@@ -1,3 +1,5 @@
+#include "kf_ent.h"
+
 typedef float Mat[4][4] __attribute__((aligned(16)));
 typedef float Vec[4] __attribute__((aligned(16)));
 typedef int IVec[4] __attribute__((aligned(16)));
@@ -18,20 +20,7 @@ typedef struct {
     int g1;                /* 0x3C */
 } KfPacket;
 
-typedef struct Obj {
-    int *model;            /* 0x00 */
-    char pad04[0x18];
-    struct Obj *next;      /* 0x1C */
-    char pad20[0x1C];
-    float height;          /* 0x3C */
-    char pad40[0x24];
-    float radius;          /* 0x64 */
-    char pad68[0x70];
-    long flags;            /* 0xD8 */
-} Obj;
-
 extern int D_00446F78;
-extern Obj *D_004467E0;
 extern float D_00420D00[];
 extern Mat D_004323E0;
 extern Mat D_00431AF0;
@@ -60,7 +49,7 @@ void func_00107840(void) {
     IVec xy;
     KfPacket pkt;
     int flag;
-    Obj *obj;
+    Ent *obj;
     float dist, max, d;
     int xv, yv, i;
     int th;
@@ -72,7 +61,7 @@ void func_00107840(void) {
     max = dist * dist;
     for (obj = D_004467E0; obj != 0; obj = obj->next) {
         if (((int)(obj->flags >> 1) & 1) == 0) continue;
-        if (dist < obj->radius) continue;
+        if (dist < obj->dist) continue;
         func_00216778(v, obj->model + 0x30);
         v[1] -= obj->height * 0.5f;
         func_00216C78(v, v, D_00420D00);

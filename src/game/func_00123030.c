@@ -1,13 +1,12 @@
+#include "kf_ent.h"
+
 void *memset(void *, int, unsigned int);
 extern int D_00446F14;
 extern int D_00446F60;
 extern int D_0044709C;
-extern int D_004467E0;
 extern int D_004467E4;
 extern int D_004467E8;
-extern int D_004470A8;
 extern int D_004470AC;
-extern int D_004470B0;
 extern int D_004470B4;
 extern int D_004470B8;
 extern int D_004470BC;
