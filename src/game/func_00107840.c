@@ -63,7 +63,7 @@ void func_00107840(void) {
     for (entity = D_004467E0; entity != NULL; entity = entity->next) {
         if (((int)(entity->flags >> 1) & 1) == 0) continue;
         if (focus_distance < entity->distance_to_player) continue;
-        func_00216778(offset_to_entity, entity->model + 0x30);
+        func_00216778(offset_to_entity, entity->model->position);
         offset_to_entity[1] -= entity->height * 0.5f;
         KF_Vector_Subtract(offset_to_entity, offset_to_entity, D_00420D00);
         KF_Vector_MultiplyComponents(scratch_vector, offset_to_entity, offset_to_entity);
