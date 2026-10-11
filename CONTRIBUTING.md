@@ -138,9 +138,12 @@ Matching comes first, but keep the source readable:
 
 - `#include "common.h"` for `u8`, `s32`, `NULL` and friends. Delete the
   typedef block decomp.me pastes in.
-- Use the shared structs in `src/game/*.h` (e.g. `Ent` in `kf_ent.h`)
+- Use the shared structs in `src/game/*.h` (e.g. `Entity` in `kf_entity.h`)
   instead of a local struct or raw casts like `*(int *)(p + 0x10)`. If you
   find a new field, add it to the header (`unkXX` until you know what it is).
+- Use long, descriptive names for variables and fields
+  (`distance_to_player`, not `d` or `f64`). Name a function
+  (`KF_Entity_FreeAllInGroup`) once its purpose is clear; see Names below.
 - Keep comments brief: one line on what a function or field is, plus a
   short note when the code is odd only to match. No essays on trivial code.
 

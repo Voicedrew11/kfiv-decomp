@@ -1,4 +1,4 @@
-#include "kf_ent.h"
+#include "kf_entity.h"
 
 typedef float Mat[4][4] __attribute__((aligned(16)));
 typedef float Vec[4] __attribute__((aligned(16)));
@@ -43,54 +43,54 @@ float sceVu0InnerProduct(float *, float *);
 float sqrtf(float);
 
 void func_00107840(void) {
-    Mat m;
-    Vec v;
-    Vec n;
-    IVec xy;
-    KfPacket pkt;
-    int flag;
-    Ent *obj;
-    float dist, max, d;
-    int xv, yv, i;
-    int th;
-    unsigned long c;
+    Mat view_matrix;
+    Vec offset_to_entity;
+    Vec scratch_vector;
+    IVec screen_position;
+    KfPacket sprite_packet;
+    int tag_flags;
+    Entity *entity;
+    float focus_distance, nearest_distance_squared, distance_squared;
+    int offset_x, offset_y, strip;
+    int tag_high_bits;
+    unsigned long tag_low_bits;
 
-    flag = 0x1180;
-    if (D_00446F78 != 0) flag = 0;
-    dist = D_00420D00[18] > 1000.0f ? 1000.0f : D_00420D00[18];
-    max = dist * dist;
-    for (obj = D_004467E0; obj != 0; obj = obj->next) {
-        if (((int)(obj->flags >> 1) & 1) == 0) continue;
-        if (dist < obj->dist) continue;
-        func_00216778(v, obj->model + 0x30);
-        v[1] -= obj->height * 0.5f;
-        func_00216C78(v, v, D_00420D00);
-        func_00216BF0(n, v, v);
-        d = n[0] + n[1] + n[2];
-        if (max < d) continue;
-        sceVu0Normalize(n, v);
-        if (sceVu0InnerProduct(n, D_00420D00 + 4) < D_00444BAC) continue;
-        max = d;
-        dist = sqrtf(d);
+    tag_flags = 0x1180;
+    if (D_00446F78 != 0) tag_flags = 0;
+    focus_distance = D_00420D00[18] > 1000.0f ? 1000.0f : D_00420D00[18];
+    nearest_distance_squared = focus_distance * focus_distance;
+    for (entity = D_004467E0; entity != 0; entity = entity->next) {
+        if (((int)(entity->flags >> 1) & 1) == 0) continue;
+        if (focus_distance < entity->distance_to_player) continue;
+        func_00216778(offset_to_entity, entity->model + 0x30);
+        offset_to_entity[1] -= entity->height * 0.5f;
+        func_00216C78(offset_to_entity, offset_to_entity, D_00420D00);
+        func_00216BF0(scratch_vector, offset_to_entity, offset_to_entity);
+        distance_squared = scratch_vector[0] + scratch_vector[1] + scratch_vector[2];
+        if (nearest_distance_squared < distance_squared) continue;
+        sceVu0Normalize(scratch_vector, offset_to_entity);
+        if (sceVu0InnerProduct(scratch_vector, D_00420D00 + 4) < D_00444BAC) continue;
+        nearest_distance_squared = distance_squared;
+        focus_distance = sqrtf(distance_squared);
     }
 
-    sceVu0MulMatrix(m, D_004323E0, D_00431AF0);
-    func_00216798(m);
-    func_00216CA8(n, D_00420D00 + 12, dist);
-    func_00216C48(n, n, D_00420D00 + 8);
-    n[3] = 1.0f;
-    func_002167E8(xy, n);
+    sceVu0MulMatrix(view_matrix, D_004323E0, D_00431AF0);
+    func_00216798(view_matrix);
+    func_00216CA8(scratch_vector, D_00420D00 + 12, focus_distance);
+    func_00216C48(scratch_vector, scratch_vector, D_00420D00 + 8);
+    scratch_vector[3] = 1.0f;
+    func_002167E8(screen_position, scratch_vector);
 
-    xv = xy[0] - 0x8000;
-    if (xv < 0) xv = xy[0] - 0x7FFF;
-    yv = xy[1] - 0x8000;
-    if (yv < 0) yv = xy[1] - 0x7FFF;
-    xv = xv / 2;
-    yv = yv / 2;
-    if (xv > 0x80) xv = 0x80;
-    else if (xv < -0x80) xv = -0x80;
-    if (yv > 0x80) yv = 0x80;
-    else if (yv < -0x80) yv = -0x80;
+    offset_x = screen_position[0] - 0x8000;
+    if (offset_x < 0) offset_x = screen_position[0] - 0x7FFF;
+    offset_y = screen_position[1] - 0x8000;
+    if (offset_y < 0) offset_y = screen_position[1] - 0x7FFF;
+    offset_x = offset_x / 2;
+    offset_y = offset_y / 2;
+    if (offset_x > 0x80) offset_x = 0x80;
+    else if (offset_x < -0x80) offset_x = -0x80;
+    if (offset_y > 0x80) offset_y = 0x80;
+    else if (offset_y < -0x80) offset_y = -0x80;
 
     func_00109A50();
     func_00109A80(0x47, 0x30000);
@@ -98,52 +98,52 @@ void func_00107840(void) {
     func_00109A80(0x22, 3);
     func_00109AD0();
 
-    pkt.reg = 0x116;
-    c = flag | 0x28028000L;
-    pkt.zero = 0;
-    pkt.rgba[0] = 0x80;
-    pkt.rgba[1] = 0x80;
-    pkt.rgba[2] = 0x80;
-    th = 0x29;
-    pkt.z0 = 0xFFFFFFFF;
-    pkt.tag = c | ((unsigned long)th << 30);
-    pkt.rgba[3] = 0x80;
-    pkt.z1 = 0xFFFFFFFF;
+    sprite_packet.reg = 0x116;
+    tag_low_bits = tag_flags | 0x28028000L;
+    sprite_packet.zero = 0;
+    sprite_packet.rgba[0] = 0x80;
+    sprite_packet.rgba[1] = 0x80;
+    sprite_packet.rgba[2] = 0x80;
+    tag_high_bits = 0x29;
+    sprite_packet.z0 = 0xFFFFFFFF;
+    sprite_packet.tag = tag_low_bits | ((unsigned long)tag_high_bits << 30);
+    sprite_packet.rgba[3] = 0x80;
+    sprite_packet.z1 = 0xFFFFFFFF;
 
-    if (xv <= 0) {
-        pkt.x0 = 0x6BF8;
-        pkt.x1 = 0x6E00;
-        pkt.f1 = 0x200;
-        pkt.f0 = 0;
+    if (offset_x <= 0) {
+        sprite_packet.x0 = 0x6BF8;
+        sprite_packet.x1 = 0x6E00;
+        sprite_packet.f1 = 0x200;
+        sprite_packet.f0 = 0;
     } else {
-        pkt.x0 = 0x9400;
-        pkt.x1 = 0x91F8;
-        pkt.f0 = 0x2800;
-        pkt.f1 = 0x2600;
+        sprite_packet.x0 = 0x9400;
+        sprite_packet.x1 = 0x91F8;
+        sprite_packet.f0 = 0x2800;
+        sprite_packet.f1 = 0x2600;
     }
-    if (yv <= 0) {
-        pkt.y0 = 0x71F8;
-        pkt.y1 = 0x8E00;
-        pkt.g1 = 0x1C00;
-        pkt.g0 = 0;
+    if (offset_y <= 0) {
+        sprite_packet.y0 = 0x71F8;
+        sprite_packet.y1 = 0x8E00;
+        sprite_packet.g1 = 0x1C00;
+        sprite_packet.g0 = 0;
     } else {
-        pkt.y0 = 0x8E00;
-        pkt.y1 = 0x71F8;
-        pkt.g0 = 0x1C00;
-        pkt.g1 = 0;
+        sprite_packet.y0 = 0x8E00;
+        sprite_packet.y1 = 0x71F8;
+        sprite_packet.g0 = 0x1C00;
+        sprite_packet.g1 = 0;
     }
-    pkt.x0 += xv;
-    pkt.x1 += xv;
-    pkt.y0 += yv;
-    pkt.y1 += yv;
-    if (xv <= 0) xv = 0x200;
-    else xv = -0x200;
-    for (i = 19; i >= 0; i--) {
-        func_0010A100(&pkt);
-        pkt.x0 += xv;
-        pkt.x1 += xv;
-        pkt.f0 += xv;
-        pkt.f1 += xv;
+    sprite_packet.x0 += offset_x;
+    sprite_packet.x1 += offset_x;
+    sprite_packet.y0 += offset_y;
+    sprite_packet.y1 += offset_y;
+    if (offset_x <= 0) offset_x = 0x200;
+    else offset_x = -0x200;
+    for (strip = 19; strip >= 0; strip--) {
+        func_0010A100(&sprite_packet);
+        sprite_packet.x0 += offset_x;
+        sprite_packet.x1 += offset_x;
+        sprite_packet.f0 += offset_x;
+        sprite_packet.f1 += offset_x;
     }
 
     func_00109A50();
