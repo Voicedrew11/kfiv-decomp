@@ -46,7 +46,7 @@ void func_00170AB8(Entity *entity) {
     entity->unk94 += turn;
     SCRATCH_VECTOR[0] = SCRATCH_VECTOR[1] = SCRATCH_VECTOR[2] = SCRATCH_VECTOR[3] = 0.0f;
     step = entity->params->unk50 * 0.5f;
-    limit = entity->params->unk54 * 0.8f;
+    limit = entity->params->unk54 * 0.2f;
     if (entity->unkC8 & 1) {
         unkE0->unk4C -= entity->params->unk50;
         if (unkE0->unk4C < -entity->params->unk54) {
