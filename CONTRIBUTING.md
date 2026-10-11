@@ -155,6 +155,12 @@ Matching comes first, but keep the source readable:
 - Keep comments brief: one line on what a function or field is, plus a
   short note when the code is odd only to match. No essays on trivial code.
 
+`tools/lint_readability.py --changed` lists what breaks these rules in the
+files your branch adds or changes (m2c names like `arg0`/`temp_a0`, plain
+`unsigned`/`short`/`long`, short names, local structs, raw offset casts).
+It is a regex scan, so treat it as hints; rebuild after fixing anything.
+Run it with no arguments for a summary of the whole tree.
+
 ## Names
 
 Keep `func_XXXXXXXX` and `D_XXXXXXXX` until you know what something is. A
