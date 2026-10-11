@@ -50,7 +50,7 @@ void func_001799A0(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_0018E9C0(entity);
-        switch (entity->unkCC) {
+        switch (entity->state) {
         case 1:
         case 2:
             func_00183240(entity, unknown);

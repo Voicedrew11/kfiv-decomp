@@ -16,6 +16,6 @@ void func_0017A1E8(Entity *entity, s32 unknown) {
             func_001958B8((char *)entity, func_0017A260, unknown);
             return;
         }
-        func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+        func_001958B8((char *)entity, unkE0->unk18, unknown);
     }
 }

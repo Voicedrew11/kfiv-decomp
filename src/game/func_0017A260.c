@@ -14,14 +14,14 @@ void func_0017A260(Entity *entity) {
     u32 i;
 
     entity->unkC6 |= 0x2000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x11, 0, entity->params->unkC4, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
@@ -29,7 +29,7 @@ void func_0017A260(Entity *entity) {
             if (entity->group_id == D_00446770) {
                 // match: an int result keeps $2 busy after the call
                 ((int (*)(s32, s32))func_002109C8)(entity->params->unk436, 0);
-                entity->state++;
+                entity->action_step++;
             }
         }
         break;

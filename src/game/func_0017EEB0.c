@@ -18,14 +18,14 @@ void func_0017EEB0(Entity *entity) {
     f32 unused_vector[4]; // match: the frame has 16 unused bytes, and they keep the tail calls from becoming jumps
 
     entity->unkC6 |= 1;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_0019A448(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (slots->unk80.unk01 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
             func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
@@ -56,7 +56,7 @@ void func_0017EEB0(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;

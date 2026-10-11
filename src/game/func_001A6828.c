@@ -17,7 +17,7 @@ typedef struct {
 void func_001AF640(void *, int);
 void func_001AF928(void *, int);
 void func_001AF538(float *, float *, float);
-void func_001A2838(u16, void *);
+s32 func_001A2838(u16, void *);
 
 typedef struct {
     float w0;

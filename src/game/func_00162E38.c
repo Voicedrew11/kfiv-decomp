@@ -105,7 +105,7 @@ void func_00162E38(Entity *entity, s32 unknown) {
         if ((s32)(ENTITY_FLAGS(entity) >> 53) & 1) {
             func_00182DE0(entity, unknown);
         } else {
-            switch (entity->unkCC) {
+            switch (entity->state) {
             case 0:
                 func_00182FD8(entity, unknown);
                 break;

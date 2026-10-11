@@ -13,7 +13,7 @@ void func_0016F7B8(Entity *entity) {
     f32 *point;
 
     entity->unkC6 |= 0x20;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x11, 0, 0, 1);
         entity->flags &= ~0x3800;
@@ -25,7 +25,7 @@ void func_0016F7B8(Entity *entity) {
         entity->flags |= 0x800000;
         entity->flags |= 0x1000000;
         entity->flags |= 0x8000000;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (unkE0->unk7A > 0) {
             func_001958B8((char *)entity, (void (*)(void))func_0016F930, 1);
@@ -35,7 +35,7 @@ void func_0016F7B8(Entity *entity) {
             func_001958B8((char *)entity, (void (*)(void))func_0016FE10, 1);
             return;
         }
-        other = func_001267B0(entity->spawn_info->unk41);
+        other = func_001267B0(entity->spawn_info->variant);
         if (other != NULL && (other->flags & 3) == 3) {
             point = (f32 *)func_0010CAB8((char *)other->model, 8);
             if (point != NULL) {

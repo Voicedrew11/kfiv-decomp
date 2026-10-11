@@ -34,7 +34,7 @@ void func_001686B0(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    if (entity->params->unk10 & 0x100) {
+    if (entity->params->flags & 0x100) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -53,7 +53,7 @@ void func_001686B0(Entity *entity, s32 unknown) {
         entity->params->unk410 = 0;
     }
     // match: angle is read here before anything has set it
-    if (unkE0->unk7B == 0 && entity->distance_to_player < entity->unk38 + 50.0f + 100.0f && entity->unkA0 == 0 &&
+    if (unkE0->unk7B == 0 && entity->distance_to_player < entity->radius + 50.0f + 100.0f && entity->unkA0 == 0 &&
         rand() % 100 < (s16)entity->params->unk434 && ABS(angle) < 1.0471976f) {
         turn_left = entity->unk68 - entity->model->unkD0[1];
         if (ABS(turn_left) < 1.0471976f) {
@@ -86,13 +86,13 @@ void func_001686B0(Entity *entity, s32 unknown) {
             return;
         case 1:
             if (unkE0->unk7A == 1 && unkE0->unk7B == 0 && func_0018CA50((int *)entity) == 0) {
-                entity->unk5C = (s32)&D_00413F80;
+                entity->target = &D_00413F80;
                 entity->unkA0 = rand() % 60 + 0xF0;
                 unkE0->unk78 = 0;
                 func_001958B8((char *)entity, (void (*)(void))func_00168DB8, unknown);
                 return;
             }
-            entity->unk5C = (s32)&D_00413F80;
+            entity->target = &D_00413F80;
             entity->unkA0 = rand() % 60 + 0x78;
             unkE0->unk78 = 0;
             break;
@@ -122,7 +122,7 @@ void func_001686B0(Entity *entity, s32 unknown) {
             }
         } else if (unkE0->unk7A == 1) {
             if (func_0018CA50((int *)entity) == 0 && unkE0->unk7B == 0) {
-                entity->unk5C = (s32)&D_00413F80;
+                entity->target = &D_00413F80;
                 entity->unkA0 = rand() % 60 + 0xF0;
                 unkE0->unk78 = 0;
                 func_001958B8((char *)entity, (void (*)(void))func_00168DB8, unknown);
@@ -133,7 +133,7 @@ void func_001686B0(Entity *entity, s32 unknown) {
             } else if (turn < 0) {
                 entity->unkC8 = 0x141;
             } else {
-                entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 1);
+                entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 1);
             }
         } else {
             if (turn > 0) {
@@ -141,7 +141,7 @@ void func_001686B0(Entity *entity, s32 unknown) {
             } else if (turn < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 0);
+                entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 0);
             }
         }
     }

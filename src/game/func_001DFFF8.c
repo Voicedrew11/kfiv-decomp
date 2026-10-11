@@ -4,7 +4,7 @@ extern u16 D_00446DE8;
 extern void **D_005CE840[];
 void func_001D3DB0(int, void *);
 void func_001D3BE8(int, void *);
-void func_0019CDC0(int);
+s32 func_0019CDC0(s32);
 
 int func_001DFFF8(void) {
     void *var_a1 = 0;

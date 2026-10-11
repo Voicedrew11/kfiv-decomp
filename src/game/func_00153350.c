@@ -18,7 +18,7 @@ void func_00153350(Entity *entity) {
         if (unkE0->unk79 == 0) {
             func_0019A448(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk88, 1, 0xE, 0, 5, 1);
         }
-        if (entity->params->unk10 & 0x100) {
+        if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
@@ -45,7 +45,7 @@ void func_00153350(Entity *entity) {
         if (ENTITY_FLAG_BITS(entity)->bit5) {
             entity->unkE0.unk00(entity, 1);
         } else {
-            func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+            func_001958B8((char *)entity, unkE0->unk18, 1);
         }
         break;
     }

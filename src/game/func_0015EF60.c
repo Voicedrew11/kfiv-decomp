@@ -7,7 +7,7 @@ void func_0015EF60(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x2000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         if (unkE0->unk7A > 0) {
             func_00192C98(entity, 0xC, 0, entity->params->unkC4, 1);
@@ -16,10 +16,10 @@ void func_0015EF60(Entity *entity) {
         }
         entity->flags = (entity->flags & ~0x3800) | 0x800;
         entity->flags &= ~0x200;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
@@ -30,7 +30,7 @@ void func_0015EF60(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;

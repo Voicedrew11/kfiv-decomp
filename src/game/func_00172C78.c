@@ -13,7 +13,7 @@ void func_00172C78(Entity *entity) {
     f32 angle;
 
     entity->unkC6 |= 0x20;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 1, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
@@ -26,7 +26,7 @@ void func_00172C78(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit28 = 1;
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->state++;
+        entity->action_step++;
         break;
     case 1:
         if (entity->distance_to_player < (f32)entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
@@ -49,7 +49,7 @@ void func_00172C78(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;

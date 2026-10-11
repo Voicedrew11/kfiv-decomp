@@ -33,7 +33,7 @@ void func_00167168(Entity *entity, s32 mode) {
                 yaw = 0.0f;
             }
             rate = 10.0f;
-            func_00195388(&unkE0->unk48[0], yaw, rate);
+            func_00195388(&unkE0->unk48, yaw, rate);
             sceVu0CopyMatrix(parent, D_00431AF0);
             func_0018BD18(entity->model->unkF8, bone, parent);
             parent[12] = 0.0f;
@@ -44,20 +44,20 @@ void func_00167168(Entity *entity, s32 mode) {
             sceVu0RotMatrixZ(rotation, rotation, bone->unk50[2]);
             sceVu0RotMatrixY(rotation, rotation, bone->unk50[1]);
             func_00216B48((int)rotation, (int *)parent, (int)rotation);
-            sceVu0RotMatrixY(twist, D_00431AF0, unkE0->unk48[0]);
+            sceVu0RotMatrixY(twist, D_00431AF0, unkE0->unk48);
             func_00216B48((int)rotation, (int *)twist, (int)rotation);
             sceVu0TransposeMatrix(parent, parent);
             func_00216B48((int)rotation, (int *)parent, (int)rotation);
             func_0018C4B8(angles, rotation);
-            func_00195388(&unkE0->unk48[1], angles[0], rate);
-            func_00195388(&unkE0->unk48[2], angles[1], rate);
+            func_00195388(&unkE0->unk4C, angles[0], rate);
+            func_00195388(&unkE0->unk50, angles[1], rate);
             func_00195388(&unkE0->unk54, angles[2], rate);
-            bone->unk50[0] = unkE0->unk48[1];
-            bone->unk50[1] = unkE0->unk48[2];
+            bone->unk50[0] = unkE0->unk4C;
+            bone->unk50[1] = unkE0->unk50;
             bone->unk50[2] = unkE0->unk54;
         } else {
-            bone->unk50[0] = unkE0->unk48[1];
-            bone->unk50[1] = unkE0->unk48[2];
+            bone->unk50[0] = unkE0->unk4C;
+            bone->unk50[1] = unkE0->unk50;
             bone->unk50[2] = unkE0->unk54;
         }
     }

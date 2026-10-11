@@ -24,17 +24,17 @@ void func_0015F5E8(Entity *entity) {
     s32 side;
 
     entity->unkC6 |= 0x3000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         unkE0->unk1C = 0.0f;
         ENTITY_FLAGS(entity) &= ~0x200;
-        entity->state++;
+        entity->action_step++;
         break;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
@@ -58,7 +58,7 @@ void func_0015F5E8(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         side = func_0018FD50(entity, 0);
@@ -80,14 +80,14 @@ void func_0015F5E8(Entity *entity) {
             }
             break;
         }
-        entity->unk5C = (s32)D_00413F80;
+        entity->target = D_00413F80;
         side = func_0018EAC0(entity, direction);
         if (side > 0) {
             entity->unkC8 = 0x241;
         } else if (side < 0) {
             entity->unkC8 = 0x141;
         } else {
-            entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 1);
+            entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 1);
         }
         ((void (*)(Entity *))unkE0->unk18)(entity);
         break;

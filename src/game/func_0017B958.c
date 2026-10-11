@@ -17,7 +17,7 @@ void func_0017B958(Entity *entity, s32 unknown) {
              -600.0f <= D_00413F80[2] && D_00413F80[2] <= 1000.0f)) {
             func_001958B8((char *)entity, func_0017BA98, unknown);
         } else {
-            func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+            func_001958B8((char *)entity, unkE0->unk18, unknown);
         }
     }
 }

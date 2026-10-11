@@ -17,9 +17,9 @@ void func_001650A0(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
         func_00196870(entity, 1);
     }
-    if (entity->distance_to_player < entity->unk38 + 300.0f + 100.0f && unkE0->unk7A == 1) {
+    if (entity->distance_to_player < entity->radius + 300.0f + 100.0f && unkE0->unk7A == 1) {
         unkE0->unk7A = 0;
-    } else if (entity->unk38 + 1000.0f + 100.0f < entity->distance_to_player && unkE0->unk7A == 0) {
+    } else if (entity->radius + 1000.0f + 100.0f < entity->distance_to_player && unkE0->unk7A == 0) {
         unkE0->unk7A = 1;
     }
     if (entity->unkC6 == 0) {
@@ -30,7 +30,7 @@ void func_001650A0(Entity *entity, s32 unknown) {
             ((void (*)(void *, int))func_00182DE0)(entity, unknown);
             entity->unkC8 |= 0x440;
         } else {
-            switch (entity->unkCC) {
+            switch (entity->state) {
             case 0:
                 func_00182FD8(entity, unknown);
                 break;

@@ -1,4 +1,5 @@
 #include "kf_entity.h"
+#include "kf_map.h"
 
 extern u32 D_00446ED4;
 extern MapSlot D_0038CD20[];
@@ -21,7 +22,7 @@ void func_0016F140(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_0018E9C0(entity);
-        switch (entity->unkCC) {
+        switch (entity->state) {
         case 1:
         case 2:
             func_00183240(entity, unknown);
@@ -42,7 +43,7 @@ void func_0016F140(Entity *entity, s32 unknown) {
         entity->model->unkE0[1] = unkE0->unk58 * scale;
         entity->model->unkE0[2] = unkE0->unk5C * scale;
         scale = (f32)unkE0->unk6A / 600.0f;
-        record = &D_0038CD20[entity->group_id].unk10[(s8)((EntityFlagWord *)&entity->spawn_info->unk38)->bytes[3]];
+        record = &((MapSlotUnk10 *)D_0038CD20[entity->group_id].unk10)[(s8)((EntityFlagWord *)&entity->spawn_info->unk38)->bytes[3]];
         record->unk70 = scale * 0.75f + 0.25f;
         record->unk74 = scale * 0.375f + 0.125f;
         if (unkE0->unk6A <= 0) {

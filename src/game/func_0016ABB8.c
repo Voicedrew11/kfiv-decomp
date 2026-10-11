@@ -49,24 +49,24 @@ void func_0016ABB8(Entity *entity, s32 mode) {
             sceVu0TransposeMatrix(parent, parent);
             func_00216B48((int)rotation, (int *)parent, (int)rotation);
             func_0018C4B8(angles, rotation);
-            func_00195388(&unkE0->unk48[0], angles[0], rate);
-            func_00195388(&unkE0->unk48[1], angles[1], rate);
-            func_00195388(&unkE0->unk48[2], angles[2], rate);
-            bone->unk50[0] = unkE0->unk48[0];
-            bone->unk50[1] = unkE0->unk48[1];
-            bone->unk50[2] = unkE0->unk48[2];
+            func_00195388(&unkE0->unk48, angles[0], rate);
+            func_00195388(&unkE0->unk4C, angles[1], rate);
+            func_00195388(&unkE0->unk50, angles[2], rate);
+            bone->unk50[0] = unkE0->unk48;
+            bone->unk50[1] = unkE0->unk4C;
+            bone->unk50[2] = unkE0->unk50;
         } else if (mode == 0) {
             rate = 10.0f;
-            func_00195388(&unkE0->unk48[0], bone->unk50[0], rate);
-            func_00195388(&unkE0->unk48[1], bone->unk50[1], rate);
-            func_00195388(&unkE0->unk48[2], bone->unk50[2], rate);
-            bone->unk50[0] = unkE0->unk48[0];
-            bone->unk50[1] = unkE0->unk48[1];
-            bone->unk50[2] = unkE0->unk48[2];
+            func_00195388(&unkE0->unk48, bone->unk50[0], rate);
+            func_00195388(&unkE0->unk4C, bone->unk50[1], rate);
+            func_00195388(&unkE0->unk50, bone->unk50[2], rate);
+            bone->unk50[0] = unkE0->unk48;
+            bone->unk50[1] = unkE0->unk4C;
+            bone->unk50[2] = unkE0->unk50;
         } else {
-            unkE0->unk48[0] = bone->unk50[0];
-            unkE0->unk48[1] = bone->unk50[1];
-            unkE0->unk48[2] = bone->unk50[2];
+            unkE0->unk48 = bone->unk50[0];
+            unkE0->unk4C = bone->unk50[1];
+            unkE0->unk50 = bone->unk50[2];
         }
     }
 }

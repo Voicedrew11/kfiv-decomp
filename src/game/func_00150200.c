@@ -9,25 +9,25 @@ void func_00150200(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x1000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x11, 0, entity->params->unkC4, 1);
         entity->flags = (entity->flags & ~0x3800) | 0x800;
         entity->flags &= ~0x200;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
-        if (unkE0->unk8A == entity->params->unk438) {
+        if (((EntityUnkE0Slot *)unkE0->unk88)->unk02 == entity->params->unk438) {
             func_0018D600((char **)entity, entity->params->unk436, entity->params->unk43E, (int)entity->model->unkD0);
         }
         if (entity->params->unk43C < entity->model->unkFC->unk82) {
             func_0018D600((char **)entity, entity->params->unk43A, entity->params->unk43E, (int)entity->model->unkD0);
             func_00150478(entity);
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 3:
@@ -38,7 +38,7 @@ void func_00150200(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;

@@ -19,8 +19,8 @@ void func_001513E8(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
         func_00196870(entity, 1);
     }
-    if (entity->spawn_info->unk40 != 0 && entity->spawn_info->unk41 != 0) {
-        other = func_001267B0(entity->spawn_info->unk41);
+    if (entity->spawn_info->unk40 != 0 && entity->spawn_info->variant != 0) {
+        other = func_001267B0(entity->spawn_info->variant);
         if (other != NULL && D_00446ED4 % entity->unkD7 == 0) {
             if (ENTITY_FLAG_BITS(other)->bits2 >= 2 || !ENTITY_FLAG_BITS(other)->bit1) {
                 func_001958B8((char *)entity, (void (*)(void))func_00151B60, 1);
@@ -34,7 +34,7 @@ void func_001513E8(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             func_00182DE0(entity, unknown);
         } else {
-            switch (entity->unkCC) {
+            switch (entity->state) {
             case 0:
                 func_00182FD8(entity, unknown);
                 break;

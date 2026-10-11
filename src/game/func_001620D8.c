@@ -27,23 +27,23 @@ void func_001620D8(Entity *entity) {
     entity->flags &= ~0x3800;
     entity->flags &= ~0x200;
     height = func_0018A9F0(entity->unk14, entity->model->position);
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 8, 0, entity->params->unkC4, 1);
-        unkE0->unk48[2] = func_00194FB8(entity->model->unkD0[1] + 3.1415927f);
-        unkE0->unk54 = unkE0->unk48[0];
+        unkE0->unk50 = func_00194FB8(entity->model->unkD0[1] + 3.1415927f);
+        unkE0->unk54 = unkE0->unk48;
         unkE0->unk58 = 0.0f;
         unkE0->unk44 = 0.0f;
-        unkE0->unk48[0] = 0.0f;
-        unkE0->unk48[1] = 0.0f;
+        unkE0->unk48 = 0.0f;
+        unkE0->unk4C = 0.0f;
         unkE0->unk1C = 0.0f;
-        entity->state++;
+        entity->action_step++;
     case 1:
         func_00192C98(entity, 8, 0, entity->params->unkC4, 0);
         unkE0->unk58 = func_00195018(unkE0->unk58, entity->params->unk54, entity->params->unk50);
         unkE0->unk54 = func_00195018(unkE0->unk54, -20.0f, 2.0f);
         if (height == D_00446820[0] || height >= 400.0f) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
@@ -57,7 +57,7 @@ void func_001620D8(Entity *entity) {
         if (entity->flags & (0x8200L << 35)) {
             func_00192C98(entity, 9, 0, 0, 1);
             unkE0->unk58 = unkE0->unk54 = 0.0f;
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 3:
@@ -68,7 +68,7 @@ void func_001620D8(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 entity->unkE0.unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;
@@ -76,7 +76,7 @@ void func_001620D8(Entity *entity) {
     SCRATCH_VECTOR[1] = unkE0->unk54;
     SCRATCH_VECTOR[2] = unkE0->unk58 + unkE0->unk58;
     SCRATCH_VECTOR[0] = SCRATCH_VECTOR[3] = 0.0f;
-    sceVu0RotMatrixY(SCRATCH_MATRIX, D_00431AF0, unkE0->unk48[2]);
+    sceVu0RotMatrixY(SCRATCH_MATRIX, D_00431AF0, unkE0->unk50);
     func_00216BC0(SCRATCH_VECTOR, SCRATCH_MATRIX, SCRATCH_VECTOR);
     // match: never taken, but until the compiler works that out the branch separates the
     // scratchpad stores above from the loads below, so their addresses are not kept in registers

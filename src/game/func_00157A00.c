@@ -28,7 +28,7 @@ void func_00157A00(Entity *entity) {
     unkE0->unk00 = func_00157BD0;
     unkE0->unk04 = func_00182A08;
     unkE0->unk08 = (void (*)(void))func_00158E28;
-    unkE0->unk18 = (s32)func_00158380;
+    unkE0->unk18 = (void (*)(void))func_00158380;
     unkE0->unk10 = (void (*)(void))func_00158ED8;
     unkE0->unk14 = (void (*)(void))func_001593E8;
     for (i = 3; i != -1; i--) {
@@ -38,11 +38,11 @@ void func_00157A00(Entity *entity) {
         entity->unkC0[i] = 0x80;
     }
     ENTITY_FLAG_BITS(entity)->bit28 = 1;
-    entity->unk5C = 0;
+    entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
         func_001958B8((char *)entity, unkE0->unk10, 1);
     } else {
-        func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 0);
+        func_001958B8((char *)entity, unkE0->unk18, 0);
     }
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);

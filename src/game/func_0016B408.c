@@ -22,7 +22,7 @@ void func_0016B408(Entity *entity, s32 unknown) {
         if ((s32)(entity->flags >> 53) & 1) {
             func_00182DE0(entity, unknown);
         } else {
-            switch (entity->unkCC) {
+            switch (entity->state) {
             case 0:
                 func_00182FD8(entity, unknown);
                 break;

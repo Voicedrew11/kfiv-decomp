@@ -26,7 +26,7 @@ void func_001AF0B0(void *);
 int func_001AF4E0(void *);
 void func_001AF5B0(void *, void *);
 void func_001A1E28(u16, void *, void *, int, u16, void *);
-void func_001A2838(u16, void *);
+s32 func_001A2838(u16, void *);
 void sceVu0AddVector(void *, void *, void *);
 
 void func_001A7548(Actor *arg0) {

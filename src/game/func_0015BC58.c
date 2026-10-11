@@ -34,7 +34,7 @@ void func_0015BC58(Entity *entity, s32 unknown) {
     s32 mode;
     s32 side;
 
-    if (entity->params->unk10 & 0x100) {
+    if (entity->params->flags & 0x100) {
         entity->flags &= ~0x3800;
     } else {
         entity->flags = (entity->flags & ~0x3800) | 0x800;
@@ -73,17 +73,17 @@ void func_0015BC58(Entity *entity, s32 unknown) {
         case 1:
             player_angle = func_001957B8(D_00413F80[5], func_00195478(D_00413F80, (char *)entity->model->position));
             if (ABS(player_angle) > 0.61086524f) {
-                entity->unk5C = (s32)D_00413F80;
+                entity->target = D_00413F80;
                 entity->unkA0 = rand() % 30 + 60;
                 unkE0->unk78 = 1;
             } else {
-                entity->unk5C = (s32)D_00413F80;
+                entity->target = D_00413F80;
                 if (1.5707964f < ABS(func_00194FB8(entity->unk68 - entity->model->unkD0[1]))) {
                     unkE0->unk7A = (func_00194FB8(entity->unk68 - entity->model->unkD0[1]) > 0.0f) ? 1 : -1;
                     func_001958B8((char *)entity, (void (*)(void))func_0015C3B8, unknown);
                     return;
                 }
-                entity->unk5C = (s32)D_00413F80;
+                entity->target = D_00413F80;
                 entity->unkA0 = rand() % 60 + 60;
                 unkE0->unk78 = 0;
             }
@@ -137,7 +137,7 @@ void func_0015BC58(Entity *entity, s32 unknown) {
                         func_001958B8((char *)entity, (void (*)(void))func_0015C3B8, unknown);
                         return;
                     }
-                    entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 1);
+                    entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 1);
                 }
                 unkE0->unk6A = 0;
                 break;
@@ -154,7 +154,7 @@ void func_0015BC58(Entity *entity, s32 unknown) {
                         return;
                     }
                     // match: called like func_00190F90, with a mode the callee ignores
-                    entity->unkC8 = ((int (*)(Entity *, int, float))func_0015C958)(entity, 1, entity->unk38 + 100.0f + 30.0f);
+                    entity->unkC8 = ((int (*)(Entity *, int, float))func_0015C958)(entity, 1, entity->radius + 100.0f + 30.0f);
                 }
                 unkE0->unk6A = 0;
                 break;
@@ -162,5 +162,5 @@ void func_0015BC58(Entity *entity, s32 unknown) {
         }
     }
 done:
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

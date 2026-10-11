@@ -21,9 +21,9 @@ void func_0015B428(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     turn = func_0018EAC0(entity, direction);
     if (turn == 0) {
-        entity->unk5C = (s32)entity->spawn_info;
+        entity->target = entity->spawn_info;
         // match: called like func_00190F90, with a mode the callee ignores
-        entity->unkC8 = ((s16 (*)(float, void *, int))func_0015B340)(entity->unk38 + 100.0f + 30.0f, entity, 1);
+        entity->unkC8 = ((s16 (*)(float, void *, int))func_0015B340)(entity->radius + 100.0f + 30.0f, entity, 1);
     } else {
         push[0] = push[1] = push[2] = push[3] = 0.0f;
         if (entity->flags & (0xC000L << 31)) {
@@ -45,15 +45,15 @@ void func_0015B428(Entity *entity, s32 unknown) {
         } else if (turn == 1) {
             turn = -1;
         }
-        entity->unk5C = (s32)entity->spawn_info;
+        entity->target = entity->spawn_info;
         if (turn > 0) {
             entity->unkC8 = 0x202;
         } else if (turn < 0) {
             entity->unkC8 = 0x102;
         } else {
             // match: called like func_00190F90, with a mode the callee ignores
-            entity->unkC8 = ((s16 (*)(float, void *, int))func_0015B340)(entity->unk38 + 100.0f + 30.0f, entity, 1);
+            entity->unkC8 = ((s16 (*)(float, void *, int))func_0015B340)(entity->radius + 100.0f + 30.0f, entity, 1);
         }
     }
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

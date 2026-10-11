@@ -12,7 +12,7 @@ void func_00153A18(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 8;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         if (func_001957B8(D_00413F80[5], func_00195478(D_00413F80, (char *)entity->model->position)) * 57.29578f > 0.0f) {
             func_0019A448(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, 6, 0, entity->params->unkC4 >> 1, 1);
@@ -27,10 +27,10 @@ void func_00153A18(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (((EntityUnkE0Kind151D30 *)unkE0)->unk80.unk01 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
         break;
@@ -42,7 +42,7 @@ void func_00153A18(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->unkE0.unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;

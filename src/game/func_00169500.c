@@ -12,16 +12,16 @@ void func_00169500(Entity *entity) {
     char *unk350 = entity->params->unk350;
 
     entity->unkC6 |= 0x5000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x1D, 0, 1, 1);
         entity->flags &= ~0x3800;
         entity->flags &= ~0x200;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
             entity->flags |= 0x20000;
-            entity->state++;
+            entity->action_step++;
         }
         if (unkE0->unk6E == 0) {
             s32 flag = (s32)(entity->flags >> 49) & 1;

@@ -10,7 +10,7 @@ void func_00154C58(Entity *entity) {
         func_00190A30((char *)entity);
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->unk5C = 0;
+        entity->target = NULL;
         func_0019A310((char *)entity, func_001816A0, 0);
     }
     func_00195898((char *)entity, 2);

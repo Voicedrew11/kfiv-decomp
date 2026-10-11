@@ -28,5 +28,5 @@ void func_00176238(Entity *entity, s32 unknown) {
     if (func_00194F80(entity->model->position, entity->spawn_info) > 10000.0f) {
         ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
     }
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

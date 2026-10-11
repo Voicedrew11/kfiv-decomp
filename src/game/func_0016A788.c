@@ -17,7 +17,7 @@ void func_00181038(void);
 void func_001818B8(void);
 void func_00183570(void);
 
-// match: read as pointers, so that the int store to unk5C is not taken to alias the table
+// match: read as pointers, so that the int store to target is not taken to alias the table
 extern void *D_003E6E40[][2];
 
 void func_0016A788(Entity *entity) {
@@ -41,14 +41,14 @@ void func_0016A788(Entity *entity) {
         entity->unkC0[i] = 0x80;
     }
     entity->flags &= ~0x10000000;
-    entity->unk5C = 0;
+    *(s32 *)&entity->target = 0; // match: stored as an int, so it can move ahead of the params load
     func_001958A8((char *)entity, (s32)D_003E6E40[entity->params->unk02][1]);
     if (entity->spawn_info->unk40 != 0) {
         unkE0->unk00 = func_0016AEC0;
         unkE0->unk04 = (void (*)(void))func_0016AA00;
         unkE0->unk08 = (void (*)(void))func_0016AE00;
         unkE0->unk10 = (void (*)(void))func_0016B088;
-        unkE0->unk18 = (s32)func_0016AFD8;
+        unkE0->unk18 = (void (*)(void))func_0016AFD8;
         unkE0->unk14 = func_001818B8;
         ENTITY_FLAG_BITS(entity)->bit18 = 1;
         func_001958B8((char *)entity, unkE0->unk10, 1);
@@ -58,13 +58,13 @@ void func_0016A788(Entity *entity) {
         unkE0->unk08 = (void (*)(void))func_0016AE00;
         unkE0->unk14 = func_001818B8;
         unkE0->unk10 = func_00181038;
-        unkE0->unk18 = (s32)func_00183570;
+        unkE0->unk18 = (void (*)(void))func_00183570;
         if (ENTITY_FLAG_WORD(entity->spawn_info->unk38) & (0x8000L << 43)) {
             func_001958B8((char *)entity, unkE0->unk10, 1);
         } else {
-            func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 0);
+            func_001958B8((char *)entity, unkE0->unk18, 0);
         }
-        entity->unkD6 = (entity->params->unk10 & 0x4000) ? 0x40 : 0x80;
+        entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
         entity->model->unk15C = entity->unkD6;
     }
     if (unk138 != NULL) {

@@ -8,10 +8,10 @@ void func_00216778(void *, void *);
 
 void func_00178108(Entity *entity) {
     entity->unkC6 = 0x40;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x10, 0, 5, 1);
-        if (entity->params->unk10 & 0x100) {
+        if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             s32 kind = 2;
@@ -28,10 +28,10 @@ void func_00178108(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
@@ -49,7 +49,7 @@ void func_00178108(Entity *entity) {
                     func_00216778(partner->model->position, entity->model->position);
                 }
             }
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 3:

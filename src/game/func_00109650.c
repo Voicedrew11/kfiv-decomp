@@ -10,27 +10,27 @@ typedef struct { int w0, w1, w2, w3; } Blk;
 extern void *D_00447018[2];
 extern Blk *D_00447020[2];
 
-void func_00109650(int arg0, u32 arg1) {
-    void **p18;
-    Blk **p20;
+void func_00109650(u32 *packet, u32 *packet_end) {
+    void **packet_head;
+    Blk **packet_tail;
 
-    p18 = &D_00447018[D_00446748];
-    p20 = &D_00447020[D_00446748];
+    packet_head = &D_00447018[D_00446748];
+    packet_tail = &D_00447020[D_00446748];
     if (D_0044703C == 0) {
-        if (arg1 >= D_00447038) {
+        if ((u32)packet_end >= D_00447038) {
             puts(D_0043E4A0);
             while (1) {
             }
         } else {
-            if (*p18 != 0) {
-                Blk *b = *p20;
-                b->w0 = 0x20000000;
-                b->w1 = arg0;
-                b->w3 = b->w2 = 0;
+            if (*packet_head != 0) {
+                Blk *tail_tag = *packet_tail;
+                tail_tag->w0 = 0x20000000;
+                tail_tag->w1 = (int)packet;
+                tail_tag->w3 = tail_tag->w2 = 0;
             } else {
-                *p18 = (void *) arg0;
+                *packet_head = packet;
             }
-            *p20 = (Blk *) arg1;
+            *packet_tail = (Blk *)packet_end;
         }
     }
 }

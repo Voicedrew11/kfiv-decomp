@@ -1,6 +1,6 @@
 extern void func_0019E758(void);
 extern void func_0019DC00(void);
-extern void func_001A14D8(void);
+extern int func_001A14D8(void);
 extern int func_001CBAC0(void);
 extern void func_001CEBE0(void);
 extern char D_004470E2;

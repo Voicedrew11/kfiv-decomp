@@ -52,13 +52,13 @@ void func_0015FD38(Entity *entity, s32 unknown) {
         if (D_00413F80.position[0] >= 6600.0f) {
             ENTITY_FLAGS(entity) |= 0x40000;
             ENTITY_FLAGS(entity) &= ~0x3800;
-            entity->unk5C = (s32)entity->spawn_info;
+            entity->target = entity->spawn_info;
             entity->unkC8 = func_00190F90(500.0f, entity, 0) | 0x440;
-            func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+            func_001958B8((char *)entity, unkE0->unk18, unknown);
         } else if ((s32)(ENTITY_FLAGS(entity) >> 53) & 1) {
             func_00182DE0(entity, unknown);
         } else {
-            switch (entity->unkCC) {
+            switch (entity->state) {
             case 0:
                 func_00182FD8(entity, unknown);
                 break;

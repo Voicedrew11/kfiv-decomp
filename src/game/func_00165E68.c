@@ -16,7 +16,7 @@ void func_00165E68(Entity *entity) {
     f32 side;
 
     entity->unkC6 |= 0x1000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         side = func_001957B8(D_00413F80[5], func_00195478(D_00413F80, (char *)entity->model->position));
         if (unkE0->unk7B == 1) {
@@ -40,10 +40,10 @@ void func_00165E68(Entity *entity) {
         }
         entity->flags = (entity->flags & ~0x3800) | 0x800;
         entity->flags &= ~0x200;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
         break;
@@ -56,7 +56,7 @@ void func_00165E68(Entity *entity) {
                 if ((s32)(entity->flags >> 5) & 1) {
                     entity->unkE0.unk00(entity, 1);
                 } else {
-                    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                    func_001958B8((char *)entity, unkE0->unk18, 1);
                 }
             } else {
                 func_0018F030((char *)entity);

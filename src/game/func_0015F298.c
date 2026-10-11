@@ -14,7 +14,7 @@ s32 func_0015F298(Entity *entity, f32 min_distance, f32 max_angle) {
     if ((u8)(entity->unkE0.unk7B - 1) >= 15) {
         return FALSE;
     }
-    distance = entity->distance_to_player - (entity->unk38 + 100.0f);
+    distance = entity->distance_to_player - (entity->radius + 100.0f);
     angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
     player_angle = func_001957B8(D_00413F80[5], func_00195478(D_00413F80, (char *)entity->model->position));
     if (distance < min_distance) {

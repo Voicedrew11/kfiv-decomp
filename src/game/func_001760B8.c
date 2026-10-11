@@ -9,7 +9,7 @@ void func_001760B8(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 roll;
 
-    if (entity->params->unk10 & 0x100) {
+    if (entity->params->flags & 0x100) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -31,6 +31,6 @@ void func_001760B8(Entity *entity, s32 unknown) {
             entity->unkA0 = rand() % 60 + 0x78;
         }
     }
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
     return;
 }

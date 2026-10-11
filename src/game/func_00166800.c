@@ -13,7 +13,7 @@ void func_00166800(Entity *entity) {
     s32 landed;
 
     entity->unkC6 |= 8;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         if (func_001957B8(D_00413F80[5], func_00195478(D_00413F80, (char *)entity->model->position)) > 0.0f) {
             func_00192C98(entity, 6, 0, entity->params->unkC4 >> 1, 1);
@@ -22,35 +22,35 @@ void func_00166800(Entity *entity) {
         }
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         ENTITY_FLAGS(entity) &= ~0x200;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            unkE0->unk48[0] = entity->params->unk43A * 0.8f;
-            entity->state = 5;
+            unkE0->unk48 = entity->params->unk43A * 0.8f;
+            entity->action_step = 5;
         }
         func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
         break;
     case 2:
         if (entity->model->unkFC->unk82 >= 4) {
-            entity->unk88 = -unkE0->unk48[0];
-            unkE0->unk48[0] -= entity->params->unk43E * 0.1f;
+            entity->unk88 = -unkE0->unk48;
+            unkE0->unk48 -= entity->params->unk43E * 0.1f;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
             func_00192C98(entity, 9, 0, entity->params->unkC4 >> 1, 1);
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 3:
-        entity->unk88 = -unkE0->unk48[0];
-        unkE0->unk48[0] -= entity->params->unk43E * 0.1f;
+        entity->unk88 = -unkE0->unk48;
+        unkE0->unk48 -= entity->params->unk43E * 0.1f;
         if (entity->model->unkFC->unk88 == 0) {
             ENTITY_FLAGS(entity) &= ~0x4000;
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 4:
-        entity->unk88 = -unkE0->unk48[0];
-        unkE0->unk48[0] -= entity->params->unk43E * 0.1f;
+        entity->unk88 = -unkE0->unk48;
+        unkE0->unk48 -= entity->params->unk43E * 0.1f;
         landed = (s32)(ENTITY_FLAGS(entity) >> 44) & 1;
         if (landed == 1) {
             entity->unk84 = 0.0f;
@@ -58,7 +58,7 @@ void func_00166800(Entity *entity) {
             entity->unk8C = 0.0f;
             ENTITY_FLAGS(entity) |= 0x4000;
             ENTITY_FLAGS(entity) &= ~0x10000000;
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 5:
@@ -69,7 +69,7 @@ void func_00166800(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;

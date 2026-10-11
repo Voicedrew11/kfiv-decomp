@@ -31,7 +31,7 @@ void func_00155128(Entity *entity, s32 unknown) {
     s32 turn;
     s32 mode;
 
-    if (entity->params->unk10 & 0x100) {
+    if (entity->params->flags & 0x100) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -47,18 +47,18 @@ void func_00155128(Entity *entity, s32 unknown) {
     side = func_0018FD50(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
     angle = func_001957B8(D_00413F80[5], func_00195478(D_00413F80, (char *)entity->model->position));
-    if (entity->unk60 - entity->unk38 - 100.0f < 300.0f && ABS(angle) < 0.6981317f && unkE0->unk68 == 0) {
+    if (entity->unk60 - entity->radius - 100.0f < 300.0f && ABS(angle) < 0.6981317f && unkE0->unk68 == 0) {
         entity->unkC6 = 0;
         entity->unkC8 = 0;
         entity->unkA0 = 0;
         func_001958B8((char *)entity, (void (*)(void))func_00155760, 1);
         return;
     }
-    if (entity->unk60 - entity->unk38 - 100.0f < 800.0f && ABS(angle) < 0.6981317f) {
+    if (entity->unk60 - entity->radius - 100.0f < 800.0f && ABS(angle) < 0.6981317f) {
         angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
         if (ABS(angle) < 1.5707964f) {
             unkE0->unk78 = 1;
-            entity->unk5C = (s32)D_00413F80;
+            entity->target = D_00413F80;
             entity->unkCD = 1;
             entity->unkA0 = rand() % 60 + 90;
         }
@@ -79,7 +79,7 @@ void func_00155128(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->unk5C = (s32)D_00413F80;
+            entity->target = D_00413F80;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -116,7 +116,7 @@ void func_00155128(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 0);
+                    entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 0);
                 }
                 break;
             case 1:
@@ -126,12 +126,12 @@ void func_00155128(Entity *entity, s32 unknown) {
                     entity->unkC8 = 0x202;
                 } else {
                     // match: the caller passes an integer argument the callee does not take
-                    entity->unkC8 = ((int (*)(Entity *, int, float))func_00155678)(entity, 0, entity->unk38 + 100.0f + 30.0f);
+                    entity->unkC8 = ((int (*)(Entity *, int, float))func_00155678)(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             }
         }
     }
 done:
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

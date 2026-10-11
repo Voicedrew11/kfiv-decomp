@@ -25,7 +25,7 @@ void func_00155760(Entity *entity) {
     f32 step;
 
     entity->unkC6 |= 0x1000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x17, 0, entity->params->unkC4, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -34,12 +34,12 @@ void func_00155760(Entity *entity) {
         unkE0->unk6C = entity->params->unk438;
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->state++;
+        entity->action_step++;
         break;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
             unkE0->unk7A = 0;
-            entity->state++;
+            entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
             func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);

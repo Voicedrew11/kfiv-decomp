@@ -8,18 +8,18 @@ void func_0015C7A8(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 turn;
 
-    if (entity == (Entity *)D_00414184[0] && (entity->params->unk10 & 0x800)) {
+    if (entity == (Entity *)D_00414184[0] && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     if (entity->unkC8 & 0x100) {
         unkE0->unk1C -= entity->params->unk58;
-        if (unkE0->unk1C < -entity->params->unk5C) {
-            unkE0->unk1C = -entity->params->unk5C;
+        if (unkE0->unk1C < -entity->params->turn_limit) {
+            unkE0->unk1C = -entity->params->turn_limit;
         }
     } else if (entity->unkC8 & 0x200) {
         unkE0->unk1C += entity->params->unk58;
-        if (unkE0->unk1C > entity->params->unk5C) {
-            unkE0->unk1C = entity->params->unk5C;
+        if (unkE0->unk1C > entity->params->turn_limit) {
+            unkE0->unk1C = entity->params->turn_limit;
         }
     } else {
         unkE0->unk1C = 0.0f;

@@ -7,7 +7,7 @@ void func_0016FE10(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 = 0x40;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x11, 0, entity->params->unkC4, 1);
         ENTITY_FLAG_BITS(entity)->bit22 = 0;
@@ -19,11 +19,11 @@ void func_0016FE10(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit4 = 1;
         entity->unkA0 = 20;
         unkE0->unk68 = 0;
-        entity->state++;
+        entity->action_step++;
     case 1:
-        unkE0->unk48[0] += (f32)entity->params->unk430 * ((f32)unkE0->unk68 / 30.0f);
-        if ((f32)entity->params->unk432 < unkE0->unk48[0]) {
-            unkE0->unk48[0] = (f32)entity->params->unk432;
+        unkE0->unk48 += (f32)entity->params->unk430 * ((f32)unkE0->unk68 / 30.0f);
+        if ((f32)entity->params->unk432 < unkE0->unk48) {
+            unkE0->unk48 = (f32)entity->params->unk432;
         }
         if (entity->unkA0 != 0) {
             entity->model->unk15C = (f32)entity->unkD6 * (f32)entity->unkA0 / 20.0f;
@@ -36,6 +36,6 @@ void func_0016FE10(Entity *entity) {
         }
         break;
     }
-    entity->unk88 += unkE0->unk48[0] + unkE0->unk48[0];
+    entity->unk88 += unkE0->unk48 + unkE0->unk48;
     unkE0->unk68++;
 }

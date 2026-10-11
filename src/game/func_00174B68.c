@@ -23,7 +23,7 @@ void func_00174B68(Entity *entity, s32 unknown) {
     s32 next_action;
     s32 side;
 
-    if (entity->params->unk10 & 0x100) {
+    if (entity->params->flags & 0x100) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -58,7 +58,7 @@ void func_00174B68(Entity *entity, s32 unknown) {
             unkE0->unk78 = -1;
             break;
         case 1:
-            entity->unk5C = (s32)D_00413F80;
+            entity->target = D_00413F80;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -79,9 +79,9 @@ void func_00174B68(Entity *entity, s32 unknown) {
             } else if (side < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 0);
+                entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 0);
             }
         }
     }
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

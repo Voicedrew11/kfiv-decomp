@@ -29,16 +29,16 @@ void func_0015CC20(Entity *entity) {
     s32 side;
 
     entity->unkC6 |= 0x3000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         unkE0->unk1C = 0.0f;
         ENTITY_FLAGS(entity) &= ~0x200;
-        entity->state++;
+        entity->action_step++;
         break;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
@@ -62,7 +62,7 @@ void func_0015CC20(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         side = func_0018FD50(entity, 0);
@@ -86,7 +86,7 @@ void func_0015CC20(Entity *entity) {
             }
             break;
         }
-        entity->unk5C = (s32)D_00413F80;
+        entity->target = D_00413F80;
         angle = func_001957B8(D_00413F80[5], func_00195478(D_00413F80, (char *)entity->model->position));
         side = func_0018EAC0(entity, direction);
         if (ABS(angle) > 0.7853982f) {
@@ -100,9 +100,9 @@ void func_0015CC20(Entity *entity) {
             entity->unkC8 |= 0x100;
         } else if (ABS(angle) > 0.7853982f) {
             // match: the caller passes a second integer argument the callee does not take
-            entity->unkC8 = ((int (*)(Entity *, int, float))func_0015C958)(entity, 1, entity->unk38 + 100.0f + 30.0f);
+            entity->unkC8 = ((int (*)(Entity *, int, float))func_0015C958)(entity, 1, entity->radius + 100.0f + 30.0f);
         } else {
-            entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 1);
+            entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 1);
         }
         ((void (*)(Entity *))unkE0->unk18)(entity);
         break;

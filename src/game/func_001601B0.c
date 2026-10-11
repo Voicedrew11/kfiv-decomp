@@ -57,7 +57,7 @@ void func_001601B0(Entity *entity, s32 unknown) {
         }
         func_00190B88(entity, mode);
         if (entity->unkCD == 1) {
-            entity->unk5C = (s32)D_00413F80;
+            entity->target = D_00413F80;
             angle = func_001957B8(D_00413F80[5], entity->unk68);
             if (entity->distance_to_player < 350.0f && ABS(angle) < 0.6981317f) {
                 func_001958B8((char *)entity, (void (*)(void))func_001620D8, unknown);
@@ -81,7 +81,7 @@ void func_001601B0(Entity *entity, s32 unknown) {
         } else if (side < 0) {
             entity->unkC8 |= 0x101;
         } else {
-            entity->unkC8 |= func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 0);
+            entity->unkC8 |= func_00190F90(entity->radius + 100.0f + 30.0f, entity, 0);
         }
         break;
     case 1:
@@ -122,5 +122,5 @@ void func_001601B0(Entity *entity, s32 unknown) {
         entity->unkC8 |= func_00190BE0(entity);
         break;
     }
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

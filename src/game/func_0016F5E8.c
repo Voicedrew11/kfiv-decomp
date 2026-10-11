@@ -6,7 +6,7 @@ void func_0018DCD8(Entity *);
 
 void func_0016F5E8(Entity *entity) {
     entity->unkC6 = 0x40;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x10, 0, 5, 1);
         entity->flags &= ~0x3800;
@@ -17,10 +17,10 @@ void func_0016F5E8(Entity *entity) {
         entity->flags |= 0x4000000;
         entity->flags &= ~0x10000000;
         entity->flags &= ~0x200;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
@@ -33,7 +33,7 @@ void func_0016F5E8(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             entity->unkA0 = 20;
             func_0018DCD8(entity);
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 3:

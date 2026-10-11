@@ -10,15 +10,15 @@ void func_00162738(Entity *entity) {
     entity->unkC6 |= 0x2000;
     entity->flags |= 0x200;
     entity->unkC8 |= func_00190BE0(entity);
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x12, 0, entity->params->unkC4 >> 2, 0);
         entity->flags &= ~0x3800;
-        entity->state++;
+        entity->action_step++;
         break;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
@@ -29,7 +29,7 @@ void func_00162738(Entity *entity) {
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;

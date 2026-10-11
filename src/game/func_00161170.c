@@ -24,13 +24,13 @@ void func_00161170(Entity *entity) {
     turn = 0.0f;
     if (entity->unkC8 & 0x100) {
         unkE0->unk1C -= entity->params->unk58;
-        if (unkE0->unk1C < -entity->params->unk5C) {
-            unkE0->unk1C = -entity->params->unk5C;
+        if (unkE0->unk1C < -entity->params->turn_limit) {
+            unkE0->unk1C = -entity->params->turn_limit;
         }
     } else if (entity->unkC8 & 0x200) {
         unkE0->unk1C += entity->params->unk58;
-        if (entity->params->unk5C < unkE0->unk1C) {
-            unkE0->unk1C = entity->params->unk5C;
+        if (entity->params->turn_limit < unkE0->unk1C) {
+            unkE0->unk1C = entity->params->turn_limit;
         }
     } else if (entity->params->unk58 < unkE0->unk1C) {
         unkE0->unk1C -= entity->params->unk58;
@@ -48,21 +48,21 @@ void func_00161170(Entity *entity) {
     step = entity->params->unk50 * 0.5f;
     limit = entity->params->unk54 * 0.5f;
     if (entity->unkC8 & 1) {
-        unkE0->unk48[1] -= entity->params->unk50;
-        if (unkE0->unk48[1] < -entity->params->unk54) {
-            unkE0->unk48[1] = -entity->params->unk54;
+        unkE0->unk4C -= entity->params->unk50;
+        if (unkE0->unk4C < -entity->params->unk54) {
+            unkE0->unk4C = -entity->params->unk54;
         }
     } else if (entity->unkC8 & 2) {
-        unkE0->unk48[1] += entity->params->unk50;
-        if (entity->params->unk54 < unkE0->unk48[1]) {
-            unkE0->unk48[1] = entity->params->unk54;
+        unkE0->unk4C += entity->params->unk50;
+        if (entity->params->unk54 < unkE0->unk4C) {
+            unkE0->unk4C = entity->params->unk54;
         }
-    } else if (entity->params->unk50 < unkE0->unk48[1]) {
-        unkE0->unk48[1] -= entity->params->unk50;
-    } else if (unkE0->unk48[1] < -entity->params->unk50) {
-        unkE0->unk48[1] += entity->params->unk50;
+    } else if (entity->params->unk50 < unkE0->unk4C) {
+        unkE0->unk4C -= entity->params->unk50;
+    } else if (unkE0->unk4C < -entity->params->unk50) {
+        unkE0->unk4C += entity->params->unk50;
     } else {
-        unkE0->unk48[1] = 0.0f;
+        unkE0->unk4C = 0.0f;
     }
     if (entity->unkC8 & 4) {
         unkE0->unk44 += entity->params->unk50;
@@ -82,25 +82,25 @@ void func_00161170(Entity *entity) {
         unkE0->unk44 = 0.0f;
     }
     if (entity->unkC8 & 0x10) {
-        unkE0->unk48[0] -= step;
-        if (unkE0->unk48[0] < -limit) {
-            unkE0->unk48[0] = -limit;
+        unkE0->unk48 -= step;
+        if (unkE0->unk48 < -limit) {
+            unkE0->unk48 = -limit;
         }
     } else if (entity->unkC8 & 0x20) {
-        unkE0->unk48[0] += step;
-        if (limit < unkE0->unk48[0]) {
-            unkE0->unk48[0] = limit;
+        unkE0->unk48 += step;
+        if (limit < unkE0->unk48) {
+            unkE0->unk48 = limit;
         }
-    } else if (step < unkE0->unk48[0]) {
-        unkE0->unk48[0] -= step;
-    } else if (unkE0->unk48[0] < -step) {
-        unkE0->unk48[0] += step;
+    } else if (step < unkE0->unk48) {
+        unkE0->unk48 -= step;
+    } else if (unkE0->unk48 < -step) {
+        unkE0->unk48 += step;
     } else {
-        unkE0->unk48[0] = 0.0f;
+        unkE0->unk48 = 0.0f;
     }
     SCRATCH_VECTOR[0] = unkE0->unk44;
-    SCRATCH_VECTOR[1] = unkE0->unk48[0];
-    SCRATCH_VECTOR[2] = unkE0->unk48[1];
+    SCRATCH_VECTOR[1] = unkE0->unk48;
+    SCRATCH_VECTOR[2] = unkE0->unk4C;
     sceVu0RotMatrixZ(SCRATCH_MATRIX, D_00431AF0, entity->model->unkD0[2]);
     sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, entity->model->unkD0[0]);
     sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, entity->model->unkD0[1]);

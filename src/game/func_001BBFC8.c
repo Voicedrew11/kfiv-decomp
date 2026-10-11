@@ -16,7 +16,7 @@ typedef struct {
 extern Dev *D_00446978;
 
 void func_00109098(Dev *, u8, u16);
-void func_0019CDA0(int);
+s32 func_0019CDA0(s32);
 int func_0019CE00(int);
 
 void func_001BBFC8(void) {

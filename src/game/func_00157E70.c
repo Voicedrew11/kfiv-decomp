@@ -36,7 +36,7 @@ void func_00157E70(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    if (entity->params->unk10 & 0x100) {
+    if (entity->params->flags & 0x100) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -75,8 +75,8 @@ void func_00157E70(Entity *entity, s32 unknown) {
             model = entity->model;
             height_difference = D_00413F80[1] - model->position[1];
             if (ABS(height_difference) > 200.0f) {
-                func_0018BA10(retreat_point, model->position, func_00194F80(model->position, entity->spawn_info), entity->unk38 * 4.0f);
-                entity->unk5C = (s32)retreat_point;
+                func_0018BA10(retreat_point, model->position, func_00194F80(model->position, entity->spawn_info), entity->radius * 4.0f);
+                entity->target = retreat_point;
                 entity->unkA0 = rand() % 30 + 30;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
@@ -92,15 +92,15 @@ void func_00157E70(Entity *entity, s32 unknown) {
                 }
                 return;
             } else {
-                func_0018BA10(destination, model->position, func_00194F80(model->position, entity->spawn_info), entity->unk38 * 4.0f);
-                entity->unk5C = (s32)destination;
+                func_0018BA10(destination, model->position, func_00194F80(model->position, entity->spawn_info), entity->radius * 4.0f);
+                entity->target = destination;
                 entity->unkA0 = rand() % 30 + 60;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
             }
             break;
         case 1:
-            entity->unk5C = (s32)D_00413F80;
+            entity->target = D_00413F80;
             entity->unkA0 = rand() % 30 + 60;
             unkE0->unk78 = 0;
             break;
@@ -134,10 +134,10 @@ void func_00157E70(Entity *entity, s32 unknown) {
             } else if (turn < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 0);
+                entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 0);
             }
         }
     }
 done:
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

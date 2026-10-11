@@ -22,7 +22,7 @@ void func_00158948(Entity *entity) {
     f32 yaw;
 
     entity->unkC6 |= 0x2000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 1, 0, entity->params->unkC4, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
@@ -31,7 +31,7 @@ void func_00158948(Entity *entity) {
         unkE0->unk1C = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->state++;
+        entity->action_step++;
         break;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
@@ -42,7 +42,7 @@ void func_00158948(Entity *entity) {
             unkE0->unk7C = 0;
             unkE0->unk6E = 0;
             func_0018D600((char **)entity, 0x234, 0, (int)entity->model->unkD0);
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:

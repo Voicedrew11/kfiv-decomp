@@ -1,8 +1,8 @@
 #include "common.h"
 
 extern u8 D_0034B098[];
-int func_0011E1F0(int, int);
-void func_0011E140(int);
+void *func_0011E1F0(int, int);
+void func_0011E140(void *);
 
 typedef struct {
     char *f0;
@@ -11,7 +11,7 @@ typedef struct {
 } Rec;
 
 void func_0011A2B8(int arg0) {
-    int temp;
+    void *temp;
 
     if (D_0034B098[0] == 0) {
         temp = func_0011E1F0(arg0, 0x77);

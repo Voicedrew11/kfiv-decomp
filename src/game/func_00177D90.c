@@ -18,20 +18,20 @@ void func_00177D90(Entity *entity) {
     s32 elapsed;
 
     entity->unkC6 |= 1;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->unkC4 >> 1, 1);
-        if (entity->params->unk10 & 0x100) {
+        if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) == 0x02000000) ? 2 : 1;
         }
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        entity->state++;
+        entity->action_step++;
         break;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
@@ -44,7 +44,7 @@ void func_00177D90(Entity *entity) {
         }
         if (entity->model->unkFC->unk82 >= 0x2A) {
             entity->unkA0 = 0x5A;
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 3:
@@ -54,7 +54,7 @@ void func_00177D90(Entity *entity) {
         func_001957B8(entity->model->unkD0[1], entity->unk68);
         angle = func_001957B8(unkE0->unk4C, entity->unk68);
         if (entity->unkA0 == 0 || entity->distance_to_player < 200.0f || ABS(angle) <= 0.010471975f) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 4:
@@ -71,7 +71,7 @@ void func_00177D90(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;

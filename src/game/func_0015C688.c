@@ -11,7 +11,7 @@ s32 func_0015C688(Entity *entity, f32 max_distance, f32 max_angle) {
     f32 distance;
     f32 angle;
 
-    distance = entity->distance_to_player - (entity->unk38 + 100.0f);
+    distance = entity->distance_to_player - (entity->radius + 100.0f);
     angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
     if (entity->unkC6 != 0) {
         return FALSE;

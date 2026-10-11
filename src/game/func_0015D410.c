@@ -40,7 +40,7 @@ void func_0015D410(Entity *entity, s32 unknown) {
             ((void (*)(void *, int))func_00182DE0)(entity, unknown);
             entity->unkC8 |= 0x440;
         } else {
-            switch (entity->unkCC) {
+            switch (entity->state) {
             case 0:
                 func_00182FD8(entity, unknown);
                 break;

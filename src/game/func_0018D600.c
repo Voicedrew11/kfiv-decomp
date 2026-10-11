@@ -1,7 +1,7 @@
 #include "common.h"
 
 char *func_0010CAB8(char *, u32);
-void func_001A1C58(int, char *, int, void *);
+int func_001A1C58(int, void *, void *, void *);
 
 void func_0018D600(char **arg0, int arg1, u32 arg2, int arg3) {
     char *temp_v0;

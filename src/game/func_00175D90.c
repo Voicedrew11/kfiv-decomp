@@ -31,7 +31,7 @@ void func_00175D90(Entity *entity) {
     unkE0->unk00 = func_00176050;
     unkE0->unk04 = func_00175F60;
     unkE0->unk08 = NULL;
-    unkE0->unk18 = (s32)func_00183570;
+    unkE0->unk18 = (void (*)(void))func_00183570;
     unkE0->unk10 = func_00181038;
     unkE0->unk14 = func_00176360;
     for (i = 4 - 1; i != -1; i--) {
@@ -44,11 +44,11 @@ void func_00175D90(Entity *entity) {
     if (entity->spawn_info->unk38 & (0x8000L << 43)) {
         func_001958B8((char *)entity, unkE0->unk10, 1);
     } else {
-        func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 0);
+        func_001958B8((char *)entity, unkE0->unk18, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->unk10 & 0x4000) ? 0x40 : 0x80;
+    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
     func_00191478(entity->model);
     func_00193378(entity->model, 0, 0);

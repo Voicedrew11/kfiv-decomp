@@ -16,7 +16,7 @@ s32 func_00167C70(Entity *entity) {
     s32 sum;
     f32 angle;
 
-    angle = func_00194FB8(entity->model->unkD0[1] + entity->unkE0.unk48[0]);
+    angle = func_00194FB8(entity->model->unkD0[1] + entity->unkE0.unk48);
     chance = func_00198730(entity, angle, 0) ? (entity->unkC0[0] * entity->params->unk240[0].unk00) >> 6 : 0;
     chances[0] = chance;
     total += chance;

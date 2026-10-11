@@ -55,8 +55,8 @@ void func_0017F998(Entity *entity) {
     limits[0] = -entity->params->unk430 * 0.017453292f;
     limits[3] = entity->params->unk432 * 0.017453292f;
     limits[2] = -entity->params->unk432 * 0.017453292f;
-    if (ENTITY_FLAG_BITS(entity)->bit9 && entity->unk5C != 0) {
-        func_001960C0(entity, (int)unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, entity->unk5C, (int)limits, 12.0f);
+    if (ENTITY_FLAG_BITS(entity)->bit9 && entity->target != NULL) {
+        func_001960C0(entity, (int)unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, (int)entity->target, (int)limits, 12.0f);
     } else {
         func_00196120(8.0f, entity, unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, NULL);
     }

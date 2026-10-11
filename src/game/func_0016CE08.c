@@ -14,10 +14,10 @@ void func_0016CE08(Entity *entity) {
     s32 elapsed;
 
     entity->unkC6 |= 1;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, kind | 0x14, 0, entity->params->unkC4 >> 1, 1);
-        if (entity->params->unk10 & 0x100) {
+        if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) == 0x02000000) ? 2 : 1;
@@ -26,10 +26,10 @@ void func_0016CE08(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
         ENTITY_FLAG_BITS(entity)->bit56 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         if (unk240->unk01 != 0) {
             entity->unkC8 |= func_00190BE0(entity);
@@ -63,7 +63,7 @@ void func_0016CE08(Entity *entity) {
                 unkE0->unk00(entity, 1);
                 return;
             }
-            func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+            func_001958B8((char *)entity, unkE0->unk18, 1);
             return;
         }
         break;

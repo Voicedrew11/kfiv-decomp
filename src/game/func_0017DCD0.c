@@ -40,7 +40,7 @@ void func_0017DCD0(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             func_00182DE0(entity, unknown);
         } else {
-            switch (entity->unkCC) {
+            switch (entity->state) {
             case 0:
                 func_0017E2E0(entity, unknown);
                 break;
@@ -58,7 +58,7 @@ void func_0017DCD0(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 & 0x40) {
         unkE0->unk44 = 0.0f;
-        unkE0->unk48[0] = 0.0f;
+        unkE0->unk48 = 0.0f;
     } else {
         side = func_0018EAC0(entity, direction);
         if (side > 0) {

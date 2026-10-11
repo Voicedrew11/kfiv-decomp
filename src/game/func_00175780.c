@@ -47,6 +47,6 @@ void func_00175780(Entity *entity, s32 unknown) {
                 entity->unkA0 = rand() % 60 + 0x3C;
             }
         }
-        func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+        func_001958B8((char *)entity, unkE0->unk18, unknown);
     }
 }

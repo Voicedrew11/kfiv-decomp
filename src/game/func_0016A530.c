@@ -15,15 +15,15 @@ void func_0016A530(Entity *entity) {
     s32 elapsed;
 
     entity->unkC6 |= 1;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
         entity->flags = (entity->flags & ~0x3800) | 0x800;
         entity->flags &= ~0x200;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
             func_00199EB8(entity, &unkE0->unk1C, entity->unk68);

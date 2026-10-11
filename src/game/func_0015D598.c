@@ -31,7 +31,7 @@ void func_0015D598(Entity *entity, s32 unknown) {
     s32 mode;
     s32 side;
 
-    if (entity->params->unk10 & 0x100) {
+    if (entity->params->flags & 0x100) {
         entity->flags &= ~0x3800;
     } else {
         entity->flags = (entity->flags & ~0x3800) | 0x800;
@@ -67,7 +67,7 @@ void func_0015D598(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->unk5C = (s32)D_00413F80;
+            entity->target = D_00413F80;
             entity->unkA0 = rand() % 60 + 120;
             if (rand() % 5 == 0) {
                 unkE0->unk78 = 1;
@@ -113,15 +113,15 @@ void func_0015D598(Entity *entity, s32 unknown) {
                         func_001958B8((char *)entity, (void (*)(void))func_0015DA28, unknown);
                         return;
                     }
-                    entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 1) | 0x400;
+                    entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 1) | 0x400;
                 }
                 break;
             case 1:
-                entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 0);
+                entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 0);
                 break;
             }
         }
     }
 done:
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

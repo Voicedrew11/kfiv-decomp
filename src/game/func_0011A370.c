@@ -1,12 +1,12 @@
 #include "common.h"
 
 extern u8 D_00349690[];
-int func_0011E0C8(int);
-int func_0011E140(int);
-int func_0011E1F0(int, int);
+void func_0011E0C8(void *);
+void func_0011E140(void *);
+void *func_0011E1F0(int, int);
 
 void func_0011A370(int arg0) {
-    int temp;
+    void *temp;
 
     if (D_00349690[0x1C0A] != 0) {
         D_00349690[0x1ADB] = 1;

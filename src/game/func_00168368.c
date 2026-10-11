@@ -1,4 +1,5 @@
 #include "kf_entity.h"
+#include "kf_map.h"
 
 extern u32 D_00446ED4;
 extern s32 D_00446770;
@@ -33,15 +34,15 @@ void func_00168368(Entity *entity, s32 unknown) {
     if (unkE0->unk7C > 0) {
         unkE0->unk7C--;
     }
-    if (entity->distance_to_player < entity->unk38 + 500.0f + 100.0f && unkE0->unk7A == 1 && unkE0->unk7B == 0) {
+    if (entity->distance_to_player < entity->radius + 500.0f + 100.0f && unkE0->unk7A == 1 && unkE0->unk7B == 0) {
         unkE0->unk7A = 0;
-    } else if (entity->unk38 + 1000.0f + 100.0f < entity->distance_to_player && unkE0->unk7A == 0) {
+    } else if (entity->radius + 1000.0f + 100.0f < entity->distance_to_player && unkE0->unk7A == 0) {
         unkE0->unk7A = 1;
     }
     if (unkE0->unk6A < 5) {
         func_0018B778(500.0f, &D_004FF390[unkE0->unk6A], &D_00413F80, &D_00413F80);
         slot = &D_0038CD20[D_00446770];
-        height = func_0018A9F0(slot->unk14 + D_00413F80.unk252, &D_004FF390[unkE0->unk6A]);
+        height = func_0018A9F0((MapRecord *)slot->records + D_00413F80.unk252, &D_004FF390[unkE0->unk6A]);
         no_floor = D_00446824[0];
         if (height == no_floor) {
             height = func_0018A9F0(entity->unk14, &D_004FF390[unkE0->unk6A]);
@@ -62,7 +63,7 @@ void func_00168368(Entity *entity, s32 unknown) {
         if ((s32)(entity->flags >> 53) & 1) {
             func_00182DE0(entity, unknown);
         } else {
-            switch (entity->unkCC) {
+            switch (entity->state) {
             case 0:
                 func_00182FD8(entity, unknown);
                 break;

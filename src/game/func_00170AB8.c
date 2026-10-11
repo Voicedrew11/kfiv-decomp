@@ -18,19 +18,19 @@ void func_00170AB8(Entity *entity) {
     f32 step;
     f32 limit;
 
-    if (entity == D_00413F80.unk204 && (entity->params->unk10 & 0x800)) {
+    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     turn = 0.0f;
     if (entity->unkC8 & 0x100) {
         unkE0->unk1C -= entity->params->unk58;
-        if (unkE0->unk1C < -entity->params->unk5C) {
-            unkE0->unk1C = -entity->params->unk5C;
+        if (unkE0->unk1C < -entity->params->turn_limit) {
+            unkE0->unk1C = -entity->params->turn_limit;
         }
     } else if (entity->unkC8 & 0x200) {
         unkE0->unk1C += entity->params->unk58;
-        if (entity->params->unk5C < unkE0->unk1C) {
-            unkE0->unk1C = entity->params->unk5C;
+        if (entity->params->turn_limit < unkE0->unk1C) {
+            unkE0->unk1C = entity->params->turn_limit;
         }
     } else if (unkE0->unk1C > entity->params->unk58) {
         unkE0->unk1C -= entity->params->unk58;

@@ -33,7 +33,7 @@ void func_00179F28(Entity *entity) {
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->unk04 = func_00182A08;
-    unkE0->unk18 = (s32)func_0017A4F8;
+    unkE0->unk18 = (void (*)(void))func_0017A4F8;
     unkE0->unk08 = NULL;
     unkE0->unk10 = NULL;
     unkE0->unk14 = NULL;
@@ -52,14 +52,14 @@ void func_00179F28(Entity *entity) {
     for (i = 6 - 1; i != -1; i--) {
         entity->unkC0[i] = 0x80;
     }
-    entity->unk5C = 0;
+    entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 0);
+    func_001958B8((char *)entity, unkE0->unk18, 0);
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->unk10 & 0x4000) ? 0x40 : 0x80;
+    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
     func_00191478(entity->model);
     func_00193378(entity->model, 0, 0);

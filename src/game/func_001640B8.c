@@ -13,7 +13,7 @@ void func_001640B8(Entity *entity) {
     s32 frame;
 
     entity->unkC6 |= 1;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x16, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -21,10 +21,10 @@ void func_001640B8(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
         ENTITY_FLAG_BITS(entity)->bit56 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         if (unk240->unk01 != 0) {
             func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
@@ -59,7 +59,7 @@ void func_001640B8(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;

@@ -39,7 +39,7 @@ void func_0017AF88(Entity *entity, s32 unknown) {
         func_00182DE0(entity, unknown);
         return;
     }
-    switch (entity->unkCC) {
+    switch (entity->state) {
     case 0:
         break;
     case 1:

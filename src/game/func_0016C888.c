@@ -19,13 +19,13 @@ void func_0016C888(Entity *entity) {
 
     if (entity->unkC8 & 0x100) {
         unkE0->unk1C -= entity->params->unk58;
-        if (unkE0->unk1C < -entity->params->unk5C) {
-            unkE0->unk1C = -entity->params->unk5C;
+        if (unkE0->unk1C < -entity->params->turn_limit) {
+            unkE0->unk1C = -entity->params->turn_limit;
         }
     } else if (entity->unkC8 & 0x200) {
         unkE0->unk1C += entity->params->unk58;
-        if (entity->params->unk5C < unkE0->unk1C) {
-            unkE0->unk1C = entity->params->unk5C;
+        if (entity->params->turn_limit < unkE0->unk1C) {
+            unkE0->unk1C = entity->params->turn_limit;
         }
     } else if (entity->params->unk58 < unkE0->unk1C) {
         unkE0->unk1C -= entity->params->unk58;

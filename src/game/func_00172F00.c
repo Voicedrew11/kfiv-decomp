@@ -4,7 +4,7 @@ extern PlayerData D_00413F80;
 
 int func_0019A448(void *, void *, int, int, int, int, int);
 int func_0018EAC0(void *, void *);
-s16 func_00172BB8(Entity *, s32, f32);
+int func_00172BB8(Entity *);
 void func_001958B8(char *, void (*)(void), int);
 void func_00173198(Entity *);
 void func_00172738(Entity *);
@@ -16,18 +16,18 @@ void func_00172F00(Entity *entity) {
     s32 turn;
 
     entity->unkC6 |= 0x3000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_0019A448(entity, &unkE0->unk80, 0, 3, 0, entity->params->unkC4, 0);
         func_0019A448(entity, &unkE0->unk88, 1, 3, 0, entity->params->unkC4, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bit10 = 1;
         ENTITY_FLAG_BITS(entity)->bit9 = 1;
-        entity->unk5C = (s32)&D_00413F80;
+        entity->target = &D_00413F80;
         unkE0->unk68 = 0;
-        entity->state++;
+        entity->action_step++;
     case 1:
-        if (entity->distance_to_player < entity->unk38 + 250.0f + 100.0f) {
+        if (entity->distance_to_player < entity->radius + 250.0f + 100.0f) {
             f32 above = D_00413F80.position[1] - entity->model->position[1];
 
             if (100.0f < above && above < 400.0f) {
@@ -45,7 +45,7 @@ void func_00172F00(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
             return;
         }
@@ -55,7 +55,8 @@ void func_00172F00(Entity *entity) {
         } else if (turn < 0) {
             entity->unkC8 = 0x101;
         } else {
-            entity->unkC8 = func_00172BB8(entity, 0, 0.0f);
+            // match: retail passes two more arguments here and takes the result as 16 bits
+            entity->unkC8 = ((s16 (*)(Entity *, s32, f32))func_00172BB8)(entity, 0, 0.0f);
         }
         height = D_00413F80.position[1] - entity->model->position[1];
         if (height < 200.0f || ENTITY_FLAG_BITS(entity)->bit44 == 1 || ENTITY_FLAG_BITS(entity)->bit45 == 1) {

@@ -1,4 +1,5 @@
 #include "kf_entity.h"
+#include "kf_map.h"
 
 extern s32 D_00446770;
 extern PlayerData D_00413F80;
@@ -10,7 +11,7 @@ void func_002109C8(s32, s32);
 
 void func_0016DFD8(Entity *entity) {
     MapSlot *slot = &D_0038CD20[D_00446770];
-    MapRecord *record = &slot->unk14[D_00413F80.unk252];
+    MapRecord *record = &((MapRecord *)slot->records)[D_00413F80.unk252];
     s32 remaining;
     s32 chance;
     s32 i;

@@ -8,11 +8,11 @@ void func_001593E8(Entity *entity) {
     EntityParams *params;
 
     entity->unkC6 = 0x40;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x10, 0, 5, 1);
         params = entity->params;
-        if (params->unk10 & 0x100) {
+        if (params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
@@ -29,10 +29,10 @@ void func_001593E8(Entity *entity) {
         if (params->unkC6 != 0 && params->unkC6 != 0xFFFF) {
             func_001A32A8(entity);
         }
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
@@ -42,7 +42,7 @@ void func_001593E8(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             func_0018DCD8(entity);
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 3:

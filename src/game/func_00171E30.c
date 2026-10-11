@@ -9,7 +9,7 @@ f32 func_0018A9F0(void *, void *);
 void func_00190B88(Entity *, s32);
 int func_0018F030(char *);
 int func_0018EAC0(void *, void *);
-s16 func_00172BB8(Entity *, s32, f32);
+int func_00172BB8(Entity *);
 void func_001958B8(char *, void (*)(void), int);
 void func_00172F00(Entity *);
 void func_00173198(Entity *);
@@ -22,7 +22,7 @@ void func_00171E30(Entity *entity, s32 unknown) {
     s32 side;
     s32 turn;
 
-    if (entity->params->unk10 & 0x100) {
+    if (entity->params->flags & 0x100) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -30,13 +30,13 @@ void func_00171E30(Entity *entity, s32 unknown) {
     if (entity->unkA0 == 0) {
         if (rand() % 100 < entity->params->unk438) {
             if (!(rand() & 1)) {
-                entity->unk5C = (s32)&D_00413F80;
+                entity->target = &D_00413F80;
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
                 unkE0->unk79 = 1;
             } else {
-                entity->unk5C = (s32)&D_00413F80;
+                entity->target = &D_00413F80;
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
@@ -51,7 +51,7 @@ void func_00171E30(Entity *entity, s32 unknown) {
         if (func_0018A9F0(entity->unk14, entity->model->position) < (f32)entity->params->unk436 ||
             ENTITY_FLAG_BITS(entity)->bit44 == 1) {
             side = 1;
-            entity->unk5C = (s32)&D_00413F80;
+            entity->target = &D_00413F80;
             entity->unkA0 = rand() % 30 + 0x1E;
             unkE0->unk78 = 0;
             entity->unkCD = 1;
@@ -59,7 +59,7 @@ void func_00171E30(Entity *entity, s32 unknown) {
         } else if (func_0018A9F0(entity->unk14, entity->model->position) > (f32)(s16)entity->params->unk434 ||
                    ENTITY_FLAG_BITS(entity)->bit46 == 1) {
             side = 1;
-            entity->unk5C = (s32)&D_00413F80;
+            entity->target = &D_00413F80;
             entity->unkA0 = rand() % 30 + 0x1E;
             unkE0->unk78 = 0;
             entity->unkCD = 1;
@@ -70,15 +70,15 @@ void func_00171E30(Entity *entity, s32 unknown) {
                 (f32)entity->spawn_info->unk42 * (entity->spawn_info->unk43 != 0 ? 100.0f : -100.0f) ||
             ENTITY_FLAG_BITS(entity)->bit44 == 1) {
             side = 1;
-            entity->unk5C = (s32)&D_00413F80;
+            entity->target = &D_00413F80;
             entity->unkA0 = rand() % 30 + 0x1E;
             unkE0->unk78 = 0;
             entity->unkCD = 1;
             unkE0->unk79 = 2;
-        } else if (entity->spawn_info->spawn_y - entity->model->position[1] > (f32)entity->spawn_info->unk41 * 100.0f ||
+        } else if (entity->spawn_info->spawn_y - entity->model->position[1] > (f32)entity->spawn_info->variant * 100.0f ||
                    ENTITY_FLAG_BITS(entity)->bit46 == 1) {
             side = 1;
-            entity->unk5C = (s32)&D_00413F80;
+            entity->target = &D_00413F80;
             entity->unkA0 = rand() % 30 + 0x1E;
             unkE0->unk78 = 0;
             entity->unkCD = 1;
@@ -97,7 +97,7 @@ void func_00171E30(Entity *entity, s32 unknown) {
         case 0:
             if (func_0018F030((char *)entity)) {
                 if (D_00413F80.position[1] - entity->model->position[1] < 200.0f) {
-                    entity->unk5C = (s32)&D_00413F80;
+                    entity->target = &D_00413F80;
                     entity->unkA0 = rand() % 30 + 0x1E;
                     unkE0->unk78 = 0;
                     entity->unkCD = 1;
@@ -117,12 +117,12 @@ void func_00171E30(Entity *entity, s32 unknown) {
             }
             break;
         case 1:
-            entity->unk5C = (s32)&D_00413F80;
+            entity->target = &D_00413F80;
             entity->unkA0 = rand() % 30 + 0x3C;
             unkE0->unk78 = 0;
             break;
         default:
-            entity->unk5C = (s32)&D_00413F80;
+            entity->target = &D_00413F80;
             entity->unkA0 = rand() % 30 + 0x3C;
             unkE0->unk78 = 0;
             break;
@@ -135,8 +135,9 @@ void func_00171E30(Entity *entity, s32 unknown) {
         } else if (turn < 0) {
             entity->unkC8 = 0x101;
         } else {
-            entity->unkC8 = func_00172BB8(entity, 0, 0.0f);
+            // match: retail passes two more arguments here and takes the result as 16 bits
+            entity->unkC8 = ((s16 (*)(Entity *, s32, f32))func_00172BB8)(entity, 0, 0.0f);
         }
     }
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

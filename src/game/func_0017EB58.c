@@ -11,7 +11,7 @@ void func_0017EB58(Entity *entity) {
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
 
     entity->unkC6 |= 0x20;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_0019A448(entity, &slots->unk80, 0, 1, 0, 0, 1);
         func_0019A448(entity, &slots->unk88, 1, 1, 0, 0, 1);
@@ -24,35 +24,35 @@ void func_0017EB58(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        entity->state++;
+        entity->action_step++;
         break;
     case 1:
         if (entity->distance_to_player < entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
-            unkE0->unk48[2] = entity->params->unk43A;
+            unkE0->unk50 = entity->params->unk43A;
             func_0018D600((char **)entity, 0x166, 0xFF, (int)entity->model->unkD0);
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 2:
-        entity->model->position[1] -= unkE0->unk48[2];
-        unkE0->unk48[2] -= 3.0f;
-        if (unkE0->unk48[2] <= 0.0f) {
+        entity->model->position[1] -= unkE0->unk50;
+        unkE0->unk50 -= 3.0f;
+        if (unkE0->unk50 <= 0.0f) {
             func_0019A448(entity, &slots->unk80, 0, 2, 0, entity->params->unkC4, 1);
             func_0019A448(entity, &slots->unk88, 1, 2, 0, entity->params->unkC4, 1);
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 3:
-        entity->model->position[1] -= unkE0->unk48[2];
-        unkE0->unk48[2] -= 1.0f;
+        entity->model->position[1] -= unkE0->unk50;
+        unkE0->unk50 -= 1.0f;
         if (slots->unk80.unk01 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         break;
     case 4:
         if (slots->unk80.unk02 < 0x32) {
-            entity->model->position[1] -= unkE0->unk48[2];
-            unkE0->unk48[2] -= 0.1f;
+            entity->model->position[1] -= unkE0->unk50;
+            unkE0->unk50 -= 0.1f;
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
@@ -68,7 +68,7 @@ void func_0017EB58(Entity *entity) {
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         entity->unkC8 = 1;

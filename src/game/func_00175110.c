@@ -30,7 +30,7 @@ s32 func_00175110(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 fra
                 memset(&extra, 0, sizeof(extra));
                 func_00216778(request.position, entity->model->position);
                 request.unk34 = entity->height + 10.0f;
-                request.unk30 = entity->unk38 + record->unk10[index].unk20;
+                request.unk30 = entity->radius + record->unk10[index].unk20;
                 request.unk38 = func_00194FB8(angle + 3.1415927f);
                 request.unk3C = func_00194FB8(record->unk10[index].unk22 * 0.017453292f);
                 request.owner = entity;

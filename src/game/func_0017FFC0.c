@@ -33,7 +33,7 @@ void func_0017FFC0(Entity *entity, s32 unknown) {
         func_00182DE0(entity, unknown);
         return;
     }
-    switch (entity->unkCC) {
+    switch (entity->state) {
     case 0:
         func_00182FD8(entity, unknown);
         return;

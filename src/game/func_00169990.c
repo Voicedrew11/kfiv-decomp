@@ -12,7 +12,7 @@ void func_00169990(Entity *entity) {
     switch (entity->unkCB) {
     case 0:
         func_00192C98(entity, 0xF, 0, 5, 1);
-        if (entity->params->unk10 & 0x100) {
+        if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) == 0x02000000) ? 2 : 1;

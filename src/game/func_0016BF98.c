@@ -35,7 +35,7 @@ void func_0016BF98(Entity *entity) {
     unkE0->unk00 = func_0016C1E0;
     unkE0->unk04 = func_00182A08;
     unkE0->unk08 = (void (*)(void))func_0016C138;
-    unkE0->unk18 = (s32)func_0016C7F0;
+    unkE0->unk18 = (void (*)(void))func_0016C7F0;
     unkE0->unk10 = (void (*)(void))func_0016CC58;
     unkE0->unk14 = (void (*)(void))func_0016D4D0;
     for (i = 3; i != -1; i--) {
@@ -44,7 +44,7 @@ void func_0016BF98(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->unkC0[i] = 0x80;
     }
-    entity->unk5C = 0;
+    entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     func_001958B8((char *)entity, unkE0->unk10, 1);
     if (unk138 != NULL) {

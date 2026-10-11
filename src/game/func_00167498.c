@@ -32,7 +32,7 @@ void func_00167498(Entity *entity, s32 unknown) {
                 func_001958B8((char *)entity, func_00181E48, unknown);
             }
         } else {
-            func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+            func_001958B8((char *)entity, unkE0->unk18, unknown);
         }
     }
 }

@@ -5,7 +5,7 @@ int func_00198730(void *, float, int);
 int func_001995A0(void *, float, int);
 
 s32 func_00167BA0(Entity *entity) {
-    f32 angle = func_00194FB8(entity->model->unkD0[1] + entity->unkE0.unk48[0]);
+    f32 angle = func_00194FB8(entity->model->unkD0[1] + entity->unkE0.unk48);
 
     if (func_00198730(entity, angle, 0)) {
         return TRUE;

@@ -33,7 +33,7 @@ void func_0017B510(Entity *entity, s32 unknown) {
         unkE0->unk30[1] = entity->spawn_info->spawn_y;
         unkE0->unk30[2] = -1400.0f;
         unkE0->unk30[3] = 0.0f;
-        entity->unk5C = (s32)entity->unkE0.unk30;
+        entity->target = entity->unkE0.unk30;
         entity->unkC8 = func_00190F90(50.0f, entity, 0);
     } else {
         if (unkE0->unk79 == 0) {
@@ -60,7 +60,7 @@ void func_0017B510(Entity *entity, s32 unknown) {
         if (func_00194F80(entity->model->position, near_point) < range) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
             func_00216778(unkE0->unk30, far_point);
-            entity->unk5C = (s32)unkE0->unk30;
+            entity->target = unkE0->unk30;
             entity->unkC8 = func_00190BE0(entity);
             if (entity->unkC8 == 0) {
                 func_001958B8((char *)entity, (void (*)(void))func_0017AE10, unknown);
@@ -68,9 +68,9 @@ void func_0017B510(Entity *entity, s32 unknown) {
             }
         } else {
             func_00216778(unkE0->unk30, near_point);
-            entity->unk5C = (s32)unkE0->unk30;
+            entity->target = unkE0->unk30;
             entity->unkC8 = func_00190F90(range * 0.5f, entity, 0);
         }
     }
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

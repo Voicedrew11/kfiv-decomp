@@ -22,17 +22,17 @@ void func_00159D28(Entity *entity) {
     s8 turn;
 
     entity->unkC6 |= 0x1000;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, 0x11, 0, entity->params->unkC4, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         unkE0->unk6A = entity->params->unk438 / 2 + rand() % (entity->params->unk438 / 2);
         unkE0->unk1C = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
         break;
@@ -49,7 +49,7 @@ void func_00159D28(Entity *entity) {
             func_001958B8((char *)entity, (void (*)(void))func_0015A538, 1);
             break;
         }
-        if (entity->distance_to_player < (f32)entity->params->unk436 + 100.0f + entity->unk38 &&
+        if (entity->distance_to_player < (f32)entity->params->unk436 + 100.0f + entity->radius &&
             ABS(func_00194FB8(entity->unk68 - entity->model->unkD0[1])) < 0.34906584f) {
             unkE0->unk7A = 1;
             entity->unkC6 = 0;
@@ -78,7 +78,7 @@ void func_00159D28(Entity *entity) {
                 break;
             }
             if (ABS(func_00194FB8(entity->unk68 - entity->model->unkD0[1])) > 0.34906584f) {
-                entity->unk5C = (s32)D_00413F80;
+                entity->target = D_00413F80;
                 entity->unkA0 = rand() % 30 + 30;
                 unkE0->unk78 = 0;
             } else {
@@ -95,17 +95,17 @@ void func_00159D28(Entity *entity) {
             } else if (turn < 0) {
                 entity->unkC8 = 0x141;
             } else {
-                entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 1);
+                entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 1);
             }
             if (entity->unkC8 & 0x100) {
                 unkE0->unk1C -= entity->params->unk58;
-                if (unkE0->unk1C < -entity->params->unk5C) {
-                    unkE0->unk1C = -entity->params->unk5C;
+                if (unkE0->unk1C < -entity->params->turn_limit) {
+                    unkE0->unk1C = -entity->params->turn_limit;
                 }
             } else if (entity->unkC8 & 0x200) {
                 unkE0->unk1C += entity->params->unk58;
-                if (entity->params->unk5C < unkE0->unk1C) {
-                    unkE0->unk1C = entity->params->unk5C;
+                if (entity->params->turn_limit < unkE0->unk1C) {
+                    unkE0->unk1C = entity->params->turn_limit;
                 }
             } else {
                 unkE0->unk1C = 0.0f;

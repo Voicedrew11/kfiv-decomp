@@ -17,10 +17,10 @@ void func_00177AD0(Entity *entity) {
     s32 elapsed;
 
     entity->unkC6 |= 1;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, attack_index + 0x17, 0, entity->params->unkC4 >> 1, 1);
-        if (entity->params->unk10 & 0x100) {
+        if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             s32 kind = 2;
@@ -31,10 +31,10 @@ void func_00177AD0(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits11 = kind;
         }
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
             func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
@@ -64,7 +64,7 @@ void func_00177AD0(Entity *entity) {
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->unk00(entity, 1);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+                func_001958B8((char *)entity, unkE0->unk18, 1);
             }
         }
         break;

@@ -58,14 +58,14 @@ void func_001787E0(Entity *entity, s32 unknown) {
                 angle = func_001957B8(entity->unk68, entity->model->unkD0[1]);
                 angle = ABS(angle);
                 if (angle > 0.7853982f) {
-                    entity->unk5C = (s32)D_00413F80;
+                    entity->target = D_00413F80;
                     entity->unkA0 = rand() % 30 + 0x3C;
                     unkE0->unk78 = 0;
                 } else {
                     unkE0->unk78 = -1;
                 }
             } else {
-                entity->unk5C = (s32)D_00413F80;
+                entity->target = D_00413F80;
                 entity->unkA0 = rand() % 60 + 0x78;
                 unkE0->unk78 = 1;
             }
@@ -111,12 +111,12 @@ void func_001787E0(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190F90(entity->unk38 + 100.0f + 30.0f, entity, 0);
+                    entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 0);
                 }
                 break;
             }
         }
     }
 done:
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

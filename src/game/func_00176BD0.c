@@ -24,14 +24,14 @@ void func_00176BD0(Entity *entity) {
     unkE0->unk00 = (void (*)(Entity *, s32))func_00176CD8;
     unkE0->unk04 = func_00182A08;
     unkE0->unk08 = NULL;
-    unkE0->unk18 = 0;
+    unkE0->unk18 = NULL;
     unkE0->unk10 = NULL;
     unkE0->unk14 = NULL;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
-    entity->unkD6 = (entity->params->unk10 & 0x4000) ? 0x40 : 0x80;
+    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
     func_00193378(entity->model, 0, 0);
 }

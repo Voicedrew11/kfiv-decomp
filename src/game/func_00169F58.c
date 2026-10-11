@@ -1,4 +1,5 @@
 #include "kf_entity.h"
+#include "kf_map.h"
 
 extern s32 D_00446770;
 extern PlayerData D_00413F80;
@@ -36,25 +37,25 @@ void func_00169F58(Entity *entity) {
     s32 count;
 
     entity->unkC6 |= 1;
-    switch (entity->state) {
+    switch (entity->action_step) {
     case 0:
         func_00192C98(entity, kind + 0x17, 0, params->unkC4 >> 1, 1);
-        if (entity->params->unk10 & 0x100) {
+        if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) == 0x02000000) ? 2 : 1;
         }
         unkE0->unk6A = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->state++;
+        entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->state++;
+            entity->action_step++;
         }
         if (unkE0->unk6A < 5) {
             func_0018B778(500.0f, &D_004FF390[unkE0->unk6A], &D_00413F80, &D_00413F80);
             slot = &D_0038CD20[D_00446770];
-            height = func_0018A9F0(slot->unk14 + D_00413F80.unk252, &D_004FF390[unkE0->unk6A]);
+            height = func_0018A9F0((MapRecord *)slot->records + D_00413F80.unk252, &D_004FF390[unkE0->unk6A]);
             no_floor = D_00446828[0];
             if (height == no_floor) {
                 height = func_0018A9F0(entity->unk14, &D_004FF390[unkE0->unk6A]);

@@ -37,7 +37,7 @@ void func_0017F408(Entity *entity) {
         if (ENTITY_FLAG_BITS(entity)->bit5) {
             entity->unkE0.unk00(entity, 1);
         } else {
-            func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, 1);
+            func_001958B8((char *)entity, unkE0->unk18, 1);
         }
         break;
     }

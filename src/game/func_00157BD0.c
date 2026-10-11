@@ -43,7 +43,7 @@ void func_00157BD0(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             func_00182DE0(entity, unknown);
         } else {
-            switch (entity->unkCC) {
+            switch (entity->state) {
             case 0:
                 func_00182FD8(entity, unknown);
                 break;

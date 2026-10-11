@@ -22,13 +22,13 @@ void func_0017DF10(Entity *entity, s32 unknown) {
     if (entity->unkA0 == 0) {
         if (rand() % 100 < entity->params->unk438) {
             if (!(rand() & 1)) {
-                entity->unk5C = (s32)D_00413F80;
+                entity->target = D_00413F80;
                 entity->unkA0 = rand() % 30 + 30;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
                 unkE0->unk79 = 1;
             } else {
-                entity->unk5C = (s32)D_00413F80;
+                entity->target = D_00413F80;
                 entity->unkA0 = rand() % 30 + 30;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
@@ -40,7 +40,7 @@ void func_0017DF10(Entity *entity, s32 unknown) {
     }
     next_action = func_0018FD50(entity, 0);
     if (D_00413F80[1] - entity->model->position[1] < entity->params->unk436) {
-        entity->unk5C = (s32)D_00413F80;
+        entity->target = D_00413F80;
         entity->unkA0 = rand() % 30 + 30;
         unkE0->unk78 = 0;
         next_action = 1;
@@ -48,7 +48,7 @@ void func_0017DF10(Entity *entity, s32 unknown) {
         unkE0->unk79 = 2;
     }
     if (D_00413F80[1] - entity->model->position[1] > (s16)entity->params->unk434) { // match: read signed here
-        entity->unk5C = (s32)D_00413F80;
+        entity->target = D_00413F80;
         entity->unkA0 = rand() % 30 + 30;
         unkE0->unk78 = 0;
         next_action = 1;
@@ -71,12 +71,12 @@ void func_0017DF10(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->unk5C = (s32)D_00413F80;
+            entity->target = D_00413F80;
             entity->unkA0 = rand() % 30 + 60;
             unkE0->unk78 = 0;
             break;
         default:
-            entity->unk5C = (s32)D_00413F80;
+            entity->target = D_00413F80;
             entity->unkA0 = rand() % 30 + 60;
             unkE0->unk78 = 0;
             break;
@@ -95,5 +95,5 @@ void func_0017DF10(Entity *entity, s32 unknown) {
             }
         }
     }
-    func_001958B8((char *)entity, (void (*)(void))unkE0->unk18, unknown);
+    func_001958B8((char *)entity, unkE0->unk18, unknown);
 }

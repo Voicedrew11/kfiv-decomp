@@ -1,4 +1,5 @@
 #include "kf_entity.h"
+#include "kf_map.h"
 
 extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
@@ -44,11 +45,11 @@ void func_00155FE8(Entity *entity, s32 unknown) {
         second = (Entity *)func_0011E1F0(entity->group_id, 0xA1);
         third = (Entity *)func_0011E1F0(entity->group_id, 0xA2);
         if (unkE0->unk7A == 0) {
-            records = D_0038CD20[entity->group_id].unk14;
+            records = (MapRecord *)D_0038CD20[entity->group_id].records;
             if (entity->unk14 == &records[0x11]) {
                 if (func_0018A970(first, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 1)
                     && (func_00194F80(&D_00413F80, first->model->position) < 500.0f
-                        || func_00194F80(entity->model->position, first->model->position) < entity->unk38 + 400.0f)
+                        || func_00194F80(entity->model->position, first->model->position) < entity->radius + 400.0f)
                     && D_00413F80.unk252 == 0x14) {
                     unkE0->unk7A = 2;
                     unkE0->unk7B |= 1;
@@ -57,7 +58,7 @@ void func_00155FE8(Entity *entity, s32 unknown) {
                 }
                 if (func_0018A970(second, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 2)
                     && (func_00194F80(&D_00413F80, second->model->position) < 500.0f
-                        || func_00194F80(entity->model->position, second->model->position) < entity->unk38 + 400.0f)
+                        || func_00194F80(entity->model->position, second->model->position) < entity->radius + 400.0f)
                     && D_00413F80.unk252 == 0x16) {
                     unkE0->unk7A = 3;
                     unkE0->unk7B |= 2;
@@ -67,7 +68,7 @@ void func_00155FE8(Entity *entity, s32 unknown) {
             } else if (entity->unk14 == &records[0x14]) {
                 if (func_0018A970(first, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 1)
                     && (func_00194F80(&D_00413F80, first->model->position) < 500.0f
-                        || func_00194F80(entity->model->position, first->model->position) < entity->unk38 + 400.0f)
+                        || func_00194F80(entity->model->position, first->model->position) < entity->radius + 400.0f)
                     && D_00413F80.unk252 == 0x11) {
                     unkE0->unk7A = 2;
                     unkE0->unk7B |= 1;
@@ -76,7 +77,7 @@ void func_00155FE8(Entity *entity, s32 unknown) {
                 }
                 if (func_0018A970(third, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 4)
                     && (func_00194F80(&D_00413F80, third->model->position) < 500.0f
-                        || func_00194F80(entity->model->position, third->model->position) < entity->unk38 + 400.0f)
+                        || func_00194F80(entity->model->position, third->model->position) < entity->radius + 400.0f)
                     && D_00413F80.unk252 == 0x16) {
                     unkE0->unk7A = 1;
                     unkE0->unk7B |= 4;
@@ -86,7 +87,7 @@ void func_00155FE8(Entity *entity, s32 unknown) {
             } else if (entity->unk14 == &records[0x16]) {
                 if (func_0018A970(second, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 2)
                     && (func_00194F80(&D_00413F80, second->model->position) < 500.0f
-                        || func_00194F80(entity->model->position, second->model->position) < entity->unk38 + 400.0f)
+                        || func_00194F80(entity->model->position, second->model->position) < entity->radius + 400.0f)
                     && D_00413F80.unk252 == 0x11) {
                     unkE0->unk7A = 3;
                     unkE0->unk7B |= 2;
@@ -95,7 +96,7 @@ void func_00155FE8(Entity *entity, s32 unknown) {
                 }
                 if (func_0018A970(third, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 4)
                     && (func_00194F80(&D_00413F80, third->model->position) < 500.0f
-                        || func_00194F80(entity->model->position, third->model->position) < entity->unk38 + 400.0f)
+                        || func_00194F80(entity->model->position, third->model->position) < entity->radius + 400.0f)
                     && D_00413F80.unk252 == 0x14) {
                     unkE0->unk7A = 1;
                     unkE0->unk7B |= 4;
@@ -111,7 +112,7 @@ void func_00155FE8(Entity *entity, s32 unknown) {
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             func_00182DE0(entity, unknown);
         } else {
-            switch (entity->unkCC) {
+            switch (entity->state) {
             case 0:
                 func_00182FD8(entity, unknown);
                 break;

@@ -8,7 +8,7 @@ void func_001740A8(Entity *);
 
 void func_00173E08(Entity *entity) {
     func_00190A30((char *)entity);
-    entity->unk5C = 0;
+    entity->target = NULL;
     entity->flags &= ~0x400;
     entity->flags &= ~0x200;
     if (((s32)(entity->flags >> 36) & 3) == 1) {
