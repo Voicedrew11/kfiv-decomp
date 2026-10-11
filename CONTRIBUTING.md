@@ -134,13 +134,19 @@ See step 3 of [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Readable C
 
-Matching comes first, but keep the source readable:
+Matching comes first, but keep the source readable. Write it the way a
+programmer would have, not the way m2c printed it:
 
-- `#include "common.h"` for `u8`, `s32`, `NULL` and friends. Delete the
-  typedef block decomp.me pastes in.
+- `#include "common.h"` (or a `kf_*.h` header that includes it) for `u8`,
+  `s32`, `NULL` and friends. Delete the typedef block decomp.me pastes in.
 - Use the shared structs in `src/game/*.h` (e.g. `Entity` in `kf_entity.h`)
   instead of a local struct or raw casts like `*(int *)(p + 0x10)`. If you
   find a new field, add it to the header (`unkXX` until you know what it is).
+- Struct-shaped data is a struct, not an array: not `extern u8 D_00413F80[]`
+  read as `D_00413F80[0x261]`, not an `int *` parameter read as `arg0[7]`.
+- Unknown fields are `unk1B4` and padding `padD0[0xE4]`, never
+  `f1B4`, `s44` or `p0C`. When a local struct can't be avoided yet, name it
+  for what it is (`TargetMenuState`), not `Obj`, `Ctl`, `Actor`, `Sub` or `A`.
 - Use long, descriptive names for variables and fields
   (`distance_to_player`, not `d` or `f64`). Name a function
   (`KF_Entity_FreeAllInGroup`) once its purpose is clear; see Names below.
@@ -148,18 +154,33 @@ Matching comes first, but keep the source readable:
   variables and fields `snake_case`, types `PascalCase`, constants and
   macros `UPPER_CASE`.
 - Write `NULL` for pointers, `TRUE`/`FALSE` for flags, and name magic
-  numbers (`ENTITY_DESPAWN_MARGIN`, `GS_REG_ZBUF_1` from `kf_gs.h`).
-  Macros like `ABS()` expand to the same code, so they still match.
-- Prototypes for a module's functions go in its header (`kf_entity.h`),
-  not repeated in every file.
-- Keep comments brief: one line on what a function or field is, plus a
-  short note when the code is odd only to match. No essays on trivial code.
+  numbers (`ENTITY_DESPAWN_MARGIN`, `GS_REG_ZBUF_1` from `kf_gs.h`), flag
+  bits included: `ENTITY_FLAG_40000` beats a bare `0x40000`. Macros like
+  `ABS()` expand to the same code, so they still match.
+- EE registers come from `eeregs.h` (`*D1_CHCR`, `*GIF_STAT`), not a local
+  `#define HW_10009000`.
+- Idiomatic C: `x += y` not `x = x + y`, `if (a && b)` not nested ifs. gcc
+  2.9 almost always emits the same code.
+- A function is declared the same way everywhere, matching its definition:
+  module prototypes go in the module header (`kf_entity.h`), and a function
+  that is still asm keeps the signature other files already use. If a match
+  needs a different one, the others are wrong; fix them too.
+- Code that is odd only to match (`new_var`, a pointless cast, a union for a
+  byte load) gets a meaningful name and a one-line `// match:` comment, so
+  nobody "cleans it up" later.
+- Keep comments brief: one line on what a function or field is. No essays
+  on trivial code.
 
-`tools/lint_readability.py --changed` lists what breaks these rules in the
-files your branch adds or changes (m2c names like `arg0`/`temp_a0`, plain
-`unsigned`/`short`/`long`, short names, local structs, raw offset casts).
-It is a regex scan, so treat it as hints; rebuild after fixing anything.
-Run it with no arguments for a summary of the whole tree.
+[`KF_Entity_DespawnOutOfRange.c`](src/game/KF_Entity_DespawnOutOfRange.c) is
+the style to aim for.
+
+`tools/lint_readability.py --changed` must pass (CI runs it): files your
+PR adds must be clean, and so must the lines it changes in other files. A
+`// match:` comment
+on the line, or on its own line just above, silences a finding the match
+forces. The lint is a regex scan, so if it is plainly wrong, say so in the
+PR. Rebuild after fixing anything. Run it with no arguments for a summary of
+the whole tree.
 
 ## Names
 

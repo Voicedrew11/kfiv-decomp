@@ -190,7 +190,14 @@ the rules in `CONTRIBUTING.md`. Still to do, all without breaking the match:
   `D_003BEDF0[][0x80]` (0x180-byte objects, index at 0xD5) may be the
   entity pool.
 - **Module headers** with one correct prototype per function, replacing
-  per-file declarations that disagree (e.g. `func_00124D48`).
+  per-file declarations that disagree. `lint_readability.py` reports them
+  as `proto-conflict` (146 files), some real bugs: `func_001AF538` is
+  declared with its arguments in a different order from its definition,
+  `func_00109A80` as both `(int, s64)` and `(int, u64)`.
+- **Struct-shaped arrays.** About 100 files declare a struct as
+  `extern u8 D_...[]` and index it with offsets (`D_0041B9B8[i * 0x90 +
+  0x63]`), and about 100 take an `int *` parameter read as `arg0[7]`. Both
+  want a struct type in a shared header.
 - **`.clang-format`** to keep layout consistent; apply it per module, not
   in one sweep that conflicts with open PRs.
 - **Real modules.** Merge `func_*.c` files into translation units as

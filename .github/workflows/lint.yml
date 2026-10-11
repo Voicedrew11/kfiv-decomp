@@ -1,0 +1,16 @@
+name: lint
+
+on: pull_request
+
+jobs:
+  readability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Readability lint on changed game files
+        run: python3 tools/lint_readability.py --changed origin/${{ github.base_ref }}
