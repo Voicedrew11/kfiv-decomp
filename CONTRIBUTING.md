@@ -144,6 +144,14 @@ Matching comes first, but keep the source readable:
 - Use long, descriptive names for variables and fields
   (`distance_to_player`, not `d` or `f64`). Name a function
   (`KF_Entity_FreeAllInGroup`) once its purpose is clear; see Names below.
+- Naming convention: functions `KF_Module_Verb` (`KF_Vector_Subtract`),
+  variables and fields `snake_case`, types `PascalCase`, constants and
+  macros `UPPER_CASE`.
+- Write `NULL` for pointers, `TRUE`/`FALSE` for flags, and name magic
+  numbers (`ENTITY_DESPAWN_MARGIN`, `GS_REG_ZBUF_1` from `kf_gs.h`).
+  Macros like `ABS()` expand to the same code, so they still match.
+- Prototypes for a module's functions go in its header (`kf_entity.h`),
+  not repeated in every file.
 - Keep comments brief: one line on what a function or field is, plus a
   short note when the code is odd only to match. No essays on trivial code.
 

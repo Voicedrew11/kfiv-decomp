@@ -1,4 +1,5 @@
 #include "kf_entity.h"
+#include "kf_gs.h"
 
 typedef float Mat[4][4] __attribute__((aligned(16)));
 typedef float Vec[4] __attribute__((aligned(16)));
@@ -31,12 +32,12 @@ void func_00109A80(int, long);
 void func_00109AD0(void);
 void func_0010A100(void *);
 void func_00216778(float *, void *);
-void func_00216798(Mat);
-void func_00216BF0(float *, float *, float *);
+void KF_Vu0_LoadMatrix(Mat);
+void KF_Vector_MultiplyComponents(float *, float *, float *);
 void func_00216C48(float *, float *, float *);
-void func_00216C78(float *, float *, float *);
-void func_00216CA8(float *, float *, float);
-void func_002167E8(IVec, float *);
+void KF_Vector_Subtract(float *, float *, float *);
+void KF_Vector_Scale(float *, float *, float);
+void KF_Vu0_ProjectToScreen(IVec, float *);
 void sceVu0MulMatrix(Mat, Mat, Mat);
 void sceVu0Normalize(float *, float *);
 float sceVu0InnerProduct(float *, float *);
@@ -59,13 +60,13 @@ void func_00107840(void) {
     if (D_00446F78 != 0) tag_flags = 0;
     focus_distance = D_00420D00[18] > 1000.0f ? 1000.0f : D_00420D00[18];
     nearest_distance_squared = focus_distance * focus_distance;
-    for (entity = D_004467E0; entity != 0; entity = entity->next) {
+    for (entity = D_004467E0; entity != NULL; entity = entity->next) {
         if (((int)(entity->flags >> 1) & 1) == 0) continue;
         if (focus_distance < entity->distance_to_player) continue;
         func_00216778(offset_to_entity, entity->model + 0x30);
         offset_to_entity[1] -= entity->height * 0.5f;
-        func_00216C78(offset_to_entity, offset_to_entity, D_00420D00);
-        func_00216BF0(scratch_vector, offset_to_entity, offset_to_entity);
+        KF_Vector_Subtract(offset_to_entity, offset_to_entity, D_00420D00);
+        KF_Vector_MultiplyComponents(scratch_vector, offset_to_entity, offset_to_entity);
         distance_squared = scratch_vector[0] + scratch_vector[1] + scratch_vector[2];
         if (nearest_distance_squared < distance_squared) continue;
         sceVu0Normalize(scratch_vector, offset_to_entity);
@@ -75,11 +76,11 @@ void func_00107840(void) {
     }
 
     sceVu0MulMatrix(view_matrix, D_004323E0, D_00431AF0);
-    func_00216798(view_matrix);
-    func_00216CA8(scratch_vector, D_00420D00 + 12, focus_distance);
+    KF_Vu0_LoadMatrix(view_matrix);
+    KF_Vector_Scale(scratch_vector, D_00420D00 + 12, focus_distance);
     func_00216C48(scratch_vector, scratch_vector, D_00420D00 + 8);
     scratch_vector[3] = 1.0f;
-    func_002167E8(screen_position, scratch_vector);
+    KF_Vu0_ProjectToScreen(screen_position, scratch_vector);
 
     offset_x = screen_position[0] - 0x8000;
     if (offset_x < 0) offset_x = screen_position[0] - 0x7FFF;
@@ -93,9 +94,9 @@ void func_00107840(void) {
     else if (offset_y < -0x80) offset_y = -0x80;
 
     func_00109A50();
-    func_00109A80(0x47, 0x30000);
-    func_00109A80(0x4E, 0x10A000118L);
-    func_00109A80(0x22, 3);
+    func_00109A80(GS_REG_TEST_1, 0x30000);
+    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
+    func_00109A80(GS_REG_SCANMSK, 3);
     func_00109AD0();
 
     sprite_packet.reg = 0x116;
@@ -147,7 +148,7 @@ void func_00107840(void) {
     }
 
     func_00109A50();
-    func_00109A80(0x22, 0);
-    func_00109A80(0x4E, 0xA000118L);
+    func_00109A80(GS_REG_SCANMSK, 0);
+    func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
     func_00109AD0();
 }

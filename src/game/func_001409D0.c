@@ -4,7 +4,7 @@ float func_00194F80(int, int);
 
 void func_001409D0(Entity *entity) {
     Entity *other_entity = D_004467E0;
-    while (other_entity != 0) {
+    while (other_entity != NULL) {
         if (entity->unk0C == other_entity->unk0C) {
             if (*(int *)&other_entity->flags & 1) {
                 long other_flags = other_entity->flags;

@@ -1,3 +1,5 @@
+#include "kf_gs.h"
+
 extern int D_00446F78;
 
 void func_00109A50(void);
@@ -34,9 +36,9 @@ void func_00107E70(int r, int g, int b) {
     func_00109E88();
     func_00109E18();
     func_00109A50();
-    func_00109A80(0x42, 10);
-    func_00109A80(0x47, 0x30000);
-    func_00109A80(0x4E, 0x10A000118L);
+    func_00109A80(GS_REG_ALPHA_1, 10);
+    func_00109A80(GS_REG_TEST_1, 0x30000);
+    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
     func_00109AD0();
 
     pkt.tag = (0x28028000L | flag) | (0x9000L << 18);
@@ -70,7 +72,7 @@ void func_00107E70(int r, int g, int b) {
     } while (n >= 0);
 
     func_00109A50();
-    func_00109A80(0x4E, 0xA000118L);
+    func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
     func_00109AD0();
     func_00109E18();
     func_00109E88();

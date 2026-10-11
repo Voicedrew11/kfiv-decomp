@@ -17,4 +17,9 @@ typedef double f64;
 #define NULL ((void *)0)
 #endif
 
+#define TRUE 1
+#define FALSE 0
+
+#define ABS(x) ((x) >= 0 ? (x) : -(x))
+
 #endif

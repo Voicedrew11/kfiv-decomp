@@ -167,7 +167,36 @@ inside runs, which is fine while their data stays in the asm data units.
 - Start with leaf utility code (math, string, file wrappers such as
   `KF_File_Open`) and work outward.
 
-### 5. Whole-ELF match (later)
+### 5. Readability (started)
+
+Done: `common.h`, `kf_entity.h`, `kf_gs.h`, the vector helpers named, and
+the rules in `CONTRIBUTING.md`. Still to do, all without breaking the match:
+
+- **Name the globals** (`D_004467E0` → `g_entity_list`). Every file that
+  declares one changes at once, so do it in one PR right after the open
+  matching PRs merge.
+- **Structs for global arrays.** `D_00420D00` looks like the camera
+  (`[0]` position, `[4]` forward, `[18]` far distance) and `D_00413F80` like
+  the player position.
+- **Finish the vector helpers.** `func_00216778` (copy) and `func_00216C48`
+  (add) wait for PR #24; then use `sceVu0FVECTOR`/`sceVu0FMATRIX`-style
+  types instead of each file's local `Vec`/`Mat`.
+- **Entity flag macros** (`ENTITY_IS_ACTIVE(e)` for `(e->flags >> 1) & 1`)
+  once the bits' meanings are known.
+- **Typed pointers** instead of integer offsets, e.g. a `Model` struct so
+  `(int)entity->model + 0xC0` becomes `&entity->model->position`.
+- **Migrate local structs.** About 200 files still define their own `Ent`/
+  `Obj`; move them to shared headers as each file is touched.
+  `D_003BEDF0[][0x80]` (0x180-byte objects, index at 0xD5) may be the
+  entity pool.
+- **Module headers** with one correct prototype per function, replacing
+  per-file declarations that disagree (e.g. `func_00124D48`).
+- **`.clang-format`** to keep layout consistent; apply it per module, not
+  in one sweep that conflicts with open PRs.
+- **Real modules.** Merge `func_*.c` files into translation units as
+  regions finish (step 3), moving their data out of asm into C.
+
+### 6. Whole-ELF match (later)
 
 The ROM view matches already. A full `SLUS_203.18` SHA-1 match also needs the
 empty `.vutext` header, `.reginfo` placement, the eight `.DVP.overlay`

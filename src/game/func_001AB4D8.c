@@ -6,7 +6,7 @@ void func_001AF0B0(char *);
 void func_001AF298(char *, char *);
 void func_001AF5B0(char *, char *);
 void func_001AFC88(float, float, char *, float *);
-void func_00216C78(float *, int *, char *);
+void KF_Vector_Subtract(float *, int *, char *);
 void sceVu0AddVector(char *, char *, char *);
 
 void func_001AB4D8(char *arg0) {
@@ -20,7 +20,7 @@ void func_001AB4D8(char *arg0) {
     s1 = arg0 + 0x10;
     func_001AED58(arg0);
     func_001AF0B0(arg0);
-    func_00216C78(v, D_00413F80, *(char **)(arg0 + 0x50) + 0xC0);
+    KF_Vector_Subtract(v, D_00413F80, *(char **)(arg0 + 0x50) + 0xC0);
     t = *(char **)(arg0 + 0x54);
     if (*(unsigned short *)(arg0 + 0x4C) < *(unsigned short *)(t + 0xEC)) {
         v[1] = v[1] - 220.0f;

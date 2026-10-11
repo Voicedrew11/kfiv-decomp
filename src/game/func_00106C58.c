@@ -1,3 +1,5 @@
+#include "kf_gs.h"
+
 extern int D_00446F78;
 
 void func_00109A50(void);
@@ -36,10 +38,10 @@ void func_00106C58(void) {
     }
     func_00109A50();
     n = 9;
-    func_00109A80(0x3f, 0xffffffffL);
-    func_00109A80(0x42, 0x44);
-    func_00109A80(0x47, 0x30000);
-    func_00109A80(0x4e, 0x10a000118L);
+    func_00109A80(GS_REG_TEXFLUSH, 0xffffffffL);
+    func_00109A80(GS_REG_ALPHA_1, 0x44);
+    func_00109A80(GS_REG_TEST_1, 0x30000);
+    func_00109A80(GS_REG_ZBUF_1, 0x10a000118L);
     func_00109AD0();
     th = 9;
     c = uVar1 | 0x28028000L;
@@ -70,6 +72,6 @@ void func_00106C58(void) {
     } while (n >= 0);
 
     func_00109A50();
-    func_00109A80(0x4e, 0xa000118L);
+    func_00109A80(GS_REG_ZBUF_1, 0xa000118L);
     func_00109AD0();
 }

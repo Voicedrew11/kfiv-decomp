@@ -4,6 +4,9 @@
 
 #include "common.h"
 
+#define ENTITY_DESPAWN_MARGIN           300.0f
+#define ENTITY_VERTICAL_DESPAWN_MARGIN  150.0f
+
 /* what Entity.spawn_info points at */
 typedef struct {
     char pad00[0x04];
@@ -43,5 +46,16 @@ typedef struct Entity {
 extern Entity *D_004467E0;          /* entity list head */
 extern Entity *D_004470A8;          /* other lists of the same layout */
 extern Entity *D_004470B0;
+
+float func_00124DE0(Entity *entity);    /* distance to the player */
+void func_00123AB8(Entity *entity);
+void func_00124BC8(Entity *entity);
+Entity *func_00124C08(Entity *entity);  /* free; returns the next one */
+Entity *func_00124CA0(Entity *entity);  /* free; returns the next one */
+Entity *func_00124D48(Entity *entity);  /* free; returns the next one */
+
+void KF_Entity_ResetAllLists(void);
+void KF_Entity_FreeAllInGroup(int group_id);
+void KF_Entity_DespawnOutOfRange(void);
 
 #endif

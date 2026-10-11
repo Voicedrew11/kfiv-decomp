@@ -1,3 +1,5 @@
+#include "kf_gs.h"
+
 typedef struct {
     int v[3];
 } Offsets;
@@ -46,8 +48,8 @@ void func_001067E0(void) {
         base = 0;
     }
     func_00109A50();
-    func_00109A80(0x42, 0x80000000a8L);
-    func_00109A80(0x47, 0x51001);
+    func_00109A80(GS_REG_ALPHA_1, 0x80000000a8L);
+    func_00109A80(GS_REG_TEST_1, 0x51001);
     func_00109A80(8, 5);
     func_00109AD0();
     th = 9;

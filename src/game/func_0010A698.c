@@ -1,3 +1,5 @@
+#include "kf_gs.h"
+
 void func_00109A50(void);
 void func_00109A80(int, unsigned long);
 void func_00109AD0(void);
@@ -21,7 +23,7 @@ void func_0010A698(void) {
     Ctx s;
 
     func_00109A50();
-    func_00109A80(0x47, 0x32001);
+    func_00109A80(GS_REG_TEST_1, 0x32001);
     func_00109AD0();
     s.f10 = 6;
     s.f14[0] = 0;

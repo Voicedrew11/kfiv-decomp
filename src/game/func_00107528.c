@@ -1,3 +1,5 @@
+#include "kf_gs.h"
+
 extern int D_00446F78;
 extern float D_00420D30[];
 extern float D_00420D40[];
@@ -9,10 +11,10 @@ void func_00109A80(int, long);
 void func_00109AD0(void);
 void func_0010A100(void *);
 void sceVu0MulMatrix(void *, void *, void *);
-void func_00216798(void *);
-void func_00216CA8(float, void *, void *);
+void KF_Vu0_LoadMatrix(void *);
+void KF_Vector_Scale(float, void *, void *);
 void func_00216C48(void *, void *, void *);
-void func_002167E8(int *, void *);
+void KF_Vu0_ProjectToScreen(int *, void *);
 
 typedef struct {
     long tag;
@@ -42,18 +44,18 @@ void func_00107528(void) {
     uVar3 = D_00446F78 ? 0 : 0x1180;
 
     func_00109A50();
-    func_00109A80(0x42, 10);
-    func_00109A80(0x47, 0x30000);
-    func_00109A80(0x4E, 0x10A000118L);
-    func_00109A80(0x22, 3);
+    func_00109A80(GS_REG_ALPHA_1, 10);
+    func_00109A80(GS_REG_TEST_1, 0x30000);
+    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
+    func_00109A80(GS_REG_SCANMSK, 3);
     func_00109AD0();
 
     sceVu0MulMatrix(m, D_004323E0, D_00431AF0);
-    func_00216798(m);
-    func_00216CA8(1000.0f, v, D_00420D30);
+    KF_Vu0_LoadMatrix(m);
+    KF_Vector_Scale(1000.0f, v, D_00420D30);
     func_00216C48(v, v, D_00420D30 - 4);
     v[3] = 1.0f;
-    func_002167E8(xy, v);
+    KF_Vu0_ProjectToScreen(xy, v);
 
     x = xy[0] - 0x8000;
     if (x < 0) {
@@ -136,7 +138,7 @@ void func_00107528(void) {
     } while (n >= 0);
 
     func_00109A50();
-    func_00109A80(0x22, 0);
-    func_00109A80(0x4E, 0xA000118L);
+    func_00109A80(GS_REG_SCANMSK, 0);
+    func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
     func_00109AD0();
 }

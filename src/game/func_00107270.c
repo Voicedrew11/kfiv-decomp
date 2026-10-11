@@ -1,3 +1,5 @@
+#include "kf_gs.h"
+
 typedef unsigned int u_long128 __attribute__((mode(TI)));
 
 typedef struct {
@@ -29,8 +31,8 @@ void func_00107270(int alpha) {
         base = 0;
     }
     func_00109A50();
-    func_00109A80(0x42, 0x44);
-    func_00109A80(0x47, 0x51001);
+    func_00109A80(GS_REG_ALPHA_1, 0x44);
+    func_00109A80(GS_REG_TEST_1, 0x51001);
     func_00109AD0();
 
     p0 = p = func_00109990(0xD);

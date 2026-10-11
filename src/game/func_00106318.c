@@ -14,8 +14,8 @@ void sceVu0RotMatrixX(Mat, Mat, float);
 void sceVu0RotMatrixY(Mat, Mat, float);
 void sceVu0ViewScreenMatrix(Mat, float, float, float, float, float, float, float, float, float);
 void sceVu0MulMatrix(Mat, Mat, Mat);
-void func_00216798(Mat);
-void func_002167E8(IVec, Vec);
+void KF_Vu0_LoadMatrix(Mat);
+void KF_Vu0_ProjectToScreen(IVec, Vec);
 
 void func_00106318(void) {
     Mat m;
@@ -33,7 +33,7 @@ void func_00106318(void) {
     sceVu0ViewScreenMatrix(view, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f, 65535.0f);
     sceVu0MulMatrix(m, view, work);
     sceVu0MulMatrix(m, m, D_00431AF0);
-    func_00216798(m);
+    KF_Vu0_LoadMatrix(m);
     D_00446744 = 0;
     for (i = 0; i < 8; i++) {
         if (D_0038A158[i] == 0) {
@@ -43,7 +43,7 @@ void func_00106318(void) {
             break;
         }
         tv[2] = D_0038A158[i];
-        func_002167E8(ov, tv);
+        KF_Vu0_ProjectToScreen(ov, tv);
         D_0038A178[i] = ov[2] = ov[2] / 16;
         D_00446744++;
     }

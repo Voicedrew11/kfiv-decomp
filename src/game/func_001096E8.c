@@ -1,3 +1,5 @@
+#include "kf_gs.h"
+
 void FlushCache(int);
 void func_00109A50(void);
 int func_00109A80(int, unsigned long);
@@ -24,7 +26,7 @@ void func_001096E8(void) {
         if (D_0044703C == 0) {
             D_00447028 = 1;
             func_00109A50();
-            func_00109A80(0x61, 0xFFFFFFFFUL);
+            func_00109A80(GS_REG_FINISH, 0xFFFFFFFFUL);
             func_00109AD0();
             temp_v0 = D_00447020[D_00446748];
             temp_v0->w0 = 0x70000000;

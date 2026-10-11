@@ -1,9 +1,5 @@
 #include "kf_entity.h"
 
-Entity *func_00124C08(Entity *);
-Entity *func_00124CA0(Entity *);
-Entity *func_00124D48(Entity *);
-void func_00123AB8(Entity *);
 void func_001243E8(char);
 void func_001A32A8(Entity *);
 
@@ -12,7 +8,7 @@ void KF_Entity_FreeAllInGroup(int group_id) {
     Entity *entity;
 
     entity = D_004470A8;
-    while (entity != 0) {
+    while (entity != NULL) {
         if (entity->group_id == group_id) {
             entity = func_00124C08(entity);
         } else {
@@ -21,7 +17,7 @@ void KF_Entity_FreeAllInGroup(int group_id) {
     }
 
     entity = D_004470B0;
-    while (entity != 0) {
+    while (entity != NULL) {
         if (entity->group_id == group_id) {
             entity = func_00124CA0(entity);
         } else {
@@ -30,7 +26,7 @@ void KF_Entity_FreeAllInGroup(int group_id) {
     }
 
     entity = D_004467E0;
-    while (entity != 0) {
+    while (entity != NULL) {
         if (entity->group_id == group_id) {
             func_001243E8(entity->unkD3);
             func_00123AB8(entity);

@@ -1,3 +1,5 @@
+#include "kf_gs.h"
+
 typedef struct {
     int v[8][11][2];
 } Grid __attribute__((aligned(16)));
@@ -71,12 +73,12 @@ void func_00108020(int a0, int a1, int a2, int a3, float t) {
 
     func_00109E18();
     func_00109A50();
-    func_00109A80(0x3F, 0xFFFFFFFF);
-    func_00109A80(0x42, 0x44);
-    func_00109A80(0x47, 0x30000);
-    func_00109A80(0x4E, 0x10A000118L);
-    func_00109A80(0x06, 0x26802ABC0L);
-    func_00109A80(0x14, 0);
+    func_00109A80(GS_REG_TEXFLUSH, 0xFFFFFFFF);
+    func_00109A80(GS_REG_ALPHA_1, 0x44);
+    func_00109A80(GS_REG_TEST_1, 0x30000);
+    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
+    func_00109A80(GS_REG_TEX0_1, 0x26802ABC0L);
+    func_00109A80(GS_REG_TEX1_1, 0);
     func_00109AD0();
 
     for (i = 0; i < 7; i++) {
@@ -128,7 +130,7 @@ void func_00108020(int a0, int a1, int a2, int a3, float t) {
 
     D_00446740 = 0;
     func_00109A50();
-    func_00109A80(0x4E, 0xA000118);
+    func_00109A80(GS_REG_ZBUF_1, 0xA000118);
     func_00109AD0();
     func_00109E18();
 }
