@@ -1,7 +1,9 @@
-extern unsigned int D_00446F64;
-extern unsigned int D_00447164;
-extern unsigned int D_00447168;
-extern unsigned int D_00447170;
+#include "common.h"
+
+extern u32 D_00446F64;
+extern u32 D_00447164;
+extern u32 D_00447168;
+extern u32 D_00447170;
 extern int D_00446970;
 extern int D_00446974;
 extern char D_0043F588[];
@@ -12,7 +14,7 @@ extern char D_0057B860[];
 extern char D_0057BAB0[];
 extern char D_0057CB40[];
 
-void *memset(void *, int, unsigned int);
+void *memset(void *, int, u32);
 int func_00102238(char *, int, int);
 int func_001025C0(int, int, int);
 int func_001024B0(int);

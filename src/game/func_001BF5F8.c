@@ -1,4 +1,6 @@
-extern unsigned char D_00367980[6][5];
+#include "common.h"
+
+extern u8 D_00367980[6][5];
 
 int func_001BF5F8(void) {
     int i;

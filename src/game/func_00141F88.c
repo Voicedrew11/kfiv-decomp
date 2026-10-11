@@ -1,18 +1,20 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xC6];
-    unsigned short fC6;
+    u16 fC6;
     char padC8[4];
-    signed char fCC;
+    s8 fCC;
     char padCD[0xA];
-    unsigned char fD7;
-    unsigned long b0 : 41;
-    unsigned int b41 : 1;
-    unsigned int b42 : 11;
-    unsigned int b53 : 1;
-    unsigned int b54 : 10;
+    u8 fD7;
+    u64 b0 : 41;
+    u32 b41 : 1;
+    u32 b42 : 11;
+    u32 b53 : 1;
+    u32 b54 : 10;
 } Actor;
 
-extern unsigned int D_00446ED4;
+extern u32 D_00446ED4;
 void func_00142080(Actor *, int);
 void func_00182DE0(Actor *, int);
 void func_00182FD8(Actor *, int);

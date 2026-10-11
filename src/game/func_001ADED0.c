@@ -1,10 +1,12 @@
+#include "common.h"
+
 int func_001AEC48();
 int func_001AED58(void *);
 int func_001AF0B0(void *);
 
 typedef struct {
     char pad0[0x4C];
-    unsigned short count;
+    u16 count;
     char pad1[0x2];
     char *sub;
 } Actor;

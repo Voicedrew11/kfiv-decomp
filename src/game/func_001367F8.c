@@ -1,13 +1,15 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xC6];
-    unsigned short flags;
+    u16 flags;
     char padC8[4];
     char state;
     char padCD[10];
-    unsigned char key;
+    u8 key;
 } Obj;
 
-extern unsigned int D_00446ED4;
+extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_001958B8(void *, void (*)(void), int);
 void func_001368B8(void);

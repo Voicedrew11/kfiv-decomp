@@ -1,4 +1,6 @@
-extern unsigned char D_0034A017[];
+#include "common.h"
+
+extern u8 D_0034A017[];
 extern char D_0038CD20[];
 extern const float D_00444C98;
 extern const float D_00444C9C;
@@ -8,10 +10,10 @@ extern const float D_00444CA4;
 typedef struct {
     char pad0[0x20];
     float f20, f24, f28, f2C;
-    long long l30;
+    s64 l30;
     char pad38[8];
     float f40, f44, f48, f4C;
-    long long l50;
+    s64 l50;
 } T;
 
 void func_0011A048(int arg0) {

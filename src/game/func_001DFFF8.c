@@ -1,4 +1,6 @@
-extern unsigned short D_00446DE8;
+#include "common.h"
+
+extern u16 D_00446DE8;
 extern void **D_005CE840[];
 void func_001D3DB0(int, void *);
 void func_001D3BE8(int, void *);

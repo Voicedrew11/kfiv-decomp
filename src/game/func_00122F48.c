@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct {
     int phase;
     int period;
@@ -26,6 +28,6 @@ int func_00122F48(Obj *arg0) {
         f = (float)(period - phase) / (float)period * 0.5f;
     }
     v = (int)(f * 128.0f);
-    *(short *)((char *)arg0->ptr + 0x146) = v;
+    *(s16 *)((char *)arg0->ptr + 0x146) = v;
     return v;
 }

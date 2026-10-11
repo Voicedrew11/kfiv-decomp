@@ -1,16 +1,18 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0x20];
-    long flags;
+    s64 flags;
     char pad28[0x14];
-    unsigned short id;
+    u16 id;
     char pad3E[0x12];
 } A;
 
 typedef struct {
     char pad0[0x40];
-    long flags;
+    s64 flags;
     char pad48[6];
-    unsigned short id;
+    u16 id;
     char pad50[0x50];
 } B;
 

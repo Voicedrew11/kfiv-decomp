@@ -1,7 +1,9 @@
+#include "common.h"
+
 int func_001CBAE0();
 extern char *D_004471D4;
 
-int func_001CDBC0(unsigned int arg0, short arg1)
+int func_001CDBC0(u32 arg0, s16 arg1)
 {
   char *temp_v0;
 
@@ -14,6 +16,6 @@ int func_001CDBC0(unsigned int arg0, short arg1)
   {
     return -1;
   }
-  func_001CBAE0(1, 0x1060, *(short *)(temp_v0 + 0x18), arg1);
+  func_001CBAE0(1, 0x1060, *(s16 *)(temp_v0 + 0x18), arg1);
   return 0;
 }

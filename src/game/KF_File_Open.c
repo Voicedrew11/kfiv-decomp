@@ -5,7 +5,7 @@ int KF_File_Open(char *name, int nowait, int pack) {
     char path[256];
     KFFile *f;
     KFDirEntry *e;
-    unsigned int i;
+    u32 i;
     int slot;
     char *p;
 

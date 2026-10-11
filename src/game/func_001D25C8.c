@@ -1,5 +1,7 @@
+#include "common.h"
+
 typedef struct {
-    unsigned char stat, second, minute, hour, pad, day, month, year;
+    u8 stat, second, minute, hour, pad, day, month, year;
 } sceCdCLOCK;
 int sceCdReadClock(sceCdCLOCK *);
 #define BCD2DEC(x) (((x) & 0xF) + ((x) >> 4) * 10)

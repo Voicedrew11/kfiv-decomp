@@ -1,8 +1,10 @@
+#include "common.h"
+
 typedef struct {
-    unsigned long a : 16;
-    unsigned long b : 16;
-    unsigned long c : 24;
-    unsigned long d : 8;
+    u64 a : 16;
+    u64 b : 16;
+    u64 c : 24;
+    u64 d : 8;
 } Packed;
 
 extern Packed D_00446D60;

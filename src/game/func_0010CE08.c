@@ -1,17 +1,19 @@
-typedef struct { char pad[0x78]; unsigned long long w; } Ent;
+#include "common.h"
+
+typedef struct { char pad[0x78]; u64 w; } Ent;
 typedef struct {
     char p0[0xF0];
-    unsigned short cnt;
+    u16 cnt;
     char p1[6];
     Ent *ents;
     char p2[0xA8];
-    long long *out;
+    s64 *out;
 } Obj;
 
-long long *func_0010CE08(Obj *o, long long *a) {
-    long long *s;
+s64 *func_0010CE08(Obj *o, s64 *a) {
+    s64 *s;
     int i;
-    unsigned short total;
+    u16 total;
     Ent *e;
     int m;
 
@@ -22,12 +24,12 @@ long long *func_0010CE08(Obj *o, long long *a) {
     for (i = 0; i < total; i++, e++) {
         int j = 0;
         int n = (int)(e->w >> 53);
-        long long *p = *(long long **)&e->w;
+        s64 *p = *(s64 **)&e->w;
         for (; j < n; j++) {
-            long long *cur = p;
-            unsigned short u = *cur;
+            s64 *cur = p;
+            u16 u = *cur;
             int k = 0;
-            long long *d;
+            s64 *d;
             p += 6;
             *s++ = *p;
             m = *(int *)(cur + 0x12) & 0x7FFF;

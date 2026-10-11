@@ -1,6 +1,8 @@
-typedef unsigned int u128 __attribute__((mode(TI)));
+#include "common.h"
 
-void func_0020B358(char *src, char *dst, unsigned int n) {
+typedef u32 u128 __attribute__((mode(TI)));
+
+void func_0020B358(char *src, char *dst, u32 n) {
     int q = n >> 4;
 
     while (q--) {

@@ -1,3 +1,5 @@
+#include "common.h"
+
 void func_00190A30(char *);
 void func_00195898(char *, int);
 void func_0019A310(char *, void (*)(void), int);
@@ -7,13 +9,13 @@ extern void func_001816A0(void);
 
 typedef struct {
     char pad0[0xD8];
-    unsigned long long flags;
+    u64 flags;
 } Actor;
 
 void func_0016C138(char *arg0) {
     Actor *a = (Actor *)arg0;
-    unsigned long long f;
-    unsigned long long state;
+    u64 f;
+    u64 state;
 
     func_00190A30(arg0);
     a->flags &= ~0x200;

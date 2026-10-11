@@ -1,8 +1,10 @@
+#include "common.h"
+
 extern float D_00444EE8;
 extern int D_00413F80[];
 void func_00132428(void);
 float func_001957B8(float, float);
-short func_00190F90(float, char *, int);
+s16 func_00190F90(float, char *, int);
 void func_001958B8(char *, void (*)(void), int);
 
 typedef struct A {
@@ -11,11 +13,11 @@ typedef struct A {
     float f68;
     char pad2[0x68];
     float fD4;
-    unsigned long b0 : 9;
-    unsigned long b9 : 1;
-    unsigned long b10 : 1;
-    unsigned long b11 : 3;
-    unsigned long b14 : 50;
+    u64 b0 : 9;
+    u64 b9 : 1;
+    u64 b10 : 1;
+    u64 b11 : 3;
+    u64 b14 : 50;
 } A;
 
 void func_00131C78(char *arg0, int arg1) {
@@ -32,6 +34,6 @@ void func_00131C78(char *arg0, int arg1) {
         return;
     }
     *(int **)(arg0 + 0x5C) = D_00413F80;
-    *(short *)(arg0 + 0xC8) = func_00190F90(50.0f, arg0, 1);
+    *(s16 *)(arg0 + 0xC8) = func_00190F90(50.0f, arg0, 1);
     func_001958B8(arg0, *(void (**)(void))(temp_s1 + 0x18), arg1);
 }

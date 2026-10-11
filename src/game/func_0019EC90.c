@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern int func_001CBD20(void);
 extern int func_001CBAC0(void);
 extern int func_001CD020(int, int, int, int, int, int, int);
@@ -5,7 +7,7 @@ extern void func_001CD6E0(int);
 extern int func_001CDF90(int, int, int, int);
 extern void func_001CE408(int);
 extern void func_0019C7D0(int);
-extern unsigned char D_00349681[];
+extern u8 D_00349681[];
 extern int D_00446858;
 extern int D_0044685C;
 extern int D_00446860;

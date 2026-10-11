@@ -1,14 +1,16 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xC6];
-    unsigned short c6;
+    u16 c6;
     char pad1[0xCC - 0xC8];
     char cc;
     char pad2[0xD7 - 0xCD];
-    unsigned char d7;
-    unsigned long d8;
+    u8 d7;
+    u64 d8;
 } Actor;
 
-extern unsigned int D_00446ED4;
+extern u32 D_00446ED4;
 
 void func_00126C28(void *, int);
 void func_00126C70(void *, int);
@@ -19,9 +21,9 @@ void func_00196CC0(void *);
 
 void func_00126B38(void *arg0, int arg1) {
     Actor *a = arg0;
-    unsigned int temp_hi;
-    unsigned char temp_a2;
-    unsigned long bit;
+    u32 temp_hi;
+    u8 temp_a2;
+    u64 bit;
 
     temp_hi = D_00446ED4 % 10U;
     temp_a2 = a->d7;

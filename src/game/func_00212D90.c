@@ -1,3 +1,5 @@
+#include "common.h"
+
 int func_0011E1F0(int, int);
 void func_00211CF8(char *, int);
 extern int D_00446770;
@@ -13,14 +15,14 @@ typedef struct
 typedef struct
 {
   char pad[0x82];
-  short s82;
+  s16 s82;
 } Sub;
 
 typedef struct
 {
   char pad0[0xFC];
   Sub *pFC;
-  unsigned short f100;
+  u16 f100;
 } Ctl;
 
 typedef struct

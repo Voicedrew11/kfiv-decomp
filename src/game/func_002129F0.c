@@ -1,4 +1,3 @@
-
 int func_0011E1F0(int, int);
 extern int D_00446770;
 typedef struct 

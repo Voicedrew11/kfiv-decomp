@@ -1,4 +1,5 @@
 #include "kf_gs.h"
+#include "common.h"
 
 typedef struct {
     int v[8][11][2];
@@ -11,22 +12,22 @@ extern int D_00467C00[8][11][2];
 extern float D_00467EC0[8][11][2];
 
 int rand(void);
-unsigned int fptoui(float);
-unsigned int *func_00109990(int);
-void func_00109650(unsigned int *, unsigned int *);
+u32 fptoui(float);
+u32 *func_00109990(int);
+void func_00109650(u32 *, u32 *);
 void func_00109E18(void);
 void func_00109A50(void);
-void func_00109A80(int, long);
+void func_00109A80(int, s64);
 void func_00109AD0(void);
 
 void func_00108020(int a0, int a1, int a2, int a3, float t) {
     char buf[0x40];
     int j, i, k, l;
     int x, y, b;
-    long t0, t1;
+    s64 t0, t1;
     float dx, dy;
-    unsigned int *p0;
-    unsigned int *p;
+    u32 *p0;
+    u32 *p;
 
     if (D_00446740 != 0) {
         for (i = 0; i < 8; i++) {
@@ -93,9 +94,9 @@ void func_00108020(int a0, int a1, int a2, int a3, float t) {
             *p++ = 0;
             t0 = 0xC0AE400000008001L;
             *p++ = 0x6C0DC000;
-            *(long *)p = t0;
+            *(s64 *)p = t0;
             p += 2;
-            *(long *)p = 0x513513513513L;
+            *(s64 *)p = 0x513513513513L;
             p += 2;
             for (k = 0; k < 2; k++) {
                 for (l = 0; l < 2; l++) {

@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern char D_004681A0[];
 
 typedef struct {
@@ -9,7 +11,7 @@ typedef struct {
     void (*f1B0)(void *);
 } Obj;
 
-void func_0010B140(unsigned int arg0, unsigned int arg1) {
+void func_0010B140(u32 arg0, u32 arg1) {
     int i;
     Obj *s;
     Obj **slot;

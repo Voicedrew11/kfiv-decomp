@@ -1,4 +1,5 @@
 #include "kf_gs.h"
+#include "common.h"
 
 extern int D_00447000[2];
 extern int D_00447010;
@@ -6,7 +7,7 @@ extern int D_00447014;
 extern int D_00468180[];
 
 void func_00109A50(void);
-void func_00109A80(int, long);
+void func_00109A80(int, s64);
 void func_00109AD0(void);
 void func_0010A4E8(int, int, int, int, int);
 

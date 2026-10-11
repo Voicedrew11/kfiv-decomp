@@ -1,7 +1,9 @@
+#include "common.h"
+
 int memset(int, int, int);
 extern int D_00446748;
 extern int D_0044674C;
-extern unsigned int D_00446750;
+extern u32 D_00446750;
 extern int D_00446F58;
 extern int D_00447018;
 extern int D_0044701C;
@@ -15,7 +17,7 @@ extern int D_00447040;
 extern int D_00447044;
 
 void func_00109878(int arg0) {
-    unsigned int size;
+    u32 size;
     int base;
     int half;
 

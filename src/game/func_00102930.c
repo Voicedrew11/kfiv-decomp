@@ -1,6 +1,8 @@
-extern unsigned char D_00349680[0x10];
+#include "common.h"
 
-void *memset(void *, int, unsigned int);
+extern u8 D_00349680[0x10];
+
+void *memset(void *, int, u32);
 
 void func_00102930(void) {
     memset(D_00349680, 0, sizeof(D_00349680));

@@ -6,17 +6,17 @@ typedef float Vec[4] __attribute__((aligned(16)));
 typedef int IVec[4] __attribute__((aligned(16)));
 
 typedef struct {
-    long tag;              /* 0x00 GIF tag */
-    long zero;             /* 0x08 */
+    s64 tag;              /* 0x00 GIF tag */
+    s64 zero;             /* 0x08 */
     int reg;               /* 0x10 = 0x116 */
-    unsigned char rgba[4]; /* 0x14 */
-    long pad18;            /* 0x18 unused */
-    unsigned short x0, y0; /* 0x20 */
-    unsigned int z0;       /* 0x24 = -1 */
+    u8 rgba[4]; /* 0x14 */
+    s64 pad18;            /* 0x18 unused */
+    u16 x0, y0; /* 0x20 */
+    u32 z0;       /* 0x24 = -1 */
     int f0;                /* 0x28 */
     int g0;                /* 0x2C */
-    unsigned short x1, y1; /* 0x30 */
-    unsigned int z1;       /* 0x34 = -1 */
+    u16 x1, y1; /* 0x30 */
+    u32 z1;       /* 0x34 = -1 */
     int f1;                /* 0x38 */
     int g1;                /* 0x3C */
 } KfPacket;
@@ -28,7 +28,7 @@ extern Mat D_00431AF0;
 extern float D_00444BAC;
 
 void func_00109A50(void);
-void func_00109A80(int, long);
+void func_00109A80(int, s64);
 void func_00109AD0(void);
 void func_0010A100(void *);
 void func_00216778(float *, void *);
@@ -54,7 +54,7 @@ void func_00107840(void) {
     float focus_distance, nearest_distance_squared, distance_squared;
     int offset_x, offset_y, strip;
     int tag_high_bits;
-    unsigned long tag_low_bits;
+    u64 tag_low_bits;
 
     tag_flags = 0x1180;
     if (D_00446F78 != 0) tag_flags = 0;
@@ -107,7 +107,7 @@ void func_00107840(void) {
     sprite_packet.rgba[2] = 0x80;
     tag_high_bits = 0x29;
     sprite_packet.z0 = 0xFFFFFFFF;
-    sprite_packet.tag = tag_low_bits | ((unsigned long)tag_high_bits << 30);
+    sprite_packet.tag = tag_low_bits | ((u64)tag_high_bits << 30);
     sprite_packet.rgba[3] = 0x80;
     sprite_packet.z1 = 0xFFFFFFFF;
 

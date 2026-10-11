@@ -1,9 +1,11 @@
-extern unsigned char D_00369830[];
-extern unsigned char D_0041A6F8[];
+#include "common.h"
+
+extern u8 D_00369830[];
+extern u8 D_0041A6F8[];
 
 typedef struct {
     char pad00[0xE];
-    unsigned short f0E;
+    u16 f0E;
     char pad10[0x10];
 } Ent;
 

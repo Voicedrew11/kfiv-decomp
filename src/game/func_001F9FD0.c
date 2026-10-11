@@ -1,8 +1,10 @@
+#include "common.h"
+
 typedef struct {
     int f0;
     char pad4[0xC];
-    short f10;
-    short f12;
+    s16 f10;
+    s16 f12;
     char f14, f15, f16, f17;
     char pad18[2];
     char f1A;

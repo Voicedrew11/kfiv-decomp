@@ -1,11 +1,13 @@
+#include "common.h"
+
 typedef struct {
     char *ctx;
     char pad4[8];
-    unsigned char *c;
+    u8 *c;
     char pad10[0x18];
-    unsigned short s28;
+    u16 s28;
     char pad2a[0x9C];
-    unsigned short sc6;
+    u16 sc6;
 } Act;
 
 typedef struct {
@@ -21,20 +23,20 @@ typedef struct {
 } Ctx;
 
 typedef struct {
-    unsigned int idx : 5;
-    unsigned int flag : 1;
-    unsigned int pad : 2;
-    unsigned int b1 : 8;
-    unsigned int s2 : 16;
+    u32 idx : 5;
+    u32 flag : 1;
+    u32 pad : 2;
+    u32 b1 : 8;
+    u32 s2 : 16;
     int w4;
 } Cmd;
 
 int func_001914E8(char *, int, int, int);
 
 int func_0019A448(Act *arg0, Cmd *arg1, int arg2, int arg3, int arg4, int arg5, int arg6) {
-    unsigned char *base = arg0->c + 0x60;
+    u8 *base = arg0->c + 0x60;
     int v = base[arg3];
-    int cur = base[*(unsigned char *)arg1 & 0x1F];
+    int cur = base[*(u8 *)arg1 & 0x1F];
 
     if (arg6 == 0 && cur == v) {
         return 1;

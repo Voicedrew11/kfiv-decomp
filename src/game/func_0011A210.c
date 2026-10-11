@@ -1,10 +1,12 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xD8];
-    unsigned long long bits;
+    u64 bits;
 } Actor;
 
-extern unsigned char D_0034B6D0[];
-extern unsigned char D_00349690[];
+extern u8 D_0034B6D0[];
+extern u8 D_00349690[];
 
 void *func_001267E8(int, int);
 

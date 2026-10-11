@@ -1,19 +1,21 @@
-int func_00192C98(void *, int, int, unsigned int, int);
+#include "common.h"
+
+int func_00192C98(void *, int, int, u32, int);
 
 typedef struct {
     char pad0[0xC4];
-    unsigned char c4;
+    u8 c4;
 } Ctl;
 
 typedef struct {
     char pad0[0xC];
     Ctl *c;
     char pad10[0xC8 - 0x10];
-    unsigned short sC8;
+    u16 sC8;
 } Act;
 
 void func_0016C7F0(Act *a) {
-    unsigned short flags = a->sC8;
+    u16 flags = a->sC8;
 
     if (flags & 4) {
         func_00192C98(a, 6, 0, a->c->c4, 0);

@@ -1,4 +1,6 @@
-extern unsigned char D_0034C350[0x190];   // 50 areas x 8 bytes of bits
+#include "common.h"
+
+extern u8 D_0034C350[0x190];   // 50 areas x 8 bytes of bits
 
 int func_001037F8(int id) {
     int r = id % 50;

@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0x34];
     char *f34;
@@ -11,13 +13,13 @@ typedef struct {
 typedef struct {
     int unk0;
     int unk4;
-    unsigned int count;
+    u32 count;
     int unkC;
     Entry entries[1];
 } Header;
 
 void func_002007C0(Header *arg0) {
-    unsigned int i;
+    u32 i;
     Entry *e;
 
     e = arg0->entries;

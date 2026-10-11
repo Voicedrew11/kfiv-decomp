@@ -1,5 +1,7 @@
+#include "common.h"
+
 int func_0018EAC0(void *, void *, int);
-short func_00190F90(float, void *, int);
+s16 func_00190F90(float, void *, int);
 void func_001958B8(char *, void (*)(void), int);
 
 typedef struct {
@@ -9,34 +11,34 @@ typedef struct {
 
 typedef struct {
     char pad0[0x10];
-    unsigned short s10;
+    u16 s10;
 } Ctl;
 
 typedef struct {
-    unsigned long long z0 : 9;
-    unsigned long long b9 : 1;
-    unsigned long long z10 : 1;
-    unsigned long long f11 : 3;
-    unsigned long long z14 : 3;
-    unsigned long long b17 : 1;
-    unsigned long long z18 : 10;
-    unsigned long long b28 : 1;
-    unsigned long long z29 : 35;
+    u64 z0 : 9;
+    u64 b9 : 1;
+    u64 z10 : 1;
+    u64 f11 : 3;
+    u64 z14 : 3;
+    u64 b17 : 1;
+    u64 z18 : 10;
+    u64 b28 : 1;
+    u64 z29 : 35;
 } Flags;
 
 typedef struct {
     char pad0[0xC];
     Ctl *c;
     char pad10[0xC8 - 0x10];
-    short sC8;
+    s16 sC8;
     char padCA[0xD8 - 0xCA];
-    union { Flags b; unsigned long l; } flags;
+    union { Flags b; u64 l; } flags;
     Sub sub;
 } Actor;
 
 void func_00141A18(Actor *arg0, int arg1) {
     Sub *s = &arg0->sub;
-    long buf;
+    s64 buf;
     int temp_v0;
     void (*fn)(void);
 

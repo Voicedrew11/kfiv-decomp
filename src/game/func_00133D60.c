@@ -1,20 +1,22 @@
+#include "common.h"
+
 void func_0019A310(char *, void (*)(void), int);
 int func_0019A448(void *, void *, int, int, int, int, int);
 
 typedef struct {
     char pad0[0xC6];
-    unsigned short sC6;
+    u16 sC6;
     char padC8[0xCB - 0xC8];
-    signed char cCB;
+    s8 cCB;
     char padCC[0xD8 - 0xCC];
-    unsigned long long flags;
+    u64 flags;
 } Actor;
 
 typedef struct {
     char pad0[0x80];
-    unsigned char c80;
-    unsigned char c81;
-    short s82;
+    u8 c80;
+    u8 c81;
+    s16 s82;
 } Sub;
 
 void func_00133D60(char *arg0) {

@@ -1,11 +1,13 @@
-extern unsigned int D_0038CC74[];
+#include "common.h"
+
+extern u32 D_0038CC74[];
 extern int D_00441300[];
 extern int D_00441320[];
 extern int D_00446E90;
 extern int D_00446F20;
 extern int D_00446F50;
 
-void func_0021B540(int *, int, int, void (*)(void), int, int, long, long);
+void func_0021B540(int *, int, int, void (*)(void), int, int, s64, s64);
 int sceGsSyncV(int);
 void func_0019BDA0(int, int);
 void func_001CB9A0(void);

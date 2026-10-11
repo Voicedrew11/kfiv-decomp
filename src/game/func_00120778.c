@@ -1,4 +1,6 @@
-short func_0011E340(char *, int);
+#include "common.h"
+
+s16 func_0011E340(char *, int);
 
 void func_00120778(char *arg0) {
     if (!(*(int *)(arg0 + 0x10) & 0x20000)) {

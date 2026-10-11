@@ -1,3 +1,5 @@
+#include "common.h"
+
 int FlushCache(int);
 int sceSifSetDma(int *, int);
 extern char *D_004471D4;
@@ -14,7 +16,7 @@ typedef struct {
     int w18;
 } Req;
 
-int func_001CBC30(int arg0, int arg1, unsigned int arg2) {
+int func_001CBC30(int arg0, int arg1, u32 arg2) {
     Req *d;
     int temp_a1;
     int temp_v0;

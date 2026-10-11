@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct
 {
   int pad0[32];
@@ -21,7 +23,7 @@ int func_0021B478(int arg0, int arg1, int arg2)
     s->p98 = 0x1E;
     return -1;
   }
-  if ((unsigned int)temp_v0 < (unsigned int)arg2)
+  if ((u32)temp_v0 < (u32)arg2)
   {
     s->p98 = 0x1F;
     return -2;

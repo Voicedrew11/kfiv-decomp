@@ -1,20 +1,22 @@
+#include "common.h"
+
 typedef struct {
-    unsigned char n;
+    u8 n;
     char pad0[0xB];
-    unsigned short *p;
+    u16 *p;
 } Ent;
 
 typedef struct {
     char pad0[0x6C];
-    unsigned char tag;
+    u8 tag;
     char pad1[0xB];
-    unsigned long long lo : 39;
-    unsigned long long f : 7;
+    u64 lo : 39;
+    u64 f : 7;
 } Rec;
 
 typedef struct {
     char pad0[0xF0];
-    unsigned short count;
+    u16 count;
     char pad1[6];
     Rec *recs;
     Ent **ents;
@@ -29,7 +31,7 @@ int func_001914E8(Ctx *arg0, int arg1, int arg2, int arg3) {
         Rec *r = &arg0->recs[i];
         int v;
         int n;
-        unsigned short *p;
+        u16 *p;
 
         if (r->tag == arg1 && e->p != 0 && e->n != 0) {
             p = e->p;

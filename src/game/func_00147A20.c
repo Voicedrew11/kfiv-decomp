@@ -1,3 +1,5 @@
+#include "common.h"
+
 float func_001957B8(float, float);
 float func_00195388(float *, float, float);
 
@@ -8,9 +10,9 @@ void func_00147A20(char *arg0, int arg1) {
     float r;
 
     s = arg0 + 0xE0;
-    a = (float)*(short *)(*(char **)(arg0 + 0xC) + 0x436);
+    a = (float)*(s16 *)(*(char **)(arg0 + 0xC) + 0x436);
     q = (char *)(*(int *)(*(char **)arg0 + 0xF8) + 0x480);
-    if (*(unsigned short *)(arg0 + 0x28) != 0) {
+    if (*(u16 *)(arg0 + 0x28) != 0) {
         a = a + a;
     }
     r = func_001957B8(*(float *)(*(char **)arg0 + 0xD4), *(float *)(arg0 + 0x68));

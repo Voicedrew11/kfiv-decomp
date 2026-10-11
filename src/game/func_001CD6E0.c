@@ -1,10 +1,12 @@
+#include "common.h"
+
 int FlushCache(int);
 int sceSifFreeIopHeap(int);
 extern char *D_004471D4;
 
-int func_001CD6E0(unsigned int arg0) {
+int func_001CD6E0(u32 arg0) {
     int *e;
-    unsigned int v;
+    u32 v;
     int t;
     int i;
 
@@ -38,9 +40,9 @@ int func_001CD6E0(unsigned int arg0) {
     i = 15;
     e = (int *)D_004471D4;
     do {
-        v = *(unsigned int *)(D_004471D4 + 0x4C0);
+        v = *(u32 *)(D_004471D4 + 0x4C0);
         t = e[3];
-        if ((unsigned int)t >= v) {
+        if ((u32)t >= v) {
             *(int *)(D_004471D4 + 0x4C0) = t + e[5];
         }
         e += 8;

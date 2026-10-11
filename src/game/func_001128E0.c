@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern char D_0038CD20[];
 extern char D_0038CDE0[];
 extern int D_00446770;
@@ -6,7 +8,7 @@ extern int D_00446780[2];
 extern int D_00446788;
 extern int D_0044678C;
 
-void *memset(void *, int, unsigned int);
+void *memset(void *, int, u32);
 
 void func_001128E0(void) {
     D_00446770 = 0;

@@ -1,9 +1,11 @@
+#include "common.h"
+
 extern char D_00349682[];
 extern int D_003EF5E8[];
 extern int D_003EF648[];
 int rand(void);
 int func_0019C688(int);
-void func_001CE690(int, int, int, char, int, char, short, int);
+void func_001CE690(int, int, int, char, int, char, s16, int);
 
 int func_0019D020(int arg0) {
     int *p;
@@ -18,7 +20,7 @@ int func_0019D020(int arg0) {
         return -1;
     }
     a0 = func_0019C688(1);
-    pan = ((unsigned long) rand() << 11) / 0x7FFFFFFF - 0x400;
+    pan = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
     func_001CE690(a0, p[4], 0, arg0, 0x3C, D_00349682[0], pan, 0x3F);
     return a0;
 }

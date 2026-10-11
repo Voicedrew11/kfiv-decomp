@@ -1,6 +1,8 @@
+#include "common.h"
+
 int func_001BB308(int);
 void func_001BB360(void);
-void func_001B57A0(unsigned char, unsigned char, unsigned char);
+void func_001B57A0(u8, u8, u8);
 extern int D_00413FD8[];
 extern int D_0044695C;
 

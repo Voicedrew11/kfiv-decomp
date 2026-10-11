@@ -1,7 +1,9 @@
+#include "common.h"
+
 int func_001CBAE0();
 extern char *D_004471D4;
 
-int func_001CE510(unsigned int arg0) {
+int func_001CE510(u32 arg0) {
     char *entry;
 
     if (arg0 >= 5) {

@@ -1,3 +1,5 @@
+#include "common.h"
+
 void func_001AF928(void *, int);
 void func_001AF640(void *, int);
 int func_001AFD08(void *, void *, void *);
@@ -17,13 +19,13 @@ typedef struct {
     char pad0[0x10];
     Sub sub;
     char pad38[8];
-    unsigned long b0 : 32;
-    short h44;
-    signed char c46;
-    unsigned long b56 : 1;
-    unsigned long b57 : 1;
-    unsigned long b58 : 1;
-    unsigned long b59 : 5;
+    u64 b0 : 32;
+    s16 h44;
+    s8 c46;
+    u64 b56 : 1;
+    u64 b57 : 1;
+    u64 b58 : 1;
+    u64 b59 : 5;
     char pad48[8];
     char *p50;
     char *p54;

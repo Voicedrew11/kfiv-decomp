@@ -1,5 +1,7 @@
+#include "common.h"
+
 typedef struct { char pad[0xD5]; char idx; char pad2[0x180 - 0xD6]; } Obj;
-typedef struct { char a; unsigned char b; char pad[0x5E]; } Ent;
+typedef struct { char a; u8 b; char pad[0x5E]; } Ent;
 extern Ent D_0038CD20[];
 extern Obj D_003BEDF0[][0x80];
 Obj *func_001267B0(int);

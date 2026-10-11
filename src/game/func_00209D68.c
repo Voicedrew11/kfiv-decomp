@@ -1,4 +1,6 @@
-void sceGsSetHalfOffset(void *draw, short x, short y, short half);
+#include "common.h"
+
+void sceGsSetHalfOffset(void *draw, s16 x, s16 y, s16 half);
 int sceGsSwapDBuff(void *db, int id);
 int sceGsSyncV(int mode);
 void FlushCache(int operation);

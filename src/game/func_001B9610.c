@@ -1,13 +1,15 @@
-extern unsigned char D_00413F80[];
+#include "common.h"
+
+extern u8 D_00413F80[];
 extern int D_0038CC50[];
 int func_0019D0F0(int);
 
 void func_001B9610(void)
 {
-    unsigned char *s = D_00413F80;
+    u8 *s = D_00413F80;
 
     if (s[0x1A8] == 0) {
-        if (*(short *)(s + 0x1A4) > 0) {
+        if (*(s16 *)(s + 0x1A4) > 0) {
             return;
         }
         if (*(int *)(s + 0xB4) > 0) {

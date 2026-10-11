@@ -1,13 +1,15 @@
+#include "common.h"
+
 void *func_001B1390();
-char *func_0010CAB8(char *, unsigned int);
-void func_001B4F30(unsigned char, void *, void *, void *, void *);
-typedef struct { long long v; } __attribute__((packed)) U64P;
+char *func_0010CAB8(char *, u32);
+void func_001B4F30(u8, void *, void *, void *, void *);
+typedef struct { s64 v; } __attribute__((packed)) U64P;
 
 typedef struct {
     char a;
     char pad[0x1F];
-    unsigned short x20;
-    short x22;
+    u16 x20;
+    s16 x22;
     char pad2[4];
     U64P x28;
 } P;
@@ -17,11 +19,11 @@ typedef struct {
     char pad[8];
     char *sC;
     char pad2[0x1A];
-    unsigned short x2A;
+    u16 x2A;
 } A;
 
-int func_00173D38(A *arg0, unsigned char *arg1, int arg2, int arg3, void *arg4) {
-    unsigned char *q;
+int func_00173D38(A *arg0, u8 *arg1, int arg2, int arg3, void *arg4) {
+    u8 *q;
     int i;
     P *p;
     char *r;

@@ -1,14 +1,6 @@
-typedef int s32;
-typedef unsigned int u32;
-typedef unsigned char u8;
-typedef signed char s8;
-typedef short s16;
-typedef unsigned short u16;
-typedef float f32;
-typedef double f64;
-#define NULL ((void *)0)
-#define NULL ((void *)0)
+#include "common.h"
+
 void func_001958A8(char *arg0, s32 arg1) {
     (*(int *)((char *)arg0 + 0x50)) = arg1;
-    (*(unsigned char *)((char *)arg0 + 0xCA)) = 0;
+    (*(u8 *)((char *)arg0 + 0xCA)) = 0;
 }

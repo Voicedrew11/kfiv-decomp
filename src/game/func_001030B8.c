@@ -1,12 +1,14 @@
+#include "common.h"
+
 typedef struct {
     char unk0[0x20];
     int unk20;
     int unk24;
     char unk28[0x14];
-    unsigned char unk3C;
-    unsigned char unk3D;
-    unsigned char unk3E;
-    unsigned char unk3F[7];
+    u8 unk3C;
+    u8 unk3D;
+    u8 unk3E;
+    u8 unk3F[7];
     char unk46[0x6E];
     int unkB4;
     int unkB8;
@@ -14,16 +16,16 @@ typedef struct {
 
 typedef struct {
     char unk0[0xE];
-    unsigned short flags;
+    u16 flags;
     char unk10[0x10];
 } Def20;
 
 
 extern State D_00413F80;
 extern Def20 D_0041A6F8[150];
-extern unsigned char D_00369830[380];
-extern unsigned char D_00367980[6][5];
-extern unsigned short D_00367940[6][5];
+extern u8 D_00369830[380];
+extern u8 D_00367980[6][5];
+extern u16 D_00367940[6][5];
 
 void func_001030B8(void) {
     int i;

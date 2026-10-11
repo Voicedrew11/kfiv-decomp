@@ -1,11 +1,13 @@
-int func_00192C98(void *, int, int, unsigned int, int);
+#include "common.h"
+
+int func_00192C98(void *, int, int, u32, int);
 
 typedef struct {
     char pad0[0x58];
     float f58;
     float f5C;
     char pad60[0xC4 - 0x60];
-    unsigned char c4;
+    u8 c4;
 } Ctl;
 
 typedef struct {
@@ -19,14 +21,14 @@ typedef struct {
     char pad10[0x94 - 0x10];
     float f94;
     char pad98[0xC8 - 0x98];
-    unsigned short sC8;
+    u16 sC8;
     char padCA[0xE0 - 0xCA];
     Sub sub;
 } Act;
 
 void func_0016AFD8(Act *a) {
     Sub *s = &a->sub;
-    unsigned short flags = a->sC8;
+    u16 flags = a->sC8;
     float v;
     float lim;
 

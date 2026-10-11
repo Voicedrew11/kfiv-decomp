@@ -1,10 +1,12 @@
+#include "common.h"
+
 typedef struct {
     int f0;
     int pad4;
     int f8;
 } S;
 
-extern unsigned char D_00349680[];
+extern u8 D_00349680[];
 void func_0019C7F0(int);
 void func_0019C820(int);
 

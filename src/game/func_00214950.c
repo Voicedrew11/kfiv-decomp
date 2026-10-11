@@ -1,6 +1,8 @@
+#include "common.h"
+
 extern int D_00446FDC;
 extern char D_0038CC50[];
-extern unsigned int D_0038CC74[];
+extern u32 D_0038CC74[];
 
 void func_00214950(int *arg0) {
     if (D_00446FDC == 0) {

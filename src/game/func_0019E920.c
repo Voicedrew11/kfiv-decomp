@@ -1,4 +1,6 @@
-extern unsigned char D_00349680[];
+#include "common.h"
+
+extern u8 D_00349680[];
 extern char D_003EF710[];
 void func_001CE9A0(int, int, int);
 

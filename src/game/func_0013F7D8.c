@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern char D_00413F80[];
 
 double atan2(double, double);
@@ -9,7 +11,7 @@ void func_0013F7D8(char *arg0) {
     char *ctrl;
     char *sub;
     char *s3;
-    short a0;
+    s16 a0;
     float buf[2];
     float f;
 
@@ -17,7 +19,7 @@ void func_0013F7D8(char *arg0) {
     s3 = *(char **)(ctrl + 0xF8) + 0x780;
     sub = arg0 + 0xE0;
     if (s3 != 0) {
-        a0 = *(short *)(*(char **)(ctrl + 0xFC) + 0x82);
+        a0 = *(s16 *)(*(char **)(ctrl + 0xFC) + 0x82);
         if (a0 < 0x2B) {
             func_00216778(buf, D_00413F80);
             buf[1] = buf[1] + 400.0f;

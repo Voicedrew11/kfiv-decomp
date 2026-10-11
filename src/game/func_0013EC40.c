@@ -1,22 +1,24 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xC];
     int *ctrl;                     /* 0xC */
     char pad1[0xC6 - 0x10];
-    unsigned short flags;          /* 0xC6 */
+    u16 flags;          /* 0xC6 */
     char pad2[0xD5 - 0xC8];
-    signed char byteD5;            /* 0xD5 */
+    s8 byteD5;            /* 0xD5 */
     char pad3[0xD7 - 0xD6];
-    unsigned char byteD7;          /* 0xD7 */
-    unsigned long long bits;       /* 0xD8 */
+    u8 byteD7;          /* 0xD7 */
+    u64 bits;       /* 0xD8 */
 } Actor;
 
 typedef struct {
     char pad0[0x78];
-    signed char f78;               /* 0x78 */
-    signed char f79;               /* 0x79 */
+    s8 f78;               /* 0x78 */
+    s8 f79;               /* 0x79 */
 } Sub;
 
-extern unsigned int D_00446ED4;
+extern u32 D_00446ED4;
 
 void *func_001267E8(char, int);
 int func_0013ED58(void *, int);
@@ -29,7 +31,7 @@ void func_0013EC40(void *arg0, int arg1) {
     Actor *a = arg0;
     Actor *t;
     Sub *s = (Sub *) ((char *) arg0 + 0xE0);
-    unsigned int temp_hi;
+    u32 temp_hi;
 
     t = func_001267E8(a->byteD5, 0x29);
     if (t != 0 && (int) t->bits & 1) {

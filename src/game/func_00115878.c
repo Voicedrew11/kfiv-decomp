@@ -1,6 +1,8 @@
+#include "common.h"
+
 typedef struct Node {
     char pad0[0x38];
-    unsigned long f38;
+    u64 f38;
     char pad40[0x1C];
     struct Node *f5C;
 } Node;
@@ -15,7 +17,7 @@ void func_00115878(int arg0) {
     prev = 0;
     cur = D_00446788;
     while (cur != 0) {
-        if (((unsigned char)(cur->f38 >> 27) & 1) == arg0) {
+        if (((u8)(cur->f38 >> 27) & 1) == arg0) {
             if (prev != 0) {
                 prev->f5C = cur->f5C;
             } else {
@@ -33,7 +35,7 @@ void func_00115878(int arg0) {
     prev = 0;
     cur = D_0044678C;
     while (cur != 0) {
-        if (((unsigned char)(cur->f38 >> 27) & 1) == arg0) {
+        if (((u8)(cur->f38 >> 27) & 1) == arg0) {
             if (prev != 0) {
                 prev->f5C = cur->f5C;
             } else {

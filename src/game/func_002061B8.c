@@ -1,13 +1,15 @@
+#include "common.h"
+
 extern float D_00446C04;
 extern char D_00446C08;
 
 typedef struct {
-    long long w[12];
+    s64 w[12];
 } Blk;
 
 typedef struct {
     char pad[0x20];
-    unsigned char b0, b1, b2, b3;
+    u8 b0, b1, b2, b3;
 } Out;
 
 extern Blk D_005DDB20[];

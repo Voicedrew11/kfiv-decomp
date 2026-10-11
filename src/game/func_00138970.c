@@ -1,4 +1,6 @@
-int func_00192C98(void *, int, int, unsigned int, int);
+#include "common.h"
+
+int func_00192C98(void *, int, int, u32, int);
 
 typedef struct {
     char pad0[0x1C];
@@ -9,12 +11,12 @@ typedef struct {
     char pad0[0xC];
     struct {
         char pad0[0xC4];
-        unsigned char c4;
+        u8 c4;
     } *c;
     char pad10[0xC8];
-    unsigned long b0 : 18;
-    unsigned long b18 : 1;
-    unsigned long b19 : 45;
+    u64 b0 : 18;
+    u64 b18 : 1;
+    u64 b19 : 45;
     Sub sub;
 } Actor;
 

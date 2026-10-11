@@ -1,26 +1,28 @@
+#include "common.h"
+
 typedef struct {
-    unsigned long X : 16;
-    unsigned long Y : 16;
-    unsigned long Z : 32;
+    u64 X : 16;
+    u64 Y : 16;
+    u64 Z : 32;
 } Xyz;
 
 typedef struct {
     Xyz a;
-    long pad8;
+    s64 pad8;
     Xyz b;
     float f18;
     char pad1C[0x3F - 0x1C];
-    signed char f3F;
+    s8 f3F;
     char pad40[0x60 - 0x40];
 } S;
 
 extern S D_005DDA00;
-extern unsigned char D_00349681[];
-extern unsigned char D_00349682[];
-extern unsigned char D_00349683[];
+extern u8 D_00349681[];
+extern u8 D_00349682[];
+extern u8 D_00349683[];
 
 S *func_00205F38(S *arg0) {
-    unsigned char v;
+    u8 v;
 
     D_005DDA00 = *arg0;
     switch (arg0->f3F) {

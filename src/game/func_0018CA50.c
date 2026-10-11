@@ -1,3 +1,5 @@
+#include "common.h"
+
 int func_0018B3C0(float, int *, int, int);
 extern int D_00413F80[];
 extern void *D_004467E0;
@@ -9,12 +11,12 @@ typedef struct E {
     char pad20[0x18];
     float f38;
     char pad3C[0x9C];
-    long flags;
+    s64 flags;
 } E;
 
 int func_0018CA50(int *arg0) {
     E *s;
-    long temp;
+    s64 temp;
 
     s = D_004467E0;
     while (s != 0) {

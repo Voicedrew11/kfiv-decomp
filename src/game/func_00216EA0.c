@@ -1,21 +1,23 @@
+#include "common.h"
+
 typedef struct {
-    unsigned char a, b, c, d;
+    u8 a, b, c, d;
 } Slot;
 
 typedef struct {
     char pad0[0x102];
-    unsigned short f102;
+    u16 f102;
     char pad1[0x1C];
-    unsigned short f120;
-    unsigned short f122;
+    u16 f120;
+    u16 f122;
     Slot slot[16];
-    unsigned short f164;
+    u16 f164;
 } Ctl;
 
 void func_00216EA0(void *arg0) {
     Ctl *c = arg0;
     int i;
-    unsigned short bit;
+    u16 bit;
     Slot *s;
 
     c->f122 = 0;

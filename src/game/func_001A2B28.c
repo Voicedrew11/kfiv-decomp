@@ -1,10 +1,12 @@
+#include "common.h"
+
 extern int D_004468D0;
 extern char D_003F3550[];
 void func_001A2A18(void *);
 
 typedef struct {
     char pad0[0x40];
-    unsigned long flags;
+    u64 flags;
     char pad48[0x18];
     int f60;
     char pad64[0xA0 - 0x64];

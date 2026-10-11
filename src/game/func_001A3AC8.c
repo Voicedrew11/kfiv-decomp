@@ -1,5 +1,7 @@
+#include "common.h"
+
 int func_00109A50();
-int func_00109A80(int, long);
+int func_00109A80(int, s64);
 int func_00109AD0();
 int func_00109E18();
 int func_0010AEB8(int);

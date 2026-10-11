@@ -1,13 +1,15 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0x20];
-    long flags;
+    s64 flags;
     int key;
     char pad2C[0x24];
 } A;
 
 typedef struct {
     char pad0[0x40];
-    long flags;
+    s64 flags;
     char pad48[0x14];
     int key;
     char pad5C[0x40];

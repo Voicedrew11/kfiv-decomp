@@ -1,8 +1,10 @@
-void *memset(void *, int, unsigned int);
+#include "common.h"
+
+void *memset(void *, int, u32);
 
 typedef struct Node {
     char pad0[0x2C];
-    short id;
+    s16 id;
     char pad1[0x0A];
     struct Node *prev;
     struct Node *next;

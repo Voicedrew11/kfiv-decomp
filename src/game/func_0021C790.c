@@ -1,7 +1,9 @@
+#include "common.h"
+
 typedef struct {
     int a00;
     char pad04[0x28];
-    unsigned int a2C;
+    u32 a2C;
     int a30;
     int a34;
     int a38;
@@ -10,9 +12,9 @@ typedef struct {
 } Obj;
 
 void func_0021C790(Obj *arg0, int arg1) {
-    unsigned int temp_a0;
-    unsigned int temp_v0;
-    unsigned int temp_v0_2;
+    u32 temp_a0;
+    u32 temp_v0;
+    u32 temp_v0_2;
 
     if (arg0->a00 == 0) {
         temp_a0 = arg0->a2C;

@@ -1,10 +1,12 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xC];
     float f0C;
     float f10;
     float f14;
     char pad1[0x34];
-    unsigned short u4C;
+    u16 u4C;
     char pad2[2];
     int p50;
     char pad3[0x10];

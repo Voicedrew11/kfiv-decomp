@@ -1,6 +1,8 @@
+#include "common.h"
+
 typedef union {
     float f[4];
-    long long q[2];
+    s64 q[2];
 } Vec4;
 
 int memset(void *, int, int);

@@ -1,15 +1,17 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0x10];
     int i10;
     char pad1[0x38];
-    unsigned short u4C;
+    u16 u4C;
     char pad2[6];
     void *p54;
 } Actor;
 
 typedef struct {
     char pad0[0xEC];
-    unsigned short uEC;
+    u16 uEC;
 } Target;
 
 void func_001AF298(Actor *, char *);

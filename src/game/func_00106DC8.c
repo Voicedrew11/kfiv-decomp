@@ -1,26 +1,27 @@
 #include "kf_gs.h"
+#include "common.h"
 
 extern int D_00446F78;
 
 void func_00109A50(void);
-void func_00109A80(int, long);
+void func_00109A80(int, s64);
 void func_00109AD0(void);
 void func_0010A100(void *);
 
 typedef struct {
-    long tag;              /* 0x00 GIF tag */
-    long zero;             /* 0x08 */
+    s64 tag;              /* 0x00 GIF tag */
+    s64 zero;             /* 0x08 */
     int ctl;               /* 0x10 */
-    unsigned char rgba[4]; /* 0x14 */
-    unsigned char pad[8];  /* 0x18 */
-    unsigned short x0;     /* 0x20 */
-    unsigned short y0;     /* 0x22 */
-    unsigned int u0;       /* 0x24 */
+    u8 rgba[4]; /* 0x14 */
+    u8 pad[8];  /* 0x18 */
+    u16 x0;     /* 0x20 */
+    u16 y0;     /* 0x22 */
+    u32 u0;       /* 0x24 */
     int w;                 /* 0x28 */
     int h;                 /* 0x2c */
-    unsigned short x1;     /* 0x30 */
-    unsigned short y1;     /* 0x32 */
-    unsigned int u1;       /* 0x34 */
+    u16 x1;     /* 0x30 */
+    u16 y1;     /* 0x32 */
+    u32 u1;       /* 0x34 */
     int v1;                /* 0x38 */
     int z;                 /* 0x3c */
 } SpritePkt;
@@ -30,7 +31,7 @@ void func_00106DC8(void) {
     int uVar1;
     int n;
     int th;
-    unsigned long c;
+    u64 c;
 
     uVar1 = 0x1180;
     if (D_00446F78 != 0) {
@@ -47,7 +48,7 @@ void func_00106DC8(void) {
     th = 9;
     c = uVar1 | 0x28028000L;
     p.zero = 0;
-    p.tag = c | ((unsigned long)th << 30);
+    p.tag = c | ((u64)th << 30);
     p.rgba[0] = 0x80;
     p.rgba[1] = 0x80;
     p.u1 = 0xFFFFFFFF;

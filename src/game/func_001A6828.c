@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xD0];
     float vD0[4];
@@ -9,13 +11,13 @@ typedef struct {
     float fDC;
     float fE0;
     char padE4[0xE];
-    unsigned short hF2;
+    u16 hF2;
 } T54;
 
 void func_001AF640(void *, int);
 void func_001AF928(void *, int);
 void func_001AF538(float *, float *, float);
-void func_001A2838(unsigned short, void *);
+void func_001A2838(u16, void *);
 
 typedef struct {
     float w0;
@@ -28,7 +30,7 @@ typedef struct {
     char pad0[0x10];
     Sub sub;
     char pad24[0x40 - 0x24];
-    long l40;
+    s64 l40;
     char pad48[8];
     T50 *p50;
     T54 *p54;
@@ -47,5 +49,5 @@ void func_001A6828(Obj *a, int arg1) {
         func_001A2838(a->p54->hF2, a);
     }
     s->c10 = 0;
-    a->l40 |= (long)0x8000 << 0x2B;
+    a->l40 |= (s64)0x8000 << 0x2B;
 }

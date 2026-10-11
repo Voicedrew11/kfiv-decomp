@@ -1,7 +1,9 @@
+#include "common.h"
+
 void func_001241A0(int);
 typedef struct {
-    union { int w; struct { unsigned char a; unsigned short b; } f; } u;
-    short c; char d; int e; int f;
+    union { int w; struct { u8 a; u16 b; } f; } u;
+    s16 c; char d; int e; int f;
 } Entry;
 extern Entry D_003D6DF0[];
 int func_00123DD8(int idx) {

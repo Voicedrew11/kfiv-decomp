@@ -1,8 +1,10 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xEC];
-    unsigned short uEC;
-    unsigned short uEE;
-    unsigned short uF0;
+    u16 uEC;
+    u16 uEE;
+    u16 uF0;
     char pad1[0x12];
     float f104;
 } Ctl;
@@ -10,7 +12,7 @@ typedef struct {
 typedef struct {
     char pad0[0x10];
     float f10;
-    unsigned short u14;
+    u16 u14;
     char t16;
 } Sub;
 
@@ -19,8 +21,8 @@ typedef struct {
     Sub sub;
     char pad1[0x20];
     void *p48;
-    unsigned short count;
-    unsigned short u4E;
+    u16 count;
+    u16 u4E;
     char *p50;
     Ctl *p54;
     char pad2[4];
@@ -31,13 +33,13 @@ void func_001AEC48(void *);
 void func_001AED58(void *);
 int func_001AF0B0(void *);
 int func_001A2A18(void *);
-void func_001A1E28(unsigned short, void *, void *, int, unsigned short, void *);
+void func_001A1E28(u16, void *, void *, int, u16, void *);
 
 void func_001ADDD0(Actor *arg0) {
     Sub *s;
     Ctl *c;
     char *p50;
-    unsigned short var_a0;
+    u16 var_a0;
 
     func_001AEC48(arg0);
     s = &arg0->sub;

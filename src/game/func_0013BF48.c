@@ -1,10 +1,12 @@
+#include "common.h"
+
 typedef struct {
     int a[5];
 } Tbl;
 
 typedef struct {
     char pad0[0xD8];
-    long flags;
+    s64 flags;
     char pade0[0x7A];
     char tag;
 } Obj;

@@ -1,8 +1,10 @@
+#include "common.h"
+
 extern char D_0038CD20[];
 extern int D_00446770;
 
 void func_00214290(int *arg0) {
-    unsigned int idx;
+    u32 idx;
     char *row;
     char *p;
     float *fp;
@@ -27,7 +29,7 @@ void func_00214290(int *arg0) {
     if (idx < 0x20) {
         f3 = f2 - f6;
         p = (char *)((idx << 5) + ((int *)row)[3]);
-        *(long long *)(p + 0x10) = (long long)((c << 16) + (b << 8) + a);
+        *(s64 *)(p + 0x10) = (s64)((c << 16) + (b << 8) + a);
         fp = (float *)p;
         fp[0] = fp[1] = 0.0f;
         *(float *)(p + 0xC) = f2 * f6 * (f4 - f7) / f3;

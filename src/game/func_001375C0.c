@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern float D_00444F74;
 extern float D_00444F78;
 float func_00195388(float *, float, float);
@@ -8,12 +10,12 @@ void func_001375C0(void *arg0) {
     char *s;
     char *obj;
     char *ent;
-    unsigned short flags;
-    unsigned short n;
+    u16 flags;
+    u16 n;
     int i;
 
     f0 = D_00444F74;
-    flags = *(unsigned short *)((char *)arg0 + 0xC8);
+    flags = *(u16 *)((char *)arg0 + 0xC8);
     s = (char *)arg0 + 0xE0;
     if (flags & 0x200) {
         f12 = f0;
@@ -26,7 +28,7 @@ void func_001375C0(void *arg0) {
     }
     func_00195388((float *)(s + 0x4C), f12, 20.0f);
     obj = *(char **)arg0;
-    n = *(unsigned short *)(obj + 0xF0);
+    n = *(u16 *)(obj + 0xF0);
     ent = *(char **)(obj + 0xF8);
     for (i = 0; i < n; i++) {
         if (i == 0x17 || i == 0x1C || i == 0x1F || i == 0x20) {

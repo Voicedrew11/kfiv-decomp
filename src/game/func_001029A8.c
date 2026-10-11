@@ -1,12 +1,14 @@
+#include "common.h"
+
 typedef struct {
     char unk0[0x3C];
-    unsigned char unk3C;
+    u8 unk3C;
     char unk3D[3];
 } Def40;
 
 typedef struct {
     char unk0[0x12];
-    unsigned char unk12;
+    u8 unk12;
     char unk13[0xF];
 } Rec22;
 
@@ -15,12 +17,12 @@ typedef struct {
 } Blk17C;
 
 typedef struct {
-    unsigned char unk0;
-    unsigned char unk1;
-    short unk2;
-    unsigned char unk4;
-    unsigned char unk5;
-    short unk6;
+    u8 unk0;
+    u8 unk1;
+    s16 unk2;
+    u8 unk4;
+    u8 unk5;
+    s16 unk6;
     char unk8[0xC];
 } Cfg14;
 
@@ -60,7 +62,7 @@ extern const Blk17C D_0043DCB0;
 extern const Blk17C D_0043DE30;
 extern const Blk17C D_0043DFB0;
 
-void *memset(void *, int, unsigned int);
+void *memset(void *, int, u32);
 void func_001DC0E0(void);
 
 void func_001029A8(void) {

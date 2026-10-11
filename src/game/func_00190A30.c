@@ -1,16 +1,18 @@
+#include "common.h"
+
 typedef struct {
     char p0[0xBC];
-    unsigned char a[2];
+    u8 a[2];
     char pb[2];
-    unsigned char b[6];
+    u8 b[6];
     char pc[6];
-    signed char state;
-    signed char sel;
+    s8 state;
+    s8 sel;
     char p1[10];
-    unsigned long bits;
+    u64 bits;
 } Actor;
 
-static inline void adjust(unsigned char *p, int d) {
+static inline void adjust(u8 *p, int d) {
     int v = *p + d;
     int hi = 0xC0;
 
@@ -22,7 +24,7 @@ static inline void adjust(unsigned char *p, int d) {
 void func_00190A30(Actor *a) {
     int i;
     int n;
-    unsigned char *b;
+    u8 *b;
 
     if (a->state == 2) {
         for (i = 0; i < 2; i++) {

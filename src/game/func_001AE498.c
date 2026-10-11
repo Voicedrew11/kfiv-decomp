@@ -1,8 +1,10 @@
+#include "common.h"
+
 typedef struct Obj {
     char pad0[0xC];
     float f0C;
     char pad10[0x4C - 0x10];
-    unsigned short u4C;
+    u16 u4C;
     char pad4E[2];
     char *p50;
     char *p54;
@@ -12,7 +14,7 @@ typedef struct Obj {
 
 void func_001AEC48(void *);
 void func_001AED58(void *);
-unsigned short func_001AF0B0(void *);
+u16 func_001AF0B0(void *);
 void func_00216778(void *, void *);
 
 void func_001AE498(Obj *arg0) {
@@ -34,7 +36,7 @@ void func_001AE498(Obj *arg0) {
     func_00216778(temp_s1, arg0->p60->p50 + 0xD0);
     temp_v0 = arg0->u4C + 1;
     arg0->u4C = temp_v0;
-    if ((unsigned int)(temp_v0 & 0xFFFF) >= (unsigned int)*(unsigned short *)(arg0->p54 + 0x102)) {
+    if ((u32)(temp_v0 & 0xFFFF) >= (u32)*(u16 *)(arg0->p54 + 0x102)) {
         arg0->u4C = 0;
     }
 }

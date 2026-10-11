@@ -1,9 +1,11 @@
-extern unsigned char D_00349D55[];
+#include "common.h"
+
+extern u8 D_00349D55[];
 extern char D_0038CD20[];
 
 typedef struct {
     float x, y, z, w;
-    long long v;
+    s64 v;
     char pad[0x8];
 } Pos;
 

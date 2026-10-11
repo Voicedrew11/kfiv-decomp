@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern float D_00445194;
 extern float D_00445198;
 
@@ -20,15 +22,15 @@ typedef struct {
     char pad14[0x5C - 0x14];
     float *f5C;
     char pad60[0xC8 - 0x60];
-    short sC8;
+    s16 sC8;
     char padCA[0xD8 - 0xCA];
-    unsigned long b0 : 11;
-    unsigned long b11 : 3;
-    unsigned long b14 : 50;
+    u64 b0 : 11;
+    u64 b11 : 3;
+    u64 b14 : 50;
     Sub sub;
 } Actor;
 
-short func_00190F90(float, void *, int);
+s16 func_00190F90(float, void *, int);
 float func_00194F80(void *, void *);
 void func_001958B8(void *, void (*)(void), int);
 void func_00216778(void *, void *);

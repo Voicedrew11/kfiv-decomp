@@ -1,9 +1,11 @@
+#include "common.h"
+
 typedef struct {
     float x;
     float y;
     float z;
     float w;
-    long v;
+    s64 v;
     char pad[8];
 } Fog;
 
@@ -27,7 +29,7 @@ typedef struct {
     char pad2[0x4C];
 } Entry;
 
-extern unsigned char D_0034A0D5[];
+extern u8 D_0034A0D5[];
 extern Entry D_0038CD20[];
 
 void func_0011A0B8(int arg0) {

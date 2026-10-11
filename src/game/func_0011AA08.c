@@ -1,7 +1,9 @@
+#include "common.h"
+
 extern int D_00447064;
 extern int D_00447068;
 extern char D_0038D6B0[];
-extern unsigned short D_00413DA8[];
+extern u16 D_00413DA8[];
 
 void func_0020B780(int);
 void func_001096E8(void);
@@ -11,7 +13,7 @@ void func_001095D0(void);
 void func_0011AAE8(void);
 void func_001095D8(void);
 void func_001B5460(void);
-unsigned char func_00109800(void);
+u8 func_00109800(void);
 
 void func_0011AA08(void) {
     int temp_v1;

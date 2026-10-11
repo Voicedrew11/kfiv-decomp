@@ -6,7 +6,7 @@ int func_001025C0(int fd, void *buf, int size) {
     KFFile *f;
     int sectors;
 
-    if ((unsigned int)fd >= 2 || D_00447600[fd].active == 0) {
+    if ((u32)fd >= 2 || D_00447600[fd].active == 0) {
         return -1;
     }
     if (size < 0) {

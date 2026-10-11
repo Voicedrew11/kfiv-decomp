@@ -1,14 +1,16 @@
+#include "common.h"
+
 typedef float Mat[4][4] __attribute__((aligned(16)));
 typedef float Vec[4] __attribute__((aligned(16)));
 typedef int IVec[4] __attribute__((aligned(16)));
 
-extern unsigned int D_0038A158[8];
+extern u32 D_0038A158[8];
 extern int D_0038A178[8];
 extern int D_00446744;
 extern Mat D_00431AF0;
 extern Mat D_00432320;
 
-void *memset(void *, int, unsigned int);
+void *memset(void *, int, u32);
 void sceVu0TransMatrix(Mat, Mat, Vec);
 void sceVu0RotMatrixX(Mat, Mat, float);
 void sceVu0RotMatrixY(Mat, Mat, float);

@@ -1,3 +1,5 @@
+#include "common.h"
+
 int func_001CBAE0();
 extern char *D_004471D4;
 
@@ -11,7 +13,7 @@ typedef struct {
     Rec cur;
 } G;
 
-void func_001CEFA0(unsigned int arg0) {
+void func_001CEFA0(u32 arg0) {
     if (arg0 < 5) {
         ((G *)D_004471D4)->cur = ((G *)D_004471D4)->tab[arg0];
         func_001CBAE0(1, 0x40070, &((G *)D_004471D4)->cur);

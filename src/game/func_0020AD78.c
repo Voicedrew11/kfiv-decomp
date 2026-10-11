@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern int D_00446E90;
 extern int D_00446F20;
 extern int D_00446F50;
@@ -5,15 +7,15 @@ extern int D_00446F78;
 extern int D_00446F7C;
 extern int D_004412E0[];
 void D_0020AD30(void);
-extern long D_00432E20[];
-extern long D_00433050[];
+extern s64 D_00432E20[];
+extern s64 D_00433050[];
 
-void func_0021B540(int *, int, int, void (*)(void), int, int, long, long);
+void func_0021B540(int *, int, int, void (*)(void), int, int, s64, s64);
 void func_001095E0(void);
 void func_0010B000(void);
 void func_001095D0(void);
 void func_0010A008(void);
-void func_0010A4E8(long, long, long, long, long);
+void func_0010A4E8(s64, s64, s64, s64, s64);
 void func_001095D8(void);
 void func_001096E8(void);
 void func_00109800(void);
@@ -22,12 +24,12 @@ void func_001CB9A0(void);
 void func_0019C300(void);
 
 void func_0020AD78(void) {
-    long temp;
+    s64 temp;
     char buf[0x40];
 
     D_00446E90 = 0;
     func_0021B540(D_004412E0, D_00446F50, D_00446F20, D_0020AD30, 0x3FFF, 2, 0, 0);
-    temp = (long)0xC000 << 17;
+    temp = (s64)0xC000 << 17;
     D_00432E20[0] = temp;
     D_00432E20[30] = temp;
     D_00433050[0] = temp;

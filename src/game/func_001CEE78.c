@@ -1,15 +1,17 @@
+#include "common.h"
+
 void FlushCache(int);
 extern char *D_004471D4;
 
 typedef struct {
     int id;
     int flags;
-    short a;
-    short b;
+    s16 a;
+    s16 b;
     int c;
     int d;
-    short e;
-    short f;
+    s16 e;
+    s16 f;
 } Rec;
 
 typedef struct {
@@ -17,7 +19,7 @@ typedef struct {
     Rec tab[4];
 } G;
 
-int func_001CEE78(int arg0, short arg1, short arg2, short arg3, short arg4, short arg5, short arg6, int arg7) {
+int func_001CEE78(int arg0, s16 arg1, s16 arg2, s16 arg3, s16 arg4, s16 arg5, s16 arg6, int arg7) {
     Rec *r;
     int i;
 

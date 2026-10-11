@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct {
     char pad[0x120];
 } Ent;
@@ -5,7 +7,7 @@ typedef struct {
 typedef struct {
     char pad0[0x20];
     union {
-        long flags;
+        s64 flags;
         Ent *ent;
     } u;
     char pad28[0x28];
@@ -13,7 +15,7 @@ typedef struct {
 
 typedef struct {
     char pad0[0x40];
-    long flags;
+    s64 flags;
     char pad48[0xC];
     Ent *ent;
     char pad58[0x48];

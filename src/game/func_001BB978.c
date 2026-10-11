@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern char D_0038CD20[];
 extern int D_00446770;
 extern char D_00413F80[];
@@ -13,7 +15,7 @@ void func_001BB978(void) {
 
     row = D_0038CD20 + D_00446770 * 0x60;
     s = D_00413F80;
-    c =*(char *)((*(unsigned short *)(s + 0x252) << 7) + ((int *)row)[5] + 0x4C);
+    c =*(char *)((*(u16 *)(s + 0x252) << 7) + ((int *)row)[5] + 0x4C);
     *(int *)(s + 0x2A4) = c;
     if (c - D_00414524[0] < 0) {
         *(int *)(s + 0x2AC) = -0x30;

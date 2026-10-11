@@ -1,7 +1,9 @@
+#include "common.h"
+
 typedef struct Sub {
     char pad0[0xEE];
-    unsigned short lo;
-    unsigned short hi;
+    u16 lo;
+    u16 hi;
 } Sub;
 
 typedef struct Inner {
@@ -14,7 +16,7 @@ typedef struct Obj {
     char pad0[0x10];
     Inner in;
     char pad1[0x14];
-    unsigned short cur;
+    u16 cur;
     char pad2[0x6];
     Sub *sub;
 } Obj;

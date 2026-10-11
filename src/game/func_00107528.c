@@ -1,4 +1,5 @@
 #include "kf_gs.h"
+#include "common.h"
 
 extern int D_00446F78;
 extern float D_00420D30[];
@@ -7,7 +8,7 @@ extern float D_004323E0[16];
 extern float D_00431AF0[16];
 
 void func_00109A50(void);
-void func_00109A80(int, long);
+void func_00109A80(int, s64);
 void func_00109AD0(void);
 void func_0010A100(void *);
 void sceVu0MulMatrix(void *, void *, void *);
@@ -17,17 +18,17 @@ void func_00216C48(void *, void *, void *);
 void KF_Vu0_ProjectToScreen(int *, void *);
 
 typedef struct {
-    long tag;
-    long zero;
+    s64 tag;
+    s64 zero;
     int reg;
-    unsigned char rgba[4];
-    long pad;
-    unsigned short x0, y0;
-    unsigned int f24;
+    u8 rgba[4];
+    s64 pad;
+    u16 x0, y0;
+    u32 f24;
     int f28;
     int f2c;
-    unsigned short x1, y1;
-    unsigned int f34;
+    u16 x1, y1;
+    u32 f34;
     int f38;
     int f3c;
 } Pkt;

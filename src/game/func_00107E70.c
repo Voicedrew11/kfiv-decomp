@@ -1,26 +1,27 @@
 #include "kf_gs.h"
+#include "common.h"
 
 extern int D_00446F78;
 
 void func_00109A50(void);
-void func_00109A80(int, long);
+void func_00109A80(int, s64);
 void func_00109AD0(void);
 void func_00109E18(void);
 void func_00109E88(void);
 void func_0010A100(void *);
 
 typedef struct {
-    long tag;              /* 0x00 GIF tag */
-    long zero;             /* 0x08 */
+    s64 tag;              /* 0x00 GIF tag */
+    s64 zero;             /* 0x08 */
     int reg;               /* 0x10 = 0x116 */
-    unsigned char rgba[4]; /* 0x14 */
-    long pad18;            /* 0x18 unused */
-    short x0, y0;          /* 0x20 */
-    unsigned int z0;       /* 0x24 = -1 */
+    u8 rgba[4]; /* 0x14 */
+    s64 pad18;            /* 0x18 unused */
+    s16 x0, y0;          /* 0x20 */
+    u32 z0;       /* 0x24 = -1 */
     int f0;                /* 0x28 scrolled by 0x400 */
     int g0;                /* 0x2C = 0 */
-    short x1, y1;          /* 0x30 */
-    unsigned int z1;       /* 0x34 = -1 */
+    s16 x1, y1;          /* 0x30 */
+    u32 z1;       /* 0x34 = -1 */
     int f1;                /* 0x38 scrolled by 0x400 */
     int g1;                /* 0x3C = 0x1C00 */
 } KfPacket;
@@ -52,7 +53,7 @@ void func_00107E70(int r, int g, int b) {
     pkt.y0 = 0x7200;
     pkt.x1 = 0x7000;
     {
-        unsigned int ky = 0x8DF8;
+        u32 ky = 0x8DF8;
         pkt.y1 = ky;
     }
     pkt.z0 = 0xFFFFFFFFU;

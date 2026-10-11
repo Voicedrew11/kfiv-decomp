@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern char D_0038CC50[];
 extern int D_0044705C;
 extern int D_00447060;
@@ -7,7 +9,7 @@ extern int D_0044706C;
 extern int D_00447070;
 extern char D_00472080[];
 
-void *memset(void *, int, unsigned int);
+void *memset(void *, int, u32);
 
 void func_0011A598(void) {
     int *p = (int *)D_0038CC50;

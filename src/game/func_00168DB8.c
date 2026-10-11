@@ -1,4 +1,6 @@
-int func_00192C98(void *, int, int, unsigned int, int);
+#include "common.h"
+
+int func_00192C98(void *, int, int, u32, int);
 int func_001958B8(void *, void *, int);
 int func_00199EB8(void *, void *, float);
 extern float D_00445640;
@@ -15,7 +17,7 @@ typedef struct {
 
 typedef struct {
     char pad0[0x82];
-    short s82;
+    s16 s82;
     char pad84[0x88 - 0x84];
     int i88;
 } Inner;
@@ -27,20 +29,20 @@ typedef struct {
 
 typedef struct {
     char pad0[0xC4];
-    unsigned char c4;
+    u8 c4;
 } Ctl;
 
 
 typedef struct {
-    unsigned long long z0 : 9;
-    unsigned long long b9 : 1;
-    unsigned long long z10 : 1;
-    unsigned long long f11 : 3;
-    unsigned long long z14 : 3;
-    unsigned long long b17 : 1;
-    unsigned long long z18 : 10;
-    unsigned long long b28 : 1;
-    unsigned long long z29 : 35;
+    u64 z0 : 9;
+    u64 b9 : 1;
+    u64 z10 : 1;
+    u64 f11 : 3;
+    u64 z14 : 3;
+    u64 b17 : 1;
+    u64 z18 : 10;
+    u64 b28 : 1;
+    u64 z29 : 35;
 } Flags;
 
 typedef struct {
@@ -52,13 +54,13 @@ typedef struct {
     char pad6C[0x88 - 0x6C];
     float f88;
     char pad8C[0xA0 - 0x8C];
-    short sA0;
+    s16 sA0;
     char padA2[0xC6 - 0xA2];
-    unsigned short sC6;
-    short sC8;
+    u16 sC6;
+    s16 sC8;
     char cCA;
     char padCB[0xD8 - 0xCB];
-    union { Flags b; unsigned long l; } flags;
+    union { Flags b; u64 l; } flags;
     Sub sub;
 } Act;
 

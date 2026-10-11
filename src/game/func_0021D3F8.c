@@ -1,12 +1,14 @@
-#define HW_1000B000 (*(volatile unsigned int *)0x1000B000)
-#define HW_1000B010 (*(volatile unsigned int *)0x1000B010)
-#define HW_1000B020 (*(volatile unsigned int *)0x1000B020)
-#define HW_1000B400 (*(volatile unsigned int *)0x1000B400)
-#define HW_1000B410 (*(volatile unsigned int *)0x1000B410)
-#define HW_1000B420 (*(volatile unsigned int *)0x1000B420)
-#define HW_1000B430 (*(volatile unsigned int *)0x1000B430)
-#define HW_10002010 (*(volatile unsigned int *)0x10002010)
-#define HW_10002020 (*(volatile unsigned int *)0x10002020)
+#include "common.h"
+
+#define HW_1000B000 (*(volatile u32 *)0x1000B000)
+#define HW_1000B010 (*(volatile u32 *)0x1000B010)
+#define HW_1000B020 (*(volatile u32 *)0x1000B020)
+#define HW_1000B400 (*(volatile u32 *)0x1000B400)
+#define HW_1000B410 (*(volatile u32 *)0x1000B410)
+#define HW_1000B420 (*(volatile u32 *)0x1000B420)
+#define HW_1000B430 (*(volatile u32 *)0x1000B430)
+#define HW_10002010 (*(volatile u32 *)0x10002010)
+#define HW_10002020 (*(volatile u32 *)0x10002020)
 
 int WaitSema(int);
 int SignalSema(int);

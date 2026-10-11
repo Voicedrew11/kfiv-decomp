@@ -1,12 +1,14 @@
+#include "common.h"
+
 typedef struct {
     char f0;
-    unsigned char sec;
-    unsigned char min;
-    unsigned char hour;
+    u8 sec;
+    u8 min;
+    u8 hour;
     char f4;
-    unsigned char mday;
-    unsigned char mon;
-    unsigned char year;
+    u8 mday;
+    u8 mon;
+    u8 year;
 } Func1D2390Date;
 
 int mktime(int *);

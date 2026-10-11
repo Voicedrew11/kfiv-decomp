@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct {
     char pad[0xC0];
     float f0;
@@ -7,7 +9,7 @@ typedef struct {
 
 typedef struct {
     char pad[0x44];
-    short s44;
+    s16 s44;
 } Sub;
 
 typedef struct {
@@ -15,16 +17,16 @@ typedef struct {
     int pad4;
     Sub *p8;
     int pad0C;
-    union { int flags; struct { char f0; unsigned char st; } b; } u;
+    union { int flags; struct { char f0; u8 st; } b; } u;
 } Obj;
 
-extern long D_0043E780[];
-short func_0011E340(void *, int);
-void func_001C9340(int, short, void *, void *, void *, void *);
+extern s64 D_0043E780[];
+s16 func_0011E340(void *, int);
+void func_001C9340(int, s16, void *, void *, void *, void *);
 
 void func_0011FCF8(Obj *arg0) {
     float sp[3];
-    long sp10[2];
+    s64 sp10[2];
     Ctl *c;
     Sub *s;
 
@@ -43,7 +45,7 @@ void func_0011FCF8(Obj *arg0) {
                 sp[0] = c->f0;
                 sp[1] = c->f4 - 25.0f;
                 sp[2] = c->f8;
-                func_001C9340((unsigned char) arg0->u.flags & 1, s->s44, sp, (char *) c + 0xD0, sp10, arg0);
+                func_001C9340((u8) arg0->u.flags & 1, s->s44, sp, (char *) c + 0xD0, sp10, arg0);
             }
         }
     }

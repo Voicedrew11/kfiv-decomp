@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern char D_002496BF[];
 extern int D_003EF560[];
 extern int D_003EF678[];
@@ -20,7 +22,7 @@ void func_001A1160(int arg0) {
     temp_s1 = arg0 + 0x96;
     sprintf(sp, (char *)D_003EF678[1], temp_s1);
     sprintf(sp80, (char *)D_003EF678[2], temp_s1);
-    temp_v1 = ((unsigned int)D_002496BF >> 6) << 6;
+    temp_v1 = ((u32)D_002496BF >> 6) << 6;
     D_003EF560[0] = temp_v1;
     temp_a0 = temp_v1 + 0x20000;
     D_003EF560[1] = temp_a0;

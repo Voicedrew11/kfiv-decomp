@@ -1,9 +1,11 @@
-extern unsigned char D_00413F80[];
-extern unsigned char D_0041B9B8[];
+#include "common.h"
+
+extern u8 D_00413F80[];
+extern u8 D_0041B9B8[];
 
 typedef struct {
     char pad0[0x82];
-    unsigned short f82;
+    u16 f82;
 } Ctl;
 
 typedef struct {
@@ -13,7 +15,7 @@ typedef struct {
 
 extern Dev *D_00446978;
 
-void func_00109098(Dev *, unsigned char, unsigned short);
+void func_00109098(Dev *, u8, u16);
 void func_0019CDA0(int);
 int func_0019CE00(int);
 

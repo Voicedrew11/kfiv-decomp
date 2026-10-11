@@ -1,7 +1,9 @@
+#include "common.h"
+
 void FlushCache(int);
 extern char *D_004471D4;
 
-int func_001CEF48(unsigned int arg0) {
+int func_001CEF48(u32 arg0) {
     int *temp_v0;
 
     if (arg0 >= 5U) {

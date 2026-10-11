@@ -4,19 +4,21 @@
 #ifndef KF_FILE_H
 #define KF_FILE_H
 
+#include "common.h"
+
 typedef struct {
-    unsigned char trycount;
-    unsigned char spindlctrl;
-    unsigned char datapattern;
-    unsigned char pad;
+    u8 trycount;
+    u8 spindlctrl;
+    u8 datapattern;
+    u8 pad;
 } sceCdRMode;
 
 typedef struct {
-    unsigned int lsn;
-    unsigned int size;
+    u32 lsn;
+    u32 size;
     char name[16];
-    unsigned char date[8];
-    unsigned int flag;
+    u8 date[8];
+    u32 flag;
 } sceCdlFILE;
 
 /* one open file */
@@ -38,14 +40,14 @@ typedef struct {
 /* a KF4.DAT member */
 typedef struct {
     char name[0x34];
-    unsigned int size;
+    u32 size;
     int unk38;
-    unsigned int offset;    /* bytes from the start of KF4.DAT */
+    u32 offset;    /* bytes from the start of KF4.DAT */
 } KFDirEntry;
 
 typedef struct {
     int unk0;
-    unsigned int count;
+    u32 count;
     int lsn;                /* first sector of KF4.DAT */
     char pad[0x34];
 } KFDirHeader;
@@ -66,7 +68,7 @@ int puts(const char *);
 char *strcpy(char *, const char *);
 char *strcat(char *, const char *);
 int strcasecmp(const char *, const char *);
-void *memset(void *, int, unsigned int);
+void *memset(void *, int, u32);
 int sceCdSearchFile(sceCdlFILE *, const char *);
 int sceCdRead(int lsn, int sectors, void *buf, sceCdRMode *mode);
 int sceCdSeek(int lsn);

@@ -1,6 +1,8 @@
+#include "common.h"
+
 typedef struct {
     char pad0[4];
-    unsigned char *type;           /* 0x4 */
+    u8 *type;           /* 0x4 */
     char pad8[0x10 - 8];
     int flags;                     /* 0x10 */
 } Obj;

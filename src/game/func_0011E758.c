@@ -1,13 +1,15 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0x10];
-    unsigned int b0 : 8;
-    unsigned int b8 : 8;
-    unsigned int b16 : 4;
-    unsigned int f20 : 1;
-    unsigned int f21 : 1;
-    unsigned int f22 : 1;
-    unsigned int b23 : 1;
-    unsigned int b24 : 8;
+    u32 b0 : 8;
+    u32 b8 : 8;
+    u32 b16 : 4;
+    u32 f20 : 1;
+    u32 f21 : 1;
+    u32 f22 : 1;
+    u32 b23 : 1;
+    u32 b24 : 8;
 } Rec;
 
 void func_0011E758(Rec *arg0, int arg1) {

@@ -1,4 +1,6 @@
-unsigned int func_001124E0(int arg0, unsigned int arg1, unsigned int arg2) {
+#include "common.h"
+
+u32 func_001124E0(int arg0, u32 arg1, u32 arg2) {
     if (arg0 == 0 && arg1 == 0xFF && arg2 < 8) {
         return arg2;
     }

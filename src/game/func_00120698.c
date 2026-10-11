@@ -1,4 +1,6 @@
-extern unsigned int D_0038CC74[];
+#include "common.h"
+
+extern u32 D_0038CC74[];
 extern void *D_00420D50[];
 
 void func_00120698(char *arg0) {

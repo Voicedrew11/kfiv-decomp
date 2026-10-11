@@ -1,16 +1,18 @@
+#include "common.h"
+
 extern int D_01DFAF80[];
 
 int FlushCache(int);
 
-#define GIF_CTRL (*(volatile unsigned int *)0x1000A000)
-#define GIF_MODE (*(volatile unsigned int *)0x1000A010)
-#define GIF_STAT (*(volatile unsigned int *)0x1000A020)
-#define GIF_TAG0 (*(volatile unsigned int *)0x1000A030)
+#define GIF_CTRL (*(volatile u32 *)0x1000A000)
+#define GIF_MODE (*(volatile u32 *)0x1000A010)
+#define GIF_STAT (*(volatile u32 *)0x1000A020)
+#define GIF_TAG0 (*(volatile u32 *)0x1000A030)
 
 void func_0020D9A8(void) {
-    unsigned int *p;
+    u32 *p;
 
-    p = (unsigned int *)D_01DFAF80;
+    p = (u32 *)D_01DFAF80;
     *p++ = 0x70000002;
     *p++ = 0;
     *p++ = 0;
@@ -26,6 +28,6 @@ void func_0020D9A8(void) {
     FlushCache(0);
     while (GIF_CTRL & 0x100);
     GIF_MODE = 0;
-    GIF_TAG0 = (unsigned int)D_01DFAF80;
+    GIF_TAG0 = (u32)D_01DFAF80;
     GIF_CTRL = 0x105;
 }

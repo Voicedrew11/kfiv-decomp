@@ -1,8 +1,10 @@
+#include "common.h"
+
 int func_0019F5A8(int *, int);
 extern int D_003EF5B8[];
 extern int D_0044685C;
-extern unsigned char D_004470E4;
-extern unsigned char D_004470E5;
+extern u8 D_004470E4;
+extern u8 D_004470E5;
 
 int func_0019F628(int arg0, int arg1) {
     int var_s0;

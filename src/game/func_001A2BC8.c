@@ -1,6 +1,8 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0x20];
-    long flags;
+    s64 flags;
     char pad28[0x4];
     int owner;
     char pad30[0x20];
@@ -13,7 +15,7 @@ void func_001A2AF8(A *);
 
 void func_001A2BC8(int arg0) {
     A *p;
-    long m1;
+    s64 m1;
     int i;
 
     if (D_004468CC > 0) {

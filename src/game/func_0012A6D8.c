@@ -1,19 +1,21 @@
-int func_00192C98(void *, int, int, unsigned int, int);
+#include "common.h"
+
+int func_00192C98(void *, int, int, u32, int);
 
 typedef struct {
     char pad0[0xC4];
-    unsigned char c4;
+    u8 c4;
 } Ctl;
 
 typedef struct {
     char pad0[0xC];
     Ctl *c;
     char pad1[0xC8 - 0x10];
-    unsigned short hc8;
+    u16 hc8;
 } Actor;
 
 void func_0012A6D8(Actor *arg0) {
-    unsigned short temp_v1;
+    u16 temp_v1;
 
     temp_v1 = arg0->hc8;
     if (temp_v1 & 0x100) {

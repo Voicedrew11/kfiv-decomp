@@ -1,3 +1,5 @@
+#include "common.h"
+
 void func_001AF928(void);
 void func_001AF640(void *, int);
 void func_001AF538(float, void *, void *);
@@ -14,7 +16,7 @@ void func_001A7E98(char *arg0, int arg1) {
     func_001AF928();
     func_001AF640(arg0, arg1);
     func_001AF538(*(float *)(*(char **)(arg0 + 0x54) + 0xD8), temp_s2, *(char **)(arg0 + 0x50) + 0xD0);
-    *(long *)(arg0 + 0x40) = *(long *)(arg0 + 0x40) | ((long)0x8000 << 43);
+    *(s64 *)(arg0 + 0x40) = *(s64 *)(arg0 + 0x40) | ((s64)0x8000 << 43);
     *(float *)(temp_s2 + 0x10) = (float)((((float)(rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 0.5f);
     temp_f0 = (float)(rand() & 0xFFFF);
     temp_f1 = (float)((((temp_f0 * 0.000030517578f) - 1.0f) * D_004460A4) + D_004460A8);

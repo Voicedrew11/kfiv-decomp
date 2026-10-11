@@ -1,8 +1,10 @@
+#include "common.h"
+
 extern char D_0038CD20[];
 extern int D_00446770;
 
 void func_00214480(int *arg0) {
-    unsigned int idx;
+    u32 idx;
     char *p;
     char *row;
 

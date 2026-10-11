@@ -1,3 +1,5 @@
+#include "common.h"
+
 float func_00194FB8(float);
 extern float D_004452DC;
 extern float D_004452E0;
@@ -6,10 +8,10 @@ typedef struct {
     char pad0[0x50];
     float f50;
     char pad54[0x14];
-    short h68;
+    s16 h68;
     char pad6A[0x11];
-    signed char c7b;
-    signed char c7c;
+    s8 c7b;
+    s8 c7c;
 } Sub;
 
 typedef struct {

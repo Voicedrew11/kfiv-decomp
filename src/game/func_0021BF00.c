@@ -1,15 +1,17 @@
-int func_0021BFD8(int, int, int, int, unsigned int, int, unsigned int, int);
+#include "common.h"
+
+int func_0021BFD8(int, int, int, int, u32, int, u32, int);
 void func_0021C6F0(int *, int *, int *, int *, int *);
 void func_0021C790(int *, int);
 extern int D_004379F0[];
 
-int func_0021BF00(int arg0, int *arg1, unsigned int arg2) {
+int func_0021BF00(int arg0, int *arg1, u32 arg2) {
     int sp0, sp4, sp8, spC;
-    unsigned int a;
+    u32 a;
     int b;
     int rem;
     int len;
-    unsigned int end;
+    u32 end;
     int v;
     int ret;
 

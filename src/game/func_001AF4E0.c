@@ -1,11 +1,13 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0x10B];
-    unsigned char b10B;
+    u8 b10B;
 } Ctl;
 
 typedef struct {
     char pad0[0x4E];
-    unsigned short u4E;
+    u16 u4E;
     char pad1[4];
     Ctl *p54;
 } Actor;

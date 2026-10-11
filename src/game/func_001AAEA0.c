@@ -1,5 +1,7 @@
+#include "common.h"
+
 typedef struct { char pad0[0x10]; int w0; float f4; int w8; char c0xC; } Sub;
-typedef struct Ctl { char pad0[0xD8]; float f_d8; char pad1[0xEC - 0xDC]; unsigned short h_ec; } Ctl;
+typedef struct Ctl { char pad0[0xD8]; float f_d8; char pad1[0xEC - 0xDC]; u16 h_ec; } Ctl;
 typedef struct { char pad0[0x10]; Sub s; char pad1[0x50-0x10-sizeof(Sub)]; char *p50; Ctl *p54; } Actor;
 void func_001AF538(float, void *, void *);
 void func_001AF640(void *, int);

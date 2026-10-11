@@ -1,4 +1,3 @@
-
 void func_00115550(void *, float *);
 void *func_00116160(int, int);
 extern int D_00446770;

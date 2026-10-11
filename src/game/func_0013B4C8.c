@@ -1,3 +1,5 @@
+#include "common.h"
+
 void func_001958B8(char *, void (*)(void), int);
 
 typedef struct P {
@@ -14,20 +16,20 @@ typedef struct A {
     char pad[0xD2];
     char d6;
     char pad2;
-    unsigned long b0 : 11;
-    unsigned long b11 : 3;
-    unsigned long b14 : 4;
-    unsigned long b18 : 1;
-    unsigned long b19 : 1;
-    unsigned long b20 : 1;
-    unsigned long b21 : 1;
-    unsigned long b22 : 1;
-    unsigned long b23 : 1;
-    unsigned long b24 : 2;
-    unsigned long b26 : 1;
-    unsigned long b27 : 1;
-    unsigned long b28 : 1;
-    unsigned long b29 : 35;
+    u64 b0 : 11;
+    u64 b11 : 3;
+    u64 b14 : 4;
+    u64 b18 : 1;
+    u64 b19 : 1;
+    u64 b20 : 1;
+    u64 b21 : 1;
+    u64 b22 : 1;
+    u64 b23 : 1;
+    u64 b24 : 2;
+    u64 b26 : 1;
+    u64 b27 : 1;
+    u64 b28 : 1;
+    u64 b29 : 35;
     char pad3[0x18];
     void (*f8)(void);
 } A;

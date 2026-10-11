@@ -1,8 +1,9 @@
 #include "kf_gs.h"
+#include "common.h"
 
 void FlushCache(int);
 void func_00109A50(void);
-int func_00109A80(int, unsigned long);
+int func_00109A80(int, u64);
 void func_00109AD0(void);
 extern int D_00446748;
 extern void *D_00447018[2];
@@ -11,11 +12,11 @@ extern Blk *D_00447020[2];
 extern int D_00447028;
 extern int D_0044703C;
 
-#define HW_10009000 (*(volatile unsigned int *)0x10009000)
-#define HW_10009010 (*(volatile unsigned int *)0x10009010)
-#define HW_10009020 (*(volatile unsigned int *)0x10009020)
-#define HW_10009030 (*(volatile unsigned int *)0x10009030)
-#define HW_12001000 (*(long *)0x12001000)
+#define HW_10009000 (*(volatile u32 *)0x10009000)
+#define HW_10009010 (*(volatile u32 *)0x10009010)
+#define HW_10009020 (*(volatile u32 *)0x10009020)
+#define HW_10009030 (*(volatile u32 *)0x10009030)
+#define HW_12001000 (*(s64 *)0x12001000)
 
 void func_001096E8(void) {
     void **temp_s0;
@@ -40,7 +41,7 @@ void func_001096E8(void) {
             FlushCache(0);
             HW_10009020 = 0;
             HW_10009010 = 0;
-            HW_10009030 = (unsigned int)*temp_s0;
+            HW_10009030 = (u32)*temp_s0;
             HW_10009000 = 0x105;
         }
     }

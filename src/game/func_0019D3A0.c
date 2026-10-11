@@ -1,11 +1,13 @@
+#include "common.h"
+
 extern char D_004470E1;
-extern unsigned char D_00349682[];
+extern u8 D_00349682[];
 extern int D_003EF658[];
 int rand(void);
 int func_0019C688(int);
-void func_001CE690(int, int, int, char, int, char, short, int);
+void func_001CE690(int, int, int, char, int, char, s16, int);
 
-int func_0019D3A0(unsigned char arg0, int arg1) {
+int func_0019D3A0(u8 arg0, int arg1) {
     int pan;
     int a0;
 
@@ -19,7 +21,7 @@ int func_0019D3A0(unsigned char arg0, int arg1) {
     if (arg1 >= 128) {
         arg1 = 127;
     }
-    pan = ((unsigned long) rand() << 11) / 0x7FFFFFFF - 0x400;
+    pan = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
     a0 = func_0019C688(3);
     if (arg1 != 0) {
         func_001CE690(a0, D_003EF658[0], 0, arg0, 0x3C, arg1, pan, 0x3F);

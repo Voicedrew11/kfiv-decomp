@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xC0];
     float vC0;
@@ -12,7 +14,7 @@ typedef struct {
     float fDC;
     float fE0;
     char padE4[0xE];
-    unsigned short hF2;
+    u16 hF2;
 } T54;
 
 void func_001AF640(void *, int);

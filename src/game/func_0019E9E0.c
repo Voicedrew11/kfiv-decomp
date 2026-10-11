@@ -1,5 +1,7 @@
+#include "common.h"
+
 extern char D_00500158[];
-int func_001CE8B0(unsigned int);
+int func_001CE8B0(u32);
 
 typedef struct {
     char pad0[0x3A];

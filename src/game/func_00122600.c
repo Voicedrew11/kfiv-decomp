@@ -1,8 +1,10 @@
-typedef struct { char pad[0x178]; unsigned int flags; } Obj;
+#include "common.h"
+
+typedef struct { char pad[0x178]; u32 flags; } Obj;
 
 void func_00122600(Obj **arg0, int arg1) {
     Obj *p;
-    unsigned int idx;
+    u32 idx;
     int sel;
 
     p = *arg0;

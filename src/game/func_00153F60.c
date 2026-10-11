@@ -1,10 +1,12 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xC0];
     float f0, f1, f2, f3;
     float rx, ry, rz;
 } Cam;
 
-void *memset(void *, int, unsigned int);
+void *memset(void *, int, u32);
 void sceVu0TransMatrix(float *, float *, float *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);

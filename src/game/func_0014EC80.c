@@ -1,6 +1,8 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xC];
-    unsigned char *ctl;
+    u8 *ctl;
     char pad1[0xFC - 0x10];
     int fc;
 } Actor;

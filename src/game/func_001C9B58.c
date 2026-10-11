@@ -1,6 +1,8 @@
+#include "common.h"
+
 typedef struct KfNode {
     int f00;
-    unsigned char *f04;
+    u8 *f04;
     struct KfNode *f08;
     char pad[0x14];
     int f20;

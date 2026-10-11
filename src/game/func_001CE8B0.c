@@ -1,20 +1,22 @@
+#include "common.h"
+
 extern char *D_004471D4;
 
 typedef struct {
     char b0;
-    unsigned char b1;
-    unsigned char b2;
+    u8 b1;
+    u8 b2;
     char b3;
 } Slot;
 
-int func_001CE8B0(unsigned int arg0) {
-    unsigned char *p;
+int func_001CE8B0(u32 arg0) {
+    u8 *p;
     int *ctl;
     Slot *s;
     int n;
     int m;
 
-    if (*(unsigned short *)(D_004471D4 + 0x4D6) == 0) {
+    if (*(u16 *)(D_004471D4 + 0x4D6) == 0) {
         return -1;
     }
     if (arg0 >= 0x7E) {
@@ -22,14 +24,14 @@ int func_001CE8B0(unsigned int arg0) {
     }
     ctl = (int *)(*(int *)(D_004471D4 + 0x4CC) | 0x20000000);
     n = *ctl;
-    if ((unsigned int)(n + 0xA) >= 0x3FC) {
+    if ((u32)(n + 0xA) >= 0x3FC) {
         return -2;
     }
     m = n + 4;
-    p = (unsigned char *)(((int)ctl + m) | 0x20000000);
+    p = (u8 *)(((int)ctl + m) | 0x20000000);
     s = (Slot *)(D_004471D4 + (arg0 * 4 + 0x240));
     *p++ = 0xFF;
-    *p++ = ((unsigned char *)(D_004471D4 + (s->b0 << 5)))[0x18];
+    *p++ = ((u8 *)(D_004471D4 + (s->b0 << 5)))[0x18];
     *p++ = 7;
     *p++ = 0xFD;
     *p++ = 0x10;

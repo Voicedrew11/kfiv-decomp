@@ -1,6 +1,8 @@
-#define HW_1000B410 (*(volatile unsigned int *)0x1000B410)
-#define HW_1000B420 (*(volatile unsigned int *)0x1000B420)
-#define HW_1000B430 (*(volatile unsigned int *)0x1000B430)
+#include "common.h"
+
+#define HW_1000B410 (*(volatile u32 *)0x1000B410)
+#define HW_1000B420 (*(volatile u32 *)0x1000B420)
+#define HW_1000B430 (*(volatile u32 *)0x1000B430)
 
 typedef struct {
     int w[4];
@@ -20,7 +22,7 @@ typedef struct {
     int f28;
     char pad2C[0x44 - 0x2C];
     int f44;
-    long long f48;
+    s64 f48;
 } S;
 
 void func_0021CDB8(int);

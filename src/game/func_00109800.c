@@ -1,8 +1,10 @@
+#include "common.h"
+
 extern int D_00447028;
 void sceGsSyncPath(int, int);
 
-#define HW_10009000 (*(volatile unsigned int *)0x10009000)
-#define HW_12001000 (*(volatile unsigned long *)0x12001000)
+#define HW_10009000 (*(volatile u32 *)0x10009000)
+#define HW_12001000 (*(volatile u64 *)0x12001000)
 
 void func_00109800(void) {
     if (D_00447028 != 0) {

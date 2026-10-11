@@ -1,10 +1,12 @@
+#include "common.h"
+
 int func_001CBAE0();
 extern char *D_004471D4;
 
-int func_001CE468(unsigned int arg0, int arg1) {
+int func_001CE468(u32 arg0, int arg1) {
     char *entry;
 
-    if (*(unsigned short *)(D_004471D4 + 0x4D6) == 0) {
+    if (*(u16 *)(D_004471D4 + 0x4D6) == 0) {
         return -1;
     }
     if (arg0 >= 5) {

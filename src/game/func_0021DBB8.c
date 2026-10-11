@@ -1,10 +1,12 @@
+#include "common.h"
+
 int WaitSema(int);
 int SignalSema(int);
 int func_0021D9F0(void *, void *);
 
 typedef struct {
-    long long a;
-    long long b;
+    s64 a;
+    s64 b;
     int c;
     int d;
 } Entry;

@@ -1,6 +1,8 @@
+#include "common.h"
+
 extern char D_01E0DB00[];
 
-void func_002177F8(int arg0, int arg1, unsigned short arg2, unsigned short arg3, unsigned short arg4) {
+void func_002177F8(int arg0, int arg1, u16 arg2, u16 arg3, u16 arg4) {
     int temp_v0;
     int var_t3;
     char *var_a1;
@@ -15,7 +17,7 @@ void func_002177F8(int arg0, int arg1, unsigned short arg2, unsigned short arg3,
     var_t1 = temp_a0 + 0x127;
     var_a1 = temp_a0 + 0x126;
     var_v1 = temp_a0 + 0x125;
-    *(unsigned short *)(temp_a0 + 0x164) = arg2 | *(unsigned short *)(temp_a0 + 0x164);
+    *(u16 *)(temp_a0 + 0x164) = arg2 | *(u16 *)(temp_a0 + 0x164);
     do {
         temp_v0 = arg2 >> var_t3;
         var_t3 += 1;

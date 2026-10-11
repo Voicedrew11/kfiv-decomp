@@ -1,11 +1,5 @@
-typedef int s32;
-typedef unsigned int u32;
-typedef unsigned char u8;
-typedef signed char s8;
-typedef short s16;
-typedef unsigned short u16;
-typedef float f32;
-typedef double f64;
+#include "common.h"
+
 extern s8 D_005CF40B[64];
 
 s32 func_001FBBA8(void) {

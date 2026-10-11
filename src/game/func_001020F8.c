@@ -1,16 +1,18 @@
+#include "common.h"
+
 typedef struct {
     char pad[0x24];
-    unsigned int b0 : 1;
-    unsigned int b1 : 1;
-    unsigned int b2 : 1;
-    unsigned int b3 : 1;
-    unsigned int b4 : 1;
-    unsigned int b5 : 1;
-    unsigned int b6 : 1;
-    unsigned int b7 : 1;
-    unsigned int b8 : 1;
-    unsigned int b9 : 5;
-    unsigned int b14 : 1;
+    u32 b0 : 1;
+    u32 b1 : 1;
+    u32 b2 : 1;
+    u32 b3 : 1;
+    u32 b4 : 1;
+    u32 b5 : 1;
+    u32 b6 : 1;
+    u32 b7 : 1;
+    u32 b8 : 1;
+    u32 b9 : 5;
+    u32 b14 : 1;
 } A;
 
 extern A D_0038CC50;

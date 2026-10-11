@@ -1,4 +1,5 @@
 #include "kf_gs.h"
+#include "common.h"
 
 typedef struct {
     int v[3];
@@ -6,27 +7,27 @@ typedef struct {
 
 extern int D_00446F78;
 extern Offsets D_0043E460;
-extern unsigned int D_00446744;
-extern unsigned int D_00446ED4;
+extern u32 D_00446744;
+extern u32 D_00446ED4;
 extern int D_0038A178[];
 
 void func_00109A50(void);
-void func_00109A80(int, long);
+void func_00109A80(int, s64);
 void func_00109AD0(void);
 void func_0010A100(void *);
 
 struct Pkt {
-    long hdr[2];
+    s64 hdr[2];
     int tag;
-    unsigned char col[4];
-    long pad;
-    unsigned short a;
-    unsigned short b;
+    u8 col[4];
+    s64 pad;
+    u16 a;
+    u16 b;
     int c;
     int d;
     int e;
-    unsigned short f;
-    unsigned short g;
+    u16 f;
+    u16 g;
     int h;
     int i;
     int j;
@@ -37,9 +38,9 @@ void func_001067E0(void) {
     struct Pkt pkt;
     int base;
     int th;
-    unsigned long c;
-    unsigned int i;
-    unsigned int k;
+    u64 c;
+    u32 i;
+    u32 k;
     int t;
     int v;
 
@@ -54,7 +55,7 @@ void func_001067E0(void) {
     func_00109AD0();
     th = 9;
     c = base | 0x28028000L;
-    pkt.hdr[0] = c | ((unsigned long)th << 30);
+    pkt.hdr[0] = c | ((u64)th << 30);
     pkt.hdr[1] = 0x60L;
     pkt.tag = 0x156;
     pkt.col[0] = 0x80;

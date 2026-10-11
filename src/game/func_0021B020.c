@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct
 {
   int pad0[32];
@@ -12,7 +14,7 @@ typedef struct
 } McState;
 extern McState D_01E4F278;
 
-int func_0021B020(unsigned int arg0, unsigned int arg1, int arg2)
+int func_0021B020(u32 arg0, u32 arg1, int arg2)
 {
   McState *s = &D_01E4F278;
 

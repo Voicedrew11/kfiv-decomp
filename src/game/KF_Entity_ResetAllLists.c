@@ -1,6 +1,6 @@
 #include "kf_entity.h"
 
-void *memset(void *, int, unsigned int);
+void *memset(void *, int, u32);
 extern int D_00446F14;
 extern int D_00446F60;
 extern int D_0044709C;
@@ -20,8 +20,8 @@ extern int D_004470A0[2];
 /* one block of the entity pool */
 typedef struct {
     char unk0;                  /* 0x0 */
-    unsigned short unk2;        /* 0x2 */
-    short unk4;                 /* 0x4 */
+    u16 unk2;        /* 0x2 */
+    s16 unk4;                 /* 0x4 */
     char unk6;                  /* 0x6 */
     int unk8;                   /* 0x8 */
     int base_address;           /* 0xC */

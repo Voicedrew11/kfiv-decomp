@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0x138];
     int f138;
@@ -5,7 +7,7 @@ typedef struct {
 
 typedef struct {
     char pad0[0x10];
-    unsigned short flags;
+    u16 flags;
 } Ctrl;
 
 typedef struct {

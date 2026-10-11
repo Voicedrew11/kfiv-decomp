@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern int D_0038CC80[3];
 extern void *D_004469D4;
 
@@ -32,7 +34,7 @@ void func_001C95B0(void) {
         do {
             if (p->f04 != 0) {
                 flags = p->f0C;
-                if (((unsigned int)flags >> 2) & 1) {
+                if (((u32)flags >> 2) & 1) {
                     s = p->f2C + p->f30;
                     p->f2C = s;
                     if (p->f28 <= s) {

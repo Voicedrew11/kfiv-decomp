@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct {
     float x;
     float y;
@@ -10,9 +12,9 @@ typedef struct {
     char pad04[4];
     char a08;
     char pad09[7];
-    unsigned char a10;
+    u8 a10;
     char pad11[7];
-    unsigned char a18;
+    u8 a18;
     char pad19[7];
     float a20;
     char pad24[4];
@@ -29,7 +31,7 @@ typedef struct {
     float a50;
 } Act;
 
-void func_0019DAA8(char, unsigned char, unsigned char, Vec4 *, Vec4 *, float);
+void func_0019DAA8(char, u8, u8, Vec4 *, Vec4 *, float);
 
 void func_002147A0(Act *arg0) {
     Vec4 a;

@@ -1,9 +1,11 @@
-extern unsigned char D_0034C350[50][8];
-extern unsigned char D_0034C4E0[50];
+#include "common.h"
+
+extern u8 D_0034C350[50][8];
+extern u8 D_0034C4E0[50];
 
 void func_00103858(int id) {
     int area;
-    unsigned char mask;
+    u8 mask;
 
     if (id == 0x138B) {
         func_00103858(0x138C);

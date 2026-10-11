@@ -1,4 +1,3 @@
-
 int sceMcFormat(int, int);
 int sceMcSync(int, int *, int *);
 typedef struct 

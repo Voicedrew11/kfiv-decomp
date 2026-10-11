@@ -1,11 +1,12 @@
+#include "common.h"
 
-extern unsigned char D_00354928[];
-void func_001035A8(unsigned int x, int y)
+extern u8 D_00354928[];
+void func_001035A8(u32 x, int y)
 {
-  unsigned int t;
-  unsigned int i;
-  unsigned int s;
-  unsigned int c;
+  u32 t;
+  u32 i;
+  u32 s;
+  u32 c;
   int new_var;
   if (((x < 0x80) && (y >= 0)) && (y < 0x80))
   {

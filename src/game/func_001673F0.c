@@ -1,16 +1,18 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xC6];
-    unsigned short flags;          /* 0xC6 */
+    u16 flags;          /* 0xC6 */
     char pad1[0xD7 - 0xC8];
-    unsigned char byteD7;          /* 0xD7 */
+    u8 byteD7;          /* 0xD7 */
 } Actor;
 
 typedef struct {
     char pad0[0x68];
-    short timer;                   /* 0xE0 + 0x68 */
+    s16 timer;                   /* 0xE0 + 0x68 */
 } Sub;
 
-extern unsigned int D_00446ED4;
+extern u32 D_00446ED4;
 
 void func_00167498(void *, int);
 void func_0018E9C0(void *);

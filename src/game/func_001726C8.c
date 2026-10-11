@@ -1,8 +1,10 @@
+#include "common.h"
+
 typedef struct {
     char pad0[0xC];
-    unsigned char *ctl;
+    u8 *ctl;
     char pad1[0xD8 - 0x10];
-    unsigned long long bits;
+    u64 bits;
 } Actor;
 
 int func_0019A448(void *, void *, int, int, int, int, int);

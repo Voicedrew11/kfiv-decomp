@@ -1,8 +1,10 @@
+#include "common.h"
+
 int func_001124E0(int, int, int);
 int func_001C2D08(void *);
 void func_0020E1F8(int, int, int, int, float, float);
 
-typedef struct { int count; char *list; int pad; unsigned int n; } Hdr;
+typedef struct { int count; char *list; int pad; u32 n; } Hdr;
 
 void func_001C47A0(void *arg0, int arg1, float arg2, float arg3) {
     Hdr *h;
@@ -18,7 +20,7 @@ void func_001C47A0(void *arg0, int arg1, float arg2, float arg3) {
             i = h->count;
             do {
                 q = p + 0x20;
-                j = *(unsigned short *)p - 2;
+                j = *(u16 *)p - 2;
                 do {
                     func_0020E1F8(*(int *)q, *(int *)(q + 0x10), *(int *)(q + 0x20), arg1, arg3, arg2);
                     if (*(int *)0x70000010 != 0) {

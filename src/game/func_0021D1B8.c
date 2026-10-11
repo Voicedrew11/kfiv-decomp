@@ -1,3 +1,5 @@
+#include "common.h"
+
 int SignalSema(int);
 int WaitSema(int);
 
@@ -7,7 +9,7 @@ typedef struct {
     char pad1[0x40 - 0x18];
     int sema;
     char pad2[0x48 - 0x44];
-    long f48;
+    s64 f48;
 } Obj;
 
 void func_0021D1B8(void *arg0, int arg1) {

@@ -1,3 +1,5 @@
+#include "common.h"
+
 float sqrtf(float);
 extern float D_00413F80[];
 
@@ -10,7 +12,7 @@ typedef struct {
 
 typedef struct {
     char pad[0x46];
-    short s46;
+    s16 s46;
 } Dev;
 
 typedef struct {

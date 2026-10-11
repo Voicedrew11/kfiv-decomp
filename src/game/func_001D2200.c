@@ -1,9 +1,11 @@
-extern unsigned char D_00446A21;
-extern unsigned char D_00446A22;
-extern unsigned char D_00446A23;
-extern unsigned char D_00446A25;
-extern unsigned char D_00446A26;
-extern unsigned char D_00446A27;
+#include "common.h"
+
+extern u8 D_00446A21;
+extern u8 D_00446A22;
+extern u8 D_00446A23;
+extern u8 D_00446A25;
+extern u8 D_00446A26;
+extern u8 D_00446A27;
 
 int mktime(void *);
 

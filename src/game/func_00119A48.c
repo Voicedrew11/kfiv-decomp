@@ -1,4 +1,6 @@
-extern unsigned char D_0034B696[];
+#include "common.h"
+
+extern u8 D_0034B696[];
 extern char D_0038CD20[];
 
 typedef struct {
@@ -7,7 +9,7 @@ typedef struct {
     float fA4;
     float fA8;
     float fAC;
-    long lB0;
+    s64 lB0;
 } Fog;
 
 typedef struct {

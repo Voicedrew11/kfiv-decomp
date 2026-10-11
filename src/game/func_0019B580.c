@@ -1,5 +1,7 @@
+#include "common.h"
+
 typedef struct Env {
-    long d[16];
+    s64 d[16];
 } Env;
 
 typedef struct Pkt {

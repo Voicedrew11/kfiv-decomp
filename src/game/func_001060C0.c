@@ -1,4 +1,6 @@
-extern unsigned char D_0036A130[];
+#include "common.h"
+
+extern u8 D_0036A130[];
 
 typedef struct {
     int v;
@@ -8,10 +10,10 @@ int func_001060C0(void) {
     Unal hdr[2];
     int count;
     int i;
-    unsigned char *base;
-    unsigned char *p;
-    unsigned char *tbl;
-    unsigned char *blk;
+    u8 *base;
+    u8 *p;
+    u8 *tbl;
+    u8 *blk;
     int sum;
     int k;
 
@@ -23,7 +25,7 @@ int func_001060C0(void) {
         return 0;
     }
     hdr[1] = *(Unal *)p;
-    count = (unsigned int)hdr[1].v >> 7;
+    count = (u32)hdr[1].v >> 7;
     blk = base;
     tbl = base + hdr[1].v;
     for (i = 0; i < count; i++) {

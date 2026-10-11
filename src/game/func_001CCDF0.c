@@ -1,3 +1,5 @@
+#include "common.h"
+
 int func_001CBAE0(int, int, char, int);
 void func_001CD6E0(int);
 int printf(char *);
@@ -19,8 +21,8 @@ typedef struct {
 
 int func_001CCDF0(int *arg0, Req *arg1) {
     int temp_v0;
-    unsigned int temp_a1;
-    unsigned int temp_v1;
+    u32 temp_a1;
+    u32 temp_v1;
 
     temp_a1 = arg1->w08;
     temp_v1 = arg1->w18;

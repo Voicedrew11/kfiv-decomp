@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct {
     void *p0;
     char pad4[0xC];
@@ -20,7 +22,7 @@ typedef struct {
 
 extern int D_0038CC50[];
 void func_00216C48(void *, void *, void *);
-short func_0011E340(void *, int);
+s16 func_0011E340(void *, int);
 
 void func_00121578(Actor *arg0) {
     Sub *s;

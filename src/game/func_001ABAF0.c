@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern int D_004468E8;
 
 void func_001AEC48(char *);
@@ -11,7 +13,7 @@ void func_001ABAF0(char *arg0) {
     float v[4];
     char *s1;
     char *p;
-    unsigned short n;
+    u16 n;
     float f;
 
     D_004468E8 = 0;
@@ -19,8 +21,8 @@ void func_001ABAF0(char *arg0) {
     s1 = arg0 + 0x10;
     func_001AED58(arg0);
     func_001AF0B0(arg0);
-    n = *(unsigned short *)(*(char **)(arg0 + 0x54) + 0x108);
-    if (*(unsigned short *)(arg0 + 0x4C) < n || n == 0) {
+    n = *(u16 *)(*(char **)(arg0 + 0x54) + 0x108);
+    if (*(u16 *)(arg0 + 0x4C) < n || n == 0) {
         func_00216778(v, s1);
         if (*(float *)(*(char **)(arg0 + 0x54) + 0x11C) != 0.0f) {
             f = *(float *)(s1 + 0x14) + *(float *)(*(char **)(arg0 + 0x54) + 0x11C);
@@ -31,8 +33,8 @@ void func_001ABAF0(char *arg0) {
         p = *(char **)(arg0 + 0x50) + 0xC0;
         sceVu0AddVector(p, p, (char *)v);
     }
-    if (*(unsigned short *)(*(char **)(arg0 + 0x54) + 0xF0) < *(unsigned short *)(arg0 + 0x4C)) {
+    if (*(u16 *)(*(char **)(arg0 + 0x54) + 0xF0) < *(u16 *)(arg0 + 0x4C)) {
         func_001AF298(arg0, s1 + 0x18);
     }
-    *(unsigned short *)(arg0 + 0x4C) += 1;
+    *(u16 *)(arg0 + 0x4C) += 1;
 }

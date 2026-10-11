@@ -3,10 +3,10 @@
 /* wait for the read in flight; reissue it while the drive reports an error */
 int func_00102790(int fd, int mode) {
     sceCdRMode rmode;
-    unsigned int err;
+    u32 err;
     int ret;
 
-    if ((unsigned int)fd >= 2 || D_00447600[fd].active == 0) {
+    if ((u32)fd >= 2 || D_00447600[fd].active == 0) {
         return -1;
     }
     ret = sceCdSync(mode);

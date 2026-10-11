@@ -1,3 +1,5 @@
+#include "common.h"
+
 extern int D_004468A4;
 extern int D_004470D4;
 extern int D_004470F4;
@@ -26,7 +28,7 @@ int func_0019F298(Ctx *arg0, int arg1) {
     if (func_001CBD20() != 0) {
         switch (D_004468A4) {
         case 0:
-            temp_v0 = ((unsigned int)&D_002496BF >> 6) << 6;
+            temp_v0 = ((u32)&D_002496BF >> 6) << 6;
             D_004470F4 = temp_v0;
             *arg0->w00 = temp_v0;
             D_004470F4 = temp_v0 + 0xA0000;

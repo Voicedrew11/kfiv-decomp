@@ -1,30 +1,31 @@
 #include "kf_gs.h"
+#include "common.h"
 
-typedef unsigned int u_long128 __attribute__((mode(TI)));
+typedef u32 u_long128 __attribute__((mode(TI)));
 
 typedef struct {
     int v[4];
 } Color;
 
 extern int D_00446F78;
-extern unsigned int D_00446744;
+extern u32 D_00446744;
 extern int D_0038A178[8];
 extern Color D_0043E450;
 
-unsigned int *func_00109990(int);
-void func_00109650(unsigned int *, unsigned int *);
+u32 *func_00109990(int);
+void func_00109650(u32 *, u32 *);
 void func_00109A50(void);
-void func_00109A80(int, long);
+void func_00109A80(int, s64);
 void func_00109AD0(void);
 
 void func_00106520(void) {
     Color col = D_0043E450;
     int base;
     int th;
-    unsigned int i;
-    unsigned long c;
-    unsigned int *p0;
-    unsigned int *p;
+    u32 i;
+    u64 c;
+    u32 *p0;
+    u32 *p;
 
     base = 0x1180;
     if (D_00446F78 != 0) {
@@ -49,17 +50,17 @@ void func_00106520(void) {
         *p++ = 0;
         *p++ = 0;
         *p++ = 0x6C09C000;
-        *(unsigned long *)p = 0x80AF400000008001L;
+        *(u64 *)p = 0x80AF400000008001L;
         p += 2;
-        *(unsigned long *)p = 0x513513EEL;
+        *(u64 *)p = 0x513513EEL;
         p += 2;
         th = 9;
         c = base | 0x28028000L;
-        *(unsigned long *)p = c | ((unsigned long)th << 30);
+        *(u64 *)p = c | ((u64)th << 30);
         p += 2;
         *p++ = 6;
         *p++ = 0;
-        *(unsigned long *)p = 0x60;
+        *(u64 *)p = 0x60;
         p += 2;
         *p++ = 0x14;
         *p++ = 0;

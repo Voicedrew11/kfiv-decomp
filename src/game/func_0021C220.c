@@ -1,3 +1,5 @@
+#include "common.h"
+
 typedef struct {
     int f00;
     char pad04[0x28];
@@ -15,7 +17,7 @@ typedef struct {
     int f58;
 } Buf;
 
-void *memset(void *, int, unsigned int);
+void *memset(void *, int, u32);
 int sceSifAllocIopHeap(int);
 int func_0021CBE8(int, void *, int);
 int func_0021CC60(int);

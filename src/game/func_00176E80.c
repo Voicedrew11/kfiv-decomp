@@ -1,6 +1,8 @@
+#include "common.h"
+
 typedef struct {
     char pad[0x88];
-    unsigned int v88;
+    u32 v88;
 } Mid;
 
 typedef struct {
@@ -9,20 +11,20 @@ typedef struct {
 } Owner;
 
 typedef struct {
-    unsigned int w0;
+    u32 w0;
     char pad[0x42C];
-    short s430;
-    short s432;
-    short s434;
+    s16 s430;
+    s16 s432;
+    s16 s434;
 } Ctl;
 
 typedef struct {
-    unsigned long b0 : 11;
-    unsigned long b11 : 3;
-    unsigned long b14 : 1;
-    unsigned long b15 : 19;
-    unsigned long b34 : 1;
-    unsigned long b35 : 29;
+    u64 b0 : 11;
+    u64 b11 : 3;
+    u64 b14 : 1;
+    u64 b15 : 19;
+    u64 b34 : 1;
+    u64 b35 : 29;
 } Flags;
 
 
@@ -31,7 +33,7 @@ typedef struct {
     char pad0[0xC - 4];
     Ctl *ctl;
     char pad1[0xC6 - 0x10];
-    unsigned short flags_c6;
+    u16 flags_c6;
     char pad2[0xD8 - 0xC8];
     Flags f;
 } Actor;
@@ -44,15 +46,15 @@ void func_00196120(float, void *, void *, int, void *);
 void func_00176E80(Actor *arg0) {
     float sp[4];
     float sq[3];
-    unsigned int temp_a0;
-    long temp_a1;
+    u32 temp_a0;
+    s64 temp_a1;
     int f;
     Ctl *c;
     char *temp_a2;
 
-    temp_a1 = *(long *)&arg0->f;
+    temp_a1 = *(s64 *)&arg0->f;
     temp_a2 = (char *)arg0 + 0xE0;
-    if (((int) ((long) (temp_a1 << 0x12) >> 0x20)) & 1) {
+    if (((int) ((s64) (temp_a1 << 0x12) >> 0x20)) & 1) {
         arg0->f.b11 = 0;
         temp_a0 = arg0->owner->mid->v88;
         if (temp_a0 != 0) {
@@ -68,7 +70,7 @@ void func_00176E80(Actor *arg0) {
         sq[0] = *(float *)(temp_a2 + 0x48);
         sq[1] = *(float *)(temp_a2 + 0x4C);
         sq[2] = *(float *)(temp_a2 + 0x50);
-        f = ((int) (*(long *)((char *)arg0 + 0xD8) >> 9)) & 1;
+        f = ((int) (*(s64 *)((char *)arg0 + 0xD8) >> 9)) & 1;
         if (f) {
             func_001960C0((float) c->s434, arg0, temp_a2 + 0x20, f, sq, sp);
         } else {

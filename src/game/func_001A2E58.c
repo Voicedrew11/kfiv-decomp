@@ -1,11 +1,13 @@
-typedef struct __attribute__((packed)) { unsigned long long a, b; } Unal;
-typedef unsigned int u128 __attribute__((mode(TI)));
-typedef struct { char pad[0x78]; unsigned long long w; } Ent;
+#include "common.h"
+
+typedef struct __attribute__((packed)) { u64 a, b; } Unal;
+typedef u32 u128 __attribute__((mode(TI)));
+typedef struct { char pad[0x78]; u64 w; } Ent;
 
 void func_001A2E58(char *arg0, int unused, int arg2, int arg3) {
     char *ent;
     int i;
-    unsigned short total = *(unsigned short *)(arg0 + 0xF0);
+    u16 total = *(u16 *)(arg0 + 0xF0);
 
     *(int *)(arg0 + 0x17C) = 0;
     *(u128 *)(arg0 + 0x180) = 0;

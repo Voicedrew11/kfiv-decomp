@@ -1,3 +1,5 @@
+#include "common.h"
+
 void func_001C2F30(void *, int, int, float);
 void func_001C31E8(void *, int, int, float);
 void func_001C3910(void *, int, int, float);
@@ -6,7 +8,7 @@ void func_001C2E48(void *, int, int, float);
 
 typedef struct {
     char *obj;
-    unsigned char *cmd;
+    u8 *cmd;
 } Ev;
 
 void func_001C2128(Ev *arg0, int arg1, int arg2, float arg3) {
