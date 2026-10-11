@@ -10,7 +10,7 @@ extern s16 D_00446938;
 extern s16 D_0044693A;
 extern u16 D_0044693C;
 extern s16 D_0044693E;
-extern s16 D_00446940;
+extern u16 D_00446940;
 extern s16 D_00446942;
 extern s16 D_00446944;
 extern s16 D_00446946;
