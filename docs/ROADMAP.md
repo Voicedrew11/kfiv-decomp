@@ -158,7 +158,10 @@ inside runs, which is fine while their data stays in the asm data units.
   `func_00120D78` is `void`. Small functions with two stores of one value come
   out in the scheduler's order, so their C is a chained assignment.
 - Each matched function is its own unit in `src/game/` until step 3 gives
-  the real file boundaries.
+  the real file boundaries. A unit may keep its own string literals:
+  `tools/carve.py` splits `.rodata` and `.sdata` around it (`KF_File_Open`'s
+  `"\\DATA\\"` and `";1"` are 8 bytes or less and go to `.sdata`). `.lit4` and
+  `.sbss` are still single asm units.
 - Workflow per function: m2c for a first draft → decomp.me (preset "PS2
   ee-gcc 2.9-991111-01") or objdiff → drop into `src/`.
 - Start with leaf utility code (math, string, file wrappers such as

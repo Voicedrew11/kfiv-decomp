@@ -45,7 +45,7 @@ def c_parts(src: str) -> tuple[list[Path], list[Path]]:
     name = src[len("src/"):-len(".c")]
     mdir = ROOT / "asm/matchings" / name
     funcs = sorted(mdir.glob("*.s")) if mdir.is_dir() else []
-    datas = [ROOT / f"asm/data/{name}.{sec}.s" for sec in ("data", "rodata", "bss")]
+    datas = [ROOT / f"asm/data/{name}.{sec}.s" for sec in ("data", "rodata", "sdata", "bss")]
     return funcs, [d for d in datas if d.exists()]
 
 

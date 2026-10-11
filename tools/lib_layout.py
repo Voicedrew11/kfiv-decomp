@@ -107,8 +107,9 @@ def load_symbols(generated=True):
     lines = []
     for fn in files:
         if os.path.exists(os.path.join(ROOT, fn)):
-            lines += open(os.path.join(ROOT, fn)).readlines()
-    for line in lines:
+            lines += [(fn, l) for l in open(os.path.join(ROOT, fn)).readlines()]
+    named = set()   # addresses symbol_addrs.txt names
+    for fn, line in lines:
         note = line.split("//", 1)[1] if "//" in line else ""
         line = line.split("//", 1)[0].strip().rstrip(";")
         if "=" in line:
@@ -120,6 +121,12 @@ def load_symbols(generated=True):
             # does not take the name from it
             if "allow_duplicated:True" not in note:
                 n2a.setdefault(name, int(addr, 0))
+            # a name symbol_addrs.txt gives an address beats the generated
+            # one, which may be left over from before a rename
+            if fn == files[0]:
+                named.add(int(addr, 0))
+            elif int(addr, 0) in named:
+                continue
             a2n[int(addr, 0)] = name
     return n2a, a2n
 
