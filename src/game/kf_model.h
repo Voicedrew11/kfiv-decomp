@@ -53,7 +53,9 @@ typedef struct {
     char pad0D[0x03];
 } BoneAnchor;
 
-typedef struct {
+#define MODEL_FLAG_800  0x800
+
+typedef struct ModelInstance {
     char pad00[0x40];
     char unk40[0x40];               /* 0x40 a matrix, passed by address */
     char pad80[0x40];
@@ -67,10 +69,24 @@ typedef struct {
     char padF2[0x06];
     ModelPart *parts;               /* 0xF8 */
     ModelPartLevels **level_tables; /* 0xFC */
-    char pad100[0x20];
+    u16 unk100;                     /* 0x100 */
+    u16 unk102;                     /* 0x102 MODEL_FLAG_800: drawn with its own texture */
+    char pad104[0x1C];
     BoneAnchor *bone_anchors;       /* 0x120 32 of them */
     Vector4 *bone_positions;        /* 0x124 32 of them, written from bone_anchors */
-    char pad128[0x90];
+    char pad128[0x34];
+    f32 alpha;                      /* 0x15C below 128: drawn without z writes */
+    char pad160[0x30];
+    u16 unk190;                     /* 0x190 */
+    char pad192[0x02];
+    int unk194;                     /* 0x194 */
+    char pad198[0x04];
+    int unk19C;                     /* 0x19C */
+    int unk1A0;                     /* 0x1A0 */
+    char pad1A4[0x08];
+    void (*draw)(struct ModelInstance *model);  /* 0x1AC sets the GS state and draws */
+    void (*unk1B0)(void);           /* 0x1B0 */
+    char pad1B4[0x04];
     int (*get_point)(void *model, int index);   /* 0x1B8 */
 } ModelInstance;
 
