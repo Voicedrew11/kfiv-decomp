@@ -3,18 +3,16 @@
 #define KF_SCREEN_H
 
 #include "common.h"
+#include "kf_model.h"
+
+/* the model func_0010AEB8 draws; the older name for ModelInstance */
+typedef ModelInstance OverlaySprite;
 
 /* D_0038D680: the screen fade */
 typedef struct {
     char pad00[0x28];
     int timer;                      /* 0x28 frames left */
 } ScreenFade;
-
-/* what func_0010AEB8 draws, with its alpha at 0x15C */
-typedef struct {
-    char pad00[0x15C];
-    f32 alpha;                      /* 0x15C below 128: drawn without z writes */
-} OverlaySprite;
 
 /* D_00471DE0[16]: the screen wobble, one sine wave per entry */
 typedef struct {

@@ -2,7 +2,7 @@
 
 extern float D_00413F80[];
 
-void func_001243E8(char);
+void func_001243E8(int slot_index);
 void func_001A32A8(Entity *);
 
 /* Free entities that are out of range of the player. */

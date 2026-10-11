@@ -1,6 +1,6 @@
 #include "kf_entity.h"
 
-void func_001243E8(char);
+void func_001243E8(int slot_index);
 void func_001A32A8(Entity *);
 
 /* Free every entity in the group from all three lists. */

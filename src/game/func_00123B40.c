@@ -1,7 +1,5 @@
 #include "kf_entity.h"
 
-extern EntityPoolSlot D_003D6DF0[];
-
 /* Claims the first free pool block, else the unused block with the lowest size; returns its index. */
 int func_00123B40(void) {
     int i;
