@@ -248,7 +248,6 @@ void func_002008E8(PoolPart *part, s32 parent, RenderSlotArg color) {
         }
         send_packet(scratch->packet, scratch->packet_size);
     }
-    __asm__ volatile("" : : "m"(again->cursor)); // match: no code; a mention of `again` outside the loops keeps it from getting a register, so its use is the plain address
     scratch->cursor = func_001FBE70();
     scratch->packet = scratch->cursor;
     *scratch->cursor++ = 0x8001;

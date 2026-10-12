@@ -27,8 +27,7 @@ void func_002048D8(TextureHeader *header, u64 *tex0_out, u64 *trailer_out) {
     if (tex0_out != NULL) {
         *tex0_out = header->tex0;
     }
-    // match: retail reads TEX0 again here whether or not it was just stored, so for the compiler something that
-    // may write memory stood at this point and left no instruction; what it was in the original is not known
+    // match: no code; without it gcc loads TEX0 into other registers ($7/$5 in retail), same instructions otherwise
     __asm__ volatile("" : : : "memory");
     image = (char *)header + sizeof(TextureHeader);
     switch (HEADER_TEX0(header)->psm) {

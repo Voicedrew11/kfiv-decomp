@@ -4,11 +4,12 @@
 void func_00188348(void *point, void *centre, f32 radius) {
     CollisionResult *result;
     f32 distance;
+    int distance_bits;
 
     __asm__ volatile(
         "lui %1, 0x7000\n"
-        "lqc2 $vf16, 0(%2)\n"
-        "lqc2 $vf17, 0(%3)\n"
+        "lqc2 $vf16, 0(%3)\n"
+        "lqc2 $vf17, 0(%4)\n"
         "vsub.xyz $vf18, $vf17, $vf16\n"
         "vmul.xyz $vf18, $vf18, $vf18\n"
         "vaddy.x $vf18, $vf18, $vf18y\n"
@@ -16,11 +17,10 @@ void func_00188348(void *point, void *centre, f32 radius) {
         "vsqrt Q, $vf18x\n"
         "vwaitq\n"
         "vaddq.x $vf18, $vf0, Q\n"
-        "qmfc2.ni $2, $vf18\n"
-        "mtc1 $2, %0\n"
-        : "=f"(distance), "=r"(result)
-        : "r"(point), "r"(centre)
-        : "$2");
+        "qmfc2.ni %2, $vf18\n"
+        "mtc1 %2, %0\n"
+        : "=f"(distance), "=r"(result), "=r"(distance_bits)
+        : "r"(point), "r"(centre));
 
     result->distance = distance;
     if (!(radius <= distance)) {
