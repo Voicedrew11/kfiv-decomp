@@ -6,7 +6,7 @@ void func_00196870(void *, int);
 void func_00196CC0(char *);
 void func_0018E9C0(void *);
 int func_00182DE0(void *, int);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 void func_00128DD8(Entity *, s32);
 void func_00128F40(Entity *, s32);
 void func_00129CA0(Entity *);

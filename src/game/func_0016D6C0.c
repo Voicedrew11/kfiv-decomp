@@ -4,7 +4,7 @@ extern EntityActionWeights3 D_0043EA88;
 extern PlayerData D_00413F80;
 
 int rand(void);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 void func_0016D838(Entity *);
 void func_0016DCC0(Entity *);
 void func_0016DE50(Entity *);

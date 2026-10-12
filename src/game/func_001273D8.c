@@ -8,7 +8,7 @@ int func_00192C98(void *, int, int, u32, int);
 int func_00199EB8(void *, void *, float);
 s32 func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_0019A290(Entity *, s32);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 /* Action: one of the melee attacks; a hit may also clear the player's first timed flag. */
 void func_001273D8(Entity *entity) {

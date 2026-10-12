@@ -1,7 +1,7 @@
 #include "kf_entity.h"
 
 float func_001957B8(float, float);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 void func_0012A778(Entity *);
 void func_0012A8E0(Entity *);
 

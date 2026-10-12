@@ -5,7 +5,7 @@ s16 func_00190D50(float, void *, int);
 void func_00216D20(void *, void *);
 void func_00216CD8(void *, void *, void *);
 void KF_Vector_Subtract(void *, void *, void *);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 /* walk back to the spawn point, turning away from whatever is pushing the entity */
 void func_0012BE50(Entity *entity, s32 unknown) {

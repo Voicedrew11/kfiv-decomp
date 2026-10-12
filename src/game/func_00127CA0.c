@@ -3,8 +3,8 @@
 int rand(void);
 int func_0018EAC0(void *, void *);
 void func_0018B778(float, void *, void *, void *);
-s16 func_00190F90(float, void *, int);
-void func_001958B8(char *, void (*)(void), int);
+s16 func_00190F90(float, void *, int); // match: this file only matches with this type; func_00190F90.c defines it differently
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 /* wander: every so often stand still, or now and then pick a point near the spawn point to walk to */
 int func_00127CA0(void *entity_ptr, int unknown) {

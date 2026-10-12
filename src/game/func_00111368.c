@@ -7,7 +7,7 @@ extern float D_00471EE0[];
 void *memset(void *, int, u32);
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
-void func_00216B48(int, int *, int);
+void func_00216B48(void *, void *, void *);
 void func_002168B8(int *, int *, int *, f32 *, f32 *, f32 *);
 void KF_Vu0_LoadMatrix(void *);
 void KF_Vu0_ProjectToScreen(int *, void *);

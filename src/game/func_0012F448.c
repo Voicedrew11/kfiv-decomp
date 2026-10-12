@@ -5,7 +5,7 @@ int func_0018EAC0(void *, void *);
 float func_00194FB8(float);
 s32 func_00195AC0(Entity *, void *, s32, s32, s32);
 float func_001957B8(float, float);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 void func_0012F448(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;

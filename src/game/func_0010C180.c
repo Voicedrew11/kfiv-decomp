@@ -19,7 +19,7 @@ void func_00109A80(int, s64);
 void func_00109AD0(void);
 int func_0020CBC0(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
 void func_00216778(void *, void *);
-void func_00216B48(int, int *, int);
+void func_00216B48(void *, void *, void *);
 
 /* the scratchpad as this function uses it: the turn it works out, the two matrices func_0020CBC0
    makes for the model, then a matrix per part and the same without the model's own placement */

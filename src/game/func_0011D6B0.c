@@ -22,7 +22,7 @@ void func_00109AD0(void);
 void func_00109EB8(void);
 void func_0010AEB8(void *);
 void func_0010B018(ModelInstance *, s32, s32);
-void func_0019AC88(ModelInstance *, s16);
+void func_0019AC88(ModelInstance *, int);
 void func_0019ADB8(ModelInstance *, int);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);

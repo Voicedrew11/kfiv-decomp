@@ -6,7 +6,7 @@ extern f32 D_00431AF0[16];
 extern f32 D_004323E0[16];
 
 void func_00216778(void *, void *);
-void func_00216B48(int, int *, int);
+void func_00216B48(void *, void *, void *);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);

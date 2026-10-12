@@ -10,7 +10,7 @@ void func_00190B88(Entity *, s32);
 int func_0018F030(char *);
 void func_0018B778(float, void *, void *, void *);
 float func_00194F80(void *, void *);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 void func_00181C60(Entity *);
 void func_00182240(Entity *);
 void func_001273D8(Entity *);

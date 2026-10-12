@@ -2,7 +2,7 @@
 
 int func_00192C98(void *, int, int, u32, int);
 void func_00195898(char *, u8);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 void func_0012E0C8(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;

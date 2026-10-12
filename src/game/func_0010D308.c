@@ -8,7 +8,7 @@ u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
 int func_0020CBC0(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
 void func_00216778(void *, void *);
-void func_00216B48(int, int *, int);
+void func_00216B48(void *, void *, void *);
 
 /* the scratchpad as this function uses it: two matrices func_0020CBC0 makes for the model */
 #define SCRATCH_MATRIX_A ((void *)0x70000000)

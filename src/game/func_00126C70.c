@@ -5,7 +5,7 @@ void func_0018B778(float, void *, void *, void *);
 float func_00194F80(void *, void *);
 float func_00195818(void);
 float func_001957B8(float, float);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 /* wander: every so often walk to a point near the spawn point, turn to a random heading, or stand still */
 void func_00126C70(void *entity_ptr, int unknown) {

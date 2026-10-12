@@ -2,9 +2,9 @@
 
 int func_00192C98(void *, int, int, u32, int);
 int func_00199EB8(void *, void *, float);
-void func_00195588(f32 *, f32);
+void func_00195588(Vector4 *, float);
 int func_0018F030(char *);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 void func_00165A70(Entity *);
 
 /* one frame of the jump: forwards at unk44 along unk30, upwards at unk48; both wear off */

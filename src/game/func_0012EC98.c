@@ -6,7 +6,7 @@ int func_00192C98(void *, int, int, u32, int);
 int func_00199EB8(void *, void *, float);
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void func_0019A290(Entity *, s32);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 void func_0012EC98(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;

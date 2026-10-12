@@ -4,8 +4,8 @@ int rand(void);
 void func_0018B6F8(f32 *, f32, f32, void *, void *);
 int func_0018EAC0(void *, void *);
 s16 func_00190D50(float, void *, int);
-s16 func_00191340(void *, int);
-void func_001958B8(char *, void (*)(void), int);
+int func_00191340(Entity *, int);
+void func_001958B8(char *, void (*)(void), int); // match: this file only matches with this type; func_001958B8.c defines it differently
 
 void func_0012C088(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;

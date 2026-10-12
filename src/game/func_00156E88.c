@@ -7,7 +7,7 @@ float func_00194F80(void *, void *);
 int func_00192C98(void *, int, int, u32, int);
 int func_0011E1F0(int, int);
 void func_0011E228(void *);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 /* walks through one of three doorways (map objects 0xA0-0xA2): unk7A says which. It is put just
    inside the doorway facing through it, opens the door on an animation frame and walks to a point

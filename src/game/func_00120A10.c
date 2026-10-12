@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-s16 func_0019A928(void *, Vector4 *, int, f32, int, int, int);
+s16 func_0019A928(void *, Vector4 *, int, f32, int, int, int); // match: this file only matches with this type; func_0019A928.c defines it differently
 int rand(void);
 
 /* Start handler of the light kind: makes a light of the colour in its source at

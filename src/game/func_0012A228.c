@@ -2,7 +2,7 @@
 
 void func_00190A30(char *);
 void func_00195898(char *, u8);
-void func_0019A310(char *, void (*)(void), int);
+int func_0019A310(char *, void (*)(void), int);
 void func_001816A0(Entity *);
 
 void func_0012A228(Entity *entity) {

@@ -12,10 +12,10 @@ int func_0018F030(char *);
 float func_00194FB8(float);
 float func_00195478(float *, char *);
 float func_001957B8(float, float);
-s16 func_00190BE0(Entity *);
+int func_00190BE0(Entity *);
 int func_0018EAC0(void *, void *);
-s16 func_00190F90(float, void *, int);
-void func_001958B8(char *, void (*)(void), int);
+s16 func_00190F90(float, void *, int); // match: this file only matches with this type; func_00190F90.c defines it differently
+int func_001958B8(Entity *, void (*)(Entity *), int);
 void func_00181AE0(Entity *);
 void func_00181C60(Entity *);
 void func_00181E48(Entity *);

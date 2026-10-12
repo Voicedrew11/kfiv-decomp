@@ -2,7 +2,7 @@
 
 int func_00192C98(void *, int, int, u32, int);
 int func_00195AC0(Entity *, void *, s32, s32, s32);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 int func_00199EB8(void *, void *, float);
 f32 func_0018A9F0(void *, void *);
 float func_00194FB8(float);

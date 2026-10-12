@@ -6,11 +6,11 @@ int rand(void);
 int func_00197078(void);
 int func_0018F030(char *);
 int func_0018EAC0(void *, void *);
-s16 func_00191340(void *, int);
+int func_00191340(Entity *, int);
 float func_001957B8(float, float);
 void func_00216778(void *, void *);
-void func_00194F48(f32 *, f32 *);
-void func_001958B8(char *, void (*)(void), int);
+f32 func_00194F48(f32 *, f32 *);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 void func_0012CCA0(Entity *);
 void func_0012D040(Entity *);
 

@@ -1,6 +1,6 @@
 #include "kf_entity.h"
 
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 /* Sends the entity back to its spawn point with the walk handler of its kind. */
 void func_00126C28(void *entity_ptr, int unknown) {

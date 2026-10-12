@@ -17,7 +17,7 @@ void func_0010C9E8(ModelInstance *);
 s32 func_001963A8(Entity *);
 void func_0018DC40(char *);
 s32 func_001962E8(Entity *);
-void func_00194F48(f32 *, f32 *);
+f32 func_00194F48(f32 *, f32 *);
 float func_00194F80(void *, void *);
 float func_001954A8(float *, float *);
 int func_00126240(Entity *);

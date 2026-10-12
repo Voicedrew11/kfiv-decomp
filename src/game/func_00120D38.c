@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-void func_0019AA50(s16);
+void func_0019AA50(u32);
 
 /* End handler: releases the handle the kind keeps in its work area, if any. */
 void func_00120D38(MapObject *object) {

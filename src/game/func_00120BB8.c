@@ -2,7 +2,7 @@
 
 extern f32 D_0042C6F0[];
 
-void func_0019B1E8(s16, Vector4 *, f32);
+void func_0019B1E8(s16, Vector4 *, f32); // match: this file only matches with this type; func_0019B1E8.c defines it differently
 
 /* Update handler of the light kind: the flickering sorts (0 faintly, 1 strongly)
    step their two periods and scale the colour by the product of the two waves

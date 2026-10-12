@@ -8,7 +8,7 @@ s32 func_0018FD50(Entity *, s32);
 void func_00190B88(Entity *, s32);
 int func_0018F030(char *);
 float func_001957B8(float, float);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 void func_00181C60(Entity *);
 void func_00181E48(Entity *);
 void func_0012A778(Entity *);

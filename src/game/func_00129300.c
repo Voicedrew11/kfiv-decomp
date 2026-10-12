@@ -7,7 +7,7 @@ int func_00199EB8(void *, void *, float);
 void func_00216778(void *, void *);
 int func_0018CF30(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 void func_0019A290(Entity *, s32);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 /* Action: one of the ranged attacks, aimed a little below the player. */
 void func_00129300(Entity *entity) {

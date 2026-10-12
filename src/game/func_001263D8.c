@@ -7,7 +7,7 @@ extern const f32 D_004467F8[];
 
 void func_00216778(void *, void *);
 f32 func_0018A9F0(void *, void *);
-void func_00194F48(f32 *, f32 *);
+f32 func_00194F48(f32 *, f32 *);
 
 /* The map record the entity stands on: the one with the nearest floor under it, or failing that the one whose
    middle is nearest, among the records of the entity's map and then the other map. NULL when there is none. */

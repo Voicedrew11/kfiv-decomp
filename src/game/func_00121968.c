@@ -7,7 +7,7 @@ void KF_Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 float func_0019B838(float);
 void *func_001B1390();
-void func_001B4F30(u8, void *, void *, void *, void *);
+int func_001B4F30(u16, void *, void *, void *, void *);
 
 /* Update handler of the shooting kind: every so many frames (or all the time
    when its model is animated), while it is on and the player is in range, it

@@ -8,7 +8,7 @@ void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
-void func_00216B48(int, int *, int);
+void func_00216B48(void *, void *, void *);
 void func_00216BC0(void *, void *, void *);
 void KF_Vector_Subtract(void *, void *, void *);
 float sqrtf(float);

@@ -3,7 +3,7 @@
 extern f32 D_004323E0[16];
 
 int rand(void);
-void func_00216B48(int, int *, int);
+void func_00216B48(void *, void *, void *);
 void KF_Vu0_LoadMatrix(void *);
 void KF_Vu0_ProjectToScreen(int *, void *);
 

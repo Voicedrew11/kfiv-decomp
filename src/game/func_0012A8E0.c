@@ -1,7 +1,7 @@
 #include "kf_entity.h"
 
 int func_00192C98(void *, int, int, u32, int);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 void func_0012A8E0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;

@@ -2,7 +2,7 @@
 
 int func_00192C98(void *, int, int, u32, int);
 float func_00194F80(void *, void *);
-void func_001958B8(char *, void (*)(void), int);
+int func_001958B8(Entity *, void (*)(Entity *), int);
 
 /* Action: plays animation 3 until the entity is far enough from its spawn point, then goes back to its handler. */
 void func_001295B0(Entity *entity) {
