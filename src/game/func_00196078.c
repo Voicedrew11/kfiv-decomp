@@ -1,5 +1,6 @@
 #include "kf_entity.h"
 
+// match: the call leaves the sixth argument (rate, $f12) unset
 int func_0018DDA8(void *, f32 *, int, f32 *, f32 *);
 
 int func_00196078(Entity *actor, f32 *out_a, int mode, f32 *out_b, f32 *limit) {
