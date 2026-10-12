@@ -1,7 +1,7 @@
 #include "kf_packet.h"
 #include "kf_texture.h"
 
-int func_00102238(int, int, int);
+int func_00102238(char *, int, int);
 int func_001025C0(int, void *, int);
 int func_001024B0(int);
 void func_0010B510(char *, int, int);

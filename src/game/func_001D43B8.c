@@ -1,7 +1,7 @@
 #include "kf_load.h"
 
 extern int D_00446AD0;
-int func_00102258(int, int, int);
+int func_00102258(char *, int, int);
 int func_001025C0(int, void *, int);
 
 /* Stage 0 of a chunk upload: open the named file and start reading up to 0x1A2000 bytes. */

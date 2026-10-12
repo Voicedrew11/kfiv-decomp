@@ -8,7 +8,7 @@ int sprintf(char *, char *, ...);
 u32 strlen(char *);
 int strncmp(const char *, const char *, u32);
 char *strchr(const char *, int);
-int func_00102238(int, int, int);
+int func_00102238(char *, int, int);
 int func_001025C0(int, void *, int);
 int func_001024B0(int);
 void func_002080A0(s32, s32);

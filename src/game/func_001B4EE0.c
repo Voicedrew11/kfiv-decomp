@@ -3,7 +3,7 @@
 extern char D_0043F248[];
 extern FxTableEntry D_00402DA8[];
 
-int func_00102238(int, int, int);
+int func_00102238(char *, int, int);
 int func_001025C0(int, void *, int);
 int func_001024B0(int);
 

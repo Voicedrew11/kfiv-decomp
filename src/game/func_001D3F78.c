@@ -2,8 +2,8 @@
 
 extern int D_00446AD0;
 extern char D_0043F6F8[];
-int func_00102238(int, int, int);
-int func_00102258(int, int, int);
+int func_00102238(char *, int, int);
+int func_00102258(char *, int, int);
 int func_001025C0(int, void *, int);
 
 /* Stage 0 of a chunk upload: open the named file (or the fallback file) and start reading it. */

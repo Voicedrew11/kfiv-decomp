@@ -28,7 +28,7 @@ extern char D_0043F5D0[];
 void *memset(void *, int, u32);
 void *memcpy(void *, const void *, u32);
 int sprintf(char *, char *, ...);
-int func_00102238(int, int, int);
+int func_00102238(char *, int, int);
 int func_001025C0(int, void *, int);
 int func_001024B0(int);
 void func_0010B758(ModelInstance *, int *, int *);

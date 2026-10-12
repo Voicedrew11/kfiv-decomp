@@ -3,7 +3,7 @@
 extern BootTexture D_005FAB60[13];
 extern TextureHeader *D_004473B4;
 
-int func_00102238(int, int, int);
+int func_00102238(char *, int, int);
 int func_001025C0(int, void *, int);
 int func_001024B0(int);
 

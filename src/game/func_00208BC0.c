@@ -15,7 +15,7 @@ extern int D_004473A0;
 
 void *memset(void *, int, u32);
 int sprintf(char *, char *, ...);
-int func_00102238(int, int, int);
+int func_00102238(char *, int, int);
 int func_001024B0(int);
 int func_001025C0(int, void *, int);
 void func_00108940(int, int *, ModelInstance *, int);
