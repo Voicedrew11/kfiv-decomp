@@ -81,7 +81,7 @@ int func_001E5210(u8);
 void func_001FC5E8(MenuCursorBar *);
 void func_001FDCD0(MenuColor);
 int func_001FE9A8(LevelDef *, s32);
-void func_00200068(s32, s32);
+s32 func_00200068(u16 *, s32);
 void func_00203F28(int, int, int);
 void func_00207478(int, int, int, int);
 

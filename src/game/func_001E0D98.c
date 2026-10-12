@@ -79,7 +79,7 @@ s32 func_001FBB88(s32);
 void func_001FBDC8(void);
 void func_001FC5E8(MenuCursorBar *);
 void func_001FDCD0(MenuColor);
-void func_001FDD28(TradeValue *, s32);
+s32 func_001FDD28(u16 *, s32);
 void func_00203F28(int, int, int);
 void func_00207478(int, int, int, int);
 void *func_00217760(int, int);

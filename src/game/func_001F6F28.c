@@ -28,7 +28,7 @@ s32 func_001CFC48(s32);
 void func_001D55E8(void);
 s32 func_001F94C0(void);
 s32 func_001F9740(s8);
-int func_001F71D8(void);
+void func_001F71D8(void);
 void func_001FBDE8(s32);
 u32 *func_001FBE70(void);
 void func_00204180(void *, LoadedBlockRef *);

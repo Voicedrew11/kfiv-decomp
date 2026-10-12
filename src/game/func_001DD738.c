@@ -26,9 +26,9 @@ s32 func_0019CDC0(s32);
 s32 func_001CFC58(s32);
 void func_001DCA80(HandlerContext *);
 int func_001E5210(u8);
-int func_001FE350(int, int);
-void func_001FF428(LevelDef *, s32);
-void func_00200068(s32, s32);
+s32 func_001FE350(u16 *, s32);
+s32 func_001FF428(u16 *, s32);
+s32 func_00200068(u16 *, s32);
 void func_00201E10(LinkNode *, f32 *, MenuColor); // match: this file only matches with this type; func_00201E10.c defines it differently
 void func_00203F28(int, int, int);
 

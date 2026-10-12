@@ -44,7 +44,7 @@ void func_001FC5E8(MenuCursorBar *);
 int func_001FDC28(GsPackedWord);
 void func_001FDCD0(MenuColor);
 s32 func_001FE9A8(FxTableEntry *, s32);
-void func_00200068(s32, s32);
+s32 func_00200068(u16 *, s32);
 void func_00201E10(LinkNode *, f32 *, MenuColor); // match: the colour is loaded unaligned, so not the definition's types
 void func_00207478(int, int, int, int);
 

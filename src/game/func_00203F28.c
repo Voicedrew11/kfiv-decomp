@@ -4,7 +4,7 @@ extern KindObject *(*const D_00440B70[])(int, int);
 
 void func_001FBEB0(KindObject *);
 void func_001FC0D8(KindObject *);
-void func_001FCBD0(KindObject *);
+int func_001FCBD0(KindObject *);
 
 /* Builds an object with the handler in slot index, then dispatches it by kind. */
 void func_00203F28(int owner, int index, int param) {

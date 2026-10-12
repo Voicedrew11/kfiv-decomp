@@ -74,7 +74,7 @@ void func_001F0D90(HandlerContext *);
 void func_001FC5E8(MenuCursorBar *);
 void func_001FDCD0(MenuColor);
 int func_001FE9A8(LevelDef *, s32);
-void func_00200068(s32, s32);
+s32 func_00200068(u16 *, s32);
 void func_00207478(int, int, int, int);
 
 /* match: the two level lookups are inline functions taking the record index, so the subtraction is not folded into

@@ -297,6 +297,17 @@ typedef struct {
 } EntityParamsUnk3D8Array;
 
 /* one of the four bodies of an entity kind the player collides with piece by piece (EntityParams.unk20) */
+/* the same slot as the motion code reads it: every flag a byte-wide bit-field (func_00191600) */
+typedef struct {
+    u8 index : 5;                   /* 0x00 which EntityParams.unk60 entry (motion) it plays */
+    u8 moves_entity : 1;            /* the root part's movement in the motion is handed to the entity */
+    u8 bit6 : 1;
+    u8 backwards : 1;               /* the motion plays from its last frame to its first */
+    u8 unk01;                       /* 0x01 */
+    s16 frame;                      /* 0x02 */
+    s32 frame_fixed;                /* 0x04 the frame times 256 */
+} EntityMotionSlot;
+
 #define ENTITY_BODY_USED    0x100
 #define ENTITY_BODY_ROUND   0x200   /* as tall as it is wide, the point being its top */
 
@@ -428,6 +439,14 @@ typedef struct {
 } EntityParamsRangedView;
 
 #define ENTITY_PARAMS_RANGED_VIEW(params) ((EntityParamsRangedView *)(params))
+
+/* EntityParams with the float at 0xC0, which lies inside unk80 (func_00191600) */
+typedef struct {
+    char pad00[0xC0];
+    f32 motion_scale;               /* 0xC0 how far the root part's movement in a motion carries the entity */
+} EntityParamsMotionScale;
+
+#define ENTITY_PARAMS_MOTION_SCALE(params) (((EntityParamsMotionScale *)(params))->motion_scale)
 
 /* the first word of EntityParams as plain bytes: unlike a bit-field read, a
    read through this does not depend on every store before it */

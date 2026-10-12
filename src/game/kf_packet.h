@@ -21,7 +21,10 @@ typedef struct {
     u8 green;                       /* 0x21 */
     u8 blue;                        /* 0x22 */
     u8 alpha;                       /* 0x23 */
-    char pad24[0x10];
+    char pad24[0x0D];
+    u8 unk31;                       /* 0x31 the kind (KindObject.kind); 2: func_001FCBD0 asks func_001FC820 for the number */
+    u8 unk32;                       /* 0x32 which word of D_0042A078 func_001FC0D8 draws (kind 1) */
+    u8 unk33;                       /* 0x33 how many digits func_001FCBD0 draws; 0: three digits, a point and one more */
     s32 unk34;                      /* 0x34 which number the sprite stands for (func_001FC820 gives its current value) */
     char pad38[0x06];
     u8 unk3E;                       /* 0x3E 1: a menu screen's own sprite, 2: one func_001D76D0/func_001D7760 draw */
@@ -275,6 +278,31 @@ typedef union {
     s32 as_int;
     f32 as_float;
 } GsPacketWord;
+
+/* the 14-byte header a .bmp file starts with (func_0019BE68 writes screenshots) */
+typedef struct {
+    u8 type[2];                     /* 0x00 "BM" */
+    u16 file_size_low;              /* 0x02 the file's size; the 32-bit fields are unaligned, so the game writes halves */
+    u16 file_size_high;             /* 0x04 */
+    u16 reserved[2];                /* 0x06 */
+    u16 pixel_offset_low;           /* 0x0A where the pixels start in the file */
+    u16 pixel_offset_high;          /* 0x0C */
+} BmpFileHeader;
+
+/* the 40-byte image header that follows BmpFileHeader */
+typedef struct {
+    u32 header_size;                /* 0x00 */
+    s32 width;                      /* 0x04 */
+    s32 height;                     /* 0x08 above 0: the rows run bottom to top */
+    u16 planes;                     /* 0x0C */
+    u16 bit_count;                  /* 0x0E */
+    u32 compression;                /* 0x10 */
+    u32 image_size;                 /* 0x14 */
+    s32 pixels_per_metre_x;         /* 0x18 */
+    s32 pixels_per_metre_y;         /* 0x1C */
+    u32 colours_used;               /* 0x20 */
+    u32 colours_important;          /* 0x24 */
+} BmpInfoHeader;
 
 int sceGsPutDrawEnv(GsDrawPacket *);
 int sceGsSetDefDrawEnv(GsDrawEnv *, s16, s16, s16, s16, s16);

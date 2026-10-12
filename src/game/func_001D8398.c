@@ -43,8 +43,8 @@ s32 func_001DFC60(HandlerContext *, s32);
 int func_001E5210(u8);
 void func_001FC5E8(MenuCursorBar *);
 void func_001FDCD0(MenuColor);
-void func_001FDD28(TradeValue *, s32);
-void func_00200068(s32, s32);
+s32 func_001FDD28(u16 *, s32);
+s32 func_00200068(u16 *, s32);
 void func_00207478(int, int, int, int);
 
 /* an angle brought back into -pi..pi (for angles above -pi) */

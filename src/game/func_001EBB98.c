@@ -82,8 +82,8 @@ void func_001E6AB8(HandlerContext *);
 void func_001FC5E8(MenuCursorBar *);
 void func_001FDCD0(MenuColor);
 int func_001FE9A8(LevelDef *, s32);
-void func_001FF428(LevelDef *, s32);
-void func_00200068(s32, s32);
+s32 func_001FF428(u16 *, s32);
+s32 func_00200068(u16 *, s32);
 void func_00207478(int, int, int, int);
 
 /* match: the part number is passed sign-extended and no result is kept (the definition takes a u8 and returns int) */

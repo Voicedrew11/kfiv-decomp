@@ -4,7 +4,7 @@ extern KindObject *(*const D_00440B70[])(int, int);
 
 void func_001FBEB0(KindObject *);
 void func_001FC0D8(KindObject *);
-void func_001FCBD0(KindObject *);
+int func_001FCBD0(KindObject *);
 KindObject *func_00207428(KindObject *, int);
 
 /* Builds an object with the handler for entry_id % 1000, then dispatches it by kind. */

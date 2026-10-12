@@ -7,7 +7,7 @@ extern char D_004470E1;
 double sqrt(double);
 int rand(void);
 float func_0019C640(float *, float *, float *);
-void func_0019C598(float, float *, float *);
+void func_0019C598(f32, f32 *, f32 *);
 int func_0019C688(int);
 int func_001CE690(u32, int, char, char, char, char, s16, char);
 

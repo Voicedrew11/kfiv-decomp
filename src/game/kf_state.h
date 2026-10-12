@@ -39,6 +39,14 @@ typedef struct {
 
 extern SaveScreen D_005CF3C0;
 
+/* D_00426600, D_00426610: two 0x10-byte records func_001F71D8 fills before it hands over to func_001F8058 */
+typedef struct {
+    s32 unk00;                      /* 0x00 */
+    s32 unk04;                      /* 0x04 */
+    s32 unk08;                      /* 0x08 */
+    char pad0C[0x04];
+} SaveListRange;
+
 /* D_005CF3F0, D_005CF410: a mode record and its sub-state (0x20 bytes apart; copied whole) */
 typedef struct {
     s32 slot;                       /* 0x00 index into D_00428B80 */

@@ -18,7 +18,7 @@ int func_001CE8B0(u32);
 int func_001CE9A0(int kind, u32 slot, int value);
 int func_0019E110(s32, Vector4 *);
 float func_0019C640(float *, float *, float *);
-void func_0019C598(float, float *, float *);
+void func_0019C598(f32, f32 *, f32 *);
 s8 func_0019C700(void);
 int func_001CE690(u32, int, char, char, char, char, s16, char);
 

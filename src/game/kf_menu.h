@@ -211,6 +211,12 @@ typedef struct {
     char pad33[0x2D];
 } MenuGlyphSprite;
 
+/* D_00446D58: how much of a font texture one glyph cell covers across and down (1/25.6 each); the sprite
+   drawers func_001FC0D8 and func_001FCBD0 copy it whole to a local */
+typedef struct {
+    f32 step[2];
+} MenuGlyphCell;
+
 /* what a D_005CEE60 entry points to: a motion of the weapon model on the equipment screen */
 typedef struct {
     char pad00[0x0C];

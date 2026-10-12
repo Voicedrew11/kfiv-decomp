@@ -5,7 +5,7 @@ extern s32 D_00446F38;
 extern void **D_005CE840[];
 
 s32 func_001CFC58(s32);
-int func_001FE350(int, int);
+s32 func_001FE350(u16 *, s32);
 s32 func_00207320(int, s64);
 
 /* Looks up the table entry for index in the current node, and if it is set, sets TEST_1 and submits it. */

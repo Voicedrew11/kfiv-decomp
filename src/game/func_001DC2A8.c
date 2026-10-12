@@ -40,7 +40,7 @@ void func_001D8398(void); // match: this file only matches with this type; func_
 void func_001E4568(void);
 int func_001E5210(u8);
 void func_001FDCD0(MenuColor);
-void func_001FF428(LevelDef *, s32);
+s32 func_001FF428(u16 *, s32);
 void func_002020A0(RenderSlot *, RenderSlotArg);
 void func_00204180(TextureHeader *, LoadedBlockRef *);
 void func_00207478(int, int, int, int);

@@ -48,9 +48,9 @@ void func_001DD738(HandlerContext *);
 int func_001E5210(u8);
 void func_001FC5E8(MenuCursorBar *);
 void func_001FDCD0(MenuColor);
-int func_001FE350(int, int);
-int func_001FEEA8(int, int);
-void func_001FF428(LevelDef *, s32);
+s32 func_001FE350(u16 *, s32);
+s32 func_001FEEA8(u16 *, s32);
+s32 func_001FF428(u16 *, s32);
 void func_00201E10(LinkNode *, f32 *, MenuColor); // match: the colour is loaded unaligned, so not the definition's types
 void func_00207478(int, int, int, int);
 

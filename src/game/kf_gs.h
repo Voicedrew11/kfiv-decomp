@@ -214,4 +214,45 @@ typedef struct {
     f32 scale;                      /* 0x24 */
 } RectDef;
 
+/* a screen corner as plain bit-fields of one 64-bit word (GsPackedWord without the union). The first field of
+   such a struct is read with the alias set of its declared type, the others with alias set 0, and retail's
+   load and store order in func_001FBEB0 and func_001FC5E8 depends on exactly that */
+typedef struct {
+    u64 pos_x : 16;                 /* 0x00 12.4 fixed point */
+    u64 pos_y : 16;                 /* 0x02 */
+    u64 depth : 24;                 /* 0x04 */
+    u64 pad07 : 8;
+} GsCornerBits;
+
+/* the textured rectangle func_001FBEB0 draws (a KindObject of kind 0): two corners with their texture
+   coordinates, a colour, and the TEX0 register of the texture */
+typedef struct {
+    GsCornerBits first;             /* 0x00 top left */
+    f32 first_s;                    /* 0x08 */
+    f32 first_t;                    /* 0x0C */
+    GsCornerBits second;            /* 0x10 bottom right */
+    f32 second_s;                   /* 0x18 */
+    f32 second_t;                   /* 0x1C */
+    u32 red : 8;                    /* 0x20 */
+    u32 green : 8;                  /* 0x21 */
+    u32 blue : 8;                   /* 0x22 */
+    u32 alpha : 8;                  /* 0x23 */
+    f32 scale;                      /* 0x24 the Q of the RGBAQ register */
+    s64 tex0;                       /* 0x28 */
+} TexturedRectDef;
+
+/* the flat rectangle func_001FC5E8 draws, as that function reads it: RectDef (and the MenuCursorBar its
+   callers fill) with the corners and the colour as bit-fields */
+typedef struct {
+    GsCornerBits first;             /* 0x00 top left */
+    char pad08[0x08];
+    GsCornerBits second;            /* 0x10 bottom right */
+    char pad18[0x08];
+    u32 red : 8;                    /* 0x20 */
+    u32 green : 8;                  /* 0x21 */
+    u32 blue : 8;                   /* 0x22 */
+    u32 alpha : 8;                  /* 0x23 */
+    f32 scale;                      /* 0x24 the Q of the RGBAQ register */
+} FlatRectDef;
+
 #endif

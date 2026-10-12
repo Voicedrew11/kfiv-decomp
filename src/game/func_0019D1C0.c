@@ -5,7 +5,7 @@ extern u8 D_00349682[];
 extern int D_003EF5F8[];
 float atan2f(float, float);
 float func_0019C640(float *, float *, float *);
-void func_0019C598(float, float *, float *);
+void func_0019C598(f32, f32 *, f32 *);
 int func_0019C688(int);
 int func_001CE690(u32, int, char, char, char, char, s16, char);
 

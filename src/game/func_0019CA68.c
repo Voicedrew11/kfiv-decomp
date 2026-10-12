@@ -6,7 +6,7 @@ extern int D_003EF628[];
 extern s32 D_00502170[][2];
 double sqrt(double);
 float func_0019C640(float *, float *, float *);
-void func_0019C598(float, float *, float *);
+void func_0019C598(f32, f32 *, f32 *);
 int func_0019C688(int);
 int func_001CE690(u32, int, char, char, char, char, s16, char);
 
