@@ -1,7 +1,7 @@
 #include "kf_model.h"
 
 s16 func_0011E340(char *, int);
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 
 /* Start handler shared by several kinds: restarts the animation it is on. */
 void func_0011EE18(MapObject *object) {

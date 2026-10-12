@@ -6,7 +6,7 @@ extern void *D_00420D50[];
 
 int func_00103AE0(u8, u8, void *, u8);
 int func_00103B38(u8, u8);
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 void func_0011F148(char *);
 void func_001BC1C0(int);
 

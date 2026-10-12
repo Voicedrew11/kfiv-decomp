@@ -207,6 +207,16 @@ typedef struct {
     int size_b;                     /* 0x10 */
 } SoundBankSpec;
 
+/* SoundJobSpec as func_001A0C18 fills it in: there the two buffers are pointers of one type
+   and the sizes are ints, which fixes the order of its loads and stores */
+typedef struct {
+    void *buffer_a;                 /* 0x00 */
+    void *buffer_b;                 /* 0x04 */
+    int unk08;                      /* 0x08 */
+    int size_a;                     /* 0x0C */
+    int size_b;                     /* 0x10 */
+} SoundStartSpec;
+
 /* what MapSlot.unk34 points at: the sound bank of a map, two buffers and their sizes */
 typedef struct {
     int size_b;                     /* 0x00 */

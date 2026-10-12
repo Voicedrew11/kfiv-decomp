@@ -18,7 +18,7 @@ int sprintf(char *, char *, ...);
 int func_00102238(char *, int, int);
 int func_001024B0(int);
 int func_001025C0(int, void *, int);
-void func_00108940(int, int *, ModelInstance *, int);
+MotionData *func_00108940(MotionFile *, ModelChannel **, ModelInstance *, int);
 void func_0010B510(char *, int, int);
 void func_0010D018(ModelInstance *, char **, char **);
 void func_0010DB40(ModelInstance *);

@@ -1,7 +1,7 @@
 #include "kf_model.h"
 
 u16 func_001090E0(char *);
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 int func_0011E1F0(int, int);
 void func_0011E0C8(MapObject *);
 void func_0011E140(void *);

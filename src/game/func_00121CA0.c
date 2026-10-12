@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 s16 func_0011E340(char *, int);
 
 /* Update handler, step 4: waits, then runs the animation back; at its end the

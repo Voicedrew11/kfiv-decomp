@@ -1,7 +1,7 @@
 #include "common.h"
 
 s16 func_0011E340(char *, int);
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 
 void func_00121BE8(char *arg0) {
     int n = *(int *)(arg0 + 0x40);

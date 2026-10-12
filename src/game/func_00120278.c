@@ -3,7 +3,7 @@
 extern float D_00413F80[];
 
 s16 func_0011E340(char *, int);
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 void KF_Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 

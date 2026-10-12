@@ -16,7 +16,7 @@ void *memset(void *, int, u32);
 void func_001157D8(AreaNode *);
 void func_0010D018(ModelInstance *, char **, char **);
 void func_0010B758(ModelInstance *, int *, int *);
-void func_00108940(int, int *, ModelInstance *, int);
+MotionData *func_00108940(MotionFile *, ModelChannel **, ModelInstance *, int);
 u32 *func_00116BD0(int, int);
 void func_0010E6A8(ModelInstance *, s64, s64);
 void func_0010E820(ModelInstance *, s64);

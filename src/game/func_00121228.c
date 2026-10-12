@@ -3,7 +3,7 @@
 extern char D_0038CC50[];
 
 s16 func_0011E340(char *, int);
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 
 void func_00121228(char *arg0) {
     char *temp_a2 = arg0 + 0x40;

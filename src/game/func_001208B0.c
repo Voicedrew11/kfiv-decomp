@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 s16 func_0011E340(char *, int);
 
 /* Update handler of a switch turning off: runs the animation, then it is off. */

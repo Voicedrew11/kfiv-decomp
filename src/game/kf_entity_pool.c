@@ -38,7 +38,7 @@ int func_001025C0(int, void *, int);
 void func_00102218(void);
 void func_0010B758(ModelInstance *, int *, int *);
 s64 *func_0010CE08(ModelInstance *, s64 *);
-void func_00108940(int, int *, ModelInstance *, int);
+MotionData *func_00108940(MotionFile *, ModelChannel **, ModelInstance *, int);
 u32 *func_00116BD0(int, int);
 void func_001251E0(Entity *);
 void func_0010D018(ModelInstance *, char **, char **);

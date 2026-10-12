@@ -167,6 +167,17 @@ typedef struct {
     u8 year;                        /* 0x07 years since 2000 */
 } ClockTime;
 
+/* a LevelRecord (kf_player.h; D_003679A0, D_003682F0) seen with its time as the ClockTime it is: func_001ED9A8
+   passes the member by value, which the char[8] of LevelRecord.unk19 cannot give */
+typedef struct {
+    s16 unk00[9];                   /* 0x00 */
+    u8 level;                       /* 0x12 */
+    char pad13[0x05];
+    u8 unk18;                       /* 0x18 nonzero: the time below counts */
+    ClockTime unk19;                /* 0x19 not aligned */
+    char pad21[0x01];
+} LevelRecordTimed;
+
 /* D_00431CE8: func_0020CD00 advances its counter once a frame */
 typedef struct {
     char pad00[0x08];

@@ -3,7 +3,7 @@
 
 extern GameStatus D_0038CC50;
 
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 s16 func_0011E340(char *, int);
 
 /* Update handler: runs the animation; at its end the object is at step 4 and

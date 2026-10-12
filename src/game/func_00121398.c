@@ -3,7 +3,7 @@
 extern float D_00413F80[];
 extern f32 D_00431AF0[16];
 
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 void func_0011F148(char *);
 void func_00216BC0(void *, void *, void *);
 void func_00216778(void *, void *);

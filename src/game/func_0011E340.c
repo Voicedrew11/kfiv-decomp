@@ -1,7 +1,7 @@
 #include "kf_model.h"
 
 void func_00108A08(ModelInstance *, int);
-void func_0011E3A0(char *);
+int func_0011E3A0(void *);
 
 /* Starts one of a map object's animations from its first frame. */
 s16 func_0011E340(char *arg, int anim) {
