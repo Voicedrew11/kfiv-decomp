@@ -79,7 +79,7 @@ s32 func_001E0088(void);
 int func_001E4FE0(s32, u32);
 int func_001E5210(u8);
 void func_001FC5E8(MenuCursorBar *);
-void func_001FDCD0(MenuColor);
+void func_001FDCD0(MenuColor); // match: this file only matches with this type; func_001FDCD0.c defines it differently
 int func_001FE9A8(LevelDef *, s32);
 void func_00200068(s32, s32);
 void func_00203F28(int, int, int);

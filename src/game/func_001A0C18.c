@@ -4,7 +4,7 @@
 extern SoundJob D_004FF4D8;
 extern SoundStartSpec D_004FF4C0;
 
-int func_001A0BD0(void *);
+int func_001A0BD0(void *); // match: this file only matches with this type; func_001A0BD0.c defines it differently
 
 /* Runs the step 2 sound load into bank index; returns 0 and the voice once it is done. */
 int func_001A0C18(int args_addr, int index, int voice_out) {
