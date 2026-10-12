@@ -5,7 +5,7 @@ FromSoftware, 2001) for the PlayStation 2. The target is the USA retail boot
 ELF, `SLUS_203.18` (SLUS-20318). The goal is C source that the original
 toolchain compiles back into the identical executable.
 
-[![code](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Voicedrew11/kfiv-decomp/main/docs/progress/badge-code.json)](docs/progress/) [![functions](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Voicedrew11/kfiv-decomp/main/docs/progress/badge-functions.json)](docs/progress/)
+[![code](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Voicedrew11/kfiv-decomp/main/docs/progress/badge-code.json)](docs/progress/) [![functions](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Voicedrew11/kfiv-decomp/main/docs/progress/badge-functions.json)](docs/progress/) [![game named](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/Voicedrew11/kfiv-decomp/main/docs/progress/badge-named.json)](docs/progress/)
 
 **Status:** the build reproduces the retail ROM image (all bytes the console
 loads) **byte for byte**. The SDK, libc, libm and libgcc code is in C (181
@@ -99,11 +99,11 @@ static page) and the table below; commit those with each batch of work.
 `main`, `/docs`).
 
 <!-- progress:start -->
-| | code | functions | units complete |
-| --- | ---: | ---: | ---: |
-| overall | 89.71% | 3672 / 3839 | 14 / 3036 |
-| game | 88.38% | 2832 / 2991 | 0 / 2830 |
-| sce | 98.98% | 840 / 848 | 14 / 206 |
+| | code | functions | named | units complete |
+| --- | ---: | ---: | ---: | ---: |
+| overall | 89.71% | 3672 / 3839 | 836 / 3839 | 14 / 3036 |
+| game | 88.38% | 2832 / 2991 | 10 / 2991 | 0 / 2830 |
+| sce | 98.98% | 840 / 848 | 826 / 848 | 14 / 206 |
 <!-- progress:end -->
 
 ## Contributing
