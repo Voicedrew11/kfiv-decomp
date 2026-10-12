@@ -24,8 +24,8 @@ typedef struct {
 extern State D_00413F80;
 extern Def20 D_0041A6F8[150];
 extern u8 D_00369830[380];
-extern u8 D_00367980[6][5];
-extern u16 D_00367940[6][5];
+extern u8 spell_levels[6][5];
+extern u16 spell_experience[6][5];
 
 void func_001030B8(void) {
     int i;
@@ -86,36 +86,36 @@ void func_001030B8(void) {
     D_00369830[370] = 1;
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
-            if (D_00367980[i][j] == 0) {
+            if (spell_levels[i][j] == 0) {
                 for (; j < 5; j++) {
-                    D_00367980[i][j] = 0;
+                    spell_levels[i][j] = 0;
                 }
             }
         }
     }
     /* through an int: a bare byte compare is narrowed and gives bnez, not bgtz */
-    if (D_00413F80.unk3D == 0 || (n = D_00367980[(D_00413F80.unk3D - 1) / 15][(D_00413F80.unk3D - 1) / 3 % 5]) <= 0) {
+    if (D_00413F80.unk3D == 0 || (n = spell_levels[(D_00413F80.unk3D - 1) / 15][(D_00413F80.unk3D - 1) / 3 % 5]) <= 0) {
         D_00413F80.unk3D = 0;
     }
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
-            if (D_00367940[i][j] == 0) {
-                switch (D_00367980[i][j]) {
+            if (spell_experience[i][j] == 0) {
+                switch (spell_levels[i][j]) {
                 case 0:
-                    D_00367940[i][j] = 0;
+                    spell_experience[i][j] = 0;
                     break;
                 case 1:
-                    D_00367940[i][j] = 0;
+                    spell_experience[i][j] = 0;
                     break;
                 case 2:
-                    D_00367940[i][j] = 50;
+                    spell_experience[i][j] = 50;
                     break;
                 case 3:
-                    D_00367940[i][j] = 150;
+                    spell_experience[i][j] = 150;
                     break;
                 default:
-                    D_00367940[i][j] = 0;
-                    D_00367980[i][j] = 0;
+                    spell_experience[i][j] = 0;
+                    spell_levels[i][j] = 0;
                     break;
                 }
             }

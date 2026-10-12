@@ -755,3 +755,5 @@ KF_Vu0_ProjectToScreen = 0x002167E8; // type:func
 KF_Vector_MultiplyComponents = 0x00216BF0; // type:func
 KF_Vector_Subtract = 0x00216C78; // type:func
 KF_Vector_Scale = 0x00216CA8; // type:func
+spell_experience = 0x00367940; // size:0x3C
+spell_levels = 0x00367980; // size:0x1E

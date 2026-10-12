@@ -45,8 +45,8 @@ extern char D_00356928[0x2000];
 extern char D_00358928[0xA000];
 extern char D_00362928[0x5000];
 extern Cfg14 D_00367928;
-extern char D_00367940[0x3C];
-extern char D_00367980[0x1E];
+extern char spell_experience[0x3C];
+extern char spell_levels[0x1E];
 extern Rec22 D_003679A0[70];
 extern Rec22 D_003682F0[160];
 extern Blk17C D_00369830;
@@ -102,8 +102,8 @@ void func_001029A8(void) {
     D_00369CB0 = D_0043DCB0;
     D_00369E30 = D_0043DE30;
     D_00369FB0 = D_0043DFB0;
-    memset(D_00367940, 0, sizeof(D_00367940));
-    memset(D_00367980, 0, sizeof(D_00367980));
+    memset(spell_experience, 0, sizeof(spell_experience));
+    memset(spell_levels, 0, sizeof(spell_levels));
     func_001DC0E0();
     memset(D_0038A130, 0, sizeof(D_0038A130));
 }

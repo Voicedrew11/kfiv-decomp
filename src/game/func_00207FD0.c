@@ -1,7 +1,7 @@
 #include "common.h"
 
-extern u8 D_00367980[6][5];
-extern u16 D_00367940[6][5];
+extern u8 spell_levels[6][5];
+extern u16 spell_experience[6][5];
 
 int atoi(const char *);
 char *strchr(const char *, int);
@@ -13,10 +13,10 @@ void func_00207FD0(int arg0, char *arg1) {
     if ((u8)(arg1[-2] - 0x31) < 5) {
         idx = arg1[-2] - 0x31;
         atoi(arg1);
-        D_00367980[arg0][idx] = atoi(arg1);
+        spell_levels[arg0][idx] = atoi(arg1);
         p = strchr(arg1, 0x2C);
         if (p != 0) {
-            D_00367940[arg0][idx] = atoi(p + 1);
+            spell_experience[arg0][idx] = atoi(p + 1);
         }
     }
 }
