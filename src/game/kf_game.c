@@ -101,8 +101,8 @@ void func_00109E18(void);
 void func_00109E88(void);
 void func_0010A100(void *);
 u16 *func_00217760(int, int);
-int func_001036F8(int map, int entry, int bit);
-void func_00103778(int map, int entry, int bit, int value);
+static int func_001036F8(int map, int entry, int bit);
+static void func_00103778(int map, int entry, int bit, int value);
 
 /* sets the options to their defaults */
 void func_00102930(void) {
@@ -349,7 +349,7 @@ void func_001036E8(int map, int entry, int value) {
 }
 
 /* one of the four flag bits of an entry on a map */
-int func_001036F8(int map, int entry, int bit) {
+static int func_001036F8(int map, int entry, int bit) {
     u32 mask = 1;
 
     if ((u32)map >= 0x80) {
@@ -366,7 +366,7 @@ int func_001036F8(int map, int entry, int bit) {
     return (D_0034C928[entry / 2 + map * 0x100] & mask) != 0;
 }
 
-void func_00103778(int map, int entry, int bit, int value) {
+static void func_00103778(int map, int entry, int bit, int value) {
     if ((u32)map < 0x80 && (u32)entry < 0x200 && (u32)bit < 4) {
         u8 mask = (u8)(1 << bit);
         u8 *flag_byte;
@@ -424,12 +424,12 @@ void func_00103858(int flag) {
 }
 
 /* moves an area's flags to another area */
-void func_00103990(u32 from, u32 to) {
-    if (from < 50 && to < 50) {
-        D_0034C4E0[to] = D_0034C4E0[from];
-        D_0034C350[to] = D_0034C350[from];
-        memset(&D_0034C350[from], 0, sizeof(AreaFlagBits));
-        D_0034C4E0[from] = 0;
+void func_00103990(u32 source_area, u32 dest_area) {
+    if (source_area < 50 && dest_area < 50) {
+        D_0034C4E0[dest_area] = D_0034C4E0[source_area];
+        D_0034C350[dest_area] = D_0034C350[source_area];
+        memset(&D_0034C350[source_area], 0, sizeof(AreaFlagBits));
+        D_0034C4E0[source_area] = 0;
     }
 }
 
@@ -525,6 +525,7 @@ int func_00103BA8(int map_tag, int trigger_id, int item) {
     return FALSE;
 }
 
+/* writes the game into the save image, then the checksum table */
 void func_00103C18(void) {
     u8 *save_cursor;
     u8 bit_byte;
@@ -658,6 +659,7 @@ void func_00103C18(void) {
     }
 }
 
+/* reads the game back from the save image */
 void func_00104EC8(void) {
     u8 *save_cursor;
     int magic;
@@ -768,36 +770,36 @@ void func_00104EC8(void) {
 /* checks the save image: the magic word and a byte sum per 128-byte block */
 int func_001060C0(void) {
     UnalignedInt header[2];
-    int count;
+    int block_count;
     int i;
     u8 *base;
-    u8 *p;
-    u8 *tbl;
-    u8 *blk;
+    u8 *cursor;
+    u8 *sum_table;
+    u8 *block_byte;
     int sum;
-    int k;
+    int byte_index;
 
-    p = D_0036A130;
+    cursor = D_0036A130;
     header[0] = *(UnalignedInt *)D_0036A130;
-    base = p;
-    p = base + 4;
+    base = cursor;
+    cursor = base + 4;
     if (header[0].value != 0x15400) {
         return 0;
     }
-    header[1] = *(UnalignedInt *)p;
-    count = (u32)header[1].value >> 7;
-    blk = base;
-    tbl = base + header[1].value;
-    for (i = 0; i < count; i++) {
+    header[1] = *(UnalignedInt *)cursor;
+    block_count = (u32)header[1].value >> 7;
+    block_byte = base;
+    sum_table = base + header[1].value;
+    for (i = 0; i < block_count; i++) {
         sum = 0;
-        for (k = 0x7F; k >= 0; k--) {
-            sum += *blk++;
+        for (byte_index = 0x7F; byte_index >= 0; byte_index--) {
+            sum += *block_byte++;
         }
         sum &= 0xFF;
-        if (sum != *tbl) {
+        if (sum != *sum_table) {
             return 0;
         }
-        tbl++;
+        sum_table++;
     }
     return 1;
 }
@@ -862,7 +864,7 @@ void func_00106208(void) {
     }
 }
 
-/* Builds the view-projection matrix and projects the strip breakpoints to screen depth. */
+/* loads the screen matrix and projects the haze layer distances D_0038A158 to screen depths */
 void func_00106318(void) {
     sceVu0FMATRIX screen_matrix;
     sceVu0FMATRIX work_matrix;
@@ -896,19 +898,19 @@ void func_00106318(void) {
     }
 }
 
-/* Draws the D_00446744 small sprites whose screen depths are in D_0038A178. */
+/* draws the D_00446744 small sprites whose screen depths are in D_0038A178 */
 void func_00106520(void) {
     GsColor color = D_0043E450;
-    int context_base;
+    int texture_base;
     int texture_height_log2;
     u32 i;
     u64 tex0_low;
     u32 *packet_start;
     u32 *cursor;
 
-    context_base = 0x1180;
+    texture_base = 0x1180;
     if (D_00446F78 != 0) {
-        context_base = 0;
+        texture_base = 0;
     }
     if (D_00446744 == 0) {
         return;
@@ -934,7 +936,7 @@ void func_00106520(void) {
         *(u64 *)cursor = 0x513513EEL;
         cursor += 2;
         texture_height_log2 = 9;
-        tex0_low = context_base | 0x28028000L;
+        tex0_low = texture_base | 0x28028000L;
         *(u64 *)cursor = tex0_low | ((u64)texture_height_log2 << 30);
         cursor += 2;
         *cursor++ = 6;
@@ -975,11 +977,11 @@ void func_00106520(void) {
     func_00109AD0();
 }
 
-/* Draws the D_00446744 sprites in a strip, each at a column offset from the table D_0043E460. */
+/* draws the D_00446744 sprites in a strip, each at a column offset from the table D_0043E460 */
 void func_001067E0(void) {
     LayerOffsets offset_table = D_0043E460;
     GsSpritePacket sprite;
-    int context_base;
+    int texture_base;
     int texture_height_log2;
     u64 tex0_low;
     u32 i;
@@ -987,9 +989,9 @@ void func_001067E0(void) {
     int x_offset;
     int depth;
 
-    context_base = 0x1180;
+    texture_base = 0x1180;
     if (D_00446F78 != 0) {
-        context_base = 0;
+        texture_base = 0;
     }
     func_00109A50();
     func_00109A80(GS_REG_ALPHA_1, 0x80000000a8L);
@@ -997,7 +999,7 @@ void func_001067E0(void) {
     func_00109A80(GS_REG_CLAMP_1, 5);
     func_00109AD0();
     texture_height_log2 = 9;
-    tex0_low = context_base | 0x28028000L;
+    tex0_low = texture_base | 0x28028000L;
     sprite.tex0 = tex0_low | ((u64)texture_height_log2 << 30);
     sprite.unk08 = 0x60L;
     sprite.prim = 0x156;
@@ -1030,19 +1032,19 @@ void func_001067E0(void) {
     func_00109AD0();
 }
 
-/* Draws one sprite at the depth in D_0044673C; the pad's up and down buttons step that depth. */
+/* draws one sprite at the depth in D_0044673C; the pad's up and down buttons step that depth */
 void func_00106980(void) {
     u32 *cursor;
     int texture_height_log2;
     u32 *packet_start;
     GsColor color = D_0043E450;
-    int context_base;
+    int texture_base;
     u16 pad_buttons;
     u64 tex0_low;
 
-    context_base = 0x1180;
+    texture_base = 0x1180;
     if (D_00446F78 != 0) {
-        context_base = 0;
+        texture_base = 0;
     }
     pad_buttons = func_00217760(1, 0)[1];
     if (pad_buttons & 0x400) {
@@ -1073,7 +1075,7 @@ void func_00106980(void) {
     *(u64 *)cursor = 0x513513EEL;
     cursor += 2;
     texture_height_log2 = 9;
-    tex0_low = context_base | 0x28028000L;
+    tex0_low = texture_base | 0x28028000L;
     *(u64 *)cursor = tex0_low | ((u64)texture_height_log2 << 30);
     cursor += 2;
     *cursor++ = 6;
@@ -1117,17 +1119,17 @@ void func_00106980(void) {
     func_00109AD0();
 }
 
-// Draws a column of 10 gradient sprites, with the Z buffer off for the run.
+/* draws a column of 10 gradient sprites, with the Z buffer off for the run */
 void func_00106C58(void) {
     GsSpritePacket sprite;
-    int tag_flags;
+    int texture_base;
     int remaining;
-    int tag_high_bits;
-    u64 tag_low_bits;
+    int texture_height_log2;
+    u64 tex0_low;
 
-    tag_flags = 0x1180;
+    texture_base = 0x1180;
     if (D_00446F78 != 0) {
-        tag_flags = 0;
+        texture_base = 0;
     }
     func_00109A50();
     remaining = 9;
@@ -1136,10 +1138,10 @@ void func_00106C58(void) {
     func_00109A80(GS_REG_TEST_1, 0x30000);
     func_00109A80(GS_REG_ZBUF_1, 0x10a000118L);
     func_00109AD0();
-    tag_high_bits = 9;
-    tag_low_bits = tag_flags | 0x28028000L;
+    texture_height_log2 = 9;
+    tex0_low = texture_base | 0x28028000L;
     sprite.unk08 = 0;
-    sprite.tex0 = tag_low_bits | ((u64)tag_high_bits << 30);
+    sprite.tex0 = tex0_low | ((u64)texture_height_log2 << 30);
     sprite.rgba[0] = 0x80;
     sprite.rgba[1] = 0x80;
     sprite.corner[1].z = 0xFFFFFFFF;
@@ -1169,17 +1171,17 @@ void func_00106C58(void) {
     func_00109AD0();
 }
 
-// Draws two columns of 10 gradient sprites each, with the Z buffer off for the run.
+/* draws two columns of 10 gradient sprites each, with the Z buffer off for the run */
 void func_00106DC8(void) {
     GsSpritePacket sprite;
-    int tag_flags;
+    int texture_base;
     int remaining;
-    int tag_high_bits;
-    u64 tag_low_bits;
+    int texture_height_log2;
+    u64 tex0_low;
 
-    tag_flags = 0x1180;
+    texture_base = 0x1180;
     if (D_00446F78 != 0) {
-        tag_flags = 0;
+        texture_base = 0;
     }
     func_00109A50();
     remaining = 9;
@@ -1189,10 +1191,10 @@ void func_00106DC8(void) {
     func_00109A80(GS_REG_ZBUF_1, 0x10a000118L);
     func_00109AD0();
 
-    tag_high_bits = 9;
-    tag_low_bits = tag_flags | 0x28028000L;
+    texture_height_log2 = 9;
+    tex0_low = texture_base | 0x28028000L;
     sprite.unk08 = 0;
-    sprite.tex0 = tag_low_bits | ((u64)tag_high_bits << 30);
+    sprite.tex0 = tex0_low | ((u64)texture_height_log2 << 30);
     sprite.rgba[0] = 0x80;
     sprite.rgba[1] = 0x80;
     sprite.corner[1].z = 0xFFFFFFFF;
@@ -1241,20 +1243,20 @@ void func_00106DC8(void) {
     func_00109AD0();
 }
 
-/* Draws one sprite from the screen rectangle D_0043E480 at the given alpha. */
+/* draws one sprite from the screen rectangle D_0043E480 at the given alpha */
 void func_00106FB8(int alpha) {
     ScreenRect screen_rect = D_0043E480;
     ScreenRect texel_rect = D_0043E480;
     int vertex_color[4] = { 0x80, 0x80, 0x80, alpha };
-    int context_base;
+    int texture_base;
     int texture_height_log2;
     u64 tex0_low;
     u32 *packet_start;
     u32 *cursor;
 
-    context_base = 0x1180;
+    texture_base = 0x1180;
     if (D_00446F78 == 0) {
-        context_base = 0;
+        texture_base = 0;
     }
     func_00109A50();
     func_00109A80(GS_REG_ALPHA_1, 0x44);
@@ -1275,7 +1277,7 @@ void func_00106FB8(int alpha) {
     *(u64 *)cursor = 0x513513EEL;
     cursor += 2;
     texture_height_log2 = 9;
-    tex0_low = context_base | 0x28028000L;
+    tex0_low = texture_base | 0x28028000L;
     *(u64 *)cursor = tex0_low | ((u64)texture_height_log2 << 30);
     cursor += 2;
     *cursor++ = 6;
@@ -1315,20 +1317,20 @@ void func_00106FB8(int alpha) {
     func_00109650(packet_start, cursor);
 }
 
-/* Draws one sprite from the screen rectangle D_0043E480, textured from D_0043E490, at the given alpha. */
+/* draws one sprite from the screen rectangle D_0043E480, textured from D_0043E490, at the given alpha */
 void func_00107270(int alpha) {
     ScreenRect screen_rect = D_0043E480;
     ScreenRect texel_rect = D_0043E490;
     int vertex_color[4] = { 0x80, 0x80, 0x80, alpha };
-    int context_base;
+    int texture_base;
     int texture_height_log2;
     u64 tex0_low;
     u32 *packet_start;
     u32 *cursor;
 
-    context_base = 0x1180;
+    texture_base = 0x1180;
     if (D_00446F78 == 0) {
-        context_base = 0;
+        texture_base = 0;
     }
     func_00109A50();
     func_00109A80(GS_REG_ALPHA_1, 0x44);
@@ -1349,7 +1351,7 @@ void func_00107270(int alpha) {
     *(u64 *)cursor = 0x513513EEL;
     cursor += 2;
     texture_height_log2 = 9;
-    tex0_low = context_base | 0x28028000L;
+    tex0_low = texture_base | 0x28028000L;
     *(u64 *)cursor = tex0_low | ((u64)texture_height_log2 << 30);
     cursor += 2;
     *cursor++ = 6;
@@ -1389,18 +1391,18 @@ void func_00107270(int alpha) {
     func_00109650(packet_start, cursor);
 }
 
-// Draws the sight marker: a 20-strip sprite whose position follows the projected target.
+/* draws the sight marker: a 20-strip sprite whose position follows the projected target */
 void func_00107528(void) {
     float view_matrix[16];
     float scaled_vector[4];
     int screen_xy[2];
     GsSpritePacket sprite_packet;
     GsSpritePacket *strip_packet;
-    int tag_flags;
+    int texture_base;
     int offset_x, offset_y;
     int strip;
 
-    tag_flags = D_00446F78 ? 0 : 0x1180;
+    texture_base = D_00446F78 ? 0 : 0x1180;
 
     func_00109A50();
     func_00109A80(GS_REG_ALPHA_1, 10);
@@ -1441,7 +1443,7 @@ void func_00107528(void) {
     }
 
     sprite_packet.prim = 0x116;
-    sprite_packet.tex0 = 0x28028000L | tag_flags;
+    sprite_packet.tex0 = 0x28028000L | texture_base;
     sprite_packet.tex0 |= 0xA400L << 20;
     sprite_packet.unk08 = 0;
     sprite_packet.rgba[0] = 0x80;
@@ -1502,22 +1504,22 @@ void func_00107528(void) {
     func_00109AD0();
 }
 
-// Draws the target marker for the nearest entity in front of the camera, if any.
+/* draws the target marker for the nearest entity in front of the camera, if any */
 void func_00107840(void) {
     sceVu0FMATRIX view_matrix;
     sceVu0FVECTOR offset_to_entity;
     sceVu0FVECTOR scratch_vector;
     VuIntVector screen_position;
     GsSpritePacket sprite_packet;
-    int tag_flags;
+    int texture_base;
     Entity *entity;
     float focus_distance, nearest_distance_squared, distance_squared;
     int offset_x, offset_y, strip;
-    int tag_high_bits;
-    u64 tag_low_bits;
+    int texture_height_log2;
+    u64 tex0_low;
 
-    tag_flags = 0x1180;
-    if (D_00446F78 != 0) tag_flags = 0;
+    texture_base = 0x1180;
+    if (D_00446F78 != 0) texture_base = 0;
     focus_distance = D_00420D00[18] > 1000.0f ? 1000.0f : D_00420D00[18];
     nearest_distance_squared = focus_distance * focus_distance;
     for (entity = D_004467E0; entity != NULL; entity = entity->next) {
@@ -1560,14 +1562,14 @@ void func_00107840(void) {
     func_00109AD0();
 
     sprite_packet.prim = 0x116;
-    tag_low_bits = tag_flags | 0x28028000L;
+    tex0_low = texture_base | 0x28028000L;
     sprite_packet.unk08 = 0;
     sprite_packet.rgba[0] = 0x80;
     sprite_packet.rgba[1] = 0x80;
     sprite_packet.rgba[2] = 0x80;
-    tag_high_bits = 0x29;
+    texture_height_log2 = 0x29;
     sprite_packet.corner[0].z = 0xFFFFFFFF;
-    sprite_packet.tex0 = tag_low_bits | ((u64)tag_high_bits << 30);
+    sprite_packet.tex0 = tex0_low | ((u64)texture_height_log2 << 30);
     sprite_packet.rgba[3] = 0x80;
     sprite_packet.corner[1].z = 0xFFFFFFFF;
 
@@ -1613,17 +1615,16 @@ void func_00107840(void) {
     func_00109AD0();
 }
 
-// Draws a column of 10 grey sprites at the given brightness, scrolling across the screen.
+/* draws a column of 10 grey sprites at the given brightness, scrolling across the screen */
 void func_00107CD8(int brightness) {
-    // match: retail reserves this stack space; the match needs it
-    char unused_stack[0x60];
+    char unused_stack[0x60]; // match: retail reserves the 0x60 bytes
     GsSpritePacket sprite;
-    int tag_flags;
+    int texture_base;
     int remaining;
-    int tag_high_bits;
-    u64 tag_low_bits;
+    int texture_height_log2;
+    u64 tex0_low;
 
-    tag_flags = D_00446F78 ? 0 : 0x1180;
+    texture_base = D_00446F78 ? 0 : 0x1180;
     remaining = 9;
     func_00109E88();
     func_00109E18();
@@ -1633,9 +1634,9 @@ void func_00107CD8(int brightness) {
     func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
     func_00109AD0();
     sprite.unk08 = 0;
-    tag_low_bits = tag_flags | 0x28028000L;
-    tag_high_bits = 9;
-    sprite.tex0 = tag_low_bits | ((u64)tag_high_bits << 30);
+    tex0_low = texture_base | 0x28028000L;
+    texture_height_log2 = 9;
+    sprite.tex0 = tex0_low | ((u64)texture_height_log2 << 30);
     sprite.prim = 0x116;
     sprite.rgba[1] = sprite.rgba[2] = brightness;
     sprite.rgba[0] = brightness;
@@ -1666,15 +1667,14 @@ void func_00107CD8(int brightness) {
     func_00109E88();
 }
 
-// Draws a column of 10 sprites in the given colour, scrolling across the screen.
+/* draws a column of 10 sprites in the given colour, scrolling across the screen */
 void func_00107E70(int red, int green, int blue) {
-    // match: retail reserves this stack space; the match needs it
-    char unused_stack[0x60];
+    char unused_stack[0x60]; // match: retail reserves the 0x60 bytes
     GsSpritePacket sprite_packet;
-    int tag_flags;
+    int texture_base;
     int remaining;
 
-    tag_flags = D_00446F78 ? 0 : 0x1180;
+    texture_base = D_00446F78 ? 0 : 0x1180;
     remaining = 9;
     func_00109E88();
     func_00109E18();
@@ -1684,7 +1684,7 @@ void func_00107E70(int red, int green, int blue) {
     func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
     func_00109AD0();
 
-    sprite_packet.tex0 = (0x28028000L | tag_flags) | (0x9000L << 18);
+    sprite_packet.tex0 = (0x28028000L | texture_base) | (0x9000L << 18);
     sprite_packet.unk08 = 0;
     sprite_packet.prim = 0x116;
     sprite_packet.rgba[0] = red;
@@ -1695,7 +1695,7 @@ void func_00107E70(int red, int green, int blue) {
     sprite_packet.corner[0].y = 0x7200;
     sprite_packet.corner[1].x = 0x7000;
     {
-        // match: the bottom y goes through its own local; the match needs this block
+        // match: the bottom y goes through a local of its own
         u32 bottom_y = 0x8DF8;
         sprite_packet.corner[1].y = bottom_y;
     }
@@ -1722,13 +1722,12 @@ void func_00107E70(int red, int green, int blue) {
     func_00109E88();
 }
 
-/* Steps the wobbling grid when D_00446740 is set, then draws its 70 cells as sprites with
-   corners blended between the rest and current positions by blend. */
+/* steps the wobbling grid (laid out afresh when D_00446740 is set) and draws its cells, blended by blend */
 void func_00108020(int red, int green, int blue, int alpha, float blend) {
-    char unused_stack[0x40]; // match: retail reserves this stack space
+    char unused_stack[0x40]; // match: retail reserves the 0x40 bytes
     int j, i, k, corner_col;
     int origin_x, origin_y, target_x;
-    s64 tag_low_bits;
+    s64 tex0_low;
     float force_x, force_y;
     u32 *packet_start;
     u32 *cursor;
@@ -1796,9 +1795,9 @@ void func_00108020(int red, int green, int blue, int alpha, float blend) {
             *cursor++ = 0;
             *cursor++ = 0;
             *cursor++ = 0;
-            tag_low_bits = 0xC0AE400000008001L;
+            tex0_low = 0xC0AE400000008001L;
             *cursor++ = 0x6C0DC000;
-            *(s64 *)cursor = tag_low_bits;
+            *(s64 *)cursor = tex0_low;
             cursor += 2;
             *(s64 *)cursor = 0x513513513513L;
             cursor += 2;

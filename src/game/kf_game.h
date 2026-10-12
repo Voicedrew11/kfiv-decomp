@@ -163,7 +163,7 @@ typedef struct {
     u16 unk3E;                      /* 0x3E unk33 scaled by D_0043E568, worked out after loading */
 } GameDefinition;
 
-/* a GameDefinition as the save code reads it (func_00103C18, func_00104EC8): the word unk33 is the top byte of */
+/* a GameDefinition as the save code reads it (func_00103C18, func_00104EC8): unk33 is the top byte of flags */
 typedef struct {
     char pad00[0x30];
     u32 flags;                      /* 0x30 bits 18 and 19 are a state; below 2 it is saved as one bit */
