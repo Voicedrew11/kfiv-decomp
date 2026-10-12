@@ -170,6 +170,30 @@ entry, `next` is read uninitialised. Harmless as long as every entry in every
 map file is used by at least one object, which is presumably true of the
 shipped data. A port that loads modified maps should not rely on it.
 
+## `func_0018AE98` keeps the last prop a ray hits, not the nearest
+
+`func_0018AE98` tests a ray against the props of the loaded maps and returns
+the kind and point of the hit. It sets `nearest` to FLT_MAX before the loops
+and compares every hit with it:
+
+```c
+kind = func_0018AB40(record, origin, direction, length, (s32)point);
+if (kind != 0 && COLLISION_RESULT->distance < nearest) {
+    result = kind;
+    if (out_point != NULL) {
+        func_00216778(out_point, point);
+    }
+}
+```
+
+Nothing assigns `nearest` inside the `if`, so the test passes for every hit.
+
+Effect: when the ray goes through several props of one map, the kind and
+point returned are those of the last one in record order. `func_00166BF8`
+only tests the result against 0 and passes no point, so it is not touched;
+`func_001299F8` takes the point as a jump's landing, and can get a farther
+prop's. Marked with `// match:`.
+
 ## `func_001A1E88` tests the address of the slot pool where it means to stop early
 
 `func_001A1E88` runs the effect spawner slots and the effects for one frame.
@@ -189,6 +213,39 @@ Effect: the `break` never runs and the loop always walks all 0x60 slots. The
 loop is only entered when the live count `D_004468CC` is above 0, and the slot
 loop of `func_001A3040` stops on that count, so the count was probably what
 was meant here (a guess). Marked with `// match:`.
+
+## `func_001A2168` leaves a play-once texture's frame number unset after its last frame
+
+`func_001A2168` draws the live effects. For an effect with texture frames
+(`def->unkF7` of them) it works out the frame from the mode `def->unkF6`:
+
+```c
+case 1:
+    if (step < effect->def->unkF7) {
+        record_id = step;
+    }
+    break;
+case 2:
+    record_id = effect->def->unkF7 - 1;
+    if (step < effect->def->unkF7) {
+        record_id = step;
+    }
+    break;
+...
+record_id = effect->def->unkFA + record_id * effect->def->unkF8;
+func_001A2E58(model, model->unk104, effect->def->unkFA, record_id);
+```
+
+Mode 2 holds the last frame once `step` has run past it. Mode 1 sets nothing
+then, so `record_id` is what the last line left in it for the effect drawn
+before this one in the loop (that effect's finished id, not a frame number),
+or an unset register if no effect before it had frames.
+
+Effect: `func_001A2E58` finds the record `unkFA` in the model and writes the
+id it is given into it, so an effect of mode 1 that outlives its frames gets
+an id of `unkFA + leftover * unkF8`. What is drawn for an id that names no
+texture frame is not checked, nor whether any mode 1 effect lives that long.
+Marked with `// match:`.
 
 ## `func_001A3040` takes one record too many for the map it unloads
 
@@ -421,6 +478,31 @@ when the button is let go. Otherwise an overshoot below 0 is not clamped here,
 but the block after it (`unk1BC < 0`: add the loss, clamp at 0) puts it right
 in the same frame.
 
+## `func_001D2680` has no `break` after case 0 of its quick-slot switch
+
+`func_001D2680` builds the rings of items the menus walk. For the ring of
+usable items and spells it puts two list heads on the entry that
+`PlayerState.unk48` (a mode, 0 to 2) and `unk46` name:
+
+```c
+switch (D_00413F80.unk48) {
+case 0:
+    D_005CE810.item = D_005CE6A0.item = D_00424600;
+case 1:
+    if (D_00369830[D_00413F80.unk46] != 0) {
+        D_005CE810.item = D_005CE6A0.item = &D_00424600[D_00413F80.unk46];
+    } else {
+        D_00413F80.unk46 = 0;
+        D_005CE810.item = D_005CE6A0.item = D_00424600;
+    }
+    break;
+```
+
+Effect: case 0's stores are always overwritten; mode 0 behaves as mode 1.
+That only differs from what case 0 asks for when `unk48` is 0 while `unk46`
+is the number of an owned item. `func_001DDB10` clears the two together; not
+checked whether every writer does. Marked with `// match:`.
+
 ## `func_001D3730` reads `next` of the spare upload node without a NULL test
 
 `func_001D3730` copies the current upload node into the spare node
@@ -541,7 +623,7 @@ at all. Nothing is seen if the two lists match part for part; not checked.
 
 ## The item detail panel's switch leaves its part list unset for groups 1 and 10
 
-Six screens open a detail panel for the current item with the same code: a
+Seven screens open a detail panel for the current item with the same code: a
 `switch` on the item's group sets `packets` and `count` (the panel's sprite
 list), and the fade code right after the switch walks `packets[0..count)` and
 writes `D_00425910[i]`:
@@ -549,6 +631,7 @@ writes `D_00425910[i]`:
 | Function | Groups with no case |
 | --- | --- |
 | `func_001E7010`, `func_001E88A0`, `func_001EA568`, `func_001EBB98`, `func_001EF840` | 1 and 10 |
+| `func_001DDB10` | 1 and 10 |
 | `func_001D94F8` | 10 |
 
 For a group with no case both variables are read unset; in retail they are
@@ -561,6 +644,11 @@ item is current. What then happens depends on the caller's registers (a
 guess: usually a count of 0 or a harmless read; a large count would write
 past `D_00425910[256]`). Not checked which of these lists can hold group 1
 items; `func_001D94F8` has its own case for group 1.
+
+`func_001DDB10` (the item screen) is the same as the trade screens here: same
+gate, same switch. Its list is the ring `func_001D2680` builds from every
+item number from 1 up, and `MenuItem.group` 1 is the first 150 of those, so
+there a group 1 item can be current.
 
 ## `func_002050F8` clamps an unsigned Y at 0
 
@@ -1053,7 +1141,19 @@ does not mistake them for meaning something.
 - Dead statements kept because the match needs them: `item = D_00426120[0]`
   at the top of `func_001D8398`, and `word.f.mid16 += 0xB0; word.f.lo16 =
   0x7080;` in the list loop of `func_001D8C90`. Each is live in the other of
-  the two menus.
+  the two menus. `func_001D2680`, `func_001E57A0` and `func_001ED9A8` (build
+  the menu rings) clear `last`, `first` and `count` twice at the top, in the
+  declarations and again by statements.
+- `func_001D2680` closes ten of its rings (usable items, the 70 of group 0,
+  the eight equipment groups) with `first->next = last; last->prev = first;`
+  and no test for an empty ring; its three counted rings test
+  `first != NULL`. An empty one would write to addresses 4 and 8. No effect
+  as long as each ring always has an entry (presumably a "nothing" one; not
+  checked).
+- `func_00116610` (map viewer draw) picks each record's two draw blocks by
+  `flags & 0x10`, as the game's draw loop does, and at once replaces both
+  with the viewer's own (`D_0038CCA0`, `D_0038A1B0.unkA0`). The choice does
+  nothing.
 - `func_001D94F8` (equipment detail panel) picks the magic panel's variant
   with `(index - 1) / 15` in one layout and `(index + 1) / 15` in the other
   (`FxTableEntry.unk102 != 0`). The magic menu uses `(number - 1) / 15`. May
@@ -1061,7 +1161,8 @@ does not mistake them for meaning something.
 - `func_001E0D98` and `func_001DF308` hand `func_001FC5E8` a cursor bar of
   which only the corners and the colour are set. `func_001FC5E8` (not matched;
   from its assembly) also reads the float at +0x24, so that one is stack
-  contents. Presumably not visible.
+  contents. Presumably not visible. `func_001DDB10` fills its bar the same
+  way.
 - `func_001E0D98`: the last arm of the per-save `switch` is written as a
   fourth test, not an `else`, so retail keeps a path that sets neither
   argument of the call after it. The four tests cover every case.
@@ -1144,6 +1245,9 @@ does not mistake them for meaning something.
   the position again.
 - `func_001D37F8` and `func_001D39F0` (rotate the upload nodes) pass their own
   first argument to `func_001D3730` and `func_001D3650`, which take none.
+  Likewise `func_001DDB10` passes its context to `func_001E0088`, and
+  `func_001A0C18` passes `index` as a second argument to `func_001A0BD0`,
+  which takes one.
 - `func_0010B758` (set up a model's parts) walks each part's data blocks by
   their lengths and uses nothing from the walk; retail keeps only the empty
   loop.
