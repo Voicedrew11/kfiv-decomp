@@ -32,4 +32,56 @@ typedef struct {
     void (*stage[3])(void *upload);
 } ChunkUploadStages;
 
+/* IopLoadContext.buffer */
+typedef struct {
+    char pad00[0x0C];
+    s32 unk0C;                      /* 0x0C */
+    char pad10[0x04];
+    s32 size;                       /* 0x14 */
+} IopLoadBuffer;
+
+/* the request func_001CCD78 reads: the data size and a second value */
+typedef struct {
+    char pad00[0x10];
+    s32 size;                       /* 0x10 rounded up to 16 */
+    char pad14[0x04];
+    s32 unk18;                      /* 0x18 */
+} IopLoadRequest;
+
+/* an IOP heap block load: the sizes it settled on and the heap it got */
+typedef struct {
+    IopLoadBuffer *buffer;          /* 0x00 */
+    char pad04[0x04];
+    s32 size;                       /* 0x08 */
+    s32 unk0C;                      /* 0x0C */
+    s32 heap;                       /* 0x10 */
+    char pad14[0x04];
+    s32 heap_size;                  /* 0x18 */
+} IopLoadContext;
+
+/* StreamSlot.stream */
+typedef struct {
+    char pad00[0x04];
+    void *buf;                      /* 0x04 read destination */
+} StreamBuf;
+
+/* a chain of sectors, each followed by its file data */
+typedef struct {
+    char pad00[0x14];
+    void *next;                     /* 0x14 */
+    char pad18[0x10];
+    u8 data[0];                     /* 0x28 size unknown */
+} SectorChain;
+
+/* a streaming read slot (func_001D4118) */
+typedef struct {
+    char pad00[0x08];
+    s32 file_handle;                /* 0x08 */
+    StreamBuf *stream;              /* 0x0C */
+    SectorChain *chain;             /* 0x10 */
+    char pad14[0x08];
+    s32 sector_count;               /* 0x1C */
+    s32 done;                       /* 0x20 */
+} StreamSlot;
+
 #endif

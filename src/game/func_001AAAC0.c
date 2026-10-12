@@ -28,7 +28,7 @@ void func_001AAAC0(EffectActor *effect) {
         }
     }
     *(float *)&effect->unk0C = *(float *)&effect->unk0C * fade;
-    func_00216778(&effect->model->position, effect->unk64);
-    func_00216778(&effect->model->rotation, effect->unk68);
+    func_00216778(&effect->model->position, effect->start_position);
+    func_00216778(&effect->model->rotation, effect->start_rotation);
     effect->frame += 1;
 }

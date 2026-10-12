@@ -117,4 +117,15 @@ typedef struct {
     int used;                       /* 0x08 */
 } LoadBuffer;
 
+/* the voice record func_0021C350 sets up for a stream upload */
+typedef struct {
+    s32 unk00;                      /* 0x00 */
+    char pad04[0x40];
+    s32 unk44;                      /* 0x44 */
+    char pad48[0x08];
+    s32 unk50;                      /* 0x50 */
+    char pad54[0x04];
+    s32 unk58;                      /* 0x58 */
+} StreamVoice;
+
 #endif

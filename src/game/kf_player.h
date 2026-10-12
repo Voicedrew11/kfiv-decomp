@@ -14,11 +14,20 @@ typedef struct {
     char pad20[0x10];
     s16 timed_flags[6];             /* 0x30 held at 0 while the matching timer runs */
     u8 unk3C;                       /* 0x3C row of D_0041B9B8 (0x90 bytes each) */
-    char pad3D[0x16F];
+    char pad3D[0x05];
+    u8 unk42;                       /* 0x42 */
+    char pad43[0x71];
+    s32 unkB4;                      /* 0xB4 */
+    char padB8[0xF4];
     f32 unk1AC;                     /* 0x1AC */
     f32 unk1B0;                     /* 0x1B0 */
     f32 unk1B4;                     /* 0x1B4 */
-    char pad1B8[0x9A];
+    char pad1B8[0x10];
+    u64 unk1C8;                     /* 0x1C8 status bits; bit 38 is tested */
+    char pad1D0[0x30];
+    s32 unk200;                     /* 0x200 */
+    s32 unk204;                     /* 0x204 */
+    char pad208[0x4A];
     u16 map_index;                  /* 0x252 picks the MapSlot record */
     char pad254[0x0D];
     u8 unk261;                      /* 0x261 */

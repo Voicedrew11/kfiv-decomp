@@ -11,7 +11,7 @@ void func_001ACE08(EffectActor *effect, EffectSlot *spawn_slot) {
     func_001AF640(effect, spawn_slot);
     motion = (SavedArgMotion *)&effect->motion;
     motion->owner_entity = effect->owner_entity;
-    func_00216778(&effect->model->position, effect->unk64);
-    func_00216778(&effect->model->rotation, effect->unk68);
+    func_00216778(&effect->model->position, effect->start_position);
+    func_00216778(&effect->model->rotation, effect->start_rotation);
     motion->unk14 = 0;
 }

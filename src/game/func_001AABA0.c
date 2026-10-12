@@ -9,7 +9,7 @@ void func_001AABA0(EffectActor *effect, EffectSlot *spawn_slot) {
 
     motion = (SprayMotion *)&effect->motion;
     func_001AF640(effect, spawn_slot);
-    func_00216778(&effect->model->rotation, effect->unk68);
+    func_00216778(&effect->model->rotation, effect->start_rotation);
     motion->velocity.x = effect->def->offset_base[0] + ((rand() & 0xFFFF) / 32768.0f - 1.0f) * effect->def->offset_spread[0];
     motion->velocity.y = effect->def->offset_base[1] + ((rand() & 0xFFFF) / 32768.0f - 1.0f) * effect->def->offset_spread[1];
     motion->velocity.z = effect->def->offset_base[2] + ((rand() & 0xFFFF) / 32768.0f - 1.0f) * effect->def->offset_spread[2];

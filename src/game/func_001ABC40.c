@@ -19,9 +19,9 @@ void func_001ABC40(EffectActor *effect) {
     if (def->radius_half < frame) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     } else if (frame < def->radius_half) {
-        func_00216778(&effect->model->position, effect->unk64);
+        func_00216778(&effect->model->position, effect->start_position);
     } else {
-        func_001AF538(def->speed, &motion->velocity, effect->unk68);
+        func_001AF538(def->speed, &motion->velocity, effect->start_rotation);
     }
     func_001AF298(effect, &motion->unk10.w);
     effect->frame += 1;

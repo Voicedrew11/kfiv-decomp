@@ -115,6 +115,13 @@ typedef struct {
     char pad04[0x2C];
 } PulseMotion;
 
+/* EffectMotion as func_001ACE80 (stays attached to another model) uses it */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    ModelInstance **anchor;         /* 0x10 the model it is attached to */
+    char unk14[0x1C];               /* 0x14 passed by address */
+} AttachedMotion;
+
 /* EffectMotion as func_001A40E8 and func_001AD278 use it: follows EffectActor.target */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
@@ -711,8 +718,8 @@ typedef struct EffectActor {
     char pad58[0x04];
     Entity *owner_entity;           /* 0x5C the entity that cast it; freed with it (func_001A32A8) */
     struct EffectActor *target;     /* 0x60 */
-    Vector4 *unk64;                 /* 0x64 a position the effect starts from */
-    Vector4 *unk68;                 /* 0x68 a rotation the effect starts from */
+    Vector4 *start_position;        /* 0x64 */
+    Vector4 *start_rotation;        /* 0x68 */
     int unk6C;                      /* 0x6C an Entity (EffectTarget) the effect homes on */
     Vector4 unk70;                  /* 0x70 */
     char pad80[0x10];
@@ -812,5 +819,33 @@ void func_001AF538(float length, Vector4 *out, Vector4 *angles);
 void func_001AF640(EffectActor *effect, EffectSlot *spawn_slot);
 void func_001AF928(EffectActor *effect, EffectSlot *spawn_slot);
 void func_001AFC88(Vector4 *velocity, Vector4 *direction, float speed, float turn);
+
+
+/* a request to spawn an effect at a position (func_00214660) */
+typedef struct {
+    s32 pending;                    /* 0x00 cleared once the effect is spawned */
+    char pad04[0x04];
+    char kind;                      /* 0x08 */
+    char pad09[0x07];
+    u8 unk10;                       /* 0x10 */
+    char pad11[0x07];
+    u8 unk18;                       /* 0x18 */
+    char pad19[0x07];
+    f32 unk20;                      /* 0x20 */
+    char pad24[0x04];
+    f32 pos_x;                      /* 0x28 */
+    char pad2C[0x04];
+    f32 pos_y;                      /* 0x30 */
+    char pad34[0x04];
+    f32 pos_z;                      /* 0x38 */
+} SpawnRequest;
+
+/* a task that feeds the cosine of an angle to a command (func_00214DC0) */
+typedef struct {
+    s32 active;                     /* 0x00 cleared after one step */
+    char pad04[0x04];
+    f32 angle;                      /* 0x08 radians */
+    char command[4];                /* 0x0C the command func_00211D90 fills in */
+} AngleTask;
 
 #endif

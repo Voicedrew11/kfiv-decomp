@@ -106,4 +106,22 @@ typedef struct {
     ScriptArg result;               /* 0x34 */
 } ScriptDistanceCommand;
 
+/* stores the angle of (x, y) in `angle` (func_00214FF0) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptFloatArg x;               /* 0x04 value at 0x08 */
+    ScriptFloatArg y;               /* 0x0C value at 0x10 */
+    ScriptArg angle;                /* 0x14 value at 0x18 */
+} ScriptAngleCommand;
+
+/* stores the distance between points a and b in `result`, ignoring z (func_00215F50) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptFloatArg a_x;             /* 0x04 value at 0x08 */
+    ScriptFloatArg a_y;             /* 0x0C value at 0x10 */
+    ScriptFloatArg b_x;             /* 0x14 value at 0x18 */
+    ScriptFloatArg b_y;             /* 0x1C value at 0x20 */
+    ScriptArg result;               /* 0x24 value at 0x28 */
+} ScriptDistance2DCommand;
+
 #endif

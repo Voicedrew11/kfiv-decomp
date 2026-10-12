@@ -8,7 +8,7 @@ typedef struct {
 } Obj;
 
 int func_0021CCC8(int);
-int sceSdRemote(int, int, int, int, int, int, int);
+int sceSdRemote(int, ...);
 
 int func_0021C3D8(Obj *arg0) {
     func_0021CCC8(0x7FFF);

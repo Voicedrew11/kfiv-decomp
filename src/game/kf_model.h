@@ -20,6 +20,14 @@ typedef struct {
     f32 w;
 } __attribute__((aligned(16))) VuVector4;
 
+/* the same vector, 8-byte aligned: how it is passed by value */
+typedef struct {
+    f32 x;
+    f32 y;
+    f32 z;
+    f32 w;
+} __attribute__((aligned(8))) Vector4Arg;
+
 /* a 128-bit value moved as two doublewords */
 typedef struct {
     u64 unk00;
@@ -34,6 +42,29 @@ typedef struct __attribute__((packed)) {
 
 /* a 128-bit integer, stored with one sq */
 typedef u32 Uint128 __attribute__((mode(TI)));
+
+/* one vertex of a strip */
+typedef struct {
+    void *unk00;                    /* 0x00 */
+    s32 unk04;                      /* 0x04 */
+    s32 unk08;                      /* 0x08 */
+    s32 unk0C;                      /* 0x0C */
+} StripVertex;
+
+/* a strip: a header, then vertex_count vertices */
+typedef struct {
+    u16 vertex_count;               /* 0x00 */
+    char pad02[0x1E];
+    StripVertex vertices[1];      /* 0x20 vertex_count of them */
+} Strip;
+
+/* ModelInstance.strips: the strips back to back */
+typedef struct {
+    s32 strip_count;                /* 0x00 */
+    Strip *strips;                  /* 0x04 */
+    s32 unk08;                      /* 0x08 */
+    u32 unk0C;                      /* 0x0C */
+} ModelStripList;
 
 /* one 0x80-byte part (joint) of a model, ModelInstance.parts[i] */
 typedef struct {
@@ -89,7 +120,9 @@ typedef struct ModelInstance {
     ModelPartLevels **level_tables; /* 0xFC */
     u16 unk100;                     /* 0x100 */
     u16 unk102;                     /* 0x102 MODEL_FLAG_800: drawn with its own texture */
-    char pad104[0x1C];
+    char pad104[0x0C];
+    ModelStripList *strips;         /* 0x110 */
+    char pad114[0x0C];
     BoneAnchor *bone_anchors;       /* 0x120 32 of them */
     Vector4 *bone_positions;        /* 0x124 32 of them, written from bone_anchors */
     char pad128[0x34];
@@ -110,6 +143,28 @@ typedef struct ModelInstance {
     int (*get_point)(void *model, int index);   /* 0x1B8 */
 } ModelInstance;
 
+/* AnimObject+0x40 */
+typedef struct {
+    char pad00[0x14];
+    s32 unk14;                      /* 0x14 */
+    s32 unk18;                      /* 0x18 */
+} AnimObjectBody;
+
+/* an animated object: the model, its animation table and a small state machine */
+typedef struct {
+    ModelInstance *model;           /* 0x00 */
+    void *anims;                    /* 0x04 8-byte entries */
+    char pad08[0x08];
+    u8 unk10;                       /* 0x10 the flag word is ANIM_OBJECT_FLAGS */
+    u8 mode;                        /* 0x11 */
+    char pad12[0x02];
+    char pad14[0x2C];
+    AnimObjectBody body;            /* 0x40 */
+} AnimObject;
+
+/* the 32-bit flags at AnimObject+0x10 */
+#define ANIM_OBJECT_FLAGS(object) (*(u32 *)&(object)->unk10)
+
 /* the objects of a map, looked up by func_0011E1F0(map, id) */
 typedef struct {
     ModelInstance *model;           /* 0x00 */
@@ -126,8 +181,24 @@ typedef struct {
 /* what D_004469D8 points at */
 typedef struct {
     char pad00[0x18];
-    ModelInstance *model;           /* 0x18 */
+    ModelInstance *model;           /* 0x18 non-null while the node is in use */
+    char pad1C[0x20];
 } ModelNode;
+
+/* a motion that turns a model by a fixed step each frame (func_00212778) */
+typedef struct {
+    s32 active;                     /* 0x00 cleared when the motion ends */
+    char pad04[0x04];
+    s32 owner_id;                   /* 0x08 */
+    char pad0C[0x04];
+    f32 delta_x;                    /* 0x10 */
+    char pad14[0x04];
+    f32 delta_y;                    /* 0x18 */
+    char pad1C[0x04];
+    f32 delta_z;                    /* 0x20 */
+    char pad24[0x04];
+    s32 frames_left;                /* 0x28 */
+} RotationMotion;
 
 /* the object func_001C5170 tests against a model's points */
 typedef struct {
@@ -135,5 +206,46 @@ typedef struct {
     char pad04[0x0C];
     int flags;                      /* 0x10 */
 } CollisionOwner;
+
+/* ChannelOwner.channel: the playback state func_00192C98 resets */
+typedef struct {
+    char pad00[0x80];
+    u8 limit;                       /* 0x80 entries at or above this index are replaced by 0 */
+    u8 index;                       /* 0x81 */
+    s16 param;                      /* 0x82 */
+    s32 param_shifted;              /* 0x84 param << 8 */
+    u32 value;                      /* 0x88 */
+    u16 word;                       /* 0x8C */
+} ModelChannel;
+
+/* ChannelOwner.vec: the vector that is cleared on a switch */
+typedef struct {
+    char pad00[0x40];
+    f32 x;                          /* 0x40 */
+    f32 y;                          /* 0x44 */
+    f32 z;                          /* 0x48 */
+} ChannelVector;
+
+/* what ChannelActor.owner points at */
+typedef struct {
+    char pad00[0xFC];
+    ModelChannel *channel;          /* 0xFC */
+    char pad100[0x30];
+    ChannelVector *vec;             /* 0x130 */
+} ChannelOwner;
+
+/* an actor that switches between the entries of a table of levels */
+typedef struct {
+    ChannelOwner *owner;            /* 0x00 */
+    char pad04[0x08];
+    u8 *table;                      /* 0x0C levels at +0x60, words at +0x80 */
+    char pad10[0x18];
+    u16 enabled;                    /* 0x28 */
+    char pad2A[0x9C];
+    u16 flags;                      /* 0xC6 */
+    char padC8[0x08];
+    u8 old_index;                   /* 0xD0 */
+    s8 cur_index;                   /* 0xD1 */
+} ChannelActor;
 
 #endif
