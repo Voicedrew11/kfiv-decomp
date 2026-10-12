@@ -8,6 +8,7 @@ typedef struct MenuItem {
     int unk00;                      /* 0x00 */
     struct MenuItem *next;          /* 0x04 */
     struct MenuItem *prev;          /* 0x08 */
+    s16 unk0C;                      /* 0x0C the number in its model's file name */
 } MenuItem;
 
 #endif

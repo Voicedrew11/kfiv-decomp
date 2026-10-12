@@ -16,7 +16,7 @@ void func_00173E08(Entity *);
 void func_001726C8(Entity *);
 void func_001742E0(Entity *);
 void func_00172C78(Entity *);
-void func_00181038(void);
+void func_00181038(Entity *);
 
 void func_001719F8(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -42,7 +42,7 @@ void func_001719F8(Entity *entity) {
     if (entity->spawn_info->unk40 == 1) {
         unkE0->unk10 = (void (*)(void))func_00172C78;
     } else {
-        unkE0->unk10 = func_00181038;
+        unkE0->unk10 = (void (*)(void))func_00181038;
     }
     for (i = 3; i != -1; i--) {
         entity->unkBC[i] = 0x80;

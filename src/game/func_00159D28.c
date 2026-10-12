@@ -11,7 +11,7 @@ float func_00194FB8(float);
 int func_0018EAC0(void *, void *);
 s16 func_00190F90(float, void *, int);
 void func_001958B8(char *, void (*)(void), int);
-void func_00181E48(void);
+void func_00181E48(Entity *);
 void func_0015A3D8(Entity *);
 void func_0015A538(Entity *);
 void func_0015B620(Entity *);
@@ -56,7 +56,7 @@ void func_00159D28(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             ENTITY_FLAG_BITS(entity)->bits58 = 1;
-            func_001958B8((char *)entity, func_00181E48, 1);
+            func_001958B8((char *)entity, (void (*)(void))func_00181E48, 1);
             break;
         }
         if (entity->unkA0 == 0) {

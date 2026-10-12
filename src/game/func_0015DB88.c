@@ -4,7 +4,7 @@ int rand(void);
 int func_00192C98(void *, int, int, u32, int);
 void func_001958B8(char *, void (*)(void), int);
 float func_00194FB8(float);
-void func_00182240(void);
+void func_00182240(Entity *);
 
 void func_0015DB88(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -40,7 +40,7 @@ void func_0015DB88(Entity *entity) {
             entity->unkA0 = 0;
             if (!(rand() & 1) && ABS(func_00194FB8(entity->unk68 - entity->model->unkD0[1])) < 0.5235988f) {
                 ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~(3L << 58)) | (1L << 58);
-                func_001958B8((char *)entity, func_00182240, 1);
+                func_001958B8((char *)entity, (void (*)(void))func_00182240, 1);
             } else if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->unk00(entity, 1);
             } else {

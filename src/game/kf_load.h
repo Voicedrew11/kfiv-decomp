@@ -17,6 +17,13 @@ typedef struct {
     int file_handle;                /* 0x24 -1 when closed */
 } LoadJob;
 
+/* what ChunkUpload.source points at: one of the 16 nodes at D_005CE900.
+   D_004472B0 heads the free ones. */
+typedef struct ChunkSource {
+    struct ChunkSource *next;       /* 0x00 the next free node */
+    u32 *chunks;                    /* 0x04 the chunk list */
+} ChunkSource;
+
 /* a staged chunk upload (func_001D4360, func_001D44A0) */
 typedef struct {
     char pad00[0x08];

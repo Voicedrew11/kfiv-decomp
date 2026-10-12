@@ -6,7 +6,7 @@ int func_00192C98(void *, int, int, u32, int);
 void func_0019A290(Entity *, s32);
 void func_0019A310(char *, void (*)(void), int);
 void func_001958B8(char *, void (*)(void), int);
-void func_00182240(void);
+void func_00182240(Entity *);
 
 void func_00150818(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -43,7 +43,7 @@ void func_00150818(Entity *entity) {
         if (entity->spawn_info->unk40 == 0 && rand() % 100 < entity->params->unk436) {
             ENTITY_FLAG_BITS(entity)->bit57 = 1;
             ENTITY_FLAG_BITS(entity)->bits58 = 0;
-            func_001958B8((char *)entity, func_00182240, 1);
+            func_001958B8((char *)entity, (void (*)(void))func_00182240, 1);
         } else if (ENTITY_FLAG_BITS(entity)->bit5) {
             unkE0->unk00(entity, 1);
         } else {

@@ -26,11 +26,25 @@ typedef struct {
     char pad20[0x40];
 } MapSlot;
 
+/* what MapSlot.unk08 points at */
+typedef struct {
+    char pad00[0x3C];
+    u16 record_count;               /* 0x3C how many MapSlot.records there are */
+} MapSlotUnk08;
+
 /* the trigger's one-shot state, MapTrigger+0x40 */
 typedef struct {
     int unk00[6];                   /* 0x00 */
     int fired;                      /* 0x18 the type it fired for, 0 before */
 } MapTriggerShot;
+
+/* MapTrigger.shot as func_00121660 (start) and func_00121680 (update) use it */
+typedef struct {
+    f32 unk00;                      /* 0x00 a speed, added to the model's y */
+    s32 unk04;                      /* 0x04 frames to wait */
+    s32 unk08;                      /* 0x08 1 while D_00414188 is this trigger */
+    s32 unk0C;                      /* 0x0C unk08 of the frame before */
+} MapTriggerShotKind121660;
 
 /* what MapTrigger.unk08 points at, as func_0011F0D8 reads it */
 typedef struct {

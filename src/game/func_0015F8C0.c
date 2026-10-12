@@ -13,7 +13,7 @@ void func_0015FB98(void);
 void func_0015FAC8(char *);
 // match: the definition takes an Actor, a struct local to its file
 void func_001610C0(void);
-void func_00181038(void);
+void func_00181038(Entity *);
 void func_00161860(Entity *);
 
 extern s32 D_003E6E40[][2];
@@ -37,7 +37,7 @@ void func_0015F8C0(Entity *entity) {
     unkE0->unk04 = func_0015FB98;
     unkE0->unk08 = (void (*)(void))func_0015FAC8;
     unkE0->unk18 = (void (*)(void))func_001610C0;
-    unkE0->unk10 = func_00181038;
+    unkE0->unk10 = (void (*)(void))func_00181038;
     unkE0->unk14 = (void (*)(void))func_00161860;
     for (i = 3; i != -1; i--) {
         entity->unkBC[i] = 0x80;

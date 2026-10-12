@@ -14,7 +14,9 @@ typedef struct {
     char pad20[0x10];
     s16 timed_flags[6];             /* 0x30 held at 0 while the matching timer runs */
     u8 unk3C;                       /* 0x3C row of D_0041B9B8 (0x90 bytes each) */
-    char pad3D[0x16F];
+    char pad3D[0x08];
+    u8 unk45;                       /* 0x45 0x9C: enemy attacks reach half as far (func_0018F648) */
+    char pad46[0x166];
     f32 unk1AC;                     /* 0x1AC */
     f32 unk1B0;                     /* 0x1B0 */
     f32 unk1B4;                     /* 0x1B4 */
@@ -22,8 +24,13 @@ typedef struct {
     u16 map_index;                  /* 0x252 picks the MapSlot record */
     char pad254[0x0D];
     u8 unk261;                      /* 0x261 */
-    char pad262[0x56];
+    char pad262[0x3E];
+    s32 unk2A0;                     /* 0x2A0 a total func_001B4EC8 adds to */
+    char pad2A4[0x14];
     u16 flag_timers[6];             /* 0x2B8 frames left, one per timed_flags entry */
+    char pad2C4[0x20];
+    s32 unk2E4;                     /* 0x2E4 above 0: unk2E8 counts (func_0018F648) */
+    f32 unk2E8;                     /* 0x2E8 enemies whose unk60 is below it attack from half as far */
 } PlayerState;
 
 /* D_003682F0[160]: what has been gained per item (0x22 bytes each) */

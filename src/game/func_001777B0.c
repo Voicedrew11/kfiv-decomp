@@ -15,9 +15,9 @@ s16 func_00190BE0(Entity *);
 int func_0018EAC0(void *, void *);
 s16 func_00190F90(float, void *, int);
 void func_001958B8(char *, void (*)(void), int);
-void func_00181AE0(void);
-void func_00181C60(void);
-void func_00181E48(void);
+void func_00181AE0(Entity *);
+void func_00181C60(Entity *);
+void func_00181E48(Entity *);
 void func_00177AD0(Entity *);
 void func_00177D90(Entity *);
 
@@ -30,11 +30,11 @@ void func_001777B0(Entity *entity, s32 unknown) {
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
-        func_001958B8((char *)entity, func_00181C60, 1);
+        func_001958B8((char *)entity, (void (*)(void))func_00181C60, 1);
         return;
     }
     if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
-        func_001958B8((char *)entity, func_00181AE0, 1);
+        func_001958B8((char *)entity, (void (*)(void))func_00181AE0, 1);
         return;
     }
     side = func_0018FD50(entity, 0);
@@ -56,7 +56,7 @@ void func_001777B0(Entity *entity, s32 unknown) {
                     func_001958B8((char *)entity, (void (*)(void))func_00177AD0, unknown);
                 }
             } else {
-                func_001958B8((char *)entity, func_00181E48, unknown);
+                func_001958B8((char *)entity, (void (*)(void))func_00181E48, unknown);
             }
             return;
         case 1:

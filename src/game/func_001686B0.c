@@ -17,8 +17,8 @@ s16 func_00190BE0(Entity *);
 int func_0018EAC0(void *, void *);
 s16 func_00190F90(float, void *, int);
 void func_001958B8(char *, void (*)(void), int);
-void func_00181AE0(void);
-void func_00181E48(void);
+void func_00181AE0(Entity *);
+void func_00181E48(Entity *);
 void func_00168DB8(Entity *);
 void func_00169500(Entity *);
 void func_00169738(Entity *);
@@ -44,7 +44,7 @@ void func_001686B0(Entity *entity, s32 unknown) {
         return;
     }
     if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
-        func_001958B8((char *)entity, func_00181AE0, 1);
+        func_001958B8((char *)entity, (void (*)(void))func_00181AE0, 1);
         return;
     }
     if (entity->spawn_info->unk40 == 1) {
@@ -81,7 +81,7 @@ void func_001686B0(Entity *entity, s32 unknown) {
                     func_001958B8((char *)entity, (void (*)(void))func_0016A530, unknown);
                 }
             } else {
-                func_001958B8((char *)entity, func_00181E48, unknown);
+                func_001958B8((char *)entity, (void (*)(void))func_00181E48, unknown);
             }
             return;
         case 1:

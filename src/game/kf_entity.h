@@ -10,26 +10,32 @@
 
 /* what Entity.spawn_info points at */
 typedef struct {
-    char pad00[0x04];
+    f32 spawn_x;                    /* 0x00 the block starts with the spawn position */
     f32 spawn_y;                    /* 0x04 */
-    char pad08[0x28];
+    f32 spawn_z;                    /* 0x08 */
+    char pad0C[0x04];
+    f32 unk10;                      /* 0x10 start of the rotation it spawns with (unk14 is its y) */
+    f32 unk14;                      /* 0x14 an angle (the facing it spawns with?) */
+    char pad18[0x18];
     u16 type_id;                    /* 0x30 which pool block holds its data */
     char pad32[0x02];
     s8 pool_size;                   /* 0x34 0-4: one pool block, else two */
-    char pad35;
+    u8 unk35;                       /* 0x35 strips of CollisionMesh.unk24 rated below it are skipped (func_00187A20) */
     u16 unk36;                      /* 0x36 what func_002109C8 gets when the entity dies */
     u64 unk38;                      /* 0x38 */
     u8 unk40;                       /* 0x40 */
     u8 variant;                     /* 0x41 picks the animation set */
     u8 unk42;                       /* 0x42 ids of two map objects (see func_0011E1F0) */
     u8 unk43;                       /* 0x43 */
-    char pad44[0x04];
+    u8 unk44;                       /* 0x44 an animation frame number */
+    char pad45[0x03];
     u16 vertical_despawn_range;     /* 0x48 0: no vertical limit */
     char pad4A[0x02];
     u16 unk4C;                      /* 0x4C */
     char pad4E[0x06];
     u16 unk54;                      /* 0x54 */
-    char pad56[0x04];
+    u16 unk56;                      /* 0x56 */
+    char pad58[0x02];
     u16 despawn_range;              /* 0x5A */
 } EntitySpawnInfo;
 
@@ -46,10 +52,12 @@ struct Entity;
 
 /* what EntityModel.unkFC points at */
 typedef struct {
-    char pad00[0x82];
+    char pad00[0x81];
+    u8 unk81;                       /* 0x81 */
     s16 unk82;                      /* 0x82 */
     s32 unk84;                      /* 0x84 */
     s32 unk88;                      /* 0x88 */
+    u16 unk8C;                      /* 0x8C set from EntityParams.unk80[] */
 } EntityModelUnkFC;
 
 /* one 0x100-byte element of what EntityModel.unkF8 points at */
@@ -126,9 +134,12 @@ typedef struct {
     u8 unk01;                       /* 0x01 */
     u8 unk02;                       /* 0x02 */
     u8 unk03;                       /* 0x03 */
-    char pad04[0x08];
+    u16 unk04;                      /* 0x04 nearest the player may be for it, 0: no limit */
+    u16 unk06;                      /* 0x06 farthest the player may be for it */
+    f32 unk08;                      /* 0x08 widest angle to the player for it */
     u8 unk0C;                       /* 0x0C */
-    char pad0D[0x03];
+    char pad0D;
+    s16 unk0E;                      /* 0x0E degrees its direction is off the entity's heading */
     EntityParamsUnk240Part unk10[3]; /* 0x10 */
 } EntityParamsUnk240;
 
@@ -216,11 +227,14 @@ typedef struct {
     u32 unk03_3 : 5;
     char pad04[0x06];
     u16 unk0A;                      /* 0x0A what Entity.unk2C is measured against */
-    char pad0C[0x04];
+    char pad0C[0x02];
+    u16 unk0E;                      /* 0x0E passed to func_001BBB60 when the entity dies */
     u16 flags;                      /* 0x10 */
     char pad12[0x02];
     u8 unk14[4];                    /* 0x14 weights of the four actions, scaled by Entity.unkBC */
-    char pad18[0x38];
+    u16 unk18;                      /* 0x18 a distance to the player (see func_00183E98) */
+    u16 unk1A;                      /* 0x1A a height: ranged attacks need the player level with it (func_0018FD50) */
+    char pad1C[0x34];
     f32 unk50;                      /* 0x50 */
     f32 unk54;                      /* 0x54 */
     f32 unk58;                      /* 0x58 */
@@ -236,14 +250,26 @@ typedef struct {
     u8 unkCB;                       /* 0xCB */
     char padCC[0x02];
     u16 unkCE;                      /* 0xCE */
-    char padD0[0x168];
+    char padD0[0x0A];
+    s16 unkDA;                      /* 0xDA */
+    char padDC[0x0C];
+    u16 unkE8;                      /* 0xE8 */
+    u8 unkEA;                       /* 0xEA */
+    char padEB[0x05];
+    u8 unkF0[0x20];                 /* 0xF0 how many records unk130[n] leads to */
+    u8 unk110[0x20];                /* 0x110 how many records unk1B0[n] leads to */
+    s32 unk130[0x20];               /* 0x130 offsets from D_004467C0 to EntityParamsUnk130 records, by animation */
+    s32 unk1B0[0x20];               /* 0x1B0 offsets from D_004467C0 to EntityParamsUnk1B0 records, by animation */
+    char pad230[0x08];
     EntityUnaligned64 unk238;       /* 0x238 */
     EntityParamsUnk240 unk240[2];   /* 0x240 indexed by flag bits 58-59 */
     char unk350[0x88];              /* 0x350 */
     EntityParamsUnk3D8 unk3D8;      /* 0x3D8 */
     char pad3DC[0x34];
     u8 unk410;                      /* 0x410 */
-    char pad411[0x1D];
+    char pad411[0x1B];
+    u8 unk42C;                      /* 0x42C how far below its position a floor may be to count (func_00186478) */
+    u8 unk42D;                      /* 0x42D what it does at a ledge (func_00186B00): 0 walks off, 1 steps down at most Entity.unk34, else stops */
     u16 unk42E;                     /* 0x42E */
     s16 unk430;                     /* 0x430 */
     s16 unk432;                     /* 0x432 */
@@ -253,16 +279,39 @@ typedef struct {
     s16 unk43A;                     /* 0x43A */
     s16 unk43C;                     /* 0x43C */
     s16 unk43E;                     /* 0x43E */
+    u16 unk440[8];                  /* 0x440 indexed by flag bits 60-62; passed to func_001A1C58 */
 } EntityParams;
+
+/* what EntityParams.unk130[n] leads to: something func_001A1C58 starts at a bone on an animation frame */
+typedef struct {
+    u16 unk00;                      /* 0x00 passed to func_001A1C58 */
+    u16 unk02;                      /* 0x02 the animation frame */
+    u8 unk04;                       /* 0x04 passed to func_0010CAB8 (and the one after it) */
+    s8 unk05;                       /* 0x05 not 0: EntityParams.unk440 picks what to start */
+} EntityParamsUnk130;
+
+/* what EntityParams.unk1B0[n] leads to: something func_001A0CD0 starts on an animation frame */
+typedef struct {
+    u8 unk00;                       /* 0x00 passed to func_001A0CD0 */
+    u8 unk01;                       /* 0x01 passed to func_001A0CD0 */
+    u16 unk02;                      /* 0x02 the animation frame */
+    u8 unk04;                       /* 0x04 not 0: left out while Entity.unk2A is set */
+    char pad05[0x03];
+} EntityParamsUnk1B0;
 
 /* EntityParams.unk3D8 is the first of several 0x1C-byte records */
 #define ENTITY_PARAMS_UNK3D8(params, index) (&((EntityParamsUnk3D8Array *)&(params)->unk3D8)[index].record)
+/* the same records whole: the three ranged attacks */
+#define ENTITY_PARAMS_RANGED(params) ((EntityParamsUnk3D8Array *)&(params)->unk3D8)
 
 typedef struct {
     EntityParamsUnk3D8 record;      /* 0x00 */
-    char pad04[0x08];
+    u16 unk04;                      /* 0x04 nearest the player may be for it, 0: no limit */
+    u16 unk06;                      /* 0x06 farthest the player may be for it */
+    f32 unk08;                      /* 0x08 widest angle to the player for it */
     u8 unk0C;                       /* 0x0C */
-    char pad0D[0x03];
+    char pad0D;
+    s16 unk0E;                      /* 0x0E degrees its direction is off the entity's heading */
     u8 unk10;                       /* 0x10 */
     u8 unk11;                       /* 0x11 */
     char pad12[0x0A];
@@ -287,7 +336,7 @@ typedef struct {
     void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
     void (*unk04)(void);            /* 0x04 */
     void (*unk08)(void);            /* 0x08 */
-    char pad0C[0x04];
+    void (*unk0C)(void);            /* 0x0C */
     void (*unk10)(void);            /* 0x10 */
     void (*unk14)(void);            /* 0x14 */
     void (*unk18)(void);            /* 0x18 */
@@ -476,6 +525,30 @@ typedef struct {
     f32 unk90[4];                   /* 0x90 pitch and yaw passed to func_0018D600 */
 } EntityUnkE0Kind162BC8;
 
+/* Entity+0xE0 as the kind set up by func_0017FC60 lays it out */
+typedef struct {
+    char pad00[0x68];
+    s16 unk68[3];                   /* 0x68 weights of the first three actions (see func_00180A90) */
+    char pad6E[0x32];
+} EntityUnkE0Kind17FC60;
+
+/* Entity+0xE0 as the kind set up by func_00131390 lays it out */
+typedef struct {
+    void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
+    char pad04[0x14];
+    void (*unk18)(void);            /* 0x18 */
+    f32 unk1C;                      /* 0x1C */
+    char pad20[0x4A];
+    s16 unk6A;                      /* 0x6A counts down; reloaded from EntityParams.unk434 */
+    char pad6C[0x0E];
+    s8 unk7A;                       /* 0x7A */
+    s8 unk7B;                       /* 0x7B */
+    s8 unk7C;                       /* 0x7C distance band to the player, 0 (far) to 4 (near) */
+    s8 unk7D;                       /* 0x7D frames until unk7C is picked again */
+    s8 unk7E;                       /* 0x7E */
+    char pad7F[0x21];
+} EntityUnkE0Kind131390;
+
 /* what Entity.params points at (the entity's controller / type data), see ENTITY_CONTROLLER.
    EntityParams above is a second view of the same block; the two are to be unified. */
 typedef struct {
@@ -508,7 +581,11 @@ typedef struct Entity {
     void *unk14;                    /* 0x14 */
     struct Entity *prev;            /* 0x18 */
     struct Entity *next;            /* 0x1C */
-    char pad20[0x0A];
+    u16 unk20;                      /* 0x20 a timer, set to 1800 by func_001862F0 */
+    char pad22[0x02];
+    u16 unk24;                      /* 0x24 not 0: attacks reach half as far (func_0018F648) */
+    char pad26[0x02];
+    u16 unk28;                      /* 0x28 */
     u16 unk2A;                      /* 0x2A */
     u16 unk2C;                      /* 0x2C */
     char pad2E[0x02];
@@ -516,19 +593,26 @@ typedef struct Entity {
     f32 unk34;                      /* 0x34 */
     f32 radius;                     /* 0x38 */
     f32 height;                     /* 0x3C */
-    char pad40[0x1C];
+    char pad40[0x08];
+    f32 unk48;                      /* 0x48 how far above the floor it is kept (see func_00187E28) */
+    f32 unk4C;                      /* 0x4C */
+    char pad50[0x04];
+    void (*unk54)(struct Entity *entity); /* 0x54 called by func_001824E0 while flag bit 6 is set */
+    char pad58[0x04];
     void *target;                   /* 0x5C */
     f32 unk60;                      /* 0x60 */
     f32 distance_to_player;         /* 0x64 */
     f32 unk68;                      /* 0x68 */
-    char pad6C[0x16];
+    char pad6C[0x04];
+    f32 unk70[4];                   /* 0x70 the model's position before this frame's move */
+    char pad80[0x02];
     u16 unk82;                      /* 0x82 */
     f32 unk84;                      /* 0x84 */
     f32 unk88;                      /* 0x88 */
     f32 unk8C;                      /* 0x8C */
     f32 unk90;                      /* 0x90 */
     f32 unk94;                      /* 0x94 */
-    char pad98[0x04];
+    f32 unk98;                      /* 0x98 */
     u16 timer;                      /* 0x9C */
     u16 unk9E;                      /* 0x9E */
     u16 unkA0;                      /* 0xA0 */
@@ -577,12 +661,14 @@ typedef struct {
     u32 bits2 : 2;
     u32 bit4 : 1;
     u32 bit5 : 1;
-    u32 pad6 : 3;
+    u32 bit6 : 1;
+    u32 bit7 : 1;
+    u32 pad8 : 1;
     u32 bit9 : 1;
     u32 bit10 : 1;
     u32 bits11 : 3;
     u32 bit14 : 1;
-    u32 pad15 : 1;
+    u32 bit15 : 1;
     u32 bit16 : 1;
     u32 bit17 : 1;
     u32 bit18 : 1;
@@ -600,25 +686,33 @@ typedef struct {
     u32 pad30 : 1;
     u32 bit31 : 1;
     u32 bit32 : 1;
-    u32 pad33 : 1;
+    u32 bit33 : 1;
     u32 bit34 : 1;
     u32 bit35 : 1;
     u32 bits36 : 2;
     u32 bit38 : 1;
     u32 bit39 : 1;
-    u32 pad40 : 3;
+    u32 pad40 : 1;
+    u32 bit41 : 1;
+    u32 bit42 : 1;
     u32 bit43 : 1;
     u32 bit44 : 1;
     u32 bit45 : 1;
     u32 bit46 : 1;
-    u32 pad47 : 6;
+    u32 bit47 : 1;
+    u32 bit48 : 1;
+    u32 bit49 : 1;
+    u32 bit50 : 1;
+    u32 bit51 : 1;
+    u32 bit52 : 1;
     u32 bit53 : 1;
     u32 bit54 : 1;
     u32 bit55 : 1;
     u32 bit56 : 1;
     u64 bit57 : 1;
     u32 bits58 : 2;
-    u64 pad60 : 4;
+    u32 bits60 : 3;
+    u64 pad63 : 1;
 } EntityFlagBits;
 
 #define ENTITY_FLAG_BITS(entity) ((EntityFlagBits *)&(entity)->flags)
@@ -671,6 +765,24 @@ typedef struct {
     s32 frames[4];                  /* 0x00 */
 } EntityFrameTable;
 
+/* ten weights, one per tenth of a range: a local table func_0018B778 copies whole
+   from read-only data */
+typedef struct {
+    s32 weights[10];                /* 0x00 */
+} EntityRangeWeights;
+
+/* five animation frame numbers, copied whole from read-only data like
+   EntityFrameTable (func_0014EFB0, func_0014FCC0) */
+typedef struct {
+    s32 frames[5];                  /* 0x00 */
+} EntityFrameTable5;
+
+/* five entity ids: a local table that a function copies whole from read-only
+   data (func_0013BF48, func_0013C018) */
+typedef struct {
+    s32 ids[5];                     /* 0x00 */
+} EntityIdTable;
+
 /* a point or direction as the game stores it (16 bytes) */
 typedef struct {
     f32 x;                          /* 0x00 */
@@ -681,9 +793,15 @@ typedef struct {
 
 /* one of the 0x80-byte records MapSlot.records (kf_map.h) points at */
 typedef struct {
-    char pad00[0x4E];
+    char pad00[0x32];
+    u16 unk32;                      /* 0x32 0xFFFF: unused */
+    char pad34[0x04];
+    u64 unk38;                      /* 0x38 flags; 0x4000000: func_0018D670 does its work */
+    char pad40[0x0E];
     u8 unk4E;                       /* 0x4E */
-    char pad4F[0x31];
+    char pad4F[0x11];
+    f32 unk60[4];                   /* 0x60 lowest x, y, z it covers */
+    f32 unk70[4];                   /* 0x70 highest x, y, z it covers */
 } MapRecord;
 
 /* one of the 0x80-byte records MapSlot.unk10 (kf_map.h) points at, indexed by byte 3 of
@@ -764,13 +882,21 @@ typedef struct LinkedPoint {
     Vector4 position;               /* 0x00 w is kept when following */
     char pad10[0x10];
     Vector4 *follow;                /* 0x20 NULL: stays put */
-    char pad24[0x18];
+    char pad24[0x14];
+    struct LinkedPoint *prev;       /* 0x38 */
     struct LinkedPoint *next;       /* 0x3C */
 } LinkedPoint;
 
 /* upstream's typed views of the two blocks an Entity points at */
 #define ENTITY_MODEL(entity) ((ModelInstance *)(entity)->model)
 #define ENTITY_CONTROLLER(entity) ((EntityController *)(entity)->params)
+
+/* a whole model instance (0x1C0 bytes) as func_00131390 copies it to D_003E7140[0] and [1]
+   (afterimages drawn at half alpha): the game's struct is 8-byte aligned, the copy moves
+   doublewords */
+typedef struct {
+    ModelInstance model;
+} __attribute__((aligned(8))) ModelInstanceBlock;
 
 extern Entity *D_004467E0;          /* entity list head */
 extern Entity *D_004470A8;          /* other lists of the same layout */

@@ -3,7 +3,7 @@
 void func_00190A30(char *);
 void func_0019A310(char *, void (*)(void), int);
 void func_00195898(char *, u8);
-void func_001816A0(void);
+void func_001816A0(Entity *);
 
 void func_00154C58(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
@@ -11,7 +11,7 @@ void func_00154C58(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->target = NULL;
-        func_0019A310((char *)entity, func_001816A0, 0);
+        func_0019A310((char *)entity, (void (*)(void))func_001816A0, 0);
     }
     func_00195898((char *)entity, 2);
 }

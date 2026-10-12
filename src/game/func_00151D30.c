@@ -11,7 +11,7 @@ void func_00151F90(Entity *, s32);
 void func_001523D0(Entity *);
 void func_001532C0(Entity *);
 void func_00153040(Entity *);
-void func_00181038(void);
+void func_00181038(Entity *);
 void func_001537B8(Entity *);
 
 extern s32 D_003E6E40[][2];
@@ -29,7 +29,7 @@ void func_00151D30(Entity *entity) {
     unkE0->unk04 = (void (*)(void))func_001523D0;
     unkE0->unk08 = (void (*)(void))func_001532C0;
     unkE0->unk18 = (void (*)(void))func_00153040;
-    unkE0->unk10 = func_00181038;
+    unkE0->unk10 = (void (*)(void))func_00181038;
     unkE0->unk14 = (void (*)(void))func_001537B8;
     for (i = 3; i != -1; i--) {
         entity->unkBC[i] = 0x80;
