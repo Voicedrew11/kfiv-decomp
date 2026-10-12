@@ -29,7 +29,7 @@ void func_00100D10(void) {
     if (D_0038CC50.unk03 != 0) {
         record = func_00115CD0(&D_004325A0, 100.0f, D_00446770);
         if (record != NULL) {
-            D_00413F80.map_index = (u32)((char *)record - D_0038CD20[D_00446770].records) >> 14;
+            D_00413F80.map_index = (u32)((char *)record - D_0038CD20[D_00446770].records) >> 14; // match: the byte offset of 0x80-byte records shifted by 14; 7 would give the record number
             D_00413F80.unk250 = record->unk38;
         }
     }

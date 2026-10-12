@@ -536,7 +536,7 @@ void func_001D94F8(void) {
                 }
                 D_00446B50 = 0;
                 if (D_004472C7 == 1) {
-                    RESET_ALPHAS(D_00447240, D_00446A44);
+                    RESET_ALPHAS(D_00447240, D_00446A44); // match: the armour panel's list; the parts drawn and faded in this case are D_00447268's
                 }
                 DRAW_PARTS(D_00447268, D_00446A7C, D_00446E1C);
                 func_001FDCD0(D_00446C80);

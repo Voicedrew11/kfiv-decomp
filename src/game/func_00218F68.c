@@ -262,7 +262,7 @@ int func_00218F68(void) {
                 if (chunk_max < chunk) {
                     chunk = chunk_max;
                 }
-                if (chunk != 0) {
+                if (chunk != 0) { // match: an empty block is not taken as the end; it steps back below and is read again
                     checksum = 0;
                     for (index = 0; index < chunk; index++) {
                         checksum += ~D_01E4F338[index];

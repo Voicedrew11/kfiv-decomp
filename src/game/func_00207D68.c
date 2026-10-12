@@ -19,7 +19,7 @@ void func_00207D68(char *text) {
 
     if ((u32)((u8)text[-4] - '0') < 10 && text[-3] >= '0' && text[-3] <= '9' && text[-2] >= '0' && text[-2] <= '9') {
         item = atoi(text - 4);
-        D_00369830[item] = atoi(text);
+        D_00369830[item] = atoi(text); // match: item can be 0 to 999 here; the table has 380 entries
         index = item - 150;
         if ((u32)index < 70) {
             comma = strchr(text, ',');
@@ -54,7 +54,7 @@ void func_00207D68(char *text) {
                     D_003679A0[index].unk14 = 0;
                 }
             }
-        } else if ((u32)(item - 160) < 160) {
+        } else if ((u32)(item - 160) < 160) { // match: tests 160 to 319 where the index below is item - 220, so 320 to 379 get no level
             comma = strchr(text, ',');
             if (comma == NULL) {
                 return;

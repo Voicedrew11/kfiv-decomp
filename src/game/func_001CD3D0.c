@@ -36,10 +36,10 @@ int func_001CD3D0(int voice_id, int header_block, int header_size, int sample_bl
     }
     voice->unk04 = sceSifAllocIopHeap(header_size);
     if (voice->unk04 == 0) {
-        return -1;
+        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
     }
     if ((u32)(voice->unk04 + voice->unk10) > 0x1FFFFF) {
-        return -1;
+        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
     }
     func_001CBAE0(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
     voice->unk14 = sample_size;
@@ -51,10 +51,10 @@ int func_001CD3D0(int voice_id, int header_block, int header_size, int sample_bl
         D_004471D4->unk4C0 = voice->unk0C + voice->unk14;
     }
     if (voice->iop_heap == 0) {
-        return -1;
+        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
     }
     if (0x1E7FBF - voice->unk0C < voice->unk14) {
-        return -1;
+        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
     }
     if (voice->unk1C != 0) {
         block = voice->unk00;
@@ -62,7 +62,7 @@ int func_001CD3D0(int voice_id, int header_block, int header_size, int sample_bl
         block = voice->unk04;
     }
     if (func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
-        return -1;
+        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
     }
     FlushCache(0);
     return voice_index;

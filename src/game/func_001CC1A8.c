@@ -51,7 +51,7 @@ int func_001CC1A8(int voice_id, char *header_name, char *sample_name, int unk1B)
         return -1;
     }
     if (func_001CF110(header_name, (void *)voice->unk00) != 0) {
-        return -1;
+        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
     }
     func_001CBAE0(1, 0x1070, voice->unk04, voice->unk00, size);
     if (sample_name == NULL) {

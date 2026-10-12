@@ -209,7 +209,7 @@ void func_001EF840(HandlerContext *context) {
         }
     }
     if (D_00446AD4 != 0) {
-        switch (D_00426110[0]->group) {
+        switch (D_00426110[0]->group) { // match: groups 1 and 10 have no case, so parts and count stay unset for the fade below
         case 11:
         case 12:
             parts = D_00446C14;

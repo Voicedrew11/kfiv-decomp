@@ -100,7 +100,7 @@ int func_0021A368(void) {
                 D_01E4F278.unk8C--;
             } else {
                 D_01E4F278.unk9C = 0;
-                if ((u32)D_01E4F278.unkA8 < D_01E4F274[0] + result) {
+                if ((u32)D_01E4F278.unkA8 < D_01E4F274[0] + result) { // match: looks inverted: the clipped copy goes back to read again, the other goes on to close
                     result = D_01E4F278.unkA8 - D_01E4F274[0];
                     memcpy((u8 *)D_01E4F278.unkB4 + D_01E4F274[0], D_01E4F338, result);
                     D_01E4F278.unk8C--;
@@ -130,7 +130,7 @@ int func_0021A368(void) {
         break;
     case 9:
         if (sceMcSync(1, NULL, &result) != 0) {
-            D_01E4F278.state = 0;
+            D_01E4F278.state = 0; // match: cleared before the result is tested, as in func_002186E0 step 23
             if (result < 0) {
                 if (D_01E4F278.unk9C == 2) {
                     D_01E4F278.timeout = 0x47;

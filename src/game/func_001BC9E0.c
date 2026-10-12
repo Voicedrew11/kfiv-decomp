@@ -77,7 +77,7 @@ int func_001BC9E0(int magic_id) {
         } else if (angles.x < -1.012291f) {
             angles.x = -1.012291f;
         }
-        func_001B4F30(magic_id, shot, &D_00413F80, &D_00413F80.rotation, &D_00413F80);
+        func_001B4F30(magic_id, shot, &D_00413F80, &D_00413F80.rotation, &D_00413F80); // match: the player's rotation is passed; the clamped angles above are never used
         D_00413F80.unk259 = 1;
     } else {
         if (stats->unk00[0] != 0) {

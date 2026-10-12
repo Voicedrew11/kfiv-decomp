@@ -52,9 +52,9 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if ((u8)(D_00413F80.unk42 - 0x6A) <= 1) {
         percent += 20;
     }
-    func_001B3ED8(&attack, request, extra);
-    damage = func_001B4AA8(request->unk50.unk00[0], D_00413F80.unk90.values[1], D_00413F80.unkAC);
-    damage += func_001B4AA8(request->unk50.unk00[1], D_00413F80.unk90.values[1], D_00413F80.unkAC);
+    func_001B3ED8(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50
+    damage = func_001B4AA8(request->unk50.unk00[0], D_00413F80.unk90.values[1], D_00413F80.unkAC); // match: values[1] here and on the next line; values[0] is never used
+    damage += func_001B4AA8(request->unk50.unk00[1], D_00413F80.unk90.values[1], D_00413F80.unkAC); // match: values[1] a second time
     damage += func_001B4AA8(request->unk50.unk00[2], D_00413F80.unk90.values[2], D_00413F80.unkAC);
     damage += func_001B4AA8(request->unk50.unk00[3], D_00413F80.unk90.values[3], D_00413F80.unkB0) * percent / 100;
     damage += func_001B4AA8(request->unk50.unk00[4], D_00413F80.unk90.values[4], D_00413F80.unkB0);
@@ -63,7 +63,7 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     damage += func_001B4AA8(request->unk50.unk00[7], D_00413F80.unk90.values[7], D_00413F80.unkB0);
     damage += func_001B4AA8(request->unk50.unk00[8], D_00413F80.unk90.values[8], D_00413F80.unkB0);
     request->unk74 = 1;
-    if (damage <= blocked) {
+    if (damage <= blocked) { // match: blocked is request->unk72, which is known to be 0 here
         damage = 1;
     }
     func_001BB260(damage);
