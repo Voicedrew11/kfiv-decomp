@@ -1,26 +1,24 @@
 #include "common.h"
+#include "kf_effect.h"
 
-void func_001AF928(void);
-void func_001AF640(void *, int);
-void func_001AF538(float, void *, void *);
-int rand(void);
 extern float D_004460A4;
 extern float D_004460A8;
 
-void func_001A7E98(char *arg0, int arg1) {
-    char *temp_s2;
-    float temp_f0;
-    float temp_f1;
+/* Spawns an effect that flies along its model's heading and spins at a random rate. */
+void func_001A7E98(EffectActor *effect, EffectSlot *spawn_slot) {
+    SpinMotion *motion;
+    float random_fraction;
+    float spin_rate;
 
-    temp_s2 = arg0 + 0x10;
-    func_001AF928();
-    func_001AF640(arg0, arg1);
-    func_001AF538(*(float *)(*(char **)(arg0 + 0x54) + 0xD8), temp_s2, *(char **)(arg0 + 0x50) + 0xD0);
-    *(s64 *)(arg0 + 0x40) = *(s64 *)(arg0 + 0x40) | ((s64)0x8000 << 43);
-    *(float *)(temp_s2 + 0x10) = (float)((((float)(rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 0.5f);
-    temp_f0 = (float)(rand() & 0xFFFF);
-    temp_f1 = (float)((((temp_f0 * 0.000030517578f) - 1.0f) * D_004460A4) + D_004460A8);
-    *(float *)(temp_s2 + 0x18) = 1.0f;
-    *(char *)(temp_s2 + 0x1D) = 0;
-    *(float *)(temp_s2 + 0x14) = temp_f1;
+    motion = (SpinMotion *)&effect->motion;
+    ((void (*)(void))func_001AF928)(); // match: retail calls with no arguments
+    func_001AF640(effect, spawn_slot);
+    func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
+    effect->flags |= EFFECT_FLAG_HAS_TARGETERS;
+    motion->unk10 = (((float)(rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 0.5f;
+    random_fraction = (float)(rand() & 0xFFFF);
+    spin_rate = (float)((((random_fraction * 0.000030517578f) - 1.0f) * D_004460A4) + D_004460A8);
+    motion->unk18 = 1.0f;
+    motion->unk1D = 0;
+    motion->spin_rate = spin_rate;
 }

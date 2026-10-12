@@ -1,42 +1,26 @@
-#include "common.h"
+#include "kf_effect.h"
 
-typedef struct Obj {
-    char pad0[0xC];
-    float f0C;
-    char pad10[0x4C - 0x10];
-    u16 u4C;
-    char pad4E[2];
-    char *p50;
-    char *p54;
-    char pad58[8];
-    struct Obj *p60;
-} Obj;
-
-void func_001AEC48(void *);
-void func_001AED58(void *);
-u16 func_001AF0B0(void *);
 void func_00216778(void *, void *);
 
-void func_001AE498(Obj *arg0) {
-    char *temp_s0;
-    char *temp_s1;
-    int temp_v0;
-    Obj *temp_v1;
+/* Scales the effect's unk0C by its target's, copies the model pose to and from the target, and wraps the frame at keyframe_end. */
+void func_001AE498(EffectActor *effect) {
+    EffectMotion *motion;
+    Vector4 *motion_rotation;
+    int next_frame;
 
-    temp_s0 = (char *)arg0 + 0x10;
-    func_001AEC48(arg0);
-    temp_s1 = (char *)arg0 + 0x20;
-    func_001AED58(arg0);
-    func_001AF0B0(arg0);
-    temp_v1 = (Obj *)arg0->p60;
-    arg0->f0C = arg0->f0C * (*(float *)((char *)temp_v1 + 0xC) * 0.0078125f);
-    func_00216778(arg0->p50 + 0xC0, temp_s0);
-    func_00216778(arg0->p50 + 0xD0, temp_s1);
-    func_00216778(temp_s0, arg0->p60->p50 + 0xC0);
-    func_00216778(temp_s1, arg0->p60->p50 + 0xD0);
-    temp_v0 = arg0->u4C + 1;
-    arg0->u4C = temp_v0;
-    if ((u32)(temp_v0 & 0xFFFF) >= (u32)*(u16 *)(arg0->p54 + 0x102)) {
-        arg0->u4C = 0;
+    motion = &effect->motion;
+    motion_rotation = &motion->unk10;
+    func_001AEC48(effect);
+    func_001AED58(effect);
+    func_001AF0B0(effect);
+    *(f32 *)&effect->unk0C = *(f32 *)&effect->unk0C * (*(f32 *)&effect->target->unk0C * 0.0078125f); // match: unk0C is a float here
+    func_00216778(&effect->model->position, &motion->velocity);
+    func_00216778(&effect->model->rotation, motion_rotation);
+    func_00216778(&motion->velocity, &effect->target->model->position);
+    func_00216778(motion_rotation, &effect->target->model->rotation);
+    next_frame = effect->frame + 1;
+    effect->frame = next_frame;
+    if ((u16)next_frame >= effect->def->keyframe_end) { // match: compares the masked 16-bit frame
+        effect->frame = 0;
     }
 }

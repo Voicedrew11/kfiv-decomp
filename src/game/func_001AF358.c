@@ -1,56 +1,32 @@
-#include "common.h"
+#include "kf_effect.h"
 
-typedef struct {
-    char pad0[0xF2];
-    u16 uF2;
-    char pad1[0x17];
-    u8 b10B;
-    char pad2[0xC];
-    u16 u118;
-} Ctl;
+int func_001B4F90(void *effect);
 
-typedef struct {
-    char pad0[0x48];
-    void *p48;
-    char pad1[2];
-    u16 u4E;
-    char *p50;
-    Ctl *p54;
-    char pad2[4];
-    int i5C;
-} Actor;
+/* Like func_001AF298, but returns 0, 1 or 2 by the hit flags from func_001B4F90. */
+int func_001AF358(EffectActor *effect, s8 *state) {
+    int hit_flags;
 
-int func_001A2A18(void *);
-int func_001B4F90(void *);
-void func_001A1E28(u16, void *, void *, int, u16, void *);
-
-int func_001AF358(Actor *arg0, char *arg1) {
-    int r;
-    char *p50;
-
-    if (*arg1 == 1) {
-        func_001A2A18(arg0);
-        *arg1 = 0;
+    if (*state == 1) {
+        func_001A2A18(effect);
+        *state = 0;
         return 0;
     }
-    if (arg0->u4E != 0xFFFF && arg0->p54->b10B != 0xFF) {
-        r = func_001B4F90(arg0);
-        if (r & 2) {
-            if (arg0->p54->uF2 != 0) {
-                p50 = arg0->p50;
-                func_001A1E28(arg0->p54->uF2, p50 + 0xC0, p50 + 0xD0, arg0->i5C, arg0->u4E, arg0->p48);
+    if (effect->effect_param != 0xFFFF && effect->def->unk10B != 0xFF) {
+        hit_flags = func_001B4F90(effect);
+        if (hit_flags & 2) {
+            if (effect->def->unkF2 != 0) {
+                func_001A1E28(effect->def->unkF2, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             }
             return 1;
         }
-        if (r != 0) {
-            if (arg0->p54->u118 != 0xFFFF) {
-                p50 = arg0->p50;
-                func_001A1E28(arg0->p54->u118, p50 + 0xC0, p50 + 0xD0, arg0->i5C, arg0->u4E, arg0->p48);
-                *arg1 = 1;
+        if (hit_flags != 0) {
+            if (effect->def->end_effect != 0xFFFF) {
+                func_001A1E28(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                *state = 1;
             }
             return 2;
         }
     }
-    *arg1 = 0;
+    *state = 0;
     return 0;
 }

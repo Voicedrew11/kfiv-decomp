@@ -1,43 +1,28 @@
 #include "common.h"
+#include "kf_effect.h"
 
-typedef struct {
-    char pad0[0x20];
-    s64 flags;
-    char pad28[0x14];
-    u16 id;
-    char pad3E[0x12];
-} A;
-
-typedef struct {
-    char pad0[0x40];
-    s64 flags;
-    char pad48[6];
-    u16 id;
-    char pad50[0x50];
-} B;
-
-extern A D_003F1750[];
-extern B D_003F3550[];
+extern EffectSlot D_003F1750[0x60];
+extern EffectActor D_003F3550[0x180];
 extern int D_004468CC;
 extern int D_004468D0;
-void func_001A2A18(void *);
-void func_001A2AF8(void *);
 
-void func_001A34D0(int arg0) {
-    A *p;
-    B *q;
+
+/* Frees every spawner slot and effect whose effect_param is the given id. */
+void func_001A34D0(int effect_param) {
+    EffectSlot *spawn_slot;
+    EffectActor *effect;
     int i;
 
-    p = D_003F1750;
-    q = D_003F3550;
-    for (i = 0; i < 0x60 && D_004468CC > 0; i++, p++) {
-        if ((p->flags & (0x8000L << 17)) && p->id == arg0) {
-            func_001A2AF8(p);
+    spawn_slot = D_003F1750;
+    effect = D_003F3550;
+    for (i = 0; i < 0x60 && D_004468CC > 0; i++, spawn_slot++) {
+        if ((spawn_slot->flags & EFFECT_SLOT_LIVE) && spawn_slot->effect_param == effect_param) {
+            func_001A2AF8(spawn_slot);
         }
     }
-    for (i = 0; i < 0x180 && D_004468D0 > 0; i++, q++) {
-        if ((q->flags & (0x8000L << 41)) && q->id == arg0) {
-            func_001A2A18(q);
+    for (i = 0; i < 0x180 && D_004468D0 > 0; i++, effect++) {
+        if ((effect->flags & EFFECT_FLAG_LIVE) && effect->effect_param == effect_param) {
+            func_001A2A18(effect);
         }
     }
 }

@@ -70,4 +70,51 @@ typedef struct {
     s16 unk0E;                      /* 0x0E */
 } SoundCue;
 
+/* the data a SoundJob loads or plays: two buffers and their sizes */
+typedef struct {
+    int buffer_a;                   /* 0x00 */
+    int buffer_b;                   /* 0x04 */
+    int unk08;                      /* 0x08 */
+    int size_a;                     /* 0x0C */
+    int size_b;                     /* 0x10 */
+} SoundJobSpec;
+
+/* a sound job (func_001A0B10 to func_001A1458): its data, two file names, the
+   driver's result and two more arguments for the driver call */
+typedef struct {
+    SoundJobSpec *spec;             /* 0x00 */
+    char *name_a;                   /* 0x04 sprintf format or file name */
+    char *name_b;                   /* 0x08 */
+    char pad0C[0x04];
+    int result;                     /* 0x10 the voice or step the driver returned */
+    char pad14[0x04];
+    int unk18;                      /* 0x18 */
+    int unk1C;                      /* 0x1C */
+} SoundJob;
+
+/* a 0x60-byte sound command (D_0043EE78) */
+typedef struct {
+    char pad00;
+    u8 kind;                        /* 0x01 */
+    char pad02[0x32];
+    int *params;                    /* 0x34 four words for a SoundJobSpec */
+    char pad38[0x28];
+} SoundCommand;
+
+/* the start arguments func_001A0C18 copies into a SoundJobSpec */
+typedef struct {
+    int unk00;                      /* 0x00 */
+    char pad04[0x10];
+    int unk14;                      /* 0x14 */
+    int unk18;                      /* 0x18 */
+    int unk1C;                      /* 0x1C */
+} SoundStartArgs;
+
+/* a load buffer: a 64-byte aligned base, its limit and a fill count */
+typedef struct {
+    u32 base;                       /* 0x00 */
+    u32 limit;                      /* 0x04 */
+    int used;                       /* 0x08 */
+} LoadBuffer;
+
 #endif

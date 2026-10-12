@@ -1,21 +1,16 @@
-extern int func_001CD020(int, int, int, int, int, int, int);
+#include "common.h"
+#include "kf_sound.h"
+
 extern int D_00446864;
+int func_001CD020(int, int, int, int, int, int, int);
 
-typedef struct {
-    int *ctl;
-    int pad04[3];
-    int f10;
-    int f14;
-    int f18;
-    int f1C;
-} Job;
+/* Starts a sound job and counts it in D_00446864 when it was accepted. */
+int func_001A0B10(SoundJob *job) {
+    SoundJobSpec *spec = job->spec;
+    int result = func_001CD020(job->unk18, spec->buffer_b, spec->size_b, spec->buffer_a, spec->size_a, 0, job->unk1C);
 
-int func_001A0B10(Job *arg0) {
-    int *v = arg0->ctl;
-    int r = func_001CD020(arg0->f18, v[1], v[4], v[0], v[3], 0, arg0->f1C);
-
-    arg0->f10 = r;
-    if (r >= 0) {
+    job->result = result;
+    if (result >= 0) {
         D_00446864 += 1;
     }
     return 0;

@@ -22,7 +22,9 @@ typedef struct {
     u16 map_index;                  /* 0x252 picks the MapSlot record */
     char pad254[0x0D];
     u8 unk261;                      /* 0x261 */
-    char pad262[0x56];
+    char pad262[0x3E];
+    int unk2A0;                     /* 0x2A0 a running total func_001B4EC8 adds to */
+    char pad2A4[0x14];
     u16 flag_timers[6];             /* 0x2B8 frames left, one per timed_flags entry */
 } PlayerState;
 

@@ -1,28 +1,24 @@
-#include "common.h"
+#include "kf_effect.h"
 
-void func_001AF928(char *, int);
-void func_001AF640(void *, int);
-void func_001AF538(float, void *, void *);
 s16 func_001B0208(float, void *, void *, void *);
 
-void func_001A9E88(char *arg0, int arg1) {
-    char *temp_s2;
-    char *temp_a0;
-    u32 temp_v0;
-    float temp_f0;
+/* Turning effect launched along its model's heading; its end frame and turn come from the definition. */
+void func_001A9E88(EffectActor *effect, EffectSlot *spawn_slot) {
+    TurningMotion *motion;
+    s16 angle;
+    float unk_e8;
 
-    temp_s2 = arg0 + 0x10;
-    func_001AF928(arg0, arg1);
-    func_001AF640(arg0, arg1);
-    func_001AF538(*(float *)(*(char **)(arg0 + 0x54) + 0xD8), temp_s2, *(char **)(arg0 + 0x50) + 0xD0);
-    temp_v0 = func_001B0208(*(float *)(*(char **)(arg0 + 0x54) + 0xDC), arg0, temp_s2, arg0 + 0x20);
-    *(s16 *)(temp_s2 + 0x22) = temp_v0;
-    temp_a0 = *(char **)(arg0 + 0x54);
-    if (*(u16 *)(temp_a0 + 0xF0) < (u32)(temp_v0 & 0xFFFF)) {
-        *(u16 *)(temp_s2 + 0x22) = 0xFFFF;
+    motion = (TurningMotion *)&effect->motion;
+    func_001AF928(effect, spawn_slot);
+    func_001AF640(effect, spawn_slot);
+    func_001AF538(effect->def->speed, &effect->motion.velocity, &effect->model->rotation);
+    angle = func_001B0208(effect->def->unkDC, effect, motion, &motion->unk10);
+    motion->unk22 = angle;
+    if (effect->def->unkF0 < (u32)(angle & 0xFFFF)) {
+        *(u16 *)&motion->unk22 = 0xFFFF; // match: stored as an unsigned halfword
     }
-    temp_f0 = *(float *)(temp_a0 + 0xE8);
-    *(char *)(temp_s2 + 0x25) = 0;
-    *(char *)(temp_s2 + 0x24) = (int)temp_f0;
-    *(u16 *)(temp_s2 + 0x20) = *(u16 *)(*(char **)(arg0 + 0x54) + 0x118);
+    unk_e8 = effect->def->unkE8;
+    motion->unk25 = 0;
+    motion->unk24 = (int)unk_e8;
+    motion->unk20 = effect->def->end_effect;
 }

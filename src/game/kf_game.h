@@ -75,4 +75,17 @@ typedef struct {
     int tail[2];                    /* 0x178 */
 } ScratchSlot;
 
+/* a node of the doubly linked list at D_004469D4 */
+typedef struct ListNode {
+    char pad00[0x20];
+    struct ListNode *prev;          /* 0x20 */
+    struct ListNode *next;          /* 0x24 */
+} ListNode;
+
+/* what D_004471E4 and D_004471E8 point at; func_001CFC80 clears unk04 */
+typedef struct {
+    char pad00[0x04];
+    int unk04;                      /* 0x04 */
+} PendingSlot;
+
 #endif

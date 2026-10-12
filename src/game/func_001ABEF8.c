@@ -1,25 +1,29 @@
-void func_001AF928(char *, int);
-void func_001AF640(void *, int);
-void func_00216C48(void *, void *, void *);
-void func_00216778(void *, void *);
-void func_001C1430(float, void *, void *);
-float func_001B0178(void *, void *);
-void func_001AF538(float, void *, void *);
+#include "common.h"
+#include "kf_effect.h"
 
-void func_001ABEF8(char *arg0, int arg1) {
-    int vec[4];
-    char *temp_s2 = arg0 + 0x10;
+#define SCRATCH_VECTOR ((void *)0x70000000)
+#define SCRATCH_MATRIX_FIRST_WORD (*(int *)0x70000010)
 
-    func_001AF928(arg0, arg1);
-    func_001AF640(arg0, arg1);
-    *(float *)(temp_s2 + 0x20) = 0;
-    func_001AF538(1000.0f, vec, *(char **)(arg0 + 0x50) + 0xD0);
-    func_001C1430(1.0f, *(char **)(arg0 + 0x50) + 0xC0, vec);
-    if (*(int *)0x70000010 != 0) {
-        func_00216778(arg0 + 0x20, (void *)0x70000000);
+void func_00216778(void *dst, void *src);
+void func_00216C48(void *dst, void *a, void *b);
+void func_001C1430(float scale, void *dst, void *src);
+float func_001B0178(void *a, void *b);
+
+/* Probe effect: sets its velocity from the model's rotation and measures the distance to a point. */
+void func_001ABEF8(EffectActor *effect, EffectSlot *spawn_slot) {
+    TargetDistanceMotion *motion = (TargetDistanceMotion *)&effect->motion;
+    Vector4 offset;
+
+    func_001AF928(effect, spawn_slot);
+    func_001AF640(effect, spawn_slot);
+    motion->distance_to_target = 0;
+    func_001AF538(1000.0f, &offset, &effect->model->rotation);
+    func_001C1430(1.0f, &effect->model->position, &offset);
+    if (SCRATCH_MATRIX_FIRST_WORD != 0) {
+        func_00216778(&motion->unk10, SCRATCH_VECTOR);
     } else {
-        func_00216C48(arg0 + 0x20, vec, *(char **)(arg0 + 0x50) + 0xC0);
+        func_00216C48(&motion->unk10, &offset, &effect->model->position);
     }
-    *(float *)(temp_s2 + 0x20) = func_001B0178(temp_s2 + 0x10, *(char **)(arg0 + 0x50) + 0xC0);
-    func_001AF538(100.0f, temp_s2, *(char **)(arg0 + 0x50) + 0xD0);
+    motion->distance_to_target = func_001B0178(&motion->unk10, &effect->model->position);
+    func_001AF538(100.0f, &motion->velocity, &effect->model->rotation);
 }

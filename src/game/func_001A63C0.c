@@ -1,32 +1,27 @@
-void func_001AF640(void *, int);
-void func_001AF928(char *, int);
-void func_001AF538(float, void *, void *);
-void func_00216778(float *, void *);
-int func_001C0E40(float, float *);
+#include "common.h"
+#include "kf_effect.h"
 
-typedef struct {
-    char pad[0x10];
-    float f10;
-    float f14;
-    char c18;
-} Sub;
+#define SCRATCH_VECTOR ((f32 *)0x70000000)
 
-void func_001A63C0(char *arg0, int arg1) {
-    Sub *temp_s2;
-    float sp[3];
+int func_001C0E40(float radius, void *point);
+void func_00216778(void *out, void *position);
 
-    temp_s2 = (Sub *)(arg0 + 0x10);
-    func_001AF640(arg0, arg1);
-    func_001AF928(arg0, arg1);
-    func_001AF538(*(float *)(*(char **)(arg0 + 0x54) + 0xD8), temp_s2, *(char **)(arg0 + 0x50) + 0xD0);
-    temp_s2->f10 = *(float *)(*(char **)(arg0 + 0x54) + 0xDC);
-    temp_s2->f14 = 0.0f;
-    temp_s2->c18 = 0;
-    func_00216778(sp, *(char **)(arg0 + 0x50) + 0xC0);
-    sp[1] = sp[1] - temp_s2->f10 * 1.5f;
-    if (func_001C0E40(temp_s2->f10 * 3.0f, sp) == 0) {
-        temp_s2->c18 = 1;
+void func_001A63C0(EffectActor *effect, EffectSlot *spawn_slot) {
+    ProbeFlatMotion *motion;
+    float point[3];
+
+    motion = (ProbeFlatMotion *)&effect->motion;
+    func_001AF640(effect, spawn_slot);
+    func_001AF928(effect, spawn_slot);
+    func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
+    motion->radius = effect->def->unkDC;
+    motion->unk14 = 0.0f;
+    motion->on_ground = 0;
+    func_00216778(point, &effect->model->position);
+    point[1] -= motion->radius * 1.5f;
+    if (func_001C0E40(motion->radius * 3.0f, point) == 0) {
+        motion->on_ground = 1;
     } else {
-        *(float *)(*(char **)(arg0 + 0x50) + 0xC4) = *(float *)0x70000004;
+        effect->model->position.y = SCRATCH_VECTOR[1];
     }
 }

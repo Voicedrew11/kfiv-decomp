@@ -1,7 +1,9 @@
-extern int D_0043EE30[];
+#include "common.h"
+#include "kf_sound.h"
 
-void func_001A0CD0(int arg0, int arg1, int arg2) {
-  int (*fn)(int, int);
-  fn = *((int (**)(int, int)) (((char *) D_0043EE30) + ((arg1 & 0xFF) * 4)));
-  fn(arg0 & 0xFF, arg2);
+extern int (*D_0043EE30[])(int, int);
+
+/* Calls handler handler_index of D_0043EE30 with the low byte of handler_arg and value. */
+void func_001A0CD0(int handler_arg, int handler_index, int value) {
+    D_0043EE30[handler_index & 0xFF](handler_arg & 0xFF, value);
 }

@@ -1,44 +1,46 @@
 #include "common.h"
+#include "kf_effect.h"
 
-extern char D_003F1750[];
-extern char D_003F3550[];
+extern EffectSlot D_003F1750[0x60];
+extern EffectActor D_003F3550[0x180];
 extern int D_004468CC;
 extern int D_004468D0;
 
-void func_00216C48(char *, int, char *);
+void func_00216C48(void *, void *, void *);
 
-void func_001A1B48(int arg0) {
-    char *p;
-    char *q;
-    char *temp;
-    s64 m1;
-    s64 m2;
-    int i;
-    int n;
+/* Transforms the positions of the live effect slots and effect actors by a matrix. */
+void func_001A1B48(void *transform) {
+    s64 slot_in_use_bit;
+    s64 actor_in_use_bit;
+    EffectSlot *slot;
+    EffectActor *effect;
+    Vector4 *model_position;
+    int pool_index;
+    int live_left;
 
-    m1 = 0x8000L << 17;
-    p = D_003F1750;
-    q = D_003F3550;
-    n = D_004468CC;
-    for (i = 0; i < 0x60; i++, p += 0x50) {
-        if (*(s64 *)(p + 0x20) & m1) {
-            func_00216C48(p, arg0, p);
-            n--;
-            if (n <= 0) {
+    slot_in_use_bit = EFFECT_SLOT_LIVE;
+    slot = D_003F1750;
+    effect = D_003F3550;
+    live_left = D_004468CC;
+    for (pool_index = 0; pool_index < 0x60; pool_index++, slot++) {
+        if (slot->flags & slot_in_use_bit) {
+            func_00216C48(&slot->position, transform, &slot->position);
+            live_left--;
+            if (live_left <= 0) {
                 break;
             }
         }
     }
 
-    m2 = 0x8000L << 41;
-    n = D_004468D0;
-    for (i = 0; i < 0x180; i++, q += 0xA0) {
-        if (*(s64 *)(q + 0x40) & m2) {
-            n--;
-            temp = *(char **)(q + 0x50) + 0xC0;
-            func_00216C48(temp, arg0, temp);
-            func_00216C48(q + 0x70, arg0, q + 0x70);
-            if (n <= 0) {
+    actor_in_use_bit = EFFECT_FLAG_LIVE;
+    live_left = D_004468D0;
+    for (pool_index = 0; pool_index < 0x180; pool_index++, effect++) {
+        if (effect->flags & actor_in_use_bit) {
+            live_left--;
+            model_position = &effect->model->position;
+            func_00216C48(model_position, transform, model_position);
+            func_00216C48(&effect->unk70, transform, &effect->unk70);
+            if (live_left <= 0) {
                 break;
             }
         }

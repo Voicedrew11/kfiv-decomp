@@ -1,40 +1,35 @@
 #include "common.h"
+#include "kf_effect.h"
 
-extern int D_00413F80[];
+extern Vector4 D_00413F80;
 
-void func_001AEC48(char *);
-void func_001AED58(char *);
-void func_001AF0B0(char *);
-void func_001AF298(char *, char *);
-void func_001AF5B0(char *, char *);
-void func_001AFC88(float, float, char *, float *);
-void KF_Vector_Subtract(float *, int *, char *);
-void sceVu0AddVector(char *, char *, char *);
+void func_001AF298(EffectActor *effect, void *unk10);
+void func_001AF5B0(void *rotation, void *direction);
+void KF_Vector_Subtract(void *out, void *a, void *b);
+void sceVu0AddVector(void *out, void *a, void *b);
 
-void func_001AB4D8(char *arg0) {
-    float v[4];
-    char *s1;
-    char *t;
-    char *p;
-    u16 n;
+/* Homing effect: steers its velocity toward the player and moves while frame < max_frames. */
+void func_001AB4D8(EffectActor *effect) {
+    Vector4 to_player;
+    EffectMotion *motion = &effect->motion;
+    EffectDef *def;
+    u16 max_frames;
 
-    func_001AEC48(arg0);
-    s1 = arg0 + 0x10;
-    func_001AED58(arg0);
-    func_001AF0B0(arg0);
-    KF_Vector_Subtract(v, D_00413F80, *(char **)(arg0 + 0x50) + 0xC0);
-    t = *(char **)(arg0 + 0x54);
-    if (*(u16 *)(arg0 + 0x4C) < *(u16 *)(t + 0xEC)) {
-        v[1] = v[1] - 220.0f;
-        func_001AFC88(*(float *)(t + 0xD8), *(float *)(t + 0xDC), s1, v);
-        func_001AF5B0(*(char **)(arg0 + 0x50) + 0xD0, s1);
-        t = *(char **)(arg0 + 0x54);
+    func_001AEC48(effect);
+    func_001AED58(effect);
+    func_001AF0B0(effect);
+    KF_Vector_Subtract(&to_player, &D_00413F80, &effect->model->position);
+    def = effect->def;
+    if (effect->frame < def->radius_half) {
+        to_player.y -= 220.0f;
+        func_001AFC88(&motion->velocity, &to_player, def->speed, def->unkDC);
+        func_001AF5B0(&effect->model->rotation, &motion->velocity);
+        def = effect->def;
     }
-    n = *(u16 *)(t + 0x108);
-    if (*(u16 *)(arg0 + 0x4C) < n || n == 0) {
-        p = *(char **)(arg0 + 0x50) + 0xC0;
-        sceVu0AddVector(p, p, s1);
+    max_frames = def->max_frames;
+    if (effect->frame < max_frames || max_frames == 0) {
+        sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     }
-    func_001AF298(arg0, s1 + 0x10);
-    *(u16 *)(arg0 + 0x4C) += 1;
+    func_001AF298(effect, &motion->unk10);
+    effect->frame += 1;
 }

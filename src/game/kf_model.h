@@ -26,6 +26,15 @@ typedef struct {
     u64 unk08;
 } Qword;
 
+/* the same 128 bits at any alignment, copied as two unaligned doublewords */
+typedef struct __attribute__((packed)) {
+    u64 unk00;
+    u64 unk08;
+} UnalignedQword;
+
+/* a 128-bit integer, stored with one sq */
+typedef u32 Uint128 __attribute__((mode(TI)));
+
 /* one 0x80-byte part (joint) of a model, ModelInstance.parts[i] */
 typedef struct {
     char unk00[0x40];               /* 0x00 the part's matrix, passed by address */
@@ -38,6 +47,15 @@ typedef struct {
     u64 pad78_46 : 7;
     u64 data_count : 11;
 } ModelPart;
+
+/* one record of a part's data (ModelPart.data_addr): 0x80 bytes plus its payload */
+typedef struct {
+    char pad00[0x40];
+    int id_word;                    /* 0x40 low 14 bits: the record id */
+    char pad44[0x1C];
+    int payload_size;               /* 0x60 low 15 bits: the payload length in 0x40-byte units */
+    char pad64[0x0C];
+} ModelPartRecord;
 
 /* per-part level thresholds, ModelInstance.level_tables[n][part] */
 typedef struct {
@@ -62,7 +80,7 @@ typedef struct ModelInstance {
     Vector4 position;               /* 0xC0 */
     Vector4 rotation;               /* 0xD0 x, y (heading), z in radians */
     f32 unkE0;                      /* 0xE0 its sign picks the turn direction */
-    char padE4[0x04];
+    f32 unkE4;                      /* 0xE4 */
     f32 unkE8;                      /* 0xE8 */
     char padEC[0x04];
     u16 part_count;                 /* 0xF0 */
@@ -76,7 +94,9 @@ typedef struct ModelInstance {
     Vector4 *bone_positions;        /* 0x124 32 of them, written from bone_anchors */
     char pad128[0x34];
     f32 alpha;                      /* 0x15C below 128: drawn without z writes */
-    char pad160[0x30];
+    char pad160[0x1C];
+    int found_record_id;            /* 0x17C the id func_001A2E58 last found */
+    int found_record[4];            /* 0x180 a copy of that record, its id bits replaced */
     u16 unk190;                     /* 0x190 */
     char pad192[0x02];
     int unk194;                     /* 0x194 */

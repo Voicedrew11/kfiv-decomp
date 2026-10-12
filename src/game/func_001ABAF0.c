@@ -1,40 +1,38 @@
 #include "common.h"
+#include "kf_effect.h"
 
 extern int D_004468E8;
 
-void func_001AEC48(char *);
-void func_001AED58(char *);
-void func_001AF0B0(char *);
-void func_001AF298(char *, char *);
-void func_00216778(float *, void *);
-void sceVu0AddVector(char *, char *, char *);
+void func_001AF298(EffectActor *effect, void *unk10_z);
+void func_00216778(void *dst, void *src);
+void sceVu0AddVector(void *out, void *a, void *b);
 
-void func_001ABAF0(char *arg0) {
-    float v[4];
-    char *s1;
-    char *p;
-    u16 n;
-    float f;
+/* Drifting effect: moves by its velocity, which grows by unk10.y each frame, until def->unkF0. */
+void func_001ABAF0(EffectActor *effect) {
+    Vector4 velocity;
+    EffectMotion *motion = &effect->motion;
+    EffectDef *def;
+    u16 max_frames;
+    float scale;
 
     D_004468E8 = 0;
-    func_001AEC48(arg0);
-    s1 = arg0 + 0x10;
-    func_001AED58(arg0);
-    func_001AF0B0(arg0);
-    n = *(u16 *)(*(char **)(arg0 + 0x54) + 0x108);
-    if (*(u16 *)(arg0 + 0x4C) < n || n == 0) {
-        func_00216778(v, s1);
-        if (*(float *)(*(char **)(arg0 + 0x54) + 0x11C) != 0.0f) {
-            f = *(float *)(s1 + 0x14) + *(float *)(*(char **)(arg0 + 0x54) + 0x11C);
-            *(float *)(s1 + 0x14) = f;
-            v[0] = v[0] * f;
-            v[2] = v[2] * f;
+    func_001AEC48(effect);
+    func_001AED58(effect);
+    func_001AF0B0(effect);
+    max_frames = effect->def->max_frames;
+    if (effect->frame < max_frames || max_frames == 0) {
+        func_00216778(&velocity, &motion->velocity);
+        def = effect->def;
+        if (def->scale_per_frame != 0.0f) {
+            scale = motion->unk10.y + def->scale_per_frame;
+            motion->unk10.y = scale;
+            velocity.x *= scale;
+            velocity.z *= scale;
         }
-        p = *(char **)(arg0 + 0x50) + 0xC0;
-        sceVu0AddVector(p, p, (char *)v);
+        sceVu0AddVector(&effect->model->position, &effect->model->position, &velocity);
     }
-    if (*(u16 *)(*(char **)(arg0 + 0x54) + 0xF0) < *(u16 *)(arg0 + 0x4C)) {
-        func_001AF298(arg0, s1 + 0x18);
+    if (effect->def->unkF0 < effect->frame) {
+        func_001AF298(effect, &motion->unk10.z);
     }
-    *(u16 *)(arg0 + 0x4C) += 1;
+    effect->frame += 1;
 }

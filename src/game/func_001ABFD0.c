@@ -1,34 +1,35 @@
-extern int D_00413F80[];
+#include "common.h"
+#include "kf_effect.h"
 
-void func_001AF928(void);
-void func_001AF640(void *, int);
-void KF_Vector_Subtract(void *, void *, void *);
-void func_00216778(void *, void *);
-void func_001C1430(float, void *, void *);
-void func_001AF5B0(void *, void *);
-float func_001B0178(void *, void *);
-void func_001AF538(float, void *, void *);
+#define SCRATCH_VECTOR ((void *)0x70000000)
+#define SCRATCH_MATRIX_FIRST_WORD (*(int *)0x70000010)
 
-void func_001ABFD0(char *arg0, int arg1) {
-    int vec[4];
-    char *temp_s0;
-    char *temp_s2;
+void KF_Vector_Subtract(void *out, void *a, void *b);
+void func_00216778(void *dst, void *src);
+void func_001C1430(float scale, void *dst, void *src);
+void func_001AF5B0(void *rotation, void *direction);
+float func_001B0178(void *a, void *b);
 
-    temp_s2 = arg0 + 0x10;
-    func_001AF928();
-    func_001AF640(arg0, arg1);
-    *(float *)(temp_s2 + 0x20) = 0;
-    KF_Vector_Subtract(vec, D_00413F80, *(char **)(arg0 + 0x50) + 0xC0);
-    func_001C1430(1.0f, *(char **)(arg0 + 0x50) + 0xC0, vec);
-    if (*(int *)0x70000010 != 0) {
-        func_00216778(arg0 + 0x20, (void *)0x70000000);
+extern Vector4 D_00413F80;
+
+/* Probe effect: turns its model toward the player and measures the distance to a point. */
+void func_001ABFD0(EffectActor *effect, EffectSlot *spawn_slot) {
+    TargetDistanceMotion *motion = (TargetDistanceMotion *)&effect->motion;
+    Vector4 offset;
+
+    func_001AF928(effect, spawn_slot);
+    func_001AF640(effect, spawn_slot);
+    motion->distance_to_target = 0;
+    KF_Vector_Subtract(&offset, &D_00413F80, &effect->model->position);
+    func_001C1430(1.0f, &effect->model->position, &offset);
+    if (SCRATCH_MATRIX_FIRST_WORD != 0) {
+        func_00216778(&motion->unk10, SCRATCH_VECTOR);
     } else {
-        func_00216778(arg0 + 0x20, D_00413F80);
-        *(float *)(temp_s2 + 0x14) = *(float *)(temp_s2 + 0x14) - 180.0f;
+        func_00216778(&motion->unk10, &D_00413F80);
+        motion->unk10.y -= 180.0f;
     }
-    temp_s0 = temp_s2 + 0x10;
-    KF_Vector_Subtract(vec, temp_s0, *(char **)(arg0 + 0x50) + 0xC0);
-    func_001AF5B0(*(char **)(arg0 + 0x50) + 0xD0, vec);
-    *(float *)(temp_s2 + 0x20) = func_001B0178(temp_s0, *(char **)(arg0 + 0x50) + 0xC0);
-    func_001AF538(100.0f, temp_s2, *(char **)(arg0 + 0x50) + 0xD0);
+    KF_Vector_Subtract(&offset, &motion->unk10, &effect->model->position);
+    func_001AF5B0(&effect->model->rotation, &offset);
+    motion->distance_to_target = func_001B0178(&motion->unk10, &effect->model->position);
+    func_001AF538(100.0f, &motion->velocity, &effect->model->rotation);
 }

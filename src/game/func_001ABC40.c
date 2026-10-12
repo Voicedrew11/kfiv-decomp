@@ -1,32 +1,28 @@
 #include "common.h"
+#include "kf_effect.h"
 
-void func_001AEC48(char *);
-void func_001AED58(char *);
-void func_001AF0B0(char *);
-void func_001AF298(char *, char *);
-void func_001AF538(float, void *, void *);
-void func_00216778(void *, void *);
-void sceVu0AddVector(char *, char *, char *);
+void func_001AF298(EffectActor *effect, void *unk10_w);
+void func_00216778(void *dst, void *src);
+void sceVu0AddVector(void *out, void *a, void *b);
 
-void func_001ABC40(char *arg0) {
-    char *s1;
-    char *t;
-    u16 n;
+/* Moves its model: copies its start position, aims its velocity at radius_half, then adds the velocity. */
+void func_001ABC40(EffectActor *effect) {
+    EffectMotion *motion = &effect->motion;
+    EffectDef *def;
+    u16 frame;
 
-    func_001AEC48(arg0);
-    s1 = arg0 + 0x10;
-    func_001AED58(arg0);
-    func_001AF0B0(arg0);
-    t = *(char **)(arg0 + 0x54);
-    n = *(u16 *)(arg0 + 0x4C);
-    if (*(u16 *)(t + 0xEC) < n) {
-        char *p = *(char **)(arg0 + 0x50) + 0xC0;
-        sceVu0AddVector(p, p, s1);
-    } else if (n < *(u16 *)(t + 0xEC)) {
-        func_00216778(*(char **)(arg0 + 0x50) + 0xC0, *(void **)(arg0 + 0x64));
+    func_001AEC48(effect);
+    func_001AED58(effect);
+    func_001AF0B0(effect);
+    def = effect->def;
+    frame = effect->frame;
+    if (def->radius_half < frame) {
+        sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
+    } else if (frame < def->radius_half) {
+        func_00216778(&effect->model->position, effect->unk64);
     } else {
-        func_001AF538(*(float *)(t + 0xD8), s1, *(void **)(arg0 + 0x68));
+        func_001AF538(def->speed, &motion->velocity, effect->unk68);
     }
-    func_001AF298(arg0, s1 + 0x1C);
-    *(u16 *)(arg0 + 0x4C) += 1;
+    func_001AF298(effect, &motion->unk10.w);
+    effect->frame += 1;
 }

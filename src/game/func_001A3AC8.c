@@ -1,17 +1,18 @@
 #include "common.h"
+#include "kf_gs.h"
 
-int func_00109A50();
-int func_00109A80(int, s64);
-int func_00109AD0();
-int func_00109E18();
-int func_0010AEB8(int);
+void func_00109A50(void);
+void func_00109A80(int, s64);
+void func_00109AD0(void);
+void func_00109E18(void);
+void func_0010AEB8(void *model);
 
-void func_001A3AC8(int arg0) {
+void func_001A3AC8(void *model) {
     func_00109A50();
-    func_00109A80(0x4E, 0x10A000118L);
-    func_00109A80(0x42, 0x48);
-    func_00109A80(0x47, 0x53001);
+    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
+    func_00109A80(GS_REG_ALPHA_1, 0x48);
+    func_00109A80(GS_REG_TEST_1, 0x53001);
     func_00109AD0();
     func_00109E18();
-    func_0010AEB8(arg0);
+    func_0010AEB8(model);
 }
