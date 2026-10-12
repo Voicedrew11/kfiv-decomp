@@ -213,7 +213,8 @@ def unit_symbols(placed):
             elif typ == R_LO16 and sname in hi:
                 for how, hrw in hi.pop(sname):
                     addend = ((how & 0xFFFF) << 16) + sext16(ow)
-                    add(sname, ((hrw & 0xFFFF) << 16) + sext16(rw) - addend, False,
+                    # an addend can be negative (a loop that counts from the table's end)
+                    add(sname, (((hrw & 0xFFFF) << 16) + sext16(rw) - addend) & 0xFFFFFFFF, False,
                         f"referenced from {unit}")
     return out, statics, clash
 

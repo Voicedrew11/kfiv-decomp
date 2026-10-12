@@ -755,3 +755,5 @@ KF_Vu0_ProjectToScreen = 0x002167E8; // type:func
 KF_Vector_MultiplyComponents = 0x00216BF0; // type:func
 KF_Vector_Subtract = 0x00216C78; // type:func
 KF_Vector_Scale = 0x00216CA8; // type:func
+// A byte that only C code refers to: without a name here the splitter keeps it inside the word at 0x00446BDC.
+D_00446BDD = 0x00446BDD; // type:s8 size:0x1
