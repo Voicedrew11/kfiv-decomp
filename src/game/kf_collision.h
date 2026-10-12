@@ -36,9 +36,10 @@ typedef struct {
 typedef struct {
     s32 strip_count;                /* 0x00 */
     CollisionStrip *strips;         /* 0x04 */
-    char pad08[0x04];
+    char *unk08;                    /* 0x08 the end of the strips: unk0C 16-byte entries */
     u32 unk0C;                      /* 0x0C */
-    char pad10[0x08];
+    f32 unk10;                      /* 0x10 how far it reaches from its origin, unscaled (func_0011C708) */
+    char *unk14;                    /* 0x14 the next mesh of a map file starts this many bytes on (a size, typed as func_00114AA8 needs) */
     CollisionStrip *unk18;          /* 0x18 unk38 strips */
     CollisionStrip *floor_strips;   /* 0x1C */
     CollisionStrip *unk20;          /* 0x20 unk3C strips */
@@ -56,11 +57,15 @@ typedef struct {
 
 /* a MapRecord (kf_entity.h) as the collision code reads it: the box it covers and its model */
 typedef struct {
-    char pad00[0x32];
+    f32 position[4];                /* 0x00 */
+    f32 rotation[4];                /* 0x10 */
+    f32 scale[4];                   /* 0x20 */
+    u16 unk30;                      /* 0x30 0xFFFF: always drawn (func_00116CB0) */
     u16 unk32;                      /* 0x32 0xFFFF: unused */
     char pad34[0x08];
     u32 unk3C;                      /* 0x3C high half of MapRecord.unk38; 0x40000000: nothing collides with it */
-    char pad40[0x20];
+    f32 unk40[4];                   /* 0x40 a point, moved with the record */
+    f32 unk50[4];                   /* 0x50 a point, moved with the record */
     f32 lowest[4];                  /* 0x60 lowest x, y, z it covers */
     f32 highest[3];                 /* 0x70 highest x, y, z it covers */
     ModelInstance *model;           /* 0x7C */

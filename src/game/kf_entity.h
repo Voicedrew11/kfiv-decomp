@@ -16,7 +16,8 @@ typedef struct {
     char pad0C[0x04];
     f32 unk10;                      /* 0x10 start of the rotation it spawns with (unk14 is its y) */
     f32 unk14;                      /* 0x14 an angle (the facing it spawns with?) */
-    char pad18[0x18];
+    char pad18[0x08];
+    f32 unk20[4];                   /* 0x20 the scale it spawns with */
     u16 type_id;                    /* 0x30 which pool block holds its data */
     char pad32[0x02];
     s8 pool_size;                   /* 0x34 0-4: one pool block, else two */
@@ -32,7 +33,10 @@ typedef struct {
     u16 vertical_despawn_range;     /* 0x48 0: no vertical limit */
     char pad4A[0x02];
     u16 unk4C;                      /* 0x4C */
-    char pad4E[0x06];
+    char pad4E[0x02];
+    u16 unk50;                      /* 0x50 0: func_00124F00 makes it 1800 */
+    u8 unk52;                       /* 0x52 0: func_00124F00 makes it 100 */
+    char pad53;
     u16 unk54;                      /* 0x54 */
     u16 unk56;                      /* 0x56 */
     char pad58[0x02];
@@ -44,6 +48,7 @@ typedef struct {
 typedef union {
     u64 word;
     u32 halves[2];
+    u8 bytes[8];                    /* [4]: the entity's id in D_004FEB90; [6]: 0 becomes 80 (func_00124F00) */
 } EntitySpawnFlags;
 
 #define ENTITY_SPAWN_FLAGS(entity) (((EntitySpawnFlags *)&(entity)->spawn_info->unk38)->word)
@@ -103,7 +108,8 @@ typedef struct {
     u16 unk102;                     /* 0x102 */
     char pad104[0x34];
     void *unk138;                   /* 0x138 */
-    char pad13C[0x20];
+    f32 unk13C;                     /* 0x13C the larger of Entity.unk30 and unk34 */
+    char pad140[0x1C];
     f32 unk15C;                     /* 0x15C */
 } EntityModel;
 
@@ -225,9 +231,11 @@ typedef struct {
     u32 unk03_0 : 1;                /* 0x03 */
     u32 unk03_1 : 2;
     u32 unk03_3 : 5;
-    char pad04[0x06];
+    u16 unk04;                      /* 0x04 Entity.unk44 before scaling */
+    u16 unk06;                      /* 0x06 Entity.unk30 before scaling */
+    u16 unk08;                      /* 0x08 Entity.unk34 before scaling */
     u16 unk0A;                      /* 0x0A what Entity.unk2C is measured against */
-    char pad0C[0x02];
+    u16 unk0C;                      /* 0x0C 0: func_00124F00 makes it 70 */
     u16 unk0E;                      /* 0x0E passed to func_001BBB60 when the entity dies */
     u16 flags;                      /* 0x10 */
     char pad12[0x02];
@@ -248,14 +256,17 @@ typedef struct {
     char padC9;
     u8 unkCA;                       /* 0xCA */
     u8 unkCB;                       /* 0xCB */
-    char padCC[0x02];
+    u16 unkCC;                      /* 0xCC Entity.radius before scaling */
     u16 unkCE;                      /* 0xCE */
-    char padD0[0x0A];
+    char padD0[0x02];
+    u8 unkD2;                       /* 0xD2 the model's scale in percent */
+    char padD3[0x07];
     s16 unkDA;                      /* 0xDA */
     char padDC[0x0C];
     u16 unkE8;                      /* 0xE8 */
     u8 unkEA;                       /* 0xEA */
-    char padEB[0x05];
+    char padEB[0x03];
+    u16 unkEE;                      /* 0xEE Entity.height before scaling */
     u8 unkF0[0x20];                 /* 0xF0 how many records unk130[n] leads to */
     u8 unk110[0x20];                /* 0x110 how many records unk1B0[n] leads to */
     s32 unk130[0x20];               /* 0x130 offsets from D_004467C0 to EntityParamsUnk130 records, by animation */
@@ -366,6 +377,7 @@ typedef struct {
     char pad7D[0x03];
     char unk80[0x08];               /* 0x80 (Entity+0x160) passed by address; an EntityUnkE0Slot */
     char unk88[0x08];               /* 0x88 (Entity+0x168) passed by address; an EntityUnkE0Slot */
+    char pad90[0x10];               /* the work area is 0xA0 bytes, an Entity 0x180 */
 } EntityUnkE0;
 
 /* one of the two 8-byte slots func_0019A448 fills */
@@ -549,6 +561,15 @@ typedef struct {
     char pad7F[0x21];
 } EntityUnkE0Kind131390;
 
+/* Entity+0xE0 as the kind set up by func_0012ACA0 lays it out */
+typedef struct {
+    char pad00[0x1C];
+    f32 unk1C;                      /* 0x1C turn speed */
+    char pad20[0x20];
+    f32 unk40[7];                   /* 0x40 [2] to [6]: how far each of the five neck joints (model parts 30 to 34) is bent */
+    char pad5C[0x44];
+} EntityUnkE0Kind12ACA0;
+
 /* what Entity.params points at (the entity's controller / type data), see ENTITY_CONTROLLER.
    EntityParams above is a second view of the same block; the two are to be unified. */
 typedef struct {
@@ -584,28 +605,29 @@ typedef struct Entity {
     u16 unk20;                      /* 0x20 a timer, set to 1800 by func_001862F0 */
     char pad22[0x02];
     u16 unk24;                      /* 0x24 not 0: attacks reach half as far (func_0018F648) */
-    char pad26[0x02];
+    u16 unk26;                      /* 0x26 1-4: which of the timers unk20, unk24, unk28, unk2A tints the model (func_00125BD8) */
     u16 unk28;                      /* 0x28 */
     u16 unk2A;                      /* 0x2A */
     u16 unk2C;                      /* 0x2C */
-    char pad2E[0x02];
+    u16 unk2E;                      /* 0x2E capped at EntityParams.unk0A; Entity.unk4C is set from it (func_001256C0) */
     f32 unk30;                      /* 0x30 */
     f32 unk34;                      /* 0x34 */
     f32 radius;                     /* 0x38 */
     f32 height;                     /* 0x3C */
-    char pad40[0x08];
+    f32 unk40;                      /* 0x40 EntityParams.unk0C scaled three ways (a volume or weight?) */
+    f32 unk44;                      /* 0x44 EntityParams.unk04 scaled */
     f32 unk48;                      /* 0x48 how far above the floor it is kept (see func_00187E28) */
     f32 unk4C;                      /* 0x4C */
-    char pad50[0x04];
+    s32 unk50;                      /* 0x50 */
     void (*unk54)(struct Entity *entity); /* 0x54 called by func_001824E0 while flag bit 6 is set */
-    char pad58[0x04];
+    s32 unk58;                      /* 0x58 */
     void *target;                   /* 0x5C */
     f32 unk60;                      /* 0x60 */
     f32 distance_to_player;         /* 0x64 */
     f32 unk68;                      /* 0x68 */
-    char pad6C[0x04];
+    f32 unk6C;                      /* 0x6C the heading Entity.unk4C pushes it along (func_001256C0) */
     f32 unk70[4];                   /* 0x70 the model's position before this frame's move */
-    char pad80[0x02];
+    u16 unk80;                      /* 0x80 */
     u16 unk82;                      /* 0x82 */
     f32 unk84;                      /* 0x84 */
     f32 unk88;                      /* 0x88 */
@@ -783,6 +805,12 @@ typedef struct {
     s32 ids[5];                     /* 0x00 */
 } EntityIdTable;
 
+/* weights of three actions: a local table func_0016D6C0 copies whole from read-only
+   data and then adjusts */
+typedef struct {
+    s32 weights[3];                 /* 0x00 */
+} EntityActionWeights3;
+
 /* a point or direction as the game stores it (16 bytes) */
 typedef struct {
     f32 x;                          /* 0x00 */
@@ -795,7 +823,9 @@ typedef struct {
 typedef struct {
     char pad00[0x32];
     u16 unk32;                      /* 0x32 0xFFFF: unused */
-    char pad34[0x04];
+    char pad34[0x02];
+    u8 unk36;                       /* 0x36 which MapSlotUnk0C block the entities standing on it are drawn with */
+    u8 unk37;                       /* 0x37 which MapSlotUnk10Words block they are drawn with */
     u64 unk38;                      /* 0x38 flags; 0x4000000: func_0018D670 does its work */
     char pad40[0x0E];
     u8 unk4E;                       /* 0x4E */
@@ -807,10 +837,21 @@ typedef struct {
 /* one of the 0x80-byte records MapSlot.unk10 (kf_map.h) points at, indexed by byte 3 of
    EntitySpawnInfo.unk38 */
 typedef struct {
-    char pad00[0x70];
+    char pad00[0x04];
+    f32 unk04;                      /* 0x04 */
+    char pad08[0x0C];
+    f32 unk14;                      /* 0x14 */
+    char pad18[0x0C];
+    f32 unk24;                      /* 0x24 */
+    char pad28[0x28];
+    f32 unk50;                      /* 0x50 */
+    f32 unk54;                      /* 0x54 */
+    f32 unk58;                      /* 0x58 */
+    char pad5C[0x14];
     f32 unk70;                      /* 0x70 */
     f32 unk74;                      /* 0x74 */
-    char pad78[0x08];
+    f32 unk78;                      /* 0x78 */
+    char pad7C[0x04];
 } MapSlotUnk10;
 
 /* Entity.flags as retail reads it where a store through another pointer (the work area, say) sits
@@ -819,8 +860,16 @@ typedef struct {
    the retail code has that second ld. */
 typedef union {
     u64 all;
+    u32 halves[2];                  /* func_001251E0 clears bits 32-63 in one store */
 } EntityFlags;
 #define ENTITY_FLAGS(entity) (((EntityFlags *)&(entity)->flags)->all)
+
+/* Entity.unkC8 (the movement command bits) read through a union: the value then does not survive a
+   store of another type, and func_00128438 reads the field again after it (see ENTITY_FLAGS) */
+typedef union {
+    u16 all;
+} EntityCommand;
+#define ENTITY_COMMAND(entity) (((EntityCommand *)&(entity)->unkC8)->all)
 
 /* a turn request handed to func_00195AC0 with the entity */
 typedef struct {
@@ -876,6 +925,26 @@ typedef struct {
 } EntityPoolSlot;
 
 extern EntityPoolSlot D_003D6DF0[ENTITY_POOL_SLOT_COUNT];
+
+/* the first 0x20 bytes of a loaded type file (D_00249680), kept in D_00474B70 while the file's
+   sound part is handed to the sound loader */
+typedef struct {
+    char pad00[0x14];
+    int unk14;                      /* 0x14 an offset into the file, made an address; 0: no sound part */
+    int unk18;                      /* 0x18 an offset into the file, made an address; 0: no sound part */
+    char pad1C[0x04];
+} EntityTypeFileHeader;
+
+/* the start of the data loaded into an entity pool block (EntityPoolSlot.base_address):
+   offsets from the start of the block to its parts */
+typedef struct {
+    char pad00[0x04];
+    char *model_offset;             /* 0x04 handed to func_0010B758 with the entity's model. The two are
+                                       pointer typed: only then does func_00123918 load them after base_address */
+    char *motion_offset;            /* 0x08 handed to func_00108940 */
+    s32 unk0C;                      /* 0x0C becomes ModelInstance.unk194 */
+    s32 pool_model_offset;          /* 0x10 the slot's own model (func_00124B00), 0: none */
+} EntityPoolData;
 
 /* the two point lists at D_004470C8: points that follow another vector */
 typedef struct LinkedPoint {

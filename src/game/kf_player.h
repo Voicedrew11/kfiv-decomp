@@ -11,29 +11,62 @@
 typedef struct {
     Vector4 position;               /* 0x00 */
     Vector4 rotation;               /* 0x10 y is the heading */
-    char pad20[0x10];
+    s32 unk20;                      /* 0x20 unk20 to unk2C are saved one by one (func_00103C18, func_00104EC8) */
+    s32 unk24;                      /* 0x24 */
+    s32 unk28;                      /* 0x28 */
+    s32 unk2C;                      /* 0x2C */
     s16 timed_flags[6];             /* 0x30 held at 0 while the matching timer runs */
     u8 unk3C;                       /* 0x3C row of D_0041B9B8 (0x90 bytes each) */
-    char pad3D[0x05];
+    u8 unk3D;                       /* 0x3D passed to func_001A1260 at start-up */
+    char pad3E[0x04];
     u8 unk42;                       /* 0x42 */
     char pad43[0x02];
     u8 unk45;                       /* 0x45 0x9C: enemy attacks reach half as far (func_0018F648) */
-    char pad46[0x6E];
+    u16 unk46;                      /* 0x46 */
+    u8 unk48;                       /* 0x48 */
+    char pad49[0x03];
+    s32 unk4C;                      /* 0x4C saved */
+    s32 unk50;                      /* 0x50 saved */
+    s32 unk54;                      /* 0x54 saved */
+    char pad58[0x5C];
     s32 unkB4;                      /* 0xB4 */
-    char padB8[0xF4];
+    s32 unkB8;                      /* 0xB8 saved */
+    s32 unkBC;                      /* 0xBC cleared when unk3C changes over a menu (func_001017A8) */
+    s32 unkC0;                      /* 0xC0 cleared when unk264 is set */
+    char padC4[0x10];
+    s32 unkD4;                      /* 0xD4 saved */
+    s32 unkD8;                      /* 0xD8 saved */
+    char padDC[0xCC];
+    u8 unk1A8;                      /* 0x1A8 nonzero: the main loop skips func_00210D48 */
+    char pad1A9[0x03];
     f32 unk1AC;                     /* 0x1AC */
     f32 unk1B0;                     /* 0x1B0 */
     f32 unk1B4;                     /* 0x1B4 */
-    char pad1B8[0x10];
+    f32 unk1B8;                     /* 0x1B8 */
+    f32 unk1BC;                     /* 0x1BC */
+    char pad1C0[0x04];
+    f32 unk1C4;                     /* 0x1C4 added to the camera's height */
     u64 unk1C8;                     /* 0x1C8 status bits; bit 38 is tested */
-    char pad1D0[0x30];
+    char pad1D0[0x20];
+    f32 unk1F0;                     /* 0x1F0 added to the camera's height */
+    char pad1F4[0x0C];
     s32 unk200;                     /* 0x200 */
     s32 unk204;                     /* 0x204 */
-    char pad208[0x4A];
+    s32 unk208;                     /* 0x208 */
+    s32 unk20C;                     /* 0x20C */
+    char pad210[0x20];
+    f32 unk230;                     /* 0x230 above 0: func_001005E8 draws func_00106FB8(0x40) */
+    char pad234[0x1C];
+    u8 unk250;                      /* 0x250 0xFF after a map change */
+    char pad251[0x01];
     u16 map_index;                  /* 0x252 picks the MapSlot record */
-    char pad254[0x0D];
+    u32 unk254;                     /* 0x254 */
+    char pad258[0x09];
     u8 unk261;                      /* 0x261 */
-    char pad262[0x3E];
+    char pad262[0x02];
+    u8 unk264;                      /* 0x264 set from unk3D, unk46 or the PlayerItemDef after a menu (func_001017A8) */
+    char pad265[0x37];
+    s32 unk29C;                     /* 0x29C nonzero: the screen is tinted by it (func_001005E8) */
     s32 unk2A0;                     /* 0x2A0 a total func_001B4EC8 adds to */
     char pad2A4[0x14];
     u16 flag_timers[6];             /* 0x2B8 frames left, one per timed_flags entry */
@@ -47,8 +80,20 @@ typedef struct {
     char pad00[0x12];
     u8 level;                       /* 0x12 */
     u8 exp;                         /* 0x13 */
-    char pad14[0x0E];
+    u8 unk14;                       /* 0x14 */
+    char pad15[0x0D];
 } LevelRecord;
+
+/* D_0041B9B8[]: 0x90-byte definitions, PlayerState.unk3C picks one */
+typedef struct {
+    char pad00[0x42];
+    u16 unk42;                      /* 0x42 0xFFFF: none */
+    char pad44[0x0E];
+    u16 unk52;                      /* 0x52 0xFFFF: none */
+    char pad54[0x0F];
+    u8 unk63;                       /* 0x63 */
+    char pad64[0x2C];
+} PlayerItemDef;
 
 /* D_00417EF8[]: the fixed definition per item (0x40 bytes each) */
 typedef struct {

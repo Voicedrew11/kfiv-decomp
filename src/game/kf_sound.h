@@ -47,6 +47,21 @@ typedef struct {
     u16 active;                     /* 0x4D6 */
 } SoundState;
 
+/* D_0038A130: the sound loads waiting to run, one at a time (func_00101618). Other files
+   still declare it as int[]/char[], so the extern stays in each file. */
+typedef struct {
+    int unk00;                      /* 0x00 first argument of func_0019F628 */
+    int unk04;                      /* 0x04 nonzero: a step 3 load is wanted; func_0019F628 clears it */
+    int step;                       /* 0x08 0: idle, 1-3: which load is running */
+    int unk0C;                      /* 0x0C nonzero: a step 1 load is wanted; func_001A1048 clears it */
+    int unk10;                      /* 0x10 what the step 1 load loads */
+    int unk14;                      /* 0x14 the next unk10, taken once unk10 is 0 */
+    int unk18;                      /* 0x18 nonzero: a step 2 load is wanted; func_001A0C18 clears it */
+    int unk1C;                      /* 0x1C arguments of func_001A0C18 */
+    int unk20;                      /* 0x20 */
+    int unk24;                      /* 0x24 */
+} SoundLoadQueue;
+
 /* a voice status word as func_001CF1F0 unpacks it */
 typedef struct {
     u32 bits0_4 : 5;

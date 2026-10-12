@@ -10,7 +10,13 @@ typedef ModelInstance OverlaySprite;
 
 /* D_0038D680: the screen fade */
 typedef struct {
-    char pad00[0x28];
+    Vector4 position;               /* 0x00 where the player goes in the new map */
+    s32 kind;                       /* 0x10 1: func_00118848 started it, 2: func_001188E0 */
+    s32 unk14;                      /* 0x14 */
+    s32 step;                       /* 0x18 index into D_0038D650, 0: no map change running */
+    s32 map;                        /* 0x1C the map to change to */
+    s32 file_handle;                /* 0x20 */
+    s32 draw_step;                  /* 0x24 index into D_0038D670 */
     int timer;                      /* 0x28 frames left */
 } ScreenFade;
 
@@ -39,13 +45,21 @@ typedef struct AreaNode {
     char pad00[0x3C];
     s32 flags;                      /* 0x3C bit 25 skips insertion, bit 31 picks the second list */
     f32 left;                       /* 0x40 */
-    char pad44[0x04];
+    f32 unk44;                      /* 0x44 the box's lowest y */
     f32 top;                        /* 0x48 */
     char pad4C[0x04];
     f32 right;                      /* 0x50 */
-    char pad54[0x04];
+    f32 unk54;                      /* 0x54 the box's highest y */
     f32 bottom;                     /* 0x58 */
     struct AreaNode *next;          /* 0x5C */
 } AreaNode;
+
+/* an AreaNode with the doubleword its flags are the high half of; bit 27 is the map slot it belongs to */
+typedef struct {
+    char pad00[0x38];
+    u64 unk38;                      /* 0x38 */
+} AreaNodeWords;
+
+#define AREA_NODE_WORD(node) (((AreaNodeWords *)(node))->unk38)
 
 #endif
