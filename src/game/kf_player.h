@@ -43,14 +43,7 @@ typedef struct {
     s16 timed_flags[6];             /* 0x30 held at 0 while the matching timer runs */
     u8 unk3C;                       /* 0x3C row of D_0041B9B8 (0x90 bytes each) */
     u8 unk3D;                       /* 0x3D passed to func_001A1260 at start-up */
-    u8 unk3E;                       /* 0x3E unk3E to unk45: eight more LevelDef numbers (less 220) that func_001BA310 adds up */
-    u8 unk3F;                       /* 0x3F 0x30: unk5C is a fifth more */
-    u8 unk40;                       /* 0x40 0x4B: the timed flags do not run down on every third frame (func_001B96C8) */
-    u8 unk41;                       /* 0x41 */
-    u8 unk42;                       /* 0x42 */
-    u8 unk43;                       /* 0x43 0x87 to 0x8A: weapon trail kinds 1 to 4 when no unk122 entry is set (func_001C06E8) */
-    u8 unk44;                       /* 0x44 0x94: experience gained counts double (func_001BBB60) */
-    u8 unk45;                       /* 0x45 0x9C: enemy attacks reach half as far (func_0018F648) */
+    u8 equipment[8];                /* 0x3E equipped items, from definition 220 on; [7] 0x9C: enemy attacks reach half as far (func_0018F648) */
     u16 unk46;                      /* 0x46 */
     u8 unk48;                       /* 0x48 */
     char pad49[0x03];

@@ -56,11 +56,11 @@ void func_001B9078(void) {
     case 5:
         func_001BB2E8(1);
         func_001B4B10(D_00413F80.unk3C, 1);
-        func_001B4DF8(D_00413F80.unk3E, 1);
-        func_001B4DF8(D_00413F80.unk3F, 1);
-        func_001B4DF8(D_00413F80.unk40, 1);
-        func_001B4DF8(D_00413F80.unk41, 1);
-        func_001B4DF8(D_00413F80.unk42, 1);
+        func_001B4DF8(D_00413F80.equipment[0], 1);
+        func_001B4DF8(D_00413F80.equipment[1], 1);
+        func_001B4DF8(D_00413F80.equipment[2], 1);
+        func_001B4DF8(D_00413F80.equipment[3], 1);
+        func_001B4DF8(D_00413F80.equipment[4], 1);
         break;
     }
 }

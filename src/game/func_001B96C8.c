@@ -125,10 +125,10 @@ void func_001B96C8(void) {
 
     wear = 1;
     if (is_frame_multiple(3)) {
-        if (D_00413F80.unk40 == 0x4B) {
+        if (D_00413F80.equipment[2] == 0x4B) {
             wear = 0;
         }
-        if (D_00413F80.unk45 == 0x9B) {
+        if (D_00413F80.equipment[7] == 0x9B) {
             wear++;
         }
     }

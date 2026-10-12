@@ -46,7 +46,7 @@ void func_0011D6B0(int mode, int only_one, int which) {
     MapObject *object;
 
     D_0044707C = D_00447078;
-    D_00447078 = D_00413F80.unk45 == 0x9D;
+    D_00447078 = D_00413F80.equipment[7] == 0x9D;
     if (D_0044707C != D_00447078) {
         D_00447080 = 0;
     } else if (D_0044707C != 0) {

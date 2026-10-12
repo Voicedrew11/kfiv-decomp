@@ -16,7 +16,7 @@ int func_00198BD8(Entity *entity, int index) {
     if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
         reach *= 0.5f;
     }
-    if (D_00413F80.unk45 == 0x9C) {
+    if (D_00413F80.equipment[7] == 0x9C) {
         reach *= 0.5f;
     }
     window[0] = ENTITY_PARAMS_UNK240_RECORD(params, index).unk04 != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_UNK240_RECORD(params, index).unk04 : 0.0f;

@@ -144,10 +144,10 @@ void func_001B69D0(void) {
         darkened = TRUE;
     }
     if (D_00413F80.unk3C == 0x2B &&
-        !(D_00413F80.unk3C == 0x2B && D_00413F80.unk3E == 0x19 && D_00413F80.unk3F == 0x35 && D_00413F80.unk40 == 0x4D &&
-          D_00413F80.unk41 == 0x66 && D_00413F80.unk42 == 0x80)) {
+        !(D_00413F80.unk3C == 0x2B && D_00413F80.equipment[0] == 0x19 && D_00413F80.equipment[1] == 0x35 && D_00413F80.equipment[2] == 0x4D &&
+          D_00413F80.equipment[3] == 0x66 && D_00413F80.equipment[4] == 0x80)) {
         darkened = TRUE;
-    } else if (D_00413F80.unk3F == 0x31) {
+    } else if (D_00413F80.equipment[1] == 0x31) {
         darkened = TRUE;
     }
     if (darkened) {

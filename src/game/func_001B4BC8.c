@@ -32,7 +32,7 @@ void func_001B4BC8(int damage, Unk1B1470Request *request) {
     } else {
         part = (int)(rand() * 4.0f * 4.656613e-10f) + 1;
     }
-    if (!((s32)(D_00413F80.unk1C8 >> 35) & 1) && D_00413F80.unk3E != 0) {
+    if (!((s32)(D_00413F80.unk1C8 >> 35) & 1) && D_00413F80.equipment[0] != 0) {
         shield_exp = 1;
         if (!(percent < 5.0f)) {
             shield_exp = amount * 2;
@@ -59,19 +59,19 @@ void func_001B4BC8(int damage, Unk1B1470Request *request) {
             boots_exp = amount * 4;
         }
     }
-    if (D_00413F80.unk3E != 0) {
-        func_001B4DF8(D_00413F80.unk3E, shield_exp);
+    if (D_00413F80.equipment[0] != 0) {
+        func_001B4DF8(D_00413F80.equipment[0], shield_exp);
     }
-    if (D_00413F80.unk3F != 0x1E) {
-        func_001B4DF8(D_00413F80.unk3F, helmet_exp);
+    if (D_00413F80.equipment[1] != 0x1E) {
+        func_001B4DF8(D_00413F80.equipment[1], helmet_exp);
     }
-    if (D_00413F80.unk40 != 0x37) {
-        func_001B4DF8(D_00413F80.unk40, armor_exp);
+    if (D_00413F80.equipment[2] != 0x37) {
+        func_001B4DF8(D_00413F80.equipment[2], armor_exp);
     }
-    if (D_00413F80.unk41 != 0x50) {
-        func_001B4DF8(D_00413F80.unk41, gloves_exp);
+    if (D_00413F80.equipment[3] != 0x50) {
+        func_001B4DF8(D_00413F80.equipment[3], gloves_exp);
     }
-    if (D_00413F80.unk42 != 0x69) {
-        func_001B4DF8(D_00413F80.unk42, boots_exp);
+    if (D_00413F80.equipment[4] != 0x69) {
+        func_001B4DF8(D_00413F80.equipment[4], boots_exp);
     }
 }

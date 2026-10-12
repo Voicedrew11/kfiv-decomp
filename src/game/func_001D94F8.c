@@ -291,7 +291,7 @@ void func_001D94F8(void) {
     node.unk00 = 0;
     D_00446ACC = D_0041B9B8[D_00413F80.unk3C].unk7C;
     if (D_0041B9B8[D_00413F80.unk3C].unk63 == 0) {
-        D_00446ACC += D_0041E118[D_00413F80.unk3E].unk3F;
+        D_00446ACC += D_0041E118[D_00413F80.equipment[0]].unk3F;
     }
     func_00203820((RelocEntry *)D_005CEE60[D_00446ACC]->frames, D_0042A8F0, weapon_matrix, D_00446B5C);
     D_00446B5C++;
@@ -300,7 +300,7 @@ void func_001D94F8(void) {
     D_00446ACC = ((PlayerItemDef *)((MenuItemList *)D_005CE6B0[0])->item)->unk7D;
     switch (D_0041B9B8[D_00413F80.unk3C].unk63) {
     case 0:
-        D_00446ACC += D_00413F80.unk3E == 0;
+        D_00446ACC += D_00413F80.equipment[0] == 0;
         break;
     case 1:
         D_00446ACC++;
@@ -680,14 +680,14 @@ void func_001D94F8(void) {
             if (D_0041B9B8[D_00413F80.unk3C].unk63 == 2 && D_005CE840[0]->group == 0
                 && D_0041B9B8[index].unk63 != 2) {
 *D_00420D60[2] = D_00423650;
-D_00413F80.unk3E = 0;
+D_00413F80.equipment[0] = 0;
 D_0042A8F0[20].part = NULL;
             }
             (&D_00413F80.unk3C)[D_005CE840[0]->group] = index;
             *D_00420D60[D_005CE840[0]->group] = CURRENT_ITEM;
             if (D_0041B9B8[D_00413F80.unk3C].unk63 != 0 && D_005CE840[0]->group == 0) {
 *D_00420D60[2] = D_00423650;
-D_00413F80.unk3E = 0;
+D_00413F80.equipment[0] = 0;
 D_0042A8F0[20].part = NULL;
             }
             if (D_0041B9B8[D_00413F80.unk3C].unk63 != 0 && D_005CE840[0]->group == 2) {

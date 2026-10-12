@@ -10,8 +10,8 @@ void func_00207B78(char *text) {
     PlayerState *player = &D_00413F80;
 
     if (number >= 0) {
-        player->unk40 = number + 36;
+        player->equipment[2] = number + 36;
     } else {
-        player->unk40 = 55;
+        player->equipment[2] = 55;
     }
 }

@@ -196,9 +196,9 @@ void func_001B5A48(void) {
         } else if (D_00413F80.unk200 != 0) {
             PLAYER_STATUS(&D_00413F80)->bit35 = FALSE;
         // match: unk3E is tested again with the rest of the set
-        } else if (D_00413F80.unk3E == 0x19 &&
-                   !(D_00413F80.unk3C == 0x2B && D_00413F80.unk3E == 0x19 && D_00413F80.unk3F == 0x35 &&
-                     D_00413F80.unk40 == 0x4D && D_00413F80.unk41 == 0x66 && D_00413F80.unk42 == 0x80)) {
+        } else if (D_00413F80.equipment[0] == 0x19 &&
+                   !(D_00413F80.unk3C == 0x2B && D_00413F80.equipment[0] == 0x19 && D_00413F80.equipment[1] == 0x35 &&
+                     D_00413F80.equipment[2] == 0x4D && D_00413F80.equipment[3] == 0x66 && D_00413F80.equipment[4] == 0x80)) {
             PLAYER_STATUS(&D_00413F80)->bit35 = FALSE;
         }
     } else {
@@ -344,7 +344,7 @@ void func_001B5A48(void) {
     }
 
     /* item 0x32 worn: effect 0x7C starts at the player by chance, at most once in 30 frames, unless under water */
-    if (D_00413F80.unk3F == 0x32 && D_0038CC50.unk00 != 0 && !(D_0038CC50.unk30 & 1)) {
+    if (D_00413F80.equipment[1] == 0x32 && D_0038CC50.unk00 != 0 && !(D_0038CC50.unk30 & 1)) {
         if (D_00446950 > 0) {
             D_00446950--;
         } else if (!(((s32)(D_00413F80.unk1C8 >> 38) & 1) &&

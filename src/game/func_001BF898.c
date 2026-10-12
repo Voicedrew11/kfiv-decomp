@@ -46,7 +46,7 @@ void func_001BF898(void) {
     int data;
     int buffer;
     GameDefinition *item = &D_00416D78[D_00413F80.unk3C];
-    GameDefinition *arm = &D_00416D78[D_00413F80.unk41 + 70];
+    GameDefinition *arm = &D_00416D78[D_00413F80.equipment[3] + 70];
     PlayerArmFile *file;
     s32 size;
     s32 handle;
@@ -104,8 +104,8 @@ void func_001BF898(void) {
         D_00414740[1] = D_0041B9B8[D_00413F80.unk3C].unk88;
         D_00414740[2] = D_0041B9B8[D_00413F80.unk3C].unk89;
     }
-    if (D_00446970 != D_00413F80.unk41) {
-        D_00446970 = D_00413F80.unk41;
+    if (D_00446970 != D_00413F80.equipment[3]) {
+        D_00446970 = D_00413F80.equipment[3];
         memset((void *)D_00447170, 0, 0x50000);
         memset(&D_0057B860, 0, 0x1C0);
         memset(D_0057CB40, 0, 0x1000);

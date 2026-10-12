@@ -757,3 +757,5 @@ KF_Vector_Subtract = 0x00216C78; // type:func
 KF_Vector_Scale = 0x00216CA8; // type:func
 // A byte that only C code refers to: without a name here the splitter keeps it inside the word at 0x00446BDC.
 D_00446BDD = 0x00446BDD; // type:s8 size:0x1
+spell_experience = 0x00367940; // size:0x3C
+spell_levels = 0x00367980; // size:0x1E

@@ -16,42 +16,42 @@ int func_001E5660(u32 slot, s32 kind, s32 value) {
             }
             break;
         case 2:
-            if (value == D_00413F80.unk3E + 220) {
+            if (value == D_00413F80.equipment[0] + 220) {
                 return TRUE;
             }
             break;
         case 3:
-            if (value == D_00413F80.unk3F + 220) {
+            if (value == D_00413F80.equipment[1] + 220) {
                 return TRUE;
             }
             break;
         case 4:
-            if (value == D_00413F80.unk40 + 220) {
+            if (value == D_00413F80.equipment[2] + 220) {
                 return TRUE;
             }
             break;
         case 5:
-            if (value == D_00413F80.unk41 + 220) {
+            if (value == D_00413F80.equipment[3] + 220) {
                 return TRUE;
             }
             break;
         case 6:
-            if (value == D_00413F80.unk42 + 220) {
+            if (value == D_00413F80.equipment[4] + 220) {
                 return TRUE;
             }
             break;
         case 7:
-            if (value == D_00413F80.unk43 + 220) {
+            if (value == D_00413F80.equipment[5] + 220) {
                 return TRUE;
             }
             break;
         case 8:
-            if (value == D_00413F80.unk44 + 220) {
+            if (value == D_00413F80.equipment[6] + 220) {
                 return TRUE;
             }
             break;
         case 9:
-            if (value == D_00413F80.unk45 + 220) {
+            if (value == D_00413F80.equipment[7] + 220) {
                 return TRUE;
             }
             break;

@@ -9,7 +9,7 @@ void func_001CFA70(int, int, int, int, int, int, ...);
 void func_001BBB60(int amount) {
     int level;
 
-    if (D_00413F80.unk44 == 0x94) {
+    if (D_00413F80.equipment[6] == 0x94) {
         amount *= 2;
     }
     D_00413F80.unk50 += amount;

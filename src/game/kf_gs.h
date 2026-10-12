@@ -5,6 +5,7 @@
 #include "common.h"
 
 #define GS_REG_TEX0_1       0x06
+#define GS_REG_CLAMP_1      0x08
 #define GS_REG_TEX1_1       0x14
 #define GS_REG_XYOFFSET_1   0x18
 #define GS_REG_XYOFFSET_2   0x19
@@ -156,6 +157,38 @@ typedef struct {
     u64 first;
     u64 second;
 } GsRegisterPair;
+
+/* one corner of the sprite in a GsSpritePacket */
+typedef struct {
+    u16 x;                          /* 0x00 screen position, 12.4 fixed point */
+    u16 y;                          /* 0x02 */
+    u32 z;                          /* 0x04 */
+    int texel_x;                    /* 0x08 texel position, 12.4 fixed point */
+    int texel_y;                    /* 0x0C */
+} GsSpriteCorner;
+
+/* a GIF packet drawing one sprite, sent by func_0010A100 */
+typedef struct {
+    u64 tex0;                       /* 0x00 the TEX0 register */
+    u64 unk08;                      /* 0x08 */
+    int prim;                       /* 0x10 */
+    u8 rgba[4];                     /* 0x14 */
+    u64 pad18;
+    GsSpriteCorner corner[2];       /* 0x20 */
+} GsSpritePacket;
+
+/* a colour as four 32-bit RGBA words, copied into a packet as one quadword */
+typedef struct {
+    int rgba[4];
+} GsColor;
+
+/* a screen rectangle in pixels */
+typedef struct {
+    int left;
+    int top;
+    int right;
+    int bottom;
+} ScreenRect;
 
 int func_001FDB88(GsPackedWord);
 

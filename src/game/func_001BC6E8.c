@@ -9,7 +9,7 @@ int func_001BC990(int);
 void func_00209018(int, int);
 
 /* What using item `kind` does to the player: starts a timer, raises one of unk24/unk28/unk2C (999 at most),
-   or marks a slot of D_00367980. */
+   or marks a slot of spell_levels. */
 void func_001BC6E8(int kind) {
     int marked;
 

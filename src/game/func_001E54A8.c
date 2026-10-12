@@ -28,35 +28,35 @@ void func_001E54A8(s8 slot) {
             break;
         case 2:
             *D_00420D60[2] = D_00423650;
-            D_00413F80.unk3E = 0;
+            D_00413F80.equipment[0] = 0;
             break;
         case 3:
             *D_00420D60[3] = D_00423830;
-            D_00413F80.unk3F = 30;
+            D_00413F80.equipment[1] = 30;
             break;
         case 4:
             *D_00420D60[4] = D_004239C0;
-            D_00413F80.unk40 = 55;
+            D_00413F80.equipment[2] = 55;
             break;
         case 5:
             *D_00420D60[5] = D_00423B50;
-            D_00413F80.unk41 = 80;
+            D_00413F80.equipment[3] = 80;
             break;
         case 6:
             *D_00420D60[6] = D_00423CE0;
-            D_00413F80.unk42 = 105;
+            D_00413F80.equipment[4] = 105;
             break;
         case 7:
             *D_00420D60[7] = D_00423E70;
-            D_00413F80.unk43 = 130;
+            D_00413F80.equipment[5] = 130;
             break;
         case 8:
             *D_00420D60[8] = D_00423F10;
-            D_00413F80.unk44 = 140;
+            D_00413F80.equipment[6] = 140;
             break;
         case 9:
             *D_00420D60[9] = D_00423FB0;
-            D_00413F80.unk45 = 150;
+            D_00413F80.equipment[7] = 150;
             break;
         case 11:
             *D_00420D60[10] = D_00424600;

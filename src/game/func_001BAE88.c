@@ -24,14 +24,14 @@ void func_001BAE88(void) {
     D_00413F80.unkDC[4] = 0;
     D_00413F80.unkDC[5] = 0;
     func_001BB020(D_00413F80.unk3C + 150);
-    func_001BB020(D_00413F80.unk3E + 220);
-    func_001BB020(D_00413F80.unk3F + 220);
-    func_001BB020(D_00413F80.unk40 + 220);
-    func_001BB020(D_00413F80.unk41 + 220);
-    func_001BB020(D_00413F80.unk42 + 220);
-    func_001BB020(D_00413F80.unk43 + 220);
-    func_001BB020(D_00413F80.unk44 + 220);
-    func_001BB020(D_00413F80.unk45 + 220);
+    func_001BB020(D_00413F80.equipment[0] + 220);
+    func_001BB020(D_00413F80.equipment[1] + 220);
+    func_001BB020(D_00413F80.equipment[2] + 220);
+    func_001BB020(D_00413F80.equipment[3] + 220);
+    func_001BB020(D_00413F80.equipment[4] + 220);
+    func_001BB020(D_00413F80.equipment[5] + 220);
+    func_001BB020(D_00413F80.equipment[6] + 220);
+    func_001BB020(D_00413F80.equipment[7] + 220);
     if (D_00413F80.unkF0 != 0) {
         D_00413F80.unkF0 = 150 / (s32)D_00413F80.unkF0;
         if (D_00413F80.unkF0 == 0) {

@@ -4,11 +4,11 @@
 extern PlayerState D_00413F80;
 extern PlayerItemDef D_0041B9B8[];
 extern LevelRecord D_003679A0[];
-extern u8 D_00367980[6][5];
+extern u8 spell_levels[6][5];
 extern FxTableEntry D_00402DA8[];
 
 /* Picks PlayerState.unk264: unk3D, else unk46, else what the current PlayerItemDef names, else the first
-   marked slot of D_00367980 whose effect is ready. */
+   marked slot of spell_levels whose effect is ready. */
 void func_001BB5E8(void) {
     PlayerItemDef *def;
     int i;
@@ -37,8 +37,8 @@ void func_001BB5E8(void) {
     }
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
-            effect_id = 15 * i + 3 * j + D_00367980[i][j];
-            if (D_00367980[i][j] != 0 && D_00402DA8[effect_id].unk102 == 1) {
+            effect_id = 15 * i + 3 * j + spell_levels[i][j];
+            if (spell_levels[i][j] != 0 && D_00402DA8[effect_id].unk102 == 1) {
                 D_00413F80.unk264 = effect_id;
                 return;
             }

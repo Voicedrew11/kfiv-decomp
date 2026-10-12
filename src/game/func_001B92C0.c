@@ -20,7 +20,7 @@ void func_001B92C0(float speed) {
     }
     if (amount > 0) {
         func_001BB260(amount);
-        if (D_00413F80.unk42 != 0x7D) {
+        if (D_00413F80.equipment[4] != 0x7D) {
             D_00413F80.unk200 = 60;
         }
     }

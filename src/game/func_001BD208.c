@@ -36,7 +36,7 @@ void func_001BD208(int magic_id) {
                 }
             }
         }
-        if (D_00413F80.unk40 == 0x49 && magic_id > 0 && (magic_id - 1) / 15 == 0) {
+        if (D_00413F80.equipment[2] == 0x49 && magic_id > 0 && (magic_id - 1) / 15 == 0) {
             return;
         }
         D_00413F80.unkC8 = entry->unk104;

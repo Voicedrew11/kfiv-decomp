@@ -19,7 +19,7 @@ void func_00196548(Entity *actor) {
         half_height *= 0.5f;
         reach *= 0.5f;
     }
-    if (D_00413F80.unk45 == 0x9C) {
+    if (D_00413F80.equipment[7] == 0x9C) {
         arc *= 0.5f;
         half_height *= 0.5f;
         reach *= 0.5f;

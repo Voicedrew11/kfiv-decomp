@@ -2,8 +2,8 @@
 #include "kf_effect.h"
 
 extern PlayerState D_00413F80;
-extern u16 D_00367940[6][5];
-extern u8 D_00367980[6][5];
+extern u16 spell_experience[6][5];
+extern u8 spell_levels[6][5];
 extern FxTableEntry D_00402DA8[];
 
 void func_001CFA70(int, int, int, int, int, int, ...);
@@ -20,25 +20,25 @@ void func_001BBC88(int effect_id) {
     slot = (effect_id - 1) / 3;
     row = slot / 5;
     column = slot % 5;
-    if ((u32)row < 6 && column >= 0 && column < 5 && D_00367940[row][column] < 150) {
+    if ((u32)row < 6 && column >= 0 && column < 5 && spell_experience[row][column] < 150) {
         if (D_00402DA8[effect_id].unk102 == 0) {
-            D_00367940[row][column] += 1;
+            spell_experience[row][column] += 1;
         } else if ((u32)(effect_id - 0x10) < 3) {
-            D_00367940[row][column] += 1;
+            spell_experience[row][column] += 1;
         } else if ((u32)(effect_id - 0x37) < 3) {
-            D_00367940[row][column] += 1;
+            spell_experience[row][column] += 1;
         } else {
-            D_00367940[row][column] += 3;
+            spell_experience[row][column] += 3;
         }
-        uses = D_00367940[row][column];
+        uses = spell_experience[row][column];
         if (uses > 150) {
-            D_00367940[row][column] = 150;
+            spell_experience[row][column] = 150;
             uses = 150;
         }
         clamped_uses = uses;
-        if ((clamped_uses >= 50 && D_00367980[row][column] < 2)
-            || (clamped_uses >= 150 && D_00367980[row][column] < 3)) {
-            D_00367980[row][column]++;
+        if ((clamped_uses >= 50 && spell_levels[row][column] < 2)
+            || (clamped_uses >= 150 && spell_levels[row][column] < 3)) {
+            spell_levels[row][column]++;
             func_001CFA70(0, 0, 0, 0, 0x2D, 0x2D);
             if (D_00413F80.unk3D == effect_id) {
                 D_00413F80.unk3D = effect_id + 1;

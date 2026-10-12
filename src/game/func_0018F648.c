@@ -65,7 +65,7 @@ s32 func_0018F648(Entity *entity) {
         if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
             farthest *= 0.5f;
         }
-        if (D_00413F80.unk45 == 0x9C) {
+        if (D_00413F80.equipment[7] == 0x9C) {
             farthest *= 0.5f;
         }
         if (entity->params->unk240[i].unk04 != 0) {

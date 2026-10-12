@@ -46,10 +46,10 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         return;
     }
     percent = 100;
-    if ((u8)(D_00413F80.unk3E - 1) <= 1) {
+    if ((u8)(D_00413F80.equipment[0] - 1) <= 1) {
         percent = 120;
     }
-    if ((u8)(D_00413F80.unk42 - 0x6A) <= 1) {
+    if ((u8)(D_00413F80.equipment[4] - 0x6A) <= 1) {
         percent += 20;
     }
     func_001B3ED8(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50

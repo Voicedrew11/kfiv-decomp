@@ -3,7 +3,7 @@
 extern PlayerState D_00413F80;
 extern PlayerState D_00414280;
 extern PlayerScreenTint D_00414580;
-extern u8 D_00367980[6][5];
+extern u8 spell_levels[6][5];
 
 void *memset(void *, s32, u32);
 void func_001BA310(void);
@@ -25,16 +25,16 @@ void func_001B5810(void) {
     D_00413F80.unk50 = 0;
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
-            D_00367980[i][j] = 0;
+            spell_levels[i][j] = 0;
         }
     }
-    D_00413F80.unk3F = 0x1E;
-    D_00413F80.unk40 = 0x37;
-    D_00413F80.unk41 = 0x50;
-    D_00413F80.unk42 = 0x69;
-    D_00413F80.unk43 = 0x82;
-    D_00413F80.unk44 = 0x8C;
-    D_00413F80.unk45 = 0x96;
+    D_00413F80.equipment[1] = 0x1E;
+    D_00413F80.equipment[2] = 0x37;
+    D_00413F80.equipment[3] = 0x50;
+    D_00413F80.equipment[4] = 0x69;
+    D_00413F80.equipment[5] = 0x82;
+    D_00413F80.equipment[6] = 0x8C;
+    D_00413F80.equipment[7] = 0x96;
     D_00413F80.position.x = D_00413F80.position.y = D_00413F80.position.z = D_00413F80.position.w = 0.0f;
     D_00413F80.unkB4 = D_00413F80.unk20;
     D_00413F80.unkB8 = D_00413F80.unk24;
@@ -46,7 +46,7 @@ void func_001B5810(void) {
     D_00413F80.timed_flags[4] = 0;
     D_00413F80.timed_flags[5] = 0;
     D_00413F80.unk3C = 0;
-    D_00413F80.unk3E = 0;
+    D_00413F80.equipment[0] = 0;
     D_00413F80.unk48 = 0;
     D_00413F80.unk46 = 0;
     D_00413F80.unkBC = 0;
