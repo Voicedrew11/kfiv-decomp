@@ -864,7 +864,7 @@ typedef struct {
     f32 bob_limit;                  /* 0x14 the bob turns round at +- this speed */
     f32 velocity_scale;             /* 0x18 grows by EffectDef.scale_per_frame */
     s8 ended;                       /* 0x1C set by the hit check: the effect ends next frame */
-    s8 bob_falling;                 /* 0x1D */
+    s8 bob_rising;                  /* 0x1D */
     char pad1E[0x12];
 } BobbingGrowMotion;
 

@@ -27,12 +27,12 @@ void func_001A7F88(EffectActor *effect) {
         KF_Vector_Scale(&step, &motion->velocity, motion->velocity_scale);
         sceVu0AddVector(&effect->model->position, &effect->model->position, &step);
     }
-    motion->bob_speed += motion->bob_falling != 0 ? -0.01f : 0.01f;
+    motion->bob_speed += motion->bob_rising != 0 ? 0.01f : -0.01f;
     if (motion->bob_limit < motion->bob_speed) {
-        motion->bob_falling = FALSE;
+        motion->bob_rising = FALSE;
     }
     if (motion->bob_speed < -motion->bob_limit) {
-        motion->bob_falling = TRUE;
+        motion->bob_rising = TRUE;
     }
     effect->model->position.y += motion->bob_speed;
     if (effect->frame >= 3 && effect->frame < 48) {
