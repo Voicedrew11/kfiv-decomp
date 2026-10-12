@@ -170,6 +170,45 @@ entry, `next` is read uninitialised. Harmless as long as every entry in every
 map file is used by at least one object, which is presumably true of the
 shipped data. A port that loads modified maps should not rely on it.
 
+## `func_001A1E88` tests the address of the slot pool where it means to stop early
+
+`func_001A1E88` runs the effect spawner slots and the effects for one frame.
+Its first loop walks the 0x60 slots of `D_003F1750`, and after running one:
+
+```c
+func_001A24D8(slot);
+if (!D_003F1750) {
+    break;
+}
+```
+
+`D_003F1750` is the pool array itself, so the test is on its address. Retail
+has it as `addiu $2, $18, %lo(D_003F1750)` / `bnez $2`.
+
+Effect: the `break` never runs and the loop always walks all 0x60 slots. The
+loop is only entered when the live count `D_004468CC` is above 0, and the slot
+loop of `func_001A3040` stops on that count, so the count was probably what
+was meant here (a guess). Marked with `// match:`.
+
+## `func_001A3040` takes one record too many for the map it unloads
+
+`func_001A3040` frees the effects of a map slot that is going away and clears
+what the other effects still point at in it. For the map's entities and map
+objects it builds a range from the first to the last element and tests
+`>= first && <= last`. For the map's records the end is one past the last:
+
+```c
+char *last_record = first_record + map_slot->header->record_count * 0x80;
+...
+if (effect->unk58 != NULL && effect->unk58 >= first_record && effect->unk58 <= last_record) {
+    effect->unk58 = NULL;
+}
+```
+
+Effect: an effect whose `unk58` is exactly the address after the map's last
+record has it cleared too. Whether anything can sit there (the other slot's
+first record, say) has not been checked. Marked with `// match:`.
+
 ## `func_001B29C8` skips the player's first defence and drops the adjusted attack
 
 `func_001B29C8` works out the damage of a hit on the player: nine terms, each
@@ -832,6 +871,46 @@ Effect: after one call with the stream not active, every later
 `WaitSema(stream->sema)` blocks for good. Probably never reached in the game
 (a guess). The slip is in the sample code as shipped.
 
+## `func_0022AEF0` (libdev) stores VU0's vector registers where it loads the rest
+
+This one and the next are in Sony's libdev, not in the game's own code, and no
+call to either was found in the game.
+
+`func_0022AEF0` is the "put" half of a pair over a VU0 register block. It
+loads status, MAC, clipping, R, I, Q and VI0 to VI15 from the block with
+`ctc2`, but before that it runs
+
+```c
+__asm__ __volatile__("sqc2 $vf0, 0x0(%0)" : : "r"(vectors));
+```
+
+for all of VF0 to VF31: `sqc2` stores. The "get" half, `func_0022AE10`, reads
+the same control and integer registers into the block and does not touch the
+vector registers.
+
+Effect: the vector registers are never set from a block; "put" overwrites the
+block's first 0x200 bytes with their current values. Either `lqc2` was meant,
+or the run belongs in the other function (a guess). Marked with `// match:`.
+
+## `func_0022B888` (libdev) tests VIF1's "FIFO full" bit on VIF0
+
+Sony's libdev again. `func_0022B888` writes quadwords to the VIF0 FIFO and
+`func_0022BC10` to the VIF1 FIFO; both stop on the same bit of their status
+register:
+
+```c
+if (LIBDEV_REG32(VIF0_STAT) & 0x10000000) {
+    return written;
+}
+```
+
+Bit 28 is the top of VIF1's five-bit FIFO count (16 quadwords: full). VIF0's
+FIFO holds 8 and its count is the four bits 24 to 27, so bit 28 of `VIF0_STAT`
+is never set.
+
+Effect: the VIF0 version never stops early; it writes every quadword whether
+or not the FIFO has room. Marked with `// match:`.
+
 ## Smaller oddities
 
 Things that look unintended but have no known effect. Kept here so a port
@@ -1045,8 +1124,29 @@ does not mistake them for meaning something.
 - `func_0021DFE8` (movie time stamps) takes its position from the decoder it
   is given and queues into the global `D_00437980`. There is one decoder, and
   it is that one.
-- `func_00201518` and `func_002020A0` (draw a part's strips) send every strip
-  with the TEX0 read once before the loop, and inside the loop set CLD in each
-  strip's own TEX0, which they never send. `func_00201518` also transforms the
-  normals and loads the light matrix without using either. In both,
-  `if (packet_size < 3) return;` can never be true.
+- `func_00201518`, `func_002020A0` and `func_002008E8` (draw a part's strips)
+  send every strip with the TEX0 read once before the loop, and inside the
+  loop set CLD in each strip's own TEX0, which they never send.
+  `func_00201518` also transforms the normals and loads the light matrix
+  without using either. In all three, `if (packet_size < 3) return;` can never
+  be true.
+- `func_001A7B28` (homing effect) calls `func_001AFF78` (nearest entity:
+  effect, position) with a third argument, the model's rotation. The callee
+  does not read it.
+- `func_001A9F98` keeps an effect's restart frame in a byte and sets
+  `effect->frame = (s8)start_frame`; `func_001AA040` puts it back the same
+  way, `(s8)motion->start_frame`, from a `u8`. `frame` is a `u16`, so a start
+  frame of 128 or more would become a frame near 0xFF80. Not checked whether
+  any definition's `unkF0 + interval` gets that high.
+- `func_001AF640` (place a new effect's model) first copies the definition's
+  `offset_base` (flag 0x10000) or the slot's position into the model's
+  position. Nothing reads it before the `sceVu0AddVector` at the end writes
+  the position again.
+- `func_001D37F8` and `func_001D39F0` (rotate the upload nodes) pass their own
+  first argument to `func_001D3730` and `func_001D3650`, which take none.
+- `func_0010B758` (set up a model's parts) walks each part's data blocks by
+  their lengths and uses nothing from the walk; retail keeps only the empty
+  loop.
+- Stack space that is reserved and never used: two vectors in `func_001AF0B0`
+  and in `func_001A1E88`, a matrix in `func_001A6538` and `func_001AB670`,
+  0x70 bytes in `func_001EEA90`, eight floats in `func_001AFF78`.
