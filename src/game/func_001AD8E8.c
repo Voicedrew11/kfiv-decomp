@@ -31,7 +31,7 @@ void func_001AD8E8(EffectActor *effect) {
         }
     }
     if (motion->toggle != 0) {
-        effect->unk0C = 0;
+        effect->scale = 0;
     }
     motion->phase = motion->phase + motion->phase_step;  // match: operand order picks retail registers
     spin.y = motion->spin_per_frame * (float)effect->frame;

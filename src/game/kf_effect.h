@@ -55,6 +55,15 @@ typedef struct {
 /* the 64-bit flag word at EffectDef+0x108, whose low 16 bits are max_frames */
 #define EFFECT_DEF_FLAGS(def) (*(s64 *)&(def)->max_frames)
 
+/* ObjectSlot+0x20, whose low word func_001A2F20 reads as a pointer to the effect
+   definition while the same 8 bytes are ObjectSlot.flags (reached by cast, not a union) */
+typedef struct {
+    char pad00[0x20];
+    EffectDef *def;                 /* 0x20 */
+} ObjectSlotDefView;
+
+#define OBJECT_SLOT_DEF(slot) (((ObjectSlotDefView *)(slot))->def)
+
 /* EffectActor+0x10, which the update functions keep a pointer to. Each kind of
    effect uses the bytes after the velocity its own way; the *Motion types below
    are those views, reached by a cast (a union changes gcc's scheduling). */
@@ -76,7 +85,7 @@ typedef struct {
     Vector4 velocity;               /* 0x00 */
     int mode;                       /* 0x10 3 or 5: spawn effect 0x15 on landing */
     u16 end_frame;                  /* 0x14 */
-    char pad16;
+    s8 spawned;                     /* 0x16 a follow-up effect has been spawned */
     char unk17[0x19];               /* 0x17 passed by address */
 } FallingMotion;
 
@@ -104,7 +113,8 @@ typedef struct {
     s16 unk22;                      /* 0x22 */
     u8 unk24;                       /* 0x24 */
     u8 unk25;                       /* 0x25 */
-    char pad26[0x0A];
+    u8 unk26;                       /* 0x26 */
+    char pad27[0x09];
 } TurningMotion;
 
 /* EffectMotion as func_001AA230 uses it: the definition's collision radius and
@@ -128,7 +138,8 @@ typedef struct {
     f32 speed;                      /* 0x10 the target's velocity.x */
     s32 unk14;                      /* 0x14 */
     f32 unk18;                      /* 0x18 */
-    char pad1C[0x04];
+    u8 unk1C;                       /* 0x1C */
+    char pad1D[0x03];
     s8 unk20;                       /* 0x20 */
     char pad21[0x0F];
 } FollowerMotion;
@@ -161,7 +172,7 @@ typedef struct {
 /* EffectMotion as func_001A3F20 uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    f32 unk10;                      /* 0x10 */
+    f32 fall_speed;                 /* 0x10 */
     f32 scale;                      /* 0x14 */
     char pad18[0x04];
     char unk1C[0x14];               /* 0x1C passed by address */
@@ -704,10 +715,125 @@ typedef struct {
     char pad04[0x1C];
 } LoopMotion;
 
+/* EffectMotion as func_001AA590 uses it: spawns effect_id at end_frame or on a hit */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    char pad10[0x10];
+    u16 effect_id;                  /* 0x20 */
+    u16 end_frame;                  /* 0x22 */
+    s8 ended;                       /* 0x24 */
+    char pad25[0x0B];
+} DelayedMotion;
+
+/* EffectMotion as func_001AE060 and func_001AE730 set it up: an end position and two floats */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    Vector4 end_position;           /* 0x10 */
+    f32 unk20;                      /* 0x20 */
+    f32 unk24;                      /* 0x24 */
+    char pad28[0x08];
+} DriftMotion;
+
+/* EffectMotion as func_001AA940 uses it: the distances the effect fades in over */
+typedef struct {
+    f32 range[2];                   /* 0x00 fade-in distance, full-size distance */
+    char pad08[0x28];
+} FadingMotion;
+
+/* EffectMotion as func_001ACD18 uses it: a flag byte at the very start */
+typedef struct {
+    u8 grounded;                    /* 0x00 set when the model is dropped onto the entity */
+    char pad01[0x2F];
+} GroundedMotion;
+
+/* EffectMotion as func_001ADF40 uses it: the heading in degrees, and as a word */
+typedef struct {
+    s32 heading_word;               /* 0x00 the heading, zero-extended */
+    u16 heading;                    /* 0x04 degrees */
+    char pad06[0x2A];
+} HeadingWordMotion;
+
+/* EffectMotion as func_001ADCA8 uses it: the frame the effect lands at */
+typedef struct {
+    char pad00[0x14];
+    u16 landing_frame;              /* 0x14 */
+    u8 unk16;                       /* 0x16 */
+    char pad17[0x19];
+} LandingFrameMotion;
+
+/* EffectMotion as func_001A52B8 uses it: a flag byte right after the velocity */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    s8 unk10;                       /* 0x10 cleared when the model is lifted */
+    char pad11[0x1F];
+} LiftedMotion;
+
+/* EffectMotion as func_001A7148 reads it from the effect that picked the targets: an entity and a distance per slot */
+typedef struct {
+    struct Entity *entity[4];       /* 0x00 */
+    f32 distance[4];                /* 0x10 */
+    char pad20[0x10];
+} PickedMotion;
+
+/* EffectMotion as func_001A72F0 uses it: scales the model, spawns the end effect */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    Vector4 end_position;           /* 0x10 where the end effect appears */
+    f32 scale_per_mille;            /* 0x20 */
+    s8 ended;                       /* 0x24 */
+    char pad25[0x0B];
+} ScalingEndMotion;
+
+/* EffectMotion as func_001ACFC0 uses it: a scale and a countdown byte */
+typedef struct {
+    f32 scale;                      /* 0x00 */
+    s8 countdown;                   /* 0x04 frames the model is held still */
+    char pad05[0x2B];
+} ShockMotion;
+
+/* EffectMotion as func_001A4128 (sits on another entity) uses it */
+typedef struct {
+    s32 radius_half;                /* 0x00 */
+    s8 unk04;                       /* 0x04 */
+    char pad05[0x1B];
+} SnappedMotion;
+
+/* EffectMotion as func_001AD558 uses it: spawns the end effect at end_frame */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    Vector4 end_position;           /* 0x10 where the end effect appears */
+    s32 end_frame;                  /* 0x20 */
+    s8 ended;                       /* 0x24 also the start of the block passed by address */
+    char pad25[0x0B];
+} EndAtFrameMotion;
+
+/* EffectMotion as func_001A73B0 (homes on a target) sets it up */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    Vector4 aim;                    /* 0x10 */
+    s32 timer;                      /* 0x20 */
+    u16 flags;                      /* 0x24 */
+    char pad26[0x0A];
+} AimingMotion;
+
+/* EffectMotion as func_001A7880 sets it up: the velocity, two random offsets and a scale */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    f32 offset_x;                   /* 0x10 */
+    f32 offset_y;                   /* 0x14 */
+    char pad18[0x04];
+    f32 scale;                      /* 0x1C */
+    s16 unk20;                      /* 0x20 */
+    char pad22;
+    u8 unk23;                       /* 0x23 */
+    u8 unk24;                       /* 0x24 */
+    char pad25[0x0B];
+} OffsetSprayMotion;
+
 /* one 0xA0-byte effect of the pool D_003F3550 (0x180 of them) */
 typedef struct EffectActor {
     char pad00[0x0C];
-    int unk0C;                      /* 0x0C */
+    f32 scale;                      /* 0x0C */
     EffectMotion motion;            /* 0x10 */
     s64 flags;                      /* 0x40 EFFECT_FLAG_* */
     void *owner;                    /* 0x48 */
@@ -732,12 +858,22 @@ typedef struct EffectActor {
 #define EFFECT_FLAG_HAS_SLOTS (0x8000L << 42)      /* bit 57: free its spawner slots with it */
 #define EFFECT_FLAG_HAS_TARGETERS (0x8000L << 43)  /* bit 58: free the effects aimed at it with it */
 
+/* D_00502260[effect id]: an effect's definition-table entry (0x120 bytes) */
+typedef struct {
+    char pad00[0x108];
+    u64 pad108 : 16;
+    u8 track : 1;                   /* 0x108 bit 16: the actor is tracked by its object slot */
+    u64 pad109 : 47;
+    char pad110[0x10];
+} EffectTableEntry;
+
 /* EffectActor.flags as bit-fields, for the stores that need them */
 typedef struct {
     u64 pad00 : 56;
     u64 live : 1;                   /* bit 56: EFFECT_FLAG_LIVE */
     u64 has_slots : 1;              /* bit 57: EFFECT_FLAG_HAS_SLOTS */
     u64 has_targeters : 1;          /* bit 58: EFFECT_FLAG_HAS_TARGETERS */
+    u8 bit59 : 1;
 } EffectActorFlagBits;
 
 #define EFFECT_FLAG_BITS(effect) ((EffectActorFlagBits *)&(effect)->flags)
@@ -801,10 +937,18 @@ typedef struct {
 
 #define EFFECT_SLOT_FLAG_PARTS(slot) ((EffectSlotFlagParts *)&(slot)->flags)
 
+/* D_00402DA8[]: a table entry of 0x110 bytes, indexed by effect id (func_001B4F30) */
+typedef struct {
+    char pad00[0x100];
+    u16 unk100;                     /* 0x100 */
+    s8 unk102;                      /* 0x102 nonzero: the effect cannot be started */
+    char pad103[0x0D];
+} FxTableEntry;
+
 /* helpers every effect kind calls */
 int func_001A1E28(int effect_id, Vector4 *position, Vector4 *rotation, Entity *owner_entity, u16 effect_param, void *owner);
 int func_001A2838(int effect_id, EffectActor *effect);
-int func_001A2928(int effect_id, EffectActor *effect, void *position);
+int func_001A2928(int effect_id, EffectActor *effect, Vector4 *position);
 void func_001A2A18(void *effect);
 void func_001A2AF8(EffectSlot *slot);
 void func_001A2B28(EffectActor *target);
@@ -839,6 +983,23 @@ typedef struct {
     char pad34[0x04];
     f32 pos_z;                      /* 0x38 */
 } SpawnRequest;
+
+/* a spawn request with a float at 0x18 and the position at 0x20 (func_002145F0, func_00214580) */
+typedef struct {
+    s32 pending;                    /* 0x00 cleared once the effect is spawned */
+    char pad04[0x04];
+    u8 kind;                        /* 0x08 */
+    char pad09[0x07];
+    u8 unk10;                       /* 0x10 */
+    char pad11[0x07];
+    f32 unk18;                      /* 0x18 */
+    char pad1C[0x04];
+    f32 pos_x;                      /* 0x20 */
+    char pad24[0x04];
+    f32 pos_y;                      /* 0x28 */
+    char pad2C[0x04];
+    f32 pos_z;                      /* 0x30 */
+} SpawnRequestWide;
 
 /* a task that feeds the cosine of an angle to a command (func_00214DC0) */
 typedef struct {

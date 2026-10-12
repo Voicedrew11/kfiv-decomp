@@ -22,8 +22,8 @@ void func_001A3F20(EffectActor *effect) {
             KF_Vector_Scale(&step, &step, motion->scale);
         } else {
             if (effect->def->gravity != 0.0f) {
-                motion->unk10 += effect->def->gravity;
-                motion->velocity.y += motion->unk10;
+                motion->fall_speed += effect->def->gravity;
+                motion->velocity.y += motion->fall_speed;
             }
             func_00216778(&step, motion);
             if (effect->def->scale_per_frame != 0.0f) {

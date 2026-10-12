@@ -18,10 +18,10 @@ s16 func_00190F90(float, void *, int);
 int func_00155678(char *, float);
 void func_00155760(Entity *);
 void func_001958B8(char *, void (*)(void), int);
-void func_00181AE0(void);
-void func_00181C60(void);
-void func_00181E48(void);
-void func_00182240(void);
+void func_00181AE0(Entity *);
+void func_00181C60(Entity *);
+void func_00181E48(Entity *);
+void func_00182240(Entity *);
 
 void func_00155128(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -37,11 +37,11 @@ void func_00155128(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
     if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
-        func_001958B8((char *)entity, func_00181C60, 1);
+        func_001958B8((char *)entity, (void (*)(void))func_00181C60, 1);
         return;
     }
     if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
-        func_001958B8((char *)entity, func_00181AE0, 1);
+        func_001958B8((char *)entity, (void (*)(void))func_00181AE0, 1);
         return;
     }
     side = func_0018FD50(entity, 0);
@@ -73,9 +73,9 @@ void func_00155128(Entity *entity, s32 unknown) {
         switch (entity->unkCD) {
         case 0:
             if (func_0018F030((char *)entity)) {
-                func_001958B8((char *)entity, func_00182240, unknown);
+                func_001958B8((char *)entity, (void (*)(void))func_00182240, unknown);
             } else {
-                func_001958B8((char *)entity, func_00181E48, unknown);
+                func_001958B8((char *)entity, (void (*)(void))func_00181E48, unknown);
             }
             return;
         case 1:

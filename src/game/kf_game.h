@@ -31,6 +31,28 @@ typedef struct {
     char pad34[0x14];
 } GameStatus;
 
+/* D_004325A0 (the camera, it seems). Other files still declare it as float[],
+   so the extern stays in each file. */
+typedef struct {
+    char pad00[0x78];
+    f32 unk78;                      /* 0x78 set with unk7C by func_00195878 */
+    s32 unk7C;                      /* 0x7C */
+} CameraState;
+
+/* one of the 0x24-byte slots at D_005C5940, linked in a ring. D_004471E4 is the
+   one being shown and D_004471E8 the next free one. */
+typedef struct MessageSlot {
+    char *text;                     /* 0x00 */
+    int unk04;                      /* 0x04 */
+    int unk08;                      /* 0x08 */
+    int length;                     /* 0x0C */
+    struct MessageSlot *next;       /* 0x10 */
+    int unk14;                      /* 0x14 */
+    int unk18;                      /* 0x18 */
+    int unk1C;                      /* 0x1C */
+    int unk20;                      /* 0x20 */
+} MessageSlot;
+
 /* D_00420D00: the event runner */
 typedef struct {
     char pad00[0x50];
@@ -42,6 +64,18 @@ typedef struct {
     char pad00[0x10];
     u32 flags;                      /* 0x10 */
 } GameEvent;
+
+/* an 8-byte wall-clock time passed by value (func_001D2390, func_001D23F0, func_001D24A8) */
+typedef struct {
+    char unk0;                      /* 0x00 */
+    u8 sec;                         /* 0x01 */
+    u8 min;                         /* 0x02 */
+    u8 hour;                        /* 0x03 */
+    char unk4;                      /* 0x04 */
+    u8 mday;                        /* 0x05 */
+    u8 mon;                         /* 0x06 */
+    u8 year;                        /* 0x07 years since 2000 */
+} ClockTime;
 
 /* D_00431CE8: func_0020CD00 advances its counter once a frame */
 typedef struct {
@@ -87,5 +121,13 @@ typedef struct {
     char pad00[0x04];
     int unk04;                      /* 0x04 */
 } PendingSlot;
+
+/* D_0042A8F0[32]: a pool of 0x70-byte slots chained into a free list through `next`;
+   D_00446DF0 holds the head */
+typedef struct PoolSlot {
+    char pad00[0x50];
+    struct PoolSlot *next;          /* 0x50 */
+    char pad54[0x1C];
+} PoolSlot;
 
 #endif

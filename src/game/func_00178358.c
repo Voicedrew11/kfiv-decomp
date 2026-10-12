@@ -14,8 +14,8 @@ void func_00178698(Entity *, s32);
 // match: the definition takes an Actor, a struct local to func_00182A08.c
 void func_00182A08(void);
 void func_00182BD0(char *);
-void func_00183570(void);
-void func_00181038(void);
+void func_00183570(Entity *);
+void func_00181038(Entity *);
 void func_00178BC0(Entity *);
 
 extern s32 D_003E6E40[][2];
@@ -45,7 +45,7 @@ void func_00178358(Entity *entity) {
         unkE0->unk04 = func_00182A08;
         unkE0->unk08 = (void (*)(void))func_00182BD0;
         unkE0->unk18 = (void (*)(void))func_00183570;
-        unkE0->unk10 = func_00181038;
+        unkE0->unk10 = (void (*)(void))func_00181038;
         unkE0->unk14 = (void (*)(void))func_00178BC0;
         break;
     case 4:
@@ -53,7 +53,7 @@ void func_00178358(Entity *entity) {
         unkE0->unk04 = func_00182A08;
         unkE0->unk08 = (void (*)(void))func_00182BD0;
         unkE0->unk18 = (void (*)(void))func_00183570;
-        unkE0->unk10 = func_00181038;
+        unkE0->unk10 = (void (*)(void))func_00181038;
         unkE0->unk14 = (void (*)(void))func_00178BC0;
         break;
     default:
@@ -61,7 +61,7 @@ void func_00178358(Entity *entity) {
         unkE0->unk04 = func_00182A08;
         unkE0->unk08 = (void (*)(void))func_00182BD0;
         unkE0->unk18 = (void (*)(void))func_00183570;
-        unkE0->unk10 = func_00181038;
+        unkE0->unk10 = (void (*)(void))func_00181038;
         unkE0->unk14 = (void (*)(void))func_00178BC0;
         break;
     }

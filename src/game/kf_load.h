@@ -17,14 +17,46 @@ typedef struct {
     int file_handle;                /* 0x24 -1 when closed */
 } LoadJob;
 
-/* a staged chunk upload (func_001D4360, func_001D44A0) */
+/* the job func_0019EC90 and func_0019F498 step: control words, the IOP handle it got and its arguments */
 typedef struct {
+    int *ctl;                       /* 0x00 */
+    char pad04[0x0C];
+    s32 result;                     /* 0x10 handle, negative until loaded */
+    s32 unk14;                      /* 0x14 */
+    s32 unk18;                      /* 0x18 */
+    s32 unk1C;                      /* 0x1C */
+} IopLoadJob;
+
+/* LoadRequest.target (func_0019F788) */
+typedef struct {
+    s32 unk00;                      /* 0x00 */
+    void *buffer;                   /* 0x04 where the file is read to */
+} LoadBuffer;
+
+/* a request to read a named file into a buffer (func_0019F788) */
+typedef struct {
+    LoadBuffer *target;             /* 0x00 */
+    char pad04[0x04];
+    char *name;                     /* 0x08 */
+} LoadRequest;
+
+/* a node of the free list of upload buffers (D_005CE900[16], func_001D55E8) */
+typedef struct ChunkPoolNode {
+    struct ChunkPoolNode *next;     /* 0x00 */
+    void *buffer;                   /* 0x04 the loaded package: word 0 is its chunk count */
+} ChunkPoolNode;
+
+/* a staged chunk upload (func_001D4360, func_001D44A0) */
+typedef struct ChunkUpload {
     char pad00[0x08];
     int unk08;                      /* 0x08 set to -1 when done */
-    char *source;                   /* 0x0C word 1 points at the chunk list */
-    char pad10[0x0C];
+    ChunkPoolNode *pool_node;       /* 0x0C the node whose buffer holds the chunk list */
+    char pad10[0x08];
+    void (*callback)(struct ChunkUpload *upload); /* 0x18 runs the next stage */
     int stage;                      /* 0x1C index into the stage handlers */
     int done;                       /* 0x20 */
+    char pad24[0x04];
+    char name[0x28];                /* 0x28 */
 } ChunkUpload;
 
 /* D_0043F730: the three stage handlers, copied to the stack before the call */

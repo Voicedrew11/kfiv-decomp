@@ -11,7 +11,7 @@ void func_0017ABC0(Entity *);
 // match: the definition takes an Actor, a struct local to func_00182A08.c
 void func_00182A08(void);
 void func_00182BD0(char *);
-void func_00183570(void);
+void func_00183570(Entity *);
 void func_0017AF88(Entity *, s32);
 void func_0017B380(Entity *, s32);
 void func_0017A738(Entity *, s32);

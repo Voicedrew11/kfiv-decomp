@@ -22,9 +22,9 @@ void func_001639A8(Entity *);
 void func_001640B8(Entity *);
 void func_00164480(Entity *);
 void func_001646B8(Entity *);
-void func_00181AE0(void);
-void func_00181E48(void);
-void func_00182240(void);
+void func_00181AE0(Entity *);
+void func_00181E48(Entity *);
+void func_00182240(Entity *);
 
 void func_00163310(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -40,7 +40,7 @@ void func_00163310(Entity *entity, s32 unknown) {
         return;
     }
     if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
-        func_001958B8((char *)entity, func_00181AE0, 1);
+        func_001958B8((char *)entity, (void (*)(void))func_00181AE0, 1);
         return;
     }
     if (func_00164940((char *)entity)) {
@@ -62,13 +62,13 @@ void func_00163310(Entity *entity, s32 unknown) {
                 if (((s32)(entity->flags >> 58) & 3) == 1) {
                     func_001958B8((char *)entity, (void (*)(void))func_001646B8, unknown);
                 } else {
-                    func_001958B8((char *)entity, func_00182240, unknown);
+                    func_001958B8((char *)entity, (void (*)(void))func_00182240, unknown);
                 }
             } else {
                 if (((s32)(entity->flags >> 58) & 3) == 3) {
                     func_001958B8((char *)entity, (void (*)(void))func_001640B8, unknown);
                 } else {
-                    func_001958B8((char *)entity, func_00181E48, unknown);
+                    func_001958B8((char *)entity, (void (*)(void))func_00181E48, unknown);
                 }
             }
             return;

@@ -7,8 +7,8 @@ void func_00216778(void *, void *);
 s16 func_00190BE0(Entity *);
 s16 func_00190F90(float, void *, int);
 void func_001958B8(char *, void (*)(void), int);
-void func_00181E48(void);
-void func_00182240(void);
+void func_00181E48(Entity *);
+void func_00182240(Entity *);
 void func_0017AE10(Entity *);
 
 void func_0017B510(Entity *entity, s32 unknown) {
@@ -20,9 +20,9 @@ void func_0017B510(Entity *entity, s32 unknown) {
     // match: takes the entity; the shared prototype has no parameters
     if (((int (*)(Entity *))func_00197078)(entity)) {
         if (func_0018F030((char *)entity)) {
-            func_001958B8((char *)entity, func_00182240, 1);
+            func_001958B8((char *)entity, (void (*)(void))func_00182240, 1);
         } else {
-            func_001958B8((char *)entity, func_00181E48, 1);
+            func_001958B8((char *)entity, (void (*)(void))func_00181E48, 1);
         }
         return;
     }

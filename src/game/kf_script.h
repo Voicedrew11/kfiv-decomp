@@ -51,6 +51,14 @@ typedef struct {
     ScriptArg motion;               /* 0x14 value at 0x18 */
 } ScriptMotionCommand;
 
+/* calls a map object routine with two integer arguments (func_00212CB8, func_00213320) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg target_id;            /* 0x04 value at 0x08 */
+    ScriptArg first;                /* 0x0C value at 0x10 */
+    ScriptArg second;               /* 0x14 value at 0x18 */
+} ScriptCallCommand;
+
 /* blends two floats toward target_a and target_b over `frames` (func_002134F8) */
 typedef struct {
     int active;                     /* 0x00 */
@@ -58,6 +66,24 @@ typedef struct {
     ScriptFloatArg target_b;        /* 0x0C value at 0x10 */
     ScriptArg frames;               /* 0x14 value at 0x18 */
 } ScriptBlendCommand;
+
+/* eases three floats toward the shared target over `frames` (func_00213BA8) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptFloatArg x;               /* 0x04 value at 0x08 */
+    ScriptFloatArg y;               /* 0x0C value at 0x10 */
+    ScriptFloatArg z;               /* 0x14 value at 0x18 */
+    ScriptArg frames;               /* 0x1C value at 0x20 */
+} ScriptTripleCommand;
+
+/* sets a flag bit on the current map's entities (func_00215A18) */
+typedef struct {
+    s32 active;                     /* 0x00 cleared when handled */
+    char pad04[0x04];
+    s32 kind;                       /* 0x08 1: only unflagged, 2: only flagged */
+    char pad0C[0x04];
+    u32 value;                      /* 0x10 bit 0 is copied */
+} ScriptFlagCommand;
 
 /* a command with an id and up to two points (func_00213868, func_00213A60,
    func_00214130, func_00214EE8) */
@@ -123,5 +149,15 @@ typedef struct {
     ScriptFloatArg b_y;             /* 0x1C value at 0x20 */
     ScriptArg result;               /* 0x24 value at 0x28 */
 } ScriptDistance2DCommand;
+
+/* D_01DFB3B0[24]: a script slot, 0xC4C bytes. `active` is nonzero while it runs; the
+   commands (ScriptMoveCommand and the like) sit in the area from 0x0C. */
+typedef struct {
+    u16 active;                     /* 0x00 */
+    char pad02[0x02];
+    s32 unk04;                      /* 0x04 */
+    char pad08[0x04];
+    u8 commands[0xC40];             /* 0x0C */
+} ScriptSlot;
 
 #endif

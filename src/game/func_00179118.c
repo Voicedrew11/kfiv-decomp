@@ -2,8 +2,8 @@
 
 int func_00197078(void);
 int func_0018F030(char *);
-void func_00182240(void);
-void func_00181E48(void);
+void func_00182240(Entity *);
+void func_00181E48(Entity *);
 void func_001958B8(char *, void (*)(void), int);
 float func_00194F80(void *, void *);
 void func_00216778(void *, void *);
@@ -20,9 +20,9 @@ void func_00179118(Entity *entity, s32 unknown) {
     // match: the shared prototype takes no argument; retail passes the entity
     if (((int (*)(Entity *))func_00197078)(entity)) {
         if (func_0018F030((char *)entity)) {
-            func_001958B8((char *)entity, func_00182240, 1);
+            func_001958B8((char *)entity, (void (*)(void))func_00182240, 1);
         } else {
-            func_001958B8((char *)entity, func_00181E48, 1);
+            func_001958B8((char *)entity, (void (*)(void))func_00181E48, 1);
         }
         return;
     }

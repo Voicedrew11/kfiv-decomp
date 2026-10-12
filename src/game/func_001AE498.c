@@ -13,7 +13,7 @@ void func_001AE498(EffectActor *effect) {
     func_001AEC48(effect);
     func_001AED58(effect);
     func_001AF0B0(effect);
-    *(f32 *)&effect->unk0C = *(f32 *)&effect->unk0C * (*(f32 *)&effect->target->unk0C * 0.0078125f); // match: unk0C is a float here
+    effect->scale = effect->scale * (effect->target->scale * 0.0078125f);
     func_00216778(&effect->model->position, &motion->velocity);
     func_00216778(&effect->model->rotation, motion_rotation);
     func_00216778(&motion->velocity, &effect->target->model->position);

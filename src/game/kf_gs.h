@@ -30,4 +30,18 @@ typedef union {
     } f;
 } GsAlphaReg;
 
+/* a 64-bit value split into 16, 16, 24 and 8 bits, passed to func_001FDB88 and kept
+   in D_00446D60; `raw` is the same word whole */
+typedef union {
+    s64 raw;
+    struct {
+        u64 lo16 : 16;              /* 0 */
+        u64 mid16 : 16;             /* 16 */
+        u64 mid24 : 24;             /* 32 */
+        u64 hi8 : 8;                /* 56 */
+    } f;
+} GsPackedWord;
+
+int func_001FDB88(GsPackedWord);
+
 #endif

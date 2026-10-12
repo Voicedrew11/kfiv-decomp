@@ -5,7 +5,7 @@ int rand(void);
 void func_00190A30(char *);
 void func_00195898(char *, u8);
 void func_0019A310(char *, void (*)(void), int);
-void func_0013D820(void);
+void func_0013D820(Entity *);
 
 void func_0013D778(Entity *entity) {
     EntityUnkE0 *sub = &entity->unkE0;
@@ -17,6 +17,6 @@ void func_0013D778(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit21 = 1;
     func_00190A30((char *)entity);
     entity->target = NULL;
-    func_0019A310((char *)entity, func_0013D820, 0);
+    func_0019A310((char *)entity, (void (*)(void))func_0013D820, 0);
     func_00195898((char *)entity, 2);
 }

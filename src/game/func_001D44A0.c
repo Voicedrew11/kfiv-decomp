@@ -10,7 +10,7 @@ void func_001D44A0(ChunkUpload *upload) {
     char *next;
     char *chunk;
 
-    header = ((u32 **)upload->source)[1];
+    header = upload->pool_node->buffer;
     chunk = (char *)header + 0x10;
     for (i = 0; i < *header; i++) {
         next = chunk + ((int *)chunk)[3];

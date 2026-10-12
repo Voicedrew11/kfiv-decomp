@@ -27,7 +27,7 @@ void func_001AAAC0(EffectActor *effect) {
             fade = (distance_to_player - velocity->x) / (velocity->y - velocity->x);
         }
     }
-    *(float *)&effect->unk0C = *(float *)&effect->unk0C * fade;
+    effect->scale *= fade;
     func_00216778(&effect->model->position, effect->start_position);
     func_00216778(&effect->model->rotation, effect->start_rotation);
     effect->frame += 1;
