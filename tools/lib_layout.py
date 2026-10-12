@@ -12,8 +12,8 @@ the path under <objdir> names the unit). For each object:
              the one where the object's functions sit at their symbol_addrs
              addresses wins. A unique hit places it.
   data       .data/.rodata/.lit4/.sdata/.sbss/.bss are placed from the
-             relocations that point into them: a %hi/%lo pair, a .word or a
-             gp-relative literal load (li.s) in the located .text/.data gives
+             relocations that point into them: a %hi/%lo pair, a .word, or a
+             gp-relative load (li.s, a small static) in the located .text/.data gives
              the absolute address, the object's in-place addend gives the
              offset, and their difference is the section base. All
              relocations must agree. Initialized sections are then compared
@@ -36,7 +36,7 @@ from collections import defaultdict
 from elftools.elf.elffile import ELFFile
 from elftools.elf.relocation import RelocationSection
 
-R_32, R_26, R_HI16, R_LO16, R_LITERAL = 2, 4, 5, 6, 8
+R_32, R_26, R_HI16, R_LO16, R_GPREL16, R_LITERAL = 2, 4, 5, 6, 7, 8
 SECS = [".text", ".data", ".rodata", ".lit4", ".sdata", ".sbss", ".bss"]
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -109,7 +109,8 @@ class Obj:
         for off, typ, *_ in self.relocs[sec]:
             if off // 4 < len(m):
                 m[off // 4] &= {R_26: 0xFC000000, R_HI16: 0xFFFF0000,
-                                R_LO16: 0xFFFF0000, R_LITERAL: 0xFFFF0000}.get(typ, 0)
+                                R_LO16: 0xFFFF0000, R_GPREL16: 0xFFFF0000,
+                                R_LITERAL: 0xFFFF0000}.get(typ, 0)
         return m
 
 
@@ -212,16 +213,16 @@ def bases_from(obj, sec, sec_addr, retail, gp):
     out = defaultdict(set)    # target section -> {base}
     pending_hi = []
     for off, typ, tsec, sval, sname in sorted(obj.relocs[sec], key=lambda r: r[0]):
-        if typ not in (R_32, R_HI16, R_LO16, R_LITERAL):
+        if typ not in (R_32, R_HI16, R_LO16, R_GPREL16, R_LITERAL):
             continue
         ow = struct.unpack_from("<I", data, off)[0]
         roff = sec_addr - rbase + off
         rw = struct.unpack_from("<I", rdata, roff)[0]
         if typ == R_32 and tsec:
             out[tsec].add(rw - (ow + sval))
-        elif typ == R_LITERAL and tsec:
-            # li.s: both words hold an offset from their gp (the object's is
-            # gp0, set by the assembler)
+        elif typ in (R_GPREL16, R_LITERAL) and tsec:
+            # li.s, or a small static (.sdata/.sbss): both words hold an offset
+            # from their gp (the object's is gp0, set by the assembler)
             out[tsec].add(gp + sext16(rw) - (obj.gp0 + sext16(ow) + sval))
         elif typ == R_HI16:
             pending_hi.append((off, tsec, sval))

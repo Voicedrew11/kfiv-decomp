@@ -171,8 +171,8 @@ programmer would have, not the way m2c printed it:
 - Keep comments brief: one line on what a function or field is. No essays
   on trivial code.
 
-[`KF_Entity_DespawnOutOfRange.c`](src/game/KF_Entity_DespawnOutOfRange.c) is
-the style to aim for.
+`KF_Entity_DespawnOutOfRange` in
+[`kf_entity_pool.c`](src/game/kf_entity_pool.c) is the style to aim for.
 
 `tools/lint_readability.py --changed` must pass (CI runs it): files your
 PR adds must be clean, and so must the lines it changes in other files. A

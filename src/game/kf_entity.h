@@ -1000,15 +1000,8 @@ typedef struct {
 } __attribute__((aligned(8))) ModelInstanceBlock;
 
 extern Entity *D_004467E0;          /* entity list head */
-extern Entity *D_004470A8;          /* other lists of the same layout */
-extern Entity *D_004470B0;
 
 float func_00124DE0(Entity *entity);    /* distance to the player */
-void func_00123AB8(Entity *entity);
-void func_00124BC8(Entity *entity);
-Entity *func_00124C08(Entity *entity);  /* free; returns the next one */
-Entity *func_00124CA0(Entity *entity);  /* free; returns the next one */
-Entity *func_00124D48(Entity *entity);  /* free; returns the next one */
 
 /* D_003F1750[0x60]: a live map-object slot, 0x50 bytes */
 typedef struct {
