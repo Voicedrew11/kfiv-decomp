@@ -197,6 +197,33 @@ typedef struct {
     int unk1C;                      /* 0x1C */
 } SoundStartArgs;
 
+/* SoundJobSpec as func_001A0C18, func_001A1048 and func_001A10D8 fill it in: the two buffers
+   are pointers of two different types in the game, which is what lets gcc reorder the copies */
+typedef struct {
+    char *buffer_a;                 /* 0x00 */
+    void *buffer_b;                 /* 0x04 */
+    int unk08;                      /* 0x08 */
+    int size_a;                     /* 0x0C */
+    int size_b;                     /* 0x10 */
+} SoundBankSpec;
+
+/* what MapSlot.unk34 points at: the sound bank of a map, two buffers and their sizes */
+typedef struct {
+    int size_b;                     /* 0x00 */
+    void *buffer_b;                 /* 0x04 */
+    int size_a;                     /* 0x08 */
+    char *buffer_a;                 /* 0x0C */
+} SoundBankInfo;
+
+/* SoundStartArgs with the buffers as the pointers they are (func_001A0C18) */
+typedef struct {
+    int size_b;                     /* 0x00 */
+    char pad04[0x10];
+    void *buffer_b;                 /* 0x14 */
+    char *buffer_a;                 /* 0x18 */
+    int size_a;                     /* 0x1C */
+} SoundStartInfo;
+
 /* a load buffer: a 64-byte aligned base, its limit and a fill count */
 typedef struct {
     u32 base;                       /* 0x00 */

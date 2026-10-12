@@ -18,7 +18,7 @@ int func_00102900(int);
 int sprintf(char *, char *, ...);
 void func_00114840(int);
 void func_00114AA8(int);
-void func_001A10D8(MapSlot *);
+int func_001A10D8(MapSlot *);
 void func_001155F8(int);
 void func_00116F20(int);
 void func_001A15F0(void);

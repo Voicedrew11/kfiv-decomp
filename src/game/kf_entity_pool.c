@@ -40,7 +40,7 @@ void func_0010B758(ModelInstance *, int *, int *);
 s64 *func_0010CE08(ModelInstance *, s64 *);
 void func_00108940(int, int *, ModelInstance *, int);
 u32 *func_00116BD0(int, int);
-void func_001251E0(void);
+void func_001251E0(Entity *);
 void func_0010D018(ModelInstance *, char **, char **);
 void func_0010E8A0(ModelInstance *, s32);
 void func_0010E6A8(ModelInstance *, s64, s64);

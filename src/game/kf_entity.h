@@ -416,6 +416,15 @@ typedef struct {
     char pad12[0x0A];
 } EntityParamsUnk3D8Array;
 
+/* EntityParams with the three ranged-attack records as a real array member: indexed this way the
+   compiler adds the scaled index to the params pointer, base first (func_00164C88 needs that) */
+typedef struct {
+    char pad00[0x3D8];
+    EntityParamsUnk3D8Array ranged[3]; /* 0x3D8 */
+} EntityParamsRangedView;
+
+#define ENTITY_PARAMS_RANGED_VIEW(params) ((EntityParamsRangedView *)(params))
+
 /* the first word of EntityParams as plain bytes: unlike a bit-field read, a
    read through this does not depend on every store before it */
 typedef struct {

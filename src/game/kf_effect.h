@@ -20,9 +20,9 @@ typedef struct {
     u8 modes_a[3];                  /* 0x9C easing between the keys_a stages */
     u8 modes_b[3];                  /* 0x9F */
     u8 colour_modes[3];             /* 0xA2 */
-    char padA5;
+    u8 unkA5;                       /* 0xA5 how many effects the spawner makes each time it fires */
     u8 max_level;                   /* 0xA6 the spawner's level counts down from this */
-    char padA7;
+    u8 unkA7;                       /* 0xA7 frames between two firings of the spawner, 0: every frame */
     f32 rotation_base[3];           /* 0xA8 */
     f32 rotation_spread[3];         /* 0xB4 random +- range around rotation_base */
     f32 offset_base[3];             /* 0xC0 */
@@ -36,7 +36,13 @@ typedef struct {
     u16 interval;                   /* 0xEE frames between collision checks, or a range */
     u16 unkF0;                      /* 0xF0 effect ids passed to func_001A2838 */
     u16 unkF2;                      /* 0xF2 */
-    char padF4[0x09];
+    u8 unkF4;                       /* 0xF4 with the placement bits, picks the model's draw routine from D_003F1710 */
+    u8 unkF5;                       /* 0xF5 bit 0: drawn with the map's own light block; bit 1: not drawn in the second pass */
+    u8 unkF6;                       /* 0xF6 how the texture frames run: 0 loop, 1 once, 2 once and hold the last */
+    u8 unkF7;                       /* 0xF7 how many texture frames, 0: not animated */
+    u16 unkF8;                      /* 0xF8 record ids between two texture frames */
+    u16 unkFA;                      /* 0xFA nonzero: an id that func_001A1610 moves up by 0x1400; the first texture frame's record */
+    u8 unkFC;                       /* 0xFC effect frames per texture frame, less one */
     u8 unkFD;                       /* 0xFD */
     u16 unkFE;                      /* 0xFE */
     u16 unk100;                     /* 0x100 index into the handler tables D_00402550 and D_00402DA8 */
@@ -48,12 +54,18 @@ typedef struct {
     u16 unk10C[3];                  /* 0x10C */
     u16 unk112[3];                  /* 0x112 */
     u16 end_effect;                 /* 0x118 spawned when the effect ends */
-    char pad11A[0x02];
+    u16 unk11A;                     /* 0x11A not 0: sets EffectActor flag bit 59; passed to func_0019C8D0 */
     f32 scale_per_frame;            /* 0x11C */
 } EffectDef;
 
+/* the 64-bit word at EffectDef+0xF0 as func_001A2168 tests it (bits 40 and 41 are unkF5's bits 0 and 1) */
+#define EFFECT_DEF_WORD_F0(def) (*(s64 *)&(def)->unkF0)
+
 /* the 64-bit flag word at EffectDef+0x108, whose low 16 bits are max_frames */
 #define EFFECT_DEF_FLAGS(def) (*(s64 *)&(def)->max_frames)
+
+/* the same word read through a union, which keeps the read behind any earlier store (func_001AF640) */
+#define EFFECT_DEF_FLAG_WORD(def) (((EntityFlagWord *)&(def)->max_frames)->word)
 
 /* ObjectSlot+0x20, whose low word func_001A2F20 reads as a pointer to the effect
    definition while the same 8 bytes are ObjectSlot.flags (reached by cast, not a union) */
@@ -256,6 +268,17 @@ typedef struct {
     char pad15[0x0B];
 } NearTargetMotion;
 
+/* EffectMotion as func_001A5880 sets it up and func_001A5988 uses it: runs along the ground */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    Vector4 probe;                  /* 0x10 passed to func_001C1430; y is def->unkDC */
+    f32 height;                     /* 0x20 def->unkDC: the ground is looked for from half of it down */
+    f32 fall_speed;                 /* 0x24 */
+    f32 hit_offset;                 /* 0x28 def->unkE0: how far below itself it checks for hits */
+    s8 ended;                       /* 0x2C set when it starts with no ground under it; also passed by address */
+    char pad2D[0x03];
+} GroundRunMotion;
+
 /* EffectMotion as func_001A6028 uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
@@ -314,8 +337,11 @@ typedef struct {
     f32 target_x;                   /* 0x10 */
     f32 unk14;                      /* 0x14 */
     f32 target_z;                   /* 0x18 */
-    char pad1C[0x09];
+    char pad1C[0x04];
+    f32 turn;                       /* 0x20 how sharply it turns toward the aim point (func_001A6C98) */
+    s8 aimed;                       /* 0x24 the aim point is set */
     u8 flag25;                      /* 0x25 */
+    s8 ended;                       /* 0x26 the end effect is spawned */
 } AimMotion;
 
 /* EffectMotion as func_001A7548 uses it */
@@ -772,7 +798,8 @@ typedef struct {
 typedef struct {
     struct Entity *entity[4];       /* 0x00 */
     f32 distance[4];                /* 0x10 */
-    char pad20[0x10];
+    s8 list_index[4];               /* 0x20 where the entity is in the list D_004467E0, -1: none (func_001A6EE8) */
+    char pad24[0x0C];
 } PickedMotion;
 
 /* EffectMotion as func_001A72F0 uses it: scales the model, spawns the end effect */
@@ -830,6 +857,79 @@ typedef struct {
     char pad25[0x0B];
 } OffsetSprayMotion;
 
+/* EffectMotion as func_001A7F88 uses it: grows along its velocity and bobs up and down */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    f32 bob_speed;                  /* 0x10 added to the model's height each frame */
+    f32 bob_limit;                  /* 0x14 the bob turns round at +- this speed */
+    f32 velocity_scale;             /* 0x18 grows by EffectDef.scale_per_frame */
+    s8 ended;                       /* 0x1C set by the hit check: the effect ends next frame */
+    s8 bob_falling;                 /* 0x1D */
+    char pad1E[0x12];
+} BobbingGrowMotion;
+
+/* EffectMotion as func_001AA040 reads it (set up by func_001A9E88 and func_001A9F98): a
+   turning effect that hands over to a sub-effect and restarts from start_frame */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    Vector4 aim;                    /* 0x10 where the sub-effect appears at end_frame */
+    u16 end_effect;                 /* 0x20 */
+    u16 end_frame;                  /* 0x22 */
+    u8 countdown;                   /* 0x24 */
+    s8 started;                     /* 0x25 set once a sub-effect was started */
+    u8 start_frame;                 /* 0x26 the frame the effect restarts from */
+    char pad27[0x09];
+} RestartMotion;
+
+/* EffectMotion as func_001AB5C8 and func_001AB670 use it: tilts to and fro while it falls */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    f32 tilt_speed;                 /* 0x10 added to the model's rotation.x each frame */
+    f32 tilt_accel;                 /* 0x14 */
+    f32 fall_speed;                 /* 0x18 */
+    f32 fall_accel;                 /* 0x1C */
+    s8 tilting_back;                /* 0x20 */
+    char pad21[0x0F];
+} TiltFallMotion;
+
+/* EffectMotion as func_001A90A0 and func_001A92A8 use it (func_001A8FF0 fills aim and
+   arrival_frame): flies to a point, then sweeps on from there */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    Vector4 aim;                    /* 0x10 */
+    f32 sweep_turn;                 /* 0x20 */
+    u16 arrival_frame;              /* 0x24 */
+    s8 arrived;                     /* 0x26 */
+    s8 has_aim;                     /* 0x27 the aim is a target or a point on the ground */
+    s8 hit_spawned;                 /* 0x28 */
+    s8 on_ground;                   /* 0x29 the aim has ground under it: the effect sweeps */
+    s8 first_level;                 /* 0x2A spawned by a slot at level 1 */
+    s8 level_step;                  /* 0x2B EffectDef.max_level less the slot's level */
+    char pad2C[0x04];
+} SweepMotion;
+
+/* EffectMotion as func_001ACA28 uses it: one link of a chain of effects, each spawning the next */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    f32 length;                     /* 0x10 how far on the next link starts */
+    int links_left;                 /* 0x14 one less than the link before; 0 ends the chain */
+    char pad18[0x18];
+} ChainMotion;
+
+/* EffectMotion as func_001A7B28 reads it: the BobMotion of func_001A7A48 with its bytes signed */
+typedef struct {
+    Vector4 velocity;               /* 0x00 */
+    f32 bob_speed;                  /* 0x10 added to the model's height each frame */
+    f32 bob_limit;                  /* 0x14 the bob turns round at +- this speed */
+    f32 turn;                       /* 0x18 how sharply it turns toward its target; grows to EffectDef.unkE0 */
+    f32 velocity_scale;             /* 0x1C grows by EffectDef.scale_per_frame */
+    u16 countdown;                  /* 0x20 */
+    s8 ended;                       /* 0x22 */
+    s8 end_countdown;               /* 0x23 frames until it ends after another of its group did */
+    s8 bob_rising;                  /* 0x24 */
+    char pad25[0x0B];
+} HomingBobMotion;
+
 /* one 0xA0-byte effect of the pool D_003F3550 (0x180 of them) */
 typedef struct EffectActor {
     char pad00[0x0C];
@@ -841,7 +941,7 @@ typedef struct EffectActor {
     u16 effect_param;               /* 0x4E */
     ModelInstance *model;           /* 0x50 */
     EffectDef *def;                 /* 0x54 */
-    char pad58[0x04];
+    char *unk58;                    /* 0x58 one of MapSlot.records; cleared when its map is unloaded (func_001A3040) */
     Entity *owner_entity;           /* 0x5C the entity that cast it; freed with it (func_001A32A8) */
     struct EffectActor *target;     /* 0x60 */
     Vector4 *start_position;        /* 0x64 */
@@ -853,6 +953,16 @@ typedef struct EffectActor {
     char pad94[0x0C];
 } EffectActor;
 
+/* EffectActor+0x00 as func_001AF0B0 writes it: the colour, whose alpha is EffectActor.scale */
+typedef struct {
+    f32 red;                        /* 0x00 */
+    f32 green;                      /* 0x04 */
+    f32 blue;                       /* 0x08 */
+    f32 alpha;                      /* 0x0C */
+} EffectActorColour;
+
+#define EFFECT_COLOUR(effect) ((EffectActorColour *)(effect))
+
 /* EffectActor.flags bits */
 #define EFFECT_FLAG_LIVE (0x8000L << 41)           /* bit 56: the actor is in use */
 #define EFFECT_FLAG_HAS_SLOTS (0x8000L << 42)      /* bit 57: free its spawner slots with it */
@@ -863,7 +973,9 @@ typedef struct {
     char pad00[0x108];
     u64 pad108 : 16;
     u8 track : 1;                   /* 0x108 bit 16: the actor is tracked by its object slot */
-    u64 pad109 : 47;
+    u64 pad109 : 4;
+    u8 placement : 2;               /* 0x108 bits 21-22: 0 and 3 take the spawn position, 1 and 2 place themselves */
+    u64 pad10B : 41;
     char pad110[0x10];
 } EffectTableEntry;
 
@@ -936,6 +1048,23 @@ typedef struct {
 } EffectSlotFlagParts;
 
 #define EFFECT_SLOT_FLAG_PARTS(slot) ((EffectSlotFlagParts *)&(slot)->flags)
+
+/* the whole EffectSlot as func_001A24D8 reads it: the bytes of the flag word as members of
+   the slot itself (no address is taken, so gcc keeps no pointer to the word), and unk34 as
+   the vector pointer it is */
+typedef struct {
+    char pad00[0x20];
+    EffectDef *def;                 /* 0x20 */
+    u8 unk24;                       /* 0x24 */
+    u8 level;                       /* 0x25 the firings left */
+    u8 unk26;                       /* 0x26 frames to the next firing */
+    u8 unk27;                       /* 0x27 frames before the first firing, from EffectDef.unkFD */
+    char pad28[0x0C];
+    Vector4 *start_rotation;        /* 0x34 EffectSlot.unk34 */
+    char pad38[0x18];
+} EffectSlotView;
+
+#define EFFECT_SLOT_VIEW(slot) ((EffectSlotView *)(slot))
 
 /* FxTableEntry+0xAC: what casting the magic does to the player (func_001BC9E0) */
 typedef struct {

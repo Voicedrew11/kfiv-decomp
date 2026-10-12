@@ -81,6 +81,23 @@ typedef struct {
     u64 unk18;                      /* 0x18 */
 } SplashImageBits;
 
+/* the 0x70 bytes func_002087D0 puts in front of image data it sends to GS memory: five registers, then the tag of the data */
+typedef struct {
+    u64 tag[2];                     /* 0x00 GIF tag: five address+data pairs */
+    u32 texflush[2];                /* 0x10 */
+    u32 texflush_reg[2];            /* 0x18 0x3F, TEXFLUSH */
+    u64 bitbltbuf;                  /* 0x20 where the data goes: base pointer, buffer width, pixel format */
+    u32 bitbltbuf_reg[2];           /* 0x28 0x50, BITBLTBUF */
+    u64 trxpos;                     /* 0x30 */
+    u32 trxpos_reg[2];              /* 0x38 0x51, TRXPOS */
+    u64 trxreg;                     /* 0x40 width, and height in the high half */
+    u32 trxreg_reg[2];              /* 0x48 0x52, TRXREG */
+    u64 trxdir;                     /* 0x50 */
+    u32 trxdir_reg[2];              /* 0x58 0x53, TRXDIR */
+    u64 image_tag;                  /* 0x60 GIF tag of the data that follows, in quadwords */
+    u32 image_tag_high[2];          /* 0x68 */
+} SplashLoadPacket;
+
 /* one texture of the boot screens, D_005FAB60[13], loaded by func_002097E0 */
 typedef struct {
     BootTex0 tex0;                  /* 0x00 GS TEX0, copied from the file */

@@ -333,6 +333,15 @@ typedef struct ModelFile {
     ModelFilePart parts[1];         /* 0x210 part_count of them */
 } ModelFile;
 
+/* a model file's header through a union of its two layouts: a read through it aliases everything
+   (func_0010D018 tests the part count that way, after it has moved the memory cursor) */
+typedef union {
+    ModelFile plain;
+    PosedModelFile posed;
+} ModelFileUnion;
+
+#define POSED_MODEL_FILE_ANY(file) (((ModelFileUnion *)(file))->posed)
+
 #define MODEL_FLAG_800  0x800
 
 /* ModelInstance with the three part slots at 0x130 as the array func_0010B758 fills
@@ -368,7 +377,8 @@ typedef struct ModelInstance {
     ModelPartLevels **level_tables; /* 0xFC */
     u16 unk100;                     /* 0x100 */
     u16 unk102;                     /* 0x102 MODEL_FLAG_800: drawn with its own texture */
-    char pad104[0x0C];
+    int unk104;                     /* 0x104 passed to func_001A2E58, which does not read it */
+    char pad108[0x08];
     ModelStripList *strips;         /* 0x110 also read as a CollisionMesh (kf_collision.h), NULL: none */
     MotionFile *motion_file;        /* 0x114 */
     char pad118[0x04];

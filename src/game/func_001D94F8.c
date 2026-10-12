@@ -108,7 +108,7 @@ s32 func_0019CDC0(s32);
 void func_001BA310(void);
 void func_001D2680(void);
 void func_001D37F8(int, void *);
-void func_001D39F0(s32);
+void func_001D39F0(s32); // match: this file only matches with this type; func_001D39F0.c defines it differently
 void func_001D45D0(void);
 void func_001D4840(void);
 void func_001D7C30(void);

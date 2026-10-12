@@ -3,7 +3,7 @@
 extern float D_00413F80[];
 
 s32 func_00198D10(Entity *);
-void func_0018F9C0(Entity *);
+s32 func_0018F9C0(Entity *);
 s16 func_00190F90(float, void *, int);
 void func_001958B8(char *, void (*)(void), int);
 void func_00182240(Entity *);

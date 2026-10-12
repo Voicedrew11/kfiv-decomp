@@ -4,7 +4,7 @@ extern float D_00413F80[];
 
 int rand(void);
 s32 func_00196D70(Entity *, void *, f32, f32, f32);
-void func_0018F9C0(Entity *);
+s32 func_0018F9C0(Entity *);
 void func_0018B6F8(f32 *, f32, f32, void *, void *);
 int func_0018EAC0(void *, void *);
 s16 func_00191340(void *, int);

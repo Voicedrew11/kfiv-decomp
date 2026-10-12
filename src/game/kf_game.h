@@ -56,6 +56,16 @@ typedef struct {
     char bytes[8];
 } PlayTime;
 
+/* the first 8 bytes of the save buffer D_0036A130 (func_00103C18 writes them, func_001060C0 checks them) */
+typedef struct {
+    s32 magic;                      /* 0x00 SAVE_MAGIC */
+    s32 size;                       /* 0x04 bytes of state, header included, rounded up to SAVE_BLOCK_SIZE; one checksum
+                                       byte for each block of that size follows */
+} SaveHeader;
+
+#define SAVE_MAGIC      0x15400
+#define SAVE_BLOCK_SIZE 0x80
+
 /* D_004325A0 (the camera, it seems). Other files still declare it as float[],
    so the extern stays in each file. */
 typedef struct {
@@ -500,6 +510,17 @@ typedef struct {
 } PoolDrawScratch;
 
 #define POOL_DRAW_SCRATCH ((PoolDrawScratch *)0x70000000)
+
+/* PoolDrawScratch.cursor as a union (func_002008E8 advances it through this view once per point) */
+typedef struct {
+    char pad000[0x18C];
+    union {
+        u32 *words;                 /* 0x18C */
+        u8 *bytes;
+    } cursor;
+} PoolDrawScratchCursorView;
+
+#define POOL_DRAW_SCRATCH_CURSOR(scratch) (((PoolDrawScratchCursorView *)(scratch))->cursor)
 
 /* the two places in GS memory that func_00201E10 and func_00201F58 pick a palette's from (D_00440DC0) */
 typedef struct {
