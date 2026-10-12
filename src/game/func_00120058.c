@@ -3,9 +3,9 @@
 extern u32 D_0038CC74[];
 extern void *D_00420D50[];
 
-int func_001C9580(MapObject *);
-void func_001C9AB0(int);
-void func_001CFA70(int, int, int, int, int, int);
+ModelNode *func_001C9580(int);
+int func_001C9AB0(ModelNode *);
+void func_001CFA70(int, int, int, int, int, int, ...);
 
 /* Update handler: when the player uses an object that still holds something it
    is handed out (func_001C9580), else message 0x46 is shown, at most every 45 frames. */

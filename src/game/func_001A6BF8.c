@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 
 void func_00216778(void *, void *);
-int func_001C0E40(float, float *);
+int func_001C0E40(f32, void *);
 
 /* Aims a motion at its target if the target is within reach; returns 1 if it is. */
 int func_001A6BF8(EffectActor *effect, float *position, AimMotion *motion) {

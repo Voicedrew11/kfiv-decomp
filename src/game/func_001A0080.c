@@ -3,7 +3,7 @@
 extern u8 D_00349682[];
 void func_0019C598(float, float *, float *);
 int func_0019C688(int);
-void func_001CE690(int, int, int, char, int, char, s16, int);
+int func_001CE690(u32, int, char, char, char, char, s16, char);
 double sqrt(double);
 
 void func_001A0080(u8 sound, int bank, float level, float max_level, float angle) {

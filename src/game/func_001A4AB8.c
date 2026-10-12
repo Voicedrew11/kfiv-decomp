@@ -5,7 +5,7 @@
 #define SCRATCH_VECTOR ((f32 *)0x70000000)
 
 int func_001B4F90(void *);
-int func_001C0E40(float, void *);
+int func_001C0E40(f32, void *);
 void func_00216778(void *, void *);
 void KF_Vector_Subtract(void *, void *, void *);
 void sceVu0AddVector(void *, void *, void *);

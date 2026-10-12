@@ -3,7 +3,7 @@
 
 #define SCRATCH_VECTOR ((f32 *)0x70000000)
 
-int func_001C0E40(float radius, void *point);
+int func_001C0E40(f32, void *);
 void func_00216778(void *out, void *position);
 
 void func_001A63C0(EffectActor *effect, EffectSlot *spawn_slot) {

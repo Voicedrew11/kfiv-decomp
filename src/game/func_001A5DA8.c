@@ -6,7 +6,7 @@ extern int D_004468DC;
 int func_001B4F90(void *);
 void sceVu0AddVector(void *, void *, void *);
 void func_00216778(void *, void *);
-int func_001C0E40(float, void *);
+int func_001C0E40(f32, void *);
 
 /* Scratchpad words shared with the other effect kinds. */
 #define SCRATCHPAD_FLOAT_04 (*(float *)0x70000004)

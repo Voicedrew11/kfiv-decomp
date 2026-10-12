@@ -5,7 +5,7 @@ extern EntitySpawnInfo *D_004467D0[2];
 extern MapSlot D_0038CD20[];
 extern int D_00446770;
 
-void func_001C8CB0(void *);
+s32 func_001C8CB0(Entity *);
 int func_001CB2C8(Entity *);
 void func_001BBB60(s32);
 void func_001035A8(u32, int);

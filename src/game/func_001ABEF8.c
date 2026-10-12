@@ -6,7 +6,7 @@
 
 void func_00216778(void *dst, void *src);
 void func_00216C48(void *dst, void *a, void *b);
-void func_001C1430(float scale, void *dst, void *src);
+void func_001C1430(f32, void *, void *);
 float func_001B0178(void *a, void *b);
 
 /* Probe effect: sets its velocity from the model's rotation and measures the distance to a point. */

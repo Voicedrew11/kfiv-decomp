@@ -2,7 +2,7 @@
 #include "kf_script.h"
 
 void *func_001267B0(int);
-void func_001C8CB0(void *);
+s32 func_001C8CB0(Entity *);
 
 /* Run func_001C8CB0 on the looked-up object with its spawn_info->unk38 temporarily set, then clear the command. */
 void func_00212690(ScriptSetValueCommand *command) {

@@ -3,7 +3,7 @@
 extern u32 D_0038CC74[];
 extern void *D_00420D50[];
 
-void func_001CFA70(int, int, int, int, int, int);
+void func_001CFA70(int, int, int, int, int, int, ...);
 
 /* Update handler: used by the player, it shows the message of its definition,
    at most every 45 frames. */

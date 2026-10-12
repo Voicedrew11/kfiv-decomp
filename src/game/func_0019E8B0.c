@@ -2,7 +2,7 @@
 #include "kf_sound.h"
 
 extern SoundChannel D_003EF710[];
-void func_001CE9A0(int, int, int);
+int func_001CE9A0(int, u32, int);
 
 void func_0019E8B0(void) {
     SoundChannel *entry = D_003EF710;

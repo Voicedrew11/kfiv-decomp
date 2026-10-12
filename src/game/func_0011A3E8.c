@@ -1,7 +1,7 @@
 #include "kf_model.h"
 
 void *func_001C8AF0(int);
-void func_001C8C80(int, int);
+int func_001C8C80(int, int);
 
 /* Lowers the model of node 0x37 by 400 after func_001C8C80 has set it up. */
 void func_0011A3E8(int map) {

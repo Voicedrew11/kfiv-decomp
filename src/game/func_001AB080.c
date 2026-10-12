@@ -1,6 +1,6 @@
 #include "kf_effect.h"
 
-int func_001C0E40(float, void *);
+int func_001C0E40(f32, void *);
 void func_00216778(void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 

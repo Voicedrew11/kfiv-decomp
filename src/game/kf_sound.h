@@ -12,7 +12,7 @@ typedef struct {
     int iop_heap;                   /* 0x08 IOP memory, 0 when freed */
     int unk0C;                      /* 0x0C */
     int unk10;                      /* 0x10 */
-    char pad14[0x04];
+    int unk14;                      /* 0x14 size of the block at iop_heap */
     s16 unk18;                      /* 0x18 */
     char unk1A;                     /* 0x1A */
     char unk1B;                     /* 0x1B */
@@ -22,7 +22,7 @@ typedef struct {
 /* SoundState.banks[4]: a bank and the voice it is bound to */
 typedef struct {
     int iop_heap;                   /* 0x00 IOP memory, 0 when freed */
-    char pad04[0x04];
+    int unk04;                      /* 0x04 func_001CE300's last argument (a size, it seems) */
     int voice;                      /* 0x08 */
     int unk0C;                      /* 0x0C */
 } SoundBank;
@@ -30,26 +30,88 @@ typedef struct {
 /* the request func_001CCF80 reads: the voice to reload and the heap to free */
 typedef struct {
     SoundVoice *voice;              /* 0x00 */
-    char pad04[0x0C];
+    int unk04;                      /* 0x04 */
+    int unk08;                      /* 0x08 bytes still to send */
+    int unk0C;                      /* 0x0C where the next piece goes */
     int heap_addr;                  /* 0x10 */
     int unk14;                      /* 0x14 */
+    int unk18;                      /* 0x18 */
+    int unk1C;                      /* 0x1C the running DMA transfer */
 } SoundReloadRequest;
+
+/* the arguments of func_001CD020 as its step functions get them */
+typedef struct {
+    int unk00;                      /* 0x00 the voice */
+    int unk04;                      /* 0x04 the voice's first data */
+    int unk08;                      /* 0x08 its size */
+    char *unk0C;                    /* 0x0C where the next piece is read from */
+    int unk10;                      /* 0x10 */
+    int unk14;                      /* 0x14 */
+    int unk18;                      /* 0x18 */
+} SoundLoadArgs;
 
 /* 0x18 bytes of effect settings, copied whole (byte-aligned) */
 typedef struct {
     char bytes[0x18];
 } SoundEffectParams;
 
+/* SoundEffectParams as func_001CB778 clears it, field by field */
+typedef struct {
+    int unk00;                      /* 0x00 */
+    int unk04;                      /* 0x04 */
+    s16 unk08;                      /* 0x08 */
+    s16 unk0A;                      /* 0x0A */
+    int unk0C;                      /* 0x0C */
+    int unk10;                      /* 0x10 */
+    s16 unk14;                      /* 0x14 */
+    s16 unk16;                      /* 0x16 */
+} SoundEffectFields;
+
+/* D_005BF280: the record func_001CBAE0 sends the sound driver; the reply lands on it */
+typedef struct {
+    void *self;                     /* 0x00 the record itself, then the driver's answer */
+    int args[15];                   /* 0x04 */
+} SoundRpcRequest;
+
+/* D_005BF870: a block being sent to the IOP in pieces of 0x4000 bytes (func_001CBC30, func_001CBD20) */
+typedef struct {
+    int dest;                       /* 0x00 */
+    int src;                        /* 0x04 */
+    int remaining;                  /* 0x08 */
+    int padded_size;                /* 0x0C the piece's size rounded up to 16 */
+    int piece_size;                 /* 0x10 */
+    int dma_id;                     /* 0x14 */
+    int active;                     /* 0x18 */
+} SoundUpload;
+
+/* D_005BF860: the DMA descriptor handed to sceSifSetDma */
+typedef struct {
+    int src;                        /* 0x00 */
+    int dest;                       /* 0x04 */
+    int size;                       /* 0x08 */
+    int mode;                       /* 0x0C */
+} SoundDmaRequest;
+
+/* SoundState.unk240[n] with its signs: the note sounding in slot n (func_001CE690 fills it) */
+typedef struct {
+    s8 voice;                       /* 0x00 index into SoundState.voices */
+    u8 unk01;                       /* 0x01 */
+    u8 unk02;                       /* 0x02 */
+    s8 unk03;                       /* 0x03 1 while it sounds, -1 once stopped (func_001CE8B0) */
+} SoundKey;
+
 /* what D_004471D4 points at. Most files still declare D_004471D4 as char *,
    so the extern stays in each file. */
 typedef struct {
     SoundVoice voices[16];          /* 0x000 */
     SoundBank banks[4];             /* 0x200 */
-    char pad240[0x200];
+    s8 unk240[126][4];              /* 0x240 all -1 after func_001CB778 */
+    char pad438[0x08];
     SoundEffectParams effects[4];   /* 0x440 */
     SoundEffectParams effect;       /* 0x4A0 the one in use */
     void *load_addr;                /* 0x4B8 first IOP heap load's address */
-    char pad4BC[0x08];
+    int unk4BC;                     /* 0x4BC */
+    u32 unk4C0;                     /* 0x4C0 end of the used sound memory */
     int dma_src;                    /* 0x4C4 */
     int unk4C8;                     /* 0x4C8 */
     int dma_dest;                   /* 0x4CC */

@@ -1,6 +1,6 @@
 #include "kf_effect.h"
 
-int func_001C0E40(float, void *);
+int func_001C0E40(f32, void *);
 int rand(void);
 
 /* Sinks the model by its definition's float, then sets a random countdown to the next check. */

@@ -6,7 +6,7 @@
 void func_001AF298(void *, void *);
 void func_001AF5B0(void *, void *);
 float func_001B0178(void *, void *);
-void func_001C1430(float, void *, void *);
+void func_001C1430(f32, void *, void *);
 void KF_Vector_Subtract(void *, void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 

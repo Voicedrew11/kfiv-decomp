@@ -2,7 +2,7 @@
 
 extern char D_00413F80[];
 
-void func_001B4B10(s16, int);
+void func_001B4B10(int, int);
 int func_001BBFC8(void);
 
 int func_001B3E78(char *arg0, u8 *arg1) {

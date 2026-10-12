@@ -8,7 +8,7 @@ extern int D_0044706C;
 extern int D_00447070;
 
 int func_0011C678(u8);
-void func_001CFA70(int, int, int, int, int, int);
+void func_001CFA70(int, int, int, int, int, int, ...);
 
 void func_0011A438(int arg0) {
     u32 temp_s0;

@@ -6,7 +6,7 @@ extern u8 D_00369830[];
 
 void func_00123000(int);
 void func_0019D490(s32, s32, f32 *, f32);
-void func_001CFA70(int, int, int, int, int, int);
+void func_001CFA70(int, int, int, int, int, int, ...);
 
 /* Update handler of a closed door-like object: when the player uses it, it opens
    if it needs no item or the player holds the item, else a message says so. */

@@ -33,13 +33,13 @@ typedef struct {
     u16 vertical_despawn_range;     /* 0x48 0: no vertical limit */
     char pad4A[0x02];
     u16 unk4C;                      /* 0x4C */
-    char pad4E[0x02];
+    u16 unk4E;                      /* 0x4E asked of func_00210C48 before unk58 is used, 0: nothing */
     u16 unk50;                      /* 0x50 0: func_00124F00 makes it 1800 */
     u8 unk52;                       /* 0x52 0: func_00124F00 makes it 100 */
     char pad53;
     u16 unk54;                      /* 0x54 */
     u16 unk56;                      /* 0x56 */
-    char pad58[0x02];
+    u16 unk58;                      /* 0x58 passed to func_002109C8 when an item is used on the entity, 0: nothing */
     u16 despawn_range;              /* 0x5A */
 } EntitySpawnInfo;
 
@@ -160,12 +160,14 @@ typedef struct {
 /* the two blocks func_00175110 fills for func_001B1470 */
 typedef struct {
     f32 position[4];                /* 0x00 */
-    char pad10[0x20];
+    f32 unk10[4];                   /* 0x10 an earlier position: func_001B2F70 takes the hit direction from it */
+    f32 unk20[4];                   /* 0x20 shape 2: a second point (func_001B4F90) */
     f32 unk30;                      /* 0x30 */
     f32 unk34;                      /* 0x34 */
     f32 unk38;                      /* 0x38 */
     f32 unk3C;                      /* 0x3C */
-    char pad40[0x08];
+    f32 unk40;                      /* 0x40 unk40, unk44, unk78 and unk7C: more of the shape of the player's swept requests (func_001B1B90) */
+    f32 unk44;                      /* 0x44 */
     struct Entity *owner;           /* 0x48 */
     u64 unk4C_0 : 2;                /* 0x4C */
     u64 unk4C_2 : 1;
@@ -173,21 +175,63 @@ typedef struct {
     u64 unk4C_4 : 4;
     u8 unk4D;                       /* 0x4D */
     u8 unk4E;                       /* 0x4E */
-    char pad4F;
+    u8 unk4F;                       /* 0x4F copied to Entity.unk82 by a hit of kind 1 */
     EntityParamsUnk240PartUnk00 unk50; /* 0x50 */
     EntityParamsUnk240PartUnk12 unk62; /* 0x62 */
-    char pad6E[0x12];
+    u8 unk6E;                       /* 0x6E a weapon hit's damage to a map object is multiplied by it when the object asks (func_001B3AC0) */
+    u8 unk6F;                       /* 0x6F chance in percent that the hit counts double */
+    u8 unk70;                       /* 0x70 chance in percent that the hit kills outright */
+    u8 unk71;                       /* 0x71 taken off PlayerState.unkB8 when the hit lands on the player (func_001B29C8) */
+    u16 unk72;                      /* 0x72 not 0: the hit does nothing to the player */
+    u8 unk74;                       /* 0x74 set once the hit has landed on the player */
+    char pad75[0x03];
+    f32 unk78;                      /* 0x78 */
+    f32 unk7C;                      /* 0x7C */
 } Unk1B1470Request;
 
 typedef struct {
     u8 unk00;                       /* 0x00 */
     char pad01;
     s16 unk02;                      /* 0x02 */
-    char pad04[0x1C];
+    s32 unk04;                      /* 0x04 */
+    char pad08[0x06];
+    s16 unk0E[6];                   /* 0x0E */
+    char pad1A[0x02];
+    s32 unk1C;                      /* 0x1C */
     s16 unk20;                      /* 0x20 */
     s16 unk22;                      /* 0x22 */
-    char pad24[0x0C];
+    s16 unk24;                      /* 0x24 */
+    s16 unk26;                      /* 0x26 */
+    char pad28[0x08];
 } Unk1B1470Extra;
+
+/* Unk1B1470Request with the bits at 0x4C as byte-sized fields: func_001B2F70 reads unk4C_3 as a u8 */
+typedef struct {
+    char pad00[0x4C];
+    u8 unk4C_0 : 3;                 /* 0x4C */
+    u8 unk4C_3 : 1;
+    u8 unk4C_4 : 4;
+    char pad4D[0x33];
+} __attribute__((aligned(8))) Unk1B1470RequestBits;
+
+/* Unk1B1470Request with the four flag bytes from 0x4C as one 32-bit field, the way
+   func_001B1470 reads the shape in the low two bits */
+typedef struct {
+    char pad00[0x48];
+    struct Entity *owner;           /* 0x48 */
+    u64 flags : 32;                 /* 0x4C */
+} Unk1B1470RequestWord;
+
+/* Unk1B1470Request with the owner and the flag bytes after it as the one 64-bit word
+   func_001B1510 and func_001B29C8 test bits of (the flag bytes are its upper half) */
+typedef struct {
+    char pad00[0x48];
+    u64 owner_and_flags;            /* 0x48 */
+} Unk1B1470RequestUnit;
+
+#define UNK1B1470_REQUEST_UNIT(request) (((Unk1B1470RequestUnit *)(request))->owner_and_flags)
+/* unk4C_3 as a bit of the 64-bit word */
+#define UNK1B1470_UNIT_UNK4C_3 (0x8000L << 20)
 
 /* eight bytes the game copies with unaligned loads and stores */
 typedef struct {
@@ -231,6 +275,20 @@ typedef struct {
     u8 unk03;                       /* 0x03 */
 } EntityParamsUnk3D8;
 
+/* one of the four bodies of an entity kind the player collides with piece by piece (EntityParams.unk20) */
+#define ENTITY_BODY_USED    0x100
+#define ENTITY_BODY_ROUND   0x200   /* as tall as it is wide, the point being its top */
+
+typedef struct {
+    union {
+        u32 flags;                  /* 0x00 ENTITY_BODY_ bits */
+        u8 point;                   /* 0x00 the model point it sits at */
+    } unk00;
+    u16 unk04;                      /* 0x04 its radius, before the model's x scale */
+    u16 unk06;                      /* 0x06 its height, before the model's y scale */
+    f32 unk08;                      /* 0x08 a hit on this body counts this many times over (func_001B1510) */
+} EntityBodyPoint;
+
 /* what Entity.params points at: per-kind tuning values. EntityController below is a second
    view of the same block; the two are to be unified. */
 typedef struct {
@@ -250,7 +308,8 @@ typedef struct {
     u8 unk14[4];                    /* 0x14 weights of the four actions, scaled by Entity.unkBC */
     u16 unk18;                      /* 0x18 a distance to the player (see func_00183E98) */
     u16 unk1A;                      /* 0x1A a height: ranged attacks need the player level with it (func_0018FD50) */
-    char pad1C[0x34];
+    char pad1C[0x04];
+    EntityBodyPoint unk20[4];       /* 0x20 what the player collides with for the kinds made of several bodies (func_001BECA8) */
     f32 unk50;                      /* 0x50 */
     f32 unk54;                      /* 0x54 */
     f32 unk58;                      /* 0x58 */
@@ -261,25 +320,40 @@ typedef struct {
     char padC5;
     u16 unkC6;                      /* 0xC6 */
     u8 unkC8;                       /* 0xC8 */
-    char padC9;
+    u8 unkC9;                       /* 0xC9 */
     u8 unkCA;                       /* 0xCA */
     u8 unkCB;                       /* 0xCB */
     u16 unkCC;                      /* 0xCC Entity.radius before scaling */
     u16 unkCE;                      /* 0xCE */
-    char padD0[0x02];
+    u8 unkD0;                       /* 0xD0 */
+    u8 unkD1;                       /* 0xD1 */
     u8 unkD2;                       /* 0xD2 the model's scale in percent */
-    char padD3[0x07];
+    char padD3;
+    s16 unkD4;                      /* 0xD4 unkD4 to unkE4: nine resistances, 100 and up: immune (func_001B2F70) */
+    s16 unkD6;                      /* 0xD6 */
+    s16 unkD8;                      /* 0xD8 */
     s16 unkDA;                      /* 0xDA */
-    char padDC[0x0C];
+    s16 unkDC;                      /* 0xDC */
+    s16 unkDE;                      /* 0xDE */
+    s16 unkE0;                      /* 0xE0 */
+    s16 unkE2;                      /* 0xE2 */
+    s16 unkE4;                      /* 0xE4 */
+    u16 unkE6;                      /* 0xE6 */
     u16 unkE8;                      /* 0xE8 */
-    u8 unkEA;                       /* 0xEA */
-    char padEB[0x03];
+    u8 unkEA;                       /* 0xEA unkEA to unkED: percent taken off a hit's chance to start each of the four ailments (func_001B3908) */
+    u8 unkEB;                       /* 0xEB */
+    u8 unkEC;                       /* 0xEC */
+    u8 unkED;                       /* 0xED */
     u16 unkEE;                      /* 0xEE Entity.height before scaling */
     u8 unkF0[0x20];                 /* 0xF0 how many records unk130[n] leads to */
     u8 unk110[0x20];                /* 0x110 how many records unk1B0[n] leads to */
     s32 unk130[0x20];               /* 0x130 offsets from D_004467C0 to EntityParamsUnk130 records, by animation */
     s32 unk1B0[0x20];               /* 0x1B0 offsets from D_004467C0 to EntityParamsUnk1B0 records, by animation */
-    char pad230[0x08];
+    u16 gold;                       /* 0x230 how much gold it drops (func_001CB2C8): half of it for sure, the rest by chance */
+    u16 drop_item;                  /* 0x232 the item it may drop (func_001C8CB0), 0xFFFF: none */
+    u16 second_drop_item;           /* 0x234 the item it may drop when the first one's roll fails, 0xFFFF: none */
+    s8 drop_chance;                 /* 0x236 percent */
+    s8 second_drop_chance;          /* 0x237 percent */
     EntityUnaligned64 unk238;       /* 0x238 */
     EntityParamsUnk240 unk240[2];   /* 0x240 indexed by flag bits 58-59 */
     char unk350[0x88];              /* 0x350 */
@@ -757,6 +831,16 @@ typedef struct {
 
 #define ENTITY_FLAG_BITS(entity) ((EntityFlagBits *)&(entity)->flags)
 
+/* Entity.flags with bits 36-37 and 38-39 as two fields, the way func_001B2F70 sets them on a hit */
+typedef struct {
+    u64 pad0 : 36;
+    u32 hit_strength : 2;           /* bits 36-37: 1 below the threshold D_00446214 (percent of EntityParams.unk0A), else 2 */
+    u32 hit_source : 2;             /* bits 38-39: 1 the player's weapon, 2 the player's magic, 0 anything else */
+    u64 pad40 : 24;
+} EntityFlagHitBits;
+
+#define ENTITY_FLAG_HIT_BITS(entity) ((EntityFlagHitBits *)&(entity)->flags)
+
 /* Entity.target is a union member in the game: where a store to it has to stay
    ahead of a later load, only a store through a union matches. */
 typedef union {
@@ -839,7 +923,12 @@ typedef struct {
 
 /* one of the 0x80-byte records MapSlot.records (kf_map.h) points at */
 typedef struct {
-    char pad00[0x32];
+    char pad00[0x1C];
+    f32 unk1C;                      /* 0x1C the heading its floor pushes the player along (func_001B7EE0) */
+    char pad20[0x0C];
+    u16 unk2C;                      /* 0x2C the most speed the push gives, 0: no push */
+    u16 unk2E;                      /* 0x2E how much speed the push adds per frame, 0: no push */
+    char pad30[0x02];
     u16 unk32;                      /* 0x32 0xFFFF: unused */
     char pad34[0x02];
     u8 unk36;                       /* 0x36 which MapSlotUnk0C block the entities standing on it are drawn with */
@@ -1036,12 +1125,18 @@ typedef struct {
 typedef struct {
     char pad00[0x30];
     u16 unk30;                      /* 0x30 */
+    char pad32[0x1E];
+    s16 unk50;                      /* 0x50 how many steps there are between the two end points (func_001BD420) */
+    s16 unk52;                      /* 0x52 frames one step takes */
 } ReferencedObject;
 
 /* D_0044712C: points at the ReferencedObject */
 typedef struct {
-    char pad00[0x08];
+    ModelInstance *model;           /* 0x00 its get_point gives the two end points (func_001BD420) */
+    char pad04[0x04];
     ReferencedObject *unk08;        /* 0x08 */
+    char pad0C[0x04];
+    s32 unk10;                      /* 0x10 flags; 0x10000 is tested by func_001BD808 */
 } ObjectReference;
 
 void KF_Entity_ResetAllLists(void);

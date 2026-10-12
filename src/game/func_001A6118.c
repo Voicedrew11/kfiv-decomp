@@ -8,7 +8,7 @@ void func_001AF298(void *, void *);
 int func_001B4F90(void *);
 void sceVu0AddVector(void *, void *, void *);
 void KF_Vector_Scale(void *, void *, float);
-int func_001C0E40(float, void *);
+int func_001C0E40(f32, void *);
 char func_0019C8D0(int index, int first, int second, int third, int fourth);
 double sin(double);
 

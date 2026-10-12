@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 
 void func_00216778(void *, void *);
-int func_001C0E40(float, float *);
+int func_001C0E40(f32, void *);
 
 /* Starts an effect that falls toward the ground in front of it. */
 void func_001A6748(EffectActor *effect, EffectSlot *spawn_slot) {

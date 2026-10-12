@@ -2,7 +2,7 @@
 
 extern char D_003679A0[];
 extern char D_00413F80[];
-void func_001CFA70(int, int, int, int, int, int);
+void func_001CFA70(int, int, int, int, int, int, ...);
 
 typedef struct {
     char pad0[0x14];

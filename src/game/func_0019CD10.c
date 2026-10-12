@@ -1,7 +1,7 @@
 #include "common.h"
 
 extern s32 D_00502170[][2];
-void func_001CE9A0(s32, s32, s32);
+int func_001CE9A0(int, u32, int);
 
 void func_0019CD10(void) {
     s32 i;

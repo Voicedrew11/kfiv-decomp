@@ -1,7 +1,7 @@
 #include "kf_effect.h"
 
 void func_00216778(void *, void *);
-int func_001C0E40(float, void *);
+int func_001C0E40(f32, void *);
 
 /* Follows its target and counts down, then ends at the target's frame count. */
 void func_001AB188(EffectActor *actor, EffectSlot *spawn_slot) {

@@ -1,7 +1,7 @@
 #include "common.h"
 #include "kf_effect.h"
 
-void func_001C1430(float, void *, void *);
+void func_001C1430(f32, void *, void *);
 void func_00216778(void *, void *);
 
 #define SCRATCH_VECTOR ((Vector4 *)0x70000000)

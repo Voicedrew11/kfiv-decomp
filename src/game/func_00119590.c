@@ -8,7 +8,7 @@ void func_0011E758(MapObject *, int);
 void func_0011E7B0(void *, int, int);
 void func_0011E810(void *, int);
 void *func_001267E8(int, int);
-void func_001C8C80(int, int);
+int func_001C8C80(int, int);
 
 /* Sets map objects 0xA, 0xB and 0x22 and entity 0x17 up from the stage flags. */
 void func_00119590(int map) {

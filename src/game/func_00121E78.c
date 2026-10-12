@@ -5,7 +5,7 @@ extern GameStatus D_0038CC50;
 extern void *D_00420D50[];
 extern float D_00413F80[];
 
-void func_001CFA70(int, int, int, int, int, int);
+void func_001CFA70(int, int, int, int, int, int, ...);
 void func_0011E3A0(char *);
 void func_0011F148(char *);
 void func_00216B48(void *, void *, void *);

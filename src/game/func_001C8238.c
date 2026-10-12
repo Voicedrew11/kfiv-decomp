@@ -1,7 +1,7 @@
 #include "kf_model.h"
 #include "kf_player.h"
 
-int func_001CA338(int);
+void func_001CA338(int);
 extern LevelDef D_004147F8[];
 extern s32 D_004469D0;
 extern ModelNode *D_004469D4;

@@ -2,7 +2,7 @@
 
 extern u8 D_00349680[];
 extern char D_003EF710[];
-void func_001CE9A0(int, int, int);
+int func_001CE9A0(int, u32, int);
 
 typedef struct {
     char pad0[0x30];

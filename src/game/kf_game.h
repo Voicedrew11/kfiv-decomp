@@ -13,7 +13,7 @@ typedef struct {
     s8 unk03;                       /* 0x03 */
     u8 unk04;                       /* 0x04 0 or 1 */
     s8 unk05;                       /* 0x05 nonzero: the camera moves to CameraState.unk30 */
-    char pad06;
+    char unk06;                     /* 0x06 nonzero: the player cannot run (func_001B5A48) */
     char unk07;                     /* 0x07 */
     char pad08[0x18];
     int unk20;                      /* 0x20 index into D_0041A6F8 (TriggerTypeDef), used with bit6 */
@@ -35,7 +35,8 @@ typedef struct {
     int unk2C;                      /* 0x2C */
     int unk30;                      /* 0x30 */
     int unk34;                      /* 0x34 set with bit5 by func_001226E0 */
-    char pad38[0x10];
+    char pad38[0x0C];
+    int unk44;                      /* 0x44 counts down to 0; 1 when an item was just used (func_001BC2D0) */
 } GameStatus;
 
 /* D_00446A28: the play time as func_001D22B8 splits it (byte 1 seconds, 2 minutes, 3 and 5 hours), passed by value */
@@ -87,6 +88,7 @@ typedef struct {
     f32 unk40;                      /* 0x40 how far along unk10 */
     char pad44[0x0C];
     void *current;                  /* 0x50 the event being run */
+    void *unk54;                    /* 0x54 an Entity whose spawn info can answer the use of an item (func_001BC2D0) */
 } EventRunner;
 
 /* an event func_00120130 hands to func_0011FDD0 */
@@ -155,7 +157,9 @@ typedef struct {
 /* D_004147F8[380]: 0x40-byte definitions read from a data file by func_00112648
    (150, then 70, then 160 of them: see func_001029A8) */
 typedef struct {
-    char pad00[0x33];
+    char pad00[0x30];
+    u16 unk30;                      /* 0x30 the number in the name of its item_arm file (func_001BF898) */
+    char pad32[0x01];
     u8 unk33;                       /* 0x33 */
     char pad34[0x08];
     u8 unk3C;                       /* 0x3C */
@@ -183,6 +187,25 @@ typedef struct {
     int unk04;                      /* 0x04 */
 } PendingSlot;
 
+/* D_005C58E8: the message box (func_001CF988 opens it, func_001CF4D0 runs it, func_001CF708 draws it) */
+typedef struct {
+    s16 *start;                     /* 0x00 first glyph of the page on screen */
+    s16 *cursor;                    /* 0x04 glyph being typed */
+    s16 *end;                       /* 0x08 end of the page (func_001D0658) */
+    int delay;                      /* 0x0C frames per glyph */
+    int timer;                      /* 0x10 frames since the last glyph */
+    int unk14;                      /* 0x14 */
+    int waiting;                    /* 0x18 1 = page typed out, waiting for a button */
+    int typed;                      /* 0x1C glyphs typed on this page (control codes not counted) */
+    int closing;                    /* 0x20 1 = closing */
+    int close_timer;                /* 0x24 frames left of the closing */
+    int left;                       /* 0x28 */
+    int top;                        /* 0x2C */
+    int font;                       /* 0x30 */
+    int unk34;                      /* 0x34 */
+    int line_offsets[4];            /* 0x38 left edge of each line (func_001D0658) */
+} MessageBox;
+
 /* D_0042A8F0[32]: a pool of 0x70-byte slots chained into a free list through `next`;
    D_00446DF0 holds the head */
 typedef struct PoolSlot {
@@ -190,5 +213,50 @@ typedef struct PoolSlot {
     struct PoolSlot *next;          /* 0x50 */
     char pad54[0x1C];
 } PoolSlot;
+
+/* D_00413DB8[2]: a controller as the game reads it, one per port (func_001B5590). D_00413DA8 is the copy
+   of port 0 that the game tests. */
+typedef struct {
+    u16 held;                       /* 0x00 buttons held, the stick directions among them */
+    u16 pressed;                    /* 0x02 buttons that went down this frame */
+    s32 type;                       /* 0x04 what func_002179F8 says: 1 has sticks, 0xFF is no controller */
+    u16 look_buttons;               /* 0x08 the right stick's up and down as the buttons 0x200 and 0x100 */
+    u16 prev_look_buttons;          /* 0x0A */
+    u16 move_buttons;               /* 0x0C the left stick as the direction buttons (0x80, 0x20, 0x10, 0x40) */
+    u16 prev_move_buttons;          /* 0x0E */
+} PadState;
+
+/* what func_00217760 returns: the controller's own report */
+typedef struct {
+    char pad00[0x02];
+    u16 held;                       /* 0x02 */
+    u8 right_stick_x;               /* 0x04 the four axes, 0x80 at rest */
+    u8 right_stick_y;               /* 0x05 */
+    u8 left_stick_x;                /* 0x06 */
+    u8 left_stick_y;                /* 0x07 */
+    char pad08[0x18];
+    u16 pressed;                    /* 0x20 */
+} PadReport;
+
+/* PadReport's axis bytes two at a time: zero when the controller sends none */
+typedef struct {
+    char pad00[0x04];
+    u16 right_stick;                /* 0x04 */
+    u16 left_stick;                 /* 0x06 */
+} PadReportAxes;
+
+/* the texts of the debug start menu (func_001B0A78), local arrays it copies whole from
+   read-only data: blank lines above the text, the PUSH START line, the four menu lines */
+typedef struct {
+    char text[0x1A];
+} DebugStartMenuSpacer;
+
+typedef struct {
+    char text[0x46];
+} DebugStartMenuPrompt;
+
+typedef struct {
+    char text[4][0x80];
+} DebugStartMenuItems;
 
 #endif

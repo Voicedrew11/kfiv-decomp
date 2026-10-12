@@ -4,7 +4,7 @@ extern u8 D_00349690[];
 void func_0011E0C8(MapObject *);
 void func_0011E140(MapObject *);
 MapObject *func_0011E1F0(int, int);
-void func_001C8C80(int, int);
+int func_001C8C80(int, int);
 
 /* Parks or reveals the pair of scene objects 0x66/0x67 depending on the stage flags. */
 void func_0011A138(int map) {

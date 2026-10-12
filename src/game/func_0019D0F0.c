@@ -3,7 +3,7 @@
 extern int D_003EF5F8[];
 extern char D_00349682[];
 int func_0019C688(int);
-void func_001CE690(int, int, int, char, int, char, s16, int);
+int func_001CE690(u32, int, char, char, char, char, s16, char);
 
 s32 func_0019D0F0(s32 value) {
     s32 slot;

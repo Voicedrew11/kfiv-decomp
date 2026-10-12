@@ -4,7 +4,7 @@
 extern char D_00413F80[];
 
 int func_001AFD08(void *, void *, void *);
-int func_001C0E40(float, void *);
+int func_001C0E40(f32, void *);
 
 /* Starts an effect like func_001A4128, then settles the model onto the ground half a height up. */
 void func_001A4248(EffectActor *actor, EffectSlot *spawn_slot) {

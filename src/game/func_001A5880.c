@@ -20,7 +20,7 @@ typedef struct {
 void func_001AF640(void *, int);
 void func_001AF928(void *, int);
 void func_001AF538(float, void *, void *);
-void func_001C1430(float, void *, void *);
+void func_001C1430(f32, void *, void *);
 
 typedef struct {
     char pad[0x10];

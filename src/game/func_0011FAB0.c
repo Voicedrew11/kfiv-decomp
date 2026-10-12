@@ -4,9 +4,9 @@ extern Qword D_0043E780;
 extern u32 D_0038CC74[];
 extern void *D_00420D50[];
 
-void func_001C9340(int, s16, void *, void *, void *, void *);
-void func_001C9AB0(int);
-void func_001CFA70(int, int, int, int, int, int);
+ItemNode *func_001C9340(int, int, void *, void *, void *, void *);
+int func_001C9AB0(ModelNode *);
+void func_001CFA70(int, int, int, int, int, int, ...);
 
 /* Update handler: when the player uses an object that holds an item it is handed
    out (func_001C9340), else a message is shown, at most every 45 frames. */

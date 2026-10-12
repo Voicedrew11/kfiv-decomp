@@ -2,7 +2,7 @@
 
 extern int D_004468E0;
 void func_001AF298(void *, void *);
-int func_001C0E40(float, void *);
+int func_001C0E40(f32, void *);
 void sceVu0AddVector(void *, void *, void *);
 
 void func_001A98D0(EffectActor *actor) {

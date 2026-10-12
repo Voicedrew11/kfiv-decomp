@@ -937,12 +937,47 @@ typedef struct {
 
 #define EFFECT_SLOT_FLAG_PARTS(slot) ((EffectSlotFlagParts *)&(slot)->flags)
 
+/* FxTableEntry+0xAC: what casting the magic does to the player (func_001BC9E0) */
+typedef struct {
+    u16 unk00[6];                   /* 0x00 nonzero: PlayerState.timed_flags[i] is cleared */
+    u16 unk0C[6];                   /* 0x0C goes to PlayerState.unk110 */
+    s16 unk18[9];                   /* 0x18 goes to PlayerState.unk11C and unk122 */
+    u16 unk2A[6];                   /* 0x2A goes to PlayerState.unk12E */
+    s16 unk36[9];                   /* 0x36 goes to PlayerState.unk13A and unk140 */
+    u16 duration;                   /* 0x48 frames the values above last */
+    s16 unk4A;                      /* 0x4A healing in all; 999 and more: all of it */
+    s16 unk4C;                      /* 0x4C healing given at once */
+    s16 unk4E;                      /* 0x4E frames per point of the rest */
+} FxTableStats;
+
+/* FxTableEntry+0x34: one of the three hit checks of an effect, EffectDef.unk10B picks it (func_001B4F90) */
+typedef struct {
+    EntityParamsUnk240PartUnk00 strengths; /* 0x00 goes to Unk1B1470Request.unk50 */
+    EntityParamsUnk240PartUnk12 unk12; /* 0x12 goes to Unk1B1470Request.unk62 */
+    s16 unk1E;                      /* 0x1E goes to Unk1B1470Request.unk30 */
+    s16 unk20;                      /* 0x20 goes to Unk1B1470Request.unk34 (shape 1) */
+    u8 shape;                       /* 0x22 0 to 2: Unk1B1470Request.unk4C_0 */
+    u8 unk23;                       /* 0x23 bits copied to Unk1B1470Request.unk4D (all but 0x40) */
+    u8 unk24;                       /* 0x24 goes to EffectActorFlagParts.unk40 once the hit has landed */
+    u8 unk25;                       /* 0x25 goes to Unk1B1470Request.unk4F */
+    u8 unk26;                       /* 0x26 not 0: Unk1B1470Request.unk4C_3 */
+    u8 unk27;                       /* 0x27 goes to Unk1B1470Request.unk70 */
+} FxTableHitCheck;
+
 /* D_00402DA8[]: a table entry of 0x110 bytes, indexed by effect id (func_001B4F30) */
 typedef struct {
-    char pad00[0x100];
+    char pad00[0x34];
+    FxTableHitCheck hit_checks[3];  /* 0x34 */
+    FxTableStats unkAC;             /* 0xAC */
+    u16 unkFC;                      /* 0xFC taken from PlayerState.unkB8 to cast it (func_001BC9E0) */
+    u16 unkFE;                      /* 0xFE divides how fast PlayerState.unkC0 fills (func_001B96C8) */
     u16 unk100;                     /* 0x100 */
     s8 unk102;                      /* 0x102 nonzero: the effect cannot be started */
-    char pad103[0x0D];
+    char pad103[0x01];
+    u16 unk104;                     /* 0x104 goes to PlayerState.unkC8 when it is cast */
+    char pad106[0x02];
+    f32 unk108;                     /* 0x108 */
+    char pad10C[0x04];
 } FxTableEntry;
 
 /* helpers every effect kind calls */

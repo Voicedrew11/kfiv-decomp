@@ -6,7 +6,7 @@
 
 void func_001A7110(void *, void *, void *);
 float func_001B0178(void *, void *);
-void func_001C1430(float, void *, void *);
+void func_001C1430(f32, void *, void *);
 void func_00216778(void *, void *);
 int rand(void);
 

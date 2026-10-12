@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-void func_001CFA70(int, int, int, int, int, int);
+void func_001CFA70(int, int, int, int, int, int, ...);
 
 /* Update handler of the message kind, step 3: shows the message for 45 frames. */
 void func_00120E48(MapObject *object) {

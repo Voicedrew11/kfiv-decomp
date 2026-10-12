@@ -6,11 +6,11 @@ extern void *D_00420D50[];
 extern u8 D_00369830[];
 
 void *memset(void *, int, u32);
-void func_001CFA70(int, int, int, int, int, int);
+void func_001CFA70(int, int, int, int, int, int, ...);
 void func_00123000(int);
 void func_0019D490(s32, s32, f32 *, f32);
-void func_001C9340(int, s16, void *, void *, void *, void *);
-void func_001CB0D0(Vector4 *, Vector4 *, int, int, int, int, int);
+ItemNode *func_001C9340(int, int, void *, void *, void *, void *);
+int func_001CB0D0(Vector4 *, Vector4 *, int, int, int, int, int);
 
 /* Update handler of a chest-like kind: used by the player, it opens (when it
    needs a key the player must hold it, else a message is shown) and hands out

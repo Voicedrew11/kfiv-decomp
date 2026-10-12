@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 #include "kf_entity.h"
 
-int func_001C1138(float, void *);
+int func_001C1138(f32, void *);
 
 /* Drops the model onto the entity it is tied to, and clears the motion's flag while it is in reach. */
 void func_001ACD18(EffectActor *actor, EffectSlot *spawn_slot) {

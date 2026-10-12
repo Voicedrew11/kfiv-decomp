@@ -1,6 +1,6 @@
 extern void *D_004469D4;
 
-int func_001CA338(int);
+void func_001CA338(int);
 void *func_001CA520(void *);
 
 typedef struct KfNode {

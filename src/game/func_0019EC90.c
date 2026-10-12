@@ -4,7 +4,7 @@ extern int func_001CBD20(void);
 extern int func_001CBAC0(void);
 extern int func_001CD020(int, int, int, int, int, int, int);
 extern void func_001CD6E0(int);
-extern int func_001CDF90(int, int, int, int);
+int func_001CDF90(int, int, int, u32);
 extern void func_001CE408(int);
 extern void func_0019C7D0(int);
 extern u8 D_00349681[];

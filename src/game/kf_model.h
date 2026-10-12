@@ -434,8 +434,21 @@ typedef struct {
     s32 unk0C;                      /* 0x0C */
 } ModelScreenPoint;
 
+/* a 4x4 matrix (ModelInstance.unk40, ModelPart.unk00) as retail copies it whole: by doublewords */
+typedef struct {
+    f32 rows[4][4];
+} __attribute__((aligned(16))) ModelMatrix;
+
+/* the same matrix where retail copies it by quadwords */
+typedef struct {
+    Uint128 rows[4];
+} ModelMatrixQwords;
+
 /* ModelInstance.unk40 as the 4x4 matrix it is */
 #define MODEL_MATRIX(model) ((f32 (*)[4])(model)->unk40)
+
+/* ModelPart.unk00 as the 4x4 matrix it is */
+#define PART_MATRIX(part) ((f32 (*)[4])(part)->unk00)
 
 /* the scratchpad as func_00112118 uses it: a matrix per part, then one point and where it lands */
 typedef struct {
@@ -467,10 +480,12 @@ typedef struct {
     u8 unk48;                       /* 0x48 */
     char pad49[0x01];
     s16 unk4A;                      /* 0x4A */
-    char pad4C[0x08];
+    char pad4C[0x06];
+    u16 unk52;                      /* 0x52 1 to 6: touching it starts PlayerState.timed_flags[unk52 - 1] (func_001BF350) */
     u16 unk54;                      /* 0x54 passed to func_001A1C58 when the object comes into view, 0: nothing */
     u8 unk56;                       /* 0x56 the model point it starts at; the next one gives its direction */
-    char pad57[0x03];
+    char pad57[0x01];
+    u16 unk58;                      /* 0x58 passed to func_002109C8 when an item is used on the object, 0: nothing */
     u8 unk5A;                       /* 0x5A 0, 0xFF: in view with its map record; else by func_00116C08 */
     char pad5B[0x25];
 } MapObjectUnk08;
@@ -515,19 +530,37 @@ typedef struct {
     u32 pad00_9 : 2;
     u32 bit11 : 1;                  /* func_0011E228 can break it */
     u32 bit12 : 1;                  /* it has a breaking animation (1) */
-    u32 pad00_13 : 19;
+    u32 pad00_13 : 2;
+    u32 bit15 : 1;                  /* the player standing on it is carried and turned with it (func_001B7EE0) */
+    u32 pad00_16 : 16;
     u16 unk04;                      /* 0x04 0xFFFF: it has no model */
     u16 unk06;                      /* 0x06 0xFFFF: it has no collision mesh */
     char pad08[0x04];
     f32 unk0C;                      /* 0x0C above 0: MapObject.unk14 is this times the scale, plus 100 */
     MapObjectAnim anims[8];         /* 0x10 by MapObjectBytes.anim; entry anim + 2 holds a second sound for anims 4 and 5 */
     u16 unk50;                      /* 0x50 passed to func_001A1C58 */
-    char pad52[0x16];
+    s16 unk52[9];                   /* 0x52 percent of each of a hit's nine strengths that it shrugs off, 200: all of it (func_001B3AC0) */
+    char pad64[0x04];
     u32 unk68;                      /* 0x68 flags; the low half is also a message id */
     f32 unk6C;                      /* 0x6C MapObject.unk3C is this times the scale, plus 100 */
     f32 unk70;                      /* 0x70 how far its sounds carry, 0: 800 */
     u8 unk74;                       /* 0x74 */
 } MapObjectUnk04;
+
+/* MapObjectUnk04's first word as two halves */
+typedef struct {
+    u16 flags;                      /* 0x00 */
+    u16 toughness;                  /* 0x02 the damage one hit must do to break the object (func_001B3AC0) */
+} MapObjectDefHalves;
+
+#define MAP_OBJECT_DEF_TOUGHNESS(def) (((MapObjectDefHalves *)(def))->toughness)
+
+/* MapObjectUnk04's first word whole, where retail tests a bit of it with a mask (func_001B7EE0) */
+#define MAP_OBJECT_DEF_FLAGS(def) (*(u32 *)(def))
+#define MAP_OBJECT_DEF_CARRIES 0x8000   /* bit15 */
+
+/* MapObjectUnk04.kind read as the byte it is, where retail compares it that way (func_001C65F0) */
+#define MAP_OBJECT_DEF_KIND(def) (*(u8 *)(def))
 
 /* AnimObject+0x40 */
 typedef struct {
@@ -559,7 +592,7 @@ typedef struct {
     s32 unk0C;                      /* 0x0C what func_00115CD0 returns for its position */
     u32 unk10;                      /* 0x10 flags, MAP_OBJECT_BITS */
     f32 unk14;                      /* 0x14 how far around its position it reaches, 0: nothing to hit */
-    char pad18[0x04];
+    f32 unk18;                      /* 0x18 how far it is from the point last tested against the map objects (func_001C2758, func_001C2A38) */
     void *unk1C;                    /* 0x1C the next MapObject of its draw list (D_00447088, D_00447090) */
     f32 unk20;                      /* 0x20 the model's position (x, y, z) as of the last update */
     f32 unk24;                      /* 0x24 */
@@ -686,13 +719,92 @@ typedef struct ModelNode {
     s32 unk00;                      /* 0x00 */
     s32 unk04;                      /* 0x04 cleared when the node is unlinked */
     s32 unk08;                      /* 0x08 cleared when the node is unlinked */
-    char pad0C[0x0C];
+    s32 unk0C;                      /* 0x0C bit 0: the map slot */
+    char pad10[0x04];
+    void *unk14;                    /* 0x14 the MapRecordInfo (kf_map.h) it is standing in, found every frame */
     ModelInstance *model;           /* 0x18 non-null while the node is in use */
-    char pad1C[0x04];
+    s16 item;                       /* 0x1C which item it is (index into D_004147F8) */
+    s16 unk1E;                      /* 0x1E index into the map's row of D_00356928 */
     struct ModelNode *prev;         /* 0x20 */
     struct ModelNode *next;         /* 0x24 */
     char pad28[0x14];
 } ModelNode;
+
+/* one of a map's fixed items: where it lies and what it is (0x40 bytes, D_004469B8[map]) */
+typedef struct {
+    Vector4 position;               /* 0x00 */
+    Vector4 rotation;               /* 0x10 */
+    Vector4 scale;                  /* 0x20 */
+    u16 item;                       /* 0x30 which LevelDef (D_004147F8) it is */
+    char pad32[0x04];
+    u8 required_flag;               /* 0x36 nonzero: it only appears while its byte of D_00356928 is below this */
+    u8 chance;                      /* 0x37 percent chance that it appears (func_001C87D8) */
+    u8 group;                       /* 0x38 0-15: picks the roll and the map's threshold it is tested against */
+    char pad39[0x06];
+    u8 slot_id;                     /* 0x3F its slot in D_005B5EC0 */
+} MapItemDef;
+
+/* an item lying where it was dropped, as it is saved (0x14 bytes, 16 per map at D_00358928) */
+typedef struct {
+    s16 position[3];                /* 0x00 */
+    s8 rotation[3];                 /* 0x06 in 1/16 radian */
+    s8 scale[3];                    /* 0x09 in 1/16 */
+    u16 item;                       /* 0x0C */
+    u8 used;                        /* 0x0E */
+    u8 priority;                    /* 0x0F ItemNodeBits.priority */
+    s32 order;                      /* 0x10 D_004469D0 when it was dropped: the oldest is replaced first */
+} DroppedItemRecord;
+
+/* a map's 16 dropped items (a row of D_00358928), for copying them all at once */
+typedef struct {
+    DroppedItemRecord records[16];  /* 0x00 */
+} DroppedItemRecords;
+
+/* a ModelNode as the item code reads it: 64 fixed items per map at D_0057E240, then 16
+   dropped ones per map at D_00580040 */
+typedef struct ItemNode {
+    MapItemDef *def;                /* 0x00 NULL on a dropped item */
+    DroppedItemRecord *record;      /* 0x04 NULL on a fixed item */
+    s32 unk08;                      /* 0x08 */
+    u32 flags;                      /* 0x0C ItemNodeBits */
+    char pad10[0x04];
+    void *map_record;               /* 0x14 the MapRecordInfo (kf_map.h) it lies in, looked up before it is drawn */
+    ModelInstance *model;           /* 0x18 */
+    u16 item;                       /* 0x1C */
+    s16 index;                      /* 0x1E */
+    struct ItemNode *prev;          /* 0x20 */
+    struct ItemNode *next;          /* 0x24 */
+    f32 unk28;                      /* 0x28 a height */
+    f32 unk2C;                      /* 0x2C a height */
+    f32 unk30;                      /* 0x30 0 when the item is laid down */
+    char pad34[0x08];
+} ItemNode;
+
+/* ItemNode.flags with the map slot as a bit-field */
+typedef struct {
+    u32 map : 1;                    /* which of the two loaded maps it lies in */
+    u32 bits1 : 31;
+} ItemNodeMapBit;
+
+#define ITEM_NODE_MAP_BIT(node) ((ItemNodeMapBit *)&(node)->flags)
+
+/* ItemNode with all of its flags as bit-fields (func_001C8F18) */
+typedef struct {
+    char pad00[0x0C];
+    u32 map : 1;                    /* 0x0C which of the two loaded maps it lies in */
+    u32 bit1 : 1;
+    u32 bit2 : 1;                   /* set on a dropped item */
+    u32 priority : 4;               /* a dropped item is only replaced by one whose priority is not lower */
+    u32 bits7 : 25;
+} ItemNodeBits;
+
+#define ITEM_NODE_BITS(node) ((ItemNodeBits *)(node))
+
+/* D_0057E040[map][32]: what is loaded for each kind of item a map holds (func_001CA498 finds one) */
+typedef struct {
+    char *model_data;               /* 0x00 handed to func_0010D018 */
+    char *texture;                  /* 0x04 becomes the model's unk194 */
+} ItemModelSource;
 
 /* a motion that turns a model by a fixed step each frame (func_00212778) */
 typedef struct {

@@ -7,7 +7,7 @@ float atan2f(float, float);
 float func_0019C640(float *, float *, float *);
 void func_0019C598(float, float *, float *);
 int func_0019C688(int);
-void func_001CE690(int, int, int, char, int, char, s16, int);
+int func_001CE690(u32, int, char, char, char, char, s16, char);
 
 /* Plays a sound panned and scaled by where the point lies relative to the player, if it is within range. */
 int func_0019D1C0(float range, int sound, float *position) {

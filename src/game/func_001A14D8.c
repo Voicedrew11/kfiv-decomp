@@ -7,7 +7,7 @@ extern int D_00446770;
 extern PlayerState D_00413F80;
 extern s8 D_004470E3;
 
-int func_001CBAE0(int, int, int, int);
+int func_001CBAE0(int, ...);
 
 /* Syncs the cached byte D_004470E3 to the current map slot's value and sends it to the sound call. */
 int func_001A14D8(void) {

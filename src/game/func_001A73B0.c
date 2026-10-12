@@ -8,7 +8,7 @@ extern char D_00413F80[];
 
 int func_001AFD08(void *, void *, void *);
 void KF_Vector_Subtract(void *, void *, void *);
-void func_001C1430(float, void *, void *);
+void func_001C1430(f32, void *, void *);
 void func_00216778(void *, void *);
 
 /* Starts an effect that homes on an entity picked from its target's setup. */

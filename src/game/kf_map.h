@@ -52,6 +52,11 @@ typedef struct {
     u64 unk00[16];                  /* 0x00 */
 } MapSlotUnk10Words;
 
+/* the first half of such a block: what the held item's models are lit by (D_004145E0, func_001BFCC8) */
+typedef struct {
+    u64 unk00[8];                   /* 0x00 */
+} MapSlotUnk10Half;
+
 /* a MapSlotUnk10Words block as the eight vectors it holds; func_0011D6B0 blends the last four
    towards D_0038D9F0 */
 typedef struct {
@@ -88,7 +93,10 @@ typedef struct {
     MapFogColor unk280;             /* 0x280 the current map's */
     MapSlotUnk0C unk290[2][0x20];   /* 0x290 each map slot's blocks */
     MapSlotUnk10Words unkA90[2][0x20];  /* 0xA90 each map slot's blocks */
-    char pad2A90[0x10];
+    f32 unk2A90;                    /* 0x2A90 0 to 0.25: rises while PlayerState.unk2E0 or unk10C is set (func_001B69D0) */
+    f32 unk2A94;                    /* 0x2A94 copy of unk2A90 */
+    f32 unk2A98;                    /* 0x2A98 copy of unk2A90 */
+    char pad2A9C[0x04];
 } MapDrawState;
 
 /* MapDrawState.unk60 as bit-fields */
@@ -200,10 +208,15 @@ typedef struct {
 
 /* what MapSlot.header points at: the loaded map's header, as func_0019F3A0 reads it */
 typedef struct {
-    char pad00[0x3C];
+    char pad00[0x20];
+    s32 item_models_offset;         /* 0x20 from the header to the item models: sized blocks, a model then its texture per kind */
+    char pad24[0x18];
     u16 record_count;               /* 0x3C how many MapSlot.records there are */
-    char pad3E[0x32];
+    char pad3E[0x06];
+    u16 item_count;                 /* 0x44 how many fixed items (MapItemDef) the map has */
+    char pad46[0x2A];
     s8 unk70;                       /* 0x70 passed to sprintf as the file-name index */
+    u8 unk71;                       /* 0x71 which block of MapDrawState.unkA90 the items lying in the map are drawn with */
 } MapHeader;
 
 /* one 0x60-byte entry of D_0038CD20, indexed by the current map/slot D_00446770 */
@@ -403,21 +416,56 @@ typedef struct {
 /* D_0041A6F8[]: 0x20-byte definitions whose first byte is a trigger type */
 typedef struct {
     u8 type;                        /* 0x00 */
-    char pad01[0x0D];
+    u16 unk01_0 : 4;                /* 0x01 */
+    u16 use_mode : 4;               /* using one: 0 takes it, 2 takes it and gives one of unk02 (func_001BC2D0) */
+    u16 unk02;                      /* 0x02 an item (D_00369830) */
+    u16 unk04;                      /* 0x04 added to PlayerState.unkB4 when a type 0 one is used */
+    u16 unk06;                      /* 0x06 added to PlayerState.unkB8 */
+    u16 unk08;                      /* 0x08 bit n set: starts PlayerState.timed_flags[n] for 60 frames */
+    char pad0A[0x04];
     u16 flags;                      /* 0x0E bit 1 */
     char pad10[0x10];
 } TriggerTypeDef;
 
 /* D_005B6100[map slot][16]: a map actor (0x2C bytes); flags bit 2 is the map slot */
-typedef struct {
-    u32 flags;                      /* 0x00 */
-    char pad04[0x0C];
+typedef struct MapActor {
+    u32 flags;                      /* 0x00 bit 0: in use, bit 1: near enough to pick up, bit 2: the map slot; the high half is MapActorWords.amount */
+    s8 step;                        /* 0x04 0: fading in, 1: lying there, 2: fading out */
+    u8 fade_timer;                  /* 0x05 frames left of the fade */
+    char pad06[0x02];
+    f32 unk08;                      /* 0x08 D_004469DC when it was dropped */
+    u32 serial;                     /* 0x0C the slot's count of drops when it was dropped: the lowest is the oldest */
     ModelInstance *body;            /* 0x10 */
     f32 unk14;                      /* 0x14 */
-    char pad18[0x0C];
+    struct MapActor *prev;          /* 0x18 */
+    struct MapActor *next;          /* 0x1C the list of the ones in use starts at D_004469E0 */
+    char pad20[0x04];
     u8 unk24;                       /* 0x24 */
     char pad25[0x07];
 } MapActor;
+
+/* a MapActor where the code reads the high half of flags and the word at 0x24 whole */
+typedef struct {
+    u16 flags_low;                  /* 0x00 */
+    u16 amount;                     /* 0x02 how much gold it is worth */
+    char pad04[0x20];
+    s32 object_id;                  /* 0x24 the map object that dropped it (func_0011E678), 0: none */
+    char pad28[0x04];
+} MapActorWords;
+
+#define MAP_ACTOR_WORDS(actor) ((MapActorWords *)(actor))
+
+/* MapActor.flags as bit-fields */
+typedef struct {
+    u32 in_use : 1;
+    u32 in_reach : 1;               /* the nearest one to the player, when it is close enough to pick up */
+    u32 map : 1;                    /* which of the two loaded maps it lies in */
+    u32 bits3 : 13;
+    u32 amount : 16;
+} MapActorBits;
+
+#define MAP_ACTOR_BITS(actor) ((MapActorBits *)&(actor)->flags)
+#define MAP_ACTOR_COUNT 16
 
 /* D_00362928[MapSlot.tag][16]: where a map object is marked (0xA bytes) */
 typedef struct {
@@ -428,5 +476,10 @@ typedef struct {
     u8 unk07;                       /* 0x07 */
     u16 unk08;                      /* 0x08 */
 } ObjectMark;
+
+/* a map's 16 marks, as func_001CA920 copies them whole */
+typedef struct {
+    ObjectMark marks[16];
+} ObjectMarkRow;
 
 #endif

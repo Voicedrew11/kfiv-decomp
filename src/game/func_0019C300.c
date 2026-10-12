@@ -25,7 +25,7 @@ extern u8 D_004470E7;
 
 void *memset(void *, int, u32);
 int func_001CB778(void);
-int func_001CBAE0(int, int, int, int);
+int func_001CBAE0(int, ...);
 void func_001CBE60(void);
 void func_001A1458(void *);
 int func_0019F720(void);

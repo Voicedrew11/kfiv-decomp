@@ -5,7 +5,7 @@ extern TriggerTypeDef D_0041A6F8[];
 extern GameStatus D_0038CC50;
 extern void *D_00420D50[];
 
-void func_001CFA70(int, int, int, int, int, int);
+void func_001CFA70(int, int, int, int, int, int, ...);
 void func_001BC1C0(int);
 
 /* Update handler of a sliding kind, step 3: used by the player, it gives back

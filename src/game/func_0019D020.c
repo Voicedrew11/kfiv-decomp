@@ -5,7 +5,7 @@ extern int D_003EF5E8[];
 extern int D_003EF648[];
 int rand(void);
 int func_0019C688(int);
-void func_001CE690(int, int, int, char, int, char, s16, int);
+int func_001CE690(u32, int, char, char, char, char, s16, char);
 
 int func_0019D020(int arg0) {
     int *p;

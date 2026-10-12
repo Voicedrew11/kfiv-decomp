@@ -1,6 +1,6 @@
 #include "common.h"
 
-int func_001CBAE0(int, int, char, int);
+int func_001CBAE0(int, ...);
 void func_001CD6E0(int);
 int printf(char *);
 int sceSifFreeIopHeap(int);

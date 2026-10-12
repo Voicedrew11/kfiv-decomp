@@ -1,4 +1,6 @@
-int func_001CBAE0(int, int, int, int);
+#include "common.h"
+
+int func_001CBAE0(int, ...);
 
 void func_0019C748(void) {
     func_001CBAE0(1, 0x100, 0xA, 0x800);

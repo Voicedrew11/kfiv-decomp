@@ -1,6 +1,6 @@
 #include "common.h"
 
-void func_001CE690(int, int, int, char, int, char, s16, int);
+int func_001CE690(u32, int, char, char, char, char, s16, char);
 s32 func_001CE8B0(u32);
 extern s8 D_00349680[];
 extern s32 D_003EF618[];

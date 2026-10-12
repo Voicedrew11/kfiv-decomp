@@ -6,7 +6,7 @@ extern char D_00413F80[];
 
 int func_001AFD08(void *, void *, void *);
 void func_00216778(void *, void *);
-int func_001C0E40(float, void *);
+int func_001C0E40(f32, void *);
 void KF_Vector_Subtract(void *, void *, void *);
 
 void func_001A4F78(EffectActor *actor, EffectSlot *spawn_slot) {

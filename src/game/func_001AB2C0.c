@@ -4,7 +4,7 @@ extern char D_00413F80[];
 
 void KF_Vector_Subtract(void *, void *, void *);
 int func_001B4F90(void *);
-int func_001C0E40(float, void *);
+int func_001C0E40(f32, void *);
 void sceVu0AddVector(void *, void *, void *);
 
 /* Bobs toward its target, then ends once it is grounded or a check fails. */
