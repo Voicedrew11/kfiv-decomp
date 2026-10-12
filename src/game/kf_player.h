@@ -18,10 +18,7 @@ typedef struct {
     s16 timed_flags[6];             /* 0x30 held at 0 while the matching timer runs */
     u8 unk3C;                       /* 0x3C row of D_0041B9B8 (0x90 bytes each) */
     u8 unk3D;                       /* 0x3D passed to func_001A1260 at start-up */
-    char pad3E[0x04];
-    u8 unk42;                       /* 0x42 */
-    char pad43[0x02];
-    u8 unk45;                       /* 0x45 0x9C: enemy attacks reach half as far (func_0018F648) */
+    u8 equipment[8];                /* 0x3E equipped items, from definition 220 on; [7] 0x9C: enemy attacks reach half as far (func_0018F648) */
     u16 unk46;                      /* 0x46 */
     u8 unk48;                       /* 0x48 */
     char pad49[0x03];

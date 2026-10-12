@@ -57,7 +57,7 @@ extern int D_00447000[2];       /* [1] the KF4.DAT header, [2] its entries */
 extern KFFile D_00447600[2];
 extern char D_00447680[];       /* the KF4.DAT table of contents */
 
-int KF_File_Open(char *name, int nowait, int pack);
+int KF_File_Open(char *name, int nowait, int pack, int unused);
 int func_001024B0(int fd);
 int func_001025C0(int fd, void *buf, int size);
 int func_00102790(int fd, int mode);

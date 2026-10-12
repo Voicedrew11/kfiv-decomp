@@ -170,6 +170,31 @@ typedef struct {
     char pad34[0x0C];
 } GameDefinitionFlags;
 
+/* D_00369830 and the five tables after it: one byte per GameDefinition */
+typedef struct {
+    u8 bytes[380];
+} DefinitionByteSet;
+
+/* D_0034C350[50]: the 50 flags of one area, a bit each */
+typedef struct {
+    u8 bits[8];
+} AreaFlagBits;
+
+/* a word read from any alignment (the save image header) */
+typedef struct {
+    int value;
+} __attribute__((packed)) UnalignedInt;
+
+/* D_0043E460: the x offsets func_001067E0 cycles its sprites through */
+typedef struct {
+    int x[3];
+} LayerOffsets;
+
+/* D_00467680, D_00467940, D_00467C00: an 8 x 11 grid of points func_00108020 wobbles */
+typedef struct {
+    int points[8][11][2];
+} __attribute__((aligned(16))) RippleGrid;
+
 /* a node of the doubly linked list at D_004469D4 */
 typedef struct ListNode {
     char pad00[0x20];
