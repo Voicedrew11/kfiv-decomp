@@ -19,7 +19,7 @@ int func_001A0C18(int args_addr, int index, int voice_out) {
     D_004FF4C0.size_b = args->size_b;
     D_004FF4D8.spec = (SoundJobSpec *)&D_004FF4C0;
     D_004FF4D8.result = index + 6;
-    if (((int (*)(void *, int))func_001A0BD0)(&D_004FF4D8, index) == 0) { // match: a second argument the callee does not take
+    if (func_001A0BD0(&D_004FF4D8, index) == 0) {
         *(u8 *)voice_out = D_004FF4D8.result;
         pending = 0;
     }
