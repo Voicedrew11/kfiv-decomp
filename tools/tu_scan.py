@@ -15,7 +15,9 @@ itself:
     each distinct string once per object.
   * .bss and .sbss. The game has no COMMON block and its .bss precedes the
     library's, so these hold only file-static variables. (Its uninitialized
-    globals are in .data/.sdata, as with -fno-common.)
+    globals are in .data/.sdata, as with -fno-common.) An .sbss item is its
+    exact address: splat writes neighbouring small statics as "D_X + 0xC",
+    which in .bss is more often a field of one object.
 
 Every function that uses one such item is in the object that holds it, and
 since objects keep the link order in every section, an item placed after
@@ -46,7 +48,7 @@ YAML = os.path.join(ROOT, "build/kfiv.us.yaml")
 OUT = os.path.join(ROOT, "build/tu_groups.txt")
 GP = 0x0044CB70
 INSN = re.compile(r"/\* [0-9A-F]+ ([0-9A-F]{8}) [0-9A-F]{8} \*/\s+(\S+)\s*(.*)")
-REF = re.compile(r"\b((?:D|jtbl)_([0-9A-F]{8}))\b")
+REF = re.compile(r"\b((?:D|jtbl)_([0-9A-F]{8}))\b(?:\s*\+\s*(0x[0-9A-Fa-f]+))?")
 
 
 def game_range():
@@ -144,6 +146,9 @@ def scan():
                 continue
             for m in REF.finditer(args):
                 t = int(m[2], 16)
+                # .sbss objects are at most 8 bytes (-G 8), so splat's "D_X + 0xC" there is its own variable
+                if m[3] and section_of(retail, t + int(m[3], 16)) == ".sbss":
+                    t += int(m[3], 16)
                 if t == GP:
                     continue
                 sec = section_of(retail, t)
