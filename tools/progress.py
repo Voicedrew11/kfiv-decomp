@@ -3,14 +3,14 @@
 
     tools/progress.py [report.json] [--write] [--html PATH]
 
-Prints the overall totals and one row per category: matched code (bytes,
-hex), functions, data and complete units. Percentages come from the byte and
+Prints the overall totals and one row per category: matched code bytes,
+functions, data and complete units. Percentages come from the byte and
 function counts.
 
 --write refreshes docs/progress/, which is committed: summary.json (no
 per-function data), badge-*.json (shields.io endpoints) and index.html, a
-static page with the summary embedded. It also replaces the table between
-the progress markers in README.md.
+static page with the summary and a unit map embedded. It also replaces the
+table between the progress markers in README.md.
 
 --html PATH writes the same page with each unit's functions expandable. The
 page holds symbol names and sizes of the local build: keep it under build/.
@@ -39,8 +39,8 @@ def pct(part, whole) -> float:
     return 100.0 * part / whole if whole else 0.0
 
 
-def hexn(n) -> str:
-    return f"0x{n:X}"
+def num(n) -> str:
+    return f"{n:,}"
 
 
 def code_pct(m: dict) -> float:
@@ -96,7 +96,7 @@ def terminal(data) -> str:
         mf, tf = x.get("matched_functions", 0), x.get("total_functions", 0)
         dp = pct(x.get("matched_data", 0), x.get("total_data", 0))
         cu, tu = x.get("complete_units", 0), x.get("total_units", 0)
-        out.append(f"{label:8} {code_pct(x):6.2f}%  {hexn(mc) + ' / ' + hexn(tc):>23}  "
+        out.append(f"{label:8} {code_pct(x):6.2f}%  {num(mc) + ' / ' + num(tc):>23}  "
                    f"{f'{mf}/{tf}':>11}  {dp:6.2f}%  {f'{cu}/{tu}':>9}")
     return "\n".join(out)
 
@@ -136,9 +136,9 @@ def cards_and_bars(data) -> tuple:
     md, td = m.get("matched_data", 0), m.get("total_data", 0)
     cu, tu = m.get("complete_units", 0), m.get("total_units", 0)
     cards = [
-        ("Code matched", f"{code_pct(m):.2f}%", f"{hexn(mc)} of {hexn(tc)} bytes"),
+        ("Code matched", f"{code_pct(m):.2f}%", f"{num(mc)} of {num(tc)} bytes"),
         ("Functions matched", f"{pct(mf, tf):.2f}%", f"{mf} of {tf}"),
-        ("Data matched", f"{pct(md, td):.2f}%", f"{hexn(md)} of {hexn(td)} bytes"),
+        ("Data matched", f"{pct(md, td):.2f}%", f"{num(md)} of {num(td)} bytes"),
         ("Units complete", f"{cu} of {tu}", f"{pct(cu, tu):.2f}% of units"),
     ]
     html_cards = "".join(
@@ -156,8 +156,8 @@ def cards_and_bars(data) -> tuple:
             f'<span class="muted">({escape(c["id"])})</span></h2>'
             f'<div class="bar" role="img" aria-label="{p:.2f} percent of code matched">'
             f'<i style="width:{min(max(p, 0.0), 100.0):.2f}%"></i></div>'
-            f'<p class="muted">code {p:.2f}% ({hexn(x.get("matched_code", 0))} of '
-            f'{hexn(x.get("total_code", 0))} bytes), functions {mf}/{tf}, data {dp:.2f}%, '
+            f'<p class="muted">code {p:.2f}% ({num(x.get("matched_code", 0))} of '
+            f'{num(x.get("total_code", 0))} bytes), functions {mf}/{tf}, data {dp:.2f}%, '
             f'units {cu}/{tu} complete</p></section>')
     return html_cards, "".join(bars)
 
@@ -172,16 +172,19 @@ PAGE = """<!doctype html>
 :root {
   --bg: #fbfbfc; --fg: #1c1e21; --muted: #5f6570; --line: #d8dbe0;
   --track: #e4e6ea; --bar: #2f7d4f; --accent: #2f5fb3; --row: #f0f2f5;
+  --map-done: #2f7d4f; --map-part: #c27c0e; --map-none: #d3d7dd;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #16181c; --fg: #e6e8eb; --muted: #9aa1ab; --line: #353a42;
     --track: #2b3038; --bar: #4caf72; --accent: #7aa6ec; --row: #1e2227;
+    --map-done: #3f9a62; --map-part: #b97a1e; --map-none: #323842;
   }
 }
 :root[data-theme="dark"] {
   --bg: #16181c; --fg: #e6e8eb; --muted: #9aa1ab; --line: #353a42;
   --track: #2b3038; --bar: #4caf72; --accent: #7aa6ec; --row: #1e2227;
+  --map-done: #3f9a62; --map-part: #b97a1e; --map-none: #323842;
 }
 body { margin: 0; background: var(--bg); color: var(--fg);
   font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
@@ -214,6 +217,16 @@ button.link:focus-visible { outline: 2px solid var(--accent); }
 tr.detail td { background: var(--row); }
 table.fns th { cursor: default; }
 footer { margin: 24px 0 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 4px 0 8px; font-size: .9rem; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px;
+  margin-right: 6px; border-radius: 2px; background: var(--sw); vertical-align: -1px; }
+#map { position: relative; height: clamp(320px, 60vw, 600px); }
+#map canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
+#tip { position: absolute; pointer-events: none; z-index: 1; max-width: 280px;
+  padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); box-shadow: 0 2px 8px rgba(0,0,0,.18); font-size: .85rem; }
+#tip b { display: block; font-weight: 600; word-break: break-all;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 </style>
 </head>
 <body>
@@ -222,6 +235,11 @@ footer { margin: 24px 0 8px; }
 <p class="muted">Generated @@GEN@@ from objdiff-cli's report against the retail ELF.</p>
 <div class="cards">@@CARDS@@</div>
 @@BARS@@
+<h2>Map</h2>
+<p class="muted">One cell per unit, sized by its code. Hover for details, click to find it
+in the table. The filters below apply to the map too.</p>
+<div class="legend" id="legend"></div>
+<div id="map"><canvas id="mapcv" role="img"></canvas><div id="tip" hidden></div></div>
 <div class="controls">
   <input id="q" type="search" placeholder="Filter units" aria-label="Filter units">
   <select id="cat" aria-label="Category"><option value="all">All categories</option>@@CATOPTS@@</select>
@@ -231,14 +249,14 @@ footer { margin: 24px 0 8px; }
 <table id="units">
 <thead><tr>
 <th data-k="name">Unit</th><th data-k="category">Category</th>
-<th class="n" data-k="cp">Code</th><th class="n" data-k="fp">Functions</th>
+<th class="n" data-k="code_total">Size</th><th class="n" data-k="cp">Code</th><th class="n" data-k="fp">Functions</th>
 <th class="n" data-k="dp">Data</th><th data-k="complete">Complete</th>
 </tr></thead>
 <tbody></tbody>
 </table>
 </div>
-<footer class="muted">Code and data are matched bytes over total bytes. Click a column
-header to sort. Units are in link order by default.</footer>
+<footer class="muted">Size is code bytes. Code and data are matched bytes over total
+bytes. Click a column header to sort. Units are in link order by default.</footer>
 </main>
 <script id="data" type="application/json">@@DATA@@</script>
 <script>
@@ -253,6 +271,7 @@ header to sort. Units are in link order by default.</footer>
 
   function pct(a, b) { return b ? 100 * a / b : null; }
   function txt(p) { return p === null ? "-" : p.toFixed(2) + "%"; }
+  function num(n) { return n.toLocaleString("en-US"); }
   function cell(tag, cls, text) {
     var td = document.createElement(tag);
     if (cls) td.className = cls;
@@ -272,7 +291,7 @@ header to sort. Units are in link order by default.</footer>
     var tr = document.createElement("tr");
     tr.className = "detail";
     var td = document.createElement("td");
-    td.colSpan = 6;
+    td.colSpan = 7;
     var t = document.createElement("table");
     t.className = "fns";
     var head = document.createElement("tr");
@@ -283,7 +302,7 @@ header to sort. Units are in link order by default.</footer>
     u.functions.forEach(function (f) {
       var r = document.createElement("tr");
       r.appendChild(cell("td", "mono", f.name));
-      r.appendChild(cell("td", "n", String(f.size)));
+      r.appendChild(cell("td", "n", num(f.size)));
       r.appendChild(cell("td", "n", f.fuzzy.toFixed(2) + "%"));
       t.appendChild(r);
     });
@@ -327,6 +346,7 @@ header to sort. Units are in link order by default.</footer>
       }
       tr.appendChild(name);
       tr.appendChild(cell("td", "", u.category));
+      tr.appendChild(cell("td", "n", u.code_total ? num(u.code_total) : "-"));
       tr.appendChild(cell("td", "n", txt(u.cp)));
       tr.appendChild(cell("td", "n", u.functions_total ?
         u.functions_matched + " / " + u.functions_total : "-"));
@@ -336,6 +356,129 @@ header to sort. Units are in link order by default.</footer>
       if (opened[u.i] && u.functions) tbody.appendChild(fnRows(u));
     });
     count.textContent = list.length + " of " + units.length + " units";
+    drawMap();
+  }
+
+  // Treemap of units with code, squarified (Bruls et al.), largest first
+  var cv = document.getElementById("mapcv");
+  var tip = document.getElementById("tip");
+  var legend = document.getElementById("legend");
+  var STATES = [["done", "Fully matched"], ["part", "Partly matched"], ["none", "Not matched"]];
+  var cells = [], laidOut = null;
+
+  units.forEach(function (u) {
+    u.state = u.code_total && u.code_matched >= u.code_total ? "done" :
+              u.fuzzy > 0 ? "part" : "none";
+  });
+
+  function squarify(items, x, y, w, h) {
+    var total = 0, out = [], i = 0;
+    items.forEach(function (u) { total += u.code_total; });
+    var scale = w * h / total;
+    while (i < items.length) {
+      var side = Math.min(w, h), sum = 0, best = Infinity, j = i;
+      var first = items[i].code_total * scale;
+      for (; j < items.length; j++) {
+        var a = items[j].code_total * scale, s = sum + a;
+        var worst = Math.max(side * side * first / (s * s), s * s / (side * side * a));
+        if (worst > best) break;
+        best = worst;
+        sum = s;
+      }
+      var thick = sum / side, pos = 0;
+      for (var k = i; k < j; k++) {
+        var len = items[k].code_total * scale / thick;
+        out.push(w >= h ? {u: items[k], x: x, y: y + pos, w: thick, h: len}
+                        : {u: items[k], x: x + pos, y: y, w: len, h: thick});
+        pos += len;
+      }
+      if (w >= h) { x += thick; w -= thick; } else { y += thick; h -= thick; }
+      i = j;
+    }
+    return out;
+  }
+
+  function drawMap() {
+    var c = cat.value, needle = q.value.trim().toLowerCase();
+    var W = cv.clientWidth, H = cv.clientHeight, dpr = window.devicePixelRatio || 1;
+    var key = c + "|" + W + "|" + H;
+    var items = units.filter(function (u) {
+      return u.code_total > 0 && (c === "all" || u.category === c);
+    });
+    if (laidOut !== key) {
+      items.sort(function (a, b) { return b.code_total - a.code_total || a.i - b.i; });
+      cells = items.length ? squarify(items, 0, 0, W, H) : [];
+      laidOut = key;
+    }
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    var g = cv.getContext("2d"), css = getComputedStyle(document.documentElement);
+    var color = {}, sums = {}, counts = {};
+    STATES.forEach(function (s) {
+      color[s[0]] = css.getPropertyValue("--map-" + s[0]).trim();
+      sums[s[0]] = 0;
+      counts[s[0]] = 0;
+    });
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.fillStyle = css.getPropertyValue("--bg").trim();
+    g.fillRect(0, 0, W, H);
+    cells.forEach(function (r) {
+      var gap = r.w > 3 && r.h > 3 ? 1 : 0;
+      g.globalAlpha = !needle || r.u.name.toLowerCase().indexOf(needle) >= 0 ? 1 : 0.2;
+      g.fillStyle = color[r.u.state];
+      g.fillRect(r.x + gap / 2, r.y + gap / 2, r.w - gap, r.h - gap);
+      sums[r.u.state] += r.u.code_total;
+      counts[r.u.state]++;
+    });
+    g.globalAlpha = 1;
+    var total = sums.done + sums.part + sums.none;
+    legend.textContent = "";
+    STATES.forEach(function (s) {
+      var span = document.createElement("span");
+      span.style.setProperty("--sw", "var(--map-" + s[0] + ")");
+      span.textContent = s[1] + ": " + counts[s[0]] + " units, " +
+        (total ? (100 * sums[s[0]] / total).toFixed(1) : "0.0") + "% of code";
+      legend.appendChild(span);
+    });
+    cv.setAttribute("aria-label", "Map of " + cells.length + " units: " + legend.textContent);
+  }
+
+  function cellAt(ev) {
+    var b = cv.getBoundingClientRect(), x = ev.clientX - b.left, y = ev.clientY - b.top;
+    for (var i = 0; i < cells.length; i++) {
+      var r = cells[i];
+      if (x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) return {r: r, x: x, y: y};
+    }
+    return null;
+  }
+
+  cv.addEventListener("mousemove", function (ev) {
+    var hit = cellAt(ev);
+    if (!hit) { tip.hidden = true; return; }
+    var u = hit.r.u;
+    tip.textContent = "";
+    tip.appendChild(cell("b", "", u.name));
+    tip.appendChild(document.createTextNode(
+      num(u.code_total) + " bytes of code, " +
+      (u.functions_total ? u.functions_matched + "/" + u.functions_total + " functions, " : "") +
+      u.fuzzy.toFixed(2) + "% fuzzy"));
+    tip.hidden = false;
+    var mw = cv.clientWidth, tw = tip.offsetWidth, th = tip.offsetHeight;
+    tip.style.left = Math.max(0, Math.min(hit.x + 12, mw - tw)) + "px";
+    tip.style.top = (hit.y + 12 + th > cv.clientHeight ? hit.y - th - 8 : hit.y + 12) + "px";
+  });
+  cv.addEventListener("mouseleave", function () { tip.hidden = true; });
+  cv.addEventListener("click", function (ev) {
+    var hit = cellAt(ev);
+    if (!hit) return;
+    q.value = hit.r.u.name;
+    render();
+    document.getElementById("units").scrollIntoView({behavior: "smooth"});
+  });
+  window.addEventListener("resize", drawMap);
+  if (window.matchMedia) {
+    var mq = window.matchMedia("(prefers-color-scheme: dark)");
+    if (mq.addEventListener) mq.addEventListener("change", drawMap);
   }
 
   document.querySelectorAll("#units thead th[data-k]").forEach(function (th) {

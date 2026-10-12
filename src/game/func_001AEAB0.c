@@ -12,7 +12,7 @@ typedef struct Obj {
 
 void func_001AEC48(void *);
 void func_001AED58(void *);
-u16 func_001AF0B0(void *);
+int func_001AF0B0(void *);
 extern u8 D_0034AFD6[];
 
 void func_001AEAB0(Obj *arg0) {

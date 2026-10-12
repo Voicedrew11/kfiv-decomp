@@ -76,7 +76,7 @@ void func_001888C0(Entity *entity) {
                 func_001898E8((CollisionOwner *)object, position, entity->unk34, entity->unk30);
                 break;
             default:
-                if (object->model->unk110 != NULL) {
+                if (object->model->strips != NULL) {
                     func_00189A38((CollisionOwner *)object, position, entity->unk34, entity->unk30);
                 }
                 break;

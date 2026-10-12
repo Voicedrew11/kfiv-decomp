@@ -23,7 +23,7 @@ s32 func_00187A20(Entity *entity, ModelInstance *model, f32 *position, f32 *norm
 
     hit_floor = FALSE;
     func_001C2D08(model);
-    mesh = model->unk110;
+    mesh = (CollisionMesh *)model->strips;
     if (!((s32)(entity->flags >> 23) & 1)) {
         strip = mesh->unk18;
         i = mesh->unk38;

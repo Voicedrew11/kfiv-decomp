@@ -19,13 +19,13 @@ f32 func_0018A9F0(void *prop_arg, void *position_arg) {
     s32 j;
 
     result = lowest = D_00446844[0];
-    if (prop == NULL || prop->unk32 == 0xFFFF || prop->model == NULL || prop->model->unk110 == NULL) {
+    if (prop == NULL || prop->unk32 == 0xFFFF || prop->model == NULL || prop->model->strips == NULL) {
         return lowest;
     }
     found = FALSE;
     // match: called as if it returned nothing (other files declare it int)
     ((void (*)(void *))func_001C2D08)(prop->model);
-    mesh = prop->model->unk110;
+    mesh = (CollisionMesh *)prop->model->strips;
     strip = mesh->floor_strips;
     i = mesh->floor_strip_count;
     while (--i != -1) {

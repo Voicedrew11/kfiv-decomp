@@ -19,13 +19,13 @@ s32 func_0018AB40(void *prop_arg, f32 *origin, f32 *direction, f32 length, s32 o
     s32 i;
     s32 j;
 
-    if (prop == NULL || prop->unk32 == 0xFFFF || prop->model == NULL || prop->model->unk110 == NULL) {
+    if (prop == NULL || prop->unk32 == 0xFFFF || prop->model == NULL || prop->model->strips == NULL) {
         return 0;
     }
     kind = 0;
     // match: called as if it returned nothing (other files declare it int)
     ((void (*)(void *))func_001C2D08)(prop->model);
-    mesh = prop->model->unk110;
+    mesh = (CollisionMesh *)prop->model->strips;
     nearest = D_00446848[0];
     strip = mesh->floor_strips;
     i = mesh->floor_strip_count;

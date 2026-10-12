@@ -47,7 +47,7 @@ void func_00186B00(Entity *entity) {
                 if (record->unk32 == 0xFFFF) {
                     continue;
                 }
-                if (record->model->unk110 == NULL) {
+                if (record->model->strips == NULL) {
                     continue;
                 }
                 if (record->lowest[0] - entity->unk30 > entity->model->position[0]) {

@@ -17,7 +17,7 @@ typedef struct {
 extern int D_00413F80[];
 void func_001AEC48(Actor *);
 void func_001AED58(Actor *);
-void func_001AF0B0(Actor *);
+int func_001AF0B0(Actor *);
 float func_001B0178(int *, int);
 void func_00216778(int, int);
 

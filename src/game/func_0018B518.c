@@ -40,7 +40,7 @@ f32 func_0018B518(f32 *point) {
                 }
                 // match: called as void, or the mesh pointer does not take $2
                 ((void (*)(void *))func_001C2D08)(model);
-                mesh = model->model.unk110;
+                mesh = (CollisionMesh *)model->model.strips;
                 strips_left = mesh->unk42;
                 strip = mesh->unk2C;
                 while (--strips_left != -1) {

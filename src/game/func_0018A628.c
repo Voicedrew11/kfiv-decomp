@@ -24,14 +24,14 @@ void func_0018A628(CollisionOwner *owner, void *centre, f32 radius) {
     s32 j;
 
     COLLISION_RESULT->hit = 0;
-    if (owner->model->unk110 == NULL) {
+    if (owner->model->strips == NULL) {
         return;
     }
     hit_floor = FALSE;
     hit_unk18 = FALSE;
     hit_unk20 = FALSE;
     func_001C2D08(owner->model);
-    mesh = owner->model->unk110;
+    mesh = (CollisionMesh *)owner->model->strips;
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
     func_00216778(position, centre);
     strip = mesh->floor_strips;

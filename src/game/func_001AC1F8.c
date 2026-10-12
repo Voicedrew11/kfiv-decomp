@@ -2,7 +2,7 @@
 
 void func_001AEC48(void *);
 void func_001AED58(void *);
-void func_001AF0B0(char *);
+int func_001AF0B0(char *);
 
 /* Advances the frame counter and scales the model's float at +0xE8 by scale_per_mille / 1000. */
 void func_001AC1F8(EffectActor *effect) {

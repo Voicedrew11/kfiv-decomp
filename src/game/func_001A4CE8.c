@@ -3,7 +3,7 @@
 
 void func_001AEC48(void *);
 void func_001AED58(void *);
-void func_001AF0B0(void *);
+int func_001AF0B0(void *);
 int func_001B4F90(void *);
 void func_001A2A18(void *);
 int func_001A1E28(int, int, int, int, u16, int);

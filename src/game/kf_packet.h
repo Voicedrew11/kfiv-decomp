@@ -23,7 +23,9 @@ typedef struct {
     u8 alpha;                       /* 0x23 */
     char pad24[0x1B];
     s8 slot;                        /* 0x3F which slot the packet belongs to */
-    char pad40[0x20];
+    char pad40[0x01];
+    s8 unk41;                       /* 0x41 */
+    char pad42[0x1E];
 } SpritePacket;
 
 #endif

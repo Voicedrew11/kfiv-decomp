@@ -54,7 +54,7 @@ s32 func_0018B150(f32 *origin, f32 *direction, f32 length, f32 *unused) {
                 }
                 // match: called as void, or the model pointer does not take $2
                 ((void (*)(void *))func_001C2D08)(((MapProp *)record)->model);
-                mesh = ((MapProp *)record)->model->unk110;
+                mesh = (CollisionMesh *)((MapProp *)record)->model->strips;
                 strips_left = mesh->unk38;
                 strip = mesh->unk18;
                 while (--strips_left != -1) {

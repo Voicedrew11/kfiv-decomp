@@ -32,7 +32,7 @@ typedef struct {
     CollisionStripPoint points[1];  /* 0x20 point_count of them */
 } CollisionStrip;
 
-/* what ModelInstance.unk110 points at */
+/* what ModelInstance.strips points at */
 typedef struct {
     s32 strip_count;                /* 0x00 */
     CollisionStrip *strips;         /* 0x04 */

@@ -47,7 +47,7 @@ s32 func_00186478(Entity *entity, ModelInstance *model, f32 *position, f32 *norm
     hit_floor = FALSE;
     func_001C2D08(model);
     period = 30;
-    mesh = model->unk110;
+    mesh = (CollisionMesh *)model->strips;
     if (D_00446ED4 % period == entity->unkD7 % 10U) {
         strip = mesh->unk28;
         i = mesh->unk40;

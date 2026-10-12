@@ -34,4 +34,18 @@ typedef struct {
     DisplaySettings *settings;      /* 0xFC */
 } DisplayContext;
 
+/* the nodes func_001157D8 sorts into the lists D_00446788 and D_0044678C by box area */
+typedef struct AreaNode {
+    char pad00[0x3C];
+    s32 flags;                      /* 0x3C bit 25 skips insertion, bit 31 picks the second list */
+    f32 left;                       /* 0x40 */
+    char pad44[0x04];
+    f32 top;                        /* 0x48 */
+    char pad4C[0x04];
+    f32 right;                      /* 0x50 */
+    char pad54[0x04];
+    f32 bottom;                     /* 0x58 */
+    struct AreaNode *next;          /* 0x5C */
+} AreaNode;
+
 #endif
