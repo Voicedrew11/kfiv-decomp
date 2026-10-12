@@ -194,8 +194,8 @@ typedef struct {
 typedef struct {
     int size_b;                     /* 0x00 */
     char pad04[0x10];
-    void *buffer_b;                 /* 0x14 */
-    u8 *buffer_a;                   /* 0x18 */
+    int buffer_b;                   /* 0x14 an address; func_001A0C18 only matches reading these as ints */
+    int buffer_a;                   /* 0x18 an address */
     int size_a;                     /* 0x1C */
 } SoundStartArgs;
 

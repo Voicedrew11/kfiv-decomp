@@ -3,8 +3,8 @@
 extern s32 D_004467A4;
 
 int func_0019D1C0(float, int, void *);
-void func_0019D490(s32, s32, f32 *, f32);
-void func_0019D980(char, u8, u8, f32, Vector4Arg);
+int func_0019D490(u8, u8, float *, float);
+s32 func_0019D980(s8, u8, u8, f32, Vector4Arg *);
 void func_00108AC8(void *);
 void func_0011EA80(MapObject *);
 
