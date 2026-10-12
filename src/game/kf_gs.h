@@ -23,6 +23,15 @@
 #define GS_REG_ZBUF_2       0x4F
 #define GS_REG_FINISH       0x61
 
+/* a color as four bytes, passed in an 8-byte argument (func_001FDCD0 stores it to D_00446D70..D_00446D73) */
+typedef struct {
+    u8 red;                         /* 0x00 */
+    u8 green;                       /* 0x01 */
+    u8 blue;                        /* 0x02 */
+    u8 alpha;                       /* 0x03 */
+    char pad04[0x04];
+} ColorBytes;
+
 /* the ALPHA registers (GS_REG_ALPHA_1/2) as a value to write */
 typedef union {
     s64 raw;
@@ -191,5 +200,18 @@ typedef struct {
 } ScreenRect;
 
 int func_001FDB88(GsPackedWord);
+
+/* the rectangle func_001FC5E8 draws: two corners, a color and a scale */
+typedef struct {
+    GsPackedWord first;             /* 0x00 */
+    char pad08[0x08];
+    GsPackedWord second;            /* 0x10 */
+    char pad18[0x08];
+    u8 red;                         /* 0x20 */
+    u8 green;                       /* 0x21 */
+    u8 blue;                        /* 0x22 */
+    u8 alpha;                       /* 0x23 */
+    f32 scale;                      /* 0x24 */
+} RectDef;
 
 #endif

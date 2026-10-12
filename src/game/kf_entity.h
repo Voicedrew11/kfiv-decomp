@@ -135,12 +135,20 @@ typedef struct {
     EntityParamsUnk240PartUnk00 unk00; /* 0x00 */
     EntityParamsUnk240PartUnk12 unk12; /* 0x12 */
     u8 unk1E;                       /* 0x1E */
-    char pad1F;
+    u8 unk1F;                       /* 0x1F */
     u16 unk20;                      /* 0x20 */
     u16 unk22;                      /* 0x22 an angle in degrees */
     u16 unk24;                      /* 0x24 first animation frame it is active on, 0: unused */
     u16 unk26;                      /* 0x26 last animation frame it is active on */
 } EntityParamsUnk240Part;
+
+/* EntityParamsUnk240Part.unk1E as func_00195BD8 reads it: bit 1 of the halfword at 0x1E
+   says unk1F is copied (reached by cast: a union changes gcc's scheduling) */
+typedef struct {
+    u16 flags;                      /* 0x1E bit 1: unk1F is copied */
+} EntityParamsUnk240PartFlags;
+
+#define ENTITY_PART_FLAGS(part) ((EntityParamsUnk240PartFlags *)&(part)->unk1E)
 
 /* one of the 0x88-byte records at EntityParams+0x240 (EntityParams.unk350 is the third) */
 typedef struct {
@@ -275,6 +283,19 @@ typedef struct {
     u8 unk03;                       /* 0x03 */
 } EntityParamsUnk3D8;
 
+typedef struct {
+    EntityParamsUnk3D8 record;      /* 0x00 */
+    u16 reach_min;                  /* 0x04 nearest distance (past the radius) the attack is used at, 0: none */
+    u16 reach_max;                  /* 0x06 farthest distance it is used at */
+    f32 unk08;                      /* 0x08 widest angle to the player for it */
+    u8 unk0C;                       /* 0x0C */
+    char pad0D;
+    s16 unk0E;                      /* 0x0E degrees its direction is off the entity's heading */
+    u8 unk10;                       /* 0x10 */
+    u8 unk11;                       /* 0x11 */
+    char pad12[0x0A];
+} EntityParamsUnk3D8Array;
+
 /* one of the four bodies of an entity kind the player collides with piece by piece (EntityParams.unk20) */
 #define ENTITY_BODY_USED    0x100
 #define ENTITY_BODY_ROUND   0x200   /* as tall as it is wide, the point being its top */
@@ -357,10 +378,7 @@ typedef struct {
     EntityUnaligned64 unk238;       /* 0x238 */
     EntityParamsUnk240 unk240[2];   /* 0x240 indexed by flag bits 58-59 */
     char unk350[0x88];              /* 0x350 */
-    EntityParamsUnk3D8 unk3D8;      /* 0x3D8 */
-    char pad3DC[0x34];
-    u8 unk410;                      /* 0x410 */
-    char pad411[0x1B];
+    EntityParamsUnk3D8Array unk3D8[3]; /* 0x3D8 */
     u8 unk42C;                      /* 0x42C how far below its position a floor may be to count (func_00186478) */
     u8 unk42D;                      /* 0x42D what it does at a ledge (func_00186B00): 0 walks off, 1 steps down at most Entity.unk34, else stops */
     u16 unk42E;                     /* 0x42E */
@@ -396,25 +414,11 @@ typedef struct {
     char pad05[0x03];
 } EntityParamsUnk1B0;
 
-/* EntityParams.unk3D8 is the first of several 0x1C-byte records */
-#define ENTITY_PARAMS_UNK3D8(params, index) (&((EntityParamsUnk3D8Array *)&(params)->unk3D8)[index].record)
-/* the same records whole: the three ranged attacks */
-#define ENTITY_PARAMS_RANGED(params) ((EntityParamsUnk3D8Array *)&(params)->unk3D8)
-
-#define ENTITY_PARAMS_RECORD(params, index) (&((EntityParamsUnk3D8Array *)&(params)->unk3D8)[index])
-
-typedef struct {
-    EntityParamsUnk3D8 record;      /* 0x00 */
-    u16 reach_min;                  /* 0x04 nearest distance (past the radius) the attack is used at, 0: none */
-    u16 reach_max;                  /* 0x06 farthest distance it is used at */
-    f32 unk08;                      /* 0x08 widest angle to the player for it */
-    u8 unk0C;                       /* 0x0C */
-    char pad0D;
-    s16 unk0E;                      /* 0x0E degrees its direction is off the entity's heading */
-    u8 unk10;                       /* 0x10 */
-    u8 unk11;                       /* 0x11 */
-    char pad12[0x0A];
-} EntityParamsUnk3D8Array;
+/* the first word of an EntityParams.unk3D8 record, as the AI functions take it */
+#define ENTITY_PARAMS_UNK3D8(params, index) (&(params)->unk3D8[index].record)
+/* the three ranged attacks */
+#define ENTITY_PARAMS_RANGED(params) ((params)->unk3D8)
+#define ENTITY_PARAMS_RECORD(params, index) (&(params)->unk3D8[index])
 
 /* EntityParams with the three ranged-attack records as a real array member: indexed this way the
    compiler adds the scaled index to the params pointer, base first (func_00164C88 needs that) */
@@ -806,7 +810,7 @@ typedef struct {
     u32 bit27 : 1;
     u32 bit28 : 1;
     u32 bit29 : 1;
-    u32 pad30 : 1;
+    u32 bit30 : 1;
     u32 bit31 : 1;
     u32 bit32 : 1;
     u32 bit33 : 1;

@@ -40,7 +40,6 @@ void func_001D7C30(void);
 f32 func_001D8300(f32, s32, s32);
 int func_001DFEF8(void);
 int func_001E5210(u8);
-u32 *func_001FBE70(void);
 void func_001FC5E8(MenuCursorBar *);
 int func_001FDC28(GsPackedWord);
 void func_001FDCD0(MenuColor);

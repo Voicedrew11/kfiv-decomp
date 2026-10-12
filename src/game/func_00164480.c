@@ -8,7 +8,7 @@ void func_001958B8(char *, void (*)(void), int);
 
 void func_00164480(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8;
+    EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
 
     entity->unkC6 |= 1;
     switch (entity->action_step) {

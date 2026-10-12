@@ -12,7 +12,7 @@ void func_001958B8(char *, void (*)(void), int);
 
 void func_0014EFB0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8;
+    EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8[0];
     f32 target[4];
     EntityFrameTable5 launch_frames = D_0043E8E8;
     s32 elapsed;

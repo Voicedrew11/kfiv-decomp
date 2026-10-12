@@ -1,7 +1,6 @@
 #include "kf_packet.h"
 #include <eeregs.h>
 
-u32 *func_001FBE70(void);
 
 /* Sends a fifteen-quadword packet: GS settings, one textured sprite, GS settings again. */
 void func_001D6A00(void) {

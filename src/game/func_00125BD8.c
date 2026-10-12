@@ -59,7 +59,7 @@ void func_00125BD8(int list) {
                 if (entity->unk14 == NULL) {
                     continue;
                 }
-                if (ENTITY_FLAG_BITS(entity)->pad30) {
+                if (ENTITY_FLAG_BITS(entity)->bit30) {
                     continue;
                 }
                 if (entity->unkA3 != 0 && entity->unk82 == 0) {

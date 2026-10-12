@@ -19,7 +19,7 @@ int func_001A0D20(SoundJob *job) {
         D_004470E2 = 0;
     }
     spec = job->spec;
-    result = func_001CD020(job->unk18, spec->buffer_b, spec->size_b, spec->buffer_a, spec->size_a, 0, job->unk1C);
+    result = func_001CD020(job->unk18, (int)spec->buffer_b, spec->size_b, (int)spec->buffer_a, spec->size_a, 0, job->unk1C);
     job->result = result;
     if (result >= 0) {
         D_00446868 += 1;

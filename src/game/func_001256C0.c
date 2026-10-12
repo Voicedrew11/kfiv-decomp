@@ -66,13 +66,13 @@ void func_001256C0(void) {
         entity->unk68 = func_001954A8(entity->model->position, D_00413F80.position);
         entity->unk84 = entity->unk88 = entity->unk8C = entity->unk90 = entity->unk94 = entity->unk98 = 0.0f;
         if (!func_00126240(entity)) {
-            if (!ENTITY_FLAG_BITS(entity)->pad30) {
+            if (!ENTITY_FLAG_BITS(entity)->bit30) {
                 func_0020C300(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->unkE0);
             }
-            ENTITY_FLAG_BITS(entity)->pad30 = TRUE;
+            ENTITY_FLAG_BITS(entity)->bit30 = TRUE;
             continue;
         }
-        ENTITY_FLAG_BITS(entity)->pad30 = FALSE;
+        ENTITY_FLAG_BITS(entity)->bit30 = FALSE;
         if (entity->unk80 != 0) {
             entity->unk80--;
         }

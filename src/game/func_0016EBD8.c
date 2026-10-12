@@ -11,7 +11,7 @@ void func_001958B8(char *, void (*)(void), int);
 
 void func_0016EBD8(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8Array *unk3D8 = (EntityParamsUnk3D8Array *)&entity->params->unk3D8;
+    EntityParamsUnk3D8Array *unk3D8 = entity->params->unk3D8;
     f32 direction[4];
     f32 *base;
     f32 *tip;

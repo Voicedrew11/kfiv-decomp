@@ -61,7 +61,7 @@ void func_0017FC60(Entity *entity) {
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
     func_00191478(entity->model);
-    unkE0->unk68 = entity->params->unk3D8.unk00;
+    unkE0->unk68 = entity->params->unk3D8[0].record.unk00;
     unkE0->unk6A = entity->params->unk240[1].unk00;
     unkE0->unk6C = (u8)entity->params->unk350[0];
     unkE0->unk7A = 3;
@@ -77,7 +77,7 @@ void func_0017FC60(Entity *entity) {
     case 0:
         first_part = 0x16;
         part_count = 10;
-        unkE0->unk68 = entity->params->unk3D8.unk00;
+        unkE0->unk68 = entity->params->unk3D8[0].record.unk00;
         break;
     case 1:
         first_part = 0xB;
@@ -92,7 +92,7 @@ void func_0017FC60(Entity *entity) {
     default:
         first_part = 8;
         part_count = 3;
-        unkE0->unk68 = entity->params->unk3D8.unk00;
+        unkE0->unk68 = entity->params->unk3D8[0].record.unk00;
         unkE0->unk6A = entity->params->unk240[1].unk00;
         unkE0->unk6C = (u8)entity->params->unk350[0];
         break;

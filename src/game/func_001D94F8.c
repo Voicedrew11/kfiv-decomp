@@ -117,7 +117,6 @@ int func_001E44D0(s32);
 int func_001E4FE0(s32, u32);
 int func_001E5210(u8);
 int func_001E5660(u32, s32, s32);
-u32 *func_001FBE70(void);
 s8 func_001FC0C0(s32);
 void func_001FC0D8(KindObject *);
 void func_001FDCD0(MenuColor);

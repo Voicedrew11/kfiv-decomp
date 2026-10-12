@@ -20,7 +20,7 @@ void func_0017FFC0(Entity *entity, s32 unknown) {
         unkE0->unk6E--;
     }
     if (!(entity->unkC6 & 0x1000) && unkE0->unk6E == 0) {
-        unkE0->unk68 = entity->params->unk3D8.unk00;
+        unkE0->unk68 = entity->params->unk3D8[0].record.unk00;
         unkE0->unk6A = entity->params->unk240[1].unk00;
         unkE0->unk6C = (u8)entity->params->unk350[0];
     }

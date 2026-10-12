@@ -6,7 +6,7 @@ int func_001B0040(void *);
 float func_001B0178(void *, void *);
 
 /* The nearest entity within the effect's range of position, or NULL. */
-Entity *func_001AFF78(EffectActor *effect, Vector4 *position) {
+Entity *func_001AFF78(EffectActor *effect, Vector4 *position, Vector4 *unused_rotation) {
     Entity *entity;
     Entity *nearest = NULL;
     f32 nearest_distance = 65535.0f;

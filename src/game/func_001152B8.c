@@ -28,7 +28,7 @@ void func_001152B8(int map) {
     MapSlot *slot;
     SoundLoadQueue *queue;
     f32 *offset;
-    int loading;
+    MapSlot *loading;
 
     if (D_00446770 != map) {
         offset = &D_0038D610.position.x;
@@ -57,12 +57,12 @@ void func_001152B8(int map) {
         func_00210930(D_0038CD20[map].unk5C);
         func_002109C8(0x7FFF, 0);
         loading = queue->unk10;
-        if (loading != (int)slot && queue->unk14 != (int)slot) {
+        if (loading != slot && queue->unk14 != slot) {
             func_001BB590();
             func_0019EA98(1);
-            queue->unk14 = (int)slot;
-        } else if (loading == (int)slot && D_0038A130.unk14 != (int)slot) {
-            D_0038A130.unk14 = 0;
+            queue->unk14 = slot;
+        } else if (loading == slot && D_0038A130.unk14 != slot) {
+            D_0038A130.unk14 = NULL;
         }
         D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[map].header)->unk70;
         D_0038A130.unk04 = 1;

@@ -39,7 +39,7 @@ void func_0014FA28(Entity *entity) {
         if ((entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8 < 0x2B &&
             entity->model->unkFC->unk82 >= 0x2B) {
             func_00216778(target, D_00413F80);
-            func_00195E48(entity, ((EntityParamsUnk3D8Full *)&entity->params->unk3D8)->unk10[0].unk00, target,
+            func_00195E48(entity, ((EntityParamsUnk3D8Full *)&entity->params->unk3D8[0])->unk10[0].unk00, target,
                           entity->model->unkD0);
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {

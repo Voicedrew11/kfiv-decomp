@@ -11,7 +11,7 @@ extern float D_00413F80[];
 
 void func_001483F8(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8;
+    EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8[0];
     f32 target[4];
     s32 elapsed;
 

@@ -4,7 +4,6 @@
 extern u64 D_004261A0[47];             /* the frame register of the first buffer ([0]) and of the second ([46]) */
 extern s32 D_00446CCC;
 extern int D_00446F78;
-u32 *func_001FBE70(void);
 
 /* Copies the shown frame buffer into a work buffer and draws that back into both frame buffers, then steps the screen counter. */
 s32 func_001EEA90(void) {

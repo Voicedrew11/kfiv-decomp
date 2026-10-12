@@ -32,7 +32,7 @@ void func_001251E0(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit25 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit26 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
-    ENTITY_FLAG_BITS(entity)->pad30 = FALSE;
+    ENTITY_FLAG_BITS(entity)->bit30 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit17 = TRUE;

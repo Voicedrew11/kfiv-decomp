@@ -26,7 +26,6 @@ s32 func_0019CDC0(s32);
 s32 func_001CFC58(s32);
 void func_001DCA80(HandlerContext *);
 int func_001E5210(u8);
-u32 *func_001FBE70(void);
 int func_001FE350(int, int);
 void func_001FF428(LevelDef *, s32);
 void func_00200068(s32, s32);

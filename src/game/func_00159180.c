@@ -14,7 +14,7 @@ void func_001958B8(char *, void (*)(void), int);
 
 void func_00159180(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8;
+    EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
     f32 direction[4];
 
     entity->unkC6 |= 1;

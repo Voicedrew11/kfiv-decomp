@@ -90,7 +90,7 @@ void func_001190C8(void) {
     D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[0].header)->unk70;
     D_0038A130.unk04 = 1;
     func_0019EA98(1);
-    D_0038A130.unk14 = (int)&D_0038CD20[0];
+    D_0038A130.unk14 = &D_0038CD20[0];
     func_00106178(0, 0, 0, 30);
     D_0038D680.step = 0;
 }

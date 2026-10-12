@@ -181,11 +181,13 @@ def search(hay_words, needle_words, mask):
         return []
     # anchor on the first fully unmasked word
     anchor = next((i for i, m in enumerate(mask) if m == 0xFFFFFFFF), None)
-    hits = []
-    if anchor is None:
-        return hits
-    aw = needle_words[anchor]
     n = len(needle_words)
+    if anchor is None:
+        # every word carries a relocation (e.g. a gp store in a j delay slot): scan
+        return [b for b in range(len(hay_words) - n + 1)
+                if all((hay_words[b + i] ^ needle_words[i]) & mask[i] == 0 for i in range(n))]
+    hits = []
+    aw = needle_words[anchor]
     start = 0
     while True:
         try:

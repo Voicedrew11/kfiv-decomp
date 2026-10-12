@@ -4,7 +4,7 @@
 int func_00197040(Entity *entity) {
     EntityParams *params = entity->params;
 
-    if (params->unk3D8.unk00 != 0 || ENTITY_PARAMS_UNK3D8(params, 1)->unk00 != 0 || ENTITY_PARAMS_UNK3D8(params, 2)->unk00 != 0) {
+    if (params->unk3D8[0].record.unk00 != 0 || ENTITY_PARAMS_UNK3D8(params, 1)->unk00 != 0 || ENTITY_PARAMS_UNK3D8(params, 2)->unk00 != 0) {
         return 1;
     }
     return 0;

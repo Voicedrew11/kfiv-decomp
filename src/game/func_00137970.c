@@ -11,7 +11,7 @@ void func_001958B8(char *, void (*)(void), int);
 
 void func_00137970(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8;
+    EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
     EntityParamsUnk240 *unk240 = &entity->params->unk240[1];
     s32 elapsed;
 

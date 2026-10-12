@@ -293,7 +293,7 @@ typedef struct {
     char pad02[0x02];
     int words[10];                  /* 0x04 */
     char pad2C[0x14C];
-    int tail[2];                    /* 0x178 */
+    PlayTime tail;                  /* 0x178 */
 } ScratchSlot;
 
 /* D_004147F8[380]: 0x40-byte definitions read from a data file by func_00112648

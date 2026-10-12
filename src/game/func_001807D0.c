@@ -37,7 +37,7 @@ void func_001807D0(Entity *entity) {
             case 0:
                 first_part = 0x16;
                 part_count = 10;
-                unkE0->unk68 = entity->params->unk3D8.unk00;
+                unkE0->unk68 = entity->params->unk3D8[0].record.unk00;
                 break;
             case 1:
                 first_part = 0xB;

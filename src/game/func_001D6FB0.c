@@ -5,7 +5,6 @@ extern u64 D_004261A0[47];             /* the frame register of the first buffer
 extern s32 D_00446AC4;
 extern s8 D_00446C94;
 extern int D_00446F78;
-u32 *func_001FBE70(void);
 
 /* On the first menu screen: copies the backdrop from the shown buffer into the drawn one in two half-brightness passes. */
 s32 func_001D6FB0(void) {

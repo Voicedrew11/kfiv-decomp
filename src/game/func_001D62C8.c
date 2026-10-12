@@ -19,7 +19,6 @@ void func_001B5460(void);
 int func_001CEBE0(void);
 s32 func_001D72F0(s32);
 void func_001FBDC8(void);
-u32 *func_001FBE70(void);
 s16 func_00206C40(void);
 int func_002179F8(int, int);
 

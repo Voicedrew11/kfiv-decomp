@@ -3,7 +3,6 @@
 
 extern int D_00446F78;
 
-u32 *func_001FBE70(void);
 
 /* Sends a five-quadword packet that draws one sprite in the grey level given, into the frame buffer D_00446F78 selects. */
 void func_001E5070(s32 level) {

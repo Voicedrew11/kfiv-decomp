@@ -4,6 +4,7 @@
 #define KF_SOUND_H
 
 #include "common.h"
+#include "kf_model.h"
 
 /* one of the 16 voices, SoundState.voices[n] */
 typedef struct {
@@ -126,8 +127,8 @@ typedef struct {
     int unk04;                      /* 0x04 nonzero: a step 3 load is wanted; func_0019F628 clears it */
     int step;                       /* 0x08 0: idle, 1-3: which load is running */
     int unk0C;                      /* 0x0C nonzero: a step 1 load is wanted; func_001A1048 clears it */
-    int unk10;                      /* 0x10 what the step 1 load loads */
-    int unk14;                      /* 0x14 the next unk10, taken once unk10 is 0 */
+    struct MapSlot *unk10;          /* 0x10 the map slot whose sound bank the step 1 load loads */
+    struct MapSlot *unk14;          /* 0x14 the next unk10, taken once unk10 is NULL */
     int unk18;                      /* 0x18 nonzero: a step 2 load is wanted; func_001A0C18 clears it */
     int unk1C;                      /* 0x1C arguments of func_001A0C18 */
     int unk20;                      /* 0x20 */
@@ -157,14 +158,24 @@ typedef struct {
     s16 unk0E;                      /* 0x0E */
 } SoundCue;
 
-/* the data a SoundJob loads or plays: two buffers and their sizes */
+/* the data a SoundJob loads or plays: two buffers and their sizes. The two
+   buffers have different pointer types in retail (the copies into a spec are
+   scheduled as if they cannot alias), so they stay u8 * and void *. */
 typedef struct {
-    int buffer_a;                   /* 0x00 */
-    int buffer_b;                   /* 0x04 */
+    u8 *buffer_a;                   /* 0x00 */
+    void *buffer_b;                 /* 0x04 */
     int unk08;                      /* 0x08 */
     int size_a;                     /* 0x0C */
     int size_b;                     /* 0x10 */
 } SoundJobSpec;
+
+/* four words that fill a SoundJobSpec: what MapSlot.unk34 points at */
+typedef struct SoundSpecSource {
+    int size_b;                     /* 0x00 */
+    void *buffer_b;                 /* 0x04 */
+    int size_a;                     /* 0x08 */
+    u8 *buffer_a;                   /* 0x0C */
+} SoundSpecSource;
 
 /* a sound job (func_001A0B10 to func_001A1458): its data, two file names, the
    driver's result and two more arguments for the driver call */
@@ -179,22 +190,13 @@ typedef struct {
     int unk1C;                      /* 0x1C */
 } SoundJob;
 
-/* a 0x60-byte sound command (D_0043EE78) */
-typedef struct {
-    char pad00;
-    u8 kind;                        /* 0x01 */
-    char pad02[0x32];
-    int *params;                    /* 0x34 four words for a SoundJobSpec */
-    char pad38[0x28];
-} SoundCommand;
-
 /* the start arguments func_001A0C18 copies into a SoundJobSpec */
 typedef struct {
-    int unk00;                      /* 0x00 */
+    int size_b;                     /* 0x00 */
     char pad04[0x10];
-    int unk14;                      /* 0x14 */
-    int unk18;                      /* 0x18 */
-    int unk1C;                      /* 0x1C */
+    void *buffer_b;                 /* 0x14 */
+    u8 *buffer_a;                   /* 0x18 */
+    int size_a;                     /* 0x1C */
 } SoundStartArgs;
 
 /* SoundJobSpec as func_001A0C18, func_001A1048 and func_001A10D8 fill it in: the two buffers
@@ -251,17 +253,16 @@ typedef struct {
 /* D_003EF710[128]: a sound channel (0x40 bytes); unk3A is -1 when it is free.
    D_00500170[128] are queued requests of the same shape; there unk38 is -1 when free. */
 typedef struct {
-    f32 origin[3];                  /* 0x00 */
-    char pad0C[0x04];
-    f32 target[3];                  /* 0x10 */
-    char pad1C[0x14];
+    Vector4Arg origin;              /* 0x00 */
+    Vector4Arg target;              /* 0x10 */
+    char pad20[0x10];
     s32 unk30;                      /* 0x30 */
     f32 volume;                     /* 0x34 */
     s8 unk38;                       /* 0x38 */
     s8 unk39;                       /* 0x39 */
     s8 unk3A;                       /* 0x3A */
     s8 unk3B;                       /* 0x3B voice handed to func_001CE9A0 */
-    s8 unk3C;                       /* 0x3C 0x63: restarts with the cue's volume */
+    s8 unk3C;                       /* 0x3C 1: a point at origin, 2: a segment origin..target; 0x63: restarts with the cue's volume */
     char pad3D[0x03];
 } SoundChannel;
 

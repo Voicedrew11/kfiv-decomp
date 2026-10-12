@@ -147,7 +147,7 @@ static void func_001686B0(Entity *entity, s32 unknown) {
     if (entity->spawn_info->unk40 == 1) {
         func_0016A450((char *)entity);
     } else {
-        entity->params->unk410 = 0;
+        entity->params->unk3D8[2].record.unk00 = 0;
     }
     // match: angle is read here before anything has set it
     if (unkE0->unk7B == 0 && entity->distance_to_player < entity->radius + 50.0f + 100.0f && entity->unkA0 == 0 &&

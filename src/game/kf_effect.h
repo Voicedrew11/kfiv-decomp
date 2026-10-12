@@ -213,15 +213,15 @@ typedef struct {
     u16 spawn_frames_span;          /* 0x0A copied from def->unkF2 */
 } SpawnerMotion;
 
-/* EffectMotion as func_001A4630, func_001A73B0 and others use it */
+/* EffectMotion as func_001A4630, func_001A46F0, func_001A73B0 and others use it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    f32 unkDC;                      /* 0x10 copied from def->unkDC */
-    int unk14;                      /* 0x14 */
-    int unk18;                      /* 0x18 */
-    int unk1C;                      /* 0x1C */
-    int unk20;                      /* 0x20 */
-    u8 unk24;                       /* 0x24 */
+    f32 unkDC;                      /* 0x10 copied from def->unkDC; func_001A46F0 grows it by def->unkE0 */
+    int unk14;                      /* 0x14 func_001A46F0: frames until it may be hit again */
+    int unk18;                      /* 0x18 func_001A46F0: 1 once hit (it wobbles) */
+    f32 unk1C;                      /* 0x1C func_001A46F0: wobble offset x */
+    f32 unk20;                      /* 0x20 func_001A46F0: wobble offset z */
+    s8 unk24;                       /* 0x24 func_001A46F0: set once the end effect is spawned */
     char pad25[0x0B];
 } HomingMotion;
 

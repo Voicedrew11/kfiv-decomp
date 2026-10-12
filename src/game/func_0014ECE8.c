@@ -45,7 +45,7 @@ void func_0014ECE8(Entity *entity) {
     case 4:
         if ((slots->unk88.unk04 - entity->params->unk80[slots->unk88.index]) >> 8 < 0x2B && slots->unk88.unk02 >= 0x2B) {
             func_00216778(target, D_00413F80);
-            func_00195E48(entity, ((EntityParamsUnk3D8Full *)&entity->params->unk3D8)->unk10[0].unk00, target,
+            func_00195E48(entity, ((EntityParamsUnk3D8Full *)&entity->params->unk3D8[0])->unk10[0].unk00, target,
                           entity->model->unkD0);
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {

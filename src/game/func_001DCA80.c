@@ -46,7 +46,6 @@ void func_001D7C30(void);
 f32 func_001D8300(f32, s32, s32);
 void func_001DD738(HandlerContext *);
 int func_001E5210(u8);
-u32 *func_001FBE70(void);
 void func_001FC5E8(MenuCursorBar *);
 void func_001FDCD0(MenuColor);
 int func_001FE350(int, int);

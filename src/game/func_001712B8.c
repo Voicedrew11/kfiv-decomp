@@ -10,7 +10,7 @@ void func_00170AB8(Entity *);
 
 void func_001712B8(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8Array *unk3D8 = (EntityParamsUnk3D8Array *)&entity->params->unk3D8;
+    EntityParamsUnk3D8Array *unk3D8 = entity->params->unk3D8;
     f32 target[4]; // match: never used, but retail keeps 16 bytes of stack for it
     char *point;
 

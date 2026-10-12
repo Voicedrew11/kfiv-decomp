@@ -159,6 +159,117 @@ typedef struct {
     GsDrawPacket packet;            /* 0x30 */
 } GsDrawFrame;
 
+/* the 0x1A0-byte GIF packet func_001F6B70 fills: a tag, then 25 address+data register writes */
+typedef struct {
+    s32 unk00;                   /* 0x00 */
+    s32 unk04;                   /* 0x04 */
+    s32 unk08;                   /* 0x08 */
+    s32 unk0C;                   /* 0x0C */
+    s64 unk10;                   /* 0x10 */
+    s32 unk18;                   /* 0x18 */
+    s32 unk1C;                   /* 0x1C */
+    s32 unk20;                   /* 0x20 */
+    s32 unk24;                   /* 0x24 */
+    s32 unk28;                   /* 0x28 */
+    s32 unk2C;                   /* 0x2C */
+    s32 unk30;                   /* 0x30 */
+    s32 unk34;                   /* 0x34 */
+    s32 unk38;                   /* 0x38 */
+    s32 unk3C;                   /* 0x3C */
+    s32 unk40;                   /* 0x40 */
+    s32 unk44;                   /* 0x44 */
+    s32 unk48;                   /* 0x48 */
+    s32 unk4C;                   /* 0x4C */
+    s64 unk50;                   /* 0x50 */
+    s32 unk58;                   /* 0x58 */
+    s32 unk5C;                   /* 0x5C */
+    s32 unk60;                   /* 0x60 */
+    f32 unk64;                   /* 0x64 */
+    s32 unk68;                   /* 0x68 */
+    s32 unk6C;                   /* 0x6C */
+    s32 unk70;                   /* 0x70 */
+    s32 unk74;                   /* 0x74 */
+    s32 unk78;                   /* 0x78 */
+    s32 unk7C;                   /* 0x7C */
+    s32 unk80;                   /* 0x80 */
+    s32 unk84;                   /* 0x84 */
+    s32 unk88;                   /* 0x88 */
+    s32 unk8C;                   /* 0x8C */
+    f32 unk90;                   /* 0x90 */
+    f32 unk94;                   /* 0x94 */
+    s32 unk98;                   /* 0x98 */
+    s32 unk9C;                   /* 0x9C */
+    s32 unkA0;                   /* 0xA0 */
+    s32 unkA4;                   /* 0xA4 */
+    s32 unkA8;                   /* 0xA8 */
+    s32 unkAC;                   /* 0xAC */
+    s32 unkB0;                   /* 0xB0 */
+    s32 unkB4;                   /* 0xB4 */
+    s32 unkB8;                   /* 0xB8 */
+    s32 unkBC;                   /* 0xBC */
+    s64 unkC0;                   /* 0xC0 */
+    s32 unkC8;                   /* 0xC8 */
+    s32 unkCC;                   /* 0xCC */
+    s64 unkD0;                   /* 0xD0 */
+    s32 unkD8;                   /* 0xD8 */
+    s32 unkDC;                   /* 0xDC */
+    s32 unkE0;                   /* 0xE0 */
+    s32 unkE4;                   /* 0xE4 */
+    s32 unkE8;                   /* 0xE8 */
+    s32 unkEC;                   /* 0xEC */
+    s32 unkF0;                   /* 0xF0 */
+    s32 unkF4;                   /* 0xF4 */
+    s32 unkF8;                   /* 0xF8 */
+    s32 unkFC;                   /* 0xFC */
+    f32 unk100;                  /* 0x100 */
+    f32 unk104;                  /* 0x104 */
+    s32 unk108;                  /* 0x108 */
+    s32 unk10C;                  /* 0x10C */
+    s32 unk110;                  /* 0x110 */
+    s32 unk114;                  /* 0x114 */
+    s32 unk118;                  /* 0x118 */
+    s32 unk11C;                  /* 0x11C */
+    s64 unk120;                  /* 0x120 */
+    s32 unk128;                  /* 0x128 */
+    s32 unk12C;                  /* 0x12C */
+    s32 unk130;                  /* 0x130 */
+    s32 unk134;                  /* 0x134 */
+    s32 unk138;                  /* 0x138 */
+    s32 unk13C;                  /* 0x13C */
+    s32 unk140;                  /* 0x140 */
+    s32 unk144;                  /* 0x144 */
+    s32 unk148;                  /* 0x148 */
+    s32 unk14C;                  /* 0x14C */
+    f32 unk150;                  /* 0x150 */
+    f32 unk154;                  /* 0x154 */
+    s32 unk158;                  /* 0x158 */
+    s32 unk15C;                  /* 0x15C */
+    s32 unk160;                  /* 0x160 */
+    s32 unk164;                  /* 0x164 */
+    s32 unk168;                  /* 0x168 */
+    s32 unk16C;                  /* 0x16C */
+    s32 unk170;                  /* 0x170 */
+    s32 unk174;                  /* 0x174 */
+    s32 unk178;                  /* 0x178 */
+    s32 unk17C;                  /* 0x17C */
+    s32 unk180;                  /* 0x180 */
+    s32 unk184;                  /* 0x184 */
+    s32 unk188;                  /* 0x188 */
+    s32 unk18C;                  /* 0x18C */
+    s32 unk190;                  /* 0x190 */
+    s32 unk194;                  /* 0x194 */
+    s32 unk198;                  /* 0x198 */
+    s32 unk19C;                  /* 0x19C */
+} GsFillPacket;
+
+/* the two packet buffers func_001FBE70 alternates between (D_00446D48) */
+typedef struct {
+    void *buffers[2];
+} BufferPair;
+
+/* hands out the next packet buffer to fill; callers use it as whichever packet they build */
+void *func_001FBE70(void);
+
 /* one 32-bit word of a packet built in place (func_001E5070), written as an integer or as a float */
 typedef union {
     s32 as_int;

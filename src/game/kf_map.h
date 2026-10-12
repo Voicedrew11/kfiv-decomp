@@ -227,7 +227,7 @@ typedef struct {
 } MapHeader;
 
 /* one 0x60-byte entry of D_0038CD20, indexed by the current map/slot D_00446770 */
-typedef struct {
+typedef struct MapSlot {
     u8 unk00;                       /* 0x00 */
     u8 tag;                         /* 0x01 matched against MapFlagBlock.tags */
     u8 unk02;                       /* 0x02 nonzero: the slot's map is being drawn */
@@ -244,7 +244,7 @@ typedef struct {
     char *unk28;                    /* 0x28 room for MapSlotUnk08.unk2C bytes */
     char pad2C[0x04];
     char *unk30;                    /* 0x30 the file at MapSlotUnk08.unk24: the first of the packets */
-    s32 *unk34;                     /* 0x34 the file at MapSlotUnk08.unk28 */
+    struct SoundSpecSource *unk34;  /* 0x34 the file at MapSlotUnk08.unk28: the map's sound bank */
     char *unk38;                    /* 0x38 the file at 0x1480 */
     char *unk3C;                    /* 0x3C the file at 0x1540 */
     MapSlotPackets unk40;           /* 0x40 */
