@@ -95,11 +95,11 @@ typedef struct {
     u32 flags;                      /* 0x10 */
 } GameEvent;
 
-/* D_0038D6B0[]: the viewers func_0011A500 runs, picked by D_00447064 (0xC bytes each) */
+/* the viewers func_0011A500 runs, indexed by picked_viewer (kf_map_viewer.c), 0xC bytes each */
 typedef struct {
     void (*run)(void);              /* 0x00 loops until the viewer is left */
     int unk04;                      /* 0x04 */
-    int count;                      /* 0x08 D_00447068 stays below it */
+    int count;                      /* 0x08 the number of pictures; viewer_picture stays below it */
 } ViewerEntry;
 
 /* four texture coordinates, one per corner of the viewer's player marker: a local table func_0011AAE8

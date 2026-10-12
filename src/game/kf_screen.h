@@ -33,7 +33,7 @@ typedef struct {
     int timer;                      /* 0x28 frames left */
 } ScreenFade;
 
-/* D_00471DE0[16]: the screen wobble, one sine wave per entry */
+/* one screen wobble oscillator (kf_wobble.c keeps 16); its sine wave moves the screen */
 typedef struct {
     f32 amp_x;                      /* 0x00 */
     f32 amp_y;                      /* 0x04 */

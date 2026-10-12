@@ -204,7 +204,9 @@ the rules in `CONTRIBUTING.md`. Still to do, all without breaking the match:
   in one sweep that conflicts with open PRs.
 - **Real modules.** Merge `func_*.c` files into translation units as
   regions finish (step 3), moving their data out of asm into C. Started:
-  the entity pool (`kf_entity_pool.c`).
+  the entity pool (`kf_entity_pool.c`) and the six other fully-C runs
+  (`kf_packet_buffer.c`, `kf_model_textures.c`, `kf_draw_list.c`,
+  `kf_wobble.c`, `kf_map_viewer.c`, `kf_entity_ai.c`).
 
 ### 6. Whole-ELF match (later)
 
