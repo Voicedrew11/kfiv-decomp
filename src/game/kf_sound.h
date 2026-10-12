@@ -1,4 +1,4 @@
-/* Sound: the driver state at *D_004471D4 (voices, banks, effect settings,
+/* Sound: the driver state at *sound_state (voices, banks, effect settings,
    the IOP DMA of the status block) and the sound cue table. */
 #ifndef KF_SOUND_H
 #define KF_SOUND_H
@@ -68,13 +68,13 @@ typedef struct {
     s16 unk16;                      /* 0x16 */
 } SoundEffectFields;
 
-/* D_005BF280: the record func_001CBAE0 sends the sound driver; the reply lands on it */
+/* sound_rpc_buffer: the record func_001CBAE0 sends the sound driver; the reply lands on it */
 typedef struct {
     void *self;                     /* 0x00 the record itself, then the driver's answer */
-    int args[15];                   /* 0x04 */
+    int args[63];                   /* 0x04 */
 } SoundRpcRequest;
 
-/* D_005BF870: a block being sent to the IOP in pieces of 0x4000 bytes (func_001CBC30, func_001CBD20) */
+/* sound_upload: a block being sent to the IOP in pieces of 0x4000 bytes (func_001CBC30, func_001CBD20) */
 typedef struct {
     int dest;                       /* 0x00 */
     int src;                        /* 0x04 */
@@ -85,7 +85,7 @@ typedef struct {
     int active;                     /* 0x18 */
 } SoundUpload;
 
-/* D_005BF860: the DMA descriptor handed to sceSifSetDma */
+/* sound_dma, sound_command_dma: the DMA descriptor handed to sceSifSetDma */
 typedef struct {
     int src;                        /* 0x00 */
     int dest;                       /* 0x04 */
@@ -101,8 +101,7 @@ typedef struct {
     s8 unk03;                       /* 0x03 1 while it sounds, -1 once stopped (func_001CE8B0) */
 } SoundKey;
 
-/* what D_004471D4 points at. Most files still declare D_004471D4 as char *,
-   so the extern stays in each file. */
+/* the sound driver state (sound_state_storage in kf_sound.c) */
 typedef struct {
     SoundVoice voices[16];          /* 0x000 */
     SoundBank banks[4];             /* 0x200 */
@@ -118,6 +117,7 @@ typedef struct {
     int dma_dest;                   /* 0x4CC */
     char unk4D0[0x06];              /* 0x4D0 */
     u16 active;                     /* 0x4D6 */
+    char pad4D8[0x08];              /* the block in .bss is 0x4E0 bytes */
 } SoundState;
 
 /* D_0038A130: the sound loads waiting to run, one at a time (func_00101618). Other files
@@ -241,7 +241,7 @@ typedef struct {
     u32 base;                       /* 0x00 */
     u32 limit;                      /* 0x04 */
     int used;                       /* 0x08 */
-} LoadBuffer;
+} SoundFileBuffer;
 
 /* D_0043EE78: the sound script state (0x78 bytes) */
 typedef struct {
@@ -276,5 +276,10 @@ typedef struct {
     char pad54[0x04];
     s32 unk58;                      /* 0x58 */
 } StreamVoice;
+
+/* kf_sound.c */
+int func_001CBAE0(int blocking, ...);
+int func_001CD6E0(u32 voice_index);
+int func_001CE408(int bank_index);
 
 #endif

@@ -2,7 +2,7 @@
 #include "kf_sound.h"
 
 extern char D_002496BF[];
-extern LoadBuffer D_003EF560;
+extern SoundFileBuffer D_003EF560;
 extern SoundJob D_003EF678;
 extern int D_004470F4;
 

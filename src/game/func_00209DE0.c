@@ -1,6 +1,6 @@
 #include "common.h"
 
-int func_001CBAE0();
+int func_001CBAE0(int, ...);
 int func_001CED78(int, char *, int);
 extern char D_00441260[];
 

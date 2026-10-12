@@ -10,7 +10,7 @@ extern int func_00102238(char *, int, int);
 extern int func_001025C0(int, int, int);
 extern int func_00102790(int, int);
 extern void func_001024B0(int);
-extern void func_001CD6E0(int);
+extern int func_001CD6E0(u32);
 extern int sprintf(char *, char *, ...);
 
 typedef struct {
