@@ -403,7 +403,7 @@ typedef struct ModelInstance {
     struct ModelWaveUv *wave_uvs;   /* 0x1A4 one per vertex, built by func_00111E28 */
     void (*unk1A8)(struct ModelInstance *model);    /* 0x1A8 */
     void (*draw)(struct ModelInstance *model);  /* 0x1AC sets the GS state and draws */
-    void (*unk1B0)(void);           /* 0x1B0 */
+    void (*unk1B0)();               /* 0x1B0 called with the model by func_0010B140 */
     void (*unk1B4)(struct ModelInstance *model);    /* 0x1B4 */
     int (*get_point)(void *model, int index);   /* 0x1B8 */
     void (*unk1BC)(struct ModelInstance *model);    /* 0x1BC called when func_0010AEB8 sent new textures */

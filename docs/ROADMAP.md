@@ -143,6 +143,8 @@ coarsening of it, to be chosen as the code is understood.
 `[START, END)`. A C unit that owns its strings, jump tables or statics must
 cover whole runs. The current one-function units in `src/game/` mostly sit
 inside runs, which is fine while their data stays in the asm data units.
+`.sbss` is carved like `.bss`, so a merged unit can define its small statics
+in C; `src/game/kf_entity_pool.c` (0x123030–0x124DE0) is the first.
 
 ### 4. Match the game functions (started)
 
@@ -201,7 +203,10 @@ the rules in `CONTRIBUTING.md`. Still to do, all without breaking the match:
 - **`.clang-format`** to keep layout consistent; apply it per module, not
   in one sweep that conflicts with open PRs.
 - **Real modules.** Merge `func_*.c` files into translation units as
-  regions finish (step 3), moving their data out of asm into C.
+  regions finish (step 3), moving their data out of asm into C. Started:
+  the entity pool (`kf_entity_pool.c`) and the six other fully-C runs
+  (`kf_packet_buffer.c`, `kf_model_textures.c`, `kf_draw_list.c`,
+  `kf_wobble.c`, `kf_map_viewer.c`, `kf_entity_ai.c`).
 
 ### 6. Whole-ELF match (later)
 

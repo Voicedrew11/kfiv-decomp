@@ -57,6 +57,14 @@ typedef struct {
 
 #define SPRITE_PACKET_COLOR_VIEW(packet) ((SpritePacketColorView *)(packet))
 
+/* one quadword DMA tag at the head of a packet chain */
+typedef struct {
+    s32 id_and_qwc;                 /* 0x00 the DMA tag ID (bits 28-30) and quadword count */
+    s32 address;                    /* 0x04 the next packet, or 0 */
+    s32 unk08;                      /* 0x08 */
+    s32 unk0C;                      /* 0x0C */
+} DmaTag;
+
 /* one corner of a ScreenSprite */
 typedef struct {
     u16 x;                          /* 0x00 12.4 fixed point */
