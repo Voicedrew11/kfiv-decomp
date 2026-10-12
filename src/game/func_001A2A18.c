@@ -3,7 +3,7 @@
 
 extern int D_004468C8;
 extern int D_004468D0;
-void func_0019AA50(s16 sound_id);
+void func_0019AA50(u32 index);
 void func_0019CD70(s8 handle);
 
 /* Frees an effect, then the spawner slots and effects that it owns or targets. */

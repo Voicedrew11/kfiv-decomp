@@ -9,7 +9,7 @@ int func_001B4F90(void *);
 void sceVu0AddVector(void *, void *, void *);
 void KF_Vector_Scale(void *, void *, float);
 int func_001C0E40(float, void *);
-int func_0019C8D0(int, int, int, char *, int);
+char func_0019C8D0(int index, int first, int second, int third, int fourth);
 double sin(double);
 
 /* Scratchpad words shared with the other effect kinds. */
@@ -72,7 +72,7 @@ void func_001A6118(EffectActor *effect) {
         return;
     }
     if (effect->frame == 0) {
-        result = func_0019C8D0(1, 10, 0, D_00413F80, EFFECT_FLAG_PARTS(effect)->unk46);
+        result = func_0019C8D0(1, 10, 0, (int)D_00413F80, EFFECT_FLAG_PARTS(effect)->unk46);
         EFFECT_FLAG_PARTS(effect)->unk46 = result;
         if ((s8)result > 0) {
             D_004468C8 += 1;

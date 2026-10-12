@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 #include "kf_player.h"
 
-int func_0019CE00(int);
+void func_0019CE00(int mode);
 extern u32 D_00402D50[14];
 extern PlayerState D_00413F80;
 
