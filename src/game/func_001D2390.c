@@ -1,27 +1,16 @@
-#include "common.h"
-
-typedef struct {
-    char f0;
-    u8 sec;
-    u8 min;
-    u8 hour;
-    char f4;
-    u8 mday;
-    u8 mon;
-    u8 year;
-} Func1D2390Date;
+#include "kf_game.h"
 
 int mktime(int *);
 
-int func_001D2390(Func1D2390Date arg0) {
-    int tm[9];
+int func_001D2390(ClockTime time) {
+    int tm_fields[9];
 
-    tm[0] = arg0.sec;
-    tm[1] = arg0.min;
-    tm[2] = arg0.hour;
-    tm[3] = arg0.mday;
-    tm[4] = arg0.mon - 1;
-    tm[5] = arg0.year + 0x64;
-    mktime(tm);
-    return tm[7];
+    tm_fields[0] = time.sec;
+    tm_fields[1] = time.min;
+    tm_fields[2] = time.hour;
+    tm_fields[3] = time.mday;
+    tm_fields[4] = time.mon - 1;
+    tm_fields[5] = time.year + 0x64;
+    mktime(tm_fields);
+    return tm_fields[7];
 }

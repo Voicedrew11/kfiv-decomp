@@ -52,7 +52,7 @@ void func_0011C160(void) {
     func_00109A80(GS_REG_ALPHA_2, ((s64)alpha << 32) | 0x68);
     func_00109AD0();
     D_00472080.unk148 = (s32)&D_0038D930;
-    D_00472080.unk144 = 0;
+    D_00472080.hit_count = 0;
     D_00472080.unk14C = &D_0038A1B0.unkA0;
     func_0010D308(&D_00472080);
     func_00109A50();
@@ -77,7 +77,7 @@ void func_0011C160(void) {
                 case 0x63:
                     break;
                 default:
-                    for (i = 0; i < ((MapSlotUnk08 *)slot->unk08)->record_count; i++, record++) {
+                    for (i = 0; i < ((MapSlotUnk08 *)slot->header)->record_count; i++, record++) {
                         flags = record->flags;
                         if (flags & 0x40000000) {
                             continue;
@@ -95,7 +95,7 @@ void func_0011C160(void) {
                             record->model->unk148 = (s32)&D_0038A1B0.unkA90[map][record->unk35];
                             record->model->unk14C = &D_0038A1B0.unk290[map][record->unk34];
                         }
-                        record->model->unk144 = 0;
+                        record->model->hit_count = 0;
                         record->model->unk148 = (s32)&D_0038D930;
                         record->model->unk14C = &D_0038A1B0.unkA0;
                         func_0010D308(record->model);

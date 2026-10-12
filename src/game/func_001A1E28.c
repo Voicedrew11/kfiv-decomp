@@ -1,24 +1,20 @@
 #include "common.h"
+#include "kf_effect.h"
 
-extern char D_003F1750[];
+extern EffectSlot D_003F1750[0x60];
 
-int func_001A1C58();
+int func_001A1C58(int effect_id, Vector4 *position, Vector4 *rotation, Entity *owner_entity);
 
-typedef struct {
-    char pad[0x38];
-    int a38;
-    s16 a3c;
-} Ent;
+/* Spawns effect effect_id at position and rotation; returns its slot, or -1 when none is free. */
+int func_001A1E28(int effect_id, Vector4 *position, Vector4 *rotation, Entity *owner_entity, u16 effect_param, void *owner) {
+    int slot_index;
+    EffectSlot *slot;
 
-int func_001A1E28(int a0, int a1, int a2, int a3, u16 a4, int a5) {
-    int temp_v0;
-    Ent *temp_v1;
-
-    temp_v0 = func_001A1C58();
-    if (temp_v0 != -1) {
-        temp_v1 = (Ent *)(D_003F1750 + temp_v0 * 0x50);
-        temp_v1->a3c = a4;
-        temp_v1->a38 = a5;
+    slot_index = func_001A1C58(effect_id, position, rotation, owner_entity);
+    if (slot_index != -1) {
+        slot = &D_003F1750[slot_index];
+        slot->effect_param = effect_param;
+        slot->owner = owner;
     }
-    return temp_v0;
+    return slot_index;
 }

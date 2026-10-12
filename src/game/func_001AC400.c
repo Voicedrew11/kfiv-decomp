@@ -1,15 +1,14 @@
 #include "common.h"
+#include "kf_effect.h"
 
-void func_001AF538(float *, float *, float);
-void func_001AF640(void *, int);
-void func_001AF928(char *, int);
 
-void func_001AC400(char *arg0, int arg1) {
-    float *temp_s2;
+/* Sets the velocity from the heading and speed, and flags the effect. */
+void func_001AC400(EffectActor *effect, EffectSlot *spawn_slot) {
+    Vector4 *velocity;
 
-    temp_s2 = (float *)(arg0 + 0x10);
-    func_001AF928(arg0, arg1);
-    func_001AF640(arg0, arg1);
-    func_001AF538(temp_s2, (float *)(*(char **)(arg0 + 0x50) + 0xD0), *(float *)(*(char **)(arg0 + 0x54) + 0xD8));
-    *(s64 *)(arg0 + 0x40) |= (s64)0x8000 << 0x2B;
+    velocity = &effect->motion.velocity;
+    func_001AF928(effect, spawn_slot);
+    func_001AF640(effect, spawn_slot);
+    func_001AF538(effect->def->speed, velocity, &effect->model->rotation);
+    effect->flags |= EFFECT_FLAG_HAS_TARGETERS;
 }

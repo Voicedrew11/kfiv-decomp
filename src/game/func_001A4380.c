@@ -1,15 +1,18 @@
 #include "common.h"
+#include "kf_effect.h"
 
-void func_001AF298(char *, char *);
+void func_001AF298(EffectActor *effect, s8 *state);
 
-void func_001A4380(char *arg0) {
-    char tmp[0x10];
-    int n;
+// Counts the countdown down, and calls func_001AF298 once it runs out while the flag is clear.
+void func_001A4380(EffectActor *effect) {
+    CountdownMotion *motion = (CountdownMotion *)&effect->motion;
+    s8 state_buffer[0x10];
+    int remaining;
 
-    n = *(int *)(arg0 + 0x10) - 1;
-    *(int *)(arg0 + 0x10) = n;
-    if (*(s8 *)(arg0 + 0x14) == 0 && n <= 0) {
-        func_001AF298(arg0, tmp);
+    remaining = motion->countdown - 1;
+    motion->countdown = remaining;
+    if (motion->unk04 == 0 && remaining <= 0) {
+        func_001AF298(effect, state_buffer);
     }
-    *(u16 *)(arg0 + 0x4C) += 1;
+    effect->frame += 1;
 }

@@ -1,21 +1,23 @@
+#include "common.h"
 #include "kf_effect.h"
 
-int func_001A1E28(int, int, int, int, u16, int);
 int rand(void);
 
-void func_001A4570(EffectActor *actor) {
-    SpawnerMotion *motion;
+// Spawner update: spawns an effect when its frame is due, then schedules the next one.
+void func_001A4570(EffectActor *effect) {
+    SpawnerMotion *motion = (SpawnerMotion *)&effect->motion;
+    ModelInstance *model;
 
-    motion = (SpawnerMotion *)&actor->motion;
-    if (motion->next_frame < actor->frame) {
-        func_001A1E28(motion->effect_id, (int)&actor->model->position, (int)&actor->model->rotation, actor->effect_arg, actor->effect_param, (int)actor->owner);
-        motion->count++;
-        if (motion->count >= motion->repeat_limit) {
-            actor->frame = actor->def->restart_frame;
+    if (motion->next_spawn_frame < effect->frame) {
+        model = effect->model;
+        func_001A1E28(motion->spawn_effect_id, &model->position, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+        motion->spawn_count += 1;
+        if (motion->spawn_count >= motion->spawn_limit) {
+            effect->frame = effect->def->keyframe_end;
         } else {
-            actor->frame = 0;
+            effect->frame = 0;
         }
-        motion->next_frame = motion->interval_base + rand() % motion->interval_range;
+        motion->next_spawn_frame = motion->spawn_frames_base + rand() % motion->spawn_frames_span;
     }
-    actor->frame++;
+    effect->frame += 1;
 }

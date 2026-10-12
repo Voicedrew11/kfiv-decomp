@@ -215,7 +215,7 @@ int func_001005E8(int arg) {
     if (D_0038A1B0.bit40) {
         func_00106FB8(D_0038A1B0.unk88);
     }
-    if (D_00413F80.unk230 > 0.0f) {
+    if (D_00413F80.aim_speed > 0.0f) {
         func_00106FB8(0x40);
     }
     if (arg != 0 && D_0038A1B0.bit45) {

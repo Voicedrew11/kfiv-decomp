@@ -26,7 +26,7 @@ void func_001155F8(int map) {
 
     record = (MapRecordBounds *)slot->records;
     if (record != NULL) {
-        count = ((MapSlotUnk08 *)slot->unk08)->record_count;
+        count = ((MapSlotUnk08 *)slot->header)->record_count;
         model = record->model;
         for (i = 0; i < count; i++, record++, model++) {
             func_00216778(&model->position, record->position);

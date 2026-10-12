@@ -34,6 +34,15 @@ typedef struct {
     u64 unk08;
 } Qword;
 
+/* the same 128 bits at any alignment, copied as two unaligned doublewords */
+typedef struct __attribute__((packed)) {
+    u64 unk00;
+    u64 unk08;
+} UnalignedQword;
+
+/* a 128-bit integer, stored with one sq */
+typedef u32 Uint128 __attribute__((mode(TI)));
+
 /* one vertex of a strip */
 typedef struct {
     void *unk00;                    /* 0x00 */
@@ -138,6 +147,15 @@ typedef struct {
     char pad78[0x18];
     ModelPartVertex vertices[1];    /* 0x90 */
 } ModelPartData;
+
+/* one record of a part's data (ModelPart.data_addr): 0x80 bytes plus its payload */
+typedef struct {
+    char pad00[0x40];
+    int id_word;                    /* 0x40 low 14 bits: the record id */
+    char pad44[0x1C];
+    int payload_size;               /* 0x60 low 15 bits: the payload length in 0x40-byte units */
+    char pad64[0x0C];
+} ModelPartRecord;
 
 /* ModelPart with its last doubleword (the bit-fields) whole. Bits 32-38 clear:
    func_0018BD18 leaves the part's turn and offset out. */
@@ -360,11 +378,11 @@ typedef struct ModelInstance {
     struct ModelInstance *draw_next[2]; /* 0x128 next model in the same depth bucket, per draw list */
     ModelPart *unk130;              /* 0x130 the part whose placement func_00126120 leaves out (the root?) */
     char pad134[0x08];
-    f32 unk13C;                     /* 0x13C a map object's reach (MapObject.unk14) */
-    u8 unk140[4];                   /* 0x140 the lights it is lit by: indices into D_003E7500 */
-    u8 unk144;                      /* 0x144 how many of unk140 are used */
+    f32 radius;                     /* 0x13C how far the model reaches around its position (a map object's MapObject.unk14) */
+    u8 hit_handles[4];              /* 0x140 handles of the linked points (D_003E7500) that touch it; the drawing code lights it by them */
+    u8 hit_count;                   /* 0x144 how many of hit_handles are used */
     u8 unk145;                      /* 0x145 */
-    u16 unk146;                     /* 0x146 */
+    s16 unk146;                     /* 0x146 */
     s32 unk148;                     /* 0x148 */
     void *unk14C;                   /* 0x14C */
     f32 unk150;                     /* 0x150 */
@@ -374,8 +392,8 @@ typedef struct ModelInstance {
     s32 unk160[4];                  /* 0x160 */
     char pad170[0x08];
     void *unk178;                   /* 0x178 passed to func_0010B2E0 with unk194: bit n set skips chunk n (a mask, but not stored as an int) */
-    s32 unk17C;                     /* 0x17C sent after the colour at unk150 by func_0010D308, in its alpha slot */
-    char unk180[0x10];              /* 0x180 a quadword sent after it */
+    int found_record_id;            /* 0x17C the id func_001A2E58 last found; sent after the colour at unk150 by func_0010D308, in its alpha slot */
+    int found_record[4];            /* 0x180 a copy of that record, its id bits replaced; a quadword sent after it */
     u16 unk190;                     /* 0x190 slot of unk194 in D_00468190 (0..2), 3: always sent */
     s16 unk192;                     /* 0x192 */
     int unk194;                     /* 0x194 */
@@ -665,7 +683,10 @@ typedef struct {
 /* what D_004469D8 points at: one of the nodes at D_0057E240. D_004469D4 heads
    the list of the ones in use. */
 typedef struct ModelNode {
-    char pad00[0x18];
+    s32 unk00;                      /* 0x00 */
+    s32 unk04;                      /* 0x04 cleared when the node is unlinked */
+    s32 unk08;                      /* 0x08 cleared when the node is unlinked */
+    char pad0C[0x0C];
     ModelInstance *model;           /* 0x18 non-null while the node is in use */
     char pad1C[0x04];
     struct ModelNode *prev;         /* 0x20 */

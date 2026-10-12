@@ -64,7 +64,7 @@ void func_0011C708(int map) {
             object->unk14 = 0.0f;
         }
         object->unk3C = object->unk04->unk6C * scale + 100.0f;
-        object->model->unk13C = object->unk14;
+        object->model->radius = object->unk14;
         if (object->model->unk100 & 1) {
             MAP_OBJECT_BYTES(object)->anim = 0;
         } else {
@@ -98,7 +98,7 @@ void func_0011C708(int map) {
         MAP_OBJECT_BITS(object)->bit2 = FALSE;
     }
     D_00447088[map] = NULL;
-    for (i = ((MapSlotUnk08 *)D_0038CD20[map].unk08)->unk30 - 1; i >= 0; i--) {
+    for (i = ((MapSlotUnk08 *)D_0038CD20[map].header)->unk30 - 1; i >= 0; i--) {
         for (object = &D_003A1A30[map][count - 1], j = count - 1; j >= 0; j--, object--) {
             if (MAP_OBJECT_DEF_WORD(object) & 0x400) {
                 continue;
@@ -114,7 +114,7 @@ void func_0011C708(int map) {
         }
     }
     D_00447090[map] = NULL;
-    for (i = ((MapSlotUnk08 *)D_0038CD20[map].unk08)->unk32 - 1; i >= 0; i--) {
+    for (i = ((MapSlotUnk08 *)D_0038CD20[map].header)->unk32 - 1; i >= 0; i--) {
         for (object = &D_003A1A30[map][count - 1], j = count - 1; j >= 0; j--, object--) {
             if (MAP_OBJECT_DEF_WORD(object) & 0x400) {
                 continue;

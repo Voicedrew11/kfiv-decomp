@@ -1,38 +1,19 @@
-#include "common.h"
+#include "kf_effect.h"
 
-extern char D_003F3550[];
-void func_001A2A18(void *);
 
-typedef struct {
-    char pad0[0x40];
-    u64 flags;
-    char pad48[0xC];
-    void *p54;
-    char pad58[0xA0 - 0x58];
-} B;
+extern EffectActor D_003F3550[0x180];
 
-typedef struct {
-    char pad0[0x100];
-    u16 u100;
-} K;
-
-typedef struct {
-    char pad0[0x4C];
-    u16 u4C;
-} A;
-
-void func_001A9AE0(A *arg0) {
-    B *q;
+/* Keeps this effect alive while another effect of kind 0x23 is in use; otherwise ends it. */
+void func_001A9AE0(EffectActor *effect) {
+    EffectActor *candidate;
     int i;
 
-    q = (B *)D_003F3550;
-    for (i = 0; i < 0x180; i++, q++) {
-        if (q->flags & (0x8000L << 41)) {
-            if (((K *)q->p54)->u100 == 0x23) {
-                arg0->u4C++;
-                return;
-            }
+    candidate = D_003F3550;
+    for (i = 0; i < 0x180; i++, candidate++) {
+        if ((candidate->flags & EFFECT_FLAG_LIVE) && candidate->def->unk100 == 0x23) {
+            effect->frame++;
+            return;
         }
     }
-    func_001A2A18(arg0);
+    func_001A2A18(effect);
 }

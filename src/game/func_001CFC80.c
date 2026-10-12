@@ -1,11 +1,15 @@
+#include "common.h"
 #include "kf_game.h"
 
 extern char D_004471E1;
-extern MessageSlot *D_004471E4;
-extern MessageSlot *D_004471E8;
+extern PendingSlot *D_004471E4;
+extern PendingSlot *D_004471E8;
 
+/* Makes D_004471E4's slot the current one and clears its unk04. */
 void func_001CFC80(void) {
+    PendingSlot *slot = D_004471E4;
+
     D_004471E1 = 0;
-    D_004471E8 = D_004471E4;
-    D_004471E4->unk04 = 0;
+    D_004471E8 = slot;
+    slot->unk04 = 0;
 }

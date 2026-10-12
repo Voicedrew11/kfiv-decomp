@@ -1,11 +1,13 @@
-#include "kf_load.h"
+#include "common.h"
+#include "kf_menu.h"
 
-extern ChunkSource *D_004472B0;
+extern MenuFreeNode *D_004472B0;
 
-/* Gives the upload's source node back to the free list. */
-void func_001D45B8(ChunkUpload *upload) {
-    ChunkSource *source = (ChunkSource *)upload->source;
+/* Pushes the request's node back onto the menu free list. */
+void func_001D45B8(MenuFreeRequest *request) {
+    MenuFreeNode *node = request->node;
+    MenuFreeNode *old_head = D_004472B0;
 
-    source->next = D_004472B0;
-    D_004472B0 = source;
+    D_004472B0 = node;
+    node->next = old_head;
 }

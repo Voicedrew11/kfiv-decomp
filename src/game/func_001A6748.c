@@ -1,28 +1,26 @@
+#include "common.h"
 #include "kf_effect.h"
 
-void func_001AF640(void *, int);
-void func_001AF928(void *, int);
-void func_001AF538(float *, float *, float);
 void func_00216778(void *, void *);
-int func_001C0E40(float, void *);
+int func_001C0E40(float, float *);
 
-/* Starts an effect that rests on the ground: sets its range, and restarts at the frame the definition names if the ground is out of reach. */
-void func_001A6748(EffectActor *actor, int frame) {
-    LandingMotion *motion;
-    Vector4 ground;
+/* Starts an effect that falls toward the ground in front of it. */
+void func_001A6748(EffectActor *effect, EffectSlot *spawn_slot) {
+    SpeedMotion *motion;
+    Vector4 position;
 
-    motion = (LandingMotion *)&actor->motion;
-    func_001AF640(actor, frame);
-    func_001AF928(actor, frame);
-    func_001AF538(&motion->velocity.x, &actor->model->rotation.x, actor->def->speed);
-    motion->range = actor->def->unkDC;
+    motion = (SpeedMotion *)&effect->motion;
+    func_001AF640(effect, spawn_slot);
+    func_001AF928(effect, spawn_slot);
+    func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
     motion->unk14 = 0;
-    func_00216778(&ground, &actor->model->position);
-    ground.y -= motion->range * 0.5f;
-    if (func_001C0E40(motion->range, &ground) == 0) {
-        actor->frame = actor->def->restart_frame;
+    motion->speed = effect->def->unkDC;
+    func_00216778(&position, &effect->model->position);
+    position.y -= motion->speed * 0.5f;
+    if (func_001C0E40(motion->speed, &position.x) == 0) {
+        effect->frame = effect->def->keyframe_end;
     } else {
-        actor->model->position.y = *(float *)0x70000004;
+        effect->model->position.y = *(float *)0x70000004;
     }
-    motion->landed = 0;
+    motion->flag18 = 0;
 }

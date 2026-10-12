@@ -1,8 +1,9 @@
-#include "kf_game.h"
+#include "common.h"
 
-extern CameraState D_004325A0;
+extern float D_004325A0[];
 
-void func_00195878(s32 amount, s32 frames) {
-    D_004325A0.unk78 = amount;
-    D_004325A0.unk7C = frames;
+/* Sets D_004325A0[30] to float_value and D_004325A0[31] to int_value. */
+void func_00195878(int float_value, int int_value) {
+    D_004325A0[30] = float_value;
+    *(int *)&D_004325A0[31] = int_value;
 }

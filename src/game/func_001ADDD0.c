@@ -1,64 +1,30 @@
-#include "common.h"
+#include "kf_effect.h"
 
-typedef struct {
-    char pad0[0xEC];
-    u16 uEC;
-    u16 uEE;
-    u16 uF0;
-    char pad1[0x12];
-    float f104;
-} Ctl;
+/* Falls under EffectDef.gravity and spawns an effect when it lands. */
+void func_001ADDD0(EffectActor *effect) {
+    GravityMotion *motion;
+    EffectDef *def;
+    ModelInstance *model;
+    u16 spawn_id;
 
-typedef struct {
-    char pad0[0x10];
-    float f10;
-    u16 u14;
-    char t16;
-} Sub;
-
-typedef struct {
-    char pad0[0x10];
-    Sub sub;
-    char pad1[0x20];
-    void *p48;
-    u16 count;
-    u16 u4E;
-    char *p50;
-    Ctl *p54;
-    char pad2[4];
-    int i5C;
-} Actor;
-
-void func_001AEC48(void *);
-void func_001AED58(void *);
-int func_001AF0B0(void *);
-int func_001A2A18(void *);
-void func_001A1E28(u16, void *, void *, int, u16, void *);
-
-void func_001ADDD0(Actor *arg0) {
-    Sub *s;
-    Ctl *c;
-    char *p50;
-    u16 var_a0;
-
-    func_001AEC48(arg0);
-    s = &arg0->sub;
-    func_001AED58(arg0);
-    func_001AF0B0(arg0);
-    c = arg0->p54;
-    if (arg0->count >= c->uF0) {
-        p50 = arg0->p50;
-        s->f10 = s->f10 + c->f104;
-        *(float *)(p50 + 0xC4) = *(float *)(p50 + 0xC4) + s->f10;
-        if (arg0->count >= s->u14) {
-            if (s->t16 == 5) {
-                var_a0 = c->uEC;
+    func_001AEC48(effect);
+    motion = (GravityMotion *)&effect->motion;
+    func_001AED58(effect);
+    func_001AF0B0(effect);
+    def = effect->def;
+    if (effect->frame >= def->unkF0) {
+        model = effect->model;
+        motion->vertical_speed += def->gravity;
+        model->position.y += motion->vertical_speed;
+        if (effect->frame >= motion->landing_frame) {
+            if (motion->landing_mode == 5) {
+                spawn_id = def->radius_half;
             } else {
-                var_a0 = c->uEE;
+                spawn_id = def->interval;
             }
-            func_001A1E28(var_a0, s, p50 + 0xD0, arg0->i5C, arg0->u4E, arg0->p48);
-            func_001A2A18(arg0);
+            func_001A1E28(spawn_id, &motion->velocity, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+            func_001A2A18(effect);
         }
     }
-    arg0->count = arg0->count + 1;
+    effect->frame++;
 }

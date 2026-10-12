@@ -1,33 +1,36 @@
 #include "common.h"
+#include "kf_model.h"
 
-typedef struct __attribute__((packed)) { u64 a, b; } Unal;
-typedef u32 u128 __attribute__((mode(TI)));
-typedef struct { char pad[0x78]; u64 w; } Ent;
+/* Finds the record with the given id in a model's parts and copies it to model->found_record. */
+// match: the caller passes a second argument that this function never reads
+void func_001A2E58(ModelInstance *model, int unused_arg1, int record_id, int id_bits) {
+    int part_total = model->part_count;
+    ModelPart *part;
+    char *record;
+    int part_index;
+    int record_index;
 
-void func_001A2E58(char *arg0, int unused, int arg2, int arg3) {
-    char *ent;
-    int i;
-    u16 total = *(u16 *)(arg0 + 0xF0);
+    model->found_record_id = 0;
+    *(Uint128 *)model->found_record = 0;
+    part = model->parts;
+    for (part_index = 0; part_index < part_total; part_index++, part++) {
+        int record_count = part->data_count;
 
-    *(int *)(arg0 + 0x17C) = 0;
-    *(u128 *)(arg0 + 0x180) = 0;
-    ent = *(char **)(arg0 + 0xF8);
-    for (i = 0; i < total; i++, ent += 0x80) {
-        int n = (int)(((Ent *)ent)->w >> 53);
-        char *s = *(char **)(ent + 0x78);
-        int j;
-        for (j = 0; j < n; j++, s += 0x10) {
-            if ((*(int *)(s + 0x40) & 0x3FFF) == arg2) {
-                *(Unal *)(arg0 + 0x180) = *(Unal *)(s + 0x40);
-                *(int *)(arg0 + 0x17C) = arg2;
-                *(int *)(arg0 + 0x180) = (*(int *)(arg0 + 0x180) & 0xFFFFC000) | arg3;
+        record = (char *)(int)part->data_addr;
+        for (record_index = 0; record_index < record_count; record_index++, record += 0x10) {
+            if ((((ModelPartRecord *)record)->id_word & 0x3FFF) == record_id) {
+                *(UnalignedQword *)model->found_record = *(UnalignedQword *)&((ModelPartRecord *)record)->id_word;
+                model->found_record_id = record_id;
+                model->found_record[0] = (model->found_record[0] & 0xFFFFC000) | id_bits;
                 return;
             }
-            s += 0x60;
+            // match: the record is walked as bytes, its payload size read mid-step
+            record += 0x60;
             {
-                int hdr = *(int *)s;
-                s += 0x10;
-                s += (hdr & 0x7FFF) << 6;
+                int payload_size = *(int *)record;
+
+                record += 0x10;
+                record += (payload_size & 0x7FFF) << 6;
             }
         }
     }

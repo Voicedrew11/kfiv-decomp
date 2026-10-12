@@ -70,7 +70,7 @@ void func_00112948(int map) {
     D_0038A1B0.unkA0 = *slot->unk0C;
     D_0038A1B0.unkC0 = *(MapSlotUnk10Words *)slot->unk10;
     fog = &D_0038A1B0.unk280;
-    *fog = ((MapSlotUnk08 *)D_0038CD20[0].unk08)->unk50;
+    *fog = ((MapSlotUnk08 *)D_0038CD20[0].header)->unk50;
     D_0038A1B0.unk9A = 0;
     D_0038A1B0.unk9B = 0;
     D_0038A1B0.unk9C = 0;
@@ -83,6 +83,6 @@ void func_00112948(int map) {
     func_001034F8(D_0038CD20[0].tag);
     func_00210930(D_0038CD20[0].unk5C);
     func_002109C8(0x7FFF, 0);
-    D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[0].unk08)->unk70;
+    D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[0].header)->unk70;
     D_0038A130.unk04 = 1;
 }

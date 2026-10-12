@@ -1,35 +1,35 @@
 #include "common.h"
+#include "kf_effect.h"
 
-void func_001AF928(char *, int);
-void func_001AF640(void *, int);
 void func_001C1430(float, void *, void *);
 void func_00216778(void *, void *);
-int func_001A2A18(void *);
 
-void func_001AC588(char *arg0, int arg1) {
-    float vec[4];
-    char *temp_s2;
-    char *p54;
-    char *p50;
+#define SCRATCH_VECTOR ((Vector4 *)0x70000000)
+#define SCRATCH_MATRIX ((f32 *)0x70000010)
 
-    temp_s2 = arg0 + 0x10;
-    func_001AF928(arg0, arg1);
-    func_001AF640(arg0, arg1);
-    p54 = *(char **)(arg0 + 0x54);
-    p50 = *(char **)(arg0 + 0x50);
-    vec[0] = 0;
-    vec[1] = -*(u16 *)(p54 + 0xEC);
-    vec[2] = 0;
-    vec[3] = 0;
-    *(float *)(p50 + 0xC4) -= *(u16 *)(p54 + 0xEE);
-    func_001C1430(1.0f, p50 + 0xC0, vec);
-    if (*(int *)0x70000010 != 0) {
-        func_00216778(*(char **)(arg0 + 0x50) + 0xC0, (void *)0x70000000);
+/* Drops the model by its interval and starts the motion from the heading and speed. */
+void func_001AC588(EffectActor *effect, EffectSlot *spawn_slot) {
+    EffectDef *def;
+    Vector4 *velocity;
+    Vector4 offset;
+
+    velocity = &effect->motion.velocity;
+    func_001AF928(effect, spawn_slot);
+    func_001AF640(effect, spawn_slot);
+    def = effect->def;
+    offset.x = 0;
+    offset.y = -def->radius_half;
+    offset.z = 0;
+    offset.w = 0;
+    effect->model->position.y -= def->interval;
+    func_001C1430(1.0f, &effect->model->position, &offset);
+    if (*(int *)SCRATCH_MATRIX != 0) {
+        func_00216778(&effect->model->position, SCRATCH_VECTOR);
     } else {
-        func_001A2A18(arg0);
+        func_001A2A18(effect);
     }
-    *(float *)(temp_s2 + 0x0) = 0;
-    *(float *)(temp_s2 + 0x4) = *(float *)(*(char **)(arg0 + 0x54) + 0xD8);
-    *(float *)(temp_s2 + 0x8) = 0;
-    *(float *)(temp_s2 + 0xC) = 0;
+    velocity->x = 0;
+    velocity->y = effect->def->speed;
+    velocity->z = 0;
+    velocity->w = 0;
 }

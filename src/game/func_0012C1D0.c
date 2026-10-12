@@ -138,7 +138,7 @@ void func_0012C1D0(Entity *entity, s32 unknown) {
             break;
         }
     }
-    if (entity->unk54 != (void (*)(Entity *))unkE0->unk18) {
+    if (entity->handler != (void (*)(Entity *))unkE0->unk18) {
         func_001958B8((char *)entity, unkE0->unk18, unknown);
     }
 }

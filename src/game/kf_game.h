@@ -108,6 +108,18 @@ typedef struct {
     s32 values[4];                  /* 0x00 */
 } ViewerCornerTable;
 
+/* an 8-byte wall-clock time passed by value (func_001D2390, func_001D23F0, func_001D24A8) */
+typedef struct {
+    char unk0;                      /* 0x00 */
+    u8 sec;                         /* 0x01 */
+    u8 min;                         /* 0x02 */
+    u8 hour;                        /* 0x03 */
+    char unk4;                      /* 0x04 */
+    u8 mday;                        /* 0x05 */
+    u8 mon;                         /* 0x06 */
+    u8 year;                        /* 0x07 years since 2000 */
+} ClockTime;
+
 /* D_00431CE8: func_0020CD00 advances its counter once a frame */
 typedef struct {
     char pad00[0x08];
@@ -157,5 +169,26 @@ typedef struct {
     u32 flags;                      /* 0x30 bits 18 and 19 are a state; below 2 it is saved as one bit */
     char pad34[0x0C];
 } GameDefinitionFlags;
+
+/* a node of the doubly linked list at D_004469D4 */
+typedef struct ListNode {
+    char pad00[0x20];
+    struct ListNode *prev;          /* 0x20 */
+    struct ListNode *next;          /* 0x24 */
+} ListNode;
+
+/* what D_004471E4 and D_004471E8 point at; func_001CFC80 clears unk04 */
+typedef struct {
+    char pad00[0x04];
+    int unk04;                      /* 0x04 */
+} PendingSlot;
+
+/* D_0042A8F0[32]: a pool of 0x70-byte slots chained into a free list through `next`;
+   D_00446DF0 holds the head */
+typedef struct PoolSlot {
+    char pad00[0x50];
+    struct PoolSlot *next;          /* 0x50 */
+    char pad54[0x1C];
+} PoolSlot;
 
 #endif

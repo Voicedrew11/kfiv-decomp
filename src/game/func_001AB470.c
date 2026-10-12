@@ -1,13 +1,12 @@
-void func_001AF928(char *, int);
-void func_001AF640(void *, int);
-void func_001AF538(float, void *, void *);
+#include "common.h"
+#include "kf_effect.h"
 
-void func_001AB470(char *arg0, int arg1) {
-    char *temp_s2;
+/* Spawn: moves along the model's heading at the definition's speed. */
+void func_001AB470(EffectActor *effect, EffectSlot *spawn_slot) {
+    HeadingMotion *motion = (HeadingMotion *)&effect->motion;
 
-    temp_s2 = arg0 + 0x10;
-    func_001AF928(arg0, arg1);
-    func_001AF640(arg0, arg1);
-    func_001AF538(*(float *)(*(char **)(arg0 + 0x54) + 0xD8), temp_s2, *(char **)(arg0 + 0x50) + 0xD0);
-    temp_s2[0x10] = 0;
+    func_001AF928(effect, spawn_slot);
+    func_001AF640(effect, spawn_slot);
+    func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
+    motion->unk10 = 0;
 }

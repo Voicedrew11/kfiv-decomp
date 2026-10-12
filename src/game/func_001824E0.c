@@ -37,8 +37,8 @@ void func_001824E0(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit6) {
         if (unkE0->unk0C != NULL) {
             ((void (*)(Entity *))unkE0->unk0C)(entity);
-        } else if (entity->unk54 != NULL) {
-            entity->unk54(entity);
+        } else if (entity->handler != NULL) {
+            entity->handler(entity);
         }
     }
     if (entity->unkA0 != 0) {

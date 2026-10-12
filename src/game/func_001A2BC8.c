@@ -1,34 +1,22 @@
 #include "common.h"
+#include "kf_effect.h"
 
-typedef struct {
-    char pad0[0x20];
-    s64 flags;
-    char pad28[0x4];
-    int owner;
-    char pad30[0x20];
-} A;
-
-extern A D_003F1750[];
+extern EffectSlot D_003F1750[0x60];
 extern int D_004468CC;
 
-void func_001A2AF8(A *);
-
-void func_001A2BC8(int arg0) {
-    A *p;
-    s64 m1;
+/* Frees every spawner slot that the given effect spawned. */
+void func_001A2BC8(EffectActor *owner) {
+    EffectSlot *slot;
     int i;
 
     if (D_004468CC > 0) {
         i = 0;
-        m1 = 0x8000L << 17;
-        p = D_003F1750;
-        for (; i < 0x60; i++, p++) {
-            if (p->flags & m1) {
-                if (p->owner == arg0) {
-                    func_001A2AF8(p);
-                    if (D_004468CC == 0) {
-                        break;
-                    }
+        slot = D_003F1750;
+        for (; i < 0x60; i++, slot++) {
+            if ((slot->flags & EFFECT_SLOT_LIVE) && slot->owner_effect == owner) {
+                func_001A2AF8(slot);
+                if (D_004468CC == 0) {
+                    break;
                 }
             }
         }

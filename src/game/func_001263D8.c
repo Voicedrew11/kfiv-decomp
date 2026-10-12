@@ -34,7 +34,7 @@ MapRecordBounds *func_001263D8(Entity *entity) {
     for (map = 0; map < 2; map++) {
         if (slots[map]->unk00 != 0) {
             record = (MapRecordBounds *)slots[map]->records;
-            for (i = 0; i < ((MapSlotUnk08 *)slots[map]->unk08)->record_count; i++, record++) {
+            for (i = 0; i < ((MapSlotUnk08 *)slots[map]->header)->record_count; i++, record++) {
                 if (record->unk3C & 0x40000000) {
                     continue;
                 }
@@ -73,7 +73,7 @@ MapRecordBounds *func_001263D8(Entity *entity) {
     for (map = 0; map < 2; map++) {
         if (slots[map]->unk00 != 0) {
             record = (MapRecordBounds *)slots[map]->records;
-            for (i = 0; i < ((MapSlotUnk08 *)slots[map]->unk08)->record_count; i++, record++) {
+            for (i = 0; i < ((MapSlotUnk08 *)slots[map]->header)->record_count; i++, record++) {
                 if (record->unk3C & 0x40000000) {
                     continue;
                 }

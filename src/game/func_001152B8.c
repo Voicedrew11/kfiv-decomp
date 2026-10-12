@@ -64,7 +64,7 @@ void func_001152B8(int map) {
         } else if (loading == (int)slot && D_0038A130.unk14 != (int)slot) {
             D_0038A130.unk14 = 0;
         }
-        D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[map].unk08)->unk70;
+        D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[map].header)->unk70;
         D_0038A130.unk04 = 1;
         func_00117AA8(map == 0, map);
     }

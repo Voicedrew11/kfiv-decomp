@@ -101,7 +101,7 @@ int func_0011A600(void) {
     D_00472070.z = D_00472070.y = D_00472070.x = D_0044679C[0];
     for (i = 0; i < 2; i++) {
         if (D_0038CD20[i].unk00 != 0 && func_0011C678(D_0038CD20[i].tag) != 0) {
-            count = ((MapSlotUnk08 *)D_0038CD20[i].unk08)->record_count;
+            count = ((MapSlotUnk08 *)D_0038CD20[i].header)->record_count;
             record = (MapRecordBounds *)D_0038CD20[i].records;
             for (j = 0; j < count; j++, record++) {
                 if (D_00472060.x > record->unk40[0]) {

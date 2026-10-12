@@ -1,8 +1,9 @@
 #include "kf_model.h"
 
-/* Returns the first value of the header in front of one of the model's tables. */
-int func_0019A418(ModelInstance *model, int table_index) {
-    ModelPartLevels **table = model->level_tables + table_index;
+u16 func_0019A418(ModelInstance *model, int index) {
+    ModelPartLevels *levels;
 
-    return ((ModelTableHeader *)*table - 1)->unk00;
+    /* match: indexing level_tables as an array swaps the addu operands */
+    levels = *(ModelPartLevels **)((char *)model->level_tables + (index << 2));
+    return *(u16 *)((char *)levels - 4);
 }

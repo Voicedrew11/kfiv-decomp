@@ -1,25 +1,26 @@
-#include "common.h"
+#include "kf_effect.h"
 
-void func_001AF928(char *, int);
-void func_001AF640(void *, int);
 void func_00216778(void *, void *);
 int rand(void);
 
-void func_001AD7F8(char *arg0, int arg1) {
-    char *temp_s0;
-    char *temp_v0;
-    int hi;
+/* Sets up a spiral's start angle, per-frame steps and a random start phase. */
+void func_001AD7F8(EffectActor *effect, EffectSlot *spawn_slot) {
+    SpiralMotion *motion;
+    EffectDef *def;
+    ModelInstance *model;
+    int random_step;
 
-    temp_s0 = arg0 + 0x10;
-    func_001AF928(arg0, arg1);
-    func_001AF640(arg0, arg1);
-    func_00216778(temp_s0, *(char **)(arg0 + 0x50) + 0xC0);
-    temp_v0 = *(char **)(arg0 + 0x54);
-    *(int *)(temp_s0 + 0x14) = 0;
-    *(float *)(temp_s0 + 0x10) = *(float *)(*(char **)(arg0 + 0x50) + 0xD4) + *(float *)(temp_v0 + 0xE0);
-    *(float *)(temp_s0 + 0x18) = (float)*(u16 *)(temp_v0 + 0xEC) / ((float)*(u16 *)(temp_v0 + 0x102) * 0.5f);
-    *(float *)(temp_s0 + 0x1C) = (float)*(u16 *)(temp_v0 + 0xEE) / (float)*(u16 *)(temp_v0 + 0x102);
-    hi = rand() % 10;
-    *(char *)(temp_s0 + 0x21) = 0;
-    *(char *)(temp_s0 + 0x20) = (char)hi;
+    func_001AF928(effect, spawn_slot);
+    func_001AF640(effect, spawn_slot);
+    motion = (SpiralMotion *)&effect->motion;
+    func_00216778(motion, &effect->model->position);
+    model = effect->model;
+    def = effect->def;
+    motion->unk14 = 0;
+    motion->start_angle = model->rotation.y + def->unkE0;
+    motion->unk18 = (f32)def->radius_half / ((f32)def->keyframe_end * 0.5f);
+    motion->unk1C = (f32)def->interval / (f32)def->keyframe_end;
+    random_step = rand() % 10;
+    motion->unk21 = 0;
+    motion->start_step = (u8)random_step;
 }

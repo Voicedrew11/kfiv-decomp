@@ -1,20 +1,20 @@
-extern char D_00413F80[];
+#include "common.h"
+#include "kf_effect.h"
+#include "kf_entity.h"
 
-void func_001AF928(void *, int);
-void func_001AF640(void *, int);
-void func_001AF538(float, void *, void *);
-int func_001AFD08(void *, void *, void *);
+int func_001AFD08(EffectActor *effect, Vector4 *position, Vector4 *reference);
+extern PlayerData D_00413F80;
 
-void func_001A4A20(char *arg0, int arg1) {
-    char *temp_s2;
-    char *q;
+// Lifts the model 220 units, starts its velocity and aims it at the player.
+void func_001A4A20(EffectActor *effect, EffectSlot *spawn_slot) {
+    PlayerHomingMotion *motion = (PlayerHomingMotion *)&effect->motion;
+    ModelInstance *model;
 
-    temp_s2 = arg0 + 0x10;
-    func_001AF928(arg0, arg1);
-    func_001AF640(arg0, arg1);
-    q = *(char **)(arg0 + 0x50);
-    *(float *)(q + 0xC4) = *(float *)(q + 0xC4) - 220.0f;
-    func_001AF538(*(float *)(*(char **)(arg0 + 0x54) + 0xD8), temp_s2, q + 0xD0);
-    *(int *)(arg0 + 0x6C) = func_001AFD08(arg0, D_00413F80, D_00413F80 + 0x10);
-    *(float *)(temp_s2 + 0x10) = *(float *)(*(char **)(arg0 + 0x54) + 0xDC);
+    func_001AF928(effect, spawn_slot);
+    func_001AF640(effect, spawn_slot);
+    model = effect->model;
+    model->position.y -= 220.0f;
+    func_001AF538(effect->def->speed, &motion->velocity, &model->rotation);
+    effect->unk6C = func_001AFD08(effect, (Vector4 *)&D_00413F80, (Vector4 *)((char *)&D_00413F80 + 0x10));
+    motion->unkDC = effect->def->unkDC;
 }

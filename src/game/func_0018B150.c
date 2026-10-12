@@ -30,7 +30,7 @@ s32 func_0018B150(f32 *origin, f32 *direction, f32 length, f32 *unused) {
         slot = D_00446770 == map ? &D_0038CD20[0] : &D_0038CD20[1];
         record = (MapRecord *)slot->records;
         if (slot->unk00 != 0) {
-            for (i = 0; i < ((MapSlotUnk08 *)slot->unk08)->record_count; i++, record++) {
+            for (i = 0; i < slot->header->record_count; i++, record++) {
                 if (record->unk32 == 0xFFFF) {
                     continue;
                 }

@@ -28,7 +28,7 @@ f32 func_0018B518(f32 *point) {
         slot = D_00446770 == map ? &D_0038CD20[0] : &D_0038CD20[1];
         if (slot->unk00 != 0) {
             record = (MapRecord *)slot->records;
-            record_count = ((MapSlotUnk08 *)slot->unk08)->record_count;
+            record_count = slot->header->record_count;
             model = D_00432224[D_00446770 == map ? 0 : 22];
             for (i = 0; i < record_count; i++, model++, record++) {
                 if (record->unk32 == 0xFFFF) {

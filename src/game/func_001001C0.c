@@ -80,7 +80,7 @@ void func_001001C0(int arg) {
     func_00112948(arg);
     if (D_00446734 == 0) {
         func_001D20A0();
-        header = (MapSlotUnk08 *)D_0038CD20[0].unk08;
+        header = (MapSlotUnk08 *)D_0038CD20[0].header;
         D_00413F80.position.x = header->unk60;
         D_00413F80.position.y = header->unk64;
         D_00413F80.position.z = header->unk68;

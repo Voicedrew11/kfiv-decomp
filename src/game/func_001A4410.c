@@ -1,21 +1,12 @@
 #include "common.h"
+#include "kf_effect.h"
 
-int func_001A4480(void *);
 int rand(void);
 
-typedef struct {
-    char pad0[0x4C];
-    u16 s4C;
-    char pad4E[0x50 - 0x4E];
-    struct {
-        char pad0[0xD8];
-        float fD8;
-    } *p50;
-} Obj;
-
-void func_001A4410(Obj *arg0) {
-    if (arg0->s4C == 0) {
-        arg0->p50->fD8 = ((float) (rand() & 0xFFFF) * 0.000030517578125f - 1.0f) * 3.1415f;
+// On the first frame, turns the model to a random heading within +-pi, then runs func_001A4480.
+void func_001A4410(EffectActor *effect) {
+    if (effect->frame == 0) {
+        effect->model->rotation.z = ((float)(rand() & 0xFFFF) * 0.000030517578125f - 1.0f) * 3.1415f;
     }
-    func_001A4480(arg0);
+    func_001A4480(effect);
 }

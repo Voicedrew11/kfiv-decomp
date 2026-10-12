@@ -6,8 +6,8 @@ extern PlayerState D_00413F80;
 float atan2f(float, float);
 void func_001B2C48(void *);
 
-/* calls func_001B2C48 for the entity if the player is near `point` and within max_angle of `heading` */
-s32 func_0018CDC0(Entity *entity, f32 *point, f32 max_angle, f32 max_height, f32 max_distance, f32 heading) {
+/* calls func_001B2C48 on target if the player is near `point` and within max_angle of `heading` */
+s32 func_0018CDC0(void *target, f32 *point, f32 max_angle, f32 max_height, f32 max_distance, f32 heading) {
     f32 distance_out[4];
     f32 angle;
 
@@ -41,6 +41,6 @@ s32 func_0018CDC0(Entity *entity, f32 *point, f32 max_angle, f32 max_height, f32
     if (ABS(angle) > max_angle) {
         return FALSE;
     }
-    func_001B2C48(entity);
+    func_001B2C48(target);
     return TRUE;
 }

@@ -27,7 +27,7 @@ void func_00124F00(int map) {
     entity = D_003BEDF0[map];
     spawn_info = D_004467D0[map];
     model = memory->unk44;
-    D_004467D8[map] = ((MapSlotUnk08 *)slot->unk08)->unk42;
+    D_004467D8[map] = ((MapSlotUnk08 *)slot->header)->unk42;
     memset(entity, 0, sizeof(D_003BEDF0[map]));
     memset(D_004FEB90[map], 0, sizeof(D_004FEB90[map]));
     count = D_004467D8[map];

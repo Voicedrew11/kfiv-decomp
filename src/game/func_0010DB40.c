@@ -81,14 +81,14 @@ void func_0010DB40(ModelInstance *model) {
         packet += 7;
         *packet = 0x6C090040;
         packet += 4;
-        *packet++ = model->unk144;
+        *packet++ = model->hit_count;
         light_out = packet;
         light_out_b = packet + 0x10;
-        for (i = 0; i < model->unk144; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)D_003E7500[model->unk140[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)D_003E7500[model->unk140[i]].unk10;
+        for (i = 0; i < model->hit_count; i++) {
+            *(u_long128 *)light_out = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk00;
+            *(u_long128 *)light_out_b = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk10;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = D_003E7500[model->unk140[i]].unk24;
+            ((f32 *)light_out)[3] = D_003E7500[model->hit_handles[i]].unk24;
             light_out += 4;
         }
         packet += 0x20;
@@ -103,8 +103,8 @@ void func_0010DB40(ModelInstance *model) {
             *packet++ = 0x6C030064;
             func_00216778(packet, &model->unk150);
             packet += 4;
-            packet[3] = model->unk17C;
-            ((u_long128 *)packet)[1] = *(u_long128 *)model->unk180;
+            packet[3] = model->found_record_id;
+            ((u_long128 *)packet)[1] = *(u_long128 *)model->found_record;
         }
         func_00109650(packet_start, func_00109990(1)); /* the packet ends where the next one would start */
         part = model->parts;

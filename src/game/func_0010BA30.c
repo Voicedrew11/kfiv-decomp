@@ -110,14 +110,14 @@ void func_0010BA30(ModelInstance *model) {
     packet += 7;
     *packet = 0x6C090040;
     packet += 4;
-    *packet++ = model->unk144;
+    *packet++ = model->hit_count;
     light_out = packet;
     light_out_b = packet + 0x10;
-    for (i = 0; i < model->unk144; i++) {
-        *(u_long128 *)light_out = *(u_long128 *)D_003E7500[model->unk140[i]].unk00;
-        *(u_long128 *)light_out_b = *(u_long128 *)D_003E7500[model->unk140[i]].unk10;
+    for (i = 0; i < model->hit_count; i++) {
+        *(u_long128 *)light_out = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk00;
+        *(u_long128 *)light_out_b = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk10;
         light_out_b += 4;
-        ((f32 *)light_out)[3] = D_003E7500[model->unk140[i]].unk24;
+        ((f32 *)light_out)[3] = D_003E7500[model->hit_handles[i]].unk24;
         light_out += 4;
     }
     packet += 0x20;

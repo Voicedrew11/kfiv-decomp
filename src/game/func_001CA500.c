@@ -1,13 +1,16 @@
-#include "kf_model.h"
+#include "common.h"
+#include "kf_game.h"
 
-extern ModelNode *D_004469D4;
+extern ListNode *D_004469D4;
 
-/* Puts a node at the head of the list at D_004469D4. */
-void func_001CA500(ModelNode *node) {
+/* Pushes a node onto the front of the list at D_004469D4. */
+void func_001CA500(ListNode *node) {
+    ListNode *head = D_004469D4;
+
     node->prev = NULL;
-    node->next = D_004469D4;
-    if (D_004469D4 != NULL) {
-        D_004469D4->prev = node;
+    node->next = head;
+    if (head != NULL) {
+        head->prev = node;
     }
     D_004469D4 = node;
 }

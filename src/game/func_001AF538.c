@@ -1,14 +1,18 @@
-void sceVu0RotMatrixX(float, int *, int *);
-void sceVu0RotMatrixY(float, int *, int *);
-void sceVu0ApplyMatrix(float *, int *, float *);
-extern int D_00431AF0[];
+#include "common.h"
+#include "kf_effect.h"
 
-void func_001AF538(float *arg0, float *arg1, float arg2) {
-    int m[16];
+void sceVu0RotMatrixX(float *, float *, float);
+void sceVu0RotMatrixY(float *, float *, float);
+void sceVu0ApplyMatrix(float *, float *, float *);
+extern f32 D_00431AF0[16];
 
-    arg0[0] = arg0[1] = arg0[3] = 0.0f;
-    arg0[2] = arg2;
-    sceVu0RotMatrixX(arg1[0], m, D_00431AF0);
-    sceVu0RotMatrixY(arg1[1], m, m);
-    sceVu0ApplyMatrix(arg0, m, arg0);
+/* Sets out to a vector of the given length along z, turned by angles (x pitch, y heading). */
+void func_001AF538(float length, Vector4 *out, Vector4 *angles) {
+    f32 matrix[16];
+
+    out->x = out->y = out->w = 0.0f;
+    out->z = length;
+    sceVu0RotMatrixX(matrix, D_00431AF0, angles->x);
+    sceVu0RotMatrixY(matrix, matrix, angles->y);
+    sceVu0ApplyMatrix(&out->x, matrix, &out->x);
 }

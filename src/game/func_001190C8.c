@@ -65,7 +65,7 @@ void func_001190C8(void) {
             break;
         }
     case 0:
-        header = slot->unk08;
+        header = slot->header;
         D_00413F80.position.x = header->unk60;
         D_00413F80.position.y = header->unk64;
         D_00413F80.position.z = header->unk68;
@@ -87,7 +87,7 @@ void func_001190C8(void) {
     func_001034F8(D_0038CD20[0].tag);
     func_00210930(D_0038CD20[0].unk5C);
     func_002109C8(0x7FFF, 0);
-    D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[0].unk08)->unk70;
+    D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[0].header)->unk70;
     D_0038A130.unk04 = 1;
     func_0019EA98(1);
     D_0038A130.unk14 = (int)&D_0038CD20[0];

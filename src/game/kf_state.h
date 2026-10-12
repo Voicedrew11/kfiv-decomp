@@ -26,4 +26,17 @@ typedef struct {
     u8 kind;                        /* 0x31 picks the function that consumes the object */
 } KindObject;
 
+/* a task that runs a one-time setup (func_00103858, func_001CF988) and ends when func_001CF980 reports done */
+typedef struct {
+    s32 active;                     /* 0x00 cleared once the setup is done */
+    char pad04[0x04];
+    s32 unk08;                      /* 0x08 */
+    char pad0C[0x04];
+    s32 unk10;                      /* 0x10 */
+    char pad14[0x04];
+    s32 unk18;                      /* 0x18 */
+    char pad1C[0x68];
+    s32 started;                    /* 0x84 set once the setup has been started */
+} SetupTask;
+
 #endif

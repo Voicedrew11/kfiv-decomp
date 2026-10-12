@@ -91,7 +91,7 @@ void func_00114528(int mode) {
                 }
                 func_0019AEF8(record, record->model);
                 if (record->flags & 0x200) {
-                    header = slot->unk08;
+                    header = slot->header;
                     func_00111368(record->model, header->unk78, header->unk79, header->unk7A, header->unk7B);
                 }
                 record->model->unk1A8(record->model);
