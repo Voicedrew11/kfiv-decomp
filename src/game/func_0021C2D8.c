@@ -2,7 +2,7 @@
 
 int sceSifFreeIopHeap(int);
 int printf(char *, ...);
-int func_0021CC60(int);
+void func_0021CC60(int);
 extern char D_004420F8[];
 extern char D_00442118[];
 

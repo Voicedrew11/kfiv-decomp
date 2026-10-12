@@ -6,7 +6,7 @@ extern LinkNode D_00426510;
 extern LinkNode D_00426560;
 extern LinkNode D_004265B0;
 extern LinkNode *D_00446C90;
-void func_001D40C0(void);
+void func_001D40C0(LinkNode *);
 void func_001D4F50(void);
 
 /* Builds two node lists: 470 -> 4C0 -> 510 and 560 -> 5B0. */

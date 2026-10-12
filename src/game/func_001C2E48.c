@@ -1,7 +1,7 @@
 #include "common.h"
 
 int func_001C2D08(void *);
-void func_0020E918(int, int, int, int, int, float);
+void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 
 typedef struct { int count; char *list; int pad; u32 n; } Hdr;
 

@@ -6,7 +6,7 @@ extern const VuVector4 D_0043F200;
 
 void KF_Vu0_LoadMatrix(void *);
 u32 func_001124E0(int, u32, u32);
-extern void func_0020DF38(void *, void *, void *, int, float);
+void func_0020DF38(f32 *, f32 *, f32 *, f32 *, f32);
 
 /* func_001B21F8 for strip lists 0 and 2 only: returns 0 when the sphere touches a triangle
    of them (the result is left in the scratchpad). */

@@ -2,7 +2,7 @@
 
 int func_001124E0(int, int, int);
 int func_001C2D08(void *);
-void func_0020E1F8(int, int, int, int, float, float);
+void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 
 typedef struct { int count; char *list; int pad; u32 n; } Hdr;
 

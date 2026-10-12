@@ -4,7 +4,7 @@ extern EntityFrameTable D_0043EAD8;
 extern int D_00446770;
 
 int func_00192C98(void *, int, int, u32, int);
-void func_002109C8(s32, s32);
+int func_002109C8(int, int);
 void func_001B57A0(u8, u8, u8);
 void func_0017A158(Entity *, s32);
 

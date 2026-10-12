@@ -35,9 +35,21 @@ typedef struct {
     int unk2C;                      /* 0x2C */
     int unk30;                      /* 0x30 */
     int unk34;                      /* 0x34 set with bit5 by func_001226E0 */
-    char pad38[0x0C];
+    char pad38[0x08];
+    void *unk40;                    /* 0x40 the model of the item effect that asked for unk30 = 0xC5F (func_00209408) */
     int unk44;                      /* 0x44 counts down to 0; 1 when an item was just used (func_001BC2D0) */
 } GameStatus;
+
+/* GameStatus with bits 10 and 11 of the flag word (GameStatus.bits10) apart, as func_00214A20
+   sets them */
+typedef struct {
+    char pad00[0x24];
+    u32 bits0 : 9;                  /* 0x24 */
+    u32 bit9 : 1;
+    u32 bit10 : 1;
+    u32 bit11 : 1;
+    u32 bits12 : 20;
+} GameStatusSplitBits;
 
 /* D_00446A28: the play time as func_001D22B8 splits it (byte 1 seconds, 2 minutes, 3 and 5 hours), passed by value */
 typedef struct {
@@ -80,15 +92,38 @@ typedef struct MessageSlot {
     int unk20;                      /* 0x20 */
 } MessageSlot;
 
+/* D_00420C10[3]: how the glyphs of one kind (0 full width, 1 half width, 2 the debug font) lie on their texture */
+typedef struct {
+    f32 step_s;                     /* 0x00 from one column to the next */
+    f32 step_t;                     /* 0x04 from one row to the next */
+    f32 size_s;                     /* 0x08 of one glyph */
+    f32 size_t;                     /* 0x0C */
+    f32 base_s;                     /* 0x10 of the first glyph */
+    f32 base_t;                     /* 0x14 */
+    s32 columns;                    /* 0x18 glyphs in a row */
+} GlyphSheet;
+
+/* D_00420C68[font][kind]: the screen box of a glyph, relative to its position */
+typedef struct {
+    s32 left;                       /* 0x00 */
+    s32 top;                        /* 0x04 */
+    s32 right;                      /* 0x08 */
+    s32 bottom;                     /* 0x0C */
+} GlyphBox;
+
 /* D_00420D00: the event runner */
 typedef struct {
     f32 unk00[4];                   /* 0x00 a position the camera is put in front of (func_00100FC8) */
     f32 unk10[4];                   /* 0x10 a direction from it */
-    char pad20[0x20];
+    f32 unk20[4];                   /* 0x20 unk00 as it was the frame before (func_001D0800) */
+    f32 unk30[4];                   /* 0x30 unk10 as it was the frame before */
     f32 unk40;                      /* 0x40 how far along unk10 */
-    char pad44[0x0C];
+    f32 unk44;                      /* 0x44 unk40 as it was the frame before */
+    f32 unk48;                      /* 0x48 distance to the nearest entity around the player (func_001D0970) */
+    f32 unk4C;                      /* 0x4C distance to what `current`, unk54 or unk58 names */
     void *current;                  /* 0x50 the event being run */
     void *unk54;                    /* 0x54 an Entity whose spawn info can answer the use of an item (func_001BC2D0) */
+    void *unk58;                    /* 0x58 the ItemNode (kf_model.h) in front of the player, NULL: none (func_001D0970) */
 } EventRunner;
 
 /* an event func_00120130 hands to func_0011FDD0 */
@@ -130,16 +165,102 @@ typedef struct {
 
 /* D_00432820: what decides whether func_0020CD00 advances GameClock.ticks */
 typedef struct {
-    char pad00[0x213];
+    char pad00[0x208];
+    char unk208;                    /* 0x208 func_0020B6A0 clears it */
+    char unk209;                    /* 0x209 func_0020B6A0 clears it */
+    char unk20A;                    /* 0x20A func_0020B6A0 clears it */
+    char unk20B;                    /* 0x20B func_0020B6A0 sets it to 2 */
+    char pad20C[0x7];
     char unk213;                    /* 0x213 nonzero: the clock stops */
     char unk214;                    /* 0x214 nonzero: the clock stops */
     char pad215[0x73];
     int flags;                      /* 0x288 0x200: tick every fourth frame */
 } ClockControl;
 
-/* D_01E0E9C0: the 0x800-byte text buffer func_00217EE0 appends to */
+/* auto-repeat timing of one button of a PadSlot (set by func_002177F8, stepped by func_00216EA0) */
 typedef struct {
-    char pad00[0x4C];
+    u8 delay;                       /* 0x00 frames before the first repeat */
+    u8 interval;                    /* 0x01 frames between repeats */
+    u8 countdown;                   /* 0x02 */
+    u8 fired;                       /* 0x03 0 none, 1 first press, 2 repeat */
+} PadRepeatKey;
+
+/* one controller of D_01E0DB00 (0x1C0 bytes), kept up to date by func_00217008 */
+typedef struct {
+    u8 dma_buffer[0x100];           /* 0x000 work area handed to scePadPortOpen */
+    u8 report_status;               /* 0x100 the 0x24 bytes scePadRead gave (func_00216DD0) */
+    u8 report_id;                   /* 0x101 */
+    u16 buttons;                    /* 0x102 held buttons, a set bit is a pressed button */
+    u8 report_analog[0x1C];         /* 0x104 sticks and button pressures */
+    u16 pressed;                    /* 0x120 buttons that went down this frame */
+    u16 repeated;                   /* 0x122 buttons that fired through auto-repeat */
+    PadRepeatKey repeat_keys[16];   /* 0x124 */
+    u16 repeat_mask;                /* 0x164 buttons that auto-repeat */
+    char pad166[0x02];
+    int state;                      /* 0x168 scePadGetState */
+    int request_state;              /* 0x16C scePadGetReqState */
+    int actuator_count;             /* 0x170 scePadInfoAct(-1) */
+    u8 actuators[6];                /* 0x174 [0] small motor on/off, [1] big motor power */
+    u8 phase;                       /* 0x17A step of the set-up state machine in func_00217008 */
+    u8 next_phase;                  /* 0x17B phase to go to after the actuators are aligned */
+    u8 pad_type;                    /* 0x17C report_id >> 4 */
+    u8 features;                    /* 0x17D 1: mode can be switched, 2: has actuators, 4: pressure sensitive */
+    u8 mode;                        /* 0x17E 0xFF unknown, 0 digital, 1 analog, 2 analog with pressure */
+    u8 mode_request;                /* 0x17F mode asked for, 0xFF: none */
+    u8 mode_lock;                   /* 0x180 passed to scePadSetMainMode */
+    u8 actuators_aligned;           /* 0x181 */
+    char pad182[0x3E];
+} PadSlot;
+
+/* D_01E0DB00: two ports with four multitap slots each */
+typedef struct {
+    PadSlot slots[8];               /* 0x000 index is port * 4 + slot */
+    u8 open_slots[2];               /* 0xE00 per port, bit n: slot n was opened */
+} PadSystem;
+
+/* one corner of a character's sprite as func_00217CB8 queues it: UV, RGBAQ and XYZ2 for the GS */
+typedef struct {
+    int tex_u;                      /* 0x00 in 1/16 texel */
+    int tex_v;                      /* 0x04 */
+    char pad08[0x08];
+    int red;                        /* 0x10 */
+    int green;                      /* 0x14 */
+    int blue;                       /* 0x18 */
+    int alpha;                      /* 0x1C */
+    int pos_x;                      /* 0x20 in 1/16 pixel */
+    int pos_y;                      /* 0x24 */
+    int pos_z;                      /* 0x28 */
+    char pad2C[0x04];
+} TextLogVertex;
+
+/* one character: a sprite of 16 by 8 pixels (0x60 bytes) */
+typedef struct {
+    TextLogVertex corners[2];       /* 0x00 top left, bottom right */
+} TextLogGlyph;
+
+/* D_01E0F210: the GIF packet func_00217F98 sends, a tag and room for 37 characters */
+typedef struct {
+    int tag[4];                     /* 0x00 */
+    TextLogGlyph glyphs[37];        /* 0x10 */
+} TextLogPacket;
+
+/* D_01E0E9C0: the 0x800-byte text buffer func_00217EE0 appends to, and the window func_00217F98 prints it in */
+typedef struct {
+    TextLogGlyph *packet;           /* 0x00 where the next character goes in D_01E0F210 */
+    char pad04[0x0C];
+    int left;                       /* 0x10 the window, in GS coordinates (func_00217C20) */
+    int top;                        /* 0x14 */
+    int width;                      /* 0x18 */
+    int height;                     /* 0x1C */
+    int depth;                      /* 0x20 */
+    char pad24[0x0C];
+    int red;                        /* 0x30 text colour */
+    int green;                      /* 0x34 */
+    int blue;                       /* 0x38 */
+    char pad3C[0x04];
+    int font_base;                  /* 0x40 GS page of the font texture (func_00217A20) */
+    int palette_base;               /* 0x44 GS page of its palette */
+    int font_buffer_width;          /* 0x48 in units of 64 pixels */
     int used;                       /* 0x4C bytes of text */
     char text[0x800];               /* 0x50 */
 } TextLog;
@@ -167,12 +288,32 @@ typedef struct {
     u16 unk3E;                      /* 0x3E unk33 scaled by D_0043E568, worked out after loading */
 } GameDefinition;
 
+/* a GameDefinition as the menu code reads it: the record is word-aligned (LevelDef in kf_player.h
+   shows the word at 0x30 is bit-fields), and its low 16 bits are the number in the model's file name */
+typedef struct {
+    char pad00[0x30];
+    u32 file_number : 16;           /* 0x30 */
+    u32 unk30_16 : 16;
+    char pad34[0x0C];
+} GameDefinitionWords;
+
 /* a GameDefinition as the save code reads it (func_00103C18, func_00104EC8): the word unk33 is the top byte of */
 typedef struct {
     char pad00[0x30];
     u32 flags;                      /* 0x30 bits 18 and 19 are a state; below 2 it is saved as one bit */
     char pad34[0x0C];
 } GameDefinitionFlags;
+
+/* a GameDefinition with the word at 0x30 as the bit-fields the menu code reads (func_001EF648): as a bit-field the
+   file number keeps its 0x30 in the load (D_004147F8[i].file_number), where the u16 member folds it into the address */
+typedef struct {
+    char pad00[0x30];
+    u32 file_number : 16;           /* 0x30 GameDefinition.unk30 */
+    u32 unk30_16 : 2;
+    u32 state : 2;                  /* GameDefinitionFlags.flags bits 18 and 19 */
+    u32 unk30_20 : 12;
+    char pad34[0x0C];
+} GameDefinitionBits;
 
 /* a node of the doubly linked list at D_004469D4 */
 typedef struct ListNode {
@@ -209,10 +350,249 @@ typedef struct {
 /* D_0042A8F0[32]: a pool of 0x70-byte slots chained into a free list through `next`;
    D_00446DF0 holds the head */
 typedef struct PoolSlot {
-    char pad00[0x50];
+    char pad00[0x40];
+    struct PoolSlot *unk40;         /* 0x40 another slot, picked by a byte of the part's record (func_002032E0) */
+    struct PoolPart *part;          /* 0x44 the 0x50-byte part this slot shows, NULL: none */
+    struct PoolPartRecord *unk48;   /* 0x48 */
+    char pad4C[0x04];
     struct PoolSlot *next;          /* 0x50 */
-    char pad54[0x1C];
+    s32 key_index;                  /* 0x54 the key of its node's animation that func_00203820 is at */
+    u64 unk58;                      /* 0x58 copied from the texture header's tex0 */
+    u64 unk60;                      /* 0x60 */
+    char pad68[0x08];
 } PoolSlot;
+
+/* a texture header's two GS register values (TextureHeader.tex0 and unk18), which func_002032E0 copies as one */
+typedef struct {
+    u64 tex0;                       /* 0x00 */
+    u64 unk08;                      /* 0x08 */
+} PoolSlotRegisters;
+
+/* a PoolSlot with unk58 and unk60 as the one member they are copied as */
+typedef struct {
+    char pad00[0x58];
+    PoolSlotRegisters registers;    /* 0x58 */
+    char pad68[0x08];
+} PoolSlotRegistersView;
+
+#define POOL_SLOT_REGISTERS(slot) (((PoolSlotRegistersView *)(slot))->registers)
+
+/* one 0x10-byte record of a RelocEntry, with two file offsets that func_00200820 turns into pointers */
+typedef struct {
+    char pad00[0x08];
+    void *unk08;                    /* 0x08 */
+    void *unk0C;                    /* 0x0C */
+} RelocLayer;
+
+/* one 0x40-byte entry of a RelocFile */
+typedef struct {
+    u16 key_count;                  /* 0x00 */
+    u16 layer_count;                /* 0x02 */
+    u16 slot;                       /* 0x04 the PoolSlot the node poses (func_00203820) */
+    char pad06[0x2A];
+    void *unk30;                    /* 0x30 a file offset until func_00200820 has run, like the next three */
+    RelocLayer *layers;             /* 0x34 */
+    void *unk38;                    /* 0x38 */
+    void *unk3C;                    /* 0x3C */
+} RelocEntry;
+
+/* a file whose offsets func_00200820 turns into pointers: a 0x10-byte header, then the entries */
+typedef struct {
+    char pad00[0x08];
+    u32 entry_count;                /* 0x08 */
+    char pad0C[0x04];
+    RelocEntry entries[1];          /* 0x10 */
+} RelocFile;
+
+/* lists of pool slot numbers that func_00203090 and func_002032E0 copy whole from read-only data, and
+   their tables of counts */
+typedef struct {
+    u8 slots[7];                    /* 0x00 */
+} PoolSlotList7;
+
+typedef struct {
+    u8 slots[4];                    /* 0x00 */
+} PoolSlotList4;
+
+typedef struct {
+    u8 slots[2];                    /* 0x00 */
+} PoolSlotList2;
+
+typedef struct {
+    u8 slots[6];                    /* 0x00 */
+} PoolSlotList6;
+
+typedef struct {
+    u32 counts[6];                  /* 0x00 */
+} PoolSlotCounts6;
+
+typedef struct {
+    u32 counts[10];                 /* 0x00 */
+} PoolSlotCounts10;
+
+typedef struct {
+    u32 values[11];                 /* 0x00 */
+} PoolSlotValues11;
+
+/* one 0x20-byte point of a PoolPartMaterial's strip */
+typedef struct {
+    u16 point;                      /* 0x00 which of the part's points */
+    u16 normal;                     /* 0x02 which of its normals */
+    char pad04[0x04];
+    f32 tex_s;                      /* 0x08 */
+    f32 tex_t;                      /* 0x0C */
+    f32 color[4];                   /* 0x10 */
+} PoolPartPoint;
+
+/* what a PoolPart draws with: the first of its strips; each strip's points follow it, then the next strip */
+typedef struct {
+    u16 point_count;                /* 0x00 */
+    char pad02[0x02];
+    u16 unk04;                      /* 0x04 the value of GS ALPHA_2 */
+    u16 prim;                       /* 0x06 GS PRIM bits */
+    u64 tex0;                       /* 0x08 GS TEX0, set from the texture header's before the part is drawn */
+    u64 unk10;                      /* 0x10 GS TEX0 of a second texture drawn over the first (func_002008E8), 0: none */
+    char pad18[0x08];
+    PoolPartPoint points[1];        /* 0x20 point_count of them */
+} PoolPartMaterial;
+
+/* PoolPartMaterial.tex0 with the CLUT load control of GS TEX0 as a bit-field */
+typedef struct {
+    char pad00[0x08];
+    u64 pad08 : 61;
+    u64 cld : 3;                    /* bit 61 */
+} PoolPartMaterialBits;
+
+/* the scratchpad while a PoolPart is drawn (func_002008E8, func_00201518, func_002020A0) */
+typedef struct {
+    u32 prim_tag[4];                /* 0x00 the GIF tag in front of a strip's points */
+    u32 reg_tag[4];                 /* 0x10 the GIF tag in front of the registers set for a strip */
+    s32 packet_size;                /* 0x20 quadwords */
+    char pad24[0x4C];
+    s32 point;                      /* 0x70 */
+    u32 strip;                      /* 0x74 */
+    u32 point_count;                /* 0x78 */
+    u32 normal_count;               /* 0x7C */
+    u32 strip_count;                /* 0x80 */
+    char pad84[0x1C];
+    f32 unkA0[4];                   /* 0xA0 128.0 each */
+    f32 screen[16];                 /* 0xB0 the part's points to the screen */
+    f32 light[16];                  /* 0xF0 */
+    f32 world[16];                  /* 0x130 the part in the world */
+    u64 tex0;                       /* 0x170 */
+    PoolPartMaterial *strip_start;  /* 0x178 */
+    u64 *registers;                 /* 0x17C */
+    u32 *packet;                    /* 0x180 */
+    PoolPartPoint *strip_point;     /* 0x184 */
+    PoolPartMaterial *strip_at;     /* 0x188 */
+    u32 *cursor;                    /* 0x18C */
+    f32 (*screen_points)[4];        /* 0x190 the part's points on the screen, 12.4 fixed point */
+    f32 (*work)[4];                 /* 0x194 D_00446D40 */
+    f32 (*normals)[4];              /* 0x198 the part's normals in the world */
+    char pad19C[0x04];
+    s32 unk1A0[4];                  /* 0x1A0 0, 0, 0, 0x80; stored as one quadword */
+    u32 parent_point_count;         /* 0x1B0 func_002020A0: how many points go by the parent slot's matrix */
+    u32 point_at;                   /* 0x1B4 */
+    u32 point_index;                /* 0x1B8 */
+    u32 parent_normal_count;        /* 0x1BC func_002020A0: how many normals go by the parent slot's matrix */
+    u32 normal;                     /* 0x1C0 */
+    u32 normal_index;               /* 0x1C4 */
+} PoolDrawScratch;
+
+#define POOL_DRAW_SCRATCH ((PoolDrawScratch *)0x70000000)
+
+/* the two places in GS memory that func_00201E10 and func_00201F58 pick a palette's from (D_00440DC0) */
+typedef struct {
+    u64 pages[2];                   /* 0x00 */
+} PoolClutPages;
+
+/* one 0x80-byte animation key of a RelocEntry (its unk30), interpolated towards the next one by func_00203820 */
+typedef struct {
+    u16 frame;                      /* 0x00 the frame the key starts at */
+    u16 length;                     /* 0x02 frames to the next key */
+    char pad04[0x0C];
+    f32 translation[4];             /* 0x10 */
+    f32 translation_in[4];          /* 0x20 tangent arriving at this key */
+    f32 translation_out[4];         /* 0x30 tangent leaving it */
+    f32 rotation[4];                /* 0x40 angles about x, y and z */
+    f32 rotation_in[4];             /* 0x50 */
+    f32 rotation_out[4];            /* 0x60 */
+    f32 scale[4];                   /* 0x70 */
+} PoolNodeKey;
+
+/* one 0x50-byte part of a PoolPartFile */
+typedef struct PoolPart {
+    f32 position[4];                /* 0x00 */
+    f32 rotation[4];                /* 0x10 angles about x, y and z */
+    f32 scale[4];                   /* 0x20 */
+    u16 strip_count;                /* 0x30 */
+    char pad32[0x02];
+    PoolPartMaterial *material;     /* 0x34 */
+    u16 point_count;                /* 0x38 */
+    char pad3A[0x02];
+    f32 (*points)[4];               /* 0x3C */
+    u16 normal_count;               /* 0x40 */
+    char pad42[0x02];
+    f32 (*normals)[4];              /* 0x44 */
+    char pad48[0x08];
+} PoolPart;
+
+/* one 0x10-byte record of a PoolPartFile; the records end records_end_offset bytes into the file, the
+   last one belonging to the last part */
+typedef struct PoolPartRecord {
+    s32 unk00;                      /* 0x00 above 0: the part's slot points at this record */
+    s32 unk04;                      /* 0x04 how many of the part's normals go by the parent slot's matrix (unk00: points) */
+    s32 unk08;                      /* 0x08 index, in the group's slot list, of the slot PoolSlot.unk40 is set to */
+    char pad0C[0x04];
+} PoolPartRecord;
+
+/* a part file as loaded: a 0x10-byte header, then the parts */
+typedef struct {
+    PoolPartRecord *records_end;    /* 0x00 the end of its PoolPartRecord array, as an offset from the file's start */
+    char pad04[0x04];
+    u32 part_count;                 /* 0x08 */
+    char pad0C[0x04];
+    PoolPart parts[1];              /* 0x10 */
+} PoolPartFile;
+
+/* the 0x10 bytes in front of a PoolPartFile's parts, copied as one (func_00203C88) */
+typedef struct {
+    PoolPartRecord *records_end;    /* 0x00 */
+    char pad04[0x04];
+    u32 part_count;                 /* 0x08 */
+    char pad0C[0x04];
+} PoolPartFileHeader;
+
+/* the 0x20 bytes in front of a strip's points as the four words func_00203C88 copies them as */
+typedef union {
+    u64 words[4];                   /* 0x00 */
+    char bytes[0x20];               /* 0x00 */
+} PoolPartStripWords;
+
+/* one 0x40-byte point of a strip in the copy func_00203C88 makes: the point and normal themselves
+   instead of their numbers */
+typedef struct {
+    f32 position[4];                /* 0x00 */
+    f32 normal[4];                  /* 0x10 */
+    f32 tex_s;                      /* 0x20 */
+    f32 tex_t;                      /* 0x24 */
+    f32 tex_q;                      /* 0x28 1.0 */
+    f32 unk2C;                      /* 0x2C 0 */
+    f32 color[4];                   /* 0x30 */
+} PoolPartFlatPoint;
+
+/* a strip of that copy: the same 0x20 bytes as a PoolPartMaterial's, then 0x40-byte points */
+typedef struct {
+    u16 point_count;                /* 0x00 */
+    char pad02[0x1E];
+    PoolPartFlatPoint points[1];    /* 0x20 */
+} PoolPartFlatStrip;
+
+/* what func_002032E0 is handed: a part file and the texture its parts are drawn with */
+typedef struct {
+    PoolPartFile *file;             /* 0x00 */
+    void *texture;                  /* 0x04 a TextureHeader (kf_texture.h) */
+} PoolPartSource;
 
 /* D_00413DB8[2]: a controller as the game reads it, one per port (func_001B5590). D_00413DA8 is the copy
    of port 0 that the game tests. */
@@ -245,6 +625,18 @@ typedef struct {
     u16 left_stick;                 /* 0x06 */
 } PadReportAxes;
 
+/* PadReport.pressed inside a union: a read through it may alias any store, so it stays behind one
+   (the boot screens func_0020A490 and func_0020A8C8 only match this way) */
+typedef union {
+    u16 buttons;
+    u8 bytes[2];
+} PadButtonsUnion;
+
+typedef struct {
+    char pad00[0x20];
+    PadButtonsUnion pressed;        /* 0x20 */
+} PadReportUnion;
+
 /* the texts of the debug start menu (func_001B0A78), local arrays it copies whole from
    read-only data: blank lines above the text, the PUSH START line, the four menu lines */
 typedef struct {
@@ -258,5 +650,11 @@ typedef struct {
 typedef struct {
     char text[4][0x80];
 } DebugStartMenuItems;
+
+/* what func_0020D008 is given; nothing calls that function, so what this is stays unknown */
+typedef struct {
+    char pad00[0x70];
+    s16 *unk70;                     /* 0x70 seven values */
+} Unk20D008Owner;
 
 #endif

@@ -29,7 +29,7 @@ void func_001C82C0(int);
 void func_001C87D8(int);
 void func_001CA920(int);
 void func_00210930(int);
-void func_002109C8(s32, s32);
+int func_002109C8(int, int);
 void func_00216778(void *, void *);
 
 /* Map change step: sets the loaded map up in slot 0, puts the player in it and ends the change. */

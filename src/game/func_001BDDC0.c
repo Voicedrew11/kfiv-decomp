@@ -15,7 +15,7 @@ void KF_Vector_Scale(void *, void *, float);
 int func_001C2D08(void *);
 void func_001C0A88(void *, void *, void *, void *);
 void func_001C0C50(void *, void *, void *, void *, f32);
-void func_0020E1F8(int, int, int, int, float, float);
+void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 u32 func_001124E0(int, u32, u32);
 u32 func_001125A8(u32, u32, int);
 void func_001152B8(int);

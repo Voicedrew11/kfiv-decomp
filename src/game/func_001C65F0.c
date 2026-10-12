@@ -3,7 +3,7 @@
 
 int func_001C2D08(void *);
 void func_00216778(void *, void *);
-void func_0020E1F8(int, int, int, int, float, float);
+void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 void KF_Vector_Scale(float *, float *, float);
 void sceVu0Normalize(float *, float *);
 extern PlayerState D_00413F80;

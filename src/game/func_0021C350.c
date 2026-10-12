@@ -1,6 +1,6 @@
 #include "kf_sound.h"
 
-s32 func_0021CCC8(s32);
+void func_0021CCC8(int);
 s32 sceSdRemote(s32, ...);
 
 s32 func_0021C350(StreamVoice *voice) {

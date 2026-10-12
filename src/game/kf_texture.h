@@ -8,16 +8,61 @@
 typedef struct {
     int data_offset;                /* 0x00 from this header */
     int image_size;                 /* 0x04 bytes */
-    char pad08[0x08];
+    char pad08[0x04];
+    int unk0C;                      /* 0x0C from this header to a second CLUT (func_002048D8) */
     u64 tex0;                       /* 0x10 GS TEX0: TBP0 at bit 0, CBP at bit 37 */
-    char pad18[0x08];
+    u64 unk18;                      /* 0x18 copied to PoolSlot.unk60 with tex0 (func_001DC2A8) */
 } TextureHeader;
+
+/* the fields of a GS TEX0 value (TextureHeader.tex0), as func_0020D478 reads them */
+typedef struct {
+    u64 base_pointer : 14;          /* TBP0 */
+    u64 buffer_width : 6;           /* TBW */
+    u64 pixel_format : 6;           /* PSM */
+    u64 width_log2 : 4;             /* TW */
+    u64 height_log2 : 4;            /* TH */
+    u64 has_alpha : 1;              /* TCC */
+    u64 function : 2;               /* TFX */
+    u64 clut_pointer : 14;          /* CBP */
+    u64 clut_format : 4;            /* CPSM */
+    u64 clut_mode : 1;              /* CSM */
+    u64 clut_offset : 5;            /* CSA */
+    u64 clut_load : 3;              /* CLD */
+} TextureTex0Bits;
+
+/* a TextureHeader with the two base pointers of its TEX0 as bit-fields; `raw` is the same register whole */
+typedef struct {
+    char pad00[0x10];
+    union {
+        u64 raw;
+        struct {
+            u64 tbp0 : 14;          /* bit 0 */
+            u64 pad14 : 23;
+            u64 cbp : 14;           /* bit 37 */
+            u64 pad51 : 13;
+        } f;
+    } tex0;                         /* 0x10 */
+    union {
+        u64 raw;
+        s64 as_signed;
+    } unk18;                        /* 0x18 a union so that, like tex0, reading it counts as touching anything (func_001DC2A8) */
+} TextureHeaderBits;
+
+#define TEXTURE_HEADER_BITS(header) ((TextureHeaderBits *)(header))
+
+/* D_0042A8D0: a loaded texture file (the menu font) and the two words func_00204D60 reads from it */
+typedef struct {
+    u64 tex0;                       /* 0x00 */
+    u64 trailer;                    /* 0x08 the word after its CLUT */
+    TextureHeader *header;          /* 0x10 */
+} LoadedTexture;
 
 /* a chunk table: this header, then entry_count TextureTableEntry */
 typedef struct {
     int unk00;                      /* 0x00 */
     u32 entry_count;                /* 0x04 */
-    char pad08[0x08];
+    int unk08;                      /* 0x08 func_0020D348 clears it */
+    int unk0C;                      /* 0x0C func_0020D348 clears it */
 } TextureTableHeader;
 
 /* a texture func_0010A880 redraws into another one every frame, scrolled (D_00474AC0[4]) */
@@ -54,7 +99,8 @@ typedef struct {
 
 typedef struct {
     int offset;                     /* 0x00 from the table base, to a chunk: its size in quadwords, 12 bytes, the data */
-    char pad04[0x08];
+    int unk04;                      /* 0x04 func_0020D348 clears it */
+    int unk08;                      /* 0x08 func_0020D348 clears it */
     int unk0C;                      /* 0x0C not 0: func_0010B2E0 skips it (set by func_0010B4E0) */
 } TextureTableEntry;
 

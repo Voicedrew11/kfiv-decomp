@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 
 int func_001C2D08(void *);
-void func_0020E918(int, int, int, int, int, float);
+void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 
 /* Tests a ray against a map object of kind 18 (a pitfall). With flag 0x20000 clear the object's
    collision strips are tested, as func_001C2E48 does. With it set, model points 0 to 0x1F are

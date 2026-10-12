@@ -3,7 +3,7 @@
 int puts(char *);
 u32 func_001124E0(int, u32, u32);
 int func_001C2D08(void *);
-extern void func_0020DF38(void *, void *, void *, int, float);
+void func_0020DF38(f32 *, f32 *, f32 *, f32 *, f32);
 extern char D_0043F5E8[];
 
 /* Tests a point against a map object of kind 18. With flag 0x20000 clear the object's collision

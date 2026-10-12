@@ -15,7 +15,7 @@ s32 DisableDmac(s32);
 s32 RemoveDmacHandler(s32, s32);
 s32 DisableIntc(s32);
 s32 RemoveIntcHandler(s32, s32);
-void func_0021DF88(void *);
+int func_0021DF88(MovieVideoDecoder *);
 s32 func_0021C2D8(MovieBuffers *);
 s32 func_0021FCE8(void *);
 

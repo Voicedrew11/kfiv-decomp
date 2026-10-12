@@ -7,7 +7,7 @@ extern LinkNode D_00426510;
 extern LinkNode D_00426560;
 extern LinkNode D_004265B0;
 extern LinkNode *D_00446C90;
-void func_001D40C0(void);
+void func_001D40C0(LinkNode *);
 void func_001ED540(void);
 
 void func_001E6928(void) {

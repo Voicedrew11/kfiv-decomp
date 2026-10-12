@@ -2,7 +2,7 @@
 
 int func_0021F1F0(int, u32, u32, u32, u32, u32, u32, u32, u32, u32);
 int func_0021F2A8(s64, u32, u32, u32, u32, u64);
-int func_0021F2F8(s64, u32, u32, u32);
+int func_0021F2F8(int, u32, u32, u32);
 
 /* Sends a colored primitive for the rect (x, y, width, height), color as RGBA bytes. */
 int func_0021EF38(int reserved, s32 *rect, u32 color) {

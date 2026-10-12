@@ -5,7 +5,7 @@ extern int D_00446770;
 
 s16 func_0011E340(char *, int);
 int func_001A1C58(int, void *, void *, void *);
-void func_002109C8(s32, s32);
+int func_002109C8(int, int);
 int func_0011E1F0(int, int);
 void func_0011E0C8(MapObject *);
 

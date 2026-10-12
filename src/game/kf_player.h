@@ -74,7 +74,8 @@ typedef struct {
     s32 unkC0;                      /* 0xC0 cleared when unk264 is set */
     s32 unkC4;                      /* 0xC4 frames unkBC waits before it fills again */
     s32 unkC8;                      /* 0xC8 frames unkC0 waits before it fills again */
-    char padCC[0x08];
+    s32 unkCC;                      /* 0xCC how much of a HUD bar is filled (func_001D19D8), out of unkD0 */
+    s32 unkD0;                      /* 0xD0 0: the bar is not drawn */
     s32 unkD4;                      /* 0xD4 saved */
     s32 unkD8;                      /* 0xD8 saved */
     u16 unkDC[6];                   /* 0xDC at most 100 each */
@@ -271,7 +272,8 @@ typedef struct {
     char pad1E[0x01];
     u8 bonus_kinds[2];              /* 0x1F what wearing the item does, 0: nothing (the switch of func_001BB020) */
     u8 bonus_amounts[2];            /* 0x21 */
-    char pad23[0x1D];
+    char pad23[0x1C];
+    u8 unk3F;                       /* 0x3F added to PlayerItemDef.unk7C for the shield in hand (func_001D94F8) */
 } LevelRecordDef;
 
 /* D_003682F0[160]: what has been gained per item (0x22 bytes each) */
@@ -280,7 +282,11 @@ typedef struct {
     u8 level;                       /* 0x12 */
     u8 exp;                         /* 0x13 */
     u8 unk14;                       /* 0x14 */
-    char pad15[0x0D];
+    char pad15[0x01];
+    s16 unk16;                      /* 0x16 ini "item_": the third number times 20, 0 to 480 (func_00207D68) */
+    u8 unk18;                       /* 0x18 nonzero: func_001ED9A8 lists the item among those whose time unk19 counts */
+    char unk19[8];                  /* 0x19 a ClockTime (kf_game.h), not aligned */
+    char pad21[0x01];
 } LevelRecord;
 
 /* D_0041B9B8[]: 0x90-byte definitions, PlayerState.unk3C picks one */
@@ -307,13 +313,15 @@ typedef struct {
     u8 unk63;                       /* 0x63 */
     u8 bonus_kinds[2];              /* 0x64 as LevelRecordDef.bonus_kinds */
     u8 bonus_amounts[2];            /* 0x66 */
-    char pad68[0x04];
+    u16 unk68;                      /* 0x68 shown on the trade screen in tenths of a foot (func_001E7010) */
+    char pad6A[0x02];
     f32 unk6C;                      /* 0x6C twice Unk1B1470Request.unk44 of a swing, before D_00446240 (func_001B70F8) */
     f32 unk70;                      /* 0x70 twice Unk1B1470Request.unk3C of a swing, before D_00446240 */
     f32 unk74;                      /* 0x74 how far a swing reaches, less 100 */
     u16 unk78;                      /* 0x78 the motion frame from which a held shot is ready (func_001B7918) */
     u16 unk7A;                      /* 0x7A the frame the drawing motion stops at */
-    char pad7C[0x02];
+    u8 unk7C;                       /* 0x7C which D_005CEE60 motion the weapon shown on the equipment screen plays (func_001D94F8) */
+    u8 unk7D;                       /* 0x7D which D_0042A290 function draws it there */
     u8 unk7E;                       /* 0x7E goes to PlayerState.unkC4 when a swing starts (func_001B70F8) */
     u8 unk7F;                       /* 0x7F copied to Unk1B1470Request.unk6E */
     u16 unk80;                      /* 0x80 0xFFFF: no sound while drawing */
@@ -351,12 +359,19 @@ typedef struct {
     u32 unk30_0 : 18;               /* 0x30 */
     u32 state : 2;                  /* 0x32 bits 2-3: 0 is set to 1 when the table is reset */
     u32 unk30_20 : 12;
-    char pad34[0x03];
+    char pad34[0x02];
+    u8 unk36;                       /* 0x36 minutes that must pass since LevelRecord.unk19 (func_001ED9A8) */
     u8 exp_per_level;               /* 0x37 */
     char pad38[0x04];
     u8 unk3C;                       /* 0x3C */
     char pad3D[0x01];
     u16 unk3E;                      /* 0x3E summed into PlayerState.unkA4 for everything worn */
 } LevelDef;
+
+/* D_0042B810[]: the keys of ini/NNNN.ini ("hp=", "equip_weapon=", "item_", ...) and what reads each; a NULL handler ends it */
+typedef struct {
+    char key[0x40];                 /* 0x00 the start of the line */
+    void (*handler)(char *);        /* 0x40 gets the text after the "=" */
+} IniKeyHandler;
 
 #endif

@@ -6,11 +6,11 @@ extern void (*D_004473C4)(void);
 extern int D_005FAD60[];
 extern int D_005FAD80[];
 
-void func_00209A48(float, void *, int);
-void func_00209FC8(void);
+int func_00209A48(float, void *, int);
+int func_00209FC8(void);
 void func_00217008(void);
 void *func_00217760(int, int);
-void func_0020A108(void);
+int func_0020A108(void);
 
 int func_00209EE8(void) {
     int var_v1;

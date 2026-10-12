@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 
 void func_00216778(void *, void *);
-void func_0020E918(int, int, int, int, int, float);
+void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 
 /* Tests a ray against the four walls of a box-like map object (kind 1), two triangles a wall.
    Model points 0 to 3 are the top corners; the bottom ones lie below them by the height that

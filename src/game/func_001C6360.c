@@ -1,6 +1,6 @@
 #include "kf_collision.h"
 
-void func_0020E1F8(int, int, int, int, float, float);
+void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 
 /* notes on which side of the lines from the origin to the two ends the point lies */
 #define TEST_SIDES(point) \

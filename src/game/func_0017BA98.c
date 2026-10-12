@@ -8,7 +8,7 @@ extern int D_00446770;
 int func_00192C98(void *, int, int, u32, int);
 void func_001A32A8(Entity *);
 void func_001035A8(u32, int);
-void func_002109C8(s32, s32);
+int func_002109C8(int, int);
 
 void func_0017BA98(Entity *entity) {
     entity->unkC6 = 0x40;

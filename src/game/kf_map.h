@@ -64,6 +64,13 @@ typedef struct {
     Vector4 unk40[4];               /* 0x40 */
 } MapSlotUnk10Vectors;
 
+/* a MapSlotUnk10Words block as three lights: their directions are the columns of a matrix, their
+   colours (0 to 1) the vectors after it (func_00214358) */
+typedef struct {
+    f32 directions[4][4];           /* 0x00 [axis][light] */
+    Vector4 colors[4];              /* 0x40 */
+} MapSlotUnk10Lights;
+
 /* D_0038A1B0 as func_001012D8 reads it: the first word of MapDrawState.unk60 as a float */
 typedef struct {
     char pad00[0x60];
@@ -426,6 +433,17 @@ typedef struct {
     u16 flags;                      /* 0x0E bit 1 */
     char pad10[0x10];
 } TriggerTypeDef;
+
+/* TriggerTypeDef.flags as bit-fields, where retail reads the low byte alone (func_001D2680) */
+typedef struct {
+    char pad00[0x0E];
+    u8 unlisted : 1;                /* 0x0E set: the item is left out of the menu's list of things to use */
+    u8 bit1 : 1;
+    u8 bits2 : 6;
+    char pad0F[0x11];
+} TriggerTypeDefBits;
+
+#define TRIGGER_TYPE_DEF_BITS(def) ((TriggerTypeDefBits *)(def))
 
 /* D_005B6100[map slot][16]: a map actor (0x2C bytes); flags bit 2 is the map slot */
 typedef struct MapActor {

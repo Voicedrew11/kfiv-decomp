@@ -18,7 +18,7 @@ extern int D_00446734;
 extern u32 D_00446ED4;
 
 void func_00112948(int);
-void func_001D20A0(void);
+int func_001D20A0(void);
 void func_001D2048(PlayTime);
 void func_00106178(int, int, int, int);
 void func_001095E0(void);
@@ -29,7 +29,7 @@ void func_001096E8(void);
 void func_0010B000(void);
 void func_00111D58(void);
 void func_001B5460(void);
-void func_00210D48(void);
+int func_00210D48(void);
 void func_001B5A48(void);
 void func_00100D10(void);
 void func_001D0970(void);

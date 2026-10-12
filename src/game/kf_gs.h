@@ -48,6 +48,115 @@ typedef union {
     } f;
 } GsPackedWord;
 
+/* D_00426140: the menus' two frame buffers, a libgraph sceGsDBuffDc of which the game only names
+   the colour each frame is cleared to */
+typedef struct {
+    char pad000[0x180];
+    u64 clear0_rgbaq;               /* 0x180 sceGsClear.rgbaq of the first frame */
+    char pad188[0x168];
+    u64 clear1_rgbaq;               /* 0x2F0 of the second frame */
+    char pad2F8[0x38];
+} GsDoubleBufferDc;
+
+/* GS registers as the bit-fields the game writes when it patches a double buffer (func_0020AFA8) */
+typedef struct {
+    u64 fbp : 9;
+    u64 fbw : 6;
+    u64 psm : 5;
+    u64 pad20 : 12;
+    u64 dbx : 11;
+    u64 dby : 11;
+    u64 pad54 : 10;
+} GsDispfbBits;
+
+typedef struct {
+    u64 fbp : 9;
+    u64 pad09 : 7;
+    u64 fbw : 6;
+    u64 pad22 : 2;
+    u64 psm : 6;
+    u64 pad30 : 2;
+    u64 fbmsk : 32;
+} GsFrameBits;
+
+typedef struct {
+    u64 zbp : 9;
+    u64 pad09 : 15;
+    u64 psm : 4;
+    u64 pad28 : 4;
+    u64 zmsk : 1;
+    u64 pad33 : 31;
+} GsZbufBits;
+
+typedef struct {
+    u64 ofx : 16;
+    u64 pad16 : 16;
+    u64 ofy : 16;
+    u64 pad48 : 16;
+} GsXyoffsetBits;
+
+/* libgraph's sceGsDispEnv, sceGsDrawEnv1 and sceGsClear with those registers */
+typedef struct {
+    u64 pmode;                      /* 0x00 */
+    u64 smode2;                     /* 0x08 */
+    GsDispfbBits dispfb;            /* 0x10 */
+    u64 display;                    /* 0x18 */
+    u64 bgcolor;                    /* 0x20 */
+} GsDispEnvBits;
+
+typedef struct {
+    GsFrameBits frame;              /* 0x00 */
+    u64 frame_addr;                 /* 0x08 */
+    GsZbufBits zbuf;                /* 0x10 */
+    u64 zbuf_addr;                  /* 0x18 */
+    GsXyoffsetBits xyoffset;        /* 0x20 */
+    u64 xyoffset_addr;              /* 0x28 */
+    u64 scissor;                    /* 0x30 */
+    u64 scissor_addr;               /* 0x38 */
+    u64 prmodecont;                 /* 0x40 */
+    u64 prmodecont_addr;            /* 0x48 */
+    u64 colclamp;                   /* 0x50 */
+    u64 colclamp_addr;              /* 0x58 */
+    u64 dthe;                       /* 0x60 */
+    u64 dthe_addr;                  /* 0x68 */
+    u64 test;                       /* 0x70 */
+    u64 test_addr;                  /* 0x78 */
+} GsDrawEnvBits;
+
+typedef struct {
+    u64 test_a;                     /* 0x00 */
+    u64 test_a_addr;                /* 0x08 */
+    u32 prim;                       /* 0x10 the low word; 0x200 is CTXT */
+    u32 prim_hi;                    /* 0x14 */
+    u64 prim_addr;                  /* 0x18 */
+    u64 rgbaq;                      /* 0x20 */
+    u64 rgbaq_addr;                 /* 0x28 */
+    u64 xyz2_a;                     /* 0x30 */
+    u64 xyz2_a_addr;                /* 0x38 */
+    u64 xyz2_b;                     /* 0x40 */
+    u64 xyz2_b_addr;                /* 0x48 */
+    u64 test_b;                     /* 0x50 */
+    u64 test_b_addr;                /* 0x58 */
+} GsClearBits;
+
+/* D_0042C4C0 (boot screens), D_00432D20 and D_00432F50 (the game): a libgraph sceGsDBuff, two frame
+   buffers with one context each */
+typedef struct {
+    GsDispEnvBits disp[2];          /* 0x000 */
+    u64 giftag0[2];                 /* 0x050 */
+    GsDrawEnvBits draw0;            /* 0x060 */
+    GsClearBits clear0;             /* 0x0E0 */
+    u64 giftag1[2];                 /* 0x140 */
+    GsDrawEnvBits draw1;            /* 0x150 */
+    GsClearBits clear1;             /* 0x1D0 */
+} GsDoubleBuffer;
+
+/* D_00433180 and D_00433190: the DISPFB and DISPLAY values of the two frames, kept by func_0020AFA8 */
+typedef struct {
+    u64 first;
+    u64 second;
+} GsRegisterPair;
+
 int func_001FDB88(GsPackedWord);
 
 #endif

@@ -12,7 +12,7 @@ extern void *D_00414188[];
 extern int D_00446770;
 
 int func_00210C48(int);
-void func_002109C8(s32, s32);
+int func_002109C8(int, int);
 void func_001BC6E8(int);
 void func_001BC968(int);
 int func_0011D600(void *, int);

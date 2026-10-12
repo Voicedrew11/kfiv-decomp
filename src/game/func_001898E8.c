@@ -1,6 +1,6 @@
 #include "kf_collision.h"
 
-void func_0020E1F8(int, int, int, int, float, float);
+void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 
 /* Tests a sphere against the two triangles of the owner's four points and pushes
    `centre` out along the normal. */

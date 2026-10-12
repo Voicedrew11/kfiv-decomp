@@ -1,6 +1,6 @@
 #include "common.h"
 
-int func_0021BFD8(int, int, int, int, u32, int, u32, int);
+int func_0021BFD8(u8 *, int, u8 *, int, u8 *, int, u8 *, int);
 void func_0021C6F0(int *, int *, int *, int *, int *);
 void func_0021C790(int *, int);
 extern int D_004379F0[];

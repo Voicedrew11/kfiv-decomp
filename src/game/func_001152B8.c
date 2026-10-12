@@ -17,7 +17,7 @@ void func_0019B150(void *);
 void func_001C8990(int, f32 *);
 void func_001CACF8(int, f32 *);
 void func_00210930(int);
-void func_002109C8(s32, s32);
+int func_002109C8(int, int);
 void func_001BB590(void);
 void func_0019EA98(int);
 void func_00117AA8(int, int);

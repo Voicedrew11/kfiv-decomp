@@ -21,12 +21,41 @@ typedef struct {
     u8 green;                       /* 0x21 */
     u8 blue;                        /* 0x22 */
     u8 alpha;                       /* 0x23 */
-    char pad24[0x1B];
+    char pad24[0x10];
+    s32 unk34;                      /* 0x34 which number the sprite stands for (func_001FC820 gives its current value) */
+    char pad38[0x06];
+    u8 unk3E;                       /* 0x3E 1: a menu screen's own sprite, 2: one func_001D76D0/func_001D7760 draw */
     s8 slot;                        /* 0x3F which slot the packet belongs to */
     char pad40[0x01];
     s8 unk41;                       /* 0x41 */
-    char pad42[0x1E];
+    u8 unk42;                       /* 0x42 handed to func_001E5210 before the sprite is drawn */
+    s8 unk43;                       /* 0x43 1: the cursor bar is drawn just before this one (func_001EEF78) */
+    char pad44[0x1C];
 } SpritePacket;
+
+/* SpritePacket's colour (0x20) as four 8-bit fields of one unsigned word, the shape of Sony's sceGsRgbaq: a field
+   read on its own is an unsigned int, so turning it into a float takes the unsigned conversion (func_001EA568) */
+typedef struct {
+    u32 red : 8;
+    u32 green : 8;
+    u32 blue : 8;
+    u32 alpha : 8;
+} SpritePacketColor;
+
+#define SPRITE_PACKET_COLOR(packet) ((SpritePacketColor *)&(packet)->red)
+
+/* the same four colour fields seen from the start of the packet: reads and writes are then based on the packet's
+   own address (lbu 0x23(packet)), as retail's are in func_001E02F8 */
+typedef struct {
+    char pad00[0x20];
+    u32 red : 8;                    /* 0x20 */
+    u32 green : 8;                  /* 0x21 */
+    u32 blue : 8;                   /* 0x22 */
+    u32 alpha : 8;                  /* 0x23 */
+    char pad24[0x3C];
+} SpritePacketColorView;
+
+#define SPRITE_PACKET_COLOR_VIEW(packet) ((SpritePacketColorView *)(packet))
 
 /* one corner of a ScreenSprite */
 typedef struct {
@@ -121,6 +150,12 @@ typedef struct {
     GsDataBlock block;              /* 0x10 */
     GsDrawPacket packet;            /* 0x30 */
 } GsDrawFrame;
+
+/* one 32-bit word of a packet built in place (func_001E5070), written as an integer or as a float */
+typedef union {
+    s32 as_int;
+    f32 as_float;
+} GsPacketWord;
 
 int sceGsPutDrawEnv(GsDrawPacket *);
 int sceGsSetDefDrawEnv(GsDrawEnv *, s16, s16, s16, s16, s16);

@@ -10,7 +10,7 @@ void func_00216778(void *, void *);
 void func_00216D20(void *, void *);
 void KF_Vector_Scale(void *, void *, float);
 int func_001C2D08(void *);
-void func_0020E1F8(int, int, int, int, float, float);
+void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 
 /* Keeps the player 100 units away from the wall triangles (CollisionMesh.unk18) of the records around him:
    each one that is hit pushes him straight out, level with the ground. */

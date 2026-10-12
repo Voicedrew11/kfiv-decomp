@@ -1,8 +1,8 @@
 #include "common.h"
 
 int func_0021F1F0(int, u32, u32, u32, u32, u32, u32, u32, u32, u32);
-int func_0021F278(s64, u32, u32);
-int func_0021F2F8(s64, u32, u32, u32);
+int func_0021F278(int, u32, u32);
+int func_0021F2F8(int, u32, u32, u32);
 
 /* Sends the corner points of two rects (x, y, width, height). */
 int func_0021EE78(int reserved, s32 *rect_a, s32 *rect_b) {

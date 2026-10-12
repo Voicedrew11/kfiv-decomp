@@ -1,0 +1,107 @@
+#include "kf_link.h"
+#include "kf_load.h"
+
+extern LinkNode D_00426470;
+extern LinkNode D_004264C0;
+extern LinkNode D_00426510;
+extern LinkNode D_00426560;
+extern LinkNode D_004265B0;
+extern LinkNode D_005CE9D0;
+extern LinkNode D_005CEA70;
+extern LinkNode D_005CEAC0;
+extern LinkNode D_005CEB10;
+extern LinkNode D_005CEB60;
+extern LinkNode D_005CEBB0;
+extern LinkNode D_005CEC00;
+extern LinkNode D_005CEC50;
+extern LinkNode D_005CECA0;
+extern LinkNode D_005CED40;
+extern LinkNode *D_00446C90;
+void func_001D40C0(LinkNode *node);
+void func_001D4360(ChunkUpload *upload);
+void func_001D46F0(void);
+void func_001D4840(void);
+
+/* Sets up the loads of the player's equipment models (nine nodes behind D_005CED40) and of the five
+   menu item models, and chains them all for the loader. */
+// match: the order of the statements decides which node address gets which register (and D_005CED40 gets none)
+void func_001D49D0(void) {
+    func_001D4598(&D_005CED40);
+    func_001D4598(&D_005CE9D0);
+    func_001D4598(&D_005CEA70);
+    func_001D4598(&D_005CEAC0);
+    func_001D4598(&D_005CEB10);
+    func_001D4598(&D_005CEB60);
+    func_001D4598(&D_005CEBB0);
+    func_001D4598(&D_005CEC00);
+    func_001D4598(&D_005CEC50);
+    func_001D4598(&D_005CECA0);
+    func_001D4840();
+    D_005CEA70.slot = 2;
+    D_005CEAC0.slot = 4;
+    D_005CEB10.slot = 3;
+    D_005CEB60.slot = 5;
+    D_005CEBB0.slot = 6;
+    D_005CEC00.slot = 7;
+    D_005CEC50.slot = 8;
+    D_005CECA0.slot = 9;
+    D_005CED40.callback = (void (*)(void))func_001D4360;
+    D_005CE9D0.callback = (void (*)(void))func_001D4360;
+    D_005CEA70.callback = (void (*)(void))func_001D4360;
+    D_005CEAC0.callback = (void (*)(void))func_001D4360;
+    D_005CEB10.callback = (void (*)(void))func_001D4360;
+    D_005CEB60.callback = (void (*)(void))func_001D4360;
+    D_005CEBB0.callback = (void (*)(void))func_001D4360;
+    D_005CEC00.callback = (void (*)(void))func_001D4360;
+    D_005CEC50.callback = (void (*)(void))func_001D4360;
+    D_005CECA0.callback = (void (*)(void))func_001D4360;
+    D_005CE9D0.slot = 0;
+    D_005CE9D0.unk1C = 0;
+    D_005CEA70.unk1C = 0;
+    D_005CEAC0.unk1C = 0;
+    D_005CEB10.unk1C = 0;
+    D_005CEB60.unk1C = 0;
+    D_005CEBB0.unk1C = 0;
+    D_005CEC00.unk1C = 0;
+    D_005CEC50.unk1C = 0;
+    D_005CECA0.unk1C = 0;
+    D_005CED40.unk10 = &D_005CEA70;
+    D_005CEA70.next = &D_005CE9D0;
+    D_005CE9D0.next = &D_005CEAC0;
+    D_005CED40.unk1C = 0;
+    D_005CED40.unk20 = 0;
+    D_005CEAC0.next = &D_005CEB10;
+    D_005CEB10.next = &D_005CEB60;
+    D_005CEB60.next = &D_005CEBB0;
+    D_005CEBB0.next = &D_005CEC00;
+    D_005CEC00.next = &D_005CEC50;
+    D_005CEC50.next = &D_005CECA0;
+    D_005CECA0.next = NULL;
+    func_001D46F0();
+    func_001D4598(&D_00426470);
+    func_001D4598(&D_004264C0);
+    func_001D4598(&D_00426510);
+    func_001D4598(&D_00426560);
+    func_001D4598(&D_004265B0);
+    D_00426470.next = &D_004264C0;
+    D_00426470.callback = (void (*)(void))func_001D40C0;
+    D_004264C0.next = &D_00426510;
+    D_004264C0.callback = (void (*)(void))func_001D40C0;
+    D_00426510.next = &D_00426560;
+    D_00426510.callback = (void (*)(void))func_001D40C0;
+    D_00426560.next = &D_004265B0;
+    D_00426560.callback = (void (*)(void))func_001D40C0;
+    D_004265B0.next = NULL;
+    D_004265B0.callback = (void (*)(void))func_001D40C0;
+    D_00426470.unk20 = 0;
+    D_004264C0.unk20 = 0;
+    D_00426510.unk20 = 0;
+    D_00426560.unk20 = 0;
+    D_004265B0.unk20 = 0;
+    D_004264C0.unk1C = 0;
+    D_00426510.unk1C = 0;
+    D_00426560.unk1C = 0;
+    D_00426470.unk1C = D_004265B0.unk1C = 0;
+    D_00446C90 = &D_005CED40;
+    D_005CED40.next = &D_00426470;
+}

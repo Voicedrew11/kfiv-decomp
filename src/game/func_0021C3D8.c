@@ -7,7 +7,7 @@ typedef struct {
     int f50;
 } Obj;
 
-int func_0021CCC8(int);
+void func_0021CCC8(int);
 int sceSdRemote(int, ...);
 
 int func_0021C3D8(Obj *arg0) {

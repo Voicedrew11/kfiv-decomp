@@ -13,7 +13,7 @@ void KF_Vector_Subtract(void *, void *, void *);
 void KF_Vector_Scale(float *, float *, float);
 void func_00216778(void *, void *);
 int func_001C2D08(void *);
-void func_0020E918(int, int, int, int, int, float);
+void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 u32 func_001124E0(int, u32, u32);
 
 /* Sweeps a point from `position` to `target` through the loaded maps' records and leaves the

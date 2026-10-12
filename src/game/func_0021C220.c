@@ -20,7 +20,7 @@ typedef struct {
 void *memset(void *, int, u32);
 int sceSifAllocIopHeap(int);
 int func_0021CBE8(int, void *, int);
-int func_0021CC60(int);
+void func_0021CC60(int);
 extern int D_00437920[];
 extern char D_01E4F7C0[];
 

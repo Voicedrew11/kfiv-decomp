@@ -116,4 +116,27 @@ typedef struct {
     s32 done;                       /* 0x20 */
 } StreamSlot;
 
+/* D_0042A2A0[D_00446DEC]: one per block of the loaded menu file (func_00204128 fills them in) */
+typedef struct {
+    char pad00[0x10];
+    void *data;                     /* 0x10 the block, handed to func_00204180 */
+    char pad14[0x04];
+} LoadedBlockRef;
+
+/* the header of one chunk in a loaded package (ChunkPoolNode.buffer + 0x10 is the first; see func_001D44A0) */
+typedef struct {
+    char pad00[0x04];
+    s32 payload_offset;             /* 0x04 from the header to the chunk's data */
+    s32 unk08;                      /* 0x08 the next chunk is unk08 + unk0C bytes after this header */
+    s32 unk0C;                      /* 0x0C */
+} PackageChunk;
+
+/* a loaded key item model (the buffer of a D_005CEF30[] upload, func_001DC2A8) */
+typedef struct {
+    char pad00[0x04];
+    s32 part_offset;                /* 0x04 from 0x10 bytes into the file to its PoolPart */
+    char pad08[0x04];
+    s32 texture_offset;             /* 0x0C from the file's start to its TextureHeader */
+} KeyItemModelFile;
+
 #endif

@@ -11,7 +11,7 @@ extern u8 D_0044694D;
 extern u8 D_0044694E;
 
 int func_002179F8(int, int);
-void func_00217970(int, int, int);
+int func_00217970(int, int, int);
 void func_00217008(void);
 void func_001B5590(int);
 void func_00217908(int, int, int);

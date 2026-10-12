@@ -10,7 +10,7 @@ void D_0020AD30(void);
 extern s64 D_00432E20[];
 extern s64 D_00433050[];
 
-void func_0021B540(int *, int, int, void (*)(void), int, int, s64, s64);
+int func_0021B540(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
 void func_001095E0(void);
 void func_0010B000(void);
 void func_001095D0(void);

@@ -540,7 +540,7 @@ typedef struct {
     MapObjectAnim anims[8];         /* 0x10 by MapObjectBytes.anim; entry anim + 2 holds a second sound for anims 4 and 5 */
     u16 unk50;                      /* 0x50 passed to func_001A1C58 */
     s16 unk52[9];                   /* 0x52 percent of each of a hit's nine strengths that it shrugs off, 200: all of it (func_001B3AC0) */
-    char pad64[0x04];
+    f32 unk64;                      /* 0x64 above 0: the player must face it within this angle to act on it (func_001D0970) */
     u32 unk68;                      /* 0x68 flags; the low half is also a message id */
     f32 unk6C;                      /* 0x6C MapObject.unk3C is this times the scale, plus 100 */
     f32 unk70;                      /* 0x70 how far its sounds carry, 0: 800 */
@@ -736,7 +736,8 @@ typedef struct {
     Vector4 rotation;               /* 0x10 */
     Vector4 scale;                  /* 0x20 */
     u16 item;                       /* 0x30 which LevelDef (D_004147F8) it is */
-    char pad32[0x04];
+    char pad32[0x02];
+    u16 unk34;                      /* 0x34 passed to func_002109C8 in place of picking the item up, 0: nothing (func_001D0970) */
     u8 required_flag;               /* 0x36 nonzero: it only appears while its byte of D_00356928 is below this */
     u8 chance;                      /* 0x37 percent chance that it appears (func_001C87D8) */
     u8 group;                       /* 0x38 0-15: picks the roll and the map's threshold it is tested against */

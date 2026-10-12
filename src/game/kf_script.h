@@ -150,6 +150,114 @@ typedef struct {
     ScriptArg result;               /* 0x24 value at 0x28 */
 } ScriptDistance2DCommand;
 
+/* shakes the controller (func_00214C20) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg strength;             /* 0x04 value at 0x08 */
+    ScriptArg duration;             /* 0x0C value at 0x10 */
+    ScriptArg delay;                /* 0x14 value at 0x18 */
+} ScriptShakeCommand;
+
+/* stores something worked out from `input` in `result` (func_00214C58, func_00215040,
+   func_00216660) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg input;                /* 0x04 value at 0x08 */
+    ScriptArg result;               /* 0x0C value at 0x10 */
+} ScriptLookupCommand;
+
+/* stores something worked out from `input` in `result` (func_00214C58, func_00215040,
+   func_00216660, func_00212040) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg input;                /* 0x04 value at 0x08 */
+    ScriptArg result;               /* 0x0C value at 0x10 */
+} ScriptQueryCommand;
+
+/* sends an object walking to a point until it is within `distance`, turning and
+   climbing as needed (func_00215520) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg target_id;            /* 0x04 value at 0x08 */
+    ScriptFloatArg x;               /* 0x0C value at 0x10 */
+    ScriptFloatArg y;               /* 0x14 value at 0x18 */
+    ScriptFloatArg z;               /* 0x1C value at 0x20 */
+    ScriptFloatArg distance;        /* 0x24 value at 0x28 */
+    ScriptArg mode;                 /* 0x2C value at 0x30: goes into Entity flag bits 11-13 */
+    ScriptArg run;                  /* 0x34 value at 0x38 */
+} ScriptWalkToCommand;
+
+/* the same without the height (func_002156F0) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg target_id;            /* 0x04 value at 0x08 */
+    ScriptFloatArg x;               /* 0x0C value at 0x10 */
+    ScriptFloatArg z;               /* 0x14 value at 0x18 */
+    ScriptFloatArg distance;        /* 0x1C value at 0x20 */
+    ScriptArg mode;                 /* 0x24 value at 0x28: goes into Entity flag bits 11-13 */
+    ScriptArg run;                  /* 0x2C value at 0x30 */
+} ScriptWalkToFlatCommand;
+
+/* puts an object in state 4 and waits `frames` and for state 5 (func_00215310) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg target_id;            /* 0x04 value at 0x08 */
+    ScriptArg frames;               /* 0x0C value at 0x10 */
+    char pad14[0x70];
+    int step;                       /* 0x84 */
+} ScriptStateWaitCommand;
+
+/* sets the object's flags picked by `mask` from the bits of `value` (func_00216088; the
+   sixteen bits are the same ones func_00216408 reads back) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg target_id;            /* 0x04 value at 0x08 */
+    ScriptArg value;                /* 0x0C value at 0x10 */
+    ScriptArg mask;                 /* 0x14 value at 0x18 */
+} ScriptSetFlagsCommand;
+
+/* shows a message (func_00215118) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg message_id;           /* 0x04 value at 0x08 */
+    ScriptArg font;                 /* 0x0C value at 0x10 */
+    ScriptArg kind;                 /* 0x14 value at 0x18 */
+    ScriptArg frames;               /* 0x1C value at 0x20 */
+} ScriptMessageCommand;
+
+/* stores in `result` whether an object's turn is within `range` degrees (func_00215AF8) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg target_id;            /* 0x04 value at 0x08 */
+    ScriptArg range;                /* 0x0C value at 0x10 */
+    ScriptArg result;               /* 0x14 value at 0x18 */
+} ScriptFacingCommand;
+
+/* one running command of a script thread: 0xA4 bytes, the Script*Command structs are
+   views of it */
+typedef struct {
+    int active;                     /* 0x00 the command's number, 0: free or finished */
+    ScriptArg args[20];             /* 0x04 */
+} ScriptThreadCommand;
+
+/* the same 0xC4C bytes as ScriptSlot, with the parts named: what the interpreter
+   (func_002109C8 to func_00211BC0) works on */
+typedef struct {
+    u16 script_id;                  /* 0x00 0: free */
+    char pad02[0x02];
+    u32 *cursor;                    /* 0x04 next word of the script: opcode << 16 | operand */
+    int argument;                   /* 0x08 what the starter passed */
+    ScriptThreadCommand commands[16]; /* 0x0C */
+    u8 locals[0x200];               /* 0xA4C the script's own variables */
+} ScriptThread;
+
+/* an argument as the interpreter's own locals hold it (func_002111F0, func_002114D8):
+   16 bytes apart on the stack, read as an int or as a float by its type (6: float) */
+typedef union {
+    ScriptArg as_int;
+    ScriptFloatArg as_float;
+} ScriptValue __attribute__((aligned(16)));
+
 /* D_01DFB3B0[24]: a script slot, 0xC4C bytes. `active` is nonzero while it runs; the
    commands (ScriptMoveCommand and the like) sit in the area from 0x0C. */
 typedef struct {
@@ -159,5 +267,77 @@ typedef struct {
     char pad08[0x04];
     u8 commands[0xC40];             /* 0x0C */
 } ScriptSlot;
+
+/* shakes the camera: CameraState.unk70 and unk74 (func_00213C78) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptFloatArg reach;           /* 0x04 value at 0x08 */
+    ScriptArg frames;               /* 0x0C value at 0x10 */
+} ScriptCameraShakeCommand;
+
+/* sets one of the three lights of a block of the current map's MapSlot.unk10: its direction
+   and its colour, 0 to 255 (func_00214358) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg block;                /* 0x04 value at 0x08, below 32 */
+    ScriptArg light;                /* 0x0C value at 0x10, 0 to 2 */
+    ScriptFloatArg dir_x;           /* 0x14 value at 0x18 */
+    ScriptFloatArg dir_y;           /* 0x1C value at 0x20 */
+    ScriptFloatArg dir_z;           /* 0x24 value at 0x28 */
+    ScriptArg red;                  /* 0x2C value at 0x30 */
+    ScriptArg green;                /* 0x34 value at 0x38 */
+    ScriptArg blue;                 /* 0x3C value at 0x40 */
+} ScriptLightCommand;
+
+/* hands two points to func_0019DAA8 (func_00214700) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg unk04;                /* 0x04 value at 0x08, passed as a char */
+    ScriptArg unk0C;                /* 0x0C value at 0x10, passed as a u8 */
+    ScriptFloatArg unk14;           /* 0x14 value at 0x18 */
+    ScriptFloatArg from_x;          /* 0x1C value at 0x20 */
+    ScriptFloatArg from_y;          /* 0x24 value at 0x28 */
+    ScriptFloatArg from_z;          /* 0x2C value at 0x30 */
+    ScriptFloatArg to_x;            /* 0x34 value at 0x38 */
+    ScriptFloatArg to_y;            /* 0x3C value at 0x40 */
+    ScriptFloatArg to_z;            /* 0x44 value at 0x48 */
+} ScriptTwoPointCommand;
+
+/* sets the colour func_0010A4E8 covers the screen with: MapDrawStateOverlays.unk6C to unk80
+   (func_00214B88) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg red;                  /* 0x04 value at 0x08 */
+    ScriptArg green;                /* 0x0C value at 0x10 */
+    ScriptArg blue;                 /* 0x14 value at 0x18 */
+    ScriptArg alpha;                /* 0x1C value at 0x20 */
+    ScriptArg blend;                /* 0x24 value at 0x28, 0 to 2 */
+} ScriptScreenColorCommand;
+
+/* a command with one integer argument (func_00211E38, func_00212248, func_00212450) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg value;                /* 0x04 value at 0x08 */
+} ScriptValueCommand;
+
+/* a command with one float argument (func_00211FF0) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptFloatArg value;           /* 0x04 value at 0x08 */
+} ScriptFloatValueCommand;
+
+/* a command with two integer arguments (func_002120A0, func_00212218, func_00212480) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg first;                /* 0x04 value at 0x08 */
+    ScriptArg second;               /* 0x0C value at 0x10 */
+} ScriptPairCommand;
+
+/* a command whose only argument in use is the eighth, a result (func_00211F60, func_00211F90) */
+typedef struct {
+    int active;                     /* 0x00 */
+    char pad04[0x38];
+    ScriptArg result;               /* 0x3C */
+} ScriptLateResultCommand;
 
 #endif

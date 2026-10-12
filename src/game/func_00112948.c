@@ -13,7 +13,7 @@ extern u32 D_00446F20;
 extern char *D_00446F50;
 extern char *D_00446F54;
 
-void func_0020B2E8(void *, int);
+void func_0020B2E8(void *, u32);
 int func_00102900(int);
 int sprintf(char *, char *, ...);
 void func_00114840(int);
@@ -33,7 +33,7 @@ void func_00125188(int);
 void func_00119360(int);
 void func_001034F8(int);
 void func_00210930(int);
-void func_002109C8(s32, s32);
+int func_002109C8(int, int);
 
 /* Loads a map into slot 0 in one go, sets everything in it up and makes it the current map. */
 void func_00112948(int map) {

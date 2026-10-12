@@ -1,4 +1,6 @@
-int func_001D62C8(int);
+#include "common.h"
+
+int func_001D62C8(s8);
 int func_00209608(int);
 
 int func_001F91F8(void) {

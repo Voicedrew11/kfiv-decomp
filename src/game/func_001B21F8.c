@@ -5,7 +5,7 @@ extern const VuVector4 D_0043F200;
 
 void KF_Vu0_LoadMatrix(void *);
 u32 func_001124E0(int, u32, u32);
-extern void func_0020DF38(void *, void *, void *, int, float);
+void func_0020DF38(f32 *, f32 *, f32 *, f32 *, f32);
 
 /* Tests a hit's sphere against four of a map model's strip lists (0, 1, 2 and 5). When it
    touches a triangle the result is left in the scratchpad and the list's number returned. */

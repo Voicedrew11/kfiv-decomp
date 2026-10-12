@@ -9,7 +9,7 @@ u32 func_00112618(u32, u32, int);
 u32 func_001124E0(int, u32, u32);
 void func_001862F0(Entity *, s32, s32, s32);
 void func_001C0A88(void *, void *, void *, void *);
-void func_0020E1F8(int, int, int, int, float, float);
+void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 void func_00216C48(void *, void *, void *);
 void KF_Vector_Scale(float *, float *, float);
 void sceVu0Normalize(float *, float *);

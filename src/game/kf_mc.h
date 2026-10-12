@@ -23,6 +23,32 @@ typedef struct {
     int unkB8;                      /* 0xB8 */
 } McState;
 
+/* the first 0x80 bytes of McState: what sceMcGetInfo reported per port and slot */
+typedef struct {
+    int type[2][4];                 /* 0x00 card type */
+    int free_clusters[2][4];        /* 0x20 */
+    int format[2][4];               /* 0x40 nonzero when formatted */
+    int result[2][4];               /* 0x60 result of the sceMcGetInfo call */
+} McCardInfo;
+
+#define MC_CARD_INFO ((McCardInfo *)&D_01E4F278)
+
 extern McState D_01E4F278;
+
+/* progress of the file being written in 0x400-byte blocks */
+typedef struct {
+    int total_size;                 /* 0x00 size of the whole file, a multiple of 0x20 */
+    u32 offset;                     /* 0x04 bytes of the data done so far */
+    int chunk_size;                 /* 0x08 bytes to hand to sceMcWrite this step */
+} McFileProgress;
+
+/* the open file and the block being built for it */
+typedef struct {
+    int file_fd;                    /* 0x00 */
+    u8 buffer[0x420];               /* 0x04 */
+} McFileWork;
+
+extern McFileProgress D_01E4F240;
+extern McFileWork D_01E4F334;
 
 #endif

@@ -1,0 +1,17 @@
+#include "kf_player.h"
+
+extern PlayerState D_00413F80;
+
+int atoi(const char *);
+
+/* ini/NNNN.ini, key "equip_helm=": item 36 plus the number, or the empty slot 30 when it is negative. */
+void func_00207B38(char *text) {
+    int number = atoi(text);
+    PlayerState *player = &D_00413F80;
+
+    if (number >= 0) {
+        player->unk3F = number + 36;
+    } else {
+        player->unk3F = 30;
+    }
+}

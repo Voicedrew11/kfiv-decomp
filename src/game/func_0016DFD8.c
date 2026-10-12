@@ -7,7 +7,7 @@ extern MapSlot D_0038CD20[];
 
 int rand(void);
 void *func_00116160(int, int);
-void func_002109C8(s32, s32);
+int func_002109C8(int, int);
 
 void func_0016DFD8(Entity *entity) {
     MapSlot *slot = &D_0038CD20[D_00446770];

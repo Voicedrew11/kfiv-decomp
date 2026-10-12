@@ -2,7 +2,7 @@
 
 int func_00192C98(void *, int, int, u32, int);
 int func_0011E1F0(int, int);
-void func_002109C8(s32, s32);
+int func_002109C8(int, int);
 void func_001958B8(char *, void (*)(void), int);
 
 extern int D_00446770;

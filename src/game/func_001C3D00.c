@@ -2,7 +2,7 @@
 
 u32 func_001124E0(int, u32, u32);
 int func_001C2D08(void *);
-extern void func_0020DF38(void *, void *, void *, int, float);
+void func_0020DF38(f32 *, f32 *, f32 *, f32 *, f32);
 
 void func_001C3D00(CollisionOwner *owner, int mode, float factor) {
     ModelStripList *list;
