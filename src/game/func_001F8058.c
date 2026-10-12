@@ -175,7 +175,7 @@ void func_001F8058(void) {
                     } else if (D_005CF3C0.unk1E == 0 && D_005CF3C0.unk20 > 0) {
                         second_arg = 0;
                         first_arg = 2;
-                    } else if (D_005CF3C0.unk1E == 0 && D_005CF3C0.unk20 == 0) {
+                    } else if (D_005CF3C0.unk1E == 0 && D_005CF3C0.unk20 == 0) { // match: no else: a negative byte sets neither argument
                         second_arg = 1;
                         first_arg = 1;
                     }

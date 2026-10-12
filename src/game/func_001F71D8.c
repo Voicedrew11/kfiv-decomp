@@ -352,7 +352,7 @@ void func_001F71D8(void) {
     case 2:
     case 3:
         for (i = 0; i < D_00446A60; i++) {
-            D_00425510[0xFF] -= 1.6f;
+            D_00425510[0xFF] -= 1.6f; // match: stepped once for every part here too
             if (D_00425510[0xFF] < 0.0f) {
                 D_00425510[0xFF] = 0.0f;
             }

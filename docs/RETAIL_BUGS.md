@@ -623,14 +623,15 @@ at all. Nothing is seen if the two lists match part for part; not checked.
 
 ## The item detail panel's switch leaves its part list unset for groups 1 and 10
 
-Seven screens open a detail panel for the current item with the same code: a
+Ten screens open a detail panel for the current item with the same code: a
 `switch` on the item's group sets `packets` and `count` (the panel's sprite
-list), and the fade code right after the switch walks `packets[0..count)` and
-writes `D_00425910[i]`:
+list; `parts` in the later files), and the fade code right after the switch
+walks `packets[0..count)` and writes `D_00425910[i]`:
 
 | Function | Groups with no case |
 | --- | --- |
 | `func_001E7010`, `func_001E88A0`, `func_001EA568`, `func_001EBB98`, `func_001EF840` | 1 and 10 |
+| `func_001F0D90`, `func_001F4098`, `func_001F52A8` | 1 and 10 |
 | `func_001DDB10` | 1 and 10 |
 | `func_001D94F8` | 10 |
 
@@ -643,12 +644,139 @@ screens the fade can run over a stale pointer and count whenever a group 1
 item is current. What then happens depends on the caller's registers (a
 guess: usually a count of 0 or a harmless read; a large count would write
 past `D_00425910[256]`). Not checked which of these lists can hold group 1
-items; `func_001D94F8` has its own case for group 1.
+items; `func_001D94F8` has its own case for group 1. `func_001F0D90`,
+`func_001F4098` and `func_001F52A8` open the panel through the same
+`func_001E4FE0` gate as the trade screens.
 
 `func_001DDB10` (the item screen) is the same as the trade screens here: same
 gate, same switch. Its list is the ring `func_001D2680` builds from every
 item number from 1 up, and `MenuItem.group` 1 is the first 150 of those, so
 there a group 1 item can be current.
+
+## `func_001F0D90` does not put the blend mode back after the parts of groups 7 to 9
+
+Every loop that draws panel parts in the menu screens sets the part's blend
+mode, draws, and sets mode 0 again. In `func_001F0D90` the loop of the case
+for groups 7 to 9 sets the part's mode a second time where the 0 belongs:
+
+```c
+for (i = 0; i < D_00446A94; i++) {
+    func_001E5210((s8)D_00446C0C[i].unk42);
+    func_00207478((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
+    func_001E5210((s8)D_00446C0C[i].unk42);
+}
+```
+
+The four other such loops in this function end with `func_001E5210(0)`, and so
+does the loop over the same list in `func_001EF840`.
+
+Effect: after the loop the mode `func_001E5210` sets (ALPHA_1) is the last
+part's `unk42`, not 0, until the next call. The list's text, drawn right after
+the panel with `func_001FE9A8`, comes before that call. Nothing changes if the
+last part of `D_00446C0C` has `unk42` 0; the data has not been checked. Marked
+with `// match:`.
+
+## `func_001F71D8` steps the cursor bar's level once for every part
+
+In its fade-in and fade-out the bar's level `D_00425510[0xFF]` is stepped and
+clamped inside the loop over the screen's parts:
+
+```c
+for (i = 0; i < D_00446A60; i++) {
+    D_00425510[0xFF] += 1.6f;
+    if (D_00425510[0xFF] > 16.0f) {
+        D_00425510[0xFF] = 16.0f;
+    }
+    ...
+    D_00425510[i] += SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha / 10.0f;
+```
+
+(and `-= 1.6f`, clamped at 0, in the fade-out). Nothing in the statement
+depends on `i`. The other menus step their bar level once a frame
+(`func_001D8398`, `func_001D8C90`: 1.6 a frame up to 16), and the twin screen
+`func_001E0D98` steps its own level outside any loop.
+
+Effect: the level moves by 1.6 times the number of parts each frame, so with
+ten parts or more it is at its limit after one frame, where the parts
+themselves take ten frames. Both lines are marked with `// match:`.
+
+## `func_001F8058` can ask about room on the card with two unset arguments
+
+This screen keeps one signed byte of state for each of three saves (`unk1E`,
+`unk1F`, `unk20`, also written as `save_state[i]`). For each one that is not 1
+it picks two arguments for `func_001FBA18` from the two other bytes, with chains
+that test `> 0` and `== 0` and have no final `else`:
+
+```c
+case 1:
+    if (D_005CF3C0.unk1E > 0 && D_005CF3C0.unk20 > 0) {
+        ...
+    } else if (D_005CF3C0.unk1E > 0 && D_005CF3C0.unk20 == 0) {
+        ...
+    } else if (D_005CF3C0.unk1E == 0 && D_005CF3C0.unk20 > 0) {
+        ...
+    } else if (D_005CF3C0.unk1E == 0 && D_005CF3C0.unk20 == 0) {
+        second_arg = 1;
+        first_arg = 1;
+    }
+    break;
+...
+if (func_001FBA18(D_005CF3C0.unk0C, first_arg, second_arg) > 0) {
+    MENU_SCREEN_SAVES(&D_005CF3C0)->save_state[i] = 0;
+} else {
+    MENU_SCREEN_SAVES(&D_005CF3C0)->save_state[i] = -1;
+}
+```
+
+A byte can be negative: `func_001FB980` returns -1, and this very loop stores
+-1 in the bytes it has already done. Then no arm of cases 1 and 2 runs. The
+twin `func_001E0D98` tests `!= 0` and `== 0`, which leaves no gap.
+
+Effect: `func_001FBA18` gets what the two variables held from the save before,
+or, when that one was a save and skipped the switch, the caller's `$17` and
+`$19`. The answer decides whether that line is stored as 0 or -1. Marked with
+`// match:`.
+
+## `func_001FCBD0` fills a too-large number's glyphs one place too high
+
+`func_001FCBD0` draws a number as `unk33` glyphs (five when `unk33` is 0) from
+`glyphs[0]` up. For a number above 999,999,999 it does not work out digits but
+fills in glyph 0:
+
+```c
+for (index = sprite->unk33; index > 0; index--) {
+    glyphs[index] = 0;
+}
+```
+
+The digit loops in the other branch write `glyphs[index - 1]`.
+
+Effect: `glyphs[0]`, the first one drawn, is left as the stack had it, and
+with `unk33` 0 all five are. Not checked whether any sprite is ever given a
+number that large. Marked with `// match:`.
+
+## `func_001FF9F0` measures a word without looking for the end of the text
+
+`func_001FF9F0` draws text over several lines. At the first glyph after a
+space (0x800) it counts the glyphs of the word to decide whether it still
+fits on the line:
+
+```c
+for (j = 0, word_length = 0; text[i + j] != 0x800 && text[i + j] != 0x80E; j++) {
+    if (text[i + j] != 0x8000) {
+        word_length++;
+    }
+}
+```
+
+The text ends at 0xFFFF (the outer loop's test), and this scan does not stop
+there. The same scan in `func_00200068` has `text[i + j] != 0xFFFF`.
+
+Effect: when the last word of a text is followed by neither a space nor a
+full stop (0x80E), the scan reads on past the text until some halfword is
+0x800 or 0x80E, and `word_length` counts all of it, so the last word is moved
+to a new line whether it fits or not. No effect on texts that end in a full
+stop; the texts have not been checked. Marked with `// match:`.
 
 ## `func_002050F8` clamps an unsigned Y at 0
 
@@ -1123,6 +1251,7 @@ does not mistake them for meaning something.
   constant it never uses.
 - More functions that return no value on some path: `func_001D4598` and
   `func_001D6E60` (declared `int`, return nothing; no caller reads it),
+  `func_001FCBD0` (the same),
   `func_001D7AD8` for a step outside 0 to 5, `func_001D62C8` for a menu number
   outside 0 to 5 (`func_001F91F8` passes 1 to 3).
 - `func_001D62C8` (run the menu) reads the clock, puts its BCD bytes into
@@ -1159,10 +1288,21 @@ does not mistake them for meaning something.
   (`FxTableEntry.unk102 != 0`). The magic menu uses `(number - 1) / 15`. May
   be intended.
 - `func_001E0D98` and `func_001DF308` hand `func_001FC5E8` a cursor bar of
-  which only the corners and the colour are set. `func_001FC5E8` (not matched;
-  from its assembly) also reads the float at +0x24, so that one is stack
-  contents. Presumably not visible. `func_001DDB10` fills its bar the same
-  way.
+  which only the corners and the colour are set. `func_001FC5E8` also copies
+  the float at +0x24 (to the packet's Q), so that one is stack contents.
+  Presumably not visible. `func_001DDB10`, `func_001F71D8` and `func_001F8058`
+  fill their bars the same way.
+- `func_001FC5E8` (flat rectangle) and the two sprite drawers `func_001FC0D8`
+  and `func_001FCBD0` copy the first corner's depth into their copy of the
+  second corner, and then read neither copy: every vertex takes the first
+  corner's depth from the argument. The second corner's depth that callers set
+  is ignored. The two sprite drawers also work out a vertical step that
+  nothing uses.
+- `func_001FD1F8` and `func_001FD680` (draw a line of text) start the packet
+  with `glyph_count | 0x8000` from a variable that is never set. The word is
+  written again with the real count after the loop.
+- `func_00191A60` (step a motion) sets a local frame number to 0 on the
+  forward wrap that nothing reads; only the fixed-point frame is returned.
 - `func_001E0D98`: the last arm of the per-save `switch` is written as a
   fourth test, not an `else`, so retail keeps a path that sets neither
   argument of the call after it. The four tests cover every case.
