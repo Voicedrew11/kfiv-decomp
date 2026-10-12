@@ -8,8 +8,9 @@ functions, data and complete units. Percentages come from the byte and
 function counts.
 
 --write refreshes docs/progress/, which is committed: summary.json (no
-per-function data), badge-*.json (shields.io endpoints) and index.html, a
-static page with the summary and a unit map embedded. It also replaces the
+per-function data), badge-*.json (shields.io endpoints), index.html, a
+static page with the summary and a unit map embedded, and report.json, the
+objdiff report itself (CI uploads it for decomp.dev). It also replaces the
 table between the progress markers in README.md.
 
 --html PATH writes the same page with each unit's functions expandable. The
@@ -514,14 +515,15 @@ def dumps(obj) -> str:
     return json.dumps(obj, indent=1, sort_keys=True) + "\n"
 
 
-def write_docs(data):
+def write_docs(data, report: Path):
     DOCS.mkdir(parents=True, exist_ok=True)
+    (DOCS / "report.json").write_bytes(report.read_bytes())
     # data is loaded without functions here
     (DOCS / "summary.json").write_text(dumps(data))
     for name, b in badges(data).items():
         (DOCS / name).write_text(dumps(b))
     (DOCS / "index.html").write_text(render_html(data))
-    print(f"wrote {DOCS.relative_to(ROOT)}/ (summary.json, badge-*.json, index.html)")
+    print(f"wrote {DOCS.relative_to(ROOT)}/ (summary.json, badge-*.json, index.html, report.json)")
 
 
 def update_readme(data):
@@ -551,7 +553,7 @@ def main():
     data = load(report, detail=False)
     print(terminal(data))
     if a.write:
-        write_docs(data)
+        write_docs(data, report)
         update_readme(data)
     if a.html:
         full = load(report, detail=True)
