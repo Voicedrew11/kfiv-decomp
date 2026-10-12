@@ -14,10 +14,10 @@ int func_0018EAC0(void *, void *);
 int func_0015B340(char *, float);
 void func_0015AA00(Entity *);
 void func_001958B8(char *, void (*)(void), int);
-void func_00181AE0(void);
-void func_00181C60(void);
-void func_00181E48(void);
-void func_00182240(void);
+void func_00181AE0(Entity *);
+void func_00181C60(Entity *);
+void func_00181E48(Entity *);
+void func_00182240(Entity *);
 
 void func_0015AE88(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -40,15 +40,15 @@ void func_0015AE88(Entity *entity) {
         break;
     case 2:
         if (func_0015A790(entity, 200.0f, 1.0471976f)) {
-            func_001958B8((char *)entity, func_00181AE0, 1);
+            func_001958B8((char *)entity, (void (*)(void))func_00181AE0, 1);
             break;
         }
         if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
-            func_001958B8((char *)entity, func_00181C60, 1);
+            func_001958B8((char *)entity, (void (*)(void))func_00181C60, 1);
             break;
         }
         if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
-            func_001958B8((char *)entity, func_00181AE0, 1);
+            func_001958B8((char *)entity, (void (*)(void))func_00181AE0, 1);
             break;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 53) & 1) {
@@ -77,10 +77,10 @@ void func_0015AE88(Entity *entity) {
                     if (ENTITY_FLAG_BITS(entity)->bits58 == 1) {
                         func_001958B8((char *)entity, (void (*)(void))func_0015AA00, 1);
                     } else {
-                        func_001958B8((char *)entity, func_00182240, 1);
+                        func_001958B8((char *)entity, (void (*)(void))func_00182240, 1);
                     }
                 } else {
-                    func_001958B8((char *)entity, func_00181E48, 1);
+                    func_001958B8((char *)entity, (void (*)(void))func_00181E48, 1);
                 }
             }
             break;

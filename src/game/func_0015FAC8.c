@@ -3,7 +3,7 @@
 void func_00190A30(char *);
 void func_0019A310(char *, void (*)(void), int);
 void func_00195898(char *, u8);
-void func_00181378(void);
+void func_00181378(Entity *);
 void func_00161550(Entity *);
 void func_001616D8(Entity *);
 
@@ -14,7 +14,7 @@ void func_0015FAC8(Entity *entity) {
     entity->flags &= ~0x200;
     if (((s32)(entity->flags >> 36) & 3) == 1) {
         if ((s32)(entity->flags >> 19) & 1) {
-            func_0019A310((char *)entity, func_00181378, 0);
+            func_0019A310((char *)entity, (void (*)(void))func_00181378, 0);
         } else {
             func_0019A310((char *)entity, (void (*)(void))func_00161550, 0);
         }

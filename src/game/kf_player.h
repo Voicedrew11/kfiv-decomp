@@ -17,7 +17,7 @@ typedef struct {
     char pad3D[0x05];
     u8 unk42;                       /* 0x42 */
     char pad43[0x02];
-    u8 unk45;                       /* 0x45 */
+    u8 unk45;                       /* 0x45 0x9C: enemy attacks reach half as far (func_0018F648) */
     char pad46[0x12];
     s32 unk58;                      /* 0x58 */
     char pad5C[0x48];
@@ -49,13 +49,15 @@ typedef struct {
     u8 unk263;                      /* 0x263 */
     char pad264[0x34];
     u8 unk298;                      /* 0x298 */
-    char pad299[0x0F];
+    char pad299[0x07];
+    s32 unk2A0;                     /* 0x2A0 a total func_001B4EC8 adds to */
+    char pad2A4[0x04];
     f32 unk2A8;                     /* 0x2A8 fade amount: > 0 toward white, < 0 toward black */
     char pad2AC[0x0C];
     u16 flag_timers[6];             /* 0x2B8 frames left, one per timed_flags entry */
     char pad2C4[0x20];
-    s32 unk2E4;                     /* 0x2E4 */
-    f32 unk2E8;                     /* 0x2E8 */
+    s32 unk2E4;                     /* 0x2E4 above 0: unk2E8 counts (func_0018F648) */
+    f32 unk2E8;                     /* 0x2E8 enemies whose unk60 is below it attack from half as far */
 } PlayerState;
 
 /* D_003682F0[160]: what has been gained per item (0x22 bytes each) */

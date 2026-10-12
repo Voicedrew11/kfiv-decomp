@@ -14,7 +14,9 @@ typedef struct {
 
 /* what MapSlot.header points at: the loaded map's header, as func_0019F3A0 reads it */
 typedef struct {
-    char pad00[0x70];
+    char pad00[0x3C];
+    u16 record_count;               /* 0x3C how many MapSlot.records there are */
+    char pad3E[0x32];
     s8 unk70;                       /* 0x70 passed to sprintf as the file-name index */
 } MapHeader;
 
@@ -37,6 +39,14 @@ typedef struct {
     int unk00[6];                   /* 0x00 */
     int fired;                      /* 0x18 the type it fired for, 0 before */
 } MapTriggerShot;
+
+/* MapTrigger.shot as func_00121660 (start) and func_00121680 (update) use it */
+typedef struct {
+    f32 unk00;                      /* 0x00 a speed, added to the model's y */
+    s32 unk04;                      /* 0x04 frames to wait */
+    s32 unk08;                      /* 0x08 1 while D_00414188 is this trigger */
+    s32 unk0C;                      /* 0x0C unk08 of the frame before */
+} MapTriggerShotKind121660;
 
 /* what MapTrigger.unk08 points at, as func_0011F0D8 reads it */
 typedef struct {

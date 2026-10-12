@@ -20,9 +20,9 @@ void func_001958B8(char *, void (*)(void), int);
 void func_0015DA28(Entity *);
 void func_0015DB88(Entity *);
 void func_0015DE30(Entity *);
-void func_00181C60(void);
-void func_00181E48(void);
-void func_00182240(void);
+void func_00181C60(Entity *);
+void func_00181E48(Entity *);
+void func_00182240(Entity *);
 
 void func_0015D598(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -41,7 +41,7 @@ void func_0015D598(Entity *entity, s32 unknown) {
         return;
     }
     if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
-        func_001958B8((char *)entity, func_00181C60, 1);
+        func_001958B8((char *)entity, (void (*)(void))func_00181C60, 1);
         return;
     }
     if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
@@ -61,9 +61,9 @@ void func_0015D598(Entity *entity, s32 unknown) {
         switch (entity->unkCD) {
         case 0:
             if (func_0018F030((char *)entity)) {
-                func_001958B8((char *)entity, func_00182240, unknown);
+                func_001958B8((char *)entity, (void (*)(void))func_00182240, unknown);
             } else {
-                func_001958B8((char *)entity, func_00181E48, unknown);
+                func_001958B8((char *)entity, (void (*)(void))func_00181E48, unknown);
             }
             return;
         case 1:

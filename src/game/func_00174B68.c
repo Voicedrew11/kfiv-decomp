@@ -11,8 +11,8 @@ void func_00190B88(Entity *, s32);
 int func_0018EAC0(void *, void *);
 s16 func_00190F90(float, void *, int);
 void func_001958B8(char *, void (*)(void), int);
-void func_00181AE0(void);
-void func_00181C60(void);
+void func_00181AE0(Entity *);
+void func_00181C60(Entity *);
 void func_00174DF0(Entity *);
 
 void func_00174B68(Entity *entity, s32 unknown) {
@@ -31,11 +31,11 @@ void func_00174B68(Entity *entity, s32 unknown) {
     range = 300.0f;
     angle = 0.5235988f;
     if (func_0018ED98(entity, range, angle)) {
-        func_001958B8((char *)entity, func_00181C60, 1);
+        func_001958B8((char *)entity, (void (*)(void))func_00181C60, 1);
         return;
     }
     if (func_0018EEE0(entity, range, angle)) {
-        func_001958B8((char *)entity, func_00181AE0, 1);
+        func_001958B8((char *)entity, (void (*)(void))func_00181AE0, 1);
         return;
     }
     next_action = func_0018FD50(entity, 0);
