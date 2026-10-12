@@ -54,8 +54,8 @@ void func_00111010(ModelInstance *model) {
                 point[2] = vertex->z;
                 point[3] = 1.0f;
                 KF_Vu0_ProjectToScreen(screen, point);
-                vertex->u = (s16)(screen[0] - 0x6C00) * 6.1035156e-05f;
-                vertex->v = (s16)(screen[1] - 0x7200) * 0.00012207031f;
+                vertex->tex_u = (s16)(screen[0] - 0x6C00) * 6.1035156e-05f;
+                vertex->tex_v = (s16)(screen[1] - 0x7200) * 0.00012207031f;
                 vertex->unk14 = 1;
                 vertex++;
             }

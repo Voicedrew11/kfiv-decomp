@@ -5,7 +5,7 @@ extern u32 D_00446ED4;
 
 int func_001C2D08(void *);
 u32 func_001125F0(u32, u32, int);
-int func_00112618(u32, u32, int);
+u32 func_00112618(u32, u32, int);
 u32 func_001124E0(int, u32, u32);
 void func_001862F0(Entity *, s32, s32, s32);
 void func_001C0A88(void *, void *, void *, void *);

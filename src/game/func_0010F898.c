@@ -21,8 +21,8 @@ void func_0010F898(ModelPartVertexWords *out, ModelPartVertexWords *from, ModelP
     step.unk08[0] = (last->unk08[0] - from->unk08[0]) / steps;
     step.unk08[1] = (last->unk08[1] - from->unk08[1]) / steps;
     step.unk08[2] = (last->unk08[2] - from->unk08[2]) / steps;
-    step.u = (last->u - from->u) / steps;
-    step.v = (last->v - from->v) / steps;
+    step.tex_u = (last->tex_u - from->tex_u) / steps;
+    step.tex_v = (last->tex_v - from->tex_v) / steps;
     step.colour[0] = (last->colour[0] - from->colour[0]) / steps;
     step.colour[1] = (last->colour[1] - from->colour[1]) / steps;
     step.colour[2] = (last->colour[2] - from->colour[2]) / steps;
@@ -43,8 +43,8 @@ void func_0010F898(ModelPartVertexWords *out, ModelPartVertexWords *from, ModelP
         out->unk08[1] = previous->unk08[1] + step.unk08[1];
         out->unk08[2] = previous->unk08[2] + step.unk08[2];
         out->unk0E = 0;
-        out->u = previous->u + step.u;
-        out->v = previous->v + step.v;
+        out->tex_u = previous->tex_u + step.tex_u;
+        out->tex_v = previous->tex_v + step.tex_v;
         out->unk14 = 0x1000;
         out->unk16 = 0x7FFF;
         out->colour[0] = previous->colour[0] + step.colour[0];

@@ -50,8 +50,8 @@ void func_00112118(ModelInstance *model) {
                 *&MODEL_PROJECT_SCRATCH->point[2] = vertex->z + (rand() - 1073741824.0f) * 2.0f * 9.313226e-10f;
                 *&MODEL_PROJECT_SCRATCH->point[3] = 1.0f;
                 KF_Vu0_ProjectToScreen(MODEL_PROJECT_SCRATCH->screen, MODEL_PROJECT_SCRATCH->point);
-                vertex->u = (*&MODEL_PROJECT_SCRATCH->screen[0] - 0x6C00) / 10240.0f * 4096.0f;
-                vertex->v = (*&MODEL_PROJECT_SCRATCH->screen[1] - 0x7200) / 7168.0f * 4096.0f;
+                vertex->tex_u = (*&MODEL_PROJECT_SCRATCH->screen[0] - 0x6C00) / 10240.0f * 4096.0f;
+                vertex->tex_v = (*&MODEL_PROJECT_SCRATCH->screen[1] - 0x7200) / 7168.0f * 4096.0f;
                 vertex++;
             }
             next_data = (ModelPartData *)((char *)data + (length + 1) * 0x10);

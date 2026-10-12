@@ -84,8 +84,8 @@ typedef struct {
     s16 z;                          /* 0x04 */
     char pad06[0x08];
     u16 unk0E;                      /* 0x0E flag bits func_00111368 passes on to the GS vertex */
-    u16 u;                          /* 0x10 texture coordinates */
-    u16 v;                          /* 0x12 */
+    u16 tex_u;                          /* 0x10 texture coordinates */
+    u16 tex_v;                          /* 0x12 */
     u16 unk14;                      /* 0x14 set to 1 by func_00111010 */
     char pad16[0x02];
     s16 colour[4];                  /* 0x18 red, green, blue, alpha: 0..0xFF each (set by func_0010E8E0) */
@@ -100,8 +100,8 @@ typedef struct {
     s16 unk06;                      /* 0x06 1 on a vertex built between two others */
     s16 unk08[3];                   /* 0x08 a normal, it seems */
     u16 unk0E;                      /* 0x0E 0; 0x8000 on the first two vertices of a strip (func_0010F478) */
-    s16 u;                          /* 0x10 */
-    s16 v;                          /* 0x12 */
+    s16 tex_u;                          /* 0x10 */
+    s16 tex_v;                          /* 0x12 */
     s16 unk14;                      /* 0x14 0x1000 */
     s16 unk16;                      /* 0x16 0x7FFF on a vertex built between two others, 0 on the two ends */
     s16 colour[4];                  /* 0x18 */
@@ -164,8 +164,8 @@ typedef union {
 typedef struct {
     f32 position[4];                /* 0x00 */
     f32 offset[4];                  /* 0x10 added to the position before it is projected (func_0010CB98) */
-    f32 s;                          /* 0x20 texture coordinates, 0 to 1 across the screen */
-    f32 t;                          /* 0x24 */
+    f32 tex_s;                          /* 0x20 texture coordinates, 0 to 1 across the screen */
+    f32 tex_t;                          /* 0x24 */
     char pad28[0x04];
     s32 on_parent;                  /* 0x2C 0: placed by its own part's matrix, otherwise by the parent part's */
     char pad30[0x10];
@@ -328,8 +328,8 @@ typedef struct {
 
 /* a vertex's own texture coordinates and the wave (kf_screen.h WaveOscillator) that moves them */
 typedef struct ModelWaveUv {
-    u16 u;                          /* 0x00 */
-    u16 v;                          /* 0x02 */
+    u16 tex_u;                          /* 0x00 */
+    u16 tex_v;                          /* 0x02 */
     s32 wave;                       /* 0x04 0-15 */
 } ModelWaveUv;
 

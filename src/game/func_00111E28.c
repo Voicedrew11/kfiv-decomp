@@ -48,8 +48,8 @@ void func_00111E28(ModelInstance *model, u32 *alloc) {
             vertex_count = data->unk70 & 0x7FFF;
             length = data->length;
             for (k = 0; k < vertex_count; k++) {
-                wave_uv->u = vertex->u;
-                wave_uv->v = vertex->v;
+                wave_uv->tex_u = vertex->tex_u;
+                wave_uv->tex_v = vertex->tex_v;
                 srand((vertex->x + (int)model->position.x) + ((int)model->position.y + vertex->y) +
                       ((int)model->position.z + vertex->z));
                 wave_uv->wave = rand() % 16;

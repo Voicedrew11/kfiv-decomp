@@ -40,12 +40,12 @@ void func_00101D48(int divisor) {
     sprite.vertex[0].x = 0x6BF8;
     sprite.vertex[1].x = 0x93F8;
     sprite.vertex[1].z = 0xFFFF;
-    sprite.vertex[1].s = 0x2800;
+    sprite.vertex[1].tex_s = 0x2800;
     sprite.vertex[0].y = 0x7200;
     sprite.vertex[1].y = 0x8E00;
-    sprite.vertex[1].t = 0xE00;
-    sprite.vertex[0].s = 0;
-    sprite.vertex[0].t = 0;
+    sprite.vertex[1].tex_t = 0xE00;
+    sprite.vertex[0].tex_s = 0;
+    sprite.vertex[0].tex_t = 0;
     for (pass = 0; pass < 2; pass++) {
         func_001095E0();
         func_0010B000();

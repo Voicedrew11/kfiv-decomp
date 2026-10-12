@@ -34,8 +34,8 @@ void func_0010A100(void *sprite_arg) {
     *packet++ = 0x14;
     *packet++ = 0;
     vertex = &sprite->vertex[0];
-    *packet++ = vertex->s;
-    *packet++ = vertex->t;
+    *packet++ = vertex->tex_s;
+    *packet++ = vertex->tex_t;
     *packet++ = 0;
     *packet++ = 0;
     *packet++ = sprite->rgba[0];
@@ -47,8 +47,8 @@ void func_0010A100(void *sprite_arg) {
     *packet++ = vertex->z;
     *packet++ = 1;
     vertex = &sprite->vertex[1];
-    *packet++ = vertex->s;
-    *packet++ = vertex->t;
+    *packet++ = vertex->tex_s;
+    *packet++ = vertex->tex_t;
     *packet++ = 0;
     *packet++ = 0;
     *packet++ = sprite->rgba[0];

@@ -29,8 +29,8 @@ void func_00110D60(BlendVertex *, BlendVertex *, BlendVertex *, int);
     (to).unk10[1] = (from)->unk08[1] * 4096.0f;                                                    \
     (to).unk10[2] = (from)->unk08[2] * 4096.0f;                                                    \
     (to).unk10[3] = 0.0f;                                                                          \
-    (to).unk20[0] = (from)->u * 4096.0f;                                                           \
-    (to).unk20[1] = (from)->v * 4096.0f;                                                           \
+    (to).unk20[0] = (from)->tex_u * 4096.0f;                                                           \
+    (to).unk20[1] = (from)->tex_v * 4096.0f;                                                           \
     (to).unk20[2] = 1.0f;                                                                          \
     (to).unk20[3] = 0.0f;                                                                          \
     (to).unk30[0] = (from)->colour[0];                                                             \

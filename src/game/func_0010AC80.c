@@ -37,10 +37,10 @@ void func_0010AC80(int fbp, int psm, int width, int height) {
     sprite.vertex[1].x = ((width / 2) << 4) + 0x7FF8;
     sprite.vertex[1].y = ((height / 2) << 4) + 0x7FF8;
     sprite.vertex[1].z = sprite.vertex[0].z = 0xFFFFFFFF;
-    sprite.vertex[1].s = 0x2800;
-    sprite.vertex[1].t = 0x1C00;
-    sprite.vertex[0].s = 0;
-    sprite.vertex[0].t = 0;
+    sprite.vertex[1].tex_s = 0x2800;
+    sprite.vertex[1].tex_t = 0x1C00;
+    sprite.vertex[0].tex_s = 0;
+    sprite.vertex[0].tex_t = 0;
     func_0010A100(&sprite);
     func_00109A50();
     func_00109A80(8, 0);

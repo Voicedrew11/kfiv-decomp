@@ -144,9 +144,9 @@ void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4)
                         flags = (flags << 1) & 7;
                         out->flags |= vertex->unk0E;
                         vertex++;
-                        out->s = (f32)(screen[0] - 0x6C00) / 10240.0f;
-                        out->t = (f32)(screen[1] - 0x7200) / 7168.0f;
-                        out->q = 1.0f;
+                        out->tex_s = (f32)(screen[0] - 0x6C00) / 10240.0f;
+                        out->tex_t = (f32)(screen[1] - 0x7200) / 7168.0f;
+                        out->tex_q = 1.0f;
                         screen += 4;
                         out++;
                     }
@@ -169,9 +169,9 @@ void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4)
                     flags = (flags << 1) & 7;
                     out->flags |= vertex->unk0E;
                     vertex++;
-                    out->q = 1.0f;
-                    out->s = (f32)(screens[0][0] - 0x6C00) / 10240.0f;
-                    out->t = (f32)(screens[0][1] - 0x7200) / 7168.0f;
+                    out->tex_q = 1.0f;
+                    out->tex_s = (f32)(screens[0][0] - 0x6C00) / 10240.0f;
+                    out->tex_t = (f32)(screens[0][1] - 0x7200) / 7168.0f;
                     out++;
                 }
                 next = (ModelPartData *)((char *)data + (length + 1) * 0x10);

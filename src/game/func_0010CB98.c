@@ -66,8 +66,8 @@ void func_0010CB98(void *model_arg) {
                 }
                 func_00216C48(MODEL_PROJECT_SCRATCH->point, vertex->position, vertex->offset);
                 KF_Vu0_ProjectToScreen(MODEL_PROJECT_SCRATCH->screen, MODEL_PROJECT_SCRATCH->point);
-                vertex->s = (*&MODEL_PROJECT_SCRATCH->screen[0] - 0x6C00) / 10240.0f;
-                vertex->t = (*&MODEL_PROJECT_SCRATCH->screen[1] - 0x7200) / 7168.0f;
+                vertex->tex_s = (*&MODEL_PROJECT_SCRATCH->screen[0] - 0x6C00) / 10240.0f;
+                vertex->tex_t = (*&MODEL_PROJECT_SCRATCH->screen[1] - 0x7200) / 7168.0f;
             }
             cursor = (s32 *)((char *)block + (length + 1) * 16);
         }

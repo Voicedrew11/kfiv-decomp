@@ -30,8 +30,8 @@ void func_00112018(ModelInstance *model) {
             vertex_count = data->unk70 & 0x7FFF;
             length = data->length;
             for (k = 0; k < vertex_count; k++) {
-                vertex->u = wave_uv->u + (u16)D_00471DE0[wave_uv->wave].x;
-                vertex->v = wave_uv->v + (u16)D_00471DE0[wave_uv->wave].y;
+                vertex->tex_u = wave_uv->tex_u + (u16)D_00471DE0[wave_uv->wave].x;
+                vertex->tex_v = wave_uv->tex_v + (u16)D_00471DE0[wave_uv->wave].y;
                 wave_uv++;
                 vertex++;
             }
