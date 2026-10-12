@@ -6,17 +6,17 @@ extern u16 spell_experience[6][5];
 int atoi(const char *);
 char *strchr(const char *, int);
 
-void func_00207FD0(int arg0, char *arg1) {
+void func_00207FD0(int school, char *text) {
     int idx;
-    char *p;
+    char *comma;
 
-    if ((u8)(arg1[-2] - 0x31) < 5) {
-        idx = arg1[-2] - 0x31;
-        atoi(arg1);
-        spell_levels[arg0][idx] = atoi(arg1);
-        p = strchr(arg1, 0x2C);
-        if (p != 0) {
-            spell_experience[arg0][idx] = atoi(p + 1);
+    if ((u8)(text[-2] - 0x31) < 5) {
+        idx = text[-2] - 0x31;
+        atoi(text);
+        spell_levels[school][idx] = atoi(text);
+        comma = strchr(text, 0x2C);
+        if (comma != NULL) {
+            spell_experience[school][idx] = atoi(comma + 1);
         }
     }
 }
