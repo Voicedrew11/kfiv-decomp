@@ -41,7 +41,7 @@ typedef struct {
     s32 green;                      /* 0x04 */
     s32 blue;                       /* 0x08 */
     s32 alpha;                      /* 0x0C */
-} TextColour;
+} TextColor;
 
 /* the size of the glyphs of one font */
 typedef struct {
@@ -76,10 +76,10 @@ int KF_Message_IsBoxOpen(void);
 void KF_Message_OpenBox(int x, int y, int font, int centred, int delay, int message_id, ...);
 void KF_Message_ShowNotice(int x, int y, int font, int kind, int frames, int message_id, ...);
 void KF_Message_DebugPrintf(char *format, ...);
-void KF_Message_DebugSetColour(char colour);
+void KF_Message_DebugSetColor(char colour);
 s32 KF_Message_GetFontTexture(s32 font_base);
 s32 KF_Message_GetFontText(s32 font_base);
-char *KF_Message_GetColour(s32 colour);
+char *KF_Message_GetColor(s32 colour);
 void KF_Message_ClearNotices(void);
 void KF_Message_CloseBox(void);
 

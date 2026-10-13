@@ -17,7 +17,7 @@ typedef char *va_list;
 #define GLYPH_HALF_WIDTH 0x800
 #define GLYPH_NUMBER 0x1000      /* the next argument, in digit glyphs padded with blanks; width in bits 8-11 */
 #define GLYPH_RAW_NUMBER 0x2000  /* the next argument, in raw digits padded with 0x4AF */
-#define GLYPH_COLOUR 0x4000      /* colour in bits 8-11 */
+#define GLYPH_COLOR 0x4000      /* colour in bits 8-11 */
 #define GLYPH_NEW_LINE -0x8000
 #define GLYPH_END -1
 
@@ -37,7 +37,7 @@ extern s32 D_00446F38;
 extern u16 D_00413DAA[];
 extern u16 D_00446940;
 
-static TextColour text_colours[10] = {     /* 0x420B40 */
+static TextColor text_colours[10] = {     /* 0x420B40 */
     { 0x80, 0x80, 0x80, 0x80 }, { 0x00, 0x00, 0x00, 0x80 }, { 0x00, 0x00, 0x80, 0x80 }, { 0x00, 0x80, 0x00, 0x80 },
     { 0x00, 0x80, 0x80, 0x80 }, { 0x80, 0x00, 0x00, 0x80 }, { 0x80, 0x00, 0x80, 0x80 }, { 0x80, 0x80, 0x00, 0x80 },
     { 0x80, 0x80, 0x80, 0x80 }, { 0x50, 0x50, 0x50, 0x80 },
@@ -364,7 +364,7 @@ void KF_Message_DebugPrintf(char *format, ...) {
 }
 
 /* Adds a debug log line holding only a colour byte, the colour of the lines after it. */
-void KF_Message_DebugSetColour(char colour) {
+void KF_Message_DebugSetColor(char colour) {
     debug_log[debug_line_count][0] = colour;
     debug_line_count++;
 }
@@ -380,7 +380,7 @@ s32 KF_Message_GetFontText(s32 font_base) {
 }
 
 /* The red, green, blue, alpha ints of text colour `colour`. */
-char *KF_Message_GetColour(s32 colour) {
+char *KF_Message_GetColor(s32 colour) {
     return (char *)&text_colours[colour];
 }
 
@@ -535,7 +535,7 @@ static void KF_Message_DrawGlyphs(char kind, int font, int left, int top, s16 *t
                 pos_x = left;
             }
             pos_y += font_metrics[font].line_height;
-        } else if (*text & GLYPH_COLOUR) {
+        } else if (*text & GLYPH_COLOR) {
             colour = (*text & 0xF00) >> 8;
         } else if (*text & GLYPH_HALF_WIDTH) {
             KF_Message_DrawGlyph(pos_x, pos_y, *text - GLYPH_HALF_WIDTH, colour, glyph_alphas[drawn], 1, font);
@@ -562,7 +562,7 @@ static void KF_Message_DrawGlyph(int pos_x, int pos_y, int glyph, int colour, in
     s32 i;
     s32 *corner;
     f32 *coord;
-    TextColour *rgb;
+    TextColor *rgb;
 
     index = glyph;
     if (!first_page) {

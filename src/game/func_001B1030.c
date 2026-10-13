@@ -53,10 +53,10 @@ void func_001B1030(int *value) {
         }
         func_001095E0();
         func_001095D0();
-        KF_Message_DebugSetColour(9);
+        KF_Message_DebugSetColor(9);
         KF_Message_DebugPrintf(D_00446900);
         for (i = 3; i >= 0; i--) {
-            KF_Message_DebugSetColour((cursor == i) ? 8 : 9);
+            KF_Message_DebugSetColor((cursor == i) ? 8 : 9);
             KF_Message_DebugPrintf(D_00446908, digits[i]);
         }
         KF_Message_DebugPrintf(D_00446910);

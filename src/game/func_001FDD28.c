@@ -49,7 +49,7 @@ s32 func_001FDD28(u16 *text, s32 limit) {
             /* a colour change, not a glyph */
             count--;
             color_index = text[i];
-            palette = KF_Message_GetColour((color_index & 0xFFF) >> 8);
+            palette = KF_Message_GetColor((color_index & 0xFFF) >> 8);
             color[0] = palette[0];
             color[1] = palette[4];
             color[2] = palette[8];

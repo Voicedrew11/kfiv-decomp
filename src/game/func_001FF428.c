@@ -61,7 +61,7 @@ s32 func_001FF428(u16 *text, s32 limit) {
     for (i = 0, count = 0, column = 0; text[i] != 0xFFFF; i++, count++) {
         if (text[i] & 0x4000) {
             count--;
-            palette = KF_Message_GetColour(text_color(text[i]));
+            palette = KF_Message_GetColor(text_color(text[i]));
             color[0] = palette[0];
             color[1] = palette[4];
             color[2] = palette[8];

@@ -35,7 +35,7 @@ int func_001B0A78(void) {
             func_001095E0();
             func_001095D0();
             func_0010A4E8(0, 0, 0, 0, 0x2A);
-            KF_Message_DebugSetColour(0);
+            KF_Message_DebugSetColor(0);
             KF_Message_DebugPrintf(spacer.text);
             KF_Message_DebugPrintf(prompt.text);
             KF_Message_Update();
@@ -62,7 +62,7 @@ int func_001B0A78(void) {
             func_0010A4E8(0, 0, 0, 0, 0x2A);
             KF_Message_DebugPrintf(spacer.text);
             for (i = 0; i < 4; i++) {
-                KF_Message_DebugSetColour((selected == i) ? 3 : 0);
+                KF_Message_DebugSetColor((selected == i) ? 3 : 0);
                 KF_Message_DebugPrintf(items.text[i]);
             }
             KF_Message_Update();
