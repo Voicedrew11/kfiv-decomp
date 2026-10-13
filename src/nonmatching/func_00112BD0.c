@@ -6,7 +6,7 @@
  *
  * It lives outside src/game because carve.py compiles and places everything under src/game, and this does not match:
  * the ROM is built from the function's assembly. Compiled with the game's flags (-O2 -G 8) it gives 1393 instructions
- * of which 34 differ from retail, all in one basic block, the fog blend at 0x1131DC-0x1132E0 (search "fog blend"
+ * of which 31 differ from retail, all in one basic block, the fog blend at 0x1131DC-0x1132E0 (search "fog blend"
  * below). Code outside that block, the jump table and the three float literals (1.3f, 0.9604f, 0.3978f) equal retail.
  *
  * What differs: the block has the same 50 instructions as retail, in another order and with other FP register
@@ -28,8 +28,9 @@
  *  - Source forms tried in the block without changing the schedule: every order of the five statements, operands
  *    swapped, float and int temporaries shared in about 9,000 generated combinations, pointer and struct views of the
  *    colours, volatile and const accesses, local copies of the fog block, do { } while (0) wrappers.
- *  - The form kept here is the lowest count found (34). It came out of a randomised search over temporaries, so its
- *    exact shape is not evidence of the original source; a plainer version with five statements differs in 41.
+ *  - The form kept here is the lowest count found (31). It came out of randomised searches over temporaries (34),
+ *    then decomp-permuter (the operand order of the last blend, 33; the dead store into blue_to, 31), so its exact
+ *    shape is not evidence of the original source; a plainer version with five statements differs in 41.
  *
  * The struct views below are local because the file is not part of the build; when the function matches they belong
  * in kf_map.h (MapLightBlock = MapSlotUnk10Words as two 4x4 float matrices, 8-aligned so that copies use ld/sd;
@@ -288,7 +289,7 @@ void func_00112BD0(void) {
     if (D_0038A1B0.unk9A != 0) {
         D_0038A1B0.unk9A--;
         if (D_0038A1B0.unk9A != 0) {
-            { /* fog blend: the 34 instructions that differ come from here */
+            { /* fog blend: the 31 instructions that differ come from here */
                 f32 blend_sum;
                 f32 green_from;
                 f32 green_to;
@@ -320,7 +321,8 @@ void func_00112BD0(void) {
                 far_to = D_0038A1B0.unk160.unk0C;
                 far_to *= fade_in;
                 D_0038A1B0.unkA0.unk0C = D_0038A1B0.unk140.unk0C * fade_out + far_to;
-                blend_sum = D_0038A1B0.unk140.unk08 * fade_out + D_0038A1B0.unk160.unk08 * fade_in;
+                /* match: the dead store into blue_to (decomp-permuter) takes this from 33 to 31. */
+                blend_sum = (blue_to = D_0038A1B0.unk160.unk08 * fade_in + D_0038A1B0.unk140.unk08 * fade_out);
                 D_0038A1B0.unkA0.unk08 = blend_sum;
             }
         } else {
