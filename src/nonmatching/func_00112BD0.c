@@ -39,6 +39,14 @@
  *    boundary of the block makes it worse (44 or more). With the statements in retail's split order (the six
  *    byte-to-float conversions, the red sum and the green multiplies first) one barrier does put the four float loads
  *    after all six conversions, as in retail, but the rest moves: 53, and 40 at best with registers pinned.
+ *  - The compiler's own scheduler log (-fsched-verbose-5, haifa-sched) agrees with retail cycle for cycle up to
+ *    cycle 10; at cycle 11 it issues the first float load, ready since cycle 1, where retail waits for the last two
+ *    byte conversions. Retail behaves as if the second pass saw a barrier there.
+ *  - A do { } while (0) around the second half (loop notes are a haifa-sched barrier) reproduces the load timing
+ *    but pads the next label (the else branch) to 8 bytes with a nop that retail lacks; with the nop removed by
+ *    hand the rest of the function matches and the block differs in 57. Unused labels are deleted (no effect);
+ *    pinned ones (&&label) split the block for CSE too. A whole-block static inline helper gives 60 or more, and
+ *    ee-gcc 2.96 already differs at the start of the function.
  *
  * The struct views below are local because the file is not part of the build; when the function matches they belong
  * in kf_map.h (MapLightBlock = MapSlotUnk10Words as two 4x4 float matrices, 8-aligned so that copies use ld/sd;
