@@ -1,12 +1,15 @@
 #include "kf_entity.h"
+#include "kf_linked_point.h"
 #include "kf_gold.h"
+#include "kf_linked_point.h"
 #include "kf_entity_world.h"
+#include "kf_linked_point.h"
 
 void func_00115878(int);
 void func_001A3040(int);
 void func_0011CE80(int);
 void func_001C8938(int);
-void func_0019AAA0(int);
+
 void func_001A15F8(void);
 extern char D_0038CD20[];
 extern int D_0038D610[];
@@ -29,7 +32,7 @@ void func_001181B8(void) {
             KF_Entity_ClearMapSlot(other_slot);
             KF_Gold_UnlinkMap(other_slot);
             func_001C8938(other_slot);
-            func_0019AAA0(other_slot);
+            KF_LinkedPoint_ReleaseByKind(other_slot);
             func_001A15F8();
         }
         D_0038D610[10] = 2;

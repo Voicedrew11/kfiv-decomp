@@ -1,5 +1,6 @@
 #include "kf_entity_world.h"
 #include "kf_collision.h"
+#include "kf_linked_point.h"
 #include "kf_gs.h"
 #include "kf_map.h"
 
@@ -43,7 +44,6 @@ void sceVu0ApplyMatrix(float *, float *, float *);
 void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
-void func_0019AB60(ModelInstance *);
 void func_0010B018(ModelInstance *, s32, s32);
 void func_0010AEB8(void *);
 void func_0010BA30(ModelInstance *);
@@ -452,7 +452,7 @@ void KF_Entity_DrawAll(int list) {
                         entity_draw_set_model_tint(entity, 128.0f, 128.0f, 128.0f);
                     }
                 }
-                func_0019AB60(ENTITY_MODEL(entity));
+                KF_LinkedPoint_FindHitsForModel(ENTITY_MODEL(entity));
                 if (ENTITY_MODEL(entity)->alpha < 128.0f || (ENTITY_MODEL(entity)->unk100 & 0x200) || entity->spawn_info->type_id == 0x10) {
                     func_0010B018(ENTITY_MODEL(entity), 0, list);
                 } else {

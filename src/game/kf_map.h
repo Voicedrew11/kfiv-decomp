@@ -144,10 +144,10 @@ typedef struct MapDrawRecord {
     u8 unk34;                       /* 0x34 which MapSlotUnk0C block it is drawn with */
     u8 unk35;                       /* 0x35 which MapSlotUnk10Words block it is drawn with */
     char pad36[0x02];
-    u8 unk38;                       /* 0x38 low byte of MapRecord.unk38: compared with LinkedPoint.unk32 (func_0019AEF8) */
+    u8 unk38;                       /* 0x38 low byte of MapRecord.unk38: compared with LinkedPoint.unk32 (KF_LinkedPoint_FindHitsForMapDraw) */
     char pad39[0x03];
     s32 flags;                      /* 0x3C high half of MapRecord.unk38 */
-    f32 unk40[4];                   /* 0x40 lowest x, y, z of the box linked points are tested against (func_0019AEF8) */
+    f32 unk40[4];                   /* 0x40 lowest x, y, z of the box linked points are tested against (KF_LinkedPoint_FindHitsForMapDraw) */
     f32 unk50[4];                   /* 0x50 highest x, y, z of that box */
     char pad60[0x0C];
     struct MapDrawRecord *next;     /* 0x6C next in its draw list (D_00446778, D_00446780) */

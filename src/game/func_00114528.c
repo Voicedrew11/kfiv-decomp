@@ -1,4 +1,5 @@
 #include "kf_map.h"
+#include "kf_linked_point.h"
 #include "kf_gs.h"
 #include "kf_map_scroll.h"
 
@@ -18,7 +19,6 @@ void func_00111368(ModelInstance *, int, int, int, int);
 void func_00116970(void);
 void func_00116AD8(int, int);
 int func_00116CB0(MapDrawRecord *, ModelInstance *);
-void func_0019AEF8(MapDrawRecord *, ModelInstance *);
 
 /* Draws the second list of records of both map slots, switching z writes on and off as the
    records ask. mode 0 draws every record, the others only some; below 2 the screen is cleared first. */
@@ -88,7 +88,7 @@ void func_00114528(int mode) {
                     record->model->unk148 = (s32)&D_0038A1B0.unkA90[map][record->unk35];
                     record->model->unk14C = &D_0038A1B0.unk290[map][record->unk34];
                 }
-                func_0019AEF8(record, record->model);
+                KF_LinkedPoint_FindHitsForMapDraw(record, record->model);
                 if (record->flags & 0x200) {
                     header = slot->header;
                     func_00111368(record->model, header->unk78, header->unk79, header->unk7A, header->unk7B);

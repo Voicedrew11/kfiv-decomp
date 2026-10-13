@@ -1,4 +1,5 @@
 #include "kf_map.h"
+#include "kf_linked_point.h"
 #include "kf_game.h"
 
 void func_00109A50(void);
@@ -8,7 +9,7 @@ MapRecordInfo *func_00115CD0(CameraState *, f32, int);
 void KF_Vector_Scale(float *, float *, float);
 void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
-void func_0019AB60(ModelInstance *);
+
 void func_0010AEB8(void *);
 void func_0010DB40(ModelInstance *);
 extern MapDrawState D_0038A1B0;
@@ -46,7 +47,7 @@ void func_001C9650(int with_picked) {
         }
         node->model->unk148 = (s32)&D_0038A1B0.unkA90[node->flags & 1][D_0038CD20[node->flags & 1].header->unk71];
         node->model->unk14C = &D_0038A1B0.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
-        func_0019AB60(node->model);
+        KF_LinkedPoint_FindHitsForModel(node->model);
         func_0010AEB8(node->model);
         func_0010DB40(node->model);
     }

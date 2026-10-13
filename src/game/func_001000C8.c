@@ -1,6 +1,7 @@
 #include "kf_gold.h"
 #include "kf_held_weapon.h"
 #include "kf_item_effect.h"
+#include "kf_linked_point.h"
 #include "kf_player.h"
 #include "kf_shot.h"
 #include "kf_splash.h"
@@ -14,7 +15,6 @@ void func_002077F0(int);
 void func_001030B8(void);
 void func_001BA310(void);
 void func_001127F8(void);
-void func_0019A848(void);
 void func_001128E0(void);
 void func_00117C60(void);
 void func_0011A430(void);
@@ -38,7 +38,7 @@ void func_001000C8(int arg) {
     func_001BA310();
     func_001127F8();
     KF_Shot_ClearAll();
-    func_0019A848();
+    KF_LinkedPoint_Init();
     func_001128E0();
     func_00117C60();
     func_0011A430();

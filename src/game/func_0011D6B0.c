@@ -1,4 +1,5 @@
 #include "kf_entity.h"
+#include "kf_linked_point.h"
 #include "kf_map.h"
 #include "kf_gs.h"
 #include "kf_player.h"
@@ -22,8 +23,8 @@ void func_00109AD0(void);
 void func_00109EB8(void);
 void func_0010AEB8(void *);
 void func_0010B018(ModelInstance *, s32, s32);
-void func_0019AC88(ModelInstance *, int);
-void func_0019ADB8(ModelInstance *, int);
+
+
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 
@@ -149,11 +150,11 @@ void func_0011D6B0(int mode, int only_one, int which) {
                 object->model->unk14C = &D_0038A1B0.unk290[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk34];
             }
             if (object->unk04->kind == 9) {
-                func_0019AC88(object->model, *(s16 *)object->work);
+                KF_LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
             } else if (object->unk08->unk5A != 0 && object->unk08->unk5A != 0xFF) {
-                func_0019ADB8(object->model, object->unk08->unk5A);
+                KF_LinkedPoint_FindHitsForOwner(object->model, object->unk08->unk5A);
             } else {
-                func_0019ADB8(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
+                KF_LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
             }
             if ((object->unk08->unk38.flags & 0x1000000000000L) || (object->model->alpha < 128.0f && !(object->unk04->unk68 & 0x10000))) {
                 func_0010B018(object->model, 0, mode);
@@ -210,11 +211,11 @@ void func_0011D6B0(int mode, int only_one, int which) {
                 object->model->unk14C = &D_0038A1B0.unk290[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[4]];
             }
             if (object->unk04->kind == 9) {
-                func_0019AC88(object->model, *(s16 *)object->work);
+                KF_LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
             } else if (object->unk08->unk5A != 0 && object->unk08->unk5A != 0xFF) {
-                func_0019ADB8(object->model, object->unk08->unk5A);
+                KF_LinkedPoint_FindHitsForOwner(object->model, object->unk08->unk5A);
             } else {
-                func_0019ADB8(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
+                KF_LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
             }
             if ((object->unk08->unk38.flags & 0x1000000000000L) || (object->model->unk145 != 0 && (s16)object->model->unk146 < 0x80 && !(object->unk04->unk68 & 0x10000))) {
                 func_0010B018(object->model, 0, mode);

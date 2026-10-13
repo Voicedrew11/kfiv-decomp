@@ -1,0 +1,333 @@
+#include "kf_linked_point.h"
+
+void *memset(void *, int, u32);
+void func_00216778(void *, void *);
+void func_00216C48(void *, void *, void *);
+void sceVu0SubVector(void *, void *, void *);
+float sqrtf(float);
+
+LinkedPoint D_003E7500[LINKED_POINT_COUNT]; /* 0x3E7500 pool of influence points used as model lights */
+
+static LinkedPoint *linked_point_heads[2]; /* 0x4470C8 two active lists */
+static LinkedPoint *linked_point_free;     /* 0x4470D0 free list */
+
+static LinkedPoint *linked_point_take_free(void);
+static void linked_point_push_free(LinkedPoint *point);
+static LinkedPoint *linked_point_unlink_active(LinkedPoint *point);
+static void linked_point_link_active(LinkedPoint *point, u32 list);
+
+/* Clears the pool, chains every entry on the free list and empties the two active lists. */
+void KF_LinkedPoint_Init(void) {
+    LinkedPoint *node;
+    int i;
+
+    memset(D_003E7500, 0, sizeof(D_003E7500));
+    node = D_003E7500;
+    node->handle = 0;
+    node->prev = NULL;
+    node->next = node + 1;
+    node++;
+    for (i = 1; i < LINKED_POINT_COUNT - 1; i++) {
+        node->handle = i;
+        node->prev = node - 1;
+        node->next = node + 1;
+        node++;
+    }
+    node->handle = LINKED_POINT_COUNT - 1;
+    node->prev = node - 1;
+    node->next = NULL;
+    for (i = 1; i >= 0; i--) {
+        linked_point_heads[i] = NULL;
+    }
+    linked_point_free = D_003E7500;
+}
+
+/* Starts a point with its owner slot fixed at -1; returns the pool index or -1. */
+int KF_LinkedPoint_Start(f32 duration, void *start, void *end, int kind_a, int kind_b, u32 list) {
+    return KF_LinkedPoint_Allocate(duration, start, end, kind_a, kind_b, -1, list);
+}
+
+/* Takes a node from the pool, links it into list `list` and fills it in; returns its id or -1. */
+int KF_LinkedPoint_Allocate(f32 duration, void *start, void *end, u8 kind_a, int kind_b, int owner, u32 list) {
+    LinkedPoint *point;
+
+    if (list >= 2) {
+        return -1;
+    }
+    point = linked_point_take_free();
+    if (point == NULL) {
+        return -1;
+    }
+    linked_point_link_active(point, list);
+    func_00216778(point, start);
+    point->follow = start;
+    func_00216778(&point->target, end);
+    point->kind_a = kind_a;
+    point->kind_b = kind_b;
+    point->unk32 = owner;
+    point->target.w = 1.0f;
+    point->duration = duration;
+    point->position.w = 1.0f / duration;
+    point->progress_scale = 1.0f / (duration * duration);
+    return point->handle;
+}
+
+int KF_LinkedPoint_StartDefault(f32 duration, void *start, void *end) {
+    return KF_LinkedPoint_Allocate(duration, start, end, 0, -1, -1, 0);
+}
+
+/* Unlinks and frees the pool entry at index. */
+void KF_LinkedPoint_ReleaseIndex(u32 index) {
+    LinkedPoint *node;
+
+    if (index < LINKED_POINT_COUNT) {
+        node = &D_003E7500[index];
+        linked_point_unlink_active(node);
+        linked_point_push_free(node);
+    }
+}
+
+/* Releases every active point of the given kind from both active lists. */
+void KF_LinkedPoint_ReleaseByKind(int kind) {
+    int i;
+    LinkedPoint *node;
+    LinkedPoint *next;
+
+    for (i = 0; i < 2; i++) {
+        node = linked_point_heads[i];
+        while (node != NULL) {
+            if (node->active != 0 && node->kind_b == kind) {
+                next = linked_point_unlink_active(node);
+                linked_point_push_free(node);
+                node = next;
+            } else {
+                node = node->next;
+            }
+        }
+    }
+}
+
+/* Collects the handles of the linked points whose reach touches the model (at most 4). */
+void KF_LinkedPoint_FindHitsForModel(ModelInstance *model) {
+    int i;
+    LinkedPoint *node;
+    f32 delta[4];
+    f32 dist;
+
+    model->hit_count = 0;
+    for (i = 1; i >= 0; i--) {
+        for (node = linked_point_heads[i]; node != NULL; node = node->next) {
+            sceVu0SubVector(delta, &model->position, node);
+            dist = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
+            if (dist - model->radius <= node->duration) {
+                model->hit_handles[model->hit_count++] = node->handle;
+                if (model->hit_count >= 4) {
+                    return;
+                }
+            }
+        }
+    }
+}
+
+/* Collects handles of linked points (except one) whose reach touches the model (at most 4). */
+void KF_LinkedPoint_FindHitsExclude(ModelInstance *model, int handle) {
+    int i;
+    LinkedPoint *node;
+    f32 delta[4];
+    f32 dist;
+
+    model->hit_count = 0;
+    for (i = 1; i >= 0; i--) {
+        for (node = linked_point_heads[i]; node != NULL; node = node->next) {
+            if (node->handle == handle) {
+                continue;
+            }
+            sceVu0SubVector(delta, &model->position, node);
+            dist = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
+            if (dist - model->radius <= node->duration) {
+                model->hit_handles[model->hit_count++] = node->handle;
+                if (model->hit_count >= 4) {
+                    return;
+                }
+            }
+        }
+    }
+}
+
+/* Collects handles for one owner (or any owner) whose reach touches the model (at most 4). */
+void KF_LinkedPoint_FindHitsForOwner(ModelInstance *model, int owner) {
+    int i;
+    LinkedPoint *node;
+    f32 delta[4];
+    f32 dist;
+
+    model->hit_count = 0;
+    for (i = 1; i >= 0; i--) {
+        for (node = linked_point_heads[i]; node != NULL; node = node->next) {
+            if (node->unk32 != -1 && node->unk32 != owner) {
+                continue;
+            }
+            sceVu0SubVector(delta, &model->position, node);
+            dist = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
+            if (dist - model->radius <= node->duration) {
+                model->hit_handles[model->hit_count++] = node->handle;
+                if (model->hit_count >= 4) {
+                    return;
+                }
+            }
+        }
+    }
+}
+
+/* Collects handles whose reach touches the map record's box (at most 4, at most 2 per list). */
+void KF_LinkedPoint_FindHitsForMapDraw(MapDrawRecord *record, ModelInstance *model) {
+    f32 unused[4]; // match: the frame has 16 unused bytes below the counters
+    s32 taken[2];
+    s32 *taken_start = taken; // match: memset through a pointer is a call; on the array itself it is inlined
+    int i;
+    LinkedPoint *node;
+    f32 reach;
+
+    memset(taken_start, 0, sizeof(taken));
+    model->hit_count = 0;
+    for (i = 1; i >= 0; i--) {
+        for (node = linked_point_heads[i]; node != NULL; node = node->next) {
+            if (taken[node->list_index] >= 2) {
+                continue;
+            }
+            if (node->unk32 != -1 && node->unk32 != record->unk38) {
+                continue;
+            }
+            reach = node->duration;
+            if (!(0.0f < reach)) {
+                continue;
+            }
+            if (record->unk40[0] - reach <= node->position.x && node->position.x <= record->unk50[0] + reach &&
+                record->unk40[1] - reach <= node->position.y && node->position.y <= record->unk50[1] + reach &&
+                record->unk40[2] - reach <= node->position.z && node->position.z <= record->unk50[2] + reach) {
+                model->hit_handles[model->hit_count++] = node->handle;
+                taken[node->list_index]++;
+                if (model->hit_count >= 4) {
+                    return;
+                }
+            }
+        }
+    }
+}
+
+void KF_LinkedPoint_UpdateFollows(void) {
+    int i;
+    LinkedPoint *node;
+
+    for (i = 0; i < 2; i++) {
+        for (node = linked_point_heads[i]; node != NULL; node = node->next) {
+            if (node->follow != NULL) {
+                f32 saved = node->position.w;
+
+                func_00216778(node, node->follow);
+                node->position.w = saved;
+            }
+        }
+    }
+}
+
+void KF_LinkedPoint_TransformFollows(void *transform) {
+    int i;
+    LinkedPoint *node;
+
+    i = 0;
+    do {
+        node = linked_point_heads[i];
+        if (node != NULL) {
+            do {
+                if (node->follow != NULL) {
+                    func_00216C48(node, node, transform);
+                }
+                node = node->next;
+            } while (node != NULL);
+        }
+        i++;
+    } while (i < 2);
+}
+
+/* Retargets the pool point at index, easing toward target over duration frames. */
+void KF_LinkedPoint_Retarget(f32 duration, s32 index, void *target) {
+    LinkedPoint *point;
+
+    if ((u32)index < LINKED_POINT_COUNT) {
+        point = &D_003E7500[index];
+        point->duration = duration;
+        point->position.w = 1.0f / duration;
+        point->progress_scale = 1.0f / (duration * duration);
+        func_00216778(&point->target, target);
+        point->target.w = 1.0f;
+    }
+}
+
+/* Takes the first node off the free list, clearing its links; returns NULL when empty. */
+static LinkedPoint *linked_point_take_free(void) {
+    LinkedPoint *node;
+    LinkedPoint *next;
+
+    node = linked_point_free;
+    if (node == NULL) {
+        return NULL;
+    }
+    next = node->next;
+    linked_point_free = next;
+    if (next != NULL) {
+        next->prev = NULL;
+    }
+    node->prev = NULL;
+    node->next = NULL;
+    return node;
+}
+
+/* Pushes a node onto the front of the free list. */
+static void linked_point_push_free(LinkedPoint *node) {
+    node->prev = NULL;
+    node->next = linked_point_free;
+    if (linked_point_free != NULL) {
+        linked_point_free->prev = node;
+    }
+    linked_point_free = node;
+}
+
+/* Unlinks a point from its active list and returns the node that followed it. */
+static LinkedPoint *linked_point_unlink_active(LinkedPoint *node) {
+    LinkedPoint *next;
+    u8 list;
+
+    next = node->next;
+    list = node->list_index;
+    if (node->prev != NULL) {
+        node->prev->next = node->next;
+    }
+    if (node->next != NULL) {
+        node->next->prev = node->prev;
+    }
+    if (linked_point_heads[list] == node) {
+        linked_point_heads[list] = node->next;
+    }
+    node->prev = NULL;
+    node->next = NULL;
+    node->active = 0;
+    return next;
+}
+
+/* Pushes a point onto the front of one of the two active lists (list is 0 or 1). */
+static void linked_point_link_active(LinkedPoint *point, u32 list) {
+    LinkedPoint *head;
+
+    if (list < 2) {
+        head = linked_point_heads[list];
+        point->active = TRUE;
+        point->list_index = list;
+        point->next = head;
+        point->prev = NULL;
+        if (linked_point_heads[list] != NULL) {
+            linked_point_heads[list]->prev = point;
+        }
+        linked_point_heads[list] = point;
+    }
+}

@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-s16 func_0019A928(void *, Vector4 *, int, f32, int, int, int); // match: this file only matches with this type; func_0019A928.c defines it differently
+s16 KF_LinkedPoint_Allocate(void *, Vector4 *, int, f32, int, int, int); // match: this file only matches with this type; kf_linked_point.c defines it differently
 int rand(void);
 
 /* Start handler of the light kind: makes a light of the colour in its source at
@@ -20,7 +20,7 @@ void func_00120A10(MapObject *object) {
     colour.w = 1.0f;
     point = (void *)object->model->get_point(object->model, source->unk52);
     params = MAP_OBJECT_WORDS(object);
-    work[0] = func_0019A928(point, &colour, 0, params->unk4A, MAP_OBJECT_BYTES(object)->unk00 & 1, params->unk4C != 0 ? params->unk4E : -1, 1);
+    work[0] = KF_LinkedPoint_Allocate(point, &colour, 0, params->unk4A, MAP_OBJECT_BYTES(object)->unk00 & 1, params->unk4C != 0 ? params->unk4E : -1, 1);
     sort = MAP_OBJECT_WORDS(object)->unk50;
     if (sort >= 0) {
         if (sort <= 1) {

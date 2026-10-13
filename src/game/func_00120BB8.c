@@ -2,7 +2,7 @@
 
 extern f32 D_0042C6F0[];
 
-void func_0019B1E8(s16, Vector4 *, f32); // match: this file only matches with this type; func_0019B1E8.c defines it differently
+void KF_LinkedPoint_Retarget(s16, Vector4 *, f32); // match: this file only matches with this type; kf_linked_point.c defines it differently
 
 /* Update handler of the light kind: the flickering sorts (0 faintly, 1 strongly)
    step their two periods and scale the colour by the product of the two waves
@@ -46,5 +46,5 @@ void func_00120BB8(MapObject *object) {
     colour.y = level * source->unk46;
     colour.z = level * source->unk48;
     colour.w = 1.0f;
-    func_0019B1E8(work[0], &colour, source->unk4A);
+    KF_LinkedPoint_Retarget(work[0], &colour, source->unk4A);
 }

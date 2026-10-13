@@ -1088,7 +1088,7 @@ typedef struct {
 
 /* a node of the D_003E7500 pool (0x200 of them, chained through prev/next): a point
    that eases toward a target over a duration or follows another vector. The two
-   active lists are at D_004470C8, the free list head at D_004470D0. */
+   active lists and free list are owned by kf_linked_point.c. */
 typedef struct LinkedPoint {
     Vector4 position;               /* 0x00 w is kept when following; w is 1 / duration while easing */
     Vector4 target;                 /* 0x10 w is 1.0 */
