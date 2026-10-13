@@ -239,7 +239,7 @@ typedef struct {
     u8 open_slots[2];               /* 0xE00 per port, bit n: slot n was opened */
 } PadSystem;
 
-/* one corner of a character's sprite as func_00217CB8 queues it: UV, RGBAQ and XYZ2 for the GS */
+/* one corner of a character's sprite as KF_TextLog_PutChar queues it: UV, RGBAQ and XYZ2 for the GS */
 typedef struct {
     int tex_u;                      /* 0x00 in 1/16 texel */
     int tex_v;                      /* 0x04 */
@@ -259,17 +259,17 @@ typedef struct {
     TextLogVertex corners[2];       /* 0x00 top left, bottom right */
 } TextLogGlyph;
 
-/* D_01E0F210: the GIF packet func_00217F98 sends, a tag and room for 37 characters */
+/* D_01E0F210: the GIF packet KF_TextLog_Flush sends, a tag and room for 37 characters */
 typedef struct {
     int tag[4];                     /* 0x00 */
     TextLogGlyph glyphs[37];        /* 0x10 */
 } TextLogPacket;
 
-/* D_01E0E9C0: the 0x800-byte text buffer func_00217EE0 appends to, and the window func_00217F98 prints it in */
+/* D_01E0E9C0: the 0x800-byte text buffer KF_TextLog_AppendV appends to, and the window KF_TextLog_Flush prints it in */
 typedef struct {
     TextLogGlyph *packet;           /* 0x00 where the next character goes in D_01E0F210 */
     char pad04[0x0C];
-    int left;                       /* 0x10 the window, in GS coordinates (func_00217C20) */
+    int left;                       /* 0x10 the window, in GS coordinates (KF_TextLog_SetWindow) */
     int top;                        /* 0x14 */
     int width;                      /* 0x18 */
     int height;                     /* 0x1C */
@@ -279,7 +279,7 @@ typedef struct {
     int green;                      /* 0x34 */
     int blue;                       /* 0x38 */
     char pad3C[0x04];
-    int font_base;                  /* 0x40 GS page of the font texture (func_00217A20) */
+    int font_base;                  /* 0x40 GS page of the font texture (KF_TextLog_LoadFont) */
     int palette_base;               /* 0x44 GS page of its palette */
     int font_buffer_width;          /* 0x48 in units of 64 pixels */
     int used;                       /* 0x4C bytes of text */
