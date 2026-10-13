@@ -1,4 +1,4 @@
-#include "common.h"
+#include "kf_pad.h"
 
 extern int (*const D_00440628[])(int);
 extern int D_00446D00;
@@ -18,7 +18,6 @@ void func_0019DC00(void);
 void func_001A15B8(void);
 void func_001B5460(void);
 int func_001D72F0(int);
-int func_002179F8(int, int);
 s16 func_00206C40(void);
 void func_001FBDC8(void);
 
@@ -32,12 +31,12 @@ void func_001F6A38(void) {
     func_001A15C0();
     func_0019DC00();
     D_00446C94 = 0;
-    D_0044731C = D_00447320 = func_002179F8(0, 0);
+    D_0044731C = D_00447320 = KF_Pad_GetMode(0, 0);
     while (D_00440628[D_00446D00](0) != 0) {
         sceGsSyncPath(0, 0);
         D_00447328 = func_001D72F0(1);
         func_001B5460();
-        field = func_002179F8(0, 0);
+        field = KF_Pad_GetMode(0, 0);
         D_0044731C = field;
         if (field != D_00447320) {
             D_0044730C = 1;

@@ -1,6 +1,7 @@
 #include "kf_game.h"
 #include "kf_menu.h"
 #include "kf_packet.h"
+#include "kf_pad.h"
 #include <eeregs.h>
 
 struct sceCdCLOCK;
@@ -20,7 +21,6 @@ int func_001CEBE0(void);
 s32 func_001D72F0(s32);
 void func_001FBDC8(void);
 s16 func_00206C40(void);
-int func_002179F8(int, int);
 
 extern GsDrawEnv D_00432D80;
 extern int (*D_0043F6E0[])(void); // match: two handlers (func_001D6FB0, func_001D77F0); with its size it would be reached through $gp
@@ -64,12 +64,12 @@ int func_001D62C8(s8 mode) { // match: callers declare the parameter int; retail
     tm_fields[5] = clock.year + 100;
     mktime(tm_fields);
     D_00446C94 = mode;
-    D_004472D0 = D_004472D4 = func_002179F8(0, 0);
+    D_004472D0 = D_004472D4 = KF_Pad_GetMode(0, 0);
     while (func_001CEBE0(), D_0043F6E0[D_00446AC4]() != 0) {
         sceGsSyncPath(0, 0);
         D_00447200 = func_001D72F0(1);
         func_001B5460();
-        status = func_002179F8(0, 0);
+        status = KF_Pad_GetMode(0, 0);
         D_004472D0 = status;
         if (status != D_004472D4) {
             D_00447204 = 1;

@@ -165,47 +165,6 @@ typedef struct {
     int flags;                      /* 0x288 0x200: tick every fourth frame */
 } ClockControl;
 
-/* auto-repeat timing of one button of a PadSlot (set by func_002177F8, stepped by func_00216EA0) */
-typedef struct {
-    u8 delay;                       /* 0x00 frames before the first repeat */
-    u8 interval;                    /* 0x01 frames between repeats */
-    u8 countdown;                   /* 0x02 */
-    u8 fired;                       /* 0x03 0 none, 1 first press, 2 repeat */
-} PadRepeatKey;
-
-/* one controller of D_01E0DB00 (0x1C0 bytes), kept up to date by func_00217008 */
-typedef struct {
-    u8 dma_buffer[0x100];           /* 0x000 work area handed to scePadPortOpen */
-    u8 report_status;               /* 0x100 the 0x24 bytes scePadRead gave (func_00216DD0) */
-    u8 report_id;                   /* 0x101 */
-    u16 buttons;                    /* 0x102 held buttons, a set bit is a pressed button */
-    u8 report_analog[0x1C];         /* 0x104 sticks and button pressures */
-    u16 pressed;                    /* 0x120 buttons that went down this frame */
-    u16 repeated;                   /* 0x122 buttons that fired through auto-repeat */
-    PadRepeatKey repeat_keys[16];   /* 0x124 */
-    u16 repeat_mask;                /* 0x164 buttons that auto-repeat */
-    char pad166[0x02];
-    int state;                      /* 0x168 scePadGetState */
-    int request_state;              /* 0x16C scePadGetReqState */
-    int actuator_count;             /* 0x170 scePadInfoAct(-1) */
-    u8 actuators[6];                /* 0x174 [0] small motor on/off, [1] big motor power */
-    u8 phase;                       /* 0x17A step of the set-up state machine in func_00217008 */
-    u8 next_phase;                  /* 0x17B phase to go to after the actuators are aligned */
-    u8 pad_type;                    /* 0x17C report_id >> 4 */
-    u8 features;                    /* 0x17D 1: mode can be switched, 2: has actuators, 4: pressure sensitive */
-    u8 mode;                        /* 0x17E 0xFF unknown, 0 digital, 1 analog, 2 analog with pressure */
-    u8 mode_request;                /* 0x17F mode asked for, 0xFF: none */
-    u8 mode_lock;                   /* 0x180 passed to scePadSetMainMode */
-    u8 actuators_aligned;           /* 0x181 */
-    char pad182[0x3E];
-} PadSlot;
-
-/* D_01E0DB00: two ports with four multitap slots each */
-typedef struct {
-    PadSlot slots[8];               /* 0x000 index is port * 4 + slot */
-    u8 open_slots[2];               /* 0xE00 per port, bit n: slot n was opened */
-} PadSystem;
-
 /* one corner of a character's sprite as KF_TextLog_PutChar queues it: UV, RGBAQ and XYZ2 for the GS */
 typedef struct {
     int tex_u;                      /* 0x00 in 1/16 texel */
@@ -598,43 +557,12 @@ typedef struct {
 typedef struct {
     u16 held;                       /* 0x00 buttons held, the stick directions among them */
     u16 pressed;                    /* 0x02 buttons that went down this frame */
-    s32 type;                       /* 0x04 what func_002179F8 says: 1 has sticks, 0xFF is no controller */
+    s32 type;                       /* 0x04 what KF_Pad_GetMode says: 1 has sticks, 0xFF is no controller */
     u16 look_buttons;               /* 0x08 the right stick's up and down as the buttons 0x200 and 0x100 */
     u16 prev_look_buttons;          /* 0x0A */
     u16 move_buttons;               /* 0x0C the left stick as the direction buttons (0x80, 0x20, 0x10, 0x40) */
     u16 prev_move_buttons;          /* 0x0E */
 } PadState;
-
-/* what func_00217760 returns: the controller's own report */
-typedef struct {
-    char pad00[0x02];
-    u16 held;                       /* 0x02 */
-    u8 right_stick_x;               /* 0x04 the four axes, 0x80 at rest */
-    u8 right_stick_y;               /* 0x05 */
-    u8 left_stick_x;                /* 0x06 */
-    u8 left_stick_y;                /* 0x07 */
-    char pad08[0x18];
-    u16 pressed;                    /* 0x20 */
-} PadReport;
-
-/* PadReport's axis bytes two at a time: zero when the controller sends none */
-typedef struct {
-    char pad00[0x04];
-    u16 right_stick;                /* 0x04 */
-    u16 left_stick;                 /* 0x06 */
-} PadReportAxes;
-
-/* PadReport.pressed inside a union: a read through it may alias any store, so it stays behind one
-   (KF_Title_UpdateMenu and KF_Title_UpdateGameOver only match this way) */
-typedef union {
-    u16 buttons;
-    u8 bytes[2];
-} PadButtonsUnion;
-
-typedef struct {
-    char pad00[0x20];
-    PadButtonsUnion pressed;        /* 0x20 */
-} PadReportUnion;
 
 /* the texts of the debug start menu (func_001B0A78), local arrays it copies whole from
    read-only data: blank lines above the text, the PUSH START line, the four menu lines */

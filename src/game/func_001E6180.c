@@ -1,4 +1,4 @@
-#include "common.h"
+#include "kf_pad.h"
 
 int sceGsSyncPath(int, int);
 int sceGsSyncV(int);
@@ -6,7 +6,6 @@ void func_0019BDA0(int, int);
 void func_001A15C0(void);
 void func_001A15B8(void);
 void func_0019DC00(void);
-int func_002179F8(int, int);
 s32 func_001D72F0(s32);
 void func_001B5460(void);
 s16 func_00206C40(void);
@@ -33,12 +32,12 @@ void func_001E6180(s32 value) {
     func_001A15C0();
     func_0019DC00();
     D_00446C94 = 0;
-    D_0044731C = D_00447320 = func_002179F8(0, 0);
+    D_0044731C = D_00447320 = KF_Pad_GetMode(0, 0);
     while (D_004402E0[D_00446CA8](value) != 0) {
         sceGsSyncPath(0, 0);
         D_00447328 = func_001D72F0(1);
         func_001B5460();
-        D_0044731C = func_002179F8(0, 0);
+        D_0044731C = KF_Pad_GetMode(0, 0);
         if (D_0044731C != D_00447320) {
             D_00447304 = 1;
         }

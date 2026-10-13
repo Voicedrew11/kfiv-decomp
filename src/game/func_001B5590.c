@@ -1,9 +1,8 @@
 #include "kf_game.h"
+#include "kf_pad.h"
 
 extern PadState D_00413DB8[2];
 
-int func_002179F8(int, int);
-void *func_00217760(int, int);
 
 /* Reads the controller in a port into its PadState; the sticks count as direction buttons unless
    the matching buttons are held. */
@@ -11,9 +10,9 @@ void func_001B5590(int port) {
     PadState *pad = &D_00413DB8[port];
     PadReport *report;
 
-    pad->type = func_002179F8(port, 0);
+    pad->type = KF_Pad_GetMode(port, 0);
     if (pad->type != 0xFF) {
-        report = func_00217760(port, 0);
+        report = KF_Pad_GetReport(port, 0);
         pad->held = report->held;
         pad->pressed = report->pressed;
         if (pad->type == 1 && ((PadReportAxes *)report)->right_stick != 0) {

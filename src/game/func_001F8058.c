@@ -1,6 +1,7 @@
 #include "kf_game.h"
 #include "kf_menu.h"
 #include "kf_packet.h"
+#include "kf_pad.h"
 #include "kf_state.h"
 #include "kf_message.h"
 
@@ -80,7 +81,6 @@ void func_001FDCD0(MenuColor); // match: the definition takes the same eight byt
 s32 func_001FDD28(u16 *, s32);
 void func_00203F28(int, int, int);
 void func_00207478(int, int, int, int);
-void *func_00217760(int, int);
 
 // match: called as a void function, so the result register is free at once
 #define SET_PART_MODE(mode) ((void (*)(u8))func_001E5210)(mode)
@@ -363,10 +363,10 @@ void func_001F8058(void) {
         }
     }
 
-    report = func_00217760(0, 0);
+    report = KF_Pad_GetReport(0, 0);
     if ((report->pressed & 0x4000) && D_0044731C != 0xFF) {
         if (D_005CF3C0.unk13 != 0) {
-            report = func_00217760(0, 0);
+            report = KF_Pad_GetReport(0, 0);
             if (report->held & 0x50) {
                 D_005CF3C0.unk1D = 1;
             } else {
@@ -378,7 +378,7 @@ void func_001F8058(void) {
         D_005CF3C0.unk1D = 3;
     }
     if (D_005CF3C0.unk1D == 1) {
-        report = func_00217760(0, 0);
+        report = KF_Pad_GetReport(0, 0);
         if (report->held & 0x50) {
             if (D_00446DE8 & 0x50) {
                 D_005CF3C0.unk1D = 2;
@@ -436,7 +436,7 @@ void func_001F8058(void) {
                 break;
             }
         } else {
-            report = func_00217760(0, 0);
+            report = KF_Pad_GetReport(0, 0);
             if ((report->pressed & 0x2000) && D_0044731C != 0xFF && D_005CF3C0.unk1D == 0) {
                 func_0019CDC0(2);
                 switch (D_005CF3C0.unk13) {

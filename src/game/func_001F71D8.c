@@ -1,6 +1,7 @@
 #include "kf_game.h"
 #include "kf_menu.h"
 #include "kf_packet.h"
+#include "kf_pad.h"
 #include "kf_state.h"
 
 extern f32 D_00425510[0x100];
@@ -41,7 +42,6 @@ void func_001FBDC8(void);
 void func_001FC5E8(MenuCursorBar *);
 void func_00203F28(int, int, int);
 void func_00207478(int, int, int, int);
-void *func_00217760(int, int);
 
 /* The save screen: draws its parts, picks a card, asks the format and overwrite questions, runs the card
    checks and hands over to the save list (func_001F8058). */
@@ -284,13 +284,13 @@ void func_001F71D8(void) {
             func_0019CDC0(1);
             D_005CF3C0.unk0C = (D_005CF3C0.unk0C + 1) & 1;
         } else {
-            report = func_00217760(0, 0);
+            report = KF_Pad_GetReport(0, 0);
             if ((report->pressed & 0x4000) && D_0044731C != 0xFF) {
                 func_0019CDC0(0);
                 D_005CF3C0.unk21 = 1;
                 D_005CF3C0.unk18 = 1;
             } else {
-                report = func_00217760(0, 0);
+                report = KF_Pad_GetReport(0, 0);
                 if ((report->pressed & 0x2000) && D_0044731C != 0xFF) {
                     func_0019CDC0(2);
                     if (D_005CF3C0.unk12 == 14) {

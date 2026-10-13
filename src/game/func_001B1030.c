@@ -1,5 +1,6 @@
 #include "kf_game.h"
 #include "kf_message.h"
+#include "kf_pad.h"
 
 extern s64 D_00432E20[];
 extern s64 D_00433050[];
@@ -13,8 +14,6 @@ void func_001095E0(void);
 void func_001096E8(void);
 void func_00109800(void);
 void func_0020B780(int);
-void func_00217008(void);
-void *func_00217760(int, int);
 
 /* Debug editor for a four-digit decimal number on an "INI:" screen: left and right move
    the cursor, up and down change the digit under it. Stores the number on confirm. */
@@ -40,8 +39,8 @@ void func_001B1030(int *value) {
     D_00433050[30] = 0xC000L << 17;
     do {
         func_0020B780(0);
-        func_00217008();
-        report = func_00217760(0, 0);
+        KF_Pad_Update();
+        report = KF_Pad_GetReport(0, 0);
         pressed = report->pressed;
         if ((pressed & 0x80) && cursor < 3) {
             cursor++;
@@ -72,8 +71,8 @@ void func_001B1030(int *value) {
     } while (!(pressed & 0x4000));
     do {
         func_0020B780(0);
-        func_00217008();
-        report = func_00217760(0, 0);
+        KF_Pad_Update();
+        report = KF_Pad_GetReport(0, 0);
     } while (report->held != 0);
     D_00432E20[0] = saved_colours[0];
     D_00432E20[30] = saved_colours[1];

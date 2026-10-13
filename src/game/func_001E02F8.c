@@ -1,6 +1,7 @@
 #include "kf_game.h"
 #include "kf_menu.h"
 #include "kf_packet.h"
+#include "kf_pad.h"
 
 extern MenuScreenState D_005CF2F0;
 extern GameStatus D_0038CC50;
@@ -39,7 +40,6 @@ s32 func_001FBBB8(void);
 char func_001FBBE0(int);
 void func_00203F28(int, int, int);
 void func_00207478(int, int, int, int);
-void *func_00217760(int, int);
 
 /* The memory card screen: draws its parts, picks a card slot and starts the load or save screen (func_001E0D98). */
 void func_001E02F8(void) {
@@ -178,7 +178,7 @@ void func_001E02F8(void) {
             func_0019CDC0(1);
             D_005CF2F0.unk0C = (D_005CF2F0.unk0C + 1) & 1;
         } else {
-            report = func_00217760(0, 0);
+            report = KF_Pad_GetReport(0, 0);
             if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
                 if (D_005CF2F0.unk12 != -1) {
                     func_0019CDC0(0);
@@ -200,7 +200,7 @@ void func_001E02F8(void) {
                     D_005CF2F0.unk12 = 5;
                 }
             } else {
-                report = func_00217760(0, 0);
+                report = KF_Pad_GetReport(0, 0);
                 if (((report->pressed & 0x2000) && D_004472D0 != 0xFF) || D_0038CC50.bit9) {
                     func_0019CDC0(2);
                     if (D_005CF2F0.unk12 != -1) {

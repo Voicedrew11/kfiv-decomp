@@ -1,6 +1,7 @@
 #include "kf_title.h"
 #include "kf_file.h"
 #include "kf_game.h"
+#include "kf_pad.h"
 #include "kf_sound.h"
 #include <eekernel.h>
 #include <eeregs.h>
@@ -22,8 +23,6 @@ s32 func_0019CDC0(s32);
 s32 func_001E4068(void);
 int func_001CEBE0(void);
 void func_0020D9A8(void);
-void func_00217008(void);
-void *func_00217760(int, int);
 
 typedef void (*TitleScreenInit)(void);
 
@@ -297,8 +296,8 @@ int KF_Title_UpdateLogos(void) {
     int phase;
 
     screen_timer--;
-    func_00217008();
-    report = func_00217760(0, 0);
+    KF_Pad_Update();
+    report = KF_Pad_GetReport(0, 0);
     phase = logo_phase;
     if (phase == 0 && screen_timer <= 0) {
         phase = 1;
@@ -341,9 +340,9 @@ int KF_Title_UpdatePressStart(void) {
     f32 brightness;
 
     screen_timer--;
-    func_00217008();
+    KF_Pad_Update();
     brightness = 1.0f;
-    pad = func_00217760(0, 0);
+    pad = KF_Pad_GetReport(0, 0);
     if (screen_timer > PRESS_START_FRAMES - TITLE_FADE_FRAMES) {
         brightness = (3600.0f - screen_timer) / 30.0f;
     }
@@ -395,8 +394,8 @@ int KF_Title_InitMenu(void) {
         }
     }
     KF_Title_PlayMusic();
-    func_00217008();
-    func_00217760(0, 0);
+    KF_Pad_Update();
+    KF_Pad_GetReport(0, 0);
     return 0;
 }
 
@@ -409,9 +408,9 @@ int KF_Title_UpdateMenu(void) {
     u16 stick_pressed;
     int i;
 
-    func_00217008();
+    KF_Pad_Update();
     brightness = 1.0f;
-    report = func_00217760(0, 0);
+    report = KF_Pad_GetReport(0, 0);
     // match: pressed is read through the union below, so that the reads alias the stores
     stick = (report->left_stick_y > 0x3FU) ? 0 : PAD_UP;
     if (report->left_stick_y > 0xC0) {
@@ -493,8 +492,8 @@ int KF_Title_InitGameOver(void) {
             game_over_choice_tracks[i].length = 0;
         }
     }
-    func_00217008();
-    func_00217760(0, 0);
+    KF_Pad_Update();
+    KF_Pad_GetReport(0, 0);
     return 0;
 }
 
@@ -507,9 +506,9 @@ int KF_Title_UpdateGameOver(void) {
     u16 stick_pressed;
     int i;
 
-    func_00217008();
+    KF_Pad_Update();
     brightness = 1.0f;
-    report = func_00217760(0, 0);
+    report = KF_Pad_GetReport(0, 0);
     stick = (report->left_stick_y > 0x3FU) ? 0 : PAD_UP;
     if (report->left_stick_y > 0xC0) {
         stick |= PAD_DOWN;

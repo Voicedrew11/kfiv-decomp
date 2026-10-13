@@ -1,6 +1,7 @@
 #include "kf_game.h"
 #include "kf_menu.h"
 #include "kf_packet.h"
+#include "kf_pad.h"
 
 extern f32 D_00425510[0x100];
 extern u32 D_00446ABC;
@@ -29,7 +30,6 @@ s32 func_001FBCF0(void);
 void func_001FBDC8(void);
 void func_001FC5E8(MenuCursorBar *);
 void func_00207478(int, int, int, int);
-void *func_00217760(int, int);
 
 /* The menu screen that first checks the two slots, then asks yes or no with a cursor bar, and fades its parts in and out. */
 void func_001E3858(void) {
@@ -177,7 +177,7 @@ void func_001E3858(void) {
         func_001F9740(1);
         func_001FAFB0();
     } else {
-        report = func_00217760(0, 0);
+        report = KF_Pad_GetReport(0, 0);
         if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
             func_0019CDC0(0);
             D_005CF2F0.unk11 = 1;

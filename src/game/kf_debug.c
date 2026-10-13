@@ -1,5 +1,6 @@
 #include "kf_debug.h"
 #include "kf_game.h"
+#include "kf_pad.h"
 
 static PadReport *debug_pad; /* 0x447108 the controller report the editors read; nothing in the retail game sets it */
 

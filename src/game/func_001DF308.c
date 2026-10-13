@@ -1,6 +1,7 @@
 #include "kf_game.h"
 #include "kf_menu.h"
 #include "kf_packet.h"
+#include "kf_pad.h"
 
 extern s8 D_00446C70;
 extern u16 D_00446DE8;
@@ -51,7 +52,6 @@ s32 func_001F94C0(void);
 s32 func_001F9740(s32);
 void func_001FC5E8(MenuCursorBar *);
 void func_00207478(int, int, int, int);
-void *func_00217760(int, int);
 
 /* The title menu screen: moves the cursor over its five lines, asks yes or no on the last, and fades the parts in and out. */
 void func_001DF308(MenuScreenContext *context) {
@@ -115,7 +115,7 @@ void func_001DF308(MenuScreenContext *context) {
         func_001FC5E8(&bar); // match: the float at bar+0x24 that func_001FC5E8 copies is never set
     }
 
-    report = func_00217760(0, 0);
+    report = KF_Pad_GetReport(0, 0);
     if ((report->pressed & 0x4000) && D_004472D0 != 0xFF && D_004472DA != 0) {
         if (D_00446C70 != 4) {
             PLAY_MENU_SOUND(0);

@@ -1,6 +1,7 @@
 /* The game module: new-game state, event flags, the save image, the screen fade and GS screen effects. */
 #include "kf_file.h"
 #include "kf_game.h"
+#include "kf_pad.h"
 #include "kf_player.h"
 #include "kf_map.h"
 #include "kf_gs.h"
@@ -100,7 +101,6 @@ void func_00109AD0(void);
 void func_00109E18(void);
 void func_00109E88(void);
 void func_0010A100(void *);
-u16 *func_00217760(int, int);
 static int func_001036F8(int map, int entry, int bit);
 static void func_00103778(int map, int entry, int bit, int value);
 
@@ -1046,7 +1046,7 @@ void func_00106980(void) {
     if (D_00446F78 != 0) {
         texture_base = 0;
     }
-    pad_buttons = func_00217760(1, 0)[1];
+    pad_buttons = KF_Pad_GetReport(1, 0)->held;
     if (pad_buttons & 0x400) {
         D_0044673C += 0xFF;
         printf(D_0043E470, D_0044673C);

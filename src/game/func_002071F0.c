@@ -1,10 +1,9 @@
-#include "common.h"
+#include "kf_pad.h"
 
 extern s8 D_00446DDC;               /* TRUE while the held direction is repeating */
 extern s32 D_00446DE0;              /* frames since the last step, stops at 11 */
 extern s32 D_00446DE4;              /* frames up (positive) or down (negative) has been held */
 
-int func_002179F8(int, int);
 
 /* Up and down in `buttons` as steps of a menu, the way func_00206F58 does it for the directional buttons:
    1 or -1 when both are let go more than ten frames after the last step, and held for more than ten frames,
@@ -12,7 +11,7 @@ int func_002179F8(int, int);
 int func_002071F0(int repeat_start, u16 buttons) {
     int step = 0;
 
-    if (func_002179F8(0, 0) == 0xFF) {
+    if (KF_Pad_GetMode(0, 0) == 0xFF) {
         D_00446DE0 = 0;
         D_00446DE4 = 0;
         D_00446DDC = 0;
