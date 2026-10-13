@@ -37,24 +37,6 @@ typedef struct {
 
 extern SplashImage D_00249680;
 
-/* how one sprite of the boot screens (language choice, title logos) changes over time: four keys */
-typedef struct {
-    int key_frames[4];              /* 0x00 the frame each key starts at */
-    int key_values[4];              /* 0x10 the brightness at each key, 0..0x80 */
-    int length;                     /* 0x20 the frame counter starts over after this many frames */
-} BootSpriteTrack;
-
-/* one sprite of the boot screens, set up by func_00209A28 and drawn by func_00209A48 */
-typedef struct {
-    int texture;                    /* 0x00 index into D_005FAB60 */
-    int pos_x;                      /* 0x04 left edge, from the screen centre */
-    int pos_y;                      /* 0x08 top edge in frame lines (halved when drawn), from the screen centre */
-    int width;                      /* 0x0C */
-    int height;                     /* 0x10 in frame lines */
-    int frame;                      /* 0x14 counts up to track->length */
-    BootSpriteTrack *track;         /* 0x18 */
-} BootSprite;
-
 /* the GS TEX0 register as bit-fields */
 typedef struct {
     u64 tbp0 : 14;                  /* bit 0 where the texture is in GS memory */
@@ -96,35 +78,6 @@ typedef struct {
     u64 image_tag;                  /* 0x60 GIF tag of the data that follows, in quadwords */
     u32 image_tag_high[2];          /* 0x68 */
 } SplashLoadPacket;
-
-/* one texture of the boot screens, D_005FAB60[13], loaded by func_002097E0 */
-typedef struct {
-    BootTex0 tex0;                  /* 0x00 GS TEX0, copied from the file */
-    TextureHeader *file;            /* 0x08 the file as loaded */
-} BootTexture;
-
-/* the GS packet func_00209A48 draws a boot screen sprite with, D_005F9B60 */
-typedef struct {
-    u32 tag[4];                     /* 0x00 GIF tag: two address+data pairs */
-    u64 alpha;                      /* 0x10 from D_0042C1C0 by blend mode */
-    u64 alpha_reg;                  /* 0x18 0x42, ALPHA_1 */
-    u64 test;                       /* 0x20 */
-    u64 test_reg;                   /* 0x28 0x47, TEST_1 */
-    u32 list_tag[4];                /* 0x30 GIF tag: a list of eight registers */
-    u32 prim[2];                    /* 0x40 a textured sprite with alpha blending */
-    BootTex0 tex0;                  /* 0x48 */
-    u32 rgba;                       /* 0x50 */
-    f32 rgba_q;                     /* 0x54 */
-    f32 first_s;                    /* 0x58 texture coordinates of the top left corner */
-    f32 first_t;                    /* 0x5C */
-    u32 first_xy;                   /* 0x60 x and y in 16ths of a pixel, y in the high half */
-    u32 first_z;                    /* 0x64 */
-    f32 second_s;                   /* 0x68 the bottom right corner */
-    f32 second_t;                   /* 0x6C */
-    u32 second_xy;                  /* 0x70 */
-    u32 second_z;                   /* 0x74 */
-    u32 nop[2];                     /* 0x78 */
-} BootSpritePacket;
 
 /* the effect shown when item `kind` is used (files item_ms/...), D_0042BBE0[kind] (kinds 0x46 to 0x52 are used) */
 typedef struct {

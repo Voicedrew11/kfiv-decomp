@@ -149,7 +149,7 @@ typedef struct {
     u64 test_b_addr;                /* 0x58 */
 } GsClearBits;
 
-/* D_0042C4C0 (boot screens), D_00432D20 and D_00432F50 (the game): a libgraph sceGsDBuff, two frame
+/* title_dbuff (kf_title.c), D_00432D20 and D_00432F50 (the game): a libgraph sceGsDBuff, two frame
    buffers with one context each */
 typedef struct {
     GsDispEnvBits disp[2];          /* 0x000 */

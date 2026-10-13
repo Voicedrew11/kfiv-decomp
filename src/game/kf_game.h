@@ -683,7 +683,7 @@ typedef struct {
 } PadReportAxes;
 
 /* PadReport.pressed inside a union: a read through it may alias any store, so it stays behind one
-   (the boot screens func_0020A490 and func_0020A8C8 only match this way) */
+   (KF_Title_UpdateMenu and KF_Title_UpdateGameOver only match this way) */
 typedef union {
     u16 buttons;
     u8 bytes[2];

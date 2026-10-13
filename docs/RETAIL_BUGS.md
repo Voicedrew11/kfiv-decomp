@@ -1334,7 +1334,7 @@ does not mistake them for meaning something.
 - `func_00208BC0` (load the boot models): after setting up the second model
   it writes `D_00447394->unk1A8` again, the first model's. No effect seen:
   `func_00209018` sets `unk1A8` on the model it draws.
-- `func_00209A48` (boot screen sprite) interpolates between key `i` and key
+- `KF_Title_DrawSprite` (title screen sprite) interpolates between key `i` and key
   `i + 1` of four; at the last key that reads one past both arrays. The ratio
   is 0 there, so the value is still the last key's.
 - `func_0020D008` is not called from anywhere.
