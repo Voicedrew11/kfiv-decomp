@@ -1,9 +1,8 @@
 #include "kf_model.h"
+#include "kf_message.h"
 
 extern u32 D_0038CC74[];
 extern void *D_00420D50[];
-
-void func_001CFA70(int, int, int, int, int, int, ...);
 
 /* Update handler: used by the player, it shows the message of its definition,
    at most every 45 frames. */
@@ -21,7 +20,7 @@ void func_00122730(MapObject *object) {
         if (message == 0) {
             return;
         }
-        func_001CFA70(0, 0, 0, 0, 0x2D, message);
+        KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
         object->work[0] = 0x2D;
     }
 }

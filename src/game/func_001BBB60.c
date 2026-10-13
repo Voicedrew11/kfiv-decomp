@@ -1,9 +1,8 @@
 #include "kf_player.h"
+#include "kf_message.h"
 
 extern PlayerState D_00413F80;
 extern const PlayerLevelStep D_0043E130[];
-
-void func_001CFA70(int, int, int, int, int, int, ...);
 
 /* Adds experience and takes every level it now reaches. */
 void func_001BBB60(int amount) {
@@ -23,7 +22,7 @@ void func_001BBB60(int amount) {
             D_00413F80.unk24 += D_0043E130[level].unk05;
             D_00413F80.unk28 += D_0043E130[level].unk06;
             D_00413F80.unk2C += D_0043E130[level].unk07;
-            func_001CFA70(0, 0, 0, 0, 0x2D, 0x28);
+            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x28);
         }
     }
 }

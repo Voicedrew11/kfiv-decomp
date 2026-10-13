@@ -119,7 +119,7 @@ typedef struct {
     char pad43[0x1D];
 } Entry60;
 
-/* a task that runs a one-time setup (func_00103858, func_001CF988) and ends when func_001CF980 reports done */
+/* a task that runs a one-time setup (func_00103858, KF_Message_OpenBox) and ends when the message box closes */
 typedef struct {
     s32 active;                     /* 0x00 cleared once the setup is done */
     char pad04[0x04];

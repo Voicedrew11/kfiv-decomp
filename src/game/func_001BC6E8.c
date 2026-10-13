@@ -1,9 +1,9 @@
 #include "kf_item_effect.h"
 #include "kf_player.h"
+#include "kf_message.h"
 
 extern PlayerState D_00413F80;
 
-void func_001CFA70(int, int, int, int, int, int, ...);
 void func_001BA310(void);
 void func_001BB5E8(void);
 int func_001BC990(int);
@@ -22,18 +22,18 @@ void func_001BC6E8(int kind) {
         break;
     case 0x1B:
         if (D_00413F80.unk2C < 999) {
-            func_001CFA70(0, 0, 0, 1, 0x2D, 0x2B);
+            KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0x2B);
             D_00413F80.unk2C++;
         } else {
-            func_001CFA70(0, 0, 0, 1, 0x2D, 0xA);
+            KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
         }
         break;
     case 0x1C:
         if (D_00413F80.unk28 < 999) {
             D_00413F80.unk28++;
-            func_001CFA70(0, 0, 0, 1, 0x2D, 0x2A);
+            KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0x2A);
         } else {
-            func_001CFA70(0, 0, 0, 1, 0x2D, 0xA);
+            KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
         }
         break;
     case 0x46:

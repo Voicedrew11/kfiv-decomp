@@ -1,12 +1,12 @@
 #include "kf_model.h"
 #include "kf_player.h"
+#include "kf_message.h"
 
 float func_0019B838(float);
 int func_001BC148(int);
 void func_00216778(void *, void *);
 void KF_Vector_Subtract(void *, void *, void *);
 void KF_Vector_Scale(float *, float *, float);
-void func_001CFA70(int, int, int, int, int, int, ...);
 extern PlayerState D_00413F80;
 extern u16 D_00413DAA[];
 extern ItemNode *D_004469D8;
@@ -34,7 +34,7 @@ void func_001C9FB0(void) {
             D_004471A4++;
             return;
         }
-        func_001CFA70(0, 0, 0, 0, 0x2D, 0x1E);
+        KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x1E);
     } else if (!(D_00413DAA[0] & 0x2000) || D_00447198 != 0) {
         return;
     }

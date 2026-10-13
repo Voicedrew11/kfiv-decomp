@@ -1,13 +1,12 @@
 #include "eeregs.h"
 #include "kf_gs.h"
 #include "kf_packet.h"
+#include "kf_message.h"
 
 extern u64 *D_00420DC0[];
 extern GsCornerBits D_00446D60;
 extern GsCornerBits D_00446D68;
 extern u8 D_00446D70[4];
-
-char *func_001CFC68(s32);
 
 static inline s32 text_color(u16 code) {
     return (code & 0xFFF) >> 8;
@@ -55,7 +54,7 @@ s32 func_001FF9F0(u16 *text, s32 limit) {
     for (i = 0, count = 0, column = 0; text[i] != 0xFFFF; i++, count++) {
         if (text[i] & 0x4000) {
             count--;
-            palette = func_001CFC68(text_color(text[i]));
+            palette = KF_Message_GetColour(text_color(text[i]));
             color[0] = palette[0];
             color[1] = palette[4];
             color[2] = palette[8];

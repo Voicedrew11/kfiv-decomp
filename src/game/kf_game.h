@@ -88,39 +88,6 @@ typedef struct {
     s32 unk7C;                      /* 0x7C */
 } CameraState;
 
-/* one of the 0x24-byte slots at D_005C5940, linked in a ring. D_004471E4 is the
-   one being shown and D_004471E8 the next free one. */
-typedef struct MessageSlot {
-    char *text;                     /* 0x00 */
-    int unk04;                      /* 0x04 */
-    int unk08;                      /* 0x08 */
-    int length;                     /* 0x0C */
-    struct MessageSlot *next;       /* 0x10 */
-    int unk14;                      /* 0x14 */
-    int unk18;                      /* 0x18 */
-    int unk1C;                      /* 0x1C */
-    int unk20;                      /* 0x20 */
-} MessageSlot;
-
-/* D_00420C10[3]: how the glyphs of one kind (0 full width, 1 half width, 2 the debug font) lie on their texture */
-typedef struct {
-    f32 step_s;                     /* 0x00 from one column to the next */
-    f32 step_t;                     /* 0x04 from one row to the next */
-    f32 size_s;                     /* 0x08 of one glyph */
-    f32 size_t;                     /* 0x0C */
-    f32 base_s;                     /* 0x10 of the first glyph */
-    f32 base_t;                     /* 0x14 */
-    s32 columns;                    /* 0x18 glyphs in a row */
-} GlyphSheet;
-
-/* D_00420C68[font][kind]: the screen box of a glyph, relative to its position */
-typedef struct {
-    s32 left;                       /* 0x00 */
-    s32 top;                        /* 0x04 */
-    s32 right;                      /* 0x08 */
-    s32 bottom;                     /* 0x0C */
-} GlyphBox;
-
 /* D_00420D00: the event runner */
 typedef struct {
     f32 unk00[4];                   /* 0x00 a position the camera is put in front of (func_00100FC8) */
@@ -367,31 +334,6 @@ typedef struct ListNode {
     struct ListNode *prev;          /* 0x20 */
     struct ListNode *next;          /* 0x24 */
 } ListNode;
-
-/* what D_004471E4 and D_004471E8 point at; func_001CFC80 clears unk04 */
-typedef struct {
-    char pad00[0x04];
-    int unk04;                      /* 0x04 */
-} PendingSlot;
-
-/* D_005C58E8: the message box (func_001CF988 opens it, func_001CF4D0 runs it, func_001CF708 draws it) */
-typedef struct {
-    s16 *start;                     /* 0x00 first glyph of the page on screen */
-    s16 *cursor;                    /* 0x04 glyph being typed */
-    s16 *end;                       /* 0x08 end of the page (func_001D0658) */
-    int delay;                      /* 0x0C frames per glyph */
-    int timer;                      /* 0x10 frames since the last glyph */
-    int unk14;                      /* 0x14 */
-    int waiting;                    /* 0x18 1 = page typed out, waiting for a button */
-    int typed;                      /* 0x1C glyphs typed on this page (control codes not counted) */
-    int closing;                    /* 0x20 1 = closing */
-    int close_timer;                /* 0x24 frames left of the closing */
-    int left;                       /* 0x28 */
-    int top;                        /* 0x2C */
-    int font;                       /* 0x30 */
-    int unk34;                      /* 0x34 */
-    int line_offsets[4];            /* 0x38 left edge of each line (func_001D0658) */
-} MessageBox;
 
 /* D_0042A8F0[32]: a pool of 0x70-byte slots chained into a free list through `next`;
    D_00446DF0 holds the head */

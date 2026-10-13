@@ -4,6 +4,7 @@
 #include "kf_model.h"
 #include "kf_player.h"
 #include "kf_splash.h"
+#include "kf_message.h"
 
 extern char D_0038A440[];
 extern LevelRecord D_003679A0[];
@@ -44,7 +45,6 @@ void func_0010E8E0(void *, int, int, int, int);
 int func_001A1C58(int, void *, void *, void *);
 void func_001A3918(int);
 int func_001BF6E8(void);
-void func_001CFA70(int, int, int, int, int, int, ...);
 void func_002095D0(ModelInstance *);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
 void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
@@ -242,7 +242,7 @@ void KF_ItemEffect_Update(void) {
             D_00413F80.unkC0 = 5000;
         }
         if (item_effect_marked != 0) {
-            func_001CFA70(0, 0, 0, 0, 0x2D, 0x29);
+            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x29);
             item_effect_marked = 0;
         }
     }

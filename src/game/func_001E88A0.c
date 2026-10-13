@@ -3,6 +3,7 @@
 #include "kf_player.h"
 #include "kf_link.h"
 #include "kf_state.h"
+#include "kf_message.h"
 
 extern const TradeValueTables D_00440300;
 extern const TradeStockTables D_00440318;
@@ -82,7 +83,6 @@ void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, fl
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
 s32 func_0019CDC0(s32);
-s32 func_001CFC58(s32);
 void func_001D45D0(void);
 int func_001D6E60(f32 *); // match: an int result keeps $2 for the load after the call
 int func_001E4FE0(s32, u32);
@@ -436,7 +436,7 @@ void func_001E88A0(HandlerContext *context) {
     }
 
     current = D_005CF380[0];
-    texts = func_001CFC58(D_00446F38);
+    texts = KF_Message_GetFontText(D_00446F38);
     number = current->unk0C + 0x1F5; // match: its own local, or the offset is folded into the load
     text_offset = ((s32 *)texts)[number];
     position.raw = 0x000F424083207080L;

@@ -1,11 +1,10 @@
 #include "kf_map.h"
+#include "kf_message.h"
 
 extern u8 D_00369830[];
 extern TriggerTypeDef D_0041A6F8[];
 
 void func_001DC120(int); // match: one argument is passed (func_002135A0 declares three)
-void func_001CFA70(int, int, int, int, int, int, ...);
-
 /* Adds one to the count at the index: up to 1 for indices from 150 on and for definitions with flag bit 1,
    up to 99 for the others (a message is shown past that). */
 void func_001BC1C0(int index) {
@@ -34,7 +33,7 @@ void func_001BC1C0(int index) {
                 func_001DC120(index);
             }
         } else {
-            func_001CFA70(0, 0, 0, 0, 0x2D, 0x1E);
+            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x1E);
         }
     }
 }

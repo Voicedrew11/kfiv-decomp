@@ -8,6 +8,7 @@
 #include "kf_gold.h"
 #include "kf_held_weapon.h"
 #include "kf_splash.h"
+#include "kf_message.h"
 
 extern u8 D_00349680[0x10];
 extern u8 D_00349F56[];
@@ -52,8 +53,6 @@ void func_001A2108(void);
 void func_0010A4E8(int, int, int, int, int);
 void func_00107E70(int, int, int);
 void func_00106208(void);
-int func_001CF980(void);
-void func_001CF4D0(void);
 void func_00107CD8(int);
 void func_001095D8(void);
 
@@ -242,7 +241,7 @@ int func_001005E8(int arg) {
     }
     func_00106208();
     KF_Splash_Draw();
-    if (func_001CF980() != 0) {
+    if (KF_Message_IsBoxOpen() != 0) {
         if (D_00446708 < 0x40) {
             D_00446708 += 0x10;
             if (D_00446708 > 0x40) {
@@ -258,7 +257,7 @@ int func_001005E8(int arg) {
     if (D_00446708 != 0) {
         func_0010A4E8(0, 0, 0, D_00446708, 0x44);
     }
-    func_001CF4D0();
+    KF_Message_Update();
     if (D_0038CC50.paused) {
         func_0010A4E8(0, 0, 0, 0x40, 0x44);
         KF_Hud_DrawPaused();

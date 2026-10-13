@@ -3,6 +3,7 @@
 #include "kf_packet.h"
 #include "kf_player.h"
 #include "kf_state.h"
+#include "kf_message.h"
 
 extern u8 D_00369830[380];
 extern LevelRecord D_003679A0[70];
@@ -69,7 +70,6 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
 s32 func_0019CDC0(s32);
 void func_001BA310(void);
-s32 func_001CFC58(s32);
 void func_001D2680(void);
 void func_001D45D0(void);
 int func_001D6E60(f32 *);
@@ -257,7 +257,7 @@ void func_001DDB10(HandlerContext *context) {
     } else {
         node = D_00447220;
     }
-    texts = func_001CFC58(D_00446F38);
+    texts = KF_Message_GetFontText(D_00446F38);
     position.raw = 0x000A875083207080;
     text_index = node->unk0C + 0x1F5;
     text_offset = ((s32 *)texts)[text_index];

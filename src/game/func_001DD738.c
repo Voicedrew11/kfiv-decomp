@@ -4,6 +4,7 @@
 #include "kf_packet.h"
 #include "kf_player.h"
 #include "kf_state.h"
+#include "kf_message.h"
 #include <eeregs.h>
 
 extern u8 D_0034C4E0[50];
@@ -23,7 +24,6 @@ void *memset(void *, int, u32);
 void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
 void sceVu0TransMatrix(float *, float *, float *);
 s32 func_0019CDC0(s32);
-s32 func_001CFC58(s32);
 void func_001DCA80(HandlerContext *);
 int func_001E5210(u8);
 s32 func_001FE350(u16 *, s32);
@@ -91,7 +91,7 @@ void func_001DD738(HandlerContext *context) {
         model_node.buffer = chunk;
         func_00201E10(&D_00426470, local, D_00446C78);
     }
-    table = func_001CFC58(D_00446F38);
+    table = KF_Message_GetFontText(D_00446F38);
     word.raw = 0x000A875081106E80;
     number = page * 50 + 3001;
     entry = func_001DD738_TextOffset(table, number + 49);

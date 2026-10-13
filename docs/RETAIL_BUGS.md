@@ -434,26 +434,28 @@ allocated. Not checked whether any caller can make it fail. `func_001CC1A8`
 has one such bare return too (when `func_001CF110` fails). Each of these
 returns is marked with `// match:`.
 
-## `func_001CFFA0` fills its table of glyph alphas a byte at a time
+## `KF_Message_DrawGlyphs` fills its table of glyph alphas a byte at a time
 
-`D_005C50C8` holds one `int` of alpha per glyph of a message, 0x80 of them.
-The typing branch of `func_001CFFA0` writes it as ints
-(`D_005C50C8[i] = 0x80`), and the draw loop reads it as ints. The ring branch
-and the box's closing branch fill it with
+`glyph_alphas` (`kf_message.c`) holds one `int` of alpha per glyph of a
+message, 0x200 of them. The typing branch of `KF_Message_DrawGlyphs` writes it
+as ints (`glyph_alphas[i] = 0x80`), and the draw loop reads it as ints. The
+notice branch and the box's closing branch fill it with
 
 ```c
-memset(D_005C50C8, alpha, 0x200);
+memset(glyph_alphas, alpha, 0x200);
 ```
 
-so each entry becomes `alpha * 0x01010101`.
+which is a byte count: only the first 0x80 entries are filled, each with
+`alpha * 0x01010101`.
 
-Effect: `func_001D0298` is handed that word as the glyph's alpha. Unknown what
-it does with the upper bytes (it is not matched yet); nothing is seen if it
-only uses the low byte.
+Effect: `KF_Message_DrawGlyph` stores that word as the A of the glyph's
+packed RGBAQ, of which the GS takes only the low byte, so nothing is seen for
+the first 0x80 glyphs. A fading notice or closing box of more than 0x80 glyphs
+would draw the rest with whatever alphas the table held before.
 
 Also here: nothing bounds the index. The typing branch writes
-`D_005C50C8[shown + i]` for `i < 8` and the draw loop reads one entry per
-glyph, so a message of more than about 0x78 glyphs would run past the table.
+`glyph_alphas[shown + i]` for `i < 8` and the draw loop reads one entry per
+glyph, so a message of more than about 0x1F8 glyphs would run past the table.
 Not checked whether any message is that long.
 
 ## `func_001B7EE0` tests the looking speed where it slows the turn

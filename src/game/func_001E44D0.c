@@ -1,10 +1,10 @@
 #include "kf_gs.h"
 #include "kf_menu.h"
+#include "kf_message.h"
 
 extern s32 D_00446F38;
 extern void **D_005CE840[];
 
-s32 func_001CFC58(s32);
 s32 func_001FE350(u16 *, s32);
 s32 func_00207320(int, s64);
 
@@ -17,7 +17,7 @@ int func_001E44D0(s32 index) {
     GsPackedWord word;
 
     node = (DataNode *)*D_005CE840[0];
-    table = func_001CFC58(D_00446F38);
+    table = KF_Message_GetFontText(D_00446F38);
     slot = node->unk0C + 1;
     entry = ((s32 *)table)[index + slot];
     word.raw = 0x000A87507E9080C0;

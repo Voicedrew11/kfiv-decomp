@@ -1,4 +1,5 @@
 #include "kf_model.h"
+#include "kf_message.h"
 
 extern void *D_00420D50[];
 extern u32 D_0038CC74[];
@@ -6,8 +7,6 @@ extern u8 D_00369830[];
 
 void func_00123000(int);
 void func_0019D490(s32, s32, f32 *, f32);
-void func_001CFA70(int, int, int, int, int, int, ...);
-
 /* Update handler of a closed door-like object: when the player uses it, it opens
    if it needs no item or the player holds the item, else a message says so. */
 void func_0011F340(MapObject *object) {
@@ -39,7 +38,7 @@ void func_0011F340(MapObject *object) {
                 if (message == 0) {
                     message = 0x3E;
                 }
-                func_001CFA70(0, 0, 0, 0, 0x2D, message);
+                KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
                 work->timer = 0x2D;
                 return;
             }

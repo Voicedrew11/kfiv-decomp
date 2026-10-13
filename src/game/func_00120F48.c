@@ -1,12 +1,12 @@
 #include "kf_model.h"
 #include "kf_game.h"
+#include "kf_message.h"
 
 extern GameStatus D_0038CC50;
 extern void *D_00420D50[];
 extern float D_00413F80[];
 extern f32 D_00431AF0[16];
 
-void func_001CFA70(int, int, int, int, int, int, ...);
 int func_0011E3A0(void *);
 void func_0011F148(char *);
 void func_00216BC0(void *, void *, void *);
@@ -35,7 +35,7 @@ void func_00120F48(MapObject *object) {
         if (work->timer > 0) {
             return;
         }
-        func_001CFA70(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
+        KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
         work->timer = 0x2D;
     } else if (work->fired != 0) {
         work->fired = 0;

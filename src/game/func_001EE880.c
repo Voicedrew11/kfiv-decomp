@@ -2,6 +2,7 @@
 #include "kf_menu.h"
 #include "kf_state.h"
 #include "kf_texture.h"
+#include "kf_message.h"
 #include <eeregs.h>
 
 extern f32 D_00425510[0x100];
@@ -24,7 +25,6 @@ void func_001096E8(void);
 void func_00109800(void);
 void func_00109E88(void);
 void func_0010B238(TextureTableHeader *);
-s32 func_001CFC48(s32);
 void func_001D55E8(void);
 void func_001EEF78(HandlerContext *);
 int func_001FBDE8(int);
@@ -39,7 +39,7 @@ s32 func_001EE880(void) {
 
     func_001095E0();
     func_001095D0();
-    func_0010B238((TextureTableHeader *)func_001CFC48(D_00446F38));
+    func_0010B238((TextureTableHeader *)KF_Message_GetFontTexture(D_00446F38));
     func_00109E88();
     func_001095D8();
     func_001096E8();

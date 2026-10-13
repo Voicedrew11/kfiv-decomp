@@ -4,6 +4,7 @@
 #include "kf_packet.h"
 #include "kf_player.h"
 #include "kf_state.h"
+#include "kf_message.h"
 #include <eeregs.h>
 
 #define LIST_PAGES 50
@@ -40,7 +41,6 @@ void sceVu0TransMatrix(float *, float *, float *);
 int sceCdBreak(void);
 int func_001024B0(int);
 s32 func_0019CDC0(s32);
-s32 func_001CFC58(s32);
 void func_001D45D0(void);
 void func_001D7C30(void);
 f32 func_001D8300(f32, s32, s32);
@@ -214,7 +214,7 @@ void func_001DCA80(HandlerContext *context) {
         func_00201E10(&D_00426470, local, D_00446C88);
     }
 
-    table = func_001CFC58(D_00446F38);
+    table = KF_Message_GetFontText(D_00446F38);
     first_text = D_00446BC0 * LIST_PAGES + 3001;
     entry = func_001DCA80_TextOffset(table, first_text + LIST_PAGES - 1);
     word.raw = 0x000A875081106E80;

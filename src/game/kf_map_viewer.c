@@ -7,9 +7,9 @@
 #include "kf_packet.h"
 #include "kf_player.h"
 #include "kf_texture.h"
+#include "kf_message.h"
 
 int func_0011C678(int);
-void func_001CFA70(int, int, int, int, int, int);
 void func_0011A598(void);
 static void func_0011A5E0(void);
 static int func_0011A600(void);
@@ -117,7 +117,7 @@ void func_0011A438(int viewer_number) {
         if (viewer_number == 5) {
             row = (u8 *)D_0038CD20 + D_00446770 * 0x60;
             if (func_0011C678(row[1]) == 0) {
-                func_001CFA70(0, 0, 0, 1, 0x2D, 0xB);
+                KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xB);
                 return;
             }
         }

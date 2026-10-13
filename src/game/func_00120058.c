@@ -1,12 +1,11 @@
 #include "kf_model.h"
+#include "kf_message.h"
 
 extern u32 D_0038CC74[];
 extern void *D_00420D50[];
 
 ModelNode *func_001C9580(int);
 int func_001C9AB0(ModelNode *);
-void func_001CFA70(int, int, int, int, int, int, ...);
-
 /* Update handler: when the player uses an object that still holds something it
    is handed out (func_001C9580), else message 0x46 is shown, at most every 45 frames. */
 void func_00120058(MapObject *object) {
@@ -28,7 +27,7 @@ void func_00120058(MapObject *object) {
             if (work[1] > 0) {
                 return;
             }
-            func_001CFA70(0, 0, 0, 0, 0x2D, 0x46);
+            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x46);
             work[1] = 0x2D;
         }
     }

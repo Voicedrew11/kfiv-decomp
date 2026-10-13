@@ -1,13 +1,12 @@
 #include "eeregs.h"
 #include "kf_gs.h"
 #include "kf_packet.h"
+#include "kf_message.h"
 
 extern u64 *D_00420DC0[];
 extern GsCornerBits D_00446D60;
 extern GsCornerBits D_00446D68;
 extern u8 D_00446D70[4];
-
-char *func_001CFC68(s32);
 
 /* Draws a string of glyphs at the pen position D_00446D60 into the next shared packet buffer, wrapping at
    `limit` glyphs a line and at the line breaks in the text, and sends it to the GS; returns the number of
@@ -50,7 +49,7 @@ s32 func_001FDD28(u16 *text, s32 limit) {
             /* a colour change, not a glyph */
             count--;
             color_index = text[i];
-            palette = func_001CFC68((color_index & 0xFFF) >> 8);
+            palette = KF_Message_GetColour((color_index & 0xFFF) >> 8);
             color[0] = palette[0];
             color[1] = palette[4];
             color[2] = palette[8];

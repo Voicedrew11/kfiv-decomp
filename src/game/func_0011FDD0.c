@@ -1,5 +1,6 @@
 #include "kf_gold.h"
 #include "kf_model.h"
+#include "kf_message.h"
 
 extern Qword D_0043E780;
 extern u32 D_0038CC74[];
@@ -7,7 +8,6 @@ extern void *D_00420D50[];
 extern u8 D_00369830[];
 
 void *memset(void *, int, u32);
-void func_001CFA70(int, int, int, int, int, int, ...);
 void func_00123000(int);
 void func_0019D490(s32, s32, f32 *, f32);
 ItemNode *func_001C9340(int, int, void *, void *, void *, void *);
@@ -44,7 +44,7 @@ void func_0011FDD0(void *arg, int unused) {
                 if (message == 0) {
                     message = 0x3E;
                 }
-                func_001CFA70(0, 0, 0, 0, 0x2D, message);
+                KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
                 work[1] = 0x2D;
                 return;
             }

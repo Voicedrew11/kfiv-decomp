@@ -4,6 +4,7 @@
 #include "kf_menu.h"
 #include "kf_packet.h"
 #include "kf_player.h"
+#include "kf_message.h"
 #include <eeregs.h>
 
 extern GameStatus D_0038CC50;
@@ -34,7 +35,6 @@ void *memset(void *, int, u32);
 void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
 void sceVu0TransMatrix(float *, float *, float *);
 s32 func_0019CDC0(s32);
-s32 func_001CFC58(s32);
 void func_001D45D0(void);
 void func_001D7C30(void);
 f32 func_001D8300(f32, s32, s32);
@@ -126,7 +126,7 @@ void func_001D8C90(s32 context) {
         }
     }
     selected = D_005CE880[0];
-    table = func_001CFC58(D_00446F38);
+    table = KF_Message_GetFontText(D_00446F38);
     slot = selected->unk0C + 0x385;
     entry = ((s32 *)table)[slot];
     word.raw = 0x000A875082E07000;

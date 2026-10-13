@@ -1,4 +1,5 @@
 #include "kf_game.h"
+#include "kf_message.h"
 
 extern DebugStartMenuSpacer D_0043EF70;
 extern DebugStartMenuPrompt D_0043EF90;
@@ -12,9 +13,6 @@ void func_001096E8(void);
 void func_00109800(void);
 void func_0010A4E8(int, int, int, int, int);
 void func_001B5460(void);
-void func_001CF4D0(void);
-void func_001CFBB0(char *, ...);
-void func_001CFC20(char);
 void func_0020B780(int);
 
 /* Debug start menu: waits on a PUSH START screen, then lets up and down pick one of four
@@ -37,10 +35,10 @@ int func_001B0A78(void) {
             func_001095E0();
             func_001095D0();
             func_0010A4E8(0, 0, 0, 0, 0x2A);
-            func_001CFC20(0);
-            func_001CFBB0(spacer.text);
-            func_001CFBB0(prompt.text);
-            func_001CF4D0();
+            KF_Message_DebugSetColour(0);
+            KF_Message_DebugPrintf(spacer.text);
+            KF_Message_DebugPrintf(prompt.text);
+            KF_Message_Update();
             func_001095D8();
             func_001096E8();
             func_00109800();
@@ -62,12 +60,12 @@ int func_001B0A78(void) {
             func_001095E0();
             func_001095D0();
             func_0010A4E8(0, 0, 0, 0, 0x2A);
-            func_001CFBB0(spacer.text);
+            KF_Message_DebugPrintf(spacer.text);
             for (i = 0; i < 4; i++) {
-                func_001CFC20((selected == i) ? 3 : 0);
-                func_001CFBB0(items.text[i]);
+                KF_Message_DebugSetColour((selected == i) ? 3 : 0);
+                KF_Message_DebugPrintf(items.text[i]);
             }
-            func_001CF4D0();
+            KF_Message_Update();
             func_001095D8();
             func_001096E8();
             func_00109800();

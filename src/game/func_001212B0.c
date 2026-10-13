@@ -1,11 +1,11 @@
 #include "kf_map.h"
 #include "kf_game.h"
+#include "kf_message.h"
 
 extern TriggerTypeDef D_0041A6F8[];
 extern GameStatus D_0038CC50;
 extern void *D_00420D50[];
 
-void func_001CFA70(int, int, int, int, int, int, ...);
 void func_001BC1C0(int);
 
 /* Update handler of a sliding kind, step 3: used by the player, it gives back
@@ -24,7 +24,7 @@ void func_001212B0(MapObject *object) {
             if (work->timer > 0) {
                 return;
             }
-            func_001CFA70(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
+            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
             work->timer = 0x2D;
         } else {
             MAP_OBJECT_BYTES(object)->step = 5;

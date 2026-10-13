@@ -1,5 +1,6 @@
 #include "eeregs.h"
 #include "kf_gs.h"
+#include "kf_message.h"
 
 extern u64 *D_00420DC0[];
 extern GsCornerBits D_00446D60;
@@ -8,7 +9,6 @@ extern u8 D_00446D70[4];
 extern s32 D_00446D7C;
 extern u32 D_005DDF00[2][0x3700];
 
-char *func_001CFC68(s32);
 int FlushCache(int);
 
 /* Draws a string of glyphs at the pen position D_00446D60, wrapping at `limit` glyphs a line and only between
@@ -55,7 +55,7 @@ s32 func_00200068(u16 *text, s32 limit) {
             /* a colour change, not a glyph */
             count--;
             color_index = text[i];
-            palette = func_001CFC68((color_index & 0xFFF) >> 8);
+            palette = KF_Message_GetColour((color_index & 0xFFF) >> 8);
             color[0] = palette[0];
             color[1] = palette[4];
             color[2] = palette[8];

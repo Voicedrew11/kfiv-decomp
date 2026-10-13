@@ -1,4 +1,5 @@
 #include "kf_game.h"
+#include "kf_message.h"
 
 extern s64 D_00432E20[];
 extern s64 D_00433050[];
@@ -9,8 +10,6 @@ void func_001095D8(void);
 void func_001095E0(void);
 void func_001096E8(void);
 void func_00109800(void);
-void func_001CF4D0(void);
-void func_001CFBB0(char *, ...);
 void func_0020B780(int);
 void func_00217008(void);
 void *func_00217760(int, int);
@@ -62,8 +61,8 @@ int func_001B0E50(int *map_id) {
         }
         func_001095E0();
         func_001095D0();
-        func_001CFBB0(D_0043F1D8, map);
-        func_001CF4D0();
+        KF_Message_DebugPrintf(D_0043F1D8, map);
+        KF_Message_Update();
         func_001095D8();
         func_001096E8();
         ((int (*)(void))func_00109800)(); // match: a result keeps $2 busy after the call

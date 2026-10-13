@@ -1,6 +1,7 @@
 #include "kf_game.h"
 #include "kf_menu.h"
 #include "kf_packet.h"
+#include "kf_message.h"
 
 extern MenuScreenState D_005CF2F0;
 extern GameStatus D_0038CC50;
@@ -60,7 +61,6 @@ extern s32 D_00446E80;
 
 void *memset(void *, int, u32);
 s32 func_0019CDC0(s32);
-s32 func_001CFC58(s32);
 f32 func_001D8300(f32, s32, s32);
 void func_001E02F8(void);
 int func_001E5210(u8);
@@ -225,7 +225,7 @@ void func_001E0D98(void) {
         SET_PART_MODE(0);
     }
 
-    table = func_001CFC58(D_00446F38);
+    table = KF_Message_GetFontText(D_00446F38);
     word.raw = 0x000A87507C107120;
     for (i = 0; i < 3; i++) {
         entry = ((s32 *)table)[info[i]->unk04 + 1];

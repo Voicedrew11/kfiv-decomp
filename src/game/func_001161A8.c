@@ -1,5 +1,6 @@
 #include "kf_game.h"
 #include "kf_player.h"
+#include "kf_message.h"
 
 extern GameStatus D_0038CC50;
 extern u16 D_00413DA8[];
@@ -25,7 +26,6 @@ void func_0010B000(void);
 void func_00116610(void);
 float func_0019B838(float);
 void func_001B5460(void);
-void func_001CF4D0(void);
 void func_0020B780(int);
 void func_00216C48(void *, void *, void *);
 void func_00216D20(void *, void *);
@@ -126,7 +126,7 @@ void func_001161A8(void) {
             func_0010A7E0(world_screen);
             func_001095D0();
             func_00116610();
-            func_001CF4D0();
+            KF_Message_Update();
             func_001095D8();
             func_00101618();
             func_00109800();

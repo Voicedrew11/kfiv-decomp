@@ -10,6 +10,7 @@
 #include "kf_sound.h"
 #include "kf_linked_point.h"
 #include "kf_splash.h"
+#include "kf_message.h"
 
 extern u8 D_00349680[0x10];
 extern PlayTime D_0036A138[];   /* the play time in the loaded save (D_0036A130 + 8) */
@@ -61,8 +62,6 @@ void func_001017A8(void);
 void func_00118958(void);
 void func_00101F90(void);
 void func_001B5778(void);
-void func_001CFC98(void);
-void func_001CFC80(void);
 void func_0019C7F0(int);
 void func_0019C820(int);
 int sceGsSyncV(int);
@@ -158,8 +157,8 @@ void func_001001C0(int arg) {
     D_00433050[0] = 0xC000L << 17;
     D_00433050[30] = 0xC000L << 17;
     func_001B5778();
-    func_001CFC98();
-    func_001CFC80();
+    KF_Message_CloseBox();
+    KF_Message_ClearNotices();
     saved = D_00349680[1];
     D_00349680[1] = 0;
     func_0019C7F0(0);
