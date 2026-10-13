@@ -1,5 +1,6 @@
 #include "kf_gold.h"
 #include "kf_map.h"
+#include "kf_map_scroll.h"
 #include "kf_entity_world.h"
 #include "kf_file.h"
 #include "kf_sound.h"
@@ -22,7 +23,6 @@ void func_00114840(int);
 void func_00114AA8(int);
 int func_001A10D8(MapSlot *);
 void func_001155F8(int);
-void func_00116F20(int);
 void func_001A15F0(void);
 void func_0011C708(int);
 void func_001C82C0(int);
@@ -59,7 +59,7 @@ void func_00112948(int map) {
     func_00114AA8(0);
     func_001A10D8(slot);
     func_001155F8(0);
-    func_00116F20(0);
+    KF_MapScroll_ClearPairs(0);
     func_001A15F0();
     func_0011C708(0);
     func_001C82C0(0);

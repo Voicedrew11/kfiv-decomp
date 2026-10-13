@@ -1,5 +1,6 @@
 #include "kf_gold.h"
 #include "kf_map.h"
+#include "kf_map_scroll.h"
 #include "kf_entity_world.h"
 #include "kf_sound.h"
 
@@ -20,7 +21,6 @@ void func_00210930(int);
 int func_002109C8(int, int);
 void func_001BB590(void);
 void func_0019EA98(int);
-void func_00117AA8(int, int);
 
 /* Makes the other map slot the current one: moves everything by the load's offset and switches
    the sound over. */
@@ -66,6 +66,6 @@ void func_001152B8(int map) {
         }
         D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[map].header)->unk70;
         D_0038A130.unk04 = 1;
-        func_00117AA8(map == 0, map);
+        KF_MapScroll_CarryPairs(map == 0, map);
     }
 }

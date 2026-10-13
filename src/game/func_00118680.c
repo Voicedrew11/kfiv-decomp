@@ -1,12 +1,12 @@
 #include "kf_map.h"
 #include "kf_entity_world.h"
+#include "kf_map_scroll.h"
 
 extern MapSlot D_0038CD20[];
 extern MapLoadState D_0038D610;
 extern int D_00446770;
 
 void func_001034F8(int);
-void func_00117AA8(int, int);
 void func_001187B0(void);
 void func_00119360(int);
 void func_0011CC50(int);
@@ -34,7 +34,7 @@ void func_00118680(void) {
     func_00123158(other_slot);
     func_001C87D8(other_slot);
     KF_Entity_ClearFlag10InSlot(other_slot);
-    func_00117AA8(D_00446770, other_slot);
+    KF_MapScroll_CarryPairs(D_00446770, other_slot);
     func_00119360(other_slot);
     func_001034F8(slot->tag);
     D_0038D610.position.x = D_0038D610.request->x;

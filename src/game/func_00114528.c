@@ -1,5 +1,6 @@
 #include "kf_map.h"
 #include "kf_gs.h"
+#include "kf_map_scroll.h"
 
 extern MapSlot D_0038CD20[];
 extern MapDrawState D_0038A1B0;
@@ -17,8 +18,6 @@ void func_00111368(ModelInstance *, int, int, int, int);
 void func_00116970(void);
 void func_00116AD8(int, int);
 int func_00116CB0(MapDrawRecord *, ModelInstance *);
-void func_00116F98(int, int);
-void func_001175F8(int, int);
 void func_0019AEF8(MapDrawRecord *, ModelInstance *);
 
 /* Draws the second list of records of both map slots, switching z writes on and off as the
@@ -49,8 +48,8 @@ void func_00114528(int mode) {
             func_00116AD8(map, 2);
             func_00116AD8(map, 5);
             func_00109E88();
-            func_001175F8(map, 1);
-            func_00116F98(map, 1);
+            KF_MapScroll_UpdateDraw(map, 1);
+            KF_MapScroll_UpdateCopy(map, 1);
             if (mode < 2) {
                 func_0010A008();
             } else {

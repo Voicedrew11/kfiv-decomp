@@ -155,14 +155,14 @@ typedef struct MapDrawRecord {
     ModelInstance *model;           /* 0x7C */
 } MapDrawRecord;
 
-/* D_00471F60[2][16] and D_00471FE0[2][16]: 16 pairs of values per map slot (func_00116F20 clears them) */
+/* map_scroll_copy_pairs and map_scroll_draw_pairs in kf_map_scroll.c: 16 pairs per map slot */
 typedef struct {
     s16 unk00;                      /* 0x00 */
     s16 unk02;                      /* 0x02 */
 } MapSlotPair;
 
-/* one of the 16 0xC-byte entries MapSlot.unk38 points at: a texture that func_00116F98 scrolls in
-   place by copying it through a spare buffer, as far as the matching D_00471F60 pair says */
+/* one of the 16 0xC-byte entries MapSlot.unk38 points at: a texture that KF_MapScroll_UpdateCopy scrolls in
+   place by copying it through a spare buffer, as far as the matching copy pair says */
 typedef struct {
     u16 base;                       /* 0x00 0: the entry is unused */
     u16 format;                     /* 0x02 */
@@ -171,11 +171,11 @@ typedef struct {
     u8 step_x;                      /* 0x08 signed; added to the pair each time */
     u8 step_y;                      /* 0x09 signed */
     u8 period;                      /* 0x0A it moves every this many frames; 0: every frame */
-    u8 mode;                        /* 0x0B which call of func_00116F98 moves it */
+    u8 mode;                        /* 0x0B which call of KF_MapScroll_UpdateCopy moves it */
 } MapScrollCopy;
 
-/* one of the 16 0x28-byte entries MapSlot.unk3C points at: a texture that func_001175F8 draws into
-   another one, moved along by the matching D_00471FE0 pair */
+/* one of the 16 0x28-byte entries MapSlot.unk3C points at: a texture that KF_MapScroll_UpdateDraw draws into
+   another one, moved along by the matching draw pair */
 typedef struct {
     u16 width;                      /* 0x00 */
     u16 height;                     /* 0x02 */
@@ -196,7 +196,7 @@ typedef struct {
     u8 blend;                       /* 0x20 the GS ALPHA register's A, B, C and D, two bits each */
     u8 blend_fix;                   /* 0x21 and its FIX */
     u8 period;                      /* 0x22 it moves every this many frames; 0: every frame */
-    u8 mode;                        /* 0x23 which call of func_001175F8 draws it */
+    u8 mode;                        /* 0x23 which call of KF_MapScroll_UpdateDraw draws it */
     s16 step_x;                     /* 0x24 added to the pair each time */
     s16 step_y;                     /* 0x26 */
 } MapScrollTexture;
