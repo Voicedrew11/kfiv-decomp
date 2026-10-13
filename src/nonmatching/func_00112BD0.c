@@ -31,6 +31,14 @@
  *  - The form kept here is the lowest count found (31). It came out of randomised searches over temporaries (34),
  *    then decomp-permuter (the operand order of the last blend, 33; the dead store into blue_to, 31), so its exact
  *    shape is not evidence of the original source; a plainer version with five statements differs in 41.
+ *  - Pinning registers (`register f32 blue_from asm("$f5"); register f32 blue_to asm("$f0");`) gives 29: every
+ *    FP register in the block then equals retail, and only the order differs. Not kept, as it still does not match.
+ *    No other subset of the block's temporaries pinned to retail's registers, including the four float loads, does
+ *    better.
+ *  - An empty `__asm__ volatile("")` (with or without a "memory" clobber), alone or in pairs, at every statement
+ *    boundary of the block makes it worse (44 or more). With the statements in retail's split order (the six
+ *    byte-to-float conversions, the red sum and the green multiplies first) one barrier does put the four float loads
+ *    after all six conversions, as in retail, but the rest moves: 53, and 40 at best with registers pinned.
  *
  * The struct views below are local because the file is not part of the build; when the function matches they belong
  * in kf_map.h (MapLightBlock = MapSlotUnk10Words as two 4x4 float matrices, 8-aligned so that copies use ld/sd;
