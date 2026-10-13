@@ -1,0 +1,12 @@
+func_name = "func_00112BD0"
+compiler_type = "gcc"
+objdump_command = "mips64-linux-gnu-objdump -drz -m mips:5900"
+
+# Favour changes to types, casts and expression shape over extra temporaries.
+[weight_overrides]
+perm_temp_for_expr = 20
+perm_randomize_internal_type = 40
+perm_cast_simple = 40
+perm_struct_ref = 30
+perm_split_assignment = 30
+perm_expand_expr = 30

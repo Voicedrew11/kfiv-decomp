@@ -1,0 +1,6 @@
+# decomp-permuter outputs and the retail-derived target objects (never commit disc-derived data)
+output-*/
+archive-*/
+*.o
+*.s
+__pycache__/
