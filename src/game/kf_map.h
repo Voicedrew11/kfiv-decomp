@@ -52,12 +52,12 @@ typedef struct {
     u64 unk00[16];                  /* 0x00 */
 } MapSlotUnk10Words;
 
-/* the first half of such a block: what the held item's models are lit by (D_004145E0, KF_Player_UpdateArmModels) */
+/* the first half of such a block: what the held item's models are lit by (D_004145E0, Player_UpdateArmModels) */
 typedef struct {
     u64 unk00[8];                   /* 0x00 */
 } MapSlotUnk10Half;
 
-/* a MapSlotUnk10Words block as the eight vectors it holds; KF_MapObject_DrawAll blends the last four
+/* a MapSlotUnk10Words block as the eight vectors it holds; MapObject_DrawAll blends the last four
    towards D_0038D9F0 */
 typedef struct {
     Vector4 unk00[4];               /* 0x00 */
@@ -100,7 +100,7 @@ typedef struct {
     MapFogColor unk280;             /* 0x280 the current map's */
     MapSlotUnk0C unk290[2][0x20];   /* 0x290 each map slot's blocks */
     MapSlotUnk10Words unkA90[2][0x20];  /* 0xA90 each map slot's blocks */
-    f32 unk2A90;                    /* 0x2A90 0 to 0.25: rises while PlayerState.unk2E0 or unk10C is set (KF_Player_UpdateScreenTints) */
+    f32 unk2A90;                    /* 0x2A90 0 to 0.25: rises while PlayerState.unk2E0 or unk10C is set (Player_UpdateScreenTints) */
     f32 unk2A94;                    /* 0x2A94 copy of unk2A90 */
     f32 unk2A98;                    /* 0x2A98 copy of unk2A90 */
     char pad2A9C[0x04];
@@ -144,10 +144,10 @@ typedef struct MapDrawRecord {
     u8 unk34;                       /* 0x34 which MapSlotUnk0C block it is drawn with */
     u8 unk35;                       /* 0x35 which MapSlotUnk10Words block it is drawn with */
     char pad36[0x02];
-    u8 unk38;                       /* 0x38 low byte of MapRecord.unk38: compared with LinkedPoint.unk32 (KF_LinkedPoint_FindHitsForMapDraw) */
+    u8 unk38;                       /* 0x38 low byte of MapRecord.unk38: compared with LinkedPoint.unk32 (LinkedPoint_FindHitsForMapDraw) */
     char pad39[0x03];
     s32 flags;                      /* 0x3C high half of MapRecord.unk38 */
-    f32 unk40[4];                   /* 0x40 lowest x, y, z of the box linked points are tested against (KF_LinkedPoint_FindHitsForMapDraw) */
+    f32 unk40[4];                   /* 0x40 lowest x, y, z of the box linked points are tested against (LinkedPoint_FindHitsForMapDraw) */
     f32 unk50[4];                   /* 0x50 highest x, y, z of that box */
     char pad60[0x0C];
     struct MapDrawRecord *next;     /* 0x6C next in its draw list (D_00446778, D_00446780) */
@@ -161,7 +161,7 @@ typedef struct {
     s16 unk02;                      /* 0x02 */
 } MapSlotPair;
 
-/* one of the 16 0xC-byte entries MapSlot.unk38 points at: a texture that KF_MapScroll_UpdateCopy scrolls in
+/* one of the 16 0xC-byte entries MapSlot.unk38 points at: a texture that MapScroll_UpdateCopy scrolls in
    place by copying it through a spare buffer, as far as the matching copy pair says */
 typedef struct {
     u16 base;                       /* 0x00 0: the entry is unused */
@@ -171,10 +171,10 @@ typedef struct {
     u8 step_x;                      /* 0x08 signed; added to the pair each time */
     u8 step_y;                      /* 0x09 signed */
     u8 period;                      /* 0x0A it moves every this many frames; 0: every frame */
-    u8 mode;                        /* 0x0B which call of KF_MapScroll_UpdateCopy moves it */
+    u8 mode;                        /* 0x0B which call of MapScroll_UpdateCopy moves it */
 } MapScrollCopy;
 
-/* one of the 16 0x28-byte entries MapSlot.unk3C points at: a texture that KF_MapScroll_UpdateDraw draws into
+/* one of the 16 0x28-byte entries MapSlot.unk3C points at: a texture that MapScroll_UpdateDraw draws into
    another one, moved along by the matching draw pair */
 typedef struct {
     u16 width;                      /* 0x00 */
@@ -196,7 +196,7 @@ typedef struct {
     u8 blend;                       /* 0x20 the GS ALPHA register's A, B, C and D, two bits each */
     u8 blend_fix;                   /* 0x21 and its FIX */
     u8 period;                      /* 0x22 it moves every this many frames; 0: every frame */
-    u8 mode;                        /* 0x23 which call of KF_MapScroll_UpdateDraw draws it */
+    u8 mode;                        /* 0x23 which call of MapScroll_UpdateDraw draws it */
     s16 step_x;                     /* 0x24 added to the pair each time */
     s16 step_y;                     /* 0x26 */
 } MapScrollTexture;
@@ -471,7 +471,7 @@ typedef struct {
     u16 flags_low;                  /* 0x00 */
     u16 amount;                     /* 0x02 how much gold it is worth */
     char pad04[0x20];
-    s32 object_id;                  /* 0x24 the map object that dropped it (KF_MapObject_MarkEmptiedById), 0: none */
+    s32 object_id;                  /* 0x24 the map object that dropped it (MapObject_MarkEmptiedById), 0: none */
     char pad28[0x04];
 } MapActorWords;
 
@@ -499,7 +499,7 @@ typedef struct {
     u16 unk08;                      /* 0x08 */
 } ObjectMark;
 
-/* a map's 16 marks, as KF_Gold_InitMap copies them whole */
+/* a map's 16 marks, as Gold_InitMap copies them whole */
 typedef struct {
     ObjectMark marks[16];
 } ObjectMarkRow;

@@ -10,7 +10,7 @@ int func_0019B9F0(float, float *, int);
 void func_00212B00(ScriptMoveCommand *command) {
     MapObject *object;
 
-    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(D_00446770, command->target_id.value);
     if (object == NULL) {
         command->active = 0;
         return;

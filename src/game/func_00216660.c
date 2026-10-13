@@ -9,7 +9,7 @@ void func_00216660(ScriptLookupCommand *command) {
     Entity *entity;
     s64 flags;
 
-    entity = KF_Entity_GetBySpawnId(command->input.value);
+    entity = Entity_GetBySpawnId(command->input.value);
     if (entity != NULL) {
         flags = entity->flags;
         if (((flags & 3) == 3) && (entity->unk82 == 0) && ((flags & ((0x30L << 32) | 0xC)) == 0)) {

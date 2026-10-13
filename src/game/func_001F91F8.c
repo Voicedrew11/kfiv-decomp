@@ -6,7 +6,7 @@ int func_001F91F8(void) {
     int screen = 0;
 
     do {
-        switch (KF_Title_Run(screen)) {
+        switch (Title_Run(screen)) {
         case 1:
             return 0;
         case 2:

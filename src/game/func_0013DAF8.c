@@ -70,7 +70,7 @@ void func_0013DAF8(Entity *entity) {
                     position[0] = unkE0->unk4C + delta_x * i / count;
                     position[1] = unkE0->unk50 + delta_y * i / count;
                     position[2] = unkE0->unk54 + delta_z * i / count;
-                    KF_Effect_StartSpawner(0x222, position, angles, entity);
+                    Effect_StartSpawner(0x222, position, angles, entity);
                 }
             }
             unkE0->unk4C = tip[0];

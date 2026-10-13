@@ -18,7 +18,7 @@ void func_00139FE0(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
     if (entity->unkC6 == 0) {
         is_open = 0;
-        map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->variant);
+        map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
         if (map_object != NULL) {
             is_open = (map_object->unk10 >> 17) & 1;
         }

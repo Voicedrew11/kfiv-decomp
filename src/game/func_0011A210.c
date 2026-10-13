@@ -8,7 +8,7 @@ extern u8 D_00349690[];
 void func_0011A210(int map_slot) {
     Entity *entity;
 
-    entity = KF_Entity_GetBySpawnIdForMap(map_slot, 1);
+    entity = Entity_GetBySpawnIdForMap(map_slot, 1);
     if (D_0034B6D0[0x340] == 0) {
         if (D_0034B6D0[0x345] != 0 && D_0034B6D0[0x346] == 0) {
             D_0034B6D0[0x346] = 1;

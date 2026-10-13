@@ -3,7 +3,7 @@
 #include "kf_entity.h"
 
 int func_001AFD08(void *, void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 double sqrt(double);
 extern PlayerData D_00413F80;
 
@@ -21,7 +21,7 @@ void func_001A8BA8(EffectActor *actor, EffectSlot *spawn_slot) {
     actor->unk6C = func_001AFD08(actor, &D_00413F80, (char *)&D_00413F80 + 0x10);
     motion->unk14 = 0;
     if (actor->unk6C) {
-        KF_Vector_Subtract(&offset, &ENTITY_MODEL((Entity *)actor->unk6C)->position, &actor->model->position);
+        Vector_Subtract(&offset, &ENTITY_MODEL((Entity *)actor->unk6C)->position, &actor->model->position);
         interval = (f32)actor->def->interval;
         distance = sqrt(offset.x * offset.x + offset.z * offset.z);
         remaining = interval - distance;

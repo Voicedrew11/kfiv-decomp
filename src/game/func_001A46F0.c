@@ -8,7 +8,7 @@ Entity *func_001AFF78(EffectActor *, void *, void *);
 float func_001B0970(void *, void *);
 int func_001B4F90(void *);
 void sceVu0AddVector(void *, void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 
 /* Chases the entity it picked (wobbling once hit), moves, and spawns its end effects on a hit. */
 void func_001A46F0(EffectActor *actor) {
@@ -23,11 +23,11 @@ void func_001A46F0(EffectActor *actor) {
     func_001AED58(actor);
     func_001AF0B0(actor);
     if (motion->unk24 != 0) {
-        KF_Effect_Free(actor);
+        Effect_Free(actor);
         return;
     }
     if (actor->unk6C != 0) {
-        KF_Vector_Subtract(&delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
+        Vector_Subtract(&delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
         if (motion->unk18 == 0) {
             motion->unkDC += actor->def->unkE0;
             delta.y -= ((Entity *)actor->unk6C)->height * 0.8f;
@@ -51,7 +51,7 @@ void func_001A46F0(EffectActor *actor) {
     }
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
         sceVu0AddVector(&actor->model->position, &actor->model->position, motion);
-        KF_Effect_Spawn(actor->def->unkF2, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+        Effect_Spawn(actor->def->unkF2, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
     }
     motion->unk14--;
     *(int *)0x70000018 = 6;
@@ -60,7 +60,7 @@ void func_001A46F0(EffectActor *actor) {
         if (hit & 2) {
             if (motion->unk14 < 0) {
                 motion->unkDC = actor->def->unkF0;
-                KF_Effect_Spawn(actor->def->radius_half, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+                Effect_Spawn(actor->def->radius_half, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
                 motion->unk18 = 1;
                 motion->unk14 = 15;
             }
@@ -74,7 +74,7 @@ void func_001A46F0(EffectActor *actor) {
             } else {
                 effect_id = 0x14;
             }
-            KF_Effect_Spawn(effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            Effect_Spawn(effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             motion->unk24 = 1;
         }
     }

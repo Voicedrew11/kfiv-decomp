@@ -16,38 +16,38 @@ void func_00119590(int map) {
         func_001C8C80(map, 0x46);
     }
     if (D_0034B6D0[0x5C6] == 1 && D_00349690[0x2C5] == 0) {
-        object = KF_MapObject_GetById(map, 0xA);
+        object = MapObject_GetById(map, 0xA);
         if (object != NULL) {
-            KF_MapObject_SetScripted(object, 1);
+            MapObject_SetScripted(object, 1);
         }
-        object = KF_MapObject_GetById(map, 0xB);
+        object = MapObject_GetById(map, 0xB);
         if (object != NULL) {
-            KF_MapObject_SetScripted(object, 1);
+            MapObject_SetScripted(object, 1);
         }
         ((int (*)(int, int))func_001C8C80)(map, 0x46); // match: called as returning a value, so the next test uses $3
         if (D_0034B6D0[0x5C0] == 0) {
-            entity = KF_Entity_GetBySpawnIdForMap(map, 0x17);
+            entity = Entity_GetBySpawnIdForMap(map, 0x17);
             if (entity != NULL) {
                 entity->flags |= 2;
                 entity->flags |= 0x80;
             }
         }
     } else {
-        object = KF_MapObject_GetById(map, 0xA);
+        object = MapObject_GetById(map, 0xA);
         if (object != NULL) {
-            KF_MapObject_SetScripted(object, 0);
+            MapObject_SetScripted(object, 0);
             object->unk10 |= 0x20000;
         }
-        object = KF_MapObject_GetById(map, 0xB);
+        object = MapObject_GetById(map, 0xB);
         if (object != NULL) {
-            KF_MapObject_SetScripted(object, 0);
+            MapObject_SetScripted(object, 0);
             object->unk10 |= 0x20000;
         }
-        object = KF_MapObject_GetById(map, 0x22);
+        object = MapObject_GetById(map, 0x22);
         if (object != NULL) {
-            KF_MapObject_SetScripted(object, 1);
-            KF_MapObject_PlayScriptedAnim(object, 1, 0);
-            KF_MapObject_SetScriptedBit21(object, 1);
+            MapObject_SetScripted(object, 1);
+            MapObject_PlayScriptedAnim(object, 1, 0);
+            MapObject_SetScriptedBit21(object, 1);
         }
     }
 }

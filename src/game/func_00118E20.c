@@ -31,20 +31,20 @@ void func_00118E20(void) {
     for (slot = 0; slot < 2; slot++) {
         if (D_0038CD20[slot].unk00 != 0) {
             func_00115878(slot);
-            KF_Effect_FreeForMap(slot);
-            KF_MapObject_UnloadMap(slot);
-            KF_Entity_FreeAllInGroup(slot);
-            KF_Entity_ClearMapSlot(slot);
-            KF_Gold_UnlinkMap(slot);
+            Effect_FreeForMap(slot);
+            MapObject_UnloadMap(slot);
+            Entity_FreeAllInGroup(slot);
+            Entity_ClearMapSlot(slot);
+            Gold_UnlinkMap(slot);
             func_001C8938(slot);
-            KF_LinkedPoint_ReleaseByKind(slot);
+            LinkedPoint_ReleaseByKind(slot);
         }
     }
     func_00117C60();
     func_001A15F8();
-    KF_Entity_ResetAllLists();
+    Entity_ResetAllLists();
     func_001BC128();
-    KF_Effect_FreePlayerMagic();
+    Effect_FreePlayerMagic();
     D_00446770 = 0;
     memset(D_0038CD20, 0, sizeof(D_0038CD20));
     memset(D_00446778, 0, sizeof(D_00446778));

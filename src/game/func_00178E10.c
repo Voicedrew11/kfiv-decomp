@@ -23,9 +23,9 @@ void func_00178E10(Entity *entity) {
         break;
     case 2:
         if (entity->model->unkFC->unk82 == 20) {
-            map_object = KF_MapObject_GetById(entity->group_id, unkE0->unk7C);
+            map_object = MapObject_GetById(entity->group_id, unkE0->unk7C);
             if (map_object != NULL) {
-                KF_MapObject_Signal(map_object, 1);
+                MapObject_Signal(map_object, 1);
             }
         }
         if ((s32)(entity->flags >> 34) & 1) {

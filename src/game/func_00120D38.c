@@ -8,7 +8,7 @@ void func_00120D38(MapObject *object) {
     s16 *handle = (s16 *)object->work;
 
     if (*handle >= 0) {
-        KF_LinkedPoint_ReleaseIndex(*handle);
+        LinkedPoint_ReleaseIndex(*handle);
         *handle = -1;
     }
 }

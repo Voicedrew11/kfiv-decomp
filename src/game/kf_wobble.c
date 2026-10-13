@@ -9,8 +9,8 @@ u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
 void func_00216B48(void *, void *, void *);
 void func_002168B8(int *, int *, int *, f32 *, f32 *, f32 *);
-void KF_Vu0_LoadMatrix(void *);
-void KF_Vu0_ProjectToScreen(int *, void *);
+void Vu0_LoadMatrix(void *);
+void Vu0_ProjectToScreen(int *, void *);
 float sinf(float);
 int rand(void);
 void srand(u32);
@@ -125,7 +125,7 @@ void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4)
         for (i = 0; i < part_count; i++, part++) {
             func_00216B48((int)matrix, (int *)model->unk40, (int)part);
             func_00216B48((int)matrix, (int *)D_004323E0, (int)matrix);
-            KF_Vu0_LoadMatrix(matrix);
+            Vu0_LoadMatrix(matrix);
             data_count = part->data_count;
             next = (ModelPartData *)(int)part->data_addr;
             for (j = 0; j < data_count; j++) {
@@ -186,10 +186,10 @@ void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4)
                     points[0][0] = vertex->x;
                     points[0][1] = vertex->y;
                     points[0][2] = vertex->z;
-                    KF_Vu0_ProjectToScreen(&out->x, points[0]);
+                    Vu0_ProjectToScreen(&out->x, points[0]);
                     out->z >>= 4;
                     WOBBLE(points[0], vertex[0]);
-                    KF_Vu0_ProjectToScreen(screens[0], points[0]);
+                    Vu0_ProjectToScreen(screens[0], points[0]);
                     if ((u32)out->z > 0xFFFF0 || ((out->x | out->y) & 0xFFFF0000)) {
                         flags |= 1;
                         out->flags |= 0x8000;

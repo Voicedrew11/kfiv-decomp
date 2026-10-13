@@ -9,7 +9,7 @@ float func_00194FB8(float);
 void func_00215850(ScriptMoveCommand *command) {
     Entity *target;
 
-    target = KF_Entity_GetBySpawnId(command->target_id.value);
+    target = Entity_GetBySpawnId(command->target_id.value);
     if (target != NULL && (target->flags & 0xF) == 3 && target->unk2C != 0) {
         ENTITY_MODEL(target)->rotation.x = func_00194FB8(ENTITY_MODEL(target)->rotation.x + command->x.value);
         ENTITY_MODEL(target)->rotation.y = func_00194FB8(ENTITY_MODEL(target)->rotation.y + command->y.value);

@@ -2,7 +2,7 @@
 
 extern const f32 D_00446FC4[];      /* -0.0f */
 
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 
 /* Drops a point straight up onto a triangle: finds where the upright line through `point` meets the
    triangle's plane, no more than 8192 above the point, and whether that is inside the triangle seen
@@ -69,7 +69,7 @@ void func_0020EE58(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point) {
     foot[1] = point[1] + denominator;
     foot[2] = point[2];
     COLLISION_RESULT->distance = denominator;
-    KF_Vector_Subtract(from_b, foot, corner_b);
+    Vector_Subtract(from_b, foot, corner_b);
     denominator = edge_c[0] * edge_a[2] - edge_c[2] * edge_a[0];
     weight_c = from_b[0] * edge_a[2] - from_b[2] * edge_a[0];
     weight_a = from_b[2] * edge_c[0] - from_b[0] * edge_c[2];

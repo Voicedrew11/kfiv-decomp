@@ -7,7 +7,7 @@ void func_001AF298(void *, void *);
 void func_001AF5B0(void *, void *);
 float func_001B0178(void *, void *);
 void func_001C1430(f32, void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 
 /* Steers the effect toward the entity it chases (pulled by gravity after radius_half) and moves it. */
@@ -18,7 +18,7 @@ void func_001AD318(EffectActor *actor) {
 
     motion = (FollowerMotion *)&actor->motion;
     if (motion->unk20 != 0) {
-        KF_Effect_Free(actor);
+        Effect_Free(actor);
         return;
     }
     func_001AEC48(actor);
@@ -29,7 +29,7 @@ void func_001AD318(EffectActor *actor) {
     }
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
         if (actor->unk6C != 0) {
-            KF_Vector_Subtract(&delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
+            Vector_Subtract(&delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
             delta.y -= ((Entity *)actor->unk6C)->height * 0.5f;
             func_001AFC88(&motion->velocity, &delta, motion->speed, actor->def->unkDC);
         }

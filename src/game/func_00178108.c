@@ -42,7 +42,7 @@ void func_00178108(Entity *entity) {
             entity->unkA0 = 20;
             func_0018DCD8(entity);
             if (entity->spawn_info->unk40 != 0) {
-                Entity *partner = KF_Entity_GetBySpawnId(entity->spawn_info->unk40);
+                Entity *partner = Entity_GetBySpawnId(entity->spawn_info->unk40);
 
                 if (partner != NULL && ((s32)partner->flags & 1)) {
                     func_0018DC40((char *)partner);

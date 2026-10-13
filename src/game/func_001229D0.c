@@ -11,7 +11,7 @@ void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 
 /* An angle brought back into -half_turn..half_turn. */
 static inline f32 func_001229D0_wrap_angle(f32 angle, f32 half_turn) {
@@ -53,7 +53,7 @@ void func_001229D0(MapTrigger *trigger) {
     // this point, which is what leaves the half_turn load in front of the call above
     do { } while (0);
     pivot = joint[1].unk40;
-    KF_Vector_Scale(pivot_back, pivot, -1.0f);
+    Vector_Scale(pivot_back, pivot, -1.0f);
     joint++;
     sceVu0TransMatrix(matrix, matrix, pivot_back);
     sceVu0RotMatrixX(matrix, matrix, func_001229D0_wrap_angle(joint->unk50, half_turn));

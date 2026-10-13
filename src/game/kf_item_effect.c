@@ -48,7 +48,7 @@ void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
 void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 
 static int item_effect_active;              /* 0x447388 nonzero while an effect runs */
 static int item_effect_kind;                /* 0x44738C the item kind (0x46..0x52) */
@@ -56,7 +56,7 @@ static int item_effect_step;                /* 0x447390 index into D_0042C190 */
 static ModelInstance *item_effect_model_a;  /* 0x447394 the small-item model */
 static ModelInstance *item_effect_model_b;  /* 0x447398 the large-item model */
 static ModelInstance *item_effect_model;    /* 0x44739C the model shown this time */
-static int item_effect_load_pad;            /* 0x4473A0 cleared in KF_ItemEffect_Load */
+static int item_effect_load_pad;            /* 0x4473A0 cleared in ItemEffect_Load */
 static ItemUseEffectDef *item_effect_def;   /* 0x4473A4 D_0042BBE0[kind] */
 static int item_effect_brightness;          /* 0x4473A8 model colour alpha while fading */
 static int item_effect_pending_effects;     /* 0x4473AC set until motion reaches def->unk08 */
@@ -72,7 +72,7 @@ static inline char *align16(char *address) {
 }
 
 /* Loads the two item-effect models, their motions and seven textures into D_00446F70. */
-void KF_ItemEffect_Load(void) {
+void ItemEffect_Load(void) {
     char name[0x100];
     char *model_data;
     char *buffer;
@@ -153,7 +153,7 @@ void KF_ItemEffect_Load(void) {
 }
 
 /* Clears the item use effect state. */
-int KF_ItemEffect_Reset(void) { // match: func_001000C8 only matches with it declared to return a value
+int ItemEffect_Reset(void) { // match: func_001000C8 only matches with it declared to return a value
     item_effect_active = 0;
     item_effect_kind = 0;
     item_effect_step = 0;
@@ -164,7 +164,7 @@ int KF_ItemEffect_Reset(void) { // match: func_001000C8 only matches with it dec
 }
 
 /* Starts the effect for item kind (0x46..0x52): places the model ahead of the camera and plays its motion. */
-void KF_ItemEffect_Start(int kind, int marked) {
+void ItemEffect_Start(int kind, int marked) {
     ModelInstance *model;
     int i;
 
@@ -196,7 +196,7 @@ void KF_ItemEffect_Start(int kind, int marked) {
     func_00108AC8(item_effect_model);
     item_effect_brightness = 0x80;
     func_0010E8E0(item_effect_model, 0x80, 0x80, 0x80, item_effect_brightness);
-    KF_Vector_Scale((float *)&item_effect_model->position, D_00420D00.unk10, 75.0f);
+    Vector_Scale((float *)&item_effect_model->position, D_00420D00.unk10, 75.0f);
     func_00216C48(&item_effect_model->position, &item_effect_model->position, D_00420D00.unk00);
     func_00216778(&item_effect_model->rotation, &D_00413F80.rotation);
     item_effect_model->unkE0 = item_effect_model->unkE4 = item_effect_model->unkE8 = 1.0f;
@@ -213,7 +213,7 @@ void KF_ItemEffect_Start(int kind, int marked) {
 }
 
 /* One frame of the running effect: runs the current step, then poses the model. */
-void KF_ItemEffect_Update(void) {
+void ItemEffect_Update(void) {
     Vector4 origin;
     PlayerItemDef *def;
     ModelPart *part;
@@ -231,8 +231,8 @@ void KF_ItemEffect_Update(void) {
     }
     if (item_effect_pending_effects != 0 && item_effect_model != NULL &&
         MODEL_CHANNEL(item_effect_model)->param >= item_effect_def->unk08) {
-        KF_Effect_StartSpawner(item_effect_def->unk0C, &origin, &origin, item_effect_model);
-        KF_Effect_StartSpawner(0x26A, &D_00413F80.position, &D_00413F80.rotation, item_effect_model);
+        Effect_StartSpawner(item_effect_def->unk0C, &origin, &origin, item_effect_model);
+        Effect_StartSpawner(0x26A, &D_00413F80.position, &D_00413F80.rotation, item_effect_model);
         def = &D_0041B9B8[D_00413F80.unk3C];
         item_effect_pending_effects = 0;
         if (D_00413F80.unk3D != 0 || def->unk42 != 0xFFFF ||
@@ -240,7 +240,7 @@ void KF_ItemEffect_Update(void) {
             D_00413F80.unkC0 = 5000;
         }
         if (item_effect_marked != 0) {
-            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x29);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x29);
             item_effect_marked = 0;
         }
     }
@@ -257,17 +257,17 @@ void KF_ItemEffect_Update(void) {
 }
 
 /* Item-effect step 0: asks the game for status 0xC5F and frees spawner 0x5D. */
-void KF_ItemEffect_StepRequestGameStatus(void) {
+void ItemEffect_StepRequestGameStatus(void) {
     if (D_0038CC50.unk30 == 0) {
         D_0038CC50.unk30 = 0xC5F;
         D_0038CC50.unk40 = item_effect_model;
         item_effect_step += 2;
-        KF_Effect_FreeSpawnersByParam(0x5D);
+        Effect_FreeSpawnersByParam(0x5D);
     }
 }
 
 /* Item-effect step 1: waits until the confirmation overlay flag is clear. */
-void KF_ItemEffect_StepWaitOverlay(void) {
+void ItemEffect_StepWaitOverlay(void) {
     if (D_004141D8[0] == 0) {
         D_0038CC50.unk30 = 0xC5F;
         D_0038CC50.unk40 = item_effect_model;
@@ -276,7 +276,7 @@ void KF_ItemEffect_StepWaitOverlay(void) {
 }
 
 /* Item-effect step 2: advances the model motion until the kind's first frame. */
-void KF_ItemEffect_StepPlayMotion(void) {
+void ItemEffect_StepPlayMotion(void) {
     func_00108AC8(item_effect_model);
     if (MODEL_CHANNEL(item_effect_model)->param >= item_effect_def->unk00) {
         item_effect_step++;
@@ -284,7 +284,7 @@ void KF_ItemEffect_StepPlayMotion(void) {
 }
 
 /* Item-effect step 3: fades the model out and clears the effect when done. */
-void KF_ItemEffect_StepFadeOut(void) {
+void ItemEffect_StepFadeOut(void) {
     int brightness;
 
     if (MODEL_CHANNEL(item_effect_model)->param <= 0 && item_effect_brightness <= 0) {
@@ -314,7 +314,7 @@ void KF_ItemEffect_StepFadeOut(void) {
 }
 
 /* Draws the item-effect model while the effect runs. */
-void KF_ItemEffect_Draw(void) {
+void ItemEffect_Draw(void) {
     if (item_effect_active != 0 && item_effect_step > 0 && item_effect_model != NULL) {
         func_0010B018(item_effect_model, 0, 0);
     }

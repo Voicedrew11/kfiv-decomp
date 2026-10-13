@@ -360,7 +360,7 @@ void func_001EA568(HandlerContext *context) {
     }
 
     current = D_00426110[0];
-    texts = KF_Message_GetFontText(D_00446F38);
+    texts = Message_GetFontText(D_00446F38);
     text_index = current->unk0C + 0x1F5; // match: the index is worked out apart from the load
     text_offset = ((s32 *)texts)[text_index];
     position.raw = 0x000A875083207080L;

@@ -27,15 +27,15 @@ void func_0020D9A8(void);
 typedef void (*TitleScreenInit)(void);
 
 static int (*screen_updates[4])(void) = { /* 0x42C1A0 */
-    KF_Title_UpdateLogos,
-    KF_Title_UpdatePressStart,
-    KF_Title_UpdateMenu,
+    Title_UpdateLogos,
+    Title_UpdatePressStart,
+    Title_UpdateMenu,
     NULL,
 };
 static TitleScreenInit screen_inits[4] = { /* 0x42C1B0 */
-    KF_Title_InitLogos,
-    (TitleScreenInit)KF_Title_InitPressStart,
-    (TitleScreenInit)KF_Title_InitMenu,
+    Title_InitLogos,
+    (TitleScreenInit)Title_InitPressStart,
+    (TitleScreenInit)Title_InitMenu,
     NULL,
 };
 static u64 sprite_blend_alpha[4] = { 0x48, 0x42, 0x44, 0x0A }; /* 0x42C1C0 GS ALPHA_1 by blend mode */
@@ -73,7 +73,7 @@ static TextureHeader *texture_cursor;                  /* 0x4473B4 where the nex
 static int texture_cursor_unused;                      /* 0x4473B8 never used by this code */
 static u32 *packet_cursor;                             /* 0x4473BC */
 static int packet_cursor_unused;                       /* 0x4473C0 never used by this code */
-static int (*current_screen_update)(void);             /* 0x4473C4 one frame of the screen shown; nonzero ends KF_Title_Run */
+static int (*current_screen_update)(void);             /* 0x4473C4 one frame of the screen shown; nonzero ends Title_Run */
 static int screen_timer;                               /* 0x4473C8 frames left on the screen, or of its fade-out */
 static int logo_phase;                                 /* 0x4473CC 0 while logo2 shows, then 1 for logo */
 static s8 press_start_fading_out;                      /* 0x4473D0 */
@@ -99,47 +99,47 @@ static BootSprite game_over_ok_sprite;                 /* 0x5FAF28 */
 static BootSprite game_over_sprite;                    /* 0x5FAF48 */
 
 /* Runs the title screens from `screen` (0 logos, 1 PRESS START, 2 menu) until one returns a result. */
-int KF_Title_Run(int screen) {
+int Title_Run(int screen) {
     int result;
 
-    KF_Title_Init();
+    Title_Init();
     current_screen_update = screen_updates[screen];
     screen_inits[screen]();
     do {
         result = current_screen_update();
-        KF_Title_SwapBuffers();
+        Title_SwapBuffers();
     } while (result == 0);
-    KF_Title_StopMusic();
+    Title_StopMusic();
     return result;
 }
 
 /* Sets up the display for the title screens and loads their thirteen textures. */
-int KF_Title_Init(void) {
+int Title_Init(void) {
     sceGsSyncV(0);
     sceGsResetGraph(0, 1, 2, 1);
     sceGsSetDefDBuff(&title_dbuff, 0, 640, 224, 3, 0, 1);
     title_dbuff.clear1.rgbaq = title_dbuff.clear0.rgbaq = 0x180000000;
-    ((int (*)(void))KF_Title_SwapBuffers)(); // match: called as if it returned a value, which keeps $2 busy
+    ((int (*)(void))Title_SwapBuffers)(); // match: called as if it returned a value, which keeps $2 busy
     texture_cursor = (TextureHeader *)D_00446F50;
-    KF_Title_LoadTexture("title\\logo.tm2", TITLE_TEXTURE_LOGO);
-    KF_Title_LoadTexture("title\\title_menu1.tm2", TITLE_TEXTURE_PRESS_START);
-    KF_Title_LoadTexture("title\\title_menu2.tm2", TITLE_TEXTURE_MENU_CHOICE + 0);
-    KF_Title_LoadTexture("title\\title_menu3.tm2", TITLE_TEXTURE_MENU_CHOICE + 1);
-    KF_Title_LoadTexture("title\\title_menu4.tm2", TITLE_TEXTURE_MENU_CHOICE + 2);
-    KF_Title_LoadTexture("title\\title_menu5.tm2", TITLE_TEXTURE_MENU_CHOICE + 3);
-    KF_Title_LoadTexture("title\\copy.tm2", TITLE_TEXTURE_COPYRIGHT);
-    KF_Title_LoadTexture("title\\title_logo1.tm2", TITLE_TEXTURE_TITLE_LOGO_LEFT);
-    KF_Title_LoadTexture("title\\title_logo2.tm2", TITLE_TEXTURE_TITLE_LOGO_RIGHT);
-    KF_Title_LoadTexture("title\\itimaie_00.tm2", TITLE_TEXTURE_PICTURE_LEFT);
-    KF_Title_LoadTexture("title\\itimaie_01.tm2", TITLE_TEXTURE_PICTURE_MIDDLE);
-    KF_Title_LoadTexture("title\\itimaie_02.tm2", TITLE_TEXTURE_PICTURE_RIGHT);
-    KF_Title_LoadTexture("title\\logo2.tm2", TITLE_TEXTURE_LOGO2);
+    Title_LoadTexture("title\\logo.tm2", TITLE_TEXTURE_LOGO);
+    Title_LoadTexture("title\\title_menu1.tm2", TITLE_TEXTURE_PRESS_START);
+    Title_LoadTexture("title\\title_menu2.tm2", TITLE_TEXTURE_MENU_CHOICE + 0);
+    Title_LoadTexture("title\\title_menu3.tm2", TITLE_TEXTURE_MENU_CHOICE + 1);
+    Title_LoadTexture("title\\title_menu4.tm2", TITLE_TEXTURE_MENU_CHOICE + 2);
+    Title_LoadTexture("title\\title_menu5.tm2", TITLE_TEXTURE_MENU_CHOICE + 3);
+    Title_LoadTexture("title\\copy.tm2", TITLE_TEXTURE_COPYRIGHT);
+    Title_LoadTexture("title\\title_logo1.tm2", TITLE_TEXTURE_TITLE_LOGO_LEFT);
+    Title_LoadTexture("title\\title_logo2.tm2", TITLE_TEXTURE_TITLE_LOGO_RIGHT);
+    Title_LoadTexture("title\\itimaie_00.tm2", TITLE_TEXTURE_PICTURE_LEFT);
+    Title_LoadTexture("title\\itimaie_01.tm2", TITLE_TEXTURE_PICTURE_MIDDLE);
+    Title_LoadTexture("title\\itimaie_02.tm2", TITLE_TEXTURE_PICTURE_RIGHT);
+    Title_LoadTexture("title\\logo2.tm2", TITLE_TEXTURE_LOGO2);
     func_0020D9A8();
     return 0;
 }
 
 /* Loads a texture file of the title screens to the free memory at texture_cursor. */
-void KF_Title_LoadTexture(char *name, int index) {
+void Title_LoadTexture(char *name, int index) {
     int file;
     int size;
 
@@ -152,7 +152,7 @@ void KF_Title_LoadTexture(char *name, int index) {
 }
 
 /* Sends a texture of the title screens to GS memory, and its palette when it has 8-bit pixels. */
-int KF_Title_UploadTexture(int index) {
+int Title_UploadTexture(int index) {
     sceGsLoadImage load_image;
     int width;
     int height;
@@ -177,7 +177,7 @@ int KF_Title_UploadTexture(int index) {
     return 0;
 }
 
-void KF_Title_SetSprite(int texture, int pos_x, int pos_y, int width, int height, BootSprite *sprite,
+void Title_SetSprite(int texture, int pos_x, int pos_y, int width, int height, BootSprite *sprite,
                         BootSpriteTrack *track) {
     sprite->track = track;
     sprite->texture = texture;
@@ -190,12 +190,12 @@ void KF_Title_SetSprite(int texture, int pos_x, int pos_y, int width, int height
 
 /* Draws a sprite of the title screens: sends its texture, then a sprite packet (BootSpritePacket) written through
    packet_cursor. Its brightness is the track's value at the sprite's frame, times scale. */
-int KF_Title_DrawSprite(float scale, BootSprite *sprite, int blend) {
+int Title_DrawSprite(float scale, BootSprite *sprite, int blend) {
     int alpha;
     int next;
     int i;
 
-    KF_Title_UploadTexture(sprite->texture);
+    Title_UploadTexture(sprite->texture);
     for (i = 3; i >= 0; i--) {
         if (sprite->frame >= sprite->track->key_frames[i]) {
             // match: at the last key, key_frames[next] and key_values[next] are past their arrays (the ratio is 0 there)
@@ -237,7 +237,7 @@ int KF_Title_DrawSprite(float scale, BootSprite *sprite, int blend) {
     *packet_cursor++ = 0xFFFF;
     *packet_cursor++ = 0;
     *packet_cursor++ = 0;
-    KF_Title_SendPacket((u32)sprite_packet, (u32)(packet_cursor - (u32 *)sprite_packet) / 4);
+    Title_SendPacket((u32)sprite_packet, (u32)(packet_cursor - (u32 *)sprite_packet) / 4);
     sprite->frame++;
     if (sprite->track->length < sprite->frame) {
         sprite->frame = 0;
@@ -246,7 +246,7 @@ int KF_Title_DrawSprite(float scale, BootSprite *sprite, int blend) {
 }
 
 /* Sends a packet to the GS through DMA channel 2 and waits for it. */
-int KF_Title_SendPacket(u32 packet, u32 qword_count) {
+int Title_SendPacket(u32 packet, u32 qword_count) {
     FlushCache(0);
     while (*D2_CHCR & 0x100);
     *D2_QWC = qword_count;
@@ -257,7 +257,7 @@ int KF_Title_SendPacket(u32 packet, u32 qword_count) {
 }
 
 /* Waits for the vertical blank and shows the frame just drawn. */
-void KF_Title_SwapBuffers(void) {
+void Title_SwapBuffers(void) {
     int odd_field = !sceGsSyncV(0);
 
     sceGsSetHalfOffset(display_buffer_index == 1 ? &title_dbuff.draw1 : &title_dbuff.draw0, 0x800, 0x800, odd_field);
@@ -267,7 +267,7 @@ void KF_Title_SwapBuffers(void) {
 }
 
 /* Starts the title music stream, TITLE.ADS, unless it is already playing. */
-void KF_Title_PlayMusic(void) {
+void Title_PlayMusic(void) {
     if (func_001CBAE0(1, 0x3090, 0) == 0) {
         func_001CED78(0, "cdrom0:\\DATA\\TITLE.ADS;1", 0x10000);
         do {
@@ -277,27 +277,27 @@ void KF_Title_PlayMusic(void) {
 }
 
 /* Stops the title music stream. */
-void KF_Title_StopMusic(void) {
+void Title_StopMusic(void) {
     func_001CBAE0(1, 0x3050, 0);
     func_001CBAE0(1, 0x3030, 0);
 }
 
 /* Sets up the logo screen: logo2, then logo, for LOGO_FRAMES each. */
-void KF_Title_InitLogos(void) {
+void Title_InitLogos(void) {
     screen_timer = LOGO_FRAMES;
-    KF_Title_SetSprite(TITLE_TEXTURE_LOGO, -0x100, -0x20, 0x200, 0x40, &logo_sprite, &logo_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_LOGO2, -0x100, -0x80, 0x200, 0x100, &logo2_sprite, &logo2_track);
+    Title_SetSprite(TITLE_TEXTURE_LOGO, -0x100, -0x20, 0x200, 0x40, &logo_sprite, &logo_track);
+    Title_SetSprite(TITLE_TEXTURE_LOGO2, -0x100, -0x80, 0x200, 0x100, &logo2_sprite, &logo2_track);
     logo_phase = 0;
 }
 
 /* One frame of the logo screen; after both logos, or on START, goes on to PRESS START. */
-int KF_Title_UpdateLogos(void) {
+int Title_UpdateLogos(void) {
     PadReport *report;
     int phase;
 
     screen_timer--;
-    KF_Pad_Update();
-    report = KF_Pad_GetReport(0, 0);
+    Pad_Update();
+    report = Pad_GetReport(0, 0);
     phase = logo_phase;
     if (phase == 0 && screen_timer <= 0) {
         phase = 1;
@@ -305,44 +305,44 @@ int KF_Title_UpdateLogos(void) {
         logo_phase = 1;
     }
     if (phase == 0) {
-        KF_Title_DrawSprite(1.0f, &logo2_sprite, 0);
+        Title_DrawSprite(1.0f, &logo2_sprite, 0);
     } else {
-        KF_Title_DrawSprite(1.0f, &logo_sprite, 0);
+        Title_DrawSprite(1.0f, &logo_sprite, 0);
     }
     // match: retail returns early here rather than guarding the switch below
     if (!((report->pressed & PAD_START) || (screen_timer <= 0 && logo_phase == 1))) {
         return 0;
     }
-    current_screen_update = KF_Title_UpdatePressStart;
-    KF_Title_InitPressStart();
+    current_screen_update = Title_UpdatePressStart;
+    Title_InitPressStart();
     return 0;
 }
 
 /* Sets up the seven sprites of the PRESS START screen and starts the title music. */
-int KF_Title_InitPressStart(void) {
+int Title_InitPressStart(void) {
     screen_timer = PRESS_START_FRAMES;
-    KF_Title_SetSprite(TITLE_TEXTURE_PRESS_START, -0x80, 0x40, 0x100, 0x40, &press_start_sprite, &press_start_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_COPYRIGHT, -0x140, 0xB4, 0x280, 0x20, &copyright_sprite, &copyright_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_TITLE_LOGO_LEFT, -0x100, -0xC0, 0x100, 0x100, &title_logo_left_sprite, &title_logo_left_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_TITLE_LOGO_RIGHT, 0, -0xC0, 0x100, 0x100, &title_logo_right_sprite, &title_logo_right_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_PICTURE_LEFT, -0x140, -0xE0, 0x100, 0x200, &picture_left_sprite, &picture_left_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_PICTURE_MIDDLE, -0x40, -0xE0, 0x100, 0x200, &picture_middle_sprite, &picture_middle_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_PICTURE_RIGHT, 0xC0, -0xE0, 0x80, 0x200, &picture_right_sprite, &picture_right_track);
+    Title_SetSprite(TITLE_TEXTURE_PRESS_START, -0x80, 0x40, 0x100, 0x40, &press_start_sprite, &press_start_track);
+    Title_SetSprite(TITLE_TEXTURE_COPYRIGHT, -0x140, 0xB4, 0x280, 0x20, &copyright_sprite, &copyright_track);
+    Title_SetSprite(TITLE_TEXTURE_TITLE_LOGO_LEFT, -0x100, -0xC0, 0x100, 0x100, &title_logo_left_sprite, &title_logo_left_track);
+    Title_SetSprite(TITLE_TEXTURE_TITLE_LOGO_RIGHT, 0, -0xC0, 0x100, 0x100, &title_logo_right_sprite, &title_logo_right_track);
+    Title_SetSprite(TITLE_TEXTURE_PICTURE_LEFT, -0x140, -0xE0, 0x100, 0x200, &picture_left_sprite, &picture_left_track);
+    Title_SetSprite(TITLE_TEXTURE_PICTURE_MIDDLE, -0x40, -0xE0, 0x100, 0x200, &picture_middle_sprite, &picture_middle_track);
+    Title_SetSprite(TITLE_TEXTURE_PICTURE_RIGHT, 0xC0, -0xE0, 0x80, 0x200, &picture_right_sprite, &picture_right_track);
     press_start_fading_out = FALSE;
-    KF_Title_PlayMusic();
+    Title_PlayMusic();
     return 0;
 }
 
 /* One frame of the PRESS START screen: it fades in over 30 frames and out over the last 30, then the
    logos return; START goes on to the menu. */
-int KF_Title_UpdatePressStart(void) {
+int Title_UpdatePressStart(void) {
     PadReport *pad;
     f32 brightness;
 
     screen_timer--;
-    KF_Pad_Update();
+    Pad_Update();
     brightness = 1.0f;
-    pad = KF_Pad_GetReport(0, 0);
+    pad = Pad_GetReport(0, 0);
     if (screen_timer > PRESS_START_FRAMES - TITLE_FADE_FRAMES) {
         brightness = (3600.0f - screen_timer) / 30.0f;
     }
@@ -350,40 +350,40 @@ int KF_Title_UpdatePressStart(void) {
         press_start_fading_out = TRUE;
         brightness = screen_timer / 30.0f;
         if (screen_timer <= 0) {
-            current_screen_update = KF_Title_UpdateLogos;
-            KF_Title_StopMusic();
-            KF_Title_InitLogos();
+            current_screen_update = Title_UpdateLogos;
+            Title_StopMusic();
+            Title_InitLogos();
             return 0;
         }
     }
-    KF_Title_DrawSprite(brightness, &picture_left_sprite, 2);
-    KF_Title_DrawSprite(brightness, &picture_middle_sprite, 2);
-    KF_Title_DrawSprite(brightness, &picture_right_sprite, 2);
-    KF_Title_DrawSprite(brightness, &press_start_sprite, 0);
-    KF_Title_DrawSprite(brightness, &copyright_sprite, 0);
-    KF_Title_DrawSprite(brightness, &title_logo_left_sprite, 2);
-    KF_Title_DrawSprite(brightness, &title_logo_right_sprite, 2);
+    Title_DrawSprite(brightness, &picture_left_sprite, 2);
+    Title_DrawSprite(brightness, &picture_middle_sprite, 2);
+    Title_DrawSprite(brightness, &picture_right_sprite, 2);
+    Title_DrawSprite(brightness, &press_start_sprite, 0);
+    Title_DrawSprite(brightness, &copyright_sprite, 0);
+    Title_DrawSprite(brightness, &title_logo_left_sprite, 2);
+    Title_DrawSprite(brightness, &title_logo_right_sprite, 2);
     if (press_start_fading_out == FALSE && (pad->pressed & PAD_START)) {
-        current_screen_update = KF_Title_UpdateMenu;
-        KF_Title_InitMenu();
+        current_screen_update = Title_UpdateMenu;
+        Title_InitMenu();
     }
     return 0;
 }
 
 /* Sets up the sprites of the menu: four choices in a column, the one func_001E4068 returns pulsing. */
-int KF_Title_InitMenu(void) {
+int Title_InitMenu(void) {
     int i;
 
-    KF_Title_SetSprite(TITLE_TEXTURE_TITLE_LOGO_LEFT, -0x100, -0xC0, 0x100, 0x100, &title_logo_left_sprite, &title_logo_left_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_TITLE_LOGO_RIGHT, 0, -0xC0, 0x100, 0x100, &title_logo_right_sprite, &title_logo_right_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_MENU_CHOICE + 0, -0x80, 0x20, 0x100, 0x40, &menu_choice_sprites[0], &menu_choice_tracks[0]);
-    KF_Title_SetSprite(TITLE_TEXTURE_MENU_CHOICE + 1, -0x80, 0x40, 0x100, 0x40, &menu_choice_sprites[1], &menu_choice_tracks[1]);
-    KF_Title_SetSprite(TITLE_TEXTURE_MENU_CHOICE + 2, -0x80, 0x60, 0x100, 0x40, &menu_choice_sprites[2], &menu_choice_tracks[2]);
-    KF_Title_SetSprite(TITLE_TEXTURE_MENU_CHOICE + 3, -0x80, 0x80, 0x100, 0x40, &menu_choice_sprites[3], &menu_choice_tracks[3]);
-    KF_Title_SetSprite(TITLE_TEXTURE_COPYRIGHT, -0x140, 0xB4, 0x280, 0x20, &copyright_sprite, &copyright_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_PICTURE_LEFT, -0x140, -0xE0, 0x100, 0x200, &picture_left_sprite, &picture_left_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_PICTURE_MIDDLE, -0x40, -0xE0, 0x100, 0x200, &picture_middle_sprite, &picture_middle_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_PICTURE_RIGHT, 0xC0, -0xE0, 0x80, 0x200, &picture_right_sprite, &picture_right_track);
+    Title_SetSprite(TITLE_TEXTURE_TITLE_LOGO_LEFT, -0x100, -0xC0, 0x100, 0x100, &title_logo_left_sprite, &title_logo_left_track);
+    Title_SetSprite(TITLE_TEXTURE_TITLE_LOGO_RIGHT, 0, -0xC0, 0x100, 0x100, &title_logo_right_sprite, &title_logo_right_track);
+    Title_SetSprite(TITLE_TEXTURE_MENU_CHOICE + 0, -0x80, 0x20, 0x100, 0x40, &menu_choice_sprites[0], &menu_choice_tracks[0]);
+    Title_SetSprite(TITLE_TEXTURE_MENU_CHOICE + 1, -0x80, 0x40, 0x100, 0x40, &menu_choice_sprites[1], &menu_choice_tracks[1]);
+    Title_SetSprite(TITLE_TEXTURE_MENU_CHOICE + 2, -0x80, 0x60, 0x100, 0x40, &menu_choice_sprites[2], &menu_choice_tracks[2]);
+    Title_SetSprite(TITLE_TEXTURE_MENU_CHOICE + 3, -0x80, 0x80, 0x100, 0x40, &menu_choice_sprites[3], &menu_choice_tracks[3]);
+    Title_SetSprite(TITLE_TEXTURE_COPYRIGHT, -0x140, 0xB4, 0x280, 0x20, &copyright_sprite, &copyright_track);
+    Title_SetSprite(TITLE_TEXTURE_PICTURE_LEFT, -0x140, -0xE0, 0x100, 0x200, &picture_left_sprite, &picture_left_track);
+    Title_SetSprite(TITLE_TEXTURE_PICTURE_MIDDLE, -0x40, -0xE0, 0x100, 0x200, &picture_middle_sprite, &picture_middle_track);
+    Title_SetSprite(TITLE_TEXTURE_PICTURE_RIGHT, 0xC0, -0xE0, 0x80, 0x200, &picture_right_sprite, &picture_right_track);
     menu_choice = func_001E4068();
     menu_confirmed = FALSE;
     for (i = 0; i < 4; i++) {
@@ -393,24 +393,24 @@ int KF_Title_InitMenu(void) {
             menu_choice_tracks[i].length = 0;
         }
     }
-    KF_Title_PlayMusic();
-    KF_Pad_Update();
-    KF_Pad_GetReport(0, 0);
+    Title_PlayMusic();
+    Pad_Update();
+    Pad_GetReport(0, 0);
     return 0;
 }
 
 /* One frame of the menu: moves the choice with the pad, and once one is confirmed
    fades the screen out and returns the choice plus one. Returns 0 until then. */
-int KF_Title_UpdateMenu(void) {
+int Title_UpdateMenu(void) {
     f32 brightness;
     PadReport *report;
     u16 stick;
     u16 stick_pressed;
     int i;
 
-    KF_Pad_Update();
+    Pad_Update();
     brightness = 1.0f;
-    report = KF_Pad_GetReport(0, 0);
+    report = Pad_GetReport(0, 0);
     // match: pressed is read through the union below, so that the reads alias the stores
     stick = (report->left_stick_y > 0x3FU) ? 0 : PAD_UP;
     if (report->left_stick_y > 0xC0) {
@@ -440,51 +440,51 @@ int KF_Title_UpdateMenu(void) {
         menu_choice_sprites[menu_choice].frame = 60;
         menu_choice_tracks[menu_choice].length = 120;
     }
-    KF_Title_DrawSprite(brightness, &picture_left_sprite, 2);
-    KF_Title_DrawSprite(brightness, &picture_middle_sprite, 2);
-    KF_Title_DrawSprite(brightness, &picture_right_sprite, 2);
-    KF_Title_DrawSprite(brightness, &title_logo_left_sprite, 2);
-    KF_Title_DrawSprite(brightness, &title_logo_right_sprite, 2);
+    Title_DrawSprite(brightness, &picture_left_sprite, 2);
+    Title_DrawSprite(brightness, &picture_middle_sprite, 2);
+    Title_DrawSprite(brightness, &picture_right_sprite, 2);
+    Title_DrawSprite(brightness, &title_logo_left_sprite, 2);
+    Title_DrawSprite(brightness, &title_logo_right_sprite, 2);
     for (i = 0; i < 4; i++) {
-        KF_Title_DrawSprite(brightness, &menu_choice_sprites[i], 0);
+        Title_DrawSprite(brightness, &menu_choice_sprites[i], 0);
     }
-    KF_Title_DrawSprite(brightness, &copyright_sprite, 0);
+    Title_DrawSprite(brightness, &copyright_sprite, 0);
     return 0;
 }
 
 /* Runs the game-over screen until a choice is confirmed; returns 1 for load, 2 for quit. */
-int KF_Title_RunGameOver(void) {
+int Title_RunGameOver(void) {
     int result;
 
-    KF_Title_InitGameOver();
+    Title_InitGameOver();
     do {
-        result = KF_Title_UpdateGameOver();
-        KF_Title_SwapBuffers();
+        result = Title_UpdateGameOver();
+        Title_SwapBuffers();
     } while (result == 0);
     return result;
 }
 
 /* Sets up the game-over screen: its frame buffers, its four textures and its sprites. */
-int KF_Title_InitGameOver(void) {
+int Title_InitGameOver(void) {
     int i;
 
     sceGsSyncV(0);
     sceGsResetGraph(0, 1, 2, 1);
     sceGsSetDefDBuff(&title_dbuff, 0, 640, 224, 3, 0, 1);
     title_dbuff.clear1.rgbaq = title_dbuff.clear0.rgbaq = 0x180000000L;
-    ((int (*)(void))KF_Title_SwapBuffers)(); // match: called as if it returned a value, which keeps $2 busy
+    ((int (*)(void))Title_SwapBuffers)(); // match: called as if it returned a value, which keeps $2 busy
     texture_cursor = (TextureHeader *)D_00446F50;
-    KF_Title_LoadTexture("title\\gameover_load.tm2", TITLE_TEXTURE_GAME_OVER_LOAD);
-    KF_Title_LoadTexture("title\\gameover_quit.tm2", TITLE_TEXTURE_GAME_OVER_QUIT);
-    KF_Title_LoadTexture("title\\gameover_ok.tm2", TITLE_TEXTURE_GAME_OVER_OK);
-    KF_Title_LoadTexture("title\\gameover.tm2", TITLE_TEXTURE_GAME_OVER);
+    Title_LoadTexture("title\\gameover_load.tm2", TITLE_TEXTURE_GAME_OVER_LOAD);
+    Title_LoadTexture("title\\gameover_quit.tm2", TITLE_TEXTURE_GAME_OVER_QUIT);
+    Title_LoadTexture("title\\gameover_ok.tm2", TITLE_TEXTURE_GAME_OVER_OK);
+    Title_LoadTexture("title\\gameover.tm2", TITLE_TEXTURE_GAME_OVER);
     func_0020D9A8();
     game_over_choice = 0;
     game_over_confirmed = FALSE;
-    KF_Title_SetSprite(TITLE_TEXTURE_GAME_OVER_LOAD, -0x80, -0x30, 0x100, 0x40, &game_over_choice_sprites[0], &game_over_choice_tracks[0]);
-    KF_Title_SetSprite(TITLE_TEXTURE_GAME_OVER_QUIT, -0x80, -0x10, 0x100, 0x40, &game_over_choice_sprites[1], &game_over_choice_tracks[1]);
-    KF_Title_SetSprite(TITLE_TEXTURE_GAME_OVER_OK, -0x40, 0x94, 0x80, 0x40, &game_over_ok_sprite, &game_over_ok_track);
-    KF_Title_SetSprite(TITLE_TEXTURE_GAME_OVER, -0x80, -0x80, 0x100, 0x100, &game_over_sprite, &game_over_track);
+    Title_SetSprite(TITLE_TEXTURE_GAME_OVER_LOAD, -0x80, -0x30, 0x100, 0x40, &game_over_choice_sprites[0], &game_over_choice_tracks[0]);
+    Title_SetSprite(TITLE_TEXTURE_GAME_OVER_QUIT, -0x80, -0x10, 0x100, 0x40, &game_over_choice_sprites[1], &game_over_choice_tracks[1]);
+    Title_SetSprite(TITLE_TEXTURE_GAME_OVER_OK, -0x40, 0x94, 0x80, 0x40, &game_over_ok_sprite, &game_over_ok_track);
+    Title_SetSprite(TITLE_TEXTURE_GAME_OVER, -0x80, -0x80, 0x100, 0x100, &game_over_sprite, &game_over_track);
     for (i = 0; i < 2; i++) {
         if (game_over_choice == i) {
             game_over_choice_tracks[i].length = 120;
@@ -492,23 +492,23 @@ int KF_Title_InitGameOver(void) {
             game_over_choice_tracks[i].length = 0;
         }
     }
-    KF_Pad_Update();
-    KF_Pad_GetReport(0, 0);
+    Pad_Update();
+    Pad_GetReport(0, 0);
     return 0;
 }
 
 /* One frame of the game-over screen: moves the choice with the pad, and once one is confirmed
    fades the screen out and returns the choice plus one. Returns 0 until then. */
-int KF_Title_UpdateGameOver(void) {
+int Title_UpdateGameOver(void) {
     f32 brightness;
     PadReport *report;
     u16 stick;
     u16 stick_pressed;
     int i;
 
-    KF_Pad_Update();
+    Pad_Update();
     brightness = 1.0f;
-    report = KF_Pad_GetReport(0, 0);
+    report = Pad_GetReport(0, 0);
     stick = (report->left_stick_y > 0x3FU) ? 0 : PAD_UP;
     if (report->left_stick_y > 0xC0) {
         stick |= PAD_DOWN;
@@ -541,10 +541,10 @@ int KF_Title_UpdateGameOver(void) {
         game_over_choice_tracks[game_over_choice].length = 120;
     }
     for (i = 0; i < 2; i++) {
-        KF_Title_DrawSprite(brightness, &game_over_choice_sprites[i], 0);
+        Title_DrawSprite(brightness, &game_over_choice_sprites[i], 0);
     }
-    KF_Title_DrawSprite(brightness, &game_over_sprite, 0);
-    KF_Title_DrawSprite(brightness, &game_over_ok_sprite, 0);
+    Title_DrawSprite(brightness, &game_over_sprite, 0);
+    Title_DrawSprite(brightness, &game_over_ok_sprite, 0);
     func_001CEBE0();
     return 0;
 }

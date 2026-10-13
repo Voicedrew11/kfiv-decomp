@@ -73,15 +73,15 @@ int func_001005E8(int arg) {
         func_0010A7E0(D_004323E0);
         func_0010AE58();
         func_00114198(0);
-        KF_MapObject_DrawAll(0, 0, 0);
+        MapObject_DrawAll(0, 0, 0);
         func_0019A608();
-        KF_Entity_DrawAll(0);
+        Entity_DrawAll(0);
         func_001C9650(0);
-        KF_ItemEffect_Draw();
-        KF_Gold_Draw(0);
+        ItemEffect_Draw();
+        Gold_Draw(0);
         func_0010AE58();
         func_00114528(0);
-        KF_Effect_DrawAll(0);
+        Effect_DrawAll(0);
         func_0010B140(0, 0);
         func_001012D8(0, 2);
         func_0010A7E0(D_004323E0);
@@ -97,13 +97,13 @@ int func_001005E8(int arg) {
         func_0010A7E0(D_004323E0);
         func_0010AE58();
         func_00114198(1);
-        KF_MapObject_DrawAll(1, 0, 0);
-        KF_Entity_DrawAll(1);
+        MapObject_DrawAll(1, 0, 0);
+        Entity_DrawAll(1);
         func_001C9650(1);
-        KF_Gold_Draw(1);
+        Gold_Draw(1);
         func_00114528(1);
         func_0010AE58();
-        KF_Effect_DrawAll(1);
+        Effect_DrawAll(1);
         func_0010B140(0, 1);
         func_00109EB8();
         func_001012D8(0, 1);
@@ -115,15 +115,15 @@ int func_001005E8(int arg) {
         func_0010A7E0(D_004323E0);
         func_0010AE58();
         func_00114198(0);
-        KF_MapObject_DrawAll(0, 0, 0);
+        MapObject_DrawAll(0, 0, 0);
         func_0019A608();
-        KF_Entity_DrawAll(0);
+        Entity_DrawAll(0);
         func_001C9650(0);
-        KF_ItemEffect_Draw();
-        KF_Gold_Draw(0);
+        ItemEffect_Draw();
+        Gold_Draw(0);
         func_0010AE58();
         func_00114528(0);
-        KF_Effect_DrawAll(0);
+        Effect_DrawAll(0);
         func_0010B140(0, 0);
         func_001012D8(0, 2);
         func_0010A7E0(D_004323E0);
@@ -141,14 +141,14 @@ int func_001005E8(int arg) {
         func_0010A7E0(D_004323E0);
         func_0010AE58();
         func_00114198(2);
-        KF_MapObject_DrawAll(1, 0, 0);
-        KF_Entity_DrawAll(1);
+        MapObject_DrawAll(1, 0, 0);
+        Entity_DrawAll(1);
         func_001C9650(1);
-        KF_ItemEffect_Draw();
-        KF_Gold_Draw(1);
+        ItemEffect_Draw();
+        Gold_Draw(1);
         func_0010AE58();
         func_00114528(2);
-        KF_Effect_DrawAll(1);
+        Effect_DrawAll(1);
         func_0010B140(0, 1);
         func_00109EB8();
         func_001012D8(1, 1);
@@ -161,14 +161,14 @@ int func_001005E8(int arg) {
         func_0010A7E0(D_004323E0);
         func_0010AE58();
         func_00114198(0);
-        KF_MapObject_DrawAll(0, 0, 0);
+        MapObject_DrawAll(0, 0, 0);
         func_0019A608();
-        KF_Entity_DrawAll(0);
+        Entity_DrawAll(0);
         func_001C9650(0);
-        KF_Gold_Draw(0);
+        Gold_Draw(0);
         func_0010AE58();
         func_00114528(0);
-        KF_Effect_DrawAll(0);
+        Effect_DrawAll(0);
         func_0010B140(0, 0);
         func_001012D8(0, 2);
         func_0010A7E0(D_004323E0);
@@ -220,11 +220,11 @@ int func_001005E8(int arg) {
     }
     func_0010A698();
     if (tinted) {
-        KF_Effect_UploadTextures();
+        Effect_UploadTextures();
     }
     func_0010B140(3, 0);
-    KF_Player_DrawArm();
-    KF_Player_DrawScreenTints();
+    Player_DrawArm();
+    Player_DrawScreenTints();
     if ((s32)(D_00413F80.unk1C8 >> 39) & 1) {
         if (D_0038CD20[D_00446770].tag == 0x23 && D_00349F56[0] == 0) {
             func_0010A4E8(0x40, 0x80, 0x40, 0x78, 0x44);
@@ -232,15 +232,15 @@ int func_001005E8(int arg) {
             func_00107E70(0x5E, 0x87, 0x92);
         }
     }
-    KF_Hud_Draw();
+    Hud_Draw();
     if (D_0038A1B0.unk78 > 0) {
         // match: the last argument is passed as the 64-bit word
         ((void (*)(int, int, int, int, s64))func_0010A4E8)(D_0038A1B0.unk6C, D_0038A1B0.unk70, D_0038A1B0.unk74,
                                                              D_0038A1B0.unk78, D_0038A1B0.unk80);
     }
     func_00106208();
-    KF_Splash_Draw();
-    if (KF_Message_IsBoxOpen() != 0) {
+    Splash_Draw();
+    if (Message_IsBoxOpen() != 0) {
         if (D_00446708 < 0x40) {
             D_00446708 += 0x10;
             if (D_00446708 > 0x40) {
@@ -256,10 +256,10 @@ int func_001005E8(int arg) {
     if (D_00446708 != 0) {
         func_0010A4E8(0, 0, 0, D_00446708, 0x44);
     }
-    KF_Message_Update();
+    Message_Update();
     if (D_0038CC50.paused) {
         func_0010A4E8(0, 0, 0, 0x40, 0x44);
-        KF_Hud_DrawPaused();
+        Hud_DrawPaused();
     }
     func_00107CD8(D_00349680[10]);
     func_001095D8();

@@ -4,8 +4,8 @@ int func_001C2D08(void *);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 void func_001883E0(void *, void *, void *, void *, f32);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void sceVu0Normalize(float *, float *);
 
 /* Pushes a sphere out of every triangle of the owner's mesh it touches; leaves the summed
@@ -43,10 +43,10 @@ void func_0018A628(CollisionOwner *owner, void *centre, f32 radius) {
             func_001883E0(point[0].position, point[1].position, point[2].position, position, radius);
             if (COLLISION_RESULT->hit != 0) {
                 hit_floor = TRUE;
-                KF_Vector_Subtract(offset, position, COLLISION_RESULT);
+                Vector_Subtract(offset, position, COLLISION_RESULT);
                 sceVu0Normalize(offset, offset);
                 func_00216C48(normal_sum, normal_sum, offset);
-                KF_Vector_Scale(offset, offset, radius);
+                Vector_Scale(offset, offset, radius);
                 func_00216C48(position, COLLISION_RESULT, offset);
             }
             point++;
@@ -62,10 +62,10 @@ void func_0018A628(CollisionOwner *owner, void *centre, f32 radius) {
             func_001883E0(point[0].position, point[1].position, point[2].position, position, radius);
             if (COLLISION_RESULT->hit != 0) {
                 hit_unk18 = TRUE;
-                KF_Vector_Subtract(offset, position, COLLISION_RESULT);
+                Vector_Subtract(offset, position, COLLISION_RESULT);
                 sceVu0Normalize(offset, offset);
                 func_00216C48(normal_sum, normal_sum, offset);
-                KF_Vector_Scale(offset, offset, radius);
+                Vector_Scale(offset, offset, radius);
                 func_00216C48(position, COLLISION_RESULT, offset);
             }
             point++;
@@ -81,10 +81,10 @@ void func_0018A628(CollisionOwner *owner, void *centre, f32 radius) {
             func_001883E0(point[0].position, point[1].position, point[2].position, position, radius);
             if (COLLISION_RESULT->hit != 0) {
                 hit_unk20 = TRUE;
-                KF_Vector_Subtract(offset, position, COLLISION_RESULT);
+                Vector_Subtract(offset, position, COLLISION_RESULT);
                 sceVu0Normalize(offset, offset);
                 func_00216C48(normal_sum, normal_sum, offset);
-                KF_Vector_Scale(offset, offset, radius);
+                Vector_Scale(offset, offset, radius);
                 func_00216C48(position, COLLISION_RESULT, offset);
             }
             point++;

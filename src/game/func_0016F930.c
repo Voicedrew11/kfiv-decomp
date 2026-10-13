@@ -12,7 +12,7 @@ s32 func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_00195898(char *, u8);
 void func_001958B8(char *, void (*)(void), int);
 void func_00195588(f32 *, f32);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_0016F348(Entity *);
 
 void func_0016F930(Entity *entity) {
@@ -109,7 +109,7 @@ void func_0016F930(Entity *entity) {
     }
     unkE0->unk68++;
     func_00195588(direction, entity->model->unkD0[1]);
-    KF_Vector_Scale(direction, direction, unkE0->unk4C);
+    Vector_Scale(direction, direction, unkE0->unk4C);
     entity->unk84 += direction[0];
     entity->unk88 += unkE0->unk48;
     entity->unk8C += direction[2];

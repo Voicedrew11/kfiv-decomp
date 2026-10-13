@@ -4,10 +4,10 @@
 
 #include "common.h"
 
-void KF_ItemEffect_Load(void);
-int KF_ItemEffect_Reset(void);
-void KF_ItemEffect_Start(int kind, int marked);
-void KF_ItemEffect_Update(void);
-void KF_ItemEffect_Draw(void);
+void ItemEffect_Load(void);
+int ItemEffect_Reset(void);
+void ItemEffect_Start(int kind, int marked);
+void ItemEffect_Update(void);
+void ItemEffect_Draw(void);
 
 #endif

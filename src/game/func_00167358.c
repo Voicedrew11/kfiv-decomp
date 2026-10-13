@@ -27,7 +27,7 @@ void func_00167358(char *arg0)
     func_0019A310(arg0, func_001816A0, 0);
     if (s[0x7C])
     {
-      t = KF_Entity_GetBySpawnId(s[0x7B]);
+      t = Entity_GetBySpawnId(s[0x7B]);
       if (t != 0)
       {
         t[0x15A] = -1;

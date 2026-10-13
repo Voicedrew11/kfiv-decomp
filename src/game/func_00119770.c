@@ -9,7 +9,7 @@ void func_00119770(int map) {
     MapObject *object;
 
     if (D_0034B69C[0] != 0) {
-        object = KF_MapObject_GetById(map, 0x65);
+        object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
             object->unk10 |= 0x20000;
         }

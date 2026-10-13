@@ -424,7 +424,7 @@ void func_001E7010(HandlerContext *context) {
     }
 
     current = D_005CF380[0];
-    texts = KF_Message_GetFontText(D_00446F38);
+    texts = Message_GetFontText(D_00446F38);
     text_number = current->unk0C + 0x1F5; // match: a variable, so the 0x1F5 is added before the index is scaled
     text_offset = ((s32 *)texts)[text_number];
     func_001FDCD0(D_00446C78);

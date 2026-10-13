@@ -15,7 +15,7 @@ void func_001A5988(EffectActor *effect) {
     GroundRunMotion *motion = (GroundRunMotion *)&effect->motion;
 
     if (motion->ended) {
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);
@@ -29,13 +29,13 @@ void func_001A5988(EffectActor *effect) {
             func_001C1430(1.0f, &effect->model->position, &motion->probe);
             if (COLLISION_RESULT->hit == 0) {
                 effect->model->position.y += motion->height * 0.5f;
-                KF_Effect_Free(effect);
+                Effect_Free(effect);
                 return;
             }
             if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
-                KF_Effect_Spawn(effect->def->unkF0, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
-                KF_Effect_Spawn(0x123, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
-                KF_Effect_Free(effect);
+                Effect_Spawn(effect->def->unkF0, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Spawn(0x123, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Free(effect);
                 return;
             }
             effect->model->position.y += motion->height * 0.5f;
@@ -53,10 +53,10 @@ void func_001A5988(EffectActor *effect) {
             effect->model->position.y -= motion->hit_offset;
             if (func_001B4F90(effect) & 0x14) {
                 if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
-                    KF_Effect_Spawn(effect->def->unkF0, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
-                    KF_Effect_Spawn(0x123, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                    Effect_Spawn(effect->def->unkF0, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                    Effect_Spawn(0x123, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 }
-                KF_Effect_Free(effect);
+                Effect_Free(effect);
             }
             effect->model->position.y += motion->hit_offset;
         }

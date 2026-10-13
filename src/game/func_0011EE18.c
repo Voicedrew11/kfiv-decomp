@@ -8,8 +8,8 @@ void func_0011EE18(MapObject *object) {
         object->work[0] = 0;
     }
     if (object->model->unk100 & 1) {
-        KF_MapObject_StartAnim(object, MAP_OBJECT_BYTES(object)->anim);
-        KF_MapObject_StepAnim(object);
+        MapObject_StartAnim(object, MAP_OBJECT_BYTES(object)->anim);
+        MapObject_StepAnim(object);
     }
     MAP_OBJECT_BYTES(object)->step = 1;
 }

@@ -137,7 +137,7 @@ void func_001D0970(void) {
     }
     facing = D_00420D00.current;
     if (facing != NULL && facing->unk04->unk64 != 0.0f) {
-        turn = KF_MapObject_GetTurnToward(facing, &D_00413F80.position);
+        turn = MapObject_GetTurnToward(facing, &D_00413F80.position);
         limit = ((MapObject *)D_00420D00.current)->unk04->unk64;
         if (turn < -limit || limit < turn) {
             D_00420D00.current = NULL;
@@ -174,23 +174,23 @@ void func_001D0970(void) {
                 switch (D_0038CD20[item_map].tag) {
                 case 0xC:
                     if (def->slot_id == 0xFA) {
-                        object = KF_MapObject_GetById(item_map, def->slot_id);
+                        object = MapObject_GetById(item_map, def->slot_id);
                     }
                     break;
                 case 0x11:
                     if (def->slot_id == 0xC9) {
-                        object = KF_MapObject_GetById(item_map, def->slot_id + 0x32);
+                        object = MapObject_GetById(item_map, def->slot_id + 0x32);
                     }
                     break;
                 case 0x12:
                 case 0x13:
                     if (def->slot_id == 0xC9 || def->slot_id == 0xCA) {
-                        object = KF_MapObject_GetById(item_map, def->slot_id + 0x32);
+                        object = MapObject_GetById(item_map, def->slot_id + 0x32);
                     }
                     break;
                 case 0x6D:
                     if (def->slot_id >= 0xFA && def->slot_id <= 0xFD) {
-                        object = KF_MapObject_GetById(item_map, def->slot_id);
+                        object = MapObject_GetById(item_map, def->slot_id);
                     }
                     break;
                 }

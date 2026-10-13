@@ -20,7 +20,7 @@ void func_001513E8(Entity *entity, s32 unknown) {
         func_00196870(entity, 1);
     }
     if (entity->spawn_info->unk40 != 0 && entity->spawn_info->variant != 0) {
-        other = KF_Entity_GetBySpawnId(entity->spawn_info->variant);
+        other = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (other != NULL && D_00446ED4 % entity->unkD7 == 0) {
             if (ENTITY_FLAG_BITS(other)->bits2 >= 2 || !ENTITY_FLAG_BITS(other)->bit1) {
                 func_001958B8((char *)entity, (void (*)(void))func_00151B60, 1);

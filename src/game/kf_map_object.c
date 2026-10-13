@@ -13,8 +13,8 @@ void *memset(void *, int, u32);
 float sinf(float);
 float sqrtf(float);
 float atan2f(float, float);
-void KF_Vector_Scale(float *, float *, float);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
 int func_001034A8(int);
 int func_00103698(int, int);
 int func_001036C8(int, int);
@@ -86,7 +86,7 @@ static MapSlotUnk10Vectors glow_lights[2][0x20]; /* 0x472AC0 D_0038A1B0.unkA90 b
    source says, works out how far the object reaches, picks the functions that
    draw it, runs the every-frame handler of its kind once, and threads the
    objects into the two draw lists of the map, grouped by the model they use. */
-void KF_MapObject_InitMap(int map) {
+void MapObject_InitMap(int map) {
     int i = 0;
     int count = D_004467B8[map];
     MapObject *object = D_003A1A30[map];
@@ -151,8 +151,8 @@ void KF_MapObject_InitMap(int map) {
             object->model->draw = (void (*)(ModelInstance *))func_0011E9D0;
         }
         if (object->unk08->unk30 == 0x91) {
-            object->model->unk1BC = (void (*)(ModelInstance *))KF_ScrollTexture_DrawAll;
-            KF_ScrollTexture_Init();
+            object->model->unk1BC = (void (*)(ModelInstance *))ScrollTexture_DrawAll;
+            ScrollTexture_Init();
         }
         MAP_OBJECT_BITS(object)->bit1 = FALSE;
         MAP_OBJECT_BITS(object)->bit2 = FALSE;
@@ -194,7 +194,7 @@ void KF_MapObject_InitMap(int map) {
 /* Starts the objects of a map: their flags come from the flag block of the map
    when it has been visited, else from their sources; each is then put in use or
    handed to the handler of its kind in D_003BE4B0. */
-void KF_MapObject_StartMap(int map) {
+void MapObject_StartMap(int map) {
     int i = 0;
     int count = D_004467B8[map];
     MapObject *object = D_003A1A30[map];
@@ -226,7 +226,7 @@ void KF_MapObject_StartMap(int map) {
         }
         object->unk0C = (s32)func_00115CD0((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->unk00 & 1);
         if (in_use) {
-            KF_MapObject_Activate(object);
+            MapObject_Activate(object);
         } else {
             D_003BE4B0[object->unk04->kind](object);
         }
@@ -236,7 +236,7 @@ void KF_MapObject_StartMap(int map) {
 
 /* Unloads the objects of a map: saves four flags of each into the flag block
    of the map, stops their sounds, then empties the table. */
-void KF_MapObject_UnloadMap(int map) {
+void MapObject_UnloadMap(int map) {
     int count = D_004467B8[map];
     MapObject *object = D_003A1A30[map];
     int tag = D_0038CD20[map].tag;
@@ -249,11 +249,11 @@ void KF_MapObject_UnloadMap(int map) {
         func_00103648(tag, i, 1, MAP_OBJECT_BITS(object)->bit19);
         func_0011EA80(object);
     }
-    KF_MapObject_ClearMap(map);
+    MapObject_ClearMap(map);
 }
 
 /* Saves four flags of every object of both maps into the flag blocks of the maps. */
-void KF_MapObject_SaveAllFlags(void) {
+void MapObject_SaveAllFlags(void) {
     int map;
     int count;
     MapObject *object;
@@ -278,7 +278,7 @@ void KF_MapObject_SaveAllFlags(void) {
 }
 
 /* Moves every object of a map by offset through its kind's handler in D_003BE430. */
-void KF_MapObject_OffsetAll(int map, f32 *offset) {
+void MapObject_OffsetAll(int map, f32 *offset) {
     int count = D_004467B8[map];
     MapObject *object = D_003A1A30[map];
     int i;
@@ -310,7 +310,7 @@ static inline s32 map_object_count(s32 map) {
    runs the step handler of its kind (D_003BDA30) and the kind's every-frame
    handler (D_003BE3B0), works out whether it is in view, and starts or stops
    the effect tied to it as it comes into or goes out of view. */
-void KF_MapObject_UpdateAll(void) {
+void MapObject_UpdateAll(void) {
     Vector4 angles;
     int period;
     int map;
@@ -356,7 +356,7 @@ void KF_MapObject_UpdateAll(void) {
             if (MODEL_UNK100_BITS(model)->has_motion) {
                 anim = &object->unk04->anims[MAP_OBJECT_BYTES(object)->anim];
                 if (anim->unk06 == MODEL_CHANNEL(model)->param) {
-                    KF_Effect_StartSpawner(anim->unk02, &model->position, &model->rotation, object);
+                    Effect_StartSpawner(anim->unk02, &model->position, &model->rotation, object);
                 }
             }
             kind = (object->unk10 & 0x100000) ? 0 : object->unk04->kind;
@@ -398,19 +398,19 @@ void KF_MapObject_UpdateAll(void) {
                     angles.x = atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
                     angles.y = func_0019B838(-atan2f(delta_z, delta_x) + 1.5707964f);
                     angles.z = angles.w = 0.0f;
-                    KF_Effect_StartSpawner(object->unk08->unk54, from, &angles, object);
+                    Effect_StartSpawner(object->unk08->unk54, from, &angles, object);
                 } else {
-                    KF_Effect_StartSpawner(source->unk54, &shown->position, &shown->rotation, object);
+                    Effect_StartSpawner(source->unk54, &shown->position, &shown->rotation, object);
                 }
             } else if (in_view == 4) {
-                KF_Effect_FreeForOwner((Entity *)object);
+                Effect_FreeForOwner((Entity *)object);
             }
         }
     }
 }
 
 /* Uses an item on a map object through its kind's handler; FALSE when the item isn't carried. */
-int KF_MapObject_UseItem(MapObject *object, int item) {
+int MapObject_UseItem(MapObject *object, int item) {
     int used;
 
     if (D_00369830[item] == 0) {
@@ -422,7 +422,7 @@ int KF_MapObject_UseItem(MapObject *object, int item) {
 }
 
 /* Passes a signal to a map object's kind (D_003BE330) unless a script drives it. */
-void KF_MapObject_Signal(MapObject *object, int signal) {
+void MapObject_Signal(MapObject *object, int signal) {
     if (object != NULL && !(object->unk10 & 0x100000)) {
         D_003BE330[object->unk04->kind](object, signal);
     }
@@ -436,7 +436,7 @@ void KF_MapObject_Signal(MapObject *object, int signal) {
    the jointed ones, then the plain ones. While the player wears item 0x9D the
    objects that allow it are lit with their light blocks blended towards
    D_0038D9F0 and back, over 210 frames (fully at frame 105). */
-void KF_MapObject_DrawAll(int mode, int only_one, int which) {
+void MapObject_DrawAll(int mode, int only_one, int which) {
     f32 scaled[4];
     f32 blend;
     f32 rest;
@@ -468,17 +468,17 @@ void KF_MapObject_DrawAll(int mode, int only_one, int which) {
                 func_00216778(&dest->unk00[1], &source->unk00[1]);
                 func_00216778(&dest->unk00[2], &source->unk00[2]);
                 func_00216778(&dest->unk00[3], &source->unk00[3]);
-                KF_Vector_Scale(scaled, &D_0038D9F0[0].x, blend);
-                KF_Vector_Scale(&dest->unk40[0].x, &source->unk40[0].x, rest);
+                Vector_Scale(scaled, &D_0038D9F0[0].x, blend);
+                Vector_Scale(&dest->unk40[0].x, &source->unk40[0].x, rest);
                 func_00216C48(&dest->unk40[0], &dest->unk40[0], scaled);
-                KF_Vector_Scale(scaled, &D_0038D9F0[1].x, blend);
-                KF_Vector_Scale(&dest->unk40[1].x, &source->unk40[1].x, rest);
+                Vector_Scale(scaled, &D_0038D9F0[1].x, blend);
+                Vector_Scale(&dest->unk40[1].x, &source->unk40[1].x, rest);
                 func_00216C48(&dest->unk40[1], &dest->unk40[1], scaled);
-                KF_Vector_Scale(scaled, &D_0038D9F0[2].x, blend);
-                KF_Vector_Scale(&dest->unk40[2].x, &source->unk40[2].x, rest);
+                Vector_Scale(scaled, &D_0038D9F0[2].x, blend);
+                Vector_Scale(&dest->unk40[2].x, &source->unk40[2].x, rest);
                 func_00216C48(&dest->unk40[2], &dest->unk40[2], scaled);
-                KF_Vector_Scale(scaled, &D_0038D9F0[3].x, blend);
-                KF_Vector_Scale(&dest->unk40[3].x, &source->unk40[3].x, rest);
+                Vector_Scale(scaled, &D_0038D9F0[3].x, blend);
+                Vector_Scale(&dest->unk40[3].x, &source->unk40[3].x, rest);
                 func_00216C48(&dest->unk40[3], &dest->unk40[3], scaled);
             }
         }
@@ -487,17 +487,17 @@ void KF_MapObject_DrawAll(int mode, int only_one, int which) {
     func_00216778(&glow_lights_shared.unk00[1], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[1]);
     func_00216778(&glow_lights_shared.unk00[2], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[2]);
     func_00216778(&glow_lights_shared.unk00[3], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[3]);
-    KF_Vector_Scale(scaled, &D_0038D9F0[0].x, blend);
-    KF_Vector_Scale(&glow_lights_shared.unk40[0].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[0].x, rest);
+    Vector_Scale(scaled, &D_0038D9F0[0].x, blend);
+    Vector_Scale(&glow_lights_shared.unk40[0].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[0].x, rest);
     func_00216C48(&glow_lights_shared.unk40[0], &glow_lights_shared.unk40[0], scaled);
-    KF_Vector_Scale(scaled, &D_0038D9F0[1].x, blend);
-    KF_Vector_Scale(&glow_lights_shared.unk40[1].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[1].x, rest);
+    Vector_Scale(scaled, &D_0038D9F0[1].x, blend);
+    Vector_Scale(&glow_lights_shared.unk40[1].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[1].x, rest);
     func_00216C48(&glow_lights_shared.unk40[1], &glow_lights_shared.unk40[1], scaled);
-    KF_Vector_Scale(scaled, &D_0038D9F0[2].x, blend);
-    KF_Vector_Scale(&glow_lights_shared.unk40[2].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[2].x, rest);
+    Vector_Scale(scaled, &D_0038D9F0[2].x, blend);
+    Vector_Scale(&glow_lights_shared.unk40[2].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[2].x, rest);
     func_00216C48(&glow_lights_shared.unk40[2], &glow_lights_shared.unk40[2], scaled);
-    KF_Vector_Scale(scaled, &D_0038D9F0[3].x, blend);
-    KF_Vector_Scale(&glow_lights_shared.unk40[3].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[3].x, rest);
+    Vector_Scale(scaled, &D_0038D9F0[3].x, blend);
+    Vector_Scale(&glow_lights_shared.unk40[3].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[3].x, rest);
     func_00216C48(&glow_lights_shared.unk40[3], &glow_lights_shared.unk40[3], scaled);
     func_00109A50();
     func_00109A80(GS_REG_ALPHA_1, 0x44);
@@ -550,11 +550,11 @@ void KF_MapObject_DrawAll(int mode, int only_one, int which) {
                 object->model->unk14C = &D_0038A1B0.unk290[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk34];
             }
             if (object->unk04->kind == 9) {
-                KF_LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
+                LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
             } else if (object->unk08->unk5A != 0 && object->unk08->unk5A != 0xFF) {
-                KF_LinkedPoint_FindHitsForOwner(object->model, object->unk08->unk5A);
+                LinkedPoint_FindHitsForOwner(object->model, object->unk08->unk5A);
             } else {
-                KF_LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
+                LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
             }
             if ((object->unk08->unk38.flags & 0x1000000000000L) || (object->model->alpha < 128.0f && !(object->unk04->unk68 & 0x10000))) {
                 func_0010B018(object->model, 0, mode);
@@ -611,11 +611,11 @@ void KF_MapObject_DrawAll(int mode, int only_one, int which) {
                 object->model->unk14C = &D_0038A1B0.unk290[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[4]];
             }
             if (object->unk04->kind == 9) {
-                KF_LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
+                LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
             } else if (object->unk08->unk5A != 0 && object->unk08->unk5A != 0xFF) {
-                KF_LinkedPoint_FindHitsForOwner(object->model, object->unk08->unk5A);
+                LinkedPoint_FindHitsForOwner(object->model, object->unk08->unk5A);
             } else {
-                KF_LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
+                LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
             }
             if ((object->unk08->unk38.flags & 0x1000000000000L) || (object->model->unk145 != 0 && (s16)object->model->unk146 < 0x80 && !(object->unk04->unk68 & 0x10000))) {
                 func_0010B018(object->model, 0, mode);
@@ -629,7 +629,7 @@ void KF_MapObject_DrawAll(int mode, int only_one, int which) {
 }
 
 /* Puts a map object in use: not started, fully opaque. */
-void KF_MapObject_Activate(MapObject *object) {
+void MapObject_Activate(MapObject *object) {
     ModelInstance *model;
 
     if (object != NULL && !(object->unk10 & 0x10000)) {
@@ -646,13 +646,13 @@ void KF_MapObject_Activate(MapObject *object) {
 }
 
 /* Takes a map object out of use: ends its kind's state machine and clears its state. */
-void KF_MapObject_Deactivate(MapObject *object) {
+void MapObject_Deactivate(MapObject *object) {
     if (object != NULL) {
         if (MAP_OBJECT_BITS(object)->step != 0) {
             D_003BE230[object->unk04->kind](object);
         }
         func_0011EA80(object);
-        KF_Effect_FreeForOwner((Entity *)object); // match: shared prototype takes an Entity
+        Effect_FreeForOwner((Entity *)object); // match: shared prototype takes an Entity
         object->unk10 &= ~0x10000;
         MAP_OBJECT_BITS(object)->step = 0;
         MAP_OBJECT_BITS(object)->bit1 = FALSE;
@@ -662,7 +662,7 @@ void KF_MapObject_Deactivate(MapObject *object) {
 }
 
 /* Looks a map object up by its object_id (1 to 255); NULL when the object_id is out of range. */
-MapObject *KF_MapObject_GetById(int map, int object_id) {
+MapObject *MapObject_GetById(int map, int object_id) {
     if ((u32)(object_id - 1) < 0xFF) {
         return objects_by_id[map][object_id];
     }
@@ -671,7 +671,7 @@ MapObject *KF_MapObject_GetById(int map, int object_id) {
 
 /* Breaks a breakable map object that has started: step 0xF, its breaking
    animation, an effect, a sound, and the object named by its source comes into use. */
-void KF_MapObject_Break(MapObject *object) {
+void MapObject_Break(MapObject *object) {
     MapObject *other;
 
     if (!(MAP_OBJECT_DEF_WORD(object) & 0x800)) {
@@ -686,23 +686,23 @@ void KF_MapObject_Break(MapObject *object) {
     object->unk10 &= ~0x100000;
     MAP_OBJECT_BYTES(object)->step = 0xF;
     if (MAP_OBJECT_DEF_WORD(object) & 0x1000) {
-        KF_MapObject_StartAnim(object, 1);
+        MapObject_StartAnim(object, 1);
     }
-    KF_Effect_StartSpawner(object->unk04->unk50, &object->model->position, &object->model->rotation, &D_0038CD20[MAP_OBJECT_BYTES(object)->unk00 & 1]);
+    Effect_StartSpawner(object->unk04->unk50, &object->model->position, &object->model->rotation, &D_0038CD20[MAP_OBJECT_BYTES(object)->unk00 & 1]);
     if (object->unk08->unk42 != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
         func_002109C8(object->unk08->unk42, 0);
     }
     if (object->unk04->unk68 & 0x20000) {
-        other = KF_MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk38.bytes[3]);
+        other = MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk38.bytes[3]);
         if (other != NULL) {
-            KF_MapObject_Activate(other);
+            MapObject_Activate(other);
         }
     }
 }
 
 /* Starts one of a map object's animations from its first frame. */
 // match: declared s16 but returns nothing; with void its callers allocate $2 differently
-s16 KF_MapObject_StartAnim(MapObject *object, int anim) {
+s16 MapObject_StartAnim(MapObject *object, int anim) {
     ModelChannel *channel;
 
     func_00108A08(object->model, object->unk04->anims[anim].anim);
@@ -710,12 +710,12 @@ s16 KF_MapObject_StartAnim(MapObject *object, int anim) {
     channel = MODEL_CHANNEL(object->model);
     channel->param = 0;
     channel->param_shifted = 0;
-    KF_MapObject_StepAnim(object);
+    MapObject_StepAnim(object);
 }
 
 /* Advances a map object's animation one frame, starting the sounds tied to the
    frame it is on; returns whether the animation is still running. */
-int KF_MapObject_StepAnim(MapObject *object) {
+int MapObject_StepAnim(MapObject *object) {
     MapObjectAnim *anim = &object->unk04->anims[MAP_OBJECT_BYTES(object)->anim];
     ModelInstance *model;
     f32 range;
@@ -775,7 +775,7 @@ int KF_MapObject_StepAnim(MapObject *object) {
 }
 
 /* Marks a chest-like map object (kinds 3, 4 and 0x15) of the map's own sources as emptied. */
-void KF_MapObject_MarkEmptied(MapObject *object) {
+void MapObject_MarkEmptied(MapObject *object) {
     u8 kind = object->unk04->kind;
 
     if ((kind == 3 || kind == 4 || kind == 0x15) &&
@@ -784,9 +784,9 @@ void KF_MapObject_MarkEmptied(MapObject *object) {
     }
 }
 
-/* KF_MapObject_MarkEmptied on the map object with this id. */
-void KF_MapObject_MarkEmptiedById(int map, int object_id) {
-    MapObject *object = KF_MapObject_GetById(map, object_id);
+/* MapObject_MarkEmptied on the map object with this id. */
+void MapObject_MarkEmptiedById(int map, int object_id) {
+    MapObject *object = MapObject_GetById(map, object_id);
     u8 kind;
 
     if (object != NULL) {
@@ -799,15 +799,15 @@ void KF_MapObject_MarkEmptiedById(int map, int object_id) {
 }
 
 /* The turn that would face a map object toward a point (wrapped by func_0019B838). */
-f32 KF_MapObject_GetTurnToward(MapObject *object, Vector4 *point) {
+f32 MapObject_GetTurnToward(MapObject *object, Vector4 *point) {
     Vector4 delta;
 
-    KF_Vector_Subtract(&delta, &object->model->position, point);
+    Vector_Subtract(&delta, &object->model->position, point);
     return func_0019B838(atan2f(delta.x, delta.z) - object->model->rotation.y);
 }
 
 /* Hands a map object to a script (bit 20) or back, restarting its state machine. */
-void KF_MapObject_SetScripted(MapObject *object, int scripted) {
+void MapObject_SetScripted(MapObject *object, int scripted) {
     if (MAP_OBJECT_BITS(object)->bit20 != scripted) {
         MAP_OBJECT_BITS(object)->bit20 = scripted;
         MAP_OBJECT_BITS(object)->bit21 = FALSE;
@@ -818,7 +818,7 @@ void KF_MapObject_SetScripted(MapObject *object, int scripted) {
 }
 
 /* Restarts a scripted map object (model flag 1, bit 20) on another animation. */
-void KF_MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22) {
+void MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22) {
     if ((object->model->unk100 & 1) && (object->unk10 & 0x100000)) {
         MAP_OBJECT_BITS(object)->bit21 = FALSE;
         MAP_OBJECT_BITS(object)->bit22 = bit22;
@@ -828,14 +828,14 @@ void KF_MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22) {
 }
 
 /* Sets bit 21 of a scripted map object (model flag 1, bit 20). */
-void KF_MapObject_SetScriptedBit21(MapObject *object, int bit21) {
+void MapObject_SetScriptedBit21(MapObject *object, int bit21) {
     if ((object->model->unk100 & 1) && (object->unk10 & 0x100000)) {
         MAP_OBJECT_BITS(object)->bit21 = bit21;
     }
 }
 
 /* Empties one map's objects: the two counts, the two draw lists and the tables. */
-void KF_MapObject_ClearMap(int map) {
+void MapObject_ClearMap(int map) {
     D_004467A8[map] = 0;
     D_004467B8[map] = 0;
     plain_draw_list[map] = NULL;

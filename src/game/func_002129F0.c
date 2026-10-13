@@ -5,7 +5,7 @@ extern int D_00446770;
 
 /* Eases a map object of the current map toward x, y, z, a 1/frames part of the way each frame. */
 void func_002129F0(ScriptMoveCommand *command) {
-    MapObject *object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    MapObject *object = MapObject_GetById(D_00446770, command->target_id.value);
     int frames;
     f32 divisor;
     int frames_left;

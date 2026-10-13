@@ -74,27 +74,27 @@ static MessageSlot *notice_shown;   /* 0x4471E4 */
 static MessageSlot *notice_free;    /* 0x4471E8 */
 static int debug_line_count;        /* 0x4471EC */
 
-static void KF_Message_Draw(void);
-static void KF_Message_DrawDebugLog(void);
-static int KF_Message_Format(u16 *format, u16 *out, va_list args);
-static void KF_Message_DrawGlyphs(char kind, int font, int left, int top, s16 *text, int count);
-static void KF_Message_DrawGlyph(int pos_x, int pos_y, int glyph, int colour, int alpha, int kind, int font);
-static s32 KF_Message_GetGlyphWidth(u16 *glyph, s32 font);
-static int KF_Message_GetTextWidth(s16 *text, int font);
-static s16 *KF_Message_LayoutPage(s16 *text, s32 font);
+static void Message_Draw(void);
+static void Message_DrawDebugLog(void);
+static int Message_Format(u16 *format, u16 *out, va_list args);
+static void Message_DrawGlyphs(char kind, int font, int left, int top, s16 *text, int count);
+static void Message_DrawGlyph(int pos_x, int pos_y, int glyph, int colour, int alpha, int kind, int font);
+static s32 Message_GetGlyphWidth(u16 *glyph, s32 font);
+static int Message_GetTextWidth(s16 *text, int font);
+static s16 *Message_LayoutPage(s16 *text, s32 font);
 
 /* Loads font.tmr and font.txc, empties the notice ring and the debug log, and sets up the TEX0 writes of the
    two texture pages of the font. */
-void KF_Message_Init(void) {
+void Message_Init(void) {
     char unused[0x60]; // match: retail reserves 0x60 bytes it never uses
     int file_handle;
     int i;
 
     file_handle = func_00102238("font.tmr", 0, 1);
-    func_001025C0(file_handle, (void *)KF_Message_GetFontTexture(D_00446F38), -1);
+    func_001025C0(file_handle, (void *)Message_GetFontTexture(D_00446F38), -1);
     func_001024B0(file_handle);
     file_handle = func_00102238("font.txc", 0, 1);
-    func_001025C0(file_handle, (void *)KF_Message_GetFontText(D_00446F38), -1);
+    func_001025C0(file_handle, (void *)Message_GetFontText(D_00446F38), -1);
     func_001024B0(file_handle);
     glyph_count = 0;
     notice_free = notices;
@@ -109,7 +109,7 @@ void KF_Message_Init(void) {
     notices[NOTICE_COUNT - 1].text = notice_texts[NOTICE_COUNT - 1];
     notices[NOTICE_COUNT - 1].next = notices;
     // match: the callee returns a value here; $2 is then taken when the table address is formed
-    ((int (*)(void *, u32))KF_Memory_ClearWords)(glyph_alphas, 0x200);
+    ((int (*)(void *, u32))Memory_ClearWords)(glyph_alphas, 0x200);
     font_tex0[0].first = 0x4007FC0665423B40L;
     font_tex0[0].second = GS_REG_TEX0_1;
     font_tex0[1].first = 0x4007FC2665423B40L;
@@ -117,12 +117,12 @@ void KF_Message_Init(void) {
 }
 
 /* Per-frame update of the message box (typing, paging, closing) and of the notice ring, then draws them. */
-void KF_Message_Update(void) {
+void Message_Update(void) {
     MessageBox *box;
 
     func_0020D088();
     if (box_open == 0 && notices_active == 0) {
-        KF_Message_Draw();
+        Message_Draw();
         return;
     }
     if (box_open == 1) {
@@ -144,7 +144,7 @@ void KF_Message_Update(void) {
                 box->waiting = 0;
                 box->start = box->end + 1;
                 box->reveal_frames = 0;
-                box->end = KF_Message_LayoutPage(box->start, box->font);
+                box->end = Message_LayoutPage(box->start, box->font);
                 box->typed = 0;
             }
         } else if (D_00413DAA[0] & D_00446940) {
@@ -185,11 +185,11 @@ void KF_Message_Update(void) {
             }
         }
     }
-    KF_Message_Draw();
+    Message_Draw();
 }
 
 /* Builds and queues the GS packet that draws the message box or the shown notice, and the debug log. */
-static void KF_Message_Draw(void) {
+static void Message_Draw(void) {
     char unused[0x60]; // match: retail reserves 0x60 bytes it never uses
     u32 *packet;
     u32 *words;
@@ -198,7 +198,7 @@ static void KF_Message_Draw(void) {
     u64 *texture;
 
     if (box_open != 0 || notices_active != 0 || debug_line_count != 0) {
-        func_0010B238((TextureTableHeader *)KF_Message_GetFontTexture(D_00446F38));
+        func_0010B238((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
         func_00109E88();
         if (box_open != 0) {
             glyph_count += message_box.typed;
@@ -257,14 +257,14 @@ static void KF_Message_Draw(void) {
         *glyph_packet++ = 0x42421E0;
         *glyph_packet++ = 0;
         if (box_open == 1) {
-            KF_Message_DrawGlyphs(0, message_box.font, message_box.left, message_box.top, message_box.start,
+            Message_DrawGlyphs(0, message_box.font, message_box.left, message_box.top, message_box.start,
                                   message_box.typed);
         } else if (notices_active == 1) {
-            KF_Message_DrawGlyphs(1, notice_shown->font, notice_shown->left, notice_shown->top, notice_shown->text,
+            Message_DrawGlyphs(1, notice_shown->font, notice_shown->left, notice_shown->top, notice_shown->text,
                                   notice_shown->length);
         }
         if (debug_line_count > 0) {
-            KF_Message_DrawDebugLog();
+            Message_DrawDebugLog();
         }
         func_00109650(packet, glyph_packet);
         glyph_count = 0;
@@ -273,13 +273,13 @@ static void KF_Message_Draw(void) {
 }
 
 /* Whether the message box is still on screen. */
-int KF_Message_IsBoxOpen(void) {
+int Message_IsBoxOpen(void) {
     return box_open;
 }
 
 /* Opens the message box on message `message_id`, formatted with the arguments, unless it is open already.
    It types out a glyph every `delay` frames; `centred` centres each line. */
-void KF_Message_OpenBox(int x, int y, int font, int centred, int delay, int message_id, ...) {
+void Message_OpenBox(int x, int y, int font, int centred, int delay, int message_id, ...) {
     va_list args;
     int format;
 
@@ -287,7 +287,7 @@ void KF_Message_OpenBox(int x, int y, int font, int centred, int delay, int mess
     VA_START(args, message_id, 6);
     if (box_open == 0) {
         box_open = 1;
-        KF_Message_Format((u16 *)format, (u16 *)box_text, args);
+        Message_Format((u16 *)format, (u16 *)box_text, args);
         message_box.reveal_frames = 0;
         message_box.delay = delay;
         message_box.timer = delay;
@@ -301,14 +301,14 @@ void KF_Message_OpenBox(int x, int y, int font, int centred, int delay, int mess
         message_box.cursor = box_text;
         message_box.font = font;
         message_box.closing = 0;
-        message_box.end = KF_Message_LayoutPage(box_text, font);
+        message_box.end = Message_LayoutPage(box_text, font);
     }
 }
 
 /* Formats message `message_id` into a notice of the ring for `frames` frames, centred on (x + 320, y + 400).
    kind 1 overwrites the notice being shown; any other kind takes the next free slot, or does nothing when the
    ring is full. */
-void KF_Message_ShowNotice(int x, int y, int font, int kind, int frames, int message_id, ...) {
+void Message_ShowNotice(int x, int y, int font, int kind, int frames, int message_id, ...) {
     va_list args;
     int format;
     int width;
@@ -319,8 +319,8 @@ void KF_Message_ShowNotice(int x, int y, int font, int kind, int frames, int mes
         int top;
 
         VA_START(args, message_id, 6);
-        notice_shown->length = KF_Message_Format((u16 *)format, (u16 *)notice_shown->text, args);
-        width = KF_Message_GetTextWidth(notice_shown->text, font);
+        notice_shown->length = Message_Format((u16 *)format, (u16 *)notice_shown->text, args);
+        width = Message_GetTextWidth(notice_shown->text, font);
         left = x + 0x140;
         top = y + 0x190;
         notice_shown->frames = frames;
@@ -337,8 +337,8 @@ void KF_Message_ShowNotice(int x, int y, int font, int kind, int frames, int mes
             return;
         }
         VA_START(args, message_id, 6);
-        notice_free->length = KF_Message_Format((u16 *)format, (u16 *)notice_free->text, args);
-        width = KF_Message_GetTextWidth(notice_free->text, font);
+        notice_free->length = Message_Format((u16 *)format, (u16 *)notice_free->text, args);
+        width = Message_GetTextWidth(notice_free->text, font);
         left = x + 0x140;
         top = y + 0x190;
         notice_free->frames = frames;
@@ -353,7 +353,7 @@ void KF_Message_ShowNotice(int x, int y, int font, int kind, int frames, int mes
 }
 
 /* Formats a line into the next debug log slot. */
-void KF_Message_DebugPrintf(char *format, ...) {
+void Message_DebugPrintf(char *format, ...) {
     va_list args;
     int length;
 
@@ -364,28 +364,28 @@ void KF_Message_DebugPrintf(char *format, ...) {
 }
 
 /* Adds a debug log line holding only a colour byte, the colour of the lines after it. */
-void KF_Message_DebugSetColor(char colour) {
+void Message_DebugSetColor(char colour) {
     debug_log[debug_line_count][0] = colour;
     debug_line_count++;
 }
 
 /* Where font.tmr, the font texture, is loaded in the font buffer. */
-s32 KF_Message_GetFontTexture(s32 font_base) {
+s32 Message_GetFontTexture(s32 font_base) {
     return font_base + 0x180000;
 }
 
 /* Where font.txc, the message texts, is loaded in the font buffer. */
-s32 KF_Message_GetFontText(s32 font_base) {
+s32 Message_GetFontText(s32 font_base) {
     return font_base + 0x1A0400;
 }
 
 /* The red, green, blue, alpha ints of text colour `colour`. */
-char *KF_Message_GetColor(s32 colour) {
+char *Message_GetColor(s32 colour) {
     return (char *)&text_colours[colour];
 }
 
 /* Takes every notice off the ring. */
-void KF_Message_ClearNotices(void) {
+void Message_ClearNotices(void) {
     MessageSlot *slot = notice_shown;
 
     notices_active = 0;
@@ -394,12 +394,12 @@ void KF_Message_ClearNotices(void) {
 }
 
 /* Takes the message box off the screen at once. */
-void KF_Message_CloseBox(void) {
+void Message_CloseBox(void) {
     box_open = 0;
 }
 
 /* Adds the debug log lines to the text packet in the debug font, 10 pixels a character, 16 a line. */
-static void KF_Message_DrawDebugLog(void) {
+static void Message_DrawDebugLog(void) {
     int i;
     int colour = 0;
     int pos_x = 0;
@@ -417,11 +417,11 @@ static void KF_Message_DrawDebugLog(void) {
                 char character = *line;
 
                 if (character == '\n') {
-                    KF_Message_DrawGlyph(pos_x, pos_y, 0, colour, 0x80, 2, 1);
+                    Message_DrawGlyph(pos_x, pos_y, 0, colour, 0x80, 2, 1);
                     pos_x = 0;
                     pos_y += 16;
                 } else {
-                    KF_Message_DrawGlyph(pos_x, pos_y, character - ' ', colour, 0x80, 2, 1);
+                    Message_DrawGlyph(pos_x, pos_y, character - ' ', colour, 0x80, 2, 1);
                     pos_x += 10;
                 }
             }
@@ -432,7 +432,7 @@ static void KF_Message_DrawDebugLog(void) {
 /* Expands a message's glyph stream: copies it to `out` up to the 0xFFFF end mark, replacing each number code
    by the next argument printed in the width the code gives. Returns the number of glyphs written, not counting
    control codes. */
-static int KF_Message_Format(u16 *format, u16 *out, va_list args) {
+static int Message_Format(u16 *format, u16 *out, va_list args) {
     u8 digits[0x20];
     int count;
     int width;
@@ -481,7 +481,7 @@ static int KF_Message_Format(u16 *format, u16 *out, va_list args) {
 
 /* Draws `count` glyphs of a message. kind 0 is the message box, typed out glyph by glyph; kind 1 the shown
    notice, fading in and out. */
-static void KF_Message_DrawGlyphs(char kind, int font, int left, int top, s16 *text, int count) {
+static void Message_DrawGlyphs(char kind, int font, int left, int top, s16 *text, int count) {
     int pos_x = left;
     int pos_y = top;
     int shown = 0;
@@ -538,11 +538,11 @@ static void KF_Message_DrawGlyphs(char kind, int font, int left, int top, s16 *t
         } else if (*text & GLYPH_COLOR) {
             colour = (*text & 0xF00) >> 8;
         } else if (*text & GLYPH_HALF_WIDTH) {
-            KF_Message_DrawGlyph(pos_x, pos_y, *text - GLYPH_HALF_WIDTH, colour, glyph_alphas[drawn], 1, font);
+            Message_DrawGlyph(pos_x, pos_y, *text - GLYPH_HALF_WIDTH, colour, glyph_alphas[drawn], 1, font);
             drawn++;
             pos_x += font_metrics[font].advance / 2;
         } else {
-            KF_Message_DrawGlyph(pos_x, pos_y, *text, colour, glyph_alphas[drawn], 0, font);
+            Message_DrawGlyph(pos_x, pos_y, *text, colour, glyph_alphas[drawn], 0, font);
             drawn++;
             pos_x += font_metrics[font].advance;
         }
@@ -552,7 +552,7 @@ static void KF_Message_DrawGlyphs(char kind, int font, int left, int top, s16 *t
 
 /* Adds one glyph to the text packet: PRIM, the TEX0 write of its texture page, the colour and the two corners
    (ST and XYZ each). */
-static void KF_Message_DrawGlyph(int pos_x, int pos_y, int glyph, int colour, int alpha, int kind, int font) {
+static void Message_DrawGlyph(int pos_x, int pos_y, int glyph, int colour, int alpha, int kind, int font) {
     s32 corners[2][4];
     f32 tex[2][2];
     s32 first_page = glyph < 0x271;
@@ -613,7 +613,7 @@ static void KF_Message_DrawGlyph(int pos_x, int pos_y, int glyph, int colour, in
 }
 
 /* Width of one glyph in `font`: the advance, half of it for a half-width glyph, nothing for a control code. */
-static s32 KF_Message_GetGlyphWidth(u16 *glyph, s32 font) {
+static s32 Message_GetGlyphWidth(u16 *glyph, s32 font) {
     u32 advance; // match: unsigned, so the halving is spelled out
 
     if (!(*glyph & 0xF000)) {
@@ -627,11 +627,11 @@ static s32 KF_Message_GetGlyphWidth(u16 *glyph, s32 font) {
 }
 
 /* Width of a glyph stream (ended by -1) in `font`. */
-static int KF_Message_GetTextWidth(s16 *text, int font) {
+static int Message_GetTextWidth(s16 *text, int font) {
     int width = 0;
 
     while (*text != GLYPH_END) {
-        width += KF_Message_GetGlyphWidth((u16 *)text, font);
+        width += Message_GetGlyphWidth((u16 *)text, font);
         text++;
     }
     return width;
@@ -639,7 +639,7 @@ static int KF_Message_GetTextWidth(s16 *text, int font) {
 
 /* Lays out one page of the message box: stores the centring offset of each line and returns the page's last
    glyph (the new line that ends it, or the end mark). */
-static s16 *KF_Message_LayoutPage(s16 *text, s32 font) {
+static s16 *Message_LayoutPage(s16 *text, s32 font) {
     s32 line = 0;
     MessageBox *box = &message_box; // match: the box address is formed before the metrics table
     s32 *offsets = box->line_offsets;
@@ -647,7 +647,7 @@ static s16 *KF_Message_LayoutPage(s16 *text, s32 font) {
     s16 glyph;
 
     while (TRUE) {
-        width += KF_Message_GetGlyphWidth((u16 *)text, font);
+        width += Message_GetGlyphWidth((u16 *)text, font);
         glyph = *text;
         if (glyph == GLYPH_NEW_LINE) {
             line++;

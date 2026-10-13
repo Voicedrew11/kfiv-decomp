@@ -12,7 +12,7 @@ void func_0011F238(MapObject *object) {
     ModelPart *part;
 
     if (object->unk04->kind == 6) {
-        KF_MapObject_StartAnim(object, 4);
+        MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
         func_00216778(work, object->model->parts[1].unk40);
         work->timer = 0;
@@ -28,10 +28,10 @@ void func_0011F238(MapObject *object) {
         }
     } else {
         if (!(object->unk10 & 0x20000)) {
-            KF_MapObject_StartAnim(object, 4);
+            MapObject_StartAnim(object, 4);
             MAP_OBJECT_BYTES(object)->step = 1;
         } else {
-            KF_MapObject_StartAnim(object, 5);
+            MapObject_StartAnim(object, 5);
             MAP_OBJECT_BYTES(object)->step = 3;
         }
         MAP_OBJECT_UNK60_BITS(object)->bit0 = FALSE;

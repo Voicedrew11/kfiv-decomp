@@ -2,8 +2,8 @@
 #include "kf_collision.h"
 
 double sqrt(double);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
@@ -22,7 +22,7 @@ void func_00185E28(f32 *position, f32 *other, f32 radius, f32 other_radius, f32 
 
     reach_squared = radius + other_radius;
     result->hit = 0;
-    KF_Vector_Subtract(delta, position, other);
+    Vector_Subtract(delta, position, other);
     reach = reach_squared;
     reach_squared *= reach_squared;
     distance = delta[0] * delta[0] + delta[2] * delta[2];
@@ -64,13 +64,13 @@ void func_00185E28(f32 *position, f32 *other, f32 radius, f32 other_radius, f32 
     } else {
         delta[1] = 0.0f;
         sceVu0Normalize(nearest, delta);
-        KF_Vector_Scale(nearest, nearest, other_radius);
+        Vector_Scale(nearest, nearest, other_radius);
         func_00216C48(nearest, nearest, other);
         if (position[1] <= other[1] - other_height * 0.5f) {
             nearest[1] -= other_height;
         }
         reach_squared = radius * radius;
-        KF_Vector_Subtract(delta, position, nearest);
+        Vector_Subtract(delta, position, nearest);
         distance = delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2];
         if (reach_squared <= distance) {
             result->hit = 0;

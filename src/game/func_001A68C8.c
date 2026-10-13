@@ -21,15 +21,15 @@ void func_001A68C8(EffectActor *actor) {
     }
     if (actor->frame < 0x14) {
         if (motion->unk10 != 0) {
-            KF_Effect_Free(actor);
+            Effect_Free(actor);
         } else if (func_001B4F90(actor) != 0) {
             if (*(int *)0x70000018 == 3 || *(int *)0x70000018 == 5) {
                 end_effect = actor->def->unkF0;
-                KF_Effect_Spawn(0x122, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+                Effect_Spawn(0x122, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             } else {
                 end_effect = actor->def->end_effect;
             }
-            KF_Effect_Spawn(end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            Effect_Spawn(end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             motion->unk10 = 1;
         }
     }

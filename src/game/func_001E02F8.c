@@ -178,7 +178,7 @@ void func_001E02F8(void) {
             func_0019CDC0(1);
             D_005CF2F0.unk0C = (D_005CF2F0.unk0C + 1) & 1;
         } else {
-            report = KF_Pad_GetReport(0, 0);
+            report = Pad_GetReport(0, 0);
             if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
                 if (D_005CF2F0.unk12 != -1) {
                     func_0019CDC0(0);
@@ -200,7 +200,7 @@ void func_001E02F8(void) {
                     D_005CF2F0.unk12 = 5;
                 }
             } else {
-                report = KF_Pad_GetReport(0, 0);
+                report = Pad_GetReport(0, 0);
                 if (((report->pressed & 0x2000) && D_004472D0 != 0xFF) || D_0038CC50.bit9) {
                     func_0019CDC0(2);
                     if (D_005CF2F0.unk12 != -1) {

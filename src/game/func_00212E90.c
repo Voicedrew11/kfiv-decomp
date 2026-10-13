@@ -10,7 +10,7 @@ void func_00212E90(ScriptCallCommand *command) {
     MapObject *object;
     int part;
 
-    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(D_00446770, command->target_id.value);
     if (object != NULL && object->model != NULL) {
         part = command->first.value;
         if (part >= 0 && part < object->model->part_count) {

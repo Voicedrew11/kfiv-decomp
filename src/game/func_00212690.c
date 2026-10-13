@@ -10,7 +10,7 @@ void func_00212690(ScriptSetValueCommand *command) {
     Entity *entity;
     EntitySpawnInfo *spawn_info;
 
-    entity = KF_Entity_GetBySpawnId(command->object_id.value);
+    entity = Entity_GetBySpawnId(command->object_id.value);
     if (entity != NULL) {
         spawn_info = entity->spawn_info;
         saved_value = *(u16 *)&spawn_info->unk38; // match: the low 16 bits of the 64-bit field

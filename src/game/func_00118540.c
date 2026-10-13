@@ -35,13 +35,13 @@ void func_00118540(void) {
     func_00114AA8(other_slot);
     func_001154D8(other_slot, (int)offset);
     func_001155F8(other_slot);
-    KF_MapScroll_ClearPairs(other_slot);
+    MapScroll_ClearPairs(other_slot);
     func_001A15F0();
-    KF_MapObject_InitMap(other_slot);
-    KF_MapObject_OffsetAll(other_slot, offset);
+    MapObject_InitMap(other_slot);
+    MapObject_OffsetAll(other_slot, offset);
     func_001C82C0(other_slot);
     func_001C8990(other_slot, offset);
-    KF_Gold_InitMap(other_slot);
-    KF_Gold_MoveMap(other_slot, offset);
+    Gold_InitMap(other_slot);
+    Gold_MoveMap(other_slot, offset);
     D_0038D610.step++;
 }

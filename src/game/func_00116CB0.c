@@ -8,8 +8,8 @@ extern f32 D_004323E0[16];
 extern f32 D_00431AF0[16];
 extern int D_00446770;
 
-void KF_Vu0_LoadMatrix(void *);
-void KF_Vu0_ProjectToScreen(int *, void *);
+void Vu0_LoadMatrix(void *);
+void Vu0_ProjectToScreen(int *, void *);
 int func_00116C08(int, int, int, int);
 void func_002168B8(int *, int *, int *, f32 *, f32 *, f32 *);
 void sceVu0MulMatrix(void *, void *, void *);
@@ -41,7 +41,7 @@ int func_00116CB0(MapDrawRecord *draw_record, ModelInstance *model) {
         return 1;
     }
     sceVu0MulMatrix(matrix, D_004323E0, D_00431AF0);
-    KF_Vu0_LoadMatrix(matrix);
+    Vu0_LoadMatrix(matrix);
     corner2[3] = 1.0f;
     corner1[3] = 1.0f;
     corner0[3] = 1.0f;
@@ -74,12 +74,12 @@ int func_00116CB0(MapDrawRecord *draw_record, ModelInstance *model) {
     corner0[0] = bounds->unk50[0];
     corner0[1] = bounds->unk50[1];
     corner0[2] = bounds->unk40[2];
-    KF_Vu0_ProjectToScreen(screen0, corner0);
+    Vu0_ProjectToScreen(screen0, corner0);
     outside += (u32)screen0[2] > 0xFFFF0;
     corner0[0] = bounds->unk50[0];
     corner0[1] = bounds->unk50[1];
     corner0[2] = bounds->unk50[2];
-    KF_Vu0_ProjectToScreen(screen0, corner0);
+    Vu0_ProjectToScreen(screen0, corner0);
     outside += (u32)screen0[2] > 0xFFFF0;
     if (outside == 0) {
         return 1;

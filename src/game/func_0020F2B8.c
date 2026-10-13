@@ -3,7 +3,7 @@
 extern const f32 D_00446FC8[];      /* -0.0f */
 
 float sqrtf(float);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void func_00216778(void *, void *);
 void sceVu0Normalize(float *, float *);
 
@@ -39,7 +39,7 @@ void func_0020F2B8(f32 radius, f32 height, f32 length, f32 *base, f32 *origin, f
     if (end[1] < base[1] - height && start[1] < base[1] - height) {
         return;
     }
-    KF_Vector_Subtract(along, end, start);
+    Vector_Subtract(along, end, start);
     heading[0] = along[0];
     heading[1] = 0.0f;
     heading[2] = along[2];
@@ -52,7 +52,7 @@ void func_0020F2B8(f32 radius, f32 height, f32 length, f32 *base, f32 *origin, f
         nearest[0] = start[0];
         nearest[1] = base[1];
         nearest[2] = start[2];
-        KF_Vector_Subtract(along, base, nearest);
+        Vector_Subtract(along, base, nearest);
         distance_squared = along[0] * along[0] + along[2] * along[2];
         if (!(distance_squared <= radius_squared)) {
             return;
@@ -70,7 +70,7 @@ void func_0020F2B8(f32 radius, f32 height, f32 length, f32 *base, f32 *origin, f
         nearest[1] = start[1] + along[1] * part;
         nearest[2] = start[2] + along[2] * part;
         if (part < D_00446FC8[0]) {
-            KF_Vector_Subtract(offset, base, start);
+            Vector_Subtract(offset, base, start);
             distance_squared = offset[0] * offset[0] + offset[2] * offset[2];
             if (!(distance_squared <= radius_squared)) {
                 return;
@@ -87,7 +87,7 @@ void func_0020F2B8(f32 radius, f32 height, f32 length, f32 *base, f32 *origin, f
             *&COLLISION_RESULT->point[1] = nearest[1];
             *&COLLISION_RESULT->point[2] = nearest[2];
         } else if (1.0f < part) {
-            KF_Vector_Subtract(offset, base, end);
+            Vector_Subtract(offset, base, end);
             distance_squared = offset[0] * offset[0] + offset[2] * offset[2];
             if (!(distance_squared <= radius_squared)) {
                 return;
@@ -104,7 +104,7 @@ void func_0020F2B8(f32 radius, f32 height, f32 length, f32 *base, f32 *origin, f
             *&COLLISION_RESULT->point[1] = nearest[1];
             *&COLLISION_RESULT->point[2] = nearest[2];
         } else {
-            KF_Vector_Subtract(offset, base, nearest);
+            Vector_Subtract(offset, base, nearest);
             distance_squared = offset[0] * offset[0] + offset[2] * offset[2];
             if (!(distance_squared <= radius_squared)) {
                 return;
@@ -125,7 +125,7 @@ void func_0020F2B8(f32 radius, f32 height, f32 length, f32 *base, f32 *origin, f
                 *&COLLISION_RESULT->point[2] = start[2];
             } else {
                 inside = sqrtf(radius_squared - distance_squared);
-                KF_Vector_Subtract(offset, nearest, start);
+                Vector_Subtract(offset, nearest, start);
                 *&COLLISION_RESULT->distance = sqrtf(offset[0] * offset[0] + offset[2] * offset[2]) - inside;
                 *&COLLISION_RESULT->point[0] = nearest[0];
                 *&COLLISION_RESULT->point[1] = nearest[1];

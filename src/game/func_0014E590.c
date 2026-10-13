@@ -58,7 +58,7 @@ void func_0014E590(Entity *entity) {
     ((EntityUnkE0Kind151D30 *)unkE0)->unk88.bit6 = 1;
     func_00193378(entity->model, 0, 0);
     for (i = 0; i < 6; i++) {
-        other = KF_Entity_GetBySpawnId(i + 10);
+        other = Entity_GetBySpawnId(i + 10);
         if (other != NULL) {
             other->flags &= ~2;
             other->flags &= ~0x80;

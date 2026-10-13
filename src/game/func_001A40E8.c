@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 
 void func_001A3F20(EffectActor *effect);
-void KF_Vector_Scale(void *, void *, float);
+void Vector_Scale(void *, void *, float);
 
 /* Scales the model's unkE0 vector by the follower's scale factor. */
 void func_001A40E8(EffectActor *effect) {
@@ -12,5 +12,5 @@ void func_001A40E8(EffectActor *effect) {
     motion = (FollowerMotion *)&effect->motion;
     func_001A3F20(effect);
     model = effect->model;
-    KF_Vector_Scale(&model->unkE0, &model->unkE0, motion->unk18);
+    Vector_Scale(&model->unkE0, &model->unkE0, motion->unk18);
 }

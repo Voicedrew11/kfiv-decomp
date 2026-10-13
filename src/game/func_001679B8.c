@@ -16,7 +16,7 @@ void func_001679B8(Entity *entity) {
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0xC) | 4;
         ENTITY_FLAGS(entity) &= ~0x200;
         if (unkE0->unk7C != 0) {
-            Entity *other = KF_Entity_GetBySpawnId(unkE0->unk7B);
+            Entity *other = Entity_GetBySpawnId(unkE0->unk7B);
 
             if (other != NULL) {
                 other->unkE0.unk7A = -1;

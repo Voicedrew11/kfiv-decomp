@@ -3,10 +3,10 @@
 /* Start handler: closed (animation 4, step 1) or, with bit 17 set, open (animation 5, step 3). */
 void func_00120778(MapObject *object) {
     if (!(object->unk10 & 0x20000)) {
-        KF_MapObject_StartAnim(object, 4);
+        MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
-        KF_MapObject_StartAnim(object, 5);
+        MapObject_StartAnim(object, 5);
         MAP_OBJECT_BYTES(object)->step = 3;
     }
 }

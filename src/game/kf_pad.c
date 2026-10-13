@@ -7,7 +7,7 @@ void func_00216EA0(void *);
 static PadSystem pad_system; /* 0x1E0DB00 */
 
 /* Forgets every controller and starts libpad. */
-int KF_Pad_Init(int mode) {
+int Pad_Init(int mode) {
     PadSlot *pad;
 
     pad_system.open_slots[0] = 0;
@@ -27,8 +27,8 @@ int KF_Pad_Init(int mode) {
     return scePadInit(mode);
 }
 
-/* Opens a controller slot and marks it for KF_Pad_Update to poll. */
-int KF_Pad_OpenPort(int port, int slot) {
+/* Opens a controller slot and marks it for Pad_Update to poll. */
+int Pad_OpenPort(int port, int slot) {
     pad_system.open_slots[port] |= 1 << slot;
     return scePadPortOpen(port, slot, pad_system.slots[port * 4 + slot].dma_buffer);
 }
@@ -43,7 +43,7 @@ int KF_Pad_OpenPort(int port, int slot) {
    0xC8/0xC9 lining up the motors; 0xFD, 0xFE, 0xFF settled in digital, analog, analog with pressure.
    Only the settled phases leave the switch and read the pad. The other controller kinds (2, 3, 5, 6, 0x100,
    0x300) are named in the first phase and left alone. */
-void KF_Pad_Update(void) {
+void Pad_Update(void) {
     u8 align[6];
     int port;
     int slot;
@@ -279,42 +279,42 @@ void KF_Pad_Update(void) {
     }
 }
 
-/* The controller's scePadGetState value as of the last KF_Pad_Update. */
-int KF_Pad_GetState(int port, int slot) {
+/* The controller's scePadGetState value as of the last Pad_Update. */
+int Pad_GetState(int port, int slot) {
     PadSlot *pad = &pad_system.slots[port * 4 + slot];
 
     return pad->state;
 }
 
-/* The controller's scePadGetReqState value as of the last KF_Pad_Update. */
-int KF_Pad_GetRequestState(int port, int slot) {
+/* The controller's scePadGetReqState value as of the last Pad_Update. */
+int Pad_GetRequestState(int port, int slot) {
     PadSlot *pad = &pad_system.slots[port * 4 + slot];
 
     return pad->request_state;
 }
 
 /* The controller's last report: status, id, buttons, analog bytes, then pressed and repeated buttons. */
-PadReport *KF_Pad_GetReport(int port, int slot) {
+PadReport *Pad_GetReport(int port, int slot) {
     return &pad_system.slots[port * 4 + slot].report;
 }
 
 /* The buttons held on a controller. */
-int KF_Pad_GetButtons(int port, int slot) {
+int Pad_GetButtons(int port, int slot) {
     return pad_system.slots[port * 4 + slot].report.held;
 }
 
 /* The buttons that went down this frame. */
-int KF_Pad_GetPressed(int port, int slot) {
+int Pad_GetPressed(int port, int slot) {
     return pad_system.slots[port * 4 + slot].report.pressed;
 }
 
 /* The buttons that fired this frame, auto-repeat included. */
-int KF_Pad_GetRepeated(int port, int slot) {
+int Pad_GetRepeated(int port, int slot) {
     return pad_system.slots[port * 4 + slot].report.repeated;
 }
 
 /* Turns auto-repeat on for the given buttons: the first repeat after delay frames, then every interval. */
-void KF_Pad_SetRepeat(int port, int slot, u16 buttons, u16 delay, u16 interval) {
+void Pad_SetRepeat(int port, int slot, u16 buttons, u16 delay, u16 interval) {
     PadSlot *pad = &pad_system.slots[port * 4 + slot];
     int i;
 
@@ -330,12 +330,12 @@ void KF_Pad_SetRepeat(int port, int slot, u16 buttons, u16 delay, u16 interval) 
 }
 
 /* Turns auto-repeat off for the given buttons. */
-void KF_Pad_ClearRepeat(int port, int slot, u16 buttons) {
+void Pad_ClearRepeat(int port, int slot, u16 buttons) {
     pad_system.slots[port * 4 + slot].repeat_mask &= ~buttons;
 }
 
-/* Sets the six actuator bytes KF_Pad_Update sends to the controller. */
-void KF_Pad_SetActuators(int port, int slot, u8 *values) {
+/* Sets the six actuator bytes Pad_Update sends to the controller. */
+void Pad_SetActuators(int port, int slot, u8 *values) {
     PadSlot *pad = &pad_system.slots[port * 4 + slot];
     int i;
 
@@ -345,7 +345,7 @@ void KF_Pad_SetActuators(int port, int slot, u8 *values) {
 }
 
 /* Sets the rumble: the big motor runs at the given power and the small motor is on whenever that is not zero. */
-void KF_Pad_SetRumble(int port, int slot, int power) {
+void Pad_SetRumble(int port, int slot, int power) {
     PadSlot *pad = &pad_system.slots[port * 4 + slot];
     u8 big_motor = power;
 
@@ -358,7 +358,7 @@ void KF_Pad_SetRumble(int port, int slot, int power) {
 }
 
 /* Asks for digital mode. */
-void KF_Pad_RequestDigital(int port, int slot, int lock) {
+void Pad_RequestDigital(int port, int slot, int lock) {
     PadSlot *pad = &pad_system.slots[port * 4 + slot];
 
     pad->mode_lock = lock;
@@ -366,7 +366,7 @@ void KF_Pad_RequestDigital(int port, int slot, int lock) {
 }
 
 /* Asks for analog mode; FALSE when the controller cannot switch modes. */
-int KF_Pad_RequestAnalog(int port, int slot, int lock) {
+int Pad_RequestAnalog(int port, int slot, int lock) {
     PadSlot *pad = &pad_system.slots[port * 4 + slot];
 
     if (!(pad->features & PAD_FEATURE_MODE_SWITCH)) {
@@ -378,7 +378,7 @@ int KF_Pad_RequestAnalog(int port, int slot, int lock) {
 }
 
 /* Asks for pressure-sensitive mode; FALSE when the buttons do not sense pressure. */
-int KF_Pad_RequestPressure(int port, int slot) {
+int Pad_RequestPressure(int port, int slot) {
     PadSlot *pad = &pad_system.slots[port * 4 + slot];
 
     if (!(pad->features & PAD_FEATURE_PRESSURE)) {
@@ -389,6 +389,6 @@ int KF_Pad_RequestPressure(int port, int slot) {
 }
 
 /* The controller's mode: PAD_MODE_*, PAD_MODE_NONE while not known yet. */
-int KF_Pad_GetMode(int port, int slot) {
+int Pad_GetMode(int port, int slot) {
     return pad_system.slots[port * 4 + slot].mode;
 }

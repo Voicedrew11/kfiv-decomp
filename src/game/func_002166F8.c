@@ -6,7 +6,7 @@ void func_002166F8(ScriptObjectCommand *command) {
     Entity *entity;
     s64 flags;
 
-    entity = KF_Entity_GetBySpawnId(command->object_id.value);
+    entity = Entity_GetBySpawnId(command->object_id.value);
     if (entity != NULL) {
         flags = entity->flags;
         if (((flags & 3) == 3) && (entity->unk82 == 0) && ((flags & ((0x30L << 32) | 0xC)) == 0)) {

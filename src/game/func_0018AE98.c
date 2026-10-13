@@ -6,7 +6,7 @@
 extern int D_00446770;
 extern MapSlot D_0038CD20[2];
 
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *, void *, void *);
 void func_00216778(void *, void *);
 s32 func_0018AB40(void *, f32 *, f32 *, f32, s32);
@@ -26,7 +26,7 @@ s32 func_0018AE98(f32 *origin, f32 *direction, void *out_point, f32 length) {
     s32 map;
     s32 i;
 
-    KF_Vector_Scale(end, direction, length);
+    Vector_Scale(end, direction, length);
     func_00216C48(end, end, origin);
     if (origin[0] < end[0]) {
         lowest[0] = origin[0];

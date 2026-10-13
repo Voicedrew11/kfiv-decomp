@@ -2,7 +2,7 @@
 #include "kf_collision.h"
 
 double sqrt(double);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
 /* cylinder against cylinder: is `position` (a cylinder reaching `height` up from it) inside the other one,
@@ -22,7 +22,7 @@ void func_001857E8(f32 *position, f32 *other, f32 radius, f32 height, f32 other_
     reach = radius + other_radius;
     result->hit = 0;
     reach_squared = reach * reach;
-    KF_Vector_Subtract(delta, position, other);
+    Vector_Subtract(delta, position, other);
     distance_squared = delta[0] * delta[0] + delta[2] * delta[2];
     if (reach_squared < distance_squared) {
         return;

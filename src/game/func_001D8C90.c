@@ -126,7 +126,7 @@ void func_001D8C90(s32 context) {
         }
     }
     selected = D_005CE880[0];
-    table = KF_Message_GetFontText(D_00446F38);
+    table = Message_GetFontText(D_00446F38);
     slot = selected->unk0C + 0x385;
     entry = ((s32 *)table)[slot];
     word.raw = 0x000A875082E07000;

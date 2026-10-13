@@ -24,7 +24,7 @@ void func_0011FAB0(MapObject *object) {
                 MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk44, (void *)object->model->get_point(object->model, 0),
                 &object->model->rotation, &unk_value, object));
         } else if (work[0] <= 0) {
-            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
             work[0] = 0x2D;
         }
     }

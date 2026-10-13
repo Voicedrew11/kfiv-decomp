@@ -4,6 +4,6 @@
 
 /* Empties the map objects of both maps. */
 void func_0011C6E8(void) {
-    KF_MapObject_ClearMap(0);
-    KF_MapObject_ClearMap(1);
+    MapObject_ClearMap(0);
+    MapObject_ClearMap(1);
 }

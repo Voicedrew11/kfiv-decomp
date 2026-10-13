@@ -4,7 +4,7 @@ int func_0018EAC0(void *, void *);
 int func_0015B340(char *, float);
 void func_00216D20(void *, void *);
 void func_00216CD8(void *, void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void func_001958B8(char *, void (*)(void), int);
 
 /* walk back to the spawn point, turning away from whatever is pushing the entity */
@@ -35,7 +35,7 @@ void func_0015B428(Entity *entity, s32 unknown) {
             push[2] += entity->unkB0[2];
         }
         func_00216D20(push, push);
-        KF_Vector_Subtract(to_spawn, entity->spawn_info, entity->model->position);
+        Vector_Subtract(to_spawn, entity->spawn_info, entity->model->position);
         func_00216D20(to_spawn, to_spawn);
         func_00216CD8(to_spawn, push, to_spawn);
         if (to_spawn[1] <= 0.0f) {

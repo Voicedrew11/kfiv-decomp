@@ -377,7 +377,7 @@ typedef struct ModelInstance {
     ModelPartLevels **level_tables; /* 0xFC */
     u16 unk100;                     /* 0x100 */
     u16 unk102;                     /* 0x102 MODEL_FLAG_800: drawn with its own texture */
-    int unk104;                     /* 0x104 passed to KF_Effect_FindModelRecord, which does not read it */
+    int unk104;                     /* 0x104 passed to Effect_FindModelRecord, which does not read it */
     char pad108[0x08];
     ModelStripList *strips;         /* 0x110 also read as a CollisionMesh (kf_collision.h), NULL: none */
     MotionFile *motion_file;        /* 0x114 */
@@ -386,7 +386,7 @@ typedef struct ModelInstance {
     BoneAnchor *bone_anchors;       /* 0x120 32 of them */
     Vector4 *bone_positions;        /* 0x124 32 of them, written from bone_anchors */
     struct ModelInstance *draw_next[2]; /* 0x128 next model in the same depth bucket, per draw list */
-    ModelPart *unk130;              /* 0x130 the part whose placement KF_Entity_RebuildModelMatrices leaves out (the root?) */
+    ModelPart *unk130;              /* 0x130 the part whose placement Entity_RebuildModelMatrices leaves out (the root?) */
     char pad134[0x08];
     f32 radius;                     /* 0x13C how far the model reaches around its position (a map object's MapObject.unk14) */
     u8 hit_handles[4];              /* 0x140 handles of the linked points (D_003E7500) that touch it; the drawing code lights it by them */
@@ -402,7 +402,7 @@ typedef struct ModelInstance {
     s32 unk160[4];                  /* 0x160 */
     char pad170[0x08];
     void *unk178;                   /* 0x178 passed to func_0010B2E0 with unk194: bit n set skips chunk n (a mask, but not stored as an int) */
-    int found_record_id;            /* 0x17C the id KF_Effect_FindModelRecord last found; sent after the colour at unk150 by func_0010D308, in its alpha slot */
+    int found_record_id;            /* 0x17C the id Effect_FindModelRecord last found; sent after the colour at unk150 by func_0010D308, in its alpha slot */
     int found_record[4];            /* 0x180 a copy of that record, its id bits replaced; a quadword sent after it */
     u16 unk190;                     /* 0x190 slot of unk194 in D_00468190 (0..2), 3: always sent */
     s16 unk192;                     /* 0x192 */
@@ -436,7 +436,7 @@ typedef struct {
     char pad28[0x18];
 } __attribute__((aligned(16))) ModelLight;
 
-/* where a vertex lands on the screen, as KF_Vu0_ProjectToScreen and func_002168B8 write it */
+/* where a vertex lands on the screen, as Vu0_ProjectToScreen and func_002168B8 write it */
 typedef struct {
     s32 x;                          /* 0x00 12.4 fixed point; the screen is 0x6C00 to 0x9400 across */
     s32 y;                          /* 0x04 0x7200 to 0x8E00 down */
@@ -483,7 +483,7 @@ typedef struct {
         u8 bytes[8];                /* bytes[2] 0x3A, bytes[3] 0x3B: the id of another map object */
     } unk38;                        /* 0x38 */
     u16 unk40;                      /* 0x40 passed to func_002109C8, 0: nothing */
-    u16 unk42;                      /* 0x42 the same, by KF_MapObject_Break */
+    u16 unk42;                      /* 0x42 the same, by MapObject_Break */
     s16 unk44;                      /* 0x44 an item (D_00369830) or, 0x40 to 0x7F, a sound */
     u8 unk46;                       /* 0x46 */
     char pad47[0x01];
@@ -492,7 +492,7 @@ typedef struct {
     s16 unk4A;                      /* 0x4A */
     char pad4C[0x06];
     u16 unk52;                      /* 0x52 1 to 6: touching it starts PlayerState.timed_flags[unk52 - 1] (func_001BF350) */
-    u16 unk54;                      /* 0x54 passed to KF_Effect_StartSpawner when the object comes into view, 0: nothing */
+    u16 unk54;                      /* 0x54 passed to Effect_StartSpawner when the object comes into view, 0: nothing */
     u8 unk56;                       /* 0x56 the model point it starts at; the next one gives its direction */
     char pad57[0x01];
     u16 unk58;                      /* 0x58 passed to func_002109C8 when an item is used on the object, 0: nothing */
@@ -527,7 +527,7 @@ typedef struct {
 typedef struct {
     u8 anim;                        /* 0x00 passed to func_00108A08 */
     u8 sound_kind;                  /* 0x01 0: func_0019D1C0, 1: func_0019D490, 2: func_0019D980 */
-    u16 unk02;                      /* 0x02 passed to KF_Effect_StartSpawner on frame unk06 (KF_MapObject_UpdateAll) */
+    u16 unk02;                      /* 0x02 passed to Effect_StartSpawner on frame unk06 (MapObject_UpdateAll) */
     u16 sound;                      /* 0x04 0xFFFF: none */
     u8 unk06;                       /* 0x06 the animation frame unk02 starts on */
     u8 sound_frame;                 /* 0x07 the animation frame the sound starts on */
@@ -536,19 +536,19 @@ typedef struct {
 /* what MapObject.unk04 points at */
 typedef struct {
     u32 kind : 8;                   /* 0x00 1, 2, 6, 0x11: func_0018C728 tests lines of sight against it */
-    u32 bit8 : 1;                   /* which function draws it (KF_MapObject_InitMap) */
+    u32 bit8 : 1;                   /* which function draws it (MapObject_InitMap) */
     u32 pad00_9 : 2;
-    u32 bit11 : 1;                  /* KF_MapObject_Break can break it */
+    u32 bit11 : 1;                  /* MapObject_Break can break it */
     u32 bit12 : 1;                  /* it has a breaking animation (1) */
     u32 pad00_13 : 2;
-    u32 bit15 : 1;                  /* the player standing on it is carried and turned with it (KF_Player_Move) */
+    u32 bit15 : 1;                  /* the player standing on it is carried and turned with it (Player_Move) */
     u32 pad00_16 : 16;
     u16 unk04;                      /* 0x04 0xFFFF: it has no model */
     u16 unk06;                      /* 0x06 0xFFFF: it has no collision mesh */
     char pad08[0x04];
     f32 unk0C;                      /* 0x0C above 0: MapObject.unk14 is this times the scale, plus 100 */
     MapObjectAnim anims[8];         /* 0x10 by MapObjectBytes.anim; entry anim + 2 holds a second sound for anims 4 and 5 */
-    u16 unk50;                      /* 0x50 passed to KF_Effect_StartSpawner */
+    u16 unk50;                      /* 0x50 passed to Effect_StartSpawner */
     s16 unk52[9];                   /* 0x52 percent of each of a hit's nine strengths that it shrugs off, 200: all of it (func_001B3AC0) */
     f32 unk64;                      /* 0x64 above 0: the player must face it within this angle to act on it (func_001D0970) */
     u32 unk68;                      /* 0x68 flags; the low half is also a message id */
@@ -565,7 +565,7 @@ typedef struct {
 
 #define MAP_OBJECT_DEF_TOUGHNESS(def) (((MapObjectDefHalves *)(def))->toughness)
 
-/* MapObjectUnk04's first word whole, where retail tests a bit of it with a mask (KF_Player_Move) */
+/* MapObjectUnk04's first word whole, where retail tests a bit of it with a mask (Player_Move) */
 #define MAP_OBJECT_DEF_FLAGS(def) (*(u32 *)(def))
 #define MAP_OBJECT_DEF_CARRIES 0x8000   /* bit15 */
 
@@ -594,7 +594,7 @@ typedef struct {
 /* the 32-bit flags at AnimObject+0x10 */
 #define ANIM_OBJECT_FLAGS(object) (*(u32 *)&(object)->unk10)
 
-/* the objects of a map, looked up by KF_MapObject_GetById(map, id) */
+/* the objects of a map, looked up by MapObject_GetById(map, id) */
 typedef struct {
     ModelInstance *model;           /* 0x00 */
     MapObjectUnk04 *unk04;          /* 0x04 */
@@ -603,7 +603,7 @@ typedef struct {
     u32 unk10;                      /* 0x10 flags, MAP_OBJECT_BITS */
     f32 unk14;                      /* 0x14 how far around its position it reaches, 0: nothing to hit */
     f32 unk18;                      /* 0x18 how far it is from the point last tested against the map objects (func_001C2758, func_001C2A38) */
-    void *unk1C;                    /* 0x1C the next MapObject of its draw list (KF_MapObject_InitMap) */
+    void *unk1C;                    /* 0x1C the next MapObject of its draw list (MapObject_InitMap) */
     f32 unk20;                      /* 0x20 the model's position (x, y, z) as of the last update */
     f32 unk24;                      /* 0x24 */
     f32 unk28;                      /* 0x28 */
@@ -677,11 +677,11 @@ typedef struct {
     u32 bit17 : 1;
     u32 bit18 : 1;
     u32 bit19 : 1;
-    u32 bit20 : 1;                  /* a script drives it (KF_MapObject_SetScripted) */
+    u32 bit20 : 1;                  /* a script drives it (MapObject_SetScripted) */
     u32 bit21 : 1;
     u32 bit22 : 1;
     u32 bit23 : 1;
-    u32 anim : 8;                   /* 0x13 the animation KF_MapObject_StartAnim started */
+    u32 anim : 8;                   /* 0x13 the animation MapObject_StartAnim started */
 } MapObjectBits;
 
 #define MAP_OBJECT_BITS(object) ((MapObjectBits *)&(object)->unk10)
@@ -704,7 +704,7 @@ typedef union {
 
 #define MAP_OBJECT_FLAGS(object) (((MapObjectFlags *)&(object)->unk10)->word)
 
-/* the same word with bit 3 on its own: KF_MapObject_UpdateAll clears it every frame, the kinds' handlers set it */
+/* the same word with bit 3 on its own: MapObject_UpdateAll clears it every frame, the kinds' handlers set it */
 typedef struct {
     u32 map : 1;
     u32 bit1 : 1;                   /* in view this frame */

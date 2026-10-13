@@ -12,7 +12,7 @@ extern s32 D_00446DC4;              /* frames right (positive) or left (negative
 int func_00206DF8(int repeat_start) {
     int step = 0;
 
-    if (KF_Pad_GetMode(0, 0) == 0xFF) {
+    if (Pad_GetMode(0, 0) == 0xFF) {
         D_00446DC1 = 0;
         D_00446DC4 = 0;
         D_00446DC0 = 0;
@@ -22,7 +22,7 @@ int func_00206DF8(int repeat_start) {
         D_00446DC1 = 10;
     }
     D_00446DC1++;
-    if (!(KF_Pad_GetReport(0, 0)->held & 0xA0)) {
+    if (!(Pad_GetReport(0, 0)->held & 0xA0)) {
         if (D_00446DC4 != 0 && D_00446DC0 == 0 && D_00446DC1 > 10) {
             int backward = D_00446DC4 < 1; // match: the test as a value, or the compare turns round
             int back_step = -1;         // match: -1 loaded before step is set
@@ -38,7 +38,7 @@ int func_00206DF8(int repeat_start) {
             D_00446DC4 = 0;
         }
     }
-    if (KF_Pad_GetReport(0, 0)->held & 0x20) {
+    if (Pad_GetReport(0, 0)->held & 0x20) {
         D_00446DC4++;
         if (D_00446DC4 > 10) {
             step = 1;
@@ -46,7 +46,7 @@ int func_00206DF8(int repeat_start) {
             D_00446DC0 = 1;
             D_00446DC1 = 0;
         }
-    } else if (KF_Pad_GetReport(0, 0)->held & 0x80) {
+    } else if (Pad_GetReport(0, 0)->held & 0x80) {
         D_00446DC4--;
         if (D_00446DC4 < -10) {
             D_00446DC4 = -repeat_start;

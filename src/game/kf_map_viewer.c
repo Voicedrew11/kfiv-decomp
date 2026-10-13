@@ -60,8 +60,8 @@ void sceVu0TransMatrix(float *, float *, float *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0MulMatrix(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
 void func_0010A7E0(void *);
 static void func_0011C160(void);
 void func_0011AAE8(void);
@@ -117,7 +117,7 @@ void func_0011A438(int viewer_number) {
         if (viewer_number == 5) {
             row = (u8 *)D_0038CD20 + D_00446770 * 0x60;
             if (func_0011C678(row[1]) == 0) {
-                KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xB);
+                Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xB);
                 return;
             }
         }
@@ -694,7 +694,7 @@ void func_0011BCD0(void) {
             }
             if (move.x != 0.0f || move.y != 0.0f || move.z != 0.0f) {
                 func_00216D20(&move, &move);
-                KF_Vector_Scale(&move.x, &move.x, 100.0f);
+                Vector_Scale(&move.x, &move.x, 100.0f);
                 func_00216C48(&position, &position, &move);
                 if (position.x < D_00413F80.position.x + -48000.0f) {
                     position.x = D_00413F80.position.x + -48000.0f;
@@ -715,13 +715,13 @@ void func_0011BCD0(void) {
                     position.z = 50000.0f;
                 }
             }
-            KF_Vector_Scale(&move.x, &D_00413F80.position.x, -1.0f);
+            Vector_Scale(&move.x, &D_00413F80.position.x, -1.0f);
             sceVu0TransMatrix(world_view, D_00431AF0, &move.x);
             sceVu0RotMatrixY(world_view, world_view, -rotation.y);
             sceVu0RotMatrixX(world_view, world_view, -rotation.x);
             sceVu0TransMatrix(world_view, world_view, &D_00413F80.position.x);
-            KF_Vector_Subtract(&move, &D_00413F80, &position);
-            KF_Vector_Scale(&move.x, &move.x, -1.0f);
+            Vector_Subtract(&move, &D_00413F80, &position);
+            Vector_Scale(&move.x, &move.x, -1.0f);
             sceVu0TransMatrix(world_view, world_view, &move.x);
             sceVu0MulMatrix(world_screen, view_screen, world_view);
             func_0010A7E0(world_screen);

@@ -7,8 +7,8 @@ extern int D_00447054;
 double sin(double);
 int FlushCache(int);
 void sceVu0MulMatrix(void *, void *, void *);
-void KF_Vu0_LoadMatrix(void *);
-void KF_Vu0_ProjectToScreen(int *, void *);
+void Vu0_LoadMatrix(void *);
+void Vu0_ProjectToScreen(int *, void *);
 
 /* Gives every vertex texture coordinates taken from where it lands on the screen. Also steps a
    60-frame counter and fills a sine table that nothing reads. */
@@ -38,7 +38,7 @@ void func_00111010(ModelInstance *model) {
     for (i = 0; i < part_count; i++, part++) {
         FlushCache(0);
         sceVu0MulMatrix(matrix, D_004323E0, part);
-        KF_Vu0_LoadMatrix(matrix);
+        Vu0_LoadMatrix(matrix);
         ((void (*)(int))FlushCache)(0); // match: called as void, retail reuses $2 at once
         count = part->data_count;
         next_data = (ModelPartData *)(int)part->data_addr;
@@ -53,7 +53,7 @@ void func_00111010(ModelInstance *model) {
                 point[1] = vertex->y;
                 point[2] = vertex->z;
                 point[3] = 1.0f;
-                KF_Vu0_ProjectToScreen(screen, point);
+                Vu0_ProjectToScreen(screen, point);
                 vertex->tex_u = (s16)(screen[0] - 0x6C00) * 6.1035156e-05f;
                 vertex->tex_v = (s16)(screen[1] - 0x7200) * 0.00012207031f;
                 vertex->unk14 = 1;

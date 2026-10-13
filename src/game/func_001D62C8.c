@@ -64,12 +64,12 @@ int func_001D62C8(s8 mode) { // match: callers declare the parameter int; retail
     tm_fields[5] = clock.year + 100;
     mktime(tm_fields);
     D_00446C94 = mode;
-    D_004472D0 = D_004472D4 = KF_Pad_GetMode(0, 0);
+    D_004472D0 = D_004472D4 = Pad_GetMode(0, 0);
     while (func_001CEBE0(), D_0043F6E0[D_00446AC4]() != 0) {
         sceGsSyncPath(0, 0);
         D_00447200 = func_001D72F0(1);
         func_001B5460();
-        status = KF_Pad_GetMode(0, 0);
+        status = Pad_GetMode(0, 0);
         D_004472D0 = status;
         if (status != D_004472D4) {
             D_00447204 = 1;

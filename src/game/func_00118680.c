@@ -28,13 +28,13 @@ void func_00118680(void) {
     offset[2] = -D_0038D610.request->z;
     offset[3] = 0.0f;
     slot->unk00 = 1;
-    KF_MapObject_StartMap(other_slot);
-    KF_Entity_InitFromMapSpawns(other_slot);
-    KF_Entity_OffsetAllInSlot(other_slot, offset);
+    MapObject_StartMap(other_slot);
+    Entity_InitFromMapSpawns(other_slot);
+    Entity_OffsetAllInSlot(other_slot, offset);
     func_00123158(other_slot);
     func_001C87D8(other_slot);
-    KF_Entity_ClearFlag10InSlot(other_slot);
-    KF_MapScroll_CarryPairs(D_00446770, other_slot);
+    Entity_ClearFlag10InSlot(other_slot);
+    MapScroll_CarryPairs(D_00446770, other_slot);
     func_00119360(other_slot);
     func_001034F8(slot->tag);
     D_0038D610.position.x = D_0038D610.request->x;

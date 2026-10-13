@@ -13,8 +13,8 @@ float func_001B0178(void *, void *);
 void func_001AF5B0(void *, void *);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
-void KF_Vector_Scale(void *, void *, float);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Scale(void *, void *, float);
+void Vector_Subtract(void *, void *, void *);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(void *, void *, void *);
 
@@ -45,7 +45,7 @@ void func_001A92A8(EffectActor *effect) {
     if (effect->frame == motion->arrival_frame) {
         if (motion->has_aim != 0) {
             if (motion->first_level != 0) {
-                KF_Effect_Spawn(effect->def->end_effect, &motion->aim, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Spawn(effect->def->end_effect, &motion->aim, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             }
             if (motion->on_ground != 0) {
                 effect->motion.velocity.x = 0.0f;
@@ -63,9 +63,9 @@ void func_001A92A8(EffectActor *effect) {
         if (motion->on_ground != 0 && motion->arrival_frame + 10 < effect->frame) {
             sceVu0RotMatrixY(matrix, D_00431AF0, motion->sweep_turn);
             sceVu0ApplyMatrix(&motion->velocity, matrix, &motion->velocity);
-            KF_Vector_Scale(&motion->velocity, &motion->velocity, 1.02f);
+            Vector_Scale(&motion->velocity, &motion->velocity, 1.02f);
             func_00216C48(&motion->aim, &motion->aim, &motion->velocity);
-            KF_Vector_Subtract(&to_aim, &motion->aim, &effect->model->position);
+            Vector_Subtract(&to_aim, &motion->aim, &effect->model->position);
             func_001AF5B0(&effect->model->rotation, &to_aim);
             if (motion->hit_spawned == 0) {
                 func_00216778(&saved_position, &effect->model->position);
@@ -73,7 +73,7 @@ void func_001A92A8(EffectActor *effect) {
                 hits = func_001B4F90(effect);
                 func_00216778(&effect->model->position, &saved_position);
                 if (hits != 0) {
-                    KF_Effect_Spawn(effect->def->unkF0, &motion->aim, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                    Effect_Spawn(effect->def->unkF0, &motion->aim, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                     motion->hit_spawned = 1;
                 }
             }

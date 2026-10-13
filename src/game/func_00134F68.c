@@ -10,7 +10,7 @@ s32 func_00196D70(Entity *, void *, f32, f32, f32);
 int func_0018F030(char *);
 float func_00194FB8(float);
 void func_00195588(f32 *, f32);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *, void *, void *);
 void func_001958B8(char *, void (*)(void), int);
 void func_00134398(Entity *);
@@ -65,7 +65,7 @@ void func_00134F68(Entity *entity, s32 unknown) {
 
             direction[0] = func_00194FB8(entity->unk68 + 3.1415927f);
             func_00195588(point, direction[0]);
-            KF_Vector_Scale(point, point, 800.0f);
+            Vector_Scale(point, point, 800.0f);
             func_00216C48(point, point, D_00413F80);
             entity->target = point;
             unkE0->unk30[1] = entity->spawn_info->spawn_y;

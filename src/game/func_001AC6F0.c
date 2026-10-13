@@ -9,7 +9,7 @@ int rand(void);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 void func_001AF5B0(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void sceVu0RotMatrixY(Mat, Mat, float);
 void sceVu0ApplyMatrix(void *, void *, void *);
 
@@ -39,7 +39,7 @@ void func_001AC6F0(EffectActor *effect, EffectSlot *spawn_slot) {
     func_00216C48(&effect->model->position, D_00413F80, &offset);
     func_00216778(&player_point, D_00413F80);
     player_point.y -= 110.0f;
-    KF_Vector_Subtract(&offset, &player_point, &effect->model->position);
+    Vector_Subtract(&offset, &player_point, &effect->model->position);
     func_001AF5B0(&effect->model->rotation, &offset);
     motion->unk20 = (s16)((effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level) * effect->def->unkF0 + 30);
     motion->unk22 = (s16)(motion->unk20 - effect->def->unkF2);

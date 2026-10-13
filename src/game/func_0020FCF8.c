@@ -3,8 +3,8 @@
 float atan2f(float, float);
 float sqrtf(float);
 float func_0019B838(float);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
@@ -39,7 +39,7 @@ void func_0020FCF8(f32 *base, f32 *other, f32 radius, f32 height, f32 other_radi
     if (top < other_low) {
         return;
     }
-    KF_Vector_Subtract(delta, base, other);
+    Vector_Subtract(delta, base, other);
     distance = delta[0] * delta[0] + delta[2] * delta[2];
     COLLISION_RESULT->distance = distance;
     if ((radius + other_radius) * (radius + other_radius) < distance) {
@@ -86,10 +86,10 @@ void func_0020FCF8(f32 *base, f32 *other, f32 radius, f32 height, f32 other_radi
     if (second < lower) {
         return;
     }
-    KF_Vector_Subtract(delta, other, base);
+    Vector_Subtract(delta, other, base);
     delta[1] = 0.0f;
     sceVu0Normalize(COLLISION_RESULT->normal, delta);
-    KF_Vector_Scale(delta, COLLISION_RESULT->normal, other_radius);
+    Vector_Scale(delta, COLLISION_RESULT->normal, other_radius);
     func_00216C48(COLLISION_RESULT->point, base, delta);
     // match: `level` is never given a value; the height of the other cylinder was meant
     if (level < bottom) {

@@ -30,7 +30,7 @@ s32 func_00173AB0(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from, s3
         return 0;
     }
     for (i = 0; i < 2; i++) {
-        shot = KF_Shot_Alloc();
+        shot = Shot_Alloc();
         shot->unk22 = shot->unk20 = 0;
         shot->unk00 = 1;
         shot->unk28 = entity->params->unk238;

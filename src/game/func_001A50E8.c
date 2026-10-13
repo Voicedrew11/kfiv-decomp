@@ -3,7 +3,7 @@
 #include "kf_entity.h"
 
 float func_001B0178(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void func_00216778(void *, void *);
 int func_001C0E40(f32, void *);
 void sceVu0AddVector(void *, void *, void *);
@@ -19,7 +19,7 @@ void func_001A50E8(EffectActor *actor) {
         target = (Entity *)actor->unk6C;
         if (target != NULL) {
             if (((int)(target->flags >> 2) & 3) == 0) { // match: the int cast gives retail's dsll/dsra32
-                KF_Vector_Subtract(&offset, &target->model->position, &actor->model->position);
+                Vector_Subtract(&offset, &target->model->position, &actor->model->position);
                 func_001AFC88(&motion->velocity, &offset, actor->def->speed, actor->def->unkDC);
             } else {
                 actor->unk6C = 0;
@@ -36,13 +36,13 @@ void func_001A50E8(EffectActor *actor) {
         }
     }
     if (motion->state == 1) {
-        KF_Effect_Free(actor);
+        Effect_Free(actor);
     } else if (actor->frame == 0) {
         func_00216778(&offset, &actor->model->position);
         if (actor->unk6C != 0) {
             target = (Entity *)actor->unk6C;
             if (func_001B0178(&offset, &target->model->position) < 100.0f) {
-                KF_Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+                Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
                 motion->state = 1;
             }
         }

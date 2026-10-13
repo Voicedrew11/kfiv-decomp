@@ -10,7 +10,7 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void func_00216BC0(void *, void *, void *);
 void func_00216D20(void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 float func_00199E68(Entity *, float);
 int func_00192C98(void *, int, int, u32, int);
 
@@ -89,7 +89,7 @@ void func_0012C7B8(Entity *entity) {
         sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, entity->model->unkD0[1]);
         func_00216BC0(SCRATCH_VECTOR, SCRATCH_MATRIX, SCRATCH_VECTOR);
         func_00216D20(SCRATCH_VECTOR, SCRATCH_VECTOR);
-        KF_Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, amount);
+        Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, amount);
         entity->unk84 += SCRATCH_VECTOR[0];
         entity->unk88 += SCRATCH_VECTOR[1];
         entity->unk8C += SCRATCH_VECTOR[2];

@@ -75,7 +75,7 @@ typedef struct {
     CollisionStrip *strips;         /* 0x04 */
     char *unk08;                    /* 0x08 the end of the strips: unk0C 16-byte entries */
     u32 unk0C;                      /* 0x0C */
-    f32 unk10;                      /* 0x10 how far it reaches from its origin, unscaled (KF_MapObject_InitMap) */
+    f32 unk10;                      /* 0x10 how far it reaches from its origin, unscaled (MapObject_InitMap) */
     char *unk14;                    /* 0x14 the next mesh of a map file starts this many bytes on (a size, typed as func_00114AA8 needs) */
     CollisionStrip *unk18;          /* 0x18 unk38 strips */
     CollisionStrip *floor_strips;   /* 0x1C */

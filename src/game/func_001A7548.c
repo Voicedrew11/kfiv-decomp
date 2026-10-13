@@ -15,10 +15,10 @@ void func_001A7548(EffectActor *effect) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
         func_001AF5B0(&effect->model->rotation, &motion->velocity);
         if (func_001AF4E0(effect) != 0) {
-            KF_Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+            Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         } else {
             if (motion->unk24 == 0) {
-                KF_Effect_Spawn(effect->def->end_effect, &motion->unk10, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Spawn(effect->def->end_effect, &motion->unk10, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             } else {
                 u16 effect_id;
 
@@ -27,7 +27,7 @@ void func_001A7548(EffectActor *effect) {
                 } else {
                     effect_id = effect->def->unkF0;
                 }
-                KF_Effect_SpawnFromEffect(effect_id, effect);
+                Effect_SpawnFromEffect(effect_id, effect);
             }
         }
     }

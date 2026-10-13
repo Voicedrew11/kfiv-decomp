@@ -1,7 +1,7 @@
 #include "kf_model.h"
 
-void KF_Vector_Subtract(float *, float *, float *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(float *, float *, float *);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *, void *, void *);
 
 /* Writes steps + 1 vertices that lead from one vertex to another in equal steps
@@ -13,15 +13,15 @@ void func_00110D60(BlendVertex *out, BlendVertex *from, BlendVertex *last, int s
     int i;
 
     scale = 1.0f / steps;
-    KF_Vector_Subtract(delta.unk00, last->unk00, from->unk00);
-    KF_Vector_Scale(delta.unk00, delta.unk00, scale);
-    KF_Vector_Subtract(delta.unk10, last->unk10, from->unk10);
-    KF_Vector_Scale(delta.unk10, delta.unk10, scale);
+    Vector_Subtract(delta.unk00, last->unk00, from->unk00);
+    Vector_Scale(delta.unk00, delta.unk00, scale);
+    Vector_Subtract(delta.unk10, last->unk10, from->unk10);
+    Vector_Scale(delta.unk10, delta.unk10, scale);
     // match: retail bug, a product where every other component uses the difference last - from
     delta.unk20[0] = last->unk20[0] * from->unk20[0] * scale;
     delta.unk20[1] = last->unk20[1] * from->unk20[1] * scale; // match: retail bug, as above
-    KF_Vector_Subtract(delta.unk30, last->unk30, from->unk30);
-    KF_Vector_Scale(delta.unk30, delta.unk30, scale);
+    Vector_Subtract(delta.unk30, last->unk30, from->unk30);
+    Vector_Scale(delta.unk30, delta.unk30, scale);
     previous = out;
     *out = *from;
     out++;

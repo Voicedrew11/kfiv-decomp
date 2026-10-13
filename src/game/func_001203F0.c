@@ -10,10 +10,10 @@ void func_0010B5D0(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
 void func_00216B48(void *, void *, void *);
 void func_00216BC0(void *, void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 float atan2f(float, float);
-void KF_Vector_MultiplyComponents(float *, float *, float *);
+void Vector_MultiplyComponents(float *, float *, float *);
 
 /* Rebuilds the model matrices of an object whose parts always face the camera:
    each part is put where it sits in the world and turned toward D_004325A0. */
@@ -50,7 +50,7 @@ void func_001203F0(MapObject *object) {
     for (; i < part_count; i++) {
         func_00216B48((int)matrix, (int *)object->model->unk40, (int)part);
         func_00216BC0(&world, matrix, &unit);
-        KF_Vector_Subtract(&delta, D_004325A0, &world);
+        Vector_Subtract(&delta, D_004325A0, &world);
         pitch = atan2f(delta.y, sqrtf(delta.x * delta.x + delta.z * delta.z));
         yaw = atan2f(-delta.x, -delta.z);
         part->unk40[0] = world.x;
@@ -61,7 +61,7 @@ void func_001203F0(MapObject *object) {
         part->unk54 = yaw;
         part->unk58 = 0.0f;
         part->unk5C = 1.0f;
-        KF_Vector_MultiplyComponents(part->unk60, part->unk60, &object->model->unkE0);
+        Vector_MultiplyComponents(part->unk60, part->unk60, &object->model->unkE0);
         part++;
     }
     part = object->model->parts;

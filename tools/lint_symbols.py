@@ -10,8 +10,8 @@ Checks:
   game-order       the game section of symbol_addrs.txt out of address order
   duplicate-addr   two names for one address in the game section
   stale-name       C still says func_/D_XXXXXXXX where symbol_addrs.txt names the address
-  unknown-name     a KF_ function used in C that symbol_addrs.txt doesn't name (and no
-                   file defines static)
+  unknown-name     a Module_Verb function used in C that symbol_addrs.txt doesn't name
+                   (and no file defines static)
   function-order   a file's functions out of address order (gcc emits them as written)
   forbidden-path   (--changed) a generated or disc-derived file in the change
 
@@ -29,8 +29,8 @@ from lint_readability import GAME, ROOT, read_code  # noqa: E402
 SYMBOL_ADDRS = os.path.join(ROOT, "config", "symbol_addrs.txt")
 SYMBOL = re.compile(r"^\s*(\w+)\s*=\s*0x([0-9A-Fa-f]+)\s*;(.*)$")
 SPLAT_NAME = re.compile(r"\b(?:func|D)_([0-9A-F]{8})\b")
-KF_CALL = re.compile(r"\b(KF_[A-Z][a-z]\w*)\s*\(")
-STATIC_KF = re.compile(r"\bstatic\b[^;{(]*\b(KF_\w+)\s*\(")
+GAME_CALL = re.compile(r"\b((?:KF_)?[A-Z][a-z][A-Za-z0-9]*_[A-Z]\w*)\s*\(")
+STATIC_GAME = re.compile(r"\bstatic\b[^;{(]*\b((?:KF_)?[A-Z][a-z][A-Za-z0-9]*_[A-Z]\w*)\s*\(")
 DEFINITION = re.compile(r"^(?:static\s+)?(?:inline\s+)?[A-Za-z_][\w \t*]*?\b(\w+)\s*\([^;{]*\)\s*\{", re.M)
 FORBIDDEN = re.compile(r"^(?:asm/|build/|baserom/|tools/cc/|\.venv/|build\.ninja$|objdiff\.json$|config/undefined_)"
                        r"|\.(?:iso|elf|rom|bin)$", re.I)
@@ -82,7 +82,7 @@ def source_findings():
             by_address[address] = name
     sources = [(path, read_code(path)[1]) for path in game_files()]
     for _, code in sources:
-        statics.update(STATIC_KF.findall(code))
+        statics.update(STATIC_GAME.findall(code))
     for path, code in sources:
         where = os.path.relpath(path, ROOT)
         for match in SPLAT_NAME.finditer(code):
@@ -90,7 +90,7 @@ def source_findings():
             if real and real != match.group():
                 yield where, line_of(code, match.start()), "stale-name", f"{match.group()} is {real}"
         reported = set()
-        for match in KF_CALL.finditer(code):
+        for match in GAME_CALL.finditer(code):
             name = match.group(1)
             if name not in names and name not in statics and name not in reported:
                 reported.add(name)

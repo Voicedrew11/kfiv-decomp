@@ -23,10 +23,10 @@ void func_00121DA8(MapObject *object) {
     }
     func_00122600(object, count);
     if (!(object->unk10 & 0x20000)) {
-        KF_MapObject_StartAnim(object, 4);
+        MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
-        KF_MapObject_StartAnim(object, 5);
+        MapObject_StartAnim(object, 5);
         MAP_OBJECT_BYTES(object)->step = 4;
     }
 }

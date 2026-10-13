@@ -17,7 +17,7 @@ int func_001E44D0(s32 index) {
     GsPackedWord word;
 
     node = (DataNode *)*D_005CE840[0];
-    table = KF_Message_GetFontText(D_00446F38);
+    table = Message_GetFontText(D_00446F38);
     slot = node->unk0C + 1;
     entry = ((s32 *)table)[index + slot];
     word.raw = 0x000A87507E9080C0;

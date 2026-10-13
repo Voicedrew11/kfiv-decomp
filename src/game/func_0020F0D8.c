@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void sceVu0Normalize(float *, float *);
 
 /* Tests two upright cylinders, each given by a point on its axis, its radius and its height (it runs
@@ -17,7 +17,7 @@ void func_0020F0D8(f32 *base, f32 radius, f32 height, f32 *other_base, f32 other
 
     reach = radius + other_radius;
     COLLISION_RESULT->hit = 0;
-    KF_Vector_Subtract(delta, other_base, base);
+    Vector_Subtract(delta, other_base, base);
     reach *= reach;
     if (reach <= delta[0] * delta[0] + delta[2] * delta[2]) {
         return;
@@ -36,5 +36,5 @@ void func_0020F0D8(f32 *base, f32 radius, f32 height, f32 *other_base, f32 other
         COLLISION_RESULT->point[1] = level;
         COLLISION_RESULT->hit = 1;
     }
-    KF_Vector_Scale(COLLISION_RESULT->normal, delta, -1.0f);
+    Vector_Scale(COLLISION_RESULT->normal, delta, -1.0f);
 }

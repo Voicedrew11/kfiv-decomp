@@ -38,7 +38,7 @@ void func_001BBC88(int effect_id) {
         if ((clamped_uses >= 50 && spell_levels[row][column] < 2)
             || (clamped_uses >= 150 && spell_levels[row][column] < 3)) {
             spell_levels[row][column]++;
-            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2D);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2D);
             if (D_00413F80.unk3D == effect_id) {
                 D_00413F80.unk3D = effect_id + 1;
             } else if (D_00413F80.unk48 == 2 && D_00413F80.unk46 == effect_id) {
@@ -49,6 +49,6 @@ void func_001BBC88(int effect_id) {
     D_00413F80.unkD8 = (D_00413F80.unkD8 + 1) % 100;
     if (D_00413F80.unkD8 == 0 && D_00413F80.unk2C < 999) {
         D_00413F80.unk2C++;
-        KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2B);
+        Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2B);
     }
 }

@@ -25,8 +25,8 @@ extern u16 D_00446936;
 
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(void *, void *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(void *, void *, float);
 int func_001B4F30(u16, void *, void *, void *, void *);
 void func_001BBC88(int);
 int func_0019B908(float *, float, float);
@@ -55,7 +55,7 @@ static s32 channeled_shot_ring_index;             /* 0x44715C next slot in chann
 static PlayerShot *channeled_shot_slot;           /* 0x447160 shot reused while magic 7-9 is held */
 
 /* Casts magic `magic_id`: takes its cost, then launches its shot or applies what it does to the player. */
-int KF_Player_CastMagic(int magic_id) {
+int Player_CastMagic(int magic_id) {
     Vector4 angles;
     FxTableEntry *entry;
     FxTableStats *stats;
@@ -99,7 +99,7 @@ int KF_Player_CastMagic(int magic_id) {
         return FALSE;
     }
     if (entry->unk102 == 0) {
-        shot = KF_Shot_Alloc();
+        shot = Shot_Alloc();
         shot->unk00 = 1;
         shot->unk20 = D_00413F80.unkAC;
         shot->unk22 = D_00413F80.unkB0;
@@ -322,8 +322,8 @@ int KF_Player_CastMagic(int magic_id) {
             D_00413F80.unk2F0 = 30;
             break;
         }
-        KF_Effect_FreeByParam(magic_id);
-        KF_Effect_Spawn(entry->unk100, &D_00431C80, &D_00431C80, (Entity *)&D_00413F80, magic_id, NULL);
+        Effect_FreeByParam(magic_id);
+        Effect_Spawn(entry->unk100, &D_00431C80, &D_00431C80, (Entity *)&D_00413F80, magic_id, NULL);
         switch (magic_id) {
         case 0x10:
         case 0x11:
@@ -351,8 +351,8 @@ int KF_Player_CastMagic(int magic_id) {
 }
 
 /* Keeps a held magic (7 to 9) going: after the first 30 frames it costs one of unkB8 every third frame, and
-   every call launches its shot again from the slot KF_Player_CastMagic set aside. Out of unkB8, it stops. */
-void KF_Player_HoldMagic(int magic_id) {
+   every call launches its shot again from the slot Player_CastMagic set aside. Out of unkB8, it stops. */
+void Player_HoldMagic(int magic_id) {
     Vector4 angles;
     FxTableEntry *entry;
 
@@ -415,7 +415,7 @@ stop:
 
 /* Puts the player on the object (a ladder, it seems): notes its two end points, the walk to the end the player
    starts from (12 units a frame) and the number of steps. */
-void KF_Ladder_Start(ObjectReference *object, int from_far_end) {
+void Ladder_Start(ObjectReference *object, int from_far_end) {
     Vector4 span;
     int step_count;
     ReferencedObject *def;
@@ -428,7 +428,7 @@ void KF_Ladder_Start(ObjectReference *object, int from_far_end) {
     }
     func_00216778(&ladder_top_point, (void *)object->model->get_point(object->model, 1));
     func_00216778(&ladder_bottom_point, (void *)object->model->get_point(object->model, 0));
-    KF_Vector_Subtract(&ladder_span, &ladder_top_point, &ladder_bottom_point);
+    Vector_Subtract(&ladder_span, &ladder_top_point, &ladder_bottom_point);
     PLAYER_STATUS_BITS(&D_00413F80)->bit36 = TRUE;
     PLAYER_STATUS_BITS(&D_00413F80)->bit34 = FALSE;
     PLAYER_STATUS_BITS(&D_00413F80)->bit33 = FALSE;
@@ -445,9 +445,9 @@ void KF_Ladder_Start(ObjectReference *object, int from_far_end) {
     } else {
         func_00216778(&ladder_foot_position, &ladder_bottom_point);
     }
-    KF_Vector_Subtract(&ladder_walk_step, &ladder_foot_position, &D_00413F80.position);
+    Vector_Subtract(&ladder_walk_step, &ladder_foot_position, &D_00413F80.position);
     ladder_walk_frames_remaining = sqrtf(ladder_walk_step.x * ladder_walk_step.x + ladder_walk_step.y * ladder_walk_step.y + ladder_walk_step.z * ladder_walk_step.z) / 12.0f;
-    KF_Vector_Scale(&ladder_walk_step, &ladder_walk_step, 1.0f / (f32)ladder_walk_frames_remaining);
+    Vector_Scale(&ladder_walk_step, &ladder_walk_step, 1.0f / (f32)ladder_walk_frames_remaining);
     def = object->unk08;
     step_count = def->unk50;
     ladder_rung_count = step_count;
@@ -460,18 +460,18 @@ void KF_Ladder_Start(ObjectReference *object, int from_far_end) {
     }
     ladder_frames_per_rung = def->unk52;
     ladder_rung_anim_frame = 0;
-    KF_Vector_Subtract(&span, &ladder_bottom_point, &ladder_top_point);
+    Vector_Subtract(&span, &ladder_bottom_point, &ladder_top_point);
     ladder_rung_spacing = sqrtf(span.x * span.x + span.y * span.y + span.z * span.z) / (f32)ladder_rung_count;
 }
 
 /* Clears ladder approach state when the player is knocked off during a climb. */
-void KF_Ladder_CancelApproach(void) {
+void Ladder_CancelApproach(void) {
     ladder_state_index = 0;
     D_00413F80.unk1C8 &= ~(1L << 36);
 }
 
 /* Dispatches pad input to the ladder state handler when the player is on a ladder. */
-int KF_Ladder_DispatchPad(u16 held, u16 pressed) {
+int Ladder_DispatchPad(u16 held, u16 pressed) {
     PlayerState *player = &D_00413F80;
 
     if ((s32)(player->unk1C8 >> 36) & 1) {
@@ -481,7 +481,7 @@ int KF_Ladder_DispatchPad(u16 held, u16 pressed) {
 }
 
 /* Walks the player toward the ladder foot and turns to face it. */
-void KF_Ladder_WalkToFoot(void) {
+void Ladder_WalkToFoot(void) {
     if (ladder_walk_frames_remaining > 0) {
         ladder_walk_frames_remaining--;
         if (ladder_walk_frames_remaining > 0) {
@@ -496,7 +496,7 @@ void KF_Ladder_WalkToFoot(void) {
 }
 
 /* Waits on a rung; up/down input starts climbing or leaves the ladder. */
-void KF_Ladder_WaitOnRung(u16 buttons) {
+void Ladder_WaitOnRung(u16 buttons) {
     if (!(ladder_object->unk10 & 0x10000)) {
         D_00413F80.unk1C8 &= ~(1L << 36);
     }
@@ -528,7 +528,7 @@ void KF_Ladder_WaitOnRung(u16 buttons) {
 }
 
 /* Moves the player one rung up along a sine ease and plays a step sound. */
-void KF_Ladder_ClimbRungUp(u16 buttons) {
+void Ladder_ClimbRungUp(u16 buttons) {
     Vector4 offset;
     f32 angle;
     f32 fraction;
@@ -547,18 +547,18 @@ void KF_Ladder_ClimbRungUp(u16 buttons) {
     fraction = 1.0f;
     fraction /= (f32)ladder_rung_count;
     fraction = fraction * sinf((f32)ladder_rung_anim_frame * angle / (f32)ladder_frames_per_rung) / sinf(angle);
-    KF_Vector_Scale(&offset, &ladder_span,
+    Vector_Scale(&offset, &ladder_span,
                     fraction + (f32)(ladder_rung_anim_base * ladder_frames_per_rung) / (f32)(ladder_rung_count * ladder_frames_per_rung));
     func_00216C48(&D_00413F80.position, &ladder_bottom_point, &offset);
     if (ladder_rung_anim_frame >= ladder_frames_per_rung) {
         ladder_rung_anim_base = ladder_current_rung;
         ladder_state_index--;
-        KF_Ladder_PlayStepSound();
+        Ladder_PlayStepSound();
     }
 }
 
 /* Moves the player one rung down along a sine ease and plays a step sound. */
-void KF_Ladder_ClimbRungDown(u16 buttons) {
+void Ladder_ClimbRungDown(u16 buttons) {
     Vector4 offset;
     f32 angle;
     f32 fraction;
@@ -577,18 +577,18 @@ void KF_Ladder_ClimbRungDown(u16 buttons) {
     fraction = 1.0f;
     fraction /= (f32)ladder_rung_count;
     fraction = fraction * sinf((f32)ladder_rung_anim_frame * angle / (f32)ladder_frames_per_rung) / sinf(angle);
-    KF_Vector_Scale(&offset, &ladder_span,
+    Vector_Scale(&offset, &ladder_span,
                     fraction + (f32)(ladder_current_rung * ladder_frames_per_rung) / (f32)(ladder_rung_count * ladder_frames_per_rung));
     func_00216C48(&D_00413F80.position, &ladder_bottom_point, &offset);
     if (ladder_rung_anim_frame <= 0) {
         ladder_rung_anim_base = ladder_current_rung;
         ladder_state_index -= 2;
-        KF_Ladder_PlayStepSound();
+        Ladder_PlayStepSound();
     }
 }
 
 /* Plays the sound for the kind of object ladder_object refers to. */
-int KF_Ladder_PlayStepSound(void) {
+int Ladder_PlayStepSound(void) {
     u16 kind;
 
     if (ladder_object != NULL) {

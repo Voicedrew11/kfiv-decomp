@@ -32,8 +32,8 @@ void func_00216778(void *, void *);
 void func_00216788(void *, void *);
 void func_00216C48(void *, void *, void *);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
-void KF_Vu0_LoadMatrix(void *);
-void KF_Vu0_ProjectToScreen(int *, void *);
+void Vu0_LoadMatrix(void *);
+void Vu0_ProjectToScreen(int *, void *);
 
 extern char *D_00446F64;
 extern PlayerState D_00413F80;
@@ -78,15 +78,15 @@ static s32 trail_write_index;           /* 0x447180 */
 static s32 trail_read_index;            /* 0x447184 */
 static s32 trail_kind;                  /* 0x447188 index into D_00414660 */
 
-void KF_WeaponTrail_Reset(void);
-void KF_WeaponTrail_SetMinLife(s32);
-void KF_WeaponTrail_Age(void);
-void KF_WeaponTrail_Push(void *);
-void KF_WeaponTrail_GetPoint(void *, s32);
-s32 KF_WeaponTrail_GetLife(s32);
-int KF_WeaponTrail_GetCount(void);
+void WeaponTrail_Reset(void);
+void WeaponTrail_SetMinLife(s32);
+void WeaponTrail_Age(void);
+void WeaponTrail_Push(void *);
+void WeaponTrail_GetPoint(void *, s32);
+s32 WeaponTrail_GetLife(s32);
+int WeaponTrail_GetCount(void);
 
-void KF_HeldWeapon_Init(void) {
+void HeldWeapon_Init(void) {
     int file_handle;
     u32 heap_cursor;
     heap_cursor = (u32)D_00446F64; // match: retail treats the heap cursor as a plain address
@@ -108,13 +108,13 @@ void KF_HeldWeapon_Init(void) {
     file_handle = func_00102238(D_0043F588, 0, 1);
     func_001025C0(file_handle, (int)shared_texture_table, -1);
     func_001024B0(file_handle);
-    KF_Player_LoadArmModels();
+    Player_LoadArmModels();
 }
 
 /* Loads the model of the item the player holds (PlayerState.unk3C) and of the arm that holds it
    (unk41) when either changed: reads the item_arm file, copies it to its own buffer and sets up
    the model, its motions and its textures from the parts the file has. */
-void KF_Player_LoadArmModels(void) {
+void Player_LoadArmModels(void) {
     char path[0x100];
     int data;
     int buffer;
@@ -128,7 +128,7 @@ void KF_Player_LoadArmModels(void) {
         D_00446974 = D_00413F80.unk3C;
         if (D_00413F80.unk258 != 0) {
             D_00413F80.unk258 = 0;
-            KF_Effect_FreePlayerWeaponKinds();
+            Effect_FreePlayerWeaponKinds();
         }
         memset((void *)held_item_file, 0, 0x30000);
         memset(&D_0057B6A0, 0, 0x1C0);
@@ -171,8 +171,8 @@ void KF_Player_LoadArmModels(void) {
         D_0057B6A0.unk14C = &D_0038A250;
         MODEL_CHANNEL(&D_0057B6A0)->unk8F = 0x80;
         func_001A1160(D_00413F80.unk3C);
-        KF_WeaponTrail_Reset();
-        KF_WeaponTrail_SetMinLife(3);
+        WeaponTrail_Reset();
+        WeaponTrail_SetMinLife(3);
         D_00414740[0] = D_0041B9B8[D_00413F80.unk3C].unk87;
         D_00414740[1] = D_0041B9B8[D_00413F80.unk3C].unk88;
         D_00414740[2] = D_0041B9B8[D_00413F80.unk3C].unk89;
@@ -216,7 +216,7 @@ void KF_Player_LoadArmModels(void) {
 
 /* Each frame: places the held item's model in front of the camera (turned with the player's view),
    poses its parts, copies the pose to the arm's model and notes two of its points. */
-void KF_Player_UpdateArmModels(void) {
+void Player_UpdateArmModels(void) {
     f32 matrix[16];
     f32 position[4];
     f32 unused[4];
@@ -277,7 +277,7 @@ void KF_Player_UpdateArmModels(void) {
 }
 
 /* each frame: ages the weapon trail and queues the two ends of the held weapon, in screen space */
-void KF_WeaponTrail_Update(void) {
+void WeaponTrail_Update(void) {
     f32 world_screen[16];
     f32 unused[4];
     ModelScreenPoint point;
@@ -286,7 +286,7 @@ void KF_WeaponTrail_Update(void) {
     void *blade_tip;
     s32 item;
 
-    KF_WeaponTrail_Age();
+    WeaponTrail_Age();
     if (D_00413F80.unk258 != 0) {
         weapon = &D_0057B6A0;
         weapon->unk1B4(weapon);
@@ -303,28 +303,28 @@ void KF_WeaponTrail_Update(void) {
         blade_base = (void *)weapon->get_point(weapon, 0);
         blade_tip = (void *)weapon->get_point(weapon, 1);
         sceVu0MulMatrix(world_screen, D_004323E0, D_00431AF0);
-        KF_Vu0_LoadMatrix(world_screen);
-        KF_Vu0_ProjectToScreen((int *)&point, blade_base);
+        Vu0_LoadMatrix(world_screen);
+        Vu0_ProjectToScreen((int *)&point, blade_base);
         point.z = (s32)point.z >> 4;
         if (point.z > 0xFFFF0 || ((point.x | point.y) & 0xFFFF0000)) {
             point.unk0C |= 0x8000;
         } else {
             point.unk0C = 0;
         }
-        KF_WeaponTrail_Push(&point);
-        KF_Vu0_ProjectToScreen((int *)&point, blade_tip);
+        WeaponTrail_Push(&point);
+        Vu0_ProjectToScreen((int *)&point, blade_tip);
         point.z = (s32)point.z >> 4;
         if (point.z > 0xFFFF0 || ((point.x | point.y) & 0xFFFF0000)) {
             point.unk0C |= 0x8000;
         } else {
             point.unk0C = 0;
         }
-        KF_WeaponTrail_Push(&point);
+        WeaponTrail_Push(&point);
     }
 }
 
 /* draws the held weapon and the hand, then the weapon trail as one triangle strip */
-void KF_Player_DrawArm(void) {
+void Player_DrawArm(void) {
     s32 i;
     s32 count;
     u32 *packet;
@@ -367,7 +367,7 @@ void KF_Player_DrawArm(void) {
             }
         }
     }
-    count = KF_WeaponTrail_GetCount();
+    count = WeaponTrail_GetCount();
     if (count >= 4) {
         func_00109A50();
         func_00109A80(GS_REG_ALPHA_1, D_00414660[trail_kind].blend);
@@ -392,8 +392,8 @@ void KF_Player_DrawArm(void) {
             *packet++ = D_00414660[trail_kind].red;
             *packet++ = D_00414660[trail_kind].green;
             *packet++ = D_00414660[trail_kind].blue;
-            *packet++ = D_00414660[trail_kind].alpha * (KF_WeaponTrail_GetLife(i) - 1) / (D_00414660[trail_kind].lifetime - 1);
-            KF_WeaponTrail_GetPoint(packet, i);
+            *packet++ = D_00414660[trail_kind].alpha * (WeaponTrail_GetLife(i) - 1) / (D_00414660[trail_kind].lifetime - 1);
+            WeaponTrail_GetPoint(packet, i);
             packet += 3;
             /* a point off the screen keeps the three triangles it is part of from being drawn */
             if (*packet != 0) {
@@ -413,7 +413,7 @@ void KF_Player_DrawArm(void) {
 }
 
 /* picks the weapon trail kind: the strongest of six values, else by unk43 */
-void KF_WeaponTrail_PickKind(void) {
+void WeaponTrail_PickKind(void) {
     s32 best = 0;
 
     trail_kind = 0;
@@ -457,7 +457,7 @@ void KF_WeaponTrail_PickKind(void) {
     }
 }
 
-void KF_WeaponTrail_Reset(void) {
+void WeaponTrail_Reset(void) {
     memset(trail_points, 0, 0x400);
     memset(trail_lives, 0, 0x100);
     trail_count = 0;
@@ -466,13 +466,13 @@ void KF_WeaponTrail_Reset(void) {
     trail_read_index = 0;
 }
 
-void KF_WeaponTrail_SetMinLife(s32 min_life) {
+void WeaponTrail_SetMinLife(s32 min_life) {
     if (min_life > 0) {
         trail_min_life = min_life;
     }
 }
 
-void KF_WeaponTrail_GetPoint(void *dst, s32 index) {
+void WeaponTrail_GetPoint(void *dst, s32 index) {
     s32 table_index;
 
     if (index < trail_count) {
@@ -482,7 +482,7 @@ void KF_WeaponTrail_GetPoint(void *dst, s32 index) {
 }
 
 /* ages every queued trail point and drops the expired ones from the front */
-void KF_WeaponTrail_Age(void) {
+void WeaponTrail_Age(void) {
     s32 i;
     s32 slot;
     s32 count = trail_count;
@@ -498,7 +498,7 @@ void KF_WeaponTrail_Age(void) {
 }
 
 /* queues a weapon trail point; it lives as long as the current kind says */
-void KF_WeaponTrail_Push(void *position) {
+void WeaponTrail_Push(void *position) {
     if (trail_count + 1 <= 64) {
         func_00216788(&trail_points[trail_write_index], position);
         trail_lives[trail_write_index] = D_00414660[trail_kind].lifetime;
@@ -508,14 +508,14 @@ void KF_WeaponTrail_Push(void *position) {
 }
 
 /* frames left of the index-th queued trail point, oldest first */
-s32 KF_WeaponTrail_GetLife(s32 index) {
-    // match: retail accepts index == count, one past the newest point (KF_WeaponTrail_GetPoint tests index < count)
+s32 WeaponTrail_GetLife(s32 index) {
+    // match: retail accepts index == count, one past the newest point (WeaponTrail_GetPoint tests index < count)
     if (index <= trail_count) {
         return trail_lives[(trail_read_index + index) % 64];
     }
     return 0;
 }
 
-int KF_WeaponTrail_GetCount(void) {
+int WeaponTrail_GetCount(void) {
     return trail_count;
 }

@@ -42,7 +42,7 @@ void func_00119B20(int map) {
         show_record(map, 0x44);
         hide_record(map, 0x3F);
         hide_record(map, 0x41);
-        object = KF_MapObject_GetById(map, 0x66);
+        object = MapObject_GetById(map, 0x66);
         if (object != NULL) {
             object->model->position.x = -5887.0f;
             object->model->position.y = -790.0f;
@@ -55,9 +55,9 @@ void func_00119B20(int map) {
         rotation[1] = rotation[0] = 3.14f;
         rotation[2] = 0.0f;
         rotation[3] = 0.0f;
-        KF_Effect_StartSpawner(0x1DF, position, rotation, &D_0038CD20[map]);
+        Effect_StartSpawner(0x1DF, position, rotation, &D_0038CD20[map]);
     }
-    object = KF_MapObject_GetById(map, 0x67);
+    object = MapObject_GetById(map, 0x67);
     if (object != NULL) {
         object->model->unk150 = object->model->unk154 = object->model->unk158 = 255.0f;
     }

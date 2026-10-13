@@ -27,7 +27,7 @@ void func_001CA0E0(void) {
     if (node->def != NULL && node->def->required_flag != 0) {
         D_00356928[D_0038CD20[node->flags & 1].tag][node->index]++;
     } else if (node->unk08 != 0) {
-        KF_MapObject_MarkEmptied((MapObject *)node->unk08);
+        MapObject_MarkEmptied((MapObject *)node->unk08);
     } else if (node->record != NULL) {
         memset(node->record, 0, sizeof(DroppedItemRecord));
     }

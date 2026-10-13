@@ -5,8 +5,8 @@ int func_001C2D08(void *);
 u32 func_001125F0(u32, u32, int);
 void func_00216C48(void *, void *, void *);
 void func_001883E0(void *, void *, void *, void *, f32);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void sceVu0Normalize(float *, float *);
 
 /* Pushes the entity's sphere (at `position`, radius unk30) out of every triangle of a model's
@@ -34,10 +34,10 @@ s32 func_00187A20(Entity *entity, ModelInstance *model, f32 *position, f32 *norm
                 func_001883E0(point[0].position, point[1].position, point[2].position, position, entity->unk30);
                 if (COLLISION_RESULT->hit != 0) {
                     entity->flags |= 0x8000L << 30;
-                    KF_Vector_Subtract(offset, position, COLLISION_RESULT);
+                    Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     func_00216C48(normal_sum, normal_sum, offset);
-                    KF_Vector_Scale(offset, offset, entity->unk30);
+                    Vector_Scale(offset, offset, entity->unk30);
                     func_00216C48(position, COLLISION_RESULT, offset);
                 }
                 point++;
@@ -55,10 +55,10 @@ s32 func_00187A20(Entity *entity, ModelInstance *model, f32 *position, f32 *norm
                 func_001883E0(point[0].position, point[1].position, point[2].position, position, entity->unk30);
                 if (COLLISION_RESULT->hit != 0) {
                     entity->flags |= 0x8000L << 30;
-                    KF_Vector_Subtract(offset, position, COLLISION_RESULT);
+                    Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     func_00216C48(normal_sum, normal_sum, offset);
-                    KF_Vector_Scale(offset, offset, entity->unk30);
+                    Vector_Scale(offset, offset, entity->unk30);
                     func_00216C48(position, COLLISION_RESULT, offset);
                 }
                 point++;
@@ -76,10 +76,10 @@ s32 func_00187A20(Entity *entity, ModelInstance *model, f32 *position, f32 *norm
                 func_001883E0(point[0].position, point[1].position, point[2].position, position, entity->unk30);
                 if (COLLISION_RESULT->hit != 0) {
                     entity->flags |= 0x8000L << 30;
-                    KF_Vector_Subtract(offset, position, COLLISION_RESULT);
+                    Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     func_00216C48(normal_sum, normal_sum, offset);
-                    KF_Vector_Scale(offset, offset, entity->unk30);
+                    Vector_Scale(offset, offset, entity->unk30);
                     func_00216C48(position, COLLISION_RESULT, offset);
                 }
                 point++;
@@ -100,9 +100,9 @@ s32 func_00187A20(Entity *entity, ModelInstance *model, f32 *position, f32 *norm
                 if (COLLISION_RESULT->hit != 0) {
                     hit_floor = TRUE;
                     entity->flags |= 0x8000L << 29;
-                    KF_Vector_Subtract(offset, position, COLLISION_RESULT);
+                    Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
-                    KF_Vector_Scale(offset, offset, entity->unk30);
+                    Vector_Scale(offset, offset, entity->unk30);
                     func_00216C48(position, COLLISION_RESULT, offset);
                 }
                 point++;

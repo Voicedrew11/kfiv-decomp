@@ -12,9 +12,9 @@ void func_001A96B0(EffectActor *actor) {
     sceVu0AddVector(&actor->model->position, &actor->model->position, &motion->velocity);
     if (actor->frame > motion->end_frame) {
         if (motion->mode == 5 || motion->mode == 3) {
-            KF_Effect_Spawn(0x15, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            Effect_Spawn(0x15, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
         }
-        KF_Effect_Free(actor);
+        Effect_Free(actor);
         return;
     }
     func_001AF298(actor, motion->unk17);

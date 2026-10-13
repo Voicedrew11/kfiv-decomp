@@ -5,7 +5,7 @@ void func_001AF298(void *, void *);
 void func_00216778(void *, void *);
 void func_001AF5B0(void *, void *);
 void func_0019CE30(u8, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 
 extern char D_00413F80[];
@@ -28,12 +28,12 @@ void func_001AC8E8(EffectActor *effect) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
         func_001AF298(effect, motion->unk24);
         if (effect->frame > motion->end_frame + 0x3C) {
-            KF_Effect_Free(effect);
+            Effect_Free(effect);
         }
     } else if (effect->frame < motion->player_frame) {
         func_00216778(&player_offset, D_00413F80);
         player_offset.y -= 110.0f;
-        KF_Vector_Subtract(&offset, &player_offset, &effect->model->position);
+        Vector_Subtract(&offset, &player_offset, &effect->model->position);
         func_001AF5B0(&effect->model->rotation, &offset);
     }
     effect->frame += 1;

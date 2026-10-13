@@ -9,7 +9,7 @@ void func_001201E0(MapObject *object) {
     MapObjectUnk08Words *source;
 
     if (object->model->unk100 & 1) {
-        KF_MapObject_StartAnim(object, 4);
+        MapObject_StartAnim(object, 4);
     }
     source = MAP_OBJECT_WORDS(object);
     ((MapObjectWorkFade *)object->work)->near_distance = source->unk44;

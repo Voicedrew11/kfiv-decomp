@@ -11,7 +11,7 @@ int func_002071F0(int, u16);
 /* Builds the menu's buttons for this frame in D_00446DE8: what was pressed, the held shoulder buttons, and the
    directions as repeating steps, from the directional buttons and, in analog mode, from the left stick. */
 s16 func_00206C40(void) {
-    PadReport *report = KF_Pad_GetReport(0, 0);
+    PadReport *report = Pad_GetReport(0, 0);
     int horizontal;
     int vertical;
     int mode;
@@ -33,7 +33,7 @@ s16 func_00206C40(void) {
     if (vertical < 0) {
         D_00446DE8 |= 0x40;
     }
-    mode = KF_Pad_GetMode(0, 0);
+    mode = Pad_GetMode(0, 0);
     if (mode == 1 && ((PadReportAxes *)report)->left_stick != 0) {
         stick = 0;
         if (report->left_stick_x < 0x40) {

@@ -32,8 +32,8 @@ void func_002077F0(int number) {
     }
     line = (char *)func_001025C0(file, D_00249680, -1);
     func_001024B0(file);
-    KF_Ini_SetText(D_00249680, (int)line);
-    while ((line = KF_Ini_ReadLine()) != NULL) {
+    Ini_SetText(D_00249680, (int)line);
+    while ((line = Ini_ReadLine()) != NULL) {
         for (i = 0; D_0042B810[i].handler != NULL; i++) {
             if (strncmp(line, D_0042B810[i].key, strlen(D_0042B810[i].key)) == 0) {
                 line = strchr(line, '=') + 1;

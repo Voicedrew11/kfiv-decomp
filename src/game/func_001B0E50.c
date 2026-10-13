@@ -33,8 +33,8 @@ int func_001B0E50(int *map_id) {
     D_00433050[30] = 0xC000L << 17;
     do {
         func_0020B780(0);
-        KF_Pad_Update();
-        report = KF_Pad_GetReport(0, 0);
+        Pad_Update();
+        report = Pad_GetReport(0, 0);
         pressed = report->pressed;
         held = report->held;
         if (pressed & 0x80) {
@@ -60,8 +60,8 @@ int func_001B0E50(int *map_id) {
         }
         func_001095E0();
         func_001095D0();
-        KF_Message_DebugPrintf(D_0043F1D8, map);
-        KF_Message_Update();
+        Message_DebugPrintf(D_0043F1D8, map);
+        Message_Update();
         func_001095D8();
         func_001096E8();
         ((int (*)(void))func_00109800)(); // match: a result keeps $2 busy after the call
@@ -73,8 +73,8 @@ int func_001B0E50(int *map_id) {
     } while (!(pressed & 0x4000));
     do {
         func_0020B780(0);
-        KF_Pad_Update();
-        report = KF_Pad_GetReport(0, 0);
+        Pad_Update();
+        report = Pad_GetReport(0, 0);
     } while (report->held != 0);
     D_00432E20[0] = saved_colours[0];
     D_00432E20[30] = saved_colours[1];

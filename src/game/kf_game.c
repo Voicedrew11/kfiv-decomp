@@ -86,11 +86,11 @@ int rand(void);
 u32 fptoui(float);
 void sceVu0TransMatrix(void *, void *, void *);
 void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
-void KF_Vu0_LoadMatrix(void *);
-void KF_Vu0_ProjectToScreen(int *, void *);
-void KF_Vector_MultiplyComponents(float *, float *, float *);
-void KF_Vector_Scale(float *, float *, float);
-void KF_Vector_Subtract(float *, float *, float *);
+void Vu0_LoadMatrix(void *);
+void Vu0_ProjectToScreen(int *, void *);
+void Vector_MultiplyComponents(float *, float *, float *);
+void Vector_Scale(float *, float *, float);
+void Vector_Subtract(float *, float *, float *);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 void func_00109650(u32 *, u32 *);
@@ -544,7 +544,7 @@ void func_00103C18(void) {
     int sum;
 
     save_cursor = D_0036A130;
-    KF_MapObject_SaveAllFlags();
+    MapObject_SaveAllFlags();
     memset(save_cursor, 0, sizeof(D_0036A130));
     save_cursor += 8;
     *(int *)D_0036A130 = 0x15400;
@@ -881,7 +881,7 @@ void func_00106318(void) {
     sceVu0ViewScreenMatrix(view_matrix, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f, 65535.0f);
     sceVu0MulMatrix(screen_matrix, view_matrix, work_matrix);
     sceVu0MulMatrix(screen_matrix, screen_matrix, D_00431AF0);
-    KF_Vu0_LoadMatrix(screen_matrix);
+    Vu0_LoadMatrix(screen_matrix);
     D_00446744 = 0;
     for (i = 0; i < 8; i++) {
         if (D_0038A158[i] == 0) {
@@ -891,7 +891,7 @@ void func_00106318(void) {
             break;
         }
         translation[2] = D_0038A158[i];
-        KF_Vu0_ProjectToScreen(screen_xyz, translation);
+        Vu0_ProjectToScreen(screen_xyz, translation);
         screen_xyz[2] /= 16;
         D_0038A178[i] = screen_xyz[2];
         D_00446744++;
@@ -1046,7 +1046,7 @@ void func_00106980(void) {
     if (D_00446F78 != 0) {
         texture_base = 0;
     }
-    pad_buttons = KF_Pad_GetReport(1, 0)->held;
+    pad_buttons = Pad_GetReport(1, 0)->held;
     if (pad_buttons & 0x400) {
         D_0044673C += 0xFF;
         printf(D_0043E470, D_0044673C);
@@ -1412,11 +1412,11 @@ void func_00107528(void) {
     func_00109AD0();
 
     sceVu0MulMatrix(view_matrix, D_004323E0, D_00431AF0);
-    KF_Vu0_LoadMatrix(view_matrix);
-    KF_Vector_Scale(scaled_vector, D_00420D30, 1000.0f);
+    Vu0_LoadMatrix(view_matrix);
+    Vector_Scale(scaled_vector, D_00420D30, 1000.0f);
     func_00216C48(scaled_vector, scaled_vector, D_00420D30 - 4);
     scaled_vector[3] = 1.0f;
-    KF_Vu0_ProjectToScreen(screen_xy, scaled_vector);
+    Vu0_ProjectToScreen(screen_xy, scaled_vector);
 
     offset_x = screen_xy[0] - 0x8000;
     if (offset_x < 0) {
@@ -1527,8 +1527,8 @@ void func_00107840(void) {
         if (focus_distance < entity->distance_to_player) continue;
         func_00216778(offset_to_entity, entity->model->position);
         offset_to_entity[1] -= entity->height * 0.5f;
-        KF_Vector_Subtract(offset_to_entity, offset_to_entity, D_00420D00);
-        KF_Vector_MultiplyComponents(scratch_vector, offset_to_entity, offset_to_entity);
+        Vector_Subtract(offset_to_entity, offset_to_entity, D_00420D00);
+        Vector_MultiplyComponents(scratch_vector, offset_to_entity, offset_to_entity);
         distance_squared = scratch_vector[0] + scratch_vector[1] + scratch_vector[2];
         if (nearest_distance_squared < distance_squared) continue;
         sceVu0Normalize(scratch_vector, offset_to_entity);
@@ -1538,11 +1538,11 @@ void func_00107840(void) {
     }
 
     sceVu0MulMatrix(view_matrix, D_004323E0, D_00431AF0);
-    KF_Vu0_LoadMatrix(view_matrix);
-    KF_Vector_Scale(scratch_vector, D_00420D00 + 12, focus_distance);
+    Vu0_LoadMatrix(view_matrix);
+    Vector_Scale(scratch_vector, D_00420D00 + 12, focus_distance);
     func_00216C48(scratch_vector, scratch_vector, D_00420D00 + 8);
     scratch_vector[3] = 1.0f;
-    KF_Vu0_ProjectToScreen(screen_position, scratch_vector);
+    Vu0_ProjectToScreen(screen_position, scratch_vector);
 
     offset_x = screen_position[0] - 0x8000;
     if (offset_x < 0) offset_x = screen_position[0] - 0x7FFF;

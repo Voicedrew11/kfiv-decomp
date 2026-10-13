@@ -9,8 +9,8 @@ float sinf(float);
 float cosf(float);
 float atan2f(float, float);
 double sqrt(double);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 extern GameStatus D_0038CC50;
 extern PlayerState D_00413F80;
 extern EventRunner D_00420D00;
@@ -47,14 +47,14 @@ void func_001C9C40(void) {
     }
     D_005B60E0[3] = 0.0f;
     D_004471A8 = atan2f(D_00420D00.unk00[1] - D_005B60E0[1], 150.0f);
-    KF_Vector_Subtract(delta, D_005B60E0, D_005B60C0);
+    Vector_Subtract(delta, D_005B60E0, D_005B60C0);
     distance = sqrt(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
     if (distance < 75.0f) {
-        KF_Vector_Scale(D_005B60F0, delta, 1.0f / distance);
-        KF_Vector_Scale(D_005B60F0, D_005B60F0, 5.0f);
+        Vector_Scale(D_005B60F0, delta, 1.0f / distance);
+        Vector_Scale(D_005B60F0, D_005B60F0, 5.0f);
         D_004471AC = distance / 5.0f;
     } else {
-        KF_Vector_Scale(D_005B60F0, delta, 0.06666667f);
+        Vector_Scale(D_005B60F0, delta, 0.06666667f);
         D_004471AC = 15;
     }
     D_0044719C = 1.0f;

@@ -3,7 +3,7 @@
 
 extern float D_00413F80[];
 
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 
 /* Update handler of the fading kind: the alpha goes from near_alpha to far_alpha
@@ -14,14 +14,14 @@ void func_00120278(MapObject *object) {
     f32 distance;
 
     if (object->model->unk100 & 1) {
-        KF_MapObject_StartAnim(object, 4);
-        KF_MapObject_StepAnim(object);
+        MapObject_StartAnim(object, 4);
+        MapObject_StepAnim(object);
     }
     if (work->near_alpha == 0.0f && work->far_alpha == 0.0f) {
         object->model->alpha = 127.0f;
         return;
     }
-    KF_Vector_Subtract(&delta, &object->model->position, D_00413F80);
+    Vector_Subtract(&delta, &object->model->position, D_00413F80);
     distance = sqrtf(delta.x * delta.x + delta.z * delta.z);
     if (distance < work->near_distance) {
         object->model->alpha = work->near_alpha;

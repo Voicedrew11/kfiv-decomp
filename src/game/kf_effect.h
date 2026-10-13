@@ -38,14 +38,14 @@ typedef struct {
     f32 unkE8;                      /* 0xE8 */
     u16 radius_half;                /* 0xEC */
     u16 interval;                   /* 0xEE frames between collision checks, or a range */
-    u16 unkF0;                      /* 0xF0 effect ids passed to KF_Effect_SpawnFromEffect */
+    u16 unkF0;                      /* 0xF0 effect ids passed to Effect_SpawnFromEffect */
     u16 unkF2;                      /* 0xF2 */
     u8 unkF4;                       /* 0xF4 with the placement bits, picks the model's draw routine from D_003F1710 */
     u8 unkF5;                       /* 0xF5 bit 0: drawn with the map's own light block; bit 1: not drawn in the second pass */
     u8 unkF6;                       /* 0xF6 how the texture frames run: 0 loop, 1 once, 2 once and hold the last */
     u8 unkF7;                       /* 0xF7 how many texture frames, 0: not animated */
     u16 unkF8;                      /* 0xF8 record ids between two texture frames */
-    u16 unkFA;                      /* 0xFA nonzero: an id that KF_Effect_Init moves up by 0x1400; the first texture frame's record */
+    u16 unkFA;                      /* 0xFA nonzero: an id that Effect_Init moves up by 0x1400; the first texture frame's record */
     u8 unkFC;                       /* 0xFC effect frames per texture frame, less one */
     u8 unkFD;                       /* 0xFD */
     u16 unkFE;                      /* 0xFE */
@@ -62,7 +62,7 @@ typedef struct {
     f32 scale_per_frame;            /* 0x11C */
 } EffectDef;
 
-/* the 64-bit word at EffectDef+0xF0 as KF_Effect_DrawAll tests it (bits 40 and 41 are unkF5's bits 0 and 1) */
+/* the 64-bit word at EffectDef+0xF0 as Effect_DrawAll tests it (bits 40 and 41 are unkF5's bits 0 and 1) */
 #define EFFECT_DEF_WORD_F0(def) (*(s64 *)&(def)->unkF0)
 
 /* the 64-bit flag word at EffectDef+0x108, whose low 16 bits are max_frames */
@@ -936,8 +936,8 @@ typedef struct EffectActor {
     u16 effect_param;               /* 0x4E */
     ModelInstance *model;           /* 0x50 */
     EffectDef *def;                 /* 0x54 */
-    char *unk58;                    /* 0x58 one of MapSlot.records; cleared when its map is unloaded (KF_Effect_FreeForMap) */
-    Entity *owner_entity;           /* 0x5C the entity that cast it; freed with it (KF_Effect_FreeForOwner) */
+    char *unk58;                    /* 0x58 one of MapSlot.records; cleared when its map is unloaded (Effect_FreeForMap) */
+    Entity *owner_entity;           /* 0x5C the entity that cast it; freed with it (Effect_FreeForOwner) */
     struct EffectActor *target;     /* 0x60 */
     Vector4 *start_position;        /* 0x64 */
     Vector4 *start_rotation;        /* 0x68 */
@@ -1045,7 +1045,7 @@ typedef struct {
 
 #define EFFECT_SLOT_FLAG_PARTS(slot) ((EffectSlotFlagParts *)&(slot)->flags)
 
-/* the whole EffectSlot as KF_Effect_RunSpawner reads it: the bytes of the flag word as members of
+/* the whole EffectSlot as Effect_RunSpawner reads it: the bytes of the flag word as members of
    the slot itself (no address is taken, so gcc keeps no pointer to the word), and unk34 as
    the vector pointer it is */
 typedef struct {
@@ -1062,7 +1062,7 @@ typedef struct {
 
 #define EFFECT_SLOT_VIEW(slot) ((EffectSlotView *)(slot))
 
-/* FxTableEntry+0xAC: what casting the magic does to the player (KF_Player_CastMagic) */
+/* FxTableEntry+0xAC: what casting the magic does to the player (Player_CastMagic) */
 typedef struct {
     u16 unk00[6];                   /* 0x00 nonzero: PlayerState.timed_flags[i] is cleared */
     u16 unk0C[6];                   /* 0x0C goes to PlayerState.unk110 */
@@ -1094,7 +1094,7 @@ typedef struct {
     char pad00[0x34];
     FxTableHitCheck hit_checks[3];  /* 0x34 */
     FxTableStats unkAC;             /* 0xAC */
-    u16 unkFC;                      /* 0xFC taken from PlayerState.unkB8 to cast it (KF_Player_CastMagic) */
+    u16 unkFC;                      /* 0xFC taken from PlayerState.unkB8 to cast it (Player_CastMagic) */
     u16 unkFE;                      /* 0xFE divides how fast PlayerState.unkC0 fills (func_001B96C8) */
     u16 unk100;                     /* 0x100 */
     s8 unk102;                      /* 0x102 nonzero: the effect cannot be started */
@@ -1109,29 +1109,29 @@ extern EffectActor D_003F3550[EFFECT_COUNT]; /* the effect pool (kf_effect.c) */
 extern int D_004468C8;                       /* live effects that hold a sound slot */
 
 /* kf_effect.c: the spawner slot and effect pools */
-void KF_Effect_Init(void);
-void KF_Effect_DebugFreeAllButPlayer(void);
-void KF_Effect_TransformAll(void *transform);
-int KF_Effect_StartSpawner(int effect_id, void *position, void *rotation, void *owner_entity);
-int KF_Effect_Spawn(int effect_id, Vector4 *position, Vector4 *rotation, Entity *owner_entity, u16 effect_param, void *owner);
-void KF_Effect_UpdateAll(void);
-void KF_Effect_UploadTextures(void);
-void KF_Effect_DrawAll(int pass);
-int KF_Effect_SpawnFromEffect(int effect_id, EffectActor *effect);
-int KF_Effect_SpawnFromEffectAt(int effect_id, EffectActor *effect, Vector4 *position);
-void KF_Effect_Free(EffectActor *effect);
-void KF_Effect_FreeSpawner(EffectSlot *slot);
-void KF_Effect_FreeTargeting(EffectActor *target);
-void KF_Effect_FreeSpawnersOf(EffectActor *owner);
-void KF_Effect_OffsetAll(void *offset);
-void KF_Effect_FreeForMap(int map);
-void KF_Effect_FreeForOwner(Entity *owner);
-void KF_Effect_FreeUntaggedForOwner(Entity *owner);
-void KF_Effect_FreeByParam(int effect_param);
-void KF_Effect_FreePlayerWeaponKinds(void);
-void KF_Effect_FreePlayerMagic(void);
-void KF_Effect_FreeSpawnersByParam(int effect_param);
-int KF_Effect_IsDefRangeInUse(int first_def, int last_def);
+void Effect_Init(void);
+void Effect_DebugFreeAllButPlayer(void);
+void Effect_TransformAll(void *transform);
+int Effect_StartSpawner(int effect_id, void *position, void *rotation, void *owner_entity);
+int Effect_Spawn(int effect_id, Vector4 *position, Vector4 *rotation, Entity *owner_entity, u16 effect_param, void *owner);
+void Effect_UpdateAll(void);
+void Effect_UploadTextures(void);
+void Effect_DrawAll(int pass);
+int Effect_SpawnFromEffect(int effect_id, EffectActor *effect);
+int Effect_SpawnFromEffectAt(int effect_id, EffectActor *effect, Vector4 *position);
+void Effect_Free(EffectActor *effect);
+void Effect_FreeSpawner(EffectSlot *slot);
+void Effect_FreeTargeting(EffectActor *target);
+void Effect_FreeSpawnersOf(EffectActor *owner);
+void Effect_OffsetAll(void *offset);
+void Effect_FreeForMap(int map);
+void Effect_FreeForOwner(Entity *owner);
+void Effect_FreeUntaggedForOwner(Entity *owner);
+void Effect_FreeByParam(int effect_param);
+void Effect_FreePlayerWeaponKinds(void);
+void Effect_FreePlayerMagic(void);
+void Effect_FreeSpawnersByParam(int effect_param);
+int Effect_IsDefRangeInUse(int first_def, int last_def);
 
 /* helpers every effect kind calls */
 void func_001A3E30(EffectActor *effect, EffectSlot *spawn_slot);

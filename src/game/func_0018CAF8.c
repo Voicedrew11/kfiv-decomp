@@ -7,7 +7,7 @@ extern MapSlot D_0038CD20[];
 extern PlayerState D_00413F80;
 
 void func_00216778(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void func_00216D20(void *, void *);
 s32 func_0018AB40(void *, f32 *, f32 *, f32, s32);
 
@@ -40,7 +40,7 @@ s32 func_0018CAF8(Entity *entity) {
         "sqc2 $vf16, 0(%2)\n"
         : : "r"(target), "r"(position), "r"(distance_out) : "memory");
     distance = distance_out[0];
-    KF_Vector_Subtract(target, target, position);
+    Vector_Subtract(target, target, position);
     func_00216D20(target, target);
     if (entity->unk14 != player_record && (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) != 0x4000000) {
         hit = func_0018AB40(entity->unk14, position, target, distance, 0);

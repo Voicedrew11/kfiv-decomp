@@ -3,8 +3,8 @@
 
 #include "common.h"
 
-void KF_Shot_ClearAll(void);
-void *KF_Shot_Alloc(void);
-void *KF_Shot_AllocSecondRing(void);
+void Shot_ClearAll(void);
+void *Shot_Alloc(void);
+void *Shot_AllocSecondRing(void);
 
 #endif

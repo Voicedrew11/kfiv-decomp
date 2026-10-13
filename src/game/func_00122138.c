@@ -14,9 +14,9 @@ void func_00122138(MapObject *object) {
         work->timer--;
     }
     if (MODEL_CHANNEL(object->model)->param != 0) {
-        KF_MapObject_StepAnim(object);
+        MapObject_StepAnim(object);
     } else {
-        KF_MapObject_StartAnim(object, 5);
+        MapObject_StartAnim(object, 5);
         MAP_OBJECT_BYTES(object)->step = 4;
         D_0038CC50.unk30 &= ~1U;
     }

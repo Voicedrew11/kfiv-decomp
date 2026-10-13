@@ -14,7 +14,7 @@ void func_00150478(Entity *entity) {
     for (i = 0; i < 6; i++) {
         if (!((unkE0->unk6A >> i) & 1)) {
             if (rand() % 100 < chance / slots_left) {
-                Entity *other = KF_Entity_GetBySpawnId(i + 10);
+                Entity *other = Entity_GetBySpawnId(i + 10);
                 if (other != NULL && ((s32)other->flags & 1)) {
                     chance -= 100;
                     func_0018DC40((char *)other);

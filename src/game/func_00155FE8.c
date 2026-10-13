@@ -8,7 +8,7 @@ extern MapSlot D_0038CD20[];
 
 void func_00196870(void *, int);
 void func_00216778(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void func_00216D20(void *, void *);
 void func_00194F48(f32 *, f32 *);
 s32 func_0018A970(Entity *, f32 *, PlayerData *);
@@ -38,12 +38,12 @@ void func_00155FE8(Entity *entity, s32 unknown) {
         func_00216778(target, &D_00413F80);
         position[1] = entity->model->position[1] - entity->unk34 * 0.5f;
         target[1] = D_00413F80.position[1] - 115.0f;
-        KF_Vector_Subtract(delta, target, position);
+        Vector_Subtract(delta, target, position);
         func_00216D20(delta, delta);
         func_00194F48(position, target);
-        first = (Entity *)KF_MapObject_GetById(entity->group_id, 0xA0);
-        second = (Entity *)KF_MapObject_GetById(entity->group_id, 0xA1);
-        third = (Entity *)KF_MapObject_GetById(entity->group_id, 0xA2);
+        first = (Entity *)MapObject_GetById(entity->group_id, 0xA0);
+        second = (Entity *)MapObject_GetById(entity->group_id, 0xA1);
+        third = (Entity *)MapObject_GetById(entity->group_id, 0xA2);
         if (unkE0->unk7A == 0) {
             records = (MapRecord *)D_0038CD20[entity->group_id].records;
             if (entity->unk14 == &records[0x11]) {

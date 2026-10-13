@@ -17,8 +17,8 @@ void func_001A4CE8(EffectActor *effect) {
     }
     if (func_001B4F90(effect) != 0 || motion->end_frame == effect->frame) {
         model = effect->model;
-        KF_Effect_Spawn(effect->def->end_effect, &model->position, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
-        KF_Effect_Free(effect);
+        Effect_Spawn(effect->def->end_effect, &model->position, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+        Effect_Free(effect);
     }
     effect->frame += 1;
 }

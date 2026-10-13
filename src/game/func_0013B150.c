@@ -25,12 +25,12 @@ void func_0013B150(Entity *entity, s32 unknown) {
     s32 both_open;
 
     first_open = 0;
-    map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->variant);
+    map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
     if (map_object != NULL) {
         first_open = (map_object->unk10 >> 17) & 1;
     }
     second_open = 0;
-    map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->unk42);
+    map_object = MapObject_GetById(entity->group_id, entity->spawn_info->unk42);
     if (map_object != NULL) {
         second_open = (map_object->unk10 >> 17) & 1;
     }

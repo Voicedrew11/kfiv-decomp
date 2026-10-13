@@ -10,7 +10,7 @@ void func_001A4570(EffectActor *effect) {
 
     if (motion->next_spawn_frame < effect->frame) {
         model = effect->model;
-        KF_Effect_Spawn(motion->spawn_effect_id, &model->position, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+        Effect_Spawn(motion->spawn_effect_id, &model->position, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         motion->spawn_count += 1;
         if (motion->spawn_count >= motion->spawn_limit) {
             effect->frame = effect->def->keyframe_end;

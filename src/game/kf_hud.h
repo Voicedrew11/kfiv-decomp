@@ -3,9 +3,9 @@
 
 #include "common.h"
 
-void KF_Hud_Load(void);
-int KF_Hud_Update(void);
-void KF_Hud_Draw(void);
-void KF_Hud_DrawPaused(void);
+void Hud_Load(void);
+int Hud_Update(void);
+void Hud_Draw(void);
+void Hud_DrawPaused(void);
 
 #endif

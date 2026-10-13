@@ -26,7 +26,7 @@ void func_001221C0(MapObject *object) {
         MAP_OBJECT_BYTES(object)->step = 5;
         count = func_00103AE0(tag, object->unk08->unk38.bytes[2], work, timer);
         func_00103B38(tag, object->unk08->unk38.bytes[2]);
-        KF_MapObject_StepAnim(object);
+        MapObject_StepAnim(object);
         func_0011F148((char *)object);
         func_001BC1C0(count);
         object->unk10 &= ~0x20000;

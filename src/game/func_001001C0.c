@@ -115,33 +115,33 @@ void func_001001C0(int arg) {
         if (!(D_0038CC50.unk30 & 0x40) && D_00413F80.unk1A8 == 0) {
             func_00210D48();
         }
-        KF_Player_Update();
+        Player_Update();
         func_00100D10();
         func_001D0970();
         func_00117CC8();
-        KF_Player_UpdateArmModels();
+        Player_UpdateArmModels();
         func_00112BD0();
-        KF_MapObject_UpdateAll();
+        MapObject_UpdateAll();
         func_00123288();
-        KF_Entity_UpdateAll();
+        Entity_UpdateAll();
         func_001C95B0();
-        KF_Gold_Update();
+        Gold_Update();
         func_001BC2D0();
-        KF_Player_UpdateWeaponAim();
-        KF_Effect_UpdateAll();
-        KF_LinkedPoint_UpdateFollows();
-        KF_Hud_Update();
+        Player_UpdateWeaponAim();
+        Effect_UpdateAll();
+        LinkedPoint_UpdateFollows();
+        Hud_Update();
         if (!(D_0038CC50.bit12 && D_0038CC50.bit13)) {
             func_00101618();
             func_0019C540();
         }
         func_001061E8();
-        KF_Splash_Update();
-        KF_ItemEffect_Update();
+        Splash_Update();
+        ItemEffect_Update();
         func_00100FC8();
         func_001012D8(0, 0);
         func_0010A7E0(D_004323E0);
-        KF_WeaponTrail_Update();
+        WeaponTrail_Update();
         if (!(D_0038CC50.bit12 && D_0038CC50.bit13)) {
             func_001005E8(1);
             func_00109800();
@@ -157,8 +157,8 @@ void func_001001C0(int arg) {
     D_00433050[0] = 0xC000L << 17;
     D_00433050[30] = 0xC000L << 17;
     func_001B5778();
-    KF_Message_CloseBox();
-    KF_Message_ClearNotices();
+    Message_CloseBox();
+    Message_ClearNotices();
     saved = D_00349680[1];
     D_00349680[1] = 0;
     func_0019C7F0(0);

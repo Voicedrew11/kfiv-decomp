@@ -14,6 +14,6 @@ void func_001A9F98(EffectActor *effect, Vector4 *position, int effect_id) {
     }
     motion->unk26 = start_frame;
     effect->frame = (s8)start_frame;
-    KF_Effect_SpawnFromEffectAt(effect_id, effect, position);
+    Effect_SpawnFromEffectAt(effect_id, effect, position);
     motion->unk25 = 1;
 }

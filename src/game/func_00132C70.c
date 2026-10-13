@@ -67,7 +67,7 @@ void func_00132C70(Entity *entity) {
                     position[0] = unkE0->unk48 + delta_x * i / count;
                     position[1] = unkE0->unk4C + delta_y * i / count;
                     position[2] = unkE0->unk50 + delta_z * i / count;
-                    KF_Effect_StartSpawner(0x3A0, position, angles, entity);
+                    Effect_StartSpawner(0x3A0, position, angles, entity);
                 }
             }
             unkE0->unk48 = from[0];

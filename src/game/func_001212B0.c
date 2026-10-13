@@ -24,7 +24,7 @@ void func_001212B0(MapObject *object) {
             if (work->timer > 0) {
                 return;
             }
-            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
             work->timer = 0x2D;
         } else {
             MAP_OBJECT_BYTES(object)->step = 5;

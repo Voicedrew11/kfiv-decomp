@@ -27,7 +27,7 @@ void func_00120058(MapObject *object) {
             if (work[1] > 0) {
                 return;
             }
-            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x46);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x46);
             work[1] = 0x2D;
         }
     }

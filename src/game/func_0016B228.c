@@ -30,7 +30,7 @@ void func_0016B228(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit26 = 1;
             entity->unkA0 = 20;
             func_001035A8(D_0038CD20[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
-            KF_Effect_FreeForOwner(entity);
+            Effect_FreeForOwner(entity);
             entity->action_step++;
         }
         break;

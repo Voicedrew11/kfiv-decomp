@@ -41,16 +41,16 @@ void func_001152B8(int map) {
         func_001154D8(1, (int)offset);
         func_001155F8(0);
         func_001155F8(1);
-        KF_MapObject_OffsetAll(0, offset);
-        KF_MapObject_OffsetAll(1, offset);
-        KF_Entity_OffsetAllInSlot(0, offset);
-        KF_Entity_OffsetAllInSlot(1, offset);
-        KF_Effect_OffsetAll(offset);
-        KF_LinkedPoint_TransformFollows(offset);
+        MapObject_OffsetAll(0, offset);
+        MapObject_OffsetAll(1, offset);
+        Entity_OffsetAllInSlot(0, offset);
+        Entity_OffsetAllInSlot(1, offset);
+        Effect_OffsetAll(offset);
+        LinkedPoint_TransformFollows(offset);
         func_001C8990(0, offset);
         func_001C8990(1, offset);
-        KF_Gold_MoveMap(0, offset);
-        KF_Gold_MoveMap(1, offset);
+        Gold_MoveMap(0, offset);
+        Gold_MoveMap(1, offset);
         D_0038D610.position.x = -D_0038D610.position.x;
         D_0038D610.position.y = -D_0038D610.position.y;
         D_0038D610.position.z = -D_0038D610.position.z;
@@ -66,6 +66,6 @@ void func_001152B8(int map) {
         }
         D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[map].header)->unk70;
         D_0038A130.unk04 = 1;
-        KF_MapScroll_CarryPairs(map == 0, map);
+        MapScroll_CarryPairs(map == 0, map);
     }
 }

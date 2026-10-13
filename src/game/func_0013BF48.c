@@ -19,7 +19,7 @@ int func_0013BF48(Obj *arg0, int arg1) {
     Obj *o;
 
     for (i = 0; i < 5; i++) {
-        o = KF_Entity_GetBySpawnId(t.a[i]);
+        o = Entity_GetBySpawnId(t.a[i]);
         if (o != 0 && (o->flags & 0xD) == 1 && o != arg0 && o->tag == arg1) {
             return 0;
         }

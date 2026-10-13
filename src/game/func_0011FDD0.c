@@ -44,7 +44,7 @@ void func_0011FDD0(void *arg, int unused) {
                 if (message == 0) {
                     message = 0x3E;
                 }
-                KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
+                Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
                 work[1] = 0x2D;
                 return;
             }
@@ -71,7 +71,7 @@ void func_0011FDD0(void *arg, int unused) {
             position.y = object->model->position.y - 25.0f;
             position.z = object->model->position.z;
             turn.y = object->model->rotation.y;
-            KF_Gold_Drop(&position, &turn, MAP_OBJECT_BYTES(object)->unk00 & 1, ((MapObjectUnk08Words *)source)->unk48, source->unk38.bytes[2], 0, 1);
+            Gold_Drop(&position, &turn, MAP_OBJECT_BYTES(object)->unk00 & 1, ((MapObjectUnk08Words *)source)->unk48, source->unk38.bytes[2], 0, 1);
             MAP_OBJECT_BITS(object)->bit18 = FALSE;
         }
     }

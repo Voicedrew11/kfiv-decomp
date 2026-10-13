@@ -103,7 +103,7 @@ static int D_004470BC;                  /* 0x4470BC list B count */
 static int D_004470C0;                  /* 0x4470C0 list C count */
 
 /* Clear the entity pool and empty every entity list. */
-void KF_Entity_ResetAllLists(void) {
+void Entity_ResetAllLists(void) {
     EntityPoolSlot *block;
     int block_address;
     int blocks_left;
@@ -165,7 +165,7 @@ void func_00123158(int idx) {
 }
 
 /* Free every entity in the group from all three lists. */
-void KF_Entity_FreeAllInGroup(int group_id) {
+void Entity_FreeAllInGroup(int group_id) {
     Entity *entity;
 
     entity = D_004470A8;
@@ -192,7 +192,7 @@ void KF_Entity_FreeAllInGroup(int group_id) {
             func_001243E8(entity->unkD3);
             func_00123AB8(entity);
             entity = func_00124D48(entity);
-            KF_Effect_FreeForOwner(entity);
+            Effect_FreeForOwner(entity);
         } else {
             entity = entity->next;
         }
@@ -203,7 +203,7 @@ void KF_Entity_FreeAllInGroup(int group_id) {
 void func_00123288(void) {
     func_001232C0();
     func_001234F0();
-    KF_Entity_DespawnOutOfRange();
+    Entity_DespawnOutOfRange();
     func_00123690();
     func_00124570();
 }
@@ -294,7 +294,7 @@ static void func_001234F0(void) {
 }
 
 /* Free entities that are out of range of the player. */
-void KF_Entity_DespawnOutOfRange(void) {
+void Entity_DespawnOutOfRange(void) {
     Entity *entity = D_004467E0;
     while (entity != NULL) {
         EntitySpawnInfo *spawn_info;
@@ -321,7 +321,7 @@ void KF_Entity_DespawnOutOfRange(void) {
             func_00123AB8(despawned);
             func_00124D48(despawned);
             func_00124BC8(despawned);
-            KF_Effect_FreeForOwner(despawned);
+            Effect_FreeForOwner(despawned);
         } else {
             entity = entity->next;
         }
@@ -459,7 +459,7 @@ static int func_00123918(Entity *entity) {
     ENTITY_MODEL(entity)->unk1A0 = (int)func_00116BD0(entity->group_id, 5);
     entity->unkD2 = slot->unk7;
     func_00124370(entity->unkD3);
-    ((void (*)(Entity *))KF_Entity_ResetToSpawn)(entity); // match: declared without its argument elsewhere
+    ((void (*)(Entity *))Entity_ResetToSpawn)(entity); // match: declared without its argument elsewhere
     return TRUE;
 }
 
@@ -684,7 +684,7 @@ static void func_001240B8(int group_id) {
     entity = D_004467E0;
     while (entity != NULL) {
         if (group_id == entity->unkD3) {
-            KF_Effect_FreeForOwner(entity);
+            Effect_FreeForOwner(entity);
             func_001243E8(entity->unkD3);
             func_00123AB8(entity);
             next = entity->next;
@@ -745,7 +745,7 @@ static void func_001241A0(int slot_index) {
     entity = D_004467E0;
     while (entity != NULL) {
         if (slot_index == entity->unkD3) {
-            KF_Effect_FreeForOwner(entity);
+            Effect_FreeForOwner(entity);
             func_001243E8(entity->unkD3);
             func_00123AB8(entity);
             next = entity->next;
@@ -1154,7 +1154,7 @@ static Entity *func_00124D48(Entity *entity) {
     if (entity->next != NULL) {
         entity->next->prev = entity->prev;
     }
-    KF_Entity_SetSpawnedFlags(entity);
+    Entity_SetSpawnedFlags(entity);
     entity->flags &= ~1;
     D_004470C0--;
     return next;

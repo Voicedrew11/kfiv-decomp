@@ -6,6 +6,6 @@ extern u8 D_0044694E;
 void func_001B57D8(void) {
     if (D_0044694E == 0) {
         D_0044694E = 1;
-        KF_Pad_SetRumble(0, 0, 0);
+        Pad_SetRumble(0, 0, 0);
     }
 }

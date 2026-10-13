@@ -8,7 +8,7 @@ int func_00211D90(void *, double); // match: retail converts the float argument 
 void func_00215BF0(ScriptEntityVectorCommand *command) {
     Entity *entity;
 
-    entity = KF_Entity_GetBySpawnId(command->target_id.value);
+    entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
         func_00211D90(&command->x, entity->model->position[0]);
         func_00211D90(&command->y, entity->model->position[1]);

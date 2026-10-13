@@ -15,7 +15,7 @@ extern Vector4Arg D_00441490;
 #define SCRATCH_MATRIX ((f32 *)0x70000000)
 
 /* Brings an angle back into -pi..pi. */
-static inline f32 KF_Angle_Wrap(f32 angle) {
+static inline f32 Angle_Wrap(f32 angle) {
     angle += 3.1415927f;
     return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
 }
@@ -32,7 +32,7 @@ void func_0020C7A8(ModelInstance *model, Vector4 *rotation, f32 *scale) {
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
     scratch[10] = -1.0f;
-    sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, KF_Angle_Wrap(rotation->z));
+    sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
     offset.y += offset.z * sinf(D_004325A0.unk10);
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, &offset.x);
     func_00216B48(model, D_004322A0, matrix);

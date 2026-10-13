@@ -26,8 +26,8 @@ extern u8 D_004141D0[];
 extern const f32 D_004467F8[];
 
 void func_00216778(void *, void *);
-void KF_Vector_Scale(float *, float *, float);
-void KF_Vector_MultiplyComponents(float *, float *, float *);
+void Vector_Scale(float *, float *, float);
+void Vector_MultiplyComponents(float *, float *, float *);
 int func_00192C98(void *, int, int, u32, int);
 void func_00216C48(void *, void *, void *);
 void func_0010C9E8(ModelInstance *);
@@ -59,13 +59,13 @@ f32 func_0018A9F0(void *, void *);
 
 static Entity *entity_by_spawn_id[2][0x100]; /* 0x4FEB90 entity lookup by spawn id byte per map slot */
 
-static void KF_Entity_RebuildModelMatrices(Entity *entity);
-static int KF_Entity_IsMapRecordActive(Entity *entity);
-static MapRecordBounds *KF_Entity_FindMapRecordUnder(Entity *entity);
+static void Entity_RebuildModelMatrices(Entity *entity);
+static int Entity_IsMapRecordActive(Entity *entity);
+static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity);
 static inline void entity_draw_set_model_tint(Entity *entity, f32 red, f32 green, f32 blue);
 
 /* Sets up the entities of a map from its spawn records, filling in defaults for values left at 0. */
-void KF_Entity_InitFromMapSpawns(int map) {
+void Entity_InitFromMapSpawns(int map) {
     Entity *entity;
     EntitySpawnInfo *spawn_info;
     ModelInstance *model;
@@ -135,7 +135,7 @@ void KF_Entity_InitFromMapSpawns(int map) {
 }
 
 /* Clears flag bit 4 of every entity in one of the two entity arrays. */
-void KF_Entity_ClearFlag10InSlot(int array_index) {
+void Entity_ClearFlag10InSlot(int array_index) {
     Entity *entity;
     int i;
 
@@ -146,7 +146,7 @@ void KF_Entity_ClearFlag10InSlot(int array_index) {
 }
 
 /* Puts an entity back to how it spawns: flags, counters, position, rotation and its sizes scaled. */
-void KF_Entity_ResetToSpawn(Entity *entity) {
+void Entity_ResetToSpawn(Entity *entity) {
     Vector4Arg scale = D_0043E7C0;
     f32 widest;
 
@@ -197,12 +197,12 @@ void KF_Entity_ResetToSpawn(Entity *entity) {
     entity->unk48 = 10.0f;
     func_00216778(entity->model->position, entity->spawn_info);
     func_00216778(entity->model->unkD0, &entity->spawn_info->unk10);
-    KF_Vector_Scale(entity->model->unkE0, &scale.x, (f32)entity->params->unkD2 / 100.0f);
+    Vector_Scale(entity->model->unkE0, &scale.x, (f32)entity->params->unkD2 / 100.0f);
     func_00216778(&scale, entity->spawn_info->unk20);
     if (!(entity->params->flags & 0x240)) {
-        KF_Vector_Scale(&scale.x, &scale.x, (f32)(rand() % 11 + 95) / 100.0f);
+        Vector_Scale(&scale.x, &scale.x, (f32)(rand() % 11 + 95) / 100.0f);
     }
-    KF_Vector_MultiplyComponents(entity->model->unkE0, entity->model->unkE0, &scale.x);
+    Vector_MultiplyComponents(entity->model->unkE0, entity->model->unkE0, &scale.x);
     widest = (scale.z < scale.x) ? scale.x : scale.z;
     entity->unk30 = (f32)entity->params->unk06 * widest;
     entity->unk34 = (f32)entity->params->unk08 * scale.y;
@@ -214,12 +214,12 @@ void KF_Entity_ResetToSpawn(Entity *entity) {
     entity->model->unk13C = (entity->unk30 < entity->unk34) ? entity->unk34 : entity->unk30;
     func_00192C98(entity, 0, 0, 0, 1);
     ((void (*)(Entity *))D_003E6E40[entity->params->unk02][0])(entity);
-    KF_Entity_RebuildModelMatrices(entity);
+    Entity_RebuildModelMatrices(entity);
 }
 
 /* Empties one of the two entity arrays and makes the other array's entities forget the map
    records (Entity.unk14) that belonged to its map. */
-void KF_Entity_ClearMapSlot(int array_index) {
+void Entity_ClearMapSlot(int array_index) {
     Entity *entity;
     int i;
 
@@ -233,12 +233,12 @@ void KF_Entity_ClearMapSlot(int array_index) {
     }
 }
 
-void KF_Entity_SetSpawnedFlags(Entity *entity) {
+void Entity_SetSpawnedFlags(Entity *entity) {
     entity->flags = (entity->flags | 0xC) & ~0x100;
 }
 
 /* Moves every entity of one of the two entity arrays by an offset. */
-void KF_Entity_OffsetAllInSlot(int array_index, f32 *offset) {
+void Entity_OffsetAllInSlot(int array_index, f32 *offset) {
     Entity *entity;
     int i;
     int count;
@@ -254,7 +254,7 @@ void KF_Entity_OffsetAllInSlot(int array_index, f32 *offset) {
 
 /* The per-frame update of every live entity: respawn, the countdowns, where the player is, the push it is
    under, its own update function, and the map blocks its model is drawn with. */
-void KF_Entity_UpdateAll(void) {
+void Entity_UpdateAll(void) {
     Entity *entity;
     EntitySpawnInfo *spawn_info;
 
@@ -287,7 +287,7 @@ void KF_Entity_UpdateAll(void) {
         entity->distance_to_player = func_00194F80(entity->model->position, D_00413F80.position);
         entity->unk68 = func_001954A8(entity->model->position, D_00413F80.position);
         entity->unk84 = entity->unk88 = entity->unk8C = entity->unk90 = entity->unk94 = entity->unk98 = 0.0f;
-        if (!KF_Entity_IsMapRecordActive(entity)) {
+        if (!Entity_IsMapRecordActive(entity)) {
             if (!ENTITY_FLAG_BITS(entity)->bit30) {
                 func_0020C300(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->unkE0);
             }
@@ -342,7 +342,7 @@ void KF_Entity_UpdateAll(void) {
             push[3] = 0.0f;
             sceVu0RotMatrixY(SCRATCH_MATRIX, D_00431AF0, func_00194FB8(entity->unk6C));
             sceVu0ApplyMatrix(SCRATCH_VECTOR, SCRATCH_MATRIX, SCRATCH_VECTOR);
-            KF_Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, entity->unk4C);
+            Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, entity->unk4C);
             func_00216C48(entity->model->position, entity->model->position, SCRATCH_VECTOR);
         }
         if (entity->unk50 == 0) {
@@ -352,9 +352,9 @@ void KF_Entity_UpdateAll(void) {
         if (entity->unk4C > 0.0f) {
             entity->unk4C -= entity->unk40 * 4.0f / 10.0f;
         }
-        KF_Entity_RebuildModelMatrices(entity);
+        Entity_RebuildModelMatrices(entity);
         if (entity->unk14 == NULL) {
-            entity->unk14 = KF_Entity_FindMapRecordUnder(entity);
+            entity->unk14 = Entity_FindMapRecordUnder(entity);
         }
         spawn_info = entity->spawn_info;
         if ((s8)SPAWN_FLAGS(spawn_info)->bytes[2] != -1 || entity->unk14 == NULL) {
@@ -383,7 +383,7 @@ static inline void entity_draw_set_model_tint(Entity *entity, f32 red, f32 green
 
 /* Draws the entities of both maps, pool block by pool block: red while one is hit, pulsing in the colour of
    the timer that is running (unk20, unk24, unk28, unk2A), plain otherwise. */
-void KF_Entity_DrawAll(int list) {
+void Entity_DrawAll(int list) {
     Entity *entity;
     s32 map;
     s32 block;
@@ -452,7 +452,7 @@ void KF_Entity_DrawAll(int list) {
                         entity_draw_set_model_tint(entity, 128.0f, 128.0f, 128.0f);
                     }
                 }
-                KF_LinkedPoint_FindHitsForModel(ENTITY_MODEL(entity));
+                LinkedPoint_FindHitsForModel(ENTITY_MODEL(entity));
                 if (ENTITY_MODEL(entity)->alpha < 128.0f || (ENTITY_MODEL(entity)->unk100 & 0x200) || entity->spawn_info->type_id == 0x10) {
                     func_0010B018(ENTITY_MODEL(entity), 0, list);
                 } else {
@@ -468,7 +468,7 @@ void KF_Entity_DrawAll(int list) {
 }
 
 /* Rebuilds the entity's model matrices with the root part's own offset and rotation left out. */
-static void KF_Entity_RebuildModelMatrices(Entity *entity) {
+static void Entity_RebuildModelMatrices(Entity *entity) {
     f32 saved_offset[4];
     f32 saved_rotation[4];
     ModelPart *root;
@@ -501,7 +501,7 @@ static void KF_Entity_RebuildModelMatrices(Entity *entity) {
    is flagged off or its map flag is clear. The record's map flag is a bit of the current map's
    flag block; for a record of the other map it is looked up among the 16 flags the block keeps
    for other maps. TRUE for an entity without a record and for types 0x10, 0x2F, 0x53 and 0x9E. */
-static int KF_Entity_IsMapRecordActive(Entity *entity) {
+static int Entity_IsMapRecordActive(Entity *entity) {
     MapRecordBounds *record;
     MapFlagBlock *block;
     MapSlot *slot;
@@ -564,7 +564,7 @@ static int KF_Entity_IsMapRecordActive(Entity *entity) {
 
 /* The map record the entity stands on: the one with the nearest floor under it, or failing that the one whose
    middle is nearest, among the records of the entity's map and then the other map. NULL when there is none. */
-static MapRecordBounds *KF_Entity_FindMapRecordUnder(Entity *entity) {
+static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
     MapSlot *slots[2];
     f32 middle[4];
     f32 position[4];
@@ -666,7 +666,7 @@ static MapRecordBounds *KF_Entity_FindMapRecordUnder(Entity *entity) {
 }
 
 /* Looks up an entity of the current map by id. */
-Entity *KF_Entity_GetBySpawnId(int entity_id) {
+Entity *Entity_GetBySpawnId(int entity_id) {
     if ((u32)entity_id >= 0x100) {
         return NULL;
     }
@@ -674,7 +674,7 @@ Entity *KF_Entity_GetBySpawnId(int entity_id) {
 }
 
 /* Looks up an entity of the given map by id. */
-Entity *KF_Entity_GetBySpawnIdForMap(int map_index, int entity_id) {
+Entity *Entity_GetBySpawnIdForMap(int map_index, int entity_id) {
     if ((u32)entity_id >= 0x100) {
         return NULL;
     }

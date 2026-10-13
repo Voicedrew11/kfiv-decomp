@@ -19,7 +19,7 @@ void func_0017BA98(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
         ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        KF_Effect_FreeForOwner(entity);
+        Effect_FreeForOwner(entity);
         entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {

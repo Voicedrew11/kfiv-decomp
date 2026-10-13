@@ -8,7 +8,7 @@ extern int D_00446770;
 void func_002131C0(ScriptPointCommand *command) {
     MapObject *object;
 
-    object = KF_MapObject_GetById(D_00446770, command->object_id.value);
+    object = MapObject_GetById(D_00446770, command->object_id.value);
     if (object != NULL) {
         func_00211D90(&command->from_x, object->model->position.x);
         func_00211D90(&command->from_y, object->model->position.y);

@@ -11,7 +11,7 @@ extern f32 D_00446968[];
 
 void func_00216778(void *, void *);
 void func_00216D20(void *, void *);
-void KF_Vector_Scale(void *, void *, float);
+void Vector_Scale(void *, void *, float);
 int func_001C2D08(void *);
 void func_001C0A88(void *, void *, void *, void *);
 void func_001C0C50(void *, void *, void *, void *, f32);
@@ -131,7 +131,7 @@ int func_001BDDC0(void) {
                             COLLISION_SCRATCH->push.y = 0.0f;
                             COLLISION_SCRATCH->push.z = COLLISION_SCRATCH->unk90.z - COLLISION_RESULT->point[2];
                             func_00216D20(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push);
-                            KF_Vector_Scale(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push, 100.0f);
+                            Vector_Scale(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push, 100.0f);
                             COLLISION_SCRATCH->unk90.x = COLLISION_RESULT->point[0] + COLLISION_SCRATCH->push.x;
                             COLLISION_SCRATCH->unk90.z = COLLISION_RESULT->point[2] + COLLISION_SCRATCH->push.z;
                         }

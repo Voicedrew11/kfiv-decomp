@@ -7,7 +7,7 @@ void func_0010A698(void);
 void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
@@ -53,13 +53,13 @@ void func_001C97E8(int hidden) {
     func_00109A50();
     func_00109A80(0x47, 0x5000D);
     func_00109AD0();
-    KF_Vector_Scale(scale, &node->model->unkE0, 1.0f);
+    Vector_Scale(scale, &node->model->unkE0, 1.0f);
     func_0020C300(node->model, &node->model->position, &node->model->rotation, scale);
     count = node->model->part_count;
     part = node->model->parts;
     for (; i < count; i++, part++) {
-        KF_Vector_Scale(offset, part->unk40, D_0044719C);
-        KF_Vector_Scale(turn, &part->unk50, D_0044719C);
+        Vector_Scale(offset, part->unk40, D_0044719C);
+        Vector_Scale(turn, &part->unk50, D_0044719C);
         sceVu0CopyMatrix(part, D_00431AF0);
         PART_MATRIX(part)[0][0] = part->unk60[0];
         PART_MATRIX(part)[1][1] = part->unk60[1];
@@ -71,7 +71,7 @@ void func_001C97E8(int hidden) {
     }
     node->model->unk148 = (s32)&D_0038A1B0.unkA90[node->flags & 1][D_0038CD20[node->flags & 1].header->unk71];
     node->model->unk14C = &D_0038A1B0.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
-    KF_LinkedPoint_FindHitsForModel(node->model);
+    LinkedPoint_FindHitsForModel(node->model);
     func_0010AEB8(node->model);
     func_0010DB40(node->model);
     func_00109E18();

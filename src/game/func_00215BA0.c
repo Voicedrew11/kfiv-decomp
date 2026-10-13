@@ -6,7 +6,7 @@
 void func_00215BA0(ScriptCallCommand *command) {
     Entity *entity;
 
-    entity = KF_Entity_GetBySpawnId(command->target_id.value);
+    entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
         entity->unkD6 = command->first.value;
         entity->model->unk15C = entity->unkD6;

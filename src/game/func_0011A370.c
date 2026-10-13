@@ -8,13 +8,13 @@ void func_0011A370(int map) {
 
     if (D_00349690[0x1C0A] != 0) {
         D_00349690[0x1ADB] = 1;
-        object = KF_MapObject_GetById(map, 0x75);
+        object = MapObject_GetById(map, 0x75);
         if (object != NULL) {
-            KF_MapObject_Deactivate(object);
+            MapObject_Deactivate(object);
         }
-        object = KF_MapObject_GetById(map, 0x76);
+        object = MapObject_GetById(map, 0x76);
         if (object != NULL) {
-            KF_MapObject_Activate(object);
+            MapObject_Activate(object);
         }
     }
 }

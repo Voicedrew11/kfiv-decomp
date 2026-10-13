@@ -11,13 +11,13 @@ LinkedPoint D_003E7500[LINKED_POINT_COUNT]; /* 0x3E7500 pool of influence points
 static LinkedPoint *linked_point_heads[2]; /* 0x4470C8 two active lists */
 static LinkedPoint *linked_point_free;     /* 0x4470D0 free list */
 
-static LinkedPoint *KF_LinkedPoint_TakeFree(void);
-static void KF_LinkedPoint_PushFree(LinkedPoint *point);
-static LinkedPoint *KF_LinkedPoint_UnlinkActive(LinkedPoint *point);
-static void KF_LinkedPoint_LinkActive(LinkedPoint *point, u32 list);
+static LinkedPoint *LinkedPoint_TakeFree(void);
+static void LinkedPoint_PushFree(LinkedPoint *point);
+static LinkedPoint *LinkedPoint_UnlinkActive(LinkedPoint *point);
+static void LinkedPoint_LinkActive(LinkedPoint *point, u32 list);
 
 /* Clears the pool, chains every entry on the free list and empties the two active lists. */
-void KF_LinkedPoint_Init(void) {
+void LinkedPoint_Init(void) {
     LinkedPoint *node;
     int i;
 
@@ -43,22 +43,22 @@ void KF_LinkedPoint_Init(void) {
 }
 
 /* Starts a point with its owner slot fixed at -1; returns the pool index or -1. */
-int KF_LinkedPoint_Start(f32 duration, void *start, void *end, int kind_a, int kind_b, u32 list) {
-    return KF_LinkedPoint_Allocate(duration, start, end, kind_a, kind_b, -1, list);
+int LinkedPoint_Start(f32 duration, void *start, void *end, int kind_a, int kind_b, u32 list) {
+    return LinkedPoint_Allocate(duration, start, end, kind_a, kind_b, -1, list);
 }
 
 /* Takes a node from the pool, links it into list `list` and fills it in; returns its id or -1. */
-int KF_LinkedPoint_Allocate(f32 duration, void *start, void *end, u8 kind_a, int kind_b, int owner, u32 list) {
+int LinkedPoint_Allocate(f32 duration, void *start, void *end, u8 kind_a, int kind_b, int owner, u32 list) {
     LinkedPoint *point;
 
     if (list >= 2) {
         return -1;
     }
-    point = KF_LinkedPoint_TakeFree();
+    point = LinkedPoint_TakeFree();
     if (point == NULL) {
         return -1;
     }
-    KF_LinkedPoint_LinkActive(point, list);
+    LinkedPoint_LinkActive(point, list);
     func_00216778(point, start);
     point->follow = start;
     func_00216778(&point->target, end);
@@ -72,23 +72,23 @@ int KF_LinkedPoint_Allocate(f32 duration, void *start, void *end, u8 kind_a, int
     return point->handle;
 }
 
-int KF_LinkedPoint_StartDefault(f32 duration, void *start, void *end) {
-    return KF_LinkedPoint_Allocate(duration, start, end, 0, -1, -1, 0);
+int LinkedPoint_StartDefault(f32 duration, void *start, void *end) {
+    return LinkedPoint_Allocate(duration, start, end, 0, -1, -1, 0);
 }
 
 /* Unlinks and frees the pool entry at index. */
-void KF_LinkedPoint_ReleaseIndex(u32 index) {
+void LinkedPoint_ReleaseIndex(u32 index) {
     LinkedPoint *node;
 
     if (index < LINKED_POINT_COUNT) {
         node = &D_003E7500[index];
-        KF_LinkedPoint_UnlinkActive(node);
-        KF_LinkedPoint_PushFree(node);
+        LinkedPoint_UnlinkActive(node);
+        LinkedPoint_PushFree(node);
     }
 }
 
 /* Releases every active point of the given kind from both active lists. */
-void KF_LinkedPoint_ReleaseByKind(int kind) {
+void LinkedPoint_ReleaseByKind(int kind) {
     int i;
     LinkedPoint *node;
     LinkedPoint *next;
@@ -97,8 +97,8 @@ void KF_LinkedPoint_ReleaseByKind(int kind) {
         node = linked_point_heads[i];
         while (node != NULL) {
             if (node->active != 0 && node->kind_b == kind) {
-                next = KF_LinkedPoint_UnlinkActive(node);
-                KF_LinkedPoint_PushFree(node);
+                next = LinkedPoint_UnlinkActive(node);
+                LinkedPoint_PushFree(node);
                 node = next;
             } else {
                 node = node->next;
@@ -108,7 +108,7 @@ void KF_LinkedPoint_ReleaseByKind(int kind) {
 }
 
 /* Collects the handles of the linked points whose reach touches the model (at most 4). */
-void KF_LinkedPoint_FindHitsForModel(ModelInstance *model) {
+void LinkedPoint_FindHitsForModel(ModelInstance *model) {
     int i;
     LinkedPoint *node;
     f32 delta[4];
@@ -130,7 +130,7 @@ void KF_LinkedPoint_FindHitsForModel(ModelInstance *model) {
 }
 
 /* Collects handles of linked points (except one) whose reach touches the model (at most 4). */
-void KF_LinkedPoint_FindHitsExclude(ModelInstance *model, int handle) {
+void LinkedPoint_FindHitsExclude(ModelInstance *model, int handle) {
     int i;
     LinkedPoint *node;
     f32 delta[4];
@@ -155,7 +155,7 @@ void KF_LinkedPoint_FindHitsExclude(ModelInstance *model, int handle) {
 }
 
 /* Collects handles for one owner (or any owner) whose reach touches the model (at most 4). */
-void KF_LinkedPoint_FindHitsForOwner(ModelInstance *model, int owner) {
+void LinkedPoint_FindHitsForOwner(ModelInstance *model, int owner) {
     int i;
     LinkedPoint *node;
     f32 delta[4];
@@ -180,7 +180,7 @@ void KF_LinkedPoint_FindHitsForOwner(ModelInstance *model, int owner) {
 }
 
 /* Collects handles whose reach touches the map record's box (at most 4, at most 2 per list). */
-void KF_LinkedPoint_FindHitsForMapDraw(MapDrawRecord *record, ModelInstance *model) {
+void LinkedPoint_FindHitsForMapDraw(MapDrawRecord *record, ModelInstance *model) {
     f32 unused[4]; // match: the frame has 16 unused bytes below the counters
     s32 taken[2];
     s32 *taken_start = taken; // match: memset through a pointer is a call; on the array itself it is inlined
@@ -215,7 +215,7 @@ void KF_LinkedPoint_FindHitsForMapDraw(MapDrawRecord *record, ModelInstance *mod
     }
 }
 
-void KF_LinkedPoint_UpdateFollows(void) {
+void LinkedPoint_UpdateFollows(void) {
     int i;
     LinkedPoint *node;
 
@@ -231,7 +231,7 @@ void KF_LinkedPoint_UpdateFollows(void) {
     }
 }
 
-void KF_LinkedPoint_TransformFollows(void *transform) {
+void LinkedPoint_TransformFollows(void *transform) {
     int i;
     LinkedPoint *node;
 
@@ -251,7 +251,7 @@ void KF_LinkedPoint_TransformFollows(void *transform) {
 }
 
 /* Retargets the pool point at index, easing toward target over duration frames. */
-void KF_LinkedPoint_Retarget(f32 duration, s32 index, void *target) {
+void LinkedPoint_Retarget(f32 duration, s32 index, void *target) {
     LinkedPoint *point;
 
     if ((u32)index < LINKED_POINT_COUNT) {
@@ -265,7 +265,7 @@ void KF_LinkedPoint_Retarget(f32 duration, s32 index, void *target) {
 }
 
 /* Takes the first node off the free list, clearing its links; returns NULL when empty. */
-static LinkedPoint *KF_LinkedPoint_TakeFree(void) {
+static LinkedPoint *LinkedPoint_TakeFree(void) {
     LinkedPoint *node;
     LinkedPoint *next;
 
@@ -284,7 +284,7 @@ static LinkedPoint *KF_LinkedPoint_TakeFree(void) {
 }
 
 /* Pushes a node onto the front of the free list. */
-static void KF_LinkedPoint_PushFree(LinkedPoint *node) {
+static void LinkedPoint_PushFree(LinkedPoint *node) {
     node->prev = NULL;
     node->next = linked_point_free;
     if (linked_point_free != NULL) {
@@ -294,7 +294,7 @@ static void KF_LinkedPoint_PushFree(LinkedPoint *node) {
 }
 
 /* Unlinks a point from its active list and returns the node that followed it. */
-static LinkedPoint *KF_LinkedPoint_UnlinkActive(LinkedPoint *node) {
+static LinkedPoint *LinkedPoint_UnlinkActive(LinkedPoint *node) {
     LinkedPoint *next;
     u8 list;
 
@@ -316,7 +316,7 @@ static LinkedPoint *KF_LinkedPoint_UnlinkActive(LinkedPoint *node) {
 }
 
 /* Pushes a point onto the front of one of the two active lists (list is 0 or 1). */
-static void KF_LinkedPoint_LinkActive(LinkedPoint *point, u32 list) {
+static void LinkedPoint_LinkActive(LinkedPoint *point, u32 list) {
     LinkedPoint *head;
 
     if (list < 2) {

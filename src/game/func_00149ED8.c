@@ -17,7 +17,7 @@ void func_00149ED8(Entity *entity, s32 unknown) {
 
     entity->flags &= ~0x200;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->unk43);
+    map_object = MapObject_GetById(entity->group_id, entity->spawn_info->unk43);
     if (map_object != NULL) {
         stand_point[0] = map_object->model->position.x;
         stand_point[1] = map_object->model->position.y;

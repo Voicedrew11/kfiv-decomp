@@ -39,7 +39,7 @@ void func_00140738(Entity *entity, s32 unknown) {
         }
     }
     part = func_0010CAB8((char *)entity->model, 0x1E);
-    KF_Effect_StartSpawner(entity->params->unk43A, part, entity->model->unkD0, entity);
+    Effect_StartSpawner(entity->params->unk43A, part, entity->model->unkD0, entity);
     part = func_0010CAB8((char *)entity->model, 0x1F);
-    KF_Effect_StartSpawner(entity->params->unk43A, part, entity->model->unkD0, entity);
+    Effect_StartSpawner(entity->params->unk43A, part, entity->model->unkD0, entity);
 }

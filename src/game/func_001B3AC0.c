@@ -32,7 +32,7 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
             return;
         }
         if (D_00413F80.unk3C == 0x2E) {
-            KF_MapObject_Break(object);
+            MapObject_Break(object);
             return;
         }
         func_001B4B10(extra->unk24, 4);
@@ -40,7 +40,7 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
         return;
     }
     if (request->owner == (Entity *)&D_0038CD20[0] || request->owner == (Entity *)&D_0038CD20[1]) {
-        KF_MapObject_Break(object);
+        MapObject_Break(object);
         return;
     }
     if (!IS_PLAYER(request->owner)) {
@@ -99,7 +99,7 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
         damage *= request->unk6E;
     }
     if (damage >= MAP_OBJECT_DEF_TOUGHNESS(object->unk04)) {
-        KF_MapObject_Break(object);
+        MapObject_Break(object);
         return;
     }
     if (D_00413F80.unk262 != 0) {

@@ -11,8 +11,8 @@ void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 float func_00194F80(float *, float *);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void func_00189D28(CollisionOwner *, void *, f32);
 void func_00189EC8(CollisionOwner *, void *, f32);
 void func_0018A2B0(CollisionOwner *, void *, f32);
@@ -90,10 +90,10 @@ void func_00188BE0(Entity *entity) {
             }
             hit = COLLISION_RESULT->hit;
             if (hit == 1) {
-                KF_Vector_Subtract(offset, position, COLLISION_RESULT);
+                Vector_Subtract(offset, position, COLLISION_RESULT);
                 sceVu0Normalize(offset, offset);
                 func_00216C48(normal_sum, normal_sum, offset);
-                KF_Vector_Scale(offset, offset, entity->unk30);
+                Vector_Scale(offset, offset, entity->unk30);
                 func_00216C48(position, COLLISION_RESULT, offset);
                 ENTITY_FLAG_BITS(entity)->bit47 = TRUE;
                 ENTITY_FLAG_BITS(entity)->bit45 = TRUE;

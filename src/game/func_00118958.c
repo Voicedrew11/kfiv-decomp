@@ -22,7 +22,7 @@ void func_00118958(void) {
     if (D_0038D680.step != 0) {
         func_00118A50();
         func_001020F8();
-        KF_Splash_Abort();
+        Splash_Abort();
         do {
             func_001B5460();
             func_0020B780(0);

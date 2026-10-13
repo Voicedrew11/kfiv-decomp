@@ -22,18 +22,18 @@ void func_001BC6E8(int kind) {
         break;
     case 0x1B:
         if (D_00413F80.unk2C < 999) {
-            KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0x2B);
+            Message_ShowNotice(0, 0, 0, 1, 0x2D, 0x2B);
             D_00413F80.unk2C++;
         } else {
-            KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
+            Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
         }
         break;
     case 0x1C:
         if (D_00413F80.unk28 < 999) {
             D_00413F80.unk28++;
-            KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0x2A);
+            Message_ShowNotice(0, 0, 0, 1, 0x2D, 0x2A);
         } else {
-            KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
+            Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
         }
         break;
     case 0x46:
@@ -42,7 +42,7 @@ void func_001BC6E8(int kind) {
             D_00413F80.unk24 = 999;
         }
         func_001BA310();
-        KF_ItemEffect_Start(kind, 0);
+        ItemEffect_Start(kind, 0);
         break;
     case 0x47:
     case 0x48:
@@ -59,7 +59,7 @@ void func_001BC6E8(int kind) {
         if (D_00413F80.unk264 == 0) {
             func_001BB5E8();
         }
-        KF_ItemEffect_Start(kind, marked);
+        ItemEffect_Start(kind, marked);
         break;
     case 0x4D:
     case 0x4E:
@@ -76,7 +76,7 @@ void func_001BC6E8(int kind) {
         if (D_00413F80.unk264 == 0) {
             func_001BB5E8();
         }
-        KF_ItemEffect_Start(kind, marked);
+        ItemEffect_Start(kind, marked);
         break;
     }
 }

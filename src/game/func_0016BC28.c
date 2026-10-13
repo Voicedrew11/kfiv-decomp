@@ -13,7 +13,7 @@ f32 func_00195018(f32, f32, f32);
 int func_001958B8(Entity *, void (*)(Entity *), int);
 void sceVu0RotMatrixY(float *, float *, float);
 void func_00216BC0(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 
 void func_0016BC28(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -86,7 +86,7 @@ void func_0016BC28(Entity *entity) {
     // match: never taken, but until the compiler works that out the branch separates the
     // scratchpad stores above from the loads below, so their addresses are not kept in registers
     if (run) {
-        KF_Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, 2.0f);
+        Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, 2.0f);
     }
     entity->unk84 += SCRATCH_VECTOR[0];
     entity->unk88 += SCRATCH_VECTOR[1];

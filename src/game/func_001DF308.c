@@ -115,7 +115,7 @@ void func_001DF308(MenuScreenContext *context) {
         func_001FC5E8(&bar); // match: the float at bar+0x24 that func_001FC5E8 copies is never set
     }
 
-    report = KF_Pad_GetReport(0, 0);
+    report = Pad_GetReport(0, 0);
     if ((report->pressed & 0x4000) && D_004472D0 != 0xFF && D_004472DA != 0) {
         if (D_00446C70 != 4) {
             PLAY_MENU_SOUND(0);

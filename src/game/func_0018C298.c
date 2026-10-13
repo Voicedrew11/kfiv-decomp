@@ -7,7 +7,7 @@ float atan2f(float, float);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void func_00216BC0(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 
 /* keeps a direction within pitch limits[0]..limits[1] and yaw limits[2]..limits[3] of
    `heading`; TRUE: it had to be changed */
@@ -49,7 +49,7 @@ s32 func_0018C298(f32 *direction, f32 *limits, f32 heading) {
         local[1] = matrix[9];
         local[2] = matrix[10];
         local[3] = matrix[11];
-        KF_Vector_Scale(direction, local, length);
+        Vector_Scale(direction, local, length);
     }
     return clamped;
 }

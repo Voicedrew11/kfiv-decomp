@@ -80,5 +80,5 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     func_001BB4D0(damage);
     func_001B4BC8(damage, request);
-    KF_Ladder_CancelApproach();
+    Ladder_CancelApproach();
 }

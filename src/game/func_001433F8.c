@@ -12,7 +12,7 @@ void func_001433F8(Entity *entity, s32 unknown) {
     Entity *other;
 
     if (entity->spawn_info->unk40 == 2) {
-        leader = KF_Entity_GetBySpawnId(entity->spawn_info->variant);
+        leader = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (leader != NULL) {
             if (ENTITY_FLAG_BITS(leader)->bits2 >= 2) {
                 // match: called as returning int; only then are the flags kept in $3 afterwards

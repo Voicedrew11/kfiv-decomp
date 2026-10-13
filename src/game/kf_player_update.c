@@ -63,7 +63,7 @@ int rand(void);
 int func_0019D020(int);
 int func_0019D0F0(int);
 int func_001B4F30(u16, void *, void *, void *, void *);
-void KF_Player_Move(u16 held, u16 pressed); // match: retail passes both pad words
+void Player_Move(u16 held, u16 pressed); // match: retail passes both pad words
 void func_001B9078(void);
 void func_001B9478(void);
 void func_001B94C0(void);
@@ -97,7 +97,7 @@ static inline void check_map_index(void) {
 }
 
 /* The player's frame: reads the pad, runs movement, magic and the item in hand, footsteps and timers. */
-void KF_Player_Update(void) {
+void Player_Update(void) {
     Vector4 zero;                   // match: cleared and never read
     f32 unused[16];                 // match: retail's frame has room for this
     PlayerItemDef *item_def = &D_0041B9B8[D_00413F80.unk3C];
@@ -178,7 +178,7 @@ void KF_Player_Update(void) {
                 break;
             case 2:
                 if (D_00413F80.unkC0 >= 5000 && D_00413F80.unkB8 >= D_00402DA8[D_00413F80.unk46].unkFC) {
-                    KF_Player_CastMagic(D_00413F80.unk46);
+                    Player_CastMagic(D_00413F80.unk46);
                 }
                 break;
             }
@@ -242,9 +242,9 @@ void KF_Player_Update(void) {
         func_001B96C8();
     }
     if (D_0038CC50.unk00 != 0 && !(D_0038CC50.unk30 & 1)) {
-        KF_Player_Move(held, pressed);
+        Player_Move(held, pressed);
         func_001B9078();
-        KF_Ladder_DispatchPad(held, pressed);
+        Ladder_DispatchPad(held, pressed);
         func_001B94C0();
         func_001B9588();
         func_001B9610();
@@ -340,8 +340,8 @@ void KF_Player_Update(void) {
         func_0019D0F0(0x29);
     }
 
-    KF_Player_UpdateActions(held, pressed);
-    KF_Player_UpdateScreenTints();
+    Player_UpdateActions(held, pressed);
+    Player_UpdateScreenTints();
     if (D_00413F80.unk2DC > 0) {
         D_00413F80.unk2DC--;
     }
@@ -364,7 +364,7 @@ void KF_Player_Update(void) {
         } else if (!(((s32)(D_00413F80.unk1C8 >> 38) & 1) &&
                      D_00413F80.unk1DC < D_00413F80.position.y - D_00402DA8[0x7C].unk108) &&
                    (s32)((f32)rand() * 451.0f * 0.0000000004656613f) == 0) {
-            shot = KF_Shot_Alloc();
+            shot = Shot_Alloc();
             shot->unk00 = 1;
             shot->unk20 = 0;
             shot->unk22 = 0;
@@ -385,7 +385,7 @@ extern PlayerScreenTint D_00414580;
 void func_0010A4E8(int, int, int, int, int);
 
 /* Draws the colours that lie over the screen (PlayerScreenTint). */
-void KF_Player_DrawScreenTints(void) {
+void Player_DrawScreenTints(void) {
     if (D_00414580.unk08 != 0 && D_00414580.kind == 0) {
         func_0010A4E8(0, 0xFF, 0, D_00414580.unk08, 0x48);
     }
@@ -425,7 +425,7 @@ extern u32 D_00446ED4;
 
 /* Works out the colours laid over the screen (PlayerScreenTint) for the frame: which timed
    flag shows, how strong each tint is, and the map's glow. */
-void KF_Player_UpdateScreenTints(void) {
+void Player_UpdateScreenTints(void) {
     s32 newest = -1;
     s32 darkened = FALSE;
     u32 tick;                       /* the frame count */
@@ -591,7 +591,7 @@ extern void (*D_00413F50[])(u16, u16);
 extern u16 D_0044693E;
 
 /* The player's actions for this frame: runs the handler of the item in hand, then the magic button. */
-void KF_Player_UpdateActions(u16 held, u16 pressed) {
+void Player_UpdateActions(u16 held, u16 pressed) {
     PlayerItemDef *def;
 
     D_00413F80.unk259 = 0;
@@ -601,16 +601,16 @@ void KF_Player_UpdateActions(u16 held, u16 pressed) {
         if (D_0038CC50.unk00 == 0 || (D_0038CC50.unk30 & 1) || D_00413F80.unk1A8 != 0 ||
             (u16)D_00413F80.timed_flags[1] != 0) {
             D_00413F80.unk263 = 1;
-            KF_Effect_FreeSpawnersByParam(0x5D);
+            Effect_FreeSpawnersByParam(0x5D);
         }
     }
     D_00413F50[def->unk63](held, pressed);
     if (D_00413F80.unk258 == 0 || (D_00413F80.unk25A == 0 && D_00413F80.unk25B == 0)) {
         if (D_0044693E & pressed) {
-            KF_Player_CastMagic(D_00413F80.unk3D);
+            Player_CastMagic(D_00413F80.unk3D);
         }
         if (D_0044693E & held) {
-            KF_Player_HoldMagic(D_00413F80.unk3D);
+            Player_HoldMagic(D_00413F80.unk3D);
         }
     }
     if (D_00413F80.unk258 != 0) {
@@ -638,7 +638,7 @@ void func_00216778(void *, void *);
 /* Handler of a weapon that is swung: the button starts the swing; while its motion runs the
    swing hits what it reaches, plays its sound and casts the weapon's two magics when they were
    asked for in time. */
-void KF_Player_SwingWeapon(u16 held, u16 pressed) {
+void Player_SwingWeapon(u16 held, u16 pressed) {
     Unk1B1470Request request;
     LevelRecord *record = &D_003679A0[D_00413F80.unk3C];
     PlayerItemDef *def = &D_0041B9B8[D_00413F80.unk3C];
@@ -680,7 +680,7 @@ void KF_Player_SwingWeapon(u16 held, u16 pressed) {
             D_00413F80.unk25E = 0;
             D_00413F80.unk25F = 0;
             D_00413F80.unk263 = 0;
-            KF_WeaponTrail_PickKind();
+            WeaponTrail_PickKind();
         }
         return;
     }
@@ -695,7 +695,7 @@ void KF_Player_SwingWeapon(u16 held, u16 pressed) {
             if (((s32)(D_00413F80.unk1C8 >> 39) & 1) ||
                 (((s32)(D_00413F80.unk1C8 >> 38) & 1) &&
                  D_00413F80.position.y - D_00402DA8[swing_magic_id].unk108 > D_00413F80.unk1DC)) {
-                KF_Effect_FreeSpawnersByParam(swing_magic_id);
+                Effect_FreeSpawnersByParam(swing_magic_id);
                 swing_magic_frames = 0;
             }
         }
@@ -748,14 +748,14 @@ void KF_Player_SwingWeapon(u16 held, u16 pressed) {
         }
         if (D_00413F80.unk25F == 1 && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->unk44) {
             D_00413F80.unk25F = 2;
-            if (KF_Player_CastMagic(def->unk42)) {
+            if (Player_CastMagic(def->unk42)) {
                 swing_magic_id = def->unk42;
                 swing_magic_frames = def->unk4E;
             }
         }
         if (D_00413F80.unk25E == 1 && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->unk54) {
             D_00413F80.unk25E = 2;
-            if (KF_Player_CastMagic(def->unk52)) {
+            if (Player_CastMagic(def->unk52)) {
                 swing_magic_id = def->unk52;
                 swing_magic_frames = def->unk5E;
             }
@@ -781,8 +781,8 @@ typedef void (*StateHandler)(u16, u16);
 extern u8 D_004141D8[];
 extern StateHandler D_00413F60[];
 
-void KF_Player_InvokeTargetHandler(u16 target_id, u16 command) {
-    KF_Player_UpdateWeaponAim();
+void Player_InvokeTargetHandler(u16 target_id, u16 command) {
+    Player_UpdateWeaponAim();
     D_00413F60[D_004141D8[0]](target_id, command);
 }
 
@@ -798,7 +798,7 @@ void func_00108AC8(void *);
 int func_001B4F30(u16, void *, void *, void *, void *);
 
 /* Handler of an item that shoots: on the button, starts the motion and launches the item's shot. */
-void KF_Player_FireProjectile(u16 held, u16 pressed) {
+void Player_FireProjectile(u16 held, u16 pressed) {
     PlayerItemDef *def = &D_0041B9B8[D_00413F80.unk3C];
 
     if ((D_0044693C & pressed) && !((s32)(D_00413F80.unk1C8 >> 39) & 1) && D_00369830[def->unk62] != 0) {
@@ -811,7 +811,7 @@ void KF_Player_FireProjectile(u16 held, u16 pressed) {
         D_00413F80.unk298 = 0;
         D_00413F80.unk258++;
         D_00413F80.unk263 = 0;
-        item_shot = KF_Shot_Alloc();
+        item_shot = Shot_Alloc();
         item_shot->unk00 = 0;
         item_shot->unk26 = def->unk52;
         item_shot->unk20 = D_00413F80.unkAC;
@@ -837,7 +837,7 @@ void func_0019CE00(int mode);
 
 /* Handler of a drawn weapon while the button is held: the draw motion runs to its last frame and the
    strength builds up; letting go looses the shot, anything else lowers the weapon. */
-void KF_Player_DrawBow(u16 held, u16 pressed) {
+void Player_DrawBow(u16 held, u16 pressed) {
     GameDefinition *item = &D_00416D78[D_00413F80.unk3C];
     PlayerItemDef *def = &D_0041B9B8[D_00413F80.unk3C];
     s32 rate;
@@ -850,7 +850,7 @@ void KF_Player_DrawBow(u16 held, u16 pressed) {
     if (D_00413F80.unk298 == 0) {
         D_00413F80.unk298 = MODEL_CHANNEL(WEAPON_MODEL)->param >= def->unk78;
     }
-    if (D_00413F80.unk263 == 0 && !((s32)(D_00413F80.unk1C8 >> 39) & 1) && KF_Player_CanFireAtAim()) {
+    if (D_00413F80.unk263 == 0 && !((s32)(D_00413F80.unk1C8 >> 39) & 1) && Player_CanFireAtAim()) {
         if (!D_00413F80.unk260_0 && def->unk80 != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->unk82) {
             ((int (*)(int))func_0019CE00)(0); // match: called as if it returned a value
             D_00413F80.unk260_0 = 1;
@@ -906,7 +906,7 @@ extern PlayerState D_00413F80;
 
 void func_0019CE00(int mode);
 
-void KF_Player_PlayEquipSound(void) {
+void Player_PlayEquipSound(void) {
     func_0019CE00(1);
     D_00413F80.unkBC = 0;
     D_00413F80.unk258++;
@@ -916,7 +916,7 @@ extern PlayerState D_00413F80;
 
 void func_00108AC8(void *);
 
-void KF_Player_FinishWeaponMotion(void) {
+void Player_FinishWeaponMotion(void) {
     if (MODEL_CHANNEL(WEAPON_MODEL)->value != 0) {
         func_00108AC8(WEAPON_MODEL);
         if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
@@ -934,10 +934,10 @@ extern u8 D_004141D8[];
 
 void func_00108AC8(void *);
 
-void KF_Player_HolsterWeapon(void) {
+void Player_HolsterWeapon(void) {
     func_00108AC8(WEAPON_MODEL);
     if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
-        KF_Effect_FreePlayerWeaponKinds();
+        Effect_FreePlayerWeaponKinds();
         D_004141D8[0] = 0;
     }
 }
@@ -945,14 +945,14 @@ void KF_Player_HolsterWeapon(void) {
 extern PlayerState D_00413F80;
 extern float D_00420D10[];
 
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *dst, void *a, void *b);
 
-int KF_Player_CanFireAtAim(void) {
+int Player_CanFireAtAim(void) {
     float vec[4];
     int result;
 
-    KF_Vector_Scale(vec, D_00420D10, 100.0f);
+    Vector_Scale(vec, D_00420D10, 100.0f);
     func_00216C48(vec, vec, &D_00413F80);
     vec[1] -= 186.0f;
     result = 0;
@@ -965,11 +965,11 @@ int KF_Player_CanFireAtAim(void) {
 float atan2f(float, float);
 float sqrtf(float);
 void func_00216778(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 extern float D_00413F40[];
 extern int D_00413F30[];
 
-void KF_Player_UpdateWeaponAim(void) {
+void Player_UpdateWeaponAim(void) {
     float vec[4];
     void *weapon_base;
     void *weapon_tip;
@@ -977,7 +977,7 @@ void KF_Player_UpdateWeaponAim(void) {
     D_00446978->update_aim(D_00446978);
     weapon_base = D_00446978->get_point(D_00446978, 0);
     weapon_tip = D_00446978->get_point(D_00446978, 1);
-    KF_Vector_Subtract(vec, weapon_tip, weapon_base);
+    Vector_Subtract(vec, weapon_tip, weapon_base);
     func_00216778(D_00413F30, weapon_tip);
     D_00413F40[0] = atan2f(-vec[1], sqrtf(vec[0] * vec[0] + vec[2] * vec[2]));
     D_00413F40[1] = atan2f(vec[0], vec[2]);
@@ -1021,8 +1021,8 @@ double sin(double);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 float func_0019B838(float);
 int func_0019B908(float *, float, float);
 int func_0019D0F0(int);
@@ -1046,7 +1046,7 @@ void func_00216D20(void *, void *);
 
 /* Moves the player for one frame: the pad bits in `buttons` turn, look and walk; then gravity,
    collision in steps of 25 units, landing, and the push of the floor. */
-void KF_Player_Move(u16 buttons, u16 unused_pressed) {
+void Player_Move(u16 buttons, u16 unused_pressed) {
     Vector4 delta;
     Vector4 turn;
     Vector4 step;
@@ -1079,14 +1079,14 @@ void KF_Player_Move(u16 buttons, u16 unused_pressed) {
 
     platform = (MapObject *)D_00414280.unk208;
     if (platform != NULL && (platform->unk10 & 0x10000) && (MAP_OBJECT_DEF_FLAGS(platform->unk04) & MAP_OBJECT_DEF_CARRIES)) {
-        KF_Vector_Subtract(&turn, &platform->model->rotation, &platform->unk30);
+        Vector_Subtract(&turn, &platform->model->rotation, &platform->unk30);
         turn.x = func_0019B838(turn.x);
         turn.y = func_0019B838(turn.y);
         turn.z = func_0019B838(turn.z);
         sceVu0RotMatrixZ(matrix, D_00431AF0, turn.z);
         sceVu0RotMatrixX(matrix, matrix, turn.x);
         sceVu0RotMatrixY(matrix, matrix, turn.y);
-        KF_Vector_Subtract(&delta, &D_00413F80, &platform->unk20);
+        Vector_Subtract(&delta, &D_00413F80, &platform->unk20);
         func_00216BC0(&delta, matrix, &delta);
         func_00216C48(&D_00413F80, &platform->model->position, &delta);
         D_00413F80.rotation.y += platform->model->rotation.y - platform->unk34;
@@ -1137,7 +1137,7 @@ void KF_Player_Move(u16 buttons, u16 unused_pressed) {
     }
 
     if (D_00413F80.aim_speed > 0.0f) {
-        KF_Vector_Scale((f32 *)&delta, (f32 *)&D_00413F80.aim, D_00413F80.aim_speed);
+        Vector_Scale((f32 *)&delta, (f32 *)&D_00413F80.aim, D_00413F80.aim_speed);
         func_00216C48(&D_00413F80, &D_00413F80, &delta);
         D_00413F80.aim_speed -= ((f32)D_00413F80.unkA4 + 600.0f) / 600.0f * 20.0f;
         if (D_00413F80.aim_speed < 0.0) {
@@ -1352,14 +1352,14 @@ void KF_Player_Move(u16 buttons, u16 unused_pressed) {
 
     if (D_0038CC50.unk00 != 0 && !(D_0038CC50.unk30 & 1)) {
         if (D_00414280.unk208 == 0) {
-            KF_Vector_Subtract(&delta, &D_00413F80, &D_00414280);
+            Vector_Subtract(&delta, &D_00413F80, &D_00414280);
             distance = sqrtf(delta.x * delta.x + delta.z * delta.z);
             if (distance > STEP_LENGTH) {
                 steps = (s32)(distance / STEP_LENGTH);
                 delta.y = 0.0f;
                 func_00216D20(&delta, &delta);
-                KF_Vector_Scale((f32 *)&step, (f32 *)&delta, STEP_LENGTH);
-                KF_Vector_Scale((f32 *)&delta, (f32 *)&delta, distance - (f32)steps * STEP_LENGTH);
+                Vector_Scale((f32 *)&step, (f32 *)&delta, STEP_LENGTH);
+                Vector_Scale((f32 *)&delta, (f32 *)&delta, distance - (f32)steps * STEP_LENGTH);
                 func_00216778(&D_00413F80, &D_00414280);
                 do {
                     func_00216C48(&D_00413F80, &D_00413F80, &step);
@@ -1443,22 +1443,22 @@ void KF_Player_Move(u16 buttons, u16 unused_pressed) {
                               + D_00413F80.unk240.z * D_00413F80.unk240.z);
                 if (speed > (f32)record->unk2C) {
                     func_00216D20(velocity, velocity);
-                    KF_Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->unk2C);
+                    Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->unk2C);
                 }
             } else {
                 func_00216D20(&delta, velocity);
-                KF_Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
+                Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
                 func_00216C48(velocity, velocity, &delta);
                 speed = sqrtf(D_00413F80.unk240.x * D_00413F80.unk240.x + D_00413F80.unk240.y * D_00413F80.unk240.y
                               + D_00413F80.unk240.z * D_00413F80.unk240.z);
                 if (speed > (f32)record->unk2C) {
                     func_00216D20(velocity, velocity);
-                    KF_Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->unk2C);
+                    Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->unk2C);
                 }
             }
         } else if (speed > speed_loss) {
             func_00216D20(&delta, &D_00413F80.unk240);
-            KF_Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
+            Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
             func_00216C48(&D_00413F80.unk240, &D_00413F80.unk240, &delta);
         } else {
             D_00413F80.unk240.x = D_00413F80.unk240.y = D_00413F80.unk240.z = 0.0f;

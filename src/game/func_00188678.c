@@ -1,6 +1,6 @@
 #include "kf_collision.h"
 
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *, void *, void *);
 
 /* Tests a ray (origin, unit direction, length) against a triangle. */
@@ -73,7 +73,7 @@ void func_00188678(void *corner_a, void *corner_b, void *corner_c, void *origin,
         return;
     }
     COLLISION_RESULT->distance = distance;
-    KF_Vector_Scale(offset, direction, distance);
+    Vector_Scale(offset, direction, distance);
     func_00216C48(COLLISION_RESULT, offset, origin);
     __asm__ volatile(
         "lqc2 $vf16, 0(%3)\n"

@@ -3,7 +3,7 @@
 extern GameClock D_00431CE8;
 
 /* The game clock's tick count (a tick is one second of game time). */
-static inline u32 KF_Clock_GetTicks(void) {
+static inline u32 Clock_GetTicks(void) {
     GameClock *clock = &D_00431CE8;
 
     return clock->ticks;
@@ -11,7 +11,7 @@ static inline u32 KF_Clock_GetTicks(void) {
 
 /* Advances the game clock to the next time it shows the given hour, minute and second. */
 void func_0020CD78(int hour, int minute, int second) {
-    u32 ticks = KF_Clock_GetTicks();
+    u32 ticks = Clock_GetTicks();
     GameClock *clock;
     int target;
     int now;

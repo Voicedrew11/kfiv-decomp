@@ -5,7 +5,7 @@ extern int D_00446770;
 extern MapSlot D_0038CD20[2];
 extern const f32 D_00446994[];
 
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_00216778(void *, void *);
 int func_001C2D08(void *);
 void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
@@ -33,7 +33,7 @@ void func_001C1858(f32 scale, void *position_arg, void *direction, s32 lists) {
     s32 points_left;
     s32 forward;
 
-    KF_Vector_Scale(step, direction, scale);
+    Vector_Scale(step, direction, scale);
     best.result.hit = 0;
     COLLISION_RESULT->hit = 0;
     best.result.distance = D_00446994[0];

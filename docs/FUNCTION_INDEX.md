@@ -100,7 +100,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00103AE0 |  | the item recorded for a trigger, 0 if there is none | kf_game.c |
 | 00103B38 |  | frees the record of a trigger; returns whether there was one | kf_game.c |
 | 00103BA8 |  | records an item for a trigger in the first free record; returns whether there was room | kf_game.c |
-| 00103C18 | KF_Save_Pack | The save writer: packs the whole game state into the save buffer D_0036A130 (SaveHeader magic 0x15400 + size, play time D_00446A28, map tag), one bit per GameDefinition for state 1, then one checksum byte per 0x80 bytes behind the data; calls func_0011CF88 first. (alt name: SaveDataWrite) | o1 |
+| 00103C18 | Save_Pack | The save writer: packs the whole game state into the save buffer D_0036A130 (SaveHeader magic 0x15400 + size, play time D_00446A28, map tag), one bit per GameDefinition for state 1, then one checksum byte per 0x80 bytes behind the data; calls func_0011CF88 first. (alt name: SaveDataWrite) | o1 |
 | 00104EC8 |  | Unpacks the save buffer D_0036A130 into the game state (the reader twin of func_00103C18). (unmatched) | f1 |
 | 001060C0 |  | checks the save image: the magic word and a byte sum per 128-byte block | kf_game.c |
 | 00106178 |  | starts a fade from a colour to the picture over some frames | kf_game.c |
@@ -134,7 +134,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00109098 |  | Switches the model to a motion and sets its speed. | src comment |
 | 001090E0 |  |  |  |
 | 00109100 |  | Hermite interpolation: hands the four basis weights for the ratio to func_00216CF0. | src comment |
-| 00109178 | KF_Model_BlendToMotion | One frame of blending a pose into the first key: while ModelChannel.value != 0 every part moves 1/divisor of the way to the first key of the current motion; value drops by word per frame. | o1 |
+| 00109178 | Model_BlendToMotion | One frame of blending a pose into the first key: while ModelChannel.value != 0 every part moves 1/divisor of the way to the first key of the current motion; value drops by word per frame. | o1 |
 | 00109410 |  |  |  |
 | 00109430 |  | Uploads the five VU1 microprograms. | src comment |
 | 001095D0 |  |  |  |
@@ -179,7 +179,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0010B018 |  | Put a model in the draw list bucket for its distance from the player. | kf_draw_list.c |
 | 0010B140 |  | Draws the models of one draw list, from the farthest bucket to the nearest. | kf_draw_list.c |
 | 0010B238 |  | Queue every chunk of a texture table for sending. | src comment |
-| 0010B2E0 | KF_Texture_QueueTableMasked | Queues the chunks of a texture table (TextureTableHeader) like func_0010B238, but skips chunks switched off (unk0C) or in the skip mask (first 32 only). | o1 |
+| 0010B2E0 | Texture_QueueTableMasked | Queues the chunks of a texture table (TextureTableHeader) like func_0010B238, but skips chunks switched off (unk0C) or in the skip mask (first 32 only). | o1 |
 | 0010B410 |  | Queue one chunk of a texture table for sending. | src comment |
 | 0010B4D8 |  |  |  |
 | 0010B4E0 |  | Switch one chunk of a texture table on or off for func_0010B2E0. | src comment |
@@ -190,7 +190,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 0010B758 | KF_Model_InitFromFile | (model, int *file_cursor, int *memory): sets a model instance up from a model file of the unposed kind (func_0010D018 is the posed one): carves parts and bone positions out of *memory, fills each part's data_count/data_addr, sets alpha 128.0f and handler addresses. | o1 |
+| 0010B758 | Model_InitFromFile | (model, int *file_cursor, int *memory): sets a model instance up from a model file of the unposed kind (func_0010D018 is the posed one): carves parts and bone positions out of *memory, fills each part's data_count/data_addr, sets alpha 128.0f and handler addresses. | o1 |
 | 0010BA30 |  | Draws a model (the draw function func_0010B758 installs): works out a turn from the block at unk148 and the model's rotation, queues a packet with the model's two matrices, its MapSlotUnk0C block, its lights and the vectors at unk160 and unk150, then for ... | src comment |
 | 0010C180 |  | Draws a model like func_0010BA30, but in two passes with their own Z buffer state: first the parts with bit 41 of their flag word set, with Z writes on, then the others with Z writes off. | src comment |
 | 0010C9E8 |  | Builds 32 transformed bone vectors from the actor source table. | src comment |
@@ -211,7 +211,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0010E820 |  | Set the doubleword at +0x50 of every data block of every part. | src comment |
 | 0010E8A0 |  | Set the word that ends the first data block of every part. | src comment |
 | 0010E8E0 |  | Set the colour of every vertex of a model; a component outside 0..0xFF is left as it is. | src comment |
-| 0010EA08 | KF_Model_FadeVertexColours | Steps a model's vertex colours towards a target colour near a point (sphere); returns how many components are still moving. (alt name: ColorFadeSphere) | o1 |
+| 0010EA08 | Model_FadeVertexColours | Steps a model's vertex colours towards a target colour near a point (sphere); returns how many components are still moving. (alt name: ColorFadeSphere) | o1 |
 | 0010ED80 |  |  |  |
 | 0010EE98 |  | Looks for the triangles of a model that the GS could not draw as they are (a corner out of its range) but that are partly on the screen, and queues each cut up into smaller ones. | src comment |
 | 0010F478 |  | Queues one triangle of a block, the one that ends at `vertex`, cut up into 16 smaller ones: the edge between its last two vertices is cut in four, and so is each line from the first vertex (the apex) to a point of that edge | src comment |
@@ -231,7 +231,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00112018 |  | Moves every vertex's texture coordinates by its wave. | kf_wobble.c |
 | 00112118 |  | Gives every vertex texture coordinates taken from where it lands on the screen, with each vertex shaken a little first. | src comment |
 | 001123F8 |  |  |  |
-| 00112400 | KF_Collision_RelocateMesh | Makes a loaded collision mesh usable: stores it in model->strips, turns the eight offsets after 0x18 into pointers and, when asked, the strips' point numbers into scratchpad addresses (COLLISION_WORLD_POINTS); returns the end of the mesh. | o2 |
+| 00112400 | Collision_RelocateMesh | Makes a loaded collision mesh usable: stores it in model->strips, turns the eight offsets after 0x18 into pointers and, when asked, the strips' point numbers into scratchpad addresses (COLLISION_WORLD_POINTS); returns the end of the mesh. | o2 |
 | 001124E0 |  |  |  |
 | 00112560 |  | Surface attribute: the first value of (0-7, 0xFF, 0xFF), the third of (0xFF, 0xFF, 0xFE-0xFF), 0 otherwise. | src comment |
 | 001125A8 |  | Surface attribute: the first value when the triple is (0-7, 0xFF, 0xFF), 6 otherwise. | src comment |
@@ -250,7 +250,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00112BD0 |  | (unmatched) | f2 |
 | 00114198 |  | Draws the first list of records of both map slots. mode 0 draws every record, the others only some; below 2 the screen is cleared first. | src comment |
 | 00114528 |  | Draws the second list of records of both map slots, switching z writes on and off as the records ask. mode 0 draws every record, the others only some; below 2 the screen is cleared first. | src comment |
-| 00114840 | KF_Map_LayOutSlot | Lays out map slot &D_0038CD20[map] for a loaded map file: clears the slot's objects and entities, points the slot at the parts of the file, shares out the slot's working memory, relocates two words of the block at header+unk28. | o2 |
+| 00114840 | Map_LayOutSlot | Lays out map slot &D_0038CD20[map] for a loaded map file: clears the slot's objects and entities, points the slot at the parts of the file, shares out the slot's working memory, relocates two words of the block at header+unk28. | o2 |
 | 00114AA8 |  | Builds the models of a map that was just read: one per record, then one per map object, with their collision meshes and motions. | src comment |
 | 001152B8 |  | Makes the other map slot the current one: moves everything by the load's offset and switches the sound over. | src comment |
 | 001154D8 |  |  |  |
@@ -356,7 +356,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0011C708 |  | Sets up the objects of a map once it is loaded: puts each model where its source says, works out how far the object reaches, picks the functions that draw it, runs the every-frame handler of its kind once, and threads the objects into the two draw lists of ... | src comment |
 | 0011CC50 |  | Starts the objects of a map: their flags come from the flag block of the map when it has been visited, else from their sources; each is then put in use or handed to the handler of its kind in D_003BE4B0. | src comment |
 | 0011CE80 |  | Unloads the objects of a map: saves four flags of each into the flag block of the map, stops their sounds, then empties the table. | src comment |
-| 0011CF88 | KF_MapObject_SaveFlagsAll | Saves four flags (bits 16-19) of every object of both loaded maps (D_003A1A30[map]) into the maps' flag blocks: func_0011CE80's flag saving for both maps, without unloading. | g3 |
+| 0011CF88 | MapObject_SaveFlagsAll | Saves four flags (bits 16-19) of every object of both loaded maps (D_003A1A30[map]) into the maps' flag blocks: func_0011CE80's flag saving for both maps, without unloading. | g3 |
 | 0011D0D0 |  | Calls each object of a map through its kind's handler in D_003BE430. | src comment |
 | 0011D180 |  | Updates the map objects of both maps once a frame: remembers where each was, runs the step handler of its kind (D_003BDA30) and the kind's every-frame handler (D_003BE3B0), works out whether it is in view, and starts or stops the effect tied to it as it comes ... | src comment |
 | 0011D600 |  |  |  |
@@ -367,21 +367,21 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0011E1F0 |  | Looks a map object up by its object_id (1 to 255); 0 when the object_id is out of range. | src comment |
 | 0011E228 |  | Breaks a breakable map object that has started: step 0xF, its breaking animation, an effect, a sound, and the object named by its source comes into use. | src comment |
 | 0011E340 |  | Starts one of a map object's animations from its first frame. | src comment |
-| 0011E3A0 | KF_MapObject_StepAnim | KF_MapObject_StepAnim(object): advances a map object's animation one frame, starts the frame-triggered sounds of the current animation (and of animation + 2 for animations 4 and 5), sets bit 3 of the flags, stops the looping sound when the animation ends; returns whether it is still running. | g3 |
+| 0011E3A0 | MapObject_StepAnim | MapObject_StepAnim(object): advances a map object's animation one frame, starts the frame-triggered sounds of the current animation (and of animation + 2 for animations 4 and 5), sets bit 3 of the flags, stops the looping sound when the animation ends; returns whether it is still running. | g3 |
 | 0011E608 |  |  |  |
 | 0011E678 |  | Marks the map object with this id when it is one of the kinds 3, 4 or 0x15 and its unk08 lies in the first 0x200 0x4000-byte blocks of its map's data. | src comment |
 | 0011E708 |  | The turn that would face a map object toward a point (wrapped by func_0019B838). | src comment |
 | 0011E758 |  | Sets bit 20 of a map object and resets its state bits (object, value) | t08 |
 | 0011E7B0 |  | Restarts a waiting map object (model flag 1, bit 20) on another animation. | src comment |
 | 0011E810 |  | Sets bit 21 of a waiting map object (model flag 1, bit 20). | src comment |
-| 0011E858 | KF_MapObject_ClearSlot | (map): zeroes one map's two object counts (D_004467A8[map], D_004467B8[map]), the two draw-list heads (D_00447088[map], D_00447090[map]), the object table and the id lookup table. | f3 |
+| 0011E858 | MapObject_ClearSlot | (map): zeroes one map's two object counts (D_004467A8[map], D_004467B8[map]), the two draw-list heads (D_00447088[map], D_00447090[map]), the object table and the id lookup table. | f3 |
 | 0011E8E8 |  |  |  |
 | 0011E8F0 |  | Sets the GS Z-buffer, alpha and test registers for model, then hands it on. | src comment |
 | 0011E9D0 |  | Sets the GS registers for drawing a map object's model, then draws it. | src comment |
 | 0011EA70 |  |  |  |
 | 0011EA78 |  |  |  |
 | 0011EA80 |  | Stops the sound a map object is playing, if any. | src comment |
-| 0011EAC0 | KF_ScrollTexture_InitAll | Sets up the four scrolling textures: clears and fills the ScrollTexture table D_00474AC0. | o2 |
+| 0011EAC0 | ScrollTexture_InitAll | Sets up the four scrolling textures: clears and fills the ScrollTexture table D_00474AC0. | o2 |
 | 0011ED18 |  |  |  |
 | 0011EDC8 |  | Moves a map object and what its unk08 points at by an offset. | src comment |
 | 0011EE18 |  | Start handler shared by several kinds: restarts the animation it is on. | src comment |
@@ -479,7 +479,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 001228C0 |  | Update handler, step 3: used by the player, it starts turning off. | src comment |
 | 00122908 |  | Update handler of a switch turning off: runs the animation, then it is off. | src comment |
 | 00122960 |  | Switches the trigger on (type 1 to 2) or off (type 3 to 4) when it is at rest in the other position. | src comment |
-| 001229D0 | KF_MapTrigger_UpdateModelMatrix | Map trigger: rebuilds the model's part matrices, then turns the model about the pivot of its second part (part 1), angle wrapped with pi / 2pi. | o2 |
+| 001229D0 | MapTrigger_UpdateModelMatrix | Map trigger: rebuilds the model's part matrices, then turns the model about the pivot of its second part (part 1), angle wrapped with pi / 2pi. | o2 |
 | 00122BE8 |  | Starts this kind of trigger: at rest in the position its flag gives. | src comment |
 | 00122CA8 |  |  |  |
 | 00122CB0 |  | Advances the float at +0x50 toward 100000, then calls func_0010EA08; on a zero result sets state 3 and clears the float. | src comment |
@@ -494,12 +494,12 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 00123030 | KF_Entity_ResetAllLists | Clear the entity pool and empty every entity list. | kf_entity_pool.c, repo name |
+| 00123030 | Entity_ResetAllLists | Clear the entity pool and empty every entity list. | kf_entity_pool.c, repo name |
 | 00123108 |  | Returns TRUE while any pool block is held by a loading or unpacking job. | kf_entity_pool.c |
 | 00123158 |  |  |  |
-| 001231C0 | KF_Entity_FreeAllInGroup | Free every entity in the group from all three lists. | kf_entity_pool.c, repo name |
+| 001231C0 | Entity_FreeAllInGroup | Free every entity in the group from all three lists. | kf_entity_pool.c, repo name |
 | 00123288 |  | Per-frame entity update: runs the pool, list and despawn steps in order. | kf_entity_pool.c |
-| 00123580 | KF_Entity_DespawnOutOfRange | Free entities that are out of range of the player. | kf_entity_pool.c, repo name |
+| 00123580 | Entity_DespawnOutOfRange | Free entities that are out of range of the player. | kf_entity_pool.c, repo name |
 | 001248F8 |  | Sets the GS Z-buffer, alpha and test registers, then draws the model. | kf_entity_pool.c |
 | 00124DE0 |  | Horizontal distance from the entity's spawn point to the player. | src comment |
 | 00124E48 |  | Default init of an entity: clears the work area, sets flags 22-28 and the model of its kind. | src comment |
@@ -507,14 +507,14 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00124EF8 |  |  |  |
 | 00124F00 |  | Sets up the entities of a map from its spawn records, filling in defaults for values left at 0. | src comment |
 | 00125188 |  | Clears flag bit 4 of every entity in one of the two entity arrays. | src comment |
-| 001251E0 | KF_Entity_ResetToSpawn | Puts an entity (Entity *) back to how it spawns: unk2C = params->unk0A, the flag chain reset, state fields zeroed, a 16-byte copy and the (1,1,1,1) vector D_0043E7C0. | o2 |
-| 00125560 | KF_Entity_ClearArray | KF_Entity_ClearArray(array_index): zeroes one of the two 0x80-entity arrays D_003BEDF0[array_index] and its count; in the other array clears every Entity.unk14 pointing at a record of the cleared map (bit 27 of MapRecord.unk38 flags is the map slot). | o3 |
+| 001251E0 | Entity_ResetToSpawn | Puts an entity (Entity *) back to how it spawns: unk2C = params->unk0A, the flag chain reset, state fields zeroed, a 16-byte copy and the (1,1,1,1) vector D_0043E7C0. | o2 |
+| 00125560 | Entity_ClearArray | Entity_ClearArray(array_index): zeroes one of the two 0x80-entity arrays D_003BEDF0[array_index] and its count; in the other array clears every Entity.unk14 pointing at a record of the cleared map (bit 27 of MapRecord.unk38 flags is the map slot). | o3 |
 | 00125600 |  |  |  |
 | 00125620 |  | Moves every entity of one of the two entity arrays by an offset. | src comment |
 | 001256C0 |  | The per-frame update of every live entity: respawn, the countdowns, where the player is, the push it is under, its own update function, and the map blocks its model is drawn with. | src comment |
 | 00125BD8 |  | Draws the entities of both maps, pool block by pool block: red while one is hit, pulsing in the colour of the timer that is running (unk20, unk24, unk28, unk2A), plain otherwise. | src comment |
 | 00126120 |  | Rebuilds the entity's model matrices with the root part's own offset and rotation left out. | src comment |
-| 00126240 | KF_Entity_IsRecordActive | Is the entity's map record (Entity.unk14) switched on: finds it in the two map slots; FALSE when the record has 0x40000000 in its high flag word, its slot is not loaded, or its map flag is clear (current map: a bit of flag_blocks[D_004141D0[0]].bits; other map: the block's 16 tags/values pairs). Same test as func_00116C08, written out. | o3 |
+| 00126240 | Entity_IsRecordActive | Is the entity's map record (Entity.unk14) switched on: finds it in the two map slots; FALSE when the record has 0x40000000 in its high flag word, its slot is not loaded, or its map flag is clear (current map: a bit of flag_blocks[D_004141D0[0]].bits; other map: the block's 16 tags/values pairs). Same test as func_00116C08, written out. | o3 |
 | 001263D8 |  | The map record the entity stands on: the one with the nearest floor under it, or failing that the one whose middle is nearest, among the records of the entity's map and then the other map. NULL when there is none. | src comment |
 | 001267B0 |  | Looks up an entity of the current map by id. | src comment |
 | 001267E8 |  | Looks up an entity of the given map by id. | src comment |
@@ -563,7 +563,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0012AA48 |  |  |  |
 | 0012ACA0 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind12ACA0 | kf_entity.h |
 | 0012AE98 |  |  |  |
-| 0012B040 | KF_Enemy_BendNeck | Bends the five neck joints (model parts 30-34, angles in EntityUnkE0Kind12ACA0.unk40[2..6]): facing the target (within 0.0001 rad) the first joint returns to 0 and each other follows the joint before it within params->turn_limit; otherwise unk1C is added to the first joint and what exceeds 15 degrees carries to the next. | o3 |
+| 0012B040 | Enemy_BendNeck | Bends the five neck joints (model parts 30-34, angles in EntityUnkE0Kind12ACA0.unk40[2..6]): facing the target (within 0.0001 rad) the first joint returns to 0 and each other follows the joint before it within params->turn_limit; otherwise unk1C is added to the first joint and what exceeds 15 degrees carries to the next. | o3 |
 | 0012B338 |  |  |  |
 | 0012B5F8 |  |  |  |
 | 0012B880 |  |  |  |
@@ -921,7 +921,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00156E88 |  | walks through one of three doorways (map objects 0xA0-0xA2): unk7A says which. It is put just inside the doorway facing through it, opens the door on an animation frame and walks to a point on the far side. | src comment |
 | 00157428 |  |  |  |
 | 001574C0 |  |  |  |
-| 00157898 | KF_Entity_CheckAttackPartInFrames | Runs the hit check func_00195BD8 for one part of an attack record unless the animation frames [frame_from, frame_to] lie wholly outside the part's active frames (unk24..unk26, 0 = unused); parts 3, 4, 5 take their window from the four frame marks at params+0x434 and run as part 1, 0, 1. Sibling of func_00195990. | g4 |
+| 00157898 | Entity_CheckAttackPartInFrames | Runs the hit check func_00195BD8 for one part of an attack record unless the animation frames [frame_from, frame_to] lie wholly outside the part's active frames (unk24..unk26, 0 = unused); parts 3, 4, 5 take their window from the four frame marks at params+0x434 and run as part 1, 0, 1. Sibling of func_00195990. | g4 |
 | 00157A00 |  |  |  |
 | 00157BD0 |  |  |  |
 | 00157E70 |  |  |  |
@@ -1015,7 +1015,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00164940 |  |  |  |
 | 00164950 |  |  |  |
 | 00164A60 |  |  |  |
-| 00164C88 | KF_Enemy_ChooseAttack | Picks the next attack by weighted chance: three melee (EntityParams.unk240[n].unk00 weights, usable when func_001984B0 says so) and three ranged (records at params+0x3D8, usable when Entity.unkA2 == 0 and func_001992F0 says so), each weight scaled by Entity.unkC0[n] / 64; stores the choice in flag bits 57 (ranged) and 58-59 (which), returns bit 57. | o3 |
+| 00164C88 | Enemy_ChooseAttack | Picks the next attack by weighted chance: three melee (EntityParams.unk240[n].unk00 weights, usable when func_001984B0 says so) and three ranged (records at params+0x3D8, usable when Entity.unkA2 == 0 and func_001992F0 says so), each weight scaled by Entity.unkC0[n] / 64; stores the choice in flag bits 57 (ranged) and 58-59 (which), returns bit 57. | o3 |
 | 00164EA8 |  |  |  |
 | 001650A0 |  |  |  |
 | 00165280 |  |  |  |
@@ -1025,7 +1025,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00166158 |  | the jump at the player: crouch, leap along the arc func_00166BF8 tried out, land; being hit in the air ends it (unk7B: what to go back to afterwards) | src comment |
 | 00166800 |  |  |  |
 | 00166B38 |  |  |  |
-| 00166BF8 | KF_Enemy_CanJumpArc | Jump arc test: simulates the arc of a jump from the entity's position (same arithmetic as move_along_arc in func_00166158), stores the travel in direction[0..2] and asks func_0018AE98 about the straight line to its end; TRUE when nothing is in the way. | o3 |
+| 00166BF8 | Enemy_CanJumpArc | Jump arc test: simulates the arc of a jump from the entity's position (same arithmetic as move_along_arc in func_00166158), stores the travel in direction[0..2] and asks func_0018AE98 about the straight line to its end; TRUE when nothing is in the way. | o3 |
 | 00166D78 |  |  |  |
 | 00166F70 |  |  |  |
 | 00167168 |  |  |  |
@@ -1221,7 +1221,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00180170 |  |  |  |
 | 00180590 |  |  |  |
 | 001807D0 |  |  |  |
-| 00180A90 |  | Sibling of func_00164C88 (KF_Enemy_ChooseAttack): the same weighted attack choice, same shape. | o3 |
+| 00180A90 |  | Sibling of func_00164C88 (Enemy_ChooseAttack): the same weighted attack choice, same shape. | o3 |
 | 00180CA0 |  |  |  |
 | 00180DE8 |  |  |  |
 | 00180EA8 |  |  |  |
@@ -1273,7 +1273,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00185A28 |  | cylinder against sphere: is `position` (a cylinder reaching `height` up from it) inside the sphere at `other`, and where should it stand instead | src comment |
 | 00185E28 |  | sphere against cylinder: is the sphere at `position` inside the cylinder reaching `other_height` up from `other`, and where should it be instead | src comment |
 | 001861F8 |  |  |  |
-| 001862F0 | KF_Entity_ApplySurfaceEffect | Applies a surface's side effect on an entity after func_001125A8 classifies the hit surface (1-5; jump table jtbl_0043EB50): starts the unk20 timer (1800 frames) outright or by chance lowered by params->unkEA, or cuts push speed unk2C (by amount or by 30) and clears flag bits 38-39. | f4 |
+| 001862F0 | Entity_ApplySurfaceEffect | Applies a surface's side effect on an entity after func_001125A8 classifies the hit surface (1-5; jump table jtbl_0043EB50): starts the unk20 timer (1800 frames) outright or by chance lowered by params->unkEA, or cuts push speed unk2C (by amount or by 30) and clears flag bits 38-39. | f4 |
 | 00186478 |  | Collides a walking entity with a model's collision mesh: pushes `position` out of the walls (adding their normals to `normal_sum`) and lowers `*floor_y` to the highest floor under it. Returns TRUE if it found a floor. | src comment |
 | 00186B00 |  | Collides a walking entity with the map pieces whose box it is in (its own map's, then the other loaded map's): pushes it out of walls, updates its push (unkA4), and puts it on the floor, lets it fall, or stops it at a ledge. | src comment |
 | 001870F8 |  | Tests an upright capsule (a sphere of `radius` swept from `centre` down by `height`) against a triangle: its face at the top and bottom of the capsule first, then the nearest point of each edge. | src comment |
@@ -1288,7 +1288,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00188F40 |  | Pushes a sphere out of the four walls standing on the owner's points 0-3 (as high as point 0x1F is above point 0), then out of the four corner posts. | src comment |
 | 00189210 |  | Pushes a sphere out of the walls standing on the owner's points, then out of the corner posts: one ring of four points, or two rings (0-3 and 4-7) while the model is animating. | src comment |
 | 001898E8 |  | Tests a sphere against the two triangles of the owner's four points and pushes `centre` out along the normal. | src comment |
-| 00189A38 | KF_Collision_MoveSphereOnMesh | Moves a sphere against the owner's collision mesh: finds the floor under it (floor_y starts at FLT_MAX, .sdata D_00446840) and pushes it out of walls. | o4 |
+| 00189A38 | Collision_MoveSphereOnMesh | Moves a sphere against the owner's collision mesh: finds the floor under it (floor_y starts at FLT_MAX, .sdata D_00446840) and pushes it out of walls. | o4 |
 | 00189D28 |  | Tests a sphere against the four walls standing on the owner's points 0-3, as high as point 0x1F is above point 0. | src comment |
 | 00189EC8 |  | Tests a sphere against the walls standing on the owner's points: one ring of four, or two rings (points 0-3 and 4-7) while the model is animating. | src comment |
 | 0018A2B0 |  | Tests a sphere against the two triangles of the owner's four points. | src comment |
@@ -1297,7 +1297,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0018A970 |  | Tests the way from `from` to `destination` against `target`; TRUE when something is hit. | src comment |
 | 0018A9F0 |  | How far above `position` the lowest floor of the prop's mesh is (D_00446844 when there is none). | src comment |
 | 0018AB40 |  | Finds the nearest triangle of the prop's mesh a ray hits. Returns which of the four strip lists it is in (1-4, 0: none), leaves the distance in the result and copies the point to `out_point`. | src comment |
-| 0018AE98 | KF_Map_RayHitsProp | KF_Map_RayHitsProp(origin, direction, out_point, length): ray against the props of the two loaded maps, current map first; returns the strip list hit (1-4) and copies the hit point. nearest stays FLT_MAX (retail bug), so it reports the last prop hit in record order, not the nearest. | g4 |
+| 0018AE98 | Map_RayHitsProp | Map_RayHitsProp(origin, direction, out_point, length): ray against the props of the two loaded maps, current map first; returns the strip list hit (1-4) and copies the hit point. nearest stays FLT_MAX (retail bug), so it reports the last prop hit in record order, not the nearest. | g4 |
 | 0018B150 |  | TRUE when the ray (origin, unit direction, length) hits a wall (strip list unk18) of any prop of the loaded maps. | src comment |
 
 ## Enemy helpers: line of sight, bone tree, look-at, projectile launches, attack choice (0x18B3C0-0x18FD50)
@@ -1334,13 +1334,13 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0018E3D0 |  | func_0018DDA8 for a part that is to look at a point. mode 1: `angles` turn towards the angles func_0018C0D0 gives for `target` (FALSE if it gives none) and go into the part; mode 0 and other modes as in func_0018DDA8. FALSE: no model or no part. | src comment |
 | 0018E9C0 |  | Steps the entity four-state timer machine. | src comment |
 | 0018EAC0 |  | while the entity is pushed (flags 45, 46, 48) from the front: the heading that turns it a degree past side on to the push, written to `heading_out`. Returns the side it turns to (1, -1), or 0 when there is nothing to do. | src comment |
-| 0018EC78 | KF_Entity_PushIsBehind | Returns whether the push the entity is under (flags 45/46 -> unkA4, 48 -> unkB0) points away from heading; FALSE if no push flag is set. | f4 |
+| 0018EC78 | Entity_PushIsBehind | Returns whether the push the entity is under (flags 45/46 -> unkA4, 48 -> unkB0) points away from heading; FALSE if no push flag is set. | f4 |
 | 0018ED98 |  | whether to react (chance params->unkCB / 5 percent) while the player, close enough and in front, is early in a swing | src comment |
 | 0018EEE0 |  | like func_0018ED98, with the chance params->unkCA / 5 percent | src comment |
-| 0018F030 | KF_Entity_PickAttack | Picks one of the six attacks (three melee EntityParams.unk240[i], three ranged at params+0x3D8) by weighted draw among those the player is in reach of (angle, height band, distance); weights (entity->unkC0[i] * record.unk00) >> 6. Writes flag bits 58-59 and 57 (ranged), calls func_00190B28, returns bit 57; with none in reach melee attack 0 is picked. | o4 |
-| 0018F648 | KF_Entity_ChooseAttack | Picks one of the entity's three melee attacks (params unk240) by weighted draw among those whose reach, angle and height window contain the player; stores it in flag bits 58-59, clears or sets bit 57, calls func_00190B28; returns the chosen index. | f4 |
-| 0018F9C0 | KF_Entity_ChooseRangedAttack | Twin of func_0018F648 for the three ranged attacks (params unk3D8, 0x1C-byte records): weighted draw among those whose reach, angle and height window contain the player; stores it in flag bits 58-59, bit 57, calls func_00190B28; returns the chosen index. | f4 |
-| 0018FD50 | KF_Entity_PickAction | Picks the entity's next action out of the four; reads entity->unkA2 after a copy loop. | o4 |
+| 0018F030 | Entity_PickAttack | Picks one of the six attacks (three melee EntityParams.unk240[i], three ranged at params+0x3D8) by weighted draw among those the player is in reach of (angle, height band, distance); weights (entity->unkC0[i] * record.unk00) >> 6. Writes flag bits 58-59 and 57 (ranged), calls func_00190B28, returns bit 57; with none in reach melee attack 0 is picked. | o4 |
+| 0018F648 | Entity_ChooseAttack | Picks one of the entity's three melee attacks (params unk240) by weighted draw among those whose reach, angle and height window contain the player; stores it in flag bits 58-59, clears or sets bit 57, calls func_00190B28; returns the chosen index. | f4 |
+| 0018F9C0 | Entity_ChooseRangedAttack | Twin of func_0018F648 for the three ranged attacks (params unk3D8, 0x1C-byte records): weighted draw among those whose reach, angle and height window contain the player; stores it in flag bits 58-59, bit 57, calls func_00190B28; returns the chosen index. | f4 |
+| 0018FD50 | Entity_PickAction | Picks the entity's next action out of the four; reads entity->unkA2 after a copy loop. | o4 |
 
 ## Outside our ranges (0x19xxxx), described in passing by reports (0x192C98-0x19E9E0)
 
@@ -1383,7 +1383,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 001A0B10 |  | Starts a sound job and counts it in D_00446864 when it was accepted. | src comment |
 | 001A0B70 |  | Stops the voice of a job and counts the stop; -1 if the hardware is not ready. | src comment |
 | 001A0BD0 |  | Runs the current step of the sound sequence, moving on when it reports done. | src comment |
-| 001A0C18 | KF_Sound_LoadBankStep | func_001A0C18(args, index, voice_out): step 2 sound load of func_00101618. Fills job D_004FF4D8 (result = index + 6, address index * 0x11800 + 0x138810) and its spec D_004FF4C0 from the argument block, runs the sequence step func_001A0BD0; when done stores voice index + 6 through voice_out and returns 0, otherwise 1 (try again next frame). | g5 |
+| 001A0C18 | Sound_LoadBankStep | func_001A0C18(args, index, voice_out): step 2 sound load of func_00101618. Fills job D_004FF4D8 (result = index + 6, address index * 0x11800 + 0x138810) and its spec D_004FF4C0 from the argument block, runs the sequence step func_001A0BD0; when done stores voice index + 6 through voice_out and returns 0, otherwise 1 (try again next frame). | g5 |
 | 001A0CD0 |  | Calls handler handler_index of D_0043EE30 with the low byte of handler_arg and value. | src comment |
 | 001A0D08 |  |  |  |
 | 001A0D20 |  | Starts a sound job; -1 while the previous one is still being cleared. | src comment |
@@ -1664,55 +1664,55 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001B0040 | KF_Entity_IsUntargetable | Returns whether an entity cannot be targeted: not live, dying, or flag bit 16 or bit 21 set. | q01 |
+| 001B0040 | Entity_IsUntargetable | Returns whether an entity cannot be targeted: not live, dying, or flag bit 16 or bit 21 set. | q01 |
 | 001B00A0 |  | Nonzero if the point is within radius of any live entity centre. | src comment |
-| 001B0178 | KF_Vector_Distance | Distance between two points (VU0). | q01 |
+| 001B0178 | Vector_Distance | Distance between two points (VU0). | q01 |
 | 001B01B0 |  |  |  |
-| 001B0208 | KF_Effect_FramesToImpact | Effect helper: casts the path forward and returns the frames until within radius of where it lands ((distance - radius) / speed). | q01 |
+| 001B0208 | Effect_FramesToImpact | Effect helper: casts the path forward and returns the frames until within radius of where it lands ((distance - radius) / speed). | q01 |
 | 001B02D8 |  |  |  |
-| 001B0390 | KF_Debug_EditInt | Dead debug value editor for an s32; reads the controller report through D_00447108, a pointer nothing in the game sets. | q01 |
-| 001B04F0 | KF_Debug_EditU16 | Dead debug value editor for a u16; reads the controller report through D_00447108, a pointer nothing in the game sets. | q01 |
-| 001B0658 | KF_Debug_EditU8 | Dead debug value editor for a u8; reads the controller report through D_00447108, a pointer nothing in the game sets. | q01 |
-| 001B07C0 | KF_Debug_EditFloat | Dead debug value editor for an f32 (steps 1000/100/10); reads the controller report through D_00447108, a pointer nothing in the game sets. | q01 |
+| 001B0390 | Debug_EditInt | Dead debug value editor for an s32; reads the controller report through D_00447108, a pointer nothing in the game sets. | q01 |
+| 001B04F0 | Debug_EditU16 | Dead debug value editor for a u16; reads the controller report through D_00447108, a pointer nothing in the game sets. | q01 |
+| 001B0658 | Debug_EditU8 | Dead debug value editor for a u8; reads the controller report through D_00447108, a pointer nothing in the game sets. | q01 |
+| 001B07C0 | Debug_EditFloat | Dead debug value editor for an f32 (steps 1000/100/10); reads the controller report through D_00447108, a pointer nothing in the game sets. | q01 |
 | 001B0950 |  |  |  |
-| 001B0970 | KF_Vector_Dot3 | Dot product of two 3D vectors. | q01 |
+| 001B0970 | Vector_Dot3 | Dot product of two 3D vectors. | q01 |
 | 001B09A0 |  | Wraps an angle in radians into [-pi, pi]. | src comment |
-| 001B0A00 | KF_Debug_StartMenuLoop | Outer loop of the debug start menu (dead debug code, called by nothing). | q01 |
+| 001B0A00 | Debug_StartMenuLoop | Outer loop of the debug start menu (dead debug code, called by nothing). | q01 |
 | 001B0A58 |  |  |  |
 | 001B0A60 |  |  |  |
 | 001B0A68 |  |  |  |
 | 001B0A70 |  |  |  |
-| 001B0A78 | KF_Debug_StartMenu | Debug start menu: "PUSH START" screen, then a four-line menu ("NEW GAME" and three more); texts from D_0043EF70, D_0043EF90, D_0043EFD8. Dead debug code. | q01 |
-| 001B0E50 | KF_Debug_PickMap | Debug map picker ("MAP %3.3d", 0..254); saves, blanks and restores D_00432E20[0],[30] and D_00433050[0],[30] around its loop. Dead debug code. | q01 |
+| 001B0A78 | Debug_StartMenu | Debug start menu: "PUSH START" screen, then a four-line menu ("NEW GAME" and three more); texts from D_0043EF70, D_0043EF90, D_0043EFD8. Dead debug code. | q01 |
+| 001B0E50 | Debug_PickMap | Debug map picker ("MAP %3.3d", 0..254); saves, blanks and restores D_00432E20[0],[30] and D_00433050[0],[30] around its loop. Dead debug code. | q01 |
 | 001B1028 |  |  |  |
-| 001B1030 | KF_Debug_EditNumber | Debug four-digit decimal editor ("INI:"); saves, blanks and restores D_00432E20[0],[30] and D_00433050[0],[30] around its loop. Dead debug code. | q01 |
+| 001B1030 | Debug_EditNumber | Debug four-digit decimal editor ("INI:"); saves, blanks and restores D_00432E20[0],[30] and D_00433050[0],[30] around its loop. Dead debug code. | q01 |
 
 ## Hit system and damage (0x1B1340-0x1B4EC8)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001B1340 | KF_Shot_ResetRings | Empties both rings of 0x30-byte shot slots and sets D_00446928 (g_dmgLassBossCnt) to 3. | q01 |
+| 001B1340 | Shot_ResetRings | Empties both rings of 0x30-byte shot slots and sets D_00446928 (g_dmgLassBossCnt) to 3. | q01 |
 | 001B1390 |  | Claims the next 0x30-byte slot from a ring of slots; the index wraps at 0x100. | src comment |
-| 001B1400 | KF_Shot_ClaimSecond | Claims the next slot of the second shot ring (ring D_00577348, index D_00447110); twin of func_001B1390. | q01 |
-| 001B1470 | KF_Hit_Run | Runs an attack request (Unk1B1470Request): sets the scratchpad result kind to 6, dispatches on (u8)flags & 3: shape 0 func_001B1510, 3 func_001B1B90, 1 and 2 the stubs func_001B1B80/func_001B1B88. | q01 |
-| 001B1510 | KF_Hit_RunSphere | Hit test shape 0 (sphere) per target mask byte 0x4D: map objects, player, entities, map meshes via D_00402D88 handlers. Returns 1 player, 2 entity, 4 map object, 8/0x10/0x20 map, 0 nothing. | q01 |
+| 001B1400 | Shot_ClaimSecond | Claims the next slot of the second shot ring (ring D_00577348, index D_00447110); twin of func_001B1390. | q01 |
+| 001B1470 | Hit_Run | Runs an attack request (Unk1B1470Request): sets the scratchpad result kind to 6, dispatches on (u8)flags & 3: shape 0 func_001B1510, 3 func_001B1B90, 1 and 2 the stubs func_001B1B80/func_001B1B88. | q01 |
+| 001B1510 | Hit_RunSphere | Hit test shape 0 (sphere) per target mask byte 0x4D: map objects, player, entities, map meshes via D_00402D88 handlers. Returns 1 player, 2 entity, 4 map object, 8/0x10/0x20 map, 0 nothing. | q01 |
 | 001B1B80 |  | Stub for hit shape 1 in func_001B1470: only returns 0. | q01 |
 | 001B1B88 |  | Stub for hit shape 2 in func_001B1470: only returns 0. | q01 |
-| 001B1B90 | KF_Hit_RunSwept | Hit test shape 3 (swept): player, entities; when the owner is the player uses the longer tests func_0020FCF8/func_00210678 and tests map objects and the map along the weapon edges D_00414780/D_004147A0 arm points. | q01 |
-| 001B21F8 |  | Hit sphere against a map model's strip lists 0, 1, 2, 5 (D_0043F1F0): places the mesh points in the world (inlined func_001C2D08), then every triangle through func_0020DF38. D_00402D88[0]. Name family KF_Hit_TestMapModel... | q01 |
-| 001B24B0 |  | Hit sphere against a map model's strip lists 1 and 5 (D_00446918): places the mesh points in the world, then every triangle through func_0020DF38; twin of func_001B21F8. D_00402D88[1]. Name family KF_Hit_TestMapModel... | q01 |
-| 001B2740 |  | Hit sphere against a map model's strip lists 0 and 2 (D_00446920): places the mesh points in the world, then every triangle through func_0020DF38; twin of func_001B21F8. D_00402D88[2]. Name family KF_Hit_TestMapModel... | q01 |
-| 001B29C8 | KF_Hit_LandOnPlayer | A hit lands on the player: marks the attacking entity (flag bit 41 weapon, 42 otherwise), nine func_001B4AA8 damage terms against the player's defence (D_00413F80.unk90), func_001BB260(damage), ailments, reactions. | q01 |
-| 001B2C48 | KF_Player_RollAilments | A hit may start the player's six timed ailments: six chances against PlayerState.unkDC[i] (min 5%), skipped while flag_timers[i] runs; sets timed_flags[i] to 1800/150/3600/5400/1800/18000 frames. | q01 |
-| 001B2F70 | KF_Entity_ApplyHit | (request, extra, entity, f32 scale): a hit lands on an entity: nine strengths (func_001B3ED8) against EntityParams.unkD4..unkE4 resistances via func_001B49F8, double/kill chances, unk2C (HP) -= damage, unk80 = 15 cooldown, flag bits 36-39, knock-back, life/mana steal, ailments (func_001B3908). Type 99 (last boss) takes no damage and counts D_00446928 down. (alt name: KF_Combat_DamageEntity) | q10 |
-| 001B3908 | KF_Entity_RollAilments | A hit may start an entity's four ailments: chances 0, 2, 4, 5 against EntityParams.unkEA..unkED; sets Entity.unk20=1800, unk24=3600, unk28=1800, unk2A=3600 and Entity.unk26=1..4 (tint). | q01 |
-| 001B3AC0 | KF_Hit_ApplyToMapObject | A hit lands on a map object: damage from the nine strengths against MapObjectUnk04.unk52[9], breaks it (func_0011E228) when it reaches the object's toughness; else the player's weapon bounces off. Sibling of func_001B2F70. | q02 |
+| 001B1B90 | Hit_RunSwept | Hit test shape 3 (swept): player, entities; when the owner is the player uses the longer tests func_0020FCF8/func_00210678 and tests map objects and the map along the weapon edges D_00414780/D_004147A0 arm points. | q01 |
+| 001B21F8 |  | Hit sphere against a map model's strip lists 0, 1, 2, 5 (D_0043F1F0): places the mesh points in the world (inlined func_001C2D08), then every triangle through func_0020DF38. D_00402D88[0]. Name family Hit_TestMapModel... | q01 |
+| 001B24B0 |  | Hit sphere against a map model's strip lists 1 and 5 (D_00446918): places the mesh points in the world, then every triangle through func_0020DF38; twin of func_001B21F8. D_00402D88[1]. Name family Hit_TestMapModel... | q01 |
+| 001B2740 |  | Hit sphere against a map model's strip lists 0 and 2 (D_00446920): places the mesh points in the world, then every triangle through func_0020DF38; twin of func_001B21F8. D_00402D88[2]. Name family Hit_TestMapModel... | q01 |
+| 001B29C8 | Hit_LandOnPlayer | A hit lands on the player: marks the attacking entity (flag bit 41 weapon, 42 otherwise), nine func_001B4AA8 damage terms against the player's defence (D_00413F80.unk90), func_001BB260(damage), ailments, reactions. | q01 |
+| 001B2C48 | Player_RollAilments | A hit may start the player's six timed ailments: six chances against PlayerState.unkDC[i] (min 5%), skipped while flag_timers[i] runs; sets timed_flags[i] to 1800/150/3600/5400/1800/18000 frames. | q01 |
+| 001B2F70 | Entity_ApplyHit | (request, extra, entity, f32 scale): a hit lands on an entity: nine strengths (func_001B3ED8) against EntityParams.unkD4..unkE4 resistances via func_001B49F8, double/kill chances, unk2C (HP) -= damage, unk80 = 15 cooldown, flag bits 36-39, knock-back, life/mana steal, ailments (func_001B3908). Type 99 (last boss) takes no damage and counts D_00446928 down. (alt name: Combat_DamageEntity) | q10 |
+| 001B3908 | Entity_RollAilments | A hit may start an entity's four ailments: chances 0, 2, 4, 5 against EntityParams.unkEA..unkED; sets Entity.unk20=1800, unk24=3600, unk28=1800, unk2A=3600 and Entity.unk26=1..4 (tint). | q01 |
+| 001B3AC0 | Hit_ApplyToMapObject | A hit lands on a map object: damage from the nine strengths against MapObjectUnk04.unk52[9], breaks it (func_0011E228) when it reaches the object's toughness; else the player's weapon bounces off. Sibling of func_001B2F70. | q02 |
 | 001B3E78 |  |  |  |
-| 001B3ED8 | KF_Combat_GetHitStrengths | (out, request, extra): the nine effective strengths of a hit. Player: raised by extra->unk20 (weapon, first three) or unk22 in fiftieths, magic adds unk0E[i] / 50; entity with kind 0: copied; otherwise physical three zeroed and six magic ones times EntityParams.unk238[i] tenths (or 10). Rounded up when over 0.001 remains. | q10 |
+| 001B3ED8 | Combat_GetHitStrengths | (out, request, extra): the nine effective strengths of a hit. Player: raised by extra->unk20 (weapon, first three) or unk22 in fiftieths, magic adds unk0E[i] / 50; entity with kind 0: copied; otherwise physical three zeroed and six magic ones times EntityParams.unk238[i] tenths (or 10). Rounded up when over 0.001 remains. | q10 |
 | 001B49F8 |  | Damage term of a hit on an entity: (strength, raw strength, bonus, resistance); summed for each resistance below 100 by func_001B2F70. | q10 |
 | 001B4AA8 |  | Damage term: attack strength against the defender's defence value; called nine times by func_001B29C8. | q01 |
-| 001B4B10 | KF_Player_AddWeaponExp | Adds experience to the weapon in hand (LevelRecord of D_003679A0); level counts down to 0x32. | q02 |
-| 001B4BC8 | KF_Player_AddArmorExpOnHit | Player was hit: shield/helmet/armor/gloves/boots gain experience by damage*10/max HP; double without a shield, four times for the piece hit (Request.unk4E or random 1-4). | q02 |
+| 001B4B10 | Player_AddWeaponExp | Adds experience to the weapon in hand (LevelRecord of D_003679A0); level counts down to 0x32. | q02 |
+| 001B4BC8 | Player_AddArmorExpOnHit | Player was hit: shield/helmet/armor/gloves/boots gain experience by damage*10/max HP; double without a shield, four times for the piece hit (Request.unk4E or random 1-4). | q02 |
 | 001B4DF8 |  | Adds experience to a record, rolling over into levels (levels below 0x33 reset to 0x32). | src comment |
 | 001B4EC8 |  | Adds amount to the player's running total at 0x2A0. | src comment |
 
@@ -1720,9 +1720,9 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001B4EE0 | KF_Effect_LoadTable | Loads the effect table D_00402DA8 from file D_0043F248. | q02 |
+| 001B4EE0 | Effect_LoadTable | Loads the effect table D_00402DA8 from file D_0043F248. | q02 |
 | 001B4F30 |  | Launches an effect: func_001B4F30(0x7C, shot, player, rotation, map slot) for worn item 0x32. | q10b |
-| 001B4F90 | KF_Effect_CheckHit | Hit check of an effect actor: builds an Unk1B1470Request from D_00402DA8[effect_param].hit_checks[def->unk10B] (shape, radius, strengths, flag bits) or from PlayerShot.unk04 for a weapon's shot, runs func_001B1470 and returns its result; on a player hit the row's unk24 goes to the actor's countdown. | q02b |
+| 001B4F90 | Effect_CheckHit | Hit check of an effect actor: builds an Unk1B1470Request from D_00402DA8[effect_param].hit_checks[def->unk10B] (shape, radius, strengths, flag bits) or from PlayerShot.unk04 for a weapon's shot, runs func_001B1470 and returns its result; on a player hit the row's unk24 goes to the actor's countdown. | q02b |
 
 ## Pad input and rumble (0x1B5390-0x1B5808)
 
@@ -1730,11 +1730,11 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 |---|---|---|---|
 | 001B5390 |  |  |  |
 | 001B53E8 |  | Store a fixed set of 14 bit-mask constants into consecutive globals. | src comment |
-| 001B5460 | KF_Pad_Update | Per frame: reads pad 0 (func_001B5590), copies D_00413DB8[0] to D_00413DA8, runs the rumble request. | q02 |
-| 001B5590 | KF_Pad_ReadPort | Reads one controller port into PadState; right stick up/down become buttons 0x200/0x100, left stick becomes the d-pad bits. | q02 |
-| 001B5778 | KF_Pad_Reset | Clears the rumble request and updates the pad. | q02 |
-| 001B57A0 | KF_Pad_Rumble | Requests a rumble (strength, duration, fade flag) if the option D_00349686 is on. | q02 |
-| 001B57D8 | KF_Pad_MuteRumble | Sets D_0044694E once and stops the actuators. | q02 |
+| 001B5460 | Pad_Update | Per frame: reads pad 0 (func_001B5590), copies D_00413DB8[0] to D_00413DA8, runs the rumble request. | q02 |
+| 001B5590 | Pad_ReadPort | Reads one controller port into PadState; right stick up/down become buttons 0x200/0x100, left stick becomes the d-pad bits. | q02 |
+| 001B5778 | Pad_Reset | Clears the rumble request and updates the pad. | q02 |
+| 001B57A0 | Pad_Rumble | Requests a rumble (strength, duration, fade flag) if the option D_00349686 is on. | q02 |
+| 001B57D8 | Pad_MuteRumble | Sets D_0044694E once and stops the actuators. | q02 |
 | 001B5800 |  |  |  |
 | 001B5808 |  |  |  |
 
@@ -1742,13 +1742,13 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001B5810 | KF_Player_Init | New game: clears PlayerState D_00413F80 (0x300 bytes), its copy D_00414280 and the screen tint, sets the starting values. | q02 |
+| 001B5810 | Player_Init | New game: clears PlayerState D_00413F80 (0x300 bytes), its copy D_00414280 and the screen tint, sets the starting values. | q02 |
 | 001B5A10 |  | Clears PlayerState unk264/unkBC/unkC0/unk1A4/unk1A6 and picks unk264 again (func_001BB5E8). | q02 |
-| 001B5A48 | KF_Player_Update | The player's frame, called once per frame from func_001001C0: map record index check, pad read (D_00413DA8) and masking, copy to D_00414280, magic button D_00446944 (cast via func_001BC9E0), running (status bit 35, button D_00446940), movement callees, stride unk1C0 and head bob unk1C4, footstep sounds by unk210, low-health sound 0x29, func_001B6FA0, func_001B69D0, timers, item 0x32 random shot, func_001BB978. | q10b |
-| 001B6800 | KF_Player_DrawScreenTints | Draws the colours laid over the screen (PlayerScreenTint, D_00414580). | q02 |
-| 001B69D0 | KF_Player_UpdateScreenTints | Per frame: works out PlayerScreenTint (D_00414580): newest timed flag's colour, fade in/out, cycling colour of flag 5 (D_00413EE8), map glow MapDrawState.unk2A90 for magic 0x3D-0x3F or item 0x15F, dark tint for a cursed weapon (item 0x2B without the full set). | q02b |
-| 001B6FA0 | KF_Player_UpdateActions | The player's actions for a frame: item handler D_00413F50[item.unk63](held, pressed), then the magic button (func_001BC9E0 / func_001BD208). | q02 |
-| 001B70F8 | KF_Player_SwingWeapon | Item handler of a swung weapon (D_00413F50 family): button starts the swing (fills PlayerShot PlayerState.unk268), between motion frames def->unk78..unk7A sends a shape-3 request to func_001B1470, plays the swing sound, casts the weapon's two magics (def->unk42, def->unk52) in their frame windows. | q02b |
+| 001B5A48 | Player_Update | The player's frame, called once per frame from func_001001C0: map record index check, pad read (D_00413DA8) and masking, copy to D_00414280, magic button D_00446944 (cast via func_001BC9E0), running (status bit 35, button D_00446940), movement callees, stride unk1C0 and head bob unk1C4, footstep sounds by unk210, low-health sound 0x29, func_001B6FA0, func_001B69D0, timers, item 0x32 random shot, func_001BB978. | q10b |
+| 001B6800 | Player_DrawScreenTints | Draws the colours laid over the screen (PlayerScreenTint, D_00414580). | q02 |
+| 001B69D0 | Player_UpdateScreenTints | Per frame: works out PlayerScreenTint (D_00414580): newest timed flag's colour, fade in/out, cycling colour of flag 5 (D_00413EE8), map glow MapDrawState.unk2A90 for magic 0x3D-0x3F or item 0x15F, dark tint for a cursed weapon (item 0x2B without the full set). | q02b |
+| 001B6FA0 | Player_UpdateActions | The player's actions for a frame: item handler D_00413F50[item.unk63](held, pressed), then the magic button (func_001BC9E0 / func_001BD208). | q02 |
+| 001B70F8 | Player_SwingWeapon | Item handler of a swung weapon (D_00413F50 family): button starts the swing (fills PlayerShot PlayerState.unk268), between motion frames def->unk78..unk7A sends a shape-3 request to func_001B1470, plays the swing sound, casts the weapon's two magics (def->unk42, def->unk52) in their frame windows. | q02b |
 | 001B7788 |  |  |  |
 | 001B77E0 |  | Item handler (D_00413F50 family): on the button, starts motion 0 and launches the item's shot (PlayerItemDef.unk52) if D_00369830[def.unk62] is nonzero. | q02 |
 | 001B7918 |  | Item handler of a drawn weapon (bow): strength unkBC builds while held (max 5000), letting go fills an Unk1B1470Request in ring D_0057A350 and plays motion 1, anything else lowers the weapon; uses one of D_00369830[def.unk62] (ammunition). | q02 |
@@ -1757,54 +1757,54 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 001B7D38 |  | Animates the weapon model; when the blend is over calls func_001A35D0 and clears D_004141D8. | q02 |
 | 001B7D80 |  |  |  |
 | 001B7DF8 |  |  |  |
-| 001B7EE0 | KF_Player_Move | One frame of player movement from the button mask (u16 buttons): carry by map object under the player, movement constants from tables D_00413DE0..D_00413ED0 by movement mode, carry-weight and status slow-downs, knock-back along aim, walk/turn/look from button masks D_0044692C..D_0044693A, gravity, 25-unit collision sub-steps, landing sound/fall damage/view dip, conveyor push from the MapRecord, death when unk1AC > 1000 (fell out of the world) | q11 |
-| 001B9078 | KF_Player_ApplyGroundEffect | What the ground under the player does (PlayerState.unk1E4 1..5): poison by chance (20%/50% less resistance unkDC[0], min 5%, every 60th frame), poison at once, 10 damage, or 1 damage plus 1 experience to everything worn; unk1EC kills. | q02 |
-| 001B92C0 |  | Fall damage: called by KF_Player_Move on landing with a fall speed of 66.67 or more | q11 |
+| 001B7EE0 | Player_Move | One frame of player movement from the button mask (u16 buttons): carry by map object under the player, movement constants from tables D_00413DE0..D_00413ED0 by movement mode, carry-weight and status slow-downs, knock-back along aim, walk/turn/look from button masks D_0044692C..D_0044693A, gravity, 25-unit collision sub-steps, landing sound/fall damage/view dip, conveyor push from the MapRecord, death when unk1AC > 1000 (fell out of the world) | q11 |
+| 001B9078 | Player_ApplyGroundEffect | What the ground under the player does (PlayerState.unk1E4 1..5): poison by chance (20%/50% less resistance unkDC[0], min 5%, every 60th frame), poison at once, 10 damage, or 1 damage plus 1 experience to everything worn; unk1EC kills. | q02 |
+| 001B92C0 |  | Fall damage: called by Player_Move on landing with a fall speed of 66.67 or more | q11 |
 | 001B93B8 |  |  |  |
 | 001B9478 |  | Clears PlayerState unk1B0..unk1C4 and status bit 32. | q02 |
 | 001B94C0 |  |  |  |
 | 001B9588 |  | Counts six countdown timers down to zero, clearing each matching flag on the way. | src comment |
-| 001B9610 |  | Run by KF_Player_Move after HP and its bar are set to 0 when the player fell out of the world (unk1AC > 1000) | q11 |
-| 001B96C8 | KF_Player_UpdateStatus | Per-frame player bookkeeping on PlayerState D_00413F80: heal/damage over time (unk2B0/unk2B4), 30 timed stat-boost timers (0x14C-0x186), HP/MP regen and drain (unkF0-unkFC), status-ailment timed_flags wear-off and poison ticks via func_001BB2E8, HP/MP clamp to unk58/unk5C, weapon/magic gauges unkBC/unkC0 (0..5000) refill, eased HUD bars unk1A4/unk1A6, item 0x24 curse roll every 600 frames | q11 |
+| 001B9610 |  | Run by Player_Move after HP and its bar are set to 0 when the player fell out of the world (unk1AC > 1000) | q11 |
+| 001B96C8 | Player_UpdateStatus | Per-frame player bookkeeping on PlayerState D_00413F80: heal/damage over time (unk2B0/unk2B4), 30 timed stat-boost timers (0x14C-0x186), HP/MP regen and drain (unkF0-unkFC), status-ailment timed_flags wear-off and poison ticks via func_001BB2E8, HP/MP clamp to unk58/unk5C, weapon/magic gauges unkBC/unkC0 (0..5000) refill, eased HUD bars unk1A4/unk1A6, item 0x24 curse roll every 600 frames | q11 |
 
 ## Player stats, inventory, items, magic, experience, ladders (0x1BA310-0x1BDD38)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001BA310 | KF_Player_UpdateStats | Recomputes the player's derived statistics: max HP/MP, carrying capacity unkA8 = (unkAC * 3 + 80) * 2.2046, worn weight unkA4 (LevelDef.unk3E over nine worn things), nine attack values unk60, six weapon rates unk72, worn-item totals unk7E/unk90 via func_001BB728, unkDC, special cases for item numbers in unk41/unk43/unk44/unk3F, caps (999 for unk58/unk5C, 100 for unk72 and unkDC) | q12 |
-| 001BAE88 | KF_Player_SumItemBonuses | Clears PlayerState unkDC..unk10C, adds every worn item's part (func_001BB020), turns the four rates unkF0..unkFC into frame counts (150 / rate, at least 1). | q02 |
-| 001BB020 | KF_Player_AddItemBonus | Adds what wearing definition index gives: two (kind, amount) pairs switched over 12 kinds, six u16 added to PlayerState.unkDC, items 0x15A / 0x15F set unk108 / unk10C; kinds 7 and 8 assign unk100/unk104 instead of adding. | q02 |
+| 001BA310 | Player_UpdateStats | Recomputes the player's derived statistics: max HP/MP, carrying capacity unkA8 = (unkAC * 3 + 80) * 2.2046, worn weight unkA4 (LevelDef.unk3E over nine worn things), nine attack values unk60, six weapon rates unk72, worn-item totals unk7E/unk90 via func_001BB728, unkDC, special cases for item numbers in unk41/unk43/unk44/unk3F, caps (999 for unk58/unk5C, 100 for unk72 and unkDC) | q12 |
+| 001BAE88 | Player_SumItemBonuses | Clears PlayerState unkDC..unk10C, adds every worn item's part (func_001BB020), turns the four rates unkF0..unkFC into frame counts (150 / rate, at least 1). | q02 |
+| 001BB020 | Player_AddItemBonus | Adds what wearing definition index gives: two (kind, amount) pairs switched over 12 kinds, six u16 added to PlayerState.unkDC, items 0x15A / 0x15F set unk108 / unk10C; kinds 7 and 8 assign unk100/unk104 instead of adding. | q02 |
 | 001BB260 |  | Applies damage to the player (called with the computed damage by func_001B29C8). | q01 |
-| 001BB2E8 |  | Called by KF_Player_UpdateStatus with 3 every 30 (or 90) frames while timed_flags[0] is set (poison damage, a guess) and with 1 every 30 frames while unkEC != 0 or timed_flags[3] is set (together with MP unkB8--) | q11 |
+| 001BB2E8 |  | Called by Player_UpdateStatus with 3 every 30 (or 90) frames while timed_flags[0] is set (poison damage, a guess) and with 1 every 30 frames while unkEC != 0 or timed_flags[3] is set (together with MP unkB8--) | q11 |
 | 001BB308 |  | Takes amount from the counter, clamped at zero; fails for a non-positive amount or while the block is locked. | src comment |
 | 001BB360 |  | Sets the screen tint D_00414580 = 10 unless a script is running. | q03 |
 | 001BB390 |  |  |  |
 | 001BB468 |  | Sets the player aim vector (+0x220) to the flattened, normalised direction from target, and its speed. | src comment |
 | 001BB4D0 |  |  |  |
-| 001BB590 | KF_Player_StopHeldSound | Stops the sound slot held in D_00446958. | q03 |
+| 001BB590 | Player_StopHeldSound | Stops the sound slot held in D_00446958. | q03 |
 | 001BB5C0 |  | Clears PlayerState unk1A4 and unkB4 and calls func_001B9610, unless unk1A8 is set. | q03 |
-| 001BB5E8 | KF_Player_PickMagic | Picks the selected magic PlayerState.unk264: forced unk3D, else unk46, else the equipped item's own magic, else the first learned slot of D_00367980 whose effect is usable. | q03 |
-| 001BB728 | KF_Player_AddItemStats | Adds an item's nine stats (base plus gained, times its level in percent) to a totals array. | q03 |
-| 001BB908 | KF_Player_UpdateMapArea | Finds the map area the player stands in, stores PlayerState map_index and unk250. | q03 |
+| 001BB5E8 | Player_PickMagic | Picks the selected magic PlayerState.unk264: forced unk3D, else unk46, else the equipped item's own magic, else the first learned slot of D_00367980 whose effect is usable. | q03 |
+| 001BB728 | Player_AddItemStats | Adds an item's nine stats (base plus gained, times its level in percent) to a totals array. | q03 |
+| 001BB908 | Player_UpdateMapArea | Finds the map area the player stands in, stores PlayerState map_index and unk250. | q03 |
 | 001BB978 |  |  |  |
 | 001BBA58 |  | Fades the screen toward white (D_00413F80.unk2A8 > 0) or black (< 0) by that amount. | src comment |
-| 001BBB60 | KF_Player_AddExperience | Adds experience to the player: doubles the amount when PlayerState.unk44 is 0x94, caps at 999999, takes every level reached from the const table D_0043E130 (PlayerLevelStep) and shows message 0x2D for each. | q03b |
-| 001BBC88 | KF_Player_CountMagicUse | Counts a use of a magic; at 50 and 150 uses its level rises with message 0x2D; every 100th cast raises PlayerState.unk2C. | q03 |
+| 001BBB60 | Player_AddExperience | Adds experience to the player: doubles the amount when PlayerState.unk44 is 0x94, caps at 999999, takes every level reached from the const table D_0043E130 (PlayerLevelStep) and shows message 0x2D for each. | q03b |
+| 001BBC88 | Player_CountMagicUse | Counts a use of a magic; at 50 and 150 uses its level rises with message 0x2D; every 100th cast raises PlayerState.unk2C. | q03 |
 | 001BBEE0 |  |  |  |
 | 001BBFC8 |  |  |  |
 | 001BC058 |  | Kick off a request once the flag at 0x261 is clear and the table entry at 0x63 is not 2. | src comment |
 | 001BC0E0 |  | Sets PlayerState.unk262 once, with sound 0x23 if asked. | q03 |
 | 001BC128 |  | Sets PlayerState.unk263 = 1 while unk258 runs. | q03 |
 | 001BC148 |  | Tells whether the inventory has room for an item (checked before taking a picked-up item). | q07 |
-| 001BC1C0 | KF_Inventory_Add | Adds an item to the inventory D_00369830 (1 at most for unique ones, 99 otherwise; message 0x1E when full). | q03 |
-| 001BC2A0 | KF_Inventory_Remove | Takes one of an item from the inventory D_00369830. | q03 |
-| 001BC2D0 | KF_Player_UseItem | Uses the item GameStatus.unk20 names: scripts of the entity or map object in front first, then func_001BC6E8, then by type (0 restores unkB4/unkB8 and cures timed flags, 1/4/5 on the object in front, 2 map change on a kind 12 object, 6 func_0011A438, 8 "cannot use" message 0xA); use_mode says taken or exchanged. | q03 |
-| 001BC6E8 | KF_Player_ApplyItem | Item effects by item id: 0x15/0x16 start the 1800-frame timers unk19C/unk1A0, 0x1B/0x1C raise unk2C/unk28, 0x46-0x52 raise unk24 and learn a magic slot through func_001BC990. | q03 |
+| 001BC1C0 | Inventory_Add | Adds an item to the inventory D_00369830 (1 at most for unique ones, 99 otherwise; message 0x1E when full). | q03 |
+| 001BC2A0 | Inventory_Remove | Takes one of an item from the inventory D_00369830. | q03 |
+| 001BC2D0 | Player_UseItem | Uses the item GameStatus.unk20 names: scripts of the entity or map object in front first, then func_001BC6E8, then by type (0 restores unkB4/unkB8 and cures timed flags, 1/4/5 on the object in front, 2 map change on a kind 12 object, 6 func_0011A438, 8 "cannot use" message 0xA); use_mode says taken or exchanged. | q03 |
+| 001BC6E8 | Player_ApplyItem | Item effects by item id: 0x15/0x16 start the 1800-frame timers unk19C/unk1A0, 0x1B/0x1C raise unk2C/unk28, 0x46-0x52 raise unk24 and learn a magic slot through func_001BC990. | q03 |
 | 001BC968 |  | Item 0x12: starts PlayerState timed_flags[0] for 1800 frames. | q03 |
 | 001BC990 |  | Marks the first free of a row's five magic slots (learning a magic). | q03 |
-| 001BC9E0 | KF_Player_CastMagic | Casts magic magic_id: refuses on id 0, deep water, unk40 == 0x49 with magics 1-15, magic gauge unkC0 < 5000 or MP unkB8 < FxTableEntry.unkFC (cost); takes the cost; magics 7-9 arm 30-frame timer D_00447158 and a slot of ring D_0057B3A0; unk102 == 0 launches a shot (func_001B1390 + func_001B4F30); others heal, cure, set timed values unk110..unk14A and special timers, start the effect (func_001A1E28); returns 1 when something was cast | q12 |
-| 001BD208 | KF_Player_HoldMagic | Keeps a held magic (7 to 9) firing: one unkB8 every third frame after the first 30 frames; shot leaves along the player's raw rotation via func_001B4F30. | q03 |
-| 001BD420 | KF_Ladder_Start | Gets on a ladder (given a map object): end points D_0057B370/D_0057B380, walk to the foot D_0057B350/D_0057B360 in D_00447134 frames of 12 units, D_0044713C rungs, D_00447148 frames per rung. | q03 |
+| 001BC9E0 | Player_CastMagic | Casts magic magic_id: refuses on id 0, deep water, unk40 == 0x49 with magics 1-15, magic gauge unkC0 < 5000 or MP unkB8 < FxTableEntry.unkFC (cost); takes the cost; magics 7-9 arm 30-frame timer D_00447158 and a slot of ring D_0057B3A0; unk102 == 0 launches a shot (func_001B1390 + func_001B4F30); others heal, cure, set timed values unk110..unk14A and special timers, start the effect (func_001A1E28); returns 1 when something was cast | q12 |
+| 001BD208 | Player_HoldMagic | Keeps a held magic (7 to 9) firing: one unkB8 every third frame after the first 30 frames; shot leaves along the player's raw rotation via func_001B4F30. | q03 |
+| 001BD420 | Ladder_Start | Gets on a ladder (given a map object): end points D_0057B370/D_0057B380, walk to the foot D_0057B350/D_0057B360 in D_00447134 frames of 12 units, D_0044713C rungs, D_00447148 frames per rung. | q03 |
 | 001BD6E0 |  | Ladder: gets off (clears player status bit 36). | q03 |
 | 001BD710 |  | Dispatches the ladder state handler: table D_004145C8 indexed by state D_00447128. | q03 |
 | 001BD778 |  | Ladder state: walks to the foot and turns to face the ladder. | q03 |
@@ -1817,46 +1817,46 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001BDDC0 | KF_Player_CollideWithMap | Player against the collision meshes of both loaded maps within 100 units: surface triangles (unk1E0/unk1E4 or unk1EC = death), walls (pushed 100 units out), water surfaces (status bits 38/39, unk1DC), floors (sets map_index, unk250, unk210, current map); then stands the player on the floor, starts a step-down (bit 33) or lets him fall by unk1AC; counts frames on the same surface in unk1E8; calls func_001152B8; returns found (int) | q12 |
-| 001BE760 | KF_Player_PushOutOfWalls | Pushes the player 100 units out of wall triangles. | q03 |
-| 001BEA50 | KF_Player_FindFloorKind | Finds the floor triangle under the player and stores what it is made of in PlayerState.unk210. | q03 |
-| 001BECA8 | KF_Player_CollideWithEntities | Player against every entity: with climb, first put on top of any entity low enough to step onto, then pushed out of every entity touched (max 50 a frame); kinds 0x11/0x14/0x97/0x9B use up to four bodies (EntityParams.unk20). Step over 16.67 sets status bit 33 and unk1D0/unk1D4. | q04 |
-| 001BF350 | KF_Player_CollideWithMapObjects | Player against map objects (through func_001C2A38 / func_001C2758), with optional climb; a newly touched object whose definition unk52 is 1..6 starts that timed flag (1800/150/3600/5400/1800/18000 frames). Step over 16.67 sets status bit 33. | q04 |
+| 001BDDC0 | Player_CollideWithMap | Player against the collision meshes of both loaded maps within 100 units: surface triangles (unk1E0/unk1E4 or unk1EC = death), walls (pushed 100 units out), water surfaces (status bits 38/39, unk1DC), floors (sets map_index, unk250, unk210, current map); then stands the player on the floor, starts a step-down (bit 33) or lets him fall by unk1AC; counts frames on the same surface in unk1E8; calls func_001152B8; returns found (int) | q12 |
+| 001BE760 | Player_PushOutOfWalls | Pushes the player 100 units out of wall triangles. | q03 |
+| 001BEA50 | Player_FindFloorKind | Finds the floor triangle under the player and stores what it is made of in PlayerState.unk210. | q03 |
+| 001BECA8 | Player_CollideWithEntities | Player against every entity: with climb, first put on top of any entity low enough to step onto, then pushed out of every entity touched (max 50 a frame); kinds 0x11/0x14/0x97/0x9B use up to four bodies (EntityParams.unk20). Step over 16.67 sets status bit 33 and unk1D0/unk1D4. | q04 |
+| 001BF350 | Player_CollideWithMapObjects | Player against map objects (through func_001C2A38 / func_001C2758), with optional climb; a newly touched object whose definition unk52 is 1..6 starts that timed flag (1800/150/3600/5400/1800/18000 frames). Step over 16.67 sets status bit 33. | q04 |
 | 001BF5F8 |  |  |  |
 | 001BF650 |  |  |  |
 | 001BF6E8 |  |  |  |
 | 001BF788 |  |  |  |
-| 001BF898 | KF_Player_LoadArmModels | Loads the held item's model (D_0057B6A0) and the arm's (D_0057B860) when PlayerState.unk3C (item) or unk41 (arm) changed: reads item_arm/i%04d.arm (fallbacks i1001.arm, i5001.arm), copies it, sets up model, motion and textures. | q04 |
-| 001BFCC8 | KF_Player_UpdateArmModels | Each frame: places the item's model in front of the camera, poses it, copies the pose to the arm's model, keeps model points 30 and 31 in D_00414780 (previous frame's in D_004147A0). | q04 |
-| 001C00D8 | KF_WeaponTrail_Update | Each frame: ages the weapon trail and queues the two ends of the weapon (model points 0 and 1) projected to the screen. | q04 |
-| 001C0268 | KF_Player_DrawArm | Draws the held item's and the arm's models, then the weapon trail as one shaded, blended triangle strip whose alpha fades with age. | q04 |
-| 001C06E8 | KF_WeaponTrail_PickKind | Picks the weapon trail kind D_00447188 (row of D_00414660): the largest of six PlayerState.unk18E values whose unk122 is set, else by unk43 0x87 to 0x8A. | q04 |
+| 001BF898 | Player_LoadArmModels | Loads the held item's model (D_0057B6A0) and the arm's (D_0057B860) when PlayerState.unk3C (item) or unk41 (arm) changed: reads item_arm/i%04d.arm (fallbacks i1001.arm, i5001.arm), copies it, sets up model, motion and textures. | q04 |
+| 001BFCC8 | Player_UpdateArmModels | Each frame: places the item's model in front of the camera, poses it, copies the pose to the arm's model, keeps model points 30 and 31 in D_00414780 (previous frame's in D_004147A0). | q04 |
+| 001C00D8 | WeaponTrail_Update | Each frame: ages the weapon trail and queues the two ends of the weapon (model points 0 and 1) projected to the screen. | q04 |
+| 001C0268 | Player_DrawArm | Draws the held item's and the arm's models, then the weapon trail as one shaded, blended triangle strip whose alpha fades with age. | q04 |
+| 001C06E8 | WeaponTrail_PickKind | Picks the weapon trail kind D_00447188 (row of D_00414660): the largest of six PlayerState.unk18E values whose unk122 is set, else by unk43 0x87 to 0x8A. | q04 |
 | 001C0840 |  |  |  |
 | 001C0890 |  |  |  |
 | 001C08A0 |  | Returns a weapon trail point's position (bounds test index < count); sibling of func_001C0A28. | q04 |
-| 001C08F0 | KF_WeaponTrail_Age | Ages the weapon trail ring (D_0057DB40 points, D_0057DF40 frames left) and drops expired points. (report writes the name as _Age) | q04 |
-| 001C0988 | KF_WeaponTrail_Push | Queues one screen point into the weapon trail ring (D_0057DB40, write index D_00447180). (report writes the name as _Push) | q04 |
-| 001C0A28 | KF_WeaponTrail_GetLife | Returns a weapon trail point's frames left (D_0057DF40); bounds test is index <= count. (report writes the name as _GetLife) | q04 |
+| 001C08F0 | WeaponTrail_Age | Ages the weapon trail ring (D_0057DB40 points, D_0057DF40 frames left) and drops expired points. (report writes the name as _Age) | q04 |
+| 001C0988 | WeaponTrail_Push | Queues one screen point into the weapon trail ring (D_0057DB40, write index D_00447180). (report writes the name as _Push) | q04 |
+| 001C0A28 | WeaponTrail_GetLife | Returns a weapon trail point's frames left (D_0057DF40); bounds test is index <= count. (report writes the name as _GetLife) | q04 |
 | 001C0A80 |  |  |  |
-| 001C0A88 | KF_Collision_DropOnTriangle | Vertical line through point against a triangle (a, b, c, point); on a hit the scratchpad result gets the height and the rise. | q04 |
+| 001C0A88 | Collision_DropOnTriangle | Vertical line through point against a triangle (a, b, c, point); on a hit the scratchpad result gets the height and the rise. | q04 |
 | 001C0C50 |  | Vertical line through point against a triangle with a limit (above the point, by no more than reach); variant of func_001C0A88, no caller known. | q04 |
-| 001C0E40 | KF_Collision_FindFloorAbove | (reach, point): the lowest floor (CollisionMesh.floor_strips) of the loaded maps' records above point within reach; returns TRUE and leaves the hit in the scratchpad. | q04 |
+| 001C0E40 | Collision_FindFloorAbove | (reach, point): the lowest floor (CollisionMesh.floor_strips) of the loaded maps' records above point within reach; returns TRUE and leaves the hit in the scratchpad. | q04 |
 | 001C1138 |  | Twin of func_001C0E40 for the CollisionMesh unk2C strips: lowest such surface of the loaded maps' records above point within reach; returns TRUE and leaves the hit. | q04 |
-| 001C1430 | KF_Collision_SweepPoint | (scale, position, direction): sweeps a point through the loaded maps' records and leaves the nearest hit; tests the four strip lists picked by D_004147C0 = {0, 1, 2, 5}. | q04 |
+| 001C1430 | Collision_SweepPoint | (scale, position, direction): sweeps a point through the loaded maps' records and leaves the nearest hit; tests the four strip lists picked by D_004147C0 = {0, 1, 2, 5}. | q04 |
 | 001C1858 |  | Variant of func_001C1430 taking a bit mask of strip lists (bits 0 to 6) instead of the fixed four: sweeps a point through the loaded maps' records, nearest hit; no caller known. | q04 |
 
 ## Collision against map objects and map records (0x1C1C80-0x1C48A8)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001C1C80 | KF_Collision_HitRayMap | Ray (segment) from position to target against the map records of both loaded maps, nearest hit; a record is only tested when the start point is within one unit of its box. | q05 |
-| 001C2128 | KF_Collision_HitRayObj | Ray test for map objects that have a collision mesh or kind 1/2/6/0x11 | q19, q05 |
-| 001C21C0 | KF_Collision_HitSphereObj | Sphere vs one map object: reach test, then dispatch on the object's kind (MapObjectUnk04.kind: 1 box, 2 two boxes, 17 quad, 18 pitfall, else mesh strips). | q05 |
-| 001C2300 | KF_Collision_HitSpherePushObj | Sphere vs one map object with two float parameters (radius, push): reach test, then dispatch on the object's kind. | q05 |
-| 001C24C0 | KF_Collision_HitFanObj | Fan (sector) vs one map object: reach test, computes the fan's two edge points from heading +- spread, then dispatch on the object's kind. | q05 |
-| 001C2758 | KF_Collision_HitCircleAllObjs | Circle vs every map object of both loaded maps; stores the distance in MapObject.unk18 (FLT_MAX when out of reach). | q05 |
-| 001C2A38 | KF_Collision_FindFloorObj | Point vs every map object of both maps that can be stood on; returns TRUE/FALSE and for the player stores the object in PlayerState.unk208. | q05 |
-| 001C2D08 | KF_Collision_TransformMeshPoints | VU0: multiplies a model's collision points by the model matrix into the scratchpad (COLLISION_WORLD_POINTS 0x70000100); returns nothing. | q05 |
+| 001C1C80 | Collision_HitRayMap | Ray (segment) from position to target against the map records of both loaded maps, nearest hit; a record is only tested when the start point is within one unit of its box. | q05 |
+| 001C2128 | Collision_HitRayObj | Ray test for map objects that have a collision mesh or kind 1/2/6/0x11 | q19, q05 |
+| 001C21C0 | Collision_HitSphereObj | Sphere vs one map object: reach test, then dispatch on the object's kind (MapObjectUnk04.kind: 1 box, 2 two boxes, 17 quad, 18 pitfall, else mesh strips). | q05 |
+| 001C2300 | Collision_HitSpherePushObj | Sphere vs one map object with two float parameters (radius, push): reach test, then dispatch on the object's kind. | q05 |
+| 001C24C0 | Collision_HitFanObj | Fan (sector) vs one map object: reach test, computes the fan's two edge points from heading +- spread, then dispatch on the object's kind. | q05 |
+| 001C2758 | Collision_HitCircleAllObjs | Circle vs every map object of both loaded maps; stores the distance in MapObject.unk18 (FLT_MAX when out of reach). | q05 |
+| 001C2A38 | Collision_FindFloorObj | Point vs every map object of both maps that can be stood on; returns TRUE/FALSE and for the player stores the object in PlayerState.unk208. | q05 |
+| 001C2D08 | Collision_TransformMeshPoints | VU0: multiplies a model's collision points by the model matrix into the scratchpad (COLLISION_WORLD_POINTS 0x70000100); returns nothing. | q05 |
 | 001C2E48 | HitRayMeshObj | Ray vs a map object of any other kind: the model's collision strips. | q05 |
 | 001C2F30 | HitRayBoxObj | Ray vs map object kind 1 (box: corner points 0-3, point 0x1F gives the height); does not check the model points for NULL. | q05 |
 | 001C31E8 | HitRayDoorObj | Ray vs map object kind 2 (two boxes, points 0-3 and 4-7; one box 0,1,6,7 while animation 4 is on frame 1). | q05 |
@@ -1874,68 +1874,68 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001C4B10 | KF_MapObject_TestCircleOutline | Circle against the walls and corner posts of a map object's outline (points 0,1,6,7 while animation 4 is on frame 0/1, else quads 0-3 and 4-7); stops at first hit, no push; result in the scratchpad CollisionResult. | q06 |
+| 001C4B10 | MapObject_TestCircleOutline | Circle against the walls and corner posts of a map object's outline (points 0,1,6,7 while animation 4 is on frame 0/1, else quads 0-3 and 4-7); stops at first hit, no push; result in the scratchpad CollisionResult. | q06 |
 | 001C5170 |  | Draws up to two segments through three or four model points. | src comment |
 | 001C5278 |  | Empty function: pitfall (kind 18) case of the sphere-with-push family, still called with full arguments. | q05 |
-| 001C5280 | KF_MapObject_TestCapsuleMeshInWedge | Capsule against every mesh triangle of a map object, culling triangles outside the wedge origin->(first)/(second); stores the surface id in result.unk18. | q06 |
-| 001C5538 | KF_MapObject_TestCapsuleWallsInWedge | Kind 1 map object: capsule against the four outline walls with the same wedge culling as func_001C5280; returns early on a stale CollisionResult hit. | q06 |
-| 001C58F0 | KF_MapObject_CollideDoorInWedge | Per-kind collision test for a double door/gate MapObject (two quads of model points 0-3 and 4-7, height from point 0x1F): for each outline edge not wholly outside the wedge origin->(first_x,first_z) / origin->(second_x,second_z), calls func_00210258(point_a, point_b, height, origin, radius, push); returns as soon as COLLISION_RESULT->hit is set; closed outline 0,1,6,7 while anims[4] frame param < 2 | q13 |
-| 001C6360 | KF_MapObject_TestCapsuleFaceInWedge | Kind 17 map object: capsule against the two triangles of the face 1,2,0,3 with wedge culling (side bits not shifted/masked in the loop, retail bug). | q06 |
+| 001C5280 | MapObject_TestCapsuleMeshInWedge | Capsule against every mesh triangle of a map object, culling triangles outside the wedge origin->(first)/(second); stores the surface id in result.unk18. | q06 |
+| 001C5538 | MapObject_TestCapsuleWallsInWedge | Kind 1 map object: capsule against the four outline walls with the same wedge culling as func_001C5280; returns early on a stale CollisionResult hit. | q06 |
+| 001C58F0 | MapObject_CollideDoorInWedge | Per-kind collision test for a double door/gate MapObject (two quads of model points 0-3 and 4-7, height from point 0x1F): for each outline edge not wholly outside the wedge origin->(first_x,first_z) / origin->(second_x,second_z), calls func_00210258(point_a, point_b, height, origin, radius, push); returns as soon as COLLISION_RESULT->hit is set; closed outline 0,1,6,7 while anims[4] frame param < 2 | q13 |
+| 001C6360 | MapObject_TestCapsuleFaceInWedge | Kind 17 map object: capsule against the two triangles of the face 1,2,0,3 with wedge culling (side bits not shifted/masked in the loop, retail bug). | q06 |
 | 001C65E8 |  | Empty function: pitfall (kind 18) case of the fan family, still called with full arguments. | q05 |
-| 001C65F0 | KF_MapObject_PushOutOfMeshWalls | Pushes a capsule out of a map object's mesh wall strips; for kind 10 and the player it records the touched object in PlayerState.unk20C. | q06 |
-| 001C68B0 | KF_MapObject_PushOutOfOutline | Pushes out of a map object's four outline walls (by push) or the first corner post (push + 0.1). | q06 |
-| 001C6B88 | KF_MapObject_PushOutOfDoor | Pushes a circle (centre, radius, push) out of a double door/gate MapObject: calls model->unk1B4, then walls (func_00210088) and corner posts (func_0020F0D8) of the outline, moving centre x/z after each hit without stopping at the first; closed outline while param == 1; with leaves open walls off the gaps 2-5 and 4-3 when narrow (<= push * 2.25) or, for the player, when object->unk60 bit 0 is set | q13 |
-| 001C7960 | KF_MapObject_PushOutOfSide | Pushes out of the upright side point0-point3 of a map object; skipped when the face normal is within 20 degrees of vertical (abs n.y > 0.93969). | q06 |
+| 001C65F0 | MapObject_PushOutOfMeshWalls | Pushes a capsule out of a map object's mesh wall strips; for kind 10 and the player it records the touched object in PlayerState.unk20C. | q06 |
+| 001C68B0 | MapObject_PushOutOfOutline | Pushes out of a map object's four outline walls (by push) or the first corner post (push + 0.1). | q06 |
+| 001C6B88 | MapObject_PushOutOfDoor | Pushes a circle (centre, radius, push) out of a double door/gate MapObject: calls model->unk1B4, then walls (func_00210088) and corner posts (func_0020F0D8) of the outline, moving centre x/z after each hit without stopping at the first; closed outline while param == 1; with leaves open walls off the gaps 2-5 and 4-3 when narrow (<= push * 2.25) or, for the player, when object->unk60 bit 0 is set | q13 |
+| 001C7960 | MapObject_PushOutOfSide | Pushes out of the upright side point0-point3 of a map object; skipped when the face normal is within 20 degrees of vertical (abs n.y > 0.93969). | q06 |
 | 001C7AF0 |  | Empty function: pitfall (kind 18) case of the circle family, still called with full arguments. | q05 |
-| 001C7AF8 | KF_MapObject_DropOnMeshFloor | Drops a ball on a map object's mesh floor: y = lowest hit - 1. | q06 |
-| 001C7C60 | KF_MapObject_DropOnFace | Drops a ball on a map object's face: y = lowest hit - 1. | q06 |
-| 001C7E48 | KF_MapObject_DropOnFaces | Drops a ball on a map object: the mesh floor while animation 4 rests, else the eight quads from 32 model points; y = lowest hit - 1. | q06 |
+| 001C7AF8 | MapObject_DropOnMeshFloor | Drops a ball on a map object's mesh floor: y = lowest hit - 1. | q06 |
+| 001C7C60 | MapObject_DropOnFace | Drops a ball on a map object's face: y = lowest hit - 1. | q06 |
+| 001C7E48 | MapObject_DropOnFaces | Drops a ball on a map object: the mesh floor while animation 4 rests, else the eight quads from 32 model points; y = lowest hit - 1. | q06 |
 | 001C8238 |  | Resets the model node lists and marks every unset item record state as 1. | src comment |
-| 001C82C0 | KF_Item_SetUpMap | (map): per-map item set-up after a map is loaded: D_00447190[map] = header->item_count, loads model/texture blocks per item kind into ItemModelSource D_0057E040[map][32] (ids D_004469C0[map]), indexes fixed items in D_005B5EC0[map][def->id], builds their ItemNode and model D_005816C0[map][i], then re-lays the 16 saved DroppedItemRecords with func_001C8F18. | q06b |
-| 001C87D8 | KF_Item_RollMapItems | Rolls a map's fixed items: 16 group rolls vs D_004469C8[map] thresholds, then each item's own chance. | q06 |
+| 001C82C0 | Item_SetUpMap | (map): per-map item set-up after a map is loaded: D_00447190[map] = header->item_count, loads model/texture blocks per item kind into ItemModelSource D_0057E040[map][32] (ids D_004469C0[map]), indexes fixed items in D_005B5EC0[map][def->id], builds their ItemNode and model D_005816C0[map][i], then re-lays the 16 saved DroppedItemRecords with func_001C8F18. | q06b |
+| 001C87D8 | Item_RollMapItems | Rolls a map's fixed items: 16 group rolls vs D_004469C8[map] thresholds, then each item's own chance. | q06 |
 | 001C8938 |  |  |  |
-| 001C8990 | KF_Item_MoveMapItems | (map, offset): shifts the item defs, models and dropped nodes of a map. | q06 |
+| 001C8990 | Item_MoveMapItems | (map, offset): shifts the item defs, models and dropped nodes of a map. | q06 |
 | 001C8AF0 |  | Returns the node at the current map slot for slot, or NULL when the index is invalid or the node is unused. | src comment |
-| 001C8B58 | KF_Item_PlaceMapItem | (map, index): places a map's fixed item by index; tail-calls the void func_001CA500 on success, so returns nothing defined there. | q06 |
-| 001C8C80 | KF_Item_PlaceMapItemById | (map, id): places a map's fixed item by id; returns func_001C8B58's value. | q06 |
-| 001C8CB0 | KF_Item_DropFromEntity | (entity): drops the spawn record's item when flag bit 62 is set (priority 1), else the first/second drop of the entity kind by percent chances; drops at the floor found by func_001C0E40(2000, pos). | q06b |
-| 001C8F18 | KF_Item_LayDropped | (map, item, priority, position, floor_y, offset, rotation, scale, order): lays down a dropped item node. | q06 |
+| 001C8B58 | Item_PlaceMapItem | (map, index): places a map's fixed item by index; tail-calls the void func_001CA500 on success, so returns nothing defined there. | q06 |
+| 001C8C80 | Item_PlaceMapItemById | (map, id): places a map's fixed item by id; returns func_001C8B58's value. | q06 |
+| 001C8CB0 | Item_DropFromEntity | (entity): drops the spawn record's item when flag bit 62 is set (priority 1), else the first/second drop of the entity kind by percent chances; drops at the floor found by func_001C0E40(2000, pos). | q06b |
+| 001C8F18 | Item_LayDropped | (map, item, priority, position, floor_y, offset, rotation, scale, order): lays down a dropped item node. | q06 |
 
 ## Items lying in maps and gold piles (0x1C9340-0x1CB710)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001C9340 | KF_Item_SpawnForObject | (map, item, position, rotation, scale, object): takes one of the 32 item nodes at D_005807C0[map] for a map object (chest contents); returns the node, or NULL if the player may not get the item, the object already has one out, no node is free, or the item's model is not loaded. | q07 |
-| 001C9580 | KF_Item_FindForObject | (object): returns the item node whose unk08 is the given map object. | q07 |
+| 001C9340 | Item_SpawnForObject | (map, item, position, rotation, scale, object): takes one of the 32 item nodes at D_005807C0[map] for a map object (chest contents); returns the node, or NULL if the player may not get the item, the object already has one out, no node is free, or the item's model is not loaded. | q07 |
+| 001C9580 | Item_FindForObject | (object): returns the item node whose unk08 is the given map object. | q07 |
 | 001C95B0 |  |  |  |
-| 001C9650 | KF_Item_DrawAll | (with_picked): draws the items lying in the maps (ItemNode lists at D_004469D4). | q07 |
-| 001C97E8 | KF_Item_DrawPicked | (hidden): draws the item being picked up (D_004469D8) on top, every part's offset and turn scaled by D_0044719C (1 lying, 0 held up). | q07 |
-| 001C9AB0 | KF_Item_StartPickup | (node): starts picking up an item node; returns int. | q07 |
+| 001C9650 | Item_DrawAll | (with_picked): draws the items lying in the maps (ItemNode lists at D_004469D4). | q07 |
+| 001C97E8 | Item_DrawPicked | (hidden): draws the item being picked up (D_004469D8) on top, every part's offset and turn scaled by D_0044719C (1 lying, 0 held up). | q07 |
+| 001C9AB0 | Item_StartPickup | (node): starts picking up an item node; returns int. | q07 |
 | 001C9B00 |  |  |  |
 | 001C9B58 |  |  |  |
-| 001C9C00 | KF_Item_UpdatePickup | Runs the current item pick-up step: handler table D_004147E0 indexed by D_004471A4. | q07 |
+| 001C9C00 | Item_UpdatePickup | Runs the current item pick-up step: handler table D_004147E0 indexed by D_004471A4. | q07 |
 | 001C9C40 |  | Item pick-up step 0: remembers where it lay (D_005B60C0/D0), aims at a point 150 in front of the player (D_005B60E0), per-frame step D_005B60F0, frame count D_004471AC/B0; sets GameStatus.unk30 = 0x87F. | q07 |
 | 001C9EB0 |  | Counts down a blend: steps the actor's vectors toward a target, resetting when done. | src comment |
 | 001C9FB0 |  | Item pick-up step 2: turns the item in front of the player; pad 0x4000 takes it (if func_001BC148 says there is room, else message 0x1E), pad 0x2000 puts it back. | q07 |
 | 001CA0E0 |  | Item pick-up step 3: flies to the player, func_001BC1C0(item), marks where it came from (D_00356928 counter, func_0011E608 for an object, or clears its DroppedItemRecord), frees the node. | q07 |
 | 001CA1E8 |  | Item pick-up step 4: flies the item back to where it lay and lets go. | q07 |
-| 001CA338 | KF_Item_ClearMap | (map): clears a map's item nodes and tables. | q07 |
+| 001CA338 | Item_ClearMap | (map): clears a map's item nodes and tables. | q07 |
 | 001CA498 |  | Scans the slot's list of up to 32 ids for key; returns the matching 8-byte entry, or NULL. | src comment |
 | 001CA500 |  | Pushes a node onto the front of the list at D_004469D4. | src comment |
 | 001CA520 |  | Unlinks node from the model node list and returns the node that followed it. | src comment |
 | 001CA578 |  | Sets GS state for an item model (the draw callback of item models). | q07 |
-| 001CA5B0 | KF_Item_NodeIndexForId | (map, id): looks up a fixed item's node index in D_005B5EC0. | q07 |
+| 001CA5B0 | Item_NodeIndexForId | (map, id): looks up a fixed item's node index in D_005B5EC0. | q07 |
 | 001CA5E0 |  |  |  |
 | 001CA630 |  | Tells whether none of the five tables after D_00369830 (D_003699B0.., each +0x180) holds a one-of-a-kind copy of this item. | q07 |
 | 001CA788 |  |  |  |
-| 001CA818 | KF_Gold_Init | Initialises the gold piles (MapActor, 16 per map at D_005B6100, in-use list D_004469E0, model item/i0000.om2). | q07 |
-| 001CA920 | KF_Gold_InitMap | (map): sets up the map's gold pile models, then re-drops what the map's ObjectMarks recorded and clears them. | q07 |
-| 001CACA0 | KF_Gold_UnlinkMap | (map): unlinks a map's gold piles from the in-use list D_004469E0. | q07 |
-| 001CACF8 | KF_Gold_MoveMap | (map, offset): shifts a map's gold piles by the map offset. | q07 |
-| 001CAD80 | KF_Gold_Update | Per frame: fades gold piles in/out, finds the nearest in reach within 200; pick-up adds amount to PlayerState.unk4C (gold, capped at 999999) and shows message 0x14 with the amount. | q07 |
-| 001CB008 | KF_Gold_Draw | (list): draws the gold piles of a list. | q07 |
-| 001CB0D0 | KF_Gold_Drop | (position, rotation, map, amount, object_id, on_ground, other_map): drops a gold pile; returns TRUE when dropped. | q07 |
-| 001CB2C8 | KF_Gold_DropFromEntity | (entity): drops the entity's gold (EntityParams.gold at 0x230) as a pile via func_001CB0D0; nothing when it has none. | q07 |
+| 001CA818 | Gold_Init | Initialises the gold piles (MapActor, 16 per map at D_005B6100, in-use list D_004469E0, model item/i0000.om2). | q07 |
+| 001CA920 | Gold_InitMap | (map): sets up the map's gold pile models, then re-drops what the map's ObjectMarks recorded and clears them. | q07 |
+| 001CACA0 | Gold_UnlinkMap | (map): unlinks a map's gold piles from the in-use list D_004469E0. | q07 |
+| 001CACF8 | Gold_MoveMap | (map, offset): shifts a map's gold piles by the map offset. | q07 |
+| 001CAD80 | Gold_Update | Per frame: fades gold piles in/out, finds the nearest in reach within 200; pick-up adds amount to PlayerState.unk4C (gold, capped at 999999) and shows message 0x14 with the amount. | q07 |
+| 001CB008 | Gold_Draw | (list): draws the gold piles of a list. | q07 |
+| 001CB0D0 | Gold_Drop | (position, rotation, map, amount, object_id, on_ground, other_map): drops a gold pile; returns TRUE when dropped. | q07 |
+| 001CB2C8 | Gold_DropFromEntity | (entity): drops the entity's gold (EntityParams.gold at 0x230) as a pile via func_001CB0D0; nothing when it has none. | q07 |
 | 001CB460 |  | Returns the first free gold pile actor (MapActor). | q07 |
 | 001CB4A8 |  | Returns the oldest gold pile actor not owned by an object. | q07 |
 | 001CB508 |  | Links a gold pile actor into the in-use list. | q07 |
@@ -1948,64 +1948,64 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001CB778 | KF_Sound_Init | Binds RPC service 0x1010 (retrying; spins forever if bind fails), points D_004471D4 at D_005BF380, asks the driver for its buffers (commands 0x10, 0x30, 0xA0), resets every voice, bank, the 126-entry table at SoundState 0x240 and the 4 effect slots. | q08 |
+| 001CB778 | Sound_Init | Binds RPC service 0x1010 (retrying; spins forever if bind fails), points D_004471D4 at D_005BF380, asks the driver for its buffers (commands 0x10, 0x30, 0xA0), resets every voice, bank, the 126-entry table at SoundState 0x240 and the 4 effect slots. | q08 |
 | 001CB9A0 |  |  |  |
 | 001CBA58 |  | Polls the SIF RPC status until it is no longer 1, giving up after 0x989680 tries. | src comment |
-| 001CBAC0 | KF_Sound_IsRpcBusy | sceSifCheckStatRpc on the sound RPC client. | q08 |
-| 001CBAE0 | KF_Sound_Command | The game's own sceSdRemote (int blocking, ...): packs a command and up to 8 words into D_005BF280, waits for the client (func_001CBA58), calls the IOP, returns the driver's answer. Bit 0x80000: reply to buffer in arg 0; bit 0x40000: send buffer is arg 0. | q08 |
+| 001CBAC0 | Sound_IsRpcBusy | sceSifCheckStatRpc on the sound RPC client. | q08 |
+| 001CBAE0 | Sound_Command | The game's own sceSdRemote (int blocking, ...): packs a command and up to 8 words into D_005BF280, waits for the client (func_001CBA58), calls the IOP, returns the driver's answer. Bit 0x80000: reply to buffer in arg 0; bit 0x40000: send buffer is arg 0. | q08 |
 | 001CBC30 |  | Starts an upload of data to the sound driver (continued by func_001CBD20 in 0x4000-byte pieces). | q08 |
-| 001CBD20 | KF_Sound_UploadStep | Continues the upload func_001CBC30 started: when the DMA piece has landed, command 0xB0 writes it, then the next 0x4000-byte piece is sent; returns 1 when done or idle, 0 while busy. | q08 |
-| 001CBE60 | KF_Sound_Enable | Sound output on (command 0x40), tracked in SoundState.active. | q08 |
-| 001CBEA0 | KF_Sound_Disable | Sound output off (command 0x50), tracked in SoundState.active. | q08 |
-| 001CBED8 | KF_Sound_SetMono | Selects the second (unk04) header block for every voice and bank: flag at SoundState 0x4D4, command 0xC0, voice->unk1C, then rebinds voices (0x1010) and banks (0x2070). Probably the mono/stereo output switch (name is a guess). | q08 |
-| 001CC018 | KF_Sound_SetStereo | Selects the first (unk00) header block for every voice and bank: flag at SoundState 0x4D4, command 0xC0, voice->unk1C, then rebinds voices (0x1010) and banks (0x2070); twin of func_001CBED8 (name is a guess; report writes SetStereo). | q08 |
-| 001CC160 | KF_Sound_FindFreeVoice | Returns the first free voice index or -1. | q08 |
-| 001CC1A8 | KF_Sound_LoadVoiceFiles | Loads a voice from files (header file, optional sample file). | q08 |
-| 001CC400 | KF_Sound_LoadVoice | Loads a voice from memory (header data + sample data, both through func_001CBC30); accepts ids 0..15. | q08 |
-| 001CC6A0 | KF_Sound_CloneVoice | New voice with its own header but the sample data of an existing voice. | q08 |
-| 001CC888 | KF_Sound_LoadVoiceChunked | Loads a voice from memory like func_001CC400, the sample data sent through a temporary IOP block in pieces (commands 0x80/0x90). | q08 |
-| 001CCC08 |  | Step function of the staged sound load func_001CD020 (table D_0043F670): gives the voice up. Name family KF_Sound_LoadStep_*. | q08 |
-| 001CCC28 |  | Step 0 of the staged sound load func_001CD020 (table D_0043F670): clears the request, allocates, uploads the header. Name family KF_Sound_LoadStep_*. | q08 |
+| 001CBD20 | Sound_UploadStep | Continues the upload func_001CBC30 started: when the DMA piece has landed, command 0xB0 writes it, then the next 0x4000-byte piece is sent; returns 1 when done or idle, 0 while busy. | q08 |
+| 001CBE60 | Sound_Enable | Sound output on (command 0x40), tracked in SoundState.active. | q08 |
+| 001CBEA0 | Sound_Disable | Sound output off (command 0x50), tracked in SoundState.active. | q08 |
+| 001CBED8 | Sound_SetMono | Selects the second (unk04) header block for every voice and bank: flag at SoundState 0x4D4, command 0xC0, voice->unk1C, then rebinds voices (0x1010) and banks (0x2070). Probably the mono/stereo output switch (name is a guess). | q08 |
+| 001CC018 | Sound_SetStereo | Selects the first (unk00) header block for every voice and bank: flag at SoundState 0x4D4, command 0xC0, voice->unk1C, then rebinds voices (0x1010) and banks (0x2070); twin of func_001CBED8 (name is a guess; report writes SetStereo). | q08 |
+| 001CC160 | Sound_FindFreeVoice | Returns the first free voice index or -1. | q08 |
+| 001CC1A8 | Sound_LoadVoiceFiles | Loads a voice from files (header file, optional sample file). | q08 |
+| 001CC400 | Sound_LoadVoice | Loads a voice from memory (header data + sample data, both through func_001CBC30); accepts ids 0..15. | q08 |
+| 001CC6A0 | Sound_CloneVoice | New voice with its own header but the sample data of an existing voice. | q08 |
+| 001CC888 | Sound_LoadVoiceChunked | Loads a voice from memory like func_001CC400, the sample data sent through a temporary IOP block in pieces (commands 0x80/0x90). | q08 |
+| 001CCC08 |  | Step function of the staged sound load func_001CD020 (table D_0043F670): gives the voice up. Name family Sound_LoadStep_*. | q08 |
+| 001CCC28 |  | Step 0 of the staged sound load func_001CD020 (table D_0043F670): clears the request, allocates, uploads the header. Name family Sound_LoadStep_*. | q08 |
 | 001CCD78 |  | Rounds the request size up to 16, then allocates the largest IOP heap block it can (halving from 1 MB). | src comment |
 | 001CCDF0 |  |  |  |
-| 001CCEB8 |  | Step function of the staged sound load func_001CD020 (table D_0043F670): waits for a sample piece and writes it. Name family KF_Sound_LoadStep_*. | q08 |
+| 001CCEB8 |  | Step function of the staged sound load func_001CD020 (table D_0043F670): waits for a sample piece and writes it. Name family Sound_LoadStep_*. | q08 |
 | 001CCF80 |  |  |  |
 | 001CD020 |  | Runs the handler for the current step with a packed argument block, then advances the step. | src comment |
-| 001CD0E0 | KF_Sound_LoadVoiceAt | Like func_001CC888 (chunked voice load) into a given voice and a given sound memory address. | q08 |
-| 001CD3D0 | KF_Sound_AdoptVoice | Makes a voice from blocks already on the IOP; leaves the voice taken when it fails. | q08 |
+| 001CD0E0 | Sound_LoadVoiceAt | Like func_001CC888 (chunked voice load) into a given voice and a given sound memory address. | q08 |
+| 001CD3D0 | Sound_AdoptVoice | Makes a voice from blocks already on the IOP; leaves the voice taken when it fails. | q08 |
 | 001CD578 |  |  |  |
 | 001CD5E0 |  |  |  |
 | 001CD6B8 |  | Sends sound driver command 0x80 with one argument. | q08 |
 | 001CD6E0 |  | Releases a voice; called by the voice loaders on failure. | q08 |
 | 001CD7E0 |  | Release the IOP heap block of a voice; returns -1 if none was held or the free failed. | src comment |
-| 001CD840 | KF_Sound_FreeVoiceHeaders | Frees a voice's two header blocks on the IOP. | q08 |
-| 001CD8C8 | KF_Sound_Defragment | Compacts sound memory: shell-sorts the voices by sample address, moves each down over the gaps (commands 0x80/0x90), rebinds voices and banks. | q08 |
-| 001CDB58 | KF_Sound_SetVoiceAddress | Sets a voice's sample address. | q08 |
+| 001CD840 | Sound_FreeVoiceHeaders | Frees a voice's two header blocks on the IOP. | q08 |
+| 001CD8C8 | Sound_Defragment | Compacts sound memory: shell-sorts the voices by sample address, moves each down over the gaps (commands 0x80/0x90), rebinds voices and banks. | q08 |
+| 001CDB58 | Sound_SetVoiceAddress | Sets a voice's sample address. | q08 |
 | 001CDB80 |  | Sends sound driver command 0x1040 with the voice id and a byte. | q08 |
 | 001CDBA0 |  | Sends sound driver command 0x1050 with the voice id and a byte. | q08 |
 | 001CDBC0 |  |  |  |
 | 001CDC18 |  |  |  |
 | 001CDD20 |  |  |  |
-| 001CDE28 | KF_Sound_LoadBank | Loads a bank file to the IOP and binds it to a voice (commands 0x1010, 0x2000). | q08 |
+| 001CDE28 | Sound_LoadBank | Loads a bank file to the IOP and binds it to a voice (commands 0x1010, 0x2000). | q08 |
 
 ## Sound bank loads and note commands (0x1CDF90-0x1CF2E8)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001CDF90 | KF_Sound_LoadBankStep | Stepped bank load: the work of func_001CE170 in three steps kept in D_004469F8; returns -1 while working (also -1 for a bad bank id, with D_004471C8/D_004471C4 already overwritten). | q09 |
-| 001CE170 | KF_Sound_LoadBank | (bank_id, voice_index, data, size): blocking bank load: first free of the 4 banks, sceSifAllocIopHeap, upload (func_001CBC30 then busy-wait on func_001CBD20), driver commands 0x1010 and 0x2000; frees through func_001CE408 on failure. | q09 |
-| 001CE300 | KF_Sound_BindBank | (bank_id, voice_index, iop_heap, size): binds a bank for data already in IOP memory into the first free of the 4 banks; -2 when none is free, -1 when iop_heap is 0. | q09 |
+| 001CDF90 | Sound_LoadBankStep | Stepped bank load: the work of func_001CE170 in three steps kept in D_004469F8; returns -1 while working (also -1 for a bad bank id, with D_004471C8/D_004471C4 already overwritten). | q09 |
+| 001CE170 | Sound_LoadBank | (bank_id, voice_index, data, size): blocking bank load: first free of the 4 banks, sceSifAllocIopHeap, upload (func_001CBC30 then busy-wait on func_001CBD20), driver commands 0x1010 and 0x2000; frees through func_001CE408 on failure. | q09 |
+| 001CE300 | Sound_BindBank | (bank_id, voice_index, iop_heap, size): binds a bank for data already in IOP memory into the first free of the 4 banks; -2 when none is free, -1 when iop_heap is 0. | q09 |
 | 001CE408 |  | Frees a bank's IOP memory (used by the bank loaders on failure). | q09 |
 | 001CE468 |  | Bank driver command sibling of func_001CE4D0; shares the off-by-one bank index check (>= 5 with four banks). | q09 |
 | 001CE4D0 |  | Sends sound driver command 0x2010 for a bank (banks[n].unk0C, the driver's id for the bank); index check is >= 5 though there are four banks. | q09 |
 | 001CE510 |  | Bank driver command sibling of func_001CE4D0; shares the off-by-one bank index check (>= 5 with four banks). | q09 |
 | 001CE568 |  | Sends sound driver command 0x2050 for a bank that holds memory (banks[n].unk0C); index check is >= 5 though there are four banks. | q09 |
 | 001CE5C0 |  | Sends bank bank_index's second word to the driver if the bank holds IOP memory; -1 if not. | src comment |
-| 001CE620 | KF_Sound_SetBankVolume | Sends sound driver command 0x1060 (bank's driver id banks[n].unk0C, s16 value); func_0019C7D0 calls it with a level 0..0x7F, so the name is "likely". | q09 |
+| 001CE620 | Sound_SetBankVolume | Sends sound driver command 0x1060 (bank's driver id banks[n].unk0C, s16 value); func_0019C7D0 calls it with a level 0..0x7F, so the name is "likely". | q09 |
 | 001CE658 |  | Sends sound driver command 0x2080 (bank's driver id banks[n].unk0C, u16 value). | q09 |
-| 001CE690 | KF_Sound_NoteOn | (slot, voice_index, channel, program, note, volume, bend, pan): queues a MIDI-like byte stream (program/pan/bend/volume/note) for the IOP in the uncached buffer at dma_dest (limit 0x3FC); pan forced to 0x3F when the u16 at SoundState 0x4D4 or the voice's unk1C is 0. | q09 |
+| 001CE690 | Sound_NoteOn | (slot, voice_index, channel, program, note, volume, bend, pan): queues a MIDI-like byte stream (program/pan/bend/volume/note) for the IOP in the uncached buffer at dma_dest (limit 0x3FC); pan forced to 0x3F when the u16 at SoundState 0x4D4 or the voice's unk1C is 0. | q09 |
 | 001CE8B0 |  | Sound note-off of the NoteOn family (queues FD 10 ... 00 00); matched earlier. | q09 |
-| 001CE9A0 | KF_Sound_NoteControl | (kind, slot, value): queues one 10-byte controller command for a sounding note (FF voice-id 07 FD kind ch note slot ...); kind 0 = value, 1 = pan, 2 = bend as two 7-bit halves. | q09 |
+| 001CE9A0 | Sound_NoteControl | (kind, slot, value): queues one 10-byte controller command for a sounding note (FF voice-id 07 FD kind ch note slot ...); kind 0 = value, 1 = pan, 2 = bend as two 7-bit halves. | q09 |
 | 001CEB38 |  |  |  |
 | 001CEBE0 |  | Starts a DMA transfer with a 16-byte aligned size and waits for it, then clears the uncached word. | src comment |
 | 001CECB8 |  |  |  |
@@ -2025,12 +2025,12 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001CF378 | KF_Message_Init | Loads the two text files, links the six message slots into a ring (slot 5's text is the sixth 0x400 buffer of D_005BF8C8, D_005C0CC8), clears the debug log, calls func_0020B2E8(D_005C50C8, 0x200) and sets the two font TEX0 register writes in D_005C58C8 (TBP0 0x3B40, 512x512 PSMT4, CBP 0x3FE0 / 0x3FE1). | g4 |
-| 001CF4D0 | KF_Message_Update | Per frame: calls func_0020D088; if the message box (MessageBox D_005C58E8) is active (D_004471E0) types it out every delay frames, pages on a button press, closes over 8 frames at the 0xFFFF end mark; else if the ring is active (D_004471E1) ages the shown slot and moves to the next. Always ends in func_001CF708. | q09b |
-| 001CF708 | KF_Message_Draw | Builds and queues the GS packet for the on-screen text when box, ring or debug log has something: font texture, count * 7 + 13 quadwords, register blocks, glyph GIF tag; then func_001CFFA0 for the box or ring slot, func_001CFCA0 for the debug log; clears D_004471DC and D_004471EC. | q09b |
+| 001CF378 | Message_Init | Loads the two text files, links the six message slots into a ring (slot 5's text is the sixth 0x400 buffer of D_005BF8C8, D_005C0CC8), clears the debug log, calls func_0020B2E8(D_005C50C8, 0x200) and sets the two font TEX0 register writes in D_005C58C8 (TBP0 0x3B40, 512x512 PSMT4, CBP 0x3FE0 / 0x3FE1). | g4 |
+| 001CF4D0 | Message_Update | Per frame: calls func_0020D088; if the message box (MessageBox D_005C58E8) is active (D_004471E0) types it out every delay frames, pages on a button press, closes over 8 frames at the 0xFFFF end mark; else if the ring is active (D_004471E1) ages the shown slot and moves to the next. Always ends in func_001CF708. | q09b |
+| 001CF708 | Message_Draw | Builds and queues the GS packet for the on-screen text when box, ring or debug log has something: font texture, count * 7 + 13 quadwords, register blocks, glyph GIF tag; then func_001CFFA0 for the box or ring slot, func_001CFCA0 for the debug log; clears D_004471DC and D_004471EC. | q09b |
 | 001CF980 |  |  |  |
 | 001CF988 |  | Opens a message box: fills the state D_005C58E8 (has its own local Ctx struct for it). | q09b |
-| 001CFA70 | KF_Message_Show | (x, y, font, kind, frames, message_id, ...): formats a message into the ring of 6 MessageSlots D_005C5940: func_001D07C8 gets the format, func_001CFDB8 expands it, func_001D05E0 measures it; position x + 320 - width / 2, y + 400. Kind 1 overwrites the slot on screen, else next free slot. | q09 |
+| 001CFA70 | Message_Show | (x, y, font, kind, frames, message_id, ...): formats a message into the ring of 6 MessageSlots D_005C5940: func_001D07C8 gets the format, func_001CFDB8 expands it, func_001D05E0 measures it; position x + 320 - width / 2, y + 400. Kind 1 overwrites the slot on screen, else next free slot. | q09 |
 | 001CFBB0 |  | Formats a message into the next 0x108-byte debug log slot. | src comment |
 | 001CFC20 |  | Starts the next debug log slot (0x108-byte lines at D_005C5A18, count D_004471EC) with one character: a line that is one colour byte. | q09 |
 | 001CFC48 |  |  |  |
@@ -2040,29 +2040,29 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 001CFC98 |  |  |  |
 | 001CFCA0 |  | Draws the debug log text into the message GS packet. | q09b |
 | 001CFDB8 |  | Message formatter, the vsprintf of the glyph stream: int (u16 *format, u16 *out, va_list); expands number codes (& 0x3000) into digit glyphs until the 0xFFFF end; returns glyphs written, control codes (& 0xF000) not counted. | q09b |
-| 001CFFA0 | KF_Message_DrawGlyphs | (kind, font, left, top, text, count): fills the per-glyph alpha table D_005C50C8 (kind 1 ring: one fading alpha; kind 0 box: 0x80 typed, ramp behind the cursor) and draws count glyphs through func_001D0298; 0x8000 new line, 0x4000 colour, 0x800 half-width glyph; metrics D_00420BE0[font]. | q09b |
+| 001CFFA0 | Message_DrawGlyphs | (kind, font, left, top, text, count): fills the per-glyph alpha table D_005C50C8 (kind 1 ring: one fading alpha; kind 0 box: 0x80 typed, ramp behind the cursor) and draws count glyphs through func_001D0298; 0x8000 new line, 0x4000 colour, 0x800 half-width glyph; metrics D_00420BE0[font]. | q09b |
 
 ## Text glyphs, HUD, facing target and play clock (0x1D0298-0x1D25C8)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
 | 001D0298 |  | Adds one glyph to the text packet at D_004471D8 (PRIM 0x56, the texture page's register pair, colour, two corners) (unmatched) | g6 |
-| 001D0588 |  | Width of one glyph (summed by KF_Text_GetWidth) | q14 |
-| 001D05E0 | KF_Text_GetWidth | Width of a text string ended by -1, summing func_001D0588 per glyph | q14 |
+| 001D0588 |  | Width of one glyph (summed by Text_GetWidth) | q14 |
+| 001D05E0 | Text_GetWidth | Width of a text string ended by -1, summing func_001D0588 per glyph | q14 |
 | 001D0658 |  | Measures each line of a text stream and stores its centering offset. | src comment |
 | 001D0758 |  | Produces a number's digits in reverse order into a buffer (used by the message formatter func_001CFDB8). | q09 |
-| 001D07C8 | KF_Text_GetMessage | Address of message n: offset table entry n+1 of the message file at D_00446F38, then the text | q14 |
-| 001D0800 | KF_Event_UpdateViewRay | Per frame: keeps last frame's view ray in the event runner (unk20/unk30/unk44), then rebuilds it from the player's eyes (y - 220 + unk1F0 + camera unk4C, pitch clamped to +-58 degrees) or from the camera when GameStatus.unk03 is set | q14 |
-| 001D0970 | KF_Player_FindFacingTarget | Once a frame, finds what is in front of the player: casts the view ray against the map (func_001C1858, 2000 units), every living entity, every map object in use and every ground item; leaves in EventRunner D_00420D00 unk40 (view reach), unk48 (nearest entity distance), unk4C (picked distance) and one of unk54 (Entity), current (MapObject), unk58 (ItemNode); if GameStatus.bit1 is set and scripts are not skipped, starts that thing's script (func_002109C8) or picks the item up (func_001C9AB0) and clears bit1 | q19 |
+| 001D07C8 | Text_GetMessage | Address of message n: offset table entry n+1 of the message file at D_00446F38, then the text | q14 |
+| 001D0800 | Event_UpdateViewRay | Per frame: keeps last frame's view ray in the event runner (unk20/unk30/unk44), then rebuilds it from the player's eyes (y - 220 + unk1F0 + camera unk4C, pitch clamped to +-58 degrees) or from the camera when GameStatus.unk03 is set | q14 |
+| 001D0970 | Player_FindFacingTarget | Once a frame, finds what is in front of the player: casts the view ray against the map (func_001C1858, 2000 units), every living entity, every map object in use and every ground item; leaves in EventRunner D_00420D00 unk40 (view reach), unk48 (nearest entity distance), unk4C (picked distance) and one of unk54 (Entity), current (MapObject), unk58 (ItemNode); if GameStatus.bit1 is set and scripts are not skipped, starts that thing's script (func_002109C8) or picks the item up (func_001C9AB0) and clears bit1 | q19 |
 | 001D1210 |  |  |  |
 | 001D1260 |  | Distance from pos to target if within radius on every axis and overall, else D_00446A0C. | src comment |
-| 001D1378 | KF_Sprite_Set | Fills a ScreenSprite: prim, tex0, tex1, colour, box in pixels, texture box | q14 |
-| 001D1450 | KF_Hud_Init | Loads two files after the data loaded so far (names D_0043F6B8, D_0043F6C8; second is a texture table, uploaded at once), sets up the ten HUD sprites D_005CDE18[10] and the sprite D_005CE098 | q14 |
+| 001D1378 | Sprite_Set | Fills a ScreenSprite: prim, tex0, tex1, colour, box in pixels, texture box | q14 |
+| 001D1450 | Hud_Init | Loads two files after the data loaded so far (names D_0043F6B8, D_0043F6C8; second is a texture table, uploaded at once), sets up the ten HUD sprites D_005CDE18[10] and the sprite D_005CE098 | q14 |
 | 001D19D0 |  |  |  |
-| 001D19D8 | KF_Hud_Draw | Draws the HUD from copies of the HUD sprites: frame, two bars filling from the left (PlayerState.unkBC, unkC0 out of 5000), one from the bottom (unk1A4 out of 49), a faded overlay (unk1A6 * 255 / unk5C), a bar unkCC out of unkD0; selects texture table D_00446F6C | q14 |
+| 001D19D8 | Hud_Draw | Draws the HUD from copies of the HUD sprites: frame, two bars filling from the left (PlayerState.unkBC, unkC0 out of 5000), one from the bottom (unk1A4 out of 49), a faded overlay (unk1A6 * 255 / unk5C), a bar unkCC out of unkD0; selects texture table D_00446F6C | q14 |
 | 001D2020 |  | Selects texture table D_004471F0 and queues sprite D_005CE098 (the eleventh HUD sprite) | q14 |
-| 001D2048 | KF_Clock_Resume | Restarts the play clock from a saved play time (base D_00446A18) and reads the wall clock into D_00446A10 | q14 |
-| 001D20A0 | KF_Clock_Start | Starts the play clock from zero; returns 0 | q14 |
+| 001D2048 | Clock_Resume | Restarts the play clock from a saved play time (base D_00446A18) and reads the wall clock into D_00446A10 | q14 |
+| 001D20A0 | Clock_Start | Starts the play clock from zero; returns 0 | q14 |
 | 001D20E0 |  | Refreshes the play clock (called before the ready-to-collect list is built) | q28 |
 | 001D2100 |  | Seconds between clock start D_00446A10 and last wall-clock read D_00446A20 | q14 |
 | 001D2138 |  | Minutes between clock start D_00446A10 and last wall-clock read D_00446A20 | q14 |
@@ -2084,59 +2084,59 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001D2680 | KF_Menu_BuildItemRings | rebuilds every ring the menus walk from what the player owns: the items (page mark on the seventh), everything not locked and not in use, usable items plus castable spells, one ring per equipment group with the list put on the piece worn, the spells known, the spells that can be cast | g7 |
+| 001D2680 | Menu_BuildItemRings | rebuilds every ring the menus walk from what the player owns: the items (page mark on the seventh), everything not locked and not in use, usable items plus castable spells, one ring per equipment group with the list put on the piece worn, the spells known, the spells that can be cast | g7 |
 | 001D3608 |  | Upload queue: runs the current link node's callback with the node, or steps to the next node when it has none or is finished | q14 |
 | 001D3650 |  | Upload queue: moves the current upload node into the spare node D_005CE8B0, resets the original, cuts the chain after it, gives the spare's pool node back | q14 |
 | 001D3730 |  | Upload queue: copies the current upload node into the spare node D_005CE8B0 and cuts the chain after it | q14 |
-| 001D37F8 | KF_Menu_RotateModelsNextCategory | "Next category" of the five-item carousel: node 0 moves to node 2, node 1 to node 0, nodes 1, 3 and 4 are reset, the five are rechained and the file names rewritten; passes its own first argument to func_001D3730 / func_001D3650, which take none. | o5 |
-| 001D39F0 | KF_Upload_RotateNodes | Upload handler (int, void *): saves the current node into the spare (func_001D3730 copies or func_001D3650 moves), frees node 1's request, copies node 0 into node 1 and node 2 into node 0, makes nodes 2, 3, 4 fresh, appends the first unfinished node to the current chain, relinks 0-4; sibling of func_001D3BE8. (report writes the name as KF_Upload_RotateNodes...) | f5 |
-| 001D3BE8 | KF_Upload_RotateNodes... | Rotation of the five upload nodes at D_00426470: saves the current node into the spare, frees a request, copies node 0 into node 3 and node 4 into node 0, resets node 4 (unk20 = 0, unk1C = 0, next = NULL, unk08 = -1), appends the first unfinished node to the current chain, relinks in order 0, 3, 4, 1, 2; signature (int, void *), called from func_001DFFF8 (report gives the name as a stem "KF_Upload_RotateNodes..." for three variants) | q14b |
-| 001D3DB0 | KF_Menu_RotateItemNodesPrev | Rotates the five menu item load nodes one step, the other direction than q14's func_001D3BE8; queues what is not loaded; ends in func_001D46F0 (report: "KF_Menu_RotateItemNodesPrev (5 nodes)") | q15b |
-| 001D3F78 | KF_MenuLoad_OpenModel | Menu model load stage 0: opens node->name (or the fallback file D_0043F6F8, unchecked) and starts reading 0x25800 bytes | q15 |
+| 001D37F8 | Menu_RotateModelsNextCategory | "Next category" of the five-item carousel: node 0 moves to node 2, node 1 to node 0, nodes 1, 3 and 4 are reset, the five are rechained and the file names rewritten; passes its own first argument to func_001D3730 / func_001D3650, which take none. | o5 |
+| 001D39F0 | Upload_RotateNodes | Upload handler (int, void *): saves the current node into the spare (func_001D3730 copies or func_001D3650 moves), frees node 1's request, copies node 0 into node 1 and node 2 into node 0, makes nodes 2, 3, 4 fresh, appends the first unfinished node to the current chain, relinks 0-4; sibling of func_001D3BE8. (report writes the name as Upload_RotateNodes...) | f5 |
+| 001D3BE8 | Upload_RotateNodes... | Rotation of the five upload nodes at D_00426470: saves the current node into the spare, frees a request, copies node 0 into node 3 and node 4 into node 0, resets node 4 (unk20 = 0, unk1C = 0, next = NULL, unk08 = -1), appends the first unfinished node to the current chain, relinks in order 0, 3, 4, 1, 2; signature (int, void *), called from func_001DFFF8 (report gives the name as a stem "Upload_RotateNodes..." for three variants) | q14b |
+| 001D3DB0 | Menu_RotateItemNodesPrev | Rotates the five menu item load nodes one step, the other direction than q14's func_001D3BE8; queues what is not loaded; ends in func_001D46F0 (report: "Menu_RotateItemNodesPrev (5 nodes)") | q15b |
+| 001D3F78 | MenuLoad_OpenModel | Menu model load stage 0: opens node->name (or the fallback file D_0043F6F8, unchecked) and starts reading 0x25800 bytes | q15 |
 | 001D3FF8 |  |  |  |
 | 001D4070 |  |  |  |
-| 001D40C0 | KF_MenuLoad_RunStage | LinkNode callback (takes the node): runs stage unk1C of the three-stage table D_0043F710 (open, wait for read, hand over) unless the node is done | q15 |
+| 001D40C0 | MenuLoad_RunStage | LinkNode callback (takes the node): runs stage unk1C of the three-stage table D_0043F710 (open, wait for read, hand over) unless the node is done | q15 |
 | 001D4118 |  |  |  |
 | 001D41B0 |  |  |  |
-| 001D4228 | KF_MenuLoad_FinishSlot | Menu load last stage: points slot target->slot (D_00420DF0) at the file's two parts, swaps buffers with the target node, calls func_002032E0 with the per-slot value from D_0043F720, goes to the next waiting node | q15 |
+| 001D4228 | MenuLoad_FinishSlot | Menu load last stage: points slot target->slot (D_00420DF0) at the file's two parts, swaps buffers with the target node, calls func_002032E0 with the per-slot value from D_0043F720, goes to the next waiting node | q15 |
 | 001D4360 |  | Call the stage handler selected by upload->stage unless upload->done is set. | src comment |
-| 001D43B8 | KF_MenuLoad_OpenPackage | Stage 0 of the big menu loader: opens the file and starts reading 0x1A2000 bytes (handle stored to D_00446AD0); on open failure clears done/stage but carries on with a NULL node (retail bug) | q15 |
-| 001D4428 | KF_MenuLoad_WaitRead | Menu load stage 1: polls the read, closes the file, goes to the next stage; on error starts over | q15 |
+| 001D43B8 | MenuLoad_OpenPackage | Stage 0 of the big menu loader: opens the file and starts reading 0x1A2000 bytes (handle stored to D_00446AD0); on open failure clears done/stage but carries on with a NULL node (retail bug) | q15 |
+| 001D4428 | MenuLoad_WaitRead | Menu load stage 1: polls the read, closes the file, goes to the next stage; on error starts over | q15 |
 | 001D44A0 |  | Walk every chunk of the loaded package, hand each payload to func_002007C0, then flush. | src comment |
 | 001D4540 |  | Runs the next stage of a chunk upload until it is done. | src comment |
-| 001D4598 | KF_MenuLoad_TakeBuffer | Takes a buffer node off the free list D_004472B0 for a load node; returns nothing | q15 |
+| 001D4598 | MenuLoad_TakeBuffer | Takes a buffer node off the free list D_004472B0 for a load node; returns nothing | q15 |
 | 001D45B8 |  | Pushes the request's node back onto the menu free list. | src comment |
 | 001D45D0 |  | Called before going back to func_001E6AB8 on cancel; takes no argument (though passed 0) | q27 |
-| 001D4690 | KF_Menu_FormatItemModelName | sprintf(buffer, "...%d", definition[item->unk0C].file_number): writes a menu item's model file name; identical copy of func_001D46C8 | q15 |
+| 001D4690 | Menu_FormatItemModelName | sprintf(buffer, "...%d", definition[item->unk0C].file_number): writes a menu item's model file name; identical copy of func_001D46C8 | q15 |
 | 001D46B8 |  | Formats a menu item's value into buffer. | src comment |
-| 001D46C8 | KF_Menu_FormatItemModelName | sprintf(buffer, "...%d", definition[item->unk0C].file_number): writes a menu item's model file name; identical copy of func_001D4690 | q15 |
-| 001D46F0 | KF_Menu_NameShownItems | Writes the model file names of the five menu items on show through the per-group handler table D_0043F780 (MenuNameHandlers, 12 entries) | q15 |
-| 001D4840 | KF_Menu_NameEquipmentModels | Writes the model file names of the player's weapon and eight worn things into the nine equipment load nodes | q15 |
-| 001D49D0 | KF_Menu_QueueEquipmentLoads | Ten func_001D4598 calls, then sets slots/callbacks/chain of the nine equipment load nodes behind D_005CED40 and the five item nodes; leaves D_00446C90 = &D_005CED40 | q15b |
-| 001D4C60 | KF_Menu_NameListItems | Writes model file names for a long menu list: the current item, its neighbours, and the items seven steps away either way | q15 |
+| 001D46C8 | Menu_FormatItemModelName | sprintf(buffer, "...%d", definition[item->unk0C].file_number): writes a menu item's model file name; identical copy of func_001D4690 | q15 |
+| 001D46F0 | Menu_NameShownItems | Writes the model file names of the five menu items on show through the per-group handler table D_0043F780 (MenuNameHandlers, 12 entries) | q15 |
+| 001D4840 | Menu_NameEquipmentModels | Writes the model file names of the player's weapon and eight worn things into the nine equipment load nodes | q15 |
+| 001D49D0 | Menu_QueueEquipmentLoads | Ten func_001D4598 calls, then sets slots/callbacks/chain of the nine equipment load nodes behind D_005CED40 and the five item nodes; leaves D_00446C90 = &D_005CED40 | q15b |
+| 001D4C60 | Menu_NameListItems | Writes model file names for a long menu list: the current item, its neighbours, and the items seven steps away either way | q15 |
 | 001D4E58 |  | Opener of main menu line 5, called through func_001D8260 | q16 |
 | 001D4F50 |  |  |  |
 | 001D4FD0 |  | Builds two node lists: 470 -> 4C0 -> 510 and 560 -> 5B0. | src comment |
-| 001D50C0 | KF_Menu_QueueKeyItemLoads | Sets up and chains the twelve key item load nodes (D_005CEF30); tables from D_0043F7C8, D_0043F7F8 | q15 |
-| 001D52D8 | KF_Menu_RotateItemNodesNext | Rotates the three menu item load nodes one step forward and queues what is not loaded (report writes the names as "KF_Menu_RotateItemNodesNext / Prev (3 nodes)") | q15b |
-| 001D5460 | KF_Menu_RotateItemNodesPrev | Rotates the three menu item load nodes one step back and queues what is not loaded (report writes the names as "KF_Menu_RotateItemNodesNext / Prev (3 nodes)") | q15b |
+| 001D50C0 | Menu_QueueKeyItemLoads | Sets up and chains the twelve key item load nodes (D_005CEF30); tables from D_0043F7C8, D_0043F7F8 | q15 |
+| 001D52D8 | Menu_RotateItemNodesNext | Rotates the three menu item load nodes one step forward and queues what is not loaded (report writes the names as "Menu_RotateItemNodesNext / Prev (3 nodes)") | q15b |
+| 001D5460 | Menu_RotateItemNodesPrev | Rotates the three menu item load nodes one step back and queues what is not loaded (report writes the names as "Menu_RotateItemNodesNext / Prev (3 nodes)") | q15b |
 | 001D55E8 |  | Builds the free list of 16 pool nodes with 0x25800-byte buffers and sets up their owner. | src comment |
-| 001D56B0 | KF_Menu_LoadPartFile | Loads a file of 0x60-byte records behind a 0x10 header; gives back count and pointer | q15 |
-| 001D5740 | KF_Menu_LoadAllParts | 36 calls of func_001D56B0: loads every menu screen's part list (counts D_00446A30.., pointers D_0044722C..) | q15 |
-| 001D5A20 | KF_Menu_Init | Menu start-up: resets the GS, sets up the menus' frame buffers, loads menu/menu.tmx, menu/font.tmr and the twenty menu/equip/a%03d.mi2 files, fills every MenuItem table (D_004210D0, D_00421A30, D_004231F0 ... D_00423FB0, D_00424050, D_00424600: definition pointer, running number, group) and links the eleven item lists D_005CE770..D_005CE810 into a ring | q19 |
+| 001D56B0 | Menu_LoadPartFile | Loads a file of 0x60-byte records behind a 0x10 header; gives back count and pointer | q15 |
+| 001D5740 | Menu_LoadAllParts | 36 calls of func_001D56B0: loads every menu screen's part list (counts D_00446A30.., pointers D_0044722C..) | q15 |
+| 001D5A20 | Menu_Init | Menu start-up: resets the GS, sets up the menus' frame buffers, loads menu/menu.tmx, menu/font.tmr and the twenty menu/equip/a%03d.mi2 files, fills every MenuItem table (D_004210D0, D_00421A30, D_004231F0 ... D_00423FB0, D_00424050, D_00424600: definition pointer, running number, group) and links the eleven item lists D_005CE770..D_005CE810 into a ring | q19 |
 
 ## Main menu and its screens: items, equipment, key items, options, memory card (0x1D62C8-0x1E4068)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001D62C8 | KF_Menu_Run | Runs a whole menu (s8 mode, menu number stored in D_00446C94): sync, sound/pad setup, reads the clock (unused), then every frame func_001CEBE0() and handler D_0043F6E0[D_00446AC4] until it gives 0, with end-of-frame (func_001D72F0), pad read, memory card state (func_002179F8) and a 20-frame input lock on change; afterwards an 11-quadword packet (menu 0 only), teardown, two more frames; menu 1 returns 1 when D_005CF2F0.unk16 was set | q15b |
-| 001D67A0 | KF_Menu_Draw...Sprite | Sends a fixed 15-quadword GS packet (settings + one sprite); sibling of func_001D6A00 and func_001D6C30 | q15 |
-| 001D6A00 | KF_Menu_Draw...Sprite | Sends a fixed 15-quadword GS packet (settings + one sprite); sibling of func_001D67A0 and func_001D6C30 | q15 |
-| 001D6C30 | KF_Menu_Draw...Sprite | Sends a fixed 15-quadword GS packet (settings + one sprite); sibling of func_001D67A0 and func_001D6A00 | q15 |
-| 001D6E60 | KF_Menu_DrawItemModel | Sends a GS settings packet, draws the model of load node D_00426470 with the matrix given, restores the view-screen matrix; returns nothing | q15 |
-| 001D6FB0 | KF_Menu_DrawBackdrop | Step 0 of the menu handler table D_0043F6E0: on menu 0 sends a 26-quadword packet copying the shown buffer into the drawn one in two half-brightness passes; D_00446AC4++; returns 1 | q15b |
+| 001D62C8 | Menu_Run | Runs a whole menu (s8 mode, menu number stored in D_00446C94): sync, sound/pad setup, reads the clock (unused), then every frame func_001CEBE0() and handler D_0043F6E0[D_00446AC4] until it gives 0, with end-of-frame (func_001D72F0), pad read, memory card state (func_002179F8) and a 20-frame input lock on change; afterwards an 11-quadword packet (menu 0 only), teardown, two more frames; menu 1 returns 1 when D_005CF2F0.unk16 was set | q15b |
+| 001D67A0 | Menu_Draw...Sprite | Sends a fixed 15-quadword GS packet (settings + one sprite); sibling of func_001D6A00 and func_001D6C30 | q15 |
+| 001D6A00 | Menu_Draw...Sprite | Sends a fixed 15-quadword GS packet (settings + one sprite); sibling of func_001D67A0 and func_001D6C30 | q15 |
+| 001D6C30 | Menu_Draw...Sprite | Sends a fixed 15-quadword GS packet (settings + one sprite); sibling of func_001D67A0 and func_001D6A00 | q15 |
+| 001D6E60 | Menu_DrawItemModel | Sends a GS settings packet, draws the model of load node D_00426470 with the matrix given, restores the view-screen matrix; returns nothing | q15 |
+| 001D6FB0 | Menu_DrawBackdrop | Step 0 of the menu handler table D_0043F6E0: on menu 0 sends a 26-quadword packet copying the shown buffer into the drawn one in two half-brightness passes; D_00446AC4++; returns 1 | q15b |
 | 001D72E8 |  |  |  |
-| 001D72F0 | KF_Menu_EndFrame | End of a menu frame: brightness sprite, vsync, half-line offset, swap buffers, run option handler; returns the field | q15 |
+| 001D72F0 | Menu_EndFrame | End of a menu frame: brightness sprite, vsync, half-line offset, swap buffers, run option handler; returns the field | q15 |
 | 001D7460 | MenuDrawBackdrop | Only on menu screen 0 (D_00446C94): sends a 5-quadword textured sprite packet, syncs, then a 3-quadword flat rectangle in the colour {0x10,0x10,0x10} (from D_00446B18) | q16 |
 | 001D76D0 | MenuDrawKind2Sprites | Draws every SpritePacket of D_00447248 whose unk3E is 2; twin of func_001D7760 (which does it for D_00446BFC) | q16 |
 | 001D7760 |  | Twin of func_001D76D0: draws every SpritePacket of D_00446BFC whose unk3E is 2 | q16 |
@@ -2150,70 +2150,70 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 001D8298 | MenuStepBlink | D_00446B39 = (D_00446B39 + 1) % 7 | q16 |
 | 001D82C8 | MenuItemMoveAfter | Unlinks a MenuItem and links it in after another | q16 |
 | 001D8300 |  | Steps value toward `target` by (target - start) / 60 per call, bouncing between the two ends. | src comment |
-| 001D8398 | KF_Menu_UpdateItemList | Item menu screen handler, as in q20 (nothing new about behaviour): list D_00426110 / D_00426120 / D_00426130, names from D_004147F8 via func_001FDB88 + func_001FDD28, uses the item on 0x4000; a dead load of D_00426120[0] at the top is a leftover shared with the magic menu | q20b |
-| 001D8C90 | KF_Menu_UpdateMagicList | Magic menu screen handler: moves the cursor (func_001DFEF8) while state D_004472C8 < 2, draws the parts (D_00447234[D_00446A38], alpha in D_00425510[]), the cursor bar (alpha pulsing 16..32 via func_001D8300), seven magic names (func_001FE9A8(&D_00402DA8[n], 0x1A)), the description (func_00200068), the model of D_00426470; 0x4000 confirms if MP unkB8 >= cost unkFC and unkC0 >= 5000, storing the number in GameStatus.unk28 (else sound 3); 0x2000 cancels; states 0 fade in, 1 open, 2 wait for D_00446C90, 3 fade out | q20 |
-| 001D94F8 | KF_Menu_EquipScreen | Equipment screen run every frame through D_00446B20 (description unchanged from q21): category/slot stepping, item and worn-weapon models, per-group detail panel, worn list from D_00420D60[0..10], equip on 0x4000, screen step D_004472C6 and panel fade step D_004472C7; category node D_005CE840[0] holds a MenuItem pointer in its first word | q21b |
+| 001D8398 | Menu_UpdateItemList | Item menu screen handler, as in q20 (nothing new about behaviour): list D_00426110 / D_00426120 / D_00426130, names from D_004147F8 via func_001FDB88 + func_001FDD28, uses the item on 0x4000; a dead load of D_00426120[0] at the top is a leftover shared with the magic menu | q20b |
+| 001D8C90 | Menu_UpdateMagicList | Magic menu screen handler: moves the cursor (func_001DFEF8) while state D_004472C8 < 2, draws the parts (D_00447234[D_00446A38], alpha in D_00425510[]), the cursor bar (alpha pulsing 16..32 via func_001D8300), seven magic names (func_001FE9A8(&D_00402DA8[n], 0x1A)), the description (func_00200068), the model of D_00426470; 0x4000 confirms if MP unkB8 >= cost unkFC and unkC0 >= 5000, storing the number in GameStatus.unk28 (else sound 3); 0x2000 cancels; states 0 fade in, 1 open, 2 wait for D_00446C90, 3 fade out | q20 |
+| 001D94F8 | Menu_EquipScreen | Equipment screen run every frame through D_00446B20 (description unchanged from q21): category/slot stepping, item and worn-weapon models, per-group detail panel, worn list from D_00420D60[0..10], equip on 0x4000, screen step D_004472C6 and panel fade step D_004472C7; category node D_005CE840[0] holds a MenuItem pointer in its first word | q21b |
 | 001DBDB0 | MenuPartsScreenUpdate | Menu screen that only shows its parts (D_0044724C, count D_00446A50): fades in, and on button 0x2000 fades out to the main menu (state 3) or to func_001DC2A8 (state 2) | q16 |
 | 001DC0E0 | KeyItemSlotsClear | Sets the twelve key item slots D_00421050[12] to -1 | q16 |
 | 001DC120 | KeyItemSlotsAdd | Puts the index of a key item (LevelDef numbers 0x2F..0x3B, in D_0043F7C8 order) into the first free slot of D_00421050 | q16 |
 | 001DC2A8 | KeyItemScreenUpdate | Key item screen: six of the twelve slots at a time (row D_00446BB8), each with its loaded model (uploads D_005CEF30[slot], texture pages patched into its TEX0) and, when D_00369830[number] is set, its name; fades in and out, leaves through func_001D8398 | q16 |
-| 001DCA80 | KF_Menu_UpdateListScreen | Menu screen handler in D_0043FC28[] (0x0043FC48): list screen of 50 pages (D_00446BC0), entries bit-mapped in D_0034C350[50][8], counts D_0034C4E0[50]; cursor D_004472D8 in a 7-row window; 0x4000 opens func_001DD738 with text number page*50+entry+3000; probably a bestiary or record list | q22 |
+| 001DCA80 | Menu_UpdateListScreen | Menu screen handler in D_0043FC28[] (0x0043FC48): list screen of 50 pages (D_00446BC0), entries bit-mapped in D_0034C350[50][8], counts D_0034C4E0[50]; cursor D_004472D8 in a 7-row window; 0x4000 opens func_001DD738 with text number page*50+entry+3000; probably a bestiary or record list | q22 |
 | 001DD738 | EntryPageUpdate | The page of entry context->unk04 (3000 and up, 50 to a page): parts, the page's model out of the package D_005CEEE0, and three texts; button 0x2000 goes back to func_001DCA80 | q16 |
-| 001DDB10 | KF_Menu_ItemScreenUpdate | per-frame handler of the item (equipment) screen: the list of seven under a cursor bar, the turning model, the chosen item's text, the detail panel with its values and the fades; confirm puts the item on or takes it off, cancel leaves through func_001D2680 | g7 |
-| 001DF308 | KF_Menu_UpdateTitleScreen | Five-line title/top menu handler (as in q23): cursor D_004472E8, yes/no D_00446BD8, screen step D_00446C70, dispatches to the chosen line's screen handler; draws its cursor bar with func_001FC5E8 | q23b |
+| 001DDB10 | Menu_ItemScreenUpdate | per-frame handler of the item (equipment) screen: the list of seven under a cursor bar, the turning model, the chosen item's text, the detail panel with its values and the fades; confirm puts the item on or takes it off, cancel leaves through func_001D2680 | g7 |
+| 001DF308 | Menu_UpdateTitleScreen | Five-line title/top menu handler (as in q23): cursor D_004472E8, yes/no D_00446BD8, screen step D_00446C70, dispatches to the chosen line's screen handler; draws its cursor bar with func_001FC5E8 | q23b |
 | 001DFC60 | ItemListMoveCursor | Moves the item list cursor on lists D_00426110/20/30 (with a lock argument): one row with 0x10/0x40, one page of 7 with 0x20/0x80 when the list has 8 or more; returns 0/1; twin of func_001E0088 | q16 |
 | 001DFEF8 |  | Steps the selected list node forward (0x10) or back (0x40). | src comment |
 | 001DFFF8 |  | Moves the menu cursor inside the current category (called by the equipment screen when left/right is not pressed) | q21 |
 | 001E0088 | ItemListMoveCursor | Moves the item list cursor on lists D_005CE850/60/70: one row with 0x10/0x40, one page of 7 with 0x20/0x80 when the list has 8 or more; twin of func_001DFC60 | q16 |
-| 001E02F8 | KF_MemCard_UpdateSlotScreen | Memory-card screen that picks card slot 1 or 2 (D_005CF2F0.unk0C), shows the card messages (unk12: 4/5 no card, 9/10 errors, -1 none), starts the card check (unk14) and moves on to the save list func_001E0D98 or back to func_001DF308 | q23 |
-| 001E0D98 | KF_MemCard_UpdateSaveList | List of three saves on the chosen card: copies each save's numbers into the 36 text parameters D_00446DF4..D_00446E80, draws three name lines, moves cursor (unk0D) over existing saves only, asks yes/no before overwriting (unk13 8, cursor unk0E), starts the transfer (func_001FA4F0, 0x20000-byte buffer D_0036A130) and shows its result (unk13 1, 3, 10, 23) | q23 |
+| 001E02F8 | MemCard_UpdateSlotScreen | Memory-card screen that picks card slot 1 or 2 (D_005CF2F0.unk0C), shows the card messages (unk12: 4/5 no card, 9/10 errors, -1 none), starts the card check (unk14) and moves on to the save list func_001E0D98 or back to func_001DF308 | q23 |
+| 001E0D98 | MemCard_UpdateSaveList | List of three saves on the chosen card: copies each save's numbers into the 36 text parameters D_00446DF4..D_00446E80, draws three name lines, moves cursor (unk0D) over existing saves only, asks yes/no before overwriting (unk13 8, cursor unk0E), starts the transfer (func_001FA4F0, 0x20000-byte buffer D_0036A130) and shows its result (unk13 1, 3, 10, 23) | q23 |
 | 001E1D70 | OptionsScreenUpdate | Options screen handler (MenuScreenContext *): context->unk04 is the cursor line 0-6 (up 0x10, down 0x40); edits the options block D_00349680 ([0] toggle applied next frame via func_001CBED8 / func_001CC018 with state D_00446BE4 and old value D_00446BE0, [1] volume applied by func_0019C7F0 + func_0019C8C0, [2] volume, [5]/[6]/[9] toggles, [8] 0..2); draws parts D_0044725C (count D_00446A68) via func_00207478; fade state D_00446C70; on leaving sets D_00446B20 = func_001DF308 or D_00446AC8++ | q16b |
 | 001E2558 | PadConfigFillTables | For the 12 button slots D_00440200[i] (pointers to pad bit masks) stores the bit's index 0..11 into D_004210B0[i] and D_004210C0[i] | q16 |
-| 001E2750 | KF_Menu_UpdateButtonConfigScreen | Per-frame handler of the button configuration screen: twelve actions plus a thirteenth line "defaults" (choice_count 12); cancel (0x2000) fades out if no two actions share a button and the last action's button is not shared, otherwise shows prompt 1 (D_00446BF0); every part is drawn with func_00207478(&part, kind + 1000, ...) | q24b |
+| 001E2750 | Menu_UpdateButtonConfigScreen | Per-frame handler of the button configuration screen: twelve actions plus a thirteenth line "defaults" (choice_count 12); cancel (0x2000) fades out if no two actions share a button and the last action's button is not shared, otherwise shows prompt 1 (D_00446BF0); every part is drawn with func_00207478(&part, kind + 1000, ...) | q24b |
 | 001E37C8 | MenuOpenScreen4 | Menu screen 4 opener: if func_001F94C0() >= 0, resets MenuScreenState fields and makes func_001E3858 the handler | q16 |
-| 001E3858 | KF_Menu_UpdateCardCheckScreen | Per-frame handler of the screen func_001E37C8 opens (looks like the memory card check before load or save): MenuScreenState.unk17 steps 0-3 probe both card slots into unk19/unk1A, build unk04 and pick message unk12; from step 4 draws the parts, a yes/no cursor bar at row unk0C, takes 0x4000 confirm and 0x50 toggle, fades in and out (D_00446C70) | q24 |
+| 001E3858 | Menu_UpdateCardCheckScreen | Per-frame handler of the screen func_001E37C8 opens (looks like the memory card check before load or save): MenuScreenState.unk17 steps 0-3 probe both card slots into unk19/unk1A, build unk04 and pick message unk12; from step 4 draws the parts, a yes/no cursor bar at row unk0C, takes 0x4000 confirm and 0x50 toggle, fades in and out (D_00446C70) | q24 |
 | 001E4068 | MenuScreenBusy | Returns D_005CF2F0.unk19 > 0 or unk1A > 0 | q16 |
 
 ## Trade screens and remaining menu handlers (0x1E4098-0x1EEE28)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001E4098 | KF_Menu_SliderScreen | Slider screen handler: pad 0x20 / 0x80 change D_00349680[10] by 4 between 0x20 and 0xFC (wrapping), 0x4000 confirms, 0x2000 cancels and restores the value saved in D_004472CF; slider x = (value - 32) * 402 / 220; fade state D_00446C70; afterwards steps D_00446AC8 (when D_00446C94 == 5) or returns to func_001DF308; brightness or volume setting by the look of it | q17 |
+| 001E4098 | Menu_SliderScreen | Slider screen handler: pad 0x20 / 0x80 change D_00349680[10] by 4 between 0x20 and 0xFC (wrapping), 0x4000 confirms, 0x2000 cancels and restores the value saved in D_004472CF; slider x = (value - 32) * 402 / 220; fade state D_00446C70; afterwards steps D_00446AC8 (when D_00446C94 == 5) or returns to func_001DF308; brightness or volume setting by the look of it | q17 |
 | 001E4478 |  |  |  |
 | 001E44D0 |  | Looks up the table entry for index in the current node, and if it is set, sets TEST_1 and submits it. | src comment |
 | 001E4568 |  | Sets up the trade lists with D_00446C1C/20/34 when the select screen's fade ends | q17b |
-| 001E4660 | KF_Menu_BuildLinkNodeNames | Builds the five link node model file names for the trade screen D_00426110 lists: sprintf of GameDefinitionBits.file_number for the selected item, its prev and next, and the two items found walking from the window mark D_00426120 to the list end marks D_00446C40 / D_00446C44; twin of func_001ED540 | q17 |
-| 001E4858 | KF_Menu_ShiftLinkNodesNext | Link nodes D_00426470.., cursor one item forward: 470's model moves to the neighbour it came from, the other neighbour's model moves into 470, the freed node and the two far nodes are reset, the first node still needing load is appended to the queue, the five are rechained (report writes the pair as "KF_Menu_ShiftLinkNodesNext/Prev") | q17 |
-| 001E4A48 | KF_Menu_ShiftLinkNodesPrev | Link nodes D_00426470.., cursor one item back: 470's model moves to the neighbour it came from, the other neighbour's model moves into 470, the freed node and the two far nodes are reset, the first node still needing load is queued, the five are rechained (report writes the pair as "KF_Menu_ShiftLinkNodesNext/Prev") | q17 |
-| 001E4C38 | KF_Menu_ShiftLinkNodesPage... | Link nodes D_00426470.., page step: node 470 takes the model of a far node (5B0 or 560), all others are reset; twin of func_001E4DC8 (other direction) | q17 |
-| 001E4DC8 | KF_Menu_ShiftLinkNodesPage... | Link nodes D_00426470.., page step the other way: node 470 takes the model of a far node (5B0 or 560), all others are reset; twin of func_001E4C38 | q17 |
-| 001E4F58 | KF_Menu_OpenScreenE02F8 | Resets the menu screen state D_005CF2F0, calls func_001F94C0, func_001FBB68(0), func_001FBB68(1), func_001F9740(1) (memory-card style calls) and installs handler func_001E02F8 | q17 |
-| 001E4FE0 | KF_Trade_IsNotGroupBase | func_001E4FE0(value, step): value != base, where base is 0, 30, 55, 80, 105, 130, 140, 150 for steps 3-9 (group bases of the item table); steps 0-2 and 11 test value != 0; step 10 is always FALSE | q17 |
-| 001E5070 | KF_Menu_DrawGreySprite | Sends a five-quadword GS packet with one textured sprite, RGB = level, alpha 0x80, FRAME from D_00446F78, on D2 at once | q17 |
-| 001E5210 | KF_Gs_SetMenuBlend | Sets alpha test and blend for menu parts by u8 mode 0-3: TEST_1 = 0x30000 (mode 3: 3) and ALPHA_1 A/B/C/D = 0/1/0/1, 0/2/0/1, 2/0/0/1, 0/2/0/0; returns func_00207320's result; twin of func_001E53A8 | q17 |
+| 001E4660 | Menu_BuildLinkNodeNames | Builds the five link node model file names for the trade screen D_00426110 lists: sprintf of GameDefinitionBits.file_number for the selected item, its prev and next, and the two items found walking from the window mark D_00426120 to the list end marks D_00446C40 / D_00446C44; twin of func_001ED540 | q17 |
+| 001E4858 | Menu_ShiftLinkNodesNext | Link nodes D_00426470.., cursor one item forward: 470's model moves to the neighbour it came from, the other neighbour's model moves into 470, the freed node and the two far nodes are reset, the first node still needing load is appended to the queue, the five are rechained (report writes the pair as "Menu_ShiftLinkNodesNext/Prev") | q17 |
+| 001E4A48 | Menu_ShiftLinkNodesPrev | Link nodes D_00426470.., cursor one item back: 470's model moves to the neighbour it came from, the other neighbour's model moves into 470, the freed node and the two far nodes are reset, the first node still needing load is queued, the five are rechained (report writes the pair as "Menu_ShiftLinkNodesNext/Prev") | q17 |
+| 001E4C38 | Menu_ShiftLinkNodesPage... | Link nodes D_00426470.., page step: node 470 takes the model of a far node (5B0 or 560), all others are reset; twin of func_001E4DC8 (other direction) | q17 |
+| 001E4DC8 | Menu_ShiftLinkNodesPage... | Link nodes D_00426470.., page step the other way: node 470 takes the model of a far node (5B0 or 560), all others are reset; twin of func_001E4C38 | q17 |
+| 001E4F58 | Menu_OpenScreenE02F8 | Resets the menu screen state D_005CF2F0, calls func_001F94C0, func_001FBB68(0), func_001FBB68(1), func_001F9740(1) (memory-card style calls) and installs handler func_001E02F8 | q17 |
+| 001E4FE0 | Trade_IsNotGroupBase | func_001E4FE0(value, step): value != base, where base is 0, 30, 55, 80, 105, 130, 140, 150 for steps 3-9 (group bases of the item table); steps 0-2 and 11 test value != 0; step 10 is always FALSE | q17 |
+| 001E5070 | Menu_DrawGreySprite | Sends a five-quadword GS packet with one textured sprite, RGB = level, alpha 0x80, FRAME from D_00446F78, on D2 at once | q17 |
+| 001E5210 | Gs_SetMenuBlend | Sets alpha test and blend for menu parts by u8 mode 0-3: TEST_1 = 0x30000 (mode 3: 3) and ALPHA_1 A/B/C/D = 0/1/0/1, 0/2/0/1, 2/0/0/1, 0/2/0/0; returns func_00207320's result; twin of func_001E53A8 | q17 |
 | 001E53A8 |  | Sets the blend mode of ALPHA_1 from mode and writes it; the value is never seeded. | src comment |
-| 001E54A8 | KF_Trade_ClearEquipSlot | Empties equipment slot (s8 slot): *D_00420D60[slot] = first item of that slot's list and the player's unk3C..unk45 set to the slot's "nothing" number (0, 0, 0, 30, 55, 80, 105, 130, 140, 150); slot 11 clears unk46 / unk48 (magic slot); slot 10 does nothing | q17 |
-| 001E5660 | KF_Trade_IsEquipped | func_001E5660(slot, kind, value): TRUE when item number value is what the player has in slot (unk3C + 150, unk3D, unk3E..unk45 + 220); slot 10 compares unk46 depending on kind and unk48 | q17 |
-| 001E57A0 | KF_Trade_BuildItemRings | for trade table `table`: builds the ring of what the player owns and the table gives a value for (count to D_00446C34) and the ring of what is in stock (count to D_00446C38); copies the tables D_00440300 / D_00440318 from read-only data to the stack on every call | g7 |
-| 001E6180 | KF_Trade_Run | Complete modal screen loop: sync, set the display (func_0019BDA0(0x3D00, 0x3F00)), then calls D_004402E0[D_00446CA8](value) until it returns 0, reading the pad each frame (func_001D72F0(1) -> D_00447328, func_001B5460) and watching the controller type (func_002179F8(0, 0)): after a change pad word D_00446DE8 is held at 0 for 20 frames | q17 |
-| 001E62D0 | KF_Trade_CopyFrameToTexture | Screen grab for the trade screens' background: copies the shown frame buffer into a work buffer and draws it back into both frame buffers (26-quadword packet on D2), steps D_00446CA8; twin of func_001EEA90. | f5 |
+| 001E54A8 | Trade_ClearEquipSlot | Empties equipment slot (s8 slot): *D_00420D60[slot] = first item of that slot's list and the player's unk3C..unk45 set to the slot's "nothing" number (0, 0, 0, 30, 55, 80, 105, 130, 140, 150); slot 11 clears unk46 / unk48 (magic slot); slot 10 does nothing | q17 |
+| 001E5660 | Trade_IsEquipped | func_001E5660(slot, kind, value): TRUE when item number value is what the player has in slot (unk3C + 150, unk3D, unk3E..unk45 + 220); slot 10 compares unk46 depending on kind and unk48 | q17 |
+| 001E57A0 | Trade_BuildItemRings | for trade table `table`: builds the ring of what the player owns and the table gives a value for (count to D_00446C34) and the ring of what is in stock (count to D_00446C38); copies the tables D_00440300 / D_00440318 from read-only data to the stack on every call | g7 |
+| 001E6180 | Trade_Run | Complete modal screen loop: sync, set the display (func_0019BDA0(0x3D00, 0x3F00)), then calls D_004402E0[D_00446CA8](value) until it returns 0, reading the pad each frame (func_001D72F0(1) -> D_00447328, func_001B5460) and watching the controller type (func_002179F8(0, 0)): after a change pad word D_00446DE8 is held at 0 for 20 frames | q17 |
+| 001E62D0 | Trade_CopyFrameToTexture | Screen grab for the trade screens' background: copies the shown frame buffer into a work buffer and draws it back into both frame buffers (26-quadword packet on D2), steps D_00446CA8; twin of func_001EEA90. | f5 |
 | 001E6600 |  | Calls the handler selected by D_00446CA4 with the context at D_005CF330, storing value in it first. | src comment |
 | 001E6668 |  | Start-up step (step 0 of the D_004402E8 table) of the trade screens: loads textures and blocks, builds the lists of trade table context->arg (func_001E57A0), installs func_001E6AB8 (or for table 4 the handler in D_004402F8 with the link nodes started, func_001E6928), clears the three alpha tables, sets the two menu colours, D_00446CA4++ | q17 |
 | 001E68D0 |  | Trade screen step 1: calls the installed handler in D_00446CA0 with the same context; returns 1 | q17 |
-| 001E68F8 | KF_Menu_CutLinkChain | Cuts the link node chain: node->next = NULL for the queue head (D_00446C90) and for head->unk10; with no queue clears the screen step D_00446CA4; twin of func_001EEE50 | q17 |
+| 001E68F8 | Menu_CutLinkChain | Cuts the link node chain: node->next = NULL for the queue head (D_00446C90) and for head->unk10; with no queue clears the screen step D_00446CA4; twin of func_001EEE50 | q17 |
 | 001E6928 |  | Sets up the trade lists with D_00446C24/28/38 when the select screen's fade ends | q17b |
-| 001E6A20 | KF_Menu_PulseValue | func_001E6A20(low, high, value): ping-pong of a float between two bounds, moving by (high - low) / 60 per call, up until it passes high then down until it passes low (direction in D_00446C09) | q17 |
-| 001E6AB8 | KF_Trade_SelectMenu | Two-row first screen of the trade (HandlerContext *): pad 0x10 / 0x40 move context->unk04 (modulo 2); draws the D_00446BFC parts and the cursor bar (alpha pulsing via func_001E6A20 while D_00447311 == 1); 0x4000 takes the row (row 0 needs D_005CF380[0], row 1 D_00426110[0], sound 3 when empty), 0x2000 leaves; D_00447311 is the fade state; when the fade ends installs handler D_004402F8[row] and sets up the lists (func_001E6928 or func_001E4568) or steps D_00446CA4; rows being buy/sell is a guess | q17b |
-| 001E7010 | KF_Trade_UpdateStockList | Trade (shop) screen per-frame handler while the STOCK list is shown (D_00446CA0 points at it): seven item names with take_value in D_00446E64..D_00446E7C, cursor bar, turning model, detail panel on 0x1000 (D_00446C9C, D_00447312); 0x4000 goes to amount screen func_001E88A0, 0x2000 cancels to func_001E6AB8; D_00447311 is the screen step | q25 |
-| 001E88A0 | KF_Trade_UpdateAmountScreen | func_001E88A0(HandlerContext *context): trade (shop) screen while the amount to buy is chosen (context->arg trade table 0-4, context->unk04 amount); shows owned/stock/amount/price in D_00446E44..D_00446E50; confirm needs enough gold (D_00413F80.unk4C) or paying item (table 4), adds to D_00369830[item], reduces stock, rebuilds lists (func_001E57A0) (alt name: TradeBuyNumSelect) | q26 |
-| 001EA568 | KF_Trade_UpdateOwnedList | Trade (shop) screen handler while the list of what the player owns is shown (ring D_00426110[0]): cursor via func_001DFC60, seven names with give values in D_00446E64..D_00446E7C, model, details panel on 0x1000 (D_00446C9C); 0x4000 goes on to func_001EBB98, 0x2000 back to func_001E6AB8; D_00447311 is the screen state (alt name: TradeMenuGiveList) | q27 |
-| 001EBB98 | KF_Trade_UpdateGiveAmount | func_001EBB98(HandlerContext *context): trade (smith/shop) screen while the amount to GIVE is chosen, twin of func_001E88A0: amount context->unk04 between 1 and owned D_00369830[item]; confirm (0x4000) adds amount * give_value to money D_00413F80.unk4C (cap 999999), removes the items (func_001E54A8 if a worn one runs out), adds to the trader's stock, rebuilds lists (func_001E57A0) | q28b |
-| 001ED540 | KF_Menu_BuildLinkNodeNames | Twin of func_001E4660 for the D_005CF380 lists: sprintf the model file numbers of the selected item, its prev and next, and the two items found walking from the window mark D_005CF360 into the five link nodes | q17 |
-| 001ED738 | KF_Menu_MoveListCursor | List cursor movement for the D_005CF360/370/380 lists (twin of func_001E0088): pad 0x10 / 0x40 one row, 0x20 / 0x80 one page (lists of 8 and more), then rebuilds the names (func_001ED540); returns 0/1 | q17 |
-| 001ED9A8 | KF_Trade_BuildItemRings | KF_Trade_BuildItemRings(mode): builds the two MenuItem rings of the trade screen: items that can be handed in (owned D_00369830[n] != 0, !(def.state & 2), record unk18 == 0; mode 0 also below level 100, mode 1 adds runs 350/360/370) with heads D_00426110 / D_00426120, seventh D_00426130, count D_00446C34; then items handed in earlier whose time is up (func_001D2258(record.unk19, D_00446A28) >= def.unk36 * 60) into D_005CF390.., count D_00446C38. | g6 |
-| 001EE730 | KF_..._Run | Complete modal screen loop, twin of func_001E6180: sync, set the display, calls D_004404C0[D_00446CCC](0) until it returns 0, reading the pad each frame and holding it at 0 for 20 frames after a controller type change | q17 |
+| 001E6A20 | Menu_PulseValue | func_001E6A20(low, high, value): ping-pong of a float between two bounds, moving by (high - low) / 60 per call, up until it passes high then down until it passes low (direction in D_00446C09) | q17 |
+| 001E6AB8 | Trade_SelectMenu | Two-row first screen of the trade (HandlerContext *): pad 0x10 / 0x40 move context->unk04 (modulo 2); draws the D_00446BFC parts and the cursor bar (alpha pulsing via func_001E6A20 while D_00447311 == 1); 0x4000 takes the row (row 0 needs D_005CF380[0], row 1 D_00426110[0], sound 3 when empty), 0x2000 leaves; D_00447311 is the fade state; when the fade ends installs handler D_004402F8[row] and sets up the lists (func_001E6928 or func_001E4568) or steps D_00446CA4; rows being buy/sell is a guess | q17b |
+| 001E7010 | Trade_UpdateStockList | Trade (shop) screen per-frame handler while the STOCK list is shown (D_00446CA0 points at it): seven item names with take_value in D_00446E64..D_00446E7C, cursor bar, turning model, detail panel on 0x1000 (D_00446C9C, D_00447312); 0x4000 goes to amount screen func_001E88A0, 0x2000 cancels to func_001E6AB8; D_00447311 is the screen step | q25 |
+| 001E88A0 | Trade_UpdateAmountScreen | func_001E88A0(HandlerContext *context): trade (shop) screen while the amount to buy is chosen (context->arg trade table 0-4, context->unk04 amount); shows owned/stock/amount/price in D_00446E44..D_00446E50; confirm needs enough gold (D_00413F80.unk4C) or paying item (table 4), adds to D_00369830[item], reduces stock, rebuilds lists (func_001E57A0) (alt name: TradeBuyNumSelect) | q26 |
+| 001EA568 | Trade_UpdateOwnedList | Trade (shop) screen handler while the list of what the player owns is shown (ring D_00426110[0]): cursor via func_001DFC60, seven names with give values in D_00446E64..D_00446E7C, model, details panel on 0x1000 (D_00446C9C); 0x4000 goes on to func_001EBB98, 0x2000 back to func_001E6AB8; D_00447311 is the screen state (alt name: TradeMenuGiveList) | q27 |
+| 001EBB98 | Trade_UpdateGiveAmount | func_001EBB98(HandlerContext *context): trade (smith/shop) screen while the amount to GIVE is chosen, twin of func_001E88A0: amount context->unk04 between 1 and owned D_00369830[item]; confirm (0x4000) adds amount * give_value to money D_00413F80.unk4C (cap 999999), removes the items (func_001E54A8 if a worn one runs out), adds to the trader's stock, rebuilds lists (func_001E57A0) | q28b |
+| 001ED540 | Menu_BuildLinkNodeNames | Twin of func_001E4660 for the D_005CF380 lists: sprintf the model file numbers of the selected item, its prev and next, and the two items found walking from the window mark D_005CF360 into the five link nodes | q17 |
+| 001ED738 | Menu_MoveListCursor | List cursor movement for the D_005CF360/370/380 lists (twin of func_001E0088): pad 0x10 / 0x40 one row, 0x20 / 0x80 one page (lists of 8 and more), then rebuilds the names (func_001ED540); returns 0/1 | q17 |
+| 001ED9A8 | Trade_BuildItemRings | Trade_BuildItemRings(mode): builds the two MenuItem rings of the trade screen: items that can be handed in (owned D_00369830[n] != 0, !(def.state & 2), record unk18 == 0; mode 0 also below level 100, mode 1 adds runs 350/360/370) with heads D_00426110 / D_00426120, seventh D_00426130, count D_00446C34; then items handed in earlier whose time is up (func_001D2258(record.unk19, D_00446A28) >= def.unk36 * 60) into D_005CF390.., count D_00446C38. | g6 |
+| 001EE730 | ..._Run | Complete modal screen loop, twin of func_001E6180: sync, set the display, calls D_004404C0[D_00446CCC](0) until it returns 0, reading the pad each frame and holding it at 0 for 20 frames after a controller type change | q17 |
 | 001EE880 |  | Start-up step for the D_004404C8 screens (same as func_001E6668 for the trade screens): installs func_001EEF78 as handler, D_00446CC8++ | q17 |
-| 001EEA90 | KF_Menu_CopyFrameToTexture | Screen grab: a 26-quadword packet draws the shown frame buffer (TBP 0 or 0x1180 by D_00446F78) into a work buffer at FBP 0x192 and that buffer back into both frame buffers, waits for the path and steps the screen counter D_00446CCC. Same body as func_001D6FB0 without its D_00446C94 guard. (alt name: KF_Trade_CopyFrameToTexture) | o5 |
+| 001EEA90 | Menu_CopyFrameToTexture | Screen grab: a 26-quadword packet draws the shown frame buffer (TBP 0 or 0x1180 by D_00446F78) into a work buffer at FBP 0x192 and that buffer back into both frame buffers, waits for the path and steps the screen counter D_00446CCC. Same body as func_001D6FB0 without its D_00446C94 guard. (alt name: Trade_CopyFrameToTexture) | o5 |
 | 001EEDC0 |  | Calls the handler selected by D_00446CC8 with the context at D_005CF340, storing value in it first. | src comment |
 | 001EEE28 |  | Step 1 of the D_004404C8 screens: calls the installed handler in D_00446CC4 with the same context; returns 1 | q17 |
 
@@ -2225,14 +2225,14 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 001EEE80 | MenuSelect2LoadModels | The func_001E4568 / func_001E6928 of the select2 list: if D_005CF3B0[0] (selected item) is set, func_001EF648() writes the five file names, then the five LinkNodes at D_00426470 are reset and chained with func_001D40C0 as callback | q18 |
 | 001EEF78 | MenuSelect2Main | HandlerContext handler of the three-line "select2" menu (context->unk04 = cursor line 0-2): moves the cursor (pad 0x10 / 0x40), draws parts D_00446C4C[0..D_00446AA0) with alpha from D_00425510[], the pulsing cursor bar, the D_00446C64 parts while D_00446CD0 is 0; confirm 0x4000 builds the list (func_001ED9A8(line)), cancel 0x2000; fade state D_00447316; after fade-out opens the chosen list (D_00446CC4 = D_004404D8[line], func_001E4568 or func_001EEE80) or steps D_00446CC8 | q18 |
 | 001EF648 | MenuSelect2SetModelNames | sprintf's "menu/select2/i%04d.mod" (D_004404A8) into the five link nodes (name at node+0x28): the selected item, its prev, its next, and the two items just outside the seven-row window (walking from D_005CF390[0] up to 7 steps until D_00446C40 / D_00446C44; fewer than 8 items (D_00446C48): both D_00446C40); number from D_004147F8[item->unk0C] low 16 bits of the word at 0x30 | q18 |
-| 001EF840 | KF_Menu_UpdateUpgradeList | Item-upgrade (smith) list screen per-frame update (unchanged from q29); the current level D_00446E34 and the confirm test (level < 100) read D_003679A0[number - 150].level for numbers below 220, else D_003682F0[number - 220].level | q29b |
+| 001EF840 | Menu_UpdateUpgradeList | Item-upgrade (smith) list screen per-frame update (unchanged from q29); the current level D_00446E34 and the confirm test (level < 100) read D_003679A0[number - 150].level for numbers below 220, else D_003682F0[number - 220].level | q29b |
 
 ## Outside our ranges (0x1Fxxxx), described in passing by reports (0x1F0D90-0x1FF9F0)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
 | 001F0D90 |  | Screen the upgrade list goes on to after confirm and fade-out (context->unk04 set to 1) | q29 |
-| 001F91F8 |  | Caller of KF_Menu_Run: passes menu numbers 1, 2 and 3 and reads the result only for 1 | q15b |
+| 001F91F8 |  | Caller of Menu_Run: passes menu numbers 1, 2 and 3 and reads the result only for 1 | q15b |
 | 001F92D0 |  | Main menu line 5 is refused (sound 3) when this returns 0 | q16 |
 | 001F93A8 |  | Main menu line 1 is refused (sound 3) when this returns 0 | q16 |
 | 001F9648 |  | Returns the memory-card operation result (below 0 = failed) | q23 |
@@ -2352,7 +2352,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00207720 |  | VU0 helper: loads a vector, transforms by vf12..vf14, adds 1 to x/y, scales by vf21.w, z = 1, stores it (texture coordinate from a normal) | t03 |
 | 00207748 |  | VU0 helper, twin of func_00207720 with arguments swapped (src, dst): transforms by vf12..vf14, adds 1 to x/y, scales by vf21.w, z = 1 | t03 |
 | 00207770 |  |  |  |
-| 002077F0 | KF_Ini_Load | Reader of start-up settings file (debug/test start state), called from func_001000C8: opens "ini/%4.4d.ini" (D_004410A8), falls back to ini/9999.ini, reads it to D_00249680, for each line (func_002080B0) runs the handler of every matching key in D_0042B810 with the text after "=" (alt name: LoadIniFile) | t03 |
+| 002077F0 | Ini_Load | Reader of start-up settings file (debug/test start state), called from func_001000C8: opens "ini/%4.4d.ini" (D_004410A8), falls back to ini/9999.ini, reads it to D_00249680, for each line (func_002080B0) runs the handler of every matching key in D_0042B810 with the text after "=" (alt name: LoadIniFile) | t03 |
 | 00207970 |  | Ini key handler for "hp=": sets PlayerState.unk20 (HP) from the number | t03 |
 | 00207998 |  | Ini key handler for "mp=": sets PlayerState.unk24 (MP) from the number | t03 |
 | 002079C0 |  | Ini key handler for "power=": sets PlayerState.unk28 from the number | t03 |
@@ -2436,27 +2436,27 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 0020A490 | KF_Boot_UpdateSelect4 | One frame of a four-choice boot menu: left stick y and pad 0x10/0x40 move the choice (D_004473D4, wraps & 3), 0x4008 confirms, then a 30-frame fade; returns choice + 1 when done; draws sprites D_005FADA0..D_005FAE20, D_005FAE80[4], D_005FAE60 | t05 |
-| 0020A6D8 | KF_Boot_RunSelect2 | Runs the two-choice boot menu: calls func_0020A710, then loops func_0020A8C8 + func_00209D68 (swap) until the update returns nonzero | t05 |
-| 0020A710 | KF_Boot_InitSelect2 | Init of the two-choice boot menu: sceGsResetGraph, sceGsSetDefDBuff(D_0042C4C0, 640x224), loads four textures (0x10, 0x11, 0x12, 0x16) to D_00446F50, sets up sprites D_005FAEF0[2], D_005FAF28, D_005FAF48; returns 0 | t05 |
-| 0020A8C8 | KF_Boot_UpdateSelect2 | One frame of the two-choice boot menu (choice D_004473DC, & 1), two-choice version of func_0020A490, with sounds func_0019CDC0(0) on confirm and (1) on move; probably the language or 50/60Hz style choice | t05 |
+| 0020A490 | Boot_UpdateSelect4 | One frame of a four-choice boot menu: left stick y and pad 0x10/0x40 move the choice (D_004473D4, wraps & 3), 0x4008 confirms, then a 30-frame fade; returns choice + 1 when done; draws sprites D_005FADA0..D_005FAE20, D_005FAE80[4], D_005FAE60 | t05 |
+| 0020A6D8 | Boot_RunSelect2 | Runs the two-choice boot menu: calls func_0020A710, then loops func_0020A8C8 + func_00209D68 (swap) until the update returns nonzero | t05 |
+| 0020A710 | Boot_InitSelect2 | Init of the two-choice boot menu: sceGsResetGraph, sceGsSetDefDBuff(D_0042C4C0, 640x224), loads four textures (0x10, 0x11, 0x12, 0x16) to D_00446F50, sets up sprites D_005FAEF0[2], D_005FAF28, D_005FAF48; returns 0 | t05 |
+| 0020A8C8 | Boot_UpdateSelect2 | One frame of the two-choice boot menu (choice D_004473DC, & 1), two-choice version of func_0020A490, with sounds func_0019CDC0(0) on confirm and (1) on move; probably the language or 50/60Hz style choice | t05 |
 | 0020AAE0 | main |  | repo name |
 | 0020AD78 |  |  |  |
 | 0020AE68 |  |  |  |
 | 0020AF18 |  |  |  |
 | 0020AF28 |  |  |  |
 | 0020AF38 |  | The game's system init; the only game caller of libdev (calls sceDevVif0Reset func_0022B5B8 and sceDevVif1Reset func_0022B8E8). | u01 |
-| 0020AFA8 | KF_Gs_InitDoubleBuffers | sceGsSetDefDBuff for D_00432D20 and D_00432F50 (640x448); retargets the second buffer's packets to GS context 2; keeps DISPFB/DISPLAY in D_00433180/D_00433190; unit matrices into D_00432320 and D_004323A0; projection D_00432560 = func_0020B5F8(512, 1, 65536) | t05 |
+| 0020AFA8 | Gs_InitDoubleBuffers | sceGsSetDefDBuff for D_00432D20 and D_00432F50 (640x448); retargets the second buffer's packets to GS context 2; keeps DISPFB/DISPLAY in D_00433180/D_00433190; unit matrices into D_00432320 and D_004323A0; projection D_00432560 = func_0020B5F8(512, 1, 65536) | t05 |
 | 0020B208 |  | Sets the sizes of the memory areas (D_00446F0C..) that func_0020B3D0 lays out | t05 |
-| 0020B278 | KF_Mem_ClearBytes | Clears byte_count bytes at dest (dest, byte_count) by doublewords; retail bug: when the size is not a multiple of 8 only the first leftover byte is cleared | t05 |
-| 0020B2E8 | KF_Mem_ClearWords | Clears word_count 32-bit words at dest (dest, word_count) | t05 |
-| 0020B320 | KF_Mem_CopyWords | Copies word_count 32-bit words (dest, src, word_count) | t05 |
+| 0020B278 | Mem_ClearBytes | Clears byte_count bytes at dest (dest, byte_count) by doublewords; retail bug: when the size is not a multiple of 8 only the first leftover byte is cleared | t05 |
+| 0020B2E8 | Mem_ClearWords | Clears word_count 32-bit words at dest (dest, word_count) | t05 |
+| 0020B320 | Mem_CopyWords | Copies word_count 32-bit words (dest, src, word_count) | t05 |
 | 0020B358 |  |  |  |
-| 0020B3D0 | KF_Mem_LayoutAreas | Places the memory areas back to back from D_005FAF80 using the sizes func_0020B208 set (pointers D_00446F50..D_00446F74, sizes D_00446F0C..D_00446F28); D_00446F68 = D_00446F58; D_00446F08 = D_004321F0 | t05 |
-| 0020B458 | KF_Iop_RebootAndLoadModules | sceSifInitRpc, func_00102150, sceSifRebootIop(D_00441350) until it succeeds, sceSifSyncIop, sceFsReset, then nine sceSifLoadModule (D_00441368..D_00441458, args D_00446F90) | t05 |
+| 0020B3D0 | Mem_LayoutAreas | Places the memory areas back to back from D_005FAF80 using the sizes func_0020B208 set (pointers D_00446F50..D_00446F74, sizes D_00446F0C..D_00446F28); D_00446F68 = D_00446F58; D_00446F08 = D_004321F0 | t05 |
+| 0020B458 | Iop_RebootAndLoadModules | sceSifInitRpc, func_00102150, sceSifRebootIop(D_00441350) until it succeeds, sceSifSyncIop, sceFsReset, then nine sceSifLoadModule (D_00441368..D_00441458, args D_00446F90) | t05 |
 | 0020B570 |  |  |  |
-| 0020B5F8 | KF_Matrix_SetProjection | Builds a projection matrix (matrix, screen_scale, near, far): unit matrix with [0][0] = [1][1] = scale/1024, [2][2] = (far+near)/(far-near), [3][2] = -2*far*near/(far-near), [2][3] = 1, [3][3] = 0 | t05 |
-| 0020B6A0 | KF_Mem_Init | Memory init: calls func_0020B208, D_00446F38 = D_01BFAF80, ClockControl D_00432820.unk208..20A = 0, unk20B = 2 | t05 |
+| 0020B5F8 | Matrix_SetProjection | Builds a projection matrix (matrix, screen_scale, near, far): unit matrix with [0][0] = [1][1] = scale/1024, [2][2] = (far+near)/(far-near), [3][2] = -2*far*near/(far-near), [2][3] = 1, [3][3] = 0 | t05 |
+| 0020B6A0 | Mem_Init | Memory init: calls func_0020B208, D_00446F38 = D_01BFAF80, ClockControl D_00432820.unk208..20A = 0, unk20B = 2 | t05 |
 | 0020B6E8 |  |  |  |
 | 0020B6F0 |  |  |  |
 | 0020B6F8 |  |  |  |
@@ -2470,45 +2470,45 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 0020B8B0 | KF_ModelPart_BuildMatrix | Builds a model part's matrix (model, part, dest): scale (unk60), RotX(unk50), RotZ(unk58), RotY(unk54), translate (unk40); angles wrapped to -pi..pi | t05 |
-| 0020B9E0 | KF_ModelPart_BuildRotation | Builds a model part's rotation matrix (model, part, matrix, with_offset): same rotations as func_0020B8B0, no scale, translation optional | t05 |
-| 0020BB18 | KF_Model_BuildMatrix | Builds a model's matrix (model): RotX, RotY, RotZ, translate; models with unk102 & 0x300 (billboards) only RotZ then multiply by D_00432620 | t05 |
+| 0020B8B0 | ModelPart_BuildMatrix | Builds a model part's matrix (model, part, dest): scale (unk60), RotX(unk50), RotZ(unk58), RotY(unk54), translate (unk40); angles wrapped to -pi..pi | t05 |
+| 0020B9E0 | ModelPart_BuildRotation | Builds a model part's rotation matrix (model, part, matrix, with_offset): same rotations as func_0020B8B0, no scale, translation optional | t05 |
+| 0020BB18 | Model_BuildMatrix | Builds a model's matrix (model): RotX, RotY, RotZ, translate; models with unk102 & 0x300 (billboards) only RotZ then multiply by D_00432620 | t05 |
 | 0020BCB8 |  |  |  |
 | 0020BD40 |  |  |  |
 | 0020BD48 |  | Local matrix from the model's rotation x and z, row 1 zeroed, RotX(-pi/2), translate (0, 0, 16), then func_00216B48(model, D_004322E0, matrix); looks like a shadow or a marker under the model | t05 |
 | 0020BE70 |  | Scale * RotX * RotY * RotZ * translate into model->unk40, then a copy with row 1 = (-0.707, 0, -0.707, 0) multiplied by D_004323E0 into the model; probably a flattened (shadow) projection | t05 |
-| 0020BFF0 | KF_Model_BuildScreenMatrixXYZ | Scratchpad matrix = scale, rotations x, y, z, translate into model->unk40; model matrix = D_004323E0 * that | t05 |
-| 0020C178 | KF_Model_BuildScreenMatrixZYX | Twin of func_0020BFF0 with rotation order z, y, x: scratchpad matrix = scale, rotations, translate into model->unk40; model matrix = D_004323E0 * that | t05 |
-| 0020C300 | KF_Model_BuildMatrix | General model matrix (model, position, rotation, scale): unk102 & 0x300 billboards toward the camera (D_004325A0.position; 0x100 adds pitch, 0x200 adds yaw); 0x400 turns about z only; otherwise RotZ, RotX, RotY | t05 |
+| 0020BFF0 | Model_BuildScreenMatrixXYZ | Scratchpad matrix = scale, rotations x, y, z, translate into model->unk40; model matrix = D_004323E0 * that | t05 |
+| 0020C178 | Model_BuildScreenMatrixZYX | Twin of func_0020BFF0 with rotation order z, y, x: scratchpad matrix = scale, rotations, translate into model->unk40; model matrix = D_004323E0 * that | t05 |
+| 0020C300 | Model_BuildMatrix | General model matrix (model, position, rotation, scale): unk102 & 0x300 billboards toward the camera (D_004325A0.position; 0x100 adds pitch, 0x200 adds yaw); 0x400 turns about z only; otherwise RotZ, RotX, RotY | t05 |
 | 0020C6A0 |  |  |  |
 | 0020C7A8 |  | Flat mirrored model matrix (scratch[10] = -1): turn about z, offset D_00441490 whose y gets + z * sin(camera pitch), then D_004322A0 (view to screen); a screen-space overlay, perhaps a lens flare or sun | t05 |
-| 0020C8D0 | KF_Matrix_FromEuler | Closed-form 3x3 rotation matrix from three angles (matrix, angles) | t05 |
-| 0020CB18 | KF_Matrix_MulRotation | VU0: three rows of matrix times the 3x3 of rotation (dest, rotation, matrix); only xyz of the rows, fourth row not written | t05 |
+| 0020C8D0 | Matrix_FromEuler | Closed-form 3x3 rotation matrix from three angles (matrix, angles) | t05 |
+| 0020CB18 | Matrix_MulRotation | VU0: three rows of matrix times the 3x3 of rotation (dest, rotation, matrix); only xyz of the rows, fourth row not written | t05 |
 | 0020CB70 |  |  |  |
-| 0020CBC0 | KF_Model_MakeDrawMatrices | (model, normal_src, light_src, normal_dest, light_dest): first matrix with rows divided by the model's scale; second, for unk100 & 0x400, zeroed 3x3 and row 3 = colour (unk150..158)/255 * alpha/255 | t05 |
+| 0020CBC0 | Model_MakeDrawMatrices | (model, normal_src, light_src, normal_dest, light_dest): first matrix with rows divided by the model's scale; second, for unk100 & 0x400, zeroed 3x3 and row 3 = colour (unk150..158)/255 * alpha/255 | t05 |
 | 0020CD00 |  |  |  |
-| 0020CD78 | KF_Clock_AdvanceTo | Adds to GameClock.ticks (D_00431CE8) the seconds until the clock next shows (hour, minute, second); 86400-second day, hour = (ticks/3600 + 12) % 24 so tick 0 is noon | t05 |
-| 0020CE28 | KF_Vector_Distance | Distance between two points (a, b) | t06 |
+| 0020CD78 | Clock_AdvanceTo | Adds to GameClock.ticks (D_00431CE8) the seconds until the clock next shows (hour, minute, second); 86400-second day, hour = (ticks/3600 + 12) % 24 so tick 0 is noon | t05 |
+| 0020CE28 | Vector_Distance | Distance between two points (a, b) | t06 |
 | 0020CE90 |  | Horizontal (XZ-plane) distance between two points. | src comment |
-| 0020CEF0 | KF_Vector_Heading | atan2f(dx, dz) of a - b: the heading from b to a (a, b) | t06 |
+| 0020CEF0 | Vector_Heading | atan2f(dx, dz) of a - b: the heading from b to a (a, b) | t06 |
 | 0020CF20 |  |  |  |
-| 0020CF88 | KF_Angle_StepTowards | Moves *angle by 0.01 towards target (f32 *angle, f32 target) | t06 |
-| 0020CFC8 | KF_Vu0_WorldToScreen | Loads the world-to-screen matrix D_004323E0 and projects one point (point, screen) | t06 |
+| 0020CF88 | Angle_StepTowards | Moves *angle by 0.01 towards target (f32 *angle, f32 target) | t06 |
+| 0020CFC8 | Vu0_WorldToScreen | Loads the world-to-screen matrix D_004323E0 and projects one point (point, screen) | t06 |
 | 0020D008 |  | Returns the index of the largest of seven s16 values behind a pointer at +0x70 of its argument; dead code (no caller) | t06 |
-| 0020D050 | KF_Timer_OverflowHandler | Timer 0 overflow interrupt handler: D_00446F84++ (overflow count) and acknowledges the overflow flag in T0_MODE; installed by func_00209FC8 through func_00216D50 | t06 |
-| 0020D078 | KF_Timer_Reset | D_00446F84 = 0; *T0_COUNT = 0 | t06 |
-| 0020D088 | KF_Timer_GetTicks | Returns D_00446F84 * 60000 + *T0_COUNT: ticks since the reset (also the seed given to srand) | t06 |
+| 0020D050 | Timer_OverflowHandler | Timer 0 overflow interrupt handler: D_00446F84++ (overflow count) and acknowledges the overflow flag in T0_MODE; installed by func_00209FC8 through func_00216D50 | t06 |
+| 0020D078 | Timer_Reset | D_00446F84 = 0; *T0_COUNT = 0 | t06 |
+| 0020D088 | Timer_GetTicks | Returns D_00446F84 * 60000 + *T0_COUNT: ticks since the reset (also the seed given to srand) | t06 |
 | 0020D0A8 |  |  |  |
 | 0020D0B0 |  | Calls load_tm2 (func_0020D0E8) on a texture chunk when upload is not 0; returns the address after the chunk (chunk, upload) | t06 |
 | 0020D0E8 | load_tm2 | Uploads a texture (TextureHeader *) with sceGsSetDefLoadImage/sceGsExecLoadImage using TBP0, TBW, PSM, sizes from the header's TEX0, waits for the GIF, then uploads the CLUT (16x16 for PSMT8/8H, 8x2 for PSMT4 kinds); prints "load_tm2() tbp:0 !!!!" and does nothing when TBP0 is 0 | t06 |
-| 0020D348 | KF_Texture_BuildPacketTable | Builds a table of GS upload packets from a texture table (char **textures, char **packets): copies the table header and entries with recomputed offsets, calls func_0020D478 per texture, leaves *packets after the last packet and the total size in the new header's first word | t06 |
+| 0020D348 | Texture_BuildPacketTable | Builds a table of GS upload packets from a texture table (char **textures, char **packets): copies the table header and entries with recomputed offsets, calls func_0020D478 per texture, leaves *packets after the last packet and the total size in the new header's first word | t06 |
 | 0020D470 |  |  |  |
-| 0020D478 | KF_Texture_BuildLoadPacket | Builds the DMA/VIF/GIF packet that uploads one texture at *packet (char **texture, char **packet): BITBLTBUF/TRXPOS/TRXREG/TRXDIR plus IMAGE data, then the same for the CLUT when 8 bits per pixel or fewer; prints every TEX0 field ("load_tm2()" debug dump); stores the packet end in *packet; switch on pixel format | t06 |
+| 0020D478 | Texture_BuildLoadPacket | Builds the DMA/VIF/GIF packet that uploads one texture at *packet (char **texture, char **packet): BITBLTBUF/TRXPOS/TRXREG/TRXDIR plus IMAGE data, then the same for the CLUT when 8 bits per pixel or fewer; prints every TEX0 field ("load_tm2()" debug dump); stores the packet end in *packet; switch on pixel format | t06 |
 | 0020D9A8 |  |  |  |
 | 0020DAA0 |  |  |  |
 | 0020DAA8 |  | Walks a chunk table, handing each entry's chunk to func_0020D0B0; returns the read cursor. | src comment |
 | 0020DB48 |  | Adds the deltas to two 14-bit fields packed in header->tex0; returns the data base. | src comment |
-| 0020DBB8 | KF_Texture_RelocateTable | Calls func_0020DB48 (moves TBP0 and CBP) for every texture of a table (table, delta_a, delta_b) | t06 |
+| 0020DBB8 | Texture_RelocateTable | Calls func_0020DB48 (moves TBP0 and CBP) for every texture of a table (table, delta_a, delta_b) | t06 |
 
 ## Collision primitives (0x20DC68-0x210678)
 
@@ -2538,22 +2538,22 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 002108F8 | KF_Script_FillWords | Fills count words at dest with value (dest, count, value) | t07 |
+| 002108F8 | Script_FillWords | Fills count words at dest with value (dest, count, value) | t07 |
 | 00210930 |  |  |  |
-| 002109C8 | KF_Script_Start | Starts a script (script_id, argument): returns 0 if already running (func_00210C48); takes the first free thread of D_01DFB3B0[24] (error flag D_00432920 if none), stores argument/id/cursor = D_004473E8, walks words with func_00210CD0 to label 0x190<<16 or script_id, clears the 16 commands' active words, returns the slot index; 0 at end label 0x7FFE | t07b |
-| 00210AF8 | KF_Script_StartAlways | Starts a script like func_002109C8 but without the already-running test and without the end-label test: claims a free thread of D_01DFB3B0, finds the script's label in D_004473E8, clears its commands, returns the slot index | t07b |
-| 00210C28 | KF_Script_IsSlotBusy | Returns whether script thread slot (index) of D_01DFB3B0 is in use | t07 |
-| 00210C48 | KF_Script_IsRunning | Returns whether a script with script_id is running in any of the 24 threads at D_01DFB3B0 | t07 |
-| 00210C88 | KF_Script_FindFreeCommand | Returns the index of a free command among a thread's 16; when all are busy sets error flag D_00432921 and returns 0 | t07 |
-| 00210CD0 | KF_Script_SkipWord | Returns the cursor after one script word (cursor), by the length of each control word: 0x192 "if" = (n >> 8) * 5 + 1 more words, 0x196 "set" = n, 0x19D = n + 1, commands = 2 * n | t07 |
-| 00210D48 | KF_Script_UpdateAll | Per-frame update of all script threads: func_00210E88 steps the running commands, func_002110A0 reads on; returns D_004473E4 (commands live this frame) | t07 |
+| 002109C8 | Script_Start | Starts a script (script_id, argument): returns 0 if already running (func_00210C48); takes the first free thread of D_01DFB3B0[24] (error flag D_00432920 if none), stores argument/id/cursor = D_004473E8, walks words with func_00210CD0 to label 0x190<<16 or script_id, clears the 16 commands' active words, returns the slot index; 0 at end label 0x7FFE | t07b |
+| 00210AF8 | Script_StartAlways | Starts a script like func_002109C8 but without the already-running test and without the end-label test: claims a free thread of D_01DFB3B0, finds the script's label in D_004473E8, clears its commands, returns the slot index | t07b |
+| 00210C28 | Script_IsSlotBusy | Returns whether script thread slot (index) of D_01DFB3B0 is in use | t07 |
+| 00210C48 | Script_IsRunning | Returns whether a script with script_id is running in any of the 24 threads at D_01DFB3B0 | t07 |
+| 00210C88 | Script_FindFreeCommand | Returns the index of a free command among a thread's 16; when all are busy sets error flag D_00432921 and returns 0 | t07 |
+| 00210CD0 | Script_SkipWord | Returns the cursor after one script word (cursor), by the length of each control word: 0x192 "if" = (n >> 8) * 5 + 1 more words, 0x196 "set" = n, 0x19D = n + 1, commands = 2 * n | t07 |
+| 00210D48 | Script_UpdateAll | Per-frame update of all script threads: func_00210E88 steps the running commands, func_002110A0 reads on; returns D_004473E4 (commands live this frame) | t07 |
 | 00210DE8 |  | Walks the 24 entries of 0xC4C bytes; each live one is handed to the two step callbacks. | src comment |
 | 00210E88 |  | Steps the running commands of one script thread (called per frame by func_00210D48) | t07 |
 | 00210F88 |  | Variant of func_00210E88 (steps a thread's commands) for commands with bit 0x8000, used by func_00210DE8; calls handlers through table D_00433650 (index bug for such commands) | t07 |
-| 002110A0 | KF_Script_Advance | Reads on in a thread's script (thread): control words 0x190 label, 0x191 end (frees the thread), 0x192 if, 0x194 begin no-wait block, 0x195 end block and yield, 0x196 set, 0x197 jump, 0x19D (broken: cursor = 0); anything else starts a command through func_00211C38 | t07 |
-| 002111F0 | KF_Script_EvalIf | Evaluates a script "if": up to 32 comparisons (==, !=, >, <, >=, <=; float when either side has type 6) joined by "or" (byte 0 == 0) or "and"; returns the words to skip when false | t07 |
-| 002114D8 | KF_Script_EvalSet | Evaluates a script "set": target variable, then operand/operator words (+ - * / % << >> & or; float only + - * /) until the 0xFF word; writes back by the target's kind (1 game variable, 2 thread local, 3 shared) | t07 |
-| 00211810 | KF_Script_ReadArg | Reads one script argument (thread, words, result): kind 0 constant, 1 game variable, 2 thread local, 3 shared variable, 0x11-0x13 passed through as output arguments (resolved later by func_00211CF8 / func_00211D90) | t07 |
+| 002110A0 | Script_Advance | Reads on in a thread's script (thread): control words 0x190 label, 0x191 end (frees the thread), 0x192 if, 0x194 begin no-wait block, 0x195 end block and yield, 0x196 set, 0x197 jump, 0x19D (broken: cursor = 0); anything else starts a command through func_00211C38 | t07 |
+| 002111F0 | Script_EvalIf | Evaluates a script "if": up to 32 comparisons (==, !=, >, <, >=, <=; float when either side has type 6) joined by "or" (byte 0 == 0) or "and"; returns the words to skip when false | t07 |
+| 002114D8 | Script_EvalSet | Evaluates a script "set": target variable, then operand/operator words (+ - * / % << >> & or; float only + - * /) until the 0xFF word; writes back by the target's kind (1 game variable, 2 thread local, 3 shared) | t07 |
+| 00211810 | Script_ReadArg | Reads one script argument (thread, words, result): kind 0 constant, 1 game variable, 2 thread local, 3 shared variable, 0x11-0x13 passed through as output arguments (resolved later by func_00211CF8 / func_00211D90) | t07 |
 | 002118D8 |  | Script variable reader: game variable from block table D_00433340[low byte] + offset, by value type (0 s8, 1 u8, 2 s16, 3 u16, 4-6 32 bits, 6 = float) | t07 |
 | 00211958 |  | Script variable reader: shared variable from the 0x400 bytes at D_01DFAFB0, by value type; offset > 0x3FC sets error flag D_0043292A but still reads | t07 |
 | 002119D8 |  | Script variable reader: thread local (ScriptThread.locals), by value type; offset > 0x1FC sets error flag D_0043292B but still reads | t07 |
@@ -2686,7 +2686,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00214AB8 | ScriptCmd_WaitStatusBit14 | Script command handler, three steps in work[0]: func_0019CDA0(2) (stop sound slot 2); set game status bit 14; wait until bit 14 is cleared | t09 |
 | 00214B70 | ScriptCmd_SetDrawUnk68 | Script command handler: MapDrawState.unk68 = arg | t09 |
 | 00214B88 | ScriptCmd_SetScreenOverlay | Script command handler: screen overlay colour unk6C..unk78 = red, green, blue, alpha; blend mode (MapDrawStateOverlays.unk80) from arg 5, but the switch has no breaks so it always ends as 0x44 | t09 |
-| 00214C20 | KF_Script_CmdPadShake | Script command handler: func_001B57A0(strength, duration, delay) (u8 each) | t10 |
+| 00214C20 | Script_CmdPadShake | Script command handler: func_001B57A0(strength, duration, delay) (u8 each) | t10 |
 | 00214C58 |  | Script command handler: result = func_00210C48(input), i.e. whether the script with that id is running | t10 |
 | 00214C90 |  |  |  |
 | 00214C98 |  |  |  |
@@ -2711,65 +2711,65 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00214E60 |  |  |  |
 | 00214EE8 |  | Rotates the vector at D_00413F80+0x1AC about Y, scales it, and stores the three components as ints. | src comment |
 | 00214FF0 |  |  |  |
-| 00215040 | KF_Script_CmdRandom | Script command handler: result = rand() % input | t10 |
+| 00215040 | Script_CmdRandom | Script command handler: result = rand() % input | t10 |
 | 00215088 |  |  |  |
 | 002150A0 |  |  |  |
 | 002150B0 |  | Starts the one-time setup for the task, then clears active once func_001CF980 reports done. | src comment |
-| 00215118 | KF_Script_CmdShowMessage | Script command handler: func_001CFA70(0, 0, font, kind, frames, message_id) | t10 |
-| 00215158 | KF_Script_CmdEntityMotion | Script command handler: func_00192C98(entity, first, 0, second, 1) on a live entity | t10 |
+| 00215118 | Script_CmdShowMessage | Script command handler: func_001CFA70(0, 0, font, kind, frames, message_id) | t10 |
+| 00215158 | Script_CmdEntityMotion | Script command handler: func_00192C98(entity, first, 0, second, 1) on a live entity | t10 |
 | 002151C0 |  | Each frame, run the callback on the target entity until the frame count runs out. | src comment |
 | 00215230 |  |  |  |
 | 00215298 |  |  |  |
-| 00215310 | KF_Script_CmdEntityState4Wait | Script command handler: puts the entity in state 4 with func_00195898 (skipped when already in state 5; kinds with params flag 0x80 must also face the player within params->unk438 degrees), then counts frames down and waits for state 5 | t10 |
+| 00215310 | Script_CmdEntityState4Wait | Script command handler: puts the entity in state 4 with func_00195898 (skipped when already in state 5; kinds with params flag 0x80 must also face the player within params->unk438 degrees), then counts frames down and waits for state 5 | t10 |
 | 00215488 |  | Script command handler: puts the entity in state 6 once, then waits until it is back in state 0 | t10 |
-| 00215520 | KF_Script_CmdEntityWalkTo | Script command handler: per frame sets movement command bits in Entity.unkC8 (0x100/0x200 turn, 0x10/0x20 down/up, 1 walk, 0x40 run) toward a point, flag bits 11-13 = mode; ends within distance (func_00194F48, 3D) | t10 |
+| 00215520 | Script_CmdEntityWalkTo | Script command handler: per frame sets movement command bits in Entity.unkC8 (0x100/0x200 turn, 0x10/0x20 down/up, 1 walk, 0x40 run) toward a point, flag bits 11-13 = mode; ends within distance (func_00194F48, 3D) | t10 |
 | 002156F0 |  | Script command handler: twin of func_00215520 in the plane: walks the entity toward (x, z) via Entity.unkC8 bits, ends within distance (func_00194F80, no height) | t10 |
 | 00215850 |  | Per frame, shift the target entity's rotation by the command's deltas (wrapped), then count down. | src comment |
 | 00215920 |  | Per frame, turn the target entity's heading a step toward facing the point (x, z), then count down. | src comment |
 | 00215A18 |  | Copy bit 0 of the request into flag bit 5 of every entity in the current map's list, depending on the request kind. | src comment |
-| 00215AF8 | KF_Script_CmdEntityIsFacing | Script command handler: result = whether abs(wrap(entity->unk68 - model rotation y)) in degrees <= range / 2 | t10 |
-| 00215BA0 | KF_Script_CmdEntitySetAnimSpeed | Script command handler: Entity.unkD6 = value; model->unk15C = (float)unkD6 | t10 |
+| 00215AF8 | Script_CmdEntityIsFacing | Script command handler: result = whether abs(wrap(entity->unk68 - model rotation y)) in degrees <= range / 2 | t10 |
+| 00215BA0 | Script_CmdEntitySetAnimSpeed | Script command handler: Entity.unkD6 = value; model->unk15C = (float)unkD6 | t10 |
 | 00215BF0 |  |  |  |
 | 00215CC8 |  |  |  |
 | 00215DA0 |  |  |  |
 | 00215E78 |  |  |  |
 | 00215F50 |  |  |  |
 | 00215FE0 |  |  |  |
-| 00216088 | KF_Script_CmdEntitySetFlags | Script command handler: for each of 16 mask bits copies that bit of value to an entity flag: mask bits 0..15 -> flag bits 1, 2-3 (both), 5, 6, 7, 18, 22, 23, 24, 25, 26, 27, 28, 14, 9, 29 | t10 |
-| 00216408 | KF_Script_CmdEntityGetFlags | Script command handler: reverse of func_00216088: packs the same 16 entity flags into the result (bit 1 set when flag bits 2-3 are 2 or 3) | t10 |
+| 00216088 | Script_CmdEntitySetFlags | Script command handler: for each of 16 mask bits copies that bit of value to an entity flag: mask bits 0..15 -> flag bits 1, 2-3 (both), 5, 6, 7, 18, 22, 23, 24, 25, 26, 27, 28, 14, 9, 29 | t10 |
+| 00216408 | Script_CmdEntityGetFlags | Script command handler: reverse of func_00216088: packs the same 16 entity flags into the result (bit 1 set when flag bits 2-3 are 2 or 3) | t10 |
 | 00216580 |  | Move the looked-up object to the command's x/y/z, then clear the command. | src comment |
 | 002165D0 |  |  |  |
-| 00216660 | KF_Script_CmdEntityTrySetFlag18 | Script command handler: sets entity flag bit 18 if (flags & 3) == 3, unk82 == 0 and bits 2, 3, 36, 37 are clear; result = whether it did; func_002166F8 is the clearing twin | t10 |
+| 00216660 | Script_CmdEntityTrySetFlag18 | Script command handler: sets entity flag bit 18 if (flags & 3) == 3, unk82 == 0 and bits 2, 3, 36, 37 are clear; result = whether it did; func_002166F8 is the clearing twin | t10 |
 | 002166F8 |  | Script command handler: clears entity flag bit 18 (clearing twin of func_00216660) | t10 |
 
 ## VU0 vector helpers (0x216778-0x216D20)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 00216778 | KF_Vu0_CopyVector | Copies one 16-byte vector (lq/sq, like libvu0's sceVu0CopyVector); byte-identical copy of func_00216788 | t10 |
-| 00216788 | KF_Vu0_CopyVector | Copies one 16-byte vector (lq/sq, like libvu0's sceVu0CopyVector); byte-identical copy of func_00216778 | t10 |
-| 00216798 | KF_Vu0_LoadMatrix |  | repo name |
+| 00216778 | Vu0_CopyVector | Copies one 16-byte vector (lq/sq, like libvu0's sceVu0CopyVector); byte-identical copy of func_00216788 | t10 |
+| 00216788 | Vu0_CopyVector | Copies one 16-byte vector (lq/sq, like libvu0's sceVu0CopyVector); byte-identical copy of func_00216778 | t10 |
+| 00216798 | Vu0_LoadMatrix |  | repo name |
 | 002167B0 |  | VU0 helper: loads three rows into vf5-vf7 | t10 |
 | 002167C0 |  | VU0 helper: loads a matrix into vf8-vf11 | t10 |
 | 002167D8 |  | VU0 helper: loads two vectors into vf12, vf13 (setup for func_00216850 and friends) | t10 |
-| 002167E8 | KF_Vu0_ProjectToScreen |  | repo name |
+| 002167E8 | Vu0_ProjectToScreen |  | repo name |
 | 00216850 |  | VU0 routine that uses vf12/vf13 and vf1-vf4 set up by the loader helpers | t10 |
 | 002168B8 |  |  |  |
 | 00216960 |  |  |  |
 | 00216A10 |  |  |  |
 | 00216A88 |  |  |  |
 | 00216B48 |  |  |  |
-| 00216BC0 | KF_Vu0_ApplyMatrix | VU0: dst = matrix * vector (xyzw) | t10 |
-| 00216BF0 | KF_Vector_MultiplyComponents |  | repo name |
+| 00216BC0 | Vu0_ApplyMatrix | VU0: dst = matrix * vector (xyzw) | t10 |
+| 00216BF0 | Vector_MultiplyComponents |  | repo name |
 | 00216C08 |  | VU0: vftoi4 on one vector | t10 |
 | 00216C18 |  | VU0: vftoi0 on one vector | t10 |
 | 00216C28 |  | VU0: vitof4 on one vector | t10 |
 | 00216C38 |  | VU0: vitof0 on one vector | t10 |
-| 00216C48 | KF_Vu0_AddVectorXYZ | VU0: adds two vectors, xyz only | t10 |
+| 00216C48 | Vu0_AddVectorXYZ | VU0: adds two vectors, xyz only | t10 |
 | 00216C60 | Vu0AddVector | VU0: dst = a + b (xyzw) | t11 |
-| 00216C78 | KF_Vector_Subtract |  | repo name |
+| 00216C78 | Vector_Subtract |  | repo name |
 | 00216C90 | Vu0SubVector | VU0: dst = a - b | t11 |
-| 00216CA8 | KF_Vector_Scale |  | repo name |
+| 00216CA8 | Vector_Scale |  | repo name |
 | 00216CC0 | Vu0ScaleVector | VU0: dst = src * float scale | t11 |
 | 00216CD8 | Vu0OuterProduct | VU0: dst = a x b, cross product (vopmula/vopmsub) | t11 |
 | 00216CF0 | Vu0ApplyMatrixRows | VU0: dst = row0*x + row1*y + row2*z + row3*w, the four matrix rows passed separately | t11 |
@@ -2811,45 +2811,45 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 00218160 | KF_TextLog_SetColor | Copies three ints (int *rgb) to TextLog red/green/blue | t12 |
-| 00218188 | KF_Mc_CheckCardStep | Memory card (port, slot, &type, &free, &format, step): calls sceMcGetInfo three times (steps 0, 2, 4) and waits for each (1, 3, 5); returns the next step, or the last answer (<= 0) after step 5, -100 when sceMcGetInfo keeps failing; stores the answer in MC_CARD_INFO->result[port][slot] | t12 |
-| 00218270 | KF_Mc_MessageForCheck | Memory card: message code for the current port/slot from the check result, the card type and the format flag (0 usable card, 1 no/unknown card, 2, 3 unformatted, 4, 100) | t12 |
+| 00218160 | TextLog_SetColor | Copies three ints (int *rgb) to TextLog red/green/blue | t12 |
+| 00218188 | Mc_CheckCardStep | Memory card (port, slot, &type, &free, &format, step): calls sceMcGetInfo three times (steps 0, 2, 4) and waits for each (1, 3, 5); returns the next step, or the last answer (<= 0) after step 5, -100 when sceMcGetInfo keeps failing; stores the answer in MC_CARD_INFO->result[port][slot] | t12 |
+| 00218270 | Mc_MessageForCheck | Memory card: message code for the current port/slot from the check result, the card type and the format flag (0 usable card, 1 no/unknown card, 2, 3 unformatted, 4, 100) | t12 |
 | 00218340 |  |  |  |
-| 002183C0 | KF_Mc_StepGetInfo | Memory card request 3 step: one sceMcGetInfo + sync; returns 1 when a usable card is there, else -10 | t12 |
-| 00218570 | KF_Mc_StepGetDir | Memory card request 4 step: sceMcGetDir(name, flags, max, table); entry count to McState.unk94 | t12 |
+| 002183C0 | Mc_StepGetInfo | Memory card request 3 step: one sceMcGetInfo + sync; returns 1 when a usable card is there, else -10 | t12 |
+| 00218570 | Mc_StepGetDir | Memory card request 4 step: sceMcGetDir(name, flags, max, table); entry count to McState.unk94 | t12 |
 | 002186E0 | McStepWriteFile | Memory card "write a file" step function (jump table jtbl_00441870): returns 0 while running, 1 when written, negative on error; step in D_01E4F278.unk8C; step 23 closes the file, step 100 is the error path (sync, close, message 0x3D). | t18b |
-| 00218F68 | KF_Mc_StepLoadChecked | Memory card request 6 step: reads back a file written by func_002186E0: 4-byte data length, end mark check in the last 0x20 bytes, then 0x400-byte blocks each ending in a check byte (sum of the inverted bytes); bad check byte gives error -399 | t12 |
-| 00219700 | KF_Mc_StepSaveRaw | Memory card request 7 step: checks free space, opens (create when new), writes McState.unkB8 0x400 bytes at a time, closes; errors -4, -6, -11, -101, -999 | t12 |
-| 00219CD8 | KF_Mc_StepCopyFile | Memory card request 8 step: like func_00219700 but the data comes from a file opened with sceOpen (unkA4 path), read with sceRead 0x400 bytes at a time; how the save icon is copied from the disc to the card | t12 |
-| 0021A368 | KF_Mc_StepLoadRaw | Memory card request 12 step: card check, open, read 0x400 bytes, copy to McState.unkB4, close (delivers at most 0x400 bytes correctly) | t12 |
+| 00218F68 | Mc_StepLoadChecked | Memory card request 6 step: reads back a file written by func_002186E0: 4-byte data length, end mark check in the last 0x20 bytes, then 0x400-byte blocks each ending in a check byte (sum of the inverted bytes); bad check byte gives error -399 | t12 |
+| 00219700 | Mc_StepSaveRaw | Memory card request 7 step: checks free space, opens (create when new), writes McState.unkB8 0x400 bytes at a time, closes; errors -4, -6, -11, -101, -999 | t12 |
+| 00219CD8 | Mc_StepCopyFile | Memory card request 8 step: like func_00219700 but the data comes from a file opened with sceOpen (unkA4 path), read with sceRead 0x400 bytes at a time; how the save icon is copied from the disc to the card | t12 |
+| 0021A368 | Mc_StepLoadRaw | Memory card request 12 step: card check, open, read 0x400 bytes, copy to McState.unkB4, close (delivers at most 0x400 bytes correctly) | t12 |
 | 0021A7F8 |  |  |  |
-| 0021A910 | KF_Mc_StepChdir | Memory card request 10 step (change directory), stepped once a frame | t12 |
-| 0021AA40 | KF_Mc_StepMkdir | Memory card request 11 step (make directory), stepped once a frame | t12 |
-| 0021AB58 | KF_Mc_StepFileExists | Memory card request 13 step: sceMcGetDir of one name; message 0x2E found, 0x2D not found | t12 |
-| 0021ACB8 | KF_Mc_RequestGetInfo | Starts memory card request 3 (get info) for (port, slot); returns 1 = busy, -1 = bad argument | t12 |
-| 0021AD08 | KF_Mc_RequestGetDir | Starts memory card request 4 (get directory) (port, slot, name, flags, max, table); returns 1 = busy, -1 = bad argument | t12 |
+| 0021A910 | Mc_StepChdir | Memory card request 10 step (change directory), stepped once a frame | t12 |
+| 0021AA40 | Mc_StepMkdir | Memory card request 11 step (make directory), stepped once a frame | t12 |
+| 0021AB58 | Mc_StepFileExists | Memory card request 13 step: sceMcGetDir of one name; message 0x2E found, 0x2D not found | t12 |
+| 0021ACB8 | Mc_RequestGetInfo | Starts memory card request 3 (get info) for (port, slot); returns 1 = busy, -1 = bad argument | t12 |
+| 0021AD08 | Mc_RequestGetDir | Starts memory card request 4 (get directory) (port, slot, name, flags, max, table); returns 1 = busy, -1 = bad argument | t12 |
 | 0021AD68 |  |  |  |
 | 0021ADD0 |  | Start a request unless one is active; returns 1 if busy, -1 on a bad argument, 0 on success. | src comment |
 | 0021AE38 |  | Start a request unless one is active; returns 1 if busy, -1 on a bad argument, 0 on success. | src comment |
 | 0021AEA0 |  | Start a memory card request: kind 0..2, slot 0..4. Returns 1 while a request is already running. | src comment |
-| 0021AF08 | KF_Mc_RequestLoadRaw | Starts memory card request 12 (raw load, message 0x46) (port, slot, name, buffer, size); returns 1 = busy, -1 = bad argument | t12 |
+| 0021AF08 | Mc_RequestLoadRaw | Starts memory card request 12 (raw load, message 0x46) (port, slot, name, buffer, size); returns 1 = busy, -1 = bad argument | t12 |
 | 0021AF70 |  | Start a memory card request: kind 0..2, slot 0..4. Returns 1 while a request is already running. | src comment |
-| 0021AFC8 | KF_Mc_RequestChdir | Starts memory card request 10 (chdir) (port, slot, name, pwd); returns 1 = busy, -1 = bad argument | t12 |
+| 0021AFC8 | Mc_RequestChdir | Starts memory card request 10 (chdir) (port, slot, name, pwd); returns 1 = busy, -1 = bad argument | t12 |
 | 0021B020 |  |  |  |
 | 0021B070 |  | Start a memory card request. Fails while another request is in progress or the arguments are out of range. | src comment |
-| 0021B0C0 | KF_Mc_Update | Steps the memory card request in progress (McState D_01E4F278.state 3..13): returns 0 = idle or just finished, the request number while it runs, minus the request number when it failed | t12 |
-| 0021B208 | KF_Mc_ClassifyCard | Memory card (port, slot): sets the message from card type and check result; returns the negated result (0 unchanged card, 1 new card, 2 new unformatted...), or -1, -2, -5, -6 for unusable cards | t12 |
+| 0021B0C0 | Mc_Update | Steps the memory card request in progress (McState D_01E4F278.state 3..13): returns 0 = idle or just finished, the request number while it runs, minus the request number when it failed | t12 |
+| 0021B208 | Mc_ClassifyCard | Memory card (port, slot): sets the message from card type and check result; returns the negated result (0 unchanged card, 1 new card, 2 new unformatted...), or -1, -2, -5, -6 for unusable cards | t12 |
 | 0021B338 |  | Init the memory card library, then clear the card state block if it succeeded. | src comment |
-| 0021B3A0 | KF_Mc_GetCheckResult | Returns the card check result for (port, slot) | t12 |
-| 0021B3C0 | KF_Mc_GetFreeClusters | Returns the card's free clusters less two for (port, slot), -1 when no card was seen; message 0x1E for too little space is overwritten with 0 (retail bug) | t12 |
-| 0021B438 | KF_Mc_GetCardType | Returns the card type for (port, slot) | t12 |
+| 0021B3A0 | Mc_GetCheckResult | Returns the card check result for (port, slot) | t12 |
+| 0021B3C0 | Mc_GetFreeClusters | Returns the card's free clusters less two for (port, slot), -1 when no card was seen; message 0x1E for too little space is overwritten with 0 (retail bug) | t12 |
+| 0021B438 | Mc_GetCardType | Returns the card type for (port, slot) | t12 |
 | 0021B458 |  |  |  |
 | 0021B468 |  |  |  |
 | 0021B478 |  |  |  |
-| 0021B4D0 | KF_Movie_HeapInit | Movie player bump allocator init (start, size) over the block the caller lends the player (MovieThreadState D_00437850 heap_start/heap_next/heap_end) | t12 |
-| 0021B4F0 | KF_Movie_HeapAlloc | Movie player bump allocator (size, alignment): returns an aligned block from the lent heap, NULL when full | t12 |
-| 0021B540 | KF_Movie_Play | Plays a movie (path, heap, heap_size, skip_requested, volume?, s16, s16, s16): allocates the eleven buffers (stacks, mpeg work area, audio, stream ring, five output pictures and tags, read buffer), sets up the 640x448 display, plays; returns 0, or -1 when the block is too small | t12 |
-| 0021B728 | KF_Movie_PlayFile | Plays a movie file (path, skip_requested): func_0021BA20 (create), func_0021B778 (play loop), func_0021BD18 (destroy); returns what the play loop returned | t12 |
+| 0021B4D0 | Movie_HeapInit | Movie player bump allocator init (start, size) over the block the caller lends the player (MovieThreadState D_00437850 heap_start/heap_next/heap_end) | t12 |
+| 0021B4F0 | Movie_HeapAlloc | Movie player bump allocator (size, alignment): returns an aligned block from the lent heap, NULL when full | t12 |
+| 0021B540 | Movie_Play | Plays a movie (path, heap, heap_size, skip_requested, volume?, s16, s16, s16): allocates the eleven buffers (stacks, mpeg work area, audio, stream ring, five output pictures and tags, read buffer), sets up the 640x448 display, plays; returns 0, or -1 when the block is too small | t12 |
+| 0021B728 | Movie_PlayFile | Plays a movie file (path, skip_requested): func_0021BA20 (create), func_0021B778 (play loop), func_0021BD18 (destroy); returns what the play loop returned | t12 |
 
 ## Movie player (SDK sample based): read loop, audio, video decoder, display, file access (0x21B778-0x21FD68)
 
@@ -2939,16 +2939,16 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0021E658 | voBufIsEmpty | Movie picture ring: tests whether the ring (MovieOutBuffer) is empty. | t15 |
 | 0021E668 | voBufGetTag | Returns the MovieOutTag of the oldest picture in the ring; NULL when the ring is empty. | t15 |
 | 0021E6D0 | voBufDecCount | Decrements the picture ring's count if it is above 0 (drops the oldest picture). | t15 |
-| 0021E6F0 | KF_Movie_InitDisplay | (display, screen_x, screen_y, width, height, picture_width, picture_height): clears vblank variables D_00437824..D_00437834, sceGsResetGraph with video mode D_00437850.unkD4, sets the display env, sends PRMODECONT/FRAME_1/TEST_1/XYOFFSET_1/SCISSOR_1/CLAMP_1 from D_01E4FFC0 over GIF DMA. | t15 |
+| 0021E6F0 | Movie_InitDisplay | (display, screen_x, screen_y, width, height, picture_width, picture_height): clears vblank variables D_00437824..D_00437834, sceGsResetGraph with video mode D_00437850.unkD4, sets the display env, sends PRMODECONT/FRAME_1/TEST_1/XYOFFSET_1/SCISSOR_1/CLAMP_1 from D_01E4FFC0 over GIF DMA. | t15 |
 | 0021E958 |  |  |  |
-| 0021E960 | KF_Movie_BuildFieldPackets | (display, packet, picture, field): builds the DMA chain stored in a MovieOutTag; field 0 also uploads the picture per 16x16 macroblock (BITBLTBUF/TRXREG/TRXPOS/TRXDIR, IMAGE tag, DMA ref); both fields end with TEXFLUSH/TEX0/TEX1 and a sprite to the screen rect. | t15 |
-| 0021ED10 | KF_Movie_ShowField | (display, second): sets DISPFB.FBP = frame_base[second != 0] and calls sceGsPutDispEnv. | t15 |
-| 0021ED48 | KF_Movie_ClearFrames | (display, color): opens the scissor to (width, height*2), draws one sprite of color over both frame buffers (func_0021EF38), restores the scissor; packet sent from D_01E50100. | t15 |
+| 0021E960 | Movie_BuildFieldPackets | (display, packet, picture, field): builds the DMA chain stored in a MovieOutTag; field 0 also uploads the picture per 16x16 macroblock (BITBLTBUF/TRXREG/TRXPOS/TRXDIR, IMAGE tag, DMA ref); both fields end with TEXFLUSH/TEX0/TEX1 and a sprite to the screen rect. | t15 |
+| 0021ED10 | Movie_ShowField | (display, second): sets DISPFB.FBP = frame_base[second != 0] and calls sceGsPutDispEnv. | t15 |
+| 0021ED48 | Movie_ClearFrames | (display, color): opens the scissor to (width, height*2), draws one sprite of color over both frame buffers (func_0021EF38), restores the scissor; packet sent from D_01E50100. | t15 |
 | 0021EE78 |  | Sends the corner points of two rects (x, y, width, height). | src comment |
 | 0021EF38 |  | Sends a colored primitive for the rect (x, y, width, height), color as RGBA bytes. | src comment |
-| 0021EFE8 | KF_GsPacket_DmaTag | (packet, spr, addr, irq, id, pce, qwc): writes a DMA tag (low doubleword only) at the packet address and returns the address advanced by 16. | t15 |
-| 0021F040 | KF_GsPacket_GifTag | (packet, regs, nreg, flg, prim, pre, eop, nloop): writes a GIF tag at the packet address and returns the next address. | t15 |
-| 0021F098 | KF_GsPacket_AddReg | (packet, reg, value): writes one A+D register/value pair as four words and returns the next packet address. | t15 |
+| 0021EFE8 | GsPacket_DmaTag | (packet, spr, addr, irq, id, pce, qwc): writes a DMA tag (low doubleword only) at the packet address and returns the address advanced by 16. | t15 |
+| 0021F040 | GsPacket_GifTag | (packet, regs, nreg, flg, prim, pre, eop, nloop): writes a GIF tag at the packet address and returns the next address. | t15 |
+| 0021F098 | GsPacket_AddReg | (packet, reg, value): writes one A+D register/value pair as four words and returns the next packet address. | t15 |
 | 0021F0C8 |  | GS packet writer: appends a TEXFLUSH register write; returns the next packet address. | t15 |
 | 0021F0E8 |  | GS packet writer: appends TEX1_1. | t15 |
 | 0021F150 |  | GS packet writer: appends TEX0_1. | t15 |
@@ -2967,16 +2967,16 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0021F590 |  | GS packet writer: appends TRXPOS (dir, dsax, dsay); returns the next packet address. | t15 |
 | 0021F5C0 |  | GS packet writer: appends TRXREG; returns the next packet address. | t15 |
 | 0021F5F0 |  | GS packet writer: appends TRXDIR; returns the next packet address. | t15 |
-| 0021F618 | KF_Movie_SendChain | (tadr): starts the GIF DMA channel on a chain: D2_TADR = addr & 0x0FFFFFFF, D2_QWC = 0, D2_CHCR = 0x105. | t15 |
-| 0021F650 | KF_Movie_VblankHandler | Movie player vblank interrupt handler (SDK sample: vblankHandler): if enabled (D_00437824) and GS paths idle, takes the oldest picture's tag; even field + status 2 shows frame buffer 1 and DMAs field_packets[0]; odd field + status 1 shows buffer 0, DMAs field_packets[1], sets D_0043782C = 1. | t16 |
+| 0021F618 | Movie_SendChain | (tadr): starts the GIF DMA channel on a chain: D2_TADR = addr & 0x0FFFFFFF, D2_QWC = 0, D2_CHCR = 0x105. | t15 |
+| 0021F650 | Movie_VblankHandler | Movie player vblank interrupt handler (SDK sample: vblankHandler): if enabled (D_00437824) and GS paths idle, takes the oldest picture's tag; even field + status 2 shows frame buffer 1 and DMAs field_packets[0]; odd field + status 1 shows buffer 0, DMAs field_packets[1], sets D_0043782C = 1. | t16 |
 | 0021F790 |  | Movie player path-3 (GIF) DMA end handler: sets D_0043782C ("a picture was shown completely"), then drops the picture from the ring with func_0021E6D0. | t16 |
-| 0021F7E8 | KF_Movie_StartDisplay | Waits for the other field, then enables the movie vblank handler (D_00437824 = 1, D_00437828 = 0) (SDK sample: startDisplay). | t16 |
+| 0021F7E8 | Movie_StartDisplay | Waits for the other field, then enables the movie vblank handler (D_00437824 = 1, D_00437828 = 0) (SDK sample: startDisplay). | t16 |
 | 0021F830 |  |  |  |
-| 0021F848 | KF_Movie_LoadModule | Loads an IOP module with no arguments; Exit(1) on failure (SDK sample: loadModule). | t16 |
+| 0021F848 | Movie_LoadModule | Loads an IOP module with no arguments; Exit(1) on failure (SDK sample: loadModule). | t16 |
 | 0021F880 |  |  |  |
-| 0021F998 | KF_Movie_FileOpen | Opens the movie file into a MovieFile (SDK sample: strFileOpen): "cdrom0:" upper-cases the name, appends ";1", allocates a 0x28010-byte IOP stream ring, sceCdStInit, finds the file and starts the stream; other devices use sceOpen + sceLseek for size; no device means "host0:" + path. | t16 |
-| 0021FCE8 | KF_Movie_FileClose | Closes the movie file (MovieFile; SDK sample: strFileClose). | t16 |
-| 0021FD68 | KF_Movie_FileRead | Reads from the movie file (SDK sample: strFileRead): disc stream uses sceCdStRead(size >> 11) retrying on errors (error 1 restarts the stream at lsn, others wait for the disc and seek), returns sectors << 11; host file uses sceRead until it does not fail. | t16 |
+| 0021F998 | Movie_FileOpen | Opens the movie file into a MovieFile (SDK sample: strFileOpen): "cdrom0:" upper-cases the name, appends ";1", allocates a 0x28010-byte IOP stream ring, sceCdStInit, finds the file and starts the stream; other devices use sceOpen + sceLseek for size; no device means "host0:" + path. | t16 |
+| 0021FCE8 | Movie_FileClose | Closes the movie file (MovieFile; SDK sample: strFileClose). | t16 |
+| 0021FD68 | Movie_FileRead | Reads from the movie file (SDK sample: strFileRead): disc stream uses sceCdStRead(size >> 11) retrying on errors (error 1 restarts the stream at lsn, others wait for the disc and seek), returns sectors << 11; host file uses sceRead until it does not fail. | t16 |
 
 ## Sony libdev (not game code) and end-of-text padding (0x22AE10-0x249660)
 
@@ -3009,26 +3009,26 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 Where reports disagree the table keeps the later report (or the one that matched the function); the other reading is noted here.
 
-- 0011CF88: f3/g3 say it saves four flags of every object of both maps (KF_MapObject_SaveFlagsAll); o1 only notes that the save writer calls it first and supposed it updates the play time. Kept g3.
+- 0011CF88: f3/g3 say it saves four flags of every object of both maps (MapObject_SaveFlagsAll); o1 only notes that the save writer calls it first and supposed it updates the play time. Kept g3.
 - 00117AA8: f2 listed a 0x63/0x15 tag pair; g2 (matched) says that was misread, the pairs are 4/0x63, 0x62/0x63, 0x15/0x1B and 0x1A/0x1B. Kept g2.
 - 0018AE98: f4 says it returns the prop hit by the ray; g4 (matched) adds that it returns the last prop hit in record order, not the nearest (retail bug). Kept g4.
 - 001B4B10: q02 says it adds experience to the weapon in hand; q10 lists its call among the "sounds/effects" of a hit. Kept q02 (the report that matched it).
 - 001B5A48: q10's notes before the match had pad [0] = pressed and status bit 35 = guard/aim; q10b (matched) says [0] = held, [1] = pressed, bit 35 = running. q02 put the magic button at D_0044693E, q10b at D_00446944. Kept q10b.
 - 001C1C80: q05 guessed its callers were camera code; q01/q04 show they are the weapon's swept hit test.
-- 001D37F8 / 001D39F0 / 001D3BE8: q14b and f5 call the D_00426470 nodes an upload queue (KF_Upload_RotateNodes...); q15/q15b/q17/o5 say they are the menu item model nodes (o5: KF_Menu_RotateModelsNextCategory for 001D37F8). The rows for 39F0 and 3BE8 still carry the q14b/f5 name.
-- 001D3DB0 / 001D5460: q15b gives both the name KF_Menu_RotateItemNodesPrev (five nodes / three nodes).
+- 001D37F8 / 001D39F0 / 001D3BE8: q14b and f5 call the D_00426470 nodes an upload queue (Upload_RotateNodes...); q15/q15b/q17/o5 say they are the menu item model nodes (o5: Menu_RotateModelsNextCategory for 001D37F8). The rows for 39F0 and 3BE8 still carry the q14b/f5 name.
+- 001D3DB0 / 001D5460: q15b gives both the name Menu_RotateItemNodesPrev (five nodes / three nodes).
 - 001D4598: q14b says it releases a node; q15 (matched) says it takes a buffer node off the free list D_004472B0. Kept q15.
-- 001DDB10: KF_Menu_UpdateItemScreen (q22) vs KF_Menu_ItemScreenUpdate (g7). Kept g7.
+- 001DDB10: Menu_UpdateItemScreen (q22) vs Menu_ItemScreenUpdate (g7). Kept g7.
 - 001E4F58: q16 lists it as the handler of menu screen 1; q17 (matched) says it is the opener that installs func_001E02F8. Kept q17.
-- 001E57A0 / 001ED9A8: both end up as KF_Trade_BuildItemRings (g7 for 001E57A0, g6 for 001ED9A8). Earlier names: KF_Trade_BuildItemLists (q24) for 001E57A0; KF_Menu_BuildItemLists (q28), KF_Trade_BuildGiveLists (q28b) for 001ED9A8, which q29 places in the smith screen.
+- 001E57A0 / 001ED9A8: both end up as Trade_BuildItemRings (g7 for 001E57A0, g6 for 001ED9A8). Earlier names: Trade_BuildItemLists (q24) for 001E57A0; Menu_BuildItemLists (q28), Trade_BuildGiveLists (q28b) for 001ED9A8, which q29 places in the smith screen.
 - 001E6AB8 / 001EA568: q25 calls 001E6AB8 the owned-list handler of the trade screen; q27 gives that role to 001EA568 and makes 001E6AB8 the screen before it. Kept q27 / q17b.
 - 001EBB98: q28 (before the match) read D_00446E48 as a level and the lists as built by func_001ED9A8; q28b (matched) says it is the trader's stock and the lists come from func_001E57A0. Kept q28b.
-- 001EEA90: KF_Trade_CopyFrameToTexture (q17b) vs KF_Menu_CopyFrameToTexture (o5). 001EEE50: KF_Menu_CutLinkChain (q17, in passing) vs MenuSelect2CutModelChain (q18, matched).
+- 001EEA90: Trade_CopyFrameToTexture (q17b) vs Menu_CopyFrameToTexture (o5). 001EEE50: Menu_CutLinkChain (q17, in passing) vs MenuSelect2CutModelChain (q18, matched).
 - 002179F8: q15b took it for the memory card state; q17 and t11 (matched) say controller mode (PadGetMode). Kept t11.
 - 00216D50: t06 says func_00209FC8 installs the timer handler through it; t11 (matched it, TimerSetup) says it has no callers.
 - PlayerState fields: the ini keys (t03) map "hp=" to unk20 and "mp=" to unk24, while q10/t09 show unkB4 / unk58 as current and maximum HP; probably base versus current values, no report settles it.
-- One name on two functions: KF_Sound_LoadBank (001CDE28 q08, 001CE170 q09); KF_Sound_LoadBankStep (001A0C18 g5, 001CDF90 q09); KF_Vector_Distance (001B0178 q01, 0020CE28 t06); KF_Model_BuildMatrix (0020BB18, 0020C300, t05); DrawLoadedModel (00201E10, 00201F58, t01); ItemListMoveCursor (001DFC60, 001E0088, q16); KF_Vu0_CopyVector (00216778, 00216788, byte-identical, t10); copy2area (0021BFD8 t13, 0021E3C8 t14: the SDK sample has one in each file).
+- One name on two functions: Sound_LoadBank (001CDE28 q08, 001CE170 q09); Sound_LoadBankStep (001A0C18 g5, 001CDF90 q09); Vector_Distance (001B0178 q01, 0020CE28 t06); Model_BuildMatrix (0020BB18, 0020C300, t05); DrawLoadedModel (00201E10, 00201F58, t01); ItemListMoveCursor (001DFC60, 001E0088, q16); Vu0_CopyVector (00216778, 00216788, byte-identical, t10); copy2area (0021BFD8 t13, 0021E3C8 t14: the SDK sample has one in each file).
 - Two names offered by one report (first kept, second in the description): 001B2F70, 001D94F8, 001E88A0, 001EA568, 001EF840, 00203C88, 002186E0, 00103C18, 0010EA08, 002077F0.
 - 0022AE10..0022BA38: u01's inferred libdev names (sceDevVu0GetCnd, ...) differ from the names in the repo's libdev_internal.h for six functions; u01 says two of the header's Vu0 names are really VU1 functions.
 - 00249660 is not a function (zero padding at the end of .text, u01b). 001017A8: g1's report never filled in its result; the row uses f1.
-- Naming style differs by report: most use KF_Area_Verb; q16, q18, t01, t02, t11, u02, u03 use unprefixed names; t08 ScriptCmdX, t09 ScriptCmd_X, t10 KF_Script_CmdX; t04 Title_* and t05 KF_Boot_* for the same family; t13-t15 use the SDK movie sample's names.
+- Naming style differs by report: most use Area_Verb; q16, q18, t01, t02, t11, u02, u03 use unprefixed names; t08 ScriptCmdX, t09 ScriptCmd_X, t10 Script_CmdX; t04 Title_* and t05 Boot_* for the same family; t13-t15 use the SDK movie sample's names.

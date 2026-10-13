@@ -19,7 +19,7 @@ void func_001127F8(void);
 void func_001128E0(void);
 void func_00117C60(void);
 void func_0011A430(void);
-void KF_Entity_ResetAllLists(void);
+void Entity_ResetAllLists(void);
 void func_0011C6E8(void);
 void func_001C8238(void);
 void func_001B4EE0(void);
@@ -37,26 +37,26 @@ void func_001000C8(int arg) {
     func_001030B8();
     func_001BA310();
     func_001127F8();
-    KF_Shot_ClearAll();
-    KF_LinkedPoint_Init();
+    Shot_ClearAll();
+    LinkedPoint_Init();
     func_001128E0();
     func_00117C60();
     func_0011A430();
-    KF_HeldWeapon_Init();
-    KF_Entity_ResetAllLists();
+    HeldWeapon_Init();
+    Entity_ResetAllLists();
     func_0011C6E8();
     func_001C8238();
-    KF_Effect_Init();
+    Effect_Init();
     func_001B4EE0();
-    KF_Gold_Init();
-    KF_Splash_Reset();
-    KF_ItemEffect_Reset();
+    Gold_Init();
+    Splash_Reset();
+    ItemEffect_Reset();
     if (D_00446734 != 0) {
         func_001060C0();
         func_00104EC8();
     }
     func_001B5A10();
-    KF_Player_LoadArmModels();
+    Player_LoadArmModels();
     func_001A1260(D_00413F80.unk3D);
     func_0019C520();
 }

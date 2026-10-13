@@ -29,7 +29,7 @@ void func_0016FE10(Entity *entity) {
             entity->model->unk15C = (f32)entity->unkD6 * (f32)entity->unkA0 / 20.0f;
         } else {
             if (entity->params->unkC6 != 0 && entity->params->unkC6 != 0xFFFF) {
-                KF_Effect_FreeForOwner(entity);
+                Effect_FreeForOwner(entity);
             }
             ENTITY_FLAG_BITS(entity)->bits2 = 3;
             ENTITY_FLAG_BITS(entity)->bit1 = 0;

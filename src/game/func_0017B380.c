@@ -21,11 +21,11 @@ void func_0017B380(Entity *entity, s32 unknown) {
     if (entity->unkC6 != 0) {
         return;
     }
-    map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->unk42);
+    map_object = MapObject_GetById(entity->group_id, entity->spawn_info->unk42);
     if (map_object != NULL) {
         unkE0->unk79 = (map_object->unk10 >> 17) & 1;
     }
-    map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->unk43);
+    map_object = MapObject_GetById(entity->group_id, entity->spawn_info->unk43);
     if (map_object != NULL) {
         unkE0->unk7A = (map_object->unk10 >> 17) & 1;
     }

@@ -7,11 +7,11 @@ extern f32 D_00431AF0[16];
 void func_0011F148(char *);
 void func_00216BC0(void *, void *, void *);
 void func_00216778(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 
 /* Update handler of a sliding kind, step 5: once the animation has ended, works
    out the steps that carry the part to a point 115 below the player (6.67 a frame). */
@@ -28,7 +28,7 @@ void func_00121398(MapObject *object) {
         work->timer--;
     }
     if (MODEL_CHANNEL(object->model)->param != 0) {
-        KF_MapObject_StepAnim(object);
+        MapObject_StepAnim(object);
         return;
     }
     MAP_OBJECT_BYTES(object)->step = 6;
@@ -39,12 +39,12 @@ void func_00121398(MapObject *object) {
     func_00216BC0(&origin, object->model->unk40, &origin);
     func_00216778(&target, D_00413F80);
     target.y -= 115.0f;
-    KF_Vector_Subtract(work, &target, &origin);
+    Vector_Subtract(work, &target, &origin);
     distance = sqrtf(((MapObjectWorkSlide *)object->work)->step.x * ((MapObjectWorkSlide *)object->work)->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
     sceVu0RotMatrixX(matrix, D_00431AF0, object->model->rotation.x);
     sceVu0RotMatrixY(matrix, D_00431AF0, -object->model->rotation.y);
     func_00216BC0(work, matrix, work);
     frames = distance / 6.6666665f;
     work->frames = frames;
-    KF_Vector_Scale(&work->step.x, &work->step.x, 1.0f / frames);
+    Vector_Scale(&work->step.x, &work->step.x, 1.0f / frames);
 }

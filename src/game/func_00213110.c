@@ -9,7 +9,7 @@ void func_00213110(RotationMotion *motion) {
     MapObject *map_object;
     s32 frames;
 
-    map_object = KF_MapObject_GetById(D_00446770, motion->owner_id);
+    map_object = MapObject_GetById(D_00446770, motion->owner_id);
     if (map_object == NULL || motion->frames_left <= 0) {
         motion->active = 0;
     } else {

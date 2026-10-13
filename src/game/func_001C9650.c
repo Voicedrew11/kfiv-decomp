@@ -6,7 +6,7 @@ void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
 MapRecordInfo *func_00115CD0(CameraState *, f32, int);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
 
@@ -38,7 +38,7 @@ void func_001C9650(int with_picked) {
         if (node == D_004469D8 && with_picked == 0) {
             continue;
         }
-        KF_Vector_Scale(scale, &node->model->unkE0, 1.0f);
+        Vector_Scale(scale, &node->model->unkE0, 1.0f);
         func_0020C300(node->model, &node->model->position, &node->model->rotation, scale);
         part = node->model->parts;
         count = node->model->part_count;
@@ -47,7 +47,7 @@ void func_001C9650(int with_picked) {
         }
         node->model->unk148 = (s32)&D_0038A1B0.unkA90[node->flags & 1][D_0038CD20[node->flags & 1].header->unk71];
         node->model->unk14C = &D_0038A1B0.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
-        KF_LinkedPoint_FindHitsForModel(node->model);
+        LinkedPoint_FindHitsForModel(node->model);
         func_0010AEB8(node->model);
         func_0010DB40(node->model);
     }

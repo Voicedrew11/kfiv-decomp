@@ -27,7 +27,7 @@ int rand(void);
 float cosf(float);
 float sinf(float);
 
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 extern MapDrawState D_0038A1B0;
 extern MapSlot D_0038CD20[];
 extern ObjectMarkRow D_00362928[];
@@ -40,12 +40,12 @@ extern u16 D_00446940;
 extern int D_00446770;
 extern f32 D_004469DC[];
 
-MapActor *KF_Gold_FindFree(int slot);
-MapActor *KF_Gold_FindOldest(int slot);
-void KF_Gold_LinkInUse(MapActor *actor);
-MapActor *KF_Gold_UnlinkFromList(MapActor *actor);
-void KF_Gold_SaveMark(MapActor *actor);
-void KF_Gold_ClearMark(MapActor *actor);
+MapActor *Gold_FindFree(int slot);
+MapActor *Gold_FindOldest(int slot);
+void Gold_LinkInUse(MapActor *actor);
+MapActor *Gold_UnlinkFromList(MapActor *actor);
+void Gold_SaveMark(MapActor *actor);
+void Gold_ClearMark(MapActor *actor);
 
 #define GOLD_MAX 999999
 
@@ -58,7 +58,7 @@ static char map_gold_model[0x2000];             /* 0x5BBE80 item/i0000.om2 */
 static char map_actor_matrices[2][MAP_ACTOR_COUNT][0x80]; /* 0x5BDE80 */
 
 /* Clears the map actors and loads their model (item/i0000.om2) and texture (item/i0000.tx2). */
-void KF_Gold_Init(void) {
+void Gold_Init(void) {
     int file;
 
     D_004469E0 = NULL;
@@ -90,7 +90,7 @@ static inline void copy_matrix(ModelMatrixQwords *target, ModelMatrixQwords *ori
 
 /* Sets up a map slot's gold: gives each of the 16 map actors its model, then drops again what the map's marks
    say was lying there when it was left, and clears the marks. */
-void KF_Gold_InitMap(int map) {
+void Gold_InitMap(int map) {
     f32 position[4];
     f32 rotation[4];
     ObjectMarkRow marks;
@@ -134,19 +134,19 @@ void KF_Gold_InitMap(int map) {
             position[1] = marks.marks[i].y;
             position[2] = marks.marks[i].z;
             rotation[1] = marks.marks[i].radius * 0.0625f;
-            KF_Gold_Drop((Vector4 *)position, (Vector4 *)rotation, map, marks.marks[i].unk08, marks.marks[i].unk07,
+            Gold_Drop((Vector4 *)position, (Vector4 *)rotation, map, marks.marks[i].unk08, marks.marks[i].unk07,
                          FALSE, FALSE);
         }
     }
 }
 
 /* Takes every map actor of the slot off the list of the ones in use. */
-void KF_Gold_UnlinkMap(int slot) {
+void Gold_UnlinkMap(int slot) {
     MapActor *actor = D_004469E0;
 
     while (actor != NULL) {
         if (((actor->flags >> 2) & 1) == slot) {
-            actor = KF_Gold_UnlinkFromList(actor);
+            actor = Gold_UnlinkFromList(actor);
         } else {
             actor = actor->next;
         }
@@ -154,7 +154,7 @@ void KF_Gold_UnlinkMap(int slot) {
 }
 
 /* Moves every map actor of the slot that is in use by offset (the maps' origins moved). */
-void KF_Gold_MoveMap(int slot, f32 *offset) {
+void Gold_MoveMap(int slot, f32 *offset) {
     MapActor *actor = map_actors[slot];
     int i;
 
@@ -169,7 +169,7 @@ void KF_Gold_MoveMap(int slot, f32 *offset) {
 
 /* Steps the gold lying about: fades it in and out, finds the one nearest the player among those in reach and,
    when the button is pressed, gives its gold to the player. */
-void KF_Gold_Update(void) {
+void Gold_Update(void) {
     f32 delta[4];
     MapActor *nearest = NULL;
     MapActor *actor = D_004469E0;
@@ -197,17 +197,17 @@ void KF_Gold_Update(void) {
                 actor->body->unk146 = (actor->fade_timer << 7) / 15;
             } else {
                 if (MAP_ACTOR_WORDS(actor)->object_id != 0) {
-                    KF_MapObject_MarkEmptiedById(MAP_ACTOR_BITS(actor)->map, MAP_ACTOR_WORDS(actor)->object_id);
+                    MapObject_MarkEmptiedById(MAP_ACTOR_BITS(actor)->map, MAP_ACTOR_WORDS(actor)->object_id);
                 }
-                KF_Gold_ClearMark(actor);
-                actor = KF_Gold_UnlinkFromList(actor);
+                Gold_ClearMark(actor);
+                actor = Gold_UnlinkFromList(actor);
                 continue;
             }
             break;
         }
         actor->body->unk145 = actor->body->unk146 < 0x80;
         if (actor->flags & 2) {
-            KF_Vector_Subtract(delta, &actor->body->position, &D_00413F80);
+            Vector_Subtract(delta, &actor->body->position, &D_00413F80);
             distance = delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2];
             if (distance < nearest_distance) {
                 nearest_distance = distance;
@@ -225,12 +225,12 @@ void KF_Gold_Update(void) {
         if (D_00413F80.unk4C >= GOLD_MAX) {
             D_00413F80.unk4C = GOLD_MAX;
         }
-        KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x14, amount);
+        Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x14, amount);
     }
 }
 
 /* Draws the map actors in use: solid ones at once, fading ones through the draw list given. */
-void KF_Gold_Draw(s32 list) {
+void Gold_Draw(s32 list) {
     MapActor *actor;
 
     func_00109A50();
@@ -251,7 +251,7 @@ void KF_Gold_Draw(s32 list) {
 }
 
 /* Drops gold in a map slot: takes a free map actor, or the oldest one, and puts it at position. */
-int KF_Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int object_id, int on_ground,
+int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int object_id, int on_ground,
                  int other_map) {
     MapActor *actor;
 
@@ -264,14 +264,14 @@ int KF_Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int 
     if (on_ground && !func_001C0E40(1000.0f, position)) {
         return FALSE;
     }
-    actor = KF_Gold_FindFree(map);
+    actor = Gold_FindFree(map);
     if (actor == NULL) {
-        actor = KF_Gold_FindOldest(map);
+        actor = Gold_FindOldest(map);
         if (actor == NULL) {
             return FALSE;
         }
-        KF_Gold_ClearMark(actor);
-        KF_Gold_UnlinkFromList(actor);
+        Gold_ClearMark(actor);
+        Gold_UnlinkFromList(actor);
     }
     MAP_ACTOR_BITS(actor)->in_use = TRUE;
     MAP_ACTOR_BITS(actor)->map = map;
@@ -293,22 +293,22 @@ int KF_Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int 
     if (on_ground) {
         actor->body->position.y = actor->unk14;
     }
-    KF_Gold_LinkInUse(actor);
+    Gold_LinkInUse(actor);
     if (map == D_00446770) {
         other_map = FALSE;
     }
     if (other_map) {
         func_00216C48(&actor->body->position, &actor->body->position, &D_0038D610);
     }
-    KF_Gold_SaveMark(actor);
+    Gold_SaveMark(actor);
     if (other_map) {
-        KF_Vector_Subtract(&actor->body->position, &actor->body->position, &D_0038D610);
+        Vector_Subtract(&actor->body->position, &actor->body->position, &D_0038D610);
     }
     return TRUE;
 }
 
 /* Drops the gold of an entity near it: half of EntityParams.gold for sure, the rest by chance. */
-int KF_Gold_DropFromEntity(Entity *entity) {
+int Gold_DropFromEntity(Entity *entity) {
     Vector4 position;
     Vector4 rotation;
     u16 amount;
@@ -319,7 +319,7 @@ int KF_Gold_DropFromEntity(Entity *entity) {
     f32 angle;
 
     if (entity->params->gold == 0) {
-        return; // match: no value, though the function returns what KF_Gold_Drop does (retail keeps $2 live here)
+        return; // match: no value, though the function returns what Gold_Drop does (retail keeps $2 live here)
     }
     amount = 1;
     if (entity->params->gold >= 2) {
@@ -336,11 +336,11 @@ int KF_Gold_DropFromEntity(Entity *entity) {
     rotation.x = 0.0f;
     rotation.y = rand() * 6.2831855f * 4.656613e-10f - 3.1415927f;
     rotation.z = 0.0f;
-    return KF_Gold_Drop(&position, &rotation, entity->group_id, amount, 0, TRUE, TRUE);
+    return Gold_Drop(&position, &rotation, entity->group_id, amount, 0, TRUE, TRUE);
 }
 
 /* Returns the first map actor of the slot that is not in use, or NULL. */
-MapActor *KF_Gold_FindFree(int slot) {
+MapActor *Gold_FindFree(int slot) {
     MapActor *actor = map_actors[slot];
     int i;
 
@@ -354,7 +354,7 @@ MapActor *KF_Gold_FindFree(int slot) {
 }
 
 /* Returns the oldest map actor of the slot that no map object dropped, or NULL. */
-MapActor *KF_Gold_FindOldest(int slot) {
+MapActor *Gold_FindOldest(int slot) {
     MapActor *actor = map_actors[slot];
     MapActor *oldest = NULL;
     int i;
@@ -373,7 +373,7 @@ MapActor *KF_Gold_FindOldest(int slot) {
 }
 
 /* Marks a map actor as in use and pushes it onto the front of the in-use list. */
-void KF_Gold_LinkInUse(MapActor *actor) {
+void Gold_LinkInUse(MapActor *actor) {
     MapActor *head = D_004469E0;
 
     actor->flags |= 1;
@@ -386,7 +386,7 @@ void KF_Gold_LinkInUse(MapActor *actor) {
 }
 
 /* Removes a map actor from the in-use list and clears its in-use flag; returns the next actor in the list. */
-MapActor *KF_Gold_UnlinkFromList(MapActor *actor) {
+MapActor *Gold_UnlinkFromList(MapActor *actor) {
     MapActor *next = actor->next;
     MapActor *prev = actor->prev;
 
@@ -404,7 +404,7 @@ MapActor *KF_Gold_UnlinkFromList(MapActor *actor) {
 }
 
 /* Records a dropped pile in the map's ObjectMark table so it can be restored when the map is loaded again. */
-void KF_Gold_SaveMark(MapActor *actor) {
+void Gold_SaveMark(MapActor *actor) {
     u32 map_slot;
     MapSlot *entry;
     ObjectMark *mark;
@@ -422,7 +422,7 @@ void KF_Gold_SaveMark(MapActor *actor) {
 }
 
 /* Clears the ObjectMark for a map actor slot. */
-void KF_Gold_ClearMark(MapActor *actor) {
+void Gold_ClearMark(MapActor *actor) {
     u32 map_slot;
     u32 slot;
     MapSlot *entry;

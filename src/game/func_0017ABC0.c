@@ -39,7 +39,7 @@ void func_0017ABC0(Entity *entity) {
             entity->unkA0 = 20;
             func_0018DCD8(entity);
             if (entity->spawn_info->unk40 != 0) {
-                other = KF_Entity_GetBySpawnId(entity->spawn_info->unk40);
+                other = Entity_GetBySpawnId(entity->spawn_info->unk40);
                 if (other != NULL && ENTITY_FLAG_BITS(other)->bit0) {
                     func_0018DC40((char *)other);
                     func_00216778(other->model->position, entity->model->position);

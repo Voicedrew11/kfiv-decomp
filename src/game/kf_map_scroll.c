@@ -20,11 +20,11 @@ void func_0010A100(void *);
 static MapSlotPair map_scroll_copy_pairs[2][16]; /* 0x471F60 */
 static MapSlotPair map_scroll_draw_pairs[2][16];  /* 0x471FE0 */
 
-u32 *KF_MapScroll_AppendBitblt(u32 *packet, int end_of_packet, int format, int buffer_width, int width, int height,
+u32 *MapScroll_AppendBitblt(u32 *packet, int end_of_packet, int format, int buffer_width, int width, int height,
                                int source_base, int source_x, int source_y, int dest_base, int dest_x, int dest_y);
 
 /* Clears the copy and draw scroll offsets for one map slot. */
-void KF_MapScroll_ClearPairs(int map_slot) {
+void MapScroll_ClearPairs(int map_slot) {
     int i;
     s16 *p; // match: retail local name
 
@@ -46,12 +46,12 @@ void KF_MapScroll_ClearPairs(int map_slot) {
     } while (i >= 0);
 }
 
-void KF_MapScroll_PrepareCopy(void) {
+void MapScroll_PrepareCopy(void) {
 }
 
 /* Scrolls each of a map's moving textures of this mode in place: moves the pair that goes with it along,
    then copies the texture to the spare buffer at 0x3C40 and back in two pieces, shifted by the pair. */
-void KF_MapScroll_UpdateCopy(int map, int mode) {
+void MapScroll_UpdateCopy(int map, int mode) {
     MapScrollCopy *texture;
     MapSlotPair *pair = map_scroll_copy_pairs[map];
     MapSlot *slot = &D_0038CD20[map];
@@ -115,33 +115,33 @@ void KF_MapScroll_UpdateCopy(int map, int mode) {
                     *packet++ = 0;
                     *packet++ = count | 0x51000000;
                     if (shift_x > 0) {
-                        packet = KF_MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height, base, 0, 0,
+                        packet = MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height, base, 0, 0,
                                                           spare_base, 0, 0);
-                        packet = KF_MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width - shift_x, height,
+                        packet = MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width - shift_x, height,
                                                           spare_base, 0, 0, base, shift_x, 0);
-                        packet = KF_MapScroll_AppendBitblt(packet, x_is_last, format, buffer_width, shift_x, height,
+                        packet = MapScroll_AppendBitblt(packet, x_is_last, format, buffer_width, shift_x, height,
                                                           spare_base, width - shift_x, 0, base, 0, 0);
                     } else if (shift_x < 0) {
-                        packet = KF_MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height, base, 0, 0,
+                        packet = MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height, base, 0, 0,
                                                           spare_base, 0, 0);
-                        packet = KF_MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width + shift_x, height,
+                        packet = MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width + shift_x, height,
                                                           spare_base, -shift_x, 0, base, 0, 0);
-                        packet = KF_MapScroll_AppendBitblt(packet, x_is_last, format, buffer_width, -shift_x, height,
+                        packet = MapScroll_AppendBitblt(packet, x_is_last, format, buffer_width, -shift_x, height,
                                                           spare_base, 0, 0, base, width + shift_x, 0);
                     }
                     if (shift_y > 0) {
-                        packet = KF_MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height, base, 0, 0,
+                        packet = MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height, base, 0, 0,
                                                           spare_base, 0, 0);
-                        packet = KF_MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height - shift_y,
+                        packet = MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height - shift_y,
                                                           spare_base, 0, 0, base, 0, shift_y);
-                        packet = KF_MapScroll_AppendBitblt(packet, TRUE, format, buffer_width, width, shift_y, spare_base, 0,
+                        packet = MapScroll_AppendBitblt(packet, TRUE, format, buffer_width, width, shift_y, spare_base, 0,
                                                           height - shift_y, base, 0, 0);
                     } else if (shift_y < 0) {
-                        packet = KF_MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height, base, 0, 0,
+                        packet = MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height, base, 0, 0,
                                                           spare_base, 0, 0);
-                        packet = KF_MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height + shift_y,
+                        packet = MapScroll_AppendBitblt(packet, FALSE, format, buffer_width, width, height + shift_y,
                                                           spare_base, 0, -shift_y, base, 0, 0);
-                        packet = KF_MapScroll_AppendBitblt(packet, TRUE, format, buffer_width, width, -shift_y, spare_base,
+                        packet = MapScroll_AppendBitblt(packet, TRUE, format, buffer_width, width, -shift_y, spare_base,
                                                           0, 0, base, 0, height + shift_y);
                     }
                     func_00109650(packet_start, packet);
@@ -153,7 +153,7 @@ void KF_MapScroll_UpdateCopy(int map, int mode) {
 
 /* Writes a GS packet that copies a rectangle from one buffer to another (BITBLTBUF, TRXPOS, TRXREG, TRXDIR,
    TEXFLUSH) and returns where the next packet goes. */
-u32 *KF_MapScroll_AppendBitblt(u32 *packet, int end_of_packet, int format, int buffer_width, int width, int height,
+u32 *MapScroll_AppendBitblt(u32 *packet, int end_of_packet, int format, int buffer_width, int width, int height,
                                int source_base, int source_x, int source_y, int dest_base, int dest_x, int dest_y) {
     *((u64 *)packet)++ = ((s64)end_of_packet << 15) | 0x1000000000000005L;
     *((u64 *)packet)++ = 0xE;
@@ -176,12 +176,12 @@ u32 *KF_MapScroll_AppendBitblt(u32 *packet, int end_of_packet, int format, int b
     return packet;
 }
 
-void KF_MapScroll_PrepareDraw(void) {
+void MapScroll_PrepareDraw(void) {
 }
 
 /* Draws each of a map's moving textures of this mode into its target texture, shifted by the pair that
    goes with it, and moves the pair along. */
-void KF_MapScroll_UpdateDraw(int map, int mode) {
+void MapScroll_UpdateDraw(int map, int mode) {
     ScreenQuad quad;
     MapSlot *slot = &D_0038CD20[map];
     MapSlotPair *pair = map_scroll_draw_pairs[map];
@@ -273,7 +273,7 @@ void KF_MapScroll_UpdateDraw(int map, int mode) {
 }
 
 /* Carries pairs over from one map slot to the other for the maps that share them. */
-void KF_MapScroll_CarryPairs(int from_slot, int to_slot) {
+void MapScroll_CarryPairs(int from_slot, int to_slot) {
     int from_tag = D_0038CD20[from_slot].tag;
     int to_tag = D_0038CD20[to_slot].tag;
 

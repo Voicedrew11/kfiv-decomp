@@ -48,8 +48,8 @@ void func_00114528(int mode) {
             func_00116AD8(map, 2);
             func_00116AD8(map, 5);
             func_00109E88();
-            KF_MapScroll_UpdateDraw(map, 1);
-            KF_MapScroll_UpdateCopy(map, 1);
+            MapScroll_UpdateDraw(map, 1);
+            MapScroll_UpdateCopy(map, 1);
             if (mode < 2) {
                 func_0010A008();
             } else {
@@ -88,7 +88,7 @@ void func_00114528(int mode) {
                     record->model->unk148 = (s32)&D_0038A1B0.unkA90[map][record->unk35];
                     record->model->unk14C = &D_0038A1B0.unk290[map][record->unk34];
                 }
-                KF_LinkedPoint_FindHitsForMapDraw(record, record->model);
+                LinkedPoint_FindHitsForMapDraw(record, record->model);
                 if (record->flags & 0x200) {
                     header = slot->header;
                     func_00111368(record->model, header->unk78, header->unk79, header->unk7A, header->unk7B);

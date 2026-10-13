@@ -5,7 +5,7 @@
 extern PlayerData D_00413F80;
 
 int func_001B4F90(void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 
 /* Steers toward the player for the first interval frames, then flies straight until it hits. */
@@ -18,16 +18,16 @@ void func_001AC478(EffectActor *actor) {
     func_001AED58(actor);
     func_001AF0B0(actor);
     if (actor->frame < actor->def->interval) {
-        KF_Vector_Subtract(&to_player, &D_00413F80, &actor->model->position);
+        Vector_Subtract(&to_player, &D_00413F80, &actor->model->position);
         to_player.y -= 110.0f;
         func_001AFC88(velocity, &to_player, actor->def->speed, actor->def->unkDC);
     }
     sceVu0AddVector(&actor->model->position, &actor->model->position, velocity);
     if (func_001B4F90(actor) != 0 && actor->def->end_effect != 0xFFFF) {
         if (*(int *)0x70000018 != 5) {
-            KF_Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
         }
-        KF_Effect_Free(actor);
+        Effect_Free(actor);
     }
     actor->frame++;
 }

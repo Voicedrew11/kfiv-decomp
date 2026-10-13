@@ -2,7 +2,7 @@
 #include "kf_model.h"
 
 void *memset(void *, int, u32);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 
 extern f32 D_00413F80[];
@@ -23,7 +23,7 @@ void func_0010B018(ModelInstance *model, s32 layer, s32 list) {
     s32 depth;
 
     if (model->part_count != 0 && (u32)layer < 5 && (u32)list < 2) {
-        KF_Vector_Subtract(delta, &model->position, D_00413F80);
+        Vector_Subtract(delta, &model->position, D_00413F80);
         depth = (sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]) * 1000.0f) / 5000.0f;
         if (depth < 0) {
             depth = 0;

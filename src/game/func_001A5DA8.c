@@ -26,14 +26,14 @@ void func_001A5DA8(EffectActor *effect) {
     func_001AF0B0(effect);
     sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     if ((s8)motion->unk25 != 0) { // match: retail loads unk25 as a signed byte
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
     } else {
         motion->unk22 -= 1;
         hits = func_001B4F90(effect);
         if (hits != 0) {
             if ((hits & 2) && effect->def->unkF2 != 0) {
-                KF_Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
-                KF_Effect_Spawn(0x33, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Spawn(0x33, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 motion->unk25 = 1;
             } else if ((hits & 8) && motion->unk22 < 0) {
                 func_00216778(&point, &effect->model->position);
@@ -46,20 +46,20 @@ void func_001A5DA8(EffectActor *effect) {
                     } else {
                         spawn_id = 0x16;
                     }
-                    KF_Effect_Spawn(spawn_id, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                    Effect_Spawn(spawn_id, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                     spawn_count = D_004468DC + 1;
                     D_004468DC = spawn_count;
                     if (spawn_count & 1) {
-                        KF_Effect_Spawn(0x122, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                        Effect_Spawn(0x122, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                     }
                 } else {
-                    KF_Effect_Spawn(effect->def->end_effect, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                    Effect_Spawn(effect->def->end_effect, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                     D_004468DC += 1;
                     if (3.0f < effect->model->unkE8) {
                         D_004468DC = 0;
                     }
                     if ((s8)motion->unk24 == 0 || (D_004468DC & 1) == 0) {
-                        KF_Effect_Spawn(0x33, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                        Effect_Spawn(0x33, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                         motion->unk24 = 1;
                     }
                 }

@@ -4,7 +4,7 @@
 int func_001C2D08(void *);
 void func_00216778(void *, void *);
 void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void sceVu0Normalize(float *, float *);
 extern PlayerState D_00413F80;
 
@@ -64,7 +64,7 @@ void func_001C65F0(MapObject *object, f32 *position, f32 height, f32 radius) {
                     offset[1] = 0.0f;
                     offset[2] = centre[2] - COLLISION_RESULT->point[2];
                     sceVu0Normalize(offset, offset);
-                    KF_Vector_Scale(offset, offset, radius);
+                    Vector_Scale(offset, offset, radius);
                     centre[0] = COLLISION_RESULT->point[0] + offset[0];
                     centre[2] = COLLISION_RESULT->point[2] + offset[2];
                     if (MAP_OBJECT_DEF_KIND(object->unk04) == 10 && (PlayerState *)position == &D_00413F80

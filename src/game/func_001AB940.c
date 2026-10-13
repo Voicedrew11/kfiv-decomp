@@ -9,9 +9,9 @@ void func_001AB940(EffectActor *effect) {
     func_001AED58(effect);
     func_001AF0B0(effect);
     if (motion->spawn_count < effect->frame) {
-        KF_Effect_Spawn(effect->def->unkF0, &effect->model->position, &effect->model->rotation,
+        Effect_Spawn(effect->def->unkF0, &effect->model->position, &effect->model->rotation,
                       effect->owner_entity, effect->effect_param, effect->owner);
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
     }
     effect->frame += 1;
 }

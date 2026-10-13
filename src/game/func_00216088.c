@@ -6,7 +6,7 @@
 void func_00216088(ScriptSetFlagsCommand *command) {
     Entity *entity;
 
-    entity = KF_Entity_GetBySpawnId(command->target_id.value);
+    entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity == NULL) {
         command->active = 0;
         return;

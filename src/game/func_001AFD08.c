@@ -10,7 +10,7 @@ int func_001B0040(Entity *entity);
 float func_001B0178(void *, void *);
 f32 func_001B0950(f32);
 void func_001AF5B0(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 
 /* Wraps an angle into -pi..pi. */
 static inline f32 wrap_angle(f32 angle) {
@@ -42,7 +42,7 @@ int func_001AFD08(EffectActor *effect, Vector4 *position, Vector4 *reference) {
         if ((f32)effect->def->interval < distance) {
             continue;
         }
-        KF_Vector_Subtract(&offset, &ENTITY_MODEL(entity)->position, position);
+        Vector_Subtract(&offset, &ENTITY_MODEL(entity)->position, position);
         offset.y -= entity->height * 0.5f;
         func_001AF5B0(&angles, &offset);
         angles.x = wrap_angle(angles.x - reference->x);

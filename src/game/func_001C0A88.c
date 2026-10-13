@@ -1,6 +1,6 @@
 #include "kf_collision.h"
 
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 extern f32 D_00446980[];
 
 /* Drops a vertical line through `point` onto a triangle: on a hit the scratchpad result gets the
@@ -46,7 +46,7 @@ void func_001C0A88(void *corner_a, void *corner_b, void *corner_c, void *point) 
     hit_point[1] = ((f32 *)point)[1] + scalar;
     hit_point[2] = ((f32 *)point)[2];
     COLLISION_RESULT->distance = scalar;
-    KF_Vector_Subtract(offset, hit_point, corner_b);
+    Vector_Subtract(offset, hit_point, corner_b);
     scalar = edge_c[0] * edge_a[2] - edge_c[2] * edge_a[0];
     along_c = offset[0] * edge_a[2] - offset[2] * edge_a[0];
     along_a = offset[2] * edge_c[0] - offset[0] * edge_c[2];

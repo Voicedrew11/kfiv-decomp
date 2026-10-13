@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-/* one of the six notices of the ring, the short messages KF_Message_ShowNotice puts on screen */
+/* one of the six notices of the ring, the short messages Message_ShowNotice puts on screen */
 typedef struct MessageSlot {
     s16 *text;                      /* 0x00 glyph stream, ended by -1 */
     int frames_left;                /* 0x04 */
@@ -16,11 +16,11 @@ typedef struct MessageSlot {
     int kind;                       /* 0x20 */
 } MessageSlot;
 
-/* the message box (KF_Message_OpenBox opens it, KF_Message_Update types it out page by page) */
+/* the message box (Message_OpenBox opens it, Message_Update types it out page by page) */
 typedef struct {
     s16 *start;                     /* 0x00 first glyph of the page on screen */
     s16 *cursor;                    /* 0x04 glyph being typed */
-    s16 *end;                       /* 0x08 end of the page (KF_Message_LayoutPage) */
+    s16 *end;                       /* 0x08 end of the page (Message_LayoutPage) */
     int delay;                      /* 0x0C frames per glyph */
     int timer;                      /* 0x10 frames since the last glyph */
     int reveal_frames;              /* 0x14 frames since the page started, drives the fade-in behind the cursor */
@@ -32,7 +32,7 @@ typedef struct {
     int top;                        /* 0x2C */
     int font;                       /* 0x30 */
     int centred;                    /* 0x34 nonzero: each line starts at its line_offsets entry */
-    int line_offsets[8];            /* 0x38 left edge of each line (KF_Message_LayoutPage) */
+    int line_offsets[8];            /* 0x38 left edge of each line (Message_LayoutPage) */
 } MessageBox;
 
 /* one of the ten text colours (glyph code 0x4000 | colour << 8) */
@@ -70,17 +70,17 @@ typedef struct {
     s32 bottom;                     /* 0x0C */
 } GlyphBox;
 
-void KF_Message_Init(void);
-void KF_Message_Update(void);
-int KF_Message_IsBoxOpen(void);
-void KF_Message_OpenBox(int x, int y, int font, int centred, int delay, int message_id, ...);
-void KF_Message_ShowNotice(int x, int y, int font, int kind, int frames, int message_id, ...);
-void KF_Message_DebugPrintf(char *format, ...);
-void KF_Message_DebugSetColor(char colour);
-s32 KF_Message_GetFontTexture(s32 font_base);
-s32 KF_Message_GetFontText(s32 font_base);
-char *KF_Message_GetColor(s32 colour);
-void KF_Message_ClearNotices(void);
-void KF_Message_CloseBox(void);
+void Message_Init(void);
+void Message_Update(void);
+int Message_IsBoxOpen(void);
+void Message_OpenBox(int x, int y, int font, int centred, int delay, int message_id, ...);
+void Message_ShowNotice(int x, int y, int font, int kind, int frames, int message_id, ...);
+void Message_DebugPrintf(char *format, ...);
+void Message_DebugSetColor(char colour);
+s32 Message_GetFontTexture(s32 font_base);
+s32 Message_GetFontText(s32 font_base);
+char *Message_GetColor(s32 colour);
+void Message_ClearNotices(void);
+void Message_CloseBox(void);
 
 #endif

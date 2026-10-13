@@ -16,7 +16,7 @@ extern CameraState D_004325A0;
 #define SCRATCH_MATRIX ((f32 *)0x70000000)
 
 /* Brings an angle back into -pi..pi. */
-static inline f32 KF_Angle_Wrap(f32 angle) {
+static inline f32 Angle_Wrap(f32 angle) {
     angle += 3.1415927f;
     return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
 }
@@ -35,7 +35,7 @@ void func_0020C300(ModelInstance *model, Vector4 *position, Vector4 *rotation, f
         scratch[0] *= scale[0];
         scratch[5] *= scale[1];
         scratch[10] *= scale[2];
-        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, KF_Angle_Wrap(model->rotation.z));
+        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(model->rotation.z));
         if (model->unk102 & 0x100) {
             sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX,
                              atan2f(to_camera[1], sqrtf(to_camera[0] * to_camera[0] + to_camera[2] * to_camera[2])));
@@ -53,16 +53,16 @@ void func_0020C300(ModelInstance *model, Vector4 *position, Vector4 *rotation, f
         scratch[0] *= scale[0];
         scratch[5] *= scale[1];
         scratch[10] *= scale[2];
-        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, KF_Angle_Wrap(rotation->z));
+        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
         sceVu0TransMatrix((f32 *)model->unk40, SCRATCH_MATRIX, &position->x);
     } else {
         sceVu0CopyMatrix(SCRATCH_MATRIX, D_00431B30);
         scratch[0] *= scale[0];
         scratch[5] *= scale[1];
         scratch[10] *= scale[2];
-        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, KF_Angle_Wrap(rotation->z));
-        sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, KF_Angle_Wrap(rotation->x));
-        sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, KF_Angle_Wrap(rotation->y));
+        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
+        sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->x));
+        sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->y));
         sceVu0TransMatrix((f32 *)model->unk40, SCRATCH_MATRIX, &position->x);
     }
 }

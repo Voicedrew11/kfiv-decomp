@@ -2,8 +2,8 @@
 #include "kf_collision.h"
 
 double sqrt(double);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
@@ -22,7 +22,7 @@ void func_00185A28(f32 *position, f32 *other, f32 radius, f32 height, f32 other_
 
     reach = radius + other_radius;
     result->hit = 0;
-    KF_Vector_Subtract(delta, position, other);
+    Vector_Subtract(delta, position, other);
     distance = delta[0] * delta[0] + delta[2] * delta[2];
     if (reach * reach <= distance) {
         return;
@@ -62,12 +62,12 @@ void func_00185A28(f32 *position, f32 *other, f32 radius, f32 height, f32 other_
     } else {
         delta[1] = 0.0f;
         sceVu0Normalize(nearest, delta);
-        KF_Vector_Scale(nearest, nearest, -radius);
+        Vector_Scale(nearest, nearest, -radius);
         func_00216C48(nearest, nearest, position);
         if (other[1] <= position[1] - height * 0.5f) {
             nearest[1] -= height;
         }
-        KF_Vector_Subtract(delta, nearest, other);
+        Vector_Subtract(delta, nearest, other);
         distance = sqrt(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
         if (other_radius <= distance) {
             result->hit = 0;

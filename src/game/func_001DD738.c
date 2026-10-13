@@ -91,7 +91,7 @@ void func_001DD738(HandlerContext *context) {
         model_node.buffer = chunk;
         func_00201E10(&D_00426470, local, D_00446C78);
     }
-    table = KF_Message_GetFontText(D_00446F38);
+    table = Message_GetFontText(D_00446F38);
     word.raw = 0x000A875081106E80;
     number = page * 50 + 3001;
     entry = func_001DD738_TextOffset(table, number + 49);

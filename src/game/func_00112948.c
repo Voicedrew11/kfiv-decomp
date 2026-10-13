@@ -42,11 +42,11 @@ void func_00112948(int map) {
     int size;
     MapFogColor *fog;
 
-    ((int (*)(void *, int))KF_Memory_ClearWords)(slot, 0x18); // match: the callee returns a value here, which keeps $2 busy
+    ((int (*)(void *, int))Memory_ClearWords)(slot, 0x18); // match: the callee returns a value here, which keeps $2 busy
     memory->unk14 = memory->unk1C = D_00446F50;
     memory->unk18 = memory->unk20 = D_00446F54;
-    KF_Memory_ClearWords(memory->unk1C, D_00446F20 / 4);
-    KF_Memory_ClearWords(memory->unk20, D_00446F1C / 4);
+    Memory_ClearWords(memory->unk1C, D_00446F20 / 4);
+    Memory_ClearWords(memory->unk20, D_00446F1C / 4);
     sprintf(name, D_0043E570, map);
     handle = func_00102238(name, 0, 1);
     size = func_00102900(handle);
@@ -58,11 +58,11 @@ void func_00112948(int map) {
     func_00114AA8(0);
     func_001A10D8(slot);
     func_001155F8(0);
-    KF_MapScroll_ClearPairs(0);
+    MapScroll_ClearPairs(0);
     func_001A15F0();
-    KF_MapObject_InitMap(0);
+    MapObject_InitMap(0);
     func_001C82C0(0);
-    KF_Gold_InitMap(0);
+    Gold_InitMap(0);
     D_0038CD20[0].unk00 = 1;
     D_00446770 = 0;
     D_0038A1B0.unkA0 = *slot->unk0C;
@@ -72,11 +72,11 @@ void func_00112948(int map) {
     D_0038A1B0.unk9A = 0;
     D_0038A1B0.unk9B = 0;
     D_0038A1B0.unk9C = 0;
-    KF_MapObject_StartMap(0);
-    KF_Entity_InitFromMapSpawns(0);
+    MapObject_StartMap(0);
+    Entity_InitFromMapSpawns(0);
     func_00123158(0);
     func_001C87D8(0);
-    KF_Entity_ClearFlag10InSlot(0);
+    Entity_ClearFlag10InSlot(0);
     func_00119360(0);
     func_001034F8(D_0038CD20[0].tag);
     func_00210930(D_0038CD20[0].unk5C);

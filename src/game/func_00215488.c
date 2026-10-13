@@ -8,7 +8,7 @@ void func_00195898(char *, u8);
 void func_00215488(ScriptWaitCommand *command) {
     Entity *entity;
 
-    entity = KF_Entity_GetBySpawnId(command->object_id.value);
+    entity = Entity_GetBySpawnId(command->object_id.value);
     if (entity != NULL && (entity->flags & 0xF) == 3 && entity->unk2C != 0) {
         if (entity->unkC6 != 0) {
             return;

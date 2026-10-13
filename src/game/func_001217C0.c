@@ -4,12 +4,12 @@
 extern u32 D_0038CC74[];
 extern PlayerState D_00413F80;
 
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 float atan2f(float, float);
 float func_0019B838(float);
 /* Update handler: when the player (using it, status bit 36 clear) is within
    75 in height, within the radius and inside the angle of one of its two
-   points, KF_Ladder_Start is called for that point. */
+   points, Ladder_Start is called for that point. */
 void func_001217C0(MapObject *object) {
     Vector4 delta;
     int i;
@@ -23,7 +23,7 @@ void func_001217C0(MapObject *object) {
         return;
     }
     for (i = 0; i < 2; i++) {
-        KF_Vector_Subtract(&delta, (void *)object->model->get_point(object->model, i), &D_00413F80);
+        Vector_Subtract(&delta, (void *)object->model->get_point(object->model, i), &D_00413F80);
         if (delta.y < -75.0f) {
             continue;
         }
@@ -42,7 +42,7 @@ void func_001217C0(MapObject *object) {
         if (half_angle < turn) {
             continue;
         }
-        KF_Ladder_Start((ObjectReference *)object, i);
+        Ladder_Start((ObjectReference *)object, i);
         return;
     }
 }

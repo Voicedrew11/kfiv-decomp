@@ -6,7 +6,7 @@ void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0ApplyMatrix(float *, int *, float *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 int func_0018AE98(float, void *, void *, void *);
@@ -78,7 +78,7 @@ void func_001299F8(Entity *entity) {
             func_001958B8((char *)entity, unkE0->unk18, 1);
         }
     } else {
-        KF_Vector_Scale(direction, direction, 20.0f);
+        Vector_Scale(direction, direction, 20.0f);
         func_00216C48(entity->model->position, entity->model->position, direction);
     }
 }

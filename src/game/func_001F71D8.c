@@ -284,13 +284,13 @@ void func_001F71D8(void) {
             func_0019CDC0(1);
             D_005CF3C0.unk0C = (D_005CF3C0.unk0C + 1) & 1;
         } else {
-            report = KF_Pad_GetReport(0, 0);
+            report = Pad_GetReport(0, 0);
             if ((report->pressed & 0x4000) && D_0044731C != 0xFF) {
                 func_0019CDC0(0);
                 D_005CF3C0.unk21 = 1;
                 D_005CF3C0.unk18 = 1;
             } else {
-                report = KF_Pad_GetReport(0, 0);
+                report = Pad_GetReport(0, 0);
                 if ((report->pressed & 0x2000) && D_0044731C != 0xFF) {
                     func_0019CDC0(2);
                     if (D_005CF3C0.unk12 == 14) {

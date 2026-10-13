@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 
@@ -38,14 +38,14 @@ void func_0020EBB8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *origin, f32
         :
         : "r"(corner_a), "r"(corner_b), "r"(corner_c), "r"(edge_a), "r"(edge_c), "r"(normal));
     // match: the two edges are worked out again (the first one reversed), over what the VU0 code stored
-    KF_Vector_Subtract(edge_a, corner_b, corner_a);
-    KF_Vector_Subtract(edge_c, corner_c, corner_b);
+    Vector_Subtract(edge_a, corner_b, corner_a);
+    Vector_Subtract(edge_c, corner_c, corner_b);
     plane[0] = edge_a[1] * edge_c[2] - edge_a[2] * edge_c[1];
     plane[1] = edge_a[2] * edge_c[0] - edge_a[0] * edge_c[2];
     plane[2] = edge_a[0] * edge_c[1] - edge_a[1] * edge_c[0];
     plane[3] = 1.0f;
     distance = -(plane[0] * corner_a[0] + plane[1] * corner_a[1] + plane[2] * corner_a[2]);
-    KF_Vector_Scale(move, direction, length);
+    Vector_Scale(move, direction, length);
     // match: the parallel test adds the plane normal and the direction and sums the components; a dot product was meant
     func_00216C48(edge_a, plane, direction);
     facing = edge_a[0] + edge_a[1] + edge_a[2];
@@ -61,7 +61,7 @@ void func_0020EBB8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *origin, f32
         return;
     }
     COLLISION_RESULT->hit = 1;
-    KF_Vector_Scale(COLLISION_RESULT->point, move, distance);
+    Vector_Scale(COLLISION_RESULT->point, move, distance);
     func_00216C48(COLLISION_RESULT->point, COLLISION_RESULT->point, origin);
     func_00216778(COLLISION_RESULT->normal, normal);
     COLLISION_RESULT->distance = (length * distance) * (length * distance);

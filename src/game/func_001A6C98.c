@@ -4,7 +4,7 @@
 int func_001A6BF8(EffectActor *effect, float *position, AimMotion *motion);
 float func_001B0178(void *, void *);
 void func_00216778(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 
 /* Per-frame update of an effect that trails the effect it is aimed at; once that one has ended it homes on
@@ -20,7 +20,7 @@ void func_001A6C98(EffectActor *effect) {
     motion = (AimMotion *)&effect->motion;
     target_motion = (SpeedFlagMotion *)&effect->target->motion;
     if (motion->ended == 1) {
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);
@@ -37,13 +37,13 @@ void func_001A6C98(EffectActor *effect) {
         aim = (Vector4 *)&motion->target_x;
         distance = func_001B0178(&effect->model->position, aim);
         if (motion->aimed == 0) {
-            KF_Vector_Subtract(&to_aim, &effect->target->model->position, &effect->model->position);
+            Vector_Subtract(&to_aim, &effect->target->model->position, &effect->model->position);
             motion->turn = 3000.0f / distance * 8.0f;
             if (motion->turn < 8.0f) {
                 motion->turn = 8.0f;
             }
         } else {
-            KF_Vector_Subtract(&to_aim, aim, &effect->model->position);
+            Vector_Subtract(&to_aim, aim, &effect->model->position);
             motion->turn = 65535.0f;
         }
         if (effect->frame >= 13) {
@@ -53,7 +53,7 @@ void func_001A6C98(EffectActor *effect) {
         if (motion->aimed == 1) {
             reached = motion->flag25; // match: a local keeps this test apart from the one on aimed
             if (reached == 1 && distance < 50.0f) {
-                KF_Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 motion->ended = 1;
             }
         }

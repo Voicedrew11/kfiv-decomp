@@ -348,7 +348,7 @@ void func_001EF840(HandlerContext *context) {
         }
     }
     selected = D_00426110[0];
-    table = KF_Message_GetFontText(D_00446F38);
+    table = Message_GetFontText(D_00446F38);
     text_index = selected->unk0C + 0x1F5;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080;

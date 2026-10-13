@@ -5,7 +5,7 @@ extern PlayerState D_00413F80;
 
 double sqrt(double);
 void func_00216778(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void func_00216D20(void *, void *);
 s32 func_0018B150(f32 *, f32 *, f32, f32 *);
 
@@ -34,7 +34,7 @@ s32 func_0018CC60(Entity *entity) {
         bounds[2] = target[2];
         bounds[3] = position[2];
     }
-    KF_Vector_Subtract(target, target, position);
+    Vector_Subtract(target, target, position);
     distance = sqrt(target[0] * target[0] + target[1] * target[1] + target[2] * target[2]);
     func_00216D20(target, target);
     return func_0018B150(position, target, distance, bounds);

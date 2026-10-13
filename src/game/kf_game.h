@@ -13,7 +13,7 @@ typedef struct {
     s8 unk03;                       /* 0x03 */
     u8 unk04;                       /* 0x04 0 or 1 */
     s8 unk05;                       /* 0x05 nonzero: the camera moves to CameraState.unk30 */
-    char unk06;                     /* 0x06 nonzero: the player cannot run (KF_Player_Update) */
+    char unk06;                     /* 0x06 nonzero: the player cannot run (Player_Update) */
     char unk07;                     /* 0x07 */
     char pad08[0x18];
     int unk20;                      /* 0x20 index into D_0041A6F8 (TriggerTypeDef), used with bit6 */
@@ -36,7 +36,7 @@ typedef struct {
     int unk30;                      /* 0x30 */
     int unk34;                      /* 0x34 set with bit5 by func_001226E0 */
     char pad38[0x08];
-    void *unk40;                    /* 0x40 the model of the item effect that asked for unk30 = 0xC5F (KF_ItemEffect_StepRequestGameStatus) */
+    void *unk40;                    /* 0x40 the model of the item effect that asked for unk30 = 0xC5F (ItemEffect_StepRequestGameStatus) */
     int unk44;                      /* 0x44 counts down to 0; 1 when an item was just used (func_001BC2D0) */
 } GameStatus;
 
@@ -165,7 +165,7 @@ typedef struct {
     int flags;                      /* 0x288 0x200: tick every fourth frame */
 } ClockControl;
 
-/* one corner of a character's sprite as KF_TextLog_PutChar queues it: UV, RGBAQ and XYZ2 for the GS */
+/* one corner of a character's sprite as TextLog_PutChar queues it: UV, RGBAQ and XYZ2 for the GS */
 typedef struct {
     int tex_u;                      /* 0x00 in 1/16 texel */
     int tex_v;                      /* 0x04 */
@@ -185,17 +185,17 @@ typedef struct {
     TextLogVertex corners[2];       /* 0x00 top left, bottom right */
 } TextLogGlyph;
 
-/* text_log_packet: the GIF packet KF_TextLog_Flush sends, a tag and room for 37 characters */
+/* text_log_packet: the GIF packet TextLog_Flush sends, a tag and room for 37 characters */
 typedef struct {
     int tag[4];                     /* 0x00 */
     TextLogGlyph glyphs[37];        /* 0x10 */
 } TextLogPacket;
 
-/* text_log: the 0x800-byte text buffer KF_TextLog_AppendV appends to, and the window KF_TextLog_Flush prints it in */
+/* text_log: the 0x800-byte text buffer TextLog_AppendV appends to, and the window TextLog_Flush prints it in */
 typedef struct {
     TextLogGlyph *packet;           /* 0x00 where the next character goes in text_log_packet */
     char pad04[0x0C];
-    int left;                       /* 0x10 the window, in GS coordinates (KF_TextLog_SetWindow) */
+    int left;                       /* 0x10 the window, in GS coordinates (TextLog_SetWindow) */
     int top;                        /* 0x14 */
     int width;                      /* 0x18 */
     int height;                     /* 0x1C */
@@ -205,7 +205,7 @@ typedef struct {
     int green;                      /* 0x34 */
     int blue;                       /* 0x38 */
     char pad3C[0x04];
-    int font_base;                  /* 0x40 GS page of the font texture (KF_TextLog_LoadFont) */
+    int font_base;                  /* 0x40 GS page of the font texture (TextLog_LoadFont) */
     int palette_base;               /* 0x44 GS page of its palette */
     int font_buffer_width;          /* 0x48 in units of 64 pixels */
     int used;                       /* 0x4C bytes of text */
@@ -226,7 +226,7 @@ typedef struct {
    (150, then 70, then 160 of them: see func_001029A8) */
 typedef struct {
     char pad00[0x30];
-    u16 unk30;                      /* 0x30 the number in the name of its item_arm file (KF_Player_LoadArmModels) */
+    u16 unk30;                      /* 0x30 the number in the name of its item_arm file (Player_LoadArmModels) */
     char pad32[0x01];
     u8 unk33;                       /* 0x33 */
     char pad34[0x08];
@@ -557,7 +557,7 @@ typedef struct {
 typedef struct {
     u16 held;                       /* 0x00 buttons held, the stick directions among them */
     u16 pressed;                    /* 0x02 buttons that went down this frame */
-    s32 type;                       /* 0x04 what KF_Pad_GetMode says: 1 has sticks, 0xFF is no controller */
+    s32 type;                       /* 0x04 what Pad_GetMode says: 1 has sticks, 0xFF is no controller */
     u16 look_buttons;               /* 0x08 the right stick's up and down as the buttons 0x200 and 0x100 */
     u16 prev_look_buttons;          /* 0x0A */
     u16 move_buttons;               /* 0x0C the left stick as the direction buttons (0x80, 0x20, 0x10, 0x40) */

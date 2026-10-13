@@ -23,9 +23,9 @@ void func_0017AE10(Entity *entity) {
         break;
     case 2:
         if (entity->model->unkFC->unk82 == 0x14) {
-            map_object = KF_MapObject_GetById(entity->group_id, unkE0->unk7B);
+            map_object = MapObject_GetById(entity->group_id, unkE0->unk7B);
             if (map_object != NULL) {
-                KF_MapObject_Signal(map_object, 1);
+                MapObject_Signal(map_object, 1);
             }
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {

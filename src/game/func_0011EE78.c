@@ -29,11 +29,11 @@ void func_0011EE78(MapObject *object) {
         if (object->unk10 & 0x100000) {
             if (object->unk10 & 0x200000) {
                 if ((object->unk10 & 0x400000) || MODEL_CHANNEL(object->model)->param != 0) {
-                    KF_MapObject_StepAnim(object);
+                    MapObject_StepAnim(object);
                 }
             }
         } else if (object->unk08->unk38.flags & (0x8000L << 35)) {
-            KF_MapObject_StepAnim(object);
+            MapObject_StepAnim(object);
         }
     }
 }

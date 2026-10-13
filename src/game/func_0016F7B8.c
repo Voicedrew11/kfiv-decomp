@@ -35,7 +35,7 @@ void func_0016F7B8(Entity *entity) {
             func_001958B8((char *)entity, (void (*)(void))func_0016FE10, 1);
             return;
         }
-        other = KF_Entity_GetBySpawnId(entity->spawn_info->variant);
+        other = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (other != NULL && (other->flags & 3) == 3) {
             point = (f32 *)func_0010CAB8((char *)other->model, 8);
             if (point != NULL) {

@@ -33,7 +33,7 @@ int func_00173D38(A *arg0, u8 *arg1, int arg2, int arg3, void *arg4) {
     }
     q = arg1;
     for (i = 0; i < 3; i++) {
-        p = KF_Shot_Alloc();
+        p = Shot_Alloc();
         p->a = 1;
         p->x20 = 0;
         p->x22 = 0;

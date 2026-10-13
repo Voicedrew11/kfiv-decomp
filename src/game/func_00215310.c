@@ -15,7 +15,7 @@ void func_00215310(ScriptStateWaitCommand *command) {
     f32 heading;
     f32 turn;
 
-    entity = KF_Entity_GetBySpawnId(command->target_id.value);
+    entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL && (entity->flags & 0xF) == 3 && entity->unk2C != 0) {
         if (entity->unkC6 != 0) {
             return;

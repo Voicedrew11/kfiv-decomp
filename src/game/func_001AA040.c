@@ -47,7 +47,7 @@ void func_001AA040(EffectActor *effect) {
         } else if (effect->frame >= motion->end_frame) {
             func_001A9F98(effect, &motion->aim, motion->end_effect);
         } else if (effect->frame == effect->def->unkF0 && effect->def->radius_half != 0) {
-            KF_Effect_SpawnFromEffect(effect->def->radius_half, effect);
+            Effect_SpawnFromEffect(effect->def->radius_half, effect);
         }
     }
     effect->frame++;

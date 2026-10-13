@@ -3,11 +3,11 @@
 
 #include "common.h"
 
-void KF_HeldWeapon_Init(void);
-void KF_Player_LoadArmModels(void);
-void KF_Player_UpdateArmModels(void);
-void KF_WeaponTrail_Update(void);
-void KF_Player_DrawArm(void);
-void KF_WeaponTrail_PickKind(void);
+void HeldWeapon_Init(void);
+void Player_LoadArmModels(void);
+void Player_UpdateArmModels(void);
+void WeaponTrail_Update(void);
+void Player_DrawArm(void);
+void WeaponTrail_PickKind(void);
 
 #endif

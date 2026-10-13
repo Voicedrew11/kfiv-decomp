@@ -225,7 +225,7 @@ void func_001E0D98(void) {
         SET_PART_MODE(0);
     }
 
-    table = KF_Message_GetFontText(D_00446F38);
+    table = Message_GetFontText(D_00446F38);
     word.raw = 0x000A87507C107120;
     for (i = 0; i < 3; i++) {
         entry = ((s32 *)table)[info[i]->unk04 + 1];
@@ -314,10 +314,10 @@ void func_001E0D98(void) {
         }
     }
 
-    report = KF_Pad_GetReport(0, 0);
+    report = Pad_GetReport(0, 0);
     if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
         if (D_005CF2F0.unk13 != 1) {
-            report = KF_Pad_GetReport(0, 0);
+            report = Pad_GetReport(0, 0);
             if (report->held & 0x50) {
                 D_005CF2F0.unk1D = 1;
             } else {
@@ -329,7 +329,7 @@ void func_001E0D98(void) {
         D_005CF2F0.unk1D = 3;
     }
     if (D_005CF2F0.unk1D == 1) {
-        report = KF_Pad_GetReport(0, 0);
+        report = Pad_GetReport(0, 0);
         if (report->held & 0x50) {
             if (D_00446DE8 & 0x50) {
                 D_005CF2F0.unk1D = 2;
@@ -382,7 +382,7 @@ void func_001E0D98(void) {
                 break;
             }
         } else {
-            report = KF_Pad_GetReport(0, 0);
+            report = Pad_GetReport(0, 0);
             if ((report->pressed & 0x2000) && D_004472D0 != 0xFF && D_005CF2F0.unk1D == 0) {
                 func_0019CDC0(2);
                 switch (D_005CF2F0.unk13) {

@@ -13,8 +13,8 @@ void sceVu0TransMatrix(float *, float *, float *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0MulMatrix(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
 void func_00101618(void);
 void func_001095D0(void);
 void func_001095D8(void);
@@ -105,7 +105,7 @@ void func_001161A8(void) {
             }
             if (move.x != 0.0f || move.y != 0.0f || move.z != 0.0f) {
                 func_00216D20(&move, &move);
-                KF_Vector_Scale(&move.x, &move.x, 100.0f);
+                Vector_Scale(&move.x, &move.x, 100.0f);
                 func_00216C48(&position, &position, &move);
                 if (position.z < 2500.0f) {
                     position.z = 2500.0f;
@@ -114,19 +114,19 @@ void func_001161A8(void) {
                     position.z = 50000.0f;
                 }
             }
-            KF_Vector_Scale(&move.x, &D_00413F80.position.x, -1.0f);
+            Vector_Scale(&move.x, &D_00413F80.position.x, -1.0f);
             sceVu0TransMatrix(world_view, D_00431AF0, &move.x);
             sceVu0RotMatrixY(world_view, world_view, -rotation.y);
             sceVu0RotMatrixX(world_view, world_view, -rotation.x);
             sceVu0TransMatrix(world_view, world_view, &D_00413F80.position.x);
-            KF_Vector_Subtract(&move, &D_00413F80, &position);
-            KF_Vector_Scale(&move.x, &move.x, -1.0f);
+            Vector_Subtract(&move, &D_00413F80, &position);
+            Vector_Scale(&move.x, &move.x, -1.0f);
             sceVu0TransMatrix(world_view, world_view, &move.x);
             sceVu0MulMatrix(world_screen, view_screen, world_view);
             func_0010A7E0(world_screen);
             func_001095D0();
             func_00116610();
-            KF_Message_Update();
+            Message_Update();
             func_001095D8();
             func_00101618();
             func_00109800();

@@ -57,12 +57,12 @@ void func_00117F98(void) {
     PLAYER_STATUS_BITS(&D_00413F80)->bit34 = FALSE;
     D_0038CD20[D_00446770 == 0].unk00 = 0;
     func_00115878(D_00446770 == 0);
-    KF_Effect_FreeForMap(D_00446770 == 0);
-    KF_MapObject_UnloadMap(D_00446770 == 0);
-    KF_Entity_FreeAllInGroup(D_00446770 == 0);
-    KF_Entity_ClearMapSlot(D_00446770 == 0);
-    KF_Gold_UnlinkMap(D_00446770 == 0);
+    Effect_FreeForMap(D_00446770 == 0);
+    MapObject_UnloadMap(D_00446770 == 0);
+    Entity_FreeAllInGroup(D_00446770 == 0);
+    Entity_ClearMapSlot(D_00446770 == 0);
+    Gold_UnlinkMap(D_00446770 == 0);
     func_001C8938(D_00446770 == 0);
-    KF_LinkedPoint_ReleaseByKind(D_00446770 == 0);
+    LinkedPoint_ReleaseByKind(D_00446770 == 0);
     func_001A15F8();
 }

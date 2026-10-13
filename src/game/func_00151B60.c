@@ -17,7 +17,7 @@ void func_00151B60(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit28 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         if (entity->params->unkC6 != 0 && entity->params->unkC6 != 0xFFFF) {
-            KF_Effect_FreeForOwner(entity);
+            Effect_FreeForOwner(entity);
         }
         entity->action_step++;
     case 1:

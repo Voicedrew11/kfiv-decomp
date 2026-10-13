@@ -33,6 +33,6 @@ void func_00195EF8(char **model, int effect_id, int point) {
         }
         angles[1] = yaw;
         angles[2] = angles[3] = 0.0f;
-        KF_Effect_StartSpawner(effect_id, from, angles, model);
+        Effect_StartSpawner(effect_id, from, angles, model);
     }
 }

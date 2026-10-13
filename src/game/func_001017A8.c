@@ -83,7 +83,7 @@ void func_001017A8(void) {
     }
     func_001B5778();
     if (D_0038CC50.bit14 && D_00413F80.unk254 >= 2) {
-        KF_Player_LoadArmModels();
+        Player_LoadArmModels();
         D_0038CC50.bit14 = FALSE;
     }
     if (D_0038CC50.bit3) {
@@ -129,9 +129,9 @@ void func_001017A8(void) {
         func_001095E0();
     }
     if (menu_ran) {
-        KF_Player_LoadArmModels();
+        Player_LoadArmModels();
         if (D_0038CC50.unk28 != 0) {
-            KF_Player_CastMagic(D_0038CC50.unk28);
+            Player_CastMagic(D_0038CC50.unk28);
             D_0038CC50.unk28 = 0;
         }
         if (D_00413F80.unk3C != D_00414280.unk3C) {

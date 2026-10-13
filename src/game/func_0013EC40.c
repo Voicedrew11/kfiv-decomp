@@ -33,7 +33,7 @@ void func_0013EC40(void *arg0, int arg1) {
     Sub *s = (Sub *) ((char *) arg0 + 0xE0);
     u32 temp_hi;
 
-    t = KF_Entity_GetBySpawnIdForMap(a->byteD5, 0x29);
+    t = Entity_GetBySpawnIdForMap(a->byteD5, 0x29);
     if (t != 0 && (int) t->bits & 1) {
         if ((t->bits & 0xE) != 2) {
             void (*fp)(void *, int) = func_0013F0D8;

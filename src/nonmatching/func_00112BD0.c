@@ -126,7 +126,7 @@ float cosf(float);
 float sinf(float);
 void func_00116F90(void);
 void func_001175F0(void);
-void KF_Memory_CopyWords(s32 *, s32 *, u32);
+void Memory_CopyWords(s32 *, s32 *, u32);
 int func_00116C08(int, int, int, int);
 void func_00112018(ModelInstance *);
 void func_00216778(void *, void *);
@@ -243,10 +243,10 @@ void func_00112BD0(void) {
     }
 
     if (D_0038CD20[0].unk00 != 0) {
-        KF_Memory_CopyWords((s32 *)D_0038A1B0.unk290[0], (s32 *)D_0038CD20[0].unk0C, 0x100);
+        Memory_CopyWords((s32 *)D_0038A1B0.unk290[0], (s32 *)D_0038CD20[0].unk0C, 0x100);
     }
     if (D_0038CD20[1].unk00 != 0) {
-        KF_Memory_CopyWords((s32 *)D_0038A1B0.unk290[1], (s32 *)D_0038CD20[1].unk0C, 0x100);
+        Memory_CopyWords((s32 *)D_0038A1B0.unk290[1], (s32 *)D_0038CD20[1].unk0C, 0x100);
     }
     for (i = 0, slot = D_0038CD20; i < 2; i++, slot++) {
         if (slot->unk00 != 0) {

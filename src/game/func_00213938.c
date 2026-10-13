@@ -8,6 +8,6 @@ extern PlayerState D_00413F80;
 void func_00213938(ScriptObjectCommand *command) {
     PlayerState *player = &D_00413F80;
 
-    KF_Effect_StartSpawner(command->object_id.value, &player->position, &player->rotation, player);
+    Effect_StartSpawner(command->object_id.value, &player->position, &player->rotation, player);
     command->active = 0;
 }

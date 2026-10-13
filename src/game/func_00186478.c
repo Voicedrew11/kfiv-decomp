@@ -11,7 +11,7 @@ void func_001862F0(Entity *, s32, s32, s32);
 void func_001C0A88(void *, void *, void *, void *);
 void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 void func_00216C48(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void sceVu0Normalize(float *, float *);
 
 /* tests the entity's upright capsule against the triangle at `point` and pushes `position`
@@ -26,7 +26,7 @@ void sceVu0Normalize(float *, float *);
         offset[2] = position[2] - COLLISION_RESULT->point[2];                                      \
         sceVu0Normalize(offset, offset);                                                           \
         func_00216C48(normal_sum, normal_sum, offset);                                             \
-        KF_Vector_Scale(offset, offset, entity->unk30);                                            \
+        Vector_Scale(offset, offset, entity->unk30);                                            \
         position[0] = COLLISION_RESULT->point[0] + offset[0];                                      \
         position[2] = COLLISION_RESULT->point[2] + offset[2];                                      \
     }

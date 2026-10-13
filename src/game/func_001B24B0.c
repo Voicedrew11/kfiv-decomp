@@ -4,7 +4,7 @@
 extern CollisionListPick2 D_00446918[];
 extern const VuVector4 D_0043F200;
 
-void KF_Vu0_LoadMatrix(void *);
+void Vu0_LoadMatrix(void *);
 u32 func_001124E0(int, u32, u32);
 void func_0020DF38(f32 *, f32 *, f32 *, f32 *, f32);
 
@@ -32,7 +32,7 @@ int func_001B24B0(ModelInstance *model, void *request, f32 reach) {
     if (((CollisionMesh *)mesh)->unk0C < 4) {
         return;
     }
-    KF_Vu0_LoadMatrix(model->unk40);
+    Vu0_LoadMatrix(model->unk40);
     count = ((CollisionMesh *)mesh)->unk0C;
     local = (Vector4 *)((CollisionMesh *)mesh)->unk08;
     i = count / 3;

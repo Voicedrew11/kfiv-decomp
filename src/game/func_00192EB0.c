@@ -6,8 +6,8 @@ void func_0018D670(Entity *, s32, s32, s32);
 void func_0018D8B8(Entity *, s32, s32, s32);
 void func_00216778(void *, void *);
 void sceVu0MulVector(void *, void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 float sinf(float);
 float cosf(float);
 
@@ -73,10 +73,10 @@ s32 func_00192EB0(Entity *entity, s32 mode) {
     func_00216778(turned, &root->unk50);
     func_00216778(moved, root->unk40);
     func_00193378(ENTITY_MODEL(entity), step, ENTITY_FLAG_BITS(entity)->bit15);
-    KF_Vector_Subtract(turned, &root->unk50, turned);
-    KF_Vector_Subtract(moved, root->unk40, moved);
+    Vector_Subtract(turned, &root->unk50, turned);
+    Vector_Subtract(moved, root->unk40, moved);
     sceVu0MulVector(moved, moved, &ENTITY_MODEL(entity)->unkE0);
-    KF_Vector_Scale(moved, moved, ENTITY_PARAMS_MOTION_SCALE(entity->params));
+    Vector_Scale(moved, moved, ENTITY_PARAMS_MOTION_SCALE(entity->params));
     if (ENTITY_MODEL(entity)->unkE0 < 0.0f) {
         turned[1] = -turned[1];
     }

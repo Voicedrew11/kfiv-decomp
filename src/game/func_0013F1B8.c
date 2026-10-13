@@ -69,9 +69,9 @@ void func_0013F1B8(Entity *entity, s32 unknown) {
             post[2] = 2550.0f;
         } else {
             post[2] = 3050.0f;
-            other = KF_Entity_GetBySpawnId(0x28);
+            other = Entity_GetBySpawnId(0x28);
             if (ENTITY_FLAG_BITS(other)->bits2 == 0) {
-                other = KF_Entity_GetBySpawnId(0x28);
+                other = Entity_GetBySpawnId(0x28);
                 if (ENTITY_FLAG_BITS(other)->bit1) {
                     margin = entity->radius + entity->radius;
                 }

@@ -14,7 +14,7 @@ extern f32 D_004323E0[16];
 extern f32 D_00432620[16];
 
 /* Brings an angle back into -pi..pi. */
-static inline f32 KF_Angle_Wrap(f32 angle) {
+static inline f32 Angle_Wrap(f32 angle) {
     angle += 3.1415927f;
     return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
 }
@@ -26,8 +26,8 @@ void func_0020BD48(ModelInstance *model) {
 
     memset(offset, 0, sizeof(offset));
     offset[2] = 16.0f;
-    sceVu0RotMatrixX(matrix, D_00431AF0, KF_Angle_Wrap(model->rotation.x));
-    sceVu0RotMatrixZ(matrix, matrix, KF_Angle_Wrap(model->rotation.z));
+    sceVu0RotMatrixX(matrix, D_00431AF0, Angle_Wrap(model->rotation.x));
+    sceVu0RotMatrixZ(matrix, matrix, Angle_Wrap(model->rotation.z));
     matrix[4] = matrix[5] = matrix[6] = matrix[7] = 0.0f;
     sceVu0RotMatrixX(matrix, matrix, -1.5707964f);
     sceVu0TransMatrix(matrix, matrix, offset);

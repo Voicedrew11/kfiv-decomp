@@ -15,7 +15,7 @@ void func_00212388(ScriptCallCommand *command) {
     int map_slot;
     int entry_index;
 
-    entity = KF_Entity_GetBySpawnId(command->target_id.value);
+    entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
         map_slot = entity->group_id;
         entry_index = func_00103548(

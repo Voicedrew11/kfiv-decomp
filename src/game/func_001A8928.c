@@ -36,9 +36,9 @@ void func_001A8928(EffectActor *effect) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     }
     if (effect->frame >= motion->end_frame) {
-        KF_Effect_Spawn(effect->def->end_effect, &motion->unk10, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+        Effect_Spawn(effect->def->end_effect, &motion->unk10, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         func_001A88A8(effect);
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
     } else {
         hit = func_001AF358(effect, &motion->unk28);
         if (hit != 0) {
@@ -59,7 +59,7 @@ void func_001A8928(EffectActor *effect) {
                     sceVu0RotMatrixY(rotation_matrix, rotation_matrix, effect->model->rotation.y);
                     sceVu0ApplyMatrix(&forward, rotation_matrix, &forward);
                     func_001AF5B0(&angles, &forward);
-                    KF_Effect_Spawn(effect->def->unkF0, &effect->model->position, &angles, effect->owner_entity, effect->effect_param, effect->owner);
+                    Effect_Spawn(effect->def->unkF0, &effect->model->position, &angles, effect->owner_entity, effect->effect_param, effect->owner);
                     next_angle = turn_angle + effect->def->unkE0;
                     next_angle -= (float)(int)(next_angle / TWO_PI) * TWO_PI;
                     if (PI < next_angle) {
@@ -69,7 +69,7 @@ void func_001A8928(EffectActor *effect) {
                     }
                     turn_angle = next_angle;
                 }
-                KF_Effect_Free(effect);
+                Effect_Free(effect);
             }
         }
         effect->frame += 1;

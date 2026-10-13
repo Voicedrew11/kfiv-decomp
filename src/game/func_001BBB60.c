@@ -22,7 +22,7 @@ void func_001BBB60(int amount) {
             D_00413F80.unk24 += D_0043E130[level].unk05;
             D_00413F80.unk28 += D_0043E130[level].unk06;
             D_00413F80.unk2C += D_0043E130[level].unk07;
-            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x28);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x28);
         }
     }
 }

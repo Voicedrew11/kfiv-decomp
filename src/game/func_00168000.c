@@ -14,7 +14,7 @@ void func_00168000(Entity *entity) {
         if (!((unkE0->unk6A >> i) & 1)) {
             if (rand() % 100 < remaining * 100 / slots_left) {
                 s32 other_id = i + 10;
-                Entity *other = KF_Entity_GetBySpawnId(other_id);
+                Entity *other = Entity_GetBySpawnId(other_id);
                 if (other != NULL && ((s32)other->flags & 1)) {
                     func_0018DC40((char *)other);
                     unkE0->unk7B = other_id;

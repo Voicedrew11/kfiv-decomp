@@ -9,7 +9,7 @@ void sceVu0TransMatrix(float *, float *, float *);
 extern f32 D_00431AF0[16];
 
 /* Brings an angle back into -pi..pi. */
-static inline f32 KF_Angle_Wrap(f32 angle) {
+static inline f32 Angle_Wrap(f32 angle) {
     angle += 3.1415927f;
     return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
 }
@@ -22,8 +22,8 @@ void func_0020B8B0(ModelInstance *model, ModelPart *part, ModelPart *dest) {
     matrix[0] = part->unk60[0];
     matrix[5] = part->unk60[1];
     matrix[10] = part->unk60[2];
-    sceVu0RotMatrixX(matrix, matrix, KF_Angle_Wrap(part->unk50));
-    sceVu0RotMatrixZ(matrix, matrix, KF_Angle_Wrap(part->unk58));
-    sceVu0RotMatrixY(matrix, matrix, KF_Angle_Wrap(part->unk54));
+    sceVu0RotMatrixX(matrix, matrix, Angle_Wrap(part->unk50));
+    sceVu0RotMatrixZ(matrix, matrix, Angle_Wrap(part->unk58));
+    sceVu0RotMatrixY(matrix, matrix, Angle_Wrap(part->unk54));
     sceVu0TransMatrix(matrix, matrix, part->unk40);
 }

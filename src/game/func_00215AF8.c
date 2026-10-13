@@ -10,7 +10,7 @@ void func_00215AF8(ScriptFacingCommand *command) {
     Entity *entity;
     f32 angle;
 
-    entity = KF_Entity_GetBySpawnId(command->target_id.value);
+    entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
         angle = func_0019B838(entity->unk68 - entity->model->unkD0[1]);
         angle = ABS(angle);

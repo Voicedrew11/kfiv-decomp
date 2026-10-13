@@ -9,8 +9,8 @@ extern s32 D_00446998[2];
 extern const f32 D_004469A0[];
 
 float sqrtf(float);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void func_00216778(void *, void *);
 int func_001C2D08(void *);
 void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
@@ -39,9 +39,9 @@ void func_001C1C80(f32 *position, f32 *target) {
     s32 points_left;
     s32 forward;
 
-    KF_Vector_Subtract(direction, target, position);
+    Vector_Subtract(direction, target, position);
     length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
-    KF_Vector_Scale(direction, direction, 1.0f / length);
+    Vector_Scale(direction, direction, 1.0f / length);
     best.hit = 0;
     COLLISION_RESULT->hit = 0;
     best.distance = D_004469A0[0];

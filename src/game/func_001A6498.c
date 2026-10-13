@@ -19,5 +19,5 @@ void func_001A6498(EffectActor *effect, int effect_id, float angle) {
     sceVu0RotMatrixY(rotation_matrix, D_00431AF0, effect->model->rotation.y);
     sceVu0ApplyMatrix(&spawn_position.x, rotation_matrix, &offset.x);
     func_00216C48(&spawn_position, &spawn_position, &effect->model->position);
-    KF_Effect_SpawnFromEffectAt(effect_id, effect, &spawn_position);
+    Effect_SpawnFromEffectAt(effect_id, effect, &spawn_position);
 }

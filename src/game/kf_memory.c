@@ -14,7 +14,7 @@ extern int D_00446F24;
 extern int D_00446F28;
 extern int D_00446F2C;
 
-/* the areas, as KF_Memory_PlaceAreas lays them out */
+/* the areas, as Memory_PlaceAreas lays them out */
 extern MapSlotMemory D_004321F0[2];
 extern MapSlotMemory *D_00446F08;
 extern char *D_00446F50;
@@ -31,8 +31,8 @@ extern char *D_00446F74;
 static char memory_arena[MEMORY_ARENA_SIZE]; /* 0x5FAF80 every area lies in it */
 
 /* Clears the arena, sets the size of each area and lays them out. */
-void KF_Memory_Init(void) {
-    KF_Memory_ClearWords(memory_arena, sizeof(memory_arena) / 4);
+void Memory_Init(void) {
+    Memory_ClearWords(memory_arena, sizeof(memory_arena) / 4);
     D_00446F0C = 0x280000;
     D_00446F10 = 0x1D0000;
     D_00446F18 = 0xA0000;
@@ -42,11 +42,11 @@ void KF_Memory_Init(void) {
     D_00446F24 = 0x20000;
     D_00446F28 = 0x80000;
     D_00446F2C = 0x60000;
-    KF_Memory_PlaceAreas();
+    Memory_PlaceAreas();
 }
 
 /* Clears byte_count bytes, eight at a time. */
-void KF_Memory_Clear64(char *dest, u32 byte_count) {
+void Memory_Clear64(char *dest, u32 byte_count) {
     int remaining = byte_count >> 3;
 
     while (remaining--) {
@@ -60,7 +60,7 @@ void KF_Memory_Clear64(char *dest, u32 byte_count) {
 }
 
 /* Clears word_count 32-bit words. */
-void KF_Memory_ClearWords(void *dest, u32 word_count) {
+void Memory_ClearWords(void *dest, u32 word_count) {
     s32 *words = dest;
 
     while (word_count--) {
@@ -69,14 +69,14 @@ void KF_Memory_ClearWords(void *dest, u32 word_count) {
 }
 
 /* Copies word_count 32-bit words. */
-void KF_Memory_CopyWords(s32 *dest, s32 *src, u32 word_count) {
+void Memory_CopyWords(s32 *dest, s32 *src, u32 word_count) {
     while (word_count--) {
         *dest++ = *src++;
     }
 }
 
 /* Copies byte_count bytes, sixteen at a time; note src comes first. */
-void KF_Memory_Copy128(char *src, char *dest, u32 byte_count) {
+void Memory_Copy128(char *src, char *dest, u32 byte_count) {
     int remaining = byte_count >> 4;
 
     while (remaining--) {
@@ -90,8 +90,8 @@ void KF_Memory_Copy128(char *src, char *dest, u32 byte_count) {
     }
 }
 
-/* Places the areas one after another in the arena, using the sizes KF_Memory_Init set. */
-void KF_Memory_PlaceAreas(void) {
+/* Places the areas one after another in the arena, using the sizes Memory_Init set. */
+void Memory_PlaceAreas(void) {
     char *next_area = memory_arena;
 
     D_00446F08 = D_004321F0;

@@ -26,14 +26,14 @@ void func_0011EFC8(MapObject *object) {
                 object->model->unk146 = alpha;
             }
         }
-        KF_MapObject_StepAnim(object);
+        MapObject_StepAnim(object);
     } else {
         if (!(object->unk04->unk68 & 0x20000)) {
-            other = KF_MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk38.bytes[3]);
+            other = MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk38.bytes[3]);
             if (other != NULL) {
-                KF_MapObject_Activate(other);
+                MapObject_Activate(other);
             }
         }
-        KF_MapObject_Deactivate(object);
+        MapObject_Deactivate(object);
     }
 }

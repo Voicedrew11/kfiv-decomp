@@ -33,28 +33,28 @@ void func_001A5348(EffectActor *effect) {
     if (hit & 8) {
         if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
             if (COLLISION_RESULT->unk18 == 5) {
-                KF_Effect_Spawn(0x16, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Spawn(0x16, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             }
-            KF_Effect_Spawn(0x14, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+            Effect_Spawn(0x14, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         } else {
             func_00216778(&position, &effect->model->position);
             position.y -= effect->def->unkDC;
             if (func_001C0E40(effect->def->unkDC + effect->def->unkDC, &position) == 1) {
                 effect->model->position.y = COLLISION_RESULT->point[1];
-                KF_Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             }
         }
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
     } else if (hit != 0) {
         if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
             if (COLLISION_RESULT->unk18 == 5) {
-                KF_Effect_Spawn(0x16, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Spawn(0x16, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             }
-            KF_Effect_Spawn(0x14, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+            Effect_Spawn(0x14, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         } else {
-            KF_Effect_Spawn(effect->def->radius_half, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+            Effect_Spawn(effect->def->radius_half, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         }
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
     }
     effect->frame += 1;
 }

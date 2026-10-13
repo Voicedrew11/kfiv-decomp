@@ -8,7 +8,7 @@ extern int D_00446770;
 void func_00212C18(ScriptCallCommand *command) {
     MapObject *object;
 
-    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(D_00446770, command->target_id.value);
     if (object != NULL) {
         func_00211CF8(&command->first, MAP_OBJECT_BITS(object)->bit17);
     } else {

@@ -88,25 +88,25 @@ void func_00156E88(Entity *entity) {
             switch (unkE0->unk7A) {
             case 1:
                 if (entity->group_id == D_00446770) {
-                    map_object = KF_MapObject_GetById(entity->group_id, 0xA2);
+                    map_object = MapObject_GetById(entity->group_id, 0xA2);
                     if (map_object != NULL) {
-                        KF_MapObject_Break(map_object);
+                        MapObject_Break(map_object);
                     }
                 }
                 break;
             case 2:
                 if (entity->group_id == D_00446770) {
-                    map_object = KF_MapObject_GetById(entity->group_id, 0xA0);
+                    map_object = MapObject_GetById(entity->group_id, 0xA0);
                     if (map_object != NULL) {
-                        KF_MapObject_Break(map_object);
+                        MapObject_Break(map_object);
                     }
                 }
                 break;
             case 3:
                 if (entity->group_id == D_00446770) {
-                    map_object = KF_MapObject_GetById(entity->group_id, 0xA1);
+                    map_object = MapObject_GetById(entity->group_id, 0xA1);
                     if (map_object != NULL) {
-                        KF_MapObject_Break(map_object);
+                        MapObject_Break(map_object);
                     }
                 }
                 break;

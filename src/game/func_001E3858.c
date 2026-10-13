@@ -177,7 +177,7 @@ void func_001E3858(void) {
         func_001F9740(1);
         func_001FAFB0();
     } else {
-        report = KF_Pad_GetReport(0, 0);
+        report = Pad_GetReport(0, 0);
         if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
             func_0019CDC0(0);
             D_005CF2F0.unk11 = 1;

@@ -4,8 +4,8 @@ extern f32 D_004323E0[16];
 
 void func_00216B48(void *, void *, void *);
 void func_00216C48(void *, void *, void *);
-void KF_Vu0_LoadMatrix(void *);
-void KF_Vu0_ProjectToScreen(int *, void *);
+void Vu0_LoadMatrix(void *);
+void Vu0_ProjectToScreen(int *, void *);
 
 /* Gives every vertex of a model drawn with its own texture the texture coordinates of the place
    it lands on the screen (0 to 1 across the screen). */
@@ -58,14 +58,14 @@ void func_0010CB98(void *model_arg) {
             for (; k < vertex_count; k++, vertex++) {
                 if (last != vertex->on_parent) {
                     if (vertex->on_parent != 0) {
-                        KF_Vu0_LoadMatrix(parent_matrix);
+                        Vu0_LoadMatrix(parent_matrix);
                     } else {
-                        KF_Vu0_LoadMatrix(matrix);
+                        Vu0_LoadMatrix(matrix);
                     }
                     last = vertex->on_parent;
                 }
                 func_00216C48(MODEL_PROJECT_SCRATCH->point, vertex->position, vertex->offset);
-                KF_Vu0_ProjectToScreen(MODEL_PROJECT_SCRATCH->screen, MODEL_PROJECT_SCRATCH->point);
+                Vu0_ProjectToScreen(MODEL_PROJECT_SCRATCH->screen, MODEL_PROJECT_SCRATCH->point);
                 vertex->tex_s = (*&MODEL_PROJECT_SCRATCH->screen[0] - 0x6C00) / 10240.0f;
                 vertex->tex_t = (*&MODEL_PROJECT_SCRATCH->screen[1] - 0x7200) / 7168.0f;
             }

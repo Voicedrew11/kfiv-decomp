@@ -14,7 +14,7 @@ static inline int debug_pad_modifier(int mask) {
 
 /* Debug editor for an int: left and right change *value by step (times 10, 100 or 1000
    with the modifier buttons), clamped to [minimum, maximum]. */
-void KF_Debug_EditInt(s32 *value, s32 minimum, s32 maximum, s32 step) {
+void Debug_EditInt(s32 *value, s32 minimum, s32 maximum, s32 step) {
     if (debug_pad_step(0x80) && debug_pad_modifier(0x3000) == 0x3000) {
         *value -= step * 1000;
     } else if (debug_pad_step(0x20) && debug_pad_modifier(0x3000) == 0x3000) {
@@ -40,8 +40,8 @@ void KF_Debug_EditInt(s32 *value, s32 minimum, s32 maximum, s32 step) {
     }
 }
 
-/* KF_Debug_EditInt for a u16. */
-void KF_Debug_EditU16(u16 *value, u16 minimum, u16 maximum, u16 step) {
+/* Debug_EditInt for a u16. */
+void Debug_EditU16(u16 *value, u16 minimum, u16 maximum, u16 step) {
     if (debug_pad_step(0x80) && debug_pad_modifier(0x3000) == 0x3000) {
         *value -= step * 1000;
     } else if (debug_pad_step(0x20) && debug_pad_modifier(0x3000) == 0x3000) {
@@ -67,8 +67,8 @@ void KF_Debug_EditU16(u16 *value, u16 minimum, u16 maximum, u16 step) {
     }
 }
 
-/* KF_Debug_EditInt for a byte. */
-void KF_Debug_EditU8(u8 *value, u8 minimum, u8 maximum, u8 step) {
+/* Debug_EditInt for a byte. */
+void Debug_EditU8(u8 *value, u8 minimum, u8 maximum, u8 step) {
     if (debug_pad_step(0x80) && debug_pad_modifier(0x3000) == 0x3000) {
         *value -= step * 1000;
     } else if (debug_pad_step(0x20) && debug_pad_modifier(0x3000) == 0x3000) {
@@ -94,8 +94,8 @@ void KF_Debug_EditU8(u8 *value, u8 minimum, u8 maximum, u8 step) {
     }
 }
 
-/* KF_Debug_EditInt for a float. */
-void KF_Debug_EditFloat(f32 *value, f32 minimum, f32 maximum, f32 step) {
+/* Debug_EditInt for a float. */
+void Debug_EditFloat(f32 *value, f32 minimum, f32 maximum, f32 step) {
     if (debug_pad_step(0x80) && debug_pad_modifier(0x3000) == 0x3000) {
         *value -= step * 1000.0f;
     } else if (debug_pad_step(0x20) && debug_pad_modifier(0x3000) == 0x3000) {

@@ -51,7 +51,7 @@ s32 func_001E6668(HandlerContext *context) {
 
     func_001095E0();
     func_001095D0();
-    func_0010B238((TextureTableHeader *)KF_Message_GetFontTexture(D_00446F38));
+    func_0010B238((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
     func_00109E88();
     func_001095D8();
     func_001096E8();

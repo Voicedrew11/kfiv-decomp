@@ -13,5 +13,5 @@ int func_001B4F30(u16 effect_id, void *shot, void *from, void *angles, void *ent
     if (entry->unk102 != 0) {
         return 0;
     }
-    return KF_Effect_Spawn(entry->unk100, from, angles, entity, effect_id, shot);
+    return Effect_Spawn(entry->unk100, from, angles, entity, effect_id, shot);
 }

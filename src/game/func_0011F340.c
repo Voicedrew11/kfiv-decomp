@@ -38,7 +38,7 @@ void func_0011F340(MapObject *object) {
                 if (message == 0) {
                     message = 0x3E;
                 }
-                KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
+                Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
                 work->timer = 0x2D;
                 return;
             }

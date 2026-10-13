@@ -5,8 +5,8 @@
 float func_0019B838(float);
 int func_001BC148(int);
 void func_00216778(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 extern PlayerState D_00413F80;
 extern u16 D_00413DAA[];
 extern ItemNode *D_004469D8;
@@ -28,17 +28,17 @@ void func_001C9FB0(void) {
         if (!func_001BC148((s16)D_004469D8->item)) {
             func_00216778(D_005B60E0, &D_00413F80);
             D_005B60E0[1] -= 115.0f;
-            KF_Vector_Subtract(delta, D_005B60E0, &D_004469D8->model->position);
-            KF_Vector_Scale(D_005B60F0, delta, 0.06666667f);
+            Vector_Subtract(delta, D_005B60E0, &D_004469D8->model->position);
+            Vector_Scale(D_005B60F0, delta, 0.06666667f);
             D_004471B0 = 15;
             D_004471A4++;
             return;
         }
-        KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x1E);
+        Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x1E);
     } else if (!(D_00413DAA[0] & 0x2000) || D_00447198 != 0) {
         return;
     }
-    KF_Vector_Scale(D_005B60F0, D_005B60F0, -1.0f);
+    Vector_Scale(D_005B60F0, D_005B60F0, -1.0f);
     D_004471B0 = D_004471AC;
     D_004471A4 += 2;
 }

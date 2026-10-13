@@ -19,5 +19,5 @@ void func_001A5CB8(EffectActor *actor) {
             }
         }
     }
-    KF_Effect_Free(actor);
+    Effect_Free(actor);
 }

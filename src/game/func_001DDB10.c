@@ -257,7 +257,7 @@ void func_001DDB10(HandlerContext *context) {
     } else {
         node = D_00447220;
     }
-    texts = KF_Message_GetFontText(D_00446F38);
+    texts = Message_GetFontText(D_00446F38);
     position.raw = 0x000A875083207080;
     text_index = node->unk0C + 0x1F5;
     text_offset = ((s32 *)texts)[text_index];

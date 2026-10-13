@@ -7,16 +7,16 @@ void func_001206F0(MapObject *object) {
 
     if (channel->index == 0) {
         if (channel->param != 0) {
-            KF_MapObject_StepAnim(object);
+            MapObject_StepAnim(object);
         } else {
-            KF_MapObject_StartAnim(object, 5);
+            MapObject_StartAnim(object, 5);
         }
     } else {
         if (channel->param == 0) {
-            KF_MapObject_StartAnim(object, 4);
+            MapObject_StartAnim(object, 4);
             MAP_OBJECT_BYTES(object)->step = 1;
         } else {
-            KF_MapObject_StepAnim(object);
+            MapObject_StepAnim(object);
         }
     }
 }

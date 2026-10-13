@@ -14,7 +14,7 @@ void func_00213978(ScriptPointCommand *command) {
     VuVector4 angles = (VuVector4){ command->to_x.value, command->to_y.value, command->to_z.value, 1.0f };
     PlayerShot *shot;
 
-    shot = KF_Shot_Alloc();
+    shot = Shot_Alloc();
     shot->unk00 = 1;
     shot->unk20 = 0;
     shot->unk22 = 0;

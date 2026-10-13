@@ -12,9 +12,9 @@ void func_00121BE8(MapObject *object) {
         }
     } else {
         if (MODEL_CHANNEL(object->model)->param != 0) {
-            KF_MapObject_StepAnim(object);
+            MapObject_StepAnim(object);
         } else {
-            KF_MapObject_StartAnim(object, 5);
+            MapObject_StartAnim(object, 5);
             MAP_OBJECT_BYTES(object)->step = 3;
             object->work[0] = MAP_OBJECT_WORDS(object)->unk46;
         }

@@ -24,5 +24,5 @@ void func_001A7A48(EffectActor *effect) {
         }
         other = (EffectActor *)((char *)other + EFFECT_POOL_STRIDE);
     }
-    KF_Effect_Spawn(0xDF, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+    Effect_Spawn(0xDF, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
 }

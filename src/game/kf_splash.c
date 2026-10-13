@@ -44,44 +44,44 @@ static s32 splash_fade_out_counter;   /* 0x447384 */
 
 static SplashSprite splash_sprite;    /* 0x5F9B00 GS sprite packet for the splash image */
 
-void KF_Splash_StateIdle(void);
-void KF_Splash_StateStartDelay(void);
-void KF_Splash_StateLoadImage(void);
-void KF_Splash_StateFadeIn(void);
-void KF_Splash_StateHold(void);
-void KF_Splash_StateFadeOut(void);
-void KF_Splash_StateClose(void);
+void Splash_StateIdle(void);
+void Splash_StateStartDelay(void);
+void Splash_StateLoadImage(void);
+void Splash_StateFadeIn(void);
+void Splash_StateHold(void);
+void Splash_StateFadeOut(void);
+void Splash_StateClose(void);
 
 static void (*splash_state_table[8])(void) = { /* 0x42C008 */
-    KF_Splash_StateIdle,
-    KF_Splash_StateStartDelay,
-    KF_Splash_StateLoadImage,
-    KF_Splash_StateFadeIn,
-    KF_Splash_StateHold,
-    KF_Splash_StateFadeOut,
-    KF_Splash_StateClose,
+    Splash_StateIdle,
+    Splash_StateStartDelay,
+    Splash_StateLoadImage,
+    Splash_StateFadeIn,
+    Splash_StateHold,
+    Splash_StateFadeOut,
+    Splash_StateClose,
     NULL,
 };
 
 /* Clears splash state (idle, no image id, file not open). */
-void KF_Splash_Reset(void) {
+void Splash_Reset(void) {
     splash_state = 0;
     splash_image_id = 0;
     splash_image_file_open = 0;
 }
 
 /* Returns the splash state (0 = idle). */
-int KF_Splash_GetState(void) {
+int Splash_GetState(void) {
     return splash_state;
 }
 
 /* Starts splash image splash_id with default hold, fade and skip settings. */
-int KF_Splash_Start(int splash_id) {
-    return KF_Splash_Begin(splash_id, -1, 0, 0x10, 0x10);
+int Splash_Start(int splash_id) {
+    return Splash_Begin(splash_id, -1, 0, 0x10, 0x10);
 }
 
 /* Starts splash image splash_id: hold_frames (<0 = forever), skippable, fade-in and fade-out frames. Returns 1 if started. */
-int KF_Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_frames, int fade_out_frames) {
+int Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_frames, int fade_out_frames) {
     int skip_value;
     int fade_in;
     int fade_out;
@@ -117,7 +117,7 @@ int KF_Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_f
 }
 
 /* Aborts the splash image: jumps to the close state (6) with a short end delay. */
-void KF_Splash_Abort(void) {
+void Splash_Abort(void) {
     if (splash_state != 0) {
         splash_state = 6;
         splash_end_delay = 2;
@@ -125,16 +125,16 @@ void KF_Splash_Abort(void) {
 }
 
 /* Run the handler for the splash image's current state. */
-void KF_Splash_Update(void) {
+void Splash_Update(void) {
     splash_state_table[splash_state]();
 }
 
 /* State 0: idle, no work. */
-void KF_Splash_StateIdle(void) {
+void Splash_StateIdle(void) {
 }
 
 /* State 1: count down the start delay, then advance to loading the image. */
-void KF_Splash_StateStartDelay(void) {
+void Splash_StateStartDelay(void) {
     func_001B9478();
     splash_start_delay -= 1;
     if (splash_start_delay < 0) {
@@ -143,7 +143,7 @@ void KF_Splash_StateStartDelay(void) {
 }
 
 /* Loads the splash image file into D_00249680 and sets up its display. */
-void KF_Splash_StateLoadImage(void) {
+void Splash_StateLoadImage(void) {
     char image_file_name[256];
     int image_fd;
 
@@ -162,7 +162,7 @@ void KF_Splash_StateLoadImage(void) {
         func_001025C0(image_fd, &D_00249680, 0x80000);
         func_001024B0(image_fd);
         func_002087D0(0x2E40, 0x3D40);
-        KF_Splash_BuildSprite();
+        Splash_BuildSprite();
         splash_state += 1;
     } else {
         splash_state = 0;
@@ -172,7 +172,7 @@ void KF_Splash_StateLoadImage(void) {
 }
 
 /* State 3: fade the image in over the fade-in frames. */
-void KF_Splash_StateFadeIn(void) {
+void Splash_StateFadeIn(void) {
     int counter;
 
     counter = splash_fade_in_counter + 1;
@@ -186,7 +186,7 @@ void KF_Splash_StateFadeIn(void) {
 }
 
 /* State 4: hold the image until the hold time runs out or a skippable button is pressed. */
-void KF_Splash_StateHold(void) {
+void Splash_StateHold(void) {
     if (splash_hold_frames > 0) {
         splash_hold_frames -= 1;
         if (splash_hold_frames < 1) {
@@ -199,7 +199,7 @@ void KF_Splash_StateHold(void) {
 }
 
 /* State 5: fade the image out over the fade-out frames, then advance to closing. */
-void KF_Splash_StateFadeOut(void) {
+void Splash_StateFadeOut(void) {
     splash_fade_out_counter += 1;
     if (splash_fade_out_counter < splash_fade_out_frames) {
         splash_brightness = 0x80 - (splash_fade_out_counter << 7) / splash_fade_out_frames;
@@ -211,7 +211,7 @@ void KF_Splash_StateFadeOut(void) {
 }
 
 /* State 6: counts down the end delay, then releases the splash and closes its file. */
-void KF_Splash_StateClose(void) {
+void Splash_StateClose(void) {
     splash_end_delay -= 1;
     if (splash_end_delay < 0) {
         D_0038CC80[0] = 0;
@@ -224,7 +224,7 @@ void KF_Splash_StateClose(void) {
 }
 
 /* Draw the splash image while it is on screen (states 3..5). */
-void KF_Splash_Draw(void) {
+void Splash_Draw(void) {
     u32 *packet;
     u32 *cursor;
 
@@ -255,7 +255,7 @@ void KF_Splash_Draw(void) {
 }
 
 /* Build splash_sprite for the image at D_00249680. */
-void KF_Splash_BuildSprite(void) {
+void Splash_BuildSprite(void) {
     int height;
     int width;
     u64 tex0;

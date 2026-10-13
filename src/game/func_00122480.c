@@ -17,7 +17,7 @@ void func_00122480(MapObject *object) {
     func_00216C48(part->unk40, part->unk40, work);
     if (--work->frames <= 0) {
         func_00122600(object, 0);
-        KF_MapObject_StartAnim(object, 4);
+        MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
         D_0038CC50.unk30 &= ~1U;
     }

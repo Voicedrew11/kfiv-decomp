@@ -3,8 +3,8 @@
 extern f32 D_00431AF0[16];
 
 void sceVu0CopyMatrix(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void func_00216D20(void *, void *);
 void func_00216CD8(void *, void *, void *);
 
@@ -16,7 +16,7 @@ void func_0018BFA8(f32 *target, f32 *origin, s32 up_sign, f32 *matrix, f32 side_
     f32 *side;
 
     sceVu0CopyMatrix(matrix, D_00431AF0);
-    KF_Vector_Subtract(vector, target, origin);
+    Vector_Subtract(vector, target, origin);
     func_00216D20(forward, vector);
     // match: the whole vector is set in both arms
     if (up_sign >= 0) {
@@ -36,7 +36,7 @@ void func_0018BFA8(f32 *target, f32 *origin, s32 up_sign, f32 *matrix, f32 side_
     func_00216CD8(side, forward, matrix);
     func_00216D20(side, side);
     if (side_sign < 0.0f) {
-        KF_Vector_Scale(matrix, matrix, -1.0f);
+        Vector_Scale(matrix, matrix, -1.0f);
     }
     matrix[3] = matrix[7] = matrix[11] = 0.0f;
 }

@@ -10,7 +10,7 @@ void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void func_00216BC0(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 
 void func_00170AB8(Entity *entity) {
     EntityUnkE0Kind16BF98 *unkE0 = (EntityUnkE0Kind16BF98 *)&entity->unkE0;
@@ -106,7 +106,7 @@ void func_00170AB8(Entity *entity) {
     sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, entity->model->unkD0[1]);
     func_00216BC0(SCRATCH_VECTOR, SCRATCH_MATRIX, SCRATCH_VECTOR);
     if (entity->unkC8 & 0x40) {
-        KF_Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, 2.0f);
+        Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, 2.0f);
     }
     entity->unk84 += SCRATCH_VECTOR[0];
     entity->unk88 += SCRATCH_VECTOR[1];

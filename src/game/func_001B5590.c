@@ -10,9 +10,9 @@ void func_001B5590(int port) {
     PadState *pad = &D_00413DB8[port];
     PadReport *report;
 
-    pad->type = KF_Pad_GetMode(port, 0);
+    pad->type = Pad_GetMode(port, 0);
     if (pad->type != 0xFF) {
-        report = KF_Pad_GetReport(port, 0);
+        report = Pad_GetReport(port, 0);
         pad->held = report->held;
         pad->pressed = report->pressed;
         if (pad->type == 1 && ((PadReportAxes *)report)->right_stick != 0) {

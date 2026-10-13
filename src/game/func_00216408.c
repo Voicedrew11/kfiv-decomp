@@ -10,7 +10,7 @@ void func_00216408(ScriptLookupCommand *command) {
     Entity *entity;
     int result;
 
-    entity = KF_Entity_GetBySpawnId(command->input.value);
+    entity = Entity_GetBySpawnId(command->input.value);
     if (entity != NULL) {
         result = ENTITY_FLAG_BITS(entity)->bit1;
         if (ENTITY_FLAG_BITS(entity)->bits2 >= 2) {

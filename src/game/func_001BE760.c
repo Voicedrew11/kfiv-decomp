@@ -8,7 +8,7 @@ extern MapSlot D_0038CD20[2];
 
 void func_00216778(void *, void *);
 void func_00216D20(void *, void *);
-void KF_Vector_Scale(void *, void *, float);
+void Vector_Scale(void *, void *, float);
 int func_001C2D08(void *);
 void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 
@@ -62,7 +62,7 @@ void func_001BE760(void) {
                             COLLISION_SCRATCH->push.y = 0.0f;
                             COLLISION_SCRATCH->push.z = COLLISION_SCRATCH->point.z - COLLISION_RESULT->point[2];
                             func_00216D20(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push);
-                            KF_Vector_Scale(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push, 100.0f);
+                            Vector_Scale(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push, 100.0f);
                             COLLISION_SCRATCH->point.x = COLLISION_RESULT->point[0] + COLLISION_SCRATCH->push.x;
                             COLLISION_SCRATCH->point.z = COLLISION_RESULT->point[2] + COLLISION_SCRATCH->push.z;
                         }

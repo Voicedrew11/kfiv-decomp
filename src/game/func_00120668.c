@@ -4,6 +4,6 @@
 
 /* Start handler: animation 4, step 1. */
 void func_00120668(MapObject *object) {
-    KF_MapObject_StartAnim(object, 4);
+    MapObject_StartAnim(object, 4);
     MAP_OBJECT_BYTES(object)->step = 1;
 }

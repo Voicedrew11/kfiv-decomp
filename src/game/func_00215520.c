@@ -14,7 +14,7 @@ void func_00215520(ScriptWalkToCommand *command) {
     f32 turn;
     f32 rise;
 
-    entity = KF_Entity_GetBySpawnId(command->target_id.value);
+    entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
         point[0] = command->x.value;
         point[1] = command->y.value;

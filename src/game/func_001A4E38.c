@@ -13,7 +13,7 @@ void func_001A4E38(EffectActor *effect) {
     int spawn_id;
 
     if (motion->landed) {
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);
@@ -28,8 +28,8 @@ void func_001A4E38(EffectActor *effect) {
     }
     if (func_001B4F90(effect)) {
         spawn_id = SCRATCHPAD_WORD_18 == 5 ? 0x16 : effect->def->end_effect;
-        KF_Effect_Spawn(spawn_id, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
-        KF_Effect_Spawn(0x122, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+        Effect_Spawn(spawn_id, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+        Effect_Spawn(0x122, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         motion->landed = 1;
     }
     effect->frame += 1;

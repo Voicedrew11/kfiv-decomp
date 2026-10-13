@@ -11,7 +11,7 @@ extern s32 D_00446DE4;              /* frames up (positive) or down (negative) h
 int func_002071F0(int repeat_start, u16 buttons) {
     int step = 0;
 
-    if (KF_Pad_GetMode(0, 0) == 0xFF) {
+    if (Pad_GetMode(0, 0) == 0xFF) {
         D_00446DE0 = 0;
         D_00446DE4 = 0;
         D_00446DDC = 0;

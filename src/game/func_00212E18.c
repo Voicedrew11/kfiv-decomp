@@ -7,7 +7,7 @@ extern int D_00446770;
 void func_00212E18(ScriptObjectValuesCommand *command) {
     MapObject *object;
 
-    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(D_00446770, command->target_id.value);
     if (object != NULL && object->model != NULL) {
         object->model->unk150 = command->values[0].value;
         object->model->unk154 = command->values[1].value;

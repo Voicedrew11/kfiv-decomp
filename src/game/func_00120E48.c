@@ -5,7 +5,7 @@
 void func_00120E48(MapObject *object) {
     s32 *work = object->work;
 
-    KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, work[1]);
+    Message_ShowNotice(0, 0, 0, 0, 0x2D, work[1]);
     work[2] = 0x2D;
     MAP_OBJECT_BYTES(object)->step = 4;
 }

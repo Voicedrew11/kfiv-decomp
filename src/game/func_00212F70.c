@@ -8,7 +8,7 @@ extern int D_00446770;
 void func_00212F70(ScriptObjectValuesCommand *command) {
     MapObject *object;
 
-    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(D_00446770, command->target_id.value);
     if (object != NULL && object->model != NULL && object->unk04->kind == 9) {
         func_00211CF8(&command->values[0], MAP_OBJECT_WORDS(object)->unk44);
         func_00211CF8(&command->values[1], MAP_OBJECT_WORDS(object)->unk46);

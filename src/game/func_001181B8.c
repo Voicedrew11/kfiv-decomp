@@ -26,13 +26,13 @@ void func_001181B8(void) {
         if (*slot_entry != 0) {
             *slot_entry = 0;
             func_00115878(other_slot);
-            KF_Effect_FreeForMap(other_slot);
-            KF_MapObject_UnloadMap(other_slot);
-            KF_Entity_FreeAllInGroup(other_slot);
-            KF_Entity_ClearMapSlot(other_slot);
-            KF_Gold_UnlinkMap(other_slot);
+            Effect_FreeForMap(other_slot);
+            MapObject_UnloadMap(other_slot);
+            Entity_FreeAllInGroup(other_slot);
+            Entity_ClearMapSlot(other_slot);
+            Gold_UnlinkMap(other_slot);
             func_001C8938(other_slot);
-            KF_LinkedPoint_ReleaseByKind(other_slot);
+            LinkedPoint_ReleaseByKind(other_slot);
             func_001A15F8();
         }
         D_0038D610[10] = 2;

@@ -19,5 +19,5 @@ void func_001A88A8(EffectActor *effect) {
         }
         other++;
     }
-    KF_Effect_Spawn(0x47, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+    Effect_Spawn(0x47, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
 }

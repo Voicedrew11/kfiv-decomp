@@ -140,7 +140,7 @@ void func_001D8398(HandlerContext *context) {
             }
         }
         item = D_00426110[0];
-        table = KF_Message_GetFontText(D_00446F38);
+        table = Message_GetFontText(D_00446F38);
         slot = item->unk0C + 0x1F5;
         entry = ((s32 *)table)[slot];
         word.raw = 0x000A875083207080;

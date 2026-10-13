@@ -13,7 +13,7 @@ int func_0016A450(Entity *entity) {
     work = (EntityUnkE0Kind17FC60 *)&entity->unkE0;
     ally_count = 0;
     for (ally_index = 0; ally_index < 8; ally_index++) {
-        ally = KF_Entity_GetBySpawnId(ally_index + 0xA);
+        ally = Entity_GetBySpawnId(ally_index + 0xA);
         if (ally != NULL) {
             ally_flags = ally->flags;
             if ((ally_flags & 3) == 1) {

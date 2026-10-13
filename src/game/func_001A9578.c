@@ -30,6 +30,6 @@ void func_001A9578(EffectActor *actor, EffectSlot *spawn_slot) {
             }
         }
     }
-    KF_Effect_Spawn(actor->def->unkF0, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+    Effect_Spawn(actor->def->unkF0, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
     motion->spawned = 1;
 }

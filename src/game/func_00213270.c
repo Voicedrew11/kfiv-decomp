@@ -9,7 +9,7 @@ extern int D_00446770;
 void func_00213270(ScriptMoveCommand *command) {
     MapObject *object;
 
-    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(D_00446770, command->target_id.value);
     if (object != NULL) {
         func_00211D90(&command->x, object->model->rotation.x);
         func_00211D90(&command->y, object->model->rotation.y);

@@ -9,7 +9,7 @@ int func_00215298(ScriptMotionBlendCommand *command) {
     Entity *entity;
     EntityModel *entity_model;
 
-    entity = KF_Entity_GetBySpawnId(command->target_id.value);
+    entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL && (entity->flags & 0xF) == 3 && entity->unk2C != 0) {
         entity_model = entity->model;
         if (entity_model->unkFC->unk88 != 0) {

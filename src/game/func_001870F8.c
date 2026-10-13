@@ -3,7 +3,7 @@
 extern const f32 D_0044683C[];     /* -0.0f; const: only then may a store pass the read of it */
 
 void func_00188678(void *, void *, void *, void *, void *, f32);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
 /* loads one edge of the triangle: its two ends, and start minus end into both `edge` and `flat` */
@@ -191,7 +191,7 @@ void func_001870F8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32
             point[0] = end[0];
             point[1] = centre[1];
             point[2] = end[2];
-            KF_Vector_Subtract(edge, centre, point);
+            Vector_Subtract(edge, centre, point);
             distance = edge[0] * edge[0] + edge[2] * edge[2];
             if (distance <= nearest_sq) {
                 KEEP_NEAREST(distance, point);
@@ -206,7 +206,7 @@ void func_001870F8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32
             point[0] = end[0] + edge[0] * ratio;
             point[1] = end[1] + edge[1] * ratio;
             point[2] = end[2] + edge[2] * ratio;
-            KF_Vector_Subtract(offset, centre, point);
+            Vector_Subtract(offset, centre, point);
             distance = offset[0] * offset[0] + offset[2] * offset[2];
             if (distance < nearest_sq) {
                 KEEP_NEAREST(distance, point);
@@ -220,14 +220,14 @@ void func_001870F8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32
             point[0] = end[0] + edge[0] * ratio;
             point[1] = end[1] + edge[1] * ratio;
             point[2] = end[2] + edge[2] * ratio;
-            KF_Vector_Subtract(offset, centre, point);
+            Vector_Subtract(offset, centre, point);
             distance = offset[0] * offset[0] + offset[2] * offset[2];
             if (distance < nearest_sq) {
                 KEEP_NEAREST(distance, point);
             }
         }
         if (start[1] < centre[1] && bottom < start[1]) {
-            KF_Vector_Subtract(offset, centre, start);
+            Vector_Subtract(offset, centre, start);
             along = offset[0] * offset[0] + offset[2] * offset[2];
             if (along < nearest_sq) {
                 KEEP_NEAREST(along, start);
@@ -246,7 +246,7 @@ void func_001870F8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32
         point[0] = end[0] + edge[0] * ratio;
         point[1] = end[1] + edge[1] * ratio;
         point[2] = end[2] + edge[2] * ratio;
-        KF_Vector_Subtract(offset, centre, point);
+        Vector_Subtract(offset, centre, point);
         distance = offset[0] * offset[0] + offset[2] * offset[2];
         if (distance <= nearest_sq && point[1] <= centre[1] && bottom <= point[1]) {
             KEEP_NEAREST(distance, point);

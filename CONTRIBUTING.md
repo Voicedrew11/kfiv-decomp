@@ -149,8 +149,8 @@ programmer would have, not the way m2c printed it:
   for what it is (`TargetMenuState`), not `Obj`, `Ctl`, `Actor`, `Sub` or `A`.
 - Use long, descriptive names for variables and fields
   (`distance_to_player`, not `d` or `f64`). Name a function
-  (`KF_Entity_FreeAllInGroup`) once its purpose is clear; see Names below.
-- Naming convention: functions `KF_Module_Verb` (`KF_Vector_Subtract`),
+  (`Entity_FreeAllInGroup`) once its purpose is clear; see Names below.
+- Naming convention: functions `Module_Verb` (`Vector_Subtract`),
   variables and fields `snake_case`, types `PascalCase`, constants and
   macros `UPPER_CASE`.
 - Write `NULL` for pointers, `TRUE`/`FALSE` for flags, and name magic
@@ -174,7 +174,7 @@ programmer would have, not the way m2c printed it:
 - Keep comments brief: one line on what a function or field is. No essays
   on trivial code.
 
-`KF_Entity_DespawnOutOfRange` in
+`Entity_DespawnOutOfRange` in
 [`kf_entity_pool.c`](src/game/kf_entity_pool.c) is the style to aim for.
 
 `tools/lint_readability.py --changed` must pass (CI runs it): files your
@@ -188,7 +188,7 @@ the whole tree.
 `tools/lint_symbols.py --changed` must pass too (CI runs it). It checks the
 whole tree: `config/symbol_addrs.txt` in address order with no duplicates,
 no `func_`/`D_` name left where the
-address has a real name, every `KF_` function in `symbol_addrs.txt`,
+address has a real name, every `Module_Verb` function in `symbol_addrs.txt`,
 functions in address order within a file, and no generated or disc-derived
 file in the change.
 
@@ -196,5 +196,6 @@ file in the change.
 
 Keep `func_XXXXXXXX` and `D_XXXXXXXX` until you know what something is. A
 real name goes into `config/symbol_addrs.txt` (in the game section, in
-address order), e.g. `KF_File_Open = 0x00102278; // type:func`, and the C
-uses the new name.
+address order), e.g. `Entity_FreeAllInGroup = 0x001231C0; // type:func`, and the C
+uses the new name. `KF_File_Open` keeps its prefix: it is the one name the
+game itself gives away (in a debug string), so it is FromSoftware's own.

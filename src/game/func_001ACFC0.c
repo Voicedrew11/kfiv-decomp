@@ -20,7 +20,7 @@ void func_001ACFC0(EffectActor *actor) {
         actor->model->unkE8 = 0;
         motion->countdown--;
         if (motion->countdown <= 0) {
-            KF_Effect_Free(actor);
+            Effect_Free(actor);
         }
         return;
     }
@@ -35,7 +35,7 @@ void func_001ACFC0(EffectActor *actor) {
                 return;
             }
             if (D_00413F80.unk298 != 0 && D_00413F80.unk263 == 0) {
-                KF_Effect_SpawnFromEffect(actor->def->radius_half, actor);
+                Effect_SpawnFromEffect(actor->def->radius_half, actor);
                 motion->scale = actor->def->speed * ((float)D_00413F80.unkBC / 5000.0f) + 1.0f;
             }
             motion->countdown = 3;

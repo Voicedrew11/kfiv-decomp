@@ -11,7 +11,7 @@ void func_00215920(ScriptMoveCommand *command) {
     Entity *target;
     f32 heading;
 
-    target = KF_Entity_GetBySpawnId(command->target_id.value);
+    target = Entity_GetBySpawnId(command->target_id.value);
     if (target == NULL || (target->flags & 0xF) != 3 || target->unk2C == 0) {
         command->active = 0;
         return;

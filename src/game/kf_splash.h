@@ -84,16 +84,16 @@ typedef struct {
     int unk00;                      /* 0x00 the motion frame at which func_00209480 goes to the next step */
     int unk04;                      /* 0x04 taken off the effect's brightness each frame while it fades (func_002094C8) */
     int unk08;                      /* 0x08 the motion frame at which the effect unk0C starts */
-    int unk0C;                      /* 0x0C an effect number for KF_Effect_StartSpawner */
+    int unk0C;                      /* 0x0C an effect number for Effect_StartSpawner */
 } ItemUseEffectDef;
 
-void KF_Splash_Reset(void);
-int KF_Splash_GetState(void);
-int KF_Splash_Start(int splash_id);
-int KF_Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_frames, int fade_out_frames);
-void KF_Splash_Abort(void);
-void KF_Splash_Update(void);
-void KF_Splash_Draw(void);
-void KF_Splash_BuildSprite(void);
+void Splash_Reset(void);
+int Splash_GetState(void);
+int Splash_Start(int splash_id);
+int Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_frames, int fade_out_frames);
+void Splash_Abort(void);
+void Splash_Update(void);
+void Splash_Draw(void);
+void Splash_BuildSprite(void);
 
 #endif

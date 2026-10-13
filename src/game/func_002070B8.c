@@ -11,7 +11,7 @@ extern s32 D_00446DD8;              /* frames right (positive) or left (negative
 int func_002070B8(int repeat_start, u16 buttons) {
     int step = 0;
 
-    if (KF_Pad_GetMode(0, 0) == 0xFF) {
+    if (Pad_GetMode(0, 0) == 0xFF) {
         D_00446DD5 = 0;
         D_00446DD8 = 0;
         D_00446DD4 = 0;

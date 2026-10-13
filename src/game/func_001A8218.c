@@ -4,7 +4,7 @@
 extern float D_00413F80[];
 extern f32 D_00431AF0[16];
 
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 int func_001AF358(void *, void *);
 void func_001AF5B0(void *, void *);
 int func_001AFD08(void *, void *, void *);
@@ -28,7 +28,7 @@ void func_001A8218(EffectActor *effect) {
     if (effect->unk6C != 0) {
         gone_bits = (int)(((EffectTarget *)effect->unk6C)->flags << 30 >> 32);
         if ((gone_bits & 3) == 0) {
-            KF_Vector_Subtract(&offset, &((EffectTarget *)effect->unk6C)->model->position, &effect->model->position);
+            Vector_Subtract(&offset, &((EffectTarget *)effect->unk6C)->model->position, &effect->model->position);
             offset.y -= ((EffectTarget *)effect->unk6C)->height * 0.5f;
             func_001AFC88(&motion->velocity, &offset, effect->def->speed, effect->def->unkDC);
         } else {

@@ -1,7 +1,7 @@
 #include "kf_model.h"
 
-void KF_Vector_Subtract(float *, float *, float *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(float *, float *, float *);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *, void *, void *);
 
 /* turns a packed vertex into one of floats */
@@ -36,14 +36,14 @@ void func_001108E8(BlendVertex *out, ModelPartVertexWords *from, ModelPartVertex
     scale = 1.0f / steps;
     TO_BLEND_VERTEX(from_point, from);
     TO_BLEND_VERTEX(last_point, last);
-    KF_Vector_Subtract(delta.unk00, last_point.unk00, from_point.unk00);
-    KF_Vector_Scale(delta.unk00, delta.unk00, scale);
-    KF_Vector_Subtract(delta.unk10, last_point.unk10, from_point.unk10);
-    KF_Vector_Scale(delta.unk10, delta.unk10, scale);
+    Vector_Subtract(delta.unk00, last_point.unk00, from_point.unk00);
+    Vector_Scale(delta.unk00, delta.unk00, scale);
+    Vector_Subtract(delta.unk10, last_point.unk10, from_point.unk10);
+    Vector_Scale(delta.unk10, delta.unk10, scale);
     delta.unk20[0] = last_point.unk20[0] * from_point.unk20[0] * scale;
     delta.unk20[1] = last_point.unk20[1] * from_point.unk20[1] * scale;
-    KF_Vector_Subtract(delta.unk30, last_point.unk30, from_point.unk30);
-    KF_Vector_Scale(delta.unk30, delta.unk30, scale);
+    Vector_Subtract(delta.unk30, last_point.unk30, from_point.unk30);
+    Vector_Scale(delta.unk30, delta.unk30, scale);
     previous = out;
     *out = from_point;
     out++;

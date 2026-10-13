@@ -10,7 +10,7 @@ void func_00213090(ScriptMoveCommand *command) {
     ModelInstance *model;
     int frames_left;
 
-    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(D_00446770, command->target_id.value);
     if (object == NULL || command->frames.value <= 0) {
         command->active = 0;
         return;

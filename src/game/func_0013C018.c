@@ -10,7 +10,7 @@ s32 func_0013C018(Entity *entity, f32 limit) {
     EntityUnkE0 *other_unkE0;
 
     for (i = 0; i < 5; i++) {
-        other = KF_Entity_GetBySpawnId(table.ids[i]);
+        other = Entity_GetBySpawnId(table.ids[i]);
         if (other != NULL && (other->flags & 0xD) == 1 && other != entity) {
             other_unkE0 = &other->unkE0;
             if (other_unkE0->unk7A == 5 && other_unkE0->unk54 < limit) {

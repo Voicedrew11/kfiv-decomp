@@ -12,8 +12,8 @@ extern s32 D_004467B8[2];
 extern MapObject D_003A1A30[][0x200];
 
 float sqrtf(float);
-void KF_Vector_Scale(float *, float *, float);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
 void func_00216778(void *, void *);
 void func_001B29C8(Unk1B1470Request *, Unk1B1470Extra *);
 void func_001B2F70(Unk1B1470Request *, Unk1B1470Extra *, Entity *, f32);
@@ -139,17 +139,17 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             count = D_004467B8[index];
             object = D_003A1A30[index];
             for (item = 0; item < count; item++, object++) {
-                KF_Vector_Subtract(direction, &D_00414780.points[1], &D_00414780.points[0]);
+                Vector_Subtract(direction, &D_00414780.points[1], &D_00414780.points[0]);
                 length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
-                KF_Vector_Scale(direction, direction, 1.0f / length);
+                Vector_Scale(direction, direction, 1.0f / length);
                 func_001C2128(object, (int)&D_00414780.points[0], (int)direction, length);
                 if (COLLISION_RESULT->hit != 0) {
                     func_001B3AC0(request, extra, object);
                     return 4;
                 }
-                KF_Vector_Subtract(direction, &D_00414780.points[1], &D_004147A0.points[1]);
+                Vector_Subtract(direction, &D_00414780.points[1], &D_004147A0.points[1]);
                 length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
-                KF_Vector_Scale(direction, direction, 1.0f / length);
+                Vector_Scale(direction, direction, 1.0f / length);
                 func_001C2128(object, (int)&D_004147A0.points[1], (int)direction, length);
                 if (COLLISION_RESULT->hit != 0) {
                     func_001B3AC0(request, extra, object);

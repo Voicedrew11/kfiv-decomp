@@ -65,14 +65,14 @@ int main(void) {
     func_001029A8();
     func_001B5808();
     func_00124EF8();
-    KF_ItemEffect_Load();
-    KF_Message_Init();
+    ItemEffect_Load();
+    Message_Init();
     func_001D5A20();
     func_0019C300();
     func_001F9438();
     func_00109410();
     func_00111D00();
-    KF_Hud_Load();
+    Hud_Load();
     func_00106318();
     func_001D62C8(4);
     sceGsSyncV(0);
@@ -100,7 +100,7 @@ int main(void) {
             func_0019BDA0(0, 0x4000);
             do {
                 // match: retail passes a zero the function does not take
-                if (((int (*)(int))KF_Title_RunGameOver)(0) != 1) {
+                if (((int (*)(int))Title_RunGameOver)(0) != 1) {
                     break;
                 }
             } while (func_001D62C8(1) == 0);

@@ -4,7 +4,7 @@
 void func_001AF298(void *, void *);
 void func_00216778(void *, void *);
 void sceVu0AddVector(void *, void *, void *);
-void KF_Vector_Scale(void *, void *, float);
+void Vector_Scale(void *, void *, float);
 
 void func_001A3F20(EffectActor *effect) {
     ScaledFallMotion *motion;
@@ -19,7 +19,7 @@ void func_001A3F20(EffectActor *effect) {
         if (EFFECT_DEF_FLAGS(effect->def) & 0x80000) {
             func_001AF538(effect->def->speed, &step, &effect->model->rotation);
             motion->scale += effect->def->scale_per_frame;
-            KF_Vector_Scale(&step, &step, motion->scale);
+            Vector_Scale(&step, &step, motion->scale);
         } else {
             if (effect->def->gravity != 0.0f) {
                 motion->fall_speed += effect->def->gravity;

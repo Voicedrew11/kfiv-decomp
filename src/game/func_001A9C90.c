@@ -9,7 +9,7 @@ void sceVu0RotMatrixY(Mat, Mat, float);
 void sceVu0ApplyMatrix(void *, Mat, void *);
 void func_00216C48(void *, void *, void *);
 void func_00216D20(void *, void *);
-void KF_Vector_Scale(void *, void *, float);
+void Vector_Scale(void *, void *, float);
 
 /* Spawns an effect: a random change of the model's rotation, then a velocity along the rotated radius. */
 void func_001A9C90(EffectActor *effect, EffectSlot *spawn_slot) {
@@ -32,5 +32,5 @@ void func_001A9C90(EffectActor *effect, EffectSlot *spawn_slot) {
     sceVu0ApplyMatrix(&offset, rotation_matrix, &offset);
     func_00216C48(&effect->model->position, &effect->model->position, &offset);
     func_00216D20(&offset, &offset);
-    KF_Vector_Scale(motion, &offset, -effect->def->speed);
+    Vector_Scale(motion, &offset, -effect->def->speed);
 }

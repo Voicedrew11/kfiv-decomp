@@ -194,13 +194,13 @@ only tests the result against 0 and passes no point, so it is not touched;
 `func_001299F8` takes the point as a jump's landing, and can get a farther
 prop's. Marked with `// match:`.
 
-## `KF_Effect_UpdateAll` tests the address of the slot pool where it means to stop early
+## `Effect_UpdateAll` tests the address of the slot pool where it means to stop early
 
-`KF_Effect_UpdateAll` runs the effect spawner slots and the effects for one frame.
+`Effect_UpdateAll` runs the effect spawner slots and the effects for one frame.
 Its first loop walks the 0x60 slots of `D_003F1750`, and after running one:
 
 ```c
-KF_Effect_RunSpawner(slot);
+Effect_RunSpawner(slot);
 if (!D_003F1750) {
     break;
 }
@@ -211,12 +211,12 @@ has it as `addiu $2, $18, %lo(D_003F1750)` / `bnez $2`.
 
 Effect: the `break` never runs and the loop always walks all 0x60 slots. The
 loop is only entered when the live count `D_004468CC` is above 0, and the slot
-loop of `KF_Effect_FreeForMap` stops on that count, so the count was probably what
+loop of `Effect_FreeForMap` stops on that count, so the count was probably what
 was meant here (a guess). Marked with `// match:`.
 
-## `KF_Effect_DrawAll` leaves a play-once texture's frame number unset after its last frame
+## `Effect_DrawAll` leaves a play-once texture's frame number unset after its last frame
 
-`KF_Effect_DrawAll` draws the live effects. For an effect with texture frames
+`Effect_DrawAll` draws the live effects. For an effect with texture frames
 (`def->unkF7` of them) it works out the frame from the mode `def->unkF6`:
 
 ```c
@@ -233,7 +233,7 @@ case 2:
     break;
 ...
 record_id = effect->def->unkFA + record_id * effect->def->unkF8;
-KF_Effect_FindModelRecord(model, model->unk104, effect->def->unkFA, record_id);
+Effect_FindModelRecord(model, model->unk104, effect->def->unkFA, record_id);
 ```
 
 Mode 2 holds the last frame once `step` has run past it. Mode 1 sets nothing
@@ -241,15 +241,15 @@ then, so `record_id` is what the last line left in it for the effect drawn
 before this one in the loop (that effect's finished id, not a frame number),
 or an unset register if no effect before it had frames.
 
-Effect: `KF_Effect_FindModelRecord` finds the record `unkFA` in the model and writes the
+Effect: `Effect_FindModelRecord` finds the record `unkFA` in the model and writes the
 id it is given into it, so an effect of mode 1 that outlives its frames gets
 an id of `unkFA + leftover * unkF8`. What is drawn for an id that names no
 texture frame is not checked, nor whether any mode 1 effect lives that long.
 Marked with `// match:`.
 
-## `KF_Effect_FreeForMap` takes one record too many for the map it unloads
+## `Effect_FreeForMap` takes one record too many for the map it unloads
 
-`KF_Effect_FreeForMap` frees the effects of a map slot that is going away and clears
+`Effect_FreeForMap` frees the effects of a map slot that is going away and clears
 what the other effects still point at in it. For the map's entities and map
 objects it builds a range from the first to the last element and tests
 `>= first && <= last`. For the map's records the end is one past the last:
@@ -434,10 +434,10 @@ allocated. Not checked whether any caller can make it fail. `func_001CC1A8`
 has one such bare return too (when `func_001CF110` fails). Each of these
 returns is marked with `// match:`.
 
-## `KF_Message_DrawGlyphs` fills its table of glyph alphas a byte at a time
+## `Message_DrawGlyphs` fills its table of glyph alphas a byte at a time
 
 `glyph_alphas` (`kf_message.c`) holds one `int` of alpha per glyph of a
-message, 0x200 of them. The typing branch of `KF_Message_DrawGlyphs` writes it
+message, 0x200 of them. The typing branch of `Message_DrawGlyphs` writes it
 as ints (`glyph_alphas[i] = 0x80`), and the draw loop reads it as ints. The
 notice branch and the box's closing branch fill it with
 
@@ -448,7 +448,7 @@ memset(glyph_alphas, alpha, 0x200);
 which is a byte count: only the first 0x80 entries are filled, each with
 `alpha * 0x01010101`.
 
-Effect: `KF_Message_DrawGlyph` stores that word as the A of the glyph's
+Effect: `Message_DrawGlyph` stores that word as the A of the glyph's
 packed RGBAQ, of which the GS takes only the low byte, so nothing is seen for
 the first 0x80 glyphs. A fading notice or closing box of more than 0x80 glyphs
 would draw the rest with whatever alphas the table held before.
@@ -863,7 +863,7 @@ was probably meant. The x and z of the point are right.
 `length`). Past the far end it works out that end as
 
 ```c
-KF_Vector_Scale(offset, axis, length);
+Vector_Scale(offset, axis, length);
 func_00216C48(offset, axis, offset);
 ```
 
@@ -893,7 +893,7 @@ product.
 Effect: a move is thrown out when `nx + ny + nz + dx + dy + dz` is within
 0.00001 of 0, which has nothing to do with being parallel, and a move that is
 parallel goes on to a division by (nearly) 0. Also here, with no effect: the
-two edges are worked out in VU0 code and then again with `KF_Vector_Subtract`
+two edges are worked out in VU0 code and then again with `Vector_Subtract`
 over the same locals.
 
 ## `func_00210F88` masks a script command number with 0x7FFFF and then does not use the mask
@@ -1144,11 +1144,11 @@ does not mistake them for meaning something.
 - `func_00112648` (data table load) converts a field of each of the 380 item
   definitions with `unk3E = unk33 * 2.2046`, kilograms to pounds. Not a bug:
   it looks like a localisation step, and tells you `unk33` is a weight.
-- `KF_MapObject_UpdateAll` (update all map objects) calls
+- `MapObject_UpdateAll` (update all map objects) calls
   `sinf(sway_frame * 2pi / 60)` every frame from a 60-frame counter and throws
   the result away. The counter is still advanced. Probably a leftover pulse
   value; the only effect is the wasted call.
-- `KF_MapObject_InitMap` (set up all map objects) switches on a one-bit field and has
+- `MapObject_InitMap` (set up all map objects) switches on a one-bit field and has
   a `default` arm that sets `model->draw = NULL`. It can never run.
 - `func_0010FC30` (interpolate vertices, rounding) is not called from anywhere,
   and fills two stack arrays it never reads back.
@@ -1336,7 +1336,7 @@ does not mistake them for meaning something.
 - `func_00208BC0` (load the boot models): after setting up the second model
   it writes `D_00447394->unk1A8` again, the first model's. No effect seen:
   `func_00209018` sets `unk1A8` on the model it draws.
-- `KF_Title_DrawSprite` (title screen sprite) interpolates between key `i` and key
+- `Title_DrawSprite` (title screen sprite) interpolates between key `i` and key
   `i + 1` of four; at the last key that reads one past both arrays. The ratio
   is 0 there, so the value is still the last key's.
 - `func_0020D008` is not called from anywhere.
@@ -1394,5 +1394,5 @@ does not mistake them for meaning something.
   their lengths and uses nothing from the walk; retail keeps only the empty
   loop.
 - Stack space that is reserved and never used: two vectors in `func_001AF0B0`
-  and in `KF_Effect_UpdateAll`, a matrix in `func_001A6538` and `func_001AB670`,
+  and in `Effect_UpdateAll`, a matrix in `func_001A6538` and `func_001AB670`,
   0x70 bytes in `func_001EEA90`, eight floats in `func_001AFF78`.

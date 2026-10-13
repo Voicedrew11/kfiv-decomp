@@ -14,7 +14,7 @@ static ScrollTexture scroll_textures[4]; /* 0x474AC0 */
 static ScrollOffset scroll_offsets[4];   /* 0x474B60 */
 
 /* Sets up the four scrolling textures (the water and the like) and rewinds them. */
-void KF_ScrollTexture_Init(void) {
+void ScrollTexture_Init(void) {
     ScrollTexture *texture = scroll_textures;
 
     memset(scroll_offsets, 0, sizeof(scroll_offsets));
@@ -120,7 +120,7 @@ void KF_ScrollTexture_Init(void) {
 }
 
 /* Scrolls and redraws the four textures, then restores the GS state (a map object's draw hook). */
-void KF_ScrollTexture_DrawAll(void) {
+void ScrollTexture_DrawAll(void) {
     ScrollTexture *texture = scroll_textures;
     ScrollOffset *offset = scroll_offsets;
 

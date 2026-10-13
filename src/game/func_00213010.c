@@ -8,7 +8,7 @@ void func_00213010(ScriptObjectShortsCommand *command) {
     MapObject *object;
     MapObjectUnk08Words *source;
 
-    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(D_00446770, command->target_id.value);
     if (object != NULL && object->model != NULL && object->unk04->kind == 9) {
         source = MAP_OBJECT_WORDS(object);
         source->unk44 = command->values[0].value;

@@ -21,12 +21,12 @@ static TextLogPacket text_log_packet;                              /* 0x1E0F210 
 typedef char *va_list;
 #define va_start(ap, last) ((ap) = (char *)__builtin_next_arg(last) - 0x38)
 
-void KF_TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z);
-void KF_TextLog_SendGsRegs(void);
+void TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z);
+void TextLog_SendGsRegs(void);
 
 /* Loads the text log's font (D_00433820, 256 by 128 at 4 bits) and its 16-colour palette (D_004337E0) into
    GS memory at the given pages, then tells the GS to flush its texture cache. */
-void KF_TextLog_LoadFont(int font_base, int palette_base) {
+void TextLog_LoadFont(int font_base, int palette_base) {
     sceGsLoadImage image;
     u32 *packet;
 
@@ -62,7 +62,7 @@ void KF_TextLog_LoadFont(int font_base, int palette_base) {
 
 /* Places the text log's window (x, y, width and height in frame pixels, on a screen of the given size whose
    centre is at the GS offset), makes the text white and empties the log. */
-void KF_TextLog_SetWindow(int window_x, int window_y, int width, int height, int offset_x, int offset_y,
+void TextLog_SetWindow(int window_x, int window_y, int width, int height, int offset_x, int offset_y,
                           int screen_width, int screen_height, int depth) {
     TextLog *log = &text_log;
 
@@ -81,7 +81,7 @@ void KF_TextLog_SetWindow(int window_x, int window_y, int width, int height, int
 
 /* Queues one character of the text log's font (16 characters a row, starting at '!') at a GS position.
    Anything up to the space character is drawn as character 0x80. */
-void KF_TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z) {
+void TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z) {
     TextLog *log = &text_log;
     TextLogGlyph *glyph = log->packet;
     int code;
@@ -117,7 +117,7 @@ void KF_TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z) {
 
 /* Sends the GS registers the text log draws with: its font texture (256 by 128, 4-bit, palette in the texture
    page), point sampling, alpha blending. Each register is a 64-bit value followed by its address. */
-void KF_TextLog_SendGsRegs(void) {
+void TextLog_SendGsRegs(void) {
     int *packet;
 
     packet = (int *)((u32)gs_regs_packet | 0x20000000);
@@ -154,7 +154,7 @@ void KF_TextLog_SendGsRegs(void) {
 }
 
 /* printf-style append to the text log, cut off at its 0x800 bytes. */
-void KF_TextLog_AppendV(char *format, char *args) {
+void TextLog_AppendV(char *format, char *args) {
     char line[0x400];
     TextLog *log;
     char *text;
@@ -174,15 +174,15 @@ void KF_TextLog_AppendV(char *format, char *args) {
 }
 
 /* printf into the text log. */
-void KF_TextLog_Printf(char *format, ...) {
+void TextLog_Printf(char *format, ...) {
     va_list args;
 
     va_start(args, format);
-    KF_TextLog_AppendV(format, args);
+    TextLog_AppendV(format, args);
 }
 
 /* Draws the text log in its window, wrapping at the right edge and stopping at the bottom, then empties it. */
-void KF_TextLog_Flush(void) {
+void TextLog_Flush(void) {
     TextLogPacket *packet = &text_log_packet;
     int vertex_count = 0;
     int remaining = text_log.used;
@@ -198,7 +198,7 @@ void KF_TextLog_Flush(void) {
             pos_y += 8;
             pos_x = text_log.left;
         } else {
-            KF_TextLog_PutChar(*text, pos_x, pos_y, text_log.depth);
+            TextLog_PutChar(*text, pos_x, pos_y, text_log.depth);
             pos_x += 16;
             vertex_count += 2;
             if (text_log.left + text_log.width - 16 < pos_x) {
@@ -212,7 +212,7 @@ void KF_TextLog_Flush(void) {
         text++;
     }
     if (vertex_count != 0) {
-        KF_TextLog_SendGsRegs();
+        TextLog_SendGsRegs();
         packet->tag[0] = vertex_count | 0x8000;
         packet->tag[1] = 0x30AB4000;
         packet->tag[2] = 0x413;
@@ -228,7 +228,7 @@ void KF_TextLog_Flush(void) {
 }
 
 /* Sets the text log's colour from three ints: red, green, blue. */
-void KF_TextLog_SetColor(int *colour) {
+void TextLog_SetColor(int *colour) {
     TextLog *log = &text_log;
 
     log->red = colour[0];

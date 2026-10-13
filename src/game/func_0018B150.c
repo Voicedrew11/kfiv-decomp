@@ -6,7 +6,7 @@ extern int D_00446770;
 extern MapSlot D_0038CD20[2];
 
 int func_001C2D08(void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *, void *, void *);
 void func_00188678(void *, void *, void *, void *, void *, f32);
 
@@ -24,7 +24,7 @@ s32 func_0018B150(f32 *origin, f32 *direction, f32 length, f32 *unused) {
     s32 strips_left;
     s32 points_left;
 
-    KF_Vector_Scale(end, direction, length);
+    Vector_Scale(end, direction, length);
     func_00216C48(end, end, origin);
     for (map = 0; map < 2; map++) {
         slot = D_00446770 == map ? &D_0038CD20[0] : &D_0038CD20[1];

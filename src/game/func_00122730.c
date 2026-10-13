@@ -20,7 +20,7 @@ void func_00122730(MapObject *object) {
         if (message == 0) {
             return;
         }
-        KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
+        Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
         object->work[0] = 0x2D;
     }
 }

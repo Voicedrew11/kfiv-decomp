@@ -8,9 +8,9 @@ void func_0011A2B8(int map) {
     MapObject *object;
 
     if (D_0034B098[0] == 0) {
-        object = KF_MapObject_GetById(map, 0x77);
+        object = MapObject_GetById(map, 0x77);
         if (object != NULL) {
-            KF_MapObject_Deactivate(object);
+            MapObject_Deactivate(object);
             if (object->model != NULL && object->unk04->kind == 9) {
                 MAP_OBJECT_WORDS(object)->unk44 = 0xFF;
                 MAP_OBJECT_WORDS(object)->unk46 = 0x80;
@@ -18,9 +18,9 @@ void func_0011A2B8(int map) {
                 MAP_OBJECT_WORDS(object)->unk4A = 0;
             }
         }
-        object = KF_MapObject_GetById(map, 0x76);
+        object = MapObject_GetById(map, 0x76);
         if (object != NULL) {
-            KF_MapObject_Deactivate(object);
+            MapObject_Deactivate(object);
         }
     }
 }

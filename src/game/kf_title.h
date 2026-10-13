@@ -29,7 +29,7 @@ typedef struct {
     int length;                     /* 0x20 the frame counter starts over after this many frames */
 } BootSpriteTrack;
 
-/* one sprite of the title screens, set up by KF_Title_SetSprite and drawn by KF_Title_DrawSprite */
+/* one sprite of the title screens, set up by Title_SetSprite and drawn by Title_DrawSprite */
 typedef struct {
     int texture;                    /* 0x00 index into title_textures */
     int pos_x;                      /* 0x04 left edge, from the screen centre */
@@ -40,13 +40,13 @@ typedef struct {
     BootSpriteTrack *track;         /* 0x18 */
 } BootSprite;
 
-/* one texture of the title screens, loaded by KF_Title_LoadTexture */
+/* one texture of the title screens, loaded by Title_LoadTexture */
 typedef struct {
     BootTex0 tex0;                  /* 0x00 GS TEX0, copied from the file */
     TextureHeader *file;            /* 0x08 the file as loaded */
 } BootTexture;
 
-/* the GS packet KF_Title_DrawSprite writes to the start of sprite_packet */
+/* the GS packet Title_DrawSprite writes to the start of sprite_packet */
 typedef struct {
     u32 tag[4];                     /* 0x00 GIF tag: two address+data pairs */
     u64 alpha;                      /* 0x10 from sprite_blend_alpha by blend mode */
@@ -69,25 +69,25 @@ typedef struct {
     u32 nop[2];                     /* 0x78 */
 } BootSpritePacket;
 
-int KF_Title_Run(int screen);
-int KF_Title_Init(void);
-void KF_Title_LoadTexture(char *name, int index);
-int KF_Title_UploadTexture(int index);
-void KF_Title_SetSprite(int texture, int pos_x, int pos_y, int width, int height, BootSprite *sprite,
+int Title_Run(int screen);
+int Title_Init(void);
+void Title_LoadTexture(char *name, int index);
+int Title_UploadTexture(int index);
+void Title_SetSprite(int texture, int pos_x, int pos_y, int width, int height, BootSprite *sprite,
                         BootSpriteTrack *track);
-int KF_Title_DrawSprite(float scale, BootSprite *sprite, int blend);
-int KF_Title_SendPacket(u32 packet, u32 qword_count);
-void KF_Title_SwapBuffers(void);
-void KF_Title_PlayMusic(void);
-void KF_Title_StopMusic(void);
-void KF_Title_InitLogos(void);
-int KF_Title_UpdateLogos(void);
-int KF_Title_InitPressStart(void);
-int KF_Title_UpdatePressStart(void);
-int KF_Title_InitMenu(void);
-int KF_Title_UpdateMenu(void);
-int KF_Title_RunGameOver(void);
-int KF_Title_InitGameOver(void);
-int KF_Title_UpdateGameOver(void);
+int Title_DrawSprite(float scale, BootSprite *sprite, int blend);
+int Title_SendPacket(u32 packet, u32 qword_count);
+void Title_SwapBuffers(void);
+void Title_PlayMusic(void);
+void Title_StopMusic(void);
+void Title_InitLogos(void);
+int Title_UpdateLogos(void);
+int Title_InitPressStart(void);
+int Title_UpdatePressStart(void);
+int Title_InitMenu(void);
+int Title_UpdateMenu(void);
+int Title_RunGameOver(void);
+int Title_InitGameOver(void);
+int Title_UpdateGameOver(void);
 
 #endif

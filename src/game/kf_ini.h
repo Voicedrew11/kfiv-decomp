@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-void KF_Ini_SetText(char *text, int length);
-char *KF_Ini_ReadLine(void);
+void Ini_SetText(char *text, int length);
+char *Ini_ReadLine(void);
 
 #endif

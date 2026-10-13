@@ -71,7 +71,7 @@ void func_0014B270(Actor *arg0) {
             *(int *)(temp_a2 + 0x50) = 0;
         }
         if (D_00446ED4 % 10U == 0) {
-            p = KF_Shot_Alloc();
+            p = Shot_Alloc();
             p->a = 1;
             p->x20 = 0;
             p->x22 = 0;

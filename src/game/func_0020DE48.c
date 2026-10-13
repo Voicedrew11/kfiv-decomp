@@ -1,25 +1,28 @@
-void KF_Vector_Subtract(void *, void *, void *);
+#include "kf_collision.h"
+
+void Vector_Subtract(void *, void *, void *);
 void func_00216C48(void *, void *, void *);
-void KF_Vector_Scale(void *, void *, float);
+void Vector_Scale(void *, void *, float);
 void func_00216D20(void *, void *);
 float sqrtf(float);
 
-void func_0020DE48(void *arg0, void *arg1, float arg2, float arg3) {
-    float v[3];
-    float len;
-    float dd;
+/* sphere against sphere: fills COLLISION_RESULT when the two overlap */
+void func_0020DE48(void *center_a, void *center_b, float radius_a, float radius_b) {
+    float offset[3];
+    float distance;
+    float reach;
 
-    dd = arg2 + arg3;
-    *(int *)0x70000010 = 0;
-    KF_Vector_Subtract(v, arg1, arg0);
-    dd = dd * dd;
-    len = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
-    if (!(dd < len)) {
-        len = sqrtf(len);
-        func_00216D20((void *)0x70000020, v);
-        KF_Vector_Scale((void *)0x70000000, (void *)0x70000020, len);
-        func_00216C48((void *)0x70000000, (void *)0x70000000, arg0);
-        *(float *)0x70000014 = len;
-        *(int *)0x70000010 = 1;
+    reach = radius_a + radius_b;
+    COLLISION_RESULT->hit = 0;
+    Vector_Subtract(offset, center_b, center_a);
+    reach *= reach;
+    distance = offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2];
+    if (!(reach < distance)) {
+        distance = sqrtf(distance);
+        func_00216D20(COLLISION_RESULT->normal, offset);
+        Vector_Scale(COLLISION_RESULT->point, COLLISION_RESULT->normal, distance);
+        func_00216C48(COLLISION_RESULT->point, COLLISION_RESULT->point, center_a);
+        COLLISION_RESULT->distance = distance;
+        COLLISION_RESULT->hit = 1;
     }
 }

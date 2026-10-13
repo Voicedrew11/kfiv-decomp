@@ -10,7 +10,7 @@ extern MapObject D_003A1A30[];
 extern MapObject D_003AFA30[];
 
 void func_00216778(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void func_00216D20(void *, void *);
 void func_001C2128(void *, int, int, float);
 
@@ -64,7 +64,7 @@ s32 func_0018C728(Entity *entity) {
         "sqc2 $vf16, 0(%2)\n"
         : : "r"(target), "r"(position), "r"(distance_out) : "memory");
     distance = distance_out[0];
-    KF_Vector_Subtract(direction, target, position);
+    Vector_Subtract(direction, target, position);
     func_00216D20(direction, direction);
     if (target[0] < position[0]) {
         lowest[0] = target[0];

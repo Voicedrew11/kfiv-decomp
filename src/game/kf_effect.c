@@ -66,14 +66,14 @@ static union {
 static ModelInstance effect_models[EFFECT_COUNT];    /* 0x54A260 one model per effect */
 static Vector4 effect_light_block[8];                /* 0x574260 */
 
-static void KF_Effect_CaptureTextures(void);
-static void KF_Effect_RunSpawner(EffectSlot *slot);
-static void KF_Effect_SetupModel(int index);
-static void KF_Effect_FindModelRecord(ModelInstance *model, int unused_arg1, int record_id, int id_bits);
+static void Effect_CaptureTextures(void);
+static void Effect_RunSpawner(EffectSlot *slot);
+static void Effect_SetupModel(int index);
+static void Effect_FindModelRecord(ModelInstance *model, int unused_arg1, int record_id, int id_bits);
 
 /* Clears the effect pools, lays out the effect buffers, loads the three effect files and
    turns the angles of the effect definitions from degrees into radians. */
-void KF_Effect_Init(void) {
+void Effect_Init(void) {
     char unused_buffer[0x2C0];
     char *buffer;
     int handle;
@@ -117,7 +117,7 @@ void KF_Effect_Init(void) {
     for (i = 0; i < 0x200; i++) {
         table[i] += (int)table; /* file offsets become pointers */
     }
-    KF_Effect_CaptureTextures();
+    Effect_CaptureTextures();
     scale = 0.017453292f;
     def = effect_table.defs;
     for (i = 0; i < EFFECT_DEF_COUNT; i++, def = next_def) {
@@ -141,7 +141,7 @@ void KF_Effect_Init(void) {
 }
 
 /* Builds the texture packet's DMA tags, then reads the effect textures back from the GS into it. */
-static void KF_Effect_CaptureTextures(void) {
+static void Effect_CaptureTextures(void) {
     char store_image[0x70];
     u32 *packet;
 
@@ -185,7 +185,7 @@ static void KF_Effect_CaptureTextures(void) {
 }
 
 /* Debug: prints and frees every spawner slot and effect the player does not own. */
-void KF_Effect_DebugFreeAllButPlayer(void) {
+void Effect_DebugFreeAllButPlayer(void) {
     EffectSlot *slot = effect_slots;
     EffectActor *effect = D_003F3550;
     int i;
@@ -199,7 +199,7 @@ void KF_Effect_DebugFreeAllButPlayer(void) {
             if (slot->owner_entity == (Entity *)&D_00413F80) {
                 continue;
             }
-            KF_Effect_FreeSpawner(slot);
+            Effect_FreeSpawner(slot);
             if (effect_slot_count <= 0) {
                 break;
             }
@@ -215,7 +215,7 @@ void KF_Effect_DebugFreeAllButPlayer(void) {
             if (effect->owner_entity == (Entity *)&D_00413F80) {
                 continue;
             }
-            KF_Effect_Free(effect);
+            Effect_Free(effect);
             if (effect_count <= 0) {
                 break;
             }
@@ -224,7 +224,7 @@ void KF_Effect_DebugFreeAllButPlayer(void) {
 }
 
 /* Transforms the positions of the live spawner slots and effects by a matrix. */
-void KF_Effect_TransformAll(void *transform) {
+void Effect_TransformAll(void *transform) {
     s64 slot_in_use_bit;
     s64 actor_in_use_bit;
     EffectSlot *slot;
@@ -263,7 +263,7 @@ void KF_Effect_TransformAll(void *transform) {
 }
 
 /* Takes a free spawner slot for effect_id at position and rotation; returns its index, or -1. */
-int KF_Effect_StartSpawner(int effect_id, void *position, void *rotation, void *owner_entity) {
+int Effect_StartSpawner(int effect_id, void *position, void *rotation, void *owner_entity) {
     EffectSlot unused_slot;
     EffectDef *def;
     EffectSlot *slot;
@@ -320,11 +320,11 @@ int KF_Effect_StartSpawner(int effect_id, void *position, void *rotation, void *
 }
 
 /* Spawns effect effect_id at position and rotation; returns its slot, or -1 when none is free. */
-int KF_Effect_Spawn(int effect_id, Vector4 *position, Vector4 *rotation, Entity *owner_entity, u16 effect_param, void *owner) {
+int Effect_Spawn(int effect_id, Vector4 *position, Vector4 *rotation, Entity *owner_entity, u16 effect_param, void *owner) {
     int slot_index;
     EffectSlot *slot;
 
-    slot_index = KF_Effect_StartSpawner(effect_id, position, rotation, owner_entity);
+    slot_index = Effect_StartSpawner(effect_id, position, rotation, owner_entity);
     if (slot_index != -1) {
         slot = &effect_slots[slot_index];
         slot->effect_param = effect_param;
@@ -335,7 +335,7 @@ int KF_Effect_Spawn(int effect_id, Vector4 *position, Vector4 *rotation, Entity 
 
 /* Runs the spawner slots and the effects for one frame. While the game status has bit 0x400
    set, only those of the owner in unk40 and of the kinds 0x280, 0x282 and 0x284 run. */
-void KF_Effect_UpdateAll(void) {
+void Effect_UpdateAll(void) {
     Vector4 unused[2]; /* unused, but retail reserves the bytes */
     EffectDef *kind_280 = &effect_table.defs[0x280];
     EffectDef *kind_282 = &effect_table.defs[0x282];
@@ -355,7 +355,7 @@ void KF_Effect_UpdateAll(void) {
             if (slot->flags & EFFECT_SLOT_LIVE) {
                 if (only_owner == NULL || only_owner == slot->owner_entity || EFFECT_SLOT_FLAG_PARTS(slot)->def == kind_280 ||
                     EFFECT_SLOT_FLAG_PARTS(slot)->def == kind_282 || EFFECT_SLOT_FLAG_PARTS(slot)->def == kind_284) {
-                    KF_Effect_RunSpawner(slot);
+                    Effect_RunSpawner(slot);
                     if (!effect_slots) { // match: tests the pool's address, which is never null
                         break;
                     }
@@ -383,7 +383,7 @@ void KF_Effect_UpdateAll(void) {
                 }
                 for (key = 0; key < 3; key++) {
                     if (effect->def->unk112[key] == effect->frame) {
-                        KF_Effect_SpawnFromEffect(effect->def->unk10C[key], effect);
+                        Effect_SpawnFromEffect(effect->def->unk10C[key], effect);
                     }
                 }
                 D_00402550[effect->def->unk100][1](effect);
@@ -393,7 +393,7 @@ void KF_Effect_UpdateAll(void) {
 }
 
 /* Sends the texture packet, putting the effect textures back into the GS. */
-void KF_Effect_UploadTextures(void) {
+void Effect_UploadTextures(void) {
     u32 *first_word;
     u32 *cursor;
 
@@ -410,7 +410,7 @@ void KF_Effect_UploadTextures(void) {
 /* Draws the live effects for pass 0 or 1: finds the map record each is in, picks its texture
    frame, places its parts and sends the model. In pass 0 it also frees the effects whose
    frame has reached keyframe_end. */
-void KF_Effect_DrawAll(int pass) {
+void Effect_DrawAll(int pass) {
     Vector4 unused[3]; /* unused, but retail reserves the bytes */
     EffectActor *effect;
     ModelInstance *model;
@@ -424,7 +424,7 @@ void KF_Effect_DrawAll(int pass) {
     if (effect_count == 0) {
         return;
     }
-    KF_Effect_UploadTextures();
+    Effect_UploadTextures();
     effect = D_003F3550;
     for (i = 0; i < EFFECT_COUNT; i++, effect++) {
         if (!(effect->flags & EFFECT_FLAG_LIVE)) {
@@ -442,7 +442,7 @@ void KF_Effect_DrawAll(int pass) {
             }
             if (pass == 0 && effect->unk58 == NULL) {
                 if (effect->frame >= effect->def->keyframe_end) {
-                    KF_Effect_Free(effect);
+                    Effect_Free(effect);
                 }
                 continue;
             }
@@ -470,7 +470,7 @@ void KF_Effect_DrawAll(int pass) {
                 break;
             }
             record_id = effect->def->unkFA + record_id * effect->def->unkF8;
-            KF_Effect_FindModelRecord(model, model->unk104, effect->def->unkFA, record_id);
+            Effect_FindModelRecord(model, model->unk104, effect->def->unkFA, record_id);
         }
         func_00216778(&model->unk150, effect);
         // match: it returns a value
@@ -491,14 +491,14 @@ void KF_Effect_DrawAll(int pass) {
             func_0010B018(model, ((EffectTableEntry *)effect->def)->placement, pass);
         }
         if (pass == 0 && effect->frame >= effect->def->keyframe_end) {
-            KF_Effect_Free(effect);
+            Effect_Free(effect);
         }
     }
 }
 
 /* Runs a spawner slot for one frame: after its start delay, every unkA7 frames, it makes unkA5
    effects of its definition and counts its level down, freeing itself at 0. */
-static void KF_Effect_RunSpawner(EffectSlot *slot) {
+static void Effect_RunSpawner(EffectSlot *slot) {
     EffectDef *def;
     EffectActor *effect;
     int index;
@@ -520,7 +520,7 @@ static void KF_Effect_RunSpawner(EffectSlot *slot) {
     }
     if (effect_count >= EFFECT_COUNT) {
         if (--EFFECT_SLOT_VIEW(slot)->level == 0) {
-            KF_Effect_FreeSpawner(slot);
+            Effect_FreeSpawner(slot);
         }
         return;
     }
@@ -535,7 +535,7 @@ static void KF_Effect_RunSpawner(EffectSlot *slot) {
             break;
         }
         effect_count++;
-        KF_Memory_ClearWords(effect, sizeof(EffectActor) / 4);
+        Memory_ClearWords(effect, sizeof(EffectActor) / 4);
         EFFECT_FLAG_BITS(effect)->live = TRUE;
         effect->frame = 0;
         effect->start_position = slot->unk30;
@@ -549,7 +549,7 @@ static void KF_Effect_RunSpawner(EffectSlot *slot) {
         EFFECT_FLAG_PARTS(effect)->unk44 = -1;
         effect->unk90 = 4; /* frames the actor stays reserved once it is freed */
         effect->unk6C = 0;
-        KF_Effect_SetupModel(index);
+        Effect_SetupModel(index);
         D_00402550[effect->def->unk100][0](effect, slot);
         EFFECT_FLAG_BITS(effect)->bit59 = effect->def->unk11A != 0;
         if (D_00402DA8[effect->effect_param].unk102 != 0) {
@@ -567,16 +567,16 @@ static void KF_Effect_RunSpawner(EffectSlot *slot) {
         def = EFFECT_SLOT_VIEW(slot)->def;
     }
     if (--EFFECT_SLOT_VIEW(slot)->level == 0) {
-        KF_Effect_FreeSpawner(slot);
+        Effect_FreeSpawner(slot);
     }
 }
 
 /* Starts a spawner slot for effect_id at the effect's own model and links it to the effect. */
-int KF_Effect_SpawnFromEffect(int effect_id, EffectActor *effect) {
+int Effect_SpawnFromEffect(int effect_id, EffectActor *effect) {
     int slot_index;
     EffectSlot *slot;
 
-    slot_index = KF_Effect_StartSpawner(effect_id, &effect->model->position, &effect->model->rotation, effect->owner_entity);
+    slot_index = Effect_StartSpawner(effect_id, &effect->model->position, &effect->model->rotation, effect->owner_entity);
     if (slot_index != -1) {
         slot = &effect_slots[slot_index];
         slot->effect_param = effect->effect_param;
@@ -591,11 +591,11 @@ int KF_Effect_SpawnFromEffect(int effect_id, EffectActor *effect) {
 }
 
 /* Starts a spawner slot for effect_id at position, turned like the effect, and links it to the effect. */
-int KF_Effect_SpawnFromEffectAt(int effect_id, EffectActor *effect, Vector4 *position) {
+int Effect_SpawnFromEffectAt(int effect_id, EffectActor *effect, Vector4 *position) {
     int slot_index;
     EffectSlot *slot;
 
-    slot_index = KF_Effect_StartSpawner(effect_id, position, &effect->model->rotation, effect->owner_entity);
+    slot_index = Effect_StartSpawner(effect_id, position, &effect->model->rotation, effect->owner_entity);
     if (slot_index != -1) {
         slot = &effect_slots[slot_index];
         slot->effect_param = effect->effect_param;
@@ -610,7 +610,7 @@ int KF_Effect_SpawnFromEffectAt(int effect_id, EffectActor *effect, Vector4 *pos
 }
 
 /* Frees an effect, then the spawner slots and effects that it owns or targets. */
-void KF_Effect_Free(EffectActor *effect) {
+void Effect_Free(EffectActor *effect) {
     EFFECT_FLAG_BITS(effect)->live = 0;
     effect->unk90 = 4;
     effect_count--;
@@ -620,24 +620,24 @@ void KF_Effect_Free(EffectActor *effect) {
     func_0019CD70(EFFECT_FLAG_PARTS(effect)->unk46);
     EFFECT_FLAG_PARTS(effect)->unk46 = -1;
     if (EFFECT_FLAG_PARTS(effect)->unk44 != -1) {
-        KF_LinkedPoint_ReleaseIndex(EFFECT_FLAG_PARTS(effect)->unk44);
+        LinkedPoint_ReleaseIndex(EFFECT_FLAG_PARTS(effect)->unk44);
     }
     if (effect->flags & EFFECT_FLAG_HAS_SLOTS) {
-        KF_Effect_FreeSpawnersOf(effect);
+        Effect_FreeSpawnersOf(effect);
     }
     if (effect->flags & EFFECT_FLAG_HAS_TARGETERS) {
-        KF_Effect_FreeTargeting(effect);
+        Effect_FreeTargeting(effect);
     }
 }
 
 /* Frees a spawner slot: clears its live flag and counts one slot down. */
-void KF_Effect_FreeSpawner(EffectSlot *slot) {
+void Effect_FreeSpawner(EffectSlot *slot) {
     EFFECT_SLOT_FLAG_BITS(slot)->live = 0;
     effect_slot_count--;
 }
 
 /* Frees every effect that targets the given effect. */
-void KF_Effect_FreeTargeting(EffectActor *target) {
+void Effect_FreeTargeting(EffectActor *target) {
     EffectActor *effect;
     int i;
 
@@ -646,7 +646,7 @@ void KF_Effect_FreeTargeting(EffectActor *target) {
         for (i = 0; i < EFFECT_COUNT; i++, effect++) {
             if (effect->flags & EFFECT_FLAG_LIVE) {
                 if (effect->target == target) {
-                    KF_Effect_Free(effect);
+                    Effect_Free(effect);
                     if (effect_count == 0) {
                         break;
                     }
@@ -657,7 +657,7 @@ void KF_Effect_FreeTargeting(EffectActor *target) {
 }
 
 /* Frees every spawner slot that the given effect spawned. */
-void KF_Effect_FreeSpawnersOf(EffectActor *owner) {
+void Effect_FreeSpawnersOf(EffectActor *owner) {
     EffectSlot *slot;
     int i;
 
@@ -666,7 +666,7 @@ void KF_Effect_FreeSpawnersOf(EffectActor *owner) {
         slot = effect_slots;
         for (; i < EFFECT_SLOT_COUNT; i++, slot++) {
             if ((slot->flags & EFFECT_SLOT_LIVE) && slot->owner_effect == owner) {
-                KF_Effect_FreeSpawner(slot);
+                Effect_FreeSpawner(slot);
                 if (effect_slot_count == 0) {
                     break;
                 }
@@ -676,7 +676,7 @@ void KF_Effect_FreeSpawnersOf(EffectActor *owner) {
 }
 
 /* Sets up the model of effect number index from its definition's model file. */
-static void KF_Effect_SetupModel(int index) {
+static void Effect_SetupModel(int index) {
     char *file_cursor;
     char *memory;
     EffectActor *effect = &D_003F3550[index];
@@ -684,7 +684,7 @@ static void KF_Effect_SetupModel(int index) {
     EffectDef *def;
     int map;
 
-    KF_Memory_ClearWords(model, sizeof(ModelInstance) / 4);
+    Memory_ClearWords(model, sizeof(ModelInstance) / 4);
     def = effect->def;
     if (EFFECT_DEF_FLAGS(def) & 0x20000) {
         if ((EFFECT_DEF_FLAGS(def) & 0x600000) == 0 || (EFFECT_DEF_FLAGS(def) & 0x600000) == 0x600000) {
@@ -721,7 +721,7 @@ static void KF_Effect_SetupModel(int index) {
 
 /* Finds the record with the given id in a model's parts and copies it to model->found_record. */
 // match: the caller passes a second argument that this function never reads
-static void KF_Effect_FindModelRecord(ModelInstance *model, int unused_arg1, int record_id, int id_bits) {
+static void Effect_FindModelRecord(ModelInstance *model, int unused_arg1, int record_id, int id_bits) {
     int part_total = model->part_count;
     ModelPart *part;
     char *record;
@@ -755,7 +755,7 @@ static void KF_Effect_FindModelRecord(ModelInstance *model, int unused_arg1, int
 }
 
 /* Moves every live spawner slot and effect that takes the spawn position by an offset. */
-void KF_Effect_OffsetAll(void *offset) {
+void Effect_OffsetAll(void *offset) {
     EffectSlot *slot = effect_slots;
     EffectActor *effect = D_003F3550;
     int i;
@@ -783,7 +783,7 @@ void KF_Effect_OffsetAll(void *offset) {
 
 /* Frees the spawner slots and effects owned by anything of map slot map (its entities, its
    map objects, the slot itself) and makes the other effects forget what they knew of it. */
-void KF_Effect_FreeForMap(int map) {
+void Effect_FreeForMap(int map) {
     MapSlot *map_slot = &D_0038CD20[map];
     char *first_record = map_slot->records;
     char *last_record = first_record + map_slot->header->record_count * 0x80;
@@ -802,7 +802,7 @@ void KF_Effect_FreeForMap(int map) {
             owner = slot->owner_entity;
             if ((owner >= first_entity && owner <= last_entity) ||
                 ((MapObject *)owner >= first_object && (MapObject *)owner <= last_object) || owner == (Entity *)map_slot) {
-                KF_Effect_FreeSpawner(slot);
+                Effect_FreeSpawner(slot);
             }
         }
     }
@@ -812,7 +812,7 @@ void KF_Effect_FreeForMap(int map) {
             owner = effect->owner_entity;
             if ((owner >= first_entity && owner <= last_entity) ||
                 ((MapObject *)owner >= first_object && (MapObject *)owner <= last_object) || owner == (Entity *)map_slot) {
-                KF_Effect_Free(effect);
+                Effect_Free(effect);
                 effects_left = effect_count;
             }
         }
@@ -832,7 +832,7 @@ void KF_Effect_FreeForMap(int map) {
 }
 
 /* Frees every spawner slot and effect that the given entity owns. */
-void KF_Effect_FreeForOwner(Entity *owner) {
+void Effect_FreeForOwner(Entity *owner) {
     EffectSlot *slot;
     EffectActor *effect;
     int i;
@@ -841,18 +841,18 @@ void KF_Effect_FreeForOwner(Entity *owner) {
     effect = D_003F3550;
     for (i = 0; i < EFFECT_SLOT_COUNT && effect_slot_count > 0; i++, slot++) {
         if ((slot->flags & EFFECT_SLOT_LIVE) && slot->owner_entity == owner) {
-            KF_Effect_FreeSpawner(slot);
+            Effect_FreeSpawner(slot);
         }
     }
     for (i = 0; i < EFFECT_COUNT && effect_count > 0; i++, effect++) {
         if ((effect->flags & EFFECT_FLAG_LIVE) && effect->owner_entity == owner) {
-            KF_Effect_Free(effect);
+            Effect_Free(effect);
         }
     }
 }
 
 /* Frees the spawner slots and effects that have no effect_param and belong to owner. */
-void KF_Effect_FreeUntaggedForOwner(Entity *owner) {
+void Effect_FreeUntaggedForOwner(Entity *owner) {
     EffectSlot *slot;
     EffectActor *effect;
     int i;
@@ -862,19 +862,19 @@ void KF_Effect_FreeUntaggedForOwner(Entity *owner) {
     i = 0;
     for (; i < EFFECT_SLOT_COUNT && effect_slot_count > 0; i++, slot++) {
         if ((slot->flags & EFFECT_SLOT_LIVE) && slot->effect_param == 0xFFFF && slot->owner_entity == owner) {
-            KF_Effect_FreeSpawner(slot);
+            Effect_FreeSpawner(slot);
         }
     }
     i = 0;
     for (; i < EFFECT_COUNT && effect_count > 0; i++, effect++) {
         if ((effect->flags & EFFECT_FLAG_LIVE) && effect->effect_param == 0xFFFF && effect->owner_entity == owner) {
-            KF_Effect_Free(effect);
+            Effect_Free(effect);
         }
     }
 }
 
 /* Frees every spawner slot and effect whose effect_param is the given id. */
-void KF_Effect_FreeByParam(int effect_param) {
+void Effect_FreeByParam(int effect_param) {
     EffectSlot *slot;
     EffectActor *effect;
     int i;
@@ -883,18 +883,18 @@ void KF_Effect_FreeByParam(int effect_param) {
     effect = D_003F3550;
     for (i = 0; i < EFFECT_SLOT_COUNT && effect_slot_count > 0; i++, slot++) {
         if ((slot->flags & EFFECT_SLOT_LIVE) && slot->effect_param == effect_param) {
-            KF_Effect_FreeSpawner(slot);
+            Effect_FreeSpawner(slot);
         }
     }
     for (i = 0; i < EFFECT_COUNT && effect_count > 0; i++, effect++) {
         if ((effect->flags & EFFECT_FLAG_LIVE) && effect->effect_param == effect_param) {
-            KF_Effect_Free(effect);
+            Effect_Free(effect);
         }
     }
 }
 
 /* Frees the player's spawner slots and effects of the weapon kinds 0x280, 0x282 and 0x284. */
-void KF_Effect_FreePlayerWeaponKinds(void) {
+void Effect_FreePlayerWeaponKinds(void) {
     EffectSlot *slot;
     EffectActor *effect;
     int i;
@@ -906,20 +906,20 @@ void KF_Effect_FreePlayerWeaponKinds(void) {
             (EFFECT_SLOT_FLAG_PARTS(slot)->def == &effect_table.defs[0x280] || EFFECT_SLOT_FLAG_PARTS(slot)->def == &effect_table.defs[0x282] ||
              EFFECT_SLOT_FLAG_PARTS(slot)->def == &effect_table.defs[0x284]) &&
             slot->owner_entity == (Entity *)&D_00413F80) {
-            KF_Effect_FreeSpawner(slot);
+            Effect_FreeSpawner(slot);
         }
     }
     for (i = 0; i < EFFECT_COUNT && effect_count > 0; i++, effect++) {
         if ((effect->flags & EFFECT_FLAG_LIVE) &&
             (effect->def == &effect_table.defs[0x280] || effect->def == &effect_table.defs[0x282] || effect->def == &effect_table.defs[0x284]) &&
             effect->owner_entity == (Entity *)&D_00413F80) {
-            KF_Effect_Free(effect);
+            Effect_Free(effect);
         }
     }
 }
 
 /* Frees the player's tagged spawner slots and effects that may be stopped, but for the weapon kinds. */
-void KF_Effect_FreePlayerMagic(void) {
+void Effect_FreePlayerMagic(void) {
     EffectSlot *slot;
     EffectActor *effect;
     int i;
@@ -930,33 +930,33 @@ void KF_Effect_FreePlayerMagic(void) {
         if ((slot->flags & EFFECT_SLOT_LIVE) && slot->owner_entity == (Entity *)&D_00413F80 && slot->effect_param != 0 &&
             D_00402DA8[slot->effect_param].unk102 == 0 && EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x280] &&
             EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x282] && EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x284]) {
-            KF_Effect_FreeSpawner(slot);
+            Effect_FreeSpawner(slot);
         }
     }
     for (i = 0; i < EFFECT_COUNT && effect_count > 0; i++, effect++) {
         if ((effect->flags & EFFECT_FLAG_LIVE) && effect->owner_entity == (Entity *)&D_00413F80 && effect->effect_param != 0 &&
             D_00402DA8[effect->effect_param].unk102 == 0 && effect->def != &effect_table.defs[0x280] &&
             effect->def != &effect_table.defs[0x282] && effect->def != &effect_table.defs[0x284]) {
-            KF_Effect_Free(effect);
+            Effect_Free(effect);
         }
     }
 }
 
 /* Frees every live spawner slot whose effect_param is effect_param, while any are live. */
-void KF_Effect_FreeSpawnersByParam(int effect_param) {
+void Effect_FreeSpawnersByParam(int effect_param) {
     EffectSlot *slot;
     int i;
 
     slot = effect_slots;
     for (i = 0; i < EFFECT_SLOT_COUNT && effect_slot_count > 0; i++, slot++) {
         if ((slot->flags & EFFECT_SLOT_LIVE) && slot->effect_param == effect_param) {
-            KF_Effect_FreeSpawner(slot);
+            Effect_FreeSpawner(slot);
         }
     }
 }
 
 /* Returns 1 if a live spawner or effect uses an EffectDef from first_def to last_def. */
-int KF_Effect_IsDefRangeInUse(int first_def, int last_def) {
+int Effect_IsDefRangeInUse(int first_def, int last_def) {
     EffectDef *first;
     EffectDef *last;
     EffectSlot *slot;

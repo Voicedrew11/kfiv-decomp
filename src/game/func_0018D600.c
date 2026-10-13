@@ -9,6 +9,6 @@ void func_0018D600(char **entity, int effect_id, u32 point_id, int rotation) {
 
     point = func_0010CAB8(*entity, point_id);
     if (point != 0) {
-        KF_Effect_StartSpawner(effect_id, point, (void *)rotation, entity);
+        Effect_StartSpawner(effect_id, point, (void *)rotation, entity);
     }
 }

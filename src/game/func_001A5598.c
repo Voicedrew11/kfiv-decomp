@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 
 int func_001AFD08(void *, void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 double sqrt(double);
 
 void func_001A5598(EffectActor *actor, EffectSlot *spawn_slot) {
@@ -20,7 +20,7 @@ void func_001A5598(EffectActor *actor, EffectSlot *spawn_slot) {
     motion->near_target = 0;
     if (actor->unk6C != 0) {
         target = *(ModelInstance **)actor->unk6C;
-        KF_Vector_Subtract(offset, &target->position, &actor->model->position);
+        Vector_Subtract(offset, &target->position, &actor->model->position);
         remaining = (double)(float)actor->def->interval - sqrt((double)(offset[0] * offset[0] + offset[2] * offset[2]));
         motion->fraction = remaining / (double)((float)actor->def->interval + (float)actor->def->interval);
         motion->fraction *= actor->def->unkDC;

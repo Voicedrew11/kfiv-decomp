@@ -4,8 +4,8 @@ extern f32 D_00431AF0[16];
 
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0TransposeMatrix(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void func_00216D20(void *, void *);
 void func_00216CD8(void *, void *, void *);
 void func_00216B48(int, int *, int);
@@ -26,7 +26,7 @@ s32 func_0018C0D0(ModelInstance *model, void *part, f32 *target, f32 *limits, f3
     }
     func_00216B48((int)part_matrix, (int *)model->unk40, (int)part_matrix);
     sceVu0CopyMatrix(look, D_00431AF0);
-    KF_Vector_Subtract(vector, &part_matrix[12], target);
+    Vector_Subtract(vector, &part_matrix[12], target);
     if (limits != NULL) {
         func_0018C298(vector, limits, model->rotation.y);
     }
@@ -40,7 +40,7 @@ s32 func_0018C0D0(ModelInstance *model, void *part, f32 *target, f32 *limits, f3
     func_00216CD8(&look[4], &look[8], look);
     func_00216D20(&look[4], &look[4]);
     if (model->unkE0 < 0.0f) {
-        KF_Vector_Scale(look, look, -1.0f);
+        Vector_Scale(look, look, -1.0f);
     }
     look[3] = look[7] = look[11] = 0.0f;
     part_matrix[14] = part_matrix[13] = part_matrix[12] = 0.0f;

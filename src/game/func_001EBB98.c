@@ -368,7 +368,7 @@ void func_001EBB98(HandlerContext *context) {
     func_001FF428(chosen, 0x18);
 
     current = D_00426110[0];
-    texts = KF_Message_GetFontText(D_00446F38);
+    texts = Message_GetFontText(D_00446F38);
     number = current->unk0C + 0x1F5; // match: its own local, or the offset is folded into the load
     text_offset = ((s32 *)texts)[number];
     position.raw = 0x000A875083207080L;

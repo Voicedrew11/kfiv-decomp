@@ -4,16 +4,16 @@ void *memset(void *, int, u32);
 
 static char *ini_cursor;          /* 0x447350 start of the next line */
 static int ini_remaining;         /* 0x447354 bytes left after ini_cursor */
-static char ini_line[0x400];      /* 0x5F9700 the line KF_Ini_ReadLine returns */
+static char ini_line[0x400];      /* 0x5F9700 the line Ini_ReadLine returns */
 
-/* Sets the text KF_Ini_ReadLine reads lines from. */
-void KF_Ini_SetText(char *text, int length) {
+/* Sets the text Ini_ReadLine reads lines from. */
+void Ini_SetText(char *text, int length) {
     ini_cursor = text;
     ini_remaining = length;
 }
 
 /* Copies the next line of the text to ini_line, without its CR LF; NULL at the end of the text. */
-char *KF_Ini_ReadLine(void) {
+char *Ini_ReadLine(void) {
     char *dest;
     char *source;
     char current;

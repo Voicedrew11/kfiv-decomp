@@ -31,12 +31,12 @@ void func_001F6A38(void) {
     func_001A15C0();
     func_0019DC00();
     D_00446C94 = 0;
-    D_0044731C = D_00447320 = KF_Pad_GetMode(0, 0);
+    D_0044731C = D_00447320 = Pad_GetMode(0, 0);
     while (D_00440628[D_00446D00](0) != 0) {
         sceGsSyncPath(0, 0);
         D_00447328 = func_001D72F0(1);
         func_001B5460();
-        field = KF_Pad_GetMode(0, 0);
+        field = Pad_GetMode(0, 0);
         D_0044731C = field;
         if (field != D_00447320) {
             D_0044730C = 1;

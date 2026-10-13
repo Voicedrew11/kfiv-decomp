@@ -33,7 +33,7 @@ void func_001BC1C0(int index) {
                 func_001DC120(index);
             }
         } else {
-            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x1E);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x1E);
         }
     }
 }

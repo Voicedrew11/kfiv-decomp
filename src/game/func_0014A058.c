@@ -26,7 +26,7 @@ void func_0014A058(Entity *entity) {
         break;
     case 2:
         if (entity->model->unkFC->unk82 == entity->spawn_info->unk44) {
-            map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->unk43);
+            map_object = MapObject_GetById(entity->group_id, entity->spawn_info->unk43);
             if (map_object != NULL && map_object->unk08->unk40 != 0 && entity->group_id == D_00446770) {
                 func_002109C8(map_object->unk08->unk40, 0);
             }

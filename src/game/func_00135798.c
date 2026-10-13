@@ -36,15 +36,15 @@ void func_00135798(Entity *entity) {
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             part = func_0010CAB8((char *)entity->model, 0x14);
             if (part != NULL) {
-                KF_Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80);
+                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80);
             }
             part = func_0010CAB8((char *)entity->model, 0x15);
             if (part != NULL) {
-                KF_Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80);
+                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80);
             }
             part = func_0010CAB8((char *)entity->model, 0x16);
             if (part != NULL) {
-                KF_Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80);
+                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80);
             }
             ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
             unkE0->unk7A = 1;
@@ -52,7 +52,7 @@ void func_00135798(Entity *entity) {
         }
         break;
     case 3:
-        other = KF_Entity_GetBySpawnIdForMap(entity->group_id, entity->spawn_info->unk40);
+        other = Entity_GetBySpawnIdForMap(entity->group_id, entity->spawn_info->unk40);
         if (other != NULL && ((s32)other->flags & 1) && other->unkE0.unk7A != 0) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;

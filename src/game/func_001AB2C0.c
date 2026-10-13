@@ -2,7 +2,7 @@
 
 extern char D_00413F80[];
 
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 int func_001B4F90(void *);
 int func_001C0E40(f32, void *);
 void sceVu0AddVector(void *, void *, void *);
@@ -15,7 +15,7 @@ void func_001AB2C0(EffectActor *actor) {
 
     motion = (BobbingMotion *)&actor->motion;
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
-        KF_Vector_Subtract(&offset, D_00413F80, &actor->model->position);
+        Vector_Subtract(&offset, D_00413F80, &actor->model->position);
         func_001AFC88(&motion->velocity, &offset, actor->def->speed, actor->def->unkDC);
         actor->model->position.y -= actor->def->unkE0 * 0.5f;
         motion->velocity.w = 0.0f;
@@ -28,7 +28,7 @@ void func_001AB2C0(EffectActor *actor) {
         }
     }
     if (motion->ending == 1) {
-        KF_Effect_Free(actor);
+        Effect_Free(actor);
     } else if (actor->frame == 0) {
         actor->model->position.y -= 100.0f;
         check = func_001B4F90(actor);
@@ -36,7 +36,7 @@ void func_001AB2C0(EffectActor *actor) {
         if (check & 0x10) {
             motion->ending = 1;
         } else if (check & 1) {
-            KF_Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             motion->ending = 1;
         }
     }

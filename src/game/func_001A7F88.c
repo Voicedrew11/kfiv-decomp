@@ -3,7 +3,7 @@
 
 void func_001AF298(void *, void *);
 void sceVu0AddVector(void *, void *, void *);
-void KF_Vector_Scale(void *, void *, float);
+void Vector_Scale(void *, void *, float);
 
 /* Per-frame update of an effect that speeds up along its heading while bobbing up and down. */
 void func_001A7F88(EffectActor *effect) {
@@ -14,7 +14,7 @@ void func_001A7F88(EffectActor *effect) {
 
     motion = (BobbingGrowMotion *)&effect->motion;
     if (motion->ended != 0) {
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);
@@ -24,7 +24,7 @@ void func_001A7F88(EffectActor *effect) {
     max_frames = def->max_frames;
     if (effect->frame < max_frames || max_frames == 0) {
         motion->velocity_scale += def->scale_per_frame;
-        KF_Vector_Scale(&step, &motion->velocity, motion->velocity_scale);
+        Vector_Scale(&step, &motion->velocity, motion->velocity_scale);
         sceVu0AddVector(&effect->model->position, &effect->model->position, &step);
     }
     motion->bob_speed += motion->bob_rising != 0 ? 0.01f : -0.01f;
@@ -38,7 +38,7 @@ void func_001A7F88(EffectActor *effect) {
     if (effect->frame >= 3 && effect->frame < 48) {
         func_001AF298(effect, &motion->ended);
         if (motion->ended != 0) {
-            KF_Effect_Spawn(0xDF, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+            Effect_Spawn(0xDF, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         }
     }
     effect->frame++;

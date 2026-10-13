@@ -6,7 +6,7 @@
 void func_00216580(ScriptPointCommand *command) {
     MapObject *object;
 
-    object = KF_Entity_GetBySpawnId(command->object_id.value);
+    object = Entity_GetBySpawnId(command->object_id.value);
     if (object != NULL) {
         object->model->position.x = command->from_x.value;
         object->model->position.y = command->from_y.value;

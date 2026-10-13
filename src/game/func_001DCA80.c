@@ -214,7 +214,7 @@ void func_001DCA80(HandlerContext *context) {
         func_00201E10(&D_00426470, local, D_00446C88);
     }
 
-    table = KF_Message_GetFontText(D_00446F38);
+    table = Message_GetFontText(D_00446F38);
     first_text = D_00446BC0 * LIST_PAGES + 3001;
     entry = func_001DCA80_TextOffset(table, first_text + LIST_PAGES - 1);
     word.raw = 0x000A875081106E80;

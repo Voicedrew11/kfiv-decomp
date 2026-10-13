@@ -5,7 +5,7 @@
 void func_00143C28(Entity *entity) {
     Entity *partner;
 
-    partner = KF_Entity_GetBySpawnId(entity->spawn_info->variant);
+    partner = Entity_GetBySpawnId(entity->spawn_info->variant);
     if (partner != NULL) {
         if ((partner->flags & 0xE) == 2) {
             partner->state = 2;

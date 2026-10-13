@@ -741,7 +741,7 @@ static void func_00169F58(Entity *entity) {
             }
             for (point_index = 0; point_index < count; point_index++) {
                 for (; minion_index < 8; minion_index++) {
-                    minion = KF_Entity_GetBySpawnId(minion_index + 10);
+                    minion = Entity_GetBySpawnId(minion_index + 10);
                     if (minion != NULL && (minion->flags & 3) == 1 &&
                         (((s32)(minion->flags >> 2) & 3) == 0 || ((s32)(minion->flags >> 2) & 3) == 3)) {
                         point = &D_004FF390[point_index];

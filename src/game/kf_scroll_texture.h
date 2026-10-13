@@ -3,7 +3,7 @@
 
 #include "common.h"
 
-void KF_ScrollTexture_Init(void);
-void KF_ScrollTexture_DrawAll(void);
+void ScrollTexture_Init(void);
+void ScrollTexture_DrawAll(void);
 
 #endif

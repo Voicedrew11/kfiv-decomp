@@ -5,7 +5,7 @@ extern u8 D_00349690[];
 int func_00192C98(void *, int, int, u32, int);
 f32 func_0018A9F0(void *, void *);
 void func_00195588(Vector4 *, float);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void func_00195898(char *, u8);
 int func_001958B8(Entity *, void (*)(Entity *), int);
 
@@ -56,7 +56,7 @@ void func_0012FDB8(Entity *entity) {
             break;
         }
         func_00195588(direction, entity->model->unkD0[1]);
-        KF_Vector_Scale(direction, direction, entity->params->unk436);
+        Vector_Scale(direction, direction, entity->params->unk436);
         direction[1] += entity->params->unk438;
         entity->unk84 += direction[0];
         entity->unk88 += direction[1];

@@ -23,7 +23,7 @@ void func_001A6538(EffectActor *effect) {
 
     motion = (ProbeFlatMotion *)&effect->motion;
     if ((s8)motion->on_ground != 0) {
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);
@@ -53,7 +53,7 @@ void func_001A6538(EffectActor *effect) {
     hits = func_001B4F90(effect);
     effect->model->position.y += 110.0f;
     if (hits & 0x14) {
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
         return;
     }
     if (effect->frame == 0) {

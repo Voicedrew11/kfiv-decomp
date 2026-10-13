@@ -1,6 +1,6 @@
 #include "kf_collision.h"
 
-void KF_Vu0_LoadMatrix(void *);
+void Vu0_LoadMatrix(void *);
 
 /* Places the points of a model's collision mesh in the world: each is multiplied by the model's
    matrix and written to the scratchpad (COLLISION_WORLD_POINTS), three at a time and then the
@@ -15,7 +15,7 @@ int func_001C2D08(void *target) {
     s32 i;
 
     mesh = (CollisionMesh *)model->strips;
-    KF_Vu0_LoadMatrix(model->unk80);
+    Vu0_LoadMatrix(model->unk80);
     count = mesh->unk0C;
     local = (Vector4 *)mesh->unk08;
     i = count / 3;

@@ -6,8 +6,8 @@ float cosf(float);
 float sqrtf(float);
 float func_0019B838(float);
 void func_00216C48(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
 /* Tests a ball (`centre`, `radius`) against a swing from `origin`: a slab `depth` deep below the origin's
@@ -42,7 +42,7 @@ void func_00210488(void *ball_centre, void *swing_origin, f32 radius, f32 range,
     } else {
         width = radius;
     }
-    KF_Vector_Subtract(delta, centre, origin);
+    Vector_Subtract(delta, centre, origin);
     width = (width + range) * (width + range);
     bottom = delta[0] * delta[0] + delta[2] * delta[2];
     COLLISION_RESULT->distance = bottom;
@@ -57,9 +57,9 @@ void func_00210488(void *ball_centre, void *swing_origin, f32 radius, f32 range,
     if (half_angle < top) {
         return;
     }
-    KF_Vector_Subtract(delta, origin, centre);
+    Vector_Subtract(delta, origin, centre);
     sceVu0Normalize(COLLISION_RESULT->normal, delta);
-    KF_Vector_Scale(delta, COLLISION_RESULT->normal, radius);
+    Vector_Scale(delta, COLLISION_RESULT->normal, radius);
     func_00216C48(COLLISION_RESULT->point, centre, delta);
     COLLISION_RESULT->hit = 1;
 }

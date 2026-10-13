@@ -39,7 +39,7 @@ s32 func_00153C58(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from, s3
     }
     for (; i < end; i++) {
         if (record->unk10[i].unk02 != 0 && frame_from < record->unk10[i].unk02 && record->unk10[i].unk02 <= frame_to) {
-            shot = KF_Shot_Alloc();
+            shot = Shot_Alloc();
             shot->unk22 = shot->unk20 = 0;
             shot->unk00 = 1;
             shot->unk28 = entity->params->unk238;

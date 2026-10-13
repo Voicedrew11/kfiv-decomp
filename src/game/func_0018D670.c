@@ -64,9 +64,9 @@ void func_0018D670(Entity *entity, s32 animation, s32 frame_from, s32 frame_to) 
                 continue;
             }
             if (record->unk05 != 0) {
-                KF_Effect_StartSpawner(entity->params->unk440[(s32)(entity->flags >> 60) & 7], from, angles, entity);
+                Effect_StartSpawner(entity->params->unk440[(s32)(entity->flags >> 60) & 7], from, angles, entity);
             } else {
-                KF_Effect_StartSpawner(record->unk00, from, angles, entity);
+                Effect_StartSpawner(record->unk00, from, angles, entity);
             }
         }
     }

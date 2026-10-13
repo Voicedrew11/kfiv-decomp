@@ -13,7 +13,7 @@ static char shot_ring[SHOT_RING_SLOTS * SHOT_SLOT_SIZE];   /* 0x574348 the shots
 static char second_ring[SHOT_RING_SLOTS * SHOT_SLOT_SIZE]; /* 0x577348 the same, nothing claims from it */
 
 /* Empties both rings of shot slots. */
-void KF_Shot_ClearAll(void) {
+void Shot_ClearAll(void) {
     shot_ring_next = 0;
     memset(shot_ring, 0, sizeof(shot_ring));
     second_ring_next = 0;
@@ -22,7 +22,7 @@ void KF_Shot_ClearAll(void) {
 }
 
 /* Claims the next shot slot, cleared; the oldest is reused once all are taken. */
-void *KF_Shot_Alloc(void) {
+void *Shot_Alloc(void) {
     void *slot = shot_ring + shot_ring_next * SHOT_SLOT_SIZE;
 
     memset(slot, 0, SHOT_SLOT_SIZE);
@@ -30,8 +30,8 @@ void *KF_Shot_Alloc(void) {
     return slot;
 }
 
-/* KF_Shot_Alloc for second_ring. */
-void *KF_Shot_AllocSecondRing(void) {
+/* Shot_Alloc for second_ring. */
+void *Shot_AllocSecondRing(void) {
     void *slot = second_ring + second_ring_next * SHOT_SLOT_SIZE;
 
     memset(slot, 0, SHOT_SLOT_SIZE);

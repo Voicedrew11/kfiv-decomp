@@ -2,8 +2,8 @@
 
 extern const f32 D_00446FCC[];      /* -0.0f */
 
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void func_00216C48(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
@@ -19,7 +19,7 @@ void func_0020F820(f32 *base, f32 *centre, f32 radius, f32 height, f32 reach) {
 
     result->hit = 0;
     distance = base[1] - centre[1];
-    KF_Vector_Subtract(delta, base, centre);
+    Vector_Subtract(delta, base, centre);
     result->distance = delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2];
     if (distance < -reach) {
         return;
@@ -42,10 +42,10 @@ past_far_end:
     delta[1] = 0.0f;
     sceVu0Normalize(rim, delta);
     reach *= reach;
-    KF_Vector_Scale(rim, rim, radius);
+    Vector_Scale(rim, rim, radius);
     func_00216C48(rim, rim, base);
     rim[1] -= height;
-    KF_Vector_Subtract(rim, centre, rim);
+    Vector_Subtract(rim, centre, rim);
     distance = rim[0] * rim[0] + rim[1] * rim[1] + rim[2] * rim[2];
     if (distance < reach) {
         COLLISION_RESULT->hit = 1;
@@ -57,9 +57,9 @@ past_near_end:
     delta[1] = 0.0f;
     sceVu0Normalize(rim, delta);
     reach *= reach;
-    KF_Vector_Scale(rim, rim, radius);
+    Vector_Scale(rim, rim, radius);
     func_00216C48(rim, rim, base);
-    KF_Vector_Subtract(rim, centre, rim);
+    Vector_Subtract(rim, centre, rim);
     distance = rim[0] * rim[0] + rim[1] * rim[1] + rim[2] * rim[2];
     if (distance < reach) {
         COLLISION_RESULT->hit = 1;

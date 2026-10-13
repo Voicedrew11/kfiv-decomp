@@ -92,15 +92,15 @@ void func_001BC2D0(void) {
             case 1:
             case 4:
             case 5:
-                if (D_00420D00.current == NULL || !KF_MapObject_UseItem(D_00420D00.current, item)) {
-                    KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
+                if (D_00420D00.current == NULL || !MapObject_UseItem(D_00420D00.current, item)) {
+                    Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
                     return;
                 }
                 break;
             case 2:
                 stood_on = D_00414188[0];
                 if (stood_on == NULL || stood_on->unk04->kind != 12 || !func_001188E0(item)) {
-                    KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
+                    Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
                     return;
                 }
                 break;
@@ -112,7 +112,7 @@ void func_001BC2D0(void) {
             case 7:
                 break;
             case 8:
-                KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
+                Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
                 return;
             default:
                 return;

@@ -4,8 +4,8 @@ extern f32 D_004323E0[16];
 
 int rand(void);
 void func_00216B48(void *, void *, void *);
-void KF_Vu0_LoadMatrix(void *);
-void KF_Vu0_ProjectToScreen(int *, void *);
+void Vu0_LoadMatrix(void *);
+void Vu0_ProjectToScreen(int *, void *);
 
 /* Gives every vertex texture coordinates taken from where it lands on the screen, with each
    vertex shaken a little first. */
@@ -35,7 +35,7 @@ void func_00112118(ModelInstance *model) {
     part = model->parts;
     part_count = model->part_count;
     for (i = 0; i < part_count; i++, part++) {
-        KF_Vu0_LoadMatrix(scratch->matrices[i]);
+        Vu0_LoadMatrix(scratch->matrices[i]);
         count = part->data_count;
         next_data = (ModelPartData *)(int)part->data_addr;
         for (j = 0; j < count; j++) {
@@ -49,7 +49,7 @@ void func_00112118(ModelInstance *model) {
                 *&MODEL_PROJECT_SCRATCH->point[1] = vertex->y + (rand() - 1073741824.0f) * 2.0f * 9.313226e-10f;
                 *&MODEL_PROJECT_SCRATCH->point[2] = vertex->z + (rand() - 1073741824.0f) * 2.0f * 9.313226e-10f;
                 *&MODEL_PROJECT_SCRATCH->point[3] = 1.0f;
-                KF_Vu0_ProjectToScreen(MODEL_PROJECT_SCRATCH->screen, MODEL_PROJECT_SCRATCH->point);
+                Vu0_ProjectToScreen(MODEL_PROJECT_SCRATCH->screen, MODEL_PROJECT_SCRATCH->point);
                 vertex->tex_u = (*&MODEL_PROJECT_SCRATCH->screen[0] - 0x6C00) / 10240.0f * 4096.0f;
                 vertex->tex_v = (*&MODEL_PROJECT_SCRATCH->screen[1] - 0x7200) / 7168.0f * 4096.0f;
                 vertex++;

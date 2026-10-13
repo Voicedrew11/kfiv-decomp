@@ -1,21 +1,24 @@
-extern void KF_Vector_Subtract(float *, int, float *);
-extern int sceVu0Normalize(int, void *);
+#include "kf_collision.h"
 
-void func_001861F8(int arg0, float *arg1, float arg2, float arg3) {
-    float v[4];
-    float temp_f20;
-    float temp_f21;
+void Vector_Subtract(void *, void *, void *);
+void sceVu0Normalize(float *, float *);
 
-    temp_f20 = arg2 + arg3;
-    *(int *)0x70000010 = 0;
-    KF_Vector_Subtract(v, arg0, arg1);
-    temp_f21 = temp_f20;
-    temp_f20 = temp_f20 * temp_f20;
-    if (!(temp_f20 <= v[0] * v[0] + v[1] * v[1] + v[2] * v[2])) {
-        *(int *)0x70000010 = 1;
-        sceVu0Normalize(0x70000020, v);
-        *(float *)0x70000000 = arg1[0] + *(float *)0x70000020 * temp_f21;
-        *(float *)0x70000004 = arg1[1] + *(float *)0x70000024 * temp_f21;
-        *(float *)0x70000008 = arg1[2] + *(float *)0x70000028 * temp_f21;
+/* sphere against sphere: fills COLLISION_RESULT when the two overlap, the point on the second's surface */
+void func_001861F8(void *center_a, float *center_b, float radius_a, float radius_b) {
+    float offset[4];
+    float reach;
+    float reach_squared;
+
+    reach_squared = radius_a + radius_b;
+    COLLISION_RESULT->hit = 0;
+    Vector_Subtract(offset, center_a, center_b);
+    reach = reach_squared;
+    reach_squared *= reach_squared;
+    if (!(reach_squared <= offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2])) {
+        COLLISION_RESULT->hit = 1;
+        sceVu0Normalize(COLLISION_RESULT->normal, offset);
+        COLLISION_RESULT->point[0] = center_b[0] + COLLISION_RESULT->normal[0] * reach;
+        COLLISION_RESULT->point[1] = center_b[1] + COLLISION_RESULT->normal[1] * reach;
+        COLLISION_RESULT->point[2] = center_b[2] + COLLISION_RESULT->normal[2] * reach;
     }
 }

@@ -24,7 +24,7 @@ void func_001BBEE0(int arg0) {
         if ((u16)n == 0xB4 || (u16)n == 0x1E0) {
             if (e->b14 < 2) {
                 e->b14++;
-                KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2C);
+                Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2C);
             }
         }
     }
@@ -34,7 +34,7 @@ void func_001BBEE0(int arg0) {
     if (t == 0) {
         if (p[10] < 0x3E7) {
             p[10]++;
-            KF_Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2A);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2A);
         }
     }
 }

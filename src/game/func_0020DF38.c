@@ -2,8 +2,8 @@
 
 extern const f32 D_00446FB8[];      /* -0.0f */
 
-void KF_Vector_Subtract(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
 void func_00216778(void *, void *);
 void sceVu0Normalize(float *, float *);
 
@@ -53,9 +53,9 @@ void func_0020DF38(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point, f32 
     if (reach <= distance) {
         return;
     }
-    KF_Vector_Scale(foot, normal, distance);
-    KF_Vector_Subtract(foot, point, foot);
-    KF_Vector_Subtract(from_b, foot, corner_b);
+    Vector_Scale(foot, normal, distance);
+    Vector_Subtract(foot, point, foot);
+    Vector_Subtract(from_b, foot, corner_b);
     COLLISION_RESULT->distance = distance;
     __asm__ volatile(
         "lqc2 $vf16, 0(%0)\n"

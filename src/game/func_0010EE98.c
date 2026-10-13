@@ -3,8 +3,8 @@
 extern f32 D_004323E0[16];      /* world to screen */
 
 void sceVu0MulMatrix(void *, void *, void *);
-void KF_Vu0_LoadMatrix(void *);
-void KF_Vu0_ProjectToScreen(int *, void *);
+void Vu0_LoadMatrix(void *);
+void Vu0_ProjectToScreen(int *, void *);
 void func_002168B8(int *, int *, int *, f32 *, f32 *, f32 *);
 void func_0010F478(u32 *, ModelPartVertexWords *, int, int, void *);
 
@@ -51,7 +51,7 @@ void func_0010EE98(ModelInstance *model) {
 
         sceVu0MulMatrix(local_matrix, model->unk40, part);
         sceVu0MulMatrix(screen_matrix, D_004323E0, local_matrix);
-        KF_Vu0_LoadMatrix(screen_matrix);
+        Vu0_LoadMatrix(screen_matrix);
         j = 0;
         count = (s32)(MODEL_PART_WORD(part) >> 53);
         block = *(ModelPartData **)&MODEL_PART_WORD(part);
@@ -90,7 +90,7 @@ void func_0010EE98(ModelInstance *model) {
                 point0[2] = vertex->z;
                 point0[3] = 1.0f;
                 vertex++;
-                KF_Vu0_ProjectToScreen((int *)screen++, point0);
+                Vu0_ProjectToScreen((int *)screen++, point0);
             }
             clip[0] = clip[1] = clip[2] = 0;
             outside = 0;

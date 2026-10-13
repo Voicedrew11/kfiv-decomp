@@ -8,19 +8,19 @@ extern Entity *D_004467E0;
 float sqrtf(float);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Scale(float *, float *, float);
+void Vector_Subtract(void *, void *, void *);
 void func_0020F0D8(void *, f32, f32, void *, f32, f32);
 
 /* moves the player out of the body just hit: to `push` from it, but by no more than 50 a frame */
 #define PUSH_PLAYER_OUT()                                                                          \
-    KF_Vector_Scale(offset, COLLISION_RESULT->normal, push);                                       \
+    Vector_Scale(offset, COLLISION_RESULT->normal, push);                                       \
     func_00216C48(offset, COLLISION_RESULT, offset);                                               \
-    KF_Vector_Subtract(offset, offset, &D_00413F80);                                               \
+    Vector_Subtract(offset, offset, &D_00413F80);                                               \
     length = sqrtf(offset[0] * offset[0] + offset[2] * offset[2]);                                 \
     if (50.0f < length) {                                                                          \
         offset[1] = 0.0f;                                                                          \
-        KF_Vector_Scale(offset, offset, 50.0f / length);                                           \
+        Vector_Scale(offset, offset, 50.0f / length);                                           \
         func_00216C48(&D_00413F80, &D_00413F80, offset);                                           \
     } else {                                                                                       \
         D_00413F80.position.x = COLLISION_RESULT->point[0] + COLLISION_RESULT->normal[0] * push;   \

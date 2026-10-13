@@ -6,7 +6,7 @@ extern char D_00413F80[];
 void func_001AF298(void *, void *);
 int func_001B4F90(void *);
 void sceVu0AddVector(void *, void *, void *);
-void KF_Vector_Scale(void *, void *, float);
+void Vector_Scale(void *, void *, float);
 int func_001C0E40(f32, void *);
 char func_0019C8D0(int index, int first, int second, int third, int fourth);
 double sin(double);
@@ -25,7 +25,7 @@ void func_001A6118(EffectActor *effect) {
 
     motion = (SwayMotion *)&effect->motion;
     if (motion->done != 0) {
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);
@@ -47,7 +47,7 @@ void func_001A6118(EffectActor *effect) {
     }
     motion->angle = angle;
     sine = (float)sin((double)angle);
-    KF_Vector_Scale(&offset, &offset, sine);
+    Vector_Scale(&offset, &offset, sine);
     sceVu0AddVector(&effect->model->position, &effect->model->position, &offset);
     sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     if (func_001C0E40(motion->unk10, &effect->model->position) == 0) {
@@ -67,7 +67,7 @@ void func_001A6118(EffectActor *effect) {
     hits = func_001B4F90(effect);
     effect->model->position.y += 110.0f;
     if (hits & 0x14) {
-        KF_Effect_Free(effect);
+        Effect_Free(effect);
         return;
     }
     if (effect->frame == 0) {

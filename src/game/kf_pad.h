@@ -14,8 +14,8 @@
 #define PAD_MODE_PRESSURE 2 /* analog with pressure-sensitive buttons */
 #define PAD_MODE_NONE 0xFF  /* mode: not known yet; mode_request: nothing asked */
 
-/* what KF_Pad_GetReport returns: the controller's own report as scePadRead gave it, then the
-   buttons KF_Pad_Update worked out */
+/* what Pad_GetReport returns: the controller's own report as scePadRead gave it, then the
+   buttons Pad_Update worked out */
 typedef struct {
     u8 status;                      /* 0x00 0 when the read succeeded */
     u8 type_and_length;             /* 0x01 controller type in the high nibble, half the data length in the low */
@@ -37,7 +37,7 @@ typedef struct {
 } PadReportAxes;
 
 /* PadReport.pressed inside a union: a read through it may alias any store, so it stays behind one
-   (KF_Title_UpdateMenu and KF_Title_UpdateGameOver only match this way) */
+   (Title_UpdateMenu and Title_UpdateGameOver only match this way) */
 typedef union {
     u16 buttons;
     u8 bytes[2];
@@ -48,7 +48,7 @@ typedef struct {
     PadButtonsUnion pressed;        /* 0x20 */
 } PadReportUnion;
 
-/* auto-repeat timing of one button of a PadSlot (set by KF_Pad_SetRepeat, stepped by func_00216EA0) */
+/* auto-repeat timing of one button of a PadSlot (set by Pad_SetRepeat, stepped by func_00216EA0) */
 typedef struct {
     u8 delay;                       /* 0x00 frames before the first repeat */
     u8 interval;                    /* 0x01 frames between repeats */
@@ -56,7 +56,7 @@ typedef struct {
     u8 fired;                       /* 0x03 0 none, 1 first press, 2 repeat */
 } PadRepeatKey;
 
-/* one controller (0x1C0 bytes), kept up to date by KF_Pad_Update */
+/* one controller (0x1C0 bytes), kept up to date by Pad_Update */
 typedef struct {
     u8 dma_buffer[0x100];           /* 0x000 work area handed to scePadPortOpen */
     PadReport report;               /* 0x100 the 0x24 bytes scePadRead gave (func_00216DD0) */
@@ -67,7 +67,7 @@ typedef struct {
     int request_state;              /* 0x16C scePadGetReqState */
     int actuator_count;             /* 0x170 scePadInfoAct(-1) */
     u8 actuators[6];                /* 0x174 [0] small motor on/off, [1] big motor power */
-    u8 phase;                       /* 0x17A step of the set-up state machine in KF_Pad_Update */
+    u8 phase;                       /* 0x17A step of the set-up state machine in Pad_Update */
     u8 next_phase;                  /* 0x17B phase to go to after the actuators are aligned */
     u8 pad_type;                    /* 0x17C report.type_and_length >> 4 */
     u8 features;                    /* 0x17D PAD_FEATURE_* */
@@ -84,22 +84,22 @@ typedef struct {
     u8 open_slots[2];               /* 0xE00 per port, bit n: slot n was opened */
 } PadSystem;
 
-int KF_Pad_Init(int mode);
-int KF_Pad_OpenPort(int port, int slot);
-void KF_Pad_Update(void);
-int KF_Pad_GetState(int port, int slot);
-int KF_Pad_GetRequestState(int port, int slot);
-PadReport *KF_Pad_GetReport(int port, int slot);
-int KF_Pad_GetButtons(int port, int slot);
-int KF_Pad_GetPressed(int port, int slot);
-int KF_Pad_GetRepeated(int port, int slot);
-void KF_Pad_SetRepeat(int port, int slot, u16 buttons, u16 delay, u16 interval);
-void KF_Pad_ClearRepeat(int port, int slot, u16 buttons);
-void KF_Pad_SetActuators(int port, int slot, u8 *values);
-void KF_Pad_SetRumble(int port, int slot, int power);
-void KF_Pad_RequestDigital(int port, int slot, int lock);
-int KF_Pad_RequestAnalog(int port, int slot, int lock);
-int KF_Pad_RequestPressure(int port, int slot);
-int KF_Pad_GetMode(int port, int slot);
+int Pad_Init(int mode);
+int Pad_OpenPort(int port, int slot);
+void Pad_Update(void);
+int Pad_GetState(int port, int slot);
+int Pad_GetRequestState(int port, int slot);
+PadReport *Pad_GetReport(int port, int slot);
+int Pad_GetButtons(int port, int slot);
+int Pad_GetPressed(int port, int slot);
+int Pad_GetRepeated(int port, int slot);
+void Pad_SetRepeat(int port, int slot, u16 buttons, u16 delay, u16 interval);
+void Pad_ClearRepeat(int port, int slot, u16 buttons);
+void Pad_SetActuators(int port, int slot, u8 *values);
+void Pad_SetRumble(int port, int slot, int power);
+void Pad_RequestDigital(int port, int slot, int lock);
+int Pad_RequestAnalog(int port, int slot, int lock);
+int Pad_RequestPressure(int port, int slot);
+int Pad_GetMode(int port, int slot);
 
 #endif

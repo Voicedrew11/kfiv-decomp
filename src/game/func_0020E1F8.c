@@ -4,7 +4,7 @@ extern const f32 D_00446FBC[];      /* -0.0f */
 
 void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 void func_00216778(void *, void *);
-void KF_Vector_Subtract(void *, void *, void *);
+void Vector_Subtract(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
 /* records a hit at `from`. The result is written through constant addresses (*&), not through
@@ -146,7 +146,7 @@ void func_0020E1F8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32
         if (end[1] < centre[1] - height && start[1] < centre[1] - height) {
             continue;
         }
-        KF_Vector_Subtract(edge, start, end);
+        Vector_Subtract(edge, start, end);
         flat[0] = edge[0];
         flat[1] = 0.0f;
         flat[2] = edge[2];
@@ -156,7 +156,7 @@ void func_0020E1F8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32
             point[0] = end[0];
             point[1] = centre[1];
             point[2] = end[2];
-            KF_Vector_Subtract(edge, centre, point);
+            Vector_Subtract(edge, centre, point);
             distance = edge[0] * edge[0] + edge[2] * edge[2];
             if (!(distance <= radius_squared)) {
                 continue;
@@ -174,7 +174,7 @@ void func_0020E1F8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32
             point[0] = end[0];
             point[1] = centre[1];
             point[2] = end[2];
-            KF_Vector_Subtract(edge, centre, point);
+            Vector_Subtract(edge, centre, point);
             distance = edge[0] * edge[0] + edge[2] * edge[2];
             if (!(distance <= radius_squared)) {
                 continue;
@@ -186,7 +186,7 @@ void func_0020E1F8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32
             point[0] = start[0];
             point[1] = centre[1];
             point[2] = start[2];
-            KF_Vector_Subtract(edge, centre, point);
+            Vector_Subtract(edge, centre, point);
             distance = edge[0] * edge[0] + edge[2] * edge[2];
             if (!(distance <= radius_squared)) {
                 continue;
@@ -198,7 +198,7 @@ void func_0020E1F8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32
             point[0] = end[0] + edge[0] * ratio;
             point[1] = end[1] + edge[1] * ratio;
             point[2] = end[2] + edge[2] * ratio;
-            KF_Vector_Subtract(edge, centre, point);
+            Vector_Subtract(edge, centre, point);
             distance = edge[0] * edge[0] + edge[2] * edge[2];
             if (!(distance <= radius_squared)) {
                 continue;

@@ -5,7 +5,7 @@ void func_001C0A88(void *, void *, void *, f32 *);
 void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
-void KF_Vector_Scale(float *, float *, float);
+void Vector_Scale(float *, float *, float);
 void sceVu0Normalize(float *, float *);
 void func_00195100(f32 *, f32, f32); // match: the pointer is set up first, so it is the first argument here
 
@@ -68,7 +68,7 @@ void func_00189A38(CollisionOwner *owner, f32 *centre, f32 step, f32 radius) {
                 offset[2] = position[2] - COLLISION_RESULT->point[2];
                 sceVu0Normalize(offset, offset);
                 func_00216C48(normal_sum, normal_sum, offset);
-                KF_Vector_Scale(offset, offset, radius);
+                Vector_Scale(offset, offset, radius);
                 position[0] = COLLISION_RESULT->point[0] + offset[0];
                 position[2] = COLLISION_RESULT->point[2] + offset[2];
             }

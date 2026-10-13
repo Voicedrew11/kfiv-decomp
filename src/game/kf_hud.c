@@ -31,7 +31,7 @@ static inline char *align16(char *address) {
 
 /* Loads the HUD textures (gage.tx2) into the HUD area and the pause label (pause.tx2) after them, uploads the
    latter at once and sets up the sprites drawn from them. */
-void KF_Hud_Load(void) {
+void Hud_Load(void) {
     char *address = D_00446F6C;
     int file;
     int size;
@@ -71,12 +71,12 @@ void KF_Hud_Load(void) {
 }
 
 /* Per-frame HUD update; empty in retail. */
-int KF_Hud_Update(void) { // match: callers read $2 after it, so it is declared to return a value
+int Hud_Update(void) { // match: callers read $2 after it, so it is declared to return a value
 }
 
 /* Draws the HUD: the frame, the two bars that fill from the left, the one that fills from the bottom, and the
-   rest, each a copy of one of the sprites KF_Hud_Load set up. */
-void KF_Hud_Draw(void) {
+   rest, each a copy of one of the sprites Hud_Load set up. */
+void Hud_Draw(void) {
     ScreenSprite sprite;
     s32 fade;
 
@@ -161,7 +161,7 @@ void KF_Hud_Draw(void) {
 }
 
 /* Draws the pause label over the paused game. */
-void KF_Hud_DrawPaused(void) {
+void Hud_DrawPaused(void) {
     func_0010B238(pause_texture_table);
     func_0010A100(&pause_sprite);
 }

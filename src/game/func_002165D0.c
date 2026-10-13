@@ -8,7 +8,7 @@ float func_0019B838(float);
 void func_002165D0(ScriptEntityVectorCommand *command) {
     Entity *entity;
 
-    entity = KF_Entity_GetBySpawnId(command->target_id.value);
+    entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
         entity->model->unkD0[0] = command->x.value;
         entity->model->unkD0[1] = command->y.value;
