@@ -957,7 +957,7 @@ typedef struct {
 /* one of the 0x80-byte records MapSlot.records (kf_map.h) points at */
 typedef struct {
     char pad00[0x1C];
-    f32 unk1C;                      /* 0x1C the heading its floor pushes the player along (func_001B7EE0) */
+    f32 unk1C;                      /* 0x1C the heading its floor pushes the player along (KF_Player_Move) */
     char pad20[0x0C];
     u16 unk2C;                      /* 0x2C the most speed the push gives, 0: no push */
     u16 unk2E;                      /* 0x2E how much speed the push adds per frame, 0: no push */

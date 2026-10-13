@@ -541,7 +541,7 @@ typedef struct {
     u32 bit11 : 1;                  /* func_0011E228 can break it */
     u32 bit12 : 1;                  /* it has a breaking animation (1) */
     u32 pad00_13 : 2;
-    u32 bit15 : 1;                  /* the player standing on it is carried and turned with it (func_001B7EE0) */
+    u32 bit15 : 1;                  /* the player standing on it is carried and turned with it (KF_Player_Move) */
     u32 pad00_16 : 16;
     u16 unk04;                      /* 0x04 0xFFFF: it has no model */
     u16 unk06;                      /* 0x06 0xFFFF: it has no collision mesh */
@@ -565,7 +565,7 @@ typedef struct {
 
 #define MAP_OBJECT_DEF_TOUGHNESS(def) (((MapObjectDefHalves *)(def))->toughness)
 
-/* MapObjectUnk04's first word whole, where retail tests a bit of it with a mask (func_001B7EE0) */
+/* MapObjectUnk04's first word whole, where retail tests a bit of it with a mask (KF_Player_Move) */
 #define MAP_OBJECT_DEF_FLAGS(def) (*(u32 *)(def))
 #define MAP_OBJECT_DEF_CARRIES 0x8000   /* bit15 */
 

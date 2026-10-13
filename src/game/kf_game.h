@@ -13,7 +13,7 @@ typedef struct {
     s8 unk03;                       /* 0x03 */
     u8 unk04;                       /* 0x04 0 or 1 */
     s8 unk05;                       /* 0x05 nonzero: the camera moves to CameraState.unk30 */
-    char unk06;                     /* 0x06 nonzero: the player cannot run (func_001B5A48) */
+    char unk06;                     /* 0x06 nonzero: the player cannot run (KF_Player_Update) */
     char unk07;                     /* 0x07 */
     char pad08[0x18];
     int unk20;                      /* 0x20 index into D_0041A6F8 (TriggerTypeDef), used with bit6 */

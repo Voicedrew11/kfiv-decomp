@@ -80,7 +80,7 @@ typedef struct {
     u32 unkFC;                      /* 0xFC nonzero: unkB8 drops every that many frames */
     s32 unk100;                     /* 0x100 percent of the damage dealt that is added to unkB4 (func_001B2F70) */
     s32 unk104;                     /* 0x104 percent of the damage dealt that is added to unkB8 */
-    s32 unk108;                     /* 0x108 nonzero: the player moves and turns at half speed (func_001B7EE0) */
+    s32 unk108;                     /* 0x108 nonzero: the player moves and turns at half speed (KF_Player_Move) */
     s32 unk10C;                     /* 0x10C 1 while item 0x15F is worn (func_001BB020) */
     u16 unk110[6];                  /* 0x110 cleared when unk14C[i] runs out */
     s16 unk11C[3];                  /* 0x11C cleared with unk188[i] when unk158[i] runs out */
@@ -142,24 +142,24 @@ typedef struct {
     char pad251[0x01];
     u16 map_index;                  /* 0x252 picks the MapSlot record */
     u32 unk254;                     /* 0x254 */
-    u8 unk258;                      /* 0x258 a step counter: func_001B7C90 advances it, func_001B7CC8 clears it */
+    u8 unk258;                      /* 0x258 a step counter: KF_Player_PlayEquipSound advances it, KF_Player_FinishWeaponMotion clears it */
     u8 unk259;                      /* 0x259 set when a cast magic launches a shot (KF_Player_CastMagic) */
     u8 unk25A;                      /* 0x25A */
-    u8 unk25B;                      /* 0x25B cleared every frame before the item's handler runs (func_001B6FA0) */
-    u8 unk25C;                      /* 0x25C frames left in which the first magic of the weapon may be asked for (func_001B70F8) */
+    u8 unk25B;                      /* 0x25B cleared every frame before the item's handler runs (KF_Player_UpdateActions) */
+    u8 unk25C;                      /* 0x25C frames left in which the first magic of the weapon may be asked for (KF_Player_SwingWeapon) */
     u8 unk25D;                      /* 0x25D set when a swing starts: the second magic of the weapon may be asked for */
     u8 unk25E;                      /* 0x25E the second magic: 1 asked for, 2 cast */
     u8 unk25F;                      /* 0x25F the first magic: 1 asked for, 2 cast */
-    u8 unk260_0 : 1;                /* 0x260 set while the sound of drawing the weapon plays (func_001B7918) */
-    u8 unk260_1 : 1;                /* set once the first magic's motion frame is reached (func_001B70F8) */
-    u8 unk260_2 : 1;                /* tested for the second magic, never set (func_001B70F8) */
+    u8 unk260_0 : 1;                /* 0x260 set while the sound of drawing the weapon plays (KF_Player_DrawBow) */
+    u8 unk260_1 : 1;                /* set once the first magic's motion frame is reached (KF_Player_SwingWeapon) */
+    u8 unk260_2 : 1;                /* tested for the second magic, never set (KF_Player_SwingWeapon) */
     u8 unk260_3 : 5;
     u8 unk261;                      /* 0x261 */
     u8 unk262;                      /* 0x262 set once by func_001BC0E0 */
     u8 unk263;                      /* 0x263 */
     u8 unk264;                      /* 0x264 set from unk3D, unk46 or the PlayerItemDef after a menu (func_001017A8) */
     char pad265[0x03];
-    PlayerShot unk268;              /* 0x268 the swing of the weapon in hand, passed to func_001B1470 (func_001B70F8) */
+    PlayerShot unk268;              /* 0x268 the swing of the weapon in hand, passed to func_001B1470 (KF_Player_SwingWeapon) */
     u8 unk298;                      /* 0x298 */
     char pad299[0x03];
     s32 unk29C;                     /* 0x29C nonzero: the screen is tinted by it (func_001005E8) */
@@ -197,7 +197,7 @@ typedef struct {
 } WeaponTrailKind;
 
 /* D_00414580 (0x48 bytes): the colours laid over the screen for what happens to the player; each
-   strength is the alpha func_001B6800 draws with */
+   strength is the alpha KF_Player_DrawScreenTints draws with */
 typedef struct {
     s32 unk00;                      /* 0x00 set to 10 by func_001BB360 */
     s32 unk04;                      /* 0x04 red (dark red while unk14 shows) */
@@ -212,7 +212,7 @@ typedef struct {
     s32 unk28;                      /* 0x28 its strength */
     s32 kind;                       /* 0x2C which of the tints is shown */
     s32 unk30;                      /* 0x30 black, subtracted */
-    s32 unk34;                      /* 0x34 0x80 to 0xA0: rises with MapDrawState.unk2A90 (func_001B69D0) */
+    s32 unk34;                      /* 0x34 0x80 to 0xA0: rises with MapDrawState.unk2A90 (KF_Player_UpdateScreenTints) */
     char pad38[0x10];
 } PlayerScreenTint;
 
@@ -221,7 +221,7 @@ typedef struct {
     u64 pad0 : 33;
     u64 bit33 : 1;
     u64 bit34 : 1;                  /* set: KF_Ladder_Start does nothing */
-    u64 bit35 : 1;                  /* running: the run button is held while moving (func_001B5A48) */
+    u64 bit35 : 1;                  /* running: the run button is held while moving (KF_Player_Update) */
     u64 bit36 : 1;                  /* on an object set up by KF_Ladder_Start (a ladder, it seems) */
     u64 pad37 : 1;
     u64 bit38 : 1;                  /* cleared at the start of every played frame, with bit39 */
@@ -230,7 +230,7 @@ typedef struct {
 } PlayerStatusBits;
 
 /* the start of a PlayerState with unk1C8 as a word and bit-fields: accesses through it are based on the
-   block's address, as retail's are in func_001B5A48 */
+   block's address, as retail's are in KF_Player_Update */
 typedef struct {
     char pad000[0x1C8];
     s32 step_sounded;               /* 0x1C8 set once the footstep of the current stride (PlayerState.unk1C0) has sounded */
@@ -287,7 +287,7 @@ typedef struct {
     PlayerShotStats unk00[3];       /* 0x00 one row per LevelRecord.unk14 */
     PlayerItemRates unk36;          /* 0x36 */
     u16 unk42;                      /* 0x42 0xFFFF: none */
-    u16 unk44;                      /* 0x44 the swing's motion frame on which magic unk42 is cast (func_001B70F8) */
+    u16 unk44;                      /* 0x44 the swing's motion frame on which magic unk42 is cast (KF_Player_SwingWeapon) */
     u16 unk46;                      /* 0x46 0xFFFF: none */
     u16 unk48;                      /* 0x48 the motion frame from which PlayerState.unk260_1 is set */
     u16 unk4A;                      /* 0x4A first and last motion frame on which magic unk42 may be asked for */
@@ -302,20 +302,20 @@ typedef struct {
     u16 unk5C;                      /* 0x5C */
     u16 unk5E;                      /* 0x5E */
     char pad60[0x02];
-    u8 unk62;                       /* 0x62 index into D_00369830: nonzero there lets the item launch its shot (func_001B77E0) */
+    u8 unk62;                       /* 0x62 index into D_00369830: nonzero there lets the item launch its shot (KF_Player_FireProjectile) */
     u8 unk63;                       /* 0x63 */
     u8 bonus_kinds[2];              /* 0x64 as LevelRecordDef.bonus_kinds */
     u8 bonus_amounts[2];            /* 0x66 */
     u16 unk68;                      /* 0x68 shown on the trade screen in tenths of a foot (func_001E7010) */
     char pad6A[0x02];
-    f32 unk6C;                      /* 0x6C twice Unk1B1470Request.unk44 of a swing, before D_00446240 (func_001B70F8) */
+    f32 unk6C;                      /* 0x6C twice Unk1B1470Request.unk44 of a swing, before D_00446240 (KF_Player_SwingWeapon) */
     f32 unk70;                      /* 0x70 twice Unk1B1470Request.unk3C of a swing, before D_00446240 */
     f32 unk74;                      /* 0x74 how far a swing reaches, less 100 */
-    u16 unk78;                      /* 0x78 the motion frame from which a held shot is ready (func_001B7918) */
+    u16 unk78;                      /* 0x78 the motion frame from which a held shot is ready (KF_Player_DrawBow) */
     u16 unk7A;                      /* 0x7A the frame the drawing motion stops at */
     u8 unk7C;                       /* 0x7C which D_005CEE60 motion the weapon shown on the equipment screen plays (func_001D94F8) */
     u8 unk7D;                       /* 0x7D which D_0042A290 function draws it there */
-    u8 unk7E;                       /* 0x7E goes to PlayerState.unkC4 when a swing starts (func_001B70F8) */
+    u8 unk7E;                       /* 0x7E goes to PlayerState.unkC4 when a swing starts (KF_Player_SwingWeapon) */
     u8 unk7F;                       /* 0x7F copied to Unk1B1470Request.unk6E */
     u16 unk80;                      /* 0x80 0xFFFF: no sound while drawing */
     u16 unk82;                      /* 0x82 the motion frame the drawing sound starts on */
@@ -324,7 +324,7 @@ typedef struct {
     s8 unk87;                       /* 0x87 unk87 to unk89 become D_00414740 (x, y, z) when the item's model is loaded */
     s8 unk88;                       /* 0x88 */
     s8 unk89;                       /* 0x89 */
-    u16 unk8A;                      /* 0x8A the least PlayerState.unkAC for magic unk42 (func_001B70F8) */
+    u16 unk8A;                      /* 0x8A the least PlayerState.unkAC for magic unk42 (KF_Player_SwingWeapon) */
     u16 unk8C;                      /* 0x8C the least PlayerState.unkB0 for magic unk42 */
     char pad8E[0x02];
 } PlayerItemDef;

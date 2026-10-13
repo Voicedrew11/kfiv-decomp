@@ -100,7 +100,7 @@ typedef struct {
     MapFogColor unk280;             /* 0x280 the current map's */
     MapSlotUnk0C unk290[2][0x20];   /* 0x290 each map slot's blocks */
     MapSlotUnk10Words unkA90[2][0x20];  /* 0xA90 each map slot's blocks */
-    f32 unk2A90;                    /* 0x2A90 0 to 0.25: rises while PlayerState.unk2E0 or unk10C is set (func_001B69D0) */
+    f32 unk2A90;                    /* 0x2A90 0 to 0.25: rises while PlayerState.unk2E0 or unk10C is set (KF_Player_UpdateScreenTints) */
     f32 unk2A94;                    /* 0x2A94 copy of unk2A90 */
     f32 unk2A98;                    /* 0x2A98 copy of unk2A90 */
     char pad2A9C[0x04];
