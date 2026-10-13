@@ -12,27 +12,10 @@ void *memcpy(void *, const void *, u32);
 extern char D_004337E0[0x40];
 extern char D_00433820[];
 
-extern TextLog D_01E0E9C0;
-extern u32 D_01E0E940[8];
-extern int D_01E0E960[0x18];
-extern TextLogPacket D_01E0F210;
-
-/* match: retail lays out D_01E0E940, D_01E0E960, D_01E0E9C0 and D_01E0F210 as one .bss stretch. */
-__asm__(
-    "\t.section .bss\n"
-    "\t.align 4\n"
-    "\t.globl D_01E0E940\n"
-    "D_01E0E940:\n"
-    "\t.space 0x20\n"
-    "\t.globl D_01E0E960\n"
-    "D_01E0E960:\n"
-    "\t.space 0x60\n"
-    "\t.globl D_01E0E9C0\n"
-    "D_01E0E9C0:\n"
-    "\t.space 0x850\n"
-    "\t.globl D_01E0F210\n"
-    "D_01E0F210:\n"
-    "\t.space 0xE08\n");
+static u32 font_flush_packet[8] __attribute__((aligned(16)));   /* 0x1E0E940 DMA packet flushing the GS texture cache */
+static int gs_regs_packet[0x18] __attribute__((aligned(16)));     /* 0x1E0E960 DMA packet setting the text log's GS registers */
+static TextLog text_log;                                           /* 0x1E0E9C0 */
+static TextLogPacket text_log_packet;                              /* 0x1E0F210 */
 
 /* EE EABI varargs: the register save area a1..a7 is spilled to, as in libsdr.c */
 typedef char *va_list;
@@ -48,20 +31,20 @@ void KF_TextLog_LoadFont(int font_base, int palette_base) {
     u32 *packet;
 
     sceDmaGetChan(2);
-    D_01E0E9C0.font_base = font_base;
-    D_01E0E9C0.font_buffer_width = 4;
-    D_01E0E9C0.palette_base = palette_base;
-    sceGsSetDefLoadImage(&image, D_01E0E9C0.font_base, D_01E0E9C0.font_buffer_width, 0x14, 0, 0, 0x100, 0x80);
+    text_log.font_base = font_base;
+    text_log.font_buffer_width = 4;
+    text_log.palette_base = palette_base;
+    sceGsSetDefLoadImage(&image, text_log.font_base, text_log.font_buffer_width, 0x14, 0, 0, 0x100, 0x80);
     FlushCache(0);
     sceGsExecLoadImage(&image, D_00433820);
     while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
     }
-    sceGsSetDefLoadImage(&image, D_01E0E9C0.palette_base, 1, 0, 0, 0, 8, 2);
+    sceGsSetDefLoadImage(&image, text_log.palette_base, 1, 0, 0, 0, 8, 2);
     FlushCache(0);
     sceGsExecLoadImage(&image, D_004337E0);
     while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
     }
-    packet = (u32 *)((u32)D_01E0E940 | 0x20000000);
+    packet = (u32 *)((u32)font_flush_packet | 0x20000000);
     *packet++ = 0x8001;
     *packet++ = 0x10004000;
     *packet++ = 0xE;
@@ -73,7 +56,7 @@ void KF_TextLog_LoadFont(int font_base, int palette_base) {
     while (*D2_CHCR & 0x100) {
     }
     *D2_QWC = 2;
-    *D2_MADR = (int)D_01E0E940;
+    *D2_MADR = (int)font_flush_packet;
     *D2_CHCR = 0x100;
 }
 
@@ -81,7 +64,7 @@ void KF_TextLog_LoadFont(int font_base, int palette_base) {
    centre is at the GS offset), makes the text white and empties the log. */
 void KF_TextLog_SetWindow(int window_x, int window_y, int width, int height, int offset_x, int offset_y,
                           int screen_width, int screen_height, int depth) {
-    TextLog *log = &D_01E0E9C0;
+    TextLog *log = &text_log;
 
     log->left = window_x + offset_x - screen_width / 2;
     log->top = window_y / 2 + offset_y - screen_height / 2;
@@ -93,13 +76,13 @@ void KF_TextLog_SetWindow(int window_x, int window_y, int width, int height, int
         log->width = 0x10;
     }
     log->used = 0;
-    log->packet = (TextLogGlyph *)&D_01E0F210;
+    log->packet = (TextLogGlyph *)&text_log_packet;
 }
 
 /* Queues one character of the text log's font (16 characters a row, starting at '!') at a GS position.
    Anything up to the space character is drawn as character 0x80. */
 void KF_TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z) {
-    TextLog *log = &D_01E0E9C0;
+    TextLog *log = &text_log;
     TextLogGlyph *glyph = log->packet;
     int code;
     int tex_u;
@@ -137,15 +120,15 @@ void KF_TextLog_PutChar(char character, int pos_x, int pos_y, int pos_z) {
 void KF_TextLog_SendGsRegs(void) {
     int *packet;
 
-    packet = (int *)((u32)D_01E0E960 | 0x20000000);
+    packet = (int *)((u32)gs_regs_packet | 0x20000000);
     *packet++ = 0x8005;
     *packet++ = 0x10004000;
     *packet++ = 0xE;
     *packet++ = 0;
     /* TEX0: TBP0, TBW, PSM, TW, TH, TCC, TFX, CBP, CPSM, CSM, CLD */
-    *(u64 *)packet = (u64)D_01E0E9C0.font_base | ((u64)D_01E0E9C0.font_buffer_width << 14) | ((u64)0x14 << 20) |
+    *(u64 *)packet = (u64)text_log.font_base | ((u64)text_log.font_buffer_width << 14) | ((u64)0x14 << 20) |
                      ((u64)8 << 26) | ((u64)7 << 30) | ((u64)1 << 34) | ((u64)0 << 35) |
-                     ((u64)D_01E0E9C0.palette_base << 37) | ((u64)0 << 51) | ((u64)0 << 55) | ((u64)4 << 61);
+                     ((u64)text_log.palette_base << 37) | ((u64)0 << 51) | ((u64)0 << 55) | ((u64)4 << 61);
     packet += 2;
     *(u64 *)packet = 6;
     packet += 2;
@@ -166,7 +149,7 @@ void KF_TextLog_SendGsRegs(void) {
     while (*D2_CHCR & 0x100) {
     }
     *D2_QWC = 6;
-    *D2_MADR = (int)D_01E0E960;
+    *D2_MADR = (int)gs_regs_packet;
     *D2_CHCR = 0x100;
 }
 
@@ -180,7 +163,7 @@ void KF_TextLog_AppendV(char *format, char *args) {
 
     vsprintf(line, format, args);
     length = strlen(line);
-    log = &D_01E0E9C0;
+    log = &text_log;
     used = log->used;
     if (length + used >= 0x801) {
         length = 0x800 - used;
@@ -200,30 +183,30 @@ void KF_TextLog_Printf(char *format, ...) {
 
 /* Draws the text log in its window, wrapping at the right edge and stopping at the bottom, then empties it. */
 void KF_TextLog_Flush(void) {
-    TextLogPacket *packet = &D_01E0F210;
+    TextLogPacket *packet = &text_log_packet;
     int vertex_count = 0;
-    int remaining = D_01E0E9C0.used;
-    char *text = D_01E0E9C0.text;
+    int remaining = text_log.used;
+    char *text = text_log.text;
     int pos_x;
     int pos_y;
 
-    D_01E0E9C0.packet = packet->glyphs;
-    pos_x = D_01E0E9C0.left;
-    pos_y = D_01E0E9C0.top;
+    text_log.packet = packet->glyphs;
+    pos_x = text_log.left;
+    pos_y = text_log.top;
     while (remaining-- != 0) {
         if (*text == '\n') {
             pos_y += 8;
-            pos_x = D_01E0E9C0.left;
+            pos_x = text_log.left;
         } else {
-            KF_TextLog_PutChar(*text, pos_x, pos_y, D_01E0E9C0.depth);
+            KF_TextLog_PutChar(*text, pos_x, pos_y, text_log.depth);
             pos_x += 16;
             vertex_count += 2;
-            if (D_01E0E9C0.left + D_01E0E9C0.width - 16 < pos_x) {
-                pos_x = D_01E0E9C0.left;
+            if (text_log.left + text_log.width - 16 < pos_x) {
+                pos_x = text_log.left;
                 pos_y += 8;
             }
         }
-        if (D_01E0E9C0.top + D_01E0E9C0.height - 8 < pos_y) {
+        if (text_log.top + text_log.height - 8 < pos_y) {
             break;
         }
         text++;
@@ -237,16 +220,16 @@ void KF_TextLog_Flush(void) {
         FlushCache(0);
         while (*D2_CHCR & 0x100) {
         }
-        *D2_QWC = ((int)D_01E0E9C0.packet - (int)&D_01E0F210) >> 4;
-        *D2_MADR = (u32)&D_01E0F210 & 0x7FFFFFFF;
+        *D2_QWC = ((int)text_log.packet - (int)&text_log_packet) >> 4;
+        *D2_MADR = (u32)&text_log_packet & 0x7FFFFFFF;
         *D2_CHCR = 0x100;
     }
-    D_01E0E9C0.used = 0;
+    text_log.used = 0;
 }
 
 /* Sets the text log's colour from three ints: red, green, blue. */
 void KF_TextLog_SetColor(int *colour) {
-    TextLog *log = &D_01E0E9C0;
+    TextLog *log = &text_log;
 
     log->red = colour[0];
     log->green = colour[1];

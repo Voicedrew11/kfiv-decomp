@@ -259,15 +259,15 @@ typedef struct {
     TextLogVertex corners[2];       /* 0x00 top left, bottom right */
 } TextLogGlyph;
 
-/* D_01E0F210: the GIF packet KF_TextLog_Flush sends, a tag and room for 37 characters */
+/* text_log_packet: the GIF packet KF_TextLog_Flush sends, a tag and room for 37 characters */
 typedef struct {
     int tag[4];                     /* 0x00 */
     TextLogGlyph glyphs[37];        /* 0x10 */
 } TextLogPacket;
 
-/* D_01E0E9C0: the 0x800-byte text buffer KF_TextLog_AppendV appends to, and the window KF_TextLog_Flush prints it in */
+/* text_log: the 0x800-byte text buffer KF_TextLog_AppendV appends to, and the window KF_TextLog_Flush prints it in */
 typedef struct {
-    TextLogGlyph *packet;           /* 0x00 where the next character goes in D_01E0F210 */
+    TextLogGlyph *packet;           /* 0x00 where the next character goes in text_log_packet */
     char pad04[0x0C];
     int left;                       /* 0x10 the window, in GS coordinates (KF_TextLog_SetWindow) */
     int top;                        /* 0x14 */
