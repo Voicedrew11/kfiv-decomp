@@ -1,4 +1,5 @@
 #include "kf_entity.h"
+#include "kf_effect.h"
 
 float sqrtf(float);
 float atan2f(float, float);
@@ -6,7 +7,6 @@ int func_00192C98(void *, int, int, u32, int);
 int func_00199EB8(void *, void *, float);
 char *func_0010CAB8(char *, u32);
 float func_00194FB8(float);
-int func_001A1C58(int, void *, void *, void *);
 s32 func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_0019A290(Entity *, s32);
 void func_001958B8(char *, void (*)(void), int);
@@ -67,7 +67,7 @@ void func_0013E3F0(Entity *entity) {
                     position[0] = unkE0->unk4C + delta_x * i / count;
                     position[1] = unkE0->unk50 + delta_y * i / count;
                     position[2] = unkE0->unk54 + delta_z * i / count;
-                    func_001A1C58(0x222, position, angles, entity);
+                    KF_Effect_StartSpawner(0x222, position, angles, entity);
                 }
             }
             unkE0->unk4C = tip[0];

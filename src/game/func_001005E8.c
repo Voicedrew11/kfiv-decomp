@@ -9,6 +9,7 @@
 #include "kf_held_weapon.h"
 #include "kf_splash.h"
 #include "kf_message.h"
+#include "kf_effect.h"
 
 extern u8 D_00349680[0x10];
 extern u8 D_00349F56[];
@@ -30,7 +31,6 @@ void func_00114198(int);
 void func_0011D6B0(int, int, int);
 void func_001C9650(int);
 void func_00114528(int);
-void func_001A2168(int);
 void func_0010B140(u32, u32);
 void func_00109EB8(void);
 void func_001C97E8(int);
@@ -49,7 +49,6 @@ void func_00106C58(void);
 void func_00106DC8(void);
 void func_00106FB8(int);
 void func_00107528(void);
-void func_001A2108(void);
 void func_0010A4E8(int, int, int, int, int);
 void func_00107E70(int, int, int);
 void func_00106208(void);
@@ -82,7 +81,7 @@ int func_001005E8(int arg) {
         KF_Gold_Draw(0);
         func_0010AE58();
         func_00114528(0);
-        func_001A2168(0);
+        KF_Effect_DrawAll(0);
         func_0010B140(0, 0);
         func_001012D8(0, 2);
         func_0010A7E0(D_004323E0);
@@ -104,7 +103,7 @@ int func_001005E8(int arg) {
         KF_Gold_Draw(1);
         func_00114528(1);
         func_0010AE58();
-        func_001A2168(1);
+        KF_Effect_DrawAll(1);
         func_0010B140(0, 1);
         func_00109EB8();
         func_001012D8(0, 1);
@@ -124,7 +123,7 @@ int func_001005E8(int arg) {
         KF_Gold_Draw(0);
         func_0010AE58();
         func_00114528(0);
-        func_001A2168(0);
+        KF_Effect_DrawAll(0);
         func_0010B140(0, 0);
         func_001012D8(0, 2);
         func_0010A7E0(D_004323E0);
@@ -149,7 +148,7 @@ int func_001005E8(int arg) {
         KF_Gold_Draw(1);
         func_0010AE58();
         func_00114528(2);
-        func_001A2168(1);
+        KF_Effect_DrawAll(1);
         func_0010B140(0, 1);
         func_00109EB8();
         func_001012D8(1, 1);
@@ -169,7 +168,7 @@ int func_001005E8(int arg) {
         KF_Gold_Draw(0);
         func_0010AE58();
         func_00114528(0);
-        func_001A2168(0);
+        KF_Effect_DrawAll(0);
         func_0010B140(0, 0);
         func_001012D8(0, 2);
         func_0010A7E0(D_004323E0);
@@ -221,7 +220,7 @@ int func_001005E8(int arg) {
     }
     func_0010A698();
     if (tinted) {
-        func_001A2108();
+        KF_Effect_UploadTextures();
     }
     func_0010B140(3, 0);
     KF_Player_DrawArm();

@@ -1,13 +1,14 @@
 #include "common.h"
+#include "kf_effect.h"
 
 char *func_0010CAB8(char *, u32);
-int func_001A1C58(int, void *, void *, void *);
 
-void func_0018D600(char **arg0, int arg1, u32 arg2, int arg3) {
-    char *temp_v0;
+/* Starts effect effect_id at point point_id of the entity's model, turned by rotation. */
+void func_0018D600(char **entity, int effect_id, u32 point_id, int rotation) {
+    char *point;
 
-    temp_v0 = func_0010CAB8(*arg0, arg2);
-    if (temp_v0 != 0) {
-        func_001A1C58(arg1, temp_v0, arg3, arg0);
+    point = func_0010CAB8(*entity, point_id);
+    if (point != 0) {
+        KF_Effect_StartSpawner(effect_id, point, (void *)rotation, entity);
     }
 }

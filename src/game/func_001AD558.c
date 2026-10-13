@@ -11,9 +11,9 @@ void func_001AD558(EffectActor *effect) {
     func_001AF0B0(effect);
     sceVu0AddVector(&effect->model->position, &effect->model->position, motion);
     if (motion->done) {
-        func_001A2A18(effect);
+        KF_Effect_Free(effect);
     } else if (effect->frame == motion->end_frame) {
-        func_001A1E28(effect->def->end_effect, &motion->unk10, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+        KF_Effect_Spawn(effect->def->end_effect, &motion->unk10, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         motion->done = 1;
     } else {
         func_001AF298(effect, &motion->done);

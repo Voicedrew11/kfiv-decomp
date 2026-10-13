@@ -84,7 +84,7 @@ typedef struct {
     int unk00;                      /* 0x00 the motion frame at which func_00209480 goes to the next step */
     int unk04;                      /* 0x04 taken off the effect's brightness each frame while it fades (func_002094C8) */
     int unk08;                      /* 0x08 the motion frame at which the effect unk0C starts */
-    int unk0C;                      /* 0x0C an effect number for func_001A1C58 */
+    int unk0C;                      /* 0x0C an effect number for KF_Effect_StartSpawner */
 } ItemUseEffectDef;
 
 void KF_Splash_Reset(void);

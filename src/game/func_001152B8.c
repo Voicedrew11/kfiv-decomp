@@ -4,6 +4,7 @@
 #include "kf_entity_world.h"
 #include "kf_linked_point.h"
 #include "kf_sound.h"
+#include "kf_effect.h"
 
 extern MapSlot D_0038CD20[];
 extern MapLoadState D_0038D610;
@@ -15,7 +16,6 @@ void func_001D1210(void *);
 void func_001154D8(int, int);
 void func_001155F8(int);
 void func_0011D0D0(int, int);
-void func_001A2F20(f32 *);
 void func_001C8990(int, f32 *);
 void func_00210930(int);
 int func_002109C8(int, int);
@@ -45,7 +45,7 @@ void func_001152B8(int map) {
         func_0011D0D0(1, (int)offset);
         KF_Entity_OffsetAllInSlot(0, offset);
         KF_Entity_OffsetAllInSlot(1, offset);
-        func_001A2F20(offset);
+        KF_Effect_OffsetAll(offset);
         KF_LinkedPoint_TransformFollows(offset);
         func_001C8990(0, offset);
         func_001C8990(1, offset);

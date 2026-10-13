@@ -2,7 +2,6 @@
 #include "kf_effect.h"
 
 extern char D_00413F80[];
-extern int D_004468C8;
 
 void func_001AF298(void *, void *);
 int func_001B4F90(void *);
@@ -26,7 +25,7 @@ void func_001A6118(EffectActor *effect) {
 
     motion = (SwayMotion *)&effect->motion;
     if (motion->done != 0) {
-        func_001A2A18(effect);
+        KF_Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);
@@ -68,7 +67,7 @@ void func_001A6118(EffectActor *effect) {
     hits = func_001B4F90(effect);
     effect->model->position.y += 110.0f;
     if (hits & 0x14) {
-        func_001A2A18(effect);
+        KF_Effect_Free(effect);
         return;
     }
     if (effect->frame == 0) {

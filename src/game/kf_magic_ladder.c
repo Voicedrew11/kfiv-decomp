@@ -28,9 +28,7 @@ void func_00216C48(void *, void *, void *);
 void KF_Vector_Subtract(void *, void *, void *);
 void KF_Vector_Scale(void *, void *, float);
 int func_001B4F30(u16, void *, void *, void *, void *);
-void func_001A34D0(int);
 void func_001BBC88(int);
-int func_001A1E28(int, Vector4 *, Vector4 *, Entity *, u16, void *);
 int func_0019B908(float *, float, float);
 int func_0019D020(int);
 
@@ -324,8 +322,8 @@ int KF_Player_CastMagic(int magic_id) {
             D_00413F80.unk2F0 = 30;
             break;
         }
-        func_001A34D0(magic_id);
-        func_001A1E28(entry->unk100, &D_00431C80, &D_00431C80, (Entity *)&D_00413F80, magic_id, NULL);
+        KF_Effect_FreeByParam(magic_id);
+        KF_Effect_Spawn(entry->unk100, &D_00431C80, &D_00431C80, (Entity *)&D_00413F80, magic_id, NULL);
         switch (magic_id) {
         case 0x10:
         case 0x11:

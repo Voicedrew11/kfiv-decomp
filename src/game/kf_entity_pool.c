@@ -4,6 +4,7 @@
 #include "kf_gs.h"
 #include "kf_model.h"
 #include "kf_sound.h"
+#include "kf_effect.h"
 
 void *memset(void *, int, u32);
 int sprintf(char *, char *, ...);
@@ -54,7 +55,6 @@ void func_0010AC80(int, int, int, int);
 void func_0010CAE8(void *, s64, s64, s64, s64);
 void func_0010CB98(void *);
 void func_0010CF10(void *);
-void func_001A32A8(Entity *);
 
 /* file-local functions, in order of definition */
 static int func_00123918(Entity *entity);
@@ -192,7 +192,7 @@ void KF_Entity_FreeAllInGroup(int group_id) {
             func_001243E8(entity->unkD3);
             func_00123AB8(entity);
             entity = func_00124D48(entity);
-            func_001A32A8(entity);
+            KF_Effect_FreeForOwner(entity);
         } else {
             entity = entity->next;
         }
@@ -321,7 +321,7 @@ void KF_Entity_DespawnOutOfRange(void) {
             func_00123AB8(despawned);
             func_00124D48(despawned);
             func_00124BC8(despawned);
-            func_001A32A8(despawned);
+            KF_Effect_FreeForOwner(despawned);
         } else {
             entity = entity->next;
         }
@@ -684,7 +684,7 @@ static void func_001240B8(int group_id) {
     entity = D_004467E0;
     while (entity != NULL) {
         if (group_id == entity->unkD3) {
-            func_001A32A8(entity);
+            KF_Effect_FreeForOwner(entity);
             func_001243E8(entity->unkD3);
             func_00123AB8(entity);
             next = entity->next;
@@ -745,7 +745,7 @@ static void func_001241A0(int slot_index) {
     entity = D_004467E0;
     while (entity != NULL) {
         if (slot_index == entity->unkD3) {
-            func_001A32A8(entity);
+            KF_Effect_FreeForOwner(entity);
             func_001243E8(entity->unkD3);
             func_00123AB8(entity);
             next = entity->next;

@@ -13,9 +13,9 @@ void func_001AA230(EffectActor *actor, EffectSlot *spawn_slot) {
     motion->radius_half = def->radius_half;
     motion->interval = def->interval;
     if (def->unkF0 != 0) {
-        func_001A2838(def->unkF0, actor);
+        KF_Effect_SpawnFromEffect(def->unkF0, actor);
     }
     if (actor->def->unkF2 != 0) {
-        func_001A2838(actor->def->unkF2, actor);
+        KF_Effect_SpawnFromEffect(actor->def->unkF2, actor);
     }
 }

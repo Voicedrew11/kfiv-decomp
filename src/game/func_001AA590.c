@@ -18,19 +18,19 @@ void func_001AA590(EffectActor *actor) {
     func_001AF0B0(actor);
     sceVu0AddVector(&actor->model->position, &actor->model->position, motion);
     if (motion->ended != 0) {
-        func_001A2A18(actor);
+        KF_Effect_Free(actor);
     } else if (motion->end_frame < actor->frame) {
-        func_001A1E28(motion->effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+        KF_Effect_Spawn(motion->effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
         motion->ended = 1;
     } else if (actor->def->unk10B != 0xFF) {
         hit = func_001B4F90(actor);
         if (hit != 0 && actor->def->end_effect != 0xFFFF) {
             if (hit & 2) {
-                func_001A1E28(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+                KF_Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             } else if ((D_00402550[actor->def->unk100][0] == func_001AA3E0 || D_00402550[actor->def->unk100][0] == func_001AA438) && (*(int *)0x70000018 == 3 || *(int *)0x70000018 == 5)) {
-                func_001A1E28(actor->def->interval, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+                KF_Effect_Spawn(actor->def->interval, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             } else {
-                func_001A1E28(motion->effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+                KF_Effect_Spawn(motion->effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             }
             motion->ended = 1;
         }

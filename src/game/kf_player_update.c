@@ -590,8 +590,6 @@ extern GameStatus D_0038CC50;
 extern void (*D_00413F50[])(u16, u16);
 extern u16 D_0044693E;
 
-void func_001A3918(int);
-
 /* The player's actions for this frame: runs the handler of the item in hand, then the magic button. */
 void KF_Player_UpdateActions(u16 held, u16 pressed) {
     PlayerItemDef *def;
@@ -603,7 +601,7 @@ void KF_Player_UpdateActions(u16 held, u16 pressed) {
         if (D_0038CC50.unk00 == 0 || (D_0038CC50.unk30 & 1) || D_00413F80.unk1A8 != 0 ||
             (u16)D_00413F80.timed_flags[1] != 0) {
             D_00413F80.unk263 = 1;
-            func_001A3918(0x5D);
+            KF_Effect_FreeSpawnersByParam(0x5D);
         }
     }
     D_00413F50[def->unk63](held, pressed);
@@ -634,7 +632,6 @@ void *memset(void *, int, u32);
 void func_00108A08(ModelInstance *, int);
 void func_00108AC8(void *);
 void func_0019CE00(int mode);
-void func_001A3918(int);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
 void func_00216778(void *, void *);
 
@@ -698,7 +695,7 @@ void KF_Player_SwingWeapon(u16 held, u16 pressed) {
             if (((s32)(D_00413F80.unk1C8 >> 39) & 1) ||
                 (((s32)(D_00413F80.unk1C8 >> 38) & 1) &&
                  D_00413F80.position.y - D_00402DA8[swing_magic_id].unk108 > D_00413F80.unk1DC)) {
-                func_001A3918(swing_magic_id);
+                KF_Effect_FreeSpawnersByParam(swing_magic_id);
                 swing_magic_frames = 0;
             }
         }
@@ -936,12 +933,11 @@ void KF_Player_FinishWeaponMotion(void) {
 extern u8 D_004141D8[];
 
 void func_00108AC8(void *);
-void func_001A35D0(void);
 
 void KF_Player_HolsterWeapon(void) {
     func_00108AC8(WEAPON_MODEL);
     if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
-        func_001A35D0();
+        KF_Effect_FreePlayerWeaponKinds();
         D_004141D8[0] = 0;
     }
 }

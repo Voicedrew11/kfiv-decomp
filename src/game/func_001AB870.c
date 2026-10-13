@@ -14,7 +14,7 @@ void func_001AB870(EffectActor *actor, EffectSlot *spawn_slot) {
     if (func_001C0E40(actor->def->unkDC * 2.0f, &actor->model->position) == 1) {
         actor->model->position.y = *(float *)0x70000004 - actor->def->unkDC;
     } else {
-        func_001A2A18(actor);
+        KF_Effect_Free(actor);
     }
     motion->countdown = actor->def->radius_half + rand() % actor->def->interval;
 }

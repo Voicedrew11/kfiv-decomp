@@ -18,7 +18,7 @@ void func_001AD318(EffectActor *actor) {
 
     motion = (FollowerMotion *)&actor->motion;
     if (motion->unk20 != 0) {
-        func_001A2A18(actor);
+        KF_Effect_Free(actor);
         return;
     }
     func_001AEC48(actor);

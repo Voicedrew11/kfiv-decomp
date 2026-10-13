@@ -402,16 +402,16 @@ typedef struct {
     s16 unk43A;                     /* 0x43A */
     s16 unk43C;                     /* 0x43C */
     s16 unk43E;                     /* 0x43E */
-    u16 unk440[8];                  /* 0x440 indexed by flag bits 60-62; passed to func_001A1C58 */
+    u16 unk440[8];                  /* 0x440 indexed by flag bits 60-62; passed to KF_Effect_StartSpawner */
 } EntityParams;
 
 /* record index of the 0x88-byte records at +0x240, reached by stepping the whole params pointer
    (the match keeps the index scaling apart from the +0x240) */
 #define ENTITY_PARAMS_UNK240_RECORD(params, index) (((EntityParams *)((char *)(params) + (index) * sizeof(EntityParamsUnk240)))->unk240[0])
 
-/* what EntityParams.unk130[n] leads to: something func_001A1C58 starts at a bone on an animation frame */
+/* what EntityParams.unk130[n] leads to: something KF_Effect_StartSpawner starts at a bone on an animation frame */
 typedef struct {
-    u16 unk00;                      /* 0x00 passed to func_001A1C58 */
+    u16 unk00;                      /* 0x00 passed to KF_Effect_StartSpawner */
     u16 unk02;                      /* 0x02 the animation frame */
     u8 unk04;                       /* 0x04 passed to func_0010CAB8 (and the one after it) */
     s8 unk05;                       /* 0x05 not 0: EntityParams.unk440 picks what to start */
@@ -1124,28 +1124,6 @@ typedef struct {
 extern Entity *D_004467E0;          /* entity list head */
 
 float func_00124DE0(Entity *entity);    /* distance to the player */
-
-/* D_003F1750[0x60]: a live map-object slot, 0x50 bytes */
-typedef struct {
-    char pad00[0x20];
-    s64 flags;                      /* 0x20 */
-    Entity *owner;                  /* 0x28 */
-    struct EffectActor *actor;      /* 0x2C the effect attached to it */
-    char pad30[0x08];
-    s32 unk38;                      /* 0x38 */
-    u16 object_id;                  /* 0x3C */
-    char pad3E[0x12];
-} ObjectSlot;
-
-/* ObjectSlot.flags as the bit-fields the game sets (see ENTITY_FLAG_BITS) */
-typedef struct {
-    u64 pad0 : 32;
-    u64 bit32 : 1;
-    u64 bit33 : 1;
-    u64 pad34 : 30;
-} ObjectSlotFlagBits;
-
-#define OBJECT_SLOT_FLAG_BITS(slot) ((ObjectSlotFlagBits *)&(slot)->flags)
 
 /* what ladder_object refers to: a record with a kind id at 0x30 (KF_Ladder_PlayStepSound) */
 typedef struct {

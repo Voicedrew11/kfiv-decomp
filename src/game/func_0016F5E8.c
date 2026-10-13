@@ -1,7 +1,7 @@
 #include "kf_entity.h"
+#include "kf_effect.h"
 
 int func_00192C98(void *, int, int, u32, int);
-void func_001A32A8(Entity *);
 void func_0018DCD8(Entity *);
 
 void func_0016F5E8(Entity *entity) {
@@ -26,7 +26,7 @@ void func_0016F5E8(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             if (entity->params->unkC6 != 0 && entity->params->unkC6 != 0xFFFF) {
-                func_001A32A8(entity);
+                KF_Effect_FreeForOwner(entity);
             }
             ENTITY_FLAG_BITS(entity)->bit14 = 0;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;

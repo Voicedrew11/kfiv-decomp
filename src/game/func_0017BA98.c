@@ -1,12 +1,12 @@
 #include "kf_entity.h"
 #include "kf_map.h"
+#include "kf_effect.h"
 
 extern EntitySpawnInfo *D_004467D0[2];
 extern MapSlot D_0038CD20[];
 extern int D_00446770;
 
 int func_00192C98(void *, int, int, u32, int);
-void func_001A32A8(Entity *);
 void func_001035A8(u32, int);
 int func_002109C8(int, int);
 
@@ -19,7 +19,7 @@ void func_0017BA98(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
         ENTITY_FLAG_BITS(entity)->bits2 = 1;
-        func_001A32A8(entity);
+        KF_Effect_FreeForOwner(entity);
         entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {

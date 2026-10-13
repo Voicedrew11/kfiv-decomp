@@ -1,10 +1,10 @@
 #include "kf_map.h"
+#include "kf_effect.h"
 
 extern MapSlot D_0038CD20[];
 extern int D_00446770;
 
 s16 func_0011E340(char *, int);
-int func_001A1C58(int, void *, void *, void *);
 int func_002109C8(int, int);
 int func_0011E1F0(int, int);
 void func_0011E0C8(MapObject *);
@@ -28,7 +28,7 @@ void func_0011E228(MapObject *object) {
     if (MAP_OBJECT_DEF_WORD(object) & 0x1000) {
         func_0011E340((char *)object, 1);
     }
-    func_001A1C58(object->unk04->unk50, &object->model->position, &object->model->rotation, &D_0038CD20[MAP_OBJECT_BYTES(object)->unk00 & 1]);
+    KF_Effect_StartSpawner(object->unk04->unk50, &object->model->position, &object->model->rotation, &D_0038CD20[MAP_OBJECT_BYTES(object)->unk00 & 1]);
     if (object->unk08->unk42 != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
         func_002109C8(object->unk08->unk42, 0);
     }

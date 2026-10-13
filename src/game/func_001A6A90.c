@@ -14,7 +14,7 @@ void func_001A6A90(EffectActor *effect) {
     f32 unused[4]; // match: retail reserves 0x10 bytes of stack it never uses
 
     if ((s8)motion->flag14 != 0) {
-        func_001A2A18(effect);
+        KF_Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);

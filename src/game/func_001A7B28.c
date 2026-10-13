@@ -1,7 +1,6 @@
 #include "common.h"
 #include "kf_effect.h"
 
-extern EffectActor D_003F3550[];
 
 Entity *func_001AFF78(EffectActor *effect, Vector4 *position);
 void func_001A7AC8(EffectActor *effect);
@@ -66,7 +65,7 @@ void func_001A7B28(EffectActor *effect) {
                 ((HomingBobMotion *)&other->motion)->end_countdown = (int)(func_001B0178(&other->model->position, &effect->model->position) / 20.0f);
             }
         }
-        func_001A2A18(effect);
+        KF_Effect_Free(effect);
         return;
     }
     if (effect->frame >= 3 && effect->frame < effect->def->keyframe_end - 3 && func_001AF4E0(effect) != 0) {

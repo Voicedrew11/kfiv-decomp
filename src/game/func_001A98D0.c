@@ -20,7 +20,7 @@ void func_001A98D0(EffectActor *actor) {
         if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
             sceVu0AddVector(&actor->model->position, &actor->model->position, &motion->velocity);
             if (func_001C0E40(actor->def->radius_half * 2, &actor->model->position) == 0) {
-                func_001A2A18(actor);
+                KF_Effect_Free(actor);
                 return;
             }
             actor->model->position.y = *(float *)0x70000004;

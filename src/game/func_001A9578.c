@@ -1,6 +1,5 @@
 #include "kf_effect.h"
 
-extern EffectActor D_003F3550[];
 
 s16 func_001B0208(float, void *, void *, void *);
 
@@ -31,6 +30,6 @@ void func_001A9578(EffectActor *actor, EffectSlot *spawn_slot) {
             }
         }
     }
-    func_001A1E28(actor->def->unkF0, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+    KF_Effect_Spawn(actor->def->unkF0, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
     motion->spawned = 1;
 }

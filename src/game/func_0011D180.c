@@ -1,5 +1,6 @@
 #include "kf_entity.h"
 #include "kf_player.h"
+#include "kf_effect.h"
 
 extern int D_0038CC80[3];
 extern s32 D_004467A0;
@@ -17,8 +18,6 @@ float sqrtf(float);
 float atan2f(float, float);
 float func_0019B838(float);
 int func_00116C08(int, int, int, int);
-int func_001A1C58(int, void *, void *, void *);
-void func_001A32A8(Entity *);
 
 /* the objects of the current map (map 0) or the other loaded one (map 1), which the game inlines */
 static inline MapObject *map_objects(s32 map) {
@@ -88,7 +87,7 @@ void func_0011D180(void) {
             if (MODEL_UNK100_BITS(model)->has_motion) {
                 anim = &object->unk04->anims[MAP_OBJECT_BYTES(object)->anim];
                 if (anim->unk06 == MODEL_CHANNEL(model)->param) {
-                    func_001A1C58(anim->unk02, &model->position, &model->rotation, object);
+                    KF_Effect_StartSpawner(anim->unk02, &model->position, &model->rotation, object);
                 }
             }
             kind = (object->unk10 & 0x100000) ? 0 : object->unk04->kind;
@@ -130,12 +129,12 @@ void func_0011D180(void) {
                     angles.x = atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
                     angles.y = func_0019B838(-atan2f(delta_z, delta_x) + 1.5707964f);
                     angles.z = angles.w = 0.0f;
-                    func_001A1C58(object->unk08->unk54, from, &angles, object);
+                    KF_Effect_StartSpawner(object->unk08->unk54, from, &angles, object);
                 } else {
-                    func_001A1C58(source->unk54, &shown->position, &shown->rotation, object);
+                    KF_Effect_StartSpawner(source->unk54, &shown->position, &shown->rotation, object);
                 }
             } else if (in_view == 4) {
-                func_001A32A8((Entity *)object);
+                KF_Effect_FreeForOwner((Entity *)object);
             }
         }
     }

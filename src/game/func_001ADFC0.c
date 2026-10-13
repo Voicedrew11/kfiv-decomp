@@ -19,7 +19,7 @@ void func_001ADFC0(EffectActor *effect) {
         effect->frame += 1;
         motion->countdown = reload_frames;
         if (effect->frame >= def->keyframe_end) {
-            func_001A1E28(def->radius_half, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+            KF_Effect_Spawn(def->radius_half, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             effect->frame = 0;
         }
     }

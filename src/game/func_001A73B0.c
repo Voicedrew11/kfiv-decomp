@@ -25,8 +25,8 @@ void func_001A73B0(EffectActor *actor, EffectSlot *spawn_slot) {
         actor->unk6C = func_001AFD08(actor, D_00413F80, D_00413F80 + 0x10);
         motion->timer = actor->target->def->unkF2;
         if (func_001AF4E0(actor)) {
-            func_001A1E28(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
-            func_001A2A18(actor);
+            KF_Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            KF_Effect_Free(actor);
             return;
         }
     } else {

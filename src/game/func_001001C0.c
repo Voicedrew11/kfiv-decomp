@@ -11,6 +11,7 @@
 #include "kf_linked_point.h"
 #include "kf_splash.h"
 #include "kf_message.h"
+#include "kf_effect.h"
 
 extern u8 D_00349680[0x10];
 extern PlayTime D_0036A138[];   /* the play time in the loaded save (D_0036A130 + 8) */
@@ -47,7 +48,6 @@ void func_0011D180(void);
 void func_00123288(void);
 void func_001C95B0(void);
 void func_001BC2D0(void);
-void func_001A1E88(void);
 void func_00101618(void);
 void func_0019C540(void);
 void func_001061E8(void);
@@ -128,7 +128,7 @@ void func_001001C0(int arg) {
         KF_Gold_Update();
         func_001BC2D0();
         KF_Player_UpdateWeaponAim();
-        func_001A1E88();
+        KF_Effect_UpdateAll();
         KF_LinkedPoint_UpdateFollows();
         KF_Hud_Update();
         if (!(D_0038CC50.bit12 && D_0038CC50.bit13)) {

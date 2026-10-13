@@ -9,7 +9,7 @@ void func_001A72F0(EffectActor *effect) {
 
     motion = (ScalerMotion *)&effect->motion;
     if ((s8)((TurningMotion *)motion)->unk24 != 0) {
-        func_001A2A18(effect);
+        KF_Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);
@@ -19,7 +19,7 @@ void func_001A72F0(EffectActor *effect) {
     def = effect->def;
     model->unkE8 *= motion->scale_per_mille / 1000.0f;
     if (effect->frame == def->radius_half) {
-        func_001A1E28(def->end_effect, &effect->motion.unk10, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+        KF_Effect_Spawn(def->end_effect, &effect->motion.unk10, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
     }
     effect->frame += 1;
 }

@@ -14,7 +14,7 @@ void func_001A7F88(EffectActor *effect) {
 
     motion = (BobbingGrowMotion *)&effect->motion;
     if (motion->ended != 0) {
-        func_001A2A18(effect);
+        KF_Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);
@@ -38,7 +38,7 @@ void func_001A7F88(EffectActor *effect) {
     if (effect->frame >= 3 && effect->frame < 48) {
         func_001AF298(effect, &motion->ended);
         if (motion->ended != 0) {
-            func_001A1E28(0xDF, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+            KF_Effect_Spawn(0xDF, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         }
     }
     effect->frame++;

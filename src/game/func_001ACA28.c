@@ -46,7 +46,7 @@ void func_001ACA28(EffectActor *effect, EffectSlot *spawn_slot) {
         func_00216778(&saved_rotation, &effect->model->rotation);
         func_001AF538(motion->length, &step, &effect->model->rotation);
         func_00216C48(&effect->model->position, &effect->model->position, &step);
-        func_001A2838(effect->def->radius_half, effect);
+        KF_Effect_SpawnFromEffect(effect->def->radius_half, effect);
         func_00216778(&effect->model->position, &saved_position);
         func_00216778(&effect->model->rotation, &saved_rotation);
     }

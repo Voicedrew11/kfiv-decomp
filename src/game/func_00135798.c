@@ -1,11 +1,11 @@
 #include "kf_entity.h"
 #include "kf_entity_world.h"
+#include "kf_effect.h"
 
 extern float D_00413F80[];
 
 int func_00192C98(void *, int, int, u32, int);
 char *func_0010CAB8(char *, u32);
-int func_001A1C58(int, void *, void *, void *);
 void func_0018DCD8(Entity *);
 
 void func_00135798(Entity *entity) {
@@ -36,15 +36,15 @@ void func_00135798(Entity *entity) {
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             part = func_0010CAB8((char *)entity->model, 0x14);
             if (part != NULL) {
-                func_001A1C58(0x3BC, part, entity->model->unkD0, D_00413F80);
+                KF_Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80);
             }
             part = func_0010CAB8((char *)entity->model, 0x15);
             if (part != NULL) {
-                func_001A1C58(0x3BC, part, entity->model->unkD0, D_00413F80);
+                KF_Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80);
             }
             part = func_0010CAB8((char *)entity->model, 0x16);
             if (part != NULL) {
-                func_001A1C58(0x3BC, part, entity->model->unkD0, D_00413F80);
+                KF_Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80);
             }
             ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
             unkE0->unk7A = 1;

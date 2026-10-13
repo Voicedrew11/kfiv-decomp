@@ -28,7 +28,7 @@ void func_001AB2C0(EffectActor *actor) {
         }
     }
     if (motion->ending == 1) {
-        func_001A2A18(actor);
+        KF_Effect_Free(actor);
     } else if (actor->frame == 0) {
         actor->model->position.y -= 100.0f;
         check = func_001B4F90(actor);
@@ -36,7 +36,7 @@ void func_001AB2C0(EffectActor *actor) {
         if (check & 0x10) {
             motion->ending = 1;
         } else if (check & 1) {
-            func_001A1E28(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            KF_Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             motion->ending = 1;
         }
     }

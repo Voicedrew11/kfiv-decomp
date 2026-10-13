@@ -15,7 +15,7 @@ void func_001A8ED0(EffectActor *actor) {
     if (motion->countdown > 0) {
         motion->countdown--;
         if (motion->countdown <= 0) {
-            func_001A2A18(actor);
+            KF_Effect_Free(actor);
             return;
         }
     } else {
@@ -23,13 +23,13 @@ void func_001A8ED0(EffectActor *actor) {
             sceVu0AddVector(&actor->model->position, &actor->model->position, motion);
         }
         if (actor->frame >= motion->end_frame) {
-            func_001A1E28(actor->def->end_effect, &motion->unk10, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            KF_Effect_Spawn(actor->def->end_effect, &motion->unk10, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             spawn_flag = 1;
         } else {
             func_001AF298(actor, &spawn_flag);
         }
         if (spawn_flag) {
-            func_001A2BC8(actor);
+            KF_Effect_FreeSpawnersOf(actor);
             motion->countdown = actor->def->interval;
         }
     }

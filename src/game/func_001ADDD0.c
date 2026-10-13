@@ -22,8 +22,8 @@ void func_001ADDD0(EffectActor *effect) {
             } else {
                 spawn_id = def->interval;
             }
-            func_001A1E28(spawn_id, &motion->velocity, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
-            func_001A2A18(effect);
+            KF_Effect_Spawn(spawn_id, &motion->velocity, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+            KF_Effect_Free(effect);
         }
     }
     effect->frame++;

@@ -5,6 +5,7 @@
 #include "kf_model.h"
 #include "kf_player.h"
 #include "kf_texture.h"
+#include "kf_effect.h"
 
 void *memset(void *, int, u32);
 void *memcpy(void *, const void *, u32);
@@ -22,7 +23,6 @@ void func_00109AD0(void);
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
 void func_0010B5D0(ModelPart *);
-void func_001A35D0(void);
 void func_001A1160(int);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -128,7 +128,7 @@ void KF_Player_LoadArmModels(void) {
         D_00446974 = D_00413F80.unk3C;
         if (D_00413F80.unk258 != 0) {
             D_00413F80.unk258 = 0;
-            func_001A35D0();
+            KF_Effect_FreePlayerWeaponKinds();
         }
         memset((void *)held_item_file, 0, 0x30000);
         memset(&D_0057B6A0, 0, 0x1C0);

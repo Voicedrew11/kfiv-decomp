@@ -45,7 +45,7 @@ void func_001A92A8(EffectActor *effect) {
     if (effect->frame == motion->arrival_frame) {
         if (motion->has_aim != 0) {
             if (motion->first_level != 0) {
-                func_001A1E28(effect->def->end_effect, &motion->aim, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                KF_Effect_Spawn(effect->def->end_effect, &motion->aim, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             }
             if (motion->on_ground != 0) {
                 effect->motion.velocity.x = 0.0f;
@@ -73,7 +73,7 @@ void func_001A92A8(EffectActor *effect) {
                 hits = func_001B4F90(effect);
                 func_00216778(&effect->model->position, &saved_position);
                 if (hits != 0) {
-                    func_001A1E28(effect->def->unkF0, &motion->aim, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                    KF_Effect_Spawn(effect->def->unkF0, &motion->aim, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                     motion->hit_spawned = 1;
                 }
             }

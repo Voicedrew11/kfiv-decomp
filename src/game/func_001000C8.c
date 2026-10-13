@@ -5,6 +5,7 @@
 #include "kf_player.h"
 #include "kf_shot.h"
 #include "kf_splash.h"
+#include "kf_effect.h"
 
 extern PlayerState D_00413F80;
 extern int D_00446734;          /* nonzero: a saved game was loaded */
@@ -21,7 +22,6 @@ void func_0011A430(void);
 void KF_Entity_ResetAllLists(void);
 void func_0011C6E8(void);
 void func_001C8238(void);
-void func_001A1610(void);
 void func_001B4EE0(void);
 int func_001060C0(void);
 void func_00104EC8(void);
@@ -46,7 +46,7 @@ void func_001000C8(int arg) {
     KF_Entity_ResetAllLists();
     func_0011C6E8();
     func_001C8238();
-    func_001A1610();
+    KF_Effect_Init();
     func_001B4EE0();
     KF_Gold_Init();
     KF_Splash_Reset();

@@ -36,7 +36,7 @@ void func_001A4AB8(EffectActor *actor) {
     }
     hit = func_001B4F90(actor);
     if (hit != 0) {
-        func_001A2BC8(actor);
+        KF_Effect_FreeSpawnersOf(actor);
         if (hit & 2) {
             func_00216778(&vec, &actor->model->position);
             if (func_001C0E40(350.0f, &actor->model->position) == 1) {
@@ -45,9 +45,9 @@ void func_001A4AB8(EffectActor *actor) {
             } else {
                 end_effect = actor->def->unkF0;
             }
-            func_001A1E28(end_effect, &vec, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            KF_Effect_Spawn(end_effect, &vec, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
         }
-        func_001A2A18(actor);
+        KF_Effect_Free(actor);
     }
     actor->frame += 1;
 }

@@ -42,8 +42,6 @@ void func_0010E6A8(ModelInstance *, s64, s64);
 void func_0010E770(ModelInstance *, u64, s64);
 void func_0010E820(ModelInstance *, s64);
 void func_0010E8E0(void *, int, int, int, int);
-int func_001A1C58(int, void *, void *, void *);
-void func_001A3918(int);
 int func_001BF6E8(void);
 void func_002095D0(ModelInstance *);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
@@ -233,8 +231,8 @@ void KF_ItemEffect_Update(void) {
     }
     if (item_effect_pending_effects != 0 && item_effect_model != NULL &&
         MODEL_CHANNEL(item_effect_model)->param >= item_effect_def->unk08) {
-        func_001A1C58(item_effect_def->unk0C, &origin, &origin, item_effect_model);
-        func_001A1C58(0x26A, &D_00413F80.position, &D_00413F80.rotation, item_effect_model);
+        KF_Effect_StartSpawner(item_effect_def->unk0C, &origin, &origin, item_effect_model);
+        KF_Effect_StartSpawner(0x26A, &D_00413F80.position, &D_00413F80.rotation, item_effect_model);
         def = &D_0041B9B8[D_00413F80.unk3C];
         item_effect_pending_effects = 0;
         if (D_00413F80.unk3D != 0 || def->unk42 != 0xFFFF ||
@@ -264,7 +262,7 @@ void KF_ItemEffect_StepRequestGameStatus(void) {
         D_0038CC50.unk30 = 0xC5F;
         D_0038CC50.unk40 = item_effect_model;
         item_effect_step += 2;
-        func_001A3918(0x5D);
+        KF_Effect_FreeSpawnersByParam(0x5D);
     }
 }
 

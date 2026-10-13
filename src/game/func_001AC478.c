@@ -25,9 +25,9 @@ void func_001AC478(EffectActor *actor) {
     sceVu0AddVector(&actor->model->position, &actor->model->position, velocity);
     if (func_001B4F90(actor) != 0 && actor->def->end_effect != 0xFFFF) {
         if (*(int *)0x70000018 != 5) {
-            func_001A1E28(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            KF_Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
         }
-        func_001A2A18(actor);
+        KF_Effect_Free(actor);
     }
     actor->frame++;
 }

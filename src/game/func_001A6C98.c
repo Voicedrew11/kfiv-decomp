@@ -20,7 +20,7 @@ void func_001A6C98(EffectActor *effect) {
     motion = (AimMotion *)&effect->motion;
     target_motion = (SpeedFlagMotion *)&effect->target->motion;
     if (motion->ended == 1) {
-        func_001A2A18(effect);
+        KF_Effect_Free(effect);
         return;
     }
     func_001AEC48(effect);
@@ -53,7 +53,7 @@ void func_001A6C98(EffectActor *effect) {
         if (motion->aimed == 1) {
             reached = motion->flag25; // match: a local keeps this test apart from the one on aimed
             if (reached == 1 && distance < 50.0f) {
-                func_001A1E28(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                KF_Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 motion->ended = 1;
             }
         }

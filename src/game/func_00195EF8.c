@@ -1,9 +1,9 @@
 #include "common.h"
+#include "kf_effect.h"
 
 float sqrtf(float);
 float atan2f(float, float);
 char *func_0010CAB8(char *, u32);
-int func_001A1C58(int, void *, void *, void *);
 
 /* Spawns an effect at a model point, facing along the line to the next point. */
 void func_00195EF8(char **model, int effect_id, int point) {
@@ -33,6 +33,6 @@ void func_00195EF8(char **model, int effect_id, int point) {
         }
         angles[1] = yaw;
         angles[2] = angles[3] = 0.0f;
-        func_001A1C58(effect_id, from, angles, model);
+        KF_Effect_StartSpawner(effect_id, from, angles, model);
     }
 }

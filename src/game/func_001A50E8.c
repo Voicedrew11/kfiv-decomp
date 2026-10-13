@@ -36,13 +36,13 @@ void func_001A50E8(EffectActor *actor) {
         }
     }
     if (motion->state == 1) {
-        func_001A2A18(actor);
+        KF_Effect_Free(actor);
     } else if (actor->frame == 0) {
         func_00216778(&offset, &actor->model->position);
         if (actor->unk6C != 0) {
             target = (Entity *)actor->unk6C;
             if (func_001B0178(&offset, &target->model->position) < 100.0f) {
-                func_001A1E28(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+                KF_Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
                 motion->state = 1;
             }
         }

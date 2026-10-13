@@ -1,11 +1,11 @@
 #include "kf_entity.h"
+#include "kf_effect.h"
 
 extern char *D_004467C0;
 
 float atan2f(float, float);
 float sqrtf(float);
 char *func_0010CAB8(char *, u32);
-int func_001A1C58(int, void *, void *, void *);
 
 /* func_00194FB8, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
@@ -64,9 +64,9 @@ void func_0018D670(Entity *entity, s32 animation, s32 frame_from, s32 frame_to) 
                 continue;
             }
             if (record->unk05 != 0) {
-                func_001A1C58(entity->params->unk440[(s32)(entity->flags >> 60) & 7], from, angles, entity);
+                KF_Effect_StartSpawner(entity->params->unk440[(s32)(entity->flags >> 60) & 7], from, angles, entity);
             } else {
-                func_001A1C58(record->unk00, from, angles, entity);
+                KF_Effect_StartSpawner(record->unk00, from, angles, entity);
             }
         }
     }

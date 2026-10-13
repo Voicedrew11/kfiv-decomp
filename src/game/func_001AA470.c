@@ -11,7 +11,7 @@ void func_001AA470(EffectActor *effect, EffectSlot *spawn_slot) {
 
     motion = (TurningMotion *)&effect->motion;
     if (D_00413FBC[0] != 0x26) {
-        func_001A2AF8(spawn_slot);
+        KF_Effect_FreeSpawner(spawn_slot);
         return;
     }
     func_001AF928(effect, spawn_slot);
@@ -26,6 +26,6 @@ void func_001AA470(EffectActor *effect, EffectSlot *spawn_slot) {
     if (D_004468E4 < effect->def->interval) {
         return;
     }
-    func_001A1E28(effect->def->unkF0, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+    KF_Effect_Spawn(effect->def->unkF0, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
     D_004468E4 = 0;
 }

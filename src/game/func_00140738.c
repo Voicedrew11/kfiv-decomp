@@ -1,4 +1,5 @@
 #include "kf_entity.h"
+#include "kf_effect.h"
 
 extern u32 D_00446ED4;
 
@@ -9,7 +10,6 @@ int func_00182DE0(void *, int);
 void func_00183240(Entity *, s32);
 void func_001958B8(char *, void (*)(void), int);
 char *func_0010CAB8(char *, u32);
-int func_001A1C58(int, void *, void *, void *);
 void func_001408B0(Entity *);
 
 void func_00140738(Entity *entity, s32 unknown) {
@@ -39,7 +39,7 @@ void func_00140738(Entity *entity, s32 unknown) {
         }
     }
     part = func_0010CAB8((char *)entity->model, 0x1E);
-    func_001A1C58(entity->params->unk43A, part, entity->model->unkD0, entity);
+    KF_Effect_StartSpawner(entity->params->unk43A, part, entity->model->unkD0, entity);
     part = func_0010CAB8((char *)entity->model, 0x1F);
-    func_001A1C58(entity->params->unk43A, part, entity->model->unkD0, entity);
+    KF_Effect_StartSpawner(entity->params->unk43A, part, entity->model->unkD0, entity);
 }

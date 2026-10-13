@@ -26,7 +26,7 @@ void func_001AC588(EffectActor *effect, EffectSlot *spawn_slot) {
     if (*(int *)SCRATCH_MATRIX != 0) {
         func_00216778(&effect->model->position, SCRATCH_VECTOR);
     } else {
-        func_001A2A18(effect);
+        KF_Effect_Free(effect);
     }
     velocity->x = 0;
     velocity->y = effect->def->speed;

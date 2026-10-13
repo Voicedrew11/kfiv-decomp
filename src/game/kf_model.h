@@ -377,7 +377,7 @@ typedef struct ModelInstance {
     ModelPartLevels **level_tables; /* 0xFC */
     u16 unk100;                     /* 0x100 */
     u16 unk102;                     /* 0x102 MODEL_FLAG_800: drawn with its own texture */
-    int unk104;                     /* 0x104 passed to func_001A2E58, which does not read it */
+    int unk104;                     /* 0x104 passed to KF_Effect_FindModelRecord, which does not read it */
     char pad108[0x08];
     ModelStripList *strips;         /* 0x110 also read as a CollisionMesh (kf_collision.h), NULL: none */
     MotionFile *motion_file;        /* 0x114 */
@@ -402,7 +402,7 @@ typedef struct ModelInstance {
     s32 unk160[4];                  /* 0x160 */
     char pad170[0x08];
     void *unk178;                   /* 0x178 passed to func_0010B2E0 with unk194: bit n set skips chunk n (a mask, but not stored as an int) */
-    int found_record_id;            /* 0x17C the id func_001A2E58 last found; sent after the colour at unk150 by func_0010D308, in its alpha slot */
+    int found_record_id;            /* 0x17C the id KF_Effect_FindModelRecord last found; sent after the colour at unk150 by func_0010D308, in its alpha slot */
     int found_record[4];            /* 0x180 a copy of that record, its id bits replaced; a quadword sent after it */
     u16 unk190;                     /* 0x190 slot of unk194 in D_00468190 (0..2), 3: always sent */
     s16 unk192;                     /* 0x192 */
@@ -492,7 +492,7 @@ typedef struct {
     s16 unk4A;                      /* 0x4A */
     char pad4C[0x06];
     u16 unk52;                      /* 0x52 1 to 6: touching it starts PlayerState.timed_flags[unk52 - 1] (func_001BF350) */
-    u16 unk54;                      /* 0x54 passed to func_001A1C58 when the object comes into view, 0: nothing */
+    u16 unk54;                      /* 0x54 passed to KF_Effect_StartSpawner when the object comes into view, 0: nothing */
     u8 unk56;                       /* 0x56 the model point it starts at; the next one gives its direction */
     char pad57[0x01];
     u16 unk58;                      /* 0x58 passed to func_002109C8 when an item is used on the object, 0: nothing */
@@ -527,7 +527,7 @@ typedef struct {
 typedef struct {
     u8 anim;                        /* 0x00 passed to func_00108A08 */
     u8 sound_kind;                  /* 0x01 0: func_0019D1C0, 1: func_0019D490, 2: func_0019D980 */
-    u16 unk02;                      /* 0x02 passed to func_001A1C58 on frame unk06 (func_0011D180) */
+    u16 unk02;                      /* 0x02 passed to KF_Effect_StartSpawner on frame unk06 (func_0011D180) */
     u16 sound;                      /* 0x04 0xFFFF: none */
     u8 unk06;                       /* 0x06 the animation frame unk02 starts on */
     u8 sound_frame;                 /* 0x07 the animation frame the sound starts on */
@@ -548,7 +548,7 @@ typedef struct {
     char pad08[0x04];
     f32 unk0C;                      /* 0x0C above 0: MapObject.unk14 is this times the scale, plus 100 */
     MapObjectAnim anims[8];         /* 0x10 by MapObjectBytes.anim; entry anim + 2 holds a second sound for anims 4 and 5 */
-    u16 unk50;                      /* 0x50 passed to func_001A1C58 */
+    u16 unk50;                      /* 0x50 passed to KF_Effect_StartSpawner */
     s16 unk52[9];                   /* 0x52 percent of each of a hit's nine strengths that it shrugs off, 200: all of it (func_001B3AC0) */
     f32 unk64;                      /* 0x64 above 0: the player must face it within this angle to act on it (func_001D0970) */
     u32 unk68;                      /* 0x68 flags; the low half is also a message id */

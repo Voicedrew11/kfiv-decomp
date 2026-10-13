@@ -194,13 +194,13 @@ only tests the result against 0 and passes no point, so it is not touched;
 `func_001299F8` takes the point as a jump's landing, and can get a farther
 prop's. Marked with `// match:`.
 
-## `func_001A1E88` tests the address of the slot pool where it means to stop early
+## `KF_Effect_UpdateAll` tests the address of the slot pool where it means to stop early
 
-`func_001A1E88` runs the effect spawner slots and the effects for one frame.
+`KF_Effect_UpdateAll` runs the effect spawner slots and the effects for one frame.
 Its first loop walks the 0x60 slots of `D_003F1750`, and after running one:
 
 ```c
-func_001A24D8(slot);
+KF_Effect_RunSpawner(slot);
 if (!D_003F1750) {
     break;
 }
@@ -211,12 +211,12 @@ has it as `addiu $2, $18, %lo(D_003F1750)` / `bnez $2`.
 
 Effect: the `break` never runs and the loop always walks all 0x60 slots. The
 loop is only entered when the live count `D_004468CC` is above 0, and the slot
-loop of `func_001A3040` stops on that count, so the count was probably what
+loop of `KF_Effect_FreeForMap` stops on that count, so the count was probably what
 was meant here (a guess). Marked with `// match:`.
 
-## `func_001A2168` leaves a play-once texture's frame number unset after its last frame
+## `KF_Effect_DrawAll` leaves a play-once texture's frame number unset after its last frame
 
-`func_001A2168` draws the live effects. For an effect with texture frames
+`KF_Effect_DrawAll` draws the live effects. For an effect with texture frames
 (`def->unkF7` of them) it works out the frame from the mode `def->unkF6`:
 
 ```c
@@ -233,7 +233,7 @@ case 2:
     break;
 ...
 record_id = effect->def->unkFA + record_id * effect->def->unkF8;
-func_001A2E58(model, model->unk104, effect->def->unkFA, record_id);
+KF_Effect_FindModelRecord(model, model->unk104, effect->def->unkFA, record_id);
 ```
 
 Mode 2 holds the last frame once `step` has run past it. Mode 1 sets nothing
@@ -241,15 +241,15 @@ then, so `record_id` is what the last line left in it for the effect drawn
 before this one in the loop (that effect's finished id, not a frame number),
 or an unset register if no effect before it had frames.
 
-Effect: `func_001A2E58` finds the record `unkFA` in the model and writes the
+Effect: `KF_Effect_FindModelRecord` finds the record `unkFA` in the model and writes the
 id it is given into it, so an effect of mode 1 that outlives its frames gets
 an id of `unkFA + leftover * unkF8`. What is drawn for an id that names no
 texture frame is not checked, nor whether any mode 1 effect lives that long.
 Marked with `// match:`.
 
-## `func_001A3040` takes one record too many for the map it unloads
+## `KF_Effect_FreeForMap` takes one record too many for the map it unloads
 
-`func_001A3040` frees the effects of a map slot that is going away and clears
+`KF_Effect_FreeForMap` frees the effects of a map slot that is going away and clears
 what the other effects still point at in it. For the map's entities and map
 objects it builds a range from the first to the last element and tests
 `>= first && <= last`. For the map's records the end is one past the last:
@@ -1394,5 +1394,5 @@ does not mistake them for meaning something.
   their lengths and uses nothing from the walk; retail keeps only the empty
   loop.
 - Stack space that is reserved and never used: two vectors in `func_001AF0B0`
-  and in `func_001A1E88`, a matrix in `func_001A6538` and `func_001AB670`,
+  and in `KF_Effect_UpdateAll`, a matrix in `func_001A6538` and `func_001AB670`,
   0x70 bytes in `func_001EEA90`, eight floats in `func_001AFF78`.

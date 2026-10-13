@@ -1,7 +1,6 @@
 #include "kf_entity.h"
 
 int func_00192C98(void *, int, int, u32, int);
-void func_001A32A8(Entity *);
 void func_0018DCD8(Entity *);
 
 void func_00148C30(Entity *entity) {

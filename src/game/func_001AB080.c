@@ -14,7 +14,7 @@ void func_001AB080(EffectActor *actor) {
     func_001AED58(actor);
     func_001AF0B0(actor);
     if (motion->ending != 0) {
-        func_001A2A18(actor);
+        KF_Effect_Free(actor);
     }
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
         motion->velocity.y += actor->def->gravity;
@@ -23,7 +23,7 @@ void func_001AB080(EffectActor *actor) {
         } else {
             func_00216778(&spawn_position, &actor->model->position);
             spawn_position.y = *(float *)0x70000004;
-            func_001A1E28(actor->def->end_effect, &spawn_position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            KF_Effect_Spawn(actor->def->end_effect, &spawn_position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             motion->ending = 1;
         }
     }

@@ -14,7 +14,7 @@ void func_001A6828(EffectActor *effect, EffectSlot *spawn_slot) {
     func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
     motion->velocity.y = effect->def->unkDC;
     if (effect->def->unkF2 != 0) {
-        func_001A2838(effect->def->unkF2, effect);
+        KF_Effect_SpawnFromEffect(effect->def->unkF2, effect);
     }
     motion->unk10 = 0;
     effect->flags |= EFFECT_FLAG_HAS_TARGETERS;

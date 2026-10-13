@@ -28,7 +28,7 @@ void func_001AC8E8(EffectActor *effect) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
         func_001AF298(effect, motion->unk24);
         if (effect->frame > motion->end_frame + 0x3C) {
-            func_001A2A18(effect);
+            KF_Effect_Free(effect);
         }
     } else if (effect->frame < motion->player_frame) {
         func_00216778(&player_offset, D_00413F80);

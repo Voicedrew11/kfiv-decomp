@@ -42,6 +42,6 @@ void func_001ADA60(EffectActor *effect) {
     if (SCRATCHPAD_INT_10 != 0) {
         effect->model->position.y = SCRATCHPAD_FLOAT_04 - (f32)effect->def->radius_half;
     } else {
-        func_001A2A18(effect);
+        KF_Effect_Free(effect);
     }
 }
