@@ -57,25 +57,26 @@ extern WeaponTrailKind D_00414660[7];
 
 extern int D_00446970;
 extern int D_00446974;
-extern u32 D_00447164;
-extern u32 D_00447168;
-extern u32 D_0044716C;
-extern u32 D_00447170;
-extern u32 D_00447174;
-extern s32 D_00447178;
-extern s32 D_0044717C;
-extern s32 D_00447180;
-extern s32 D_00447184;
-extern s32 D_00447188;
 
-ModelInstance D_0057B6A0;
-ModelInstance D_0057B860;
-char D_0057BA20[0x90];
-char D_0057BAB0[0x1000];
-char D_0057CAB0[0x90];
-char D_0057CB40[0x1000];
-Vector4 D_0057DB40[64];
-s32 D_0057DF40[64];
+ModelInstance D_0057B6A0;               /* the held item; D_00446978 in asm .sdata points here */
+static ModelInstance arm_model;         /* 0x57B860 */
+static char held_item_channels[0x90];   /* 0x57BA20 */
+static char held_item_setup[0x1000];    /* 0x57BAB0 */
+static char arm_channels[0x90];         /* 0x57CAB0 */
+static char arm_setup[0x1000];          /* 0x57CB40 */
+static Vector4 trail_points[64];        /* 0x57DB40 screen positions of the weapon trail */
+static s32 trail_lives[64];             /* 0x57DF40 frames each trail point has left */
+
+static u32 shared_texture_table;        /* 0x447164 */
+static u32 held_item_file;              /* 0x447168 */
+static u32 held_item_textures;          /* 0x44716C */
+static u32 arm_file;                    /* 0x447170 */
+static u32 arm_textures;                /* 0x447174 */
+static s32 trail_min_life;              /* 0x447178 */
+static s32 trail_count;                 /* 0x44717C */
+static s32 trail_write_index;           /* 0x447180 */
+static s32 trail_read_index;            /* 0x447184 */
+static s32 trail_kind;                  /* 0x447188 index into D_00414660 */
 
 void KF_WeaponTrail_Reset(void);
 void KF_WeaponTrail_SetMinLife(s32);
@@ -89,23 +90,23 @@ void KF_HeldWeapon_Init(void) {
     int file_handle;
     u32 heap_cursor;
     heap_cursor = (u32)D_00446F64; // match: retail treats the heap cursor as a plain address
-    D_00447164 = heap_cursor;
+    shared_texture_table = heap_cursor;
     heap_cursor += 0x20000;
-    D_00447170 = heap_cursor;
+    arm_file = heap_cursor;
     heap_cursor += 0x50000;
-    D_00447168 = heap_cursor;
-    memset(&D_0057B860, 0, 0x1C0);
+    held_item_file = heap_cursor;
+    memset(&arm_model, 0, 0x1C0);
     memset(&D_0057B6A0, 0, 0x1C0);
-    memset((void *)D_00447170, 0, 0x50000);
-    memset((void *)D_00447168, 0, 0x30000);
-    memset(D_0057CB40, 0, 0x1000);
-    memset(D_0057BAB0, 0, 0x1000);
+    memset((void *)arm_file, 0, 0x50000);
+    memset((void *)held_item_file, 0, 0x30000);
+    memset(arm_setup, 0, 0x1000);
+    memset(held_item_setup, 0, 0x1000);
     memset(&D_00414780, 0, 0x20);
     memset(&D_004147A0, 0, 0x20);
     D_00446970 = -1;
     D_00446974 = -1;
     file_handle = func_00102238(D_0043F588, 0, 1);
-    func_001025C0(file_handle, (int)D_00447164, -1);
+    func_001025C0(file_handle, (int)shared_texture_table, -1);
     func_001024B0(file_handle);
     KF_Player_LoadArmModels();
 }
@@ -129,15 +130,15 @@ void KF_Player_LoadArmModels(void) {
             D_00413F80.unk258 = 0;
             func_001A35D0();
         }
-        memset((void *)D_00447168, 0, 0x30000);
+        memset((void *)held_item_file, 0, 0x30000);
         memset(&D_0057B6A0, 0, 0x1C0);
-        memset(D_0057BAB0, 0, 0x1000);
-        memset(D_0057BA20, 0, 0x90);
-        D_0044716C = 0;
+        memset(held_item_setup, 0, 0x1000);
+        memset(held_item_channels, 0, 0x90);
+        held_item_textures = 0;
         sprintf(path, D_0043F5A0, item->unk30);
-        handle = func_00102238((int)path, 0, 1);
+        handle = func_00102238(path, 0, 1);
         if (handle < 0) {
-            handle = func_00102238((int)D_0043F5B8, 0, 1);
+            handle = func_00102238(D_0043F5B8, 0, 1);
         }
         func_001025C0(handle, D_00249680, -1);
         func_001024B0(handle);
@@ -151,20 +152,20 @@ void KF_Player_LoadArmModels(void) {
         } else {
             size = 0x40;
         }
-        memcpy((void *)D_00447168, D_00249680, size);
-        file = (PlayerArmFile *)D_00447168;
+        memcpy((void *)held_item_file, D_00249680, size);
+        file = (PlayerArmFile *)held_item_file;
         if (file->model_size != 0) {
             data = (int)file + file->model_offset;
-            buffer = (int)D_0057BAB0;
+            buffer = (int)held_item_setup;
             func_0010B758(&D_0057B6A0, &data, &buffer);
         }
         if (file->motion_size != 0) {
-            data = D_00447168 + file->motion_offset;
-            buffer = (int)D_0057BA20;
+            data = held_item_file + file->motion_offset;
+            buffer = (int)held_item_channels;
             func_00108940(data, &buffer, &D_0057B6A0, 1);
         }
         if (file->texture_size != 0) {
-            D_0044716C = D_00447168 + file->texture_offset;
+            held_item_textures = held_item_file + file->texture_offset;
         }
         D_0057B6A0.unk148 = (s32)D_004145E0;
         D_0057B6A0.unk14C = &D_0038A250;
@@ -178,15 +179,15 @@ void KF_Player_LoadArmModels(void) {
     }
     if (D_00446970 != D_00413F80.equipment[3]) {
         D_00446970 = D_00413F80.equipment[3];
-        memset((void *)D_00447170, 0, 0x50000);
-        memset(&D_0057B860, 0, 0x1C0);
-        memset(D_0057CB40, 0, 0x1000);
-        memset(D_0057CAB0, 0, 0x90);
-        D_00447174 = 0;
+        memset((void *)arm_file, 0, 0x50000);
+        memset(&arm_model, 0, 0x1C0);
+        memset(arm_setup, 0, 0x1000);
+        memset(arm_channels, 0, 0x90);
+        arm_textures = 0;
         sprintf(path, D_0043F5A0, arm->unk30);
-        handle = func_00102238((int)path, 0, 1);
+        handle = func_00102238(path, 0, 1);
         if (handle < 0) {
-            handle = func_00102238((int)D_0043F5D0, 0, 1);
+            handle = func_00102238(D_0043F5D0, 0, 1);
         }
         func_001025C0(handle, D_00249680, -1);
         func_001024B0(handle);
@@ -198,18 +199,18 @@ void KF_Player_LoadArmModels(void) {
         } else {
             size = 0x40;
         }
-        memcpy((void *)D_00447170, D_00249680, size);
-        file = (PlayerArmFile *)D_00447170;
+        memcpy((void *)arm_file, D_00249680, size);
+        file = (PlayerArmFile *)arm_file;
         if (file->model_size != 0) {
             data = (int)file + file->model_offset;
-            buffer = (int)D_0057CB40;
-            func_0010B758(&D_0057B860, &data, &buffer);
+            buffer = (int)arm_setup;
+            func_0010B758(&arm_model, &data, &buffer);
         }
         if (file->texture_size != 0) {
-            D_00447174 = D_00447170 + file->texture_offset;
+            arm_textures = arm_file + file->texture_offset;
         }
-        D_0057B860.unk148 = (s32)D_004145E0;
-        D_0057B860.unk14C = &D_0038A250;
+        arm_model.unk148 = (s32)D_004145E0;
+        arm_model.unk14C = &D_0038A250;
     }
 }
 
@@ -256,12 +257,12 @@ void KF_Player_UpdateArmModels(void) {
             }
         }
         func_00216778(&D_0057B6A0.rotation, &D_00413F80.rotation);
-        func_00216778(&D_0057B860.rotation, &D_00413F80.rotation);
-        *(ModelMatrix *)D_0057B860.unk40 = *(ModelMatrix *)D_0057B6A0.unk40;
+        func_00216778(&arm_model.rotation, &D_00413F80.rotation);
+        *(ModelMatrix *)arm_model.unk40 = *(ModelMatrix *)D_0057B6A0.unk40;
         part = D_0057B6A0.parts;
-        arm_part = D_0057B860.parts;
+        arm_part = arm_model.parts;
         // match: retail takes the larger part count of the two models, not the smaller
-        count = D_0057B6A0.part_count > D_0057B860.part_count ? D_0057B6A0.part_count : D_0057B860.part_count;
+        count = D_0057B6A0.part_count > arm_model.part_count ? D_0057B6A0.part_count : arm_model.part_count;
         for (i = 0; i < count; i++, part++, arm_part++) {
             func_00216778(arm_part->unk40, part->unk40);
             func_00216778(&arm_part->unk50, &part->unk50);
@@ -333,7 +334,7 @@ void KF_Player_DrawArm(void) {
     u64 tag;
 
     if (D_00413F80.unk258 != 0) {
-        func_0010B238((TextureTableHeader *)D_00447164);
+        func_0010B238((TextureTableHeader *)shared_texture_table);
         func_00109E88();
         func_00109A50();
         func_00109A80(GS_REG_ALPHA_1, 0x44);
@@ -341,10 +342,10 @@ void KF_Player_DrawArm(void) {
         func_00109A80(GS_REG_TEST_1, 0x5000D);
         func_00109A80(GS_REG_TEST_2, 0x5000D);
         func_00109AD0();
-        func_0010B238((TextureTableHeader *)D_00447174);
+        func_0010B238((TextureTableHeader *)arm_textures);
         func_00109E88();
-        D_0057B860.unk1A8(&D_0057B860);
-        func_0010B238((TextureTableHeader *)D_0044716C);
+        arm_model.unk1A8(&arm_model);
+        func_0010B238((TextureTableHeader *)held_item_textures);
         func_00109E88();
         if (D_00413F80.unk3C != 0x2E) {
             D_0057B6A0.unk1A8(&D_0057B6A0);
@@ -369,7 +370,7 @@ void KF_Player_DrawArm(void) {
     count = KF_WeaponTrail_GetCount();
     if (count >= 4) {
         func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, D_00414660[D_00447188].blend);
+        func_00109A80(GS_REG_ALPHA_1, D_00414660[trail_kind].blend);
         func_00109A80(GS_REG_TEST_1, 0x30000);
         func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
         func_00109AD0();
@@ -388,10 +389,10 @@ void KF_Player_DrawArm(void) {
         packet += 2;
         for (i = 0; i < count; i++) {
             clipped >>= 1;
-            *packet++ = D_00414660[D_00447188].red;
-            *packet++ = D_00414660[D_00447188].green;
-            *packet++ = D_00414660[D_00447188].blue;
-            *packet++ = D_00414660[D_00447188].alpha * (KF_WeaponTrail_GetLife(i) - 1) / (D_00414660[D_00447188].lifetime - 1);
+            *packet++ = D_00414660[trail_kind].red;
+            *packet++ = D_00414660[trail_kind].green;
+            *packet++ = D_00414660[trail_kind].blue;
+            *packet++ = D_00414660[trail_kind].alpha * (KF_WeaponTrail_GetLife(i) - 1) / (D_00414660[trail_kind].lifetime - 1);
             KF_WeaponTrail_GetPoint(packet, i);
             packet += 3;
             /* a point off the screen keeps the three triangles it is part of from being drawn */
@@ -415,68 +416,68 @@ void KF_Player_DrawArm(void) {
 void KF_WeaponTrail_PickKind(void) {
     s32 best = 0;
 
-    D_00447188 = 0;
+    trail_kind = 0;
     if (D_00413F80.unk122[0] != 0 && D_00413F80.unk18E[0] > best) {
         best = D_00413F80.unk18E[0];
-        D_00447188 = 1;
+        trail_kind = 1;
     }
     if (D_00413F80.unk122[1] != 0 && D_00413F80.unk18E[1] > best) {
         best = D_00413F80.unk18E[1];
-        D_00447188 = 2;
+        trail_kind = 2;
     }
     if (D_00413F80.unk122[2] != 0 && D_00413F80.unk18E[2] > best) {
         best = D_00413F80.unk18E[2];
-        D_00447188 = 3;
+        trail_kind = 3;
     }
     if (D_00413F80.unk122[3] != 0 && D_00413F80.unk18E[3] > best) {
         best = D_00413F80.unk18E[3];
-        D_00447188 = 4;
+        trail_kind = 4;
     }
     if (D_00413F80.unk122[4] != 0 && D_00413F80.unk18E[4] > best) {
         best = D_00413F80.unk18E[4];
-        D_00447188 = 5;
+        trail_kind = 5;
     }
     if (D_00413F80.unk122[5] != 0 && D_00413F80.unk18E[5] > best) {
         best = D_00413F80.unk18E[5];
-        D_00447188 = 6;
+        trail_kind = 6;
     }
-    if (D_00447188 == 0) {
+    if (trail_kind == 0) {
         if (D_00413F80.equipment[5] == 0x87) {
-            D_00447188 = 1;
+            trail_kind = 1;
         }
         if (D_00413F80.equipment[5] == 0x88) {
-            D_00447188 = 2;
+            trail_kind = 2;
         }
         if (D_00413F80.equipment[5] == 0x89) {
-            D_00447188 = 3;
+            trail_kind = 3;
         }
         if (D_00413F80.equipment[5] == 0x8A) {
-            D_00447188 = 4;
+            trail_kind = 4;
         }
     }
 }
 
 void KF_WeaponTrail_Reset(void) {
-    memset(D_0057DB40, 0, 0x400);
-    memset(D_0057DF40, 0, 0x100);
-    D_0044717C = 0;
-    D_00447178 = 1;
-    D_00447180 = 0;
-    D_00447184 = 0;
+    memset(trail_points, 0, 0x400);
+    memset(trail_lives, 0, 0x100);
+    trail_count = 0;
+    trail_min_life = 1;
+    trail_write_index = 0;
+    trail_read_index = 0;
 }
 
 void KF_WeaponTrail_SetMinLife(s32 min_life) {
     if (min_life > 0) {
-        D_00447178 = min_life;
+        trail_min_life = min_life;
     }
 }
 
 void KF_WeaponTrail_GetPoint(void *dst, s32 index) {
     s32 table_index;
 
-    if (index < D_0044717C) {
-        table_index = D_00447184 + index;
-        func_00216788(dst, &D_0057DB40[table_index % 64]);
+    if (index < trail_count) {
+        table_index = trail_read_index + index;
+        func_00216788(dst, &trail_points[table_index % 64]);
     }
 }
 
@@ -484,37 +485,37 @@ void KF_WeaponTrail_GetPoint(void *dst, s32 index) {
 void KF_WeaponTrail_Age(void) {
     s32 i;
     s32 slot;
-    s32 count = D_0044717C;
+    s32 count = trail_count;
 
     for (i = 0; i < count; i++) {
-        slot = (D_00447184 + i) % 64;
-        D_0057DF40[slot]--;
-        if (D_0057DF40[slot] <= 0) {
-            D_0044717C--;
-            D_00447184 = (D_00447184 + 1) % 64;
+        slot = (trail_read_index + i) % 64;
+        trail_lives[slot]--;
+        if (trail_lives[slot] <= 0) {
+            trail_count--;
+            trail_read_index = (trail_read_index + 1) % 64;
         }
     }
 }
 
 /* queues a weapon trail point; it lives as long as the current kind says */
 void KF_WeaponTrail_Push(void *position) {
-    if (D_0044717C + 1 <= 64) {
-        func_00216788(&D_0057DB40[D_00447180], position);
-        D_0057DF40[D_00447180] = D_00414660[D_00447188].lifetime;
-        D_00447180 = (D_00447180 + 1) % 64;
-        D_0044717C++;
+    if (trail_count + 1 <= 64) {
+        func_00216788(&trail_points[trail_write_index], position);
+        trail_lives[trail_write_index] = D_00414660[trail_kind].lifetime;
+        trail_write_index = (trail_write_index + 1) % 64;
+        trail_count++;
     }
 }
 
 /* frames left of the index-th queued trail point, oldest first */
 s32 KF_WeaponTrail_GetLife(s32 index) {
     // match: retail accepts index == count, one past the newest point (KF_WeaponTrail_GetPoint tests index < count)
-    if (index <= D_0044717C) {
-        return D_0057DF40[(D_00447184 + index) % 64];
+    if (index <= trail_count) {
+        return trail_lives[(trail_read_index + index) % 64];
     }
     return 0;
 }
 
 int KF_WeaponTrail_GetCount(void) {
-    return D_0044717C;
+    return trail_count;
 }
