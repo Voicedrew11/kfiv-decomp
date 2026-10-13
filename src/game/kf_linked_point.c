@@ -11,10 +11,10 @@ LinkedPoint D_003E7500[LINKED_POINT_COUNT]; /* 0x3E7500 pool of influence points
 static LinkedPoint *linked_point_heads[2]; /* 0x4470C8 two active lists */
 static LinkedPoint *linked_point_free;     /* 0x4470D0 free list */
 
-static LinkedPoint *linked_point_take_free(void);
-static void linked_point_push_free(LinkedPoint *point);
-static LinkedPoint *linked_point_unlink_active(LinkedPoint *point);
-static void linked_point_link_active(LinkedPoint *point, u32 list);
+static LinkedPoint *KF_LinkedPoint_TakeFree(void);
+static void KF_LinkedPoint_PushFree(LinkedPoint *point);
+static LinkedPoint *KF_LinkedPoint_UnlinkActive(LinkedPoint *point);
+static void KF_LinkedPoint_LinkActive(LinkedPoint *point, u32 list);
 
 /* Clears the pool, chains every entry on the free list and empties the two active lists. */
 void KF_LinkedPoint_Init(void) {
@@ -54,11 +54,11 @@ int KF_LinkedPoint_Allocate(f32 duration, void *start, void *end, u8 kind_a, int
     if (list >= 2) {
         return -1;
     }
-    point = linked_point_take_free();
+    point = KF_LinkedPoint_TakeFree();
     if (point == NULL) {
         return -1;
     }
-    linked_point_link_active(point, list);
+    KF_LinkedPoint_LinkActive(point, list);
     func_00216778(point, start);
     point->follow = start;
     func_00216778(&point->target, end);
@@ -82,8 +82,8 @@ void KF_LinkedPoint_ReleaseIndex(u32 index) {
 
     if (index < LINKED_POINT_COUNT) {
         node = &D_003E7500[index];
-        linked_point_unlink_active(node);
-        linked_point_push_free(node);
+        KF_LinkedPoint_UnlinkActive(node);
+        KF_LinkedPoint_PushFree(node);
     }
 }
 
@@ -97,8 +97,8 @@ void KF_LinkedPoint_ReleaseByKind(int kind) {
         node = linked_point_heads[i];
         while (node != NULL) {
             if (node->active != 0 && node->kind_b == kind) {
-                next = linked_point_unlink_active(node);
-                linked_point_push_free(node);
+                next = KF_LinkedPoint_UnlinkActive(node);
+                KF_LinkedPoint_PushFree(node);
                 node = next;
             } else {
                 node = node->next;
@@ -265,7 +265,7 @@ void KF_LinkedPoint_Retarget(f32 duration, s32 index, void *target) {
 }
 
 /* Takes the first node off the free list, clearing its links; returns NULL when empty. */
-static LinkedPoint *linked_point_take_free(void) {
+static LinkedPoint *KF_LinkedPoint_TakeFree(void) {
     LinkedPoint *node;
     LinkedPoint *next;
 
@@ -284,7 +284,7 @@ static LinkedPoint *linked_point_take_free(void) {
 }
 
 /* Pushes a node onto the front of the free list. */
-static void linked_point_push_free(LinkedPoint *node) {
+static void KF_LinkedPoint_PushFree(LinkedPoint *node) {
     node->prev = NULL;
     node->next = linked_point_free;
     if (linked_point_free != NULL) {
@@ -294,7 +294,7 @@ static void linked_point_push_free(LinkedPoint *node) {
 }
 
 /* Unlinks a point from its active list and returns the node that followed it. */
-static LinkedPoint *linked_point_unlink_active(LinkedPoint *node) {
+static LinkedPoint *KF_LinkedPoint_UnlinkActive(LinkedPoint *node) {
     LinkedPoint *next;
     u8 list;
 
@@ -316,7 +316,7 @@ static LinkedPoint *linked_point_unlink_active(LinkedPoint *node) {
 }
 
 /* Pushes a point onto the front of one of the two active lists (list is 0 or 1). */
-static void linked_point_link_active(LinkedPoint *point, u32 list) {
+static void KF_LinkedPoint_LinkActive(LinkedPoint *point, u32 list) {
     LinkedPoint *head;
 
     if (list < 2) {
