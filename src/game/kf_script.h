@@ -78,6 +78,20 @@ typedef struct {
     ScriptArg second;               /* 0x14 value at 0x18 */
 } ScriptCallCommand;
 
+/* an object and four integer values for it (func_00212E18, func_00212F70) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg target_id;            /* 0x04 value at 0x08 */
+    ScriptArg values[4];            /* 0x0C values at 0x10, 0x18, 0x20, 0x28 */
+} ScriptObjectValuesCommand;
+
+/* the same with u16 values (func_00213010) */
+typedef struct {
+    int active;                     /* 0x00 */
+    ScriptArg target_id;            /* 0x04 value at 0x08 */
+    ScriptShortArg values[4];       /* 0x0C values at 0x10, 0x18, 0x20, 0x28 */
+} ScriptObjectShortsCommand;
+
 /* blends two floats toward target_a and target_b over `frames` (func_002134F8) */
 typedef struct {
     int active;                     /* 0x00 */

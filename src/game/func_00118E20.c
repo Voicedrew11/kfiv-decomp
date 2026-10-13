@@ -3,6 +3,7 @@
 #include "kf_gold.h"
 #include "kf_linked_point.h"
 #include "kf_map.h"
+#include "kf_map_object.h"
 #include "kf_screen.h"
 #include "kf_effect.h"
 
@@ -18,7 +19,6 @@ extern AreaNode *D_0044678C;
 void *memset(void *, int, u32);
 void func_00115878(int);
 void func_00117C60(void);
-void func_0011CE80(int);
 
 void func_001A15F8(void);
 void func_001BC128(void);
@@ -32,7 +32,7 @@ void func_00118E20(void) {
         if (D_0038CD20[slot].unk00 != 0) {
             func_00115878(slot);
             KF_Effect_FreeForMap(slot);
-            func_0011CE80(slot);
+            KF_MapObject_UnloadMap(slot);
             KF_Entity_FreeAllInGroup(slot);
             KF_Entity_ClearMapSlot(slot);
             KF_Gold_UnlinkMap(slot);

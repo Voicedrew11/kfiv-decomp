@@ -1,5 +1,6 @@
 #include "kf_map.h"
 #include "kf_entity_world.h"
+#include "kf_map_object.h"
 #include "kf_map_scroll.h"
 
 extern MapSlot D_0038CD20[];
@@ -9,7 +10,6 @@ extern int D_00446770;
 void func_001034F8(int);
 void func_001187B0(void);
 void func_00119360(int);
-void func_0011CC50(int);
 void func_00123158(int);
 void func_001C87D8(int);
 
@@ -28,7 +28,7 @@ void func_00118680(void) {
     offset[2] = -D_0038D610.request->z;
     offset[3] = 0.0f;
     slot->unk00 = 1;
-    func_0011CC50(other_slot);
+    KF_MapObject_StartMap(other_slot);
     KF_Entity_InitFromMapSpawns(other_slot);
     KF_Entity_OffsetAllInSlot(other_slot, offset);
     func_00123158(other_slot);

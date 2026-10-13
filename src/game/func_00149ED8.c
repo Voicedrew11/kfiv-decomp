@@ -1,6 +1,6 @@
 #include "kf_entity.h"
+#include "kf_map_object.h"
 
-int func_0011E1F0(int, int);
 void func_001958B8(char *, void (*)(void), int);
 float func_00194F80(void *, void *);
 void func_00216778(void *, void *);
@@ -17,7 +17,7 @@ void func_00149ED8(Entity *entity, s32 unknown) {
 
     entity->flags &= ~0x200;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    map_object = (MapObject *)func_0011E1F0(entity->group_id, entity->spawn_info->unk43);
+    map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->unk43);
     if (map_object != NULL) {
         stand_point[0] = map_object->model->position.x;
         stand_point[1] = map_object->model->position.y;

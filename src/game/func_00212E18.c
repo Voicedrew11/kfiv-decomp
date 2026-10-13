@@ -1,28 +1,18 @@
+#include "kf_map_object.h"
+#include "kf_script.h"
+
 extern int D_00446770;
 
-void *func_0011E1F0(int, int);
+/* Sets the colour of a map object's model (ModelInstance.unk150, unk154, unk158 and alpha). */
+void func_00212E18(ScriptObjectValuesCommand *command) {
+    MapObject *object;
 
-typedef struct {
-    char pad[0x150];
-    float a;
-    float b;
-    float c;
-    float d;
-} Target;
-
-typedef struct {
-    Target *v;
-} Node;
-
-void func_00212E18(char *arg0) {
-    Node *temp_v0;
-
-    temp_v0 = func_0011E1F0(D_00446770, *(int *)(arg0 + 0x8));
-    if (temp_v0 != 0 && temp_v0->v != 0) {
-        temp_v0->v->a = (float)*(int *)(arg0 + 0x10);
-        temp_v0->v->b = (float)*(int *)(arg0 + 0x18);
-        temp_v0->v->c = (float)*(int *)(arg0 + 0x20);
-        temp_v0->v->d = (float)*(int *)(arg0 + 0x28);
+    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    if (object != NULL && object->model != NULL) {
+        object->model->unk150 = command->values[0].value;
+        object->model->unk154 = command->values[1].value;
+        object->model->unk158 = command->values[2].value;
+        object->model->alpha = command->values[3].value;
     }
-    *(int *)arg0 = 0;
+    command->active = 0;
 }

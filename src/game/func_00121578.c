@@ -1,46 +1,23 @@
-#include "common.h"
+#include "kf_game.h"
+#include "kf_map_object.h"
 
-typedef struct {
-    void *p0;
-    char pad4[0xC];
-    char b10;
-    char b11;
-} Actor;
+extern GameStatus D_0038CC50;
 
-typedef struct {
-    char pad[0xF8];
-    int f;
-} Ctl;
-
-typedef struct {
-    int p0[4];
-    int a10;
-    int a14;
-    int pad18;
-    int a1c;
-} Sub;
-
-extern int D_0038CC50[];
 void func_00216C48(void *, void *, void *);
-s16 func_0011E340(void *, int);
 
-void func_00121578(Actor *arg0) {
-    Sub *s;
-    int temp_a0;
-    int temp_v0;
+/* Update handler of a sliding kind: moves the part one step; after the last one it
+   starts animation 4 at step 1 and clears bit 0 of D_0038CC50.unk30. */
+void func_00121578(MapObject *object) {
+    MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
+    ModelPart *part = &object->model->parts[work->part];
 
-    s = (Sub *)((char *)arg0 + 0x40);
-    temp_a0 = ((Ctl *)arg0->p0)->f + (s->a14 << 7);
-    if (s->a1c > 0) {
-        s->a1c = s->a1c - 1;
+    if (work->timer > 0) {
+        work->timer--;
     }
-    temp_a0 += 0x40;
-    func_00216C48((void *)temp_a0, (void *)temp_a0, s);
-    temp_v0 = s->a10 - 1;
-    s->a10 = temp_v0;
-    if (temp_v0 <= 0) {
-        func_0011E340(arg0, 4);
-        arg0->b11 = 1;
-        D_0038CC50[12] &= 0xFFFFFFFE;
+    func_00216C48(part->unk40, part->unk40, work);
+    if (--work->frames <= 0) {
+        KF_MapObject_StartAnim(object, 4);
+        MAP_OBJECT_BYTES(object)->step = 1;
+        D_0038CC50.unk30 &= ~1U;
     }
 }

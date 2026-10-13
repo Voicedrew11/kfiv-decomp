@@ -1,5 +1,6 @@
 #include "kf_gold.h"
 #include "kf_map.h"
+#include "kf_map_object.h"
 #include "kf_map_scroll.h"
 
 extern MapSlot D_0038CD20[];
@@ -12,8 +13,6 @@ void func_00114840(int);
 void func_00114AA8(int);
 void func_001154D8(int, int);
 void func_001155F8(int);
-void func_0011C708(int);
-void func_0011D0D0(int, int);
 void func_001A15F0(void);
 void func_001C82C0(int);
 void func_001C8990(int, f32 *);
@@ -38,8 +37,8 @@ void func_00118540(void) {
     func_001155F8(other_slot);
     KF_MapScroll_ClearPairs(other_slot);
     func_001A15F0();
-    func_0011C708(other_slot);
-    func_0011D0D0(other_slot, (int)offset);
+    KF_MapObject_InitMap(other_slot);
+    KF_MapObject_OffsetAll(other_slot, offset);
     func_001C82C0(other_slot);
     func_001C8990(other_slot, offset);
     KF_Gold_InitMap(other_slot);

@@ -27,7 +27,7 @@ typedef struct {
     u64 unk38;                      /* 0x38 */
     u8 unk40;                       /* 0x40 */
     u8 variant;                     /* 0x41 picks the animation set */
-    u8 unk42;                       /* 0x42 ids of two map objects (see func_0011E1F0) */
+    u8 unk42;                       /* 0x42 ids of two map objects (see KF_MapObject_GetById) */
     u8 unk43;                       /* 0x43 */
     u8 unk44;                       /* 0x44 an animation frame number */
     char pad45[0x03];

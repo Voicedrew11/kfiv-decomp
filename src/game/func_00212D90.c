@@ -1,48 +1,18 @@
-#include "common.h"
+#include "kf_map_object.h"
+#include "kf_script.h"
 
-int func_0011E1F0(int, int);
-void func_00211CF8(char *, int);
+int func_00211CF8(ScriptArg *, int);
 extern int D_00446770;
 
-typedef struct
-{
-  int a00;
-  int a04;
-  int a08;
-  int a0c;
-} Obj;
+/* Stores in `first` whether a map object's animation has ended; -1 when the object
+   has no motion or bit 22 is set. */
+void func_00212D90(ScriptCallCommand *command) {
+    MapObject *object = KF_MapObject_GetById(D_00446770, command->target_id.value);
 
-typedef struct
-{
-  char pad[0x82];
-  s16 s82;
-} Sub;
-
-typedef struct
-{
-  char pad0[0xFC];
-  Sub *pFC;
-  u16 f100;
-} Ctl;
-
-typedef struct
-{
-  Ctl *p00;
-  char pad[0xC];
-  int w10;
-} Entry;
-
-void func_00212D90(Obj *arg0)
-{
-  Entry *temp_v0 = (Entry *)func_0011E1F0(D_00446770, arg0->a08);
-
-  if (temp_v0 != 0 && (temp_v0->p00->f100 & 1) && !(temp_v0->w10 & 0x400000))
-  {
-    func_00211CF8((char *)&arg0->a0c, temp_v0->p00->pFC->s82 < 1);
-  }
-  else
-  {
-    func_00211CF8((char *)&arg0->a0c, -1);
-  }
-  arg0->a00 = 0;
+    if (object != NULL && (object->model->unk100 & 1) && !(object->unk10 & 0x400000)) {
+        func_00211CF8(&command->first, MODEL_CHANNEL(object->model)->param < 1);
+    } else {
+        func_00211CF8(&command->first, -1);
+    }
+    command->active = 0;
 }

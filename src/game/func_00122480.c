@@ -1,48 +1,24 @@
-#include "common.h"
+#include "kf_game.h"
+#include "kf_map_object.h"
 
-typedef struct {
-    void *p0;
-    char pad4[0xC];
-    char b10;
-    char b11;
-} Actor;
+extern GameStatus D_0038CC50;
 
-typedef struct {
-    char pad[0xF8];
-    int f;
-} Ctl;
-
-typedef struct {
-    int p0[4];
-    int a10;
-    int a14;
-    int pad18;
-    char a1c;
-} Sub;
-
-extern int D_0038CC50[];
 void func_00216C48(void *, void *, void *);
 void func_00122600(void *, int);
-s16 func_0011E340(void *, int);
 
-void func_00122480(Actor *arg0) {
-    Sub *s;
-    int temp_a0;
-    int temp_v0;
+/* The same for the kind of func_00121DA8, which also resets its count through func_00122600. */
+void func_00122480(MapObject *object) {
+    MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
+    ModelPart *part = &object->model->parts[work->part];
 
-    s = (Sub *)((char *)arg0 + 0x40);
-    temp_a0 = ((Ctl *)arg0->p0)->f + (s->a14 << 7);
-    if (s->a1c > 0) {
-        s->a1c = (u8)s->a1c - 1;
+    if (work->timer > 0) {
+        work->timer--;
     }
-    temp_a0 += 0x40;
-    func_00216C48((void *)temp_a0, (void *)temp_a0, s);
-    temp_v0 = s->a10 - 1;
-    s->a10 = temp_v0;
-    if (temp_v0 <= 0) {
-        func_00122600(arg0, 0);
-        func_0011E340(arg0, 4);
-        arg0->b11 = 1;
-        D_0038CC50[12] &= 0xFFFFFFFE;
+    func_00216C48(part->unk40, part->unk40, work);
+    if (--work->frames <= 0) {
+        func_00122600(object, 0);
+        KF_MapObject_StartAnim(object, 4);
+        MAP_OBJECT_BYTES(object)->step = 1;
+        D_0038CC50.unk30 &= ~1U;
     }
 }

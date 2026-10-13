@@ -1,6 +1,7 @@
 #include "kf_game.h"
 #include "kf_map.h"
 #include "kf_entity.h"
+#include "kf_map_object.h"
 #include "kf_player.h"
 #include "kf_message.h"
 
@@ -16,7 +17,6 @@ int func_00210C48(int);
 int func_002109C8(int, int);
 void func_001BC6E8(int);
 void func_001BC968(int);
-int func_0011D600(void *, int);
 int func_001188E0(int);
 void func_0011A438(int);
 /* Uses the item GameStatus.unk20 names once GameStatus.bit6 asks for it: an entity or a map object in front of
@@ -92,7 +92,7 @@ void func_001BC2D0(void) {
             case 1:
             case 4:
             case 5:
-                if (D_00420D00.current == NULL || !func_0011D600(D_00420D00.current, item)) {
+                if (D_00420D00.current == NULL || !KF_MapObject_UseItem(D_00420D00.current, item)) {
                     KF_Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
                     return;
                 }

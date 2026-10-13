@@ -1,5 +1,6 @@
 #include "kf_entity.h"
 #include "kf_map.h"
+#include "kf_map_object.h"
 
 extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
@@ -10,7 +11,6 @@ void func_00216778(void *, void *);
 void KF_Vector_Subtract(void *, void *, void *);
 void func_00216D20(void *, void *);
 void func_00194F48(f32 *, f32 *);
-int func_0011E1F0(int, int);
 s32 func_0018A970(Entity *, f32 *, PlayerData *);
 float func_00194F80(void *, void *);
 void func_001958B8(char *, void (*)(void), int);
@@ -41,9 +41,9 @@ void func_00155FE8(Entity *entity, s32 unknown) {
         KF_Vector_Subtract(delta, target, position);
         func_00216D20(delta, delta);
         func_00194F48(position, target);
-        first = (Entity *)func_0011E1F0(entity->group_id, 0xA0);
-        second = (Entity *)func_0011E1F0(entity->group_id, 0xA1);
-        third = (Entity *)func_0011E1F0(entity->group_id, 0xA2);
+        first = (Entity *)KF_MapObject_GetById(entity->group_id, 0xA0);
+        second = (Entity *)KF_MapObject_GetById(entity->group_id, 0xA1);
+        third = (Entity *)KF_MapObject_GetById(entity->group_id, 0xA2);
         if (unkE0->unk7A == 0) {
             records = (MapRecord *)D_0038CD20[entity->group_id].records;
             if (entity->unk14 == &records[0x11]) {

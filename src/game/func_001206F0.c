@@ -1,24 +1,22 @@
-#include "common.h"
+#include "kf_map_object.h"
 
-int func_0011E340(void *, int);
-int func_0011E3A0(void *);
+/* Step handler: runs the animation; when it ends, starts animation 5, or with the
+   channel index set animation 4 at step 1. */
+void func_001206F0(MapObject *object) {
+    ModelChannel *channel = MODEL_CHANNEL(object->model);
 
-void func_001206F0(void *arg0) {
-    char *temp;
-
-    temp = *(char **)(*(char **)arg0 + 0xFC);
-    if (*(u8 *)(temp + 0x81) == 0) {
-        if (*(s16 *)(temp + 0x82) != 0) {
-            func_0011E3A0(arg0);
+    if (channel->index == 0) {
+        if (channel->param != 0) {
+            KF_MapObject_StepAnim(object);
         } else {
-            func_0011E340(arg0, 5);
+            KF_MapObject_StartAnim(object, 5);
         }
     } else {
-        if (*(s16 *)(temp + 0x82) == 0) {
-            func_0011E340(arg0, 4);
-            *(char *)((char *)arg0 + 0x11) = 1;
+        if (channel->param == 0) {
+            KF_MapObject_StartAnim(object, 4);
+            MAP_OBJECT_BYTES(object)->step = 1;
         } else {
-            func_0011E3A0(arg0);
+            KF_MapObject_StepAnim(object);
         }
     }
 }

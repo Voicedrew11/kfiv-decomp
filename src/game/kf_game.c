@@ -2,6 +2,7 @@
 #include "kf_file.h"
 #include "kf_game.h"
 #include "kf_pad.h"
+#include "kf_map_object.h"
 #include "kf_player.h"
 #include "kf_map.h"
 #include "kf_gs.h"
@@ -56,7 +57,6 @@ extern int D_00468180[3];               /* the fade colour */
 
 void *memcpy(void *, const void *, u32);
 void func_0010A4E8(int, int, int, int, int);
-void func_0011CF88(void);
 void func_001DC0E0(void);
 extern int D_0038A178[8];               /* the screen depth of each haze layer */
 extern u32 D_0038A158[8];               /* the distances of the haze layers, nearest last */
@@ -544,7 +544,7 @@ void func_00103C18(void) {
     int sum;
 
     save_cursor = D_0036A130;
-    func_0011CF88();
+    KF_MapObject_SaveAllFlags();
     memset(save_cursor, 0, sizeof(D_0036A130));
     save_cursor += 8;
     *(int *)D_0036A130 = 0x15400;

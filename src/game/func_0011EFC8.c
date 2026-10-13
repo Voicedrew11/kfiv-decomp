@@ -1,10 +1,7 @@
+#include "kf_map_object.h"
 #include "kf_model.h"
 
 u16 func_001090E0(char *);
-int func_0011E3A0(void *);
-int func_0011E1F0(int, int);
-void func_0011E0C8(MapObject *);
-void func_0011E140(void *);
 
 /* Update handler: runs the animation, fading the model out over it when the
    definition asks for that; once it has ended the object goes out of use and
@@ -29,14 +26,14 @@ void func_0011EFC8(MapObject *object) {
                 object->model->unk146 = alpha;
             }
         }
-        func_0011E3A0((char *)object);
+        KF_MapObject_StepAnim(object);
     } else {
         if (!(object->unk04->unk68 & 0x20000)) {
-            other = (MapObject *)func_0011E1F0(MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk38.bytes[3]);
+            other = KF_MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk38.bytes[3]);
             if (other != NULL) {
-                func_0011E0C8(other);
+                KF_MapObject_Activate(other);
             }
         }
-        func_0011E140(object);
+        KF_MapObject_Deactivate(object);
     }
 }

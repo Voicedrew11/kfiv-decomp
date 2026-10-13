@@ -3,6 +3,7 @@
 #include "kf_hud.h"
 #include "kf_item_effect.h"
 #include "kf_map.h"
+#include "kf_map_object.h"
 #include "kf_player.h"
 #include "kf_player_update.h"
 #include "kf_gold.h"
@@ -28,7 +29,6 @@ void func_001012D8(int, int);
 void func_0010A7E0(void *);
 void func_0010AE58(void);
 void func_00114198(int);
-void func_0011D6B0(int, int, int);
 void func_001C9650(int);
 void func_00114528(int);
 void func_0010B140(u32, u32);
@@ -73,7 +73,7 @@ int func_001005E8(int arg) {
         func_0010A7E0(D_004323E0);
         func_0010AE58();
         func_00114198(0);
-        func_0011D6B0(0, 0, 0);
+        KF_MapObject_DrawAll(0, 0, 0);
         func_0019A608();
         KF_Entity_DrawAll(0);
         func_001C9650(0);
@@ -97,7 +97,7 @@ int func_001005E8(int arg) {
         func_0010A7E0(D_004323E0);
         func_0010AE58();
         func_00114198(1);
-        func_0011D6B0(1, 0, 0);
+        KF_MapObject_DrawAll(1, 0, 0);
         KF_Entity_DrawAll(1);
         func_001C9650(1);
         KF_Gold_Draw(1);
@@ -115,7 +115,7 @@ int func_001005E8(int arg) {
         func_0010A7E0(D_004323E0);
         func_0010AE58();
         func_00114198(0);
-        func_0011D6B0(0, 0, 0);
+        KF_MapObject_DrawAll(0, 0, 0);
         func_0019A608();
         KF_Entity_DrawAll(0);
         func_001C9650(0);
@@ -141,7 +141,7 @@ int func_001005E8(int arg) {
         func_0010A7E0(D_004323E0);
         func_0010AE58();
         func_00114198(2);
-        func_0011D6B0(1, 0, 0);
+        KF_MapObject_DrawAll(1, 0, 0);
         KF_Entity_DrawAll(1);
         func_001C9650(1);
         KF_ItemEffect_Draw();
@@ -161,7 +161,7 @@ int func_001005E8(int arg) {
         func_0010A7E0(D_004323E0);
         func_0010AE58();
         func_00114198(0);
-        func_0011D6B0(0, 0, 0);
+        KF_MapObject_DrawAll(0, 0, 0);
         func_0019A608();
         KF_Entity_DrawAll(0);
         func_001C9650(0);

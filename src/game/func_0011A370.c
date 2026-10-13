@@ -1,22 +1,20 @@
-#include "common.h"
+#include "kf_map_object.h"
 
 extern u8 D_00349690[];
-void func_0011E0C8(void *);
-void func_0011E140(void *);
-void *func_0011E1F0(int, int);
 
-void func_0011A370(int arg0) {
-    void *temp;
+/* Map script: once flag D_00349690[0x1C0A] is set, sets 0x1ADB and swaps map object 0x75 for 0x76. */
+void func_0011A370(int map) {
+    MapObject *object;
 
     if (D_00349690[0x1C0A] != 0) {
         D_00349690[0x1ADB] = 1;
-        temp = func_0011E1F0(arg0, 0x75);
-        if (temp != 0) {
-            func_0011E140(temp);
+        object = KF_MapObject_GetById(map, 0x75);
+        if (object != NULL) {
+            KF_MapObject_Deactivate(object);
         }
-        temp = func_0011E1F0(arg0, 0x76);
-        if (temp != 0) {
-            func_0011E0C8(temp);
+        object = KF_MapObject_GetById(map, 0x76);
+        if (object != NULL) {
+            KF_MapObject_Activate(object);
         }
     }
 }

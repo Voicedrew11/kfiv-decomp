@@ -1,23 +1,22 @@
-#include "common.h"
+#include "kf_map_object.h"
 
-s16 func_0011E340(char *, int);
-int func_0011E3A0(void *);
+/* Step handler: waits out a delay (counted only while unk44 is positive), then runs the
+   animation and, once it ends, starts animation 5 at step 3 with the delay reloaded from unk46. */
+void func_00121BE8(MapObject *object) {
+    int delay = object->work[0];
+    char reserved[0x10]; // match: unused, but retail reserves the 0x10 bytes
 
-void func_00121BE8(char *arg0) {
-    int n = *(int *)(arg0 + 0x40);
-    char buf[0x10]; /* unused, but retail reserves the 0x10 bytes */
-
-    if (n != 0) {
-        if (*(s16 *)(*(char **)(arg0 + 8) + 0x44) > 0) {
-            *(int *)(arg0 + 0x40) = n - 1;
+    if (delay != 0) {
+        if (MAP_OBJECT_WORDS(object)->unk44 > 0) {
+            object->work[0] = delay - 1;
         }
     } else {
-        if (*(s16 *)(*(char **)(*(char **)arg0 + 0xFC) + 0x82) != 0) {
-            func_0011E3A0(arg0);
+        if (MODEL_CHANNEL(object->model)->param != 0) {
+            KF_MapObject_StepAnim(object);
         } else {
-            func_0011E340(arg0, 5);
-            arg0[0x11] = 3;
-            *(int *)(arg0 + 0x40) = *(s16 *)(*(char **)(arg0 + 8) + 0x46);
+            KF_MapObject_StartAnim(object, 5);
+            MAP_OBJECT_BYTES(object)->step = 3;
+            object->work[0] = MAP_OBJECT_WORDS(object)->unk46;
         }
     }
 }

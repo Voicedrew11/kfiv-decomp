@@ -1,10 +1,10 @@
 #include "kf_entity.h"
+#include "kf_map_object.h"
 
 extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
 
 void func_00196870(void *, int);
-int func_0011E1F0(int, int);
 void func_001958B8(char *, void (*)(void), int);
 void func_00138970(Entity *);
 void func_00138D50(Entity *);
@@ -23,7 +23,7 @@ void func_00138A48(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         is_open = 0;
-        map_object = (MapObject *)func_0011E1F0(entity->group_id, entity->spawn_info->variant);
+        map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->variant);
         if (map_object != NULL) {
             is_open = (map_object->unk10 >> 17) & 1;
         }

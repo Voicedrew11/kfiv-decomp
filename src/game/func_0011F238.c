@@ -1,6 +1,6 @@
+#include "kf_map_object.h"
 #include "kf_model.h"
 
-s16 func_0011E340(char *, int);
 void func_00216778(void *, void *);
 void func_0011F498(MapObject *);
 
@@ -12,7 +12,7 @@ void func_0011F238(MapObject *object) {
     ModelPart *part;
 
     if (object->unk04->kind == 6) {
-        func_0011E340((char *)object, 4);
+        KF_MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
         func_00216778(work, object->model->parts[1].unk40);
         work->timer = 0;
@@ -28,10 +28,10 @@ void func_0011F238(MapObject *object) {
         }
     } else {
         if (!(object->unk10 & 0x20000)) {
-            func_0011E340((char *)object, 4);
+            KF_MapObject_StartAnim(object, 4);
             MAP_OBJECT_BYTES(object)->step = 1;
         } else {
-            func_0011E340((char *)object, 5);
+            KF_MapObject_StartAnim(object, 5);
             MAP_OBJECT_BYTES(object)->step = 3;
         }
         MAP_OBJECT_UNK60_BITS(object)->bit0 = FALSE;

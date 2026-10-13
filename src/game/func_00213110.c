@@ -1,6 +1,6 @@
+#include "kf_map_object.h"
 #include "kf_model.h"
 
-int func_0011E1F0(int, int);
 float func_0019B838(float);
 extern int D_00446770;
 
@@ -9,7 +9,7 @@ void func_00213110(RotationMotion *motion) {
     MapObject *map_object;
     s32 frames;
 
-    map_object = (MapObject *)func_0011E1F0(D_00446770, motion->owner_id);
+    map_object = KF_MapObject_GetById(D_00446770, motion->owner_id);
     if (map_object == NULL || motion->frames_left <= 0) {
         motion->active = 0;
     } else {

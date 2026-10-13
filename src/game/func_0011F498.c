@@ -1,7 +1,6 @@
+#include "kf_map_object.h"
 #include "kf_model.h"
 
-int func_0011E3A0(void *);
-s16 func_0011E340(char *, int);
 void KF_Vector_Subtract(void *, void *, void *);
 float sinf(float);
 float cosf(float);
@@ -32,7 +31,7 @@ void func_0011F498(MapObject *object) {
         work->timer--;
     }
     if (MODEL_CHANNEL(object->model)->param != 0) {
-        ((int (*)(char *))func_0011E3A0)((char *)object); // match: it returns a value
+        ((int (*)(char *))KF_MapObject_StepAnim)((char *)object); // match: it returns a value
         kind = object->unk04->kind;
         if (kind == 6) {
             KF_Vector_Subtract(&delta, object->model->parts[1].unk40, work);
@@ -62,7 +61,7 @@ void func_0011F498(MapObject *object) {
             }
         }
     } else {
-        func_0011E340((char *)object, 5);
+        KF_MapObject_StartAnim(object, 5);
         MAP_OBJECT_BYTES(object)->step = 3;
     }
 }

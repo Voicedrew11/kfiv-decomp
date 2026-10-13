@@ -1,16 +1,16 @@
+#include "kf_map_object.h"
 #include "kf_script.h"
 #include "kf_model.h"
 
 extern int D_00446770;
 
-MapObject *func_0011E1F0(int, int);
 int func_0019B9F0(float, float *, int);
 
 /* Eases an object's position toward a goal over frames.value frames, then stops. */
 void func_00212B00(ScriptMoveCommand *command) {
     MapObject *object;
 
-    object = func_0011E1F0(D_00446770, command->target_id.value);
+    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
     if (object == NULL) {
         command->active = 0;
         return;

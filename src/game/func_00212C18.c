@@ -1,23 +1,18 @@
-#include "common.h"
+#include "kf_map_object.h"
+#include "kf_script.h"
 
-typedef struct {
-    int a00;
-    int a04;
-    int a08;
-} Obj;
-
-int func_0011E1F0(int, int);
-void func_00211CF8(char *, int);
+int func_00211CF8(ScriptArg *, int);
 extern int D_00446770;
 
-void func_00212C18(Obj *arg0) {
-    int r;
+/* Stores bit 17 of a map object of the current map in `first`, 0 when there is no such object. */
+void func_00212C18(ScriptCallCommand *command) {
+    MapObject *object;
 
-    r = func_0011E1F0(D_00446770, arg0->a08);
-    if (r != 0) {
-        func_00211CF8((char *)arg0 + 0xC, (*(u32 *)(r + 0x10) >> 17) & 1);
+    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    if (object != NULL) {
+        func_00211CF8(&command->first, MAP_OBJECT_BITS(object)->bit17);
     } else {
-        func_00211CF8((char *)arg0 + 0xC, 0);
+        func_00211CF8(&command->first, 0);
     }
-    arg0->a00 = 0;
+    command->active = 0;
 }

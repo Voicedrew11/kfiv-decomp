@@ -1,9 +1,8 @@
+#include "kf_map_object.h"
 #include "kf_model.h"
 
 extern float D_00413F80[];
 
-s16 func_0011E340(char *, int);
-int func_0011E3A0(void *);
 void KF_Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 
@@ -15,8 +14,8 @@ void func_00120278(MapObject *object) {
     f32 distance;
 
     if (object->model->unk100 & 1) {
-        func_0011E340((char *)object, 4);
-        func_0011E3A0((char *)object);
+        KF_MapObject_StartAnim(object, 4);
+        KF_MapObject_StepAnim(object);
     }
     if (work->near_alpha == 0.0f && work->far_alpha == 0.0f) {
         object->model->alpha = 127.0f;

@@ -1,26 +1,18 @@
-void *func_0011E1F0(int, int);
-int func_00211D90(void *, double);
+#include "kf_map_object.h"
+#include "kf_script.h"
+
+int func_00211D90(void *, double); // match: retail converts the float argument to double at the call site (fptodp)
 extern int D_00446770;
 
-typedef struct {
-    char pad[0xC0];
-    float x;
-    float y;
-    float z;
-} Vec3;
+/* Stores the position of a map object of the current map in from_x, from_y and from_z. */
+void func_002131C0(ScriptPointCommand *command) {
+    MapObject *object;
 
-typedef struct {
-    Vec3 *v;
-} Node;
-
-void func_002131C0(char *arg0) {
-    Node *temp_v0;
-
-    temp_v0 = func_0011E1F0(D_00446770, *(int *)(arg0 + 0x8));
-    if (temp_v0 != 0) {
-        func_00211D90(arg0 + 0xC, temp_v0->v->x);
-        func_00211D90(arg0 + 0x14, temp_v0->v->y);
-        func_00211D90(arg0 + 0x1C, temp_v0->v->z);
+    object = KF_MapObject_GetById(D_00446770, command->object_id.value);
+    if (object != NULL) {
+        func_00211D90(&command->from_x, object->model->position.x);
+        func_00211D90(&command->from_y, object->model->position.y);
+        func_00211D90(&command->from_z, object->model->position.z);
     }
-    *(int *)arg0 = 0;
+    command->active = 0;
 }

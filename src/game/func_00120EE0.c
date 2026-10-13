@@ -1,17 +1,17 @@
-#include "kf_model.h"
+#include "kf_map_object.h"
 
-s16 func_0011E340(AnimObject *, int);
+/* Start handler of a sliding kind: part 2, closed (animation 4, step 1) or, with bit 17 set,
+   open (animation 5, step 4). */
+void func_00120EE0(MapObject *object) {
+    MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
 
-void func_00120EE0(AnimObject *object) {
-    AnimObjectBody *body = &object->body;
-
-    body->unk14 = 2;
-    body->unk18 = 0;
-    if (!(ANIM_OBJECT_FLAGS(object) & 0x20000)) {
-        func_0011E340(object, 4);
-        object->mode = 1;
+    work->part = 2;
+    work->fired = 0;
+    if (!(object->unk10 & 0x20000)) {
+        KF_MapObject_StartAnim(object, 4);
+        MAP_OBJECT_BYTES(object)->step = 1;
     } else {
-        func_0011E340(object, 5);
-        object->mode = 4;
+        KF_MapObject_StartAnim(object, 5);
+        MAP_OBJECT_BYTES(object)->step = 4;
     }
 }

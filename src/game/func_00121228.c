@@ -1,25 +1,21 @@
-#include "common.h"
+#include "kf_game.h"
+#include "kf_map_object.h"
 
-extern char D_0038CC50[];
+extern GameStatus D_0038CC50;
 
-s16 func_0011E340(char *, int);
-int func_0011E3A0(void *);
+/* Step handler: counts the timer down and runs the animation; at its end starts
+   animation 5 at step 4 and clears bit 0 of D_0038CC50.unk30. */
+void func_00121228(MapObject *object) {
+    MapObjectWork *work = MAP_OBJECT_WORK(object);
 
-void func_00121228(char *arg0) {
-    char *temp_a2 = arg0 + 0x40;
-    char *g;
-    int w;
-
-    if (*(int *)(temp_a2 + 0x1C) > 0) {
-        *(int *)(temp_a2 + 0x1C) = *(int *)(temp_a2 + 0x1C) - 1;
+    if (work->timer > 0) {
+        work->timer--;
     }
-    if (*(s16 *)(*(char **)(*(char **)arg0 + 0xFC) + 0x82) != 0) {
-        func_0011E3A0(arg0);
+    if (MODEL_CHANNEL(object->model)->param != 0) {
+        KF_MapObject_StepAnim(object);
         return;
     }
-    func_0011E340(arg0, 5);
-    arg0[0x11] = 4;
-    g = D_0038CC50;
-    w = *(u32 *)(g + 0x30);
-    *(u32 *)(g + 0x30) = w & 0xFFFFFFFE;
+    KF_MapObject_StartAnim(object, 5);
+    MAP_OBJECT_BYTES(object)->step = 4;
+    D_0038CC50.unk30 &= ~1U;
 }

@@ -5,9 +5,9 @@
 #include "kf_entity_world.h"
 #include "kf_linked_point.h"
 #include "kf_effect.h"
+#include "kf_map_object.h"
 
 void func_00115878(int);
-void func_0011CE80(int);
 void func_001C8938(int);
 
 void func_001A15F8(void);
@@ -27,7 +27,7 @@ void func_001181B8(void) {
             *slot_entry = 0;
             func_00115878(other_slot);
             KF_Effect_FreeForMap(other_slot);
-            func_0011CE80(other_slot);
+            KF_MapObject_UnloadMap(other_slot);
             KF_Entity_FreeAllInGroup(other_slot);
             KF_Entity_ClearMapSlot(other_slot);
             KF_Gold_UnlinkMap(other_slot);

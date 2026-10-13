@@ -1,41 +1,35 @@
-#include "common.h"
+#include "kf_game.h"
+#include "kf_map.h"
+#include "kf_map_object.h"
 
-extern char D_0038CD20[];
-extern char D_0038CC50[];
-extern void *D_00420D50[];
+extern MapSlot D_0038CD20[];
+extern GameStatus D_0038CC50;
+extern EventRunner D_00420D00;
 
 int func_00103AE0(u8, u8, void *, u8);
 int func_00103B38(u8, u8);
-int func_0011E3A0(void *);
 void func_0011F148(char *);
 void func_001BC1C0(int);
 
-void func_001221C0(char *arg0) {
-    char *temp_a2;
-    u8 temp_a3;
-    u8 temp_s2;
-    int temp_s0;
-    char *entry;
-    char *g;
+/* Event handler: while an event runs on this object, moves it to step 5, takes its
+   count from the map's flags, runs the animation and clears bit 17. */
+void func_001221C0(MapObject *object) {
+    MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
+    u8 timer = work->timer;
+    u8 tag = D_0038CD20[MAP_OBJECT_BYTES(object)->unk00 & 1].tag;
+    int count;
 
-    temp_a2 = arg0 + 0x40;
-    temp_a3 = temp_a2[0x1C];
-    entry = D_0038CD20 + (arg0[0x10] & 1) * 0x60;
-    temp_s2 = entry[1];
-    if ((s8) temp_a2[0x1C] > 0) {
-        temp_a2[0x1C] = temp_a3 - 1;
+    if (work->timer > 0) {
+        work->timer = timer - 1;
     }
-    g = D_0038CC50;
-    if ((*(u32 *)(g + 0x24) >> 1) & 1) {
-        if (D_00420D50[0] == arg0) {
-            arg0[0x11] = 5;
-            temp_s0 = func_00103AE0(temp_s2, (*(char **)(arg0 + 8))[0x3A], temp_a2, temp_a3);
-            func_00103B38(temp_s2, (*(char **)(arg0 + 8))[0x3A]);
-            func_0011E3A0(arg0);
-            func_0011F148(arg0);
-            func_001BC1C0(temp_s0);
-            *(int *)(arg0 + 0x10) &= 0xFFFDFFFF;
-            *(int *)(g + 0x30) |= 1;
-        }
+    if (D_0038CC50.bit1 && D_00420D00.current == object) {
+        MAP_OBJECT_BYTES(object)->step = 5;
+        count = func_00103AE0(tag, object->unk08->unk38.bytes[2], work, timer);
+        func_00103B38(tag, object->unk08->unk38.bytes[2]);
+        KF_MapObject_StepAnim(object);
+        func_0011F148((char *)object);
+        func_001BC1C0(count);
+        object->unk10 &= ~0x20000;
+        D_0038CC50.unk30 |= 1;
     }
 }

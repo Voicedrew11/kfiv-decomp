@@ -1,6 +1,7 @@
 #include "kf_game.h"
 #include "kf_map.h"
 #include "kf_entity.h"
+#include "kf_map_object.h"
 #include "kf_player.h"
 #include "kf_collision.h"
 
@@ -26,9 +27,7 @@ void sceVu0SubVector(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 float sceVu0InnerProduct(float *, float *);
 float sqrtf(float);
-f32 func_0011E708(MapObject *, Vector4 *);
 int func_001C9B00(void *);
-int func_0011E1F0(int, int);
 int func_001090E0(char *); // match: its u16 is halved as an int
 int func_002109C8(int, int);
 int func_00210C48(int);
@@ -138,7 +137,7 @@ void func_001D0970(void) {
     }
     facing = D_00420D00.current;
     if (facing != NULL && facing->unk04->unk64 != 0.0f) {
-        turn = func_0011E708(facing, &D_00413F80.position);
+        turn = KF_MapObject_GetTurnToward(facing, &D_00413F80.position);
         limit = ((MapObject *)D_00420D00.current)->unk04->unk64;
         if (turn < -limit || limit < turn) {
             D_00420D00.current = NULL;
@@ -175,23 +174,23 @@ void func_001D0970(void) {
                 switch (D_0038CD20[item_map].tag) {
                 case 0xC:
                     if (def->slot_id == 0xFA) {
-                        object = (MapObject *)func_0011E1F0(item_map, def->slot_id);
+                        object = KF_MapObject_GetById(item_map, def->slot_id);
                     }
                     break;
                 case 0x11:
                     if (def->slot_id == 0xC9) {
-                        object = (MapObject *)func_0011E1F0(item_map, def->slot_id + 0x32);
+                        object = KF_MapObject_GetById(item_map, def->slot_id + 0x32);
                     }
                     break;
                 case 0x12:
                 case 0x13:
                     if (def->slot_id == 0xC9 || def->slot_id == 0xCA) {
-                        object = (MapObject *)func_0011E1F0(item_map, def->slot_id + 0x32);
+                        object = KF_MapObject_GetById(item_map, def->slot_id + 0x32);
                     }
                     break;
                 case 0x6D:
                     if (def->slot_id >= 0xFA && def->slot_id <= 0xFD) {
-                        object = (MapObject *)func_0011E1F0(item_map, def->slot_id);
+                        object = KF_MapObject_GetById(item_map, def->slot_id);
                     }
                     break;
                 }

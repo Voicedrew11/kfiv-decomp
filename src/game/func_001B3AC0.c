@@ -1,5 +1,6 @@
 #include "kf_entity.h"
 #include "kf_map.h"
+#include "kf_map_object.h"
 #include "kf_player.h"
 
 extern PlayerState D_00413F80;
@@ -10,7 +11,6 @@ int func_001B49F8(int, int, int, int);
 void func_001B4B10(int, int);
 void func_001BBFC8(void);
 void func_001BC0E0(int with_sound);
-void func_0011E228(MapObject *object);
 
 #define IS_PLAYER(owner) ((owner) == (Entity *)&D_00413F80)
 
@@ -32,7 +32,7 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
             return;
         }
         if (D_00413F80.unk3C == 0x2E) {
-            func_0011E228(object);
+            KF_MapObject_Break(object);
             return;
         }
         func_001B4B10(extra->unk24, 4);
@@ -40,7 +40,7 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
         return;
     }
     if (request->owner == (Entity *)&D_0038CD20[0] || request->owner == (Entity *)&D_0038CD20[1]) {
-        func_0011E228(object);
+        KF_MapObject_Break(object);
         return;
     }
     if (!IS_PLAYER(request->owner)) {
@@ -99,7 +99,7 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
         damage *= request->unk6E;
     }
     if (damage >= MAP_OBJECT_DEF_TOUGHNESS(object->unk04)) {
-        func_0011E228(object);
+        KF_MapObject_Break(object);
         return;
     }
     if (D_00413F80.unk262 != 0) {

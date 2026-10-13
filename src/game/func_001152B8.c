@@ -1,5 +1,6 @@
 #include "kf_gold.h"
 #include "kf_map.h"
+#include "kf_map_object.h"
 #include "kf_map_scroll.h"
 #include "kf_entity_world.h"
 #include "kf_linked_point.h"
@@ -15,7 +16,6 @@ void func_001B93B8(char *);
 void func_001D1210(void *);
 void func_001154D8(int, int);
 void func_001155F8(int);
-void func_0011D0D0(int, int);
 void func_001C8990(int, f32 *);
 void func_00210930(int);
 int func_002109C8(int, int);
@@ -41,8 +41,8 @@ void func_001152B8(int map) {
         func_001154D8(1, (int)offset);
         func_001155F8(0);
         func_001155F8(1);
-        func_0011D0D0(0, (int)offset);
-        func_0011D0D0(1, (int)offset);
+        KF_MapObject_OffsetAll(0, offset);
+        KF_MapObject_OffsetAll(1, offset);
         KF_Entity_OffsetAllInSlot(0, offset);
         KF_Entity_OffsetAllInSlot(1, offset);
         KF_Effect_OffsetAll(offset);

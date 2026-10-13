@@ -1,3 +1,4 @@
+#include "kf_map_object.h"
 #include "kf_model.h"
 #include "kf_game.h"
 #include "kf_message.h"
@@ -6,7 +7,6 @@ extern GameStatus D_0038CC50;
 extern void *D_00420D50[];
 extern float D_00413F80[];
 
-int func_0011E3A0(void *);
 void func_0011F148(char *);
 void func_00216B48(void *, void *, void *);
 void func_00216BC0(void *, void *, void *);
@@ -41,7 +41,7 @@ void func_00121E78(MapObject *object) {
         work->fired = 0;
         object->unk10 |= 0x20000;
         MAP_OBJECT_BYTES(object)->step = 3;
-        func_0011E3A0((char *)object);
+        KF_MapObject_StepAnim(object);
         func_0011F148((char *)object);
         func_00216778(&origin, part->unk40);
         origin.w = 1.0f;

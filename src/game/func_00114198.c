@@ -1,6 +1,7 @@
 #include "kf_map.h"
 #include "kf_linked_point.h"
 #include "kf_gs.h"
+#include "kf_map_object.h"
 #include "kf_map_scroll.h"
 
 extern MapSlot D_0038CD20[];
@@ -21,7 +22,6 @@ void func_00111368(ModelInstance *, int, int, int, int);
 void func_00116970(void);
 void func_00116AD8(int, int);
 int func_00116CB0(MapDrawRecord *, ModelInstance *);
-void func_0011D6B0(int, int, int);
 
 
 #define FOG_COLOR() \
@@ -103,7 +103,7 @@ void func_00114198(int mode) {
                 }
                 func_00109E18();
             }
-            func_0011D6B0(mode, 1, map);
+            KF_MapObject_DrawAll(mode, 1, map);
         }
     }
 }

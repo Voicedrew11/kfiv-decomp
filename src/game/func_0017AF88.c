@@ -1,11 +1,11 @@
 #include "kf_entity.h"
+#include "kf_map_object.h"
 
 extern u32 D_00446ED4;
 
 void func_00196870(void *, int);
 void func_00196CC0(char *);
 void func_0018E9C0(void *);
-int func_0011E1F0(int, int);
 int func_00182DE0(void *, int);
 int func_00182FD8(void *, int);
 void func_0017A880(Entity *, s32);
@@ -21,11 +21,11 @@ void func_0017AF88(Entity *entity, s32 unknown) {
     if (entity->unkC6 != 0) {
         return;
     }
-    map_object = (MapObject *)func_0011E1F0(entity->group_id, entity->spawn_info->unk42);
+    map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->unk42);
     if (map_object != NULL) {
         unkE0->unk79 = (map_object->unk10 >> 17) & 1;
     }
-    map_object = (MapObject *)func_0011E1F0(entity->group_id, entity->spawn_info->unk43);
+    map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->unk43);
     if (map_object != NULL) {
         unkE0->unk7A = (map_object->unk10 >> 17) & 1;
     }

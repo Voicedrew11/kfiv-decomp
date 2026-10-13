@@ -1,10 +1,10 @@
+#include "kf_map_object.h"
 #include "kf_model.h"
 
 extern int D_00446770;
 extern int D_0038A130[0x28 / 4];
 
 void func_0019D980(char, u8, u8, f32, Vector4Arg);
-int func_0011E3A0(void *);
 
 /* Update handler: keeps a kind 0 object's sound playing while its map is the
    current one, and runs its animation when it is allowed to. */
@@ -29,11 +29,11 @@ void func_0011EE78(MapObject *object) {
         if (object->unk10 & 0x100000) {
             if (object->unk10 & 0x200000) {
                 if ((object->unk10 & 0x400000) || MODEL_CHANNEL(object->model)->param != 0) {
-                    func_0011E3A0((char *)object);
+                    KF_MapObject_StepAnim(object);
                 }
             }
         } else if (object->unk08->unk38.flags & (0x8000L << 35)) {
-            func_0011E3A0((char *)object);
+            KF_MapObject_StepAnim(object);
         }
     }
 }

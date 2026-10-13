@@ -483,7 +483,7 @@ typedef struct {
         u8 bytes[8];                /* bytes[2] 0x3A, bytes[3] 0x3B: the id of another map object */
     } unk38;                        /* 0x38 */
     u16 unk40;                      /* 0x40 passed to func_002109C8, 0: nothing */
-    u16 unk42;                      /* 0x42 the same, by func_0011E228 */
+    u16 unk42;                      /* 0x42 the same, by KF_MapObject_Break */
     s16 unk44;                      /* 0x44 an item (D_00369830) or, 0x40 to 0x7F, a sound */
     u8 unk46;                       /* 0x46 */
     char pad47[0x01];
@@ -527,7 +527,7 @@ typedef struct {
 typedef struct {
     u8 anim;                        /* 0x00 passed to func_00108A08 */
     u8 sound_kind;                  /* 0x01 0: func_0019D1C0, 1: func_0019D490, 2: func_0019D980 */
-    u16 unk02;                      /* 0x02 passed to KF_Effect_StartSpawner on frame unk06 (func_0011D180) */
+    u16 unk02;                      /* 0x02 passed to KF_Effect_StartSpawner on frame unk06 (KF_MapObject_UpdateAll) */
     u16 sound;                      /* 0x04 0xFFFF: none */
     u8 unk06;                       /* 0x06 the animation frame unk02 starts on */
     u8 sound_frame;                 /* 0x07 the animation frame the sound starts on */
@@ -536,9 +536,9 @@ typedef struct {
 /* what MapObject.unk04 points at */
 typedef struct {
     u32 kind : 8;                   /* 0x00 1, 2, 6, 0x11: func_0018C728 tests lines of sight against it */
-    u32 bit8 : 1;                   /* which function draws it (func_0011C708) */
+    u32 bit8 : 1;                   /* which function draws it (KF_MapObject_InitMap) */
     u32 pad00_9 : 2;
-    u32 bit11 : 1;                  /* func_0011E228 can break it */
+    u32 bit11 : 1;                  /* KF_MapObject_Break can break it */
     u32 bit12 : 1;                  /* it has a breaking animation (1) */
     u32 pad00_13 : 2;
     u32 bit15 : 1;                  /* the player standing on it is carried and turned with it (KF_Player_Move) */
@@ -594,7 +594,7 @@ typedef struct {
 /* the 32-bit flags at AnimObject+0x10 */
 #define ANIM_OBJECT_FLAGS(object) (*(u32 *)&(object)->unk10)
 
-/* the objects of a map, looked up by func_0011E1F0(map, id) */
+/* the objects of a map, looked up by KF_MapObject_GetById(map, id) */
 typedef struct {
     ModelInstance *model;           /* 0x00 */
     MapObjectUnk04 *unk04;          /* 0x04 */
@@ -603,7 +603,7 @@ typedef struct {
     u32 unk10;                      /* 0x10 flags, MAP_OBJECT_BITS */
     f32 unk14;                      /* 0x14 how far around its position it reaches, 0: nothing to hit */
     f32 unk18;                      /* 0x18 how far it is from the point last tested against the map objects (func_001C2758, func_001C2A38) */
-    void *unk1C;                    /* 0x1C the next MapObject of its draw list (D_00447088, D_00447090) */
+    void *unk1C;                    /* 0x1C the next MapObject of its draw list (KF_MapObject_InitMap) */
     f32 unk20;                      /* 0x20 the model's position (x, y, z) as of the last update */
     f32 unk24;                      /* 0x24 */
     f32 unk28;                      /* 0x28 */
@@ -677,11 +677,11 @@ typedef struct {
     u32 bit17 : 1;
     u32 bit18 : 1;
     u32 bit19 : 1;
-    u32 bit20 : 1;
+    u32 bit20 : 1;                  /* a script drives it (KF_MapObject_SetScripted) */
     u32 bit21 : 1;
     u32 bit22 : 1;
     u32 bit23 : 1;
-    u32 anim : 8;                   /* 0x13 the animation func_0011E340 started */
+    u32 anim : 8;                   /* 0x13 the animation KF_MapObject_StartAnim started */
 } MapObjectBits;
 
 #define MAP_OBJECT_BITS(object) ((MapObjectBits *)&(object)->unk10)
@@ -704,7 +704,7 @@ typedef union {
 
 #define MAP_OBJECT_FLAGS(object) (((MapObjectFlags *)&(object)->unk10)->word)
 
-/* the same word with bit 3 on its own: func_0011D180 clears it every frame, the kinds' handlers set it */
+/* the same word with bit 3 on its own: KF_MapObject_UpdateAll clears it every frame, the kinds' handlers set it */
 typedef struct {
     u32 map : 1;
     u32 bit1 : 1;                   /* in view this frame */

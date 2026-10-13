@@ -1,8 +1,8 @@
 #include "kf_map.h"
+#include "kf_map_object.h"
 
 void func_00216C48(void *, void *, void *);
 void func_001BC1C0(int);
-void func_0011E608(char *);
 void *memset(void *, int, u32);
 ModelNode *func_001CA520(ModelNode *);
 extern char D_00356928[0x80][0x40];
@@ -27,7 +27,7 @@ void func_001CA0E0(void) {
     if (node->def != NULL && node->def->required_flag != 0) {
         D_00356928[D_0038CD20[node->flags & 1].tag][node->index]++;
     } else if (node->unk08 != 0) {
-        func_0011E608((char *)node->unk08);
+        KF_MapObject_MarkEmptied((MapObject *)node->unk08);
     } else if (node->record != NULL) {
         memset(node->record, 0, sizeof(DroppedItemRecord));
     }

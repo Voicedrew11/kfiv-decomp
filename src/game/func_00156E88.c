@@ -1,12 +1,11 @@
 #include "kf_entity.h"
+#include "kf_map_object.h"
 
 extern int D_00446770;
 
 float func_00194FB8(float);
 float func_00194F80(void *, void *);
 int func_00192C98(void *, int, int, u32, int);
-int func_0011E1F0(int, int);
-void func_0011E228(void *);
 int func_001958B8(Entity *, void (*)(Entity *), int);
 
 /* walks through one of three doorways (map objects 0xA0-0xA2): unk7A says which. It is put just
@@ -89,25 +88,25 @@ void func_00156E88(Entity *entity) {
             switch (unkE0->unk7A) {
             case 1:
                 if (entity->group_id == D_00446770) {
-                    map_object = (void *)func_0011E1F0(entity->group_id, 0xA2);
+                    map_object = KF_MapObject_GetById(entity->group_id, 0xA2);
                     if (map_object != NULL) {
-                        func_0011E228(map_object);
+                        KF_MapObject_Break(map_object);
                     }
                 }
                 break;
             case 2:
                 if (entity->group_id == D_00446770) {
-                    map_object = (void *)func_0011E1F0(entity->group_id, 0xA0);
+                    map_object = KF_MapObject_GetById(entity->group_id, 0xA0);
                     if (map_object != NULL) {
-                        func_0011E228(map_object);
+                        KF_MapObject_Break(map_object);
                     }
                 }
                 break;
             case 3:
                 if (entity->group_id == D_00446770) {
-                    map_object = (void *)func_0011E1F0(entity->group_id, 0xA1);
+                    map_object = KF_MapObject_GetById(entity->group_id, 0xA1);
                     if (map_object != NULL) {
-                        func_0011E228(map_object);
+                        KF_MapObject_Break(map_object);
                     }
                 }
                 break;

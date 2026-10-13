@@ -1,15 +1,16 @@
-void *func_0011E1F0(int, int);
-void func_0011E7B0(void *, int, int);
-void func_0011E810(void *, int);
+#include "kf_map_object.h"
+#include "kf_script.h"
+
 extern int D_00446770;
 
-void func_00213320(char *arg0) {
-    void *temp_v0;
+/* Plays animation `first` (bit 22 from `second`) on a scripted map object and clears its bit 21. */
+void func_00213320(ScriptCallCommand *command) {
+    MapObject *object;
 
-    temp_v0 = func_0011E1F0(D_00446770, *(int *)(arg0 + 0x8));
-    if (temp_v0 != 0) {
-        func_0011E7B0(temp_v0, *(int *)(arg0 + 0x10), *(int *)(arg0 + 0x18));
-        func_0011E810(temp_v0, 0);
+    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    if (object != NULL) {
+        KF_MapObject_PlayScriptedAnim(object, command->first.value, command->second.value);
+        KF_MapObject_SetScriptedBit21(object, 0);
     }
-    *(int *)arg0 = 0;
+    command->active = 0;
 }

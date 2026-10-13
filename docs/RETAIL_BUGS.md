@@ -1144,11 +1144,11 @@ does not mistake them for meaning something.
 - `func_00112648` (data table load) converts a field of each of the 380 item
   definitions with `unk3E = unk33 * 2.2046`, kilograms to pounds. Not a bug:
   it looks like a localisation step, and tells you `unk33` is a weight.
-- `func_0011D180` (update all map objects) calls
-  `sinf(D_004467A0 * 2pi / 60)` every frame from a 60-frame counter and throws
+- `KF_MapObject_UpdateAll` (update all map objects) calls
+  `sinf(sway_frame * 2pi / 60)` every frame from a 60-frame counter and throws
   the result away. The counter is still advanced. Probably a leftover pulse
   value; the only effect is the wasted call.
-- `func_0011C708` (set up all map objects) switches on a one-bit field and has
+- `KF_MapObject_InitMap` (set up all map objects) switches on a one-bit field and has
   a `default` arm that sets `model->draw = NULL`. It can never run.
 - `func_0010FC30` (interpolate vertices, rounding) is not called from anywhere,
   and fills two stack arrays it never reads back.

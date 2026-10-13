@@ -1,23 +1,20 @@
-#include "common.h"
+#include "kf_map_object.h"
+#include "kf_script.h"
 
 extern int D_00446770;
-void *func_0011E1F0(int, int);
 
-void func_00213010(char *arg0) {
-    char *temp_a0;
-    char *temp_v0;
+/* Sets the four parameters of a kind 9 map object's source. */
+void func_00213010(ScriptObjectShortsCommand *command) {
+    MapObject *object;
+    MapObjectUnk08Words *source;
 
-    temp_v0 = func_0011E1F0(D_00446770, *(int *)(arg0 + 0x8));
-    if (temp_v0 != 0) {
-        if (*(int *)temp_v0 != 0) {
-            if (**(u8 **)(temp_v0 + 4) == 9) {
-                temp_a0 = *(char **)(temp_v0 + 8);
-                *(u16 *)(temp_a0 + 0x44) = *(u16 *)(arg0 + 0x10);
-                *(u16 *)(temp_a0 + 0x46) = *(u16 *)(arg0 + 0x18);
-                *(u16 *)(temp_a0 + 0x48) = *(u16 *)(arg0 + 0x20);
-                *(u16 *)(temp_a0 + 0x4A) = *(u16 *)(arg0 + 0x28);
-            }
-        }
+    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    if (object != NULL && object->model != NULL && object->unk04->kind == 9) {
+        source = MAP_OBJECT_WORDS(object);
+        source->unk44 = command->values[0].value;
+        source->unk46 = command->values[1].value;
+        source->unk48 = command->values[2].value;
+        source->unk4A = command->values[3].value;
     }
-    *(int *)arg0 = 0;
+    command->active = 0;
 }

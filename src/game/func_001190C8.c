@@ -1,5 +1,6 @@
 #include "kf_gold.h"
 #include "kf_map.h"
+#include "kf_map_object.h"
 #include "kf_map_scroll.h"
 #include "kf_entity_world.h"
 #include "kf_player.h"
@@ -19,9 +20,6 @@ void func_00114840(int);
 void func_00114AA8(int);
 void func_001155F8(int);
 void func_00119360(int);
-void func_0011C708(int);
-void func_0011CC50(int);
-int func_0011E1F0(int, int);
 void func_00123158(int);
 void func_0019EA98(int);
 void func_001A15F0(void);
@@ -45,7 +43,7 @@ void func_001190C8(void) {
     func_001155F8(0);
     KF_MapScroll_ClearPairs(0);
     func_001A15F0();
-    func_0011C708(0);
+    KF_MapObject_InitMap(0);
     func_001C82C0(0);
     KF_Gold_InitMap(0);
     switch (D_0038D680.kind) {
@@ -53,7 +51,7 @@ void func_001190C8(void) {
         func_00216778(&D_00413F80, &D_0038D680);
         break;
     case 2:
-        object = (MapObject *)func_0011E1F0(0, D_0038D680.unk14);
+        object = KF_MapObject_GetById(0, D_0038D680.unk14);
         if (object != NULL) {
             sine = sinf(-object->model->rotation.y);
             cosine = cosf(-object->model->rotation.y);
@@ -77,7 +75,7 @@ void func_001190C8(void) {
     D_00413F80.unk204 = 0;
     D_00413F80.unk20C = 0;
     D_0038CD20[0].unk00 = 1;
-    func_0011CC50(0);
+    KF_MapObject_StartMap(0);
     KF_Entity_InitFromMapSpawns(0);
     func_00123158(0);
     func_001C87D8(0);

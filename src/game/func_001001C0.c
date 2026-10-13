@@ -5,6 +5,7 @@
 #include "kf_hud.h"
 #include "kf_item_effect.h"
 #include "kf_map.h"
+#include "kf_map_object.h"
 #include "kf_player.h"
 #include "kf_player_update.h"
 #include "kf_sound.h"
@@ -44,7 +45,6 @@ void func_00100D10(void);
 void func_001D0970(void);
 void func_00117CC8(void);
 void func_00112BD0(void);
-void func_0011D180(void);
 void func_00123288(void);
 void func_001C95B0(void);
 void func_001BC2D0(void);
@@ -121,7 +121,7 @@ void func_001001C0(int arg) {
         func_00117CC8();
         KF_Player_UpdateArmModels();
         func_00112BD0();
-        func_0011D180();
+        KF_MapObject_UpdateAll();
         func_00123288();
         KF_Entity_UpdateAll();
         func_001C95B0();

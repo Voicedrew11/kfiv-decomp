@@ -1,13 +1,12 @@
-#include "common.h"
+#include "kf_map_object.h"
 
-s16 func_0011E340(char *, int);
-
-void func_001227D0(char *arg0) {
-    if (!(*(int *)(arg0 + 0x10) & 0x20000)) {
-        func_0011E340(arg0, 4);
-        arg0[0x11] = 1;
+/* Start handler: closed (animation 4, step 1) or, with bit 17 set, open (animation 5, step 3). */
+void func_001227D0(MapObject *object) {
+    if (!(object->unk10 & 0x20000)) {
+        KF_MapObject_StartAnim(object, 4);
+        MAP_OBJECT_BYTES(object)->step = 1;
     } else {
-        func_0011E340(arg0, 5);
-        arg0[0x11] = 3;
+        KF_MapObject_StartAnim(object, 5);
+        MAP_OBJECT_BYTES(object)->step = 3;
     }
 }

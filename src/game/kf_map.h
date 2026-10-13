@@ -57,7 +57,7 @@ typedef struct {
     u64 unk00[8];                   /* 0x00 */
 } MapSlotUnk10Half;
 
-/* a MapSlotUnk10Words block as the eight vectors it holds; func_0011D6B0 blends the last four
+/* a MapSlotUnk10Words block as the eight vectors it holds; KF_MapObject_DrawAll blends the last four
    towards D_0038D9F0 */
 typedef struct {
     Vector4 unk00[4];               /* 0x00 */
@@ -471,7 +471,7 @@ typedef struct {
     u16 flags_low;                  /* 0x00 */
     u16 amount;                     /* 0x02 how much gold it is worth */
     char pad04[0x20];
-    s32 object_id;                  /* 0x24 the map object that dropped it (func_0011E678), 0: none */
+    s32 object_id;                  /* 0x24 the map object that dropped it (KF_MapObject_MarkEmptiedById), 0: none */
     char pad28[0x04];
 } MapActorWords;
 

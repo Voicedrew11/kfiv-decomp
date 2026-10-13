@@ -1,43 +1,19 @@
-#include "common.h"
+#include "kf_map_object.h"
+#include "kf_script.h"
 
-int func_0011E1F0(int, int);
-int func_00211CF8(char *, int);
+int func_00211CF8(ScriptArg *, int);
 extern int D_00446770;
 
-typedef struct
-{
-  int a00;
-  int a04;
-  int a08;
-} Obj;
+/* Reads the four parameters of a kind 9 map object's source into the arguments. */
+void func_00212F70(ScriptObjectValuesCommand *command) {
+    MapObject *object;
 
-typedef struct
-{
-  char pad[0x44];
-  s16 s44;
-  s16 s46;
-  s16 s48;
-  s16 s4A;
-} Sub;
-
-typedef struct
-{
-  int a00;
-  u8 *p04;
-  Sub *p08;
-} Entry;
-
-void func_00212F70(Obj *arg0)
-{
-  Entry *temp_v0;
-
-  temp_v0 = (Entry *)func_0011E1F0(D_00446770, arg0->a08);
-  if (temp_v0 != 0 && temp_v0->a00 != 0 && *temp_v0->p04 == 9)
-  {
-    func_00211CF8((char *)arg0 + 0xC, temp_v0->p08->s44);
-    func_00211CF8((char *)arg0 + 0x14, temp_v0->p08->s46);
-    func_00211CF8((char *)arg0 + 0x1C, temp_v0->p08->s48);
-    func_00211CF8((char *)arg0 + 0x24, temp_v0->p08->s4A);
-  }
-  arg0->a00 = 0;
+    object = KF_MapObject_GetById(D_00446770, command->target_id.value);
+    if (object != NULL && object->model != NULL && object->unk04->kind == 9) {
+        func_00211CF8(&command->values[0], MAP_OBJECT_WORDS(object)->unk44);
+        func_00211CF8(&command->values[1], MAP_OBJECT_WORDS(object)->unk46);
+        func_00211CF8(&command->values[2], MAP_OBJECT_WORDS(object)->unk48);
+        func_00211CF8(&command->values[3], MAP_OBJECT_WORDS(object)->unk4A);
+    }
+    command->active = 0;
 }

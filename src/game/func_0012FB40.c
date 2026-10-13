@@ -1,7 +1,7 @@
 #include "kf_entity.h"
+#include "kf_map_object.h"
 
 int func_00192C98(void *, int, int, u32, int);
-int func_0011E1F0(int, int);
 void func_00195898(char *, u8);
 int func_001958B8(Entity *, void (*)(Entity *), int);
 
@@ -28,7 +28,7 @@ void func_0012FB40(Entity *entity) {
     case 1:
         ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
         if (entity->distance_to_player < entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bits36 != 0) {
-            map_object = (MapObject *)func_0011E1F0(entity->group_id, entity->spawn_info->variant);
+            map_object = KF_MapObject_GetById(entity->group_id, entity->spawn_info->variant);
             if (map_object != NULL) {
                 if (!(map_object->unk10 & 0x10000) || MAP_OBJECT_BITS(map_object)->step == 0xF) {
                     func_00192C98(entity, 0x11, 0, 0, 1);
