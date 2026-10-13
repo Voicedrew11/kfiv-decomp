@@ -3,9 +3,9 @@
 extern MenuScreenState D_005CF2F0;
 extern void *D_00446B20;
 void func_001E02F8(void);
-s32 func_001F94C0(void);
-void func_001FBB68(s32);
-s32 func_001F9740(s32);
+s32 SaveCard_Open(void);
+void SaveCard_ClearLoadFailed(s32);
+s32 SaveCard_StartCheck(s8);
 
 /* Resets the menu screen state and makes func_001E02F8 the current handler. */
 void func_001E4F58(void) {
@@ -23,9 +23,9 @@ void func_001E4F58(void) {
     D_005CF2F0.unk00 = 0;
     D_005CF2F0.unk0E = 1;
     D_005CF2F0.unk12 = -1;
-    func_001F94C0();
-    func_001FBB68(0);
-    func_001FBB68(1);
-    func_001F9740(1);
+    SaveCard_Open();
+    SaveCard_ClearLoadFailed(0);
+    SaveCard_ClearLoadFailed(1);
+    SaveCard_StartCheck(1);
     D_00446B20 = (void *)func_001E02F8;
 }

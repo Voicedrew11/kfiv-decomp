@@ -22,22 +22,22 @@ s32 func_0019CDC0(s32);
 void func_001E5210(s32); // match: defined as int (u8); retail passes unk42 sign-extended and uses no result
 f32 func_001E6A20(s32, s32, f32);
 int func_001F8058();
-s32 func_001F9648(void);
-s32 func_001F9740(s8);
-s32 func_001F9BA0(s32, char);
-s32 func_001FA780(s32);
-void func_001FAFB0(void);
-s32 func_001FB6F8(void);
-s32 func_001FB960(s32);
-s32 func_001FB9E8(s32);
-s32 func_001FBA78(void);
-s8 func_001FBBD0(void);
-char func_001FBBE0(int);
-s8 func_001FBC00(s32);
-s8 func_001FBC20(s32);
-s8 func_001FBC40(s32);
-void func_001FBC60(s32);
-s32 func_001FBD38(void);
+s32 SaveCard_Update(void);
+s32 SaveCard_StartCheck(s8);
+s32 SaveCard_StartReadList(s32, char);
+s32 SaveCard_StartFormat(s32);
+void SaveCard_Close(void);
+s32 SaveCard_CheckBusy(void);
+s32 SaveCard_HasCard(s32);
+s32 SaveCard_HasRoomForFolder(s32);
+s32 SaveCard_GetSaveMask(void);
+s8 SaveCard_IsCheckRunning(void);
+s8 SaveCard_IsPresent(s32);
+s8 SaveCard_IsFormatted(s32);
+s8 SaveCard_HasSaveFolder(s32);
+s8 SaveCard_IsDamaged(s32);
+void SaveCard_Cancel(s32);
+s32 SaveCard_HasAnySave(void);
 void func_001FBDC8(void);
 void func_001FC5E8(MenuCursorBar *);
 void func_00203F28(int, int, int);
@@ -55,14 +55,14 @@ void func_001F71D8(void) {
     s32 card_flags;
     PadReport *report;
 
-    card_result = func_001F9648();
-    if (func_001FB960(D_005CF3C0.unk0C) == 0 && D_005CF3C0.unk12 == 14) {
+    card_result = SaveCard_Update();
+    if (SaveCard_HasCard(D_005CF3C0.unk0C) == 0 && D_005CF3C0.unk12 == 14) {
         card_result = -1;
     }
-    if (D_005CF3C0.unk1B == 0 && func_001FBBD0() == 0) {
+    if (D_005CF3C0.unk1B == 0 && SaveCard_IsCheckRunning() == 0) {
         D_005CF3C0.unk18 = 0;
         D_005CF3C0.unk1B = 1;
-        if (func_001FBBE0(0) == 0 && func_001FBBE0(1) != 0) {
+        if (SaveCard_IsPresent(0) == 0 && SaveCard_IsPresent(1) != 0) {
             D_005CF3C0.unk0C = 1;
         }
     }
@@ -104,7 +104,7 @@ void func_001F71D8(void) {
             }
             break;
         case 26:
-            if (func_001FBBE0(0) == 0) {
+            if (SaveCard_IsPresent(0) == 0) {
                 if (D_00446C70 == 0) {
                     func_00207478((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
                 } else if (D_00446C70 < 2) {
@@ -117,7 +117,7 @@ void func_001F71D8(void) {
             }
             break;
         case 27:
-            if (func_001FBBE0(1) == 0) {
+            if (SaveCard_IsPresent(1) == 0) {
                 if (D_00446C70 == 0) {
                     func_00207478((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
                 } else if (D_00446C70 < 2) {
@@ -188,32 +188,32 @@ void func_001F71D8(void) {
     }
 
     if (D_005CF3C0.unk21 != 0) {
-        if (func_001FBBD0() == 0) {
+        if (SaveCard_IsCheckRunning() == 0) {
             D_005CF3C0.unk21 = 0;
             D_005CF3C0.unk18 = 0;
             if (D_005CF3C0.unk12 == 12) {
                 if (D_005CF3C0.unk0D == 0) {
-                    func_001FA780(D_005CF3C0.unk0C);
+                    SaveCard_StartFormat(D_005CF3C0.unk0C);
                     D_005CF3C0.unk12 = 13;
                     D_005CF3C0.unk14 = 1;
                 } else {
                     D_005CF3C0.unk12 = -1;
                 }
             } else if (D_005CF3C0.unk12 == 14) {
-                if (func_001F9BA0(D_005CF3C0.unk0C, 0) == 0) {
+                if (SaveCard_StartReadList(D_005CF3C0.unk0C, 0) == 0) {
                     D_005CF3C0.unk14 = 1;
                 }
             } else if (D_005CF3C0.unk12 == 21) {
                 D_005CF3C0.unk12 = -1;
             } else if (D_005CF3C0.unk12 != -1) {
                 D_005CF3C0.unk12 = -1;
-            } else if (func_001FBBE0(D_005CF3C0.unk0C) != 0) {
-                if (func_001FBC00(D_005CF3C0.unk0C) == 0) {
+            } else if (SaveCard_IsPresent(D_005CF3C0.unk0C) != 0) {
+                if (SaveCard_IsFormatted(D_005CF3C0.unk0C) == 0) {
                     D_005CF3C0.unk12 = 12;
-                } else if (func_001FBC20(D_005CF3C0.unk0C) == 0 && func_001FB9E8(D_005CF3C0.unk0C) < 0) {
+                } else if (SaveCard_HasSaveFolder(D_005CF3C0.unk0C) == 0 && SaveCard_HasRoomForFolder(D_005CF3C0.unk0C) < 0) {
                     D_005CF3C0.unk12 = 21;
-                    func_001F9740(1);
-                } else if (func_001F9BA0(D_005CF3C0.unk0C, 1) == 0) {
+                    SaveCard_StartCheck(1);
+                } else if (SaveCard_StartReadList(D_005CF3C0.unk0C, 1) == 0) {
                     D_005CF3C0.unk14 = 1;
                 }
             } else if (D_005CF3C0.unk0C == 0) {
@@ -223,19 +223,19 @@ void func_001F71D8(void) {
             }
         }
     } else if (D_005CF3C0.unk14 != 0) {
-        if (func_001FB6F8() == 0) {
+        if (SaveCard_CheckBusy() == 0) {
             if (D_005CF3C0.unk12 == 13) {
                 D_005CF3C0.unk12 = 14;
                 D_005CF3C0.unk0D = 1;
                 D_005CF3C0.unk13 = -1;
-            } else if (func_001FBD38() != 0 || func_001FB9E8(D_005CF3C0.unk0C) > 0) {
+            } else if (SaveCard_HasAnySave() != 0 || SaveCard_HasRoomForFolder(D_005CF3C0.unk0C) > 0) {
                 D_005CF3C0.unk18 = 1;
                 D_005CF3C0.unk13 = -1;
                 D_00446C70 = 2;
                 D_005CF3C0.unk0D = 0;
             } else {
                 D_005CF3C0.unk12 = 21;
-                func_001F9740(1);
+                SaveCard_StartCheck(1);
             }
             D_005CF3C0.unk14 = 0;
         } else if (card_result < 0) {
@@ -243,19 +243,19 @@ void func_001F71D8(void) {
                 D_005CF3C0.unk12 = 15;
                 D_005CF3C0.unk14 = 0;
                 D_005CF3C0.unk0D = 1;
-                func_001F9740(1);
+                SaveCard_StartCheck(1);
                 card_result = 0;
             } else if (D_005CF3C0.unk12 == -1) {
-                if (func_001FBC40(D_005CF3C0.unk0C) != 0) {
-                    if (func_001FBD38() != 0 || func_001FB9E8(D_005CF3C0.unk0C) > 0) {
+                if (SaveCard_IsDamaged(D_005CF3C0.unk0C) != 0) {
+                    if (SaveCard_HasAnySave() != 0 || SaveCard_HasRoomForFolder(D_005CF3C0.unk0C) > 0) {
                         D_005CF3C0.unk18 = 1;
                         D_00446C70 = 2;
                         D_005CF3C0.unk13 = -1;
                         D_005CF3C0.unk0D = 0;
-                        func_001FBC60(D_005CF3C0.unk0C);
+                        SaveCard_Cancel(D_005CF3C0.unk0C);
                     } else {
                         D_005CF3C0.unk12 = 21;
-                        func_001F9740(1);
+                        SaveCard_StartCheck(1);
                     }
                 } else {
                     D_005CF3C0.unk12 = 10;
@@ -271,14 +271,14 @@ void func_001F71D8(void) {
             D_005CF3C0.unk18 = 1;
             D_00446C70 = 3;
         }
-    } else if (D_005CF3C0.unk12 == 12 && func_001FBBE0(D_005CF3C0.unk0C) == 0) {
+    } else if (D_005CF3C0.unk12 == 12 && SaveCard_IsPresent(D_005CF3C0.unk0C) == 0) {
         D_005CF3C0.unk12 = 10;
         D_005CF3C0.unk0D = 1;
     } else if (card_result < 0) {
         D_005CF3C0.unk12 = 10;
         D_005CF3C0.unk0D = 1;
         D_005CF3C0.unk14 = 0;
-        func_001F9740(1);
+        SaveCard_StartCheck(1);
     } else if (D_005CF3C0.unk14 == 0 && D_005CF3C0.unk18 == 0) {
         if ((D_00446DE8 & 0xA0) && D_0044731C != 0xFF && D_005CF3C0.unk12 == -1) {
             func_0019CDC0(1);
@@ -294,7 +294,7 @@ void func_001F71D8(void) {
                 if ((report->pressed & 0x2000) && D_0044731C != 0xFF) {
                     func_0019CDC0(2);
                     if (D_005CF3C0.unk12 == 14) {
-                        if (func_001F9BA0(D_005CF3C0.unk0C, 0) == 0) {
+                        if (SaveCard_StartReadList(D_005CF3C0.unk0C, 0) == 0) {
                             D_005CF3C0.unk14 = 1;
                         }
                     } else if (D_005CF3C0.unk12 != -1) {
@@ -302,7 +302,7 @@ void func_001F71D8(void) {
                         D_005CF3C0.unk0D = 1;
                     } else {
                         D_005CF3C0.unk11 = 1;
-                        func_001FAFB0();
+                        SaveCard_Close();
                     }
                 } else if ((D_00446DE8 & 0x10) && D_0044731C != 0xFF && D_005CF3C0.unk12 == 12) {
                     func_0019CDC0(1);
@@ -324,13 +324,13 @@ void func_001F71D8(void) {
                 D_00425510[0xFF] = 16.0f;
             }
             if (D_00446BF4[i].unk3E == 26) {
-                if (func_001FBBE0(0) != 0) {
+                if (SaveCard_IsPresent(0) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
                 }
             } else if (D_00446BF4[i].unk3E == 27) {
-                if (func_001FBBE0(1) != 0) {
+                if (SaveCard_IsPresent(1) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
@@ -357,13 +357,13 @@ void func_001F71D8(void) {
                 D_00425510[0xFF] = 0.0f;
             }
             if (D_00446BF4[i].unk3E == 26) {
-                if (func_001FBBE0(0) != 0) {
+                if (SaveCard_IsPresent(0) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
                 }
             } else if (D_00446BF4[i].unk3E == 27) {
-                if (func_001FBBE0(1) != 0) {
+                if (SaveCard_IsPresent(1) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
@@ -379,7 +379,7 @@ void func_001F71D8(void) {
                     D_005CF3C0.unk0D = 0;
                     D_00446C09 = 0;
                     D_00446C08 = 0;
-                    card_flags = func_001FBA78();
+                    card_flags = SaveCard_GetSaveMask();
                     if (card_flags != 0 && (card_flags & 1)) {
                         D_00426610.unk00 = 0;
                         if (card_flags & 2) {

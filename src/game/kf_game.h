@@ -212,16 +212,6 @@ typedef struct {
     char text[0x800];               /* 0x50 */
 } TextLog;
 
-/* one of the three 0x180-byte records at *D_0044733C, cleared by func_001FBAC8 */
-typedef struct {
-    char flag0;                     /* 0x00 */
-    char flag1;                     /* 0x01 */
-    char pad02[0x02];
-    int words[10];                  /* 0x04 */
-    char pad2C[0x14C];
-    PlayTime tail;                  /* 0x178 */
-} ScratchSlot;
-
 /* D_004147F8[380]: 0x40-byte definitions read from a data file by func_00112648
    (150, then 70, then 160 of them: see func_001029A8) */
 typedef struct {

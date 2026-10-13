@@ -28,16 +28,16 @@ int func_001E5210(u8);
 
 // match: called as a void function, so the result register is free at once
 #define SET_PART_MODE(mode) ((void (*)(u8))func_001E5210)(mode)
-s32 func_001F9648(void); // match: the result is used here
-s32 func_001F9740(s32);
-s32 func_001F9BA0(s32, s32); // match: the result is used here
-void func_001FAFB0(void);
-s32 func_001FB6F8(void);
-s32 func_001FB9B0(void);
-s32 func_001FBA78(void);
-void func_001FBB68(s32);
-s32 func_001FBBB8(void);
-char func_001FBBE0(int);
+s32 SaveCard_Update(void); // match: the result is used here
+s32 SaveCard_StartCheck(s8);
+s32 SaveCard_StartReadList(s32, s32); // match: the result is used here
+void SaveCard_Close(void);
+s32 SaveCard_CheckBusy(void);
+s32 SaveCard_CheckSavesIntact(void);
+s32 SaveCard_GetSaveMask(void);
+void SaveCard_ClearLoadFailed(s32);
+s32 SaveCard_IsChecking(void);
+s8 SaveCard_IsPresent(s32);
 void func_00203F28(int, int, int);
 void func_00207478(int, int, int, int);
 
@@ -48,11 +48,11 @@ void func_001E02F8(void) {
     u8 kind;
     PadReport *report;
 
-    card_result = func_001F9648();
-    if (D_005CF2F0.unk1B == 0 && func_001FBBB8() == 0) {
+    card_result = SaveCard_Update();
+    if (D_005CF2F0.unk1B == 0 && SaveCard_IsChecking() == 0) {
         D_005CF2F0.unk18 = 0;
         D_005CF2F0.unk1B = 1;
-        if (func_001FBBE0(0) == 0 && func_001FBBE0(1) != 0) {
+        if (SaveCard_IsPresent(0) == 0 && SaveCard_IsPresent(1) != 0) {
             D_005CF2F0.unk0C = 1;
         }
     }
@@ -89,7 +89,7 @@ void func_001E02F8(void) {
             }
             break;
         case 26:
-            if (func_001FBBE0(0) == 0) {
+            if (SaveCard_IsPresent(0) == 0) {
                 if (D_00446C70 == 0) {
                     func_00207478((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
                 } else if (D_00446C70 < 2) {
@@ -104,7 +104,7 @@ void func_001E02F8(void) {
             }
             break;
         case 27:
-            if (func_001FBBE0(1) == 0) {
+            if (SaveCard_IsPresent(1) == 0) {
                 if (D_00446C70 == 0) {
                     func_00207478((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
                 } else if (D_00446C70 < 2) {
@@ -142,8 +142,8 @@ void func_001E02F8(void) {
     }
 
     if (D_005CF2F0.unk14 != 0) {
-        if (func_001FB6F8() == 0) {
-            D_00447224 = func_001FBA78();
+        if (SaveCard_CheckBusy() == 0) {
+            D_00447224 = SaveCard_GetSaveMask();
             if (D_00447224 != 0) {
                 D_005CF2F0.unk18 = 1;
                 D_00446C70 = 2;
@@ -153,14 +153,14 @@ void func_001E02F8(void) {
             }
             D_005CF2F0.unk14 = 0;
         } else if (card_result < 0) {
-            if (func_001FBBE0(D_005CF2F0.unk0C) != 0) {
+            if (SaveCard_IsPresent(D_005CF2F0.unk0C) != 0) {
                 D_005CF2F0.unk12 = 9;
             } else {
                 D_005CF2F0.unk12 = 10;
             }
             D_005CF2F0.unk14 = 0;
             card_result = 0;
-            func_001F9740(1);
+            SaveCard_StartCheck(1);
         }
     }
 
@@ -172,7 +172,7 @@ void func_001E02F8(void) {
     } else if (card_result < 0) {
         D_005CF2F0.unk14 = 0;
         D_005CF2F0.unk12 = 10;
-        func_001F9740(1);
+        SaveCard_StartCheck(1);
     } else if (D_005CF2F0.unk14 == 0 && D_005CF2F0.unk18 == 0) {
         if ((D_00446DE8 & 0xA0) && D_004472D0 != 0xFF && D_005CF2F0.unk12 == -1) {
             func_0019CDC0(1);
@@ -183,9 +183,9 @@ void func_001E02F8(void) {
                 if (D_005CF2F0.unk12 != -1) {
                     func_0019CDC0(0);
                     D_005CF2F0.unk12 = -1;
-                } else if (func_001FBBE0(D_005CF2F0.unk0C) != 0) {
-                    if (func_001FB9B0() > 0) {
-                        if (func_001F9BA0(D_005CF2F0.unk0C, 1) == 0) {
+                } else if (SaveCard_IsPresent(D_005CF2F0.unk0C) != 0) {
+                    if (SaveCard_CheckSavesIntact() > 0) {
+                        if (SaveCard_StartReadList(D_005CF2F0.unk0C, 1) == 0) {
                             func_0019CDC0(0);
                             D_005CF2F0.unk14 = 1;
                         }
@@ -207,7 +207,7 @@ void func_001E02F8(void) {
                         D_005CF2F0.unk12 = -1;
                     } else {
                         D_005CF2F0.unk11 = 1;
-                        func_001FAFB0();
+                        SaveCard_Close();
                     }
                 }
             }
@@ -218,13 +218,13 @@ void func_001E02F8(void) {
     case 0:
         for (i = 0; i < D_00446A60; i++) {
             if (D_00446BF4[i].unk3E == 26) {
-                if (func_001FBBE0(0) != 0) {
+                if (SaveCard_IsPresent(0) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
                 }
             } else if (D_00446BF4[i].unk3E == 27) {
-                if (func_001FBBE0(1) != 0) {
+                if (SaveCard_IsPresent(1) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
@@ -247,13 +247,13 @@ void func_001E02F8(void) {
     case 3:
         for (i = 0; i < D_00446A60; i++) {
             if (D_00446BF4[i].unk3E == 26) {
-                if (func_001FBBE0(0) != 0) {
+                if (SaveCard_IsPresent(0) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
                 }
             } else if (D_00446BF4[i].unk3E == 27) {
-                if (func_001FBBE0(1) != 0) {
+                if (SaveCard_IsPresent(1) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
@@ -277,8 +277,8 @@ void func_001E02F8(void) {
                         D_00446B24 = (void *)func_001E02F8;
                         D_005CF2F0.unk0D = 0;
                         D_005CF2F0.unk1D = 0;
-                        func_001FBB68(0);
-                        func_001FBB68(1);
+                        SaveCard_ClearLoadFailed(0);
+                        SaveCard_ClearLoadFailed(1);
                     } else if (D_00446C70 == 3) {
                         if (D_00446C94 != 1) {
                             D_00446B20 = (void *)func_001DF308;

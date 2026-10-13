@@ -31,7 +31,7 @@ void func_001B5808(void);
 void func_00124EF8(void);
 void func_001D5A20(void);
 void func_0019C300(void);
-s32 func_001F9438(void);
+s32 SaveCard_Init(void);
 void func_00109410(void);
 void func_00111D00(void);
 void func_00106318(void);
@@ -69,7 +69,7 @@ int main(void) {
     Message_Init();
     func_001D5A20();
     func_0019C300();
-    func_001F9438();
+    SaveCard_Init();
     func_00109410();
     func_00111D00();
     Hud_Load();

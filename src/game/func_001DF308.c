@@ -48,8 +48,8 @@ int func_001E5210(u8);
 #define PLAY_MENU_SOUND(sound) ((void (*)(s32))func_0019CDC0)(sound)
 #define SET_PART_MODE(mode) ((void (*)(u8))func_001E5210)(mode)
 
-s32 func_001F94C0(void);
-s32 func_001F9740(s32);
+s32 SaveCard_Open(void);
+s32 SaveCard_StartCheck(s8);
 void func_001FC5E8(MenuCursorBar *);
 void func_00207478(int, int, int, int);
 
@@ -135,8 +135,8 @@ void func_001DF308(MenuScreenContext *context) {
                 D_005CF2F0.unk00 = 0;
                 D_005CF2F0.unk0E = 1;
                 D_005CF2F0.unk12 = -1;
-                func_001F94C0();
-                func_001F9740(1);
+                SaveCard_Open();
+                SaveCard_StartCheck(1);
                 D_00446C70 = 2;
                 D_004472DA = 0;
                 for (i = 0; i < D_00446A5C; i++) {

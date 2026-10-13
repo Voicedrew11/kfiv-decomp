@@ -35,7 +35,7 @@ typedef struct {
 
 extern McState D_01E4F278;
 
-/* the PS2 memory card icon.sys header, built at *D_00447338 by func_001FB2A0 */
+/* the PS2 memory card icon.sys header, built by SaveCard_BuildIconSys */
 typedef struct {
     char head[4];                   /* 0x00 "PS2D" */
     char pad04[0x02];
@@ -52,11 +52,6 @@ typedef struct {
     char delete_name[64];           /* 0x184 */
     char pad1C4[0x200];
 } McIconSys;
-
-extern McIconSys *D_00447338;
-
-/* slot is the memory card slot; the header is the same for both */
-void func_001FB2A0(s32 slot);
 
 /* progress of the file being written in 0x400-byte blocks */
 typedef struct {

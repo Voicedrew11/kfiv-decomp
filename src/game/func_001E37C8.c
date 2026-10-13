@@ -7,15 +7,15 @@ extern s8 D_00446C09;
 extern s8 D_00446C70;
 void *memset(void *, int, u32);
 void func_001E3858(void);
-s32 func_001F94C0(void);
-s32 func_001F9740(s32);
-s32 func_001F9648(void);
+s32 SaveCard_Open(void);
+s32 SaveCard_StartCheck(s8);
+s32 SaveCard_Update(void);
 
-/* Opens the menu screen func_001E3858 runs, unless func_001F94C0 fails. */
+/* Opens the menu screen func_001E3858 runs, unless SaveCard_Open fails. */
 void func_001E37C8(void) {
-    if (func_001F94C0() >= 0) {
-        func_001F9740(1);
-        func_001F9648();
+    if (SaveCard_Open() >= 0) {
+        SaveCard_StartCheck(1);
+        SaveCard_Update();
         memset(D_00425510, 0, 0x400);
         D_00446B20 = (void *)func_001E3858;
         D_005CF2F0.unk17 = 0;

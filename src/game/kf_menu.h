@@ -78,7 +78,7 @@ typedef struct DataNode {
     s16 unk0C;                      /* 0x0C table row, plus one */
 } DataNode;
 
-/* one of the three 0x180-byte records func_001FB948 hands out (ScratchSlot in kf_game.h), as the save list of
+/* one of the three 0x180-byte records SaveCard_GetSaveInfo hands out (SaveInfo in kf_save_card.h), as the save list of
    func_001E0D98 reads it: what a save on the card says about itself */
 typedef struct {
     char pad00[0x04];
@@ -99,8 +99,8 @@ typedef struct {
     char pad17C[0x04];
 } CardSaveInfo;
 
-/* MenuScreenState's three bytes at 0x1E as the array func_001E0D98 fills: what func_001FB980 says of each save
-   (1: there is one), then 0 or -1 for the others by what func_001FBA18 answers */
+/* MenuScreenState's three bytes at 0x1E as the array func_001E0D98 fills: what SaveCard_GetSaveState says of each save
+   (1: there is one), then 0 or -1 for the others by what SaveCard_HasRoomFor answers */
 typedef struct {
     char pad00[0x1E];
     s8 save_state[3];               /* 0x1E */

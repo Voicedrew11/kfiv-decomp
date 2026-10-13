@@ -16,17 +16,17 @@ void *memset(void *, int, u32);
 s32 func_0019CDC0(s32);
 f32 func_001D8300(f32, s32, s32);
 int func_001E5210(u8);
-s32 func_001F9648(void);
-s32 func_001F9740(s32);
-s32 func_001F9BA0(s32, s32);
-void func_001FA988(void);
-void func_001FAFB0(void);
-s32 func_001FB6F8(void);
-s32 func_001FBBA8(void);
-char func_001FBBE0(int);
-s32 func_001FBC00(s32);
-int func_001FBC80(int);
-s32 func_001FBCF0(void);
+s32 SaveCard_Update(void);
+s32 SaveCard_StartCheck(s8);
+s32 SaveCard_StartReadList(s32, char);
+s32 SaveCard_StartRescan(void);
+void SaveCard_Close(void);
+s32 SaveCard_CheckBusy(void);
+s32 SaveCard_IsCheckDone(void);
+s8 SaveCard_IsPresent(s32);
+s8 SaveCard_IsFormatted(s32);
+int SaveCard_GetCardProblem(int);
+s32 SaveCard_GetSavesState(void);
 void func_001FBDC8(void);
 void func_001FC5E8(MenuCursorBar *);
 void func_00207478(int, int, int, int);
@@ -38,61 +38,61 @@ void func_001E3858(void) {
     MenuCursorBar bar;
     PadReport *report;
     u32 full_alpha;
-    s32 result = ((s32 (*)(void))func_001F9648)(); // match: its result is used here
+    s32 result = ((s32 (*)(void))SaveCard_Update)(); // match: its result is used here
 
     switch (D_005CF2F0.unk17) {
     case 0:
-        if (func_001FBBA8() == 0) {
+        if (SaveCard_IsCheckDone() == 0) {
             return;
         }
-        if (func_001FBBE0(0) != 0 && func_001FBC00(0) != 0) {
-            func_001F9BA0(0, 0);
+        if (SaveCard_IsPresent(0) != 0 && SaveCard_IsFormatted(0) != 0) {
+            SaveCard_StartReadList(0, 0);
             D_005CF2F0.unk17 = 1;
-        } else if (func_001FBBE0(1) != 0 && func_001FBC00(1) != 0) {
+        } else if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
             D_005CF2F0.unk17 = 2;
-            func_001F9BA0(1, 0);
+            SaveCard_StartReadList(1, 0);
         } else {
             D_005CF2F0.unk17 = 3;
-            func_001FA988();
+            SaveCard_StartRescan();
         }
         return;
     case 1:
-        if (func_001FB6F8() == 0) {
-            D_005CF2F0.unk19 = func_001FBCF0();
-            if (func_001FBBE0(1) != 0 && func_001FBC00(1) != 0) {
+        if (SaveCard_CheckBusy() == 0) {
+            D_005CF2F0.unk19 = SaveCard_GetSavesState();
+            if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
                 D_005CF2F0.unk17 = 2;
-                func_001F9BA0(1, 0);
+                SaveCard_StartReadList(1, 0);
             } else {
                 D_005CF2F0.unk17 = 3;
-                func_001FA988();
+                SaveCard_StartRescan();
             }
         } else if (result < 0) {
             D_005CF2F0.unk19 = 0;
-            if (func_001FBBE0(1) != 0 && func_001FBC00(1) != 0) {
+            if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
                 D_005CF2F0.unk17 = 2;
-                func_001F9BA0(1, 0);
+                SaveCard_StartReadList(1, 0);
             } else {
                 D_005CF2F0.unk17 = 3;
-                func_001FA988();
+                SaveCard_StartRescan();
             }
         }
         return;
     case 2:
-        if (func_001FB6F8() == 0) {
-            D_005CF2F0.unk1A = func_001FBCF0();
+        if (SaveCard_CheckBusy() == 0) {
+            D_005CF2F0.unk1A = SaveCard_GetSavesState();
             D_005CF2F0.unk17 = 3;
-            func_001FA988();
+            SaveCard_StartRescan();
         } else if (result < 0) {
             D_005CF2F0.unk1A = 0;
             D_005CF2F0.unk17 = 3;
-            func_001FA988();
+            SaveCard_StartRescan();
         }
         return;
     case 3:
         if (result > 0) {
             D_005CF2F0.unk17 = 4;
             for (i = 0; (s32)i < 2; i++) {
-                switch (func_001FBC80(i)) {
+                switch (SaveCard_GetCardProblem(i)) {
                 case 0:
                     D_005CF2F0.unk04 |= 1 << (i * 4);
                     break;
@@ -114,7 +114,7 @@ void func_001E3858(void) {
                 D_005CF2F0.unk12 = 0x12;
             } else {
                 D_005CF2F0.unk1C = D_005CF2F0.unk11 = 1;
-                func_001FAFB0();
+                SaveCard_Close();
             }
         }
         return;
@@ -174,15 +174,15 @@ void func_001E3858(void) {
         }
     } else if (result < 0) {
         D_005CF2F0.unk11 = 1;
-        func_001F9740(1);
-        func_001FAFB0();
+        SaveCard_StartCheck(1);
+        SaveCard_Close();
     } else {
         report = Pad_GetReport(0, 0);
         if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
             func_0019CDC0(0);
             D_005CF2F0.unk11 = 1;
-            func_001F9740(1);
-            func_001FAFB0();
+            SaveCard_StartCheck(1);
+            SaveCard_Close();
             if (D_005CF2F0.unk0C == 0) {
                 D_00446C70 = 2;
             } else {

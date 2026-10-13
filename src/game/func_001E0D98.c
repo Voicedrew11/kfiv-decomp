@@ -3,6 +3,7 @@
 #include "kf_packet.h"
 #include "kf_message.h"
 #include "kf_pad.h"
+#include "kf_save_card.h"
 
 extern MenuScreenState D_005CF2F0;
 extern GameStatus D_0038CC50;
@@ -65,18 +66,17 @@ s32 func_0019CDC0(s32);
 f32 func_001D8300(f32, s32, s32);
 void func_001E02F8(void);
 int func_001E5210(u8);
-s32 func_001F9438(void);
-s32 func_001F9648(void); // match: the result is used here
-s32 func_001F9740(s32);
-int func_001FA4F0(int, int, int, int);
-s32 func_001FB6F8(void);
-s32 func_001FB948(s32);
-s32 func_001FB960(s32);
-s32 func_001FB980(s32);
-s32 func_001FBA18(s32, s32, s32);
-void func_001FBB50(s32);
-void func_001FBB68(s32);
-s32 func_001FBB88(s32);
+s32 SaveCard_Init(void);
+s32 SaveCard_Update(void); // match: the result is used here
+s32 SaveCard_StartCheck(s8);
+s32 SaveCard_StartLoad(s32, s32, s32 *, s32);
+s32 SaveCard_CheckBusy(void);
+s32 SaveCard_HasCard(s32);
+s8 SaveCard_GetSaveState(s32);
+s32 SaveCard_HasRoomFor(s32, s32, s32);
+void SaveCard_ResetCard(s32);
+void SaveCard_ClearLoadFailed(s32);
+s8 SaveCard_GetLoadFailed(s32);
 void func_001FBDC8(void);
 void func_001FC5E8(MenuCursorBar *);
 void func_001FDCD0(MenuColor);
@@ -103,7 +103,7 @@ void func_001E0D98(void) {
     GsPackedWord word;
     PadReport *report;
 
-    info[0] = (CardSaveInfo *)func_001FB948(0);
+    info[0] = (CardSaveInfo *)SaveCard_GetSaveInfo(0);
     D_00446DF4 = info[0]->unk0C;
     D_00446DF8 = info[0]->unk08;
     D_00446DFC = info[0]->unk28;
@@ -116,7 +116,7 @@ void func_001E0D98(void) {
     D_00446E18 = info[0]->unk17B;
     D_00446E1C = info[0]->unk17A;
     D_00446E20 = info[0]->unk179;
-    info[1] = (CardSaveInfo *)func_001FB948(1);
+    info[1] = (CardSaveInfo *)SaveCard_GetSaveInfo(1);
     D_00446E24 = info[1]->unk0C;
     D_00446E28 = info[1]->unk08;
     D_00446E2C = info[1]->unk28;
@@ -129,7 +129,7 @@ void func_001E0D98(void) {
     D_00446E48 = info[1]->unk17B;
     D_00446E4C = info[1]->unk17A;
     D_00446E50 = info[1]->unk179;
-    info[2] = (CardSaveInfo *)func_001FB948(2);
+    info[2] = (CardSaveInfo *)SaveCard_GetSaveInfo(2);
     D_00446E54 = info[2]->unk0C;
     D_00446E58 = info[2]->unk08;
     D_00446E5C = info[2]->unk28;
@@ -145,7 +145,7 @@ void func_001E0D98(void) {
 
     if (D_005CF2F0.unk13 == -1) {
         for (i = 0; i < 3; i++) {
-            MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] = func_001FB980(i);
+            MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] = SaveCard_GetSaveState(i);
         }
         for (i = 0; i < 3; i++) {
             if (MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] != 1) {
@@ -190,7 +190,7 @@ void func_001E0D98(void) {
                     }
                     break;
                 }
-                if (func_001FBA18(D_005CF2F0.unk0C, first_arg, second_arg) > 0) {
+                if (SaveCard_HasRoomFor(D_005CF2F0.unk0C, first_arg, second_arg) > 0) {
                     MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] = 0;
                 } else {
                     MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] = -1;
@@ -287,18 +287,18 @@ void func_001E0D98(void) {
         func_001FC5E8(&bar); // match: the float at bar+0x24 that func_001FC5E8 copies is never set
     }
 
-    D_005CF2F0.unk00 = func_001F9648();
-    if (func_001FB960(D_005CF2F0.unk0C) == 0) {
+    D_005CF2F0.unk00 = SaveCard_Update();
+    if (SaveCard_HasCard(D_005CF2F0.unk0C) == 0) {
         D_005CF2F0.unk00 = -1;
     }
-    if (D_005CF2F0.unk13 == 1 && func_001FB6F8() == 0) {
+    if (D_005CF2F0.unk13 == 1 && SaveCard_CheckBusy() == 0) {
         D_005CF2F0.unk13 = 3;
     }
     if (D_005CF2F0.unk00 < 0) {
-        if (func_001FBB88(D_005CF2F0.unk0C) != 0 && !D_0038CC50.bit9) {
+        if (SaveCard_GetLoadFailed(D_005CF2F0.unk0C) != 0 && !D_0038CC50.bit9) {
             D_005CF2F0.unk13 = 23;
-            func_001FBB68(D_005CF2F0.unk0C);
-            func_001F9740(0);
+            SaveCard_ClearLoadFailed(D_005CF2F0.unk0C);
+            SaveCard_StartCheck(0);
         } else if (D_005CF2F0.unk13 != 3) {
             if (!D_0038CC50.bit9) {
                 D_005CF2F0.unk13 = 10;
@@ -307,7 +307,7 @@ void func_001E0D98(void) {
     }
     if (D_0038CC50.bit9) {
         if (D_005CF2F0.unk13 == -1 && D_00446BDD == 0) {
-            func_001F9438();
+            SaveCard_Init();
             D_005CF2F0.unk18 = 1;
             D_00446C70 = 2;
             D_00446BDD = 1;
@@ -352,7 +352,7 @@ void func_001E0D98(void) {
                     func_0019CDC0(0);
                     D_005CF2F0.unk13 = 1;
                     memset(D_0036A130, 0, 0x20000);
-                    func_001FA4F0(D_005CF2F0.unk0C, D_005CF2F0.unk0D, (int)D_0036A130, 0x20000);
+                    SaveCard_StartLoad(D_005CF2F0.unk0C, D_005CF2F0.unk0D, (s32 *)D_0036A130, 0x20000);
                 } else {
                     func_0019CDC0(2);
                     D_005CF2F0.unk13 = -1;
@@ -368,7 +368,7 @@ void func_001E0D98(void) {
                 D_005CF2F0.unk18 = 1;
                 if (!D_0038CC50.bit9) {
                     D_00446C70 = 3;
-                    func_001FBB50(D_005CF2F0.unk0C);
+                    SaveCard_ResetCard(D_005CF2F0.unk0C);
                 } else {
                     D_005CF2F0.unk13 = -1;
                     D_00446C70 = 2;
@@ -390,7 +390,7 @@ void func_001E0D98(void) {
                     D_005CF2F0.unk18 = 1;
                     if (!D_0038CC50.bit9) {
                         D_00446C70 = 3;
-                        func_001FBB50(D_005CF2F0.unk0C);
+                        SaveCard_ResetCard(D_005CF2F0.unk0C);
                     } else {
                         D_005CF2F0.unk13 = -1;
                         D_00446C70 = 2;
@@ -415,7 +415,7 @@ void func_001E0D98(void) {
                 case -1:
                     D_005CF2F0.unk0D++;
                     for (i = 0; i < 3; i++) {
-                        if (func_001FB980((D_005CF2F0.unk0D + i) % 3) != 0) {
+                        if (SaveCard_GetSaveState((D_005CF2F0.unk0D + i) % 3) != 0) {
                             break;
                         }
                     }
@@ -434,7 +434,7 @@ void func_001E0D98(void) {
                 case -1:
                     D_005CF2F0.unk0D--;
                     for (i = 0; i < 3; i++) {
-                        if (func_001FB980((D_005CF2F0.unk0D - i + 3) % 3) != 0) {
+                        if (SaveCard_GetSaveState((D_005CF2F0.unk0D - i + 3) % 3) != 0) {
                             break;
                         }
                     }
@@ -499,7 +499,7 @@ void func_001E0D98(void) {
                     D_00446B20 = (void *)func_001E02F8;
                     D_00446C70 = 0;
                     D_00446BDD = 0;
-                    func_001F9740(0);
+                    SaveCard_StartCheck(0);
                 }
                 break;
             }
