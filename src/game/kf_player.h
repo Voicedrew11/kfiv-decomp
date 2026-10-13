@@ -84,7 +84,7 @@ typedef struct {
     s32 unk10C;                     /* 0x10C 1 while item 0x15F is worn (func_001BB020) */
     u16 unk110[6];                  /* 0x110 cleared when unk14C[i] runs out */
     s16 unk11C[3];                  /* 0x11C cleared with unk188[i] when unk158[i] runs out */
-    s16 unk122[6];                  /* 0x122 nonzero: unk18E[i] competes for the weapon trail kind (func_001C06E8) */
+    s16 unk122[6];                  /* 0x122 nonzero: unk18E[i] competes for the weapon trail kind (KF_WeaponTrail_PickKind) */
     u16 unk12E[6];                  /* 0x12E cleared when unk16A[i] runs out */
     s16 unk13A[3];                  /* 0x13A cleared when unk176[i] runs out */
     s16 unk140[6];                  /* 0x140 cleared when unk17C[i] runs out */

@@ -52,7 +52,7 @@ typedef struct {
     u64 unk00[16];                  /* 0x00 */
 } MapSlotUnk10Words;
 
-/* the first half of such a block: what the held item's models are lit by (D_004145E0, func_001BFCC8) */
+/* the first half of such a block: what the held item's models are lit by (D_004145E0, KF_Player_UpdateArmModels) */
 typedef struct {
     u64 unk00[8];                   /* 0x00 */
 } MapSlotUnk10Half;

@@ -1,4 +1,5 @@
 #include "kf_gold.h"
+#include "kf_held_weapon.h"
 #include "kf_item_effect.h"
 #include "kf_player.h"
 #include "kf_shot.h"
@@ -17,7 +18,6 @@ void func_0019A848(void);
 void func_001128E0(void);
 void func_00117C60(void);
 void func_0011A430(void);
-void func_001BF788(void);
 void KF_Entity_ResetAllLists(void);
 void func_0011C6E8(void);
 void func_001C8238(void);
@@ -26,7 +26,6 @@ void func_001B4EE0(void);
 int func_001060C0(void);
 void func_00104EC8(void);
 void func_001B5A10(void);
-void func_001BF898(void);
 void func_001A1260(int);
 void func_0019C520(void);
 
@@ -43,7 +42,7 @@ void func_001000C8(int arg) {
     func_001128E0();
     func_00117C60();
     func_0011A430();
-    func_001BF788();
+    KF_HeldWeapon_Init();
     KF_Entity_ResetAllLists();
     func_0011C6E8();
     func_001C8238();
@@ -57,7 +56,7 @@ void func_001000C8(int arg) {
         func_00104EC8();
     }
     func_001B5A10();
-    func_001BF898();
+    KF_Player_LoadArmModels();
     func_001A1260(D_00413F80.unk3D);
     func_0019C520();
 }

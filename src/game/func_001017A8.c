@@ -1,6 +1,7 @@
 #include "kf_game.h"
 #include "kf_map.h"
 #include "kf_player.h"
+#include "kf_held_weapon.h"
 #include "kf_magic_ladder.h"
 #include "kf_sound.h"
 
@@ -21,7 +22,6 @@ int func_001187D8(void);
 int func_00102230(void);
 void func_00102228(void);
 void func_001B5778(void);
-void func_001BF898(void);
 void func_00101CE0(void);
 void func_001E6180(s32);
 void func_001EE730(void);
@@ -83,7 +83,7 @@ void func_001017A8(void) {
     }
     func_001B5778();
     if (D_0038CC50.bit14 && D_00413F80.unk254 >= 2) {
-        func_001BF898();
+        KF_Player_LoadArmModels();
         D_0038CC50.bit14 = FALSE;
     }
     if (D_0038CC50.bit3) {
@@ -129,7 +129,7 @@ void func_001017A8(void) {
         func_001095E0();
     }
     if (menu_ran) {
-        func_001BF898();
+        KF_Player_LoadArmModels();
         if (D_0038CC50.unk28 != 0) {
             KF_Player_CastMagic(D_0038CC50.unk28);
             D_0038CC50.unk28 = 0;

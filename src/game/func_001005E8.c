@@ -5,6 +5,7 @@
 #include "kf_map.h"
 #include "kf_player.h"
 #include "kf_gold.h"
+#include "kf_held_weapon.h"
 #include "kf_splash.h"
 
 extern u8 D_00349680[0x10];
@@ -47,7 +48,6 @@ void func_00106DC8(void);
 void func_00106FB8(int);
 void func_00107528(void);
 void func_001A2108(void);
-void func_001C0268(void);
 void func_001B6800(void);
 void func_0010A4E8(int, int, int, int, int);
 void func_00107E70(int, int, int);
@@ -225,7 +225,7 @@ int func_001005E8(int arg) {
         func_001A2108();
     }
     func_0010B140(3, 0);
-    func_001C0268();
+    KF_Player_DrawArm();
     func_001B6800();
     if ((s32)(D_00413F80.unk1C8 >> 39) & 1) {
         if (D_0038CD20[D_00446770].tag == 0x23 && D_00349F56[0] == 0) {

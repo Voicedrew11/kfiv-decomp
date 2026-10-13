@@ -1,4 +1,5 @@
 #include "kf_effect.h"
+#include "kf_held_weapon.h"
 #include "kf_magic_ladder.h"
 #include "kf_player.h"
 
@@ -19,7 +20,6 @@ void func_00108AC8(void *);
 void func_0019CE00(int mode);
 void func_001A3918(int);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
-void func_001C06E8(void);
 void func_00216778(void *, void *);
 
 /* Handler of a weapon that is swung: the button starts the swing; while its motion runs the
@@ -67,7 +67,7 @@ void func_001B70F8(u16 held, u16 pressed) {
             D_00413F80.unk25E = 0;
             D_00413F80.unk25F = 0;
             D_00413F80.unk263 = 0;
-            func_001C06E8();
+            KF_WeaponTrail_PickKind();
         }
         return;
     }

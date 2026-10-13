@@ -300,7 +300,7 @@ typedef struct {
    (150, then 70, then 160 of them: see func_001029A8) */
 typedef struct {
     char pad00[0x30];
-    u16 unk30;                      /* 0x30 the number in the name of its item_arm file (func_001BF898) */
+    u16 unk30;                      /* 0x30 the number in the name of its item_arm file (KF_Player_LoadArmModels) */
     char pad32[0x01];
     u8 unk33;                       /* 0x33 */
     char pad34[0x08];
