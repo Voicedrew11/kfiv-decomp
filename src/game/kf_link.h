@@ -26,7 +26,7 @@ typedef struct {
     s32 second_offset;              /* 0x0C */
 } LinkFile;
 
-/* D_0043F720: the second argument of func_002032E0 for each slot (the D_00420DF0 entries are PoolPartSource, kf_game.h) */
+/* D_0043F720: the second argument of PoolSlot_LoadGroup for each slot (the D_00420DF0 entries are PoolPartSource, kf_game.h) */
 typedef struct {
     u8 value[12];
 } LinkSlotValues;

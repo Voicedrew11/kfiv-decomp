@@ -29,7 +29,7 @@ int func_0021B438(int, int);
 s32 func_0021B458(void);
 s32 func_0021B468(void);
 
-void *func_001FBD90(int);
+void *MenuHeap_Alloc(int);
 int func_00102258(char *, int, int);
 
 extern GameStatus D_0038CC50;
@@ -97,7 +97,7 @@ s32 SaveCard_Open(void) {
     card_check.retries = 0;
     card_check.kind = CARD_TASK_CHECK;
     card_check.keep_open = 1;
-    base = (s32)func_001FBD90(0x800);
+    base = (s32)MenuHeap_Alloc(0x800);
     addr = (base & 0x3F) == 0 ? base : base + (base & 0x3F);
     save_infos = (SaveInfo *)addr;
     addr += 0x480;

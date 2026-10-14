@@ -266,18 +266,18 @@ typedef struct ListNode {
    D_00446DF0 holds the head */
 typedef struct PoolSlot {
     char pad00[0x40];
-    struct PoolSlot *unk40;         /* 0x40 another slot, picked by a byte of the part's record (func_002032E0) */
+    struct PoolSlot *unk40;         /* 0x40 another slot, picked by a byte of the part's record (PoolSlot_LoadGroup) */
     struct PoolPart *part;          /* 0x44 the 0x50-byte part this slot shows, NULL: none */
     struct PoolPartRecord *unk48;   /* 0x48 */
     char pad4C[0x04];
     struct PoolSlot *next;          /* 0x50 */
-    s32 key_index;                  /* 0x54 the key of its node's animation that func_00203820 is at */
+    s32 key_index;                  /* 0x54 the key of its node's animation that PoolNode_Pose is at */
     u64 unk58;                      /* 0x58 copied from the texture header's tex0 */
     u64 unk60;                      /* 0x60 */
     char pad68[0x08];
 } PoolSlot;
 
-/* a texture header's two GS register values (TextureHeader.tex0 and unk18), which func_002032E0 copies as one */
+/* a texture header's two GS register values (TextureHeader.tex0 and unk18), which PoolSlot_LoadGroup copies as one */
 typedef struct {
     u64 tex0;                       /* 0x00 */
     u64 unk08;                      /* 0x08 */
@@ -292,7 +292,7 @@ typedef struct {
 
 #define POOL_SLOT_REGISTERS(slot) (((PoolSlotRegistersView *)(slot))->registers)
 
-/* one 0x10-byte record of a RelocEntry, with two file offsets that func_00200820 turns into pointers */
+/* one 0x10-byte record of a RelocEntry, with two file offsets that PoolNodeFile_Relocate turns into pointers */
 typedef struct {
     char pad00[0x08];
     void *unk08;                    /* 0x08 */
@@ -303,15 +303,15 @@ typedef struct {
 typedef struct {
     u16 key_count;                  /* 0x00 */
     u16 layer_count;                /* 0x02 */
-    u16 slot;                       /* 0x04 the PoolSlot the node poses (func_00203820) */
+    u16 slot;                       /* 0x04 the PoolSlot the node poses (PoolNode_Pose) */
     char pad06[0x2A];
-    void *unk30;                    /* 0x30 a file offset until func_00200820 has run, like the next three */
+    void *unk30;                    /* 0x30 a file offset until PoolNodeFile_Relocate has run, like the next three */
     RelocLayer *layers;             /* 0x34 */
     void *unk38;                    /* 0x38 */
     void *unk3C;                    /* 0x3C */
 } RelocEntry;
 
-/* a file whose offsets func_00200820 turns into pointers: a 0x10-byte header, then the entries */
+/* a file whose offsets PoolNodeFile_Relocate turns into pointers: a 0x10-byte header, then the entries */
 typedef struct {
     char pad00[0x08];
     u32 entry_count;                /* 0x08 */
@@ -319,7 +319,7 @@ typedef struct {
     RelocEntry entries[1];          /* 0x10 */
 } RelocFile;
 
-/* lists of pool slot numbers that func_00203090 and func_002032E0 copy whole from read-only data, and
+/* lists of pool slot numbers that PoolSlot_SetGroupParts and PoolSlot_LoadGroup copy whole from read-only data, and
    their tables of counts */
 typedef struct {
     u8 slots[7];                    /* 0x00 */
@@ -366,7 +366,7 @@ typedef struct {
     u16 unk04;                      /* 0x04 the value of GS ALPHA_2 */
     u16 prim;                       /* 0x06 GS PRIM bits */
     u64 tex0;                       /* 0x08 GS TEX0, set from the texture header's before the part is drawn */
-    u64 unk10;                      /* 0x10 GS TEX0 of a second texture drawn over the first (func_002008E8), 0: none */
+    u64 unk10;                      /* 0x10 GS TEX0 of a second texture drawn over the first (PoolPart_DrawTinted), 0: none */
     char pad18[0x08];
     PoolPartPoint points[1];        /* 0x20 point_count of them */
 } PoolPartMaterial;
@@ -378,7 +378,7 @@ typedef struct {
     u64 cld : 3;                    /* bit 61 */
 } PoolPartMaterialBits;
 
-/* the scratchpad while a PoolPart is drawn (func_002008E8, func_00201518, func_002020A0) */
+/* the scratchpad while a PoolPart is drawn (PoolPart_DrawTinted, PoolPart_Draw, PoolSlot_Draw) */
 typedef struct {
     u32 prim_tag[4];                /* 0x00 the GIF tag in front of a strip's points */
     u32 reg_tag[4];                 /* 0x10 the GIF tag in front of the registers set for a strip */
@@ -406,17 +406,17 @@ typedef struct {
     f32 (*normals)[4];              /* 0x198 the part's normals in the world */
     char pad19C[0x04];
     s32 unk1A0[4];                  /* 0x1A0 0, 0, 0, 0x80; stored as one quadword */
-    u32 parent_point_count;         /* 0x1B0 func_002020A0: how many points go by the parent slot's matrix */
+    u32 parent_point_count;         /* 0x1B0 PoolSlot_Draw: how many points go by the parent slot's matrix */
     u32 point_at;                   /* 0x1B4 */
     u32 point_index;                /* 0x1B8 */
-    u32 parent_normal_count;        /* 0x1BC func_002020A0: how many normals go by the parent slot's matrix */
+    u32 parent_normal_count;        /* 0x1BC PoolSlot_Draw: how many normals go by the parent slot's matrix */
     u32 normal;                     /* 0x1C0 */
     u32 normal_index;               /* 0x1C4 */
 } PoolDrawScratch;
 
 #define POOL_DRAW_SCRATCH ((PoolDrawScratch *)0x70000000)
 
-/* PoolDrawScratch.cursor as a union (func_002008E8 advances it through this view once per point) */
+/* PoolDrawScratch.cursor as a union (PoolPart_DrawTinted advances it through this view once per point) */
 typedef struct {
     char pad000[0x18C];
     union {
@@ -427,12 +427,12 @@ typedef struct {
 
 #define POOL_DRAW_SCRATCH_CURSOR(scratch) (((PoolDrawScratchCursorView *)(scratch))->cursor)
 
-/* the two places in GS memory that func_00201E10 and func_00201F58 pick a palette's from (D_00440DC0) */
+/* the two places in GS memory that MenuModel_DrawTinted and MenuModel_Draw pick a palette's from (D_00440DC0) */
 typedef struct {
     u64 pages[2];                   /* 0x00 */
 } PoolClutPages;
 
-/* one 0x80-byte animation key of a RelocEntry (its unk30), interpolated towards the next one by func_00203820 */
+/* one 0x80-byte animation key of a RelocEntry (its unk30), interpolated towards the next one by PoolNode_Pose */
 typedef struct {
     u16 frame;                      /* 0x00 the frame the key starts at */
     u16 length;                     /* 0x02 frames to the next key */
@@ -481,7 +481,7 @@ typedef struct {
     PoolPart parts[1];              /* 0x10 */
 } PoolPartFile;
 
-/* the 0x10 bytes in front of a PoolPartFile's parts, copied as one (func_00203C88) */
+/* the 0x10 bytes in front of a PoolPartFile's parts, copied as one (PoolPartFile_Expand) */
 typedef struct {
     PoolPartRecord *records_end;    /* 0x00 */
     char pad04[0x04];
@@ -489,13 +489,13 @@ typedef struct {
     char pad0C[0x04];
 } PoolPartFileHeader;
 
-/* the 0x20 bytes in front of a strip's points as the four words func_00203C88 copies them as */
+/* the 0x20 bytes in front of a strip's points as the four words PoolPartFile_Expand copies them as */
 typedef union {
     u64 words[4];                   /* 0x00 */
     char bytes[0x20];               /* 0x00 */
 } PoolPartStripWords;
 
-/* one 0x40-byte point of a strip in the copy func_00203C88 makes: the point and normal themselves
+/* one 0x40-byte point of a strip in the copy PoolPartFile_Expand makes: the point and normal themselves
    instead of their numbers */
 typedef struct {
     f32 position[4];                /* 0x00 */
@@ -514,7 +514,7 @@ typedef struct {
     PoolPartFlatPoint points[1];    /* 0x20 */
 } PoolPartFlatStrip;
 
-/* what func_002032E0 is handed: a part file and the texture its parts are drawn with */
+/* what PoolSlot_LoadGroup is handed: a part file and the texture its parts are drawn with */
 typedef struct {
     PoolPartFile *file;             /* 0x00 */
     void *texture;                  /* 0x04 a TextureHeader (kf_texture.h) */

@@ -9,7 +9,7 @@ typedef struct {
     int data_offset;                /* 0x00 from this header */
     int image_size;                 /* 0x04 bytes */
     char pad08[0x04];
-    int unk0C;                      /* 0x0C from this header to a second CLUT (func_002048D8) */
+    int unk0C;                      /* 0x0C from this header to a second CLUT (MenuTexture_UploadTwoCluts) */
     u64 tex0;                       /* 0x10 GS TEX0: TBP0 at bit 0, CBP at bit 37 */
     u64 unk18;                      /* 0x18 copied to PoolSlot.unk60 with tex0 (Menu_UpdateKeyItems) */
 } TextureHeader;
@@ -50,7 +50,7 @@ typedef struct {
 
 #define TEXTURE_HEADER_BITS(header) ((TextureHeaderBits *)(header))
 
-/* D_0042A8D0: a loaded texture file (the menu font) and the two words func_00204D60 reads from it */
+/* D_0042A8D0: a loaded texture file (the menu font) and the two words MenuTexture_GetRegisters reads from it */
 typedef struct {
     u64 tex0;                       /* 0x00 */
     u64 trailer;                    /* 0x08 the word after its CLUT */

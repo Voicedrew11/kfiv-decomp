@@ -116,10 +116,10 @@ typedef struct {
     s32 done;                       /* 0x20 */
 } StreamSlot;
 
-/* D_0042A2A0[D_00446DEC]: one per block of the loaded menu file (func_00204128 fills them in) */
+/* D_0042A2A0[D_00446DEC]: one per block of the loaded menu file (MenuFile_IndexBlocks fills them in) */
 typedef struct {
     char pad00[0x10];
-    void *data;                     /* 0x10 the block, handed to func_00204180 */
+    void *data;                     /* 0x10 the block, handed to MenuTexture_Upload */
     char pad14[0x04];
 } LoadedBlockRef;
 

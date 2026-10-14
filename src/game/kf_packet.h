@@ -16,16 +16,17 @@ typedef struct {
     GsXyz xyz0;                     /* 0x00 */
     s64 unk08;                      /* 0x08 */
     GsXyz xyz1;                     /* 0x10 */
-    char pad18[0x08];
+    f32 second_s;                   /* 0x18 the right edge's texture coordinate (TexturedRectDef.second_s) */
+    char pad1C[0x04];
     u8 red;                         /* 0x20 */
     u8 green;                       /* 0x21 */
     u8 blue;                        /* 0x22 */
     u8 alpha;                       /* 0x23 */
     char pad24[0x0D];
-    u8 unk31;                       /* 0x31 the kind (KindObject.kind); 2: func_001FCBD0 asks func_001FC820 for the number */
-    u8 unk32;                       /* 0x32 which word of D_0042A078 func_001FC0D8 draws (kind 1) */
-    u8 unk33;                       /* 0x33 how many digits func_001FCBD0 draws; 0: three digits, a point and one more */
-    s32 unk34;                      /* 0x34 which number the sprite stands for (func_001FC820 gives its current value) */
+    u8 unk31;                       /* 0x31 the kind (KindObject.kind); 2: MenuDraw_Number asks MenuDraw_GetNumber for the number */
+    u8 unk32;                       /* 0x32 which word of D_0042A078 MenuDraw_Word draws (kind 1) */
+    u8 unk33;                       /* 0x33 how many digits MenuDraw_Number draws; 0: three digits, a point and one more */
+    s32 unk34;                      /* 0x34 which number the sprite stands for (MenuDraw_GetNumber gives its current value) */
     char pad38[0x06];
     u8 unk3E;                       /* 0x3E 1: a menu screen's own sprite, 2: one Menu_DrawBackdropItemSelParts/Menu_DrawBackdropPreshopParts draw */
     s8 slot;                        /* 0x3F which slot the packet belongs to */
@@ -265,13 +266,13 @@ typedef struct {
     s32 unk19C;                  /* 0x19C */
 } GsFillPacket;
 
-/* the two packet buffers func_001FBE70 alternates between (D_00446D48) */
+/* the two packet buffers MenuDraw_NextPacket alternates between (D_00446D48) */
 typedef struct {
     void *buffers[2];
 } BufferPair;
 
 /* hands out the next packet buffer to fill; callers use it as whichever packet they build */
-void *func_001FBE70(void);
+void *MenuDraw_NextPacket(void);
 
 /* one 32-bit word of a packet built in place (func_001E5070), written as an integer or as a float */
 typedef union {
@@ -304,8 +305,10 @@ typedef struct {
     u32 colours_important;          /* 0x24 */
 } BmpInfoHeader;
 
+#ifndef SCE_LIBGRAPH_LIBGRAPH_H /* a file that includes <libgraph.h> first uses its prototypes */
 int sceGsPutDrawEnv(GsDrawPacket *);
 int sceGsSetDefDrawEnv(GsDrawEnv *, s16, s16, s16, s16, s16);
 int sceGsSyncPath(int, int);
+#endif
 
 #endif

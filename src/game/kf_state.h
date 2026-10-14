@@ -39,13 +39,13 @@ typedef struct {
 
 extern SaveScreen D_005CF3C0;
 
-/* what the D_00440B70 handlers build; func_00207478 dispatches it by kind */
+/* what the D_00440B70 handlers build; MenuSprite_Draw dispatches it by kind */
 typedef struct {
     char pad00[0x31];
     u8 kind;                        /* 0x31 picks the function that consumes the object */
 } KindObject;
 
-/* the 0x60-byte objects D_00446BF4 points at, drawn by func_00207478 and func_00203F28 (D_00446BFC
+/* the 0x60-byte objects D_00446BF4 points at, drawn by MenuSprite_Draw and MenuSprite_DrawPlain (D_00446BFC
    is taken to point at the same kind of object: inferred from the matching offsets, not proven) */
 typedef struct {
     char pad00[0x20];

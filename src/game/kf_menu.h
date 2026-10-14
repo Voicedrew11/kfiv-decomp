@@ -5,7 +5,7 @@
 #include "common.h"
 #include "kf_gs.h"
 
-/* the colour the menus draw with (D_00446C78), eight bytes passed by value to func_001FDCD0 and func_00201E10 */
+/* the colour the menus draw with (D_00446C78), eight bytes passed by value to MenuText_SetColor and MenuModel_DrawTinted */
 typedef struct {
     u8 red;                         /* 0x00 */
     u8 green;                       /* 0x01 */
@@ -14,7 +14,7 @@ typedef struct {
     char pad04[0x04];
 } MenuColor;
 
-/* the flat rectangle func_001FC5E8 draws: a SpritePacket whose corners are filled as GsPackedWord */
+/* the flat rectangle MenuDraw_Bar draws: a SpritePacket whose corners are filled as GsPackedWord */
 typedef struct {
     GsPackedWord first;             /* 0x00 x, y and z of the top left corner */
     char pad08[0x08];
@@ -195,7 +195,7 @@ typedef struct {
     s8 per_group[11];               /* 0x00 */
 } EquipGroupBytes;
 
-/* the glyph sprite func_001FC0D8 draws: a KindObject of kind 1 */
+/* the glyph sprite MenuDraw_Word draws: a KindObject of kind 1 */
 typedef struct {
     GsPackedWord first;             /* 0x00 x, y and z of the top left corner */
     char pad08[0x08];
@@ -212,7 +212,7 @@ typedef struct {
 } MenuGlyphSprite;
 
 /* D_00446D58: how much of a font texture one glyph cell covers across and down (1/25.6 each); the sprite
-   drawers func_001FC0D8 and func_001FCBD0 copy it whole to a local */
+   drawers MenuDraw_Word and MenuDraw_Number copy it whole to a local */
 typedef struct {
     f32 step[2];
 } MenuGlyphCell;
@@ -221,7 +221,7 @@ typedef struct {
 typedef struct {
     char pad00[0x0C];
     u32 frame_count;                /* 0x0C */
-    char frames[1];                 /* 0x10 handed to func_00203820 */
+    char frames[1];                 /* 0x10 handed to PoolNode_Pose */
 } MenuModelMotion;
 
 /* a 4x4 matrix inside a union: a store through it may alias any later load, so it stays ahead of one
@@ -246,7 +246,7 @@ typedef struct {
     f32 position[6][4] __attribute__((aligned(16))); /* 0x00 */
 } KeyItemPositions;
 
-/* D_0043FEE0: where the six key item names go, as func_001FDB88 takes it; copied whole */
+/* D_0043FEE0: where the six key item names go, as MenuText_SetPen takes it; copied whole */
 typedef struct {
     GsPackedWord word[6];           /* 0x00 */
 } KeyItemNameWords;

@@ -135,10 +135,10 @@ int func_001025C0(int, void *, int);
 int func_001024B0(int file);
 int func_00102790(int file, int mode);
 int FlushCache(int);
-void func_002007C0(char *);
+void PoolPartFile_Relocate(char *);
 extern int D_004472F0;
 extern PoolPartSource *D_00420DF0[13];
-void func_002032E0(PoolPartSource *, u32);
+void PoolSlot_LoadGroup(PoolPartSource *, u32);
 extern ChunkPoolNode *D_004472B0;
 extern ChunkPoolNode D_005CE900[];
 int sprintf(char *, char *, ...);
@@ -169,10 +169,10 @@ extern LinkNode D_005CECA0;
 extern LinkNode D_005CEF30[12];
 extern s32 D_00446F58;
 extern ChunkUpload D_005CEEE0;
-int func_001FBDE8(int); // match: this file only matches with an int result
-s32 func_001FBDF8(s32 size, s32 align);
-void *func_001FBD90(int);
-int func_00203FC8(char *, void *);
+int MenuArena_Init(int); // match: this file only matches with an int result
+void *MenuArena_Alloc(s32, s32);
+void *MenuHeap_Alloc(int);
+int MenuFile_Load(char *, void *);
 extern u32 D_00446A30;
 extern u32 D_00446A34;
 extern u32 D_00446A38;
@@ -252,12 +252,12 @@ extern LoadedTexture D_0042A8D0;
 extern MenuModelMotion *D_005CEE60[];
 int sceGsResetGraph(int, int, int, int);
 void sceGsSetDefDBuffDc(void *, s16, s16, s16, s16, s16, s16);
-void func_001FBD70(void);
-void func_00204128(char *);
-void func_001FBD80(void);
-void func_00204D60(TextureHeader *, u64 *, u64 *);
-void func_001FBDC8(void);
-s32 func_00200820(RelocFile *);
+void MenuHeap_Reset(void);
+void MenuFile_IndexBlocks(char *);
+void MenuHeap_Mark(void);
+void MenuTexture_GetRegisters(TextureHeader *, u64 *, u64 *);
+void MenuHeap_FreeToMark(void);
+s32 PoolNodeFile_Relocate(RelocFile *);
 struct sceCdCLOCK;
 int sceCdReadClock(struct sceCdCLOCK *);
 int sceGsSyncV(int);
@@ -272,7 +272,7 @@ void func_001A15B8(void);
 void func_001A15C0(void);
 void func_001B5460(void);
 int func_001CEBE0(void);
-s16 func_00206C40(void);
+s16 MenuPad_Update(void);
 extern GsDrawEnv D_00432D80;
 extern s32 D_00446AC4;
 extern s8 D_00446C94;
@@ -286,9 +286,9 @@ extern int D_004472D4;
 extern MenuScreenState D_005CF2F0;
 extern ColorBytes D_00446C78;
 extern f32 D_0042B7D0[16];
-void func_00201E10(ChunkUpload *upload, s32 draw_param, RenderSlotArg slot_arg);
+void MenuModel_DrawTinted(ChunkUpload *upload, s32 draw_param, RenderSlotArg slot_arg);
 // match: called with the node, a matrix and the colour, not as the definition has it (the colour is loaded unaligned)
-#define DRAW_NODE_MODEL(node, matrix, colour) ((void (*)(LinkNode *, f32 *, ColorBytes))func_00201E10)(node, matrix, colour)
+#define DRAW_NODE_MODEL(node, matrix, colour) ((void (*)(LinkNode *, f32 *, ColorBytes))MenuModel_DrawTinted)(node, matrix, colour)
 void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
 extern u64 D_004261A0[47];             /* the frame register of the first buffer ([0]) and of the second ([46]) */
 extern u8 D_00349680[0x10];  /* the options block */
@@ -306,7 +306,7 @@ int sceGsSetHalfOffset2(void *, int, int, s16);
 int sceGsSwapDBuffDc(GsDoubleBufferDc *, int);
 extern ColorBytes D_00446B18[]; // match: the initialiser of the local below ({ 0x10, 0x10, 0x10 }); an array so it is not reached through $gp
 int func_001E5210(u8);
-void func_00203F28(int owner, int index, int param);
+void MenuSprite_DrawPlain(int owner, int index, int param);
 extern s32 D_00446AC8;
 extern char D_005CE0E0[];
 extern u8 D_0034968A[];
@@ -328,7 +328,7 @@ void func_001096E8(void);
 void func_00109800(void);
 void func_00109E88(void);
 void func_0010B238(TextureTableHeader *);
-void func_00204180(TextureHeader *, LoadedBlockRef *);
+void MenuTexture_Upload(TextureHeader *, LoadedBlockRef *);
 extern s8 D_004472CD;
 void func_001A1260(int);
 void *memset(void *, int, u32);
@@ -341,7 +341,7 @@ extern s8 D_004472D8;
 s32 func_0019CDC0(s32);
 int func_001F92D0(void);
 int func_001F93A8(void);
-void func_00207478(int, int, int, int);
+void MenuSprite_Draw(int, int, int, int);
 extern u8 D_00446B39;
 extern GameStatus D_0038CC50;
 extern f32 D_00421000[4];
@@ -351,10 +351,10 @@ extern s32 D_00446DF4;
 extern s8 D_004472C5;               /* 0: fading in, 1: open, 2 to 4: waiting for the models, 5 to 7: fading out */
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
-void func_001FC5E8(MenuCursorBar *);
-s32 func_001FDCD0(ColorBytes bytes);
-s32 func_001FDD28(u16 *, s32);
-s32 func_00200068(u16 *, s32);
+void MenuDraw_Bar(MenuCursorBar *);
+s32 MenuText_SetColor(ColorBytes bytes);
+s32 MenuText_DrawWrapped(u16 *, s32);
+s32 MenuText_DrawWordWrappedLong(u16 *, s32);
 /* an angle brought back into -pi..pi (for angles above -pi) */
 static inline f32 wrap_angle(f32 angle) {
     angle += 3.1415927f;
@@ -363,8 +363,8 @@ static inline f32 wrap_angle(f32 angle) {
 extern f32 D_00421010[4];
 extern s32 D_00446DF8;
 extern s8 D_004472C8;               /* 0: fading in, 1: open, 2: waiting for the models, 3: fading out */
-int func_001FDC28(GsPackedWord);
-s32 func_001FE9A8(u16 *text, s32 limit);
+int MenuText_SetGlyphSize(GsPackedWord);
+s32 MenuText_DrawLine(u16 *text, s32 limit);
 extern u8 D_00413FBC[];
 extern MenuItem **D_00420D60[11];
 extern LinkNode *D_00420DC8[];
@@ -401,13 +401,13 @@ __asm__("D_004472C7 = D_004472C6 + 1");
 void func_001BA310(void);
 int func_001E4FE0(s32, u32);
 int func_001E5660(u32, s32, s32);
-s8 func_001FC0C0(s32);
-void func_001FC0D8(KindObject *);
-s32 func_001FF428(u16 *, s32);
-void func_002020A0(RenderSlot *, RenderSlotArg);
-s32 func_00203770(void);
-void func_00203820(RelocEntry *, PoolSlot *, f32 *, s32);
-s32 func_00207320(int, s64);
+s8 MenuDraw_GetWordStart(s32);
+void MenuDraw_Word(KindObject *);
+s32 MenuText_DrawLineCentered(u16 *, s32);
+void PoolSlot_Draw(RenderSlot *, RenderSlotArg);
+s32 PoolSlot_ClearParts(void);
+void PoolNode_Pose(RelocEntry *, PoolSlot *, f32 *, s32);
+s32 MenuDraw_SetGsRegister(int, s64);
 /* the item the cursor is on in the category shown */
 // match: the category is a MenuItem whose first word is a MenuItem pointer; read as an int it cannot pass the GS stores
 // match: the list read as a MenuItem (next, prev and group are at the same offsets)
@@ -417,7 +417,7 @@ s32 func_00207320(int, s64);
 #define SET_BLEND(mode) ((void (*)(u8))func_001E5210)(mode)
 #define DRAW_ITEM_MODEL(matrix) DRAW_NODE_MODEL(&D_00426470, matrix, D_00446C88)
 // match: called with the slot alone
-#define DRAW_SLOT(slot) ((void (*)(PoolSlot *))func_002020A0)(slot)
+#define DRAW_SLOT(slot) ((void (*)(PoolSlot *))PoolSlot_Draw)(slot)
 // match: forty dead additions. Retail's source gave about forty more RTL instructions than this one before the GCSE
 // pass; they leave no code, but they size that pass's hash table, and its bucket order numbers the five spilled stack
 // addresses (0x330..0x340 of the frame). What they were is not known; 38 to 44 additions give retail's bytes.
@@ -443,7 +443,7 @@ s32 func_00207320(int, s64);
 #define DRAW_PARTS(parts, count, variant)                       \
     for (i = 0; i < count; i++) {                               \
         SET_BLEND(parts[i].unk42);                          \
-        func_00207478((int)&parts[i], parts[i].unk3E + 1000, variant, (int)D_00425910[i]); \
+        MenuSprite_Draw((int)&parts[i], parts[i].unk3E + 1000, variant, (int)D_00425910[i]); \
         SET_BLEND(0);                                       \
     }
 extern s8 D_004472C9;               /* 0: fading in, 1: open, 2: fading out to Menu_UpdateKeyItems, 3: fading out to leave */
@@ -460,8 +460,8 @@ extern s32 D_00446BC4;              /* the page shown the frame before */
 extern s8 D_004472CA;               /* 0: fading in, 1: open, 2: fading out */
 extern s8 D_004472D9;               /* the counter at the top of the list */
 int sceCdBreak(void);
-s32 func_001FE350(u16 *, s32);
-s32 func_001FEEA8(u16 *, s32);
+s32 MenuText_DrawWrappedLong(u16 *, s32);
+s32 MenuText_DrawLineShortened(u16 *, s32);
 /* The offset of text `number` in the text table, 0 when it has none. */
 static inline s32 GetListTextOffset(s32 table, s32 number) {
     return ((s32 *)table)[number];
@@ -493,7 +493,7 @@ static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
 #define DRAW_PACKETS(packets, count, param)                                                             \
     for (i = 0; i < (count); i++) {                                                                     \
         func_001E5210((packets)[i].unk42);                                                              \
-        func_00207478((int)&(packets)[i], (packets)[i].unk3E + 1000, (param), (int)D_00425910[i]);      \
+        MenuSprite_Draw((int)&(packets)[i], (packets)[i].unk3E + 1000, (param), (int)D_00425910[i]);      \
         ((void (*)(u8))func_001E5210)(0);                                                               \
     }
 extern s32 D_004472E8;
@@ -1236,7 +1236,7 @@ static void Menu_FinishModelLoad(ChunkUpload *upload) {
     LinkFile *file;
 
     file = upload->pool_node->buffer;
-    func_002007C0((char *)file + file->first_offset);
+    PoolPartFile_Relocate((char *)file + file->first_offset);
     FlushCache(0);
     upload->done = 1;
     upload->stage = 0;
@@ -1302,7 +1302,7 @@ static void Menu_WaitWornModelRead(ChunkUpload *upload) {
     }
 }
 
-/* func_002032E0's second argument for each slot of D_00420DF0 */
+/* PoolSlot_LoadGroup's second argument for each slot of D_00420DF0 */
 static const LinkSlotValues slot_part_values = { { 4, 0xFF, 5, 2, 1, 3, 0, 6, 7, 8, 0xFF, 0xFF } };
 
 /* Last stage of a node's load: points its slot at the two parts of the file, gives the buffer to
@@ -1323,11 +1323,11 @@ static void Menu_FinishWornModelLoad(LinkNode *node) {
     file = ((ChunkPoolNode *)node->pool_node)->buffer;
     D_00420DF0[target->slot]->texture = (char *)file + file->second_offset;
     D_00420DF0[target->slot]->file = (PoolPartFile *)((char *)file + file->first_offset);
-    func_002007C0((char *)D_00420DF0[target->slot]->file);
+    PoolPartFile_Relocate((char *)D_00420DF0[target->slot]->file);
     pool_node = node->unk10->pool_node;
     node->unk10->pool_node = node->pool_node;
     node->pool_node = pool_node;
-    func_002032E0(D_00420DF0[node->unk10->slot], values.value[node->unk10->slot]);
+    PoolSlot_LoadGroup(D_00420DF0[node->unk10->slot], values.value[node->unk10->slot]);
     loaded = node->unk10;
     node->unk1C = 0;
     node->unk08 = -1;
@@ -1402,7 +1402,7 @@ static void Menu_FinishPackageLoad(ChunkUpload *upload) {
     chunk = (char *)header + 0x10;
     for (i = 0; i < *header; i++) {
         next = chunk + ((int *)chunk)[3];
-        func_002007C0(chunk + ((int *)chunk)[1]);
+        PoolPartFile_Relocate(chunk + ((int *)chunk)[1]);
         chunk = next + ((int *)chunk)[2];
     }
     FlushCache(0);
@@ -1855,14 +1855,14 @@ static void Menu_ShiftSpellModelsPrev(int unused) {
 void Menu_InitLoadBuffers(void) {
     u32 i;
 
-    func_001FBDE8(D_00446F58);
+    MenuArena_Init(D_00446F58);
     D_004472B0 = D_005CE900;
     for (i = 0; i < 15; i++) {
         D_005CE900[i].next = &D_005CE900[i + 1];
-        D_005CE900[i].buffer = (void *)func_001FBDF8(0x25800, 0x10);
+        D_005CE900[i].buffer = (void *)MenuArena_Alloc(0x25800, 0x10);
     }
     D_005CE900[15].next = NULL;
-    D_005CE900[15].buffer = (void *)func_001FBDF8(0x25800, 0x10);
+    D_005CE900[15].buffer = (void *)MenuArena_Alloc(0x25800, 0x10);
     D_005CEEE0.pool_node = D_005CE900;
     D_005CEEE0.callback = Menu_StepPackageLoad;
     D_005CEEE0.stage = 0;
@@ -1874,8 +1874,8 @@ void Menu_InitLoadBuffers(void) {
 static void Menu_LoadPartFile(char *name, u32 *record_count, SpritePacket **records) {
     u32 *file_data;
 
-    file_data = func_001FBD90(0x2800);
-    if (func_00203FC8(name, file_data) != 0) {
+    file_data = MenuHeap_Alloc(0x2800);
+    if (MenuFile_Load(name, file_data) != 0) {
         *record_count = (*file_data - 0x10) / 0x60;
         if (*record_count == 0) {
             *records = NULL;
@@ -1937,21 +1937,21 @@ void Menu_Init(void) {
     sceGsResetGraph(0, 1, 2, 1);
     sceGsSetDefDBuffDc(&D_00426140, 0, 0x280, 0xE0, 3, 0x30, 1);
     D_00426140.clear1_rgbaq = D_00426140.clear0_rgbaq = 0x180000000L;
-    func_001FBD70();
+    MenuHeap_Reset();
     Menu_LoadAllParts();
-    menu_file = func_001FBD90(0xE0000);
-    func_00203FC8("menu/menu.tmx", menu_file);
-    func_00204128(menu_file);
-    func_001FBD80();
-    D_0042A8D0.header = func_001FBD90(0x23000);
-    func_00203FC8("menu/font.tmr", D_0042A8D0.header);
-    func_00204D60(D_0042A8D0.header, &D_0042A8D0.tex0, &D_0042A8D0.trailer);
-    func_001FBDC8();
+    menu_file = MenuHeap_Alloc(0xE0000);
+    MenuFile_Load("menu/menu.tmx", menu_file);
+    MenuFile_IndexBlocks(menu_file);
+    MenuHeap_Mark();
+    D_0042A8D0.header = MenuHeap_Alloc(0x23000);
+    MenuFile_Load("menu/font.tmr", D_0042A8D0.header);
+    MenuTexture_GetRegisters(D_0042A8D0.header, &D_0042A8D0.tex0, &D_0042A8D0.trailer);
+    MenuHeap_FreeToMark();
     for (i = 0; i < 20; i++) {
-        D_005CEE60[i] = func_001FBD90(0x2800);
+        D_005CEE60[i] = MenuHeap_Alloc(0x2800);
         sprintf(name, "menu/equip/a%03d.mi2", i);
-        func_00203FC8(name, D_005CEE60[i]);
-        func_00200820((RelocFile *)D_005CEE60[i]);
+        MenuFile_Load(name, D_005CEE60[i]);
+        PoolNodeFile_Relocate((RelocFile *)D_005CEE60[i]);
     }
     for (i = 0; i < 150; i++) {
         D_00424600[i].unk0C = i;
@@ -2135,7 +2135,7 @@ void Menu_Init(void) {
     D_005CE7E0.next = &D_005CE7D0;
     D_005CE7F0.next = &D_005CE7E0;
     D_005CE810.next = &D_005CE7F0;
-    func_001FBD80();
+    MenuHeap_Mark();
 }
 
 extern char D_00446AE0[8];
@@ -2189,7 +2189,7 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
             D_00447204 = 1;
         }
         D_004472D4 = status;
-        func_00206C40();
+        MenuPad_Update();
         if (D_00447204 > 0) {
             D_00447204++;
             if (D_00447204 > 20) {
@@ -2200,7 +2200,7 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         }
     }
     if (D_00446C94 == 0 && D_005CF2F0.unk16 == 0) {
-        packet = func_001FBE70();
+        packet = MenuDraw_NextPacket();
         packet[1] = 0x100B4000; // match: the tag word packet[0] is written last
         packet[2] = 0xE;
         packet[3] = 0;
@@ -2283,7 +2283,7 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         }
         return 0;
     case 1:
-        func_001FBDC8();
+        MenuHeap_FreeToMark();
         sceGsSyncPath(0, 0);
         Menu_EndFrame(0);
         sceGsSyncV(0);
@@ -2324,7 +2324,7 @@ static void Menu_SendUnusedFlatSprite(void) {
     GsPacketWord *packet;
     GsPacketWord *cursor;
 
-    packet = (GsPacketWord *)func_001FBE70();
+    packet = (GsPacketWord *)MenuDraw_NextPacket();
     cursor = packet;
     cursor++;
     (cursor++)->as_int = 0x10000000;
@@ -2398,7 +2398,7 @@ static void Menu_SendUnusedSpriteFirst(void) {
     GsPacketWord *packet;
     GsPacketWord *cursor;
 
-    packet = (GsPacketWord *)func_001FBE70();
+    packet = (GsPacketWord *)MenuDraw_NextPacket();
     cursor = packet;
     cursor++;
     (cursor++)->as_int = 0x10000000;
@@ -2472,7 +2472,7 @@ static void Menu_SendUnusedSpriteSecond(void) {
     GsPacketWord *packet;
     GsPacketWord *cursor;
 
-    packet = (GsPacketWord *)func_001FBE70();
+    packet = (GsPacketWord *)MenuDraw_NextPacket();
     cursor = packet;
     cursor++;
     (cursor++)->as_int = 0x10000000;
@@ -2546,7 +2546,7 @@ static void Menu_SendUnusedSpriteSecond(void) {
 int Menu_DrawItemModel(f32 *matrix) { // match: callers declare an int result; nothing is returned
     u32 *packet;
 
-    packet = func_001FBE70();
+    packet = MenuDraw_NextPacket();
     packet[0] = 0x8002;
     packet[1] = 0x10000000;
     packet[2] = 0xE;
@@ -2575,7 +2575,7 @@ static s32 Menu_CopyFrameToTexture(void) {
     u32 *packet;
 
     if (D_00446C94 == 0) {
-        packet = func_001FBE70();
+        packet = MenuDraw_NextPacket();
         texture_base = 0x1180;
         if (D_00446F78 == 0) {
             texture_base = 0;
@@ -2731,7 +2731,7 @@ static void Menu_DrawBackdropPlain(void) {
     u32 *packet;
 
     if (D_00446C94 == 0) {
-        packet = func_001FBE70();
+        packet = MenuDraw_NextPacket();
         packet[0] = 0x8001;
         packet[1] = 0x740B4000;
         packet[2] = 0xF5252160;
@@ -2754,7 +2754,7 @@ static void Menu_DrawBackdropPlain(void) {
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
         *D2_CHCR = 0x100;
         sceGsSyncPath(0, 0);
-        packet = func_001FBE70();
+        packet = MenuDraw_NextPacket();
         packet[0] = 0x8001;
         packet[1] = 0x44000000;
         packet[2] = 0x5510;
@@ -2782,7 +2782,7 @@ static void Menu_DrawBackdropItemSelParts(void) {
     for (i = 0; i < D_00446A4C; i++) {
         if (D_00447248[i].unk3E == 2) {
             func_001E5210(D_00447248[i].unk42);
-            func_00203F28((int)&D_00447248[i], 2, 0);
+            MenuSprite_DrawPlain((int)&D_00447248[i], 2, 0);
             func_001E5210(0);
         }
     }
@@ -2795,7 +2795,7 @@ static void Menu_DrawBackdropPreshopParts(void) {
     for (i = 0; i < D_00446A74; i++) {
         if (D_00446BFC[i].unk3E == 2) {
             func_001E5210(D_00446BFC[i].unk42);
-            func_00203F28((int)&D_00446BFC[i], 2, 0);
+            MenuSprite_DrawPlain((int)&D_00446BFC[i], 2, 0);
             func_001E5210(0);
         }
     }
@@ -2829,10 +2829,10 @@ static s32 Menu_Start(void) {
     ((s32 (*)(void))func_00109800)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < D_00446DEC; i++) {
         block = &D_0042A2A0[i];
-        func_00204180(block->data, block);
+        MenuTexture_Upload(block->data, block);
     }
-    func_001FBDE8(D_00446F58);
-    packet = func_001FBE70();
+    MenuArena_Init(D_00446F58);
+    packet = MenuDraw_NextPacket();
     packet[0] = 0x8001;
     packet[1] = 0x10000000;
     packet[2] = 0xE;
@@ -2993,9 +2993,9 @@ static void Menu_UpdateMain(HandlerContext *context) {
         kind = D_0044722C[i].unk3E;
         func_001E5210(D_0044722C[i].unk42);
         if (D_004472C4 != 1) {
-            func_00207478((int)&D_0044722C[i], kind + 1000, D_004472CD, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_0044722C[i], kind + 1000, D_004472CD, (int)D_00425510[i]);
         } else {
-            func_00207478((int)&D_0044722C[i], kind, D_004472CD, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_0044722C[i], kind, D_004472CD, (int)D_00425510[i]);
         }
         func_001E5210(0);
     }
@@ -3152,9 +3152,9 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         kind = D_00447230[i].unk3E;
         ((void (*)(u8))func_001E5210)(D_00447230[i].unk42); // match: called as if it returned nothing
         if (D_00426110[0] != NULL) {
-            func_00207478((int)&D_00447230[i], kind + 1000, 0, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00447230[i], kind + 1000, 0, (int)D_00425510[i]);
         } else {
-            func_00207478((int)&D_00447230[i], kind + 1000, 1, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00447230[i], kind + 1000, 1, (int)D_00425510[i]);
         }
         ((void (*)(u8))func_001E5210)(0); // match: called as if it returned nothing
     }
@@ -3179,7 +3179,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
                     D_00425510[253] = Menu_PulseValue(D_00425510[253], 0x10, 0x20);
                 }
                 bar.alpha = (s32)D_00425510[253];
-                func_001FC5E8(&bar);
+                MenuDraw_Bar(&bar);
                 break;
             }
         }
@@ -3191,11 +3191,11 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         sceVu0TransMatrix(local, local, D_00421000);
         Menu_DrawItemModel(local);
         item = D_00426120[0];
-        func_001FDCD0(D_00446C78);
+        MenuText_SetColor(D_00446C78);
         for (row = 0; row < 7; row++, item = item->prev) {
             text = (s32)&D_004147F8[item->unk0C];
-            func_001FDB88(word);
-            ((s32 (*)(s32, s32))func_001FDD28)(text, 0x1A); // match: called as if it took and returned a number
+            MenuText_SetPen(word);
+            ((s32 (*)(s32, s32))MenuText_DrawWrapped)(text, 0x1A); // match: called as if it took and returned a number
             word.f.mid16 += 0xB0;
             word.f.lo16 = 0x7080;
             if (D_00426130[0]->prev == item) {
@@ -3207,11 +3207,11 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         slot = item->unk0C + 0x1F5;
         entry = ((s32 *)table)[slot];
         word.raw = 0x000A875083207080;
-        func_001FDB88(word);
+        MenuText_SetPen(word);
         if (entry != 0) {
             text = table + entry;
-            func_001FDCD0(D_00446C78);
-            func_00200068((u16 *)text, 0x33);
+            MenuText_SetColor(D_00446C78);
+            MenuText_DrawWordWrappedLong((u16 *)text, 0x33);
         }
     }
     if ((D_00446DE8 & 0x4000) && D_004472DA != 0 && D_00426110[0] != NULL) {
@@ -3348,10 +3348,10 @@ static void Menu_UpdateCastSpell(s32 context) {
     }
     item = D_005CE890[0];
     word.raw = 0x0C0AAE607C307080;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     corner.raw = 0x0A0F42407C307000;
     pitch.raw = 0xB00140;
-    func_001FDC28(pitch);
+    MenuText_SetGlyphSize(pitch);
     i = 0;
     number = D_005CE880[0]->unk0C; /* the selected magic's number */
     page = (number - 1) / 15;
@@ -3360,7 +3360,7 @@ static void Menu_UpdateCastSpell(s32 context) {
     for (; i < D_00446A38; i++) {
         kind = D_00447234[i].unk3E;
         func_001E5210(D_00447234[i].unk42);
-        func_00207478((int)&D_00447234[i], kind + 1000, page, (int)D_00425510[i]);
+        MenuSprite_Draw((int)&D_00447234[i], kind + 1000, page, (int)D_00425510[i]);
         ((void (*)(u8))func_001E5210)(0); // match: called as if it returned nothing
     }
     for (row = 0; row < 7; row++, item = item->prev) {
@@ -3378,14 +3378,14 @@ static void Menu_UpdateCastSpell(s32 context) {
                 D_00425510[253] = Menu_PulseValue(D_00425510[253], 0x10, 0x20);
             }
             bar.alpha = (s32)D_00425510[253];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
             break;
         }
     }
     item = D_005CE890[0];
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     for (row = 0; row < 7; row++, item = item->prev) {
-        func_001FE9A8((u16 *)&D_00402DA8[item->unk0C], 0x1A);
+        MenuText_DrawLine((u16 *)&D_00402DA8[item->unk0C], 0x1A);
         word.f.mid16 += 0xB0; // match: dead, left over from the item menu (Menu_UpdateUseItem), which sets the row's place here
         word.f.lo16 = 0x7080; // match: dead as well; without the two lines the loop is compiled differently
         if (D_005CE8A0[0]->prev == item) {
@@ -3397,13 +3397,13 @@ static void Menu_UpdateCastSpell(s32 context) {
     slot = selected->unk0C + 0x385;
     entry = ((s32 *)table)[slot];
     word.raw = 0x000A875082E07000;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
-        func_00200068((u16 *)(table + entry), 0x35);
+        MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x35);
     }
     sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     sceVu0TransMatrix(local, view, D_00421010);
-    packet = func_001FBE70();
+    packet = MenuDraw_NextPacket();
     packet[0] = 0x8002;
     packet[1] = 0x10000000;
     packet[2] = 0xE;
@@ -3598,9 +3598,9 @@ static void Menu_UpdateEquip(void) {
         kind = D_00447238[i].unk3E;
         SET_BLEND(D_00447238[i].unk42);
         if (func_001E5660(D_004472E0, CURRENT_ITEM->group, CURRENT_ITEM->unk0C)) {
-            func_00207478((int)&D_00447238[i], kind + 1000, 0, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00447238[i], kind + 1000, 0, (int)D_00425510[i]);
         } else {
-            func_00207478((int)&D_00447238[i], kind + 1000, 1, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00447238[i], kind + 1000, 1, (int)D_00425510[i]);
         }
         SET_BLEND(0);
     }
@@ -3642,7 +3642,7 @@ static void Menu_UpdateEquip(void) {
     if (D_0041B9B8[D_00413F80.unk3C].unk63 == 0) {
         D_00446ACC += D_0041E118[D_00413F80.equipment[0]].unk3F;
     }
-    func_00203820((RelocEntry *)D_005CEE60[D_00446ACC]->frames, D_0042A8F0, weapon_matrix, D_00446B5C);
+    PoolNode_Pose((RelocEntry *)D_005CEE60[D_00446ACC]->frames, D_0042A8F0, weapon_matrix, D_00446B5C);
     D_00446B5C++;
     D_00446B5C %= D_005CEE60[D_00446ACC]->frame_count;
     // match: a pointer-typed load, as in CURRENT_ITEM
@@ -3659,7 +3659,7 @@ static void Menu_UpdateEquip(void) {
         break;
     }
     draw = D_0042A290[D_00446ACC];
-    scissor_packet = func_001FBE70();
+    scissor_packet = MenuDraw_NextPacket();
     scissor_packet[0] = 0x8001;
     scissor_packet[1] = 0x10000000;
     scissor_packet[2] = 0xE;
@@ -3679,7 +3679,7 @@ static void Menu_UpdateEquip(void) {
     DRAW_SLOT(&D_0042A8F0[22]);
     DRAW_SLOT(&D_0042A8F0[23]);
     draw(D_0042A8F0, D_00446C88);
-    full_packet = func_001FBE70();
+    full_packet = MenuDraw_NextPacket();
     full_packet[0] = 0x8001;
     full_packet[1] = 0x10000000;
     full_packet[2] = 0xE;
@@ -3689,7 +3689,7 @@ static void Menu_UpdateEquip(void) {
     full_packet[6] = 0x40;
     full_packet[7] = 0;
     GIF_SEND(full_packet, 2);
-    packet = func_001FBE70();
+    packet = MenuDraw_NextPacket();
     packet[0] = 0x8002;
     packet[1] = 0x10000000;
     packet[2] = 0xE;
@@ -3761,7 +3761,7 @@ static void Menu_UpdateEquip(void) {
                 }
                 D_00446B50 = 0;
                 DRAW_PARTS(D_0044723C, D_00446A40, 0);
-                func_001FDCD0(D_00446C80);
+                MenuText_SetColor(D_00446C80);
                 Menu_DrawEquipItemText(500);
             }
             parts = D_0044723C;
@@ -3789,7 +3789,7 @@ static void Menu_UpdateEquip(void) {
                     }
                     D_00446B50 = 0;
                     DRAW_PARTS(D_00447244, D_00446A48, (index - 1) / 15);
-                    func_001FDCD0(D_00446C80);
+                    MenuText_SetColor(D_00446C80);
                     Menu_DrawEquipItemText(900);
                 }
                 parts = D_00447244;
@@ -3805,7 +3805,7 @@ static void Menu_UpdateEquip(void) {
                     }
                     D_00446B50 = 0;
                     DRAW_PARTS(D_00446C6C, D_00446AC0, (index + 1) / 15);
-                    func_001FDCD0(D_00446C80);
+                    MenuText_SetColor(D_00446C80);
                     Menu_DrawEquipItemText(900);
                 }
                 parts = D_00446C6C;
@@ -3823,10 +3823,10 @@ static void Menu_UpdateEquip(void) {
                 D_00446B50 = 0;
                 for (i = 0; i < D_00446A80; i++) {
                     SET_BLEND(D_0044726C[i].unk42);
-                    func_00207478((int)&D_0044726C[i], 1002, 1, (int)D_00425910[i]);
+                    MenuSprite_Draw((int)&D_0044726C[i], 1002, 1, (int)D_00425910[i]);
                     SET_BLEND(0);
                 }
-                func_001FDCD0(D_00446C80);
+                MenuText_SetColor(D_00446C80);
                 Menu_DrawEquipItemText(500);
             }
             parts = D_0044726C;
@@ -3859,7 +3859,7 @@ static void Menu_UpdateEquip(void) {
                     RESET_ALPHAS(D_00447240, D_00446A44);
                 }
                 DRAW_PARTS(D_00447240, D_00446A44, D_00446E1C);
-                func_001FDCD0(D_00446C80);
+                MenuText_SetColor(D_00446C80);
                 Menu_DrawEquipItemText(500);
             }
             parts = D_00447240;
@@ -3888,7 +3888,7 @@ static void Menu_UpdateEquip(void) {
                     RESET_ALPHAS(D_00447240, D_00446A44); // match: the armour panel's list; the parts drawn and faded in this case are D_00447268's
                 }
                 DRAW_PARTS(D_00447268, D_00446A7C, D_00446E1C);
-                func_001FDCD0(D_00446C80);
+                MenuText_SetColor(D_00446C80);
                 Menu_DrawEquipItemText(500);
             }
             parts = D_00447268;
@@ -3932,16 +3932,16 @@ static void Menu_UpdateEquip(void) {
             break;
         }
     }
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     word.raw = 0x0A0A875084106EF0;
     word.f.mid24 = 0xA8750;
-    func_001FDB88(word);
-    func_001FF428(definition, 0x18);
+    MenuText_SetPen(word);
+    MenuText_DrawLineCentered(definition, 0x18);
     {
         EquipGroupBytes glyphs = equip_group_glyphs;
 
         glyph = glyphs.per_group[EQUIP_LIST->group];
-        width = func_001FC0C0(glyph + 1) - func_001FC0C0(glyph) - 1;
+        width = MenuDraw_GetWordStart(glyph + 1) - MenuDraw_GetWordStart(glyph) - 1;
         offset = (s32)(width * 0.5f * 20.0f);
         sprite.red = D_00446C78.red;
         sprite.green = D_00446C78.green;
@@ -3955,15 +3955,15 @@ static void Menu_UpdateEquip(void) {
         sprite.second.f.lo16 = (width * 20 << 4) + (1865 << 4) - (offset << 4);
         sprite.second.f.mid16 = 0x7C00;
         sprite.second.f.mid24 = 0xA8750;
-        func_001FDCD0(D_00446C78);
-        ((int (*)(KindObject *))func_001FC0D8)((KindObject *)&sprite); // match: the result register stays taken
+        MenuText_SetColor(D_00446C78);
+        ((int (*)(KindObject *))MenuDraw_Word)((KindObject *)&sprite); // match: the result register stays taken
     }
     if (D_00446AD5 != 0) {
-        func_00207320(0x47, 0x30000);
+        MenuDraw_SetGsRegister(0x47, 0x30000);
         word.raw = 0x000A87507AF07D00;
         for (i = 0; i < D_00446A80; i++) {
             SET_BLEND(D_0044726C[i].unk42);
-            func_00207478((int)&D_0044726C[i], D_0044726C[i].unk3E + 1000, 0, (int)D_00425910[i]);
+            MenuSprite_Draw((int)&D_0044726C[i], D_0044726C[i].unk3E + 1000, 0, (int)D_00425910[i]);
             SET_BLEND(0);
         }
         switch (D_004472C7) {
@@ -4014,9 +4014,9 @@ static void Menu_UpdateEquip(void) {
             } else {
                 listed = &D_004147F8[(*D_00420D60[i])->unk0C];
             }
-            func_001FDB88(word);
-            func_001FDCD0(D_00446C80);
-            ((int (*)(void *, s32))func_001FDD28)(listed, 0x1A); // match: the result register stays taken
+            MenuText_SetPen(word);
+            MenuText_SetColor(D_00446C80);
+            ((int (*)(void *, s32))MenuText_DrawWrapped)(listed, 0x1A); // match: the result register stays taken
             word.f.mid16 += 0xD0;
         }
     }
@@ -4134,7 +4134,7 @@ D_0042A8F0[15].part = NULL;
                 memset(D_00425510, 0, 0x400);
                 D_00446B20 = Menu_OpenMain;
                 ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
-                func_00203770();
+                PoolSlot_ClearParts();
                 D_00446C80.alpha = 0;
                 D_00446C80.red = D_00446C80.green = D_00446C80.blue = 0x80;
                 D_004472C6 = 0;
@@ -4158,7 +4158,7 @@ static void Menu_UpdateStatus(void) {
 
     for (i = 0; i < D_00446A50; i++) {
         func_001E5210(D_0044724C[i].unk42);
-        func_00207478((int)&D_0044724C[i], D_0044724C[i].unk3E + 1000, 0, (int)D_00425510[i]);
+        MenuSprite_Draw((int)&D_0044724C[i], D_0044724C[i].unk3E + 1000, 0, (int)D_00425510[i]);
         ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
@@ -4285,7 +4285,7 @@ static const KeyItemPositions key_item_positions = { {
     { 0.0f, 55.0f, 380.0f, 0.0f },
     { 140.0f, 55.0f, 380.0f, 0.0f },
 } };
-/* where the six key item names go, as func_001FDB88 takes them */
+/* where the six key item names go, as MenuText_SetPen takes them */
 static const KeyItemNameWords key_item_name_words = { {
     { 0x0A2DC6C07F606F50 },
     { 0x0A2DC6C07F607B30 },
@@ -4327,7 +4327,7 @@ static void Menu_UpdateKeyItems(void) {
     sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     for (i = 0; i < D_00446A6C; i++) {
         func_001E5210(D_00447260[i].unk42);
-        func_00207478((int)&D_00447260[i], 1000, 0, (int)D_00425510[i]);
+        MenuSprite_Draw((int)&D_00447260[i], 1000, 0, (int)D_00425510[i]);
         ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
     D_00446BBC++;
@@ -4349,17 +4349,17 @@ static void Menu_UpdateKeyItems(void) {
             D_0042A8F0[31].unk60 = TEXTURE_HEADER_BITS(texture)->unk18.raw;
             D_0042A8F0[31].unk48 = NULL;
             D_0042A8F0[31].unk40 = NULL;
-            func_00204180(texture, NULL);
+            MenuTexture_Upload(texture, NULL);
             sceVu0TransMatrix((f32 *)&D_0042A8F0[31], view, positions.position[i]);
-            func_002020A0((RenderSlot *)&D_0042A8F0[31], slot_arg); // match: slot_arg is never set
+            PoolSlot_Draw((RenderSlot *)&D_0042A8F0[31], slot_arg); // match: slot_arg is never set
             number = &numbers.number[D_00421050[i + D_00446BB8 * 3]];
             if (D_00369830[*number] != 0) {
                 KeyItemNameWords words = key_item_name_words;
                 LevelDef *def = &D_004147F8[*number];
 
-                func_001FDCD0(D_00446C78);
-                func_001FDB88(words.word[i]);
-                func_001FF428((u16 *)def, 0x10);
+                MenuText_SetColor(D_00446C78);
+                MenuText_SetPen(words.word[i]);
+                MenuText_DrawLineCentered((u16 *)def, 0x10);
             }
         }
     }
@@ -4542,7 +4542,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
 
     for (i = 0; i < D_00446A54; i++) {
         func_001E5210(D_00447250[i].unk42);
-        func_00207478((int)&D_00447250[i], 1000, 0, (int)D_00425510[i]);
+        MenuSprite_Draw((int)&D_00447250[i], 1000, 0, (int)D_00425510[i]);
         ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
@@ -4553,7 +4553,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         view[15] = 1.0f;
         sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
         sceVu0TransMatrix(local, view, D_00421080);
-        packet = func_001FBE70();
+        packet = MenuDraw_NextPacket();
         packet[0] = 0x8002;
         packet[1] = 0x10000000;
         packet[2] = 0xE;
@@ -4591,19 +4591,19 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     first_text = D_00446BC0 * LIST_PAGES + 3001;
     entry = GetListTextOffset(table, first_text + LIST_PAGES - 1);
     word.raw = 0x000A875081106E80;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
         text = table + entry;
-        func_001FDCD0(D_00446C78);
-        func_001FF428((u16 *)text, 0x17);
+        MenuText_SetColor(D_00446C78);
+        MenuText_DrawLineCentered((u16 *)text, 0x17);
     }
     entry = GetListTextOffset(table, first_text + D_0034C4E0[D_00446BC0] - 1);
     word.raw = 0x000A875083106FE0;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
         text = table + entry;
-        func_001FDCD0(D_00446C78);
-        func_001FE350((u16 *)text, 0x33);
+        MenuText_SetColor(D_00446C78);
+        MenuText_DrawWrappedLong((u16 *)text, 0x33);
     }
 
     for (i = 0; i < LIST_ROWS && i < row_count; i++) {
@@ -4623,20 +4623,20 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
                 D_00425510[253] = Menu_PulseValue(D_00425510[253], 0x10, 0x20);
             }
             bar.alpha = (s32)D_00425510[253];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
             break;
         }
     }
 
     word.raw = 0x000AAE607C307F80;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     for (i = 0; i < LIST_ROWS && i < row_count; i++) {
         counter = D_004472D9 + i;
         entry = ((s32 *)table + first_text)[rows[counter % row_count]]; // match: the page's first text is added to the table, not to the row
         if (entry != 0) {
             text = table + entry;
-            func_001FDCD0(D_00446C78);
-            func_001FEEA8((u16 *)text, 0x1C);
+            MenuText_SetColor(D_00446C78);
+            MenuText_DrawLineShortened((u16 *)text, 0x1C);
         }
     }
 
@@ -4738,7 +4738,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     for (i = 0; i < D_00446A54; i++) {
         kind = D_00447250[i].unk3E;
         func_001E5210(D_00447250[i].unk42);
-        func_00203F28((int)&D_00447250[i], kind, 1);
+        MenuSprite_DrawPlain((int)&D_00447250[i], kind, 1);
         ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
     if (D_005CEEE0.done != 0) {
@@ -4747,7 +4747,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
         view[15] = 1.0f;
         sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
         sceVu0TransMatrix(local, view, D_00421090);
-        packet = func_001FBE70();
+        packet = MenuDraw_NextPacket();
         packet[0] = 0x8002;
         packet[1] = 0x10000000;
         packet[2] = 0xE;
@@ -4777,24 +4777,24 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     word.raw = 0x000A875081106E80;
     number = page * 50 + 3001;
     entry = GetPageTextOffset(table, number + 49);
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
-        func_001FF428((u16 *)(table + entry), 0x17);
+        MenuText_DrawLineCentered((u16 *)(table + entry), 0x17);
     }
     word.raw = 0x000A875083106FE0;
     entry = GetPageTextOffset(table, number + D_0034C4E0[page] - 1);
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
-        func_001FE350((u16 *)(table + entry), 0x33);
+        MenuText_DrawWrappedLong((u16 *)(table + entry), 0x33);
     }
     word.raw = 0x000AAE607C307F80;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     entry = ((s32 *)table)[context->unk04 + 1];
     if (entry != 0) {
         if (page == 0) {
-            func_001FE350((u16 *)(table + entry), 0x1B);
+            MenuText_DrawWrappedLong((u16 *)(table + entry), 0x1B);
         } else {
-            func_00200068((u16 *)(table + entry), 0x1B);
+            MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x1B);
         }
     }
     if (D_00446DE8 & 0x2000) {
@@ -4904,9 +4904,9 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         kind = D_00447254[i].unk3E;
         func_001E5210(D_00447254[i].unk42);
         if (D_005CE850[0]->group != 12) {
-            func_00207478((int)&D_00447254[i], kind + 1000, 0, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00447254[i], kind + 1000, 0, (int)D_00425510[i]);
         } else {
-            func_00207478((int)&D_00447254[i], kind + 1000, 1, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00447254[i], kind + 1000, 1, (int)D_00425510[i]);
         }
         ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
@@ -4930,7 +4930,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
                 D_00425510[253] = Menu_PulseValue(D_00425510[253], 0x10, 0x20);
             }
             bar.alpha = (s32)D_00425510[253];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
         }
         if (D_005CE870[0]->prev == item) {
             break;
@@ -4948,9 +4948,9 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
     for (row = 0; row < 7; row++, node = node->prev) {
         def = &D_004147F8[node->unk0C];
-        func_001FDB88(position);
-        func_001FDCD0(D_00446C78);
-        func_001FE9A8((u16 *)def, 0x1A);
+        MenuText_SetPen(position);
+        MenuText_SetColor(D_00446C78);
+        MenuText_DrawLine((u16 *)def, 0x1A);
         position.f.mid16 += 0xB0;
         if (D_005CE870[0]->prev == node) {
             break;
@@ -4967,11 +4967,11 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     position.raw = 0x000A875083207080;
     text_index = node->unk0C + 0x1F5;
     text_offset = ((s32 *)texts)[text_index];
-    func_001FDB88(position);
+    MenuText_SetPen(position);
     if (text_offset != 0) {
         text = texts + text_offset;
-        func_001FDCD0(D_00446C78);
-        func_00200068((u16 *)text, 0x33);
+        MenuText_SetColor(D_00446C78);
+        MenuText_DrawWordWrappedLong((u16 *)text, 0x33);
     }
 
     for (i = 0; i < D_00446A4C; i++) {
@@ -4979,9 +4979,9 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         if (kind != 2) {
             ((void (*)(u8))func_001E5210)(D_00447248[i].unk42); // match: called as returning nothing
             if (D_004472CB != 1 && ((worn_mask >> D_00447248[i].slot) & 1)) {
-                func_00207478((int)&D_00447248[i], kind + 1000, worn_mask, (int)D_00425510[i + 200]);
+                MenuSprite_Draw((int)&D_00447248[i], kind + 1000, worn_mask, (int)D_00425510[i + 200]);
             } else {
-                func_00203F28((int)&D_00447248[i], kind, worn_mask);
+                MenuSprite_DrawPlain((int)&D_00447248[i], kind, worn_mask);
             }
             func_001E5210(0);
         }
@@ -5220,12 +5220,12 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
         kind = D_00447258[i].unk3E;
         SET_PART_MODE(D_00447258[i].unk42);
         if (D_00446C70 == 4 && kind == 2) {
-            func_00207478((int)&D_00447258[i], 0x3EA, 0, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00447258[i], 0x3EA, 0, D_00425510[i]);
         } else if (kind != 2) {
             if (D_00446C70 != 1) {
-                func_00207478((int)&D_00447258[i], kind + 1000, D_004472E8, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00447258[i], kind + 1000, D_004472E8, D_00425510[i]);
             } else {
-                func_00207478((int)&D_00447258[i], kind, D_004472E8, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00447258[i], kind, D_004472E8, D_00425510[i]);
             }
         }
         SET_PART_MODE(0);
@@ -5243,7 +5243,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
         bar.blue = 0x78;
         D_00425510[0xFD] = Menu_PulseValue(D_00425510[0xFD], 0x10, 0x20);
         bar.alpha = D_00425510[0xFD];
-        func_001FC5E8(&bar); // match: the float at bar+0x24 that func_001FC5E8 copies is never set
+        MenuDraw_Bar(&bar); // match: the float at bar+0x24 that MenuDraw_Bar copies is never set
     }
 
     report = Pad_GetReport(0, 0);
@@ -5612,11 +5612,11 @@ static void Menu_UpdateCardSlot(void) {
         func_001E5210(D_00446BF4[i].unk42);
         switch (kind) {
         case 2:
-            func_00207478((int)&D_00446BF4[i], kind + 1000, 1, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 1, D_00425510[i]);
             break;
         case 29:
             if ((u8)D_00446BF4[i].slot < 2) {
-                func_00207478((int)&D_00446BF4[i], kind + 1000, D_00446BF4[i].slot, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, D_00446BF4[i].slot, D_00425510[i]);
             }
             break;
         case 3:
@@ -5625,67 +5625,67 @@ static void Menu_UpdateCardSlot(void) {
             case 5:
             case 9:
             case 10:
-                func_00207478((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
                 break;
             }
             break;
         case 31:
             if (D_005CF2F0.unk1B != 0) {
                 if (D_00446C70 != 1) {
-                    func_00207478((int)&D_00446BF4[i], kind + 1000, D_005CF2F0.unk0C, D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, D_005CF2F0.unk0C, D_00425510[i]);
                 } else {
-                    func_00207478((int)&D_00446BF4[i], kind, D_005CF2F0.unk0C, D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446BF4[i], kind, D_005CF2F0.unk0C, D_00425510[i]);
                 }
             }
             break;
         case 26:
             if (SaveCard_IsPresent(0) == 0) {
                 if (D_00446C70 == 0) {
-                    func_00207478((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
                 } else if (D_00446C70 < 2) {
                     if (D_00446C94 != 1 || D_00446BDC == 0) {
-                        func_00203F28((int)&D_00446BF4[i], kind, 0x20);
+                        MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x20);
                     }
                 }
             } else if (D_00446C70 != 1) {
-                func_00207478((int)&D_00446BF4[i], kind + 1000, 0x80, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x80, D_00425510[i]);
             } else {
-                func_00203F28((int)&D_00446BF4[i], kind, 0x80);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x80);
             }
             break;
         case 27:
             if (SaveCard_IsPresent(1) == 0) {
                 if (D_00446C70 == 0) {
-                    func_00207478((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
                 } else if (D_00446C70 < 2) {
                     if (D_00446C94 != 1 || D_00446BDC == 0) {
-                        func_00203F28((int)&D_00446BF4[i], kind, 0x20);
+                        MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x20);
                     }
                 }
             } else if (D_00446C70 != 1) {
-                func_00207478((int)&D_00446BF4[i], kind + 1000, 0x80, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x80, D_00425510[i]);
             } else {
-                func_00203F28((int)&D_00446BF4[i], kind, 0x80);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x80);
             }
             break;
         case 28:
             switch (D_005CF2F0.unk12) {
             case 4:
-                func_00203F28((int)&D_00446BF4[i], kind, 4);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 4);
                 break;
             case 5:
-                func_00203F28((int)&D_00446BF4[i], kind, 5);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 5);
                 break;
             case 9:
-                func_00203F28((int)&D_00446BF4[i], kind, 9);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 9);
                 break;
             case 10:
-                func_00203F28((int)&D_00446BF4[i], kind, 10);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 10);
                 break;
             }
             /* fallthrough */
         default:
-            func_00207478((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
             break;
         }
         SET_PART_MODE(0);
@@ -5964,21 +5964,21 @@ static void Menu_UpdateSaveList(void) {
         func_001E5210(D_00446BF8[i].unk42);
         switch (kind) {
         case 2:
-            func_00207478((int)&D_00446BF8[i], 0x3EA, 1, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446BF8[i], 0x3EA, 1, D_00425510[i]);
             break;
         case 3:
             group = slot / 3;
             if (MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[group] == 1) {
-                func_00207478((int)&D_00446BF8[i], 0x3EB, group * 3, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF8[i], 0x3EB, group * 3, D_00425510[i]);
             }
             break;
         case 25:
             if (MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[slot] == 1) {
-                func_00207478((int)&D_00446BF8[i], 0x401, D_005CF2F0.unk0D, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF8[i], 0x401, D_005CF2F0.unk0D, D_00425510[i]);
             }
             break;
         default:
-            func_00207478((int)&D_00446BF8[i], kind + 1000, D_005CF2F0.unk0D, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446BF8[i], kind + 1000, D_005CF2F0.unk0D, D_00425510[i]);
             break;
         }
         SET_PART_MODE(0);
@@ -5988,10 +5988,10 @@ static void Menu_UpdateSaveList(void) {
     word.raw = 0x000A87507C107120;
     for (i = 0; i < 3; i++) {
         entry = ((s32 *)table)[info[i]->unk04 + 1];
-        func_001FDB88(word);
-        func_001FDCD0(D_00446C78);
+        MenuText_SetPen(word);
+        MenuText_SetColor(D_00446C78);
         if (entry != 0) {
-            func_001FDD28((u16 *)(table + entry), 0x18);
+            MenuText_DrawWrapped((u16 *)(table + entry), 0x18);
         }
         word.f.mid16 += 0x340;
     }
@@ -6002,19 +6002,19 @@ static void Menu_UpdateSaveList(void) {
         if (kind == 3) {
             switch (D_005CF2F0.unk13) {
             case 8:
-                func_00203F28((int)&D_00446C58[i], kind, 8);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 8);
                 break;
             case 1:
-                func_00203F28((int)&D_00446C58[i], kind, 1);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 1);
                 break;
             case 3:
-                func_00203F28((int)&D_00446C58[i], kind, 3);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 3);
                 break;
             case 10:
-                func_00203F28((int)&D_00446C58[i], kind, 10);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 10);
                 break;
             case 23:
-                func_00203F28((int)&D_00446C58[i], kind, 23);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 23);
                 break;
             }
         } else {
@@ -6024,7 +6024,7 @@ static void Menu_UpdateSaveList(void) {
             case 8:
             case 10:
             case 23:
-                func_00207478((int)&D_00446C58[i], kind + 1000, 0, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C58[i], kind + 1000, 0, D_00425510[i]);
                 break;
             }
         }
@@ -6043,7 +6043,7 @@ static void Menu_UpdateSaveList(void) {
         bar.blue = 0x78;
         D_00425510[0xFD] = Menu_PulseValue(D_00425510[0xFD], 0x10, 0x20);
         bar.alpha = D_00425510[0xFD];
-        func_001FC5E8(&bar); // match: the float at bar+0x24 that func_001FC5E8 copies is never set
+        MenuDraw_Bar(&bar); // match: the float at bar+0x24 that MenuDraw_Bar copies is never set
     }
 
     D_005CF2F0.unk00 = SaveCard_Update();
@@ -6250,7 +6250,7 @@ static void Menu_UpdateSaveList(void) {
                         D_00446C70 = 0;
                         D_00446B20 = (void *)Menu_UpdateCardSlot;
                         D_00446BDD = 0;
-                        func_001FBDC8();
+                        MenuHeap_FreeToMark();
                         D_00446AC8++;
                     }
                 } else if (D_00446C70 == 3) {
@@ -6368,7 +6368,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
     for (i = 0; i < D_00446A68; i++) {
         kind = D_0044725C[i].unk3E;
         func_001E5210(D_0044725C[i].unk42);
-        func_00207478((int)&D_0044725C[i], kind + 1000, context->unk04, (int)D_00425510[i]);
+        MenuSprite_Draw((int)&D_0044725C[i], kind + 1000, context->unk04, (int)D_00425510[i]);
         ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
@@ -6614,21 +6614,21 @@ static void Menu_UpdateButtonConfig(void) {
                     D_00425510[0xFD] = Menu_PulseValue(D_00425510[0xFD], 0x10, 0x20);
                 }
                 bar.alpha = D_00425510[0xFD];
-                func_001FC5E8(&bar);
+                MenuDraw_Bar(&bar);
             }
         }
         ((void (*)(u8))func_001E5210)(D_00447264[i].unk42); // match: called as returning nothing, which frees $2 for the switch
         switch (kind) {
         case 2:
             if (D_00446BF0 != 0) {
-                func_00207478((int)&D_00447264[i], kind + 1000, 0, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00447264[i], kind + 1000, 0, D_00425510[i]);
             }
             break;
         case 3:
             if (D_00446BF0 == 1) {
-                func_00207478((int)&D_00447264[i], kind + 1000, 0, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00447264[i], kind + 1000, 0, D_00425510[i]);
             } else if (D_00446BF0 == 2) {
-                func_00207478((int)&D_00447264[i], kind + 1000, 1, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00447264[i], kind + 1000, 1, D_00425510[i]);
             }
             break;
         case 0x18:
@@ -6652,7 +6652,7 @@ static void Menu_UpdateButtonConfig(void) {
                 D_00446DF4 = 0;
                 D_00446DF8 = 0;
             }
-            func_00207478((int)&D_00447264[i], kind + 1000, slot, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00447264[i], kind + 1000, slot, D_00425510[i]);
             break;
         case 0x21:
             if (D_00446E00 == 0) {
@@ -6660,11 +6660,11 @@ static void Menu_UpdateButtonConfig(void) {
             }
             D_00446E04 = D_004210C0[D_00446E00];
             // match: called as returning a value, which keeps $2 out of the count's increment
-            ((int (*)(int, int, int, int))func_00207478)((int)&(&D_00447264[j])[11 - D_00446E04], kind + 1000, D_00446E00, D_00425510[i]);
+            ((int (*)(int, int, int, int))MenuSprite_Draw)((int)&(&D_00447264[j])[11 - D_00446E04], kind + 1000, D_00446E00, D_00425510[i]);
             D_00446E00++;
             break;
         default:
-            func_00207478((int)&D_00447264[i], kind + 1000, slot, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00447264[i], kind + 1000, slot, D_00425510[i]);
             break;
         }
         ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
@@ -6887,16 +6887,16 @@ static void Menu_UpdateCardCheck(void) {
             ((void (*)(u8))func_001E5210)(D_00446C68[i].unk42); // match: called as returning nothing, which frees $2 for the switch
             switch (D_005CF2F0.unk12) {
             case 0x10:
-                func_00207478((int)&D_00446C68[i], kind + 1000, 0x10, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x10, D_00425510[i]);
                 break;
             case 0x11:
-                func_00207478((int)&D_00446C68[i], kind + 1000, 0x11, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x11, D_00425510[i]);
                 break;
             case 0x12:
-                func_00207478((int)&D_00446C68[i], kind + 1000, 0x12, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x12, D_00425510[i]);
                 break;
             case 0x13:
-                func_00207478((int)&D_00446C68[i], kind + 1000, 0x13, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x13, D_00425510[i]);
                 break;
             }
             func_001E5210(0);
@@ -6919,7 +6919,7 @@ static void Menu_UpdateCardCheck(void) {
             D_00425510[0xFD] = 0.0f;
         }
         bar.alpha = D_00425510[0xFD];
-        func_001FC5E8(&bar);
+        MenuDraw_Bar(&bar);
     }
 
     if (D_005CF2F0.unk11 != 0) {
@@ -6929,7 +6929,7 @@ static void Menu_UpdateCardCheck(void) {
             } else if (D_00446C70 == 3) {
                 D_00446C70 = 5;
             } else if (D_00446C70 == 0) {
-                func_001FBDC8();
+                MenuHeap_FreeToMark();
                 D_00446AC8++;
             }
         }
@@ -6983,7 +6983,7 @@ static void Menu_UpdateCardCheck(void) {
                     break;
                 }
                 if (D_00446C70 == 4) {
-                    func_001FBDC8();
+                    MenuHeap_FreeToMark();
                     D_00446AC8++;
                 } else {
                     D_00446AC8--;
@@ -7039,7 +7039,7 @@ static void Menu_UpdateBrightness(void) {
     for (i = 0; i < D_00446AB0; i++) {
         kind = D_00446C5C[i].unk3E;
         func_001E5210(D_00446C5C[i].unk42);
-        func_00207478((int)&D_00446C5C[i], kind + 1000, (int)D_00447228 + 0x72C, (int)D_00425510[i]);
+        MenuSprite_Draw((int)&D_00446C5C[i], kind + 1000, (int)D_00447228 + 0x72C, (int)D_00425510[i]);
         func_001E5210(0);
     }
     switch (D_00446C70) {
@@ -7103,10 +7103,10 @@ static int Menu_DrawEquipItemText(s32 index) {
     slot = node->unk0C + 1;
     entry = ((s32 *)table)[index + slot];
     word.raw = 0x000A87507E9080C0;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
-        func_00207320(GS_REG_TEST_1, 0x30000);
-        return func_001FE350((u16 *)(table + entry), 0x1B);
+        MenuDraw_SetGsRegister(GS_REG_TEST_1, 0x30000);
+        return MenuText_DrawWrappedLong((u16 *)(table + entry), 0x1B);
     }
 }
 

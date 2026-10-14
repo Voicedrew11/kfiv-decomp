@@ -10,7 +10,7 @@ void func_001E5070(s32 level) {
     GsPacketWord *cursor;
     u32 colour;
 
-    packet = (GsPacketWord *)func_001FBE70();
+    packet = (GsPacketWord *)MenuDraw_NextPacket();
     packet[0].as_int = 0x8001;
     packet[1].as_int = 0x740B4000;
     packet[2].as_int = 0xF5252160;

@@ -73,8 +73,8 @@ void func_001A15C0(void);
 void func_001A15B8(void);
 void func_0019DC00(void);
 void func_001B5460(void);
-s16 func_00206C40(void);
-void func_001FBDC8(void);
+s16 MenuPad_Update(void);
+void MenuHeap_FreeToMark(void);
 extern s8 D_00447318;
 extern s8 D_00447310;
 extern s8 D_00446C94;
@@ -111,8 +111,8 @@ void func_001096E8(void);
 void func_00109800(void);
 void func_00109E88(void);
 void func_0010B238(TextureTableHeader *);
-void func_001FBDE8(s32 value);
-void func_00204180(void *, LoadedBlockRef *);
+s32 MenuArena_Init(s32 value);
+void MenuTexture_Upload(void *, LoadedBlockRef *);
 extern LinkNode *D_00446C90;
 extern LinkNode D_00426470;
 extern LinkNode D_004264C0;
@@ -124,8 +124,8 @@ extern SpritePacket *D_00446BFC;
 extern s8 D_00447311;
 s32 func_0019CDC0(s32);
 int func_001E5210(u8 mode);
-void func_001FC5E8(MenuCursorBar *);
-void func_00207478(int, int, int, int);
+void MenuDraw_Bar(MenuCursorBar *);
+void MenuSprite_Draw(int, int, int, int);
 /* match: the part number is passed sign-extended and no result is kept (the definition takes a u8 and returns int) */
 #define SELECT_PART(part) ((void (*)(s32))func_001E5210)(part)
 extern LevelRecordDef D_0041E118[];
@@ -169,10 +169,10 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
 int Menu_DrawItemModel(f32 *); // match: an int result keeps $2 for the load after the call
 int func_001E4FE0(s32, u32);
-s32 func_001FDCD0(ColorBytes bytes);
-s32 func_001FDD28(u16 *, s32);
-s32 func_001FE9A8(u16 *text, s32 limit);
-s32 func_00200068(u16 *, s32);
+s32 MenuText_SetColor(ColorBytes bytes);
+s32 MenuText_DrawWrapped(u16 *, s32);
+s32 MenuText_DrawLine(u16 *text, s32 limit);
+s32 MenuText_DrawWordWrappedLong(u16 *, s32);
 /* value * percent / divisor. match: an inline function, so every use loads its own divisor (the dead `li 100`s) */
 static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
     return value * percent / divisor;
@@ -187,7 +187,7 @@ static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
 #define DRAW_PACKETS(packets, count, param)                                                             \
     for (i = 0; i < (count); i++) {                                                                     \
         SELECT_PART((s8)(packets)[i].unk42);                                                            \
-        func_00207478((int)&(packets)[i], (packets)[i].unk3E + 1000, (param), (int)D_00425910[i]);      \
+        MenuSprite_Draw((int)&(packets)[i], (packets)[i].unk3E + 1000, (param), (int)D_00425910[i]);      \
         SELECT_PART(0);                                                                                 \
     }
 extern PlayerState D_00413F80;
@@ -201,7 +201,7 @@ extern s32 D_00446E44;
 extern s32 D_00446E48;
 extern s32 D_00446E4C;
 extern s32 D_00446E50;
-s32 func_001FF428(u16 *, s32);
+s32 MenuText_DrawLineCentered(u16 *, s32);
 extern f32 D_00428A10[4];
 extern f32 D_00446CBC;
 /* Starts every packet of a list at its full alpha. match: the alpha is read as an unsigned bit-field */
@@ -283,7 +283,7 @@ extern SpritePacket *D_00446C4C;
 extern SpritePacket *D_00446C64;
 extern s8 D_00446CD0;               /* nonzero once the cursor is on the three lines */
 extern s8 D_00447316;               /* 0: fading in, 1: open, 2 to 4: fading out to a list, 5: fading out to leave */
-void func_00203F28(int, int, int);
+void MenuSprite_DrawPlain(int, int, int);
 extern f32 D_00428A30[4];
 extern u32 D_00446AA4;              /* how many parts the screen has */
 extern SpritePacket *D_00446C50;
@@ -585,7 +585,7 @@ void Trade_Run(s32 value) {
             D_00447304 = 1;
         }
         D_00447320 = D_0044731C;
-        func_00206C40();
+        MenuPad_Update();
         if (D_00447304 > 0) {
             D_00447304++;
             if (D_00447304 >= 21) {
@@ -599,7 +599,7 @@ void Trade_Run(s32 value) {
     while (sceGsSyncV(0) != 0) {
     }
     func_001A15B8();
-    func_001FBDC8();
+    MenuHeap_FreeToMark();
     D_00446CA8 = 0;
     sceGsSyncPath(0, 0);
     sceGsSyncV(0);
@@ -611,7 +611,7 @@ static s32 Trade_CopyFrameToTexture(void) {
     u32 texture_base; /* where the shown buffer is as a texture: 0x1180 when it is the second one */
     u32 *packet;
 
-    packet = func_001FBE70();
+    packet = MenuDraw_NextPacket();
     texture_base = 0x1180;
     if (D_00446F78 == 0) {
         texture_base = 0;
@@ -753,10 +753,10 @@ static s32 Trade_Start(HandlerContext *context) {
     ((s32 (*)(void))func_00109800)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < D_00446DEC; i++) {
         block = &D_0042A2A0[i];
-        func_00204180(block->data, block);
+        MenuTexture_Upload(block->data, block);
     }
-    func_001FBDE8(D_00446F68);
-    packet = func_001FBE70();
+    MenuArena_Init(D_00446F68);
+    packet = MenuDraw_NextPacket();
     packet[0] = 0x8001;
     packet[1] = 0x10000000;
     packet[2] = 0xE;
@@ -910,11 +910,11 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
                 D_00425510[0xFD] = 0.0f;
             }
             bar.alpha = (s32)D_00425510[0xFD];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
         }
         kind = D_00446BFC[i].unk3E;
         SELECT_PART((s8)D_00446BFC[i].unk42);
-        func_00207478((int)&D_00446BFC[i], kind + 1000, 1, (int)D_00425510[i]);
+        MenuSprite_Draw((int)&D_00446BFC[i], kind + 1000, 1, (int)D_00425510[i]);
         SELECT_PART(0);
     }
 
@@ -1052,30 +1052,30 @@ static void Trade_UpdateStockList(HandlerContext *context) {
         if (kind == 3) {
             switch (D_00446C00[i].slot) {
             case 0:
-                func_00207478((int)&D_00446C00[i], kind + 1000, 0, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 0, (int)D_00425510[i]);
                 break;
             case 1:
                 break;
             case 2:
                 if (context->arg != 4) {
-                    func_00207478((int)&D_00446C00[i], kind + 1000, 2, (int)D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 2, (int)D_00425510[i]);
                 }
                 break;
             case 3:
                 if (D_005CF380[0]->group != 12) {
-                    func_00207478((int)&D_00446C00[i], kind + 1000, 3, (int)D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 3, (int)D_00425510[i]);
                 }
                 break;
             case 4:
                 if (context->arg == 4) {
-                    func_00207478((int)&D_00446C00[i], kind + 1000, 4, (int)D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 4, (int)D_00425510[i]);
                 }
                 break;
             }
         } else if (context->arg != 4) {
-            func_00207478((int)&D_00446C00[i], kind + 1000, 1, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 1, (int)D_00425510[i]);
         } else {
-            func_00207478((int)&D_00446C00[i], kind + 1000, 5, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 5, (int)D_00425510[i]);
         }
         SELECT_PART(0);
     }
@@ -1097,7 +1097,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 D_00425510[0xFD] = Trade_PulseValue(0x10, 0x20, D_00425510[0xFD]);
             }
             bar.alpha = (s32)D_00425510[0xFD];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
             break;
         }
     }
@@ -1120,16 +1120,16 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             label = D_00426630;
             break;
         }
-        func_001FDB88(position);
-        func_001FDD28(label, 10);
+        MenuText_SetPen(position);
+        MenuText_DrawWrapped(label, 10);
     }
 
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     row_position.raw = 0x0C7A12007C307080L;
     for (row = 0, node = D_005CF360[0]; row < 7; node = node->prev, row++) {
         item = &D_004147F8[node->unk0C];
-        func_001FDB88(row_position);
-        func_001FE9A8((u16 *)item, 0x1A);
+        MenuText_SetPen(row_position);
+        MenuText_DrawLine((u16 *)item, 0x1A);
         row_position.f.mid16 += 0xB0;
         if (D_005CF370[0]->prev == node) {
             break;
@@ -1313,11 +1313,11 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     texts = Message_GetFontText(D_00446F38);
     text_number = current->unk0C + 0x1F5; // match: a variable, so the 0x1F5 is added before the index is scaled
     text_offset = ((s32 *)texts)[text_number];
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     position.raw = 0x000A875083207080L;
-    func_001FDB88(position);
+    MenuText_SetPen(position);
     if (text_offset != 0) {
-        func_00200068(texts + text_offset, 0x33);
+        MenuText_DrawWordWrappedLong(texts + text_offset, 0x33);
     }
 
     if (D_00447318 == 0) {
@@ -1501,28 +1501,28 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         if (kind == 3) {
             switch (D_00446C00[i].slot) {
             case 0:
-                func_00207478((int)&D_00446C00[i], kind + 1000, 0, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 0, (int)D_00425510[i]);
                 break;
             case 1:
-                func_00207478((int)&D_00446C00[i], kind + 1000, 1, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 1, (int)D_00425510[i]);
                 break;
             case 2:
                 break;
             case 3:
                 if (D_005CF380[0]->group != 12) {
-                    func_00207478((int)&D_00446C00[i], kind + 1000, 3, (int)D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 3, (int)D_00425510[i]);
                 }
                 break;
             }
         } else if (context->arg != 4) {
-            func_00207478((int)&D_00446C00[i], kind + 1000, 2, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 2, (int)D_00425510[i]);
         } else {
-            func_00207478((int)&D_00446C00[i], kind + 1000, 6, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 6, (int)D_00425510[i]);
         }
         SELECT_PART(0);
     }
 
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     memset(view_matrix, 0, 0x40);
     view_matrix[2][2] = view_matrix[1][1] = view_matrix[0][0] = 0.8f;
     view_matrix[3][3] = 1.0f;
@@ -1657,12 +1657,12 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     }
 
     node = D_005CF360[0];
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     position.raw = 0x0C7A12007C307080L;
     for (row = 0; row < 7; row++) {
         item = &D_004147F8[node->unk0C];
-        func_001FDB88(position);
-        func_001FE9A8((u16 *)item, 0x1A);
+        MenuText_SetPen(position);
+        MenuText_DrawLine((u16 *)item, 0x1A);
         position.f.mid16 += 0xB0;
         if (D_005CF370[0]->prev == node) {
             break;
@@ -1687,27 +1687,27 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                 D_00425510[0xFD] = Trade_PulseValue(0x10, 0x20, D_00425510[0xFD]);
             }
             bar.alpha = (s32)D_00425510[0xFD];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
         }
         SELECT_PART((s8)D_00446C60[i].unk42);
         kind = D_00446C60[i].unk3E;
         if (context->arg != 4) {
-            func_00207478((int)&D_00446C60[i], kind + 1000, 2, (int)D_00425D10[i]);
+            MenuSprite_Draw((int)&D_00446C60[i], kind + 1000, 2, (int)D_00425D10[i]);
         } else {
-            func_00207478((int)&D_00446C60[i], kind + 1000, 6, (int)D_00425D10[i]);
+            MenuSprite_Draw((int)&D_00446C60[i], kind + 1000, 6, (int)D_00425D10[i]);
         }
         SELECT_PART(0);
     }
 
     chosen = &D_004147F8[D_005CF380[0]->unk0C];
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     position.raw = 0x0A2DC6C07DB078C0L;
-    func_001FDB88(position);
-    func_001FF428(chosen, 0x18);
+    MenuText_SetPen(position);
+    MenuText_DrawLineCentered(chosen, 0x18);
     if (context->arg == 4) {
         position.raw = 0x000DBBA079E08A30L;
         label_position.raw = 0x000DBBA081807C60L;
-        func_001FDB88(position);
+        MenuText_SetPen(position);
         switch (D_004147F8[D_005CF380[0]->unk0C].unk30_20 & 3) {
         case 1:
             label = D_00426620;
@@ -1723,9 +1723,9 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             label = D_00426640;
             break;
         }
-        func_001FDD28(label, 10);
-        func_001FDB88(label_position);
-        func_001FDD28(label, 10); // match: the same label a second time
+        MenuText_DrawWrapped(label, 10);
+        MenuText_SetPen(label_position);
+        MenuText_DrawWrapped(label, 10); // match: the same label a second time
     }
 
     current = D_005CF380[0];
@@ -1733,9 +1733,9 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     number = current->unk0C + 0x1F5; // match: its own local, or the offset is folded into the load
     text_offset = ((s32 *)texts)[number];
     position.raw = 0x000F424083207080L;
-    func_001FDB88(position);
+    MenuText_SetPen(position);
     if (text_offset != 0) {
-        func_00200068(texts + text_offset, 0x33);
+        MenuText_DrawWordWrappedLong(texts + text_offset, 0x33);
     }
 
     if (D_00447318 == 0) {
@@ -1920,21 +1920,21 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
         if (kind == 3) {
             switch (D_00446C00[i].slot) {
             case 0:
-                func_00207478((int)&D_00446C00[i], kind + 1000, 0, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 0, (int)D_00425510[i]);
                 break;
             case 1: // match: an empty case of its own
                 break;
             case 2:
-                func_00207478((int)&D_00446C00[i], kind + 1000, 2, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 2, (int)D_00425510[i]);
                 break;
             case 3:
                 if (D_00426110[0]->group != 11) {
-                    func_00207478((int)&D_00446C00[i], kind + 1000, 3, (int)D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 3, (int)D_00425510[i]);
                 }
                 break;
             }
         } else {
-            func_00207478((int)&D_00446C00[i], kind + 1000, 3, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 3, (int)D_00425510[i]);
         }
         SELECT_PART(0);
     }
@@ -1955,12 +1955,12 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
                 D_00425510[0xFD] = Trade_PulseValue(0x10, 0x20, D_00425510[0xFD]);
             }
             bar.alpha = (s32)D_00425510[0xFD];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
             break;
         }
     }
 
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     position.raw = 0x0C7A12007C307080L;
     row = 0;
     memset(&view_matrix, 0, 0x40);
@@ -1977,8 +1977,8 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
 
     for (; row < 7; node = node->prev, row++) {
         item = &D_004147F8[node->unk0C];
-        func_001FDB88(position);
-        func_001FE9A8((u16 *)item, 0x1A);
+        MenuText_SetPen(position);
+        MenuText_DrawLine((u16 *)item, 0x1A);
         position.f.mid16 += 0xB0;
         if (D_00426130[0]->prev == node) {
             break;
@@ -2138,9 +2138,9 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     text_index = current->unk0C + 0x1F5; // match: the index is worked out apart from the load
     text_offset = ((s32 *)texts)[text_index];
     position.raw = 0x000A875083207080L;
-    func_001FDB88(position);
+    MenuText_SetPen(position);
     if (text_offset != 0) {
-        func_00200068(texts + text_offset, 0x33);
+        MenuText_DrawWordWrappedLong(texts + text_offset, 0x33);
     }
 
     if (D_00447318 == 0) {
@@ -2285,27 +2285,27 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
         if (kind == 3) {
             switch (D_00446C00[i].slot) {
             case 0:
-                func_00207478((int)&D_00446C00[i], kind + 1000, 0, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 0, (int)D_00425510[i]);
                 break;
             case 1:
-                func_00207478((int)&D_00446C00[i], kind + 1000, 1, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 1, (int)D_00425510[i]);
                 break;
             case 2:
                 break;
             case 3:
                 if (D_00426110[0]->group != 11) {
-                    func_00207478((int)&D_00446C00[i], kind + 1000, 3, (int)D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446C00[i], kind + 1000, 3, (int)D_00425510[i]);
                 }
                 break;
             }
         } else {
             // match: 10000 where the other screens add 1000 (the callee takes it modulo 1000, so it draws the same)
-            func_00207478((int)&D_00446C00[i], kind + 10000, 4, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446C00[i], kind + 10000, 4, (int)D_00425510[i]);
         }
         SELECT_PART(0);
     }
 
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     memset(view_matrix, 0, 0x40);
     view_matrix[2][2] = view_matrix[1][1] = view_matrix[0][0] = 0.8f;
     view_matrix[3][3] = 1.0f;
@@ -2444,9 +2444,9 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
 
     node = D_00426120[0];
     position.raw = 0x0C0975E07C307080L;
-    func_001FDB88(position);
+    MenuText_SetPen(position);
     for (row = 0; row < 7; row++) {
-        func_001FE9A8((u16 *)&D_004147F8[node->unk0C], 0x1A);
+        MenuText_DrawLine((u16 *)&D_004147F8[node->unk0C], 0x1A);
         if (D_00426130[0]->prev == node) {
             break;
         }
@@ -2470,28 +2470,28 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
                 D_00425510[0xFD] = Trade_PulseValue(0x10, 0x20, D_00425510[0xFD]);
             }
             bar.alpha = (s32)D_00425510[0xFD];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
         }
         kind = D_00446C60[i].unk3E;
         SELECT_PART((s8)D_00446C60[i].unk42);
-        func_00207478((int)&D_00446C60[i], kind + 1000, 4, (int)D_00425D10[i]);
+        MenuSprite_Draw((int)&D_00446C60[i], kind + 1000, 4, (int)D_00425D10[i]);
         SELECT_PART(0);
     }
 
     chosen = &D_004147F8[D_00426110[0]->unk0C];
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     position.raw = 0x0A2DC6C07DB078C0L;
-    func_001FDB88(position);
-    func_001FF428(chosen, 0x18);
+    MenuText_SetPen(position);
+    MenuText_DrawLineCentered(chosen, 0x18);
 
     current = D_00426110[0];
     texts = Message_GetFontText(D_00446F38);
     number = current->unk0C + 0x1F5; // match: its own local, or the offset is folded into the load
     text_offset = ((s32 *)texts)[number];
     position.raw = 0x000A875083207080L;
-    func_001FDB88(position);
+    MenuText_SetPen(position);
     if (text_offset != 0) {
-        func_00200068(texts + text_offset, 0x33);
+        MenuText_DrawWordWrappedLong(texts + text_offset, 0x33);
     }
 
     if (D_00447318 == 0) {
@@ -2869,7 +2869,7 @@ void Smith_Run(void) {
             D_00447308 = 1;
         }
         D_00447320 = D_0044731C;
-        func_00206C40();
+        MenuPad_Update();
         if (D_00447308 > 0) {
             D_00447308++;
             if (D_00447308 >= 21) {
@@ -2883,7 +2883,7 @@ void Smith_Run(void) {
     while (sceGsSyncV(0) != 0) {
     }
     func_001A15B8();
-    func_001FBDC8();
+    MenuHeap_FreeToMark();
     D_00446CCC = 0;
     sceGsSyncPath(0, 0);
     sceGsSyncV(0);
@@ -2904,10 +2904,10 @@ static s32 Smith_Start(void) {
     ((s32 (*)(void))func_00109800)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < D_00446DEC; i++) {
         block = &D_0042A2A0[i];
-        func_00204180(block->data, block);
+        MenuTexture_Upload(block->data, block);
     }
-    func_001FBDE8(D_00446F68);
-    packet = func_001FBE70();
+    MenuArena_Init(D_00446F68);
+    packet = MenuDraw_NextPacket();
     packet[0] = 0x8001;
     packet[1] = 0x10000000;
     packet[2] = 0xE;
@@ -2943,7 +2943,7 @@ static s32 Smith_CopyFrameToTexture(void) {
     u32 texture_base; /* where the shown buffer is as a texture: 0x1180 when it is the second one */
     u32 *packet;
 
-    packet = func_001FBE70();
+    packet = MenuDraw_NextPacket();
     texture_base = 0x1180;
     if (D_00446F78 == 0) {
         texture_base = 0;
@@ -3164,17 +3164,17 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                 D_00425510[253] = 0.0f;
             }
             bar.alpha = (s32)D_00425510[253];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
         }
         ((int (*)(s8))func_001E5210)(D_00446C4C[i].unk42); // match: the byte is passed sign-extended here
-        func_00207478((int)&D_00446C4C[i], 1000, 0, (int)D_00425510[i]);
+        MenuSprite_Draw((int)&D_00446C4C[i], 1000, 0, (int)D_00425510[i]);
         ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
     if (D_00446CD0 == 0) {
         for (i = 0; i < D_00446AB8; i++) {
             kind = D_00446C64[i].unk3E;
-            func_00203F28((int)&D_00446C64[i], kind, 1);
+            MenuSprite_DrawPlain((int)&D_00446C64[i], kind, 1);
         }
     }
 
@@ -3379,19 +3379,19 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
         if (kind == 3) {
             switch (D_00446C50[i].slot) {
             case 0:
-                func_00207478((int)&D_00446C50[i], 1003, 0, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 0, (int)D_00425510[i]);
                 break;
             case 1:
                 break;
             case 2:
-                func_00207478((int)&D_00446C50[i], 1003, 2, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 2, (int)D_00425510[i]);
                 break;
             case 3:
-                func_00207478((int)&D_00446C50[i], 1003, 3, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 3, (int)D_00425510[i]);
                 break;
             }
         } else {
-            func_00207478((int)&D_00446C50[i], kind + 1000, 1, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446C50[i], kind + 1000, 1, (int)D_00425510[i]);
         }
         SELECT_PART(0);
     }
@@ -3412,16 +3412,16 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                 D_00425510[253] = Trade_PulseValue(0x10, 0x20, D_00425510[253]);
             }
             bar.alpha = (s32)D_00425510[253];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
             break;
         }
     }
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     word.raw = 0x0C7A12007C307080;
     for (line = 0, node = D_00426120[0]; line < 7; node = node->prev, line++) {
         def = &D_004147F8[node->unk0C];
-        func_001FDB88(word);
-        func_001FE9A8((u16 *)def, 0x1A);
+        MenuText_SetPen(word);
+        MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
         if (D_00426130[0]->prev == node) {
             break;
@@ -3481,7 +3481,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A9C; i++) {
                 SELECT_PART((s8)D_00446C14[i].unk42);
-                func_00207478((int)&D_00446C14[i], D_00446C14[i].unk3E + 1000, variant, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C14[i], D_00446C14[i].unk3E + 1000, variant, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C14;
@@ -3513,7 +3513,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A94; i++) {
                 SELECT_PART((s8)D_00446C0C[i].unk42);
-                func_00207478((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C0C;
@@ -3546,7 +3546,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A98; i++) {
                 SELECT_PART((s8)D_00446C10[i].unk42);
-                func_00207478((int)&D_00446C10[i], D_00446C10[i].unk3E + 1000, 0, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C10[i], D_00446C10[i].unk3E + 1000, 0, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C10;
@@ -3588,9 +3588,9 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     text_index = selected->unk0C + 0x1F5;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
-        func_00200068(table + entry, 0x33);
+        MenuText_DrawWordWrappedLong(table + entry, 0x33);
     }
     if ((D_00446DE8 & 0x4000) && D_00447318 == 0) {
         if ((D_00426110[0]->unk0C < 220 ? GetWeaponLevel(D_00426110[0]->unk0C - 150) < 100
@@ -3725,23 +3725,23 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
         if (kind == 3) {
             switch (D_00446C50[i].slot) {
             case 0:
-                func_00207478((int)&D_00446C50[i], 1003, 0, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 0, (int)D_00425510[i]);
                 break;
             case 1:
-                func_00207478((int)&D_00446C50[i], 1003, 1, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 1, (int)D_00425510[i]);
                 break;
             case 2:
                 break;
             case 3:
-                func_00207478((int)&D_00446C50[i], 1003, 3, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 3, (int)D_00425510[i]);
                 break;
             }
         } else {
-            func_00207478((int)&D_00446C50[i], kind + 1000, 2, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446C50[i], kind + 1000, 2, (int)D_00425510[i]);
         }
         SELECT_PART(0);
     }
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     memset(scale, 0, 0x40);
     scale[10] = scale[5] = scale[0] = 0.8f;
     scale[15] = 1.0f;
@@ -3796,7 +3796,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A9C; i++) {
                 SELECT_PART((s8)D_00446C14[i].unk42);
-                func_00207478((int)&D_00446C14[i], D_00446C14[i].unk3E + 1000, variant, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C14[i], D_00446C14[i].unk3E + 1000, variant, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C14;
@@ -3829,7 +3829,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             for (i = 0; i < D_00446A94; i++) {
                 SELECT_PART((s8)D_00446C0C[i].unk42);
                 // match: called as returning a value, which keeps $2 away from the pointer formed for the next call
-                ((int (*)(int, int, int, int))func_00207478)((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
+                ((int (*)(int, int, int, int))MenuSprite_Draw)((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
                 SELECT_PART((s8)D_00446C0C[i].unk42); // match: the other lists hand 0 here
             }
             parts = D_00446C0C;
@@ -3862,7 +3862,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A98; i++) {
                 SELECT_PART((s8)D_00446C10[i].unk42);
-                func_00207478((int)&D_00446C10[i], D_00446C10[i].unk3E + 1000, 0, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C10[i], D_00446C10[i].unk3E + 1000, 0, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C10;
@@ -3899,8 +3899,8 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     word.raw = 0x0C0975E07C307080;
     for (row = 0, item = D_00426120[0]; row < 7; item = item->prev, row++) {
         def = &D_004147F8[item->unk0C];
-        func_001FDB88(word);
-        func_001FE9A8((u16 *)def, 0x1A);
+        MenuText_SetPen(word);
+        MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
         if (D_00426130[0]->prev == item) {
             break;
@@ -3910,22 +3910,22 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     for (i = 0; i < D_00446AB8; i++) {
         kind = D_00446C64[i].unk3E;
         SELECT_PART((s8)D_00446C64[i].unk42);
-        func_00207478((int)&D_00446C64[i], kind + 1000, 0, (int)D_00425D10[i]);
+        MenuSprite_Draw((int)&D_00446C64[i], kind + 1000, 0, (int)D_00425D10[i]);
         SELECT_PART(0);
     }
     selected_def = &D_004147F8[D_00426110[0]->unk0C];
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     word.raw = 0x0A2DC6C07F5078C0;
-    func_001FDB88(word);
-    func_001FF428(selected_def, 0x18);
+    MenuText_SetPen(word);
+    MenuText_DrawLineCentered(selected_def, 0x18);
     selected = D_00426110[0];
     table = Message_GetFontText(D_00446F38);
     text_index = selected->unk0C + 0x1F5;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
-        func_00200068((u16 *)(table + entry), 0x33);
+        MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x33);
     }
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
@@ -4113,24 +4113,24 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         if (kind == 3) {
             switch (D_00446C50[i].slot) {
             case 0:
-                func_00207478((int)&D_00446C50[i], 1003, 0, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 0, (int)D_00425510[i]);
                 break;
             case 1:
                 if (D_00447313 != 0) {
-                    func_00207478((int)&D_00446C50[i], 1003, 1, (int)D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446C50[i], 1003, 1, (int)D_00425510[i]);
                 }
                 break;
             case 2:
                 if (D_00447313 == 0) {
-                    func_00207478((int)&D_00446C50[i], 1003, 2, (int)D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446C50[i], 1003, 2, (int)D_00425510[i]);
                 }
                 break;
             case 3:
-                func_00207478((int)&D_00446C50[i], 1003, 3, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 3, (int)D_00425510[i]);
                 break;
             }
         } else {
-            func_00207478((int)&D_00446C50[i], kind + 1000, 3, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446C50[i], kind + 1000, 3, (int)D_00425510[i]);
         }
         SELECT_PART(0);
     }
@@ -4159,17 +4159,17 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                     }
                 }
                 bar.alpha = (s32)D_00425510[253];
-                func_001FC5E8(&bar);
+                MenuDraw_Bar(&bar);
                 break;
             }
         }
     }
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     word.raw = 0x0C0975E07C307080;
     for (line = 0, node = D_00426120[0]; line < 7; node = node->prev, line++) {
         def = &D_004147F8[node->unk0C];
-        func_001FDB88(word);
-        func_001FE9A8((u16 *)def, 0x1A);
+        MenuText_SetPen(word);
+        MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
         if (D_00426130[0]->prev == node) {
             break;
@@ -4232,7 +4232,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A9C; i++) {
                 SELECT_PART((s8)D_00446C14[i].unk42);
-                func_00207478((int)&D_00446C14[i], D_00446C14[i].unk3E + 1000, variant, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C14[i], D_00446C14[i].unk3E + 1000, variant, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C14;
@@ -4264,7 +4264,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A94; i++) {
                 SELECT_PART((s8)D_00446C0C[i].unk42);
-                func_00207478((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C0C;
@@ -4297,7 +4297,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A98; i++) {
                 SELECT_PART((s8)D_00446C10[i].unk42);
-                func_00207478((int)&D_00446C10[i], D_00446C10[i].unk3E + 1000, 0, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C10[i], D_00446C10[i].unk3E + 1000, 0, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C10;
@@ -4336,23 +4336,23 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         for (i = 0; i < D_00446AB8; i++) {
             kind = D_00446C64[i].unk3E;
             SELECT_PART((s8)D_00446C64[i].unk42);
-            func_00207478((int)&D_00446C64[i], kind + 1000, 0, (int)D_00425D10[i]);
+            MenuSprite_Draw((int)&D_00446C64[i], kind + 1000, 0, (int)D_00425D10[i]);
             SELECT_PART(0);
         }
         chosen = &D_004147F8[D_00426110[0]->unk0C];
-        func_001FDCD0(D_00446C78);
+        MenuText_SetColor(D_00446C78);
         word.raw = 0x0A2DC6C07F5078C0;
-        func_001FDB88(word);
-        func_001FF428((u16 *)chosen, 0x18);
+        MenuText_SetPen(word);
+        MenuText_DrawLineCentered((u16 *)chosen, 0x18);
     }
     selected = D_00426110[0];
     table = Message_GetFontText(D_00446F38);
     text_index = selected->unk0C + 0x1F5;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
-        func_00200068((u16 *)(table + entry), 0x33);
+        MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x33);
     }
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
@@ -4608,14 +4608,14 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
                 D_00425510[253] = Trade_PulseValue(0x10, 0x20, D_00425510[253]);
             }
             bar.alpha = (s32)D_00425510[253];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
         }
         kind = D_00446C54[i].unk3E;
         SELECT_PART((s8)D_00446C54[i].unk42);
-        func_00207478((int)&D_00446C54[i], kind + 1000, 0, (int)D_00425510[i]);
+        MenuSprite_Draw((int)&D_00446C54[i], kind + 1000, 0, (int)D_00425510[i]);
         SELECT_PART(0);
     }
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     memset(scale, 0, 0x40);
     scale[10] = scale[5] = scale[0] = 0.8f;
     scale[15] = 1.0f;
@@ -4666,7 +4666,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             variant = D_00413FBC[D_00426110[0]->group];
             for (i = 0; i < D_00446A9C; i++) {
                 SELECT_PART((s8)D_00446C14[i].unk42);
-                func_00207478((int)&D_00446C14[i], D_00446C14[i].unk3E + 1000, variant, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C14[i], D_00446C14[i].unk3E + 1000, variant, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C14;
@@ -4691,7 +4691,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             variant = D_00413FBC[D_00426110[0]->group];
             for (i = 0; i < D_00446A94; i++) {
                 SELECT_PART((s8)D_00446C0C[i].unk42);
-                func_00207478((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C0C;
@@ -4717,7 +4717,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             D_00446E2C = 100;
             for (i = 0; i < D_00446A98; i++) {
                 SELECT_PART((s8)D_00446C10[i].unk42);
-                func_00207478((int)&D_00446C10[i], D_00446C10[i].unk3E + 1000, 0, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C10[i], D_00446C10[i].unk3E + 1000, 0, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C10;
@@ -4756,9 +4756,9 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     text_index = selected->unk0C + 0x1F5;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080L;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
-        func_00200068(table + entry, 0x33);
+        MenuText_DrawWordWrappedLong(table + entry, 0x33);
     }
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
@@ -4896,19 +4896,19 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
         if (kind == 3) {
             switch (D_00446C50[i].slot) {
             case 0:
-                func_00207478((int)&D_00446C50[i], 1003, 0, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 0, (int)D_00425510[i]);
                 break;
             case 1:
                 break;
             case 2:
-                func_00207478((int)&D_00446C50[i], 1003, 2, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 2, (int)D_00425510[i]);
                 break;
             case 3:
-                func_00207478((int)&D_00446C50[i], 1003, 3, (int)D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C50[i], 1003, 3, (int)D_00425510[i]);
                 break;
             }
         } else {
-            func_00207478((int)&D_00446C50[i], kind + 1000, 4, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446C50[i], kind + 1000, 4, (int)D_00425510[i]);
         }
         SELECT_PART(0);
     }
@@ -4929,16 +4929,16 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                 D_00425510[253] = Trade_PulseValue(0x10, 0x20, D_00425510[253]);
             }
             bar.alpha = (s32)D_00425510[253];
-            func_001FC5E8(&bar);
+            MenuDraw_Bar(&bar);
             break;
         }
     }
-    func_001FDCD0(D_00446C78);
+    MenuText_SetColor(D_00446C78);
     word.raw = 0x0C7A12007C307080;
     for (line = 0, node = D_005CF390[0]; line < 7; node = node->prev, line++) {
         def = &D_004147F8[node->unk0C];
-        func_001FDB88(word);
-        func_001FE9A8((u16 *)def, 0x1A);
+        MenuText_SetPen(word);
+        MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
         if (D_005CF3A0[0]->prev == node) {
             break;
@@ -4998,7 +4998,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A9C; i++) {
                 SELECT_PART((s8)D_00446C14[i].unk42);
-                func_00207478((int)&D_00446C14[i], D_00446C14[i].unk3E + 1000, variant, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C14[i], D_00446C14[i].unk3E + 1000, variant, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C14;
@@ -5030,7 +5030,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A94; i++) {
                 SELECT_PART((s8)D_00446C0C[i].unk42);
-                func_00207478((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C0C[i], D_00446C0C[i].unk3E + 1000, variant, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C0C;
@@ -5063,7 +5063,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             }
             for (i = 0; i < D_00446A98; i++) {
                 SELECT_PART((s8)D_00446C10[i].unk42);
-                func_00207478((int)&D_00446C10[i], D_00446C10[i].unk3E + 1000, 0, (int)D_00425910[i]);
+                MenuSprite_Draw((int)&D_00446C10[i], D_00446C10[i].unk3E + 1000, 0, (int)D_00425910[i]);
                 SELECT_PART(0);
             }
             parts = D_00446C10;
@@ -5103,9 +5103,9 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     text_index = selected->unk0C + 0x1F5;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080;
-    func_001FDB88(word);
+    MenuText_SetPen(word);
     if (entry != 0) {
-        func_00200068(table + entry, 0x33);
+        MenuText_DrawWordWrappedLong(table + entry, 0x33);
     }
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
@@ -5296,7 +5296,7 @@ void SaveScreen_Run(void) {
             D_0044730C = 1;
         }
         D_00447320 = field;
-        func_00206C40();
+        MenuPad_Update();
         if (D_0044730C > 0) {
             if (++D_0044730C >= 0x15) {
                 D_0044730C = 0;
@@ -5309,7 +5309,7 @@ void SaveScreen_Run(void) {
     while (sceGsSyncV(0) != 0) {
     }
     func_001A15B8();
-    func_001FBDC8();
+    MenuHeap_FreeToMark();
     D_00446CFC = 0;
     D_00446D00 = 0;
     sceGsSyncPath(0, 0);
@@ -5322,7 +5322,7 @@ static s32 SaveScreen_DrawBackground(void) {
     GsFillPacket *packet;
     u32 flag;
 
-    packet = func_001FBE70();
+    packet = MenuDraw_NextPacket();
     flag = D_00446F78 != 0 ? 0x1180 : 0;
     packet->unk04 = 0x100B4000;
     packet->unk08 = 0xE;
@@ -5466,10 +5466,10 @@ static int SaveScreen_Start(HandlerContext *context) {
     ((s32 (*)(void))func_00109800)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < D_00446DEC; i++) {
         block = &D_0042A2A0[i];
-        func_00204180(block->data, block);
+        MenuTexture_Upload(block->data, block);
     }
-    func_001FBDE8(D_00446F68);
-    packet = func_001FBE70();
+    MenuArena_Init(D_00446F68);
+    packet = MenuDraw_NextPacket();
     packet[0] = 0x8001;
     packet[1] = 0x10000000;
     packet[2] = 0xE;
@@ -5564,20 +5564,20 @@ static void SaveScreen_UpdateCardSelect(void) {
         SELECT_PART((s8)D_00446BF4[i].unk42);
         switch (kind) {
         case 2:
-            func_00207478((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
             break;
         case 29:
             slot = D_00446BF4[i].slot;
             if (slot == 0 || slot == 2) {
-                func_00207478((int)&D_00446BF4[i], kind + 1000, slot, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, slot, D_00425510[i]);
             }
             break;
         case 31:
             if (D_005CF3C0.unk1B != 0) {
                 if (D_00446C70 != 1) {
-                    func_00207478((int)&D_00446BF4[i], kind + 1000, D_005CF3C0.unk0C, D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, D_005CF3C0.unk0C, D_00425510[i]);
                 } else {
-                    func_00207478((int)&D_00446BF4[i], kind, D_005CF3C0.unk0C, D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446BF4[i], kind, D_005CF3C0.unk0C, D_00425510[i]);
                 }
             }
             break;
@@ -5591,69 +5591,69 @@ static void SaveScreen_UpdateCardSelect(void) {
             case 14:
             case 15:
             case 21:
-                func_00207478((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
                 break;
             }
             break;
         case 26:
             if (SaveCard_IsPresent(0) == 0) {
                 if (D_00446C70 == 0) {
-                    func_00207478((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
                 } else if (D_00446C70 < 2) {
-                    func_00203F28((int)&D_00446BF4[i], kind, 0x20);
+                    MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x20);
                 }
             } else if (D_00446C70 != 1) {
-                func_00207478((int)&D_00446BF4[i], kind + 1000, 0x80, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x80, D_00425510[i]);
             } else {
-                func_00203F28((int)&D_00446BF4[i], kind, 0x80);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x80);
             }
             break;
         case 27:
             if (SaveCard_IsPresent(1) == 0) {
                 if (D_00446C70 == 0) {
-                    func_00207478((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
                 } else if (D_00446C70 < 2) {
-                    func_00203F28((int)&D_00446BF4[i], kind, 0x20);
+                    MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x20);
                 }
             } else if (D_00446C70 != 1) {
-                func_00207478((int)&D_00446BF4[i], kind + 1000, 0x80, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x80, D_00425510[i]);
             } else {
-                func_00203F28((int)&D_00446BF4[i], kind, 0x80);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x80);
             }
             break;
         case 28:
             switch (D_005CF3C0.unk12) {
             case 4:
-                func_00203F28((int)&D_00446BF4[i], kind, 4);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 4);
                 break;
             case 5:
-                func_00203F28((int)&D_00446BF4[i], kind, 5);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 5);
                 break;
             case 12:
-                func_00203F28((int)&D_00446BF4[i], kind, 12);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 12);
                 break;
             case 13:
-                func_00203F28((int)&D_00446BF4[i], kind, 13);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 13);
                 break;
             case 14:
-                func_00203F28((int)&D_00446BF4[i], kind, 14);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 14);
                 break;
             case 15:
-                func_00203F28((int)&D_00446BF4[i], kind, 15);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 15);
                 break;
             case 21:
-                func_00203F28((int)&D_00446BF4[i], kind, 21);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 21);
                 break;
             case 10:
-                func_00203F28((int)&D_00446BF4[i], kind, 10);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 10);
                 break;
             case 22:
-                func_00203F28((int)&D_00446BF4[i], kind, 22);
+                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 22);
                 break;
             }
             break;
         default:
-            func_00207478((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
             break;
         }
         SELECT_PART(0);
@@ -5676,7 +5676,7 @@ static void SaveScreen_UpdateCardSelect(void) {
         bar.blue = 0x78;
         D_00425510[0xFF] = Trade_PulseValue(0x10, 0x20, D_00425510[0xFF]);
         bar.alpha = D_00425510[0xFF];
-        func_001FC5E8(&bar); // match: the float at bar+0x24 that func_001FC5E8 copies is never set
+        MenuDraw_Bar(&bar); // match: the float at bar+0x24 that MenuDraw_Bar copies is never set
     }
 
     if (D_005CF3C0.unk21 != 0) {
@@ -5892,7 +5892,7 @@ static void SaveScreen_UpdateCardSelect(void) {
                 } else if (D_00446C70 == 3) {
                     D_005CF3C0.unk0D = 0;
                     D_00446CFC++;
-                    func_001FBDC8();
+                    MenuHeap_FreeToMark();
                 }
                 D_005CF3C0.unk12 = -1;
                 D_00446C70 = 0;
@@ -6027,23 +6027,23 @@ static void SaveScreen_UpdateSaveList(void) {
         ((int (*)(s8))func_001E5210)((s8)D_00446BF8[i].unk42); // match: a signed byte, see SET_PART_MODE_OF
         switch (kind) {
         case 2:
-            func_00207478((int)&D_00446BF8[i], 0x3EA, 0, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446BF8[i], 0x3EA, 0, D_00425510[i]);
             break;
         case 3:
             group = slot / 3;
             if (MENU_SCREEN_SAVES(&D_005CF3C0)->save_state[D_00426600[group]] == 1) {
-                func_00207478((int)&D_00446BF8[i], 0x3EB, group * 3, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF8[i], 0x3EB, group * 3, D_00425510[i]);
             } else if (MENU_SCREEN_SAVES(&D_005CF3C0)->save_state[D_00426600[group]] == 0) {
-                func_00207478((int)&D_00446BF8[i], 0x3EB, group * 3 + 1, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF8[i], 0x3EB, group * 3 + 1, D_00425510[i]);
             }
             break;
         case 25:
             if (MENU_SCREEN_SAVES(&D_005CF3C0)->save_state[D_00426600[slot]] != -1) {
-                func_00207478((int)&D_00446BF8[i], 0x401, D_005CF3C0.unk0D, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF8[i], 0x401, D_005CF3C0.unk0D, D_00425510[i]);
             }
             break;
         default:
-            func_00207478((int)&D_00446BF8[i], kind + 1000, D_005CF3C0.unk0D, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446BF8[i], kind + 1000, D_005CF3C0.unk0D, D_00425510[i]);
             break;
         }
         SET_PART_MODE(0);
@@ -6056,9 +6056,9 @@ static void SaveScreen_UpdateSaveList(void) {
             kind = table[info[i]->unk04 + 1]; // match: the text's offset in the kind variable: retail keeps both in one register
             if (kind != 0) {
                 text = (char *)table + kind;
-                func_001FDB88(word);
-                func_001FDCD0(D_00446C78);
-                func_001FDD28((TradeValue *)text, 0x18);
+                MenuText_SetPen(word);
+                MenuText_SetColor(D_00446C78);
+                MenuText_DrawWrapped((TradeValue *)text, 0x18);
             }
         }
         word.f.mid16 += 0x340;
@@ -6070,25 +6070,25 @@ static void SaveScreen_UpdateSaveList(void) {
         if (kind == 3) {
             switch (D_005CF3C0.unk13) {
             case 6:
-                func_00203F28((int)&D_00446C58[i], kind, 6);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 6);
                 break;
             case 7:
-                func_00203F28((int)&D_00446C58[i], kind, 7);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 7);
                 break;
             case 0:
-                func_00203F28((int)&D_00446C58[i], kind, 0);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 0);
                 break;
             case 2:
-                func_00203F28((int)&D_00446C58[i], kind, 2);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 2);
                 break;
             case 20:
-                func_00203F28((int)&D_00446C58[i], kind, 20);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 20);
                 break;
             case 10:
-                func_00203F28((int)&D_00446C58[i], kind, 10);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 10);
                 break;
             case 11:
-                func_00203F28((int)&D_00446C58[i], kind, 11);
+                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 11);
                 break;
             }
         } else {
@@ -6100,7 +6100,7 @@ static void SaveScreen_UpdateSaveList(void) {
             case 10:
             case 11:
             case 20:
-                func_00207478((int)&D_00446C58[i], kind + 1000, 0, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446C58[i], kind + 1000, 0, D_00425510[i]);
                 break;
             }
         }
@@ -6119,7 +6119,7 @@ static void SaveScreen_UpdateSaveList(void) {
         bar.blue = 0x78;
         D_00425510[0xFF] = Trade_PulseValue(0x10, 0x20, D_00425510[0xFF]);
         bar.alpha = D_00425510[0xFF];
-        func_001FC5E8(&bar); // match: the float at bar+0x24 that func_001FC5E8 copies is never set
+        MenuDraw_Bar(&bar); // match: the float at bar+0x24 that MenuDraw_Bar copies is never set
     }
 
     D_005CF3C0.unk00 = SaveCard_Update();
