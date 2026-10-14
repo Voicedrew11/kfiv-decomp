@@ -846,6 +846,7 @@ EntityType37_Init = 0x0017B778; // type:func
 EntityType70_Init = 0x0017BC98; // type:func
 EntityType69_Init = 0x0017CC08; // type:func
 EntityType68_Init = 0x0017DAA0; // type:func
+EntityType74_Init = 0x0017FC60; // type:func
 LinkedPoint_Init = 0x0019A848; // type:func
 LinkedPoint_Start = 0x0019A900; // type:func
 LinkedPoint_Allocate = 0x0019A928; // type:func
