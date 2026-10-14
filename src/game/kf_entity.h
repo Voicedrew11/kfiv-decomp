@@ -531,7 +531,7 @@ typedef struct {
     EntityUnkE0Slot unk88;          /* 0x88 */
 } EntityUnkE0Kind1740A8;
 
-/* Entity+0xE0 as the flying kind set up by func_001719F8 lays it out */
+/* Entity+0xE0 as the flying kind set up by EntityType59_Init lays it out */
 typedef struct {
     void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
     char pad04[0x14];
@@ -550,7 +550,7 @@ typedef struct {
     char pad90[0x10];
 } EntityUnkE0Kind1719F8;
 
-/* Entity+0xE0 as the kind set up by func_00178358 lays it out */
+/* Entity+0xE0 as the kind set up by EntityType7_Init lays it out */
 typedef struct {
     void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
     char pad04[0x14];
@@ -571,7 +571,7 @@ typedef struct {
     s32 unk1C;                      /* 0x1C */
 } EntityUnkE0Kind150588;
 
-/* Entity+0xE0 as the kind set up by func_00168160 lays it out. The area is
+/* Entity+0xE0 as the kind set up by EntityType56_Init lays it out. The area is
    8-byte aligned: tests of neighbouring bytes are merged into one 64-bit load. */
 typedef struct {
     void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
@@ -617,7 +617,7 @@ typedef struct {
     EntityUnkE0SlotBits unk88;      /* 0x88 */
 } EntityUnkE0Kind151D30;
 
-/* Entity+0xE0 as the kind set up by func_0016BF98 lays it out */
+/* Entity+0xE0 as the kind set up by EntityType53_Init lays it out */
 typedef struct {
     char pad00[0x1C];
     f32 unk1C;                      /* 0x1C turn speed */
@@ -657,7 +657,7 @@ typedef struct {
     f32 unk90[4];                   /* 0x90 pitch and yaw passed to func_0018D600 */
 } EntityUnkE0Kind162BC8;
 
-/* Entity+0xE0 as the kind set up by func_0017FC60 lays it out */
+/* Entity+0xE0 as the kind set up by EntityType74_Init lays it out */
 typedef struct {
     char pad00[0x68];
     s16 unk68[3];                   /* 0x68 weights of the first three actions (see func_00180A90) */
