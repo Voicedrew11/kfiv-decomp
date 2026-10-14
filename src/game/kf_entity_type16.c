@@ -1,0 +1,422 @@
+/* The behaviour of entity type 16 (Entity.params->unk02, the index into D_003E6E40): its set-up
+   function, which the table names, and the handlers that function installs. */
+#include "kf_entity.h"
+#include "common.h"
+
+void func_001958A8(char *, s32);
+int func_001958B8(Entity *, void (*)(Entity *), int);
+void func_00191478(EntityModel *);
+int func_00193378(EntityModel *, s32, s32);
+void func_00182BD0(char *);
+void func_00181038(Entity *);
+void func_001818B8(Entity *);
+extern s32 D_003E6E40[][2];
+int func_00192EB0(void *, int);
+// match: the callee is void, but retail keeps what it leaves in $2
+int func_00194368(EntityModel *, f32);
+extern u32 D_00446ED4;
+int func_00182DE0(void *, int);
+void func_0018E9C0(void *);
+void func_00196870(void *, int);
+void func_00196CC0(void *);
+int rand(void);
+int func_0018EAC0(void *, void *);
+void func_0018B778(float, void *, void *, void *);
+s16 func_00190F90(float, void *, int); // match: this file only matches with this type; func_00190F90.c defines it differently
+extern PlayerData D_00413F80;
+s32 func_0018ED98(Entity *, f32, f32);
+s32 func_0018EEE0(Entity *, f32, f32);
+s32 func_0018FD50(Entity *, s32);
+void func_00190B88(Entity *, s32);
+int func_0018F030(char *);
+float func_00194FB8(float);
+float func_00195478(float *, char *);
+float func_001957B8(float, float);
+int func_00190BE0(Entity *);
+void func_00181AE0(Entity *);
+void func_00181C60(Entity *);
+void func_00181E48(Entity *);
+void func_00182240(Entity *);
+void func_00196D48(Entity *);
+extern f32 D_00431AF0[16];
+void sceVu0RotMatrixX(float *, float *, float);
+void sceVu0RotMatrixY(float *, float *, float);
+void sceVu0RotMatrixZ(float *, float *, float);
+void func_00216BC0(void *, void *, void *);
+void func_00216D20(void *, void *);
+void Vector_Scale(float *, float *, float);
+float func_00199E68(Entity *, float);
+int func_00192C98(void *, int, int, u32, int);
+
+static void func_00127AB0(Entity *entity);
+static void func_00127BA0(Entity *entity, s32 unknown);
+static int func_00127CA0(Entity *entity, s32 unknown);
+static int func_00127E08(Entity *entity, s32 unknown);
+static void func_00128438(Entity *entity);
+
+/* Set-up of a type 16 entity: clears its work area and installs the type's handlers. */
+void EntityType16_Init(Entity *entity) {
+    EntityUnkE0 *unkE0 = &entity->unkE0;
+    u8 *unkBC = entity->unkBC;
+    u8 *unkC0 = entity->unkC0;
+    s32 i;
+
+    // match: in the three loops the pointer has to be formed inside the loop
+    for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
+        u8 *dest = (u8 *)&entity->unkE0;
+
+        dest[i] = 0;
+    }
+    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    unkE0->unk00 = (void (*)(Entity *, s32))func_00127BA0;
+    unkE0->unk04 = (void (*)(void))func_00127AB0;
+    unkE0->unk08 = (void (*)(void))func_00182BD0;
+    unkE0->unk18 = (void (*)(void))func_00128438;
+    unkE0->unk10 = (void (*)(void))func_00181038;
+    unkE0->unk14 = (void (*)(void))func_001818B8;
+    for (i = 4 - 1; i != -1; i--) {
+        entity->unkBC[i] = 0x80;
+    }
+    for (i = 6 - 1; i != -1; i--) {
+        entity->unkC0[i] = 0x80;
+    }
+    ENTITY_UNK5C(entity)->as_s32 = 0;
+    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+    } else {
+        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+    }
+    unkE0->unk40 = 0.5f;
+    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->unk15C = entity->unkD6;
+    func_00191478(entity->model);
+    func_00193378(entity->model, 0, 0);
+}
+
+static void func_00127AB0(Entity *entity) {
+    u32 blend_frames; // match: converted to float as unsigned
+    s64 flags;
+    EntityUnkE0 *unkE0;
+
+    flags = entity->flags;
+    unkE0 = &entity->unkE0;
+    if (ENTITY_FLAG_BITS(entity)->bit14) {
+        blend_frames = entity->model->unkFC->unk88;
+        if (blend_frames != 0) {
+            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+        } else {
+            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+        }
+    }
+}
+
+static void func_00127BA0(Entity *entity, s32 unknown) {
+    u32 phase;
+
+    phase = D_00446ED4 % 10U;
+    if (phase == entity->unkD7 % 10U) {
+        func_00196870(entity, 1);
+    }
+    if (entity->unkC6 != 0) {
+        return;
+    }
+    func_00196CC0(entity);
+    func_0018E9C0(entity);
+    if (ENTITY_FLAG_BITS(entity)->bit53) {
+        func_00182DE0(entity, unknown);
+        return;
+    }
+    switch (entity->state) {
+    case 0:
+    case 1:
+        break;
+    case 2:
+        func_00127E08(entity, unknown);
+        return;
+    }
+    func_00127CA0(entity, unknown);
+}
+
+/* wander: every so often stand still, or now and then pick a point near the spawn point to walk to */
+static int func_00127CA0(Entity *entity, s32 unknown) {
+    EntityUnkE0 *unkE0 = &entity->unkE0;
+    f32 direction[4];
+    s32 turn;
+
+    if (entity->params->flags & 0x100) {
+        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    } else {
+        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    }
+    if (entity->unkA0 == 0) {
+        if (rand() % 100 <= 20) {
+            func_0018B778(entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
+            entity->target = unkE0->unk30;
+            entity->unkA0 = rand() % 30 + 60;
+        } else {
+            entity->target = NULL;
+            entity->unkA0 = rand() % 60 + 120;
+        }
+    }
+    turn = func_0018EAC0(entity, direction);
+    if (turn > 0) {
+        entity->unkC8 = 0x201;
+    } else if (turn < 0) {
+        entity->unkC8 = 0x101;
+    } else {
+        entity->unkC8 = func_00190F90(50.0f, entity, 0);
+    }
+    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+}
+
+/* chase: face the player, then close in, or circle left or right around the player for a while */
+static int func_00127E08(Entity *entity, s32 unknown) {
+    EntityUnkE0 *unkE0 = &entity->unkE0;
+    f32 heading;
+    f32 angle;
+    s32 side;
+    s32 turn;
+    s32 mode;
+
+    if (entity->params->flags & 0x100) {
+        ENTITY_FLAG_BITS(entity)->bits11 = 0;
+    } else {
+        ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    }
+    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+        func_001958B8(entity, func_00181C60, 1);
+        return;
+    }
+    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+        func_001958B8(entity, func_00181AE0, 1);
+        return;
+    }
+    side = func_0018FD50(entity, 0);
+    if (entity->unkA0 == 0 || side == 0) {
+        entity->unkCF = entity->unkCD;
+        entity->unkCD = side;
+        if (entity->unkCD != entity->unkCF) {
+            entity->unk9E = D_00446ED4;
+        }
+        func_00190B88(entity, side);
+        switch (entity->unkCD) {
+        case 0:
+            if (func_0018F030((char *)entity)) {
+                func_001958B8(entity, func_00182240, unknown);
+            } else {
+                func_001958B8(entity, func_00181E48, unknown);
+            }
+            return;
+        case 1:
+            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            if (ABS(angle) > 0.17453292f) {
+                entity->target = &D_00413F80;
+                entity->unkA0 = rand() % 60 + 60;
+                unkE0->unk78 = 0;
+            } else {
+                heading = func_00195478(D_00413F80.position, (char *)entity->model->position) - D_00413F80.unk14;
+                heading = func_00194FB8(heading);
+                if (ABS(heading) > 0.7853982f || rand() % 100 < entity->params->unk430) {
+                    entity->target = &D_00413F80;
+                    entity->unkA0 = rand() % 60 + 120;
+                    unkE0->unk78 = 1;
+                } else {
+                    if (heading >= 0.0f) {
+                        unkE0->unk7A = 0;
+                    } else {
+                        unkE0->unk7A = 1;
+                    }
+                    entity->unkA0 = rand() % 30 + 60;
+                    unkE0->unk78 = 2;
+                }
+            }
+            break;
+        case 2:
+            entity->unkA0 = 30;
+            unkE0->unk78 = -1;
+            break;
+        default:
+            unkE0->unk78 = -1;
+            break;
+        }
+    }
+    mode = entity->unkCD;
+    if (mode == 1) {
+        func_00196D48(entity);
+        if (ENTITY_FLAG_BITS(entity)->bit31) {
+            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            if (unkE0->unk79 == 0) {
+                unkE0->unk79 = ABS(angle) > 0.5235988f;
+                if (unkE0->unk79 == 0) {
+                    goto done;
+                }
+            }
+            entity->unkC8 = func_00190BE0(entity);
+            if (entity->unkC8 == 0) {
+                unkE0->unk79 = 0;
+            }
+        } else {
+            turn = func_0018EAC0(entity, &heading);
+            switch (unkE0->unk78) {
+            case 0:
+                angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+                if (ABS(angle) > entity->params->turn_limit) {
+                    if (angle >= 0.0f) {
+                        entity->unkC8 |= 0x200;
+                    } else {
+                        entity->unkC8 |= 0x100;
+                    }
+                }
+                if (ABS(angle) <= 0.17453292f) {
+                    entity->unkA0 = 0;
+                }
+                ENTITY_FLAG_BITS(entity)->bits11 = 3;
+                break;
+            case 1:
+                if (turn > 0) {
+                    entity->unkC8 = 0x201;
+                } else if (turn < 0) {
+                    entity->unkC8 = 0x101;
+                } else {
+                    entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 0);
+                }
+                break;
+            case 2:
+                angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+                if (ABS(angle) > entity->params->turn_limit) {
+                    if (angle >= 0.0f) {
+                        entity->unkC8 |= 0x200;
+                    } else {
+                        entity->unkC8 |= 0x100;
+                    }
+                }
+                if (entity->flags & (0xD000L << 33)) {
+                    unkE0->unk78 = 1;
+                } else if (unkE0->unk7A != 0) {
+                    entity->unkC8 |= 8;
+                } else {
+                    entity->unkC8 |= 4;
+                }
+                break;
+            }
+        }
+    }
+done:
+    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+}
+
+/* movement of this kind: turn and move as the command bits in Entity.unkC8 say, and pick the animation to go with it
+   (it has turn animations of its own) */
+static void func_00128438(Entity *entity) {
+    EntityUnkE0 *unkE0 = &entity->unkE0;
+    f32 *vector;
+    f32 turn;
+    f32 amount;
+    s32 command;
+    s32 first_command;
+
+    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+        entity->unkC8 = 0;
+    }
+    // match: read through the union, and again below once the turn speed is stored
+    first_command = ENTITY_COMMAND(entity);
+    if (first_command & 0xFCFF) {
+        if (first_command & 0x100) {
+            unkE0->unk1C -= entity->params->unk58;
+            if (unkE0->unk1C < -entity->params->turn_limit) {
+                unkE0->unk1C = -entity->params->turn_limit;
+            }
+        } else if (first_command & 0x200) {
+            unkE0->unk1C += entity->params->unk58;
+            if (entity->params->turn_limit < unkE0->unk1C) {
+                unkE0->unk1C = entity->params->turn_limit;
+            }
+        } else {
+            unkE0->unk1C = 0.0f;
+        }
+        command = entity->unkC8;
+        turn = unkE0->unk1C;
+        if (command & 0x400) {
+            turn += turn;
+        }
+        entity->unk94 += turn;
+    } else {
+        command = first_command;
+    }
+    if (ENTITY_FLAG_BITS(entity)->bits11 == 0) {
+        vector = ENTITY_SCRATCH_VECTOR;
+        vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
+        if (command & 3) {
+            amount = 0.0f;
+            if (command & 1) {
+                amount = -1.0f;
+            } else if (command & 2) {
+                amount = 1.0f;
+            }
+            vector[2] += amount;
+        }
+        if (command & 0xC) {
+            amount = 0.0f;
+            if (command & 4) {
+                amount = 1.0f;
+            } else if (command & 8) {
+                amount = -1.0f;
+            }
+            vector[0] += amount;
+        }
+        if (command & 0x30) {
+            amount = 0.0f;
+            if (command & 0x10) {
+                amount = -1.0f;
+            } else if (command & 0x20) {
+                amount = 1.0f;
+            }
+            vector[1] += amount;
+        }
+        if (command & 0x3F) {
+            unkE0->unk44 = func_00199E68(entity, unkE0->unk44);
+            amount = unkE0->unk44;
+            if (entity->unkC8 & 0x40) {
+                amount += amount;
+            }
+            sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->unkD0[2]);
+            sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[0]);
+            sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[1]);
+            func_00216BC0(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
+            func_00216D20(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR);
+            Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, amount);
+            command = entity->unkC8;
+            entity->unk84 += ENTITY_SCRATCH_VECTOR[0];
+            entity->unk88 += ENTITY_SCRATCH_VECTOR[1];
+            entity->unk8C += ENTITY_SCRATCH_VECTOR[2];
+        } else {
+            unkE0->unk44 = 0.0f;
+        }
+    } else {
+        unkE0->unk44 = 0.0f;
+    }
+    if (command & 1) {
+        if (command & 0x40) {
+            func_00192C98(entity, 4, 0, entity->params->unkC4 >> 1, 0);
+        } else {
+            func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+        }
+    } else if (command & 2) {
+        func_00192C98(entity, 5, 0, entity->params->unkC4, 0);
+    } else if (command & 0x10) {
+        func_00192C98(entity, 8, 0, entity->params->unkC4, 0);
+    } else if (command & 0x20) {
+        func_00192C98(entity, 9, 0, entity->params->unkC4, 0);
+    } else if (command & 4) {
+        func_00192C98(entity, 6, 0, entity->params->unkC4, 0);
+    } else if (command & 8) {
+        func_00192C98(entity, 7, 0, entity->params->unkC4, 0);
+    } else if (command & 0x100) {
+        func_00192C98(entity, 0xB, 0, entity->params->unkC4, 0);
+    } else if (command & 0x200) {
+        func_00192C98(entity, 0xC, 0, entity->params->unkC4, 0);
+    } else {
+        func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    }
+}

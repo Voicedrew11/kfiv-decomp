@@ -1,0 +1,398 @@
+/* The behaviour of entity type 18 (Entity.params->unk02, the index into D_003E6E40): its set-up
+   function, which the table names, and the handlers that function installs. */
+#include "kf_entity.h"
+#include "common.h"
+
+#define ENTITY_WORK_AREA_SIZE 0xA0
+void func_001958A8(char *, s32);
+int func_001958B8(Entity *, void (*)(Entity *), int);
+void func_00191478(EntityModel *);
+int func_00193378(EntityModel *, s32, s32);
+void func_00216778(void *, void *);
+void func_00182BD0(char *);
+void func_00181038(Entity *);
+void func_001818B8(Entity *);
+extern s32 D_003E6E40[][2];
+int func_00192EB0(void *, int);
+// match: the callee is void, but retail keeps what it leaves in $2
+int func_00194368(EntityModel *, f32);
+int func_00196120(Entity *, void *, s32, void *, f32);
+float func_001954A8(float *, float *);
+float func_001957B8(float, float);
+float func_00195088(float *, float, float);
+extern u32 D_00446ED4;
+int rand(void);
+char *func_0010CAB8(char *, u32);
+int func_00195E48(void *, int, void *, void *);
+void func_00196870(void *, int);
+void func_00196CC0(char *);
+void func_0018E9C0(void *);
+int func_00182DE0(void *, int);
+int func_00182FD8(void *, int);
+extern PlayerData D_00413F80;
+s32 func_0018ED98(Entity *, f32, f32);
+s32 func_0018EEE0(Entity *, f32, f32);
+s32 func_00197078(Entity *);
+int func_0018F030(char *);
+void func_00196D48(Entity *);
+int func_00190BE0(Entity *);
+int func_0018EAC0(void *, void *);
+int func_001958F8(Entity *, void (*)(Entity *entity), int, int, int);
+void func_00181AE0(Entity *);
+void func_00181C60(Entity *);
+void func_00181E48(Entity *);
+void func_00182240(Entity *);
+int func_0019A050(Entity *, f32 *, f32 *);
+int func_00192C98(void *, int, int, u32, int);
+
+static void func_0012AE98(Entity *entity);
+static void func_0012B040(void *entity_arg);
+static void func_0012B338(Entity *entity, s32 unknown);
+static void func_0012B5F8(Entity *entity, s32 unknown);
+static void func_0012B880(Entity *entity);
+
+/* Set-up of a type 18 entity: clears its work area and installs the type's handlers. */
+void EntityType18_Init(Entity *entity) {
+    EntityUnkE0 *unkE0 = &entity->unkE0;
+    u8 *unkBC = entity->unkBC;
+    u8 *unkC0 = entity->unkC0;
+    char *unk138 = entity->model->unk138;
+    s32 i;
+
+    // match: in the three loops the pointer has to be formed inside the loop
+    for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
+        u8 *dest = (u8 *)&entity->unkE0;
+
+        dest[i] = 0;
+    }
+    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    unkE0->unk00 = func_0012B338;
+    unkE0->unk04 = (void (*)(void))func_0012AE98;
+    unkE0->unk08 = (void (*)(void))func_00182BD0;
+    unkE0->unk18 = (void (*)(void))func_0012B880;
+    unkE0->unk10 = (void (*)(void))func_00181038;
+    unkE0->unk14 = (void (*)(void))func_001818B8;
+    for (i = 4 - 1; i != -1; i--) {
+        entity->unkBC[i] = 0x80;
+    }
+    for (i = 6 - 1; i != -1; i--) {
+        entity->unkC0[i] = 0x80;
+    }
+    ENTITY_UNK5C(entity)->as_s32 = 0;
+    ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
+    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+    } else {
+        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+    }
+    if (unk138 != NULL) {
+        func_00216778(unkE0->unk20, unk138 + 0x50);
+    }
+    unkE0->unk40 = 0.5f;
+    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->unk15C = entity->unkD6;
+    func_00191478(entity->model);
+    func_00193378(entity->model, 0, 0);
+}
+
+static void func_0012AE98(Entity *entity) {
+    f32 limits[4];
+    s32 look_at_target;
+    u32 blend_frames; // match: converted to float as unsigned
+    s64 flags;
+    EntityUnkE0 *unkE0;
+
+    flags = entity->flags;
+    unkE0 = &entity->unkE0;
+    if (ENTITY_FLAG_BITS(entity)->bit14) {
+        blend_frames = entity->model->unkFC->unk88;
+        if (blend_frames != 0) {
+            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 2) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+        } else {
+            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+        }
+        look_at_target = ENTITY_FLAG_BITS(entity)->bit9;
+        limits[1] = entity->params->unk430 * 0.017453292f;
+        limits[0] = -entity->params->unk430 * 0.017453292f;
+        limits[3] = entity->params->unk432 * 0.017453292f;
+        limits[2] = -entity->params->unk432 * 0.017453292f;
+        if (look_at_target) {
+            func_00196120(entity, unkE0->unk20, look_at_target, limits, 8.0f);
+        } else {
+            func_00196120(entity, unkE0->unk20, 0, NULL, 5.0f);
+        }
+        func_0012B040(entity);
+    }
+}
+
+/* Bends the five neck joints (model parts 30 to 34) towards the target. Facing it: each joint
+   moves to where the joint before it was, the first back to straight. Otherwise the turn is
+   spread over the joints, each taking up to 15 degrees, and the joints past that straighten. */
+static void func_0012B040(void *entity_arg) {
+    Entity *entity = entity_arg;
+    EntityUnkE0Kind12ACA0 *unkE0 = (EntityUnkE0Kind12ACA0 *)&entity->unkE0;
+    EntityModelPart80 *part;
+    f32 previous[5];
+    f32 limit = 0.2617994f;
+    f32 angle;
+    f32 step;
+    f32 remaining;
+    f32 moved;
+    s32 done;
+    s32 i;
+    f32 *previous_joint;
+    s32 part_index;
+
+    part = (EntityModelPart80 *)entity->model->unkF8;
+    if (entity->unkD1 != 0 && entity->unkD1 != 3 && entity->unkD1 != 4 && entity->unkD1 != 0xB &&
+        entity->unkD1 != 0xC) {
+        unkE0->unk40[2] = unkE0->unk40[3] = unkE0->unk40[4] = unkE0->unk40[5] = unkE0->unk40[6] = 0.0f;
+        return;
+    }
+    if (entity->target != NULL) {
+        angle = func_001954A8(entity->model->position, entity->target);
+        angle = func_001957B8(entity->model->unkD0[1], angle);
+        previous[0] = unkE0->unk40[2];
+        previous[1] = unkE0->unk40[3];
+        previous[2] = unkE0->unk40[4];
+        previous[3] = unkE0->unk40[5];
+        previous[4] = unkE0->unk40[6];
+        step = entity->params->turn_limit;
+        if (angle >= -0.0001f && angle <= 0.0001f) {
+            if (unkE0->unk40[2] != 0.0f) {
+                moved = func_00195088(&unkE0->unk40[2], 0.0f, step);
+                moved = ABS(moved);
+                if (moved < step) {
+                    step -= moved;
+                } else {
+                    step = 0.0f;
+                }
+            }
+            previous_joint = previous;
+            for (i = 0; i < 4; i++, previous_joint++) {
+                if (unkE0->unk40[i + 3] != *previous_joint) {
+                    moved = func_00195088(&unkE0->unk40[i + 3], *previous_joint, step);
+                    moved = ABS(moved);
+                    if (moved < step) {
+                        step -= moved;
+                    } else {
+                        step = 0.0f;
+                    }
+                }
+            }
+        } else {
+            remaining = unkE0->unk1C;
+            done = FALSE;
+            for (i = 2; i < 7; i++) {
+                if (!done) {
+                    unkE0->unk40[i] += remaining;
+                    if (unkE0->unk40[i] > limit) {
+                        remaining = unkE0->unk40[i] - limit;
+                        unkE0->unk40[i] = limit;
+                    } else if (unkE0->unk40[i] < -limit) {
+                        remaining = unkE0->unk40[i] + limit;
+                        unkE0->unk40[i] = -limit;
+                    } else {
+                        done = TRUE;
+                    }
+                } else if (unkE0->unk40[i] != 0.0f) {
+                    moved = func_00195088(&unkE0->unk40[i], 0.0f, step);
+                    moved = ABS(moved);
+                    if (moved < step) {
+                        step -= moved;
+                    } else {
+                        step = 0.0f;
+                    }
+                }
+            }
+        }
+    }
+    part_index = 30;
+    for (i = 0; i < 5; i++) {
+        part[part_index++].unk50[1] = -unkE0->unk40[i + 2];
+    }
+}
+
+static void func_0012B338(Entity *entity, s32 unknown) {
+    EntityUnkE0 *unkE0 = &entity->unkE0;
+    char *part = func_0010CAB8((char *)entity->model, 0);
+    f32 target[4];
+    f32 direction[4];
+    f32 offset;
+
+    if (part != NULL && entity->unk2A == 0) {
+        direction[0] = 0.0f;
+        direction[1] = 0.0f;
+        direction[2] = 0.0f;
+        direction[3] = 0.0f;
+        if (unkE0->unk68 == 0) {
+            if (rand() % 100 < ENTITY_CONTROLLER(entity)->unk434) {
+                func_00216778(target, part);
+                offset = rand() % 10 - 5;
+                target[0] += offset;
+                target[1] += offset;
+                target[2] += offset;
+                func_00195E48(entity, entity->params->unk43C, target, direction);
+                unkE0->unk68 = entity->params->unk436;
+            }
+        }
+        if (unkE0->unk68 != 0) {
+            unkE0->unk68--;
+        }
+        if (unkE0->unk6A == 0) {
+            if (rand() % 100 < ENTITY_CONTROLLER(entity)->unk438) {
+                func_00216778(target, part);
+                offset = rand() % 10 - 5;
+                target[0] += offset;
+                target[1] += offset;
+                target[2] += offset;
+                func_00195E48(entity, entity->params->unk43C, target, direction);
+                unkE0->unk6A = entity->params->unk43A;
+            }
+        }
+        if (unkE0->unk6A != 0) {
+            unkE0->unk6A--;
+        }
+    }
+    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+        func_00196870(entity, 1);
+    }
+    if (entity->unkC6 != 0) {
+        return;
+    }
+    func_00196CC0((char *)entity);
+    func_0018E9C0(entity);
+    if (ENTITY_FLAG_BITS(entity)->bit53) {
+        func_00182DE0(entity, unknown);
+        return;
+    }
+    switch (entity->state) {
+    case 0:
+        break;
+    case 1:
+    case 2:
+        func_0012B5F8(entity, unknown);
+        return;
+    }
+    ((void (*)(void *, int))func_00182FD8)(entity, unknown); // match: called as void, $2 is reused at once
+    unkE0->unk7A = 1;
+}
+
+static void func_0012B5F8(Entity *entity, s32 unknown) {
+    EntityUnkE0 *unkE0 = &entity->unkE0;
+    f32 direction[4];
+    f32 angle;
+    s32 turn;
+
+    ENTITY_FLAG_BITS(entity)->bits11 = 1;
+    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+        func_001958B8(entity, func_00181C60, 1);
+        return;
+    }
+    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+        func_001958B8(entity, func_00181AE0, 1);
+        return;
+    }
+    if (entity->unkA2 == 0 && ((int (*)(Entity *))func_00197078)(entity)) { // match: the entity is passed
+        entity->target = NULL;
+        if (func_0018F030((char *)entity)) {
+            func_001958B8(entity, func_00182240, unknown);
+        } else {
+            func_001958B8(entity, func_00181E48, unknown);
+        }
+        return;
+    }
+    entity->flags |= 0x200;
+    if ((s32)(entity->flags >> 32) & 1) {
+        if (unkE0->unk7A == 1) {
+            unkE0->unk7A = 0;
+            if (rand() % 100 < 40) {
+                func_001958F8(entity, func_00182240, unknown, 1, 0);
+                return;
+            }
+        }
+    } else {
+        unkE0->unk7A = 1;
+    }
+    func_00196D48(entity);
+    if (ENTITY_FLAG_BITS(entity)->bit31) {
+        angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+        if (unkE0->unk79 == 0) {
+            unkE0->unk79 = ABS(angle) > 0.5235988f;
+            if (unkE0->unk79 == 0) {
+                goto done;
+            }
+        }
+        entity->unkC8 = func_00190BE0(entity);
+        if (entity->unkC8 == 0) {
+            unkE0->unk79 = 0;
+        }
+    } else if (unkE0->unk78 == 1) {
+        entity->target = &D_00413F80;
+        turn = func_0018EAC0(entity, direction);
+        if (turn > 0) {
+            entity->unkC8 = 0x241;
+        } else if (turn < 0) {
+            entity->unkC8 = 0x141;
+        } else {
+            entity->unkC8 = 0x841;
+        }
+    } else {
+        unkE0->unk78 = 1;
+    }
+done:
+    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+}
+
+static void func_0012B880(Entity *entity) {
+    EntityUnkE0 *unkE0 = &entity->unkE0;
+    f32 vector[4];
+    f32 turn;
+
+    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+        entity->unkC8 = 0;
+    }
+    vector[0] = vector[1] = vector[2] = vector[3] = turn = 0.0f;
+    if (entity->unkC8 & 0x800) {
+        if (entity->target != NULL) {
+            func_0019A050(entity, &unkE0->unk1C, entity->target);
+        }
+    } else if (entity->unkC8 & 0x100) {
+        unkE0->unk1C -= entity->params->unk58;
+        if (unkE0->unk1C < -entity->params->turn_limit) {
+            unkE0->unk1C = -entity->params->turn_limit;
+        }
+        turn = unkE0->unk1C;
+        if (entity->unkC8 & 0x400) {
+            turn += turn;
+        }
+        entity->unk94 += turn;
+    } else if (entity->unkC8 & 0x200) {
+        unkE0->unk1C += entity->params->unk58;
+        if (entity->params->turn_limit < unkE0->unk1C) {
+            unkE0->unk1C = entity->params->turn_limit;
+        }
+        turn = unkE0->unk1C;
+        if (entity->unkC8 & 0x400) {
+            turn += turn;
+        }
+        entity->unk94 += turn;
+    } else {
+        unkE0->unk1C = 0.0f;
+    }
+    if (entity->unkC8 & 1) {
+        if (entity->unkC8 & 0x40) {
+            func_00192C98(entity, 4, 0, (s32)((f32)entity->params->unkC4 * 0.5f), 0);
+        } else {
+            func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+        }
+    } else if (entity->unkC8 & 0x300) {
+        func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+    } else if (entity->unkC8 & 0x8000) {
+        func_00192C98(entity, 0x11, 0, entity->params->unkC4, 0);
+    } else if (entity->unkC8 & 0x800) {
+        func_00192C98(entity, 4, 0, entity->params->unkC4, 0);
+    } else {
+        func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    }
+}
