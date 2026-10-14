@@ -1,5 +1,9 @@
-/* The behaviour of entity type 75 (Entity.params->unk02, the index into D_003E6E40): its set-up
-   function, which the table names, and the handlers that function installs. */
+/* DarkOne: the behaviour of entity type 75 (Entity.params->unk02, the index into D_003E6E40): its set-up
+   function, which the table names, and the handlers it installs. Used by: the Dark One, the last boss,
+   chr.prm record 99 (ENTITY_TYPE_LAST_BOSS in func_001B2F70), whose one spawn is in 040.map, the end of
+   the Dark Reality. The game's own text calls him the Dark One. func_001B2F70 gives him no damage:
+   each weapon hit counts D_00446928 down and throws the player back, magic does nothing, and the hit
+   that takes the count to 0 kills him; Prima's official guide (2004) describes the same fight. */
 #include "kf_entity.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
@@ -27,13 +31,13 @@ extern u8 D_00413FBC[];
 int func_00192C98(void *, int, int, u32, int);
 void func_0018DCD8(Entity *);
 
-static void EntityType75_Think(Entity *entity, s32 unknown);
-static void EntityType75_Death(Entity *entity);
-static void EntityType75_DeathRemainAnim16(Entity *entity);
-static void EntityType75_DeathRemainAnim0(Entity *entity);
+static void DarkOne_Think(Entity *entity, s32 unknown);
+static void DarkOne_Death(Entity *entity);
+static void DarkOne_DeathByOtherWeapon(Entity *entity);
+static void DarkOne_DeathByMoonlightSword(Entity *entity);
 
 /* Set-up of a type 75 entity: clears its work area and installs the type's handlers. */
-void EntityType75_Init(Entity *entity) {
+void DarkOne_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     u8 *unkBC = entity->unkBC;
     u8 *unkC0 = entity->unkC0;
@@ -47,12 +51,12 @@ void EntityType75_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->think = EntityType75_Think;
+    unkE0->think = DarkOne_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
     unkE0->move = (void (*)(void))EntityAi_Move;
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityType75_Death;
+    unkE0->death = (void (*)(void))DarkOne_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -84,9 +88,9 @@ void EntityType75_Init(Entity *entity) {
    EntityAi_ThinkCombat for states 1 and 2. Every third frame it calls func_0018D600 with
    EntityParams.unk430, unk432 or unk434, by D_00446928 (3, 2, other). In a frame with flag bit 43
    set it calls func_0018D600 with 0x13D and clears the bit; then, with D_00446928 at 0 or less, it
-   sets Entity.unkA3 to 6 and starts EntityType75_Death, and else, when D_00446928 has changed (work
+   sets Entity.unkA3 to 6 and starts DarkOne_Death, and else, when D_00446928 has changed (work
    byte unk7A keeps it), calls func_0018DA38 and func_0019D490. */
-static void EntityType75_Think(Entity *entity, s32 unknown) {
+static void DarkOne_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 3U == 0) {
@@ -107,7 +111,7 @@ static void EntityType75_Think(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->bit43 = FALSE;
         if (D_00446928 <= 0) {
             entity->unkA3 = 6;
-            EntityAi_StartAction(entity, EntityType75_Death, unknown);
+            EntityAi_StartAction(entity, DarkOne_Death, unknown);
             return;
         }
         if (unkE0->unk7A != D_00446928) {
@@ -136,23 +140,24 @@ static void EntityType75_Think(Entity *entity, s32 unknown) {
     }
 }
 
-/* The death action in the slot: it only starts one of the two others, EntityType75_DeathRemainAnim0 with
-   flag bit 29 set when D_00413FBC[0] is 0x2E, else EntityType75_DeathRemainAnim16 with flag bit 29 clear.
-   EntityType75_Think starts it too. */
-static void EntityType75_Death(Entity *entity) {
+/* The death action in the slot: it only starts one of the two others, DarkOne_DeathByMoonlightSword with
+   flag bit 29 set when the weapon in hand (PlayerState.weapon, D_00413FBC[0]) is 0x2E, the Moonlight Sword
+   (item 196), else DarkOne_DeathByOtherWeapon with flag bit 29 clear.
+   DarkOne_Think starts it too. */
+static void DarkOne_Death(Entity *entity) {
     if (D_00413FBC[0] == 0x2E) {
         ENTITY_FLAG_BITS(entity)->bit29 = TRUE;
-        EntityAi_StartAction(entity, EntityType75_DeathRemainAnim0, 1);
+        EntityAi_StartAction(entity, DarkOne_DeathByMoonlightSword, 1);
     } else {
         ENTITY_FLAG_BITS(entity)->bit29 = FALSE;
-        EntityAi_StartAction(entity, EntityType75_DeathRemainAnim16, 1);
+        EntityAi_StartAction(entity, DarkOne_DeathByOtherWeapon, 1);
     }
 }
 
-/* A death action (busy bit 0x40), started by EntityType75_Death: plays animation 16 as
+/* A death action (busy bit 0x40), started by DarkOne_Death: plays animation 16 as
    EntityAi_Death does, calling func_0018DCD8 at the start, and when the animation has ended sets
    the flags of the fade and stops there: no fade and no removal. */
-static void EntityType75_DeathRemainAnim16(Entity *entity) {
+static void DarkOne_DeathByOtherWeapon(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
@@ -196,9 +201,9 @@ static void EntityType75_DeathRemainAnim16(Entity *entity) {
     }
 }
 
-/* A death action (busy bit 0x40), started by EntityType75_Death: as EntityType75_DeathRemainAnim16 with
+/* A death action (busy bit 0x40), started by DarkOne_Death: as DarkOne_DeathByOtherWeapon with
    animation 0 in place of 16. */
-static void EntityType75_DeathRemainAnim0(Entity *entity) {
+static void DarkOne_DeathByMoonlightSword(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:

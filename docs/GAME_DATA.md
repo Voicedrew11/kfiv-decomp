@@ -212,7 +212,8 @@ The wiki's table is the bestiary of Prima's official strategy guide (2004): its 
 the guide's. Three of the six differing experience values are the guide's own errors (Lava Face,
 Dark Succubus, Greater Demon: a factor of ten each) and three are errors in copying it. The guide also
 names one creature the wiki lacks: the Ancient King, record 57 (`kf_enemy_ancient_king.c`), whose
-description matches the record's resistances and its code. Prima's "Beetle" is the segmented creature
+description matches the record's resistances and its code. The last boss, record 99 (`kf_enemy_dark_one.c`), is the
+Dark One of the game's own text; the guide's account of the fight is the code's. Prima's "Beetle" is the segmented creature
 of records 11, 19 and 152, all drawn with model `c0011`.
 
 ## Areas
