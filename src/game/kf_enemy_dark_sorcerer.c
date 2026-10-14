@@ -65,7 +65,7 @@ int func_0019D490(u8, u8, float *, float);
 extern s32 D_00446770;
 extern MapSlot D_0038CD20[];
 void *func_00116160(int, int);
-int func_002109C8(int, int);
+int Script_Start(int, int);
 
 static void DarkSorcerer_OnHit(Entity *entity);
 static void DarkSorcerer_Think(Entity *entity, s32 unknown);
@@ -911,7 +911,7 @@ static void DarkSorcerer_StartMapScripts(Entity *entity) {
     s32 roll_range;
 
     if (record->unk4E != 0 && entity->group_id == D_00446770) {
-        func_002109C8(record->unk4E + 10000, 0);
+        Script_Start(record->unk4E + 10000, 0);
     }
     slots_left = 0x1D;
     i = 0;
@@ -924,7 +924,7 @@ static void DarkSorcerer_StartMapScripts(Entity *entity) {
             if (record != NULL && record->unk4E != 0 && entity->group_id == D_00446770) {
                 chance -= 100;
                 remaining--;
-                func_002109C8(record->unk4E + 10000, 0);
+                Script_Start(record->unk4E + 10000, 0);
             }
         }
         if (remaining <= 0) {

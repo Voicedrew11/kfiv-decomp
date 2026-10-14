@@ -37,7 +37,7 @@ extern EntitySpawnInfo *D_004467D0[2];
 extern MapSlot D_0038CD20[];
 extern int D_00446770;
 void func_001035A8(u32, int);
-int func_002109C8(int, int);
+int Script_Start(int, int);
 
 static void Snake_DormantHoldAnim2(Entity *entity);
 static void Snake_DormantHoldAnim8ThenMove(Entity *entity);
@@ -360,7 +360,7 @@ static void Snake_Death(Entity *entity) {
             func_001035A8(D_0038CD20[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
             Effect_FreeForOwner(entity);
             if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
-                func_002109C8(entity->spawn_info->unk36, 0);
+                Script_Start(entity->spawn_info->unk36, 0);
             }
             entity->action_step++;
         }

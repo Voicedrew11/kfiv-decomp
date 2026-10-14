@@ -30,8 +30,8 @@ void func_00123158(int);
 void func_001C87D8(int);
 void func_00119360(int);
 void func_001034F8(int);
-void func_00210930(int);
-int func_002109C8(int, int);
+void Script_Init(int);
+int Script_Start(int, int);
 
 /* Loads a map into slot 0 in one go, sets everything in it up and makes it the current map. */
 void func_00112948(int map) {
@@ -79,8 +79,8 @@ void func_00112948(int map) {
     Entity_ClearFlag10InSlot(0);
     func_00119360(0);
     func_001034F8(D_0038CD20[0].tag);
-    func_00210930(D_0038CD20[0].unk5C);
-    func_002109C8(0x7FFF, 0);
+    Script_Init(D_0038CD20[0].unk5C);
+    Script_Start(0x7FFF, 0);
     D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[0].header)->unk70;
     D_0038A130.unk04 = 1;
 }

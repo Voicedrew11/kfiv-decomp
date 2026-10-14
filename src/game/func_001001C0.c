@@ -40,7 +40,7 @@ void func_001096E8(void);
 void func_0010B000(void);
 void func_00111D58(void);
 void func_001B5460(void);
-int func_00210D48(void);
+int Script_UpdateAll(void);
 void func_00100D10(void);
 void func_001D0970(void);
 void func_00117CC8(void);
@@ -113,7 +113,7 @@ void func_001001C0(int arg) {
             }
         }
         if (!(D_0038CC50.unk30 & 0x40) && D_00413F80.unk1A8 == 0) {
-            func_00210D48();
+            Script_UpdateAll();
         }
         Player_Update();
         func_00100D10();

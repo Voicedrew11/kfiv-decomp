@@ -13,8 +13,8 @@ extern PlayerState D_00413F80;
 extern void *D_00414188[];
 extern int D_00446770;
 
-int func_00210C48(int);
-int func_002109C8(int, int);
+int Script_IsRunning(int);
+int Script_Start(int, int);
 void Player_ApplyItem(int);
 void func_001BC968(int);
 int func_001188E0(int);
@@ -38,18 +38,18 @@ void Player_UseItem(void) {
         if (item_counts[item] != 0) {
             entity = D_00420D00.unk54;
             if (entity != NULL && entity->spawn_info->unk58 != 0 && entity->group_id == D_00446770) {
-                if (entity->spawn_info->unk4E != 0 && func_00210C48(entity->spawn_info->unk4E) != 0) {
+                if (entity->spawn_info->unk4E != 0 && Script_IsRunning(entity->spawn_info->unk4E) != 0) {
                     return;
                 }
-                func_002109C8(((Entity *)D_00420D00.unk54)->spawn_info->unk58, 0);
+                Script_Start(((Entity *)D_00420D00.unk54)->spawn_info->unk58, 0);
                 return;
             }
             object = D_00420D00.current;
             if (object != NULL && object->unk08->unk58 != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
-                if (object->unk08->unk40 != 0 && func_00210C48(object->unk08->unk40) != 0) {
+                if (object->unk08->unk40 != 0 && Script_IsRunning(object->unk08->unk40) != 0) {
                     return;
                 }
-                func_002109C8(((MapObject *)D_00420D00.current)->unk08->unk58, 0);
+                Script_Start(((MapObject *)D_00420D00.current)->unk08->unk58, 0);
                 return;
             }
             Player_ApplyItem(item);

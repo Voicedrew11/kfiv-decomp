@@ -25,8 +25,8 @@ void func_0019EA98(int);
 void func_001A15F0(void);
 void func_001C82C0(int);
 void func_001C87D8(int);
-void func_00210930(int);
-int func_002109C8(int, int);
+void Script_Init(int);
+int Script_Start(int, int);
 void func_00216778(void *, void *);
 
 /* Map change step: sets the loaded map up in slot 0, puts the player in it and ends the change. */
@@ -82,8 +82,8 @@ void func_001190C8(void) {
     Entity_ClearFlag10InSlot(0);
     func_00119360(0);
     func_001034F8(D_0038CD20[0].tag);
-    func_00210930(D_0038CD20[0].unk5C);
-    func_002109C8(0x7FFF, 0);
+    Script_Init(D_0038CD20[0].unk5C);
+    Script_Start(0x7FFF, 0);
     D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[0].header)->unk70;
     D_0038A130.unk04 = 1;
     func_0019EA98(1);

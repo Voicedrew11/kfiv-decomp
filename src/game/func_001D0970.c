@@ -29,8 +29,8 @@ float sceVu0InnerProduct(float *, float *);
 float sqrtf(float);
 int func_001C9B00(void *);
 int func_001090E0(char *); // match: its u16 is halved as an int
-int func_002109C8(int, int);
-int func_00210C48(int);
+int Script_Start(int, int);
+int Script_IsRunning(int);
 int func_001C9AB0(ModelNode *);
 
 /* Finds what is in front of the player: how far the view reaches before a wall or a map object (unk40), and the
@@ -219,7 +219,7 @@ void func_001D0970(void) {
         if (pickup != NULL && can_act) {
             if (pickup->def != NULL && pickup->def->unk34 != 0) {
                 if ((pickup->flags & 1) == D_00446770) {
-                    func_002109C8(pickup->def->unk34, 0);
+                    Script_Start(pickup->def->unk34, 0);
                 }
                 can_act = FALSE;
             } else if (D_004469D8 == NULL) {
@@ -231,8 +231,8 @@ void func_001D0970(void) {
         if (user != NULL) {
             if (can_act && user->spawn_info->unk4E != 0) {
                 if (user->group_id == D_00446770) {
-                    if (user->spawn_info->unk58 == 0 || func_00210C48(user->spawn_info->unk58) == 0) {
-                        func_002109C8(((Entity *)D_00420D00.unk54)->spawn_info->unk4E, 0);
+                    if (user->spawn_info->unk58 == 0 || Script_IsRunning(user->spawn_info->unk58) == 0) {
+                        Script_Start(((Entity *)D_00420D00.unk54)->spawn_info->unk4E, 0);
                     }
                 }
                 D_0038CC50.bit1 = FALSE;
@@ -241,8 +241,8 @@ void func_001D0970(void) {
             used = D_00420D00.current;
             if (used != NULL && can_act && used->unk08->unk40 != 0) {
                 if ((MAP_OBJECT_BYTES(used)->unk00 & 1) == D_00446770) {
-                    if (used->unk08->unk58 == 0 || func_00210C48(used->unk08->unk58) == 0) {
-                        func_002109C8(((MapObject *)D_00420D00.current)->unk08->unk40, 0);
+                    if (used->unk08->unk58 == 0 || Script_IsRunning(used->unk08->unk58) == 0) {
+                        Script_Start(((MapObject *)D_00420D00.current)->unk08->unk40, 0);
                     }
                 }
                 D_0038CC50.bit1 = FALSE;

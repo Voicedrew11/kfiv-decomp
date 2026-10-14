@@ -59,17 +59,4 @@ typedef struct {
     char pad43[0x1D];
 } Entry60;
 
-/* a task that runs a one-time setup (Game_MarkMessageHeard, Message_OpenBox) and ends when the message box closes */
-typedef struct {
-    s32 active;                     /* 0x00 cleared once the setup is done */
-    char pad04[0x04];
-    s32 unk08;                      /* 0x08 */
-    char pad0C[0x04];
-    s32 unk10;                      /* 0x10 */
-    char pad14[0x04];
-    s32 unk18;                      /* 0x18 */
-    char pad1C[0x68];
-    s32 started;                    /* 0x84 set once the setup has been started */
-} SetupTask;
-
 #endif

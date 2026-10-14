@@ -54,7 +54,7 @@ void func_0019A290(Entity *, s32);
 extern u8 D_00349690[];
 float func_00194F80(void *, void *);
 s32 func_00190F90(Entity *, s32, f32);
-int func_002109C8(int, int);
+int Script_Start(int, int);
 extern int D_00446770;
 
 static void WiddaArcher_Animate(Entity *entity);
@@ -466,7 +466,7 @@ static void WiddaArcher_WalkToMapObject(Entity *entity, s32 unknown) {
 }
 
 /* An action (busy bit 0x1000) that WiddaArcher_WalkToMapObject starts: plays animation 17 to its
-   end; on frame EntitySpawnInfo.unk44 it starts the script (func_002109C8) of the map object
+   end; on frame EntitySpawnInfo.unk44 it starts the script (Script_Start) of the map object
    EntitySpawnInfo.unk43 names, when the object has one and the entity is on map D_00446770. */
 static void WiddaArcher_StartMapObjectScript(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -489,7 +489,7 @@ static void WiddaArcher_StartMapObjectScript(Entity *entity) {
         if (entity->model->unkFC->unk82 == entity->spawn_info->unk44) {
             map_object = MapObject_GetById(entity->group_id, entity->spawn_info->unk43);
             if (map_object != NULL && map_object->unk08->unk40 != 0 && entity->group_id == D_00446770) {
-                func_002109C8(map_object->unk08->unk40, 0);
+                Script_Start(map_object->unk08->unk40, 0);
             }
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
