@@ -69,12 +69,12 @@ static void func_0016C138(Entity *entity);
 static void func_0016C1E0(Entity *entity, s32 unknown);
 static void func_0016C3A0(Entity *entity, s32 unknown);
 static void func_0016C7F0(Entity *entity);
-void func_0016C888(Entity *entity);
+static void func_0016C888(Entity *entity);
 static void func_0016CC58(Entity *entity);
 static void func_0016CE08(Entity *entity);
 static void func_0016D210(Entity *entity);
 static void func_0016D4D0(Entity *entity);
-s32 func_0016D6C0(Entity *entity);
+static s32 func_0016D6C0(Entity *entity);
 static void func_0016D838(Entity *entity);
 static void func_0016D9C0(Entity *entity);
 static void func_0016DCC0(Entity *entity);
@@ -181,7 +181,7 @@ static void func_0016C1E0(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkC6 == 0 || (entity->unkC6 & 6)) {
-        func_0016C888(entity);
+         func_0016C888(entity);
     }
     if (unkE0->unk6A > 0) {
         unkE0->unk6A--;
@@ -313,7 +313,7 @@ static void func_0016C7F0(Entity *entity) {
     func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
 }
 
-void func_0016C888(Entity *entity) {
+static void func_0016C888(Entity *entity) {
     EntityUnkE0Kind16BF98 *unkE0 = (EntityUnkE0Kind16BF98 *)&entity->unkE0;
     f32 turn = 0.0f;
     f32 step;
@@ -512,7 +512,7 @@ static void func_0016CE08(Entity *entity) {
         }
         break;
     }
-    func_0016C888(entity);
+     func_0016C888(entity);
 }
 
 static void func_0016D210(Entity *entity) {
@@ -568,7 +568,7 @@ static void func_0016D210(Entity *entity) {
         }
         break;
     }
-    func_0016C888(entity);
+     func_0016C888(entity);
 }
 
 static void func_0016D4D0(Entity *entity) {
@@ -612,7 +612,7 @@ static void func_0016D4D0(Entity *entity) {
     }
 }
 
-s32 func_0016D6C0(Entity *entity) {
+static s32 func_0016D6C0(Entity *entity) {
     EntityActionWeights3 chances = D_0043EA88;
     s32 choice;
     s32 total;
@@ -684,7 +684,7 @@ static void func_0016D838(Entity *entity) {
         }
         break;
     }
-    func_0016C888(entity);
+     func_0016C888(entity);
 }
 
 static void func_0016D9C0(Entity *entity) {
@@ -808,7 +808,7 @@ static void func_0016DCC0(Entity *entity) {
         }
         break;
     }
-    func_0016C888(entity);
+     func_0016C888(entity);
 }
 
 static void func_0016DE50(Entity *entity) {
@@ -847,7 +847,7 @@ static void func_0016DE50(Entity *entity) {
         }
         break;
     }
-    func_0016C888(entity);
+     func_0016C888(entity);
 }
 
 static void func_0016DFD8(Entity *entity) {
