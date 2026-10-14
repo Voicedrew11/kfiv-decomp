@@ -1,16 +1,18 @@
+/* The behaviour of entity type 72 (Entity.params->unk02, the index into D_003E6E40): its set-up
+   function, which the table names, and the handlers that function installs. */
 #include "kf_entity.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-
 void func_001958A8(char *, s32);
-void func_00193378(EntityModel *, s32, s32);
-void func_00176CD8(void);
+int func_00193378(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to func_00182A08.c
 void func_00182A08(void);
-
 extern s32 D_003E6E40[][2];
 
-void func_00176BD0(Entity *entity) {
+static void func_00176CD8(void);
+
+/* Set-up of a type 72 entity: clears its work area and installs the type's handlers. */
+void EntityType72_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 i;
 
@@ -34,4 +36,7 @@ void func_00176BD0(Entity *entity) {
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
     func_00193378(entity->model, 0, 0);
+}
+
+static void func_00176CD8(void) {
 }
