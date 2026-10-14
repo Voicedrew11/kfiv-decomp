@@ -9,8 +9,6 @@
    doors are kinds 1, 2, 6 and 0x11, bones and gravestones 3, the things only examined 0xB, pedestals 0xD */
 #define MAP_OBJECT_KIND_CHEST               4
 #define MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE   12      /* where the wands take the player (Player_UseItem) */
-#define MAP_OBJECT_KIND_MARKER              19      /* takes a Guide Stone */
-#define MAP_OBJECT_KIND_SAVE_POINT          20
 #define MAP_OBJECT_KIND_CONTAINER           21      /* barrels, pots and wooden boxes */
 
 extern s32 D_004467A8[2];
