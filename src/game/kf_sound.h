@@ -266,17 +266,6 @@ typedef struct {
     char pad3D[0x03];
 } SoundChannel;
 
-/* the voice record func_0021C350 sets up for a stream upload */
-typedef struct {
-    s32 unk00;                      /* 0x00 */
-    char pad04[0x40];
-    s32 unk44;                      /* 0x44 */
-    char pad48[0x08];
-    s32 unk50;                      /* 0x50 */
-    char pad54[0x04];
-    s32 unk58;                      /* 0x58 */
-} StreamVoice;
-
 /* kf_sound.c */
 int func_001CBAE0(int blocking, ...);
 int func_001CD6E0(u32 voice_index);

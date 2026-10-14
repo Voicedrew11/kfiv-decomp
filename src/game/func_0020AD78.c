@@ -5,12 +5,12 @@ extern int D_00446F20;
 extern int D_00446F50;
 extern int D_00446F78;
 extern int D_00446F7C;
-extern int D_004412E0[];
-void D_0020AD30(void);
+extern char D_004412E0[];
+int D_0020AD30(void);
 extern s64 D_00432E20[];
 extern s64 D_00433050[];
 
-int func_0021B540(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
+int Movie_Play(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
 void func_001095E0(void);
 void func_0010B000(void);
 void func_001095D0(void);
@@ -28,7 +28,7 @@ void func_0020AD78(void) {
     char buf[0x40];
 
     D_00446E90 = 0;
-    func_0021B540(D_004412E0, D_00446F50, D_00446F20, D_0020AD30, 0x3FFF, 2, 0, 0);
+    Movie_Play(D_004412E0, D_00446F50, D_00446F20, D_0020AD30, 0x3FFF, 2, 0, 0);
     temp = (s64)0xC000 << 17;
     D_00432E20[0] = temp;
     D_00432E20[30] = temp;
