@@ -469,6 +469,9 @@ typedef struct {
 
 #define MODEL_PROJECT_SCRATCH ((ModelProjectScratch *)0x70000000)
 
+/* the scratchpad as a matrix, where the builders of kf_model_matrix.c work */
+#define MODEL_MATRIX_SCRATCH ((f32 *)0x70000000)
+
 /* what MapObject.unk08 points at */
 typedef struct {
     Vector4 position;               /* 0x00 where the object rests */

@@ -298,8 +298,8 @@ extern char D_00426390[];
 extern s32 D_00446C98;
 extern u8 D_00447208;
 void func_001E5070(s32);
-int func_0020D088(void);
-int func_0020D078(void); // match: an int result keeps $2 clear of the pad test after the call
+int Timer_GetTicks(void);
+int Timer_Restart(void); // match: an int result keeps $2 clear of the pad test after the call
 int sceGsSyncPath(int, int);
 void sceGsSetHalfOffset(void *, int, int, s16); // match: void, so the test after the call uses $2
 int sceGsSetHalfOffset2(void *, int, int, s16);
@@ -2703,9 +2703,9 @@ s32 Menu_EndFrame(s32 run_handler) {
     func_001E5070(D_00349680[10]);
     func_001CEBE0();
     sceGsSyncPath(0, 0);
-    D_00446C98 = func_0020D088();
+    D_00446C98 = Timer_GetTicks();
     even_field = sceGsSyncV(0) == 0;
-    func_0020D078();
+    Timer_Restart();
     if (D_00446DE8 & 0x100) {
         D_00447208++;
     }

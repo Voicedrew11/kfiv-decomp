@@ -9,7 +9,7 @@ extern const f32 D_00446990[];
 void Vector_Scale(float *, float *, float);
 void func_00216778(void *, void *);
 int func_001C2D08(void *);
-void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
+void Collision_RayTriangle(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 u32 func_001124E0(int, u32, u32);
 
 /* Sweeps a point from `position_arg` along `direction` times `scale` through the loaded maps'
@@ -85,10 +85,10 @@ void func_001C1430(f32 scale, void *position_arg, void *direction) {
                         forward = TRUE;
                         do {
                             if (forward) {
-                                func_0020E918((int)strip_point[0].position, (int)strip_point[1].position,
+                                Collision_RayTriangle((int)strip_point[0].position, (int)strip_point[1].position,
                                               (int)strip_point[2].position, (int)position, (int)direction, scale);
                             } else {
-                                func_0020E918((int)strip_point[0].position, (int)strip_point[2].position,
+                                Collision_RayTriangle((int)strip_point[0].position, (int)strip_point[2].position,
                                               (int)strip_point[1].position, (int)position, (int)direction, scale);
                             }
                             forward ^= 1;

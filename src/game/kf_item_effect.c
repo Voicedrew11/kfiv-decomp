@@ -1,6 +1,7 @@
 #include "kf_item_effect.h"
 #include "kf_effect.h"
 #include "kf_game.h"
+#include "kf_gs.h"
 #include "kf_model.h"
 #include "kf_player.h"
 #include "kf_splash.h"
@@ -43,9 +44,13 @@ void func_0010E770(ModelInstance *, u64, s64);
 void func_0010E820(ModelInstance *, s64);
 void func_0010E8E0(void *, int, int, int, int);
 int func_001BF6E8(void);
-void func_002095D0(ModelInstance *);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
-void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
+void func_0010AEB8(void *);
+void func_00109A50(void);
+void func_00109A80(int, s64);
+void func_00109AD0(void);
+static void ItemEffect_DrawModel(ModelInstance *model);
+void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
+void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
@@ -191,7 +196,7 @@ void ItemEffect_Start(int kind, int marked) {
         item_effect_model = model;
     }
     item_effect_model->unk1A8 = func_0010DB40;
-    item_effect_model->draw = func_002095D0;
+    item_effect_model->draw = ItemEffect_DrawModel;
     func_00108A08(item_effect_model, 0);
     func_00108AC8(item_effect_model);
     item_effect_brightness = 0x80;
@@ -244,11 +249,11 @@ void ItemEffect_Update(void) {
             item_effect_marked = 0;
         }
     }
-    func_0020C300(item_effect_model, &item_effect_model->position, &item_effect_model->rotation, &item_effect_model->unkE0);
+    ModelMatrix_Build(item_effect_model, &item_effect_model->position, &item_effect_model->rotation, &item_effect_model->unkE0);
     count = item_effect_model->part_count;
     part = item_effect_model->parts;
     for (i = 0; i < count; i++, part++) {
-        func_0020B8B0(item_effect_model, part, part);
+        ModelMatrix_BuildPartLocal(item_effect_model, part, part);
     }
     part = item_effect_model->parts;
     for (i = 0; i < count; i++, part++) {
@@ -318,4 +323,13 @@ void ItemEffect_Draw(void) {
     if (item_effect_active != 0 && item_effect_step > 0 && item_effect_model != NULL) {
         func_0010B018(item_effect_model, 0, 0);
     }
+}
+
+/* The item effect model's draw handler: draws the model, then writes TEST_1 = 0x5010D (alpha test greater than
+   0x10, depth test on). */
+static void ItemEffect_DrawModel(ModelInstance *model) {
+    func_0010AEB8(model);
+    func_00109A50();
+    func_00109A80(GS_REG_TEST_1, 0x5010D);
+    func_00109AD0();
 }

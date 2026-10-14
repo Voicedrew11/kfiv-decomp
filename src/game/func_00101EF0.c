@@ -10,7 +10,7 @@ void func_0010A4E8(int, int, int, int, int);
 void func_001095D8(void);
 void func_001096E8(void);
 void func_00109800(void);
-void func_0020B780(int);
+void Display_SwapBuffers(int);
 
 /* Runs two passes of the frame setup, syncing after the first. */
 void func_00101EF0(void) {
@@ -30,7 +30,7 @@ void func_00101EF0(void) {
             D_00446F7C = 1;
             func_001096E8();
             func_00109800();
-            func_0020B780(0);
+            Display_SwapBuffers(0);
         }
     }
 }

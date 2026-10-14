@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 
-void func_00210088(void *, void *, f32, void *, f32, f32);
-void func_0020F0D8(void *, f32, f32, void *, f32, f32);
+void Collision_CylinderEdge(void *, void *, f32, void *, f32, f32);
+void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 
 /* Pushes a sphere out of the four walls standing on the owner's points 0-3 (as high as point
    0x1F is above point 0), then out of the four corner posts. */
@@ -30,49 +30,49 @@ void func_00188F40(CollisionOwner *owner, f32 *centre, f32 radius, f32 push) {
     top = (f32 *)owner->model->get_point(owner->model, 0x1F);
     if (top != NULL) {
         height = corner_a[1] - top[1];
-        func_00210088(corner_a, corner_b, height, centre, radius, push);
+        Collision_CylinderEdge(corner_a, corner_b, height, centre, radius, push);
         if (COLLISION_RESULT->hit != 0) {
             centre[0] = COLLISION_RESULT->point[0] + COLLISION_RESULT->normal[0] * push;
             centre[2] = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * push;
             return;
         }
-        func_00210088(corner_b, corner_c, height, centre, radius, push);
+        Collision_CylinderEdge(corner_b, corner_c, height, centre, radius, push);
         if (COLLISION_RESULT->hit != 0) {
             centre[0] = COLLISION_RESULT->point[0] + COLLISION_RESULT->normal[0] * push;
             centre[2] = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * push;
             return;
         }
-        func_00210088(corner_c, corner_d, height, centre, radius, push);
+        Collision_CylinderEdge(corner_c, corner_d, height, centre, radius, push);
         if (COLLISION_RESULT->hit != 0) {
             centre[0] = COLLISION_RESULT->point[0] + COLLISION_RESULT->normal[0] * push;
             centre[2] = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * push;
             return;
         }
-        func_00210088(corner_d, corner_a, height, centre, radius, push);
+        Collision_CylinderEdge(corner_d, corner_a, height, centre, radius, push);
         if (COLLISION_RESULT->hit != 0) {
             centre[0] = COLLISION_RESULT->point[0] + COLLISION_RESULT->normal[0] * push;
             centre[2] = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * push;
             return;
         }
-        func_0020F0D8(centre, push, radius, corner_a, 0.0f, height);
+        Collision_CylinderCylinder(centre, push, radius, corner_a, 0.0f, height);
         if (COLLISION_RESULT->hit != 0) {
             centre[0] = COLLISION_RESULT->point[0] + COLLISION_RESULT->normal[0] * (push + 0.1f);
             centre[2] = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * (push + 0.1f);
             return;
         }
-        func_0020F0D8(centre, push, radius, corner_b, 0.0f, height);
+        Collision_CylinderCylinder(centre, push, radius, corner_b, 0.0f, height);
         if (COLLISION_RESULT->hit != 0) {
             centre[0] = COLLISION_RESULT->point[0] + COLLISION_RESULT->normal[0] * (push + 0.1f);
             centre[2] = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * (push + 0.1f);
             return;
         }
-        func_0020F0D8(centre, push, radius, corner_c, 0.0f, height);
+        Collision_CylinderCylinder(centre, push, radius, corner_c, 0.0f, height);
         if (COLLISION_RESULT->hit != 0) {
             centre[0] = COLLISION_RESULT->point[0] + COLLISION_RESULT->normal[0] * (push + 0.1f);
             centre[2] = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * (push + 0.1f);
             return;
         }
-        func_0020F0D8(centre, push, radius, corner_d, 0.0f, height);
+        Collision_CylinderCylinder(centre, push, radius, corner_d, 0.0f, height);
         if (COLLISION_RESULT->hit != 0) {
             centre[0] = COLLISION_RESULT->point[0] + COLLISION_RESULT->normal[0] * (push + 0.1f);
             centre[2] = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * (push + 0.1f);

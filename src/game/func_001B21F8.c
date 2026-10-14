@@ -5,7 +5,7 @@ extern const VuVector4 D_0043F200;
 
 void Vu0_LoadMatrix(void *);
 u32 func_001124E0(int, u32, u32);
-void func_0020DF38(f32 *, f32 *, f32 *, f32 *, f32);
+void Collision_PointTriangle(f32 *, f32 *, f32 *, f32 *, f32);
 
 /* Tests a hit's sphere against four of a map model's strip lists (0, 1, 2 and 5). When it
    touches a triangle the result is left in the scratchpad and the list's number returned. */
@@ -88,7 +88,7 @@ int func_001B21F8(ModelInstance *model, void *request, f32 reach) {
             strip_point = strip->points;
             points_left = strip->point_count - 2;
             do {
-                func_0020DF38(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
+                Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
                 if (COLLISION_RESULT->hit != 0) {
                     COLLISION_RESULT->unk18 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                     return lists.lists[list];

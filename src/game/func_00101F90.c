@@ -6,7 +6,7 @@ extern u16 D_00446946;
 extern PlayTime D_00446A28;
 
 void func_001D20E0(void);
-void func_0020B780(int);
+void Display_SwapBuffers(int);
 void func_001096E8(void);
 void func_001095E0(void);
 void func_0010B000(void);
@@ -27,21 +27,21 @@ void func_00101F90(void) {
         func_001D20E0();
         D_0038CC50.paused = TRUE;
         play_time = D_00446A28;
-        func_0020B780(0);
+        Display_SwapBuffers(0);
         func_001096E8();
         func_001095E0();
         func_0010B000();
         func_00111D58();
         func_001005E8(0);
         func_00109800();
-        func_0020B780(0);
+        Display_SwapBuffers(0);
         func_001096E8();
         func_001095E0();
         func_0010B000();
         func_00111D58();
         func_001005E8(0);
         func_00109800();
-        func_0020B780(0);
+        Display_SwapBuffers(0);
         func_001B57D8();
         do {
             while (sceGsSyncV(0) != 1) {

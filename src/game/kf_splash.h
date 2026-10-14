@@ -62,7 +62,7 @@ typedef struct {
     u64 unk18;                      /* 0x18 */
 } SplashImageBits;
 
-/* the 0x70 bytes func_002087D0 puts in front of image data it sends to GS memory: five registers, then the tag of the data */
+/* the 0x70 bytes Splash_BuildImagePacket puts in front of image data it sends to GS memory: five registers, then the tag of the data */
 typedef struct {
     u64 tag[2];                     /* 0x00 GIF tag: five address+data pairs */
     u32 texflush[2];                /* 0x10 */

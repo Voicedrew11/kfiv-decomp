@@ -7,7 +7,7 @@
 #define RIGHT_OF(point, line_x, line_z) \
     (((line_x) - origin->x) * ((point)->z - origin->z) - ((line_z) - origin->z) * ((point)->x - origin->x) < 0.0f)
 
-void func_00210258(Vector4 *, Vector4 *, f32, Vector4 *, f32, f32);
+void Collision_CylinderEdgeExtended(Vector4 *, Vector4 *, f32, Vector4 *, f32, f32);
 
 /* Collides a circle with the outline of a map object, leaving out every edge that lies wholly left of the first line from
    the origin or wholly right of the second. The outline is points 0, 1, 6, 7 while the object's fifth animation is on its
@@ -53,25 +53,25 @@ void func_001C58F0(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
             left3 = LEFT_OF(point3, first_x, first_z);
             right3 = RIGHT_OF(point3, second_x, second_z);
             if (!(left0 && left1) && !(right0 && right1)) {
-                func_00210258(point0, point1, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point0, point1, height, origin, radius, push);
             }
             if (result->hit != 0) {
                 return;
             }
             if (!(left1 && left2) && !(right1 && right2)) {
-                func_00210258(point1, point2, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point1, point2, height, origin, radius, push);
             }
             if (result->hit != 0) {
                 return;
             }
             if (!(left2 && left3) && !(right2 && right3)) {
-                func_00210258(point2, point3, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point2, point3, height, origin, radius, push);
             }
             if (result->hit != 0) {
                 return;
             }
             if (!(left3 && left0) && !(right3 && right0)) {
-                func_00210258(point3, point0, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point3, point0, height, origin, radius, push);
             }
         } else {
             point0 = (Vector4 *)object->model->get_point(object->model, 0);
@@ -128,49 +128,49 @@ void func_001C58F0(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
             left7 = LEFT_OF(point7, first_x, first_z);
             right7 = RIGHT_OF(point7, second_x, second_z);
             if (!(left0 && left1) && !(right0 && right1)) {
-                func_00210258(point0, point1, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point0, point1, height, origin, radius, push);
             }
             if (result->hit != 0) {
                 return;
             }
             if (!(left1 && left2) && !(right1 && right2)) {
-                func_00210258(point1, point2, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point1, point2, height, origin, radius, push);
             }
             if (result->hit != 0) {
                 return;
             }
             if (!(left2 && left3) && !(right2 && right3)) {
-                func_00210258(point2, point3, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point2, point3, height, origin, radius, push);
             }
             if (result->hit != 0) {
                 return;
             }
             if (!(left3 && left0) && !(right3 && right0)) {
-                func_00210258(point3, point0, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point3, point0, height, origin, radius, push);
             }
             if (result->hit != 0) {
                 return;
             }
             if (!(left4 && left5) && !(right4 && right5)) {
-                func_00210258(point4, point5, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point4, point5, height, origin, radius, push);
             }
             if (result->hit != 0) {
                 return;
             }
             if (!(left5 && left6) && !(right5 && right6)) {
-                func_00210258(point5, point6, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point5, point6, height, origin, radius, push);
             }
             if (result->hit != 0) {
                 return;
             }
             if (!(left6 && left7) && !(right6 && right7)) {
-                func_00210258(point6, point7, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point6, point7, height, origin, radius, push);
             }
             if (result->hit != 0) {
                 return;
             }
             if (!(left7 && left4) && !(right7 && right4)) {
-                func_00210258(point7, point4, height, origin, radius, push);
+                Collision_CylinderEdgeExtended(point7, point4, height, origin, radius, push);
             }
         }
     }

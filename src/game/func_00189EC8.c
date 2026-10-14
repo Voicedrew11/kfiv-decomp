@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 #include "kf_entity.h"
 
-void func_00210018(void *, void *, f32, void *, f32);
+void Collision_BallEdge(void *, void *, f32, void *, f32);
 
 /* Tests a sphere against the walls standing on the owner's points: one ring of four, or two
    rings (points 0-3 and 4-7) while the model is animating. */
@@ -32,19 +32,19 @@ void func_00189EC8(CollisionOwner *owner, void *centre, f32 radius) {
         top = (f32 *)owner->model->get_point(owner->model, 0x1F);
         if (top != NULL) {
             height = corner_a[1] - top[1];
-            func_00210018(corner_a, corner_b, height, centre, radius);
+            Collision_BallEdge(corner_a, corner_b, height, centre, radius);
             if (COLLISION_RESULT->hit != 0) {
                 return;
             }
-            func_00210018(corner_b, corner_c, height, centre, radius);
+            Collision_BallEdge(corner_b, corner_c, height, centre, radius);
             if (COLLISION_RESULT->hit != 0) {
                 return;
             }
-            func_00210018(corner_c, corner_d, height, centre, radius);
+            Collision_BallEdge(corner_c, corner_d, height, centre, radius);
             if (COLLISION_RESULT->hit != 0) {
                 return;
             }
-            func_00210018(corner_d, corner_a, height, centre, radius);
+            Collision_BallEdge(corner_d, corner_a, height, centre, radius);
         }
     } else {
         corner_a = (f32 *)owner->model->get_point(owner->model, 0);
@@ -82,35 +82,35 @@ void func_00189EC8(CollisionOwner *owner, void *centre, f32 radius) {
         top = (f32 *)owner->model->get_point(owner->model, 0x1F);
         if (top != NULL) {
             height = corner_a[1] - top[1];
-            func_00210018(corner_a, corner_b, height, centre, radius);
+            Collision_BallEdge(corner_a, corner_b, height, centre, radius);
             if (COLLISION_RESULT->hit != 0) {
                 return;
             }
-            func_00210018(corner_b, corner_c, height, centre, radius);
+            Collision_BallEdge(corner_b, corner_c, height, centre, radius);
             if (COLLISION_RESULT->hit != 0) {
                 return;
             }
-            func_00210018(corner_c, corner_d, height, centre, radius);
+            Collision_BallEdge(corner_c, corner_d, height, centre, radius);
             if (COLLISION_RESULT->hit != 0) {
                 return;
             }
-            func_00210018(corner_d, corner_a, height, centre, radius);
+            Collision_BallEdge(corner_d, corner_a, height, centre, radius);
             if (COLLISION_RESULT->hit != 0) {
                 return;
             }
-            func_00210018(corner_e, corner_f, height, centre, radius);
+            Collision_BallEdge(corner_e, corner_f, height, centre, radius);
             if (COLLISION_RESULT->hit != 0) {
                 return;
             }
-            func_00210018(corner_f, corner_g, height, centre, radius);
+            Collision_BallEdge(corner_f, corner_g, height, centre, radius);
             if (COLLISION_RESULT->hit != 0) {
                 return;
             }
-            func_00210018(corner_g, corner_h, height, centre, radius);
+            Collision_BallEdge(corner_g, corner_h, height, centre, radius);
             if (COLLISION_RESULT->hit != 0) {
                 return;
             }
-            func_00210018(corner_h, corner_e, height, centre, radius);
+            Collision_BallEdge(corner_h, corner_e, height, centre, radius);
         }
     }
 }

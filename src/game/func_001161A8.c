@@ -26,7 +26,7 @@ void func_0010B000(void);
 void func_00116610(void);
 float func_0019B838(float);
 void func_001B5460(void);
-void func_0020B780(int);
+void Display_SwapBuffers(int);
 void func_00216C48(void *, void *, void *);
 void func_00216D20(void *, void *);
 
@@ -51,7 +51,7 @@ void func_001161A8(void) {
         do {
             VuVector4 move;
 
-            func_0020B780(0);
+            Display_SwapBuffers(0);
             func_001096E8();
             func_001095E0();
             func_0010B000();

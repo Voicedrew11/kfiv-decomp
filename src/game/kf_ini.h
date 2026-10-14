@@ -1,9 +1,10 @@
+/* The start-up settings file ini/NNNN.ini (kf_ini.c). */
 #ifndef KF_INI_H
 #define KF_INI_H
 
 #include "common.h"
 
-void Ini_SetText(char *text, int length);
-char *Ini_ReadLine(void);
+/* Reads ini/NNNN.ini for `number` (ini/9999.ini when it is missing) and applies every key it knows. */
+void Ini_Load(int number);
 
 #endif

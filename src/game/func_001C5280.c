@@ -2,7 +2,7 @@
 
 int func_001C2D08(void *);
 u32 func_001124E0(int, u32, u32);
-void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
+void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
 
 /* notes on which side of the lines from the origin to the two ends the point lies */
 #define TEST_SIDES(point) \
@@ -54,7 +54,7 @@ void func_001C5280(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
                     TEST_SIDES((f32 *)point->position);
                     if (second_sides != 7 && first_sides != 7) {
                         // match: the unsigned indices give retail's two-step address
-                        func_0020E1F8((int)point[-2U].position, (int)point[-1U].position, (int)point->position,
+                        Collision_CapsuleTriangle((int)point[-2U].position, (int)point[-1U].position, (int)point->position,
                                       (int)origin, push, radius);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_RESULT->unk18 = func_001124E0(point->unk04, point->unk08, point->unk0C);

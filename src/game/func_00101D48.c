@@ -16,7 +16,7 @@ void func_0010A100(void *);
 void func_001095D8(void);
 void func_001096E8(void);
 void func_00109800(void);
-void func_0020B780(int);
+void Display_SwapBuffers(int);
 
 /* Draws the centred 0x280 x 0x1C0 logo sprite into both frame buffers, dimmed by the divisor. */
 void func_00101D48(int divisor) {
@@ -68,7 +68,7 @@ void func_00101D48(int divisor) {
             D_00446F7C = 1;
             func_001096E8();
             func_00109800();
-            func_0020B780(0);
+            Display_SwapBuffers(0);
         }
     }
 }

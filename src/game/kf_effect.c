@@ -13,8 +13,8 @@ int FlushCache(int);
 int sceGsSyncPath(int, int);
 void sceGsSetDefStoreImage(void *, s16, s16, s16, s16, s16, s16, s16);
 void sceGsExecStoreImage(void *, void *);
-char *func_0020DAA8(char *base, int chunk_arg);
-void func_0020D9A8(void);
+char *Texture_UploadTable(char *base, int upload);
+void Texture_SendTexFlush(void);
 void func_00216778(void *dst, void *src);
 void func_00216C48(void *, void *, void *);
 void func_00109E18(void);
@@ -23,8 +23,8 @@ void func_00109650(u32 *, u32 *);
 void func_00109E88(void);
 int func_001160B0(f32 *point, AreaNode *node, f32 margin);
 AreaNode *func_00115950(f32 *point, f32 margin);
-void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
+void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
+void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B018(ModelInstance *, s32, s32);
 char func_0019C8D0(int index, int first, int second, int third, int fourth);
 void func_0019CD70(s8 handle);
@@ -108,8 +108,8 @@ void Effect_Init(void) {
     handle = func_00102238("sfx/sfx.tmx", 0, 1);
     func_001025C0(handle, buffer, -1);
     func_001024B0(handle);
-    func_0020DAA8(buffer, 1);
-    func_0020D9A8();
+    Texture_UploadTable(buffer, 1);
+    Texture_SendTexFlush();
     handle = func_00102238("sfx/sfx.dat", 0, 1);
     func_001025C0(handle, effect_model_file, -1);
     func_001024B0(handle);
@@ -474,10 +474,10 @@ void Effect_DrawAll(int pass) {
         }
         func_00216778(&model->unk150, effect);
         // match: it returns a value
-        ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))func_0020C300)(model, &model->position, &model->rotation, &model->unkE0);
+        ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))ModelMatrix_Build)(model, &model->position, &model->rotation, &model->unkE0);
         part = effect->model->parts;
         for (part_index = 0; part_index < model->part_count; part_index++, part++) {
-            func_0020B8B0(model, part, part);
+            ModelMatrix_BuildPartLocal(model, part, part);
         }
         model->unk14C = D_0038A440 + (D_00446770 << 10);
         // match: the flag is read through the union so the test stays behind the unk14C store

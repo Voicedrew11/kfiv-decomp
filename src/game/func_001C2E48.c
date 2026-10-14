@@ -1,34 +1,37 @@
-#include "common.h"
+#include "kf_collision.h"
 
 int func_001C2D08(void *);
-void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
+void Collision_RayTriangle(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 
-typedef struct { int count; char *list; int pad; u32 n; } Hdr;
+/* Tests a ray (from `origin` along `direction`, no further than `reach` times it) against every triangle of
+   the strips of the object's model, if the object has flag 0x10000 and the mesh unk0C is 4 or more; stops at
+   the first hit. */
+void func_001C2E48(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
+    CollisionMesh *mesh;
+    CollisionStrip *strip;
+    CollisionStripPoint *point;
+    s32 strips_left;
+    s32 triangles_left;
 
-void func_001C2E48(void *arg0, int arg1, int arg2, float arg3) {
-    Hdr *h;
-    int i, j;
-    char *p;
-    char *q;
-
-    if (*(int *)((char *)arg0 + 0x10) & 0x10000) {
-        h = *(Hdr **)(*(char **)arg0 + 0x110);
-        if (h != 0 && h->n >= 4U) {
-            func_001C2D08(*(void **)arg0);
-            p = h->list;
-            i = h->count;
+    if (object->unk10 & 0x10000) {
+        mesh = (CollisionMesh *)object->model->strips;
+        if (mesh != NULL && mesh->unk0C >= 4) {
+            func_001C2D08(object->model);
+            strip = mesh->strips;
+            strips_left = mesh->strip_count;
             do {
-                q = p + 0x20;
-                j = *(u16 *)p - 2;
+                point = strip->points;
+                triangles_left = strip->point_count - 2;
                 do {
-                    func_0020E918(*(int *)q, *(int *)(q + 0x10), *(int *)(q + 0x20), arg1, arg2, arg3);
-                    if (*(int *)0x70000010 != 0) {
+                    Collision_RayTriangle(point[0].position, point[1].position, point[2].position, origin, direction,
+                                          reach);
+                    if (COLLISION_RESULT->hit != 0) {
                         return;
                     }
-                    q += 0x10;
-                } while (--j != 0);
-                p = q + 0x20;
-            } while (--i != 0);
+                    point++;
+                } while (--triangles_left != 0);
+                strip = (CollisionStrip *)(point + 2);
+            } while (--strips_left != 0);
         }
     }
 }

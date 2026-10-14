@@ -68,7 +68,7 @@ typedef struct {
     char pad2F8[0x38];
 } GsDoubleBufferDc;
 
-/* GS registers as the bit-fields the game writes when it patches a double buffer (func_0020AFA8) */
+/* GS registers as the bit-fields the game writes when it patches a double buffer (Display_Init) */
 typedef struct {
     u64 fbp : 9;
     u64 fbw : 6;
@@ -161,7 +161,7 @@ typedef struct {
     GsClearBits clear1;             /* 0x1D0 */
 } GsDoubleBuffer;
 
-/* D_00433180 and D_00433190: the DISPFB and DISPLAY values of the two frames, kept by func_0020AFA8 */
+/* D_00433180 and D_00433190: the DISPFB and DISPLAY values of the two frames, kept by Display_Init */
 typedef struct {
     u64 first;
     u64 second;

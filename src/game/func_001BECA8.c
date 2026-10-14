@@ -10,7 +10,7 @@ void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
-void func_0020F0D8(void *, f32, f32, void *, f32, f32);
+void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 
 /* moves the player out of the body just hit: to `push` from it, but by no more than 50 a frame */
 #define PUSH_PLAYER_OUT()                                                                          \
@@ -159,7 +159,7 @@ void func_001BECA8(int climb) {
                     height = radius + radius;
                 }
                 push = 100.0f;
-                func_0020F0D8(&D_00413F80, push, 230.0f, position, radius, height);
+                Collision_CylinderCylinder(&D_00413F80, push, 230.0f, position, radius, height);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_PLAYER_OUT();
                 }
@@ -167,7 +167,7 @@ void func_001BECA8(int climb) {
             break;
         default:
             push = 100.0f;
-            func_0020F0D8(&D_00413F80, push, 230.0f, entity->model->position, entity->radius, entity->height);
+            Collision_CylinderCylinder(&D_00413F80, push, 230.0f, entity->model->position, entity->radius, entity->height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_PLAYER_OUT();
             }

@@ -31,7 +31,7 @@ void sceVu0MulMatrix(void *, void *, void *);
 void func_00216778(void *, void *);
 void func_00216788(void *, void *);
 void func_00216C48(void *, void *, void *);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
+void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 
@@ -248,7 +248,7 @@ void Player_UpdateArmModels(void) {
         count = D_0057B6A0.part_count;
         part = D_0057B6A0.parts;
         for (i = 0; i < count; i++, part++) {
-            func_0020B8B0(&D_0057B6A0, part, part);
+            ModelMatrix_BuildPartLocal(&D_0057B6A0, part, part);
         }
         if (D_0057B6A0.unk100 & 1) {
             part = D_0057B6A0.parts;

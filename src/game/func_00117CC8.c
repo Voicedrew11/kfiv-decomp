@@ -21,7 +21,7 @@ void func_00117F98(void);
 void func_00123288(void);
 void func_0019C540(void);
 void func_001B5778(void);
-void func_0020B780(int);
+void Display_SwapBuffers(int);
 
 /* Starts, queues and steps the background load of the map next to where the player stands. */
 void func_00117CC8(void) {
@@ -78,7 +78,7 @@ void func_00117CC8(void) {
                 while (D_0038D610.step != 5) {
                     func_001005E8(0);
                     func_00109800();
-                    func_0020B780(0);
+                    Display_SwapBuffers(0);
                     func_001096E8();
                     func_001095E0();
                     func_0010B000();

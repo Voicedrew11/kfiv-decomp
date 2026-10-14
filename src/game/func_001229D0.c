@@ -2,8 +2,8 @@
 
 extern f32 D_00431AF0[16];
 
-void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
+void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
+void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
 void func_00216B48(void *, void *, void *);
 void sceVu0CopyMatrix(void *, void *);
@@ -31,11 +31,11 @@ void func_001229D0(MapTrigger *trigger) {
     ModelPart *joint;
     f32 half_turn;
 
-    func_0020C300(trigger->model, &trigger->model->position, &trigger->model->rotation, &trigger->model->unkE0);
+    ModelMatrix_Build(trigger->model, &trigger->model->position, &trigger->model->rotation, &trigger->model->unkE0);
     part_count = trigger->model->part_count;
     part = trigger->model->parts;
     for (i = 0; i < part_count; i++) {
-        func_0020B8B0(trigger->model, part, part);
+        ModelMatrix_BuildPartLocal(trigger->model, part, part);
         part++;
     }
     part = trigger->model->parts;

@@ -2,7 +2,7 @@
 
 int func_001C2D08(void *);
 void func_001C0A88(void *, void *, void *, f32 *);
-void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
+void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
@@ -60,7 +60,7 @@ void func_00189A38(CollisionOwner *owner, f32 *centre, f32 step, f32 radius) {
         point = strip->points;
         j = strip->point_count - 2;
         do {
-            func_0020E1F8(point[0].position, point[1].position, point[2].position, position, radius, step);
+            Collision_CapsuleTriangle(point[0].position, point[1].position, point[2].position, position, radius, step);
             if (COLLISION_RESULT->hit != 0) {
                 hit_wall = 1;
                 offset[0] = position[0] - COLLISION_RESULT->point[0];

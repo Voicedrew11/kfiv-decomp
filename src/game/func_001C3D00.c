@@ -2,7 +2,7 @@
 
 u32 func_001124E0(int, u32, u32);
 int func_001C2D08(void *);
-void func_0020DF38(f32 *, f32 *, f32 *, f32 *, f32);
+void Collision_PointTriangle(f32 *, f32 *, f32 *, f32 *, f32);
 
 void func_001C3D00(CollisionOwner *owner, int mode, float factor) {
     ModelStripList *list;
@@ -20,7 +20,7 @@ void func_001C3D00(CollisionOwner *owner, int mode, float factor) {
                 vertex = strip->vertices;
                 j = strip->vertex_count - 2;
                 do {
-                    func_0020DF38(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, mode, factor);
+                    Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, mode, factor);
                     if (*(int *)0x70000010 != 0) {
                         *(int *)0x70000018 = func_001124E0(vertex->unk04, vertex->unk08, vertex->unk0C);
                         return;

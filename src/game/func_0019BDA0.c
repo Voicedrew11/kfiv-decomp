@@ -2,7 +2,7 @@
 
 extern void *memset(void *, int, u32);
 extern int FlushCache(int);
-extern int func_0020D9A8(void);
+void Texture_SendTexFlush(void);
 extern int sceGsExecLoadImage(int *, int *);
 extern int sceGsSetDefLoadImage(int *, int, int, int, int, int, int, int);
 extern int sceGsSyncPath(int, int);
@@ -19,5 +19,5 @@ void func_0019BDA0(int arg0, int arg1) {
         sceGsExecLoadImage(img, buf);
         sceGsSyncPath(0, 0);
     }
-    func_0020D9A8();
+    Texture_SendTexFlush();
 }

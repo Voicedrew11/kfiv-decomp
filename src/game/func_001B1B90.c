@@ -21,10 +21,10 @@ void func_001B3AC0(Unk1B1470Request *, Unk1B1470Extra *, MapObject *);
 int func_001B3E78(char *, u8 *);
 void func_001C1C80(f32 *, f32 *);
 void func_001C2128(void *, int, int, float);
-void func_0020FA58(void *, void *, f32, f32, f32, f32, f32, f32);
-void func_0020FCF8(void *, void *, f32, f32, f32, f32, f32, f32, f32, f32, f32);
-void func_00210488(void *, void *, f32, f32, f32, f32, f32);
-void func_00210678(void *, void *, f32, f32, f32, f32, f32, f32, f32, f32);
+void Collision_CylinderArc(void *, void *, f32, f32, f32, f32, f32, f32);
+void Collision_CylinderArcPitch(void *, void *, f32, f32, f32, f32, f32, f32, f32, f32, f32);
+void Collision_BallSwing(void *, void *, f32, f32, f32, f32, f32);
+void Collision_BallSwingPitch(void *, void *, f32, f32, f32, f32, f32, f32, f32, f32);
 
 #define IS_PLAYER(owner) ((owner) == (Entity *)&D_00413F80)
 #define LARGER(first, second) ((first) < (second) ? (second) : (first))
@@ -49,7 +49,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 
     if (request->unk4D & 1) {
         if (!((request->unk4D & 0x80) && IS_PLAYER(request->owner))) {
-            func_0020FA58(&D_00413F80, request, 50.0f, 230.0f, request->unk30, request->unk34, request->unk3C,
+            Collision_CylinderArc(&D_00413F80, request, 50.0f, 230.0f, request->unk30, request->unk34, request->unk3C,
                           request->unk38);
             if (COLLISION_RESULT->hit != 0) {
                 func_001B29C8(request, extra);
@@ -73,11 +73,11 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             }
             if (!(entity->params->flags & 0x400)) {
                 if (IS_PLAYER(request->owner)) {
-                    func_0020FCF8(entity->model->position, request, entity->radius, entity->height, request->unk30,
+                    Collision_CylinderArcPitch(entity->model->position, request, entity->radius, entity->height, request->unk30,
                                   request->unk78, request->unk7C, request->unk3C, request->unk38, request->unk44,
                                   request->unk40);
                 } else {
-                    func_0020FA58(entity->model->position, request, entity->radius, entity->height, request->unk30,
+                    Collision_CylinderArc(entity->model->position, request, entity->radius, entity->height, request->unk30,
                                   request->unk34, request->unk3C, request->unk38);
                 }
                 if (COLLISION_RESULT->hit != 0) {
@@ -102,19 +102,19 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                     if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
                         if (IS_PLAYER(request->owner)) {
-                            func_0020FCF8(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->unkE4,
+                            Collision_CylinderArcPitch(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->unkE4,
                                           request->unk30, request->unk78, request->unk7C, request->unk3C, request->unk38,
                                           request->unk44, request->unk40);
                         } else {
-                            func_0020FA58(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->unkE4,
+                            Collision_CylinderArc(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->unkE4,
                                           request->unk30, request->unk34, request->unk3C, request->unk38);
                         }
                     } else {
                         if (IS_PLAYER(request->owner)) {
-                            func_00210678(point, request, body->unk04 * scale, request->unk30, request->unk78, request->unk7C,
+                            Collision_BallSwingPitch(point, request, body->unk04 * scale, request->unk30, request->unk78, request->unk7C,
                                           request->unk3C, request->unk38, request->unk44, request->unk40);
                         } else {
-                            func_00210488(point, request, body->unk04 * scale, request->unk30, request->unk34,
+                            Collision_BallSwing(point, request, body->unk04 * scale, request->unk30, request->unk34,
                                           request->unk3C, request->unk38);
                         }
                     }

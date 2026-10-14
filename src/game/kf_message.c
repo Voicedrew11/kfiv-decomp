@@ -23,7 +23,7 @@ typedef char *va_list;
 
 #define GLYPH_GIF_NREG (7 << 28) /* high word of the glyphs' GIF tag: seven registers each */
 
-int func_0020D088(void);
+int Timer_GetTicks(void);
 void func_0010B238(TextureTableHeader *);
 void func_00109E88(void);
 u32 *func_00109990(int);
@@ -119,7 +119,7 @@ void Message_Init(void) {
 void Message_Update(void) {
     MessageBox *box;
 
-    func_0020D088();
+    Timer_GetTicks();
     if (box_open == 0 && notices_active == 0) {
         Message_Draw();
         return;

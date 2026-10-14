@@ -11,7 +11,7 @@ void func_001095D8(void);
 void func_001095E0(void);
 void func_001096E8(void);
 void func_00109800(void);
-void func_0020B780(int);
+void Display_SwapBuffers(int);
 
 /* Debug map picker: left and right (or L2 and R2 held) step *map_id through 0..254 on a
    "MAP nnn" screen. Returns TRUE if the choice was confirmed, FALSE if cancelled. */
@@ -32,7 +32,7 @@ int func_001B0E50(int *map_id) {
     D_00433050[0] = 0xC000L << 17;
     D_00433050[30] = 0xC000L << 17;
     do {
-        func_0020B780(0);
+        Display_SwapBuffers(0);
         Pad_Update();
         report = Pad_GetReport(0, 0);
         pressed = report->pressed;
@@ -72,7 +72,7 @@ int func_001B0E50(int *map_id) {
         }
     } while (!(pressed & 0x4000));
     do {
-        func_0020B780(0);
+        Display_SwapBuffers(0);
         Pad_Update();
         report = Pad_GetReport(0, 0);
     } while (report->held != 0);

@@ -6,7 +6,7 @@ extern ModelLight D_003E7500[];
 
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
-int func_0020CBC0(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
+int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
 void func_00216778(void *, void *);
 
 /* copies a 4x4 matrix through VU0 registers */
@@ -22,7 +22,7 @@ void func_00216778(void *, void *);
         "sqc2 $vf19, 0x30(%1)\n"                                                                   \
         : : "r"(from), "r"(to))
 
-/* Draws a model like func_0010D308, with the two matrices of func_0020CBC0 on the stack and each
+/* Draws a model like func_0010D308, with the two matrices of ModelMatrix_BuildDrawMatrices on the stack and each
    part's own matrix sent as it is; parts scaled to nothing are left out. */
 void func_0010D700(ModelInstance *model) {
     VuVector4 matrix_a[4];
@@ -40,7 +40,7 @@ void func_0010D700(ModelInstance *model) {
 
     if (model->parts != NULL && model->part_count != 0) {
         matrix_b_ptr = matrix_b;
-        func_0020CBC0(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b_ptr);
+        ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b_ptr);
         if (model->unk100 & 0x800) {
             packet_start = packet = func_00109990(0x21); // match: two calls, the compiler merges them
         } else {

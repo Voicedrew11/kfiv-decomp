@@ -37,7 +37,7 @@ s32 func_001962E8(Entity *);
 f32 func_00194F48(f32 *, f32 *);
 float func_00194F80(void *, void *);
 float func_001954A8(float *, float *);
-void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
+void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 float func_00194FB8(float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, float *, float *);
@@ -48,7 +48,7 @@ void func_0010B018(ModelInstance *, s32, s32);
 void func_0010AEB8(void *);
 void func_0010BA30(ModelInstance *);
 void func_00133708(Entity *, s32);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
+void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
 f32 func_0018A9F0(void *, void *);
 
@@ -289,7 +289,7 @@ void Entity_UpdateAll(void) {
         entity->unk84 = entity->unk88 = entity->unk8C = entity->unk90 = entity->unk94 = entity->unk98 = 0.0f;
         if (!Entity_IsMapRecordActive(entity)) {
             if (!ENTITY_FLAG_BITS(entity)->bit30) {
-                func_0020C300(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->unkE0);
+                ModelMatrix_Build(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->unkE0);
             }
             ENTITY_FLAG_BITS(entity)->bit30 = TRUE;
             continue;
@@ -478,14 +478,14 @@ static void Entity_RebuildModelMatrices(Entity *entity) {
 
     root = ENTITY_MODEL(entity)->unk130;
     part_count = ENTITY_MODEL(entity)->part_count;
-    func_0020C300(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->unkE0);
+    ModelMatrix_Build(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->unkE0);
     func_00216778(saved_offset, root->unk40);
     func_00216778(saved_rotation, &root->unk50);
     root->unk40[0] = root->unk40[1] = root->unk40[2] = 0.0f;
     root->unk50 = root->unk54 = root->unk58 = 0.0f;
     part = ENTITY_MODEL(entity)->parts;
     for (i = 0; i < part_count; i++) {
-        func_0020B8B0(ENTITY_MODEL(entity), part, part);
+        ModelMatrix_BuildPartLocal(ENTITY_MODEL(entity), part, part);
         part++;
     }
     func_00216778(root->unk40, saved_offset);

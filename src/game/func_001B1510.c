@@ -15,8 +15,8 @@ void func_001B2F70(Unk1B1470Request *, Unk1B1470Extra *, Entity *, f32);
 void func_001B3AC0(Unk1B1470Request *, Unk1B1470Extra *, MapObject *);
 int func_001B3E78(char *, u8 *);
 void func_001C21C0(MapObject *, f32 *, f32);
-void func_0020DE48(void *, void *, float, float);
-void func_0020F820(void *, void *, f32, f32, f32);
+void Collision_SphereSphere(void *, void *, float, float);
+void Collision_SphereCylinder(void *, void *, f32, f32, f32);
 
 #define IS_PLAYER(owner) ((owner) == (Entity *)&D_00413F80)
 #define LARGER(first, second) ((first) < (second) ? (second) : (first))
@@ -75,7 +75,7 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     if (request->unk4D & 1) {
         if (!((request->unk4D & 0x80) && IS_PLAYER(request->owner))) {
-            func_0020F820(&D_00413F80, request, 50.0f, 230.0f, request->unk30);
+            Collision_SphereCylinder(&D_00413F80, request, 50.0f, 230.0f, request->unk30);
             if (COLLISION_RESULT->hit != 0) {
                 func_001B29C8(request, extra);
                 return 1;
@@ -98,9 +98,9 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             }
             if (!(entity->params->flags & 0x400)) {
                 if (((EntityParamsWord *)entity->params)->unk00 & 0x8000000) {
-                    func_0020DE48(entity->model->position, request, entity->radius, request->unk30);
+                    Collision_SphereSphere(entity->model->position, request, entity->radius, request->unk30);
                 } else {
-                    func_0020F820(entity->model->position, request, entity->radius, entity->height, request->unk30);
+                    Collision_SphereCylinder(entity->model->position, request, entity->radius, entity->height, request->unk30);
                 }
                 if (COLLISION_RESULT->hit != 0) {
                     func_001B2F70(request, extra, entity, 1.0f);
@@ -116,10 +116,10 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     }
                     point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                     if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
-                        func_0020F820(point, request, body->unk04 * scale, body->unk06 * ENTITY_MODEL(entity)->unkE4,
+                        Collision_SphereCylinder(point, request, body->unk04 * scale, body->unk06 * ENTITY_MODEL(entity)->unkE4,
                                       request->unk30);
                     } else {
-                        func_0020DE48(point, request, body->unk04 * scale, request->unk30);
+                        Collision_SphereSphere(point, request, body->unk04 * scale, request->unk30);
                     }
                     if (COLLISION_RESULT->hit != 0) {
                         func_001B2F70(request, extra, entity, body->unk08);

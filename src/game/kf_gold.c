@@ -16,7 +16,7 @@ void func_001CB710(OverlaySprite *);
 void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
-void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
+void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void func_0010AEB8(void *);
 void func_0010BA30(ModelInstance *);
 void func_0010B018(ModelInstance *, s32, s32);
@@ -240,7 +240,7 @@ void Gold_Draw(s32 list) {
     func_00109A80(0x48, 0x5000D);
     func_00109AD0();
     for (actor = D_004469E0; actor != NULL; actor = actor->next) {
-        func_0020C300(actor->body, &actor->body->position, &actor->body->rotation, &actor->body->unkE0);
+        ModelMatrix_Build(actor->body, &actor->body->position, &actor->body->rotation, &actor->body->unkE0);
         if (actor->body->unk145 == 0) {
             func_0010AEB8(actor->body);
             func_0010BA30(actor->body);

@@ -13,7 +13,7 @@ void func_001095D8(void);
 void func_001095E0(void);
 void func_001096E8(void);
 void func_00109800(void);
-void func_0020B780(int);
+void Display_SwapBuffers(int);
 
 /* Debug editor for a four-digit decimal number on an "INI:" screen: left and right move
    the cursor, up and down change the digit under it. Stores the number on confirm. */
@@ -38,7 +38,7 @@ void func_001B1030(int *value) {
     D_00433050[0] = 0xC000L << 17;
     D_00433050[30] = 0xC000L << 17;
     do {
-        func_0020B780(0);
+        Display_SwapBuffers(0);
         Pad_Update();
         report = Pad_GetReport(0, 0);
         pressed = report->pressed;
@@ -70,7 +70,7 @@ void func_001B1030(int *value) {
         }
     } while (!(pressed & 0x4000));
     do {
-        func_0020B780(0);
+        Display_SwapBuffers(0);
         Pad_Update();
         report = Pad_GetReport(0, 0);
     } while (report->held != 0);

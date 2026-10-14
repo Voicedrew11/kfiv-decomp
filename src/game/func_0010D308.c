@@ -6,11 +6,11 @@ extern ModelLight D_003E7500[];
 
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
-int func_0020CBC0(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
+int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
 void func_00216778(void *, void *);
 void func_00216B48(void *, void *, void *);
 
-/* the scratchpad as this function uses it: two matrices func_0020CBC0 makes for the model */
+/* the scratchpad as this function uses it: two matrices ModelMatrix_BuildDrawMatrices makes for the model */
 #define SCRATCH_MATRIX_A ((void *)0x70000000)
 #define SCRATCH_MATRIX_B ((void *)0x70000040)
 
@@ -46,7 +46,7 @@ void func_0010D308(ModelInstance *model) {
     f32 unused[4];
 
     if (model->parts != NULL && model->part_count != 0) {
-        func_0020CBC0(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b);
+        ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b);
         if (model->unk100 & 0x800) {
             packet_start = packet = func_00109990(0x21); // match: two calls, the compiler merges them
         } else {

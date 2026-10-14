@@ -134,19 +134,19 @@ typedef struct {
     u8 year;                        /* 0x07 years since 2000 */
 } ClockTime;
 
-/* D_00431CE8: func_0020CD00 advances its counter once a frame */
+/* D_00431CE8: the game clock (kf_game_clock.c) */
 typedef struct {
     char pad00[0x08];
     int ticks;                      /* 0x08 */
 } GameClock;
 
-/* D_00432820: what decides whether func_0020CD00 advances GameClock.ticks */
+/* D_00432820: what decides whether GameClock_Tick advances GameClock.ticks */
 typedef struct {
     char pad00[0x208];
-    char unk208;                    /* 0x208 func_0020B6A0 clears it */
-    char unk209;                    /* 0x209 func_0020B6A0 clears it */
-    char unk20A;                    /* 0x20A func_0020B6A0 clears it */
-    char unk20B;                    /* 0x20B func_0020B6A0 sets it to 2 */
+    char unk208;                    /* 0x208 System_InitMemory clears it */
+    char unk209;                    /* 0x209 System_InitMemory clears it */
+    char unk20A;                    /* 0x20A System_InitMemory clears it */
+    char unk20B;                    /* 0x20B System_InitMemory sets it to 2 */
     char pad20C[0x7];
     char unk213;                    /* 0x213 nonzero: the clock stops */
     char unk214;                    /* 0x214 nonzero: the clock stops */

@@ -13,11 +13,11 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
-int func_0020CBC0(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
+int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
 void func_00216778(void *, void *);
 void func_00216B48(void *, void *, void *);
 
-/* the scratchpad as this function uses it: the turn it works out, the two matrices func_0020CBC0
+/* the scratchpad as this function uses it: the turn it works out, the two matrices ModelMatrix_BuildDrawMatrices
    makes for the model, then a matrix per part and the same without the model's own placement */
 #define SCRATCH_TURN ((f32 *)0x70000000)
 #define SCRATCH_MATRIX_A ((void *)0x70000040)
@@ -75,7 +75,7 @@ void func_0010BA30(ModelInstance *model) {
     sceVu0RotMatrixX(SCRATCH_TURN, SCRATCH_TURN, wrap_angle(model->rotation.x));
     sceVu0RotMatrixY(SCRATCH_TURN, SCRATCH_TURN, wrap_angle(model->rotation.y));
     sceVu0RotMatrixZ(SCRATCH_TURN, SCRATCH_TURN, wrap_angle(model->rotation.z));
-    func_0020CBC0(model, model->unk148, model->unk148 + 0x40, SCRATCH_MATRIX_A, SCRATCH_MATRIX_B);
+    ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, SCRATCH_MATRIX_A, SCRATCH_MATRIX_B);
     part_count = model->part_count;
     part = model->parts;
     for (; i < part_count; i++, part++) {

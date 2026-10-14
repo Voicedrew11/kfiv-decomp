@@ -44,8 +44,8 @@ float func_0019B838(float);
 int func_0019D1C0(float, int, void *);
 int func_0019D490(u8, u8, float *, float);
 s32 func_0019D980(s8, u8, u8, f32, Vector4Arg *);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
-void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
+void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
+void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 int func_002109C8(int, int);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
@@ -129,9 +129,9 @@ void MapObject_InitMap(int map) {
             MAP_OBJECT_BYTES(object)->anim = 0;
         } else {
             MAP_OBJECT_BYTES(object)->anim = -1;
-            func_0020C300(object->model, &object->model->position, &object->model->rotation, &object->model->unkE0);
+            ModelMatrix_Build(object->model, &object->model->position, &object->model->rotation, &object->model->unkE0);
             for (j = 0; j < object->model->part_count; j++) {
-                func_0020B8B0(object->model, &object->model->parts[j], &object->model->parts[j]);
+                ModelMatrix_BuildPartLocal(object->model, &object->model->parts[j], &object->model->parts[j]);
             }
         }
         D_003BE3B0[object->unk04->kind](object);

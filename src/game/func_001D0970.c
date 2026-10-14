@@ -17,11 +17,11 @@ extern ItemNode *D_004469D4;
 extern ItemNode *D_004469D8;
 extern f32 D_00446A08[];
 
-int func_0020D088(void);
+int Timer_GetTicks(void);
 void func_001D0800(void);
 void func_001C1858(f32, void *, void *, s32);
 float func_001D1260(float, float *, float *);
-void func_0020F2B8(f32, f32, f32, void *, void *, void *);
+void Collision_RayCylinder(f32, f32, f32, void *, void *, void *);
 void func_001C2128(void *, int, int, float);
 void sceVu0SubVector(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
@@ -60,7 +60,7 @@ void func_001D0970(void) {
     f32 limit;
     f32 turn;
 
-    func_0020D088();
+    Timer_GetTicks();
     func_001D0800();
     nearest = D_00420D00.unk4C = D_00420D00.unk40 = D_00446A08[0];
     D_00420D00.unk54 = NULL;
@@ -86,7 +86,7 @@ void func_001D0970(void) {
         if (D_00420D00.unk4C <= distance) {
             continue;
         }
-        func_0020F2B8(entity->radius, entity->height, reach, &ENTITY_MODEL(entity)->position, D_00420D00.unk00,
+        Collision_RayCylinder(entity->radius, entity->height, reach, &ENTITY_MODEL(entity)->position, D_00420D00.unk00,
                       D_00420D00.unk10);
         if (COLLISION_RESULT->hit != 0) {
             D_00420D00.unk4C = distance;

@@ -6,11 +6,11 @@ void func_001096E8(void);
 void func_00109800(void);
 void func_0010A040(int);
 void func_0010B000(void);
-void func_0020B780(int);
+void Display_SwapBuffers(int);
 
 /* Draws one frame with nothing in it. */
 void func_00118A50(void) {
-    func_0020B780(0);
+    Display_SwapBuffers(0);
     func_001096E8();
     func_001095E0();
     func_0010B000();

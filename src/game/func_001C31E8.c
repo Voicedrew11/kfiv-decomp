@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 
 void func_00216778(void *, void *);
-void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
+void Collision_RayTriangle(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 
 /* Tests a ray against the walls of a two-box map object (kind 2), two triangles a wall. Model
    points 0 to 3 and 4 to 7 are the top corners of its two halves; the bottom ones lie below
@@ -29,41 +29,41 @@ void func_001C31E8(void *target, int from, int direction, float distance) {
         corner3 = (f32 *)object->model->get_point(object->model, 7);
         func_00216778(&bottom[0], corner0);
         bottom[0].y -= height;
-        func_0020E918((int)corner0, (int)corner1, (int)&bottom[0], from, direction, distance);
+        Collision_RayTriangle((int)corner0, (int)corner1, (int)&bottom[0], from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
         func_00216778(&bottom[1], corner1);
         bottom[1].y -= height;
-        func_0020E918((int)corner1, (int)&bottom[0], (int)&bottom[1], from, direction, distance);
+        Collision_RayTriangle((int)corner1, (int)&bottom[0], (int)&bottom[1], from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
         func_00216778(&bottom[2], corner2);
         bottom[2].y -= height;
-        func_0020E918((int)corner2, (int)corner3, (int)&bottom[2], from, direction, distance);
+        Collision_RayTriangle((int)corner2, (int)corner3, (int)&bottom[2], from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
         func_00216778(&bottom[3], corner3);
         bottom[3].y -= height;
-        func_0020E918((int)corner3, (int)&bottom[2], (int)&bottom[3], from, direction, distance);
+        Collision_RayTriangle((int)corner3, (int)&bottom[2], (int)&bottom[3], from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
-        func_0020E918((int)corner1, (int)corner2, (int)&bottom[1], from, direction, distance);
+        Collision_RayTriangle((int)corner1, (int)corner2, (int)&bottom[1], from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
-        func_0020E918((int)corner2, (int)&bottom[1], (int)&bottom[2], from, direction, distance);
+        Collision_RayTriangle((int)corner2, (int)&bottom[1], (int)&bottom[2], from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
-        func_0020E918((int)corner3, (int)corner0, (int)&bottom[3], from, direction, distance);
+        Collision_RayTriangle((int)corner3, (int)corner0, (int)&bottom[3], from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
-        func_0020E918((int)corner0, (int)&bottom[3], (int)&bottom[0], from, direction, distance);
+        Collision_RayTriangle((int)corner0, (int)&bottom[3], (int)&bottom[0], from, direction, distance);
         return;
     }
     corner0 = (f32 *)object->model->get_point(object->model, 0);
@@ -74,41 +74,41 @@ void func_001C31E8(void *target, int from, int direction, float distance) {
     corner3 = (f32 *)object->model->get_point(object->model, 3);
     func_00216778(&bottom[0], corner0);
     bottom[0].y -= height;
-    func_0020E918((int)corner0, (int)corner1, (int)&bottom[0], from, direction, distance);
+    Collision_RayTriangle((int)corner0, (int)corner1, (int)&bottom[0], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     func_00216778(&bottom[1], corner1);
     bottom[1].y -= height;
-    func_0020E918((int)corner1, (int)&bottom[0], (int)&bottom[1], from, direction, distance);
+    Collision_RayTriangle((int)corner1, (int)&bottom[0], (int)&bottom[1], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     func_00216778(&bottom[2], corner2);
     bottom[2].y -= height;
-    func_0020E918((int)corner2, (int)corner3, (int)&bottom[2], from, direction, distance);
+    Collision_RayTriangle((int)corner2, (int)corner3, (int)&bottom[2], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     func_00216778(&bottom[3], corner3);
     bottom[3].y -= height;
-    func_0020E918((int)corner3, (int)&bottom[2], (int)&bottom[3], from, direction, distance);
+    Collision_RayTriangle((int)corner3, (int)&bottom[2], (int)&bottom[3], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    func_0020E918((int)corner1, (int)corner2, (int)&bottom[1], from, direction, distance);
+    Collision_RayTriangle((int)corner1, (int)corner2, (int)&bottom[1], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    func_0020E918((int)corner2, (int)&bottom[1], (int)&bottom[2], from, direction, distance);
+    Collision_RayTriangle((int)corner2, (int)&bottom[1], (int)&bottom[2], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    func_0020E918((int)corner3, (int)corner0, (int)&bottom[3], from, direction, distance);
+    Collision_RayTriangle((int)corner3, (int)corner0, (int)&bottom[3], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    func_0020E918((int)corner0, (int)&bottom[3], (int)&bottom[0], from, direction, distance);
+    Collision_RayTriangle((int)corner0, (int)&bottom[3], (int)&bottom[0], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
@@ -118,39 +118,39 @@ void func_001C31E8(void *target, int from, int direction, float distance) {
     corner3 = (f32 *)object->model->get_point(object->model, 7);
     func_00216778(&bottom[0], corner0);
     bottom[0].y -= height;
-    func_0020E918((int)corner0, (int)corner1, (int)&bottom[0], from, direction, distance);
+    Collision_RayTriangle((int)corner0, (int)corner1, (int)&bottom[0], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     func_00216778(&bottom[1], corner1);
     bottom[1].y -= height;
-    func_0020E918((int)corner1, (int)&bottom[0], (int)&bottom[1], from, direction, distance);
+    Collision_RayTriangle((int)corner1, (int)&bottom[0], (int)&bottom[1], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     func_00216778(&bottom[2], corner2);
     bottom[2].y -= height;
-    func_0020E918((int)corner2, (int)corner3, (int)&bottom[2], from, direction, distance);
+    Collision_RayTriangle((int)corner2, (int)corner3, (int)&bottom[2], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     func_00216778(&bottom[3], corner3);
     bottom[3].y -= height;
-    func_0020E918((int)corner3, (int)&bottom[2], (int)&bottom[3], from, direction, distance);
+    Collision_RayTriangle((int)corner3, (int)&bottom[2], (int)&bottom[3], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    func_0020E918((int)corner1, (int)corner2, (int)&bottom[1], from, direction, distance);
+    Collision_RayTriangle((int)corner1, (int)corner2, (int)&bottom[1], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    func_0020E918((int)corner2, (int)&bottom[1], (int)&bottom[2], from, direction, distance);
+    Collision_RayTriangle((int)corner2, (int)&bottom[1], (int)&bottom[2], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    func_0020E918((int)corner3, (int)corner0, (int)&bottom[3], from, direction, distance);
+    Collision_RayTriangle((int)corner3, (int)corner0, (int)&bottom[3], from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    func_0020E918((int)corner0, (int)&bottom[3], (int)&bottom[0], from, direction, distance);
+    Collision_RayTriangle((int)corner0, (int)&bottom[3], (int)&bottom[0], from, direction, distance);
 }

@@ -15,7 +15,7 @@ void Vector_Scale(void *, void *, float);
 int func_001C2D08(void *);
 void func_001C0A88(void *, void *, void *, void *);
 void func_001C0C50(void *, void *, void *, void *, f32);
-void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
+void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
 u32 func_001124E0(int, u32, u32);
 u32 func_001125A8(u32, u32, int);
 void func_001152B8(int);
@@ -124,7 +124,7 @@ int func_001BDDC0(void) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        func_0020E1F8((int)strip_point[0].position, (int)strip_point[1].position,
+                        Collision_CapsuleTriangle((int)strip_point[0].position, (int)strip_point[1].position,
                                       (int)strip_point[2].position, (int)&COLLISION_SCRATCH->unk90, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->unk90.x - COLLISION_RESULT->point[0];

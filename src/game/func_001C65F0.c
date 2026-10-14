@@ -3,7 +3,7 @@
 
 int func_001C2D08(void *);
 void func_00216778(void *, void *);
-void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
+void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
 void Vector_Scale(float *, float *, float);
 void sceVu0Normalize(float *, float *);
 extern PlayerState D_00413F80;
@@ -41,7 +41,7 @@ void func_001C65F0(MapObject *object, f32 *position, f32 height, f32 radius) {
                 point = strip->points;
                 j = strip->point_count - 2;
                 do {
-                    func_0020E1F8((int)point[0].position, (int)point[1].position, (int)point[2].position,
+                    Collision_CapsuleTriangle((int)point[0].position, (int)point[1].position, (int)point[2].position,
                                   (int)centre, radius, height);
                     if (COLLISION_RESULT->hit != 0) {
                         touched = TRUE;
@@ -57,7 +57,7 @@ void func_001C65F0(MapObject *object, f32 *position, f32 height, f32 radius) {
             point = strip->points;
             j = strip->point_count - 2;
             do {
-                func_0020E1F8((int)point[0].position, (int)point[1].position, (int)point[2].position,
+                Collision_CapsuleTriangle((int)point[0].position, (int)point[1].position, (int)point[2].position,
                               (int)centre, radius, height);
                 if (COLLISION_RESULT->hit != 0) {
                     offset[0] = centre[0] - COLLISION_RESULT->point[0];

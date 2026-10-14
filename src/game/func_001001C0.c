@@ -33,9 +33,9 @@ int func_001D20A0(void);
 void func_001D2048(PlayTime);
 void func_00106178(int, int, int, int);
 void func_001095E0(void);
-void func_0020B780(int);
-int func_0020D088(void);
-void func_0020D078(void);
+void Display_SwapBuffers(int);
+int Timer_GetTicks(void);
+void Timer_Restart(void);
 void func_001096E8(void);
 void func_0010B000(void);
 void func_00111D58(void);
@@ -92,14 +92,14 @@ void func_001001C0(int arg) {
     func_001095E0();
     while (!D_0038CC50.bit9) {
         if (!(D_0038CC50.bit12 && D_0038CC50.bit13)) {
-            func_0020B780(1);
+            Display_SwapBuffers(1);
         }
         D_00446ED4++;
-        func_0020D088();
-        func_0020D078();
+        Timer_GetTicks();
+        Timer_Restart();
         if (!(D_0038CC50.bit12 && D_0038CC50.bit13)) {
             func_001096E8();
-            func_0020D088();
+            Timer_GetTicks();
             func_001095E0();
             func_0010B000();
             func_00111D58();
@@ -168,7 +168,7 @@ void func_001001C0(int arg) {
             (D_0038A130.unk18 != 0 || D_0038A130.unk04 == 0 || func_0019F6B0() == 0))) {
         while (sceGsSyncV(0) != 1) {
         }
-        func_0020D078();
+        Timer_Restart();
         func_00101618();
         func_0019C540();
     }

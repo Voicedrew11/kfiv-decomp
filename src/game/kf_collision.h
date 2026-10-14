@@ -129,4 +129,36 @@ typedef struct {
     s32 lists[2];                   /* 0x00 */
 } CollisionListPick2;
 
+/* The tests of kf_collision.c; each leaves its result in COLLISION_RESULT. The cylinder tests are left out: their
+   callers declare them with other pointer types (void *). */
+
+/* A sphere against a sphere. */
+void Collision_SphereSphere(void *center_a, void *center_b, float radius_a, float radius_b);
+
+/* A point within `reach` of a triangle's plane, its foot inside the triangle. */
+void Collision_PointTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point, f32 reach);
+
+/* An upright capsule (a sphere of `radius` swept down from `centre` by `height`) against a triangle. */
+void Collision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32 radius, f32 height);
+
+/* A ray from `origin` along `direction`, no further than `reach` times it, against a triangle. */
+void Collision_RayTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *origin, f32 *direction, f32 reach);
+
+/* A ball against a wall edge (Collision_CylinderEdge with a cylinder twice its radius high). */
+void Collision_BallEdge(void *edge_start, void *edge_end, f32 height, void *centre, f32 reach);
+
+/* An upright cylinder against a wall edge `height` high, from its front side. */
+void Collision_CylinderEdge(void *edge_start, void *edge_end, f32 height, void *centre, f32 radius, f32 reach);
+
+/* Collision_CylinderEdge with the edge made longer by `reach` at both ends. */
+void Collision_CylinderEdgeExtended(Vector4 *start, Vector4 *end, f32 height, Vector4 *centre, f32 radius, f32 reach);
+
+/* A ball against a swing: a slab `depth` deep, `range` out, `half_angle` either side of `facing`. */
+void Collision_BallSwing(void *ball_centre, void *swing_origin, f32 radius, f32 range, f32 depth, f32 half_angle,
+                         f32 facing);
+
+/* Collision_BallSwing for the player's swing: the slab between two heights, and a pitch window. */
+void Collision_BallSwingPitch(void *ball_centre, void *swing_origin, f32 radius, f32 range, f32 lowest, f32 highest,
+                              f32 half_angle, f32 facing, f32 half_pitch, f32 pitch);
+
 #endif

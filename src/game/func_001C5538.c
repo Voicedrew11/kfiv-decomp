@@ -1,6 +1,6 @@
 #include "kf_collision.h"
 
-void func_00210258(Vector4 *, Vector4 *, f32, Vector4 *, f32, f32);
+void Collision_CylinderEdgeExtended(Vector4 *, Vector4 *, f32, Vector4 *, f32, f32);
 
 /* whether the point lies outside the line from the origin to the first end */
 #define OUTSIDE_FIRST(point) \
@@ -38,7 +38,7 @@ void func_001C5538(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
         first3 = OUTSIDE_FIRST(point3);
         second3 = OUTSIDE_SECOND(point3);
         if (!(first0 && first1) && !(second0 && second1)) {
-            func_00210258(point0, point1, height, origin, radius, push);
+            Collision_CylinderEdgeExtended(point0, point1, height, origin, radius, push);
         }
         // match: read even when the wall was left out, whatever the last test before this left there
         hit = COLLISION_RESULT->hit;
@@ -46,7 +46,7 @@ void func_001C5538(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
             return;
         }
         if (!(first1 && first2) && !(second1 && second2)) {
-            func_00210258(point1, point2, height, origin, radius, push);
+            Collision_CylinderEdgeExtended(point1, point2, height, origin, radius, push);
             hit = COLLISION_RESULT->hit;
             if (hit != 0) {
                 return;
@@ -55,7 +55,7 @@ void func_001C5538(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
             return;
         }
         if (!(first2 && first3) && !(second2 && second3)) {
-            func_00210258(point2, point3, height, origin, radius, push);
+            Collision_CylinderEdgeExtended(point2, point3, height, origin, radius, push);
             hit = COLLISION_RESULT->hit;
             if (hit != 0) {
                 return;
@@ -64,7 +64,7 @@ void func_001C5538(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
             return;
         }
         if (!(first3 && first0) && !(second3 && second0)) {
-            func_00210258(point3, point0, height, origin, radius, push);
+            Collision_CylinderEdgeExtended(point3, point0, height, origin, radius, push);
         }
     }
 }

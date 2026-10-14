@@ -8,7 +8,7 @@ void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
 void Vector_Scale(float *, float *, float);
-void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
+void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -54,7 +54,7 @@ void func_001C97E8(int hidden) {
     func_00109A80(0x47, 0x5000D);
     func_00109AD0();
     Vector_Scale(scale, &node->model->unkE0, 1.0f);
-    func_0020C300(node->model, &node->model->position, &node->model->rotation, scale);
+    ModelMatrix_Build(node->model, &node->model->position, &node->model->rotation, scale);
     count = node->model->part_count;
     part = node->model->parts;
     for (; i < count; i++, part++) {

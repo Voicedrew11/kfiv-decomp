@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 
 int func_001C2D08(void *);
-void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
+void Collision_RayTriangle(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 
 /* Tests a ray against a map object of kind 18 (a pitfall). With flag 0x20000 clear the object's
    collision strips are tested, as func_001C2E48 does. With it set, model points 0 to 0x1F are
@@ -33,7 +33,7 @@ void func_001C3A18(void *target, int from, int direction, float distance) {
                 vertex = strip->vertices;
                 triangles_left = strip->vertex_count - 2;
                 do {
-                    func_0020E918((int)vertex[0].unk00, (int)vertex[1].unk00, (int)vertex[2].unk00, from, direction, distance);
+                    Collision_RayTriangle((int)vertex[0].unk00, (int)vertex[1].unk00, (int)vertex[2].unk00, from, direction, distance);
                     if (COLLISION_RESULT->hit != 0) {
                         return;
                     }
@@ -61,11 +61,11 @@ void func_001C3A18(void *target, int from, int direction, float distance) {
         if (corner3[0] == object->model->position.x && corner3[1] == object->model->position.y && corner3[2] == object->model->position.z) {
             return;
         }
-        func_0020E918((int)corner0, (int)corner1, (int)corner2, from, direction, distance);
+        Collision_RayTriangle((int)corner0, (int)corner1, (int)corner2, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
-        func_0020E918((int)corner0, (int)corner2, (int)corner3, from, direction, distance);
+        Collision_RayTriangle((int)corner0, (int)corner2, (int)corner3, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }

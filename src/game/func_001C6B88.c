@@ -8,8 +8,8 @@
 
 extern PlayerState D_00413F80;
 
-void func_00210088(void *, void *, f32, void *, f32, f32);
-void func_0020F0D8(void *, f32, f32, void *, f32, f32);
+void Collision_CylinderEdge(void *, void *, f32, void *, f32, f32);
+void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 float sqrtf(float);
 
 /* whether the circle does not fit between the two quads; the player is told by the object instead */
@@ -58,35 +58,35 @@ void func_001C6B88(MapObject *object, f32 *centre, f32 radius, f32 push) {
                 return;
             }
             height = point0[1] - top[1];
-            func_00210088(point0, point1, height, centre, radius, push);
+            Collision_CylinderEdge(point0, point1, height, centre, radius, push);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push);
             }
-            func_00210088(point1, point2, height, centre, radius, push);
+            Collision_CylinderEdge(point1, point2, height, centre, radius, push);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push);
             }
-            func_00210088(point2, point3, height, centre, radius, push);
+            Collision_CylinderEdge(point2, point3, height, centre, radius, push);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push);
             }
-            func_00210088(point3, point0, height, centre, radius, push);
+            Collision_CylinderEdge(point3, point0, height, centre, radius, push);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push);
             }
-            func_0020F0D8(centre, push, radius, point0, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point0, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
-            func_0020F0D8(centre, push, radius, point1, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point1, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
-            func_0020F0D8(centre, push, radius, point2, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point2, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
-            func_0020F0D8(centre, push, radius, point3, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point3, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
@@ -110,89 +110,89 @@ void func_001C6B88(MapObject *object, f32 *centre, f32 radius, f32 push) {
             if (!(MODEL_CHANNEL(object->model)->index == object->unk04->anims[5].anim &&
                   MODEL_CHANNEL(object->model)->param == 1) &&
                 gap_is_closed(object, centre, push, first_gap, second_gap)) {
-                func_00210088(point2, point5, height, centre, radius, push);
+                Collision_CylinderEdge(point2, point5, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_OUT(push);
                 }
-                func_00210088(point4, point3, height, centre, radius, push);
+                Collision_CylinderEdge(point4, point3, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_OUT(push);
                 }
-                func_00210088(point0, point1, height, centre, radius, push);
+                Collision_CylinderEdge(point0, point1, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_OUT(push);
                 }
-                func_00210088(point1, point2, height, centre, radius, push);
+                Collision_CylinderEdge(point1, point2, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_OUT(push);
                 }
-                func_00210088(point3, point0, height, centre, radius, push);
+                Collision_CylinderEdge(point3, point0, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_OUT(push);
                 }
             } else {
-                func_00210088(point0, point1, height, centre, radius, push);
+                Collision_CylinderEdge(point0, point1, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_OUT(push);
                 }
-                func_00210088(point1, point2, height, centre, radius, push);
+                Collision_CylinderEdge(point1, point2, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_OUT(push);
                 }
-                func_00210088(point2, point3, height, centre, radius, push);
+                Collision_CylinderEdge(point2, point3, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_OUT(push);
                 }
-                func_00210088(point3, point0, height, centre, radius, push);
+                Collision_CylinderEdge(point3, point0, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_OUT(push);
                 }
-                func_00210088(point4, point5, height, centre, radius, push);
+                Collision_CylinderEdge(point4, point5, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
                     PUSH_OUT(push);
                 }
             }
-            func_00210088(point5, point6, height, centre, radius, push);
+            Collision_CylinderEdge(point5, point6, height, centre, radius, push);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push);
             }
-            func_00210088(point6, point7, height, centre, radius, push);
+            Collision_CylinderEdge(point6, point7, height, centre, radius, push);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push);
             }
-            func_00210088(point7, point4, height, centre, radius, push);
+            Collision_CylinderEdge(point7, point4, height, centre, radius, push);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push);
             }
-            func_0020F0D8(centre, push, radius, point0, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point0, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
-            func_0020F0D8(centre, push, radius, point1, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point1, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
-            func_0020F0D8(centre, push, radius, point2, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point2, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
-            func_0020F0D8(centre, push, radius, point3, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point3, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
-            func_0020F0D8(centre, push, radius, point4, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point4, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
-            func_0020F0D8(centre, push, radius, point5, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point5, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
-            func_0020F0D8(centre, push, radius, point6, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point6, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }
-            func_0020F0D8(centre, push, radius, point7, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point7, 0.0f, height);
             if (COLLISION_RESULT->hit != 0) {
                 PUSH_OUT(push + 0.001f);
             }

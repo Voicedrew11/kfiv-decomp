@@ -1,13 +1,13 @@
 #include "kf_collision.h"
 
-void func_00210088(void *, void *, f32, void *, f32, f32);
-void func_0020F0D8(void *, f32, f32, void *, f32, f32);
+void Collision_CylinderEdge(void *, void *, f32, void *, f32, f32);
+void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 
 /* tests the circle against the wall from one point to the next; the function ends on a hit */
-#define TEST_WALL(from, to)     func_00210088(from, to, height, centre, radius, push);     if (COLLISION_RESULT->hit != 0) {         return;     }
+#define TEST_WALL(from, to)     Collision_CylinderEdge(from, to, height, centre, radius, push);     if (COLLISION_RESULT->hit != 0) {         return;     }
 
 /* the same against the post standing at a point */
-#define TEST_POST(point)     func_0020F0D8(centre, push, radius, point, 0.0f, height);     if (COLLISION_RESULT->hit != 0) {         return;     }
+#define TEST_POST(point)     Collision_CylinderCylinder(centre, push, radius, point, 0.0f, height);     if (COLLISION_RESULT->hit != 0) {         return;     }
 
 /* Tests a circle against the walls and corner posts of a map object's outline and stops at the
    first hit: points 0, 1, 6, 7 while its fifth animation is on frame 0 or 1, otherwise the two
@@ -47,7 +47,7 @@ void func_001C4B10(MapObject *object, f32 *centre, f32 radius, f32 push) {
             TEST_POST(point0);
             TEST_POST(point1);
             TEST_POST(point2);
-            func_0020F0D8(centre, push, radius, point3, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point3, 0.0f, height);
         } else {
             point0 = (f32 *)object->model->get_point(object->model, 0);
             if (point0 == NULL) {
@@ -101,7 +101,7 @@ void func_001C4B10(MapObject *object, f32 *centre, f32 radius, f32 push) {
             TEST_POST(point4);
             TEST_POST(point5);
             TEST_POST(point6);
-            func_0020F0D8(centre, push, radius, point7, 0.0f, height);
+            Collision_CylinderCylinder(centre, push, radius, point7, 0.0f, height);
         }
     }
 }

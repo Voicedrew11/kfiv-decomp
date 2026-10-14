@@ -1,36 +1,39 @@
-#include "common.h"
+#include "kf_collision.h"
 
 int func_001124E0(int, int, int);
 int func_001C2D08(void *);
-void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
+void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
 
-typedef struct { int count; char *list; int pad; u32 n; } Hdr;
+/* Tests an upright capsule (`centre`, `radius`, `height`) against every triangle of the strips of the object's
+   model, if the object has flag 0x10000 and the mesh unk0C is 4 or more. At the first hit it stops and puts
+   func_001124E0 of the hit point's three words in COLLISION_RESULT->unk18. */
+void func_001C47A0(MapObject *object, f32 *centre, f32 height, f32 radius) {
+    CollisionMesh *mesh;
+    CollisionStrip *strip;
+    CollisionStripPoint *point;
+    s32 strips_left;
+    s32 triangles_left;
 
-void func_001C47A0(void *arg0, int arg1, float arg2, float arg3) {
-    Hdr *h;
-    int i, j;
-    char *p;
-    char *q;
-
-    if (*(int *)((char *)arg0 + 0x10) & 0x10000) {
-        h = *(Hdr **)(*(char **)arg0 + 0x110);
-        if (h != 0 && h->n >= 4U) {
-            func_001C2D08(*(void **)arg0);
-            p = h->list;
-            i = h->count;
+    if (object->unk10 & 0x10000) {
+        mesh = (CollisionMesh *)object->model->strips;
+        if (mesh != NULL && mesh->unk0C >= 4) {
+            func_001C2D08(object->model);
+            strip = mesh->strips;
+            strips_left = mesh->strip_count;
             do {
-                q = p + 0x20;
-                j = *(u16 *)p - 2;
+                point = strip->points;
+                triangles_left = strip->point_count - 2;
                 do {
-                    func_0020E1F8(*(int *)q, *(int *)(q + 0x10), *(int *)(q + 0x20), arg1, arg3, arg2);
-                    if (*(int *)0x70000010 != 0) {
-                        *(int *)0x70000018 = func_001124E0(*(int *)(q + 4), *(int *)(q + 8), *(int *)(q + 0xC));
+                    Collision_CapsuleTriangle(point[0].position, point[1].position, point[2].position, centre, radius,
+                                              height);
+                    if (COLLISION_RESULT->hit != 0) {
+                        COLLISION_RESULT->unk18 = func_001124E0(point->unk04, point->unk08, point->unk0C);
                         return;
                     }
-                    q += 0x10;
-                } while (--j != 0);
-                p = q + 0x20;
-            } while (--i != 0);
+                    point++;
+                } while (--triangles_left != 0);
+                strip = (CollisionStrip *)(point + 2);
+            } while (--strips_left != 0);
         }
     }
 }

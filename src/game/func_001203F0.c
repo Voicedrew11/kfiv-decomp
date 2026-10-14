@@ -4,8 +4,8 @@ extern float D_004325A0[];
 extern f32 D_00431B30[4][4];
 
 void *memset(void *, int, u32);
-void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
+void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
+void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
 void func_00216B48(void *, void *, void *);
@@ -30,11 +30,11 @@ void func_001203F0(MapObject *object) {
 
     memset(&unit, 0, sizeof(unit));
     unit.w = 1.0f;
-    func_0020C300(object->model, &object->model->position, &object->model->rotation, &object->model->unkE0);
+    ModelMatrix_Build(object->model, &object->model->position, &object->model->rotation, &object->model->unkE0);
     part_count = object->model->part_count;
     part = object->model->parts;
     for (; i < part_count; i++) {
-        func_0020B8B0(object->model, part, part);
+        ModelMatrix_BuildPartLocal(object->model, part, part);
         part++;
     }
     if (object->model->unk100 & 1) {
@@ -66,7 +66,7 @@ void func_001203F0(MapObject *object) {
     }
     part = object->model->parts;
     for (i = 0; i < part_count; i++) {
-        func_0020B8B0(object->model, part, part);
+        ModelMatrix_BuildPartLocal(object->model, part, part);
         part++;
     }
     sceVu0CopyMatrix(object->model->unk40, D_00431B30);

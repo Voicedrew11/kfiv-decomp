@@ -7,7 +7,7 @@ extern f32 D_004323E0[16];
 
 void func_00216778(void *, void *);
 void func_00216B48(void *, void *, void *);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
+void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -47,7 +47,7 @@ void func_001155F8(int map) {
             func_00216B48((int)model, (int *)D_004323E0, (int)matrix);
             for (j = 0; j < model->part_count; j++) {
                 // match: the callee returns a value here, which keeps $2 busy
-                ((int (*)(ModelInstance *, ModelPart *, ModelPart *))func_0020B8B0)(model, &model->parts[j], &model->parts[j]);
+                ((int (*)(ModelInstance *, ModelPart *, ModelPart *))ModelMatrix_BuildPartLocal)(model, &model->parts[j], &model->parts[j]);
             }
             sceVu0CopyMatrix(model->unk80, matrix);
         }

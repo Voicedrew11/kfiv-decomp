@@ -1,7 +1,7 @@
 #include "kf_model.h"
 
-void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
+void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
+void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
 
@@ -12,11 +12,11 @@ void func_0011F148(char *arg) {
     ModelPart *part;
     int part_count;
 
-    func_0020C300(object->model, &object->model->position, &object->model->rotation, &object->model->unkE0);
+    ModelMatrix_Build(object->model, &object->model->position, &object->model->rotation, &object->model->unkE0);
     part_count = object->model->part_count;
     part = object->model->parts;
     for (i = 0; i < part_count; i++) {
-        func_0020B8B0(object->model, part, part);
+        ModelMatrix_BuildPartLocal(object->model, part, part);
         part++;
     }
     if (object->model->unk100 & 1) {

@@ -1,6 +1,6 @@
 #include "kf_collision.h"
 
-void func_00210018(void *, void *, f32, void *, f32);
+void Collision_BallEdge(void *, void *, f32, void *, f32);
 
 // match: the last test is called for its value, which keeps it an ordinary call
 typedef int (*WallTest)(void *, void *, f32, void *, f32);
@@ -47,22 +47,22 @@ int func_001C3FA0(MapObject *object, f32 *point, f32 reach) {
             return;
         }
         height = corner0[1] - top[1];
-        func_00210018(corner0, corner1, height, point, reach);
+        Collision_BallEdge(corner0, corner1, height, point, reach);
         hit = COLLISION_RESULT->hit;
         if (hit != 0) {
             return hit;
         }
-        func_00210018(corner1, corner2, height, point, reach);
+        Collision_BallEdge(corner1, corner2, height, point, reach);
         hit = COLLISION_RESULT->hit;
         if (hit != 0) {
             return hit;
         }
-        func_00210018(corner2, corner3, height, point, reach);
+        Collision_BallEdge(corner2, corner3, height, point, reach);
         hit = COLLISION_RESULT->hit;
         if (hit != 0) {
             return hit;
         }
-        return ((WallTest)func_00210018)(corner3, corner0, height, point, reach);
+        return ((WallTest)Collision_BallEdge)(corner3, corner0, height, point, reach);
     }
     corner0 = (f32 *)object->model->get_point(object->model, 0);
     if (corner0 == NULL) {
@@ -101,40 +101,40 @@ int func_001C3FA0(MapObject *object, f32 *point, f32 reach) {
         return;
     }
     height = corner0[1] - top[1];
-    func_00210018(corner0, corner1, height, point, reach);
+    Collision_BallEdge(corner0, corner1, height, point, reach);
     hit = COLLISION_RESULT->hit;
     if (hit != 0) {
         return hit;
     }
-    func_00210018(corner1, corner2, height, point, reach);
+    Collision_BallEdge(corner1, corner2, height, point, reach);
     hit = COLLISION_RESULT->hit;
     if (hit != 0) {
         return hit;
     }
-    func_00210018(corner2, corner3, height, point, reach);
+    Collision_BallEdge(corner2, corner3, height, point, reach);
     hit = COLLISION_RESULT->hit;
     if (hit != 0) {
         return hit;
     }
-    func_00210018(corner3, corner0, height, point, reach);
+    Collision_BallEdge(corner3, corner0, height, point, reach);
     hit = COLLISION_RESULT->hit;
     if (hit != 0) {
         return hit;
     }
-    func_00210018(corner4, corner5, height, point, reach);
+    Collision_BallEdge(corner4, corner5, height, point, reach);
     hit = COLLISION_RESULT->hit;
     if (hit != 0) {
         return hit;
     }
-    func_00210018(corner5, corner6, height, point, reach);
+    Collision_BallEdge(corner5, corner6, height, point, reach);
     hit = COLLISION_RESULT->hit;
     if (hit != 0) {
         return hit;
     }
-    func_00210018(corner6, corner7, height, point, reach);
+    Collision_BallEdge(corner6, corner7, height, point, reach);
     hit = COLLISION_RESULT->hit;
     if (hit != 0) {
         return hit;
     }
-    return ((WallTest)func_00210018)(corner7, corner4, height, point, reach);
+    return ((WallTest)Collision_BallEdge)(corner7, corner4, height, point, reach);
 }

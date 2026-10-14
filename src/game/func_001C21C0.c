@@ -2,7 +2,7 @@
 
 int func_001C3DF8(MapObject *, f32 *, f32);
 int func_001C3FA0(MapObject *, f32 *, f32);
-void func_001C43A8(MapObject *, f32 *, f32); // match: the definition names a struct of its own file for the same object
+void func_001C43A8(MapObject *, f32 *, f32);
 void func_001C4498(MapObject *, f32 *, f32);
 void func_001C3D00(CollisionOwner *, int, float);
 

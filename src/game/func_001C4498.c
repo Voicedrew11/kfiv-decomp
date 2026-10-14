@@ -3,7 +3,7 @@
 int puts(char *);
 u32 func_001124E0(int, u32, u32);
 int func_001C2D08(void *);
-void func_0020DF38(f32 *, f32 *, f32 *, f32 *, f32);
+void Collision_PointTriangle(f32 *, f32 *, f32 *, f32 *, f32);
 extern char D_0043F5E8[];
 
 /* Tests a point against a map object of kind 18. With flag 0x20000 clear the object's collision
@@ -35,7 +35,7 @@ void func_001C4498(MapObject *object, f32 *point, f32 reach) {
                 vertex = strip->vertices;
                 triangles_left = strip->vertex_count - 2;
                 do {
-                    func_0020DF38(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, (int)point, reach);
+                    Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, (int)point, reach);
                     if (COLLISION_RESULT->hit != 0) {
                         COLLISION_RESULT->unk18 = func_001124E0(vertex->unk04, vertex->unk08, vertex->unk0C);
                         return;
@@ -64,12 +64,12 @@ void func_001C4498(MapObject *object, f32 *point, f32 reach) {
         if (corner3[0] == object->model->position.x && corner3[1] == object->model->position.y && corner3[2] == object->model->position.z) {
             return;
         }
-        func_0020DF38(corner0, corner1, corner2, (int)point, reach);
+        Collision_PointTriangle(corner0, corner1, corner2, (int)point, reach);
         if (COLLISION_RESULT->hit != 0) {
             puts(D_0043F5E8);
             return;
         }
-        func_0020DF38(corner0, corner2, corner3, (int)point, reach);
+        Collision_PointTriangle(corner0, corner2, corner3, (int)point, reach);
         if (COLLISION_RESULT->hit != 0) {
             puts(D_0043F5E8);
             return;

@@ -33,10 +33,10 @@ void func_0010B510(char *, int, int);
 void func_0010B5D0(ModelPart *);
 void func_0010D018(ModelInstance *, char **, char **);
 void func_0010E6A8(ModelInstance *, s64, s64);
-void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
-void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
+void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
+void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void func_00216778(void *, void *);
-void func_0020B780(int);
+void Display_SwapBuffers(int);
 void func_001096E8(void);
 void func_001095E0(void);
 void func_0010B000(void);
@@ -220,10 +220,10 @@ static int func_0011A600(void) {
     pointer_model.unkE0 = pointer_model.unkE4 = pointer_model.unkE8 = pointer_model.rotation.w = 4.0f;
     pointer_model.unkEC = 1.0f;
     // match: it returns a value
-    ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))func_0020C300)(&pointer_model, &pointer_model.position, &pointer_model.rotation, &pointer_model.unkE0);
+    ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))ModelMatrix_Build)(&pointer_model, &pointer_model.position, &pointer_model.rotation, &pointer_model.unkE0);
     for (i = 0; i < pointer_model.part_count; i++) {
         // match: the callee returns a value here, which keeps $2 busy
-        ((int (*)(ModelInstance *, ModelPart *, ModelPart *))func_0020B8B0)(&pointer_model, &pointer_model.parts[i], &pointer_model.parts[i]);
+        ((int (*)(ModelInstance *, ModelPart *, ModelPart *))ModelMatrix_BuildPartLocal)(&pointer_model, &pointer_model.parts[i], &pointer_model.parts[i]);
     }
     for (i = 0; i < pointer_model.part_count; i++) {
         func_0010B5D0(&pointer_model.parts[i]);
@@ -265,7 +265,7 @@ void func_0011AA08(void) {
 
     viewer = &D_0038D6B0[picked_viewer];
     do {
-        func_0020B780(0);
+        Display_SwapBuffers(0);
         func_001096E8();
         func_001095E0();
         func_0010B000();
@@ -638,7 +638,7 @@ void func_0011BCD0(void) {
         do {
             VuVector4 move;
 
-            func_0020B780(0);
+            Display_SwapBuffers(0);
             func_001096E8();
             func_001095E0();
             func_0010B000();

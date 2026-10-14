@@ -1,6 +1,6 @@
 #include "kf_collision.h"
 
-void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
+void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
 
 /* notes on which side of the lines from the origin to the two ends the point lies */
 #define TEST_SIDES(point) \
@@ -38,7 +38,7 @@ void func_001C6360(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
             // match: the notes are not moved up a bit here (func_001C5280 does), so on the second triangle bit 0 is point 0 or point 3
             TEST_SIDES(points[i]);
             if (second_sides != 7 && first_sides != 7) {
-                func_0020E1F8((int)points[i - 2], (int)points[i - 1], (int)points[i], (int)origin, push, radius);
+                Collision_CapsuleTriangle((int)points[i - 2], (int)points[i - 1], (int)points[i], (int)origin, push, radius);
                 if (COLLISION_RESULT->hit != 0) {
                     return;
                 }

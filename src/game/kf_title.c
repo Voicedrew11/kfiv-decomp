@@ -22,7 +22,7 @@ extern char *D_00446F50;
 int func_001CED78(int, char *, int);
 s32 func_0019CDC0(s32);
 int func_001CEBE0(void);
-void func_0020D9A8(void);
+void Texture_SendTexFlush(void);
 
 typedef void (*TitleScreenInit)(void);
 
@@ -134,7 +134,7 @@ int Title_Init(void) {
     Title_LoadTexture("title\\itimaie_01.tm2", TITLE_TEXTURE_PICTURE_MIDDLE);
     Title_LoadTexture("title\\itimaie_02.tm2", TITLE_TEXTURE_PICTURE_RIGHT);
     Title_LoadTexture("title\\logo2.tm2", TITLE_TEXTURE_LOGO2);
-    func_0020D9A8();
+    Texture_SendTexFlush();
     return 0;
 }
 
@@ -173,7 +173,7 @@ int Title_UploadTexture(int index) {
         while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
         }
     }
-    func_0020D9A8();
+    Texture_SendTexFlush();
     return 0;
 }
 
@@ -478,7 +478,7 @@ int Title_InitGameOver(void) {
     Title_LoadTexture("title\\gameover_quit.tm2", TITLE_TEXTURE_GAME_OVER_QUIT);
     Title_LoadTexture("title\\gameover_ok.tm2", TITLE_TEXTURE_GAME_OVER_OK);
     Title_LoadTexture("title\\gameover.tm2", TITLE_TEXTURE_GAME_OVER);
-    func_0020D9A8();
+    Texture_SendTexFlush();
     game_over_choice = 0;
     game_over_confirmed = FALSE;
     Title_SetSprite(TITLE_TEXTURE_GAME_OVER_LOAD, -0x80, -0x30, 0x100, 0x40, &game_over_choice_sprites[0], &game_over_choice_tracks[0]);

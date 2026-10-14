@@ -14,7 +14,7 @@ typedef struct {
     u64 unk18;                      /* 0x18 copied to PoolSlot.unk60 with tex0 (Menu_UpdateKeyItems) */
 } TextureHeader;
 
-/* the fields of a GS TEX0 value (TextureHeader.tex0), as func_0020D478 reads them */
+/* the fields of a GS TEX0 value (TextureHeader.tex0), as Texture_BuildPacket reads them */
 typedef struct {
     u64 base_pointer : 14;          /* TBP0 */
     u64 buffer_width : 6;           /* TBW */
@@ -61,8 +61,8 @@ typedef struct {
 typedef struct {
     int unk00;                      /* 0x00 */
     u32 entry_count;                /* 0x04 */
-    int unk08;                      /* 0x08 func_0020D348 clears it */
-    int unk0C;                      /* 0x0C func_0020D348 clears it */
+    int unk08;                      /* 0x08 Texture_BuildPacketTable clears it */
+    int unk0C;                      /* 0x0C Texture_BuildPacketTable clears it */
 } TextureTableHeader;
 
 /* a texture func_0010A880 redraws into another one every frame, scrolled (scroll_textures in kf_scroll_texture.c) */
@@ -99,9 +99,15 @@ typedef struct {
 
 typedef struct {
     int offset;                     /* 0x00 from the table base, to a chunk: its size in quadwords, 12 bytes, the data */
-    int unk04;                      /* 0x04 func_0020D348 clears it */
-    int unk08;                      /* 0x08 func_0020D348 clears it */
+    int unk04;                      /* 0x04 Texture_BuildPacketTable clears it */
+    int unk08;                      /* 0x08 Texture_BuildPacketTable clears it */
     int unk0C;                      /* 0x0C not 0: func_0010B2E0 skips it (set by func_0010B4E0) */
 } TextureTableEntry;
+
+/* Sends the GS a TEXFLUSH through DMA channel 2 (kf_texture_upload.c). */
+void Texture_SendTexFlush(void);
+
+/* Walks a chunk table, uploading each texture when `upload` is set; returns the address after the last one. */
+char *Texture_UploadTable(char *base, int upload);
 
 #endif

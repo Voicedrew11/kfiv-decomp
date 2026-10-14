@@ -10,7 +10,7 @@ void func_00216778(void *, void *);
 void func_00216D20(void *, void *);
 void Vector_Scale(void *, void *, float);
 int func_001C2D08(void *);
-void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
+void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
 
 /* Keeps the player 100 units away from the wall triangles (CollisionMesh.unk18) of the records around him:
    each one that is hit pushes him straight out, level with the ground. */
@@ -55,7 +55,7 @@ void func_001BE760(void) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        func_0020E1F8((int)strip_point[0].position, (int)strip_point[1].position,
+                        Collision_CapsuleTriangle((int)strip_point[0].position, (int)strip_point[1].position,
                                       (int)strip_point[2].position, (int)&COLLISION_SCRATCH->point, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->point.x - COLLISION_RESULT->point[0];

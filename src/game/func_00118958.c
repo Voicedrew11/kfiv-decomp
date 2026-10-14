@@ -15,7 +15,7 @@ void func_00109800(void);
 void func_0010B000(void);
 void func_00118A50(void);
 void func_001B5460(void);
-void func_0020B780(int);
+void Display_SwapBuffers(int);
 
 /* Runs a pending map change to the end, drawing its own frames meanwhile. */
 void func_00118958(void) {
@@ -25,7 +25,7 @@ void func_00118958(void) {
         Splash_Abort();
         do {
             func_001B5460();
-            func_0020B780(0);
+            Display_SwapBuffers(0);
             func_001096E8();
             func_001095E0();
             func_0010B000();
