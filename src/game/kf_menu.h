@@ -148,7 +148,7 @@ typedef struct {
     u16 give_value;                 /* 0x02 0: the item cannot be given from what is owned */
 } TradeValue;
 
-/* D_00440300: the trade tables, a local table func_001E57A0 copies whole from read-only data */
+/* trade_value_tables: the trade tables, a local table Trade_BuildItemRings copies whole from read-only data */
 typedef struct {
     TradeValue *values[6];          /* 0x00 */
 } TradeValueTables;
@@ -158,12 +158,12 @@ typedef struct {
     u16 bits[12];                   /* 0x00 */
 } MenuPadBitTable;
 
-/* D_00440318: per trade table, how many of each item it has in stock (D_003699B0...); copied whole like TradeValueTables */
+/* trade_stock_tables: per trade table, how many of each item it has in stock (D_003699B0...); copied whole like TradeValueTables */
 typedef struct {
     u8 *counts[5];                  /* 0x00 */
 } TradeStockTables;
 
-/* D_00440330: per MenuItem.group, the LevelDef number its records start at; copied whole like TradeValueTables */
+/* item_group_bases: per MenuItem.group, the LevelDef number its records start at; copied whole like TradeValueTables */
 typedef struct {
     s32 first_item[13];             /* 0x00 */
 } TradeGroupBases;
@@ -173,7 +173,7 @@ typedef struct {
     char *names[7];                 /* 0x00 */
 } MenuWeekdayNames;
 
-/* D_00440368: where the values of the seven listed items go (D_00446E64...); copied whole like TradeValueTables */
+/* trade_value_slots: where the values of the seven listed items go (D_00446E64...); copied whole like TradeValueTables */
 typedef struct {
     s32 *shown_value[7];            /* 0x00 */
 } TradeValueSlots;
@@ -225,7 +225,7 @@ typedef struct {
 } MenuModelMotion;
 
 /* a 4x4 matrix inside a union: a store through it may alias any later load, so it stays ahead of one
-   (func_001EA568 only matches with its scale matrix filled this way) */
+   (Trade_UpdateOwnedList only matches with its scale matrix filled this way) */
 typedef union {
     f32 rows[4][4];
     s32 words[16];

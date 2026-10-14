@@ -97,7 +97,7 @@ void func_001DD738(HandlerContext *context) {
     entry = func_001DD738_TextOffset(table, number + 49);
     func_001FDB88(word);
     if (entry != 0) {
-        func_001FF428((LevelDef *)(table + entry), 0x17); // the text; func_001E88A0 declares the callee with a LevelDef
+        func_001FF428((LevelDef *)(table + entry), 0x17); // the text; Trade_UpdateTakeAmount declares the callee with a LevelDef
     }
     word.raw = 0x000A875083106FE0;
     entry = func_001DD738_TextOffset(table, number + D_0034C4E0[page] - 1);

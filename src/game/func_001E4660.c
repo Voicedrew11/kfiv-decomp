@@ -1,8 +1,9 @@
 #include "kf_game.h"
+#include "kf_player.h"
 #include "kf_menu.h"
 
 int sprintf(char *, char *, ...);
-extern GameDefinitionBits D_004147F8[380];
+extern LevelDef D_004147F8[380];
 extern char D_0043F750[];
 extern MenuItem *D_00426110[4];
 extern MenuItem *D_00426120[4];

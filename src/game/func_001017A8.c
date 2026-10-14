@@ -23,9 +23,9 @@ int func_00102230(void);
 void func_00102228(void);
 void func_001B5778(void);
 void func_00101CE0(void);
-void func_001E6180(s32);
-void func_001EE730(void);
-void func_001F6A38(void);
+void Trade_Run(s32);
+void Smith_Run(void);
+void SaveScreen_Run(void);
 void func_001095E0(void);
 int func_001D62C8(s8);
 void func_0011A438(int);
@@ -93,7 +93,7 @@ void func_001017A8(void) {
         }
         D_0038CC50.bit3 = FALSE;
         menu_ran = TRUE;
-        func_001E6180(D_0038CC50.unk2C);
+        Trade_Run(D_0038CC50.unk2C);
         func_001095E0();
         func_001095E0();
     } else if (D_0038CC50.bit4) {
@@ -103,7 +103,7 @@ void func_001017A8(void) {
         }
         D_0038CC50.bit4 = FALSE;
         menu_ran = TRUE;
-        func_001EE730();
+        Smith_Run();
         func_001095E0();
         func_001095E0();
     } else if (D_0038CC50.bit5 && D_0038CC50.unk00 != 0) {
@@ -112,7 +112,7 @@ void func_001017A8(void) {
             func_00101CE0();
         }
         D_0038CC50.bit5 = FALSE;
-        func_001F6A38();
+        SaveScreen_Run();
         func_001095E0();
         func_001095E0();
     } else if (D_0038CC50.bit2 && D_0038CC50.unk00 != 0) {

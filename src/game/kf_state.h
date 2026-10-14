@@ -11,7 +11,7 @@ typedef struct {
     int arg;                        /* 0x08 */
 } HandlerContext;
 
-/* D_005CF3C0: the save screen func_001F71D8 runs each frame */
+/* D_005CF3C0: the save screen SaveScreen_UpdateCardSelect runs each frame */
 typedef struct {
     s32 unk00;                      /* 0x00 */
     char pad04[0x04];
@@ -38,14 +38,6 @@ typedef struct {
 } SaveScreen;
 
 extern SaveScreen D_005CF3C0;
-
-/* D_00426600, D_00426610: two 0x10-byte records func_001F71D8 fills before it hands over to func_001F8058 */
-typedef struct {
-    s32 unk00;                      /* 0x00 */
-    s32 unk04;                      /* 0x04 */
-    s32 unk08;                      /* 0x08 */
-    char pad0C[0x04];
-} SaveListRange;
 
 /* what the D_00440B70 handlers build; func_00207478 dispatches it by kind */
 typedef struct {

@@ -32,12 +32,12 @@ typedef struct {
     char pad40[0x01];
     s8 unk41;                       /* 0x41 */
     u8 unk42;                       /* 0x42 handed to func_001E5210 before the sprite is drawn */
-    s8 unk43;                       /* 0x43 1: the cursor bar is drawn just before this one (func_001EEF78) */
+    s8 unk43;                       /* 0x43 1: the cursor bar is drawn just before this one (Smith_UpdateSelectScreen) */
     char pad44[0x1C];
 } SpritePacket;
 
 /* SpritePacket's colour (0x20) as four 8-bit fields of one unsigned word, the shape of Sony's sceGsRgbaq: a field
-   read on its own is an unsigned int, so turning it into a float takes the unsigned conversion (func_001EA568) */
+   read on its own is an unsigned int, so turning it into a float takes the unsigned conversion (Trade_UpdateOwnedList) */
 typedef struct {
     u32 red : 8;
     u32 green : 8;
@@ -162,7 +162,7 @@ typedef struct {
     GsDrawPacket packet;            /* 0x30 */
 } GsDrawFrame;
 
-/* the 0x1A0-byte GIF packet func_001F6B70 fills: a tag, then 25 address+data register writes */
+/* the 0x1A0-byte GIF packet SaveScreen_DrawBackground fills: a tag, then 25 address+data register writes */
 typedef struct {
     s32 unk00;                   /* 0x00 */
     s32 unk04;                   /* 0x04 */

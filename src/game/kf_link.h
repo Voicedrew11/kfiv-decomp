@@ -8,7 +8,7 @@ typedef struct LinkNode {
     s64 unk00;                      /* 0x00 */
     s32 unk08;                      /* 0x08 set to -1 when the node is reset */
     void *pool_node;                /* 0x0C */
-    struct LinkNode *unk10;         /* 0x10 another node; func_001EEE50 clears its next too */
+    struct LinkNode *unk10;         /* 0x10 another node; Smith_CutModelChain clears its next too */
     struct LinkNode *next;          /* 0x14 */
     void (*callback)(void);         /* 0x18 */
     s32 unk1C;                      /* 0x1C */
