@@ -7,9 +7,9 @@ extern u16 spell_experience[6][5];
 extern u8 spell_levels[6][5];
 extern FxTableEntry D_00402DA8[];
 
-/* Counts a use of the effect: its slot's use count rises (by 3 for some), and at 50 and 150 uses the slot's
-   level goes up. Every 100th call also raises PlayerState.unk2C. */
-void func_001BBC88(int effect_id) {
+/* Counts a use of the magic: its slot's use count rises (by 3 for some), and at 50 and 150 uses the slot's
+   level goes up ("Magic Level UP"). Every 100th call also raises PlayerState.magic_base ("Magic Power UP"). */
+void Player_CountMagicUse(int effect_id) {
     int slot;
     int row;
     int column;
@@ -38,17 +38,17 @@ void func_001BBC88(int effect_id) {
         if ((clamped_uses >= 50 && spell_levels[row][column] < 2)
             || (clamped_uses >= 150 && spell_levels[row][column] < 3)) {
             spell_levels[row][column]++;
-            Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2D);
-            if (D_00413F80.unk3D == effect_id) {
-                D_00413F80.unk3D = effect_id + 1;
-            } else if (D_00413F80.unk48 == 2 && D_00413F80.unk46 == effect_id) {
-                D_00413F80.unk46++;
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_MAGIC_LEVEL_UP);
+            if (D_00413F80.equipped_magic == effect_id) {
+                D_00413F80.equipped_magic = effect_id + 1;
+            } else if (D_00413F80.shortcut_type == 2 && D_00413F80.shortcut == effect_id) {
+                D_00413F80.shortcut++;
             }
         }
     }
-    D_00413F80.unkD8 = (D_00413F80.unkD8 + 1) % 100;
-    if (D_00413F80.unkD8 == 0 && D_00413F80.unk2C < 999) {
-        D_00413F80.unk2C++;
-        Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2B);
+    D_00413F80.magic_use_count = (D_00413F80.magic_use_count + 1) % 100;
+    if (D_00413F80.magic_use_count == 0 && D_00413F80.magic_base < 999) {
+        D_00413F80.magic_base++;
+        Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_MAGIC_POWER_UP);
     }
 }

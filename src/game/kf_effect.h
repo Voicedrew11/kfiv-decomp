@@ -1094,7 +1094,7 @@ typedef struct {
     char pad00[0x34];
     FxTableHitCheck hit_checks[3];  /* 0x34 */
     FxTableStats unkAC;             /* 0xAC */
-    u16 unkFC;                      /* 0xFC taken from PlayerState.unkB8 to cast it (Player_CastMagic) */
+    u16 unkFC;                      /* 0xFC taken from PlayerState.mp_now to cast it (Player_CastMagic) */
     u16 unkFE;                      /* 0xFE divides how fast PlayerState.unkC0 fills (func_001B96C8) */
     u16 unk100;                     /* 0x100 */
     s8 unk102;                      /* 0x102 nonzero: the effect cannot be started */

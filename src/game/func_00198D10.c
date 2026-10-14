@@ -116,7 +116,7 @@ s32 func_00198D10(Entity *entity) {
     if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
         range *= 0.5f;
     }
-    if (D_00413F80.equipment[7] == 0x9C) {
+    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         range *= 0.5f;
     }
     reach[0] = entity->params->unk3D8[0].reach_min != 0 ? entity->radius + 100.0f + entity->params->unk3D8[0].reach_min : 0.0f;

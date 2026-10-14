@@ -3,13 +3,13 @@
 
 extern void *D_00420D50[];
 extern u32 D_0038CC74[];
-extern u8 D_00369830[];
+extern u8 item_counts[];
 
-void func_00123000(int);
+void MapObject_ShowKeyUsed(int);
 void func_0019D490(s32, s32, f32 *, f32);
-/* Update handler of a closed door-like object: when the player uses it, it opens
-   if it needs no item or the player holds the item, else a message says so. */
-void func_0011F340(MapObject *object) {
+/* Update handler of a closed door (kinds 1, 2, 6 and 0x11): when the player uses it, it opens if it needs no
+   item or the player holds the item (the key), else its name ("Jail Door", ...) or "Locked" is shown. */
+void MapObject_UpdateClosedDoor(MapObject *object) {
     MapObjectWork *work = MAP_OBJECT_WORK(object);
     s16 item;
     f32 range;
@@ -21,8 +21,8 @@ void func_0011F340(MapObject *object) {
     if (D_00420D50[0] == object && ((D_0038CC74[0] >> 1) & 1)) {
         item = object->unk08->unk44;
         if (item != 0 && !(object->unk10 & 0x40000)) {
-            if (D_00369830[item] != 0) {
-                func_00123000(item);
+            if (item_counts[item] != 0) {
+                MapObject_ShowKeyUsed(item);
                 range = 800.0f;
                 if (object->unk04->unk70 > 0.0f) {
                     range = object->unk04->unk70;
@@ -36,7 +36,7 @@ void func_0011F340(MapObject *object) {
                 }
                 message = (s16)object->unk04->unk68;
                 if (message == 0) {
-                    message = 0x3E;
+                    message = MSG_LOCKED;
                 }
                 Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
                 work->timer = 0x2D;

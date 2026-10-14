@@ -12,7 +12,7 @@ void func_001B4DF8(int idx, int amount);
 /* What the ground under the player does to him: death, poison (by chance or at once), damage, or experience. */
 void func_001B9078(void) {
     if (D_00413F80.unk1EC != 0) {
-        D_00413F80.unkB4 = 0;
+        D_00413F80.hp_now = 0;
         D_00413F80.unk1A4 = 0;
         if (D_00413F80.unk1A8 == 0) {
             func_001B9610();
@@ -55,12 +55,12 @@ void func_001B9078(void) {
         break;
     case 5:
         func_001BB2E8(1);
-        func_001B4B10(D_00413F80.unk3C, 1);
-        func_001B4DF8(D_00413F80.equipment[0], 1);
-        func_001B4DF8(D_00413F80.equipment[1], 1);
-        func_001B4DF8(D_00413F80.equipment[2], 1);
-        func_001B4DF8(D_00413F80.equipment[3], 1);
-        func_001B4DF8(D_00413F80.equipment[4], 1);
+        func_001B4B10(D_00413F80.weapon, 1);
+        func_001B4DF8(D_00413F80.equipment[EQUIP_SHIELD], 1);
+        func_001B4DF8(D_00413F80.equipment[EQUIP_HELM], 1);
+        func_001B4DF8(D_00413F80.equipment[EQUIP_ARMOR], 1);
+        func_001B4DF8(D_00413F80.equipment[EQUIP_GAUNTLET], 1);
+        func_001B4DF8(D_00413F80.equipment[EQUIP_BOOT], 1);
         break;
     }
 }

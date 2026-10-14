@@ -8,7 +8,7 @@ typedef struct {
     int unk10;
 } Arg;
 
-extern u8 D_00369830[];
+extern u8 item_counts[];
 extern u8 D_0041A6F8[];
 
 void Menu_AddKeyItem(u32, u32, int); // match: three arguments are passed; the definition takes the first alone
@@ -24,7 +24,7 @@ void func_002135A0(Arg *arg0) {
     add = arg0->unk10;
     idx = arg0->unk8;
     if (idx < 0x17D) {
-        p = &D_00369830[idx];
+        p = &item_counts[idx];
         v = *p + add;
         if (v >= 0x64) {
             *p = 0x63;
@@ -37,16 +37,16 @@ void func_002135A0(Arg *arg0) {
             t = idx << 5;
             e = D_0041A6F8 + t;
             if (*(u16 *)(e + 0xE) >> 1 & 1) {
-                if (D_00369830[idx] >= 2) {
-                    D_00369830[idx] = 1;
+                if (item_counts[idx] >= 2) {
+                    item_counts[idx] = 1;
                 }
             }
             if (D_0041A6F8[t] == 3) {
                 Menu_AddKeyItem(idx, idx, t);
             }
         } else {
-            if (D_00369830[idx] >= 2) {
-                D_00369830[idx] = 1;
+            if (item_counts[idx] >= 2) {
+                item_counts[idx] = 1;
             }
         }
     }

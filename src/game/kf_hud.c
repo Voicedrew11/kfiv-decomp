@@ -119,8 +119,8 @@ void Hud_Draw(void) {
         sprite.rgba[1] = 0;
         sprite.rgba[0] = 0;
         func_0010A100(&sprite);
-        if (D_00413F80.unk5C > 0) {
-            fade = D_00413F80.unk1A6 * 255 / D_00413F80.unk5C;
+        if (D_00413F80.mp_max > 0) {
+            fade = D_00413F80.unk1A6 * 255 / D_00413F80.mp_max;
         } else {
             fade = 0;
         }

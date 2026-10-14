@@ -11,7 +11,7 @@ void func_0010ED80(char *, int, int);
 void func_0010E8E0(void *, int, int, int, int);
 void func_0010B510(char *, int, int);
 void func_001CA500(ListNode *);
-extern GameDefinition D_004147F8[380];
+extern GameDefinition item_name_defs[380];
 extern ItemNode D_005807C0[2][32];
 extern ModelInstance D_00592EC0[2][32];
 extern char D_005ADEC0[2][32][0x200];
@@ -47,7 +47,7 @@ ItemNode *func_001C9340(int map, int item, void *position, void *rotation, void 
     if (i >= 32) {
         return NULL;
     }
-    source = func_001CA498(map, (D_004147F8 + item)->unk30);
+    source = func_001CA498(map, (item_name_defs + item)->unk30);
     if (source == NULL) {
         return NULL;
     }

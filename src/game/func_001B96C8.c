@@ -4,7 +4,7 @@
 
 extern PlayerState D_00413F80;
 extern GameDefinition D_00416D78[70];
-extern PlayerItemDef D_0041B9B8[];
+extern PlayerItemDef weapon_defs[];
 extern FxTableEntry D_00402DA8[];
 extern LevelRecord D_003679A0[70];
 extern u32 D_00446ED4;
@@ -49,8 +49,8 @@ static inline s32 is_frame_multiple(u32 period) {
 
 /* The per-frame bookkeeping of the player: timers, the two gauges, and the drawn bars. */
 void func_001B96C8(void) {
-    GameDefinition *definition = &D_00416D78[D_00413F80.unk3C];
-    PlayerItemDef *item_def = &D_0041B9B8[D_00413F80.unk3C];
+    GameDefinition *definition = &D_00416D78[D_00413F80.weapon];
+    PlayerItemDef *item_def = &weapon_defs[D_00413F80.weapon];
     FxTableEntry *fx_entry = &D_00402DA8[D_00413F80.unk264];
     s32 wear;
     s32 draining;
@@ -59,13 +59,13 @@ void func_001B96C8(void) {
 
     if (D_00413F80.unk1A8 == 0 && D_00413F80.unk2B4 != 0 && D_00446ED4 % D_00413F80.unk2B4 == 0) {
         if (D_00413F80.unk2B0 > 0) {
-            if (D_00413F80.unkB4 > 0) {
-                D_00413F80.unkB4++;
+            if (D_00413F80.hp_now > 0) {
+                D_00413F80.hp_now++;
             }
             D_00413F80.unk2B0--;
         } else {
             D_00413F80.unk2B0++;
-            D_00413F80.unkB4--;
+            D_00413F80.hp_now--;
         }
         if (D_00413F80.unk2B0 == 0) {
             D_00413F80.unk2B4 = 0;
@@ -104,31 +104,31 @@ void func_001B96C8(void) {
     RUN_DOWN(5, unk16A, unk12E);
 
     draining = D_00413F80.unkEC != 0;
-    if (D_00413F80.unkF0 != 0 && D_00446ED4 % D_00413F80.unkF0 == 0 && D_00413F80.unk1A8 == 0 && D_00413F80.unkB4 > 0) {
-        D_00413F80.unkB4++;
+    if (D_00413F80.unkF0 != 0 && D_00446ED4 % D_00413F80.unkF0 == 0 && D_00413F80.unk1A8 == 0 && D_00413F80.hp_now > 0) {
+        D_00413F80.hp_now++;
     }
     if (D_00413F80.unkF4 != 0 && D_00446ED4 % D_00413F80.unkF4 == 0 && D_00413F80.unk1A8 == 0) {
-        D_00413F80.unkB4--;
+        D_00413F80.hp_now--;
     }
     if (D_00413F80.unkF8 != 0 && D_00446ED4 % D_00413F80.unkF8 == 0 && D_00413F80.unk1A8 == 0) {
-        D_00413F80.unkB8++;
+        D_00413F80.mp_now++;
     }
     if (D_00413F80.unkFC != 0 && D_00446ED4 % D_00413F80.unkFC == 0 && D_00413F80.unk1A8 == 0) {
-        D_00413F80.unkB8--;
+        D_00413F80.mp_now--;
     }
-    if (D_00413F80.unk19C > 0) {
-        D_00413F80.unk19C--;
+    if (D_00413F80.power_seed_timer > 0) {
+        D_00413F80.power_seed_timer--;
     }
-    if (D_00413F80.unk1A0 > 0) {
-        D_00413F80.unk1A0--;
+    if (D_00413F80.widda_needle_timer > 0) {
+        D_00413F80.widda_needle_timer--;
     }
 
     wear = 1;
     if (is_frame_multiple(3)) {
-        if (D_00413F80.equipment[2] == 0x4B) {
+        if (D_00413F80.equipment[EQUIP_ARMOR] == ITEM_WORN_INDEX(ITEM_DEMON_ARMOR)) {
             wear = 0;
         }
-        if (D_00413F80.equipment[7] == 0x9B) {
+        if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_PURITY_AMULET)) {
             wear++;
         }
     }
@@ -151,19 +151,19 @@ void func_001B96C8(void) {
     if (draining) {
         if (is_frame_multiple(30)) {
             func_001BB2E8(1);
-            D_00413F80.unkB8--;
+            D_00413F80.mp_now--;
         }
     }
 
-    if (D_00413F80.unkB4 > D_00413F80.unk58) {
-        D_00413F80.unkB4 = D_00413F80.unk58;
-    } else if (D_00413F80.unkB4 < 0) {
-        D_00413F80.unkB4 = 0;
+    if (D_00413F80.hp_now > D_00413F80.hp_max) {
+        D_00413F80.hp_now = D_00413F80.hp_max;
+    } else if (D_00413F80.hp_now < 0) {
+        D_00413F80.hp_now = 0;
     }
-    if (D_00413F80.unkB8 > D_00413F80.unk5C) {
-        D_00413F80.unkB8 = D_00413F80.unk5C;
-    } else if (D_00413F80.unkB8 < 0) {
-        D_00413F80.unkB8 = 0;
+    if (D_00413F80.mp_now > D_00413F80.mp_max) {
+        D_00413F80.mp_now = D_00413F80.mp_max;
+    } else if (D_00413F80.mp_now < 0) {
+        D_00413F80.mp_now = 0;
     }
 
     if (D_00413F80.unk1A8 == 0 && D_00413F80.unk258 == 0) {
@@ -175,7 +175,7 @@ void func_001B96C8(void) {
         } else if (item_def->unk63 < 2) {
             if (D_00413F80.unkC4 <= 0) {
                 if (D_00413F80.unkBC < GAUGE_FULL) {
-                    s32 rate = D_00413F80.unkAC;
+                    s32 rate = D_00413F80.power;
 
                     if (rate < 20) {
                         rate = 20;
@@ -202,7 +202,7 @@ void func_001B96C8(void) {
         } else {
             if (D_00413F80.unkC8 <= 0) {
                 if (D_00413F80.unkC0 < GAUGE_FULL) {
-                    s32 rate = D_00413F80.unkB0;
+                    s32 rate = D_00413F80.magic;
 
                     if (rate < 20) {
                         rate = 20;
@@ -218,8 +218,8 @@ void func_001B96C8(void) {
             }
         }
     }
-    if (D_00413F80.unk3D == 0 && item_def->unk42 == 0xFFFF
-        && (item_def->unk52 == 0xFFFF || (D_003679A0 + D_00413F80.unk3C)->unk14 + 1 < 3) && func_001BF6E8() == 0) {
+    if (D_00413F80.equipped_magic == 0 && item_def->unk42 == 0xFFFF
+        && (item_def->unk52 == 0xFFFF || (D_003679A0 + D_00413F80.weapon)->unk14 + 1 < 3) && func_001BF6E8() == 0) {
         D_00413F80.unkC0 = 0;
         D_00413F80.unk264 = 0;
     }
@@ -230,8 +230,8 @@ void func_001B96C8(void) {
         D_00413F80.unk200--;
     }
 
-    if (D_00413F80.unk1A8 == 0 && D_00413F80.unkB4 > 0) {
-        bar_target = D_00413F80.unkB4 * 49 / D_00413F80.unk58;
+    if (D_00413F80.unk1A8 == 0 && D_00413F80.hp_now > 0) {
+        bar_target = D_00413F80.hp_now * 49 / D_00413F80.hp_max;
         if (bar_target < D_00413F80.unk1A4) {
             D_00413F80.unk1A4 -= 2;
             if (D_00413F80.unk1A4 < bar_target) {
@@ -247,29 +247,29 @@ void func_001B96C8(void) {
         D_00413F80.unk1A4 = 0;
     }
 
-    if (D_00413F80.unk5C < D_00413F80.unk1A6) {
-        D_00413F80.unk1A6 = D_00413F80.unk5C;
+    if (D_00413F80.mp_max < D_00413F80.unk1A6) {
+        D_00413F80.unk1A6 = D_00413F80.mp_max;
     }
-    bar_step = D_00413F80.unk5C / 64;
+    bar_step = D_00413F80.mp_max / 64;
     if (bar_step <= 0) {
         bar_step = 1;
     }
-    if (D_00413F80.unkB8 < D_00413F80.unk1A6) {
+    if (D_00413F80.mp_now < D_00413F80.unk1A6) {
         D_00413F80.unk1A6 -= bar_step;
-        if (D_00413F80.unk1A6 < D_00413F80.unkB8) {
-            D_00413F80.unk1A6 = D_00413F80.unkB8;
+        if (D_00413F80.unk1A6 < D_00413F80.mp_now) {
+            D_00413F80.unk1A6 = D_00413F80.mp_now;
         }
         if (D_00413F80.unk1A6 < 0) {
             D_00413F80.unk1A6 = 0;
         }
-    } else if (D_00413F80.unk1A6 < D_00413F80.unkB8) {
+    } else if (D_00413F80.unk1A6 < D_00413F80.mp_now) {
         D_00413F80.unk1A6 += bar_step;
-        if (D_00413F80.unkB8 < D_00413F80.unk1A6) {
-            D_00413F80.unk1A6 = D_00413F80.unkB8;
+        if (D_00413F80.mp_now < D_00413F80.unk1A6) {
+            D_00413F80.unk1A6 = D_00413F80.mp_now;
         }
     }
 
-    if (D_00413F80.unk3C == 0x24) {
+    if (D_00413F80.weapon == 0x24) {
         if (is_frame_multiple(600)) {
             if ((s32)(rand() * 100.0f * 4.656613e-10f) < 70) {
                 D_00413F80.timed_flags[0] = 1800;

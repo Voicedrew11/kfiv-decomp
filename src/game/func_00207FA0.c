@@ -1,7 +1,7 @@
 #include "common.h"
 
-void func_00207FD0(int, char *);
+void Ini_SetMagicSchool(int, char *);
 
-void func_00207FA0(char *text) {
-    func_00207FD0(3, text);
+void Ini_SetMagicWater(char *text) {
+    Ini_SetMagicSchool(3, text);
 }

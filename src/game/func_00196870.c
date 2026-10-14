@@ -24,7 +24,7 @@ void func_00196870(Entity *actor, s32 mode) {
         half_height *= 0.5f;
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[7] == 0x9C) {
+    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         arc *= 0.5f;
         half_height *= 0.5f;
         reach *= 0.5f;
@@ -47,7 +47,7 @@ void func_00196870(Entity *actor, s32 mode) {
     if (actor->unk24 != 0 || (D_00413F80.unk2E4 > 0 && actor->unk60 < D_00413F80.unk2E8)) {
         near_reach *= 0.5f;
     }
-    if (D_00413F80.equipment[7] == 0x9C) {
+    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         near_reach *= 0.5f;
     }
     limit = actor->radius + 100.0f + near_reach;

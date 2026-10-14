@@ -221,11 +221,11 @@ void Gold_Update(void) {
         nearest->step = 2;
         nearest->fade_timer = 15;
         amount = MAP_ACTOR_WORDS(nearest)->amount;
-        D_00413F80.unk4C += amount;
-        if (D_00413F80.unk4C >= GOLD_MAX) {
-            D_00413F80.unk4C = GOLD_MAX;
+        D_00413F80.gold += amount;
+        if (D_00413F80.gold >= GOLD_MAX) {
+            D_00413F80.gold = GOLD_MAX;
         }
-        Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x14, amount);
+        Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_GOLD, amount);
     }
 }
 

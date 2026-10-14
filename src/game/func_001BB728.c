@@ -1,6 +1,6 @@
 #include "kf_player.h"
 
-extern LevelRecordDef D_0041E118[];
+extern LevelRecordDef worn_defs[];
 extern LevelRecord D_003682F0[];
 
 #define ADD_SCALED(n) totals[n] += (def->unk00[n] + record->unk00[n]) * record->level / 100
@@ -11,7 +11,7 @@ void func_001BB728(u16 *totals, u32 index) {
     LevelRecord *record;
 
     if (index < 160) {
-        def = &D_0041E118[index];
+        def = &worn_defs[index];
         record = &D_003682F0[index];
         ADD_SCALED(0);
         ADD_SCALED(1);

@@ -59,7 +59,7 @@ typedef struct {
     char pad43[0x1D];
 } Entry60;
 
-/* a task that runs a one-time setup (func_00103858, Message_OpenBox) and ends when the message box closes */
+/* a task that runs a one-time setup (Game_MarkMessageHeard, Message_OpenBox) and ends when the message box closes */
 typedef struct {
     s32 active;                     /* 0x00 cleared once the setup is done */
     char pad04[0x04];

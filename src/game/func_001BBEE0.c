@@ -5,26 +5,28 @@ extern char D_003679A0[];
 extern char D_00413F80[];
 typedef struct {
     char pad0[0x14];
-    u8 b14;
+    u8 unk14;
     u8 pad15;
-    u16 h16;
+    u16 unk16;
 } E22;
 
-void func_001BBEE0(int arg0) {
-    E22 *e = (E22 *)(D_003679A0 + arg0 * 0x22);
+/* Counts a use of the weapon in hand (its row of D_003679A0): at 180 and 480 uses its level goes up ("Weapon Level UP").
+   Every 100th call also raises PlayerState.power_base ("Physical UP"). */
+void Player_CountWeaponUse(int weapon) {
+    E22 *record = (E22 *)(D_003679A0 + weapon * 0x22);
     u16 v;
     int n;
     int t;
     int *p;
 
-    v = e->h16;
+    v = record->unk16;
     if (v < 0x1E0) {
         n = v + 1;
-        e->h16 = n;
+        record->unk16 = n;
         if ((u16)n == 0xB4 || (u16)n == 0x1E0) {
-            if (e->b14 < 2) {
-                e->b14++;
-                Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2C);
+            if (record->unk14 < 2) {
+                record->unk14++;
+                Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_WEAPON_LEVEL_UP);
             }
         }
     }
@@ -34,7 +36,7 @@ void func_001BBEE0(int arg0) {
     if (t == 0) {
         if (p[10] < 0x3E7) {
             p[10]++;
-            Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x2A);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_PHYSICAL_UP);
         }
     }
 }

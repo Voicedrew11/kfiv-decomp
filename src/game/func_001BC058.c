@@ -2,7 +2,7 @@
 #include "kf_screen.h"
 
 extern PlayerState D_00413F80;
-extern u8 D_0041B9B8[];
+extern u8 weapon_defs[];
 
 extern DisplayContext *D_00446978;
 
@@ -13,7 +13,7 @@ int func_0019CDA0(int);
 void func_001BC058(void) {
     DisplayContext *display;
 
-    if (D_00413F80.unk261 == 0 && D_0041B9B8[D_00413F80.unk3C * 0x90 + 0x63] != 2) {
+    if (D_00413F80.unk261 == 0 && weapon_defs[D_00413F80.weapon * 0x90 + 0x63] != 2) {
         func_0019CDA0(2);
         display = D_00446978;
         D_00413F80.unk261 = 1;

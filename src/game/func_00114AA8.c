@@ -6,7 +6,7 @@
 
 extern MapSlot D_0038CD20[];
 extern MapProp *D_0038CDE0[2][0xFF];
-extern char D_0038DA30[];
+extern char map_object_defs[];
 extern MapObject D_003A1A30[][0x200];
 extern MapSlotMemory D_004321F0[2];
 extern int D_004467B0[2];
@@ -128,7 +128,7 @@ void func_00114AA8(int map) {
     for (i = 0; i < header->unk40; i++, model++, info++, object++) {
         object->model = model;
         object->unk08 = info;
-        object->unk04 = (MapObjectUnk04 *)&D_0038DA30[info->unk30 * 0x80];
+        object->unk04 = (MapObjectUnk04 *)&map_object_defs[info->unk30 * 0x80];
         object->unk0C = (s32)func_00115CD0((CameraState *)info, 0.0f, map);
         MAP_OBJECT_BITS(object)->map = (u8)map;
     }

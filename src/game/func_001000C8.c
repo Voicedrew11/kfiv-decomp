@@ -12,7 +12,7 @@ extern int D_00446734;          /* nonzero: a saved game was loaded */
 
 void func_001029A8(void);
 void func_001B5810(void);
-void func_002077F0(int);
+void Ini_Load(int);
 void func_001030B8(void);
 void func_001BA310(void);
 void func_001127F8(void);
@@ -33,7 +33,7 @@ void func_0019C520(void);
 void func_001000C8(int arg) {
     func_001029A8();
     func_001B5810();
-    func_002077F0(arg);
+    Ini_Load(arg);
     func_001030B8();
     func_001BA310();
     func_001127F8();
@@ -57,6 +57,6 @@ void func_001000C8(int arg) {
     }
     func_001B5A10();
     Player_LoadArmModels();
-    func_001A1260(D_00413F80.unk3D);
+    func_001A1260(D_00413F80.equipped_magic);
     func_0019C520();
 }

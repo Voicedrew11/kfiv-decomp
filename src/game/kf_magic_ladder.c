@@ -28,7 +28,7 @@ void func_00216C48(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(void *, void *, float);
 int func_001B4F30(u16, void *, void *, void *, void *);
-void func_001BBC88(int);
+void Player_CountMagicUse(int);
 int func_0019B908(float *, float, float);
 int func_0019D020(int);
 
@@ -77,16 +77,16 @@ int Player_CastMagic(int magic_id) {
             }
         }
     }
-    if (D_00413F80.equipment[2] == 0x49 && magic_id > 0 && (magic_id - 1) / 15 == 0) {
+    if (D_00413F80.equipment[EQUIP_ARMOR] == ITEM_WORN_INDEX(ITEM_ICE_ARMOR) && magic_id > 0 && (magic_id - 1) / 15 == 0) {
         return FALSE;
     }
     if (D_00413F80.unkC0 < 5000) {
         return FALSE;
     }
-    if (D_00413F80.unkB8 < entry->unkFC) {
+    if (D_00413F80.mp_now < entry->unkFC) {
         return FALSE;
     }
-    D_00413F80.unkB8 -= entry->unkFC;
+    D_00413F80.mp_now -= entry->unkFC;
     D_00413F80.unkC8 = entry->unk104;
     D_00413F80.unk264 = magic_id;
     D_00413F80.unkC0 = 0;
@@ -101,8 +101,8 @@ int Player_CastMagic(int magic_id) {
     if (entry->unk102 == 0) {
         shot = Shot_Alloc();
         shot->unk00 = 1;
-        shot->unk20 = D_00413F80.unkAC;
-        shot->unk22 = D_00413F80.unkB0;
+        shot->unk20 = D_00413F80.power;
+        shot->unk22 = D_00413F80.magic;
         shot->unk26 = magic_id;
         shot->unk08 = D_00413F80.unk7E;
         func_00216778(&angles, &D_00413F80.rotation);
@@ -134,14 +134,14 @@ int Player_CastMagic(int magic_id) {
             D_00413F80.timed_flags[5] = 0;
         }
         if (stats->unk4A >= 999) {
-            D_00413F80.unkB4 = D_00413F80.unk58;
+            D_00413F80.hp_now = D_00413F80.hp_max;
         } else if (stats->unk4A != 0) {
-            D_00413F80.unkB4 += stats->unk4C;
-            if (D_00413F80.unkB4 > D_00413F80.unk58) {
-                D_00413F80.unkB4 = D_00413F80.unk58;
+            D_00413F80.hp_now += stats->unk4C;
+            if (D_00413F80.hp_now > D_00413F80.hp_max) {
+                D_00413F80.hp_now = D_00413F80.hp_max;
             }
-            if (D_00413F80.unkB4 < 0) {
-                D_00413F80.unkB4 = 0;
+            if (D_00413F80.hp_now < 0) {
+                D_00413F80.hp_now = 0;
             }
             D_00413F80.unk2B0 = stats->unk4A - stats->unk4C;
             if (D_00413F80.unk2B0 == 0) {
@@ -331,19 +331,19 @@ int Player_CastMagic(int magic_id) {
         case 0x38:
         case 0x39:
         case 0x3A:
-            if (D_00414280.unkB4 < D_00414280.unk58) {
-                func_001BBC88(magic_id);
+            if (D_00414280.hp_now < D_00414280.hp_max) {
+                Player_CountMagicUse(magic_id);
             }
             break;
         case 0x2E:
         case 0x2F:
         case 0x30:
             if ((u16)D_00414280.timed_flags[0] != 0) { // match: read unsigned here
-                func_001BBC88(magic_id);
+                Player_CountMagicUse(magic_id);
             }
             break;
         default:
-            func_001BBC88(magic_id);
+            Player_CountMagicUse(magic_id);
             break;
         }
     }
@@ -374,7 +374,7 @@ void Player_HoldMagic(int magic_id) {
                 }
             }
         }
-        if (D_00413F80.equipment[2] == 0x49 && magic_id > 0 && (magic_id - 1) / 15 == 0) {
+        if (D_00413F80.equipment[EQUIP_ARMOR] == ITEM_WORN_INDEX(ITEM_ICE_ARMOR) && magic_id > 0 && (magic_id - 1) / 15 == 0) {
             return;
         }
         D_00413F80.unkC8 = entry->unk104;
@@ -382,18 +382,18 @@ void Player_HoldMagic(int magic_id) {
         if (channeled_magic_warmup_frames > 0) {
             channeled_magic_warmup_frames--;
         } else {
-            if (D_00413F80.unkB8 <= 0) {
+            if (D_00413F80.mp_now <= 0) {
                 goto stop;
             }
             if (D_00446ED4 % 3 == 0) {
-                D_00413F80.unkB8--;
+                D_00413F80.mp_now--;
             }
         }
         if (channeled_shot_slot != NULL) {
             D_00446964 = channeled_shot_slot;
             channeled_shot_slot->unk00 = 1;
-            D_00446964->unk20 = D_00413F80.unkAC;
-            D_00446964->unk22 = D_00413F80.unkB0;
+            D_00446964->unk20 = D_00413F80.power;
+            D_00446964->unk22 = D_00413F80.magic;
             D_00446964->unk26 = magic_id;
             D_00446964->unk08 = D_00413F80.unk7E;
             func_00216778(&angles, &D_00413F80.rotation);

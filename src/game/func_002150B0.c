@@ -1,12 +1,12 @@
 #include "kf_state.h"
 #include "kf_message.h"
 
-void func_00103858(int);
+void Game_MarkMessageHeard(int);
 
 /* Starts the one-time setup for the task, then clears active once its message box has closed. */
 void func_002150B0(SetupTask *task) {
     if (task->started == 0) {
-        func_00103858(task->unk08);
+        Game_MarkMessageHeard(task->unk08);
         Message_OpenBox(0, 0, task->unk10, 0, task->unk18, task->unk08);
         task->started = 1;
     }

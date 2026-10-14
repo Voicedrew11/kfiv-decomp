@@ -2,7 +2,7 @@
 #include "kf_player.h"
 
 void func_001CA338(int);
-extern LevelDef D_004147F8[];
+extern LevelDef item_name_defs[];
 extern s32 D_004469D0;
 extern ModelNode *D_004469D4;
 extern ModelNode *D_004469D8;
@@ -23,7 +23,7 @@ void func_001C8238(void) {
     D_004469D0 = 0;
     func_001CA338(0);
     func_001CA338(1);
-    def = D_004147F8;
+    def = item_name_defs;
     for (i = 0; i < 0x17C; i++, def++) {
         if (def->state == 0) {
             def->state = 1;

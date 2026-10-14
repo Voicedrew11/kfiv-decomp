@@ -70,6 +70,26 @@ typedef struct {
     s32 bottom;                     /* 0x0C */
 } GlyphBox;
 
+/* Message ids, as Message_OpenBox and Message_ShowNotice take them: the message's place in the offset table of
+   font.txc, counted from 0 at the table's second word (Message_GetText). The menus index the table
+   themselves, with the id plus 1. Only the ids the code itself names are listed. */
+#define MSG_NOTHING_HAPPENED        10
+#define MSG_UNABLE_TO_USE_HERE      11
+#define MSG_GOLD                    20      /* takes the amount */
+#define MSG_CANT_CARRY_ANY_MORE     30
+#define MSG_LEVEL_UP                40
+#define MSG_MAGIC_LEARNED           41
+#define MSG_PHYSICAL_UP             42
+#define MSG_MAGIC_POWER_UP          43
+#define MSG_WEAPON_LEVEL_UP         44
+#define MSG_MAGIC_LEVEL_UP          45
+#define MSG_LOCKED                  62
+#define MSG_EMPTY                   70
+#define MSG_KEY_USED_FIRST          87      /* "... Key used": one for each key item, in the keys' order */
+#define MSG_ITEM_TEXT_FIRST         500     /* what the menus say of item 0; the items follow in order */
+#define MSG_MAGIC_TEXT_FIRST        900     /* what the menus say of magic 0 (none); the magics follow */
+#define MSG_RECOLLECTION_FIRST      3000    /* the pages of the menu's Recollection screen, 50 ids each */
+
 void Message_Init(void);
 void Message_Update(void);
 int Message_IsBoxOpen(void);
@@ -82,5 +102,6 @@ s32 Message_GetFontText(s32 font_base);
 char *Message_GetColor(s32 colour);
 void Message_ClearNotices(void);
 void Message_CloseBox(void);
+int Message_GetText(int message_id);
 
 #endif

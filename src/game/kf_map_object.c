@@ -54,7 +54,7 @@ extern MapDrawState D_0038A1B0;
 extern int D_0038CC80[3];
 extern MapSlot D_0038CD20[];
 extern Vector4 D_0038D9F0[4];
-extern u8 D_00369830[];
+extern u8 item_counts[];
 extern MapObject D_003A1A30[][0x200];
 extern void (*D_003BDA30[][16])(MapObject *);
 extern void (*D_003BE230[])(MapObject *);
@@ -72,7 +72,7 @@ s32 D_004467A8[2] = { 0, 0 };                   /* the objects of each map have 
 int D_004467B0[2] = { 0, 0 };                   /* the MapObjectUnk08 array of each map */
 s32 D_004467B8[2] = { 0, 0 };                   /* how many objects each map has */
 
-static s32 glow_item_worn;                      /* 0x447078 item 0x9D is worn */
+static s32 glow_item_worn;                      /* 0x447078 Myu's Necklace is worn */
 static s32 glow_item_was_worn;                  /* 0x44707C the same, last frame */
 static s32 glow_frame;                          /* 0x447080 0 to 209 */
 static MapObject *plain_draw_list[2];           /* 0x447088 per map, through MapObject.unk1C */
@@ -413,7 +413,7 @@ void MapObject_UpdateAll(void) {
 int MapObject_UseItem(MapObject *object, int item) {
     int used;
 
-    if (D_00369830[item] == 0) {
+    if (item_counts[item] == 0) {
         used = FALSE;
     } else {
         used = D_003BE2B0[object->unk04->kind](object, item) != 0;
@@ -447,7 +447,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
     MapObject *object;
 
     glow_item_was_worn = glow_item_worn;
-    glow_item_worn = D_00413F80.equipment[7] == 0x9D;
+    glow_item_worn = D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_MYUS_NECKLACE);
     if (glow_item_was_worn != glow_item_worn) {
         glow_frame = 0;
     } else if (glow_item_was_worn != 0) {
@@ -774,11 +774,11 @@ int MapObject_StepAnim(MapObject *object) {
     return MODEL_CHANNEL(object->model)->param != 0;
 }
 
-/* Marks a chest-like map object (kinds 3, 4 and 0x15) of the map's own sources as emptied. */
+/* Marks a map object that holds something (bones and gravestones, chests, containers) of the map's own sources as emptied. */
 void MapObject_MarkEmptied(MapObject *object) {
     u8 kind = object->unk04->kind;
 
-    if ((kind == 3 || kind == 4 || kind == 0x15) &&
+    if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
         ((u32)(((int)object->unk08 - D_004467B0[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
         object->unk10 |= 0x40000;
     }
@@ -791,7 +791,7 @@ void MapObject_MarkEmptiedById(int map, int object_id) {
 
     if (object != NULL) {
         kind = object->unk04->kind;
-        if ((kind == 3 || kind == 4 || kind == 0x15) &&
+        if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
             ((u32)(((int)object->unk08 - D_004467B0[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
             object->unk10 |= 0x40000;
         }

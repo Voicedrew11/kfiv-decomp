@@ -1,7 +1,7 @@
 #include "common.h"
 
 extern u8 D_00413F80[];
-extern u8 D_0041B9B8[];
+extern u8 weapon_defs[];
 
 typedef struct {
     char pad0[0x82];
@@ -20,7 +20,7 @@ s32 func_0019CDA0(s32);
 int func_0019CE00(int);
 
 void func_001BBFC8(void) {
-    if (D_00413F80[0x261] == 0 && D_0041B9B8[D_00413F80[0x3C] * 0x90 + 0x63] != 2) {
+    if (D_00413F80[0x261] == 0 && weapon_defs[D_00413F80[0x3C] * 0x90 + 0x63] != 2) {
         func_0019CDA0(2);
         func_0019CE00(1);
         D_00413F80[0x261] = 1;

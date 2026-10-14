@@ -94,9 +94,9 @@ extern int D_00446DEC;              /* how many */
 
 /* what the sprite handlers look at */
 extern LevelRecord D_003679A0[];    /* the weapons' records */
-extern PlayerItemDef D_0041B9B8[];
+extern PlayerItemDef weapon_defs[];
 extern LevelRecord D_003682F0[];    /* the worn items' records */
-extern LevelRecordDef D_0041E118[];
+extern LevelRecordDef worn_defs[];
 extern FxTableEntry D_00402DA8[];   /* the magic table */
 extern u8 D_00349680[];             /* the options block, a byte per setting */
 extern u8 D_00349681[];
@@ -493,13 +493,13 @@ int MenuDraw_GetNumber(int number) {
     case 65:
         return 0;
     case 1:
-        return D_00413F80.unk58;
+        return D_00413F80.hp_max;
     case 2:
-        return D_00413F80.unk5C;
+        return D_00413F80.mp_max;
     case 3:
-        return D_00413F80.unk28;
+        return D_00413F80.power_base;
     case 4:
-        return D_00413F80.unk2C;
+        return D_00413F80.magic_base;
     case 5:
         return D_00413F80.unk60.values[0];
     case 6:
@@ -541,19 +541,19 @@ int MenuDraw_GetNumber(int number) {
     case 25:
     case 26:
     case 27:
-        return D_00413F80.unk4C;
+        return D_00413F80.gold;
     case 28:
-        return D_00413F80.unk50;
+        return D_00413F80.experience;
     case 29:
-        return D_00413F80.unk54;
+        return D_00413F80.level;
     case 30:
-        return D_00413F80.unkB4;
+        return D_00413F80.hp_now;
     case 31:
-        return D_00413F80.unkB8;
+        return D_00413F80.mp_now;
     case 32:
-        return D_00413F80.unkAC;
+        return D_00413F80.power;
     case 33:
-        return D_00413F80.unkB0;
+        return D_00413F80.magic;
     case 34:
         return D_00446A28.mday;
     case 35:
@@ -615,7 +615,7 @@ int MenuDraw_GetNumber(int number) {
     case 63:
         return D_00413F80.unk7E.values[8];
     case 66:
-        return D_00413F80.unkA4;
+        return D_00413F80.weight;
     case 67:
         return D_00413F80.unkA8;
     case 70:
@@ -3469,31 +3469,31 @@ static SpritePacket *MenuSprite_TintWeaponStat(SpritePacket *packet) {
     current = MenuDraw_GetNumber(packet->unk34);
     switch (packet->unk34) {
     case 0x2C:
-        base = (D_003679A0[D_00446E28].unk00[0] + D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[0]) * D_003679A0[D_00446E28].level / 100;
+        base = (D_003679A0[D_00446E28].unk00[0] + weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[0]) * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x2D:
-        base = (D_003679A0[D_00446E28].unk00[1] + D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[1]) * D_003679A0[D_00446E28].level / 100;
+        base = (D_003679A0[D_00446E28].unk00[1] + weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[1]) * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x2E:
-        base = (D_003679A0[D_00446E28].unk00[2] + D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[2]) * D_003679A0[D_00446E28].level / 100;
+        base = (D_003679A0[D_00446E28].unk00[2] + weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[2]) * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x2F:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[3] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[3] * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x30:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[4] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[4] * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x31:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[5] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[5] * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x32:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[6] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[6] * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x33:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[7] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[7] * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x34:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[8] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[8] * D_003679A0[D_00446E28].level / 100;
         break;
     default:
         base = 0;
@@ -3521,31 +3521,31 @@ static SpritePacket *MenuSprite_TintWornStat(SpritePacket *packet, int index) {
     current = MenuDraw_GetNumber(packet->unk34);
     switch (packet->unk34) {
     case 0x2C:
-        base = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
+        base = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
         break;
     case 0x2D:
-        base = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
+        base = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
         break;
     case 0x2E:
-        base = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
+        base = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
         break;
     case 0x2F:
-        base = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
         break;
     case 0x30:
-        base = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
         break;
     case 0x31:
-        base = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
         break;
     case 0x32:
-        base = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
         break;
     case 0x33:
-        base = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
         break;
     case 0x34:
-        base = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
         break;
     default:
         base = 0;
@@ -3573,28 +3573,28 @@ static SpritePacket *MenuSprite_TintMagicStat(SpritePacket *packet) {
     current = MenuDraw_GetNumber(packet->unk34);
     switch (packet->unk34) {
     case 0x2C:
-        base = D_00402DA8[D_00413F80.unk3D].hit_checks[0].strengths.unk00[0];
+        base = D_00402DA8[D_00413F80.equipped_magic].hit_checks[0].strengths.unk00[0];
         break;
     case 0x2D:
-        base = D_00402DA8[D_00413F80.unk3D].hit_checks[0].strengths.unk00[1];
+        base = D_00402DA8[D_00413F80.equipped_magic].hit_checks[0].strengths.unk00[1];
         break;
     case 0x2E:
-        base = D_00402DA8[D_00413F80.unk3D].hit_checks[0].strengths.unk00[2];
+        base = D_00402DA8[D_00413F80.equipped_magic].hit_checks[0].strengths.unk00[2];
         break;
     case 0x2F:
-        base = D_00402DA8[D_00413F80.unk3D].hit_checks[0].strengths.unk00[3];
+        base = D_00402DA8[D_00413F80.equipped_magic].hit_checks[0].strengths.unk00[3];
         break;
     case 0x30:
-        base = D_00402DA8[D_00413F80.unk3D].hit_checks[0].strengths.unk00[4];
+        base = D_00402DA8[D_00413F80.equipped_magic].hit_checks[0].strengths.unk00[4];
         break;
     case 0x31:
-        base = D_00402DA8[D_00413F80.unk3D].hit_checks[0].strengths.unk00[5];
+        base = D_00402DA8[D_00413F80.equipped_magic].hit_checks[0].strengths.unk00[5];
         break;
     case 0x32:
-        base = D_00402DA8[D_00413F80.unk3D].hit_checks[0].strengths.unk00[6];
+        base = D_00402DA8[D_00413F80.equipped_magic].hit_checks[0].strengths.unk00[6];
         break;
     case 0x33:
-        base = D_00402DA8[D_00413F80.unk3D].hit_checks[0].strengths.unk00[7];
+        base = D_00402DA8[D_00413F80.equipped_magic].hit_checks[0].strengths.unk00[7];
         break;
     case 0x34:
     default:
@@ -3852,31 +3852,31 @@ static SpritePacket *MenuSprite_TintWeaponStatAlt(SpritePacket *packet) {
     current = MenuDraw_GetNumber(packet->unk34);
     switch (packet->unk34) {
     case 0x2D:
-        base = (D_003679A0[D_00446E28].unk00[0] + D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[0]) * D_003679A0[D_00446E28].level / 100;
+        base = (D_003679A0[D_00446E28].unk00[0] + weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[0]) * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x2E:
-        base = (D_003679A0[D_00446E28].unk00[1] + D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[1]) * D_003679A0[D_00446E28].level / 100;
+        base = (D_003679A0[D_00446E28].unk00[1] + weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[1]) * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x2F:
-        base = (D_003679A0[D_00446E28].unk00[2] + D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[2]) * D_003679A0[D_00446E28].level / 100;
+        base = (D_003679A0[D_00446E28].unk00[2] + weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[2]) * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x30:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[3] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[3] * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x31:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[4] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[4] * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x32:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[5] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[5] * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x33:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[6] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[6] * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x34:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[7] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[7] * D_003679A0[D_00446E28].level / 100;
         break;
     case 0x35:
-        base = D_0041B9B8[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[8] * D_003679A0[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].unk00[D_003679A0[D_00446E28].unk14].values[8] * D_003679A0[D_00446E28].level / 100;
         break;
     default:
         base = 0;
@@ -3903,31 +3903,31 @@ static SpritePacket *MenuSprite_TintWornStatAlt(SpritePacket *packet, int index)
     current = MenuDraw_GetNumber(packet->unk34);
     switch (packet->unk34) {
     case 0x2D:
-        base = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
+        base = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
         break;
     case 0x2E:
-        base = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
+        base = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
         break;
     case 0x2F:
-        base = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
+        base = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
         break;
     case 0x30:
-        base = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
         break;
     case 0x31:
-        base = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
         break;
     case 0x32:
-        base = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
         break;
     case 0x33:
-        base = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
         break;
     case 0x34:
-        base = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
         break;
     case 0x35:
-        base = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
+        base = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
         break;
     default:
         base = 0;
@@ -3948,7 +3948,7 @@ static SpritePacket *MenuSprite_TintWornStatAlt(SpritePacket *packet, int index)
 static SpritePacket *MenuSprite_TintShortfall(SpritePacket *packet) {
     static SpritePacket copy; /* 0x5DDD60 */
     copy = *packet;
-    if (D_00413F80.unkA4 > D_00413F80.unkA8) {
+    if (D_00413F80.weight > D_00413F80.unkA8) {
         copy.red = 0xFF;
         copy.green = copy.blue = 0x20;
     }

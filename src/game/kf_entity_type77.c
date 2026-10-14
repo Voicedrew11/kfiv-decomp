@@ -1,5 +1,6 @@
 /* The behaviour of entity type 77 (Entity.params->unk02, the index into D_003E6E40): its set-up
-   function, which the table names, and the handlers that function installs. */
+   function, which the table names, and the handlers that function installs. The Forest Golem: its one spawn
+   (013.map, Holy Forest) says "Unable to move" when examined and takes the Forest Dew, the Golems' food. */
 #include "kf_entity.h"
 #include "kf_map.h"
 #include "kf_entity_world.h"

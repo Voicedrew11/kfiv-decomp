@@ -1,13 +1,16 @@
 #include "common.h"
+#include "kf_item.h"
 
-extern u8 D_00369830[];
+extern u8 item_counts[];
 
 int func_001F92D0(void) {
     int i;
 
-    for (i = 0; i < 0x17C; i++) {
-        if (D_00369830[i] != 0 && (i < 0x2F || i == 0x36 || i >= 0x3C) && i != 0 && i != 0x96 && i != 0xDC &&
-            i != 0xFA && i != 0x113 && i != 0x12C && i != 0x145 && i != 0x15E && i != 0x168 && i != 0x172 && i != 0) {
+    for (i = 0; i < ITEM_COUNT; i++) {
+        if (item_counts[i] != 0 && (i < ITEM_KEY_FIRST || i == ITEM_KEY_UNUSED || i > ITEM_KEY_LAST) && i != 0
+            && i != ITEM_WEAPON_FIRST && i != ITEM_SHIELD_NONE && i != ITEM_HELM_NONE && i != ITEM_ARMOR_NONE
+            && i != ITEM_GAUNTLET_NONE && i != ITEM_BOOT_NONE && i != ITEM_RING_NONE && i != ITEM_BRACELET_NONE
+            && i != ITEM_AMULET_NONE && i != 0) {
             return TRUE;
         }
     }

@@ -15,7 +15,7 @@ void func_0010B510(char *, int, int);
 void func_001CA500(ListNode *);
 extern MapSlot D_0038CD20[];
 extern DroppedItemRecord D_00358928[0x80][16];
-extern GameDefinition D_004147F8[380];
+extern GameDefinition item_name_defs[380];
 extern u32 D_004469D0;
 extern ItemNode D_00580040[2][16];
 extern ModelInstance D_0058F6C0[2][16];
@@ -44,7 +44,7 @@ s32 func_001C8F18(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f
     if (!func_001CA788(item)) {
         return FALSE;
     }
-    source = func_001CA498(map, (D_004147F8 + item)->unk30);
+    source = func_001CA498(map, (item_name_defs + item)->unk30);
     if (source == NULL) {
         return FALSE;
     }

@@ -76,7 +76,7 @@ static inline s32 player_in_reach(Entity *entity, EntityParams *params) {
     if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
         farthest *= 0.5f;
     }
-    if (D_00413F80.equipment[7] == 0x9C) {
+    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         farthest *= 0.5f;
     }
     reach[0][0] = params->unk240[0].unk04 != 0 ? entity->radius + 100.0f + params->unk240[0].unk04 : 0.0f;

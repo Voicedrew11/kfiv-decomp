@@ -16,13 +16,13 @@ typedef struct {
     char unk06;                     /* 0x06 nonzero: the player cannot run (Player_Update) */
     char unk07;                     /* 0x07 */
     char pad08[0x18];
-    int unk20;                      /* 0x20 index into D_0041A6F8 (TriggerTypeDef), used with bit6 */
+    int unk20;                      /* 0x20 the item to use (Player_UseItem), with bit6 */
     u32 bit0 : 1;                   /* 0x24 */
-    u32 bit1 : 1;                   /* set while func_0011FDD0 runs an event */
+    u32 bit1 : 1;                   /* set while MapObject_UpdateClosedChest runs an event */
     u32 bit2 : 1;
     u32 bit3 : 1;
     u32 bit4 : 1;
-    u32 bit5 : 1;
+    u32 save_requested : 1;         /* the save screen runs next (func_001017A8; MapObject_UpdateSavePoint) */
     u32 bit6 : 1;
     u32 bit7 : 1;
     u32 bit8 : 1;
@@ -34,10 +34,10 @@ typedef struct {
     int unk28;                      /* 0x28 */
     int unk2C;                      /* 0x2C */
     int unk30;                      /* 0x30 */
-    int unk34;                      /* 0x34 set with bit5 by func_001226E0 */
+    int save_area;                  /* 0x34 the message id of the area name the save list shows (MapObject_UpdateSavePoint) */
     char pad38[0x08];
     void *unk40;                    /* 0x40 the model of the item effect that asked for unk30 = 0xC5F (ItemEffect_StepRequestGameStatus) */
-    int unk44;                      /* 0x44 counts down to 0; 1 when an item was just used (func_001BC2D0) */
+    int unk44;                      /* 0x44 counts down to 0; 1 when an item was just used (Player_UseItem) */
 } GameStatus;
 
 /* GameStatus with bits 10 and 11 of the flag word (GameStatus.bits10) apart, as func_00214A20
@@ -99,11 +99,11 @@ typedef struct {
     f32 unk48;                      /* 0x48 distance to the nearest entity around the player (func_001D0970) */
     f32 unk4C;                      /* 0x4C distance to what `current`, unk54 or unk58 names */
     void *current;                  /* 0x50 the event being run */
-    void *unk54;                    /* 0x54 an Entity whose spawn info can answer the use of an item (func_001BC2D0) */
+    void *unk54;                    /* 0x54 an Entity whose spawn info can answer the use of an item (Player_UseItem) */
     void *unk58;                    /* 0x58 the ItemNode (kf_model.h) in front of the player, NULL: none (func_001D0970) */
 } EventRunner;
 
-/* an event func_00120130 hands to func_0011FDD0 */
+/* an event func_00120130 hands to MapObject_UpdateClosedChest */
 typedef struct {
     char pad00[0x10];
     u32 flags;                      /* 0x10 */
@@ -201,8 +201,8 @@ typedef struct {
     char text[0x800];               /* 0x50 */
 } TextLog;
 
-/* D_004147F8[380]: 0x40-byte definitions read from a data file by func_00112648
-   (150, then 70, then 160 of them: see func_001029A8) */
+/* item_name_defs[ITEM_COUNT]: param/item_nam.prm, read by func_00112648: a row per item, starting with its
+   name (the items carried, then 70 weapons from ITEM_WEAPON_FIRST, then 160 worn ones from ITEM_WORN_FIRST) */
 typedef struct {
     char pad00[0x30];
     u16 unk30;                      /* 0x30 the number in the name of its item_arm file (Player_LoadArmModels) */
@@ -230,15 +230,16 @@ typedef struct {
     char pad34[0x0C];
 } GameDefinitionFlags;
 
-/* D_00369830 and the five tables after it: one byte per GameDefinition */
+/* item_counts and the five tables after it: one byte per GameDefinition */
 typedef struct {
     u8 bytes[380];
 } DefinitionByteSet;
 
-/* D_0034C350[50]: the 50 flags of one area, a bit each */
+/* recollection_flags[50]: one page of the menu's Recollection screen (messages MSG_RECOLLECTION_FIRST + 50 * page
+   on): bits 0-2 the description shown, then a bit per message heard */
 typedef struct {
     u8 bits[8];
-} AreaFlagBits;
+} RecollectionFlags;
 
 /* a word read from any alignment (the save image header) */
 typedef struct {

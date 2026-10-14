@@ -474,7 +474,7 @@ typedef struct {
     Vector4 position;               /* 0x00 where the object rests */
     Vector4 rotation;               /* 0x10 */
     Vector4 scale;                  /* 0x20 */
-    u16 unk30;                      /* 0x30 which definition (D_0038DA30) it is */
+    u16 unk30;                      /* 0x30 its row of map_object_defs (param/obj.prm) */
     u16 unk32;                      /* 0x32 which of the map's object models it uses (func_00114AA8) */
     u16 unk34;                      /* 0x34 which of the map's object collision meshes */
     u16 unk36;                      /* 0x36 which of the map's object motions */
@@ -484,7 +484,7 @@ typedef struct {
     } unk38;                        /* 0x38 */
     u16 unk40;                      /* 0x40 passed to func_002109C8, 0: nothing */
     u16 unk42;                      /* 0x42 the same, by MapObject_Break */
-    s16 unk44;                      /* 0x44 an item (D_00369830) or, 0x40 to 0x7F, a sound */
+    s16 unk44;                      /* 0x44 an item (item_counts) or, 0x40 to 0x7F, a sound */
     u8 unk46;                       /* 0x46 */
     char pad47[0x01];
     u8 unk48;                       /* 0x48 */
@@ -533,7 +533,7 @@ typedef struct {
     u8 sound_frame;                 /* 0x07 the animation frame the sound starts on */
 } MapObjectAnim;
 
-/* what MapObject.unk04 points at */
+/* what MapObject.unk04 points at: its row of param/obj.prm (map_object_defs) */
 typedef struct {
     u32 kind : 8;                   /* 0x00 1, 2, 6, 0x11: func_0018C728 tests lines of sight against it */
     u32 bit8 : 1;                   /* which function draws it (MapObject_InitMap) */
@@ -551,7 +551,7 @@ typedef struct {
     u16 unk50;                      /* 0x50 passed to Effect_StartSpawner */
     s16 unk52[9];                   /* 0x52 percent of each of a hit's nine strengths that it shrugs off, 200: all of it (func_001B3AC0) */
     f32 unk64;                      /* 0x64 above 0: the player must face it within this angle to act on it (func_001D0970) */
-    u32 unk68;                      /* 0x68 flags; the low half is also a message id */
+    u32 unk68;                      /* 0x68 flags; the low half is also the message id of its name ("Corpse", "Jail Door"...), shown when used */
     f32 unk6C;                      /* 0x6C MapObject.unk3C is this times the scale, plus 100 */
     f32 unk70;                      /* 0x70 how far its sounds carry, 0: 800 */
     u8 unk74;                       /* 0x74 */
@@ -733,7 +733,7 @@ typedef struct ModelNode {
     char pad10[0x04];
     void *unk14;                    /* 0x14 the MapRecordInfo (kf_map.h) it is standing in, found every frame */
     ModelInstance *model;           /* 0x18 non-null while the node is in use */
-    s16 item;                       /* 0x1C which item it is (index into D_004147F8) */
+    s16 item;                       /* 0x1C which item it is (index into item_name_defs) */
     s16 unk1E;                      /* 0x1E index into the map's row of D_00356928 */
     struct ModelNode *prev;         /* 0x20 */
     struct ModelNode *next;         /* 0x24 */
@@ -745,7 +745,7 @@ typedef struct {
     Vector4 position;               /* 0x00 */
     Vector4 rotation;               /* 0x10 */
     Vector4 scale;                  /* 0x20 */
-    u16 item;                       /* 0x30 which LevelDef (D_004147F8) it is */
+    u16 item;                       /* 0x30 which LevelDef (item_name_defs) it is */
     char pad32[0x02];
     u16 unk34;                      /* 0x34 passed to func_002109C8 in place of picking the item up, 0: nothing (func_001D0970) */
     u8 required_flag;               /* 0x36 nonzero: it only appears while its byte of D_00356928 is below this */

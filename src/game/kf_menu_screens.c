@@ -26,11 +26,11 @@
 extern LevelRecord D_003679A0[70];
 extern LevelRecord D_003682F0[160];
 extern u8 spell_levels[6][5];
-extern u8 D_00369830[380];
+extern u8 item_counts[380];
 extern FxTableEntry D_00402DA8[];
 extern PlayerState D_00413F80;
-extern LevelDef D_004147F8[380];
-extern TriggerTypeDef D_0041A6F8[];
+extern LevelDef item_name_defs[380];
+extern ItemCommonDef D_0041A6F8[];
 extern MenuItem **D_00420D90[11];
 extern MenuItem D_004210D0[150];
 extern MenuItem D_00421A30[380];
@@ -111,7 +111,7 @@ extern MenuItem *D_005CE8A0[];
     last = NULL;                                                                                         \
     first = NULL;                                                                                        \
     for (i = 0; i < (item_count); i++) {                                                                 \
-        if (D_00369830[(item_base) + i] != 0 && (D_004147F8[(item_base) + i].state & 1) &&               \
+        if (item_counts[(item_base) + i] != 0 && (item_name_defs[(item_base) + i].state & 1) &&               \
             (records)[(record_base) + i].unk18 == 0) {                                                   \
             LINK_ITEM(&(nodes)[i])                                                                       \
         }                                                                                                \
@@ -245,8 +245,8 @@ extern SpritePacket *D_0044726C;
 extern SpritePacket *D_00447270;
 extern SpritePacket *D_00447274;
 extern SpritePacket *D_00447278;
-extern PlayerItemDef D_0041B9B8[];
-extern LevelRecordDef D_0041E118[];
+extern PlayerItemDef weapon_defs[];
+extern LevelRecordDef worn_defs[];
 extern GsDoubleBufferDc D_00426140;
 extern LoadedTexture D_0042A8D0;
 extern MenuModelMotion *D_005CEE60[];
@@ -452,8 +452,8 @@ extern s32 D_00446BB8;              /* the row of three the list starts at, 0 to
 extern s32 D_00446BBC;
 #define LIST_PAGES 50
 #define LIST_ROWS 7
-extern u8 D_0034C350[LIST_PAGES][8];
-extern u8 D_0034C4E0[50];
+extern u8 recollection_flags[LIST_PAGES][8];
+extern u8 recollection_pages[50];
 extern f32 D_00421080[4];
 extern s32 D_00446BC0;              /* the page shown, 0 to 49 */
 extern s32 D_00446BC4;              /* the page shown the frame before */
@@ -761,7 +761,7 @@ static void Menu_BuildItemRings(void) {
     first = NULL;
     count = 0;
     for (i = 1; i < 150; i++) {
-        if (D_00369830[i] != 0 && (D_004147F8[i].state & 1)) {
+        if (item_counts[i] != 0 && (item_name_defs[i].state & 1)) {
             LINK_COUNTED_ITEM(&D_004210D0[i], D_00426130)
         }
     }
@@ -792,7 +792,7 @@ static void Menu_BuildItemRings(void) {
     first = NULL;
     count = 0;
     for (i = 1; i < 380; i++) {
-        if (D_00369830[i] != 0 && !(D_004147F8[i].state & 2)) {
+        if (item_counts[i] != 0 && !(item_name_defs[i].state & 2)) {
             if ((i >= 0 && i < 150) || (i >= 150 && i < 220 && D_003679A0[i - 150].unk18 == 0) ||
                 (i >= 220 && i < 250 && D_003682F0[i - 220].unk18 == 0) ||
                 (i >= 250 && i < 275 && D_003682F0[i - 220].unk18 == 0) ||
@@ -838,7 +838,7 @@ static void Menu_BuildItemRings(void) {
     last = NULL;
     first = NULL;
     for (i = 0; i < 150; i++) {
-        if (D_00369830[i] != 0 && (D_004147F8[i].state & 1) && !((u8)D_0041A6F8[i].flags & 1) && !(i >= 145 && i < 148)) {
+        if (item_counts[i] != 0 && (item_name_defs[i].state & 1) && !((u8)D_0041A6F8[i].flags & 1) && !(i >= 145 && i < 148)) {
             LINK_ITEM(&D_00424600[i])
         }
     }
@@ -851,42 +851,42 @@ static void Menu_BuildItemRings(void) {
     // would be written through NULL
     first->next = last;
     last->prev = first;
-    switch (D_00413F80.unk48) {
+    switch (D_00413F80.shortcut_type) {
     case 0:
         D_005CE810.item = D_005CE6A0.item = D_00424600;
         // match: no break, case 0 goes on into case 1, which sets both again
     case 1:
-        if (D_00369830[D_00413F80.unk46] != 0) {
-            D_005CE810.item = D_005CE6A0.item = &D_00424600[D_00413F80.unk46];
+        if (item_counts[D_00413F80.shortcut] != 0) {
+            D_005CE810.item = D_005CE6A0.item = &D_00424600[D_00413F80.shortcut];
         } else {
-            D_00413F80.unk46 = 0;
+            D_00413F80.shortcut = 0;
             D_005CE810.item = D_005CE6A0.item = D_00424600;
         }
         break;
     case 2:
-        D_005CE810.item = D_005CE6A0.item = &D_00424600[D_00413F80.unk46 + 150];
+        D_005CE810.item = D_005CE6A0.item = &D_00424600[D_00413F80.shortcut + 150];
         break;
     }
 
     last = NULL;
     first = NULL;
     for (i = 0; i < 70; i++) {
-        if (D_00369830[150 + i] != 0 && (D_004147F8[150 + i].state & 1) && D_003679A0[i].unk18 == 0) {
+        if (item_counts[150 + i] != 0 && (item_name_defs[150 + i].state & 1) && D_003679A0[i].unk18 == 0) {
             LINK_ITEM(&D_004231F0[i])
         }
     }
     first->next = last;
     last->prev = first;
-    D_005CE770.item = D_005CE6B0.item = &D_004231F0[D_00413F80.unk3C];
+    D_005CE770.item = D_005CE6B0.item = &D_004231F0[D_00413F80.weapon];
 
-    LINK_GROUP(D_00423650, D_003682F0, 0, 220, 30, D_005CE780, D_005CE6C0, D_00413F80.equipment[0])
-    LINK_GROUP(D_00423830, D_003682F0, 30, 250, 25, D_005CE790, D_005CE6D0, D_00413F80.equipment[1])
-    LINK_GROUP(D_004239C0, D_003682F0, 55, 275, 25, D_005CE7A0, D_005CE6E0, D_00413F80.equipment[2])
-    LINK_GROUP(D_00423B50, D_003682F0, 80, 300, 25, D_005CE7B0, D_005CE6F0, D_00413F80.equipment[3])
-    LINK_GROUP(D_00423CE0, D_003682F0, 105, 325, 25, D_005CE7C0, D_005CE700, D_00413F80.equipment[4])
-    LINK_GROUP(D_00423E70, D_003682F0, 130, 350, 10, D_005CE7D0, D_005CE710, D_00413F80.equipment[5])
-    LINK_GROUP(D_00423F10, D_003682F0, 140, 360, 10, D_005CE7E0, D_005CE720, D_00413F80.equipment[6])
-    LINK_GROUP(D_00423FB0, D_003682F0, 150, 370, 10, D_005CE7F0, D_005CE730, D_00413F80.equipment[7])
+    LINK_GROUP(D_00423650, D_003682F0, 0, 220, 30, D_005CE780, D_005CE6C0, D_00413F80.equipment[EQUIP_SHIELD])
+    LINK_GROUP(D_00423830, D_003682F0, 30, 250, 25, D_005CE790, D_005CE6D0, D_00413F80.equipment[EQUIP_HELM])
+    LINK_GROUP(D_004239C0, D_003682F0, 55, 275, 25, D_005CE7A0, D_005CE6E0, D_00413F80.equipment[EQUIP_ARMOR])
+    LINK_GROUP(D_00423B50, D_003682F0, 80, 300, 25, D_005CE7B0, D_005CE6F0, D_00413F80.equipment[EQUIP_GAUNTLET])
+    LINK_GROUP(D_00423CE0, D_003682F0, 105, 325, 25, D_005CE7C0, D_005CE700, D_00413F80.equipment[EQUIP_BOOT])
+    LINK_GROUP(D_00423E70, D_003682F0, 130, 350, 10, D_005CE7D0, D_005CE710, D_00413F80.equipment[EQUIP_RING])
+    LINK_GROUP(D_00423F10, D_003682F0, 140, 360, 10, D_005CE7E0, D_005CE720, D_00413F80.equipment[EQUIP_BRACELET])
+    LINK_GROUP(D_00423FB0, D_003682F0, 150, 370, 10, D_005CE7F0, D_005CE730, D_00413F80.equipment[EQUIP_AMULET])
 
     last = NULL;
     first = NULL;
@@ -898,7 +898,7 @@ static void Menu_BuildItemRings(void) {
     first->next = last;
     last->prev = first;
     D_005CE890[0] = NULL;
-    D_005CE800.item = D_005CE740.item = &D_00424050[D_00413F80.unk3D];
+    D_005CE800.item = D_005CE740.item = &D_00424050[D_00413F80.equipped_magic];
     D_005CE8A0[0] = NULL;
 
     last = NULL;
@@ -1469,7 +1469,7 @@ void Menu_ResetLoadBuffers(void) {
 
 /* Writes the model file name of a menu item that has a definition (its LevelDef's file number). */
 static void Menu_WriteItemModelName(char *buffer, MenuItem *item) {
-    sprintf(buffer, "menu/select2/i%04d.mod", D_004147F8[item->unk0C].file_number);
+    sprintf(buffer, "menu/select2/i%04d.mod", item_name_defs[item->unk0C].file_number);
 }
 
 /* Writes the model file name of a spell (group 1): its own number. */
@@ -1479,7 +1479,7 @@ static void Menu_WriteSpellModelName(char *buffer, MenuItem *item) {
 
 /* A copy of Menu_WriteItemModelName, the entry of group 10 in item_name_writers; no item has that group. */
 static void Menu_WriteGroup10ModelName(char *buffer, MenuItem *item) {
-    sprintf(buffer, "menu/select2/i%04d.mod", D_004147F8[item->unk0C].file_number);
+    sprintf(buffer, "menu/select2/i%04d.mod", item_name_defs[item->unk0C].file_number);
 }
 
 /* per MenuItem.group, the function that writes the item's model file name */
@@ -1518,15 +1518,15 @@ static void Menu_SetEquipModelNames(void) {
 
 /* Writes the model file names of the player's weapon and the eight things worn into their upload nodes. */
 static void Menu_SetWornModelNames(void) {
-    sprintf(D_005CE9F8, "menu/equip/i%04d.mod", D_004147F8[D_00413F80.unk3C + 150].file_number);
-    sprintf(D_005CEA98, "menu/equip/i%04d.mod", D_004147F8[D_00413F80.equipment[0] + 220].file_number);
-    sprintf(D_005CEAE8, "menu/equip/i%04d.mod", D_004147F8[D_00413F80.equipment[2] + 220].file_number);
-    sprintf(D_005CEB38, "menu/equip/i%04d.mod", D_004147F8[D_00413F80.equipment[1] + 220].file_number);
-    sprintf(D_005CEB88, "menu/equip/i%04d.mod", D_004147F8[D_00413F80.equipment[3] + 220].file_number);
-    sprintf(D_005CEBD8, "menu/equip/i%04d.mod", D_004147F8[D_00413F80.equipment[4] + 220].file_number);
-    sprintf(D_005CEC28, "menu/equip/i%04d.mod", D_004147F8[D_00413F80.equipment[5] + 220].file_number);
-    sprintf(D_005CEC78, "menu/equip/i%04d.mod", D_004147F8[D_00413F80.equipment[6] + 220].file_number);
-    sprintf(D_005CECC8, "menu/equip/i%04d.mod", D_004147F8[D_00413F80.equipment[7] + 220].file_number);
+    sprintf(D_005CE9F8, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.weapon + ITEM_WEAPON_FIRST].file_number);
+    sprintf(D_005CEA98, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEAE8, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEB38, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEB88, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEBD8, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEC28, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEC78, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CECC8, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST].file_number);
     D_005CED40.unk20 = 0;
 }
 
@@ -1645,11 +1645,11 @@ static void Menu_SetAllItemsModelNames(void) {
     } else {
         ahead = behind = D_00446C24;
     }
-    sprintf(D_00426498, "menu/select2/i%04d.mod", D_004147F8[D_005CE850[0]->unk0C].file_number);
-    sprintf(D_00426538, "menu/select2/i%04d.mod", D_004147F8[D_005CE850[0]->prev->unk0C].file_number);
-    sprintf(D_004264E8, "menu/select2/i%04d.mod", D_004147F8[D_005CE850[0]->next->unk0C].file_number);
-    sprintf(D_00426588, "menu/select2/i%04d.mod", D_004147F8[ahead->unk0C].file_number);
-    sprintf(D_004265D8, "menu/select2/i%04d.mod", D_004147F8[behind->unk0C].file_number);
+    sprintf(D_00426498, "menu/select2/i%04d.mod", item_name_defs[D_005CE850[0]->unk0C].file_number);
+    sprintf(D_00426538, "menu/select2/i%04d.mod", item_name_defs[D_005CE850[0]->prev->unk0C].file_number);
+    sprintf(D_004264E8, "menu/select2/i%04d.mod", item_name_defs[D_005CE850[0]->next->unk0C].file_number);
+    sprintf(D_00426588, "menu/select2/i%04d.mod", item_name_defs[ahead->unk0C].file_number);
+    sprintf(D_004265D8, "menu/select2/i%04d.mod", item_name_defs[behind->unk0C].file_number);
 }
 
 /* Opens main menu line 5: names the five models of the list of everything owned and chains their loads. */
@@ -1738,8 +1738,8 @@ static void Menu_ChainKeyItemModels(void) {
         D_005CEF30[i].callback = (void (*)(void))Menu_StepModelLoad;
         D_005CEF30[i].unk1C = 0;
         D_005CEF30[i].unk20 = 0;
-        if (D_00369830[numbers.number[i]] != 0) {
-            sprintf(D_005CEF30[i].name, "menu/select/i%04d.mod", D_004147F8[numbers.number[i]].file_number);
+        if (item_counts[numbers.number[i]] != 0) {
+            sprintf(D_005CEF30[i].name, "menu/select/i%04d.mod", item_name_defs[numbers.number[i]].file_number);
         } else {
             sprintf(D_005CEF30[i].name, "menu/equip/i7000.mod");
         }
@@ -1971,55 +1971,55 @@ void Menu_Init(void) {
         number++;
     }
     for (i = 0; i < 70; i++) {
-        D_00421A30[number].unk00 = (int)&D_0041B9B8[i];
+        D_00421A30[number].unk00 = (int)&weapon_defs[i];
         D_00421A30[number].unk0C = number;
         D_00421A30[number].group = 0;
         number++;
     }
     for (i = 0; i < 30; i++) {
-        D_00421A30[number].unk00 = (int)&D_0041E118[i];
+        D_00421A30[number].unk00 = (int)&worn_defs[i];
         D_00421A30[number].unk0C = number;
         D_00421A30[number].group = 2;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00421A30[number].unk00 = (int)&D_0041E118[i + 30];
+        D_00421A30[number].unk00 = (int)&worn_defs[i + 30];
         D_00421A30[number].unk0C = number;
         D_00421A30[number].group = 3;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00421A30[number].unk00 = (int)&D_0041E118[i + 55];
+        D_00421A30[number].unk00 = (int)&worn_defs[i + 55];
         D_00421A30[number].unk0C = number;
         D_00421A30[number].group = 4;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00421A30[number].unk00 = (int)&D_0041E118[i + 80];
+        D_00421A30[number].unk00 = (int)&worn_defs[i + 80];
         D_00421A30[number].unk0C = number;
         D_00421A30[number].group = 5;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00421A30[number].unk00 = (int)&D_0041E118[i + 105];
+        D_00421A30[number].unk00 = (int)&worn_defs[i + 105];
         D_00421A30[number].unk0C = number;
         D_00421A30[number].group = 6;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00421A30[number].unk00 = (int)&D_0041E118[i + 130];
+        D_00421A30[number].unk00 = (int)&worn_defs[i + 130];
         D_00421A30[number].unk0C = number;
         D_00421A30[number].group = 7;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00421A30[number].unk00 = (int)&D_0041E118[i + 140];
+        D_00421A30[number].unk00 = (int)&worn_defs[i + 140];
         D_00421A30[number].unk0C = number;
         D_00421A30[number].group = 8;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00421A30[number].unk00 = (int)&D_0041E118[i + 130];
+        D_00421A30[number].unk00 = (int)&worn_defs[i + 130];
         D_00421A30[number].unk0C = number;
         D_00421A30[number].group = 9;
         number++;
@@ -2032,55 +2032,55 @@ void Menu_Init(void) {
         number++;
     }
     for (i = 0; i < 70; i++) {
-        D_004231F0[i].unk00 = (int)&D_0041B9B8[i];
+        D_004231F0[i].unk00 = (int)&weapon_defs[i];
         D_004231F0[i].unk0C = number;
         D_004231F0[i].group = 0;
         number++;
     }
     for (i = 0; i < 30; i++) {
-        D_00423650[i].unk00 = (int)&D_0041E118[i];
+        D_00423650[i].unk00 = (int)&worn_defs[i];
         D_00423650[i].unk0C = number;
         D_00423650[i].group = 2;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00423830[i].unk00 = (int)&D_0041E118[i + 30];
+        D_00423830[i].unk00 = (int)&worn_defs[i + 30];
         D_00423830[i].unk0C = number;
         D_00423830[i].group = 3;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_004239C0[i].unk00 = (int)&D_0041E118[i + 55];
+        D_004239C0[i].unk00 = (int)&worn_defs[i + 55];
         D_004239C0[i].unk0C = number;
         D_004239C0[i].group = 4;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00423B50[i].unk00 = (int)&D_0041E118[i + 80];
+        D_00423B50[i].unk00 = (int)&worn_defs[i + 80];
         D_00423B50[i].unk0C = number;
         D_00423B50[i].group = 5;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00423CE0[i].unk00 = (int)&D_0041E118[i + 105];
+        D_00423CE0[i].unk00 = (int)&worn_defs[i + 105];
         D_00423CE0[i].unk0C = number;
         D_00423CE0[i].group = 6;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00423E70[i].unk00 = (int)&D_0041E118[i + 130];
+        D_00423E70[i].unk00 = (int)&worn_defs[i + 130];
         D_00423E70[i].unk0C = number;
         D_00423E70[i].group = 7;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00423F10[i].unk00 = (int)&D_0041E118[i + 140];
+        D_00423F10[i].unk00 = (int)&worn_defs[i + 140];
         D_00423F10[i].unk0C = number;
         D_00423F10[i].group = 8;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00423FB0[i].unk00 = (int)&D_0041E118[i + 130];
+        D_00423FB0[i].unk00 = (int)&worn_defs[i + 130];
         D_00423FB0[i].unk0C = number;
         D_00423FB0[i].group = 9;
         number++;
@@ -3144,7 +3144,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         Menu_MoveItemListCursor(context, D_004472DA == 0);
     }
     if (D_00426110[0] != NULL) {
-        D_00446DF4 = D_00369830[D_00426110[0]->unk0C];
+        D_00446DF4 = item_counts[D_00426110[0]->unk0C];
     } else {
         D_00446DF4 = 0;
     }
@@ -3193,7 +3193,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         item = D_00426120[0];
         MenuText_SetColor(D_00446C78);
         for (row = 0; row < 7; row++, item = item->prev) {
-            text = (s32)&D_004147F8[item->unk0C];
+            text = (s32)&item_name_defs[item->unk0C];
             MenuText_SetPen(word);
             ((s32 (*)(s32, s32))MenuText_DrawWrapped)(text, 0x1A); // match: called as if it took and returned a number
             word.f.mid16 += 0xB0;
@@ -3204,7 +3204,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         }
         item = D_00426110[0];
         table = Message_GetFontText(D_00446F38);
-        slot = item->unk0C + 0x1F5;
+        slot = item->unk0C + MSG_ITEM_TEXT_FIRST + 1;
         entry = ((s32 *)table)[slot];
         word.raw = 0x000A875083207080;
         MenuText_SetPen(word);
@@ -3215,7 +3215,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         }
     }
     if ((D_00446DE8 & 0x4000) && D_004472DA != 0 && D_00426110[0] != NULL) {
-        if (D_00426110[0]->unk0C < 0x91 || D_00426110[0]->unk0C > 0x93) {
+        if (D_00426110[0]->unk0C < ITEM_ARROW || D_00426110[0]->unk0C > ITEM_WIDDAS_ARROW) {
             func_0019CDC0(0);
             D_0038CC50.bit6 = TRUE;
             D_0038CC50.unk20 = D_00426110[0]->unk0C;
@@ -3394,7 +3394,7 @@ static void Menu_UpdateCastSpell(s32 context) {
     }
     selected = D_005CE880[0];
     table = Message_GetFontText(D_00446F38);
-    slot = selected->unk0C + 0x385;
+    slot = selected->unk0C + MSG_MAGIC_TEXT_FIRST + 1;
     entry = ((s32 *)table)[slot];
     word.raw = 0x000A875082E07000;
     MenuText_SetPen(word);
@@ -3422,7 +3422,7 @@ static void Menu_UpdateCastSpell(s32 context) {
     *D2_CHCR = 0x100;
     DRAW_NODE_MODEL(&D_00426470, local, D_00446C78);
     if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
-        if (D_00413F80.unkB8 >= ((FxTableEntry *)D_005CE880[0]->unk00)->unkFC && D_00413F80.unkC0 >= 5000) {
+        if (D_00413F80.mp_now >= ((FxTableEntry *)D_005CE880[0]->unk00)->unkFC && D_00413F80.unkC0 >= 5000) {
             func_0019CDC0(0);
             D_0038CC50.unk28 = D_005CE880[0]->unk0C;
             D_004472C8 = 2;
@@ -3638,18 +3638,18 @@ static void Menu_UpdateEquip(void) {
     node.pool_node = &D_004472B8;
     node.unk20 = 1;
     node.unk00 = 0;
-    D_00446ACC = D_0041B9B8[D_00413F80.unk3C].unk7C;
-    if (D_0041B9B8[D_00413F80.unk3C].unk63 == 0) {
-        D_00446ACC += D_0041E118[D_00413F80.equipment[0]].unk3F;
+    D_00446ACC = weapon_defs[D_00413F80.weapon].unk7C;
+    if (weapon_defs[D_00413F80.weapon].unk63 == 0) {
+        D_00446ACC += worn_defs[D_00413F80.equipment[EQUIP_SHIELD]].unk3F;
     }
     PoolNode_Pose((RelocEntry *)D_005CEE60[D_00446ACC]->frames, D_0042A8F0, weapon_matrix, D_00446B5C);
     D_00446B5C++;
     D_00446B5C %= D_005CEE60[D_00446ACC]->frame_count;
     // match: a pointer-typed load, as in CURRENT_ITEM
     D_00446ACC = ((PlayerItemDef *)((MenuItemList *)D_005CE6B0.item)->item)->unk7D;
-    switch (D_0041B9B8[D_00413F80.unk3C].unk63) {
+    switch (weapon_defs[D_00413F80.weapon].unk63) {
     case 0:
-        D_00446ACC += D_00413F80.equipment[0] == 0;
+        D_00446ACC += D_00413F80.equipment[EQUIP_SHIELD] == ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
         break;
     case 1:
         D_00446ACC++;
@@ -3733,23 +3733,23 @@ static void Menu_UpdateEquip(void) {
     if (CURRENT_ITEM->group == 1) {
         definition = &D_00402DA8[CURRENT_ITEM->unk0C];
     } else {
-        definition = &D_004147F8[CURRENT_ITEM->unk0C];
+        definition = &item_name_defs[CURRENT_ITEM->unk0C];
     }
     if (D_00446AD4 != 0) {
         switch (CURRENT_ITEM->group) {
         case 0:
-            D_00446DF4 = (D_003679A0[index].unk00[0] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
-            D_00446DF8 = (D_003679A0[index].unk00[1] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
-            D_00446DFC = (D_003679A0[index].unk00[2] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
-            D_00446E00 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
-            D_00446E04 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
-            D_00446E08 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
-            D_00446E0C = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
-            D_00446E10 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
-            D_00446E14 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
-            D_00446E1C = (s32)(D_0041B9B8[index].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
+            D_00446DF8 = (D_003679A0[index].unk00[1] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
+            D_00446DFC = (D_003679A0[index].unk00[2] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
+            D_00446E00 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
+            D_00446E04 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
+            D_00446E08 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
+            D_00446E0C = weapon_defs[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
+            D_00446E10 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
+            D_00446E14 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
+            D_00446E1C = (s32)(weapon_defs[index].unk68 * 0.03281f * 10.0f);
             D_00446E20 = D_003679A0[index].level;
-            D_00446E18 = D_004147F8[CURRENT_ITEM->unk0C].unk3E;
+            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].unk3E;
             D_00446E24 = 100;
             D_00446E28 = D_00413FBC[EQUIP_LIST->group];
             if (D_004472C7 == 1) {
@@ -3762,7 +3762,7 @@ static void Menu_UpdateEquip(void) {
                 D_00446B50 = 0;
                 DRAW_PARTS(D_0044723C, D_00446A40, 0);
                 MenuText_SetColor(D_00446C80);
-                Menu_DrawEquipItemText(500);
+                Menu_DrawEquipItemText(MSG_ITEM_TEXT_FIRST);
             }
             parts = D_0044723C;
             count = D_00446A40;
@@ -3790,7 +3790,7 @@ static void Menu_UpdateEquip(void) {
                     D_00446B50 = 0;
                     DRAW_PARTS(D_00447244, D_00446A48, (index - 1) / 15);
                     MenuText_SetColor(D_00446C80);
-                    Menu_DrawEquipItemText(900);
+                    Menu_DrawEquipItemText(MSG_MAGIC_TEXT_FIRST);
                 }
                 parts = D_00447244;
                 count = D_00446A48;
@@ -3806,7 +3806,7 @@ static void Menu_UpdateEquip(void) {
                     D_00446B50 = 0;
                     DRAW_PARTS(D_00446C6C, D_00446AC0, (index + 1) / 15);
                     MenuText_SetColor(D_00446C80);
-                    Menu_DrawEquipItemText(900);
+                    Menu_DrawEquipItemText(MSG_MAGIC_TEXT_FIRST);
                 }
                 parts = D_00446C6C;
                 count = D_00446AC0;
@@ -3827,7 +3827,7 @@ static void Menu_UpdateEquip(void) {
                     SET_BLEND(0);
                 }
                 MenuText_SetColor(D_00446C80);
-                Menu_DrawEquipItemText(500);
+                Menu_DrawEquipItemText(MSG_ITEM_TEXT_FIRST);
             }
             parts = D_0044726C;
             count = D_00446A80;
@@ -3837,16 +3837,16 @@ static void Menu_UpdateEquip(void) {
         case 4:
         case 5:
         case 6:
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
-            D_00446E18 = D_004147F8[CURRENT_ITEM->unk0C].unk3E;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].unk3E;
             D_00446E1C = D_00413FBC[EQUIP_LIST->group];
             D_00446E20 = D_003682F0[index].level;
             D_00446E24 = 100;
@@ -3860,7 +3860,7 @@ static void Menu_UpdateEquip(void) {
                 }
                 DRAW_PARTS(D_00447240, D_00446A44, D_00446E1C);
                 MenuText_SetColor(D_00446C80);
-                Menu_DrawEquipItemText(500);
+                Menu_DrawEquipItemText(MSG_ITEM_TEXT_FIRST);
             }
             parts = D_00447240;
             count = D_00446A44;
@@ -3868,16 +3868,16 @@ static void Menu_UpdateEquip(void) {
         case 7:
         case 8:
         case 9:
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
-            D_00446E18 = D_004147F8[CURRENT_ITEM->unk0C].unk3E;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].unk3E;
             D_00446E1C = D_00413FBC[EQUIP_LIST->group];
             if (index != 130 && index != 140 && index != 150) {
                 if (D_00446B50 != 0) {
@@ -3889,7 +3889,7 @@ static void Menu_UpdateEquip(void) {
                 }
                 DRAW_PARTS(D_00447268, D_00446A7C, D_00446E1C);
                 MenuText_SetColor(D_00446C80);
-                Menu_DrawEquipItemText(500);
+                Menu_DrawEquipItemText(MSG_ITEM_TEXT_FIRST);
             }
             parts = D_00447268;
             count = D_00446A7C;
@@ -4009,10 +4009,10 @@ static void Menu_UpdateEquip(void) {
                 if ((*D_00420D60[10])->group == 1) {
                     listed = &D_00402DA8[(*D_00420D60[10])->unk0C];
                 } else {
-                    listed = &D_004147F8[(*D_00420D60[10])->unk0C];
+                    listed = &item_name_defs[(*D_00420D60[10])->unk0C];
                 }
             } else {
-                listed = &D_004147F8[(*D_00420D60[i])->unk0C];
+                listed = &item_name_defs[(*D_00420D60[i])->unk0C];
             }
             MenuText_SetPen(word);
             MenuText_SetColor(D_00446C80);
@@ -4026,47 +4026,47 @@ static void Menu_UpdateEquip(void) {
 
         if (*D_00420D60[EQUIP_LIST->group] != *D_00420D90[EQUIP_LIST->group]) {
             func_0019CDC0(0);
-            if (D_0041B9B8[D_00413F80.unk3C].unk63 == 2 && EQUIP_LIST->group == 0
-                && D_0041B9B8[index].unk63 != 2) {
+            if (weapon_defs[D_00413F80.weapon].unk63 == 2 && EQUIP_LIST->group == 0
+                && weapon_defs[index].unk63 != 2) {
 *D_00420D60[2] = D_00423650;
-D_00413F80.equipment[0] = 0;
+D_00413F80.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
 D_0042A8F0[20].part = NULL;
             }
-            (&D_00413F80.unk3C)[EQUIP_LIST->group] = index;
+            (&D_00413F80.weapon)[EQUIP_LIST->group] = index;
             *D_00420D60[EQUIP_LIST->group] = CURRENT_ITEM;
-            if (D_0041B9B8[D_00413F80.unk3C].unk63 != 0 && EQUIP_LIST->group == 0) {
+            if (weapon_defs[D_00413F80.weapon].unk63 != 0 && EQUIP_LIST->group == 0) {
 *D_00420D60[2] = D_00423650;
-D_00413F80.equipment[0] = 0;
+D_00413F80.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
 D_0042A8F0[20].part = NULL;
             }
-            if (D_0041B9B8[D_00413F80.unk3C].unk63 != 0 && EQUIP_LIST->group == 2) {
+            if (weapon_defs[D_00413F80.weapon].unk63 != 0 && EQUIP_LIST->group == 2) {
 *D_00420D60[0] = D_004231F0;
-D_00413F80.unk3C = 0;
+D_00413F80.weapon = 0;
 D_0042A8F0[15].part = NULL;
             }
             if (EQUIP_LIST->group == 10) {
                 if (CURRENT_ITEM->unk0C != 0) {
                     switch (CURRENT_ITEM->group) {
                     case 11:
-                        D_00413F80.unk48 = 1;
+                        D_00413F80.shortcut_type = 1;
                         break;
                     case 1:
-                        D_00413F80.unk48 = 2;
+                        D_00413F80.shortcut_type = 2;
                         break;
                     default:
-                        D_00413F80.unk48 = 0;
+                        D_00413F80.shortcut_type = 0;
                         break;
                     }
                 } else {
-                    D_00413F80.unk48 = 0;
+                    D_00413F80.shortcut_type = 0;
                 }
             }
             func_001BA310();
-            if (D_00413F80.unk58 < D_00413F80.unkB4) {
-                D_00413F80.unkB4 = D_00413F80.unk58;
+            if (D_00413F80.hp_max < D_00413F80.hp_now) {
+                D_00413F80.hp_now = D_00413F80.hp_max;
             }
-            if (D_00413F80.unkB8 > D_00413F80.unk5C) {
-                D_00413F80.unkB8 = D_00413F80.unk5C;
+            if (D_00413F80.mp_now > D_00413F80.mp_max) {
+                D_00413F80.mp_now = D_00413F80.mp_max;
             }
             if (CURRENT_ITEM->group != 1 && CURRENT_ITEM->group != 11) {
                 Menu_SetWornModelNames();
@@ -4353,9 +4353,9 @@ static void Menu_UpdateKeyItems(void) {
             sceVu0TransMatrix((f32 *)&D_0042A8F0[31], view, positions.position[i]);
             PoolSlot_Draw((RenderSlot *)&D_0042A8F0[31], slot_arg); // match: slot_arg is never set
             number = &numbers.number[D_00421050[i + D_00446BB8 * 3]];
-            if (D_00369830[*number] != 0) {
+            if (item_counts[*number] != 0) {
                 KeyItemNameWords words = key_item_name_words;
-                LevelDef *def = &D_004147F8[*number];
+                LevelDef *def = &item_name_defs[*number];
 
                 MenuText_SetColor(D_00446C78);
                 MenuText_SetPen(words.word[i]);
@@ -4462,7 +4462,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
             D_00446BC0 += LIST_PAGES + 1; // match: two statements; one expression computes the sum in another register
             D_00446BC0 %= LIST_PAGES;
             counter++; // match: counted before the test, so it sits in the branch's delay slot
-            if (D_0034C4E0[D_00446BC0] != 0) {
+            if (recollection_pages[D_00446BC0] != 0) {
                 break;
             }
         } while (counter < LIST_PAGES);
@@ -4479,7 +4479,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
             D_00446BC0 += LIST_PAGES - 1;
             D_00446BC0 %= LIST_PAGES;
             counter++; // match: counted before the test, so it sits in the branch's delay slot
-            if (D_0034C4E0[D_00446BC0] != 0) {
+            if (recollection_pages[D_00446BC0] != 0) {
                 break;
             }
         } while (counter < LIST_PAGES);
@@ -4493,14 +4493,14 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         D_00446BC4 = D_00446BC0;
     }
 
-    /* the entries the page has: one bit each in its row of D_0034C350, from bit 3 on */
+    /* the entries the page has: one bit each in its row of recollection_flags, from bit 3 on */
     for (i = 0; i < LIST_PAGES; i++) {
         rows[i] = -1;
     }
     row_count = 0;
     counter = 3;
     for (i = 3; i < LIST_PAGES - 1; i++) {
-        if ((D_0034C350[D_00446BC0][i / 8] >> counter) & 1) {
+        if ((recollection_flags[D_00446BC0][i / 8] >> counter) & 1) {
             rows[row_count] = i;
             row_count++;
         }
@@ -4588,7 +4588,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     }
 
     table = Message_GetFontText(D_00446F38);
-    first_text = D_00446BC0 * LIST_PAGES + 3001;
+    first_text = D_00446BC0 * LIST_PAGES + MSG_RECOLLECTION_FIRST + 1;
     entry = GetListTextOffset(table, first_text + LIST_PAGES - 1);
     word.raw = 0x000A875081106E80;
     MenuText_SetPen(word);
@@ -4597,7 +4597,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         MenuText_SetColor(D_00446C78);
         MenuText_DrawLineCentered((u16 *)text, 0x17);
     }
-    entry = GetListTextOffset(table, first_text + D_0034C4E0[D_00446BC0] - 1);
+    entry = GetListTextOffset(table, first_text + recollection_pages[D_00446BC0] - 1);
     word.raw = 0x000A875083106FE0;
     MenuText_SetPen(word);
     if (entry != 0) {
@@ -4643,7 +4643,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     if ((D_00446DE8 & 0x4000) && D_004472CA == 1 && D_004472DA != 0) {
         func_0019CDC0(0);
         D_00446B20 = (void *)Menu_UpdateRecollectionPage;
-        context->unk04 = D_00446BC0 * LIST_PAGES + rows[D_004472D8] + 3000;
+        context->unk04 = D_00446BC0 * LIST_PAGES + rows[D_004472D8] + MSG_RECOLLECTION_FIRST;
         D_004472DA = 0;
     } else if ((D_00446DE8 & 0x2000) && D_004472CA == 1 && D_004472DA != 0) {
         func_0019CDC0(2);
@@ -4775,14 +4775,14 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     }
     table = Message_GetFontText(D_00446F38);
     word.raw = 0x000A875081106E80;
-    number = page * 50 + 3001;
+    number = page * 50 + MSG_RECOLLECTION_FIRST + 1;
     entry = GetPageTextOffset(table, number + 49);
     MenuText_SetPen(word);
     if (entry != 0) {
         MenuText_DrawLineCentered((u16 *)(table + entry), 0x17);
     }
     word.raw = 0x000A875083106FE0;
-    entry = GetPageTextOffset(table, number + D_0034C4E0[page] - 1);
+    entry = GetPageTextOffset(table, number + recollection_pages[page] - 1);
     MenuText_SetPen(word);
     if (entry != 0) {
         MenuText_DrawWrappedLong((u16 *)(table + entry), 0x33);
@@ -4852,40 +4852,40 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
         {
             // match: the value read first is used only to set the bit; the test and the clearing read the field again
-            u8 state = D_004147F8[selected->unk0C].state;
-            D_004147F8[selected->unk0C].state =
-                (D_004147F8[selected->unk0C].state & 1) ? D_004147F8[selected->unk0C].state & ~1 : state | 1;
+            u8 state = item_name_defs[selected->unk0C].state;
+            item_name_defs[selected->unk0C].state =
+                (item_name_defs[selected->unk0C].state & 1) ? item_name_defs[selected->unk0C].state & ~1 : state | 1;
         }
         func_0019CDC0(0);
         number = selected->unk0C;
-        if (number == D_00413F80.unk3C + 150) {
-            D_00413F80.unk3C = 0;
-        } else if (number == D_00413F80.equipment[0] + 220) {
-            D_00413F80.equipment[0] = 0;
-        } else if (number == D_00413F80.equipment[2] + 220) {
-            D_00413F80.equipment[2] = 55;
-        } else if (number == D_00413F80.equipment[1] + 220) {
-            D_00413F80.equipment[1] = 30;
-        } else if (number == D_00413F80.equipment[3] + 220) {
-            D_00413F80.equipment[3] = 80;
-        } else if (number == D_00413F80.equipment[4] + 220) {
-            D_00413F80.equipment[4] = 105;
-        } else if (number == D_00413F80.equipment[5] + 220) {
-            D_00413F80.equipment[5] = 130;
-        } else if (number == D_00413F80.equipment[6] + 220) {
-            D_00413F80.equipment[6] = 140;
-        } else if (number == D_00413F80.equipment[7] + 220) {
-            D_00413F80.equipment[7] = 150;
-        } else if (number == D_00413F80.unk46) {
-            D_00413F80.unk48 = 0;
-            D_00413F80.unk46 = 0;
+        if (number == D_00413F80.weapon + ITEM_WEAPON_FIRST) {
+            D_00413F80.weapon = 0;
+        } else if (number == D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST) {
+            D_00413F80.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
+        } else if (number == D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST) {
+            D_00413F80.equipment[EQUIP_ARMOR] = ITEM_WORN_INDEX(ITEM_ARMOR_NONE);
+        } else if (number == D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST) {
+            D_00413F80.equipment[EQUIP_HELM] = ITEM_WORN_INDEX(ITEM_HELM_NONE);
+        } else if (number == D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST) {
+            D_00413F80.equipment[EQUIP_GAUNTLET] = ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE);
+        } else if (number == D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST) {
+            D_00413F80.equipment[EQUIP_BOOT] = ITEM_WORN_INDEX(ITEM_BOOT_NONE);
+        } else if (number == D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST) {
+            D_00413F80.equipment[EQUIP_RING] = ITEM_WORN_INDEX(ITEM_RING_NONE);
+        } else if (number == D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST) {
+            D_00413F80.equipment[EQUIP_BRACELET] = ITEM_WORN_INDEX(ITEM_BRACELET_NONE);
+        } else if (number == D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST) {
+            D_00413F80.equipment[EQUIP_AMULET] = ITEM_WORN_INDEX(ITEM_AMULET_NONE);
+        } else if (number == D_00413F80.shortcut) {
+            D_00413F80.shortcut_type = 0;
+            D_00413F80.shortcut = 0;
         }
         func_001BA310();
-        if (D_00413F80.unk58 < D_00413F80.unkB4) {
-            D_00413F80.unkB4 = D_00413F80.unk58;
+        if (D_00413F80.hp_max < D_00413F80.hp_now) {
+            D_00413F80.hp_now = D_00413F80.hp_max;
         }
-        if (D_00413F80.unkB8 > D_00413F80.unk5C) {
-            D_00413F80.unkB8 = D_00413F80.unk5C;
+        if (D_00413F80.mp_now > D_00413F80.mp_max) {
+            D_00413F80.mp_now = D_00413F80.mp_max;
         }
     }
     if (D_004472CB == 2) {
@@ -4896,7 +4896,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
 
     record = D_005CE850[0]->unk0C - bases.first_item[D_005CE850[0]->group];
-    D_00446DF4 = D_00369830[D_005CE850[0]->unk0C];
+    D_00446DF4 = item_counts[D_005CE850[0]->unk0C];
     if (D_005CE850[0]->group == 0) {
         D_00446E30 = D_003679A0[record].unk14 + 1;
     }
@@ -4912,7 +4912,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
 
     for (i = 0; i < 7; i++, item = item->prev) {
-        if (D_004147F8[item->unk0C].state & 1) {
+        if (item_name_defs[item->unk0C].state & 1) {
             worn_mask |= 1 << worn_bit;
         }
         worn_bit++;
@@ -4947,7 +4947,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         D_00447218 = node;
     }
     for (row = 0; row < 7; row++, node = node->prev) {
-        def = &D_004147F8[node->unk0C];
+        def = &item_name_defs[node->unk0C];
         MenuText_SetPen(position);
         MenuText_SetColor(D_00446C78);
         MenuText_DrawLine((u16 *)def, 0x1A);
@@ -4965,7 +4965,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
     texts = Message_GetFontText(D_00446F38);
     position.raw = 0x000A875083207080;
-    text_index = node->unk0C + 0x1F5;
+    text_index = node->unk0C + MSG_ITEM_TEXT_FIRST + 1;
     text_offset = ((s32 *)texts)[text_index];
     MenuText_SetPen(position);
     if (text_offset != 0) {
@@ -5019,18 +5019,18 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         case 4:
         case 5:
         case 6:
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[0] + D_0041E118[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[1] + D_0041E118[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_003682F0[record].unk00[2] + D_0041E118[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041E118[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041E118[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041E118[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041E118[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041E118[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E18 = ScaleValue(D_0041E118[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
+            D_00446E00 = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
+            D_00446E18 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
             D_00446E24 = D_003682F0[record].level;
             D_00446E28 = 100;
-            D_00446E1C = D_004147F8[D_005CE850[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].unk3E;
             if (D_004472CC == 1) {
                 FILL_FADE(D_00425910, D_00447274, D_00446A88)
             }
@@ -5041,16 +5041,16 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         case 7:
         case 8:
         case 9:
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[0] + D_0041E118[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[1] + D_0041E118[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_003682F0[record].unk00[2] + D_0041E118[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041E118[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041E118[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041E118[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041E118[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041E118[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E18 = ScaleValue(D_0041E118[record].unk00[8], D_003682F0[record].level, 100);
-            D_00446E1C = D_004147F8[D_005CE850[0]->unk0C].unk3E;
+            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
+            D_00446E00 = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
+            D_00446E18 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].unk3E;
             if (D_004472CC == 1) {
                 FILL_FADE(D_00425910, D_00447278, D_00446A8C)
             }
@@ -5059,18 +5059,18 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             count = D_00446A8C;
             break;
         case 0:
-            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[0] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003679A0[record].unk00[1] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
-            D_00446E00 = ScaleValue(D_003679A0[record].unk00[2] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
-            D_00446E18 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
-            D_00446E20 = (s32)(D_0041B9B8[record].unk68 * 0.03281f * 10.0f);
+            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[0] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003679A0[record].unk00[1] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
+            D_00446E00 = ScaleValue(D_003679A0[record].unk00[2] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
+            D_00446E04 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
+            D_00446E08 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
+            D_00446E0C = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
+            D_00446E10 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
+            D_00446E14 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
+            D_00446E18 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
+            D_00446E20 = (s32)(weapon_defs[record].unk68 * 0.03281f * 10.0f);
             D_00446E24 = D_003679A0[record].level;
-            D_00446E1C = D_004147F8[D_005CE850[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].unk3E;
             D_00446E28 = D_00413FBC[D_005CE850[0]->group];
             D_00446E2C = 100;
             if (D_004472CC == 1) {
@@ -7089,7 +7089,7 @@ static void Menu_WaitForCancel(void) {
     }
 }
 
-/* Draws text `index` + the cursor item's number + 1 of the font's text table, if there is one. Returns what the
+/* Draws message `index` + the cursor item's number (MSG_ITEM_TEXT_FIRST or MSG_MAGIC_TEXT_FIRST) of the font's text table, if there is one. Returns what the
    text drawer returns, nothing without a text. */
 static int Menu_DrawEquipItemText(s32 index) {
     DataNode *node;
@@ -7170,11 +7170,11 @@ static void Menu_SetItemListModelNames(void) {
     } else {
         forward = backward = D_00446C40;
     }
-    sprintf(D_00426498, "menu/select2/i%04d.mod", D_004147F8[D_00426110[0]->unk0C].file_number);
-    sprintf(D_00426538, "menu/select2/i%04d.mod", D_004147F8[D_00426110[0]->prev->unk0C].file_number);
-    sprintf(D_004264E8, "menu/select2/i%04d.mod", D_004147F8[D_00426110[0]->next->unk0C].file_number);
-    sprintf(D_00426588, "menu/select2/i%04d.mod", D_004147F8[forward->unk0C].file_number);
-    sprintf(D_004265D8, "menu/select2/i%04d.mod", D_004147F8[backward->unk0C].file_number);
+    sprintf(D_00426498, "menu/select2/i%04d.mod", item_name_defs[D_00426110[0]->unk0C].file_number);
+    sprintf(D_00426538, "menu/select2/i%04d.mod", item_name_defs[D_00426110[0]->prev->unk0C].file_number);
+    sprintf(D_004264E8, "menu/select2/i%04d.mod", item_name_defs[D_00426110[0]->next->unk0C].file_number);
+    sprintf(D_00426588, "menu/select2/i%04d.mod", item_name_defs[forward->unk0C].file_number);
+    sprintf(D_004265D8, "menu/select2/i%04d.mod", item_name_defs[backward->unk0C].file_number);
 }
 
 /* A list cursor went on one row: the model shown moves to node 2, node 1's becomes the one shown, nodes 1, 3

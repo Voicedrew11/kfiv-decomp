@@ -1,6 +1,6 @@
 #include "kf_player.h"
 
-extern u8 D_00369830[380];
+extern u8 item_counts[380];
 extern LevelRecord D_003679A0[70];
 extern LevelRecord D_003682F0[160];
 
@@ -10,7 +10,7 @@ char *strrchr(const char *, int);
 
 /* ini/NNNN.ini, key "item_NNN=count,level,time": how many of item NNN the player has; for a weapon (150 to 219)
    also its level (50 to 100) and unk16/unk14, for 220 and up its level. */
-void func_00207D68(char *text) {
+void Ini_SetItem(char *text) {
     int item;
     int index;
     int number;
@@ -19,7 +19,7 @@ void func_00207D68(char *text) {
 
     if ((u32)((u8)text[-4] - '0') < 10 && text[-3] >= '0' && text[-3] <= '9' && text[-2] >= '0' && text[-2] <= '9') {
         item = atoi(text - 4);
-        D_00369830[item] = atoi(text); // match: item can be 0 to 999 here; the table has 380 entries
+        item_counts[item] = atoi(text); // match: item can be 0 to 999 here; the table has 380 entries
         index = item - 150;
         if ((u32)index < 70) {
             comma = strchr(text, ',');

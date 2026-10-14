@@ -47,7 +47,7 @@ void func_00117CC8(void);
 void func_00112BD0(void);
 void func_00123288(void);
 void func_001C95B0(void);
-void func_001BC2D0(void);
+void Player_UseItem(void);
 void func_00101618(void);
 void func_0019C540(void);
 void func_001061E8(void);
@@ -126,7 +126,7 @@ void func_001001C0(int arg) {
         Entity_UpdateAll();
         func_001C95B0();
         Gold_Update();
-        func_001BC2D0();
+        Player_UseItem();
         Player_UpdateWeaponAim();
         Effect_UpdateAll();
         LinkedPoint_UpdateFollows();

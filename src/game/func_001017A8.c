@@ -13,8 +13,8 @@ extern GameStatus D_0038CC50;
 extern MapLoadState D_0038D610;
 extern PlayerState D_00413F80;
 extern PlayerState D_00414280;
-extern TriggerTypeDef D_0041A6F8[];
-extern PlayerItemDef D_0041B9B8[];
+extern ItemCommonDef D_0041A6F8[];
+extern PlayerItemDef weapon_defs[];
 extern int D_00446F78;
 
 int func_0019F6B0(void);
@@ -46,7 +46,7 @@ void func_001017A8(void) {
     int load_held;
     PlayerItemDef *item_def;
 
-    if (!D_0038CC50.bit2 && !D_0038CC50.bit3 && !D_0038CC50.bit4 && !D_0038CC50.bit5 && !D_0038CC50.bit8 &&
+    if (!D_0038CC50.bit2 && !D_0038CC50.bit3 && !D_0038CC50.bit4 && !D_0038CC50.save_requested && !D_0038CC50.bit8 &&
         !D_0038CC50.bit14) {
         return;
     }
@@ -106,12 +106,12 @@ void func_001017A8(void) {
         Smith_Run();
         func_001095E0();
         func_001095E0();
-    } else if (D_0038CC50.bit5 && D_0038CC50.unk00 != 0) {
+    } else if (D_0038CC50.save_requested && D_0038CC50.unk00 != 0) {
         if (!faded_out) {
             faded_out = TRUE;
             func_00101CE0();
         }
-        D_0038CC50.bit5 = FALSE;
+        D_0038CC50.save_requested = FALSE;
         SaveScreen_Run();
         func_001095E0();
         func_001095E0();
@@ -134,23 +134,23 @@ void func_001017A8(void) {
             Player_CastMagic(D_0038CC50.unk28);
             D_0038CC50.unk28 = 0;
         }
-        if (D_00413F80.unk3C != D_00414280.unk3C) {
+        if (D_00413F80.weapon != D_00414280.weapon) {
             D_00413F80.unkBC = 0;
         }
-        if (D_00413F80.unk3D != 0 && D_00414280.unk3D != D_00413F80.unk3D) {
-            D_00413F80.unk264 = D_00413F80.unk3D;
+        if (D_00413F80.equipped_magic != 0 && D_00414280.equipped_magic != D_00413F80.equipped_magic) {
+            D_00413F80.unk264 = D_00413F80.equipped_magic;
             D_00413F80.unkC0 = 0;
-        } else if (D_00413F80.unk48 == 2 &&
-                   (D_00414280.unk48 != D_00413F80.unk48 || D_00413F80.unk46 != D_00414280.unk46)) {
+        } else if (D_00413F80.shortcut_type == 2 &&
+                   (D_00414280.shortcut_type != D_00413F80.shortcut_type || D_00413F80.shortcut != D_00414280.shortcut)) {
             D_00413F80.unkC0 = 0;
-            D_00413F80.unk264 = D_00413F80.unk46;
-        } else if (D_00413F80.unk3C != D_00414280.unk3C) {
-            item_def = &D_0041B9B8[D_00413F80.unk3C];
+            D_00413F80.unk264 = D_00413F80.shortcut;
+        } else if (D_00413F80.weapon != D_00414280.weapon) {
+            item_def = &weapon_defs[D_00413F80.weapon];
             if (item_def->unk63 != 2) {
                 if (item_def->unk42 != 0xFFFF) {
                     D_00413F80.unkC0 = 0;
                     D_00413F80.unk264 = item_def->unk42;
-                } else if (item_def->unk52 != 0xFFFF && D_003679A0[D_00413F80.unk3C].unk14 + 1 == 3) {
+                } else if (item_def->unk52 != 0xFFFF && D_003679A0[D_00413F80.weapon].unk14 + 1 == 3) {
                     D_00413F80.unkC0 = 0;
                     D_00413F80.unk264 = item_def->unk52;
                 }

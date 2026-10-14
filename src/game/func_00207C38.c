@@ -4,14 +4,15 @@ extern PlayerState D_00413F80;
 
 int atoi(const char *);
 
-/* ini/NNNN.ini, key "equip_ring=": item 36 plus the number, or the empty slot 130 when it is negative. */
-void func_00207C38(char *text) {
+/* ini/NNNN.ini, key "equip_ring=": the number is the item; the slot holds it less ITEM_WORN_FIRST (adding
+   0x100 - ITEM_WORN_FIRST to a byte), or the group's "None" when it is negative. */
+void Ini_SetEquipRing(char *text) {
     int number = atoi(text);
     PlayerState *player = &D_00413F80;
 
     if (number >= 0) {
-        player->equipment[5] = number + 36;
+        player->equipment[EQUIP_RING] = number + (0x100 - ITEM_WORN_FIRST);
     } else {
-        player->equipment[5] = 130;
+        player->equipment[EQUIP_RING] = ITEM_WORN_INDEX(ITEM_RING_NONE);
     }
 }

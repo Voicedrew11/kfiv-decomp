@@ -9,13 +9,14 @@
 #include "kf_entity.h"
 #include "libvu0.h"
 #include "kf_menu_screens.h"
+#include "kf_message.h"
 
 extern u8 D_00349680[0x10];             /* the options (func_00102930 sets their defaults) */
 extern u8 D_00349690[0x2000];
 extern u8 D_0034B690[0x40];
 extern u8 D_0034B6D0[0xC80];
-extern AreaFlagBits D_0034C350[50];     /* 400 flags per area, numbered 3000 + 50 * area */
-extern u8 D_0034C4E0[50];               /* nonzero: the area has a flag set */
+extern RecollectionFlags recollection_flags[50];     /* per Recollection page: which messages were heard */
+extern u8 recollection_pages[50];               /* per Recollection page: 0 not met yet, else which description it shows */
 extern u8 D_0034C518[0x400];
 extern u8 D_0034C918[0x10];             /* 128 flags, one bit each */
 extern u8 D_0034C928[0x8000];           /* four flag bits per nibble, 0x100 bytes per map */
@@ -28,7 +29,7 @@ extern u16 spell_experience[6][5];
 extern u8 spell_levels[6][5];
 extern LevelRecord D_003679A0[70];
 extern LevelRecord D_003682F0[160];
-extern DefinitionByteSet D_00369830;
+extern DefinitionByteSet item_counts;
 extern DefinitionByteSet D_003699B0;
 extern DefinitionByteSet D_00369B30;
 extern DefinitionByteSet D_00369CB0;
@@ -43,8 +44,8 @@ extern const DefinitionByteSet D_0043DCB0;
 extern const DefinitionByteSet D_0043DE30;
 extern const DefinitionByteSet D_0043DFB0;
 extern PlayerState D_00413F80;
-extern GameDefinition D_004147F8[380];
-extern TriggerTypeDef D_0041A6F8[150];
+extern GameDefinition item_name_defs[380];
+extern ItemCommonDef D_0041A6F8[150];
 extern u8 D_00421050[0x30];
 extern s16 D_0044692C, D_0044692E, D_00446930, D_00446932, D_00446934, D_00446936, D_00446938;
 extern s16 D_0044693A, D_0044693C, D_0044693E, D_00446940, D_00446942, D_00446944, D_00446946;
@@ -127,9 +128,9 @@ void func_001029A8(void) {
     memset(D_00349690, 0, sizeof(D_00349690));
     memset(D_0034B690, 0, sizeof(D_0034B690));
     memset(D_0034B6D0, 0, sizeof(D_0034B6D0));
-    memset(D_0034C350, 0, sizeof(D_0034C350));
-    memset(D_0034C4E0, 0, sizeof(D_0034C4E0));
-    D_0034C4E0[0] = 1;
+    memset(recollection_flags, 0, sizeof(recollection_flags));
+    memset(recollection_pages, 0, sizeof(recollection_pages));
+    recollection_pages[0] = 1;
     memset(D_0034C518, 0, sizeof(D_0034C518));
     memset(D_0034C918, 0, sizeof(D_0034C918));
     memset(D_0034C928, 0, sizeof(D_0034C928));
@@ -147,12 +148,12 @@ void func_001029A8(void) {
     memset(D_003679A0, 0, sizeof(D_003679A0));
     memset(D_003682F0, 0, sizeof(D_003682F0));
     for (i = 0; i < 70; i++) {
-        D_003679A0[i].level = D_004147F8[150 + i].unk3C;
+        D_003679A0[i].level = item_name_defs[ITEM_WEAPON_FIRST + i].unk3C;
     }
     for (i = 0; i < 160; i++) {
-        D_003682F0[i].level = D_004147F8[220 + i].unk3C;
+        D_003682F0[i].level = item_name_defs[ITEM_WORN_FIRST + i].unk3C;
     }
-    memset(&D_00369830, 0, sizeof(D_00369830));
+    memset(&item_counts, 0, sizeof(item_counts));
     D_003699B0 = D_0043D9B0;
     D_00369B30 = D_0043DB30;
     D_00369CB0 = D_0043DCB0;
@@ -170,58 +171,58 @@ void func_001030B8(void) {
     int j;
     int level;
 
-    if (D_00413F80.unk3C != 0) {
-        D_00369830.bytes[D_00413F80.unk3C + 150] = 1;
+    if (D_00413F80.weapon != 0) {
+        item_counts.bytes[D_00413F80.weapon + ITEM_WEAPON_FIRST] = 1;
     }
-    if (D_00413F80.equipment[0] != 0) {
-        D_00369830.bytes[D_00413F80.equipment[0] + 220] = 1;
+    if (D_00413F80.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
+        item_counts.bytes[D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[1] != 30) {
-        D_00369830.bytes[D_00413F80.equipment[1] + 220] = 1;
+    if (D_00413F80.equipment[EQUIP_HELM] != ITEM_WORN_INDEX(ITEM_HELM_NONE)) {
+        item_counts.bytes[D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[2] != 55) {
-        D_00369830.bytes[D_00413F80.equipment[2] + 220] = 1;
+    if (D_00413F80.equipment[EQUIP_ARMOR] != ITEM_WORN_INDEX(ITEM_ARMOR_NONE)) {
+        item_counts.bytes[D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[3] != 80) {
-        D_00369830.bytes[D_00413F80.equipment[3] + 220] = 1;
+    if (D_00413F80.equipment[EQUIP_GAUNTLET] != ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE)) {
+        item_counts.bytes[D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[4] != 105) {
-        D_00369830.bytes[D_00413F80.equipment[4] + 220] = 1;
+    if (D_00413F80.equipment[EQUIP_BOOT] != ITEM_WORN_INDEX(ITEM_BOOT_NONE)) {
+        item_counts.bytes[D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[5] != 130) {
-        D_00369830.bytes[D_00413F80.equipment[5] + 220] = 1;
+    if (D_00413F80.equipment[EQUIP_RING] != ITEM_WORN_INDEX(ITEM_RING_NONE)) {
+        item_counts.bytes[D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[6] != 140) {
-        D_00369830.bytes[D_00413F80.equipment[6] + 220] = 1;
+    if (D_00413F80.equipment[EQUIP_BRACELET] != ITEM_WORN_INDEX(ITEM_BRACELET_NONE)) {
+        item_counts.bytes[D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[7] != 150) {
-        D_00369830.bytes[D_00413F80.equipment[7] + 220] = 1;
+    if (D_00413F80.equipment[EQUIP_AMULET] != ITEM_WORN_INDEX(ITEM_AMULET_NONE)) {
+        item_counts.bytes[D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST] = 1;
     }
-    for (i = 0; i < 150; i++) {
-        if (D_00369830.bytes[i] >= 2 && (D_0041A6F8[i].flags >> 1 & 1)) {
-            D_00369830.bytes[i] = 1;
+    for (i = 0; i < ITEM_WEAPON_FIRST; i++) {
+        if (item_counts.bytes[i] >= 2 && (D_0041A6F8[i].flags >> 1 & 1)) {
+            item_counts.bytes[i] = 1;
         }
     }
-    for (i = 150; i < 220; i++) {
-        if (D_00369830.bytes[i] >= 2) {
-            D_00369830.bytes[i] = 1;
+    for (i = ITEM_WEAPON_FIRST; i < ITEM_WORN_FIRST; i++) {
+        if (item_counts.bytes[i] >= 2) {
+            item_counts.bytes[i] = 1;
         }
     }
-    for (i = 220; i < 380; i++) {
-        if (D_00369830.bytes[i] >= 2) {
-            D_00369830.bytes[i] = 1;
+    for (i = ITEM_WORN_FIRST; i < ITEM_COUNT; i++) {
+        if (item_counts.bytes[i] >= 2) {
+            item_counts.bytes[i] = 1;
         }
     }
-    D_00369830.bytes[0] = 1;
-    D_00369830.bytes[150] = 1;
-    D_00369830.bytes[220] = 1;
-    D_00369830.bytes[250] = 1;
-    D_00369830.bytes[275] = 1;
-    D_00369830.bytes[300] = 1;
-    D_00369830.bytes[325] = 1;
-    D_00369830.bytes[350] = 1;
-    D_00369830.bytes[360] = 1;
-    D_00369830.bytes[370] = 1;
+    item_counts.bytes[0] = 1;
+    item_counts.bytes[ITEM_WEAPON_FIRST] = 1;
+    item_counts.bytes[ITEM_SHIELD_NONE] = 1;
+    item_counts.bytes[ITEM_HELM_NONE] = 1;
+    item_counts.bytes[ITEM_ARMOR_NONE] = 1;
+    item_counts.bytes[ITEM_GAUNTLET_NONE] = 1;
+    item_counts.bytes[ITEM_BOOT_NONE] = 1;
+    item_counts.bytes[ITEM_RING_NONE] = 1;
+    item_counts.bytes[ITEM_BRACELET_NONE] = 1;
+    item_counts.bytes[ITEM_AMULET_NONE] = 1;
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
             if (spell_levels[i][j] == 0) {
@@ -232,8 +233,8 @@ void func_001030B8(void) {
         }
     }
     // match: through an int; a bare byte compare is narrowed and gives bnez, not bgtz
-    if (D_00413F80.unk3D == 0 || (level = spell_levels[(D_00413F80.unk3D - 1) / 15][(D_00413F80.unk3D - 1) / 3 % 5]) <= 0) {
-        D_00413F80.unk3D = 0;
+    if (D_00413F80.equipped_magic == 0 || (level = spell_levels[(D_00413F80.equipped_magic - 1) / 15][(D_00413F80.equipped_magic - 1) / 3 % 5]) <= 0) {
+        D_00413F80.equipped_magic = 0;
     }
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
@@ -259,8 +260,8 @@ void func_001030B8(void) {
             }
         }
     }
-    D_00413F80.unkB4 = D_00413F80.unk20;
-    D_00413F80.unkB8 = D_00413F80.unk24;
+    D_00413F80.hp_now = D_00413F80.hp_base;
+    D_00413F80.mp_now = D_00413F80.mp_base;
 }
 
 /* one of the 128 flags in D_0034C918 */
@@ -380,56 +381,58 @@ static void func_00103778(int map, int entry, int bit, int value) {
     }
 }
 
-/* one of the area flags, numbered from 3000 */
-int func_001037F8(int flag) {
+/* TRUE once message `flag` of a Recollection page (an id from MSG_RECOLLECTION_FIRST) has been shown */
+int Game_IsMessageHeard(int flag) {
     int bit = flag % 50;
-    int area = (flag - 3000) / 50;
+    int page = (flag - MSG_RECOLLECTION_FIRST) / 50;
 
-    return (D_0034C350[area].bits[bit / 8] >> (bit % 8)) & 1;
+    return (recollection_flags[page].bits[bit / 8] >> (bit % 8)) & 1;
 }
 
-void func_00103858(int flag) {
-    int area;
+/* Marks message `flag` of a Recollection page as shown (Message_OpenBox shows it next, func_002150B0); ids
+   below 3 of the page pick its description, and marking a few ids marks the three after them too. */
+void Game_MarkMessageHeard(int flag) {
+    int page;
     u8 mask;
 
     if (flag == 0x138B) {
-        func_00103858(0x138C);
-        func_00103858(0x138D);
-        func_00103858(0x138E);
+        Game_MarkMessageHeard(0x138C);
+        Game_MarkMessageHeard(0x138D);
+        Game_MarkMessageHeard(0x138E);
         return;
     }
     if (flag == 0x13F0) {
-        func_00103858(0x13F1);
-        func_00103858(0x13F2);
-        func_00103858(0x13F3);
+        Game_MarkMessageHeard(0x13F1);
+        Game_MarkMessageHeard(0x13F2);
+        Game_MarkMessageHeard(0x13F3);
         return;
     }
     if (flag == 0x1421) {
-        func_00103858(0x1422);
-        func_00103858(0x1423);
-        func_00103858(0x1424);
+        Game_MarkMessageHeard(0x1422);
+        Game_MarkMessageHeard(0x1423);
+        Game_MarkMessageHeard(0x1424);
         return;
     }
-    area = (flag - 3000) / 50;
+    page = (flag - MSG_RECOLLECTION_FIRST) / 50;
     flag %= 50;
     mask = 1 << (flag % 8);
     if (flag < 3) {
-        D_0034C350[area].bits[0] = (D_0034C350[area].bits[0] & 0xF8) | mask;
+        recollection_flags[page].bits[0] = (recollection_flags[page].bits[0] & 0xF8) | mask;
     } else {
-        D_0034C350[area].bits[flag / 8] |= mask;
+        recollection_flags[page].bits[flag / 8] |= mask;
     }
-    if (D_0034C4E0[area] == 0) {
-        D_0034C4E0[area] = 1;
+    if (recollection_pages[page] == 0) {
+        recollection_pages[page] = 1;
     }
 }
 
-/* moves an area's flags to another area */
-void func_00103990(u32 source_area, u32 dest_area) {
-    if (source_area < 50 && dest_area < 50) {
-        D_0034C4E0[dest_area] = D_0034C4E0[source_area];
-        D_0034C350[dest_area] = D_0034C350[source_area];
-        memset(&D_0034C350[source_area], 0, sizeof(AreaFlagBits));
-        D_0034C4E0[source_area] = 0;
+/* moves a Recollection page's state to another page */
+void Game_MoveRecollectionPage(u32 source_page, u32 dest_page) {
+    if (source_page < 50 && dest_page < 50) {
+        recollection_pages[dest_page] = recollection_pages[source_page];
+        recollection_flags[dest_page] = recollection_flags[source_page];
+        memset(&recollection_flags[source_page], 0, sizeof(RecollectionFlags));
+        recollection_pages[source_page] = 0;
     }
 }
 
@@ -570,8 +573,8 @@ void func_00103C18(void) {
     memcpy(save_cursor, D_00349690 + 0x1680, copy_size); save_cursor += copy_size;
     memcpy(save_cursor, D_0034B690, 0x40); save_cursor += 0x40;
     memcpy(save_cursor, D_0034B6D0, 0xC80); save_cursor += 0xC80;
-    memcpy(save_cursor, D_0034C350, 0x190); save_cursor += 0x190;
-    memcpy(save_cursor, D_0034C4E0, 0x32); save_cursor += 0x32;
+    memcpy(save_cursor, recollection_flags, 0x190); save_cursor += 0x190;
+    memcpy(save_cursor, recollection_pages, 0x32); save_cursor += 0x32;
     memcpy(save_cursor, D_0034C518, 0x400); save_cursor += 0x400;
     memcpy(save_cursor, D_0034C918, 0x10); save_cursor += 0x10;
     memcpy(save_cursor, D_00367928, 0x14); save_cursor += 0x14;
@@ -599,7 +602,7 @@ void func_00103C18(void) {
     memcpy(save_cursor, spell_levels, 0x1E); save_cursor += 0x1E;
     memcpy(save_cursor, D_003679A0, 0x94C); save_cursor += 0x94C;
     memcpy(save_cursor, D_003682F0, 0x1540); save_cursor += 0x1540;
-    memcpy(save_cursor, &D_00369830, 0x17C); save_cursor += 0x17C;
+    memcpy(save_cursor, &item_counts, 0x17C); save_cursor += 0x17C;
     memcpy(save_cursor, &D_003699B0, 0x17C); save_cursor += 0x17C;
     memcpy(save_cursor, &D_00369B30, 0x17C); save_cursor += 0x17C;
     memcpy(save_cursor, &D_00369CB0, 0x17C); save_cursor += 0x17C;
@@ -628,7 +631,7 @@ void func_00103C18(void) {
     bit_byte = 0;
     mask = 1;
     for (i = 0; i < 380; i++) {
-        flags = ((GameDefinitionFlags *)D_004147F8)[i].flags >> 18;
+        flags = ((GameDefinitionFlags *)item_name_defs)[i].flags >> 18;
         if ((flags & 3) < 2 && (flags & 1)) {
             bit_byte |= mask;
         }
@@ -695,8 +698,8 @@ void func_00104EC8(void) {
     memcpy(D_00349690 + 0x1680, save_cursor, copy_size); save_cursor += copy_size;
     memcpy(D_0034B690, save_cursor, 0x40); save_cursor += 0x40;
     memcpy(D_0034B6D0, save_cursor, 0xC80); save_cursor += 0xC80;
-    memcpy(D_0034C350, save_cursor, 0x190); save_cursor += 0x190;
-    memcpy(D_0034C4E0, save_cursor, 0x32); save_cursor += 0x32;
+    memcpy(recollection_flags, save_cursor, 0x190); save_cursor += 0x190;
+    memcpy(recollection_pages, save_cursor, 0x32); save_cursor += 0x32;
     memcpy(D_0034C518, save_cursor, 0x400); save_cursor += 0x400;
     memcpy(D_0034C918, save_cursor, 0x10); save_cursor += 0x10;
     memcpy(D_00367928, save_cursor, 0x14); save_cursor += 0x14;
@@ -724,7 +727,7 @@ void func_00104EC8(void) {
     memcpy(spell_levels, save_cursor, 0x1E); save_cursor += 0x1E;
     memcpy(D_003679A0, save_cursor, 0x94C); save_cursor += 0x94C;
     memcpy(D_003682F0, save_cursor, 0x1540); save_cursor += 0x1540;
-    memcpy(&D_00369830, save_cursor, 0x17C); save_cursor += 0x17C;
+    memcpy(&item_counts, save_cursor, 0x17C); save_cursor += 0x17C;
     memcpy(&D_003699B0, save_cursor, 0x17C); save_cursor += 0x17C;
     memcpy(&D_00369B30, save_cursor, 0x17C); save_cursor += 0x17C;
     memcpy(&D_00369CB0, save_cursor, 0x17C); save_cursor += 0x17C;
@@ -756,12 +759,12 @@ void func_00104EC8(void) {
             memcpy(&flag_bits, save_cursor, 1);
             save_cursor++;
         }
-        flags = ((GameDefinitionFlags *)D_004147F8)[i].flags;
+        flags = ((GameDefinitionFlags *)item_name_defs)[i].flags;
         if (((flags >> 18) & 3) < 2) {
             if (flag_bits & 1) {
-                ((GameDefinitionFlags *)D_004147F8)[i].flags = (flags & 0xFFF3FFFF) | 0x40000;
+                ((GameDefinitionFlags *)item_name_defs)[i].flags = (flags & 0xFFF3FFFF) | 0x40000;
             } else {
-                ((GameDefinitionFlags *)D_004147F8)[i].flags = flags & 0xFFF3FFFF;
+                ((GameDefinitionFlags *)item_name_defs)[i].flags = flags & 0xFFF3FFFF;
             }
         }
     }

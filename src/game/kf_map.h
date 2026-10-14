@@ -424,30 +424,32 @@ typedef struct {
 
 #define TRIGGER_ITEM_RECORD_COUNT 5
 
-/* D_0041A6F8[]: 0x20-byte definitions whose first byte is a trigger type */
+/* D_0041A6F8[150]: param/item_cmn.prm, a row for each item below ITEM_WEAPON_FIRST; type says what using it
+   does (Player_UseItem): 0 heals (the Herb...), 1 and 5 are used on a map object, 2 on the map object the player
+   stands on (the wands), 3 are the keys, 6 the maps, 8 "Nothing happened" */
 typedef struct {
     u8 type;                        /* 0x00 */
     u16 unk01_0 : 4;                /* 0x01 */
-    u16 use_mode : 4;               /* using one: 0 takes it, 2 takes it and gives one of unk02 (func_001BC2D0) */
-    u16 unk02;                      /* 0x02 an item (D_00369830) */
-    u16 unk04;                      /* 0x04 added to PlayerState.unkB4 when a type 0 one is used */
-    u16 unk06;                      /* 0x06 added to PlayerState.unkB8 */
+    u16 use_mode : 4;               /* using one: 0 takes it, 2 takes it and gives one of unk02 (Player_UseItem) */
+    u16 unk02;                      /* 0x02 an item (item_counts) */
+    u16 hp_heal;                    /* 0x04 added to PlayerState.hp_now when a type 0 one is used */
+    u16 mp_heal;                    /* 0x06 added to PlayerState.mp_now */
     u16 unk08;                      /* 0x08 bit n set: starts PlayerState.timed_flags[n] for 60 frames */
     char pad0A[0x04];
     u16 flags;                      /* 0x0E bit 1 */
     char pad10[0x10];
-} TriggerTypeDef;
+} ItemCommonDef;
 
-/* TriggerTypeDef.flags as bit-fields, where retail reads the low byte alone (Menu_BuildItemRings) */
+/* ItemCommonDef.flags as bit-fields, where retail reads the low byte alone (Menu_BuildItemRings) */
 typedef struct {
     char pad00[0x0E];
     u8 unlisted : 1;                /* 0x0E set: the item is left out of the menu's list of things to use */
     u8 bit1 : 1;
     u8 bits2 : 6;
     char pad0F[0x11];
-} TriggerTypeDefBits;
+} ItemCommonDefBits;
 
-#define TRIGGER_TYPE_DEF_BITS(def) ((TriggerTypeDefBits *)(def))
+#define ITEM_COMMON_DEF_BITS(def) ((ItemCommonDefBits *)(def))
 
 /* D_005B6100[map slot][16]: a map actor (0x2C bytes); flags bit 2 is the map slot */
 typedef struct MapActor {

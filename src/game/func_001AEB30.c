@@ -20,7 +20,7 @@ void func_001AEB30(EffectActor *effect, EffectSlot *spawn_slot) {
     } else if (def->radius_half == 3) {
         // match: the table walk is two pointers stepped together; this loop form keeps retail's registers
         for (i = 0, param = &D_00402D50[1], key = &D_00402D50[0]; i < 7; key += 2, i++) {
-            if (D_00413F80.unk3C == *key && effect->effect_param == *param) {
+            if (D_00413F80.weapon == *key && effect->effect_param == *param) {
                 func_0019CE00(def->radius_half);
                 break;
             }

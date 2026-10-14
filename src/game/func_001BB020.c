@@ -1,22 +1,22 @@
 #include "kf_player.h"
 
 extern PlayerState D_00413F80;
-extern PlayerItemDef D_0041B9B8[];
-extern LevelRecordDef D_0041E118[];
+extern PlayerItemDef weapon_defs[];
+extern LevelRecordDef worn_defs[];
 
-/* Adds what wearing definition `index` gives (150 and up: the item in hand, 220 and up: the rest) to the player. */
+/* Adds what wearing item `index` gives (a weapon from ITEM_WEAPON_FIRST, the rest from ITEM_WORN_FIRST) to the player. */
 void func_001BB020(int index) {
     u8 *kinds;
     u8 *amounts;
     int i;
     u16 *rates;
 
-    if (index >= 220) {
-        kinds = D_0041E118[index - 220].bonus_kinds;
-        amounts = D_0041E118[index - 220].bonus_amounts;
+    if (index >= ITEM_WORN_FIRST) {
+        kinds = worn_defs[ITEM_WORN_INDEX(index)].bonus_kinds;
+        amounts = worn_defs[ITEM_WORN_INDEX(index)].bonus_amounts;
     } else {
-        kinds = D_0041B9B8[index - 150].bonus_kinds;
-        amounts = D_0041B9B8[index - 150].bonus_amounts;
+        kinds = weapon_defs[ITEM_WEAPON_INDEX(index)].bonus_kinds;
+        amounts = weapon_defs[ITEM_WEAPON_INDEX(index)].bonus_amounts;
     }
     for (i = 0; i < 2; i++) {
         switch (kinds[i]) {
@@ -45,18 +45,18 @@ void func_001BB020(int index) {
             D_00413F80.unk104 = amounts[i];
             break;
         case 9:
-            D_00413F80.unkAC += amounts[i];
+            D_00413F80.power += amounts[i];
             break;
         case 10:
-            D_00413F80.unkB0 += amounts[i];
+            D_00413F80.magic += amounts[i];
             break;
         case 0:
         case 11:
             break;
         }
     }
-    if (index >= 220) {
-        rates = D_0041E118[index - 220].unk12;
+    if (index >= ITEM_WORN_FIRST) {
+        rates = worn_defs[ITEM_WORN_INDEX(index)].unk12;
         D_00413F80.unkDC[0] += rates[0];
         D_00413F80.unkDC[1] += rates[1];
         D_00413F80.unkDC[2] += rates[2];
@@ -64,10 +64,10 @@ void func_001BB020(int index) {
         D_00413F80.unkDC[4] += rates[4];
         D_00413F80.unkDC[5] += rates[5];
     }
-    if (index == 0x15A) {
+    if (index == ITEM_DEMON_LEGS) {
         D_00413F80.unk108 = 1;
     }
-    if (index == 0x15F) {
+    if (index == ITEM_RING_OF_SIGHT) {
         D_00413F80.unk10C = 1;
     }
 }

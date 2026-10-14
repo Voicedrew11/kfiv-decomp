@@ -8,8 +8,10 @@ void func_001B4DF8(int idx, int amount) {
     LevelRecord *rec = &D_003682F0[idx];
     LevelDef *def = &D_00417EF8[idx];
 
-    if (rec->level >= 0x33 && idx != 0 && idx != 0x1E && idx != 0x37 && idx != 0x50 && idx != 0x69 &&
-        idx != 0x82 && idx != 0x8C && idx != 0x96) {
+    if (rec->level >= 0x33 && idx != ITEM_WORN_INDEX(ITEM_SHIELD_NONE) && idx != ITEM_WORN_INDEX(ITEM_HELM_NONE)
+        && idx != ITEM_WORN_INDEX(ITEM_ARMOR_NONE) && idx != ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE)
+        && idx != ITEM_WORN_INDEX(ITEM_BOOT_NONE) && idx != ITEM_WORN_INDEX(ITEM_RING_NONE)
+        && idx != ITEM_WORN_INDEX(ITEM_BRACELET_NONE) && idx != ITEM_WORN_INDEX(ITEM_AMULET_NONE)) {
         rec->exp += amount;
         while (rec->exp >= def->exp_per_level) {
             rec->exp -= def->exp_per_level;

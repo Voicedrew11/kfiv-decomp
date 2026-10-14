@@ -23,15 +23,15 @@ void func_001BAE88(void) {
     D_00413F80.unkDC[3] = 0;
     D_00413F80.unkDC[4] = 0;
     D_00413F80.unkDC[5] = 0;
-    func_001BB020(D_00413F80.unk3C + 150);
-    func_001BB020(D_00413F80.equipment[0] + 220);
-    func_001BB020(D_00413F80.equipment[1] + 220);
-    func_001BB020(D_00413F80.equipment[2] + 220);
-    func_001BB020(D_00413F80.equipment[3] + 220);
-    func_001BB020(D_00413F80.equipment[4] + 220);
-    func_001BB020(D_00413F80.equipment[5] + 220);
-    func_001BB020(D_00413F80.equipment[6] + 220);
-    func_001BB020(D_00413F80.equipment[7] + 220);
+    func_001BB020(D_00413F80.weapon + ITEM_WEAPON_FIRST);
+    func_001BB020(D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST);
+    func_001BB020(D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST);
+    func_001BB020(D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST);
+    func_001BB020(D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST);
+    func_001BB020(D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST);
+    func_001BB020(D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST);
+    func_001BB020(D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST);
+    func_001BB020(D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST);
     if (D_00413F80.unkF0 != 0) {
         D_00413F80.unkF0 = 150 / (s32)D_00413F80.unkF0;
         if (D_00413F80.unkF0 == 0) {

@@ -71,7 +71,7 @@ typedef struct {
     char exists;                    /* 0x00 */
     char damaged;                   /* 0x01 the list names the save but its file is gone, or writing it failed */
     char pad02[0x02];
-    int numbers[10];                /* 0x04 D_0038CC84[0] and nine words of the player state (SaveCard_FillSaveInfo) */
+    int numbers[10];                /* 0x04 GameStatus.save_area and nine words of the player state (SaveCard_FillSaveInfo) */
     char pad2C[0x14C];
     PlayTime play_time;             /* 0x178 */
 } SaveInfo;

@@ -82,7 +82,7 @@ typedef struct DataNode {
    Menu_UpdateSaveList reads it: what a save on the card says about itself */
 typedef struct {
     char pad00[0x04];
-    s32 unk04;                      /* 0x04 which line of the text table names it */
+    s32 unk04;                      /* 0x04 GameStatus.save_area: the message id of its area name, from 400 */
     s32 unk08;                      /* 0x08 unk08 to unk28: numbers put into the text (D_00446DF4...) */
     s32 unk0C;                      /* 0x0C */
     s32 unk10;                      /* 0x10 */

@@ -1,6 +1,6 @@
 #include "kf_player.h"
 
-extern PlayerItemDef D_0041B9B8[];
+extern PlayerItemDef weapon_defs[];
 extern LevelDef D_00416D78[];
 extern LevelRecord D_003679A0[];
 
@@ -11,7 +11,7 @@ void func_001B4B10(int idx, int amount) {
     LevelDef *def;
 
     if (idx != 0) {
-        item = &D_0041B9B8[idx];
+        item = &weapon_defs[idx];
         def = &D_00416D78[idx];
         rec = &D_003679A0[idx];
         if (item->unk63 < 2 && rec->level >= 0x33) {

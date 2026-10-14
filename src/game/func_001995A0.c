@@ -42,7 +42,7 @@ int func_001995A0(Entity *entity, int index, float yaw) {
     if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[7] == 0x9C) {
+    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         reach *= 0.5f;
     }
     window[0] = params->unk3D8[index].reach_min != 0 ? entity->radius + 100.0f + params->unk3D8[index].reach_min : 0.0f;

@@ -190,7 +190,7 @@ typedef struct {
     u8 unk6E;                       /* 0x6E a weapon hit's damage to a map object is multiplied by it when the object asks (func_001B3AC0) */
     u8 unk6F;                       /* 0x6F chance in percent that the hit counts double */
     u8 unk70;                       /* 0x70 chance in percent that the hit kills outright */
-    u8 unk71;                       /* 0x71 taken off PlayerState.unkB8 when the hit lands on the player (func_001B29C8) */
+    u8 unk71;                       /* 0x71 taken off PlayerState.mp_now when the hit lands on the player (func_001B29C8) */
     u16 unk72;                      /* 0x72 not 0: the hit does nothing to the player */
     u8 unk74;                       /* 0x74 set once the hit has landed on the player */
     char pad75[0x03];
@@ -335,7 +335,7 @@ typedef struct {
     u16 unk08;                      /* 0x08 Entity.unk34 before scaling */
     u16 unk0A;                      /* 0x0A what Entity.unk2C is measured against */
     u16 unk0C;                      /* 0x0C 0: Entity_InitFromMapSpawns makes it 70 */
-    u16 unk0E;                      /* 0x0E passed to func_001BBB60 when the entity dies */
+    u16 unk0E;                      /* 0x0E passed to Player_AddExperience when the entity dies */
     u16 flags;                      /* 0x10 */
     char pad12[0x02];
     u8 unk14[4];                    /* 0x14 weights of the four actions, scaled by Entity.unkBC */

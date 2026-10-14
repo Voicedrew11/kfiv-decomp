@@ -38,7 +38,7 @@ void Vu0_ProjectToScreen(int *, void *);
 extern char *D_00446F64;
 extern PlayerState D_00413F80;
 extern GameDefinition D_00416D78[70];
-extern PlayerItemDef D_0041B9B8[];
+extern PlayerItemDef weapon_defs[];
 extern f32 D_00414740[4];
 extern MapSlotUnk10Half D_004145E0[2];
 extern MapSlotUnk0C D_0038A250;
@@ -111,21 +111,21 @@ void HeldWeapon_Init(void) {
     Player_LoadArmModels();
 }
 
-/* Loads the model of the item the player holds (PlayerState.unk3C) and of the arm that holds it
+/* Loads the model of the item the player holds (PlayerState.weapon) and of the arm that holds it
    (unk41) when either changed: reads the item_arm file, copies it to its own buffer and sets up
    the model, its motions and its textures from the parts the file has. */
 void Player_LoadArmModels(void) {
     char path[0x100];
     int data;
     int buffer;
-    GameDefinition *item = &D_00416D78[D_00413F80.unk3C];
-    GameDefinition *arm = &D_00416D78[D_00413F80.equipment[3] + 70];
+    GameDefinition *item = &D_00416D78[D_00413F80.weapon];
+    GameDefinition *arm = &D_00416D78[D_00413F80.equipment[EQUIP_GAUNTLET] + 70];
     PlayerArmFile *file;
     s32 size;
     s32 handle;
 
-    if (D_00446974 != D_00413F80.unk3C) {
-        D_00446974 = D_00413F80.unk3C;
+    if (D_00446974 != D_00413F80.weapon) {
+        D_00446974 = D_00413F80.weapon;
         if (D_00413F80.unk258 != 0) {
             D_00413F80.unk258 = 0;
             Effect_FreePlayerWeaponKinds();
@@ -170,15 +170,15 @@ void Player_LoadArmModels(void) {
         D_0057B6A0.unk148 = (s32)D_004145E0;
         D_0057B6A0.unk14C = &D_0038A250;
         MODEL_CHANNEL(&D_0057B6A0)->unk8F = 0x80;
-        func_001A1160(D_00413F80.unk3C);
+        func_001A1160(D_00413F80.weapon);
         WeaponTrail_Reset();
         WeaponTrail_SetMinLife(3);
-        D_00414740[0] = D_0041B9B8[D_00413F80.unk3C].unk87;
-        D_00414740[1] = D_0041B9B8[D_00413F80.unk3C].unk88;
-        D_00414740[2] = D_0041B9B8[D_00413F80.unk3C].unk89;
+        D_00414740[0] = weapon_defs[D_00413F80.weapon].unk87;
+        D_00414740[1] = weapon_defs[D_00413F80.weapon].unk88;
+        D_00414740[2] = weapon_defs[D_00413F80.weapon].unk89;
     }
-    if (D_00446970 != D_00413F80.equipment[3]) {
-        D_00446970 = D_00413F80.equipment[3];
+    if (D_00446970 != D_00413F80.equipment[EQUIP_GAUNTLET]) {
+        D_00446970 = D_00413F80.equipment[EQUIP_GAUNTLET];
         memset((void *)arm_file, 0, 0x50000);
         memset(&arm_model, 0, 0x1C0);
         memset(arm_setup, 0, 0x1000);
@@ -290,10 +290,10 @@ void WeaponTrail_Update(void) {
     if (D_00413F80.unk258 != 0) {
         weapon = &D_0057B6A0;
         weapon->unk1B4(weapon);
-        if (D_0041B9B8[D_00413F80.unk3C].unk63 == 2) {
+        if (weapon_defs[D_00413F80.weapon].unk63 == 2) {
             return;
         }
-        item = D_00413F80.unk3C + 0x96;
+        item = D_00413F80.weapon + ITEM_WEAPON_FIRST;
         if (item == 0x97) {
             return;
         }
@@ -347,7 +347,7 @@ void Player_DrawArm(void) {
         arm_model.unk1A8(&arm_model);
         func_0010B238((TextureTableHeader *)held_item_textures);
         func_00109E88();
-        if (D_00413F80.unk3C != 0x2E) {
+        if (D_00413F80.weapon != 0x2E) {
             D_0057B6A0.unk1A8(&D_0057B6A0);
         } else {
             for (i = 0; i < D_0057B6A0.part_count; i++) {
@@ -442,16 +442,16 @@ void WeaponTrail_PickKind(void) {
         trail_kind = 6;
     }
     if (trail_kind == 0) {
-        if (D_00413F80.equipment[5] == 0x87) {
+        if (D_00413F80.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_FIRE)) {
             trail_kind = 1;
         }
-        if (D_00413F80.equipment[5] == 0x88) {
+        if (D_00413F80.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_EARTH)) {
             trail_kind = 2;
         }
-        if (D_00413F80.equipment[5] == 0x89) {
+        if (D_00413F80.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_WIND)) {
             trail_kind = 3;
         }
-        if (D_00413F80.equipment[5] == 0x8A) {
+        if (D_00413F80.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_WATER)) {
             trail_kind = 4;
         }
     }

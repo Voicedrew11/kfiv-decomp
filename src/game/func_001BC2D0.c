@@ -6,8 +6,8 @@
 #include "kf_message.h"
 
 extern GameStatus D_0038CC50;
-extern TriggerTypeDef D_0041A6F8[];
-extern u8 D_00369830[];
+extern ItemCommonDef D_0041A6F8[];
+extern u8 item_counts[];
 extern EventRunner D_00420D00;
 extern PlayerState D_00413F80;
 extern void *D_00414188[];
@@ -15,15 +15,15 @@ extern int D_00446770;
 
 int func_00210C48(int);
 int func_002109C8(int, int);
-void func_001BC6E8(int);
+void Player_ApplyItem(int);
 void func_001BC968(int);
 int func_001188E0(int);
 void func_0011A438(int);
 /* Uses the item GameStatus.unk20 names once GameStatus.bit6 asks for it: an entity or a map object in front of
    the player may take it for a script of its own; otherwise it does what its type says and one is used up. */
-void func_001BC2D0(void) {
+void Player_UseItem(void) {
     int item = D_0038CC50.unk20;
-    TriggerTypeDef *def = &D_0041A6F8[item];
+    ItemCommonDef *def = &D_0041A6F8[item];
     Entity *entity;
     MapObject *object;
     MapObject *stood_on;
@@ -35,7 +35,7 @@ void func_001BC2D0(void) {
     if (D_0038CC50.bit6) {
         D_0038CC50.bit6 = FALSE;
         D_0038CC50.unk44 = 1;
-        if (D_00369830[item] != 0) {
+        if (item_counts[item] != 0) {
             entity = D_00420D00.unk54;
             if (entity != NULL && entity->spawn_info->unk58 != 0 && entity->group_id == D_00446770) {
                 if (entity->spawn_info->unk4E != 0 && func_00210C48(entity->spawn_info->unk4E) != 0) {
@@ -52,16 +52,16 @@ void func_001BC2D0(void) {
                 func_002109C8(((MapObject *)D_00420D00.current)->unk08->unk58, 0);
                 return;
             }
-            func_001BC6E8(item);
+            Player_ApplyItem(item);
             switch (def->type) {
             case 0:
-                D_00413F80.unkB4 += def->unk04;
-                if (D_00413F80.unkB4 > D_00413F80.unk58) {
-                    D_00413F80.unkB4 = D_00413F80.unk58;
+                D_00413F80.hp_now += def->hp_heal;
+                if (D_00413F80.hp_now > D_00413F80.hp_max) {
+                    D_00413F80.hp_now = D_00413F80.hp_max;
                 }
-                D_00413F80.unkB8 += def->unk06;
-                if (D_00413F80.unkB8 > D_00413F80.unk5C) {
-                    D_00413F80.unkB8 = D_00413F80.unk5C;
+                D_00413F80.mp_now += def->mp_heal;
+                if (D_00413F80.mp_now > D_00413F80.mp_max) {
+                    D_00413F80.mp_now = D_00413F80.mp_max;
                 }
                 timed = def->unk08;
                 if (timed & 1) {
@@ -93,14 +93,14 @@ void func_001BC2D0(void) {
             case 4:
             case 5:
                 if (D_00420D00.current == NULL || !MapObject_UseItem(D_00420D00.current, item)) {
-                    Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
+                    Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
                     return;
                 }
                 break;
             case 2:
                 stood_on = D_00414188[0];
-                if (stood_on == NULL || stood_on->unk04->kind != 12 || !func_001188E0(item)) {
-                    Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
+                if (stood_on == NULL || stood_on->unk04->kind != MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE || !func_001188E0(item)) {
+                    Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
                     return;
                 }
                 break;
@@ -112,7 +112,7 @@ void func_001BC2D0(void) {
             case 7:
                 break;
             case 8:
-                Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xA);
+                Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
                 return;
             default:
                 return;
@@ -120,13 +120,13 @@ void func_001BC2D0(void) {
             func_001BC968(item);
             switch (def->use_mode) {
             case 0:
-                D_00369830[item]--;
+                item_counts[item]--;
                 break;
             case 1:
                 break;
             case 2:
-                D_00369830[item]--;
-                D_00369830[def->unk02]++;
+                item_counts[item]--;
+                item_counts[def->unk02]++;
                 break;
             }
         }

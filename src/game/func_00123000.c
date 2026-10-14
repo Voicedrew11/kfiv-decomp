@@ -1,8 +1,10 @@
 #include "common.h"
 #include "kf_message.h"
+#include "kf_item.h"
 
-void func_00123000(int sound_id) {
-    if (sound_id >= 0x2F && sound_id < 0x3C) {
-        Message_ShowNotice(0, 0, 0, 0, 0x2D, sound_id + 0x28);
+/* Shows "... Key used" when the item a door or chest needed is one of the keys. */
+void MapObject_ShowKeyUsed(int item) {
+    if (item >= ITEM_KEY_FIRST && item <= ITEM_KEY_LAST) {
+        Message_ShowNotice(0, 0, 0, 0, 0x2D, item + (MSG_KEY_USED_FIRST - ITEM_KEY_FIRST));
     }
 }

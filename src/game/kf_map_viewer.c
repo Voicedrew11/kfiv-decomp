@@ -117,7 +117,7 @@ void func_0011A438(int viewer_number) {
         if (viewer_number == 5) {
             row = (u8 *)D_0038CD20 + D_00446770 * 0x60;
             if (func_0011C678(row[1]) == 0) {
-                Message_ShowNotice(0, 0, 0, 1, 0x2D, 0xB);
+                Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_UNABLE_TO_USE_HERE);
                 return;
             }
         }

@@ -35,6 +35,6 @@ void func_00118958(void) {
             ((u8 (*)(void))func_00109800)(); // match: called as returning a value, so the loop test uses $3
         } while (D_0038D680.step != 0);
         D_0038CC50.bit2 = FALSE;
-        D_0038CC50.bit5 = FALSE;
+        D_0038CC50.save_requested = FALSE;
     }
 }

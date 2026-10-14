@@ -2,7 +2,7 @@
 #include "kf_map_object.h"
 
 void func_00216C48(void *, void *, void *);
-void func_001BC1C0(int);
+void Player_AddItem(int);
 void *memset(void *, int, u32);
 ModelNode *func_001CA520(ModelNode *);
 extern char D_00356928[0x80][0x40];
@@ -23,7 +23,7 @@ void func_001CA0E0(void) {
         func_00216C48(&node->model->position, &node->model->position, D_005B60F0);
         return;
     }
-    func_001BC1C0((s16)node->item);
+    Player_AddItem((s16)node->item);
     if (node->def != NULL && node->def->required_flag != 0) {
         D_00356928[D_0038CD20[node->flags & 1].tag][node->index]++;
     } else if (node->unk08 != 0) {

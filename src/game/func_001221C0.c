@@ -9,7 +9,7 @@ extern EventRunner D_00420D00;
 int func_00103AE0(u8, u8, void *, u8);
 int func_00103B38(u8, u8);
 void func_0011F148(char *);
-void func_001BC1C0(int);
+void Player_AddItem(int);
 
 /* Event handler: while an event runs on this object, moves it to step 5, takes its
    count from the map's flags, runs the animation and clears bit 17. */
@@ -28,7 +28,7 @@ void func_001221C0(MapObject *object) {
         func_00103B38(tag, object->unk08->unk38.bytes[2]);
         MapObject_StepAnim(object);
         func_0011F148((char *)object);
-        func_001BC1C0(count);
+        Player_AddItem(count);
         object->unk10 &= ~0x20000;
         D_0038CC50.unk30 |= 1;
     }

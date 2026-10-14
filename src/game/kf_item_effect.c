@@ -23,7 +23,7 @@ extern u8 D_004141D8[];
 extern int D_00446770;
 extern int D_00446F28;
 extern char *D_00446F70;
-extern PlayerItemDef D_0041B9B8[];
+extern PlayerItemDef weapon_defs[];
 
 void *memset(void *, int, u32);
 int sprintf(char *, char *, ...);
@@ -233,14 +233,14 @@ void ItemEffect_Update(void) {
         MODEL_CHANNEL(item_effect_model)->param >= item_effect_def->unk08) {
         Effect_StartSpawner(item_effect_def->unk0C, &origin, &origin, item_effect_model);
         Effect_StartSpawner(0x26A, &D_00413F80.position, &D_00413F80.rotation, item_effect_model);
-        def = &D_0041B9B8[D_00413F80.unk3C];
+        def = &weapon_defs[D_00413F80.weapon];
         item_effect_pending_effects = 0;
-        if (D_00413F80.unk3D != 0 || def->unk42 != 0xFFFF ||
-            (def->unk52 != 0xFFFF && D_003679A0[D_00413F80.unk3C].unk14 + 1 >= 3) || func_001BF6E8() != 0) {
+        if (D_00413F80.equipped_magic != 0 || def->unk42 != 0xFFFF ||
+            (def->unk52 != 0xFFFF && D_003679A0[D_00413F80.weapon].unk14 + 1 >= 3) || func_001BF6E8() != 0) {
             D_00413F80.unkC0 = 5000;
         }
         if (item_effect_marked != 0) {
-            Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x29);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_MAGIC_LEARNED);
             item_effect_marked = 0;
         }
     }

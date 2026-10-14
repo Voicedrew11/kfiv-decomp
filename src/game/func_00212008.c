@@ -1,17 +1,18 @@
 #include "common.h"
 
-extern u8 D_0034C4E0[];
+extern u8 recollection_pages[];
 
-void func_00212008(int *arg0) {
-    u32 temp_v1;
-    u8 *temp_a1;
+/* Script command: Recollection page `command[2]` shows its next description (3 at most), then finishes. */
+void func_00212008(int *command) {
+    u32 page;
+    u8 *state;
 
-    temp_v1 = arg0[2];
-    if (temp_v1 < 0x32U) {
-        temp_a1 = D_0034C4E0 + temp_v1;
-        if (*temp_a1 < 3U) {
-            *temp_a1 = *temp_a1 + 1;
+    page = command[2];
+    if (page < 0x32U) {
+        state = recollection_pages + page;
+        if (*state < 3U) {
+            *state = *state + 1;
         }
     }
-    arg0[0] = 0;
+    command[0] = 0;
 }

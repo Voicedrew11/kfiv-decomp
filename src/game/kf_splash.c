@@ -86,7 +86,7 @@ int Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_fram
     int fade_in;
     int fade_out;
 
-    if (!D_0038CC50.bit2 && !(D_0038CC50.bit3 && D_0038CC50.bit5) && !(D_0038CC50.bit4 && !D_0038CC50.bit8) &&
+    if (!D_0038CC50.bit2 && !(D_0038CC50.bit3 && D_0038CC50.save_requested) && !(D_0038CC50.bit4 && !D_0038CC50.bit8) &&
         !D_0038CC50.bit14) {
         if (splash_state != 0) {
             return 0;

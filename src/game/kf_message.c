@@ -29,7 +29,6 @@ void func_00109E88(void);
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
 int func_001D0758(int, u8 *);
-int func_001D07C8(int message_id);
 void *memset(void *, int, u32);
 int vsprintf(char *, const char *, char *);
 
@@ -283,7 +282,7 @@ void Message_OpenBox(int x, int y, int font, int centred, int delay, int message
     va_list args;
     int format;
 
-    format = func_001D07C8(message_id);
+    format = Message_GetText(message_id);
     VA_START(args, message_id, 6);
     if (box_open == 0) {
         box_open = 1;
@@ -313,7 +312,7 @@ void Message_ShowNotice(int x, int y, int font, int kind, int frames, int messag
     int format;
     int width;
 
-    format = func_001D07C8(message_id);
+    format = Message_GetText(message_id);
     if (kind == 1) {
         int left; // match: the two branches have their own left and top
         int top;

@@ -19,8 +19,8 @@ void func_001B3908(Entity *, EntityParamsUnk240PartUnk12 *);
 void func_001B4B10(int, int);
 void func_001BB260(int);
 void func_001BB468(Vector4 *, f32);
-void func_001BBC88(int);
-void func_001BBEE0(int);
+void Player_CountMagicUse(int);
+void Player_CountWeaponUse(int);
 void func_001BBFC8(void);
 void func_001BC058(void);
 s32 func_0019D0F0(s32);
@@ -34,7 +34,7 @@ s32 func_0019D0F0(s32);
 /* A hit lands on an entity: work out the damage from the attack's nine strengths and the
    entity's nine resistances, take it off the entity's health and start its reaction.
    The last boss takes no damage here: a weapon hit counts D_00446928 down, throws the
-   player back and halves the player's health (PlayerState.unkB4). */
+   player back and halves the player's health (PlayerState.hp_now). */
 void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *entity, f32 scale) {
     Vector4 position;
     EntityParamsUnk240PartUnk00 attack;
@@ -87,11 +87,11 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
             position.z += 100.0f;
         }
         func_001BB468(&position, 200.0f);
-        if (D_00413F80.unkB4 < 2) {
+        if (D_00413F80.hp_now < 2) {
             return;
         }
-        printf(D_0043F228, D_00413F80.unkB4, D_00413F80.unkB4 / 2);
-        func_001BB260(D_00413F80.unkB4 / 2);
+        printf(D_0043F228, D_00413F80.hp_now, D_00413F80.hp_now / 2);
+        func_001BB260(D_00413F80.hp_now / 2);
         return;
     }
 
@@ -168,7 +168,7 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
     damage *= scale;
 
     if (by_weapon) {
-        if (D_00413F80.unk3C == 0x11) {
+        if (D_00413F80.weapon == 0x11) {
             if ((entity->spawn_info->type_id >= 0x32 && entity->spawn_info->type_id <= 0x42) ||
                 (entity->spawn_info->type_id >= 0x5C && entity->spawn_info->type_id <= 0x61) ||
                 entity->spawn_info->type_id == 0x2F || entity->spawn_info->type_id == 0xA4 ||
@@ -186,10 +186,10 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
 
     if (damage > 0) {
         if (by_weapon) {
-            func_001BBEE0(extra->unk24);
+            Player_CountWeaponUse(extra->unk24);
         }
         if (by_magic && extra->unk1C == 0) {
-            func_001BBC88(extra->unk26);
+            Player_CountMagicUse(extra->unk26);
             extra->unk1C = 1;
         }
     }
@@ -234,16 +234,16 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
     }
 
     if (by_weapon || by_magic) {
-        if (D_00413F80.unk100 != 0 && D_00413F80.unkB4 > 0) {
-            D_00413F80.unkB4 += damage * D_00413F80.unk100 / 100;
-            if (D_00413F80.unk58 < D_00413F80.unkB4) {
-                D_00413F80.unkB4 = D_00413F80.unk58;
+        if (D_00413F80.unk100 != 0 && D_00413F80.hp_now > 0) {
+            D_00413F80.hp_now += damage * D_00413F80.unk100 / 100;
+            if (D_00413F80.hp_max < D_00413F80.hp_now) {
+                D_00413F80.hp_now = D_00413F80.hp_max;
             }
         }
         if (D_00413F80.unk104 != 0) {
-            D_00413F80.unkB8 += damage * D_00413F80.unk104 / 100;
-            if (D_00413F80.unk5C < D_00413F80.unkB8) {
-                D_00413F80.unkB8 = D_00413F80.unk5C;
+            D_00413F80.mp_now += damage * D_00413F80.unk104 / 100;
+            if (D_00413F80.mp_max < D_00413F80.mp_now) {
+                D_00413F80.mp_now = D_00413F80.mp_max;
             }
         }
     }

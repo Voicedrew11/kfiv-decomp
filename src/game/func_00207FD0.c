@@ -6,7 +6,8 @@ extern u16 spell_experience[6][5];
 int atoi(const char *);
 char *strchr(const char *, int);
 
-void func_00207FD0(int school, char *text) {
+/* ini/NNNN.ini, keys "magic_<school>_1=" to "_5=": the level of that magic and, after a comma, its experience. */
+void Ini_SetMagicSchool(int school, char *text) {
     int idx;
     char *comma;
 

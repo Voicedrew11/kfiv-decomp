@@ -18,8 +18,8 @@
 #include "kf_save_card.h"
 #include "kf_menu_screens.h"
 
-extern u8 D_00369830[380];
-extern LevelDef D_004147F8[380];
+extern u8 item_counts[380];
+extern LevelDef item_name_defs[380];
 extern LevelRecord D_003679A0[70];
 extern LevelRecord D_003682F0[160];
 extern MenuItem D_004210D0[150];
@@ -61,7 +61,7 @@ extern s32 D_00446C38;
 /* Lists the owned, unlocked items of one group that the table gives a value for and whose record is not in use. */
 #define LINK_OWNED_GROUP(nodes, records, record_base, item_base, item_count)                                       \
     for (i = 1; i < (item_count); i++) {                                                                           \
-        if (D_00369830[(item_base) + i] != 0 && !(D_004147F8[(item_base) + i].state & 2) &&                        \
+        if (item_counts[(item_base) + i] != 0 && !(item_name_defs[(item_base) + i].state & 2) &&                        \
             values.values[table][(item_base) + i].give_value != 0 && (records)[(record_base) + i].unk18 == 0) {    \
             LINK_ITEM(&(nodes)[i], D_00426130)                                                                     \
         }                                                                                                          \
@@ -128,8 +128,8 @@ void MenuDraw_Bar(MenuCursorBar *);
 void MenuSprite_Draw(int, int, int, int);
 /* match: the part number is passed sign-extended and no result is kept (the definition takes a u8 and returns int) */
 #define SELECT_PART(part) ((void (*)(s32))func_001E5210)(part)
-extern LevelRecordDef D_0041E118[];
-extern PlayerItemDef D_0041B9B8[];
+extern LevelRecordDef worn_defs[];
+extern PlayerItemDef weapon_defs[];
 extern u8 D_00413FBC[];
 extern TradeValue D_00426620[4];
 extern TradeValue D_00426630[4];
@@ -255,7 +255,7 @@ int func_001D2258(ClockTime, ClockTime);
 /* The owned, usable items of one run of definitions whose record is idle and below level 100. */
 #define APPEND_UPGRADABLE(nodes, records, base, first_item, limit) \
     for (i = 1; i < limit; i++) { \
-        if (D_00369830[first_item + i] != 0 && !(D_004147F8[first_item + i].state & 2) && \
+        if (item_counts[first_item + i] != 0 && !(item_name_defs[first_item + i].state & 2) && \
             records[base + i].unk18 == 0 && records[base + i].level < 100) { \
             APPEND(&nodes[i], D_00426130[0]) \
         } \
@@ -263,7 +263,7 @@ int func_001D2258(ClockTime, ClockTime);
 /* The owned, usable items of one run of definitions whose record is idle. */
 #define APPEND_IDLE(nodes, records, base, first_item, limit) \
     for (i = 1; i < limit; i++) { \
-        if (D_00369830[first_item + i] != 0 && !(D_004147F8[first_item + i].state & 2) && \
+        if (item_counts[first_item + i] != 0 && !(item_name_defs[first_item + i].state & 2) && \
             records[base + i].unk18 == 0) { \
             APPEND(&nodes[i], D_00426130[0]) \
         } \
@@ -500,7 +500,7 @@ static void Trade_BuildItemRings(s32 table) {
     first = NULL;
     count = 0;
     for (i = 1; i < 150; i++) {
-        if (D_00369830[i] != 0 && !(D_004147F8[i].state & 2) && values.values[table][i].give_value != 0) {
+        if (item_counts[i] != 0 && !(item_name_defs[i].state & 2) && values.values[table][i].give_value != 0) {
             LINK_ITEM(&D_004210D0[i], D_00426130)
         }
     }
@@ -541,7 +541,7 @@ static void Trade_BuildItemRings(s32 table) {
     first = NULL;
     count = 0;
     for (i = 1; i < 0x17C; i++) {
-        if (stock_counts[i] != 0 && values.values[table][i].take_value != 0 && !(D_004147F8[i].state & 2)) {
+        if (stock_counts[i] != 0 && values.values[table][i].take_value != 0 && !(item_name_defs[i].state & 2)) {
             LINK_ITEM(&D_00421A30[i], D_005CF370)
         }
     }
@@ -1031,15 +1031,15 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     }
     record = D_005CF380[0]->unk0C - bases.first_item[D_005CF380[0]->group];
     if (context->arg == 4) {
-        switch (D_004147F8[D_005CF380[0]->unk0C].unk30_20 & 3) {
+        switch (item_name_defs[D_005CF380[0]->unk0C].unk30_20 & 3) {
         case 1:
-            D_00446E80 = D_00369830[0x1F];
+            D_00446E80 = item_counts[ITEM_BONE];
             break;
         case 2:
-            D_00446E80 = D_00369830[0x20];
+            D_00446E80 = item_counts[ITEM_SCALE];
             break;
         case 3:
-            D_00446E80 = D_00369830[0x21];
+            D_00446E80 = item_counts[ITEM_CLAW];
             break;
         }
     }
@@ -1104,7 +1104,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
 
     if (context->arg == 4) {
         position.raw = 0x000DBBA079E08A30L;
-        switch (D_004147F8[D_005CF380[0]->unk0C].unk30_20 & 3) {
+        switch (item_name_defs[D_005CF380[0]->unk0C].unk30_20 & 3) {
         case 1:
             label = D_00426620;
             break;
@@ -1127,7 +1127,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     MenuText_SetColor(D_00446C78);
     row_position.raw = 0x0C7A12007C307080L;
     for (row = 0, node = D_005CF360[0]; row < 7; node = node->prev, row++) {
-        item = &D_004147F8[node->unk0C];
+        item = &item_name_defs[node->unk0C];
         MenuText_SetPen(row_position);
         MenuText_DrawLine((u16 *)item, 0x1A);
         row_position.f.mid16 += 0xB0;
@@ -1208,18 +1208,18 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CAC = 0;
-            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + D_0041E118[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + D_0041E118[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + D_0041E118[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041E118[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041E118[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041E118[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041E118[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041E118[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041E118[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
+            D_00446E00 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
             D_00446E24 = D_003682F0[record].level;
             D_00446E28 = 100;
-            D_00446E1C = D_004147F8[D_005CF380[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CF380[0]->unk0C].unk3E;
             glow = D_00413FBC[D_005CF380[0]->group];
             if (D_00447312 == 1) {
                 FILL_FADE(D_00425910, D_00446C14, D_00446A9C)
@@ -1235,16 +1235,16 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CAC = 0;
-            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + D_0041E118[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + D_0041E118[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + D_0041E118[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041E118[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041E118[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041E118[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041E118[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041E118[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041E118[record].unk00[8], D_003682F0[record].level, 100);
-            D_00446E1C = D_004147F8[D_005CF380[0]->unk0C].unk3E;
+            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
+            D_00446E00 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446E1C = item_name_defs[D_005CF380[0]->unk0C].unk3E;
             glow = D_00413FBC[D_005CF380[0]->group];
             if (D_00447312 == 1) {
                 FILL_FADE(D_00425910, D_00446C0C, D_00446A94)
@@ -1258,18 +1258,18 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CAC = 0;
-            D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[1] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003679A0[record].unk00[2] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
-            D_00446E20 = (s32)(D_0041B9B8[record].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[1] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003679A0[record].unk00[2] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
+            D_00446E00 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
+            D_00446E04 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
+            D_00446E08 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
+            D_00446E0C = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
+            D_00446E10 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
+            D_00446E14 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
+            D_00446E20 = (s32)(weapon_defs[record].unk68 * 0.03281f * 10.0f);
             D_00446E24 = D_003679A0[record].level;
-            D_00446E1C = D_004147F8[D_005CF380[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CF380[0]->unk0C].unk3E;
             D_00446E28 = D_00413FBC[D_005CF380[0]->group];
             D_00446E2C = 100;
             if (D_00447312 == 1) {
@@ -1311,7 +1311,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
 
     current = D_005CF380[0];
     texts = Message_GetFontText(D_00446F38);
-    text_number = current->unk0C + 0x1F5; // match: a variable, so the 0x1F5 is added before the index is scaled
+    text_number = current->unk0C + MSG_ITEM_TEXT_FIRST + 1; // match: a variable, so the offset is added before the index is scaled
     text_offset = ((s32 *)texts)[text_number];
     MenuText_SetColor(D_00446C78);
     position.raw = 0x000A875083207080L;
@@ -1452,8 +1452,8 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             context->unk04--;
         }
     }
-    if (context->unk04 + D_00369830[D_005CF380[0]->unk0C] >= 100) {
-        if (D_00369830[D_005CF380[0]->unk0C] != 99) {
+    if (context->unk04 + item_counts[D_005CF380[0]->unk0C] >= 100) {
+        if (item_counts[D_005CF380[0]->unk0C] != 99) {
             context->unk04 = 1;
         } else {
             context->unk04 = 0;
@@ -1463,29 +1463,29 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         context->unk04 = 1;
     } else if (context->unk04 <= 0) {
         context->unk04 = stock.counts[context->arg][D_005CF380[0]->unk0C];
-        if (context->unk04 + D_00369830[D_005CF380[0]->unk0C] >= 100) {
-            context->unk04 = 99 - D_00369830[D_005CF380[0]->unk0C];
+        if (context->unk04 + item_counts[D_005CF380[0]->unk0C] >= 100) {
+            context->unk04 = 99 - item_counts[D_005CF380[0]->unk0C];
         }
     }
     if (context->arg != 4) {
-        D_00446E44 = D_00369830[D_005CF380[0]->unk0C];
+        D_00446E44 = item_counts[D_005CF380[0]->unk0C];
         D_00446E48 = stock.counts[context->arg][D_005CF380[0]->unk0C];
         D_00446E4C = context->unk04;
         D_00446E50 = context->unk04 * values.values[context->arg][D_005CF380[0]->unk0C].take_value;
     } else {
-        D_00446E44 = D_00369830[D_005CF380[0]->unk0C];
+        D_00446E44 = item_counts[D_005CF380[0]->unk0C];
         D_00446E48 = stock.counts[4][D_005CF380[0]->unk0C];
         D_00446E4C = context->unk04;
         D_00446E50 = context->unk04 * values.values[4][D_005CF380[0]->unk0C].take_value;
-        switch (D_004147F8[D_005CF380[0]->unk0C].unk30_20 & 3) {
+        switch (item_name_defs[D_005CF380[0]->unk0C].unk30_20 & 3) {
         case 1:
-            D_00446E30 = D_00369830[0x1F];
+            D_00446E30 = item_counts[ITEM_BONE];
             break;
         case 2:
-            D_00446E30 = D_00369830[0x20];
+            D_00446E30 = item_counts[ITEM_SCALE];
             break;
         case 3:
-            D_00446E30 = D_00369830[0x21];
+            D_00446E30 = item_counts[ITEM_CLAW];
             break;
         }
     }
@@ -1558,18 +1558,18 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CB4 = 0;
-            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + D_0041E118[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + D_0041E118[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + D_0041E118[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041E118[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041E118[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041E118[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041E118[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041E118[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041E118[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
+            D_00446E00 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
             D_00446E24 = D_003682F0[record].level;
             D_00446E28 = 100;
-            D_00446E1C = D_004147F8[D_005CF380[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CF380[0]->unk0C].unk3E;
             kind = D_00413FBC[D_005CF380[0]->group];
             if (D_00447312 == 1) {
                 FILL_FADE(D_00425910, D_00446C14, D_00446A9C)
@@ -1585,16 +1585,16 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CB4 = 0;
-            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + D_0041E118[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + D_0041E118[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + D_0041E118[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041E118[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041E118[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041E118[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041E118[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041E118[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041E118[record].unk00[8], D_003682F0[record].level, 100);
-            D_00446E1C = D_004147F8[D_005CF380[0]->unk0C].unk3E;
+            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
+            D_00446E00 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446E1C = item_name_defs[D_005CF380[0]->unk0C].unk3E;
             kind = D_00413FBC[D_005CF380[0]->group];
             if (D_00447312 == 1) {
                 FILL_FADE(D_00425910, D_00446C0C, D_00446A94)
@@ -1608,18 +1608,18 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CB4 = 0;
-            D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[1] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003679A0[record].unk00[2] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
-            D_00446E20 = (s32)(D_0041B9B8[record].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[1] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003679A0[record].unk00[2] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
+            D_00446E00 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
+            D_00446E04 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
+            D_00446E08 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
+            D_00446E0C = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
+            D_00446E10 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
+            D_00446E14 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
+            D_00446E20 = (s32)(weapon_defs[record].unk68 * 0.03281f * 10.0f);
             D_00446E24 = D_003679A0[record].level;
-            D_00446E1C = D_004147F8[D_005CF380[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CF380[0]->unk0C].unk3E;
             D_00446E28 = D_00413FBC[D_005CF380[0]->group];
             D_00446E2C = 100;
             if (D_00447312 == 1) {
@@ -1660,7 +1660,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     MenuText_SetColor(D_00446C78);
     position.raw = 0x0C7A12007C307080L;
     for (row = 0; row < 7; row++) {
-        item = &D_004147F8[node->unk0C];
+        item = &item_name_defs[node->unk0C];
         MenuText_SetPen(position);
         MenuText_DrawLine((u16 *)item, 0x1A);
         position.f.mid16 += 0xB0;
@@ -1699,7 +1699,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         SELECT_PART(0);
     }
 
-    chosen = &D_004147F8[D_005CF380[0]->unk0C];
+    chosen = &item_name_defs[D_005CF380[0]->unk0C];
     MenuText_SetColor(D_00446C78);
     position.raw = 0x0A2DC6C07DB078C0L;
     MenuText_SetPen(position);
@@ -1708,7 +1708,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         position.raw = 0x000DBBA079E08A30L;
         label_position.raw = 0x000DBBA081807C60L;
         MenuText_SetPen(position);
-        switch (D_004147F8[D_005CF380[0]->unk0C].unk30_20 & 3) {
+        switch (item_name_defs[D_005CF380[0]->unk0C].unk30_20 & 3) {
         case 1:
             label = D_00426620;
             break;
@@ -1730,7 +1730,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
 
     current = D_005CF380[0];
     texts = Message_GetFontText(D_00446F38);
-    number = current->unk0C + 0x1F5; // match: its own local, or the offset is folded into the load
+    number = current->unk0C + MSG_ITEM_TEXT_FIRST + 1; // match: its own local, or the offset is folded into the load
     text_offset = ((s32 *)texts)[number];
     position.raw = 0x000F424083207080L;
     MenuText_SetPen(position);
@@ -1740,7 +1740,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
 
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
-            if ((D_00413F80.unk4C >= D_00446E50 && context->arg != 4) || (D_00446E30 >= D_00446E50 && context->arg == 4)) {
+            if ((D_00413F80.gold >= D_00446E50 && context->arg != 4) || (D_00446E30 >= D_00446E50 && context->arg == 4)) {
                 func_0019CDC0(0);
                 D_00447311 = 3;
                 D_00447312 = 2;
@@ -1817,26 +1817,26 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             if (D_00425510[i] < 0.0f) {
                 if (D_00447311 == 5) {
                     if (context->arg != 4) {
-                        D_00413F80.unk4C -= D_00446E50;
+                        D_00413F80.gold -= D_00446E50;
                         D_00446CA0 = Trade_UpdateSelectScreen;
                         ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                     } else {
-                        switch (D_004147F8[D_005CF380[0]->unk0C].unk30_20 & 3) {
+                        switch (item_name_defs[D_005CF380[0]->unk0C].unk30_20 & 3) {
                         case 1:
-                            D_00369830[0x1F] -= D_00446E50;
+                            item_counts[ITEM_BONE] -= D_00446E50;
                             break;
                         case 2:
-                            D_00369830[0x20] -= D_00446E50;
+                            item_counts[ITEM_SCALE] -= D_00446E50;
                             break;
                         case 3:
-                            D_00369830[0x21] -= D_00446E50;
+                            item_counts[ITEM_CLAW] -= D_00446E50;
                             break;
                         }
                         D_00446CA0 = trade_list_handlers[0];
                     }
-                    D_00369830[D_005CF380[0]->unk0C] += context->unk04;
-                    if (D_00369830[D_005CF380[0]->unk0C] >= 100) {
-                        D_00369830[D_005CF380[0]->unk0C] = 99;
+                    item_counts[D_005CF380[0]->unk0C] += context->unk04;
+                    if (item_counts[D_005CF380[0]->unk0C] >= 100) {
+                        item_counts[D_005CF380[0]->unk0C] = 99;
                     }
                     if (stock.counts[context->arg][D_005CF380[0]->unk0C] != 0xFF) {
                         stock.counts[context->arg][D_005CF380[0]->unk0C] -= context->unk04;
@@ -1976,7 +1976,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     Menu_DrawItemModel((f32 *)local_matrix);
 
     for (; row < 7; node = node->prev, row++) {
-        item = &D_004147F8[node->unk0C];
+        item = &item_name_defs[node->unk0C];
         MenuText_SetPen(position);
         MenuText_DrawLine((u16 *)item, 0x1A);
         position.f.mid16 += 0xB0;
@@ -2034,18 +2034,18 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             if (details_opened != 0) {
                 func_0019CDC0(1);
             }
-            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + D_0041E118[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + D_0041E118[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + D_0041E118[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041E118[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041E118[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041E118[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041E118[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041E118[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041E118[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
+            D_00446E00 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
             D_00446E24 = D_003682F0[record].level;
             D_00446E28 = 100;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             worn = D_00413FBC[D_00426110[0]->group];
             if (D_00447312 == 1) {
                 FILL_FADE_2(D_00425910, D_00446C14, D_00446A9C)
@@ -2060,16 +2060,16 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             if (details_opened != 0) {
                 func_0019CDC0(1);
             }
-            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + D_0041E118[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + D_0041E118[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + D_0041E118[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041E118[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041E118[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041E118[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041E118[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041E118[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041E118[record].unk00[8], D_003682F0[record].level, 100);
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
+            D_00446E00 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             worn = D_00413FBC[D_00426110[0]->group];
             if (D_00447312 == 1) {
                 FILL_FADE_2(D_00425910, D_00446C0C, D_00446A94)
@@ -2082,18 +2082,18 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             if (details_opened != 0) {
                 func_0019CDC0(1);
             }
-            D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[1] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003679A0[record].unk00[2] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
-            D_00446E20 = (s32)(D_0041B9B8[record].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[1] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003679A0[record].unk00[2] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
+            D_00446E00 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
+            D_00446E04 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
+            D_00446E08 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
+            D_00446E0C = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
+            D_00446E10 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
+            D_00446E14 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
+            D_00446E20 = (s32)(weapon_defs[record].unk68 * 0.03281f * 10.0f);
             D_00446E24 = D_003679A0[record].level;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             D_00446E28 = D_00413FBC[D_00426110[0]->group];
             D_00446E2C = 100;
             if (D_00447312 == 1) {
@@ -2135,7 +2135,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
 
     current = D_00426110[0];
     texts = Message_GetFontText(D_00446F38);
-    text_index = current->unk0C + 0x1F5; // match: the index is worked out apart from the load
+    text_index = current->unk0C + MSG_ITEM_TEXT_FIRST + 1; // match: the index is worked out apart from the load
     text_offset = ((s32 *)texts)[text_index];
     position.raw = 0x000A875083207080L;
     MenuText_SetPen(position);
@@ -2263,12 +2263,12 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             context->unk04--;
         }
     }
-    if (D_00369830[D_00426110[0]->unk0C] < context->unk04) {
+    if (item_counts[D_00426110[0]->unk0C] < context->unk04) {
         context->unk04 = 1;
     } else if (context->unk04 <= 0) {
-        context->unk04 = D_00369830[D_00426110[0]->unk0C];
+        context->unk04 = item_counts[D_00426110[0]->unk0C];
     }
-    D_00446E44 = D_00369830[D_00426110[0]->unk0C];
+    D_00446E44 = item_counts[D_00426110[0]->unk0C];
     D_00446E48 = stock.counts[context->arg][D_00426110[0]->unk0C];
     D_00446E4C = context->unk04;
     D_00446E50 = context->unk04 * values.values[context->arg][D_00426110[0]->unk0C].give_value;
@@ -2346,18 +2346,18 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             if (info_pressed != 0) {
                 func_0019CDC0(1);
             }
-            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + D_0041E118[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + D_0041E118[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + D_0041E118[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041E118[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041E118[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041E118[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041E118[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041E118[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041E118[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
+            D_00446E00 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
             D_00446E24 = D_003682F0[record].level;
             D_00446E28 = 100;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             glow = D_00413FBC[D_00426110[0]->group];
             if (D_00447312 == 1) {
                 FILL_FADE(D_00425910, D_00446C14, D_00446A9C)
@@ -2372,16 +2372,16 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             if (info_pressed != 0) {
                 func_0019CDC0(1);
             }
-            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + D_0041E118[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + D_0041E118[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + D_0041E118[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041E118[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041E118[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041E118[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041E118[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041E118[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041E118[record].unk00[8], D_003682F0[record].level, 100);
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
+            D_00446E00 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             glow = D_00413FBC[D_00426110[0]->group];
             if (D_00447312 == 1) {
                 FILL_FADE(D_00425910, D_00446C0C, D_00446A94)
@@ -2394,18 +2394,18 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             if (info_pressed != 0) {
                 func_0019CDC0(1);
             }
-            D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
-            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[1] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003679A0[record].unk00[2] + D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
-            D_00446E00 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
-            D_00446E04 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
-            D_00446E08 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
-            D_00446E0C = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
-            D_00446E10 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
-            D_00446E14 = ScaleValue(D_0041B9B8[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
-            D_00446E20 = (s32)(D_0041B9B8[record].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
+            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[1] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
+            D_00446DFC = ScaleValue(D_003679A0[record].unk00[2] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
+            D_00446E00 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
+            D_00446E04 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
+            D_00446E08 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
+            D_00446E0C = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
+            D_00446E10 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
+            D_00446E14 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
+            D_00446E20 = (s32)(weapon_defs[record].unk68 * 0.03281f * 10.0f);
             D_00446E24 = D_003679A0[record].level;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             D_00446E28 = D_00413FBC[D_00426110[0]->group];
             D_00446E2C = 100;
             if (D_00447312 == 1) {
@@ -2446,7 +2446,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     position.raw = 0x0C0975E07C307080L;
     MenuText_SetPen(position);
     for (row = 0; row < 7; row++) {
-        MenuText_DrawLine((u16 *)&D_004147F8[node->unk0C], 0x1A);
+        MenuText_DrawLine((u16 *)&item_name_defs[node->unk0C], 0x1A);
         if (D_00426130[0]->prev == node) {
             break;
         }
@@ -2478,7 +2478,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
         SELECT_PART(0);
     }
 
-    chosen = &D_004147F8[D_00426110[0]->unk0C];
+    chosen = &item_name_defs[D_00426110[0]->unk0C];
     MenuText_SetColor(D_00446C78);
     position.raw = 0x0A2DC6C07DB078C0L;
     MenuText_SetPen(position);
@@ -2486,7 +2486,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
 
     current = D_00426110[0];
     texts = Message_GetFontText(D_00446F38);
-    number = current->unk0C + 0x1F5; // match: its own local, or the offset is folded into the load
+    number = current->unk0C + MSG_ITEM_TEXT_FIRST + 1; // match: its own local, or the offset is folded into the load
     text_offset = ((s32 *)texts)[number];
     position.raw = 0x000A875083207080L;
     MenuText_SetPen(position);
@@ -2497,17 +2497,17 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
             func_0019CDC0(0);
-            D_00413F80.unk4C += D_00446E50;
-            if (D_00413F80.unk4C > 999999) {
-                D_00413F80.unk4C = 999999;
+            D_00413F80.gold += D_00446E50;
+            if (D_00413F80.gold > 999999) {
+                D_00413F80.gold = 999999;
             }
-            D_00369830[D_00426110[0]->unk0C] -= context->unk04;
-            if (D_00426110[0]->unk0C == D_00413F80.unk3C + 150 || D_00426110[0]->unk0C == D_00413F80.equipment[0] + 220 ||
-                D_00426110[0]->unk0C == D_00413F80.equipment[2] + 220 || D_00426110[0]->unk0C == D_00413F80.equipment[1] + 220 ||
-                D_00426110[0]->unk0C == D_00413F80.equipment[3] + 220 || D_00426110[0]->unk0C == D_00413F80.equipment[4] + 220 ||
-                D_00426110[0]->unk0C == D_00413F80.equipment[5] + 220 || D_00426110[0]->unk0C == D_00413F80.equipment[6] + 220 ||
-                D_00426110[0]->unk0C == D_00413F80.equipment[7] + 220 || D_00426110[0]->unk0C == D_00413F80.unk46) {
-                if (D_00369830[D_00426110[0]->unk0C] == 0) {
+            item_counts[D_00426110[0]->unk0C] -= context->unk04;
+            if (D_00426110[0]->unk0C == D_00413F80.weapon + ITEM_WEAPON_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST ||
+                D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST ||
+                D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST ||
+                D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST ||
+                D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.shortcut) {
+                if (item_counts[D_00426110[0]->unk0C] == 0) {
                     func_001E54A8(D_00426110[0]->group);
                 }
             }
@@ -2640,11 +2640,11 @@ static void Trade_SetModelNames(void) {
     } else {
         forward = backward = D_00446C40;
     }
-    sprintf(D_00426498, "menu/select2/i%04d.mod", D_004147F8[D_005CF380[0]->unk0C].file_number);
-    sprintf(D_00426538, "menu/select2/i%04d.mod", D_004147F8[D_005CF380[0]->prev->unk0C].file_number);
-    sprintf(D_004264E8, "menu/select2/i%04d.mod", D_004147F8[D_005CF380[0]->next->unk0C].file_number);
-    sprintf(D_00426588, "menu/select2/i%04d.mod", D_004147F8[forward->unk0C].file_number);
-    sprintf(D_004265D8, "menu/select2/i%04d.mod", D_004147F8[backward->unk0C].file_number);
+    sprintf(D_00426498, "menu/select2/i%04d.mod", item_name_defs[D_005CF380[0]->unk0C].file_number);
+    sprintf(D_00426538, "menu/select2/i%04d.mod", item_name_defs[D_005CF380[0]->prev->unk0C].file_number);
+    sprintf(D_004264E8, "menu/select2/i%04d.mod", item_name_defs[D_005CF380[0]->next->unk0C].file_number);
+    sprintf(D_00426588, "menu/select2/i%04d.mod", item_name_defs[forward->unk0C].file_number);
+    sprintf(D_004265D8, "menu/select2/i%04d.mod", item_name_defs[backward->unk0C].file_number);
 }
 
 /* Moves the list cursor one row (0x10, 0x40) or one page (0x20, 0x80, lists of 8 and more), scrolling the window. */
@@ -2776,8 +2776,8 @@ static void Smith_BuildItemRings(s32 mode) {
     for (i = 1; i < 380; i++) {
         if (i >= 150) {
             if (i < 220) {
-                if (i != 150 && D_003679A0[i - 150].unk18 != 0 && !(D_004147F8[i].state & 2) &&
-                    func_001D2258(D_003679A0[i - 150].unk19.time, D_00446A28) >= D_004147F8[i].unk36 * 60) {
+                if (i != 150 && D_003679A0[i - 150].unk18 != 0 && !(item_name_defs[i].state & 2) &&
+                    func_001D2258(D_003679A0[i - 150].unk19.time, D_00446A28) >= item_name_defs[i].unk36 * 60) {
                     // match: written out; through APPEND's `(node)->next` the item pointer is reduced differently
                     count++;
                     if (count == 7) {
@@ -2792,8 +2792,8 @@ static void Smith_BuildItemRings(s32 mode) {
                     last = &D_00421A30[i];
                 }
             } else {
-                if (i != 220 && D_003682F0[i - 220].unk18 != 0 && !(D_004147F8[i].state & 2) &&
-                    func_001D2258(D_003682F0[i - 220].unk19.time, D_00446A28) >= D_004147F8[i].unk36 * 60) {
+                if (i != 220 && D_003682F0[i - 220].unk18 != 0 && !(item_name_defs[i].state & 2) &&
+                    func_001D2258(D_003682F0[i - 220].unk19.time, D_00446A28) >= item_name_defs[i].unk36 * 60) {
                     count++;
                     if (count == 7) {
                         D_005CF3A0[0] = &D_00421A30[i];
@@ -3199,7 +3199,7 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                 case 1:
                     func_0019CDC0(0);
                     Smith_BuildItemRings(1);
-                    if (D_00369830[0x22] != 0) {
+                    if (item_counts[ITEM_EARTH_STONE] != 0) {
                         D_00447318 = 1;
                         D_00447316 = 3;
                     } else {
@@ -3320,11 +3320,11 @@ static void Smith_SetModelNames(void) {
     } else {
         after = before = D_00446C40;
     }
-    sprintf(D_00426498, "menu/select2/i%04d.mod", D_004147F8[D_005CF3B0[0]->unk0C].file_number);
-    sprintf(D_00426538, "menu/select2/i%04d.mod", D_004147F8[D_005CF3B0[0]->prev->unk0C].file_number);
-    sprintf(D_004264E8, "menu/select2/i%04d.mod", D_004147F8[D_005CF3B0[0]->next->unk0C].file_number);
-    sprintf(D_00426588, "menu/select2/i%04d.mod", D_004147F8[after->unk0C].file_number);
-    sprintf(D_004265D8, "menu/select2/i%04d.mod", D_004147F8[before->unk0C].file_number);
+    sprintf(D_00426498, "menu/select2/i%04d.mod", item_name_defs[D_005CF3B0[0]->unk0C].file_number);
+    sprintf(D_00426538, "menu/select2/i%04d.mod", item_name_defs[D_005CF3B0[0]->prev->unk0C].file_number);
+    sprintf(D_004264E8, "menu/select2/i%04d.mod", item_name_defs[D_005CF3B0[0]->next->unk0C].file_number);
+    sprintf(D_00426588, "menu/select2/i%04d.mod", item_name_defs[after->unk0C].file_number);
+    sprintf(D_004265D8, "menu/select2/i%04d.mod", item_name_defs[before->unk0C].file_number);
 }
 
 /* The smith's list of items that can be handed in: draws the screen parts, the cursor bar, the seven rows, the
@@ -3419,7 +3419,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     MenuText_SetColor(D_00446C78);
     word.raw = 0x0C7A12007C307080;
     for (line = 0, node = D_00426120[0]; line < 7; node = node->prev, line++) {
-        def = &D_004147F8[node->unk0C];
+        def = &item_name_defs[node->unk0C];
         MenuText_SetPen(word);
         MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
@@ -3460,18 +3460,18 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CD4 = 0;
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
             D_00446E24 = D_003682F0[index].level;
             D_00446E28 = 100;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             variant = D_00413FBC[D_00426110[0]->group];
             if (D_00447317 == 1) {
                 for (i = 0; i < D_00446A9C; i++) {
@@ -3494,16 +3494,16 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CD4 = 0;
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             variant = D_00413FBC[D_00426110[0]->group];
             if (D_00447317 == 1) {
                 for (i = 0; i < D_00446A94; i++) {
@@ -3524,18 +3524,18 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CD4 = 0;
-            D_00446DF4 = (D_003679A0[index].unk00[0] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
-            D_00446DF8 = (D_003679A0[index].unk00[1] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
-            D_00446DFC = (D_003679A0[index].unk00[2] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
-            D_00446E00 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
-            D_00446E04 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
-            D_00446E08 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
-            D_00446E0C = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
-            D_00446E10 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
-            D_00446E14 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
-            D_00446E20 = (s32)(D_0041B9B8[index].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
+            D_00446DF8 = (D_003679A0[index].unk00[1] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
+            D_00446DFC = (D_003679A0[index].unk00[2] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
+            D_00446E00 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
+            D_00446E04 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
+            D_00446E08 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
+            D_00446E0C = weapon_defs[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
+            D_00446E10 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
+            D_00446E14 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
+            D_00446E20 = (s32)(weapon_defs[index].unk68 * 0.03281f * 10.0f);
             D_00446E24 = D_003679A0[index].level;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             D_00446E28 = D_00413FBC[D_00426110[0]->group];
             D_00446E2C = 100;
             if (D_00447317 == 1) {
@@ -3585,7 +3585,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     }
     selected = D_00426110[0];
     table = Message_GetFontText(D_00446F38);
-    text_index = selected->unk0C + 0x1F5;
+    text_index = selected->unk0C + MSG_ITEM_TEXT_FIRST + 1;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080;
     MenuText_SetPen(word);
@@ -3775,18 +3775,18 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CDC = 0;
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
             D_00446E24 = D_003682F0[index].level;
             D_00446E28 = 100;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             variant = D_00413FBC[D_00426110[0]->group];
             if (D_00447317 == 1) {
                 for (i = 0; i < D_00446A9C; i++) {
@@ -3809,16 +3809,16 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CDC = 0;
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             variant = D_00413FBC[D_00426110[0]->group];
             if (D_00447317 == 1) {
                 for (i = 0; i < D_00446A94; i++) {
@@ -3840,18 +3840,18 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CDC = 0;
-            D_00446DF4 = (D_003679A0[index].unk00[0] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
-            D_00446DF8 = (D_003679A0[index].unk00[1] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
-            D_00446DFC = (D_003679A0[index].unk00[2] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
-            D_00446E00 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
-            D_00446E04 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
-            D_00446E08 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
-            D_00446E0C = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
-            D_00446E10 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
-            D_00446E14 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
-            D_00446E20 = (s32)(D_0041B9B8[index].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
+            D_00446DF8 = (D_003679A0[index].unk00[1] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
+            D_00446DFC = (D_003679A0[index].unk00[2] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
+            D_00446E00 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
+            D_00446E04 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
+            D_00446E08 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
+            D_00446E0C = weapon_defs[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
+            D_00446E10 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
+            D_00446E14 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
+            D_00446E20 = (s32)(weapon_defs[index].unk68 * 0.03281f * 10.0f);
             D_00446E24 = D_003679A0[index].level;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             D_00446E28 = D_00413FBC[D_00426110[0]->group];
             D_00446E2C = 100;
             if (D_00447317 == 1) {
@@ -3898,7 +3898,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     }
     word.raw = 0x0C0975E07C307080;
     for (row = 0, item = D_00426120[0]; row < 7; item = item->prev, row++) {
-        def = &D_004147F8[item->unk0C];
+        def = &item_name_defs[item->unk0C];
         MenuText_SetPen(word);
         MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
@@ -3906,21 +3906,21 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             break;
         }
     }
-    D_00446E38 = D_004147F8[D_00426110[0]->unk0C].unk36;
+    D_00446E38 = item_name_defs[D_00426110[0]->unk0C].unk36;
     for (i = 0; i < D_00446AB8; i++) {
         kind = D_00446C64[i].unk3E;
         SELECT_PART((s8)D_00446C64[i].unk42);
         MenuSprite_Draw((int)&D_00446C64[i], kind + 1000, 0, (int)D_00425D10[i]);
         SELECT_PART(0);
     }
-    selected_def = &D_004147F8[D_00426110[0]->unk0C];
+    selected_def = &item_name_defs[D_00426110[0]->unk0C];
     MenuText_SetColor(D_00446C78);
     word.raw = 0x0A2DC6C07F5078C0;
     MenuText_SetPen(word);
     MenuText_DrawLineCentered(selected_def, 0x18);
     selected = D_00426110[0];
     table = Message_GetFontText(D_00446F38);
-    text_index = selected->unk0C + 0x1F5;
+    text_index = selected->unk0C + MSG_ITEM_TEXT_FIRST + 1;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080;
     MenuText_SetPen(word);
@@ -4009,9 +4009,9 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                     func_001D20E0();
                     bought = D_00426110[0];
                     if (bought->unk0C < 220) {
-                        if (bought->unk0C == 183) {
-                            D_00369830[183] = 0;
-                            D_00369830[bought->unk0C + 1] = 1;
+                        if (bought->unk0C == ITEM_BROKEN_KATANA) {
+                            item_counts[ITEM_BROKEN_KATANA] = 0;
+                            item_counts[bought->unk0C + 1] = 1;
                             // match: "- 150 + 1" wraps the constant offset around, which keeps the compiler from
                             // forming the table's address out of this one (it does for "- 149")
                             *(ClockTime *)D_003679A0[bought->unk0C - 150 + 1].unk19.bytes = D_00446A28;
@@ -4027,11 +4027,11 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                         GetItemRecord(bought->unk0C - 220)->level = 100;
                         GetItemRecord(bought->unk0C - 220)->unk18 = 1;
                     }
-                    if (D_00426110[0]->unk0C == D_00413F80.unk3C + 150 || D_00426110[0]->unk0C == D_00413F80.equipment[0] + 220 ||
-                        D_00426110[0]->unk0C == D_00413F80.equipment[2] + 220 || D_00426110[0]->unk0C == D_00413F80.equipment[1] + 220 ||
-                        D_00426110[0]->unk0C == D_00413F80.equipment[3] + 220 || D_00426110[0]->unk0C == D_00413F80.equipment[4] + 220 ||
-                        D_00426110[0]->unk0C == D_00413F80.equipment[5] + 220 || D_00426110[0]->unk0C == D_00413F80.equipment[6] + 220 ||
-                        D_00426110[0]->unk0C == D_00413F80.equipment[7] + 220 || D_00426110[0]->unk0C == D_00413F80.unk46) {
+                    if (D_00426110[0]->unk0C == D_00413F80.weapon + ITEM_WEAPON_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST ||
+                        D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST ||
+                        D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST ||
+                        D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST ||
+                        D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.shortcut) {
                         func_001E54A8(D_00426110[0]->group);
                     }
                     context->unk04 = 0;
@@ -4167,7 +4167,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     MenuText_SetColor(D_00446C78);
     word.raw = 0x0C0975E07C307080;
     for (line = 0, node = D_00426120[0]; line < 7; node = node->prev, line++) {
-        def = &D_004147F8[node->unk0C];
+        def = &item_name_defs[node->unk0C];
         MenuText_SetPen(word);
         MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
@@ -4211,18 +4211,18 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CE4 = 0;
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
             D_00446E24 = D_003682F0[index].level;
             D_00446E28 = 100;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             variant = D_00413FBC[D_00426110[0]->group];
             if (D_00447317 == 1) {
                 for (i = 0; i < D_00446A9C; i++) {
@@ -4245,16 +4245,16 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CE4 = 0;
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             variant = D_00413FBC[D_00426110[0]->group];
             if (D_00447317 == 1) {
                 for (i = 0; i < D_00446A94; i++) {
@@ -4275,18 +4275,18 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CE4 = 0;
-            D_00446DF4 = (D_003679A0[index].unk00[0] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
-            D_00446DF8 = (D_003679A0[index].unk00[1] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
-            D_00446DFC = (D_003679A0[index].unk00[2] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
-            D_00446E00 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
-            D_00446E04 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
-            D_00446E08 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
-            D_00446E0C = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
-            D_00446E10 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
-            D_00446E14 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
-            D_00446E20 = (s32)(D_0041B9B8[index].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
+            D_00446DF8 = (D_003679A0[index].unk00[1] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
+            D_00446DFC = (D_003679A0[index].unk00[2] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
+            D_00446E00 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
+            D_00446E04 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
+            D_00446E08 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
+            D_00446E0C = weapon_defs[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
+            D_00446E10 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
+            D_00446E14 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
+            D_00446E20 = (s32)(weapon_defs[index].unk68 * 0.03281f * 10.0f);
             D_00446E24 = D_003679A0[index].level;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             D_00446E28 = D_00413FBC[D_00426110[0]->group];
             D_00446E2C = 100;
             if (D_00447317 == 1) {
@@ -4332,14 +4332,14 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         }
     }
     if (D_00447313 != 0) {
-        D_00446E38 = D_004147F8[D_00426110[0]->unk0C].unk36;
+        D_00446E38 = item_name_defs[D_00426110[0]->unk0C].unk36;
         for (i = 0; i < D_00446AB8; i++) {
             kind = D_00446C64[i].unk3E;
             SELECT_PART((s8)D_00446C64[i].unk42);
             MenuSprite_Draw((int)&D_00446C64[i], kind + 1000, 0, (int)D_00425D10[i]);
             SELECT_PART(0);
         }
-        chosen = &D_004147F8[D_00426110[0]->unk0C];
+        chosen = &item_name_defs[D_00426110[0]->unk0C];
         MenuText_SetColor(D_00446C78);
         word.raw = 0x0A2DC6C07F5078C0;
         MenuText_SetPen(word);
@@ -4347,7 +4347,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     }
     selected = D_00426110[0];
     table = Message_GetFontText(D_00446F38);
-    text_index = selected->unk0C + 0x1F5;
+    text_index = selected->unk0C + MSG_ITEM_TEXT_FIRST + 1;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080;
     MenuText_SetPen(word);
@@ -4499,15 +4499,15 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                             break;
                         }
                     }
-                    if (D_00426110[0]->unk0C == D_00413F80.unk3C + 150 || D_00426110[0]->unk0C == D_00413F80.equipment[0] + 220 ||
-                        D_00426110[0]->unk0C == D_00413F80.equipment[2] + 220 || D_00426110[0]->unk0C == D_00413F80.equipment[1] + 220 ||
-                        D_00426110[0]->unk0C == D_00413F80.equipment[3] + 220 || D_00426110[0]->unk0C == D_00413F80.equipment[4] + 220 ||
-                        D_00426110[0]->unk0C == D_00413F80.equipment[5] + 220 || D_00426110[0]->unk0C == D_00413F80.equipment[6] + 220 ||
-                        D_00426110[0]->unk0C == D_00413F80.equipment[7] + 220 || D_00426110[0]->unk0C == D_00413F80.unk46) {
+                    if (D_00426110[0]->unk0C == D_00413F80.weapon + ITEM_WEAPON_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST ||
+                        D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST ||
+                        D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST ||
+                        D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST ||
+                        D_00426110[0]->unk0C == D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == D_00413F80.shortcut) {
                         func_001E54A8(D_00426110[0]->group);
                     }
                     D_00446CC4 = Smith_UpdateSelectScreen;
-                    D_00369830[34]--;
+                    item_counts[ITEM_EARTH_STONE]--;
                     context->unk04 = 1;
                     ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 } else if (D_00447316 == 8) {
@@ -4651,18 +4651,18 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             if (play_sound) {
                 func_0019CDC0(1);
             }
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
             D_00446E24 = D_003682F0[index].level;
             D_00446E28 = 100;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             variant = D_00413FBC[D_00426110[0]->group];
             for (i = 0; i < D_00446A9C; i++) {
                 SELECT_PART((s8)D_00446C14[i].unk42);
@@ -4678,16 +4678,16 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             if (play_sound) {
                 func_0019CDC0(1);
             }
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             variant = D_00413FBC[D_00426110[0]->group];
             for (i = 0; i < D_00446A94; i++) {
                 SELECT_PART((s8)D_00446C0C[i].unk42);
@@ -4701,18 +4701,18 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             if (play_sound) {
                 func_0019CDC0(1);
             }
-            D_00446DF4 = (D_003679A0[index].unk00[0] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
-            D_00446DF8 = (D_003679A0[index].unk00[1] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
-            D_00446DFC = (D_003679A0[index].unk00[2] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
-            D_00446E00 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
-            D_00446E04 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
-            D_00446E08 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
-            D_00446E0C = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
-            D_00446E10 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
-            D_00446E14 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
-            D_00446E20 = (s32)(D_0041B9B8[index].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
+            D_00446DF8 = (D_003679A0[index].unk00[1] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
+            D_00446DFC = (D_003679A0[index].unk00[2] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
+            D_00446E00 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
+            D_00446E04 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
+            D_00446E08 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
+            D_00446E0C = weapon_defs[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
+            D_00446E10 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
+            D_00446E14 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
+            D_00446E20 = (s32)(weapon_defs[index].unk68 * 0.03281f * 10.0f);
             D_00446E24 = D_003679A0[index].level;
-            D_00446E1C = D_004147F8[D_00426110[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_00426110[0]->unk0C].unk3E;
             D_00446E28 = D_00413FBC[D_00426110[0]->group];
             D_00446E2C = 100;
             for (i = 0; i < D_00446A98; i++) {
@@ -4753,7 +4753,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     }
     selected = D_00426110[0];
     table = Message_GetFontText(D_00446F38);
-    text_index = selected->unk0C + 0x1F5;
+    text_index = selected->unk0C + MSG_ITEM_TEXT_FIRST + 1;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080L;
     MenuText_SetPen(word);
@@ -4936,7 +4936,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     MenuText_SetColor(D_00446C78);
     word.raw = 0x0C7A12007C307080;
     for (line = 0, node = D_005CF390[0]; line < 7; node = node->prev, line++) {
-        def = &D_004147F8[node->unk0C];
+        def = &item_name_defs[node->unk0C];
         MenuText_SetPen(word);
         MenuText_DrawLine((u16 *)def, 0x1A);
         word.f.mid16 += 0xB0;
@@ -4977,18 +4977,18 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CF0 = 0;
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
             D_00446E24 = D_003682F0[index].level;
             D_00446E28 = 100;
-            D_00446E1C = D_004147F8[D_005CF3B0[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CF3B0[0]->unk0C].unk3E;
             variant = D_00413FBC[D_005CF3B0[0]->group];
             if (D_00447317 == 1) {
                 for (i = 0; i < D_00446A9C; i++) {
@@ -5011,16 +5011,16 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CF0 = 0;
-            D_00446DF4 = (D_003682F0[index].unk00[0] + D_0041E118[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + D_0041E118[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + D_0041E118[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = D_0041E118[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = D_0041E118[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = D_0041E118[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = D_0041E118[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = D_0041E118[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = D_0041E118[index].unk00[8] * D_003682F0[index].level / 100;
-            D_00446E1C = D_004147F8[D_005CF3B0[0]->unk0C].unk3E;
+            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
+            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
+            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446E1C = item_name_defs[D_005CF3B0[0]->unk0C].unk3E;
             variant = D_00413FBC[D_005CF3B0[0]->group];
             if (D_00447317 == 1) {
                 for (i = 0; i < D_00446A94; i++) {
@@ -5041,18 +5041,18 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                 func_0019CDC0(1);
             }
             D_00446CF0 = 0;
-            D_00446DF4 = (D_003679A0[index].unk00[0] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
-            D_00446DF8 = (D_003679A0[index].unk00[1] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
-            D_00446DFC = (D_003679A0[index].unk00[2] + D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
-            D_00446E00 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
-            D_00446E04 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
-            D_00446E08 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
-            D_00446E0C = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
-            D_00446E10 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
-            D_00446E14 = D_0041B9B8[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
-            D_00446E20 = (s32)(D_0041B9B8[index].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
+            D_00446DF8 = (D_003679A0[index].unk00[1] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
+            D_00446DFC = (D_003679A0[index].unk00[2] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
+            D_00446E00 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
+            D_00446E04 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
+            D_00446E08 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
+            D_00446E0C = weapon_defs[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
+            D_00446E10 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
+            D_00446E14 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
+            D_00446E20 = (s32)(weapon_defs[index].unk68 * 0.03281f * 10.0f);
             D_00446E24 = D_003679A0[index].level;
-            D_00446E1C = D_004147F8[D_005CF3B0[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CF3B0[0]->unk0C].unk3E;
             D_00446E28 = D_00413FBC[D_005CF3B0[0]->group];
             D_00446E2C = 100;
             if (D_00447317 == 1) {
@@ -5100,7 +5100,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     }
     selected = D_005CF3B0[0];
     table = Message_GetFontText(D_00446F38);
-    text_index = selected->unk0C + 0x1F5;
+    text_index = selected->unk0C + MSG_ITEM_TEXT_FIRST + 1;
     entry = ((s32 *)table)[text_index];
     word.raw = 0x000A875083207080;
     MenuText_SetPen(word);

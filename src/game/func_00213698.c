@@ -1,7 +1,7 @@
 #include "common.h"
 #include "kf_script.h"
 
-extern u8 D_00369830[];
+extern u8 item_counts[];
 
 int func_00211CF8(char *, int);
 
@@ -10,7 +10,7 @@ void func_00213698(ScriptMotionCommand *command) {
 
     index = command->target_id.value;
     if (index < 0x17C) {
-        func_00211CF8((char *)&command->frames, D_00369830[index]);
+        func_00211CF8((char *)&command->frames, item_counts[index]);
     } else {
         func_00211CF8((char *)&command->frames, -1);
     }

@@ -32,7 +32,7 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             owner->flags |= 0x8000L << 27;
         }
     }
-    if (D_00413F80.unkB4 == 0) {
+    if (D_00413F80.hp_now == 0) {
         return;
     }
     if (D_0038CC50.unk00 == 0) {
@@ -46,22 +46,22 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         return;
     }
     percent = 100;
-    if ((u8)(D_00413F80.equipment[0] - 1) <= 1) {
+    if ((u8)(D_00413F80.equipment[EQUIP_SHIELD] - 1) <= 1) {
         percent = 120;
     }
-    if ((u8)(D_00413F80.equipment[4] - 0x6A) <= 1) {
+    if ((u8)(D_00413F80.equipment[EQUIP_BOOT] - 0x6A) <= 1) {
         percent += 20;
     }
     func_001B3ED8(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50
-    damage = func_001B4AA8(request->unk50.unk00[0], D_00413F80.unk90.values[1], D_00413F80.unkAC); // match: values[1] here and on the next line; values[0] is never used
-    damage += func_001B4AA8(request->unk50.unk00[1], D_00413F80.unk90.values[1], D_00413F80.unkAC); // match: values[1] a second time
-    damage += func_001B4AA8(request->unk50.unk00[2], D_00413F80.unk90.values[2], D_00413F80.unkAC);
-    damage += func_001B4AA8(request->unk50.unk00[3], D_00413F80.unk90.values[3], D_00413F80.unkB0) * percent / 100;
-    damage += func_001B4AA8(request->unk50.unk00[4], D_00413F80.unk90.values[4], D_00413F80.unkB0);
-    damage += func_001B4AA8(request->unk50.unk00[5], D_00413F80.unk90.values[5], D_00413F80.unkB0);
-    damage += func_001B4AA8(request->unk50.unk00[6], D_00413F80.unk90.values[6], D_00413F80.unkB0);
-    damage += func_001B4AA8(request->unk50.unk00[7], D_00413F80.unk90.values[7], D_00413F80.unkB0);
-    damage += func_001B4AA8(request->unk50.unk00[8], D_00413F80.unk90.values[8], D_00413F80.unkB0);
+    damage = func_001B4AA8(request->unk50.unk00[0], D_00413F80.unk90.values[1], D_00413F80.power); // match: values[1] here and on the next line; values[0] is never used
+    damage += func_001B4AA8(request->unk50.unk00[1], D_00413F80.unk90.values[1], D_00413F80.power); // match: values[1] a second time
+    damage += func_001B4AA8(request->unk50.unk00[2], D_00413F80.unk90.values[2], D_00413F80.power);
+    damage += func_001B4AA8(request->unk50.unk00[3], D_00413F80.unk90.values[3], D_00413F80.magic) * percent / 100;
+    damage += func_001B4AA8(request->unk50.unk00[4], D_00413F80.unk90.values[4], D_00413F80.magic);
+    damage += func_001B4AA8(request->unk50.unk00[5], D_00413F80.unk90.values[5], D_00413F80.magic);
+    damage += func_001B4AA8(request->unk50.unk00[6], D_00413F80.unk90.values[6], D_00413F80.magic);
+    damage += func_001B4AA8(request->unk50.unk00[7], D_00413F80.unk90.values[7], D_00413F80.magic);
+    damage += func_001B4AA8(request->unk50.unk00[8], D_00413F80.unk90.values[8], D_00413F80.magic);
     request->unk74 = 1;
     if (damage <= blocked) { // match: blocked is request->unk72, which is known to be 0 here
         damage = 1;
@@ -69,10 +69,10 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     func_001BB260(damage);
     func_001B2C48(&request->unk62);
     if (request->unk71 != 0) {
-        if (request->unk71 < D_00413F80.unkB8) {
-            D_00413F80.unkB8 -= request->unk71;
+        if (request->unk71 < D_00413F80.mp_now) {
+            D_00413F80.mp_now -= request->unk71;
         } else {
-            D_00413F80.unkB8 = 0;
+            D_00413F80.mp_now = 0;
         }
     }
     if (UNK1B1470_REQUEST_UNIT(request) & UNK1B1470_UNIT_UNK4C_3) {

@@ -1,7 +1,7 @@
 #include "kf_map.h"
 
 extern MapSlot D_0038CD20[];
-extern TriggerTypeDef D_0041A6F8[];
+extern ItemCommonDef D_0041A6F8[];
 
 int func_00103BA8(int, int, int);
 void func_00122600(void *, int);

@@ -1,8 +1,8 @@
 #include "common.h"
 
-void func_00207FD0(int, char *);
+void Ini_SetMagicSchool(int, char *);
 
-/* ini/NNNN.ini, a "magic_..." key: magic of element 2 (func_00207FD0). */
-void func_00207F90(char *text) {
-    func_00207FD0(2, text);
+/* ini/NNNN.ini, a "magic_..." key: magic of element 2 (Ini_SetMagicSchool). */
+void Ini_SetMagicWind(char *text) {
+    Ini_SetMagicSchool(2, text);
 }

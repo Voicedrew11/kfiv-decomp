@@ -554,7 +554,7 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         EFFECT_FLAG_BITS(effect)->bit59 = effect->def->unk11A != 0;
         if (D_00402DA8[effect->effect_param].unk102 != 0) {
             EFFECT_FLAG_PARTS(effect)->unk46 = func_0019C8D0(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&D_00413F80, EFFECT_FLAG_PARTS(effect)->unk46);
-        } else if (EFFECT_FLAG_BITS(effect)->bit59 || effect->effect_param == D_00413F80.unk3D) {
+        } else if (EFFECT_FLAG_BITS(effect)->bit59 || effect->effect_param == D_00413F80.equipped_magic) {
             EFFECT_FLAG_PARTS(effect)->unk46 = func_0019C8D0(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&effect->model->position, EFFECT_FLAG_PARTS(effect)->unk46);
         }
         if (EFFECT_FLAG_PARTS(effect)->unk46 > 0) {

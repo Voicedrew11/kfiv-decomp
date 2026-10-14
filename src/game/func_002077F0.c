@@ -15,7 +15,7 @@ int func_001024B0(int);
 
 /* Reads the start-up settings ini/NNNN.ini (ini/9999.ini when that one is missing) and hands every line that
    starts with a key of D_0042B810 to the key's handler. */
-void func_002077F0(int number) {
+void Ini_Load(int number) {
     char path[0x100];
     int file;
     int i;

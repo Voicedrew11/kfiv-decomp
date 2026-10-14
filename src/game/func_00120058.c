@@ -6,9 +6,9 @@ extern void *D_00420D50[];
 
 ModelNode *func_001C9580(int);
 int func_001C9AB0(ModelNode *);
-/* Update handler: when the player uses an object that still holds something it
-   is handed out (func_001C9580), else message 0x46 is shown, at most every 45 frames. */
-void func_00120058(MapObject *object) {
+/* Update handler of an open chest (kind 4, step 3): when the player uses one that still holds something it
+   is handed out (func_001C9580), else "Empty" is shown, at most every 45 frames. */
+void MapObject_UpdateOpenChest(MapObject *object) {
     s32 *work = object->work;
     MapObjectUnk08Words *source;
     int pickup;
@@ -27,7 +27,7 @@ void func_00120058(MapObject *object) {
             if (work[1] > 0) {
                 return;
             }
-            Message_ShowNotice(0, 0, 0, 0, 0x2D, 0x46);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_EMPTY);
             work[1] = 0x2D;
         }
     }

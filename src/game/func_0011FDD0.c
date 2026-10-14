@@ -5,17 +5,17 @@
 extern Qword D_0043E780;
 extern u32 D_0038CC74[];
 extern void *D_00420D50[];
-extern u8 D_00369830[];
+extern u8 item_counts[];
 
 void *memset(void *, int, u32);
-void func_00123000(int);
+void MapObject_ShowKeyUsed(int);
 void func_0019D490(s32, s32, f32 *, f32);
 ItemNode *func_001C9340(int, int, void *, void *, void *, void *);
 
-/* Update handler of a chest-like kind: used by the player, it opens (when it
-   needs a key the player must hold it, else a message is shown) and hands out
-   its item, or spawns what its third word says. */
-void func_0011FDD0(void *arg, int unused) {
+/* Update handler of a closed chest (kind 4): used by the player, it opens (when it needs a key the player
+   must hold it, else its name or "Locked" is shown) and hands out its item, or drops the gold of its third
+   word. */
+void MapObject_UpdateClosedChest(void *arg, int unused) {
     MapObject *object = arg;
     Vector4 position;
     Vector4 turn;
@@ -36,19 +36,19 @@ void func_0011FDD0(void *arg, int unused) {
         source = object->unk08;
         key = ((MapObjectUnk08Words *)source)->unk46;
         if (key != 0) {
-            if (D_00369830[key] == 0) {
+            if (item_counts[key] == 0) {
                 if (work[1] > 0) {
                     return;
                 }
                 message = (s16)object->unk04->unk68;
                 if (message == 0) {
-                    message = 0x3E;
+                    message = MSG_LOCKED;
                 }
                 Message_ShowNotice(0, 0, 0, 0, 0x2D, message);
                 work[1] = 0x2D;
                 return;
             }
-            func_00123000(key);
+            MapObject_ShowKeyUsed(key);
             range = 800.0f;
             if (object->unk04->unk70 > 0.0f) {
                 range = object->unk04->unk70;

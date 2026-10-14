@@ -9,7 +9,7 @@ int func_00211CF8(ScriptArg *, int);
 void func_00213818(ScriptCallCommand *command) {
     PlayerState *player = &D_00413F80;
 
-    func_00211CF8(&command->target_id, player->unkB8);
-    func_00211CF8(&command->first, player->unk5C);
+    func_00211CF8(&command->target_id, player->mp_now);
+    func_00211CF8(&command->first, player->mp_max);
     command->active = 0;
 }

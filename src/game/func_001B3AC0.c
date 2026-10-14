@@ -31,7 +31,7 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
         if (extra->unk04 != 0) {
             return;
         }
-        if (D_00413F80.unk3C == 0x2E) {
+        if (D_00413F80.weapon == 0x2E) {
             MapObject_Break(object);
             return;
         }

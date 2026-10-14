@@ -11,7 +11,7 @@ void func_0010B510(char *, int, int);
 void func_001CA578(void *);
 extern MapSlot D_0038CD20[];
 extern DroppedItemRecord D_00358928[0x80][16];
-extern GameDefinition D_004147F8[380];
+extern GameDefinition item_name_defs[380];
 extern MapItemDef *D_004469B8[2];
 extern s16 *D_004469C0[2];
 extern s32 D_00447190[2];
@@ -58,7 +58,7 @@ void func_001C82C0(int map) {
     node = D_0057E240[map];
     for (i = 0; i < count; i++, def++, node++) {
         D_005B5EC0[map][def->slot_id] = i;
-        definition = &D_004147F8[def->item];
+        definition = &item_name_defs[def->item];
         source = func_001CA498(map, definition->unk30);
         if (source != NULL) {
             ITEM_NODE_BITS(node)->map = map;

@@ -4,7 +4,7 @@ extern PlayerState D_00413F80;
 
 int atoi(const char *);
 
-/* ini/NNNN.ini, key "exp=": sets PlayerState.unk50. */
-void func_00207A38(char *text) {
-    D_00413F80.unk50 = atoi(text);
+/* ini/NNNN.ini, key "exp=": sets PlayerState.experience. */
+void Ini_SetExp(char *text) {
+    D_00413F80.experience = atoi(text);
 }
