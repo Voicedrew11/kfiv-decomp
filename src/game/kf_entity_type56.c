@@ -1,3 +1,5 @@
+/* The behaviour of entity type 56 (Entity.params->unk02, the index into D_003E6E40): its set-up
+   function, which the table names, and the handlers that function installs. */
 #include "common.h"
 #include "kf_entity_world.h"
 #include "kf_entity.h"
@@ -11,6 +13,19 @@ extern KfVector D_004FF390[];
 extern f32 D_00446824[];
 extern f32 D_00446828[];
 
+void func_001958A8(char *, s32);
+void func_00191478(EntityModel *);
+int func_00193378(EntityModel *, s32, s32);
+void func_00216778(void *, void *);
+// match: the definition takes an Actor, a struct local to func_00182A08.c
+void func_00182A08(void);
+void func_00181038(Entity *);
+void func_001818B8(Entity *);
+extern s32 D_003E6E40[][2];
+int func_0018D4E8(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
+static void func_00168368(Entity *entity, s32 unknown);
+static void func_00168C10(Entity *entity);
+static void func_00169918(Entity *entity);
 void func_00196870(void *, int);
 void func_0018B778(float, void *, void *, void *);
 f32 func_0018A9F0(void *, void *);
@@ -23,7 +38,7 @@ static void func_001686B0(Entity *, s32);
 int rand(void);
 static s32 func_00169DF8(Entity *, f32, f32);
 s32 func_0018EEE0(Entity *, f32, f32);
-int func_0016A450(char *);
+static int func_0016A450(Entity *entity);
 s32 func_0018FD50(Entity *, s32);
 void func_00190B88(Entity *, s32);
 int func_0018F030(char *);
@@ -41,9 +56,9 @@ static void func_00169500(Entity *);
 static void func_00169738(Entity *);
 static void func_00169BB0(Entity *);
 static void func_00169F58(Entity *);
-void func_0016A530(Entity *);
+static void func_0016A530(Entity *);
 int func_00192C98(void *, int, int, u32, int);
-int func_00199EB8(void *, void *, float);
+s32 func_00199EB8(Entity *, f32 *, f32);
 static void func_00168F48(Entity *);
 int func_00195AC0(Entity *, void *, s32, s32, s32);
 float func_00194FB8(float);
@@ -60,7 +75,53 @@ int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 float func_00194F80(void *, void *);
 void func_0018DC40(char *);
 
-void func_00168368(Entity *entity, s32 unknown) {
+/* Set-up of a type 56 entity: clears its work area and installs the type's handlers. */
+void EntityType56_Init(Entity *entity) {
+    EntityUnkE0 *unkE0 = &entity->unkE0;
+    u8 *unkBC = entity->unkBC;
+    u8 *unkC0 = entity->unkC0;
+    char *unk138 = entity->model->unk138;
+    s32 i;
+
+    // match: the three fills name their target inside the loop; unkBC and unkC0 above are
+    // otherwise unused but retail computes them up front and copies them before each loop
+    for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
+        u8 *work_area = (u8 *)&entity->unkE0;
+
+        work_area[i] = 0;
+    }
+    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    unkE0->unk00 = func_00168368;
+    unkE0->unk04 = func_00182A08;
+    unkE0->unk08 = (void (*)(void))func_00169918;
+    unkE0->unk18 = (void (*)(void))func_00168C10;
+    unkE0->unk10 = (void (*)(void))func_00181038;
+    unkE0->unk14 = (void (*)(void))func_001818B8;
+    for (i = 3; i != -1; i--) {
+        entity->unkBC[i] = 0x80;
+    }
+    for (i = 5; i != -1; i--) {
+        entity->unkC0[i] = 0x80;
+    }
+    entity->target = NULL;
+    entity->flags &= ~0x10000000;
+    if (ENTITY_FLAG_WORD(entity->spawn_info->unk38) & (0x8000L << 43)) {
+        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+    } else {
+        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+    }
+    if (unk138 != NULL) {
+        func_00216778(unkE0->unk20, unk138 + 0x50);
+    }
+    unkE0->unk40 = 0.5f;
+    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->unk15C = entity->unkD6;
+    func_00191478(entity->model);
+    unkE0->unk6C = entity->params->unk3D8[2].record.unk00;
+    func_00193378(entity->model, 0, 0);
+}
+
+static void func_00168368(Entity *entity, s32 unknown) {
     EntityUnkE0Kind168160 *unkE0 = (EntityUnkE0Kind168160 *)&entity->unkE0;
     MapSlot *slot;
     KfVector *point;
@@ -145,7 +206,7 @@ static void func_001686B0(Entity *entity, s32 unknown) {
         return;
     }
     if (entity->spawn_info->unk40 == 1) {
-        func_0016A450((char *)entity);
+        func_0016A450(entity);
     } else {
         entity->params->unk3D8[2].record.unk00 = 0;
     }
@@ -246,7 +307,7 @@ done:
     func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
 }
 
-void func_00168C10(Entity *entity) {
+static void func_00168C10(Entity *entity) {
     EntityUnkE0Kind168160 *unkE0 = (EntityUnkE0Kind168160 *)&entity->unkE0;
     EntityParams *params;
     f32 turn;
@@ -563,7 +624,7 @@ static void func_00169738(Entity *entity) {
 }
 
 /* When the state field in flags is 2, resets the entity and registers func_00169990; then sets state 2. */
-void func_00169918(Entity *entity) {
+static void func_00169918(Entity *entity) {
     if ((((u64)entity->flags >> 36) & 3) == 2) {
         func_00190A30((char *)entity);
         entity->target = NULL;
@@ -763,6 +824,86 @@ static void func_00169F58(Entity *entity) {
                 }
             }
         }
+        if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
+            entity->flags |= 0x80000;
+        } else {
+            entity->flags &= ~0x80000;
+        }
+        if ((s32)(entity->flags >> 34) & 1) {
+            entity->unkC6 = 0;
+            entity->unkC8 = 0;
+            entity->unkA0 = 0;
+            func_0019A290(entity, unk3D8->unk02);
+            if ((s32)(entity->flags >> 5) & 1) {
+                unkE0->unk00(entity, 1);
+            } else {
+                func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 1);
+            }
+        }
+        break;
+    }
+}
+
+/* Counts nearby allies in certain states and scales a ranged-attack weight from it. */
+static int func_0016A450(Entity *entity) {
+    EntityUnkE0Kind17FC60 *work;
+    Entity *ally;
+    s32 ally_index;
+    s32 ally_count;
+    u64 ally_flags;
+    s32 flag_bits;
+
+    work = (EntityUnkE0Kind17FC60 *)&entity->unkE0;
+    ally_count = 0;
+    for (ally_index = 0; ally_index < 8; ally_index++) {
+        ally = Entity_GetBySpawnId(ally_index + 0xA);
+        if (ally != NULL) {
+            ally_flags = ally->flags;
+            if ((ally_flags & 3) == 1) {
+                flag_bits = (s32)((ally_flags << 0x1E) >> 0x20); // match: bits 30-31 of the flag word
+                if (((flag_bits & 3) == 0) || ((flag_bits & 3) == 3)) {
+                    ally_count++;
+                }
+            }
+        }
+    }
+    entity->params->unk3D8[2].record.unk00 = (f32)work->unk68[2] * (f32)ally_count * 0.125f;
+    return 0;
+}
+
+static void func_0016A530(Entity *entity) {
+    EntityUnkE0Kind168160 *unkE0 = (EntityUnkE0Kind168160 *)&entity->unkE0;
+    s32 kind = (s32)(entity->flags >> 58) & 3;
+    EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
+    f32 direction[3];
+    s32 elapsed;
+
+    entity->unkC6 |= 1;
+    switch (entity->action_step) {
+    case 0:
+        func_00192C98(entity, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        entity->flags = (entity->flags & ~0x3800) | 0x800;
+        entity->flags &= ~0x200;
+        entity->action_step++;
+    case 1:
+        if (entity->model->unkFC->unk88 == 0) {
+            entity->action_step++;
+        }
+        if (unk3D8->unk01 != 0) {
+            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        }
+        break;
+    case 2:
+        if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
+            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        } else {
+            unkE0->unk1C = 0.0f;
+        }
+        elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
+        direction[0] = 0.0f;
+        direction[1] = func_00194FB8(entity->model->unkD0[1] + 3.1415927f);
+        direction[2] = 0.0f;
+        func_0018D4E8(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;
         } else {
