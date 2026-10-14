@@ -4,8 +4,9 @@
     tools/progress.py [report.json] [--write] [--html PATH]
 
 Prints the overall totals and one row per category: matched code bytes,
-functions, named functions, data and complete units. Percentages come from
-the byte and function counts. A function is named once its symbol is no
+linked code, functions, named functions, data and linked units. Percentages
+come from the byte and function counts. Linked is objdiff's complete measure:
+units marked complete in objdiff.json (every C and hand-written .s unit). A function is named once its symbol is no
 longer splat's func_XXXXXXXX; objdiff has no such measure, so it is counted
 here from the report's function names.
 
@@ -49,6 +50,10 @@ def num(n) -> str:
 
 def code_pct(m: dict) -> float:
     return pct(m.get("matched_code", 0), m.get("total_code", 0))
+
+
+def linked_pct(m: dict) -> float:
+    return pct(m.get("complete_code", 0), m.get("total_code", 0))
 
 
 def named_pct(m: dict) -> float:
@@ -113,8 +118,8 @@ def rows(data) -> list:
 def terminal(data) -> str:
     m = data["measures"]
     out = [f"KFIV progress, {data['generated']}: {m.get('total_units', 0)} units",
-           f"{'':8} {'code':>7}  {'code bytes':>23}  {'functions':>11}  "
-           f"{'named':>11}  {'data':>7}  {'complete':>9}"]
+           f"{'':8} {'code':>7}  {'code bytes':>23}  {'linked':>7}  {'functions':>11}  "
+           f"{'named':>11}  {'data':>7}  {'linked units':>12}"]
     for label, x in rows(data):
         mc, tc = x.get("matched_code", 0), x.get("total_code", 0)
         mf, tf = x.get("matched_functions", 0), x.get("total_functions", 0)
@@ -122,7 +127,8 @@ def terminal(data) -> str:
         dp = pct(x.get("matched_data", 0), x.get("total_data", 0))
         cu, tu = x.get("complete_units", 0), x.get("total_units", 0)
         out.append(f"{label:8} {code_pct(x):6.2f}%  {num(mc) + ' / ' + num(tc):>23}  "
-                   f"{f'{mf}/{tf}':>11}  {f'{nf}/{tf}':>11}  {dp:6.2f}%  {f'{cu}/{tu}':>9}")
+                   f"{linked_pct(x):6.2f}%  {f'{mf}/{tf}':>11}  {f'{nf}/{tf}':>11}  "
+                   f"{dp:6.2f}%  {f'{cu}/{tu}':>12}")
     return "\n".join(out)
 
 
@@ -147,13 +153,14 @@ def badges(data) -> dict:
 
 
 def readme_table(data) -> str:
-    out = ["| | code | functions | named | units complete |",
-           "| --- | ---: | ---: | ---: | ---: |"]
+    out = ["| | code | linked | functions | named | units linked |",
+           "| --- | ---: | ---: | ---: | ---: | ---: |"]
     for label, x in rows(data):
         mf, tf = x.get("matched_functions", 0), x.get("total_functions", 0)
         nf = x.get("named_functions", 0)
         cu, tu = x.get("complete_units", 0), x.get("total_units", 0)
-        out.append(f"| {label} | {code_pct(x):.2f}% | {mf} / {tf} | {nf} / {tf} | {cu} / {tu} |")
+        out.append(f"| {label} | {code_pct(x):.2f}% | {linked_pct(x):.2f}% | {mf} / {tf} "
+                   f"| {nf} / {tf} | {cu} / {tu} |")
     return "\n".join(out)
 
 
@@ -165,11 +172,13 @@ def cards_and_bars(data) -> tuple:
     cu, tu = m.get("complete_units", 0), m.get("total_units", 0)
     cards = [
         ("Code matched", f"{code_pct(m):.2f}%", f"{num(mc)} of {num(tc)} bytes"),
+        ("Code linked", f"{linked_pct(m):.2f}%",
+         f"{num(m.get('complete_code', 0))} of {num(tc)} bytes"),
         ("Functions matched", f"{pct(mf, tf):.2f}%", f"{mf} of {tf}"),
         ("Functions named", f"{named_pct(m):.2f}%",
          f"{m.get('named_functions', 0)} of {tf}"),
         ("Data matched", f"{pct(md, td):.2f}%", f"{num(md)} of {num(td)} bytes"),
-        ("Units complete", f"{cu} of {tu}", f"{pct(cu, tu):.2f}% of units"),
+        ("Units linked", f"{cu} of {tu}", f"{pct(cu, tu):.2f}% of units"),
     ]
     html_cards = "".join(
         f'<div class="card"><span>{escape(a)}</span><b>{escape(b)}</b>'
@@ -188,9 +197,10 @@ def cards_and_bars(data) -> tuple:
             f'<div class="bar" role="img" aria-label="{p:.2f} percent of code matched">'
             f'<i style="width:{min(max(p, 0.0), 100.0):.2f}%"></i></div>'
             f'<p class="muted">code {p:.2f}% ({num(x.get("matched_code", 0))} of '
-            f'{num(x.get("total_code", 0))} bytes), functions {mf}/{tf}, named {nf}/{tf}, '
+            f'{num(x.get("total_code", 0))} bytes), linked {linked_pct(x):.2f}%, '
+            f'functions {mf}/{tf}, named {nf}/{tf}, '
             f'data {dp:.2f}%, '
-            f'units {cu}/{tu} complete</p></section>')
+            f'units {cu}/{tu} linked</p></section>')
     return html_cards, "".join(bars)
 
 
@@ -283,7 +293,7 @@ in the table. The filters below apply to the map too.</p>
 <th data-k="name">Unit</th><th data-k="category">Category</th>
 <th class="n" data-k="code_total">Size</th><th class="n" data-k="cp">Code</th><th class="n" data-k="fp">Functions</th>
 <th class="n" data-k="np">Named</th>
-<th class="n" data-k="dp">Data</th><th data-k="complete">Complete</th>
+<th class="n" data-k="dp">Data</th><th data-k="complete">Linked</th>
 </tr></thead>
 <tbody></tbody>
 </table>

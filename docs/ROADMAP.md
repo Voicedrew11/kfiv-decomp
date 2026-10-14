@@ -78,7 +78,8 @@ order, in the categories `game` and `sce`:
 - C units: the base object is `build/src/<path>.c.o`; the target object,
   `build/target/src/<path>.o`, is assembled from splat's per-function asm
   (`asm/matchings/`) in address order plus the unit's data files, with
-  splat's fill before the next unit trimmed off.
+  splat's fill before the next unit trimmed off. Marked complete: carve only
+  links a C unit that matches as a whole, so complete code is linked code.
 - Hand-written `.s` units are both target and base (matching by
   construction, marked complete). splat's own `asm/` units are target only.
 

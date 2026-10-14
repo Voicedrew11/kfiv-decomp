@@ -235,6 +235,9 @@ def objdiff_config(srcs: list[str]) -> dict:
             unit["target_path"] = f"build/target/{stem(s)}.o"
             unit["base_path"] = obj_for(s)
             unit["metadata"]["source_path"] = s
+            # linked into the matching ROM: carve stops on a unit that
+            # does not match as a whole
+            unit["metadata"]["complete"] = True
         else:
             # hand-written asm: the same object is both target and base
             unit["target_path"] = unit["base_path"] = obj_for(s)
