@@ -951,7 +951,7 @@ typedef struct {
 } EntityRangeWeights;
 
 /* five animation frame numbers, copied whole from read-only data like
-   EntityFrameTable (EntityType61_RangedAttack0, func_0014FCC0) */
+   EntityFrameTable (AncientKing_RangedAttack0, func_0014FCC0) */
 typedef struct {
     s32 frames[5];                  /* 0x00 */
 } EntityFrameTable5;

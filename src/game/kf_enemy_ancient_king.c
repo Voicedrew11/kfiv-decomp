@@ -1,5 +1,9 @@
-/* The behaviour of entity type 61 (Entity.params->unk02, the index into D_003E6E40): its set-up
-   function, which the table names, and the handlers that function installs. */
+/* AncientKing: the behaviour of entity type 61 (Entity.params->unk02, the index into D_003E6E40): its set-up
+   function, which the table names, and the handlers it installs. Used by: the Ancient King, chr.prm record
+   57, whose one spawn is in 006.map with six High Skeletons as spawn ids 10-15, the entities this code
+   raises again. The game names no monsters; the name is from the bestiary of Prima's official strategy
+   guide (2004), whose description agrees with this code and with the record: it summons High Skeletons,
+   and it resists every kind of magic but light (50 each, light 0) while weapons hit it normally. */
 #include "kf_entity.h"
 #include "kf_entity_world.h"
 #include "common.h"
@@ -58,25 +62,25 @@ char *func_0010CAB8(char *, u32);
 float func_00194FB8(float);
 void func_0018DC40(char *);
 
-static void EntityType61_Animate(Entity *entity);
-static void EntityType61_Think(Entity *entity, s32 unknown);
-static void EntityType61_ThinkCombat(Entity *entity, s32 unknown);
-static void EntityType61_Move(Entity *entity);
-static void EntityType61_Death(Entity *entity);
-static void EntityType61_RangedAttack0(Entity *entity);
-static void EntityType61_RespawnOthers(Entity *entity);
-static void EntityType61_SwitchHandlers(Entity *entity);
-static void EntityType61_ThinkAfterSwitch(Entity *entity, s32 unknown);
-static void EntityType61_ThinkCombatAfterSwitch(Entity *entity, s32 unknown);
-static void EntityType61_DeathLaunchShot(Entity *entity);
+static void AncientKing_Animate(Entity *entity);
+static void AncientKing_Think(Entity *entity, s32 unknown);
+static void AncientKing_ThinkCombat(Entity *entity, s32 unknown);
+static void AncientKing_Move(Entity *entity);
+static void AncientKing_Death(Entity *entity);
+static void AncientKing_RangedAttack0(Entity *entity);
+static void AncientKing_RespawnOthers(Entity *entity);
+static void AncientKing_SwitchHandlers(Entity *entity);
+static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown);
+static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown);
+static void AncientKing_DeathLaunchShot(Entity *entity);
 static void func_0014FCC0(Entity *entity);
-static void EntityType61_RangedAttack1(Entity *entity);
-static void EntityType61_RespawnOthersAfterSwitch(Entity *entity);
-static s32 EntityType61_ShouldRespawnOthers(Entity *entity);
-static void EntityType61_RespawnTwoOthers(Entity *entity);
+static void AncientKing_RangedAttack1(Entity *entity);
+static void AncientKing_RespawnOthersAfterSwitch(Entity *entity);
+static s32 AncientKing_ShouldRespawnOthers(Entity *entity);
+static void AncientKing_RespawnTwoOthers(Entity *entity);
 
 /* Set-up of a type 61 entity: clears its work area and installs the type's handlers. */
-void EntityType61_Init(Entity *entity) {
+void AncientKing_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     u8 *unkBC = entity->unkBC;
     u8 *unkC0 = entity->unkC0;
@@ -91,10 +95,10 @@ void EntityType61_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->think = EntityType61_Think;
-    unkE0->animate = (void (*)(void))EntityType61_Animate;
-    unkE0->move = (void (*)(void))EntityType61_Move;
-    unkE0->death = (void (*)(void))EntityType61_Death;
+    unkE0->think = AncientKing_Think;
+    unkE0->animate = (void (*)(void))AncientKing_Animate;
+    unkE0->move = (void (*)(void))AncientKing_Move;
+    unkE0->death = (void (*)(void))AncientKing_Death;
     unkE0->on_hit = NULL;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
@@ -128,10 +132,10 @@ void EntityType61_Init(Entity *entity) {
     }
 }
 
-/* The animate handler until EntityType61_SwitchHandlers puts EntityAi_Animate in its place: plays the
+/* The animate handler until AncientKing_SwitchHandlers puts EntityAi_Animate in its place: plays the
    two motion slots of the work area (unk80 and unk88), flag bit 34 coming from the second, then
    turns the head. */
-static void EntityType61_Animate(Entity *entity) {
+static void AncientKing_Animate(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
     f32 limits[4];
@@ -173,11 +177,11 @@ static void EntityType61_Animate(Entity *entity) {
     }
 }
 
-/* The think handler until EntityType61_SwitchHandlers installs EntityType61_ThinkAfterSwitch. While the entity
+/* The think handler until AncientKing_SwitchHandlers installs AncientKing_ThinkAfterSwitch. While the entity
    is not busy: once Entity.unk2C is below three quarters of EntityParams.unk0A it starts
-   EntityType61_SwitchHandlers; else in state 2 it calls EntityType61_ThinkCombat, and in the other
+   AncientKing_SwitchHandlers; else in state 2 it calls AncientKing_ThinkCombat, and in the other
    states starts the move action. Counts down work word unk68. */
-static void EntityType61_Think(Entity *entity, s32 unknown) {
+static void AncientKing_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
@@ -186,12 +190,12 @@ static void EntityType61_Think(Entity *entity, s32 unknown) {
     if (entity->unkC6 == 0) {
         func_0018E9C0(entity);
         if (entity->unk2C < (s32)(entity->params->unk0A * 0.75f)) {
-            EntityAi_StartAction(entity, EntityType61_SwitchHandlers, unknown);
+            EntityAi_StartAction(entity, AncientKing_SwitchHandlers, unknown);
             return;
         }
         switch (entity->state) {
         case 2:
-            EntityType61_ThinkCombat(entity, unknown);
+            AncientKing_ThinkCombat(entity, unknown);
             break;
         case 0:
         case 1:
@@ -205,36 +209,36 @@ static void EntityType61_Think(Entity *entity, s32 unknown) {
     }
 }
 
-/* The think function of state 2: starts EntityType61_RespawnOthers when EntityType61_ShouldRespawnOthers says so; else
-   EntityType61_RangedAttack0 when the pause Entity.unkA2 is over and func_001992F0 finds the player
+/* The think function of state 2: starts AncientKing_RespawnOthers when AncientKing_ShouldRespawnOthers says so; else
+   AncientKing_RangedAttack0 when the pause Entity.unkA2 is over and func_001992F0 finds the player
    in reach of ranged record 0; else the move action. */
-static void EntityType61_ThinkCombat(Entity *entity, s32 unknown) {
+static void AncientKing_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
-    if (EntityType61_ShouldRespawnOthers(entity)) {
-        EntityAi_StartAction(entity, EntityType61_RespawnOthers, unknown);
+    if (AncientKing_ShouldRespawnOthers(entity)) {
+        EntityAi_StartAction(entity, AncientKing_RespawnOthers, unknown);
     } else if (entity->unkA2 == 0 && func_001992F0(entity, 0)) {
-        EntityAi_StartAttack(entity, EntityType61_RangedAttack0, unknown, 1, 0);
+        EntityAi_StartAttack(entity, AncientKing_RangedAttack0, unknown, 1, 0);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
     }
 }
 
-/* The move handler until EntityType61_SwitchHandlers installs EntityAi_Move: keeps animation 1 on both
+/* The move handler until AncientKing_SwitchHandlers installs EntityAi_Move: keeps animation 1 on both
    motion slots and does not turn. */
-static void EntityType61_Move(Entity *entity) {
+static void AncientKing_Move(Entity *entity) {
     entity->unkE0.unk1C = 0.0f;
     func_0019A448(entity, entity->unkE0.unk80, 0, 1, 0, entity->params->unkC4, 0);
     func_0019A448(entity, entity->unkE0.unk88, 1, 1, 0, entity->params->unkC4, 0);
 }
 
-/* The death action (busy bit 0x40) until EntityType61_SwitchHandlers installs EntityType61_DeathLaunchShot:
+/* The death action (busy bit 0x40) until AncientKing_SwitchHandlers installs AncientKing_DeathLaunchShot:
    on the motion slots, plays animation 2 to its end and then animation 16; as that passes frame 43
    it launches shot unk10[0].unk00 of ranged record 0 with the player's position as its starting
    point (func_00195E48); then the fade and the removal as in EntityAi_Death. */
-static void EntityType61_Death(Entity *entity) {
+static void AncientKing_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
     f32 target[4];
@@ -299,7 +303,7 @@ static void EntityType61_Death(Entity *entity) {
    second motion slot; on each of the five frames in D_0043E8E8 it launches the record's shot
    unk10[0].unk00, its starting point up to 600 from the player's position in x and in z
    (func_00195E48). */
-static void EntityType61_RangedAttack0(Entity *entity) {
+static void AncientKing_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8[0];
     f32 target[4];
@@ -347,11 +351,11 @@ static void EntityType61_RangedAttack0(Entity *entity) {
     }
 }
 
-/* An action (busy bit 0x1000) that EntityType61_ThinkCombat starts when
-   EntityType61_ShouldRespawnOthers says so: animation 17 on the second motion slot; on frame
+/* An action (busy bit 0x1000) that AncientKing_ThinkCombat starts when
+   AncientKing_ShouldRespawnOthers says so: animation 17 on the second motion slot; on frame
    EntityParams.unk438 it starts effect unk436 at model point unk43E (func_0018D600), past frame
-   unk43C effect unk43A there, and calls EntityType61_RespawnTwoOthers; then it plays to the end. */
-static void EntityType61_RespawnOthers(Entity *entity) {
+   unk43C effect unk43A there, and calls AncientKing_RespawnTwoOthers; then it plays to the end. */
+static void AncientKing_RespawnOthers(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x1000;
@@ -372,7 +376,7 @@ static void EntityType61_RespawnOthers(Entity *entity) {
         }
         if (entity->params->unk43C < ((EntityUnkE0Slot *)unkE0->unk88)->unk02) {
             func_0018D600((char **)entity, entity->params->unk43A, entity->params->unk43E, (int)entity->model->unkD0);
-            EntityType61_RespawnTwoOthers(entity);
+            AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
         }
         break;
@@ -391,10 +395,10 @@ static void EntityType61_RespawnOthers(Entity *entity) {
     }
 }
 
-/* An action (busy bit 0x2000) that EntityType61_Think starts: plays animation 2 on both motion
-   slots to its end, then installs the second set of handlers (EntityType61_ThinkAfterSwitch,
-   EntityType61_DeathLaunchShot, EntityAi_Animate, EntityAi_OnHit, EntityAi_Move) and thinks. */
-static void EntityType61_SwitchHandlers(Entity *entity) {
+/* An action (busy bit 0x2000) that AncientKing_Think starts: plays animation 2 on both motion
+   slots to its end, then installs the second set of handlers (AncientKing_ThinkAfterSwitch,
+   AncientKing_DeathLaunchShot, EntityAi_Animate, EntityAi_OnHit, EntityAi_Move) and thinks. */
+static void AncientKing_SwitchHandlers(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x2000;
@@ -417,8 +421,8 @@ static void EntityType61_SwitchHandlers(Entity *entity) {
             unkE0->animate = EntityAi_Animate;
             unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
             unkE0->move = (void (*)(void))EntityAi_Move;
-            unkE0->death = (void (*)(void))EntityType61_DeathLaunchShot;
-            entity->unkE0.think = EntityType61_ThinkAfterSwitch;
+            unkE0->death = (void (*)(void))AncientKing_DeathLaunchShot;
+            entity->unkE0.think = AncientKing_ThinkAfterSwitch;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -433,11 +437,11 @@ static void EntityType61_SwitchHandlers(Entity *entity) {
     }
 }
 
-/* The think handler that EntityType61_SwitchHandlers installs: as EntityAi_Think, with
-   EntityType61_ThinkCombatAfterSwitch for state 2 and EntityAi_ThinkIdle for states 0 and 1. Clears flag
+/* The think handler that AncientKing_SwitchHandlers installs: as EntityAi_Think, with
+   AncientKing_ThinkCombatAfterSwitch for state 2 and EntityAi_ThinkIdle for states 0 and 1. Clears flag
    bit 25 once the entity is more than 160 from its spawn point (func_00194F80). Counts down work
    word unk68. */
-static void EntityType61_ThinkAfterSwitch(Entity *entity, s32 unknown) {
+static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
@@ -454,7 +458,7 @@ static void EntityType61_ThinkAfterSwitch(Entity *entity, s32 unknown) {
         } else {
             switch (entity->state) {
             case 2:
-                EntityType61_ThinkCombatAfterSwitch(entity, unknown);
+                AncientKing_ThinkCombatAfterSwitch(entity, unknown);
                 break;
             case 0:
             case 1:
@@ -469,10 +473,10 @@ static void EntityType61_ThinkAfterSwitch(Entity *entity, s32 unknown) {
     }
 }
 
-/* The think function of state 2 for EntityType61_ThinkAfterSwitch: as EntityAi_ThinkCombat, but it starts
-   EntityType61_RespawnOthersAfterSwitch when EntityType61_ShouldRespawnOthers says so, and ranged records 0 and 1 have the
-   type's own actions (func_0014FCC0, EntityType61_RangedAttack1). */
-static void EntityType61_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
+/* The think function of state 2 for AncientKing_ThinkAfterSwitch: as EntityAi_ThinkCombat, but it starts
+   AncientKing_RespawnOthersAfterSwitch when AncientKing_ShouldRespawnOthers says so, and ranged records 0 and 1 have the
+   type's own actions (func_0014FCC0, AncientKing_RangedAttack1). */
+static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 angle;
@@ -488,8 +492,8 @@ static void EntityType61_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (EntityType61_ShouldRespawnOthers(entity)) {
-        EntityAi_StartAction(entity, EntityType61_RespawnOthersAfterSwitch, unknown);
+    if (AncientKing_ShouldRespawnOthers(entity)) {
+        EntityAi_StartAction(entity, AncientKing_RespawnOthersAfterSwitch, unknown);
         return;
     }
     side = func_0018FD50(entity, 0);
@@ -507,7 +511,7 @@ static void EntityType61_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
                 if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
                     EntityAi_StartAction(entity, func_0014FCC0, unknown);
                 } else if (ENTITY_FLAG_BITS(entity)->bits58 == 1) {
-                    EntityAi_StartAction(entity, EntityType61_RangedAttack1, unknown);
+                    EntityAi_StartAction(entity, AncientKing_RangedAttack1, unknown);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 }
@@ -558,10 +562,10 @@ done:
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-/* The death action (busy bit 0x40) that EntityType61_SwitchHandlers installs: as EntityAi_Death; as
+/* The death action (busy bit 0x40) that AncientKing_SwitchHandlers installs: as EntityAi_Death; as
    animation 16 passes frame 43 it launches shot unk10[0].unk00 of ranged record 0 with the player's
    position as its starting point (func_00195E48). */
-static void EntityType61_DeathLaunchShot(Entity *entity) {
+static void AncientKing_DeathLaunchShot(Entity *entity) {
     f32 target[4];
 
     entity->unkC6 = 0x40;
@@ -667,7 +671,7 @@ static void func_0014FCC0(Entity *entity) {
    D_0043E900 it launches the record's shot unk10[0].unk00 from the point func_0010CAB8 gives for
    EntityParams.unk43E, heading away from the entity's own position, with a pitch of -10 degrees
    (func_00195E48). */
-static void EntityType61_RangedAttack1(Entity *entity) {
+static void AncientKing_RangedAttack1(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)ENTITY_PARAMS_UNK3D8(entity->params, 1);
     f32 direction[4];
@@ -722,11 +726,11 @@ static void EntityType61_RangedAttack1(Entity *entity) {
     }
 }
 
-/* A second action with animation 17 (busy bit 0x1000), which EntityType61_ThinkCombatAfterSwitch
-   starts: as EntityType61_RespawnOthers, but on the model's one motion (func_00192C98) where that
-   one uses the second motion slot. It belongs to the handlers EntityType61_SwitchHandlers installs.
+/* A second action with animation 17 (busy bit 0x1000), which AncientKing_ThinkCombatAfterSwitch
+   starts: as AncientKing_RespawnOthers, but on the model's one motion (func_00192C98) where that
+   one uses the second motion slot. It belongs to the handlers AncientKing_SwitchHandlers installs.
    */
-static void EntityType61_RespawnOthersAfterSwitch(Entity *entity) {
+static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x1000;
@@ -747,7 +751,7 @@ static void EntityType61_RespawnOthersAfterSwitch(Entity *entity) {
         }
         if (entity->params->unk43C < entity->model->unkFC->unk82) {
             func_0018D600((char **)entity, entity->params->unk43A, entity->params->unk43E, (int)entity->model->unkD0);
-            EntityType61_RespawnTwoOthers(entity);
+            AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
         }
         break;
@@ -766,11 +770,11 @@ static void EntityType61_RespawnOthersAfterSwitch(Entity *entity) {
     }
 }
 
-/* Whether to start EntityType61_RespawnOthers or EntityType61_RespawnOthersAfterSwitch (the two
+/* Whether to start AncientKing_RespawnOthers or AncientKing_RespawnOthersAfterSwitch (the two
    think functions of state 2 ask): counts the entities with spawn ids 10 to 15 that have flag bits
    0 and 1 set and flag bits 2-3 below 3 (the count goes to work byte unk7A, a bit each to work word
    unk6A); TRUE when there are fewer than 5 and the pause in work word unk68 is over. */
-static s32 EntityType61_ShouldRespawnOthers(Entity *entity) {
+static s32 AncientKing_ShouldRespawnOthers(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 count = 0;
     s32 i;
@@ -792,11 +796,11 @@ static s32 EntityType61_ShouldRespawnOthers(Entity *entity) {
     return FALSE;
 }
 
-/* Called by EntityType61_RespawnOthers and EntityType61_RespawnOthersAfterSwitch: draws up to two
-   of the entities with spawn ids 10 to 15 that EntityType61_ShouldRespawnOthers did not count,
+/* Called by AncientKing_RespawnOthers and AncientKing_RespawnOthersAfterSwitch: draws up to two
+   of the entities with spawn ids 10 to 15 that AncientKing_ShouldRespawnOthers did not count,
    respawns each that has flag bit 0 set (func_0018DC40, which calls Entity_ResetToSpawn), and sets
    the pause in work word unk68 to EntityParams.unk434. */
-static void EntityType61_RespawnTwoOthers(Entity *entity) {
+static void AncientKing_RespawnTwoOthers(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 remaining = 2;
     s32 chance = 200;
