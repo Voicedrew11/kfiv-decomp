@@ -485,7 +485,7 @@ typedef struct {
         u64 flags;
         u8 bytes[8];                /* bytes[2] 0x3A, bytes[3] 0x3B: the id of another map object */
     } unk38;                        /* 0x38 */
-    u16 unk40;                      /* 0x40 passed to func_002109C8, 0: nothing */
+    u16 unk40;                      /* 0x40 passed to Script_Start, 0: nothing */
     u16 unk42;                      /* 0x42 the same, by MapObject_Break */
     s16 unk44;                      /* 0x44 an item (item_counts) or, 0x40 to 0x7F, a sound */
     u8 unk46;                       /* 0x46 */
@@ -498,7 +498,7 @@ typedef struct {
     u16 unk54;                      /* 0x54 passed to Effect_StartSpawner when the object comes into view, 0: nothing */
     u8 unk56;                       /* 0x56 the model point it starts at; the next one gives its direction */
     char pad57[0x01];
-    u16 unk58;                      /* 0x58 passed to func_002109C8 when an item is used on the object, 0: nothing */
+    u16 unk58;                      /* 0x58 passed to Script_Start when an item is used on the object, 0: nothing */
     u8 unk5A;                       /* 0x5A 0, 0xFF: in view with its map record; else by func_00116C08 */
     char pad5B[0x25];
 } MapObjectUnk08;
@@ -750,7 +750,7 @@ typedef struct {
     Vector4 scale;                  /* 0x20 */
     u16 item;                       /* 0x30 which LevelDef (item_name_defs) it is */
     char pad32[0x02];
-    u16 unk34;                      /* 0x34 passed to func_002109C8 in place of picking the item up, 0: nothing (func_001D0970) */
+    u16 unk34;                      /* 0x34 passed to Script_Start in place of picking the item up, 0: nothing (func_001D0970) */
     u8 required_flag;               /* 0x36 nonzero: it only appears while its byte of D_00356928 is below this */
     u8 chance;                      /* 0x37 percent chance that it appears (func_001C87D8) */
     u8 group;                       /* 0x38 0-15: picks the roll and the map's threshold it is tested against */
@@ -819,21 +819,6 @@ typedef struct {
     char *model_data;               /* 0x00 handed to func_0010D018 */
     char *texture;                  /* 0x04 becomes the model's unk194 */
 } ItemModelSource;
-
-/* a motion that turns a model by a fixed step each frame (func_00212778) */
-typedef struct {
-    s32 active;                     /* 0x00 cleared when the motion ends */
-    char pad04[0x04];
-    s32 owner_id;                   /* 0x08 */
-    char pad0C[0x04];
-    f32 delta_x;                    /* 0x10 */
-    char pad14[0x04];
-    f32 delta_y;                    /* 0x18 */
-    char pad1C[0x04];
-    f32 delta_z;                    /* 0x20 */
-    char pad24[0x04];
-    s32 frames_left;                /* 0x28 */
-} RotationMotion;
 
 /* the object func_001C5170 tests against a model's points */
 typedef struct {

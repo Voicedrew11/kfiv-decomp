@@ -65,7 +65,7 @@ typedef struct {
 } MapSlotUnk10Vectors;
 
 /* a MapSlotUnk10Words block as three lights: their directions are the columns of a matrix, their
-   colours (0 to 1) the vectors after it (func_00214358) */
+   colours (0 to 1) the vectors after it (ScriptCmd_SetMapLight) */
 typedef struct {
     f32 directions[4][4];           /* 0x00 [axis][light] */
     Vector4 colors[4];              /* 0x40 */
@@ -252,7 +252,7 @@ typedef struct MapSlot {
     char *unk38;                    /* 0x38 the file at 0x1480 */
     char *unk3C;                    /* 0x3C the file at 0x1540 */
     MapSlotPackets unk40;           /* 0x40 */
-    s32 unk5C;                      /* 0x5C passed to func_00210930 when the map becomes current */
+    s32 unk5C;                      /* 0x5C passed to Script_Init when the map becomes current */
 } MapSlot;
 
 /* what MapSlot.unk08 points at */

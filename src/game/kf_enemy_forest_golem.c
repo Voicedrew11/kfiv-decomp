@@ -20,7 +20,7 @@ extern MapSlot D_0038CD20[];
 extern int D_00446770;
 extern EntityFrameTable D_0043EAD8;
 int func_00192C98(void *, int, int, u32, int);
-int func_002109C8(int, int);
+int Script_Start(int, int);
 void func_001B57A0(u8, u8, u8);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
@@ -174,7 +174,7 @@ static void ForestGolem_Think(Entity *entity, s32 unknown) {
 
 /* An action (busy bit 0x2000) that ForestGolem_Think starts: plays animation 17 to its end. Past
    frame EntityParams.unk434, on the map D_00446770, it starts script EntityParams.unk436
-   (func_002109C8); after that, on the four frames of D_0043EAD8 and on frame 440, it asks for a
+   (Script_Start); after that, on the four frames of D_0043EAD8 and on frame 440, it asks for a
    controller rumble (func_001B57A0) with a strength that falls off with the player's distance up to
    3000. At the end it keeps the model's position in work floats unk48 to unk50, puts
    ForestGolem_ThinkStayInPlace in the think slot and calls it. */
@@ -198,7 +198,7 @@ static void ForestGolem_StartScriptAndRumble(Entity *entity) {
         if ((s16)entity->params->unk434 < entity->model->unkFC->unk82) { // match: read signed here
             if (entity->group_id == D_00446770) {
                 // match: an int result keeps $2 busy after the call
-                ((int (*)(s32, s32))func_002109C8)(entity->params->unk436, 0);
+                ((int (*)(s32, s32))Script_Start)(entity->params->unk436, 0);
                 entity->action_step++;
             }
         }

@@ -16,14 +16,14 @@ typedef struct {
     char pad0C[0x04];
     f32 unk10;                      /* 0x10 start of the rotation it spawns with (unk14 is its y) */
     f32 unk14;                      /* 0x14 an angle (the facing it spawns with?) */
-    f32 unk18;                      /* 0x18 third rotation component (func_00215E78) */
+    f32 unk18;                      /* 0x18 third rotation component (ScriptCmd_GetEntitySpawnRotation) */
     char pad1C[0x04];
     f32 unk20[4];                   /* 0x20 the scale it spawns with */
     u16 type_id;                    /* 0x30 which pool block holds its data */
     char pad32[0x02];
     s8 pool_size;                   /* 0x34 0-4: one pool block, else two */
     u8 unk35;                       /* 0x35 strips of CollisionMesh.unk24 rated below it are skipped (func_00187A20) */
-    u16 unk36;                      /* 0x36 what func_002109C8 gets when the entity dies */
+    u16 unk36;                      /* 0x36 what Script_Start gets when the entity dies */
     u64 unk38;                      /* 0x38 */
     u8 unk40;                       /* 0x40 the mode of this spawn: picks among the behaviours of its type, most often the think handler the set-up function installs */
     u8 variant;                     /* 0x41 picks the animation set */
@@ -34,13 +34,13 @@ typedef struct {
     u16 vertical_despawn_range;     /* 0x48 0: no vertical limit */
     char pad4A[0x02];
     u16 unk4C;                      /* 0x4C */
-    u16 unk4E;                      /* 0x4E asked of func_00210C48 before unk58 is used, 0: nothing */
+    u16 unk4E;                      /* 0x4E asked of Script_IsRunning before unk58 is used, 0: nothing */
     u16 unk50;                      /* 0x50 0: Entity_InitFromMapSpawns makes it 1800 */
     u8 unk52;                       /* 0x52 0: Entity_InitFromMapSpawns makes it 100 */
     char pad53;
     u16 unk54;                      /* 0x54 how near the player has to come for a dormant entity to get up (EntityAi_Dormant) */
     u16 unk56;                      /* 0x56 */
-    u16 unk58;                      /* 0x58 passed to func_002109C8 when an item is used on the entity, 0: nothing */
+    u16 unk58;                      /* 0x58 passed to Script_Start when an item is used on the entity, 0: nothing */
     u16 despawn_range;              /* 0x5A */
 } EntitySpawnInfo;
 

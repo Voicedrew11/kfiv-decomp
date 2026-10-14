@@ -122,7 +122,7 @@ typedef struct {
     s32 widda_needle_timer;         /* 0x1A0 frames the Widda Needle lasts; counts down to 0 every frame */
     s16 unk1A4;                     /* 0x1A4 */
     s16 unk1A6;                     /* 0x1A6 */
-    u8 unk1A8;                      /* 0x1A8 nonzero: the main loop skips func_00210D48 */
+    u8 unk1A8;                      /* 0x1A8 nonzero: the main loop skips Script_UpdateAll */
     char pad1A9[0x03];
     f32 unk1AC;                     /* 0x1AC */
     f32 unk1B0;                     /* 0x1B0 */

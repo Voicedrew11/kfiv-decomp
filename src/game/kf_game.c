@@ -389,8 +389,9 @@ int Game_IsMessageHeard(int flag) {
     return (recollection_flags[page].bits[bit / 8] >> (bit % 8)) & 1;
 }
 
-/* Marks message `flag` of a Recollection page as shown (Message_OpenBox shows it next, func_002150B0); ids
-   below 3 of the page pick its description, and marking a few ids marks the three after them too. */
+/* Marks message `flag` of a Recollection page as shown (Message_OpenBox shows it next,
+   ScriptCmd_ShowMessageBox); ids below 3 of the page pick its description, and marking a few ids marks the
+   three after them too. */
 void Game_MarkMessageHeard(int flag) {
     int page;
     u8 mask;

@@ -46,7 +46,7 @@ int func_0019D490(u8, u8, float *, float);
 s32 func_0019D980(s8, u8, u8, f32, Vector4Arg *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-int func_002109C8(int, int);
+int Script_Start(int, int);
 void func_00216778(void *, void *);
 void func_00216C48(void *, void *, void *);
 
@@ -690,7 +690,7 @@ void MapObject_Break(MapObject *object) {
     }
     Effect_StartSpawner(object->unk04->unk50, &object->model->position, &object->model->rotation, &D_0038CD20[MAP_OBJECT_BYTES(object)->unk00 & 1]);
     if (object->unk08->unk42 != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
-        func_002109C8(object->unk08->unk42, 0);
+        Script_Start(object->unk08->unk42, 0);
     }
     if (object->unk04->unk68 & 0x20000) {
         other = MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk38.bytes[3]);

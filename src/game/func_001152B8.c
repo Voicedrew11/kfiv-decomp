@@ -17,8 +17,8 @@ void func_001D1210(void *);
 void func_001154D8(int, int);
 void func_001155F8(int);
 void func_001C8990(int, f32 *);
-void func_00210930(int);
-int func_002109C8(int, int);
+void Script_Init(int);
+int Script_Start(int, int);
 void func_001BB590(void);
 void func_0019EA98(int);
 
@@ -54,8 +54,8 @@ void func_001152B8(int map) {
         D_0038D610.position.x = -D_0038D610.position.x;
         D_0038D610.position.y = -D_0038D610.position.y;
         D_0038D610.position.z = -D_0038D610.position.z;
-        func_00210930(D_0038CD20[map].unk5C);
-        func_002109C8(0x7FFF, 0);
+        Script_Init(D_0038CD20[map].unk5C);
+        Script_Start(0x7FFF, 0);
         loading = queue->unk10;
         if (loading != slot && queue->unk14 != slot) {
             func_001BB590();

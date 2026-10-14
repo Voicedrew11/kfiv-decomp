@@ -250,7 +250,7 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
 /* The think handler the set-up function installs for EntitySpawnInfo.unk40 2 and 3: as
    SkeletonSoldier_Think; with unk40 3 it also clears flag bit 25 once the entity is more than 180 from
    its spawn point (SkeletonSoldier_DormantAnim18Then19 leaves the bit set in that mode). What flag bit
-   25 does is not known; scripts read and set it (func_00216088, func_00216408). */
+   25 does is not known; scripts read and set it (ScriptCmd_SetEntityFlags, ScriptCmd_GetEntityFlags). */
 static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 

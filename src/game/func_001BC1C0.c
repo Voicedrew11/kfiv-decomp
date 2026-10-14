@@ -5,7 +5,7 @@
 extern u8 item_counts[];
 extern ItemCommonDef D_0041A6F8[];
 
-void Menu_AddKeyItem(int); // match: one argument is passed (func_002135A0 declares three)
+void Menu_AddKeyItem(int); // match: one argument is passed (ScriptCmd_AddItem declares three)
 /* Adds one of an item to what the player carries: up to 1 for weapons and worn items and for items with flag
    bit 1, up to 99 for the others ("Can't carry any more" past that). */
 void Player_AddItem(int index) {

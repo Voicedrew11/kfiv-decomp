@@ -10,7 +10,7 @@ extern int D_00446770;
 s32 func_001C8CB0(Entity *);
 void Player_AddExperience(s32);
 void func_001035A8(u32, int);
-int func_002109C8(int, int);
+int Script_Start(int, int);
 
 /* what every kind does when its entity dies */
 void func_0018DCD8(Entity *entity) {
@@ -22,6 +22,6 @@ void func_0018DCD8(Entity *entity) {
     func_001035A8(D_0038CD20[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
     Effect_FreeForOwner(entity);
     if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
-        func_002109C8(entity->spawn_info->unk36, 0);
+        Script_Start(entity->spawn_info->unk36, 0);
     }
 }

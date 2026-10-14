@@ -40,7 +40,7 @@ typedef struct {
     int unk44;                      /* 0x44 counts down to 0; 1 when an item was just used (Player_UseItem) */
 } GameStatus;
 
-/* GameStatus with bits 10 and 11 of the flag word (GameStatus.bits10) apart, as func_00214A20
+/* GameStatus with bits 10 and 11 of the flag word (GameStatus.bits10) apart, as ScriptCmd_ExitMainLoop
    sets them */
 typedef struct {
     char pad00[0x24];
@@ -50,6 +50,16 @@ typedef struct {
     u32 bit11 : 1;
     u32 bits12 : 20;
 } GameStatusSplitBits;
+
+#define GAME_STATUS_SPLIT_BITS(status) ((GameStatusSplitBits *)(status))
+
+/* the flag word of GameStatus (0x24) whole, where retail changes two of its bits at once */
+typedef struct {
+    char pad00[0x24];
+    s32 flags;                      /* 0x24 */
+} GameStatusFlagWord;
+
+#define GAME_STATUS_FLAG_WORD(status) (((GameStatusFlagWord *)(status))->flags)
 
 /* D_00446A28: the play time as func_001D22B8 splits it (byte 1 seconds, 2 minutes, 3 and 5 hours), passed by value */
 typedef struct {

@@ -1145,49 +1145,4 @@ void func_001AF640(EffectActor *effect, EffectSlot *spawn_slot);
 void func_001AF928(EffectActor *effect, EffectSlot *spawn_slot);
 void func_001AFC88(Vector4 *velocity, Vector4 *direction, float speed, float turn);
 
-
-/* a request to spawn an effect at a position (func_00214660) */
-typedef struct {
-    s32 pending;                    /* 0x00 cleared once the effect is spawned */
-    char pad04[0x04];
-    char kind;                      /* 0x08 */
-    char pad09[0x07];
-    u8 unk10;                       /* 0x10 */
-    char pad11[0x07];
-    u8 unk18;                       /* 0x18 */
-    char pad19[0x07];
-    f32 unk20;                      /* 0x20 */
-    char pad24[0x04];
-    f32 pos_x;                      /* 0x28 */
-    char pad2C[0x04];
-    f32 pos_y;                      /* 0x30 */
-    char pad34[0x04];
-    f32 pos_z;                      /* 0x38 */
-} SpawnRequest;
-
-/* a spawn request with a float at 0x18 and the position at 0x20 (func_002145F0, func_00214580) */
-typedef struct {
-    s32 pending;                    /* 0x00 cleared once the effect is spawned */
-    char pad04[0x04];
-    u8 kind;                        /* 0x08 */
-    char pad09[0x07];
-    u8 unk10;                       /* 0x10 */
-    char pad11[0x07];
-    f32 unk18;                      /* 0x18 */
-    char pad1C[0x04];
-    f32 pos_x;                      /* 0x20 */
-    char pad24[0x04];
-    f32 pos_y;                      /* 0x28 */
-    char pad2C[0x04];
-    f32 pos_z;                      /* 0x30 */
-} SpawnRequestWide;
-
-/* a task that feeds the cosine of an angle to a command (func_00214DC0) */
-typedef struct {
-    s32 active;                     /* 0x00 cleared after one step */
-    char pad04[0x04];
-    f32 angle;                      /* 0x08 radians */
-    char command[4];                /* 0x0C the command func_00211D90 fills in */
-} AngleTask;
-
 #endif

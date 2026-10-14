@@ -22,7 +22,7 @@ extern MapSlot D_0038CD20[];
 extern int D_00446770;
 int func_00192C98(void *, int, int, u32, int);
 void func_001035A8(u32, int);
-int func_002109C8(int, int);
+int Script_Start(int, int);
 
 static void EntityType37_Think(Entity *entity, s32 unknown);
 static void EntityType37_Death(Entity *entity);
@@ -115,7 +115,7 @@ static void EntityType37_Death(Entity *entity) {
             entity->unkA0 = 20;
             func_001035A8(D_0038CD20[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
             if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
-                func_002109C8(entity->spawn_info->unk36, 0);
+                Script_Start(entity->spawn_info->unk36, 0);
             }
             entity->action_step++;
         }
