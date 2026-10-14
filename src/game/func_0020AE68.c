@@ -1,4 +1,4 @@
-#include "common.h"
+#include "kf_movie.h"
 
 extern u32 D_0038CC74[];
 extern char D_00441300[];
@@ -7,7 +7,6 @@ extern int D_00446E90;
 extern int D_00446F20;
 extern int D_00446F50;
 
-int Movie_Play(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
 int sceGsSyncV(int);
 void func_0019BDA0(int, int);
 void func_001CB9A0(void);

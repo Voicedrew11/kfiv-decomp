@@ -1,4 +1,4 @@
-#include "common.h"
+#include "kf_movie.h"
 
 extern int D_00446E90;
 extern int D_00446F20;
@@ -10,7 +10,6 @@ int D_0020AD30(void);
 extern s64 D_00432E20[];
 extern s64 D_00433050[];
 
-int Movie_Play(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
 void func_001095E0(void);
 void func_0010B000(void);
 void func_001095D0(void);

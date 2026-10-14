@@ -232,7 +232,4 @@ typedef struct {
 int Movie_Play(char *path, u32 heap, u32 heap_size, int (*skip_requested)(void), u32 volume, s16 video_mode,
                s16 display_x, s16 display_y);
 
-/* Stops the sound stream where it is (audioDecPause). */
-int MovieAudio_Pause(MovieAudio *audio);
-
 #endif
