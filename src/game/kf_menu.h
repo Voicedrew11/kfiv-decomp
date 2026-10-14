@@ -43,7 +43,7 @@ typedef struct MenuCategory {
 } MenuCategory;
 
 /* one of the menu's item lists, a MenuCategory that knows its group: the twelve at D_005CE760, linked in
-   a ring by func_001D5A20, and the eleven at D_005CE6A0 that their items are first taken from */
+   a ring by Menu_Init, and the eleven at D_005CE6A0 that their items are first taken from */
 typedef struct MenuItemList {
     MenuItem *item;                 /* 0x00 the item the cursor is on */
     struct MenuItemList *next;      /* 0x04 */
@@ -64,13 +64,13 @@ typedef struct MenuFreeNode {
     int unk04;                      /* 0x04 */
 } MenuFreeNode;
 
-/* what func_001D45B8 is handed: the node to give back at 0x0C */
+/* what Menu_FreeLoadBuffer is handed: the node to give back at 0x0C */
 typedef struct {
     char pad00[0x0C];
     MenuFreeNode *node;             /* 0x0C */
 } MenuFreeRequest;
 
-/* a node of the list *D_005CE840[0] points into (func_001DFFF8 follows next/prev) */
+/* a node of the list *D_005CE840[0] points into (Menu_MoveEquipCursor follows next/prev) */
 typedef struct DataNode {
     int unk00;                      /* 0x00 */
     struct DataNode *next;          /* 0x04 */
@@ -79,7 +79,7 @@ typedef struct DataNode {
 } DataNode;
 
 /* one of the three 0x180-byte records SaveCard_GetSaveInfo hands out (SaveInfo in kf_save_card.h), as the save list of
-   func_001E0D98 reads it: what a save on the card says about itself */
+   Menu_UpdateSaveList reads it: what a save on the card says about itself */
 typedef struct {
     char pad00[0x04];
     s32 unk04;                      /* 0x04 which line of the text table names it */
@@ -99,7 +99,7 @@ typedef struct {
     char pad17C[0x04];
 } CardSaveInfo;
 
-/* MenuScreenState's three bytes at 0x1E as the array func_001E0D98 fills: what SaveCard_GetSaveState says of each save
+/* MenuScreenState's three bytes at 0x1E as the array Menu_UpdateSaveList fills: what SaveCard_GetSaveState says of each save
    (1: there is one), then 0 or -1 for the others by what SaveCard_HasRoomFor answers */
 typedef struct {
     char pad00[0x1E];
@@ -114,7 +114,7 @@ typedef struct {
     s32 unk04;                      /* 0x04 cleared when a screen is left */
 } MenuScreenContext;
 
-/* D_005CF2F0: state of the menu screen func_001E02F8 runs; func_001E4F58 resets it */
+/* D_005CF2F0: state of the menu screen Menu_UpdateCardSlot runs; Menu_OpenCardSlot resets it */
 typedef struct {
     s32 unk00;                      /* 0x00 */
     s32 unk04;                      /* 0x04 */
@@ -126,13 +126,13 @@ typedef struct {
     s8 unk10;                       /* 0x10 */
     s8 unk11;                       /* 0x11 */
     s8 unk12;                       /* 0x12 starts as -1 */
-    s8 unk13;                       /* 0x13 step of the screen func_001E0D98 runs, -1: waiting for input */
+    s8 unk13;                       /* 0x13 step of the screen Menu_UpdateSaveList runs, -1: waiting for input */
     s8 unk14;                       /* 0x14 */
     char pad15[0x01];
     s8 unk16;                       /* 0x16 */
     s8 unk17;                       /* 0x17 */
     s8 unk18;                       /* 0x18 starts as 1 */
-    s8 unk19;                       /* 0x19 func_001E4068: the screen is busy while this or unk1A is above 0 */
+    s8 unk19;                       /* 0x19 what SaveCard_GetSavesState said of the first slot's card, unk1A of the second's (Menu_CardsHaveSaves) */
     s8 unk1A;                       /* 0x1A */
     s8 unk1B;                       /* 0x1B */
     s8 unk1C;                       /* 0x1C */
@@ -153,7 +153,7 @@ typedef struct {
     TradeValue *values[6];          /* 0x00 */
 } TradeValueTables;
 
-/* D_00440230: the pad button bit of each of the twelve choices of the button screen; func_001E2750 copies it whole */
+/* D_00440230: the pad button bit of each of the twelve choices of the button screen; Menu_UpdateButtonConfig copies it whole */
 typedef struct {
     u16 bits[12];                   /* 0x00 */
 } MenuPadBitTable;
@@ -168,7 +168,7 @@ typedef struct {
     s32 first_item[13];             /* 0x00 */
 } TradeGroupBases;
 
-/* D_0043FC08: the seven weekday names (D_00446AE0...); func_001D62C8 copies the table whole and never reads it */
+/* D_0043FC08: the seven weekday names (D_00446AE0...); Menu_Run copies the table whole and never reads it */
 typedef struct {
     char *names[7];                 /* 0x00 */
 } MenuWeekdayNames;
@@ -231,7 +231,7 @@ typedef union {
     s32 words[16];
 } MenuMatrix;
 
-/* D_0043F7C8: the LevelDef numbers of the twelve key items (func_001DC120 maps them to 0..11); copied whole to a local */
+/* D_0043F7C8: the LevelDef numbers of the twelve key items (Menu_AddKeyItem maps them to 0..11); copied whole to a local */
 typedef struct {
     s32 number[12];                 /* 0x00 */
 } KeyItemNumbers;

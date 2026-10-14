@@ -4,6 +4,7 @@
 #include "kf_player.h"
 #include "kf_message.h"
 #include "kf_title.h"
+#include "kf_menu_screens.h"
 
 extern GameStatus D_0038CC50;
 extern PlayerState D_00413F80;
@@ -29,13 +30,11 @@ void func_00112648(void);
 void func_001029A8(void);
 void func_001B5808(void);
 void func_00124EF8(void);
-void func_001D5A20(void);
 void func_0019C300(void);
 s32 SaveCard_Init(void);
 void func_00109410(void);
 void func_00111D00(void);
 void func_00106318(void);
-int func_001D62C8(s8);
 int func_0020D088(void);
 void srand(u32);
 int func_001F91F8(void);
@@ -67,14 +66,14 @@ int main(void) {
     func_00124EF8();
     ItemEffect_Load();
     Message_Init();
-    func_001D5A20();
+    Menu_Init();
     func_0019C300();
     SaveCard_Init();
     func_00109410();
     func_00111D00();
     Hud_Load();
     func_00106318();
-    func_001D62C8(4);
+    Menu_Run(4);
     sceGsSyncV(0);
     sceGsSyncV(0);
     func_0019BDA0(0, 0x4000);
@@ -85,7 +84,7 @@ int main(void) {
             sceGsSyncV(0);
             func_0019BDA0(0, 0x4000);
             if (func_001F91F8() == 0) {
-                func_001D62C8(5);
+                Menu_Run(5);
                 func_0020AD78();
             }
             sceGsSyncV(0);
@@ -103,7 +102,7 @@ int main(void) {
                 if (((int (*)(int))Title_RunGameOver)(0) != 1) {
                     break;
                 }
-            } while (func_001D62C8(1) == 0);
+            } while (Menu_Run(1) == 0);
             sceGsSyncV(0);
             func_0019BDA0(0, 0x4000);
         } else if (D_0038CC50.bits10 & 1) {

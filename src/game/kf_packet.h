@@ -27,7 +27,7 @@ typedef struct {
     u8 unk33;                       /* 0x33 how many digits func_001FCBD0 draws; 0: three digits, a point and one more */
     s32 unk34;                      /* 0x34 which number the sprite stands for (func_001FC820 gives its current value) */
     char pad38[0x06];
-    u8 unk3E;                       /* 0x3E 1: a menu screen's own sprite, 2: one func_001D76D0/func_001D7760 draw */
+    u8 unk3E;                       /* 0x3E 1: a menu screen's own sprite, 2: one Menu_DrawBackdropItemSelParts/Menu_DrawBackdropPreshopParts draw */
     s8 slot;                        /* 0x3F which slot the packet belongs to */
     char pad40[0x01];
     s8 unk41;                       /* 0x41 */
@@ -48,7 +48,7 @@ typedef struct {
 #define SPRITE_PACKET_COLOR(packet) ((SpritePacketColor *)&(packet)->red)
 
 /* the same four colour fields seen from the start of the packet: reads and writes are then based on the packet's
-   own address (lbu 0x23(packet)), as retail's are in func_001E02F8 */
+   own address (lbu 0x23(packet)), as retail's are in Menu_UpdateCardSlot */
 typedef struct {
     char pad00[0x20];
     u32 red : 8;                    /* 0x20 */

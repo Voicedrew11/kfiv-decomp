@@ -267,7 +267,7 @@ typedef struct {
     u8 bonus_kinds[2];              /* 0x1F what wearing the item does, 0: nothing (the switch of func_001BB020) */
     u8 bonus_amounts[2];            /* 0x21 */
     char pad23[0x1C];
-    u8 unk3F;                       /* 0x3F added to PlayerItemDef.unk7C for the shield in hand (func_001D94F8) */
+    u8 unk3F;                       /* 0x3F added to PlayerItemDef.unk7C for the shield in hand (Menu_UpdateEquip) */
 } LevelRecordDef;
 
 /* D_003682F0[160]: what has been gained per item (0x22 bytes each) */
@@ -317,7 +317,7 @@ typedef struct {
     f32 unk74;                      /* 0x74 how far a swing reaches, less 100 */
     u16 unk78;                      /* 0x78 the motion frame from which a held shot is ready (Player_DrawBow) */
     u16 unk7A;                      /* 0x7A the frame the drawing motion stops at */
-    u8 unk7C;                       /* 0x7C which D_005CEE60 motion the weapon shown on the equipment screen plays (func_001D94F8) */
+    u8 unk7C;                       /* 0x7C which D_005CEE60 motion the weapon shown on the equipment screen plays (Menu_UpdateEquip) */
     u8 unk7D;                       /* 0x7D which D_0042A290 function draws it there */
     u8 unk7E;                       /* 0x7E goes to PlayerState.unkC4 when a swing starts (Player_SwingWeapon) */
     u8 unk7F;                       /* 0x7F copied to Unk1B1470Request.unk6E */

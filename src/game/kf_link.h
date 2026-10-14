@@ -13,7 +13,7 @@ typedef struct LinkNode {
     void (*callback)(void);         /* 0x18 */
     s32 unk1C;                      /* 0x1C */
     s32 unk20;                      /* 0x20 */
-    s8 slot;                        /* 0x24 which D_00420DF0 entry its file is for (func_001D4228) */
+    s8 slot;                        /* 0x24 which D_00420DF0 entry its file is for (Menu_FinishWornModelLoad) */
     char pad25[0x03];
     char name[0x28];                /* 0x28 file name built with sprintf */
 } LinkNode;
@@ -31,6 +31,6 @@ typedef struct {
     u8 value[12];
 } LinkSlotValues;
 
-int func_001D4598(LinkNode *node);
+int Menu_TakeLoadBuffer(LinkNode *node);
 
 #endif

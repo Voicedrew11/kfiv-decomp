@@ -6,6 +6,7 @@
 #include <eekernel.h>
 #include <eeregs.h>
 #include <libgraph.h>
+#include "kf_menu_screens.h"
 
 #define PAD_UP    0x0010
 #define PAD_DOWN  0x0040
@@ -20,7 +21,6 @@ extern char *D_00446F50;
 
 int func_001CED78(int, char *, int);
 s32 func_0019CDC0(s32);
-s32 func_001E4068(void);
 int func_001CEBE0(void);
 void func_0020D9A8(void);
 
@@ -370,7 +370,7 @@ int Title_UpdatePressStart(void) {
     return 0;
 }
 
-/* Sets up the sprites of the menu: four choices in a column, the one func_001E4068 returns pulsing. */
+/* Sets up the sprites of the menu: four choices in a column, the one Menu_CardsHaveSaves returns pulsing. */
 int Title_InitMenu(void) {
     int i;
 
@@ -384,7 +384,7 @@ int Title_InitMenu(void) {
     Title_SetSprite(TITLE_TEXTURE_PICTURE_LEFT, -0x140, -0xE0, 0x100, 0x200, &picture_left_sprite, &picture_left_track);
     Title_SetSprite(TITLE_TEXTURE_PICTURE_MIDDLE, -0x40, -0xE0, 0x100, 0x200, &picture_middle_sprite, &picture_middle_track);
     Title_SetSprite(TITLE_TEXTURE_PICTURE_RIGHT, 0xC0, -0xE0, 0x80, 0x200, &picture_right_sprite, &picture_right_track);
-    menu_choice = func_001E4068();
+    menu_choice = Menu_CardsHaveSaves();
     menu_confirmed = FALSE;
     for (i = 0; i < 4; i++) {
         if (menu_choice == i) {

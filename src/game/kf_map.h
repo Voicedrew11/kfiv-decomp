@@ -438,7 +438,7 @@ typedef struct {
     char pad10[0x10];
 } TriggerTypeDef;
 
-/* TriggerTypeDef.flags as bit-fields, where retail reads the low byte alone (func_001D2680) */
+/* TriggerTypeDef.flags as bit-fields, where retail reads the low byte alone (Menu_BuildItemRings) */
 typedef struct {
     char pad00[0x0E];
     u8 unlisted : 1;                /* 0x0E set: the item is left out of the menu's list of things to use */

@@ -16,6 +16,7 @@
 #include "kf_game.h"
 #include "kf_gs.h"
 #include "kf_save_card.h"
+#include "kf_menu_screens.h"
 
 extern u8 D_00369830[380];
 extern LevelDef D_004147F8[380];
@@ -71,7 +72,6 @@ void func_0019BDA0(int, int);
 void func_001A15C0(void);
 void func_001A15B8(void);
 void func_0019DC00(void);
-s32 func_001D72F0(s32 run_handler);
 void func_001B5460(void);
 s16 func_00206C40(void);
 void func_001FBDC8(void);
@@ -86,7 +86,6 @@ extern u16 D_00446DE8;
 extern s32 D_00446CA8;
 extern u64 D_004261A0[47];             /* the frame register of the first buffer ([0]) and of the second ([46]) */
 extern int D_00446F78;
-void func_001D3608(int);
 extern int D_00446CA4;
 extern HandlerContext D_005CF330;
 extern f32 D_00425510[0x100];
@@ -112,7 +111,6 @@ void func_001096E8(void);
 void func_00109800(void);
 void func_00109E88(void);
 void func_0010B238(TextureTableHeader *);
-void func_001D55E8(void);
 void func_001FBDE8(s32 value);
 void func_00204180(void *, LoadedBlockRef *);
 extern LinkNode *D_00446C90;
@@ -121,12 +119,10 @@ extern LinkNode D_004264C0;
 extern LinkNode D_00426510;
 extern LinkNode D_00426560;
 extern LinkNode D_004265B0;
-void func_001D40C0(LinkNode *);
 extern u32 D_00446A74;
 extern SpritePacket *D_00446BFC;
 extern s8 D_00447311;
 s32 func_0019CDC0(s32);
-void func_001E4568(void);
 int func_001E5210(u8 mode);
 void func_001FC5E8(MenuCursorBar *);
 void func_00207478(int, int, int, int);
@@ -171,8 +167,7 @@ extern s8 D_00447312;
 void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
-void func_001D45D0(void);
-int func_001D6E60(f32 *); // match: an int result keeps $2 for the load after the call
+int Menu_DrawItemModel(f32 *); // match: an int result keeps $2 for the load after the call
 int func_001E4FE0(s32, u32);
 s32 func_001FDCD0(ColorBytes bytes);
 s32 func_001FDD28(u16 *, s32);
@@ -209,7 +204,6 @@ extern s32 D_00446E50;
 s32 func_001FF428(u16 *, s32);
 extern f32 D_00428A10[4];
 extern f32 D_00446CBC;
-s32 func_001DFC60(HandlerContext *, s32);
 /* Starts every packet of a list at its full alpha. match: the alpha is read as an unsigned bit-field */
 #define FILL_FADE_2(levels, packets, count)                               \
     for (i = 0; i < (count); i++) {                                     \
@@ -225,10 +219,6 @@ extern char D_00426538[];
 extern char D_00426588[];
 extern char D_004265D8[];
 #define PAGE_ROWS 7
-void func_001E4858(s32);
-void func_001E4A48(s32);
-void func_001E4C38(s32);
-void func_001E4DC8(s32);
 /* Scrolls the window and the cursor up one row; FALSE once the window is at the top of the list. */
 static inline s32 func_001ED738_ScrollUp(void) {
     D_005CF360[0] = D_005CF360[0]->prev;
@@ -588,7 +578,7 @@ void Trade_Run(s32 value) {
     D_0044731C = D_00447320 = Pad_GetMode(0, 0);
     while (trade_run_steps[D_00446CA8](value) != 0) {
         sceGsSyncPath(0, 0);
-        D_00447328 = func_001D72F0(1);
+        D_00447328 = Menu_EndFrame(1);
         func_001B5460();
         D_0044731C = Pad_GetMode(0, 0);
         if (D_0044731C != D_00447320) {
@@ -738,7 +728,7 @@ static s32 Trade_CopyFrameToTexture(void) {
 static int Trade_RunStep(int value) {
     int (*handler)(HandlerContext *);
 
-    func_001D3608(0);
+    Menu_StepModelLoads(0);
     handler = trade_steps[D_00446CA4];
     D_005CF330.arg = value;
     if (handler != NULL) {
@@ -780,7 +770,7 @@ static s32 Trade_Start(HandlerContext *context) {
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
     *D2_CHCR = 0x100;
     Trade_BuildItemRings(context->arg);
-    func_001D55E8();
+    Menu_InitLoadBuffers();
     D_00446C08 = 0;
     D_00446C09 = 0;
     if (context->arg != 4) {
@@ -835,28 +825,28 @@ static int Trade_CutModelChain(void) {
 static void Trade_ChainModels(void) {
     if (D_005CF380[0] != NULL) {
         Trade_SetModelNames();
-        func_001D4598(&D_00426470);
-        func_001D4598(&D_004264C0);
-        func_001D4598(&D_00426510);
-        func_001D4598(&D_00426560);
-        func_001D4598(&D_004265B0);
+        Menu_TakeLoadBuffer(&D_00426470);
+        Menu_TakeLoadBuffer(&D_004264C0);
+        Menu_TakeLoadBuffer(&D_00426510);
+        Menu_TakeLoadBuffer(&D_00426560);
+        Menu_TakeLoadBuffer(&D_004265B0);
         D_00426470.next = &D_004264C0;
-        D_00426470.callback = func_001D40C0;
+        D_00426470.callback = Menu_StepModelLoad;
         D_00426470.unk20 = 0;
         D_004264C0.next = &D_00426510;
-        D_004264C0.callback = func_001D40C0;
+        D_004264C0.callback = Menu_StepModelLoad;
         D_004264C0.unk20 = 0;
         D_004264C0.unk1C = 0;
         D_00426510.next = &D_00426560;
-        D_00426510.callback = func_001D40C0;
+        D_00426510.callback = Menu_StepModelLoad;
         D_00426510.unk20 = 0;
         D_00426510.unk1C = 0;
         D_00426560.next = &D_004265B0;
-        D_00426560.callback = func_001D40C0;
+        D_00426560.callback = Menu_StepModelLoad;
         D_00426560.unk20 = 0;
         D_00426560.unk1C = 0;
         D_004265B0.next = NULL;
-        D_004265B0.callback = func_001D40C0;
+        D_004265B0.callback = Menu_StepModelLoad;
         D_004265B0.unk20 = 0;
         D_00426470.unk1C = D_004265B0.unk1C = 0;
         D_00446C90 = &D_00426470;
@@ -991,7 +981,7 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
                     D_00446C40 = D_00446C1C;
                     D_00446C44 = D_00446C20;
                     D_00446C48 = D_00446C34;
-                    ((void (*)(s32))func_001E4568)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
                 } else {
                     D_00446CA4++;
                 }
@@ -1187,7 +1177,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
         D_00446CB0 -= 3.1415927f;
         sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, D_00446CB0);
         sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, D_004289F0);
-        func_001D6E60((f32 *)local_matrix);
+        Menu_DrawItemModel((f32 *)local_matrix);
     }
 
     if (D_00447318 == 0) {
@@ -1408,11 +1398,11 @@ static void Trade_UpdateStockList(HandlerContext *context) {
                 } else if (D_00447311 == 6) {
                     context->unk04 = 0;
                     D_00446CA0 = Trade_UpdateSelectScreen;
-                    ((void (*)(s32))func_001D45D0)(0);
+                    ((void (*)(s32))Menu_ResetLoadBuffers)(0);
                 } else if (D_00447311 == 7) {
                     context->unk04 = 0;
                     D_00446CA4++;
-                    ((void (*)(s32))func_001D45D0)(0);
+                    ((void (*)(s32))Menu_ResetLoadBuffers)(0);
                 }
                 D_00447311 = 0;
                 D_00447312 = 0;
@@ -1541,7 +1531,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     D_00446CB8 = angle - (s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
     sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, D_00446CB8);
     sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, D_00428A00);
-    func_001D6E60((f32 *)local_matrix);
+    Menu_DrawItemModel((f32 *)local_matrix);
 
     if (D_00447318 == 0 && (D_00446DE8 & 0x1000) && func_001E4FE0(record, D_005CF380[0]->group)) {
         D_00446CB4 = 1;
@@ -1829,7 +1819,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                     if (context->arg != 4) {
                         D_00413F80.unk4C -= D_00446E50;
                         D_00446CA0 = Trade_UpdateSelectScreen;
-                        ((void (*)(s32))func_001D45D0)(0); // match: the callee takes nothing
+                        ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                     } else {
                         switch (D_004147F8[D_005CF380[0]->unk0C].unk30_20 & 3) {
                         case 1:
@@ -1854,7 +1844,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                     context->unk04 = 0;
                     Trade_BuildItemRings(context->arg);
                     if (context->arg == 4) {
-                        ((int (*)(s32))func_001D45D0)(0); // match: the callee takes nothing; an int result orders the loads after it
+                        ((int (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing; an int result orders the loads after it
                         D_00446C40 = D_00446C24;
                         D_00446C44 = D_00446C28;
                         D_00446C48 = D_00446C38;
@@ -1918,7 +1908,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
         return;
     }
     if (D_00447311 < 2) {
-        func_001DFC60(context, D_00447318);
+        Menu_MoveItemListCursor(context, D_00447318);
     }
     record = D_00426110[0]->unk0C - bases.first_item[D_00426110[0]->group];
     if (D_00426110[0]->group == 0) {
@@ -1983,7 +1973,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     D_00446CBC -= 3.1415927f;
     sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)&view_matrix, D_00446CBC);
     sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, D_00428A10);
-    func_001D6E60((f32 *)local_matrix);
+    Menu_DrawItemModel((f32 *)local_matrix);
 
     for (; row < 7; node = node->prev, row++) {
         item = &D_004147F8[node->unk0C];
@@ -2223,7 +2213,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
                 } else if (D_00447311 == 5) {
                     context->unk04 = 1;
                     D_00446CA0 = Trade_UpdateSelectScreen;
-                    ((void (*)(s32))func_001D45D0)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 }
                 D_00447311 = 0;
                 D_00447312 = 0;
@@ -2324,7 +2314,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     D_00446CC0 = angle - (s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
     sceVu0RotMatrixY((f32 *)local_matrix, (f32 *)view_matrix, D_00446CC0);
     sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, D_00428A20);
-    func_001D6E60((f32 *)local_matrix);
+    Menu_DrawItemModel((f32 *)local_matrix);
 
     if (D_00447318 == 0) {
         group = D_00426110[0]->group;
@@ -2601,7 +2591,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
                     context->unk04 = 1;
                     D_00446CA0 = Trade_UpdateSelectScreen;
                     Trade_BuildItemRings(context->arg);
-                    ((void (*)(s32))func_001D45D0)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 } else if (D_00447311 == 6) {
                     D_00446CA0 = trade_list_handlers[1];
                 }
@@ -2674,7 +2664,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                 func_0019CDC0(1);
                 D_005CF380[0] = cursor->next;
             }
-            func_001E4858(0);
+            Menu_ShiftListModelsNext(0);
         } else if (D_00446DE8 & 0x40) {
             if (cursor->prev != NULL) {
                 if (D_005CF370[0]->prev == cursor && D_005CF360[0]->next != cursor) {
@@ -2684,7 +2674,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                 func_0019CDC0(1);
                 D_005CF380[0] = cursor->prev;
             }
-            func_001E4A48(0);
+            Menu_ShiftListModelsPrev(0);
         } else if ((D_00446DE8 & 0x20) && D_00446C48 >= 8) {
             if (cursor->prev != NULL) {
                 if (D_005CF360[0]->next != D_005CF370[0]->prev) {
@@ -2697,7 +2687,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                 }
                 func_0019CDC0(1);
             }
-            func_001E4C38(0);
+            Menu_ShiftListModelsPageUp(0);
         } else if ((D_00446DE8 & 0x80) && D_00446C48 >= 8) {
             if (cursor->next != NULL) {
                 if (D_005CF360[0]->next != D_005CF370[0]->prev) {
@@ -2710,7 +2700,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                 }
                 func_0019CDC0(1);
             }
-            func_001E4DC8(0);
+            Menu_ShiftListModelsPageDown(0);
         } else {
             return FALSE;
         }
@@ -2872,7 +2862,7 @@ void Smith_Run(void) {
     D_0044731C = D_00447320 = Pad_GetMode(0, 0);
     while (smith_run_steps[D_00446CCC](0) != 0) {
         sceGsSyncPath(0, 0);
-        D_00447328 = func_001D72F0(1);
+        D_00447328 = Menu_EndFrame(1);
         func_001B5460();
         D_0044731C = Pad_GetMode(0, 0);
         if (D_0044731C != D_00447320) {
@@ -2941,7 +2931,7 @@ static s32 Smith_Start(void) {
     D_00446C88.green = 0x80;
     D_00446C88.red = 0x80;
     D_00446C88.alpha = 0;
-    func_001D55E8();
+    Menu_InitLoadBuffers();
     D_00446CC4 = Smith_UpdateSelectScreen;
     D_00446CC8++;
     return TRUE;
@@ -3070,7 +3060,7 @@ static s32 Smith_CopyFrameToTexture(void) {
 static int Smith_RunStep(int value) {
     int (*handler)(HandlerContext *);
 
-    func_001D3608(0);
+    Menu_StepModelLoads(0);
     handler = smith_steps[D_00446CC8];
     D_005CF340.arg = value;
     if (handler != NULL) {
@@ -3102,32 +3092,32 @@ static int Smith_CutModelChain(void) {
     return 1;
 }
 
-/* Rebuilds the five link nodes for the current D_005CF3B0 item and chains them (the func_001E4568 of this list). */
+/* Rebuilds the five link nodes for the current D_005CF3B0 item and chains them (the Menu_ChainItemListModels of this list). */
 static void Smith_ChainModels(void) {
     if (D_005CF3B0[0] != NULL) {
         Smith_SetModelNames();
-        func_001D4598(&D_00426470);
-        func_001D4598(&D_004264C0);
-        func_001D4598(&D_00426510);
-        func_001D4598(&D_00426560);
-        func_001D4598(&D_004265B0);
+        Menu_TakeLoadBuffer(&D_00426470);
+        Menu_TakeLoadBuffer(&D_004264C0);
+        Menu_TakeLoadBuffer(&D_00426510);
+        Menu_TakeLoadBuffer(&D_00426560);
+        Menu_TakeLoadBuffer(&D_004265B0);
         D_00426470.next = &D_004264C0;
-        D_00426470.callback = (void (*)(void))func_001D40C0;
+        D_00426470.callback = (void (*)(void))Menu_StepModelLoad;
         D_00426470.unk20 = 0;
         D_004264C0.next = &D_00426510;
-        D_004264C0.callback = (void (*)(void))func_001D40C0;
+        D_004264C0.callback = (void (*)(void))Menu_StepModelLoad;
         D_004264C0.unk20 = 0;
         D_004264C0.unk1C = 0;
         D_00426510.next = &D_00426560;
-        D_00426510.callback = (void (*)(void))func_001D40C0;
+        D_00426510.callback = (void (*)(void))Menu_StepModelLoad;
         D_00426510.unk20 = 0;
         D_00426510.unk1C = 0;
         D_00426560.next = &D_004265B0;
-        D_00426560.callback = (void (*)(void))func_001D40C0;
+        D_00426560.callback = (void (*)(void))Menu_StepModelLoad;
         D_00426560.unk20 = 0;
         D_00426560.unk1C = 0;
         D_004265B0.next = NULL;
-        D_004265B0.callback = (void (*)(void))func_001D40C0;
+        D_004265B0.callback = (void (*)(void))Menu_StepModelLoad;
         D_004265B0.unk20 = 0;
         D_00426470.unk1C = D_004265B0.unk1C = 0;
         D_00446C90 = &D_00426470;
@@ -3277,14 +3267,14 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                     D_00446CC4 = smith_list_handlers[context->unk04];
                     D_00446C44 = D_00446C20;
                     D_00446C48 = D_00446C34;
-                    ((void (*)(s32))func_001E4568)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
                 } else if (D_00447316 == 3) {
                     D_00446C40 = D_00446C1C;
                     D_00446CC4 = smith_list_handlers[context->unk04];
                     D_00446C44 = D_00446C20;
                     D_00446C48 = D_00446C34;
                     D_00447313 = 0;
-                    ((void (*)(s32))func_001E4568)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
                 } else if (D_00447316 == 4) {
                     D_00446C40 = D_00446C24;
                     D_00446CC4 = smith_list_handlers[context->unk04];
@@ -3370,7 +3360,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
         return;
     }
     if (D_00447316 < 2) {
-        func_001DFC60(context, D_00447318);
+        Menu_MoveItemListCursor(context, D_00447318);
     }
     number = D_00426110[0]->unk0C;
     index = number - bases.first_item[D_00426110[0]->group];
@@ -3445,7 +3435,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     D_00446CD8 = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
     sceVu0RotMatrixY(rotation, scale, D_00446CD8);
     sceVu0TransMatrix(rotation, rotation, D_00428A30);
-    func_001D6E60(rotation);
+    Menu_DrawItemModel(rotation);
     if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && func_001E4FE0(index, D_00426110[0]->group)) {
         D_00446CD4 = 1;
         if (D_00446AD4 == 0) {
@@ -3676,7 +3666,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
                 } else if (D_00447316 == 5) {
                     context->unk04 = 0;
                     D_00446CC4 = Smith_UpdateSelectScreen;
-                    ((void (*)(s32))func_001D45D0)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 }
                 D_00447316 = 0;
                 D_00447317 = 0;
@@ -3760,7 +3750,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     D_00446CE0 = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
     sceVu0RotMatrixY(rotation, scale, D_00446CE0);
     sceVu0TransMatrix(rotation, rotation, D_00428A40);
-    func_001D6E60(rotation);
+    Menu_DrawItemModel(rotation);
     if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && func_001E4FE0(index, D_00426110[0]->group)) {
         D_00446CDC = 1;
         if (D_00446AD4 == 0) {
@@ -4046,7 +4036,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                     }
                     context->unk04 = 0;
                     D_00446CC4 = Smith_UpdateSelectScreen;
-                    ((void (*)(s32))func_001D45D0)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 } else if (D_00447316 == 5) {
                     D_00446CC4 = (void (*)(HandlerContext *))smith_list_handlers[0];
                 }
@@ -4104,7 +4094,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         return;
     }
     if (D_00447313 == 0 && D_00447316 < 2) {
-        func_001DFC60(context, D_00447318);
+        Menu_MoveItemListCursor(context, D_00447318);
     }
     number = D_00426110[0]->unk0C;
     index = number - bases.first_item[D_00426110[0]->group];
@@ -4145,7 +4135,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         SELECT_PART(0);
     }
     if (D_00447313 == 0) {
-        // match: the bar's corner is a packed word set in front of the loop (as in func_001DDB10), not literals in
+        // match: the bar's corner is a packed word set in front of the loop (as in Menu_UpdateVisibleItem), not literals in
         // the loop body: its three fields then leave the loop in the first loop pass and 0xFF only in the second.
         // The word's top byte is not used and cannot be told from the code.
         corner.raw = 0x000864707C306FE0;
@@ -4193,7 +4183,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     D_00446CE8 = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
     sceVu0RotMatrixY(rotation, scale, D_00446CE8);
     sceVu0TransMatrix(rotation, rotation, D_00428A50);
-    func_001D6E60(rotation);
+    Menu_DrawItemModel(rotation);
     if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && func_001E4FE0(index, D_00426110[0]->group)) {
         if (D_00446AD4 == 0) {
             D_00446CE4 = 1;
@@ -4519,11 +4509,11 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                     D_00446CC4 = Smith_UpdateSelectScreen;
                     D_00369830[34]--;
                     context->unk04 = 1;
-                    ((void (*)(s32))func_001D45D0)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 } else if (D_00447316 == 8) {
                     context->unk04 = 1;
                     D_00446CC4 = Smith_UpdateSelectScreen;
-                    ((void (*)(s32))func_001D45D0)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 } else if (D_00447316 == 9) {
                     D_00447313 = 0;
                 }
@@ -4634,7 +4624,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     D_00446CEC = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
     sceVu0RotMatrixY(rotation, scale, D_00446CEC);
     sceVu0TransMatrix(rotation, rotation, D_00428A60);
-    func_001D6E60(rotation);
+    Menu_DrawItemModel(rotation);
     if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && func_001E4FE0(index, D_00426110[0]->group)) {
         if (D_00446AD4 == 0) {
             play_sound = TRUE;
@@ -4962,7 +4952,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     D_00446CF4 = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
     sceVu0RotMatrixY(rotation, scale, D_00446CF4);
     sceVu0TransMatrix(rotation, rotation, D_00428A70);
-    func_001D6E60(rotation);
+    Menu_DrawItemModel(rotation);
     if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && func_001E4FE0(index, D_005CF3B0[0]->group)) {
         D_00446CF0 = 1;
         if (D_00446AD4 == 0) {
@@ -5193,11 +5183,11 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                     }
                     context->unk04 = 2;
                     D_00446CC4 = Smith_UpdateSelectScreen;
-                    ((void (*)(s32))func_001D45D0)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 } else if (D_00447316 == 5) {
                     context->unk04 = 2;
                     D_00446CC4 = Smith_UpdateSelectScreen;
-                    ((void (*)(s32))func_001D45D0)(0); // match: the callee takes nothing
+                    ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 }
                 D_00447316 = 0;
                 D_00447317 = 0;
@@ -5227,7 +5217,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                 func_0019CDC0(1);
                 D_005CF3B0[0] = cursor->next;
             }
-            func_001E4858(0);
+            Menu_ShiftListModelsNext(0);
         } else if (D_00446DE8 & 0x40) {
             if (cursor->prev != NULL) {
                 if (D_005CF3A0[0]->prev == cursor && D_005CF390[0]->next != cursor) {
@@ -5237,7 +5227,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                 func_0019CDC0(1);
                 D_005CF3B0[0] = cursor->prev;
             }
-            func_001E4A48(0);
+            Menu_ShiftListModelsPrev(0);
         } else if ((D_00446DE8 & 0x20) && D_00446C48 >= 8) {
             if (cursor->prev != NULL) {
                 if (D_005CF390[0]->next != D_005CF3A0[0]->prev) {
@@ -5250,7 +5240,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                 }
                 func_0019CDC0(1);
             }
-            func_001E4C38(0);
+            Menu_ShiftListModelsPageUp(0);
         } else if ((D_00446DE8 & 0x80) && D_00446C48 >= 8) {
             if (cursor->next != NULL) {
                 if (D_005CF390[0]->next != D_005CF3A0[0]->prev) {
@@ -5263,7 +5253,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                 }
                 func_0019CDC0(1);
             }
-            func_001E4DC8(0);
+            Menu_ShiftListModelsPageDown(0);
         } else {
             return FALSE;
         }
@@ -5298,7 +5288,7 @@ void SaveScreen_Run(void) {
     D_0044731C = D_00447320 = Pad_GetMode(0, 0);
     while (save_screen_run_steps[D_00446D00](0) != 0) {
         sceGsSyncPath(0, 0);
-        D_00447328 = func_001D72F0(1);
+        D_00447328 = Menu_EndFrame(1);
         func_001B5460();
         field = Pad_GetMode(0, 0);
         D_0044731C = field;
@@ -5450,7 +5440,7 @@ static s32 SaveScreen_DrawBackground(void) {
 static int SaveScreen_RunStep(int value) {
     int (*handler)(HandlerContext *);
 
-    func_001D3608(0);
+    Menu_StepModelLoads(0);
     handler = save_screen_steps[D_00446CFC];
     D_005CF350.arg = value;
     if (handler != NULL) {
@@ -5492,7 +5482,7 @@ static int SaveScreen_Start(HandlerContext *context) {
     *D2_QWC = 2;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
     *D2_CHCR = 0x100;
-    func_001D55E8();
+    Menu_InitLoadBuffers();
     // match: taking the handler first orders its lui before the save screen's
     next_handler = SaveScreen_UpdateCardSelect;
     screen = &D_005CF3C0;
