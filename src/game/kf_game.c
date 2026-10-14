@@ -8,6 +8,7 @@
 #include "kf_gs.h"
 #include "kf_entity.h"
 #include "libvu0.h"
+#include "kf_menu_screens.h"
 
 extern u8 D_00349680[0x10];             /* the options (func_00102930 sets their defaults) */
 extern u8 D_00349690[0x2000];
@@ -57,7 +58,6 @@ extern int D_00468180[3];               /* the fade colour */
 
 void *memcpy(void *, const void *, u32);
 void func_0010A4E8(int, int, int, int, int);
-void func_001DC0E0(void);
 extern int D_0038A178[8];               /* the screen depth of each haze layer */
 extern u32 D_0038A158[8];               /* the distances of the haze layers, nearest last */
 extern float D_00420D00[];
@@ -160,7 +160,7 @@ void func_001029A8(void) {
     D_00369FB0 = D_0043DFB0;
     memset(spell_experience, 0, sizeof(spell_experience));
     memset(spell_levels, 0, sizeof(spell_levels));
-    func_001DC0E0();
+    Menu_ClearKeyItems();
     memset(D_0038A130, 0, sizeof(D_0038A130));
 }
 

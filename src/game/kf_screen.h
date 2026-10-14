@@ -8,14 +8,14 @@
 /* the model func_0010AEB8 draws; the older name for ModelInstance */
 typedef ModelInstance OverlaySprite;
 
-/* one 0x70-byte element func_002020A0 draws (func_00202EB0, func_00202F50 and
-   func_00202FD0 run it over an array of them) */
+/* one 0x70-byte element PoolSlot_Draw draws (PoolSlot_DrawAll, PoolSlot_DrawAllBut15 and
+   PoolSlot_DrawFirst20But15 run it over an array of them) */
 typedef struct {
     Vector4 rows[4];                /* 0x00 a matrix, loaded whole */
     char pad40[0x30];
 } RenderSlot;
 
-/* func_002020A0's second argument: eight bytes passed in one register, only spilled */
+/* PoolSlot_Draw's second argument: eight bytes passed in one register, only spilled */
 typedef struct {
     s32 unk00;                      /* 0x00 */
     s32 unk04;                      /* 0x04 */

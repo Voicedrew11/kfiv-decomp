@@ -23,7 +23,7 @@
 #define GS_REG_ZBUF_2       0x4F
 #define GS_REG_FINISH       0x61
 
-/* a color as four bytes, passed in an 8-byte argument (func_001FDCD0 stores it to D_00446D70..D_00446D73) */
+/* a color as four bytes, passed in an 8-byte argument (MenuText_SetColor stores it to D_00446D70..D_00446D73) */
 typedef struct {
     u8 red;                         /* 0x00 */
     u8 green;                       /* 0x01 */
@@ -46,7 +46,7 @@ typedef union {
     } f;
 } GsAlphaReg;
 
-/* a 64-bit value split into 16, 16, 24 and 8 bits, passed to func_001FDB88 and kept
+/* a 64-bit value split into 16, 16, 24 and 8 bits, passed to MenuText_SetPen and kept
    in D_00446D60; `raw` is the same word whole */
 typedef union {
     s64 raw;
@@ -199,9 +199,9 @@ typedef struct {
     int bottom;
 } ScreenRect;
 
-int func_001FDB88(GsPackedWord);
+int MenuText_SetPen(GsPackedWord);
 
-/* the rectangle func_001FC5E8 draws: two corners, a color and a scale */
+/* the rectangle MenuDraw_Bar draws: two corners, a color and a scale */
 typedef struct {
     GsPackedWord first;             /* 0x00 */
     char pad08[0x08];
@@ -216,7 +216,7 @@ typedef struct {
 
 /* a screen corner as plain bit-fields of one 64-bit word (GsPackedWord without the union). The first field of
    such a struct is read with the alias set of its declared type, the others with alias set 0, and retail's
-   load and store order in func_001FBEB0 and func_001FC5E8 depends on exactly that */
+   load and store order in MenuDraw_Sprite and MenuDraw_Bar depends on exactly that */
 typedef struct {
     u64 pos_x : 16;                 /* 0x00 12.4 fixed point */
     u64 pos_y : 16;                 /* 0x02 */
@@ -224,7 +224,7 @@ typedef struct {
     u64 pad07 : 8;
 } GsCornerBits;
 
-/* the textured rectangle func_001FBEB0 draws (a KindObject of kind 0): two corners with their texture
+/* the textured rectangle MenuDraw_Sprite draws (a KindObject of kind 0): two corners with their texture
    coordinates, a colour, and the TEX0 register of the texture */
 typedef struct {
     GsCornerBits first;             /* 0x00 top left */
@@ -241,7 +241,7 @@ typedef struct {
     s64 tex0;                       /* 0x28 */
 } TexturedRectDef;
 
-/* the flat rectangle func_001FC5E8 draws, as that function reads it: RectDef (and the MenuCursorBar its
+/* the flat rectangle MenuDraw_Bar draws, as that function reads it: RectDef (and the MenuCursorBar its
    callers fill) with the corners and the colour as bit-fields */
 typedef struct {
     GsCornerBits first;             /* 0x00 top left */

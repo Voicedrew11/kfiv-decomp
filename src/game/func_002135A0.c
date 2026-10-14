@@ -11,7 +11,7 @@ typedef struct {
 extern u8 D_00369830[];
 extern u8 D_0041A6F8[];
 
-void func_001DC120(u32, u32, int);
+void Menu_AddKeyItem(u32, u32, int); // match: three arguments are passed; the definition takes the first alone
 
 void func_002135A0(Arg *arg0) {
     u32 idx;
@@ -42,7 +42,7 @@ void func_002135A0(Arg *arg0) {
                 }
             }
             if (D_0041A6F8[t] == 3) {
-                func_001DC120(idx, idx, t);
+                Menu_AddKeyItem(idx, idx, t);
             }
         } else {
             if (D_00369830[idx] >= 2) {

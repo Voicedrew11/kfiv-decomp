@@ -1,6 +1,6 @@
 #include "kf_title.h"
+#include "kf_menu_screens.h"
 
-int func_001D62C8(s8);
 
 int func_001F91F8(void) {
     int screen = 0;
@@ -10,17 +10,17 @@ int func_001F91F8(void) {
         case 1:
             return 0;
         case 2:
-            if (func_001D62C8(1) != 0) {
+            if (Menu_Run(1) != 0) {
                 return 1;
             }
             screen = 2;
             break;
         case 3:
-            func_001D62C8(2);
+            Menu_Run(2);
             screen = 2;
             break;
         case 4:
-            func_001D62C8(3);
+            Menu_Run(3);
             screen = 2;
             break;
         }

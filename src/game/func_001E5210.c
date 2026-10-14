@@ -1,9 +1,9 @@
 #include "kf_gs.h"
 
-s32 func_00207320(int, s64);
+s32 MenuDraw_SetGsRegister(int, s64);
 
 // match: called as a void function, so the result register is free at once
-#define SET_TEST(value) ((void (*)(int, s64))func_00207320)(GS_REG_TEST_1, value)
+#define SET_TEST(value) ((void (*)(int, s64))MenuDraw_SetGsRegister)(GS_REG_TEST_1, value)
 
 /* Sets the alpha test and the blend mode of ALPHA_1 from mode and writes them; the value is never seeded. */
 int func_001E5210(u8 mode) {
@@ -38,5 +38,5 @@ int func_001E5210(u8 mode) {
         reg.f.d_source = 0;
         reg.f.fix = 0;
     }
-    return func_00207320(GS_REG_ALPHA_1, reg.raw);
+    return MenuDraw_SetGsRegister(GS_REG_ALPHA_1, reg.raw);
 }

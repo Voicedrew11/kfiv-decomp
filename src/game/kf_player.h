@@ -4,6 +4,7 @@
 
 #include "common.h"
 #include "kf_model.h"
+#include "kf_game.h"
 
 /* six values of a PlayerItemDef that the player takes over */
 typedef struct {
@@ -266,7 +267,7 @@ typedef struct {
     u8 bonus_kinds[2];              /* 0x1F what wearing the item does, 0: nothing (the switch of func_001BB020) */
     u8 bonus_amounts[2];            /* 0x21 */
     char pad23[0x1C];
-    u8 unk3F;                       /* 0x3F added to PlayerItemDef.unk7C for the shield in hand (func_001D94F8) */
+    u8 unk3F;                       /* 0x3F added to PlayerItemDef.unk7C for the shield in hand (Menu_UpdateEquip) */
 } LevelRecordDef;
 
 /* D_003682F0[160]: what has been gained per item (0x22 bytes each) */
@@ -277,8 +278,11 @@ typedef struct {
     u8 unk14;                       /* 0x14 */
     char pad15[0x01];
     s16 unk16;                      /* 0x16 ini "item_": the third number times 20, 0 to 480 (func_00207D68) */
-    u8 unk18;                       /* 0x18 nonzero: func_001ED9A8 lists the item among those whose time unk19 counts */
-    char unk19[8];                  /* 0x19 a ClockTime (kf_game.h), not aligned */
+    u8 unk18;                       /* 0x18 nonzero: Smith_BuildItemRings lists the item among those whose time unk19 counts */
+    union {
+        char bytes[8];              /* 0x19 stored through this view (Smith_UpdateUpgradeConfirm, Smith_UpdateListWithConfirm) */
+        ClockTime time;             /* 0x19 when it was last upgraded; not aligned */
+    } unk19;
     char pad21[0x01];
 } LevelRecord;
 
@@ -306,14 +310,14 @@ typedef struct {
     u8 unk63;                       /* 0x63 */
     u8 bonus_kinds[2];              /* 0x64 as LevelRecordDef.bonus_kinds */
     u8 bonus_amounts[2];            /* 0x66 */
-    u16 unk68;                      /* 0x68 shown on the trade screen in tenths of a foot (func_001E7010) */
+    u16 unk68;                      /* 0x68 shown on the trade screen in tenths of a foot (Trade_UpdateStockList) */
     char pad6A[0x02];
     f32 unk6C;                      /* 0x6C twice Unk1B1470Request.unk44 of a swing, before D_00446240 (Player_SwingWeapon) */
     f32 unk70;                      /* 0x70 twice Unk1B1470Request.unk3C of a swing, before D_00446240 */
     f32 unk74;                      /* 0x74 how far a swing reaches, less 100 */
     u16 unk78;                      /* 0x78 the motion frame from which a held shot is ready (Player_DrawBow) */
     u16 unk7A;                      /* 0x7A the frame the drawing motion stops at */
-    u8 unk7C;                       /* 0x7C which D_005CEE60 motion the weapon shown on the equipment screen plays (func_001D94F8) */
+    u8 unk7C;                       /* 0x7C which D_005CEE60 motion the weapon shown on the equipment screen plays (Menu_UpdateEquip) */
     u8 unk7D;                       /* 0x7D which D_0042A290 function draws it there */
     u8 unk7E;                       /* 0x7E goes to PlayerState.unkC4 when a swing starts (Player_SwingWeapon) */
     u8 unk7F;                       /* 0x7F copied to Unk1B1470Request.unk6E */
@@ -349,11 +353,12 @@ typedef struct {
    them from index 220 on (the items func_001B4DF8 reads). */
 typedef struct {
     char pad00[0x30];
-    u32 unk30_0 : 18;               /* 0x30 */
+    u32 file_number : 16;           /* 0x30 the number in its model file's name */
+    u32 unk30_16 : 2;
     u32 state : 2;                  /* 0x32 bits 2-3: 0 is set to 1 when the table is reset */
     u32 unk30_20 : 12;
     char pad34[0x02];
-    u8 unk36;                       /* 0x36 minutes that must pass since LevelRecord.unk19 (func_001ED9A8) */
+    u8 unk36;                       /* 0x36 minutes that must pass since LevelRecord.unk19 (Smith_BuildItemRings) */
     u8 exp_per_level;               /* 0x37 */
     char pad38[0x04];
     u8 unk3C;                       /* 0x3C */

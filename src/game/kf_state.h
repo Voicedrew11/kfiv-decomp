@@ -11,7 +11,7 @@ typedef struct {
     int arg;                        /* 0x08 */
 } HandlerContext;
 
-/* D_005CF3C0: the save screen func_001F71D8 runs each frame */
+/* D_005CF3C0: the save screen SaveScreen_UpdateCardSelect runs each frame */
 typedef struct {
     s32 unk00;                      /* 0x00 */
     char pad04[0x04];
@@ -39,73 +39,13 @@ typedef struct {
 
 extern SaveScreen D_005CF3C0;
 
-/* D_00426600, D_00426610: two 0x10-byte records func_001F71D8 fills before it hands over to func_001F8058 */
-typedef struct {
-    s32 unk00;                      /* 0x00 */
-    s32 unk04;                      /* 0x04 */
-    s32 unk08;                      /* 0x08 */
-    char pad0C[0x04];
-} SaveListRange;
-
-/* D_005CF3F0, D_005CF410: a mode record and its sub-state (0x20 bytes apart; copied whole) */
-typedef struct {
-    s32 slot;                       /* 0x00 index into D_00428B80 */
-    char pad04[0x0C];
-    s16 state;                      /* 0x10 selects the mode handler, 0: idle */
-    u16 unk12;                      /* 0x12 */
-    s8 step;                        /* 0x14 */
-    s8 retries;                     /* 0x15 */
-    s8 phase;                       /* 0x16 */
-    s8 count;                       /* 0x17 */
-    s8 unk18;                       /* 0x18 */
-    char pad19[0x01];
-    s8 file;                        /* 0x1A */
-    s8 unk1B;                       /* 0x1B */
-    s8 unk1C;                       /* 0x1C */
-    char pad1D[0x03];
-} ModeState;
-
-/* D_00428B80: the 0x28-byte entries of the slot table, indexed by the mode slot */
-typedef struct {
-    char unk00;                     /* 0x00 */
-    char unk01;                     /* 0x01 */
-    char unk02;                     /* 0x02 */
-    char unk03;                     /* 0x03 */
-    char unk04;                     /* 0x04 */
-    char unk05;                     /* 0x05 */
-    char unk06;                     /* 0x06 */
-    char unk07;                     /* 0x07 */
-    s32 *unk08;                     /* 0x08 */
-    void *unk0C;                    /* 0x0C */
-    void *unk10;                    /* 0x10 */
-    void *unk14;                    /* 0x14 */
-    s32 unk18;                      /* 0x18 */
-    char pad1C[0x04];
-    u16 unk20;                      /* 0x20 read whole; written and tested a byte at a time via SLOT_RECORD_BYTES */
-    char pad22[0x02];
-    s16 unk24;                      /* 0x24 */
-    char pad26[0x02];
-} SlotRecord;
-
-/* the two bytes of SlotRecord.unk20 */
-typedef struct {
-    char pad00[0x20];
-    char first;                     /* 0x20 */
-    char second;                    /* 0x21 */
-    char pad22[0x06];
-} SlotRecordBytes;
-
-#define SLOT_RECORD_BYTES(slot) ((SlotRecordBytes *)(slot))
-
-extern SlotRecord D_00428B80[];
-
-/* what the D_00440B70 handlers build; func_00207478 dispatches it by kind */
+/* what the D_00440B70 handlers build; MenuSprite_Draw dispatches it by kind */
 typedef struct {
     char pad00[0x31];
     u8 kind;                        /* 0x31 picks the function that consumes the object */
 } KindObject;
 
-/* the 0x60-byte objects D_00446BF4 points at, drawn by func_00207478 and func_00203F28 (D_00446BFC
+/* the 0x60-byte objects D_00446BF4 points at, drawn by MenuSprite_Draw and MenuSprite_DrawPlain (D_00446BFC
    is taken to point at the same kind of object: inferred from the matching offsets, not proven) */
 typedef struct {
     char pad00[0x20];

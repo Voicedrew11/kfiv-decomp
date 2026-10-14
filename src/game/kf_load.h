@@ -40,13 +40,13 @@ typedef struct {
     char *name;                     /* 0x08 */
 } LoadRequest;
 
-/* a node of the free list of upload buffers (D_005CE900[16], func_001D55E8) */
+/* a node of the free list of upload buffers (D_005CE900[16], Menu_InitLoadBuffers) */
 typedef struct ChunkPoolNode {
     struct ChunkPoolNode *next;     /* 0x00 */
     void *buffer;                   /* 0x04 the loaded package: word 0 is its chunk count */
 } ChunkPoolNode;
 
-/* a staged chunk upload (func_001D4360, func_001D44A0) */
+/* a staged chunk upload (Menu_StepWornModelLoad, Menu_FinishPackageLoad) */
 typedef struct ChunkUpload {
     char pad00[0x08];
     int unk08;                      /* 0x08 set to -1 when done */
@@ -105,7 +105,7 @@ typedef struct {
     u8 data[0];                     /* 0x28 size unknown */
 } SectorChain;
 
-/* a streaming read slot (func_001D4118) */
+/* a streaming read slot (Menu_OpenWornModelFile) */
 typedef struct {
     char pad00[0x08];
     s32 file_handle;                /* 0x08 */
@@ -116,14 +116,14 @@ typedef struct {
     s32 done;                       /* 0x20 */
 } StreamSlot;
 
-/* D_0042A2A0[D_00446DEC]: one per block of the loaded menu file (func_00204128 fills them in) */
+/* D_0042A2A0[D_00446DEC]: one per block of the loaded menu file (MenuFile_IndexBlocks fills them in) */
 typedef struct {
     char pad00[0x10];
-    void *data;                     /* 0x10 the block, handed to func_00204180 */
+    void *data;                     /* 0x10 the block, handed to MenuTexture_Upload */
     char pad14[0x04];
 } LoadedBlockRef;
 
-/* the header of one chunk in a loaded package (ChunkPoolNode.buffer + 0x10 is the first; see func_001D44A0) */
+/* the header of one chunk in a loaded package (ChunkPoolNode.buffer + 0x10 is the first; see Menu_FinishPackageLoad) */
 typedef struct {
     char pad00[0x04];
     s32 payload_offset;             /* 0x04 from the header to the chunk's data */
@@ -131,7 +131,7 @@ typedef struct {
     s32 unk0C;                      /* 0x0C */
 } PackageChunk;
 
-/* a loaded key item model (the buffer of a D_005CEF30[] upload, func_001DC2A8) */
+/* a loaded key item model (the buffer of a D_005CEF30[] upload, Menu_UpdateKeyItems) */
 typedef struct {
     char pad00[0x04];
     s32 part_offset;                /* 0x04 from 0x10 bytes into the file to its PoolPart */
