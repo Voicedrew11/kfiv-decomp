@@ -10,6 +10,8 @@ build/gamedata/ (which git ignores, like everything under build/):
   text.txt      every message of font.txc: the id the code uses for it, then the text
   items.txt     the 380 item names of param/item_nam.prm, by item number
   spells.txt    the names in param/magic.prm, by record number
+  equipment.txt weight, length and attack (weapons) or defence (armour) of every item from 150 on
+  maps.txt      for each NNN.map, the maps its neighbour table leads to
   ini/*.ini     the developers' debug presets, converted from Shift-JIS to UTF-8
   signs/*.png   the sign and inscription textures of msg/*.tm2
 
@@ -35,6 +37,17 @@ TEXT_LINE_BREAK = 0x8000
 ITEM_COUNT = 380
 ITEM_RECORD_SIZE = 64
 SPELL_RECORD_SIZE = 0x110
+ITEM_WEIGHT = 0x33        # in item_nam.prm: weight in 0.1 kg
+FIRST_WEAPON = 150
+WEAPON_RECORD_SIZE = 0x90  # item_wpn.prm, from item 150
+WEAPON_LENGTH = 0x68       # in cm
+FIRST_ARMOUR = 220
+ARMOUR_RECORD_SIZE = 0x40  # item_pct.prm, from item 220
+KINDS = ("slash", "hit", "stab", "fire", "earth", "wind", "water", "light", "dark")
+MAP_RECORDS = 0x17C0
+MAP_RECORD_SIZE = 0x80
+MAP_FLAG_BLOCK_SIZE = 0x40
+MAP_NEIGHBOURS = 32        # 16-byte entries: x, y, z offset, u16 map at 0x0C
 PSMT8 = 0x13
 PSMT4 = 0x14
 
@@ -139,6 +152,35 @@ def main() -> int:
                 "".join(f"{i:3d}  {decode_text(spells, i * SPELL_RECORD_SIZE)}\n"
                         for i in range(len(spells) // SPELL_RECORD_SIZE)), encoding="utf-8")
 
+            weapons = read("param/item_wpn.prm")
+            armour = read("param/item_pct.prm")
+            rows = [f"item  name  weight(kg)  length(cm) / {' '.join(KINDS)}: attack at weapon levels 1, 2, 3; defence\n"]
+            for item in range(FIRST_WEAPON, ITEM_COUNT):
+                name = decode_text(names, item * ITEM_RECORD_SIZE)
+                weight = names[item * ITEM_RECORD_SIZE + ITEM_WEIGHT] / 10
+                if item < FIRST_ARMOUR:
+                    base = (item - FIRST_WEAPON) * WEAPON_RECORD_SIZE
+                    (length,) = struct.unpack_from("<h", weapons, base + WEAPON_LENGTH)
+                    levels = [struct.unpack_from("<9h", weapons, base + level * 18) for level in range(3)]
+                    stats = " | ".join(" ".join(f"{v:3d}" for v in level) for level in levels)
+                    rows.append(f"{item:3d}  {name:<20} {weight:4.1f} {length:4d}  {stats}\n")
+                else:
+                    base = (item - FIRST_ARMOUR) * ARMOUR_RECORD_SIZE
+                    stats = " ".join(f"{v:3d}" for v in struct.unpack_from("<9h", armour, base))
+                    rows.append(f"{item:3d}  {name:<20} {weight:4.1f}       {stats}\n")
+            (OUT / "equipment.txt").write_text("".join(rows), encoding="utf-8")
+
+            links = []
+            for name in sorted(n for n in files if n.endswith(".map") and "/" not in n):
+                data = read(name)
+                records, flag_blocks = struct.unpack_from("<HH", data, 0x3C)
+                table = MAP_RECORDS + records * MAP_RECORD_SIZE + flag_blocks * MAP_FLAG_BLOCK_SIZE
+                used = {data[MAP_RECORDS + r * MAP_RECORD_SIZE + 0x3A] for r in range(records)}
+                neighbours = sorted({struct.unpack_from("<H", data, table + i * 16 + 12)[0]
+                                     for i in used if i < MAP_NEIGHBOURS})
+                links.append(f"{name[:3]}  " + " ".join(f"{n:03d}" for n in neighbours) + "\n")
+            (OUT / "maps.txt").write_text("".join(links), encoding="utf-8")
+
             (OUT / "ini").mkdir(exist_ok=True)
             (OUT / "signs").mkdir(exist_ok=True)
             presets = signs = 0
@@ -154,7 +196,7 @@ def main() -> int:
     finally:
         iso.close()
     print(f"{count} files in the archive; {len(lines)} messages, {ITEM_COUNT} items, "
-          f"{len(spells) // SPELL_RECORD_SIZE} spell records, {presets} presets, {signs} signs -> build/gamedata/")
+          f"{len(spells) // SPELL_RECORD_SIZE} spell records, {len(links)} maps, {presets} presets, {signs} signs -> build/gamedata/")
     return 0
 
 
