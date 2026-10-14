@@ -40,8 +40,6 @@ void func_00182240(Entity *);
 void func_00196D48(Entity *);
 float func_001957B8(float, float);
 float func_00195388(float *, float, float);
-extern float D_00444F74;
-extern float D_00444F78;
 int func_00192C98(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
 int func_00195AC0(Entity *, void *, s32, s32, s32);
@@ -298,15 +296,15 @@ static void func_001375C0(Entity *entity) {
     u16 count;
     s32 i;
 
-    limit = D_00444F74;
+    limit = 0.34906584f;
     command = entity->unkC8;
     unkE0 = &entity->unkE0;
     if (command & 0x200) {
         turn = limit;
     } else {
         turn = (command & 0x100) ? -limit : 0.0f;
-        limit = D_00444F78;
     }
+    limit = 0.34906584f;
     if (limit < turn || (limit = -limit, turn < limit)) {
         turn = limit;
     }

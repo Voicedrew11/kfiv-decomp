@@ -30,7 +30,6 @@ s32 func_00190F90(Entity *, s32, f32);
 s32 func_00198D10(Entity *);
 s32 func_0018F9C0(Entity *);
 void func_00182240(Entity *);
-extern float D_00444EE8;
 float func_001957B8(float, float);
 int rand(void);
 s32 func_0018EEE0(Entity *, f32, f32);
@@ -274,7 +273,7 @@ static void func_00131C78(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
-    if (!(0.0f <= angle ? D_00444EE8 < angle : D_00444EE8 < -angle)) {
+    if (!(ABS(angle) > 0.34906584f)) {
         unkE0->unk7B = unkE0->unk7B == 0;
         func_001958B8(entity, func_00132428, unknown);
         return;
