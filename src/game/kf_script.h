@@ -383,4 +383,16 @@ typedef struct {
     ScriptFloatArg z;               /* 0x1C value at 0x20 */
 } ScriptEntityVectorCommand;
 
+/* what func_00211E58 steps: a script it starts once and waits for */
+typedef struct {
+    s32 active;                     /* 0x00 cleared once the script has finished */
+    char pad04[0x04];
+    s32 script_id;                  /* 0x08 */
+    char pad0C[0x04];
+    s32 unk10;                      /* 0x10 1: active is cleared as soon as the script starts */
+    char pad14[0x70];
+    s32 started;                    /* 0x84 */
+    s32 slot;                       /* 0x88 func_00210AF8's answer, the script's slot */
+} ScriptRequest;
+
 #endif

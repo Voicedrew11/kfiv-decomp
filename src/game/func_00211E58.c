@@ -1,17 +1,18 @@
-#include "kf_mc.h"
+#include "kf_script.h"
 
 int func_00210AF8(int, int);
 int func_00210C28(int);
 
-/* Starts a memory-card request once, then clears the done flag when it finishes. */
-void func_00211E58(McState *state) {
-    if (state->unk84 == 0) {
-        state->unk84 = 1;
-        state->state = func_00210AF8(state->unk00[2], 0);
-        if (state->unk00[4] == 1) {
-            state->unk00[0] = 0;
+/* Starts a script once and keeps request->active set until the script has finished (with unk10 1, clears it
+   at once). */
+void func_00211E58(ScriptRequest *request) {
+    if (request->started == 0) {
+        request->started = 1;
+        request->slot = func_00210AF8(request->script_id, 0);
+        if (request->unk10 == 1) {
+            request->active = 0;
         }
-    } else if (func_00210C28(state->state) == 0) {
-        state->unk00[0] = 0;
+    } else if (func_00210C28(request->slot) == 0) {
+        request->active = 0;
     }
 }
