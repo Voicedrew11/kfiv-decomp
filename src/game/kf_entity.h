@@ -1110,6 +1110,11 @@ typedef struct LinkedPoint {
 
 extern LinkedPoint D_003E7500[LINKED_POINT_COUNT];
 
+/* the scratchpad as the movement handlers of entity types 65 and 71 use it: a velocity and the
+   matrix that turns it to the model's heading */
+#define ENTITY_SCRATCH_VECTOR ((f32 *)0x70000000)
+#define ENTITY_SCRATCH_MATRIX ((f32 *)0x70000010)
+
 /* upstream's typed views of the two blocks an Entity points at */
 #define ENTITY_MODEL(entity) ((ModelInstance *)(entity)->model)
 #define ENTITY_CONTROLLER(entity) ((EntityController *)(entity)->params)
