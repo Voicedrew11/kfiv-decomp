@@ -4,7 +4,7 @@
 
 float func_0019B838(float);
 int Player_CannotCarryItem(int);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 extern PlayerState D_00413F80;
@@ -26,7 +26,7 @@ void func_001C9FB0(void) {
     D_004469D8->model->rotation.y = func_0019B838(D_004469D8->model->rotation.y + 0.08377580f);
     if (D_00413DAA[0] & 0x4000) {
         if (!Player_CannotCarryItem((s16)D_004469D8->item)) {
-            func_00216778(D_005B60E0, &D_00413F80);
+            Vector_Copy(D_005B60E0, &D_00413F80);
             D_005B60E0[1] -= 115.0f;
             Vector_Subtract(delta, D_005B60E0, &D_004469D8->model->position);
             Vector_Scale(D_005B60F0, delta, 0.06666667f);

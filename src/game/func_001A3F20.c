@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 
 void func_001AF298(void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 void Vector_Scale(void *, void *, float);
 
@@ -25,7 +25,7 @@ void func_001A3F20(EffectActor *effect) {
                 motion->fall_speed += effect->def->gravity;
                 motion->velocity.y += motion->fall_speed;
             }
-            func_00216778(&step, motion);
+            Vector_Copy(&step, motion);
             if (effect->def->scale_per_frame != 0.0f) {
                 motion->scale += effect->def->scale_per_frame;
                 step.x *= motion->scale;

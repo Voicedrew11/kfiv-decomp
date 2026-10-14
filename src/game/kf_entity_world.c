@@ -25,11 +25,11 @@ extern int D_00446770;
 extern u8 D_004141D0[];
 extern const f32 D_004467F8[];
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_MultiplyComponents(float *, float *, float *);
 int func_00192C98(void *, int, int, u32, int);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void func_0010C9E8(ModelInstance *);
 s32 func_001963A8(Entity *);
 void func_0018DC40(char *);
@@ -195,10 +195,10 @@ void Entity_ResetToSpawn(Entity *entity) {
     entity->unkC8 = 0;
     entity->unkA0 = 0;
     entity->unk48 = 10.0f;
-    func_00216778(entity->model->position, entity->spawn_info);
-    func_00216778(entity->model->unkD0, &entity->spawn_info->unk10);
+    Vector_Copy(entity->model->position, entity->spawn_info);
+    Vector_Copy(entity->model->unkD0, &entity->spawn_info->unk10);
     Vector_Scale(entity->model->unkE0, &scale.x, (f32)entity->params->unkD2 / 100.0f);
-    func_00216778(&scale, entity->spawn_info->unk20);
+    Vector_Copy(&scale, entity->spawn_info->unk20);
     if (!(entity->params->flags & 0x240)) {
         Vector_Scale(&scale.x, &scale.x, (f32)(rand() % 11 + 95) / 100.0f);
     }
@@ -246,9 +246,9 @@ void Entity_OffsetAllInSlot(int array_index, f32 *offset) {
     entity = D_003BEDF0[array_index];
     count = D_004467D8[array_index];
     for (i = 0; i < count; i++, entity++) {
-        func_00216C48(entity->model->position, entity->model->position, offset);
-        func_00216C48(entity->unk70, entity->unk70, offset);
-        func_00216C48(entity->spawn_info, entity->spawn_info, offset);
+        Vector_Add(entity->model->position, entity->model->position, offset);
+        Vector_Add(entity->unk70, entity->unk70, offset);
+        Vector_Add(entity->spawn_info, entity->spawn_info, offset);
     }
 }
 
@@ -343,7 +343,7 @@ void Entity_UpdateAll(void) {
             sceVu0RotMatrixY(SCRATCH_MATRIX, D_00431AF0, func_00194FB8(entity->unk6C));
             sceVu0ApplyMatrix(SCRATCH_VECTOR, SCRATCH_MATRIX, SCRATCH_VECTOR);
             Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, entity->unk4C);
-            func_00216C48(entity->model->position, entity->model->position, SCRATCH_VECTOR);
+            Vector_Add(entity->model->position, entity->model->position, SCRATCH_VECTOR);
         }
         if (entity->unk50 == 0) {
             continue;
@@ -479,8 +479,8 @@ static void Entity_RebuildModelMatrices(Entity *entity) {
     root = ENTITY_MODEL(entity)->unk130;
     part_count = ENTITY_MODEL(entity)->part_count;
     ModelMatrix_Build(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->unkE0);
-    func_00216778(saved_offset, root->unk40);
-    func_00216778(saved_rotation, &root->unk50);
+    Vector_Copy(saved_offset, root->unk40);
+    Vector_Copy(saved_rotation, &root->unk50);
     root->unk40[0] = root->unk40[1] = root->unk40[2] = 0.0f;
     root->unk50 = root->unk54 = root->unk58 = 0.0f;
     part = ENTITY_MODEL(entity)->parts;
@@ -488,8 +488,8 @@ static void Entity_RebuildModelMatrices(Entity *entity) {
         ModelMatrix_BuildPartLocal(ENTITY_MODEL(entity), part, part);
         part++;
     }
-    func_00216778(root->unk40, saved_offset);
-    func_00216778(&root->unk50, saved_rotation);
+    Vector_Copy(root->unk40, saved_offset);
+    Vector_Copy(&root->unk50, saved_rotation);
     part = ENTITY_MODEL(entity)->parts;
     for (i = 0; i < part_count; i++) {
         func_0010B5D0(part);
@@ -580,7 +580,7 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
     nearest = NULL;
     nearest_distance = D_004467F8[0];
     reach = (entity->unk34 < entity->unk30) ? entity->unk30 : entity->unk34;
-    func_00216778(position, entity->model->position);
+    Vector_Copy(position, entity->model->position);
     position[1] -= (reach < 75.0f) ? 75.0f : reach;
     slots[0] = &D_0038CD20[entity->group_id];
     slots[1] = &D_0038CD20[(char)(entity->group_id ^ 1)];

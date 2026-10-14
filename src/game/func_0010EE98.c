@@ -5,7 +5,7 @@ extern f32 D_004323E0[16];      /* world to screen */
 void sceVu0MulMatrix(void *, void *, void *);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
-void func_002168B8(int *, int *, int *, f32 *, f32 *, f32 *);
+void Vu0_ProjectToScreen3(int *, int *, int *, f32 *, f32 *, f32 *);
 void func_0010F478(u32 *, ModelPartVertexWords *, int, int, void *);
 
 /* the scratchpad as this function uses it: where each vertex of a block lands on the screen */
@@ -82,7 +82,7 @@ void func_0010EE98(ModelInstance *model) {
                 point2[2] = vertex->z;
                 point2[3] = 1.0f;
                 vertex++;
-                func_002168B8((int *)screen++, (int *)screen++, (int *)screen++, point0, point1, point2);
+                Vu0_ProjectToScreen3((int *)screen++, (int *)screen++, (int *)screen++, point0, point1, point2);
             }
             for (k = vertex_count % 3; --k != -1;) {
                 point0[0] = vertex->x;

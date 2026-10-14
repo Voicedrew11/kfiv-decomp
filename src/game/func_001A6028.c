@@ -4,7 +4,7 @@
 #define SCRATCH_VECTOR ((f32 *)0x70000000)
 
 int func_001C0E40(f32, void *);
-void func_00216778(void *out, void *position);
+void Vector_Copy(void *out, void *position);
 
 void func_001A6028(EffectActor *effect, EffectSlot *spawn_slot) {
     ProbeMotion *motion;
@@ -20,7 +20,7 @@ void func_001A6028(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->unk1C = effect->def->unkE4;
     motion->unk20 = 1.57f;
     motion->on_ground = 0;
-    func_00216778(point, &effect->model->position);
+    Vector_Copy(point, &effect->model->position);
     point[1] -= motion->radius * 1.5f;
     if (func_001C0E40(motion->radius * 3.0f, point) == 0) {
         motion->on_ground = 1;

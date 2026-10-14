@@ -2,8 +2,8 @@
 
 extern f32 D_004323E0[16];
 
-void func_00216B48(void *, void *, void *);
-void func_00216C48(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 
@@ -25,8 +25,8 @@ void func_0010CB98(void *model_arg) {
     part_count = model->part_count;
     matrix = MODEL_PROJECT_SCRATCH->matrices[0];
     for (i = 0; i < part_count; i++, part++) {
-        func_00216B48((int)matrix, (int *)model->unk40, (int)part);
-        func_00216B48((int)matrix, (int *)D_004323E0, (int)matrix);
+        Matrix_Multiply(matrix, model->unk40, part);
+        Matrix_Multiply(matrix, D_004323E0, matrix);
         matrix += 16;
     }
     i = 0;
@@ -64,7 +64,7 @@ void func_0010CB98(void *model_arg) {
                     }
                     last = vertex->on_parent;
                 }
-                func_00216C48(MODEL_PROJECT_SCRATCH->point, vertex->position, vertex->offset);
+                Vector_Add(MODEL_PROJECT_SCRATCH->point, vertex->position, vertex->offset);
                 Vu0_ProjectToScreen(MODEL_PROJECT_SCRATCH->screen, MODEL_PROJECT_SCRATCH->point);
                 vertex->tex_s = (*&MODEL_PROJECT_SCRATCH->screen[0] - 0x6C00) / 10240.0f;
                 vertex->tex_t = (*&MODEL_PROJECT_SCRATCH->screen[1] - 0x7200) / 7168.0f;

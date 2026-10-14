@@ -4,8 +4,8 @@
 #define TWO_PI 6.2831855f
 #define PI 3.1415927f
 
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 int rand(void);
 
 /* Starts one link of a chain: turns it a random amount and spawns the next link a random length further on. */
@@ -42,12 +42,12 @@ void func_001ACA28(EffectActor *effect, EffectSlot *spawn_slot) {
     }
     effect->model->rotation.y = angle;
     if (motion->links_left != 0) {
-        func_00216778(&saved_position, &effect->model->position);
-        func_00216778(&saved_rotation, &effect->model->rotation);
+        Vector_Copy(&saved_position, &effect->model->position);
+        Vector_Copy(&saved_rotation, &effect->model->rotation);
         func_001AF538(motion->length, &step, &effect->model->rotation);
-        func_00216C48(&effect->model->position, &effect->model->position, &step);
+        Vector_Add(&effect->model->position, &effect->model->position, &step);
         Effect_SpawnFromEffect(effect->def->radius_half, effect);
-        func_00216778(&effect->model->position, &saved_position);
-        func_00216778(&effect->model->rotation, &saved_rotation);
+        Vector_Copy(&effect->model->position, &saved_position);
+        Vector_Copy(&effect->model->rotation, &saved_rotation);
     }
 }

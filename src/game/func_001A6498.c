@@ -4,7 +4,7 @@
 extern f32 D_00431AF0[16];
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, float *, float *);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 
 /* Spawns an effect at a point offset from the model by the heading rotated by angle. */
 void func_001A6498(EffectActor *effect, int effect_id, float angle) {
@@ -18,6 +18,6 @@ void func_001A6498(EffectActor *effect, int effect_id, float angle) {
     offset.w = 0;
     sceVu0RotMatrixY(rotation_matrix, D_00431AF0, effect->model->rotation.y);
     sceVu0ApplyMatrix(&spawn_position.x, rotation_matrix, &offset.x);
-    func_00216C48(&spawn_position, &spawn_position, &effect->model->position);
+    Vector_Add(&spawn_position, &spawn_position, &effect->model->position);
     Effect_SpawnFromEffectAt(effect_id, effect, &spawn_position);
 }

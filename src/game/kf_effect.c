@@ -15,8 +15,8 @@ void sceGsSetDefStoreImage(void *, s16, s16, s16, s16, s16, s16, s16);
 void sceGsExecStoreImage(void *, void *);
 char *Texture_UploadTable(char *base, int upload);
 void Texture_SendTexFlush(void);
-void func_00216778(void *dst, void *src);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *dst, void *src);
+void Vector_Add(void *, void *, void *);
 void func_00109E18(void);
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
@@ -239,7 +239,7 @@ void Effect_TransformAll(void *transform) {
     live_left = effect_slot_count;
     for (pool_index = 0; pool_index < EFFECT_SLOT_COUNT; pool_index++, slot++) {
         if (slot->flags & slot_in_use_bit) {
-            func_00216C48(&slot->position, transform, &slot->position);
+            Vector_Add(&slot->position, transform, &slot->position);
             live_left--;
             if (live_left <= 0) {
                 break;
@@ -253,8 +253,8 @@ void Effect_TransformAll(void *transform) {
         if (effect->flags & actor_in_use_bit) {
             live_left--;
             model_position = &effect->model->position;
-            func_00216C48(model_position, transform, model_position);
-            func_00216C48(&effect->unk70, transform, &effect->unk70);
+            Vector_Add(model_position, transform, model_position);
+            Vector_Add(&effect->unk70, transform, &effect->unk70);
             if (live_left <= 0) {
                 break;
             }
@@ -301,15 +301,15 @@ int Effect_StartSpawner(int effect_id, void *position, void *rotation, void *own
     slot->unk34 = NULL;
     placement = EFFECT_DEF_FLAG_WORD(def) & 0x600000;
     if (placement == 0 || placement == 0x600000) {
-        func_00216778(&slot->position, position);
-        func_00216778(&slot->unk10, rotation);
+        Vector_Copy(&slot->position, position);
+        Vector_Copy(&slot->unk10, rotation);
         if (EFFECT_DEF_FLAGS(def) & 0x10000) {
             slot->unk30 = position;
             slot->unk34 = rotation;
         }
     } else {
-        func_00216778(&slot->position, &D_00431C80);
-        func_00216778(&slot->unk10, &D_00431C80);
+        Vector_Copy(&slot->position, &D_00431C80);
+        Vector_Copy(&slot->unk10, &D_00431C80);
         if (EFFECT_DEF_FLAGS(def) & 0x10000) {
             slot->unk34 = slot->unk30 = &D_00431C80;
         }
@@ -371,7 +371,7 @@ void Effect_UpdateAll(void) {
             }
         } else if (only_owner == NULL || only_owner == effect->owner_entity || effect->def == kind_280 ||
                    effect->def == kind_282 || effect->def == kind_284) {
-            func_00216778(&effect->unk70, &effect->model->position);
+            Vector_Copy(&effect->unk70, &effect->model->position);
         }
     }
     effect = D_003F3550;
@@ -472,7 +472,7 @@ void Effect_DrawAll(int pass) {
             record_id = effect->def->unkFA + record_id * effect->def->unkF8;
             Effect_FindModelRecord(model, model->unk104, effect->def->unkFA, record_id);
         }
-        func_00216778(&model->unk150, effect);
+        Vector_Copy(&model->unk150, effect);
         // match: it returns a value
         ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))ModelMatrix_Build)(model, &model->position, &model->rotation, &model->unkE0);
         part = effect->model->parts;
@@ -764,7 +764,7 @@ void Effect_OffsetAll(void *offset) {
         for (i = 0; i < EFFECT_SLOT_COUNT; i++, slot++) {
             if (slot->flags & EFFECT_SLOT_LIVE) {
                 if (!(EFFECT_DEF_FLAGS(EFFECT_SLOT_VIEW(slot)->def) & 0x600000)) {
-                    func_00216C48(&slot->position, &slot->position, offset);
+                    Vector_Add(&slot->position, &slot->position, offset);
                 }
             }
         }
@@ -773,8 +773,8 @@ void Effect_OffsetAll(void *offset) {
         for (i = 0; i < EFFECT_COUNT; i++, effect++) {
             if (effect->flags & EFFECT_FLAG_LIVE) {
                 if (!(EFFECT_DEF_FLAGS(effect->def) & 0x600000)) {
-                    func_00216C48(&effect->model->position, &effect->model->position, offset);
-                    func_00216C48(&effect->unk70, &effect->unk70, offset);
+                    Vector_Add(&effect->model->position, &effect->model->position, offset);
+                    Vector_Add(&effect->unk70, &effect->unk70, offset);
                 }
             }
         }

@@ -1,7 +1,7 @@
 #include "kf_effect.h"
 
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -19,8 +19,8 @@ void func_001AAD40(EffectActor *effect) {
     func_001AEC48(effect);
     func_001AED58(effect);
     func_001AF0B0(effect);
-    func_00216778(&effect->model->position, effect->start_position);
-    func_00216778(&effect->model->rotation, effect->start_rotation);
+    Vector_Copy(&effect->model->position, effect->start_position);
+    Vector_Copy(&effect->model->rotation, effect->start_rotation);
     if (effect->frame < effect->def->max_frames || effect->def->max_frames == 0) {
         if (effect->def->gravity != 0.0f) {
             motion->accel.y += effect->def->gravity;
@@ -31,8 +31,8 @@ void func_001AAD40(EffectActor *effect) {
     sceVu0RotMatrixX(matrix, matrix, effect->model->rotation.x);
     sceVu0RotMatrixY(matrix, matrix, effect->model->rotation.y);
     sceVu0ApplyMatrix(offset, matrix, &motion->velocity.x);
-    func_00216C48(&effect->model->position, &effect->model->position, offset);
-    func_00216C48(&effect->model->rotation, &effect->model->rotation, &motion->spin);
+    Vector_Add(&effect->model->position, &effect->model->position, offset);
+    Vector_Add(&effect->model->rotation, &effect->model->rotation, &motion->spin);
     effect->frame += 1;
     if (effect->def->radius_half != 0 && effect->frame >= effect->def->keyframe_end) {
         effect->frame = 0;

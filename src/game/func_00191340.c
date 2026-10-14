@@ -1,6 +1,6 @@
 #include "kf_entity.h"
 
-void func_00216D20(float *, float *);
+void Vector_Normalize(float *, float *);
 
 /* Classifies the sign of the turn and of the entity's push direction's y into a 0x101..0x221 code. */
 int func_00191340(Entity *entity, int turn) {
@@ -18,7 +18,7 @@ int func_00191340(Entity *entity, int turn) {
         push[1] += entity->unkB0[1];
         push[2] += entity->unkB0[2];
     }
-    func_00216D20(push, push);
+    Vector_Normalize(push, push);
     if (turn > 0) {
         code = 0x201;
         if (push[1] > 0.0f) {

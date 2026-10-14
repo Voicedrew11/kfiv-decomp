@@ -3,8 +3,8 @@
 float sinf(float);
 float cosf(float);
 double acos(double);
-void func_00216D20(void *, void *);
-void func_00216CD8(void *, void *, void *);
+void Vector_Normalize(void *, void *);
+void Vector_Cross(void *, void *, void *);
 
 /* while the entity is pushed (flags 45, 46, 48) from the front: the heading that turns it a degree
    past side on to the push, written to `heading_out`. Returns the side it turns to (1, -1), or 0
@@ -33,13 +33,13 @@ int func_0018EAC0(void *entity_arg, void *heading_out) {
         push[0] += entity->unkB0[0];
         push[2] += entity->unkB0[2];
     }
-    func_00216D20(push, push);
+    Vector_Normalize(push, push);
     angle = facing[0] * push[0] + facing[2] * push[2];
     if (angle >= 0.0f) {
         return 0;
     }
     angle = (f32)acos(angle) - 1.5707964f;
-    func_00216CD8(facing, push, facing);
+    Vector_Cross(facing, push, facing);
     if (facing[1] <= 0.0f) {
         angle = entity->model->unkD0[1] + angle + 0.017453292f;
         *(f32 *)heading_out = angle;

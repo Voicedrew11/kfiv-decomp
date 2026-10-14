@@ -32,7 +32,7 @@ void func_00196870(void *, int);
 s32 func_00197078(Entity *);
 int func_0018F030(char *);
 float func_00194F80(void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 s32 func_00190F90(Entity *, s32, f32);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
@@ -439,7 +439,7 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
             }
         }
     } else {
-        func_00216778(unkE0->unk30, post);
+        Vector_Copy(unkE0->unk30, post);
         entity->target = unkE0->unk30;
         entity->unkC8 = func_00190F90(entity, 1, 50.0f) | 0x400;
     }
@@ -697,7 +697,7 @@ static void StoneGuardian_Mode3WalkToPost(Entity *entity) {
             }
         }
     } else {
-        func_00216778(unkE0->unk30, home);
+        Vector_Copy(unkE0->unk30, home);
         entity->target = unkE0->unk30;
         entity->unkC8 = func_00190F90(entity, 1, 50.0f) | 0x400;
     }
@@ -913,7 +913,7 @@ static void StoneGuardian_Mode4WalkToPost(Entity *entity) {
             }
         }
     } else {
-        func_00216778(unkE0->unk30, home);
+        Vector_Copy(unkE0->unk30, home);
         entity->target = unkE0->unk30;
         entity->unkC8 = func_00190F90(entity, 1, 50.0f) | 0x400;
     }
@@ -1127,7 +1127,7 @@ static void StoneGuardian_Mode5WalkToPost(Entity *entity) {
             }
         }
     } else {
-        func_00216778(unkE0->unk30, home);
+        Vector_Copy(unkE0->unk30, home);
         entity->target = unkE0->unk30;
         entity->unkC8 = func_00190F90(entity, 1, 50.0f) | 0x400;
     }
@@ -1271,7 +1271,7 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
     }
     if (!both_open && unkE0->unk7A != 0) {
         if (func_00194F80(entity->spawn_info, &D_00413F80) > 5400.0f) {
-            func_00216778(entity->model->position, entity->spawn_info);
+            Vector_Copy(entity->model->position, entity->spawn_info);
             unkE0->unk7A = 0;
         }
     }

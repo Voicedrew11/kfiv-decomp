@@ -1,7 +1,7 @@
 #include "kf_map_object.h"
 #include "kf_model.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_0011F498(MapObject *);
 
 /* Start handler of the door-like kinds: closed (animation 4) or already open
@@ -14,7 +14,7 @@ void func_0011F238(MapObject *object) {
     if (object->unk04->kind == 6) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
-        func_00216778(work, object->model->parts[1].unk40);
+        Vector_Copy(work, object->model->parts[1].unk40);
         work->timer = 0;
         part = object->model->parts;
         work->unk10 = part[1].unk40[0];

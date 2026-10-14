@@ -10,7 +10,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void EntityAi_Think(Entity *, s32);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
@@ -108,7 +108,7 @@ void GoldenStatue_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -186,7 +186,7 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 unknown) {
     point[1] = entity->spawn_info->spawn_y;
     point[2] = 3050.0f;
     point[3] = 0;
-    func_00216778(target, point);
+    Vector_Copy(target, point);
     entity->target = target;
     entity->unkC8 = func_00190F90(entity, 0, 25.0f);
     if (func_00194F80(entity->model->position, point) < limit) {
@@ -327,7 +327,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
     }
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     if (D_00413F80.position[0] < -7900.0f) {
-        func_00216778(post, &D_00413F80);
+        Vector_Copy(post, &D_00413F80);
         post[0] = -8000.0f;
         if (post[2] > 3350.0f) {
             post[2] = 3550.0f;
@@ -471,7 +471,7 @@ static void GoldenStatue_AimPart15AbovePlayer(Entity *entity) {
     if (part != NULL) {
         frame = model->unkFC->unk82;
         if (frame < 43) {
-            func_00216778(point, D_00413F80.position);
+            Vector_Copy(point, D_00413F80.position);
             point[1] += 400.0f;
             pitch = func_00194FB8(atan2(point[1] - model->position[1], entity->distance_to_player));
             func_00195388(&unkE0->unk4C, pitch, 10.0f);

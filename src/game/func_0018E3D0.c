@@ -1,6 +1,6 @@
 #include "kf_entity.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 s32 func_0018C0D0(ModelInstance *, void *, f32 *, f32 *, f32 *);
 
 /* func_00195388, which the game inlines here: turns *angle towards `goal`, by the whole
@@ -48,14 +48,14 @@ int func_0018E3D0(void *model, int part_arg, int angles_arg, int mode, void *tar
         turn_towards(&angles[0], goal[0], rate);
         turn_towards(&angles[1], goal[1], rate);
         turn_towards(&angles[2], goal[2], rate);
-        func_00216778(&part->unk50, angles);
+        Vector_Copy(&part->unk50, angles);
     } else if (mode == 0) {
         turn_towards(&angles[0], part->unk50, rate);
         turn_towards(&angles[1], part->unk54, rate);
         turn_towards(&angles[2], part->unk58, rate);
-        func_00216778(&part->unk50, angles);
+        Vector_Copy(&part->unk50, angles);
     } else {
-        func_00216778(angles, &part->unk50);
+        Vector_Copy(angles, &part->unk50);
     }
     return TRUE;
 }

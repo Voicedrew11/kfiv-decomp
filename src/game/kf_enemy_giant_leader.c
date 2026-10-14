@@ -11,7 +11,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 void EntityAi_Move(Entity *);
@@ -23,7 +23,7 @@ extern PlayerData D_00413F80;
 extern MapSlot D_0038CD20[];
 void func_00196870(void *, int);
 void Vector_Subtract(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Normalize(void *, void *);
 f32 func_00194F48(f32 *, f32 *);
 s32 func_0018A970(Entity *, f32 *, PlayerData *);
 float func_00194F80(void *, void *);
@@ -98,7 +98,7 @@ void GiantLeader_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -124,12 +124,12 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
         func_00196870(entity, 1);
-        func_00216778(position, entity->model->position);
-        func_00216778(target, &D_00413F80);
+        Vector_Copy(position, entity->model->position);
+        Vector_Copy(target, &D_00413F80);
         position[1] = entity->model->position[1] - entity->unk34 * 0.5f;
         target[1] = D_00413F80.position[1] - 115.0f;
         Vector_Subtract(delta, target, position);
-        func_00216D20(delta, delta);
+        Vector_Normalize(delta, delta);
         func_00194F48(position, target);
         first = (Entity *)MapObject_GetById(entity->group_id, 0xA0);
         second = (Entity *)MapObject_GetById(entity->group_id, 0xA1);

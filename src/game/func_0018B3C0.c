@@ -2,7 +2,7 @@
 
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void func_00194F48(f32 *, f32 *);
 
 /* whether `point` lies within `radius` of the segment start..end (FALSE beyond its ends) */
@@ -29,7 +29,7 @@ int func_0018B3C0(float radius, int *start_arg, int end_arg, int point_arg) {
         return FALSE;
     }
     Vector_Scale(nearest, along, fraction);
-    func_00216C48(nearest, nearest, start);
+    Vector_Add(nearest, nearest, start);
     // match: func_00194F48 returns the distance; other files declare it void
     if (((f32 (*)(f32 *, f32 *))func_00194F48)(point, nearest) <= radius) {
         return TRUE;

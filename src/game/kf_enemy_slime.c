@@ -38,8 +38,8 @@ void EntityAi_Guard(Entity *);
 void EntityAi_RangedAttack(Entity *);
 extern f32 D_00431AF0[16];
 void sceVu0RotMatrixY(float *, float *, float);
-void func_00216BC0(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
+void Vector_Normalize(void *, void *);
 void Vector_Scale(float *, float *, float);
 float func_00199E68(Entity *, float);
 float func_001954A8(void *, void *);
@@ -313,8 +313,8 @@ static void Slime_Move(Entity *entity) {
         }
         heading = func_001954A8(entity->model->position, entity->target);
         sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, D_00431AF0, heading);
-        func_00216BC0(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
-        func_00216D20(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR);
+        Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
+        Vector_Normalize(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR);
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, amount);
         entity->unk84 += ENTITY_SCRATCH_VECTOR[0];
         entity->unk88 += ENTITY_SCRATCH_VECTOR[1];

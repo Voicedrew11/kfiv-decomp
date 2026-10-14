@@ -5,7 +5,7 @@ float sqrtf(float);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
-void func_00216BC0(void *, void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
 
 /* func_00194FB8, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
@@ -34,7 +34,7 @@ void func_0018C4B8(void *angles_arg, void *matrix) {
     axis[1] = 0.0f;
     axis[2] = 0.0f;
     axis[3] = 0.0f;
-    func_00216BC0(turned, local, axis);
+    Vector_ApplyMatrix(turned, local, axis);
     angles[1] = -atan2f(turned[2], turned[0]);
     angles[2] = atan2f(turned[1], sqrtf(turned[0] * turned[0] + turned[2] * turned[2]));
     sceVu0RotMatrixY(local, local, -angles[1]);
@@ -43,7 +43,7 @@ void func_0018C4B8(void *angles_arg, void *matrix) {
     axis[0] = 0.0f;
     axis[1] = 0.0f;
     axis[3] = 0.0f;
-    func_00216BC0(turned, local, axis);
+    Vector_ApplyMatrix(turned, local, axis);
     angles[0] = atan2f(-turned[1], turned[2]);
     if (local[5] < 0.0f) {
         angles[0] = 3.1415927f - angles[0];

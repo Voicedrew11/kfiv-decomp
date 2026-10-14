@@ -7,7 +7,7 @@ int func_001B4F90(void *);
 int func_001C0E40(f32, void *);
 char func_0019C8D0(int index, int first, int second, int third, int fourth);
 void func_001A6498(EffectActor *effect, int effect_id, float angle);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 
 /* Scratchpad words shared with the other effect kinds. */
 #define SCRATCHPAD_FLOAT_04 (*(float *)0x70000004)
@@ -31,7 +31,7 @@ void func_001A6538(EffectActor *effect) {
     func_001AF0B0(effect);
     motion->velocity.y = -(motion->radius * 0.5f);
     motion->velocity.w = 0.0f;
-    func_00216C48(&effect->model->position, &effect->model->position, &motion->velocity);
+    Vector_Add(&effect->model->position, &effect->model->position, &motion->velocity);
     if (effect->frame & 1) {
         func_001A6498(effect, effect->def->radius_half, (f32)effect->def->unkF0);
         func_001A6498(effect, effect->def->interval, (f32)-effect->def->unkF2);

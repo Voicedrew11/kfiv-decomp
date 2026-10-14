@@ -11,7 +11,7 @@ extern const f32 D_004469A0[];
 float sqrtf(float);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int func_001C2D08(void *);
 void Collision_RayTriangle(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 u32 func_001124E0(int, u32, u32);
@@ -61,8 +61,8 @@ void func_001C1C80(f32 *position, f32 *target) {
                 if (record->unk3C & 0x40000000) {
                     continue;
                 }
-                func_00216778(lowest, record->lowest);
-                func_00216778(highest, record->highest);
+                Vector_Copy(lowest, record->lowest);
+                Vector_Copy(highest, record->highest);
                 // match: the box is widened by the unit direction, not by the whole way to the target
                 if (0.0f < direction[0]) {
                     lowest[0] -= direction[0];

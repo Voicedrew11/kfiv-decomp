@@ -12,7 +12,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to its file
 void EntityAi_Move(Entity *);
 extern s32 D_003E6E40[][2];
@@ -90,7 +90,7 @@ void Widdacona_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -292,7 +292,7 @@ static void Widdacona_ReturnToDormant(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             ENTITY_FLAG_BITS(entity)->bit15 = FALSE;
-            func_00216778(entity->model->unkD0, &entity->spawn_info->unk10);
+            Vector_Copy(entity->model->unkD0, &entity->spawn_info->unk10);
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
         }
         break;
@@ -408,7 +408,7 @@ static void Widdacona_RangedAttack0(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         if (entity->model->unkFC->unk82 >= 12 && entity->model->unkFC->unk82 <= 76 && D_00446ED4 % 3 != 0) {
-            func_00216778(direction, &D_00413F80);
+            Vector_Copy(direction, &D_00413F80);
             direction[1] -= 100.0f;
             func_0018CF30(entity, unk3D8, 12, 76, direction, 0.3926991f, 0.17453294f);
         }

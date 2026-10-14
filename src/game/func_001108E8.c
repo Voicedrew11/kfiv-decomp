@@ -2,7 +2,7 @@
 
 void Vector_Subtract(float *, float *, float *);
 void Vector_Scale(float *, float *, float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 
 /* turns a packed vertex into one of floats */
 #define TO_BLEND_VERTEX(to, from)                                                                  \
@@ -48,15 +48,15 @@ void func_001108E8(BlendVertex *out, ModelPartVertexWords *from, ModelPartVertex
     *out = from_point;
     out++;
     for (i = 1; i < steps; i++) {
-        func_00216C48(out->unk00, previous->unk00, delta.unk00);
+        Vector_Add(out->unk00, previous->unk00, delta.unk00);
         out->unk00[3] = 1.0f;
-        func_00216C48(out->unk10, previous->unk10, delta.unk10);
+        Vector_Add(out->unk10, previous->unk10, delta.unk10);
         *(s32 *)&out->unk10[3] = 0; // match: stored as an integer; as a float it would hold the loads below back
         out->unk20[0] = previous->unk20[0] + delta.unk20[0];
         out->unk20[1] = previous->unk20[1] + delta.unk20[1];
         out->unk20[2] = 1.0f;
         *(s32 *)&out->unk20[3] = 0; // match: an integer as well
-        func_00216C48(out->unk30, previous->unk30, delta.unk30);
+        Vector_Add(out->unk30, previous->unk30, delta.unk30);
         previous++;
         out++;
     }

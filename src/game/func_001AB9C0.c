@@ -2,7 +2,7 @@
 
 extern int D_004468E8;
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001AF5B0(void *, void *);
 
 /* Spins the model's heading, then sets the actor's motion from the spin and the definition's radius. */
@@ -14,7 +14,7 @@ void func_001AB9C0(EffectActor *effect, EffectSlot *spawn_slot) {
     motion = (SpinBurstMotion *)&effect->motion;
     func_001AF928(effect, spawn_slot);
     func_001AF640(effect, spawn_slot);
-    func_00216778(&angles, &effect->model->rotation);
+    Vector_Copy(&angles, &effect->model->rotation);
     angles.y += (f32)D_004468E8 * effect->def->unkDC;
     heading = angles.y;
     heading = heading - (f32)(int)(heading / 6.2831855f) * 6.2831855f;

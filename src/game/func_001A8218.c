@@ -8,8 +8,8 @@ void Vector_Subtract(void *, void *, void *);
 int func_001AF358(void *, void *);
 void func_001AF5B0(void *, void *);
 int func_001AFD08(void *, void *, void *);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(void *, void *, void *);
@@ -45,9 +45,9 @@ void func_001A8218(EffectActor *effect) {
         sceVu0RotMatrixX(rotation_matrix, D_00431AF0, D_00413F80[4]);
         sceVu0RotMatrixY(rotation_matrix, rotation_matrix, D_00413F80[5]);
         sceVu0ApplyMatrix(&offset, rotation_matrix, &motion->unk10);
-        func_00216778(&effect->model->rotation, &D_00413F80[4]);
+        Vector_Copy(&effect->model->rotation, &D_00413F80[4]);
         func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
-        func_00216C48(&effect->model->position, D_00413F80, &offset);
+        Vector_Add(&effect->model->position, D_00413F80, &offset);
         effect->model->position.y -= 220.0f;
     }
     timer = motion->timer;

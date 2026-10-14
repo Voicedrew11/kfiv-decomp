@@ -5,8 +5,8 @@ void Vector_Subtract(void *, void *, void *);
 float sinf(float);
 float cosf(float);
 float sqrtf(float);
-void func_00216C48(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Update handler of an opening door-like object: runs the animation (kind 6
    moves with its second part; kind 2 clears unk60 bit 0 once both pairs of its
@@ -40,8 +40,8 @@ void func_0011F498(MapObject *object) {
             offset.y = delta.y;
             offset.x = delta.x * cosine - delta.z * sine;
             offset.z = delta.x * sine + delta.z * cosine;
-            func_00216C48(&object->model->position, &object->model->position, &offset);
-            func_00216778(work, object->model->parts[1].unk40);
+            Vector_Add(&object->model->position, &object->model->position, &offset);
+            Vector_Copy(work, object->model->parts[1].unk40);
         } else if (kind == 2) {
             if (object->unk60 & 1) {
                 object->model->unk1B4(object->model);

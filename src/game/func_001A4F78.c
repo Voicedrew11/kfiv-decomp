@@ -5,7 +5,7 @@
 extern char D_00413F80[];
 
 int func_001AFD08(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int func_001C0E40(f32, void *);
 void Vector_Subtract(void *, void *, void *);
 
@@ -22,7 +22,7 @@ void func_001A4F78(EffectActor *actor, EffectSlot *spawn_slot) {
         actor->unk6C = func_001AFD08(actor, D_00413F80, D_00413F80 + 0x10);
         motion->unk14 = actor->target->def->unkF2;
     } else {
-        func_00216778(motion, target_motion);
+        Vector_Copy(motion, target_motion);
         actor->unk6C = actor->target->unk6C;
         motion->unk14 = target_motion->unk14 - 1;
         if (motion->unk14 == 0) {

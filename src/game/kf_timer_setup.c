@@ -1,12 +1,13 @@
-#include "common.h"
+/* EE timer set-up. */
+#include "kf_timer.h"
 #include <eeregs.h>
 
 int AddIntcHandler(int, void *, int);
 int EnableIntc(int);
 
 /* Programs one of the four EE timers (mode and compare value); timers 0 and 1 also get an interrupt handler.
-   Nothing calls it. */
-int func_00216D50(u32 timer, int mode, int compare, void *handler) {
+   main sets timer 0 up with it. Returns -1 for a timer number above 3. */
+int Timer_Setup(u32 timer, int mode, int compare, void *handler) {
     if (timer >= 4) {
         return -1;
     }

@@ -22,7 +22,7 @@ void func_0010E6A8(ModelInstance *, s64, s64);
 void func_0010E820(ModelInstance *, s64);
 MapRecordInfo *func_00115CD0(CameraState *, f32, int);
 void func_00111E28(ModelInstance *, u32 *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 char *func_00112400(char *, ModelInstance *, int);
 
 /* the address rounded up to a multiple of 16 */
@@ -74,7 +74,7 @@ void func_00114AA8(int map) {
             }
             func_0010D018(model, (char **)&cursor, &work);
             if (record->unk3C & 0x100) {
-                func_00216778(&model->position, record);
+                Vector_Copy(&model->position, record);
                 model->position.w = 1.0f;
                 ((void (*)(ModelInstance *, u32 *, int))func_00111E28)(model, (u32 *)&work, 0); // match: a third argument the callee does not take
             }

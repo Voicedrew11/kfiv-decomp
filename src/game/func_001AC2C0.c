@@ -4,7 +4,7 @@ typedef float Mat[4][4] __attribute__((aligned(16)));
 
 extern Mat D_00431AF0;
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void sceVu0RotMatrixZ(Mat, Mat, float);
 void sceVu0ApplyMatrix(void *, void *, void *);
 
@@ -37,6 +37,6 @@ void func_001AC2C0(EffectActor *effect) {
     model = (DriftModel *)effect->model;
     model->drift_x += effect->def->unkE0 * forward.x;
     model->drift_y += effect->def->unkE0 * forward.y;
-    func_00216778(&effect->model->position, &effect->target->model->position);
+    Vector_Copy(&effect->model->position, &effect->target->model->position);
     effect->frame += 1;
 }

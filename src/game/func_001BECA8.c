@@ -6,8 +6,8 @@ extern PlayerState D_00413F80;
 extern Entity *D_004467E0;
 
 float sqrtf(float);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
@@ -15,13 +15,13 @@ void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 /* moves the player out of the body just hit: to `push` from it, but by no more than 50 a frame */
 #define PUSH_PLAYER_OUT()                                                                          \
     Vector_Scale(offset, COLLISION_RESULT->normal, push);                                       \
-    func_00216C48(offset, COLLISION_RESULT, offset);                                               \
+    Vector_Add(offset, COLLISION_RESULT, offset);                                               \
     Vector_Subtract(offset, offset, &D_00413F80);                                               \
     length = sqrtf(offset[0] * offset[0] + offset[2] * offset[2]);                                 \
     if (50.0f < length) {                                                                          \
         offset[1] = 0.0f;                                                                          \
         Vector_Scale(offset, offset, 50.0f / length);                                           \
-        func_00216C48(&D_00413F80, &D_00413F80, offset);                                           \
+        Vector_Add(&D_00413F80, &D_00413F80, offset);                                           \
     } else {                                                                                       \
         D_00413F80.position.x = COLLISION_RESULT->point[0] + COLLISION_RESULT->normal[0] * push;   \
         D_00413F80.position.z = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * push;   \
@@ -50,7 +50,7 @@ void func_001BECA8(int climb) {
 
     D_00413F80.unk204 = 0;
     if (climb) {
-        func_00216778(old_position, &D_00413F80);
+        Vector_Copy(old_position, &D_00413F80);
         D_00413F80.position.y += 1.0f;
         reach = D_00413F80.unk1AC + 75.0f;
         if (!((s32)(D_00413F80.unk1C8 >> 33) & 1)) {
@@ -71,7 +71,7 @@ void func_001BECA8(int climb) {
                 case 0x9B:
                     continue;
                 }
-                func_00216778(position, entity->model->position);
+                Vector_Copy(position, entity->model->position);
                 radius = entity->radius;
                 if (!(((EntityParamsWord *)entity->params)->unk00 & 0x8000000)) {
                     height = entity->height;
@@ -149,7 +149,7 @@ void func_001BECA8(int climb) {
                     continue;
                 }
                 point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
-                func_00216778(position, point);
+                Vector_Copy(position, point);
                 if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
                     radius = body->unk04 * ENTITY_MODEL(entity)->unkE0;
                     height = body->unk06 * ENTITY_MODEL(entity)->unkE4;

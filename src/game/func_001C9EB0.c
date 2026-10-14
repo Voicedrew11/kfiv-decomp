@@ -1,7 +1,7 @@
 #include "kf_model.h"
 
-void func_00216C48(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Copy(void *, void *);
 int func_0019B9F0(float, float *, int);
 extern ModelNode *D_004469D8;
 extern float D_00413F90[];
@@ -17,7 +17,7 @@ extern char D_005B60F0[];
 void func_001C9EB0(void) {
     D_004471B0--;
     if (D_004471B0 > 0) {
-        func_00216C48(&D_004469D8->model->position, &D_004469D8->model->position, D_005B60F0);
+        Vector_Add(&D_004469D8->model->position, &D_004469D8->model->position, D_005B60F0);
         func_0019B9F0(0.0f, &D_004469D8->model->rotation.x, D_004471B0);
         func_0019B9F0(0.0f, &D_004469D8->model->rotation.y, D_004471B0);
         func_0019B9F0(0.0f, &D_004469D8->model->rotation.z, D_004471B0);
@@ -25,7 +25,7 @@ void func_001C9EB0(void) {
         D_0044719C = (float)D_004471B0 / (float)D_004471AC;
         return;
     }
-    func_00216778(&D_004469D8->model->position, D_005B60E0);
+    Vector_Copy(&D_004469D8->model->position, D_005B60E0);
     D_0044719C = 0.0f;
     D_00413F90[0] = D_004471A8;
     D_004471A4++;

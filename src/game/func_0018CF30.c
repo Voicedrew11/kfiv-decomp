@@ -5,7 +5,7 @@ float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
 char *func_0010CAB8(char *, u32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001B4F30(u8, void *, void *, void *, void *);
 
 /* func_00194FB8, which the game inlines here: wraps an angle to +-pi */
@@ -102,7 +102,7 @@ int func_0018CF30(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from, s3
                     angles[1] = wrap_angle(-atan2f(delta_z, delta_x) + 1.5707964f);
                     angles[2] = angles[3] = 0.0f;
                 } else {
-                    func_00216778(angles, entity->model->unkD0);
+                    Vector_Copy(angles, entity->model->unkD0);
                     angles[1] = wrap_angle(angles[1] + 3.1415927f);
                 }
                 if (target != NULL) {

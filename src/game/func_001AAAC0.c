@@ -5,7 +5,7 @@
 extern PlayerState D_00413F80;
 
 float func_001B0178(void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Update: fades the effect's scale by the player's distance inside the velocity band. */
 void func_001AAAC0(EffectActor *effect) {
@@ -28,7 +28,7 @@ void func_001AAAC0(EffectActor *effect) {
         }
     }
     effect->scale *= fade;
-    func_00216778(&effect->model->position, effect->start_position);
-    func_00216778(&effect->model->rotation, effect->start_rotation);
+    Vector_Copy(&effect->model->position, effect->start_position);
+    Vector_Copy(&effect->model->rotation, effect->start_rotation);
     effect->frame += 1;
 }

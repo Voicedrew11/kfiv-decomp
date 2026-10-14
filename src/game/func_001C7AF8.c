@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 
 int func_001C2D08(void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001C0C50(void *, void *, void *, void *, f32);
 extern f32 D_004469AC[];    /* the largest float; an array so that it is not read through $gp */
 
@@ -25,7 +25,7 @@ s32 func_001C7AF8(CollisionOwner *owner, f32 *position, f32 radius) {
             return FALSE;
         }
         func_001C2D08(owner->model);
-        func_00216778(centre, position);
+        Vector_Copy(centre, position);
         lowest = D_004469AC[0];
         centre[1] = centre[1] - 1.0f - radius;
         strip = mesh->floor_strips;

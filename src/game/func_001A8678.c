@@ -6,7 +6,7 @@ void sceVu0ApplyMatrix(float *, float *, float *);
 extern f32 D_00431AF0[16];
 
 void func_001AF5B0(void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 void func_001A8678(EffectActor *actor) {
     f32 matrix[16];
@@ -25,7 +25,7 @@ void func_001A8678(EffectActor *actor) {
     sceVu0RotMatrixY(matrix, matrix, angles.y);
     sceVu0ApplyMatrix(&direction.x, matrix, &direction.x);
     func_001AF5B0(&actor->model->rotation, &direction);
-    func_00216778(&actor->model->position, motion);
-    func_00216778(motion, &actor->target->model->position);
+    Vector_Copy(&actor->model->position, motion);
+    Vector_Copy(motion, &actor->target->model->position);
     actor->frame += 1;
 }

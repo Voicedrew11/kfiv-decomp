@@ -22,8 +22,8 @@ void func_00196870(void *, int);
 void func_00196C28(char *);
 int func_0018EAC0(void *, void *);
 s32 func_00190D50(Entity *, s32, f32);
-void func_00216D20(void *, void *);
-void func_00216CD8(void *, void *, void *);
+void Vector_Normalize(void *, void *);
+void Vector_Cross(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 int func_00191340(Entity *, int);
 void func_0018B6F8(f32 *, f32, f32, void *, void *);
@@ -43,7 +43,7 @@ extern f32 D_00431AF0[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
-void func_00216BC0(void *, void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 float func_00199E68(Entity *, float);
 int func_00192C98(void *, int, int, u32, int);
@@ -178,10 +178,10 @@ static int BloodBat_ThinkReturn(void *entity_arg, int unknown) {
             push[1] += entity->unkB0[1];
             push[2] += entity->unkB0[2];
         }
-        func_00216D20(push, push);
+        Vector_Normalize(push, push);
         Vector_Subtract(to_spawn, entity->spawn_info, entity->model->position);
-        func_00216D20(to_spawn, to_spawn);
-        func_00216CD8(to_spawn, push, to_spawn);
+        Vector_Normalize(to_spawn, to_spawn);
+        Vector_Cross(to_spawn, push, to_spawn);
         if (to_spawn[1] <= 0.0f) {
             if (turn == -1) {
                 turn = 1;
@@ -399,8 +399,8 @@ static void BloodBat_Move(Entity *entity) {
             sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->unkD0[2]);
             sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[0]);
             sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[1]);
-            func_00216BC0(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
-            func_00216D20(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR);
+            Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
+            Vector_Normalize(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR);
             Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, amount);
             entity->unk84 += ENTITY_SCRATCH_VECTOR[0];
             entity->unk88 += ENTITY_SCRATCH_VECTOR[1];

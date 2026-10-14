@@ -4,7 +4,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(char *, void (*)(void), int);
 void func_00191478(EntityModel *);
 void func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_00185390(void *, int);
 // match: the definition takes an Actor, a struct local to func_00183C78.c
 void func_00183C78(void);
@@ -53,7 +53,7 @@ void func_001850C8(Entity *entity) {
         EntityAi_StartAction((char *)entity, unkE0->move, 0);
     }
     if (part != NULL) {
-        func_00216778(unkE0->unk20, part->unk50);
+        Vector_Copy(unkE0->unk20, part->unk50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;

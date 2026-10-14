@@ -7,7 +7,7 @@ void func_001AF5B0(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int rand(void);
 
 /* Per-frame update: turns the model toward its target and adds a random tilt. */
@@ -27,6 +27,6 @@ void func_001A8550(EffectActor *effect, EffectSlot *spawn_slot) {
     sceVu0ApplyMatrix(&up_vector, rotation_matrix, &up_vector);
     func_001AF5B0(&effect->model->rotation, &up_vector);
     effect->model->rotation.z = effect->model->rotation.z + (effect->def->rotation_base[2] + ((float)(rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->rotation_spread[2]);
-    func_00216778(motion, &effect->target->model->position);
-    func_00216778(&motion->unk10, &effect->target->model->rotation);
+    Vector_Copy(motion, &effect->target->model->position);
+    Vector_Copy(&motion->unk10, &effect->target->model->rotation);
 }

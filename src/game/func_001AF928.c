@@ -4,7 +4,7 @@
 #define TWO_PI 6.2831855f
 #define PI 3.1415927f
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int rand(void);
 
 /* Wraps an angle into -pi..pi. */
@@ -22,9 +22,9 @@ static inline f32 wrap_angle(f32 angle) {
    base rotation with a random spread. */
 void func_001AF928(EffectActor *effect, EffectSlot *spawn_slot) {
     if (EFFECT_DEF_FLAGS(effect->def) & 0x10000) {
-        func_00216778(&effect->model->rotation, effect->start_rotation);
+        Vector_Copy(&effect->model->rotation, effect->start_rotation);
     } else {
-        func_00216778(&effect->model->rotation, &spawn_slot->unk10);
+        Vector_Copy(&effect->model->rotation, &spawn_slot->unk10);
     }
     if (!(EFFECT_DEF_FLAGS(effect->def) & 0x40000)) {
         effect->model->rotation.x = 0.0f;

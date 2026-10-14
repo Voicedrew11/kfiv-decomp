@@ -1,8 +1,8 @@
 #include "kf_linked_point.h"
 
 void *memset(void *, int, u32);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void sceVu0SubVector(void *, void *, void *);
 float sqrtf(float);
 
@@ -59,9 +59,9 @@ int LinkedPoint_Allocate(f32 duration, void *start, void *end, u8 kind_a, int ki
         return -1;
     }
     LinkedPoint_LinkActive(point, list);
-    func_00216778(point, start);
+    Vector_Copy(point, start);
     point->follow = start;
-    func_00216778(&point->target, end);
+    Vector_Copy(&point->target, end);
     point->kind_a = kind_a;
     point->kind_b = kind_b;
     point->unk32 = owner;
@@ -224,7 +224,7 @@ void LinkedPoint_UpdateFollows(void) {
             if (node->follow != NULL) {
                 f32 saved = node->position.w;
 
-                func_00216778(node, node->follow);
+                Vector_Copy(node, node->follow);
                 node->position.w = saved;
             }
         }
@@ -241,7 +241,7 @@ void LinkedPoint_TransformFollows(void *transform) {
         if (node != NULL) {
             do {
                 if (node->follow != NULL) {
-                    func_00216C48(node, node, transform);
+                    Vector_Add(node, node, transform);
                 }
                 node = node->next;
             } while (node != NULL);
@@ -259,7 +259,7 @@ void LinkedPoint_Retarget(f32 duration, s32 index, void *target) {
         point->duration = duration;
         point->position.w = 1.0f / duration;
         point->progress_scale = 1.0f / (duration * duration);
-        func_00216778(&point->target, target);
+        Vector_Copy(&point->target, target);
         point->target.w = 1.0f;
     }
 }

@@ -6,7 +6,7 @@ void sceVu0TransMatrix(float *, float *, float *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
-void func_00216B48(int, int *, int);
+void Matrix_Multiply(void *, void *, void *);
 
 /* func_00194FB8, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
@@ -29,7 +29,7 @@ s32 func_0018BD18(void *part_arg, void *target_arg, void *matrix) {
 
     if (part == target) {
         sceVu0TransMatrix(local, D_00431AF0, target->unk40);
-        func_00216B48((int)matrix, (int *)matrix, (int)local);
+        Matrix_Multiply(matrix, matrix, local);
         return TRUE;
     }
     if (part->child != NULL && func_0018BD18(part->child, target, matrix) != 0) {
@@ -38,7 +38,7 @@ s32 func_0018BD18(void *part_arg, void *target_arg, void *matrix) {
             sceVu0RotMatrixZ(local, local, wrap_angle(part->unk58));
             sceVu0RotMatrixY(local, local, wrap_angle(part->unk54));
             sceVu0TransMatrix(local, local, part->unk40);
-            func_00216B48((int)matrix, (int *)local, (int)matrix);
+            Matrix_Multiply(matrix, local, matrix);
         }
         return TRUE;
     }

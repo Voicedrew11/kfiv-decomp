@@ -1,8 +1,8 @@
 #include "kf_collision.h"
 
 int func_001C2D08(void *);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void func_001883E0(void *, void *, void *, void *, f32);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
@@ -33,7 +33,7 @@ void func_0018A628(CollisionOwner *owner, void *centre, f32 radius) {
     func_001C2D08(owner->model);
     mesh = (CollisionMesh *)owner->model->strips;
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
-    func_00216778(position, centre);
+    Vector_Copy(position, centre);
     strip = mesh->floor_strips;
     i = mesh->floor_strip_count;
     while (--i != -1) {
@@ -45,9 +45,9 @@ void func_0018A628(CollisionOwner *owner, void *centre, f32 radius) {
                 hit_floor = TRUE;
                 Vector_Subtract(offset, position, COLLISION_RESULT);
                 sceVu0Normalize(offset, offset);
-                func_00216C48(normal_sum, normal_sum, offset);
+                Vector_Add(normal_sum, normal_sum, offset);
                 Vector_Scale(offset, offset, radius);
-                func_00216C48(position, COLLISION_RESULT, offset);
+                Vector_Add(position, COLLISION_RESULT, offset);
             }
             point++;
         } while (--j != 0);
@@ -64,9 +64,9 @@ void func_0018A628(CollisionOwner *owner, void *centre, f32 radius) {
                 hit_unk18 = TRUE;
                 Vector_Subtract(offset, position, COLLISION_RESULT);
                 sceVu0Normalize(offset, offset);
-                func_00216C48(normal_sum, normal_sum, offset);
+                Vector_Add(normal_sum, normal_sum, offset);
                 Vector_Scale(offset, offset, radius);
-                func_00216C48(position, COLLISION_RESULT, offset);
+                Vector_Add(position, COLLISION_RESULT, offset);
             }
             point++;
         } while (--j != 0);
@@ -83,17 +83,17 @@ void func_0018A628(CollisionOwner *owner, void *centre, f32 radius) {
                 hit_unk20 = TRUE;
                 Vector_Subtract(offset, position, COLLISION_RESULT);
                 sceVu0Normalize(offset, offset);
-                func_00216C48(normal_sum, normal_sum, offset);
+                Vector_Add(normal_sum, normal_sum, offset);
                 Vector_Scale(offset, offset, radius);
-                func_00216C48(position, COLLISION_RESULT, offset);
+                Vector_Add(position, COLLISION_RESULT, offset);
             }
             point++;
         } while (--j != 0);
         strip = (CollisionStrip *)(point + 2);
     }
     if (hit_floor || hit_unk18 || hit_unk20) {
-        func_00216778(COLLISION_RESULT->normal, normal_sum);
-        func_00216778(centre, position);
+        Vector_Copy(COLLISION_RESULT->normal, normal_sum);
+        Vector_Copy(centre, position);
         COLLISION_RESULT->hit = 2;
     }
 }

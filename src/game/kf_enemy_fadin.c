@@ -25,7 +25,7 @@ float func_00194FB8(float);
 float func_00194F80(void *, void *);
 float func_00195478(float *, char *);
 f32 func_00195018(f32, f32, f32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int func_00195E48(void *, int, void *, void *);
 void func_0018DA38(Entity *, s32, s32, s32);
 int func_00192C98(void *, int, int, u32, int);
@@ -100,10 +100,10 @@ static void Fadin_Think(Entity *entity, s32 unknown) {
             angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
             angles[2] = angles[3] = 0.0f;
         } else {
-            func_00216778(angles, entity->model->unkD0);
+            Vector_Copy(angles, entity->model->unkD0);
             angles[1] = func_00194FB8(angles[1] + 3.1415927f);
         }
-        func_00216778(target, D_00413F80);
+        Vector_Copy(target, D_00413F80);
         target[1] -= 190.0f;
         pitch = func_00194FB8(-atan2(target[1] - from[1], func_00194F80(from, target)));
         yaw = func_00195478(from, (char *)target);

@@ -12,7 +12,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 void EntityAi_Move(Entity *);
@@ -33,7 +33,7 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 s32 func_0018BD18(void *, void *, void *);
 void func_0018C4B8(void *, void *);
-void func_00216B48(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 float func_00195388(float *, float, float);
 void func_00190A30(char *);
 void func_00195898(char *, u8);
@@ -77,7 +77,7 @@ void func_0019A290(Entity *, s32);
 extern const f32 D_0044682C[];
 f32 func_0018A9F0(void *, void *);
 f32 func_00195018(f32, f32, f32);
-void func_00216BC0(void *, void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 
 static void DarkArcher_Animate(Entity *entity);
@@ -141,7 +141,7 @@ void DarkArcher_Init(Entity *entity) {
         entity->model->unk15C = entity->unkD6;
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     func_00191478(entity->model);
@@ -212,11 +212,11 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
             sceVu0RotMatrixX(rotation, D_00431AF0, bone->unk50[0]);
             sceVu0RotMatrixZ(rotation, rotation, bone->unk50[2]);
             sceVu0RotMatrixY(rotation, rotation, bone->unk50[1]);
-            func_00216B48(rotation, parent, rotation);
+            Matrix_Multiply(rotation, parent, rotation);
             sceVu0RotMatrixX(tilt, D_00431AF0, pitch);
-            func_00216B48(rotation, tilt, rotation);
+            Matrix_Multiply(rotation, tilt, rotation);
             sceVu0TransposeMatrix(parent, parent);
-            func_00216B48(rotation, parent, rotation);
+            Matrix_Multiply(rotation, parent, rotation);
             func_0018C4B8(angles, rotation);
             func_00195388(&unkE0->unk48, angles[0], rate);
             func_00195388(&unkE0->unk4C, angles[1], rate);
@@ -671,7 +671,7 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[2] = unkE0->unk5C;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, D_00431AF0, unkE0->unk54);
-    func_00216BC0(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
+    Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
     // match: never taken, but until the compiler works that out the branch separates the
     // scratchpad stores above from the loads below, so their addresses are not kept in registers
     if (run) {

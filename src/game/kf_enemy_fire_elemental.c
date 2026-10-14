@@ -9,7 +9,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 void EntityAi_Dormant(Entity *);
@@ -53,8 +53,8 @@ void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
 float func_001954A8(float *, float *);
-void func_00216D20(void *, void *);
-void func_00216CD8(void *, void *, void *);
+void Vector_Normalize(void *, void *);
+void Vector_Cross(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 
 static void FireElemental_Think(Entity *entity, s32 unknown);
@@ -103,7 +103,7 @@ void FireElemental_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -531,7 +531,7 @@ static void FireElemental_RangedAttack1(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        func_00216778(direction, entity->model->unkD0);
+        Vector_Copy(direction, entity->model->unkD0);
         direction[1] = func_00194FB8(entity->model->unkD0[1] - 3.1415927f + 0.08726646f);
         func_0018D4E8(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -786,10 +786,10 @@ static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
             push[0] += entity->unkB0[0];
             push[2] += entity->unkB0[2];
         }
-        func_00216D20(push, push);
+        Vector_Normalize(push, push);
         Vector_Subtract(to_spawn, entity->spawn_info, entity->model->position);
-        func_00216D20(to_spawn, to_spawn);
-        func_00216CD8(to_spawn, push, to_spawn);
+        Vector_Normalize(to_spawn, to_spawn);
+        Vector_Cross(to_spawn, push, to_spawn);
         if (to_spawn[1] <= 0.0f) {
             if (turn == -1) {
                 turn = 1;
@@ -841,7 +841,7 @@ static void FireElemental_RangedAttack0(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        func_00216778(direction, entity->model->unkD0);
+        Vector_Copy(direction, entity->model->unkD0);
         direction[1] = func_00194FB8(direction[1] - 3.1415927f);
         func_0018D4E8(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {

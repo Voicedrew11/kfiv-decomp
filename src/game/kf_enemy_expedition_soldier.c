@@ -12,7 +12,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
@@ -118,7 +118,7 @@ void ExpeditionSoldier_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -322,7 +322,7 @@ static void ExpeditionSoldier_Death(Entity *entity) {
 
                 if (partner != NULL && ((s32)partner->flags & 1)) {
                     func_0018DC40((char *)partner);
-                    func_00216778(partner->model->position, entity->model->position);
+                    Vector_Copy(partner->model->position, entity->model->position);
                 }
             }
             entity->action_step++;
@@ -476,7 +476,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
         }
         if (func_00194F80(entity->model->position, stand_point) < reach) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
-            func_00216778(unkE0->unk30, face_point);
+            Vector_Copy(unkE0->unk30, face_point);
             entity->target = unkE0->unk30;
             entity->unkC8 = func_00190BE0(entity);
             if (entity->unkC8 == 0) {
@@ -484,7 +484,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
                 return;
             }
         } else {
-            func_00216778(unkE0->unk30, stand_point);
+            Vector_Copy(unkE0->unk30, stand_point);
             entity->target = unkE0->unk30;
             entity->unkC8 = func_00190F90(entity, 0, reach * 0.5f);
         }
@@ -583,7 +583,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
         }
         if (func_00194F80(entity->model->position, stand_point) < reach) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
-            func_00216778(unkE0->unk30, face_point);
+            Vector_Copy(unkE0->unk30, face_point);
             entity->target = unkE0->unk30;
             entity->unkC8 = func_00190BE0(entity);
             if (entity->unkC8 == 0) {
@@ -591,7 +591,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
                 return;
             }
         } else {
-            func_00216778(unkE0->unk30, stand_point);
+            Vector_Copy(unkE0->unk30, stand_point);
             entity->target = unkE0->unk30;
             entity->unkC8 = func_00190F90(entity, 0, reach * 0.5f);
         }

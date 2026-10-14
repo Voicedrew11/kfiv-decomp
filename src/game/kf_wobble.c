@@ -7,8 +7,8 @@ double sin(double);
 void *memset(void *, int, u32);
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
-void func_00216B48(void *, void *, void *);
-void func_002168B8(int *, int *, int *, f32 *, f32 *, f32 *);
+void Matrix_Multiply(void *, void *, void *);
+void Vu0_ProjectToScreen3(int *, int *, int *, f32 *, f32 *, f32 *);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 float sinf(float);
@@ -123,8 +123,8 @@ void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4)
         packet[1] = unk4;
         part = model->parts;
         for (i = 0; i < part_count; i++, part++) {
-            func_00216B48((int)matrix, (int *)model->unk40, (int)part);
-            func_00216B48((int)matrix, (int *)D_004323E0, (int)matrix);
+            Matrix_Multiply(matrix, model->unk40, part);
+            Matrix_Multiply(matrix, D_004323E0, matrix);
             Vu0_LoadMatrix(matrix);
             data_count = part->data_count;
             next = (ModelPartData *)(int)part->data_addr;
@@ -155,14 +155,14 @@ void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4)
                     points[2][0] = vertex[2].x;
                     points[2][1] = vertex[2].y;
                     points[2][2] = vertex[2].z;
-                    func_002168B8(&out[0].x, &out[1].x, &out[2].x, points[0], points[1], points[2]);
+                    Vu0_ProjectToScreen3(&out[0].x, &out[1].x, &out[2].x, points[0], points[1], points[2]);
                     out[0].z >>= 4;
                     out[1].z >>= 4;
                     out[2].z >>= 4;
                     WOBBLE(points[0], vertex[0]);
                     WOBBLE(points[1], vertex[1]);
                     WOBBLE(points[2], vertex[2]);
-                    func_002168B8(screens[0], screens[1], screens[2], points[0], points[1], points[2]);
+                    Vu0_ProjectToScreen3(screens[0], screens[1], screens[2], points[0], points[1], points[2]);
                     screen = screens[0];
                     for (corner = 0; corner < 3; corner++) {
                         if ((u32)out->z > 0xFFFF0 || ((out->x | out->y) & 0xFFFF0000)) {

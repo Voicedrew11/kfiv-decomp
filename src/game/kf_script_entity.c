@@ -16,7 +16,7 @@ double sqrt(double);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, float *, float *);
 void Vector_Scale(void *, void *, float);
-void func_00216C48(void *dest, void *a, void *b);
+void Vector_Add(void *dest, void *a, void *b);
 void Game_MarkMessageHeard(int flag);
 int func_00192C98(void *, int, int, u32, int);
 int func_00192EB0(void *, int);
@@ -175,7 +175,7 @@ void ScriptCmd_GetPointFromPlayer(ScriptPointAheadCommand *command) {
     sceVu0RotMatrixY(matrix, D_00431AF0, D_00413F80.rotation.y);
     sceVu0ApplyMatrix(vector, matrix, vector);
     Vector_Scale(vector, vector, (f32)command->distance.value);
-    func_00216C48(point, &D_00413F80.position, vector);
+    Vector_Add(point, &D_00413F80.position, vector);
     Script_StoreFloatResult((ScriptArg *)&command->x, point[0]);
     Script_StoreFloatResult((ScriptArg *)&command->y, point[1]);
     Script_StoreFloatResult((ScriptArg *)&command->z, point[2]);

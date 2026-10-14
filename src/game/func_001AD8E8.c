@@ -5,7 +5,7 @@
 
 void sceVu0RotMatrixY(void *, void *, float);
 void sceVu0ApplyMatrix(void *, void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 
 extern f32 D_00431AF0[16];
 
@@ -48,6 +48,6 @@ void func_001AD8E8(EffectActor *effect) {
     motion->angle = angle;
     sceVu0RotMatrixY(matrix, D_00431AF0, angle);
     sceVu0ApplyMatrix(&spin, matrix, &spin);
-    func_00216C48(&effect->model->position, &motion->velocity, &spin);
+    Vector_Add(&effect->model->position, &motion->velocity, &spin);
     effect->frame++;
 }

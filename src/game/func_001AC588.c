@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 
 void func_001C1430(f32, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 #define SCRATCH_VECTOR ((Vector4 *)0x70000000)
 #define SCRATCH_MATRIX ((f32 *)0x70000010)
@@ -24,7 +24,7 @@ void func_001AC588(EffectActor *effect, EffectSlot *spawn_slot) {
     effect->model->position.y -= def->interval;
     func_001C1430(1.0f, &effect->model->position, &offset);
     if (*(int *)SCRATCH_MATRIX != 0) {
-        func_00216778(&effect->model->position, SCRATCH_VECTOR);
+        Vector_Copy(&effect->model->position, SCRATCH_VECTOR);
     } else {
         Effect_Free(effect);
     }

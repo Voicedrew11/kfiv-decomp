@@ -29,7 +29,7 @@ float func_00195388(float *, float, float);
 void func_00195588(Vector4 *, float);
 void func_0018D600(char **, int, u32, int);
 s32 func_0018B150(f32 *, f32 *, f32, f32 *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 float func_00194F80(void *, void *);
 
 static void Phagos_Animate(Entity *entity);
@@ -157,7 +157,7 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
             func_0018D600((char **)entity, entity->params->unk430, 0xFF, (int)entity->model->unkD0);
             entity->action_step = 3;
         } else if (func_0018B150(entity->model->position, direction, entity->radius, bounds)) {
-            func_00216778(unkE0->unk30, entity->model->position);
+            Vector_Copy(unkE0->unk30, entity->model->position);
             ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
             func_0018D600((char **)entity, entity->params->unk430, 0xFF, (int)entity->model->unkD0);
             entity->action_step++;

@@ -10,7 +10,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 extern s32 D_003E6E40[][2];
@@ -46,7 +46,7 @@ extern f32 D_00431AF0[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
-void func_00216BC0(void *, void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 extern f32 D_00446818[];
 void func_0018D600(char **, int, u32, int);
@@ -107,7 +107,7 @@ void Malice_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = 0;
@@ -421,7 +421,7 @@ static void Malice_ApplyMoveCommand(Entity *entity) {
     sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->unkD0[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[1]);
-    func_00216BC0(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
+    Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
     if (entity->unkC8 & 0x40) {
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, 2.0f);
     }
@@ -526,7 +526,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             if (unkE0->unk7C == 1) {
-                func_00216778(entity->model->position, unkE0->unk30);
+                Vector_Copy(entity->model->position, unkE0->unk30);
             }
             EntityAi_StartAction(entity, Malice_FadeBackIn, 1);
         }
@@ -682,7 +682,7 @@ static void Malice_RangedAttack0(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         if (entity->model->unkFC->unk82 >= 0x1C && entity->model->unkFC->unk82 <= 0x3C) {
-            func_00216778(direction, entity->model->unkD0);
+            Vector_Copy(direction, entity->model->unkD0);
             direction[0] = atanf((entity->model->position[1] - D_00413F80.position[1]) / entity->distance_to_player);
             direction[1] = func_00194FB8(direction[1] - 3.1415927f);
             if (D_00446ED4 & 1) {

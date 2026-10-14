@@ -5,7 +5,7 @@ extern EntityRangeWeights D_0043EB68;
 int rand(void);
 float sinf(float);
 float cosf(float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 
 /* func_0018B778 for a caller that already knows how far from `centre` it is */
 void func_0018BA10(f32 *point, f32 *centre, f32 distance, f32 range) {
@@ -42,5 +42,5 @@ void func_0018BA10(f32 *point, f32 *centre, f32 distance, f32 range) {
     point[0] = -sinf(angle) * range;
     point[1] = 0.0f;
     point[2] = -cosf(angle) * range;
-    func_00216C48(point, point, centre);
+    Vector_Add(point, point, centre);
 }

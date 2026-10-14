@@ -11,7 +11,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
 int func_00192EB0(void *, int);
@@ -27,7 +27,7 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 s32 func_0018BD18(void *, void *, void *);
 void func_0018C4B8(void *, void *);
-void func_00216B48(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 float func_00195388(float *, float, float);
 void func_00190A30(char *);
 void func_00195898(char *, u8);
@@ -103,7 +103,7 @@ void FireGenie_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -183,11 +183,11 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
             sceVu0RotMatrixX(rotation, D_00431AF0, bone->unk50[0]);
             sceVu0RotMatrixZ(rotation, rotation, bone->unk50[2]);
             sceVu0RotMatrixY(rotation, rotation, bone->unk50[1]);
-            func_00216B48(rotation, parent, rotation);
+            Matrix_Multiply(rotation, parent, rotation);
             sceVu0RotMatrixY(twist, D_00431AF0, unkE0->unk48);
-            func_00216B48(rotation, twist, rotation);
+            Matrix_Multiply(rotation, twist, rotation);
             sceVu0TransposeMatrix(parent, parent);
-            func_00216B48(rotation, parent, rotation);
+            Matrix_Multiply(rotation, parent, rotation);
             func_0018C4B8(angles, rotation);
             func_00195388(&unkE0->unk4C, angles[0], rate);
             func_00195388(&unkE0->unk50, angles[1], rate);

@@ -5,8 +5,8 @@ extern MapSlot D_0038CD20[];
 extern f32 D_00431AF0[16];
 extern f32 D_004323E0[16];
 
-void func_00216778(void *, void *);
-void func_00216B48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
@@ -29,11 +29,11 @@ void func_001155F8(int map) {
         count = ((MapSlotUnk08 *)slot->header)->record_count;
         model = record->model;
         for (i = 0; i < count; i++, record++, model++) {
-            func_00216778(&model->position, record->position);
+            Vector_Copy(&model->position, record->position);
             model->position.w = 1.0f;
-            func_00216778(&model->rotation, record->rotation);
+            Vector_Copy(&model->rotation, record->rotation);
             model->rotation.w = 1.0f;
-            func_00216778(&model->unkE0, record->scale);
+            Vector_Copy(&model->unkE0, record->scale);
             model->unkEC = 1.0f;
             matrix = (f32 (*)[4])model->unk40;
             sceVu0CopyMatrix(matrix, D_00431AF0);
@@ -44,7 +44,7 @@ void func_001155F8(int map) {
             sceVu0RotMatrixY((f32 *)matrix, (f32 *)matrix, model->rotation.y);
             sceVu0RotMatrixZ((f32 *)matrix, (f32 *)matrix, model->rotation.z);
             sceVu0TransMatrix((f32 *)matrix, (f32 *)matrix, &model->position.x);
-            func_00216B48((int)model, (int *)D_004323E0, (int)matrix);
+            Matrix_Multiply(model, D_004323E0, matrix);
             for (j = 0; j < model->part_count; j++) {
                 // match: the callee returns a value here, which keeps $2 busy
                 ((int (*)(ModelInstance *, ModelPart *, ModelPart *))ModelMatrix_BuildPartLocal)(model, &model->parts[j], &model->parts[j]);

@@ -1,6 +1,6 @@
 #include "kf_effect.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int func_001C0E40(f32, void *);
 
 /* Follows its target and counts down, then ends at the target's frame count. */
@@ -16,7 +16,7 @@ void func_001AB188(EffectActor *actor, EffectSlot *spawn_slot) {
         motion->countdown = actor->target->def->unkF2;
         func_001AF538(actor->def->speed, &motion->velocity, &actor->model->rotation);
     } else {
-        func_00216778(&motion->velocity, target_motion);
+        Vector_Copy(&motion->velocity, target_motion);
         motion->countdown = target_motion->countdown - 1;
         if (motion->countdown == 0) {
             actor->frame = actor->def->keyframe_end;

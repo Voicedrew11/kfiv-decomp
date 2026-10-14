@@ -8,9 +8,9 @@ extern void *D_00420D50[];
 extern float D_00413F80[];
 
 void func_0011F148(char *);
-void func_00216B48(void *, void *, void *);
-void func_00216BC0(void *, void *, void *);
-void func_00216778(void *, void *);
+void Matrix_Multiply(void *, void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
+void Vector_Copy(void *, void *);
 void sceVu0InversMatrix(void *, void *);
 void Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
@@ -43,18 +43,18 @@ void func_00121E78(MapObject *object) {
         MAP_OBJECT_BYTES(object)->step = 3;
         MapObject_StepAnim(object);
         func_0011F148((char *)object);
-        func_00216778(&origin, part->unk40);
+        Vector_Copy(&origin, part->unk40);
         origin.w = 1.0f;
-        func_00216778(&target, D_00413F80);
+        Vector_Copy(&target, D_00413F80);
         target.w = 1.0f;
         target.y -= 220.0f;
-        func_00216B48((int)matrix, (int *)object->model->unk40, (int)part);
+        Matrix_Multiply(matrix, object->model->unk40, part);
         sceVu0InversMatrix(matrix, matrix);
-        func_00216BC0(&target, matrix, &target);
+        Vector_ApplyMatrix(&target, matrix, &target);
         Vector_Subtract(work, &origin, &target);
         distance = sqrtf(work->step.x * work->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
         work->frames = distance / 6.6666665f;
-        func_00216778(part->unk40, &target);
+        Vector_Copy(part->unk40, &target);
         Vector_Scale(&work->step.x, &work->step.x, 1.0f / work->frames);
         D_0038CC50.unk30 |= 1;
     }

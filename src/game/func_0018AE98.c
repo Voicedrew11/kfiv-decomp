@@ -7,8 +7,8 @@ extern int D_00446770;
 extern MapSlot D_0038CD20[2];
 
 void Vector_Scale(float *, float *, float);
-void func_00216C48(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Copy(void *, void *);
 s32 func_0018AB40(void *, f32 *, f32 *, f32, s32);
 
 /* Tests the ray (origin, unit direction, length) against the props of the loaded maps, the
@@ -27,7 +27,7 @@ s32 func_0018AE98(f32 *origin, f32 *direction, void *out_point, f32 length) {
     s32 i;
 
     Vector_Scale(end, direction, length);
-    func_00216C48(end, end, origin);
+    Vector_Add(end, end, origin);
     if (origin[0] < end[0]) {
         lowest[0] = origin[0];
         highest[0] = end[0];
@@ -80,7 +80,7 @@ s32 func_0018AE98(f32 *origin, f32 *direction, void *out_point, f32 length) {
                 if (kind != 0 && COLLISION_RESULT->distance < nearest) {
                     result = kind;
                     if (out_point != NULL) {
-                        func_00216778(out_point, point);
+                        Vector_Copy(out_point, point);
                     }
                 }
             }

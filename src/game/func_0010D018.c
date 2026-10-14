@@ -7,7 +7,7 @@ static inline s32 is_blended(u64 tag_high) {
 }
 
 void func_0010D308(ModelInstance *);
-void func_0010E5A0(char *);
+void func_0010E5A0(ModelInstance *);
 Vector4 *func_0010E678(ModelInstance *, s32);
 
 /* Set a model instance up from a model file whose parts come with their pose: the parts are
@@ -89,6 +89,6 @@ void func_0010D018(ModelInstance *model, char **file_cursor, char **memory) {
     }
     model->unk1A8 = func_0010D308;
     *file_cursor += file->size;
-    model->unk1B4 = (void (*)(ModelInstance *))func_0010E5A0;
+    model->unk1B4 = func_0010E5A0;
     model->get_point = (int (*)(void *, int))func_0010E678;
 }

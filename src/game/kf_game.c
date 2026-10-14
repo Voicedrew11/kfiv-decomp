@@ -92,8 +92,8 @@ void Vu0_ProjectToScreen(int *, void *);
 void Vector_MultiplyComponents(float *, float *, float *);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(float *, float *, float *);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void func_00109650(u32 *, u32 *);
 u32 *func_00109990(int);
 void func_00109A50(void);
@@ -1418,7 +1418,7 @@ void func_00107528(void) {
     sceVu0MulMatrix(view_matrix, D_004323E0, D_00431AF0);
     Vu0_LoadMatrix(view_matrix);
     Vector_Scale(scaled_vector, D_00420D30, 1000.0f);
-    func_00216C48(scaled_vector, scaled_vector, D_00420D30 - 4);
+    Vector_Add(scaled_vector, scaled_vector, D_00420D30 - 4);
     scaled_vector[3] = 1.0f;
     Vu0_ProjectToScreen(screen_xy, scaled_vector);
 
@@ -1529,7 +1529,7 @@ void func_00107840(void) {
     for (entity = D_004467E0; entity != NULL; entity = entity->next) {
         if (((int)(entity->flags >> 1) & 1) == 0) continue;
         if (focus_distance < entity->distance_to_player) continue;
-        func_00216778(offset_to_entity, entity->model->position);
+        Vector_Copy(offset_to_entity, entity->model->position);
         offset_to_entity[1] -= entity->height * 0.5f;
         Vector_Subtract(offset_to_entity, offset_to_entity, D_00420D00);
         Vector_MultiplyComponents(scratch_vector, offset_to_entity, offset_to_entity);
@@ -1544,7 +1544,7 @@ void func_00107840(void) {
     sceVu0MulMatrix(view_matrix, D_004323E0, D_00431AF0);
     Vu0_LoadMatrix(view_matrix);
     Vector_Scale(scratch_vector, D_00420D00 + 12, focus_distance);
-    func_00216C48(scratch_vector, scratch_vector, D_00420D00 + 8);
+    Vector_Add(scratch_vector, scratch_vector, D_00420D00 + 8);
     scratch_vector[3] = 1.0f;
     Vu0_ProjectToScreen(screen_position, scratch_vector);
 

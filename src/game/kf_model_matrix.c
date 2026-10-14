@@ -1,5 +1,5 @@
 /* Model and part matrices: built from a scale, three angles (wrapped into -pi..pi) and a position with the
-   sceVu0 matrix functions, most then multiplied by one of the view matrices through func_00216B48; and the two
+   sceVu0 matrix functions, most then multiplied by one of the view matrices through Matrix_Multiply; and the two
    matrices a model is drawn with. Several builders are not called by anything. */
 #include "kf_model_matrix.h"
 #include "kf_game.h"
@@ -22,8 +22,8 @@ void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
 void sceVu0DivVectorXYZ(void *, void *, float);
 void sceVu0SubVector(void *, void *, void *);
-void func_00216B48(void *, void *, void *);
-void func_00216BC0(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
 void *memset(void *, int, u32);
 float atan2f(float, float);
 float sqrtf(float);
@@ -75,7 +75,7 @@ static void ModelMatrix_BuildFromModel(ModelInstance *model) {
     } else {
         matrix = (f32 *)model->unk40;
         sceVu0RotMatrixZ(matrix, D_00431AF0, Angle_Wrap(model->rotation.z));
-        func_00216B48(matrix, D_00432620, matrix);
+        Matrix_Multiply(matrix, D_00432620, matrix);
         sceVu0TransMatrix(matrix, matrix, &model->position.x);
     }
 }
@@ -109,7 +109,7 @@ static void func_0020BD48(ModelInstance *model) {
     matrix[4] = matrix[5] = matrix[6] = matrix[7] = 0.0f;
     sceVu0RotMatrixX(matrix, matrix, -1.5707964f);
     sceVu0TransMatrix(matrix, matrix, offset);
-    func_00216B48(model, D_004322E0, matrix);
+    Matrix_Multiply(model, D_004322E0, matrix);
 }
 
 /* Builds a model's matrix from its scale, rotation and position, then applies D_004323E0 to a copy of it whose
@@ -130,7 +130,7 @@ static void func_0020BE70(ModelInstance *model) {
     sceVu0CopyMatrix(work, matrix);
     work[5] = work[7] = 0.0f;
     work[6] = work[4] = -0.707f;
-    func_00216B48(model, D_004323E0, work);
+    Matrix_Multiply(model, D_004323E0, work);
 }
 
 /* Builds a model's matrix from a scale, a rotation (x, y, z) and a position, then applies D_004323E0. */
@@ -147,7 +147,7 @@ static void ModelMatrix_BuildXYZ(ModelInstance *model, Vector4 *position, Vector
     sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->y));
     sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, &position->x);
-    func_00216B48(model, D_004323E0, matrix);
+    Matrix_Multiply(model, D_004323E0, matrix);
 }
 
 /* Builds a model's matrix from a scale, a rotation (z, y, x) and a position, then applies D_004323E0. */
@@ -164,7 +164,7 @@ static void ModelMatrix_BuildZYX(ModelInstance *model, Vector4 *position, Vector
     sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->y));
     sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->x));
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, &position->x);
-    func_00216B48(model, D_004323E0, matrix);
+    Matrix_Multiply(model, D_004323E0, matrix);
 }
 
 /* Builds a model's matrix from a position, a rotation and a scale, from D_00431B30. Models flagged 0x100 or
@@ -224,9 +224,9 @@ static void func_0020C6A0(ModelInstance *model, f32 *position, Vector4 *rotation
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
     sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
-    func_00216B48(SCRATCH_MATRIX, D_00432620, SCRATCH_MATRIX);
+    Matrix_Multiply(SCRATCH_MATRIX, D_00432620, SCRATCH_MATRIX);
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, position);
-    func_00216B48(model, D_004323E0, matrix);
+    Matrix_Multiply(model, D_004323E0, matrix);
 }
 
 /* Builds the matrix of a flat, mirrored model that turns about z and rises with the camera's pitch,
@@ -244,7 +244,7 @@ static void func_0020C7A8(ModelInstance *model, Vector4 *rotation, f32 *scale) {
     sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
     offset.y += offset.z * sinf(D_004325A0.unk10);
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, &offset.x);
-    func_00216B48(model, D_004322A0, matrix);
+    Matrix_Multiply(model, D_004322A0, matrix);
 }
 
 /* Builds the rotation matrix of three angles: a turn by the second, a tilt by the first, a turn by the third. */
@@ -303,7 +303,7 @@ static void Matrix_RotateVector(void *dst, void *src_matrix, void *src_vec) {
     scratch[12] = 0.0f;
     scratch[13] = 0.0f;
     scratch[14] = 0.0f;
-    func_00216BC0(dst, scratch, src_vec);
+    Vector_ApplyMatrix(dst, scratch, src_vec);
 }
 
 /* Makes the two matrices a model is drawn with: the first with its rows divided by the model's scale;

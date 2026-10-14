@@ -1,6 +1,6 @@
 #include "kf_effect.h"
 
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, float *, float *);
@@ -20,6 +20,6 @@ void func_001AE2F0(EffectActor *effect) {
     if (effect->def->unkE0 < effect->model->position.y && 0.0f < motion->velocity.y) {
         motion->velocity.y = -motion->velocity.y;
     }
-    func_00216C48(&effect->model->position, &effect->model->position, motion);
+    Vector_Add(&effect->model->position, &effect->model->position, motion);
     effect->frame += 1;
 }

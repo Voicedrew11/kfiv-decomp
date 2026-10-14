@@ -2,7 +2,7 @@
 #include "libvu0.h"
 
 s32 func_00191A60(ModelInstance *, s32, s32, s32, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void sceVu0MulVector(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
@@ -59,8 +59,8 @@ s32 func_00191600(Entity *entity, EntityUnkE0SlotBits *slot_bits, s32 type, s32 
     moved[1] = 0.0f;
     moved[2] = 0.0f;
     moved[3] = 0.0f;
-    func_00216778(turned, &root->unk50);
-    func_00216778(moved, root->unk40);
+    Vector_Copy(turned, &root->unk50);
+    Vector_Copy(moved, root->unk40);
     slot->frame_fixed = func_00191A60(ENTITY_MODEL(entity), type, table, slot->frame_fixed, step, slot->backwards);
     slot->frame = slot->frame_fixed >> 8;
     Vector_Subtract(turned, &root->unk50, turned);

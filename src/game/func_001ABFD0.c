@@ -5,7 +5,7 @@
 #define SCRATCH_MATRIX_FIRST_WORD (*(int *)0x70000010)
 
 void Vector_Subtract(void *out, void *a, void *b);
-void func_00216778(void *dst, void *src);
+void Vector_Copy(void *dst, void *src);
 void func_001C1430(f32, void *, void *);
 void func_001AF5B0(void *rotation, void *direction);
 float func_001B0178(void *a, void *b);
@@ -23,9 +23,9 @@ void func_001ABFD0(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector_Subtract(&offset, &D_00413F80, &effect->model->position);
     func_001C1430(1.0f, &effect->model->position, &offset);
     if (SCRATCH_MATRIX_FIRST_WORD != 0) {
-        func_00216778(&motion->unk10, SCRATCH_VECTOR);
+        Vector_Copy(&motion->unk10, SCRATCH_VECTOR);
     } else {
-        func_00216778(&motion->unk10, &D_00413F80);
+        Vector_Copy(&motion->unk10, &D_00413F80);
         motion->unk10.y -= 180.0f;
     }
     Vector_Subtract(&offset, &motion->unk10, &effect->model->position);

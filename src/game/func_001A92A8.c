@@ -11,8 +11,8 @@ extern f32 D_00431AF0[16];
 int func_001B4F90(void *);
 float func_001B0178(void *, void *);
 void func_001AF5B0(void *, void *);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void Vector_Scale(void *, void *, float);
 void Vector_Subtract(void *, void *, void *);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -64,14 +64,14 @@ void func_001A92A8(EffectActor *effect) {
             sceVu0RotMatrixY(matrix, D_00431AF0, motion->sweep_turn);
             sceVu0ApplyMatrix(&motion->velocity, matrix, &motion->velocity);
             Vector_Scale(&motion->velocity, &motion->velocity, 1.02f);
-            func_00216C48(&motion->aim, &motion->aim, &motion->velocity);
+            Vector_Add(&motion->aim, &motion->aim, &motion->velocity);
             Vector_Subtract(&to_aim, &motion->aim, &effect->model->position);
             func_001AF5B0(&effect->model->rotation, &to_aim);
             if (motion->hit_spawned == 0) {
-                func_00216778(&saved_position, &effect->model->position);
-                func_00216778(&effect->model->position, &motion->aim);
+                Vector_Copy(&saved_position, &effect->model->position);
+                Vector_Copy(&effect->model->position, &motion->aim);
                 hits = func_001B4F90(effect);
-                func_00216778(&effect->model->position, &saved_position);
+                Vector_Copy(&effect->model->position, &saved_position);
                 if (hits != 0) {
                     Effect_Spawn(effect->def->unkF0, &motion->aim, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                     motion->hit_spawned = 1;

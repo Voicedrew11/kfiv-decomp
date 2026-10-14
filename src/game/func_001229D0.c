@@ -5,7 +5,7 @@ extern f32 D_00431AF0[16];
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
-void func_00216B48(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -60,6 +60,6 @@ void func_001229D0(MapTrigger *trigger) {
     sceVu0RotMatrixZ(matrix, matrix, func_001229D0_wrap_angle(joint->unk58, half_turn));
     sceVu0RotMatrixY(matrix, matrix, func_001229D0_wrap_angle(joint->unk54, half_turn));
     sceVu0TransMatrix(matrix, matrix, pivot);
-    func_00216B48(trigger->model->unk80, trigger->model->unk40, matrix);
+    Matrix_Multiply(trigger->model->unk80, trigger->model->unk40, matrix);
     trigger->model->unk1B4(trigger->model);
 }

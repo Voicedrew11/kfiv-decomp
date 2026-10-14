@@ -47,8 +47,8 @@ s32 func_0019D980(s8, u8, u8, f32, Vector4Arg *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 int Script_Start(int, int);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 
 extern MapDrawState D_0038A1B0;
 extern int D_0038CC80[3];
@@ -106,9 +106,9 @@ void MapObject_InitMap(int map) {
                 objects_by_id[map][link_id] = object;
             }
         }
-        func_00216778(&object->model->position, &object->unk08->position);
-        func_00216778(&object->model->rotation, &object->unk08->rotation);
-        func_00216778(&object->model->unkE0, &object->unk08->scale);
+        Vector_Copy(&object->model->position, &object->unk08->position);
+        Vector_Copy(&object->model->rotation, &object->unk08->rotation);
+        Vector_Copy(&object->model->unkE0, &object->unk08->scale);
         object->unk20 = object->model->position.x;
         object->unk24 = object->model->position.y;
         object->unk28 = object->model->position.z;
@@ -464,41 +464,41 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             for (i = 0; i < 0x20; i++) {
                 dest = &glow_lights[map][i];
                 source = (MapSlotUnk10Vectors *)&D_0038A1B0.unkA90[map][i];
-                func_00216778(&dest->unk00[0], &source->unk00[0]);
-                func_00216778(&dest->unk00[1], &source->unk00[1]);
-                func_00216778(&dest->unk00[2], &source->unk00[2]);
-                func_00216778(&dest->unk00[3], &source->unk00[3]);
+                Vector_Copy(&dest->unk00[0], &source->unk00[0]);
+                Vector_Copy(&dest->unk00[1], &source->unk00[1]);
+                Vector_Copy(&dest->unk00[2], &source->unk00[2]);
+                Vector_Copy(&dest->unk00[3], &source->unk00[3]);
                 Vector_Scale(scaled, &D_0038D9F0[0].x, blend);
                 Vector_Scale(&dest->unk40[0].x, &source->unk40[0].x, rest);
-                func_00216C48(&dest->unk40[0], &dest->unk40[0], scaled);
+                Vector_Add(&dest->unk40[0], &dest->unk40[0], scaled);
                 Vector_Scale(scaled, &D_0038D9F0[1].x, blend);
                 Vector_Scale(&dest->unk40[1].x, &source->unk40[1].x, rest);
-                func_00216C48(&dest->unk40[1], &dest->unk40[1], scaled);
+                Vector_Add(&dest->unk40[1], &dest->unk40[1], scaled);
                 Vector_Scale(scaled, &D_0038D9F0[2].x, blend);
                 Vector_Scale(&dest->unk40[2].x, &source->unk40[2].x, rest);
-                func_00216C48(&dest->unk40[2], &dest->unk40[2], scaled);
+                Vector_Add(&dest->unk40[2], &dest->unk40[2], scaled);
                 Vector_Scale(scaled, &D_0038D9F0[3].x, blend);
                 Vector_Scale(&dest->unk40[3].x, &source->unk40[3].x, rest);
-                func_00216C48(&dest->unk40[3], &dest->unk40[3], scaled);
+                Vector_Add(&dest->unk40[3], &dest->unk40[3], scaled);
             }
         }
     }
-    func_00216778(&glow_lights_shared.unk00[0], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[0]);
-    func_00216778(&glow_lights_shared.unk00[1], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[1]);
-    func_00216778(&glow_lights_shared.unk00[2], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[2]);
-    func_00216778(&glow_lights_shared.unk00[3], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[3]);
+    Vector_Copy(&glow_lights_shared.unk00[0], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[0]);
+    Vector_Copy(&glow_lights_shared.unk00[1], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[1]);
+    Vector_Copy(&glow_lights_shared.unk00[2], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[2]);
+    Vector_Copy(&glow_lights_shared.unk00[3], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[3]);
     Vector_Scale(scaled, &D_0038D9F0[0].x, blend);
     Vector_Scale(&glow_lights_shared.unk40[0].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[0].x, rest);
-    func_00216C48(&glow_lights_shared.unk40[0], &glow_lights_shared.unk40[0], scaled);
+    Vector_Add(&glow_lights_shared.unk40[0], &glow_lights_shared.unk40[0], scaled);
     Vector_Scale(scaled, &D_0038D9F0[1].x, blend);
     Vector_Scale(&glow_lights_shared.unk40[1].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[1].x, rest);
-    func_00216C48(&glow_lights_shared.unk40[1], &glow_lights_shared.unk40[1], scaled);
+    Vector_Add(&glow_lights_shared.unk40[1], &glow_lights_shared.unk40[1], scaled);
     Vector_Scale(scaled, &D_0038D9F0[2].x, blend);
     Vector_Scale(&glow_lights_shared.unk40[2].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[2].x, rest);
-    func_00216C48(&glow_lights_shared.unk40[2], &glow_lights_shared.unk40[2], scaled);
+    Vector_Add(&glow_lights_shared.unk40[2], &glow_lights_shared.unk40[2], scaled);
     Vector_Scale(scaled, &D_0038D9F0[3].x, blend);
     Vector_Scale(&glow_lights_shared.unk40[3].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[3].x, rest);
-    func_00216C48(&glow_lights_shared.unk40[3], &glow_lights_shared.unk40[3], scaled);
+    Vector_Add(&glow_lights_shared.unk40[3], &glow_lights_shared.unk40[3], scaled);
     func_00109A50();
     func_00109A80(GS_REG_ALPHA_1, 0x44);
     func_00109A80(GS_REG_ALPHA_2, 9);

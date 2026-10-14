@@ -2,7 +2,7 @@
 
 float sinf(float);
 float cosf(float);
-void func_00216D20(void *, void *);
+void Vector_Normalize(void *, void *);
 
 /* whether the push the entity is under (flags 45, 46, 48) points away from `heading` */
 s32 func_0018EC78(Entity *entity, f32 heading) {
@@ -27,7 +27,7 @@ s32 func_0018EC78(Entity *entity, f32 heading) {
         push[0] += entity->unkB0[0];
         push[2] += entity->unkB0[2];
     }
-    func_00216D20(push, push);
+    Vector_Normalize(push, push);
     if (facing[0] * push[0] + facing[2] * push[2] >= 0.0f) {
         return FALSE;
     }

@@ -7,7 +7,7 @@ void func_001857E8(f32 *, f32 *, f32, f32, f32, f32);
 void func_00185A28(f32 *, f32 *, f32, f32, f32);
 void func_00185E28(f32 *, f32 *, f32, f32, f32);
 void func_001861F8(int, float *, float, float);
-void func_00216D20(void *, void *);
+void Vector_Normalize(void *, void *);
 
 /* keep an enemy out of the player and out of the other enemies; what pushed it is left in Entity.unkB0 */
 void func_00185480(Entity *entity) {
@@ -80,7 +80,7 @@ void func_00185480(Entity *entity) {
             }
         }
     }
-    func_00216D20(push, push);
+    Vector_Normalize(push, push);
     entity->unkB0[0] = push[0];
     entity->unkB0[2] = entity->unkB0[1] = push[2];
 }

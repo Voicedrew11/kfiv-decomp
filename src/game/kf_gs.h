@@ -4,11 +4,17 @@
 
 #include "common.h"
 
+#define GS_REG_PRIM         0x00
+#define GS_REG_RGBAQ        0x01
+#define GS_REG_UV           0x03
+#define GS_REG_XYZ2         0x05
 #define GS_REG_TEX0_1       0x06
 #define GS_REG_CLAMP_1      0x08
 #define GS_REG_TEX1_1       0x14
 #define GS_REG_XYOFFSET_1   0x18
 #define GS_REG_XYOFFSET_2   0x19
+#define GS_REG_PRMODECONT   0x1A
+#define GS_REG_PRMODE       0x1B
 #define GS_REG_SCANMSK      0x22
 #define GS_REG_TEXFLUSH     0x3F
 #define GS_REG_SCISSOR_1    0x40
@@ -21,6 +27,10 @@
 #define GS_REG_FRAME_2      0x4D
 #define GS_REG_ZBUF_1       0x4E
 #define GS_REG_ZBUF_2       0x4F
+#define GS_REG_BITBLTBUF    0x50
+#define GS_REG_TRXPOS       0x51
+#define GS_REG_TRXREG       0x52
+#define GS_REG_TRXDIR       0x53
 #define GS_REG_FINISH       0x61
 
 /* a color as four bytes, passed in an 8-byte argument (MenuText_SetColor stores it to D_00446D70..D_00446D73) */

@@ -23,8 +23,8 @@ extern u16 D_00446932;
 extern u16 D_00446934;
 extern u16 D_00446936;
 
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(void *, void *, float);
 int func_001B4F30(u16, void *, void *, void *, void *);
@@ -105,7 +105,7 @@ int Player_CastMagic(int magic_id) {
         shot->unk22 = D_00413F80.magic;
         shot->unk26 = magic_id;
         shot->unk08 = D_00413F80.unk7E;
-        func_00216778(&angles, &D_00413F80.rotation);
+        Vector_Copy(&angles, &D_00413F80.rotation);
         angles.x += D_00413F80.unk238;
         if (angles.x > 1.012291f) {
             angles.x = 1.012291f;
@@ -396,7 +396,7 @@ void Player_HoldMagic(int magic_id) {
             D_00446964->unk22 = D_00413F80.magic;
             D_00446964->unk26 = magic_id;
             D_00446964->unk08 = D_00413F80.unk7E;
-            func_00216778(&angles, &D_00413F80.rotation);
+            Vector_Copy(&angles, &D_00413F80.rotation);
             angles.x += D_00413F80.unk238;
             if (angles.x > 1.012291f) {
                 angles.x = 1.012291f;
@@ -426,8 +426,8 @@ void Ladder_Start(ObjectReference *object, int from_far_end) {
     if ((s32)(D_00413F80.unk1C8 >> 34) & 1) {
         return;
     }
-    func_00216778(&ladder_top_point, (void *)object->model->get_point(object->model, 1));
-    func_00216778(&ladder_bottom_point, (void *)object->model->get_point(object->model, 0));
+    Vector_Copy(&ladder_top_point, (void *)object->model->get_point(object->model, 1));
+    Vector_Copy(&ladder_bottom_point, (void *)object->model->get_point(object->model, 0));
     Vector_Subtract(&ladder_span, &ladder_top_point, &ladder_bottom_point);
     PLAYER_STATUS_BITS(&D_00413F80)->bit36 = TRUE;
     PLAYER_STATUS_BITS(&D_00413F80)->bit34 = FALSE;
@@ -441,9 +441,9 @@ void Ladder_Start(ObjectReference *object, int from_far_end) {
     ladder_facing_y = object->model->rotation.y;
     ladder_object = object;
     if (from_far_end) {
-        func_00216778(&ladder_foot_position, &ladder_top_point);
+        Vector_Copy(&ladder_foot_position, &ladder_top_point);
     } else {
-        func_00216778(&ladder_foot_position, &ladder_bottom_point);
+        Vector_Copy(&ladder_foot_position, &ladder_bottom_point);
     }
     Vector_Subtract(&ladder_walk_step, &ladder_foot_position, &D_00413F80.position);
     ladder_walk_frames_remaining = sqrtf(ladder_walk_step.x * ladder_walk_step.x + ladder_walk_step.y * ladder_walk_step.y + ladder_walk_step.z * ladder_walk_step.z) / 12.0f;
@@ -485,9 +485,9 @@ void Ladder_WalkToFoot(void) {
     if (ladder_walk_frames_remaining > 0) {
         ladder_walk_frames_remaining--;
         if (ladder_walk_frames_remaining > 0) {
-            func_00216C48(&D_00413F80.position, &D_00413F80.position, &ladder_walk_step);
+            Vector_Add(&D_00413F80.position, &D_00413F80.position, &ladder_walk_step);
         } else {
-            func_00216778(&D_00413F80.position, &ladder_foot_position);
+            Vector_Copy(&D_00413F80.position, &ladder_foot_position);
         }
     }
     if (func_0019B908(&D_00413F80.rotation.y, ladder_facing_y, 0.029088821f) && ladder_walk_frames_remaining <= 0) {
@@ -549,7 +549,7 @@ void Ladder_ClimbRungUp(u16 buttons) {
     fraction = fraction * sinf((f32)ladder_rung_anim_frame * angle / (f32)ladder_frames_per_rung) / sinf(angle);
     Vector_Scale(&offset, &ladder_span,
                     fraction + (f32)(ladder_rung_anim_base * ladder_frames_per_rung) / (f32)(ladder_rung_count * ladder_frames_per_rung));
-    func_00216C48(&D_00413F80.position, &ladder_bottom_point, &offset);
+    Vector_Add(&D_00413F80.position, &ladder_bottom_point, &offset);
     if (ladder_rung_anim_frame >= ladder_frames_per_rung) {
         ladder_rung_anim_base = ladder_current_rung;
         ladder_state_index--;
@@ -579,7 +579,7 @@ void Ladder_ClimbRungDown(u16 buttons) {
     fraction = fraction * sinf((f32)ladder_rung_anim_frame * angle / (f32)ladder_frames_per_rung) / sinf(angle);
     Vector_Scale(&offset, &ladder_span,
                     fraction + (f32)(ladder_current_rung * ladder_frames_per_rung) / (f32)(ladder_rung_count * ladder_frames_per_rung));
-    func_00216C48(&D_00413F80.position, &ladder_bottom_point, &offset);
+    Vector_Add(&D_00413F80.position, &ladder_bottom_point, &offset);
     if (ladder_rung_anim_frame <= 0) {
         ladder_rung_anim_base = ladder_current_rung;
         ladder_state_index -= 2;

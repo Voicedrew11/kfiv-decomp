@@ -30,7 +30,7 @@ extern GsDoubleBuffer D_00432F50;
 extern GsRegisterPair D_00433180;
 extern GsRegisterPair D_00433190;
 
-int func_0021B540(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
+int Movie_Play(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
 void func_001095E0(void);
 void func_0010B000(void);
 void func_001095D0(void);
@@ -56,7 +56,7 @@ int sceSifInitIopHeap();
 void sceGsSetDefDBuff(void *, s16, s16, s16, s16, s16, s16);
 void sceVu0CopyMatrix(void *, void *);
 
-/* The opening movie's per-frame callback (given to func_0021B540 by Movie_PlayOpening): polls the controller
+/* The opening movie's per-frame callback (given to Movie_Play by Movie_PlayOpening): polls the controller
    and returns TRUE, ending the movie, when START is pressed. */
 static int Movie_PollSkip(void) {
     Pad_Update();
@@ -74,7 +74,7 @@ void Movie_PlayOpening(void) {
     char buf[0x40]; /* unused, but retail reserves the 0x40 bytes */
 
     D_00446E90 = 0;
-    func_0021B540(D_004412E0, (u32)D_00446F50, D_00446F20, Movie_PollSkip, 0x3FFF, 2, 0, 0);
+    Movie_Play(D_004412E0, (u32)D_00446F50, D_00446F20, Movie_PollSkip, 0x3FFF, 2, 0, 0);
     temp = (s64)0xC000 << 17;
     D_00432E20[0] = temp;
     D_00432E20[30] = temp;
@@ -105,9 +105,9 @@ void Movie_PlayEnding(void) {
 
     D_00446E90 = 0;
     if ((D_0038CC74[0] >> 11) & 1) {
-        func_0021B540(D_00441300, (u32)D_00446F50, D_00446F20, 0, 0x3FFF, 2, 0, 0);
+        Movie_Play(D_00441300, (u32)D_00446F50, D_00446F20, 0, 0x3FFF, 2, 0, 0);
     } else {
-        func_0021B540(D_00441320, (u32)D_00446F50, D_00446F20, 0, 0x3FFF, 2, 0, 0);
+        Movie_Play(D_00441320, (u32)D_00446F50, D_00446F20, 0, 0x3FFF, 2, 0, 0);
     }
     sceGsSyncV(0);
     sceGsSyncV(0);

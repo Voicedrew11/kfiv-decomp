@@ -27,7 +27,7 @@ void func_001C82C0(int);
 void func_001C87D8(int);
 void Script_Init(int);
 int Script_Start(int, int);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Map change step: sets the loaded map up in slot 0, puts the player in it and ends the change. */
 void func_001190C8(void) {
@@ -48,14 +48,14 @@ void func_001190C8(void) {
     Gold_InitMap(0);
     switch (D_0038D680.kind) {
     case 1:
-        func_00216778(&D_00413F80, &D_0038D680);
+        Vector_Copy(&D_00413F80, &D_0038D680);
         break;
     case 2:
         object = MapObject_GetById(0, D_0038D680.unk14);
         if (object != NULL) {
             sine = sinf(-object->model->rotation.y);
             cosine = cosf(-object->model->rotation.y);
-            func_00216778(&D_00413F80, &object->model->position);
+            Vector_Copy(&D_00413F80, &object->model->position);
             D_00413F80.position.x += cosine * 0.0f - sine * -250.0f;
             D_00413F80.position.z += sine * 0.0f + cosine * -250.0f;
             D_00413F80.rotation.y = object->model->rotation.y;

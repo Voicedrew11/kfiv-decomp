@@ -21,8 +21,8 @@ void func_0010AEB8(void *);
 void func_0010BA30(ModelInstance *);
 void func_0010B018(ModelInstance *, s32, s32);
 int func_001C0E40(f32, void *);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 int rand(void);
 float cosf(float);
 float sinf(float);
@@ -160,7 +160,7 @@ void Gold_MoveMap(int slot, f32 *offset) {
 
     for (i = MAP_ACTOR_COUNT - 1; i >= 0; i--) {
         if (actor->flags & 1) {
-            func_00216C48(&actor->body->position, &actor->body->position, offset);
+            Vector_Add(&actor->body->position, &actor->body->position, offset);
             actor->unk14 += offset[1];
         }
         actor++;
@@ -284,8 +284,8 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
     // match: read even when on_ground is not set and no test was made: then it is whatever the last test left
     actor->unk14 = *&COLLISION_RESULT->point[1];
     MAP_ACTOR_WORDS(actor)->amount = amount;
-    func_00216778(&actor->body->position, position);
-    func_00216778(&actor->body->rotation, rotation);
+    Vector_Copy(&actor->body->position, position);
+    Vector_Copy(&actor->body->rotation, rotation);
     actor->body->unkE8 = 1.5f; // match: z, y, x, w in this order gives the stores in retail order
     actor->body->unkE4 = 1.5f;
     actor->body->unkE0 = 1.5f;
@@ -298,7 +298,7 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
         other_map = FALSE;
     }
     if (other_map) {
-        func_00216C48(&actor->body->position, &actor->body->position, &D_0038D610);
+        Vector_Add(&actor->body->position, &actor->body->position, &D_0038D610);
     }
     Gold_SaveMark(actor);
     if (other_map) {

@@ -1,7 +1,7 @@
 #include "kf_effect.h"
 
-void func_00216C48(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Copy(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -37,7 +37,7 @@ void func_001AE118(EffectActor *effect) {
     sceVu0RotMatrixX(matrix, matrix, effect->model->rotation.x);
     sceVu0RotMatrixY(matrix, matrix, effect->model->rotation.y);
     sceVu0ApplyMatrix(spin_vector, matrix, spin_vector);
-    func_00216C48(&motion->unk10, &motion->unk10, motion);
-    func_00216C48(&effect->model->position, &motion->unk10, spin_vector);
+    Vector_Add(&motion->unk10, &motion->unk10, motion);
+    Vector_Add(&effect->model->position, &motion->unk10, spin_vector);
     effect->frame += 1;
 }

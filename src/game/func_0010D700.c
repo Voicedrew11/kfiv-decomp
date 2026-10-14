@@ -7,7 +7,7 @@ extern ModelLight D_003E7500[];
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
 int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* copies a 4x4 matrix through VU0 registers */
 #define COPY_MATRIX(to, from)                                                                      \
@@ -93,7 +93,7 @@ void func_0010D700(ModelInstance *model) {
             *packet++ = 0;
             *packet++ = 0;
             *packet++ = 0x6C030064;
-            func_00216778(packet, &model->unk150);
+            Vector_Copy(packet, &model->unk150);
             packet += 4;
             packet[3] = model->found_record_id;
             ((u_long128 *)packet)[1] = *(u_long128 *)model->found_record;

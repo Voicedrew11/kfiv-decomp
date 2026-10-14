@@ -11,7 +11,7 @@ void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
 int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
-void func_00216B48(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 
 /* the scratchpad as this function uses it: two matrices ModelMatrix_BuildDrawMatrices makes for the model */
 #define SCRATCH_MATRIX_A ((void *)0x70000000)
@@ -131,7 +131,7 @@ void func_0010E010(ModelInstance *model) {
             *packet = 0x10000005;
             packet += 7;
             *packet++ = 0x6C040004;
-            func_00216B48((int)packet, (int *)model->unk40, (int)part);
+            Matrix_Multiply(packet, model->unk40, part);
             packet += 0x10;
             data = (ModelPartData *)(u32)part->data_addr;
             for (j = 0; j < part->data_count; j++) {

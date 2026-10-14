@@ -12,9 +12,9 @@ extern const f32 D_00446FCC[];      /* -0.0f */
 
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Normalize(void *, void *);
 void sceVu0Normalize(float *, float *);
 float sqrtf(float);
 float atan2f(float, float);
@@ -46,18 +46,18 @@ static void Collision_PointCapsule(f32 *point, f32 *base, f32 *axis, f32 reach_s
         Vector_Subtract(from_base, point, base);
         distance_squared = from_base[0] * from_base[0] + from_base[1] * from_base[1] + from_base[2] * from_base[2];
         if (distance_squared < reach_squared) {
-            func_00216778(COLLISION_RESULT->point, base);
+            Vector_Copy(COLLISION_RESULT->point, base);
             COLLISION_RESULT->hit = 1;
             return;
         }
     }
     if (length < along) {
         Vector_Scale(offset, axis, length);
-        func_00216C48(offset, axis, offset);    // match: the far end is taken as axis + axis * length, not base + axis * length
+        Vector_Add(offset, axis, offset);    // match: the far end is taken as axis + axis * length, not base + axis * length
         Vector_Subtract(offset, point, offset);
         distance_squared = offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2];
         if (distance_squared < reach_squared) {
-            func_00216778(COLLISION_RESULT->point, offset);
+            Vector_Copy(COLLISION_RESULT->point, offset);
             COLLISION_RESULT->hit = 1;
             return;
         }
@@ -83,9 +83,9 @@ void Collision_SphereSphere(void *center_a, void *center_b, float radius_a, floa
     distance = offset[0] * offset[0] + offset[1] * offset[1] + offset[2] * offset[2];
     if (!(reach < distance)) {
         distance = sqrtf(distance);
-        func_00216D20(COLLISION_RESULT->normal, offset);
+        Vector_Normalize(COLLISION_RESULT->normal, offset);
         Vector_Scale(COLLISION_RESULT->point, COLLISION_RESULT->normal, distance);
-        func_00216C48(COLLISION_RESULT->point, COLLISION_RESULT->point, center_a);
+        Vector_Add(COLLISION_RESULT->point, COLLISION_RESULT->point, center_a);
         COLLISION_RESULT->distance = distance;
         COLLISION_RESULT->hit = 1;
     }
@@ -182,7 +182,7 @@ void Collision_PointTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *p
     }
     if (weight_c + weight_a <= 1.0f) {
         COLLISION_RESULT->hit = 1;
-        func_00216778(COLLISION_RESULT->point, foot);
+        Vector_Copy(COLLISION_RESULT->point, foot);
     }
 }
 
@@ -301,14 +301,14 @@ void Collision_CapsuleTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 
     nearest_squared = 16777216.0f;
     for (i = 0; i < 3; i++) {
         if (i == 0) {
-            func_00216778(start, corner_a);
-            func_00216778(end, corner_b);
+            Vector_Copy(start, corner_a);
+            Vector_Copy(end, corner_b);
         } else if (i == 1) {
-            func_00216778(start, corner_b);
-            func_00216778(end, corner_c);
+            Vector_Copy(start, corner_b);
+            Vector_Copy(end, corner_c);
         } else {
-            func_00216778(start, corner_c);
-            func_00216778(end, corner_a);
+            Vector_Copy(start, corner_c);
+            Vector_Copy(end, corner_a);
         }
         if (end[1] > centre[1] && centre[1] < start[1]) {
             continue;
@@ -473,7 +473,7 @@ void Collision_RayTriangle(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *ori
     }
     if (weight_c + weight_a <= 1.0f) {
         COLLISION_RESULT->hit = 1;
-        func_00216778(COLLISION_RESULT->point, foot);
+        Vector_Copy(COLLISION_RESULT->point, foot);
     }
 }
 
@@ -521,7 +521,7 @@ static void Collision_MoveTrianglePlane(f32 *corner_a, f32 *corner_b, f32 *corne
     distance = -(plane[0] * corner_a[0] + plane[1] * corner_a[1] + plane[2] * corner_a[2]);
     Vector_Scale(move, direction, length);
     // match: the parallel test adds the plane normal and the direction and sums the components; a dot product was meant
-    func_00216C48(edge_a, plane, direction);
+    Vector_Add(edge_a, plane, direction);
     facing = edge_a[0] + edge_a[1] + edge_a[2];
     if (-0.00001f < facing && facing < 0.00001f) {
         return;
@@ -536,8 +536,8 @@ static void Collision_MoveTrianglePlane(f32 *corner_a, f32 *corner_b, f32 *corne
     }
     COLLISION_RESULT->hit = 1;
     Vector_Scale(COLLISION_RESULT->point, move, distance);
-    func_00216C48(COLLISION_RESULT->point, COLLISION_RESULT->point, origin);
-    func_00216778(COLLISION_RESULT->normal, normal);
+    Vector_Add(COLLISION_RESULT->point, COLLISION_RESULT->point, origin);
+    Vector_Copy(COLLISION_RESULT->normal, normal);
     COLLISION_RESULT->distance = (length * distance) * (length * distance);
 }
 
@@ -722,7 +722,7 @@ void Collision_RayCylinder(f32 radius, f32 height, f32 length, f32 *base, f32 *o
 
     radius_squared = radius * radius;
     COLLISION_RESULT->hit = 0;
-    func_00216778(start, origin);
+    Vector_Copy(start, origin);
     end[0] = origin[0] + direction[0] * length;
     end[1] = origin[1] + direction[1] * length;
     end[2] = origin[2] + direction[2] * length;
@@ -865,7 +865,7 @@ past_far_end:
     sceVu0Normalize(rim, delta);
     reach *= reach;
     Vector_Scale(rim, rim, radius);
-    func_00216C48(rim, rim, base);
+    Vector_Add(rim, rim, base);
     rim[1] -= height;
     Vector_Subtract(rim, centre, rim);
     distance = rim[0] * rim[0] + rim[1] * rim[1] + rim[2] * rim[2];
@@ -880,7 +880,7 @@ past_near_end:
     sceVu0Normalize(rim, delta);
     reach *= reach;
     Vector_Scale(rim, rim, radius);
-    func_00216C48(rim, rim, base);
+    Vector_Add(rim, rim, base);
     Vector_Subtract(rim, centre, rim);
     distance = rim[0] * rim[0] + rim[1] * rim[1] + rim[2] * rim[2];
     if (distance < reach) {
@@ -944,7 +944,7 @@ void Collision_CylinderArc(f32 *base, f32 *other, f32 radius, f32 height, f32 ot
     delta[1] = 0.0f;
     sceVu0Normalize(COLLISION_RESULT->normal, delta);
     Vector_Scale(delta, COLLISION_RESULT->normal, radius);
-    func_00216C48(COLLISION_RESULT->point, base, delta);
+    Vector_Add(COLLISION_RESULT->point, base, delta);
     // match: the height of the hit is one level divided by another, halved; the middle of the two was meant
     if (bottom <= other_bottom && other_top <= top) {
         COLLISION_RESULT->point[1] = other_top / other_bottom * 0.5f;
@@ -1043,7 +1043,7 @@ void Collision_CylinderArcPitch(f32 *base, f32 *other, f32 radius, f32 height, f
     delta[1] = 0.0f;
     sceVu0Normalize(COLLISION_RESULT->normal, delta);
     Vector_Scale(delta, COLLISION_RESULT->normal, other_radius);
-    func_00216C48(COLLISION_RESULT->point, base, delta);
+    Vector_Add(COLLISION_RESULT->point, base, delta);
     // match: `level` is never given a value; the height of the other cylinder was meant
     if (level < bottom) {
         COLLISION_RESULT->point[1] = bottom;
@@ -1244,7 +1244,7 @@ void Collision_BallSwing(void *ball_centre, void *swing_origin, f32 radius, f32 
     Vector_Subtract(delta, origin, centre);
     sceVu0Normalize(COLLISION_RESULT->normal, delta);
     Vector_Scale(delta, COLLISION_RESULT->normal, radius);
-    func_00216C48(COLLISION_RESULT->point, centre, delta);
+    Vector_Add(COLLISION_RESULT->point, centre, delta);
     COLLISION_RESULT->hit = 1;
 }
 
@@ -1312,6 +1312,6 @@ void Collision_BallSwingPitch(void *ball_centre, void *swing_origin, f32 radius,
     Vector_Subtract(delta, origin, centre);
     sceVu0Normalize(COLLISION_RESULT->normal, delta);
     Vector_Scale(delta, COLLISION_RESULT->normal, radius);
-    func_00216C48(COLLISION_RESULT->point, centre, delta);
+    Vector_Add(COLLISION_RESULT->point, centre, delta);
     COLLISION_RESULT->hit = 1;
 }

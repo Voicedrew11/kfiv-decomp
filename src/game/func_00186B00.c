@@ -5,7 +5,7 @@
 extern MapSlot D_0038CD20[];
 extern f32 D_00446838[];
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void sceVu0Normalize(float *, float *);
 void func_00195100(f32 *, f32, f32);
 s32 func_00186478(Entity *, ModelInstance *, f32 *, f32 *, f32 *);
@@ -28,7 +28,7 @@ void func_00186B00(Entity *entity) {
     hit_floor = FALSE;
     floor_y = D_00446838[0];
     height = entity->model->position[1];
-    func_00216778(position, entity->model->position);
+    Vector_Copy(position, entity->model->position);
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
     position[1] -= 0.1f;
     if (!((s32)(entity->flags >> 28) & 1)) {

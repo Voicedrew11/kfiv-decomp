@@ -3,7 +3,7 @@
 extern f32 D_004323E0[16];
 
 int rand(void);
-void func_00216B48(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 
@@ -28,8 +28,8 @@ void func_00112118(ModelInstance *model) {
     part_count = model->part_count;
     matrix = MODEL_PROJECT_SCRATCH->matrices[0];
     for (i = 0; i < part_count; i++, part++) {
-        func_00216B48((int)matrix, (int *)model->unk40, (int)part);
-        func_00216B48((int)matrix, (int *)D_004323E0, (int)matrix);
+        Matrix_Multiply(matrix, model->unk40, part);
+        Matrix_Multiply(matrix, D_004323E0, matrix);
         matrix += 16;
     }
     part = model->parts;

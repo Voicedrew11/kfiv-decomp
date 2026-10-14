@@ -6,7 +6,7 @@ double sqrt(double);
 float atan2f(float, float);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
-void func_00216BC0(void *, void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 
 /* keeps a direction within pitch limits[0]..limits[1] and yaw limits[2]..limits[3] of
@@ -20,7 +20,7 @@ s32 func_0018C298(f32 *direction, f32 *limits, f32 heading) {
     s32 clamped = FALSE;
 
     sceVu0RotMatrixY(matrix, D_00431AF0, -heading);
-    func_00216BC0(local, matrix, direction);
+    Vector_ApplyMatrix(local, matrix, direction);
     length = sqrt(local[0] * local[0] + local[2] * local[2]);
     pitch = atan2f(-local[1], length);
     yaw = atan2f(local[0], local[2]);

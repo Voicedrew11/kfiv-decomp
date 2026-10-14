@@ -1,6 +1,6 @@
 #include "kf_entity.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_0019A348(Entity *);
 void func_0019A388(Entity *);
 int EntityAi_StartAction(char *, void (*)(void), int);
@@ -11,7 +11,7 @@ void func_00199BB0(Entity *);
 void EntityAi_Update(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    func_00216778(entity->unk70, entity->model->position);
+    Vector_Copy(entity->unk70, entity->model->position);
     if (ENTITY_FLAG_BITS(entity)->bit41) {
         func_0019A348(entity);
     }
