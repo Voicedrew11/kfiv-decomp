@@ -1,5 +1,8 @@
-/* The behaviour of entity type 38 (Entity.params->unk02, the index into D_003E6E40): its set-up
-   function, which the table names, and the handlers that function installs. */
+/* Bell: the behaviour of entity type 38 (Entity.params->unk02, the index into D_003E6E40): its set-up
+   function, which the table names, and the handlers it installs. Used by: chr.prm record 60, model c0060
+   (a bell), 65,535 hit points, one spawn in 007.map. Struck, it calls one of the D_0043EE30 handlers
+   (func_001A0CD0), then waits EntityParams.unk434 frames before it answers another hit. Prima's
+   official guide (2004): shoot the bell with a bow to ring it and destroy the skeletons. */
 #include "kf_entity.h"
 #include "common.h"
 
@@ -16,11 +19,11 @@ float func_00194FB8(float);
 // match: the definition names only the three integer arguments; the floats go on to the handler it calls in their registers
 void func_001A0CD0(s32, s32, s32, f32, f32, f32);
 
-static void EntityType38_Animate(Entity *entity);
-static void EntityType38_Think(Entity *entity);
+static void Bell_Animate(Entity *entity);
+static void Bell_Think(Entity *entity);
 
 /* Set-up of a type 38 entity: clears its work area and installs the type's handlers. */
-void EntityType38_Init(Entity *entity) {
+void Bell_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     char *unk138 = entity->model->unk138;
     s32 i;
@@ -29,8 +32,8 @@ void EntityType38_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->think = (void (*)(Entity *, s32))EntityType38_Think;
-    unkE0->animate = (void (*)(void))EntityType38_Animate;
+    unkE0->think = (void (*)(Entity *, s32))Bell_Think;
+    unkE0->animate = (void (*)(void))Bell_Animate;
     unkE0->on_hit = NULL;
     unkE0->move = NULL;
     unkE0->dormant = NULL;
@@ -63,7 +66,7 @@ void EntityType38_Init(Entity *entity) {
 
 /* The animate handler: plays the motion a step on (func_00192EB0) and sets flag bit 34 when it has
    ended; no blend and no head turn. */
-static void EntityType38_Animate(Entity *entity) {
+static void Bell_Animate(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, ENTITY_FLAG_BITS(entity)->bits11);
 }
 
@@ -72,7 +75,7 @@ static void EntityType38_Animate(Entity *entity) {
    EntityParams.unk432, unk430 and unk42E, Entity.unkD2, Entity.unk60 and the angle of the entity
    off the player's facing, and sets the timer to EntityParams.unk434; otherwise flag bit 29 is
    clear. It always clears flag bit 43. */
-static void EntityType38_Think(Entity *entity) {
+static void Bell_Think(Entity *entity) {
     u64 flags;
     f32 angle;
 

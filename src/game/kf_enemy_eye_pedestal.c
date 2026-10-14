@@ -1,5 +1,10 @@
-/* The behaviour of entity type 31 (Entity.params->unk02, the index into D_003E6E40): its set-up
-   function, which the table names, and the handlers that function installs. */
+/* EyePedestal: the behaviour of entity type 31 (Entity.params->unk02, the index into D_003E6E40): its set-up
+   function, which the table names, and the handlers it installs. Used by: chr.prm record 91, model
+   c0091 (an eye set in a stone pedestal), whose eight spawns stand in two rows of four in 006.map. They
+   neither move nor take hits; each turns its eye after the player, except the one spawned with
+   EntitySpawnInfo.unk40 set. Prima's official guide (2004) describes the room: eight pedestals with eyes
+   that follow you, and the one that does not is the switch that closes them all and stops the ceiling
+   trap of the next room. The game itself names them nowhere. */
 #include "kf_entity.h"
 #include "common.h"
 
@@ -17,11 +22,11 @@ int func_00196120(Entity *, void *, s32, void *, f32);
 int func_00192C98(void *, int, int, u32, int);
 extern PlayerData D_00413F80;
 
-static void EntityType31_Animate(Entity *entity);
-static void EntityType31_Think(Entity *entity);
+static void EyePedestal_Animate(Entity *entity);
+static void EyePedestal_Think(Entity *entity);
 
 /* Set-up of a type 31 entity: clears its work area and installs the type's handlers. */
-void EntityType31_Init(Entity *entity) {
+void EyePedestal_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     u8 *unkBC = entity->unkBC;
     u8 *unkC0 = entity->unkC0;
@@ -35,8 +40,8 @@ void EntityType31_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->think = (void (*)(Entity *, s32))EntityType31_Think;
-    unkE0->animate = (void (*)(void))EntityType31_Animate;
+    unkE0->think = (void (*)(Entity *, s32))EyePedestal_Think;
+    unkE0->animate = (void (*)(void))EyePedestal_Animate;
     unkE0->on_hit = NULL;
     unkE0->move = NULL;
     unkE0->dormant = NULL;
@@ -62,7 +67,7 @@ void EntityType31_Init(Entity *entity) {
 /* The animate handler: as EntityAi_Animate, but the motion never moves the entity, and with flag
    bit 9 set the head follows the point in work floats unk48 to unk50 (func_001960C0, at the rate
    EntityParams.unk434) instead of the target. */
-static void EntityType31_Animate(Entity *entity) {
+static void EyePedestal_Animate(Entity *entity) {
     f32 limits[4];
     f32 point[3];
     u32 blend_frames; // match: converted to float as unsigned
@@ -102,7 +107,7 @@ static void EntityType31_Animate(Entity *entity) {
    frames (counted in work byte unk7A) it puts the player's position, 220 less in y, in work floats
    unk48 to unk50. It keeps flag bits 16, 18 and 21 set, flag bit 9 set unless EntitySpawnInfo.unk40
    is, and plays animation 0 while flag bit 29 is set and animation 1 otherwise. */
-static void EntityType31_Think(Entity *entity) {
+static void EyePedestal_Think(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
     if (unkE0->unk7A != 0) {

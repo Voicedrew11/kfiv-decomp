@@ -213,7 +213,10 @@ the guide's. Three of the six differing experience values are the guide's own er
 Dark Succubus, Greater Demon: a factor of ten each) and three are errors in copying it. The guide also
 names one creature the wiki lacks: the Ancient King, record 57 (`kf_enemy_ancient_king.c`), whose
 description matches the record's resistances and its code. The last boss, record 99 (`kf_enemy_dark_one.c`), is the
-Dark One of the game's own text; the guide's account of the fight is the code's. Prima's "Beetle" is the segmented creature
+Dark One of the game's own text; the guide's account of the fight is the code's.
+Three more types are props of the King's Throne maps, placed by the guide's walkthrough and their
+models: the eye pedestals (type 31, record 91), the bell (type 38, record 60) and the skeleton with a
+hammer beside it (type 37, record 154, named for its look only). Prima's "Beetle" is the segmented creature
 of records 11, 19 and 152, all drawn with model `c0011`.
 
 ## Areas

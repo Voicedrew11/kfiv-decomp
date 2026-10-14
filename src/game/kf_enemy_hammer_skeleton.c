@@ -1,5 +1,8 @@
-/* The behaviour of entity type 37 (Entity.params->unk02, the index into D_003E6E40): its set-up
-   function, which the table names, and the handlers that function installs. */
+/* HammerSkeleton: the behaviour of entity type 37 (Entity.params->unk02, the index into D_003E6E40): its
+   set-up function, which the table names, and the handlers it installs. Used by: chr.prm record 154,
+   model c0154 (a skeleton holding a small hammer), whose one spawn in 007.map stands beside the bell
+   (kf_enemy_bell.c). It gives no experience and dies by itself when the player enters one of two
+   boxes, then starts its spawn's script. A descriptive name: the game and the guides name it nowhere. */
 #include "kf_entity.h"
 #include "kf_map.h"
 #include "kf_effect.h"
@@ -24,11 +27,11 @@ int func_00192C98(void *, int, int, u32, int);
 void func_001035A8(u32, int);
 int func_002109C8(int, int);
 
-static void EntityType37_Think(Entity *entity, s32 unknown);
-static void EntityType37_Death(Entity *entity);
+static void HammerSkeleton_Think(Entity *entity, s32 unknown);
+static void HammerSkeleton_Death(Entity *entity);
 
 /* Set-up of a type 37 entity: clears its work area and installs the type's handlers. */
-void EntityType37_Init(Entity *entity) {
+void HammerSkeleton_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     u8 *unkBC = entity->unkBC;
     u8 *unkC0 = entity->unkC0;
@@ -41,7 +44,7 @@ void EntityType37_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->think = EntityType37_Think;
+    unkE0->think = HammerSkeleton_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
     unkE0->move = (void (*)(void))EntityAi_Move;
@@ -67,9 +70,9 @@ void EntityType37_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-/* The think handler: no states. While the entity is not busy it starts EntityType37_Death when the
+/* The think handler: no states. While the entity is not busy it starts HammerSkeleton_Death when the
    player is inside either of two fixed boxes, else the move action. */
-static void EntityType37_Think(Entity *entity, s32 unknown) {
+static void HammerSkeleton_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (entity->unkC6 == 0) {
@@ -79,19 +82,19 @@ static void EntityType37_Think(Entity *entity, s32 unknown) {
             (-6200.0f <= D_00413F80[0] && D_00413F80[0] <= -2600.0f &&
              -50.0f <= D_00413F80[1] && D_00413F80[1] <= 450.0f &&
              -600.0f <= D_00413F80[2] && D_00413F80[2] <= 1000.0f)) {
-            EntityAi_StartAction(entity, EntityType37_Death, unknown);
+            EntityAi_StartAction(entity, HammerSkeleton_Death, unknown);
         } else {
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
         }
     }
 }
 
-/* A death action (busy bit 0x40) that EntityType37_Think starts; the death slot holds
+/* A death action (busy bit 0x40) that HammerSkeleton_Think starts; the death slot holds
    EntityAi_Death. Animation 16, the fade over 20 frames and the removal, as EntityAi_Death with
    other flag settings; it frees the entity's effects at the start, and when the motion has ended
    calls func_001035A8 and starts script EntitySpawnInfo.unk36 where that one calls func_0018DCD8.
    */
-static void EntityType37_Death(Entity *entity) {
+static void HammerSkeleton_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
