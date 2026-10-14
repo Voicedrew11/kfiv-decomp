@@ -50,7 +50,6 @@ int func_0019A310(char *, void (*)(void), int);
 void func_00181378(Entity *);
 void func_001814B0(Entity *);
 void func_001816A0(Entity *);
-extern int D_00414184[];
 float func_001954A8(float *, float *);
 void func_00216D20(void *, void *);
 void func_00216CD8(void *, void *, void *);
@@ -643,7 +642,7 @@ static void func_0015B190(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 turn;
 
-    if (entity == (Entity *)D_00414184[0] && (entity->params->flags & 0x800)) {
+    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     if (entity->unkC8 & 0x100) {

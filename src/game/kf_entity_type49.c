@@ -40,7 +40,6 @@ void func_00182240(Entity *);
 int func_00192C98(void *, int, int, u32, int);
 extern u8 D_004141D8[];
 extern EntityModel *D_00446978;
-extern int D_00414184[];
 float func_001954A8(float *, float *);
 float func_00194F80(float *a, float *b);
 void func_00190A30(char *);
@@ -380,7 +379,7 @@ static void func_0015C7A8(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 turn;
 
-    if (entity == (Entity *)D_00414184[0] && (entity->params->flags & 0x800)) {
+    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     if (entity->unkC8 & 0x100) {

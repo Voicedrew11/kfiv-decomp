@@ -38,7 +38,6 @@ int func_00196120(Entity *, void *, s32, void *, f32);
 s32 func_00199EB8(Entity *, f32 *, f32);
 s32 func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_0019A290(Entity *, s32);
-extern int D_00414184[];
 void func_00190A30(char *);
 int func_0019A310(char *entity, void (*callback)(void), int run);
 void func_00195898(char *, u8);
@@ -459,7 +458,7 @@ static void func_00153040(Entity *entity) {
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
     f32 turn;
 
-    if (entity == (Entity *)D_00414184[0] && (entity->params->flags & 0x800)) {
+    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     if (entity->unkC8 & 0x100) {
