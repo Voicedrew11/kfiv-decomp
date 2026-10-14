@@ -55,7 +55,6 @@ static void func_00126E58(Entity *entity, s32 unknown);
 static void func_00127158(Entity *entity);
 static void func_001273D8(Entity *entity);
 
-/* Init of the default enemy kind: clears the work area, fills the handler table, starts walking or its action. */
 /* Set-up of a type 1 entity: clears its work area and installs the type's handlers. */
 void EntityType1_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
