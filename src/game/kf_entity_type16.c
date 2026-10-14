@@ -1,7 +1,5 @@
 /* The behaviour of entity type 16 (Entity.params->unk02, the index into D_003E6E40): its set-up
    function, which the table names, and the handlers that function installs. */
-/* The behaviour of entity type 16 (Entity.params->unk02, the index into D_003E6E40): its set-up
-   function, which the table names, and the handlers that function installs. */
 #include "kf_entity.h"
 #include "common.h"
 
@@ -54,9 +52,8 @@ static void func_00127AB0(Entity *entity);
 static void func_00127BA0(Entity *entity, s32 unknown);
 static int func_00127CA0(Entity *entity, s32 unknown);
 static int func_00127E08(Entity *entity, s32 unknown);
-void EntityType16_Init(Entity *entity);
+static void func_00128438(Entity *entity);
 
-/* Set-up of a type 16 entity: clears its work area and installs the type's handlers. */
 /* Set-up of a type 16 entity: clears its work area and installs the type's handlers. */
 void EntityType16_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -74,7 +71,7 @@ void EntityType16_Init(Entity *entity) {
     unkE0->unk00 = (void (*)(Entity *, s32))func_00127BA0;
     unkE0->unk04 = (void (*)(void))func_00127AB0;
     unkE0->unk08 = (void (*)(void))func_00182BD0;
-    unkE0->unk18 = (void (*)(void))EntityType16_Init;
+    unkE0->unk18 = (void (*)(void))func_00128438;
     unkE0->unk10 = (void (*)(void))func_00181038;
     unkE0->unk14 = (void (*)(void))func_001818B8;
     for (i = 4 - 1; i != -1; i--) {
@@ -311,7 +308,7 @@ done:
 
 /* movement of this kind: turn and move as the command bits in Entity.unkC8 say, and pick the animation to go with it
    (it has turn animations of its own) */
-void EntityType16_Init(Entity *entity) {
+static void func_00128438(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 *vector;
     f32 turn;

@@ -65,8 +65,8 @@ static void func_00129780(Entity *entity);
 static void func_001299F8(Entity *entity);
 static void func_00129CA0(Entity *entity);
 
-/* Init of this enemy kind: one handler table when it starts with its action, another when it starts asleep. */
-/* Set-up of a type 3 entity: clears its work area and installs the type's handlers. */
+/* Set-up of a type 3 entity: clears its work area and installs the type's handlers (one handler table when it
+   starts with its action, another when it starts asleep). */
 void EntityType3_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     u8 *unkBC = entity->unkBC;
