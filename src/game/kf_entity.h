@@ -75,7 +75,7 @@ typedef struct {
     char pad70[0x90];
 } EntityModelUnkF8;
 
-/* what EntityModel.unkF8 points at, seen as 0x80-byte elements: EntityType70_TurnPart2ToPlayer indexes
+/* what EntityModel.unkF8 points at, seen as 0x80-byte elements: MutantWall_TurnPart2ToPlayer indexes
    it that way (element 2 is at 0x100) */
 typedef struct {
     char pad00[0x50];
@@ -122,7 +122,7 @@ typedef struct {
     f32 unk15C;                     /* 0x15C */
 } EntityModel;
 
-/* two blocks of an EntityParamsUnk240Part that EntityType43_CheckPartHitInPlayerView copies whole into its request */
+/* two blocks of an EntityParamsUnk240Part that ParaStool_CheckPartHitInPlayerView copies whole into its request */
 typedef struct {
     s16 unk00[9];                   /* 0x00 */
 } EntityParamsUnk240PartUnk00;
@@ -166,7 +166,7 @@ typedef struct {
     EntityParamsUnk240Part unk10[3]; /* 0x10 */
 } EntityParamsUnk240;
 
-/* the two blocks EntityType43_CheckPartHitInPlayerView fills for func_001B1470 */
+/* the two blocks ParaStool_CheckPartHitInPlayerView fills for func_001B1470 */
 typedef struct {
     f32 position[4];                /* 0x00 */
     f32 unk10[4];                   /* 0x10 an earlier position: func_001B2F70 takes the hit direction from it */
@@ -545,7 +545,7 @@ typedef struct {
     EntityUnkE0Slot unk88;          /* 0x88 */
 } EntityUnkE0Kind1740A8;
 
-/* Entity+0xE0 as the flying kind set up by EntityType59_Init lays it out */
+/* Entity+0xE0 as the flying kind set up by DarkBird_Init lays it out */
 typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
@@ -564,7 +564,7 @@ typedef struct {
     char pad90[0x10];
 } EntityUnkE0Kind1719F8;
 
-/* Entity+0xE0 as the kind set up by EntityType7_Init lays it out */
+/* Entity+0xE0 as the kind set up by ExpeditionSoldier_Init lays it out */
 typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
@@ -585,7 +585,7 @@ typedef struct {
     s32 unk1C;                      /* 0x1C */
 } EntityUnkE0Kind150588;
 
-/* Entity+0xE0 as the kind set up by EntityType56_Init lays it out. The area is
+/* Entity+0xE0 as the kind set up by GreaterDemon_Init lays it out. The area is
    8-byte aligned: tests of neighbouring bytes are merged into one 64-bit load. */
 typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
@@ -631,7 +631,7 @@ typedef struct {
     EntityUnkE0SlotBits unk88;      /* 0x88 */
 } EntityUnkE0Kind151D30;
 
-/* Entity+0xE0 as the kind set up by EntityType53_Init lays it out */
+/* Entity+0xE0 as the kind set up by DarkSorcerer_Init lays it out */
 typedef struct {
     char pad00[0x1C];
     f32 unk1C;                      /* 0x1C turn speed */
@@ -671,10 +671,10 @@ typedef struct {
     f32 unk90[4];                   /* 0x90 pitch and yaw passed to func_0018D600 */
 } EntityUnkE0Kind162BC8;
 
-/* Entity+0xE0 as the kind set up by EntityType74_Init lays it out */
+/* Entity+0xE0 as the kind set up by Onyx_Init lays it out */
 typedef struct {
     char pad00[0x68];
-    s16 unk68[3];                   /* 0x68 weights of the first three actions (see EntityType74_PickAttack) */
+    s16 unk68[3];                   /* 0x68 weights of the first three actions (see Onyx_PickAttack) */
     char pad6E[0x32];
 } EntityUnkE0Kind17FC60;
 
@@ -957,12 +957,12 @@ typedef struct {
 } EntityFrameTable5;
 
 /* five entity ids: a local table that a function copies whole from read-only
-   data (EntityType23_Mode6IsStepFree, EntityType23_Mode6IsNearestWaiting) */
+   data (StoneGuardian_Mode6IsStepFree, StoneGuardian_Mode6IsNearestWaiting) */
 typedef struct {
     s32 ids[5];                     /* 0x00 */
 } EntityIdTable;
 
-/* weights of three actions: a local table EntityType53_PickAction copies whole from read-only
+/* weights of three actions: a local table DarkSorcerer_PickAction copies whole from read-only
    data and then adjusts */
 typedef struct {
     s32 weights[3];                 /* 0x00 */
@@ -1027,7 +1027,7 @@ typedef union {
 #define ENTITY_FLAGS(entity) (((EntityFlags *)&(entity)->flags)->all)
 
 /* Entity.unkC8 (the movement command bits) read through a union: the value then does not survive a
-   store of another type, and EntityType16_Move reads the field again after it (see ENTITY_FLAGS) */
+   store of another type, and Scorpion_Move reads the field again after it (see ENTITY_FLAGS) */
 typedef union {
     u16 all;
 } EntityCommand;

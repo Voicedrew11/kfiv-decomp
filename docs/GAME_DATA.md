@@ -137,3 +137,44 @@ they set:
 
 The comments beside the keys say what each value means, which settles the meaning of the fields the
 ini reader fills.
+
+## `param/chr.prm`: the fields found so far
+
+1,120 bytes (0x450) per record; a map's spawn record names its record by number. Fields established
+by tracing the code or by matching records against what players have measured:
+
+| offset | size | |
+| --- | --- | --- |
+| 0x02 | 1 | entity type: the index into `D_003E6E40`, `entity->params->unk02`, and so which `kf_enemy_*.c` drives it |
+| 0x0A | 2 | hit points (`Entity_ResetToSpawn` loads `Entity.unk2C` from it) |
+| 0x0E | 2 | experience given on death (`Player_AddExperience`) |
+| 0xD4–0xE4 | 2 each | signed resistance per attack kind: slash, hit, stab, fire, earth, wind, water, light, dark; below 0 is a weakness |
+| 0x232, 0x234 | 2 each | items it may drop |
+
+## Map spawn records
+
+0x60 bytes each, after the map's object records.
+The fields used so far: 0x30 the `chr.prm` record, 0x3C the spawn id, 0x40 the mode
+(`EntitySpawnInfo.unk40`), 0x4E the talk script, 0x58 the item script.
+
+## Characters
+
+Every character the player can talk to is entity type 15, except one; type 81 is a character's dog.
+They differ by their `chr.prm` record, and record 100 + *p* goes with page *p* of the Recollection
+screen (messages 3000 + 50*p* onwards: descriptions, the character's lines, the name last).
+
+## Monsters
+
+The game names no monsters anywhere in its data. The community's creature list at
+<https://www.cleanhit.wiki/KF4:Creatures> gives hit points, experience, weaknesses, resistances and
+drops for 91 creatures. Matching those against the spawned `chr.prm` records places all 91: 74 by hit
+points and experience alone, the rest by resistances and drops. That is where the names of the
+`kf_enemy_*.c` files come from; each file's comment lists its creatures. Six of the wiki's experience
+values differ from the game's (the game's are in the records). Thirteen spawned records match no
+creature on the list, mostly scripted things with no experience or 65,535 hit points.
+
+## Areas
+
+An area's name reaches the code only through its save point (map object kind 20): the save point
+stores the area's message id in `GameStatus.save_area` for the save list. That ties the 20 maps that
+have a save point to their area names; the other maps have none to go by.
