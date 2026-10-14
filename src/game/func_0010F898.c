@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 
 /* Writes steps + 1 vertices that lead from one vertex to another in equal steps; the position is
    stepped as floats and cut off, the rest as whole numbers. */
@@ -34,7 +34,7 @@ void func_0010F898(ModelPartVertexWords *out, ModelPartVertexWords *from, ModelP
     out->unk16 = 0;
     out++;
     for (i = 1; i < steps; i++) {
-        func_00216C48(position, position, delta);
+        Vector_Add(position, position, delta);
         out->x = position[0];
         out->y = position[1];
         out->z = position[2];

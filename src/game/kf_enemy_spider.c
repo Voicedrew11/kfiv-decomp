@@ -40,7 +40,7 @@ void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 int func_00192C98(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int func_0018CF30(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 void func_0019A290(Entity *, s32);
 void func_00190A30(char *);
@@ -53,7 +53,7 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0ApplyMatrix(float *, int *, float *);
 void Vector_Scale(float *, float *, float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 s32 func_0018AE98(f32 *, f32 *, void *, f32);
 
 static void Spider_Animate(Entity *entity);
@@ -340,7 +340,7 @@ static void Spider_RangedAttack(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        func_00216778(direction, &D_00413F80);
+        Vector_Copy(direction, &D_00413F80);
         direction[1] -= 30.0f;
         func_0018CF30(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction, 0.7853982f, 0.17453294f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -491,7 +491,7 @@ static void func_001299F8(Entity *entity) {
     sceVu0ApplyMatrix(direction, (int *)matrix, direction);
     hit = func_0018AE98(entity->model->position, direction, landing, 200.0f);
     if (hit == 1) {
-        func_00216778(entity->model->position, landing);
+        Vector_Copy(entity->model->position, landing);
         ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
@@ -510,7 +510,7 @@ static void func_001299F8(Entity *entity) {
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
         }
     } else if (hit == 2 || hit == 3) {
-        func_00216778(entity->model->position, landing);
+        Vector_Copy(entity->model->position, landing);
         unkE0->unk48 = landing[0];
         unkE0->unk4C = landing[1];
         unkE0->unk50 = landing[2];
@@ -529,7 +529,7 @@ static void func_001299F8(Entity *entity) {
         }
     } else {
         Vector_Scale(direction, direction, 20.0f);
-        func_00216C48(entity->model->position, entity->model->position, direction);
+        Vector_Add(entity->model->position, entity->model->position, direction);
     }
 }
 

@@ -4,7 +4,7 @@
 
 float func_001B0178(void *, void *);
 void Vector_Subtract(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int func_001C0E40(f32, void *);
 void sceVu0AddVector(void *, void *, void *);
 
@@ -38,7 +38,7 @@ void func_001A50E8(EffectActor *actor) {
     if (motion->state == 1) {
         Effect_Free(actor);
     } else if (actor->frame == 0) {
-        func_00216778(&offset, &actor->model->position);
+        Vector_Copy(&offset, &actor->model->position);
         if (actor->unk6C != 0) {
             target = (Entity *)actor->unk6C;
             if (func_001B0178(&offset, &target->model->position) < 100.0f) {

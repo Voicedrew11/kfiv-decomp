@@ -48,7 +48,7 @@ typedef struct {
     PadButtonsUnion pressed;        /* 0x20 */
 } PadReportUnion;
 
-/* auto-repeat timing of one button of a PadSlot (set by Pad_SetRepeat, stepped by func_00216EA0) */
+/* auto-repeat timing of one button of a PadSlot (set by Pad_SetRepeat, stepped by Pad_StepRepeat) */
 typedef struct {
     u8 delay;                       /* 0x00 frames before the first repeat */
     u8 interval;                    /* 0x01 frames between repeats */
@@ -59,7 +59,7 @@ typedef struct {
 /* one controller (0x1C0 bytes), kept up to date by Pad_Update */
 typedef struct {
     u8 dma_buffer[0x100];           /* 0x000 work area handed to scePadPortOpen */
-    PadReport report;               /* 0x100 the 0x24 bytes scePadRead gave (func_00216DD0) */
+    PadReport report;               /* 0x100 the 0x24 bytes scePadRead gave (Pad_Read) */
     PadRepeatKey repeat_keys[16];   /* 0x124 */
     u16 repeat_mask;                /* 0x164 buttons that auto-repeat */
     char pad166[0x02];

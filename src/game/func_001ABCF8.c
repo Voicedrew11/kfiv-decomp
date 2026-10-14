@@ -1,6 +1,6 @@
 #include "kf_effect.h"
 
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 
 /* Turns the model's heading by the caster's level, then moves the model along its velocity scaled by the same level. */
@@ -22,7 +22,7 @@ void func_001ABCF8(EffectActor *effect, EffectSlot *spawn_slot) {
     effect->model->rotation.y = heading;
     func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
     Vector_Scale(&offset.x, &motion->velocity.x, (f32)(effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level));
-    func_00216C48(&effect->model->position, &effect->model->position, &offset);
+    Vector_Add(&effect->model->position, &effect->model->position, &offset);
     motion->scale = 1.0f;
     motion->unk14 = 0;
 }

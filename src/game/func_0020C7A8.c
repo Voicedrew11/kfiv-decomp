@@ -4,7 +4,7 @@
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
-void func_00216B48(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 float sinf(float);
 
 extern f32 D_00431AF0[16];
@@ -35,5 +35,5 @@ void func_0020C7A8(ModelInstance *model, Vector4 *rotation, f32 *scale) {
     sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
     offset.y += offset.z * sinf(D_004325A0.unk10);
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, &offset.x);
-    func_00216B48(model, D_004322A0, matrix);
+    Matrix_Multiply(model, D_004322A0, matrix);
 }

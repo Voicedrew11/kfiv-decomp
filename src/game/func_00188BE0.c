@@ -7,8 +7,8 @@ extern s32 D_004467B8[2];
 extern MapObject D_003A1A30[];
 extern MapObject D_003AFA30[];
 
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 float func_00194F80(float *, float *);
 void Vector_Subtract(void *, void *, void *);
@@ -52,7 +52,7 @@ void func_00188BE0(Entity *entity) {
     s32 hit;
 
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
-    func_00216778(position, entity->model->position);
+    Vector_Copy(position, entity->model->position);
     sum = normal_sum;
     for (map = 0; map < 2; map++) {
         object = map_objects(map);
@@ -92,13 +92,13 @@ void func_00188BE0(Entity *entity) {
             if (hit == 1) {
                 Vector_Subtract(offset, position, COLLISION_RESULT);
                 sceVu0Normalize(offset, offset);
-                func_00216C48(normal_sum, normal_sum, offset);
+                Vector_Add(normal_sum, normal_sum, offset);
                 Vector_Scale(offset, offset, entity->unk30);
-                func_00216C48(position, COLLISION_RESULT, offset);
+                Vector_Add(position, COLLISION_RESULT, offset);
                 ENTITY_FLAG_BITS(entity)->bit47 = TRUE;
                 ENTITY_FLAG_BITS(entity)->bit45 = TRUE;
             } else if (hit == 2) {
-                func_00216C48(normal_sum, normal_sum, COLLISION_RESULT->normal);
+                Vector_Add(normal_sum, normal_sum, COLLISION_RESULT->normal);
                 ENTITY_FLAG_BITS(entity)->bit47 = TRUE;
                 ENTITY_FLAG_BITS(entity)->bit45 = TRUE;
             }

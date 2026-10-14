@@ -5,6 +5,7 @@
 #include "kf_message.h"
 #include "kf_title.h"
 #include "kf_menu_screens.h"
+#include "kf_timer.h"
 
 extern GameStatus D_0038CC50;
 extern PlayerState D_00413F80;
@@ -23,7 +24,6 @@ void func_001B5390(void);
 void func_001B53E8(void);
 void func_00102930(void);
 void func_0020D050(void);
-int func_00216D50(u32, int, int, void *);
 void func_0020D078(void);
 void func_00102178(void);
 void func_00112648(void);
@@ -57,7 +57,7 @@ int main(void) {
     func_001B53E8();
     func_00102930();
     sceGsSyncV(0);
-    func_00216D50(0, 0x1C1, 0xEA60, func_0020D050);
+    Timer_Setup(0, 0x1C1, 0xEA60, func_0020D050);
     func_0020D078();
     func_00102178();
     func_00112648();

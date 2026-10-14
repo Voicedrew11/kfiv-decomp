@@ -4,7 +4,7 @@ extern const f32 D_00446FCC[];      /* -0.0f */
 
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
 /* Tests a sphere of radius `reach` at `centre` against an upright cylinder: `base` on its axis, its
@@ -43,7 +43,7 @@ past_far_end:
     sceVu0Normalize(rim, delta);
     reach *= reach;
     Vector_Scale(rim, rim, radius);
-    func_00216C48(rim, rim, base);
+    Vector_Add(rim, rim, base);
     rim[1] -= height;
     Vector_Subtract(rim, centre, rim);
     distance = rim[0] * rim[0] + rim[1] * rim[1] + rim[2] * rim[2];
@@ -58,7 +58,7 @@ past_near_end:
     sceVu0Normalize(rim, delta);
     reach *= reach;
     Vector_Scale(rim, rim, radius);
-    func_00216C48(rim, rim, base);
+    Vector_Add(rim, rim, base);
     Vector_Subtract(rim, centre, rim);
     distance = rim[0] * rim[0] + rim[1] * rim[1] + rim[2] * rim[2];
     if (distance < reach) {

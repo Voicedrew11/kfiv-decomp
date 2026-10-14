@@ -10,7 +10,7 @@ extern int D_00446770;
 extern MapSlot D_0038CD20[2];
 extern f32 D_0044696C[];    /* the largest float; an array so that it is not read through $gp */
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int func_001C2D08(void *);
 void func_001C0C50(void *, void *, void *, void *, f32);
 u32 func_001124E0(int, u32, u32);
@@ -31,7 +31,7 @@ void func_001BEA50(void) {
     s32 points_left;
 
     lowest = D_0044696C[0];
-    func_00216778(SCRATCH_POINT, &D_00413F80.position);
+    Vector_Copy(SCRATCH_POINT, &D_00413F80.position);
     for (map = 0; map < 2; map++) {
         slot = D_00446770 == map ? &D_0038CD20[0] : &D_0038CD20[1];
         if (slot->unk00 != 0) {

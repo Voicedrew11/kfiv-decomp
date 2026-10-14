@@ -14,7 +14,7 @@ extern MapObject D_003A1A30[][0x200];
 float sqrtf(float);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001B29C8(Unk1B1470Request *, Unk1B1470Extra *);
 void func_001B2F70(Unk1B1470Request *, Unk1B1470Extra *, Entity *, f32);
 void func_001B3AC0(Unk1B1470Request *, Unk1B1470Extra *, MapObject *);
@@ -130,7 +130,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         return 0;
     }
     if (request->unk4D & 4) {
-        func_00216778(tip, request);
+        Vector_Copy(tip, request);
         tip[1] += request->unk34;
         for (index = 0; index < 2; index++) {
             if (D_0038CD20[index].unk00 == 0) {

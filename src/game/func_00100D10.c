@@ -18,7 +18,7 @@ void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, int *, float *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Finds the map record the camera is in and works out this frame's two camera shake offsets. */
 void func_00100D10(void) {
@@ -49,7 +49,7 @@ void func_00100D10(void) {
             D_004325A0.unk74--;
         }
     } else {
-        func_00216778(D_004325A0.unk50, D_00431C80);
+        Vector_Copy(D_004325A0.unk50, D_00431C80);
     }
     if (D_004325A0.unk7C != 0 && D_004325A0.unk78 > 0.0f) {
         angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * 0.017453292f;
@@ -67,6 +67,6 @@ void func_00100D10(void) {
             D_004325A0.unk7C--;
         }
     } else {
-        func_00216778(D_004325A0.unk60, D_00431C80);
+        Vector_Copy(D_004325A0.unk60, D_00431C80);
     }
 }

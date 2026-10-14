@@ -1,7 +1,7 @@
 #include "common.h"
 #include "kf_effect.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int func_001C0E40(f32, void *);
 
 /* Aims a motion at its target if the target is within reach; returns 1 if it is. */
@@ -10,7 +10,7 @@ int func_001A6BF8(EffectActor *effect, float *position, AimMotion *motion) {
     ModelInstance *target_model;
     float target_z;
 
-    func_00216778(&local, position);
+    Vector_Copy(&local, position);
     local.y += -300.0f;
     if (func_001C0E40(1000.0f, &local.x)) {
         target_model = effect->target->model;

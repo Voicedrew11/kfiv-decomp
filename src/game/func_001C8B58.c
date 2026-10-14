@@ -2,7 +2,7 @@
 #include "kf_map.h"
 #include "kf_model.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001CA500(ListNode *);
 extern MapSlot D_0038CD20[];
 extern u8 D_00356928[0x80][0x40];
@@ -26,8 +26,8 @@ int func_001C8B58(int map, int index) {
     if (node->def->required_flag != 0 && D_00356928[tag][node->index] >= node->def->required_flag) {
         return 0;
     }
-    func_00216778(&node->model->position, &node->def->position);
-    func_00216778(&node->model->rotation, &node->def->rotation);
-    func_00216778(&node->model->unkE0, &node->def->scale);
+    Vector_Copy(&node->model->position, &node->def->position);
+    Vector_Copy(&node->model->rotation, &node->def->rotation);
+    Vector_Copy(&node->model->unkE0, &node->def->scale);
     func_001CA500((ListNode *)node);
 }

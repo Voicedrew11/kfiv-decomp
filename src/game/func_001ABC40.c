@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 
 void func_001AF298(EffectActor *effect, void *unk10_w);
-void func_00216778(void *dst, void *src);
+void Vector_Copy(void *dst, void *src);
 void sceVu0AddVector(void *out, void *a, void *b);
 
 /* Moves its model: copies its start position, aims its velocity at radius_half, then adds the velocity. */
@@ -19,7 +19,7 @@ void func_001ABC40(EffectActor *effect) {
     if (def->radius_half < frame) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     } else if (frame < def->radius_half) {
-        func_00216778(&effect->model->position, effect->start_position);
+        Vector_Copy(&effect->model->position, effect->start_position);
     } else {
         func_001AF538(def->speed, &motion->velocity, effect->start_rotation);
     }

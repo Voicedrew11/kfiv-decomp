@@ -6,9 +6,9 @@ extern int D_00446770;
 extern MapSlot D_0038CD20[];
 extern PlayerState D_00413F80;
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Normalize(void *, void *);
 s32 func_0018AB40(void *, f32 *, f32 *, f32, s32);
 
 /* whether something stands between the entity and the player: tests the line from the entity's
@@ -23,9 +23,9 @@ s32 func_0018CAF8(Entity *entity) {
 
     // match: index first, or the two address registers swap
     player_record = &((MapRecord *)(D_00446770 + D_0038CD20)->records)[D_00413F80.map_index];
-    func_00216778(position, entity->model->position);
+    Vector_Copy(position, entity->model->position);
     position[1] -= entity->unk34 * 0.5f;
-    func_00216778(target, &D_00413F80);
+    Vector_Copy(target, &D_00413F80);
     target[1] -= 115.0f;
     __asm__ volatile(
         "lqc2 $vf16, 0(%0)\n"
@@ -41,7 +41,7 @@ s32 func_0018CAF8(Entity *entity) {
         : : "r"(target), "r"(position), "r"(distance_out) : "memory");
     distance = distance_out[0];
     Vector_Subtract(target, target, position);
-    func_00216D20(target, target);
+    Vector_Normalize(target, target);
     if (entity->unk14 != player_record && (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) != 0x4000000) {
         hit = func_0018AB40(entity->unk14, position, target, distance, 0);
         if (hit != 0) {

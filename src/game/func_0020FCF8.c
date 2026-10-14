@@ -5,7 +5,7 @@ float sqrtf(float);
 float func_0019B838(float);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
 /* Tests an upright cylinder (`other`, between the levels `other_low` and `other_high`) against the
@@ -90,7 +90,7 @@ void func_0020FCF8(f32 *base, f32 *other, f32 radius, f32 height, f32 other_radi
     delta[1] = 0.0f;
     sceVu0Normalize(COLLISION_RESULT->normal, delta);
     Vector_Scale(delta, COLLISION_RESULT->normal, other_radius);
-    func_00216C48(COLLISION_RESULT->point, base, delta);
+    Vector_Add(COLLISION_RESULT->point, base, delta);
     // match: `level` is never given a value; the height of the other cylinder was meant
     if (level < bottom) {
         COLLISION_RESULT->point[1] = bottom;

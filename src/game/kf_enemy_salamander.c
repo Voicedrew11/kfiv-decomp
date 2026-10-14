@@ -9,7 +9,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001914B0(EntityModel *, s32, s32, s32);
 extern s32 D_003E6E40[][2];
 int func_0019A538(void *, void *, int);
@@ -34,8 +34,8 @@ void func_00196C28(char *);
 void func_0018E9C0(void *);
 int func_0018EAC0(void *, void *);
 s32 func_00190D50(Entity *, s32, f32);
-void func_00216D20(void *, void *);
-void func_00216CD8(void *, void *, void *);
+void Vector_Normalize(void *, void *);
+void Vector_Cross(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 extern float D_00413F80[];
 int rand(void);
@@ -47,7 +47,7 @@ int func_0018F030(char *);
 float func_00194FB8(float);
 void func_00195588(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 
 static void Salamander_Animate(Entity *entity);
 static void Salamander_OnHit(Entity *entity);
@@ -98,7 +98,7 @@ void Salamander_Init(Entity *entity) {
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -537,10 +537,10 @@ static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
             push[1] += entity->unkB0[1];
             push[2] += entity->unkB0[2];
         }
-        func_00216D20(push, push);
+        Vector_Normalize(push, push);
         Vector_Subtract(to_spawn, entity->spawn_info, entity->model->position);
-        func_00216D20(to_spawn, to_spawn);
-        func_00216CD8(to_spawn, push, to_spawn);
+        Vector_Normalize(to_spawn, to_spawn);
+        Vector_Cross(to_spawn, push, to_spawn);
         if (to_spawn[1] <= 0.0f) {
             if (turn == -1) {
                 turn = 1;
@@ -629,7 +629,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
         case 0: {
             f32 *point = unkE0->unk30;
 
-            func_00216778(point, D_00413F80);
+            Vector_Copy(point, D_00413F80);
             unkE0->unk30[1] -= 220.0f;
             entity->target = point;
             entity->unkC8 = func_00190D50(entity, 0, entity->radius + 100.0f + 30.0f);
@@ -641,7 +641,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
         case 1: {
             f32 *point = unkE0->unk30;
 
-            func_00216778(point, D_00413F80);
+            Vector_Copy(point, D_00413F80);
             unkE0->unk30[1] -= 190.0f;
             entity->target = point;
             if (func_00196D70(entity, point, entity->params->unk43A * 0.017453292f,
@@ -664,7 +664,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
             direction[0] = func_00194FB8(entity->unk68 + 3.1415927f);
             func_00195588((Vector4 *)point, direction[0]);
             Vector_Scale(point, point, 800.0f);
-            func_00216C48(point, point, D_00413F80);
+            Vector_Add(point, point, D_00413F80);
             entity->target = point;
             unkE0->unk30[1] = entity->spawn_info->spawn_y;
             entity->unkC8 = func_00190D50(entity, 0, 50.0f);

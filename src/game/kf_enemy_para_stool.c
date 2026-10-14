@@ -9,7 +9,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
@@ -85,7 +85,7 @@ void ParaStool_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -288,7 +288,7 @@ static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240
                 func_001B2C48(&entity->params->unk240[0].unk10[0].unk12);
                 memset(&request, 0, sizeof(request));
                 memset(&extra, 0, sizeof(extra));
-                func_00216778(request.position, entity->model->position);
+                Vector_Copy(request.position, entity->model->position);
                 request.unk34 = entity->height + 10.0f;
                 request.unk30 = entity->radius + record->unk10[index].unk20;
                 request.unk38 = func_00194FB8(angle + 3.1415927f);

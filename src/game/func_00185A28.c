@@ -4,7 +4,7 @@
 double sqrt(double);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
 /* cylinder against sphere: is `position` (a cylinder reaching `height` up from it) inside the sphere at `other`,
@@ -63,7 +63,7 @@ void func_00185A28(f32 *position, f32 *other, f32 radius, f32 height, f32 other_
         delta[1] = 0.0f;
         sceVu0Normalize(nearest, delta);
         Vector_Scale(nearest, nearest, -radius);
-        func_00216C48(nearest, nearest, position);
+        Vector_Add(nearest, nearest, position);
         if (other[1] <= position[1] - height * 0.5f) {
             nearest[1] -= height;
         }

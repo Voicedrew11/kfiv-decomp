@@ -8,8 +8,8 @@ s16 func_001B0208(float, void *, void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(void *, void *, void *);
-void func_00216C48(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Per-frame update: aims the model along D_00413F80 and sets its turn angle. */
 void func_001A8768(EffectActor *effect, EffectSlot *spawn_slot) {
@@ -32,8 +32,8 @@ void func_001A8768(EffectActor *effect, EffectSlot *spawn_slot) {
         sceVu0RotMatrixX(rotation_matrix, D_00431AF0, angles[4]);
         sceVu0RotMatrixY(rotation_matrix, rotation_matrix, angles[5]);
         sceVu0ApplyMatrix(&offset, rotation_matrix, &offset);
-        func_00216C48(&effect->model->position, angles, &offset);
-        func_00216778(&effect->model->rotation, &angles[4]);
+        Vector_Add(&effect->model->position, angles, &offset);
+        Vector_Copy(&effect->model->rotation, &angles[4]);
         effect->model->position.y -= 220.0f;
     }
     func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);

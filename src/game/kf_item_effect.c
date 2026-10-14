@@ -46,8 +46,8 @@ int func_001BF6E8(void);
 void func_002095D0(ModelInstance *);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
 void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 
 static int item_effect_active;              /* 0x447388 nonzero while an effect runs */
@@ -197,8 +197,8 @@ void ItemEffect_Start(int kind, int marked) {
     item_effect_brightness = 0x80;
     func_0010E8E0(item_effect_model, 0x80, 0x80, 0x80, item_effect_brightness);
     Vector_Scale((float *)&item_effect_model->position, D_00420D00.unk10, 75.0f);
-    func_00216C48(&item_effect_model->position, &item_effect_model->position, D_00420D00.unk00);
-    func_00216778(&item_effect_model->rotation, &D_00413F80.rotation);
+    Vector_Add(&item_effect_model->position, &item_effect_model->position, D_00420D00.unk00);
+    Vector_Copy(&item_effect_model->rotation, &D_00413F80.rotation);
     item_effect_model->unkE0 = item_effect_model->unkE4 = item_effect_model->unkE8 = 1.0f;
     item_effect_model->unkEC = 1.0f;
     item_effect_model->unk148 = (s32)D_0042C110;

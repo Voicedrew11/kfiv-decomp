@@ -13,7 +13,7 @@ int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 void func_001914B0(EntityModel *, s32, s32, s32);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
@@ -34,7 +34,7 @@ extern f32 D_00431AF0[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
-void func_00216BC0(void *, void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 float func_001954A8(float *, float *);
 float func_001957B8(float, float);
@@ -123,7 +123,7 @@ void DarkBird_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -504,7 +504,7 @@ static void DarkBird_ApplyMoveCommand(Entity *entity) {
     sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->unkD0[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[1]);
-    func_00216BC0(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
+    Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
     if (entity->unkC8 & 0x40) {
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, 2.0f);
     }
@@ -791,7 +791,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
                 }
             }
         } else {
-            func_00216778(target, &D_00413F80);
+            Vector_Copy(target, &D_00413F80);
             target[1] -= 200.0f;
             if (record->unk10[0].unk02 != 0 && elapsed < record->unk10[0].unk02 && frame >= record->unk10[0].unk02) {
                 DarkBird_LaunchBothShots(entity, (EntityParamsUnk3D8 *)record, elapsed, unkE0->unk80.unk02, target, 0.7853982f, 0.0f);
@@ -851,7 +851,7 @@ static s32 DarkBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
                 angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
                 angles[2] = angles[3] = 0.0f;
             } else {
-                func_00216778(angles, entity->model->unkD0);
+                Vector_Copy(angles, entity->model->unkD0);
                 angles[1] = func_00194FB8(angles[1] + 3.1415927f);
             }
             if (target != NULL) {

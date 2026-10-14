@@ -4,7 +4,7 @@ extern const f32 D_00446FC8[];      /* -0.0f */
 
 float sqrtf(float);
 void Vector_Subtract(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void sceVu0Normalize(float *, float *);
 
 /* Tests a ray (from `origin` along `direction` for `length`) against an upright cylinder: `base` on
@@ -29,7 +29,7 @@ void func_0020F2B8(f32 radius, f32 height, f32 length, f32 *base, f32 *origin, f
 
     radius_squared = radius * radius;
     COLLISION_RESULT->hit = 0;
-    func_00216778(start, origin);
+    Vector_Copy(start, origin);
     end[0] = origin[0] + direction[0] * length;
     end[1] = origin[1] + direction[1] * length;
     end[2] = origin[2] + direction[2] * length;

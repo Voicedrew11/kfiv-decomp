@@ -6,7 +6,7 @@
 
 int func_001B4F90(void *);
 int func_001C0E40(f32, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 
@@ -38,7 +38,7 @@ void func_001A4AB8(EffectActor *actor) {
     if (hit != 0) {
         Effect_FreeSpawnersOf(actor);
         if (hit & 2) {
-            func_00216778(&vec, &actor->model->position);
+            Vector_Copy(&vec, &actor->model->position);
             if (func_001C0E40(350.0f, &actor->model->position) == 1) {
                 vec.y = SCRATCH_VECTOR[1];
                 end_effect = actor->def->end_effect;

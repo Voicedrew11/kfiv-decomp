@@ -10,7 +10,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
@@ -88,7 +88,7 @@ void WiddaQueen_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -355,7 +355,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
             func_0018D600((char **)entity, 0x373, 8, (int)entity->model->unkD0);
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        func_00216778(target, D_00413F80.position);
+        Vector_Copy(target, D_00413F80.position);
         target[1] -= 190.0f;
         func_0018CF30(entity, (EntityParamsUnk3D8 *)unk3D8, elapsed, entity->model->unkFC->unk82, target, 1.5707964f, 1.5707964f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {

@@ -7,7 +7,7 @@ extern u16 D_00413DA8[];
 extern u16 D_0044693C;
 extern PlayerState D_00413F80;
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Holds the model still for a few frames after a hit, then ends; otherwise copies its start pose and reacts to the player. */
 void func_001ACFC0(EffectActor *actor) {
@@ -27,8 +27,8 @@ void func_001ACFC0(EffectActor *actor) {
     func_001AEC48(actor);
     func_001AED58(actor);
     func_001AF0B0(actor);
-    func_00216778(&actor->model->position, actor->start_position);
-    func_00216778(&actor->model->rotation, actor->start_rotation);
+    Vector_Copy(&actor->model->position, actor->start_position);
+    Vector_Copy(&actor->model->rotation, actor->start_rotation);
     if (D_0038CC50.unk00 != 0) {
         if (!(D_0038CC50.unk30 & 1)) {
             if ((D_00413DA8[0] & D_0044693C) && D_00413F80.unk263 == 0) {

@@ -1,6 +1,6 @@
 #include "kf_entity.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* func_00195388, which the game inlines here: turns *angle towards `goal`, by the whole
    difference when `rate` is 1 or less, else by 1/rate of it */
@@ -55,14 +55,14 @@ s32 func_0018DDA8(ModelPart *part, f32 *angles, s32 mode, f32 *goal, f32 *limits
         turn_towards(&angles[0], goal[0], rate);
         turn_towards(&angles[1], goal[1], rate);
         turn_towards(&angles[2], goal[2], rate);
-        func_00216778(&part->unk50, angles);
+        Vector_Copy(&part->unk50, angles);
     } else if (mode == 0) {
         turn_towards(&angles[0], part->unk50, rate);
         turn_towards(&angles[1], part->unk54, rate);
         turn_towards(&angles[2], part->unk58, rate);
-        func_00216778(&part->unk50, angles);
+        Vector_Copy(&part->unk50, angles);
     } else {
-        func_00216778(angles, &part->unk50);
+        Vector_Copy(angles, &part->unk50);
     }
     return TRUE;
 }

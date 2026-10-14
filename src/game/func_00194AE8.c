@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* dst = a * (1 - t) + b * t across the xyz lanes, on the VU0 (func_00194F18 inlined) */
 static inline void blend_vectors(Vector4 *dst, Vector4 *src_a, Vector4 *src_b, f32 ratio) {
@@ -93,7 +93,7 @@ s32 func_00194AE8(ModelInstance *model, s32 table_a, s32 table_b, f32 ratio) {
         *(MotionVector *)point1 = vectors_b[key_b->position];
         point1->w = 1.0f;
         blend_vectors(result, point0, point1, ratio);
-        func_00216778(part->unk40, (Vector4 *)0x70000020);
+        Vector_Copy(part->unk40, result);
 
         part->unk60[0] = vectors_a[key_a->scale].x * (1.0f - ratio) + vectors_b[key_b->scale].x * ratio;
         part->unk60[1] = vectors_a[key_a->scale].y * (1.0f - ratio) + vectors_b[key_b->scale].y * ratio;

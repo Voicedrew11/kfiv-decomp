@@ -3,7 +3,7 @@
 extern f32 D_00446848[];
 
 int func_001C2D08(void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_00188678(void *, void *, void *, void *, void *, f32);
 
 /* Finds the nearest triangle of the prop's mesh a ray hits. Returns which of the four strip lists
@@ -38,7 +38,7 @@ s32 func_0018AB40(void *prop_arg, f32 *origin, f32 *direction, f32 length, s32 o
                 nearest = COLLISION_RESULT->distance;
                 kind = 1;
                 if (out_point != NULL) {
-                    func_00216778(out_point, COLLISION_RESULT);
+                    Vector_Copy(out_point, COLLISION_RESULT);
                 }
             }
             point++;
@@ -56,7 +56,7 @@ s32 func_0018AB40(void *prop_arg, f32 *origin, f32 *direction, f32 length, s32 o
                 nearest = COLLISION_RESULT->distance;
                 kind = 2;
                 if (out_point != NULL) {
-                    func_00216778(out_point, COLLISION_RESULT);
+                    Vector_Copy(out_point, COLLISION_RESULT);
                 }
             }
             point++;
@@ -74,7 +74,7 @@ s32 func_0018AB40(void *prop_arg, f32 *origin, f32 *direction, f32 length, s32 o
                 nearest = COLLISION_RESULT->distance;
                 kind = 3;
                 if (out_point != NULL) {
-                    func_00216778(out_point, COLLISION_RESULT);
+                    Vector_Copy(out_point, COLLISION_RESULT);
                 }
             }
             point++;
@@ -92,7 +92,7 @@ s32 func_0018AB40(void *prop_arg, f32 *origin, f32 *direction, f32 length, s32 o
                 nearest = COLLISION_RESULT->distance;
                 kind = 4;
                 if (out_point != NULL) {
-                    func_00216778(out_point, COLLISION_RESULT);
+                    Vector_Copy(out_point, COLLISION_RESULT);
                 }
             }
             point++;

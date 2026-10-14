@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 
 int func_001C2D08(void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001C0C50(void *, void *, void *, void *, f32);
 extern f32 D_004469B4[];    /* the largest float; an array so that it is not read through $gp */
 
@@ -26,7 +26,7 @@ static inline s32 drop_on_floor_strips(MapObject *object, f32 *position, f32 rad
         return FALSE;
     }
     func_001C2D08(object->model);
-    func_00216778(centre, position);
+    Vector_Copy(centre, position);
     lowest = D_004469B4[0];
     centre[1] = centre[1] - 1.0f - radius;
     strip = mesh->floor_strips;
@@ -68,7 +68,7 @@ s32 func_001C7E48(MapObject *object, f32 *position, f32 radius) {
             && MODEL_CHANNEL(object->model)->param < 2) {
             return drop_on_floor_strips(object, position, radius);
         }
-        func_00216778(centre, position);
+        Vector_Copy(centre, position);
         lowest = D_004469B4[0];
         centre[1] = centre[1] - 1.0f - radius;
         for (i = 0; i < 0x20; i += 4) {

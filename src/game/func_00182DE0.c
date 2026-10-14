@@ -2,8 +2,8 @@
 
 int func_0018EAC0(void *, void *);
 s16 func_00190F90(float, void *, int);
-void func_00216D20(void *, void *);
-void func_00216CD8(void *, void *, void *);
+void Vector_Normalize(void *, void *);
+void Vector_Cross(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 int EntityAi_StartAction(char *, void (*)(void), int);
 
@@ -38,10 +38,10 @@ int EntityAi_ThinkReturn(void *entity_ptr, int unknown) {
             push[0] += entity->unkB0[0];
             push[2] += entity->unkB0[2];
         }
-        func_00216D20(push, push);
+        Vector_Normalize(push, push);
         Vector_Subtract(to_spawn, entity->spawn_info, entity->model->position);
-        func_00216D20(to_spawn, to_spawn);
-        func_00216CD8(to_spawn, push, to_spawn);
+        Vector_Normalize(to_spawn, to_spawn);
+        Vector_Cross(to_spawn, push, to_spawn);
         if (to_spawn[1] <= 0.0f) {
             if (turn == -1) {
                 turn = 1;

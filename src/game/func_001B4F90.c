@@ -3,7 +3,7 @@
 extern FxTableEntry D_00402DA8[];
 
 void *memset(void *, int, u32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
 
 #define SHOT_REQUEST ((Unk1B1470Request *)shot->unk04)
@@ -40,7 +40,7 @@ int func_001B4F90(void *effect_actor) {
         case 2:
             position = &effect->unk70;
             request.unk4C_0 = 2;
-            func_00216778(request.unk20, position);
+            Vector_Copy(request.unk20, position);
             break;
         default:
             return 0;
@@ -48,8 +48,8 @@ int func_001B4F90(void *effect_actor) {
     } else {
         return 0;
     }
-    func_00216778(request.position, &effect->model->position);
-    func_00216778(request.unk10, position);
+    Vector_Copy(request.position, &effect->model->position);
+    Vector_Copy(request.unk10, position);
     request.owner = effect->owner_entity;
     request.unk4C_2 = 0;
     request.unk4D = 0;

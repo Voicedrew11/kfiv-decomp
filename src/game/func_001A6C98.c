@@ -3,7 +3,7 @@
 
 int func_001A6BF8(EffectActor *effect, float *position, AimMotion *motion);
 float func_001B0178(void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 
@@ -29,7 +29,7 @@ void func_001A6C98(EffectActor *effect) {
     if (motion->aimed == 0 && (s8)target_motion->flag14 != 0) {
         motion->aimed = 1;
         if (!func_001A6BF8(effect, &effect->target->model->position.x, motion) && !func_001A6BF8(effect, &effect->model->position.x, motion)) {
-            func_00216778(&motion->target_x, &effect->target->model->position);
+            Vector_Copy(&motion->target_x, &effect->target->model->position);
             effect->frame = effect->def->keyframe_end - 4;
         }
     }

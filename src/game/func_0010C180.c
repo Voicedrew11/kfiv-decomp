@@ -18,8 +18,8 @@ void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
 int func_0020CBC0(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
-void func_00216778(void *, void *);
-void func_00216B48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 
 /* the scratchpad as this function uses it: the turn it works out, the two matrices func_0020CBC0
    makes for the model, then a matrix per part and the same without the model's own placement */
@@ -81,8 +81,8 @@ void func_0010C180(ModelInstance *model) {
     part_count = model->part_count;
     part = model->parts;
     for (; i < part_count; i++, part++) {
-        func_00216B48((int)part_matrices[i], (int *)model->unk40, (int)part);
-        func_00216B48((int)part_turns[i], (int *)SCRATCH_TURN, (int)part);
+        Matrix_Multiply(part_matrices[i], model->unk40, part);
+        Matrix_Multiply(part_turns[i], SCRATCH_TURN, part);
     }
     packet_start = packet = func_00109990(0x20);
     *packet = 0x10000009;
@@ -131,8 +131,8 @@ void func_0010C180(ModelInstance *model) {
     *packet++ = 0;
     *packet++ = 0;
     *packet++ = 0x6C020064;
-    func_00216778(packet, model->unk160);
-    func_00216778(packet + 4, &model->unk150);
+    Vector_Copy(packet, model->unk160);
+    Vector_Copy(packet + 4, &model->unk150);
     packet = func_00109990(1); // match: packet named after packet_start's last use, or the stores go through packet_start
     func_00109650(packet_start, packet);
     for (pass = 0; pass < 2; pass++) {

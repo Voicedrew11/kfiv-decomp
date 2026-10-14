@@ -1,24 +1,28 @@
-void sceVu0CopyMatrix(int, int *);
-void func_00216B48(int, int *, int);
-void sceVu0RotMatrixZ(float, int, int);
-void sceVu0TransMatrix(int, int, int);
-extern int D_00431AF0[];
-extern int D_00432620[];
-extern int D_004323E0[];
+#include "kf_model.h"
+#include "kf_vu0.h"
 
-void func_0020C6A0(int arg0, int arg1, float *arg2, float *arg3) {
-    int temp_s3;
-    float t;
-    float *vu;
+void sceVu0CopyMatrix(void *, void *);
+void sceVu0RotMatrixZ(float *, float *, float);
+void sceVu0TransMatrix(float *, float *, float *);
 
-    vu = (float *)0x70000000;
-    sceVu0CopyMatrix(0x70000000, D_00431AF0);
-    temp_s3 = arg0 + 0x40;
-    vu[0] *= arg3[0];
-    vu[5] *= arg3[1];
-    t = arg2[2] + 3.1415927f;
-    sceVu0RotMatrixZ(t - (float)(int)(t / 6.2831855f) * 6.2831855f - 3.1415927f, 0x70000000, 0x70000000);
-    func_00216B48(0x70000000, D_00432620, 0x70000000);
-    sceVu0TransMatrix(temp_s3, 0x70000000, arg1);
-    func_00216B48(arg0, D_004323E0, temp_s3);
+extern f32 D_00431AF0[16];
+extern f32 D_00432620[16];
+extern f32 D_004323E0[16];
+
+/* Builds the matrix of a flat model: scaled by scale[0] and scale[1], turned about z by rotation[2], through
+   D_00432620, moved to position, then through D_004323E0. */
+void func_0020C6A0(ModelInstance *model, f32 *position, f32 *rotation, f32 *scale) {
+    f32 *scratch = MODEL_SCRATCH_MATRIX;
+    f32 *matrix;
+    f32 angle;
+
+    sceVu0CopyMatrix(MODEL_SCRATCH_MATRIX, D_00431AF0);
+    matrix = (f32 *)model->unk40;
+    scratch[0] *= scale[0];
+    scratch[5] *= scale[1];
+    angle = rotation[2] + 3.1415927f;
+    sceVu0RotMatrixZ(MODEL_SCRATCH_MATRIX, MODEL_SCRATCH_MATRIX, angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f);
+    Matrix_Multiply(MODEL_SCRATCH_MATRIX, D_00432620, MODEL_SCRATCH_MATRIX);
+    sceVu0TransMatrix(matrix, MODEL_SCRATCH_MATRIX, position);
+    Matrix_Multiply(model, D_004323E0, matrix);
 }

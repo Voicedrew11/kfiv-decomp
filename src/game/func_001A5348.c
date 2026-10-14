@@ -6,7 +6,7 @@ int func_001B4F90(void *);
 int func_001C0E40(f32, void *);
 void sceVu0AddVector(void *, void *, void *);
 void func_001AF5B0(void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Falls under gravity (no faster than 45 a frame) until its hit check reports something. On a
    surface of kind 3 or 5 it ends in effect 0x14 (and 0x16 first on kind 5); otherwise a hit
@@ -37,7 +37,7 @@ void func_001A5348(EffectActor *effect) {
             }
             Effect_Spawn(0x14, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         } else {
-            func_00216778(&position, &effect->model->position);
+            Vector_Copy(&position, &effect->model->position);
             position.y -= effect->def->unkDC;
             if (func_001C0E40(effect->def->unkDC + effect->def->unkDC, &position) == 1) {
                 effect->model->position.y = COLLISION_RESULT->point[1];

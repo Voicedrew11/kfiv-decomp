@@ -5,8 +5,8 @@ extern float D_00413F80[];
 extern f32 D_00431AF0[16];
 
 void func_00122530(char *);
-void func_00216BC0(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
+void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 void sceVu0RotMatrixX(float *, float *, float);
@@ -35,14 +35,14 @@ void func_001222C0(MapObject *object) {
     func_00122530((char *)object);
     object->model->unk1B4(object->model);
     point = (void *)object->model->get_point(object->model, 0);
-    func_00216778(&origin, point);
-    func_00216778(&target, D_00413F80);
+    Vector_Copy(&origin, point);
+    Vector_Copy(&target, D_00413F80);
     target.y -= 115.0f;
     Vector_Subtract(work, &target, &origin);
     distance = sqrtf(((MapObjectWorkKind121DA8 *)object->work)->step.x * ((MapObjectWorkKind121DA8 *)object->work)->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
     sceVu0RotMatrixX(matrix, D_00431AF0, object->model->rotation.x);
     sceVu0RotMatrixY(matrix, D_00431AF0, -object->model->rotation.y);
-    func_00216BC0(work, matrix, work);
+    Vector_ApplyMatrix(work, matrix, work);
     frames = distance / 6.6666665f;
     work->frames = frames;
     Vector_Scale(&work->step.x, &work->step.x, 1.0f / frames);

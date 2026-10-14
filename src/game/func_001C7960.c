@@ -1,7 +1,7 @@
 #include "kf_collision.h"
 
 void func_0019B688(float *, float *, float *, float *);
-void func_00216D20(void *, void *);
+void Vector_Normalize(void *, void *);
 void func_00210088(void *, void *, f32, void *, f32, f32);
 
 /* Pushes `position` out of the upright side of the owner's model that runs from its point 0
@@ -18,7 +18,7 @@ void func_001C7960(CollisionOwner *owner, f32 *position, f32 radius, f32 push) {
         point1 = (f32 *)owner->model->get_point(owner->model, 1);
         point3 = (f32 *)owner->model->get_point(owner->model, 3);
         func_0019B688(normal, point0, point1, point3);
-        func_00216D20(normal, normal);
+        Vector_Normalize(normal, normal);
         if (normal[1] < -0.93969f) {
             return;
         }

@@ -6,7 +6,7 @@ void sceVu0AddVector(void *, void *, void *);
 void func_001AF298(void *, void *);
 void func_001AF5B0(void *, void *);
 void Vector_Subtract(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Normalize(void *, void *);
 
 /* Advances the effect a frame: before its radius frame it aims a point at the model, from then on it moves the model by its velocity. */
 void func_001A8468(EffectActor *actor) {
@@ -25,7 +25,7 @@ void func_001A8468(EffectActor *actor) {
         Vector_Subtract(&offset, D_00413F80, &actor->model->position);
         offset.y -= 200.0f;
         func_001AF5B0(&actor->model->rotation, &offset);
-        func_00216D20(&motion->velocity, &offset);
+        Vector_Normalize(&motion->velocity, &offset);
     }
     actor->frame++;
 }

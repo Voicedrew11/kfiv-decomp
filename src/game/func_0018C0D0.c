@@ -6,9 +6,9 @@ void sceVu0CopyMatrix(void *, void *);
 void sceVu0TransposeMatrix(void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-void func_00216D20(void *, void *);
-void func_00216CD8(void *, void *, void *);
-void func_00216B48(int, int *, int);
+void Vector_Normalize(void *, void *);
+void Vector_Cross(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 s32 func_0018BD18(void *, void *, void *);
 s32 func_0018C298(f32 *, f32 *, f32);
 void func_0018C4B8(void *, void *);
@@ -24,21 +24,21 @@ s32 func_0018C0D0(ModelInstance *model, void *part, f32 *target, f32 *limits, f3
     if (func_0018BD18(model->parts, part, part_matrix) == 0) {
         return FALSE;
     }
-    func_00216B48((int)part_matrix, (int *)model->unk40, (int)part_matrix);
+    Matrix_Multiply(part_matrix, model->unk40, part_matrix);
     sceVu0CopyMatrix(look, D_00431AF0);
     Vector_Subtract(vector, &part_matrix[12], target);
     if (limits != NULL) {
         func_0018C298(vector, limits, model->rotation.y);
     }
-    func_00216D20(&look[8], vector);
+    Vector_Normalize(&look[8], vector);
     vector[0] = 0.0f;
     vector[1] = 1.0f;
     vector[2] = 0.0f;
     vector[3] = 0.0f;
-    func_00216CD8(look, vector, &look[8]);
-    func_00216D20(look, look);
-    func_00216CD8(&look[4], &look[8], look);
-    func_00216D20(&look[4], &look[4]);
+    Vector_Cross(look, vector, &look[8]);
+    Vector_Normalize(look, look);
+    Vector_Cross(&look[4], &look[8], look);
+    Vector_Normalize(&look[4], &look[4]);
     if (model->unkE0 < 0.0f) {
         Vector_Scale(look, look, -1.0f);
     }
@@ -46,7 +46,7 @@ s32 func_0018C0D0(ModelInstance *model, void *part, f32 *target, f32 *limits, f3
     part_matrix[14] = part_matrix[13] = part_matrix[12] = 0.0f;
     part_matrix[15] = 1.0f;
     sceVu0TransposeMatrix(part_matrix, part_matrix);
-    func_00216B48((int)look, (int *)part_matrix, (int)look);
+    Matrix_Multiply(look, part_matrix, look);
     func_0018C4B8(angles, look);
     return TRUE;
 }

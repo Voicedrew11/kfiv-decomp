@@ -27,8 +27,8 @@ void func_00116610(void);
 float func_0019B838(float);
 void func_001B5460(void);
 void func_0020B780(int);
-void func_00216C48(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Normalize(void *, void *);
 
 /* The free-camera map viewer: while GameStatus.bit7 is set it runs its own frame loop, in which the pad
    turns the camera about the player (with 0x2000 held) or moves it, and both 0x400 and 0x800 put it back. */
@@ -104,9 +104,9 @@ void func_001161A8(void) {
                 reset_held = FALSE;
             }
             if (move.x != 0.0f || move.y != 0.0f || move.z != 0.0f) {
-                func_00216D20(&move, &move);
+                Vector_Normalize(&move, &move);
                 Vector_Scale(&move.x, &move.x, 100.0f);
-                func_00216C48(&position, &position, &move);
+                Vector_Add(&position, &position, &move);
                 if (position.z < 2500.0f) {
                     position.z = 2500.0f;
                 }

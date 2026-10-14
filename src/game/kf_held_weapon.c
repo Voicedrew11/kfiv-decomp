@@ -28,9 +28,9 @@ void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
 void sceVu0MulMatrix(void *, void *, void *);
-void func_00216778(void *, void *);
-void func_00216788(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_CopyQuadword(void *, void *);
+void Vector_Add(void *, void *, void *);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
@@ -239,10 +239,10 @@ void Player_UpdateArmModels(void) {
         }
         sceVu0RotMatrixX(matrix, matrix, pitch);
         sceVu0RotMatrixY(matrix, matrix, D_00413F80.rotation.y);
-        func_00216778(position, &D_00413F80);
+        Vector_Copy(position, &D_00413F80);
         position[1] = position[1] - 220.0f + D_00413F80.unk1C4 + D_00413F80.unk1F0;
-        func_00216C48(position, position, D_004325A0.unk50);
-        func_00216C48(position, position, D_004325A0.unk60);
+        Vector_Add(position, position, D_004325A0.unk50);
+        Vector_Add(position, position, D_004325A0.unk60);
         position[1] += D_004325A0.unk4C;
         sceVu0TransMatrix((f32 *)D_0057B6A0.unk40, matrix, position);
         count = D_0057B6A0.part_count;
@@ -256,22 +256,22 @@ void Player_UpdateArmModels(void) {
                 func_0010B5D0(part);
             }
         }
-        func_00216778(&D_0057B6A0.rotation, &D_00413F80.rotation);
-        func_00216778(&arm_model.rotation, &D_00413F80.rotation);
+        Vector_Copy(&D_0057B6A0.rotation, &D_00413F80.rotation);
+        Vector_Copy(&arm_model.rotation, &D_00413F80.rotation);
         *(ModelMatrix *)arm_model.unk40 = *(ModelMatrix *)D_0057B6A0.unk40;
         part = D_0057B6A0.parts;
         arm_part = arm_model.parts;
         // match: retail takes the larger part count of the two models, not the smaller
         count = D_0057B6A0.part_count > arm_model.part_count ? D_0057B6A0.part_count : arm_model.part_count;
         for (i = 0; i < count; i++, part++, arm_part++) {
-            func_00216778(arm_part->unk40, part->unk40);
-            func_00216778(&arm_part->unk50, &part->unk50);
-            func_00216778(arm_part->unk60, part->unk60);
+            Vector_Copy(arm_part->unk40, part->unk40);
+            Vector_Copy(&arm_part->unk50, &part->unk50);
+            Vector_Copy(arm_part->unk60, part->unk60);
             *(ModelMatrix *)arm_part->unk00 = *(ModelMatrix *)part->unk00;
         }
         D_0057B6A0.unk1B4(&D_0057B6A0);
-        func_00216778(&D_00414780.points[0], (void *)D_0057B6A0.get_point(&D_0057B6A0, 30));
-        func_00216778(&D_00414780.points[1], (void *)D_0057B6A0.get_point(&D_0057B6A0, 31));
+        Vector_Copy(&D_00414780.points[0], (void *)D_0057B6A0.get_point(&D_0057B6A0, 30));
+        Vector_Copy(&D_00414780.points[1], (void *)D_0057B6A0.get_point(&D_0057B6A0, 31));
     }
     D_004145E0[0] = D_0038A270;
 }
@@ -477,7 +477,7 @@ void WeaponTrail_GetPoint(void *dst, s32 index) {
 
     if (index < trail_count) {
         table_index = trail_read_index + index;
-        func_00216788(dst, &trail_points[table_index % 64]);
+        Vector_CopyQuadword(dst, &trail_points[table_index % 64]);
     }
 }
 
@@ -500,7 +500,7 @@ void WeaponTrail_Age(void) {
 /* queues a weapon trail point; it lives as long as the current kind says */
 void WeaponTrail_Push(void *position) {
     if (trail_count + 1 <= 64) {
-        func_00216788(&trail_points[trail_write_index], position);
+        Vector_CopyQuadword(&trail_points[trail_write_index], position);
         trail_lives[trail_write_index] = D_00414660[trail_kind].lifetime;
         trail_write_index = (trail_write_index + 1) % 64;
         trail_count++;

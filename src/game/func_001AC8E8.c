@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 
 void func_001AF298(void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001AF5B0(void *, void *);
 void func_0019CE30(u8, void *);
 void Vector_Subtract(void *, void *, void *);
@@ -31,7 +31,7 @@ void func_001AC8E8(EffectActor *effect) {
             Effect_Free(effect);
         }
     } else if (effect->frame < motion->player_frame) {
-        func_00216778(&player_offset, D_00413F80);
+        Vector_Copy(&player_offset, D_00413F80);
         player_offset.y -= 110.0f;
         Vector_Subtract(&offset, &player_offset, &effect->model->position);
         func_001AF5B0(&effect->model->rotation, &offset);

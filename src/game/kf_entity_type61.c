@@ -9,7 +9,7 @@ int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 void func_001914B0(EntityModel *, s32, s32, s32);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 extern s32 D_003E6E40[][2];
 int func_0019A538(void *, void *, int);
 s32 func_00191600(Entity *, EntityUnkE0SlotBits *, s32, s32);
@@ -107,7 +107,7 @@ void EntityType61_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit25 = TRUE;
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -271,7 +271,7 @@ static void EntityType61_Death(Entity *entity) {
         break;
     case 4:
         if ((slots->unk88.unk04 - entity->params->unk80[slots->unk88.index]) >> 8 < 0x2B && slots->unk88.unk02 >= 0x2B) {
-            func_00216778(target, D_00413F80.position);
+            Vector_Copy(target, D_00413F80.position);
             func_00195E48(entity, ((EntityParamsUnk3D8Full *)&entity->params->unk3D8[0])->unk10[0].unk00, target,
                           entity->model->unkD0);
         }
@@ -325,7 +325,7 @@ static void EntityType61_RangedAttack0(Entity *entity) {
         for (i = 0; i < 5; i++) {
             if (entity->unk2A == 0 || unk3D8->unk0C != 0) {
                 if (elapsed < launch_frames.frames[i] && ((EntityUnkE0Slot *)unkE0->unk88)->unk02 >= launch_frames.frames[i]) {
-                    func_00216778(target, D_00413F80.position);
+                    Vector_Copy(target, D_00413F80.position);
                     target[0] += rand() % 1201 - 600;
                     target[2] += rand() % 1201 - 600;
                     func_00195E48(entity, unk3D8->unk10[0].unk00, target, entity->model->unkD0);
@@ -592,7 +592,7 @@ static void EntityType61_DeathLaunchShot(Entity *entity) {
     case 2:
         if ((entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8 < 0x2B &&
             entity->model->unkFC->unk82 >= 0x2B) {
-            func_00216778(target, D_00413F80.position);
+            Vector_Copy(target, D_00413F80.position);
             func_00195E48(entity, ((EntityParamsUnk3D8Full *)&entity->params->unk3D8[0])->unk10[0].unk00, target,
                           entity->model->unkD0);
         }
@@ -641,7 +641,7 @@ static void func_0014FCC0(Entity *entity) {
         for (i = 0; i < 5; i++) {
             if (entity->unk2A == 0 || unk3D8->unk0C != 0) {
                 if (elapsed < launch_frames.frames[i] && entity->model->unkFC->unk82 >= launch_frames.frames[i]) {
-                    func_00216778(target, D_00413F80.position);
+                    Vector_Copy(target, D_00413F80.position);
                     target[0] += rand() % 401 - 200;
                     target[2] += rand() % 401 - 200;
                     func_00195E48(entity, unk3D8->unk10[0].unk00, target, entity->model->unkD0);

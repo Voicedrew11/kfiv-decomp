@@ -6,8 +6,8 @@ extern PlayerState D_00413F80;
 extern int D_00446770;
 extern MapSlot D_0038CD20[2];
 
-void func_00216778(void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Normalize(void *, void *);
 void Vector_Scale(void *, void *, float);
 int func_001C2D08(void *);
 void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
@@ -27,7 +27,7 @@ void func_001BE760(void) {
     s32 strips_left;
     s32 points_left;
 
-    func_00216778(&COLLISION_SCRATCH->point, &D_00413F80.position);
+    Vector_Copy(&COLLISION_SCRATCH->point, &D_00413F80.position);
     point->y -= 1.0f;
     for (map = 0; map < 2; map++) {
         slot = D_00446770 == map ? &D_0038CD20[0] : &D_0038CD20[1];
@@ -61,7 +61,7 @@ void func_001BE760(void) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->point.x - COLLISION_RESULT->point[0];
                             COLLISION_SCRATCH->push.y = 0.0f;
                             COLLISION_SCRATCH->push.z = COLLISION_SCRATCH->point.z - COLLISION_RESULT->point[2];
-                            func_00216D20(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push);
+                            Vector_Normalize(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push);
                             Vector_Scale(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push, 100.0f);
                             COLLISION_SCRATCH->point.x = COLLISION_RESULT->point[0] + COLLISION_SCRATCH->push.x;
                             COLLISION_SCRATCH->point.z = COLLISION_RESULT->point[2] + COLLISION_SCRATCH->push.z;

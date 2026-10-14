@@ -7,7 +7,7 @@ int rand(void);
 void sceVu0RotMatrixX(void *, void *, float);
 void sceVu0RotMatrixY(void *, void *, float);
 void sceVu0ApplyMatrix(void *, void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 
 void func_001AE7B0(EffectActor *effect) {
     YawPitchMotion *motion;
@@ -34,5 +34,5 @@ void func_001AE7B0(EffectActor *effect) {
     sceVu0RotMatrixX(rotation_matrix, D_00431AF0, motion->yaw);
     sceVu0RotMatrixY(rotation_matrix, rotation_matrix, motion->pitch);
     sceVu0ApplyMatrix(motion, rotation_matrix, motion);
-    func_00216C48(&effect->model->position, motion->unk10, motion);
+    Vector_Add(&effect->model->position, motion->unk10, motion);
 }

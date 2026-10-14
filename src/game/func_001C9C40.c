@@ -3,7 +3,7 @@
 #include "kf_player.h"
 
 void func_001B9478(void);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 float func_0019B838(float);
 float sinf(float);
 float cosf(float);
@@ -36,8 +36,8 @@ void func_001C9C40(void) {
     }
     D_0038CC50.unk30 = 0x87F;
     func_001B9478();
-    func_00216778(D_005B60C0, &D_004469D8->model->position);
-    func_00216778(D_005B60D0, &D_004469D8->model->rotation);
+    Vector_Copy(D_005B60C0, &D_004469D8->model->position);
+    Vector_Copy(D_005B60D0, &D_004469D8->model->rotation);
     D_005B60D0[1] = func_0019B838(D_005B60D0[1]);
     D_005B60E0[0] = D_00420D00.unk00[0] + sinf(D_00413F80.rotation.y) * 150.0f;
     D_005B60E0[2] = D_00420D00.unk00[2] + cosf(D_00413F80.rotation.y) * 150.0f;

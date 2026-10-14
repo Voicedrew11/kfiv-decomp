@@ -5,7 +5,7 @@ float atan2f(float, float);
 float cosf(float);
 float sqrtf(float);
 float func_0019B838(float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
@@ -74,6 +74,6 @@ void func_00210678(void *ball_centre, void *swing_origin, f32 radius, f32 range,
     Vector_Subtract(delta, origin, centre);
     sceVu0Normalize(COLLISION_RESULT->normal, delta);
     Vector_Scale(delta, COLLISION_RESULT->normal, radius);
-    func_00216C48(COLLISION_RESULT->point, centre, delta);
+    Vector_Add(COLLISION_RESULT->point, centre, delta);
     COLLISION_RESULT->hit = 1;
 }

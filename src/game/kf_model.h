@@ -436,7 +436,7 @@ typedef struct {
     char pad28[0x18];
 } __attribute__((aligned(16))) ModelLight;
 
-/* where a vertex lands on the screen, as Vu0_ProjectToScreen and func_002168B8 write it */
+/* where a vertex lands on the screen, as Vu0_ProjectToScreen and Vu0_ProjectToScreen3 write it */
 typedef struct {
     s32 x;                          /* 0x00 12.4 fixed point; the screen is 0x6C00 to 0x9400 across */
     s32 y;                          /* 0x04 0x7200 to 0x8E00 down */
@@ -468,6 +468,9 @@ typedef struct {
 } ModelProjectScratch;
 
 #define MODEL_PROJECT_SCRATCH ((ModelProjectScratch *)0x70000000)
+
+/* the scratchpad as the flat-model matrix builders (func_0020C6A0, func_0020C7A8) use it: one matrix */
+#define MODEL_SCRATCH_MATRIX ((f32 *)0x70000000)
 
 /* what MapObject.unk08 points at */
 typedef struct {

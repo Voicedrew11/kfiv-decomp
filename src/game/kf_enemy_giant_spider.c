@@ -9,7 +9,7 @@ void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
@@ -83,7 +83,7 @@ void GiantSpider_Init(Entity *entity) {
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -374,7 +374,7 @@ static void GiantSpider_RangedAttack(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        func_00216778(direction, &D_00413F80);
+        Vector_Copy(direction, &D_00413F80);
         direction[1] -= 160.0f;
         func_0018CF30(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction, 0.2617994f, 0.2617994f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {

@@ -12,7 +12,7 @@ extern s32 D_00446928;              /* g_dmgLassBossCnt: weapon hits the last bo
 int printf(const char *, ...);
 int rand(void);
 float atan2f(float, float);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001B3ED8(EntityParamsUnk240PartUnk00 *, Unk1B1470Request *, Unk1B1470Extra *);
 int func_001B49F8(int, int, int, int);
 void func_001B3908(Entity *, EntityParamsUnk240PartUnk12 *);
@@ -78,7 +78,7 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
         }
         func_001B4B10(extra->unk24, 4);
         func_001BC058();
-        func_00216778(&position, owner);
+        Vector_Copy(&position, owner);
         if (D_00413F80.position.x < entity->model->position[0]) {
             position.x += 100.0f;
             position.z += 100.0f;

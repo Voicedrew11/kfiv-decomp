@@ -11,7 +11,7 @@ extern int D_00446770;
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 int func_00116C08(int, int, int, int);
-void func_002168B8(int *, int *, int *, f32 *, f32 *, f32 *);
+void Vu0_ProjectToScreen3(int *, int *, int *, f32 *, f32 *, f32 *);
 void sceVu0MulMatrix(void *, void *, void *);
 
 /* Tests the corners of a map record's box against the screen: 1 when it has to be drawn whole (or the test is
@@ -54,7 +54,7 @@ int func_00116CB0(MapDrawRecord *draw_record, ModelInstance *model) {
     corner2[0] = bounds->unk40[0];
     corner2[1] = bounds->unk50[1];
     corner2[2] = bounds->unk40[2];
-    func_002168B8(screen0, screen1, screen2, corner0, corner1, corner2);
+    Vu0_ProjectToScreen3(screen0, screen1, screen2, corner0, corner1, corner2);
     outside = (u32)screen0[2] > 0xFFFF0;
     outside += (u32)screen1[2] > 0xFFFF0;
     outside += (u32)screen2[2] > 0xFFFF0;
@@ -67,7 +67,7 @@ int func_00116CB0(MapDrawRecord *draw_record, ModelInstance *model) {
     corner2[0] = bounds->unk50[0];
     corner2[1] = bounds->unk40[1];
     corner2[2] = bounds->unk50[2];
-    func_002168B8(screen0, screen1, screen2, corner0, corner1, corner2);
+    Vu0_ProjectToScreen3(screen0, screen1, screen2, corner0, corner1, corner2);
     outside += (u32)screen0[2] > 0xFFFF0;
     outside += (u32)screen1[2] > 0xFFFF0;
     outside += (u32)screen2[2] > 0xFFFF0;

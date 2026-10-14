@@ -5,7 +5,7 @@ void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
-void func_00216B48(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 void *memset(void *, int, u32);
 
 extern f32 D_00431AF0[16];

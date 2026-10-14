@@ -1,6 +1,6 @@
 #include "kf_effect.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int rand(void);
 
 /* Sets up a spiral's start angle, per-frame steps and a random start phase. */
@@ -13,7 +13,7 @@ void func_001AD7F8(EffectActor *effect, EffectSlot *spawn_slot) {
     func_001AF928(effect, spawn_slot);
     func_001AF640(effect, spawn_slot);
     motion = (SpiralMotion *)&effect->motion;
-    func_00216778(motion, &effect->model->position);
+    Vector_Copy(motion, &effect->model->position);
     model = effect->model;
     def = effect->def;
     motion->unk14 = 0;

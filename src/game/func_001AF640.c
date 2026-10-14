@@ -1,7 +1,7 @@
 #include "common.h"
 #include "kf_effect.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 int rand(void);
 double sin(double);
@@ -19,15 +19,15 @@ void func_001AF640(EffectActor *effect, EffectSlot *spawn_slot) {
     f32 heading_cosine;
 
     if (EFFECT_DEF_FLAG_WORD(effect->def) & 0x10000) {
-        func_00216778(&effect->model->position, effect->def->offset_base);
-        func_00216778(&origin, effect->start_position);
+        Vector_Copy(&effect->model->position, effect->def->offset_base);
+        Vector_Copy(&origin, effect->start_position);
         pitch_sine = sin(-effect->start_rotation->x);
         pitch_cosine = cos(-effect->start_rotation->x);
         heading_sine = sin(-effect->start_rotation->y);
         heading_cosine = cos(-effect->start_rotation->y);
     } else {
-        func_00216778(&effect->model->position, &spawn_slot->position);
-        func_00216778(&origin, &spawn_slot->position);
+        Vector_Copy(&effect->model->position, &spawn_slot->position);
+        Vector_Copy(&origin, &spawn_slot->position);
         pitch_sine = sin(-spawn_slot->unk10.x);
         pitch_cosine = cos(-spawn_slot->unk10.x);
         heading_sine = sin(-spawn_slot->unk10.y);
@@ -47,5 +47,5 @@ void func_001AF640(EffectActor *effect, EffectSlot *spawn_slot) {
     offset.z = rotated.z;
     offset.x = rotated.x;
     sceVu0AddVector(&effect->model->position, &offset, &origin);
-    func_00216778(&effect->unk70, &effect->model->position);
+    Vector_Copy(&effect->unk70, &effect->model->position);
 }

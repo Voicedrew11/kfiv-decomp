@@ -1,7 +1,7 @@
 #include "kf_entity.h"
 
 void *memset(void *, int, u32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
 
 /* func_00194FB8, which the game inlines here: wraps an angle to +-pi */
@@ -22,7 +22,7 @@ s32 func_00195BD8(Entity *entity, EntityParamsUnk240 *record, s32 index, f32 ang
 
     memset(&request, 0, sizeof(request));
     memset(&extra, 0, sizeof(extra));
-    func_00216778(request.position, entity->model->position);
+    Vector_Copy(request.position, entity->model->position);
     yaw = angle + 3.1415927f;
     request.unk30 = entity->radius + record->unk10[index].unk20;
     request.unk34 = entity->height + 10.0f;

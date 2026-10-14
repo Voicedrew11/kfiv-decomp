@@ -8,8 +8,8 @@ extern CameraState D_004325A0;
 
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
-void func_00216C48(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Copy(void *, void *);
 int func_0019B908(float *, float, float);
 float atan2f(float, float);
 float sqrtf(float);
@@ -27,7 +27,7 @@ void func_00100FC8(void) {
     switch (D_0038CC50.unk03) {
     case 0:
         Vector_Scale(target, D_00420D00.unk10, D_00420D00.unk40);
-        func_00216C48(target, target, D_00420D00.unk00);
+        Vector_Add(target, target, D_00420D00.unk00);
         D_004325A0.position[0] = D_00413F80.position.x;
         D_004325A0.position[2] = D_00413F80.position.z;
         D_004325A0.position[1] =
@@ -44,9 +44,9 @@ void func_00100FC8(void) {
             length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
             if (D_004325A0.unk44 < length) {
                 Vector_Scale(direction, direction, D_004325A0.unk44 / length);
-                func_00216C48(D_004325A0.position, D_004325A0.position, direction);
+                Vector_Add(D_004325A0.position, D_004325A0.position, direction);
             } else {
-                func_00216778(D_004325A0.position, D_004325A0.unk30);
+                Vector_Copy(D_004325A0.position, D_004325A0.unk30);
             }
         }
         break;
@@ -69,6 +69,6 @@ void func_00100FC8(void) {
             break;
         }
     }
-    func_00216C48(D_004325A0.position, D_004325A0.position, D_004325A0.unk50);
-    func_00216C48(D_004325A0.position, D_004325A0.position, D_004325A0.unk60);
+    Vector_Add(D_004325A0.position, D_004325A0.position, D_004325A0.unk50);
+    Vector_Add(D_004325A0.position, D_004325A0.position, D_004325A0.unk60);
 }

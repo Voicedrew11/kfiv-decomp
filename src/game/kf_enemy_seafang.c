@@ -31,7 +31,7 @@ s32 func_0018EEE0(Entity *, f32, f32);
 s32 func_0018FD50(Entity *, s32);
 void func_00190B88(Entity *, s32);
 int func_0018F030(char *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
@@ -219,7 +219,7 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
         } else if (turn < 0) {
             entity->unkC8 = 0x141;
         } else {
-            func_00216778(unkE0->unk30, D_00413F80);
+            Vector_Copy(unkE0->unk30, D_00413F80);
             unkE0->unk30[1] -= unkE0->unk4C;
             entity->target = unkE0->unk30;
             entity->unkC8 = func_00190D50(entity, 1, entity->radius + 100.0f + 30.0f);

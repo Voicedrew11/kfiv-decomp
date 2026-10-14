@@ -4,7 +4,7 @@
 #define TWO_PI 6.2831855f
 #define PI 3.1415927f
 
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void *memset(void *, int, u32);
 
 /* Per-frame update of an effect that tilts to and fro and, after radius_half frames, falls ever faster. */
@@ -60,6 +60,6 @@ void func_001AB670(EffectActor *effect) {
         motion->fall_speed += motion->fall_accel;
         motion->velocity.y += motion->fall_speed * motion->fall_speed;
     }
-    func_00216C48(&effect->model->position, &motion->velocity, &forward);
+    Vector_Add(&effect->model->position, &motion->velocity, &forward);
     effect->frame++;
 }

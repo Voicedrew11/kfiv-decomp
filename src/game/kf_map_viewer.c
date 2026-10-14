@@ -35,7 +35,7 @@ void func_0010D018(ModelInstance *, char **, char **);
 void func_0010E6A8(ModelInstance *, s64, s64);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
 void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_0020B780(int);
 void func_001096E8(void);
 void func_001095E0(void);
@@ -66,8 +66,8 @@ void func_0010A7E0(void *);
 static void func_0011C160(void);
 void func_0011AAE8(void);
 float func_0019B838(float);
-void func_00216C48(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Normalize(void *, void *);
 void func_00106C58(void);
 void func_00107E70(int, int, int);
 void func_0010D308(ModelInstance *);
@@ -212,7 +212,7 @@ static int func_0011A600(void) {
     buffer = align16(buffer);
     func_0010D018(&pointer_model, &model_data, &buffer);
     func_0010E6A8(&pointer_model, 0x260, 0x240);
-    func_00216778(&pointer_model.position, &D_00413F80);
+    Vector_Copy(&pointer_model.position, &D_00413F80);
     pointer_model.position.y -= 100.0f;
     pointer_model.rotation.x = 0.0f;
     pointer_model.rotation.y = D_00413F80.rotation.y;
@@ -693,9 +693,9 @@ void func_0011BCD0(void) {
                 reset_held = FALSE;
             }
             if (move.x != 0.0f || move.y != 0.0f || move.z != 0.0f) {
-                func_00216D20(&move, &move);
+                Vector_Normalize(&move, &move);
                 Vector_Scale(&move.x, &move.x, 100.0f);
-                func_00216C48(&position, &position, &move);
+                Vector_Add(&position, &position, &move);
                 if (position.x < D_00413F80.position.x + -48000.0f) {
                     position.x = D_00413F80.position.x + -48000.0f;
                 }

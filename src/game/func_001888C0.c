@@ -7,8 +7,8 @@ extern s32 D_004467B8[2];
 extern MapObject D_003A1A30[];
 extern MapObject D_003AFA30[];
 
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 float func_00194F80(float *, float *);
 void func_00188F40(CollisionOwner *, f32 *, f32, f32);
@@ -48,7 +48,7 @@ void func_001888C0(Entity *entity) {
     s32 hit;
 
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
-    func_00216778(position, entity->model->position);
+    Vector_Copy(position, entity->model->position);
     sum = normal_sum;
     for (map = 0; map < 2; map++) {
         object = map_objects(map);
@@ -83,7 +83,7 @@ void func_001888C0(Entity *entity) {
             }
             hit = COLLISION_RESULT->hit;
             if (hit & 1) {
-                func_00216C48(normal_sum, normal_sum, COLLISION_RESULT->normal);
+                Vector_Add(normal_sum, normal_sum, COLLISION_RESULT->normal);
                 ENTITY_FLAG_BITS(entity)->bit47 = TRUE;
                 ENTITY_FLAG_BITS(entity)->bit45 = TRUE;
                 hit = COLLISION_RESULT->hit; // match: read again after the call, into the same register

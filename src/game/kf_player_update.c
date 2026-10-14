@@ -631,7 +631,7 @@ void func_00108A08(ModelInstance *, int);
 void func_00108AC8(void *);
 void func_0019CE00(int mode);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Handler of a weapon that is swung: the button starts the swing; while its motion runs the
    swing hits what it reaches, plays its sound and casts the weapon's two magics when they were
@@ -706,7 +706,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
         }
         if (MODEL_CHANNEL(WEAPON_MODEL)->param >= def->unk78 && MODEL_CHANNEL(WEAPON_MODEL)->param <= def->unk7A && swing_magic_frames == 0) {
             memset(&request, 0, sizeof(request));
-            func_00216778(request.position, &D_00413F80);
+            Vector_Copy(request.position, &D_00413F80);
             request.owner = (Entity *)&D_00413F80;
             request.unk4C_0 = 3;
             request.position[1] -= 220.0f;
@@ -944,14 +944,14 @@ extern PlayerState D_00413F80;
 extern float D_00420D10[];
 
 void Vector_Scale(float *, float *, float);
-void func_00216C48(void *dst, void *a, void *b);
+void Vector_Add(void *dst, void *a, void *b);
 
 int Player_CanFireAtAim(void) {
     float vec[4];
     int result;
 
     Vector_Scale(vec, D_00420D10, 100.0f);
-    func_00216C48(vec, vec, &D_00413F80);
+    Vector_Add(vec, vec, &D_00413F80);
     vec[1] -= 186.0f;
     result = 0;
     if (vec[1] <= D_00413F80.unk1DC) {
@@ -962,7 +962,7 @@ int Player_CanFireAtAim(void) {
 
 float atan2f(float, float);
 float sqrtf(float);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
 extern float D_00413F40[];
 extern int D_00413F30[];
@@ -976,7 +976,7 @@ void Player_UpdateWeaponAim(void) {
     weapon_base = D_00446978->get_point(D_00446978, 0);
     weapon_tip = D_00446978->get_point(D_00446978, 1);
     Vector_Subtract(vec, weapon_tip, weapon_base);
-    func_00216778(D_00413F30, weapon_tip);
+    Vector_Copy(D_00413F30, weapon_tip);
     D_00413F40[0] = atan2f(-vec[1], sqrtf(vec[0] * vec[0] + vec[2] * vec[2]));
     D_00413F40[1] = atan2f(vec[0], vec[2]);
 }
@@ -1032,10 +1032,10 @@ void func_001BE760(void);
 void func_001BEA50(void);
 void func_001BECA8(int);
 void func_001BF350(int);
-void func_00216778(void *, void *);
-void func_00216BC0(void *, void *, void *);
-void func_00216C48(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Normalize(void *, void *);
 
 #define PLAYER_FLAG_32 0x100000000L /* the view is levelling out */
 #define PLAYER_FLAG_37 0x2000000000L /* the view dips after a landing */
@@ -1085,11 +1085,11 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
         sceVu0RotMatrixX(matrix, matrix, turn.x);
         sceVu0RotMatrixY(matrix, matrix, turn.y);
         Vector_Subtract(&delta, &D_00413F80, &platform->unk20);
-        func_00216BC0(&delta, matrix, &delta);
-        func_00216C48(&D_00413F80, &platform->model->position, &delta);
+        Vector_ApplyMatrix(&delta, matrix, &delta);
+        Vector_Add(&D_00413F80, &platform->model->position, &delta);
         D_00413F80.rotation.y += platform->model->rotation.y - platform->unk34;
     }
-    func_00216C48(&D_00413F80, &D_00413F80, &D_00413F80.unk240);
+    Vector_Add(&D_00413F80, &D_00413F80, &D_00413F80.unk240);
 
     if (D_00414280.unk1E0 != 0 && D_00414280.unk1E4 == 4) {
         row = 4;
@@ -1136,7 +1136,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
 
     if (D_00413F80.aim_speed > 0.0f) {
         Vector_Scale((f32 *)&delta, (f32 *)&D_00413F80.aim, D_00413F80.aim_speed);
-        func_00216C48(&D_00413F80, &D_00413F80, &delta);
+        Vector_Add(&D_00413F80, &D_00413F80, &delta);
         D_00413F80.aim_speed -= ((f32)D_00413F80.weight + 600.0f) / 600.0f * 20.0f;
         if (D_00413F80.aim_speed < 0.0) {
             D_00413F80.aim_speed = 0.0f;
@@ -1344,7 +1344,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     delta.x *= cosf(angle);
     delta.z *= sinf(angle);
     sceVu0RotMatrixY(matrix, D_00431AF0, D_00413F80.rotation.y);
-    func_00216BC0(&delta, matrix, &delta);
+    Vector_ApplyMatrix(&delta, matrix, &delta);
     D_00413F80.position.x += delta.x;
     D_00413F80.position.z += delta.z;
 
@@ -1355,17 +1355,17 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
             if (distance > STEP_LENGTH) {
                 steps = (s32)(distance / STEP_LENGTH);
                 delta.y = 0.0f;
-                func_00216D20(&delta, &delta);
+                Vector_Normalize(&delta, &delta);
                 Vector_Scale((f32 *)&step, (f32 *)&delta, STEP_LENGTH);
                 Vector_Scale((f32 *)&delta, (f32 *)&delta, distance - (f32)steps * STEP_LENGTH);
-                func_00216778(&D_00413F80, &D_00414280);
+                Vector_Copy(&D_00413F80, &D_00414280);
                 do {
-                    func_00216C48(&D_00413F80, &D_00413F80, &step);
+                    Vector_Add(&D_00413F80, &D_00413F80, &step);
                     func_001BECA8(0);
                     func_001BF350(0);
                     func_001BE760();
                 } while (--steps != 0);
-                func_00216C48(&D_00413F80, &D_00413F80, &delta);
+                Vector_Add(&D_00413F80, &D_00413F80, &delta);
             }
         }
         func_001BECA8(1);
@@ -1436,28 +1436,28 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                 delta.y = 0.0f;
                 delta.z = cosf(record->unk1C) * (f32)record->unk2E;
                 delta.w = 0.0f;
-                func_00216C48(velocity, velocity, &delta);
+                Vector_Add(velocity, velocity, &delta);
                 speed = sqrtf(D_00413F80.unk240.x * D_00413F80.unk240.x + D_00413F80.unk240.y * D_00413F80.unk240.y
                               + D_00413F80.unk240.z * D_00413F80.unk240.z);
                 if (speed > (f32)record->unk2C) {
-                    func_00216D20(velocity, velocity);
+                    Vector_Normalize(velocity, velocity);
                     Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->unk2C);
                 }
             } else {
-                func_00216D20(&delta, velocity);
+                Vector_Normalize(&delta, velocity);
                 Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
-                func_00216C48(velocity, velocity, &delta);
+                Vector_Add(velocity, velocity, &delta);
                 speed = sqrtf(D_00413F80.unk240.x * D_00413F80.unk240.x + D_00413F80.unk240.y * D_00413F80.unk240.y
                               + D_00413F80.unk240.z * D_00413F80.unk240.z);
                 if (speed > (f32)record->unk2C) {
-                    func_00216D20(velocity, velocity);
+                    Vector_Normalize(velocity, velocity);
                     Vector_Scale((f32 *)velocity, (f32 *)velocity, (f32)record->unk2C);
                 }
             }
         } else if (speed > speed_loss) {
-            func_00216D20(&delta, &D_00413F80.unk240);
+            Vector_Normalize(&delta, &D_00413F80.unk240);
             Vector_Scale((f32 *)&delta, (f32 *)&delta, -speed_loss);
-            func_00216C48(&D_00413F80.unk240, &D_00413F80.unk240, &delta);
+            Vector_Add(&D_00413F80.unk240, &D_00413F80.unk240, &delta);
         } else {
             D_00413F80.unk240.x = D_00413F80.unk240.y = D_00413F80.unk240.z = 0.0f;
         }

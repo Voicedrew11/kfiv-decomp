@@ -3,7 +3,7 @@
 
 extern GameStatus D_0038CC50;
 
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void func_00122600(void *, int);
 
 /* The same for the kind of func_00121DA8, which also resets its count through func_00122600. */
@@ -14,7 +14,7 @@ void func_00122480(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    func_00216C48(part->unk40, part->unk40, work);
+    Vector_Add(part->unk40, part->unk40, work);
     if (--work->frames <= 0) {
         func_00122600(object, 0);
         MapObject_StartAnim(object, 4);

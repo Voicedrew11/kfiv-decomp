@@ -7,7 +7,7 @@ extern f32 D_00431AF0[16];
 
 void sceVu0RotMatrixY(void *, void *, float);
 void sceVu0ApplyMatrix(void *, void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void func_001C1430(f32, void *, void *);
 int rand(void);
 
@@ -24,7 +24,7 @@ void func_001ADA60(EffectActor *effect) {
     sceVu0RotMatrixY(matrix, D_00431AF0, D_00413F80.rotation.y);
     sceVu0ApplyMatrix(&offset, matrix, effect->def->offset_base);
     motion = &effect->motion;
-    func_00216C48(&effect->model->position, &D_00413F80, &offset);
+    Vector_Add(&effect->model->position, &D_00413F80, &offset);
     effect->model->position.x += ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[0];
     effect->model->position.z += ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[2];
     effect->model->rotation.x = ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * 3.1415927f;

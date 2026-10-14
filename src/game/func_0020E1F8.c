@@ -3,7 +3,7 @@
 extern const f32 D_00446FBC[];      /* -0.0f */
 
 void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
@@ -131,14 +131,14 @@ void func_0020E1F8(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *centre, f32
     nearest_squared = 16777216.0f;
     for (i = 0; i < 3; i++) {
         if (i == 0) {
-            func_00216778(start, corner_a);
-            func_00216778(end, corner_b);
+            Vector_Copy(start, corner_a);
+            Vector_Copy(end, corner_b);
         } else if (i == 1) {
-            func_00216778(start, corner_b);
-            func_00216778(end, corner_c);
+            Vector_Copy(start, corner_b);
+            Vector_Copy(end, corner_c);
         } else {
-            func_00216778(start, corner_c);
-            func_00216778(end, corner_a);
+            Vector_Copy(start, corner_c);
+            Vector_Copy(end, corner_a);
         }
         if (end[1] > centre[1] && centre[1] < start[1]) {
             continue;

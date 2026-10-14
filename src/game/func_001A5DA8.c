@@ -5,7 +5,7 @@ extern int D_004468DC;
 
 int func_001B4F90(void *);
 void sceVu0AddVector(void *, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int func_001C0E40(f32, void *);
 
 /* Scratchpad words shared with the other effect kinds. */
@@ -36,7 +36,7 @@ void func_001A5DA8(EffectActor *effect) {
                 Effect_Spawn(0x33, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 motion->unk25 = 1;
             } else if ((hits & 8) && motion->unk22 < 0) {
-                func_00216778(&point, &effect->model->position);
+                Vector_Copy(&point, &effect->model->position);
                 point.y -= 100.0f;
                 point.y = (func_001C0E40(200.0f, &point) == 1) ? SCRATCHPAD_FLOAT_04 : effect->model->position.y;
                 if (SCRATCHPAD_WORD_18 == 5) {

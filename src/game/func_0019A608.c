@@ -6,7 +6,7 @@ void func_00109A80(int, s64);
 void func_00109AD0(void);
 void func_00109E18(void);
 void func_0010A718(int);
-void func_00216B48(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 
 extern Entity *D_004467E0;
 extern ModelInstance D_003BE530[];
@@ -61,7 +61,7 @@ void func_0019A608(void) {
             dst++;
             src++;
         }
-        func_00216B48(model->unk40, ENTITY_MODEL(entity)->unk40, D_003E74C0);
+        Matrix_Multiply(model->unk40, ENTITY_MODEL(entity)->unk40, D_003E74C0);
         model->unk148 = ENTITY_MODEL(entity)->unk148;
         model->unk14C = ENTITY_MODEL(entity)->unk14C;
         func_00109A50();

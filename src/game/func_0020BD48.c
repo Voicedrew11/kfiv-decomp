@@ -5,7 +5,7 @@ void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
-void func_00216B48(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
 void *memset(void *, int, u32);
 
 extern f32 D_00431AF0[16];
@@ -31,5 +31,5 @@ void func_0020BD48(ModelInstance *model) {
     matrix[4] = matrix[5] = matrix[6] = matrix[7] = 0.0f;
     sceVu0RotMatrixX(matrix, matrix, -1.5707964f);
     sceVu0TransMatrix(matrix, matrix, offset);
-    func_00216B48(model, D_004322E0, matrix);
+    Matrix_Multiply(model, D_004322E0, matrix);
 }

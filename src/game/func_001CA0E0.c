@@ -1,7 +1,7 @@
 #include "kf_map.h"
 #include "kf_map_object.h"
 
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void Player_AddItem(int);
 void *memset(void *, int, u32);
 ModelNode *func_001CA520(ModelNode *);
@@ -20,7 +20,7 @@ void func_001CA0E0(void) {
 
     D_004471B0--;
     if (D_004471B0 > 0) {
-        func_00216C48(&node->model->position, &node->model->position, D_005B60F0);
+        Vector_Add(&node->model->position, &node->model->position, D_005B60F0);
         return;
     }
     Player_AddItem((s16)node->item);

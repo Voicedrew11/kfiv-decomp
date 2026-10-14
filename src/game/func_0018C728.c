@@ -9,9 +9,9 @@ extern s32 D_004467B8[2];
 extern MapObject D_003A1A30[];
 extern MapObject D_003AFA30[];
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Normalize(void *, void *);
 void func_001C2128(void *, int, int, float);
 
 /* the objects of the current map (map 0) or the other loaded one (map 1), which the game inlines */
@@ -47,9 +47,9 @@ s32 func_0018C728(Entity *entity) {
     s32 count;
     s32 i;
 
-    func_00216778(position, entity->model->position);
+    Vector_Copy(position, entity->model->position);
     position[1] -= entity->unk34 * 0.5f;
-    func_00216778(target, &D_00413F80);
+    Vector_Copy(target, &D_00413F80);
     target[1] -= 115.0f;
     __asm__ volatile(
         "lqc2 $vf16, 0(%0)\n"
@@ -65,7 +65,7 @@ s32 func_0018C728(Entity *entity) {
         : : "r"(target), "r"(position), "r"(distance_out) : "memory");
     distance = distance_out[0];
     Vector_Subtract(direction, target, position);
-    func_00216D20(direction, direction);
+    Vector_Normalize(direction, direction);
     if (target[0] < position[0]) {
         lowest[0] = target[0];
         highest[0] = position[0];

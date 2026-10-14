@@ -7,7 +7,7 @@
 void func_001958A8(char *, s32);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 extern s32 D_003E6E40[][2];
 int func_00192EB0(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
@@ -50,7 +50,7 @@ void EntityType31_Init(Entity *entity) {
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;

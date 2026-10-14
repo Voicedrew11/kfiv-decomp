@@ -9,8 +9,8 @@ extern MapSlot D_0038CD20[2];
 extern MapSlotMemory D_004321F0[2];
 extern f32 D_00446968[];
 
-void func_00216778(void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Normalize(void *, void *);
 void Vector_Scale(void *, void *, float);
 int func_001C2D08(void *);
 void func_001C0A88(void *, void *, void *, void *);
@@ -62,13 +62,13 @@ int func_001BDDC0(void) {
         }
     }
     floor_height = D_00446968[0];
-    func_00216778(wall_point, &D_00413F80.position);
+    Vector_Copy(wall_point, &D_00413F80.position);
     found = FALSE;
     wall_point->y -= 1.0f;
-    func_00216778(floor_point, &D_00413F80.position);
+    Vector_Copy(floor_point, &D_00413F80.position);
     floor_point->y -= 75.0f;
     reach = D_00413F80.unk1AC + 75.0f;
-    func_00216778(&raised_point, &D_00413F80.position);
+    Vector_Copy(&raised_point, &D_00413F80.position);
     floor_map = D_00446770;
     D_00413F80.unk211 = D_00413F80.unk210 = 6;
     D_00413F80.unk214 = 0.0f;
@@ -130,7 +130,7 @@ int func_001BDDC0(void) {
                             COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->unk90.x - COLLISION_RESULT->point[0];
                             COLLISION_SCRATCH->push.y = 0.0f;
                             COLLISION_SCRATCH->push.z = COLLISION_SCRATCH->unk90.z - COLLISION_RESULT->point[2];
-                            func_00216D20(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push);
+                            Vector_Normalize(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push);
                             Vector_Scale(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push, 100.0f);
                             COLLISION_SCRATCH->unk90.x = COLLISION_RESULT->point[0] + COLLISION_SCRATCH->push.x;
                             COLLISION_SCRATCH->unk90.z = COLLISION_RESULT->point[2] + COLLISION_SCRATCH->push.z;

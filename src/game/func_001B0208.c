@@ -5,7 +5,7 @@
 
 float func_001B0178(void *, void *);
 void func_001C1430(f32, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* the inline twin of func_001B0950 */
 static inline f32 absolute_value(f32 value) {
@@ -25,7 +25,7 @@ s16 func_001B0208(float radius, void *effect, void *motion, void *hit_point) {
     func_001C1430(actor->def->keyframe_end, &actor->model->position, motion);
     if (*SCRATCH_MATRIX != 0) {
         distance = func_001B0178(SCRATCH_VECTOR, &actor->model->position);
-        func_00216778(hit_point, SCRATCH_VECTOR);
+        Vector_Copy(hit_point, SCRATCH_VECTOR);
         return absolute_value((distance - radius) / actor->def->speed);
     }
     return -1;

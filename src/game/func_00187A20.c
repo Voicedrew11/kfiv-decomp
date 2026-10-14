@@ -3,7 +3,7 @@
 
 int func_001C2D08(void *);
 u32 func_001125F0(u32, u32, int);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void func_001883E0(void *, void *, void *, void *, f32);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
@@ -36,9 +36,9 @@ s32 func_00187A20(Entity *entity, ModelInstance *model, f32 *position, f32 *norm
                     entity->flags |= 0x8000L << 30;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
-                    func_00216C48(normal_sum, normal_sum, offset);
+                    Vector_Add(normal_sum, normal_sum, offset);
                     Vector_Scale(offset, offset, entity->unk30);
-                    func_00216C48(position, COLLISION_RESULT, offset);
+                    Vector_Add(position, COLLISION_RESULT, offset);
                 }
                 point++;
             } while (--j != 0);
@@ -57,9 +57,9 @@ s32 func_00187A20(Entity *entity, ModelInstance *model, f32 *position, f32 *norm
                     entity->flags |= 0x8000L << 30;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
-                    func_00216C48(normal_sum, normal_sum, offset);
+                    Vector_Add(normal_sum, normal_sum, offset);
                     Vector_Scale(offset, offset, entity->unk30);
-                    func_00216C48(position, COLLISION_RESULT, offset);
+                    Vector_Add(position, COLLISION_RESULT, offset);
                 }
                 point++;
             } while (--j != 0);
@@ -78,9 +78,9 @@ s32 func_00187A20(Entity *entity, ModelInstance *model, f32 *position, f32 *norm
                     entity->flags |= 0x8000L << 30;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
-                    func_00216C48(normal_sum, normal_sum, offset);
+                    Vector_Add(normal_sum, normal_sum, offset);
                     Vector_Scale(offset, offset, entity->unk30);
-                    func_00216C48(position, COLLISION_RESULT, offset);
+                    Vector_Add(position, COLLISION_RESULT, offset);
                 }
                 point++;
             } while (--j != 0);
@@ -103,7 +103,7 @@ s32 func_00187A20(Entity *entity, ModelInstance *model, f32 *position, f32 *norm
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     Vector_Scale(offset, offset, entity->unk30);
-                    func_00216C48(position, COLLISION_RESULT, offset);
+                    Vector_Add(position, COLLISION_RESULT, offset);
                 }
                 point++;
             } while (--j != 0);

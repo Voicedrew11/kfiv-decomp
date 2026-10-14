@@ -1,7 +1,8 @@
 #include "kf_effect.h"
+#include "kf_collision.h"
 
 void func_001C1430(f32, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 float func_001B0178(void *, void *);
 
 /* Drops the effect's model by a probe vector and picks the landing frame from the fall distance. */
@@ -22,7 +23,7 @@ void func_001ADCA8(EffectActor *actor, EffectSlot *spawn_slot) {
     motion->landing_frame = 0xFFFF;
     func_001C1430(1.0f, &actor->model->position, &probe);
     if (*(int *)0x70000010 != 0) {
-        func_00216778(&actor->motion, (void *)0x70000000);
+        Vector_Copy(&actor->motion, COLLISION_RESULT);
         motion->unk16 = *(u8 *)0x70000018;
         distance = func_001B0178(&actor->motion, &actor->model->position);
         velocity = 0.0f;

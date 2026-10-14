@@ -1,6 +1,6 @@
 #include "kf_effect.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Scales the effect's unk0C by its target's, copies the model pose to and from the target, and wraps the frame at keyframe_end. */
 void func_001AE498(EffectActor *effect) {
@@ -14,10 +14,10 @@ void func_001AE498(EffectActor *effect) {
     func_001AED58(effect);
     func_001AF0B0(effect);
     effect->scale *= effect->target->scale * 0.0078125f;
-    func_00216778(&effect->model->position, &motion->velocity);
-    func_00216778(&effect->model->rotation, motion_rotation);
-    func_00216778(&motion->velocity, &effect->target->model->position);
-    func_00216778(motion_rotation, &effect->target->model->rotation);
+    Vector_Copy(&effect->model->position, &motion->velocity);
+    Vector_Copy(&effect->model->rotation, motion_rotation);
+    Vector_Copy(&motion->velocity, &effect->target->model->position);
+    Vector_Copy(motion_rotation, &effect->target->model->rotation);
     next_frame = effect->frame + 1;
     effect->frame = next_frame;
     if ((u16)next_frame >= effect->def->keyframe_end) { // match: compares the masked 16-bit frame

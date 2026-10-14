@@ -1,8 +1,8 @@
 #include "kf_collision.h"
 
 void func_0019B688(float *, float *, float *, float *);
-void func_00216D20(void *, void *);
-void func_00216778(void *, void *);
+void Vector_Normalize(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001C0C50(void *, void *, void *, void *, f32);
 extern f32 D_004469B0[];    /* the largest float; an array so that it is not read through $gp */
 
@@ -23,11 +23,11 @@ s32 func_001C7C60(CollisionOwner *owner, f32 *position, f32 radius) {
         point2 = (f32 *)owner->model->get_point(owner->model, 2);
         point3 = (f32 *)owner->model->get_point(owner->model, 3);
         func_0019B688(normal, point0, point1, point3);
-        func_00216D20(normal, normal);
+        Vector_Normalize(normal, normal);
         if (normal[1] >= -0.93969f && normal[1] <= 0.93969f) {
             return FALSE;
         }
-        func_00216778(centre, position);
+        Vector_Copy(centre, position);
         lowest = D_004469B0[0];
         centre[1] = centre[1] - 1.0f - radius;
         func_001C0C50(point0, point1, point2, centre, radius);

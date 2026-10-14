@@ -2,7 +2,7 @@
 #include "kf_player.h"
 
 int func_001C2D08(void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_0020E1F8(f32 *, f32 *, f32 *, f32 *, f32, f32);
 void Vector_Scale(float *, float *, float);
 void sceVu0Normalize(float *, float *);
@@ -31,7 +31,7 @@ void func_001C65F0(MapObject *object, f32 *position, f32 height, f32 radius) {
             return;
         }
         func_001C2D08(object->model);
-        func_00216778(centre, position);
+        Vector_Copy(centre, position);
         centre[1] -= 0.001f;
         if (MAP_OBJECT_DEF_KIND(object->unk04) == 10 && (PlayerState *)position == &D_00413F80
             && ((PlayerState *)position)->unk20C == 0) {

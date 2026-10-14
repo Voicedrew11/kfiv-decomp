@@ -6,8 +6,8 @@ typedef float Mat[4][4] __attribute__((aligned(16)));
 extern Mat D_00431AF0;
 
 int rand(void);
-void func_00216778(void *, void *);
-void func_00216C48(void *, void *, void *);
+void Vector_Copy(void *, void *);
+void Vector_Add(void *, void *, void *);
 void func_001AF5B0(void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void sceVu0RotMatrixY(Mat, Mat, float);
@@ -36,8 +36,8 @@ void func_001AC6F0(EffectActor *effect, EffectSlot *spawn_slot) {
     }
     sceVu0RotMatrixY(rotation_matrix, D_00431AF0, heading);
     sceVu0ApplyMatrix(&offset, rotation_matrix, &offset);
-    func_00216C48(&effect->model->position, D_00413F80, &offset);
-    func_00216778(&player_point, D_00413F80);
+    Vector_Add(&effect->model->position, D_00413F80, &offset);
+    Vector_Copy(&player_point, D_00413F80);
     player_point.y -= 110.0f;
     Vector_Subtract(&offset, &player_point, &effect->model->position);
     func_001AF5B0(&effect->model->rotation, &offset);

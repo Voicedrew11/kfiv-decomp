@@ -2,7 +2,7 @@
 
 extern const f32 D_00446FC0[];      /* -0.0f */
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Tests a ray against a triangle: from `origin` along `direction`, no further than `reach` times the
    direction. Leaves the point where it meets the triangle and how far along the ray that is. */
@@ -97,6 +97,6 @@ void func_0020E918(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *origin, f32
     }
     if (weight_c + weight_a <= 1.0f) {
         COLLISION_RESULT->hit = 1;
-        func_00216778(COLLISION_RESULT->point, foot);
+        Vector_Copy(COLLISION_RESULT->point, foot);
     }
 }

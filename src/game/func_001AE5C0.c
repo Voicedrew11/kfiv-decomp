@@ -1,6 +1,6 @@
 #include "kf_effect.h"
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0ApplyMatrix(float *, float *, float *);
 int rand(void);
@@ -29,6 +29,6 @@ void func_001AE5C0(EffectActor *effect) {
     sceVu0ApplyMatrix(axis, matrix, axis);
     effect->model->unkE0 = effect->model->unkE0 + effect->def->unkE0 * axis[0];
     ((TiltModel *)effect->model)->unkE4 = ((TiltModel *)effect->model)->unkE4 + effect->def->unkE0 * axis[1];
-    func_00216778(&effect->model->position, &effect->target->model->position);
+    Vector_Copy(&effect->model->position, &effect->target->model->position);
     effect->frame += 1;
 }

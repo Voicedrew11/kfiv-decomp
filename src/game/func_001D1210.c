@@ -1,10 +1,11 @@
-extern char D_00420D00[];
-void func_00216C48(void *, void *, void *);
+#include "kf_game.h"
+#include "kf_vu0.h"
 
-void func_001D1210(void *arg0) {
-    char *temp;
+extern EventRunner D_00420D00;
 
-    func_00216C48(D_00420D00, D_00420D00, arg0);
-    temp = D_00420D00 + 0x20;
-    func_00216C48(temp, temp, arg0);
+/* Moves the event runner's position and its copy from the frame before by offset (the other map slot became
+   the current one). */
+void func_001D1210(f32 *offset) {
+    Vector_Add(D_00420D00.unk00, D_00420D00.unk00, offset);
+    Vector_Add(D_00420D00.unk20, D_00420D00.unk20, offset);
 }

@@ -12,7 +12,7 @@ int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 void func_001914B0(EntityModel *, s32, s32, s32);
 int func_00193378(EntityModel *, s32, s32);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
@@ -106,7 +106,7 @@ void Minion_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        func_00216778(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -767,7 +767,7 @@ static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 fr
                     angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
                     angles[2] = angles[3] = 0.0f;
                 } else {
-                    func_00216778(angles, entity->model->unkD0);
+                    Vector_Copy(angles, entity->model->unkD0);
                     angles[1] = func_00194FB8(angles[1] + 3.1415927f);
                 }
                 if (target != NULL) {

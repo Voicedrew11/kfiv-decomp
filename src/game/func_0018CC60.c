@@ -4,9 +4,9 @@
 extern PlayerState D_00413F80;
 
 double sqrt(double);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Normalize(void *, void *);
 s32 func_0018B150(f32 *, f32 *, f32, f32 *);
 
 /* tests the line from the entity's middle to the player's with func_0018B150 */
@@ -16,9 +16,9 @@ s32 func_0018CC60(Entity *entity) {
     f32 bounds[4];
     f32 distance;
 
-    func_00216778(position, entity->model->position);
+    Vector_Copy(position, entity->model->position);
     position[1] -= entity->unk34 * 0.5f;
-    func_00216778(target, &D_00413F80);
+    Vector_Copy(target, &D_00413F80);
     target[1] -= 115.0f;
     if (position[0] < target[0]) {
         bounds[0] = position[0];
@@ -36,6 +36,6 @@ s32 func_0018CC60(Entity *entity) {
     }
     Vector_Subtract(target, target, position);
     distance = sqrt(target[0] * target[0] + target[1] * target[1] + target[2] * target[2]);
-    func_00216D20(target, target);
+    Vector_Normalize(target, target);
     return func_0018B150(position, target, distance, bounds);
 }

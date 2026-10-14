@@ -3,7 +3,7 @@
 extern int D_004468E0;
 
 void func_001AF5B0(void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 
 /* Per-frame update: turns the model's heading by the global counter and wraps it into (-pi, pi]. */
 void func_001A9790(EffectActor *effect, EffectSlot *spawn_slot) {
@@ -17,7 +17,7 @@ void func_001A9790(EffectActor *effect, EffectSlot *spawn_slot) {
     func_001AF928(effect, spawn_slot);
     func_001AF640(effect, spawn_slot);
     motion = (PhaseMotion *)&effect->motion;
-    func_00216778(&heading, &effect->model->rotation);
+    Vector_Copy(&heading, &effect->model->rotation);
     def = effect->def;
     heading.y = heading.y + (float)D_004468E0 * def->unkDC;
     angle = heading.y;

@@ -1,10 +1,55 @@
 #include "kf_pad.h"
 #include <libpad.h>
 
-int func_00216DD0(PadSlot *, int, int);
-void func_00216EA0(void *);
-
 static PadSystem pad_system; /* 0x1E0DB00 */
+
+/* Reads the controller into pad->report and turns its button bits round (a set bit is then a pressed button).
+   Returns 0 when scePadRead had nothing, -1 when the controller type changed, 1 otherwise. */
+static int Pad_Read(PadSlot *pad, int port, int slot) {
+    PadReport report;
+    int old_type;
+
+    old_type = pad->pad_type;
+    if (scePadRead(port, slot, &report) == 0) {
+        return 0;
+    }
+    if (report.status == 0) {
+        pad->pad_type = report.type_and_length >> 4;
+        if (old_type != 0 && pad->pad_type != old_type) {
+            return -1;
+        }
+        pad->report = report;
+        pad->report.held = ~pad->report.held;
+    }
+    return 1;
+}
+
+/* Steps the auto-repeat of the buttons in repeat_mask: report.repeated gets those that went down this frame
+   and those whose repeat came round (after delay frames, then every interval frames). */
+static void Pad_StepRepeat(PadSlot *pad) {
+    int i;
+    u16 bit;
+    PadRepeatKey *key;
+
+    pad->report.repeated = 0;
+    for (i = 0; i < 16; i++) {
+        key = &pad->repeat_keys[i];
+        bit = 1 << i;
+        if (pad->repeat_mask & bit) {
+            if (!(pad->report.held & bit)) {
+                key->fired = 0;
+            } else if (pad->report.pressed & bit) {
+                pad->report.repeated |= bit;
+                key->fired = 1;
+                key->countdown = key->delay;
+            } else if (--key->countdown == 0) {
+                pad->report.repeated |= bit;
+                key->fired = 2;
+                key->countdown = key->interval;
+            }
+        }
+    }
+}
 
 /* Forgets every controller and starts libpad. */
 int Pad_Init(int mode) {
@@ -263,7 +308,7 @@ void Pad_Update(void) {
                     continue;
             }
             old_buttons = pad->report.held;
-            read_result = func_00216DD0(pad, port, slot);
+            read_result = Pad_Read(pad, port, slot);
             if (read_result == 0) {
                 continue;
             }
@@ -271,7 +316,7 @@ void Pad_Update(void) {
                 pad->phase = 0;
             }
             pad->report.pressed = pad->report.held & ~old_buttons;
-            func_00216EA0(pad);
+            Pad_StepRepeat(pad);
             if ((pad->features & PAD_FEATURE_ACTUATORS) && pad->state == 6) {
                 scePadSetActDirect(port, slot, pad->actuators);
             }

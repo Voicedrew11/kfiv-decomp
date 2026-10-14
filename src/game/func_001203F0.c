@@ -8,8 +8,8 @@ void func_0020C300(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void func_0020B8B0(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
-void func_00216B48(void *, void *, void *);
-void func_00216BC0(void *, void *, void *);
+void Matrix_Multiply(void *, void *, void *);
+void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 float atan2f(float, float);
@@ -48,8 +48,8 @@ void func_001203F0(MapObject *object) {
     sceVu0CopyMatrix(object->model->unk80, object->model->unk40);
     part = object->model->parts;
     for (; i < part_count; i++) {
-        func_00216B48((int)matrix, (int *)object->model->unk40, (int)part);
-        func_00216BC0(&world, matrix, &unit);
+        Matrix_Multiply(matrix, object->model->unk40, part);
+        Vector_ApplyMatrix(&world, matrix, &unit);
         Vector_Subtract(&delta, D_004325A0, &world);
         pitch = atan2f(delta.y, sqrtf(delta.x * delta.x + delta.z * delta.z));
         yaw = atan2f(-delta.x, -delta.z);

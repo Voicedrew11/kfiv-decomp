@@ -4,7 +4,7 @@ extern const f32 D_00446FB8[];      /* -0.0f */
 
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void sceVu0Normalize(float *, float *);
 
 /* Tests a point against a triangle: within `reach` of its plane, and its foot on the plane inside
@@ -98,6 +98,6 @@ void func_0020DF38(f32 *corner_a, f32 *corner_b, f32 *corner_c, f32 *point, f32 
     }
     if (weight_c + weight_a <= 1.0f) {
         COLLISION_RESULT->hit = 1;
-        func_00216778(COLLISION_RESULT->point, foot);
+        Vector_Copy(COLLISION_RESULT->point, foot);
     }
 }

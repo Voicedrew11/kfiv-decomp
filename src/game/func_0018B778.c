@@ -5,7 +5,7 @@ extern EntityRangeWeights D_0043EB68;
 int rand(void);
 float sinf(float);
 float cosf(float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 
 /* picks a random point within `range` of `centre`. The nearer half of the range is twice as
    likely while `position` is in the outer half, and the other way round. */
@@ -56,5 +56,5 @@ void func_0018B778(float range, void *point_arg, void *centre, void *position) {
     point[0] = -sinf(angle) * range;
     point[1] = 0.0f;
     point[2] = -cosf(angle) * range;
-    func_00216C48(point, point, centre);
+    Vector_Add(point, point, centre);
 }

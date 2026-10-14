@@ -7,7 +7,7 @@
 void func_001A7110(void *, void *, void *);
 float func_001B0178(void *, void *);
 void func_001C1430(f32, void *, void *);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int rand(void);
 
 /* Starts an effect that aims at the entity its caller's slot picked, or at a random point around it. */
@@ -25,7 +25,7 @@ void func_001A7148(EffectActor *actor, EffectSlot *spawn_slot) {
     if (chosen != NULL) {
         actor->unk6C = (int)chosen;
         motion->scale_per_mille = picked->distance[EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level - 1];
-        func_00216778(&motion->end_position, chosen->model->position);
+        Vector_Copy(&motion->end_position, chosen->model->position);
         func_001A7110(&actor->model->rotation, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
         return;
     }
@@ -36,7 +36,7 @@ void func_001A7148(EffectActor *actor, EffectSlot *spawn_slot) {
     if (*SCRATCH_MATRIX != 0) {
         func_001A7110(&actor->model->rotation, SCRATCH_VECTOR, &actor->model->position);
         motion->scale_per_mille = func_001B0178(SCRATCH_VECTOR, &actor->model->position);
-        func_00216778(&motion->end_position, SCRATCH_VECTOR);
+        Vector_Copy(&motion->end_position, SCRATCH_VECTOR);
     } else {
         motion->ended = 1;
     }

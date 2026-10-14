@@ -7,8 +7,8 @@ extern int rand(void);
 void sceVu0RotMatrixX(Mat, Mat, float);
 void sceVu0RotMatrixY(Mat, Mat, float);
 void sceVu0ApplyMatrix(void *, Mat, void *);
-void func_00216C48(void *, void *, void *);
-void func_00216D20(void *, void *);
+void Vector_Add(void *, void *, void *);
+void Vector_Normalize(void *, void *);
 void Vector_Scale(void *, void *, float);
 
 /* Spawns an effect: a random change of the model's rotation, then a velocity along the rotated radius. */
@@ -30,7 +30,7 @@ void func_001A9C90(EffectActor *effect, EffectSlot *spawn_slot) {
     sceVu0RotMatrixX(rotation_matrix, D_00431AF0, effect->model->rotation.x);
     sceVu0RotMatrixY(rotation_matrix, rotation_matrix, effect->model->rotation.y);
     sceVu0ApplyMatrix(&offset, rotation_matrix, &offset);
-    func_00216C48(&effect->model->position, &effect->model->position, &offset);
-    func_00216D20(&offset, &offset);
+    Vector_Add(&effect->model->position, &effect->model->position, &offset);
+    Vector_Normalize(&offset, &offset);
     Vector_Scale(motion, &offset, -effect->def->speed);
 }

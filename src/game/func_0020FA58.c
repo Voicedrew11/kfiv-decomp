@@ -5,7 +5,7 @@ float sqrtf(float);
 float func_0019B838(float);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-void func_00216C48(void *, void *, void *);
+void Vector_Add(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 
 /* Tests an upright cylinder (`other`) against the part of another one (`base`) that lies within
@@ -54,7 +54,7 @@ void func_0020FA58(f32 *base, f32 *other, f32 radius, f32 height, f32 other_radi
     delta[1] = 0.0f;
     sceVu0Normalize(COLLISION_RESULT->normal, delta);
     Vector_Scale(delta, COLLISION_RESULT->normal, radius);
-    func_00216C48(COLLISION_RESULT->point, base, delta);
+    Vector_Add(COLLISION_RESULT->point, base, delta);
     // match: the height of the hit is one level divided by another, halved; the middle of the two was meant
     if (bottom <= other_bottom && other_top <= top) {
         COLLISION_RESULT->point[1] = other_top / other_bottom * 0.5f;

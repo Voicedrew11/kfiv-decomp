@@ -7,7 +7,7 @@ extern s32 D_004147C0[4];
 extern const f32 D_00446990[];
 
 void Vector_Scale(float *, float *, float);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 int func_001C2D08(void *);
 void func_0020E918(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 u32 func_001124E0(int, u32, u32);
@@ -53,8 +53,8 @@ void func_001C1430(f32 scale, void *position_arg, void *direction) {
                 if (record->unk3C & 0x40000000) {
                     continue;
                 }
-                func_00216778(lowest, record->lowest);
-                func_00216778(highest, record->highest);
+                Vector_Copy(lowest, record->lowest);
+                Vector_Copy(highest, record->highest);
                 if (0.0f < step[0]) {
                     lowest[0] -= step[0];
                 } else {

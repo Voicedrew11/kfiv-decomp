@@ -4,7 +4,7 @@ extern PlayerState D_00413F80;
 extern PlayerState D_00414280;
 extern u32 D_00446ED4;
 
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 void func_001C2758(f32 *, s32, f32, f32);
 s32 func_001C2A38(f32 *, s32, f32, f32);
 void func_001BB360(void);
@@ -23,7 +23,7 @@ void func_001BF350(s32 climb) {
     D_00413F80.unk208 = 0;
     D_00413F80.unk20C = 0;
     if (climb) {
-        func_00216778(old_position, &D_00413F80);
+        Vector_Copy(old_position, &D_00413F80);
         D_00413F80.position.y += 1.0f;
         reach = D_00413F80.unk1AC + 75.0f;
         if (D_00414280.unk208 != 0) {
@@ -45,7 +45,7 @@ void func_001BF350(s32 climb) {
             D_00413F80.unk1AC = 0.0f;
             D_00413F80.unk1C8 &= ~(1L << 34);
         } else {
-            func_00216778(&D_00413F80, old_position);
+            Vector_Copy(&D_00413F80, old_position);
         }
     }
     if (!((s32)(D_00413F80.unk1C8 >> 33) & 1)) {

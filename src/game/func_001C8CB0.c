@@ -5,7 +5,7 @@
 s32 func_001C8F18(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
 int func_001C0E40(f32, void *);
 float func_0019B838(float);
-void func_00216778(void *, void *);
+void Vector_Copy(void *, void *);
 extern const Vector4Arg D_0043F610;
 extern MapLoadState D_0038D610;
 extern s32 D_00446770;
@@ -64,7 +64,7 @@ s32 func_001C8CB0(Entity *entity) {
     if (entity->group_id == D_00446770) {
         offset[0] = offset[1] = offset[2] = offset[3] = 0.0f;
     } else {
-        func_00216778(offset, &D_0038D610.position);
+        Vector_Copy(offset, &D_0038D610.position);
     }
     value = func_001C8F18(entity->group_id, item, priority, position, COLLISION_RESULT->point[1], offset, rotation,
                           (f32 *)&scale, 0xFFFFFFFF);

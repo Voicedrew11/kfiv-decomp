@@ -22,7 +22,7 @@ int sceClose(int);
 int func_00102238(char *, int, int);
 int func_001024B0(int);
 int func_001025C0(int, void *, int);
-void func_00216CF0(void *, void *, void *, void *, void *, float *);
+void Vector_WeightedSum4(void *, void *, void *, void *, void *, float *);
 
 /* The module's own variables are defined where the original has them: the initialised ones in front of the
    function that first uses them (retail keeps them in that order), the others here. */
@@ -2860,7 +2860,7 @@ static void PoolNode_BlendKeys(void *out, void *start, void *end, void *start_ta
     weights[1] = t_cube * -2.0f + 3.0f * t_sq;
     weights[2] = t_cube - 2.0f * t_sq + phase;
     weights[3] = t_cube - t_sq;
-    func_00216CF0(out, start, end, start_tangent, end_tangent, weights);
+    Vector_WeightedSum4(out, start, end, start_tangent, end_tangent, weights);
 }
 
 /* Poses a node of a skeleton at a frame of its animation, into its slot's matrix, then its children and siblings. */
