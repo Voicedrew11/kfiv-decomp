@@ -1,5 +1,7 @@
 /* The behaviour of entity type 53 (Entity.params->unk02, the index into D_003E6E40): its set-up
    function, which the table names, and the handlers that function installs. */
+/* The behaviour of entity type 53 (Entity.params->unk02, the index into D_003E6E40): its set-up
+   function, which the table names, and the handlers that function installs. */
 #include "kf_entity.h"
 #include "common.h"
 #include "kf_map.h"
@@ -69,7 +71,7 @@ static void func_0016C138(Entity *entity);
 static void func_0016C1E0(Entity *entity, s32 unknown);
 static void func_0016C3A0(Entity *entity, s32 unknown);
 static void func_0016C7F0(Entity *entity);
-void func_0016C888(Entity *entity);
+void EntityType53_Init(Entity *entity);
 static void func_0016CC58(Entity *entity);
 static void func_0016CE08(Entity *entity);
 static void func_0016D210(Entity *entity);
@@ -81,6 +83,7 @@ static void func_0016DCC0(Entity *entity);
 static void func_0016DE50(Entity *entity);
 static void func_0016DFD8(Entity *entity);
 
+/* Set-up of a type 53 entity: clears its work area and installs the type's handlers. */
 /* Set-up of a type 53 entity: clears its work area and installs the type's handlers. */
 void EntityType53_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -181,7 +184,7 @@ static void func_0016C1E0(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkC6 == 0 || (entity->unkC6 & 6)) {
-        func_0016C888(entity);
+        EntityType53_Init(entity);
     }
     if (unkE0->unk6A > 0) {
         unkE0->unk6A--;
@@ -313,7 +316,7 @@ static void func_0016C7F0(Entity *entity) {
     func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
 }
 
-void func_0016C888(Entity *entity) {
+void EntityType53_Init(Entity *entity) {
     EntityUnkE0Kind16BF98 *unkE0 = (EntityUnkE0Kind16BF98 *)&entity->unkE0;
     f32 turn = 0.0f;
     f32 step;
@@ -512,7 +515,7 @@ static void func_0016CE08(Entity *entity) {
         }
         break;
     }
-    func_0016C888(entity);
+    EntityType53_Init(entity);
 }
 
 static void func_0016D210(Entity *entity) {
@@ -568,7 +571,7 @@ static void func_0016D210(Entity *entity) {
         }
         break;
     }
-    func_0016C888(entity);
+    EntityType53_Init(entity);
 }
 
 static void func_0016D4D0(Entity *entity) {
@@ -684,7 +687,7 @@ static void func_0016D838(Entity *entity) {
         }
         break;
     }
-    func_0016C888(entity);
+    EntityType53_Init(entity);
 }
 
 static void func_0016D9C0(Entity *entity) {
@@ -808,7 +811,7 @@ static void func_0016DCC0(Entity *entity) {
         }
         break;
     }
-    func_0016C888(entity);
+    EntityType53_Init(entity);
 }
 
 static void func_0016DE50(Entity *entity) {
@@ -847,7 +850,7 @@ static void func_0016DE50(Entity *entity) {
         }
         break;
     }
-    func_0016C888(entity);
+    EntityType53_Init(entity);
 }
 
 static void func_0016DFD8(Entity *entity) {
