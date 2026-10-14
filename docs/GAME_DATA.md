@@ -130,10 +130,11 @@ its values).
 
 ## `chr/cNNNN.chr`: models
 
-The model file `chr/cNNNN.chr` belongs to `chr.prm` record *NNNN*: checked on the records of known
-monsters (0, 2, 11, 57, 85) by viewing the models. Not every record has a file of that number; such
-records (the Widda, record 160, for one) take their model from elsewhere, not yet traced.
-[ToolsForKFIV](https://github.com/TheStolenBattenberg/ToolsForKFIV) shows the models.
+A `chr.prm` record names its model in its first 16 bits: `kf_entity_pool.c` loads
+`chr/c%4.4d.chr` with that number. Most records use the file of their own number; variants share
+another's (records 19 and 152, both Beetles, use `c0011`; the Widda, record 160, uses `c0044`), and
+some scripted records borrow a character's model (record 169 uses Harmurah's, record 170 the Earth
+King's). [ToolsForKFIV](https://github.com/TheStolenBattenberg/ToolsForKFIV) shows the models.
 
 ## `param/chr.prm`: character parameters
 
@@ -178,6 +179,7 @@ by tracing the code or by matching records against what players have measured:
 
 | offset | size | |
 | --- | --- | --- |
+| 0x00 | 2 | model: the number of its `chr/cNNNN.chr` file, 0xFFFF none |
 | 0x02 | 1 | entity type: the index into `D_003E6E40`, `entity->params->unk02`, and so which `kf_enemy_*.c` drives it |
 | 0x0A | 2 | hit points (`Entity_ResetToSpawn` loads `Entity.unk2C` from it) |
 | 0x0E | 2 | experience given on death (`Player_AddExperience`) |
@@ -211,7 +213,7 @@ the guide's. Three of the six differing experience values are the guide's own er
 Dark Succubus, Greater Demon: a factor of ten each) and three are errors in copying it. The guide also
 names one creature the wiki lacks: the Ancient King, record 57 (`kf_enemy_ancient_king.c`), whose
 description matches the record's resistances and its code. Prima's "Beetle" is the segmented creature
-of records 11 and 152, models `c0011` and `c0152`.
+of records 11, 19 and 152, all drawn with model `c0011`.
 
 ## Areas
 
