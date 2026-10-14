@@ -1,71 +1,40 @@
-#include "common.h"
+#include "kf_entity.h"
 
-typedef struct {
-    char pad[0x88];
-    u32 v88;
-} Mid;
+s32 func_00192EB0(Entity *, s32);
+// match: the callee is void, but retail keeps what it leaves in $2
+int func_00194368(EntityModel *, f32);
+int func_00196120(Entity *, void *, s32, void *, f32);
 
-typedef struct {
-    char pad[0xFC];
-    Mid *mid;
-} Owner;
+/* The default animate handler: blends into the current motion or plays it a step on and sets flag
+   bit 34 when it has ended, then turns the head (towards the target while flag bit 9 is set). */
+void EntityAi_Animate(Entity *entity) {
+    f32 limits[4];
+    s32 look_at_target;
+    u32 blend_frames; // match: converted to float as unsigned
+    s64 flags;
+    EntityUnkE0 *unkE0;
 
-typedef struct {
-    u32 w0;
-    char pad[0x42C];
-    s16 s430;
-    s16 s432;
-    s16 s434;
-} Ctl;
-
-typedef struct {
-    Owner *owner;
-    char pad0[0xC - 4];
-    Ctl *ctl;
-    char pad1[0xC6 - 0x10];
-    u16 flags_c6;
-    char pad2[0xD8 - 0xC8];
-    u64 b0 : 14;
-    u64 b14 : 1;
-    u64 b15 : 19;
-    u64 b34 : 1;
-    u64 b35 : 29;
-} Actor;
-
-int func_00192EB0(void *, int);
-int func_00194368(float, void *);
-void func_00196120(float, void *, void *, int, void *);
-
-void func_00182A08(Actor *arg0) {
-    float sp[4];
-    u32 temp_a0;
-    s64 temp_a1;
-    int m;
-    Ctl *c;
-    char *temp_a2;
-
-    temp_a1 = *(s64 *)((char *)arg0 + 0xD8);
-    temp_a2 = (char *)arg0 + 0xE0;
-    if (((int) ((s64) (temp_a1 << 0x12) >> 0x20)) & 1) {
-        if ((arg0->ctl->w0 & 0x6000000) == 0x6000000) {
-            *(s64 *)((char *)arg0 + 0xD8) = temp_a1 & ~0x3800L;
+    flags = entity->flags;
+    unkE0 = &entity->unkE0;
+    if (ENTITY_FLAG_BITS(entity)->bit14) {
+        if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x6000000) {
+            entity->flags = flags & ~0x3800L;
         }
-        temp_a0 = arg0->owner->mid->v88;
-        if (temp_a0 != 0) {
-            arg0->b34 = func_00194368((arg0->flags_c6 & 0x12) ? *(float *)(temp_a2 + 0x40) : 1.0f / (float) temp_a0, arg0->owner);
+        blend_frames = entity->model->unkFC->unk88;
+        if (blend_frames != 0) {
+            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            m = ((int) (*(s64 *)((char *)arg0 + 0xD8) >> 11)) & 7;
-            arg0->b34 = func_00192EB0(arg0, m);
+            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
-        c = arg0->ctl;
-        sp[0] = -c->s430 * 0.017453292f;
-        sp[1] = c->s430 * 0.017453292f;
-        sp[3] = c->s432 * 0.017453292f;
-        sp[2] = -c->s432 * 0.017453292f;
-        if (((int) (*(s64 *)((char *)arg0 + 0xD8) >> 9)) & 1) {
-            func_00196120(12.0f, arg0, temp_a2 + 0x20, ((int) (*(s64 *)((char *)arg0 + 0xD8) >> 9)) & 1, sp);
+        look_at_target = ENTITY_FLAG_BITS(entity)->bit9;
+        limits[1] = entity->params->unk430 * 0.017453292f;
+        limits[0] = -entity->params->unk430 * 0.017453292f;
+        limits[3] = entity->params->unk432 * 0.017453292f;
+        limits[2] = -entity->params->unk432 * 0.017453292f;
+        if (look_at_target) {
+            func_00196120(entity, unkE0->unk20, look_at_target, limits, 12.0f);
         } else {
-            func_00196120(8.0f, arg0, temp_a2 + 0x20, 0, 0);
+            func_00196120(entity, unkE0->unk20, 0, NULL, 8.0f);
         }
     }
 }

@@ -1,17 +1,17 @@
 #include "kf_entity.h"
 
 void func_001958A8(char *, s32);
-void func_001958B8(char *, void (*)(void), int);
+int EntityAi_StartAction(char *, void (*)(void), int);
 void func_00191478(EntityModel *);
 void func_00193378(EntityModel *, s32, s32);
 void func_00216778(void *, void *);
-void func_00182C80(Entity *, s32);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
-void func_00182BD0(char *);
-void func_00183570(Entity *);
-void func_00181038(Entity *);
-void func_001818B8(Entity *);
+void EntityAi_Think(Entity *, s32);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
+void EntityAi_OnHit(char *);
+void EntityAi_Move(Entity *);
+void EntityAi_Dormant(Entity *);
+void EntityAi_Death(Entity *);
 
 extern s32 D_003E6E40[][2];
 
@@ -29,12 +29,12 @@ void func_00182800(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_00182C80;
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk08 = (void (*)(void))func_00182BD0;
-    unkE0->unk18 = (void (*)(void))func_00183570;
-    unkE0->unk10 = (void (*)(void))func_00181038;
-    unkE0->unk14 = (void (*)(void))func_001818B8;
+    unkE0->think = EntityAi_Think;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
+    unkE0->move = (void (*)(void))EntityAi_Move;
+    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
+    unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -46,9 +46,9 @@ void func_00182800(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     }
     if (entity->spawn_info->unk38 & (0x8000L << 43)) {
-        func_001958B8((char *)entity, unkE0->unk10, 1);
+        EntityAi_StartAction((char *)entity, unkE0->dormant, 1);
     } else {
-        func_001958B8((char *)entity, unkE0->unk18, 0);
+        EntityAi_StartAction((char *)entity, unkE0->move, 0);
     }
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);

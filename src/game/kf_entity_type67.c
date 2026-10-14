@@ -9,20 +9,20 @@
 extern MapSlot D_0038CD20[];
 extern s32 D_003E6E40[][2];
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *, void (*)(Entity *), int);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
 void func_00216778(void *, void *);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
-void func_00182BD0(char *);
-void func_00183570(Entity *);
-void func_001818B8(Entity *);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
+void EntityAi_OnHit(char *);
+void EntityAi_Move(Entity *);
+void EntityAi_Death(Entity *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_0018E9C0(void *);
-int func_00182FD8(void *, int);
-void func_00183240(Entity *, s32);
+int EntityAi_ThinkIdle(void *, int);
+void EntityAi_ThinkCombat(Entity *, s32);
 void func_0018D600(char **, int, u32, int);
 int func_00192C98(void *, int, int, u32, int);
 void func_00195898(char *, u8);
@@ -36,12 +36,12 @@ s32 func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_00195588(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
 
-static void func_0016F140(Entity *entity, s32 unknown);
-static void func_0016F348(Entity *entity);
-static void func_0016F5E8(Entity *entity);
-static void func_0016F7B8(Entity *entity);
-static void func_0016F930(Entity *entity);
-static void func_0016FE10(Entity *entity);
+static void EntityType67_Think(Entity *entity, s32 unknown);
+static void EntityType67_Dormant(Entity *entity);
+static void EntityType67_Death(Entity *entity);
+static void EntityType67_DormantHeldAtModelPoint(Entity *entity);
+static void EntityType67_DormantMoveAlongArc(Entity *entity);
+static void EntityType67_DeathFallAndFade(Entity *entity);
 
 /* Set-up of a type 67 entity: clears its work area and installs the type's handlers. */
 void EntityType67_Init(Entity *entity) {
@@ -60,16 +60,16 @@ void EntityType67_Init(Entity *entity) {
         work_area[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_0016F140;
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk08 = (void (*)(void))func_00182BD0;
-    unkE0->unk18 = (void (*)(void))func_00183570;
+    unkE0->think = EntityType67_Think;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
+    unkE0->move = (void (*)(void))EntityAi_Move;
     if (entity->spawn_info->unk40 != 0) {
-        unkE0->unk10 = (void (*)(void))func_0016F7B8;
+        unkE0->dormant = (void (*)(void))EntityType67_DormantHeldAtModelPoint;
     } else {
-        unkE0->unk10 = (void (*)(void))func_0016F348;
+        unkE0->dormant = (void (*)(void))EntityType67_Dormant;
     }
-    unkE0->unk14 = (void (*)(void))func_001818B8;
+    unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -79,9 +79,9 @@ void EntityType67_Init(Entity *entity) {
     entity->flags &= ~0x10000000;
     entity->target = NULL;
     if (ENTITY_FLAG_WORD(entity->spawn_info->unk38) & (0x8000L << 43)) {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
@@ -96,7 +96,13 @@ void EntityType67_Init(Entity *entity) {
     record->unk70 = 1.0f;
 }
 
-static void func_0016F140(Entity *entity, s32 unknown) {
+/* The think handler: as EntityAi_Think without func_00196CC0 and the return to the spawn point;
+   states 1 and 2 both have EntityAi_ThinkCombat. Every 20th frame it starts effect
+   EntityParams.unk43A at model point 0xFF. While work word unk6A counts down
+   (EntityType67_DormantMoveAlongArc sets it to 600) it shrinks the model's scale (EntityModel.unkE0) from
+   the one kept in work floats unk54 to unk5C towards half of it and lowers unk70 and unk74 of the
+   entity's map record; at 0 it starts EntityType67_Death. */
+static void EntityType67_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapSlotUnk10 *record;
     f32 scale;
@@ -109,11 +115,11 @@ static void func_0016F140(Entity *entity, s32 unknown) {
         switch (entity->state) {
         case 1:
         case 2:
-            func_00183240(entity, unknown);
+            EntityAi_ThinkCombat(entity, unknown);
             break;
         case 0:
         default:
-            func_00182FD8(entity, unknown);
+            EntityAi_ThinkIdle(entity, unknown);
             break;
         }
     }
@@ -131,12 +137,15 @@ static void func_0016F140(Entity *entity, s32 unknown) {
         record->unk70 = scale * 0.75f + 0.25f;
         record->unk74 = scale * 0.375f + 0.125f;
         if (unkE0->unk6A <= 0) {
-            func_001958B8(entity, func_0016F5E8, 0);
+            EntityAi_StartAction(entity, EntityType67_Death, 0);
         }
     }
 }
 
-static void func_0016F348(Entity *entity) {
+/* The dormant action (busy bit 0x20) of a spawn whose EntitySpawnInfo.unk40 is 0: as
+   EntityAi_Dormant, with flag bits 11 to 13 at 0 and flag bit 20 set as well while it lasts.
+   EntityType67_DormantMoveAlongArc starts it too. */
+static void EntityType67_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x20;
@@ -184,16 +193,20 @@ static void func_0016F348(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->unk00(entity, 1);
+                unkE0->think(entity, 1);
             } else {
-                func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
         break;
     }
 }
 
-static void func_0016F5E8(Entity *entity) {
+/* A death action (busy bit 0x40) that EntityType67_Think starts when work word unk6A has run out;
+   the death slot holds EntityAi_Death. Animation 16, the fade over 20 frames and the removal, as
+   EntityAi_Death with other flag settings; it frees the entity's effects when EntityParams.unkC6 is
+   neither 0 nor 0xFFFF. */
+static void EntityType67_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
@@ -236,7 +249,11 @@ static void func_0016F5E8(Entity *entity) {
     }
 }
 
-static void func_0016F7B8(Entity *entity) {
+/* The dormant action of a spawn whose EntitySpawnInfo.unk40 is set (busy bit 0x20): holds animation
+   17 and keeps the entity at the point func_0010CAB8 gives for 8 on the model of the entity whose
+   spawn id is EntitySpawnInfo.variant, until work byte unk7A is not 0: above 0 it starts
+   EntityType67_DormantMoveAlongArc, below 0 EntityType67_DeathFallAndFade. */
+static void EntityType67_DormantHeldAtModelPoint(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     Entity *other;
     f32 *point;
@@ -257,11 +274,11 @@ static void func_0016F7B8(Entity *entity) {
         entity->action_step++;
     case 1:
         if (unkE0->unk7A > 0) {
-            func_001958B8(entity, func_0016F930, 1);
+            EntityAi_StartAction(entity, EntityType67_DormantMoveAlongArc, 1);
             return;
         }
         if (unkE0->unk7A < 0) {
-            func_001958B8(entity, func_0016FE10, 1);
+            EntityAi_StartAction(entity, EntityType67_DeathFallAndFade, 1);
             return;
         }
         other = Entity_GetBySpawnId(entity->spawn_info->variant);
@@ -277,7 +294,13 @@ static void func_0016F7B8(Entity *entity) {
     }
 }
 
-static void func_0016F930(Entity *entity) {
+/* A second dormant action (busy bit 0x20), which EntityType67_DormantHeldAtModelPoint starts: animation 18. It
+   turns the entity to Entity.unk68, give or take half of EntityParams.unk434 degrees, and sends it
+   off at 40 degrees with a speed of 24 to 48 by the distance to the player, the y speed growing by
+   EntityParams.unk430 (limit unk432); it checks part 0 of melee record 0 for a hit (func_00195AC0)
+   and starts effect unk43C every third frame. When flag bit 44 is set it puts the model's scale
+   back, sets work word unk6A to 600, goes to state 2 and starts EntityType67_Dormant. */
+static void EntityType67_DormantMoveAlongArc(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 max_angle;
@@ -364,7 +387,7 @@ static void func_0016F930(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_001958B8(entity, func_0016F348, 1);
+            EntityAi_StartAction(entity, EntityType67_Dormant, 1);
             return;
         }
         break;
@@ -378,7 +401,11 @@ static void func_0016F930(Entity *entity) {
     entity->model->unkD0[0] = atan2f(unkE0->unk48, unkE0->unk4C);
 }
 
-static void func_0016FE10(Entity *entity) {
+/* A second death action (busy bit 0x40), which EntityType67_DormantHeldAtModelPoint starts when
+   work byte unk7A is below 0: animation 17; fades the model out over 20 frames while the entity
+   moves down (y grows downward, func_0018A9F0) with a speed that grows by EntityParams.unk430
+   (limit unk432), then frees its effects and removes it. */
+static void EntityType67_DeathFallAndFade(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 = 0x40;

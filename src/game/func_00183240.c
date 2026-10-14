@@ -14,13 +14,16 @@ float func_001957B8(float, float);
 s16 func_00190BE0(Entity *);
 int func_0018EAC0(void *, void *);
 s16 func_00190F90(float, void *, int);
-void func_001958B8(char *, void (*)(void), int);
-void func_00181AE0(Entity *);
-void func_00181C60(Entity *);
-void func_00182240(Entity *);
-void func_00181E48(Entity *);
+int EntityAi_StartAction(char *, void (*)(void), int);
+void EntityAi_Dodge(Entity *);
+void EntityAi_Guard(Entity *);
+void EntityAi_RangedAttack(Entity *);
+void EntityAi_MeleeAttack(Entity *);
 
-void func_00183240(Entity *entity, s32 unknown) {
+/* The think function of state 2 (the player is noticed): guards or dodges the player's swing, else
+   picks among attacking (when an attack reaches), closing in and waiting, and gives the movement
+   command for it. */
+void EntityAi_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 angle;
@@ -33,11 +36,11 @@ void func_00183240(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
     if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
-        func_001958B8((char *)entity, (void (*)(void))func_00181C60, 1);
+        EntityAi_StartAction((char *)entity, (void (*)(void))EntityAi_Guard, 1);
         return;
     }
     if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
-        func_001958B8((char *)entity, (void (*)(void))func_00181AE0, 1);
+        EntityAi_StartAction((char *)entity, (void (*)(void))EntityAi_Dodge, 1);
         return;
     }
     side = func_0018FD50(entity, 0);
@@ -53,9 +56,9 @@ void func_00183240(Entity *entity, s32 unknown) {
         switch (entity->unkCD) {
         case 0:
             if (func_0018F030((char *)entity)) {
-                func_001958B8((char *)entity, (void (*)(void))func_00182240, unknown);
+                EntityAi_StartAction((char *)entity, (void (*)(void))EntityAi_RangedAttack, unknown);
             } else {
-                func_001958B8((char *)entity, (void (*)(void))func_00181E48, unknown);
+                EntityAi_StartAction((char *)entity, (void (*)(void))EntityAi_MeleeAttack, unknown);
             }
             return;
         case 1:
@@ -101,5 +104,5 @@ void func_00183240(Entity *entity, s32 unknown) {
         }
     }
 done:
-    func_001958B8((char *)entity, unkE0->unk18, unknown);
+    EntityAi_StartAction((char *)entity, unkE0->move, unknown);
 }

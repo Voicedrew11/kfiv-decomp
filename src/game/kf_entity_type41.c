@@ -5,19 +5,19 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *entity, void (*handler)(Entity *), int run_now);
+int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
 void func_00216778(void *, void *);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
-void func_00182BD0(char *);
-void func_00183570(Entity *);
-void func_00181038(Entity *);
-void func_001818B8(Entity *);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
+void EntityAi_OnHit(char *);
+void EntityAi_Move(Entity *);
+void EntityAi_Dormant(Entity *);
+void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-int func_00182DE0(void *, int);
+int EntityAi_ThinkReturn(void *, int);
 void func_0018E9C0(Entity *);
 void func_00196870(Entity *, int);
 void func_00196CC0(Entity *);
@@ -33,17 +33,17 @@ float func_001957B8(float, float);
 int func_00190BE0(Entity *);
 int func_0018EAC0(void *entity_arg, void *heading_out);
 s32 func_00190F90(Entity *, s32, f32);
-void func_00181AE0(Entity *);
-void func_00181C60(Entity *);
-void func_00181E48(Entity *);
-void func_00182240(Entity *);
+void EntityAi_Dodge(Entity *);
+void EntityAi_Guard(Entity *);
+void EntityAi_MeleeAttack(Entity *);
+void EntityAi_RangedAttack(Entity *);
 int func_00192C98(void *, int, int, u32, int);
 
-static void func_00141518(Entity *entity, s32 unknown);
-static void func_001416B8(Entity *entity, s32 unknown);
-static void func_00141A18(Entity *entity, s32 unknown);
-static void func_00141AF0(Entity *entity, s32 unknown);
-static void func_00141C38(Entity *entity);
+static void EntityType41_Think(Entity *entity, s32 unknown);
+static void EntityType41_ThinkCombat(Entity *entity, s32 unknown);
+static void EntityType41_ThinkIdle(Entity *entity, s32 unknown);
+static void EntityType41_ThinkPursue(Entity *entity, s32 unknown);
+static void EntityType41_PlayAnim0ToFrame80(Entity *entity);
 
 /* Set-up of a type 41 entity: clears its work area and installs the type's handlers. */
 void EntityType41_Init(Entity *entity) {
@@ -60,12 +60,12 @@ void EntityType41_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_00141518;
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk08 = (void (*)(void))func_00182BD0;
-    unkE0->unk18 = (void (*)(void))func_00183570;
-    unkE0->unk10 = (void (*)(void))func_00181038;
-    unkE0->unk14 = (void (*)(void))func_001818B8;
+    unkE0->think = EntityType41_Think;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
+    unkE0->move = (void (*)(void))EntityAi_Move;
+    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
+    unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -75,9 +75,9 @@ void EntityType41_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->unk38 & (0x8000L << 43)) {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
@@ -89,7 +89,9 @@ void EntityType41_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_00141518(Entity *entity, s32 unknown) {
+/* The think handler: as EntityAi_Think with the type's own functions for the three states. Counts
+   the frames with flag bit 41 set in work byte unk7A and at 10 starts EntityType41_PlayAnim0ToFrame80. */
+static void EntityType41_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
@@ -109,29 +111,32 @@ static void func_00141518(Entity *entity, s32 unknown) {
         entity->unkA0 = 0;
         ENTITY_UNK5C(entity)->as_s32 = 0;
         unkE0->unk7A = 0;
-        func_001958B8(entity, func_00141C38, unknown);
+        EntityAi_StartAction(entity, EntityType41_PlayAnim0ToFrame80, unknown);
         return;
     } else if (ENTITY_FLAG_BITS(entity)->bit53) {
-        func_00182DE0(entity, unknown);
+        EntityAi_ThinkReturn(entity, unknown);
     } else {
         switch (entity->state) {
         case 0:
-            func_00141A18(entity, unknown);
+            EntityType41_ThinkIdle(entity, unknown);
             break;
         case 1:
-            func_00141AF0(entity, unknown);
+            EntityType41_ThinkPursue(entity, unknown);
             break;
         case 2:
-            func_001416B8(entity, unknown);
+            EntityType41_ThinkCombat(entity, unknown);
             break;
         default:
-            func_00141A18(entity, unknown);
+            EntityType41_ThinkIdle(entity, unknown);
             break;
         }
     }
 }
 
-static void func_001416B8(Entity *entity, s32 unknown) {
+/* The think function of state 2: as EntityAi_ThinkCombat, but when it would start closing in it
+   starts EntityType41_PlayAnim0ToFrame80 instead with a chance of EntityParams.unk434 in 100, and closing
+   in never runs. */
+static void EntityType41_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 angle;
@@ -144,11 +149,11 @@ static void func_001416B8(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
     if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
-        func_001958B8(entity, func_00181C60, 1);
+        EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
     if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
-        func_001958B8(entity, func_00181AE0, 1);
+        EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
     side = func_0018FD50(entity, 0);
@@ -163,9 +168,9 @@ static void func_001416B8(Entity *entity, s32 unknown) {
         switch (entity->unkCD) {
         case 0:
             if (func_0018F030((char *)entity)) {
-                func_001958B8(entity, func_00182240, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
-                func_001958B8(entity, func_00181E48, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
             return;
         case 1:
@@ -174,7 +179,7 @@ static void func_001416B8(Entity *entity, s32 unknown) {
                 entity->unkC8 = 0;
                 entity->unkA0 = 0;
                 entity->target = NULL;
-                func_001958B8(entity, func_00141C38, unknown);
+                EntityAi_StartAction(entity, EntityType41_PlayAnim0ToFrame80, unknown);
                 unkE0->unk7A = 0;
                 return;
             }
@@ -217,10 +222,12 @@ static void func_001416B8(Entity *entity, s32 unknown) {
         }
     }
 done:
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-static void func_00141A18(Entity *entity, s32 unknown) {
+/* The think function of state 0: as EntityAi_ThinkIdle, but it picks no point to go to: it only
+   gives the command towards the target it has. */
+static void EntityType41_ThinkIdle(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[2];
     s32 turn;
@@ -241,11 +248,13 @@ static void func_00141A18(Entity *entity, s32 unknown) {
     } else {
         entity->unkC8 = func_00190F90(entity, 0, 50.0f);
     }
-    handler = unkE0->unk18;
-    func_001958B8(entity, (void (*)(Entity *))handler, unknown);
+    handler = unkE0->move;
+    EntityAi_StartAction(entity, (void (*)(Entity *))handler, unknown);
 }
 
-static void func_00141AF0(Entity *entity, s32 unknown) {
+/* The think function of state 1: as EntityAi_ThinkPursue, but each time the timer Entity.unkA0 is
+   at 0 it starts EntityType41_PlayAnim0ToFrame80 with a chance of EntityParams.unk434 in 100. */
+static void EntityType41_ThinkPursue(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     s32 turn;
@@ -263,7 +272,7 @@ static void func_00141AF0(Entity *entity, s32 unknown) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             entity->target = NULL;
-            func_001958B8(entity, func_00141C38, unknown);
+            EntityAi_StartAction(entity, EntityType41_PlayAnim0ToFrame80, unknown);
             unkE0->unk7A = 0;
             return;
         }
@@ -277,10 +286,12 @@ static void func_00141AF0(Entity *entity, s32 unknown) {
     } else {
         entity->unkC8 = func_00190F90(entity, 0, 50.0f);
     }
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-static void func_00141C38(Entity *entity) {
+/* An action (busy bit 0x1000): stands in animation 0 with flag bit 9 clear until the animation is
+   past frame 80, then thinks. The think functions start it, and clear work byte unk7A. */
+static void EntityType41_PlayAnim0ToFrame80(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x1000;
@@ -303,9 +314,9 @@ static void func_00141C38(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->unk00(entity, 1);
+                unkE0->think(entity, 1);
             } else {
-                func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
         break;

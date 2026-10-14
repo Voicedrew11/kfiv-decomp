@@ -1,32 +1,23 @@
-#include "common.h"
+#include "kf_entity.h"
 
 float func_001957B8(float, float);
-void func_00195898(char *, int);
-void func_001958B8(char *, void (*)(void), int);
-void func_00184550(void);
+void func_00195898(char *, u8);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
+void func_00184550(Entity *);
 
-typedef struct A {
-    struct A *p0;
-    char pad[0xD4];
-    u64 b0 : 9;
-    u64 b9 : 1;
-    u64 b10 : 54;
-} A;
+void func_00184240(Entity *entity, s32 run_now) {
+    EntityUnkE0 *unkE0 = &entity->unkE0;
+    f32 angle;
+    f32 limit;
 
-void func_00184240(char *arg0, int arg1) {
-    char *s;
-    float a;
-    float g;
-
-    s = arg0 + 0xE0;
-    a = func_001957B8(*(float *)(*(char **)arg0 + 0xD4), *(float *)(*(char **)(arg0 + 0x10) + 0x14));
-    g = (float)*(s16 *)(*(char **)(arg0 + 0xC) + 0x438) * 0.017453292f;
-    if (0.0f <= a ? g < a : g < -a) {
-        func_001958B8(arg0, func_00184550, arg1);
+    angle = func_001957B8(entity->model->unkD0[1], entity->spawn_info->unk14);
+    limit = (f32)ENTITY_CONTROLLER(entity)->unk438 * 0.017453292f;
+    if (0.0f <= angle ? limit < angle : limit < -angle) {
+        EntityAi_StartAction(entity, func_00184550, run_now);
     } else {
-        *(s16 *)(s + 0x68) = 0;
-        ((A *)arg0)->b9 = 0;
-        func_00195898(arg0, 0);
-        func_001958B8(arg0, *(void (**)(void))(s + 0x18), arg1);
+        unkE0->unk68 = 0;
+        ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+        func_00195898((char *)entity, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, run_now);
     }
 }

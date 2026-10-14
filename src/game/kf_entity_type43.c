@@ -4,24 +4,24 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *, void (*)(Entity *), int);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
 void func_00216778(void *, void *);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
-void func_00182BD0(char *);
-void func_00183570(Entity *);
-void func_00181038(Entity *);
-void func_001818B8(Entity *);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
+void EntityAi_OnHit(char *);
+void EntityAi_Move(Entity *);
+void EntityAi_Dormant(Entity *);
+void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
 void func_0018E9C0(void *);
-int func_00182DE0(void *, int);
-int func_00182FD8(void *, int);
-void func_00183150(Entity *, s32);
+int EntityAi_ThinkReturn(void *, int);
+int EntityAi_ThinkIdle(void *, int);
+void EntityAi_ThinkPursue(Entity *, s32);
 extern float D_00413F80[];
 int rand(void);
 s32 func_0018ED98(Entity *, f32, f32);
@@ -30,8 +30,8 @@ s32 func_0018FD50(Entity *, s32);
 void func_00190B88(Entity *, s32);
 int func_0018EAC0(void *, void *);
 s32 func_00190F90(Entity *, s32, f32);
-void func_00181AE0(Entity *);
-void func_00181C60(Entity *);
+void EntityAi_Dodge(Entity *);
+void EntityAi_Guard(Entity *);
 int func_00192C98(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
 void func_0019A290(Entity *, s32);
@@ -43,10 +43,10 @@ float func_00194FB8(float);
 void func_001B2C48(void *);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
 
-static void func_001749F0(Entity *entity, s32 unknown);
-static void func_00174B68(Entity *entity, s32 unknown);
-static void func_00174DF0(Entity *entity);
-static s32 func_00175110(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame, s32 current_frame, f32 angle);
+static void EntityType43_Think(Entity *entity, s32 unknown);
+static void EntityType43_ThinkCombat(Entity *entity, s32 unknown);
+static void EntityType43_MeleeAttack0(Entity *entity);
+static s32 EntityType43_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame, s32 current_frame, f32 angle);
 
 /* Set-up of a type 43 entity: clears its work area and installs the type's handlers. */
 void EntityType43_Init(Entity *entity) {
@@ -63,12 +63,12 @@ void EntityType43_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_001749F0;
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk08 = (void (*)(void))func_00182BD0;
-    unkE0->unk18 = (void (*)(void))func_00183570;
-    unkE0->unk10 = (void (*)(void))func_00181038;
-    unkE0->unk14 = (void (*)(void))func_001818B8;
+    unkE0->think = EntityType43_Think;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
+    unkE0->move = (void (*)(void))EntityAi_Move;
+    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
+    unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -78,9 +78,9 @@ void EntityType43_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->unk38 & (0x8000L << 43)) {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
@@ -92,7 +92,9 @@ void EntityType43_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_001749F0(Entity *entity, s32 unknown) {
+/* The think handler: as EntityAi_Think, with EntityType43_ThinkCombat for state 2. Counts down work
+   word unk68, the pause before the next EntityType43_MeleeAttack0. */
+static void EntityType43_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
@@ -107,24 +109,27 @@ static void func_001749F0(Entity *entity, s32 unknown) {
     func_00196CC0((char *)entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
-        func_00182DE0(entity, unknown);
+        EntityAi_ThinkReturn(entity, unknown);
         return;
     }
     switch (entity->state) {
     case 0:
-        func_00182FD8(entity, unknown);
+        EntityAi_ThinkIdle(entity, unknown);
         return;
     case 1:
-        func_00183150(entity, unknown);
+        EntityAi_ThinkPursue(entity, unknown);
         return;
     case 2:
-        func_00174B68(entity, unknown);
+        EntityType43_ThinkCombat(entity, unknown);
         return;
     }
-    func_00182FD8(entity, unknown);
+    EntityAi_ThinkIdle(entity, unknown);
 }
 
-static void func_00174B68(Entity *entity, s32 unknown) {
+/* The think function of state 2: as EntityAi_ThinkCombat, but its one attack is
+   EntityType43_MeleeAttack0, started only when the pause in work word unk68 is over (which it then
+   sets to EntityParams.unk430); closing in never runs. */
+static void EntityType43_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 range;
@@ -140,11 +145,11 @@ static void func_00174B68(Entity *entity, s32 unknown) {
     range = 300.0f;
     angle = 0.5235988f;
     if (func_0018ED98(entity, range, angle)) {
-        func_001958B8(entity, func_00181C60, 1);
+        EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
     if (func_0018EEE0(entity, range, angle)) {
-        func_001958B8(entity, func_00181AE0, 1);
+        EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
     next_action = func_0018FD50(entity, 0);
@@ -161,7 +166,7 @@ static void func_00174B68(Entity *entity, s32 unknown) {
         case 0:
             if (unkE0->unk68 == 0) {
                 unkE0->unk68 = (u16)entity->params->unk430;
-                func_001958B8(entity, func_00174DF0, unknown);
+                EntityAi_StartAction(entity, EntityType43_MeleeAttack0, unknown);
                 return;
             }
             unkE0->unk78 = -1;
@@ -192,10 +197,12 @@ static void func_00174B68(Entity *entity, s32 unknown) {
             }
         }
     }
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-static void func_00174DF0(Entity *entity) {
+/* The melee attack with record 0 (busy bit 1): animation 20, as EntityAi_MeleeAttack, but only part
+   0 is checked, by EntityType43_CheckPartHitInPlayerView. */
+static void EntityType43_MeleeAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk240 *unk240 = &entity->params->unk240[0];
     s32 elapsed;
@@ -235,7 +242,7 @@ static void func_00174DF0(Entity *entity) {
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00175110(entity, unk240, 0, elapsed, entity->model->unkFC->unk82, 0.0f);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityType43_CheckPartHitInPlayerView(entity, unk240, 0, elapsed, entity->model->unkFC->unk82, 0.0f);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;
@@ -248,16 +255,21 @@ static void func_00174DF0(Entity *entity) {
             entity->unkA0 = 0;
             func_0019A290(entity, unk240->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->unk00(entity, 1);
+                unkE0->think(entity, 1);
             } else {
-                func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
         break;
     }
 }
 
-static s32 func_00175110(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame, s32 current_frame, f32 angle) {
+/* Helper of EntityType43_MeleeAttack0: the hit check of func_00195B68 and func_00195BD8 for one
+   part of the record on the part's frames, written out, with conditions of its own: the entity must
+   be within EntityParams.unk432 degrees of the player's facing and unk434 degrees of the player's
+   pitch, and Entity.unk68 within the angle of part 0 of its heading. It then calls func_001B2C48
+   before the check (func_001B1470). */
+static s32 EntityType43_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame, s32 current_frame, f32 angle) {
     Unk1B1470Request request;
     Unk1B1470Extra extra;
     f32 yaw;

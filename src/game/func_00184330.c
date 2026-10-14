@@ -6,7 +6,7 @@ int func_00192C98(void *, int, int, u32, int);
 float func_001957B8(float, float);
 float func_00195388(float *, float, float);
 int func_0019A3F0(void *, int);
-void func_001958B8(char *, void (*)(void), int);
+int EntityAi_StartAction(char *, void (*)(void), int);
 
 /* turn on the spot towards Entity.unk68 */
 void func_00184330(Entity *entity) {
@@ -49,9 +49,9 @@ void func_00184330(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.unk00(entity, 1);
+                entity->unkE0.think(entity, 1);
             } else {
-                func_001958B8((char *)entity, unkE0->unk18, 1);
+                EntityAi_StartAction((char *)entity, unkE0->move, 1);
             }
         }
         break;

@@ -1,7 +1,7 @@
 #include "kf_entity.h"
 
 void func_001958A8(char *, s32);
-void func_001958B8(char *, void (*)(void), int);
+int EntityAi_StartAction(char *, void (*)(void), int);
 void func_00191478(EntityModel *);
 void func_00193378(EntityModel *, s32, s32);
 void func_00216778(void *, void *);
@@ -10,7 +10,7 @@ void func_00185390(void *, int);
 void func_00183C78(void);
 void func_00185300(Entity *);
 void func_00184C78(Entity *);
-void func_00181038(Entity *);
+void EntityAi_Dormant(Entity *);
 void func_001849E0(Entity *);
 
 extern s32 D_003E6E40[][2];
@@ -31,12 +31,12 @@ void func_001850C8(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = (void (*)(Entity *, s32))func_00185390;
-    unkE0->unk04 = func_00183C78;
-    unkE0->unk08 = (void (*)(void))func_00185300;
-    unkE0->unk18 = (void (*)(void))func_00184C78;
-    unkE0->unk10 = (void (*)(void))func_00181038;
-    unkE0->unk14 = (void (*)(void))func_001849E0;
+    unkE0->think = (void (*)(Entity *, s32))func_00185390;
+    unkE0->animate = func_00183C78;
+    unkE0->on_hit = (void (*)(void))func_00185300;
+    unkE0->move = (void (*)(void))func_00184C78;
+    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
+    unkE0->death = (void (*)(void))func_001849E0;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -48,9 +48,9 @@ void func_001850C8(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     }
     if (entity->spawn_info->unk38 & (0x8000L << 43)) {
-        func_001958B8((char *)entity, unkE0->unk10, 1);
+        EntityAi_StartAction((char *)entity, unkE0->dormant, 1);
     } else {
-        func_001958B8((char *)entity, unkE0->unk18, 0);
+        EntityAi_StartAction((char *)entity, unkE0->move, 0);
     }
     if (part != NULL) {
         func_00216778(unkE0->unk20, part->unk50);

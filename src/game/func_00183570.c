@@ -16,7 +16,7 @@ float func_00199E68(Entity *, float);
 int func_00192C98(void *, int, int, u32, int);
 
 /* default movement: turn and move as the command bits in Entity.unkC8 say, and pick the animation to go with it */
-void func_00183570(Entity *entity) {
+void EntityAi_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 *vector;
     f32 turn;

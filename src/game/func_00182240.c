@@ -4,9 +4,12 @@ int func_00192C98(void *, int, int, u32, int);
 int func_00199EB8(void *, void *, float);
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void func_0019A290(Entity *, s32);
-void func_001958B8(char *, void (*)(void), int);
+int EntityAi_StartAction(char *, void (*)(void), int);
 
-void func_00182240(Entity *entity) {
+/* The default ranged attack (busy bit 1): plays animation 23 + n for ranged record n (flag bits
+   58-59, EntityParams.unk3D8), turns to the player during the record's first frames and launches
+   its shots on their frames. */
+void EntityAi_RangedAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
@@ -49,9 +52,9 @@ void func_00182240(Entity *entity) {
             entity->unkA0 = 0;
             func_0019A290(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->unk00(entity, 1);
+                unkE0->think(entity, 1);
             } else {
-                func_001958B8((char *)entity, unkE0->unk18, 1);
+                EntityAi_StartAction((char *)entity, unkE0->move, 1);
             }
         }
         break;

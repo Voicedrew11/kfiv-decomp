@@ -5,11 +5,11 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int func_00193378(EntityModel *, s32, s32);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
 extern s32 D_003E6E40[][2];
 
-static void func_00176CD8(void);
+static void EntityType72_Think(void);
 
 /* Set-up of a type 72 entity: clears its work area and installs the type's handlers. */
 void EntityType72_Init(Entity *entity) {
@@ -23,12 +23,12 @@ void EntityType72_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = (void (*)(Entity *, s32))func_00176CD8;
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk08 = NULL;
-    unkE0->unk18 = NULL;
-    unkE0->unk10 = NULL;
-    unkE0->unk14 = NULL;
+    unkE0->think = (void (*)(Entity *, s32))EntityType72_Think;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->on_hit = NULL;
+    unkE0->move = NULL;
+    unkE0->dormant = NULL;
+    unkE0->death = NULL;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
@@ -38,5 +38,6 @@ void EntityType72_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_00176CD8(void) {
+/* The think handler: empty. It takes no arguments. */
+static void EntityType72_Think(void) {
 }

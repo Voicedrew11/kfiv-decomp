@@ -4,7 +4,7 @@
 #include "common.h"
 
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *, void (*)(Entity *), int);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
 void func_00216778(void *, void *);
@@ -16,8 +16,8 @@ float func_00194FB8(float);
 // match: the definition names only the three integer arguments; the floats go on to the handler it calls in their registers
 void func_001A0CD0(s32, s32, s32, f32, f32, f32);
 
-static void func_00154250(Entity *entity);
-static void func_001542B0(Entity *entity);
+static void EntityType38_Animate(Entity *entity);
+static void EntityType38_Think(Entity *entity);
 
 /* Set-up of a type 38 entity: clears its work area and installs the type's handlers. */
 void EntityType38_Init(Entity *entity) {
@@ -29,12 +29,12 @@ void EntityType38_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = (void (*)(Entity *, s32))func_001542B0;
-    unkE0->unk04 = (void (*)(void))func_00154250;
-    unkE0->unk08 = NULL;
-    unkE0->unk18 = NULL;
-    unkE0->unk10 = NULL;
-    unkE0->unk14 = NULL;
+    unkE0->think = (void (*)(Entity *, s32))EntityType38_Think;
+    unkE0->animate = (void (*)(void))EntityType38_Animate;
+    unkE0->on_hit = NULL;
+    unkE0->move = NULL;
+    unkE0->dormant = NULL;
+    unkE0->death = NULL;
     for (i = 3; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -47,9 +47,9 @@ void EntityType38_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit16 = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
@@ -61,11 +61,18 @@ void EntityType38_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_00154250(Entity *entity) {
+/* The animate handler: plays the motion a step on (func_00192EB0) and sets flag bit 34 when it has
+   ended; no blend and no head turn. */
+static void EntityType38_Animate(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, ENTITY_FLAG_BITS(entity)->bits11);
 }
 
-static void func_001542B0(Entity *entity) {
+/* The think handler (it takes the entity only): no states and no actions. In a frame with flag bit
+   43 set and the timer Entity.unkA0 at 0 it sets flag bit 29, calls func_001A0CD0 with
+   EntityParams.unk432, unk430 and unk42E, Entity.unkD2, Entity.unk60 and the angle of the entity
+   off the player's facing, and sets the timer to EntityParams.unk434; otherwise flag bit 29 is
+   clear. It always clears flag bit 43. */
+static void EntityType38_Think(Entity *entity) {
     u64 flags;
     f32 angle;
 

@@ -7,12 +7,12 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *entity, void (*handler)(Entity *), int run_now);
+int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32); // match: an int result keeps $2 busy after the call
 void func_00216778(void *, void *);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
 extern s32 D_003E6E40[][2];
 extern char D_00349690[0x2000];
 extern MapSlot D_0038CD20[];
@@ -21,15 +21,15 @@ extern EntityFrameTable D_0043EAD8;
 int func_00192C98(void *, int, int, u32, int);
 int func_002109C8(int, int);
 void func_001B57A0(u8, u8, u8);
-void func_00182BD0(char *);
-void func_00183570(Entity *);
+void EntityAi_OnHit(char *);
+void EntityAi_Move(Entity *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
 void func_0018E9C0(void *);
-int func_00182DE0(void *, int);
-int func_00182FD8(void *, int);
-void func_00183150(Entity *, s32);
+int EntityAi_ThinkReturn(void *, int);
+int EntityAi_ThinkIdle(void *, int);
+void EntityAi_ThinkPursue(Entity *, s32);
 extern float D_00413F80[];
 int rand(void);
 s32 func_0018ED98(Entity *, f32, f32);
@@ -41,28 +41,28 @@ int func_0018EAC0(void *, void *);
 float func_001957B8(float, float);
 int func_00190BE0(Entity *);
 s32 func_00190F90(Entity *, s32, f32);
-void func_00181AE0(Entity *);
-void func_00181C60(Entity *);
-void func_00181E48(Entity *);
-void func_00182240(Entity *);
+void EntityAi_Dodge(Entity *);
+void EntityAi_Guard(Entity *);
+void EntityAi_MeleeAttack(Entity *);
+void EntityAi_RangedAttack(Entity *);
 void func_0018DCD8(Entity *);
 void func_0018DC40(char *);
 s32 func_00197078(Entity *);
 float func_00194F80(void *, void *);
 
-static void func_0017A158(Entity *entity, int invoke_now);
-static void func_0017A1E8(Entity *entity, s32 unknown);
-static void func_0017A260(Entity *entity);
-static void func_0017A4F8(Entity *entity);
+static void EntityType77_ThinkStayInPlace(Entity *entity, int invoke_now);
+static void EntityType77_Think(Entity *entity, s32 unknown);
+static void EntityType77_StartScriptAndRumble(Entity *entity);
+static void EntityType77_Move(Entity *entity);
 static void func_0017A540(Entity *entity);
-static void func_0017A738(Entity *entity, s32 unknown);
+static void EntityType77_ThinkByState(Entity *entity, s32 unknown);
 static void func_0017A880(Entity *entity, s32 unknown);
-static void func_0017ABC0(Entity *entity);
-static void func_0017AE10(Entity *entity);
-static void func_0017AF88(Entity *entity, s32 unknown);
-static void func_0017B118(Entity *entity, s32 unknown);
-static void func_0017B380(Entity *entity, s32 unknown);
-static void func_0017B510(Entity *entity, s32 unknown);
+static void EntityType77_Death(Entity *entity);
+static void EntityType77_SignalMapObject(Entity *entity);
+static void EntityType77_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown);
+static void EntityType77_WalkToMapObjectPosX(Entity *entity, s32 unknown);
+static void EntityType77_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown);
+static void EntityType77_WalkToMapObjectNegX(Entity *entity, s32 unknown);
 
 /* Set-up of a type 77 entity: clears its work area and installs the type's handlers. */
 void EntityType77_Init(Entity *entity) {
@@ -81,19 +81,19 @@ void EntityType77_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk18 = (void (*)(void))func_0017A4F8;
-    unkE0->unk08 = NULL;
-    unkE0->unk10 = NULL;
-    unkE0->unk14 = NULL;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->move = (void (*)(void))EntityType77_Move;
+    unkE0->on_hit = NULL;
+    unkE0->dormant = NULL;
+    unkE0->death = NULL;
     index = entity->params->unk432;
     index += entity->params->unk430 * 64;
     if (((u8 *)D_00349690)[index] != 0) {
         unkE0->unk7A = 1;
-        unkE0->unk00 = func_0017A158;
+        unkE0->think = EntityType77_ThinkStayInPlace;
     } else {
         unkE0->unk7A = 0;
-        unkE0->unk00 = func_0017A1E8;
+        unkE0->think = EntityType77_Think;
     }
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
@@ -103,7 +103,7 @@ void EntityType77_Init(Entity *entity) {
     }
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
     }
@@ -120,8 +120,12 @@ void EntityType77_Init(Entity *entity) {
     work->unk50 = -1430.0f;
 }
 
-/* Copy the actor position to its model, relative to the map origin when on another map. */
-static void func_0017A158(Entity *entity, int invoke_now) {
+/* The think handler the set-up function installs when the byte of D_00349690 that
+   EntityParams.unk430 and unk432 index is set, and EntityType77_StartScriptAndRumble when it ends: copies
+   the position in work floats unk48 to unk50 to the model, relative to the map origin
+   EntityParams.unk43A names when the entity is on another map than D_00446770, sets the heading to
+   0 and starts the move action. */
+static void EntityType77_ThinkStayInPlace(Entity *entity, int invoke_now) {
     EntityUnkE0 *sub;
     ModelInstance *model;
     MapSlot *slot;
@@ -146,10 +150,13 @@ static void func_0017A158(Entity *entity, int invoke_now) {
         model->position.z = z - origin->z;
     }
     model->rotation.y = 0.0f;
-    func_001958B8(entity, (void (*)(Entity *))sub->unk18, invoke_now);
+    EntityAi_StartAction(entity, (void (*)(Entity *))sub->move, invoke_now);
 }
 
-static void func_0017A1E8(Entity *entity, s32 unknown) {
+/* The think handler (the set-up function installs it while that byte of D_00349690 is clear): while
+   the entity is not busy it starts EntityType77_StartScriptAndRumble once the byte is set, and the move
+   action until then. */
+static void EntityType77_Think(Entity *entity, s32 unknown) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
     if (entity->unkC6 == 0) {
@@ -157,14 +164,20 @@ static void func_0017A1E8(Entity *entity, s32 unknown) {
 
         index += entity->params->unk430 * 64;
         if (((u8 *)D_00349690)[index] != 0) {
-            func_001958B8(entity, func_0017A260, unknown);
+            EntityAi_StartAction(entity, EntityType77_StartScriptAndRumble, unknown);
             return;
         }
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
     }
 }
 
-static void func_0017A260(Entity *entity) {
+/* An action (busy bit 0x2000) that EntityType77_Think starts: plays animation 17 to its end. Past
+   frame EntityParams.unk434, on the map D_00446770, it starts script EntityParams.unk436
+   (func_002109C8); after that, on the four frames of D_0043EAD8 and on frame 440, it asks for a
+   controller rumble (func_001B57A0) with a strength that falls off with the player's distance up to
+   3000. At the end it keeps the model's position in work floats unk48 to unk50, puts
+   EntityType77_ThinkStayInPlace in the think slot and calls it. */
+static void EntityType77_StartScriptAndRumble(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
     EntityFrameTable shake_frames = D_0043EAD8;
     u32 i;
@@ -209,15 +222,17 @@ static void func_0017A260(Entity *entity) {
             unkE0->unk48 = entity->model->position[0];
             unkE0->unk4C = entity->model->position[1];
             unkE0->unk50 = entity->model->position[2];
-            unkE0->unk00 = func_0017A158;
+            unkE0->think = EntityType77_ThinkStayInPlace;
             unkE0->unk7A = 1;
-            unkE0->unk00(entity, 1);
+            unkE0->think(entity, 1);
         }
         break;
     }
 }
 
-static void func_0017A4F8(Entity *entity) {
+/* The move handler: this type stays where it is; keeps animation 0, and the motion never moves the
+   entity. */
+static void EntityType77_Move(Entity *entity) {
     func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
 }
@@ -236,17 +251,17 @@ static void func_0017A540(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk08 = (void (*)(void))func_00182BD0;
-    unkE0->unk18 = (void (*)(void))func_00183570;
-    unkE0->unk14 = (void (*)(void))func_0017ABC0;
-    unkE0->unk10 = NULL;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
+    unkE0->move = (void (*)(void))EntityAi_Move;
+    unkE0->death = (void (*)(void))EntityType77_Death;
+    unkE0->dormant = NULL;
     if (entity->spawn_info->variant == 1) {
-        unkE0->unk00 = func_0017AF88;
+        unkE0->think = EntityType77_ThinkUseMapObjectsPosX;
     } else if (entity->spawn_info->variant == 2) {
-        unkE0->unk00 = func_0017B380;
+        unkE0->think = EntityType77_ThinkUseMapObjectsNegX;
     } else {
-        unkE0->unk00 = func_0017A738;
+        unkE0->think = EntityType77_ThinkByState;
     }
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
@@ -256,7 +271,7 @@ static void func_0017A540(Entity *entity) {
     }
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
     }
@@ -267,7 +282,10 @@ static void func_0017A540(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_0017A738(Entity *entity, s32 unknown) {
+/* A think handler only func_0017A540 installs (for an EntitySpawnInfo.variant other than 1 and 2),
+   a set-up function nothing refers to: as EntityAi_Think, with func_0017A880 for state 2. The same
+   as EntityType7_Think. */
+static void EntityType77_ThinkByState(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
         func_00196870(entity, 1);
     }
@@ -277,21 +295,21 @@ static void func_0017A738(Entity *entity, s32 unknown) {
     func_00196CC0((char *)entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
-        func_00182DE0(entity, unknown);
+        EntityAi_ThinkReturn(entity, unknown);
         return;
     }
     switch (entity->state) {
     case 0:
-        func_00182FD8(entity, unknown);
+        EntityAi_ThinkIdle(entity, unknown);
         return;
     case 1:
-        func_00183150(entity, unknown);
+        EntityAi_ThinkPursue(entity, unknown);
         return;
     case 2:
         func_0017A880(entity, unknown);
         return;
     }
-    func_00182FD8(entity, unknown);
+    EntityAi_ThinkIdle(entity, unknown);
 }
 
 static void func_0017A880(Entity *entity, s32 unknown) {
@@ -307,11 +325,11 @@ static void func_0017A880(Entity *entity, s32 unknown) {
     range = 300.0f;
     angle = 0.5235988f;
     if (func_0018ED98(entity, range, angle)) {
-        func_001958B8(entity, func_00181C60, 1);
+        EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
     if (func_0018EEE0(entity, range, angle)) {
-        func_001958B8(entity, func_00181AE0, 1);
+        EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
     next_action = func_0018FD50(entity, 0);
@@ -327,9 +345,9 @@ static void func_0017A880(Entity *entity, s32 unknown) {
         switch (entity->unkCD) {
         case 0:
             if (func_0018F030((char *)entity)) {
-                func_001958B8(entity, func_00182240, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
-                func_001958B8(entity, func_00181E48, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
             return;
         case 1:
@@ -381,10 +399,14 @@ static void func_0017A880(Entity *entity, s32 unknown) {
             break;
         }
     }
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-static void func_0017ABC0(Entity *entity) {
+/* A death action (busy bit 0x40) only func_0017A540 puts in the death slot, a set-up function
+   nothing refers to; EntityType77_Init leaves the slot empty. As EntityAi_Death; when the fade
+   starts and EntitySpawnInfo.unk40 is set, it calls func_0018DC40 for the entity with that spawn id
+   (if its flag bit 0 is set) and puts it at this entity's position. */
+static void EntityType77_Death(Entity *entity) {
     Entity *other;
 
     entity->unkC6 = 0x40;
@@ -437,7 +459,10 @@ static void func_0017ABC0(Entity *entity) {
     }
 }
 
-static void func_0017AE10(Entity *entity) {
+/* An action (busy bit 0x1000): plays animation 17 to its end; on frame 20 it calls MapObject_Signal
+   with 1 for the map object work byte unk7B names. EntityType77_WalkToMapObjectPosX and
+   EntityType77_WalkToMapObjectNegX start it. The same as EntityType7_SignalMapObject. */
+static void EntityType77_SignalMapObject(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapObject *map_object;
 
@@ -466,16 +491,21 @@ static void func_0017AE10(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->unk00(entity, 1);
+                unkE0->think(entity, 1);
             } else {
-                func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
         break;
     }
 }
 
-static void func_0017AF88(Entity *entity, s32 unknown) {
+/* A think handler only func_0017A540 installs (for EntitySpawnInfo.variant 1), a set-up function
+   nothing refers to: as EntityType77_ThinkByState (with func_0017A880 for state 1 too), but it
+   first reads bit 17 of the two map objects EntitySpawnInfo.unk42 and unk43 name into work bytes
+   unk79 and unk7A, and while either is clear it calls EntityType77_WalkToMapObjectPosX instead of
+   stepping the states. The same as EntityType7_ThinkUseMapObjectsPosX. */
+static void EntityType77_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapObject *map_object;
 
@@ -494,13 +524,13 @@ static void func_0017AF88(Entity *entity, s32 unknown) {
         unkE0->unk7A = (map_object->unk10 >> 17) & 1;
     }
     if (!unkE0->unk79 || !unkE0->unk7A) {
-        func_0017B118(entity, unknown);
+        EntityType77_WalkToMapObjectPosX(entity, unknown);
         return;
     }
     func_00196CC0((char *)entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
-        func_00182DE0(entity, unknown);
+        EntityAi_ThinkReturn(entity, unknown);
         return;
     }
     switch (entity->state) {
@@ -511,10 +541,14 @@ static void func_0017AF88(Entity *entity, s32 unknown) {
         func_0017A880(entity, unknown);
         return;
     }
-    func_00182FD8(entity, unknown);
+    EntityAi_ThinkIdle(entity, unknown);
 }
 
-static void func_0017B118(Entity *entity, s32 unknown) {
+/* Helper of EntityType77_ThinkUseMapObjectsPosX, which calls it in place of the state functions: attacks when
+   func_00197078 says so; else walks to a fixed point (x 950) and from there to a point next to the
+   map object whose bit is clear, turns to face it and starts EntityType77_SignalMapObject for it;
+   until then it starts the move action. */
+static void EntityType77_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 near_point[4];
     f32 far_point[4];
@@ -523,9 +557,9 @@ static void func_0017B118(Entity *entity, s32 unknown) {
     // match: takes the entity; the shared prototype has no parameters
     if (((int (*)(Entity *))func_00197078)(entity)) {
         if (func_0018F030((char *)entity)) {
-            func_001958B8(entity, func_00182240, 1);
+            EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
-            func_001958B8(entity, func_00181E48, 1);
+            EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
         }
         return;
     }
@@ -566,7 +600,7 @@ static void func_0017B118(Entity *entity, s32 unknown) {
             entity->target = unkE0->unk30;
             entity->unkC8 = func_00190BE0(entity);
             if (entity->unkC8 == 0) {
-                func_001958B8(entity, func_0017AE10, unknown);
+                EntityAi_StartAction(entity, EntityType77_SignalMapObject, unknown);
                 return;
             }
         } else {
@@ -575,10 +609,13 @@ static void func_0017B118(Entity *entity, s32 unknown) {
             entity->unkC8 = func_00190F90(entity, 0, range * 0.5f);
         }
     }
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-static void func_0017B380(Entity *entity, s32 unknown) {
+/* A think handler only func_0017A540 installs (for EntitySpawnInfo.variant 2), a set-up function
+   nothing refers to: as EntityType77_ThinkUseMapObjectsPosX, with EntityType77_WalkToMapObjectNegX
+   (the points at x -950 and -900). */
+static void EntityType77_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapObject *map_object;
 
@@ -597,13 +634,13 @@ static void func_0017B380(Entity *entity, s32 unknown) {
         unkE0->unk7A = (map_object->unk10 >> 17) & 1;
     }
     if (!unkE0->unk79 || !unkE0->unk7A) {
-        func_0017B510(entity, unknown);
+        EntityType77_WalkToMapObjectNegX(entity, unknown);
         return;
     }
     func_00196CC0((char *)entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
-        func_00182DE0(entity, unknown);
+        EntityAi_ThinkReturn(entity, unknown);
         return;
     }
     switch (entity->state) {
@@ -614,10 +651,12 @@ static void func_0017B380(Entity *entity, s32 unknown) {
         func_0017A880(entity, unknown);
         return;
     }
-    func_00182FD8(entity, unknown);
+    EntityAi_ThinkIdle(entity, unknown);
 }
 
-static void func_0017B510(Entity *entity, s32 unknown) {
+/* Helper of EntityType77_ThinkUseMapObjectsNegX: as EntityType77_WalkToMapObjectPosX with its own points (x -950).
+   */
+static void EntityType77_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 near_point[4];
     f32 far_point[4];
@@ -626,9 +665,9 @@ static void func_0017B510(Entity *entity, s32 unknown) {
     // match: takes the entity; the shared prototype has no parameters
     if (((int (*)(Entity *))func_00197078)(entity)) {
         if (func_0018F030((char *)entity)) {
-            func_001958B8(entity, func_00182240, 1);
+            EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
-            func_001958B8(entity, func_00181E48, 1);
+            EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
         }
         return;
     }
@@ -669,7 +708,7 @@ static void func_0017B510(Entity *entity, s32 unknown) {
             entity->target = unkE0->unk30;
             entity->unkC8 = func_00190BE0(entity);
             if (entity->unkC8 == 0) {
-                func_001958B8(entity, func_0017AE10, unknown);
+                EntityAi_StartAction(entity, EntityType77_SignalMapObject, unknown);
                 return;
             }
         } else {
@@ -678,5 +717,5 @@ static void func_0017B510(Entity *entity, s32 unknown) {
             entity->unkC8 = func_00190F90(entity, 0, range * 0.5f);
         }
     }
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }

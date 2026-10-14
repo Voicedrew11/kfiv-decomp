@@ -1,7 +1,7 @@
 #include "kf_entity.h"
 
 int func_00192C98(void *, int, int, u32, int);
-void func_001958B8(char *, void (*)(void), int);
+int EntityAi_StartAction(char *, void (*)(void), int);
 
 void func_00180EA8(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -29,9 +29,9 @@ void func_00180EA8(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.unk00(entity, 1);
+                entity->unkE0.think(entity, 1);
             } else {
-                func_001958B8((char *)entity, unkE0->unk18, 1);
+                EntityAi_StartAction((char *)entity, unkE0->move, 1);
             }
         }
         break;

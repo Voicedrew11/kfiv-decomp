@@ -3,10 +3,12 @@
 void func_0018D8B8(Entity *, s32, s32, s32);
 int func_00192C98(void *, int, int, u32, int);
 void func_0019A290(Entity *, s32);
-int func_0019A310(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
-void func_001958B8(char *, void (*)(void), int);
+int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
+int EntityAi_StartAction(char *, void (*)(void), int);
 
-void func_001814B0(Entity *entity) {
+/* The reaction to a light hit (busy bit 2): plays animation 14 until it has blended in, then ends
+   whatever action was running and thinks. */
+void EntityAi_ReactionLight(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 = 2;
@@ -34,14 +36,14 @@ void func_001814B0(Entity *entity) {
         break;
     case 2:
         func_0019A290(entity, entity->params->unkC8);
-        func_0019A310((char *)entity, NULL, 0);
+        EntityAi_SetReaction((char *)entity, NULL, 0);
         entity->unkC6 = 0;
         entity->unkC8 = 0;
         entity->unkA0 = 0;
         if (ENTITY_FLAG_BITS(entity)->bit5) {
-            unkE0->unk00(entity, 1);
+            unkE0->think(entity, 1);
         } else {
-            func_001958B8((char *)entity, unkE0->unk18, 1);
+            EntityAi_StartAction((char *)entity, unkE0->move, 1);
         }
         break;
     }

@@ -4,15 +4,15 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *, void (*)(Entity *), int);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32); // match: an int result keeps $2 busy after the call
 void func_00216778(void *, void *);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
-void func_00182BD0(char *);
-void func_00183570(Entity *);
-void func_00181038(Entity *);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
+void EntityAi_OnHit(char *);
+void EntityAi_Move(Entity *);
+void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
 extern s32 D_00446928;
 extern u32 D_00446ED4;
@@ -21,16 +21,16 @@ void func_0018DA38(Entity *, s32, s32, s32);
 int func_0019D490(u8, u8, float *, float);
 void func_00196870(void *, int);
 void func_0018E9C0(void *);
-int func_00182FD8(void *, int);
-void func_00183240(Entity *, s32);
+int EntityAi_ThinkIdle(void *, int);
+void EntityAi_ThinkCombat(Entity *, s32);
 extern u8 D_00413FBC[];
 int func_00192C98(void *, int, int, u32, int);
 void func_0018DCD8(Entity *);
 
-static void func_001799A0(Entity *entity, s32 unknown);
-static void func_00179BB0(Entity *entity);
-static void func_00179C10(Entity *entity);
-static void func_00179DD8(Entity *entity);
+static void EntityType75_Think(Entity *entity, s32 unknown);
+static void EntityType75_Death(Entity *entity);
+static void EntityType75_DeathRemainAnim16(Entity *entity);
+static void EntityType75_DeathRemainAnim0(Entity *entity);
 
 /* Set-up of a type 75 entity: clears its work area and installs the type's handlers. */
 void EntityType75_Init(Entity *entity) {
@@ -47,12 +47,12 @@ void EntityType75_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_001799A0;
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk08 = (void (*)(void))func_00182BD0;
-    unkE0->unk18 = (void (*)(void))func_00183570;
-    unkE0->unk10 = (void (*)(void))func_00181038;
-    unkE0->unk14 = (void (*)(void))func_00179BB0;
+    unkE0->think = EntityType75_Think;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
+    unkE0->move = (void (*)(void))EntityAi_Move;
+    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
+    unkE0->death = (void (*)(void))EntityType75_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -62,9 +62,9 @@ void EntityType75_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->unk38 & (0x8000L << 43)) {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
@@ -80,7 +80,13 @@ void EntityType75_Init(Entity *entity) {
     unkE0->unk7A = D_00446928;
 }
 
-static void func_001799A0(Entity *entity, s32 unknown) {
+/* The think handler: as EntityAi_Think without the walk back to the spawn point, with
+   EntityAi_ThinkCombat for states 1 and 2. Every third frame it calls func_0018D600 with
+   EntityParams.unk430, unk432 or unk434, by D_00446928 (3, 2, other). In a frame with flag bit 43
+   set it calls func_0018D600 with 0x13D and clears the bit; then, with D_00446928 at 0 or less, it
+   sets Entity.unkA3 to 6 and starts EntityType75_Death, and else, when D_00446928 has changed (work
+   byte unk7A keeps it), calls func_0018DA38 and func_0019D490. */
+static void EntityType75_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 3U == 0) {
@@ -101,7 +107,7 @@ static void func_001799A0(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->bit43 = FALSE;
         if (D_00446928 <= 0) {
             entity->unkA3 = 6;
-            func_001958B8(entity, func_00179BB0, unknown);
+            EntityAi_StartAction(entity, EntityType75_Death, unknown);
             return;
         }
         if (unkE0->unk7A != D_00446928) {
@@ -120,27 +126,33 @@ static void func_001799A0(Entity *entity, s32 unknown) {
         switch (entity->state) {
         case 1:
         case 2:
-            func_00183240(entity, unknown);
+            EntityAi_ThinkCombat(entity, unknown);
             break;
         case 0:
         default:
-            func_00182FD8(entity, unknown);
+            EntityAi_ThinkIdle(entity, unknown);
             break;
         }
     }
 }
 
-static void func_00179BB0(Entity *entity) {
+/* The death action in the slot: it only starts one of the two others, EntityType75_DeathRemainAnim0 with
+   flag bit 29 set when D_00413FBC[0] is 0x2E, else EntityType75_DeathRemainAnim16 with flag bit 29 clear.
+   EntityType75_Think starts it too. */
+static void EntityType75_Death(Entity *entity) {
     if (D_00413FBC[0] == 0x2E) {
         ENTITY_FLAG_BITS(entity)->bit29 = TRUE;
-        func_001958B8(entity, func_00179DD8, 1);
+        EntityAi_StartAction(entity, EntityType75_DeathRemainAnim0, 1);
     } else {
         ENTITY_FLAG_BITS(entity)->bit29 = FALSE;
-        func_001958B8(entity, func_00179C10, 1);
+        EntityAi_StartAction(entity, EntityType75_DeathRemainAnim16, 1);
     }
 }
 
-static void func_00179C10(Entity *entity) {
+/* A death action (busy bit 0x40), started by EntityType75_Death: plays animation 16 as
+   EntityAi_Death does, calling func_0018DCD8 at the start, and when the animation has ended sets
+   the flags of the fade and stops there: no fade and no removal. */
+static void EntityType75_DeathRemainAnim16(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
@@ -184,7 +196,9 @@ static void func_00179C10(Entity *entity) {
     }
 }
 
-static void func_00179DD8(Entity *entity) {
+/* A death action (busy bit 0x40), started by EntityType75_Death: as EntityType75_DeathRemainAnim16 with
+   animation 0 in place of 16. */
+static void EntityType75_DeathRemainAnim0(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:

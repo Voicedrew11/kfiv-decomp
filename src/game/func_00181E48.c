@@ -4,9 +4,12 @@ int func_00192C98(void *, int, int, u32, int);
 int func_00199EB8(void *, void *, float);
 s32 func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_0019A290(Entity *, s32);
-void func_001958B8(char *, void (*)(void), int);
+int EntityAi_StartAction(char *, void (*)(void), int);
 
-void func_00181E48(Entity *entity) {
+/* The default melee attack (busy bit 1): plays animation 20 + n for attack record n (flag bits
+   58-59, EntityParams.unk240), turns to the player during the record's first frames and checks its
+   three parts for hits on their frames. */
+void EntityAi_MeleeAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk240 *unk240 = &entity->params->unk240[ENTITY_FLAG_BITS(entity)->bits58];
     s32 frame;
@@ -60,9 +63,9 @@ void func_00181E48(Entity *entity) {
             entity->unkA0 = 0;
             func_0019A290(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->unk00(entity, 1);
+                unkE0->think(entity, 1);
             } else {
-                func_001958B8((char *)entity, unkE0->unk18, 1);
+                EntityAi_StartAction((char *)entity, unkE0->move, 1);
             }
         }
         break;

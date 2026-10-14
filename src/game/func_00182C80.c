@@ -5,12 +5,15 @@ extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
 void func_0018E9C0(void *);
-int func_00182DE0(void *, int);
-int func_00182FD8(void *, int);
-void func_00183150(Entity *, s32);
-void func_00183240(Entity *, s32);
+int EntityAi_ThinkReturn(void *, int);
+int EntityAi_ThinkIdle(void *, int);
+void EntityAi_ThinkPursue(Entity *, s32);
+void EntityAi_ThinkCombat(Entity *, s32);
 
-void func_00182C80(Entity *entity, s32 unknown) {
+/* The default think handler: every tenth frame updates what the entity knows of the player
+   (func_00196870); while the entity is not busy it steps Entity.state and calls the think function
+   of that state. */
+void EntityAi_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
         func_00196870(entity, 1);
     }
@@ -22,19 +25,19 @@ void func_00182C80(Entity *entity, s32 unknown) {
     }
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
-        func_00182DE0(entity, unknown);
+        EntityAi_ThinkReturn(entity, unknown);
         return;
     }
     switch (entity->state) {
     case 0:
-        func_00182FD8(entity, unknown);
+        EntityAi_ThinkIdle(entity, unknown);
         return;
     case 1:
-        func_00183150(entity, unknown);
+        EntityAi_ThinkPursue(entity, unknown);
         return;
     case 2:
-        func_00183240(entity, unknown);
+        EntityAi_ThinkCombat(entity, unknown);
         return;
     }
-    func_00182FD8(entity, unknown);
+    EntityAi_ThinkIdle(entity, unknown);
 }

@@ -4,20 +4,20 @@
 #include "common.h"
 
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *entity, void (*handler)(Entity *), int run_now);
+int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-void func_00183570(Entity *);
-void func_00181038(Entity *);
-void func_001818B8(Entity *);
+void EntityAi_Move(Entity *);
+void EntityAi_Dormant(Entity *);
+void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 int func_00192EB0(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int func_00194368(EntityModel *, f32);
 void func_00190A30(char *);
-int func_0019A310(char *, void (*)(void), int);
+int EntityAi_SetReaction(char *, void (*)(void), int);
 void func_00195898(char *, u8);
-void func_001814B0(Entity *);
+void EntityAi_ReactionLight(Entity *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 int rand(void);
@@ -30,10 +30,10 @@ s32 func_0018B150(f32 *, f32 *, f32, f32 *);
 void func_00216778(void *, void *);
 float func_00194F80(void *, void *);
 
-static void func_001366C8(Entity *entity);
-static void func_001367B8(Entity *entity);
-static void func_001367F8(Entity *entity, s32 unknown);
-static void func_001368B8(Entity *entity);
+static void EntityType14_Animate(Entity *entity);
+static void EntityType14_OnHit(Entity *entity);
+static void EntityType14_Think(Entity *entity, s32 unknown);
+static void EntityType14_RunAwayAndRemove(Entity *entity);
 
 /* Set-up of a type 14 entity: clears its work area and installs the type's handlers. */
 void EntityType14_Init(Entity *entity) {
@@ -44,12 +44,12 @@ void EntityType14_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_001367F8;
-    unkE0->unk04 = (void (*)(void))func_001366C8;
-    unkE0->unk08 = (void (*)(void))func_001367B8;
-    unkE0->unk18 = (void (*)(void))func_00183570;
-    unkE0->unk10 = (void (*)(void))func_00181038;
-    unkE0->unk14 = (void (*)(void))func_001818B8;
+    unkE0->think = EntityType14_Think;
+    unkE0->animate = (void (*)(void))EntityType14_Animate;
+    unkE0->on_hit = (void (*)(void))EntityType14_OnHit;
+    unkE0->move = (void (*)(void))EntityAi_Move;
+    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
+    unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -59,9 +59,9 @@ void EntityType14_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -70,7 +70,9 @@ void EntityType14_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_001366C8(Entity *entity) {
+/* The animate handler: as EntityAi_Animate without the test of the EntityParams kind bits and
+   without the head turn. */
+static void EntityType14_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     s64 flags;
     EntityUnkE0 *unkE0;
@@ -87,26 +89,36 @@ static void func_001366C8(Entity *entity) {
     }
 }
 
-static void func_001367B8(Entity *entity) {
+/* The on_hit handler: every hit starts EntityAi_ReactionLight, whatever its strength, and puts the
+   entity in state 3; the target and flag bits 9 and 10 are left as they are. */
+static void EntityType14_OnHit(Entity *entity) {
     func_00190A30((char *)entity);
-    func_0019A310((char *)entity, (void (*)(void))func_001814B0, 0);
+    EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionLight, 0);
     func_00195898((char *)entity, 3);
 }
 
-static void func_001367F8(Entity *entity, s32 unknown) {
+/* The think handler: no states. While the entity is not busy it starts EntityType14_RunAwayAndRemove; it
+   tests for state 3, but both branches start the same action. */
+static void EntityType14_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10 == entity->unkD7 % 10) {
         func_00196870(entity, 2);
     }
     if (entity->unkC6 == 0) {
         if (entity->state == 3) {
-            func_001958B8(entity, func_001368B8, unknown);
+            EntityAi_StartAction(entity, EntityType14_RunAwayAndRemove, unknown);
         } else {
-            func_001958B8(entity, func_001368B8, unknown);
+            EntityAi_StartAction(entity, EntityType14_RunAwayAndRemove, unknown);
         }
     }
 }
 
-static void func_001368B8(Entity *entity) {
+/* An action (busy bit 0x1000), the only one EntityType14_Think starts: plays animation 4 and turns
+   the entity to a heading drawn between 90 and 269 degrees from Entity.unk68 (work float unk48).
+   When flag bit 52 is set it starts effect EntityParams.unk430 at model point 0xFF, fades the model
+   out over 20 frames and removes the entity. When func_0018B150 finds a wall ahead within the
+   radius it starts the same effect, sets flag bit 28, and removes the entity once it is more than
+   four radii from that place. */
+static void EntityType14_RunAwayAndRemove(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 bounds[4];
     f32 direction[4];

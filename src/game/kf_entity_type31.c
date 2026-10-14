@@ -17,8 +17,8 @@ int func_00196120(Entity *, void *, s32, void *, f32);
 int func_00192C98(void *, int, int, u32, int);
 extern PlayerData D_00413F80;
 
-static void func_00176E80(Entity *entity);
-static void func_00177040(Entity *entity);
+static void EntityType31_Animate(Entity *entity);
+static void EntityType31_Think(Entity *entity);
 
 /* Set-up of a type 31 entity: clears its work area and installs the type's handlers. */
 void EntityType31_Init(Entity *entity) {
@@ -35,12 +35,12 @@ void EntityType31_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = (void (*)(Entity *, s32))func_00177040;
-    unkE0->unk04 = (void (*)(void))func_00176E80;
-    unkE0->unk08 = NULL;
-    unkE0->unk18 = NULL;
-    unkE0->unk10 = NULL;
-    unkE0->unk14 = NULL;
+    unkE0->think = (void (*)(Entity *, s32))EntityType31_Think;
+    unkE0->animate = (void (*)(void))EntityType31_Animate;
+    unkE0->on_hit = NULL;
+    unkE0->move = NULL;
+    unkE0->dormant = NULL;
+    unkE0->death = NULL;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -59,7 +59,10 @@ void EntityType31_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_00176E80(Entity *entity) {
+/* The animate handler: as EntityAi_Animate, but the motion never moves the entity, and with flag
+   bit 9 set the head follows the point in work floats unk48 to unk50 (func_001960C0, at the rate
+   EntityParams.unk434) instead of the target. */
+static void EntityType31_Animate(Entity *entity) {
     f32 limits[4];
     f32 point[3];
     u32 blend_frames; // match: converted to float as unsigned
@@ -95,7 +98,11 @@ static void func_00176E80(Entity *entity) {
     }
 }
 
-static void func_00177040(Entity *entity) {
+/* The think handler (it takes the entity only): no states and no actions. Every EntityParams.unk436
+   frames (counted in work byte unk7A) it puts the player's position, 220 less in y, in work floats
+   unk48 to unk50. It keeps flag bits 16, 18 and 21 set, flag bit 9 set unless EntitySpawnInfo.unk40
+   is, and plays animation 0 while flag bit 29 is set and animation 1 otherwise. */
+static void EntityType31_Think(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
     if (unkE0->unk7A != 0) {

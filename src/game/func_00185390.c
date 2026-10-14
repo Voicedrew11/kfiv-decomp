@@ -1,37 +1,26 @@
-#include "common.h"
-
-typedef struct {
-    char pad0[0xC];
-    int *ctrl;                     /* 0xC */
-    char pad1[0xC6 - 0x10];
-    u16 flags;          /* 0xC6 */
-    char pad2[0xD7 - 0xC8];
-    u8 byteD7;          /* 0xD7 */
-    u64 bits;       /* 0xD8 */
-} Actor;
+#include "kf_entity.h"
 
 extern u32 D_00446ED4;
 
-int func_00182DE0(void *, int);
+int EntityAi_ThinkReturn(void *, int);
 int func_00185460(void *, int);
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void func_00196870(Entity *, s32);
+void func_00196CC0(char *);
 
-void func_00185390(void *arg0, int arg1) {
-    Actor *a = arg0;
-    int mask = ~0x20000000;
+void func_00185390(Entity *entity, s32 run_now) {
+    s32 mask = ~0x20000000;
 
-    a->bits &= mask;
-    if (D_00446ED4 % 10U == a->byteD7 % 10U) {
-        func_00196870(arg0, 1);
+    entity->flags &= mask;
+    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+        func_00196870(entity, 1);
     }
-    if (a->flags != 0) {
+    if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0(arg0);
-    if ((int) (a->bits >> 0x35) & 1) {
-        func_00182DE0(arg0, arg1);
+    func_00196CC0((char *)entity);
+    if ((s32)(entity->flags >> 53) & 1) {
+        EntityAi_ThinkReturn(entity, run_now);
         return;
     }
-    func_00185460(arg0, arg1);
+    func_00185460(entity, run_now);
 }

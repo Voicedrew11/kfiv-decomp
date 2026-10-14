@@ -4,23 +4,23 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *, void (*)(Entity *), int);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
 void func_00216778(void *, void *);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
-void func_00182BD0(char *);
-void func_00183570(Entity *);
-void func_001818B8(Entity *);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
+void EntityAi_OnHit(char *);
+void EntityAi_Move(Entity *);
+void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
 void func_0018E9C0(void *);
-int func_00182DE0(void *, int);
-int func_00182FD8(void *, int);
-void func_00183150(Entity *, s32);
+int EntityAi_ThinkReturn(void *, int);
+int EntityAi_ThinkIdle(void *, int);
+void EntityAi_ThinkPursue(Entity *, s32);
 f32 func_0018B518(f32 *);
 extern float D_00413F80[];
 extern f32 D_00446800[];
@@ -35,11 +35,11 @@ float func_001957B8(float, float);
 int func_00190BE0(Entity *);
 int func_0018EAC0(void *, void *);
 s32 func_00190F90(Entity *, s32, f32);
-void func_00181AE0(Entity *);
-void func_00181C60(Entity *);
-void func_00181E48(Entity *);
-void func_00182240(Entity *);
-int func_001958F8(Entity *entity, void (*handler)(Entity *entity), int run, int bit57, int bits58);
+void EntityAi_Dodge(Entity *);
+void EntityAi_Guard(Entity *);
+void EntityAi_MeleeAttack(Entity *);
+void EntityAi_RangedAttack(Entity *);
+int EntityAi_StartAttack(Entity *entity, void (*handler)(Entity *entity), int run, int bit57, int bits58);
 int func_00192C98(void *, int, int, u32, int);
 void func_00195898(char *, u8);
 s32 func_00199EB8(Entity *, f32 *, f32);
@@ -47,10 +47,10 @@ int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void func_0019A290(Entity *, s32);
 s32 func_001984B0(Entity *, s32);
 
-static void func_00143E70(Entity *entity, s32 unknown);
-static void func_00143FE8(Entity *entity, s32 unknown);
-static void func_00144400(Entity *entity);
-static void func_00144758(Entity *entity);
+static void EntityType78_Think(Entity *entity, s32 unknown);
+static void EntityType78_ThinkCombat(Entity *entity, s32 unknown);
+static void EntityType78_Dormant(Entity *entity);
+static void EntityType78_RangedAttack0(Entity *entity);
 
 /* Set-up of a type 78 entity: clears its work area and installs the type's handlers. */
 void EntityType78_Init(Entity *entity) {
@@ -67,12 +67,12 @@ void EntityType78_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_00143E70;
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk08 = (void (*)(void))func_00182BD0;
-    unkE0->unk18 = (void (*)(void))func_00183570;
-    unkE0->unk10 = (void (*)(void))func_00144400;
-    unkE0->unk14 = (void (*)(void))func_001818B8;
+    unkE0->think = EntityType78_Think;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
+    unkE0->move = (void (*)(void))EntityAi_Move;
+    unkE0->dormant = (void (*)(void))EntityType78_Dormant;
+    unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -82,9 +82,9 @@ void EntityType78_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->unk38 & (0x8000L << 43)) {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
@@ -96,7 +96,10 @@ void EntityType78_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_00143E70(Entity *entity, s32 unknown) {
+/* The think handler: as EntityAi_Think, with EntityType78_ThinkCombat for state 2. Every fifth
+   frame reads func_0018B518 at the entity's position into work float unk48; counts down work word
+   unk68, the pause before the next EntityType78_RangedAttack0. */
+static void EntityType78_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
@@ -109,20 +112,20 @@ static void func_00143E70(Entity *entity, s32 unknown) {
         func_00196CC0((char *)entity);
         func_0018E9C0(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
-            func_00182DE0(entity, unknown);
+            EntityAi_ThinkReturn(entity, unknown);
         } else {
             switch (entity->state) {
             case 0:
-                func_00182FD8(entity, unknown);
+                EntityAi_ThinkIdle(entity, unknown);
                 break;
             case 1:
-                func_00183150(entity, unknown);
+                EntityAi_ThinkPursue(entity, unknown);
                 break;
             case 2:
-                func_00143FE8(entity, unknown);
+                EntityType78_ThinkCombat(entity, unknown);
                 break;
             default:
-                func_00182FD8(entity, unknown);
+                EntityAi_ThinkIdle(entity, unknown);
                 break;
             }
         }
@@ -132,7 +135,11 @@ static void func_00143E70(Entity *entity, s32 unknown) {
     }
 }
 
-static void func_00143FE8(Entity *entity, s32 unknown) {
+/* The think function of state 2: as EntityAi_ThinkCombat, but first starts
+   EntityType78_RangedAttack0 when work float unk48 is not D_00446800[0] and is above -Entity.unk34
+   / 2, the pause is over, and the player is within EntityParams.unk436 degrees ahead and farther
+   than unk438; the pause is then unk434 plus 0 to 29 frames. Closing in never runs. */
+static void EntityType78_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 angle;
@@ -145,11 +152,11 @@ static void func_00143FE8(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
     if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
-        func_001958B8(entity, func_00181C60, 1);
+        EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
     if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
-        func_001958B8(entity, func_00181AE0, 1);
+        EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
     if (unkE0->unk48 != D_00446800[0] && entity->unk34 * -0.5f < unkE0->unk48) {
@@ -157,7 +164,7 @@ static void func_00143FE8(Entity *entity, s32 unknown) {
         angle = ABS(angle);
         if (unkE0->unk68 <= 0 && angle < entity->params->unk436 * 0.017453292f
             && entity->params->unk438 < entity->distance_to_player) {
-            func_001958F8(entity, func_00144758, unknown, 1, 0);
+            EntityAi_StartAttack(entity, EntityType78_RangedAttack0, unknown, 1, 0);
             unkE0->unk68 = entity->params->unk434 + rand() % 30;
             return;
         }
@@ -175,9 +182,9 @@ static void func_00143FE8(Entity *entity, s32 unknown) {
         switch (entity->unkCD) {
         case 0:
             if (func_0018F030((char *)entity)) {
-                func_001958B8(entity, func_00182240, unknown);
+                EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
-                func_001958B8(entity, func_00181E48, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
             return;
         case 1:
@@ -220,10 +227,12 @@ static void func_00143FE8(Entity *entity, s32 unknown) {
         }
     }
 done:
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-static void func_00144400(Entity *entity) {
+/* The dormant action (busy bit 0x20): as EntityAi_Dormant, and flag bit 20 is set with the others
+   while it lasts. */
+static void EntityType78_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x20;
@@ -279,16 +288,19 @@ static void func_00144400(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.unk00(entity, 1);
+                entity->unkE0.think(entity, 1);
             } else {
-                func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
         break;
     }
 }
 
-static void func_00144758(Entity *entity) {
+/* The ranged attack with record 0 (busy bit 1): animation 23, as EntityAi_RangedAttack; when it
+   ends and func_001984B0 finds the player in reach of melee record 2 it starts EntityAi_MeleeAttack
+   with that record, with a chance of EntityParams.unk43A in 100. */
+static void EntityType78_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
 
@@ -328,12 +340,12 @@ static void func_00144758(Entity *entity) {
             func_0019A290(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 if (func_001984B0(entity, 2) && rand() % 100 < entity->params->unk43A) {
-                    func_001958F8(entity, func_00181E48, 1, 0, 2);
+                    EntityAi_StartAttack(entity, EntityAi_MeleeAttack, 1, 0, 2);
                 } else {
-                    unkE0->unk00(entity, 1);
+                    unkE0->think(entity, 1);
                 }
             } else {
-                func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
         break;

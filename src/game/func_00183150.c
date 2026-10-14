@@ -4,9 +4,11 @@ extern int D_00413F80[];
 
 int func_0018EAC0(void *, void *);
 s16 func_00190F90(float, void *, int);
-void func_001958B8(char *, void (*)(void), int);
+int EntityAi_StartAction(char *, void (*)(void), int);
 
-void func_00183150(Entity *entity, int extra) {
+/* The think function of state 1 (the player was noticed and is no longer): keeps walking to the
+   player. */
+void EntityAi_ThinkPursue(Entity *entity, int extra) {
     EntityUnkE0 *sub = &entity->unkE0;
     s64 buf;
     int result;
@@ -29,5 +31,5 @@ void func_00183150(Entity *entity, int extra) {
     } else {
         entity->unkC8 = func_00190F90(50.0f, entity, 0);
     }
-    func_001958B8((char *)entity, sub->unk18, extra);
+    EntityAi_StartAction((char *)entity, sub->move, extra);
 }

@@ -4,14 +4,14 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *, void (*)(Entity *), int);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
-void func_00182BD0(char *);
-void func_00181038(Entity *);
-void func_001818B8(Entity *);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
+void EntityAi_OnHit(char *);
+void EntityAi_Dormant(Entity *);
+void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern float D_00413F80[];
 float sqrtf(float);
@@ -28,7 +28,7 @@ void func_0018DA38(Entity *, s32, s32, s32);
 int func_00192C98(void *, int, int, u32, int);
 int rand(void);
 
-static void func_0013FCB8(Entity *entity, s32 unknown);
+static void EntityType32_Think(Entity *entity, s32 unknown);
 
 /* Set-up of a type 32 entity: clears its work area and installs the type's handlers. */
 void EntityType32_Init(Entity *entity) {
@@ -44,12 +44,12 @@ void EntityType32_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_0013FCB8;
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk08 = (void (*)(void))func_00182BD0;
-    unkE0->unk10 = (void (*)(void))func_00181038;
-    unkE0->unk14 = (void (*)(void))func_001818B8;
-    unkE0->unk18 = NULL;
+    unkE0->think = EntityType32_Think;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
+    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
+    unkE0->death = (void (*)(void))EntityAi_Death;
+    unkE0->move = NULL;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -59,9 +59,9 @@ void EntityType32_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     if (entity->spawn_info->unk38 & (0x8000L << 43)) {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -70,7 +70,10 @@ void EntityType32_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_0013FCB8(Entity *entity, s32 unknown) {
+/* The think handler: each time the timer Entity.unkA0 runs out (and EntityParams.unk434 is not 0)
+   launches shot EntityParams.unk430 from model point unk432, aimed at the player, and sets the
+   timer to unk434 plus 0 to 2 frames; keeps animation 0. */
+static void EntityType32_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 angles[4];
     f32 target[4];
@@ -110,5 +113,5 @@ static void func_0013FCB8(Entity *entity, s32 unknown) {
         entity->unkA0 = entity->params->unk434 + rand() % 3;
     }
     func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }

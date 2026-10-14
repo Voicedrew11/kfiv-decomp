@@ -4,11 +4,11 @@
 #include "kf_entity_world.h"
 
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *, void (*)(Entity *), int);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
 extern s32 D_003E6E40[][2];
 void func_0018DC40(char *);
 int func_00192C98(void *, int, int, u32, int);
@@ -26,11 +26,11 @@ int func_00195E48(void *, int, void *, void *);
 void func_0018DA38(Entity *, s32, s32, s32);
 void func_0018DCD8(Entity *);
 
-static void func_001433F8(Entity *entity, s32 unknown);
+static void EntityType79_Think(Entity *entity, s32 unknown);
 static void func_001435B0(Entity *entity, s32 unknown);
-static void func_00143850(Entity *entity);
-static void func_00143A68(Entity *entity);
-static void func_00143C28(Entity *entity);
+static void EntityType79_Dormant(Entity *entity);
+static void EntityType79_Death(Entity *entity);
+static void EntityType79_AlertPartner(Entity *entity);
 
 /* Set-up of a type 79 entity: clears its work area and installs the type's handlers. */
 void EntityType79_Init(Entity *entity) {
@@ -41,12 +41,12 @@ void EntityType79_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_001433F8;
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk10 = (void (*)(void))func_00143850;
-    unkE0->unk14 = (void (*)(void))func_00143A68;
-    unkE0->unk08 = NULL;
-    unkE0->unk18 = NULL;
+    unkE0->think = EntityType79_Think;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->dormant = (void (*)(void))EntityType79_Dormant;
+    unkE0->death = (void (*)(void))EntityType79_Death;
+    unkE0->on_hit = NULL;
+    unkE0->move = NULL;
     for (i = 3; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -56,9 +56,9 @@ void EntityType79_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -67,7 +67,14 @@ void EntityType79_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_001433F8(Entity *entity, s32 unknown) {
+/* The think handler: it sets Entity.state itself and does not call func_0018E9C0. In mode 2
+   (EntitySpawnInfo.unk40) it takes the state of the entity whose spawn id is
+   EntitySpawnInfo.variant, and starts the death action once that one's flag bits 2-3 are 2 or more.
+   In mode 1 it calls func_0018DC40 for every other entity with the same params whose flag bit 1 is
+   clear or whose bits 2-3 are 3. While the entity is not busy it calls func_001435B0 in states 1
+   and 2, and in state 0 starts what the move slot holds (the set-up function leaves it NULL). Keeps
+   animation 0; once work word unk68 has run out it puts the state back to 0. */
+static void EntityType79_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     Entity *leader;
     Entity *other;
@@ -77,7 +84,7 @@ static void func_001433F8(Entity *entity, s32 unknown) {
         if (leader != NULL) {
             if (ENTITY_FLAG_BITS(leader)->bits2 >= 2) {
                 // match: called as returning int; only then are the flags kept in $3 afterwards
-                ((int (*)(char *, void (*)(void), int))func_001958B8)((char *)entity, unkE0->unk14, 0);
+                ((int (*)(char *, void (*)(void), int))EntityAi_StartAction)((char *)entity, unkE0->death, 0);
                 ENTITY_FLAG_BITS(entity)->bit7 = FALSE;
                 return;
             }
@@ -101,7 +108,7 @@ static void func_001433F8(Entity *entity, s32 unknown) {
             break;
         case 0:
         default:
-            func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
             break;
         }
     }
@@ -152,10 +159,12 @@ static void func_001435B0(Entity *entity, s32 unknown) {
         }
     }
     func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-static void func_00143850(Entity *entity) {
+/* The dormant action (busy bit 0x20): as EntityAi_Dormant with flag bits 11 to 13 at 0; flag bit 43
+   does not end the wait, it does not go to state 2, and it leaves flag bit 28 set. */
+static void EntityType79_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x20;
@@ -196,16 +205,19 @@ static void func_00143850(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->unk00(entity, 1);
+                unkE0->think(entity, 1);
             } else {
-                func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
         break;
     }
 }
 
-static void func_00143A68(Entity *entity) {
+/* The death action (busy bit 0x40): animation 16, the fade over 20 frames and the removal, as
+   EntityAi_Death with other flag settings; in mode 2 it calls EntityType79_AlertPartner where that
+   one calls func_0018DCD8. */
+static void EntityType79_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
@@ -232,7 +244,7 @@ static void func_00143A68(Entity *entity) {
             if (entity->spawn_info->unk40 != 2) {
                 func_0018DCD8(entity);
             } else {
-                func_00143C28(entity);
+                EntityType79_AlertPartner(entity);
             }
             entity->action_step++;
         }
@@ -248,8 +260,10 @@ static void func_00143A68(Entity *entity) {
     }
 }
 
-/* When the dying entity's partner is in state 2, restart it and reload its wait timer. */
-static void func_00143C28(Entity *entity) {
+/* Helper of EntityType79_Death: when the dying entity's partner (spawn id EntitySpawnInfo.variant)
+   has flag bit 1 set and bits 2-3 at 0, puts it in state 2 and reloads its work word unk68 from
+   EntityParams.unk43A. */
+static void EntityType79_AlertPartner(Entity *entity) {
     Entity *partner;
 
     partner = Entity_GetBySpawnId(entity->spawn_info->variant);

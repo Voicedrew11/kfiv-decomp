@@ -1,9 +1,12 @@
 #include "kf_entity.h"
 
 int func_00192C98(void *, int, int, u32, int);
-void func_0019A310(char *, void (*)(void), int);
+int EntityAi_SetReaction(char *, void (*)(void), int);
 
-void func_00181378(Entity *entity) {
+/* The reaction to a light hit while flag bit 19 is set (an attack in the frames a hit does not
+   break): takes the current animation three frames back, busy bit 2 while that blends in, and lets
+   the action go on. */
+void EntityAi_ReactionRewind(Entity *entity) {
     EntityParams *params;
     s32 frame;
     s32 kind;
@@ -33,7 +36,7 @@ void func_00181378(Entity *entity) {
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
             entity->unkC6 &= ~2;
-            func_0019A310((char *)entity, NULL, 0);
+            EntityAi_SetReaction((char *)entity, NULL, 0);
         }
         break;
     }

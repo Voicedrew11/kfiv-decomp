@@ -4,10 +4,10 @@ int rand(void);
 int func_0018EAC0(void *, void *);
 void func_0018B778(float, void *, void *, void *);
 s16 func_00190F90(float, void *, int);
-void func_001958B8(char *, void (*)(void), int);
+int EntityAi_StartAction(char *, void (*)(void), int);
 
 /* wander: every so often pick a point near the spawn point to walk to, or stand still */
-int func_00182FD8(void *entity_ptr, int unknown) {
+int EntityAi_ThinkIdle(void *entity_ptr, int unknown) {
     Entity *entity = entity_ptr;
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -38,5 +38,5 @@ int func_00182FD8(void *entity_ptr, int unknown) {
     } else {
         entity->unkC8 = func_00190F90(50.0f, entity, 0);
     }
-    func_001958B8((char *)entity, unkE0->unk18, unknown);
+    EntityAi_StartAction((char *)entity, unkE0->move, unknown);
 }

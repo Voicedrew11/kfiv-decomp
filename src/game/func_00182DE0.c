@@ -5,10 +5,10 @@ s16 func_00190F90(float, void *, int);
 void func_00216D20(void *, void *);
 void func_00216CD8(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
-void func_001958B8(char *, void (*)(void), int);
+int EntityAi_StartAction(char *, void (*)(void), int);
 
 /* walk back to the spawn point, turning away from whatever is pushing the entity */
-int func_00182DE0(void *entity_ptr, int unknown) {
+int EntityAi_ThinkReturn(void *entity_ptr, int unknown) {
     Entity *entity = entity_ptr;
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 to_spawn[4];
@@ -58,5 +58,5 @@ int func_00182DE0(void *entity_ptr, int unknown) {
             entity->unkC8 = func_00190F90(50.0f, entity, 0);
         }
     }
-    func_001958B8((char *)entity, unkE0->unk18, unknown);
+    EntityAi_StartAction((char *)entity, unkE0->move, unknown);
 }

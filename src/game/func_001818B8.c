@@ -3,7 +3,9 @@
 int func_00192C98(void *, int, int, u32, int);
 void func_0018DCD8(Entity *);
 
-void func_001818B8(Entity *entity) {
+/* The default death action (busy bit 0x40): plays animation 16, fades the model out over 20 frames,
+   then clears flag bit 1. */
+void EntityAi_Death(Entity *entity) {
     EntityParams *params;
 
     entity->unkC6 = 0x40;

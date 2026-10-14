@@ -1,38 +1,28 @@
-#include "common.h"
+#include "kf_entity.h"
 
 void func_00190A30(char *);
-void func_00195898(char *, int);
-void func_0019A310(char *, void (*)(void), int);
-extern void func_00181378(void);
-extern void func_001814B0(void);
-extern void func_001816A0(void);
+void func_00195898(char *, u8);
+int EntityAi_SetReaction(Entity *, void (*)(void), int);
+void EntityAi_ReactionRewind(Entity *);
+void EntityAi_ReactionLight(Entity *);
+void EntityAi_ReactionHeavy(Entity *);
 
-typedef struct {
-    char pad0[0x5C];
-    int f5C;
-    char pad1[0xD8 - 0x60];
-    u64 flags;
-} Actor;
-
-void func_00182BD0(char *arg0) {
-    Actor *a = (Actor *)arg0;
-    u64 f;
-    u64 state;
-
-    func_00190A30(arg0);
-    a->f5C = 0;
-    a->flags &= ~0x400;
-    a->flags &= ~0x200;
-    f = a->flags;
-    state = (f >> 36) & 3;
-    if (state == 1) {
-        if ((int)(f >> 19) & 1) {
-            func_0019A310(arg0, func_00181378, 0);
+/* The default on_hit handler: forgets the target and starts the reaction the hit calls for. A light
+   hit (flag bits 36-37 are 1) gives EntityAi_ReactionLight, or EntityAi_ReactionRewind while flag
+   bit 19 is set; a heavy one (2) gives EntityAi_ReactionHeavy. The entity then goes to state 2. */
+void EntityAi_OnHit(Entity *entity) {
+    func_00190A30((char *)entity);
+    entity->target = NULL;
+    ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
+    ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
+    if (ENTITY_FLAG_BITS(entity)->bits36 == 1) {
+        if (ENTITY_FLAG_BITS(entity)->bit19) {
+            EntityAi_SetReaction(entity, (void (*)(void))EntityAi_ReactionRewind, 0);
         } else {
-            func_0019A310(arg0, func_001814B0, 0);
+            EntityAi_SetReaction(entity, (void (*)(void))EntityAi_ReactionLight, 0);
         }
-    } else if (state == 2) {
-        func_0019A310(arg0, func_001816A0, 0);
+    } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
+        EntityAi_SetReaction(entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898(arg0, 2);
+    func_00195898((char *)entity, 2);
 }

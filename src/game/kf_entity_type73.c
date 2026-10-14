@@ -7,9 +7,9 @@ void func_001958A8(char *, s32);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
 void func_00216778(void *, void *);
-int func_001958B8(Entity *, void (*)(Entity *), int);
-// match: the definition takes an Actor, a struct local to func_00182A08.c
-void func_00182A08(void);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
+// match: the definition takes an Actor, a struct local to EntityAi_Animate.c
+void EntityAi_Animate(void);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
@@ -19,9 +19,9 @@ int func_00192C98(void *, int, int, u32, int);
 void func_0018DB58(void *, int, int);
 void func_0018DCD8(Entity *);
 
-static void func_00140140(Entity *entity, s32 unknown);
-static void func_00140280(Entity *entity);
-static void func_00140328(Entity *entity);
+static void EntityType73_Think(Entity *entity, s32 unknown);
+static void EntityType73_Move(Entity *entity);
+static void EntityType73_Death(Entity *entity);
 
 /* Set-up of a type 73 entity: clears its work area and installs the type's handlers. */
 void EntityType73_Init(Entity *entity) {
@@ -38,12 +38,12 @@ void EntityType73_Init(Entity *entity) {
         dest[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_00140140;
-    unkE0->unk04 = func_00182A08;
-    unkE0->unk08 = NULL;
-    unkE0->unk18 = (void (*)(void))func_00140280;
-    unkE0->unk10 = NULL;
-    unkE0->unk14 = (void (*)(void))func_00140328;
+    unkE0->think = EntityType73_Think;
+    unkE0->animate = EntityAi_Animate;
+    unkE0->on_hit = NULL;
+    unkE0->move = (void (*)(void))EntityType73_Move;
+    unkE0->dormant = NULL;
+    unkE0->death = (void (*)(void))EntityType73_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -52,7 +52,7 @@ void EntityType73_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
     }
@@ -63,7 +63,12 @@ void EntityType73_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_00140140(Entity *entity, s32 unknown) {
+/* The think handler: no states and no actions. Every tenth frame updates what the entity knows of
+   the player; while it is not busy and func_001992F0 finds the player in reach of ranged record 0
+   (and flag bit 63 is clear) it calls func_001B4EC8 with EntityParams.unk434, sets work byte unk7A
+   and flag bit 9 and plays animation 2, else clears them and plays animation 0. Calls func_0018DB58
+   with 1 when unk7A changes. */
+static void EntityType73_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s8 previous;
 
@@ -88,7 +93,10 @@ static void func_00140140(Entity *entity, s32 unknown) {
     }
 }
 
-static void func_00140280(Entity *entity) {
+/* The move handler: this type stays where it is. While work byte unk7A is set it keeps animation 2
+   and calls func_0018DB58 with 0 every EntityParams.unk438 frames (counted in work word unk68);
+   else it keeps animation 0. */
+static void EntityType73_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (unkE0->unk7A != 0) {
@@ -104,7 +112,9 @@ static void func_00140280(Entity *entity) {
     unkE0->unk68--;
 }
 
-static void func_00140328(Entity *entity) {
+/* The death action (busy bit 0x40): no animation; calls func_0018DB58 with 2, then the fade over 20
+   frames and the removal as EntityAi_Death. */
+static void EntityType73_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:

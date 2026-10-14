@@ -25,7 +25,7 @@ typedef struct {
     u8 unk35;                       /* 0x35 strips of CollisionMesh.unk24 rated below it are skipped (func_00187A20) */
     u16 unk36;                      /* 0x36 what func_002109C8 gets when the entity dies */
     u64 unk38;                      /* 0x38 */
-    u8 unk40;                       /* 0x40 */
+    u8 unk40;                       /* 0x40 the mode of this spawn: picks among the behaviours of its type, most often the think handler the set-up function installs */
     u8 variant;                     /* 0x41 picks the animation set */
     u8 unk42;                       /* 0x42 ids of two map objects (see MapObject_GetById) */
     u8 unk43;                       /* 0x43 */
@@ -38,7 +38,7 @@ typedef struct {
     u16 unk50;                      /* 0x50 0: Entity_InitFromMapSpawns makes it 1800 */
     u8 unk52;                       /* 0x52 0: Entity_InitFromMapSpawns makes it 100 */
     char pad53;
-    u16 unk54;                      /* 0x54 */
+    u16 unk54;                      /* 0x54 how near the player has to come for a dormant entity to get up (EntityAi_Dormant) */
     u16 unk56;                      /* 0x56 */
     u16 unk58;                      /* 0x58 passed to func_002109C8 when an item is used on the entity, 0: nothing */
     u16 despawn_range;              /* 0x5A */
@@ -75,7 +75,7 @@ typedef struct {
     char pad70[0x90];
 } EntityModelUnkF8;
 
-/* what EntityModel.unkF8 points at, seen as 0x80-byte elements: func_0017CB38 indexes
+/* what EntityModel.unkF8 points at, seen as 0x80-byte elements: EntityType70_TurnPart2ToPlayer indexes
    it that way (element 2 is at 0x100) */
 typedef struct {
     char pad00[0x50];
@@ -122,7 +122,7 @@ typedef struct {
     f32 unk15C;                     /* 0x15C */
 } EntityModel;
 
-/* two blocks of an EntityParamsUnk240Part that func_00175110 copies whole into its request */
+/* two blocks of an EntityParamsUnk240Part that EntityType43_CheckPartHitInPlayerView copies whole into its request */
 typedef struct {
     s16 unk00[9];                   /* 0x00 */
 } EntityParamsUnk240PartUnk00;
@@ -166,7 +166,7 @@ typedef struct {
     EntityParamsUnk240Part unk10[3]; /* 0x10 */
 } EntityParamsUnk240;
 
-/* the two blocks func_00175110 fills for func_001B1470 */
+/* the two blocks EntityType43_CheckPartHitInPlayerView fills for func_001B1470 */
 typedef struct {
     f32 position[4];                /* 0x00 */
     f32 unk10[4];                   /* 0x10 an earlier position: func_001B2F70 takes the hit direction from it */
@@ -463,15 +463,29 @@ typedef struct {
     u32 unk00;                      /* 0x00 bits 25-26: unk03_1 */
 } EntityParamsWord;
 
-/* sub-struct at Entity+0xE0 */
+/* sub-struct at Entity+0xE0: the work area of an entity's type. It starts with the handlers the
+   type's set-up function installs; EntityAi_Update calls them. All of them take the entity. */
 typedef struct {
-    void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
-    void (*unk04)(void);            /* 0x04 */
-    void (*unk08)(void);            /* 0x08 */
-    void (*unk0C)(void);            /* 0x0C */
-    void (*unk10)(void);            /* 0x10 */
-    void (*unk14)(void);            /* 0x14 */
-    void (*unk18)(void);            /* 0x18 */
+    /* 0x00 decides what the entity does next and starts that action. Called every frame with 0
+       while flag bit 5 is set (not in a frame that calls on_hit or starts death), and with 1 by an
+       action that has ended: the action it starts then runs at once. */
+    void (*think)(struct Entity *entity, s32 run_now);
+    /* 0x04 called every frame after the action: plays the motion on, sets flag bit 34 when it ends */
+    void (*animate)(void);
+    /* 0x08 called in a frame the entity was hit (flag bits 36-37 say how hard) unless flag bit 35
+       is set: starts the reaction */
+    void (*on_hit)(void);
+    /* 0x0C while set, called every frame in place of Entity.handler (see EntityAi_SetReaction);
+       Entity.unkCB is its step. It clears itself when it is done. */
+    void (*reaction)(void);
+    /* 0x10 the action the set-up function starts when the spawn has flag bit 58: wait for the
+       player to come near, then get up */
+    void (*dormant)(void);
+    /* 0x14 the action EntityAi_Update starts when Entity.unk2C is 0 */
+    void (*death)(void);
+    /* 0x18 the action between the others: carries out the movement command in Entity.unkC8.
+       think ends by starting it; an action that has ended starts it when flag bit 5 is clear. */
+    void (*move)(void);
     f32 unk1C;                      /* 0x1C */
     f32 unk20[4];                   /* 0x20 */
     f32 unk30[4];                   /* 0x30 (Entity+0x110) a point to walk to (Entity.target points here) */
@@ -510,9 +524,9 @@ typedef struct {
 
 /* Entity+0xE0 as the kinds handled at 0x1740A8..0x180000 use it */
 typedef struct {
-    void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
+    void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
-    void (*unk18)(void);            /* 0x18 */
+    void (*move)(void);             /* 0x18 */
     s32 unk1C;                      /* 0x1C */
     char pad20[0x10];
     f32 unk30[4];                   /* 0x30 a point to move towards */
@@ -533,9 +547,9 @@ typedef struct {
 
 /* Entity+0xE0 as the flying kind set up by EntityType59_Init lays it out */
 typedef struct {
-    void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
+    void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
-    void (*unk18)(void);            /* 0x18 */
+    void (*move)(void);             /* 0x18 */
     f32 unk1C;                      /* 0x1C turn speed */
     char pad20[0x24];
     f32 unk44;                      /* 0x44 speed sideways */
@@ -552,9 +566,9 @@ typedef struct {
 
 /* Entity+0xE0 as the kind set up by EntityType7_Init lays it out */
 typedef struct {
-    void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
+    void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
-    void (*unk18)(void);            /* 0x18 */
+    void (*move)(void);             /* 0x18 */
     s32 unk1C;                      /* 0x1C */
     f32 unk20[4];                   /* 0x20 */
     f32 unk30[4];                   /* 0x30 where the entity walks to (Entity.target points here) */
@@ -574,13 +588,13 @@ typedef struct {
 /* Entity+0xE0 as the kind set up by EntityType56_Init lays it out. The area is
    8-byte aligned: tests of neighbouring bytes are merged into one 64-bit load. */
 typedef struct {
-    void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
-    void (*unk04)(void);            /* 0x04 */
-    void (*unk08)(void);            /* 0x08 */
+    void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
+    void (*animate)(void);          /* 0x04 */
+    void (*on_hit)(void);           /* 0x08 */
     char pad0C[0x04];
-    void (*unk10)(void);            /* 0x10 */
-    void (*unk14)(void);            /* 0x14 */
-    void (*unk18)(void);            /* 0x18 */
+    void (*dormant)(void);          /* 0x10 */
+    void (*death)(void);            /* 0x14 */
+    void (*move)(void);             /* 0x18 */
     f32 unk1C;                      /* 0x1C */
     f32 unk20[4];                   /* 0x20 */
     char pad30[0x10];
@@ -660,15 +674,15 @@ typedef struct {
 /* Entity+0xE0 as the kind set up by EntityType74_Init lays it out */
 typedef struct {
     char pad00[0x68];
-    s16 unk68[3];                   /* 0x68 weights of the first three actions (see func_00180A90) */
+    s16 unk68[3];                   /* 0x68 weights of the first three actions (see EntityType74_PickAttack) */
     char pad6E[0x32];
 } EntityUnkE0Kind17FC60;
 
 /* Entity+0xE0 as the kind set up by func_00131390 lays it out */
 typedef struct {
-    void (*unk00)(struct Entity *entity, s32 unknown); /* 0x00 */
+    void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
-    void (*unk18)(void);            /* 0x18 */
+    void (*move)(void);             /* 0x18 */
     f32 unk1C;                      /* 0x1C */
     char pad20[0x4A];
     s16 unk6A;                      /* 0x6A counts down; reloaded from EntityParams.unk434 */
@@ -743,8 +757,8 @@ typedef struct Entity {
     f32 unk48;                      /* 0x48 how far above the floor it is kept (see func_00187E28) */
     f32 unk4C;                      /* 0x4C */
     s32 unk50;                      /* 0x50 */
-    void (*handler)(struct Entity *entity);      /* 0x54 current handler; func_001824E0 calls it while flag bit 6 is set */
-    void (*prev_handler)(struct Entity *entity); /* 0x58 handler before the last switch */
+    void (*handler)(struct Entity *entity);      /* 0x54 the current action; EntityAi_Update calls it every frame while flag bit 6 is set and no reaction is */
+    void (*prev_handler)(struct Entity *entity); /* 0x58 the action before the last EntityAi_StartAction */
     void *target;                   /* 0x5C */
     f32 unk60;                      /* 0x60 */
     f32 distance_to_player;         /* 0x64 */
@@ -759,22 +773,30 @@ typedef struct Entity {
     f32 unk90;                      /* 0x90 */
     f32 unk94;                      /* 0x94 */
     f32 unk98;                      /* 0x98 */
-    u16 timer;                      /* 0x9C */
+    u16 timer;                      /* 0x9C frames left in state 1 (func_0018E9C0) */
     u16 unk9E;                      /* 0x9E */
-    u16 unkA0;                      /* 0xA0 */
-    u8 unkA2;                       /* 0xA2 */
+    u16 unkA0;                      /* 0xA0 a timer for the think functions and the actions; EntityAi_Update counts it down */
+    u8 unkA2;                       /* 0xA2 frames before the next attack: set when an attack or a reaction ends (func_0019A290), counted down by EntityAi_Update */
     u8 unkA3;                       /* 0xA3 */
     f32 unkA4[3];                   /* 0xA4 a push applied while flag bit 45 or 46 is set */
     f32 unkB0[3];                   /* 0xB0 a push applied while flag bit 48 is set */
     u8 unkBC[4];                    /* 0xBC */
     u8 unkC0[6];                    /* 0xC0 */
-    u16 unkC6;                      /* 0xC6 */
-    u16 unkC8;                      /* 0xC8 */
-    s8 action_step;                 /* 0xCA step of the current action */
-    s8 unkCB;                       /* 0xCB step counter used by some kinds instead of action_step */
-    s8 state;                       /* 0xCC */
+    /* 0xC6 busy bits: what the current action or reaction is. 1 an attack, 2 the reaction to a light hit,
+       4 to a heavy hit, 8 a dodge, 0x10 a guard, 0x20 dormant, 0x40 death, 0x1000 and up an action of
+       the type's own. The think handlers decide nothing while it is not 0. */
+    u16 unkC6;
+    /* 0xC8 this frame's movement command, for the move action: 1 forward, 2 back, 4 and 8 sideways,
+       0x10 and 0x20 up and down, 0x40 at the run, 0x100 and 0x200 turn, 0x400 turn at twice the speed.
+       EntityAi_Update clears it. */
+    u16 unkC8;
+    s8 action_step;                 /* 0xCA step of the current action; EntityAi_StartAction puts it back to 0 */
+    s8 unkCB;                       /* 0xCB step of the reaction (EntityUnkE0.reaction); EntityAi_SetReaction puts it back to 0 */
+    /* 0xCC what the entity knows of the player (func_0018E9C0): 0 nothing, 2 the player is noticed
+       (flag bit 33), 1 it was and Entity.timer still runs. Scripts and some types set other values. */
+    s8 state;
     s8 unkCD;                       /* 0xCD */
-    char prev_state;                /* 0xCE */
+    char prev_state;                /* 0xCE state before the last change */
     s8 unkCF;                       /* 0xCF */
     char padD0;
     s8 unkD1;                       /* 0xD1 */
@@ -929,18 +951,18 @@ typedef struct {
 } EntityRangeWeights;
 
 /* five animation frame numbers, copied whole from read-only data like
-   EntityFrameTable (func_0014EFB0, func_0014FCC0) */
+   EntityFrameTable (EntityType61_RangedAttack0, func_0014FCC0) */
 typedef struct {
     s32 frames[5];                  /* 0x00 */
 } EntityFrameTable5;
 
 /* five entity ids: a local table that a function copies whole from read-only
-   data (func_0013BF48, func_0013C018) */
+   data (EntityType23_Mode6IsStepFree, EntityType23_Mode6IsNearestWaiting) */
 typedef struct {
     s32 ids[5];                     /* 0x00 */
 } EntityIdTable;
 
-/* weights of three actions: a local table func_0016D6C0 copies whole from read-only
+/* weights of three actions: a local table EntityType53_PickAction copies whole from read-only
    data and then adjusts */
 typedef struct {
     s32 weights[3];                 /* 0x00 */
@@ -1005,7 +1027,7 @@ typedef union {
 #define ENTITY_FLAGS(entity) (((EntityFlags *)&(entity)->flags)->all)
 
 /* Entity.unkC8 (the movement command bits) read through a union: the value then does not survive a
-   store of another type, and func_00128438 reads the field again after it (see ENTITY_FLAGS) */
+   store of another type, and EntityType16_Move reads the field again after it (see ENTITY_FLAGS) */
 typedef union {
     u16 all;
 } EntityCommand;

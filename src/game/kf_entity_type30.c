@@ -7,20 +7,20 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
-int func_001958B8(Entity *, void (*)(Entity *), int);
+int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
 void func_00216778(void *, void *);
 // match: the definition takes an Actor, a struct local to its file
-void func_00183570(Entity *);
+void EntityAi_Move(Entity *);
 extern s32 D_003E6E40[][2];
 int func_00192EB0(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int func_00194368(EntityModel *, f32);
 void func_00190A30(char *);
-int func_0019A310(char *, void (*)(void), int);
+int EntityAi_SetReaction(char *, void (*)(void), int);
 void func_00195898(char *, u8);
-void func_001816A0(Entity *);
+void EntityAi_ReactionHeavy(Entity *);
 extern PlayerData D_00413F80;
 int func_00192C98(void *, int, int, u32, int);
 char *func_0010CAB8(char *, u32);
@@ -36,21 +36,21 @@ s32 func_0018FD50(Entity *, s32);
 void func_00190B88(Entity *, s32);
 int func_0018F030(char *);
 int func_00190BE0(Entity *);
-void func_00181AE0(Entity *);
-void func_00181C60(Entity *);
-void func_00181E48(Entity *);
+void EntityAi_Dodge(Entity *);
+void EntityAi_Guard(Entity *);
+void EntityAi_MeleeAttack(Entity *);
 s32 func_00199EB8(Entity *, f32 *, f32);
 int func_0018CF30(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 void func_0019A290(Entity *, s32);
 
-static void func_00135640(Entity *entity);
-static void func_00135730(Entity *entity);
-static void func_00135798(Entity *entity);
-static void func_00135A40(Entity *entity);
-static void func_00135DA0(Entity *entity);
-static void func_00135EF0(Entity *entity, s32 unknown);
-static void func_00136040(Entity *entity, s32 unknown);
-static void func_001362A0(Entity *entity);
+static void EntityType30_Animate(Entity *entity);
+static void EntityType30_OnHit(Entity *entity);
+static void EntityType30_Death(Entity *entity);
+static void EntityType30_Dormant(Entity *entity);
+static void EntityType30_ReturnToDormant(Entity *entity);
+static void EntityType30_Think(Entity *entity, s32 unknown);
+static void EntityType30_ThinkCombat(Entity *entity, s32 unknown);
+static void EntityType30_RangedAttack0(Entity *entity);
 
 /* Set-up of a type 30 entity: clears its work area and installs the type's handlers. */
 void EntityType30_Init(Entity *entity) {
@@ -68,12 +68,12 @@ void EntityType30_Init(Entity *entity) {
         work_area[i] = 0;
     }
     func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
-    unkE0->unk00 = func_00135EF0;
-    unkE0->unk04 = (void (*)(void))func_00135640;
-    unkE0->unk08 = (void (*)(void))func_00135730;
-    unkE0->unk18 = (void (*)(void))func_00183570;
-    unkE0->unk10 = (void (*)(void))func_00135A40;
-    unkE0->unk14 = (void (*)(void))func_00135798;
+    unkE0->think = EntityType30_Think;
+    unkE0->animate = (void (*)(void))EntityType30_Animate;
+    unkE0->on_hit = (void (*)(void))EntityType30_OnHit;
+    unkE0->move = (void (*)(void))EntityAi_Move;
+    unkE0->dormant = (void (*)(void))EntityType30_Dormant;
+    unkE0->death = (void (*)(void))EntityType30_Death;
     for (i = 3; i != -1; i--) {
         entity->unkBC[i] = 0x80;
     }
@@ -83,9 +83,9 @@ void EntityType30_Init(Entity *entity) {
     entity->target = NULL;
     entity->flags |= 0x10000000;
     if (ENTITY_FLAG_WORD(entity->spawn_info->unk38) & (0x8000L << 43)) {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
-        func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
         func_00216778(unkE0->unk20, unk138 + 0x50);
@@ -97,7 +97,9 @@ void EntityType30_Init(Entity *entity) {
     func_00193378(entity->model, 0, 0);
 }
 
-static void func_00135640(Entity *entity) {
+/* The animate handler: as EntityAi_Animate with flag bits 11 to 13 put to 0 (the motion never moves
+   the entity) and without the head turn. */
+static void EntityType30_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     EntityUnkE0 *unkE0;
 
@@ -113,17 +115,23 @@ static void func_00135640(Entity *entity) {
     }
 }
 
-static void func_00135730(Entity *entity) {
+/* The on_hit handler: as EntityAi_OnHit, but only a heavy hit starts a reaction
+   (EntityAi_ReactionHeavy). */
+static void EntityType30_OnHit(Entity *entity) {
     func_00190A30((char *)entity);
     entity->target = NULL;
     entity->flags &= ~0x200;
     if (((s32)(entity->flags >> 36) & 3) == 2) {
-        func_0019A310((char *)entity, (void (*)(void))func_001816A0, 0);
+        EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
     func_00195898((char *)entity, 2);
 }
 
-static void func_00135798(Entity *entity) {
+/* The death action (busy bit 0x40): animation 16; when it has ended it starts effect 0x3BC at the
+   points func_0010CAB8 gives for 20 to 22, sets work byte unk7A and waits until the entity whose
+   spawn id is EntitySpawnInfo.unk40 has its unk7A set too; then the fade over 20 frames and the
+   removal, as EntityAi_Death. */
+static void EntityType30_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     Entity *other;
     char *part;
@@ -190,7 +198,10 @@ static void func_00135798(Entity *entity) {
     }
 }
 
-static void func_00135A40(Entity *entity) {
+/* The dormant action (busy bit 0x20): as EntityAi_Dormant, but it gets up only while the player is
+   inside a fixed rectangle (x -4900 to -2500, z -5350 to -3350), and it leaves flag bit 28 alone.
+   */
+static void EntityType30_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x20;
@@ -243,16 +254,20 @@ static void func_00135A40(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.unk00(entity, 1);
+                entity->unkE0.think(entity, 1);
             } else {
-                func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
         break;
     }
 }
 
-static void func_00135DA0(Entity *entity) {
+/* An action (busy bit 0x1000) that EntityType30_Think starts while the player is outside the
+   rectangle: starts animation 2 at frame func_0019A3F0(entity, 2) - 1 with flag bits 15 and 18 set;
+   when the motion has ended it copies EntitySpawnInfo.unk10 to the model's angles and starts the
+   dormant action. */
+static void EntityType30_ReturnToDormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x1000;
@@ -276,13 +291,17 @@ static void func_00135DA0(Entity *entity) {
             entity->unkA0 = 0;
             ENTITY_FLAG_BITS(entity)->bit15 = FALSE;
             func_00216778(entity->model->unkD0, &entity->spawn_info->unk10);
-            func_001958B8(entity, (void (*)(Entity *))unkE0->unk10, 1);
+            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
         }
         break;
     }
 }
 
-static void func_00135EF0(Entity *entity, s32 unknown) {
+/* The think handler: has no switch on the state. While the entity is not busy: with the player
+   outside a fixed rectangle (x -4900 to -2500, z -5350 to -3350) it starts
+   EntityType30_ReturnToDormant; else in state 2 it calls EntityType30_ThinkCombat and in the other
+   states starts the move action. */
+static void EntityType30_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
@@ -294,27 +313,31 @@ static void func_00135EF0(Entity *entity, s32 unknown) {
     func_0018E9C0(entity);
     if (D_00413F80.position[0] < -4900.0f || D_00413F80.position[0] > -2500.0f ||
         D_00413F80.position[2] < -5350.0f || D_00413F80.position[2] > -3350.0f) {
-        func_001958B8(entity, func_00135DA0, unknown);
+        EntityAi_StartAction(entity, EntityType30_ReturnToDormant, unknown);
         return;
     }
     if (entity->state == 2) {
-        func_00136040(entity, unknown);
+        EntityType30_ThinkCombat(entity, unknown);
         return;
     }
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-static void func_00136040(Entity *entity, s32 unknown) {
+/* The think function of state 2 (called under `entity->state == 2`, not from a switch): as
+   EntityAi_ThinkCombat with func_0018FD50 in mode 3, the root movement and the head turn off, and
+   EntityType30_RangedAttack0 as the ranged attack; where that one closes in, this one only turns on
+   the spot (func_00190BE0). */
+static void EntityType30_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 side;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
-        func_001958B8(entity, func_00181C60, 1);
+        EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
     if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
-        func_001958B8(entity, func_00181AE0, 1);
+        EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
     side = func_0018FD50(entity, 3);
@@ -329,9 +352,9 @@ static void func_00136040(Entity *entity, s32 unknown) {
         switch (entity->unkCD) {
         case 0:
             if (func_0018F030((char *)entity)) {
-                func_001958B8(entity, func_001362A0, unknown);
+                EntityAi_StartAction(entity, EntityType30_RangedAttack0, unknown);
             } else {
-                func_001958B8(entity, func_00181E48, unknown);
+                EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
             return;
         case 1:
@@ -351,10 +374,12 @@ static void func_00136040(Entity *entity, s32 unknown) {
     if (unkE0->unk78 == 0) {
         entity->unkC8 = func_00190BE0(entity);
     }
-    func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-static void func_001362A0(Entity *entity) {
+/* The ranged attack with record 0 (busy bit 1): animation 23; from frame 12 to 76, on two frames in
+   three, launches the record's shots at a point 100 below the player (func_0018CF30). */
+static void EntityType30_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
     f32 direction[4];
@@ -396,9 +421,9 @@ static void func_001362A0(Entity *entity) {
             entity->unkA0 = 0;
             func_0019A290(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->unk00(entity, 1);
+                unkE0->think(entity, 1);
             } else {
-                func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
         break;
