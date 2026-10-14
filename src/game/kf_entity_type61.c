@@ -63,13 +63,13 @@ static void func_0014EA70(Entity *entity, s32 unknown);
 static void func_0014EBA8(Entity *entity, s32 unknown);
 static void func_0014EC80(Entity *entity);
 static void func_0014ECE8(Entity *entity);
-void func_0014EFB0(Entity *entity);
+static void func_0014EFB0(Entity *entity);
 static void func_0014F240(Entity *entity);
 static void func_0014F3F8(Entity *entity);
 static void func_0014F5A8(Entity *entity, s32 unknown);
 static void func_0014F6E8(Entity *entity, s32 unknown);
 static void func_0014FA28(Entity *entity);
-void func_0014FCC0(Entity *entity);
+static void func_0014FCC0(Entity *entity);
 static void func_0014FF68(Entity *entity);
 static void func_00150200(Entity *entity);
 static s32 func_001503A8(Entity *entity);
@@ -279,7 +279,7 @@ static void func_0014ECE8(Entity *entity) {
     }
 }
 
-void func_0014EFB0(Entity *entity) {
+static void func_0014EFB0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8[0];
     f32 target[4];
@@ -579,7 +579,7 @@ static void func_0014FA28(Entity *entity) {
     }
 }
 
-void func_0014FCC0(Entity *entity) {
+static void func_0014FCC0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8[0];
     f32 target[4];

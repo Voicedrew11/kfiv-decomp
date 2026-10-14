@@ -99,10 +99,8 @@ static void func_00147870(Entity *entity) {
     f32 limits[4];
     s32 look_at_target;
     u32 blend_frames; // match: converted to float as unsigned
-    s64 flags;
     EntityUnkE0 *unkE0;
 
-    flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;

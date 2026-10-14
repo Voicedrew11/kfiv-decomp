@@ -99,10 +99,8 @@ void EntityType30_Init(Entity *entity) {
 
 static void func_00135640(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
-    s64 flags;
     EntityUnkE0 *unkE0;
 
-    flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;

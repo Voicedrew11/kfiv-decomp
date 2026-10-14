@@ -68,8 +68,8 @@ static void func_0013B9E8(Entity *entity, s32 unknown);
 static void func_0013BA70(Entity *entity, s32 unknown);
 static void func_0013BC60(Entity *entity);
 static void func_0013BE18(Entity *entity, s32 unknown);
-s32 func_0013BF48(Entity *entity, s32 value);
-s32 func_0013C018(Entity *entity, f32 limit);
+static s32 func_0013BF48(Entity *entity, s32 value);
+static s32 func_0013C018(Entity *entity, f32 limit);
 
 /* Set-up of a type 23 entity: clears its work area and installs the type's handlers. */
 void EntityType23_Init(Entity *entity) {
@@ -1559,7 +1559,7 @@ static void func_0013BE18(Entity *entity, s32 unknown) {
     func_001958B8(entity, (void (*)(Entity *))unkE0->unk18, unknown);
 }
 
-s32 func_0013BF48(Entity *entity, s32 value) {
+static s32 func_0013BF48(Entity *entity, s32 value) {
     EntityIdTable table = D_0043E890;
     s32 i;
     Entity *other;
@@ -1573,7 +1573,7 @@ s32 func_0013BF48(Entity *entity, s32 value) {
     return TRUE;
 }
 
-s32 func_0013C018(Entity *entity, f32 limit) {
+static s32 func_0013C018(Entity *entity, f32 limit) {
     EntityIdTable table = D_0043E890;
     s32 i;
     Entity *other;
