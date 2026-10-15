@@ -2975,6 +2975,9 @@ D_0038A270 = 0x0038A270; // size:0x40
 D_0038A2B0 = 0x0038A2B0; // size:0x40
 D_0038A2F0 = 0x0038A2F0; // size:0x140
 D_0038A430 = 0x0038A430; // size:0x10
+D_0038A440 = 0x0038A440; // size:0x800
+D_0038AC40 = 0x0038AC40; // size:0x2000
+D_0038CC40 = 0x0038CC40; // size:0x10
 // the game state and the loaded maps, the map loader and the screen fade
 D_0038CC50 = 0x0038CC50; // size:0x48
 D_0038CCA0 = 0x0038CCA0; // size:0x80
@@ -3016,6 +3019,7 @@ D_003E6E40 = 0x003E6E40; // size:0x300
 D_003E7140 = 0x003E7140; // size:0x380
 D_003E7300 = 0x003E7300; // size:0x1C0
 D_003E74C0 = 0x003E74C0; // size:0x40
+D_003E7500 = 0x003E7500; // size:0x8000
 // the sound banks and the channels, and the effect models' draw hooks
 D_003EF500 = 0x003EF500; // size:0x20
 D_003EF520 = 0x003EF520; // size:0x20

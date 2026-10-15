@@ -6,8 +6,6 @@ void Vector_Add(void *, void *, void *);
 void sceVu0SubVector(void *, void *, void *);
 float sqrtf(float);
 
-LinkedPoint D_003E7500[LINKED_POINT_COUNT]; /* 0x3E7500 pool of influence points used as model lights */
-
 static LinkedPoint *linked_point_heads[2]; /* 0x4470C8 two active lists */
 static LinkedPoint *linked_point_free;     /* 0x4470D0 free list */
 
