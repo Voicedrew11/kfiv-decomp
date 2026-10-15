@@ -8,8 +8,6 @@
 #include "kf_message.h"
 #include "kf_map_object.h"
 
-extern void (*D_004147E0[])(void);
-
 void func_001CA338(int);
 s32 func_001C8F18(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
 void *func_001CA498(int, int);
@@ -18,6 +16,16 @@ void func_0010ED80(char *, int, int);
 void func_0010E8E0(void *, int, int, int, int);
 void func_0010B510(char *, int, int);
 void func_001CA578(void *);
+
+void func_001C9C40(void);
+void func_001C9EB0(void);
+void func_001C9FB0(void);
+void func_001CA0E0(void);
+void func_001CA1E8(void);
+
+/* 0x4147E0 the steps of the item pickup in progress, func_001C9C00 runs the current one */
+void (*D_004147E0[6])(void) = { func_001C9C40, func_001C9EB0, func_001C9FB0, func_001CA0E0, func_001CA1E8, 0 };
+
 int func_001C8B58(int, int);
 ItemNode *func_001CA520(ItemNode *);
 void Vector_Add(void *, void *, void *);
@@ -68,22 +76,11 @@ extern DroppedItemRecord D_00358928[0x80][16];
 extern MapItemDef *D_004469B8[2];
 extern s16 *D_004469C0[2];
 extern s32 D_00447190[2];
-extern ItemModelSource D_0057E040[2][32];
-extern ItemNode D_0057E240[2][64];
-extern ModelInstance D_005816C0[2][64];
-extern char D_00599EC0[2][64][0x200];
-extern s8 D_005B5EC0[2][0x100];
 extern u8 *D_004469C8[2];
 extern int D_00446770;
 extern u8 D_00356928[0x80][0x40];
 extern const Vector4Arg D_0043F610;
 extern MapLoadState D_0038D610;
-extern ItemNode D_00580040[2][16];
-extern ModelInstance D_0058F6C0[2][16];
-extern char D_005A9EC0[2][16][0x200];
-extern ItemNode D_005807C0[2][32];
-extern ModelInstance D_00592EC0[2][32];
-extern char D_005ADEC0[2][32][0x200];
 extern int D_0038CC80[3];
 extern MapDrawState D_0038A1B0;
 extern f32 D_00431AF0[16];
@@ -93,10 +90,6 @@ extern EventRunner D_00420D00;
 extern f32 D_004471A8;
 extern int D_004471AC;
 extern int D_004471B0;
-extern f32 D_005B60C0[4];
-extern f32 D_005B60D0[4];
-extern f32 D_005B60E0[4];
-extern f32 D_005B60F0[4];
 extern float D_00413F90[];
 extern u16 D_00413DAA[];
 extern u8 item_counts[];
@@ -106,6 +99,23 @@ extern u8 D_00369CB0[];
 extern u8 D_00369E30[];
 extern u8 D_00369FB0[];
 extern ItemCommonDef D_0041A6F8[];
+
+/* The per-map item blocks: nodes, models and the model data behind them, one set for each map. */
+static ItemModelSource D_0057E040[2][32];   /* 0x57E040 where the model and texture of each item kind lie */
+static ItemNode D_0057E240[2][64];          /* 0x57E240 the fixed items of the map */
+static ItemNode D_00580040[2][16];          /* 0x580040 the dropped items of the map */
+static ItemNode D_005807C0[2][32];          /* 0x5807C0 the items the player may pick up */
+static ModelInstance D_005816C0[2][64];     /* 0x5816C0 the models of the fixed items */
+static ModelInstance D_0058F6C0[2][16];     /* 0x58F6C0 the models of the dropped items */
+static ModelInstance D_00592EC0[2][32];     /* 0x592EC0 the models of the pickup items */
+static char D_00599EC0[2][64][0x200];       /* 0x599EC0 the model data of the fixed items */
+static char D_005A9EC0[2][16][0x200];       /* 0x5A9EC0 the model data of the dropped items */
+static char D_005ADEC0[2][32][0x200];       /* 0x5ADEC0 the model data of the pickup items */
+static s8 D_005B5EC0[2][0x100];             /* 0x5B5EC0 the node of each item slot, -1 for none */
+static f32 D_005B60C0[4];                   /* 0x5B60C0 where the item being picked up is */
+static f32 D_005B60D0[4];                   /* 0x5B60D0 its rotation */
+static f32 D_005B60E0[4];                   /* 0x5B60E0 where it is being taken to */
+static f32 D_005B60F0[4];                   /* 0x5B60F0 its speed */
 
 /* Resets the model node lists and marks every unset item record state as 1. */
 void func_001C8238(void) {

@@ -3038,9 +3038,25 @@ D_003EF6F0 = 0x003EF6F0; // size:0x10
 D_003EF700 = 0x003EF700; // size:0x10
 D_003EF710 = 0x003EF710; // size:0x2000
 D_003F1710 = 0x003F1710; // size:0x40
+// Data-only units in .data: without a name here the splitter cannot place an all-zero object.
+D_00402550 = 0x00402550; // size:0x800
+D_00402D50 = 0x00402D50; // size:0x38
+D_00402D88 = 0x00402D88; // size:0x20
+D_00402DA8 = 0x00402DA8; // size:0x11000
+D_00413DA8 = 0x00413DA8; // size:0x10
+D_00413DE0 = 0x00413DE0; // size:0x18
+D_00413F80 = 0x00413F80; // size:0x300
+D_00414280 = 0x00414280; // size:0x300
+D_004145C8 = 0x004145C8; // size:0x18
+D_004145E0 = 0x004145E0; // size:0x80
+D_00414660 = 0x00414660; // size:0xE0
+D_00414740 = 0x00414740; // size:0x10
+D_004147C0 = 0x004147C0; // size:0x20
+D_004147E0 = 0x004147E0; // size:0x18
 item_name_defs = 0x004147F8; // size:0x5F00
 weapon_defs = 0x0041B9B8; // size:0x2760
 worn_defs = 0x0041E118; // size:0x2800
+D_00420940 = 0x00420940; // size:0x100
 // A byte that only C code refers to: without a name here the splitter keeps it inside the word at 0x00446BDC.
 D_00446BDD = 0x00446BDD; // type:s8 size:0x1
 D_004472CB = 0x004472CB; // type:s8 size:0x1

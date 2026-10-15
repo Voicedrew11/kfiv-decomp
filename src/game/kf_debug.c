@@ -8,7 +8,7 @@ static PadReport *debug_pad; /* 0x447108 the controller report the editors read;
 int sprintf(char *, const char *, ...);
 extern char D_004468F0[];
 extern char D_004468F8[];
-extern char D_005742E0[];
+static char D_005742E0[0x68]; /* 0x5742E0 the strings the debug menus draw, four bytes apart */
 
 void func_001B0A58(void);
 void func_001B0A60(void);

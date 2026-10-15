@@ -58,6 +58,34 @@ extern u16 D_00446940;              /* run */
 extern u16 D_00446942; // match: u16 here; kf_game.c declares these pad masks as s16
 extern u16 D_00446944; // match: u16 here; kf_game.c declares this pad mask as s16
 
+/* The player's movement tables, tint colours, weapon tip and held item handlers (this file's scratch). */
+/* 0x413DE0 the top speed of each row of the movement tables (see movement_row) */
+f32 D_00413DE0[6] = { 12.0f, 12.0f, 8.0f, 6.0f, 6.0f, 0.0f };
+f32 D_00413DF8[6] = { 1.2f, 0.8f, 1.2f, 1.2f, 1.2f, 0.0f };                                            /* 0x413DF8 speed gained per frame */
+f32 D_00413E10[6] = { 1.2f, 0.6f, 1.2f, 1.2f, 1.2f, 0.0f };                                            /* 0x413E10 speed lost per frame */
+f32 D_00413E28[6] = { 0.029088821f, 0.029088821f, 0.019392548f, 0.014544411f, 0.014544411f, 0.0f };    /* 0x413E28 top turning speed */
+f32 D_00413E40[12] = { 0.0029088822f, 0.0029088822f, 0.0019392548f, 0.0014544411f, 0.0014544411f, 0.0f,
+                       0.0029088822f, 0.0029088822f, 0.0019392548f, 0.0014544411f, 0.0014544411f, 0.0f }; /* 0x413E40 turning speed gained per frame, twice */
+f32 D_00413E70[6] = { 0.02617994f, 0.02617994f, 0.02617994f, 0.01308997f, 0.02617994f, 0.0f };          /* 0x413E70 top speed of looking up and down */
+f32 D_00413E88[6] = { 0.0026179939f, 0.0026179939f, 0.0026179939f, 0.0013089969f, 0.0026179939f, 0.0f }; /* 0x413E88 looking speed gained per frame */
+f32 D_00413EA0[6] = { 0.0026179939f, 0.0026179939f, 0.0026179939f, 0.0013089969f, 0.0026179939f, 0.0f }; /* 0x413EA0 turning and looking speed lost per frame */
+f32 D_00413EB8[6] = { 0.03374303f, 0.03374303f, 0.03374303f, 0.016871516f, 0.03374303f, 0.0f };        /* 0x413EB8 how fast the view levels out */
+f32 D_00413ED0[6] = { 6.6666665f, 6.6666665f, 0.3333333f, 0.3333333f, 0.03f, 0.0f };                   /* 0x413ED0 falling speed gained per frame */
+/* 0x413EE8 the screen tint colours, red, green and blue */
+s32 D_00413EE8[6][3] = {
+    { 0x80, 0, 0 }, { 0, 0x80, 0 }, { 0, 0, 0x80 },
+};
+f32 D_00413F30[4] = { 0.0f, 0.0f, 0.0f, 1.0f };                                                        /* 0x413F30 the weapon tip */
+f32 D_00413F40[4] = { 0.0f, 0.0f, 0.0f, 1.0f };                                                        /* 0x413F40 the tip's angles */
+/* 0x413F50 the held item's action handler, Player_UpdateActions picks it with PlayerItemDef.unk63 */
+void (*D_00413F50[4])(u16, u16) = { Player_SwingWeapon, Player_SwingWeapon, Player_InvokeTargetHandler, 0 };
+/* 0x413F60 the held item's step handler, picked with PlayerState.unk258; three of them ignore the buttons */
+void (*D_00413F60[8])(u16, u16) = {
+    (void (*)(u16, u16))Player_FireProjectile, (void (*)(u16, u16))Player_DrawBow,
+    (void (*)(u16, u16))Player_PlayEquipSound, (void (*)(u16, u16))Player_FinishWeaponMotion,
+    (void (*)(u16, u16))Player_HolsterWeapon, 0, 0, 0,
+};
+
 void *memset(void *, int, u32);
 float sinf(float);
 int rand(void);
@@ -521,7 +549,6 @@ void Player_DrawScreenTints(void) {
 }
 
 extern MapDrawState D_0038A1B0;
-extern s32 D_00413EE8[][3];
 extern const s8 D_0043F260[30];
 
 /* Works out the colours laid over the screen (PlayerScreenTint) for the frame: which timed
@@ -683,8 +710,6 @@ void Player_UpdateScreenTints(void) {
         D_00414580.unk30 = D_00413F80.unk1A8 * 0x80 / 60;
     }
 }
-
-extern void (*D_00413F50[])(u16, u16);
 
 /* The player's actions for this frame: runs the handler of the item in hand, then the magic button. */
 void Player_UpdateActions(u16 held, u16 pressed) {
@@ -864,18 +889,12 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
     }
 }
 
-typedef void (*StateHandler)(u16, u16);
-
 extern u8 D_004141D8[];
-extern StateHandler D_00413F60[];
 
 void Player_InvokeTargetHandler(u16 target_id, u16 command) {
     Player_UpdateWeaponAim();
     D_00413F60[D_004141D8[0]](target_id, command);
 }
-
-extern int D_00413F30[];
-extern float D_00413F40[];
 
 /* Handler of an item that shoots: on the button, starts the motion and launches the item's shot. */
 void Player_FireProjectile(u16 held, u16 pressed) {
@@ -902,7 +921,8 @@ void Player_FireProjectile(u16 held, u16 pressed) {
 }
 
 extern GameDefinition D_00416D78[];
-extern Unk1B1470Request D_0057A350[32];
+static u8 D_0057A348[8] __attribute__((section(".bss")));  /* 0x57A348 the eight bytes before the requests */
+static Unk1B1470Request D_0057A350[32];                     /* 0x57A350 the bow's requests, one per shot */
 
 int func_00109098(ModelInstance *model, u8 index, u16 speed);
 void Sound_StopVoice(s8 slot);
@@ -1036,18 +1056,6 @@ void Player_UpdateWeaponAim(void) {
 }
 
 extern f32 D_00431AF0[16];
-
-/* the movement tables, one row per way of moving (see movement_row) */
-extern f32 D_00413DE0[6];           /* top speed */
-extern f32 D_00413DF8[6];           /* speed gained per frame */
-extern f32 D_00413E10[6];           /* speed lost per frame */
-extern f32 D_00413E28[6];           /* top turning speed */
-extern f32 D_00413E40[6];           /* turning speed gained per frame */
-extern f32 D_00413E70[6];           /* top speed of looking up and down */
-extern f32 D_00413E88[6];           /* looking speed gained per frame */
-extern f32 D_00413EA0[6];           /* turning and looking speed lost per frame */
-extern f32 D_00413EB8[6];           /* how fast the view levels out */
-extern f32 D_00413ED0[6];           /* falling speed gained per frame */
 
 /* the pad bits of each control */
 

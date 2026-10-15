@@ -15,7 +15,10 @@ extern Vector4 D_00431C80;
 extern s32 D_00446960;
 extern PlayerShot *D_00446964;
 extern u32 D_00446ED4;
-extern void (*D_004145C8[])(u16, u16);
+/* 0x4145C8 the ladder's state handlers, one per LadderState (Ladder_DispatchPad picks one) */
+void (*D_004145C8[6])(u16, u16) = {
+    (void (*)(u16, u16))Ladder_WalkToFoot, Ladder_WaitOnRung, Ladder_ClimbRungUp, Ladder_ClimbRungDown,
+};
 extern u16 D_0044692C;
 extern u16 D_0044692E;
 extern u16 D_00446930;

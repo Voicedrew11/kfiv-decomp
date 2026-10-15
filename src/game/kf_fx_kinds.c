@@ -64,7 +64,8 @@ extern s64 D_0043EF60[2];
 extern u8 D_0034A019[];
 extern u8 D_0034AFD6[];
 void Sound_PlaySw(int mode);
-extern u32 D_00402D50[14];
+/* 0x402D50 seven (weapon, effect param) pairs EffectWeaponSound_Start matches to play sound 3 */
+u32 D_00402D50[14] = { '%', '[', '&', ']', '\'', '^', '(', '\\', ')', '`', ',', 'a', '.', 'b' };
 
 void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot);
 void EffectImpactLob_Update(EffectActor *actor);

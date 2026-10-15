@@ -73,7 +73,6 @@ int func_001024B0(int);
 void *memset(void *, int, u32);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
 
-extern int (*D_00402D88[3])(ModelInstance *, void *, f32);
 // match: declared without a size, so it is not addressed through $gp
 extern CollisionListPick2 D_00446918[];
 // match: declared without a size, so it is not addressed through $gp
@@ -100,7 +99,16 @@ extern LevelRecord D_003679A0[];
 extern LevelRecord D_003682F0[];
 extern LevelDef D_00417EF8[];
 extern char D_0043F248[];
-extern FxTableEntry D_00402DA8[];
+
+int func_001B21F8(ModelInstance *, void *, f32);
+int func_001B24B0(ModelInstance *, void *, f32);
+int func_001B2740(ModelInstance *, void *, f32);
+
+/* 0x402D88 the three hit checks of a swing, one per kind of collision shape class */
+int (*D_00402D88[3])(ModelInstance *, void *, f32) = { func_001B21F8, func_001B24B0, func_001B2740 };
+u32 D_00402D98[4] = { 0x18, 8, 0x10, 0 }; /* 0x402D98 four words after the table, which nothing reads */
+/* 0x402DA8 the effect table, 0x110 bytes per effect id, which func_001B4EE0 loads from its file */
+FxTableEntry D_00402DA8[256] = { 0 };
 
 /* Runs an attack request against the world, by the request's shape (0 to 3). Only shapes
    0 and 3 do anything. */

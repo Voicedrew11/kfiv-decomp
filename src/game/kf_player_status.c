@@ -28,7 +28,8 @@ int Sound_PlayCommon(int);
 extern PlayerState D_00413F80;
 extern int D_00413FD8[];            /* D_00413F80.hp_max */
 extern int D_00414524[];            /* D_00414280 + 0x2A4 */
-extern PlayerScreenTint D_00414580;
+/* 0x414580 the tint the damage and the statuses fade the screen with (Player_DrawScreenTints draws it) */
+PlayerScreenTint D_00414580 = { 0 };
 extern PlayerItemDef weapon_defs[];
 extern FxTableEntry D_00402DA8[];
 extern LevelRecord D_003679A0[70];

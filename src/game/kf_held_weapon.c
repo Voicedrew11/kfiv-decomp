@@ -39,26 +39,41 @@ extern char *D_00446F64;
 extern PlayerState D_00413F80;
 extern GameDefinition D_00416D78[70];
 extern PlayerItemDef weapon_defs[];
-extern f32 D_00414740[4];
-extern MapSlotUnk10Half D_004145E0[2];
 extern MapSlotUnk0C D_0038A250;
 extern char D_00249680[0x80000];
 extern char D_0043F588[];
 extern char D_0043F5A0[];
 extern char D_0043F5B8[];
 extern char D_0043F5D0[];
-extern PlayerArmPoints D_00414780;
-extern PlayerArmPoints D_004147A0;
 extern MapSlotUnk10Half D_0038A270;
 extern CameraState D_004325A0;
 extern f32 D_00431AF0[16];
 extern f32 D_004323E0[16];
-extern WeaponTrailKind D_00414660[7];
-
 extern int D_00446970;
 extern int D_00446974;
 
-ModelInstance D_0057B6A0;               /* the held item; D_00446978 in asm .sdata points here */
+/* What lights the held item's models, its trail, its position offsets and the points of its arm. */
+MapSlotUnk10Half D_004145E0[2] = { /* 0x4145E0 the second hand's block ends with 1.0 four times */
+    { { 0 } },
+    { { 0, 0, 0, 0, 0, 0, 0x3F8000003F800000, 0x3F8000003F800000 } },
+};
+/* 0x414660 the colour, GS blend value and life of each kind of weapon trail (WeaponTrail_PickKind picks one) */
+WeaponTrailKind D_00414660[7] = {
+    { 0x80, 0x80, 0x80, 0x40, 0x48, 3 },
+    { 0xDF, 0x00, 0x29, 0x40, 0x48, 3 },
+    { 0xEE, 0x9C, 0x00, 0x40, 0x48, 3 },
+    { 0x00, 0xA4, 0x8F, 0x40, 0x48, 3 },
+    { 0x00, 0xB2, 0xEB, 0x40, 0x48, 3 },
+    { 0xFD, 0xFD, 0xC4, 0x40, 0x48, 3 },
+    { 0x47, 0x4D, 0x7C, 0x40, 0x48, 3 },
+};
+f32 D_00414740[4] = { 16.0f, 19.0f, 22.0f, 1.0f }; /* 0x414740 the held model's position offsets */
+/* 0x414750 twelve words after the offsets that nothing in the game reads */
+u32 D_00414750[12] = { 0x44, 0x0, 0x48, 0x0, 0x42, 0x0, 0x80, 0x80, 0x80, 0x40, 0x0, 0x0 };
+PlayerArmPoints D_00414780 = { 0 }; /* 0x414780 points 30 and 31 of the held model */
+PlayerArmPoints D_004147A0 = { 0 }; /* 0x4147A0 the same for the frame before */
+
+ModelInstance D_0057B6A0 __attribute__((section(".bss"))); /* 0x57B6A0 the held item; D_00446978 in asm .sdata points here */
 static ModelInstance arm_model;         /* 0x57B860 */
 static char held_item_channels[0x90];   /* 0x57BA20 */
 static char held_item_setup[0x1000];    /* 0x57BAB0 */
