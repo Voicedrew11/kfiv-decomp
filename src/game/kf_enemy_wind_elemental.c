@@ -8,8 +8,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -21,29 +21,29 @@ extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
 void func_00196870(void *, int);
 void func_00196CC0(void *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
 void func_00196D48(Entity *);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
-float func_001957B8(float, float);
-float func_00194FB8(float);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
+float EntityMath_AngleDifference(float, float);
+float EntityMath_WrapAngle(float);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-int func_00192C98(void *, int, int, u32, int);
-float func_00195478(float *, char *);
-float func_00194F80(void *, void *);
-void func_00190A30(char *);
+int Motion_Start(void *, int, int, u32, int);
+float EntityMath_AngleXZ(float *, char *);
+float EntityMath_DistanceXZ(void *, void *);
+void EntityAi_LowerWeightsAfterHit(char *);
 void func_00195898(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
@@ -102,8 +102,8 @@ void WindElemental_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with WindElemental_ThinkCombat for state 2; walking back to
@@ -131,7 +131,7 @@ static void WindElemental_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0(entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if ((s32)(entity->flags >> 53) & 1) {
             // match: called as returning nothing, so $2 is free for the next statement
             ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
@@ -176,15 +176,15 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, WindElemental_Dodge, 1);
         return;
     }
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, WindElemental_DodgeNoAttack, 1);
         return;
     }
-    mode = func_0018FD50(entity, 0);
+    mode = EntityAi_PickCombatChoice(entity, 0);
     entity->flags |= 0x200;
     if (entity->unkA0 == 0 || mode == 0) {
         entity->unkCF = entity->unkCD;
@@ -193,10 +193,10 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
             entity->unk9E = D_00446ED4;
         }
         // match: called with the entity alone here
-        ((void (*)(Entity *))func_00190B88)(entity);
+        ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -223,19 +223,19 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->unkCD == 1) {
         func_00196D48(entity);
         if ((s32)(entity->flags >> 31) & 1) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            side = func_0018EAC0(entity, direction);
+            side = EntityAi_TurnFromPush(entity, direction);
             switch (unkE0->unk78) {
             case 0:
                 if (side > 0) {
@@ -243,17 +243,17 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (side < 0) {
                     entity->unkC8 = 0x141;
                 } else {
-                    if (ABS(func_00194FB8(entity->unk68 - entity->model->unkD0[1])) > 1.5707964f
+                    if (ABS(EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1])) > 1.5707964f
                         && D_00446ED4 % 15U == 0 && !(rand() & 1)) {
-                        unkE0->unk7A = (func_00194FB8(entity->unk68 - entity->model->unkD0[1]) > 0.0f) ? 1 : -1;
+                        unkE0->unk7A = (EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1]) > 0.0f) ? 1 : -1;
                         EntityAi_StartAction(entity, WindElemental_PlayTurnAnim, unknown);
                         return;
                     }
-                    entity->unkC8 = func_00190F90(entity, 1, entity->radius + 100.0f + 30.0f) | 0x400;
+                    entity->unkC8 = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f) | 0x400;
                 }
                 break;
             case 1:
-                entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 break;
             }
         }
@@ -272,9 +272,9 @@ static void WindElemental_PlayTurnAnim(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         if (unkE0->unk7A > 0) {
-            func_00192C98(entity, 0xC, 0, entity->params->unkC4, 1);
+            Motion_Start(entity, 0xC, 0, entity->params->unkC4, 1);
         } else {
-            func_00192C98(entity, 0xB, 0, entity->params->unkC4, 1);
+            Motion_Start(entity, 0xB, 0, entity->params->unkC4, 1);
         }
         entity->flags = (entity->flags & ~0x3800) | 0x800;
         entity->flags &= ~0x200;
@@ -310,13 +310,13 @@ static void WindElemental_Dodge(Entity *entity) {
     case 0:
         switch (rand() % 3) {
         case 0:
-            func_00192C98(entity, 0xA, 0, 5, 1);
+            Motion_Start(entity, 0xA, 0, 5, 1);
             break;
         case 1:
-            func_00192C98(entity, 6, 0, 5, 1);
+            Motion_Start(entity, 6, 0, 5, 1);
             break;
         case 2:
-            func_00192C98(entity, 7, 0, 5, 1);
+            Motion_Start(entity, 7, 0, 5, 1);
             break;
         }
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
@@ -334,7 +334,7 @@ static void WindElemental_Dodge(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            if (!(rand() & 1) && ABS(func_00194FB8(entity->unk68 - entity->model->unkD0[1])) < 0.5235988f) {
+            if (!(rand() & 1) && ABS(EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1])) < 0.5235988f) {
                 ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~(3L << 58)) | (1L << 58);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
             } else if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
@@ -349,7 +349,7 @@ static void WindElemental_Dodge(Entity *entity) {
 
 /* A second dodge action (busy bit 8): as WindElemental_Dodge (one of animations 10, 6 and 7, drawn)
    without the ranged attack that one may start at the end. WindElemental_ThinkCombat starts it for
-   the player's swing (func_0018EEE0). */
+   the player's swing (EntityAi_ShouldDodge). */
 static void WindElemental_DodgeNoAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
@@ -358,13 +358,13 @@ static void WindElemental_DodgeNoAttack(Entity *entity) {
     case 0:
         switch (rand() % 3) {
         case 0:
-            func_00192C98(entity, 0xA, 0, 5, 1);
+            Motion_Start(entity, 0xA, 0, 5, 1);
             break;
         case 1:
-            func_00192C98(entity, 6, 0, 5, 1);
+            Motion_Start(entity, 6, 0, 5, 1);
             break;
         case 2:
-            func_00192C98(entity, 7, 0, 5, 1);
+            Motion_Start(entity, 7, 0, 5, 1);
             break;
         }
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
@@ -401,8 +401,8 @@ static s32 func_0015E000(Entity *entity, f32 min_distance, f32 max_angle) {
         return FALSE;
     }
     distance = entity->distance_to_player - (entity->radius + 100.0f);
-    angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
-    player_angle = func_001957B8(D_00413F80.unk14, func_00195478(D_00413F80.position, (char *)entity->model->position));
+    angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+    player_angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
     if (distance < min_distance) {
         return FALSE;
     }
@@ -427,9 +427,9 @@ static void WindElemental_AlertSameKind(Entity *entity) {
             EntityUnkE0 *unkE0 = &other->unkE0;
 
             if (unkE0->unk68 == 0
-                && func_00194F80(entity->model->position, other->model->position)
+                && EntityMath_DistanceXZ(entity->model->position, other->model->position)
                        < (s16)entity->params->unk434
-                && func_00194F80(other->spawn_info, D_00413F80.position) < other->spawn_info->unk4C) {
+                && EntityMath_DistanceXZ(other->spawn_info, D_00413F80.position) < other->spawn_info->unk4C) {
                 unkE0->unk68 = 1;
             }
         }
@@ -438,7 +438,7 @@ static void WindElemental_AlertSameKind(Entity *entity) {
 
 /* The on_hit handler: as EntityAi_OnHit, then WindElemental_AlertSameKind. */
 static void WindElemental_OnHit(Entity *entity) {
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
@@ -457,7 +457,7 @@ static void WindElemental_OnHit(Entity *entity) {
 
 /* An action (busy bit 0x3000) that WindElemental_Think starts while work word unk68 is 1: plays
    animation 3, then each frame guards or dodges the player's swing (WindElemental_Dodge when
-   func_0015E000 says so), starts the attack func_0018F030 picks once func_0018FD50 chooses
+   func_0015E000 says so), starts the attack EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses
    attacking (unk68 becomes 2), and else gives the command to run at the player and calls the move
    handler itself. Flag bit 53 ends it with unk68 at 2. */
 static void WindElemental_RunAtPlayer(Entity *entity) {
@@ -468,7 +468,7 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
     entity->unkC6 |= 0x3000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         unkE0->unk1C = 0.0f;
         ENTITY_FLAGS(entity) &= ~0x200;
@@ -484,11 +484,11 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
             EntityAi_StartAction(entity, WindElemental_Dodge, 1);
             break;
         }
-        if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+        if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
             EntityAi_StartAction(entity, EntityAi_Guard, 1);
             break;
         }
-        if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+        if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;
         }
@@ -503,7 +503,7 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
                 EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
-        side = func_0018FD50(entity, 0);
+        side = EntityAi_PickCombatChoice(entity, 0);
         ENTITY_FLAGS(entity) |= 0x200;
         if (side == 0) {
             entity->unkCF = entity->unkCD;
@@ -511,10 +511,10 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
             if (entity->unkCF != 0) {
                 entity->unk9E = D_00446ED4;
             }
-            func_00190B88(entity, 0);
+            EntityAi_LowerChoiceWeight(entity, 0);
             if (entity->unkCD == 0) {
                 unkE0->unk68 = 2;
-                if (func_0018F030((char *)entity)) {
+                if (EntityAi_PickAttack((char *)entity)) {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -523,13 +523,13 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
             break;
         }
         entity->target = &D_00413F80;
-        side = func_0018EAC0(entity, direction);
+        side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
             entity->unkC8 = 0x241;
         } else if (side < 0) {
             entity->unkC8 = 0x141;
         } else {
-            entity->unkC8 = func_00190F90(entity, 1, entity->radius + 100.0f + 30.0f);
+            entity->unkC8 = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
         ((void (*)(Entity *))unkE0->move)(entity);
         break;

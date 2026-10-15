@@ -10,8 +10,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
@@ -23,7 +23,7 @@ extern float D_00413F80[];
 extern EntitySpawnInfo *D_004467D0[2];
 extern MapSlot D_0038CD20[];
 extern int D_00446770;
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 void func_001035A8(u32, int);
 int Script_Start(int, int);
 
@@ -66,8 +66,8 @@ void HammerSkeleton_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: no states. While the entity is not busy it starts HammerSkeleton_Death when the
@@ -92,13 +92,13 @@ static void HammerSkeleton_Think(Entity *entity, s32 unknown) {
 /* A death action (busy bit 0x40) that HammerSkeleton_Think starts; the death slot holds
    EntityAi_Death. Animation 16, the fade over 20 frames and the removal, as EntityAi_Death with
    other flag settings; it frees the entity's effects at the start, and when the motion has ended
-   calls func_001035A8 and starts script EntitySpawnInfo.unk36 where that one calls func_0018DCD8.
+   calls func_001035A8 and starts script EntitySpawnInfo.unk36 where that one calls EntityEvent_OnDeath.
    */
 static void HammerSkeleton_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;

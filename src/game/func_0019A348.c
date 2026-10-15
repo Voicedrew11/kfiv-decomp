@@ -4,7 +4,7 @@
 void func_0019A348(Entity *entity) {
     u8 *level = entity->unkC0;
     s32 value;
-    s32 limit = 0xC0; // match: the 0xC0 cap stays in a register, as in func_00190A30
+    s32 limit = 0xC0; // match: the 0xC0 cap stays in a register, as in EntityAi_LowerWeightsAfterHit
 
     level += ENTITY_FLAG_BITS(entity)->bits58;
     value = *level + 5;

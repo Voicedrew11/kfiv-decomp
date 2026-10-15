@@ -9,8 +9,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32); // match: an int result keeps $2 busy after the call
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32); // match: an int result keeps $2 busy after the call
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -20,16 +20,16 @@ void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
 extern s32 D_00446928;
 extern u32 D_00446ED4;
-void func_0018D600(char **, int, u32, int);
-void func_0018DA38(Entity *, s32, s32, s32);
+void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
+void EntityEvent_StartCue(Entity *, s32, s32, s32);
 int func_0019D490(u8, u8, float *, float);
 void func_00196870(void *, int);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkCombat(Entity *, s32);
 extern u8 D_00413FBC[];
-int func_00192C98(void *, int, int, u32, int);
-void func_0018DCD8(Entity *);
+int Motion_Start(void *, int, int, u32, int);
+void EntityEvent_OnDeath(Entity *);
 
 static void DarkOne_Think(Entity *entity, s32 unknown);
 static void DarkOne_Death(Entity *entity);
@@ -76,8 +76,8 @@ void DarkOne_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
     ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
@@ -85,29 +85,29 @@ void DarkOne_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think without the walk back to the spawn point, with
-   EntityAi_ThinkCombat for states 1 and 2. Every third frame it calls func_0018D600 with
+   EntityAi_ThinkCombat for states 1 and 2. Every third frame it calls EntityEvent_StartEffectAtPoint with
    EntityParams.unk430, unk432 or unk434, by D_00446928 (3, 2, other). In a frame with flag bit 43
-   set it calls func_0018D600 with 0x13D and clears the bit; then, with D_00446928 at 0 or less, it
+   set it calls EntityEvent_StartEffectAtPoint with 0x13D and clears the bit; then, with D_00446928 at 0 or less, it
    sets Entity.unkA3 to 6 and starts DarkOne_Death, and else, when D_00446928 has changed (work
-   byte unk7A keeps it), calls func_0018DA38 and func_0019D490. */
+   byte unk7A keeps it), calls EntityEvent_StartCue and func_0019D490. */
 static void DarkOne_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 3U == 0) {
         switch (D_00446928) {
         case 3:
-            func_0018D600((char **)entity, entity->params->unk430, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk430, 0xFF, (int)entity->model->unkD0);
             break;
         case 2:
-            func_0018D600((char **)entity, entity->params->unk432, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk432, 0xFF, (int)entity->model->unkD0);
             break;
         default:
-            func_0018D600((char **)entity, (s16)entity->params->unk434, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, (s16)entity->params->unk434, 0xFF, (int)entity->model->unkD0);
             break;
         }
     }
     if (ENTITY_FLAG_BITS(entity)->bit43) {
-        func_0018D600((char **)entity, 0x13D, 0xFF, (int)entity->model->unkD0);
+        EntityEvent_StartEffectAtPoint((char **)entity, 0x13D, 0xFF, (int)entity->model->unkD0);
         ENTITY_FLAG_BITS(entity)->bit43 = FALSE;
         if (D_00446928 <= 0) {
             entity->unkA3 = 6;
@@ -115,7 +115,7 @@ static void DarkOne_Think(Entity *entity, s32 unknown) {
             return;
         }
         if (unkE0->unk7A != D_00446928) {
-            func_0018DA38(entity, entity->params->unk436, entity->params->unk438, 0);
+            EntityEvent_StartCue(entity, entity->params->unk436, entity->params->unk438, 0);
             // match: an int result keeps $2 busy after the call
             ((int (*)(s32, s32, f32 *, f32))func_0019D490)((u8)entity->params->unk43A, (u8)entity->params->unk43C,
                                                            entity->model->position, entity->params->unk42E);
@@ -126,7 +126,7 @@ static void DarkOne_Think(Entity *entity, s32 unknown) {
         func_00196870(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         switch (entity->state) {
         case 1:
         case 2:
@@ -155,13 +155,13 @@ static void DarkOne_Death(Entity *entity) {
 }
 
 /* A death action (busy bit 0x40), started by DarkOne_Death: plays animation 16 as
-   EntityAi_Death does, calling func_0018DCD8 at the start, and when the animation has ended sets
+   EntityAi_Death does, calling EntityEvent_OnDeath at the start, and when the animation has ended sets
    the flags of the fade and stops there: no fade and no removal. */
 static void DarkOne_DeathByOtherWeapon(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -180,7 +180,7 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits2 = 1;
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        func_0018DCD8(entity);
+        EntityEvent_OnDeath(entity);
         entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
@@ -207,14 +207,14 @@ static void DarkOne_DeathByMoonlightSword(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0, 0, 5, 1);
+        Motion_Start(entity, 0, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
         ENTITY_FLAG_BITS(entity)->bits2 = 1;
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        func_0018DCD8(entity);
+        EntityEvent_OnDeath(entity);
         entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {

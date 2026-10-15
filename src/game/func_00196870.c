@@ -2,8 +2,8 @@
 #include "kf_player.h"
 
 int rand(void);
-s32 func_0018CAF8(Entity *entity);
-s32 func_0018C728(Entity *entity);
+s32 EntitySight_PropInWay(Entity *entity);
+s32 EntitySight_ObjectInWay(Entity *entity);
 extern PlayerState D_00413F80;
 
 /* Updates the flag-32 and flag-33 bits from how near the player is, then marks the actor (flag 63) when it is busy. */
@@ -63,7 +63,7 @@ void func_00196870(Entity *actor, s32 mode) {
         }
     }
     actor->flags &= ~((u64)1 << 63);
-    if (func_0018CAF8(actor) - 1 < 3U || func_0018C728(actor) != 0) {
+    if (EntitySight_PropInWay(actor) - 1 < 3U || EntitySight_ObjectInWay(actor) != 0) {
         actor->flags |= (u64)0x8000 << 48;
         if (mode < 2) {
             actor->flags &= ~((u64)1 << 32);

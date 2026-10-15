@@ -7,46 +7,46 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int rand(void);
-int func_0018EAC0(void *, void *);
-void func_0018B778(float, void *, void *, void *);
-s16 func_00190F90(float, void *, int); // match: this file only matches with this type; func_00190F90.c defines it differently
+int EntityAi_TurnFromPush(void *, void *);
+void EntityPoint_PickNear(float, void *, void *, void *);
+s16 EntityAi_MoveCommand(float, void *, int); // match: this file only matches with this type; EntityAi_MoveCommand.c defines it differently
 extern PlayerData D_00413F80;
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
-float func_00194F80(void *, void *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
+float EntityMath_DistanceXZ(void *, void *);
 void func_00196D48(Entity *);
-float func_001957B8(float, float);
-int func_00190BE0(Entity *);
+float EntityMath_AngleDifference(float, float);
+int EntityAi_TurnCommand(Entity *);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
 void Vector_Copy(void *, void *);
-int func_0018CF30(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
+int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 void func_0019A290(Entity *, s32);
-void func_00190A30(char *);
+void EntityAi_LowerWeightsAfterHit(char *);
 void func_00195898(char *, u8);
-float func_00195388(float *, float, float);
-void func_0018DCD8(Entity *);
+float EntityMath_EaseAngleToward(float *, float, float);
+void EntityEvent_OnDeath(Entity *);
 extern f32 D_00431AF0[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -54,7 +54,7 @@ void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0ApplyMatrix(float *, int *, float *);
 void Vector_Scale(float *, float *, float);
 void Vector_Add(void *, void *, void *);
-s32 func_0018AE98(f32 *, f32 *, void *, f32);
+s32 EntityCollision_RayProps(f32 *, f32 *, void *, f32);
 
 static void Spider_Animate(Entity *entity);
 static void Spider_Think(Entity *entity, s32 unknown);
@@ -110,8 +110,8 @@ void Spider_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler (installed in both branches of the set-up function): as EntityAi_Animate
@@ -127,9 +127,9 @@ static void Spider_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
     }
     if (unkE0->unk7A != 0) {
@@ -158,7 +158,7 @@ static void Spider_Think(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
     } else if (entity->state == 2) {
@@ -169,9 +169,9 @@ static void Spider_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of every state but 2 (Spider_Think calls it): wanders. Each time the
-   timer runs out it picks a point near the spawn point (func_0018B778; 59 times in 100) or no
-   target, takes the command of func_00190F90 towards it (or the turn away from a push,
-   func_0018EAC0) and starts the move action. */
+   timer runs out it picks a point near the spawn point (EntityPoint_PickNear; 59 times in 100) or no
+   target, takes the command of EntityAi_MoveCommand towards it (or the turn away from a push,
+   EntityAi_TurnFromPush) and starts the move action. */
 static void Spider_ThinkWander(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -184,7 +184,7 @@ static void Spider_ThinkWander(Entity *entity, s32 unknown) {
     }
     if (entity->unkA0 == 0) {
         if (rand() % 100 > 40) {
-            func_0018B778(entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
+            EntityPoint_PickNear(entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
             entity->target = unkE0->unk30;
             entity->unkA0 = rand() % 60 + 120;
         } else {
@@ -192,13 +192,13 @@ static void Spider_ThinkWander(Entity *entity, s32 unknown) {
             entity->unkA0 = rand() % 30 + 60;
         }
     }
-    turn = func_0018EAC0(entity, direction);
+    turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
         entity->unkC8 = 0x201;
     } else if (turn < 0) {
         entity->unkC8 = 0x101;
     } else {
-        entity->unkC8 = func_00190F90(50.0f, entity, 0);
+        entity->unkC8 = EntityAi_MoveCommand(50.0f, entity, 0);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -219,37 +219,37 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, Spider_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
             return;
         case 1:
-            if (func_00194F80(&D_00413F80, entity->spawn_info) < (f32)entity->spawn_info->unk4C) {
+            if (EntityMath_DistanceXZ(&D_00413F80, entity->spawn_info) < (f32)entity->spawn_info->unk4C) {
                 entity->target = &D_00413F80;
                 entity->unkA0 = rand() % 60 + 120;
                 unkE0->unk78 = 0;
             } else {
-                func_0018B778(entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
+                EntityPoint_PickNear(entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
                 entity->target = unkE0->unk30;
                 entity->unkA0 = rand() % 60 + 120;
                 unkE0->unk78 = 1;
@@ -267,19 +267,19 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->unkCD == 1) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, direction);
+            turn = EntityAi_TurnFromPush(entity, direction);
             switch (unkE0->unk78) {
             case 0:
                 if (turn > 0) {
@@ -287,7 +287,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 0);
+                    entity->unkC8 = EntityAi_MoveCommand(entity->radius + 100.0f + 30.0f, entity, 0);
                 }
             case 1:
                 if (turn > 0) {
@@ -295,7 +295,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190F90(50.0f, entity, 0);
+                    entity->unkC8 = EntityAi_MoveCommand(50.0f, entity, 0);
                 }
                 break;
             }
@@ -306,7 +306,7 @@ done:
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, the shots turned towards a point 30
-   below the player (func_0018CF30). */
+   below the player (EntityShot_LaunchAimed). */
 static void Spider_RangedAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 kind = (s32)(entity->flags >> 58) & 3;
@@ -317,7 +317,7 @@ static void Spider_RangedAttack(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -342,7 +342,7 @@ static void Spider_RangedAttack(Entity *entity) {
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         Vector_Copy(direction, &D_00413F80);
         direction[1] -= 30.0f;
-        func_0018CF30(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction, 0.7853982f, 0.17453294f);
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction, 0.7853982f, 0.17453294f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;
         } else {
@@ -365,14 +365,14 @@ static void Spider_RangedAttack(Entity *entity) {
 
 /* The dormant action (busy bit 0x20), installed in both branches of the set-up function and started
    when the spawn has flag bit 58: plays animation 3 until the entity is EntityParams.unk430 or more
-   from its spawn point (func_00194F80), then thinks. It does not wait for the player. */
+   from its spawn point (EntityMath_DistanceXZ), then thinks. It does not wait for the player. */
 static void Spider_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 3, 0, 0, 1);
+        Motion_Start(entity, 3, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
@@ -382,7 +382,7 @@ static void Spider_Dormant(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        if (func_00194F80(entity->model->position, entity->spawn_info) >= (f32)entity->params->unk430) {
+        if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) >= (f32)entity->params->unk430) {
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
@@ -406,7 +406,7 @@ static void Spider_Dormant(Entity *entity) {
    ended, the slot holds EntityAi_OnHit. No reaction: it starts func_00129CA0 and goes to state 2.
    */
 static void Spider_OnHit(Entity *entity) {
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     EntityAi_StartAction(entity, func_00129CA0, 0);
     func_00195898((char *)entity, 2);
@@ -418,11 +418,11 @@ static void Spider_OnHit(Entity *entity) {
    fade. */
 static void Spider_Death(Entity *entity) {
     entity->unkC6 = 0x40;
-    func_00195388(&entity->model->unkD0[0], 0.0f, 6.0f);
-    func_00195388(&entity->model->unkD0[2], 0.0f, 6.0f);
+    EntityMath_EaseAngleToward(&entity->model->unkD0[0], 0.0f, 6.0f);
+    EntityMath_EaseAngleToward(&entity->model->unkD0[2], 0.0f, 6.0f);
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -451,7 +451,7 @@ static void Spider_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
             entity->unkA0 = 20;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
@@ -489,7 +489,7 @@ static void func_001299F8(Entity *entity) {
     sceVu0RotMatrixX(matrix, matrix, entity->model->unkD0[0]);
     sceVu0RotMatrixY(matrix, matrix, entity->model->unkD0[1]);
     sceVu0ApplyMatrix(direction, (int *)matrix, direction);
-    hit = func_0018AE98(entity->model->position, direction, landing, 200.0f);
+    hit = EntityCollision_RayProps(entity->model->position, direction, landing, 200.0f);
     if (hit == 1) {
         Vector_Copy(entity->model->position, landing);
         ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
@@ -547,8 +547,8 @@ static void func_00129CA0(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     entity->unkC6 = 0x2000;
-    pitch_left = func_00195388(&entity->model->unkD0[0], 0.0f, 6.0f);
-    roll_left = func_00195388(&entity->model->unkD0[2], 0.0f, 6.0f);
+    pitch_left = EntityMath_EaseAngleToward(&entity->model->unkD0[0], 0.0f, 6.0f);
+    roll_left = EntityMath_EaseAngleToward(&entity->model->unkD0[2], 0.0f, 6.0f);
     if (entity->flags & (0x8200L << 35)) {
         pitch_left = ABS(pitch_left);
         roll_left = ABS(roll_left);

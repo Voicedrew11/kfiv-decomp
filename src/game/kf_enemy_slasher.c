@@ -9,8 +9,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -18,7 +18,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
-void func_00190A30(char *);
+void EntityAi_LowerWeightsAfterHit(char *);
 void func_00195898(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
@@ -27,12 +27,12 @@ void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_ThinkCombat(Entity *, s32);
 char *func_0010CAB8(char *, u32);
-int func_00192C98(void *, int, int, u32, int);
-float func_00194F80(void *, void *);
+int Motion_Start(void *, int, int, u32, int);
+float EntityMath_DistanceXZ(void *, void *);
 
 static void Slasher_OnHit(Entity *entity);
 static void Slasher_Think(Entity *entity, s32 unknown);
@@ -80,8 +80,8 @@ void Slasher_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The on_hit handler: as EntityAi_OnHit, but a light hit starts EntityAi_ReactionHeavy too
@@ -92,7 +92,7 @@ static void Slasher_OnHit(Entity *entity) {
     u64 flags;
     u64 hit_strength;
 
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     ENTITY_UNK5C(entity)->as_s32 = 0;
     flags = entity->flags & ~0x200;
     entity->flags = flags;
@@ -125,7 +125,7 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0((char *)entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -162,7 +162,7 @@ static void Slasher_WaitForPlayerNear(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x1000;
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     if (entity->distance_to_player < entity->params->unk436 || unkE0->unk7A != 0) {
@@ -191,7 +191,7 @@ static void func_001409D0(Entity *entity) {
                     other_entity != entity) {
                     EntityUnkE0 *other_unkE0 = &other_entity->unkE0;
                     if (other_unkE0->unk7A == 0 &&
-                        func_00194F80(entity->model->position, other_entity->model->position) <
+                        EntityMath_DistanceXZ(entity->model->position, other_entity->model->position) <
                             (float)entity->params->unk438) {
                         other_unkE0->unk7A = 1;
                     }

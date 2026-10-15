@@ -8,14 +8,14 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 extern PlayerData D_00413F80;
-float func_00195478(float *, char *);
-float func_00194FB8(float);
+float EntityMath_AngleXZ(float *, char *);
+float EntityMath_WrapAngle(float);
 // match: the definition names only the three integer arguments; the floats go on to the handler it calls in their registers
 void func_001A0CD0(s32, s32, s32, f32, f32, f32);
 
@@ -60,14 +60,14 @@ void Bell_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
-/* The animate handler: plays the motion a step on (func_00192EB0) and sets flag bit 34 when it has
+/* The animate handler: plays the motion a step on (Motion_Step) and sets flag bit 34 when it has
    ended; no blend and no head turn. */
 static void Bell_Animate(Entity *entity) {
-    ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, ENTITY_FLAG_BITS(entity)->bits11);
+    ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
 }
 
 /* The think handler (it takes the entity only): no states and no actions. In a frame with flag bit
@@ -84,8 +84,8 @@ static void Bell_Think(Entity *entity) {
     if ((s32)(flags >> 43) & 1) {
         if (entity->unkA0 == 0) {
             entity->flags = flags | 0x20000000ULL;
-            angle = func_00195478(D_00413F80.position, (char *)entity->model->position);
-            angle = func_00194FB8(angle - D_00413F80.unk14);
+            angle = EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position);
+            angle = EntityMath_WrapAngle(angle - D_00413F80.unk14);
             func_001A0CD0((u8)entity->params->unk432, (u8)entity->params->unk430, entity->unkD2,
                           (f32)entity->params->unk42E, entity->unk60, angle);
             entity->unkA0 = entity->params->unk434;

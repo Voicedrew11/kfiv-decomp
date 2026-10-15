@@ -1,17 +1,20 @@
-extern int D_00413F80[];
+#include "kf_entity.h"
+#include "kf_player.h"
+
+extern PlayerState D_00413F80;
 
 void Vector_Copy(void *, void *);
-int func_0018E3D0(void *, int, int, int, void *, int, float);
+int Bone_TurnPartToLook(void *, int, int, int, void *, int, float);
 
-int func_00196248(char *arg0, int arg1, int arg2, int arg3, float arg4) {
-    float vec[2];
-    char *temp;
+int func_00196248(Entity *entity, int angles, int mode, int limits, float rate) {
+    f32 target[2]; // match: the frame has room for two floats only, though Vector_Copy writes four
+    EntityModel *model;
 
-    Vector_Copy(vec, D_00413F80);
-    vec[1] = vec[1] - 115.0f;
-    temp = *(char **)arg0;
-    if (*(int *)(temp + 0x134) == 0) {
+    Vector_Copy(target, &D_00413F80);
+    target[1] -= 115.0f;
+    model = entity->model;
+    if (model->unk134 == 0) {
         return 0;
     }
-    return func_0018E3D0(temp, *(int *)(temp + 0x134), arg1, arg2, vec, arg3, arg4);
+    return Bone_TurnPartToLook(model, model->unk134, angles, mode, target, limits, rate);
 }

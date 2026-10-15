@@ -1,7 +1,7 @@
 #include "kf_entity.h"
 
 // match: the call leaves the sixth argument (rate, $f12) unset
-int func_0018DDA8(void *, f32 *, int, f32 *, f32 *);
+int Bone_TurnPart(void *, f32 *, int, f32 *, f32 *);
 
 int func_00196078(Entity *actor, f32 *out_a, int mode, f32 *out_b, f32 *limit) {
     void *target = actor->model->unk138;
@@ -12,5 +12,5 @@ int func_00196078(Entity *actor, f32 *out_a, int mode, f32 *out_b, f32 *limit) {
     if (!(ENTITY_CONTROLLER(actor)->flags & 0x2000)) {
         return 0;
     }
-    return func_0018DDA8(target, out_a, mode, out_b, limit);
+    return Bone_TurnPart(target, out_a, mode, out_b, limit);
 }

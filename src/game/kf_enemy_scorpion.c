@@ -7,34 +7,34 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 extern u32 D_00446ED4;
 int EntityAi_ThinkReturn(void *, int);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 void func_00196870(void *, int);
 void func_00196CC0(void *);
 int rand(void);
-int func_0018EAC0(void *, void *);
-void func_0018B778(float, void *, void *, void *);
-s16 func_00190F90(float, void *, int); // match: this file only matches with this type; func_00190F90.c defines it differently
+int EntityAi_TurnFromPush(void *, void *);
+void EntityPoint_PickNear(float, void *, void *, void *);
+s16 EntityAi_MoveCommand(float, void *, int); // match: this file only matches with this type; EntityAi_MoveCommand.c defines it differently
 extern PlayerData D_00413F80;
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
-float func_00194FB8(float);
-float func_00195478(float *, char *);
-float func_001957B8(float, float);
-int func_00190BE0(Entity *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
+float EntityMath_WrapAngle(float);
+float EntityMath_AngleXZ(float *, char *);
+float EntityMath_AngleDifference(float, float);
+int EntityAi_TurnCommand(Entity *);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
@@ -48,7 +48,7 @@ void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 void Vector_Scale(float *, float *, float);
 float func_00199E68(Entity *, float);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 
 static void Scorpion_Animate(Entity *entity);
 static void Scorpion_Think(Entity *entity, s32 unknown);
@@ -92,8 +92,8 @@ void Scorpion_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate without the test of the EntityParams kind bits and
@@ -108,9 +108,9 @@ static void Scorpion_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
     }
 }
@@ -128,7 +128,7 @@ static void Scorpion_Think(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0(entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -145,9 +145,9 @@ static void Scorpion_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of every state but 2 (Scorpion_Think calls it): wanders. Each time the
-   timer runs out it picks a point near the spawn point (func_0018B778; 21 times in 100, for 60 to
-   89 frames) or no target (120 to 179 frames), takes the command of func_00190F90 towards it (or
-   the turn away from a push, func_0018EAC0) and starts the move action. */
+   timer runs out it picks a point near the spawn point (EntityPoint_PickNear; 21 times in 100, for 60 to
+   89 frames) or no target (120 to 179 frames), takes the command of EntityAi_MoveCommand towards it (or
+   the turn away from a push, EntityAi_TurnFromPush) and starts the move action. */
 static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -160,7 +160,7 @@ static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
     }
     if (entity->unkA0 == 0) {
         if (rand() % 100 <= 20) {
-            func_0018B778(entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
+            EntityPoint_PickNear(entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
             entity->target = unkE0->unk30;
             entity->unkA0 = rand() % 30 + 60;
         } else {
@@ -168,13 +168,13 @@ static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
             entity->unkA0 = rand() % 60 + 120;
         }
     }
-    turn = func_0018EAC0(entity, direction);
+    turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
         entity->unkC8 = 0x201;
     } else if (turn < 0) {
         entity->unkC8 = 0x101;
     } else {
-        entity->unkC8 = func_00190F90(50.0f, entity, 0);
+        entity->unkC8 = EntityAi_MoveCommand(50.0f, entity, 0);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -198,39 +198,39 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
             return;
         case 1:
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (ABS(angle) > 0.17453292f) {
                 entity->target = &D_00413F80;
                 entity->unkA0 = rand() % 60 + 60;
                 unkE0->unk78 = 0;
             } else {
-                heading = func_00195478(D_00413F80.position, (char *)entity->model->position) - D_00413F80.unk14;
-                heading = func_00194FB8(heading);
+                heading = EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position) - D_00413F80.unk14;
+                heading = EntityMath_WrapAngle(heading);
                 if (ABS(heading) > 0.7853982f || rand() % 100 < entity->params->unk430) {
                     entity->target = &D_00413F80;
                     entity->unkA0 = rand() % 60 + 120;
@@ -259,22 +259,22 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
     if (mode == 1) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, &heading);
+            turn = EntityAi_TurnFromPush(entity, &heading);
             switch (unkE0->unk78) {
             case 0:
-                angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+                angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
                 if (ABS(angle) > entity->params->turn_limit) {
                     if (angle >= 0.0f) {
                         entity->unkC8 |= 0x200;
@@ -293,11 +293,11 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 0);
+                    entity->unkC8 = EntityAi_MoveCommand(entity->radius + 100.0f + 30.0f, entity, 0);
                 }
                 break;
             case 2:
-                angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+                angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
                 if (ABS(angle) > entity->params->turn_limit) {
                     if (angle >= 0.0f) {
                         entity->unkC8 |= 0x200;
@@ -412,25 +412,25 @@ static void Scorpion_Move(Entity *entity) {
     }
     if (command & 1) {
         if (command & 0x40) {
-            func_00192C98(entity, 4, 0, entity->params->unkC4 >> 1, 0);
+            Motion_Start(entity, 4, 0, entity->params->unkC4 >> 1, 0);
         } else {
-            func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
         }
     } else if (command & 2) {
-        func_00192C98(entity, 5, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 5, 0, entity->params->unkC4, 0);
     } else if (command & 0x10) {
-        func_00192C98(entity, 8, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 8, 0, entity->params->unkC4, 0);
     } else if (command & 0x20) {
-        func_00192C98(entity, 9, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 9, 0, entity->params->unkC4, 0);
     } else if (command & 4) {
-        func_00192C98(entity, 6, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 6, 0, entity->params->unkC4, 0);
     } else if (command & 8) {
-        func_00192C98(entity, 7, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 7, 0, entity->params->unkC4, 0);
     } else if (command & 0x100) {
-        func_00192C98(entity, 0xB, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0xB, 0, entity->params->unkC4, 0);
     } else if (command & 0x200) {
-        func_00192C98(entity, 0xC, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0xC, 0, entity->params->unkC4, 0);
     } else {
-        func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     }
 }

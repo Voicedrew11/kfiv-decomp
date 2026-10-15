@@ -199,7 +199,7 @@ typedef struct {
     u32 unk2D8;                     /* 0x2D8 */
     s32 unk2DC;                     /* 0x2DC above 0: func_001BB2E8(3) runs every 90 frames, not every 30 */
     s32 unk2E0;                     /* 0x2E0 frames magic 0x3D to 0x3F last */
-    s32 unk2E4;                     /* 0x2E4 above 0: unk2E8 counts (func_0018F648) */
+    s32 unk2E4;                     /* 0x2E4 above 0: unk2E8 counts (EntityAi_PickMeleeAttack) */
     f32 unk2E8;                     /* 0x2E8 enemies whose unk60 is below it attack from half as far */
     s32 unk2EC;                     /* 0x2EC frames magic 0x52 to 0x54 last */
     s32 unk2F0;                     /* 0x2F0 10, 20 or 30 for magic 0x52, 0x53, 0x54 */

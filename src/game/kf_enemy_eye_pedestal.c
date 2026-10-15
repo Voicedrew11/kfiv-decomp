@@ -10,16 +10,16 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 int func_001960C0(void *, int, int, int, int, float);
 int func_00196120(Entity *, void *, s32, void *, f32);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 extern PlayerData D_00413F80;
 
 static void EyePedestal_Animate(Entity *entity);
@@ -60,8 +60,8 @@ void EyePedestal_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate, but the motion never moves the entity, and with flag
@@ -82,9 +82,9 @@ static void EyePedestal_Animate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
         params = entity->params;
         limits[0] = -params->unk430 * 0.017453292f;
@@ -127,8 +127,8 @@ static void EyePedestal_Think(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     }
     if (ENTITY_FLAG_BITS(entity)->bit29) {
-        func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     } else {
-        func_00192C98(entity, 1, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 1, 0, entity->params->unkC4, 0);
     }
 }

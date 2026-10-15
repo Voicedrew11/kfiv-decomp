@@ -8,37 +8,37 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 int func_00196120(Entity *, void *, s32, void *, f32);
-float func_001957B8(float, float);
-float func_00195388(float *, float, float);
+float EntityMath_AngleDifference(float, float);
+float EntityMath_EaseAngleToward(float *, float, float);
 extern u32 D_00446ED4;
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 void func_00196870(void *, int);
-s32 func_0018ED98(Entity *, f32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 void EntityAi_Guard(Entity *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 s32 func_00195B68(Entity *, void *, s32, s32, s32, f32);
-float func_00194FB8(float);
+float EntityMath_WrapAngle(float);
 void func_0019A290(Entity *, s32);
-void func_0018D600(char **, int, u32, int);
-int func_0018CF30(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
+void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
+int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 extern PlayerData D_00413F80;
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 // match: the definitions take the float last, but retail sets it up before the index
 int func_00198730(Entity *, f32, s32);
 int func_001995A0(Entity *, f32, s32); // match: as func_00198730
 int rand(void);
-void func_00190B28(Entity *);
-void func_0018DCD8(Entity *);
+void EntityAi_LowerAttackWeight(Entity *);
+void EntityEvent_OnDeath(Entity *);
 
 static void WiddaQueen_Animate(Entity *entity);
 static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode);
@@ -93,8 +93,8 @@ void WiddaQueen_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate, but the motion never moves the entity, and
@@ -110,9 +110,9 @@ static void WiddaQueen_Animate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
         WiddaQueen_TurnPart9ToPlayer(entity, unkE0->unk7A);
         look_at_target = ENTITY_FLAG_BITS(entity)->bit9;
@@ -143,7 +143,7 @@ static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode) {
     if (entity->unk28 != 0) {
         rate += rate;
     }
-    angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+    angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
     if (1.5707964f < angle) {
         angle = 1.5707964f;
     }
@@ -151,7 +151,7 @@ static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode) {
         angle = -1.5707964f;
     }
     if (mode == 1) {
-        func_00195388(&unkE0->unk48, angle, rate);
+        EntityMath_EaseAngleToward(&unkE0->unk48, angle, rate);
         part->unk50[1] = unkE0->unk48;
     } else if (mode == 2) {
         part->unk50[1] = unkE0->unk48;
@@ -170,7 +170,7 @@ static void WiddaQueen_Think(Entity *entity, s32 unknown) {
         func_00196870(entity, 0);
     }
     if (entity->unkC6 == 0) {
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         WiddaQueen_ThinkDecide(entity, unknown);
     }
 }
@@ -182,7 +182,7 @@ static void WiddaQueen_ThinkDecide(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    if (func_0018ED98(entity, 300.0f, 3.1415927f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 3.1415927f)) {
         // match: called as returning int; only then is the 2 below loaded into $3
         ((int (*)(char *, void (*)(void), int))EntityAi_StartAction)((char *)entity, (void (*)(void))EntityAi_Guard, 1);
         unkE0->unk7A = 2;
@@ -219,7 +219,7 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -242,13 +242,13 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, func_00194FB8(entity->model->unkD0[1] + unkE0->unk48));
+            ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + unkE0->unk48));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, func_00194FB8(entity->model->unkD0[1] + unkE0->unk48));
+            ENTITY_FLAG_BITS(entity)->bit55 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + unkE0->unk48));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195B68(entity, unk240, 2, frame, entity->model->unkFC->unk82, func_00194FB8(entity->model->unkD0[1] + unkE0->unk48));
+            ENTITY_FLAG_BITS(entity)->bit56 = func_00195B68(entity, unk240, 2, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + unkE0->unk48));
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -280,7 +280,7 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x15, 10, (s16)entity->params->unk434, 1);
+        Motion_Start(entity, 0x15, 10, (s16)entity->params->unk434, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         unkE0->unk7A = 0;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
@@ -322,7 +322,7 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, its shots aimed at the player
-   (func_0018CF30); calls func_0018D600 with 0x373 on frame 22. */
+   (EntityShot_LaunchAimed); calls EntityEvent_StartEffectAtPoint with 0x373 on frame 22. */
 static void WiddaQueen_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8[0];
@@ -332,7 +332,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
         entity->flags &= ~0x3800;
         entity->flags &= ~0x200;
         entity->action_step++;
@@ -351,13 +351,13 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
             unkE0->unk7A = 2;
         }
         if (entity->model->unkFC->unk82 == 0x16 && (entity->unk2A == 0 || unk3D8->unk0C != 0)) {
-            func_0018D600((char **)entity, 0x373, 4, (int)entity->model->unkD0);
-            func_0018D600((char **)entity, 0x373, 8, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, 0x373, 4, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, 0x373, 8, (int)entity->model->unkD0);
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         Vector_Copy(target, D_00413F80.position);
         target[1] -= 190.0f;
-        func_0018CF30(entity, (EntityParamsUnk3D8 *)unk3D8, elapsed, entity->model->unkFC->unk82, target, 1.5707964f, 1.5707964f);
+        EntityShot_LaunchAimed(entity, (EntityParamsUnk3D8 *)unk3D8, elapsed, entity->model->unkFC->unk82, target, 1.5707964f, 1.5707964f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
@@ -387,7 +387,7 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x18, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x18, 0, entity->params->unkC4 >> 1, 1);
         entity->flags &= ~0x3800;
         entity->flags &= ~0x200;
         entity->action_step++;
@@ -432,13 +432,13 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
 
 /* The move handler: this type stays where it is; keeps animation 0. */
 static void WiddaQueen_Move(Entity *entity) {
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
 }
 
 /* Whether the player is in reach of any of the six attack records (func_00198730 for the melee
    ones, func_001995A0 for the ranged). */
 static s32 WiddaQueen_CanAttack(Entity *entity) {
-    f32 heading = func_00194FB8(entity->model->unkD0[1] + entity->unkE0.unk48);
+    f32 heading = EntityMath_WrapAngle(entity->model->unkD0[1] + entity->unkE0.unk48);
 
     if (func_00198730(entity, heading, 0)) {
         return TRUE;
@@ -459,7 +459,7 @@ static s32 WiddaQueen_CanAttack(Entity *entity) {
 }
 
 /* Draws one of the six attacks by weight among those that reach the player, sets flag bits 57 to 59
-   to it and returns whether it is a ranged one: func_0018F030 with the heading of the turned part.
+   to it and returns whether it is a ranged one: EntityAi_PickAttack with the heading of the turned part.
    */
 static s32 WiddaQueen_PickAttack(Entity *entity) {
     s32 chances[6];
@@ -471,7 +471,7 @@ static s32 WiddaQueen_PickAttack(Entity *entity) {
     s32 sum;
     f32 angle;
 
-    angle = func_00194FB8(entity->model->unkD0[1] + entity->unkE0.unk48);
+    angle = EntityMath_WrapAngle(entity->model->unkD0[1] + entity->unkE0.unk48);
     chance = func_00198730(entity, angle, 0) ? (entity->unkC0[0] * entity->params->unk240[0].unk00) >> 6 : 0;
     chances[0] = chance;
     total += chance;
@@ -509,7 +509,7 @@ static s32 WiddaQueen_PickAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits58 = choice - 3;
         ENTITY_FLAG_BITS(entity)->bit57 = 1;
     }
-    func_00190B28(entity);
+    EntityAi_LowerAttackWeight(entity);
     return (s32)(entity->flags >> 57) & 1;
 }
 
@@ -519,7 +519,7 @@ static void WiddaQueen_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         entity->flags &= ~0x3800;
         entity->flags |= 0x4000;
         entity->flags |= 0x100000;
@@ -540,7 +540,7 @@ static void WiddaQueen_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit27 = 1;
             ENTITY_FLAG_BITS(entity)->bit26 = 1;
             entity->unkA0 = 20;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;

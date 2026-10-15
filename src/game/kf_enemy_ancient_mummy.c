@@ -6,8 +6,8 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -19,35 +19,35 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 extern PlayerData D_00413F80;
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
 void func_00196D48(Entity *);
-float func_00195478(float *, char *);
-float func_001957B8(float, float);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
+float EntityMath_AngleXZ(float *, char *);
+float EntityMath_AngleDifference(float, float);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-float func_001954A8(float *origin, float *target);
-float func_00194F80(float *a, float *b);
+float EntityMath_HeadingTo(float *origin, float *target);
+float EntityMath_DistanceXZ(float *a, float *b);
 extern f32 D_00446810[];
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
-void func_0018BA10(f32 *, f32 *, f32, f32);
-f32 func_0018A9F0(void *, void *);
-float func_00194FB8(float);
+void EntityPoint_PickNearFromDistance(f32 *, f32 *, f32, f32);
+f32 EntityCollision_DistanceToPropFloor(void *, void *);
+float EntityMath_WrapAngle(float);
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void func_00195898(char *, u8);
 
@@ -92,8 +92,8 @@ void AncientMummy_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with AncientMummy_ThinkCombat for state 2. Counts down work
@@ -109,7 +109,7 @@ static void AncientMummy_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0((char *)entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -149,17 +149,17 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    angle = func_001957B8(D_00413F80.unk14, func_00195478(D_00413F80.position, (char *)entity->model->position));
+    angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
     if (entity->unk60 - entity->radius - 100.0f < 300.0f && ABS(angle) < 0.6981317f && unkE0->unk68 == 0) {
         entity->unkC6 = 0;
         entity->unkC8 = 0;
@@ -168,7 +168,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     if (entity->unk60 - entity->radius - 100.0f < 800.0f && ABS(angle) < 0.6981317f) {
-        angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+        angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
         if (ABS(angle) < 1.5707964f) {
             unkE0->unk78 = 1;
             entity->target = &D_00413F80;
@@ -182,10 +182,10 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -209,19 +209,19 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
     if (mode == 1) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, direction);
+            turn = EntityAi_TurnFromPush(entity, direction);
             switch (unkE0->unk78) {
             case 0:
                 if (turn > 0) {
@@ -229,7 +229,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                    entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             case 1:
@@ -261,8 +261,8 @@ static s32 func_00155678(Entity *entity, s32 unused, f32 reach) {
     if (entity->target == NULL) {
         return 0;
     }
-    heading = func_001954A8(entity->model->position, entity->target);
-    turn = func_001957B8(entity->model->unkD0[1], heading);
+    heading = EntityMath_HeadingTo(entity->model->position, entity->target);
+    turn = EntityMath_AngleDifference(entity->model->unkD0[1], heading);
     limit = entity->params->turn_limit;
     if (0.0f <= turn ? limit < turn : limit < -turn) {
         command = 0x100;
@@ -270,14 +270,14 @@ static s32 func_00155678(Entity *entity, s32 unused, f32 reach) {
             command = 0x200;
         }
     }
-    if (reach < func_00194F80(entity->model->position, entity->target)) {
+    if (reach < EntityMath_DistanceXZ(entity->model->position, entity->target)) {
         command |= 2;
     }
     return command;
 }
 
 /* An action (busy bit 0x1000): plays animation 23 and launches the shots of ranged record 0 on
-   their frames. Meanwhile it looks for a point (func_0018BA10, func_0018A9F0) that is more than 90
+   their frames. Meanwhile it looks for a point (EntityPoint_PickNearFromDistance, EntityCollision_DistanceToPropFloor) that is more than 90
    degrees off the player's facing; from frame 35 it shrinks the model in x and z, stretches it in y
    and fades it out over EntityParams.unk438 frames, then puts the entity at the point if it found
    one and starts AncientMummy_FadeBackIn. */
@@ -293,7 +293,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x17, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0x17, 0, entity->params->unkC4, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bits36 = 0;
         unkE0->unk1C = 0.0f;
@@ -320,11 +320,11 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
         if (unkE0->unk7A == 0) {
             position = entity->model->position;
             destination = unkE0->unk30;
-            func_0018BA10(destination, position, func_00194F80(position, (float *)entity->spawn_info), entity->spawn_info->unk4C);
-            height = func_0018A9F0(entity->unk14, destination);
+            EntityPoint_PickNearFromDistance(destination, position, EntityMath_DistanceXZ(position, (float *)entity->spawn_info), entity->spawn_info->unk4C);
+            height = EntityCollision_DistanceToPropFloor(entity->unk14, destination);
             if (height != D_00446810[0]) {
-                yaw = func_00195478(D_00413F80.position, (char *)destination);
-                if (func_00194FB8(yaw - D_00413F80.unk14) < -1.5707964f || func_00194FB8(yaw - D_00413F80.unk14) > 1.5707964f) {
+                yaw = EntityMath_AngleXZ(D_00413F80.position, (char *)destination);
+                if (EntityMath_WrapAngle(yaw - D_00413F80.unk14) < -1.5707964f || EntityMath_WrapAngle(yaw - D_00413F80.unk14) > 1.5707964f) {
                     unkE0->unk7A = 1;
                     unkE0->unk30[1] += height;
                 }
@@ -378,7 +378,7 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
         break;
     case 1:
         if (entity->params->unk436 < unkE0->unk6A++) {
-            entity->model->unkD0[1] = func_001954A8(entity->model->position, D_00413F80.position);
+            entity->model->unkD0[1] = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
             entity->action_step++;
         }
         break;

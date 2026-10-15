@@ -9,8 +9,8 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -18,17 +18,17 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 void func_00195898(char *, u8);
 extern u8 D_00349690[];
-f32 func_0018A9F0(void *, void *);
-void func_00195588(Vector4 *, float);
+f32 EntityCollision_DistanceToPropFloor(void *, void *);
+void EntityMath_FacingVector(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
-float func_00194F80(void *, void *);
+float EntityMath_DistanceXZ(void *, void *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
@@ -91,8 +91,8 @@ void Snake_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The dormant action of a spawn in mode 0 (EntitySpawnInfo.unk40 is 0; busy bit 0x20): holds
@@ -106,7 +106,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 2, 0, 0, 1);
+        Motion_Start(entity, 2, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         unkE0->unk1C = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
@@ -125,7 +125,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
             map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
             if (map_object != NULL) {
                 if (!(map_object->unk10 & 0x10000) || MAP_OBJECT_BITS(map_object)->step == 0xF) {
-                    func_00192C98(entity, 0x11, 0, 0, 1);
+                    Motion_Start(entity, 0x11, 0, 0, 1);
                 }
             }
             ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
@@ -157,7 +157,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
 
 /* The dormant action of a spawn in mode 1 (busy bit 0x20): holds animation 8 until the player is
    within EntitySpawnInfo.unk54, plays it past frame 30, then moves the entity along its heading by
-   EntityParams.unk436 a frame (unk438 in y) until flag bit 44 is set or func_0018A9F0 reads below
+   EntityParams.unk436 a frame (unk438 in y) until flag bit 44 is set or EntityCollision_DistanceToPropFloor reads below
    100, plays the rest, goes to state 2 and thinks. While it waits it removes the entity once
    EntitySpawnInfo.variant is set and D_00349690[unk43 + unk42 * 64] is not 0. */
 static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
@@ -168,7 +168,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 8, 0, 0, 1);
+        Motion_Start(entity, 8, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         unkE0->unk1C = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
@@ -200,13 +200,13 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
         }
         break;
     case 3:
-        distance = func_0018A9F0(entity->unk14, entity->model->position);
+        distance = EntityCollision_DistanceToPropFloor(entity->unk14, entity->model->position);
         if (ENTITY_FLAG_BITS(entity)->bit44 || distance < 100.0f) {
             ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
             entity->action_step++;
             break;
         }
-        func_00195588((Vector4 *)direction, entity->model->unkD0[1]);
+        EntityMath_FacingVector((Vector4 *)direction, entity->model->unkD0[1]);
         Vector_Scale(direction, direction, entity->params->unk436);
         direction[1] += entity->params->unk438;
         entity->unk84 += direction[0];
@@ -236,7 +236,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
 }
 
 /* The dormant action of the other modes (busy bit 0x20): holds animation 3 until the player is
-   within EntitySpawnInfo.unk54, then plays it until func_00194F80 between the entity and its spawn
+   within EntitySpawnInfo.unk54, then plays it until EntityMath_DistanceXZ between the entity and its spawn
    point reaches EntityParams.unk43A, goes to state 2 and thinks. */
 static void Snake_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -244,7 +244,7 @@ static void Snake_Dormant(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 3, 0, 0, 1);
+        Motion_Start(entity, 3, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         unkE0->unk1C = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
@@ -264,7 +264,7 @@ static void Snake_Dormant(Entity *entity) {
         }
         break;
     case 2:
-        if (func_00194F80(entity->model->position, entity->spawn_info) >= (f32)entity->params->unk43A) {
+        if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) >= (f32)entity->params->unk43A) {
             func_00195898((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
@@ -306,7 +306,7 @@ static void Snake_Think(Entity *entity, s32 unknown) {
         if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) != 0x6000000) {
             func_00196CC0((char *)entity);
         }
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -330,13 +330,13 @@ static void Snake_Think(Entity *entity, s32 unknown) {
 
 /* A death action (busy bit 0x40) that Snake_Think starts; the death slot holds
    EntityAi_Death. As EntityAi_Death, but when the motion has ended it calls func_001035A8, frees
-   the entity's effects and starts script EntitySpawnInfo.unk36 where that one calls func_0018DCD8.
+   the entity's effects and starts script EntitySpawnInfo.unk36 where that one calls EntityEvent_OnDeath.
    */
 static void Snake_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;

@@ -8,8 +8,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -19,33 +19,33 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(void *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 extern PlayerData D_00413F80;
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
-void func_0018B778(float, void *, void *, void *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
+void EntityPoint_PickNear(float, void *, void *, void *);
 void func_00196D48(Entity *);
-float func_00195478(float *, char *);
-float func_001957B8(float, float);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
-s16 func_00190F90(float, void *, int); // match: this file only matches with this type; func_00190F90.c defines it differently
+float EntityMath_AngleXZ(float *, char *);
+float EntityMath_AngleDifference(float, float);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
+s16 EntityAi_MoveCommand(float, void *, int); // match: this file only matches with this type; EntityAi_MoveCommand.c defines it differently
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 extern int D_00414184[];
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
 s32 func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_0019A290(Entity *, s32);
-void func_00195588(Vector4 *, float);
+void EntityMath_FacingVector(Vector4 *, float);
 /* one frame of the arc of DarkSoldier_MoveAlongArc: forwards at unk44 along unk30, in y at minus
    unk48 (up); both wear off */
 static inline void move_along_arc(Entity *entity, EntityUnkE0 *unkE0) {
@@ -58,16 +58,16 @@ static inline void move_along_arc(Entity *entity, EntityUnkE0 *unkE0) {
         unkE0->unk44 = 0.0f;
     }
 }
-void func_00190A30(char *);
+void EntityAi_LowerWeightsAfterHit(char *);
 void func_00195898(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
 void Vector_Add(void *, void *, void *);
-f32 func_00194F48(f32 *, f32 *);
+f32 EntityMath_Distance(f32 *, f32 *);
 void Vector_Normalize(void *, void *);
-int func_0018AE98(void *, void *, void *, float); // match: the distance is the last argument (set up after the pointers)
+int EntityCollision_RayProps(void *, void *, void *, float); // match: the distance is the last argument (set up after the pointers)
 
 static void DarkSoldier_Think(Entity *entity, s32 unknown);
 static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown);
@@ -120,8 +120,8 @@ void DarkSoldier_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with DarkSoldier_ThinkCombat for state 2; walking back to
@@ -142,7 +142,7 @@ static void DarkSoldier_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0(entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if ((s32)(entity->flags >> 53) & 1) {
             // match: called as returning nothing, so $2 is free for the next statement
             ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
@@ -172,7 +172,7 @@ static void DarkSoldier_Think(Entity *entity, s32 unknown) {
    within 60 of its heading) or DarkSoldier_MoveAlongArc (a chance of unk438 in 100, within 90
    degrees of the player's facing, EntitySpawnInfo.unk40 at 0 and DarkSoldier_CanMoveAlongArc
    true). A melee attack draws for the same two actions first, with work byte unk7B at 1 so that the
-   attack follows them. In place of waiting it goes to a point func_0018B778 picks round the spawn
+   attack follows them. In place of waiting it goes to a point EntityPoint_PickNear picks round the spawn
    point; closing in is at the run with command bit 0x400. */
 static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -187,16 +187,16 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, DarkSoldier_Dodge, 1);
         return;
     }
     if (entity->unkA0 == 0) {
-        angle = func_001957B8(D_00413F80.unk14, func_00195478(D_00413F80.position, (char *)entity->model->position));
+        angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
         if (rand() % 100 < entity->params->unk436 && ABS(angle) < 1.0471976f
             && ABS(entity->unk68 - entity->model->unkD0[1]) < 1.0471976f) {
             unkE0->unk7B = 0;
@@ -210,7 +210,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         }
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
@@ -218,14 +218,14 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;
             }
-            angle = func_001957B8(D_00413F80.unk14, func_00195478(D_00413F80.position, (char *)entity->model->position));
+            angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
             if (rand() % 100 < entity->params->unk436 && ABS(angle) < 0.6981317f) {
                 unkE0->unk7B = 1;
                 EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, unknown);
@@ -245,7 +245,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
             unkE0->unk78 = 0;
             break;
         case 2:
-            func_0018B778(entity->spawn_info->unk4C, point, entity->spawn_info, entity->model->position);
+            EntityPoint_PickNear(entity->spawn_info->unk4C, point, entity->spawn_info, entity->model->position);
             entity->target = point;
             entity->unkA0 = rand() % 30 + 30;
             unkE0->unk78 = 0;
@@ -259,25 +259,25 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
     if (unkE0->unk78 == 0) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, direction);
+            turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
                 entity->unkC8 = 0x241;
             } else if (turn < 0) {
                 entity->unkC8 = 0x141;
             } else {
-                entity->unkC8 = func_00190F90(entity->radius + 100.0f + 30.0f, entity, 1);
+                entity->unkC8 = EntityAi_MoveCommand(entity->radius + 100.0f + 30.0f, entity, 1);
             }
             entity->unkC8 |= 0x400;
         }
@@ -315,29 +315,29 @@ static void DarkSoldier_Move(Entity *entity) {
     entity->unk94 += turn;
     if (entity->unkC8 & 1) {
         if (entity->unkC8 & 0x40) {
-            func_00192C98(entity, 4, 0, entity->params->unkC4 >> 1, 0);
+            Motion_Start(entity, 4, 0, entity->params->unkC4 >> 1, 0);
         } else {
-            func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
         }
     } else if (entity->unkC8 & 2) {
-        func_00192C98(entity, 5, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 5, 0, entity->params->unkC4, 0);
     } else if (entity->unkC8 & 0x10) {
-        func_00192C98(entity, 8, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 8, 0, entity->params->unkC4, 0);
     } else if (entity->unkC8 & 0x20) {
-        func_00192C98(entity, 9, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 9, 0, entity->params->unkC4, 0);
     } else if (entity->unkC8 & 4) {
-        func_00192C98(entity, 6, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 6, 0, entity->params->unkC4, 0);
     } else if (entity->unkC8 & 8) {
-        func_00192C98(entity, 7, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 7, 0, entity->params->unkC4, 0);
     } else if (entity->unkC8 & 0x300) {
-        func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
     } else {
-        func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     }
 }
 
 /* The melee attack (busy bit 1): the same as EntityAi_MeleeAttack. DarkSoldier_PlayAnim6Or7BySide and
-   DarkSoldier_MoveAlongArc start it after calling func_0018F030. */
+   DarkSoldier_MoveAlongArc start it after calling EntityAi_PickAttack. */
 static void DarkSoldier_MeleeAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk240 *unk240 = &entity->params->unk240[ENTITY_FLAG_BITS(entity)->bits58];
@@ -346,7 +346,7 @@ static void DarkSoldier_MeleeAttack(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -412,24 +412,24 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        side = func_001957B8(D_00413F80.unk14, func_00195478(D_00413F80.position, (char *)entity->model->position));
+        side = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
         if (unkE0->unk7B == 1) {
             if (side > 0.0f) {
-                func_00192C98(entity, 6, 0, entity->params->unkC4 >> 1, 1);
+                Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 1);
             } else {
-                func_00192C98(entity, 7, 0, entity->params->unkC4 >> 1, 1);
+                Motion_Start(entity, 7, 0, entity->params->unkC4 >> 1, 1);
             }
         } else if (side < 0.0f) {
             if ((f32)(rand() % 120) > side * 57.29578f + 60.0f) {
-                func_00192C98(entity, 6, 0, entity->params->unkC4 >> 1, 1);
+                Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 1);
             } else {
-                func_00192C98(entity, 7, 0, entity->params->unkC4 >> 1, 1);
+                Motion_Start(entity, 7, 0, entity->params->unkC4 >> 1, 1);
             }
         } else {
             if ((f32)(rand() % 120) > side * 57.29578f + 60.0f) {
-                func_00192C98(entity, 7, 0, entity->params->unkC4 >> 1, 1);
+                Motion_Start(entity, 7, 0, entity->params->unkC4 >> 1, 1);
             } else {
-                func_00192C98(entity, 6, 0, entity->params->unkC4 >> 1, 1);
+                Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 1);
             }
         }
         entity->flags = (entity->flags & ~0x3800) | 0x800;
@@ -453,7 +453,7 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
                     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
                 }
             } else {
-                func_0018F030((char *)entity);
+                EntityAi_PickAttack((char *)entity);
                 EntityAi_StartAction(entity, DarkSoldier_MeleeAttack, 1);
             }
         }
@@ -465,7 +465,7 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
    turning to the player, then from frame 10 moves the entity along the arc (move_along_arc:
    forwards at work float unk44 along unk30, in y at unk48, both from EntityParams.unk43A to unk43E)
    through animations 17 and 9, until flag bit 44, 48, 49 or 50 is set. Afterwards, with work byte
-   unk7B set, it calls func_0018F030 and starts DarkSoldier_MeleeAttack; else it thinks. */
+   unk7B set, it calls EntityAi_PickAttack and starts DarkSoldier_MeleeAttack; else it thinks. */
 static void DarkSoldier_MoveAlongArc(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityModel *model;
@@ -474,7 +474,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
     entity->unkC6 |= 0x2000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 8, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 8, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
@@ -487,7 +487,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
             unkE0->unk48 = entity->params->unk43A;
             unkE0->unk44 = entity->params->unk43C;
             entity->action_step++;
-            func_00195588((Vector4 *)unkE0->unk30, model->unkD0[1]);
+            EntityMath_FacingVector((Vector4 *)unkE0->unk30, model->unkD0[1]);
         }
         break;
     case 2:
@@ -495,7 +495,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
             move_along_arc(entity, unkE0);
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00192C98(entity, 0x11, 0, 1, 1);
+            Motion_Start(entity, 0x11, 0, 1, 1);
             entity->action_step += 2;
         }
         break;
@@ -506,7 +506,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
                 ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
                 entity->action_step++;
             } else {
-                func_00192C98(entity, 9, 0, 5, 1);
+                Motion_Start(entity, 9, 0, 5, 1);
                 entity->action_step += 2;
             }
         }
@@ -514,7 +514,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
     case 5:
         if (ENTITY_FLAG_BITS(entity)->bit44 == 1 || ENTITY_FLAG_BITS(entity)->bit49 == 1
             || ENTITY_FLAG_BITS(entity)->bit48 == 1 || ENTITY_FLAG_BITS(entity)->bit50 == 1) {
-            func_00192C98(entity, 9, 0, 1, 1);
+            Motion_Start(entity, 9, 0, 1, 1);
             ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
             entity->action_step = 8;
@@ -525,7 +525,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
         }
         move_along_arc(entity, unkE0);
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00192C98(entity, 9, 0, 1, 1);
+            Motion_Start(entity, 9, 0, 1, 1);
             entity->action_step = 7;
         }
         break;
@@ -573,7 +573,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
                     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
                 }
             } else {
-                func_0018F030((char *)entity);
+                EntityAi_PickAttack((char *)entity);
                 EntityAi_StartAction(entity, DarkSoldier_MeleeAttack, 1);
             }
         }
@@ -592,10 +592,10 @@ static void DarkSoldier_Dodge(Entity *entity) {
     entity->unkC6 |= 8;
     switch (entity->action_step) {
     case 0:
-        if (func_001957B8(D_00413F80.unk14, func_00195478(D_00413F80.position, (char *)entity->model->position)) > 0.0f) {
-            func_00192C98(entity, 6, 0, entity->params->unkC4 >> 1, 1);
+        if (EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position)) > 0.0f) {
+            Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 1);
         } else {
-            func_00192C98(entity, 7, 0, entity->params->unkC4 >> 1, 1);
+            Motion_Start(entity, 7, 0, entity->params->unkC4 >> 1, 1);
         }
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         ENTITY_FLAGS(entity) &= ~0x200;
@@ -613,7 +613,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
             unkE0->unk48 -= entity->params->unk43E * 0.1f;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
-            func_00192C98(entity, 9, 0, entity->params->unkC4 >> 1, 1);
+            Motion_Start(entity, 9, 0, entity->params->unkC4 >> 1, 1);
             entity->action_step++;
         }
         break;
@@ -656,7 +656,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
 /* The on_hit handler: as EntityAi_OnHit, but it keeps the target and clears Entity.unk5C and flag
    bit 28. */
 static void DarkSoldier_OnHit(Entity *entity) {
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->flags &= ~0x400;
     ENTITY_UNK5C(entity)->as_s32 = 0;
     entity->flags &= ~0x200;
@@ -674,7 +674,7 @@ static void DarkSoldier_OnHit(Entity *entity) {
 }
 
 /* Helper of DarkSoldier_ThinkCombat: whether the way is free for DarkSoldier_MoveAlongArc. It
-   follows the arc from the entity's feet (the arithmetic of move_along_arc) and asks func_0018AE98
+   follows the arc from the entity's feet (the arithmetic of move_along_arc) and asks EntityCollision_RayProps
    about the straight line to where it ends; TRUE when that returns 0. */
 static s32 DarkSoldier_CanMoveAlongArc(Entity *entity) {
     f32 direction[4];
@@ -687,7 +687,7 @@ static s32 DarkSoldier_CanMoveAlongArc(Entity *entity) {
     f32 delta_z;
     f32 distance;
 
-    func_00195588((Vector4 *)direction, entity->model->unkD0[1]);
+    EntityMath_FacingVector((Vector4 *)direction, entity->model->unkD0[1]);
     rise = entity->params->unk43A;
     advance = entity->params->unk43C;
     delta_x = delta_y = delta_z = 0.0f;
@@ -707,7 +707,7 @@ static s32 DarkSoldier_CanMoveAlongArc(Entity *entity) {
     Vector_Copy(from, entity->model->position);
     from[1] -= entity->unk34;
     Vector_Add(target, from, direction);
-    distance = func_00194F48(from, target);
+    distance = EntityMath_Distance(from, target);
     Vector_Normalize(direction, direction);
-    return func_0018AE98(from, direction, NULL, distance) == 0;
+    return EntityCollision_RayProps(from, direction, NULL, distance) == 0;
 }

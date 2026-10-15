@@ -210,7 +210,7 @@ typedef struct {
     ScriptFloatArg z;               /* 0x1C value at 0x20 */
     ScriptArg frames;               /* 0x24 value at 0x28 */
     ScriptArg animate;              /* 0x2C value at 0x30: nonzero, the entity's motion plays on (ScriptCmd_TurnEntityBy, ScriptCmd_TurnEntityToward) */
-    ScriptArg motion;               /* 0x34 value at 0x38: what func_00192EB0 is handed then */
+    ScriptArg motion;               /* 0x34 value at 0x38: what Motion_Step is handed then */
 } ScriptMoveCommand;
 
 /* eases three floats toward x, y, z over `frames` (ScriptCmd_MovePlayerTo, ScriptCmd_MoveCameraTo, ScriptCmd_TurnCameraTo) */

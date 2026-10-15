@@ -7,8 +7,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -20,28 +20,28 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 extern float D_00413F80[];
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
 void func_0019A290(Entity *, s32);
 double atan(double);
 void *memset(void *, int, u32);
-float func_00195478(float *, char *);
-float func_001957B8(float, float);
-float func_00194FB8(float);
+float EntityMath_AngleXZ(float *, char *);
+float EntityMath_AngleDifference(float, float);
+float EntityMath_WrapAngle(float);
 void func_001B2C48(void *);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
 
@@ -90,8 +90,8 @@ void ParaStool_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with ParaStool_ThinkCombat for state 2. Counts down work
@@ -109,7 +109,7 @@ static void ParaStool_Think(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -146,15 +146,15 @@ static void ParaStool_ThinkCombat(Entity *entity, s32 unknown) {
     }
     range = 300.0f;
     angle = 0.5235988f;
-    if (func_0018ED98(entity, range, angle)) {
+    if (EntityAi_ShouldGuard(entity, range, angle)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, range, angle)) {
+    if (EntityAi_ShouldDodge(entity, range, angle)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    next_action = func_0018FD50(entity, 0);
+    next_action = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     if (entity->unkA0 == 0 || next_action == 0) {
         entity->unkCF = entity->unkCD;
@@ -163,7 +163,7 @@ static void ParaStool_ThinkCombat(Entity *entity, s32 unknown) {
             entity->unk9E = D_00446ED4;
         }
         // match: called with one argument here
-        ((void (*)(Entity *))func_00190B88)(entity);
+        ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
         switch (entity->unkCD) {
         case 0:
             if (unkE0->unk68 == 0) {
@@ -188,14 +188,14 @@ static void ParaStool_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkCD == 1) {
-        side = func_0018EAC0(entity, direction);
+        side = EntityAi_TurnFromPush(entity, direction);
         if (unkE0->unk78 == 0) {
             if (side > 0) {
                 entity->unkC8 = 0x201;
             } else if (side < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
         }
     }
@@ -212,7 +212,7 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -280,19 +280,19 @@ static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240
 
     if (record->unk10[index].unk24 != 0 && !(frame < record->unk10[index].unk24 && current_frame < record->unk10[index].unk24) &&
         !(record->unk10[index].unk26 < frame && record->unk10[index].unk26 < current_frame)) {
-        yaw = func_001957B8(D_00413F80[5], func_00195478(D_00413F80, (char *)entity->model->position));
+        yaw = EntityMath_AngleDifference(D_00413F80[5], EntityMath_AngleXZ(D_00413F80, (char *)entity->model->position));
         pitch = (f32)atan((entity->model->position[1] - D_00413F80[1] + 220.0f) / entity->distance_to_player) + D_00413F80[4];
         if (ABS(yaw) < entity->params->unk432 * 0.017453292f && ABS(pitch) < (s16)entity->params->unk434 * 0.017453292f) {
-            spread = func_00194FB8(record->unk10[0].unk22 * 0.017453292f);
-            if (ABS(func_00194FB8(entity->unk68 - entity->model->unkD0[1])) < spread) {
+            spread = EntityMath_WrapAngle(record->unk10[0].unk22 * 0.017453292f);
+            if (ABS(EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1])) < spread) {
                 func_001B2C48(&entity->params->unk240[0].unk10[0].unk12);
                 memset(&request, 0, sizeof(request));
                 memset(&extra, 0, sizeof(extra));
                 Vector_Copy(request.position, entity->model->position);
                 request.unk34 = entity->height + 10.0f;
                 request.unk30 = entity->radius + record->unk10[index].unk20;
-                request.unk38 = func_00194FB8(angle + 3.1415927f);
-                request.unk3C = func_00194FB8(record->unk10[index].unk22 * 0.017453292f);
+                request.unk38 = EntityMath_WrapAngle(angle + 3.1415927f);
+                request.unk3C = EntityMath_WrapAngle(record->unk10[index].unk22 * 0.017453292f);
                 request.owner = entity;
                 request.unk4C_0 = 3;
                 request.unk4D = 1;

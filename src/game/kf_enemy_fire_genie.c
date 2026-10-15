@@ -9,48 +9,48 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 int func_00196120(Entity *, void *, s32, void *, f32);
 extern f32 D_00431AF0[16];
-float func_001957B8(float, float);
+float EntityMath_AngleDifference(float, float);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0TransposeMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
-s32 func_0018BD18(void *, void *, void *);
-void func_0018C4B8(void *, void *);
+s32 Bone_MultiplyPathTo(void *, void *, void *);
+void Bone_MatrixToAngles(void *, void *);
 void Matrix_Multiply(void *, void *, void *);
-float func_00195388(float *, float, float);
-void func_00190A30(char *);
+float EntityMath_EaseAngleToward(float *, float, float);
+void EntityAi_LowerWeightsAfterHit(char *);
 void func_00195898(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 void func_00196870(void *, int);
-s32 func_0018ED98(Entity *, f32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void func_0019A290(Entity *, s32);
-void func_0018DCD8(Entity *);
-float func_00194FB8(float);
+void EntityEvent_OnDeath(Entity *);
+float EntityMath_WrapAngle(float);
 // match: the definitions take the float last, but retail sets it up before the index
 int func_00198730(Entity *, f32, s32);
 int func_001995A0(Entity *, f32, s32); // match: as func_00198730
 int rand(void);
-void func_00190B28(Entity *);
-void func_0018DC40(char *);
+void EntityAi_LowerAttackWeight(Entity *);
+void EntityEvent_Respawn(char *);
 
 static void FireGenie_Animate(Entity *entity);
 static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode);
@@ -108,8 +108,8 @@ void FireGenie_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate, but the motion never moves the entity, and
@@ -128,10 +128,10 @@ static void FireGenie_Animate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
             FireGenie_TurnPart3ToPlayer(entity, 0);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
             if (entity->model->unkFC->unk82) {
                 FireGenie_TurnPart3ToPlayer(entity, 1);
             }
@@ -165,7 +165,7 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
 
     if (bone != NULL) {
         if (mode != 0) {
-            yaw = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            yaw = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (yaw > 0.6981317f) {
                 yaw = 0.6981317f;
             }
@@ -173,9 +173,9 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
                 yaw = 0.0f;
             }
             rate = 10.0f;
-            func_00195388(&unkE0->unk48, yaw, rate);
+            EntityMath_EaseAngleToward(&unkE0->unk48, yaw, rate);
             sceVu0CopyMatrix(parent, D_00431AF0);
-            func_0018BD18(entity->model->unkF8, bone, parent);
+            Bone_MultiplyPathTo(entity->model->unkF8, bone, parent);
             parent[12] = 0.0f;
             parent[13] = 0.0f;
             parent[14] = 0.0f;
@@ -188,10 +188,10 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
             Matrix_Multiply(rotation, twist, rotation);
             sceVu0TransposeMatrix(parent, parent);
             Matrix_Multiply(rotation, parent, rotation);
-            func_0018C4B8(angles, rotation);
-            func_00195388(&unkE0->unk4C, angles[0], rate);
-            func_00195388(&unkE0->unk50, angles[1], rate);
-            func_00195388(&unkE0->unk54, angles[2], rate);
+            Bone_MatrixToAngles(angles, rotation);
+            EntityMath_EaseAngleToward(&unkE0->unk4C, angles[0], rate);
+            EntityMath_EaseAngleToward(&unkE0->unk50, angles[1], rate);
+            EntityMath_EaseAngleToward(&unkE0->unk54, angles[2], rate);
             bone->unk50[0] = unkE0->unk4C;
             bone->unk50[1] = unkE0->unk50;
             bone->unk50[2] = unkE0->unk54;
@@ -211,7 +211,7 @@ static void FireGenie_OnHit(Entity *entity) {
     u64 flags;
     Entity *other;
 
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     flags = entity->flags;
     if (((flags >> 36) & 3) == 2) {
         ENTITY_UNK5C(entity)->as_s32 = 0;
@@ -237,7 +237,7 @@ static void FireGenie_Think(Entity *entity, s32 unknown) {
         func_00196870(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         FireGenie_ThinkDecide(entity, unknown);
     }
     if (unkE0->unk68 != 0) {
@@ -252,7 +252,7 @@ static void FireGenie_Think(Entity *entity, s32 unknown) {
 static void FireGenie_ThinkDecide(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
     } else {
         entity->flags |= 0x400;
@@ -285,7 +285,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
@@ -331,7 +331,7 @@ static void FireGenie_RespawnOther(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x11, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0x11, 0, entity->params->unkC4, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
@@ -379,7 +379,7 @@ static void FireGenie_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAGS(entity) &= ~0x3800;
         ENTITY_FLAGS(entity) |= 0x4000;
         ENTITY_FLAGS(entity) |= 0x100000;
@@ -407,7 +407,7 @@ static void FireGenie_Death(Entity *entity) {
             ENTITY_FLAGS(entity) |= 0x8000000;
             ENTITY_FLAGS(entity) |= 0x4000000;
             entity->unkA0 = 20;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
@@ -424,13 +424,13 @@ static void FireGenie_Death(Entity *entity) {
 
 /* The move handler: this type stays where it is; keeps animation 0. */
 static void FireGenie_Move(Entity *entity) {
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
 }
 
 /* Whether the player is in reach of any of the six attack records (func_00198730 for the melee
    ones, func_001995A0 for the ranged), along the heading of the turned part (work float unk48). */
 static s32 FireGenie_CanAttack(Entity *entity) {
-    f32 angle = func_00194FB8(entity->model->unkD0[1] + entity->unkE0.unk48);
+    f32 angle = EntityMath_WrapAngle(entity->model->unkD0[1] + entity->unkE0.unk48);
 
     if (func_00198730(entity, angle, 0)) {
         return TRUE;
@@ -451,7 +451,7 @@ static s32 FireGenie_CanAttack(Entity *entity) {
 }
 
 /* Draws one of the six attacks by weight among those that reach the player, sets flag bits 57 to 59
-   to it and returns whether it is a ranged one: func_0018F030 with the heading of the turned part.
+   to it and returns whether it is a ranged one: EntityAi_PickAttack with the heading of the turned part.
    */
 static s32 FireGenie_PickAttack(Entity *entity) {
     s32 chances[6];
@@ -463,7 +463,7 @@ static s32 FireGenie_PickAttack(Entity *entity) {
     s32 sum;
     f32 angle;
 
-    angle = func_00194FB8(entity->model->unkD0[1] + entity->unkE0.unk48);
+    angle = EntityMath_WrapAngle(entity->model->unkD0[1] + entity->unkE0.unk48);
     chance = func_00198730(entity, angle, 0) ? (entity->unkC0[0] * entity->params->unk240[0].unk00) >> 6 : 0;
     chances[0] = chance;
     total += chance;
@@ -501,7 +501,7 @@ static s32 FireGenie_PickAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits58 = choice - 3;
         ENTITY_FLAG_BITS(entity)->bit57 = 1;
     }
-    func_00190B28(entity);
+    EntityAi_LowerAttackWeight(entity);
     return (s32)(entity->flags >> 57) & 1;
 }
 
@@ -532,7 +532,7 @@ static s32 FireGenie_ShouldRespawnOther(Entity *entity) {
 }
 
 /* Helper of FireGenie_RespawnOther: draws one of the entities FireGenie_ShouldRespawnOther
-   did not count, respawns it when it has flag bit 0 set (func_0018DC40, which calls
+   did not count, respawns it when it has flag bit 0 set (EntityEvent_Respawn, which calls
    Entity_ResetToSpawn), keeps its spawn id in work byte unk7B, and sets the pause in work word
    unk68 to EntityParams.unk43E. */
 static void FireGenie_RespawnOneOther(Entity *entity) {
@@ -547,7 +547,7 @@ static void FireGenie_RespawnOneOther(Entity *entity) {
                 s32 other_id = i + 10;
                 Entity *other = Entity_GetBySpawnId(other_id);
                 if (other != NULL && ((s32)other->flags & 1)) {
-                    func_0018DC40((char *)other);
+                    EntityEvent_Respawn((char *)other);
                     unkE0->unk7B = other_id;
                     remaining--;
                 }

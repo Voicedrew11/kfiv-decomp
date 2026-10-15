@@ -8,8 +8,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -17,23 +17,23 @@ void EntityAi_OnHit(char *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 void func_00196870(void *, int);
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 func_00197F00(Entity *);
-s32 func_0018F648(Entity *);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
+s32 EntityAi_PickMeleeAttack(Entity *);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
 s32 func_00198D10(Entity *);
-s32 func_0018F9C0(Entity *);
+s32 EntityAi_PickRangedAttack(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 void func_00195898(char *, u8);
 s32 func_00199EB8(Entity *, f32 *, f32);
-float func_00194FB8(float);
-int func_0018D4E8(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
+float EntityMath_WrapAngle(float);
+int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 void func_0019A290(Entity *, s32);
 
 static void Reaper_Think(Entity *entity, s32 unknown);
@@ -82,8 +82,8 @@ void Reaper_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: every tenth frame updates what the entity knows of the player; while it is not
@@ -97,7 +97,7 @@ static void Reaper_Think(Entity *entity, s32 unknown) {
         func_00196870(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         switch (entity->state) {
         case 0:
         case 1:
@@ -111,35 +111,35 @@ static void Reaper_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: guards the player's swing; starts EntityAi_MeleeAttack when
-   func_00197F00 finds a melee record in reach (func_0018F648 picks it) and the pause Entity.unkA2
-   is over; else sets flag bit 32 and, each time the timer runs out with func_0018FD50 choosing the
-   attack and func_00198D10 finding a ranged record in reach (func_0018F9C0 picks it), starts
+   func_00197F00 finds a melee record in reach (EntityAi_PickMeleeAttack picks it) and the pause Entity.unkA2
+   is over; else sets flag bit 32 and, each time the timer runs out with EntityAi_PickCombatChoice choosing the
+   attack and func_00198D10 finding a ranged record in reach (EntityAi_PickRangedAttack picks it), starts
    Reaper_RangedAttack; else starts the move action. It gives no movement command. */
 static void Reaper_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 side;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
     if (func_00197F00(entity) && entity->unkA2 == 0) {
-        func_0018F648(entity);
+        EntityAi_PickMeleeAttack(entity);
         EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
     } else {
         ENTITY_FLAG_BITS(entity)->bit32 = TRUE;
-        side = func_0018FD50(entity, 0);
+        side = EntityAi_PickCombatChoice(entity, 0);
         if (entity->unkA0 == 0) {
             entity->unkCF = entity->unkCD;
             entity->unkCD = side;
             if (entity->unkCD != entity->unkCF) {
                 entity->unk9E = D_00446ED4;
             }
-            func_00190B88(entity, side);
+            EntityAi_LowerChoiceWeight(entity, side);
             if (entity->unkCD == 0) {
                 if (func_00198D10(entity)) {
-                    func_0018F9C0(entity);
+                    EntityAi_PickRangedAttack(entity);
                     EntityAi_StartAction(entity, Reaper_RangedAttack, unknown);
                     return;
                 }
@@ -153,7 +153,7 @@ static void Reaper_ThinkCombat(Entity *entity, s32 unknown) {
 
 /* The move handler: this type stays where it is; keeps animation 0. */
 static void Reaper_Move(Entity *entity) {
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
 }
 
 /* The dormant action (busy bit 0x20): holds animation 1 with flag bit 18 set until the player is
@@ -165,7 +165,7 @@ static void Reaper_Dormant(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 1, 0, 0, 1);
+        Motion_Start(entity, 1, 0, 0, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -195,7 +195,7 @@ static void Reaper_Dormant(Entity *entity) {
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but the shots are launched with
-   func_0018D4E8 along the reverse of Entity.unk68. */
+   EntityShot_Launch along the reverse of Entity.unk68. */
 static void Reaper_RangedAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 attack_index = (s32)(entity->flags >> 58) & 3;
@@ -206,7 +206,7 @@ static void Reaper_RangedAttack(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, attack_index + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, attack_index + 0x17, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -235,8 +235,8 @@ static void Reaper_RangedAttack(Entity *entity) {
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         direction[0] = direction[2] = direction[3] = 0.0f;
-        direction[1] = func_00194FB8(entity->unk68 + 3.1415927f);
-        func_0018D4E8(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction);
+        direction[1] = EntityMath_WrapAngle(entity->unk68 + 3.1415927f);
+        EntityShot_Launch(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {

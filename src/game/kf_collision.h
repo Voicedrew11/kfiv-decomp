@@ -82,7 +82,7 @@ typedef struct {
     CollisionStrip *unk20;          /* 0x20 unk3C strips */
     CollisionStrip *unk24;          /* 0x24 unk3E strips */
     CollisionStrip *unk28;          /* 0x28 unk40 strips */
-    CollisionStrip *unk2C;          /* 0x2C the strips func_0018B518 drops a point onto */
+    CollisionStrip *unk2C;          /* 0x2C the strips EntityCollision_DistanceToGround drops a point onto */
     char pad30[0x08];
     u16 unk38;                      /* 0x38 how many strips unk18 has */
     u16 floor_strip_count;          /* 0x3A */

@@ -8,8 +8,8 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -18,30 +18,30 @@ extern u32 D_00446ED4;
 extern f32 D_00446814[];
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-f32 func_0018A9F0(void *, void *);
+f32 EntityCollision_DistanceToPropFloor(void *, void *);
 extern PlayerData D_00413F80;
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
-float func_00194F80(void *, void *);
-void func_0018BA10(f32 *, f32 *, f32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
+float EntityMath_DistanceXZ(void *, void *);
+void EntityPoint_PickNearFromDistance(f32 *, f32 *, f32, f32);
 void func_00196D48(Entity *);
-float func_001957B8(float, float);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
+float EntityMath_AngleDifference(float, float);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 extern f32 D_00431AF0[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -49,11 +49,11 @@ void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 extern f32 D_00446818[];
-void func_0018D600(char **, int, u32, int);
-float func_00195478(float *, char *);
-float func_00194FB8(float);
-float func_001954A8(float *, float *);
-void func_00190A30(char *);
+void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
+float EntityMath_AngleXZ(float *, char *);
+float EntityMath_WrapAngle(float);
+float EntityMath_HeadingTo(float *, float *);
+void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void func_00195898(char *, u8);
 void EntityAi_ReactionRewind(Entity *);
@@ -61,9 +61,9 @@ void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
 float atanf(float);
 s32 func_00199EB8(Entity *, f32 *, f32);
-int func_0018D4E8(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
+int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 void func_0019A290(Entity *, s32);
-void func_0018DCD8(Entity *);
+void EntityEvent_OnDeath(Entity *);
 
 static void Malice_Think(Entity *entity, s32 unknown);
 static void Malice_ThinkCombat(Entity *entity, s32 unknown);
@@ -112,13 +112,13 @@ void Malice_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = 0;
     entity->model->unk15C = 0.0f;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with Malice_ThinkCombat for state 2. It also keeps
    flag bits 18, 20, 21, 26 and 27 set while work byte unk7B is set or work word unk68 is 1, counts
-   down work word unk6A, adds command bit 0x10 or 0x20 by what func_0018A9F0 reads at the entity's
+   down work word unk6A, adds command bit 0x10 or 0x20 by what EntityCollision_DistanceToPropFloor reads at the entity's
    position against EntityParams.unk43C and unk43E (work byte unk7A), and calls
    Malice_ApplyMoveCommand while the entity is not busy or has one of the busy bits 0x3006. */
 static void Malice_Think(Entity *entity, s32 unknown) {
@@ -147,7 +147,7 @@ static void Malice_Think(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bit28 = 1;
     if (entity->unkC6 == 0) {
         func_00196CC0((char *)entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -168,7 +168,7 @@ static void Malice_Think(Entity *entity, s32 unknown) {
         }
     }
     if (ENTITY_FLAG_BITS(entity)->bit28) {
-        height = func_0018A9F0(entity->unk14, entity->model->position);
+        height = EntityCollision_DistanceToPropFloor(entity->unk14, entity->model->position);
         if (height != D_00446814[0]) {
             if (entity->params->unk43C < height) {
                 unkE0->unk7A = 1;
@@ -194,7 +194,7 @@ static void Malice_Think(Entity *entity, s32 unknown) {
    Malice_ToggleFadeLevel (when work byte unk7B is 1 and work word unk6A has run out, or with a
    chance of EntityParams.unk43A in 100 when the timer is at 0) or Malice_FadeOutAndRelocate (a
    chance of unk438 in 100). It attacks only with unk7B at 0 and the player within 200 in y, and
-   else goes to a point func_0018BA10 picks; ranged record 0 is Malice_RangedAttack0. Closing
+   else goes to a point EntityPoint_PickNearFromDistance picks; ranged record 0 is Malice_RangedAttack0. Closing
    in never runs. */
 static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -212,11 +212,11 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -232,7 +232,7 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, Malice_FadeOutAndRelocate, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
@@ -240,19 +240,19 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
             model = entity->model;
             height_difference = D_00413F80.position[1] - model->position[1];
             if (ABS(height_difference) > 200.0f) {
-                func_0018BA10(retreat_point, model->position, func_00194F80(model->position, entity->spawn_info), entity->radius * 4.0f);
+                EntityPoint_PickNearFromDistance(retreat_point, model->position, EntityMath_DistanceXZ(model->position, entity->spawn_info), entity->radius * 4.0f);
                 entity->target = retreat_point;
                 entity->unkA0 = rand() % 30 + 30;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
             } else if (unkE0->unk7B == 0) {
-                if (func_0018F030((char *)entity)) {
+                if (EntityAi_PickAttack((char *)entity)) {
                     if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
                         EntityAi_StartAction(entity, Malice_RangedAttack0, unknown);
                     } else {
@@ -263,7 +263,7 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
                 }
                 return;
             } else {
-                func_0018BA10(destination, model->position, func_00194F80(model->position, entity->spawn_info), entity->radius * 4.0f);
+                EntityPoint_PickNearFromDistance(destination, model->position, EntityMath_DistanceXZ(model->position, entity->spawn_info), entity->radius * 4.0f);
                 entity->target = destination;
                 entity->unkA0 = rand() % 30 + 60;
                 unkE0->unk78 = 0;
@@ -287,25 +287,25 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
     if (unkE0->unk78 == 0) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, direction);
+            turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
                 entity->unkC8 = 0x201;
             } else if (turn < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
         }
     }
@@ -322,10 +322,10 @@ static void Malice_Move(Entity *entity) {
         }
     }
     if (entity->unkC8 & 1) {
-        func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
         return;
     }
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
 }
 
 /* Helper of Malice_Think: carries out the command in Entity.unkC8. It turns the entity and
@@ -439,7 +439,7 @@ static void Malice_ToggleFadeLevel(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 1, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 1, 0, entity->params->unkC4, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
@@ -472,8 +472,8 @@ static void Malice_ToggleFadeLevel(Entity *entity) {
 }
 
 /* A second action that plays animation 1 (busy bit 0x2000): sets work word unk68 to 1 and flag bits
-   18, 20, 21 and 27, calls func_0018D600 with 0x234 and takes Entity.unkD6 down to 0; meanwhile it
-   looks for a point round the spawn point (func_0018BA10, func_0018A9F0) more than 45 degrees off
+   18, 20, 21 and 27, calls EntityEvent_StartEffectAtPoint with 0x234 and takes Entity.unkD6 down to 0; meanwhile it
+   looks for a point round the spawn point (EntityPoint_PickNearFromDistance, EntityCollision_DistanceToPropFloor) more than 45 degrees off
    the player's facing. Then it puts the entity there if it found one and starts
    Malice_FadeBackIn. */
 static void Malice_FadeOutAndRelocate(Entity *entity) {
@@ -485,7 +485,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
     entity->unkC6 |= 0x2000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 1, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 1, 0, entity->params->unkC4, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bits36 = 0;
         unkE0->unk68 = 1;
@@ -502,18 +502,18 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit27 = 1;
             unkE0->unk7C = 0;
             unkE0->unk6E = 0;
-            func_0018D600((char **)entity, 0x234, 0, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, 0x234, 0, (int)entity->model->unkD0);
             entity->action_step++;
         }
         break;
     case 2:
         if (unkE0->unk7C == 0) {
             destination = unkE0->unk30;
-            func_0018BA10(destination, (f32 *)entity->spawn_info, func_00194F80(entity->model->position, entity->spawn_info), entity->spawn_info->unk4C);
-            height = func_0018A9F0(entity->unk14, destination);
+            EntityPoint_PickNearFromDistance(destination, (f32 *)entity->spawn_info, EntityMath_DistanceXZ(entity->model->position, entity->spawn_info), entity->spawn_info->unk4C);
+            height = EntityCollision_DistanceToPropFloor(entity->unk14, destination);
             if (height != D_00446818[0]) {
-                yaw = func_00195478(D_00413F80.position, (char *)destination);
-                if (ABS(func_00194FB8(yaw - D_00413F80.unk14)) > 0.7853982f) {
+                yaw = EntityMath_AngleXZ(D_00413F80.position, (char *)destination);
+                if (ABS(EntityMath_WrapAngle(yaw - D_00413F80.unk14)) > 0.7853982f) {
                     unkE0->unk30[1] += height - (f32)(rand() % 200);
                     unkE0->unk7C = 1;
                 }
@@ -535,7 +535,7 @@ static void Malice_FadeOutAndRelocate(Entity *entity) {
 }
 
 /* A third action that plays animation 1 (busy bit 0x3000), started by Malice_FadeOutAndRelocate:
-   waits EntityParams.unk434 frames, turns the entity to the player, calls func_0018D600 with 0x235
+   waits EntityParams.unk434 frames, turns the entity to the player, calls EntityEvent_StartEffectAtPoint with 0x235
    and takes Entity.unkD6 back up to 0x30 (0x10 with work byte unk7B set), then clears work word
    unk68 and thinks. */
 static void Malice_FadeBackIn(Entity *entity) {
@@ -552,9 +552,9 @@ static void Malice_FadeBackIn(Entity *entity) {
         break;
     case 1:
         if ((s16)entity->params->unk434 < unkE0->unk6C++) {
-            func_00192C98(entity, 1, 0, 0, 0);
-            entity->model->unkD0[1] = func_001954A8(entity->model->position, (f32 *)&D_00413F80);
-            func_0018D600((char **)entity, 0x235, 0, (int)entity->model->unkD0);
+            Motion_Start(entity, 1, 0, 0, 0);
+            entity->model->unkD0[1] = EntityMath_HeadingTo(entity->model->position, (f32 *)&D_00413F80);
+            EntityEvent_StartEffectAtPoint((char **)entity, 0x235, 0, (int)entity->model->unkD0);
             entity->action_step++;
         }
         break;
@@ -578,7 +578,7 @@ static void Malice_FadeBackIn(Entity *entity) {
 
 /* The on_hit handler: the same as EntityAi_OnHit. */
 static void Malice_OnHit(Entity *entity) {
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit10 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = 0;
@@ -602,7 +602,7 @@ static void Malice_Dormant(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 1, 0, 0, 1);
+        Motion_Start(entity, 1, 0, 0, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -653,7 +653,7 @@ static void Malice_Dormant(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23; from frame 28 to 60 it launches the
-   record's shots every other frame with func_0018D4E8, pitched at the player and along the reverse
+   record's shots every other frame with EntityShot_Launch, pitched at the player and along the reverse
    of its heading. */
 static void Malice_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -663,7 +663,7 @@ static void Malice_RangedAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
@@ -684,9 +684,9 @@ static void Malice_RangedAttack0(Entity *entity) {
         if (entity->model->unkFC->unk82 >= 0x1C && entity->model->unkFC->unk82 <= 0x3C) {
             Vector_Copy(direction, entity->model->unkD0);
             direction[0] = atanf((entity->model->position[1] - D_00413F80.position[1]) / entity->distance_to_player);
-            direction[1] = func_00194FB8(direction[1] - 3.1415927f);
+            direction[1] = EntityMath_WrapAngle(direction[1] - 3.1415927f);
             if (D_00446ED4 & 1) {
-                func_0018D4E8(entity, unk3D8, 0x1C, 0x3C, direction);
+                EntityShot_Launch(entity, unk3D8, 0x1C, 0x3C, direction);
             }
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -718,7 +718,7 @@ static void Malice_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         params = entity->params;
         if (params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
@@ -749,7 +749,7 @@ static void Malice_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit14 = 0;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;

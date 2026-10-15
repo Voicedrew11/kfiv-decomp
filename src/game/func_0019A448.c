@@ -1,58 +1,33 @@
-#include "common.h"
+#include "kf_entity.h"
 
-typedef struct {
-    char *ctx;
-    char pad4[8];
-    u8 *c;
-    char pad10[0x18];
-    u16 s28;
-    char pad2a[0x9C];
-    u16 sc6;
-} Act;
+int Motion_SeekSlotKeys(ModelInstance *, int, int, int);
 
-typedef struct {
-    char pad0[0x40];
-    float f40;
-    float f44;
-    float f48;
-} Sub;
+/* the slot's words as one: bit 5 is EntityMotionSlot.moves_entity */
+#define SLOT_WORD(slot) (*(u32 *)(slot))
 
-typedef struct {
-    char pad0[0x130];
-    Sub *sub;
-} Ctx;
+int func_0019A448(Entity *entity, EntityMotionSlot *slot, int part_slot, int animation, int frame, int blend_frames,
+                  int force) {
+    u8 *motions = entity->params->unk60;
+    int motion = motions[animation];
+    int current = motions[slot->index];
+    ModelPart *root;
 
-typedef struct {
-    u32 idx : 5;
-    u32 flag : 1;
-    u32 pad : 2;
-    u32 b1 : 8;
-    u32 s2 : 16;
-    int w4;
-} Cmd;
-
-int func_001914E8(char *, int, int, int);
-
-int func_0019A448(Act *arg0, Cmd *arg1, int arg2, int arg3, int arg4, int arg5, int arg6) {
-    u8 *base = arg0->c + 0x60;
-    int v = base[arg3];
-    int cur = base[*(u8 *)arg1 & 0x1F];
-
-    if (arg6 == 0 && cur == v) {
+    if (force == 0 && current == motion) {
         return 1;
     }
-    arg1->w4 = arg4 << 8;
-    arg1->idx = arg3;
-    arg1->s2 = arg4;
-    if (arg0->s28 != 0 && (arg0->sc6 & 0x46) == 0) {
-        float f = arg5;
-        arg1->b1 = f + f * 0.75f;
+    slot->frame_fixed = frame << 8;
+    slot->index = animation;
+    slot->frame = frame;
+    if (entity->unk28 != 0 && (entity->unkC6 & 0x46) == 0) {
+        f32 blend = blend_frames;
+
+        slot->unk01 = blend + blend * 0.75f;
     } else {
-        arg1->b1 = arg5;
+        slot->unk01 = blend_frames;
     }
-    if (*(int *)arg1 & 0x20) {
-        Sub *s = ((Ctx *)arg0->ctx)->sub;
-        s->f40 = s->f44 = s->f48 = 0.0f;
+    if (SLOT_WORD(slot) & 0x20) {
+        root = ENTITY_MODEL(entity)->unk130;
+        root->unk40[0] = root->unk40[1] = root->unk40[2] = 0.0f;
     }
-    return func_001914E8(arg0->ctx, arg2, v, arg4);
+    return Motion_SeekSlotKeys(ENTITY_MODEL(entity), part_slot, motion, frame);
 }

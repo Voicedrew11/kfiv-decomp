@@ -81,7 +81,7 @@ typedef struct ModelPart {
     struct ModelPart *sibling;      /* 0x74 next part on the same parent, NULL: none */
     u64 data_addr : 32;             /* 0x78 */
     u64 unk78_32 : 7;               /* MotionPart.unk02 of the motion last loaded */
-    u64 level : 7;                  /* detail level picked by func_00192DA8 */
+    u64 level : 7;                  /* detail level picked by Motion_SeekKeys */
     u64 pad78_46 : 7;
     u64 data_count : 11;
 } ModelPart;
@@ -158,7 +158,7 @@ typedef struct {
 } ModelPartRecord;
 
 /* ModelPart with its last doubleword (the bit-fields) whole. Bits 32-38 clear:
-   func_0018BD18 leaves the part's turn and offset out. */
+   Bone_MultiplyPathTo leaves the part's turn and offset out. */
 typedef struct {
     char pad00[0x78];
     u64 unk78;                      /* 0x78 */
@@ -472,6 +472,9 @@ typedef struct {
 /* the scratchpad as a matrix, where the builders of kf_model_matrix.c work */
 #define MODEL_MATRIX_SCRATCH ((f32 *)0x70000000)
 
+/* the scratchpad as the motion code (kf_motion.c) uses it: the key vectors it blends between */
+#define MOTION_SCRATCH ((Vector4 *)0x70000000)
+
 /* what MapObject.unk08 points at */
 typedef struct {
     Vector4 position;               /* 0x00 where the object rests */
@@ -538,7 +541,7 @@ typedef struct {
 
 /* what MapObject.unk04 points at: its row of param/obj.prm (map_object_defs) */
 typedef struct {
-    u32 kind : 8;                   /* 0x00 1, 2, 6, 0x11: func_0018C728 tests lines of sight against it */
+    u32 kind : 8;                   /* 0x00 1, 2, 6, 0x11: EntitySight_ObjectInWay tests lines of sight against it */
     u32 bit8 : 1;                   /* which function draws it (MapObject_InitMap) */
     u32 pad00_9 : 2;
     u32 bit11 : 1;                  /* MapObject_Break can break it */
@@ -827,7 +830,7 @@ typedef struct {
     int flags;                      /* 0x10 */
 } CollisionOwner;
 
-/* ChannelOwner.channel: the playback state func_00192C98 resets */
+/* ChannelOwner.channel: the playback state Motion_Start resets */
 typedef struct {
     ModelPartLevels *tables[0x20];  /* 0x00 MotionData.parts of each motion loaded */
     u8 limit;                       /* 0x80 entries at or above this index are replaced by 0 */

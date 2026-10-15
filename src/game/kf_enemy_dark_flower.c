@@ -7,8 +7,8 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -18,16 +18,16 @@ void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 int EntityAi_ThinkReturn(void *, int);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 void func_00196870(void *, int);
 void func_00196CC0(void *);
 int rand(void);
-void func_0018B778(float, void *, void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
+void EntityPoint_PickNear(float, void *, void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
@@ -38,8 +38,8 @@ void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 void Vector_Scale(float *, float *, float);
 float func_00199E68(Entity *, float);
-float func_001954A8(float *, float *);
-int func_00192C98(void *, int, int, u32, int);
+float EntityMath_HeadingTo(float *, float *);
+int Motion_Start(void *, int, int, u32, int);
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void func_0019A290(Entity *, s32);
 
@@ -89,8 +89,8 @@ void DarkFlower_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with DarkFlower_ThinkWander for every state but 2 and
@@ -106,7 +106,7 @@ static void DarkFlower_Think(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0(entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -123,8 +123,8 @@ static void DarkFlower_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of every state but 2 (DarkFlower_Think calls it): wanders. Each time the
-   timer runs out it picks a point near the spawn point (func_0018B778; 79 times in 100, for 240 to
-   329 frames) or no target (90 to 149 frames), takes the command of func_00190F90 towards it and
+   timer runs out it picks a point near the spawn point (EntityPoint_PickNear; 79 times in 100, for 240 to
+   329 frames) or no target (90 to 149 frames), takes the command of EntityAi_MoveCommand towards it and
    starts the move action. It does not go for the player. */
 static void DarkFlower_ThinkWander(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -134,7 +134,7 @@ static void DarkFlower_ThinkWander(Entity *entity, s32 unknown) {
         if (rand() % 100 >= 21) {
             f32 *point = unkE0->unk30;
 
-            func_0018B778(entity->spawn_info->unk4C, point, entity->spawn_info, entity->model->position);
+            EntityPoint_PickNear(entity->spawn_info->unk4C, point, entity->spawn_info, entity->model->position);
             entity->target = point;
             entity->unkA0 = rand() % 90 + 240;
         } else {
@@ -142,33 +142,33 @@ static void DarkFlower_ThinkWander(Entity *entity, s32 unknown) {
             entity->unkA0 = rand() % 60 + 90;
         }
     }
-    entity->unkC8 = func_00190F90(entity, 0, 50.0f);
+    entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat without the dodge; ranged record 0 is
    DarkFlower_RangedAttack0, and instead of closing in on the player it goes to a point
-   func_0018B778 picks round the spawn point. */
+   EntityPoint_PickNear picks round the spawn point. */
 static void DarkFlower_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 side;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
                     EntityAi_StartAction(entity, DarkFlower_RangedAttack0, unknown);
                 } else {
@@ -179,7 +179,7 @@ static void DarkFlower_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            func_0018B778(entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
+            EntityPoint_PickNear(entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
             entity->target = unkE0->unk30;
             entity->unkA0 = rand() % 60 + 210;
             unkE0->unk78 = 0;
@@ -194,7 +194,7 @@ static void DarkFlower_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (unkE0->unk78 == 0) {
-        entity->unkC8 = func_00190F90(entity, 0, 50.0f);
+        entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -256,7 +256,7 @@ static void DarkFlower_Move(Entity *entity) {
             amount += amount;
         }
         if (entity->target != NULL) {
-            heading = func_001954A8(entity->model->position, entity->target);
+            heading = EntityMath_HeadingTo(entity->model->position, entity->target);
             sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, D_00431AF0, heading);
             Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
             Vector_Normalize(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR);
@@ -268,7 +268,7 @@ static void DarkFlower_Move(Entity *entity) {
     } else {
         unkE0->unk44 = 0.0f;
     }
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, no turning. From frame
@@ -283,7 +283,7 @@ static void DarkFlower_RangedAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
         entity->flags &= ~0x3800;
         entity->action_step++;
     case 1:

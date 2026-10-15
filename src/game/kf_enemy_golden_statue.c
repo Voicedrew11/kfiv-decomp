@@ -8,52 +8,52 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Think(Entity *, s32);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
-void func_00190A30(char *);
+void EntityAi_LowerWeightsAfterHit(char *);
 void func_00195898(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 extern void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
-s32 func_00190F90(Entity *, s32, f32);
-float func_00194F80(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
+float EntityMath_DistanceXZ(void *, void *);
 s32 func_00197078(Entity *);
-int func_0018CA50(int *);
-int func_0018F030(char *);
-float func_001957B8(float, float);
+int EntitySight_EntityInWay(int *);
+int EntityAi_PickAttack(char *);
+float EntityMath_AngleDifference(float, float);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 int EntityAi_ThinkReturn(void *, int);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 void func_00196CC0(void *);
 extern PlayerData D_00413F80;
 extern char D_0043E8C0[];
 int printf(const char *, ...);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 func_00198D10(Entity *);
 s32 func_00197F00(Entity *);
-s32 func_0018F9C0(Entity *);
-s32 func_0018F648(Entity *);
+s32 EntityAi_PickRangedAttack(Entity *);
+s32 EntityAi_PickMeleeAttack(Entity *);
 void func_00196D48(Entity *);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 extern int D_00414184[];
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 double atan2(double, double);
-float func_00194FB8(float);
-float func_00195388(float *, float, float);
-int func_00192EB0(void *, int);
+float EntityMath_WrapAngle(float);
+float EntityMath_EaseAngleToward(float *, float, float);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 int func_00196120(Entity *, void *, s32, void *, f32);
 
 static void GoldenStatue_OnHit(Entity *entity);
@@ -113,8 +113,8 @@ void GoldenStatue_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The on_hit handler: as EntityAi_OnHit, but only a heavy hit starts a reaction
@@ -122,7 +122,7 @@ void GoldenStatue_Init(Entity *entity) {
 static void GoldenStatue_OnHit(Entity *entity) {
     u64 flags;
 
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     entity->flags &= ~0x400;
     entity->flags &= ~0x200;
@@ -188,8 +188,8 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 unknown) {
     point[3] = 0;
     Vector_Copy(target, point);
     entity->target = target;
-    entity->unkC8 = func_00190F90(entity, 0, 25.0f);
-    if (func_00194F80(entity->model->position, point) < limit) {
+    entity->unkC8 = EntityAi_MoveCommand(entity, 0, 25.0f);
+    if (EntityMath_DistanceXZ(entity->model->position, point) < limit) {
         unkE0->unk78 = 1;
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -197,7 +197,7 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 unknown) {
 
 /* Helper of GoldenStatue_ThinkWaitAtPost, called while work bytes unk78 and unk79 are set: clears unk78
    when the entity is more than 100 from the point (-7900, spawn y, 3050); starts the attack
-   func_0018F030 picks when func_00197078 says so and func_0018CA50 does not; else turns on the spot
+   EntityAi_PickAttack picks when func_00197078 says so and EntitySight_EntityInWay does not; else turns on the spot
    to the heading in work float unk48, clears unk79 once it is within the turn limit of it, and
    starts the move action. */
 static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
@@ -210,12 +210,12 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
     home[1] = entity->spawn_info->spawn_y;
     home[2] = 3050.0f;
     home[3] = 0.0f;
-    if (func_00194F80(entity->model->position, home) > range) {
+    if (EntityMath_DistanceXZ(entity->model->position, home) > range) {
         unkE0->unk78 = 0;
     }
     // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity) && !func_0018CA50((int *)entity)) {
-        if (func_0018F030((char *)entity)) {
+    if (((int (*)(Entity *))func_00197078)(entity) && !EntitySight_EntityInWay((int *)entity)) {
+        if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -223,7 +223,7 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    angle = func_001957B8(entity->model->unkD0[1], unkE0->unk48);
+    angle = EntityMath_AngleDifference(entity->model->unkD0[1], unkE0->unk48);
     if (ABS(angle) > entity->params->turn_limit) {
         if (angle >= 0.0f) {
             entity->unkC8 |= 0x200;
@@ -244,15 +244,15 @@ static void GoldenStatue_StandAtPost(Entity *entity, s32 unknown) {
     f32 angle;
 
     // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity) && !func_0018CA50((int *)entity)) {
-        if (func_0018F030((char *)entity)) {
+    if (((int (*)(Entity *))func_00197078)(entity) && !EntitySight_EntityInWay((int *)entity)) {
+        if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
         }
         return;
     }
-    angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+    angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
     if (ABS(angle) > 0.5235988f) {
         unkE0->unk48 = entity->unk68;
         unkE0->unk79 = 1;
@@ -276,7 +276,7 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
     if ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) != 0x06000000) {
         func_00196CC0(entity);
     }
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if ((s32)(entity->flags >> 53) & 1) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -285,8 +285,8 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
 }
 
 /* Decides for GoldenStatue_ThinkNoStates: guards or dodges the player's swing; while flag bit 32 is
-   set starts EntityAi_RangedAttack (func_00198D10, func_0018F9C0) with the player farther from the
-   spawn point than EntitySpawnInfo.unk4C and EntityAi_MeleeAttack (func_00197F00, func_0018F648)
+   set starts EntityAi_RangedAttack (func_00198D10, EntityAi_PickRangedAttack) with the player farther from the
+   spawn point than EntitySpawnInfo.unk4C and EntityAi_MeleeAttack (func_00197F00, EntityAi_PickMeleeAttack)
    with the player nearer. While the player's x is below -7900 it goes to one of three posts at x
    -8000, picked by the player's z, and from there turns to the player and starts the ranged attack
    only (work byte unk78 says it is at the post; on arriving it prints D_0043E8C0, "tuitayo",
@@ -302,25 +302,25 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (func_00194F80(entity->spawn_info, &D_00413F80) > entity->spawn_info->unk4C) {
+    if (EntityMath_DistanceXZ(entity->spawn_info, &D_00413F80) > entity->spawn_info->unk4C) {
         if (ENTITY_FLAG_BITS(entity)->bit32) {
-            if (func_00198D10(entity) && !func_0018CA50((int *)entity)) {
-                func_0018F9C0(entity);
+            if (func_00198D10(entity) && !EntitySight_EntityInWay((int *)entity)) {
+                EntityAi_PickRangedAttack(entity);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;
             }
         }
     } else if (ENTITY_FLAG_BITS(entity)->bit32) {
-        if (func_00197F00(entity) && !func_0018CA50((int *)entity)) {
-            func_0018F648(entity);
+        if (func_00197F00(entity) && !EntitySight_EntityInWay((int *)entity)) {
+            EntityAi_PickMeleeAttack(entity);
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             return;
         }
@@ -344,31 +344,31 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
             }
         }
         if (unkE0->unk78 == 0) {
-            if (func_00194F80(entity->model->position, post) < margin + 60.0f) {
+            if (EntityMath_DistanceXZ(entity->model->position, post) < margin + 60.0f) {
                 unkE0->unk78 = 1;
                 printf(D_0043E8C0);
             } else {
                 entity->target = post;
-                turn = func_0018EAC0(entity, direction);
+                turn = EntityAi_TurnFromPush(entity, direction);
                 if (turn > 0) {
                     entity->unkC8 = 0x201;
                 } else if (turn < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190F90(entity, 0, 50.0f);
+                    entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
                 }
                 EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
                 return;
             }
         } else {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
-            if (func_00194F80(entity->model->position, post) > margin + 150.0f) {
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+            if (EntityMath_DistanceXZ(entity->model->position, post) > margin + 150.0f) {
                 entity->target = post;
                 unkE0->unk78 = 0;
                 return;
             }
-            if (ENTITY_FLAG_BITS(entity)->bit32 && func_00198D10(entity) && !func_0018CA50((int *)entity)) {
-                func_0018F9C0(entity);
+            if (ENTITY_FLAG_BITS(entity)->bit32 && func_00198D10(entity) && !EntitySight_EntityInWay((int *)entity)) {
+                EntityAi_PickRangedAttack(entity);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;
             }
@@ -387,25 +387,25 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
     }
     func_00196D48(entity);
     if (ENTITY_FLAG_BITS(entity)->bit31) {
-        chase_angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+        chase_angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
         if (unkE0->unk79 == 0) {
             unkE0->unk79 = ABS(chase_angle) > 0.5235988f;
             if (unkE0->unk79 == 0) {
                 goto done;
             }
         }
-        entity->unkC8 = func_00190BE0(entity);
+        entity->unkC8 = EntityAi_TurnCommand(entity);
         if (entity->unkC8 == 0) {
             unkE0->unk79 = 0;
         }
     } else {
-        turn = func_0018EAC0(entity, direction);
+        turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
             entity->unkC8 = 0x201;
         } else if (turn < 0) {
             entity->unkC8 = 0x101;
         } else {
-            entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+            entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
         }
     }
 done:
@@ -441,21 +441,21 @@ static void GoldenStatue_Move(Entity *entity) {
     entity->unk94 += turn;
     if (entity->unkC8 & 1) {
         if (entity->unkC8 & 0x40) {
-            func_00192C98(entity, 4, 0, entity->params->unkC4 >> 1, 0);
+            Motion_Start(entity, 4, 0, entity->params->unkC4 >> 1, 0);
         } else {
-            func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
         }
     } else if (entity->unkC8 & 0x100) {
-        func_00192C98(entity, 0xB, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0xB, 0, entity->params->unkC4, 0);
     } else if (entity->unkC8 & 0x200) {
-        func_00192C98(entity, 0xC, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0xC, 0, entity->params->unkC4, 0);
     } else {
-        func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     }
 }
 
 /* Helper of GoldenStatue_Animate: adds work float unk4C to the x rotation of model part 15. Before
-   frame 43 unk4C goes towards the pitch to a point 400 above the player (func_00195388, rate 10);
+   frame 43 unk4C goes towards the pitch to a point 400 above the player (EntityMath_EaseAngleToward, rate 10);
    from frame 54 it is scaled by (67 - frame) / 14. */
 static void GoldenStatue_AimPart15AbovePlayer(Entity *entity) {
     EntityModel *model;
@@ -473,8 +473,8 @@ static void GoldenStatue_AimPart15AbovePlayer(Entity *entity) {
         if (frame < 43) {
             Vector_Copy(point, D_00413F80.position);
             point[1] += 400.0f;
-            pitch = func_00194FB8(atan2(point[1] - model->position[1], entity->distance_to_player));
-            func_00195388(&unkE0->unk4C, pitch, 10.0f);
+            pitch = EntityMath_WrapAngle(atan2(point[1] - model->position[1], entity->distance_to_player));
+            EntityMath_EaseAngleToward(&unkE0->unk4C, pitch, 10.0f);
         } else if (frame >= 54) {
             unkE0->unk4C *= (f32)(67 - frame) / 14.0f;
         }
@@ -499,9 +499,9 @@ static void GoldenStatue_Animate(Entity *entity) {
         }
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
         look_at_target = ENTITY_FLAG_BITS(entity)->bit9;
         limits[1] = entity->params->unk430 * 0.017453292f;

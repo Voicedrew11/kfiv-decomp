@@ -6,8 +6,8 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
@@ -17,9 +17,9 @@ extern u32 D_00446ED4;
 void func_00196870(void *, int);
 s32 func_001992F0(Entity *, s32);
 void func_001B4EC8(s32);
-int func_00192C98(void *, int, int, u32, int);
-void func_0018DB58(void *, int, int);
-void func_0018DCD8(Entity *);
+int Motion_Start(void *, int, int, u32, int);
+void EntityEvent_StartCueAlways(void *, int, int);
+void EntityEvent_OnDeath(Entity *);
 
 static void Watcher_Think(Entity *entity, s32 unknown);
 static void Watcher_Move(Entity *entity);
@@ -61,14 +61,14 @@ void Watcher_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: no states and no actions. Every tenth frame updates what the entity knows of
    the player; while it is not busy and func_001992F0 finds the player in reach of ranged record 0
    (and flag bit 63 is clear) it calls func_001B4EC8 with EntityParams.unk434, sets work byte unk7A
-   and flag bit 9 and plays animation 2, else clears them and plays animation 0. Calls func_0018DB58
+   and flag bit 9 and plays animation 2, else clears them and plays animation 0. Calls EntityEvent_StartCueAlways
    with 1 when unk7A changes. */
 static void Watcher_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -83,44 +83,44 @@ static void Watcher_Think(Entity *entity, s32 unknown) {
             func_001B4EC8((s16)entity->params->unk434);
             unkE0->unk7A = 1;
             ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
-            func_00192C98(entity, 2, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 2, 0, entity->params->unkC4, 0);
         } else {
             unkE0->unk7A = 0;
             ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-            func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
         }
         if (previous != unkE0->unk7A) {
-            func_0018DB58(entity, 1, 0);
+            EntityEvent_StartCueAlways(entity, 1, 0);
         }
     }
 }
 
 /* The move handler: this type stays where it is. While work byte unk7A is set it keeps animation 2
-   and calls func_0018DB58 with 0 every EntityParams.unk438 frames (counted in work word unk68);
+   and calls EntityEvent_StartCueAlways with 0 every EntityParams.unk438 frames (counted in work word unk68);
    else it keeps animation 0. */
 static void Watcher_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (unkE0->unk7A != 0) {
-        func_00192C98(entity, 2, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 2, 0, entity->params->unkC4, 0);
         if (unkE0->unk68 <= 0) {
-            func_0018DB58(entity, 0, 0);
+            EntityEvent_StartCueAlways(entity, 0, 0);
             unkE0->unk68 = entity->params->unk438;
         }
     } else {
-        func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
         unkE0->unk68 = 0;
     }
     unkE0->unk68--;
 }
 
-/* The death action (busy bit 0x40): no animation; calls func_0018DB58 with 2, then the fade over 20
+/* The death action (busy bit 0x40): no animation; calls EntityEvent_StartCueAlways with 2, then the fade over 20
    frames and the removal as EntityAi_Death. */
 static void Watcher_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_0018DB58(entity, 2, 0);
+        EntityEvent_StartCueAlways(entity, 2, 0);
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
         ENTITY_FLAG_BITS(entity)->bits2 = 1;
@@ -131,7 +131,7 @@ static void Watcher_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
         entity->unkA0 = 0x14;
-        func_0018DCD8(entity);
+        EntityEvent_OnDeath(entity);
         entity->action_step++;
         break;
     case 1:

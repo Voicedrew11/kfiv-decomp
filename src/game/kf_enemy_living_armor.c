@@ -9,8 +9,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
@@ -19,39 +19,39 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 extern PlayerData D_00413F80;
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
 void func_00196D48(Entity *);
-float func_001957B8(float, float);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
+float EntityMath_AngleDifference(float, float);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 extern Qword D_0043E8B0;
-float func_00194FB8(float);
-int func_0018E3D0(void *, int, int, int, void *, int, float);
-int func_00192EB0(void *, int);
+float EntityMath_WrapAngle(float);
+int Bone_TurnPartToLook(void *, int, int, int, void *, int, float);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
-void func_00190A30(char *);
+int Motion_BlendToPose(EntityModel *, f32);
+void EntityAi_LowerWeightsAfterHit(char *);
 void func_00195898(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 void func_0019A290(Entity *, s32);
-s32 func_0018CAF8(Entity *);
-s32 func_0018C728(Entity *);
+s32 EntitySight_PropInWay(Entity *);
+s32 EntitySight_ObjectInWay(Entity *);
 float sqrtf(float);
 float atan2f(float, float);
 s32 func_00199EB8(Entity *, f32 *, f32);
@@ -110,9 +110,9 @@ void LivingArmor_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
+    Motion_ClearPartSlots(entity->model);
     unkE0->unk68 = 0;
-    func_00193378(entity->model, 0, 0);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with LivingArmor_ThinkCombat for state 2. */
@@ -124,7 +124,7 @@ static void LivingArmor_Think(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -153,15 +153,15 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 0;
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
@@ -169,10 +169,10 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
                 EntityAi_StartAction(entity, LivingArmor_MeleeAttack0, unknown);
@@ -197,25 +197,25 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
     if (unkE0->unk78 == 0) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, direction);
+            turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
                 entity->unkC8 = 0x201;
             } else if (turn < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
             if ((s16)entity->params->unk434 != 0) {
                 entity->unkC8 |= 0x40;
@@ -227,7 +227,7 @@ done:
 }
 
 /* Helper of LivingArmor_Animate: in animation 17 turns model part 3 to look at the player
-   (func_0018E3D0, the angles kept in work area unk30) and then takes 120 degrees off the part's
+   (Bone_TurnPartToLook, the angles kept in work area unk30) and then takes 120 degrees off the part's
    angle unk50. */
 static void LivingArmor_AimPart3AtPlayer(Entity *actor) {
     char pad[0x10]; /* unused, but retail reserves the 0x10 bytes */
@@ -240,10 +240,10 @@ static void LivingArmor_AimPart3AtPlayer(Entity *actor) {
     model = ENTITY_MODEL(actor);
     joint = &model->parts[3];
     if (joint != NULL && actor->unkD1 == 0x11) {
-        func_0018E3D0(model, (int)joint, (int)actor->unkE0.unk30, 1, D_00413F80.position, 0, 10.0f);
+        Bone_TurnPartToLook(model, (int)joint, (int)actor->unkE0.unk30, 1, D_00413F80.position, 0, 10.0f);
         angle = joint->unk50 - 2.0943952f;
         joint->unk50 = angle;
-        joint->unk50 = func_00194FB8(angle);
+        joint->unk50 = EntityMath_WrapAngle(angle);
     }
 }
 
@@ -264,9 +264,9 @@ static void LivingArmor_Animate(Entity *entity) {
         }
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
         if ((entity->unkC6 & 1) && entity->unkD1 == 0x11) {
             LivingArmor_AimPart3AtPlayer(entity);
@@ -287,7 +287,7 @@ static void LivingArmor_OnHit(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit20 = 1;
     ENTITY_FLAG_BITS(entity)->bit18 = 1;
     ENTITY_FLAG_BITS(entity)->bit21 = 1;
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     EntityAi_SetReaction((char *)entity, (void (*)(void))LivingArmor_ReactionHeavy, 0);
     func_00195898((char *)entity, 2);
@@ -301,7 +301,7 @@ static void LivingArmor_ReactionHeavy(Entity *entity) {
     entity->unkC6 = 4;
     switch (entity->unkCB) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         unkE0->unk1C = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
@@ -324,7 +324,7 @@ static void LivingArmor_ReactionHeavy(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_00192C98(entity, 1, 0, 5, 1);
+            Motion_Start(entity, 1, 0, 5, 1);
             EntityAi_StartAction(entity, func_0013D9D0, 1);
         }
         break;
@@ -336,7 +336,7 @@ static void func_0013D9D0(Entity *entity) {
 
     entity->unkC6 |= 0x1000;
     if (entity->distance_to_player < (s16)entity->params->unk434 + entity->radius + 100.0f) {
-        if (!func_0018CAF8(entity) && !func_0018C728(entity)) {
+        if (!EntitySight_PropInWay(entity) && !EntitySight_ObjectInWay(entity)) {
             EntityAi_StartAction(entity, LivingArmor_MeleeAttack1, 1);
         }
     }
@@ -371,7 +371,7 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x11, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x11, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -400,7 +400,7 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
                 delta_y = base[1] - tip[1];
                 delta_z = base[2] - tip[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                 angles[2] = angles[3] = 0.0f;
                 delta_x = tip[0] - unkE0->unk4C;
                 delta_y = tip[1] - unkE0->unk50;
@@ -419,13 +419,13 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, func_00194FB8(entity->unk68));
+            ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->unk68));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, func_00194FB8(entity->unk68));
+            ENTITY_FLAG_BITS(entity)->bit55 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->unk68));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195B68(entity, unk240, 2, frame, entity->model->unkFC->unk82, func_00194FB8(entity->unk68));
+            ENTITY_FLAG_BITS(entity)->bit56 = func_00195B68(entity, unk240, 2, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->unk68));
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -441,7 +441,7 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
                 ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
                 ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
                 ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
-                func_00192C98(entity, 1, 0, 5, 1);
+                Motion_Start(entity, 1, 0, 5, 1);
                 EntityAi_StartAction(entity, func_0013D9D0, 1);
             } else {
                 entity->unkC6 = 0;
@@ -467,7 +467,7 @@ static void LivingArmor_Dormant(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 2, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 2, 0, entity->params->unkC4, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bits36 = 0;
         unkE0->unk1C = 0.0f;
@@ -532,7 +532,7 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -561,7 +561,7 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
                 delta_y = base[1] - tip[1];
                 delta_z = base[2] - tip[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                 angles[2] = angles[3] = 0.0f;
                 delta_x = tip[0] - unkE0->unk4C;
                 delta_y = tip[1] - unkE0->unk50;

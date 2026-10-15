@@ -9,48 +9,48 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 int func_00196120(Entity *, void *, s32, void *, f32);
 double atan2(double, double);
-float func_00194FB8(float);
-float func_00195388(float *, float, float);
+float EntityMath_WrapAngle(float);
+float EntityMath_EaseAngleToward(float *, float, float);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 extern PlayerData D_00413F80;
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
 void func_00196D48(Entity *);
-float func_001957B8(float, float);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
+float EntityMath_AngleDifference(float, float);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
-int func_0018CF30(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
+int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 void func_0019A290(Entity *, s32);
-void func_0018DCD8(Entity *);
-void func_0018DC40(char *);
+void EntityEvent_OnDeath(Entity *);
+void EntityEvent_Respawn(char *);
 
 static void ExpeditionArcher_Animate(Entity *entity);
 static void ExpeditionArcher_PitchPartToPlayer(Entity *actor);
@@ -100,8 +100,8 @@ void ExpeditionArcher_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate; while flag bit 10 is set ExpeditionArcher_PitchPartToPlayer
@@ -120,10 +120,10 @@ static void ExpeditionArcher_Animate(Entity *entity) {
     if ((s32)((s64)(flags << 18) >> 32) & 1) {
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 2) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 2) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
             flags = entity->flags;
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
             flags = entity->flags;
         }
     }
@@ -157,13 +157,13 @@ static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
     float angle;
 
     if (part != NULL) {
-        angle = func_00194FB8(atan2(D_00413F80.position[1] - model->position.y, actor->distance_to_player));
+        angle = EntityMath_WrapAngle(atan2(D_00413F80.position[1] - model->position.y, actor->distance_to_player));
         if (0.87266463f < angle) {
             angle = 0.87266463f;
         } else if (angle < -0.87266463f) {
             angle = -0.87266463f;
         }
-        func_00195388(&sub->unk48, angle, 10.0f);
+        EntityMath_EaseAngleToward(&sub->unk48, angle, 10.0f);
         part->unk50 = sub->unk48;
     }
 }
@@ -185,7 +185,7 @@ static void ExpeditionArcher_Think(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -215,15 +215,15 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     if (entity->unkA0 == 0 || side == 0) {
@@ -232,10 +232,10 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 if (ENTITY_FLAG_BITS(entity)->bits58 == 1) {
                     EntityAi_StartAction(entity, ExpeditionArcher_RangedAttack1, unknown);
                 } else {
@@ -262,25 +262,25 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
     if (unkE0->unk78 == 0) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, direction);
+            turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
                 entity->unkC8 = 0x201;
             } else if (turn < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
         }
     }
@@ -289,7 +289,7 @@ done:
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but it sets flag bit 10 and aims its
-   shots at a point 170 below the player's position, within 10 degrees (func_0018CF30).
+   shots at a point 170 below the player's position, within 10 degrees (EntityShot_LaunchAimed).
    ExpeditionArcher_ThinkCombat starts it for records 0 and 2. */
 static void ExpeditionArcher_RangedAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -301,7 +301,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, attack_index + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, attack_index + 0x17, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -332,7 +332,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         Vector_Copy(target, D_00413F80.position);
         target[1] -= 170.0f;
-        func_0018CF30(entity, unk3D8, elapsed, entity->model->unkFC->unk82, target, 0.17453294f, 0.17453294f);
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->unkFC->unk82, target, 0.17453294f, 0.17453294f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
@@ -357,7 +357,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
    ExpeditionArcher_ThinkCombat starts it for record 1 only. It turns to the player with flag bit 10
    set; at frame 42 it stops the motion until Entity.unk68 no longer changes, the player is nearer
    than 200 or 90 frames have gone by, then plays on and launches the shots at a point 170 below the
-   player's position, within 10 degrees (func_0018CF30). */
+   player's position, within 10 degrees (EntityShot_LaunchAimed). */
 static void ExpeditionArcher_RangedAttack1(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, ENTITY_FLAG_BITS(entity)->bits58);
@@ -368,7 +368,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -399,8 +399,8 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
         func_00199EB8(entity, (f32 *)&unkE0->unk1C, entity->unk68);
         ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-        func_001957B8(entity->model->unkD0[1], entity->unk68);
-        angle = func_001957B8(unkE0->unk4C, entity->unk68);
+        EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+        angle = EntityMath_AngleDifference(unkE0->unk4C, entity->unk68);
         if (entity->unkA0 == 0 || entity->distance_to_player < 200.0f || ABS(angle) <= 0.010471975f) {
             entity->action_step++;
         }
@@ -410,7 +410,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         Vector_Copy(target, D_00413F80.position);
         target[1] -= 170.0f;
-        func_0018CF30(entity, unk3D8, elapsed, entity->model->unkFC->unk82, target, 0.17453294f, 0.17453294f);
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->unkFC->unk82, target, 0.17453294f, 0.17453294f);
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -428,13 +428,13 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
 }
 
 /* The death action (busy bit 0x40): as EntityAi_Death; when the fade starts and
-   EntitySpawnInfo.unk40 is set, it calls func_0018DC40 for the entity with that spawn id (if its
+   EntitySpawnInfo.unk40 is set, it calls EntityEvent_Respawn for the entity with that spawn id (if its
    flag bit 0 is set) and puts it at this entity's position. */
 static void ExpeditionArcher_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -464,12 +464,12 @@ static void ExpeditionArcher_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             entity->unkA0 = 20;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             if (entity->spawn_info->unk40 != 0) {
                 Entity *partner = Entity_GetBySpawnId(entity->spawn_info->unk40);
 
                 if (partner != NULL && ((s32)partner->flags & 1)) {
-                    func_0018DC40((char *)partner);
+                    EntityEvent_Respawn((char *)partner);
                     Vector_Copy(partner->model->position, entity->model->position);
                 }
             }

@@ -4,7 +4,7 @@ void *memset(void *, int, u32);
 void Vector_Copy(void *, void *);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
 
-/* func_00194FB8, which the game inlines here: wraps an angle to +-pi */
+/* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
     angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
     if (angle > 3.1415927f) {

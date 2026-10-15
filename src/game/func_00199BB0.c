@@ -7,11 +7,11 @@ typedef union {
 
 #define ENTITY_PARAMS_WORD(params) (((EntityParamsFirstWord *)(params))->word)
 
-void func_00185480(Entity *);
-void func_00186B00(Entity *);
-void func_00187E28(Entity *);
-void func_001888C0(Entity *);
-void func_00188BE0(Entity *);
+void EntityCollision_PushApart(Entity *);
+void EntityCollision_WalkAgainstMap(Entity *);
+void EntityCollision_SphereAgainstMap(Entity *);
+void EntityCollision_WalkAgainstObjects(Entity *);
+void EntityCollision_SphereAgainstObjects(Entity *);
 
 /* per-frame flag setup for an entity: clears its push and state bits, sets bits 22-27 from its params, then runs its floor and ledge checks */
 void func_00199BB0(Entity *entity) {
@@ -52,19 +52,19 @@ void func_00199BB0(Entity *entity) {
         ENTITY_FLAG_WORD(entity->flags) |= 0x8000000;
     }
 
-    func_00185480(entity);
+    EntityCollision_PushApart(entity);
 
     if (!((s32)(ENTITY_FLAG_WORD(entity->flags) >> 25) & 1)) {
         if (ENTITY_PARAMS_WORD(entity->params) & 0x1000000) {
-            func_00188BE0(entity);
+            EntityCollision_SphereAgainstObjects(entity);
         } else {
-            func_001888C0(entity);
+            EntityCollision_WalkAgainstObjects(entity);
         }
     }
     if (!(ENTITY_PARAMS_BITS(entity)->bit25 || ENTITY_PARAMS_BITS(entity)->bit26)) {
-        func_00186B00(entity);
+        EntityCollision_WalkAgainstMap(entity);
     } else {
-        func_00187E28(entity);
+        EntityCollision_SphereAgainstMap(entity);
     }
 
     if ((u32)(ENTITY_FLAG_WORD(entity->flags) >> 51) & 1) {

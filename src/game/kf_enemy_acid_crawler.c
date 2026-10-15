@@ -9,44 +9,44 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 int func_00196120(Entity *, void *, s32, void *, f32);
-float func_001954A8(float *, float *);
-float func_001957B8(float, float);
-float func_00195088(float *, float, float);
+float EntityMath_HeadingTo(float *, float *);
+float EntityMath_AngleDifference(float, float);
+float EntityMath_StepToward(float *, float, float);
 extern u32 D_00446ED4;
 int rand(void);
 char *func_0010CAB8(char *, u32);
 int func_00195E48(void *, int, void *, void *);
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 extern PlayerData D_00413F80;
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 func_00197078(Entity *);
-int func_0018F030(char *);
+int EntityAi_PickAttack(char *);
 void func_00196D48(Entity *);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
 int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 int func_0019A050(Entity *, f32 *, f32 *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 
 static void AcidCrawler_Animate(Entity *entity);
 static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg);
@@ -94,8 +94,8 @@ void AcidCrawler_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate, with the head turned at rates 8 and 5 where that one
@@ -112,9 +112,9 @@ static void AcidCrawler_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 2) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 2) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
         look_at_target = ENTITY_FLAG_BITS(entity)->bit9;
         limits[1] = entity->params->unk430 * 0.017453292f;
@@ -156,8 +156,8 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
         return;
     }
     if (entity->target != NULL) {
-        angle = func_001954A8(entity->model->position, entity->target);
-        angle = func_001957B8(entity->model->unkD0[1], angle);
+        angle = EntityMath_HeadingTo(entity->model->position, entity->target);
+        angle = EntityMath_AngleDifference(entity->model->unkD0[1], angle);
         previous[0] = unkE0->unk40[2];
         previous[1] = unkE0->unk40[3];
         previous[2] = unkE0->unk40[4];
@@ -166,7 +166,7 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
         step = entity->params->turn_limit;
         if (angle >= -0.0001f && angle <= 0.0001f) {
             if (unkE0->unk40[2] != 0.0f) {
-                moved = func_00195088(&unkE0->unk40[2], 0.0f, step);
+                moved = EntityMath_StepToward(&unkE0->unk40[2], 0.0f, step);
                 moved = ABS(moved);
                 if (moved < step) {
                     step -= moved;
@@ -177,7 +177,7 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
             previous_joint = previous;
             for (i = 0; i < 4; i++, previous_joint++) {
                 if (unkE0->unk40[i + 3] != *previous_joint) {
-                    moved = func_00195088(&unkE0->unk40[i + 3], *previous_joint, step);
+                    moved = EntityMath_StepToward(&unkE0->unk40[i + 3], *previous_joint, step);
                     moved = ABS(moved);
                     if (moved < step) {
                         step -= moved;
@@ -202,7 +202,7 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
                         done = TRUE;
                     }
                 } else if (unkE0->unk40[i] != 0.0f) {
-                    moved = func_00195088(&unkE0->unk40[i], 0.0f, step);
+                    moved = EntityMath_StepToward(&unkE0->unk40[i], 0.0f, step);
                     moved = ABS(moved);
                     if (moved < step) {
                         step -= moved;
@@ -272,7 +272,7 @@ static void AcidCrawler_Think(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -290,7 +290,7 @@ static void AcidCrawler_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of states 1 and 2: guards or dodges the player's swing as EntityAi_ThinkCombat
-   does; attacks with what func_0018F030 draws once the pause Entity.unkA2 is over and func_00197078
+   does; attacks with what EntityAi_PickAttack draws once the pause Entity.unkA2 is over and func_00197078
    finds the player in reach; each time flag bit 32 comes on it starts EntityAi_RangedAttack with
    record 0, 40 times in 100 (work byte unk7A); else it goes for the player with command 0x841, or
    0x241 / 0x141 while it is pushed. */
@@ -301,17 +301,17 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
     if (entity->unkA2 == 0 && ((int (*)(Entity *))func_00197078)(entity)) { // match: the entity is passed
         entity->target = NULL;
-        if (func_0018F030((char *)entity)) {
+        if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -332,20 +332,20 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
     }
     func_00196D48(entity);
     if (ENTITY_FLAG_BITS(entity)->bit31) {
-        angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+        angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
         if (unkE0->unk79 == 0) {
             unkE0->unk79 = ABS(angle) > 0.5235988f;
             if (unkE0->unk79 == 0) {
                 goto done;
             }
         }
-        entity->unkC8 = func_00190BE0(entity);
+        entity->unkC8 = EntityAi_TurnCommand(entity);
         if (entity->unkC8 == 0) {
             unkE0->unk79 = 0;
         }
     } else if (unkE0->unk78 == 1) {
         entity->target = &D_00413F80;
-        turn = func_0018EAC0(entity, direction);
+        turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
             entity->unkC8 = 0x241;
         } else if (turn < 0) {
@@ -401,17 +401,17 @@ static void AcidCrawler_Move(Entity *entity) {
     }
     if (entity->unkC8 & 1) {
         if (entity->unkC8 & 0x40) {
-            func_00192C98(entity, 4, 0, (s32)((f32)entity->params->unkC4 * 0.5f), 0);
+            Motion_Start(entity, 4, 0, (s32)((f32)entity->params->unkC4 * 0.5f), 0);
         } else {
-            func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
         }
     } else if (entity->unkC8 & 0x300) {
-        func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
     } else if (entity->unkC8 & 0x8000) {
-        func_00192C98(entity, 0x11, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0x11, 0, entity->params->unkC4, 0);
     } else if (entity->unkC8 & 0x800) {
-        func_00192C98(entity, 4, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 4, 0, entity->params->unkC4, 0);
     } else {
-        func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     }
 }

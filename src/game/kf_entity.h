@@ -22,7 +22,7 @@ typedef struct {
     u16 type_id;                    /* 0x30 which pool block holds its data */
     char pad32[0x02];
     s8 pool_size;                   /* 0x34 0-4: one pool block, else two */
-    u8 unk35;                       /* 0x35 strips of CollisionMesh.unk24 rated below it are skipped (func_00187A20) */
+    u8 unk35;                       /* 0x35 strips of CollisionMesh.unk24 rated below it are skipped (EntityCollision_SphereAgainstMesh) */
     u16 unk36;                      /* 0x36 what Script_Start gets when the entity dies */
     u64 unk38;                      /* 0x38 */
     u8 unk40;                       /* 0x40 the mode of this spawn: picks among the behaviours of its type, most often the think handler the set-up function installs */
@@ -298,7 +298,7 @@ typedef struct {
 } EntityParamsUnk3D8Array;
 
 /* one of the four bodies of an entity kind the player collides with piece by piece (EntityParams.unk20) */
-/* the same slot as the motion code reads it: every flag a byte-wide bit-field (func_00191600) */
+/* the same slot as the motion code reads it: every flag a byte-wide bit-field (Motion_StepSlot) */
 typedef struct {
     u8 index : 5;                   /* 0x00 which EntityParams.unk60 entry (motion) it plays */
     u8 moves_entity : 1;            /* the root part's movement in the motion is handed to the entity */
@@ -339,8 +339,8 @@ typedef struct {
     u16 flags;                      /* 0x10 */
     char pad12[0x02];
     u8 unk14[4];                    /* 0x14 weights of the four actions, scaled by Entity.unkBC */
-    u16 unk18;                      /* 0x18 a distance to the player (see func_00183E98) */
-    u16 unk1A;                      /* 0x1A a height: ranged attacks need the player level with it (func_0018FD50) */
+    u16 unk18;                      /* 0x18 a distance to the player (see Npc_Think) */
+    u16 unk1A;                      /* 0x1A a height: ranged attacks need the player level with it (EntityAi_PickCombatChoice) */
     char pad1C[0x04];
     EntityBodyPoint unk20[4];       /* 0x20 what the player collides with for the kinds made of several bodies (func_001BECA8) */
     f32 unk50;                      /* 0x50 */
@@ -350,7 +350,7 @@ typedef struct {
     u8 unk60[0x20];                 /* 0x60 byte table */
     u16 unk80[0x22];                /* 0x80 indexed by Entity.unkD1 */
     u8 unkC4;                       /* 0xC4 */
-    u8 unkC5;                       /* 0xC5 bone index for func_0010CAB8 (func_0018DC40) */
+    u8 unkC5;                       /* 0xC5 bone index for func_0010CAB8 (EntityEvent_Respawn) */
     u16 unkC6;                      /* 0xC6 */
     u8 unkC8;                       /* 0xC8 */
     u8 unkC9;                       /* 0xC9 */
@@ -391,8 +391,8 @@ typedef struct {
     EntityParamsUnk240 unk240[2];   /* 0x240 indexed by flag bits 58-59 */
     char unk350[0x88];              /* 0x350 */
     EntityParamsUnk3D8Array unk3D8[3]; /* 0x3D8 */
-    u8 unk42C;                      /* 0x42C how far below its position a floor may be to count (func_00186478) */
-    u8 unk42D;                      /* 0x42D what it does at a ledge (func_00186B00): 0 walks off, 1 steps down at most Entity.unk34, else stops */
+    u8 unk42C;                      /* 0x42C how far below its position a floor may be to count (EntityCollision_WalkAgainstMesh) */
+    u8 unk42D;                      /* 0x42D what it does at a ledge (EntityCollision_WalkAgainstMap): 0 walks off, 1 steps down at most Entity.unk34, else stops */
     u16 unk42E;                     /* 0x42E */
     s16 unk430;                     /* 0x430 */
     s16 unk432;                     /* 0x432 */
@@ -441,7 +441,7 @@ typedef struct {
 
 #define ENTITY_PARAMS_RANGED_VIEW(params) ((EntityParamsRangedView *)(params))
 
-/* EntityParams with the float at 0xC0, which lies inside unk80 (func_00191600) */
+/* EntityParams with the float at 0xC0, which lies inside unk80 (Motion_StepSlot) */
 typedef struct {
     char pad00[0xC0];
     f32 motion_scale;               /* 0xC0 how far the root part's movement in a motion carries the entity */
@@ -663,12 +663,12 @@ typedef struct {
 /* Entity+0xE0 as the kind set up by func_00162BC8 lays it out */
 typedef struct {
     char pad00[0x30];
-    f32 unk30[4];                   /* 0x30 pitch and yaw passed to func_0018D600 */
+    f32 unk30[4];                   /* 0x30 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
     char pad40[0x2E];
     s16 unk6E;                      /* 0x6E */
     char pad70[0x10];
-    f32 unk80[4];                   /* 0x80 pitch and yaw passed to func_0018D600 */
-    f32 unk90[4];                   /* 0x90 pitch and yaw passed to func_0018D600 */
+    f32 unk80[4];                   /* 0x80 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
+    f32 unk90[4];                   /* 0x90 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
 } EntityUnkE0Kind162BC8;
 
 /* Entity+0xE0 as the kind set up by Onyx_Init lays it out */
@@ -740,9 +740,9 @@ typedef struct Entity {
     void *unk14;                    /* 0x14 */
     struct Entity *prev;            /* 0x18 */
     struct Entity *next;            /* 0x1C */
-    u16 unk20;                      /* 0x20 a timer, set to 1800 by func_001862F0 */
+    u16 unk20;                      /* 0x20 a timer, set to 1800 by EntityCollision_ApplySurfaceEffect */
     char pad22[0x02];
-    u16 unk24;                      /* 0x24 not 0: attacks reach half as far (func_0018F648) */
+    u16 unk24;                      /* 0x24 not 0: attacks reach half as far (EntityAi_PickMeleeAttack) */
     u16 unk26;                      /* 0x26 1-4: which of the timers unk20, unk24, unk28, unk2A tints the model (Entity_DrawAll) */
     u16 unk28;                      /* 0x28 */
     u16 unk2A;                      /* 0x2A */
@@ -754,7 +754,7 @@ typedef struct Entity {
     f32 height;                     /* 0x3C */
     f32 unk40;                      /* 0x40 EntityParams.unk0C scaled three ways (a volume or weight?) */
     f32 unk44;                      /* 0x44 EntityParams.unk04 scaled */
-    f32 unk48;                      /* 0x48 how far above the floor it is kept (see func_00187E28) */
+    f32 unk48;                      /* 0x48 how far above the floor it is kept (see EntityCollision_SphereAgainstMap) */
     f32 unk4C;                      /* 0x4C */
     s32 unk50;                      /* 0x50 */
     void (*handler)(struct Entity *entity);      /* 0x54 the current action; EntityAi_Update calls it every frame while flag bit 6 is set and no reaction is */
@@ -773,7 +773,7 @@ typedef struct Entity {
     f32 unk90;                      /* 0x90 */
     f32 unk94;                      /* 0x94 */
     f32 unk98;                      /* 0x98 */
-    u16 timer;                      /* 0x9C frames left in state 1 (func_0018E9C0) */
+    u16 timer;                      /* 0x9C frames left in state 1 (EntityAi_StepState) */
     u16 unk9E;                      /* 0x9E */
     u16 unkA0;                      /* 0xA0 a timer for the think functions and the actions; EntityAi_Update counts it down */
     u8 unkA2;                       /* 0xA2 frames before the next attack: set when an attack or a reaction ends (func_0019A290), counted down by EntityAi_Update */
@@ -792,14 +792,14 @@ typedef struct Entity {
     u16 unkC8;
     s8 action_step;                 /* 0xCA step of the current action; EntityAi_StartAction puts it back to 0 */
     s8 unkCB;                       /* 0xCB step of the reaction (EntityUnkE0.reaction); EntityAi_SetReaction puts it back to 0 */
-    /* 0xCC what the entity knows of the player (func_0018E9C0): 0 nothing, 2 the player is noticed
+    /* 0xCC what the entity knows of the player (EntityAi_StepState): 0 nothing, 2 the player is noticed
        (flag bit 33), 1 it was and Entity.timer still runs. Scripts and some types set other values. */
     s8 state;
     s8 unkCD;                       /* 0xCD */
     char prev_state;                /* 0xCE state before the last change */
     s8 unkCF;                       /* 0xCF */
-    char padD0;
-    s8 unkD1;                       /* 0xD1 */
+    u8 unkD0;                       /* 0xD0 the motion of the animation before (Motion_Start) */
+    s8 unkD1;                       /* 0xD1 the current animation (Motion_Start) */
     char unkD2;                     /* 0xD2 copied from its pool block */
     char unkD3;                     /* 0xD3 pool block index, -1: none */
     char unkD4;                     /* 0xD4 work area index, -1: none */
@@ -944,7 +944,7 @@ typedef struct {
     s32 frames[4];                  /* 0x00 */
 } EntityFrameTable;
 
-/* ten weights, one per tenth of a range: a local table func_0018B778 copies whole
+/* ten weights, one per tenth of a range: a local table EntityPoint_PickNear copies whole
    from read-only data */
 typedef struct {
     s32 weights[10];                /* 0x00 */
@@ -988,7 +988,7 @@ typedef struct {
     char pad34[0x02];
     u8 unk36;                       /* 0x36 which MapSlotUnk0C block the entities standing on it are drawn with */
     u8 unk37;                       /* 0x37 which MapSlotUnk10Words block they are drawn with */
-    u64 unk38;                      /* 0x38 flags; 0x4000000: func_0018D670 does its work */
+    u64 unk38;                      /* 0x38 flags; 0x4000000: EntityEvent_StartFrameEffects does its work */
     char pad40[0x0E];
     u8 unk4E;                       /* 0x4E */
     char pad4F[0x11];

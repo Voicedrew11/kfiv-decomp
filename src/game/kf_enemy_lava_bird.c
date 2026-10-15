@@ -9,33 +9,33 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
-void func_001914B0(EntityModel *, s32, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
+void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
 void Vector_Copy(void *, void *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 int rand(void);
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int func_0019A448(void *, void *, int, int, int, int, int);
 int EntityAi_ThinkReturn(void *, int);
-int func_0018EAC0(void *, void *);
+int EntityAi_TurnFromPush(void *, void *);
 extern PlayerData D_00413F80;
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
-void func_0018B778(float, void *, void *, void *);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
+void EntityPoint_PickNear(float, void *, void *, void *);
 extern f32 D_00431AF0[16];
-float func_00195388(float *, float, float);
+float EntityMath_EaseAngleToward(float *, float, float);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
-float func_001954A8(float *, float *);
-float func_001957B8(float, float);
-void func_0018D600(char **, int, u32, int);
+float EntityMath_HeadingTo(float *, float *);
+float EntityMath_AngleDifference(float, float);
+void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 void func_00195898(char *, u8);
 s32 func_00199EB8(Entity *, f32 *, f32);
 void func_0019A290(Entity *entity, s32 base);
@@ -43,18 +43,18 @@ float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
 char *func_0010CAB8(char *, u32);
-float func_00194FB8(float);
-float func_00194F80(void *, void *);
-float func_00195478(float *, char *);
-f32 func_00195018(f32, f32, f32);
+float EntityMath_WrapAngle(float);
+float EntityMath_DistanceXZ(void *, void *);
+float EntityMath_AngleXZ(float *, char *);
+f32 EntityMath_Approach(f32, f32, f32);
 int func_001B4F30(u16, void *, void *, void *, void *);
-void func_00190A30(char *);
+void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *entity, void (*callback)(void), int run);
-void func_0018D8B8(Entity *, s32, s32, s32);
-void func_0018DCD8(Entity *);
+void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
+void EntityEvent_OnDeath(Entity *);
 int func_0019A538(void *, void *, int);
-s32 func_00191600(Entity *, EntityUnkE0SlotBits *, s32, s32);
-void func_0018D670(Entity *, s32, s32, s32);
+s32 Motion_StepSlot(Entity *, EntityUnkE0SlotBits *, s32, s32);
+void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
 int func_001960C0(void *, int, int, int, int, float);
 int func_00196120(Entity *, void *, s32, void *, f32);
 
@@ -115,12 +115,12 @@ void LavaBird_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_001914B0(entity->model, 0x10, 0x19, 1);
+    Motion_ClearPartSlots(entity->model);
+    Motion_SetPartSlots(entity->model, 0x10, 0x19, 1);
     work->unk80.bit5 = TRUE;
     work->unk80.bit6 = TRUE;
     work->unk88.bit6 = TRUE;
-    func_00193378(entity->model, 0, 0);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with the type's own functions for the three states. It
@@ -149,7 +149,7 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0((char *)entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -173,13 +173,13 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
         unkE0->unk44 = 0.0f;
         unkE0->unk48 = 0.0f;
     } else {
-        side = func_0018EAC0(entity, direction);
+        side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
             entity->unkC8 = 0x201;
         } else if (side < 0) {
             entity->unkC8 = 0x101;
         } else {
-            // match: called like func_00190F90, with a speed and a mode the callee ignores
+            // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
             entity->unkC8 = func_0017EA98(entity, 0, 0.0f);
         }
         LavaBird_ApplyMoveCommand(entity);
@@ -190,7 +190,7 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
    command of func_0017EA98. It also picks the pitch command, work byte unk79: 1 or -1 at random
    (EntityParams.unk438 times in 100), 2 while the player's y less its own is below
    EntityParams.unk436, -2 while it is above unk434. Its only attack is LavaBird_RangedAttack,
-   when func_0018F030 draws a ranged one. */
+   when EntityAi_PickAttack draws a ranged one. */
 static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -217,7 +217,7 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
             unkE0->unk79 = 0;
         }
     }
-    next_action = func_0018FD50(entity, 0);
+    next_action = EntityAi_PickCombatChoice(entity, 0);
     if (D_00413F80.position[1] - entity->model->position[1] < entity->params->unk436) {
         entity->target = &D_00413F80;
         entity->unkA0 = rand() % 30 + 30;
@@ -242,10 +242,10 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
             entity->unk9E = D_00446ED4;
         }
         // match: called with one argument here
-        ((void (*)(Entity *))func_00190B88)(entity);
+        ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, LavaBird_RangedAttack, unknown);
             }
             return;
@@ -262,14 +262,14 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkCD == 1) {
-        side = func_0018EAC0(entity, direction);
+        side = EntityAi_TurnFromPush(entity, direction);
         if (unkE0->unk78 == 0) {
             if (side > 0) {
                 entity->unkC8 = 0x201;
             } else if (side < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                // match: called like func_00190F90, with a speed and a mode the callee ignores
+                // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
                 entity->unkC8 = func_0017EA98(entity, 0, 0.0f);
             }
         }
@@ -290,7 +290,7 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 unknown) {
     if (entity->unkA0 == 0) {
         entity->target = &D_00413F80;
     }
-    turn = func_0018EAC0(entity, direction);
+    turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
         entity->unkC8 = 0x201;
     } else if (turn < 0) {
@@ -312,7 +312,7 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     if (entity->unkA0 == 0) {
-        func_0018B778((f32)entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
+        EntityPoint_PickNear((f32)entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
         entity->target = unkE0->unk30;
         entity->unkA0 = rand() % 60 + 60;
         if (D_00413F80.position[1] - entity->model->position[1] < entity->params->unk436) {
@@ -347,13 +347,13 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
             unkE0->unk79 = 0;
         }
     }
-    side = func_0018EAC0(entity, direction);
+    side = EntityAi_TurnFromPush(entity, direction);
     if (side > 0) {
         entity->unkC8 = 0x201;
     } else if (side < 0) {
         entity->unkC8 = 0x101;
     } else {
-        // match: called like func_00190F90, with a speed and a mode the callee ignores
+        // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
         entity->unkC8 = func_0017EA98(entity, 0, 0.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -401,7 +401,7 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
         roll = 0.0f;
     }
     entity->unk94 += unkE0->unk1C;
-    func_00195388(&entity->model->unkD0[2], roll, 60.0f);
+    EntityMath_EaseAngleToward(&entity->model->unkD0[2], roll, 60.0f);
     if (unkE0->unk79 > 0) {
         if (ABS((f32)unkE0->unk79) * -0.17453292f < entity->model->unkD0[0]) {
             unkE0->unk4C -= 0.006981317f;
@@ -483,7 +483,7 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     entity->unk8C += ENTITY_SCRATCH_VECTOR[2];
 }
 
-/* Called like func_00190F90; the last two parameters are not used. */
+/* Called like EntityAi_MoveCommand; the last two parameters are not used. */
 static s32 func_0017EA98(Entity *entity, s32 mark_far, f32 range) {
     s32 result;
     f32 angle;
@@ -493,8 +493,8 @@ static s32 func_0017EA98(Entity *entity, s32 mark_far, f32 range) {
         return 0;
     }
     result = 1;
-    angle = func_001954A8(entity->model->position, entity->target);
-    angle = func_001957B8(entity->model->unkD0[1], angle);
+    angle = EntityMath_HeadingTo(entity->model->position, entity->target);
+    angle = EntityMath_AngleDifference(entity->model->unkD0[1], angle);
     limit = entity->params->turn_limit;
     if ((0.0f <= angle) ? (limit < angle) : (limit < -angle)) {
         if (0.0f <= angle) {
@@ -534,7 +534,7 @@ static void LavaBird_Dormant(Entity *entity) {
     case 1:
         if (entity->distance_to_player < entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
             unkE0->unk50 = entity->params->unk43A;
-            func_0018D600((char **)entity, 0x166, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, 0x166, 0xFF, (int)entity->model->unkD0);
             entity->action_step++;
         }
         break;
@@ -671,17 +671,17 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                 angles[2] = angles[3] = 0.0f;
             } else {
                 Vector_Copy(angles, entity->model->unkD0);
-                angles[1] = func_00194FB8(angles[1] + 3.1415927f);
+                angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
             }
             if (target != NULL) {
-                pitch = func_00194FB8(-atan2(target[1] - from[1], func_00194F80(from, target)));
-                yaw = func_00195478(from, (char *)target);
-                angles[0] = func_00195018(angles[0], pitch, pitch_rate);
-                angles[1] = func_00195018(angles[1], yaw, yaw_rate);
+                pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
+                yaw = EntityMath_AngleXZ(from, (char *)target);
+                angles[0] = EntityMath_Approach(angles[0], pitch, pitch_rate);
+                angles[1] = EntityMath_Approach(angles[1], yaw, yaw_rate);
             }
             func_001B4F30(record->unk10[i].unk00, shot, from, angles, entity);
         }
@@ -692,7 +692,7 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
 /* The on_hit handler: as EntityAi_OnHit with the type's own two reactions; a light hit starts
    LavaBird_ReactionLight whether flag bit 19 is set or not. */
 static void LavaBird_OnHit(Entity *entity) {
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
@@ -712,7 +712,7 @@ static void LavaBird_ReactionLight(Entity *entity) {
     entity->unkC6 = 2;
     switch (entity->unkCB) {
     case 0:
-        func_0018D8B8(entity, 0xE, 0, 0);
+        EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
         func_0019A448(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xE, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         unkE0->unk1C = 0;
@@ -820,7 +820,7 @@ static void LavaBird_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             entity->unkA0 = 20;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
@@ -860,10 +860,10 @@ static void LavaBird_Animate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))func_0019A538)(entity, &slots->unk80, 0, rate);
     } else {
         previous = slots->unk80.unk04;
-        ENTITY_FLAG_BITS(entity)->bit34 = func_00191600(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits11);
+        ENTITY_FLAG_BITS(entity)->bit34 = Motion_StepSlot(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits11);
         if (slots->unk80.index != 3) {
-            func_0018D670(entity, slots->unk80.index, previous, slots->unk80.unk04);
-            func_0018D8B8(entity, slots->unk80.index, previous, slots->unk80.unk04);
+            EntityEvent_StartFrameEffects(entity, slots->unk80.index, previous, slots->unk80.unk04);
+            EntityEvent_StartFrameCues(entity, slots->unk80.index, previous, slots->unk80.unk04);
         }
     }
     if (slots->unk88.unk01 != 0) {
@@ -876,10 +876,10 @@ static void LavaBird_Animate(Entity *entity) {
         ((int (*)(void *, void *, int, float))func_0019A538)(entity, &slots->unk88, 1, rate);
     } else {
         previous = slots->unk88.unk04;
-        func_00191600(entity, &slots->unk88, 1, ENTITY_FLAG_BITS(entity)->bits11);
+        Motion_StepSlot(entity, &slots->unk88, 1, ENTITY_FLAG_BITS(entity)->bits11);
         if (slots->unk88.index == 3) {
-            func_0018D670(entity, slots->unk88.index, previous, slots->unk88.unk04);
-            func_0018D8B8(entity, slots->unk88.index, previous, slots->unk88.unk04);
+            EntityEvent_StartFrameEffects(entity, slots->unk88.index, previous, slots->unk88.unk04);
+            EntityEvent_StartFrameCues(entity, slots->unk88.index, previous, slots->unk88.unk04);
         }
     }
     limits[1] = entity->params->unk430 * 0.017453292f;

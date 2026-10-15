@@ -10,63 +10,63 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 void EntityAi_Move(Entity *);
 // match: read as pointers, so that the int store to target is not taken to alias the table
 extern void *D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 int func_00196120(Entity *, void *, s32, void *, f32);
 extern PlayerData D_00413F80;
 extern f32 D_00431AF0[16];
 double atan2(double, double);
-float func_00194FB8(float);
+float EntityMath_WrapAngle(float);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0TransposeMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
-s32 func_0018BD18(void *, void *, void *);
-void func_0018C4B8(void *, void *);
+s32 Bone_MultiplyPathTo(void *, void *, void *);
+void Bone_MatrixToAngles(void *, void *);
 void Matrix_Multiply(void *, void *, void *);
-float func_00195388(float *, float, float);
-void func_00190A30(char *);
+float EntityMath_EaseAngleToward(float *, float, float);
+void EntityAi_LowerWeightsAfterHit(char *);
 void func_00195898(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
-int func_00190BE0(Entity *);
+int EntityAi_TurnCommand(Entity *);
 int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
 int func_001992F0(Entity *, int);
 void func_00196870(void *, int);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 // match: the size is unknown; a complete small type would be read through $gp
 extern u8 D_0034A018[];
 extern MapSlot D_0038CD20[];
 extern EntitySpawnInfo *D_004467D0[2];
 void func_001035A8(u32, int);
 void func_00196CC0(void *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
 void func_00196D48(Entity *);
-float func_001957B8(float, float);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
+float EntityMath_AngleDifference(float, float);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
@@ -75,8 +75,8 @@ void func_00195EF8(Entity *, s32, s32);
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void func_0019A290(Entity *, s32);
 extern const f32 D_0044682C[];
-f32 func_0018A9F0(void *, void *);
-f32 func_00195018(f32, f32, f32);
+f32 EntityCollision_DistanceToPropFloor(void *, void *);
+f32 EntityMath_Approach(f32, f32, f32);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 
@@ -144,8 +144,8 @@ void DarkArcher_Init(Entity *entity) {
         Vector_Copy(unkE0->unk20, unk138 + 0x50);
     }
     unkE0->unk40 = 0.5f;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler (installed in both modes): as EntityAi_Animate, and
@@ -162,9 +162,9 @@ static void DarkArcher_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
         DarkArcher_PitchPart2ToPlayer(entity, (s32)((s64)(entity->flags << 22) >> 32) & 1);
         params = entity->params;
@@ -195,7 +195,7 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
     f32 rate;
 
     if (bone != NULL) {
-        pitch = func_00194FB8(atan2(D_00413F80.position[1] - entity->model->position[1], entity->distance_to_player));
+        pitch = EntityMath_WrapAngle(atan2(D_00413F80.position[1] - entity->model->position[1], entity->distance_to_player));
         if (pitch > 1.0471976f) {
             pitch = 1.0471976f;
         } else if (pitch < -1.0471976f) {
@@ -204,7 +204,7 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
         if (mode > 0) {
             rate = 10.0f;
             sceVu0CopyMatrix(parent, D_00431AF0);
-            func_0018BD18(entity->model->unkF8, bone, parent);
+            Bone_MultiplyPathTo(entity->model->unkF8, bone, parent);
             parent[12] = 0.0f;
             parent[13] = 0.0f;
             parent[14] = 0.0f;
@@ -217,18 +217,18 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
             Matrix_Multiply(rotation, tilt, rotation);
             sceVu0TransposeMatrix(parent, parent);
             Matrix_Multiply(rotation, parent, rotation);
-            func_0018C4B8(angles, rotation);
-            func_00195388(&unkE0->unk48, angles[0], rate);
-            func_00195388(&unkE0->unk4C, angles[1], rate);
-            func_00195388(&unkE0->unk50, angles[2], rate);
+            Bone_MatrixToAngles(angles, rotation);
+            EntityMath_EaseAngleToward(&unkE0->unk48, angles[0], rate);
+            EntityMath_EaseAngleToward(&unkE0->unk4C, angles[1], rate);
+            EntityMath_EaseAngleToward(&unkE0->unk50, angles[2], rate);
             bone->unk50[0] = unkE0->unk48;
             bone->unk50[1] = unkE0->unk4C;
             bone->unk50[2] = unkE0->unk50;
         } else if (mode == 0) {
             rate = 10.0f;
-            func_00195388(&unkE0->unk48, bone->unk50[0], rate);
-            func_00195388(&unkE0->unk4C, bone->unk50[1], rate);
-            func_00195388(&unkE0->unk50, bone->unk50[2], rate);
+            EntityMath_EaseAngleToward(&unkE0->unk48, bone->unk50[0], rate);
+            EntityMath_EaseAngleToward(&unkE0->unk4C, bone->unk50[1], rate);
+            EntityMath_EaseAngleToward(&unkE0->unk50, bone->unk50[2], rate);
             bone->unk50[0] = unkE0->unk48;
             bone->unk50[1] = unkE0->unk4C;
             bone->unk50[2] = unkE0->unk50;
@@ -245,7 +245,7 @@ static void DarkArcher_OnHit(Entity *entity) {
     u64 flags;
     u64 hit_strength;
 
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     ENTITY_UNK5C(entity)->as_s32 = 0;
     entity->flags &= ~0x400;
     entity->flags &= ~0x200;
@@ -267,7 +267,7 @@ static void DarkArcher_OnHit(Entity *entity) {
 /* The think handler of a spawn whose EntitySpawnInfo.unk40 is set: no states. While the entity is
    not busy it starts DarkArcher_RangedAttack with ranged record 2 when flag bit 63 is clear, the
    pause Entity.unkA2 is over and func_001992F0 finds the player in reach of that record; else it
-   starts the move action with the command of func_00190BE0, the player as target. Keeps flag bit 10
+   starts the move action with the command of EntityAi_TurnCommand, the player as target. Keeps flag bit 10
    clear and bits 11 to 13 at 0. */
 static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -286,7 +286,7 @@ static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
             EntityAi_StartAttack(entity, DarkArcher_RangedAttack, unknown, 1, 2);
         } else {
             entity->target = &D_00413F80;
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
         }
     }
@@ -321,7 +321,7 @@ static void DarkArcher_MoveTurnOnly(Entity *entity) {
         turn *= 2.0f;
     }
     entity->unk94 += turn;
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
 }
 
 /* The dormant action of a spawn whose EntitySpawnInfo.unk40 is set (busy bit 0x20): animation 0,
@@ -333,7 +333,7 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0, 0, 0, 1);
+        Motion_Start(entity, 0, 0, 0, 1);
         entity->flags &= ~0x3800;
         entity->flags |= 0x200000;
         entity->flags |= 0x100000;
@@ -371,7 +371,7 @@ static void func_0016B228(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0, 0, entity->params->unkC4, 1);
         entity->flags &= ~0x3800;
         entity->flags |= 0x4000;
         entity->flags |= 0x40000;
@@ -414,7 +414,7 @@ static void DarkArcher_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0(entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if ((s32)(entity->flags >> 53) & 1) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -457,15 +457,15 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit10 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
     if (entity->unkA0 == 0 || side == 0) {
@@ -474,10 +474,10 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 ENTITY_FLAG_BITS(entity)->bit10 = 1;
                 EntityAi_StartAction(entity, DarkArcher_RangedAttack, unknown);
             } else {
@@ -486,7 +486,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &D_00413F80;
-            angle = func_001957B8(D_00413F80.unk14, entity->unk68);
+            angle = EntityMath_AngleDifference(D_00413F80.unk14, entity->unk68);
             if (unkE0->unk7A != 0 && entity->distance_to_player < (f32)entity->params->unk436 && ABS(angle) < 0.6981317f) {
                 EntityAi_StartAction(entity, DarkArcher_MoveAlongArc, unknown);
                 return;
@@ -506,25 +506,25 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
     if (unkE0->unk78 == 0) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, direction);
+            turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
                 entity->unkC8 = 0x201;
             } else if (turn < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
         }
     }
@@ -543,7 +543,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -602,7 +602,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
    along the heading it had (work float unk54 holds that heading plus 180 degrees, and the speed is
    put on the other end of the axis, which gives the same direction as the forward command), the
    speeds eased in work floats unk58 (y) and unk5C. The speed in y goes to minus EntityParams.unk43C
-   (up) until func_0018A9F0, the distance to the floor below, reads EntityParams.unk43E or more,
+   (up) until EntityCollision_DistanceToPropFloor, the distance to the floor below, reads EntityParams.unk43E or more,
    then to plus unk43C until flag bit 44 or 50 is set; then it plays animation 9 to its end. */
 static void DarkArcher_MoveAlongArc(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -613,10 +613,10 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    height = func_0018A9F0(entity->unk14, entity->model->position);
+    height = EntityCollision_DistanceToPropFloor(entity->unk14, entity->model->position);
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 8, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 8, 0, entity->params->unkC4, 1);
         unkE0->unk58 = 0.0f;
         unkE0->unk5C = 0.0f;
         entity->action_step++;
@@ -627,7 +627,7 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
         break;
     case 2:
         if (entity->model->unkFC->unk82 >= 0x11) {
-            unkE0->unk54 = func_00194FB8(entity->model->unkD0[1] + 3.1415927f);
+            unkE0->unk54 = EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f);
             unkE0->unk58 = -entity->params->unk438;
             unkE0->unk5C = 0.0f;
             unkE0->unk1C = 0.0f;
@@ -635,19 +635,19 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
         }
         break;
     case 3:
-        func_00192C98(entity, 4, 0, 0, 0);
-        unkE0->unk5C = func_00195018(unkE0->unk5C, entity->params->unk54, entity->params->unk50);
-        unkE0->unk58 = func_00195018(unkE0->unk58, -entity->params->unk43C, -entity->params->unk43A);
+        Motion_Start(entity, 4, 0, 0, 0);
+        unkE0->unk5C = EntityMath_Approach(unkE0->unk5C, entity->params->unk54, entity->params->unk50);
+        unkE0->unk58 = EntityMath_Approach(unkE0->unk58, -entity->params->unk43C, -entity->params->unk43A);
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
         if (height == D_0044682C[0] || height >= entity->params->unk43E) {
             entity->action_step++;
         }
         break;
     case 4:
-        unkE0->unk5C = func_00195018(unkE0->unk5C, entity->params->unk54, entity->params->unk50);
-        unkE0->unk58 = func_00195018(unkE0->unk58, entity->params->unk43C, entity->params->unk43A);
+        unkE0->unk5C = EntityMath_Approach(unkE0->unk5C, entity->params->unk54, entity->params->unk50);
+        unkE0->unk58 = EntityMath_Approach(unkE0->unk58, entity->params->unk43C, entity->params->unk43A);
         if (ENTITY_FLAGS(entity) & (0x8200L << 35)) {
-            func_00192C98(entity, 9, 0, 0, 1);
+            Motion_Start(entity, 9, 0, 0, 1);
             unkE0->unk58 = 0.0f;
             unkE0->unk5C = 0.0f;
             ENTITY_FLAG_BITS(entity)->bit28 = FALSE;

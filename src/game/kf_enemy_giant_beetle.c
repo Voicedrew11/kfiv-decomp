@@ -7,49 +7,49 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
-void func_00190A30(char *);
+int Motion_BlendToPose(EntityModel *, f32);
+void EntityAi_LowerWeightsAfterHit(char *);
 void func_00195898(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int rand(void);
-void func_0018B778(float, void *, void *, void *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
+void EntityPoint_PickNear(float, void *, void *, void *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 extern PlayerData D_00413F80;
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
-int func_00190BE0(Entity *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
+int EntityAi_TurnCommand(Entity *);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 void func_00196D48(Entity *);
-float func_001957B8(float, float);
-float func_00195388(float *, float, float);
-int func_00192C98(void *, int, int, u32, int);
+float EntityMath_AngleDifference(float, float);
+float EntityMath_EaseAngleToward(float *, float, float);
+int Motion_Start(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
 int func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_0019A290(Entity *, s32);
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void func_00195878(s32, s32);
 void func_001B57A0(u8, u8, u8);
-void func_0018DCD8(Entity *);
+void EntityEvent_OnDeath(Entity *);
 
 static void GiantBeetle_Animate(Entity *entity);
 static void GiantBeetle_OnHit(Entity *entity);
@@ -93,8 +93,8 @@ void GiantBeetle_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate without the test of the EntityParams kind bits and
@@ -110,9 +110,9 @@ static void GiantBeetle_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 2) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 2) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
         if (!(entity->unkC6 & 0x20)) {
             GiantBeetle_TurnParts7And12(entity);
@@ -126,7 +126,7 @@ static void GiantBeetle_Animate(Entity *entity) {
 static void GiantBeetle_OnHit(Entity *entity) {
     u64 flags;
 
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     ENTITY_UNK5C(entity)->as_s32 = 0;
     entity->flags &= ~0x400;
     entity->flags &= ~0x200;
@@ -147,7 +147,7 @@ static void GiantBeetle_Think(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -164,9 +164,9 @@ static void GiantBeetle_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of every state but 2 (GiantBeetle_Think calls it): wanders. Each time the
-   timer runs out it picks a point near the spawn point (func_0018B778; 79 times in 100, for 120 to
-   179 frames) or no target (60 to 89 frames), takes the command of func_00190F90 towards it (or the
-   turn away from a push, func_0018EAC0) and starts the move action. */
+   timer runs out it picks a point near the spawn point (EntityPoint_PickNear; 79 times in 100, for 120 to
+   179 frames) or no target (60 to 89 frames), takes the command of EntityAi_MoveCommand towards it (or the
+   turn away from a push, EntityAi_TurnFromPush) and starts the move action. */
 static void GiantBeetle_ThinkWander(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -177,7 +177,7 @@ static void GiantBeetle_ThinkWander(Entity *entity, s32 unknown) {
     if (entity->unkA0 == 0) {
         if (rand() % 100 > 20) {
             point = unkE0->unk30;
-            func_0018B778(entity->spawn_info->unk4C, point, entity->spawn_info, entity->model->position);
+            EntityPoint_PickNear(entity->spawn_info->unk4C, point, entity->spawn_info, entity->model->position);
             entity->target = point;
             entity->unkA0 = rand() % 60 + 120;
         } else {
@@ -185,20 +185,20 @@ static void GiantBeetle_ThinkWander(Entity *entity, s32 unknown) {
             entity->unkA0 = rand() % 30 + 60;
         }
     }
-    turn = func_0018EAC0(entity, direction);
+    turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
         entity->unkC8 = 0x201;
     } else if (turn < 0) {
         entity->unkC8 = 0x101;
     } else {
-        entity->unkC8 = func_00190F90(entity, 0, 50.0f);
+        entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but attack index 0 has the type's own
    actions (func_00137970 for the ranged one, GiantBeetle_MeleeAttack0 for the melee one); closing
-   in it takes the command of func_00190F90 (range: the radius plus 101) with no turn away from a
+   in it takes the command of EntityAi_MoveCommand (range: the radius plus 101) with no turn away from a
    push, and it leaves flag bits 9 and 10 as they are. */
 static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -206,25 +206,25 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
                     EntityAi_StartAction(entity, func_00137970, unknown);
                 } else {
@@ -253,19 +253,19 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
     if (unkE0->unk78 == 0) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 1.0f);
+            entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 1.0f);
         }
     }
 done:
@@ -295,7 +295,7 @@ static void GiantBeetle_TurnParts7And12(Entity *entity) {
     } else if (angle < -limit) {
         angle = -limit;
     }
-    func_00195388(&unkE0->unk48, angle, 10.0f);
+    EntityMath_EaseAngleToward(&unkE0->unk48, angle, 10.0f);
     part = (EntityModelPart80 *)entity->model->unkF8;
     for (i = 0; i < ENTITY_MODEL(entity)->part_count; i++) {
         if (i == 7 || i == 12) {
@@ -330,7 +330,7 @@ static void GiantBeetle_TurnParts23To32(Entity *entity) {
     if (limit < turn || (limit = -limit, turn < limit)) {
         turn = limit;
     }
-    func_00195388(&unkE0->unk4C, turn, 20.0f);
+    EntityMath_EaseAngleToward(&unkE0->unk4C, turn, 20.0f);
     model = ENTITY_MODEL(entity);
     count = model->part_count;
     part = model->parts;
@@ -352,7 +352,7 @@ static void GiantBeetle_MeleeAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -405,7 +405,7 @@ static void func_00137970(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -469,7 +469,7 @@ static void GiantBeetle_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         params = entity->params;
         if (params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
@@ -495,7 +495,7 @@ static void GiantBeetle_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             ENTITY_FLAG_BITS(entity)->bit27 = 1;
             ENTITY_FLAG_BITS(entity)->bit26 = 1;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;

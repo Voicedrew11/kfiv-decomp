@@ -7,26 +7,26 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 extern s32 D_003E6E40[][2];
-void func_0018DC40(char *);
-int func_00192C98(void *, int, int, u32, int);
+void EntityEvent_Respawn(char *);
+int Motion_Start(void *, int, int, u32, int);
 extern float D_00413F80[];
 float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
 char *func_0010CAB8(char *, u32);
-float func_00194FB8(float);
-float func_00194F80(void *, void *);
-float func_00195478(float *, char *);
-f32 func_00195018(f32, f32, f32);
+float EntityMath_WrapAngle(float);
+float EntityMath_DistanceXZ(void *, void *);
+float EntityMath_AngleXZ(float *, char *);
+f32 EntityMath_Approach(f32, f32, f32);
 void Vector_Copy(void *, void *);
 int func_00195E48(void *, int, void *, void *);
-void func_0018DA38(Entity *, s32, s32, s32);
-void func_0018DCD8(Entity *);
+void EntityEvent_StartCue(Entity *, s32, s32, s32);
+void EntityEvent_OnDeath(Entity *);
 
 static void MasterFadin_Think(Entity *entity, s32 unknown);
 static void func_001435B0(Entity *entity, s32 unknown);
@@ -65,14 +65,14 @@ void MasterFadin_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
-/* The think handler: it sets Entity.state itself and does not call func_0018E9C0. In mode 2
+/* The think handler: it sets Entity.state itself and does not call EntityAi_StepState. In mode 2
    (EntitySpawnInfo.unk40) it takes the state of the entity whose spawn id is
    EntitySpawnInfo.variant, and starts the death action once that one's flag bits 2-3 are 2 or more.
-   In mode 1 it calls func_0018DC40 for every other entity with the same params whose flag bit 1 is
+   In mode 1 it calls EntityEvent_Respawn for every other entity with the same params whose flag bit 1 is
    clear or whose bits 2-3 are 3. While the entity is not busy it calls func_001435B0 in states 1
    and 2, and in state 0 starts what the move slot holds (the set-up function leaves it NULL). Keeps
    animation 0; once work word unk68 has run out it puts the state back to 0. */
@@ -97,7 +97,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
         for (other = D_004467E0; other != NULL; other = other->next) {
             if (other->params == entity->params && other != entity && ((s32)other->flags & 1)) {
                 if (!ENTITY_FLAG_BITS(other)->bit1 || ENTITY_FLAG_BITS(other)->bits2 >= 3) {
-                    func_0018DC40((char *)other);
+                    EntityEvent_Respawn((char *)other);
                 }
             }
         }
@@ -114,7 +114,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
             break;
         }
     }
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     if (unkE0->unk68 > 0) {
         unkE0->unk68--;
     } else {
@@ -143,24 +143,24 @@ static void func_001435B0(Entity *entity, s32 unknown) {
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                 angles[2] = angles[3] = 0.0f;
             } else {
                 Vector_Copy(angles, entity->model->unkD0);
-                angles[1] = func_00194FB8(angles[1] + 3.1415927f);
+                angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
             }
             Vector_Copy(target, D_00413F80);
             target[1] -= 190.0f;
-            pitch = func_00194FB8(-atan2(target[1] - from[1], func_00194F80(from, target)));
-            yaw = func_00195478(from, (char *)target);
-            angles[0] = func_00195018(angles[0], pitch, entity->params->unk436);
-            angles[1] = func_00195018(angles[1], yaw, entity->params->unk438);
+            pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
+            yaw = EntityMath_AngleXZ(from, (char *)target);
+            angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->unk436);
+            angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->unk438);
             func_00195E48(entity, entity->params->unk430, from, angles);
-            func_0018DA38(entity, 0, 0, 0);
+            EntityEvent_StartCue(entity, 0, 0, 0);
             entity->unkA0 = entity->params->unk434;
         }
     }
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
@@ -172,7 +172,7 @@ static void MasterFadin_Dormant(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 1, 0, 0, 1);
+        Motion_Start(entity, 1, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
@@ -185,7 +185,7 @@ static void MasterFadin_Dormant(Entity *entity) {
         break;
     case 1:
         if (entity->distance_to_player < entity->spawn_info->unk54) {
-            func_00192C98(entity, 2, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 2, 0, entity->params->unkC4, 0);
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
             entity->action_step++;
@@ -218,12 +218,12 @@ static void MasterFadin_Dormant(Entity *entity) {
 
 /* The death action (busy bit 0x40): animation 16, the fade over 20 frames and the removal, as
    EntityAi_Death with other flag settings; in mode 2 it calls MasterFadin_AlertPartner where that
-   one calls func_0018DCD8. */
+   one calls EntityEvent_OnDeath. */
 static void MasterFadin_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         entity->flags &= ~0x3800;
         entity->flags |= 0x4000;
         entity->flags |= 0x100000;
@@ -244,7 +244,7 @@ static void MasterFadin_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             entity->unkA0 = 20;
             if (entity->spawn_info->unk40 != 2) {
-                func_0018DCD8(entity);
+                EntityEvent_OnDeath(entity);
             } else {
                 MasterFadin_AlertPartner(entity);
             }

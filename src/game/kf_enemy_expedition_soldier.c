@@ -10,8 +10,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -19,34 +19,34 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 extern float D_00413F80[];
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
 void func_00196D48(Entity *);
-float func_001957B8(float, float);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
+float EntityMath_AngleDifference(float, float);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-void func_0018DCD8(Entity *);
-void func_0018DC40(char *);
+void EntityEvent_OnDeath(Entity *);
+void EntityEvent_Respawn(char *);
 s32 func_00197078(Entity *);
-float func_00194F80(void *, void *);
+float EntityMath_DistanceXZ(void *, void *);
 
 static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity);
 static void ExpeditionSoldier_Think(Entity *entity, s32 unknown);
@@ -123,8 +123,8 @@ void ExpeditionSoldier_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler the set-up function installs for EntitySpawnInfo.variant 1 and 2 (it takes the
@@ -133,9 +133,9 @@ void ExpeditionSoldier_Init(Entity *entity) {
    */
 static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity) {
     if (entity->spawn_info->variant == 1) {
-        func_00192C98(entity, 0x12, 0, 0, 0);
+        Motion_Start(entity, 0x12, 0, 0, 0);
     } else {
-        func_00192C98(entity, 0x13, 0, 0, 0);
+        Motion_Start(entity, 0x13, 0, 0, 0);
     }
     entity->flags |= 0x40000;
     entity->flags |= 0x100000;
@@ -159,7 +159,7 @@ static void ExpeditionSoldier_Think(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -186,15 +186,15 @@ static void func_001787E0(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
@@ -202,10 +202,10 @@ static void func_001787E0(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -213,7 +213,7 @@ static void func_001787E0(Entity *entity, s32 unknown) {
             return;
         case 1:
             if ((s16)entity->params->unk434 < entity->distance_to_player) {
-                angle = func_001957B8(entity->unk68, entity->model->unkD0[1]);
+                angle = EntityMath_AngleDifference(entity->unk68, entity->model->unkD0[1]);
                 angle = ABS(angle);
                 if (angle > 0.7853982f) {
                     entity->target = D_00413F80;
@@ -240,19 +240,19 @@ static void func_001787E0(Entity *entity, s32 unknown) {
     if (entity->unkCD == 1) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, direction);
+            turn = EntityAi_TurnFromPush(entity, direction);
             switch (unkE0->unk78) {
             case 0:
                 if (turn > 0) {
@@ -260,7 +260,7 @@ static void func_001787E0(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190BE0(entity);
+                    entity->unkC8 = EntityAi_TurnCommand(entity);
                 }
                 break;
             case 1:
@@ -269,7 +269,7 @@ static void func_001787E0(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                    entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             }
@@ -280,13 +280,13 @@ done:
 }
 
 /* The death action (busy bit 0x40): as EntityAi_Death; when the fade starts and
-   EntitySpawnInfo.unk40 is set, it calls func_0018DC40 for the entity with that spawn id (if its
+   EntitySpawnInfo.unk40 is set, it calls EntityEvent_Respawn for the entity with that spawn id (if its
    flag bit 0 is set) and puts it at this entity's position. */
 static void ExpeditionSoldier_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -316,12 +316,12 @@ static void ExpeditionSoldier_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             entity->unkA0 = 20;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             if (entity->spawn_info->unk40 != 0) {
                 Entity *partner = Entity_GetBySpawnId(entity->spawn_info->unk40);
 
                 if (partner != NULL && ((s32)partner->flags & 1)) {
-                    func_0018DC40((char *)partner);
+                    EntityEvent_Respawn((char *)partner);
                     Vector_Copy(partner->model->position, entity->model->position);
                 }
             }
@@ -349,7 +349,7 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x11, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0x11, 0, entity->params->unkC4, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         unkE0->unk1C = 0;
         entity->action_step++;
@@ -408,7 +408,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -436,7 +436,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
 
     // match: the shared prototype takes no argument; retail passes the entity
     if (((int (*)(Entity *))func_00197078)(entity)) {
-        if (func_0018F030((char *)entity)) {
+        if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -451,7 +451,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
         unkE0->unk30[2] = -1400.0f;
         unkE0->unk30[3] = 0.0f;
         entity->target = unkE0->unk30;
-        entity->unkC8 = func_00190F90(entity, 0, 50.0f);
+        entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else {
         if (unkE0->unk7A == 0) {
             stand_point[0] = 900.0f;
@@ -474,11 +474,11 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
             face_point[3] = 0.0f;
             unkE0->unk7C = entity->spawn_info->unk43;
         }
-        if (func_00194F80(entity->model->position, stand_point) < reach) {
+        if (EntityMath_DistanceXZ(entity->model->position, stand_point) < reach) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
             Vector_Copy(unkE0->unk30, face_point);
             entity->target = unkE0->unk30;
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 EntityAi_StartAction(entity, ExpeditionSoldier_SignalMapObject, unknown);
                 return;
@@ -486,7 +486,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
         } else {
             Vector_Copy(unkE0->unk30, stand_point);
             entity->target = unkE0->unk30;
-            entity->unkC8 = func_00190F90(entity, 0, reach * 0.5f);
+            entity->unkC8 = EntityAi_MoveCommand(entity, 0, reach * 0.5f);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -518,7 +518,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -543,7 +543,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
 
     // match: the shared prototype takes no argument; retail passes the entity
     if (((int (*)(Entity *))func_00197078)(entity)) {
-        if (func_0018F030((char *)entity)) {
+        if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -558,7 +558,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
         unkE0->unk30[2] = -1400.0f;
         unkE0->unk30[3] = 0.0f;
         entity->target = unkE0->unk30;
-        entity->unkC8 = func_00190F90(entity, 0, 50.0f);
+        entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else {
         if (unkE0->unk7A == 0) {
             stand_point[0] = -900.0f;
@@ -581,11 +581,11 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
             face_point[3] = 0.0f;
             unkE0->unk7C = entity->spawn_info->unk43;
         }
-        if (func_00194F80(entity->model->position, stand_point) < reach) {
+        if (EntityMath_DistanceXZ(entity->model->position, stand_point) < reach) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
             Vector_Copy(unkE0->unk30, face_point);
             entity->target = unkE0->unk30;
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 EntityAi_StartAction(entity, ExpeditionSoldier_SignalMapObject, unknown);
                 return;
@@ -593,7 +593,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
         } else {
             Vector_Copy(unkE0->unk30, stand_point);
             entity->target = unkE0->unk30;
-            entity->unkC8 = func_00190F90(entity, 0, reach * 0.5f);
+            entity->unkC8 = EntityAi_MoveCommand(entity, 0, reach * 0.5f);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);

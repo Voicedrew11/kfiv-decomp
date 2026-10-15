@@ -8,8 +8,8 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
@@ -18,43 +18,43 @@ extern ModelInstanceBlock D_003E7140[2];
 // match: D_003E7140[1], which the set-up function reaches by its own address
 extern ModelInstanceBlock D_003E7300;
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 int func_00196120(Entity *, void *, s32, void *, f32);
 extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
-s32 func_00190F90(Entity *, s32, f32);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 s32 func_00198D10(Entity *);
-s32 func_0018F9C0(Entity *);
+s32 EntityAi_PickRangedAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-float func_001957B8(float, float);
+float EntityMath_AngleDifference(float, float);
 int rand(void);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
 void func_00196D48(Entity *);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
 void EntityAi_Dodge(Entity *);
 void EntityAi_MeleeAttack(Entity *);
-float func_001954A8(float *, float *);
-int func_00192C98(void *, int, int, u32, int);
+float EntityMath_HeadingTo(float *, float *);
+int Motion_Start(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
 float sqrtf(float);
 float atan2f(float, float);
 char *func_0010CAB8(char *, u32);
-float func_00194FB8(float);
-void func_00195588(Vector4 *, float);
+float EntityMath_WrapAngle(float);
+void EntityMath_FacingVector(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
 int func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_0019A290(Entity *, s32);
-float func_00195478(float *, char *);
+float EntityMath_AngleXZ(float *, char *);
 s32 func_001984B0(Entity *, s32);
 extern u8 D_004141D8[];
 extern EntityModel *D_00446978;
@@ -112,8 +112,8 @@ void FireLord_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
     D_003E7300 = *(ModelInstanceBlock *)entity->model;
     D_003E7140[0] = *(ModelInstanceBlock *)entity->model;
 }
@@ -132,9 +132,9 @@ static void FireLord_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
         look_at_target = ENTITY_FLAG_BITS(entity)->bit9;
         limits[1] = entity->params->unk430 * 0.017453292f;
@@ -177,7 +177,7 @@ static void FireLord_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0((char *)entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -258,32 +258,32 @@ static void FireLord_ThinkCombat(Entity *entity, s32 unknown) {
 }
 
 /* Band 0 of FireLord_ThinkCombat (and its default): goes for the player, with the command of
-   func_00190F90 (range 50, far marked). */
+   EntityAi_MoveCommand (range 50, far marked). */
 static void FireLord_ThinkCombatApproach(Entity *entity, int invoke_now) {
     EntityUnkE0 *sub = &entity->unkE0;
 
     entity->target = &D_00413F80;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    entity->unkC8 = func_00190F90(entity, 1, 50.0f);
+    entity->unkC8 = EntityAi_MoveCommand(entity, 1, 50.0f);
     EntityAi_StartAction(entity, (void (*)(Entity *))sub->move, invoke_now);
 }
 
 /* Band 1 of FireLord_ThinkCombat: when func_00198D10 finds the player in reach of a ranged
-   attack, starts EntityAi_RangedAttack with the record func_0018F9C0 draws; else goes for the
+   attack, starts EntityAi_RangedAttack with the record EntityAi_PickRangedAttack draws; else goes for the
    player as band 0 does. */
 static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (func_00198D10(entity)) {
-        func_0018F9C0(entity);
+        EntityAi_PickRangedAttack(entity);
         EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     entity->target = &D_00413F80;
-    entity->unkC8 = func_00190F90(entity, 1, 50.0f);
+    entity->unkC8 = EntityAi_MoveCommand(entity, 1, 50.0f);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
@@ -295,14 +295,14 @@ static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 unknown) 
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
-    angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+    angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
     if (!(ABS(angle) > 0.34906584f)) {
         unkE0->unk7B = unkE0->unk7B == 0;
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7Alternately, unknown);
         return;
     }
     entity->target = &D_00413F80;
-    entity->unkC8 = func_00190F90(entity, 1, 50.0f);
+    entity->unkC8 = EntityAi_MoveCommand(entity, 1, 50.0f);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
@@ -322,11 +322,11 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7ThenMelee0, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
@@ -334,10 +334,10 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
                 EntityAi_StartAction(entity, FireLord_MeleeAttack0, unknown);
@@ -364,25 +364,25 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
     if (unkE0->unk78 == 0) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, direction);
+            turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
                 entity->unkC8 = 0x201;
             } else if (turn < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
         }
     }
@@ -405,11 +405,11 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7ThenMelee0, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
@@ -417,10 +417,10 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
                 EntityAi_StartAction(entity, FireLord_MeleeAttack0, unknown);
@@ -447,26 +447,26 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
     if (unkE0->unk78 == 0) {
         func_00196D48(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            turn = func_0018EAC0(entity, direction);
+            turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
                 entity->unkC8 = 0x201;
             } else if (turn < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                direction[0] = func_001954A8(entity->model->position, entity->target);
-                angle = func_001957B8(entity->model->unkD0[1], direction[0]);
+                direction[0] = EntityMath_HeadingTo(entity->model->position, entity->target);
+                angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction[0]);
                 if (ABS(angle) > entity->params->turn_limit) {
                     if (angle >= 0.0f) {
                         entity->unkC8 |= 0x200;
@@ -494,9 +494,9 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         if (unkE0->unk7B != 0) {
-            func_00192C98(entity, 6, 0, entity->params->unkC4 >> 1, 0);
+            Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 0);
         } else {
-            func_00192C98(entity, 7, 0, entity->params->unkC4 >> 1, 0);
+            Motion_Start(entity, 7, 0, entity->params->unkC4 >> 1, 0);
         }
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
@@ -541,7 +541,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -569,7 +569,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
         }
         break;
     case 3:
-        func_00195588((Vector4 *)position, entity->model->unkD0[1]);
+        EntityMath_FacingVector((Vector4 *)position, entity->model->unkD0[1]);
         Vector_Scale(position, position, 30.0f);
         entity->unk84 += position[0];
         entity->unk88 += position[1];
@@ -594,7 +594,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                 angles[2] = angles[3] = 0.0f;
                 delta_x = from[0] - unkE0->unk48;
                 delta_y = from[1] - unkE0->unk4C;
@@ -661,7 +661,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x15, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x15, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -690,7 +690,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
+                angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                 angles[2] = angles[3] = 0.0f;
                 delta_x = from[0] - unkE0->unk48;
                 delta_y = from[1] - unkE0->unk4C;
@@ -751,12 +751,12 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
     func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
     switch (entity->action_step) {
     case 0:
-        func_001957B8(entity->model->unkD0[1], entity->unk68);
+        EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
         player = &D_00413F80;
-        if (func_001957B8(player->unk14, func_00195478(player->position, (char *)entity->model->position)) >= 0.0f) {
-            func_00192C98(entity, 6, 0, entity->params->unkC4 >> 1, 0);
+        if (EntityMath_AngleDifference(player->unk14, EntityMath_AngleXZ(player->position, (char *)entity->model->position)) >= 0.0f) {
+            Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 0);
         } else {
-            func_00192C98(entity, 7, 0, entity->params->unkC4 >> 1, 0);
+            Motion_Start(entity, 7, 0, entity->params->unkC4 >> 1, 0);
         }
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
@@ -813,24 +813,24 @@ static void FireLord_Move(Entity *entity) {
     entity->unk94 += turn;
     if (entity->unkC8 & 1) {
         if (entity->unkC8 & 0x40) {
-            func_00192C98(entity, 4, 0, params->unkC4, 0);
+            Motion_Start(entity, 4, 0, params->unkC4, 0);
         } else {
-            func_00192C98(entity, 3, 0, params->unkC4, 0);
+            Motion_Start(entity, 3, 0, params->unkC4, 0);
         }
     } else if (entity->unkC8 & 2) {
-        func_00192C98(entity, 5, 0, params->unkC4, 0);
+        Motion_Start(entity, 5, 0, params->unkC4, 0);
     } else if (entity->unkC8 & 0x10) {
-        func_00192C98(entity, 8, 0, params->unkC4, 0);
+        Motion_Start(entity, 8, 0, params->unkC4, 0);
     } else if (entity->unkC8 & 0x20) {
-        func_00192C98(entity, 9, 0, params->unkC4, 0);
+        Motion_Start(entity, 9, 0, params->unkC4, 0);
     } else if (entity->unkC8 & 4) {
-        func_00192C98(entity, 6, 0, params->unkC4 >> 1, 0);
+        Motion_Start(entity, 6, 0, params->unkC4 >> 1, 0);
     } else if (entity->unkC8 & 8) {
-        func_00192C98(entity, 7, 0, params->unkC4 >> 1, 0);
+        Motion_Start(entity, 7, 0, params->unkC4 >> 1, 0);
     } else if (entity->unkC8 & 0x300) {
-        func_00192C98(entity, 3, 0, params->unkC4, 0);
+        Motion_Start(entity, 3, 0, params->unkC4, 0);
     } else {
-        func_00192C98(entity, 0, 0, params->unkC4, 0);
+        Motion_Start(entity, 0, 0, params->unkC4, 0);
     }
 }
 
@@ -845,7 +845,7 @@ static s32 func_001335D8(Entity *entity, f32 max_distance, f32 max_angle) {
         }
     }
     distance = entity->distance_to_player - (entity->radius + 100.0f);
-    angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+    angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
     if (entity->unkC6 != 0) {
         return FALSE;
     }

@@ -9,8 +9,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32); // match: an int result keeps $2 busy after the call
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32); // match: an int result keeps $2 busy after the call
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -19,7 +19,7 @@ extern char D_00349690[0x2000];
 extern MapSlot D_0038CD20[];
 extern int D_00446770;
 extern EntityFrameTable D_0043EAD8;
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 int Script_Start(int, int);
 void func_001B57A0(u8, u8, u8);
 void EntityAi_OnHit(char *);
@@ -27,29 +27,29 @@ void EntityAi_Move(Entity *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 extern float D_00413F80[];
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
-int func_0018EAC0(void *, void *);
-float func_001957B8(float, float);
-int func_00190BE0(Entity *);
-s32 func_00190F90(Entity *, s32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
+int EntityAi_TurnFromPush(void *, void *);
+float EntityMath_AngleDifference(float, float);
+int EntityAi_TurnCommand(Entity *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-void func_0018DCD8(Entity *);
-void func_0018DC40(char *);
+void EntityEvent_OnDeath(Entity *);
+void EntityEvent_Respawn(char *);
 s32 func_00197078(Entity *);
-float func_00194F80(void *, void *);
+float EntityMath_DistanceXZ(void *, void *);
 
 static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now);
 static void ForestGolem_Think(Entity *entity, s32 unknown);
@@ -111,8 +111,8 @@ void ForestGolem_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
     ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
@@ -186,7 +186,7 @@ static void ForestGolem_StartScriptAndRumble(Entity *entity) {
     entity->unkC6 |= 0x2000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x11, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0x11, 0, entity->params->unkC4, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
     case 1:
@@ -234,7 +234,7 @@ static void ForestGolem_StartScriptAndRumble(Entity *entity) {
 /* The move handler: this type stays where it is; keeps animation 0, and the motion never moves the
    entity. */
 static void ForestGolem_Move(Entity *entity) {
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
 }
 
@@ -279,8 +279,8 @@ static void func_0017A540(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* A think handler only func_0017A540 installs (for an EntitySpawnInfo.variant other than 1 and 2),
@@ -294,7 +294,7 @@ static void ForestGolem_ThinkByState(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -325,15 +325,15 @@ static void func_0017A880(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     range = 300.0f;
     angle = 0.5235988f;
-    if (func_0018ED98(entity, range, angle)) {
+    if (EntityAi_ShouldGuard(entity, range, angle)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, range, angle)) {
+    if (EntityAi_ShouldDodge(entity, range, angle)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    next_action = func_0018FD50(entity, 0);
+    next_action = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     if (entity->unkA0 == 0 || next_action == 0) {
         entity->unkCF = entity->unkCD;
@@ -342,10 +342,10 @@ static void func_0017A880(Entity *entity, s32 unknown) {
             entity->unk9E = D_00446ED4;
         }
         // match: called with one argument here
-        ((void (*)(Entity *))func_00190B88)(entity);
+        ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -353,7 +353,7 @@ static void func_0017A880(Entity *entity, s32 unknown) {
             return;
         case 1:
             if ((s16)entity->params->unk434 < entity->distance_to_player) { // match: read signed here
-                turn = func_001957B8(entity->unk68, entity->model->unkD0[1]);
+                turn = EntityMath_AngleDifference(entity->unk68, entity->model->unkD0[1]);
                 turn = ABS(turn);
                 if (turn > 0.7853982f) {
                     entity->target = D_00413F80;
@@ -378,7 +378,7 @@ static void func_0017A880(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkCD == 1) {
-        side = func_0018EAC0(entity, direction);
+        side = EntityAi_TurnFromPush(entity, direction);
         switch (unkE0->unk78) {
         case 0:
             if (side > 0) {
@@ -386,7 +386,7 @@ static void func_0017A880(Entity *entity, s32 unknown) {
             } else if (side < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190BE0(entity);
+                entity->unkC8 = EntityAi_TurnCommand(entity);
             }
             break;
         case 1:
@@ -395,7 +395,7 @@ static void func_0017A880(Entity *entity, s32 unknown) {
             } else if (side < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
             break;
         }
@@ -405,7 +405,7 @@ static void func_0017A880(Entity *entity, s32 unknown) {
 
 /* A death action (busy bit 0x40) only func_0017A540 puts in the death slot, a set-up function
    nothing refers to; ForestGolem_Init leaves the slot empty. As EntityAi_Death; when the fade
-   starts and EntitySpawnInfo.unk40 is set, it calls func_0018DC40 for the entity with that spawn id
+   starts and EntitySpawnInfo.unk40 is set, it calls EntityEvent_Respawn for the entity with that spawn id
    (if its flag bit 0 is set) and puts it at this entity's position. */
 static void ForestGolem_Death(Entity *entity) {
     Entity *other;
@@ -413,7 +413,7 @@ static void ForestGolem_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -438,11 +438,11 @@ static void ForestGolem_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
             entity->unkA0 = 20;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             if (entity->spawn_info->unk40 != 0) {
                 other = Entity_GetBySpawnId(entity->spawn_info->unk40);
                 if (other != NULL && ENTITY_FLAG_BITS(other)->bit0) {
-                    func_0018DC40((char *)other);
+                    EntityEvent_Respawn((char *)other);
                     Vector_Copy(other->model->position, entity->model->position);
                 }
             }
@@ -470,7 +470,7 @@ static void ForestGolem_SignalMapObject(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x11, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0x11, 0, entity->params->unkC4, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         unkE0->unk1C = 0.0f;
         entity->action_step++;
@@ -529,7 +529,7 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -557,7 +557,7 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
 
     // match: takes the entity; the shared prototype has no parameters
     if (((int (*)(Entity *))func_00197078)(entity)) {
-        if (func_0018F030((char *)entity)) {
+        if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -572,7 +572,7 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
         unkE0->unk30[2] = -1400.0f;
         unkE0->unk30[3] = 0.0f;
         entity->target = entity->unkE0.unk30;
-        entity->unkC8 = func_00190F90(entity, 0, 50.0f);
+        entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else {
         if (unkE0->unk79 == 0) {
             near_point[0] = 900.0f;
@@ -595,11 +595,11 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
             far_point[3] = 0.0f;
             unkE0->unk7B = entity->spawn_info->unk43;
         }
-        if (func_00194F80(entity->model->position, near_point) < range) {
+        if (EntityMath_DistanceXZ(entity->model->position, near_point) < range) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
             Vector_Copy(unkE0->unk30, far_point);
             entity->target = unkE0->unk30;
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 EntityAi_StartAction(entity, ForestGolem_SignalMapObject, unknown);
                 return;
@@ -607,7 +607,7 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
         } else {
             Vector_Copy(unkE0->unk30, near_point);
             entity->target = unkE0->unk30;
-            entity->unkC8 = func_00190F90(entity, 0, range * 0.5f);
+            entity->unkC8 = EntityAi_MoveCommand(entity, 0, range * 0.5f);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -639,7 +639,7 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -665,7 +665,7 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
 
     // match: takes the entity; the shared prototype has no parameters
     if (((int (*)(Entity *))func_00197078)(entity)) {
-        if (func_0018F030((char *)entity)) {
+        if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, 1);
@@ -680,7 +680,7 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
         unkE0->unk30[2] = -1400.0f;
         unkE0->unk30[3] = 0.0f;
         entity->target = entity->unkE0.unk30;
-        entity->unkC8 = func_00190F90(entity, 0, 50.0f);
+        entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
     } else {
         if (unkE0->unk79 == 0) {
             near_point[0] = -900.0f;
@@ -703,11 +703,11 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
             far_point[3] = 0.0f;
             unkE0->unk7B = entity->spawn_info->unk43;
         }
-        if (func_00194F80(entity->model->position, near_point) < range) {
+        if (EntityMath_DistanceXZ(entity->model->position, near_point) < range) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
             Vector_Copy(unkE0->unk30, far_point);
             entity->target = unkE0->unk30;
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 EntityAi_StartAction(entity, ForestGolem_SignalMapObject, unknown);
                 return;
@@ -715,7 +715,7 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
         } else {
             Vector_Copy(unkE0->unk30, near_point);
             entity->target = unkE0->unk30;
-            entity->unkC8 = func_00190F90(entity, 0, range * 0.5f);
+            entity->unkC8 = EntityAi_MoveCommand(entity, 0, range * 0.5f);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);

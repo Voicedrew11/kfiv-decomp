@@ -1,15 +1,12 @@
-#include "common.h"
+#include "kf_entity.h"
 
-typedef struct { int p0; char pad[8]; u8 *tbl; } Obj;
-typedef struct { u8 idx; u8 cnt; s16 s; } Ent;
+s32 Motion_BlendSlotToPose(ModelInstance *, s32, s32, s16, f32);
 
-int func_00192100(int, int, u8, s16);
+/* `weight` is passed through to Motion_BlendSlotToPose as it came */
+int func_0019A538(Entity *entity, EntityMotionSlot *slot, int part_slot, f32 weight) {
+    u8 count;
 
-int func_0019A538(Obj *arg0, Ent *arg1, int arg2) {
-    u8 *p = arg0->tbl + (arg1->idx & 0x1F);
-    u8 v;
-
-    func_00192100(arg0->p0, arg2, p[0x60], arg1->s);
-    arg1->cnt = v = arg1->cnt - 1;
-    return v;
+    Motion_BlendSlotToPose(ENTITY_MODEL(entity), part_slot, entity->params->unk60[slot->index], slot->frame, weight);
+    slot->unk01 = count = slot->unk01 - 1;
+    return count;
 }

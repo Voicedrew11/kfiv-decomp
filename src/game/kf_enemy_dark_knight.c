@@ -8,8 +8,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -17,7 +17,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
-void func_00190A30(char *);
+void EntityAi_LowerWeightsAfterHit(char *);
 void func_00195898(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
@@ -27,38 +27,38 @@ int rand(void);
 float sqrtf(float);
 float atan2f(float, float);
 char *func_0010CAB8(char *, u32);
-void func_0018D600(char **, int, u32, int);
+void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 void func_00196870(void *, int);
 void func_00196CC0(void *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
 void func_00196D48(Entity *);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
-float func_001957B8(float, float);
-float func_00194FB8(float);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
+float EntityMath_AngleDifference(float, float);
+float EntityMath_WrapAngle(float);
 void EntityAi_Dodge(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
 s32 func_00195B68(Entity *, void *, s32, s32, s32, f32);
 void func_0019A290(Entity *, s32);
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-int func_0018D4E8(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
+int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 s32 func_00197F00(Entity *);
 s32 func_00198D10(Entity *);
-int func_0018CA50(int *);
+int EntitySight_EntityInWay(int *);
 s32 func_001984B0(Entity *, s32);
 s32 func_001992F0(Entity *, s32);
-void func_00190B28(Entity *);
+void EntityAi_LowerAttackWeight(Entity *);
 
 static void DarkKnight_OnHit(Entity *entity);
 static void DarkKnight_Think(Entity *entity, s32 unknown);
@@ -115,15 +115,15 @@ void DarkKnight_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The on_hit handler: as EntityAi_OnHit, but only a heavy hit starts a reaction
    (EntityAi_ReactionHeavy); a light hit only puts the entity in state 2. */
 static void DarkKnight_OnHit(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
-        func_00190A30((char *)entity);
+        EntityAi_LowerWeightsAfterHit((char *)entity);
         entity->target = NULL;
         ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
@@ -172,8 +172,8 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
     second_aim[0] = atan2f(-delta[1], sqrtf(delta[0] * delta[0] + delta[2] * delta[2]));
     second_aim[1] = atan2f(delta[0], delta[2]);
     second_aim[2] = 0.0f;
-    func_0018D600((char **)entity, 0x3D7, 0x1E, (int)first_aim);
-    func_0018D600((char **)entity, 0x3D7, 0x1F, (int)second_aim);
+    EntityEvent_StartEffectAtPoint((char **)entity, 0x3D7, 0x1E, (int)first_aim);
+    EntityEvent_StartEffectAtPoint((char **)entity, 0x3D7, 0x1F, (int)second_aim);
     if (unkE0->unk68 > 0) {
         if (unkE0->unk68 > (s16)entity->params->unk434 - entity->params->unk436) {
             from = (f32 *)func_0010CAB8((char *)entity->model, 4);
@@ -184,7 +184,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
             aims->unk30[0] = atan2f(-delta[1], sqrtf(delta[0] * delta[0] + delta[2] * delta[2]));
             aims->unk30[1] = atan2f(delta[0], delta[2]);
             aims->unk30[2] = 0.0f;
-            func_0018D600((char **)entity, rand() % 3 + 0x21F, 4, (int)aims->unk30);
+            EntityEvent_StartEffectAtPoint((char **)entity, rand() % 3 + 0x21F, 4, (int)aims->unk30);
             frames = entity->params->unk438;
             entity->params->unk240[0].unk10[0].unk00.unk00[8] = frames;
             entity->params->unk240[0].unk10[1].unk00.unk00[8] = frames;
@@ -216,7 +216,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
     }
     if (unkE0->unk6A > 0) {
         if (D_00446ED4 % 3U == 0) {
-            func_0018D600((char **)entity, 0x25C, 0, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, 0x25C, 0, (int)entity->model->unkD0);
         }
         ENTITY_FLAGS(entity) |= 0x8000L << 20;
         unkE0->unk6A--;
@@ -225,7 +225,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0(entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if ((s32)(ENTITY_FLAGS(entity) >> 53) & 1) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -266,7 +266,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, func_001639A8, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -274,7 +274,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, DarkKnight_RangedAttack0, unknown);
         return;
     }
-    mode = func_0018FD50(entity, 0);
+    mode = EntityAi_PickCombatChoice(entity, 0);
     entity->flags |= 0x200;
     if (entity->unkA0 == 0 || mode == 0) {
         entity->unkCF = entity->unkCD;
@@ -282,10 +282,10 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, mode);
+        EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 if (((s32)(entity->flags >> 58) & 3) == 1) {
                     EntityAi_StartAction(entity, DarkKnight_RangedAttack1, unknown);
                 } else {
@@ -317,17 +317,17 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (unkE0->unk78 == 0) {
-        side = func_0018EAC0(entity, direction);
+        side = EntityAi_TurnFromPush(entity, direction);
         func_00196D48(entity);
         if ((s32)(entity->flags >> 31) & 1) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
@@ -337,13 +337,13 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             } else if (side < 0) {
                 entity->unkC8 = 0x141;
             } else {
-                if (ABS(func_00194FB8(entity->unk68 - entity->model->unkD0[1])) > 1.5707964f
+                if (ABS(EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1])) > 1.5707964f
                     && D_00446ED4 % 15U == 0 && !(rand() & 1)) {
-                    unkE0->unk7B = (func_00194FB8(entity->unk68 - entity->model->unkD0[1]) > 0.0f) ? 1 : -1;
+                    unkE0->unk7B = (EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, unknown);
                     return;
                 }
-                entity->unkC8 = func_00190F90(entity, 1, entity->radius + 100.0f + 30.0f);
+                entity->unkC8 = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
             }
             entity->unkC8 |= 0x400;
         } else {
@@ -352,13 +352,13 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             } else if (side < 0) {
                 entity->unkC8 = 0x101;
             } else {
-                if (ABS(func_00194FB8(entity->unk68 - entity->model->unkD0[1])) > 1.5707964f
+                if (ABS(EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1])) > 1.5707964f
                     && D_00446ED4 % 15U == 0 && !(rand() & 1)) {
-                    unkE0->unk7B = (func_00194FB8(entity->unk68 - entity->model->unkD0[1]) > 0.0f) ? 1 : -1;
+                    unkE0->unk7B = (EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, unknown);
                     return;
                 }
-                entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
         }
     }
@@ -375,9 +375,9 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         if (unkE0->unk7B > 0) {
-            func_00192C98(entity, 0xC, 0, entity->params->unkC4, 1);
+            Motion_Start(entity, 0xC, 0, entity->params->unkC4, 1);
         } else {
-            func_00192C98(entity, 0xB, 0, entity->params->unkC4, 1);
+            Motion_Start(entity, 0xB, 0, entity->params->unkC4, 1);
         }
         entity->flags = (entity->flags & ~0x3800) | 0x800;
         entity->flags &= ~0x200;
@@ -408,7 +408,7 @@ static void func_001639A8(Entity *entity) {
     entity->unkC6 |= 0x10;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0xD, 0, 0xA, 1);
+        Motion_Start(entity, 0xD, 0, 0xA, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         unkE0->unk1C = 0.0f;
         ENTITY_FLAGS(entity) &= ~0x200;
@@ -447,13 +447,13 @@ static void func_00163B28(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         if (ABS(entity->unk68 - entity->model->unkD0[1]) < 0.5235988f) {
-            func_00192C98(entity, 0x11, 0, 5, 1);
+            Motion_Start(entity, 0x11, 0, 5, 1);
             unkE0->unk7A = 0;
         } else if (entity->unk68 - entity->model->unkD0[1] > 0.5235988f && entity->unk68 - entity->model->unkD0[1] < 1.5707964f) {
-            func_00192C98(entity, 0x12, 0, 5, 1);
+            Motion_Start(entity, 0x12, 0, 5, 1);
             unkE0->unk7A = 2;
         } else if (entity->unk68 - entity->model->unkD0[1] < -0.5235988f && entity->unk68 - entity->model->unkD0[1] > -1.5707964f) {
-            func_00192C98(entity, 0x13, 0, 5, 1);
+            Motion_Start(entity, 0x13, 0, 5, 1);
             unkE0->unk7A = 2;
         }
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -474,9 +474,9 @@ static void func_00163B28(Entity *entity) {
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             if (unkE0->unk7A == 0) {
-                func_00192C98(entity, 0x14, 0xE, 0, 1);
+                Motion_Start(entity, 0x14, 0xE, 0, 1);
             } else if (unkE0->unk7A == 2) {
-                func_00192C98(entity, 0x16, 0xE, 0, 1);
+                Motion_Start(entity, 0x16, 0xE, 0, 1);
             }
             entity->action_step++;
         }
@@ -501,7 +501,7 @@ static void func_00163B28(Entity *entity) {
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
             ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, entity->model->unkD0[1]);
             if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, func_00194FB8(entity->model->unkD0[1] + 3.1415927f));
+                ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f));
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
@@ -538,7 +538,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x16, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x16, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -563,7 +563,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
             ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, entity->model->unkD0[1]);
             if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, func_00194FB8(entity->model->unkD0[1] + 3.1415927f));
+                ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f));
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
@@ -598,7 +598,7 @@ static void DarkKnight_RangedAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
@@ -641,7 +641,7 @@ static void DarkKnight_RangedAttack0(Entity *entity) {
 }
 
 /* The ranged attack with record 1 (busy bit 1): as EntityAi_RangedAttack with animation 24, but the
-   shots are launched along the reverse of the heading (func_0018D4E8). */
+   shots are launched along the reverse of the heading (EntityShot_Launch). */
 static void DarkKnight_RangedAttack1(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, 1);
@@ -651,7 +651,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x18, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x18, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAGS(entity) &= ~0x3800;
         } else {
@@ -676,7 +676,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         Vector_Copy(direction, entity->model->unkD0);
         direction[1] -= 3.1415927f;
-        func_0018D4E8(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction);
+        EntityShot_Launch(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
@@ -720,7 +720,7 @@ static s32 DarkKnight_ShouldHoldAnim13(Entity *entity, f32 min_distance, f32 max
         return FALSE;
     }
     distance = entity->distance_to_player - (entity->radius + 100.0f);
-    angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+    angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
     if (entity->unkC6 != 0) {
         return FALSE;
     }
@@ -751,11 +751,11 @@ static s32 func_00164A60(Entity *entity, s32 mode) {
         weights[0] = 0;
     }
     if (mode == 0) {
-        if ((u32)(entity->flags >> 63) || func_0018CA50((int *)entity)) {
+        if ((u32)(entity->flags >> 63) || EntitySight_EntityInWay((int *)entity)) {
             weights[0] = 0;
         }
     } else if (mode == 1) {
-        if (func_0018CA50((int *)entity)) {
+        if (EntitySight_EntityInWay((int *)entity)) {
             weights[0] = 0;
         }
     } else if (mode == 2) {
@@ -849,6 +849,6 @@ static s32 func_00164C88(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits58 = choice - 3;
         ENTITY_FLAG_BITS(entity)->bit57 = 1;
     }
-    func_00190B28(entity);
+    EntityAi_LowerAttackWeight(entity);
     return (s32)(entity->flags >> 57) & 1;
 }

@@ -7,30 +7,30 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
-void func_00190A30(char *);
+int Motion_BlendToPose(EntityModel *, f32);
+void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void func_00195898(char *, u8);
 void EntityAi_ReactionLight(Entity *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 int rand(void);
-int func_00192C98(void *, int, int, u32, int);
-float func_00194FB8(float);
-float func_00195388(float *, float, float);
-void func_00195588(Vector4 *, float);
-void func_0018D600(char **, int, u32, int);
-s32 func_0018B150(f32 *, f32 *, f32, f32 *);
+int Motion_Start(void *, int, int, u32, int);
+float EntityMath_WrapAngle(float);
+float EntityMath_EaseAngleToward(float *, float, float);
+void EntityMath_FacingVector(Vector4 *, float);
+void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
+s32 EntityCollision_RayHitsPropWall(f32 *, f32 *, f32, f32 *);
 void Vector_Copy(void *, void *);
-float func_00194F80(void *, void *);
+float EntityMath_DistanceXZ(void *, void *);
 
 static void Phagos_Animate(Entity *entity);
 static void Phagos_OnHit(Entity *entity);
@@ -68,8 +68,8 @@ void Phagos_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate without the test of the EntityParams kind bits and
@@ -84,9 +84,9 @@ static void Phagos_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
     }
 }
@@ -94,7 +94,7 @@ static void Phagos_Animate(Entity *entity) {
 /* The on_hit handler: every hit starts EntityAi_ReactionLight, whatever its strength, and puts the
    entity in state 3; the target and flag bits 9 and 10 are left as they are. */
 static void Phagos_OnHit(Entity *entity) {
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionLight, 0);
     func_00195898((char *)entity, 3);
 }
@@ -117,7 +117,7 @@ static void Phagos_Think(Entity *entity, s32 unknown) {
 /* An action (busy bit 0x1000), the only one Phagos_Think starts: plays animation 4 and turns
    the entity to a heading drawn between 90 and 269 degrees from Entity.unk68 (work float unk48).
    When flag bit 52 is set it starts effect EntityParams.unk430 at model point 0xFF, fades the model
-   out over 20 frames and removes the entity. When func_0018B150 finds a wall ahead within the
+   out over 20 frames and removes the entity. When EntityCollision_RayHitsPropWall finds a wall ahead within the
    radius it starts the same effect, sets flag bit 28, and removes the entity once it is more than
    four radii from that place. */
 static void Phagos_RunAwayAndRemove(Entity *entity) {
@@ -129,42 +129,42 @@ static void Phagos_RunAwayAndRemove(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 4, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 4, 0, entity->params->unkC4, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = 1;
         }
         unkE0->unk48 = entity->unk68 + 1.5707964f + (f32)(rand() % 180) * 0.017453292f;
-        unkE0->unk48 = func_00194FB8(unkE0->unk48);
+        unkE0->unk48 = EntityMath_WrapAngle(unkE0->unk48);
         ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
         entity->action_step++;
         break;
     case 1:
         heading = entity->model->unkD0[1];
-        func_00195388(&heading, unkE0->unk48, 10.0f);
+        EntityMath_EaseAngleToward(&heading, unkE0->unk48, 10.0f);
         entity->unk94 += heading - entity->model->unkD0[1];
         bounds[0] = entity->model->position[0] - entity->radius;
         bounds[1] = entity->model->position[0] + entity->radius;
         bounds[2] = entity->model->position[2] - entity->radius;
         bounds[3] = entity->model->position[2] + entity->radius;
-        func_00195588((Vector4 *)direction, entity->model->unkD0[1]);
+        EntityMath_FacingVector((Vector4 *)direction, entity->model->unkD0[1]);
         if ((s32)(entity->flags >> 52) & 1) {
             ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
             entity->unkA0 = 20;
-            func_0018D600((char **)entity, entity->params->unk430, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk430, 0xFF, (int)entity->model->unkD0);
             entity->action_step = 3;
-        } else if (func_0018B150(entity->model->position, direction, entity->radius, bounds)) {
+        } else if (EntityCollision_RayHitsPropWall(entity->model->position, direction, entity->radius, bounds)) {
             Vector_Copy(unkE0->unk30, entity->model->position);
             ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-            func_0018D600((char **)entity, entity->params->unk430, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk430, 0xFF, (int)entity->model->unkD0);
             entity->action_step++;
         }
         break;
     case 2:
-        if (func_00194F80(entity->model->position, unkE0->unk30) > entity->radius * 4.0f) {
+        if (EntityMath_DistanceXZ(entity->model->position, unkE0->unk30) > entity->radius * 4.0f) {
             ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
         }
         break;

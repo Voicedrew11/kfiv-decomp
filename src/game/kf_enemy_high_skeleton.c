@@ -9,8 +9,8 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -21,14 +21,14 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 void EntityAi_ThinkCombat(Entity *, s32);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 void func_00195898(char *, u8);
-void func_0018D600(char **, int, u32, int);
+void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 
 static void HighSkeleton_Think(Entity *entity, s32 unknown);
 static void HighSkeleton_Dormant(Entity *entity);
@@ -74,8 +74,8 @@ void HighSkeleton_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think. Before that, with EntitySpawnInfo.unk40 and variant set, it
@@ -98,7 +98,7 @@ static void HighSkeleton_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0((char *)entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -128,7 +128,7 @@ static void HighSkeleton_Dormant(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 1, 0, 0, 1);
+        Motion_Start(entity, 1, 0, 0, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -148,7 +148,7 @@ static void HighSkeleton_Dormant(Entity *entity) {
         break;
     case 1:
         if (entity->distance_to_player < entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
-            func_00192C98(entity, 2, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 2, 0, entity->params->unkC4, 0);
             if (entity->params->flags & 0x100) {
                 ENTITY_FLAG_BITS(entity)->bits11 = 0;
             } else {
@@ -191,7 +191,7 @@ static void HighSkeleton_Dormant(Entity *entity) {
 
 /* The action the set-up function puts in the dormant slot for a spawn whose EntitySpawnInfo.unk40
    is set; its busy bit is 0x1000, not 0x20. It holds animation 0 for EntityParams.unk436 frames
-   with flag bits 18 and 21 set, calls func_0018D600 with 0x22F once, and meanwhile scales the model
+   with flag bits 18 and 21 set, calls EntityEvent_StartEffectAtPoint with 0x22F once, and meanwhile scales the model
    in x and z and the radius from 0 up to their full size; then goes to state 2 and thinks. */
 static void HighSkeleton_DormantScaleUp(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -200,7 +200,7 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0, 0, 0, 1);
+        Motion_Start(entity, 0, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         entity->unkA0 = (u16)entity->params->unk436;
         unkE0->unk48 = entity->model->unkE0[0];
@@ -216,7 +216,7 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        func_0018D600((char **)entity, 0x22F, 0xFF, (int)entity->model->unkD0);
+        EntityEvent_StartEffectAtPoint((char **)entity, 0x22F, 0xFF, (int)entity->model->unkD0);
         entity->action_step++;
         break;
     case 2:
@@ -247,12 +247,12 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
 
 /* A death action (busy bit 0x40) that HighSkeleton_Think starts; the death slot has EntityAi_Death.
    As EntityAi_Death, but it frees the entity's effects (Effect_FreeForOwner) when
-   EntityParams.unkC6 is neither 0 nor 0xFFFF and does not call func_0018DCD8. */
+   EntityParams.unkC6 is neither 0 nor 0xFFFF and does not call EntityEvent_OnDeath. */
 static void HighSkeleton_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit14 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;

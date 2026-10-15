@@ -8,8 +8,8 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
@@ -19,33 +19,33 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 extern PlayerData D_00413F80;
 int rand(void);
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
 s32 func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_0019A290(Entity *, s32);
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 int func_00196120(Entity *, void *, s32, void *, f32);
-float func_001954A8(float *, float *);
-float func_001957B8(float, float);
-float func_00195388(float *, float, float);
+float EntityMath_HeadingTo(float *, float *);
+float EntityMath_AngleDifference(float, float);
+float EntityMath_EaseAngleToward(float *, float, float);
 
 static void MutantWall_Think(Entity *entity, s32 unknown);
 static void MutantWall_ThinkCombat(Entity *entity, s32 unknown);
@@ -94,8 +94,8 @@ void MutantWall_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think (it calls func_00196870 with 2 where that one passes 1),
@@ -108,7 +108,7 @@ static void MutantWall_Think(Entity *entity, s32 unknown) {
         return;
     }
     func_00196CC0((char *)entity);
-    func_0018E9C0(entity);
+    EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
         return;
@@ -128,7 +128,7 @@ static void MutantWall_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat with the type's own two attacks; it calls
-   func_0018FD50 with 1, sets work byte unk79 to 1, and closing in does not use func_00196D48. */
+   EntityAi_PickCombatChoice with 1, sets work byte unk79 to 1, and closing in does not use func_00196D48. */
 static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -144,15 +144,15 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
     }
     range = 300.0f;
     angle = 0.5235988f;
-    if (func_0018ED98(entity, range, angle)) {
+    if (EntityAi_ShouldGuard(entity, range, angle)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, range, angle)) {
+    if (EntityAi_ShouldDodge(entity, range, angle)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    next_action = func_0018FD50(entity, 1);
+    next_action = EntityAi_PickCombatChoice(entity, 1);
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     unkE0->unk79 = 1;
     if (entity->unkA0 == 0 || next_action == 0) {
@@ -162,10 +162,10 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
             entity->unk9E = D_00446ED4;
         }
         // match: called with one argument here
-        ((void (*)(Entity *))func_00190B88)(entity);
+        ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, MutantWall_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, MutantWall_MeleeAttack, unknown);
@@ -186,7 +186,7 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkCD == 1) {
-        side = func_0018EAC0(entity, direction);
+        side = EntityAi_TurnFromPush(entity, direction);
         if (unkE0->unk78 == 0) {
             if ((s16)entity->params->unk434 != 0) { // match: read signed here
                 if (side > 0) {
@@ -194,7 +194,7 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (side < 0) {
                     entity->unkC8 = 0x141;
                 } else {
-                    entity->unkC8 = func_00190F90(entity, 1, entity->radius + 100.0f + 30.0f);
+                    entity->unkC8 = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
                 }
             } else {
                 if (side > 0) {
@@ -202,7 +202,7 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (side < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                    entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
             }
         }
@@ -220,7 +220,7 @@ static void MutantWall_MeleeAttack(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -288,7 +288,7 @@ static void MutantWall_RangedAttack(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -351,9 +351,9 @@ static void MutantWall_Animate(Entity *entity) {
         }
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(entity->flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(entity->flags >> 11) & 7);
         }
          MutantWall_TurnPart2ToPlayer(entity);
         limits[1] = entity->params->unk430 * 0.017453292f;
@@ -383,15 +383,15 @@ static void MutantWall_TurnPart2ToPlayer(Entity *entity) {
         unkE0->unk48 = parts[part_index].unk50[0];
         unkE0->unk4C = parts[part_index].unk50[1];
     } else {
-        angle = func_001954A8(entity->model->position, D_00413F80.position);
-        angle = func_001957B8(entity->model->unkD0[1], angle);
+        angle = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+        angle = EntityMath_AngleDifference(entity->model->unkD0[1], angle);
         limit = 0.7853982f;
         if (angle > limit) {
             angle = limit;
         } else if (angle < -limit) {
             angle = -limit;
         }
-        func_00195388(&unkE0->unk4C, angle, 10.0f);
+        EntityMath_EaseAngleToward(&unkE0->unk4C, angle, 10.0f);
         parts[part_index].unk50[1] = unkE0->unk4C;
     }
 }

@@ -8,8 +8,8 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 int rand(void);
 void EntityAi_OnHit(char *);
@@ -18,39 +18,39 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 extern PlayerData D_00413F80;
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
 void func_00196D48(Entity *);
-int func_00190BE0(Entity *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
-float func_001957B8(float, float);
+int EntityAi_TurnCommand(Entity *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
+float EntityMath_AngleDifference(float, float);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
-int func_00192C98(void *, int, int, u32, int);
-void func_0018DCD8(Entity *);
+int Motion_Start(void *, int, int, u32, int);
+void EntityEvent_OnDeath(Entity *);
 extern f32 D_00431AF0[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-float func_00194FB8(float);
-int func_00192EB0(void *, int);
+float EntityMath_WrapAngle(float);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 char *func_0010CAB8(char *, u32);
 int func_001B4F30(u16, void *, void *, void *, void *);
-void func_0018D600(char **, int, u32, int);
+void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 s32 func_00199EB8(Entity *, f32 *, f32);
 int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void func_0019A290(Entity *, s32);
@@ -104,8 +104,8 @@ void Skull_Init(Entity *entity) {
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
     unkE0->unk6A = rand() % 30;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with Skull_ThinkCombat for state 2. It keeps flag
@@ -129,7 +129,7 @@ static void Skull_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0((char *)entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -197,15 +197,15 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         entity->flags = (entity->flags & ~0x3800) | 0x800;
     }
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    mode = func_0018FD50(entity, 0);
+    mode = EntityAi_PickCombatChoice(entity, 0);
     entity->flags |= 0x200;
     if (entity->unkA0 == 0 || mode == 0) {
         entity->unkCF = entity->unkCD;
@@ -213,11 +213,11 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, mode);
+        EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->unkCD) {
         case 0:
             if (entity->model->position[1] < D_00413F80.position[1] - 50.0f && D_00413F80.position[1] - 300.0f < entity->model->position[1]) {
-                if (func_0018F030((char *)entity)) {
+                if (EntityAi_PickAttack((char *)entity)) {
                     EntityAi_StartAction(entity, Skull_RangedAttack0, unknown);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
@@ -252,19 +252,19 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->unkCD == 1) {
         func_00196D48(entity);
         if ((s32)(entity->flags >> 31) & 1) {
-            angle = func_001957B8(entity->model->unkD0[1], entity->unk68);
+            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
                 unkE0->unk79 = ABS(angle) > 0.5235988f;
                 if (unkE0->unk79 == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = func_00190BE0(entity);
+            entity->unkC8 = EntityAi_TurnCommand(entity);
             if (entity->unkC8 == 0) {
                 unkE0->unk79 = 0;
             }
         } else {
-            side = func_0018EAC0(entity, direction);
+            side = EntityAi_TurnFromPush(entity, direction);
             switch (unkE0->unk78) {
             case 0:
                 if (side > 0) {
@@ -272,7 +272,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (side < 0) {
                     entity->unkC8 = 0x101;
                 } else {
-                    entity->unkC8 = func_00190F90(entity, 0, entity->radius + 100.0f + 30.0f);
+                    entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             case 1:
@@ -281,7 +281,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (side < 0) {
                     entity->unkC8 = 0x141;
                 } else {
-                    entity->unkC8 = func_00190F90(entity, 1, entity->radius + 100.0f + 30.0f);
+                    entity->unkC8 = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             }
@@ -295,9 +295,9 @@ done:
    Skull_ApplyMoveCommand does the turning and the moving. */
 static void Skull_Move(Entity *entity) {
     if (entity->unkC8 & 1) {
-        func_00192C98(entity, 3, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
     } else {
-        func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     }
 }
 
@@ -307,7 +307,7 @@ static void Skull_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         entity->flags &= ~0x3800;
         entity->flags |= 0x4000;
         entity->flags |= 0x100000;
@@ -329,7 +329,7 @@ static void Skull_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             entity->unkA0 = 20;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
@@ -491,7 +491,7 @@ static void Skull_SwingPart3(Entity *entity) {
         }
         angle = unkE0->unk50;
         part->unk50[0] = angle;
-        part->unk50[0] = func_00194FB8(angle);
+        part->unk50[0] = EntityMath_WrapAngle(angle);
         unkE0->unk68--;
     }
 }
@@ -515,9 +515,9 @@ static void Skull_Animate(Entity *entity) {
         }
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, ENTITY_FLAG_BITS(entity)->bits11);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
         if (entity->unkC6 == 0 && entity->model->unkFC->unk88 == 0) {
             Skull_SwingPart3(entity);
@@ -532,7 +532,7 @@ static void Skull_Animate(Entity *entity) {
             shot->unk28 = entity->params->unk238;
             func_001B4F30(0xD0, shot, func_0010CAB8((char *)entity->model, 0xFF), entity->model->unkD0, entity);
         } else {
-            func_0018D600((char **)entity, 0x39D, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, 0x39D, 0xFF, (int)entity->model->unkD0);
         }
     }
 }
@@ -546,7 +546,7 @@ static void Skull_RangedAttack0(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;

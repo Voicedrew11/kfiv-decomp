@@ -4,7 +4,7 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
-int func_00193378(EntityModel *, s32, s32);
+int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 extern s32 D_003E6E40[][2];
@@ -35,7 +35,7 @@ void EntityType72_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00193378(entity->model, 0, 0);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: empty. It takes no arguments. */

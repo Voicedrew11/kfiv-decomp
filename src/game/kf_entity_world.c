@@ -28,17 +28,17 @@ extern const f32 D_004467F8[];
 void Vector_Copy(void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_MultiplyComponents(float *, float *, float *);
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 void Vector_Add(void *, void *, void *);
 void func_0010C9E8(ModelInstance *);
 s32 func_001963A8(Entity *);
-void func_0018DC40(char *);
+void EntityEvent_Respawn(char *);
 s32 func_001962E8(Entity *);
-f32 func_00194F48(f32 *, f32 *);
-float func_00194F80(void *, void *);
-float func_001954A8(float *, float *);
+f32 EntityMath_Distance(f32 *, f32 *);
+float EntityMath_DistanceXZ(void *, void *);
+float EntityMath_HeadingTo(float *, float *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-float func_00194FB8(float);
+float EntityMath_WrapAngle(float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, float *, float *);
 void func_00109A50(void);
@@ -50,7 +50,7 @@ void func_0010BA30(ModelInstance *);
 void func_00133708(Entity *, s32);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
-f32 func_0018A9F0(void *, void *);
+f32 EntityCollision_DistanceToPropFloor(void *, void *);
 
 #define SCRATCH_MATRIX ((f32 *)0x70000000)
 #define SCRATCH_VECTOR ((f32 *)0x70000040)
@@ -212,7 +212,7 @@ void Entity_ResetToSpawn(Entity *entity) {
     entity->unk40 = (f32)entity->params->unk0C * scale.x * scale.y * scale.z;
     entity->unk40 = ABS(entity->unk40);
     entity->model->unk13C = (entity->unk30 < entity->unk34) ? entity->unk34 : entity->unk30;
-    func_00192C98(entity, 0, 0, 0, 1);
+    Motion_Start(entity, 0, 0, 0, 1);
     ((void (*)(Entity *))D_003E6E40[entity->params->unk02][0])(entity);
     Entity_RebuildModelMatrices(entity);
 }
@@ -267,7 +267,7 @@ void Entity_UpdateAll(void) {
             if (!func_001963A8(entity)) {
                 continue;
             }
-            func_0018DC40((char *)entity);
+            EntityEvent_Respawn((char *)entity);
         }
         if (func_001962E8(entity)) {
             continue;
@@ -283,9 +283,9 @@ void Entity_UpdateAll(void) {
             entity->unk28 = 0;
             entity->unk2A = 0;
         }
-        entity->unk60 = ((f32 (*)(f32 *, f32 *))func_00194F48)(entity->model->position, D_00413F80.position); // match: returns the distance (other files declare it void)
-        entity->distance_to_player = func_00194F80(entity->model->position, D_00413F80.position);
-        entity->unk68 = func_001954A8(entity->model->position, D_00413F80.position);
+        entity->unk60 = ((f32 (*)(f32 *, f32 *))EntityMath_Distance)(entity->model->position, D_00413F80.position); // match: returns the distance (other files declare it void)
+        entity->distance_to_player = EntityMath_DistanceXZ(entity->model->position, D_00413F80.position);
+        entity->unk68 = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
         entity->unk84 = entity->unk88 = entity->unk8C = entity->unk90 = entity->unk94 = entity->unk98 = 0.0f;
         if (!Entity_IsMapRecordActive(entity)) {
             if (!ENTITY_FLAG_BITS(entity)->bit30) {
@@ -340,7 +340,7 @@ void Entity_UpdateAll(void) {
             push[1] = 0.0f;
             push[2] = forward;
             push[3] = 0.0f;
-            sceVu0RotMatrixY(SCRATCH_MATRIX, D_00431AF0, func_00194FB8(entity->unk6C));
+            sceVu0RotMatrixY(SCRATCH_MATRIX, D_00431AF0, EntityMath_WrapAngle(entity->unk6C));
             sceVu0ApplyMatrix(SCRATCH_VECTOR, SCRATCH_MATRIX, SCRATCH_VECTOR);
             Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, entity->unk4C);
             Vector_Add(entity->model->position, entity->model->position, SCRATCH_VECTOR);
@@ -609,7 +609,7 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
                 if (record->highest[2] + reach < entity->model->position[2]) {
                     continue;
                 }
-                height = func_0018A9F0(record, position);
+                height = EntityCollision_DistanceToPropFloor(record, position);
                 if (height != D_004467F8[0]) {
                     distance = height; // match: the copy to a second variable keeps the loop long enough that its end test is not hoisted
                     if (distance < nearest_distance) {
@@ -651,7 +651,7 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
                 middle[0] = (record->unk40[0] + record->unk50[0]) * 0.5f;
                 middle[1] = (record->unk40[1] + record->unk50[1]) * 0.5f;
                 middle[2] = (record->unk40[2] + record->unk50[2]) * 0.5f;
-                distance = ((f32 (*)(f32 *, f32 *))func_00194F48)(middle, entity->model->position); // match: returns the distance (other files declare it void)
+                distance = ((f32 (*)(f32 *, f32 *))EntityMath_Distance)(middle, entity->model->position); // match: returns the distance (other files declare it void)
                 if (distance < nearest_distance) {
                     nearest_distance = distance;
                     nearest = record;

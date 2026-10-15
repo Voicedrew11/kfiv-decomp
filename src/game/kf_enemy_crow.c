@@ -8,20 +8,20 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192EB0(void *, int);
+int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
-int func_00194368(EntityModel *, f32);
+int Motion_BlendToPose(EntityModel *, f32);
 int rand(void);
-void func_0018D600(char **, int, u32, int);
-float func_00195388(float *, float, float);
-float func_00194F80(void *, void *);
-int func_00192C98(void *, int, int, u32, int);
-void func_0018DCD8(Entity *);
+void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
+float EntityMath_EaseAngleToward(float *, float, float);
+float EntityMath_DistanceXZ(void *, void *);
+int Motion_Start(void *, int, int, u32, int);
+void EntityEvent_OnDeath(Entity *);
 
 static void Crow_Animate(Entity *entity);
 static void Crow_Think(Entity *entity, int frame);
@@ -67,8 +67,8 @@ void Crow_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The animate handler: as EntityAi_Animate without the head turn. */
@@ -82,9 +82,9 @@ static void Crow_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->unkFC->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00194368(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
         } else {
-            ENTITY_FLAG_BITS(entity)->bit34 = func_00192EB0(entity, (s32)(flags >> 11) & 7);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
     }
 }
@@ -143,7 +143,7 @@ static void Crow_PickAction(Entity *entity, s32 unknown) {
 }
 
 /* Helper of Crow_Think, called in state 3: gives the forward command and starts the move
-   action; the motion never moves the entity. It calls func_0018D600 with EntityParams.unk438 on the
+   action; the motion never moves the entity. It calls EntityEvent_StartEffectAtPoint with EntityParams.unk438 on the
    first unk43A frames, pitches the entity to -40 degrees while its y is above -2000 and back to 0
    after, and clears flag bit 1 once it is more than 10000 from its spawn point. */
 static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
@@ -153,20 +153,20 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     entity->unkC8 |= 1;
     if (unkE0->unk68 < entity->params->unk43A) {
-        func_0018D600((char **)entity, entity->params->unk438, 0xFF, (int)entity->model->unkD0);
+        EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk438, 0xFF, (int)entity->model->unkD0);
         unkE0->unk68++;
     }
     // match: the whole step is written out in both arms (only the call is shared in retail)
     if (-2000.0f < entity->model->position[1]) {
         turn = entity->model->unkD0[0];
-        func_00195388(&turn, -0.6981317f, 20.0f);
+        EntityMath_EaseAngleToward(&turn, -0.6981317f, 20.0f);
         entity->unk90 += turn - entity->model->unkD0[0];
     } else {
         turn = entity->model->unkD0[0];
-        func_00195388(&turn, 0.0f, 20.0f);
+        EntityMath_EaseAngleToward(&turn, 0.0f, 20.0f);
         entity->unk90 += turn - entity->model->unkD0[0];
     }
-    if (func_00194F80(entity->model->position, entity->spawn_info) > 10000.0f) {
+    if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) > 10000.0f) {
         ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -181,16 +181,16 @@ static void Crow_Death(Entity *entity) {
     // match: the whole step is written out in both arms (only the call is shared in retail)
     if (!ENTITY_FLAG_BITS(entity)->bit44) {
         turn = entity->model->unkD0[0];
-        func_00195388(&turn, 1.5707964f, 3.0f);
+        EntityMath_EaseAngleToward(&turn, 1.5707964f, 3.0f);
         entity->unk90 += turn - entity->model->unkD0[0];
     } else {
         turn = entity->model->unkD0[0];
-        func_00195388(&turn, 0.0f, 2.0f);
+        EntityMath_EaseAngleToward(&turn, 0.0f, 2.0f);
         entity->unk90 += turn - entity->model->unkD0[0];
     }
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -220,7 +220,7 @@ static void Crow_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             entity->unkA0 = 20;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
@@ -243,7 +243,7 @@ static void Crow_PlayAnim20(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x14, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0x14, 0, entity->params->unkC4, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
         break;
@@ -275,7 +275,7 @@ static void Crow_PlayAnim21(Entity *entity) {
     entity->unkC6 |= 0x2000;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x15, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0x15, 0, entity->params->unkC4, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
         break;

@@ -6,8 +6,8 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
@@ -21,14 +21,14 @@ float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
 char *func_0010CAB8(char *, u32);
-float func_00194FB8(float);
-float func_00194F80(void *, void *);
-float func_00195478(float *, char *);
-f32 func_00195018(f32, f32, f32);
+float EntityMath_WrapAngle(float);
+float EntityMath_DistanceXZ(void *, void *);
+float EntityMath_AngleXZ(float *, char *);
+f32 EntityMath_Approach(f32, f32, f32);
 void Vector_Copy(void *, void *);
 int func_00195E48(void *, int, void *, void *);
-void func_0018DA38(Entity *, s32, s32, s32);
-int func_00192C98(void *, int, int, u32, int);
+void EntityEvent_StartCue(Entity *, s32, s32, s32);
+int Motion_Start(void *, int, int, u32, int);
 
 static void Fadin_Think(Entity *entity, s32 unknown);
 
@@ -63,8 +63,8 @@ void Fadin_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: launches a shot at the player each time the timer Entity.unkA0 runs out, as
@@ -97,18 +97,18 @@ static void Fadin_Think(Entity *entity, s32 unknown) {
             delta_y = tip[1] - from[1];
             delta_z = tip[2] - from[2];
             angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-            angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
+            angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
             angles[2] = angles[3] = 0.0f;
         } else {
             Vector_Copy(angles, entity->model->unkD0);
-            angles[1] = func_00194FB8(angles[1] + 3.1415927f);
+            angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
         }
         Vector_Copy(target, D_00413F80);
         target[1] -= 190.0f;
-        pitch = func_00194FB8(-atan2(target[1] - from[1], func_00194F80(from, target)));
-        yaw = func_00195478(from, (char *)target);
-        angles[0] = func_00195018(angles[0], pitch, entity->params->unk436);
-        angles[1] = func_00195018(angles[1], yaw, entity->params->unk438);
+        pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
+        yaw = EntityMath_AngleXZ(from, (char *)target);
+        angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->unk436);
+        angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->unk438);
         if (unkE0->unk7A % 3 == entity->unkD7 % 3U) {
             func_00195E48(entity, entity->params->unk430, from, angles);
         } else {
@@ -118,9 +118,9 @@ static void Fadin_Think(Entity *entity, s32 unknown) {
         if (unkE0->unk7A < 0) {
             unkE0->unk7A = 0;
         }
-        func_0018DA38(entity, entity->params->unk43A, entity->params->unk43C, entity->params->unk43E);
+        EntityEvent_StartCue(entity, entity->params->unk43A, entity->params->unk43C, entity->params->unk43E);
         entity->unkA0 = entity->params->unk434 + rand() % 3;
     }
-    func_00192C98(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }

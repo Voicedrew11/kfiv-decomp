@@ -6,8 +6,8 @@
 
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Think(Entity *, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
@@ -17,7 +17,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
-int func_00192C98(void *, int, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 
 static void LivingStatue_ThinkHoldAnim1(Entity *entity);
 
@@ -66,8 +66,8 @@ void LivingStatue_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler of a spawn whose EntitySpawnInfo.unk40 is set: keeps the entity in animation 1
@@ -81,5 +81,5 @@ static void LivingStatue_ThinkHoldAnim1(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
-    func_00192C98(entity, 1, 0, 0, 0);
+    Motion_Start(entity, 1, 0, 0, 0);
 }

@@ -9,9 +9,9 @@
 int rand(void);
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-void func_001914B0(EntityModel *, s32, s32, s32);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
@@ -19,40 +19,40 @@ extern u32 D_00446ED4;
 void func_00196870(void *, int);
 int func_0019A448(void *, void *, int, int, int, int, int);
 void func_00196CC0(char *);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 extern PlayerData D_00413F80;
-s32 func_0018ED98(Entity *, f32, f32);
-s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_0018FD50(Entity *, s32);
-void func_00190B88(Entity *, s32);
-int func_0018F030(char *);
-int func_0018EAC0(void *, void *);
-s32 func_00190F90(Entity *, s32, f32);
+s32 EntityAi_ShouldGuard(Entity *, f32, f32);
+s32 EntityAi_ShouldDodge(Entity *, f32, f32);
+s32 EntityAi_PickCombatChoice(Entity *, s32);
+void EntityAi_LowerChoiceWeight(Entity *, s32);
+int EntityAi_PickAttack(char *);
+int EntityAi_TurnFromPush(void *, void *);
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 int func_0019A538(void *, void *, int);
-s32 func_00191600(Entity *, EntityUnkE0SlotBits *, s32, s32);
-void func_0018D670(Entity *, s32, s32, s32);
-void func_0018D8B8(Entity *, s32, s32, s32);
+s32 Motion_StepSlot(Entity *, EntityUnkE0SlotBits *, s32, s32);
+void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
+void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 int func_001960C0(void *, int, int, int, int, float);
 int func_00196120(Entity *, void *, s32, void *, f32);
 s32 func_00199EB8(Entity *, f32 *, f32);
 s32 func_00195AC0(Entity *, void *, s32, s32, s32);
 void func_0019A290(Entity *, s32);
-void func_00190A30(char *);
+void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *entity, void (*callback)(void), int run);
 void func_00195898(char *, u8);
-void func_0018DCD8(Entity *);
-float func_00195478(float *, char *);
-float func_001957B8(float, float);
+void EntityEvent_OnDeath(Entity *);
+float EntityMath_AngleXZ(float *, char *);
+float EntityMath_AngleDifference(float, float);
 float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
 char *func_0010CAB8(char *, u32);
-float func_00194FB8(float);
-float func_00194F80(void *, void *);
-f32 func_00195018(f32, f32, f32);
+float EntityMath_WrapAngle(float);
+float EntityMath_DistanceXZ(void *, void *);
+f32 EntityMath_Approach(f32, f32, f32);
 int func_001B4F30(u16, void *, void *, void *, void *);
 void *memset(void *, int, u32);
 void sceVu0TransMatrix(float *, float *, float *);
@@ -111,18 +111,18 @@ void Minion_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
+    Motion_ClearPartSlots(entity->model);
     if (!(rand() & 1)) {
-        func_001914B0(entity->model, 4, 5, 1);
+        Motion_SetPartSlots(entity->model, 4, 5, 1);
         unkE0->unk7B = 0;
     } else {
-        func_001914B0(entity->model, 6, 7, 1);
+        Motion_SetPartSlots(entity->model, 6, 7, 1);
         unkE0->unk7B = 1;
     }
     ((EntityUnkE0Kind151D30 *)unkE0)->unk80.bit5 = 1;
     ((EntityUnkE0Kind151D30 *)unkE0)->unk80.bit6 = 1;
     ((EntityUnkE0Kind151D30 *)unkE0)->unk88.bit6 = 1;
-    func_00193378(entity->model, 0, 0);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with Minion_ThinkCombat for state 2. Once
@@ -142,7 +142,7 @@ static void Minion_Think(Entity *entity, s32 unknown) {
     }
     if (entity->unkC6 == 0) {
         func_00196CC0((char *)entity);
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
         } else {
@@ -177,15 +177,15 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
-    if (func_0018ED98(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, Minion_Guard, 1);
         return;
     }
-    if (func_0018EEE0(entity, 300.0f, 0.5235988f)) {
+    if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, Minion_Dodge, 1);
         return;
     }
-    side = func_0018FD50(entity, 0);
+    side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
     if (entity->unkA0 == 0 || side == 0) {
         entity->unkCF = entity->unkCD;
@@ -193,10 +193,10 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->unkCD != entity->unkCF) {
             entity->unk9E = D_00446ED4;
         }
-        func_00190B88(entity, side);
+        EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
         case 0:
-            if (func_0018F030((char *)entity)) {
+            if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, Minion_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, Minion_MeleeAttack, unknown);
@@ -217,13 +217,13 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (unkE0->unk78 == 0) {
-        turn = func_0018EAC0(entity, direction);
+        turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
             entity->unkC8 = 0x241;
         } else if (turn < 0) {
             entity->unkC8 = 0x141;
         } else {
-            entity->unkC8 = func_00190F90(entity, 1, entity->radius + 100.0f + 30.0f);
+            entity->unkC8 = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -252,10 +252,10 @@ static void Minion_Animate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))func_0019A538)(entity, &slots->unk80, 0, rate);
     } else {
         previous = slots->unk80.unk04;
-        ENTITY_FLAG_BITS(entity)->bit34 = func_00191600(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits11);
+        ENTITY_FLAG_BITS(entity)->bit34 = Motion_StepSlot(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits11);
         if (slots->unk80.index != 3) {
-            func_0018D670(entity, slots->unk80.index, previous, slots->unk80.unk04);
-            func_0018D8B8(entity, slots->unk80.index, previous, slots->unk80.unk04);
+            EntityEvent_StartFrameEffects(entity, slots->unk80.index, previous, slots->unk80.unk04);
+            EntityEvent_StartFrameCues(entity, slots->unk80.index, previous, slots->unk80.unk04);
         }
     }
     if (slots->unk88.unk01 != 0) {
@@ -279,10 +279,10 @@ static void Minion_Animate(Entity *entity) {
         }
         if (unkE0->unk79 != 2) {
             previous = slots->unk88.unk04;
-            unkE0->unk7A = func_00191600(entity, &slots->unk88, 1, ENTITY_FLAG_BITS(entity)->bits11);
+            unkE0->unk7A = Motion_StepSlot(entity, &slots->unk88, 1, ENTITY_FLAG_BITS(entity)->bits11);
             if (slots->unk88.index == 3) {
-                func_0018D670(entity, slots->unk88.index, previous, slots->unk88.unk04);
-                func_0018D8B8(entity, slots->unk88.index, previous, slots->unk88.unk04);
+                EntityEvent_StartFrameEffects(entity, slots->unk88.index, previous, slots->unk88.unk04);
+                EntityEvent_StartFrameCues(entity, slots->unk88.index, previous, slots->unk88.unk04);
             }
         }
     }
@@ -520,7 +520,7 @@ static void Minion_Move(Entity *entity) {
 
 /* The on_hit handler: as EntityAi_OnHit with the type's own two reactions. */
 static void Minion_OnHit(Entity *entity) {
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     ENTITY_FLAG_BITS(entity)->bit10 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = 0;
@@ -539,7 +539,7 @@ static void Minion_ReactionLight(Entity *entity) {
     entity->unkC6 = 2;
     switch (entity->unkCB) {
     case 0:
-        func_0018D8B8(entity, 0xE, 0, 0);
+        EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
         func_0019A448(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, 0xE, 0, 5, 1);
         if (unkE0->unk79 == 0) {
             func_0019A448(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk88, 1, 0xE, 0, 5, 1);
@@ -664,7 +664,7 @@ static void Minion_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit14 = 0;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
@@ -687,7 +687,7 @@ static void Minion_Dodge(Entity *entity) {
     entity->unkC6 |= 8;
     switch (entity->action_step) {
     case 0:
-        if (func_001957B8(D_00413F80.unk14, func_00195478(D_00413F80.position, (char *)entity->model->position)) * 57.29578f > 0.0f) {
+        if (EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position)) * 57.29578f > 0.0f) {
             func_0019A448(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, 6, 0, entity->params->unkC4 >> 1, 1);
             if (unkE0->unk79 == 0) {
                 func_0019A448(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk88, 1, 6, 0, entity->params->unkC4 >> 1, 1);
@@ -723,7 +723,7 @@ static void Minion_Dodge(Entity *entity) {
 }
 
 /* Helper of Minion_RangedAttack: launches the record's shots whose frame has come, as
-   func_0018CF30 does, from both launch points while work byte unk79 is 0 and afterwards only from
+   EntityShot_LaunchAimed does, from both launch points while work byte unk79 is 0 and afterwards only from
    the one work byte unk7B picks. */
 static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from, s32 frame_to, f32 *target, f32 pitch_rate, f32 yaw_rate) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -764,17 +764,17 @@ static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 fr
                     delta_y = tip[1] - from[1];
                     delta_z = tip[2] - from[2];
                     angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                    angles[1] = func_00194FB8(-atan2f(delta_z, delta_x) + 1.5707964f);
+                    angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                     angles[2] = angles[3] = 0.0f;
                 } else {
                     Vector_Copy(angles, entity->model->unkD0);
-                    angles[1] = func_00194FB8(angles[1] + 3.1415927f);
+                    angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
                 }
                 if (target != NULL) {
-                    pitch = func_00194FB8(-atan2(target[1] - from[1], func_00194F80(from, target)));
-                    yaw = func_00195478(from, (char *)target);
-                    angles[0] = func_00195018(angles[0], pitch, pitch_rate);
-                    angles[1] = func_00195018(angles[1], yaw, yaw_rate);
+                    pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
+                    yaw = EntityMath_AngleXZ(from, (char *)target);
+                    angles[0] = EntityMath_Approach(angles[0], pitch, pitch_rate);
+                    angles[1] = EntityMath_Approach(angles[1], yaw, yaw_rate);
                 }
                 func_001B4F30(record->unk10[i].unk00, shot, from, angles, entity);
             }

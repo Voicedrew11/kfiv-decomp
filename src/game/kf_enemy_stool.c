@@ -8,22 +8,22 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
-void func_00190A30(char *);
+void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_RangedAttack(Entity *);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 s32 func_00197078(Entity *);
-int func_0018F030(char *);
+int EntityAi_PickAttack(char *);
 void EntityAi_MeleeAttack(Entity *);
 
 static void Stool_OnHit(Entity *entity);
@@ -65,8 +65,8 @@ void Stool_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The on_hit handler: with flag bits 38-39 not 0 it starts EntityAi_RangedAttack with ranged record
@@ -75,7 +75,7 @@ void Stool_Init(Entity *entity) {
 static void Stool_OnHit(Entity *entity) {
     u64 flags;
 
-    func_00190A30((char *)entity);
+    EntityAi_LowerWeightsAfterHit((char *)entity);
     flags = entity->flags;
     if ((s32)(flags >> 38) & 3) {
         entity->flags = (flags & ~(3UL << 58)) | (1UL << 57);
@@ -94,7 +94,7 @@ static void Stool_OnHit(Entity *entity) {
 }
 
 /* The think handler: no states and no look at the player. While the entity is not busy it starts
-   the attack func_0018F030 picks when func_00197078 says so and the pause Entity.unkA2 is over;
+   the attack EntityAi_PickAttack picks when func_00197078 says so and the pause Entity.unkA2 is over;
    else it starts the move action. */
 static void Stool_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0;
@@ -102,7 +102,7 @@ static void Stool_Think(Entity *entity, s32 unknown) {
     unkE0 = &entity->unkE0;
     if (entity->unkC6 == 0) {
         if (func_00197078(entity) != 0 && entity->unkA2 == 0) {
-            if (func_0018F030((char *)entity) != 0) {
+            if (EntityAi_PickAttack((char *)entity) != 0) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);

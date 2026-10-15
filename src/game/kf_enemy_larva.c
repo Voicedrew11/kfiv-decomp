@@ -12,8 +12,8 @@ extern MapSlot D_0038CD20[];
 extern s32 D_003E6E40[][2];
 void func_001958A8(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
-void func_00191478(EntityModel *);
-int func_00193378(EntityModel *, s32, s32);
+void Motion_ClearPartSlots(EntityModel *);
+int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
@@ -22,20 +22,20 @@ void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern u32 D_00446ED4;
 void func_00196870(void *, int);
-void func_0018E9C0(void *);
+void EntityAi_StepState(void *);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkCombat(Entity *, s32);
-void func_0018D600(char **, int, u32, int);
-int func_00192C98(void *, int, int, u32, int);
+void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
+int Motion_Start(void *, int, int, u32, int);
 void func_00195898(char *, u8);
-void func_0018DCD8(Entity *);
+void EntityEvent_OnDeath(Entity *);
 char *func_0010CAB8(char *, u32);
 int rand(void);
 float sinf(float);
 float cosf(float);
 float atan2f(float, float);
 s32 func_00195AC0(Entity *, void *, s32, s32, s32);
-void func_00195588(Vector4 *, float);
+void EntityMath_FacingVector(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
 
 static void Larva_Think(Entity *entity, s32 unknown);
@@ -91,8 +91,8 @@ void Larva_Init(Entity *entity) {
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_00191478(entity->model);
-    func_00193378(entity->model, 0, 0);
+    Motion_ClearPartSlots(entity->model);
+    Motion_StepModel(entity->model, 0, 0);
     record = &((MapSlotUnk10 *)D_0038CD20[entity->group_id].unk10)[(s8)((EntityFlagWord *)&entity->spawn_info->unk38)->bytes[3]];
     record->unk74 = 0.5f;
     record->unk70 = 1.0f;
@@ -113,7 +113,7 @@ static void Larva_Think(Entity *entity, s32 unknown) {
         func_00196870(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_0018E9C0(entity);
+        EntityAi_StepState(entity);
         switch (entity->state) {
         case 1:
         case 2:
@@ -126,7 +126,7 @@ static void Larva_Think(Entity *entity, s32 unknown) {
         }
     }
     if (D_00446ED4 % 20U == 0) {
-        func_0018D600((char **)entity, entity->params->unk43A, 0xFF, (int)entity->model->unkD0);
+        EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43A, 0xFF, (int)entity->model->unkD0);
     }
     if (unkE0->unk6A != 0) {
         unkE0->unk6A--;
@@ -153,7 +153,7 @@ static void Larva_Dormant(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 1, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 1, 0, entity->params->unkC4, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         unkE0->unk1C = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
@@ -168,7 +168,7 @@ static void Larva_Dormant(Entity *entity) {
         break;
     case 1:
         if (entity->distance_to_player < (f32)entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
-            func_00192C98(entity, 2, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 2, 0, entity->params->unkC4, 0);
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
             entity->action_step++;
@@ -212,7 +212,7 @@ static void Larva_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x10, 0, 5, 1);
+        Motion_Start(entity, 0x10, 0, 5, 1);
         entity->flags &= ~0x3800;
         entity->flags |= 0x4000;
         entity->flags |= 0x100000;
@@ -236,7 +236,7 @@ static void Larva_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             entity->unkA0 = 20;
-            func_0018DCD8(entity);
+            EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
@@ -263,7 +263,7 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x11, 0, 0, 1);
+        Motion_Start(entity, 0x11, 0, 0, 1);
         entity->flags &= ~0x3800;
         entity->flags |= 0x200000;
         entity->flags |= 0x100000;
@@ -316,7 +316,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         half = 0.5f;
-        func_00192C98(entity, 0x12, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0x12, 0, entity->params->unkC4, 1);
         degree = 0.017453292f;
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
@@ -367,7 +367,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
             unkE0->unk48 = (f32)entity->params->unk432;
         }
         if (D_00446ED4 % 3U == 0) {
-            func_0018D600((char **)entity, entity->params->unk43C, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43C, 0xFF, (int)entity->model->unkD0);
         }
         if (unkE0->unk7C == 0) {
             unkE0->unk7C = func_00195AC0(entity, entity->params->unk240, 0, 1, 2);
@@ -380,7 +380,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
             entity->model->unkE0[1] = unkE0->unk58;
             entity->model->unkE0[2] = unkE0->unk5C;
             unkE0->unk7B = 1;
-            func_0018D600((char **)entity, entity->params->unk43E, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43E, 0xFF, (int)entity->model->unkD0);
             func_00195898((char *)entity, 2);
             entity->flags &= ~0x200000;
             entity->flags &= ~0x100000;
@@ -395,7 +395,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
         break;
     }
     unkE0->unk68++;
-    func_00195588((Vector4 *)direction, entity->model->unkD0[1]);
+    EntityMath_FacingVector((Vector4 *)direction, entity->model->unkD0[1]);
     Vector_Scale(direction, direction, unkE0->unk4C);
     entity->unk84 += direction[0];
     entity->unk88 += unkE0->unk48;
@@ -405,7 +405,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
 
 /* A second death action (busy bit 0x40), which Larva_DormantHeldAtModelPoint starts when
    work byte unk7A is below 0: animation 17; fades the model out over 20 frames while the entity
-   moves down (y grows downward, func_0018A9F0) with a speed that grows by EntityParams.unk430
+   moves down (y grows downward, EntityCollision_DistanceToPropFloor) with a speed that grows by EntityParams.unk430
    (limit unk432), then frees its effects and removes it. */
 static void Larva_DeathFallAndFade(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -413,7 +413,7 @@ static void Larva_DeathFallAndFade(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_00192C98(entity, 0x11, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0x11, 0, entity->params->unkC4, 1);
         ENTITY_FLAG_BITS(entity)->bit22 = 0;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
         ENTITY_FLAG_BITS(entity)->bit27 = 1;
