@@ -110,7 +110,7 @@ SoundJobSlot mg_bank_job = { /* 0x3EF6A8 the mg bank's job */
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };
 
-f32 sound_cos_polynomial[4] __attribute__((aligned(16))) = { /* 0x3EF6E0 what func_001CE408 loads into VU0 */
+f32 sound_cos_polynomial[4] __attribute__((aligned(16))) = { /* 0x3EF6E0 what Sound_CosSin loads into VU0 */
     2.60188699e-06f, -0.000198074136f, 0.0083330255f, -0.166666567f,
 };
 

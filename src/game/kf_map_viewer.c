@@ -23,7 +23,7 @@ void Sound_MuteTagged(void);
 void Sound_UnmuteTagged(void);
 void Sound_UnmutePositional(void);
 void Sound_MutePositional(void);
-int func_001CEBE0(void);
+int SoundDriver_FlushCommands(void);
 void *memset(void *, int, u32);
 u8 func_00109800(void); // match: u8 here; declared void, the call site is compiled differently
 void func_00109878(int);
@@ -145,7 +145,7 @@ void MapViewer_Run(void) {
         Sound_MutePositional();
         Sound_UpdateTagged();
         Sound_MuteTracked();
-        func_001CEBE0();
+        SoundDriver_FlushCommands();
         viewer_entries[picked_viewer].run();
         Sound_UnmuteTagged();
         Sound_UnmutePositional();

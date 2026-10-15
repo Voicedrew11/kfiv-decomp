@@ -17,8 +17,8 @@ void System_Init(void);
 void Display_Init(void);
 int sceGsSyncV(int);
 void Vram_Clear(int, int);
-int func_001CB778(void);
-void func_001CB9A0(void);
+int SoundDriver_Init(void);
+void SoundDriver_ReleaseAll(void);
 void System_InitMemory(void);
 void func_001B5390(void);
 void func_001B53E8(void);
@@ -51,8 +51,8 @@ int main(void) {
     Display_Init();
     sceGsSyncV(0);
     Vram_Clear(0, 0x4000);
-    func_001CB778();
-    func_001CB9A0();
+    SoundDriver_Init();
+    SoundDriver_ReleaseAll();
     System_InitMemory();
     ((void (*)(int))func_001B5390)(0); // match: retail passes a zero the function does not take
     func_001B53E8();
@@ -93,7 +93,7 @@ int main(void) {
         }
         func_001000C8(0x263);
         func_001001C0(D_00446734 != 0 ? D_00446738 : 0x63);
-        func_001CB9A0();
+        SoundDriver_ReleaseAll();
         Sound_Init();
         if (player_state.unk1A8 != 0) {
             sceGsSyncV(0);

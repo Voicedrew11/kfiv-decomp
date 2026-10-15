@@ -272,7 +272,7 @@ void Sound_UnmuteTagged(void);
 void Sound_UnmutePositional(void);
 void Sound_MutePositional(void);
 void func_001B5460(void);
-int func_001CEBE0(void);
+int SoundDriver_FlushCommands(void);
 s16 MenuPad_Update(void);
 extern GsDrawEnv D_00432D80;
 extern s32 D_00446AC4;
@@ -597,8 +597,8 @@ extern s8 D_00446BE4;               /* 0: option 0 untouched, 1: toggled and not
 extern s8 D_00446BE5;               /* counts the two steps of leaving when the screen is a start-up step */
 void Sound_SetBgmVolume(s32);
 void Sound_SyncBgmLevel(void);
-void func_001CBED8(void);
-void func_001CC018(void);
+void SoundDriver_SetMono(void);
+void SoundDriver_SetStereo(void);
 extern s8 D_004210B0[12];
 extern s8 D_004210C0[12];
 extern s8 D_00446BE6;
@@ -2184,7 +2184,7 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
     mktime(tm_fields);
     D_00446C94 = mode;
     D_004472D0 = D_004472D4 = Pad_GetMode(0, 0);
-    while (func_001CEBE0(), menu_run_steps[D_00446AC4]() != 0) {
+    while (SoundDriver_FlushCommands(), menu_run_steps[D_00446AC4]() != 0) {
         sceGsSyncPath(0, 0);
         D_00447200 = Menu_EndFrame(1);
         func_001B5460();
@@ -2706,7 +2706,7 @@ s32 Menu_EndFrame(s32 run_handler) {
     s32 even_field;
 
     func_001E5070(game_options[10]);
-    func_001CEBE0();
+    SoundDriver_FlushCommands();
     sceGsSyncPath(0, 0);
     D_00446C98 = Timer_GetTicks();
     even_field = sceGsSyncV(0) == 0;
@@ -6303,14 +6303,14 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
             if (game_options[0] == 0) {
                 if (D_00446BE0 != 0) {
                     D_00446BE4 = 2;
-                    func_001CBED8();
+                    SoundDriver_SetMono();
                 } else {
                     D_00446BE4 = 4;
                 }
             } else {
                 if (D_00446BE0 == 0) {
                     D_00446BE4 = 3;
-                    func_001CC018();
+                    SoundDriver_SetStereo();
                 } else {
                     D_00446BE4 = 4;
                 }
@@ -6425,14 +6425,14 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
                         if (game_options[0] == 0) {
                             if (D_00446BE0 != 0) {
                                 D_00446BE4 = 2;
-                                func_001CBED8();
+                                SoundDriver_SetMono();
                             } else {
                                 D_00446BE4 = 4;
                             }
                         } else {
                             if (D_00446BE0 == 0) {
                                 D_00446BE4 = 3;
-                                func_001CC018();
+                                SoundDriver_SetStereo();
                             } else {
                                 D_00446BE4 = 4;
                             }

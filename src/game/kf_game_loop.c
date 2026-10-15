@@ -36,7 +36,7 @@ int func_001060C0(void);
 void func_00104EC8(void);
 void func_001B5A10(void);
 void Sound_LoadMgBank(int);
-void func_0019C520(void);
+void Sound_ApplyStereoOption(void);
 void Map_LoadAtOnce(int);
 int func_001D20A0(void);
 void func_001D2048(PlayTime);
@@ -74,7 +74,7 @@ void func_001B5778(void);
 void Sound_SetBgmVolume(int);
 void Sound_SetBankVolumes(int);
 int sceGsSyncV(int);
-int func_0019F6B0(void);
+int Sound_BgmLoadCanYield(void);
 void func_00102558(void);
 void func_001112B0(void);
 void func_001095D0(void);
@@ -127,7 +127,7 @@ void sceVu0InversMatrix(void *, void *);
 void sceVu0MulMatrix(void *, void *, void *);
 void Sound_StopAll(int);
 int Sound_LoadMapBankStep(int, int);
-int func_001A0C18(int, int, int);
+int Sound_LoadEntityBankStep(int, int, int);
 int Sound_LoadBgm(int, int);
 void MapLoad_RequestHold(void);
 int MapLoad_IsHeld(void);
@@ -215,7 +215,7 @@ void func_001000C8(int arg) {
     func_001B5A10();
     Player_LoadArmModels();
     Sound_LoadMgBank(player_state.equipped_magic);
-    func_0019C520();
+    Sound_ApplyStereoOption();
 }
 
 /* The game proper: places the player (new game) or resumes a loaded one, runs the main loop until
@@ -315,7 +315,7 @@ void func_001001C0(int arg) {
     Sound_SetBankVolumes(0);
     while (sound_load_queue.unk0C != 0 ||
            ((sound_load_queue.unk04 != 0 || sound_load_queue.unk18 != 0) &&
-            (sound_load_queue.unk18 != 0 || sound_load_queue.unk04 == 0 || func_0019F6B0() == 0))) {
+            (sound_load_queue.unk18 != 0 || sound_load_queue.unk04 == 0 || Sound_BgmLoadCanYield() == 0))) {
         while (sceGsSyncV(0) != 1) {
         }
         Timer_Restart();
@@ -712,7 +712,7 @@ void func_00101618(void) {
         sound_load_queue.unk14 = NULL;
     }
     if (sound_load_queue.step == 3 && (sound_load_queue.unk0C != 0 || sound_load_queue.unk18 != 0)) {
-        if (func_0019F6B0() != 0) {
+        if (Sound_BgmLoadCanYield() != 0) {
             sound_load_queue.step = 0;
         }
     }
@@ -736,7 +736,7 @@ void func_00101618(void) {
         break;
     case 2:
         if (sound_load_queue.unk18 != 0) {
-            sound_load_queue.unk18 = func_001A0C18(sound_load_queue.unk1C, sound_load_queue.unk20, sound_load_queue.unk24 + 7);
+            sound_load_queue.unk18 = Sound_LoadEntityBankStep(sound_load_queue.unk1C, sound_load_queue.unk20, sound_load_queue.unk24 + 7);
             if (sound_load_queue.unk18 == 0) {
                 sound_load_queue.step = 0;
             }
@@ -784,7 +784,7 @@ void func_001017A8(void) {
     if (sound_load_queue.unk18 != 0) {
         return;
     }
-    if (sound_load_queue.unk04 != 0 && func_0019F6B0() == 0) {
+    if (sound_load_queue.unk04 != 0 && Sound_BgmLoadCanYield() == 0) {
         return;
     }
     load_held = FALSE;

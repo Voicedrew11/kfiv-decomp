@@ -1,5 +1,6 @@
 /* The game's sound layer over the driver (kf_sound.c): voices, volumes, sounds played at a
-   point and panned by where it lies from the player, tagged (looping) sounds, BGM and bank loading. */
+   point and panned by where it lies from the player, tagged (looping) sounds, BGM, bank loading and the
+   reverb settings of rev_para.dat. */
 #ifndef KF_SOUND_GAME_H
 #define KF_SOUND_GAME_H
 
@@ -12,14 +13,14 @@
 /* Starts the sound driver and resets the sound state: loads the se_com and sfx_com banks into the heap,
    reads rev_para.dat, and frees every channel, queued request and claimed voice */
 void Sound_Init(void);
-/* Applies option 0 (game_options[0]) to the driver: func_001CC018 when it is set, func_001CBED8 when not */
-void func_0019C520(void);
-/* Once a frame: starts the queued tagged sounds; then, unless a cue change is pending (D_004470E2), updates
-   the tagged channels, the map's effect level and the driver; otherwise waits for the driver to finish it */
+/* Applies the stereo option (game_options[0]) to the driver: SoundDriver_SetStereo when set, else SoundDriver_SetMono */
+void Sound_ApplyStereoOption(void);
+/* Once a frame: starts the queued tagged sounds; then, unless a reverb change is pending (D_004470E2),
+   updates the tagged channels and the map's reverb volume and sends the frame's note commands */
 void Sound_Update(void);
-/* Sets the BGM voice's volume (func_001CDBC0) to level, kept within 0..0x7F: the music volume option */
+/* Sets the BGM voice's volume (SoundDriver_SetVoiceVolume) to level, kept within 0..0x7F: the music volume option */
 void Sound_SetBgmVolume(s32 level);
-/* Sets one volume (func_001CDBC0) on the voices of the five sound banks and on voices 6 to 9 */
+/* Sets one volume (SoundDriver_SetVoiceVolume) on the voices of the five sound banks and on voices 6 to 9 */
 void Sound_SetBankVolumes(int level);
 /* Sets the BGM fade level (D_00446860) to the music volume option (music_volume) */
 void Sound_SyncBgmLevel(void);
@@ -86,9 +87,8 @@ void Sound_StopAll(int clear_queue);
 /* BGM load step: opens the job's .bd file for the bgm number at a 64-byte aligned address and starts reading
    it; -1 while the file layer or the driver is busy */
 int Sound_BgmReadBody(LoadJob *job, int index);
-/* BGM load step: once the driver is free, gets the voice (func_001CD020) and the bank (func_001CDF90) of the
-   BGM if they are missing, then fades the BGM down by 3 a frame; done at 0 */
-int func_0019EC90(IopLoadJob *job);
+/* BGM load step: once the driver is free, fades the playing BGM down by 3 a frame; done at 0 */
+int Sound_BgmFadeOut(IopLoadJob *job);
 /* BGM load step: once the read has finished, closes the file and frees the old BGM's bank and voice */
 int Sound_BgmCloseBody(LoadJob *job);
 /* BGM load step: opens the job's .hd file for the bgm number and starts reading it into the spec's second
@@ -101,36 +101,35 @@ int Sound_BgmCloseHeader(LoadJob *job);
 int Sound_BgmReadSequence(LoadJob *job, int index);
 /* BGM load step: once the read has finished, closes the file */
 int Sound_BgmCloseSequence(LoadJob *job);
-/* BGM load step: hands the sequence to the driver (func_001CDF90) and calls func_001CE468 on the bank it
-   gives; -1 until it does */
-int func_0019F090(IopLoadJob *job);
+/* BGM load step: loads the sequence (SoundDriver_LoadSequenceStep) and starts it playing; -1 until it is loaded */
+int Sound_BgmStartSequence(IopLoadJob *job);
 /* BGM load step: raises the BGM fade level by 3 a frame (applied unless the bgm is 0x12) until it passes the
    music volume option */
 int Sound_BgmFadeIn(int unused, int mode);
-/* BGM load step: ends the cue of the last BGM and starts cue `bgm` of the rev_para.dat table (none for 0x12) */
+/* BGM load step: frees the last BGM's reverb slot and stores the reverb settings of BGM cue_index (none for 0x12) */
 int Sound_BgmStartCue(void *context, int cue_index);
-/* BGM load step: unless the bgm is 0x12, waits for the driver and calls func_001CEFA0 on the cue, flagging
+/* BGM load step: unless the bgm is 0x12, waits for the driver and sends the BGM's reverb settings, flagging
    the change (D_004470E2) */
-int func_0019F220(void *actor, int mode);
+int Sound_BgmApplyReverb(void *actor, int mode);
 /* Reads the file request->name formats with the current map's unk70 into a new buffer of the sound heap, a
-   step a call; 1 when done */
-s32 func_0019F3A0(LoadRequest *request);
-/* Load step: hands the job's spec to the driver (func_001CD020) and keeps the result */
-int func_0019F498(IopLoadJob *job);
-/* Load step: once the driver is free, calls func_001CD7E0 on the job's result */
-int func_0019F4F8(IopLoadJob *job);
+   step a call; 1 when done. Nothing calls it */
+s32 Sound_ReadMapBankFileStep(LoadRequest *request);
+/* BGM load step: loads the BGM's voice (SoundDriver_LoadVoiceStep) and keeps it in the job */
+int Sound_BgmLoadVoice(IopLoadJob *job);
+/* BGM load step: once the transfer to sound memory is done, frees the IOP copy of the voice's samples */
+int Sound_BgmFreeSampleBuffer(IopLoadJob *job);
 /* Loads BGM bgm a step a call while pending; returns 0 once it is the loaded one */
 int Sound_LoadBgm(int bgm, int pending);
-/* Returns D_0044685C, which the BGM load steps clear while they work */
-int func_0019F6B0(void);
-/* Load step: reads the file job->name into the job's first buffer, waiting for it */
-int func_0019F6B8(LoadJob *job);
-/* Load step: reads the file request->name into the request's buffer, waiting for it */
-s32 func_0019F788(LoadRequest *request);
-/* Load step: as func_0019F498 */
-int func_0019F7F0(IopLoadJob *job);
-/* Load step: as func_0019F4F8 */
-int func_0019F850(IopLoadJob *job);
+/* Whether the BGM load may be set aside for another sound load (D_0044685C) */
+int Sound_BgmLoadCanYield(void);
+/* Load step (Sound_RunFileLoad): reads the file job->name into the job's first buffer, waiting for it */
+int Sound_ReadJobFile(LoadJob *job);
+/* Load step (Sound_RunFileLoad): reads the file request->name into the request's buffer, waiting for it */
+s32 Sound_ReadRequestFile(LoadRequest *request);
+/* Load step (Sound_RunFileLoad): as Sound_BgmLoadVoice */
+int Sound_FileLoadVoice(IopLoadJob *job);
+/* Load step (Sound_RunFileLoad): as Sound_BgmFreeSampleBuffer */
+int Sound_FileLoadFreeSampleBuffer(IopLoadJob *job);
 /* Plays a sound of bank while distance is within range: volume falls off linearly, panned by angle, with a
    random bend */
 void Sound_PlayLinear(u8 sound, int bank, float range, float distance, float angle);
@@ -156,30 +155,29 @@ void Sound_PlayMapLinear(u8 sound, float range, float distance, float angle);
 void Sound_PlayMapSteep(u8 sound, float range, float distance, float angle);
 /* Sound_PlayRound from the map bank */
 void Sound_PlayMapRound(u8 sound, float range, float distance, float angle);
-/* Load step: hands the job's spec to the driver (func_001CD020) and keeps the result */
-int func_001A0B10(SoundJob *job);
-/* Load step: once the driver is free, calls func_001CD7E0 on the job's result */
-int func_001A0B70(SoundJob *job);
-/* Loads the bank of args into driver slot index + 6, a step a call; 0 and the slot in *voice_out once done,
-   else 1 */
-int func_001A0C18(int args_addr, int index, int voice_out);
+/* Entity bank load step: loads the voice from the job's spec (SoundDriver_LoadVoiceStep) */
+int Sound_EntityBankLoadVoice(SoundJob *job);
+/* Entity bank load step: once the transfer to sound memory is done, frees the IOP copy of the samples */
+int Sound_EntityBankFreeSampleBuffer(SoundJob *job);
+/* Loads the sound bank of the entity type file just read into voice index + 6, a step a call; 0 and the
+   voice in *voice_out once done, else 1 */
+int Sound_LoadEntityBankStep(int args_addr, int index, int voice_out);
 /* Plays sound from bank with the falloff player kind of D_0043EE30 */
 void Sound_PlayFalloff(int sound, int kind, int bank);
-/* Map bank load step: moves on */
-s32 func_001A0D08(void);
-/* Map bank load step: waits for a pending cue change, then hands the job's spec to the driver
-   (func_001CD020) */
-int func_001A0D20(SoundJob *job);
-/* Map bank load step: once the driver is free, calls func_001CD7E0 on the job's result */
-int func_001A0D98(SoundJob *job);
-/* Map bank load step: ends the last map cue and starts the one D_0043EE78 names from the second cue table */
-int func_001A0DF8(void);
-/* Map bank load step: once the driver is free, calls func_001CEFA0 on the cue and sets D_004470E1 (sounds
-   may start) */
-int func_001A0F60(void);
-/* Map bank load step: moves on; the first time through sets D_004470E0 and returns 0, after that sets
-   D_004470E1 and returns 1 */
-int func_001A0FC8(void);
+/* Map bank load step: does nothing but move on */
+s32 Sound_MapBankNoOp(void);
+/* Map bank load step: waits for a pending reverb change, then loads the map's voice (SoundDriver_LoadVoiceStep) */
+int Sound_MapBankLoadVoice(SoundJob *job);
+/* Map bank load step: once the transfer to sound memory is done, frees the IOP copy of the samples */
+int Sound_MapBankFreeSampleBuffer(SoundJob *job);
+/* Map bank load step: frees the last map's reverb slot and stores the map's reverb settings (D_0043EE78) */
+int Sound_MapBankAddReverb(void);
+/* Map bank load step: once the upload is done, sends the map's reverb settings and sets D_004470E1 (map
+   sounds may start) */
+int Sound_MapBankApplyReverb(void);
+/* Map bank load step: the first time after Sound_Init moves on to the reverb steps; after that lets map
+   sounds start (D_004470E1) and ends the load */
+int Sound_MapBankFinishUnlessFirst(void);
 /* Loads the sound bank of a map slot (MapSlot.unk34) a step a call while pending; returns 0 once it is done */
 int Sound_LoadMapBankStep(int slot_addr, int pending);
 /* Loads the sound bank of a map slot (MapSlot.unk34), waiting until it is done */
@@ -196,5 +194,7 @@ void Sound_LoadJob(SoundJob *slot);
 void Sound_UnmutePositional(void);
 /* Makes Sound_UpdateTagged keep positioned tagged sounds at volume 0 */
 void Sound_MutePositional(void);
+/* Frees the IOP copy of a voice's samples; returns 0 */
+int Sound_FreeSampleBuffer(int voice_index);
 
 #endif

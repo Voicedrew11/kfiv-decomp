@@ -19,9 +19,9 @@
 
 extern char *D_00446F50;
 
-int func_001CED78(int, char *, int);
+int SoundDriver_PlayStreamFile(int, char *, int);
 s32 Sound_PlayMenu(s32);
-int func_001CEBE0(void);
+int SoundDriver_FlushCommands(void);
 void Texture_SendTexFlush(void);
 
 typedef void (*TitleScreenInit)(void);
@@ -268,18 +268,18 @@ void Title_SwapBuffers(void) {
 
 /* Starts the title music stream, TITLE.ADS, unless it is already playing. */
 void Title_PlayMusic(void) {
-    if (func_001CBAE0(1, 0x3090, 0) == 0) {
-        func_001CED78(0, "cdrom0:\\DATA\\TITLE.ADS;1", 0x10000);
+    if (SoundDriver_Remote(1, 0x3090, 0) == 0) {
+        SoundDriver_PlayStreamFile(0, "cdrom0:\\DATA\\TITLE.ADS;1", 0x10000);
         do {
-        } while (func_001CBAE0(1, 0x30B0) == 0);
-        func_001CBAE0(1, 0x3020, 0, 1);
+        } while (SoundDriver_Remote(1, 0x30B0) == 0);
+        SoundDriver_Remote(1, 0x3020, 0, 1);
     }
 }
 
 /* Stops the title music stream. */
 void Title_StopMusic(void) {
-    func_001CBAE0(1, 0x3050, 0);
-    func_001CBAE0(1, 0x3030, 0);
+    SoundDriver_Remote(1, 0x3050, 0);
+    SoundDriver_Remote(1, 0x3030, 0);
 }
 
 /* Sets up the logo screen: logo2, then logo, for LOGO_FRAMES each. */
@@ -545,6 +545,6 @@ int Title_UpdateGameOver(void) {
     }
     Title_DrawSprite(brightness, &game_over_sprite, 0);
     Title_DrawSprite(brightness, &game_over_ok_sprite, 0);
-    func_001CEBE0();
+    SoundDriver_FlushCommands();
     return 0;
 }
