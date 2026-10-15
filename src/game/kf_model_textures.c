@@ -20,7 +20,8 @@ void ModelTexture_ResetSlots(void) {
     D_00447050[0] = 0;
 }
 
-/* Sets texture slot `slot` (0..3) to the chunk table last sent. */
+/* Sets texture slot `slot` (0..3) to chunk_table, the table ModelTexture_SendForModel then takes as sent.
+   Nothing calls it. */
 void ModelTexture_SetSlot(int chunk_table, u32 slot) {
     if (slot < 4U) {
         texture_slots[slot] = chunk_table;

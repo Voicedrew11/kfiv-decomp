@@ -59,7 +59,7 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown);
 static void GiantBeetle_TurnParts7And12(Entity *entity);
 static void GiantBeetle_TurnParts23To32(Entity *entity);
 static void GiantBeetle_MeleeAttack0(Entity *entity);
-static void GiantBeetle_RangedAttack0(Entity *entity);
+static void GiantBeetle_ShotAttackShakingCamera(Entity *entity);
 static void GiantBeetle_Death(Entity *entity);
 
 /* Set-up of a type 76 entity: clears its work area and installs the type's handlers. */
@@ -197,7 +197,7 @@ static void GiantBeetle_ThinkWander(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but attack index 0 has the type's own
-   actions (GiantBeetle_RangedAttack0 for the ranged one, GiantBeetle_MeleeAttack0 for the melee one); closing
+   actions (GiantBeetle_ShotAttackShakingCamera for the ranged one, GiantBeetle_MeleeAttack0 for the melee one); closing
    in it takes the command of EntityAi_MoveCommand (range: the radius plus 101) with no turn away from a
    push, and it leaves flag bits 9 and 10 as they are. */
 static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
@@ -226,7 +226,7 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
-                    EntityAi_StartAction(entity, GiantBeetle_RangedAttack0, unknown);
+                    EntityAi_StartAction(entity, GiantBeetle_ShotAttackShakingCamera, unknown);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 }
@@ -399,7 +399,7 @@ static void GiantBeetle_MeleeAttack0(Entity *entity) {
 /* The ranged attack with record 0 (busy bit 1): animation 23, launching the record's shots as
    EntityAi_RangedAttack does, and also checking the hits of melee record 1; at frame 19 it shakes the camera
    (EntityAi_ShakeCamera, reach 10 for 26 frames) and calls Input_StartRumble(0x80, 13, 0). */
-static void GiantBeetle_RangedAttack0(Entity *entity) {
+static void GiantBeetle_ShotAttackShakingCamera(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
     EntityParamsUnk240 *unk240 = &entity->params->unk240[1];
