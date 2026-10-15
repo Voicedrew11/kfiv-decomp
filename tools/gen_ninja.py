@@ -290,8 +290,7 @@ def categories(srcs: list[str]) -> list[str]:
     is sce. Names cannot tell them apart: game C units split the game's asm
     into text_XXXXXXXX units just as library units do."""
     lib = next(i for i, s in enumerate(srcs) if i and s.startswith("src/sce/"))
-    return ["game" if s.startswith("src/game/") else
-            "sce" if i >= lib or s.startswith("src/sce/") else "game"
+    return ["sce" if i >= lib or s.startswith("src/sce/") else "game"
             for i, s in enumerate(srcs)]
 
 
