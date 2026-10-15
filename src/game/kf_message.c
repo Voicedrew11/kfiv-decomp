@@ -24,10 +24,10 @@ typedef char *va_list;
 #define GLYPH_GIF_NREG (7 << 28) /* high word of the glyphs' GIF tag: seven registers each */
 
 int Timer_GetTicks(void);
-void func_0010B238(TextureTableHeader *);
-void func_00109E88(void);
-u32 *func_00109990(int);
-void func_00109650(u32 *, u32 *);
+void TextureTable_QueueAll(TextureTableHeader *);
+void GsDraw_QueueTexFlush(void);
+u32 *Packet_Alloc(int);
+void Packet_AppendToChain(u32 *, u32 *);
 int func_001D0758(int, u8 *);
 void *memset(void *, int, u32);
 int vsprintf(char *, const char *, char *);
@@ -89,12 +89,12 @@ void Message_Init(void) {
     int file_handle;
     int i;
 
-    file_handle = func_00102238("font.tmr", 0, 1);
-    func_001025C0(file_handle, (void *)Message_GetFontTexture(D_00446F38), -1);
-    func_001024B0(file_handle);
-    file_handle = func_00102238("font.txc", 0, 1);
-    func_001025C0(file_handle, (void *)Message_GetFontText(D_00446F38), -1);
-    func_001024B0(file_handle);
+    file_handle = File_Open("font.tmr", 0, 1);
+    File_Read(file_handle, (void *)Message_GetFontTexture(D_00446F38), -1);
+    File_Close(file_handle);
+    file_handle = File_Open("font.txc", 0, 1);
+    File_Read(file_handle, (void *)Message_GetFontText(D_00446F38), -1);
+    File_Close(file_handle);
     glyph_count = 0;
     notice_free = notices;
     notice_shown = notices;
@@ -197,15 +197,15 @@ static void Message_Draw(void) {
     u64 *texture;
 
     if (box_open != 0 || notices_active != 0 || debug_line_count != 0) {
-        func_0010B238((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
-        func_00109E88();
+        TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
+        GsDraw_QueueTexFlush();
         if (box_open != 0) {
             glyph_count += message_box.typed;
         } else if (notices_active != 0) {
             glyph_count += notice_shown->length;
         }
         /* seven quadwords for each glyph after a header of 12 */
-        words = packet = func_00109990(glyph_count * 7 + 0xD);
+        words = packet = Packet_Alloc(glyph_count * 7 + 0xD);
         *words++ = (glyph_count * 7 + 0xB) | 0x10000000;
         *words++ = 0;
         *words++ = 0;
@@ -265,7 +265,7 @@ static void Message_Draw(void) {
         if (debug_line_count > 0) {
             Message_DrawDebugLog();
         }
-        func_00109650(packet, glyph_packet);
+        Packet_AppendToChain(packet, glyph_packet);
         glyph_count = 0;
         debug_line_count = 0;
     }

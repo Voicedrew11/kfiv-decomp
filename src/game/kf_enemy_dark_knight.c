@@ -26,7 +26,7 @@ extern PlayerData player_state;
 int rand(void);
 float sqrtf(float);
 float atan2f(float, float);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
@@ -156,16 +156,16 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
     unkE0->unk40 = 0.5f;
     first_aim = aims->unk80;
     second_aim = aims->unk90;
-    from = (f32 *)func_0010CAB8((char *)entity->model, 0x1E);
-    tip = (f32 *)func_0010CAB8((char *)entity->model, 0x1C);
+    from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1E);
+    tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1C);
     delta[0] = tip[0] - from[0];
     delta[1] = tip[1] - from[1];
     delta[2] = tip[2] - from[2];
     first_aim[0] = atan2f(-delta[1], sqrtf(delta[0] * delta[0] + delta[2] * delta[2]));
     first_aim[1] = atan2f(delta[0], delta[2]);
     first_aim[2] = 0.0f;
-    from = (f32 *)func_0010CAB8((char *)entity->model, 0x1F);
-    tip = (f32 *)func_0010CAB8((char *)entity->model, 0x1D);
+    from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1F);
+    tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1D);
     delta[0] = tip[0] - from[0];
     delta[1] = tip[1] - from[1];
     delta[2] = tip[2] - from[2];
@@ -176,8 +176,8 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
     EntityEvent_StartEffectAtPoint((char **)entity, 0x3D7, 0x1F, (int)second_aim);
     if (unkE0->unk68 > 0) {
         if (unkE0->unk68 > (s16)entity->params->unk434 - entity->params->unk436) {
-            from = (f32 *)func_0010CAB8((char *)entity->model, 4);
-            tip = (f32 *)func_0010CAB8((char *)entity->model, 5);
+            from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 4);
+            tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 5);
             delta[0] = tip[0] - from[0];
             delta[1] = tip[1] - from[1];
             delta[2] = tip[2] - from[2];

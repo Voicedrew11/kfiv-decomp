@@ -4,11 +4,11 @@
 
 void Vector_Add(void *, void *, void *);
 s32 Sound_StartTaggedAt(s8, u8, u8, f32, Vector4Arg *);
-u16 func_001090E0(char *);
+u16 ModelMotion_GetLastFrame(char *);
 int Sound_StopTagged(char);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void func_0010B5D0(ModelPart *);
+void Model_MultiplyChildMatrices(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
 extern int D_00446770;
 extern int sound_load_queue[0x28 / 4];
@@ -72,7 +72,7 @@ void func_0011EFC8(MapObject *object) {
 
     if (MODEL_CHANNEL(object->model) != NULL && MODEL_CHANNEL(object->model)->param != 0) {
         if (object->unk04->unk68 & 0x20000) {
-            total = func_001090E0((char *)object->model);
+            total = ModelMotion_GetLastFrame((char *)object->model);
             if (total != 0) {
                 alpha = ((total - MODEL_CHANNEL(object->model)->param) << 7) / total;
             } else {
@@ -130,7 +130,7 @@ void func_0011F148(char *arg) {
     if (object->model->unk100 & 1) {
         part = object->model->parts;
         for (i = 0; i < part_count; i++) {
-            func_0010B5D0(part);
+            Model_MultiplyChildMatrices(part);
             part++;
         }
     }

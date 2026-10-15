@@ -11,12 +11,12 @@ extern GsDrawEnv D_00432E70;
 
 static void func_0019B4A0(void);
 static void func_0019B4A8(void);
-static void func_0019B580(void);
+static void DrawEnv_PutScreen(void);
 static void func_0019B618(void);
 
 /* Puts a 256x256 16-bit draw environment at frame page 0x1C2 with the data block D_0043EB90, waits, and puts
    the normal one back. Nothing calls it by name. */
-void func_0019B360(void) {
+void DrawEnv_PutOffscreenAndBack(void) {
     GsDrawFrame frame;
     GsDrawPacket *packet;
     memset(&frame, 0, 0x10);
@@ -45,8 +45,8 @@ static void func_0019B4A0(void) {
 static void func_0019B4A8(void) {
 }
 
-/* Puts the draw environment of func_0019B360 and waits, without putting the normal one back. */
-void func_0019B4B0(void) {
+/* Puts the draw environment of DrawEnv_PutOffscreenAndBack and waits, without putting the normal one back. */
+void DrawEnv_PutOffscreen(void) {
     GsDrawFrame frame;
     GsDrawPacket *packet;
     memset(&frame, 0, 0x10);
@@ -65,7 +65,7 @@ void func_0019B4B0(void) {
 }
 
 /* Puts the normal draw environment of the current frame buffer back. */
-static void func_0019B580(void) {
+static void DrawEnv_PutScreen(void) {
     GsDrawPacket packet;
 
     packet.tag[0] = 0x8008;

@@ -11,42 +11,47 @@ static u8 D_00447658[0x28] __attribute__((section(".bss"))) = { 0 }; /* 0x447658
 char archive_toc[0x20000] __attribute__((section(".bss"))) = { 0 };   /* 0x447680 the KF4.DAT table of contents, read whole */
 
 /* Starts the disc drive in DVD mode. */
-void func_00102150(void) {
+void File_InitDrive(void) {
     while (sceCdInit(0) == 0) {
     }
     sceCdMmode(2);
 }
 
-/* loads the KF4.DAT table of contents */
-void func_00102178(void) {
+/* Loads the KF4.DAT table of contents, read whole into archive_toc. */
+void File_LoadArchiveToc(void) {
     int file;
 
     memset(file_slots, 0, sizeof(file_slots));
     D_00447000[1] = (int)archive_toc;
     D_00447000[2] = (int)(archive_toc + 0x40);
-    file = func_00102238("KF4.DAT", 0, 0);
-    func_001025C0(file, archive_toc, 0x20000);
+    file = File_Open("KF4.DAT", 0, 0);
+    File_Read(file, archive_toc, 0x20000);
     ((KFDirHeader *)D_00447000[1])->lsn = file_slots[file].start;
-    func_001024B0(file);
+    File_Close(file);
 }
 
-void func_00102218(void) {
+/* Locks the file layer while a background read is in flight: KF_File_Open refuses to open anything. */
+void File_Lock(void) {
     D_00446710 = 1;
 }
 
-void func_00102228(void) {
+/* Unlocks the file layer. */
+void File_Unlock(void) {
     D_00446710 = 0;
 }
 
-int func_00102230(void) {
+/* Whether the file layer is locked (File_Lock). */
+int File_IsLocked(void) {
     return D_00446710;
 }
 
-int func_00102238(char *name, int nowait, int pack) {
+/* Opens a file (KF_File_Open with 1 as its ignored fourth argument); returns the slot or -1. */
+int File_Open(char *name, int nowait, int pack) {
     return KF_File_Open(name, nowait, pack, 1);
 }
 
-int func_00102258(char *name, int nowait, int pack) {
+/* Opens a file like File_Open, with 0 as KF_File_Open's ignored fourth argument; returns the slot or -1. */
+int File_OpenUnflagged(char *name, int nowait, int pack) {
     return KF_File_Open(name, nowait, pack, 0);
 }
 
@@ -112,15 +117,15 @@ int KF_File_Open(char *name, int nowait, int pack, int unused) {
     return slot;
 }
 
-/* closes a file */
-int func_001024B0(int file) {
+/* Closes a file after waiting for its read; returns 1, or -1 for a slot that is not open. */
+int File_Close(int file) {
     if (file == -1) {
         puts("-1");
     }
     if ((u32)file >= 2 || file_slots[file].active == 0) {
         return -1;
     }
-    func_00102790(file, 0);
+    File_Sync(file, 0);
     file_slots[file].active = 0;
     file_slots[file].start = 0;
     file_slots[file].cur = 0;
@@ -130,21 +135,23 @@ int func_001024B0(int file) {
 }
 
 /* closes every open file and unlocks the file layer */
-void func_00102558(void) {
+void File_CloseAll(void) {
     int i;
     KFFile *opened = file_slots;
 
     for (i = 0; i < 2; i++, opened++) {
         if (opened->active) {
-            func_00102790(i, 0);
-            func_001024B0(i);
+            File_Sync(i, 0);
+            File_Close(i);
         }
     }
     D_00446710 = 0;
 }
 
-/* reads from a file */
-int func_001025C0(int file, void *buf, int size) {
+/* Reads size bytes (all of a negative size: up to 16 MB) at the file's position into buf, waiting for them
+   unless the file was opened with nowait; returns the bytes read, 0 at the end, -1 for a slot that is not
+   open. */
+int File_Read(int file, void *buf, int size) {
     sceCdRMode mode;
     KFFile *opened;
     int sectors;
@@ -155,7 +162,7 @@ int func_001025C0(int file, void *buf, int size) {
     if (size < 0) {
         size = 0x1000000;
     }
-    func_00102790(file, 0);
+    File_Sync(file, 0);
     opened = &file_slots[file];
     if (opened->size != 0) {
         if (opened->remain == 0) {
@@ -180,7 +187,7 @@ int func_001025C0(int file, void *buf, int size) {
     }
     opened->cur += sectors;
     if (opened->nowait == 0) {
-        func_00102790(file, 0);
+        File_Sync(file, 0);
     }
     if (opened->size != 0) {
         opened->remain -= size;
@@ -188,17 +195,18 @@ int func_001025C0(int file, void *buf, int size) {
     return size;
 }
 
-/* seeks the drive to a file's next sector */
-int func_00102728(int file) {
+/* Seeks the drive to a file's next sector; returns sceCdSeek's result, -1 for a slot that is not open. */
+int File_Seek(int file) {
     if ((u32)file >= 2 || file_slots[file].active == 0) {
         return -1;
     }
-    func_00102790(file, 0);
+    File_Sync(file, 0);
     return sceCdSeek(file_slots[file].cur);
 }
 
-/* waits for the read in flight, reissuing it while the drive reports an error */
-int func_00102790(int file, int mode) {
+/* Waits for the read in flight (mode as sceCdSync), reissuing it while the drive reports an error; returns
+   sceCdSync's result. */
+int File_Sync(int file, int mode) {
     sceCdRMode retry_mode;
     u32 error;
     int result;
@@ -228,8 +236,8 @@ int func_00102790(int file, int mode) {
     return result;
 }
 
-/* the size of a file */
-int func_00102900(int file) {
+/* The size of a file (0 for a loose file), -1 for a bad slot. */
+int File_GetSize(int file) {
     if ((u32)file >= 2) {
         return -1;
     }

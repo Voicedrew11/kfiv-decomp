@@ -5,7 +5,7 @@
 #include "common.h"
 #include "kf_model.h"
 
-/* the model func_0010AEB8 draws; the older name for ModelInstance */
+/* the model ModelTexture_SendForModel draws; the older name for ModelInstance */
 typedef ModelInstance OverlaySprite;
 
 /* one 0x70-byte element PoolSlot_Draw draws (PoolSlot_DrawAll, PoolSlot_DrawAllBut15 and

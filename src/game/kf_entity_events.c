@@ -12,7 +12,7 @@
 float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 void Vector_Copy(void *, void *);
 int func_001B4F30(u16, void *, void *, void *, void *);
 extern char *D_004467C0;
@@ -137,8 +137,8 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame
             shot->unk22 = shot->unk20 = 0;
             shot->unk00 = 1;
             shot->unk28 = entity->params->unk238;
-            from = (f32 *)func_0010CAB8((char *)entity->model, record->unk10[i].unk01);
-            tip = (f32 *)func_0010CAB8((char *)entity->model, record->unk10[i].unk01 + 1);
+            from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
+            tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01 + 1);
             if (from != NULL && tip != NULL) {
                 if (record->unk10[i].unk01 != 0xFF) {
                     delta_x = tip[0] - from[0];
@@ -182,7 +182,7 @@ int EntityShot_Launch(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from
             shot->unk20 = 0;
             shot->unk22 = 0;
             shot->unk28 = entity->params->unk238;
-            origin = func_0010CAB8((char *)entity->model, record->unk10[i].unk01);
+            origin = Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
             if (origin != NULL) {
                 func_001B4F30(record->unk10[i].unk00, shot, origin, direction, entity);
             }
@@ -195,7 +195,7 @@ int EntityShot_Launch(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from
 void EntityEvent_StartEffectAtPoint(char **entity, int effect_id, u32 point_id, int rotation) {
     char *point;
 
-    point = func_0010CAB8(*entity, point_id);
+    point = Model_GetSkinnedBonePoint(*entity, point_id);
     if (point != 0) {
         Effect_StartSpawner(effect_id, point, (void *)rotation, entity);
     }
@@ -231,8 +231,8 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
         return;
     }
     for (i = 0; i < count; i++, record++) {
-        from = (f32 *)func_0010CAB8((char *)entity->model, record->unk04);
-        tip = (f32 *)func_0010CAB8((char *)entity->model, record->unk04 + 1);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk04);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk04 + 1);
         if (from != NULL && tip != NULL) {
             delta_x = tip[0] - from[0];
             delta_y = tip[1] - from[1];
@@ -335,7 +335,7 @@ void EntityEvent_Respawn(Entity *entity) {
     Effect_FreeForOwner(entity);
     if (entity->params->unkC6 != 0) {
         if (entity->params->unkC6 != 0xFFFF) {
-            bone = func_0010CAB8((char *)entity->model, entity->params->unkC5);
+            bone = Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unkC5);
             Effect_StartSpawner(entity->params->unkC6, bone, (char *)entity->model + 0xD0, entity);
         }
     }

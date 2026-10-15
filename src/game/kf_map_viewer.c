@@ -22,39 +22,39 @@ void Sound_UnmutePositional(void);
 void Sound_MutePositional(void);
 int func_001CEBE0(void);
 void *memset(void *, int, u32);
-u8 func_00109800(void); // match: u8 here; declared void, the call site is compiled differently
-void func_00109878(int);
+u8 Packet_WaitForSend(void); // match: u8 here; declared void, the call site is compiled differently
+void Packet_LayOutBuffers(int);
 int sprintf(char *, char *, ...);
-int func_00102238(int, int, int);
-int func_001024B0(int);
-int func_001025C0(int, void *, int);
-void func_00109A38(int *, int *);
-void func_0010B510(char *, int, int);
-void func_0010B5D0(ModelPart *);
-void func_0010D018(ModelInstance *, char **, char **);
-void func_0010E6A8(ModelInstance *, s64, s64);
+int File_Open(char *, int, int);
+int File_Close(int);
+int File_Read(int, void *, int);
+void Packet_GetSpareArea(int *, int *);
+void TextureTable_SetBasePointers(char *, int, int);
+void Model_MultiplyChildMatrices(ModelPart *);
+void Model_SetUpPosed(ModelInstance *, char **, char **);
+void Model_SetPrimBits(ModelInstance *, s64, s64);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void Vector_Copy(void *, void *);
 void Display_SwapBuffers(int);
-void func_001096E8(void);
-void func_001095E0(void);
-void func_0010B000(void);
+void Packet_SendChain(void);
+void Packet_SwapBuffers(void);
+void DrawList_Clear(void);
 void func_001095D0(void);
 void func_001095D8(void);
 void func_001B5460(void);
 float cosf(float);
 float sinf(float);
 void func_00107CD8(int);
-void func_00109650(u32 *, u32 *);
-u32 *func_00109990(int);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_00109E18(void);
-void func_00109E88(void);
-void func_0010A100(void *);
-void func_0010B410(TextureTableHeader *, s32);
+void Packet_AppendToChain(u32 *, u32 *);
+u32 *Packet_Alloc(int);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueFlush(void);
+void GsDraw_QueueTexFlush(void);
+void GsDraw_QueueTexturedSprite(void *);
+void TextureTable_QueueOne(TextureTableHeader *, s32);
 void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
 void sceVu0TransMatrix(float *, float *, float *);
 void sceVu0RotMatrixX(float *, float *, float);
@@ -62,7 +62,7 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0MulMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
-void func_0010A7E0(void *);
+void GsDraw_QueueVu1Matrix(void *);
 static void func_0011C160(void);
 void func_0011AAE8(void);
 float Angle_Wrap(float);
@@ -70,7 +70,7 @@ void Vector_Add(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 void func_00106C58(void);
 void func_00107E70(int, int, int);
-void func_0010D308(ModelInstance *);
+void Model_DrawPosed(ModelInstance *);
 
 extern int game_status[];
 extern MapSlot map_slots[];
@@ -163,8 +163,8 @@ void func_0011A598(void) {
 }
 
 static void func_0011A5E0(void) {
-    func_00109800();
-    func_00109878(0);
+    Packet_WaitForSend();
+    Packet_LayOutBuffers(0);
 }
 
 static inline char *align16(char *address) {
@@ -188,34 +188,34 @@ static int func_0011A600(void) {
     int count;
 
     sprintf(name, D_0043E730, picked_viewer);
-    file = func_00102238((int)name, 0, 1);
+    file = File_Open(name, 0, 1);
     if (file < 0) {
         return FALSE;
     }
-    func_00109800();
-    func_00109878(2);
+    Packet_WaitForSend();
+    Packet_LayOutBuffers(2);
     viewer_data = NULL;
     viewer_data_size = 0;
-    func_00109A38((int *)&viewer_data, &viewer_data_size);
+    Packet_GetSpareArea((int *)&viewer_data, &viewer_data_size);
     memset(viewer_data, 0, viewer_data_size);
-    size = func_001025C0(file, viewer_data, -1);
-    func_001024B0(file);
-    func_0010B510(viewer_data, 0x2BC0, 0x3FE0);
+    size = File_Read(file, viewer_data, -1);
+    File_Close(file);
+    TextureTable_SetBasePointers(viewer_data, 0x2BC0, 0x3FE0);
     if (picked_viewer != 4) {
         return TRUE;
     }
     model_data = viewer_data + size;
     model_data = align16(model_data);
-    file = func_00102238((int)D_0043E748, 0, 1);
+    file = File_Open(D_0043E748, 0, 1);
     if (file < 0) {
         return FALSE;
     }
-    size = func_001025C0(file, model_data, -1);
-    func_001024B0(file);
+    size = File_Read(file, model_data, -1);
+    File_Close(file);
     buffer = model_data + size;
     buffer = align16(buffer);
-    func_0010D018(&pointer_model, &model_data, &buffer);
-    func_0010E6A8(&pointer_model, 0x260, 0x240);
+    Model_SetUpPosed(&pointer_model, &model_data, &buffer);
+    Model_SetPrimBits(&pointer_model, 0x260, 0x240);
     Vector_Copy(&pointer_model.position, &player_state);
     pointer_model.position.y -= 100.0f;
     pointer_model.rotation.x = 0.0f;
@@ -230,7 +230,7 @@ static int func_0011A600(void) {
         ((int (*)(ModelInstance *, ModelPart *, ModelPart *))ModelMatrix_BuildPartLocal)(&pointer_model, &pointer_model.parts[i], &pointer_model.parts[i]);
     }
     for (i = 0; i < pointer_model.part_count; i++) {
-        func_0010B5D0(&pointer_model.parts[i]);
+        Model_MultiplyChildMatrices(&pointer_model.parts[i]);
     }
     bounds_min.z = bounds_min.y = bounds_min.x = D_00446798[0];
     bounds_max.z = bounds_max.y = bounds_max.x = D_0044679C[0];
@@ -270,9 +270,9 @@ void func_0011AA08(void) {
     viewer = &viewer_entries[picked_viewer];
     do {
         Display_SwapBuffers(0);
-        func_001096E8();
-        func_001095E0();
-        func_0010B000();
+        Packet_SendChain();
+        Packet_SwapBuffers();
+        DrawList_Clear();
         func_001095D0();
         func_0011AAE8();
         func_001095D8();
@@ -285,7 +285,7 @@ void func_0011AA08(void) {
                 viewer_picture = next_picture;
             }
         }
-        func_00109800();
+        Packet_WaitForSend();
     } while ((pad_state[1] & 0x2000) == 0);
 }
 
@@ -308,23 +308,23 @@ void func_0011AAE8(void) {
     u32 *packet_start;
     u32 *packet;
 
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109AD0();
-    func_0010B410((TextureTableHeader *)viewer_data, viewer_picture);
-    func_00109E88();
-    func_00109E18();
-    func_0010A100(&viewer_picture_rect);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_EndGsRegisters();
+    TextureTable_QueueOne((TextureTableHeader *)viewer_data, viewer_picture);
+    GsDraw_QueueTexFlush();
+    GsDraw_QueueFlush();
+    GsDraw_QueueTexturedSprite(&viewer_picture_rect);
     found = ((int (*)(int *, int *))entry->unk04)(&x, &y);
     if (found == 1) {
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x44);
-        func_00109AD0();
-        func_0010B410((TextureTableHeader *)viewer_data, entry->count);
-        func_00109E88();
-        func_00109E18();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+        Packet_EndGsRegisters();
+        TextureTable_QueueOne((TextureTableHeader *)viewer_data, entry->count);
+        GsDraw_QueueTexFlush();
+        GsDraw_QueueFlush();
         corner_us = D_0043E760;
         corner_vs = D_0043E770;
         if (pulse_frame < 45) {
@@ -343,7 +343,7 @@ void func_0011AAE8(void) {
         corner_ys[2] = y + (int)((sine * -32.0f + cosine * 20.0f) * 0.5f);
         corner_xs[3] = x + (int)((cosine * 32.0f - sine * 20.0f) * 0.5f);
         corner_ys[3] = y + (int)((sine * 32.0f + cosine * 20.0f) * 0.5f);
-        packet_start = packet = func_00109990(0x13);
+        packet_start = packet = Packet_Alloc(0x13);
         *packet++ = 0x10000011;
         *packet++ = 0;
         *packet++ = 0;
@@ -382,7 +382,7 @@ void func_0011AAE8(void) {
         *packet++ = 0;
         *packet++ = 0;
         *packet++ = 0x15000276;
-        func_00109650(packet_start, packet);
+        Packet_AppendToChain(packet_start, packet);
     }
     if (found == -1) {
         if (square_pulse_frame < 45) {
@@ -395,37 +395,37 @@ void func_0011AAE8(void) {
         viewer_marker_rect.first_y = (y + 0x6F0) << 4;
         viewer_marker_rect.second_x = (x + 0x6F0) << 4;
         viewer_marker_rect.second_y = (y + 0x750) << 4;
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x48);
-        func_00109AD0();
-        func_0010A100(&viewer_marker_rect);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
+        Packet_EndGsRegisters();
+        GsDraw_QueueTexturedSprite(&viewer_marker_rect);
     }
     if (entry->count >= 2) {
-        func_0010B410((TextureTableHeader *)viewer_data, entry->count * 2 | 1);
-        func_00109E88();
-        func_00109E18();
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x44);
-        func_00109AD0();
-        func_0010A100(&D_0038D7F0);
-        func_0010B410((TextureTableHeader *)viewer_data, entry->count * 2 + 2);
-        func_00109E88();
-        func_00109E18();
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x48);
-        func_00109AD0();
-        func_0010A100(&D_0038D830);
-        func_0010B410((TextureTableHeader *)viewer_data, entry->count + 1 + viewer_picture);
-        func_00109E88();
-        func_00109E18();
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x48);
-        func_00109AD0();
-        func_0010A100(&D_0038D870);
+        TextureTable_QueueOne((TextureTableHeader *)viewer_data, entry->count * 2 | 1);
+        GsDraw_QueueTexFlush();
+        GsDraw_QueueFlush();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+        Packet_EndGsRegisters();
+        GsDraw_QueueTexturedSprite(&D_0038D7F0);
+        TextureTable_QueueOne((TextureTableHeader *)viewer_data, entry->count * 2 + 2);
+        GsDraw_QueueTexFlush();
+        GsDraw_QueueFlush();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
+        Packet_EndGsRegisters();
+        GsDraw_QueueTexturedSprite(&D_0038D830);
+        TextureTable_QueueOne((TextureTableHeader *)viewer_data, entry->count + 1 + viewer_picture);
+        GsDraw_QueueTexFlush();
+        GsDraw_QueueFlush();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
+        Packet_EndGsRegisters();
+        GsDraw_QueueTexturedSprite(&D_0038D870);
     }
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+    Packet_EndGsRegisters();
     func_00107CD8(game_options[10]);
 }
 
@@ -643,9 +643,9 @@ void func_0011BCD0(void) {
             VuVector4 move;
 
             Display_SwapBuffers(0);
-            func_001096E8();
-            func_001095E0();
-            func_0010B000();
+            Packet_SendChain();
+            Packet_SwapBuffers();
+            DrawList_Clear();
             func_001B5460();
             held = pad_state[0];
             pressed = pad_state[1];
@@ -728,12 +728,12 @@ void func_0011BCD0(void) {
             Vector_Scale(&move.x, &move.x, -1.0f);
             sceVu0TransMatrix(world_view, world_view, &move.x);
             sceVu0MulMatrix(world_screen, view_screen, world_view);
-            func_0010A7E0(world_screen);
+            GsDraw_QueueVu1Matrix(world_screen);
             func_001095D0();
             func_0011C160();
             func_001095D8();
             // match: it returns a value here, which keeps $2 busy
-            ((int (*)(void))func_00109800)();
+            ((int (*)(void))Packet_WaitForSend)();
         } while (!(pressed & 0x2000));
     }
 }
@@ -758,22 +758,22 @@ static void func_0011C160(void) {
     }
     period = 60; // match: the divisor is a variable
     pulse_frame = (pulse_frame + 1) % period;
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_2, 0x51001);
-    func_00109A80(GS_REG_ALPHA_2, ((s64)alpha << 32) | 0x68);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_2, 0x51001);
+    Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)alpha << 32) | 0x68);
+    Packet_EndGsRegisters();
     pointer_model.unk148 = (s32)&viewer_default_lights;
     pointer_model.hit_count = 0;
     pointer_model.unk14C = &map_draw_state.unkA0;
-    func_0010D308(&pointer_model);
-    func_00109A50();
-    func_00109A80(0x1A, 0);
-    func_00109A80(0x1B, 0x248);
-    func_00109A80(GS_REG_ALPHA_2, 0x4000000068L);
-    func_00109A80(GS_REG_TEST_2, 0x3080B);
-    func_00109A80(GS_REG_ZBUF_2, 0x10A000118L);
-    func_00109AD0();
-    func_00109E18();
+    Model_DrawPosed(&pointer_model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x1A, 0);
+    Packet_AddGsRegister(0x1B, 0x248);
+    Packet_AddGsRegister(GS_REG_ALPHA_2, 0x4000000068L);
+    Packet_AddGsRegister(GS_REG_TEST_2, 0x3080B);
+    Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
     for (map = 0; map < 2; map++) {
         slot = &map_slots[map];
         record = (MapDrawRecord *)slot->records;
@@ -809,59 +809,59 @@ static void func_0011C160(void) {
                         record->model->hit_count = 0;
                         record->model->unk148 = (s32)&viewer_default_lights;
                         record->model->unk14C = &map_draw_state.unkA0;
-                        func_0010D308(record->model);
+                        Model_DrawPosed(record->model);
                     }
                     break;
             }
         }
     }
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_2, 0xA000118);
-    func_00109A80(0x1A, 1);
-    func_00109AD0();
-    func_00109E18();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118);
+    Packet_AddGsRegister(0x1A, 1);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
     func_00106C58();
-    func_00109E18();
+    GsDraw_QueueFlush();
     func_00107E70(0xEA, 0xB2, 0x46);
-    func_0010B410((TextureTableHeader *)viewer_data, 0);
-    func_00109E88();
-    func_00109E18();
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x31001);
-    func_00109A80(GS_REG_ALPHA_1, 0x48);
-    func_00109A80(8, 5);
-    func_00109AD0();
-    func_00109E18();
-    func_0010A100(D_0038D8B0);
-    func_0010B410((TextureTableHeader *)viewer_data, 1);
-    func_00109E88();
-    func_00109E18();
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x31001);
-    func_00109A80(GS_REG_ALPHA_1, 0x54);
-    func_00109A80(8, 5);
-    func_00109AD0();
-    func_00109E18();
-    func_0010A100(D_0038D8B0);
-    func_0010B410((TextureTableHeader *)viewer_data, 2);
-    func_00109E88();
-    func_00109E18();
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x31001);
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(8, 0);
-    func_00109AD0();
-    func_00109E18();
-    func_0010A100(D_0038D8F0);
-    func_0010B410((TextureTableHeader *)viewer_data, 3);
-    func_00109E88();
-    func_00109E18();
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x31001);
-    func_00109A80(GS_REG_ALPHA_1, 0x48);
-    func_00109AD0();
-    func_00109E18();
-    func_0010A100(D_0038D8F0);
+    TextureTable_QueueOne((TextureTableHeader *)viewer_data, 0);
+    GsDraw_QueueTexFlush();
+    GsDraw_QueueFlush();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
+    Packet_AddGsRegister(8, 5);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
+    GsDraw_QueueTexturedSprite(D_0038D8B0);
+    TextureTable_QueueOne((TextureTableHeader *)viewer_data, 1);
+    GsDraw_QueueTexFlush();
+    GsDraw_QueueFlush();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x54);
+    Packet_AddGsRegister(8, 5);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
+    GsDraw_QueueTexturedSprite(D_0038D8B0);
+    TextureTable_QueueOne((TextureTableHeader *)viewer_data, 2);
+    GsDraw_QueueTexFlush();
+    GsDraw_QueueFlush();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(8, 0);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
+    GsDraw_QueueTexturedSprite(D_0038D8F0);
+    TextureTable_QueueOne((TextureTableHeader *)viewer_data, 3);
+    GsDraw_QueueTexFlush();
+    GsDraw_QueueFlush();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
+    GsDraw_QueueTexturedSprite(D_0038D8F0);
     func_00107CD8(game_options[10]);
 }
 

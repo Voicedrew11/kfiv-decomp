@@ -43,7 +43,7 @@ int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetState(char *, u8);
 float atan2f(float, float);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
 int EntityAi_LaunchShot(void *, int, void *, void *);
 void EntityAi_SetAttackDelay(Entity *, s32);
@@ -303,7 +303,7 @@ static void IceGolem_Dormant(Entity *entity) {
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, the head following the target. On
    each frame from EntityParams.unk434 up to unk436, in steps of unk438, it launches the record's
-   shot unk10 from the point func_0010CAB8 gives for the record's unk11, towards the next point,
+   shot unk10 from the point Model_GetSkinnedBonePoint gives for the record's unk11, towards the next point,
    with a pitch of -5 degrees (EntityAi_LaunchShot). */
 static void IceGolem_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -340,8 +340,8 @@ static void IceGolem_RangedAttack0(Entity *entity) {
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         for (frame = (s16)entity->params->unk434; frame < entity->params->unk436; frame += entity->params->unk438) {
             if ((entity->unk2A == 0 || unk3D8->unk0C != 0) && elapsed < frame && entity->model->unkFC->unk82 >= frame) {
-                base = (f32 *)func_0010CAB8((char *)entity->model, unk3D8->unk11);
-                tip = (f32 *)func_0010CAB8((char *)entity->model, unk3D8->unk11 + 1);
+                base = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->unk11);
+                tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->unk11 + 1);
                 if (base != NULL && tip != NULL) {
                     delta_x = tip[0] - base[0];
                     delta_z = tip[2] - base[2];

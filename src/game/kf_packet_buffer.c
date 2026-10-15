@@ -32,13 +32,13 @@ extern u32 D_0043BB20[];
 extern u32 D_0043BB90[];
 extern u32 D_0043CD40[];
 extern u32 D_0043D290[];
-void func_00109430(void);
-void func_00109650(u32 *, u32 *);
-void func_00109878(int);
-u32 *func_00109990(int);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
+void Packet_UploadVu1Programs(void);
+void Packet_AppendToChain(u32 *, u32 *);
+void Packet_LayOutBuffers(int);
+u32 *Packet_Alloc(int);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
 
 static void *packet_chain_head[2];   /* 0x447018 first DMA tag of each buffer's chain */
 static void *packet_chain_tail[2]; /* 0x447020 last DMA tag of each buffer's chain */
@@ -50,13 +50,13 @@ static int spare_area_addr;          /* 0x447040 the area past both buffers */
 static int spare_area_size;          /* 0x447044 its size */
 
 /* Lays out the largest packet buffers and uploads the VU1 microprograms. */
-void func_00109410(void) {
-    func_00109878(0);
-    func_00109430();
+void Packet_Init(void) {
+    Packet_LayOutBuffers(0);
+    Packet_UploadVu1Programs();
 }
 
 /* Uploads the five VU1 microprograms. */
-void func_00109430(void) {
+void Packet_UploadVu1Programs(void) {
     DmaChan *channel;
 
     SEND_TO_VIF1(D_0043B1D0);
@@ -74,8 +74,8 @@ void func_001095D0(void) {
 void func_001095D8(void) {
 }
 
-/* Starts filling the other packet buffer. */
-void func_001095E0(void) {
+/* Starts filling the other packet buffer: its chain is emptied and the buffer cleared. */
+void Packet_SwapBuffers(void) {
     D_00446748 = D_00446748 == 0;
     packet_chain_head[D_00446748] = packet_chain_tail[D_00446748] = NULL;
     packet_next = packet_buffer[D_00446748];
@@ -85,7 +85,7 @@ void func_001095E0(void) {
 }
 
 /* Appends a packet (from packet to packet_end) to the chain of the buffer being filled. */
-void func_00109650(u32 *packet, u32 *packet_end) {
+void Packet_AppendToChain(u32 *packet, u32 *packet_end) {
     void **packet_head;
     void **packet_tail;
 
@@ -110,8 +110,9 @@ void func_00109650(u32 *packet, u32 *packet_end) {
     }
 }
 
-/* Ends the chain of the buffer being filled and sends it to the GS by DMA. */
-void func_001096E8(void) {
+/* Ends the chain of the buffer being filled (with a GS FINISH write and an END tag) and starts its DMA to
+   VIF1. */
+void Packet_SendChain(void) {
     void **chain_head;
     DmaTag *end_tag;
 
@@ -119,9 +120,9 @@ void func_001096E8(void) {
     if (*chain_head != 0) {
         if (packet_overflowed == 0) {
             gs_send_pending[0] = 1;
-            func_00109A50();
-            func_00109A80(GS_REG_FINISH, 0xFFFFFFFFUL);
-            func_00109AD0();
+            Packet_BeginGsRegisters();
+            Packet_AddGsRegister(GS_REG_FINISH, 0xFFFFFFFFUL);
+            Packet_EndGsRegisters();
             end_tag = packet_chain_tail[D_00446748];
             end_tag->id_and_qwc = 0x70000000;
             end_tag->address = 0;
@@ -141,7 +142,7 @@ void func_001096E8(void) {
 }
 
 /* Waits for the GS to finish reading the last buffer sent. */
-void func_00109800(void) {
+void Packet_WaitForSend(void) {
     if (gs_send_pending[0] != 0) {
         gs_send_pending[0] = 0;
         do {
@@ -153,7 +154,7 @@ void func_00109800(void) {
 }
 
 /* Lays out the packet buffers in the packet area for the given size (0 = largest). */
-void func_00109878(int size_index) {
+void Packet_LayOutBuffers(int size_index) {
     u32 size;
     int base;
     int half;
@@ -199,7 +200,7 @@ void func_00109878(int size_index) {
 }
 
 /* Takes quadwords from the packet buffer; once it overflows everything gets the start of the buffer. */
-u32 *func_00109990(int quadwords) {
+u32 *Packet_Alloc(int quadwords) {
     u32 *result = packet_next;
 
     D_0044674C += quadwords;
@@ -216,7 +217,7 @@ u32 *func_00109990(int quadwords) {
 }
 
 /* Returns the spare area's address and size. */
-void func_00109A38(int *addr, int *size) {
+void Packet_GetSpareArea(int *addr, int *size) {
     int spare_addr = spare_area_addr;
     int spare_size = spare_area_size;
     *addr = spare_addr;
@@ -224,17 +225,17 @@ void func_00109A38(int *addr, int *size) {
 }
 
 /* Starts a list of GS register writes. */
-void func_00109A50(void) {
+void Packet_BeginGsRegisters(void) {
     if (D_00446754 == NULL) {
-        D_00446754 = func_00109990(3);
+        D_00446754 = Packet_Alloc(3);
         D_00446758 = 0;
     }
 }
 
 /* Adds a GS register write to the list. */
-void func_00109A80(int reg, s64 value) {
+void Packet_AddGsRegister(int reg, s64 value) {
     if (D_00446754 != NULL) {
-        s64 *entry = (s64 *)func_00109990(1);
+        s64 *entry = (s64 *)Packet_Alloc(1);
 
         entry[0] = value;
         entry[1] = reg;
@@ -243,7 +244,7 @@ void func_00109A80(int reg, s64 value) {
 }
 
 /* Ends the list of GS register writes: fills in its DMA, VIF and GIF tags and queues it. */
-void func_00109AD0(void) {
+void Packet_EndGsRegisters(void) {
     u32 *packet;
     int i;
     int count;
@@ -277,7 +278,7 @@ void func_00109AD0(void) {
                 i++;
             } while (i < count);
         }
-        packet = func_00109990(2);
+        packet = Packet_Alloc(2);
         *packet++ = 0;
         *packet++ = 0;
         *packet++ = 0;
@@ -286,7 +287,7 @@ void func_00109AD0(void) {
         *packet++ = 0;
         *packet++ = 0;
         *packet++ = 0x13000000;
-        func_00109650(D_00446754, func_00109990(1));
+        Packet_AppendToChain(D_00446754, Packet_Alloc(1));
         D_00446754 = NULL;
         D_00446758 = 0;
     }

@@ -12,14 +12,14 @@
 extern void (*map_load_steps[])(void);
 void func_00101618(void);
 int func_001005E8(int);
-int func_00102230(void);
-void func_00102228(void);
-void func_001095E0(void);
-void func_001096E8(void);
-void func_00109800(void);
-void func_0010B000(void);
+int File_IsLocked(void);
+void File_Unlock(void);
+void Packet_SwapBuffers(void);
+void Packet_SendChain(void);
+void Packet_WaitForSend(void);
+void DrawList_Clear(void);
 void func_00117F98(void);
-void func_00123288(void);
+void Entity_UpdatePool(void);
 void Sound_Update(void);
 void func_001B5778(void);
 void Display_SwapBuffers(int);
@@ -27,8 +27,8 @@ void func_001152B8(int);
 void func_00115878(int);
 void func_001A15F8(void);
 void func_001C8938(int);
-void func_00102218(void);
-int func_00102900(int);
+void File_Lock(void);
+int File_GetSize(int);
 int sprintf(char *, char *, ...);
 void func_00114840(int);
 void func_00114AA8(int);
@@ -40,7 +40,7 @@ void func_001C8990(int, f32 *);
 void func_001034F8(int);
 void func_001187B0(void);
 void func_00119360(int);
-void func_00123158(int);
+void Entity_AddGroupToWaiting(int);
 void func_001C87D8(int);
 extern MapLoadState map_load_state;
 extern MapLoadRequest map_load_request;
@@ -103,9 +103,9 @@ void func_00117CC8(void) {
         map_load_state.request = map_load_state.next_request;
         map_load_state.next_request = NULL;
         if (map_load_state.file_handle != -1) {
-            func_001024B0(map_load_state.file_handle);
-            if (func_00102230() != 0) {
-                func_00102228();
+            File_Close(map_load_state.file_handle);
+            if (File_IsLocked() != 0) {
+                File_Unlock();
             }
             map_load_state.file_handle = -1;
         }
@@ -122,13 +122,13 @@ void func_00117CC8(void) {
                 func_001B5778();
                 while (map_load_state.step != 5) {
                     func_001005E8(0);
-                    func_00109800();
+                    Packet_WaitForSend();
                     Display_SwapBuffers(0);
-                    func_001096E8();
-                    func_001095E0();
-                    func_0010B000();
+                    Packet_SendChain();
+                    Packet_SwapBuffers();
+                    DrawList_Clear();
                     map_load_steps[map_load_state.step]();
-                    func_00123288();
+                    Entity_UpdatePool();
                     func_00101618();
                     Sound_Update();
                 }
@@ -144,11 +144,11 @@ void func_00117CC8(void) {
 void func_00117F98(void) {
     while (map_load_state.step != 5) {
         func_001005E8(0);
-        func_00109800();
+        Packet_WaitForSend();
         Display_SwapBuffers(0);
-        func_001096E8();
-        func_001095E0();
-        func_0010B000();
+        Packet_SendChain();
+        Packet_SwapBuffers();
+        DrawList_Clear();
         map_load_steps[map_load_state.step]();
     }
     map_load_state.step = 6;
@@ -218,13 +218,13 @@ void func_001182A0(void) {
     MapSlot *current = &map_slots[D_00446770];
     u32 limit;
 
-    if (func_00102230() == 0) {
+    if (File_IsLocked() == 0) {
         sprintf(name, D_0043E710, map_load_state.request->map);
         do {
-            map_load_state.file_handle = func_00102238(name, 1, 1);
+            map_load_state.file_handle = File_Open(name, 1, 1);
         } while (map_load_state.file_handle < 0);
-        func_00102218();
-        other->unk04 = (func_00102900(map_load_state.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
+        File_Lock();
+        other->unk04 = (File_GetSize(map_load_state.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
         limit = D_00446F20;
         if (limit < (u32)(other->unk04 + current->unk04)) {
             other->tag = map_load_state.request->map;
@@ -253,12 +253,12 @@ void func_00118458(void) {
     if (D_00446770 == 0) {
         memory = &D_004321F0[1];
     }
-    if (func_001025C0(map_load_state.file_handle, memory->unk14, 0x80000) > 0) {
+    if (File_Read(map_load_state.file_handle, memory->unk14, 0x80000) > 0) {
         memory->unk14 += 0x80000;
         map_load_state.step++;
     } else {
-        func_001024B0(map_load_state.file_handle);
-        func_00102228();
+        File_Close(map_load_state.file_handle);
+        File_Unlock();
         map_load_state.file_handle = -1;
         memory->unk14 = memory->unk1C;
         map_load_state.step += 2;
@@ -267,7 +267,7 @@ void func_00118458(void) {
 
 /* Map load step: once the read in flight is done, goes back to read the next piece. */
 void func_001184F8(void) {
-    if (func_00102790(map_load_state.file_handle, 1) == 0) {
+    if (File_Sync(map_load_state.file_handle, 1) == 0) {
         map_load_state.step--;
     }
 }
@@ -327,7 +327,7 @@ void func_00118680(void) {
     MapObject_StartMap(other_slot);
     Entity_InitFromMapSpawns(other_slot);
     Entity_OffsetAllInSlot(other_slot, offset);
-    func_00123158(other_slot);
+    Entity_AddGroupToWaiting(other_slot);
     func_001C87D8(other_slot);
     Entity_ClearFlag10InSlot(other_slot);
     MapScroll_CarryPairs(D_00446770, other_slot);

@@ -41,20 +41,20 @@ void func_00112948(int);
 int func_001D20A0(void);
 void func_001D2048(PlayTime);
 void func_00106178(int, int, int, int);
-void func_001095E0(void);
+void Packet_SwapBuffers(void);
 void Display_SwapBuffers(int);
 int Timer_GetTicks(void);
 void Timer_Restart(void);
-void func_001096E8(void);
-void func_0010B000(void);
-void func_00111D58(void);
+void Packet_SendChain(void);
+void DrawList_Clear(void);
+void Wobble_StepOscillators(void);
 void func_001B5460(void);
 int Script_UpdateAll(void);
 void func_00100D10(void);
 void func_001D0970(void);
 void func_00117CC8(void);
 void func_00112BD0(void);
-void func_00123288(void);
+void Entity_UpdatePool(void);
 void func_001C95B0(void);
 void Player_UseItem(void);
 void func_00101618(void);
@@ -62,9 +62,9 @@ void Sound_Update(void);
 void func_001061E8(void);
 void func_00100FC8(void);
 void func_001012D8(int, int);
-void func_0010A7E0(void *);
+void GsDraw_QueueVu1Matrix(void *);
 int func_001005E8(int);
-void func_00109800(void);
+void Packet_WaitForSend(void);
 void func_001C9C00(void);
 void func_001161A8(void);
 void func_001017A8(void);
@@ -75,24 +75,24 @@ void Sound_SetBgmVolume(int);
 void Sound_SetBankVolumes(int);
 int sceGsSyncV(int);
 int func_0019F6B0(void);
-void func_00102558(void);
-void func_001112B0(void);
+void File_CloseAll(void);
+void Wobble_AdvanceSines(void);
 void func_001095D0(void);
-void func_0010A008(void);
-void func_0010AE58(void);
+void GsDraw_ResetDrawTarget(void);
+void ModelTexture_ResetSlots(void);
 void func_00114198(int);
 void func_001C9650(int);
 void func_00114528(int);
-void func_0010B140(u32, u32);
-void func_00109EB8(void);
+void DrawList_Draw(u32, u32);
+void GsDraw_EnableDepthTest(void);
 void func_001C97E8(int);
 void func_00116AA0(void);
-void func_0010A698(void);
+void GsDraw_ClearDepth(void);
 void Entity_DrawPoolModels(void);
 void func_00116970(void);
-void func_0010A5D8(void);
-void func_00109E88(void);
-void func_0010A040(int);
+void GsDraw_ClearFrame(void);
+void GsDraw_QueueTexFlush(void);
+void GsDraw_CopyFrame(int);
 void func_00108020(int, int, int, int, float);
 void func_001BBA58(void);
 void func_00106520(void);
@@ -101,7 +101,7 @@ void func_00106C58(void);
 void func_00106DC8(void);
 void func_00106FB8(int);
 void func_00107528(void);
-void func_0010A4E8(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, int);
 void func_00107E70(int, int, int);
 void func_00106208(void);
 void func_00107CD8(int);
@@ -131,8 +131,8 @@ int func_001A0C18(int, int, int);
 int Sound_LoadBgm(int, int);
 void func_00118788(void);
 int func_001187D8(void);
-int func_00102230(void);
-void func_00102228(void);
+int File_IsLocked(void);
+void File_Unlock(void);
 void func_00101CE0(void);
 void Trade_Run(s32);
 void Smith_Run(void);
@@ -141,14 +141,14 @@ void func_0011A438(int);
 void func_00101D48(int);
 void func_00101C88(void);
 void func_0011A500(void);
-void func_00102218(void);
+void File_Lock(void);
 void func_001187B0(void);
 void func_00101EF0(void);
 void *memset(void *, int, u32);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_0010A100(void *);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueTexturedSprite(void *);
 void func_001D20E0(void);
 void func_001B57D8(void);
 void func_001B5800(void);
@@ -238,8 +238,8 @@ void func_001001C0(int arg) {
         func_00106178(0, 0, 0, 0x1E);
     }
     map_load_state.flags.raw |= 1;
-    func_001095E0();
-    func_001095E0();
+    Packet_SwapBuffers();
+    Packet_SwapBuffers();
     while (!game_status.bit9) {
         if (!(game_status.bit12 && game_status.bit13)) {
             Display_SwapBuffers(1);
@@ -248,11 +248,11 @@ void func_001001C0(int arg) {
         Timer_GetTicks();
         Timer_Restart();
         if (!(game_status.bit12 && game_status.bit13)) {
-            func_001096E8();
+            Packet_SendChain();
             Timer_GetTicks();
-            func_001095E0();
-            func_0010B000();
-            func_00111D58();
+            Packet_SwapBuffers();
+            DrawList_Clear();
+            Wobble_StepOscillators();
             func_001B5460();
         }
         if (game_status.bit12 && !game_status.bit13) {
@@ -272,7 +272,7 @@ void func_001001C0(int arg) {
         Player_UpdateArmModels();
         func_00112BD0();
         MapObject_UpdateAll();
-        func_00123288();
+        Entity_UpdatePool();
         Entity_UpdateAll();
         func_001C95B0();
         Gold_Update();
@@ -290,11 +290,11 @@ void func_001001C0(int arg) {
         ItemEffect_Update();
         func_00100FC8();
         func_001012D8(0, 0);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         WeaponTrail_Update();
         if (!(game_status.bit12 && game_status.bit13)) {
             func_001005E8(1);
-            func_00109800();
+            Packet_WaitForSend();
         }
         func_001C9C00();
         func_001161A8();
@@ -324,9 +324,9 @@ void func_001001C0(int arg) {
     }
     game_options[1] = saved;
     game_status.bit9 = FALSE;
-    func_00102558();
-    func_001095E0();
-    func_00109800();
+    File_CloseAll();
+    Packet_SwapBuffers();
+    Packet_WaitForSend();
 }
 
 /* Draws one frame of the game: the world (once, or with a second view first for the modes 1 and 2), the screen
@@ -338,14 +338,14 @@ int func_001005E8(int arg) {
     int green;
     int blue;
 
-    func_001112B0();
+    Wobble_AdvanceSines();
     func_001095D0();
-    func_0010A008();
+    GsDraw_ResetDrawTarget();
     switch (map_draw_state.mode) {
     case 0:
         func_001012D8(0, 0);
-        func_0010A7E0(D_004323E0);
-        func_0010AE58();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        ModelTexture_ResetSlots();
         func_00114198(0);
         MapObject_DrawAll(0, 0, 0);
         Entity_DrawPoolModels();
@@ -353,41 +353,41 @@ int func_001005E8(int arg) {
         func_001C9650(0);
         ItemEffect_Draw();
         Gold_Draw(0);
-        func_0010AE58();
+        ModelTexture_ResetSlots();
         func_00114528(0);
         Effect_DrawAll(0);
-        func_0010B140(0, 0);
+        DrawList_Draw(0, 0);
         func_001012D8(0, 2);
-        func_0010A7E0(D_004323E0);
-        func_0010B140(1, 0);
-        func_0010B140(2, 0);
-        func_00109EB8();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        DrawList_Draw(1, 0);
+        DrawList_Draw(2, 0);
+        GsDraw_EnableDepthTest();
         func_001012D8(0, 0);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         func_001C97E8(0);
         break;
     case 1:
         func_001012D8(0, 1);
-        func_0010A7E0(D_004323E0);
-        func_0010AE58();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        ModelTexture_ResetSlots();
         func_00114198(1);
         MapObject_DrawAll(1, 0, 0);
         Entity_DrawAll(1);
         func_001C9650(1);
         Gold_Draw(1);
         func_00114528(1);
-        func_0010AE58();
+        ModelTexture_ResetSlots();
         Effect_DrawAll(1);
-        func_0010B140(0, 1);
-        func_00109EB8();
+        DrawList_Draw(0, 1);
+        GsDraw_EnableDepthTest();
         func_001012D8(0, 1);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         func_001C97E8(1);
         func_00116AA0();
-        func_0010A698();
+        GsDraw_ClearDepth();
         func_001012D8(0, 0);
-        func_0010A7E0(D_004323E0);
-        func_0010AE58();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        ModelTexture_ResetSlots();
         func_00114198(0);
         MapObject_DrawAll(0, 0, 0);
         Entity_DrawPoolModels();
@@ -395,69 +395,69 @@ int func_001005E8(int arg) {
         func_001C9650(0);
         ItemEffect_Draw();
         Gold_Draw(0);
-        func_0010AE58();
+        ModelTexture_ResetSlots();
         func_00114528(0);
         Effect_DrawAll(0);
-        func_0010B140(0, 0);
+        DrawList_Draw(0, 0);
         func_001012D8(0, 2);
-        func_0010A7E0(D_004323E0);
-        func_0010B140(1, 0);
-        func_0010B140(2, 0);
-        func_00109EB8();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        DrawList_Draw(1, 0);
+        DrawList_Draw(2, 0);
+        GsDraw_EnableDepthTest();
         func_001012D8(0, 0);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         func_001C97E8(0);
         break;
     case 2:
         func_00116970();
-        func_0010A5D8();
+        GsDraw_ClearFrame();
         func_001012D8(1, 1);
-        func_0010A7E0(D_004323E0);
-        func_0010AE58();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        ModelTexture_ResetSlots();
         func_00114198(2);
         MapObject_DrawAll(1, 0, 0);
         Entity_DrawAll(1);
         func_001C9650(1);
         ItemEffect_Draw();
         Gold_Draw(1);
-        func_0010AE58();
+        ModelTexture_ResetSlots();
         func_00114528(2);
         Effect_DrawAll(1);
-        func_0010B140(0, 1);
-        func_00109EB8();
+        DrawList_Draw(0, 1);
+        GsDraw_EnableDepthTest();
         func_001012D8(1, 1);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         func_001C97E8(1);
-        func_0010A008();
-        func_00109E88();
-        func_0010A698();
+        GsDraw_ResetDrawTarget();
+        GsDraw_QueueTexFlush();
+        GsDraw_ClearDepth();
         func_001012D8(0, 0);
-        func_0010A7E0(D_004323E0);
-        func_0010AE58();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        ModelTexture_ResetSlots();
         func_00114198(0);
         MapObject_DrawAll(0, 0, 0);
         Entity_DrawPoolModels();
         Entity_DrawAll(0);
         func_001C9650(0);
         Gold_Draw(0);
-        func_0010AE58();
+        ModelTexture_ResetSlots();
         func_00114528(0);
         Effect_DrawAll(0);
-        func_0010B140(0, 0);
+        DrawList_Draw(0, 0);
         func_001012D8(0, 2);
-        func_0010A7E0(D_004323E0);
-        func_0010B140(1, 0);
-        func_0010B140(2, 0);
-        func_00109EB8();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        DrawList_Draw(1, 0);
+        DrawList_Draw(2, 0);
+        GsDraw_EnableDepthTest();
         func_001012D8(0, 0);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         func_001C97E8(0);
         break;
     }
     func_001012D8(0, 0);
-    func_0010A7E0(D_004323E0);
+    GsDraw_QueueVu1Matrix(D_004323E0);
     if ((s32)(player_state.unk1C8 >> 39) & 1) {
-        func_0010A040(0x2BC0);
+        GsDraw_CopyFrame(0x2BC0);
         tinted = TRUE;
         func_00108020(0x80, 0x80, 0x80, 0x80, 1.0f);
     }
@@ -466,7 +466,7 @@ int func_001005E8(int arg) {
         red = (int)(tint * -58.0f + 128.0f);
         green = (int)(tint * -78.0f + 128.0f);
         blue = (int)(tint * 12.0f + 128.0f);
-        func_0010A040(0x2BC0);
+        GsDraw_CopyFrame(0x2BC0);
         tinted = TRUE;
         func_00108020(red, green, blue, 0x80, tint);
     }
@@ -492,16 +492,16 @@ int func_001005E8(int arg) {
     if (arg != 0 && map_draw_state.bit45) {
         func_00107528();
     }
-    func_0010A698();
+    GsDraw_ClearDepth();
     if (tinted) {
         Effect_UploadTextures();
     }
-    func_0010B140(3, 0);
+    DrawList_Draw(3, 0);
     Player_DrawArm();
     Player_DrawScreenTints();
     if ((s32)(player_state.unk1C8 >> 39) & 1) {
         if (map_slots[D_00446770].tag == 0x23 && D_00349F56[0] == 0) {
-            func_0010A4E8(0x40, 0x80, 0x40, 0x78, 0x44);
+            GsDraw_FillScreen(0x40, 0x80, 0x40, 0x78, 0x44);
         } else {
             func_00107E70(0x5E, 0x87, 0x92);
         }
@@ -509,7 +509,7 @@ int func_001005E8(int arg) {
     Hud_Draw();
     if (map_draw_state.unk78 > 0) {
         // match: the last argument is passed as the 64-bit word
-        ((void (*)(int, int, int, int, s64))func_0010A4E8)(map_draw_state.unk6C, map_draw_state.unk70, map_draw_state.unk74,
+        ((void (*)(int, int, int, int, s64))GsDraw_FillScreen)(map_draw_state.unk6C, map_draw_state.unk70, map_draw_state.unk74,
                                                              map_draw_state.unk78, map_draw_state.unk80);
     }
     func_00106208();
@@ -528,11 +528,11 @@ int func_001005E8(int arg) {
         }
     }
     if (D_00446708 != 0) {
-        func_0010A4E8(0, 0, 0, D_00446708, 0x44);
+        GsDraw_FillScreen(0, 0, 0, D_00446708, 0x44);
     }
     Message_Update();
     if (game_status.paused) {
-        func_0010A4E8(0, 0, 0, 0x40, 0x44);
+        GsDraw_FillScreen(0, 0, 0, 0x40, 0x44);
         Hud_DrawPaused();
     }
     func_00107CD8(game_options[10]);
@@ -793,11 +793,11 @@ void func_001017A8(void) {
         if (func_001187D8() == 0) {
             return;
         }
-        load_held = func_00102230();
+        load_held = File_IsLocked();
         if (load_held) {
-            func_00102228();
+            File_Unlock();
         }
-    } else if (func_00102230() != 0) {
+    } else if (File_IsLocked() != 0) {
         return;
     }
     func_001B5778();
@@ -813,8 +813,8 @@ void func_001017A8(void) {
         game_status.bit3 = FALSE;
         menu_ran = TRUE;
         Trade_Run(game_status.unk2C);
-        func_001095E0();
-        func_001095E0();
+        Packet_SwapBuffers();
+        Packet_SwapBuffers();
     } else if (game_status.bit4) {
         if (!faded_out) {
             faded_out = TRUE;
@@ -823,8 +823,8 @@ void func_001017A8(void) {
         game_status.bit4 = FALSE;
         menu_ran = TRUE;
         Smith_Run();
-        func_001095E0();
-        func_001095E0();
+        Packet_SwapBuffers();
+        Packet_SwapBuffers();
     } else if (game_status.save_requested && game_status.unk00 != 0) {
         if (!faded_out) {
             faded_out = TRUE;
@@ -832,8 +832,8 @@ void func_001017A8(void) {
         }
         game_status.save_requested = FALSE;
         SaveScreen_Run();
-        func_001095E0();
-        func_001095E0();
+        Packet_SwapBuffers();
+        Packet_SwapBuffers();
     } else if (game_status.bit2 && game_status.unk00 != 0) {
         if (!faded_out) {
             faded_out = TRUE;
@@ -844,8 +844,8 @@ void func_001017A8(void) {
         game_status.unk28 = 0;
         menu_ran = TRUE;
         Menu_Run(0);
-        func_001095E0();
-        func_001095E0();
+        Packet_SwapBuffers();
+        Packet_SwapBuffers();
     }
     if (menu_ran) {
         Player_LoadArmModels();
@@ -892,7 +892,7 @@ void func_001017A8(void) {
     }
     if (map_load_state.step != 0) {
         if (load_held) {
-            func_00102218();
+            File_Lock();
         }
         func_001187B0();
     }
@@ -906,31 +906,31 @@ void func_001017A8(void) {
 }
 
 void func_00101C88(void) {
-    func_001095E0();
-    func_001095E0();
-    func_0010B000();
+    Packet_SwapBuffers();
+    Packet_SwapBuffers();
+    DrawList_Clear();
     func_001005E8(0);
-    func_00109800();
+    Packet_WaitForSend();
     Display_SwapBuffers(0);
-    func_001096E8();
-    func_00109800();
+    Packet_SendChain();
+    Packet_WaitForSend();
     Display_SwapBuffers(0);
 }
 
 void func_00101CE0(void) {
     int saved_unk68;
 
-    func_001095E0();
-    func_001095E0();
-    func_0010B000();
+    Packet_SwapBuffers();
+    Packet_SwapBuffers();
+    DrawList_Clear();
     saved_unk68 = map_draw_state.unk68;
     map_draw_state.unk68 = 0;
     func_001005E8(0);
     map_draw_state.unk68 = saved_unk68;
-    func_00109800();
+    Packet_WaitForSend();
     Display_SwapBuffers(0);
-    func_001096E8();
-    func_00109800();
+    Packet_SendChain();
+    Packet_WaitForSend();
 }
 
 /* Draws the centred 0x280 x 0x1C0 logo sprite into both frame buffers, dimmed by the divisor. */
@@ -962,27 +962,27 @@ void func_00101D48(int divisor) {
     sprite.vertex[0].tex_s = 0;
     sprite.vertex[0].tex_t = 0;
     for (pass = 0; pass < 2; pass++) {
-        func_001095E0();
-        func_0010B000();
+        Packet_SwapBuffers();
+        DrawList_Clear();
         func_001095D0();
         D_00446F78 = pass;
         D_00446F7C = pass;
-        func_0010A008();
-        func_00109A50();
-        func_00109A80(0x47, 0x31001);
-        func_00109A80(0x42, 0x44);
-        func_00109A80(8, 5);
-        func_00109AD0();
-        func_0010A100(&sprite);
-        func_00109A50();
-        func_00109A80(8, 0);
-        func_00109AD0();
+        GsDraw_ResetDrawTarget();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(0x47, 0x31001);
+        Packet_AddGsRegister(0x42, 0x44);
+        Packet_AddGsRegister(8, 5);
+        Packet_EndGsRegisters();
+        GsDraw_QueueTexturedSprite(&sprite);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(8, 0);
+        Packet_EndGsRegisters();
         func_001095D8();
         if (pass == 0) {
             D_00446F78 = 1;
             D_00446F7C = 1;
-            func_001096E8();
-            func_00109800();
+            Packet_SendChain();
+            Packet_WaitForSend();
             Display_SwapBuffers(0);
         }
     }
@@ -993,19 +993,19 @@ void func_00101EF0(void) {
     int pass;
 
     for (pass = 0; pass < 2; pass++) {
-        func_001095E0();
-        func_0010B000();
+        Packet_SwapBuffers();
+        DrawList_Clear();
         func_001095D0();
         D_00446F78 = pass;
         D_00446F7C = pass;
-        func_0010A008();
-        func_0010A4E8(0, 0, 0, 0x80, 0x44);
+        GsDraw_ResetDrawTarget();
+        GsDraw_FillScreen(0, 0, 0, 0x80, 0x44);
         func_001095D8();
         if (pass == 0) {
             D_00446F78 = 1;
             D_00446F7C = 1;
-            func_001096E8();
-            func_00109800();
+            Packet_SendChain();
+            Packet_WaitForSend();
             Display_SwapBuffers(0);
         }
     }
@@ -1020,19 +1020,19 @@ void func_00101F90(void) {
         game_status.paused = TRUE;
         play_time = D_00446A28;
         Display_SwapBuffers(0);
-        func_001096E8();
-        func_001095E0();
-        func_0010B000();
-        func_00111D58();
+        Packet_SendChain();
+        Packet_SwapBuffers();
+        DrawList_Clear();
+        Wobble_StepOscillators();
         func_001005E8(0);
-        func_00109800();
+        Packet_WaitForSend();
         Display_SwapBuffers(0);
-        func_001096E8();
-        func_001095E0();
-        func_0010B000();
-        func_00111D58();
+        Packet_SendChain();
+        Packet_SwapBuffers();
+        DrawList_Clear();
+        Wobble_StepOscillators();
         func_001005E8(0);
-        func_00109800();
+        Packet_WaitForSend();
         Display_SwapBuffers(0);
         func_001B57D8();
         do {
@@ -1042,12 +1042,12 @@ void func_00101F90(void) {
         } while (!(pad_state[1] & D_00446946));
         func_001B5800();
         game_status.paused = FALSE;
-        func_001096E8();
-        func_001095E0();
-        func_0010B000();
-        func_00111D58();
+        Packet_SendChain();
+        Packet_SwapBuffers();
+        DrawList_Clear();
+        Wobble_StepOscillators();
         func_001005E8(0);
-        func_00109800();
+        Packet_WaitForSend();
         func_001D2048(play_time);
     }
 }

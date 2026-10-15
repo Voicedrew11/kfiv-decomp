@@ -36,27 +36,27 @@
         best = node;                                                                               \
     }
 #define USABLE_IN_MAP(node) (((u8)(AREA_NODE_WORD(node) >> 27) & 1) == map && USABLE(node))
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_00109E18(void);
-void func_00109E88(void);
-void func_0010A008(void);
-void func_0010EE98(ModelInstance *);
-void func_00111368(ModelInstance *, int, int, int, int);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueFlush(void);
+void GsDraw_QueueTexFlush(void);
+void GsDraw_ResetDrawTarget(void);
+void ModelScreen_CutClippedTriangles(ModelInstance *);
+void Wobble_DrawRippledModel(ModelInstance *, int, int, int, int);
 void func_00116970(void);
 void func_00116AD8(int, int);
 int func_00116CB0(MapDrawRecord *, ModelInstance *);
 void *memset(void *, int, u32);
 void func_001157D8(AreaNode *);
-void func_0010D018(ModelInstance *, char **, char **);
-void func_0010B758(ModelInstance *, int *, int *);
-MotionData *func_00108940(MotionFile *, ModelChannel **, ModelInstance *, int);
+void Model_SetUpPosed(ModelInstance *, char **, char **);
+void Model_SetUpSkinned(ModelInstance *, int *, int *);
+MotionData *ModelMotion_LoadFile(MotionFile *, ModelChannel **, ModelInstance *, int);
 u32 *func_00116BD0(int, int);
-void func_0010E6A8(ModelInstance *, s64, s64);
-void func_0010E820(ModelInstance *, s64);
+void Model_SetPrimBits(ModelInstance *, s64, s64);
+void Model_SetAlphaBlend(ModelInstance *, s64);
 MapRecordInfo *func_00115CD0(CameraState *, f32, int);
-void func_00111E28(ModelInstance *, u32 *);
+void Wobble_BuildWaveUvs(ModelInstance *, u32 *);
 void Vector_Copy(void *, void *);
 char *func_00112400(char *, ModelInstance *, int);
 void func_001B93B8(f32 *);
@@ -84,24 +84,24 @@ void Vector_Subtract(void *, void *, void *);
 void func_00101618(void);
 void func_001095D0(void);
 void func_001095D8(void);
-void func_001095E0(void);
-void func_001096E8(void);
-void func_00109800(void);
-void func_0010A7E0(void *);
-void func_0010B000(void);
+void Packet_SwapBuffers(void);
+void Packet_SendChain(void);
+void Packet_WaitForSend(void);
+void GsDraw_QueueVu1Matrix(void *);
+void DrawList_Clear(void);
 void func_00116610(void);
 float Angle_Wrap(float);
 void func_001B5460(void);
 void Display_SwapBuffers(int);
 void Vector_Normalize(void *, void *);
 void func_00106C58(void);
-void func_0010A100(void *);
-void func_0010B238(TextureTableHeader *);
-void func_0010D308(ModelInstance *);
-void func_00109F80(s64, s64, s64);
-void func_0010A4E8(int, int, int, int, int);
-u32 *func_00109990(int);
-void func_00109650(u32 *, u32 *);
+void GsDraw_QueueTexturedSprite(void *);
+void TextureTable_QueueAll(TextureTableHeader *);
+void Model_DrawPosed(ModelInstance *);
+void GsDraw_SetDrawTarget(s64, s64, s64);
+void GsDraw_FillScreen(int, int, int, int, int);
+u32 *Packet_Alloc(int);
+void Packet_AppendToChain(u32 *, u32 *);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 int func_00116C08(int, int, int, int);
@@ -169,19 +169,19 @@ void func_00114198(int mode) {
             func_00116AD8(map, 0);
             func_00116AD8(map, 1);
             func_00116AD8(map, 5);
-            func_00109E88();
+            GsDraw_QueueTexFlush();
             MapScroll_UpdateDraw(map, 0);
             MapScroll_UpdateCopy(map, 0);
             if (mode < 2) {
-                func_0010A008();
+                GsDraw_ResetDrawTarget();
             } else {
                 func_00116970();
             }
-            func_00109A50();
-            func_00109A80(GS_REG_TEST_1, 0x5000D);
-            func_00109A80(8, 0);
-            func_00109AD0();
-            func_00109E18();
+            Packet_BeginGsRegisters();
+            Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
+            Packet_AddGsRegister(8, 0);
+            Packet_EndGsRegisters();
+            GsDraw_QueueFlush();
             for (; record != NULL; record = record->next) {
                 flags = record->flags;
                 if ((flags & 2) && mode != 0) {
@@ -206,13 +206,13 @@ void func_00114198(int mode) {
                 LinkedPoint_FindHitsForMapDraw(record, record->model);
                 if (record->flags & 0x200) {
                     header = slot->header;
-                    func_00111368(record->model, header->unk78, header->unk79, header->unk7A, header->unk7B);
+                    Wobble_DrawRippledModel(record->model, header->unk78, header->unk79, header->unk7A, header->unk7B);
                 }
                 record->model->unk1A8(record->model);
                 if (func_00116CB0(record, record->model) == 0) {
-                    func_0010EE98(record->model);
+                    ModelScreen_CutClippedTriangles(record->model);
                 }
-                func_00109E18();
+                GsDraw_QueueFlush();
             }
             MapObject_DrawAll(mode, 1, map);
         }
@@ -246,19 +246,19 @@ void func_00114528(int mode) {
         if (slot->unk00 != 0) {
             func_00116AD8(map, 2);
             func_00116AD8(map, 5);
-            func_00109E88();
+            GsDraw_QueueTexFlush();
             MapScroll_UpdateDraw(map, 1);
             MapScroll_UpdateCopy(map, 1);
             if (mode < 2) {
-                func_0010A008();
+                GsDraw_ResetDrawTarget();
             } else {
                 func_00116970();
             }
-            func_00109A50();
+            Packet_BeginGsRegisters();
             z_mask = 1;
-            func_00109A80(GS_REG_TEST_1, 0x5000D);
-            func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-            func_00109AD0();
+            Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
+            Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+            Packet_EndGsRegisters();
             for (; record != NULL; record = record->next) {
                 flags = record->flags;
                 if ((flags & 2) && mode != 0) {
@@ -276,9 +276,9 @@ void func_00114528(int mode) {
                 old_z_mask = z_mask;
                 z_mask = !((flags >> 7) & 1);
                 if (z_mask != old_z_mask) {
-                    func_00109A50();
-                    func_00109A80(GS_REG_ZBUF_1, ((s64)z_mask << 32) | 0xA000118);
-                    func_00109AD0();
+                    Packet_BeginGsRegisters();
+                    Packet_AddGsRegister(GS_REG_ZBUF_1, ((s64)z_mask << 32) | 0xA000118);
+                    Packet_EndGsRegisters();
                 }
                 if (record->flags & 0x10) {
                     record->model->unk148 = (s32)&map_draw_state.unkC0;
@@ -290,19 +290,19 @@ void func_00114528(int mode) {
                 LinkedPoint_FindHitsForMapDraw(record, record->model);
                 if (record->flags & 0x200) {
                     header = slot->header;
-                    func_00111368(record->model, header->unk78, header->unk79, header->unk7A, header->unk7B);
+                    Wobble_DrawRippledModel(record->model, header->unk78, header->unk79, header->unk7A, header->unk7B);
                 }
                 record->model->unk1A8(record->model);
                 if (func_00116CB0(record, record->model) == 0) {
-                    func_0010EE98(record->model);
+                    ModelScreen_CutClippedTriangles(record->model);
                 }
-                func_00109E18();
+                GsDraw_QueueFlush();
             }
         }
     }
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+    Packet_EndGsRegisters();
 }
 
 /* the address rounded up to a multiple of 16 */
@@ -458,19 +458,19 @@ void func_00114AA8(int map) {
             while (k-- > 0) {
                 cursor += *(int *)cursor;
             }
-            func_0010D018(model, (char **)&cursor, &work);
+            Model_SetUpPosed(model, (char **)&cursor, &work);
             if (record->unk3C & 0x100) {
                 Vector_Copy(&model->position, record);
                 model->position.w = 1.0f;
-                ((void (*)(ModelInstance *, u32 *, int))func_00111E28)(model, (u32 *)&work, 0); // match: a third argument the callee does not take
+                ((void (*)(ModelInstance *, u32 *, int))Wobble_BuildWaveUvs)(model, (u32 *)&work, 0); // match: a third argument the callee does not take
             }
             if (((ModelInstance **)slot->unk24)[record->unk30] == NULL) {
                 ((ModelInstance **)slot->unk24)[record->unk30] = model;
             }
-            func_0010E6A8(model, 0x20, 0x20);
+            Model_SetPrimBits(model, 0x20, 0x20);
             if (record->unk3C & 0x202) {
-                func_0010E6A8(model, 0x60, 0x60);
-                func_0010E820(model, 0x48);
+                Model_SetPrimBits(model, 0x60, 0x60);
+                Model_SetAlphaBlend(model, 0x48);
             }
         }
         if (record->unk32 != 0xFFFF) {
@@ -524,7 +524,7 @@ void func_00114AA8(int map) {
         for (j = 0; j < header->unk40; j++, object++) {
             if (object->unk04->unk04 != 0xFFFF && !(MAP_OBJECT_DEF_WORD(object) & 0x100) && object->unk08->unk32 == i) {
                 next = cursor; // match: retail bug, only set when an object uses this model (see cursor = next)
-                func_0010D018(object->model, (char **)&next, &work);
+                Model_SetUpPosed(object->model, (char **)&next, &work);
                 object->model->unk190 = 1;
                 object->model->unk194 = next;
                 next += *(int *)next;
@@ -540,7 +540,7 @@ void func_00114AA8(int map) {
         for (j = 0; j < header->unk40; j++, object++) {
             if (object->unk04->unk04 != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & 0x100) && object->unk08->unk32 == i) {
                 next = cursor; // match: retail bug, as in the loop above
-                func_0010B758(object->model, &next, (int *)&work);
+                Model_SetUpSkinned(object->model, &next, (int *)&work);
                 object->model->unk190 = 1;
                 object->model->unk194 = next;
                 next += *(int *)next;
@@ -571,7 +571,7 @@ void func_00114AA8(int map) {
         object = map_slot_objects[map];
         for (j = 0; j < header->unk40; j++, object++) {
             if (object->unk04->unk04 != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & 0x200) && object->unk08->unk36 == i) {
-                next = ((int (*)(int, int *, ModelInstance *, int))func_00108940)(cursor, (int *)&work, object->model, 1); // match: the callee returns where the motion ends
+                next = ((int (*)(int, int *, ModelInstance *, int))ModelMotion_LoadFile)(cursor, (int *)&work, object->model, 1); // match: the callee returns where the motion ends
             }
         }
         cursor = next; // match: retail bug, as above: next is only set when an object uses this motion
@@ -895,9 +895,9 @@ void func_001161A8(void) {
             VuVector4 move;
 
             Display_SwapBuffers(0);
-            func_001096E8();
-            func_001095E0();
-            func_0010B000();
+            Packet_SendChain();
+            Packet_SwapBuffers();
+            DrawList_Clear();
             func_001B5460();
             move.x = move.y = move.z = move.w = 0.0f;
             if (pad_state[0] & 0x2000) {
@@ -966,13 +966,13 @@ void func_001161A8(void) {
             Vector_Scale(&move.x, &move.x, -1.0f);
             sceVu0TransMatrix(world_view, world_view, &move.x);
             sceVu0MulMatrix(world_screen, view_screen, world_view);
-            func_0010A7E0(world_screen);
+            GsDraw_QueueVu1Matrix(world_screen);
             func_001095D0();
             func_00116610();
             Message_Update();
             func_001095D8();
             func_00101618();
-            func_00109800();
+            Packet_WaitForSend();
         } while (!(pad_state[1] & 0x2000));
         game_status.bit7 = FALSE;
     }
@@ -987,20 +987,20 @@ void func_00116610(void) {
     int map;
     int i;
 
-    func_0010B238(D_00446790);
-    func_00109E88();
+    TextureTable_QueueAll(D_00446790);
+    GsDraw_QueueTexFlush();
     D_00432E20[0] = 0;
     D_00432E20[30] = 0;
     D_00433050[0] = 0;
     D_00433050[30] = 0;
-    func_00109A50();
-    func_00109A80(0x1A, 0);
-    func_00109A80(0x1B, 0x248);
-    func_00109A80(GS_REG_ALPHA_2, 0x4000000068L);
-    func_00109A80(GS_REG_TEST_2, 0x3080B);
-    func_00109A80(GS_REG_ZBUF_2, 0x10A000118L);
-    func_00109AD0();
-    func_00109E18();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x1A, 0);
+    Packet_AddGsRegister(0x1B, 0x248);
+    Packet_AddGsRegister(GS_REG_ALPHA_2, 0x4000000068L);
+    Packet_AddGsRegister(GS_REG_TEST_2, 0x3080B);
+    Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
     for (map = 0; map < 2; map++) {
         slot = &map_slots[map];
         record = (MapDrawRecord *)slot->records;
@@ -1018,20 +1018,20 @@ void func_00116610(void) {
                     // match: both blocks chosen above are replaced at once by the viewer's own
                     record->model->unk148 = (s32)&map_object_default_lights;
                     record->model->unk14C = &map_draw_state.unkA0;
-                    func_0010D308(record->model);
+                    Model_DrawPosed(record->model);
                 }
             }
         }
     }
     func_00106C58();
-    func_00109A50();
-    func_00109A80(0x1A, 1);
-    func_00109A80(GS_REG_ZBUF_2, 0xA000118);
-    func_00109A80(GS_REG_TEST_1, 0x31001);
-    func_00109A80(GS_REG_ALPHA_1, 0x48);
-    func_00109A80(8, 5);
-    func_00109AD0();
-    func_00109E18();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x1A, 1);
+    Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
+    Packet_AddGsRegister(8, 5);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
     memset(&quad, 0, sizeof(quad));
     quad.tag = 0x4007A80621312E40L;
     quad.unk08 = 0x60;
@@ -1050,42 +1050,42 @@ void func_00116610(void) {
     quad.second_z = 0xFFFFFFFF;
     quad.second_u = 0x1000;
     quad.second_v = 0x1000;
-    func_0010A100(&quad);
+    GsDraw_QueueTexturedSprite(&quad);
     quad.first_x = 0x9400;
     quad.first_y = 0x7200;
     quad.second_x = 0x8000;
     quad.second_y = 0x8000;
-    func_0010A100(&quad);
+    GsDraw_QueueTexturedSprite(&quad);
     quad.first_x = 0x6C00;
     quad.first_y = 0x8E00;
     quad.second_x = 0x8000;
     quad.second_y = 0x8000;
-    func_0010A100(&quad);
+    GsDraw_QueueTexturedSprite(&quad);
     quad.first_x = 0x9400;
     quad.first_y = 0x8E00;
     quad.second_x = 0x8000;
     quad.second_y = 0x8000;
-    func_0010A100(&quad);
-    func_00109A50();
-    func_00109A80(8, 0);
-    func_00109AD0();
-    func_00109E18();
+    GsDraw_QueueTexturedSprite(&quad);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(8, 0);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
 }
 
 /* Points both drawing contexts at the frame buffer with a 256x256 scissor and no offset bias. */
 void func_00116970(void) {
-    func_00109F80(0xA04015E, 0xFF000000FF0000L, 0x780000007800L);
+    GsDraw_SetDrawTarget(0xA04015E, 0xFF000000FF0000L, 0x780000007800L);
 }
 
 /* Fills the 640x448 screen with grey, z writes off and with register 8 set to 5 meanwhile. */
 void func_00116998(void) {
     ScreenQuad quad;
 
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109A80(8, 5);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_AddGsRegister(8, 5);
+    Packet_EndGsRegisters();
     quad.tag = 0x624A16BC0L;
     quad.unk08 = 0x60;
     quad.unk10 = 0x116;
@@ -1103,11 +1103,11 @@ void func_00116998(void) {
     quad.first_u = 0;
     quad.first_v = 0;
     quad.second_z = 0;
-    func_0010A100(&quad);
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-    func_00109A80(8, 0);
-    func_00109AD0();
+    GsDraw_QueueTexturedSprite(&quad);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+    Packet_AddGsRegister(8, 0);
+    Packet_EndGsRegisters();
 }
 
 /* Fills the screen with the colour in bytes 0x78-0x7B of the current map's header. */
@@ -1117,7 +1117,7 @@ void func_00116AA0(void) {
 
     slot = &map_slots[D_00446770];
     header = (MapSlotUnk08 *)slot->header;
-    func_0010A4E8(header->unk78, header->unk79, header->unk7A, header->unk7B, 0x44);
+    GsDraw_FillScreen(header->unk78, header->unk79, header->unk7A, header->unk7B, 0x44);
 }
 
 /* Queues packet index of the map slot for sending. */
@@ -1126,12 +1126,12 @@ void func_00116AD8(int slot, int index) {
     u32 *packet_start;
     u32 *packet;
 
-    packet_start = packet = func_00109990(3);
+    packet_start = packet = Packet_Alloc(3);
     *packet++ = *map_slot->unk40.items[index] | 0x30000000;
     *packet++ = (u32)map_slot->unk40.items[index] + 0x10;
     *packet++ = 0;
     *packet++ = 0;
-    func_00109650(packet_start, packet);
+    Packet_AppendToChain(packet_start, packet);
 }
 
 /* Queues a packet for sending. */
@@ -1140,12 +1140,12 @@ void func_00116B60(int *packet) {
     u32 *cursor;
 
     if (packet != 0) {
-        packet_start = cursor = func_00109990(2);
+        packet_start = cursor = Packet_Alloc(2);
         *cursor++ = *packet | 0x30000000;
         *cursor++ = (u32)packet + 0x10;
         *cursor++ = 0;
         *cursor++ = 0;
-        func_00109650(packet_start, cursor);
+        Packet_AppendToChain(packet_start, cursor);
     }
 }
 

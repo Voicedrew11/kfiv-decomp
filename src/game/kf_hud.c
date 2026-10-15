@@ -5,13 +5,13 @@
 #include "kf_player.h"
 #include "kf_texture.h"
 
-void func_0010B510(char *, int, int);
+void TextureTable_SetBasePointers(char *, int, int);
 void func_001D1378(ScreenSprite *, s64, u64, u64, u8, u8, u8, u8, s32, s32, u32, s32, s32, s32, s32, s32, s32);
-void func_0010B238(TextureTableHeader *);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_0010A100(void *);
+void TextureTable_QueueAll(TextureTableHeader *);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueTexturedSprite(void *);
 
 extern char game_options[0x10]; // match: read as a signed byte here
 extern s32 D_0038A218[];
@@ -63,16 +63,16 @@ void Hud_Load(void) {
     int file;
     int size;
 
-    file = func_00102238("gage.tx2", 0, 1);
-    size = func_001025C0(file, address, -1);
-    func_001024B0(file);
+    file = File_Open("gage.tx2", 0, 1);
+    size = File_Read(file, address, -1);
+    File_Close(file);
     address += size;
     address = align16(address);
     pause_texture_table = (TextureTableHeader *)address;
-    file = func_00102238("pause.tx2", 0, 1);
-    func_001025C0(file, address, -1);
-    func_001024B0(file);
-    func_0010B510((char *)pause_texture_table, 0x2BC0, 0x3FE0);
+    file = File_Open("pause.tx2", 0, 1);
+    File_Read(file, address, -1);
+    File_Close(file);
+    TextureTable_SetBasePointers((char *)pause_texture_table, 0x2BC0, 0x3FE0);
     func_001D1378(&hud_sprites[0], 0x156, 0x4007DA85E1313640, 0x60, 0x5A, 0x5A, 0x5A, 0x80,
                   0, 0, 0, 0xDA, 0x5A, 0, 0, 0x100, 0x80);
     func_001D1378(&hud_sprites[1], 0x156, 0x8007DC8599307780, 0x60, 0x6C, 0x2A, 0xD, 0x80,
@@ -108,87 +108,87 @@ void Hud_Draw(void) {
     s32 fade;
 
     if (game_options[9] != 0 && D_0038A218[0] != 0) {
-        func_0010B238((TextureTableHeader *)D_00446F6C);
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x44);
-        func_00109A80(GS_REG_TEST_1, 0x31001);
-        func_00109A80(8, 5);
-        func_00109AD0();
+        TextureTable_QueueAll((TextureTableHeader *)D_00446F6C);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
+        Packet_AddGsRegister(8, 5);
+        Packet_EndGsRegisters();
         sprite = hud_sprites[0];
-        func_0010A100(&sprite);
-        func_00109A50();
-        func_00109A80(8, 0);
-        func_00109AD0();
+        GsDraw_QueueTexturedSprite(&sprite);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(8, 0);
+        Packet_EndGsRegisters();
         sprite = hud_sprites[1];
         sprite.vertex[1].x = sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.unkBC / 5000;
         sprite.vertex[1].tex_s =
             sprite.vertex[0].tex_s + (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.unkBC / 5000;
-        func_0010A100(&sprite);
+        GsDraw_QueueTexturedSprite(&sprite);
         sprite = hud_sprites[2];
         sprite.vertex[1].x = sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.unkC0 / 5000;
         sprite.vertex[1].tex_s =
             sprite.vertex[0].tex_s + (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.unkC0 / 5000;
-        func_0010A100(&sprite);
+        GsDraw_QueueTexturedSprite(&sprite);
         sprite = hud_sprites[3];
         sprite.vertex[0].y = sprite.vertex[1].y - (sprite.vertex[1].y - sprite.vertex[0].y) * player_state.unk1A4 / 49;
         sprite.vertex[0].tex_t =
             sprite.vertex[1].tex_t - (sprite.vertex[1].tex_t - sprite.vertex[0].tex_t) * player_state.unk1A4 / 49;
-        func_0010A100(&sprite);
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x48);
-        func_00109AD0();
+        GsDraw_QueueTexturedSprite(&sprite);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
+        Packet_EndGsRegisters();
         sprite = hud_sprites[4];
-        func_0010A100(&sprite);
+        GsDraw_QueueTexturedSprite(&sprite);
         sprite = hud_sprites[5];
         sprite.prim = 0x146;
         sprite.rgba[3] = 0;
         sprite.rgba[2] = 0;
         sprite.rgba[1] = 0;
         sprite.rgba[0] = 0;
-        func_0010A100(&sprite);
+        GsDraw_QueueTexturedSprite(&sprite);
         if (player_state.mp_max > 0) {
             fade = player_state.unk1A6 * 255 / player_state.mp_max;
         } else {
             fade = 0;
         }
-        func_00109A50();
-        func_00109A80(GS_REG_TEST_1, ((s64)fade << 4) | 0x30005);
-        func_00109A80(0x4A, 1);
-        func_00109AD0();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_TEST_1, ((s64)fade << 4) | 0x30005);
+        Packet_AddGsRegister(0x4A, 1);
+        Packet_EndGsRegisters();
         sprite = hud_sprites[5];
         sprite.prim = 0x156;
-        func_0010A100(&sprite);
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x44);
-        func_00109A80(GS_REG_TEST_1, 0x3D001);
-        func_00109A80(0x4A, 0);
-        func_00109AD0();
+        GsDraw_QueueTexturedSprite(&sprite);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x3D001);
+        Packet_AddGsRegister(0x4A, 0);
+        Packet_EndGsRegisters();
         sprite = hud_sprites[6];
-        func_0010A100(&sprite);
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x44);
-        func_00109A80(GS_REG_TEST_1, 0x31001);
-        func_00109AD0();
+        GsDraw_QueueTexturedSprite(&sprite);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
+        Packet_EndGsRegisters();
         sprite = hud_sprites[7];
         if (player_state.unkD0 != 0) {
             sprite.vertex[1].x =
                 sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.unkCC / player_state.unkD0;
             sprite.vertex[1].tex_s = sprite.vertex[0].tex_s +
                 (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.unkCC / player_state.unkD0;
-            func_0010A100(&sprite);
+            GsDraw_QueueTexturedSprite(&sprite);
         }
         sprite = hud_sprites[8];
-        func_0010A100(&sprite);
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x48);
-        func_00109AD0();
+        GsDraw_QueueTexturedSprite(&sprite);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
+        Packet_EndGsRegisters();
         sprite = hud_sprites[9];
-        func_0010A100(&sprite);
+        GsDraw_QueueTexturedSprite(&sprite);
     }
 }
 
 /* Draws the pause label over the paused game. */
 void Hud_DrawPaused(void) {
-    func_0010B238(pause_texture_table);
-    func_0010A100(&pause_sprite);
+    TextureTable_QueueAll(pause_texture_table);
+    GsDraw_QueueTexturedSprite(&pause_sprite);
 }

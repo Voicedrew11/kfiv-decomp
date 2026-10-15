@@ -31,7 +31,7 @@ void Vector_Scale(float *, float *, float);
 void Vector_MultiplyComponents(float *, float *, float *);
 int Motion_Start(void *, int, int, u32, int);
 void Vector_Add(void *, void *, void *);
-void func_0010C9E8(ModelInstance *);
+void Model_UpdateSkinnedBonePoints(ModelInstance *);
 s32 EntityAi_ShouldRespawn(Entity *);
 void EntityEvent_Respawn(char *);
 s32 EntityAi_RemoveIfFallen(Entity *);
@@ -42,15 +42,15 @@ void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 float EntityMath_WrapAngle(float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, float *, float *);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_0010B018(ModelInstance *, s32, s32);
-void func_0010AEB8(void *);
-void func_0010BA30(ModelInstance *);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void DrawList_Add(ModelInstance *, s32, s32);
+void ModelTexture_SendForModel(void *);
+void Model_DrawSkinned(ModelInstance *);
 void func_00133708(Entity *, s32);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void func_0010B5D0(ModelPart *);
+void Model_MultiplyChildMatrices(ModelPart *);
 f32 EntityCollision_DistanceToPropFloor(void *, void *);
 
 #define SCRATCH_MATRIX ((f32 *)0x70000000)
@@ -285,7 +285,7 @@ void Entity_UpdateAll(void) {
         return;
     }
     for (entity = D_004467E0; entity != NULL; entity = entity->next) {
-        func_0010C9E8(ENTITY_MODEL(entity));
+        Model_UpdateSkinnedBonePoints(ENTITY_MODEL(entity));
         if (ENTITY_FLAG_BITS(entity)->bits2 >= 3 || !ENTITY_FLAG_BITS(entity)->bit1) {
             if (!EntityAi_ShouldRespawn(entity)) {
                 continue;
@@ -390,7 +390,7 @@ void Entity_UpdateAll(void) {
         } else {
             ENTITY_MODEL(entity)->unk148 = (s32)&map_draw_state.unkA90[(u8)(MAP_RECORD(entity)->unk38 >> 27) & 1][MAP_RECORD(entity)->unk37];
         }
-        func_0010C9E8(ENTITY_MODEL(entity));
+        Model_UpdateSkinnedBonePoints(ENTITY_MODEL(entity));
     }
 }
 
@@ -416,12 +416,12 @@ void Entity_DrawAll(int list) {
     s32 falling;
 
     period = 40;
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_ALPHA_2, 9);
-    func_00109A80(GS_REG_TEST_1, 0x5000D);
-    func_00109A80(GS_REG_TEST_2, 0x5000D);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_ALPHA_2, 9);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
+    Packet_AddGsRegister(GS_REG_TEST_2, 0x5000D);
+    Packet_EndGsRegisters();
     for (map = 0; map < 2; map++) {
         for (block = 0; block < 5; block++) {
             for (entity = D_004467E0; entity != NULL; entity = entity->next) {
@@ -477,10 +477,10 @@ void Entity_DrawAll(int list) {
                 }
                 LinkedPoint_FindHitsForModel(ENTITY_MODEL(entity));
                 if (ENTITY_MODEL(entity)->alpha < 128.0f || (ENTITY_MODEL(entity)->unk100 & 0x200) || entity->spawn_info->type_id == 0x10) {
-                    func_0010B018(ENTITY_MODEL(entity), 0, list);
+                    DrawList_Add(ENTITY_MODEL(entity), 0, list);
                 } else {
-                    func_0010AEB8(ENTITY_MODEL(entity));
-                    func_0010BA30(ENTITY_MODEL(entity));
+                    ModelTexture_SendForModel(ENTITY_MODEL(entity));
+                    Model_DrawSkinned(ENTITY_MODEL(entity));
                 }
                 if (entity->spawn_info->type_id == 0xF) {
                     func_00133708(entity, list);
@@ -515,7 +515,7 @@ static void Entity_RebuildModelMatrices(Entity *entity) {
     Vector_Copy(&root->unk50, saved_rotation);
     part = ENTITY_MODEL(entity)->parts;
     for (i = 0; i < part_count; i++) {
-        func_0010B5D0(part);
+        Model_MultiplyChildMatrices(part);
         part++;
     }
 }

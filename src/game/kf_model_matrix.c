@@ -82,7 +82,7 @@ static void ModelMatrix_BuildFromModel(ModelInstance *model) {
 
 /* ModelMatrix_BuildDrawMatrices with fixed sources: copies D_00431BF0 with its rows divided by the model's
    scale, and D_00431C30. */
-static void func_0020BCB8(ModelInstance *model, void *normal_dest, void *light_dest) {
+static void ModelMatrix_CopyFixedDrawMatrices(ModelInstance *model, void *normal_dest, void *light_dest) {
     f32 (*normal)[4] = normal_dest;
 
     sceVu0CopyMatrix(normal, D_00431BF0);
@@ -98,7 +98,7 @@ static void func_0020BD40(void) {
 
 /* Builds a matrix from the model's x and z angles with its y row cleared, turned a quarter about x and pushed
    16 along z, and applies D_004322E0 to it (a shadow or a marker under the model, perhaps). */
-static void func_0020BD48(ModelInstance *model) {
+static void ModelMatrix_BuildFlattenedTilt(ModelInstance *model) {
     f32 matrix[16];
     f32 offset[4];
 
@@ -114,7 +114,7 @@ static void func_0020BD48(ModelInstance *model) {
 
 /* Builds a model's matrix from its scale, rotation and position, then applies D_004323E0 to a copy of it whose
    y row is (-0.707, 0, -0.707, 0). */
-static void func_0020BE70(ModelInstance *model) {
+static void ModelMatrix_BuildFlattenedSheared(ModelInstance *model) {
     f32 work[16];
     f32 *matrix;
 
@@ -215,7 +215,7 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
 
 /* Builds a model's matrix from a scale (x, y), a turn about z, D_00432620 and a position, then applies
    D_004323E0. */
-static void func_0020C6A0(ModelInstance *model, f32 *position, Vector4 *rotation, f32 *scale) {
+static void ModelMatrix_BuildFlatScaled(ModelInstance *model, f32 *position, Vector4 *rotation, f32 *scale) {
     f32 *scratch = SCRATCH_MATRIX;
     f32 *matrix;
 
@@ -231,7 +231,7 @@ static void func_0020C6A0(ModelInstance *model, f32 *position, Vector4 *rotation
 
 /* Builds the matrix of a flat, mirrored model that turns about z and rises with the camera's pitch,
    then applies D_004322A0. */
-static void func_0020C7A8(ModelInstance *model, Vector4 *rotation, f32 *scale) {
+static void ModelMatrix_BuildMirroredFlat(ModelInstance *model, Vector4 *rotation, f32 *scale) {
     Vector4Arg offset = D_00441490;
     f32 *scratch = SCRATCH_MATRIX;
     f32 *matrix;

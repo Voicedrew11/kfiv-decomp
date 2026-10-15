@@ -14,19 +14,19 @@ extern u16 pad_pressed[];
 extern u16 D_00446940;
 extern u32 *D_00446E84;
 
-void func_00102218(void);
-void func_00102228(void);
-int func_00102230(void);
-int func_001024B0(int);
-int func_001025C0(int, void *, int);
-void func_00109650(u32 *, u32 *);
-u32 *func_00109990(int);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_00109E88(void);
-void func_0010A100(void *);
-void func_0010A4E8(int, int, int, int, int);
+void File_Lock(void);
+void File_Unlock(void);
+int File_IsLocked(void);
+int File_Close(int);
+int File_Read(int, void *, int);
+void Packet_AppendToChain(u32 *, u32 *);
+u32 *Packet_Alloc(int);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueTexFlush(void);
+void GsDraw_QueueTexturedSprite(void *);
+void GsDraw_FillScreen(int, int, int, int, int);
 void func_001B9478(void);
 static void Splash_BuildImagePacket(int tbp, int cbp);
 
@@ -157,17 +157,17 @@ void Splash_StateLoadImage(void) {
     if (D_0038A134[0] != 0) {
         return;
     }
-    if (func_00102230() != 0) {
+    if (File_IsLocked() != 0) {
         return;
     }
     sprintf(image_file_name, "msg/m%4.4d.tm2", splash_image_id);
-    image_fd = func_00102238(image_file_name, 0, 1);
+    image_fd = File_Open(image_file_name, 0, 1);
     if (image_fd >= 0) {
-        func_00102218();
+        File_Lock();
         splash_image_file_open = 1;
         memset(&file_load_buffer, 0, 0x80000);
-        func_001025C0(image_fd, &file_load_buffer, 0x80000);
-        func_001024B0(image_fd);
+        File_Read(image_fd, &file_load_buffer, 0x80000);
+        File_Close(image_fd);
         Splash_BuildImagePacket(0x2E40, 0x3D40);
         Splash_BuildSprite();
         splash_state += 1;
@@ -224,7 +224,7 @@ void Splash_StateClose(void) {
         D_0038CC80[0] = 0;
         splash_state = 0;
         if (splash_image_file_open != 0) {
-            func_00102228();
+            File_Unlock();
             splash_image_file_open = 0;
         }
     }
@@ -236,28 +236,28 @@ void Splash_Draw(void) {
     u32 *cursor;
 
     if (splash_state - 3U < 3) {
-        func_0010A4E8(0, 0, 0, splash_brightness / 2, 0x44);
-        func_00109A50();
-        func_00109A80(GS_REG_TEST_1, 0x3000D);
-        func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-        func_00109A80(GS_REG_ALPHA_1, 0x44);
-        func_00109A80(8, 5);
-        func_00109AD0();
+        GsDraw_FillScreen(0, 0, 0, splash_brightness / 2, 0x44);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x3000D);
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+        Packet_AddGsRegister(8, 5);
+        Packet_EndGsRegisters();
 
-        packet = cursor = func_00109990(2);
+        packet = cursor = Packet_Alloc(2);
         *cursor++ = *D_00446E84 | 0x30000000;
         *cursor++ = (u32)(D_00446E84 + 4);
         *cursor++ = 0;
         *cursor++ = 0;
-        func_00109650(packet, cursor);
-        func_00109E88();
+        Packet_AppendToChain(packet, cursor);
+        GsDraw_QueueTexFlush();
 
         splash_sprite.alpha = splash_brightness;
-        func_0010A100(&splash_sprite);
-        func_00109A50();
-        func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
-        func_00109A80(8, 0);
-        func_00109AD0();
+        GsDraw_QueueTexturedSprite(&splash_sprite);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
+        Packet_AddGsRegister(8, 0);
+        Packet_EndGsRegisters();
     }
 }
 

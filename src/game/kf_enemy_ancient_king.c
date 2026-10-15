@@ -58,7 +58,7 @@ void EntityAi_RangedAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
 extern EntityFrameTable D_0043E900;
 float atan2f(float, float);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
 void EntityEvent_Respawn(char *);
 
@@ -668,7 +668,7 @@ static void func_0014FCC0(Entity *entity) {
 }
 
 /* The ranged attack with record 1 (busy bit 1): animation 24; on each of the four frames in
-   D_0043E900 it launches the record's shot unk10[0].unk00 from the point func_0010CAB8 gives for
+   D_0043E900 it launches the record's shot unk10[0].unk00 from the point Model_GetSkinnedBonePoint gives for
    EntityParams.unk43E, heading away from the entity's own position, with a pitch of -10 degrees
    (EntityAi_LaunchShot). */
 static void AncientKing_RangedAttack1(Entity *entity) {
@@ -699,7 +699,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
         for (i = 0; i < 4; i++) {
             if (entity->unk2A == 0 || unk3D8->unk0C != 0) {
                 if (elapsed < launch_frames.frames[i] && entity->model->unkFC->unk82 >= launch_frames.frames[i]) {
-                    source = (f32 *)func_0010CAB8((char *)entity->model, entity->params->unk43E);
+                    source = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unk43E);
                     if (source != NULL) {
                         delta_x = source[0] - entity->model->position[0];
                         delta_z = source[2] - entity->model->position[2];

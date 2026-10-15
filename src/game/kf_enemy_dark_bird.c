@@ -47,7 +47,7 @@ s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *entity, s32 base);
 double atan2(double, double);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_DistanceXZ(void *, void *);
 float sqrtf(float);
 float atan2f(float, float);
@@ -779,7 +779,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
                     break;
                 }
                 if (launch_frame != 0 && elapsed < launch_frame && frame >= launch_frame) {
-                    point = (f32 *)func_0010CAB8((char *)entity->model, 0);
+                    point = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0);
                     angles[0] = EntityMath_WrapAngle(-atan2(player_state.position[1] - point[1], EntityMath_DistanceXZ(point, &player_state)));
                     if (!(rand() & 1)) {
                         angles[1] = EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f + (f32)(rand() % 15) * 0.017453292f);
@@ -840,8 +840,8 @@ static s32 DarkBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
         shot->unk22 = shot->unk20 = 0;
         shot->unk00 = 1;
         shot->unk28 = entity->params->unk238;
-        from = (f32 *)func_0010CAB8((char *)entity->model, record->unk10[i].unk01);
-        tip = (f32 *)func_0010CAB8((char *)entity->model, record->unk10[i].unk01 + 1);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01 + 1);
         if (from != NULL && tip != NULL) {
             if (record->unk10[i].unk01 != 0xFF) {
                 delta_x = tip[0] - from[0];
@@ -882,7 +882,7 @@ static s32 DarkBird_LaunchThreeShots(Entity *entity, EntityParamsUnk3D8Full *rec
         shot->unk20 = 0;
         shot->unk22 = 0;
         shot->unk28 = entity->params->unk238;
-        point = func_0010CAB8((char *)entity->model, record->unk10[i].unk01);
+        point = Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
         if (point != NULL) {
             func_001B4F30(record->unk10[i].unk00, shot, point, angles, entity);
         }

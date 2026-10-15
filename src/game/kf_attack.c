@@ -67,9 +67,9 @@ void func_001BC058(void);
 s32 Sound_PlayCommon(s32);
 void func_001BC0E0(int with_sound);
 void func_001B4DF8(int idx, int amount);
-int func_00102238(char *, int, int);
-int func_001025C0(int, void *, int);
-int func_001024B0(int);
+int File_Open(char *, int, int);
+int File_Read(int, void *, int);
+int File_Close(int);
 void *memset(void *, int, u32);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
 
@@ -1437,10 +1437,10 @@ void func_001B4EC8(int amount) {
 
 /* Loads the effect table fx_table from its file. */
 void func_001B4EE0(void) {
-    int file_handle = func_00102238(D_0043F248, 0, 1);
+    int file_handle = File_Open(D_0043F248, 0, 1);
 
-    func_001025C0(file_handle, fx_table, -1);
-    func_001024B0(file_handle);
+    File_Read(file_handle, fx_table, -1);
+    File_Close(file_handle);
 }
 
 int func_001B4F30(u16 effect_id, void *shot, void *from, void *angles, void *entity) {

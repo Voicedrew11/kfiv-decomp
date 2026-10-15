@@ -19,7 +19,7 @@ extern float player_state[];
 float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
 float EntityMath_DistanceXZ(void *, void *);
 float EntityMath_AngleXZ(float *, char *);
@@ -88,8 +88,8 @@ static void LavaFace_Think(Entity *entity, s32 unknown) {
     f32 yaw;
 
     if (entity->unkA0 == 0 && (s16)entity->params->unk434 != 0) {
-        from = (f32 *)func_0010CAB8((char *)entity->model, entity->params->unk432);
-        tip = (f32 *)func_0010CAB8((char *)entity->model, entity->params->unk432 + 1);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unk432);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unk432 + 1);
         if (from == NULL || tip == NULL) {
             return;
         }

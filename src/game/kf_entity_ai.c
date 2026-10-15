@@ -33,7 +33,7 @@ int func_001B4F30(u16, void *, void *, void *, void *);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 float sqrtf(float);
 float atan2f(float, float);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 s32 Bone_TurnPart(ModelPart *part, f32 *angles, s32 mode, f32 *goal, f32 *limits, f32 rate);
 /* match: the call leaves the sixth argument (rate, $f12) unset */
 #define TURN_PART_NO_RATE ((int (*)(void *, f32 *, int, f32 *, f32 *))Bone_TurnPart)
@@ -70,11 +70,11 @@ static inline void adjust_level(u8 *level, s32 delta, s32 max) {
 int Motion_SeekSlotKeys(ModelInstance *, int, int, int);
 s32 Motion_BlendSlotToPose(ModelInstance *model, s32 type, s32 table, s16 frame, f32 weight);
 void Vector_WeightedSum4(void *, void *, void *, void *, void *, float *);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_00109E18(void);
-void func_0010A718(int);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueFlush(void);
+void GsDraw_SetScreenAlpha(int);
 void Matrix_Multiply(void *, void *, void *);
 extern Entity *D_004467E0;
 extern ModelInstance entity_models[];
@@ -272,8 +272,8 @@ void EntityAi_SpawnBoneEffect(char **model, int effect_id, int point) {
     f32 yaw;
     f32 turns;
 
-    from = (f32 *)func_0010CAB8(*model, point);
-    tip = (f32 *)func_0010CAB8(*model, point + 1);
+    from = (f32 *)Model_GetSkinnedBonePoint(*model, point);
+    tip = (f32 *)Model_GetSkinnedBonePoint(*model, point + 1);
     if (from != NULL && tip != NULL) {
         delta_x = tip[0] - from[0];
         delta_y = tip[1] - from[1];
@@ -1940,14 +1940,14 @@ void Entity_DrawPoolModels(void) {
     s32 i;
     s32 count;
 
-    func_0010A718(0);
-    func_00109A50();
-    func_00109A80(0x1A, 0);
-    func_00109A80(0x1B, 0x248);
-    func_00109A80(GS_REG_TEST_2, 0x55001);
-    func_00109A80(0x4B, 1);
-    func_00109AD0();
-    func_00109E18();
+    GsDraw_SetScreenAlpha(0);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x1A, 0);
+    Packet_AddGsRegister(0x1B, 0x248);
+    Packet_AddGsRegister(GS_REG_TEST_2, 0x55001);
+    Packet_AddGsRegister(0x4B, 1);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
     for (entity = D_004467E0; entity != NULL; entity = entity->next) {
         if (!ENTITY_FLAG_BITS(entity)->bit1 || entity->unk14 == NULL || (f32)entity->params->unk04 <= 0.0f) {
             continue;
@@ -1983,14 +1983,14 @@ void Entity_DrawPoolModels(void) {
         Matrix_Multiply(model->unk40, ENTITY_MODEL(entity)->unk40, fire_lord_model_matrix);
         model->unk148 = ENTITY_MODEL(entity)->unk148;
         model->unk14C = ENTITY_MODEL(entity)->unk14C;
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_2, ((s64)(s32)(ENTITY_MODEL(entity)->alpha * 32.0f * 0.0078125f) << 32) | 0x64);
-        func_00109AD0();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)(s32)(ENTITY_MODEL(entity)->alpha * 32.0f * 0.0078125f) << 32) | 0x64);
+        Packet_EndGsRegisters();
         model->unk1A8(model);
-        func_00109E18();
+        GsDraw_QueueFlush();
     }
-    func_00109A50();
-    func_00109A80(0x1A, 1);
-    func_00109A80(0x4B, 0);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x1A, 1);
+    Packet_AddGsRegister(0x4B, 0);
+    Packet_EndGsRegisters();
 }

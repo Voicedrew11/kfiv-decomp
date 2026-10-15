@@ -11,12 +11,12 @@ extern f32 player_state[];
 static ModelInstance *draw_buckets[5][2][1000];
 
 /* Forgets every model in the draw lists. */
-void func_0010B000(void) {
+void DrawList_Clear(void) {
     memset(draw_buckets, 0, sizeof(draw_buckets));
 }
 
-/* Put a model in the draw list bucket for its distance from the player. */
-void func_0010B018(ModelInstance *model, s32 layer, s32 list) {
+/* Puts a model in the draw list bucket for its distance from the player (1000 buckets over 5000 units). */
+void DrawList_Add(ModelInstance *model, s32 layer, s32 list) {
     f32 delta[4];
     ModelInstance **bucket;
     ModelInstance *next;
@@ -38,7 +38,7 @@ void func_0010B018(ModelInstance *model, s32 layer, s32 list) {
 }
 
 /* Draws the models of one draw list, from the farthest bucket to the nearest. */
-void func_0010B140(u32 layer, u32 list) {
+void DrawList_Draw(u32 layer, u32 list) {
     int depth;
     ModelInstance *model;
     ModelInstance **bucket;

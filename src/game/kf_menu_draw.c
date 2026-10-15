@@ -19,9 +19,9 @@ int sceOpen(const char *, int);
 int sceLseek(int, int, int);
 int sceRead(int, void *, int);
 int sceClose(int);
-int func_00102238(char *, int, int);
-int func_001024B0(int);
-int func_001025C0(int, void *, int);
+int File_Open(char *, int, int);
+int File_Close(int);
+int File_Read(int, void *, int);
 void Vector_WeightedSum4(void *, void *, void *, void *, void *, float *);
 
 /* The module's own variables are defined where the original has them: the initialised ones in front of the
@@ -3271,12 +3271,12 @@ void MenuSprite_DrawPlain(int owner, int index, int param) {
 int MenuFile_Load(char *name, void *buffer) {
     int file_handle;
 
-    file_handle = func_00102238(name, 0, 1);
+    file_handle = File_Open(name, 0, 1);
     if (file_handle < 0) {
         return 0;
     }
-    func_001025C0(file_handle, buffer, -1);
-    func_001024B0(file_handle);
+    File_Read(file_handle, buffer, -1);
+    File_Close(file_handle);
     FlushCache(0);
     return (int)buffer;
 }

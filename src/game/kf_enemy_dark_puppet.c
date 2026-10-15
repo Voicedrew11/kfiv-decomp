@@ -58,7 +58,7 @@ void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 int EntityAi_LaunchShot(void *, int, void *, void *);
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 int func_0019A3F0(void *, int);
@@ -531,7 +531,7 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1; DarkPuppet_ThinkCombat starts it for index 0
-   only): animation 23; on frame 30 it launches the record's shot unk10 from the point func_0010CAB8
+   only): animation 23; on frame 30 it launches the record's shot unk10 from the point Model_GetSkinnedBonePoint
    gives for the record's unk11, along the model's angles (EntityAi_LaunchShot). Turns and moves as
    DarkPuppet_MeleeAttack does. */
 static void DarkPuppet_RangedAttack0(Entity *entity) {
@@ -565,7 +565,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
         }
         if (((s32)(entity->flags >> 58) & 3) == 0 && entity->model->unkFC->unk82 == 0x1E &&
             (entity->unk2A == 0 || unk3D8->unk0C != 0)) {
-            point = func_0010CAB8((char *)entity->model, unk3D8->unk11);
+            point = Model_GetSkinnedBonePoint((char *)entity->model, unk3D8->unk11);
             if (point != NULL) {
                 EntityAi_LaunchShot(entity, unk3D8->unk10, point, entity->model->unkD0);
             }

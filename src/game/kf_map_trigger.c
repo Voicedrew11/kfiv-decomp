@@ -9,7 +9,7 @@ void func_0011FBE8(MapObject *);
 void func_0011FC10(MapObject *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void func_0010B5D0(ModelPart *);
+void Model_MultiplyChildMatrices(ModelPart *);
 void Matrix_Multiply(void *, void *, void *);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
@@ -17,10 +17,10 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
 void Vector_Scale(float *, float *, float);
-void func_0010E6A8(ModelInstance *, s64, s64);
-void func_0010E820(ModelInstance *, s64);
-void func_0010E8E0(void *, int, int, int, int);
-int func_0010EA08(int, void *, int *, int *, float);
+void Model_SetPrimBits(ModelInstance *, s64, s64);
+void Model_SetAlphaBlend(ModelInstance *, s64);
+void Model_SetVertexColour(void *, int, int, int, int);
+int Model_FadeVertexColoursNear(int, void *, int *, int *, float);
 void *memset(void *, int, u32);
 int rand(void);
 extern GameStatus game_status;
@@ -169,7 +169,7 @@ void func_001229D0(MapTrigger *trigger) {
     part = trigger->model->parts;
     if (trigger->model->unk100 & 1) {
         for (i = 0; i < part_count; i++) {
-            func_0010B5D0(part);
+            Model_MultiplyChildMatrices(part);
             part++;
         }
         part = trigger->model->parts;
@@ -196,8 +196,8 @@ void func_001229D0(MapTrigger *trigger) {
 void func_00122BE8(MapTrigger *trigger) {
     MapTriggerShotKind122BE8 *shot = (MapTriggerShotKind122BE8 *)&trigger->shot;
 
-    func_0010E6A8(trigger->model, 0x40, 0x40);
-    func_0010E820(trigger->model, 0x44);
+    Model_SetPrimBits(trigger->model, 0x40, 0x40);
+    Model_SetAlphaBlend(trigger->model, 0x44);
     shot->unk00[0] = 0.0f;
     shot->unk00[1] = -700.0f;
     shot->unk00[2] = 0.0f;
@@ -205,10 +205,10 @@ void func_00122BE8(MapTrigger *trigger) {
     shot->unk10 = 0.0f;
     if (!(MAP_TRIGGER_FLAGS(trigger)->word & MAP_TRIGGER_FLAG_20000)) {
         trigger->type = 1;
-        func_0010E8E0(trigger->model, -1, -1, -1, 0);
+        Model_SetVertexColour(trigger->model, -1, -1, -1, 0);
     } else {
         trigger->type = 3;
-        func_0010E8E0(trigger->model, -1, -1, -1, 0x80);
+        Model_SetVertexColour(trigger->model, -1, -1, -1, 0x80);
     }
 }
 
@@ -216,7 +216,7 @@ void func_00122CA8(void) {
 }
 
 /* Update handler, type 2: grows the radius (up to 100000) and steps the model's
-   alpha toward 0x80 within it (func_0010EA08); once that is done the trigger is on
+   alpha toward 0x80 within it (Model_FadeVertexColoursNear); once that is done the trigger is on
    (type 3) and the radius starts over. */
 void func_00122CB0(MapTrigger *trigger) {
     int targets[4];
@@ -231,7 +231,7 @@ void func_00122CB0(MapTrigger *trigger) {
     if (shot->unk10 < 100000.0f) {
         shot->unk10 += 6.6666f;
     }
-    if (func_0010EA08((int)trigger->model, shot, steps, targets, shot->unk10) == 0) {
+    if (Model_FadeVertexColoursNear((int)trigger->model, shot, steps, targets, shot->unk10) == 0) {
         trigger->type = 3;
         shot->unk10 = 0.0f;
     }
@@ -255,7 +255,7 @@ void func_00122D68(MapTrigger *trigger) {
     if (shot->unk10 < 2000.0f) {
         shot->unk10 += 4.0f;
     }
-    if (func_0010EA08((int)trigger->model, shot, steps, targets, shot->unk10) == 0) {
+    if (Model_FadeVertexColoursNear((int)trigger->model, shot, steps, targets, shot->unk10) == 0) {
         trigger->type = 1;
         shot->unk10 = 0.0f;
     }

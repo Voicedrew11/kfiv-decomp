@@ -11,10 +11,10 @@
 void func_001CA338(int);
 s32 func_001C8F18(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
 void *func_001CA498(int, int);
-void func_0010D018(ModelInstance *, char **, char **);
-void func_0010ED80(char *, int, int);
-void func_0010E8E0(void *, int, int, int, int);
-void func_0010B510(char *, int, int);
+void Model_SetUpPosed(ModelInstance *, char **, char **);
+void Model_SetTextureBase(char *, int, int);
+void Model_SetVertexColour(void *, int, int, int, int);
+void TextureTable_SetBasePointers(char *, int, int);
 void func_001CA578(void *);
 
 void func_001C9C40(void);
@@ -37,22 +37,22 @@ float Angle_Wrap(float);
 int func_001CA5E0(int);
 int func_001CA630(int);
 int func_001CA788(int);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
 MapRecordInfo *func_00115CD0(CameraState *, f32, int);
 void Vector_Scale(float *, float *, float);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void func_0010AEB8(void *);
-void func_0010DB40(ModelInstance *);
-void func_0010A698(void);
+void ModelTexture_SendForModel(void *);
+void Model_DrawPosedDepthByPart(ModelInstance *);
+void GsDraw_ClearDepth(void);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
-void func_00109E18(void);
+void GsDraw_QueueFlush(void);
 void func_001B9478(void);
 float sinf(float);
 float cosf(float);
@@ -186,13 +186,13 @@ void func_001C82C0(int map) {
             node->model = &D_005816C0[map][i];
             model_data = source->model_data;
             cursor = D_00599EC0[map][i];
-            func_0010D018(node->model, &model_data, &cursor);
-            func_0010ED80((char *)node->model, 0x3B40, 0x3EC0);
-            func_0010E8E0(node->model, 0xFF, 0xFF, 0xFF, -1);
+            Model_SetUpPosed(node->model, &model_data, &cursor);
+            Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
+            Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
             node->model->draw = (void (*)(ModelInstance *))func_001CA578;
             node->model->unk194 = (int)source->texture;
             node->model->unk190 = 2;
-            func_0010B510(source->texture, 0x3B40, 0x3EC0);
+            TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
         }
     }
     saved = *(DroppedItemRecords *)dropped_item_records[map_slots[map].tag];
@@ -446,12 +446,12 @@ s32 func_001C8F18(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f
     node->unk30 = 0.0f;
     model_data = source->model_data;
     buffer = D_005A9EC0[map][index];
-    func_0010D018(node->model, &model_data, &buffer);
-    func_0010ED80((char *)node->model, 0x3B40, 0x3EC0);
-    func_0010E8E0(node->model, 0xFF, 0xFF, 0xFF, -1);
+    Model_SetUpPosed(node->model, &model_data, &buffer);
+    Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
+    Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
     node->model->unk190 = 2;
     node->model->unk194 = (int)source->texture;
-    func_0010B510(source->texture, 0x3B40, 0x3EC0);
+    TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
     if (order == 0xFFFFFFFF) {
         order = D_004469D0++;
     }
@@ -517,12 +517,12 @@ ItemNode *func_001C9340(int map, int item, void *position, void *rotation, void 
     Vector_Copy(&node->model->unkE0, scale);
     sources[0] = source->model_data;
     sources[1] = D_005ADEC0[map][i];
-    func_0010D018(node->model, &sources[0], &sources[1]);
-    func_0010ED80((char *)node->model, 0x3B40, 0x3EC0);
-    func_0010E8E0(node->model, 0xFF, 0xFF, 0xFF, -1);
+    Model_SetUpPosed(node->model, &sources[0], &sources[1]);
+    Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
+    Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
     node->model->unk190 = 2;
     node->model->unk194 = (int)source->texture;
-    func_0010B510(source->texture, 0x3B40, 0x3EC0);
+    TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
     func_001CA500((ListNode *)node);
     return node;
 }
@@ -581,9 +581,9 @@ void func_001C9650(int with_picked) {
     s32 count;
     s32 i;
 
-    func_00109A50();
-    func_00109A80(0x47, 0x5000D);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x47, 0x5000D);
+    Packet_EndGsRegisters();
     for (node = D_004469D4; node != NULL; node = node->next) {
         node->map_record = func_00115CD0((CameraState *)&node->model->position, 0.0f, node->flags & 1);
         if (node->map_record == NULL) {
@@ -602,8 +602,8 @@ void func_001C9650(int with_picked) {
         node->model->unk148 = (s32)&map_draw_state.unkA90[node->flags & 1][map_slots[node->flags & 1].header->unk71];
         node->model->unk14C = &map_draw_state.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
         LinkedPoint_FindHitsForModel(node->model);
-        func_0010AEB8(node->model);
-        func_0010DB40(node->model);
+        ModelTexture_SendForModel(node->model);
+        Model_DrawPosedDepthByPart(node->model);
     }
 }
 
@@ -632,10 +632,10 @@ void func_001C97E8(int hidden) {
         return;
     }
     i = 0;
-    func_0010A698();
-    func_00109A50();
-    func_00109A80(0x47, 0x5000D);
-    func_00109AD0();
+    GsDraw_ClearDepth();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x47, 0x5000D);
+    Packet_EndGsRegisters();
     Vector_Scale(scale, &node->model->unkE0, 1.0f);
     ModelMatrix_Build(node->model, &node->model->position, &node->model->rotation, scale);
     count = node->model->part_count;
@@ -655,9 +655,9 @@ void func_001C97E8(int hidden) {
     node->model->unk148 = (s32)&map_draw_state.unkA90[node->flags & 1][map_slots[node->flags & 1].header->unk71];
     node->model->unk14C = &map_draw_state.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
     LinkedPoint_FindHitsForModel(node->model);
-    func_0010AEB8(node->model);
-    func_0010DB40(node->model);
-    func_00109E18();
+    ModelTexture_SendForModel(node->model);
+    Model_DrawPosedDepthByPart(node->model);
+    GsDraw_QueueFlush();
 }
 
 /* Makes node the one being picked up, if none is yet and it is on the list of the ones in use. */
@@ -924,10 +924,10 @@ ItemNode *func_001CA520(ItemNode *node) {
 
 /* Sends the model's textures and sets GS register 0x47 for drawing it. */
 void func_001CA578(void *model) {
-    func_0010AEB8(model);
-    func_00109A50();
-    func_00109A80(0x47, 0x5000D);
-    func_00109AD0();
+    ModelTexture_SendForModel(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x47, 0x5000D);
+    Packet_EndGsRegisters();
 }
 
 /* Returns the node index the slot's map has for object_id (1..255), or -1. */

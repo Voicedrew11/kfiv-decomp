@@ -25,7 +25,7 @@ void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionHeavy(Entity *);
 extern PlayerData player_state;
 int Motion_Start(void *, int, int, u32, int);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 void EntityEvent_OnDeath(Entity *);
 int func_0019A3F0(void *, int);
 extern u32 D_00446ED4;
@@ -130,7 +130,7 @@ static void Widdacona_OnHit(Entity *entity) {
 }
 
 /* The death action (busy bit 0x40): animation 16; when it has ended it starts effect 0x3BC at the
-   points func_0010CAB8 gives for 20 to 22, sets work byte unk7A and waits until the entity whose
+   points Model_GetSkinnedBonePoint gives for 20 to 22, sets work byte unk7A and waits until the entity whose
    spawn id is EntitySpawnInfo.unk40 has its unk7A set too; then the fade over 20 frames and the
    removal, as EntityAi_Death. */
 static void Widdacona_Death(Entity *entity) {
@@ -159,15 +159,15 @@ static void Widdacona_Death(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            part = func_0010CAB8((char *)entity->model, 0x14);
+            part = Model_GetSkinnedBonePoint((char *)entity->model, 0x14);
             if (part != NULL) {
                 Effect_StartSpawner(0x3BC, part, entity->model->unkD0, player_state.position);
             }
-            part = func_0010CAB8((char *)entity->model, 0x15);
+            part = Model_GetSkinnedBonePoint((char *)entity->model, 0x15);
             if (part != NULL) {
                 Effect_StartSpawner(0x3BC, part, entity->model->unkD0, player_state.position);
             }
-            part = func_0010CAB8((char *)entity->model, 0x16);
+            part = Model_GetSkinnedBonePoint((char *)entity->model, 0x16);
             if (part != NULL) {
                 Effect_StartSpawner(0x3BC, part, entity->model->unkD0, player_state.position);
             }

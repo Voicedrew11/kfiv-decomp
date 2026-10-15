@@ -570,7 +570,7 @@ typedef struct {
     char text[4][0x80];
 } DebugStartMenuItems;
 
-/* what func_0020D008 is given; nothing calls that function, so what this is stays unknown */
+/* what Geometry_IndexOfLargestOfSeven is given; nothing calls that function, so what this is stays unknown */
 typedef struct {
     char pad00[0x70];
     s16 *unk70;                     /* 0x70 seven values */

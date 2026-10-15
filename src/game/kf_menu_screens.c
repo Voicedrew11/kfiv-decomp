@@ -130,11 +130,11 @@ extern LinkNode D_00426510;
 extern LinkNode D_00426560;
 extern LinkNode D_004265B0;
 extern int D_00446AD0;
-int func_00102238(char *, int, int);
-int func_00102258(char *name, int nowait, int pack);
-int func_001025C0(int, void *, int);
-int func_001024B0(int file);
-int func_00102790(int file, int mode);
+int File_Open(char *, int, int);
+int File_OpenUnflagged(char *name, int nowait, int pack);
+int File_Read(int, void *, int);
+int File_Close(int file);
+int File_Sync(int file, int mode);
 int FlushCache(int);
 void PoolPartFile_Relocate(char *);
 extern int D_004472F0;
@@ -328,11 +328,11 @@ extern s32 D_00446F38;
 extern u8 D_004472CF;
 void func_001095D0(void);
 void func_001095D8(void);
-void func_001095E0(void);
-void func_001096E8(void);
-void func_00109800(void);
-void func_00109E88(void);
-void func_0010B238(TextureTableHeader *);
+void Packet_SwapBuffers(void);
+void Packet_SendChain(void);
+void Packet_WaitForSend(void);
+void GsDraw_QueueTexFlush(void);
+void TextureTable_QueueAll(TextureTableHeader *);
 void MenuTexture_Upload(TextureHeader *, LoadedBlockRef *);
 extern s8 D_004472CD;
 void Sound_LoadMgBank(int);
@@ -1210,12 +1210,12 @@ static void Menu_ShiftEquipModelsNextItem(int unused, void *unused_data) {
 static void Menu_OpenModelFile(ChunkUpload *upload) {
     s32 file_handle;
 
-    file_handle = func_00102258(upload->name, 1, 1);
+    file_handle = File_OpenUnflagged(upload->name, 1, 1);
     upload->unk08 = file_handle;
     if (file_handle < 0) {
-        upload->unk08 = func_00102238("menu/select2/i0000.mod", 1, 1);
+        upload->unk08 = File_Open("menu/select2/i0000.mod", 1, 1);
     }
-    func_001025C0(upload->unk08, upload->pool_node->buffer, 0x25800);
+    File_Read(upload->unk08, upload->pool_node->buffer, 0x25800);
     D_00446AD0 = upload->unk08;
     upload->stage++;
 }
@@ -1224,13 +1224,13 @@ static void Menu_OpenModelFile(ChunkUpload *upload) {
 static void Menu_WaitModelRead(ChunkUpload *upload) {
     s32 status;
 
-    status = func_00102790(upload->unk08, 1);
+    status = File_Sync(upload->unk08, 1);
     if (status == 0) {
-        func_001024B0(upload->unk08);
+        File_Close(upload->unk08);
         D_00446AD0 = -1;
         upload->stage++;
     } else if (status < 0) {
-        func_001024B0(upload->unk08);
+        File_Close(upload->unk08);
         upload->done = upload->stage = 0;
         D_00446AD0 = -1;
     }
@@ -1269,7 +1269,7 @@ void Menu_StepModelLoad(LinkNode *node) {
 static void Menu_OpenWornModelFile(LinkNode *node) {
     s32 file_handle;
 
-    file_handle = func_00102258(node->unk10->name, 1, 1);
+    file_handle = File_OpenUnflagged(node->unk10->name, 1, 1);
     node->unk08 = file_handle;
     if (file_handle < 0) {
         LinkNode *next;
@@ -1285,7 +1285,7 @@ static void Menu_OpenWornModelFile(LinkNode *node) {
         node->unk20 = 1;
         return;
     }
-    func_001025C0(file_handle, ((ChunkPoolNode *)node->pool_node)->buffer, 0x25800);
+    File_Read(file_handle, ((ChunkPoolNode *)node->pool_node)->buffer, 0x25800);
     D_00446AD0 = node->unk08;
     node->unk1C += 1;
 }
@@ -1294,13 +1294,13 @@ static void Menu_OpenWornModelFile(LinkNode *node) {
 static void Menu_WaitWornModelRead(ChunkUpload *upload) {
     s32 status;
 
-    status = func_00102790(upload->unk08, 1);
+    status = File_Sync(upload->unk08, 1);
     if (status == 0) {
-        func_001024B0(upload->unk08);
+        File_Close(upload->unk08);
         D_00446AD0 = -1;
         upload->stage++;
     } else if (status < 0) {
-        func_001024B0(upload->unk08);
+        File_Close(upload->unk08);
         upload->done = upload->stage = 0;
         D_00446AD0 = -1;
         D_004472F0 = 0;
@@ -1368,14 +1368,14 @@ static void Menu_StepWornModelLoad(ChunkUpload *upload) {
 static void Menu_OpenPackageFile(ChunkUpload *upload) {
     s32 file_handle;
 
-    file_handle = func_00102258(upload->name, 1, 1);
+    file_handle = File_OpenUnflagged(upload->name, 1, 1);
     upload->unk08 = file_handle;
     if (file_handle < 0) {
         upload->stage = 0;
         upload->done = 0;
         upload = NULL; // match: retail goes on to read through this null pointer
     }
-    func_001025C0(upload->unk08, upload->pool_node->buffer, 0x1A2000);
+    File_Read(upload->unk08, upload->pool_node->buffer, 0x1A2000);
     D_00446AD0 = upload->unk08;
     upload->stage++;
 }
@@ -1384,13 +1384,13 @@ static void Menu_OpenPackageFile(ChunkUpload *upload) {
 static void Menu_WaitPackageRead(ChunkUpload *upload) {
     s32 status;
 
-    status = func_00102790(upload->unk08, 1);
+    status = File_Sync(upload->unk08, 1);
     if (status == 0) {
-        func_001024B0(upload->unk08);
+        File_Close(upload->unk08);
         D_00446AD0 = -1;
         upload->stage++;
     } else if (status < 0) {
-        func_001024B0(upload->unk08);
+        File_Close(upload->unk08);
         upload->done = upload->stage = 0;
         D_00446AD0 = -1;
     }
@@ -2825,13 +2825,13 @@ static s32 Menu_Start(void) {
     u32 *packet;
     LoadedBlockRef *block;
 
-    func_001095E0();
+    Packet_SwapBuffers();
     func_001095D0();
-    func_0010B238((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
-    func_00109E88();
+    TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
+    GsDraw_QueueTexFlush();
     func_001095D8();
-    func_001096E8();
-    ((s32 (*)(void))func_00109800)(); // match: called as if it returned a value, which frees $2 for the loop below
+    Packet_SendChain();
+    ((s32 (*)(void))Packet_WaitForSend)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < D_00446DEC; i++) {
         block = &D_0042A2A0[i];
         MenuTexture_Upload(block->data, block);
@@ -2923,7 +2923,7 @@ static s32 Menu_CutModelChain(void) {
             D_005CE7E0.item = D_005CE720.item;
             D_005CE7F0.item = D_005CE730.item;
             Sound_LoadMgBank(D_005CE740.item->unk0C);
-            func_001024B0(D_00446AD0);
+            File_Close(D_00446AD0);
             D_00446AC8 = 0;
             D_004472CD = 0;
             return FALSE;
@@ -4709,7 +4709,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
                     ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 } else {
                     sceCdBreak();
-                    func_001024B0(D_00446AD0);
+                    File_Close(D_00446AD0);
                     D_00446AD0 = -1;
                     D_005CEEE0.done = 0;
                     D_005CEEE0.stage = 0;

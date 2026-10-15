@@ -55,7 +55,7 @@ s32 EntitySight_ObjectInWay(Entity *);
 float sqrtf(float);
 float atan2f(float, float);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 
@@ -351,7 +351,7 @@ static void func_0013D9D0(Entity *entity) {
 
 /* The melee attack with record 1 (busy bit 1), which func_0013D9D0 starts: animation 17, its hits
    checked at the angle Entity.unk68 (EntityAi_CheckMeleeHitAt); on frames 10 to 22 it starts effect 0x222
-   along the path of the point func_0010CAB8 gives for 9. At its end, EntityParams.unk432 times in
+   along the path of the point Model_GetSkinnedBonePoint gives for 9. At its end, EntityParams.unk432 times in
    100, it goes back to animation 1 and func_0013D9D0 with a new count in work word unk68; else it
    starts LivingArmor_Dormant. */
 static void LivingArmor_MeleeAttack1(Entity *entity) {
@@ -392,8 +392,8 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
         } else {
             unkE0->unk1C = 0.0f;
         }
-        tip = (f32 *)func_0010CAB8((char *)entity->model, 9);
-        base = (f32 *)func_0010CAB8((char *)entity->model, 8);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 9);
+        base = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 8);
         if (tip != NULL && base != NULL) {
             if (entity->model->unkFC->unk82 >= 10 && entity->model->unkFC->unk82 <= 22) {
                 delta_x = base[0] - tip[0];
@@ -514,7 +514,7 @@ static void LivingArmor_Dormant(Entity *entity) {
 }
 
 /* The melee attack with record 0 (busy bit 1): animation 20, as EntityAi_MeleeAttack; on frames 10
-   to 22 it starts effect 0x222 along the path of the point func_0010CAB8 gives for 9. */
+   to 22 it starts effect 0x222 along the path of the point Model_GetSkinnedBonePoint gives for 9. */
 static void LivingArmor_MeleeAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk240 *unk240 = &entity->params->unk240[0];
@@ -553,8 +553,8 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
         } else {
             unkE0->unk1C = 0.0f;
         }
-        tip = (f32 *)func_0010CAB8((char *)entity->model, 9);
-        base = (f32 *)func_0010CAB8((char *)entity->model, 8);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 9);
+        base = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 8);
         if (tip != NULL && base != NULL) {
             if (entity->model->unkFC->unk82 >= 10 && entity->model->unkFC->unk82 <= 22) {
                 delta_x = base[0] - tip[0];

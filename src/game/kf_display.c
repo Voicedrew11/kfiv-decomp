@@ -28,7 +28,7 @@ extern int D_00446F7C;              /* the same for the second */
 extern int D_00446FA0;              /* TRUE when the last vsync was of field 0 */
 
 void sceSifInitRpc(int);
-void func_00102150(void);
+void File_InitDrive(void);
 int sceSifRebootIop(const char *);
 int sceSifSyncIop(void);
 void sceFsReset(void);
@@ -44,13 +44,13 @@ int sceGsSyncV(int);
 /* Reboots the IOP with IOPRP224.IMG and loads the nine IOP modules (pad, memory card, sound and file I/O). */
 void System_RebootIop(void) {
     sceSifInitRpc(0);
-    func_00102150();
+    File_InitDrive();
     while (!sceSifRebootIop(D_00441350)) {
     }
     while (!sceSifSyncIop()) {
     }
     sceSifInitRpc(0);
-    func_00102150();
+    File_InitDrive();
     sceFsReset();
     sceSifLoadModule(D_00441368, 0, D_00446F90);
     sceSifLoadModule(D_00441388, 0, D_00446F90);
@@ -142,7 +142,7 @@ void Display_SwapBuffers(int allow_late_swap) {
 
 /* Waits for a vsync, then sets both double buffers to the half not in use, without flipping D_00446F78 and
    D_00446F7C. Nothing calls it. */
-static void func_0020B840(void) {
+static void Display_ReapplyLastSwap(void) {
     do {
     } while (sceGsSyncV(0) == 0);
     FlushCache(0);

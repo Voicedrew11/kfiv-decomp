@@ -106,11 +106,11 @@ extern s32 D_00446F68;
 void *memset(void *, int, u32);
 void func_001095D0(void);
 void func_001095D8(void);
-void func_001095E0(void);
-void func_001096E8(void);
-void func_00109800(void);
-void func_00109E88(void);
-void func_0010B238(TextureTableHeader *);
+void Packet_SwapBuffers(void);
+void Packet_SendChain(void);
+void Packet_WaitForSend(void);
+void GsDraw_QueueTexFlush(void);
+void TextureTable_QueueAll(TextureTableHeader *);
 s32 MenuArena_Init(s32 value);
 void MenuTexture_Upload(void *, LoadedBlockRef *);
 extern LinkNode *D_00446C90;
@@ -744,13 +744,13 @@ static s32 Trade_Start(HandlerContext *context) {
     u32 *packet;
     LoadedBlockRef *block;
 
-    func_001095E0();
+    Packet_SwapBuffers();
     func_001095D0();
-    func_0010B238((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
-    func_00109E88();
+    TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
+    GsDraw_QueueTexFlush();
     func_001095D8();
-    func_001096E8();
-    ((s32 (*)(void))func_00109800)(); // match: called as if it returned a value, which frees $2 for the loop below
+    Packet_SendChain();
+    ((s32 (*)(void))Packet_WaitForSend)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < D_00446DEC; i++) {
         block = &D_0042A2A0[i];
         MenuTexture_Upload(block->data, block);
@@ -2895,13 +2895,13 @@ static s32 Smith_Start(void) {
     u32 *packet;
     LoadedBlockRef *block;
 
-    func_001095E0();
+    Packet_SwapBuffers();
     func_001095D0();
-    func_0010B238((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
-    func_00109E88();
+    TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
+    GsDraw_QueueTexFlush();
     func_001095D8();
-    func_001096E8();
-    ((s32 (*)(void))func_00109800)(); // match: called as if it returned a value, which frees $2 for the loop below
+    Packet_SendChain();
+    ((s32 (*)(void))Packet_WaitForSend)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < D_00446DEC; i++) {
         block = &D_0042A2A0[i];
         MenuTexture_Upload(block->data, block);
@@ -5457,13 +5457,13 @@ static int SaveScreen_Start(HandlerContext *context) {
     SaveScreen *screen;
     int (*next_handler)();
 
-    func_001095E0();
+    Packet_SwapBuffers();
     func_001095D0();
-    func_0010B238((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
-    func_00109E88();
+    TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
+    GsDraw_QueueTexFlush();
     func_001095D8();
-    func_001096E8();
-    ((s32 (*)(void))func_00109800)(); // match: called as if it returned a value, which frees $2 for the loop below
+    Packet_SendChain();
+    ((s32 (*)(void))Packet_WaitForSend)(); // match: called as if it returned a value, which frees $2 for the loop below
     for (; i < D_00446DEC; i++) {
         block = &D_0042A2A0[i];
         MenuTexture_Upload(block->data, block);

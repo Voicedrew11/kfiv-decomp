@@ -20,34 +20,34 @@ extern void (*screen_fade_draw_steps[])(void);
 int func_00103A18(int, int *, int *);
 void func_00101618(void);
 void func_001020F8(void);
-void func_001095E0(void);
-void func_001096E8(void);
-void func_00109800(void);
-void func_0010B000(void);
+void Packet_SwapBuffers(void);
+void Packet_SendChain(void);
+void Packet_WaitForSend(void);
+void DrawList_Clear(void);
 void func_00118A50(void);
 void func_001B5460(void);
 void Display_SwapBuffers(int);
 int func_001005E8(int);
-void func_0010A040(int);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_0010A100(void *);
-void func_0010A4E8(int, int, int, int, int);
+void GsDraw_CopyFrame(int);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueTexturedSprite(void *);
+void GsDraw_FillScreen(int, int, int, int, int);
 void func_00114198(int);
-int func_00102230(void);
+int File_IsLocked(void);
 void func_00117CC8(void);
-int func_00123108(void);
-void func_00123288(void);
+int EntityPool_IsLoading(void);
+void Entity_UpdatePool(void);
 void Sound_Update(void);
 void func_00115878(int);
 void func_00117C60(void);
 void func_001A15F8(void);
 void func_001BC128(void);
 void func_001C8938(int);
-void func_00102218(void);
-void func_00102228(void);
-int func_00102900(int);
+void File_Lock(void);
+void File_Unlock(void);
+int File_GetSize(int);
 int sprintf(char *, char *, ...);
 float cosf(float);
 float sinf(float);
@@ -57,7 +57,7 @@ void func_00114840(int);
 void func_00114AA8(int);
 void func_001155F8(int);
 void func_00119360(int);
-void func_00123158(int);
+void Entity_AddGroupToWaiting(int);
 void Sound_StopAll(int);
 void func_001A15F0(void);
 void func_001C82C0(int);
@@ -152,13 +152,13 @@ void func_00118958(void) {
         do {
             func_001B5460();
             Display_SwapBuffers(0);
-            func_001096E8();
-            func_001095E0();
-            func_0010B000();
+            Packet_SendChain();
+            Packet_SwapBuffers();
+            DrawList_Clear();
             screen_fade_draw_steps[screen_fade.draw_step]();
             screen_fade_steps[screen_fade.step]();
             func_00101618();
-            ((u8 (*)(void))func_00109800)(); // match: called as returning a value, so the loop test uses $3
+            ((u8 (*)(void))Packet_WaitForSend)(); // match: called as returning a value, so the loop test uses $3
         } while (screen_fade.step != 0);
         game_status.bit2 = FALSE;
         game_status.save_requested = FALSE;
@@ -168,12 +168,12 @@ void func_00118958(void) {
 /* Draws one frame with nothing in it. */
 void func_00118A50(void) {
     Display_SwapBuffers(0);
-    func_001096E8();
-    func_001095E0();
-    func_0010B000();
+    Packet_SendChain();
+    Packet_SwapBuffers();
+    DrawList_Clear();
     func_001005E8(0);
-    func_0010A040(0x2BC0);
-    func_00109800();
+    GsDraw_CopyFrame(0x2BC0);
+    Packet_WaitForSend();
 }
 
 /* Map change drawing step: darkens the screen in ten strips, more each frame, until the timer runs out. */
@@ -182,11 +182,11 @@ void func_00118A98(void) {
     int remaining = 9;
     int total;
 
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109A80(GS_REG_ALPHA_1, 0x88);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x88);
+    Packet_EndGsRegisters();
     total = 30;
     quad.tag = 0x26802ABC0L;
     quad.unk10 = 0x156;
@@ -204,15 +204,15 @@ void func_00118A98(void) {
     quad.alpha = 0x80;
     do {
         remaining--;
-        func_0010A100(&quad);
+        GsDraw_QueueTexturedSprite(&quad);
         quad.first_x += 0x400;
         quad.second_x += 0x400;
         quad.first_u += 0x400;
         quad.second_u += 0x400;
     } while (remaining >= 0);
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+    Packet_EndGsRegisters();
     if (--screen_fade.timer <= 0) {
         screen_fade.draw_step++;
     }
@@ -220,32 +220,32 @@ void func_00118A98(void) {
 
 /* Map change drawing step: keeps the screen black. */
 void func_00118C28(void) {
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109AD0();
-    func_0010A4E8(0, 0, 0, 0x80, 0x88);
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_EndGsRegisters();
+    GsDraw_FillScreen(0, 0, 0, 0x80, 0x88);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+    Packet_EndGsRegisters();
 }
 
 /* Draws one frame of a 30-frame fade and counts the timer down. */
 void func_00118CA8(void) {
     func_00114198(0);
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109A80(GS_REG_ALPHA_1, 0x88);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x88);
+    Packet_EndGsRegisters();
     {
         int total = 30; /* two separate 30s, as retail keeps both */
         int span = 30;
-        func_0010A4E8(0, 0, 0, ((total - screen_fade.timer) << 7) / span, 0x88);
+        GsDraw_FillScreen(0, 0, 0, ((total - screen_fade.timer) << 7) / span, 0x88);
     }
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+    Packet_EndGsRegisters();
     screen_fade.timer--;
 }
 
@@ -255,11 +255,11 @@ void func_00118D78(void) {
 /* Map change step: lets the background load and everything else in flight settle. */
 void func_00118D80(void) {
     func_00117CC8();
-    func_00123288();
+    Entity_UpdatePool();
     Sound_Update();
     if (map_load_state.step == 0 || map_load_state.step == 5) {
-        if (func_00123108() == 0 && sound_load_queue.unk0C == 0 && sound_load_queue.unk04 == 0 && sound_load_queue.unk18 == 0 &&
-            func_00102230() == 0) {
+        if (EntityPool_IsLoading() == 0 && sound_load_queue.unk0C == 0 && sound_load_queue.unk04 == 0 && sound_load_queue.unk18 == 0 &&
+            File_IsLocked() == 0) {
             screen_fade.step++;
         }
     }
@@ -304,19 +304,19 @@ void func_00118F40(void) {
     int size;
 
     sprintf(name, D_0043E720, screen_fade.map);
-    screen_fade.file_handle = func_00102238(name, 1, 1);
+    screen_fade.file_handle = File_Open(name, 1, 1);
     if (screen_fade.file_handle < 0) {
         for (;;) {
         }
     }
-    func_00102218();
-    size = (func_00102900(screen_fade.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
+    File_Lock();
+    size = (File_GetSize(screen_fade.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
     memory->unk14 = memory->unk1C = D_00446F50;
     memory->unk18 = memory->unk20 = D_00446F54;
     slot->unk04 = size;
     memset(memory->unk1C, 0, slot->unk04);
     memset(memory->unk20, 0, D_00446F1C / 2);
-    func_001025C0(screen_fade.file_handle, memory->unk14, -1);
+    File_Read(screen_fade.file_handle, memory->unk14, -1);
     screen_fade.step++;
 }
 
@@ -324,9 +324,9 @@ void func_00118F40(void) {
 void func_00119068(void) {
     int next_step;
 
-    if (func_00102790(screen_fade.file_handle, 1) == 0) {
-        func_001024B0(screen_fade.file_handle);
-        func_00102228();
+    if (File_Sync(screen_fade.file_handle, 1) == 0) {
+        File_Close(screen_fade.file_handle);
+        File_Unlock();
         next_step = screen_fade.step + 1;
         screen_fade.file_handle = -1;
         screen_fade.step = next_step;
@@ -381,7 +381,7 @@ void func_001190C8(void) {
     map_slots[0].unk00 = 1;
     MapObject_StartMap(0);
     Entity_InitFromMapSpawns(0);
-    func_00123158(0);
+    Entity_AddGroupToWaiting(0);
     func_001C87D8(0);
     Entity_ClearFlag10InSlot(0);
     func_00119360(0);
