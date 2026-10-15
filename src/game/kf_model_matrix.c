@@ -33,7 +33,7 @@ float cosf(float);
 #define SCRATCH_MATRIX MODEL_MATRIX_SCRATCH
 
 /* Brings an angle back into -pi..pi. */
-static inline f32 Angle_Wrap(f32 angle) {
+static inline f32 ModelMatrix_WrapAngle(f32 angle) {
     angle += 3.1415927f;
     return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
 }
@@ -46,17 +46,17 @@ void ModelMatrix_BuildPartLocal(ModelInstance *model, ModelPart *part, ModelPart
     matrix[0] = part->unk60[0];
     matrix[5] = part->unk60[1];
     matrix[10] = part->unk60[2];
-    sceVu0RotMatrixX(matrix, matrix, Angle_Wrap(part->unk50));
-    sceVu0RotMatrixZ(matrix, matrix, Angle_Wrap(part->unk58));
-    sceVu0RotMatrixY(matrix, matrix, Angle_Wrap(part->unk54));
+    sceVu0RotMatrixX(matrix, matrix, ModelMatrix_WrapAngle(part->unk50));
+    sceVu0RotMatrixZ(matrix, matrix, ModelMatrix_WrapAngle(part->unk58));
+    sceVu0RotMatrixY(matrix, matrix, ModelMatrix_WrapAngle(part->unk54));
     sceVu0TransMatrix(matrix, matrix, part->unk40);
 }
 
 /* Builds a part's rotation matrix (x, z, y), and adds its offset when with_offset is set. */
 static void ModelMatrix_BuildPartRotation(ModelInstance *model, ModelPart *part, f32 *matrix, int with_offset) {
-    sceVu0RotMatrixX(matrix, D_00431AF0, Angle_Wrap(part->unk50));
-    sceVu0RotMatrixZ(matrix, matrix, Angle_Wrap(part->unk58));
-    sceVu0RotMatrixY(matrix, matrix, Angle_Wrap(part->unk54));
+    sceVu0RotMatrixX(matrix, D_00431AF0, ModelMatrix_WrapAngle(part->unk50));
+    sceVu0RotMatrixZ(matrix, matrix, ModelMatrix_WrapAngle(part->unk58));
+    sceVu0RotMatrixY(matrix, matrix, ModelMatrix_WrapAngle(part->unk54));
     if (with_offset) {
         sceVu0TransMatrix(matrix, matrix, part->unk40);
     }
@@ -68,13 +68,13 @@ static void ModelMatrix_BuildFromModel(ModelInstance *model) {
 
     if (!(model->unk102 & 0x300)) {
         matrix = (f32 *)model->unk40;
-        sceVu0RotMatrixX(matrix, D_00431AF0, Angle_Wrap(model->rotation.x));
-        sceVu0RotMatrixY(matrix, matrix, Angle_Wrap(model->rotation.y));
-        sceVu0RotMatrixZ(matrix, matrix, Angle_Wrap(model->rotation.z));
+        sceVu0RotMatrixX(matrix, D_00431AF0, ModelMatrix_WrapAngle(model->rotation.x));
+        sceVu0RotMatrixY(matrix, matrix, ModelMatrix_WrapAngle(model->rotation.y));
+        sceVu0RotMatrixZ(matrix, matrix, ModelMatrix_WrapAngle(model->rotation.z));
         sceVu0TransMatrix(matrix, matrix, &model->position.x);
     } else {
         matrix = (f32 *)model->unk40;
-        sceVu0RotMatrixZ(matrix, D_00431AF0, Angle_Wrap(model->rotation.z));
+        sceVu0RotMatrixZ(matrix, D_00431AF0, ModelMatrix_WrapAngle(model->rotation.z));
         Matrix_Multiply(matrix, D_00432620, matrix);
         sceVu0TransMatrix(matrix, matrix, &model->position.x);
     }
@@ -104,8 +104,8 @@ static void func_0020BD48(ModelInstance *model) {
 
     memset(offset, 0, sizeof(offset));
     offset[2] = 16.0f;
-    sceVu0RotMatrixX(matrix, D_00431AF0, Angle_Wrap(model->rotation.x));
-    sceVu0RotMatrixZ(matrix, matrix, Angle_Wrap(model->rotation.z));
+    sceVu0RotMatrixX(matrix, D_00431AF0, ModelMatrix_WrapAngle(model->rotation.x));
+    sceVu0RotMatrixZ(matrix, matrix, ModelMatrix_WrapAngle(model->rotation.z));
     matrix[4] = matrix[5] = matrix[6] = matrix[7] = 0.0f;
     sceVu0RotMatrixX(matrix, matrix, -1.5707964f);
     sceVu0TransMatrix(matrix, matrix, offset);
@@ -123,9 +123,9 @@ static void func_0020BE70(ModelInstance *model) {
     work[0] *= model->unkE0;
     work[5] *= model->unkE4;
     work[10] *= model->unkE8;
-    sceVu0RotMatrixX(matrix, work, Angle_Wrap(model->rotation.x));
-    sceVu0RotMatrixY(matrix, matrix, Angle_Wrap(model->rotation.y));
-    sceVu0RotMatrixZ(matrix, matrix, Angle_Wrap(model->rotation.z));
+    sceVu0RotMatrixX(matrix, work, ModelMatrix_WrapAngle(model->rotation.x));
+    sceVu0RotMatrixY(matrix, matrix, ModelMatrix_WrapAngle(model->rotation.y));
+    sceVu0RotMatrixZ(matrix, matrix, ModelMatrix_WrapAngle(model->rotation.z));
     sceVu0TransMatrix(matrix, matrix, &model->position.x);
     sceVu0CopyMatrix(work, matrix);
     work[5] = work[7] = 0.0f;
@@ -143,9 +143,9 @@ static void ModelMatrix_BuildXYZ(ModelInstance *model, Vector4 *position, Vector
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
     scratch[10] *= scale[2];
-    sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->x));
-    sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->y));
-    sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
+    sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->x));
+    sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->y));
+    sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, &position->x);
     Matrix_Multiply(model, D_004323E0, matrix);
 }
@@ -160,9 +160,9 @@ static void ModelMatrix_BuildZYX(ModelInstance *model, Vector4 *position, Vector
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
     scratch[10] *= scale[2];
-    sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
-    sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->y));
-    sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->x));
+    sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
+    sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->y));
+    sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->x));
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, &position->x);
     Matrix_Multiply(model, D_004323E0, matrix);
 }
@@ -181,7 +181,7 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
         scratch[0] *= scale[0];
         scratch[5] *= scale[1];
         scratch[10] *= scale[2];
-        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(model->rotation.z));
+        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(model->rotation.z));
         if (model->unk102 & 0x100) {
             sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX,
                              atan2f(to_camera[1], sqrtf(to_camera[0] * to_camera[0] + to_camera[2] * to_camera[2])));
@@ -199,16 +199,16 @@ void ModelMatrix_Build(ModelInstance *model, Vector4 *position, Vector4 *rotatio
         scratch[0] *= scale[0];
         scratch[5] *= scale[1];
         scratch[10] *= scale[2];
-        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
+        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
         sceVu0TransMatrix((f32 *)model->unk40, SCRATCH_MATRIX, &position->x);
     } else {
         sceVu0CopyMatrix(SCRATCH_MATRIX, D_00431B30);
         scratch[0] *= scale[0];
         scratch[5] *= scale[1];
         scratch[10] *= scale[2];
-        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
-        sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->x));
-        sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->y));
+        sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
+        sceVu0RotMatrixX(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->x));
+        sceVu0RotMatrixY(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->y));
         sceVu0TransMatrix((f32 *)model->unk40, SCRATCH_MATRIX, &position->x);
     }
 }
@@ -223,7 +223,7 @@ static void func_0020C6A0(ModelInstance *model, f32 *position, Vector4 *rotation
     matrix = (f32 *)model->unk40;
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
-    sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
+    sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
     Matrix_Multiply(SCRATCH_MATRIX, D_00432620, SCRATCH_MATRIX);
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, position);
     Matrix_Multiply(model, D_004323E0, matrix);
@@ -241,7 +241,7 @@ static void func_0020C7A8(ModelInstance *model, Vector4 *rotation, f32 *scale) {
     scratch[0] *= scale[0];
     scratch[5] *= scale[1];
     scratch[10] = -1.0f;
-    sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, Angle_Wrap(rotation->z));
+    sceVu0RotMatrixZ(SCRATCH_MATRIX, SCRATCH_MATRIX, ModelMatrix_WrapAngle(rotation->z));
     offset.y += offset.z * sinf(D_004325A0.unk10);
     sceVu0TransMatrix(matrix, SCRATCH_MATRIX, &offset.x);
     Matrix_Multiply(model, D_004322A0, matrix);
@@ -249,12 +249,12 @@ static void func_0020C7A8(ModelInstance *model, Vector4 *rotation, f32 *scale) {
 
 /* Builds the rotation matrix of three angles: a turn by the second, a tilt by the first, a turn by the third. */
 static void Matrix_BuildEulerRotation(f32 (*matrix)[4], f32 *angles) {
-    f32 cos_tilt = cosf(Angle_Wrap(angles[0]));
-    f32 sin_tilt = sinf(Angle_Wrap(angles[0]));
-    f32 cos_first = cosf(Angle_Wrap(angles[1]));
-    f32 sin_first = sinf(Angle_Wrap(angles[1]));
-    f32 cos_last = cosf(Angle_Wrap(angles[2]));
-    f32 sin_last = sinf(Angle_Wrap(angles[2]));
+    f32 cos_tilt = cosf(ModelMatrix_WrapAngle(angles[0]));
+    f32 sin_tilt = sinf(ModelMatrix_WrapAngle(angles[0]));
+    f32 cos_first = cosf(ModelMatrix_WrapAngle(angles[1]));
+    f32 sin_first = sinf(ModelMatrix_WrapAngle(angles[1]));
+    f32 cos_last = cosf(ModelMatrix_WrapAngle(angles[2]));
+    f32 sin_last = sinf(ModelMatrix_WrapAngle(angles[2]));
 
     sceVu0CopyMatrix(matrix, D_00431AF0);
     // match: the order of these nine statements decides the order of the multiplies
