@@ -57,7 +57,7 @@ extern int D_00447010;                  /* frames of the fade left */
 extern int D_00447014;                  /* frames the fade takes */
 
 void *memcpy(void *, const void *, u32);
-void func_0010A4E8(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, int);
 extern int haze_layer_depths[8];               /* the screen depth of each haze layer */
 extern u32 haze_layer_distances[8];               /* the distances of the haze layers, nearest last */
 extern float D_00420D00[];
@@ -94,14 +94,14 @@ void Vector_Scale(float *, float *, float);
 void Vector_Subtract(float *, float *, float *);
 void Vector_Copy(void *, void *);
 void Vector_Add(void *, void *, void *);
-void func_00109650(u32 *, u32 *);
-u32 *func_00109990(int);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_00109E18(void);
-void func_00109E88(void);
-void func_0010A100(void *);
+void Packet_AppendToChain(u32 *, u32 *);
+u32 *Packet_Alloc(int);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueFlush(void);
+void GsDraw_QueueTexFlush(void);
+void GsDraw_QueueTexturedSprite(void *);
 static int Game_GetObjectBit(int map, int entry, int bit);
 static void Game_SetObjectBit(int map, int entry, int bit, int value);
 
@@ -868,14 +868,14 @@ void Game_DrawFade(void) {
         return;
     }
     if (alpha > 0) {
-        func_00109A50();
-        func_00109A80(GS_REG_TEST_1, 0x30000);
-        func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-        func_00109AD0();
-        func_0010A4E8(fade_color[0], fade_color[1], fade_color[2], alpha, 0x44);
-        func_00109A50();
-        func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-        func_00109AD0();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+        Packet_EndGsRegisters();
+        GsDraw_FillScreen(fade_color[0], fade_color[1], fade_color[2], alpha, 0x44);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+        Packet_EndGsRegisters();
     }
 }
 
@@ -930,14 +930,14 @@ void Game_DrawHazeLayers(void) {
     if (D_00446744 == 0) {
         return;
     }
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 0x80000000A8L);
-    func_00109A80(GS_REG_TEST_1, 0x51001);
-    func_00109A80(GS_REG_CLAMP_1, 5);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x80000000A8L);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
+    Packet_AddGsRegister(GS_REG_CLAMP_1, 5);
+    Packet_EndGsRegisters();
 
     for (i = 0; i < D_00446744; i++) {
-        packet_start = cursor = func_00109990(0xD);
+        packet_start = cursor = Packet_Alloc(0xD);
         *cursor++ = 0x1000000B;
         *cursor++ = 0;
         *cursor++ = 0;
@@ -984,12 +984,12 @@ void Game_DrawHazeLayers(void) {
         *cursor++ = 0;
         *cursor++ = 0;
         *cursor++ = 0x15000276;
-        func_00109650(packet_start, cursor);
+        Packet_AppendToChain(packet_start, cursor);
     }
 
-    func_00109A50();
-    func_00109A80(GS_REG_CLAMP_1, 0);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_CLAMP_1, 0);
+    Packet_EndGsRegisters();
 }
 
 /* Game_DrawHazeLayers with each layer moved sideways by an offset from D_0043E460 that cycles with the frame count.
@@ -1009,11 +1009,11 @@ void Game_DrawHazeLayersShifted(void) {
     if (D_00446F78 != 0) {
         texture_base = 0;
     }
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 0x80000000a8L);
-    func_00109A80(GS_REG_TEST_1, 0x51001);
-    func_00109A80(GS_REG_CLAMP_1, 5);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x80000000a8L);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
+    Packet_AddGsRegister(GS_REG_CLAMP_1, 5);
+    Packet_EndGsRegisters();
     texture_height_log2 = 9;
     tex0_low = texture_base | 0x28028000L;
     sprite.tex0 = tex0_low | ((u64)texture_height_log2 << 30);
@@ -1039,13 +1039,13 @@ void Game_DrawHazeLayersShifted(void) {
             sprite.corner[1].y = 0x8e00;
             sprite.corner[1].x = x_offset - 0x6c08;
             sprite.corner[1].z = depth;
-            func_0010A100(&sprite);
+            GsDraw_QueueTexturedSprite(&sprite);
             i++;
         } while (i < D_00446744);
     }
-    func_00109A50();
-    func_00109A80(GS_REG_CLAMP_1, 0);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_CLAMP_1, 0);
+    Packet_EndGsRegisters();
 }
 
 /* debug: draws one haze sprite at the depth in D_0044673C; two buttons of pad 1 (0x400, 0x100) step that depth and print it
@@ -1072,13 +1072,13 @@ void Game_DrawDepthTestSprite(void) {
         D_0044673C -= 0xFF;
         printf(D_0043E470, D_0044673C);
     }
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 0x80000000A8L);
-    func_00109A80(GS_REG_TEST_1, 0x51001);
-    func_00109A80(GS_REG_CLAMP_1, 5);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x80000000A8L);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
+    Packet_AddGsRegister(GS_REG_CLAMP_1, 5);
+    Packet_EndGsRegisters();
 
-    packet_start = cursor = func_00109990(0xD);
+    packet_start = cursor = Packet_Alloc(0xD);
     *cursor++ = 0x1000000B;
     *cursor++ = 0;
     *cursor++ = 0;
@@ -1129,11 +1129,11 @@ void Game_DrawDepthTestSprite(void) {
     cursor[2] = 0;
     cursor[1] = 0;
     cursor[0] = 0;
-    func_00109650(packet_start, cursor);
+    Packet_AppendToChain(packet_start, cursor);
 
-    func_00109A50();
-    func_00109A80(GS_REG_CLAMP_1, 0);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_CLAMP_1, 0);
+    Packet_EndGsRegisters();
 }
 
 /* blends the picture over itself one pixel lower at half strength, in ten 64-pixel strips (Z writes off) */
@@ -1148,13 +1148,13 @@ void Game_BlendScreenOffsetDown(void) {
     if (D_00446F78 != 0) {
         texture_base = 0;
     }
-    func_00109A50();
+    Packet_BeginGsRegisters();
     remaining = 9;
-    func_00109A80(GS_REG_TEXFLUSH, 0xffffffffL);
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10a000118L);
-    func_00109AD0();
+    Packet_AddGsRegister(GS_REG_TEXFLUSH, 0xffffffffL);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10a000118L);
+    Packet_EndGsRegisters();
     texture_height_log2 = 9;
     tex0_low = texture_base | 0x28028000L;
     sprite.unk08 = 0;
@@ -1176,16 +1176,16 @@ void Game_BlendScreenOffsetDown(void) {
     sprite.corner[0].texel_y = 0x1c00;
     do {
         remaining--;
-        func_0010A100(&sprite);
+        GsDraw_QueueTexturedSprite(&sprite);
         sprite.corner[0].x += 0x400;
         sprite.corner[1].x += 0x400;
         sprite.corner[0].texel_x += 0x400;
         sprite.corner[1].texel_x += 0x400;
     } while (remaining >= 0);
 
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xa000118L);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xa000118L);
+    Packet_EndGsRegisters();
 }
 
 /* blends the picture over itself one pixel lower, then again one pixel higher, at half strength (Z writes off) */
@@ -1200,13 +1200,13 @@ void Game_BlendScreenOffsetUpDown(void) {
     if (D_00446F78 != 0) {
         texture_base = 0;
     }
-    func_00109A50();
+    Packet_BeginGsRegisters();
     remaining = 9;
-    func_00109A80(GS_REG_TEXFLUSH, 0xffffffffL);
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10a000118L);
-    func_00109AD0();
+    Packet_AddGsRegister(GS_REG_TEXFLUSH, 0xffffffffL);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10a000118L);
+    Packet_EndGsRegisters();
 
     texture_height_log2 = 9;
     tex0_low = texture_base | 0x28028000L;
@@ -1230,7 +1230,7 @@ void Game_BlendScreenOffsetUpDown(void) {
 
     do {
         remaining--;
-        func_0010A100(&sprite);
+        GsDraw_QueueTexturedSprite(&sprite);
         sprite.corner[0].x += 0x400;
         sprite.corner[1].x += 0x400;
         sprite.corner[0].texel_x += 0x400;
@@ -1248,16 +1248,16 @@ void Game_BlendScreenOffsetUpDown(void) {
     sprite.corner[0].texel_y = 0;
     do {
         remaining--;
-        func_0010A100(&sprite);
+        GsDraw_QueueTexturedSprite(&sprite);
         sprite.corner[0].x += 0x400;
         sprite.corner[1].x += 0x400;
         sprite.corner[0].texel_x += 0x400;
         sprite.corner[1].texel_x += 0x400;
     } while (remaining >= 0);
 
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xa000118L);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xa000118L);
+    Packet_EndGsRegisters();
 }
 
 /* blends the other frame buffer (the frame shown before) over the whole screen at the given alpha */
@@ -1275,12 +1275,12 @@ void Game_BlendPreviousFrame(int alpha) {
     if (D_00446F78 == 0) {
         texture_base = 0;
     }
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_TEST_1, 0x51001);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
+    Packet_EndGsRegisters();
 
-    packet_start = cursor = func_00109990(0xD);
+    packet_start = cursor = Packet_Alloc(0xD);
     *cursor++ = 0x1000000B;
     *cursor++ = 0;
     *cursor++ = 0;
@@ -1331,7 +1331,7 @@ void Game_BlendPreviousFrame(int alpha) {
     cursor[2] = 0;
     cursor[1] = 0;
     cursor[0] = 0;
-    func_00109650(packet_start, cursor);
+    Packet_AppendToChain(packet_start, cursor);
 }
 
 /* blends the other frame buffer over the whole screen at the given alpha, its texels taken from the slightly
@@ -1350,12 +1350,12 @@ void Game_BlendPreviousFrameZoomed(int alpha) {
     if (D_00446F78 == 0) {
         texture_base = 0;
     }
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_TEST_1, 0x51001);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
+    Packet_EndGsRegisters();
 
-    packet_start = cursor = func_00109990(0xD);
+    packet_start = cursor = Packet_Alloc(0xD);
     *cursor++ = 0x1000000B;
     *cursor++ = 0;
     *cursor++ = 0;
@@ -1406,7 +1406,7 @@ void Game_BlendPreviousFrameZoomed(int alpha) {
     cursor[2] = 0;
     cursor[1] = 0;
     cursor[0] = 0;
-    func_00109650(packet_start, cursor);
+    Packet_AppendToChain(packet_start, cursor);
 }
 
 /* projects the point 1000 ahead along last frame's view (D_00420D00 unk20/unk30) to find how far the view
@@ -1424,12 +1424,12 @@ void Game_ShiftScreenByViewTurn(void) {
 
     texture_base = D_00446F78 ? 0 : 0x1180;
 
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 10);
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109A80(GS_REG_SCANMSK, 3);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 10);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_AddGsRegister(GS_REG_SCANMSK, 3);
+    Packet_EndGsRegisters();
 
     sceVu0MulMatrix(view_matrix, D_004323E0, D_00431AF0);
     Vu0_LoadMatrix(view_matrix);
@@ -1511,17 +1511,17 @@ void Game_ShiftScreenByViewTurn(void) {
     strip = 0x13;
     do {
         strip--;
-        func_0010A100(strip_packet);
+        GsDraw_QueueTexturedSprite(strip_packet);
         sprite_packet.corner[0].x += offset_x;
         sprite_packet.corner[1].x += offset_x;
         sprite_packet.corner[0].texel_x += offset_x;
         sprite_packet.corner[1].texel_x += offset_x;
     } while (strip >= 0);
 
-    func_00109A50();
-    func_00109A80(GS_REG_SCANMSK, 0);
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_SCANMSK, 0);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
+    Packet_EndGsRegisters();
 }
 
 /* Game_ShiftScreenByViewTurn measured at the nearest entity within 30 degrees ahead (or D_00420D00.unk48 away, at most
@@ -1576,11 +1576,11 @@ void Game_ShiftScreenByFocusTurn(void) {
     if (offset_y > 0x80) offset_y = 0x80;
     else if (offset_y < -0x80) offset_y = -0x80;
 
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109A80(GS_REG_SCANMSK, 3);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_AddGsRegister(GS_REG_SCANMSK, 3);
+    Packet_EndGsRegisters();
 
     sprite_packet.prim = 0x116;
     tex0_low = texture_base | 0x28028000L;
@@ -1623,17 +1623,17 @@ void Game_ShiftScreenByFocusTurn(void) {
     if (offset_x <= 0) offset_x = 0x200;
     else offset_x = -0x200;
     for (strip = 19; strip >= 0; strip--) {
-        func_0010A100(&sprite_packet);
+        GsDraw_QueueTexturedSprite(&sprite_packet);
         sprite_packet.corner[0].x += offset_x;
         sprite_packet.corner[1].x += offset_x;
         sprite_packet.corner[0].texel_x += offset_x;
         sprite_packet.corner[1].texel_x += offset_x;
     }
 
-    func_00109A50();
-    func_00109A80(GS_REG_SCANMSK, 0);
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_SCANMSK, 0);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
+    Packet_EndGsRegisters();
 }
 
 /* draws the picture over itself in ten strips, its colour multiplied by brightness / 128: the brightness option
@@ -1648,13 +1648,13 @@ void Game_ApplyBrightness(int brightness) {
 
     texture_base = D_00446F78 ? 0 : 0x1180;
     remaining = 9;
-    func_00109E88();
-    func_00109E18();
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 10);
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109AD0();
+    GsDraw_QueueTexFlush();
+    GsDraw_QueueFlush();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 10);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_EndGsRegisters();
     sprite.unk08 = 0;
     tex0_low = texture_base | 0x28028000L;
     texture_height_log2 = 9;
@@ -1675,18 +1675,18 @@ void Game_ApplyBrightness(int brightness) {
     sprite.corner[1].texel_y = 0x1C00;
     do {
         remaining--;
-        func_0010A100(&sprite);
+        GsDraw_QueueTexturedSprite(&sprite);
         sprite.corner[0].x += 0x400;
         sprite.corner[1].x += 0x400;
         sprite.corner[0].texel_x += 0x400;
         sprite.corner[1].texel_x += 0x400;
     } while (remaining >= 0);
 
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
-    func_00109AD0();
-    func_00109E18();
-    func_00109E88();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
+    GsDraw_QueueTexFlush();
 }
 
 /* draws the picture over itself in ten strips, its colour multiplied by red, green and blue / 128 (under water) */
@@ -1698,13 +1698,13 @@ void Game_TintScreen(int red, int green, int blue) {
 
     texture_base = D_00446F78 ? 0 : 0x1180;
     remaining = 9;
-    func_00109E88();
-    func_00109E18();
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 10);
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109AD0();
+    GsDraw_QueueTexFlush();
+    GsDraw_QueueFlush();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 10);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_EndGsRegisters();
 
     sprite_packet.tex0 = (0x28028000L | texture_base) | (0x9000L << 18);
     sprite_packet.unk08 = 0;
@@ -1730,18 +1730,18 @@ void Game_TintScreen(int red, int green, int blue) {
 
     do {
         remaining--;
-        func_0010A100(&sprite_packet);
+        GsDraw_QueueTexturedSprite(&sprite_packet);
         sprite_packet.corner[0].x += 0x400;
         sprite_packet.corner[1].x += 0x400;
         sprite_packet.corner[0].texel_x += 0x400;
         sprite_packet.corner[1].texel_x += 0x400;
     } while (remaining >= 0);
 
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
-    func_00109AD0();
-    func_00109E18();
-    func_00109E88();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
+    GsDraw_QueueTexFlush();
 }
 
 /* steps the wobbling grid (laid out afresh when D_00446740 is set) and draws the grabbed picture through its
@@ -1798,19 +1798,19 @@ void Game_DrawWobblingScreen(int red, int green, int blue, int alpha, float blen
         }
     }
 
-    func_00109E18();
-    func_00109A50();
-    func_00109A80(GS_REG_TEXFLUSH, 0xFFFFFFFF);
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109A80(GS_REG_TEX0_1, 0x26802ABC0L);
-    func_00109A80(GS_REG_TEX1_1, 0);
-    func_00109AD0();
+    GsDraw_QueueFlush();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEXFLUSH, 0xFFFFFFFF);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_AddGsRegister(GS_REG_TEX0_1, 0x26802ABC0L);
+    Packet_AddGsRegister(GS_REG_TEX1_1, 0);
+    Packet_EndGsRegisters();
 
     for (i = 0; i < 7; i++) {
         for (j = 0; j < 10; j++) {
-            packet_start = cursor = func_00109990(0x11);
+            packet_start = cursor = Packet_Alloc(0x11);
             *cursor++ = 0x1000000F;
             *cursor++ = 0;
             *cursor++ = 0;
@@ -1851,13 +1851,13 @@ void Game_DrawWobblingScreen(int red, int green, int blue, int alpha, float blen
             cursor[2] = 0;
             cursor[1] = 0;
             cursor[0] = 0;
-            func_00109650(packet_start, cursor);
+            Packet_AppendToChain(packet_start, cursor);
         }
     }
 
     D_00446740 = 0;
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-    func_00109AD0();
-    func_00109E18();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
 }

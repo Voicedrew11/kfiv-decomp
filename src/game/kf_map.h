@@ -129,7 +129,7 @@ typedef struct {
     u32 bit45 : 1;                  /* set: Game_ShiftScreenByViewTurn is drawn (only on the main loop's call) */
     u32 pad46 : 18;
     s32 unk68;                      /* 0x68 */
-    s32 unk6C;                      /* 0x6C a colour func_0010A4E8 covers the screen with */
+    s32 unk6C;                      /* 0x6C a colour GsDraw_FillScreen covers the screen with */
     s32 unk70;                      /* 0x70 */
     s32 unk74;                      /* 0x74 */
     s32 unk78;                      /* 0x78 its alpha, above 0: drawn */
@@ -261,9 +261,9 @@ typedef struct {
     s32 unk04;                      /* 0x04 offset in the file of the record models (ModelFile, back to back) */
     s32 unk08;                      /* 0x08 offset of the record collision meshes */
     s32 unk0C;                      /* 0x0C offset of the plain object models */
-    s32 unk10;                      /* 0x10 offset of the jointed object models (func_0010B758) */
+    s32 unk10;                      /* 0x10 offset of the jointed object models (Model_SetUpSkinned) */
     s32 unk14;                      /* 0x14 offset of the object collision meshes */
-    s32 unk18;                      /* 0x18 offset of the object motions (func_00108940) */
+    s32 unk18;                      /* 0x18 offset of the object motions (ModelMotion_LoadFile) */
     char pad1C[0x08];
     s32 unk24;                      /* 0x24 offset in the file of what MapSlot.unk30 points at */
     s32 unk28;                      /* 0x28 offset in the file of what MapSlot.unk34 points at */
@@ -289,7 +289,7 @@ typedef struct {
     f32 unk6C;                      /* 0x6C and the heading */
     s8 unk70;                       /* 0x70 becomes SoundLoadQueue.unk00 */
     char pad71[0x07];
-    u8 unk78;                       /* 0x78 passed to func_00111368 with the three after it */
+    u8 unk78;                       /* 0x78 passed to Wobble_DrawRippledModel with the three after it */
     u8 unk79;                       /* 0x79 */
     u8 unk7A;                       /* 0x7A */
     u8 unk7B;                       /* 0x7B */
@@ -411,7 +411,7 @@ typedef struct {
 
 /* MapTrigger.shot as the kind started by MapObject_StartFadeObject uses it */
 typedef struct {
-    f32 unk00[4];                   /* 0x00 a vector handed to func_0010EA08 */
+    f32 unk00[4];                   /* 0x00 a vector handed to Model_FadeVertexColoursNear */
     f32 unk10;                      /* 0x10 grows while it moves */
 } MapTriggerShotKind122BE8;
 

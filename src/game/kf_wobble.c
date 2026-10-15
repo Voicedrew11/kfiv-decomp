@@ -5,8 +5,8 @@
 
 double sin(double);
 void *memset(void *, int, u32);
-u32 *func_00109990(int);
-void func_00109650(u32 *, u32 *);
+u32 *Packet_Alloc(int);
+void Packet_AppendToChain(u32 *, u32 *);
 void Matrix_Multiply(void *, void *, void *);
 void Vu0_ProjectToScreen3(int *, int *, int *, f32 *, f32 *, f32 *);
 void Vu0_LoadMatrix(void *);
@@ -21,11 +21,12 @@ extern const float D_00444BE4;
 extern f32 D_004323E0[16];
 
 /* the screen wobble: 16 oscillators and a table of sines they are drawn from */
-static float wobble_base_phase;                 /* 0x447058 advanced each frame by func_001112B0 */
+static float wobble_base_phase;                 /* 0x447058 advanced each frame by Wobble_AdvanceSines */
 static WaveOscillator wobble_oscillators[16];   /* 0x471DE0 */
-static float wobble_sines[32];                  /* 0x471EE0 filled by func_001112B0 */
+static float wobble_sines[32];                  /* 0x471EE0 filled by Wobble_AdvanceSines */
 
-void func_001112B0(void) {
+/* Advances the screen wobble's base phase and fills wobble_sines with 32 sines from it. */
+void Wobble_AdvanceSines(void) {
     float x;
     int i;
 
@@ -43,7 +44,7 @@ void func_001112B0(void) {
     }
 }
 
-/* moves a point up or down by a table entry (wobble_sines, the sines func_001112B0 fills) picked by the
+/* moves a point up or down by a table entry (wobble_sines, the sines Wobble_AdvanceSines fills) picked by the
    vertex's x and z */
 #define WOBBLE(point, vertex)                                                                      \
     {                                                                                              \
@@ -61,7 +62,7 @@ void func_001112B0(void) {
    screen position it would have if it were moved up or down by a sine picked by its x and z (so a
    texture that holds the screen comes out rippled). The four values go into the packet's last GS
    register write. */
-void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4) {
+void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3, int unk4) {
     f32 points[3][4];
     int screens[3][4];
     f32 matrix[16];
@@ -89,7 +90,7 @@ void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4)
     memset(points, 0, sizeof(points));
     points[2][3] = points[1][3] = points[0][3] = 1.0f;
     if (model->parts != NULL && model->part_count != 0) {
-        packet = func_00109990(9);
+        packet = Packet_Alloc(9);
         packet_start = packet; // match: copied from packet, or the stores are addressed from the start
         part_count = model->part_count;
         *packet = 0x10000008;
@@ -135,7 +136,7 @@ void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4)
                 vertex_count = next->unk70 & 0x7FFF;
                 next = (ModelPartData *)next->vertices; // match: the cursor steps on; data keeps the block's start
                 vertex = (ModelPartVertex *)next;
-                packet = func_00109990(vertex_count * 2 + 3);
+                packet = Packet_Alloc(vertex_count * 2 + 3);
                 *packet = (vertex_count * 2 + 2) | 0x10000000;
                 packet += 7;
                 *packet++ = (vertex_count * 2) | 0x51000001;
@@ -208,7 +209,7 @@ void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4)
                 next = (ModelPartData *)((char *)data + (length + 1) * 0x10);
             }
         }
-        packet = func_00109990(4);
+        packet = Packet_Alloc(4);
         *packet = 0x10000003;
         packet += 7;
         *packet++ = 0x51000002;
@@ -218,20 +219,20 @@ void func_00111368(ModelInstance *model, int unk1, int unk2, int unk3, int unk4)
         packet += 2;
         ((u64 *)packet)[1] = 8;
         ((u64 *)packet)[0] = 0;
-        packet = func_00109990(1);
-        func_00109650(packet_start, packet);
+        packet = Packet_Alloc(1);
+        Packet_AppendToChain(packet_start, packet);
     }
 }
 
-/* Queues a 12-quadword packet: a three-vertex primitive whose vertices all have 0x8000 at
-   offset 0x0E, with the rest left for the caller to fill in. */
-void func_00111BE0(void) {
+/* Queues a 12-quadword VU1 packet: a three-vertex primitive whose vertices all have the ADC bit (0x8000 at
+   offset 0x0E) set, so nothing is drawn. Nothing calls it. */
+void Wobble_QueueHiddenTriangle(void) {
     u32 *packet_start;
     u32 *packet;
     u32 *after_vertices;
     u16 *vertices;
 
-    packet_start = packet = func_00109990(0xC);
+    packet_start = packet = Packet_Alloc(0xC);
     *packet = 0x1000000A;
     packet += 7;
     *packet++ = 0x6C01C000;
@@ -247,11 +248,11 @@ void func_00111BE0(void) {
     packet = after_vertices;
     packet[3] = 0x15000000;
     packet += 4;
-    func_00109650(packet_start, packet);
+    Packet_AppendToChain(packet_start, packet);
 }
 
 /* Whether any data block of the model draws with a texture numbered from first to last. */
-int func_00111C78(ModelInstance *model, int first, int last) {
+int Wobble_ModelUsesTextures(ModelInstance *model, int first, int last) {
     ModelPart *part;
     ModelPartData *data;
     int i;
@@ -278,7 +279,7 @@ int func_00111C78(ModelInstance *model, int first, int last) {
 }
 
 /* Resets the 16 screen wobble oscillators, spreading their phases over one turn. */
-void func_00111D00(void) {
+void Wobble_ResetOscillators(void) {
     WaveOscillator *oscillator = wobble_oscillators;
     int i;
 
@@ -291,7 +292,7 @@ void func_00111D00(void) {
 }
 
 /* Advances each of the 16 entries' phase and recomputes its sine offsets. */
-void func_00111D58(void) {
+void Wobble_StepOscillators(void) {
     WaveOscillator *entry = (WaveOscillator *)wobble_oscillators;
     float step = 0.06981317f;
     float half_turn = 3.1415927f;
@@ -323,7 +324,7 @@ static inline u32 align_16(u32 address) {
 
 /* Builds the model's table of wave texture coordinates at *alloc (16-byte aligned) and moves *alloc
    past it. Each vertex keeps its own coordinates and gets a wave picked from where it is. */
-void func_00111E28(ModelInstance *model, u32 *alloc) {
+void Wobble_BuildWaveUvs(ModelInstance *model, u32 *alloc) {
     ModelPart *part;
     ModelPartData *next_data;
     ModelPartData *data;
@@ -375,7 +376,7 @@ void func_00111E28(ModelInstance *model, u32 *alloc) {
 }
 
 /* Moves every vertex's texture coordinates by its wave. */
-void func_00112018(ModelInstance *model) {
+void Wobble_ApplyWaveUvs(ModelInstance *model) {
     ModelPart *part;
     ModelPartData *next_data;
     ModelPartData *data;
@@ -414,7 +415,7 @@ void func_00112018(ModelInstance *model) {
 
 /* Gives every vertex texture coordinates taken from where it lands on the screen, with each
    vertex shaken a little first. */
-void func_00112118(ModelInstance *model) {
+void Wobble_SetUvsFromJitteredScreen(ModelInstance *model) {
     ModelPart *part;
     ModelPartData *next_data;
     ModelPartData *data;

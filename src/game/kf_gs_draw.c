@@ -4,24 +4,24 @@
 #include "kf_packet.h"
 #include "kf_texture.h"
 
-u32 *func_00109990(int);
-void func_00109650(u32 *, u32 *);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_00109F80(s64, s64, s64);
-void func_00109C30(int, int, int, int, int, int, int, int, int, int, int, int, int);
-void func_0010A338(void *);
-void func_00109E18(void);
-void func_0010A100(void *);
+u32 *Packet_Alloc(int);
+void Packet_AppendToChain(u32 *, u32 *);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_SetDrawTarget(s64, s64, s64);
+void GsDraw_QueueImageTransfer(int, int, int, int, int, int, int, int, int, int, int, int, int);
+void GsDraw_QueueFlatSprite(void *);
+void GsDraw_QueueFlush(void);
+void GsDraw_QueueTexturedSprite(void *);
 extern int D_00446F78;
 extern u32 D_00446ED4;
 
 /* Queues a GS local-to-local image transfer (BITBLTBUF, TRXPOS, TRXREG, TRXDIR). */
-void func_00109C30(int source_base, int source_format, int source_width, int source_x, int source_y, int width,
+void GsDraw_QueueImageTransfer(int source_base, int source_format, int source_width, int source_x, int source_y, int width,
                    int height, int dest_base, int dest_format, int dest_width, int dest_x, int dest_y,
                    int direction) {
-    u32 *cursor = func_00109990(8);
+    u32 *cursor = Packet_Alloc(8);
     u32 *packet = cursor;
 
     *cursor++ = 0x10000006;
@@ -54,14 +54,15 @@ void func_00109C30(int source_base, int source_format, int source_width, int sou
     cursor += 2;
     *cursor++ = 0x53;
     *cursor++ = 0;
-    func_00109650(packet, cursor);
+    Packet_AppendToChain(packet, cursor);
 }
 
-void func_00109E18(void) {
+/* Queues a packet that only holds a VIF FLUSHA: what follows waits until the GS paths are idle. */
+void GsDraw_QueueFlush(void) {
     u32 *packet_start;
     u32 *packet;
 
-    packet_start = packet = func_00109990(3);
+    packet_start = packet = Packet_Alloc(3);
     *packet++ = 0x10000001;
     *packet++ = 0;
     *packet++ = 0;
@@ -70,63 +71,70 @@ void func_00109E18(void) {
     *packet++ = 0;
     *packet++ = 0;
     *packet++ = 0x13000000;
-    func_00109650(packet_start, packet);
+    Packet_AppendToChain(packet_start, packet);
 }
 
-void func_00109E88(void) {
-    func_00109A50();
-    func_00109A80(GS_REG_TEXFLUSH, 0xFFFFFFFFL);
-    func_00109AD0();
+/* Queues a GS TEXFLUSH write. */
+void GsDraw_QueueTexFlush(void) {
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEXFLUSH, 0xFFFFFFFFL);
+    Packet_EndGsRegisters();
 }
 
-void func_00109EB8(void) {
-    func_00109A50();
-    func_00109A80(0x47, 0x70000);
-    func_00109A80(0x48, 0x70000);
-    func_00109A80(0x4E, 0xA000118);
-    func_00109A80(0x4F, 0xA000118);
-    func_00109AD0();
+/* Queues the depth state for normal drawing in both contexts: Z test GREATER with Z writes on. */
+void GsDraw_EnableDepthTest(void) {
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x47, 0x70000);
+    Packet_AddGsRegister(0x48, 0x70000);
+    Packet_AddGsRegister(0x4E, 0xA000118);
+    Packet_AddGsRegister(0x4F, 0xA000118);
+    Packet_EndGsRegisters();
 }
 
-void func_00109F10(void) {
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x30000);
-    func_00109A80(GS_REG_TEST_2, 0x30000);
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109A80(GS_REG_ZBUF_2, 0x10A000118L);
-    func_00109AD0();
+/* Queues the depth state that ignores depth in both contexts: Z test ALWAYS with Z writes off. */
+void GsDraw_DisableDepthTest(void) {
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+    Packet_AddGsRegister(GS_REG_TEST_2, 0x30000);
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L);
+    Packet_EndGsRegisters();
 }
 
-void func_00109F80(s64 frame, s64 scissor, s64 xy_offset) {
-    func_00109A50();
-    func_00109A80(GS_REG_FRAME_1, frame);
-    func_00109A80(GS_REG_FRAME_2, frame);
-    func_00109A80(GS_REG_SCISSOR_1, scissor);
-    func_00109A80(GS_REG_SCISSOR_2, scissor);
-    func_00109A80(GS_REG_XYOFFSET_1, xy_offset);
-    func_00109A80(GS_REG_XYOFFSET_2, xy_offset);
-    func_00109AD0();
+/* Queues FRAME, SCISSOR and XYOFFSET (both contexts) for drawing into another buffer. */
+void GsDraw_SetDrawTarget(s64 frame, s64 scissor, s64 xy_offset) {
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_FRAME_1, frame);
+    Packet_AddGsRegister(GS_REG_FRAME_2, frame);
+    Packet_AddGsRegister(GS_REG_SCISSOR_1, scissor);
+    Packet_AddGsRegister(GS_REG_SCISSOR_2, scissor);
+    Packet_AddGsRegister(GS_REG_XYOFFSET_1, xy_offset);
+    Packet_AddGsRegister(GS_REG_XYOFFSET_2, xy_offset);
+    Packet_EndGsRegisters();
 }
 
-void func_0010A008(void) {
+/* Queues the draw target back to the 640x448 frame being drawn. */
+void GsDraw_ResetDrawTarget(void) {
     u32 frame_base = 0x1180;
 
     if (D_00446F78 != 0) {
         frame_base = 0;
     }
-    func_00109F80((frame_base >> 5) | 0xA0000, 0x1BF0000027F0000L, 0x720000006C00L);
+    GsDraw_SetDrawTarget((frame_base >> 5) | 0xA0000, 0x1BF0000027F0000L, 0x720000006C00L);
 }
 
-void func_0010A040(int dest_base) {
-    func_00109C30((D_00446F78 != 0) ? 0 : 0x1180, 0, 0xA, 0, 0, 0x280, 0x1C0, dest_base, 0, 0xA, 0, 0, 2);
+/* Queues a copy of the 640x448 frame being drawn to dest_base in GS memory. */
+void GsDraw_CopyFrame(int dest_base) {
+    GsDraw_QueueImageTransfer((D_00446F78 != 0) ? 0 : 0x1180, 0, 0xA, 0, 0, 0x280, 0x1C0, dest_base, 0, 0xA, 0, 0, 2);
 }
 
+/* The same as GsDraw_CopyFrame; nothing calls it. */
 void func_0010A0A0(int value) {
-    func_00109C30((D_00446F78 != 0) ? 0 : 0x1180, 0, 0xA, 0, 0, 0x280, 0x1C0, value, 0, 0xA, 0, 0, 2);
+    GsDraw_QueueImageTransfer((D_00446F78 != 0) ? 0 : 0x1180, 0, 0xA, 0, 0, 0x280, 0x1C0, value, 0, 0xA, 0, 0, 2);
 }
 
 /* Queue a textured screen sprite. */
-void func_0010A100(void *sprite_arg) {
+void GsDraw_QueueTexturedSprite(void *sprite_arg) {
     ScreenSprite *sprite = sprite_arg;
     ScreenSpriteVertex *vertex;
     u32 *packet_start;
@@ -134,7 +142,7 @@ void func_0010A100(void *sprite_arg) {
     s32 prim;
 
     prim = sprite->prim;
-    packet_start = packet = func_00109990(0xD);
+    packet_start = packet = Packet_Alloc(0xD);
     *packet++ = 0x1000000B;
     *packet++ = 0;
     *packet++ = 0;
@@ -185,11 +193,11 @@ void func_0010A100(void *sprite_arg) {
     *packet++ = 0;
     *packet++ = 0;
     *packet++ = 0x15000276;
-    func_00109650(packet_start, packet);
+    Packet_AppendToChain(packet_start, packet);
 }
 
 /* Queue a flat-coloured (untextured) screen sprite. */
-void func_0010A338(void *sprite_arg) {
+void GsDraw_QueueFlatSprite(void *sprite_arg) {
     ScreenSprite *sprite = sprite_arg;
     ScreenSpriteVertex *vertex;
     u32 *packet_start;
@@ -197,7 +205,7 @@ void func_0010A338(void *sprite_arg) {
     s32 prim;
 
     prim = sprite->prim & 0xFFFFFFE9;
-    packet_start = packet = func_00109990(9);
+    packet_start = packet = Packet_Alloc(9);
     prim |= 6;
     *packet++ = 0x10000007;
     *packet++ = 0;
@@ -233,19 +241,19 @@ void func_0010A338(void *sprite_arg) {
     *packet++ = 0;
     *packet++ = 0;
     *packet++ = 0x15000276;
-    func_00109650(packet_start, packet);
+    Packet_AppendToChain(packet_start, packet);
 }
 
 /* Cover the screen with a blended flat colour, in ten vertical strips. */
-void func_0010A4E8(int red, int green, int blue, int alpha, int blend) {
+void GsDraw_FillScreen(int red, int green, int blue, int alpha, int blend) {
     ScreenSprite sprite;
     int strips_left;
 
     strips_left = 9;
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, blend);
-    func_00109A80(GS_REG_TEST_1, 0x31001);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, blend);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
+    Packet_EndGsRegisters();
     sprite.prim = 0x46;
     sprite.rgba[0] = red;
     sprite.rgba[1] = green;
@@ -259,19 +267,21 @@ void func_0010A4E8(int red, int green, int blue, int alpha, int blend) {
     sprite.vertex[1].z = 0;
     do {
         strips_left--;
-        func_0010A338(&sprite);
+        GsDraw_QueueFlatSprite(&sprite);
         sprite.vertex[0].x += 0x400;
         sprite.vertex[1].x += 0x400;
     } while (strips_left >= 0);
 }
 
-void func_0010A5D8(void) {
+/* Clears the 640x448 frame to black with one sprite (Z test ALWAYS, Z writes off, so the depth is kept), then
+   puts the normal depth test back. */
+void GsDraw_ClearFrame(void) {
     ScreenSprite sprite;
 
-    func_00109A50();
-    func_00109A80(0x47, 0x30000);
-    func_00109A80(0x4E, 0x10A000118UL);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x47, 0x30000);
+    Packet_AddGsRegister(0x4E, 0x10A000118UL);
+    Packet_EndGsRegisters();
     sprite.prim = 6;
     sprite.vertex[0].x = 0x6C00;
     sprite.vertex[0].y = 0x7200;
@@ -283,19 +293,21 @@ void func_0010A5D8(void) {
     sprite.rgba[3] = 0;
     sprite.vertex[0].z = 0;
     sprite.vertex[1].z = 0;
-    func_0010A338(&sprite);
-    func_00109A50();
-    func_00109A80(0x47, 0x70000);
-    func_00109A80(0x4E, 0x0A000118);
-    func_00109AD0();
+    GsDraw_QueueFlatSprite(&sprite);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x47, 0x70000);
+    Packet_AddGsRegister(0x4E, 0x0A000118);
+    Packet_EndGsRegisters();
 }
 
-void func_0010A698(void) {
+/* Clears the depth of the 640x448 frame to 0: a sprite whose every pixel fails the alpha test and so writes
+   only Z. */
+void GsDraw_ClearDepth(void) {
     ScreenSprite sprite;
 
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x32001);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x32001);
+    Packet_EndGsRegisters();
     sprite.prim = 6;
     sprite.rgba[0] = 0;
     sprite.rgba[1] = 0;
@@ -307,18 +319,20 @@ void func_0010A698(void) {
     sprite.vertex[1].x = 0x9400;
     sprite.vertex[1].y = 0x8E00;
     sprite.vertex[1].z = 0;
-    func_0010A338(&sprite);
+    GsDraw_QueueFlatSprite(&sprite);
 }
 
-void func_0010A718(int alpha) {
+/* Sets the alpha channel of the whole frame to `alpha`, leaving its colours: a black sprite in ten strips,
+   blended as Cd and written to the frame only. */
+void GsDraw_SetScreenAlpha(int alpha) {
     ScreenSprite sprite;
     int strips_left;
 
     strips_left = 9;
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, ((s64)alpha << 0x20) | 0x68);
-    func_00109A80(GS_REG_TEST_1, 0x31001);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)alpha << 0x20) | 0x68);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
+    Packet_EndGsRegisters();
     sprite.prim = 0x46;
     sprite.rgba[3] = alpha;
     sprite.rgba[0] = 0;
@@ -332,18 +346,18 @@ void func_0010A718(int alpha) {
     sprite.vertex[1].z = 0;
     do {
         strips_left--;
-        func_0010A338(&sprite);
+        GsDraw_QueueFlatSprite(&sprite);
         sprite.vertex[0].x += 0x400;
         sprite.vertex[1].x += 0x400;
     } while (strips_left >= 0);
 }
 
-/* Queue a packet carrying one 4x4 matrix. */
-void func_0010A7E0(void *matrix) {
+/* Queues a packet that unpacks a 4x4 matrix to VU1 memory address 0. */
+void GsDraw_QueueVu1Matrix(void *matrix) {
     u32 *packet_start;
     u32 *packet;
 
-    packet_start = packet = func_00109990(7);
+    packet_start = packet = Packet_Alloc(7);
     *packet++ = 0x10000005;
     *packet++ = 0;
     *packet++ = 0;
@@ -363,11 +377,11 @@ void func_0010A7E0(void *matrix) {
         "sqc2 $vf19, 0x30(%1)\n"
         : : "r"(matrix), "r"(packet));
     packet += 0x10;
-    func_00109650(packet_start, packet);
+    Packet_AppendToChain(packet_start, packet);
 }
 
 /* Scroll a texture and redraw it into its target texture. */
-void func_0010A880(void *texture_arg, void *offset_arg) {
+void GsDraw_DrawScrollingTexture(void *texture_arg, void *offset_arg) {
     ScrollTexture *texture = texture_arg;
     ScrollOffset *offset = offset_arg;
     ScreenSprite sprite;
@@ -414,15 +428,15 @@ void func_0010A880(void *texture_arg, void *offset_arg) {
     for (height_log2 = 0, size = source_height; size >= 2; size >>= 1) {
         height_log2++;
     }
-    func_00109F80((texture->target_fbp / 32) | ((u64)(texture->target_width / 64) << 16) | ((u64)texture->target_psm << 24),
+    GsDraw_SetDrawTarget((texture->target_fbp / 32) | ((u64)(texture->target_width / 64) << 16) | ((u64)texture->target_psm << 24),
                   ((u64)(texture->target_width - 1) << 16) | ((u64)(texture->target_height - 1) << 48),
                   ((u64)(0x800 - (texture->target_width >> 1)) << 4) | ((u64)(0x800 - (texture->target_height >> 1)) << 36));
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, (u64)texture->alpha_a | ((u64)texture->alpha_b << 2) | ((u64)texture->alpha_c << 4) |
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, (u64)texture->alpha_a | ((u64)texture->alpha_b << 2) | ((u64)texture->alpha_c << 4) |
                                       ((u64)texture->alpha_d << 6) | ((u64)texture->alpha_fix << 32));
-    func_00109A80(GS_REG_TEST_1, 0x53001);
-    func_00109AD0();
-    func_00109E18();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x53001);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
     // match: the half width is read before TEX0 is built (it decides the registers of the TEX0 terms)
     half = texture->target_width >> 1;
     sprite.tex0 = (u64)texture->tbp | ((u64)(texture->width >> 6) << 14) | ((u64)texture->psm << 20) | ((u64)width_log2 << 26) |
@@ -449,12 +463,12 @@ void func_0010A880(void *texture_arg, void *offset_arg) {
         sprite.vertex[1].tex_s += offset->x;
         sprite.vertex[1].tex_t += offset->y;
     }
-    func_0010A100(&sprite);
-    func_00109E18();
+    GsDraw_QueueTexturedSprite(&sprite);
+    GsDraw_QueueFlush();
 }
 
 /* Copy the displayed frame into a width x height texture at `fbp`. */
-void func_0010AC80(int fbp, int psm, int width, int height) {
+void GsDraw_CopyFrameToTexture(int fbp, int psm, int width, int height) {
     ScreenSprite sprite;
     int frame_base;
 
@@ -462,15 +476,15 @@ void func_0010AC80(int fbp, int psm, int width, int height) {
     if (D_00446F78 != 0) {
         frame_base = 0;
     }
-    func_00109F80((fbp >> 5) | ((u64)(width / 64) << 16) | ((u64)psm << 24),
+    GsDraw_SetDrawTarget((fbp >> 5) | ((u64)(width / 64) << 16) | ((u64)psm << 24),
                   ((u64)(width - 1) << 16) | ((u64)(height - 1) << 48),
                   ((0x800 - (width >> 1)) << 4) | ((u64)((0x800 - (height >> 1)) << 4) << 32));
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 0x80000000A8L);
-    func_00109A80(GS_REG_TEST_1, 0x51001);
-    func_00109A80(8, 5);
-    func_00109AD0();
-    func_00109E18();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x80000000A8L);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
+    Packet_AddGsRegister(8, 5);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
     sprite.tex0 = frame_base | 0x28028000L | (0xC800L << 19);
     sprite.tex1 = 0x60;
     sprite.prim = 0x156;
@@ -484,9 +498,9 @@ void func_0010AC80(int fbp, int psm, int width, int height) {
     sprite.vertex[1].tex_t = 0x1C00;
     sprite.vertex[0].tex_s = 0;
     sprite.vertex[0].tex_t = 0;
-    func_0010A100(&sprite);
-    func_00109A50();
-    func_00109A80(8, 0);
-    func_00109AD0();
-    func_00109E18();
+    GsDraw_QueueTexturedSprite(&sprite);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(8, 0);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
 }

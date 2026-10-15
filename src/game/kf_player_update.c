@@ -515,37 +515,37 @@ void Player_Update(void) {
     game_status.unk07 = 1;
 }
 
-void func_0010A4E8(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, int);
 
 /* Draws the colours that lie over the screen (PlayerScreenTint). */
 void Player_DrawScreenTints(void) {
     if (player_screen_tint.unk08 != 0 && player_screen_tint.kind == 0) {
-        func_0010A4E8(0, 0xFF, 0, player_screen_tint.unk08, 0x48);
+        GsDraw_FillScreen(0, 0xFF, 0, player_screen_tint.unk08, 0x48);
     }
     if (player_screen_tint.unk0C != 0 && player_screen_tint.kind == 1) {
-        func_0010A4E8(0x80, 0x80, 0, player_screen_tint.unk0C, 0x44);
+        GsDraw_FillScreen(0x80, 0x80, 0, player_screen_tint.unk0C, 0x44);
     }
     if (player_screen_tint.unk14 != 0 && player_screen_tint.kind == 3) {
-        func_0010A4E8(0xA0, 0, 0xA0, player_screen_tint.unk14, 0x48);
+        GsDraw_FillScreen(0xA0, 0, 0xA0, player_screen_tint.unk14, 0x48);
     }
     if (player_screen_tint.unk18 != 0 && player_screen_tint.kind == 4) {
-        func_0010A4E8(0xFF, 0xFF, 0xFF, player_screen_tint.unk18, 0x48);
+        GsDraw_FillScreen(0xFF, 0xFF, 0xFF, player_screen_tint.unk18, 0x48);
     }
     if (player_screen_tint.unk28 != 0 && player_screen_tint.kind == 5) {
-        func_0010A4E8(player_screen_tint.red, player_screen_tint.green, player_screen_tint.blue, player_screen_tint.unk28, 0x48);
+        GsDraw_FillScreen(player_screen_tint.red, player_screen_tint.green, player_screen_tint.blue, player_screen_tint.unk28, 0x48);
     }
     if (player_screen_tint.unk10 > 0) {
-        func_0010A4E8(0, 0, 0, player_screen_tint.unk10, 0x44);
+        GsDraw_FillScreen(0, 0, 0, player_screen_tint.unk10, 0x44);
     }
     if (player_screen_tint.unk04 != 0) {
         if (player_screen_tint.unk14 != 0 && player_screen_tint.kind == 3) {
-            func_0010A4E8(0x60, 0, 0, player_screen_tint.unk04, 0x48);
+            GsDraw_FillScreen(0x60, 0, 0, player_screen_tint.unk04, 0x48);
         } else {
-            func_0010A4E8(0xFF, 0, 0, player_screen_tint.unk04, 0x48);
+            GsDraw_FillScreen(0xFF, 0, 0, player_screen_tint.unk04, 0x48);
         }
     }
     if (player_screen_tint.unk30 != 0) {
-        func_0010A4E8(0, 0, 0, player_screen_tint.unk30, 0x44);
+        GsDraw_FillScreen(0, 0, 0, player_screen_tint.unk30, 0x44);
     }
 }
 
@@ -744,8 +744,8 @@ void Player_UpdateActions(u16 held, u16 pressed) {
 
 extern LevelRecord weapon_level_records[];
 
-void func_00108A08(ModelInstance *, int);
-void func_00108AC8(void *);
+void ModelMotion_Select(ModelInstance *, int);
+void ModelMotion_Step(void *);
 void Sound_PlaySw(int mode);
 s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 
@@ -779,7 +779,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             shot->unk22 = player_state.magic;
             shot->unk02 = player_state.unkBC;
             shot->unk24 = player_state.weapon;
-            func_00108A08(WEAPON_MODEL, 0);
+            ModelMotion_Select(WEAPON_MODEL, 0);
             player_state.unk260_0 = 0;
             player_state.unk260_1 = 0;
             player_state.unk260_2 = 0;
@@ -803,7 +803,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             swing_magic_frames = 0;
         }
         if (swing_magic_frames <= 0) {
-            func_00108AC8(WEAPON_MODEL);
+            ModelMotion_Step(WEAPON_MODEL);
         } else {
             swing_magic_frames--;
             if (((s32)(player_state.unk1C8 >> 39) & 1) ||
@@ -883,7 +883,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             player_state.unk260_1 = 1; // match: bit 1 again, though bit 2 was tested
         }
     } else {
-        func_00108AC8(WEAPON_MODEL);
+        ModelMotion_Step(WEAPON_MODEL);
         if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
             player_state.unk258 = 0;
         }
@@ -902,10 +902,10 @@ void Player_FireProjectile(u16 held, u16 pressed) {
     PlayerItemDef *def = &weapon_defs[player_state.weapon];
 
     if ((D_0044693C & pressed) && !((s32)(player_state.unk1C8 >> 39) & 1) && item_counts[def->unk62] != 0) {
-        func_00108A08(WEAPON_MODEL, 0);
+        ModelMotion_Select(WEAPON_MODEL, 0);
         MODEL_CHANNEL(WEAPON_MODEL)->param = 0;
         MODEL_CHANNEL(WEAPON_MODEL)->param_shifted = 0;
-        func_00108AC8(WEAPON_MODEL);
+        ModelMotion_Step(WEAPON_MODEL);
         ((int (*)(ModelInstance *))WEAPON_MODEL->unk1B4)(WEAPON_MODEL); // match: called as if it returned a value
         player_state.unk260_0 = 0;
         player_state.unk298 = 0;
@@ -925,7 +925,7 @@ extern GameDefinition D_00416D78[];
 static u8 D_0057A348[8] __attribute__((section(".bss")));  /* 0x57A348 the eight bytes before the requests */
 static Unk1B1470Request D_0057A350[32];                     /* 0x57A350 the bow's requests, one per shot */
 
-int func_00109098(ModelInstance *model, u8 index, u16 speed);
+int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed);
 void Sound_StopVoice(s8 slot);
 
 /* Handler of a drawn weapon while the button is held: the draw motion runs to its last frame and the
@@ -938,7 +938,7 @@ void Player_DrawBow(u16 held, u16 pressed) {
     s32 speed;
 
     if (MODEL_CHANNEL(WEAPON_MODEL)->param != 0 && MODEL_CHANNEL(WEAPON_MODEL)->param < def->unk7A) {
-        func_00108AC8(WEAPON_MODEL);
+        ModelMotion_Step(WEAPON_MODEL);
     }
     if (player_state.unk298 == 0) {
         player_state.unk298 = MODEL_CHANNEL(WEAPON_MODEL)->param >= def->unk78;
@@ -981,14 +981,14 @@ void Player_DrawBow(u16 held, u16 pressed) {
             if (speed <= 0) {
                 speed = 1;
             }
-            func_00109098(WEAPON_MODEL, 1, speed);
+            ModelMotion_BlendInto(WEAPON_MODEL, 1, speed);
             MODEL_CHANNEL(WEAPON_MODEL)->unk8F = 0;
             player_state.unk258++;
             item_counts[def->unk62]--;
             return;
         }
     }
-    func_00109098(WEAPON_MODEL, 0, 0xF);
+    ModelMotion_BlendInto(WEAPON_MODEL, 0, 0xF);
     MODEL_CHANNEL(WEAPON_MODEL)->unk8F = 0;
     player_state.unk298 = 0;
     player_state.unkBC = 0;
@@ -1003,12 +1003,12 @@ void Player_PlayEquipSound(void) {
 
 void Player_FinishWeaponMotion(void) {
     if (MODEL_CHANNEL(WEAPON_MODEL)->value != 0) {
-        func_00108AC8(WEAPON_MODEL);
+        ModelMotion_Step(WEAPON_MODEL);
         if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
-            func_00108AC8(WEAPON_MODEL);
+            ModelMotion_Step(WEAPON_MODEL);
         }
     } else if (MODEL_CHANNEL(WEAPON_MODEL)->param_shifted > 0) {
-        func_00108AC8(WEAPON_MODEL);
+        ModelMotion_Step(WEAPON_MODEL);
     } else {
         player_state.unk258 = 0;
         player_state.unk298 = 0;
@@ -1016,7 +1016,7 @@ void Player_FinishWeaponMotion(void) {
 }
 
 void Player_HolsterWeapon(void) {
-    func_00108AC8(WEAPON_MODEL);
+    ModelMotion_Step(WEAPON_MODEL);
     if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
         Effect_FreePlayerWeaponKinds();
         D_004141D8[0] = 0;

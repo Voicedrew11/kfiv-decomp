@@ -10,4 +10,4 @@ asm(".globl D_003D6C70\nD_003D6C70 = entity_pool + 0x17E80");  /* 0x3D6C70 the 2
 
 EntityPoolSlot entity_pool_slots[ENTITY_POOL_SLOT_COUNT] = { 0 }; /* 0x3D6DF0 the pool slots */
 
-s64 entity_work_area[0x2000] = { 0 }; /* 0x3D6E40 the work area func_0010CE08 builds a model in */
+s64 entity_work_area[0x2000] = { 0 }; /* 0x3D6E40 the work area Model_SaveGsWordsAndUvs builds a model in */

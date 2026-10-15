@@ -11,10 +11,10 @@
 void MapItem_ClearMap(int);
 s32 MapItem_Drop(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
 void *MapItem_FindModelSource(int, int);
-void func_0010D018(ModelInstance *, char **, char **);
-void func_0010ED80(char *, int, int);
-void func_0010E8E0(void *, int, int, int, int);
-void func_0010B510(char *, int, int);
+void Model_SetUpPosed(ModelInstance *, char **, char **);
+void Model_SetTextureBase(char *, int, int);
+void Model_SetVertexColour(void *, int, int, int, int);
+void TextureTable_SetBasePointers(char *, int, int);
 void MapItem_PrepareDraw(void *);
 
 void MapItem_PickupAim(void);
@@ -37,22 +37,22 @@ float Angle_Wrap(float);
 int MapItem_UniqueNotCarried(int);
 int MapItem_UniqueNotInTradeStock(int);
 int MapItem_UniqueNotDropped(int);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
 MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
 void Vector_Scale(float *, float *, float);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void func_0010AEB8(void *);
-void func_0010DB40(ModelInstance *);
-void func_0010A698(void);
+void ModelTexture_SendForModel(void *);
+void Model_DrawPosedDepthByPart(ModelInstance *);
+void GsDraw_ClearDepth(void);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
-void func_00109E18(void);
+void GsDraw_QueueFlush(void);
 void Player_StopWalking(void);
 float sinf(float);
 float cosf(float);
@@ -187,13 +187,13 @@ void MapItem_InitMap(int map) {
             node->model = &D_005816C0[map][i];
             model_data = source->model_data;
             cursor = D_00599EC0[map][i];
-            func_0010D018(node->model, &model_data, &cursor);
-            func_0010ED80((char *)node->model, 0x3B40, 0x3EC0);
-            func_0010E8E0(node->model, 0xFF, 0xFF, 0xFF, -1);
+            Model_SetUpPosed(node->model, &model_data, &cursor);
+            Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
+            Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
             node->model->draw = (void (*)(ModelInstance *))MapItem_PrepareDraw;
             node->model->unk194 = (int)source->texture;
             node->model->unk190 = 2;
-            func_0010B510(source->texture, 0x3B40, 0x3EC0);
+            TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
         }
     }
     saved = *(DroppedItemRecords *)dropped_item_records[map_slots[map].tag];
@@ -447,12 +447,12 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     node->unk30 = 0.0f;
     model_data = source->model_data;
     buffer = D_005A9EC0[map][index];
-    func_0010D018(node->model, &model_data, &buffer);
-    func_0010ED80((char *)node->model, 0x3B40, 0x3EC0);
-    func_0010E8E0(node->model, 0xFF, 0xFF, 0xFF, -1);
+    Model_SetUpPosed(node->model, &model_data, &buffer);
+    Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
+    Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
     node->model->unk190 = 2;
     node->model->unk194 = (int)source->texture;
-    func_0010B510(source->texture, 0x3B40, 0x3EC0);
+    TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
     if (order == 0xFFFFFFFF) {
         order = D_004469D0++;
     }
@@ -518,12 +518,12 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     Vector_Copy(&node->model->unkE0, scale);
     sources[0] = source->model_data;
     sources[1] = D_005ADEC0[map][i];
-    func_0010D018(node->model, &sources[0], &sources[1]);
-    func_0010ED80((char *)node->model, 0x3B40, 0x3EC0);
-    func_0010E8E0(node->model, 0xFF, 0xFF, 0xFF, -1);
+    Model_SetUpPosed(node->model, &sources[0], &sources[1]);
+    Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
+    Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
     node->model->unk190 = 2;
     node->model->unk194 = (int)source->texture;
-    func_0010B510(source->texture, 0x3B40, 0x3EC0);
+    TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
     MapItem_Link((ListNode *)node);
     return node;
 }
@@ -582,9 +582,9 @@ void MapItem_DrawAll(int with_picked) {
     s32 count;
     s32 i;
 
-    func_00109A50();
-    func_00109A80(0x47, 0x5000D);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x47, 0x5000D);
+    Packet_EndGsRegisters();
     for (node = D_004469D4; node != NULL; node = node->next) {
         node->map_record = Map_FindRecordAtInSlot((CameraState *)&node->model->position, 0.0f, node->flags & 1);
         if (node->map_record == NULL) {
@@ -603,8 +603,8 @@ void MapItem_DrawAll(int with_picked) {
         node->model->unk148 = (s32)&map_draw_state.unkA90[node->flags & 1][map_slots[node->flags & 1].header->unk71];
         node->model->unk14C = &map_draw_state.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
         LinkedPoint_FindHitsForModel(node->model);
-        func_0010AEB8(node->model);
-        func_0010DB40(node->model);
+        ModelTexture_SendForModel(node->model);
+        Model_DrawPosedDepthByPart(node->model);
     }
 }
 
@@ -633,10 +633,10 @@ void MapItem_DrawPicked(int hidden) {
         return;
     }
     i = 0;
-    func_0010A698();
-    func_00109A50();
-    func_00109A80(0x47, 0x5000D);
-    func_00109AD0();
+    GsDraw_ClearDepth();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x47, 0x5000D);
+    Packet_EndGsRegisters();
     Vector_Scale(scale, &node->model->unkE0, 1.0f);
     ModelMatrix_Build(node->model, &node->model->position, &node->model->rotation, scale);
     count = node->model->part_count;
@@ -656,9 +656,9 @@ void MapItem_DrawPicked(int hidden) {
     node->model->unk148 = (s32)&map_draw_state.unkA90[node->flags & 1][map_slots[node->flags & 1].header->unk71];
     node->model->unk14C = &map_draw_state.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
     LinkedPoint_FindHitsForModel(node->model);
-    func_0010AEB8(node->model);
-    func_0010DB40(node->model);
-    func_00109E18();
+    ModelTexture_SendForModel(node->model);
+    Model_DrawPosedDepthByPart(node->model);
+    GsDraw_QueueFlush();
 }
 
 /* Makes node the one being picked up, if none is yet and it is on the list of the ones in use. */
@@ -929,10 +929,10 @@ ItemNode *MapItem_Unlink(ItemNode *node) {
 
 /* Sends the model's textures and sets GS register 0x47 for drawing it. */
 void MapItem_PrepareDraw(void *model) {
-    func_0010AEB8(model);
-    func_00109A50();
-    func_00109A80(0x47, 0x5000D);
-    func_00109AD0();
+    ModelTexture_SendForModel(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x47, 0x5000D);
+    Packet_EndGsRegisters();
 }
 
 /* Returns the index of the slot's fixed item with this id (1..255), or -1. */

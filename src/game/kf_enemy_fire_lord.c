@@ -48,7 +48,7 @@ int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 float sqrtf(float);
 float atan2f(float, float);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
 void EntityMath_FacingVector(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
@@ -58,7 +58,7 @@ float EntityMath_AngleXZ(float *, char *);
 s32 EntityAi_CanUseMelee(Entity *, s32);
 extern u8 D_004141D8[];
 extern EntityModel *D_00446978;
-void func_0010B018(ModelInstance *, s32, s32);
+void DrawList_Add(ModelInstance *, s32, s32);
 
 static void FireLord_Animate(Entity *entity);
 static void FireLord_Think(Entity *entity, s32 unknown);
@@ -523,7 +523,7 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
 /* The melee attack with record 0 (busy bit 1): animation 20 to frame 8; then, the motion stopped,
    it moves 30 a frame along the heading for up to 15 frames or until the player is within 200; then
    plays on with the hit checks of EntityAi_MeleeAttack. On frames 20 to 26 it starts effect 0x3A0
-   along the path of the point func_0010CAB8 gives for 8, pointing to the one it gives for 9. */
+   along the path of the point Model_GetSkinnedBonePoint gives for 8, pointing to the one it gives for 9. */
 static void FireLord_MeleeAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk240 *unk240 = &entity->params->unk240[0];
@@ -586,8 +586,8 @@ static void FireLord_MeleeAttack0(Entity *entity) {
         } else {
             unkE0->unk1C = 0.0f;
         }
-        from = (f32 *)func_0010CAB8((char *)entity->model, 8);
-        tip = (f32 *)func_0010CAB8((char *)entity->model, 9);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 8);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 9);
         if (from != NULL && tip != NULL) {
             if (entity->model->unkFC->unk82 >= 0x14 && entity->model->unkFC->unk82 <= 0x1A) {
                 delta_x = tip[0] - from[0];
@@ -642,7 +642,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
 }
 
 /* The melee attack with record 1 (busy bit 1): animation 21, as EntityAi_MeleeAttack. On frames 23
-   to 27 it starts effect 0x3A0 along the path of the point func_0010CAB8 gives for 16, pointing to
+   to 27 it starts effect 0x3A0 along the path of the point Model_GetSkinnedBonePoint gives for 16, pointing to
    the one it gives for 17. */
 static void FireLord_MeleeAttack1(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -682,8 +682,8 @@ static void FireLord_MeleeAttack1(Entity *entity) {
         } else {
             unkE0->unk1C = 0.0f;
         }
-        from = (f32 *)func_0010CAB8((char *)entity->model, 0x10);
-        tip = (f32 *)func_0010CAB8((char *)entity->model, 0x11);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x10);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x11);
         if (from != NULL && tip != NULL) {
             if (entity->model->unkFC->unk82 >= 0x17 && entity->model->unkFC->unk82 <= 0x1B) {
                 delta_x = tip[0] - from[0];
@@ -866,7 +866,7 @@ void func_00133708(Entity *entity, s32 unknown) {
         fire_lord_model[0].model.unk148 = ENTITY_MODEL(entity)->unk148;
         fire_lord_model[1].model.unk14C = ENTITY_MODEL(entity)->unk14C;
         fire_lord_model[1].model.unk148 = ENTITY_MODEL(entity)->unk148;
-        func_0010B018(&fire_lord_model[0].model, 0, unknown);
-        func_0010B018(&fire_lord_model[1].model, 0, unknown);
+        DrawList_Add(&fire_lord_model[0].model, 0, unknown);
+        DrawList_Add(&fire_lord_model[1].model, 0, unknown);
     }
 }

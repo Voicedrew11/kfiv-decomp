@@ -26,26 +26,26 @@ extern PlayerItemDef weapon_defs[];
 
 void *memset(void *, int, u32);
 int sprintf(char *, char *, ...);
-int func_00102238(char *, int, int);
-int func_001024B0(int);
-int func_001025C0(int, void *, int);
-MotionData *func_00108940(MotionFile *, ModelChannel **, ModelInstance *, int);
-void func_00108A08(ModelInstance *, int);
-void func_00108AC8(void *);
-void func_0010B018(ModelInstance *, s32, s32);
-void func_0010B510(char *, int, int);
-void func_0010B5D0(ModelPart *);
-void func_0010D018(ModelInstance *, char **, char **);
-void func_0010DB40(ModelInstance *);
-void func_0010E6A8(ModelInstance *, s64, s64);
-void func_0010E770(ModelInstance *, u64, s64);
-void func_0010E820(ModelInstance *, s64);
-void func_0010E8E0(void *, int, int, int, int);
+int File_Open(char *, int, int);
+int File_Close(int);
+int File_Read(int, void *, int);
+MotionData *ModelMotion_LoadFile(MotionFile *, ModelChannel **, ModelInstance *, int);
+void ModelMotion_Select(ModelInstance *, int);
+void ModelMotion_Step(void *);
+void DrawList_Add(ModelInstance *, s32, s32);
+void TextureTable_SetBasePointers(char *, int, int);
+void Model_MultiplyChildMatrices(ModelPart *);
+void Model_SetUpPosed(ModelInstance *, char **, char **);
+void Model_DrawPosedDepthByPart(ModelInstance *);
+void Model_SetPrimBits(ModelInstance *, s64, s64);
+void Model_SetTexture(ModelInstance *, u64, s64);
+void Model_SetAlphaBlend(ModelInstance *, s64);
+void Model_SetVertexColour(void *, int, int, int, int);
 int Player_KnowsItemMenuMagic(void);
-void func_0010AEB8(void *);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
+void ModelTexture_SendForModel(void *);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
 static void ItemEffect_DrawModel(ModelInstance *model);
 void ItemEffect_StepRequestGameStatus(void);
 void ItemEffect_StepWaitOverlay(void);
@@ -131,62 +131,62 @@ void ItemEffect_Load(void) {
     item_effect_model_a = (ModelInstance *)buffer;
     buffer += sizeof(ModelInstance);
     buffer = align16(buffer);
-    file = func_00102238(D_004410C8, 0, 1);
-    size = func_001025C0(file, buffer, -1);
-    func_001024B0(file);
+    file = File_Open(D_004410C8, 0, 1);
+    size = File_Read(file, buffer, -1);
+    File_Close(file);
     model_data = buffer;
     buffer += size;
     buffer = align16(buffer);
-    func_0010D018(item_effect_model_a, &model_data, &buffer);
-    func_0010E8E0(item_effect_model_a, 0x80, 0x80, 0x80, 0x80);
-    func_0010E820(item_effect_model_a, 0x44);
-    func_0010E6A8(item_effect_model_a, 0x60, 0x40);
-    func_0010E770(item_effect_model_a, 0x4007D805E1313B40, 0x60);
-    item_effect_model_a->unk1A8 = func_0010DB40;
+    Model_SetUpPosed(item_effect_model_a, &model_data, &buffer);
+    Model_SetVertexColour(item_effect_model_a, 0x80, 0x80, 0x80, 0x80);
+    Model_SetAlphaBlend(item_effect_model_a, 0x44);
+    Model_SetPrimBits(item_effect_model_a, 0x60, 0x40);
+    Model_SetTexture(item_effect_model_a, 0x4007D805E1313B40, 0x60);
+    item_effect_model_a->unk1A8 = Model_DrawPosedDepthByPart;
     buffer = align16(buffer);
-    file = func_00102238(D_004410E0, 0, 1);
-    size = func_001025C0(file, buffer, -1);
-    func_001024B0(file);
+    file = File_Open(D_004410E0, 0, 1);
+    size = File_Read(file, buffer, -1);
+    File_Close(file);
     model_data = buffer;
     buffer += size;
     buffer = align16(buffer);
-    func_00108940((MotionFile *)model_data, (ModelChannel **)&buffer, item_effect_model_a, 1);
+    ModelMotion_LoadFile((MotionFile *)model_data, (ModelChannel **)&buffer, item_effect_model_a, 1);
 
     buffer = align16(buffer);
     item_effect_model_b = (ModelInstance *)buffer;
     buffer += sizeof(ModelInstance);
     buffer = align16(buffer);
-    file = func_00102238(D_004410F8, 0, 1);
-    size = func_001025C0(file, buffer, -1);
-    func_001024B0(file);
+    file = File_Open(D_004410F8, 0, 1);
+    size = File_Read(file, buffer, -1);
+    File_Close(file);
     model_data = buffer;
     buffer += size;
     buffer = align16(buffer);
-    func_0010D018(item_effect_model_b, &model_data, &buffer);
-    func_0010E8E0(item_effect_model_b, 0x80, 0x80, 0x80, 0x80);
-    func_0010E820(item_effect_model_b, 0x44);
-    func_0010E6A8(item_effect_model_b, 0x60, 0x40);
-    func_0010E770(item_effect_model_b, 0x4007D805E1313B40, 0x60);
-    item_effect_model_a->unk1A8 = func_0010DB40; // match: the first model again, not the second
+    Model_SetUpPosed(item_effect_model_b, &model_data, &buffer);
+    Model_SetVertexColour(item_effect_model_b, 0x80, 0x80, 0x80, 0x80);
+    Model_SetAlphaBlend(item_effect_model_b, 0x44);
+    Model_SetPrimBits(item_effect_model_b, 0x60, 0x40);
+    Model_SetTexture(item_effect_model_b, 0x4007D805E1313B40, 0x60);
+    item_effect_model_a->unk1A8 = Model_DrawPosedDepthByPart; // match: the first model again, not the second
     buffer = align16(buffer);
-    file = func_00102238(D_00441110, 0, 1);
-    size = func_001025C0(file, buffer, -1);
-    func_001024B0(file);
+    file = File_Open(D_00441110, 0, 1);
+    size = File_Read(file, buffer, -1);
+    File_Close(file);
     model_data = buffer;
     buffer += size;
     buffer = align16(buffer);
-    func_00108940((MotionFile *)model_data, (ModelChannel **)&buffer, item_effect_model_b, 1);
+    ModelMotion_LoadFile((MotionFile *)model_data, (ModelChannel **)&buffer, item_effect_model_b, 1);
 
     for (i = 0; i < 7; i++) {
         sprintf(name, D_00441128, i + 40);
-        file = func_00102238(name, 0, 1);
+        file = File_Open(name, 0, 1);
         if (file >= 0) {
             buffer = align16(buffer);
-            size = func_001025C0(file, buffer, -1);
-            func_001024B0(file);
+            size = File_Read(file, buffer, -1);
+            File_Close(file);
             item_effect_textures[i] = buffer;
             buffer += size;
-            func_0010B510(item_effect_textures[i], 0x3B40, 0x3EC0);
+            TextureTable_SetBasePointers(item_effect_textures[i], 0x3B40, 0x3EC0);
         }
     }
 }
@@ -229,12 +229,12 @@ void ItemEffect_Start(int kind, int marked) {
         model->unk194 = (int)item_effect_textures[kind - 0x46];
         item_effect_model = model;
     }
-    item_effect_model->unk1A8 = func_0010DB40;
+    item_effect_model->unk1A8 = Model_DrawPosedDepthByPart;
     item_effect_model->draw = ItemEffect_DrawModel;
-    func_00108A08(item_effect_model, 0);
-    func_00108AC8(item_effect_model);
+    ModelMotion_Select(item_effect_model, 0);
+    ModelMotion_Step(item_effect_model);
     item_effect_brightness = 0x80;
-    func_0010E8E0(item_effect_model, 0x80, 0x80, 0x80, item_effect_brightness);
+    Model_SetVertexColour(item_effect_model, 0x80, 0x80, 0x80, item_effect_brightness);
     Vector_Scale((float *)&item_effect_model->position, D_00420D00.unk10, 75.0f);
     Vector_Add(&item_effect_model->position, &item_effect_model->position, D_00420D00.unk00);
     Vector_Copy(&item_effect_model->rotation, &player_state.rotation);
@@ -291,7 +291,7 @@ void ItemEffect_Update(void) {
     }
     part = item_effect_model->parts;
     for (i = 0; i < count; i++, part++) {
-        func_0010B5D0(part);
+        Model_MultiplyChildMatrices(part);
     }
 }
 
@@ -316,7 +316,7 @@ void ItemEffect_StepWaitOverlay(void) {
 
 /* Item-effect step 2: advances the model motion until the kind's first frame. */
 void ItemEffect_StepPlayMotion(void) {
-    func_00108AC8(item_effect_model);
+    ModelMotion_Step(item_effect_model);
     if (MODEL_CHANNEL(item_effect_model)->param >= item_effect_def->unk00) {
         item_effect_step++;
     }
@@ -339,7 +339,7 @@ void ItemEffect_StepFadeOut(void) {
         return;
     }
     if (MODEL_CHANNEL(item_effect_model)->param > 0) {
-        func_00108AC8(item_effect_model);
+        ModelMotion_Step(item_effect_model);
     }
     if (item_effect_brightness > 0) {
         brightness = item_effect_brightness - item_effect_def->unk04;
@@ -347,7 +347,7 @@ void ItemEffect_StepFadeOut(void) {
         if (brightness < 0) {
             item_effect_brightness = 0;
         }
-        func_0010E8E0(item_effect_model, 0x80, 0x80, 0x80, item_effect_brightness);
+        Model_SetVertexColour(item_effect_model, 0x80, 0x80, 0x80, item_effect_brightness);
     }
     MODEL_PART_FLAG_WORD(item_effect_model->parts) &= ~MODEL_PART_BIT41;
 }
@@ -355,15 +355,15 @@ void ItemEffect_StepFadeOut(void) {
 /* Draws the item-effect model while the effect runs. */
 void ItemEffect_Draw(void) {
     if (item_effect_active != 0 && item_effect_step > 0 && item_effect_model != NULL) {
-        func_0010B018(item_effect_model, 0, 0);
+        DrawList_Add(item_effect_model, 0, 0);
     }
 }
 
 /* The item effect model's draw handler: draws the model, then writes TEST_1 = 0x5010D (alpha test greater than
    0x10, depth test on). */
 static void ItemEffect_DrawModel(ModelInstance *model) {
-    func_0010AEB8(model);
-    func_00109A50();
-    func_00109A80(GS_REG_TEST_1, 0x5010D);
-    func_00109AD0();
+    ModelTexture_SendForModel(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x5010D);
+    Packet_EndGsRegisters();
 }

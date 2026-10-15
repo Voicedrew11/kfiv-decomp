@@ -67,9 +67,9 @@ void Player_BounceWeaponQuietly(void);
 s32 Sound_PlayCommon(s32);
 void Player_StrikeSolidObject(int with_sound);
 void Attack_WearWornItem(int idx, int amount);
-int func_00102238(char *, int, int);
-int func_001025C0(int, void *, int);
-int func_001024B0(int);
+int File_Open(char *, int, int);
+int File_Read(int, void *, int);
+int File_Close(int);
 void *memset(void *, int, u32);
 s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 
@@ -1441,10 +1441,10 @@ void Attack_DrainPlayerMp(int amount) {
 
 /* Loads the magic table fx_table from param/magic.prm. */
 void Attack_LoadMagicTable(void) {
-    int file_handle = func_00102238(D_0043F248, 0, 1);
+    int file_handle = File_Open(D_0043F248, 0, 1);
 
-    func_001025C0(file_handle, fx_table, -1);
-    func_001024B0(file_handle);
+    File_Read(file_handle, fx_table, -1);
+    File_Close(file_handle);
 }
 
 /* Launches the effect of a magic table row (its unk100) from `from` along `angles`; returns Effect_Spawn's

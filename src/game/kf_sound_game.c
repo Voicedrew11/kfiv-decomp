@@ -11,8 +11,8 @@
 #include "kf_effect.h"
 #include "kf_sound_game.h"
 
-int func_00102230(void);
-int func_00102790(int, int);
+int File_IsLocked(void);
+int File_Sync(int, int);
 
 extern LoadJob bgm_load_job;
 extern SoundJob se_com_job;
@@ -57,20 +57,20 @@ extern int D_0044685C;
 extern int D_00446F74;
 extern int D_004470E8;
 extern int D_004470F4;
-void func_00102218(void);
-int func_00102900(int);
+void File_Lock(void);
+int File_GetSize(int);
 int sprintf(char *, char *, ...);
-void func_00102228(void);
+void File_Unlock(void);
 extern int D_003EF544[];
 extern int D_004470EC;
-int func_00102238(char *name, int nowait, int pack);
-int func_001025C0(int file, void *buf, int size);
+int File_Open(char *name, int nowait, int pack);
+int File_Read(int file, void *buf, int size);
 extern int D_003EF548[];
 extern int D_004470F0;
 extern u8 D_00446896;
 extern int D_004468A4;
 extern int D_004470D4;
-int func_001024B0(int file);
+int File_Close(int file);
 extern s32 D_004468A8;
 extern s32 D_004470DC;
 extern MapHeader *D_0038CD28[];
@@ -1154,7 +1154,7 @@ int Sound_BgmReadBody(LoadJob *job, int index) {
     int handle;
     int load_addr;
 
-    if (func_00102230() != 0) {
+    if (File_IsLocked() != 0) {
         D_0044685C = 1;
         return -1;
     }
@@ -1165,11 +1165,11 @@ int Sound_BgmReadBody(LoadJob *job, int index) {
     job->buffers[0] = D_004470F4 = load_addr;
     D_004470F4 = load_addr + 0x80000;
     sprintf(name, job->name, index);
-    handle = func_00102238(name, TRUE, TRUE);
+    handle = File_Open(name, TRUE, TRUE);
     job->file_handle = handle;
-    D_004470E8 = func_00102900(handle);
-    func_00102218();
-    func_001025C0(job->file_handle, (void *)job->buffers[0], -1);
+    D_004470E8 = File_GetSize(handle);
+    File_Lock();
+    File_Read(job->file_handle, (void *)job->buffers[0], -1);
     D_00446858 += 1;
     return 0;
 }
@@ -1226,11 +1226,11 @@ int Sound_BgmFadeOut(IopLoadJob *job) {
 
 /* BGM load step: once the read has finished, closes the file and frees the old BGM's bank and voice. */
 int Sound_BgmCloseBody(LoadJob *job) {
-    if (func_00102790(job->file_handle, 1) != 0) {
+    if (File_Sync(job->file_handle, 1) != 0) {
         return -1;
     }
-    func_001024B0(job->file_handle);
-    func_00102228();
+    File_Close(job->file_handle);
+    File_Unlock();
     job->file_handle = -1;
     SoundDriver_StopSequence(job->unk14);
     SoundDriver_FreeSequence(job->unk14);
@@ -1248,7 +1248,7 @@ int Sound_BgmReadHeader(LoadJob *job, int index) {
     int heap_top;
     int *buffers;
 
-    if (func_00102230() != 0) {
+    if (File_IsLocked() != 0) {
         D_0044685C = 1;
         return -1;
     }
@@ -1259,21 +1259,21 @@ int Sound_BgmReadHeader(LoadJob *job, int index) {
     D_003EF544[0] = heap_top;
     D_004470F4 = ((u32)(heap_top + 0x2003F) >> 6) << 6;
     sprintf(name, job->unk08, index);
-    file = func_00102238(name, 1, 1);
+    file = File_Open(name, 1, 1);
     job->file_handle = file;
-    D_004470EC = func_00102900(file);
-    func_00102218();
+    D_004470EC = File_GetSize(file);
+    File_Lock();
     buffers = job->buffers;
-    func_001025C0(job->file_handle, (void *)buffers[1], -1);
+    File_Read(job->file_handle, (void *)buffers[1], -1);
     D_00446858 += 1;
     return 0;
 }
 
 /* BGM load step: once the read has finished, closes the file. */
 int Sound_BgmCloseHeader(LoadJob *job) {
-    if (func_00102790(job->file_handle, 1) == 0) {
-        func_001024B0(job->file_handle);
-        func_00102228();
+    if (File_Sync(job->file_handle, 1) == 0) {
+        File_Close(job->file_handle);
+        File_Unlock();
         job->file_handle = -1;
         D_0044685C = 1;
         D_00446858 += 1;
@@ -1290,7 +1290,7 @@ int Sound_BgmReadSequence(LoadJob *job, int index) {
     int heap_top;
     int *buffers;
 
-    if (func_00102230() != 0) {
+    if (File_IsLocked() != 0) {
         return -1;
     }
     if (SoundDriver_StepUpload() == 0) {
@@ -1300,23 +1300,23 @@ int Sound_BgmReadSequence(LoadJob *job, int index) {
     D_003EF548[0] = heap_top;
     D_004470F4 = ((u32)(heap_top + 0x2003F) >> 6) << 6;
     sprintf(name, job->name_format, index);
-    handle = func_00102238(name, TRUE, TRUE);
+    handle = File_Open(name, TRUE, TRUE);
     job->file_handle = handle;
-    D_004470F0 = func_00102900(handle);
-    func_00102218();
+    D_004470F0 = File_GetSize(handle);
+    File_Lock();
     buffers = job->buffers;
-    func_001025C0(job->file_handle, (void *)buffers[2], -1);
+    File_Read(job->file_handle, (void *)buffers[2], -1);
     D_00446858 += 1;
     return 0;
 }
 
 /* BGM load step: once the read has finished, closes the file. */
 int Sound_BgmCloseSequence(LoadJob *job) {
-    if (func_00102790(job->file_handle, 1) != 0) {
+    if (File_Sync(job->file_handle, 1) != 0) {
         return -1;
     }
-    func_001024B0(job->file_handle);
-    func_00102228();
+    File_Close(job->file_handle);
+    File_Unlock();
     job->file_handle = -1;
     D_00446858 += 1;
     return 0;
@@ -1408,14 +1408,14 @@ static int Sound_ReadHeapFileStep(LoadJob *job, int index) {
             *job->buffers = heap_start;
             D_004470F4 = heap_start + 0xA0000;
             sprintf(sound_file_path, job->name, index);
-            file = func_00102238(sound_file_path, 1, 1);
+            file = File_Open(sound_file_path, 1, 1);
             D_004470D4 = file;
-            func_001025C0(file, (void *)*job->buffers, -1);
+            File_Read(file, (void *)*job->buffers, -1);
             D_004468A4 += 1;
             break;
         case 1:
-            if (func_00102790(D_004470D4, 1) == 0) {
-                func_001024B0(D_004470D4);
+            if (File_Sync(D_004470D4, 1) == 0) {
+                File_Close(D_004470D4);
                 D_004468A4 = 0;
                 SoundDriver_FreeVoice(job->unk10);
                 return 1;
@@ -1438,13 +1438,13 @@ s32 Sound_ReadMapBankFileStep(LoadRequest *request) {
             request->target->buffer = (void *)buffer;
             D_004470F4 = (((buffer + 0x2003F) >> 6) << 6);
             sprintf(map_bank_file_path, request->name, D_0038CD28[0]->unk70);
-            D_004470DC = func_00102238(map_bank_file_path, TRUE, TRUE);
-            func_001025C0(D_004470DC, request->target->buffer, -1);
+            D_004470DC = File_Open(map_bank_file_path, TRUE, TRUE);
+            File_Read(D_004470DC, request->target->buffer, -1);
             D_004468A8 += 1;
             break;
         case 1:
-            if (func_00102790(D_004470DC, 1) == 0) {
-                func_001024B0(D_004470DC);
+            if (File_Sync(D_004470DC, 1) == 0) {
+                File_Close(D_004470DC);
                 D_004468A8 = 0;
                 return 1;
             }
@@ -1487,8 +1487,8 @@ int Sound_BgmFreeSampleBuffer(IopLoadJob *job) {
 static void Sound_CancelBgmLoad(LoadJob *job) {
     if (job->file_handle >= 0) {
         sceCdBreak();
-        func_001024B0(job->file_handle);
-        func_00102228();
+        File_Close(job->file_handle);
+        File_Unlock();
     }
     job->file_handle = -1;
     D_00446858 = 0;
@@ -1545,9 +1545,9 @@ int Sound_ReadJobFile(LoadJob *job) {
     if (SoundDriver_StepUpload() == 0) {
         return -1;
     }
-    file_handle = func_00102238(job->name, 0, 1);
-    func_001025C0(file_handle, (void *)*job->buffers, -1);
-    func_001024B0(file_handle);
+    file_handle = File_Open(job->name, 0, 1);
+    File_Read(file_handle, (void *)*job->buffers, -1);
+    File_Close(file_handle);
     return 1;
 }
 
@@ -1555,10 +1555,10 @@ int Sound_ReadJobFile(LoadJob *job) {
 static int Sound_LoadReverbParams(void) {
     int file;
 
-    file = func_00102238(D_0043EE18, 0, 1);
-    func_001025C0(file, bgm_cues, 0x400);
-    func_001025C0(file, map_bank_cues, 0x800);
-    func_001024B0(file);
+    file = File_Open(D_0043EE18, 0, 1);
+    File_Read(file, bgm_cues, 0x400);
+    File_Read(file, map_bank_cues, 0x800);
+    File_Close(file);
     return 1;
 }
 
@@ -1570,9 +1570,9 @@ s32 Sound_ReadRequestFile(LoadRequest *request) {
     if (SoundDriver_StepUpload() == 0) {
         return -1;
     }
-    file_handle = func_00102238(request->name, 0, 1);
-    func_001025C0(file_handle, request->target->buffer, -1);
-    func_001024B0(file_handle);
+    file_handle = File_Open(request->name, 0, 1);
+    File_Read(file_handle, request->target->buffer, -1);
+    File_Close(file_handle);
     return 1;
 }
 
@@ -2151,20 +2151,20 @@ void Sound_LoadMgBank(int file_number) {
 static int Sound_LoadFilePair(char *name_a, char *name_b, SoundJobSpec *spec, int first_arg, int second_arg) {
     int handle;
 
-    handle = func_00102238(name_a, 0, 1);
+    handle = File_Open(name_a, 0, 1);
     if (handle < 0) {
-        func_001024B0(handle);
+        File_Close(handle);
         return 0;
     }
-    func_001025C0(handle, spec->buffer_a, spec->size_a);
-    func_001024B0(handle);
-    handle = func_00102238(name_b, 0, 1);
+    File_Read(handle, spec->buffer_a, spec->size_a);
+    File_Close(handle);
+    handle = File_Open(name_b, 0, 1);
     if (handle < 0) {
-        func_001024B0(handle);
+        File_Close(handle);
         return 0;
     }
-    func_001025C0(handle, spec->buffer_b, spec->size_b);
-    func_001024B0(handle);
+    File_Read(handle, spec->buffer_b, spec->size_b);
+    File_Close(handle);
     return SoundDriver_LoadVoiceAt(first_arg, (int)spec->buffer_b, spec->size_b, (int)spec->buffer_a, spec->size_a, 0, second_arg);
 }
 

@@ -46,12 +46,12 @@ void sceVu0MulMatrix(void *, void *, void *);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 void Vu0_ProjectToScreen3(int *, int *, int *, f32 *, f32 *, f32 *);
-void func_0010F478(u32 *, ModelPartVertexWords *, int, int, void *);
-u32 *func_00109990(int);
-void func_00109650(u32 *, u32 *);
-void func_0010F898(ModelPartVertexWords *, ModelPartVertexWords *, ModelPartVertexWords *, int);
+void ModelScreen_QueueCutTriangle(u32 *, ModelPartVertexWords *, int, int, void *);
+u32 *Packet_Alloc(int);
+void Packet_AppendToChain(u32 *, u32 *);
+void ModelScreen_StepVertices(ModelPartVertexWords *, ModelPartVertexWords *, ModelPartVertexWords *, int);
 void Vector_Add(void *, void *, void *);
-void func_00110D60(BlendVertex *, BlendVertex *, BlendVertex *, int);
+void ModelScreen_StepFloatVertices(BlendVertex *, BlendVertex *, BlendVertex *, int);
 void Vector_Subtract(float *, float *, float *);
 void Vector_Scale(float *, float *, float);
 extern f32 D_004323E0[16];      /* world to screen */
@@ -64,7 +64,7 @@ extern int D_00447054;
 
 /* Looks for the triangles of a model that the GS could not draw as they are (a corner out of its
    range) but that are partly on the screen, and queues each cut up into smaller ones. */
-void func_0010EE98(ModelInstance *model) {
+void ModelScreen_CutClippedTriangles(ModelInstance *model) {
     f32 local_matrix[16];
     f32 screen_matrix[16];
     f32 point0[4];
@@ -149,7 +149,7 @@ void func_0010EE98(ModelInstance *model) {
                 if (vertex->unk0E == 0 && outside != 0 && outside != 7) {
                     if (!(clip[0] & clip[1] & clip[2])) {
                         if (clip[0] | clip[1] | clip[2]) {
-                            func_0010F478((u32 *)block, vertex, first, setup, local_matrix);
+                            ModelScreen_QueueCutTriangle((u32 *)block, vertex, first, setup, local_matrix);
                             first = FALSE;
                             if (setup != 0) {
                                 setup--;
@@ -172,7 +172,7 @@ void func_0010EE98(ModelInstance *model) {
    vertex (the apex) to a point of that edge; each pair of neighbouring lines goes out as a strip.
    `data` is the block (a ModelPartData) as words. `first` sends the matrix along, `setup` the
    block's GS setup. */
-void func_0010F478(u32 *data, ModelPartVertexWords *vertex, int first, int setup, void *matrix) {
+void ModelScreen_QueueCutTriangle(u32 *data, ModelPartVertexWords *vertex, int first, int setup, void *matrix) {
     u16 steps = 4;
     u16 vertex_count = steps * (steps * 2 + 1);
     int size;
@@ -194,7 +194,7 @@ void func_0010F478(u32 *data, ModelPartVertexWords *vertex, int first, int setup
         size = 6;
     }
     size += vertex_count * 2 + 5;
-    packet_start = packet = func_00109990(first ? size + 6 : size);
+    packet_start = packet = Packet_Alloc(first ? size + 6 : size);
     if (first) {
         *packet = 0x10000005;
         packet += 7;
@@ -232,15 +232,15 @@ void func_0010F478(u32 *data, ModelPartVertexWords *vertex, int first, int setup
     *packet = *data;
     packet += 4;
     *packet++ = (vertex_count << 18) | 0x6D008001;
-    func_0010F898(MODEL_CUT_EDGE, before, vertex, steps);
+    ModelScreen_StepVertices(MODEL_CUT_EDGE, before, vertex, steps);
     edge_point = MODEL_CUT_EDGE + 1;
-    func_0010F898(previous, apex, MODEL_CUT_EDGE, steps);
+    ModelScreen_StepVertices(previous, apex, MODEL_CUT_EDGE, steps);
     out = (ModelPartVertexWords *)packet;
     for (i = 1; i <= steps; i++) {
         row_point = row; // match: one variable swaps the rows and then walks the older one
         row = previous;
         previous = row_point;
-        func_0010F898(row_point, apex, edge_point++, steps);
+        ModelScreen_StepVertices(row_point, apex, edge_point++, steps);
         *out = *apex;
         out->unk0E = 0x8000;
         out++;
@@ -262,13 +262,13 @@ void func_0010F478(u32 *data, ModelPartVertexWords *vertex, int first, int setup
     } else {
         *packet++ = 0x17000000;
     }
-    func_00109650(packet_start, packet);
+    Packet_AppendToChain(packet_start, packet);
     D_00446764++;
 }
 
 /* Writes steps + 1 vertices that lead from one vertex to another in equal steps; the position is
    stepped as floats and cut off, the rest as whole numbers. */
-void func_0010F898(ModelPartVertexWords *out, ModelPartVertexWords *from, ModelPartVertexWords *last, int steps) {
+void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *from, ModelPartVertexWords *last, int steps) {
     ModelPartVertexWords step;
     f32 position[4];
     f32 delta[4];
@@ -326,7 +326,7 @@ void func_0010F898(ModelPartVertexWords *out, ModelPartVertexWords *from, ModelP
 
 /* Writes steps + 1 vertices that lead from one vertex to another in equal steps; the position is
    worked out afresh for each as floats and rounded, the rest is stepped as whole numbers. */
-void func_0010FC30(ModelPartVertexWords *out, ModelPartVertexWords *from, ModelPartVertexWords *last, int steps) {
+void ModelScreen_StepVerticesRounded(ModelPartVertexWords *out, ModelPartVertexWords *from, ModelPartVertexWords *last, int steps) {
     ModelPartVertexWords step;
     f32 position[4];
     f32 delta[4];
@@ -387,11 +387,11 @@ void func_0010FC30(ModelPartVertexWords *out, ModelPartVertexWords *from, ModelP
 }
 
 /* Queues one triangle of a block, the one that ends at `vertex`, cut up into 16 smaller ones and
-   with its vertices as floats (func_0010F478 does the same with packed vertices): the edge between
+   with its vertices as floats (ModelScreen_QueueCutTriangle does the same with packed vertices): the edge between
    its last two vertices is cut in four, and so is each line from the first vertex (the apex) to a
    point of that edge; each pair of neighbouring lines goes out as a strip. `data` is the block (a
    ModelPartData) as words. `first` sends the matrix along, `setup` the block's GS setup. */
-void func_00110050(u32 *data, ModelPartVertexWords *vertex, int first, int setup, void *matrix) {
+void ModelScreen_QueueCutFloatTriangle(u32 *data, ModelPartVertexWords *vertex, int first, int setup, void *matrix) {
     BlendVertex apex_point;
     BlendVertex before_point;
     BlendVertex vertex_point;
@@ -419,7 +419,7 @@ void func_00110050(u32 *data, ModelPartVertexWords *vertex, int first, int setup
     TO_BLEND_VERTEX(apex_point, apex);
     TO_BLEND_VERTEX(before_point, before);
     TO_BLEND_VERTEX(vertex_point, vertex);
-    packet_start = packet = func_00109990(first ? size + 10 : size);
+    packet_start = packet = Packet_Alloc(first ? size + 10 : size);
     if (first) {
         *packet = 0x10000005;
         packet += 7;
@@ -473,15 +473,15 @@ void func_00110050(u32 *data, ModelPartVertexWords *vertex, int first, int setup
     *packet = *data;
     packet += 4;
     *packet++ = (vertex_count << 18) | 0x6C008001;
-    func_00110D60(MODEL_CUT_BLEND_EDGE, &before_point, &vertex_point, steps);
+    ModelScreen_StepFloatVertices(MODEL_CUT_BLEND_EDGE, &before_point, &vertex_point, steps);
     edge_point = MODEL_CUT_BLEND_EDGE + 1;
-    func_00110D60(MODEL_CUT_BLEND_ROW_B, &apex_point, MODEL_CUT_BLEND_EDGE, steps);
+    ModelScreen_StepFloatVertices(MODEL_CUT_BLEND_ROW_B, &apex_point, MODEL_CUT_BLEND_EDGE, steps);
     out = (BlendVertex *)packet;
     for (i = 1; i <= steps; i++) {
         row_point = row; // match: one variable swaps the rows and then walks the older one
         row = previous;
         previous = row_point;
-        func_00110D60(row_point, &apex_point, edge_point++, steps);
+        ModelScreen_StepFloatVertices(row_point, &apex_point, edge_point++, steps);
         *out = apex_point;
         *(s32 *)&out->unk10[3] = 0x8000;
         out++;
@@ -503,13 +503,13 @@ void func_00110050(u32 *data, ModelPartVertexWords *vertex, int first, int setup
     } else {
         *packet++ = 0x17000000;
     }
-    func_00109650(packet_start, packet);
+    Packet_AppendToChain(packet_start, packet);
     D_00446764++;
 }
 
 /* Writes steps + 1 float vertices that lead from one packed vertex to another in equal steps
-   (func_00110D60 does the same between two float vertices). */
-void func_001108E8(BlendVertex *out, ModelPartVertexWords *from, ModelPartVertexWords *last, int steps) {
+   (ModelScreen_StepFloatVertices does the same between two float vertices). */
+void ModelScreen_StepPackedToFloat(BlendVertex *out, ModelPartVertexWords *from, ModelPartVertexWords *last, int steps) {
     BlendVertex from_point;
     BlendVertex last_point;
     BlendVertex delta;
@@ -548,8 +548,8 @@ void func_001108E8(BlendVertex *out, ModelPartVertexWords *from, ModelPartVertex
 }
 
 /* Writes steps + 1 vertices that lead from one vertex to another in equal steps
-   (func_001108E8 does the same between two packed vertices). */
-void func_00110D60(BlendVertex *out, BlendVertex *from, BlendVertex *last, int steps) {
+   (ModelScreen_StepPackedToFloat does the same between two packed vertices). */
+void ModelScreen_StepFloatVertices(BlendVertex *out, BlendVertex *from, BlendVertex *last, int steps) {
     BlendVertex delta;
     BlendVertex *previous;
     f32 scale;
@@ -586,7 +586,7 @@ void func_00110D60(BlendVertex *out, BlendVertex *from, BlendVertex *last, int s
 
 /* Gives every vertex texture coordinates taken from where it lands on the screen. Also steps a
    60-frame counter and fills a sine table that nothing reads. */
-void func_00111010(ModelInstance *model) {
+void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
     VuVector4 matrix[4];
     s32 screen[4];
     f32 point[4];

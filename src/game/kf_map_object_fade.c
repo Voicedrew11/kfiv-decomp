@@ -6,7 +6,7 @@ float sqrtf(float);
 void *memset(void *, int, u32);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void func_0010B5D0(ModelPart *);
+void Model_MultiplyChildMatrices(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
 void Matrix_Multiply(void *, void *, void *);
 void Vector_ApplyMatrix(void *, void *, void *);
@@ -90,7 +90,7 @@ void MapObject_RebuildBillboardMatrices(MapObject *object) {
     if (object->model->unk100 & 1) {
         part = object->model->parts;
         for (i = 0; i < part_count; i++) {
-            func_0010B5D0(part);
+            Model_MultiplyChildMatrices(part);
             part++;
         }
     }

@@ -2,15 +2,15 @@
 #include "kf_model.h"
 
 void *memset(void *, int, u32);
-MotionData *func_001086E8(MotionData *, ModelInstance *, int);
-void func_00109100(void *, void *, void *, void *, void *, f32);
-void func_00109178(ModelInstance *);
+MotionData *ModelMotion_Load(MotionData *, ModelInstance *, int);
+void ModelMotion_Hermite(void *, void *, void *, void *, void *, f32);
+void ModelMotion_StepBlend(ModelInstance *);
 float Angle_Wrap(float);
-void func_00108A08(ModelInstance *, int);
+void ModelMotion_Select(ModelInstance *, int);
 void Vector_WeightedSum4(void *, void *, void *, void *, void *, float *);
 
 /* Adds a motion to the model's channel and poses the parts on its first key; returns the end of the motion. */
-MotionData *func_001086E8(MotionData *data, ModelInstance *model, int unused) {
+MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused) {
     MotionData *motion = data;
     ModelChannel *channel;
     int i;
@@ -79,8 +79,8 @@ MotionData *func_001086E8(MotionData *data, ModelInstance *model, int unused) {
 }
 
 /* Gives the model a fresh ModelChannel and loads every motion of the file; returns the end of the file.
-   `mode` is handed on to func_001086E8, which ignores it. */
-MotionData *func_00108940(MotionFile *file, ModelChannel **alloc, ModelInstance *model, int mode) {
+   `mode` is handed on to ModelMotion_Load, which ignores it. */
+MotionData *ModelMotion_LoadFile(MotionFile *file, ModelChannel **alloc, ModelInstance *model, int mode) {
     MotionData *motion = (MotionData *)file;   // match: the cursor is its own variable; the file stays in $4
     u32 i;
 
@@ -91,13 +91,13 @@ MotionData *func_00108940(MotionFile *file, ModelChannel **alloc, ModelInstance 
     memset(MODEL_CHANNEL(model), 0, sizeof(ModelChannel));
     (*alloc)++;
     for (i = 0; i < model->motion_file->motion_count; i++) {
-        motion = func_001086E8(motion, model, mode);
+        motion = ModelMotion_Load(motion, model, mode);
     }
     return motion;
 }
 
 /* Switches the model to one of its loaded motions, at frame 0. */
-void func_00108A08(ModelInstance *model, int index) {
+void ModelMotion_Select(ModelInstance *model, int index) {
     int i;
 
     MODEL_CHANNEL(model)->index = index;
@@ -109,21 +109,21 @@ void func_00108A08(ModelInstance *model, int index) {
 }
 
 /* Whether the model's motion has reached its last frame. */
-int func_00108A78(ModelInstance *model) {
+int ModelMotion_IsAtEnd(ModelInstance *model) {
     ModelChannel *channel = MODEL_CHANNEL(model);
 
     return channel->param >= ((ModelTableHeader *)channel->tables[channel->index] - 1)->unk00;
 }
 
-/* Whether the model's motion is at the given frame. */
-int func_00108AA0(ModelInstance *model, int frame) {
+/* Whether the model's motion stepped onto the given frame on its last step. */
+int ModelMotion_JustReachedFrame(ModelInstance *model, int frame) {
     ModelChannel *channel = MODEL_CHANNEL(model);
 
     return channel->unk8E != 0 && channel->param == frame;
 }
 
 /* Plays one frame of the model's current motion: every part is posed between the two keys around the frame. */
-void func_00108AC8(void *model_arg) {
+void ModelMotion_Step(void *model_arg) {
     ModelInstance *model = model_arg;
     Vector4 *point0 = &MOTION_SCRATCH_POINTS[0];
     Vector4 *point1 = &MOTION_SCRATCH_POINTS[1];
@@ -146,7 +146,7 @@ void func_00108AC8(void *model_arg) {
     if (MODEL_UNK100_BITS(model)->has_motion) {
         channel = MODEL_CHANNEL(model);
         if (channel->value != 0) {
-            func_00109178(model);
+            ModelMotion_StepBlend(model);
             return;
         }
         // match: two steps (the MotionData header is as long as one ModelPartLevels)
@@ -185,7 +185,7 @@ void func_00108AC8(void *model_arg) {
                     tangent0->w = 1.0f;
                     *(MotionVector *)tangent1 = vectors[next->rotation_in];
                     tangent1->w = 1.0f;
-                    func_00109100(&part->unk50, point0, point1, tangent0, tangent1, ratio);
+                    ModelMotion_Hermite(&part->unk50, point0, point1, tangent0, tangent1, ratio);
                     part->unk50 = Angle_Wrap(part->unk50);
                     part->unk54 = Angle_Wrap(part->unk54);
                     part->unk58 = Angle_Wrap(part->unk58);
@@ -194,7 +194,7 @@ void func_00108AC8(void *model_arg) {
                     *(MotionVector *)point1 = vectors[next->position];
                     *(MotionVector *)tangent0 = vectors[key->position_out];
                     *(MotionVector *)tangent1 = vectors[next->position_in];
-                    func_00109100(part->unk40, point0, point1, tangent0, tangent1, ratio);
+                    ModelMotion_Hermite(part->unk40, point0, point1, tangent0, tangent1, ratio);
 
                     part->unk60[0] = vectors[key->scale].x * (1.0f - ratio) + vectors[next->scale].x * ratio;
                     part->unk60[1] = vectors[key->scale].y * (1.0f - ratio) + vectors[next->scale].y * ratio;
@@ -216,15 +216,16 @@ void func_00108AC8(void *model_arg) {
     }
 }
 
-/* Switches the model to a motion and sets its speed. */
-int func_00109098(ModelInstance *model, u8 index, u16 speed) {
-    func_00108A08(model, index);
+/* Switches the model to a motion and blends its pose into the motion's first key over `frames` frames;
+   returns 0. */
+int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed) {
+    ModelMotion_Select(model, index);
     MODEL_CHANNEL(model)->value = speed << 8;
     return 0;
 }
 
 /* The last frame of the model's current motion. */
-u16 func_001090E0(char *model_arg) {
+u16 ModelMotion_GetLastFrame(char *model_arg) {
     ModelInstance *model = (ModelInstance *)model_arg;
     ModelChannel *channel = MODEL_CHANNEL(model);
 
@@ -232,7 +233,7 @@ u16 func_001090E0(char *model_arg) {
 }
 
 /* Hermite interpolation: hands the four basis weights for the ratio to Vector_WeightedSum4. */
-void func_00109100(void *result, void *point0, void *point1, void *tangent0, void *tangent1, f32 ratio) {
+void ModelMotion_Hermite(void *result, void *point0, void *point1, void *tangent0, void *tangent1, f32 ratio) {
     f32 weights[4];
     f32 squared = ratio * ratio;
     f32 cubed = squared * ratio;
@@ -246,7 +247,7 @@ void func_00109100(void *result, void *point0, void *point1, void *tangent0, voi
 
 /* One frame of blending the pose into the first key of the current motion (while ModelChannel.value is not 0):
    every part moves 1/divisor of the way, and value drops by word until it reaches 0. */
-void func_00109178(ModelInstance *model) {
+void ModelMotion_StepBlend(ModelInstance *model) {
     ModelChannel *channel = MODEL_CHANNEL(model);
     MotionData *motion;
     ModelPartLevels *record;
@@ -257,7 +258,7 @@ void func_00109178(ModelInstance *model) {
     f32 unused[4]; // match: the frame has 16 bytes nothing uses
     int i;
 
-    // match: two steps, as in func_00108AC8 (the MotionData header is as long as one ModelPartLevels)
+    // match: two steps, as in ModelMotion_Step (the MotionData header is as long as one ModelPartLevels)
     motion = (MotionData *)channel->tables[channel->index];
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
     record = channel->tables[channel->index];

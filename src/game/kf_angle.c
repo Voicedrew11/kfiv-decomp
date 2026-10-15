@@ -10,7 +10,7 @@ static float Angle_WrapPositive(float radians);
 static int Angle_CountSteps(float from, float target, float step);
 
 /* Cross product of first and second into out (as Vector_Cross). Nothing calls it. */
-void func_0019B620(float *out, float *first, float *second) {
+void Vector_CrossProduct(float *out, float *first, float *second) {
     out[0] = (first[1] * second[2]) - (first[2] * second[1]);
     out[1] = (first[2] * second[0]) - (first[0] * second[2]);
     out[2] = (first[0] * second[1]) - (first[1] * second[0]);

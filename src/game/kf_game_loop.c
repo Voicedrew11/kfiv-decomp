@@ -41,20 +41,20 @@ void Map_LoadAtOnce(int);
 int PlayTime_Start(void);
 void PlayTime_Resume(PlayTime);
 void Game_StartFadeIn(int, int, int, int);
-void func_001095E0(void);
+void Packet_SwapBuffers(void);
 void Display_SwapBuffers(int);
 int Timer_GetTicks(void);
 void Timer_Restart(void);
-void func_001096E8(void);
-void func_0010B000(void);
-void func_00111D58(void);
+void Packet_SendChain(void);
+void DrawList_Clear(void);
+void Wobble_StepOscillators(void);
 void Input_Update(void);
 int Script_UpdateAll(void);
 void GameLoop_UpdateCameraShake(void);
 void Interact_FindTarget(void);
 void MapLoad_Update(void);
 void func_00112BD0(void);
-void func_00123288(void);
+void Entity_UpdatePool(void);
 void MapItem_UpdateFalling(void);
 void Player_UseItem(void);
 void GameLoop_RunSoundLoads(void);
@@ -62,9 +62,9 @@ void Sound_Update(void);
 void Game_StepFade(void);
 void GameLoop_UpdateCamera(void);
 void GameLoop_SetCameraMatrices(int, int);
-void func_0010A7E0(void *);
+void GsDraw_QueueVu1Matrix(void *);
 int GameLoop_DrawFrame(int);
-void func_00109800(void);
+void Packet_WaitForSend(void);
 void MapItem_UpdatePickup(void);
 void Map_RunFreeCamera(void);
 void GameLoop_OpenRequestedMenu(void);
@@ -75,24 +75,24 @@ void Sound_SetBgmVolume(int);
 void Sound_SetBankVolumes(int);
 int sceGsSyncV(int);
 int Sound_BgmLoadCanYield(void);
-void func_00102558(void);
-void func_001112B0(void);
+void File_CloseAll(void);
+void Wobble_AdvanceSines(void);
 void func_001095D0(void);
-void func_0010A008(void);
-void func_0010AE58(void);
+void GsDraw_ResetDrawTarget(void);
+void ModelTexture_ResetSlots(void);
 void Map_DrawRecords(int);
 void MapItem_DrawAll(int);
 void Map_DrawLateRecords(int);
-void func_0010B140(u32, u32);
-void func_00109EB8(void);
+void DrawList_Draw(u32, u32);
+void GsDraw_EnableDepthTest(void);
 void MapItem_DrawPicked(int);
 void Map_CoverScreenWithMapTint(void);
-void func_0010A698(void);
+void GsDraw_ClearDepth(void);
 void Entity_DrawPoolModels(void);
 void Map_SetOffscreenTarget(void);
-void func_0010A5D8(void);
-void func_00109E88(void);
-void func_0010A040(int);
+void GsDraw_ClearFrame(void);
+void GsDraw_QueueTexFlush(void);
+void GsDraw_CopyFrame(int);
 void Game_DrawWobblingScreen(int, int, int, int, float);
 void Player_DrawScreenFade(void);
 void Game_DrawHazeLayers(void);
@@ -101,7 +101,7 @@ void Game_BlendScreenOffsetDown(void);
 void Game_BlendScreenOffsetUpDown(void);
 void Game_BlendPreviousFrame(int);
 void Game_ShiftScreenByViewTurn(void);
-void func_0010A4E8(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, int);
 void Game_TintScreen(int, int, int);
 void Game_DrawFade(void);
 void Game_ApplyBrightness(int);
@@ -131,8 +131,8 @@ int Sound_LoadEntityBankStep(int, int, int);
 int Sound_LoadBgm(int, int);
 void MapLoad_RequestHold(void);
 int MapLoad_IsHeld(void);
-int func_00102230(void);
-void func_00102228(void);
+int File_IsLocked(void);
+void File_Unlock(void);
 void GameLoop_DrawFrameWithoutHud(void);
 void Trade_Run(s32);
 void Smith_Run(void);
@@ -141,14 +141,14 @@ void MapViewer_OpenForItem(int);
 void GameLoop_ShowGrabbedFrame(int);
 void GameLoop_RedrawFrame(void);
 void MapViewer_Run(void);
-void func_00102218(void);
+void File_Lock(void);
 void MapLoad_Release(void);
 void GameLoop_ClearBothBuffers(void);
 void *memset(void *, int, u32);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_0010A100(void *);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueTexturedSprite(void *);
 void PlayTime_Update(void);
 void Input_PauseRumble(void);
 void Input_ResumeRumble(void);
@@ -238,8 +238,8 @@ void GameLoop_Run(int arg) {
         Game_StartFadeIn(0, 0, 0, 0x1E);
     }
     map_load_state.flags.raw |= 1;
-    func_001095E0();
-    func_001095E0();
+    Packet_SwapBuffers();
+    Packet_SwapBuffers();
     while (!game_status.bit9) {
         if (!(game_status.bit12 && game_status.bit13)) {
             Display_SwapBuffers(1);
@@ -248,11 +248,11 @@ void GameLoop_Run(int arg) {
         Timer_GetTicks();
         Timer_Restart();
         if (!(game_status.bit12 && game_status.bit13)) {
-            func_001096E8();
+            Packet_SendChain();
             Timer_GetTicks();
-            func_001095E0();
-            func_0010B000();
-            func_00111D58();
+            Packet_SwapBuffers();
+            DrawList_Clear();
+            Wobble_StepOscillators();
             Input_Update();
         }
         if (game_status.bit12 && !game_status.bit13) {
@@ -272,7 +272,7 @@ void GameLoop_Run(int arg) {
         Player_UpdateArmModels();
         func_00112BD0();
         MapObject_UpdateAll();
-        func_00123288();
+        Entity_UpdatePool();
         Entity_UpdateAll();
         MapItem_UpdateFalling();
         Gold_Update();
@@ -290,11 +290,11 @@ void GameLoop_Run(int arg) {
         ItemEffect_Update();
         GameLoop_UpdateCamera();
         GameLoop_SetCameraMatrices(0, 0);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         WeaponTrail_Update();
         if (!(game_status.bit12 && game_status.bit13)) {
             GameLoop_DrawFrame(1);
-            func_00109800();
+            Packet_WaitForSend();
         }
         MapItem_UpdatePickup();
         Map_RunFreeCamera();
@@ -324,9 +324,9 @@ void GameLoop_Run(int arg) {
     }
     game_options[1] = saved;
     game_status.bit9 = FALSE;
-    func_00102558();
-    func_001095E0();
-    func_00109800();
+    File_CloseAll();
+    Packet_SwapBuffers();
+    Packet_WaitForSend();
 }
 
 /* Draws one frame of the game: the world (once, or with a second view first for the modes 1 and 2), the screen
@@ -338,14 +338,14 @@ int GameLoop_DrawFrame(int arg) {
     int green;
     int blue;
 
-    func_001112B0();
+    Wobble_AdvanceSines();
     func_001095D0();
-    func_0010A008();
+    GsDraw_ResetDrawTarget();
     switch (map_draw_state.mode) {
     case 0:
         GameLoop_SetCameraMatrices(0, 0);
-        func_0010A7E0(D_004323E0);
-        func_0010AE58();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        ModelTexture_ResetSlots();
         Map_DrawRecords(0);
         MapObject_DrawAll(0, 0, 0);
         Entity_DrawPoolModels();
@@ -353,41 +353,41 @@ int GameLoop_DrawFrame(int arg) {
         MapItem_DrawAll(0);
         ItemEffect_Draw();
         Gold_Draw(0);
-        func_0010AE58();
+        ModelTexture_ResetSlots();
         Map_DrawLateRecords(0);
         Effect_DrawAll(0);
-        func_0010B140(0, 0);
+        DrawList_Draw(0, 0);
         GameLoop_SetCameraMatrices(0, 2);
-        func_0010A7E0(D_004323E0);
-        func_0010B140(1, 0);
-        func_0010B140(2, 0);
-        func_00109EB8();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        DrawList_Draw(1, 0);
+        DrawList_Draw(2, 0);
+        GsDraw_EnableDepthTest();
         GameLoop_SetCameraMatrices(0, 0);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         MapItem_DrawPicked(0);
         break;
     case 1:
         GameLoop_SetCameraMatrices(0, 1);
-        func_0010A7E0(D_004323E0);
-        func_0010AE58();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        ModelTexture_ResetSlots();
         Map_DrawRecords(1);
         MapObject_DrawAll(1, 0, 0);
         Entity_DrawAll(1);
         MapItem_DrawAll(1);
         Gold_Draw(1);
         Map_DrawLateRecords(1);
-        func_0010AE58();
+        ModelTexture_ResetSlots();
         Effect_DrawAll(1);
-        func_0010B140(0, 1);
-        func_00109EB8();
+        DrawList_Draw(0, 1);
+        GsDraw_EnableDepthTest();
         GameLoop_SetCameraMatrices(0, 1);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         MapItem_DrawPicked(1);
         Map_CoverScreenWithMapTint();
-        func_0010A698();
+        GsDraw_ClearDepth();
         GameLoop_SetCameraMatrices(0, 0);
-        func_0010A7E0(D_004323E0);
-        func_0010AE58();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        ModelTexture_ResetSlots();
         Map_DrawRecords(0);
         MapObject_DrawAll(0, 0, 0);
         Entity_DrawPoolModels();
@@ -395,69 +395,69 @@ int GameLoop_DrawFrame(int arg) {
         MapItem_DrawAll(0);
         ItemEffect_Draw();
         Gold_Draw(0);
-        func_0010AE58();
+        ModelTexture_ResetSlots();
         Map_DrawLateRecords(0);
         Effect_DrawAll(0);
-        func_0010B140(0, 0);
+        DrawList_Draw(0, 0);
         GameLoop_SetCameraMatrices(0, 2);
-        func_0010A7E0(D_004323E0);
-        func_0010B140(1, 0);
-        func_0010B140(2, 0);
-        func_00109EB8();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        DrawList_Draw(1, 0);
+        DrawList_Draw(2, 0);
+        GsDraw_EnableDepthTest();
         GameLoop_SetCameraMatrices(0, 0);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         MapItem_DrawPicked(0);
         break;
     case 2:
         Map_SetOffscreenTarget();
-        func_0010A5D8();
+        GsDraw_ClearFrame();
         GameLoop_SetCameraMatrices(1, 1);
-        func_0010A7E0(D_004323E0);
-        func_0010AE58();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        ModelTexture_ResetSlots();
         Map_DrawRecords(2);
         MapObject_DrawAll(1, 0, 0);
         Entity_DrawAll(1);
         MapItem_DrawAll(1);
         ItemEffect_Draw();
         Gold_Draw(1);
-        func_0010AE58();
+        ModelTexture_ResetSlots();
         Map_DrawLateRecords(2);
         Effect_DrawAll(1);
-        func_0010B140(0, 1);
-        func_00109EB8();
+        DrawList_Draw(0, 1);
+        GsDraw_EnableDepthTest();
         GameLoop_SetCameraMatrices(1, 1);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         MapItem_DrawPicked(1);
-        func_0010A008();
-        func_00109E88();
-        func_0010A698();
+        GsDraw_ResetDrawTarget();
+        GsDraw_QueueTexFlush();
+        GsDraw_ClearDepth();
         GameLoop_SetCameraMatrices(0, 0);
-        func_0010A7E0(D_004323E0);
-        func_0010AE58();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        ModelTexture_ResetSlots();
         Map_DrawRecords(0);
         MapObject_DrawAll(0, 0, 0);
         Entity_DrawPoolModels();
         Entity_DrawAll(0);
         MapItem_DrawAll(0);
         Gold_Draw(0);
-        func_0010AE58();
+        ModelTexture_ResetSlots();
         Map_DrawLateRecords(0);
         Effect_DrawAll(0);
-        func_0010B140(0, 0);
+        DrawList_Draw(0, 0);
         GameLoop_SetCameraMatrices(0, 2);
-        func_0010A7E0(D_004323E0);
-        func_0010B140(1, 0);
-        func_0010B140(2, 0);
-        func_00109EB8();
+        GsDraw_QueueVu1Matrix(D_004323E0);
+        DrawList_Draw(1, 0);
+        DrawList_Draw(2, 0);
+        GsDraw_EnableDepthTest();
         GameLoop_SetCameraMatrices(0, 0);
-        func_0010A7E0(D_004323E0);
+        GsDraw_QueueVu1Matrix(D_004323E0);
         MapItem_DrawPicked(0);
         break;
     }
     GameLoop_SetCameraMatrices(0, 0);
-    func_0010A7E0(D_004323E0);
+    GsDraw_QueueVu1Matrix(D_004323E0);
     if ((s32)(player_state.unk1C8 >> 39) & 1) {
-        func_0010A040(0x2BC0);
+        GsDraw_CopyFrame(0x2BC0);
         tinted = TRUE;
         Game_DrawWobblingScreen(0x80, 0x80, 0x80, 0x80, 1.0f);
     }
@@ -466,7 +466,7 @@ int GameLoop_DrawFrame(int arg) {
         red = (int)(tint * -58.0f + 128.0f);
         green = (int)(tint * -78.0f + 128.0f);
         blue = (int)(tint * 12.0f + 128.0f);
-        func_0010A040(0x2BC0);
+        GsDraw_CopyFrame(0x2BC0);
         tinted = TRUE;
         Game_DrawWobblingScreen(red, green, blue, 0x80, tint);
     }
@@ -492,16 +492,16 @@ int GameLoop_DrawFrame(int arg) {
     if (arg != 0 && map_draw_state.bit45) {
         Game_ShiftScreenByViewTurn();
     }
-    func_0010A698();
+    GsDraw_ClearDepth();
     if (tinted) {
         Effect_UploadTextures();
     }
-    func_0010B140(3, 0);
+    DrawList_Draw(3, 0);
     Player_DrawArm();
     Player_DrawScreenTints();
     if ((s32)(player_state.unk1C8 >> 39) & 1) {
         if (map_slots[D_00446770].tag == 0x23 && D_00349F56[0] == 0) {
-            func_0010A4E8(0x40, 0x80, 0x40, 0x78, 0x44);
+            GsDraw_FillScreen(0x40, 0x80, 0x40, 0x78, 0x44);
         } else {
             Game_TintScreen(0x5E, 0x87, 0x92);
         }
@@ -509,7 +509,7 @@ int GameLoop_DrawFrame(int arg) {
     Hud_Draw();
     if (map_draw_state.unk78 > 0) {
         // match: the last argument is passed as the 64-bit word
-        ((void (*)(int, int, int, int, s64))func_0010A4E8)(map_draw_state.unk6C, map_draw_state.unk70, map_draw_state.unk74,
+        ((void (*)(int, int, int, int, s64))GsDraw_FillScreen)(map_draw_state.unk6C, map_draw_state.unk70, map_draw_state.unk74,
                                                              map_draw_state.unk78, map_draw_state.unk80);
     }
     Game_DrawFade();
@@ -528,11 +528,11 @@ int GameLoop_DrawFrame(int arg) {
         }
     }
     if (D_00446708 != 0) {
-        func_0010A4E8(0, 0, 0, D_00446708, 0x44);
+        GsDraw_FillScreen(0, 0, 0, D_00446708, 0x44);
     }
     Message_Update();
     if (game_status.paused) {
-        func_0010A4E8(0, 0, 0, 0x40, 0x44);
+        GsDraw_FillScreen(0, 0, 0, 0x40, 0x44);
         Hud_DrawPaused();
     }
     Game_ApplyBrightness(game_options[10]);
@@ -793,11 +793,11 @@ void GameLoop_OpenRequestedMenu(void) {
         if (MapLoad_IsHeld() == 0) {
             return;
         }
-        load_held = func_00102230();
+        load_held = File_IsLocked();
         if (load_held) {
-            func_00102228();
+            File_Unlock();
         }
-    } else if (func_00102230() != 0) {
+    } else if (File_IsLocked() != 0) {
         return;
     }
     Input_StopRumble();
@@ -813,8 +813,8 @@ void GameLoop_OpenRequestedMenu(void) {
         game_status.bit3 = FALSE;
         menu_ran = TRUE;
         Trade_Run(game_status.unk2C);
-        func_001095E0();
-        func_001095E0();
+        Packet_SwapBuffers();
+        Packet_SwapBuffers();
     } else if (game_status.bit4) {
         if (!faded_out) {
             faded_out = TRUE;
@@ -823,8 +823,8 @@ void GameLoop_OpenRequestedMenu(void) {
         game_status.bit4 = FALSE;
         menu_ran = TRUE;
         Smith_Run();
-        func_001095E0();
-        func_001095E0();
+        Packet_SwapBuffers();
+        Packet_SwapBuffers();
     } else if (game_status.save_requested && game_status.unk00 != 0) {
         if (!faded_out) {
             faded_out = TRUE;
@@ -832,8 +832,8 @@ void GameLoop_OpenRequestedMenu(void) {
         }
         game_status.save_requested = FALSE;
         SaveScreen_Run();
-        func_001095E0();
-        func_001095E0();
+        Packet_SwapBuffers();
+        Packet_SwapBuffers();
     } else if (game_status.bit2 && game_status.unk00 != 0) {
         if (!faded_out) {
             faded_out = TRUE;
@@ -844,8 +844,8 @@ void GameLoop_OpenRequestedMenu(void) {
         game_status.unk28 = 0;
         menu_ran = TRUE;
         Menu_Run(0);
-        func_001095E0();
-        func_001095E0();
+        Packet_SwapBuffers();
+        Packet_SwapBuffers();
     }
     if (menu_ran) {
         Player_LoadArmModels();
@@ -892,7 +892,7 @@ void GameLoop_OpenRequestedMenu(void) {
     }
     if (map_load_state.step != 0) {
         if (load_held) {
-            func_00102218();
+            File_Lock();
         }
         MapLoad_Release();
     }
@@ -907,14 +907,14 @@ void GameLoop_OpenRequestedMenu(void) {
 
 /* Draws a game frame and shows it, then shows the next buffer too. */
 void GameLoop_RedrawFrame(void) {
-    func_001095E0();
-    func_001095E0();
-    func_0010B000();
+    Packet_SwapBuffers();
+    Packet_SwapBuffers();
+    DrawList_Clear();
     GameLoop_DrawFrame(0);
-    func_00109800();
+    Packet_WaitForSend();
     Display_SwapBuffers(0);
-    func_001096E8();
-    func_00109800();
+    Packet_SendChain();
+    Packet_WaitForSend();
     Display_SwapBuffers(0);
 }
 
@@ -922,17 +922,17 @@ void GameLoop_RedrawFrame(void) {
 void GameLoop_DrawFrameWithoutHud(void) {
     int saved_unk68;
 
-    func_001095E0();
-    func_001095E0();
-    func_0010B000();
+    Packet_SwapBuffers();
+    Packet_SwapBuffers();
+    DrawList_Clear();
     saved_unk68 = map_draw_state.unk68;
     map_draw_state.unk68 = 0;
     GameLoop_DrawFrame(0);
     map_draw_state.unk68 = saved_unk68;
-    func_00109800();
+    Packet_WaitForSend();
     Display_SwapBuffers(0);
-    func_001096E8();
-    func_00109800();
+    Packet_SendChain();
+    Packet_WaitForSend();
 }
 
 /* Draws the grabbed frame (texture page 0x3240, the menus' backdrop) over the whole screen into both frame
@@ -965,27 +965,27 @@ void GameLoop_ShowGrabbedFrame(int divisor) {
     sprite.vertex[0].tex_s = 0;
     sprite.vertex[0].tex_t = 0;
     for (pass = 0; pass < 2; pass++) {
-        func_001095E0();
-        func_0010B000();
+        Packet_SwapBuffers();
+        DrawList_Clear();
         func_001095D0();
         D_00446F78 = pass;
         D_00446F7C = pass;
-        func_0010A008();
-        func_00109A50();
-        func_00109A80(0x47, 0x31001);
-        func_00109A80(0x42, 0x44);
-        func_00109A80(8, 5);
-        func_00109AD0();
-        func_0010A100(&sprite);
-        func_00109A50();
-        func_00109A80(8, 0);
-        func_00109AD0();
+        GsDraw_ResetDrawTarget();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(0x47, 0x31001);
+        Packet_AddGsRegister(0x42, 0x44);
+        Packet_AddGsRegister(8, 5);
+        Packet_EndGsRegisters();
+        GsDraw_QueueTexturedSprite(&sprite);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(8, 0);
+        Packet_EndGsRegisters();
         func_001095D8();
         if (pass == 0) {
             D_00446F78 = 1;
             D_00446F7C = 1;
-            func_001096E8();
-            func_00109800();
+            Packet_SendChain();
+            Packet_WaitForSend();
             Display_SwapBuffers(0);
         }
     }
@@ -996,19 +996,19 @@ void GameLoop_ClearBothBuffers(void) {
     int pass;
 
     for (pass = 0; pass < 2; pass++) {
-        func_001095E0();
-        func_0010B000();
+        Packet_SwapBuffers();
+        DrawList_Clear();
         func_001095D0();
         D_00446F78 = pass;
         D_00446F7C = pass;
-        func_0010A008();
-        func_0010A4E8(0, 0, 0, 0x80, 0x44);
+        GsDraw_ResetDrawTarget();
+        GsDraw_FillScreen(0, 0, 0, 0x80, 0x44);
         func_001095D8();
         if (pass == 0) {
             D_00446F78 = 1;
             D_00446F7C = 1;
-            func_001096E8();
-            func_00109800();
+            Packet_SendChain();
+            Packet_WaitForSend();
             Display_SwapBuffers(0);
         }
     }
@@ -1023,19 +1023,19 @@ void GameLoop_UpdatePause(void) {
         game_status.paused = TRUE;
         play_time = D_00446A28;
         Display_SwapBuffers(0);
-        func_001096E8();
-        func_001095E0();
-        func_0010B000();
-        func_00111D58();
+        Packet_SendChain();
+        Packet_SwapBuffers();
+        DrawList_Clear();
+        Wobble_StepOscillators();
         GameLoop_DrawFrame(0);
-        func_00109800();
+        Packet_WaitForSend();
         Display_SwapBuffers(0);
-        func_001096E8();
-        func_001095E0();
-        func_0010B000();
-        func_00111D58();
+        Packet_SendChain();
+        Packet_SwapBuffers();
+        DrawList_Clear();
+        Wobble_StepOscillators();
         GameLoop_DrawFrame(0);
-        func_00109800();
+        Packet_WaitForSend();
         Display_SwapBuffers(0);
         Input_PauseRumble();
         do {
@@ -1045,12 +1045,12 @@ void GameLoop_UpdatePause(void) {
         } while (!(pad_state[1] & D_00446946));
         Input_ResumeRumble();
         game_status.paused = FALSE;
-        func_001096E8();
-        func_001095E0();
-        func_0010B000();
-        func_00111D58();
+        Packet_SendChain();
+        Packet_SwapBuffers();
+        DrawList_Clear();
+        Wobble_StepOscillators();
         GameLoop_DrawFrame(0);
-        func_00109800();
+        Packet_WaitForSend();
         PlayTime_Resume(play_time);
     }
 }

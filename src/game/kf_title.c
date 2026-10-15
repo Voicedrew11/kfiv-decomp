@@ -143,9 +143,9 @@ void Title_LoadTexture(char *name, int index) {
     int file;
     int size;
 
-    file = func_00102238(name, 0, 1);
-    size = func_001025C0(file, texture_cursor, -1);
-    func_001024B0(file);
+    file = File_Open(name, 0, 1);
+    size = File_Read(file, texture_cursor, -1);
+    File_Close(file);
     title_textures[index].file = texture_cursor;
     title_textures[index].tex0 = *(BootTex0 *)&texture_cursor->tex0;
     texture_cursor = (TextureHeader *)((char *)texture_cursor + size);

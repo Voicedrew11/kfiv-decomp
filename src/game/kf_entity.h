@@ -260,7 +260,7 @@ typedef struct {
 /* one launch of a record at EntityParams+0x3D8 */
 typedef struct {
     u8 unk00;                       /* 0x00 passed to Attack_LaunchMagicEffect */
-    u8 unk01;                       /* 0x01 passed to func_0010CAB8; 0xFF: use the model's direction */
+    u8 unk01;                       /* 0x01 passed to Model_GetSkinnedBonePoint; 0xFF: use the model's direction */
     u16 unk02;                      /* 0x02 animation frame it happens on, 0: unused */
 } EntityParamsUnk3D8Launch;
 
@@ -350,7 +350,7 @@ typedef struct {
     u8 unk60[0x20];                 /* 0x60 byte table */
     u16 unk80[0x22];                /* 0x80 indexed by Entity.unkD1 */
     u8 unkC4;                       /* 0xC4 */
-    u8 unkC5;                       /* 0xC5 bone index for func_0010CAB8 (EntityEvent_Respawn) */
+    u8 unkC5;                       /* 0xC5 bone index for Model_GetSkinnedBonePoint (EntityEvent_Respawn) */
     u16 unkC6;                      /* 0xC6 */
     u8 unkC8;                       /* 0xC8 */
     u8 unkC9;                       /* 0xC9 */
@@ -413,7 +413,7 @@ typedef struct {
 typedef struct {
     u16 unk00;                      /* 0x00 passed to Effect_StartSpawner */
     u16 unk02;                      /* 0x02 the animation frame */
-    u8 unk04;                       /* 0x04 passed to func_0010CAB8 (and the one after it) */
+    u8 unk04;                       /* 0x04 passed to Model_GetSkinnedBonePoint (and the one after it) */
     s8 unk05;                       /* 0x05 not 0: EntityParams.unk440 picks what to start */
 } EntityParamsUnk130;
 
@@ -1095,11 +1095,11 @@ typedef struct {
    offsets from the start of the block to its parts */
 typedef struct {
     char pad00[0x04];
-    char *model_offset;             /* 0x04 handed to func_0010B758 with the entity's model. The two are
-                                       pointer typed: only then does func_00123918 load them after base_address */
-    char *motion_offset;            /* 0x08 handed to func_00108940 */
+    char *model_offset;             /* 0x04 handed to Model_SetUpSkinned with the entity's model. The two are
+                                       pointer typed: only then does Entity_TryActivate load them after base_address */
+    char *motion_offset;            /* 0x08 handed to ModelMotion_LoadFile */
     s32 unk0C;                      /* 0x0C becomes ModelInstance.unk194 */
-    s32 pool_model_offset;          /* 0x10 the slot's own model (func_00124B00), 0: none */
+    s32 pool_model_offset;          /* 0x10 the slot's own model (EntityPool_BuildBlockModel), 0: none */
 } EntityPoolData;
 
 /* a node of the linked_point_pool pool (0x200 of them, chained through prev/next): a point
@@ -1144,7 +1144,7 @@ typedef struct {
 
 extern Entity *D_004467E0;          /* entity list head */
 
-float func_00124DE0(Entity *entity);    /* distance to the player */
+float Entity_SpawnDistanceToPlayer(Entity *entity);    /* distance to the player */
 
 /* what ladder_object refers to: a record with a kind id at 0x30 (Ladder_PlayStepSound) */
 typedef struct {

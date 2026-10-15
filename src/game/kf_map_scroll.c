@@ -6,16 +6,16 @@
 extern MapSlot map_slots[];
 extern u32 D_00446ED4;
 
-void func_00109650(u32 *, u32 *);
-u32 *func_00109990(int);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_00109E18(void);
-void func_00109E88(void);
-void func_00109F80(s64, s64, s64);
-void func_0010A008(void);
-void func_0010A100(void *);
+void Packet_AppendToChain(u32 *, u32 *);
+u32 *Packet_Alloc(int);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueFlush(void);
+void GsDraw_QueueTexFlush(void);
+void GsDraw_SetDrawTarget(s64, s64, s64);
+void GsDraw_ResetDrawTarget(void);
+void GsDraw_QueueTexturedSprite(void *);
 
 static MapSlotPair map_scroll_copy_pairs[2][16]; /* 0x471F60 */
 static MapSlotPair map_scroll_draw_pairs[2][16];  /* 0x471FE0 */
@@ -105,7 +105,7 @@ void MapScroll_UpdateCopy(int map, int mode) {
                     }
                     spare_base = 0x3C40;
                     x_is_last = shift_y == 0;
-                    packet_start = packet = func_00109990(count + 3);
+                    packet_start = packet = Packet_Alloc(count + 3);
                     *packet++ = count | 0x10000001;
                     *packet++ = 0;
                     *packet++ = 0;
@@ -144,7 +144,7 @@ void MapScroll_UpdateCopy(int map, int mode) {
                         packet = MapScroll_AppendBitblt(packet, TRUE, format, buffer_width, width, -shift_y, spare_base,
                                                           0, 0, base, 0, height + shift_y);
                     }
-                    func_00109650(packet_start, packet);
+                    Packet_AppendToChain(packet_start, packet);
                 }
             }
         }
@@ -226,20 +226,20 @@ void MapScroll_UpdateDraw(int map, int mode) {
                 for (height_log = 0, size = texture->height; size >= 2; size >>= 1) {
                     height_log++;
                 }
-                func_00109F80(((s64)texture->target_base >> 5) | (((s64)texture->target_width / 64) << 16) |
+                GsDraw_SetDrawTarget(((s64)texture->target_base >> 5) | (((s64)texture->target_width / 64) << 16) |
                                   ((s64)texture->target_format << 24),
                               ((s64)(texture->target_width - 1) << 16) | ((s64)(texture->target_height - 1) << 48),
                               ((s64)(0x800 - (texture->target_width >> 1)) << 4) |
                                   ((s64)(0x800 - (texture->target_height >> 1)) << 36));
-                func_00109A50();
+                Packet_BeginGsRegisters();
                 // match: A is read from the byte, the others from the word
-                func_00109A80(GS_REG_ALPHA_1,
+                Packet_AddGsRegister(GS_REG_ALPHA_1,
                               (s64)(texture->blend & 3) | ((s64)MAP_SCROLL_BLEND_BITS(texture)->b << 2) |
                                   ((s64)MAP_SCROLL_BLEND_BITS(texture)->c << 4) |
                                   ((s64)MAP_SCROLL_BLEND_BITS(texture)->d << 6) | ((s64)texture->blend_fix << 32));
-                func_00109A80(GS_REG_TEST_1, 0x51001);
-                func_00109AD0();
-                func_00109E18();
+                Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
+                Packet_EndGsRegisters();
+                GsDraw_QueueFlush();
                 quad.tag = (s64)texture->base | ((s64)texture->width >> 6 << 14) | ((s64)texture->format << 20) |
                            ((s64)width_log << 26) | ((s64)height_log << 30) | (1L << 34) |
                            ((s64)texture->clut_base << 37) | ((s64)texture->clut_format << 51) | (4L << 61);
@@ -262,13 +262,13 @@ void MapScroll_UpdateDraw(int map, int mode) {
                 quad.first_v += pair->unk02;
                 quad.second_u += pair->unk00;
                 quad.second_v += pair->unk02;
-                func_0010A100(&quad);
-                func_00109E18();
-                func_00109E88();
+                GsDraw_QueueTexturedSprite(&quad);
+                GsDraw_QueueFlush();
+                GsDraw_QueueTexFlush();
             }
         }
-        func_00109E88();
-        func_0010A008();
+        GsDraw_QueueTexFlush();
+        GsDraw_ResetDrawTarget();
     }
 }
 

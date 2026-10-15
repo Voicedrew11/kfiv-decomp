@@ -24,7 +24,7 @@ int Angle_EaseToward(float target, float *angle, int frames);
 float Angle_Wrap(float angle);
 MapRecordBounds *Map_GetRecordById(int map, int prop_id);
 void Map_OffsetRecord(MapRecordBounds *record, f32 *offset);
-void func_0010E8E0(ModelInstance *model, int red, int green, int blue, int alpha);
+void Model_SetVertexColour(ModelInstance *model, int red, int green, int blue, int alpha);
 void Player_FlashDamage(void);
 int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void MapChange_StartToMap(int map_tag);
@@ -831,13 +831,13 @@ void ScriptCmd_ShakeCamera(ScriptCameraShakeCommand *command) {
     command->active = 0;
 }
 
-/* Command 147: colours every vertex of the prop `target_id` (func_0010E8E0), then finishes. */
+/* Command 147: colours every vertex of the prop `target_id` (Model_SetVertexColour), then finishes. */
 void ScriptCmd_SetPropColor(ScriptObjectValuesCommand *command) {
     MapRecordBounds *prop;
 
     prop = Map_GetRecordById(D_00446770, command->target_id.value);
     if (prop != NULL) {
-        func_0010E8E0(prop->model, command->values[0].value, command->values[1].value, command->values[2].value,
+        Model_SetVertexColour(prop->model, command->values[0].value, command->values[1].value, command->values[2].value,
                       command->values[3].value);
     }
     command->active = 0;
@@ -1307,7 +1307,7 @@ void ScriptCmd_SetHudShown(ScriptValueCommand *command) {
     command->active = 0;
 }
 
-/* Command 197: sets the colour and alpha the screen is covered with (func_0010A4E8), then finishes. The
+/* Command 197: sets the colour and alpha the screen is covered with (GsDraw_FillScreen), then finishes. The
    blend mode is meant to come from `blend`, but the switch has no breaks and it always ends as 0x44. */
 void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command) {
     MapDrawStateOverlays *overlays = &map_draw_state;

@@ -1,4 +1,4 @@
-/* GS registers, as passed to func_00109A80 (set a GS register). */
+/* GS registers, as passed to Packet_AddGsRegister (set a GS register). */
 #ifndef KF_GS_H
 #define KF_GS_H
 
@@ -186,7 +186,7 @@ typedef struct {
     int texel_y;                    /* 0x0C */
 } GsSpriteCorner;
 
-/* a GIF packet drawing one sprite, sent by func_0010A100 */
+/* a GIF packet drawing one sprite, sent by GsDraw_QueueTexturedSprite */
 typedef struct {
     u64 tex0;                       /* 0x00 the TEX0 register */
     u64 unk08;                      /* 0x08 */

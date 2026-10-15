@@ -17,11 +17,11 @@ void Player_TakeDamageNoRumble(int);
 int Player_LoseHp(int);
 void Player_FlashDamage(void);
 MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
-int func_00109098(ModelInstance *model, u8 index, u16 speed);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_0010A4E8(int, int, int, int, int);
+int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_FillScreen(int, int, int, int, int);
 int Sound_PlaySw(int); // match: an int return (the definition is void) keeps $2 busy in Player_BounceWeapon
 int Sound_PlayCommon(int);
 
@@ -399,18 +399,18 @@ void Player_UpdateScreenFade(void) {
 /* Fades the screen toward white (player_state.unk2A8 > 0) or black (< 0) by that amount. */
 void Player_DrawScreenFade(void) {
     if (player_state.unk2A8 != 0.0f) {
-        func_00109A50();
-        func_00109A80(GS_REG_TEST_1, 0x30000);
-        func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-        func_00109AD0();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+        Packet_EndGsRegisters();
         if (player_state.unk2A8 > 0.0f) {
-            func_0010A4E8(0xFF, 0xFF, 0xFF, (int)player_state.unk2A8, 0x48);
+            GsDraw_FillScreen(0xFF, 0xFF, 0xFF, (int)player_state.unk2A8, 0x48);
         } else if (player_state.unk2A8 < 0.0f) {
-            func_0010A4E8(0, 0, 0, (int)-player_state.unk2A8, 0x44);
+            GsDraw_FillScreen(0, 0, 0, (int)-player_state.unk2A8, 0x44);
         }
-        func_00109A50();
-        func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
-        func_00109AD0();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
+        Packet_EndGsRegisters();
     }
 }
 
@@ -521,7 +521,7 @@ void Player_BounceWeapon(void) {
         Sound_StopVoice(2);
         Sound_PlaySw(1);
         player_state.unk261 = 1;
-        func_00109098((ModelInstance *)D_00446978, 0, D_00446978->settings->unk82);
+        ModelMotion_BlendInto((ModelInstance *)D_00446978, 0, D_00446978->settings->unk82);
     }
 }
 
@@ -533,7 +533,7 @@ void Player_BounceWeaponQuietly(void) {
         Sound_StopVoice(2);
         display = D_00446978;
         player_state.unk261 = 1;
-        func_00109098((ModelInstance *)display, 0, display->settings->unk82);
+        ModelMotion_BlendInto((ModelInstance *)display, 0, display->settings->unk82);
     }
 }
 

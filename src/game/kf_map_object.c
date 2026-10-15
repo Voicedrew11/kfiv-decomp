@@ -24,15 +24,15 @@ int Game_GetTriggerItem(int, int);
 void Game_SetObjectActive(int, int, int);
 void Game_SetObjectState(int, int, int);
 void Game_SetObjectFlag(int, int, u32, int);
-void func_00108A08(ModelInstance *, int);
-void func_00108AC8(void *);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_00109EB8(void);
-void func_0010AEB8(void *);
-void func_0010B018(ModelInstance *, s32, s32);
-void func_0010E010(ModelInstance *);
+void ModelMotion_Select(ModelInstance *, int);
+void ModelMotion_Step(void *);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void GsDraw_EnableDepthTest(void);
+void ModelTexture_SendForModel(void *);
+void DrawList_Add(ModelInstance *, s32, s32);
+void Model_DrawPosedWithAlpha(ModelInstance *);
 MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
 int Map_TestFlagBlockBit(int, int, int, int);
 void MapObject_DrawModel(int *);
@@ -146,7 +146,7 @@ void MapObject_InitMap(int map) {
         switch (object->unk04->bit8) {
             case 0:
                 object->model->draw = (void (*)(ModelInstance *))MapObject_DrawModel;
-                object->model->unk1A8 = func_0010E010;
+                object->model->unk1A8 = Model_DrawPosedWithAlpha;
                 break;
             case 1:
                 object->model->draw = MapObject_DrawModelWithAlpha;
@@ -507,12 +507,12 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
     Vector_Scale(scaled, &map_object_glow_colors[3].x, blend);
     Vector_Scale(&glow_lights_shared.unk40[3].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[3].x, rest);
     Vector_Add(&glow_lights_shared.unk40[3], &glow_lights_shared.unk40[3], scaled);
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_ALPHA_2, 9);
-    func_00109A80(GS_REG_TEST_1, 0x5000D);
-    func_00109A80(GS_REG_TEST_2, 0x5000D);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_ALPHA_2, 9);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
+    Packet_AddGsRegister(GS_REG_TEST_2, 0x5000D);
+    Packet_EndGsRegisters();
     for (map = 0; map < 2; map++) {
         if (only_one != 0 && which != map) {
             continue;
@@ -565,9 +565,9 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
             }
             if ((object->unk08->unk38.flags & 0x1000000000000L) || (object->model->alpha < 128.0f && !(object->unk04->unk68 & 0x10000))) {
-                func_0010B018(object->model, 0, mode);
+                DrawList_Add(object->model, 0, mode);
             } else {
-                func_0010AEB8(object->model);
+                ModelTexture_SendForModel(object->model);
                 object->model->unk1A8(object->model);
             }
         }
@@ -626,14 +626,14 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
             }
             if ((object->unk08->unk38.flags & 0x1000000000000L) || (object->model->unk145 != 0 && (s16)object->model->unk146 < 0x80 && !(object->unk04->unk68 & 0x10000))) {
-                func_0010B018(object->model, 0, mode);
+                DrawList_Add(object->model, 0, mode);
             } else {
-                func_0010AEB8(object->model);
+                ModelTexture_SendForModel(object->model);
                 object->model->unk1A8(object->model);
             }
         }
     }
-    func_00109EB8();
+    GsDraw_EnableDepthTest();
 }
 
 /* Puts a map object in use: not started, fully opaque. */
@@ -713,7 +713,7 @@ void MapObject_Break(MapObject *object) {
 s16 MapObject_StartAnim(MapObject *object, int anim) {
     ModelChannel *channel;
 
-    func_00108A08(object->model, object->unk04->anims[anim].anim);
+    ModelMotion_Select(object->model, object->unk04->anims[anim].anim);
     MAP_OBJECT_BYTES(object)->anim = anim;
     channel = MODEL_CHANNEL(object->model);
     channel->param = 0;
@@ -771,7 +771,7 @@ int MapObject_StepAnim(MapObject *object) {
             }
         }
     }
-    func_00108AC8(object->model);
+    ModelMotion_Step(object->model);
     object->model->unk1B4(object->model);
     object->unk10 |= 8;
     model = object->model;
@@ -854,40 +854,40 @@ void MapObject_ClearMap(int map) {
 
 /* Draw hook of a map object model drawn with the GS state as it is: draws the model. */
 void MapObject_DrawModel(int *model) {
-    func_0010AEB8(model);
+    ModelTexture_SendForModel(model);
 }
 
 /* Draw hook of an alpha-blended map object model: sets the GS alpha and test registers and the Z buffer (not
    written while the model is translucent, alpha below 128), then draws the model. */
 void MapObject_DrawModelWithAlpha(ModelInstance *model) {
-    func_00109A50();
+    Packet_BeginGsRegisters();
     if (model->alpha < 128.0f) {
-        func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-        func_00109A80(GS_REG_ZBUF_2, 0x10A000118L);
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+        Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L);
     } else {
-        func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
-        func_00109A80(GS_REG_ZBUF_2, 0xA000118L);
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
+        Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118L);
     }
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_ALPHA_2, 9);
-    func_00109A80(GS_REG_TEST_1, 0x5000D);
-    func_00109A80(GS_REG_TEST_2, 0x5000D);
-    func_00109AD0();
-    func_0010AEB8(model);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_ALPHA_2, 9);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
+    Packet_AddGsRegister(GS_REG_TEST_2, 0x5000D);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(model);
 }
 
 /* Draw hook of the distance-fading kind (5): sets the GS registers for alpha blending without Z-buffer
    writes, then draws the model. */
 void MapObject_DrawModelNoDepthWrite(void *model) {
-    func_00109A50();
-    func_00109A80(0x4E, 0x10A000118);
-    func_00109A80(0x4F, 0x10A000118);
-    func_00109A80(0x42, 0x44);
-    func_00109A80(0x43, 9);
-    func_00109A80(0x47, 0x5000D);
-    func_00109A80(0x48, 0x5000D);
-    func_00109AD0();
-    func_0010AEB8(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x4E, 0x10A000118);
+    Packet_AddGsRegister(0x4F, 0x10A000118);
+    Packet_AddGsRegister(0x42, 0x44);
+    Packet_AddGsRegister(0x43, 9);
+    Packet_AddGsRegister(0x47, 0x5000D);
+    Packet_AddGsRegister(0x48, 0x5000D);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(model);
 }
 
 /* Does nothing: the point-update hook (ModelInstance.unk1B4) of a map object model without points. */

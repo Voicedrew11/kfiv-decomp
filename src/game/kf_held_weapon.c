@@ -10,19 +10,19 @@
 void *memset(void *, int, u32);
 void *memcpy(void *, const void *, u32);
 int sprintf(char *, char *, ...);
-int func_00102238(char *, int, int);
-int func_001025C0(int, void *, int);
-int func_001024B0(int);
-void func_0010B758(ModelInstance *, int *, int *);
-void func_0010B238(TextureTableHeader *);
-MotionData *func_00108940(MotionFile *, ModelChannel **, ModelInstance *, int);
-void func_00109E88(void);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-u32 *func_00109990(int);
-void func_00109650(u32 *, u32 *);
-void func_0010B5D0(ModelPart *);
+int File_Open(char *, int, int);
+int File_Read(int, void *, int);
+int File_Close(int);
+void Model_SetUpSkinned(ModelInstance *, int *, int *);
+void TextureTable_QueueAll(TextureTableHeader *);
+MotionData *ModelMotion_LoadFile(MotionFile *, ModelChannel **, ModelInstance *, int);
+void GsDraw_QueueTexFlush(void);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+u32 *Packet_Alloc(int);
+void Packet_AppendToChain(u32 *, u32 *);
+void Model_MultiplyChildMatrices(ModelPart *);
 void Sound_LoadSwBank(int);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -120,9 +120,9 @@ void HeldWeapon_Init(void) {
     memset(&held_item_arm_points_prev, 0, 0x20);
     D_00446970 = -1;
     D_00446974 = -1;
-    file_handle = func_00102238(D_0043F588, 0, 1);
-    func_001025C0(file_handle, (int)shared_texture_table, -1);
-    func_001024B0(file_handle);
+    file_handle = File_Open(D_0043F588, 0, 1);
+    File_Read(file_handle, (int)shared_texture_table, -1);
+    File_Close(file_handle);
     Player_LoadArmModels();
 }
 
@@ -151,12 +151,12 @@ void Player_LoadArmModels(void) {
         memset(held_item_channels, 0, 0x90);
         held_item_textures = 0;
         sprintf(path, D_0043F5A0, item->unk30);
-        handle = func_00102238(path, 0, 1);
+        handle = File_Open(path, 0, 1);
         if (handle < 0) {
-            handle = func_00102238(D_0043F5B8, 0, 1);
+            handle = File_Open(D_0043F5B8, 0, 1);
         }
-        func_001025C0(handle, file_load_buffer, -1);
-        func_001024B0(handle);
+        File_Read(handle, file_load_buffer, -1);
+        File_Close(handle);
         file = (PlayerArmFile *)file_load_buffer;
         if (file->motion_size != 0) {
             size = file->motion_offset + file->motion_size;
@@ -172,12 +172,12 @@ void Player_LoadArmModels(void) {
         if (file->model_size != 0) {
             data = (int)file + file->model_offset;
             buffer = (int)held_item_setup;
-            func_0010B758(&D_0057B6A0, &data, &buffer);
+            Model_SetUpSkinned(&D_0057B6A0, &data, &buffer);
         }
         if (file->motion_size != 0) {
             data = held_item_file + file->motion_offset;
             buffer = (int)held_item_channels;
-            func_00108940(data, &buffer, &D_0057B6A0, 1);
+            ModelMotion_LoadFile(data, &buffer, &D_0057B6A0, 1);
         }
         if (file->texture_size != 0) {
             held_item_textures = held_item_file + file->texture_offset;
@@ -200,12 +200,12 @@ void Player_LoadArmModels(void) {
         memset(arm_channels, 0, 0x90);
         arm_textures = 0;
         sprintf(path, D_0043F5A0, arm->unk30);
-        handle = func_00102238(path, 0, 1);
+        handle = File_Open(path, 0, 1);
         if (handle < 0) {
-            handle = func_00102238(D_0043F5D0, 0, 1);
+            handle = File_Open(D_0043F5D0, 0, 1);
         }
-        func_001025C0(handle, file_load_buffer, -1);
-        func_001024B0(handle);
+        File_Read(handle, file_load_buffer, -1);
+        File_Close(handle);
         file = (PlayerArmFile *)file_load_buffer;
         if (file->model_size != 0) {
             size = file->model_offset + file->model_size;
@@ -219,7 +219,7 @@ void Player_LoadArmModels(void) {
         if (file->model_size != 0) {
             data = (int)file + file->model_offset;
             buffer = (int)arm_setup;
-            func_0010B758(&arm_model, &data, &buffer);
+            Model_SetUpSkinned(&arm_model, &data, &buffer);
         }
         if (file->texture_size != 0) {
             arm_textures = arm_file + file->texture_offset;
@@ -268,7 +268,7 @@ void Player_UpdateArmModels(void) {
         if (D_0057B6A0.unk100 & 1) {
             part = D_0057B6A0.parts;
             for (i = 0; i < count; i++, part++) {
-                func_0010B5D0(part);
+                Model_MultiplyChildMatrices(part);
             }
         }
         Vector_Copy(&D_0057B6A0.rotation, &player_state.rotation);
@@ -349,19 +349,19 @@ void Player_DrawArm(void) {
     u64 tag;
 
     if (player_state.unk258 != 0) {
-        func_0010B238((TextureTableHeader *)shared_texture_table);
-        func_00109E88();
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, 0x44);
-        func_00109A80(GS_REG_ALPHA_2, 9);
-        func_00109A80(GS_REG_TEST_1, 0x5000D);
-        func_00109A80(GS_REG_TEST_2, 0x5000D);
-        func_00109AD0();
-        func_0010B238((TextureTableHeader *)arm_textures);
-        func_00109E88();
+        TextureTable_QueueAll((TextureTableHeader *)shared_texture_table);
+        GsDraw_QueueTexFlush();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+        Packet_AddGsRegister(GS_REG_ALPHA_2, 9);
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
+        Packet_AddGsRegister(GS_REG_TEST_2, 0x5000D);
+        Packet_EndGsRegisters();
+        TextureTable_QueueAll((TextureTableHeader *)arm_textures);
+        GsDraw_QueueTexFlush();
         arm_model.unk1A8(&arm_model);
-        func_0010B238((TextureTableHeader *)held_item_textures);
-        func_00109E88();
+        TextureTable_QueueAll((TextureTableHeader *)held_item_textures);
+        GsDraw_QueueTexFlush();
         if (player_state.weapon != 0x2E) {
             D_0057B6A0.unk1A8(&D_0057B6A0);
         } else {
@@ -372,10 +372,10 @@ void Player_DrawArm(void) {
             for (i = 0; i < D_0057B6A0.part_count; i++) {
                 MODEL_PART_FLAG_BITS(&D_0057B6A0.parts[i])->bit40 = i != 5;
             }
-            func_00109A50();
-            func_00109A80(GS_REG_ALPHA_1, 0x48);
-            func_00109A80(GS_REG_TEST_1, 0x5000D);
-            func_00109AD0();
+            Packet_BeginGsRegisters();
+            Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
+            Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
+            Packet_EndGsRegisters();
             D_0057B6A0.unk1A8(&D_0057B6A0);
             for (i = 0; i < D_0057B6A0.part_count; i++) {
                 MODEL_PART_FLAG_BITS(&D_0057B6A0.parts[i])->bit40 = FALSE;
@@ -384,14 +384,14 @@ void Player_DrawArm(void) {
     }
     count = WeaponTrail_GetCount();
     if (count >= 4) {
-        func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, weapon_trail_kinds[trail_kind].blend);
-        func_00109A80(GS_REG_TEST_1, 0x30000);
-        func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-        func_00109AD0();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ALPHA_1, weapon_trail_kinds[trail_kind].blend);
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+        Packet_EndGsRegisters();
         clipped = 6;
         size = count * 2 + 1;
-        packet_start = packet = func_00109990(size + 3);
+        packet_start = packet = Packet_Alloc(size + 3);
         *packet = (size + 1) | 0x10000000;
         packet += 7;
         *packet++ = size | 0x51000000;
@@ -420,10 +420,10 @@ void Player_DrawArm(void) {
                 *packet++ = 0;
             }
         }
-        func_00109650(packet_start, packet);
-        func_00109A50();
-        func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-        func_00109AD0();
+        Packet_AppendToChain(packet_start, packet);
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+        Packet_EndGsRegisters();
     }
 }
 

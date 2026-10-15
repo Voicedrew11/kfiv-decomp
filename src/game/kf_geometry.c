@@ -60,8 +60,8 @@ static void Vector_ProjectToScreen(void *point, int *screen) {
     Vu0_ProjectToScreen(screen, point);
 }
 
-/* Index of the largest of the seven values (the first one of equals). Nothing calls this. */
-static int func_0020D008(Unk20D008Owner *owner) {
+/* Returns the index of the largest of the seven s16 values at owner->unk70. Nothing calls it. */
+static int Geometry_IndexOfLargestOfSeven(Unk20D008Owner *owner) {
     s16 *values = owner->unk70;
     int largest = values[0];
     int largest_index = 0;

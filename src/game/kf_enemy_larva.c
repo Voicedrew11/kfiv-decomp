@@ -29,7 +29,7 @@ void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetState(char *, u8);
 void EntityEvent_OnDeath(Entity *);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 int rand(void);
 float sinf(float);
 float cosf(float);
@@ -252,7 +252,7 @@ static void Larva_Death(Entity *entity) {
 }
 
 /* The dormant action of a spawn whose EntitySpawnInfo.unk40 is set (busy bit 0x20): holds animation
-   17 and keeps the entity at the point func_0010CAB8 gives for 8 on the model of the entity whose
+   17 and keeps the entity at the point Model_GetSkinnedBonePoint gives for 8 on the model of the entity whose
    spawn id is EntitySpawnInfo.variant, until work byte unk7A is not 0: above 0 it starts
    Larva_DormantMoveAlongArc, below 0 Larva_DeathFallAndFade. */
 static void Larva_DormantHeldAtModelPoint(Entity *entity) {
@@ -285,7 +285,7 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
         }
         other = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (other != NULL && (other->flags & 3) == 3) {
-            point = (f32 *)func_0010CAB8((char *)other->model, 8);
+            point = (f32 *)Model_GetSkinnedBonePoint((char *)other->model, 8);
             if (point != NULL) {
                 entity->model->position[0] = point[0];
                 entity->model->position[1] = point[1];

@@ -65,7 +65,7 @@ typedef struct {
     int unk0C;                      /* 0x0C Texture_BuildPacketTable clears it */
 } TextureTableHeader;
 
-/* a texture func_0010A880 redraws into another one every frame, scrolled (scroll_textures in kf_scroll_texture.c) */
+/* a texture GsDraw_DrawScrollingTexture redraws into another one every frame, scrolled (scroll_textures in kf_scroll_texture.c) */
 typedef struct {
     u16 width;                      /* 0x00 of the source texture, a power of two */
     u16 height;                     /* 0x02 */
@@ -101,7 +101,7 @@ typedef struct {
     int offset;                     /* 0x00 from the table base, to a chunk: its size in quadwords, 12 bytes, the data */
     int unk04;                      /* 0x04 Texture_BuildPacketTable clears it */
     int unk08;                      /* 0x08 Texture_BuildPacketTable clears it */
-    int unk0C;                      /* 0x0C not 0: func_0010B2E0 skips it (set by func_0010B4E0) */
+    int unk0C;                      /* 0x0C not 0: TextureTable_QueueEnabled skips it (set by TextureTable_SetChunkEnabled) */
 } TextureTableEntry;
 
 /* Sends the GS a TEXFLUSH through DMA channel 2 (kf_texture_upload.c). */

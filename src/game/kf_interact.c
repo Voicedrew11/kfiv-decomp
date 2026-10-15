@@ -19,7 +19,7 @@ void sceVu0Normalize(float *, float *);
 float sceVu0InnerProduct(float *, float *);
 float sqrtf(float);
 int MapItem_IsPickable(void *);
-int func_001090E0(char *); // match: its u16 is halved as an int
+int ModelMotion_GetLastFrame(char *); // match: its u16 is halved as an int
 int Script_Start(int, int);
 int Script_IsRunning(int);
 int MapItem_StartPickup(ItemNode *);
@@ -238,7 +238,7 @@ void Interact_FindTarget(void) {
                         continue;
                     }
                     frame = MODEL_CHANNEL(object->model)->param;
-                    if (frame != 1 && !(func_001090E0((char *)object->model) / 2 < frame)) {
+                    if (frame != 1 && !(ModelMotion_GetLastFrame((char *)object->model) / 2 < frame)) {
                         continue;
                     }
                 }

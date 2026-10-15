@@ -13,7 +13,7 @@ int strcmp(const char *, const char *);
 void SyncDCache(void *start, void *end);
 
 void *MenuHeap_Alloc(int);
-int func_00102258(char *, int, int);
+int File_OpenUnflagged(char *, int, int);
 
 extern GameStatus game_status;
 extern int D_00446734;
@@ -89,9 +89,9 @@ s32 SaveCard_Open(void) {
     }
     dir_entries = (sceMcTblGetDir *)addr;
     icon_sys = &icon_sys_buffer;
-    file_handle = func_00102258("menu/kf4_icon.ico", 0, 1);
-    func_001025C0(file_handle, icon_file, 0xDBF0);
-    func_001024B0(file_handle);
+    file_handle = File_OpenUnflagged("menu/kf4_icon.ico", 0, 1);
+    File_Read(file_handle, icon_file, 0xDBF0);
+    File_Close(file_handle);
     card_records[0].icon_data = icon_file;
     card_records[0].unk10 = icon_file;
     card_records[0].unk14 = icon_file;

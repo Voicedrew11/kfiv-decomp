@@ -31,14 +31,14 @@ extern GsRegisterPair D_00433180;
 extern GsRegisterPair D_00433190;
 
 int Movie_Play(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
-void func_001095E0(void);
-void func_0010B000(void);
+void Packet_SwapBuffers(void);
+void DrawList_Clear(void);
 void func_001095D0(void);
-void func_0010A008(void);
-void func_0010A4E8(s64, s64, s64, s64, s64); // match: retail passes the last value as a 64-bit constant (0x100000044)
+void GsDraw_ResetDrawTarget(void);
+void GsDraw_FillScreen(s64, s64, s64, s64, s64); // match: retail passes the last value as a 64-bit constant (0x100000044)
 void func_001095D8(void);
-void func_001096E8(void);
-void func_00109800(void);
+void Packet_SendChain(void);
+void Packet_WaitForSend(void);
 void SoundDriver_ReleaseAll(void);
 void Sound_Init(void);
 int sceGsSyncV(int);
@@ -80,19 +80,19 @@ void Movie_PlayOpening(void) {
     D_00432E20[30] = temp;
     D_00433050[0] = temp;
     D_00433050[30] = temp;
-    func_001095E0();
-    func_001095E0();
-    func_0010B000();
+    Packet_SwapBuffers();
+    Packet_SwapBuffers();
+    DrawList_Clear();
     func_001095D0();
     D_00446F78 = 0;
     D_00446F7C = 0;
-    func_0010A008();
-    func_0010A4E8(0, 0, 0, 0x80, 0x100000044L);
+    GsDraw_ResetDrawTarget();
+    GsDraw_FillScreen(0, 0, 0, 0x80, 0x100000044L);
     func_001095D8();
     D_00446F78 = 1;
     D_00446F7C = 1;
-    func_001096E8();
-    func_00109800();
+    Packet_SendChain();
+    Packet_WaitForSend();
     Display_SwapBuffers(0);
     SoundDriver_ReleaseAll();
     Sound_Init();

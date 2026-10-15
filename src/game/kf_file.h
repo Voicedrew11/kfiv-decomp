@@ -58,10 +58,10 @@ extern KFFile file_slots[2];
 extern char archive_toc[];       /* the KF4.DAT table of contents */
 
 int KF_File_Open(char *name, int nowait, int pack, int unused);
-int func_001024B0(int fd);
-int func_001025C0(int fd, void *buf, int size);
-int func_00102790(int fd, int mode);
-int func_00102238(char *name, int nowait, int pack);
+int File_Close(int fd);
+int File_Read(int fd, void *buf, int size);
+int File_Sync(int fd, int mode);
+int File_Open(char *name, int nowait, int pack);
 
 int printf(const char *, ...);
 int puts(const char *);

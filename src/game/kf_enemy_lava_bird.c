@@ -42,7 +42,7 @@ void EntityAi_SetAttackDelay(Entity *entity, s32 base);
 float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
 float EntityMath_DistanceXZ(void *, void *);
 float EntityMath_AngleXZ(float *, char *);
@@ -663,8 +663,8 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
         shot->unk22 = shot->unk20 = 0;
         shot->unk00 = 1;
         shot->unk28 = entity->params->unk238;
-        from = (f32 *)func_0010CAB8((char *)entity->model, record->unk10[i].unk01);
-        tip = (f32 *)func_0010CAB8((char *)entity->model, record->unk10[i].unk01 + 1);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01 + 1);
         if (from != NULL && tip != NULL) {
             if (record->unk10[i].unk01 != 0xFF) {
                 delta_x = tip[0] - from[0];

@@ -13,7 +13,7 @@ float sqrtf(float);
 void Vector_Add(void *, void *, void *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void func_0010B5D0(ModelPart *);
+void Model_MultiplyChildMatrices(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
 extern void *D_00420D50[];
 extern u32 D_0038CC74[];
@@ -245,7 +245,7 @@ void MapObject_RebuildMovingDoorMatrices(MapObject *object) {
     if (object->model->unk100 & 1) {
         part = object->model->parts;
         for (i = 0; i < part_count; i++) {
-            func_0010B5D0(part);
+            Model_MultiplyChildMatrices(part);
             part++;
         }
     }

@@ -63,10 +63,11 @@
         "sqc2 $vf25, 0x30(%0)\n"                                                                   \
         : "=r"(matrix)                                                                             \
         : "0"(matrix))
-// match: gcse numbers the registers of the three function addresses below by a hash of the symbol names (and of
-// the function's size), and the original names are not known. The '*' an asm label puts in front of this one
-// name gives retail's order ($24, $16, $25). Revisit when any of the three functions is renamed.
-char *func_0010CAB8(char *, u32) __asm__("func_0010CAB8");
+// match: gcse numbers the registers of the three function addresses Model_SetUpSkinned stores by a hash of
+// where the compiler keeps their names, so it depends on the names and the order they first appear in. These
+// names, this early declaration and the asm label on Model_UpdateSkinnedBonePoints (the '*' it puts in front of
+// the name) give retail's order ($24, $16, $25). Revisit when any of the three functions is renamed.
+char *Model_GetSkinnedBonePoint(char *, u32);
 typedef u32 u_long128 __attribute__((mode(TI)));
 /* copies a 4x4 matrix through VU0 registers */
 #define COPY_MATRIX(to, from)                                                                      \
@@ -83,24 +84,25 @@ typedef u32 u_long128 __attribute__((mode(TI)));
 /* the largest float: a vertex's distance before it has been measured.
    match: written as a literal, the compiler keeps it in .sdata (D_0044675C) */
 #define NOT_MEASURED 3.4028235e38f
-void func_0010BA30(ModelInstance *);
-void func_0010C9E8(ModelInstance *);
+void Model_DrawSkinned(ModelInstance *);
+// match: the asm label is part of the register order, see Model_GetSkinnedBonePoint above
+void Model_UpdateSkinnedBonePoints(ModelInstance *) __asm__("Model_UpdateSkinnedBonePoints");
 float asinf(float);
 float atan2f(float, float);
 float Angle_Wrap(float);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
-u32 *func_00109990(int);
-void func_00109650(u32 *, u32 *);
+u32 *Packet_Alloc(int);
+void Packet_AppendToChain(u32 *, u32 *);
 int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
 void Vector_Copy(void *, void *);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_0010D308(ModelInstance *);
-void func_0010E5A0(ModelInstance *);
-Vector4 *func_0010E678(ModelInstance *, s32);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void Model_DrawPosed(ModelInstance *);
+void Model_UpdateBonePoints(ModelInstance *);
+Vector4 *Model_GetBonePoint(ModelInstance *, s32);
 int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
 void Matrix_Multiply(void *, void *, void *);
 float sqrtf(float);
@@ -109,7 +111,7 @@ extern f32 D_00431AF0[16];
 extern f32 D_004323E0[16];
 
 /* Multiply the matrices of a part's children by the part's own matrix. */
-void func_0010B5D0(ModelPart *part) {
+void Model_MultiplyChildMatrices(ModelPart *part) {
     register ModelPart *matrix asm("$2"); // match: the game keeps the matrix address in $2
     ModelPart *child;
 
@@ -131,9 +133,9 @@ void func_0010B5D0(ModelPart *part) {
     }
 }
 
-/* Set a model instance up from a model file: its parts are carved out of *memory, and both
-   cursors move past what was used. */
-void func_0010B758(ModelInstance *model, int *file_cursor, int *memory) {
+/* Sets a skinned model up from a model file (vertices can follow their part or its parent): its parts and
+   bone points are carved out of *memory, and both cursors move past what was used. */
+void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     ModelFile *file;
     ModelFilePart *file_part;
     ModelPart *memory_base;
@@ -182,10 +184,10 @@ void func_0010B758(ModelInstance *model, int *file_cursor, int *memory) {
             MODEL_SLOT_PARTS(model)[file_part->unk06 - 1] = part;
         }
     }
-    model->unk1A8 = func_0010BA30;
+    model->unk1A8 = Model_DrawSkinned;
     *file_cursor += file->size;
-    model->unk1B4 = func_0010C9E8;
-    model->get_point = (int (*)(void *, int))func_0010CAB8;
+    model->unk1B4 = Model_UpdateSkinnedBonePoints;
+    model->get_point = (int (*)(void *, int))Model_GetSkinnedBonePoint;
     first = TRUE;
     model->unk160[0] = 0;
     model->unk160[1] = 0;
@@ -215,12 +217,12 @@ static inline f32 wrap_angle(f32 angle) {
     return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
 }
 
-/* Draws a model (the draw function func_0010B758 installs): works out a turn from the block at
+/* Draws a model (the draw function Model_SetUpSkinned installs): works out a turn from the block at
    unk148 and the model's rotation, queues a packet with the model's two matrices, its MapSlotUnk0C
    block, its lights and the vectors at unk160 and unk150, then for every part that is switched on
    and not scaled to nothing its two matrices, its parent's two and a reference to each of its data
    blocks. */
-void func_0010BA30(ModelInstance *model) {
+void Model_DrawSkinned(ModelInstance *model) {
     void *matrix_a = MODEL_TURN_MATRIX_A;
     void *matrix_b = MODEL_TURN_MATRIX_B;
     f32 (*part_matrices)[16] = MODEL_TURN_PART_MATRICES;
@@ -253,7 +255,7 @@ void func_0010BA30(ModelInstance *model) {
         Matrix_Multiply(part_matrices[i], model->unk40, part);
         Matrix_Multiply(part_turns[i], MODEL_TURN_SCRATCH, part);
     }
-    packet_start = packet = func_00109990(0x20);
+    packet_start = packet = Packet_Alloc(0x20);
     *packet = 0x10000009;
     packet += 7;
     *packet++ = 0x6C08000C;
@@ -310,10 +312,10 @@ void func_0010BA30(ModelInstance *model) {
         if (part->unk60[0] == 0.0f && part->unk60[1] == 0.0f && part->unk60[2] == 0.0f) {
             continue;
         }
-        packet = func_00109990(2);
+        packet = Packet_Alloc(2);
         packet[0] = 0x10000001;
         packet[7] = 0x13000000;
-        packet = func_00109990(0xC);
+        packet = Packet_Alloc(0xC);
         *packet = 0x10000005;
         packet += 7;
         *packet++ = 0x6C040004;
@@ -329,7 +331,7 @@ void func_0010BA30(ModelInstance *model) {
         *packet++ = 0x6C040024;
         COPY_MATRIX(packet, part_turns[i]);
         if (MODEL_PART_PARENT_ANY(part) != -1) { // match: always true, the 7-bit field holds 0x7F for "no parent"
-            packet = func_00109990(0xC);
+            packet = Packet_Alloc(0xC);
             *packet = 0x10000005;
             packet += 7;
             *packet++ = 0x6C040008;
@@ -341,7 +343,7 @@ void func_0010BA30(ModelInstance *model) {
             COPY_MATRIX(packet, part_turns[MODEL_PART_PARENT_ANY(part)]);
         }
         data = (ModelPartData *)(u32)part->data_addr;
-        packet = func_00109990(part->data_count);
+        packet = Packet_Alloc(part->data_count);
         for (j = 0; j < part->data_count; j++) {
             word = *(u32 *)data;
             *packet++ = (word & 0x8FFFFFFF) | 0x30000000;
@@ -350,13 +352,13 @@ void func_0010BA30(ModelInstance *model) {
             data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
         }
     }
-    packet = func_00109990(1); // match: packet named after packet_start's last use, or the stores go through packet_start
-    func_00109650(packet_start, packet);
+    packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
+    Packet_AppendToChain(packet_start, packet);
 }
 
-/* Draws a model like func_0010BA30, but in two passes with their own Z buffer state: first the
+/* Draws a model like Model_DrawSkinned, but in two passes with their own Z buffer state: first the
    parts with bit 41 of their flag word set, with Z writes on, then the others with Z writes off. */
-void func_0010C180(ModelInstance *model) {
+void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     void *matrix_a = MODEL_TURN_MATRIX_A;
     void *matrix_b = MODEL_TURN_MATRIX_B;
     f32 (*part_matrices)[16] = MODEL_TURN_PART_MATRICES;
@@ -390,7 +392,7 @@ void func_0010C180(ModelInstance *model) {
         Matrix_Multiply(part_matrices[i], model->unk40, part);
         Matrix_Multiply(part_turns[i], MODEL_TURN_SCRATCH, part);
     }
-    packet_start = packet = func_00109990(0x20);
+    packet_start = packet = Packet_Alloc(0x20);
     *packet = 0x10000009;
     packet += 7;
     *packet++ = 0x6C08000C;
@@ -439,18 +441,18 @@ void func_0010C180(ModelInstance *model) {
     *packet++ = 0x6C020064;
     Vector_Copy(packet, model->unk160);
     Vector_Copy(packet + 4, &model->unk150);
-    packet = func_00109990(1); // match: packet named after packet_start's last use, or the stores go through packet_start
-    func_00109650(packet_start, packet);
+    packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
+    Packet_AppendToChain(packet_start, packet);
     for (pass = 0; pass < 2; pass++) {
-        func_00109A50();
+        Packet_BeginGsRegisters();
         if (pass == 0) {
-            func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-            func_00109A80(GS_REG_ZBUF_2, 0xA000118);
+            Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+            Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118);
         } else {
-            func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-            func_00109A80(GS_REG_ZBUF_2, 0x10A000118L);
+            Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+            Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L);
         }
-        func_00109AD0();
+        Packet_EndGsRegisters();
         part = model->parts;
         for (i = 0; i < model->part_count; i++, part++) {
             if (((u8)(MODEL_PART_FLAG_WORD(part) >> 41) & 1) == pass) {
@@ -462,10 +464,10 @@ void func_0010C180(ModelInstance *model) {
             if (part->unk60[0] == 0.0f && part->unk60[1] == 0.0f && part->unk60[2] == 0.0f) {
                 continue;
             }
-            packet_start = packet = func_00109990(2);
+            packet_start = packet = Packet_Alloc(2);
             packet_start[0] = 0x10000001;
             packet_start[7] = 0x13000000;
-            packet = func_00109990(0xC);
+            packet = Packet_Alloc(0xC);
             *packet = 0x10000005;
             packet += 7;
             *packet++ = 0x6C040004;
@@ -481,7 +483,7 @@ void func_0010C180(ModelInstance *model) {
             *packet++ = 0x6C040024;
             COPY_MATRIX(packet, part_turns[i]);
             if (MODEL_PART_PARENT_ANY(part) != -1) { // match: always true, the 7-bit field holds 0x7F for "no parent"
-                packet = func_00109990(0xC);
+                packet = Packet_Alloc(0xC);
                 *packet = 0x10000005;
                 packet += 7;
                 *packet++ = 0x6C040008;
@@ -493,7 +495,7 @@ void func_0010C180(ModelInstance *model) {
                 COPY_MATRIX(packet, part_turns[MODEL_PART_PARENT_ANY(part)]);
             }
             data = (ModelPartData *)(u32)part->data_addr;
-            packet = func_00109990(part->data_count);
+            packet = Packet_Alloc(part->data_count);
             for (j = 0; j < part->data_count; j++) {
                 word = *(u32 *)data;
                 *packet++ = (word & 0x8FFFFFFF) | 0x30000000;
@@ -501,18 +503,19 @@ void func_0010C180(ModelInstance *model) {
                 packet += 3;
                 data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
             }
-            packet = func_00109990(1); // match: packet named after packet_start's last use, or the stores go through packet_start
-            func_00109650(packet_start, packet);
+            packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
+            Packet_AppendToChain(packet_start, packet);
         }
     }
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-    func_00109A80(GS_REG_ZBUF_2, 0xA000118);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+    Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118);
+    Packet_EndGsRegisters();
 }
 
-/* Builds 32 transformed bone vectors from the actor source table. */
-void func_0010C9E8(ModelInstance *actor) {
+/* Places a skinned model's 32 bone points: each anchor's offset through its part's matrix and then the
+   model's, or the model's position for an anchor without a bone. */
+void Model_UpdateSkinnedBonePoints(ModelInstance *actor) {
     float point[4];
     int i;
     BoneAnchor *anchor;
@@ -535,7 +538,7 @@ void func_0010C9E8(ModelInstance *actor) {
 }
 
 /* Where point `index` of a model is: one of its 32 bone points, or its position for any other index. */
-char *func_0010CAB8(char *model, u32 index) {
+char *Model_GetSkinnedBonePoint(char *model, u32 index) {
     if (model != NULL) {
         if (index < 0x20U) {
             return (char *)&((ModelInstance *)model)->bone_positions[index];
@@ -547,7 +550,7 @@ char *func_0010CAB8(char *model, u32 index) {
 
 /* Set the doublewords at +0x30, +0x40, +0x50 and +0x60 of every data block of every part; -1 leaves
    one as it is. */
-void func_0010CAE8(ModelInstance *model, s64 unk30, s64 unk40, s64 unk50, s64 unk60) {
+void Model_SetBlockGsWords(ModelInstance *model, s64 unk30, s64 unk40, s64 unk50, s64 unk60) {
     ModelPart *part;
     char *cursor;
     char *block;
@@ -588,7 +591,7 @@ void func_0010CAE8(ModelInstance *model, s64 unk30, s64 unk40, s64 unk50, s64 un
 
 /* Gives every vertex of a model drawn with its own texture the texture coordinates of the place
    it lands on the screen (0 to 1 across the screen). */
-void func_0010CB98(void *model_arg) {
+void Model_SetUvsFromScreen(void *model_arg) {
     ModelInstance *model = model_arg;
     ModelPart *part;
     f32 *matrix;
@@ -617,7 +620,7 @@ void func_0010CB98(void *model_arg) {
 
         matrix = scratch->matrices[i];
         parent = (s32)(MODEL_PART_WORD(part) >> 46) & 0x7F; /* ModelPart.pad78_46: the parent part */
-        if (parent != -1) { // match: always true, the 7-bit field holds 0x7F for "no parent" (see func_0010B758)
+        if (parent != -1) { // match: always true, the 7-bit field holds 0x7F for "no parent" (see Model_SetUpSkinned)
             parent_matrix = scratch->matrices[parent];
         }
         count = (s32)(MODEL_PART_WORD(part) >> 53);
@@ -654,9 +657,9 @@ void func_0010CB98(void *model_arg) {
 }
 
 /* Saves the four GS doublewords at +0x30 to +0x60 of every block of a model drawn with its own
-   texture, and each vertex's texture coordinates, to `save` (kept in wave_uvs for func_0010CF10).
+   texture, and each vertex's texture coordinates, to `save` (kept in wave_uvs for Model_RestoreGsWordsAndUvs).
    Returns where the saved words end. */
-s64 *func_0010CE08(ModelInstance *model, s64 *save) {
+s64 *Model_SaveGsWordsAndUvs(ModelInstance *model, s64 *save) {
     s64 *out;
     int i;
     u16 part_count;
@@ -698,9 +701,9 @@ s64 *func_0010CE08(ModelInstance *model, s64 *save) {
     return out;
 }
 
-/* Puts back what func_0010CE08 saved: the four GS doublewords of every block and each vertex's
+/* Puts back what Model_SaveGsWordsAndUvs saved: the four GS doublewords of every block and each vertex's
    texture coordinates. */
-void func_0010CF10(ModelInstance *model) {
+void Model_RestoreGsWordsAndUvs(ModelInstance *model) {
     int i = 0;
     u16 part_count = model->part_count;
     ModelPart *part = model->parts;
@@ -744,7 +747,7 @@ static inline s32 is_blended(u64 tag_high) {
 
 /* Set a model instance up from a model file whose parts come with their pose: the parts are
    carved out of *memory, and both cursors move past what was used. */
-void func_0010D018(ModelInstance *model, char **file_cursor, char **memory) {
+void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
     PosedModelFile *file;
     PosedModelFilePart *file_part;
     ModelPart *part;
@@ -819,17 +822,17 @@ void func_0010D018(ModelInstance *model, char **file_cursor, char **memory) {
     } else {
         model->bone_anchors = NULL;
     }
-    model->unk1A8 = func_0010D308;
+    model->unk1A8 = Model_DrawPosed;
     *file_cursor += file->size;
-    model->unk1B4 = func_0010E5A0;
-    model->get_point = (int (*)(void *, int))func_0010E678;
+    model->unk1B4 = Model_UpdateBonePoints;
+    model->get_point = (int (*)(void *, int))Model_GetBonePoint;
 }
 
-/* Draws a model (ModelInstance.unk1A8 of the models func_0010D018 sets up): queues a packet with
+/* Draws a model (ModelInstance.unk1A8 of the models Model_SetUpPosed sets up): queues a packet with
    its two matrices, its MapSlotUnk0C block, its lights and, when it has one, its own colour, then
    for every part that is switched on a packet with the part's matrix and a reference to each of
    its data blocks. */
-void func_0010D308(ModelInstance *model) {
+void Model_DrawPosed(ModelInstance *model) {
     void *matrix_a = MODEL_DRAW_MATRIX_A;
     void *matrix_b = MODEL_DRAW_MATRIX_B;
     u32 *packet;
@@ -846,9 +849,9 @@ void func_0010D308(ModelInstance *model) {
     if (model->parts != NULL && model->part_count != 0) {
         ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b);
         if (model->unk100 & 0x800) {
-            packet_start = packet = func_00109990(0x21); // match: two calls, the compiler merges them
+            packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
-            packet_start = packet = func_00109990(0x1C);
+            packet_start = packet = Packet_Alloc(0x1C);
         }
         *packet = 0x10000009;
         packet += 7;
@@ -908,7 +911,7 @@ void func_0010D308(ModelInstance *model) {
                 continue;
             }
             data = (ModelPartData *)(u32)part->data_addr;
-            packet = func_00109990(part->data_count + 6);
+            packet = Packet_Alloc(part->data_count + 6);
             *packet = 0x10000005;
             packet += 7;
             *packet++ = 0x6C040004;
@@ -923,14 +926,14 @@ void func_0010D308(ModelInstance *model) {
                 data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
             }
         }
-        packet = func_00109990(1);
-        func_00109650(packet_start, packet);
+        packet = Packet_Alloc(1);
+        Packet_AppendToChain(packet_start, packet);
     }
 }
 
-/* Draws a model like func_0010D308, with the two matrices of ModelMatrix_BuildDrawMatrices on the stack and each
+/* Draws a model like Model_DrawPosed, with the two matrices of ModelMatrix_BuildDrawMatrices on the stack and each
    part's own matrix sent as it is; parts scaled to nothing are left out. */
-void func_0010D700(ModelInstance *model) {
+void Model_DrawPosedPrebuilt(ModelInstance *model) {
     VuVector4 matrix_a[4];
     VuVector4 matrix_b[4];
     void *matrix_b_ptr;
@@ -948,9 +951,9 @@ void func_0010D700(ModelInstance *model) {
         matrix_b_ptr = matrix_b;
         ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b_ptr);
         if (model->unk100 & 0x800) {
-            packet_start = packet = func_00109990(0x21); // match: two calls, the compiler merges them
+            packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
-            packet_start = packet = func_00109990(0x1C);
+            packet_start = packet = Packet_Alloc(0x1C);
         }
         *packet = 0x10000009;
         packet += 7;
@@ -1012,7 +1015,7 @@ void func_0010D700(ModelInstance *model) {
             if (part->unk60[0] == 0.0f && part->unk60[1] == 0.0f && part->unk60[2] == 0.0f) {
                 continue;
             }
-            packet = func_00109990(part->data_count + 6);
+            packet = Packet_Alloc(part->data_count + 6);
             *packet = 0x10000005;
             packet += 7;
             *packet++ = 0x6C040004;
@@ -1027,15 +1030,15 @@ void func_0010D700(ModelInstance *model) {
                 data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
             }
         }
-        packet = func_00109990(1);
-        func_00109650(packet_start, packet);
+        packet = Packet_Alloc(1);
+        Packet_AppendToChain(packet_start, packet);
     }
 }
 
-/* Draws a model like func_0010D308 (its own colour included), but as func_0010E010 does the
+/* Draws a model like Model_DrawPosed (its own colour included), but as Model_DrawPosedWithAlpha does the
    parts: the first packet is queued at once, parts scaled to nothing are left out and each part
    gets its Z buffer and test state and its own packet. */
-void func_0010DB40(ModelInstance *model) {
+void Model_DrawPosedDepthByPart(ModelInstance *model) {
     void *matrix_a = MODEL_DRAW_MATRIX_A;
     void *matrix_b = MODEL_DRAW_MATRIX_B;
     u32 *packet;
@@ -1051,9 +1054,9 @@ void func_0010DB40(ModelInstance *model) {
     if (model->parts != NULL && model->part_count != 0) {
         ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b);
         if (model->unk100 & 0x800) {
-            packet_start = packet = func_00109990(0x21); // match: two calls, the compiler merges them
+            packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
-            packet_start = packet = func_00109990(0x1C);
+            packet_start = packet = Packet_Alloc(0x1C);
         }
         *packet = 0x10000009;
         packet += 7;
@@ -1107,7 +1110,7 @@ void func_0010DB40(ModelInstance *model) {
             packet[3] = model->found_record_id;
             ((u_long128 *)packet)[1] = *(u_long128 *)model->found_record;
         }
-        func_00109650(packet_start, func_00109990(1)); /* the packet ends where the next one would start */
+        Packet_AppendToChain(packet_start, Packet_Alloc(1)); /* the packet ends where the next one would start */
         part = model->parts;
         for (i = 0; i < model->part_count; i++, part++) {
             if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT40) {
@@ -1116,16 +1119,16 @@ void func_0010DB40(ModelInstance *model) {
             if (part->unk60[0] == 0.0f && part->unk60[1] == 0.0f && part->unk60[2] == 0.0f) {
                 continue;
             }
-            func_00109A50();
+            Packet_BeginGsRegisters();
             if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT41) {
-                func_00109A80(GS_REG_ZBUF_1, 0xA000118);
-                func_00109A80(GS_REG_TEST_1, 0x5000D);
+                Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
+                Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
             } else {
-                func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-                func_00109A80(GS_REG_TEST_1, 0x5000D);
+                Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+                Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
             }
-            func_00109AD0();
-            packet_start = packet = func_00109990(part->data_count + 7);
+            Packet_EndGsRegisters();
+            packet_start = packet = Packet_Alloc(part->data_count + 7);
             *packet = 0x10000005;
             packet += 7;
             *packet++ = 0x6C040004;
@@ -1139,7 +1142,7 @@ void func_0010DB40(ModelInstance *model) {
                 packet += 3;
                 data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
             }
-            func_00109650(packet_start, packet);
+            Packet_AppendToChain(packet_start, packet);
         }
     }
 }
@@ -1147,7 +1150,7 @@ void func_0010DB40(ModelInstance *model) {
 /* Draws a model: queues a packet with its two matrices, its MapSlotUnk0C block and its lights,
    then for every part that is switched on and not scaled to nothing the GS state and a packet
    with the part's matrix and a reference to each of its data blocks. */
-void func_0010E010(ModelInstance *model) {
+void Model_DrawPosedWithAlpha(ModelInstance *model) {
     void *matrix_a = MODEL_DRAW_MATRIX_A;
     void *matrix_b = MODEL_DRAW_MATRIX_B;
     u32 *packet;
@@ -1164,9 +1167,9 @@ void func_0010E010(ModelInstance *model) {
         ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b);
         /* the packet below is 0x1C quadwords either way: with the flag set the last 5 are never written */
         if (model->unk100 & 0x800) {
-            packet_start = packet = func_00109990(0x21); // match: two calls, the compiler merges them
+            packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
-            packet_start = packet = func_00109990(0x1C);
+            packet_start = packet = Packet_Alloc(0x1C);
         }
         *packet = 0x10000009;
         packet += 7;
@@ -1205,7 +1208,7 @@ void func_0010E010(ModelInstance *model) {
             ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
             light_out += 4;
         }
-        func_00109650(packet_start, func_00109990(1)); /* the packet ends where the next one would start */
+        Packet_AppendToChain(packet_start, Packet_Alloc(1)); /* the packet ends where the next one would start */
         part = model->parts;
         for (i = 0; i < model->part_count; i++, part++) {
             if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT40) {
@@ -1214,34 +1217,34 @@ void func_0010E010(ModelInstance *model) {
             if (part->unk60[0] == 0.0f && part->unk60[1] == 0.0f && part->unk60[2] == 0.0f) {
                 continue;
             }
-            func_00109A50();
+            Packet_BeginGsRegisters();
             if (model->unk145 == 0) {
-                func_00109A80(0x1A, 1);
-                func_00109A80(GS_REG_TEST_1, 0x5000D);
-                func_00109A80(GS_REG_ZBUF_1, 0xA000118);
+                Packet_AddGsRegister(0x1A, 1);
+                Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
+                Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
                 if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT41) {
-                    func_00109A80(GS_REG_ZBUF_1, 0xA000118);
+                    Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
                 } else {
-                    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
+                    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
                 }
             } else {
-                func_00109A80(0x1A, 0);
-                func_00109A80(0x1B, 0x278);
+                Packet_AddGsRegister(0x1A, 0);
+                Packet_AddGsRegister(0x1B, 0x278);
                 data = (ModelPartData *)(u32)part->data_addr;
-                func_00109A80(0x15, *(s64 *)&data->unk30);
-                func_00109A80(0x07, data->unk40);
-                func_00109A80(GS_REG_ALPHA_2,
+                Packet_AddGsRegister(0x15, *(s64 *)&data->unk30);
+                Packet_AddGsRegister(0x07, data->unk40);
+                Packet_AddGsRegister(GS_REG_ALPHA_2,
                               (s32)((GsAlphaReg *)&data->unk50)->f.a_source | ((s32)((GsAlphaReg *)&data->unk50)->f.b_source << 2) | 0x20 |
                                   ((s32)((GsAlphaReg *)&data->unk50)->f.d_source << 6) | ((s64)(s16)model->unk146 << 32));
-                func_00109A80(GS_REG_TEST_2, 0x5000D);
+                Packet_AddGsRegister(GS_REG_TEST_2, 0x5000D);
                 if ((s16)model->unk146 >= 0x80) {
-                    func_00109A80(GS_REG_ZBUF_2, 0xA000118);
+                    Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118);
                 } else {
-                    func_00109A80(GS_REG_ZBUF_2, 0x10A000118L);
+                    Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L);
                 }
             }
-            func_00109AD0();
-            packet_start = packet = func_00109990(part->data_count + 7);
+            Packet_EndGsRegisters();
+            packet_start = packet = Packet_Alloc(part->data_count + 7);
             *packet = 0x10000005;
             packet += 7;
             *packet++ = 0x6C040004;
@@ -1255,19 +1258,19 @@ void func_0010E010(ModelInstance *model) {
                 packet += 3;
                 data = (ModelPartData *)((char *)data + ((word & 0xFFFF) + 1) * 16);
             }
-            func_00109650(packet_start, packet);
+            Packet_AppendToChain(packet_start, packet);
         }
-        func_00109A50();
-        func_00109A80(0x1A, 1);
-        func_00109A80(GS_REG_ZBUF_2, 0x10A000118L);
-        func_00109A80(GS_REG_ZBUF_2, 0x10A000118L); // match: ZBUF_2 twice; ZBUF_1 is left as the last part set it
-        func_00109AD0();
+        Packet_BeginGsRegisters();
+        Packet_AddGsRegister(0x1A, 1);
+        Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L);
+        Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L); // match: ZBUF_2 twice; ZBUF_1 is left as the last part set it
+        Packet_EndGsRegisters();
     }
 }
 
 /* Places the model's 32 bone points: each anchor's offset through its part's matrix and then the model's, or
    the model's position for an anchor without a bone. */
-void func_0010E5A0(ModelInstance *model) {
+void Model_UpdateBonePoints(ModelInstance *model) {
     f32 point[4];
     int i;
     BoneAnchor *anchor;
@@ -1290,15 +1293,16 @@ void func_0010E5A0(ModelInstance *model) {
 }
 
 /* Where bone `index` of a model is; the model's own position when it has no bones or there is no such bone. */
-Vector4 *func_0010E678(ModelInstance *model, s32 index) {
+Vector4 *Model_GetBonePoint(ModelInstance *model, s32 index) {
     if (model->bone_anchors != NULL && index >= 0 && index < 32) {
         return &model->bone_positions[index];
     }
     return &model->position;
 }
 
-/* Rewrite the 11-bit fields of one word in every record of every part's data. */
-void func_0010E6A8(ModelInstance *model, s64 clear_mask, s64 set_value) {
+/* Rewrites the PRIM field (bits 15-25 of the GIF tag's high word at +0x74) of every data block of every part:
+   the bits of clear_mask are cleared, those of set_value set. */
+void Model_SetPrimBits(ModelInstance *model, s64 clear_mask, s64 set_value) {
     ModelPart *part;
     char *record;
     char *base;
@@ -1333,9 +1337,9 @@ void func_0010E6A8(ModelInstance *model, s64 clear_mask, s64 set_value) {
     }
 }
 
-/* Set the doublewords at +0x30 and +0x40 of every data block of every part. When bits 37-50 of
-   the second are not 0, the model's first block gets it with 2 in its top three bits. */
-void func_0010E770(ModelInstance *model, u64 unk40, s64 unk30) {
+/* Sets TEX0 (+0x40) and TEX1 (+0x30) of every data block of every part. When TEX0 has a CLUT pointer (bits
+   37-50), the model's first block gets 2 in its top three bits (CLUT load). */
+void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30) {
     ModelPart *part;
     ModelPartData *data;
     ModelPartData *block;
@@ -1366,8 +1370,8 @@ void func_0010E770(ModelInstance *model, u64 unk40, s64 unk30) {
     }
 }
 
-/* Set the doubleword at +0x50 of every data block of every part. */
-void func_0010E820(ModelInstance *model, s64 value) {
+/* Sets the ALPHA register value (+0x50) of every data block of every part. */
+void Model_SetAlphaBlend(ModelInstance *model, s64 value) {
     s32 i = 0;
     u16 part_count = model->part_count;
     ModelPart *part = model->parts;
@@ -1388,8 +1392,9 @@ void func_0010E820(ModelInstance *model, s64 value) {
     }
 }
 
-/* Set the word that ends the first data block of every part. */
-void func_0010E8A0(ModelInstance *model, s32 value) {
+/* Sets the VIF MSCALF that ends the first data block of every part: `value` is the VU1 microprogram address
+   it starts. */
+void Model_SetVu1Program(ModelInstance *model, s32 value) {
     ModelPart *part;
     ModelPartData *data;
     u32 *last_qword;
@@ -1404,7 +1409,7 @@ void func_0010E8A0(ModelInstance *model, s32 value) {
 }
 
 /* Set the colour of every vertex of a model; a component outside 0..0xFF is left as it is. */
-void func_0010E8E0(void *model_arg, int red, int green, int blue, int alpha) {
+void Model_SetVertexColour(void *model_arg, int red, int green, int blue, int alpha) {
     ModelInstance *model = model_arg;
     s16 scaled[4];
     s32 i = 0;
@@ -1452,7 +1457,7 @@ void func_0010E8E0(void *model_arg, int red, int green, int blue, int alpha) {
 
 /* Step the colour of every vertex within `radius` of `centre` towards `targets`, one component at
    a time by `steps`. Returns how many components have not arrived yet. */
-int func_0010EA08(int model_arg, void *centre_arg, int *steps, int *targets, float radius) {
+int Model_FadeVertexColoursNear(int model_arg, void *centre_arg, int *steps, int *targets, float radius) {
     ModelInstance *model = (ModelInstance *)model_arg;
     f32 *centre = centre_arg;
     // match: the order of these declarations decides the stack slots of the four loop cursors (gcse hashes
@@ -1535,7 +1540,7 @@ int func_0010EA08(int model_arg, void *centre_arg, int *steps, int *targets, flo
 /* Points the TEX0 at +0x40 of every data block of a model at another texture: its base pointer
    becomes texture_base and its CLUT pointer clut_base (0: left as it is). With a CLUT the model's
    first block also gets 2 in the top three bits. */
-void func_0010ED80(ModelInstance *model, int texture_base, int clut_base) {
+void Model_SetTextureBase(ModelInstance *model, int texture_base, int clut_base) {
     int i = 0;
     int first = clut_base != 0;
     u16 part_count = model->part_count;

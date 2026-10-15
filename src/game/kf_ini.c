@@ -20,9 +20,9 @@ char *strchr(const char *, int);
 char *strrchr(const char *, int);
 int atoi(const char *);
 void *memset(void *, int, u32);
-int func_00102238(char *, int, int);
-int func_001025C0(int, void *, int);
-int func_001024B0(int);
+int File_Open(char *, int, int);
+int File_Read(int, void *, int);
+int File_Close(int);
 
 static char *ini_cursor;          /* 0x447350 start of the next line */
 static int ini_remaining;         /* 0x447354 bytes left after ini_cursor */
@@ -108,16 +108,16 @@ void Ini_Load(int number) {
     char *line;
 
     sprintf(path, D_004410A8, number);
-    file = func_00102238(path, 0, 1);
+    file = File_Open(path, 0, 1);
     if (file < 0) {
         sprintf(path, D_004410A8, 9999);
-        file = func_00102238(path, 0, 1);
+        file = File_Open(path, 0, 1);
         if (file < 0) {
             return;
         }
     }
-    line = (char *)func_001025C0(file, file_load_buffer, -1);
-    func_001024B0(file);
+    line = (char *)File_Read(file, file_load_buffer, -1);
+    File_Close(file);
     Ini_SetText(file_load_buffer, (int)line);
     while ((line = Ini_ReadLine()) != NULL) {
         for (i = 0; D_0042B810[i].handler != NULL; i++) {

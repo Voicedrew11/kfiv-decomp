@@ -30,7 +30,7 @@ void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_ThinkCombat(Entity *, s32);
-char *func_0010CAB8(char *, u32);
+char *Model_GetSkinnedBonePoint(char *, u32);
 int Motion_Start(void *, int, int, u32, int);
 float EntityMath_DistanceXZ(void *, void *);
 
@@ -115,7 +115,7 @@ static void Slasher_OnHit(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, but states 1 and 2 both have EntityAi_ThinkCombat (and
    clear work byte unk7A) and state 0 starts Slasher_WaitForPlayerNear. Every frame it starts effect
-   EntityParams.unk43A at the points func_0010CAB8 gives for 30 and 31. */
+   EntityParams.unk43A at the points Model_GetSkinnedBonePoint gives for 30 and 31. */
 static void Slasher_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     char *part;
@@ -142,9 +142,9 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    part = func_0010CAB8((char *)entity->model, 0x1E);
+    part = Model_GetSkinnedBonePoint((char *)entity->model, 0x1E);
     Effect_StartSpawner(entity->params->unk43A, part, entity->model->unkD0, entity);
-    part = func_0010CAB8((char *)entity->model, 0x1F);
+    part = Model_GetSkinnedBonePoint((char *)entity->model, 0x1F);
     Effect_StartSpawner(entity->params->unk43A, part, entity->model->unkD0, entity);
 }
 

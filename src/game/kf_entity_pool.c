@@ -33,64 +33,64 @@ static EntityTypeFileHeader entity_type_file_header;                            
 static char entity_pool_slot_buffers[ENTITY_POOL_SLOT_COUNT][0x2000];            /* 0x474B90 the type data of each slot */
 char character_params[0x80000] __attribute__((section(".bss")));         /* 0x47EB90 param/chr.prm, read whole */
 
-int func_00102790(int, int);
-int func_001024B0(int);
-void func_00102228(void);
-int func_00102230(void);
-int func_00102238(int, int, int);
-int func_001025C0(int, void *, int);
-void func_00102218(void);
-void func_0010B758(ModelInstance *, int *, int *);
-s64 *func_0010CE08(ModelInstance *, s64 *);
-MotionData *func_00108940(MotionFile *, ModelChannel **, ModelInstance *, int);
+int File_Sync(int, int);
+int File_Close(int);
+void File_Unlock(void);
+int File_IsLocked(void);
+int File_Open(char *, int, int);
+int File_Read(int, void *, int);
+void File_Lock(void);
+void Model_SetUpSkinned(ModelInstance *, int *, int *);
+s64 *Model_SaveGsWordsAndUvs(ModelInstance *, s64 *);
+MotionData *ModelMotion_LoadFile(MotionFile *, ModelChannel **, ModelInstance *, int);
 u32 *Map_GetSlotPacket(int, int);
-void func_0010D018(ModelInstance *, char **, char **);
-void func_0010E8A0(ModelInstance *, s32);
-void func_0010E6A8(ModelInstance *, s64, s64);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
-void func_0010AEB8(void *);
-void func_00109E88(void);
-void func_0010A008(void);
-void func_0010AC80(int, int, int, int);
-void func_0010CAE8(void *, s64, s64, s64, s64);
-void func_0010CB98(void *);
-void func_0010CF10(void *);
+void Model_SetUpPosed(ModelInstance *, char **, char **);
+void Model_SetVu1Program(ModelInstance *, s32);
+void Model_SetPrimBits(ModelInstance *, s64, s64);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
+void ModelTexture_SendForModel(void *);
+void GsDraw_QueueTexFlush(void);
+void GsDraw_ResetDrawTarget(void);
+void GsDraw_CopyFrameToTexture(int, int, int, int);
+void Model_SetBlockGsWords(void *, s64, s64, s64, s64);
+void Model_SetUvsFromScreen(void *);
+void Model_RestoreGsWordsAndUvs(void *);
 
 /* file-local functions, in order of definition */
-static int func_00123918(Entity *entity);
-static void func_00123AB8(Entity *entity);
-static int func_00123AF0(int type_id);
-static int func_00123B40(void);
-static int func_00123C30(void);
-static int func_00123DD8(int idx);
-static int func_00123ED8(int pool_size);
-static int func_00124008(int slot_index);
-static void func_001240B8(int group_id);
-static void func_001241A0(int slot_index);
-static void func_00124318(int slot_index, int type_id, int two_blocks);
-static void func_00124370(int slot_index);
-static void func_001243E8(int slot_index);
-static void func_00124428(EntityPoolSlot *slot);
-static void func_001244C0(EntityPoolSlot *slot);
-static void func_00124570(void);
-static int func_001246A8(void);
-static int func_00124720(int index);
-static void func_00124798(int index);
-static void func_001247F8(ModelInstance *model);
-static void func_00124960(ModelInstance *model);
+static int Entity_TryActivate(Entity *entity);
+static void Entity_ReleaseWorkArea(Entity *entity);
+static int EntityPool_FindType(int type_id);
+static int EntityPool_ClaimBlock(void);
+static int EntityPool_ClaimBlockPair(void);
+static int EntityPool_ClaimFixedBlock(int idx);
+static int EntityPool_ClaimFixedBlockPair(int pool_size);
+static int EntityPool_HasFixedUser(int slot_index);
+static void EntityPool_EvictBlockUsers(int group_id);
+static void EntityPool_EmptyBlock(int slot_index);
+static void EntityPool_QueueLoad(int slot_index, int type_id, int two_blocks);
+static void EntityPool_AddUser(int slot_index);
+static void EntityPool_RemoveUser(int slot_index);
+static void EntityPool_CopyLoadedFile(EntityPoolSlot *slot);
+static void EntityPool_AbandonLoad(EntityPoolSlot *slot);
+static void EntityPool_FreeUnusedBlocks(void);
+static int Entity_FindFreeWorkArea(void);
+static int Entity_ClaimWorkArea(int index);
+static void Entity_FreeWorkArea(int index);
+static void Entity_PrepareModelDraw(ModelInstance *model);
+static void Entity_PrepareScreenTexturedDraw(ModelInstance *model);
 static void func_00124AF8(void);
-static void func_00124B00(int slot_index);
-static void func_00124BC8(Entity *entity);
-static Entity *func_00124C08(Entity *entity);
-static void func_00124C60(Entity *entity);
-static Entity *func_00124CA0(Entity *entity);
-static void func_00124CF8(Entity *entity);
-static Entity *func_00124D48(Entity *entity);
-static void func_001232C0(void);
-static void func_001234F0(void);
-static void func_00123690(void);
+static void EntityPool_BuildBlockModel(int slot_index);
+static void Entity_AppendToWaiting(Entity *entity);
+static Entity *Entity_UnlinkWaiting(Entity *entity);
+static void Entity_AppendToLoading(Entity *entity);
+static Entity *Entity_UnlinkLoading(Entity *entity);
+static void Entity_AppendToActive(Entity *entity);
+static Entity *Entity_UnlinkActive(Entity *entity);
+static void Entity_StartLoadsInRange(void);
+static void Entity_ActivateLoaded(void);
+static void EntityPool_StepLoads(void);
 
 /* Entity pool state. Lists A, B and C hold the entities; the pool blocks and work areas are below. */
 static EntityPoolSlot *D_00447098;      /* 0x447098 the block being read or unpacked */
@@ -145,7 +145,7 @@ void Entity_ResetAllLists(void) {
 }
 
 /* Returns TRUE while any pool block is held by a loading or unpacking job. */
-int func_00123108(void) {
+int EntityPool_IsLoading(void) {
     int i;
     int kind;
 
@@ -158,12 +158,13 @@ int func_00123108(void) {
     return FALSE;
 }
 
-void func_00123158(int idx) {
+/* Puts every entity of group `idx` on list A (waiting for a pool block). */
+void Entity_AddGroupToWaiting(int idx) {
     int i;
     Entity *group_entity = entity_pool[idx];
     int group_count = D_004467D8[idx];
     for (i = 0; i < group_count; i++) {
-        func_00124BC8(group_entity);
+        Entity_AppendToWaiting(group_entity);
         group_entity++;
     }
 }
@@ -175,7 +176,7 @@ void Entity_FreeAllInGroup(int group_id) {
     entity = D_004470A8;
     while (entity != NULL) {
         if (entity->group_id == group_id) {
-            entity = func_00124C08(entity);
+            entity = Entity_UnlinkWaiting(entity);
         } else {
             entity = entity->next;
         }
@@ -184,7 +185,7 @@ void Entity_FreeAllInGroup(int group_id) {
     entity = D_004470B0;
     while (entity != NULL) {
         if (entity->group_id == group_id) {
-            entity = func_00124CA0(entity);
+            entity = Entity_UnlinkLoading(entity);
         } else {
             entity = entity->next;
         }
@@ -193,9 +194,9 @@ void Entity_FreeAllInGroup(int group_id) {
     entity = D_004467E0;
     while (entity != NULL) {
         if (entity->group_id == group_id) {
-            func_001243E8(entity->unkD3);
-            func_00123AB8(entity);
-            entity = func_00124D48(entity);
+            EntityPool_RemoveUser(entity->unkD3);
+            Entity_ReleaseWorkArea(entity);
+            entity = Entity_UnlinkActive(entity);
             Effect_FreeForOwner(entity);
         } else {
             entity = entity->next;
@@ -204,62 +205,62 @@ void Entity_FreeAllInGroup(int group_id) {
 }
 
 /* Per-frame entity update: runs the pool, list and despawn steps in order. */
-void func_00123288(void) {
-    func_001232C0();
-    func_001234F0();
+void Entity_UpdatePool(void) {
+    Entity_StartLoadsInRange();
+    Entity_ActivateLoaded();
     Entity_DespawnOutOfRange();
-    func_00123690();
-    func_00124570();
+    EntityPool_StepLoads();
+    EntityPool_FreeUnusedBlocks();
 }
 
 /* Gives each entity a pool block and queues its load; out-of-range entities without a block are skipped. */
-static void func_001232C0(void) {
+static void Entity_StartLoadsInRange(void) {
     Entity *entity = D_004470A8;
     while (entity != NULL) {
         Entity *queued;
         float distance;
         float height_difference;
 
-        distance = func_00124DE0(entity);
+        distance = Entity_SpawnDistanceToPlayer(entity);
         entity->distance_to_player = distance;
         height_difference = ABS(player_state[1] - entity->spawn_info->spawn_y);
         if (entity->unkD3 >= 0 ||
             (distance <= (float)entity->spawn_info->despawn_range &&
              (entity->spawn_info->vertical_despawn_range == 0 ||
               height_difference < (float)entity->spawn_info->vertical_despawn_range))) {
-            entity->unkD3 = func_00123AF0(entity->spawn_info->type_id);
+            entity->unkD3 = EntityPool_FindType(entity->spawn_info->type_id);
             // match: the slot is tested as a signed byte, as unkD3 is stored
             if ((char)entity->unkD3 >= 0) {
                 queued = entity;
                 entity = entity->next;
-                if (func_00123918(queued)) {
-                    func_00124C08(queued);
-                    func_00124CF8(queued);
+                if (Entity_TryActivate(queued)) {
+                    Entity_UnlinkWaiting(queued);
+                    Entity_AppendToActive(queued);
                 }
                 continue;
             }
             // match: pool_size is read unsigned (lbu) for this compare
             if ((u8)entity->spawn_info->pool_size < 5) {
                 if (ENTITY_CONTROLLER(entity)->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
-                    entity->unkD3 = func_00123ED8(entity->spawn_info->pool_size);
+                    entity->unkD3 = EntityPool_ClaimFixedBlockPair(entity->spawn_info->pool_size);
                     if (entity->unkD3 >= 0) {
                         entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
                         entity_pool_slots[entity->unkD3 + 1].head.word |= ENTITY_POOL_FLAG_200;
                     }
                 } else {
-                    entity->unkD3 = func_00123DD8(entity->spawn_info->pool_size);
+                    entity->unkD3 = EntityPool_ClaimFixedBlock(entity->spawn_info->pool_size);
                     if (entity->unkD3 >= 0) {
                         entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
                     }
                 }
             } else if (ENTITY_CONTROLLER(entity)->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
-                entity->unkD3 = func_00123C30();
+                entity->unkD3 = EntityPool_ClaimBlockPair();
                 if (entity->unkD3 >= 0) {
                     entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
                     entity_pool_slots[entity->unkD3 + 1].head.word |= ENTITY_POOL_FLAG_200;
                 }
             } else {
-                entity->unkD3 = func_00123B40();
+                entity->unkD3 = EntityPool_ClaimBlock();
                 if (entity->unkD3 >= 0) {
                     entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
                 }
@@ -267,9 +268,9 @@ static void func_001232C0(void) {
             if (entity->unkD3 >= 0) {
                 queued = entity;
                 entity = entity->next;
-                func_00124318(queued->unkD3, queued->spawn_info->type_id, ENTITY_CONTROLLER(queued)->flags >> 15);
-                func_00124C08(queued);
-                func_00124C60(queued);
+                EntityPool_QueueLoad(queued->unkD3, queued->spawn_info->type_id, ENTITY_CONTROLLER(queued)->flags >> 15);
+                Entity_UnlinkWaiting(queued);
+                Entity_AppendToLoading(queued);
                 continue;
             }
         }
@@ -278,7 +279,7 @@ static void func_001232C0(void) {
 }
 
 /* Walks the D_004470B0 list and finishes each entity whose pool block is ready. */
-static void func_001234F0(void) {
+static void Entity_ActivateLoaded(void) {
     Entity *entity;
     Entity *current;
 
@@ -287,9 +288,9 @@ static void func_001234F0(void) {
         if (entity_pool_slots[entity->unkD3].head.fields.kind == ENTITY_POOL_READY) {
             current = entity;
             entity = entity->next;
-            if (func_00123918(current)) {
-                func_00124CA0(current);
-                func_00124CF8(current);
+            if (Entity_TryActivate(current)) {
+                Entity_UnlinkLoading(current);
+                Entity_AppendToActive(current);
             }
         } else {
             entity = entity->next;
@@ -307,7 +308,7 @@ void Entity_DespawnOutOfRange(void) {
         int out_of_range;
         Entity *despawned;
 
-        distance = func_00124DE0(entity);
+        distance = Entity_SpawnDistanceToPlayer(entity);
         entity->distance_to_player = distance;
         spawn_info = entity->spawn_info;
         height_difference = player_state[1] - spawn_info->spawn_y;
@@ -321,10 +322,10 @@ void Entity_DespawnOutOfRange(void) {
         despawned = entity;
         if (out_of_range) {
             entity = entity->next;
-            func_001243E8(despawned->unkD3);
-            func_00123AB8(despawned);
-            func_00124D48(despawned);
-            func_00124BC8(despawned);
+            EntityPool_RemoveUser(despawned->unkD3);
+            Entity_ReleaseWorkArea(despawned);
+            Entity_UnlinkActive(despawned);
+            Entity_AppendToWaiting(despawned);
             Effect_FreeForOwner(despawned);
         } else {
             entity = entity->next;
@@ -334,7 +335,7 @@ void Entity_DespawnOutOfRange(void) {
 
 /* Runs the entity pool's loads: steps the block being read or unpacked, ages the idle ones, and when
    nothing is busy starts reading the type file of the first queued block. */
-static void func_00123690(void) {
+static void EntityPool_StepLoads(void) {
     char path[0x100];
     EntityPoolSlot *slot;
     EntityPoolSlot *queued;
@@ -353,14 +354,14 @@ static void func_00123690(void) {
             }
             break;
         case ENTITY_POOL_READING:
-            if (func_00102790(D_004467C4, 1) == 0) {
+            if (File_Sync(D_004467C4, 1) == 0) {
                 if (((EntityController *)(D_004467C0 + slot->head.fields.unk2 * 0x450))->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
                     slot[1].head.fields.kind = ENTITY_POOL_EXTENSION;
                     slot[1].head.fields.unk2 = 0xFFFF;
                 }
-                func_001024B0(D_004467C4);
-                func_00124428(slot);
-                func_00124B00(i);
+                File_Close(D_004467C4);
+                EntityPool_CopyLoadedFile(slot);
+                EntityPool_BuildBlockModel(i);
                 entity_type_file_header = *(EntityTypeFileHeader *)file_load_buffer;
                 D_004467C4 = -1;
                 if (entity_type_file_header.unk18 != 0 && entity_type_file_header.unk14 != 0) {
@@ -380,7 +381,7 @@ static void func_00123690(void) {
         case ENTITY_POOL_UNPACKING:
             if (sound_load_queue.unk18 == 0) {
                 slot->head.fields.kind = ENTITY_POOL_READY;
-                func_00102228();
+                File_Unlock();
                 D_00447098 = NULL;
             }
             busy = TRUE;
@@ -407,23 +408,23 @@ static void func_00123690(void) {
     if (sound_load_queue.unk04 != 0) {
         return;
     }
-    if (func_00102230() != 0) {
+    if (File_IsLocked() != 0) {
         return;
     }
     sprintf(path, D_0043E790, D_004467C8, ((EntityParams *)(D_004467C0 + queued->head.fields.unk2 * 0x450))->unk00_0);
-    D_004467C4 = func_00102238((int)path, 1, 1);
+    D_004467C4 = File_Open(path, 1, 1);
     if (D_004467C4 < 0) {
-        func_001244C0(queued);
+        EntityPool_AbandonLoad(queued);
         return;
     }
     queued->head.fields.kind = ENTITY_POOL_READING;
-    func_001025C0(D_004467C4, file_load_buffer, -1);
-    func_00102218();
+    File_Read(D_004467C4, file_load_buffer, -1);
+    File_Lock();
     D_00447098 = queued;
 }
 
 /* Gives an entity whose pool block is ready its work area and model; FALSE if it has to wait. */
-static int func_00123918(Entity *entity) {
+static int Entity_TryActivate(Entity *entity) {
     int data_address;
     int work_address;
     EntityPoolSlot *slot = &entity_pool_slots[entity->unkD3];
@@ -434,47 +435,47 @@ static int func_00123918(Entity *entity) {
     if (slot->head.fields.kind != ENTITY_POOL_READY) {
         return FALSE;
     }
-    work_index = func_001246A8();
+    work_index = Entity_FindFreeWorkArea();
     if (work_index < 0) {
         return FALSE;
     }
     entity->unkD4 = work_index;
-    work_address = func_00124720(work_index);
+    work_address = Entity_ClaimWorkArea(work_index);
     data_address = slot->base_address + (int)data->model_offset;
-    func_0010B758(ENTITY_MODEL(entity), &data_address, &work_address);
+    Model_SetUpSkinned(ENTITY_MODEL(entity), &data_address, &work_address);
     model = ENTITY_MODEL(entity);
-    model->draw = func_001247F8;
+    model->draw = Entity_PrepareModelDraw;
     model->unk1B0 = NULL;
     if (entity->spawn_info->type_id == 0x47) {
         model->unk100 |= 0x200;
         model->unk102 |= MODEL_FLAG_800;
-        model->draw = func_00124960;
+        model->draw = Entity_PrepareScreenTexturedDraw;
         model->unk1B0 = func_00124AF8;
         D_004467E8 = entity->spawn_info->type_id;
         work_address = (int)entity_work_area;
-        work_address = (int)func_0010CE08(model, (s64 *)work_address);
+        work_address = (int)Model_SaveGsWordsAndUvs(model, (s64 *)work_address);
     }
     data_address = slot->base_address + (int)data->motion_offset;
-    func_00108940(data_address, &work_address, ENTITY_MODEL(entity), 1);
+    ModelMotion_LoadFile(data_address, &work_address, ENTITY_MODEL(entity), 1);
     data_address = slot->base_address + data->unk0C;
     ENTITY_MODEL(entity)->unk194 = data_address;
     ENTITY_MODEL(entity)->unk190 = 0;
     ENTITY_MODEL(entity)->unk19C = (int)Map_GetSlotPacket(entity->group_id, 3);
     ENTITY_MODEL(entity)->unk1A0 = (int)Map_GetSlotPacket(entity->group_id, 5);
     entity->unkD2 = slot->unk7;
-    func_00124370(entity->unkD3);
+    EntityPool_AddUser(entity->unkD3);
     ((void (*)(Entity *))Entity_ResetToSpawn)(entity); // match: declared without its argument elsewhere
     return TRUE;
 }
 
 /* Releases the entity's work area and clears its pool and work-area indices. */
-static void func_00123AB8(Entity *entity) {
-    func_00124798(entity->unkD4);
+static void Entity_ReleaseWorkArea(Entity *entity) {
+    Entity_FreeWorkArea(entity->unkD4);
     entity->unkD4 = entity->unkD3 = -1;
 }
 
 /* Returns the pool block index in use (kinds 1 to 4) for a type id, or -1. */
-static int func_00123AF0(int type_id) {
+static int EntityPool_FindType(int type_id) {
     int i;
     EntityPoolSlot *slot;
 
@@ -488,7 +489,7 @@ static int func_00123AF0(int type_id) {
 }
 
 /* Claims the first free pool block, else the unused block with the lowest size; returns its index. */
-static int func_00123B40(void) {
+static int EntityPool_ClaimBlock(void) {
     int i;
     int best;
     EntityPoolSlot *slot;
@@ -516,7 +517,7 @@ static int func_00123B40(void) {
 }
 
 /* Claims a free pair of pool blocks for a two-block type, else the first reusable pair; returns its first index or -1. */
-static int func_00123C30(void) {
+static int EntityPool_ClaimBlockPair(void) {
     int i;
     int j;
     int pair;
@@ -564,19 +565,21 @@ static int func_00123C30(void) {
     return best;
 }
 
-static int func_00123DD8(int idx) {
+/* Claims pool block `idx` for a type that always loads there: a free block or a ready one nobody uses is
+   emptied and claimed; returns idx, or -1 when the block is reserved or still in use. */
+static int EntityPool_ClaimFixedBlock(int idx) {
     EntityPoolSlot *slot = &entity_pool_slots[idx];
 
     if (slot->head.word & ENTITY_POOL_FLAG_200) {
         return -1;
     }
     if (slot->head.fields.kind == ENTITY_POOL_FREE) {
-        func_001241A0(idx);
+        EntityPool_EmptyBlock(idx);
         return idx;
     }
     // match: unk4 and unk6 are tested as one word
     if (slot->head.fields.kind == ENTITY_POOL_READY && !(*(int *)&slot->unk4 & 0xFFFFFF)) {
-        func_001241A0(idx);
+        EntityPool_EmptyBlock(idx);
         if (idx < 4 && slot[1].head.fields.kind == ENTITY_POOL_EXTENSION) {
             slot++;
             slot->head.fields.unk2 = 0xFFFF;
@@ -586,16 +589,16 @@ static int func_00123DD8(int idx) {
         }
         return idx;
     }
-    if (slot->head.fields.kind == ENTITY_POOL_EXTENSION && func_00123DD8(idx - 1) != -1) {
-        func_001241A0(idx);
+    if (slot->head.fields.kind == ENTITY_POOL_EXTENSION && EntityPool_ClaimFixedBlock(idx - 1) != -1) {
+        EntityPool_EmptyBlock(idx);
         return idx;
     }
-    func_001241A0(idx);
+    EntityPool_EmptyBlock(idx);
     return -1;
 }
 
 /* Claims a pair of pool blocks starting at this one for a two-block type; returns its index or -1. */
-static int func_00123ED8(int pool_size) {
+static int EntityPool_ClaimFixedBlockPair(int pool_size) {
     EntityPoolSlot *slot = &entity_pool_slots[pool_size];
     EntityPoolSlot *next = &entity_pool_slots[pool_size + 1];
     int first_free;
@@ -608,7 +611,7 @@ static int func_00123ED8(int pool_size) {
         (slot->head.fields.kind == ENTITY_POOL_READY && slot->unk4 == 0 && slot->unk6 == 0)) {
         first_free = TRUE;
     } else {
-        first_free = !func_00124008(pool_size);
+        first_free = !EntityPool_HasFixedUser(pool_size);
     }
     if (!first_free) {
         return -1;
@@ -617,20 +620,20 @@ static int func_00123ED8(int pool_size) {
         return -1;
     }
     // the game's own slip: this result is overwritten by the test right below (an `else` is missing),
-    // so a free or ready second block is always checked with func_00124008. It leaves a dead test in the code.
+    // so a free or ready second block is always checked with EntityPool_HasFixedUser. It leaves a dead test in the code.
     if (next->head.fields.kind == ENTITY_POOL_FREE || next->head.fields.kind == ENTITY_POOL_READY) {
         second_free = TRUE;
     }
     if (next->head.fields.kind == ENTITY_POOL_EXTENSION && first_free) {
         second_free = TRUE;
     } else {
-        second_free = !func_00124008(pool_size + 1);
+        second_free = !EntityPool_HasFixedUser(pool_size + 1);
     }
     if (!second_free) {
         return -1;
     }
-    func_001240B8(pool_size);
-    func_001240B8(pool_size + 1);
+    EntityPool_EvictBlockUsers(pool_size);
+    EntityPool_EvictBlockUsers(pool_size + 1);
     slot->head.fields.unk2 = 0xFFFF;
     slot->unk4 = 0;
     slot->head.bits.flag_100 = TRUE;
@@ -641,7 +644,7 @@ static int func_00123ED8(int pool_size) {
 }
 
 /* TRUE if a one-block entity (pool_size 0-4) uses this pool slot, or the block it extends. */
-static int func_00124008(int slot_index) {
+static int EntityPool_HasFixedUser(int slot_index) {
     Entity *entity;
 
     if (entity_pool_slots[slot_index].head.fields.kind == ENTITY_POOL_EXTENSION) {
@@ -666,8 +669,8 @@ static int func_00124008(int slot_index) {
     return FALSE;
 }
 
-/* Frees the entities matching a group id from two lists. */
-static void func_001240B8(int group_id) {
+/* Sends every loading or active entity that uses pool block `group_id` back to list A. */
+static void EntityPool_EvictBlockUsers(int group_id) {
     Entity *entity;
     Entity *next;
     int other; /* never assigned: retail compares against callee-saved $19 */
@@ -677,8 +680,8 @@ static void func_001240B8(int group_id) {
         if (group_id == entity->unkD3 ||
             (ENTITY_CONTROLLER(entity)->flags & 0x8000 && entity->unkD3 == other && entity->unkD3 >= 0)) {
             next = entity->next;
-            func_00124CA0(entity);
-            func_00124BC8(entity);
+            Entity_UnlinkLoading(entity);
+            Entity_AppendToWaiting(entity);
             entity = next;
         } else {
             entity = entity->next;
@@ -689,11 +692,11 @@ static void func_001240B8(int group_id) {
     while (entity != NULL) {
         if (group_id == entity->unkD3) {
             Effect_FreeForOwner(entity);
-            func_001243E8(entity->unkD3);
-            func_00123AB8(entity);
+            EntityPool_RemoveUser(entity->unkD3);
+            Entity_ReleaseWorkArea(entity);
             next = entity->next;
-            func_00124D48(entity);
-            func_00124BC8(entity);
+            Entity_UnlinkActive(entity);
+            Entity_AppendToWaiting(entity);
             entity = next;
         } else {
             entity = entity->next;
@@ -701,8 +704,9 @@ static void func_001240B8(int group_id) {
     }
 }
 
-/* Frees the users of a pool slot and marks the slot empty; keeps it if a small block still uses it. */
-static void func_001241A0(int slot_index) {
+/* Empties a pool block: sends its users back to list A and marks it reserved; does nothing while an entity
+   with a fixed block (pool_size 0-4) uses it. */
+static void EntityPool_EmptyBlock(int slot_index) {
     Entity *entity;
     Entity *next;
     EntityPoolSlot *slot;
@@ -738,8 +742,8 @@ static void func_001241A0(int slot_index) {
     while (entity != NULL) {
         if (slot_index == entity->unkD3) {
             next = entity->next;
-            func_00124CA0(entity);
-            func_00124BC8(entity);
+            Entity_UnlinkLoading(entity);
+            Entity_AppendToWaiting(entity);
             entity = next;
         } else {
             entity = entity->next;
@@ -750,11 +754,11 @@ static void func_001241A0(int slot_index) {
     while (entity != NULL) {
         if (slot_index == entity->unkD3) {
             Effect_FreeForOwner(entity);
-            func_001243E8(entity->unkD3);
-            func_00123AB8(entity);
+            EntityPool_RemoveUser(entity->unkD3);
+            Entity_ReleaseWorkArea(entity);
             next = entity->next;
-            func_00124D48(entity);
-            func_00124BC8(entity);
+            Entity_UnlinkActive(entity);
+            Entity_AppendToWaiting(entity);
             entity = next;
         } else {
             entity = entity->next;
@@ -767,7 +771,7 @@ static void func_001241A0(int slot_index) {
 }
 
 /* Marks a pool slot QUEUED for a type id; a two-block type also marks the next slot as its extension. */
-static void func_00124318(int slot_index, int type_id, int two_blocks) {
+static void EntityPool_QueueLoad(int slot_index, int type_id, int two_blocks) {
     EntityPoolSlot *slot = &entity_pool_slots[slot_index];
 
     slot->head.fields.kind = ENTITY_POOL_QUEUED;
@@ -786,7 +790,7 @@ static void func_00124318(int slot_index, int type_id, int two_blocks) {
 }
 
 /* Adds a user to a pool block and clears its flags; a two-block type's second block gets the same flag clear. */
-static void func_00124370(int slot_index) {
+static void EntityPool_AddUser(int slot_index) {
     entity_pool_slots[slot_index].head.bits.flag_100 = 0;
     entity_pool_slots[slot_index].unk4++;
     entity_pool_slots[slot_index].head.bits.flag_200 = 0;
@@ -797,7 +801,7 @@ static void func_00124370(int slot_index) {
 }
 
 /* Drops one user of a pool block; when none are left, marks it released at the current frame. */
-static void func_001243E8(int slot_index) {
+static void EntityPool_RemoveUser(int slot_index) {
     EntityPoolSlot *slot;
 
     slot = &entity_pool_slots[slot_index];
@@ -809,7 +813,7 @@ static void func_001243E8(int slot_index) {
 }
 
 /* Copies the loaded type file into the slot's block; hangs if it is empty or too big for the block. */
-static void func_00124428(EntityPoolSlot *slot) {
+static void EntityPool_CopyLoadedFile(EntityPoolSlot *slot) {
     EntityController *controller;
     int *file;
     int table_offset;
@@ -838,14 +842,15 @@ hang:
     goto hang;
 }
 
-/* Frees every entity on lists A and B whose type id matches the slot's, then marks the slot free. */
-static void func_001244C0(EntityPoolSlot *slot) {
+/* Gives up a block whose type file would not open: the entities of that type leave lists A and B, and the
+   block is marked free. */
+static void EntityPool_AbandonLoad(EntityPoolSlot *slot) {
     Entity *entity;
 
     entity = D_004470A8;
     while (entity != NULL) {
         if (entity->spawn_info->type_id == slot->head.fields.unk2) {
-            entity = func_00124C08(entity);
+            entity = Entity_UnlinkWaiting(entity);
         } else {
             entity = entity->next;
         }
@@ -854,7 +859,7 @@ static void func_001244C0(EntityPoolSlot *slot) {
     entity = D_004470B0;
     while (entity != NULL) {
         if (entity->spawn_info->type_id == slot->head.fields.unk2) {
-            entity = func_00124CA0(entity);
+            entity = Entity_UnlinkLoading(entity);
         } else {
             entity = entity->next;
         }
@@ -867,7 +872,7 @@ static void func_001244C0(EntityPoolSlot *slot) {
 }
 
 /* Frees each pool slot whose type no live entity uses any more. */
-static void func_00124570(void) {
+static void EntityPool_FreeUnusedBlocks(void) {
     EntityPoolSlot *slot;
     Entity *entity;
     Entity *list_a;
@@ -915,7 +920,7 @@ in_use:
 }
 
 /* Returns the index of the first clear bit among the 60 flag bits, or -1. */
-static int func_001246A8(void) {
+static int Entity_FindFreeWorkArea(void) {
     u8 *flags = D_004470A0;
     int i;
     int j;
@@ -934,7 +939,7 @@ static int func_001246A8(void) {
 }
 
 /* Marks work area `index` in use, clears it, and returns its address. */
-static int func_00124720(int index) {
+static int Entity_ClaimWorkArea(int index) {
     int work_area;
 
     D_004470A0[index / 8] |= 1 << (index % 8);
@@ -944,7 +949,7 @@ static int func_00124720(int index) {
 }
 
 /* Marks work area `index` free and clears it. */
-static void func_00124798(int index) {
+static void Entity_FreeWorkArea(int index) {
     u8 bit;
     int work_area;
 
@@ -954,75 +959,80 @@ static void func_00124798(int index) {
     memset((void *)work_area, 0, 0x2200);
 }
 
-/* Sets the GS Z-buffer/test/alpha registers (by the model alpha), then hands off. */
-static void func_001247F8(ModelInstance *model) {
-    func_00109A50();
+/* Before an entity model is drawn (ModelInstance.draw): sets the GS Z buffer, test and alpha registers by the
+   model's alpha, then sends the textures it needs. */
+static void Entity_PrepareModelDraw(ModelInstance *model) {
+    Packet_BeginGsRegisters();
     if (model->alpha >= 128.0f) {
-        func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
-        func_00109A80(GS_REG_ZBUF_2, 0xA000118L);
-        func_00109A80(GS_REG_TEST_1, 0x5000D);
-        func_00109A80(GS_REG_TEST_2, 0x5000D);
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
+        Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118L);
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
+        Packet_AddGsRegister(GS_REG_TEST_2, 0x5000D);
     } else {
-        func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-        func_00109A80(GS_REG_ZBUF_2, 0x10A000118L);
-        func_00109A80(GS_REG_TEST_1, 0x5000D);
-        func_00109A80(GS_REG_TEST_2, 0x30001);
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+        Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L);
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
+        Packet_AddGsRegister(GS_REG_TEST_2, 0x30001);
     }
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_ALPHA_2, 9);
-    func_00109AD0();
-    func_0010AEB8(model);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_ALPHA_2, 9);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(model);
 }
 
-/* Sets the GS Z-buffer, alpha and test registers, then draws the model. */
-void func_001248F8(ModelInstance *model) {
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-    func_00109A80(GS_REG_TEST_1, 0x50000);
-    func_00109A80(GS_REG_ALPHA_1, 0x48);
-    func_00109AD0();
-    func_0010AEB8(model);
+/* Sets Z writes off, an always-pass depth test and additive blending, then sends the model's textures.
+   Nothing calls it. */
+void Entity_PrepareAdditiveDraw(ModelInstance *model) {
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x50000);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(model);
 }
 
-/* Draw callback: sets the GS registers for the model's alpha and flags, then draws it. */
-static void func_00124960(ModelInstance *model) {
+/* Before a type 0x47 model is drawn: with MODEL_FLAG_800 it copies the frame into a 256x256 texture at 0x3540
+   and maps it onto the model by screen position, otherwise it puts the model's own textures and texture
+   coordinates back; then sets the GS registers by the model's alpha. */
+static void Entity_PrepareScreenTexturedDraw(ModelInstance *model) {
     if (model->unk102 & MODEL_FLAG_800) {
-        func_0010CAE8(model, 0x220013540L, 0x60, -1, -1);
-        func_0010CB98(model);
-        func_0010AC80(0x3540, 0, 0x100, 0x100);
-        func_0010A008();
-        func_00109E88();
+        Model_SetBlockGsWords(model, 0x220013540L, 0x60, -1, -1);
+        Model_SetUvsFromScreen(model);
+        GsDraw_CopyFrameToTexture(0x3540, 0, 0x100, 0x100);
+        GsDraw_ResetDrawTarget();
+        GsDraw_QueueTexFlush();
     } else {
-        func_0010AEB8(model);
-        func_0010CF10(model);
+        ModelTexture_SendForModel(model);
+        Model_RestoreGsWordsAndUvs(model);
     }
-    func_00109A50();
+    Packet_BeginGsRegisters();
 
     if (128.0f <= model->alpha) {
-        func_00109A80(GS_REG_ZBUF_1, 0xA000118L);
-        func_00109A80(GS_REG_ZBUF_2, 0xA000118L);
-        func_00109A80(GS_REG_TEST_1, 0x5000DL);
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
+        Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118L);
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x5000DL);
         if (model->unk102 & MODEL_FLAG_800) {
-            func_00109A80(GS_REG_TEST_2, 0x30001L);
+            Packet_AddGsRegister(GS_REG_TEST_2, 0x30001L);
         } else {
-            func_00109A80(GS_REG_TEST_2, 0x5000DL);
+            Packet_AddGsRegister(GS_REG_TEST_2, 0x5000DL);
         }
     } else {
-        func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
-        func_00109A80(GS_REG_ZBUF_2, 0x10A000118L);
-        func_00109A80(GS_REG_TEST_1, 0x5000DL);
-        func_00109A80(GS_REG_TEST_2, 0x30001L);
+        Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
+        Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L);
+        Packet_AddGsRegister(GS_REG_TEST_1, 0x5000DL);
+        Packet_AddGsRegister(GS_REG_TEST_2, 0x30001L);
     }
-    func_00109A80(GS_REG_ALPHA_1, 0x44);
-    func_00109A80(GS_REG_ALPHA_2, 0x9);
-    func_00109AD0();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
+    Packet_AddGsRegister(GS_REG_ALPHA_2, 0x9);
+    Packet_EndGsRegisters();
 }
 
+/* Empty. */
 static void func_00124AF8(void) {
 }
 
 /* Clears a pool slot's model and work buffer, then builds the model from the slot's loaded data. */
-static void func_00124B00(int slot_index) {
+static void EntityPool_BuildBlockModel(int slot_index) {
     char *model_data;
     char *buffer;
     ModelInstance *model = &entity_models[slot_index];
@@ -1036,14 +1046,14 @@ static void func_00124B00(int slot_index) {
     data = (EntityPoolData *)entity_pool_slots[slot_index].base_address;
     if (data->pool_model_offset != 0) {
         model_data = (char *)data + data->pool_model_offset;
-        func_0010D018(model, &model_data, &buffer);
-        func_0010E8A0(model, 0x5A0);
-        func_0010E6A8(model, 0x20, 0x20);
+        Model_SetUpPosed(model, &model_data, &buffer);
+        Model_SetVu1Program(model, 0x5A0);
+        Model_SetPrimBits(model, 0x20, 0x20);
     }
 }
 
-/* Appends an entity to the tail of list A. */
-static void func_00124BC8(Entity *entity) {
+/* Appends an entity to the tail of list A (waiting for a pool block). */
+static void Entity_AppendToWaiting(Entity *entity) {
     Entity *tail;
 
     if (D_004470A8 != NULL) {
@@ -1061,8 +1071,8 @@ static void func_00124BC8(Entity *entity) {
     D_004470B8++;
 }
 
-/* Unlinks an entity from its list and returns the next one. */
-static Entity *func_00124C08(Entity *entity) {
+/* Unlinks an entity from list A and returns the next one. */
+static Entity *Entity_UnlinkWaiting(Entity *entity) {
     Entity *next;
 
     next = entity->next;
@@ -1082,8 +1092,8 @@ static Entity *func_00124C08(Entity *entity) {
     return next;
 }
 
-/* Appends an entity to the tail of list B. */
-static void func_00124C60(Entity *entity) {
+/* Appends an entity to the tail of list B (waiting for its pool block to load). */
+static void Entity_AppendToLoading(Entity *entity) {
     Entity *tail;
 
     if (D_004470B0 != NULL) {
@@ -1101,7 +1111,8 @@ static void func_00124C60(Entity *entity) {
     D_004470BC++;
 }
 
-static Entity *func_00124CA0(Entity *entity) {
+/* Unlinks an entity from list B and returns the next one. */
+static Entity *Entity_UnlinkLoading(Entity *entity) {
     Entity *next;
 
     next = entity->next;
@@ -1121,8 +1132,8 @@ static Entity *func_00124CA0(Entity *entity) {
     return next;
 }
 
-/* Appends an entity to the tail of list C and sets flag bit 0. */
-static void func_00124CF8(Entity *entity) {
+/* Appends an entity to the tail of list C (active) and sets flag bit 0. */
+static void Entity_AppendToActive(Entity *entity) {
     Entity *tail;
 
     if (D_004467E0 != NULL) {
@@ -1142,7 +1153,7 @@ static void func_00124CF8(Entity *entity) {
 }
 
 /* Unlinks an entity from list C and returns the next one. */
-static Entity *func_00124D48(Entity *entity) {
+static Entity *Entity_UnlinkActive(Entity *entity) {
     Entity *next;
 
     next = entity->next;
@@ -1165,7 +1176,7 @@ static Entity *func_00124D48(Entity *entity) {
 }
 
 /* Horizontal distance from the entity's spawn point to the player. */
-float func_00124DE0(Entity *entity) {
+float Entity_SpawnDistanceToPlayer(Entity *entity) {
     float delta_x;
     float delta_z;
 

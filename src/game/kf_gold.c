@@ -9,18 +9,18 @@
 #include "kf_gs.h"
 
 void *memset(void *, int, u32);
-int func_00102238(char *, int, int);
-int func_001025C0(int, void *, int);
-int func_001024B0(int);
-void func_0010B758(ModelInstance *, int *, int *);
+int File_Open(char *, int, int);
+int File_Read(int, void *, int);
+int File_Close(int);
+void Model_SetUpSkinned(ModelInstance *, int *, int *);
 void Gold_DrawFaded(OverlaySprite *);
-void func_00109A50(void);
-void func_00109A80(int, s64);
-void func_00109AD0(void);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int, s64);
+void Packet_EndGsRegisters(void);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
-void func_0010AEB8(void *);
-void func_0010BA30(ModelInstance *);
-void func_0010B018(ModelInstance *, s32, s32);
+void ModelTexture_SendForModel(void *);
+void Model_DrawSkinned(ModelInstance *);
+void DrawList_Add(ModelInstance *, s32, s32);
 int Collision_FindFloorBelow(f32, void *);
 void Vector_Copy(void *, void *);
 void Vector_Add(void *, void *, void *);
@@ -69,12 +69,12 @@ void Gold_Init(void) {
     memset(map_gold_texture, 0, sizeof(map_gold_texture));
     memset(map_gold_model, 0, sizeof(map_gold_model));
     memset(map_actor_matrices, 0, sizeof(map_actor_matrices));
-    file = func_00102238("item/i0000.om2", 0, 1);
-    func_001025C0(file, map_gold_model, -1);
-    func_001024B0(file);
-    file = func_00102238("item/i0000.tx2", 0, 1);
-    func_001025C0(file, map_gold_texture, -1);
-    func_001024B0(file);
+    file = File_Open("item/i0000.om2", 0, 1);
+    File_Read(file, map_gold_model, -1);
+    File_Close(file);
+    file = File_Open("item/i0000.tx2", 0, 1);
+    File_Read(file, map_gold_texture, -1);
+    File_Close(file);
 }
 
 static inline void copy_matrix(ModelMatrixQwords *target, ModelMatrixQwords *origin) {
@@ -118,7 +118,7 @@ void Gold_InitMap(int map) {
         actor->body = model;
         work = (int)matrix;
         source = (int)map_gold_model;
-        func_0010B758(model, &source, &work);
+        Model_SetUpSkinned(model, &source, &work);
         copy_matrix((ModelMatrixQwords *)matrix, (ModelMatrixQwords *)D_00431AF0);
         model->unk148 = (s32)&map_draw_state.unkC0;
         model->unk14C = &map_draw_state.unkA0;
@@ -234,19 +234,19 @@ void Gold_Update(void) {
 void Gold_Draw(s32 list) {
     MapActor *actor;
 
-    func_00109A50();
-    func_00109A80(0x42, 0x44);
-    func_00109A80(0x43, 9);
-    func_00109A80(0x47, 0x5000D);
-    func_00109A80(0x48, 0x5000D);
-    func_00109AD0();
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(0x42, 0x44);
+    Packet_AddGsRegister(0x43, 9);
+    Packet_AddGsRegister(0x47, 0x5000D);
+    Packet_AddGsRegister(0x48, 0x5000D);
+    Packet_EndGsRegisters();
     for (actor = D_004469E0; actor != NULL; actor = actor->next) {
         ModelMatrix_Build(actor->body, &actor->body->position, &actor->body->rotation, &actor->body->unkE0);
         if (actor->body->unk145 == 0) {
-            func_0010AEB8(actor->body);
-            func_0010BA30(actor->body);
+            ModelTexture_SendForModel(actor->body);
+            Model_DrawSkinned(actor->body);
         } else {
-            func_0010B018(actor->body, 0, list);
+            DrawList_Add(actor->body, 0, list);
         }
     }
 }
@@ -439,10 +439,10 @@ void Gold_ClearMark(MapActor *actor) {
 
 /* Draw hook of a gold pile's model: blends it by its fade alpha (unk146), then draws it. */
 void Gold_DrawFaded(OverlaySprite *sprite) {
-    func_00109A50();
-    func_00109A80(GS_REG_ALPHA_1, ((s64)sprite->unk146 << 32) | 0x64);
-    func_00109A80(GS_REG_TEST_1, 0x51001);
-    func_00109A80(0x48, 0x30001);
-    func_00109AD0();
-    func_0010AEB8(sprite);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)sprite->unk146 << 32) | 0x64);
+    Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
+    Packet_AddGsRegister(0x48, 0x30001);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(sprite);
 }

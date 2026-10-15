@@ -18,23 +18,23 @@ char *Texture_UploadTable(char *base, int upload);
 void Texture_SendTexFlush(void);
 void Vector_Copy(void *dst, void *src);
 void Vector_Add(void *, void *, void *);
-void func_00109A50(void);
-void func_00109A80(int reg, s64 value);
-void func_00109AD0(void);
-void func_00109E18(void);
-void func_0010AEB8(void *model_arg);
-u32 *func_00109990(int);
-void func_00109650(u32 *, u32 *);
-void func_00109E88(void);
+void Packet_BeginGsRegisters(void);
+void Packet_AddGsRegister(int reg, s64 value);
+void Packet_EndGsRegisters(void);
+void GsDraw_QueueFlush(void);
+void ModelTexture_SendForModel(void *model_arg);
+u32 *Packet_Alloc(int);
+void Packet_AppendToChain(u32 *, u32 *);
+void GsDraw_QueueTexFlush(void);
 int Map_IsPointInRecord(f32 *point, AreaNode *node, f32 margin);
 AreaNode *Map_FindRecordAt(f32 *point, f32 margin);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
-void func_0010B018(ModelInstance *, s32, s32);
+void DrawList_Add(ModelInstance *, s32, s32);
 char Sound_PlayTrackedKind(int index, int first, int second, int third, int fourth);
 void Sound_StopTracked(s8 handle);
-void func_0010D018(ModelInstance *, char **, char **);
-int func_00111C78(ModelInstance *model, int first, int last);
+void Model_SetUpPosed(ModelInstance *, char **, char **);
+int Wobble_ModelUsesTextures(ModelInstance *model, int first, int last);
 u32 *Map_GetSlotPacket(int, int);
 
 extern GameStatus game_status;
@@ -107,17 +107,17 @@ void Effect_Init(void) {
     effect_light_block[7].y = 1.0f;
     effect_light_block[7].x = 1.0f;
     effect_light_block[7].w = 1.0f;
-    handle = func_00102238("param/sfx.prm", 0, 1);
-    func_001025C0(handle, effect_table.defs, -1);
-    func_001024B0(handle);
-    handle = func_00102238("sfx/sfx.tmx", 0, 1);
-    func_001025C0(handle, buffer, -1);
-    func_001024B0(handle);
+    handle = File_Open("param/sfx.prm", 0, 1);
+    File_Read(handle, effect_table.defs, -1);
+    File_Close(handle);
+    handle = File_Open("sfx/sfx.tmx", 0, 1);
+    File_Read(handle, buffer, -1);
+    File_Close(handle);
     Texture_UploadTable(buffer, 1);
     Texture_SendTexFlush();
-    handle = func_00102238("sfx/sfx.dat", 0, 1);
-    func_001025C0(handle, effect_model_file, -1);
-    func_001024B0(handle);
+    handle = File_Open("sfx/sfx.dat", 0, 1);
+    File_Read(handle, effect_model_file, -1);
+    File_Close(handle);
     table = effect_model_table;
     for (i = 0; i < 0x200; i++) {
         table[i] += (int)table; /* file offsets become pointers */
@@ -402,14 +402,14 @@ void Effect_UploadTextures(void) {
     u32 *first_word;
     u32 *cursor;
 
-    func_00109E18();
-    first_word = cursor = func_00109990(2);
+    GsDraw_QueueFlush();
+    first_word = cursor = Packet_Alloc(2);
     *cursor++ = effect_texture_packet[0] | 0x30000000;
     *cursor++ = (u32)(effect_texture_packet + 4);
     *cursor++ = 0;
     *cursor = 0;
-    func_00109650(first_word, cursor + 1);
-    func_00109E88();
+    Packet_AppendToChain(first_word, cursor + 1);
+    GsDraw_QueueTexFlush();
 }
 
 /* Draws the live effects for pass 0 or 1: finds the map record each is in, picks its texture
@@ -493,7 +493,7 @@ void Effect_DrawAll(int pass) {
         }
         model->hit_count = 0;
         if (pass == 0 || !(EFFECT_DEF_WORD_F0(effect->def) & (0x8000L << 26))) {
-            func_0010B018(model, ((EffectTableEntry *)effect->def)->placement, pass);
+            DrawList_Add(model, ((EffectTableEntry *)effect->def)->placement, pass);
         }
         if (pass == 0 && effect->frame >= effect->def->keyframe_end) {
             Effect_Free(effect);
@@ -701,10 +701,10 @@ static void Effect_SetupModel(int index) {
     model->unk100 |= 0x1800;
     file_cursor = effect_model_table[def->unkFE];
     memory = effect_model_memory + (index << 11);
-    func_0010D018(model, &file_cursor, &memory);
+    Model_SetUpPosed(model, &file_cursor, &memory);
     model->draw = effect_draw_hooks[((EffectTableEntry *)effect->def)->placement][effect->def->unkF4];
     model->unk100 |= 0x800;
-    if (func_00111C78(model, 0x3BC0, 0x3C3F) != 0) {
+    if (Wobble_ModelUsesTextures(model, 0x3BC0, 0x3C3F) != 0) {
         // match: the owner is read from the effect again for every test (a macro in the game, most likely)
         if (effect->owner_entity == (Entity *)&map_slots[0]) {
             map = 0; /* the owner is a map slot itself */
@@ -1005,85 +1005,85 @@ int Effect_IsDefRangeInUse(int first_def, int last_def) {
 #define EFFECT_TEST_CUTOUT_ON_TOP 0x3000D       /* TEST_1: pixels with alpha above 0, depth test ALWAYS */
 
 /* Draw hook: additive blending behind the scenery's depth, no depth writes; flushes with
-   func_00109E18, then sends the model's textures. */
+   GsDraw_QueueFlush, then sends the model's textures. */
 void Effect_PrepareAdditiveDraw(ModelInstance *model) {
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
-    func_00109A80(GS_REG_ALPHA_1, EFFECT_ALPHA_ADD);
-    func_00109A80(GS_REG_TEST_1, EFFECT_TEST_COLOUR_DEPTH);
-    func_00109AD0();
-    func_00109E18();
-    func_0010AEB8(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, EFFECT_ALPHA_ADD);
+    Packet_AddGsRegister(GS_REG_TEST_1, EFFECT_TEST_COLOUR_DEPTH);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
+    ModelTexture_SendForModel(model);
 }
 
 /* Draw hook: subtractive blending, depth-tested, no depth writes; then sends the model's textures. */
 void Effect_PrepareSubtractiveDraw(ModelInstance *model) {
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
-    func_00109A80(GS_REG_ALPHA_1, EFFECT_ALPHA_SUBTRACT);
-    func_00109A80(GS_REG_TEST_1, EFFECT_TEST_COLOUR_DEPTH);
-    func_00109AD0();
-    func_0010AEB8(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, EFFECT_ALPHA_SUBTRACT);
+    Packet_AddGsRegister(GS_REG_TEST_1, EFFECT_TEST_COLOUR_DEPTH);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(model);
 }
 
 /* Draw hook: alpha blending, depth-tested, no depth writes; then sends the model's textures. */
 void Effect_PrepareBlendedDraw(ModelInstance *model) {
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
-    func_00109A80(GS_REG_ALPHA_1, EFFECT_ALPHA_BLEND);
-    func_00109A80(GS_REG_TEST_1, EFFECT_TEST_COLOUR_DEPTH);
-    func_00109AD0();
-    func_0010AEB8(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, EFFECT_ALPHA_BLEND);
+    Packet_AddGsRegister(GS_REG_TEST_1, EFFECT_TEST_COLOUR_DEPTH);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(model);
 }
 
 /* Draw hook: no blending, pixels with alpha above 0 only, depth-tested and written; then sends
    the model's textures. */
 void Effect_PrepareCutoutDraw(ModelInstance *model) {
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, EFFECT_ZBUF_WRITE);
-    func_00109A80(GS_REG_ALPHA_1, EFFECT_ALPHA_OPAQUE);
-    func_00109A80(GS_REG_TEST_1, EFFECT_TEST_CUTOUT_DEPTH);
-    func_00109AD0();
-    func_0010AEB8(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, EFFECT_ZBUF_WRITE);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, EFFECT_ALPHA_OPAQUE);
+    Packet_AddGsRegister(GS_REG_TEST_1, EFFECT_TEST_CUTOUT_DEPTH);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(model);
 }
 
 /* Effect_PrepareAdditiveDraw drawn over everything (no depth test). */
 void Effect_PrepareAdditiveDrawOnTop(ModelInstance *model) {
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
-    func_00109A80(GS_REG_ALPHA_1, EFFECT_ALPHA_ADD);
-    func_00109A80(GS_REG_TEST_1, EFFECT_TEST_COLOUR_ON_TOP);
-    func_00109AD0();
-    func_00109E18();
-    func_0010AEB8(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, EFFECT_ALPHA_ADD);
+    Packet_AddGsRegister(GS_REG_TEST_1, EFFECT_TEST_COLOUR_ON_TOP);
+    Packet_EndGsRegisters();
+    GsDraw_QueueFlush();
+    ModelTexture_SendForModel(model);
 }
 
 /* Effect_PrepareSubtractiveDraw drawn over everything (no depth test). */
 void Effect_PrepareSubtractiveDrawOnTop(ModelInstance *model) {
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
-    func_00109A80(GS_REG_ALPHA_1, EFFECT_ALPHA_SUBTRACT);
-    func_00109A80(GS_REG_TEST_1, EFFECT_TEST_COLOUR_ON_TOP);
-    func_00109AD0();
-    func_0010AEB8(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, EFFECT_ALPHA_SUBTRACT);
+    Packet_AddGsRegister(GS_REG_TEST_1, EFFECT_TEST_COLOUR_ON_TOP);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(model);
 }
 
 /* Effect_PrepareBlendedDraw drawn over everything (no depth test). */
 void Effect_PrepareBlendedDrawOnTop(ModelInstance *model) {
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
-    func_00109A80(GS_REG_ALPHA_1, EFFECT_ALPHA_BLEND);
-    func_00109A80(GS_REG_TEST_1, EFFECT_TEST_COLOUR_ON_TOP);
-    func_00109AD0();
-    func_0010AEB8(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, EFFECT_ZBUF_NO_WRITE);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, EFFECT_ALPHA_BLEND);
+    Packet_AddGsRegister(GS_REG_TEST_1, EFFECT_TEST_COLOUR_ON_TOP);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(model);
 }
 
 /* Effect_PrepareCutoutDraw without the depth test; it still writes depth. */
 void Effect_PrepareCutoutDrawOnTop(ModelInstance *model) {
-    func_00109A50();
-    func_00109A80(GS_REG_ZBUF_1, EFFECT_ZBUF_WRITE);
-    func_00109A80(GS_REG_ALPHA_1, EFFECT_ALPHA_OPAQUE);
-    func_00109A80(GS_REG_TEST_1, EFFECT_TEST_CUTOUT_ON_TOP);
-    func_00109AD0();
-    func_0010AEB8(model);
+    Packet_BeginGsRegisters();
+    Packet_AddGsRegister(GS_REG_ZBUF_1, EFFECT_ZBUF_WRITE);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, EFFECT_ALPHA_OPAQUE);
+    Packet_AddGsRegister(GS_REG_TEST_1, EFFECT_TEST_CUTOUT_ON_TOP);
+    Packet_EndGsRegisters();
+    ModelTexture_SendForModel(model);
 }

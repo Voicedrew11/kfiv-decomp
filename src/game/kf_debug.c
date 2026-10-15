@@ -17,10 +17,10 @@ void func_001B0A70(void);
 int Debug_RunStartMenu(void);
 void func_001095D0(void);
 void func_001095D8(void);
-void func_001095E0(void);
-void func_001096E8(void);
-void func_00109800(void);
-void func_0010A4E8(int, int, int, int, int);
+void Packet_SwapBuffers(void);
+void Packet_SendChain(void);
+void Packet_WaitForSend(void);
+void GsDraw_FillScreen(int, int, int, int, int);
 void Input_Update(void);
 void Display_SwapBuffers(int);
 extern DebugStartMenuSpacer D_0043EF70;
@@ -250,16 +250,16 @@ int Debug_RunStartMenu(void) {
             if (pad_state[1] & 8) {
                 break;
             }
-            func_001095E0();
+            Packet_SwapBuffers();
             func_001095D0();
-            func_0010A4E8(0, 0, 0, 0, 0x2A);
+            GsDraw_FillScreen(0, 0, 0, 0, 0x2A);
             Message_DebugSetColor(0);
             Message_DebugPrintf(spacer.text);
             Message_DebugPrintf(prompt.text);
             Message_Update();
             func_001095D8();
-            func_001096E8();
-            func_00109800();
+            Packet_SendChain();
+            Packet_WaitForSend();
             Display_SwapBuffers(0);
         }
         selected = 0;
@@ -275,9 +275,9 @@ int Debug_RunStartMenu(void) {
                 chosen = selected;
                 running = FALSE;
             }
-            func_001095E0();
+            Packet_SwapBuffers();
             func_001095D0();
-            func_0010A4E8(0, 0, 0, 0, 0x2A);
+            GsDraw_FillScreen(0, 0, 0, 0, 0x2A);
             Message_DebugPrintf(spacer.text);
             for (i = 0; i < 4; i++) {
                 Message_DebugSetColor((selected == i) ? 3 : 0);
@@ -285,8 +285,8 @@ int Debug_RunStartMenu(void) {
             }
             Message_Update();
             func_001095D8();
-            func_001096E8();
-            func_00109800();
+            Packet_SendChain();
+            Packet_WaitForSend();
             Display_SwapBuffers(0);
         }
     } while (running);
@@ -338,13 +338,13 @@ int Debug_PickMap(int *map_id) {
                 map = 0;
             }
         }
-        func_001095E0();
+        Packet_SwapBuffers();
         func_001095D0();
         Message_DebugPrintf(D_0043F1D8, map);
         Message_Update();
         func_001095D8();
-        func_001096E8();
-        ((int (*)(void))func_00109800)(); // match: a result keeps $2 busy after the call
+        Packet_SendChain();
+        ((int (*)(void))Packet_WaitForSend)(); // match: a result keeps $2 busy after the call
         if (pressed & 0x2000) {
             *map_id = map;
             confirmed = TRUE;
@@ -403,7 +403,7 @@ void Debug_EditIniNumber(int *value) {
         } else if (pressed & 0x40) {
             digits[cursor] = (digits[cursor] + 9) % 10;
         }
-        func_001095E0();
+        Packet_SwapBuffers();
         func_001095D0();
         Message_DebugSetColor(9);
         Message_DebugPrintf(D_00446900);
@@ -414,8 +414,8 @@ void Debug_EditIniNumber(int *value) {
         Message_DebugPrintf(D_00446910);
         Message_Update();
         func_001095D8();
-        func_001096E8();
-        ((int (*)(void))func_00109800)(); // match: a result keeps $2 busy after the call
+        Packet_SendChain();
+        ((int (*)(void))Packet_WaitForSend)(); // match: a result keeps $2 busy after the call
         if (pressed & 0x2000) {
             *value = digits[0] + digits[1] * 10 + digits[2] * 100 + digits[3] * 1000;
             break;
