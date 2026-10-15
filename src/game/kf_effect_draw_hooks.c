@@ -1,5 +1,4 @@
-/* The draw hook of each effect model: an effect definition's placement and its blend mode
-   (unkF4) pick which of the sixteen Effect_SetupModel installs. */
+/* Draw hooks of the effect models, picked by placement and blend mode. */
 #include "kf_model.h"
 
 void Effect_PrepareAdditiveDraw(ModelInstance *model);

@@ -1,5 +1,4 @@
-/* The map objects: what a map record's object is defined by, the objects of both map
-   slots and the per-kind handlers MapObject_Update and its callers use. */
+/* Map object definitions, both slots' objects and per-kind handlers. */
 #include "kf_game.h"
 #include "kf_map.h"
 #include "kf_model.h"

@@ -1,6 +1,4 @@
-/* The map viewer: the entries func_0011A500 runs, the screen rectangles a viewer's
-   pictures and the player marker are drawn in, and the light block and blend colours its
-   models are drawn with. */
+/* Map viewer entries, screen rectangles, lights and blend colours. */
 #include "kf_game.h"
 #include "kf_map.h"
 #include "kf_packet.h"
@@ -13,8 +11,7 @@ int func_0011BAB8(int *map_x, int *map_y);
 int func_0011BBC0(int *screen_x, int *screen_y);
 void func_0011BCD0();
 
-/* 0x38D6B0 one entry per viewer, picked_viewer indexes them; a viewer's second word is
-   the function that finds what the marker is put on */
+/* 0x38D6B0 one entry per viewer, indexed by picked_viewer */
 ViewerEntry D_0038D6B0[5] = {
     { func_0011AA08, (int)func_0011B1C0, 2 },
     { func_0011AA08, (int)func_0011B4F0, 3 },
@@ -23,9 +20,7 @@ ViewerEntry D_0038D6B0[5] = {
     { func_0011BCD0, 0, 0 },
 };
 
-/* 0x38D6F0 two more screen rectangles between the viewer table and the viewer's own,
-   which nothing reads. Their alignment is what retail's four pad bytes after the table
-   hold. */
+/* 0x38D6F0 two unused screen rectangles */
 static ScreenQuad viewer_screen_rects[2] __attribute__((aligned(16))) = {
             { .tag = 0x0000000000000000, .unk08 = 0x0000000000000000, .unk10 = 0x46,
           .red = 255, .green = 0, .blue = 0, .alpha = 128,

@@ -1,5 +1,4 @@
-/* The map loader: the handlers of its steps, its state and the request that starts a
-   load, and the screen fade a map change runs. */
+/* Map loader step handlers, state, request and screen fade. */
 #include "kf_map.h"
 #include "kf_screen.h"
 

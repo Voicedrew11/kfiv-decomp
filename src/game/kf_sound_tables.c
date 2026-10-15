@@ -1,5 +1,4 @@
-/* The sound system's banks: the file buffer each bank is read into, the jobs that read
-   them and the file names they are read from. */
+/* Sound bank buffers, load jobs and file names. */
 #include "kf_load.h"
 #include "kf_sound.h"
 #include "kf_sound_game.h"

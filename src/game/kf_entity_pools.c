@@ -1,5 +1,4 @@
-/* The entity pools: a model instance per pool slot, the entities of both map slots, the
-   pool slots the entity lists are built from and the work area a model is built into. */
+/* The entity pools, their slots and the model work area. */
 #include "kf_entity.h"
 #include "kf_model.h"
 
