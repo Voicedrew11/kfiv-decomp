@@ -18,7 +18,7 @@ extern f32 D_00431B30[4][4];
 
 /* Start handler of the kind that fades with the distance to the player: takes
    the two distances and the two alphas from its source and starts invisible. */
-void func_001201E0(MapObject *object) {
+void MapObject_StartDistanceFade(MapObject *object) {
     MapObjectWorkFade *work = (MapObjectWorkFade *)object->work;
     MapObjectUnk08Words *source;
 
@@ -36,7 +36,7 @@ void func_001201E0(MapObject *object) {
 
 /* Update handler of the fading kind: the alpha goes from near_alpha to far_alpha
    as the distance to the player goes from near_distance to far_distance. */
-void func_00120278(MapObject *object) {
+void MapObject_UpdateDistanceFade(MapObject *object) {
     MapObjectWorkFade *work = (MapObjectWorkFade *)object->work;
     Vector4 delta;
     f32 distance;
@@ -67,7 +67,7 @@ void func_00120278(MapObject *object) {
 
 /* Rebuilds the model matrices of an object whose parts always face the camera:
    each part is put where it sits in the world and turned toward D_004325A0. */
-void func_001203F0(MapObject *object) {
+void MapObject_RebuildBillboardMatrices(MapObject *object) {
     f32 matrix[16];
     Vector4 world;
     Vector4 delta;

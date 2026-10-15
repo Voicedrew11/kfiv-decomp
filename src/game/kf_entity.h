@@ -342,7 +342,7 @@ typedef struct {
     u16 unk18;                      /* 0x18 a distance to the player (see Npc_Think) */
     u16 unk1A;                      /* 0x1A a height: ranged attacks need the player level with it (EntityAi_PickCombatChoice) */
     char pad1C[0x04];
-    EntityBodyPoint unk20[4];       /* 0x20 what the player collides with for the kinds made of several bodies (func_001BECA8) */
+    EntityBodyPoint unk20[4];       /* 0x20 what the player collides with for the kinds made of several bodies (Player_CollideWithEntities) */
     f32 unk50;                      /* 0x50 */
     f32 unk54;                      /* 0x54 */
     f32 unk58;                      /* 0x58 */

@@ -18,22 +18,22 @@ typedef struct {
 #define COLLISION_RESULT ((CollisionResult *)0x70000000)
 
 /* the scratchpad from 0x100 on: the points of a model's collision mesh (CollisionMesh.unk08)
-   placed in the world by func_001C2D08; the strips point at these */
+   placed in the world by Collision_TransformMeshPoints; the strips point at these */
 #define COLLISION_WORLD_POINTS ((Vector4 *)0x70000100)
 
-/* the scratchpad as func_001BE760 uses it. Reached as fields of one block at 0x70000000, retail forms each
+/* the scratchpad as Player_PushOutOfWalls uses it. Reached as fields of one block at 0x70000000, retail forms each
    address anew (`lui $1`); a pointer constant such as (Vector4 *)0x70000080 is kept in a register instead. */
 typedef struct {
     CollisionResult result;         /* 0x00 */
     char pad30[0x40];
     Vector4 push;                   /* 0x70 the way out of what was hit */
     Vector4 point;                  /* 0x80 the point that is tested */
-    Vector4 unk90;                  /* 0x90 the point func_001BDDC0 keeps away from the walls */
+    Vector4 unk90;                  /* 0x90 the point Player_CollideWithMap keeps away from the walls */
 } CollisionScratch;
 
 #define COLLISION_SCRATCH ((CollisionScratch *)0x70000000)
 
-/* a CollisionResult kept aside and put back (func_001C0E40): retail moves it by doublewords */
+/* a CollisionResult kept aside and put back (Collision_FindFloorBelow): retail moves it by doublewords */
 typedef union {
     CollisionResult result;
     s64 doublewords[6];
@@ -42,7 +42,7 @@ typedef union {
 #define COLLISION_RESULT_COPY ((CollisionResultCopy *)0x70000000)
 
 /* a CollisionResult aligned to 8 bytes: copied whole it moves by doublewords, and its members
-   keep their own types (func_001C1C80, where the union above does not match) */
+   keep their own types (Collision_CastSegmentAtMap, where the union above does not match) */
 typedef struct {
     f32 point[4];                   /* 0x00 */
     s32 hit;                        /* 0x10 */
@@ -92,8 +92,8 @@ typedef struct {
     u16 unk42;                      /* 0x42 how many strips unk2C has */
 } CollisionMesh;
 
-/* CollisionMesh with its strip lists and their lengths as arrays (func_001C1430 picks them by index;
-   func_001C1858 goes through seven, one more than CollisionMesh names) */
+/* CollisionMesh with its strip lists and their lengths as arrays (Collision_CastRayAtMap picks them by index;
+   Collision_CastRayAtMapLists goes through seven, one more than CollisionMesh names) */
 typedef struct {
     char pad00[0x18];
     CollisionStrip *strip_lists[7]; /* 0x18 unk18, floor_strips, unk20, unk24, unk28, unk2C, and one at 0x30 */

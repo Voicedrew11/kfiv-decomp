@@ -29,7 +29,7 @@ void func_001127F8(void);
 void func_001128E0(void);
 void func_00117C60(void);
 void func_0011A430(void);
-void func_0011C6E8(void);
+void MapObject_ClearAllMaps(void);
 void func_001C8238(void);
 void func_001B4EE0(void);
 int func_001060C0(void);
@@ -51,7 +51,7 @@ void func_00111D58(void);
 void func_001B5460(void);
 int Script_UpdateAll(void);
 void func_00100D10(void);
-void func_001D0970(void);
+void Interact_FindTarget(void);
 void func_00117CC8(void);
 void func_00112BD0(void);
 void func_00123288(void);
@@ -201,7 +201,7 @@ void func_001000C8(int arg) {
     func_0011A430();
     HeldWeapon_Init();
     Entity_ResetAllLists();
-    func_0011C6E8();
+    MapObject_ClearAllMaps();
     func_001C8238();
     Effect_Init();
     func_001B4EE0();
@@ -267,7 +267,7 @@ void func_001001C0(int arg) {
         }
         Player_Update();
         func_00100D10();
-        func_001D0970();
+        Interact_FindTarget();
         func_00117CC8();
         Player_UpdateArmModels();
         func_00112BD0();

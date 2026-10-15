@@ -5,8 +5,8 @@
 #include "kf_message.h"
 
 int func_00103AE0(int, int);
-void func_00122600(MapObject *, int);
-void func_0011F148(char *);
+void MapObject_ShowMarkerStone(MapObject *, int);
+void MapObject_RebuildMatrices(char *);
 void Matrix_Multiply(void *, void *, void *);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Copy(void *, void *);
@@ -17,7 +17,7 @@ void Vector_Scale(float *, float *, float);
 void Vector_Add(void *, void *, void *);
 int func_00103B38(int, int);
 void Player_AddItem(int);
-void func_00122530(char *);
+void MapObject_RebuildMarkerMatrices(char *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 int func_00103BA8(int, int, int);
@@ -29,10 +29,10 @@ extern EventRunner D_00420D00;
 extern f32 D_00431AF0[16];
 extern ItemCommonDef item_common_defs[];
 
-/* Start handler: a pedestal that starts with an item on it stays so only while
-   the map's trigger records still hold an item for it (func_00103AE0); its model
-   shows that item. */
-void func_00121DA8(MapObject *object) {
+/* Step 0 of the Guide Stone markers (kind 0x13); the stone sits on part 2. One that starts holding a stone
+   keeps it only while the map's flag block still records a stone for it (func_00103AE0), and its model shows
+   that stone (MapObject_ShowMarkerStone). Empty: animation 4, step 1; holding a stone: animation 5, step 4. */
+void MapObject_StartMarker(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
     int item;
 
@@ -45,7 +45,7 @@ void func_00121DA8(MapObject *object) {
             object->unk10 &= ~0x20000;
         }
     }
-    func_00122600(object, item);
+    MapObject_ShowMarkerStone(object, item);
     if (!(object->unk10 & 0x20000)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
@@ -55,10 +55,10 @@ void func_00121DA8(MapObject *object) {
     }
 }
 
-/* Update handler, step 1: used by the player it only shows a message; once fired
-   it puts the part at a point 220 below the player and works out the steps that
-   carry it back (6.67 a frame). */
-void func_00121E78(MapObject *object) {
+/* Step 1 of a marker: used by the player it only shows its name, at most every 45 frames. Once a stone has
+   been placed (MapObject_PlaceStoneOnMarker) the stone's part is put 220 above the player's feet (y grows
+   downward), given the steps (6.67 a frame) that would carry it back, and the marker goes to step 3. */
+void MapObject_UpdateEmptyMarker(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
     ModelPart *part = &object->model->parts[work->part];
     f32 matrix[16];
@@ -81,7 +81,7 @@ void func_00121E78(MapObject *object) {
         object->unk10 |= 0x20000;
         MAP_OBJECT_BYTES(object)->step = 3;
         MapObject_StepAnim(object);
-        func_0011F148((char *)object);
+        MapObject_RebuildMatrices((char *)object);
         Vector_Copy(&origin, part->unk40);
         origin.w = 1.0f;
         Vector_Copy(&target, player_state);
@@ -99,8 +99,9 @@ void func_00121E78(MapObject *object) {
     }
 }
 
-/* Update handler, step 2: moves the part one step; after the last one it is at step 3. */
-void func_001220B8(MapObject *object) {
+/* Step 2 of a marker (MapObject_UpdateEmptyMarker goes to step 3 instead): moves the stone's part one step;
+   after the last one, step 3. */
+void MapObject_MoveMarkerStoneIn(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
     ModelPart *part = &object->model->parts[work->part];
 
@@ -113,9 +114,9 @@ void func_001220B8(MapObject *object) {
     }
 }
 
-/* Update handler: runs the animation; at its end the object is at step 4 and
+/* Step 3 of a marker: runs the animation; at its end the marker holds the stone (animation 5, step 4) and
    game_status.unk30 bit 0 is cleared. */
-void func_00122138(MapObject *object) {
+void MapObject_SettleMarkerStone(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
 
     if (work->timer > 0) {
@@ -130,10 +131,10 @@ void func_00122138(MapObject *object) {
     }
 }
 
-/* Event handler: while an event runs on this object, moves it to step 5, takes
-   back the item recorded for it in the map's trigger records and gives it to the
-   player, runs the animation and clears bit 17. */
-void func_001221C0(MapObject *object) {
+/* Step 4 of a marker: used by the player, it takes the stone recorded for it out of the map's flag block
+   (func_00103AE0, func_00103B38), gives it to the player (Player_AddItem), runs the animation and goes to
+   step 5. */
+void MapObject_UpdateFilledMarker(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
     u8 timer = work->timer;
     u8 tag = map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag;
@@ -148,16 +149,16 @@ void func_001221C0(MapObject *object) {
         item = ((int (*)(int, int, void *, int))func_00103AE0)(tag, object->unk08->unk38.bytes[2], work, timer);
         func_00103B38(tag, object->unk08->unk38.bytes[2]);
         MapObject_StepAnim(object);
-        func_0011F148((char *)object);
+        MapObject_RebuildMatrices((char *)object);
         Player_AddItem(item);
         object->unk10 &= ~0x20000;
         game_status.unk30 |= 1;
     }
 }
 
-/* Update handler, step 5: once the animation has ended, works out the steps that
-   carry the part from point 0 of the model to a point 115 below the player. */
-void func_001222C0(MapObject *object) {
+/* Step 5 of a marker: once the animation has ended, works out the steps (6.67 a frame) that carry the stone's
+   part from the model's point 0 to 115 above the player's feet; step 6. */
+void MapObject_LiftMarkerStone(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
     f32 matrix[16];
     Vector4 origin;
@@ -174,7 +175,7 @@ void func_001222C0(MapObject *object) {
         return;
     }
     MAP_OBJECT_BYTES(object)->step = 6;
-    func_00122530((char *)object);
+    MapObject_RebuildMarkerMatrices((char *)object);
     object->model->unk1B4(object->model);
     point = (void *)object->model->get_point(object->model, 0);
     Vector_Copy(&origin, point);
@@ -190,8 +191,10 @@ void func_001222C0(MapObject *object) {
     Vector_Scale(&work->step.x, &work->step.x, 1.0f / frames);
 }
 
-/* The same for the kind of func_00121DA8, which also hides the item on its model (func_00122600). */
-void func_00122480(MapObject *object) {
+/* Step 6 of a marker: moves the stone's part one step; after the last one the stone is hidden
+   (MapObject_ShowMarkerStone), the marker is empty again (animation 4, step 1) and game_status.unk30 bit 0 is
+   cleared. */
+void MapObject_MoveMarkerStoneOut(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
     ModelPart *part = &object->model->parts[work->part];
 
@@ -200,19 +203,22 @@ void func_00122480(MapObject *object) {
     }
     Vector_Add(part->unk40, part->unk40, work);
     if (--work->frames <= 0) {
-        func_00122600(object, 0);
+        MapObject_ShowMarkerStone(object, 0);
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
         game_status.unk30 &= ~1U;
     }
 }
 
-void func_00122530(char *object) {
-    func_0011F148(object);
+/* Every-frame hook of the markers: MapObject_RebuildMatrices. */
+void MapObject_RebuildMarkerMatrices(char *object) {
+    MapObject_RebuildMatrices(object);
 }
 
-/* Fires the trigger's one-shot when its type matches; returns whether it fired. */
-int func_00122538(MapTrigger *trigger, int type_index) {
+/* Item hook of the markers: an empty marker (step 1) that has taken nothing yet takes a Guide Stone (item use
+   type 1), records it in the map's flag block (func_00103BA8) and shows it on its model; returns whether it
+   took it. */
+int MapObject_PlaceStoneOnMarker(MapTrigger *trigger, int type_index) {
     u8 type;
     MapSlot *slot;
     int tag;
@@ -223,17 +229,16 @@ int func_00122538(MapTrigger *trigger, int type_index) {
     tag = slot->tag;
     if (trigger->type == 1 && shot->fired == 0 && type == trigger->type &&
         func_00103BA8(tag, (u8)trigger->unk08[0x3A], type_index)) {
-        func_00122600((MapObject *)trigger, type_index);
+        MapObject_ShowMarkerStone((MapObject *)trigger, type_index);
         shot->fired = type;
         return TRUE;
     }
     return FALSE;
 }
 
-/* Shows the model chunk that goes with the item on the pedestal: items 0x86..0x8A
-   show chunks 0..4 (a set bit of ModelInstance.unk178 skips that chunk); any other
-   item, or none, hides all five. */
-void func_00122600(MapObject *object, int item) {
+/* Shows the stone on a marker's model: items 0x86 to 0x8A (the five Guide Stones) show chunks 0 to 4 (a set
+   bit of ModelInstance.unk178 hides that chunk); any other item, or none, hides all five. */
+void MapObject_ShowMarkerStone(MapObject *object, int item) {
     u32 *skip_mask;
     u32 chunk;
     int shown;

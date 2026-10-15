@@ -5,8 +5,8 @@
 #include "kf_map.h"
 #include "kf_item.h"
 
-void func_0011FBE8(MapObject *);
-void func_0011FC10(MapObject *);
+void MapObject_UpdateBreakingItemHolder(MapObject *);
+void MapObject_SetupItemHolder(MapObject *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
@@ -72,11 +72,11 @@ void func_00122730(MapObject *object) {
 }
 
 void func_001227C0(MapObject *object) {
-    func_0011FBE8(object);
+    MapObject_UpdateBreakingItemHolder(object);
 }
 
 void func_001227C8(MapObject *object) {
-    func_0011FC10(object);
+    MapObject_SetupItemHolder(object);
 }
 
 /* Start handler: closed (animation 4, step 1) or, with bit 17 set, open (animation 5, step 3). */

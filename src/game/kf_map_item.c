@@ -32,7 +32,7 @@ void Vector_Add(void *, void *, void *);
 int func_001CA5B0(int, int);
 void Vector_Copy(void *, void *);
 void func_001CA500(ListNode *);
-int func_001C0E40(f32, void *);
+int Collision_FindFloorBelow(f32, void *);
 float Angle_Wrap(float);
 int func_001CA5E0(int);
 int func_001CA630(int);
@@ -367,7 +367,7 @@ s32 func_001C8CB0(Entity *entity) {
     position[2] = entity->model->position[2];
     rotation[1] = (s32)(rand() * 361.0f * 4.656613e-10f);
     rotation[1] = Angle_Wrap(rotation[1] * 0.017453292f);
-    if (!func_001C0E40(2000.0f, position)) {
+    if (!Collision_FindFloorBelow(2000.0f, position)) {
         return FALSE;
     }
     if (entity->group_id == D_00446770) {

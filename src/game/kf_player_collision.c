@@ -20,16 +20,16 @@
         player_state.position.z = COLLISION_RESULT->point[2] + COLLISION_RESULT->normal[2] * push;   \
     }
 
-int func_001C2D08(void *);
-void func_001C0A88(void *, void *, void *, void *);
-void func_001C0C50(void *, void *, void *, void *, f32);
-u32 func_001124E0(int, u32, u32);
-u32 func_001125A8(u32, u32, int);
+int Collision_TransformMeshPoints(void *);
+void Collision_DropOnTriangle(void *, void *, void *, void *);
+void Collision_DropOnTriangleWithin(void *, void *, void *, void *, f32);
+u32 Collision_GetFloorMaterial(int, u32, u32);
+u32 Collision_GetSurfaceEffect(u32, u32, int);
 void func_001152B8(int);
 float sqrtf(float);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
-void func_001C2758(f32 *, s32, f32, f32);
-s32 func_001C2A38(f32 *, s32, f32, f32);
+void Collision_PushOutOfObjects(f32 *, s32, f32, f32);
+s32 Collision_StandOnObjects(f32 *, s32, f32, f32);
 void func_001BB360(void);
 
 extern PlayerState player_state;
@@ -45,8 +45,8 @@ extern u8 spell_levels[6][5];
 extern FxTableEntry fx_table[];
 
 /* Tests the player against the collision meshes of the records around him: what he touches, the walls that
-   push him back, the water above him and the floor he stands on. Returns TRUE when a floor was found. */
-int func_001BDDC0(void) {
+   push him back, the water surface he is in and the floor he stands on. Returns TRUE when a floor was found. */
+int Player_CollideWithMap(void) {
     // match: the scratchpad points through pointers (retail forms each address anew), and the order of these
     // declarations decides which stack slot each value that does not fit a register gets
     Vector4 *wall_point = &COLLISION_SCRATCH->unk90;
@@ -117,7 +117,7 @@ int func_001BDDC0(void) {
                     continue;
                 }
                 mesh = (CollisionMesh *)model->strips;
-                ((void (*)(void *))func_001C2D08)(model); // match: called as if it returned nothing
+                ((void (*)(void *))Collision_TransformMeshPoints)(model); // match: called as if it returned nothing
                 if (player_state.unk1E0 == 0) {
                     strips_left = mesh->unk40;
                     strip = mesh->unk28;
@@ -125,11 +125,11 @@ int func_001BDDC0(void) {
                         strip_point = strip->points;
                         points_left = strip->point_count - 2;
                         do {
-                            func_001C0A88(strip_point[0].position, strip_point[1].position, strip_point[2].position,
+                            Collision_DropOnTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position,
                                           &player_state.position);
                             if (COLLISION_RESULT->hit != 0 && player_state.position.y - 230.0f <= COLLISION_RESULT->point[1]
                                 && COLLISION_RESULT->point[1] <= player_state.position.y) {
-                                surface = func_001125A8(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                                surface = Collision_GetSurfaceEffect(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                                 if (surface != 0) {
                                     player_state.unk1E4 = surface;
                                     player_state.unk1E0 = 1;
@@ -170,7 +170,7 @@ int func_001BDDC0(void) {
                         strip_point = strip->points;
                         points_left = strip->point_count - 2;
                         do {
-                            func_001C0A88(strip_point[0].position, strip_point[1].position, strip_point[2].position,
+                            Collision_DropOnTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position,
                                           &player_state.position);
                             if (COLLISION_RESULT->hit != 0
                                 && COLLISION_RESULT->point[1] <= player_state.position.y + player_state.unk1AC
@@ -201,14 +201,14 @@ int func_001BDDC0(void) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        func_001C0C50(strip_point[0].position, strip_point[1].position, strip_point[2].position,
+                        Collision_DropOnTriangleWithin(strip_point[0].position, strip_point[1].position, strip_point[2].position,
                                       &COLLISION_SCRATCH->point, reach);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < floor_height) {
                             found = TRUE;
                             floor_height = COLLISION_RESULT->point[1];
                             player_state.unk250 = record->unk38;
                             player_state.map_index = i;
-                            player_state.unk210 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            player_state.unk210 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                             floor_map = D_00446770 != map;
                         }
                         strip_point++;
@@ -262,7 +262,7 @@ int func_001BDDC0(void) {
 
 /* Keeps the player 100 units away from the wall triangles (CollisionMesh.unk18) of the records around him:
    each one that is hit pushes him straight out, level with the ground. */
-void func_001BE760(void) {
+void Player_PushOutOfWalls(void) {
     Vector4 *point = &COLLISION_SCRATCH->point;
     MapSlot *slot;
     MapRecordBounds *record;
@@ -295,7 +295,7 @@ void func_001BE760(void) {
                     || record->highest[2] + 100.0f < player_state.position.z) {
                     continue;
                 }
-                func_001C2D08(record->model);
+                Collision_TransformMeshPoints(record->model);
                 mesh = (CollisionMesh *)record->model->strips;
                 strips_left = mesh->unk38;
                 strip = mesh->unk18;
@@ -325,9 +325,9 @@ void func_001BE760(void) {
     player_state.position.z = point->z;
 }
 
-/* Finds the lowest floor triangle within 10 units of the player in the records around him and notes what it is
-   made of in PlayerState.unk210. */
-void func_001BEA50(void) {
+/* Finds the floor triangle under the player (the highest one within 10 below his feet; y grows downward) in
+   the records around him and notes its material in PlayerState.unk210. */
+void Player_FindFloorMaterial(void) {
     f32 lowest;
     MapSlot *slot;
     MapRecordBounds *record;
@@ -360,7 +360,7 @@ void func_001BEA50(void) {
                     || record->highest[2] + 100.0f < player_state.position.z) {
                     continue;
                 }
-                func_001C2D08(record->model);
+                Collision_TransformMeshPoints(record->model);
                 mesh = (CollisionMesh *)record->model->strips;
                 strips_left = mesh->floor_strip_count;
                 strip = mesh->floor_strips;
@@ -368,11 +368,11 @@ void func_001BEA50(void) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        func_001C0C50(strip_point[0].position, strip_point[1].position, strip_point[2].position,
+                        Collision_DropOnTriangleWithin(strip_point[0].position, strip_point[1].position, strip_point[2].position,
                                       &COLLISION_SCRATCH->point, 10.0f);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                             lowest = COLLISION_RESULT->point[1];
-                            player_state.unk210 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            player_state.unk210 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                         }
                         strip_point++;
                     } while (--points_left != 0);
@@ -386,7 +386,7 @@ void func_001BEA50(void) {
 /* Collides the player with the entities. With `climb` set the player is first put on top of any
    entity low enough to step onto (a step higher than 16.67 is taken over several frames); then
    the player is pushed out of every entity touched. Four kinds are made of up to four bodies. */
-void func_001BECA8(int climb) {
+void Player_CollideWithEntities(int climb) {
     f32 old_position[4];
     f32 position[4];
     f32 offset[4];
@@ -536,7 +536,7 @@ void func_001BECA8(int climb) {
    higher, so a low object is stepped onto; a step higher than 16.67 is taken over several frames
    (status bit 33). An object touched for the first time starts the timed flag its definition
    names. */
-void func_001BF350(s32 climb) {
+void Player_CollideWithMapObjects(s32 climb) {
     f32 old_position[4];
     s32 hit = FALSE;
     f32 reach;
@@ -554,7 +554,7 @@ void func_001BF350(s32 climb) {
             reach += 30.0f;
         }
         if (!((s32)(player_state.unk1C8 >> 33) & 1)) {
-            hit = func_001C2A38((f32 *)&player_state, 1, reach, 100.0f);
+            hit = Collision_StandOnObjects((f32 *)&player_state, 1, reach, 100.0f);
         }
         if (hit) {
             step = 16.666666f;
@@ -572,7 +572,7 @@ void func_001BF350(s32 climb) {
         }
     }
     if (!((s32)(player_state.unk1C8 >> 33) & 1)) {
-        func_001C2758((f32 *)&player_state, 0, 230.0f, 100.0f);
+        Collision_PushOutOfObjects((f32 *)&player_state, 0, 230.0f, 100.0f);
     }
     if (player_state.unk20C != 0 && player_state.unk20C != player_previous.unk20C) {
         switch ((s16)((MapObject *)player_state.unk20C)->unk08->unk52) {
@@ -608,7 +608,8 @@ void func_001BF350(s32 climb) {
     }
 }
 
-int func_001BF5F8(void) {
+/* Whether the player has learned any magic (a nonzero entry of spell_levels). */
+int Player_KnowsAnyMagic(void) {
     int i;
     int j;
 
@@ -622,7 +623,9 @@ int func_001BF5F8(void) {
     return 0;
 }
 
-int func_001BF650(void) {
+/* Whether the player has learned a magic whose first level launches a shot (fx_table unk102 0: the magics
+   that are equipped and cast from the gauge). */
+int Player_KnowsShotMagic(void) {
     int i;
     int j;
 
@@ -638,7 +641,10 @@ int func_001BF650(void) {
     return 0;
 }
 
-int func_001BF6E8(void) {
+/* Whether the player has learned a magic whose first level is used from the item menu (fx_table unk102 1, the
+   magics listed with the items); with none of those, no equipped magic and no weapon magic the magic gauge is
+   kept empty. */
+int Player_KnowsItemMenuMagic(void) {
     int i;
     int j;
     int k;

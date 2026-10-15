@@ -5,9 +5,9 @@
 extern u32 D_0038CC74[];
 extern void *D_00420D50[];
 
-/* Start handler of the message kind: takes the message (the definition gives the
-   default) and a flag from its source. */
-void func_00120D90(MapObject *object) {
+/* Step 0 of the things that are only examined (kind 0xB): takes the message (the definition's name when the
+   source gives none) and, from the source, whether a sign picture goes with it; step 1. */
+void MapObject_StartExaminable(MapObject *object) {
     s32 *work = object->work;
     MapObjectUnk08Words *source = MAP_OBJECT_WORDS(object);
 
@@ -19,9 +19,9 @@ void func_00120D90(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
 }
 
-/* Update handler of the message kind at rest: used by the player, it goes to
-   step 2 when its flag is set, else to step 3. */
-void func_00120DC8(MapObject *object) {
+/* Step 1 of kind 0xB: used by the player, it shows its sign picture (step 2) when it has one, else its
+   message (step 3). */
+void MapObject_UpdateExaminable(MapObject *object) {
     MapObject *used;
 
     if (((D_0038CC74[0] >> 1) & 1) && (used = D_00420D50[0]) == object) {
@@ -33,15 +33,16 @@ void func_00120DC8(MapObject *object) {
     }
 }
 
-/* Update handler of the message kind, step 2: back to rest once Splash_Start accepts the message. */
-void func_00120E10(MapObject *object) {
+/* Step 2 of kind 0xB: back to step 1 once Splash_Start has taken the sign picture (msg/*.tm2) of the
+   message's number. */
+void MapObject_ShowExaminedSign(MapObject *object) {
     if (Splash_Start(object->work[1])) {
         MAP_OBJECT_BYTES(object)->step = 1;
     }
 }
 
-/* Update handler of the message kind, step 3: shows the message for 45 frames. */
-void func_00120E48(MapObject *object) {
+/* Step 3 of kind 0xB: shows the message for 45 frames; step 4. */
+void MapObject_ShowExaminedMessage(MapObject *object) {
     s32 *work = object->work;
 
     Message_ShowNotice(0, 0, 0, 0, 0x2D, work[1]);
@@ -49,8 +50,8 @@ void func_00120E48(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 4;
 }
 
-/* Update handler of the message kind, step 4: back to rest when the 45 frames are over. */
-void func_00120EA0(MapObject *object) {
+/* Step 4 of kind 0xB: back to step 1 when the 45 frames are over. */
+void MapObject_WaitExaminedMessage(MapObject *object) {
     s32 *work = object->work;
 
     if (--work[2] <= 0) {
@@ -58,10 +59,12 @@ void func_00120EA0(MapObject *object) {
     }
 }
 
-/* Start handler: step 1. */
-void func_00120EC8(MapObject *object) {
+/* Step 0 of the symbols of passage (kind 0xC): step 1, where nothing happens; the wands look for them
+   (Player_UseItem). */
+void MapObject_StartSymbolOfPassage(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
 }
 
+/* Does nothing: step 1 of the symbols of passage. */
 void func_00120ED8(void) {
 }

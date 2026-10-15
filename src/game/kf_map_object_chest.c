@@ -6,15 +6,15 @@
 
 ItemNode *func_001C9340(int, int, void *, void *, void *, void *);
 int func_001C9AB0(ModelNode *);
-void func_0011FC18(MapObject *);
-void func_0011EFC8(MapObject *);
+void MapObject_SpawnHeldItem(MapObject *);
+void MapObject_UpdateBreaking(MapObject *);
 void *memset(void *, int, u32);
 void MapObject_ShowKeyUsed(int);
 int Sound_PlayMapAtRange(u8, u8, float *, float);
 void MapObject_UpdateOpenChest(MapObject *);
 ModelNode *func_001C9580(int);
 void MapObject_UpdateClosedChest(void *, int);
-void func_0011FC10(MapObject *);
+void MapObject_SetupItemHolder(MapObject *);
 extern void (*map_object_update_hooks[])(MapObject *);
 extern Qword D_0043E780;
 extern u32 D_0038CC74[];
@@ -23,9 +23,10 @@ extern u8 item_counts[];
 extern GameStatus game_status;
 extern EventRunner D_00420D00;
 
-/* Update handler: when the player uses an object that holds an item it is handed
-   out (func_001C9340), else a message is shown, at most every 45 frames. */
-void func_0011FAB0(MapObject *object) {
+/* Step 1 of the bones and gravestones (kind 3): used by the player, one that still holds its item spawns it
+   at its point 0 (func_001C9340) and the player picks it up at once (func_001C9AB0); otherwise its name is
+   shown, at most every 45 frames. */
+void MapObject_UpdateItemHolder(MapObject *object) {
     Qword unk_value = D_0043E780;
     s32 *work = object->work;
 
@@ -45,19 +46,22 @@ void func_0011FAB0(MapObject *object) {
     }
 }
 
-/* Update handler: func_0011FC18, then the fading-out update. */
-void func_0011FBE8(MapObject *object) {
-    func_0011FC18(object);
-    func_0011EFC8(object);
+/* Step 0xF of the bones and gravestones: spawns the item they hold (MapObject_SpawnHeldItem), then breaks
+   like the other kinds (MapObject_UpdateBreaking). */
+void MapObject_UpdateBreakingItemHolder(MapObject *object) {
+    MapObject_SpawnHeldItem(object);
+    MapObject_UpdateBreaking(object);
 }
 
-void func_0011FC10(MapObject *object) {
-    func_0011FC18(object);
+/* Set-up hook of the bones and gravestones that start out of use (and, through MapObject_SetupChest, of the
+   chests): spawns the item they hold. */
+void MapObject_SetupItemHolder(MapObject *object) {
+    MapObject_SpawnHeldItem(object);
 }
 
-/* Hands out the item the object holds, unless it was handed out already: runs the
-   kind's every-frame handler (map_object_update_hooks) and rebuilds the model first. */
-void func_0011FC18(MapObject *object) {
+/* Spawns the item a map object holds (MapObjectUnk08.unk44) at its point 0 (func_001C9340), unless it was
+   handed out already (unk10 bit 0x40000); the kind's every-frame hook runs first, so the point is current. */
+void MapObject_SpawnHeldItem(MapObject *object) {
     s64 drop_params[2];
 
     drop_params[0] = D_0043E780.unk00;
@@ -74,7 +78,7 @@ void func_0011FC18(MapObject *object) {
 
 /* Start handler of a chest: closed (animation 4, step 1) or open (animation 5, step 3);
    an open chest that isn't emptied yet drops its item (MapObjectUnk08.unk44) through func_001C9340. */
-void func_0011FCF8(MapObject *object) {
+void MapObject_StartChest(MapObject *object) {
     f32 drop_position[3];
     s64 drop_params[2];
     ModelInstance *model;
@@ -164,9 +168,9 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
     }
 }
 
-/* Update handler: runs the opening animation; at its end the object is open
-   (step 3) for 90 frames. Then the open-state update. */
-void func_0011FFF8(MapObject *object) {
+/* Step 2 of a chest: runs the opening animation; at its end the chest is open (animation 5, step 3, work[0]
+   set to 90). Then the open-chest update. */
+void MapObject_UpdateOpeningChest(MapObject *object) {
     if (MODEL_CHANNEL(object->model)->param != 0) {
         MapObject_StepAnim(object);
     } else {
@@ -204,11 +208,14 @@ void MapObject_UpdateOpenChest(MapObject *object) {
     }
 }
 
+/* Does nothing: step 4 of a chest, which the chest code never sets. */
 void func_00120128(void) {
 }
 
-/* Sets game_status bit 1 and makes the event the current one while MapObject_UpdateClosedChest runs. */
-void func_00120130(GameEvent *event, int mode) {
+/* Signal hook of the chests: opens a closed chest (step 1) as if the player had used it, by running
+   MapObject_UpdateClosedChest with the use bit (GameStatus.bit1) set and the chest as the thing in front of
+   the player. */
+void MapObject_OpenChestOnSignal(GameEvent *event, int mode) {
     void *saved;
     int bit;
 
@@ -223,6 +230,7 @@ void func_00120130(GameEvent *event, int mode) {
     }
 }
 
-void func_001201D8(MapObject *object) {
-    func_0011FC10(object);
+/* Set-up hook of the chests that start out of use: spawns the item they hold (MapObject_SetupItemHolder). */
+void MapObject_SetupChest(MapObject *object) {
+    MapObject_SetupItemHolder(object);
 }

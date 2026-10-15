@@ -266,7 +266,7 @@ typedef struct {
 /* EffectMotion as EffectGroundRun_Start sets it up and EffectGroundRun_Update uses it: runs along the ground */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    Vector4 probe;                  /* 0x10 passed to func_001C1430; y is def->unkDC */
+    Vector4 probe;                  /* 0x10 passed to Collision_CastRayAtMap; y is def->unkDC */
     f32 height;                     /* 0x20 def->unkDC: the ground is looked for from half of it down */
     f32 fall_speed;                 /* 0x24 */
     f32 hit_offset;                 /* 0x28 def->unkE0: how far below itself it checks for hits */

@@ -34,18 +34,18 @@ void func_001B29C8(Unk1B1470Request *, Unk1B1470Extra *);
 void func_001B2F70(Unk1B1470Request *, Unk1B1470Extra *, Entity *, f32);
 void func_001B3AC0(Unk1B1470Request *, Unk1B1470Extra *, MapObject *);
 int func_001B3E78(Unk1B1470Request *, Unk1B1470Extra *);
-void func_001C21C0(MapObject *, f32 *, f32);
+void Collision_HitSphereObj(MapObject *, f32 *, f32);
 void Collision_SphereCylinder(void *, void *, f32, f32, f32);
 float sqrtf(float);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Copy(void *, void *);
-void func_001C1C80(f32 *, f32 *);
-void func_001C2128(MapObject *, f32 *, f32 *, f32);
+void Collision_CastSegmentAtMap(f32 *, f32 *);
+void Collision_HitRayObj(MapObject *, f32 *, f32 *, f32);
 void Collision_CylinderArc(void *, void *, f32, f32, f32, f32, f32, f32);
 void Collision_CylinderArcPitch(void *, void *, f32, f32, f32, f32, f32, f32, f32, f32, f32);
 void Vu0_LoadMatrix(void *);
-u32 func_001124E0(int, u32, u32);
+u32 Collision_GetFloorMaterial(int, u32, u32);
 void func_001B2C48(void *);
 void func_001B3ED8(EntityParamsUnk240PartUnk00 *, Unk1B1470Request *, Unk1B1470Extra *);
 int func_001B4AA8(int, int, int);
@@ -161,7 +161,7 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 if ((request->unk4D & 0x80) && request->owner == (Entity *)object) {
                     continue;
                 }
-                func_001C21C0(object, request->position, request->unk30);
+                Collision_HitSphereObj(object, request->position, request->unk30);
                 if (COLLISION_RESULT->hit != 0) {
                     if (object_result == 0) {
                         object_result = 4;
@@ -422,7 +422,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 Vector_Subtract(direction, &held_item_arm_points.points[1], &held_item_arm_points.points[0]);
                 length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
                 Vector_Scale(direction, direction, 1.0f / length);
-                func_001C2128(object, (f32 *)&held_item_arm_points.points[0], direction, length);
+                Collision_HitRayObj(object, (f32 *)&held_item_arm_points.points[0], direction, length);
                 if (COLLISION_RESULT->hit != 0) {
                     func_001B3AC0(request, extra, object);
                     return 4;
@@ -430,7 +430,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 Vector_Subtract(direction, &held_item_arm_points.points[1], &held_item_arm_points_prev.points[1]);
                 length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
                 Vector_Scale(direction, direction, 1.0f / length);
-                func_001C2128(object, (f32 *)&held_item_arm_points_prev.points[1], direction, length);
+                Collision_HitRayObj(object, (f32 *)&held_item_arm_points_prev.points[1], direction, length);
                 if (COLLISION_RESULT->hit != 0) {
                     func_001B3AC0(request, extra, object);
                     return 4;
@@ -441,12 +441,12 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if (!IS_PLAYER(request->owner)) {
         return 0;
     }
-    func_001C1C80((f32 *)&held_item_arm_points.points[0], (f32 *)&held_item_arm_points.points[1]);
+    Collision_CastSegmentAtMap((f32 *)&held_item_arm_points.points[0], (f32 *)&held_item_arm_points.points[1]);
     if (COLLISION_RESULT->hit != 0) {
         func_001B3E78(request, extra);
         return 0x10;
     }
-    func_001C1C80((f32 *)&held_item_arm_points.points[1], (f32 *)&held_item_arm_points_prev.points[1]);
+    Collision_CastSegmentAtMap((f32 *)&held_item_arm_points.points[1], (f32 *)&held_item_arm_points_prev.points[1]);
     if (COLLISION_RESULT->hit != 0) {
         func_001B3E78(request, extra);
         return 0x10;
@@ -537,7 +537,7 @@ int func_001B21F8(ModelInstance *model, void *request, f32 reach) {
             do {
                 Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
                 if (COLLISION_RESULT->hit != 0) {
-                    COLLISION_RESULT->unk18 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                    COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                     return lists.lists[list];
                 }
                 strip_point++;
@@ -630,7 +630,7 @@ int func_001B24B0(ModelInstance *model, void *request, f32 reach) {
             do {
                 Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
                 if (COLLISION_RESULT->hit != 0) {
-                    COLLISION_RESULT->unk18 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                    COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                     return 1;
                 }
                 strip_point++;
@@ -724,7 +724,7 @@ int func_001B2740(ModelInstance *model, void *request, f32 reach) {
             do {
                 Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
                 if (COLLISION_RESULT->hit != 0) {
-                    COLLISION_RESULT->unk18 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                    COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                     return 0;
                 }
                 strip_point++;
