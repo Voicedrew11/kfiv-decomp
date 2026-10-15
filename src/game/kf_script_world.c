@@ -67,9 +67,9 @@ void ScriptCmd_PlaceMapItem(ScriptValueCommand *command) {
     command->active = 0;
 }
 
-/* Command 101: hands the fixed item `first` and `second` to func_001C9B58 (which makes the item's node
-   D_004469D8), then finishes. */
-void func_00212480(ScriptPairCommand *command) {
+/* Command 101: starts the pickup of the fixed item `first` of the current map (func_001C9B58 makes its node
+   D_004469D8 the one being picked up); `second` 0 marks it as one the player cannot put back. Then finishes. */
+void ScriptCmd_StartItemPickup(ScriptPairCommand *command) {
     func_001C9B58(command->first.value, command->second.value);
     command->active = 0;
 }
@@ -304,9 +304,9 @@ void ScriptCmd_BreakMapObject(ScriptObjectCommand *command) {
     command->active = 0;
 }
 
-/* Command 115: hands the script bit 17 of the map object `target_id` (one of the four bits its map saves)
-   through `first`, 0 when there is no such object, then finishes. */
-void ScriptCmd_GetMapObjectBit17(ScriptCallCommand *command) {
+/* Command 115: hands the script, through `first`, whether the map object `target_id` is open (bit 17, the
+   latched open/on state a door, chest or switch keeps; 0 when there is no such object). Then finishes. */
+void ScriptCmd_IsMapObjectOpen(ScriptCallCommand *command) {
     MapObject *object;
 
     object = MapObject_GetById(D_00446770, command->target_id.value);
@@ -331,8 +331,8 @@ void ScriptCmd_SetMapObjectScripted(ScriptCallCommand *command) {
 }
 
 /* Command 117: starts the animation `first` (bit 22 from `second`) on the scripted map object `target_id`
-   and sets its bit 21, then finishes. */
-void ScriptCmd_PlayMapObjectAnimBit21(ScriptCallCommand *command) {
+   and sets its bit 21, so the animation runs every frame. Then finishes. */
+void ScriptCmd_PlayMapObjectAnimRunning(ScriptCallCommand *command) {
     MapObject *object;
 
     object = MapObject_GetById(D_00446770, command->target_id.value);
@@ -514,7 +514,7 @@ void ScriptCmd_GetMapObjectRotation(ScriptMoveCommand *command) {
 }
 
 /* Command 189: starts the animation `first` (bit 22 from `second`) on the scripted map object `target_id`
-   and clears its bit 21, then finishes. */
+   and clears its bit 21, so the animation holds (ScriptCmd_ResumeMapObjectAnim lets it run). Then finishes. */
 void ScriptCmd_PlayMapObjectAnim(ScriptCallCommand *command) {
     MapObject *object;
 
@@ -526,8 +526,9 @@ void ScriptCmd_PlayMapObjectAnim(ScriptCallCommand *command) {
     command->active = 0;
 }
 
-/* Command 190: sets bit 21 of the scripted map object `object_id`, then finishes. */
-void ScriptCmd_SetMapObjectBit21(ScriptObjectCommand *command) {
+/* Command 190: lets the animation of the scripted map object `object_id` run (sets its bit 21), then
+   finishes. */
+void ScriptCmd_ResumeMapObjectAnim(ScriptObjectCommand *command) {
     MapObject *object;
 
     object = MapObject_GetById(D_00446770, command->object_id.value);
@@ -537,8 +538,9 @@ void ScriptCmd_SetMapObjectBit21(ScriptObjectCommand *command) {
     command->active = 0;
 }
 
-/* Command 191: clears bit 21 of the scripted map object `object_id`, then finishes. */
-void ScriptCmd_ClearMapObjectBit21(ScriptObjectCommand *command) {
+/* Command 191: holds the animation of the scripted map object `object_id` where it is (clears its bit 21),
+   then finishes. */
+void ScriptCmd_PauseMapObjectAnim(ScriptObjectCommand *command) {
     MapObject *object;
 
     object = MapObject_GetById(D_00446770, command->object_id.value);
@@ -862,9 +864,9 @@ void ScriptCmd_LoadMap(ScriptValueCommand *command) {
     command->active = 0;
 }
 
-/* Command 149: sets D_00446794 (the map load then takes its map from D_0038D640) when a background map
-   load is running and a request is pending, then finishes. */
-void func_00213D58(ScriptThreadCommand *command) {
+/* Command 149: commits the scripted map load ScriptCmd_LoadMap asked for: with a background load running
+   and a request pending it sets D_00446794, which makes the loader take D_0038D640 and finish at once. */
+void ScriptCmd_CommitMapLoad(ScriptThreadCommand *command) {
     if (D_0038D610.step != 0 && D_0038D640.map != 0xFFFF) {
         D_00446794 = 1;
     }
@@ -1259,10 +1261,9 @@ void ScriptCmd_ExitMainLoop(ScriptValueCommand *command) {
     command->active = 0;
 }
 
-/* Command 176: `value` nonzero sets GameStatus bit 12 (when it is clear) and clears bit 13; from then on a
-   press of what D_00413DA8 holds sets bit 13 and the main loop stops drawing and reading input. 0 clears
-   both. Then finishes. */
-void func_00214A58(ScriptValueCommand *command) {
+/* Command 176: arms the main loop to hold its frame (GameStatus bits 12 and 13): it stops drawing and
+   reading input at the next START press, while `value` 0 clears both bits. Then finishes. */
+void ScriptCmd_HoldFrameOnStart(ScriptValueCommand *command) {
     if (command->value.value != 0) {
         if (!D_0038CC50.bit12) {
             GAME_STATUS_FLAG_WORD(&D_0038CC50) = (GAME_STATUS_FLAG_WORD(&D_0038CC50) | 0x1000) & ~0x2000;
@@ -1299,8 +1300,9 @@ void ScriptCmd_ReloadArmModels(ScriptWaitCommand *command) {
     }
 }
 
-/* Command 196: sets MapDrawState.unk68 to `value`, then finishes. */
-void func_00214B70(ScriptValueCommand *command) {
+/* Command 196: sets whether the HUD is drawn (MapDrawStateOverlays.unk68, which Hud_Draw tests before it
+   draws anything), then finishes. */
+void ScriptCmd_SetHudShown(ScriptValueCommand *command) {
     D_0038A1B0.unk68 = command->value.value;
     command->active = 0;
 }

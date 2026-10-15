@@ -107,7 +107,8 @@ typedef struct {
     ScriptFloatArg value;           /* 0x04 value at 0x08 */
 } ScriptFloatValueCommand;
 
-/* a command with two integer arguments (ScriptCmd_SetRecollectionPage, ScriptCmd_MoveRecollectionPage, func_00212480) */
+/* a command with two integer arguments (ScriptCmd_SetRecollectionPage, ScriptCmd_MoveRecollectionPage,
+   ScriptCmd_StartItemPickup) */
 typedef struct {
     int active;                     /* 0x00 */
     ScriptArg first;                /* 0x04 value at 0x08 */
@@ -171,7 +172,7 @@ typedef struct {
     ScriptArg object_id;            /* 0x04 value at 0x08 */
 } ScriptObjectCommand;
 
-/* an object and two integer values for it (ScriptCmd_PlayMapObjectAnimBit21, ScriptCmd_PlayMapObjectAnim) */
+/* an object and two integer values for it (ScriptCmd_PlayMapObjectAnimRunning, ScriptCmd_PlayMapObjectAnim) */
 typedef struct {
     int active;                     /* 0x00 */
     ScriptArg target_id;            /* 0x04 value at 0x08 */
