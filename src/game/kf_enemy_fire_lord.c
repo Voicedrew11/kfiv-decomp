@@ -6,7 +6,7 @@
 #include "common.h"
 #include "kf_effect.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -24,12 +24,12 @@ int Motion_BlendToPose(EntityModel *, f32);
 int func_00196120(Entity *, void *, s32, void *, f32);
 extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
-s32 func_00198D10(Entity *);
+s32 EntityAi_CanShoot(Entity *);
 s32 EntityAi_PickRangedAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 float EntityMath_AngleDifference(float, float);
@@ -45,17 +45,17 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 float EntityMath_HeadingTo(float *, float *);
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 float sqrtf(float);
 float atan2f(float, float);
 char *func_0010CAB8(char *, u32);
 float EntityMath_WrapAngle(float);
 void EntityMath_FacingVector(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
-int func_00195AC0(Entity *, void *, s32, s32, s32);
-void func_0019A290(Entity *, s32);
+int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 float EntityMath_AngleXZ(float *, char *);
-s32 func_001984B0(Entity *, s32);
+s32 EntityAi_CanUseMelee(Entity *, s32);
 extern u8 D_004141D8[];
 extern EntityModel *D_00446978;
 void func_0010B018(ModelInstance *, s32, s32);
@@ -86,7 +86,7 @@ void FireLord_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = FireLord_Think;
     unkE0->animate = (void (*)(void))FireLord_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -173,10 +173,10 @@ static void FireLord_Think(Entity *entity, s32 unknown) {
         unkE0->unk6A = entity->params->unk434;
     }
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0((char *)entity);
+        EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -269,13 +269,13 @@ static void FireLord_ThinkCombatApproach(Entity *entity, int invoke_now) {
     EntityAi_StartAction(entity, (void (*)(Entity *))sub->move, invoke_now);
 }
 
-/* Band 1 of FireLord_ThinkCombat: when func_00198D10 finds the player in reach of a ranged
+/* Band 1 of FireLord_ThinkCombat: when EntityAi_CanShoot finds the player in reach of a ranged
    attack, starts EntityAi_RangedAttack with the record EntityAi_PickRangedAttack draws; else goes for the
    player as band 0 does. */
 static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (func_00198D10(entity)) {
+    if (EntityAi_CanShoot(entity)) {
         EntityAi_PickRangedAttack(entity);
         EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
         return;
@@ -490,7 +490,7 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
     entity->unkC6 |= 0x1000;
     unkE0->unk7E = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+    EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
     switch (entity->action_step) {
     case 0:
         if (unkE0->unk7B != 0) {
@@ -550,7 +550,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
         entity->action_step++;
     case 1:
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         if (entity->model->unkFC->unk88 == 0) {
             entity->action_step++;
@@ -558,7 +558,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -582,7 +582,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
     case 4:
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -613,13 +613,13 @@ static void FireLord_MeleeAttack0(Entity *entity) {
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
         }
         if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
         }
         if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;
@@ -630,7 +630,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -670,7 +670,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
         entity->action_step++;
     case 1:
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         if (entity->model->unkFC->unk88 == 0) {
             entity->action_step++;
@@ -678,7 +678,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -709,13 +709,13 @@ static void FireLord_MeleeAttack1(Entity *entity) {
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
         }
         if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
         }
         if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;
@@ -726,7 +726,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -739,7 +739,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
 
 /* A second action with animations 6 and 7 (busy bit 0x1000), which bands 3 and 4 start in place of
    the guard: plays 6 or 7, by the side of the player's facing the entity is on, to its end, turning
-   to Entity.unk68; then starts FireLord_MeleeAttack0 when func_001984B0 finds the player in
+   to Entity.unk68; then starts FireLord_MeleeAttack0 when EntityAi_CanUseMelee finds the player in
    reach of record 0. Sets work byte unk7E. */
 static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
@@ -748,7 +748,7 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
     entity->unkC6 |= 0x1000;
     unkE0->unk7E = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+    EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
     switch (entity->action_step) {
     case 0:
         EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
@@ -770,7 +770,7 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            if (func_001984B0(entity, 0)) {
+            if (EntityAi_CanUseMelee(entity, 0)) {
                 EntityAi_StartAction(entity, FireLord_MeleeAttack0, 1);
             } else if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);

@@ -6,7 +6,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -19,8 +19,8 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -43,9 +43,9 @@ void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 float EntityMath_WrapAngle(float);
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
-s32 func_00195B68(Entity *, void *, s32, s32, s32, f32);
-void func_0019A290(Entity *, s32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 s32 Motion_Step(Entity *, s32);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -72,7 +72,7 @@ void Sentinel_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Sentinel_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -105,12 +105,12 @@ void Sentinel_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think, with Sentinel_ThinkCombat for state 2. */
 static void Sentinel_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -244,24 +244,24 @@ static void Sentinel_MeleeAttack1(Entity *entity) {
             entity->action_step++;
         }
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f));
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f));
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195B68(entity, unk240, 2, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f));
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f));
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -272,7 +272,7 @@ static void Sentinel_MeleeAttack1(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             EntityAi_StartAction(entity, Sentinel_PlayAnim12, 1);
         }
         break;

@@ -15,7 +15,7 @@ extern KfVector D_004FF390[];
 extern f32 D_00446824[];
 extern f32 D_00446828[];
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
@@ -28,10 +28,10 @@ int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 static void GreaterDemon_Think(Entity *entity, s32 unknown);
 static void GreaterDemon_Move(Entity *entity);
 static void GreaterDemon_OnHit(Entity *entity);
-void func_00196870(void *, int);
+void EntityAi_SensePlayer(void *, int);
 void EntityPoint_PickNear(float, void *, void *, void *);
 f32 EntityCollision_DistanceToPropFloor(void *, void *);
-void func_00196CC0(void *);
+void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -60,20 +60,20 @@ static void GreaterDemon_Guard(Entity *);
 static void GreaterDemon_RangedAttack2(Entity *);
 static void GreaterDemon_RangedAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 static void GreaterDemon_DescendAtPlayer(Entity *);
-int func_00195AC0(Entity *, void *, s32, s32, s32);
+int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 float EntityMath_WrapAngle(float);
 float sinf(float);
 float cosf(float);
 float EntityMath_AngleXZ(float *, char *);
 void EntityAi_LowerWeightsAfterHit(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
 static void GreaterDemon_ReactionHeavy(Entity *);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 float EntityMath_DistanceXZ(void *, void *);
 void EntityEvent_Respawn(char *);
 
@@ -92,7 +92,7 @@ void GreaterDemon_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = GreaterDemon_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))GreaterDemon_OnHit;
@@ -131,7 +131,7 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
     f32 no_floor;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (D_00413F80.unk259 != 0) {
         unkE0->unk7C = 30;
@@ -163,7 +163,7 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if ((s32)(entity->flags >> 53) & 1) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -380,7 +380,7 @@ static void GreaterDemon_Rise(Entity *entity) {
         if (entity->model->unkFC->unk88 == 0) {
             entity->action_step++;
         }
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         return;
     case 2:
         if ((int)(entity->flags >> 34) & 1) {
@@ -439,7 +439,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
                 unkE0->unk44 = 12.0f;
             }
         }
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         if (EntityCollision_DistanceToPropFloor(entity->unk14, entity->model->position) < 220.0f) {
             entity->unk88 = -unkE0->unk48;
             unkE0->unk48 += 0.8f;
@@ -486,7 +486,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
             entity->unkA0 = 0;
             flag = ENTITY_FLAG_BITS(entity)->bit49;
             if (flag == 1) {
-                func_00195AC0(entity, unk350, 0, 0x1E, 0x1F);
+                EntityAi_CheckMeleeHit(entity, unk350, 0, 0x1E, 0x1F);
                 unkE0->unk6E = flag;
             }
             EntityAi_StartAction(entity, GreaterDemon_SlideToStop, 1);
@@ -522,7 +522,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
             entity->unkA0 = 0;
             flag = ENTITY_FLAG_BITS(entity)->bit49;
             if (flag == 1) {
-                func_00195AC0(entity, unk350, 0, 0x1E, 0x1F);
+                EntityAi_CheckMeleeHit(entity, unk350, 0, 0x1E, 0x1F);
                 unkE0->unk6E = flag;
             }
             EntityAi_StartAction(entity, GreaterDemon_SlideToStop, 1);
@@ -539,7 +539,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
         if (unkE0->unk48 < 3.0f) {
             unkE0->unk48 = 3.0f;
         }
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         return;
     }
     return; // match: with this the call above becomes a tail call
@@ -570,7 +570,7 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
             s32 flag = (s32)(entity->flags >> 49) & 1;
 
             if (flag == 1) {
-                func_00195AC0(entity, unk350, 0, 0x1E, 0x1F);
+                EntityAi_CheckMeleeHit(entity, unk350, 0, 0x1E, 0x1F);
                 unkE0->unk6E = flag;
             }
         }
@@ -580,7 +580,7 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
             s32 flag = (s32)(entity->flags >> 49) & 1;
 
             if (flag == 1) {
-                func_00195AC0(entity, unk350, 0, 0x1E, 0x1F);
+                EntityAi_CheckMeleeHit(entity, unk350, 0, 0x1E, 0x1F);
                 unkE0->unk6E = flag;
             }
         }
@@ -626,10 +626,10 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
         if (entity->model->unkFC->unk88 == 0) {
             entity->action_step++;
         }
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         break;
     case 2:
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         if ((s32)(entity->flags >> 34) & 1) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -653,7 +653,7 @@ static void GreaterDemon_OnHit(Entity *entity) {
         entity->flags &= ~0x200;
         EntityAi_SetReaction((char *)entity, (void (*)(void))GreaterDemon_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
@@ -689,7 +689,7 @@ static void GreaterDemon_ReactionHeavy(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_0019A290(entity, entity->params->unkC8);
+            EntityAi_SetAttackDelay(entity, entity->params->unkC8);
             EntityAi_SetReaction((char *)entity, NULL, 0);
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -817,7 +817,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
         break;
     case 2:
         unkE0->unk1C = 0.0f;
-        func_00195ED0(entity, unk3D8, (entity->model->unkFC->unk84 - params->unk80[entity->unkD1]) >> 8,
+        EntityAi_LaunchShots(entity, unk3D8, (entity->model->unkFC->unk84 - params->unk80[entity->unkD1]) >> 8,
                       entity->model->unkFC->unk82);
         if (entity->model->unkFC->unk82 == 0x11) {
             minion_index = 0;
@@ -858,7 +858,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -917,12 +917,12 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -940,7 +940,7 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

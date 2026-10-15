@@ -6,7 +6,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -17,8 +17,8 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -42,9 +42,9 @@ void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 extern int D_00414184[];
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
-s32 func_00195AC0(Entity *, void *, s32, s32, s32);
-void func_0019A290(Entity *, s32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityMath_FacingVector(Vector4 *, float);
 /* one frame of the arc of DarkSoldier_MoveAlongArc: forwards at unk44 along unk30, in y at minus
    unk48 (up); both wear off */
@@ -59,7 +59,7 @@ static inline void move_along_arc(Entity *entity, EntityUnkE0 *unkE0) {
     }
 }
 void EntityAi_LowerWeightsAfterHit(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
@@ -94,7 +94,7 @@ void DarkSoldier_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = DarkSoldier_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))DarkSoldier_OnHit;
@@ -133,7 +133,7 @@ static void DarkSoldier_Think(Entity *entity, s32 unknown) {
 
     unkE0 = &entity->unkE0;
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->distance_to_player < entity->radius + 300.0f + 100.0f && unkE0->unk7A == 1) {
         unkE0->unk7A = 0;
@@ -141,7 +141,7 @@ static void DarkSoldier_Think(Entity *entity, s32 unknown) {
         unkE0->unk7A = 1;
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if ((s32)(entity->flags >> 53) & 1) {
             // match: called as returning nothing, so $2 is free for the next statement
@@ -362,24 +362,24 @@ static void DarkSoldier_MeleeAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -390,7 +390,7 @@ static void DarkSoldier_MeleeAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -439,7 +439,7 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
         if (entity->model->unkFC->unk88 == 0) {
             entity->action_step++;
         }
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         break;
     case 2:
         if ((s32)(entity->flags >> 34) & 1) {
@@ -481,7 +481,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit17 = FALSE;
         entity->action_step++;
     case 1:
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         model = entity->model;
         if (model->unkFC->unk88 == 0) {
             unkE0->unk48 = entity->params->unk43A;
@@ -605,7 +605,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
             unkE0->unk48 = entity->params->unk43A * 0.8f;
             entity->action_step = 5;
         }
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         break;
     case 2:
         if (entity->model->unkFC->unk82 >= 4) {
@@ -670,7 +670,7 @@ static void DarkSoldier_OnHit(Entity *entity) {
     } else if (((entity->flags >> 36) & 3) == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* Helper of DarkSoldier_ThinkCombat: whether the way is free for DarkSoldier_MoveAlongArc. It

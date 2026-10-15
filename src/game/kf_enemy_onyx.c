@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -18,8 +18,8 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -39,11 +39,11 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void func_0019A290(Entity *, s32);
-s32 func_001984B0(Entity *, s32);
-s32 func_001992F0(Entity *, s32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
+s32 EntityAi_CanUseMelee(Entity *, s32);
+s32 EntityAi_CanUseRanged(Entity *, s32);
 void EntityAi_LowerAttackWeight(Entity *);
 float EntityMath_HeadingTo(float *, float *);
 float EntityMath_DistanceXZ(void *, void *);
@@ -73,7 +73,7 @@ void Onyx_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Onyx_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -152,7 +152,7 @@ static void Onyx_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (unkE0->unk6E > 0) {
         unkE0->unk6E--;
@@ -165,7 +165,7 @@ static void Onyx_Think(Entity *entity, s32 unknown) {
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -319,15 +319,15 @@ static void Onyx_RangedAttack0(Entity *entity) {
         if (entity->model->unkFC->unk88 == 0) {
             entity->action_step++;
         }
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         break;
     case 2:
-        func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
         if (entity->model->unkFC->unk82 >= entity->params->unk436
             && entity->model->unkFC->unk82 <= entity->params->unk438) {
             ENTITY_FLAGS(entity) |= 0x200;
             if (D_00446ED4 % 3U != 0) {
-                func_00195ED0(entity, unk3D8, entity->params->unk436, entity->params->unk438);
+                EntityAi_LaunchShots(entity, unk3D8, entity->params->unk436, entity->params->unk438);
             }
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -339,7 +339,7 @@ static void Onyx_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -435,8 +435,8 @@ static void Onyx_SwitchAttack(Entity *entity) {
     }
 }
 
-/* Draws an attack by weight among melee records 1 and 2 (when func_001984B0 finds them in reach)
-   and ranged record 0 (func_001992F0), with the weights in work words unk6A, unk6C and unk68 in
+/* Draws an attack by weight among melee records 1 and 2 (when EntityAi_CanUseMelee finds them in reach)
+   and ranged record 0 (EntityAi_CanUseRanged), with the weights in work words unk6A, unk6C and unk68 in
    place of the records' own; sets flag bits 57 to 59 to it and returns whether it is the ranged
    one. With nothing to draw it gives melee record 0. */
 static s32 Onyx_PickAttack(Entity *entity) {
@@ -451,13 +451,13 @@ static s32 Onyx_PickAttack(Entity *entity) {
 
     for (i = 0; i < 6; i++) {
         if (i < 3) {
-            if (func_001984B0(entity, i) && (i == 1 || i == 2)) {
+            if (EntityAi_CanUseMelee(entity, i) && (i == 1 || i == 2)) {
                 chance = (entity->unkC0[i] * ((EntityUnkE0Kind17FC60 *)&entity->unkE0)->unk68[i]) >> 6;
             } else {
                 chance = 0;
             }
         } else {
-            if (func_001992F0(entity, i - 3) && i == 3) {
+            if (EntityAi_CanUseRanged(entity, i - 3) && i == 3) {
                 chance = (entity->unkC0[3] * unkE0->unk68) >> 6;
             } else {
                 chance = 0;

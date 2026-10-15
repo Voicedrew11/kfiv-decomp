@@ -7,7 +7,7 @@
 #include "kf_entity.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32); // match: an int result keeps $2 busy after the call
@@ -22,8 +22,8 @@ extern s32 D_00446928;
 extern u32 D_00446ED4;
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 void EntityEvent_StartCue(Entity *, s32, s32, s32);
-int func_0019D490(u8, u8, float *, float);
-void func_00196870(void *, int);
+int Sound_PlayMapAtRange(u8, u8, float *, float);
+void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkCombat(Entity *, s32);
@@ -50,7 +50,7 @@ void DarkOne_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = DarkOne_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -89,7 +89,7 @@ void DarkOne_Init(Entity *entity) {
    EntityParams.unk430, unk432 or unk434, by D_00446928 (3, 2, other). In a frame with flag bit 43
    set it calls EntityEvent_StartEffectAtPoint with 0x13D and clears the bit; then, with D_00446928 at 0 or less, it
    sets Entity.unkA3 to 6 and starts DarkOne_Death, and else, when D_00446928 has changed (work
-   byte unk7A keeps it), calls EntityEvent_StartCue and func_0019D490. */
+   byte unk7A keeps it), calls EntityEvent_StartCue and Sound_PlayMapAtRange. */
 static void DarkOne_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
@@ -117,13 +117,13 @@ static void DarkOne_Think(Entity *entity, s32 unknown) {
         if (unkE0->unk7A != D_00446928) {
             EntityEvent_StartCue(entity, entity->params->unk436, entity->params->unk438, 0);
             // match: an int result keeps $2 busy after the call
-            ((int (*)(s32, s32, f32 *, f32))func_0019D490)((u8)entity->params->unk43A, (u8)entity->params->unk43C,
+            ((int (*)(s32, s32, f32 *, f32))Sound_PlayMapAtRange)((u8)entity->params->unk43A, (u8)entity->params->unk43C,
                                                            entity->model->position, entity->params->unk42E);
             unkE0->unk7A = D_00446928;
         }
     }
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
         EntityAi_StepState(entity);

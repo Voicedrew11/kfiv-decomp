@@ -16,13 +16,13 @@ typedef struct {
 extern Dev *D_00446978;
 
 void func_00109098(Dev *, u8, u16);
-s32 func_0019CDA0(s32);
-int func_0019CE00(int);
+void Sound_StopVoice(s8);
+int Sound_PlaySw(int); // match: this file only matches with this declaration
 
 void func_001BBFC8(void) {
     if (D_00413F80[0x261] == 0 && weapon_defs[D_00413F80[0x3C] * 0x90 + 0x63] != 2) {
-        func_0019CDA0(2);
-        func_0019CE00(1);
+        Sound_StopVoice(2);
+        Sound_PlaySw(1);
         D_00413F80[0x261] = 1;
         func_00109098(D_00446978, 0, D_00446978->fFC->f82);
     }

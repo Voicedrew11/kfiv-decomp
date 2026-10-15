@@ -13,13 +13,13 @@ int func_0011C678(int);
 void func_0011A598(void);
 static void func_0011A5E0(void);
 static int func_0011A600(void);
-void func_0019CCB0(void);
-void func_0019CD10(void);
-void func_0019DC00(void);
-void func_0019E8B0(void);
-void func_0019E920(void);
-void func_001A15B8(void);
-void func_001A15C0(void);
+void Sound_MuteTracked(void);
+void Sound_UnmuteTracked(void);
+void Sound_UpdateTagged(void);
+void Sound_MuteTagged(void);
+void Sound_UnmuteTagged(void);
+void Sound_UnmutePositional(void);
+void Sound_MutePositional(void);
 int func_001CEBE0(void);
 void *memset(void *, int, u32);
 u8 func_00109800(void); // match: u8 here; declared void, the call site is compiled differently
@@ -65,7 +65,7 @@ void Vector_Subtract(void *, void *, void *);
 void func_0010A7E0(void *);
 static void func_0011C160(void);
 void func_0011AAE8(void);
-float func_0019B838(float);
+float Angle_Wrap(float);
 void Vector_Add(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 void func_00106C58(void);
@@ -131,15 +131,15 @@ void func_0011A438(int viewer_number) {
 /* Loads the picked viewer, runs it until it is left and frees what it loaded. */
 void func_0011A500(void) {
     if (func_0011A600() != 0) {
-        func_0019E8B0();
-        func_001A15C0();
-        func_0019DC00();
-        func_0019CCB0();
+        Sound_MuteTagged();
+        Sound_MutePositional();
+        Sound_UpdateTagged();
+        Sound_MuteTracked();
         func_001CEBE0();
         D_0038D6B0[picked_viewer].run();
-        func_0019E920();
-        func_001A15B8();
-        func_0019CD10();
+        Sound_UnmuteTagged();
+        Sound_UnmutePositional();
+        Sound_UnmuteTracked();
         func_0011A5E0();
         func_0011A598();
     }
@@ -648,16 +648,16 @@ void func_0011BCD0(void) {
             move.x = move.y = move.z = move.w = 0.0f;
             if (held & 0x4000) {
                 if (held & 0x40) {
-                    rotation.x = func_0019B838(rotation.x + 0.08726646f);
+                    rotation.x = Angle_Wrap(rotation.x + 0.08726646f);
                 }
                 if (held & 0x10) {
-                    rotation.x = func_0019B838(rotation.x - 0.08726646f);
+                    rotation.x = Angle_Wrap(rotation.x - 0.08726646f);
                 }
                 if (held & 0x80) {
-                    rotation.y = func_0019B838(rotation.y + 0.08726646f);
+                    rotation.y = Angle_Wrap(rotation.y + 0.08726646f);
                 }
                 if (held & 0x20) {
-                    rotation.y = func_0019B838(rotation.y - 0.08726646f);
+                    rotation.y = Angle_Wrap(rotation.y - 0.08726646f);
                 }
             } else {
                 if (held & 0x80) {

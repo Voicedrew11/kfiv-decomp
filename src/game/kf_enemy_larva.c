@@ -10,7 +10,7 @@
 #define ENTITY_WORK_AREA_SIZE 0xA0
 extern MapSlot D_0038CD20[];
 extern s32 D_003E6E40[][2];
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -21,20 +21,20 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
+void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkCombat(Entity *, s32);
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 int Motion_Start(void *, int, int, u32, int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 void EntityEvent_OnDeath(Entity *);
 char *func_0010CAB8(char *, u32);
 int rand(void);
 float sinf(float);
 float cosf(float);
 float atan2f(float, float);
-s32 func_00195AC0(Entity *, void *, s32, s32, s32);
+s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityMath_FacingVector(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
 
@@ -61,7 +61,7 @@ void Larva_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Larva_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -98,7 +98,7 @@ void Larva_Init(Entity *entity) {
     record->unk70 = 1.0f;
 }
 
-/* The think handler: as EntityAi_Think without func_00196CC0 and the return to the spawn point;
+/* The think handler: as EntityAi_Think without EntityAi_CheckFarFromSpawn and the return to the spawn point;
    states 1 and 2 both have EntityAi_ThinkCombat. Every 20th frame it starts effect
    EntityParams.unk43A at model point 0xFF. While work word unk6A counts down
    (Larva_DormantMoveAlongArc sets it to 600) it shrinks the model's scale (EntityModel.unkE0) from
@@ -110,7 +110,7 @@ static void Larva_Think(Entity *entity, s32 unknown) {
     f32 scale;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
         EntityAi_StepState(entity);
@@ -181,7 +181,7 @@ static void Larva_Dormant(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit20 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
@@ -299,7 +299,7 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
 /* A second dormant action (busy bit 0x20), which Larva_DormantHeldAtModelPoint starts: animation 18. It
    turns the entity to Entity.unk68, give or take half of EntityParams.unk434 degrees, and sends it
    off at 40 degrees with a speed of 24 to 48 by the distance to the player, the y speed growing by
-   EntityParams.unk430 (limit unk432); it checks part 0 of melee record 0 for a hit (func_00195AC0)
+   EntityParams.unk430 (limit unk432); it checks part 0 of melee record 0 for a hit (EntityAi_CheckMeleeHit)
    and starts effect unk43C every third frame. When flag bit 44 is set it puts the model's scale
    back, sets work word unk6A to 600, goes to state 2 and starts Larva_Dormant. */
 static void Larva_DormantMoveAlongArc(Entity *entity) {
@@ -370,7 +370,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43C, 0xFF, (int)entity->model->unkD0);
         }
         if (unkE0->unk7C == 0) {
-            unkE0->unk7C = func_00195AC0(entity, entity->params->unk240, 0, 1, 2);
+            unkE0->unk7C = EntityAi_CheckMeleeHit(entity, entity->params->unk240, 0, 1, 2);
         }
         if ((s32)(entity->flags >> 44) & 1) {
             ENTITY_FLAG_BITS(entity)->bit27 = 0;
@@ -381,7 +381,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
             entity->model->unkE0[2] = unkE0->unk5C;
             unkE0->unk7B = 1;
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43E, 0xFF, (int)entity->model->unkD0);
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             entity->flags &= ~0x200000;
             entity->flags &= ~0x100000;
             entity->flags &= ~0x40000;

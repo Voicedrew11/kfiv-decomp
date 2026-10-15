@@ -24,7 +24,7 @@ void func_00109800(void);
 void func_0010A7E0(void *);
 void func_0010B000(void);
 void func_00116610(void);
-float func_0019B838(float);
+float Angle_Wrap(float);
 void func_001B5460(void);
 void Display_SwapBuffers(int);
 void Vector_Add(void *, void *, void *);
@@ -59,16 +59,16 @@ void func_001161A8(void) {
             move.x = move.y = move.z = move.w = 0.0f;
             if (D_00413DA8[0] & 0x2000) {
                 if (D_00413DA8[0] & 0x40) {
-                    rotation.x = func_0019B838(rotation.x + 0.08726646f);
+                    rotation.x = Angle_Wrap(rotation.x + 0.08726646f);
                 }
                 if (D_00413DA8[0] & 0x10) {
-                    rotation.x = func_0019B838(rotation.x - 0.08726646f);
+                    rotation.x = Angle_Wrap(rotation.x - 0.08726646f);
                 }
                 if (D_00413DA8[0] & 0x80) {
-                    rotation.y = func_0019B838(rotation.y + 0.08726646f);
+                    rotation.y = Angle_Wrap(rotation.y + 0.08726646f);
                 }
                 if (D_00413DA8[0] & 0x20) {
-                    rotation.y = func_0019B838(rotation.y - 0.08726646f);
+                    rotation.y = Angle_Wrap(rotation.y - 0.08726646f);
                 }
             } else {
                 if (D_00413DA8[0] & 0x80) {

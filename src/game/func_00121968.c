@@ -6,7 +6,7 @@ extern float D_00413F80[];
 
 void Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
-float func_0019B838(float);
+float Angle_Wrap(float);
 int func_001B4F30(u16, void *, void *, void *, void *);
 
 /* Update handler of the shooting kind: every so many frames (or all the time
@@ -32,8 +32,8 @@ void func_00121968(MapObject *object) {
         return;
     }
     point = (void *)object->model->get_point(object->model, MAP_OBJECT_WORDS(object)->unk48);
-    aim.x = func_0019B838(object->model->rotation.x + MAP_OBJECT_WORDS(object)->unk4A * 0.017453292f);
-    aim.y = func_0019B838(object->model->rotation.y + MAP_OBJECT_WORDS(object)->unk4C * 0.017453292f + 3.1415927f);
+    aim.x = Angle_Wrap(object->model->rotation.x + MAP_OBJECT_WORDS(object)->unk4A * 0.017453292f);
+    aim.y = Angle_Wrap(object->model->rotation.y + MAP_OBJECT_WORDS(object)->unk4C * 0.017453292f + 3.1415927f);
     aim.z = object->model->rotation.z;
     aim.w = 0.0f;
     shot = Shot_Alloc();

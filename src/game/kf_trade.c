@@ -68,10 +68,10 @@ extern s32 D_00446C38;
     }
 int sceGsSyncPath(int, int);
 int sceGsSyncV(int);
-void func_0019BDA0(int, int);
-void func_001A15C0(void);
-void func_001A15B8(void);
-void func_0019DC00(void);
+void Vram_Clear(int, int);
+void Sound_MutePositional(void);
+void Sound_UnmutePositional(void);
+void Sound_UpdateTagged(void);
 void func_001B5460(void);
 s16 MenuPad_Update(void);
 void MenuHeap_FreeToMark(void);
@@ -122,7 +122,7 @@ extern LinkNode D_004265B0;
 extern u32 D_00446A74;
 extern SpritePacket *D_00446BFC;
 extern s8 D_00447311;
-s32 func_0019CDC0(s32);
+s32 Sound_PlayMenu(s32);
 int func_001E5210(u8 mode);
 void MenuDraw_Bar(MenuCursorBar *);
 void MenuSprite_Draw(int, int, int, int);
@@ -571,9 +571,9 @@ void Trade_Run(s32 value) {
     D_00447310 = 0;
     sceGsSyncPath(0, 0);
     sceGsSyncV(0);
-    func_0019BDA0(0x3D00, 0x3F00);
-    func_001A15C0();
-    func_0019DC00();
+    Vram_Clear(0x3D00, 0x3F00);
+    Sound_MutePositional();
+    Sound_UpdateTagged();
     D_00446C94 = 0;
     D_0044731C = D_00447320 = Pad_GetMode(0, 0);
     while (trade_run_steps[D_00446CA8](value) != 0) {
@@ -598,7 +598,7 @@ void Trade_Run(s32 value) {
     sceGsSyncPath(0, 0);
     while (sceGsSyncV(0) != 0) {
     }
-    func_001A15B8();
+    Sound_UnmutePositional();
     MenuHeap_FreeToMark();
     D_00446CA8 = 0;
     sceGsSyncPath(0, 0);
@@ -882,10 +882,10 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
 
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x10) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             context->unk04--;
         } else if (D_00446DE8 & 0x40) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             context->unk04++;
         }
     }
@@ -922,23 +922,23 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
         if (D_00446DE8 & 0x4000) {
             if (context->unk04 == 0) {
                 if (D_005CF380[0] != NULL) {
-                    func_0019CDC0(0);
+                    Sound_PlayMenu(0);
                     D_00447311 = 2;
                     D_00447318 = 1;
                 } else {
-                    func_0019CDC0(3);
+                    Sound_PlayMenu(3);
                 }
             } else if (context->unk04 == 1) {
                 if (D_00426110[0] != NULL) {
-                    func_0019CDC0(0);
+                    Sound_PlayMenu(0);
                     D_00447318 = 1;
                     D_00447311 = 3;
                 } else {
-                    func_0019CDC0(3);
+                    Sound_PlayMenu(3);
                 }
             }
         } else if (D_00446DE8 & 0x2000) {
-            func_0019CDC0(2);
+            Sound_PlayMenu(2);
             D_00447311 = 4;
             D_00447318 = 1;
         }
@@ -1205,7 +1205,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
         case 5:
         case 6:
             if (D_00446CAC != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CAC = 0;
             D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
@@ -1232,7 +1232,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
         case 8:
         case 9:
             if (D_00446CAC != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CAC = 0;
             D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
@@ -1255,7 +1255,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
             break;
         case 0:
             if (D_00446CAC != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CAC = 0;
             D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
@@ -1322,12 +1322,12 @@ static void Trade_UpdateStockList(HandlerContext *context) {
 
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
-            func_0019CDC0(0);
+            Sound_PlayMenu(0);
             D_00447311 = 2;
             D_00447312 = 3;
             D_00447318 = 1;
         } else if (D_00446DE8 & 0x2000) {
-            func_0019CDC0(2);
+            Sound_PlayMenu(2);
             if (context->arg != 4) {
                 D_00447311 = 3;
             } else {
@@ -1445,10 +1445,10 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     record = D_005CF380[0]->unk0C - bases.first_item[D_005CF380[0]->group];
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x20) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             context->unk04++;
         } else if ((D_00446DE8 & 0x80) && D_00447310 == 0) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             context->unk04--;
         }
     }
@@ -1555,7 +1555,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         case 5:
         case 6:
             if (D_00446CB4 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CB4 = 0;
             D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
@@ -1582,7 +1582,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
         case 8:
         case 9:
             if (D_00446CB4 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CB4 = 0;
             D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
@@ -1605,7 +1605,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             break;
         case 0:
             if (D_00446CB4 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CB4 = 0;
             D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
@@ -1741,7 +1741,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
             if ((D_00413F80.gold >= D_00446E50 && context->arg != 4) || (D_00446E30 >= D_00446E50 && context->arg == 4)) {
-                func_0019CDC0(0);
+                Sound_PlayMenu(0);
                 D_00447311 = 3;
                 D_00447312 = 2;
                 D_00447318 = 1;
@@ -1749,10 +1749,10 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
                     D_00446C90->next = NULL;
                 }
             } else {
-                func_0019CDC0(3);
+                Sound_PlayMenu(3);
             }
         } else if (D_00446DE8 & 0x2000) {
-            func_0019CDC0(2);
+            Sound_PlayMenu(2);
             D_00447311 = 4;
             D_00447312 = 2;
             D_00447318 = 1;
@@ -2032,7 +2032,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
         case 5:
         case 6:
             if (details_opened != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
             D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
@@ -2058,7 +2058,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
         case 8:
         case 9:
             if (details_opened != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
             D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
@@ -2080,7 +2080,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
             break;
         case 0:
             if (details_opened != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
             D_00446DF8 = ScaleValue(D_003679A0[record].unk00[1] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
@@ -2145,12 +2145,12 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
 
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
-            func_0019CDC0(0);
+            Sound_PlayMenu(0);
             D_00447311 = 2;
             D_00447312 = 3;
             D_00447318 = 1;
         } else if (D_00446DE8 & 0x2000) {
-            func_0019CDC0(2);
+            Sound_PlayMenu(2);
             D_00447311 = 3;
             D_00447312 = 2;
             D_00447318 = 1;
@@ -2256,10 +2256,10 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     info_pressed = 0;
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x20) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             context->unk04++;
         } else if (D_00446DE8 & 0x80) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             context->unk04--;
         }
     }
@@ -2344,7 +2344,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
         case 5:
         case 6:
             if (info_pressed != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
             D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
@@ -2370,7 +2370,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
         case 8:
         case 9:
             if (info_pressed != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446DF4 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
             D_00446DF8 = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
@@ -2392,7 +2392,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             break;
         case 0:
             if (info_pressed != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446DF4 = ScaleValue(D_003679A0[record].unk00[0] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
             D_00446DF8 = ScaleValue(D_003679A0[record].unk00[1] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
@@ -2496,7 +2496,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
 
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
-            func_0019CDC0(0);
+            Sound_PlayMenu(0);
             D_00413F80.gold += D_00446E50;
             if (D_00413F80.gold > 999999) {
                 D_00413F80.gold = 999999;
@@ -2524,7 +2524,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
                 D_00446C90->next = NULL;
             }
         } else if (D_00446DE8 & 0x2000) {
-            func_0019CDC0(2);
+            Sound_PlayMenu(2);
             D_00447311 = 4;
             D_00447312 = 2;
             D_00447318 = 1;
@@ -2661,7 +2661,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                     D_005CF360[0] = next;
                     D_005CF370[0] = D_005CF370[0]->next;
                 }
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
                 D_005CF380[0] = cursor->next;
             }
             Menu_ShiftListModelsNext(0);
@@ -2671,7 +2671,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                     D_005CF370[0] = cursor;
                     D_005CF360[0] = D_005CF360[0]->prev;
                 }
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
                 D_005CF380[0] = cursor->prev;
             }
             Menu_ShiftListModelsPrev(0);
@@ -2685,7 +2685,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                         }
                     }
                 }
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsPageUp(0);
         } else if ((D_00446DE8 & 0x80) && D_00446C48 >= 8) {
@@ -2698,7 +2698,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                         }
                     }
                 }
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsPageDown(0);
         } else {
@@ -2855,9 +2855,9 @@ void Smith_Run(void) {
     D_00447315 = 0;
     sceGsSyncPath(0, 0);
     sceGsSyncV(0);
-    func_0019BDA0(0x3D00, 0x3F00);
-    func_001A15C0();
-    func_0019DC00();
+    Vram_Clear(0x3D00, 0x3F00);
+    Sound_MutePositional();
+    Sound_UpdateTagged();
     D_00446C94 = 0;
     D_0044731C = D_00447320 = Pad_GetMode(0, 0);
     while (smith_run_steps[D_00446CCC](0) != 0) {
@@ -2882,7 +2882,7 @@ void Smith_Run(void) {
     sceGsSyncPath(0, 0);
     while (sceGsSyncV(0) != 0) {
     }
-    func_001A15B8();
+    Sound_UnmutePositional();
     MenuHeap_FreeToMark();
     D_00446CCC = 0;
     sceGsSyncPath(0, 0);
@@ -3136,10 +3136,10 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
 
     if (D_00447318 == 0 && D_00446CD0 != 0) {
         if (D_00446DE8 & 0x10) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             context->unk04--;
         } else if (D_00446DE8 & 0x40) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             context->unk04++;
         }
     }
@@ -3181,7 +3181,7 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
             if (D_00446CD0 == 0) {
-                func_0019CDC0(0);
+                Sound_PlayMenu(0);
                 D_00446CD0 = 1;
             } else {
                 D_00446AD4 = 0;
@@ -3189,15 +3189,15 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                 case 0:
                     Smith_BuildItemRings(0);
                     if (D_00426110[0] != NULL) {
-                        func_0019CDC0(0);
+                        Sound_PlayMenu(0);
                         D_00447318 = 1;
                         D_00447316 = 2;
                     } else {
-                        func_0019CDC0(3);
+                        Sound_PlayMenu(3);
                     }
                     break;
                 case 1:
-                    func_0019CDC0(0);
+                    Sound_PlayMenu(0);
                     Smith_BuildItemRings(1);
                     if (item_counts[ITEM_EARTH_STONE] != 0) {
                         D_00447318 = 1;
@@ -3209,17 +3209,17 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                 case 2:
                     Smith_BuildItemRings(2);
                     if (D_00446C38 > 0) {
-                        func_0019CDC0(0);
+                        Sound_PlayMenu(0);
                         D_00447318 = 1;
                         D_00447316 = 4;
                     } else {
-                        func_0019CDC0(3);
+                        Sound_PlayMenu(3);
                     }
                     break;
                 }
             }
         } else if (D_00446DE8 & 0x2000) {
-            func_0019CDC0(2);
+            Sound_PlayMenu(2);
             if (D_00446CD0 == 0) {
                 D_00446CD0 = 1;
             } else {
@@ -3457,7 +3457,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
         case 5:
         case 6:
             if (D_00446CD4 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CD4 = 0;
             D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
@@ -3491,7 +3491,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
         case 8:
         case 9:
             if (D_00446CD4 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CD4 = 0;
             D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
@@ -3521,7 +3521,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             break;
         case 0:
             if (D_00446CD4 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CD4 = 0;
             D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
@@ -3596,13 +3596,13 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
         if ((D_00426110[0]->unk0C < 220 ? GetWeaponLevel(D_00426110[0]->unk0C - 150) < 100
                                         : GetItemLevel(D_00426110[0]->unk0C - 220) < 100) ||
             D_00426110[0]->unk0C == 183) {
-            func_0019CDC0(0);
+            Sound_PlayMenu(0);
             D_00447316 = 2;
             D_00447317 = 3;
             D_00447318 = 1;
         }
     } else if ((D_00446DE8 & 0x2000) && D_00447318 == 0) {
-        func_0019CDC0(2);
+        Sound_PlayMenu(2);
         D_00447316 = 3;
         D_00447317 = 2;
         D_00447318 = 1;
@@ -3772,7 +3772,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
         case 5:
         case 6:
             if (D_00446CDC != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CDC = 0;
             D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
@@ -3806,7 +3806,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
         case 8:
         case 9:
             if (D_00446CDC != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CDC = 0;
             D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
@@ -3837,7 +3837,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             break;
         case 0:
             if (D_00446CDC != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CDC = 0;
             D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
@@ -3929,7 +3929,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     }
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
-            func_0019CDC0(0);
+            Sound_PlayMenu(0);
             D_00447316 = 2;
             D_00447317 = 2;
             D_00447318 = 1;
@@ -3937,7 +3937,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                 D_00446C90->next = NULL;
             }
         } else if (D_00446DE8 & 0x2000) {
-            func_0019CDC0(2);
+            Sound_PlayMenu(2);
             D_00447316 = 3;
             D_00447317 = 2;
             D_00447318 = 1;
@@ -4190,7 +4190,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             D_00446AD4 = 1;
         } else if (D_00447317 != 2) {
             D_00447317 = 2;
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
         } else {
             D_00447317 = 0;
         }
@@ -4208,7 +4208,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         case 5:
         case 6:
             if (D_00446CE4 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CE4 = 0;
             D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
@@ -4242,7 +4242,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         case 8:
         case 9:
             if (D_00446CE4 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CE4 = 0;
             D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
@@ -4272,7 +4272,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
             break;
         case 0:
             if (D_00446CE4 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CE4 = 0;
             D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
@@ -4357,11 +4357,11 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
             if (D_00447313 == 0) {
-                func_0019CDC0(0);
+                Sound_PlayMenu(0);
                 D_00447316 = 2;
                 D_00447318 = 1;
             } else {
-                func_0019CDC0(0);
+                Sound_PlayMenu(0);
                 D_00447316 = 3;
                 D_00447318 = 1;
                 if (D_00446C90 != NULL) {
@@ -4369,7 +4369,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                 }
             }
         } else if (D_00446DE8 & 0x2000) {
-            func_0019CDC0(2);
+            Sound_PlayMenu(2);
             if (D_00447313 == 0) {
                 D_00447316 = 4;
                 D_00447318 = 1;
@@ -4564,10 +4564,10 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
 
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x40) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             D_00447315++;
         } else if (D_00446DE8 & 0x10) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             D_00447315--;
         }
     }
@@ -4631,7 +4631,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             D_00446AD4 = 1;
         } else if (D_00447317 != 2) { // match: this way round for the branch sense
             D_00447317 = 2;
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
         } else {
             D_00447317 = 0;
         }
@@ -4649,7 +4649,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
         case 5:
         case 6:
             if (play_sound) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
             D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
@@ -4676,7 +4676,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
         case 8:
         case 9:
             if (play_sound) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
             D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
@@ -4699,7 +4699,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
             break;
         case 0:
             if (play_sound) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
             D_00446DF8 = (D_003679A0[index].unk00[1] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
@@ -4762,14 +4762,14 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     }
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
-            func_0019CDC0(0);
+            Sound_PlayMenu(0);
             D_00447316 = 2;
             D_00447318 = 1;
             if (D_00446C90 != NULL) {
                 D_00446C90->next = NULL;
             }
         } else if (D_00446DE8 & 0x2000) {
-            func_0019CDC0(2);
+            Sound_PlayMenu(2);
             D_00447316 = 3;
             D_00447318 = 1;
             if (D_00446C90 != NULL) {
@@ -4974,7 +4974,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
         case 5:
         case 6:
             if (D_00446CF0 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CF0 = 0;
             D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
@@ -5008,7 +5008,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
         case 8:
         case 9:
             if (D_00446CF0 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CF0 = 0;
             D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
@@ -5038,7 +5038,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             break;
         case 0:
             if (D_00446CF0 != 0) {
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             D_00446CF0 = 0;
             D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
@@ -5109,7 +5109,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     }
     if (D_00447318 == 0) {
         if (D_00446DE8 & 0x4000) {
-            func_0019CDC0(0);
+            Sound_PlayMenu(0);
             D_00447316 = 2;
             D_00447317 = 3;
             D_00447318 = 1;
@@ -5117,7 +5117,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
                 D_00446C90->next = NULL;
             }
         } else if (D_00446DE8 & 0x2000) {
-            func_0019CDC0(2);
+            Sound_PlayMenu(2);
             D_00447316 = 3;
             D_00447317 = 2;
             D_00447318 = 1;
@@ -5214,7 +5214,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                     D_005CF390[0] = next;
                     D_005CF3A0[0] = D_005CF3A0[0]->next;
                 }
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
                 D_005CF3B0[0] = cursor->next;
             }
             Menu_ShiftListModelsNext(0);
@@ -5224,7 +5224,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                     D_005CF3A0[0] = cursor;
                     D_005CF390[0] = D_005CF390[0]->prev;
                 }
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
                 D_005CF3B0[0] = cursor->prev;
             }
             Menu_ShiftListModelsPrev(0);
@@ -5238,7 +5238,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                         }
                     }
                 }
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsPageUp(0);
         } else if ((D_00446DE8 & 0x80) && D_00446C48 >= 8) {
@@ -5251,7 +5251,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                         }
                     }
                 }
-                func_0019CDC0(1);
+                Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsPageDown(0);
         } else {
@@ -5281,9 +5281,9 @@ void SaveScreen_Run(void) {
 
     sceGsSyncPath(0, 0);
     sceGsSyncV(0);
-    func_0019BDA0(0x3D00, 0x3F00);
-    func_001A15C0();
-    func_0019DC00();
+    Vram_Clear(0x3D00, 0x3F00);
+    Sound_MutePositional();
+    Sound_UpdateTagged();
     D_00446C94 = 0;
     D_0044731C = D_00447320 = Pad_GetMode(0, 0);
     while (save_screen_run_steps[D_00446D00](0) != 0) {
@@ -5308,7 +5308,7 @@ void SaveScreen_Run(void) {
     sceGsSyncPath(0, 0);
     while (sceGsSyncV(0) != 0) {
     }
-    func_001A15B8();
+    Sound_UnmutePositional();
     MenuHeap_FreeToMark();
     D_00446CFC = 0;
     D_00446D00 = 0;
@@ -5773,18 +5773,18 @@ static void SaveScreen_UpdateCardSelect(void) {
         SaveCard_StartCheck(1);
     } else if (D_005CF3C0.unk14 == 0 && D_005CF3C0.unk18 == 0) {
         if ((D_00446DE8 & 0xA0) && D_0044731C != 0xFF && D_005CF3C0.unk12 == -1) {
-            func_0019CDC0(1);
+            Sound_PlayMenu(1);
             D_005CF3C0.unk0C = (D_005CF3C0.unk0C + 1) & 1;
         } else {
             report = Pad_GetReport(0, 0);
             if ((report->pressed & 0x4000) && D_0044731C != 0xFF) {
-                func_0019CDC0(0);
+                Sound_PlayMenu(0);
                 D_005CF3C0.unk21 = 1;
                 D_005CF3C0.unk18 = 1;
             } else {
                 report = Pad_GetReport(0, 0);
                 if ((report->pressed & 0x2000) && D_0044731C != 0xFF) {
-                    func_0019CDC0(2);
+                    Sound_PlayMenu(2);
                     if (D_005CF3C0.unk12 == 14) {
                         if (SaveCard_StartReadList(D_005CF3C0.unk0C, 0) == 0) {
                             D_005CF3C0.unk14 = 1;
@@ -5797,10 +5797,10 @@ static void SaveScreen_UpdateCardSelect(void) {
                         SaveCard_Close();
                     }
                 } else if ((D_00446DE8 & 0x10) && D_0044731C != 0xFF && D_005CF3C0.unk12 == 12) {
-                    func_0019CDC0(1);
+                    Sound_PlayMenu(1);
                     D_005CF3C0.unk0D = (D_005CF3C0.unk0D + 1) & 1;
                 } else if ((D_00446DE8 & 0x40) && D_0044731C != 0xFF && D_005CF3C0.unk12 == 12) {
-                    func_0019CDC0(1);
+                    Sound_PlayMenu(1);
                     D_005CF3C0.unk0D = (D_005CF3C0.unk0D - 1) & 1;
                 }
             }
@@ -6209,7 +6209,7 @@ static void SaveScreen_UpdateSaveList(void) {
             D_005CF3C0.unk1D = 0;
             switch (D_005CF3C0.unk13) {
             case -1:
-                func_0019CDC0(0);
+                Sound_PlayMenu(0);
                 save_state = SaveCard_GetSaveState(D_00426610[D_005CF3C0.unk0D]);
                 if (save_state == 0) {
                     if (SaveCard_HasRoomFor(D_005CF3C0.unk0C, 1, 0) > 0 &&
@@ -6228,25 +6228,25 @@ static void SaveScreen_UpdateSaveList(void) {
             case 6:
             case 7:
                 if (D_005CF3C0.unk0E == 0) {
-                    func_0019CDC0(0);
+                    Sound_PlayMenu(0);
                     D_005CF3C0.unk13 = 0;
                     func_001D20E0();
                     func_00103C18();
                     SaveCard_StartSave(D_005CF3C0.unk0C, D_00426610[D_005CF3C0.unk0D], (s32 *)D_0036A130);
                 } else {
-                    func_0019CDC0(2);
+                    Sound_PlayMenu(2);
                     D_005CF3C0.unk13 = -1;
                 }
                 D_005CF3C0.unk0E = 1;
                 break;
             case 2:
             case 20:
-                func_0019CDC0(0);
+                Sound_PlayMenu(0);
                 D_005CF3C0.unk13 = -1;
                 break;
             case 10:
             case 11:
-                func_0019CDC0(0);
+                Sound_PlayMenu(0);
                 D_00446C70 = 3;
                 D_005CF3C0.unk18 = 1;
                 break;
@@ -6254,7 +6254,7 @@ static void SaveScreen_UpdateSaveList(void) {
         } else {
             report = Pad_GetReport(0, 0);
             if ((report->pressed & 0x2000) && D_0044731C != 0xFF && D_005CF3C0.unk1D == 0) {
-                func_0019CDC0(2);
+                Sound_PlayMenu(2);
                 switch (D_005CF3C0.unk13) {
                 case -1:
                     D_00446C70 = 2;
@@ -6280,7 +6280,7 @@ static void SaveScreen_UpdateSaveList(void) {
                         D_005CF3C0.unk0D = ((s8)(D_005CF3C0.unk0D + 1) + 3) % 3;
                         if (MENU_SCREEN_SAVES(&D_005CF3C0)->save_state[D_005CF3C0.unk0D] >= 0) {
                             if (i != 2) {
-                                func_0019CDC0(1);
+                                Sound_PlayMenu(1);
                             }
                             break;
                         }
@@ -6288,7 +6288,7 @@ static void SaveScreen_UpdateSaveList(void) {
                     break;
                 case 6:
                 case 7:
-                    func_0019CDC0(1);
+                    Sound_PlayMenu(1);
                     D_005CF3C0.unk0E = (D_005CF3C0.unk0E + 1) & 1;
                     break;
                 }
@@ -6299,7 +6299,7 @@ static void SaveScreen_UpdateSaveList(void) {
                         D_005CF3C0.unk0D = ((s8)(D_005CF3C0.unk0D - 1) + 3) % 3;
                         if (MENU_SCREEN_SAVES(&D_005CF3C0)->save_state[D_005CF3C0.unk0D] >= 0) {
                             if (i != 2) {
-                                func_0019CDC0(1);
+                                Sound_PlayMenu(1);
                             }
                             break;
                         }
@@ -6307,7 +6307,7 @@ static void SaveScreen_UpdateSaveList(void) {
                     break;
                 case 6:
                 case 7:
-                    func_0019CDC0(1);
+                    Sound_PlayMenu(1);
                     D_005CF3C0.unk0E = (D_005CF3C0.unk0E + 1) & 1;
                     break;
                 }

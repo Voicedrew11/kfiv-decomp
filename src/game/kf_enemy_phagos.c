@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 #include "common.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -18,10 +18,10 @@ int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionLight(Entity *);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
+void EntityAi_SensePlayer(void *, int);
 int rand(void);
 int Motion_Start(void *, int, int, u32, int);
 float EntityMath_WrapAngle(float);
@@ -45,7 +45,7 @@ void Phagos_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Phagos_Think;
     unkE0->animate = (void (*)(void))Phagos_Animate;
     unkE0->on_hit = (void (*)(void))Phagos_OnHit;
@@ -96,14 +96,14 @@ static void Phagos_Animate(Entity *entity) {
 static void Phagos_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionLight, 0);
-    func_00195898((char *)entity, 3);
+    EntityAi_SetState((char *)entity, 3);
 }
 
 /* The think handler: no states. While the entity is not busy it starts Phagos_RunAwayAndRemove; it
    tests for state 3, but both branches start the same action. */
 static void Phagos_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10 == entity->unkD7 % 10) {
-        func_00196870(entity, 2);
+        EntityAi_SensePlayer(entity, 2);
     }
     if (entity->unkC6 == 0) {
         if (entity->state == 3) {

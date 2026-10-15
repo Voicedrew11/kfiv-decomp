@@ -9,7 +9,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
@@ -17,7 +17,7 @@ extern s32 D_003E6E40[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
-int func_001960C0(void *, int, int, int, int, float);
+int EntityAi_LookAtPoint(void *, int, int, int, int, float);
 int func_00196120(Entity *, void *, s32, void *, f32);
 int Motion_Start(void *, int, int, u32, int);
 extern PlayerData D_00413F80;
@@ -39,7 +39,7 @@ void EyePedestal_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))EyePedestal_Think;
     unkE0->animate = (void (*)(void))EyePedestal_Animate;
     unkE0->on_hit = NULL;
@@ -65,7 +65,7 @@ void EyePedestal_Init(Entity *entity) {
 }
 
 /* The animate handler: as EntityAi_Animate, but the motion never moves the entity, and with flag
-   bit 9 set the head follows the point in work floats unk48 to unk50 (func_001960C0, at the rate
+   bit 9 set the head follows the point in work floats unk48 to unk50 (EntityAi_LookAtPoint, at the rate
    EntityParams.unk434) instead of the target. */
 static void EyePedestal_Animate(Entity *entity) {
     f32 limits[4];
@@ -96,7 +96,7 @@ static void EyePedestal_Animate(Entity *entity) {
         point[2] = unkE0->unk50;
         look_at_target = (s32)(entity->flags >> 9) & 1;
         if (look_at_target) {
-            func_001960C0(entity, (s32)unkE0->unk20, look_at_target, (s32)point, (s32)limits, (f32)(s16)params->unk434);
+            EntityAi_LookAtPoint(entity, (s32)unkE0->unk20, look_at_target, (s32)point, (s32)limits, (f32)(s16)params->unk434);
         } else {
             func_00196120(entity, unkE0->unk20, 0, NULL, 8.0f);
         }

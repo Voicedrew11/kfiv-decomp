@@ -52,7 +52,7 @@ void EntityAi_Animate(Entity *entity);
 /* The default on_hit handler: forgets the target and starts the reaction the hit calls for. */
 void EntityAi_OnHit(Entity *entity);
 
-/* The default think handler: every tenth frame updates what the entity knows of the player (func_00196870). */
+/* The default think handler: every tenth frame updates what the entity knows of the player (EntityAi_SensePlayer). */
 void EntityAi_Think(Entity *entity, s32 unknown);
 
 /* The think function while flag bit 53 is set: walks back to the spawn point. */

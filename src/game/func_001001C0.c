@@ -49,7 +49,7 @@ void func_00123288(void);
 void func_001C95B0(void);
 void Player_UseItem(void);
 void func_00101618(void);
-void func_0019C540(void);
+void Sound_Update(void);
 void func_001061E8(void);
 void func_00100FC8(void);
 void func_001012D8(int, int);
@@ -62,8 +62,8 @@ void func_001017A8(void);
 void func_00118958(void);
 void func_00101F90(void);
 void func_001B5778(void);
-void func_0019C7F0(int);
-void func_0019C820(int);
+void Sound_SetBgmVolume(int);
+void Sound_SetBankVolumes(int);
 int sceGsSyncV(int);
 int func_0019F6B0(void);
 void func_00102558(void);
@@ -133,7 +133,7 @@ void func_001001C0(int arg) {
         Hud_Update();
         if (!(D_0038CC50.bit12 && D_0038CC50.bit13)) {
             func_00101618();
-            func_0019C540();
+            Sound_Update();
         }
         func_001061E8();
         Splash_Update();
@@ -161,8 +161,8 @@ void func_001001C0(int arg) {
     Message_ClearNotices();
     saved = D_00349680[1];
     D_00349680[1] = 0;
-    func_0019C7F0(0);
-    func_0019C820(0);
+    Sound_SetBgmVolume(0);
+    Sound_SetBankVolumes(0);
     while (D_0038A130.unk0C != 0 ||
            ((D_0038A130.unk04 != 0 || D_0038A130.unk18 != 0) &&
             (D_0038A130.unk18 != 0 || D_0038A130.unk04 == 0 || func_0019F6B0() == 0))) {
@@ -170,7 +170,7 @@ void func_001001C0(int arg) {
         }
         Timer_Restart();
         func_00101618();
-        func_0019C540();
+        Sound_Update();
     }
     D_00349680[1] = saved;
     D_0038CC50.bit9 = FALSE;

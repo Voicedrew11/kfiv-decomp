@@ -6,7 +6,7 @@
 #include "common.h"
 #include "kf_entity_world.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -16,14 +16,14 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 extern void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
+void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 float EntityMath_DistanceXZ(void *, void *);
-s32 func_00197078(Entity *);
+s32 EntityAi_CanAttack(Entity *);
 int EntitySight_EntityInWay(int *);
 int EntityAi_PickAttack(char *);
 float EntityMath_AngleDifference(float, float);
@@ -31,14 +31,14 @@ void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(void *);
-void func_00196CC0(void *);
+void EntityAi_CheckFarFromSpawn(void *);
 extern PlayerData D_00413F80;
 extern char D_0043E8C0[];
 int printf(const char *, ...);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
-s32 func_00198D10(Entity *);
-s32 func_00197F00(Entity *);
+s32 EntityAi_CanShoot(Entity *);
+s32 EntityAi_CanMelee(Entity *);
 s32 EntityAi_PickRangedAttack(Entity *);
 s32 EntityAi_PickMeleeAttack(Entity *);
 void func_00196D48(Entity *);
@@ -81,7 +81,7 @@ void GoldenStatue_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->animate = (void (*)(void))GoldenStatue_Animate;
     unkE0->on_hit = (void (*)(void))GoldenStatue_OnHit;
     unkE0->move = (void (*)(void))GoldenStatue_Move;
@@ -130,7 +130,7 @@ static void GoldenStatue_OnHit(Entity *entity) {
     if (((flags >> 36) & 3) == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The think handler of mode 1 (EntitySpawnInfo.unk40 is 1): no states. Once the entity
@@ -155,7 +155,7 @@ static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 unknown) {
     }
     phase = D_00446ED4 % 10U;
     if (phase == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
         if (unkE0->unk78 == 0) {
@@ -197,7 +197,7 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 unknown) {
 
 /* Helper of GoldenStatue_ThinkWaitAtPost, called while work bytes unk78 and unk79 are set: clears unk78
    when the entity is more than 100 from the point (-7900, spawn y, 3050); starts the attack
-   EntityAi_PickAttack picks when func_00197078 says so and EntitySight_EntityInWay does not; else turns on the spot
+   EntityAi_PickAttack picks when EntityAi_CanAttack says so and EntitySight_EntityInWay does not; else turns on the spot
    to the heading in work float unk48, clears unk79 once it is within the turn limit of it, and
    starts the move action. */
 static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
@@ -213,8 +213,8 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
     if (EntityMath_DistanceXZ(entity->model->position, home) > range) {
         unkE0->unk78 = 0;
     }
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity) && !EntitySight_EntityInWay((int *)entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity) && !EntitySight_EntityInWay((int *)entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -243,8 +243,8 @@ static void GoldenStatue_StandAtPost(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 angle;
 
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity) && !EntitySight_EntityInWay((int *)entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity) && !EntitySight_EntityInWay((int *)entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -268,13 +268,13 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
 
     phase = D_00446ED4 % 10U;
     if (phase == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
     if ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) != 0x06000000) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
     }
     EntityAi_StepState(entity);
     if ((s32)(entity->flags >> 53) & 1) {
@@ -285,8 +285,8 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
 }
 
 /* Decides for GoldenStatue_ThinkNoStates: guards or dodges the player's swing; while flag bit 32 is
-   set starts EntityAi_RangedAttack (func_00198D10, EntityAi_PickRangedAttack) with the player farther from the
-   spawn point than EntitySpawnInfo.unk4C and EntityAi_MeleeAttack (func_00197F00, EntityAi_PickMeleeAttack)
+   set starts EntityAi_RangedAttack (EntityAi_CanShoot, EntityAi_PickRangedAttack) with the player farther from the
+   spawn point than EntitySpawnInfo.unk4C and EntityAi_MeleeAttack (EntityAi_CanMelee, EntityAi_PickMeleeAttack)
    with the player nearer. While the player's x is below -7900 it goes to one of three posts at x
    -8000, picked by the player's z, and from there turns to the player and starts the ranged attack
    only (work byte unk78 says it is at the post; on arriving it prints D_0043E8C0, "tuitayo",
@@ -312,14 +312,14 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
     }
     if (EntityMath_DistanceXZ(entity->spawn_info, &D_00413F80) > entity->spawn_info->unk4C) {
         if (ENTITY_FLAG_BITS(entity)->bit32) {
-            if (func_00198D10(entity) && !EntitySight_EntityInWay((int *)entity)) {
+            if (EntityAi_CanShoot(entity) && !EntitySight_EntityInWay((int *)entity)) {
                 EntityAi_PickRangedAttack(entity);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;
             }
         }
     } else if (ENTITY_FLAG_BITS(entity)->bit32) {
-        if (func_00197F00(entity) && !EntitySight_EntityInWay((int *)entity)) {
+        if (EntityAi_CanMelee(entity) && !EntitySight_EntityInWay((int *)entity)) {
             EntityAi_PickMeleeAttack(entity);
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             return;
@@ -367,7 +367,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
                 unkE0->unk78 = 0;
                 return;
             }
-            if (ENTITY_FLAG_BITS(entity)->bit32 && func_00198D10(entity) && !EntitySight_EntityInWay((int *)entity)) {
+            if (ENTITY_FLAG_BITS(entity)->bit32 && EntityAi_CanShoot(entity) && !EntitySight_EntityInWay((int *)entity)) {
                 EntityAi_PickRangedAttack(entity);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;

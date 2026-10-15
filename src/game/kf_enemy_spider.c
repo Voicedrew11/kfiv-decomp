@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 #include "common.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -17,8 +17,8 @@ int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int rand(void);
@@ -39,12 +39,12 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 void Vector_Copy(void *, void *);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityAi_LowerWeightsAfterHit(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 float EntityMath_EaseAngleToward(float *, float, float);
 void EntityEvent_OnDeath(Entity *);
 extern f32 D_00431AF0[16];
@@ -87,7 +87,7 @@ void Spider_Init(Entity *entity) {
     for (i = 6 - 1; i != -1; i--) {
         entity->unkC0[i] = 0x80;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->unk38 & (0x8000L << 43)) {
@@ -147,7 +147,7 @@ static void Spider_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
@@ -157,7 +157,7 @@ static void Spider_Think(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, func_00129CA0, 1);
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -330,12 +330,12 @@ static void Spider_RangedAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -352,7 +352,7 @@ static void Spider_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -409,7 +409,7 @@ static void Spider_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     EntityAi_StartAction(entity, func_00129CA0, 0);
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The death action (busy bit 0x40), installed and replaced together with Spider_OnHit

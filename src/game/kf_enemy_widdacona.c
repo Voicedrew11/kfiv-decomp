@@ -8,7 +8,7 @@
 #include "kf_effect.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -21,7 +21,7 @@ int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionHeavy(Entity *);
 extern PlayerData D_00413F80;
 int Motion_Start(void *, int, int, u32, int);
@@ -29,7 +29,7 @@ char *func_0010CAB8(char *, u32);
 void EntityEvent_OnDeath(Entity *);
 int func_0019A3F0(void *, int);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
+void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
@@ -41,9 +41,9 @@ int EntityAi_TurnCommand(Entity *);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
-s32 func_00199EB8(Entity *, f32 *, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void Widdacona_Animate(Entity *entity);
 static void Widdacona_OnHit(Entity *entity);
@@ -69,7 +69,7 @@ void Widdacona_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Widdacona_Think;
     unkE0->animate = (void (*)(void))Widdacona_Animate;
     unkE0->on_hit = (void (*)(void))Widdacona_OnHit;
@@ -126,7 +126,7 @@ static void Widdacona_OnHit(Entity *entity) {
     if (((s32)(entity->flags >> 36) & 3) == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The death action (busy bit 0x40): animation 16; when it has ended it starts effect 0x3BC at the
@@ -246,7 +246,7 @@ static void Widdacona_Dormant(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
             ENTITY_FLAG_BITS(entity)->bit23 = 0;
@@ -307,7 +307,7 @@ static void Widdacona_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 2);
+        EntityAi_SensePlayer(entity, 2);
     }
     if (entity->unkC6 != 0) {
         return;
@@ -398,12 +398,12 @@ static void Widdacona_RangedAttack0(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -421,7 +421,7 @@ static void Widdacona_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

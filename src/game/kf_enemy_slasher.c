@@ -7,7 +7,7 @@
 #include "kf_effect.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -19,14 +19,14 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_ThinkCombat(Entity *, s32);
@@ -54,7 +54,7 @@ void Slasher_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Slasher_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))Slasher_OnHit;
@@ -106,7 +106,7 @@ static void Slasher_OnHit(Entity *entity) {
     } else if (hit_strength == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
     unkE0->unk7A = 1;
     ENTITY_FLAG_BITS(entity)->bit32 = 1;
     ENTITY_FLAG_BITS(entity)->bit33 = 1;
@@ -121,10 +121,10 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
     char *part;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0((char *)entity);
+        EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);

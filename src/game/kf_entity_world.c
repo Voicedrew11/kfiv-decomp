@@ -31,9 +31,9 @@ void Vector_MultiplyComponents(float *, float *, float *);
 int Motion_Start(void *, int, int, u32, int);
 void Vector_Add(void *, void *, void *);
 void func_0010C9E8(ModelInstance *);
-s32 func_001963A8(Entity *);
+s32 EntityAi_ShouldRespawn(Entity *);
 void EntityEvent_Respawn(char *);
-s32 func_001962E8(Entity *);
+s32 EntityAi_RemoveIfFallen(Entity *);
 f32 EntityMath_Distance(f32 *, f32 *);
 float EntityMath_DistanceXZ(void *, void *);
 float EntityMath_HeadingTo(float *, float *);
@@ -264,12 +264,12 @@ void Entity_UpdateAll(void) {
     for (entity = D_004467E0; entity != NULL; entity = entity->next) {
         func_0010C9E8(ENTITY_MODEL(entity));
         if (ENTITY_FLAG_BITS(entity)->bits2 >= 3 || !ENTITY_FLAG_BITS(entity)->bit1) {
-            if (!func_001963A8(entity)) {
+            if (!EntityAi_ShouldRespawn(entity)) {
                 continue;
             }
             EntityEvent_Respawn((char *)entity);
         }
-        if (func_001962E8(entity)) {
+        if (EntityAi_RemoveIfFallen(entity)) {
             continue;
         }
         if (entity->unk82 != 0) {

@@ -1,6 +1,6 @@
 #include "kf_collision.h"
 
-void func_0019B688(float *, float *, float *, float *);
+void Vector_TriangleNormal(float *, float *, float *, float *);
 void Vector_Normalize(void *, void *);
 void Collision_CylinderEdge(void *, void *, f32, void *, f32, f32);
 
@@ -17,7 +17,7 @@ void func_001C7960(CollisionOwner *owner, f32 *position, f32 radius, f32 push) {
         point0 = (f32 *)owner->model->get_point(owner->model, 0);
         point1 = (f32 *)owner->model->get_point(owner->model, 1);
         point3 = (f32 *)owner->model->get_point(owner->model, 3);
-        func_0019B688(normal, point0, point1, point3);
+        Vector_TriangleNormal(normal, point0, point1, point3);
         Vector_Normalize(normal, normal);
         if (normal[1] < -0.93969f) {
             return;

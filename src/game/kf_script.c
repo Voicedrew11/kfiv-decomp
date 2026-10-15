@@ -18,8 +18,8 @@
 
 void *memset(void *, int, u32);
 void func_002108F8(void *dest, int count, int value);
-void func_0019C7F0(int level);
-void func_0019C820(int level);
+void Sound_SetBgmVolume(int level);
+void Sound_SetBankVolumes(int level);
 void func_001BB5C0(void);
 int func_00103548(int map, int entry);
 void Game_MoveRecollectionPage(u32 source_page, u32 dest_page);
@@ -1111,21 +1111,21 @@ void ScriptCmd_ShowSplash(ScriptWaitCommand *command) {
     }
 }
 
-/* Command 34: sets both volumes (options bytes 1 and 2 of D_00349680, through func_0019C7F0 and
-   func_0019C820) to `value` 64ths (0 to 64) of what the options say, then finishes. */
+/* Command 34: sets both volumes (options bytes 1 and 2 of D_00349680, through Sound_SetBgmVolume and
+   Sound_SetBankVolumes) to `value` 64ths (0 to 64) of what the options say, then finishes. */
 void ScriptCmd_SetVolumes(ScriptValueCommand *command) {
     if (command->value.value >= 0 && command->value.value <= 64) {
-        func_0019C7F0(D_00349680[1] * command->value.value / 64);
-        func_0019C820(D_00349680[2] * command->value.value / 64);
+        Sound_SetBgmVolume(D_00349680[1] * command->value.value / 64);
+        Sound_SetBankVolumes(D_00349680[2] * command->value.value / 64);
     }
     command->active = 0;
 }
 
-/* Command 35: sets the second volume (options byte 2, func_0019C820) to `value` 64ths of what the
+/* Command 35: sets the second volume (options byte 2, Sound_SetBankVolumes) to `value` 64ths of what the
    options say, then finishes. */
 void ScriptCmd_SetVolume2(ScriptValueCommand *command) {
     if (command->value.value >= 0 && command->value.value <= 64) {
-        func_0019C820(D_00349680[2] * command->value.value / 64);
+        Sound_SetBankVolumes(D_00349680[2] * command->value.value / 64);
     }
     command->active = 0;
 }
@@ -1152,14 +1152,14 @@ void ScriptCmd_RequestSoundLoad(ScriptValueCommand *command) {
     command->active = 0;
 }
 
-/* Command 36: sets the first volume (options byte 1, func_0019C7F0) to `value` 64ths (0 to 64) of what
+/* Command 36: sets the first volume (options byte 1, Sound_SetBgmVolume) to `value` 64ths (0 to 64) of what
    the options say, then finishes. */
 void ScriptCmd_SetVolume1(ScriptValueCommand *command) {
     u32 value;
 
     value = command->value.value;
     if (value < 65) {
-        func_0019C7F0((int)(D_00349680[1] * value) / 64);
+        Sound_SetBgmVolume((int)(D_00349680[1] * value) / 64);
     }
     command->active = 0;
 }

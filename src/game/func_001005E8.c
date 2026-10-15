@@ -36,7 +36,7 @@ void func_00109EB8(void);
 void func_001C97E8(int);
 void func_00116AA0(void);
 void func_0010A698(void);
-void func_0019A608(void);
+void Entity_DrawPoolModels(void);
 void func_00116970(void);
 void func_0010A5D8(void);
 void func_00109E88(void);
@@ -74,7 +74,7 @@ int func_001005E8(int arg) {
         func_0010AE58();
         func_00114198(0);
         MapObject_DrawAll(0, 0, 0);
-        func_0019A608();
+        Entity_DrawPoolModels();
         Entity_DrawAll(0);
         func_001C9650(0);
         ItemEffect_Draw();
@@ -116,7 +116,7 @@ int func_001005E8(int arg) {
         func_0010AE58();
         func_00114198(0);
         MapObject_DrawAll(0, 0, 0);
-        func_0019A608();
+        Entity_DrawPoolModels();
         Entity_DrawAll(0);
         func_001C9650(0);
         ItemEffect_Draw();
@@ -162,7 +162,7 @@ int func_001005E8(int arg) {
         func_0010AE58();
         func_00114198(0);
         MapObject_DrawAll(0, 0, 0);
-        func_0019A608();
+        Entity_DrawPoolModels();
         Entity_DrawAll(0);
         func_001C9650(0);
         Gold_Draw(0);

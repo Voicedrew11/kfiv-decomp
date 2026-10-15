@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 #include "common.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -17,8 +17,8 @@ void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
@@ -37,17 +37,17 @@ void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 float EntityMath_WrapAngle(float);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 float EntityMath_AngleXZ(float *, char *);
 extern u8 D_004141D8[];
 extern EntityModel *D_00446978;
 int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 float EntityMath_DistanceXZ(float *a, float *b);
 void EntityAi_LowerWeightsAfterHit(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
@@ -82,7 +82,7 @@ void FireElemental_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = FireElemental_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))FireElemental_OnHit;
@@ -122,7 +122,7 @@ static void FireElemental_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (D_00413F80.unk259 != 0) {
         unkE0->unk7C = 30;
@@ -136,7 +136,7 @@ static void FireElemental_Think(Entity *entity, s32 unknown) {
             return;
         }
     } else if (entity->unkC6 == 0) {
-        func_00196CC0((char *)entity);
+        EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             FireElemental_ThinkReturn(entity, unknown);
@@ -284,7 +284,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
         if (entity->model->unkFC->unk88 == 0) {
             entity->action_step++;
         }
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         break;
     case 2:
         if (unkE0->unk6A > 0) {
@@ -522,11 +522,11 @@ static void FireElemental_RangedAttack1(Entity *entity) {
         if (entity->model->unkFC->unk88 == 0) {
             entity->action_step++;
         }
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -543,7 +543,7 @@ static void FireElemental_RangedAttack1(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -589,7 +589,7 @@ static void FireElemental_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
     FireElemental_AlertSameKind(entity);
 }
 
@@ -831,12 +831,12 @@ static void FireElemental_RangedAttack0(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -853,7 +853,7 @@ static void FireElemental_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

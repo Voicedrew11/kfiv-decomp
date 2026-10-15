@@ -11,7 +11,7 @@ void Vector_Scale(float *, float *, float);
 float sinf(float);
 float cosf(float);
 extern f32 D_00431AF0[16];
-void func_0019A590(void *, void *, void *, void *, void *, f32);
+void Vector_Hermite(void *, void *, void *, void *, void *, f32);
 
 /* dst = a * (1 - t) + b * t across the xyz lanes, on the VU0 (EntityMath_LerpVector inlined) */
 static inline void blend_vectors(Vector4 *dst, Vector4 *src_a, Vector4 *src_b, f32 ratio) {
@@ -261,7 +261,7 @@ static s32 Motion_PoseSlot(ModelInstance *model, s32 type, s32 table, s32 frame_
             tangent0->w = 1.0f;
             *(MotionVector *)tangent1 = vectors[next->rotation_in];
             tangent1->w = 1.0f;
-            func_0019A590(&part->unk50, point0, point1, tangent0, tangent1, ratio);
+            Vector_Hermite(&part->unk50, point0, point1, tangent0, tangent1, ratio);
             angle = part->unk50;
             angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
             if (3.1415927f < angle) {
@@ -291,7 +291,7 @@ static s32 Motion_PoseSlot(ModelInstance *model, s32 type, s32 table, s32 frame_
             *(MotionVector *)point1 = vectors[next->position];
             *(MotionVector *)tangent0 = vectors[key->position_out];
             *(MotionVector *)tangent1 = vectors[next->position_in];
-            func_0019A590(part->unk40, point0, point1, tangent0, tangent1, ratio);
+            Vector_Hermite(part->unk40, point0, point1, tangent0, tangent1, ratio);
 
             part->unk60[0] = vectors[key->scale].x * (1.0f - ratio) + vectors[next->scale].x * ratio;
             part->unk60[1] = vectors[key->scale].y * (1.0f - ratio) + vectors[next->scale].y * ratio;
@@ -366,7 +366,7 @@ s32 Motion_BlendSlotToPose(ModelInstance *model, s32 type, s32 table, s16 frame,
                         tangent0->w = 1.0f;
                         *(MotionVector *)tangent1 = vectors[next->rotation_in];
                         tangent1->w = 1.0f;
-                        func_0019A590(result, point0, point1, tangent0, tangent1, ratio);
+                        Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
                         diff = result->x - part->unk50;
                         diff -= (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
                         if (3.1415927f < diff) {
@@ -420,7 +420,7 @@ s32 Motion_BlendSlotToPose(ModelInstance *model, s32 type, s32 table, s16 frame,
                         *(MotionVector *)point1 = vectors[next->position];
                         *(MotionVector *)tangent0 = vectors[key->position_out];
                         *(MotionVector *)tangent1 = vectors[next->position_in];
-                        func_0019A590(result, point0, point1, tangent0, tangent1, ratio);
+                        Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
                         part->unk40[0] += (result->x - part->unk40[0]) * weight;
                         part->unk40[1] += (result->y - part->unk40[1]) * weight;
                         part->unk40[2] += (result->z - part->unk40[2]) * weight;
@@ -776,7 +776,7 @@ s32 Motion_StepModel(ModelInstance *model, s32 step, s32 backwards) {
             tangent0->w = 1.0f;
             *(MotionVector *)tangent1 = vectors[next->rotation_in];
             tangent1->w = 1.0f;
-            func_0019A590(&part->unk50, point0, point1, tangent0, tangent1, ratio);
+            Vector_Hermite(&part->unk50, point0, point1, tangent0, tangent1, ratio);
             angle = part->unk50;
             angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
             if (3.1415927f < angle) {
@@ -806,7 +806,7 @@ s32 Motion_StepModel(ModelInstance *model, s32 step, s32 backwards) {
             *(MotionVector *)point1 = vectors[next->position];
             *(MotionVector *)tangent0 = vectors[key->position_out];
             *(MotionVector *)tangent1 = vectors[next->position_in];
-            func_0019A590(part->unk40, point0, point1, tangent0, tangent1, ratio);
+            Vector_Hermite(part->unk40, point0, point1, tangent0, tangent1, ratio);
 
             part->unk60[0] = vectors[key->scale].x * (1.0f - ratio) + vectors[next->scale].x * ratio;
             part->unk60[1] = vectors[key->scale].y * (1.0f - ratio) + vectors[next->scale].y * ratio;
@@ -912,7 +912,7 @@ s32 Motion_StepModelBlended(ModelInstance *model, s32 step, s32 backwards, f32 w
             tangent0->w = 1.0f;
             *(MotionVector *)tangent1 = vectors[next->rotation_in];
             tangent1->w = 1.0f;
-            func_0019A590(result, point0, point1, tangent0, tangent1, ratio);
+            Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
             angle = result->x;
             angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
             if (3.1415927f < angle) {
@@ -969,7 +969,7 @@ s32 Motion_StepModelBlended(ModelInstance *model, s32 step, s32 backwards, f32 w
             *(MotionVector *)point1 = vectors[next->position];
             *(MotionVector *)tangent0 = vectors[key->position_out];
             *(MotionVector *)tangent1 = vectors[next->position_in];
-            func_0019A590(result, point0, point1, tangent0, tangent1, ratio);
+            Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
             part->unk40[0] = part->unk40[0] * (1.0f - weight) + result->x * weight;
             part->unk40[1] = part->unk40[1] * (1.0f - weight) + result->y * weight;
             part->unk40[2] = part->unk40[2] * (1.0f - weight) + result->z * weight;
@@ -1049,7 +1049,7 @@ void Motion_BlendToPose(ModelInstance *model, f32 weight) {
                 tangent0->w = 1.0f;
                 *(MotionVector *)tangent1 = vectors[next->rotation_in];
                 tangent1->w = 1.0f;
-                func_0019A590(result, point0, point1, tangent0, tangent1, ratio);
+                Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
                 diff = result->x - part->unk50;
                 diff -= (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
                 if (3.1415927f < diff) {
@@ -1103,7 +1103,7 @@ void Motion_BlendToPose(ModelInstance *model, f32 weight) {
                 *(MotionVector *)point1 = vectors[next->position];
                 *(MotionVector *)tangent0 = vectors[key->position_out];
                 *(MotionVector *)tangent1 = vectors[next->position_in];
-                func_0019A590(result, point0, point1, tangent0, tangent1, ratio);
+                Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
                 part->unk40[0] += (result->x - part->unk40[0]) * weight;
                 part->unk40[1] += (result->y - part->unk40[1]) * weight;
                 part->unk40[2] += (result->z - part->unk40[2]) * weight;

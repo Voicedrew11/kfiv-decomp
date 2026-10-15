@@ -2,7 +2,7 @@
 
 extern u8 D_00413F80[];
 extern int D_0038CC50[];
-int func_0019D0F0(int);
+int Sound_PlayCommon(int);
 
 void func_001B9610(void)
 {
@@ -16,7 +16,7 @@ void func_001B9610(void)
             return;
         }
         s[0x1A8] = 1;
-        func_0019D0F0(0x28);
+        Sound_PlayCommon(0x28);
     }
     if (s[0x1A8] < 0x3C) {
         *(float *)(s + 0x10) += (1.012291f - *(float *)(s + 0x10)) / (0x3D - s[0x1A8]);

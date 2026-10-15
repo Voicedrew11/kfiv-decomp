@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -17,8 +17,8 @@ void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -43,11 +43,11 @@ void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 int EntityAi_StartAttack(Entity *entity, void (*handler)(Entity *entity), int run, int bit57, int bits58);
 int Motion_Start(void *, int, int, u32, int);
-void func_00195898(char *, u8);
-s32 func_00199EB8(Entity *, f32 *, f32);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void func_0019A290(Entity *, s32);
-s32 func_001984B0(Entity *, s32);
+void EntityAi_SetState(char *, u8);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
+s32 EntityAi_CanUseMelee(Entity *, s32);
 
 static void Makara_Think(Entity *entity, s32 unknown);
 static void Makara_ThinkCombat(Entity *entity, s32 unknown);
@@ -68,7 +68,7 @@ void Makara_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Makara_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -105,13 +105,13 @@ static void Makara_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (D_00446ED4 % 5U == entity->unkD7 % 5U) {
         unkE0->unk48 = EntityCollision_DistanceToGround(entity->model->position);
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0((char *)entity);
+        EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -276,7 +276,7 @@ static void Makara_Dormant(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit20 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
@@ -300,7 +300,7 @@ static void Makara_Dormant(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, as EntityAi_RangedAttack; when it
-   ends and func_001984B0 finds the player in reach of melee record 2 it starts EntityAi_MeleeAttack
+   ends and EntityAi_CanUseMelee finds the player in reach of melee record 2 it starts EntityAi_MeleeAttack
    with that record, with a chance of EntityParams.unk43A in 100. */
 static void Makara_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -318,16 +318,16 @@ static void Makara_RangedAttack0(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
-        func_00195ED0(entity, unk3D8,
+        EntityAi_LaunchShots(entity, unk3D8,
                       (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
                       entity->model->unkFC->unk82);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -339,9 +339,9 @@ static void Makara_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                if (func_001984B0(entity, 2) && rand() % 100 < entity->params->unk43A) {
+                if (EntityAi_CanUseMelee(entity, 2) && rand() % 100 < entity->params->unk43A) {
                     EntityAi_StartAttack(entity, EntityAi_MeleeAttack, 1, 0, 2);
                 } else {
                     unkE0->think(entity, 1);

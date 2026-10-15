@@ -9,22 +9,22 @@
 #include "kf_entity_math.h"
 
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now);
-void func_0019A290(Entity *, s32);
-s32 func_00199EB8(Entity *, f32 *, f32);
-s32 func_00195AC0(Entity *, void *, s32, s32, s32);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void Vector_Copy(void *, void *);
-void func_0019A348(Entity *);
-void func_0019A388(Entity *);
-void func_00199BB0(Entity *);
-void func_001958A8(char *, s32);
+void EntityAi_RaiseAttackWeight(Entity *);
+void EntityAi_RaiseRangedWeights(Entity *);
+void EntityAi_UpdateCollision(Entity *);
+void EntityAi_SetUpdate(char *, s32);
 extern s32 D_003E6E40[][2];
 int func_00196120(Entity *, void *, s32, void *, f32);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void Vector_Normalize(void *, void *);
 void Vector_Cross(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
@@ -37,7 +37,7 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-float func_00199E68(Entity *, float);
+float EntityAi_Accelerate(Entity *, float);
 
 /* Motion_BlendToPose as if it returned a value.
    match: the callee is void, but retail keeps what it leaves in $2 */
@@ -152,7 +152,7 @@ void EntityAi_Dormant(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
             ENTITY_FLAG_BITS(entity)->bit23 = 0;
@@ -242,7 +242,7 @@ void EntityAi_ReactionLight(Entity *entity) {
         }
         break;
     case 2:
-        func_0019A290(entity, entity->params->unkC8);
+        EntityAi_SetAttackDelay(entity, entity->params->unkC8);
         EntityAi_SetReaction(entity, NULL, 0);
         entity->unkC6 = 0;
         entity->unkC8 = 0;
@@ -288,7 +288,7 @@ void EntityAi_ReactionHeavy(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_0019A290(entity, entity->params->unkC8);
+            EntityAi_SetAttackDelay(entity, entity->params->unkC8);
             EntityAi_SetReaction(entity, NULL, 0);
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -467,24 +467,24 @@ void EntityAi_MeleeAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -495,7 +495,7 @@ void EntityAi_MeleeAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -530,16 +530,16 @@ void EntityAi_RangedAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
-        func_00195ED0(entity, unk3D8, (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
+        EntityAi_LaunchShots(entity, unk3D8, (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
                       entity->model->unkFC->unk82);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;
@@ -550,7 +550,7 @@ void EntityAi_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -569,10 +569,10 @@ void EntityAi_Update(Entity *entity) {
 
     Vector_Copy(entity->unk70, entity->model->position);
     if (ENTITY_FLAG_BITS(entity)->bit41) {
-        func_0019A348(entity);
+        EntityAi_RaiseAttackWeight(entity);
     }
     if (ENTITY_FLAG_BITS(entity)->bit42) {
-        func_0019A388(entity);
+        EntityAi_RaiseRangedWeights(entity);
     }
     if (!(entity->unkC6 & 0x60)) {
         if (entity->unk2C == 0) {
@@ -624,7 +624,7 @@ void EntityAi_Update(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bits36 = 0;
     entity->unkC8 = 0;
     ENTITY_FLAG_BITS(entity)->bit43 = FALSE;
-    func_00199BB0(entity);
+    EntityAi_UpdateCollision(entity);
 }
 
 /* The set-up function of entity type 0 (D_003E6E40[0]): clears the work area, installs the default handlers
@@ -644,7 +644,7 @@ void EntityAi_InitDefaults(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = EntityAi_Think;
     unkE0->animate = (void (*)(void))EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -727,21 +727,21 @@ void EntityAi_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
         EntityAi_SetReaction(entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The default think handler: every tenth frame updates what the entity knows of the player
-   (func_00196870); while the entity is not busy it steps Entity.state and calls the think function
+   (EntityAi_SensePlayer); while the entity is not busy it steps Entity.state and calls the think function
    of that state. */
 void EntityAi_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
     if (!(ENTITY_PARAMS_BITS(entity)->bit25 && ENTITY_PARAMS_BITS(entity)->bit26)) {
-        func_00196CC0((char *)entity);
+        EntityAi_CheckFarFromSpawn((char *)entity);
     }
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
@@ -1029,7 +1029,7 @@ void EntityAi_Move(Entity *entity) {
             vector[1] += amount;
         }
         if (entity->unkC8 & 0x3F) {
-            unkE0->unk44 = func_00199E68(entity, unkE0->unk44);
+            unkE0->unk44 = EntityAi_Accelerate(entity, unkE0->unk44);
             amount = unkE0->unk44;
             if (entity->unkC8 & 0x40) {
                 amount += amount;

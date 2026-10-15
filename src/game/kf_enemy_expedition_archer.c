@@ -7,7 +7,7 @@
 #include "kf_entity_world.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -24,8 +24,8 @@ double atan2(double, double);
 float EntityMath_WrapAngle(float);
 float EntityMath_EaseAngleToward(float *, float, float);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -46,9 +46,9 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityEvent_OnDeath(Entity *);
 void EntityEvent_Respawn(char *);
 
@@ -74,7 +74,7 @@ void ExpeditionArcher_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = ExpeditionArcher_Think;
     unkE0->animate = (void (*)(void))ExpeditionArcher_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -179,12 +179,12 @@ static void ExpeditionArcher_Think(Entity *entity, s32 unknown) {
         entity->model->unkF8[5].unk68 |= 0x8000L << 25;
     }
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -319,13 +319,13 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -342,7 +342,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -384,7 +384,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
         break;
     case 2:
         ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
-        func_00199EB8(entity, (f32 *)&unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, (f32 *)&unkE0->unk1C, entity->unk68);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
@@ -396,7 +396,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
         }
         break;
     case 3:
-        func_00199EB8(entity, (f32 *)&unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, (f32 *)&unkE0->unk1C, entity->unk68);
         ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
         EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
@@ -415,7 +415,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

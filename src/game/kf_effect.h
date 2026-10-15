@@ -58,7 +58,7 @@ typedef struct {
     u16 unk10C[3];                  /* 0x10C */
     u16 unk112[3];                  /* 0x112 */
     u16 end_effect;                 /* 0x118 spawned when the effect ends */
-    u16 unk11A;                     /* 0x11A not 0: sets EffectActor flag bit 59; passed to func_0019C8D0 */
+    u16 unk11A;                     /* 0x11A not 0: sets EffectActor flag bit 59; passed to Sound_PlayTrackedKind */
     f32 scale_per_frame;            /* 0x11C */
 } EffectDef;
 

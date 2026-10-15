@@ -8,7 +8,7 @@
 #include "kf_map_object.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -21,8 +21,8 @@ void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
 int Motion_Start(void *, int, int, u32, int);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -45,7 +45,7 @@ void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 void EntityEvent_OnDeath(Entity *);
 void EntityEvent_Respawn(char *);
-s32 func_00197078(Entity *);
+s32 EntityAi_CanAttack(Entity *);
 float EntityMath_DistanceXZ(void *, void *);
 
 static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity);
@@ -72,7 +72,7 @@ void ExpeditionSoldier_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     switch (entity->spawn_info->variant) {
     case 1:
     case 2:
@@ -153,12 +153,12 @@ static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity) {
    EntityAi_Think, with func_001787E0 for state 2. */
 static void ExpeditionSoldier_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -390,7 +390,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown
     MapObject *map_object;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
@@ -407,7 +407,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown
         ExpeditionSoldier_WalkToMapObjectPosX(entity, unknown);
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -425,7 +425,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown
 }
 
 /* Helper of ExpeditionSoldier_ThinkUseMapObjectsPosX, which calls it in place of the state functions: attacks when
-   func_00197078 says so; else walks to a fixed point (x 950) and from there to a point next to the
+   EntityAi_CanAttack says so; else walks to a fixed point (x 950) and from there to a point next to the
    map object whose bit is clear, turns to face it and starts ExpeditionSoldier_SignalMapObject for it; until
    then it starts the move action. */
 static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
@@ -435,7 +435,7 @@ static void ExpeditionSoldier_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
     f32 reach;
 
     // match: the shared prototype takes no argument; retail passes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -500,7 +500,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown
     MapObject *map_object;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
@@ -517,7 +517,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown
         ExpeditionSoldier_WalkToMapObjectNegX(entity, unknown);
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -542,7 +542,7 @@ static void ExpeditionSoldier_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
     f32 reach;
 
     // match: the shared prototype takes no argument; retail passes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {

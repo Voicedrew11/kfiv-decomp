@@ -4,7 +4,7 @@
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "kf_entity.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -17,8 +17,8 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -44,12 +44,12 @@ float EntityMath_HeadingTo(float *origin, float *target);
 float EntityMath_DistanceXZ(float *a, float *b);
 extern f32 D_00446810[];
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 void EntityPoint_PickNearFromDistance(f32 *, f32 *, f32, f32);
 f32 EntityCollision_DistanceToPropFloor(void *, void *);
 float EntityMath_WrapAngle(float);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void func_00195898(char *, u8);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
+void EntityAi_SetState(char *, u8);
 
 static void AncientMummy_Think(Entity *entity, s32 unknown);
 static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown);
@@ -66,7 +66,7 @@ void AncientMummy_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = AncientMummy_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -102,13 +102,13 @@ static void AncientMummy_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (unkE0->unk68 > 0) {
         unkE0->unk68--;
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0((char *)entity);
+        EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -308,12 +308,12 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -330,7 +330,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
                 }
             }
         }
-        func_00195ED0(entity, unk3D8, (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8, entity->model->unkFC->unk82);
+        EntityAi_LaunchShots(entity, unk3D8, (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8, entity->model->unkFC->unk82);
         if (entity->model->unkFC->unk82 >= 0x23) {
             unkE0->unk6C--;
             ENTITY_FLAG_BITS(entity)->bit20 = 1;
@@ -406,7 +406,7 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;

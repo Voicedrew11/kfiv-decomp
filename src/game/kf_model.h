@@ -532,7 +532,7 @@ typedef struct {
 /* one animation of a map object's definition */
 typedef struct {
     u8 anim;                        /* 0x00 passed to func_00108A08 */
-    u8 sound_kind;                  /* 0x01 0: func_0019D1C0, 1: func_0019D490, 2: func_0019D980 */
+    u8 sound_kind;                  /* 0x01 0: Sound_PlayCommonAt, 1: Sound_PlayMapAtRange, 2: Sound_StartTaggedAt */
     u16 unk02;                      /* 0x02 passed to Effect_StartSpawner on frame unk06 (MapObject_UpdateAll) */
     u16 sound;                      /* 0x04 0xFFFF: none */
     u8 unk06;                       /* 0x06 the animation frame unk02 starts on */

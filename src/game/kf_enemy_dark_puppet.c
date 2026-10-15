@@ -6,7 +6,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -17,15 +17,15 @@ void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
 // match: the size is unknown; a complete small type would be read through $gp
 extern f32 D_00446834[];
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -56,11 +56,11 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-int func_00195AC0(Entity *, void *, s32, s32, s32);
-void func_0019A290(Entity *, s32);
+int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 char *func_0010CAB8(char *, u32);
-int func_00195E48(void *, int, void *, void *);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
+int EntityAi_LaunchShot(void *, int, void *, void *);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 int func_0019A3F0(void *, int);
 void EntityEvent_OnDeath(Entity *);
 
@@ -89,7 +89,7 @@ void DarkPuppet_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = DarkPuppet_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))DarkPuppet_OnHit;
@@ -132,7 +132,7 @@ static void DarkPuppet_OnHit(Entity *entity) {
     } else if (((s32)(entity->flags >> 36) & 3) == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The think handler: as EntityAi_Think, with DarkPuppet_ThinkCombat for state 2. After that it
@@ -145,10 +145,10 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
     f32 height;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -500,13 +500,13 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
         }
         if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
         }
         if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;
@@ -517,7 +517,7 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
                 return;
@@ -532,7 +532,7 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
 
 /* The ranged attack with record 0 (busy bit 1; DarkPuppet_ThinkCombat starts it for index 0
    only): animation 23; on frame 30 it launches the record's shot unk10 from the point func_0010CAB8
-   gives for the record's unk11, along the model's angles (func_00195E48). Turns and moves as
+   gives for the record's unk11, along the model's angles (EntityAi_LaunchShot). Turns and moves as
    DarkPuppet_MeleeAttack does. */
 static void DarkPuppet_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -567,7 +567,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
             (entity->unk2A == 0 || unk3D8->unk0C != 0)) {
             point = func_0010CAB8((char *)entity->model, unk3D8->unk11);
             if (point != NULL) {
-                func_00195E48(entity, unk3D8->unk10, point, entity->model->unkD0);
+                EntityAi_LaunchShot(entity, unk3D8->unk10, point, entity->model->unkD0);
             }
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->record.unk03 >= entity->model->unkFC->unk82) {
@@ -579,7 +579,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->record.unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->record.unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -622,7 +622,7 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
             entity->unkC8 |= EntityAi_TurnCommand(entity);
         }
-        func_00195ED0(entity, unk3D8, (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
+        EntityAi_LaunchShots(entity, unk3D8, (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
                       entity->model->unkFC->unk82);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;
@@ -633,7 +633,7 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
                 return;

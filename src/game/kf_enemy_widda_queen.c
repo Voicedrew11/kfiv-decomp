@@ -6,7 +6,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -22,20 +22,20 @@ float EntityMath_AngleDifference(float, float);
 float EntityMath_EaseAngleToward(float *, float, float);
 extern u32 D_00446ED4;
 void EntityAi_StepState(void *);
-void func_00196870(void *, int);
+void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 void EntityAi_Guard(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00195B68(Entity *, void *, s32, s32, s32, f32);
+s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
 float EntityMath_WrapAngle(float);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 extern PlayerData D_00413F80;
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 // match: the definitions take the float last, but retail sets it up before the index
-int func_00198730(Entity *, f32, s32);
-int func_001995A0(Entity *, f32, s32); // match: as func_00198730
+int EntityAi_CanUseMeleeFacing(Entity *, f32, s32);
+int EntityAi_CanUseRangedFacing(Entity *, f32, s32); // match: as EntityAi_CanUseMeleeFacing
 int rand(void);
 void EntityAi_LowerAttackWeight(Entity *);
 void EntityEvent_OnDeath(Entity *);
@@ -67,7 +67,7 @@ void WiddaQueen_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = WiddaQueen_Think;
     unkE0->animate = (void (*)(void))WiddaQueen_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -167,7 +167,7 @@ static void WiddaQueen_Think(Entity *entity, s32 unknown) {
 
     phase = D_00446ED4 % 10U;
     if (phase == entity->unkD7 % 10U) {
-        func_00196870(entity, 0);
+        EntityAi_SensePlayer(entity, 0);
     }
     if (entity->unkC6 == 0) {
         EntityAi_StepState(entity);
@@ -242,13 +242,13 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + unkE0->unk48));
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + unkE0->unk48));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + unkE0->unk48));
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + unkE0->unk48));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195B68(entity, unk240, 2, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + unkE0->unk48));
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + unkE0->unk48));
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -259,7 +259,7 @@ static void WiddaQueen_MeleeAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -296,9 +296,9 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
     case 2:
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, entity->model->unkD0[1] - 0.7853982f);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->unkFC->unk82, entity->model->unkD0[1] - 0.7853982f);
             if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, entity->model->unkD0[1] + 0.7853982f);
+                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->unkFC->unk82, entity->model->unkD0[1] + 0.7853982f);
             }
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
@@ -310,7 +310,7 @@ static void WiddaQueen_MeleeAttack1(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -367,7 +367,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -407,7 +407,7 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
         }
         if (entity->model->unkFC->unk82 >= entity->params->unk438 && entity->model->unkFC->unk82 <= entity->params->unk43A) {
             if (D_00446ED4 % 3U != 0) {
-                func_00195ED0(entity, unk3D8, entity->params->unk438, entity->params->unk43A);
+                EntityAi_LaunchShots(entity, unk3D8, entity->params->unk438, entity->params->unk43A);
             }
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -419,7 +419,7 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -435,27 +435,27 @@ static void WiddaQueen_Move(Entity *entity) {
     Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
 }
 
-/* Whether the player is in reach of any of the six attack records (func_00198730 for the melee
-   ones, func_001995A0 for the ranged). */
+/* Whether the player is in reach of any of the six attack records (EntityAi_CanUseMeleeFacing for the melee
+   ones, EntityAi_CanUseRangedFacing for the ranged). */
 static s32 WiddaQueen_CanAttack(Entity *entity) {
     f32 heading = EntityMath_WrapAngle(entity->model->unkD0[1] + entity->unkE0.unk48);
 
-    if (func_00198730(entity, heading, 0)) {
+    if (EntityAi_CanUseMeleeFacing(entity, heading, 0)) {
         return TRUE;
     }
-    if (func_00198730(entity, entity->model->unkD0[1], 1)) {
+    if (EntityAi_CanUseMeleeFacing(entity, entity->model->unkD0[1], 1)) {
         return TRUE;
     }
-    if (func_00198730(entity, heading, 2)) {
+    if (EntityAi_CanUseMeleeFacing(entity, heading, 2)) {
         return TRUE;
     }
-    if (func_001995A0(entity, heading, 0)) {
+    if (EntityAi_CanUseRangedFacing(entity, heading, 0)) {
         return TRUE;
     }
-    if (func_001995A0(entity, heading, 1)) {
+    if (EntityAi_CanUseRangedFacing(entity, heading, 1)) {
         return TRUE;
     }
-    return func_001995A0(entity, heading, 2) != 0;
+    return EntityAi_CanUseRangedFacing(entity, heading, 2) != 0;
 }
 
 /* Draws one of the six attacks by weight among those that reach the player, sets flag bits 57 to 59
@@ -472,22 +472,22 @@ static s32 WiddaQueen_PickAttack(Entity *entity) {
     f32 angle;
 
     angle = EntityMath_WrapAngle(entity->model->unkD0[1] + entity->unkE0.unk48);
-    chance = func_00198730(entity, angle, 0) ? (entity->unkC0[0] * entity->params->unk240[0].unk00) >> 6 : 0;
+    chance = EntityAi_CanUseMeleeFacing(entity, angle, 0) ? (entity->unkC0[0] * entity->params->unk240[0].unk00) >> 6 : 0;
     chances[0] = chance;
     total += chance;
-    chance = func_00198730(entity, entity->model->unkD0[1], 1) ? (entity->unkC0[1] * entity->params->unk240[1].unk00) >> 6 : 0;
+    chance = EntityAi_CanUseMeleeFacing(entity, entity->model->unkD0[1], 1) ? (entity->unkC0[1] * entity->params->unk240[1].unk00) >> 6 : 0;
     chances[1] = chance;
     total += chance;
-    chance = func_00198730(entity, angle, 2) ? (entity->unkC0[2] * ((EntityParamsUnk240 *)entity->params->unk350)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseMeleeFacing(entity, angle, 2) ? (entity->unkC0[2] * ((EntityParamsUnk240 *)entity->params->unk350)->unk00) >> 6 : 0;
     chances[2] = chance;
     total += chance;
-    chance = func_001995A0(entity, angle, 0) ? (entity->unkC0[3] * ENTITY_PARAMS_UNK3D8(entity->params, 0)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 0) ? (entity->unkC0[3] * ENTITY_PARAMS_UNK3D8(entity->params, 0)->unk00) >> 6 : 0;
     chances[3] = chance;
     total += chance;
-    chance = func_001995A0(entity, angle, 1) ? (entity->unkC0[4] * ENTITY_PARAMS_UNK3D8(entity->params, 1)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 1) ? (entity->unkC0[4] * ENTITY_PARAMS_UNK3D8(entity->params, 1)->unk00) >> 6 : 0;
     chances[4] = chance;
     total += chance;
-    chance = func_001995A0(entity, angle, 2) ? (entity->unkC0[5] * ENTITY_PARAMS_UNK3D8(entity->params, 2)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 2) ? (entity->unkC0[5] * ENTITY_PARAMS_UNK3D8(entity->params, 2)->unk00) >> 6 : 0;
     chances[5] = chance;
     total += chance;
     if (total == 0) {

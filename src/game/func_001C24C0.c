@@ -3,7 +3,7 @@
 float sqrtf(float);
 float sinf(float);
 float cosf(float);
-float func_0019B838(float);
+float Angle_Wrap(float);
 void func_001C5538(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
 void func_001C58F0(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
 void func_001C6360(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
@@ -28,8 +28,8 @@ void func_001C24C0(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
     f32 distance;
 
     COLLISION_RESULT->hit = 0;
-    first_angle = func_0019B838(-heading + spread);
-    second_angle = func_0019B838(-heading - spread);
+    first_angle = Angle_Wrap(-heading + spread);
+    second_angle = Angle_Wrap(-heading - spread);
     first_x = -sinf(first_angle);
     first_z = cosf(first_angle);
     second_x = -sinf(second_angle);

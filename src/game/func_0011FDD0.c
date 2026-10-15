@@ -9,7 +9,7 @@ extern u8 item_counts[];
 
 void *memset(void *, int, u32);
 void MapObject_ShowKeyUsed(int);
-void func_0019D490(s32, s32, f32 *, f32);
+int Sound_PlayMapAtRange(u8, u8, float *, float);
 ItemNode *func_001C9340(int, int, void *, void *, void *, void *);
 
 /* Update handler of a closed chest (kind 4): used by the player, it opens (when it needs a key the player
@@ -53,7 +53,7 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
             if (object->unk04->unk70 > 0.0f) {
                 range = object->unk04->unk70;
             }
-            func_0019D490(0x2D, 0, &object->model->position.x, range);
+            Sound_PlayMapAtRange(0x2D, 0, &object->model->position.x, range);
             source = object->unk08;
         }
         MAP_OBJECT_BYTES(object)->step = 2;

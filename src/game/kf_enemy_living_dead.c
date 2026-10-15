@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 #include "common.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -16,20 +16,20 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 extern void EntityAi_ReactionRewind(Entity *);
 int rand(void);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 int Motion_Start(void *, int, int, u32, int);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityAi_RangedAttack(Entity *);
 extern u32 D_00446ED4;
 int EntityAi_ThinkIdle(void *, int);
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(void *);
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(void *);
 extern PlayerData D_00413F80;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -59,7 +59,7 @@ void LivingDead_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))LivingDead_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))LivingDead_OnHit;
@@ -107,7 +107,7 @@ static void LivingDead_OnHit(Entity *entity) {
     } else if (kind == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))LivingDead_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The reaction to a light hit (busy bit 2): as EntityAi_ReactionLight, but when it ends and
@@ -140,7 +140,7 @@ static void LivingDead_ReactionLight(Entity *entity) {
         }
         break;
     case 2:
-        func_0019A290(entity, entity->params->unkC8);
+        EntityAi_SetAttackDelay(entity, entity->params->unkC8);
         EntityAi_SetReaction((char *)entity, NULL, 0);
         entity->unkC6 = 0;
         entity->unkC8 = 0;
@@ -191,7 +191,7 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_0019A290(entity, entity->params->unkC8);
+            EntityAi_SetAttackDelay(entity, entity->params->unkC8);
             EntityAi_SetReaction((char *)entity, NULL, 0);
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -217,12 +217,12 @@ static void LivingDead_Think(Entity *entity, s32 unknown) {
 
     phase = D_00446ED4 % 10U;
     if (phase == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0(entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);

@@ -7,7 +7,7 @@ extern f32 D_00431AF0[16];
 
 float asinf(float);
 float atan2f(float, float);
-float func_0019B838(float);
+float Angle_Wrap(float);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -69,7 +69,7 @@ void func_0010BA30(ModelInstance *model) {
 
     i = 0;
     pitch = -asinf(((f32 *)model->unk148)[4]);
-    yaw = func_0019B838(atan2f(((f32 *)model->unk148)[8], ((f32 *)model->unk148)[0]) + 1.5707964f);
+    yaw = Angle_Wrap(atan2f(((f32 *)model->unk148)[8], ((f32 *)model->unk148)[0]) + 1.5707964f);
     sceVu0RotMatrixY(SCRATCH_TURN, D_00431AF0, yaw);
     sceVu0RotMatrixX(SCRATCH_TURN, SCRATCH_TURN, pitch);
     sceVu0RotMatrixX(SCRATCH_TURN, SCRATCH_TURN, wrap_angle(model->rotation.x));

@@ -8,18 +8,18 @@
 #include "kf_motion.h"
 #include "kf_entity_math.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void Vector_Copy(void *, void *);
 extern s32 D_003E6E40[][2];
 int func_00196120(Entity *, void *, s32, void *, f32);
 extern EntityGroupRecord D_0034B6D0[];
 int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 extern PlayerData D_00413F80;
 extern u8 D_00349690[0x80][0x40];
 int func_0019A3F0(void *, int);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 extern char D_0034B690[0x40];
 extern f32 D_00431AF0[16];
 void sceVu0RotMatrixX(float *, float *, float);
@@ -28,10 +28,10 @@ void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 void Vector_Scale(float *, float *, float);
-float func_00199E68(Entity *, float);
+float EntityAi_Accelerate(Entity *, float);
 extern u32 D_00446ED4;
-void func_00196870(Entity *, s32);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(Entity *, s32);
+void EntityAi_CheckFarFromSpawn(char *);
 
 /* Motion_BlendToPose as if it returned a value.
    match: the callee is void, but retail keeps what it leaves in $2 */
@@ -71,7 +71,7 @@ void Npc_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Npc_Think;
     unkE0->animate = (void (*)(void))Npc_Animate;
     unkE0->on_hit = (void (*)(void))Npc_OnHit;
@@ -163,7 +163,7 @@ void Npc_Think(Entity *entity, s32 unknown) {
         case 5:
             Npc_ThinkWatchPlayer(entity, unknown);
             if (entity->params->unk18 < entity->distance_to_player) {
-                func_00195898((char *)entity, 6);
+                EntityAi_SetState((char *)entity, 6);
             }
             break;
         case 6:
@@ -212,7 +212,7 @@ static void Npc_ThinkReactToPlayer(Entity *entity, s32 run_now) {
         unkE0->unk68 = 0x1000;
     }
     entity->unkC8 = unkE0->unk68;
-    func_00195898((char *)entity, 5);
+    EntityAi_SetState((char *)entity, 5);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, run_now);
 }
 
@@ -232,7 +232,7 @@ static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
     } else {
         unkE0->unk68 = 0x1000;
         entity->unkC8 = 0x1000;
-        func_00195898((char *)entity, 5);
+        EntityAi_SetState((char *)entity, 5);
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, run_now);
     }
 }
@@ -255,7 +255,7 @@ static void Npc_ThinkStopWatching(Entity *entity, int unknown) {
 
     unkE0->unk68 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    func_00195898((char *)entity, 0);
+    EntityAi_SetState((char *)entity, 0);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
@@ -273,7 +273,7 @@ static void Npc_ThinkTurnBack(Entity *entity, s32 run_now) {
     } else {
         unkE0->unk68 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-        func_00195898((char *)entity, 0);
+        EntityAi_SetState((char *)entity, 0);
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, run_now);
     }
 }
@@ -425,7 +425,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_0019A290(entity, entity->params->unkC8);
+            EntityAi_SetAttackDelay(entity, entity->params->unkC8);
             EntityAi_SetReaction(entity, NULL, 0);
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -543,7 +543,7 @@ static void Npc_Move(Entity *entity) {
             vector[2] += amount;
         }
         if (entity->unkC8 & 3) {
-            unkE0->unk44 = func_00199E68(entity, unkE0->unk44);
+            unkE0->unk44 = EntityAi_Accelerate(entity, unkE0->unk44);
             amount = unkE0->unk44;
             if (entity->unkC8 & 0x40) {
                 amount += amount;
@@ -603,7 +603,7 @@ void Npc_InitType81(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))Npc_ThinkType81;
     unkE0->animate = (void (*)(void))Npc_Animate;
     unkE0->on_hit = (void (*)(void))Npc_OnHitType81;
@@ -658,12 +658,12 @@ static void Npc_ThinkType81(Entity *entity, s32 run_now) {
 
     entity->flags &= mask;
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     if ((s32)(entity->flags >> 53) & 1) {
         EntityAi_ThinkReturn(entity, run_now);
         return;

@@ -7,7 +7,7 @@
 #include "kf_effect.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -17,8 +17,8 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -46,18 +46,18 @@ int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 int Motion_Start(void *, int, int, u32, int);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 s32 EntitySight_PropInWay(Entity *);
 s32 EntitySight_ObjectInWay(Entity *);
 float sqrtf(float);
 float atan2f(float, float);
-s32 func_00199EB8(Entity *, f32 *, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 char *func_0010CAB8(char *, u32);
-s32 func_00195B68(Entity *, void *, s32, s32, s32, f32);
-s32 func_00195AC0(Entity *, void *, s32, s32, s32);
+s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
+s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 
 static void LivingArmor_Think(Entity *entity, s32 unknown);
 static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown);
@@ -84,7 +84,7 @@ void LivingArmor_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = LivingArmor_Think;
     unkE0->animate = (void (*)(void))LivingArmor_Animate;
     unkE0->on_hit = (void (*)(void))LivingArmor_OnHit;
@@ -118,12 +118,12 @@ void LivingArmor_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think, with LivingArmor_ThinkCombat for state 2. */
 static void LivingArmor_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -290,7 +290,7 @@ static void LivingArmor_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
     EntityAi_SetReaction((char *)entity, (void (*)(void))LivingArmor_ReactionHeavy, 0);
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The reaction to a hit of either strength (busy bit 4): as EntityAi_ReactionHeavy with animation
@@ -319,7 +319,7 @@ static void LivingArmor_ReactionHeavy(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_0019A290(entity, entity->params->unkC8);
+            EntityAi_SetAttackDelay(entity, entity->params->unkC8);
             EntityAi_SetReaction((char *)entity, NULL, 0);
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -350,7 +350,7 @@ static void func_0013D9D0(Entity *entity) {
 }
 
 /* The melee attack with record 1 (busy bit 1), which func_0013D9D0 starts: animation 17, its hits
-   checked at the angle Entity.unk68 (func_00195B68); on frames 10 to 22 it starts effect 0x222
+   checked at the angle Entity.unk68 (EntityAi_CheckMeleeHitAt); on frames 10 to 22 it starts effect 0x222
    along the path of the point func_0010CAB8 gives for 9. At its end, EntityParams.unk432 times in
    100, it goes back to animation 1 and func_0013D9D0 with a new count in work word unk68; else it
    starts LivingArmor_Dormant. */
@@ -383,12 +383,12 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
             entity->action_step++;
         }
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -419,13 +419,13 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->unk68));
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->unk68));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->unk68));
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->unk68));
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195B68(entity, unk240, 2, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->unk68));
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->unk68));
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -447,7 +447,7 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
                 entity->unkC6 = 0;
                 entity->unkC8 = 0;
                 entity->unkA0 = 0;
-                func_0019A290(entity, unk240->unk02);
+                EntityAi_SetAttackDelay(entity, unk240->unk02);
                 ENTITY_FLAG_BITS(entity)->bit20 = FALSE;
                 ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
                 ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
@@ -488,7 +488,7 @@ static void LivingArmor_Dormant(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
@@ -541,7 +541,7 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
         entity->action_step++;
     case 1:
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         if (entity->model->unkFC->unk88 == 0) {
             entity->action_step++;
@@ -549,7 +549,7 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -580,13 +580,13 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -597,7 +597,7 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {

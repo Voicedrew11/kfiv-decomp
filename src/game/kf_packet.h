@@ -280,7 +280,7 @@ typedef union {
     f32 as_float;
 } GsPacketWord;
 
-/* the 14-byte header a .bmp file starts with (func_0019BE68 writes screenshots) */
+/* the 14-byte header a .bmp file starts with (ScreenDump_Bmp writes screenshots) */
 typedef struct {
     u8 type[2];                     /* 0x00 "BM" */
     u16 file_size_low;              /* 0x02 the file's size; the 32-bit fields are unaligned, so the game writes halves */

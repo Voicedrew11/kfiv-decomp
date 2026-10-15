@@ -40,9 +40,9 @@ void func_001095D8(void);
 void func_001096E8(void);
 void func_00109800(void);
 void func_001CB9A0(void);
-void func_0019C300(void);
+void Sound_Init(void);
 int sceGsSyncV(int);
-void func_0019BDA0(int, int);
+void Vram_Clear(int, int);
 int func_0022B5B8();
 int func_0022B8E8();
 int sceDevVu0Pause();
@@ -95,7 +95,7 @@ void Movie_PlayOpening(void) {
     func_00109800();
     Display_SwapBuffers(0);
     func_001CB9A0();
-    func_0019C300();
+    Sound_Init();
 }
 
 /* Plays the ending movie KF4ED.PSS when bit 11 of D_0038CC74 is set, the staff roll KF4STAFF.PSS otherwise;
@@ -111,9 +111,9 @@ void Movie_PlayEnding(void) {
     }
     sceGsSyncV(0);
     sceGsSyncV(0);
-    func_0019BDA0(0, 0x4000);
+    Vram_Clear(0, 0x4000);
     func_001CB9A0();
-    func_0019C300();
+    Sound_Init();
 }
 
 /* Returns TRUE; the 0x80 bytes of stack are unused. Nothing calls it. */

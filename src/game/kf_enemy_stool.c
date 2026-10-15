@@ -6,7 +6,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -22,7 +22,7 @@ void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
-s32 func_00197078(Entity *);
+s32 EntityAi_CanAttack(Entity *);
 int EntityAi_PickAttack(char *);
 void EntityAi_MeleeAttack(Entity *);
 
@@ -42,7 +42,7 @@ void Stool_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Stool_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))Stool_OnHit;
@@ -94,14 +94,14 @@ static void Stool_OnHit(Entity *entity) {
 }
 
 /* The think handler: no states and no look at the player. While the entity is not busy it starts
-   the attack EntityAi_PickAttack picks when func_00197078 says so and the pause Entity.unkA2 is over;
+   the attack EntityAi_PickAttack picks when EntityAi_CanAttack says so and the pause Entity.unkA2 is over;
    else it starts the move action. */
 static void Stool_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0;
 
     unkE0 = &entity->unkE0;
     if (entity->unkC6 == 0) {
-        if (func_00197078(entity) != 0 && entity->unkA2 == 0) {
+        if (EntityAi_CanAttack(entity) != 0 && entity->unkA2 == 0) {
             if (EntityAi_PickAttack((char *)entity) != 0) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {

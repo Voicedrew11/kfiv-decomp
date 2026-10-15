@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -18,8 +18,8 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -35,8 +35,8 @@ s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
-void func_0019A290(Entity *, s32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 double atan(double);
 void *memset(void *, int, u32);
 float EntityMath_AngleXZ(float *, char *);
@@ -64,7 +64,7 @@ void ParaStool_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = ParaStool_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -100,7 +100,7 @@ static void ParaStool_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (unkE0->unk68 > 0) {
         unkE0->unk68--;
@@ -108,7 +108,7 @@ static void ParaStool_Think(Entity *entity, s32 unknown) {
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -233,12 +233,12 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
             entity->action_step++;
         }
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -255,7 +255,7 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -266,7 +266,7 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
     }
 }
 
-/* Helper of ParaStool_MeleeAttack0: the hit check of func_00195B68 and func_00195BD8 for one
+/* Helper of ParaStool_MeleeAttack0: the hit check of EntityAi_CheckMeleeHitAt and EntityAi_SendMeleeHit for one
    part of the record on the part's frames, written out, with conditions of its own: the entity must
    be within EntityParams.unk432 degrees of the player's facing and unk434 degrees of the player's
    pitch, and Entity.unk68 within the angle of part 0 of its heading. It then calls func_001B2C48

@@ -7,7 +7,7 @@
 #include "kf_shot.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -16,10 +16,10 @@ void Vector_Copy(void *, void *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 int rand(void);
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
-int func_0019A448(void *, void *, int, int, int, int, int);
+int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_TurnFromPush(void *, void *);
 extern PlayerData D_00413F80;
@@ -36,9 +36,9 @@ void Vector_ApplyMatrix(void *, void *, void *);
 float EntityMath_HeadingTo(float *, float *);
 float EntityMath_AngleDifference(float, float);
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
-void func_00195898(char *, u8);
-s32 func_00199EB8(Entity *, f32 *, f32);
-void func_0019A290(Entity *entity, s32 base);
+void EntityAi_SetState(char *, u8);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+void EntityAi_SetAttackDelay(Entity *entity, s32 base);
 float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
@@ -52,10 +52,10 @@ void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *entity, void (*callback)(void), int run);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 void EntityEvent_OnDeath(Entity *);
-int func_0019A538(void *, void *, int);
+int EntityAi_StepSlotMotion(void *, void *, int);
 s32 Motion_StepSlot(Entity *, EntityUnkE0SlotBits *, s32, s32);
 void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
-int func_001960C0(void *, int, int, int, int, float);
+int EntityAi_LookAtPoint(void *, int, int, int, int, float);
 int func_00196120(Entity *, void *, s32, void *, f32);
 
 static void LavaBird_Think(Entity *entity, s32 unknown);
@@ -89,7 +89,7 @@ void LavaBird_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = LavaBird_Think;
     unkE0->animate = (void (*)(void))LavaBird_Animate;
     unkE0->on_hit = (void (*)(void))LavaBird_OnHit;
@@ -134,7 +134,7 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
     s32 side;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (D_00446ED4 % 60U == entity->unkD7 % 10U) {
         unkE0->unk54 = rand() % 10;
@@ -145,10 +145,10 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     }
     if (!(entity->unkC6 & 0x44)) {
-        func_0019A448(entity, &((EntityUnkE0Kind151D30 *)unkE0)->unk88, 1, 3, 5, entity->params->unkC4, 0);
+        EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)unkE0)->unk88, 1, 3, 5, entity->params->unkC4, 0);
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0((char *)entity);
+        EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -363,8 +363,8 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
    does the turning and the moving. */
 static void LavaBird_Move(Entity *entity) {
     entity->flags &= ~0x3800ULL;
-    func_0019A448(entity, entity->unkE0.unk80, 0, 3, 5, ENTITY_CONTROLLER(entity)->unkC4, 0);
-    func_0019A448(entity, entity->unkE0.unk88, 1, 3, 5, ENTITY_CONTROLLER(entity)->unkC4, 0);
+    EntityAi_StartSlotMotion(entity, entity->unkE0.unk80, 0, 3, 5, ENTITY_CONTROLLER(entity)->unkC4, 0);
+    EntityAi_StartSlotMotion(entity, entity->unkE0.unk88, 1, 3, 5, ENTITY_CONTROLLER(entity)->unkC4, 0);
 }
 
 /* Carries out the movement command in Entity.unkC8; LavaBird_Think and LavaBird_Dormant
@@ -518,8 +518,8 @@ static void LavaBird_Dormant(Entity *entity) {
     entity->unkC6 |= 0x20;
     switch (entity->action_step) {
     case 0:
-        func_0019A448(entity, &slots->unk80, 0, 1, 0, 0, 1);
-        func_0019A448(entity, &slots->unk88, 1, 1, 0, 0, 1);
+        EntityAi_StartSlotMotion(entity, &slots->unk80, 0, 1, 0, 0, 1);
+        EntityAi_StartSlotMotion(entity, &slots->unk88, 1, 1, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         unkE0->unk1C = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
@@ -542,8 +542,8 @@ static void LavaBird_Dormant(Entity *entity) {
         entity->model->position[1] -= unkE0->unk50;
         unkE0->unk50 -= 3.0f;
         if (unkE0->unk50 <= 0.0f) {
-            func_0019A448(entity, &slots->unk80, 0, 2, 0, entity->params->unkC4, 1);
-            func_0019A448(entity, &slots->unk88, 1, 2, 0, entity->params->unkC4, 1);
+            EntityAi_StartSlotMotion(entity, &slots->unk80, 0, 2, 0, entity->params->unkC4, 1);
+            EntityAi_StartSlotMotion(entity, &slots->unk88, 1, 2, 0, entity->params->unkC4, 1);
             entity->action_step++;
         }
         break;
@@ -561,7 +561,7 @@ static void LavaBird_Dormant(Entity *entity) {
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
@@ -597,7 +597,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_0019A448(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->unkC4 >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         entity->action_step++;
     case 1:
@@ -605,12 +605,12 @@ static void LavaBird_RangedAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (slots->unk80.unk02 <= unk3D8->unk01) {
-            func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -629,7 +629,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -701,7 +701,7 @@ static void LavaBird_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))LavaBird_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The reaction to a light hit (busy bit 2): as EntityAi_ReactionLight, on the first motion slot,
@@ -713,7 +713,7 @@ static void LavaBird_ReactionLight(Entity *entity) {
     switch (entity->unkCB) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
-        func_0019A448(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xE, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xE, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         unkE0->unk1C = 0;
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
@@ -729,7 +729,7 @@ static void LavaBird_ReactionLight(Entity *entity) {
         }
         break;
     case 2:
-        func_0019A290(entity, entity->params->unkC8);
+        EntityAi_SetAttackDelay(entity, entity->params->unkC8);
         EntityAi_SetReaction((char *)entity, NULL, 0);
         entity->unkC6 = 0;
         entity->unkC8 = 0;
@@ -751,8 +751,8 @@ static void LavaBird_ReactionHeavy(Entity *entity) {
     entity->unkC6 = 4;
     switch (entity->unkCB) {
     case 0:
-        func_0019A448(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xF, 0, 5, 1);
-        func_0019A448(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk88, 1, 0xF, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xF, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk88, 1, 0xF, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         unkE0->unk1C = 0;
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
@@ -772,7 +772,7 @@ static void LavaBird_ReactionHeavy(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_0019A290(entity, entity->params->unkC8);
+            EntityAi_SetAttackDelay(entity, entity->params->unkC8);
             EntityAi_SetReaction((char *)entity, NULL, 0);
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -795,8 +795,8 @@ static void LavaBird_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_0019A448(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0x10, 0, 5, 1);
-        func_0019A448(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk88, 1, 0x10, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0x10, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk88, 1, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         if (!ENTITY_PARAMS_BITS(entity)->bit25 && ENTITY_PARAMS_BITS(entity)->bit26) {
             entity->unk30 = 20.0f;
@@ -837,7 +837,7 @@ static void LavaBird_Death(Entity *entity) {
 
 /* The animate handler: puts flag bits 11 to 13 to 0, then plays the two motion slots of the work
    area (unk80 and unk88) where EntityAi_Animate plays the model's one motion, then turns the head
-   (func_001960C0 with the target while flag bit 9 is set and there is one). */
+   (EntityAi_LookAtPoint with the target while flag bit 9 is set and there is one). */
 static void LavaBird_Animate(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
@@ -857,7 +857,7 @@ static void LavaBird_Animate(Entity *entity) {
             rate = 1.0f / slots->unk80.unk01;
         }
         // match: the caller passes a float the callee does not take
-        ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))func_0019A538)(entity, &slots->unk80, 0, rate);
+        ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->unk80, 0, rate);
     } else {
         previous = slots->unk80.unk04;
         ENTITY_FLAG_BITS(entity)->bit34 = Motion_StepSlot(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits11);
@@ -873,7 +873,7 @@ static void LavaBird_Animate(Entity *entity) {
             rate = 1.0f / slots->unk88.unk01;
         }
         // match: the caller passes a float the callee does not take
-        ((int (*)(void *, void *, int, float))func_0019A538)(entity, &slots->unk88, 1, rate);
+        ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->unk88, 1, rate);
     } else {
         previous = slots->unk88.unk04;
         Motion_StepSlot(entity, &slots->unk88, 1, ENTITY_FLAG_BITS(entity)->bits11);
@@ -887,7 +887,7 @@ static void LavaBird_Animate(Entity *entity) {
     limits[3] = entity->params->unk432 * 0.017453292f;
     limits[2] = -entity->params->unk432 * 0.017453292f;
     if (ENTITY_FLAG_BITS(entity)->bit9 && entity->target != NULL) {
-        func_001960C0(entity, (int)unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, (int)entity->target, (int)limits, 12.0f);
+        EntityAi_LookAtPoint(entity, (int)unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, (int)entity->target, (int)limits, 12.0f);
     } else {
         func_00196120(entity, unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, NULL, 8.0f);
     }

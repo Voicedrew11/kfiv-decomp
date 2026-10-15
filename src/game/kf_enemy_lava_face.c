@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -25,7 +25,7 @@ float EntityMath_DistanceXZ(void *, void *);
 float EntityMath_AngleXZ(float *, char *);
 f32 EntityMath_Approach(f32, f32, f32);
 void Vector_Copy(void *, void *);
-int func_00195E48(void *, int, void *, void *);
+int EntityAi_LaunchShot(void *, int, void *, void *);
 void EntityEvent_StartCue(Entity *, s32, s32, s32);
 int Motion_Start(void *, int, int, u32, int);
 int rand(void);
@@ -45,7 +45,7 @@ void LavaFace_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = LavaFace_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -110,7 +110,7 @@ static void LavaFace_Think(Entity *entity, s32 unknown) {
         yaw = EntityMath_AngleXZ(from, (char *)target);
         angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->unk436);
         angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->unk438);
-        func_00195E48(entity, entity->params->unk430, from, angles);
+        EntityAi_LaunchShot(entity, entity->params->unk430, from, angles);
         EntityEvent_StartCue(entity, entity->params->unk43A, entity->params->unk43C, entity->params->unk43E);
         entity->unkA0 = entity->params->unk434 + rand() % 3;
     }

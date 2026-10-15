@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 #include "kf_entity_world.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -24,7 +24,7 @@ float EntityMath_DistanceXZ(void *, void *);
 float EntityMath_AngleXZ(float *, char *);
 f32 EntityMath_Approach(f32, f32, f32);
 void Vector_Copy(void *, void *);
-int func_00195E48(void *, int, void *, void *);
+int EntityAi_LaunchShot(void *, int, void *, void *);
 void EntityEvent_StartCue(Entity *, s32, s32, s32);
 void EntityEvent_OnDeath(Entity *);
 
@@ -42,7 +42,7 @@ void MasterFadin_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = MasterFadin_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->dormant = (void (*)(void))MasterFadin_Dormant;
@@ -155,7 +155,7 @@ static void func_001435B0(Entity *entity, s32 unknown) {
             yaw = EntityMath_AngleXZ(from, (char *)target);
             angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->unk436);
             angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->unk438);
-            func_00195E48(entity, entity->params->unk430, from, angles);
+            EntityAi_LaunchShot(entity, entity->params->unk430, from, angles);
             EntityEvent_StartCue(entity, 0, 0, 0);
             entity->unkA0 = entity->params->unk434;
         }

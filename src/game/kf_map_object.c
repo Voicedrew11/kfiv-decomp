@@ -40,10 +40,10 @@ void func_0011E9D0(void *);
 void func_0011EA70(void);
 char *func_0011EA78(char *);
 void func_0011EA80(MapObject *);
-float func_0019B838(float);
-int func_0019D1C0(float, int, void *);
-int func_0019D490(u8, u8, float *, float);
-s32 func_0019D980(s8, u8, u8, f32, Vector4Arg *);
+float Angle_Wrap(float);
+int Sound_PlayCommonAt(float, int, void *);
+int Sound_PlayMapAtRange(u8, u8, float *, float);
+s32 Sound_StartTaggedAt(s8, u8, u8, f32, Vector4Arg *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 int Script_Start(int, int);
@@ -396,7 +396,7 @@ void MapObject_UpdateAll(void) {
                     delta_y = next[1] - from[1];
                     delta_z = next[2] - from[2];
                     angles.x = atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
-                    angles.y = func_0019B838(-atan2f(delta_z, delta_x) + 1.5707964f);
+                    angles.y = Angle_Wrap(-atan2f(delta_z, delta_x) + 1.5707964f);
                     angles.z = angles.w = 0.0f;
                     Effect_StartSpawner(object->unk08->unk54, from, &angles, object);
                 } else {
@@ -729,14 +729,14 @@ int MapObject_StepAnim(MapObject *object) {
             }
             switch (anim->sound_kind) {
                 case 0:
-                    func_0019D1C0(range, anim->sound, &model->position);
+                    Sound_PlayCommonAt(range, anim->sound, &model->position);
                     break;
                 case 1:
                     // match: the range is evaluated before the position
-                    ((int (*)(u8, u8, f32, f32 *))func_0019D490)(anim->sound, object->unk04->unk74, range, &model->position.x);
+                    ((int (*)(u8, u8, f32, f32 *))Sound_PlayMapAtRange)(anim->sound, object->unk04->unk74, range, &model->position.x);
                     break;
                 case 2:
-                    func_0019D980((u8)next_sound_channel + 0x20, anim->sound, object->unk04->unk74, range, (Vector4Arg *)&model->position);
+                    Sound_StartTaggedAt((u8)next_sound_channel + 0x20, anim->sound, object->unk04->unk74, range, (Vector4Arg *)&model->position);
                     object->sound = (u8)next_sound_channel + 0x20;
                     next_sound_channel = (next_sound_channel + 1) % 32;
                     break;
@@ -753,10 +753,10 @@ int MapObject_StepAnim(MapObject *object) {
             func_0011EA80(object);
             switch (anim->sound_kind) {
                 case 0:
-                    func_0019D1C0(range, anim->sound, &object->model->position);
+                    Sound_PlayCommonAt(range, anim->sound, &object->model->position);
                     break;
                 case 1:
-                    func_0019D490(anim->sound, object->unk04->unk74, &object->model->position.x, range);
+                    Sound_PlayMapAtRange(anim->sound, object->unk04->unk74, &object->model->position.x, range);
                     break;
                 case 2:
                     break;
@@ -798,12 +798,12 @@ void MapObject_MarkEmptiedById(int map, int object_id) {
     }
 }
 
-/* The turn that would face a map object toward a point (wrapped by func_0019B838). */
+/* The turn that would face a map object toward a point (wrapped by Angle_Wrap). */
 f32 MapObject_GetTurnToward(MapObject *object, Vector4 *point) {
     Vector4 delta;
 
     Vector_Subtract(&delta, &object->model->position, point);
-    return func_0019B838(atan2f(delta.x, delta.z) - object->model->rotation.y);
+    return Angle_Wrap(atan2f(delta.x, delta.z) - object->model->rotation.y);
 }
 
 /* Hands a map object to a script (bit 20) or back, restarting its state machine. */

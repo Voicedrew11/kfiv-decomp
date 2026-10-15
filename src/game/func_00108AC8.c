@@ -2,7 +2,7 @@
 
 void func_00109100(void *, void *, void *, void *, void *, f32);
 void func_00109178(ModelInstance *);
-float func_0019B838(float);
+float Angle_Wrap(float);
 
 /* Plays one frame of the model's current motion: every part is posed between the two keys around the frame. */
 void func_00108AC8(void *model_arg) {
@@ -68,9 +68,9 @@ void func_00108AC8(void *model_arg) {
                     *(MotionVector *)tangent1 = vectors[next->rotation_in];
                     tangent1->w = 1.0f;
                     func_00109100(&part->unk50, point0, point1, tangent0, tangent1, ratio);
-                    part->unk50 = func_0019B838(part->unk50);
-                    part->unk54 = func_0019B838(part->unk54);
-                    part->unk58 = func_0019B838(part->unk58);
+                    part->unk50 = Angle_Wrap(part->unk50);
+                    part->unk54 = Angle_Wrap(part->unk54);
+                    part->unk58 = Angle_Wrap(part->unk58);
 
                     *(MotionVector *)point0 = vectors[key->position];
                     *(MotionVector *)point1 = vectors[next->position];

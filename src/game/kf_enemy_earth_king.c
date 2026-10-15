@@ -6,7 +6,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -22,8 +22,8 @@ extern u32 D_00446ED4;
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_StepState(Entity *);
-void func_00196870(Entity *, int);
-void func_00196CC0(Entity *);
+void EntityAi_SensePlayer(Entity *, int);
+void EntityAi_CheckFarFromSpawn(Entity *);
 extern float D_00413F80[];
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
@@ -40,12 +40,12 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
-s32 func_00195B68(Entity *, void *, s32, s32, s32, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+s32 EntityAi_CheckMeleeHitAt(Entity *, void *, s32, s32, s32, f32);
 float EntityMath_WrapAngle(float);
-void func_0019A290(Entity *, s32);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-s32 func_00195BD8(Entity *, void *, s32, f32);
+void EntityAi_SetAttackDelay(Entity *, s32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
+s32 EntityAi_SendMeleeHit(Entity *, void *, s32, f32);
 
 static void EarthKing_Think(Entity *entity, s32 unknown);
 static void EarthKing_ThinkCombat(Entity *entity, s32 unknown);
@@ -67,7 +67,7 @@ void EarthKing_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = EarthKing_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -100,12 +100,12 @@ void EarthKing_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think, with EarthKing_ThinkCombat for states 1 and 2. */
 static void EarthKing_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0(entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -230,22 +230,22 @@ static void EarthKing_MeleeAttack2(Entity *entity) {
             entity->action_step++;
         }
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 0, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + entity->params->unk438 * 0.017453292f));
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + entity->params->unk438 * 0.017453292f));
             if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + entity->params->unk43A * 0.017453292f));
+                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + entity->params->unk43A * 0.017453292f));
                 if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                    ENTITY_FLAG_BITS(entity)->bit54 = func_00195B68(entity, unk240, 2, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + entity->params->unk43C * 0.017453292f));
+                    ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->unkFC->unk82, EntityMath_WrapAngle(entity->model->unkD0[1] + entity->params->unk43C * 0.017453292f));
                 }
             }
         }
@@ -258,7 +258,7 @@ static void EarthKing_MeleeAttack2(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -287,12 +287,12 @@ static void EarthKing_RangedAttack0(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -300,7 +300,7 @@ static void EarthKing_RangedAttack0(Entity *entity) {
             && entity->model->unkFC->unk82 <= entity->params->unk436) {
             ENTITY_FLAGS(entity) |= 0x200;
             if (D_00446ED4 & 1) {
-                func_00195ED0(entity, unk3D8, (s16)entity->params->unk434, entity->params->unk436);
+                EntityAi_LaunchShots(entity, unk3D8, (s16)entity->params->unk434, entity->params->unk436);
             }
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -312,7 +312,7 @@ static void EarthKing_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -324,7 +324,7 @@ static void EarthKing_RangedAttack0(Entity *entity) {
 }
 
 /* The ranged attack with record 1 (busy bit 1): animation 24, as EntityAi_RangedAttack; on frames
-   38 to 40 it also checks part 0 of melee record 0 for a hit along the heading (func_00195BD8). */
+   38 to 40 it also checks part 0 of melee record 0 for a hit along the heading (EntityAi_SendMeleeHit). */
 static void EarthKing_RangedAttack1(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, 1);
@@ -345,21 +345,21 @@ static void EarthKing_RangedAttack1(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
-        func_00195ED0(entity, unk3D8,
+        EntityAi_LaunchShots(entity, unk3D8,
                       (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
                       entity->model->unkFC->unk82);
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
             if (entity->model->unkFC->unk82 >= 0x26 && entity->model->unkFC->unk82 <= 0x28) {
-                ENTITY_FLAG_BITS(entity)->bit54 = func_00195BD8(entity, unk240, 0, entity->model->unkD0[1]);
+                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_SendMeleeHit(entity, unk240, 0, entity->model->unkD0[1]);
             }
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -371,7 +371,7 @@ static void EarthKing_RangedAttack1(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {

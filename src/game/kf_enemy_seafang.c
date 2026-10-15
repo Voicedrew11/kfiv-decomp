@@ -4,7 +4,7 @@
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "kf_entity.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -16,8 +16,8 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 // match: const, so that the store to unk48 can follow the load of it
 extern const f32 D_00446804[];
-void func_00196870(void *, int);
-void func_00196C28(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn3D(char *);
 void EntityAi_StepState(void *);
 f32 EntityCollision_DistanceToGround(f32 *);
 int EntityAi_ThinkReturn(void *, int);
@@ -64,7 +64,7 @@ void Seafang_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     if (entity->spawn_info->unk40 != 0) {
         unkE0->think = Seafang_ThinkLowerGradually;
     } else {
@@ -102,10 +102,10 @@ static void Seafang_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_00196C28((char *)entity);
+        EntityAi_CheckFarFromSpawn3D((char *)entity);
         EntityAi_StepState(entity);
         unkE0->unk48 = EntityCollision_DistanceToGround(entity->model->position);
         if (unkE0->unk48 != D_00446804[0] && -entity->unk34 < unkE0->unk48) {
@@ -238,10 +238,10 @@ static void Seafang_ThinkLowerGradually(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_00196C28((char *)entity);
+        EntityAi_CheckFarFromSpawn3D((char *)entity);
         EntityAi_StepState(entity);
         unkE0->unk48 = EntityCollision_DistanceToGround(entity->model->position);
         if (unkE0->unk48 != D_00446808[0] && -entity->unk34 < unkE0->unk48) {

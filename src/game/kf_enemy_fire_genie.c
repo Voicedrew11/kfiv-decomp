@@ -7,7 +7,7 @@
 #include "kf_entity_world.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -30,24 +30,24 @@ void Bone_MatrixToAngles(void *, void *);
 void Matrix_Multiply(void *, void *, void *);
 float EntityMath_EaseAngleToward(float *, float, float);
 void EntityAi_LowerWeightsAfterHit(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
 void EntityAi_StepState(void *);
-void func_00196870(void *, int);
+void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void func_0019A290(Entity *, s32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityEvent_OnDeath(Entity *);
 float EntityMath_WrapAngle(float);
 // match: the definitions take the float last, but retail sets it up before the index
-int func_00198730(Entity *, f32, s32);
-int func_001995A0(Entity *, f32, s32); // match: as func_00198730
+int EntityAi_CanUseMeleeFacing(Entity *, f32, s32);
+int EntityAi_CanUseRangedFacing(Entity *, f32, s32); // match: as EntityAi_CanUseMeleeFacing
 int rand(void);
 void EntityAi_LowerAttackWeight(Entity *);
 void EntityEvent_Respawn(char *);
@@ -82,7 +82,7 @@ void FireGenie_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = FireGenie_Think;
     unkE0->animate = (void (*)(void))FireGenie_Animate;
     unkE0->on_hit = (void (*)(void))FireGenie_OnHit;
@@ -225,7 +225,7 @@ static void FireGenie_OnHit(Entity *entity) {
         }
         unkE0->unk7C = 0;
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The think handler: no states; every tenth frame updates what the entity knows of the player, and
@@ -234,7 +234,7 @@ static void FireGenie_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
         EntityAi_StepState(entity);
@@ -298,7 +298,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
             && entity->model->unkFC->unk82 <= entity->params->unk436) {
             ENTITY_FLAGS(entity) |= 0x200;
             if (D_00446ED4 % 3U != 0) {
-                func_00195ED0(entity, unk3D8, (s16)entity->params->unk434, entity->params->unk436);
+                EntityAi_LaunchShots(entity, unk3D8, (s16)entity->params->unk434, entity->params->unk436);
             }
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -310,7 +310,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -427,27 +427,27 @@ static void FireGenie_Move(Entity *entity) {
     Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
 }
 
-/* Whether the player is in reach of any of the six attack records (func_00198730 for the melee
-   ones, func_001995A0 for the ranged), along the heading of the turned part (work float unk48). */
+/* Whether the player is in reach of any of the six attack records (EntityAi_CanUseMeleeFacing for the melee
+   ones, EntityAi_CanUseRangedFacing for the ranged), along the heading of the turned part (work float unk48). */
 static s32 FireGenie_CanAttack(Entity *entity) {
     f32 angle = EntityMath_WrapAngle(entity->model->unkD0[1] + entity->unkE0.unk48);
 
-    if (func_00198730(entity, angle, 0)) {
+    if (EntityAi_CanUseMeleeFacing(entity, angle, 0)) {
         return TRUE;
     }
-    if (func_00198730(entity, angle, 1)) {
+    if (EntityAi_CanUseMeleeFacing(entity, angle, 1)) {
         return TRUE;
     }
-    if (func_00198730(entity, angle, 2)) {
+    if (EntityAi_CanUseMeleeFacing(entity, angle, 2)) {
         return TRUE;
     }
-    if (func_001995A0(entity, angle, 0)) {
+    if (EntityAi_CanUseRangedFacing(entity, angle, 0)) {
         return TRUE;
     }
-    if (func_001995A0(entity, angle, 1)) {
+    if (EntityAi_CanUseRangedFacing(entity, angle, 1)) {
         return TRUE;
     }
-    return func_001995A0(entity, angle, 2) != 0;
+    return EntityAi_CanUseRangedFacing(entity, angle, 2) != 0;
 }
 
 /* Draws one of the six attacks by weight among those that reach the player, sets flag bits 57 to 59
@@ -464,22 +464,22 @@ static s32 FireGenie_PickAttack(Entity *entity) {
     f32 angle;
 
     angle = EntityMath_WrapAngle(entity->model->unkD0[1] + entity->unkE0.unk48);
-    chance = func_00198730(entity, angle, 0) ? (entity->unkC0[0] * entity->params->unk240[0].unk00) >> 6 : 0;
+    chance = EntityAi_CanUseMeleeFacing(entity, angle, 0) ? (entity->unkC0[0] * entity->params->unk240[0].unk00) >> 6 : 0;
     chances[0] = chance;
     total += chance;
-    chance = func_00198730(entity, angle, 1) ? (entity->unkC0[1] * entity->params->unk240[1].unk00) >> 6 : 0;
+    chance = EntityAi_CanUseMeleeFacing(entity, angle, 1) ? (entity->unkC0[1] * entity->params->unk240[1].unk00) >> 6 : 0;
     chances[1] = chance;
     total += chance;
-    chance = func_00198730(entity, angle, 2) ? (entity->unkC0[2] * ((EntityParamsUnk240 *)entity->params->unk350)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseMeleeFacing(entity, angle, 2) ? (entity->unkC0[2] * ((EntityParamsUnk240 *)entity->params->unk350)->unk00) >> 6 : 0;
     chances[2] = chance;
     total += chance;
-    chance = func_001995A0(entity, angle, 0) ? (entity->unkC0[3] * ENTITY_PARAMS_UNK3D8(entity->params, 0)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 0) ? (entity->unkC0[3] * ENTITY_PARAMS_UNK3D8(entity->params, 0)->unk00) >> 6 : 0;
     chances[3] = chance;
     total += chance;
-    chance = func_001995A0(entity, angle, 1) ? (entity->unkC0[4] * ENTITY_PARAMS_UNK3D8(entity->params, 1)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 1) ? (entity->unkC0[4] * ENTITY_PARAMS_UNK3D8(entity->params, 1)->unk00) >> 6 : 0;
     chances[4] = chance;
     total += chance;
-    chance = func_001995A0(entity, angle, 2) ? (entity->unkC0[5] * ENTITY_PARAMS_UNK3D8(entity->params, 2)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 2) ? (entity->unkC0[5] * ENTITY_PARAMS_UNK3D8(entity->params, 2)->unk00) >> 6 : 0;
     chances[5] = chance;
     total += chance;
     if (total == 0) {

@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 #include "common.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -19,8 +19,8 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(void *);
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(void *);
 int rand(void);
 void EntityPoint_PickNear(float, void *, void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
@@ -37,11 +37,11 @@ void sceVu0RotMatrixY(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 void Vector_Scale(float *, float *, float);
-float func_00199E68(Entity *, float);
+float EntityAi_Accelerate(Entity *, float);
 float EntityMath_HeadingTo(float *, float *);
 int Motion_Start(void *, int, int, u32, int);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void func_0019A290(Entity *, s32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void DarkFlower_Think(Entity *entity, s32 unknown);
 static void DarkFlower_ThinkWander(Entity *entity, s32 unknown);
@@ -63,7 +63,7 @@ void DarkFlower_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = DarkFlower_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -100,12 +100,12 @@ static void DarkFlower_Think(Entity *entity, s32 unknown) {
 
     phase = D_00446ED4 % 10U;
     if (phase == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0(entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -250,7 +250,7 @@ static void DarkFlower_Move(Entity *entity) {
         vector[0] += amount;
     }
     if (entity->unkC8 & 0xF) {
-        unkE0->unk44 = func_00199E68(entity, unkE0->unk44);
+        unkE0->unk44 = EntityAi_Accelerate(entity, unkE0->unk44);
         amount = unkE0->unk44;
         if (entity->unkC8 & 0x40) {
             amount += amount;
@@ -272,7 +272,7 @@ static void DarkFlower_Move(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, no turning. From frame
-   EntityParams.unk430 to unk432 it launches shots (func_00195ED0) every unk434 frames, taking
+   EntityParams.unk430 to unk432 it launches shots (EntityAi_LaunchShots) every unk434 frames, taking
    records 1 and 0 in turn (work byte unk7A), or record 0 every frame when unk434 is 0.
    DarkFlower_ThinkCombat starts it for record 0 only. */
 static void DarkFlower_RangedAttack0(Entity *entity) {
@@ -294,12 +294,12 @@ static void DarkFlower_RangedAttack0(Entity *entity) {
     case 2:
         if (entity->model->unkFC->unk82 >= entity->params->unk430 && entity->model->unkFC->unk82 <= entity->params->unk432) {
             if ((s16)entity->params->unk434 == 0) {
-                func_00195ED0(entity, unk3D8, 30, 50);
+                EntityAi_LaunchShots(entity, unk3D8, 30, 50);
             } else if (D_00446ED4 % (s16)entity->params->unk434 == 0) {
                 if (unkE0->unk7A != 0) {
-                    func_00195ED0(entity, unk3D8, 30, 50);
+                    EntityAi_LaunchShots(entity, unk3D8, 30, 50);
                 } else {
-                    func_00195ED0(entity, second_unk3D8, 30, 50);
+                    EntityAi_LaunchShots(entity, second_unk3D8, 30, 50);
                 }
                 unkE0->unk7A ^= 1;
             }
@@ -313,7 +313,7 @@ static void DarkFlower_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

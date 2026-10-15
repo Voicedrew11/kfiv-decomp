@@ -1,7 +1,7 @@
 #include "kf_entity.h"
 
 int Motion_Start(void *, int, int, u32, int);
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 void *memset(void *, int, u32);
 extern s32 D_003E6E40[][2];
 
@@ -16,5 +16,5 @@ void func_00124E48(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
 }

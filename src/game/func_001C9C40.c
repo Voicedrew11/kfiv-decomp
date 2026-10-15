@@ -4,7 +4,7 @@
 
 void func_001B9478(void);
 void Vector_Copy(void *, void *);
-float func_0019B838(float);
+float Angle_Wrap(float);
 float sinf(float);
 float cosf(float);
 float atan2f(float, float);
@@ -38,7 +38,7 @@ void func_001C9C40(void) {
     func_001B9478();
     Vector_Copy(D_005B60C0, &D_004469D8->model->position);
     Vector_Copy(D_005B60D0, &D_004469D8->model->rotation);
-    D_005B60D0[1] = func_0019B838(D_005B60D0[1]);
+    D_005B60D0[1] = Angle_Wrap(D_005B60D0[1]);
     D_005B60E0[0] = D_00420D00.unk00[0] + sinf(D_00413F80.rotation.y) * 150.0f;
     D_005B60E0[2] = D_00420D00.unk00[2] + cosf(D_00413F80.rotation.y) * 150.0f;
     D_005B60E0[1] = D_004469D8->model->position.y - 100.0f;

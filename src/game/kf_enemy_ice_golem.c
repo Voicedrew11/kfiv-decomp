@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -17,8 +17,8 @@ void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -40,13 +40,13 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 float atan2f(float, float);
-s32 func_00199EB8(Entity *, f32 *, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 char *func_0010CAB8(char *, u32);
 float EntityMath_WrapAngle(float);
-int func_00195E48(void *, int, void *, void *);
-void func_0019A290(Entity *, s32);
+int EntityAi_LaunchShot(void *, int, void *, void *);
+void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void IceGolem_Think(Entity *entity, s32 unknown);
 static void IceGolem_ThinkCombat(Entity *entity, s32 unknown);
@@ -68,7 +68,7 @@ void IceGolem_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = IceGolem_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -102,10 +102,10 @@ void IceGolem_Init(Entity *entity) {
    frame it starts effect 0x3AD at point 0xFF of the model (EntityEvent_StartEffectAtPoint). */
 static void IceGolem_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if ((s32)(entity->flags >> 53) & 1) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -279,7 +279,7 @@ static void IceGolem_Dormant(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit17 = 1;
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit20 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
@@ -304,7 +304,7 @@ static void IceGolem_Dormant(Entity *entity) {
 /* The ranged attack with record 0 (busy bit 1): animation 23, the head following the target. On
    each frame from EntityParams.unk434 up to unk436, in steps of unk438, it launches the record's
    shot unk10 from the point func_0010CAB8 gives for the record's unk11, towards the next point,
-   with a pitch of -5 degrees (func_00195E48). */
+   with a pitch of -5 degrees (EntityAi_LaunchShot). */
 static void IceGolem_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8Array *unk3D8 = entity->params->unk3D8;
@@ -328,12 +328,12 @@ static void IceGolem_RangedAttack0(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->record.unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->record.unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -348,7 +348,7 @@ static void IceGolem_RangedAttack0(Entity *entity) {
                     direction[0] = -0.08726646f;
                     direction[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                     direction[2] = direction[3] = 0.0f;
-                    func_00195E48(entity, unk3D8->unk10, base, direction);
+                    EntityAi_LaunchShot(entity, unk3D8->unk10, base, direction);
                 }
             }
         }
@@ -361,7 +361,7 @@ static void IceGolem_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->record.unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->record.unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

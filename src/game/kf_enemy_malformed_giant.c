@@ -6,7 +6,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
@@ -21,8 +21,8 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(Entity *);
-void func_00196870(Entity *, int);
-void func_00196CC0(Entity *);
+void EntityAi_SensePlayer(Entity *, int);
+void EntityAi_CheckFarFromSpawn(Entity *);
 extern PlayerData D_00413F80;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
@@ -61,7 +61,7 @@ void MalformedGiant_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = MalformedGiant_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -97,7 +97,7 @@ static void MalformedGiant_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (ENTITY_FLAG_BITS(entity)->bit41 == 1) {
         unkE0->unk7A++;
@@ -105,7 +105,7 @@ static void MalformedGiant_Think(Entity *entity, s32 unknown) {
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0(entity);
+    EntityAi_CheckFarFromSpawn(entity);
     EntityAi_StepState(entity);
     if (unkE0->unk7A >= 10) {
         entity->unkC6 = 0;
