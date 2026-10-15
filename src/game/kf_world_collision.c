@@ -1787,9 +1787,9 @@ void Collision_HitCapsuleMeshObj(MapObject *object, f32 *centre, f32 height, f32
     }
 }
 
-/* Tests a moving point against a box-like map object (kind 1): its four walls (model points
+/* Tests an upright capsule against a box-like map object (kind 1): its four walls (model points
    0 to 3 are the corners, point 0x1F gives the height), then its four corner edges. Stops at
-   the first hit. */
+   the first hit. `radius` and `push` are the two sizes Collision_HitCapsuleObj passes on. */
 int Collision_HitCapsuleBoxObj(MapObject *object, f32 *point, f32 radius, f32 push) {
     f32 *corner0;
     f32 *corner1;
@@ -1861,9 +1861,10 @@ int Collision_HitCapsuleBoxObj(MapObject *object, f32 *point, f32 radius, f32 pu
     return ((CornerTest)Collision_CylinderCylinder)(point, push, radius, corner3, 0.0f, height);
 }
 
-/* Tests a circle against the walls and corner posts of a map object's outline and stops at the
-   first hit: points 0, 1, 6, 7 while its fifth animation is on frame 0 or 1, otherwise the two
-   quads 0-3 and 4-7. The result is left in the scratchpad. */
+/* Tests an upright capsule (`radius` and `push` are the two sizes Collision_HitCapsuleObj passes on) against
+   the walls and corner posts of a map object's outline and stops at the first hit: points 0, 1, 6, 7 while
+   its fifth animation is on frame 0 or 1, otherwise the two quads 0-3 and 4-7. The result is left in the
+   scratchpad. */
 void Collision_HitCapsuleDoubleDoorObj(MapObject *object, f32 *centre, f32 radius, f32 push) {
     f32 *point0, *point1, *point2, *point3, *point4, *point5, *point6, *point7;
     f32 *top;

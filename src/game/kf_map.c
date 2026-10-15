@@ -1185,8 +1185,9 @@ int Map_TestFlagBlockBit(int slot, int index, int other_slot, int bit) {
     return 0;
 }
 
-/* Tests the corners of a map record's box against the screen: 1 when it has to be drawn whole (or the test is
-   off), -1 when all eight corners are outside, 0 otherwise. The model is not used. */
+/* Projects the corners of a map record's box to the screen: 1 when none is out of the GS's range (projected
+   z above 0xFFFF0), when the test is off or the record is exempt, -1 when all eight are, 0 when some are (the
+   callers then cut the clipped triangles up, ModelScreen_CutClippedTriangles). The model is not used. */
 int Map_ClassifyRecordOnScreen(MapDrawRecord *draw_record, ModelInstance *model) {
     MapRecord *record = (MapRecord *)draw_record;
     MapRecordBounds *bounds = (MapRecordBounds *)draw_record;

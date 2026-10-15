@@ -164,7 +164,10 @@ void MapSetup_Armory(int map) {
     }
 }
 
-/* Set-up of the Forge as map 017: sets flag 0x20000 of map object 0x65 once the story flag is set. */
+/* Set-up of the Forge as map 017: once the story flag is set, map object 0x65 starts open (bit 17; in all
+   three Forge maps it is a door of kind 0x11 at the same spot, one that does not shut by itself). The Forge
+   is three map files (017, 018, 019) with the same links and three identical set-up functions; the file
+   number the switch in MapSetup_RunForMap picks each by is the only thing that tells them apart. */
 void MapSetup_Forge017(int map) {
     MapObject *object;
 
@@ -176,7 +179,7 @@ void MapSetup_Forge017(int map) {
     }
 }
 
-/* The same for the Forge as map 018. */
+/* The same for the Forge as map 018: door 0x65 starts open once the story flag is set. */
 void MapSetup_Forge018(int map) {
     MapObject *object;
 
@@ -188,7 +191,7 @@ void MapSetup_Forge018(int map) {
     }
 }
 
-/* The same for the Forge as map 019. */
+/* The same for the Forge as map 019: door 0x65 starts open once the story flag is set. */
 void MapSetup_Forge019(int map) {
     MapObject *object;
 
@@ -524,7 +527,7 @@ void MapSetup_CentralTowerLevel3(int map_slot) {
 }
 
 /* Set-up of the Craftsman's Room (map 104): until flag D_0034B098[0] is set, takes map objects 0x77 and 0x76 out of
-   use, giving 0x77 (when it is of kind 9) the values 0xFF, 0x80, 0x18, 0. */
+   use, giving 0x77 (when it is a light, kind 9) the colour 0xFF, 0x80, 0x18 in its source (unk4A 0). */
 void MapSetup_CraftsmansRoom(int map) {
     MapObject *object;
 

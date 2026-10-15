@@ -99,7 +99,7 @@ void MapObject_UpdateBreaking(MapObject *object) {
     }
 }
 
-/* End hook of every kind but the light (map_object_draw_hooks, run by MapObject_Deactivate): a kind 0 object
+/* End hook of every kind but the light (map_object_end_hooks, run by MapObject_Deactivate): a kind 0 object
    that started its ambient sound stops it, if its map is still the current one, and forgets it. */
 void MapObject_StopAmbientSound(MapTrigger *trigger) {
     TriggerSource *source;

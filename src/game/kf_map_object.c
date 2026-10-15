@@ -59,7 +59,7 @@ extern Vector4 map_object_glow_colors[4];
 extern u8 item_counts[];
 extern MapObject map_slot_objects[][0x200];
 extern void (*map_object_step_handlers[][16])(MapObject *);
-extern void (*map_object_draw_hooks[])(MapObject *);
+extern void (*map_object_end_hooks[])(MapObject *);
 extern int (*map_object_item_hooks[])(MapObject *, int);
 extern void (*map_object_signal_hooks[])(MapObject *, int);
 extern void (*map_object_update_hooks[])(MapObject *);
@@ -657,7 +657,7 @@ void MapObject_Activate(MapObject *object) {
 void MapObject_Deactivate(MapObject *object) {
     if (object != NULL) {
         if (MAP_OBJECT_BITS(object)->step != 0) {
-            map_object_draw_hooks[object->unk04->kind](object);
+            map_object_end_hooks[object->unk04->kind](object);
         }
         MapObject_StopSound(object);
         Effect_FreeForOwner((Entity *)object); // match: shared prototype takes an Entity

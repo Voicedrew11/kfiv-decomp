@@ -47,7 +47,7 @@ void MapObject_SetSwitchOn(MapObject *object, int turn_on);
 void MapObject_StartLight(MapObject *object);
 void MapObject_UpdateLight(MapObject *object);
 void MapObject_ReleaseLight(MapObject *object);
-void MapObject_StartTouchTrap(MapObject *object);
+void MapObject_StartStatusOnTouch(MapObject *object);
 void func_00120D88();
 void MapObject_StartExaminable(MapObject *object);
 void MapObject_UpdateExaminable(MapObject *object);
@@ -90,7 +90,7 @@ int MapObject_PlaceStoneOnMarker(MapTrigger *trigger, int type_index);
 void MapObject_StartSavePoint(MapObject *object);
 void MapObject_StartContainer(MapObject *object);
 void MapObject_UpdateContainer(MapObject *object);
-void MapObject_FadeOutContainer(MapObject *object);
+void MapObject_UpdateBreakingContainer(MapObject *object);
 void MapObject_SetUpContainer(MapObject *object);
 void MapObject_StartPivotSwitch(MapObject *object);
 void MapObject_UpdatePivotSwitchOff(MapObject *object);
@@ -125,7 +125,7 @@ void (*map_object_step_handlers[0x20][16])(MapObject *) = { /* 0x3BDA30 the step
     MapObject_StartToggle, MapObject_UpdateIdleToggle, MapObject_UpdateMovingToggle, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartSwitch, (void (*)(MapObject *))MapObject_UpdateOffSwitch, MapObject_UpdateSwitchTurningOn, (void (*)(MapObject *))MapObject_UpdateOnSwitch, MapObject_UpdateSwitchTurningOff, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartLight, MapObject_UpdateLight, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
-    MapObject_StartTouchTrap, (void (*)(MapObject *))func_00120D88, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
+    MapObject_StartStatusOnTouch, (void (*)(MapObject *))func_00120D88, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartExaminable, MapObject_UpdateExaminable, MapObject_ShowExaminedSign, MapObject_ShowExaminedMessage, MapObject_WaitExaminedMessage, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartSymbolOfPassage, (void (*)(MapObject *))func_00120ED8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartPedestal, MapObject_UpdateEmptyPedestal, MapObject_MovePedestalItemIn, MapObject_SettlePedestalItem, MapObject_UpdateFilledPedestal, MapObject_LiftPedestalItem, MapObject_MovePedestalItemOut, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
@@ -136,7 +136,7 @@ void (*map_object_step_handlers[0x20][16])(MapObject *) = { /* 0x3BDA30 the step
     MapObject_StartPitfall, MapObject_UpdateClosedPitfall, MapObject_UpdateOpeningPitfall, MapObject_UpdateOpenPitfall, MapObject_UpdateClosingPitfall, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartMarker, MapObject_UpdateEmptyMarker, MapObject_MoveMarkerStoneIn, MapObject_SettleMarkerStone, MapObject_UpdateFilledMarker, MapObject_LiftMarkerStone, MapObject_MoveMarkerStoneOut, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartSavePoint, MapObject_UpdateSavePoint, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
-    MapObject_StartContainer, MapObject_UpdateContainer, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_FadeOutContainer,
+    MapObject_StartContainer, MapObject_UpdateContainer, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreakingContainer,
     MapObject_StartScenery, MapObject_UpdateScenery, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartScenery, MapObject_UpdateScenery, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartScenery, MapObject_UpdateScenery, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
@@ -149,7 +149,7 @@ void (*map_object_step_handlers[0x20][16])(MapObject *) = { /* 0x3BDA30 the step
     (void (*)(MapObject *))MapObject_StartFadeObject, (void (*)(MapObject *))func_00122CA8, (void (*)(MapObject *))MapObject_FadeInObject, (void (*)(MapObject *))func_00122D60, (void (*)(MapObject *))MapObject_FadeOutObject, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
 };
 
-void (*map_object_draw_hooks[0x20])(MapObject *) = { /* 0x3BE230 the kind's draw hook */
+void (*map_object_end_hooks[0x20])(MapObject *) = { /* 0x3BE230 the kind's end hook, run by MapObject_Deactivate */
     (void (*)(MapObject *))MapObject_StopAmbientSound, (void (*)(MapObject *))MapObject_StopAmbientSound, (void (*)(MapObject *))MapObject_StopAmbientSound, (void (*)(MapObject *))MapObject_StopAmbientSound,
     (void (*)(MapObject *))MapObject_StopAmbientSound, (void (*)(MapObject *))MapObject_StopAmbientSound, (void (*)(MapObject *))MapObject_StopAmbientSound, (void (*)(MapObject *))MapObject_StopAmbientSound,
     (void (*)(MapObject *))MapObject_StopAmbientSound, MapObject_ReleaseLight, (void (*)(MapObject *))MapObject_StopAmbientSound, (void (*)(MapObject *))MapObject_StopAmbientSound,

@@ -71,9 +71,9 @@ void MapObject_UpdateContainer(MapObject *object) {
     }
 }
 
-/* Last step of a container (the step the others fade out in): puts out the item it holds, then fades
-   out like the other kinds (MapObject_UpdateBreakingItemHolder). */
-void MapObject_FadeOutContainer(MapObject *object) {
+/* Step 0xF of a container, after MapObject_Break: puts out the item it holds, then breaks like the other
+   kinds (MapObject_UpdateBreakingItemHolder). */
+void MapObject_UpdateBreakingContainer(MapObject *object) {
     MapObject_UpdateBreakingItemHolder(object);
 }
 
@@ -298,7 +298,8 @@ void MapObject_StartPulse(MapTrigger *trigger) {
 }
 
 /* Update handler of the pulsing kind: steps the phase through the period and sets
-   the model's unk146 on a triangle wave that peaks at 32 half-way through. */
+   the model's unk146 on a triangle wave that peaks at 32 half-way through (with unk145 set, as the start
+   handler leaves it, Model_DrawPosedWithAlpha draws the model with unk146 as its fixed alpha). */
 int MapObject_UpdatePulse(MapTrigger *trigger) {
     MapTriggerShotKind122E88 *shot;
     int phase;
