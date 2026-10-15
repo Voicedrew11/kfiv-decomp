@@ -84,7 +84,7 @@ void MapObject_SetUpContainer(MapObject *object) {
 
 /* Start handler of a switch (kind 30): off (animation 4, step 1) or, with bit 17 set, on (animation 5,
    step 3). */
-void MapObject_StartSwitch(MapObject *object) {
+void MapObject_StartPivotSwitch(MapObject *object) {
     if (!(object->unk10 & 0x20000)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
@@ -95,7 +95,7 @@ void MapObject_StartSwitch(MapObject *object) {
 }
 
 /* Update handler of a switch that is off (step 1): used by the player, it starts turning on. */
-void MapObject_UpdateSwitchOff(MapObject *object) {
+void MapObject_UpdatePivotSwitchOff(MapObject *object) {
     MapObject *used = D_00420D50[0];
 
     if (used == object && ((D_0038CC74[0] >> 1) & 1)) {
@@ -105,7 +105,7 @@ void MapObject_UpdateSwitchOff(MapObject *object) {
 }
 
 /* Update handler of a switch turning on: runs the animation, then it is on. */
-void MapObject_TurnSwitchOn(MapObject *object) {
+void MapObject_TurnPivotSwitchOn(MapObject *object) {
     if (MODEL_CHANNEL(object->model)->param != 0) {
         MapObject_StepAnim(object);
     } else {
@@ -115,7 +115,7 @@ void MapObject_TurnSwitchOn(MapObject *object) {
 }
 
 /* Update handler of a switch that is on (step 3): used by the player, it starts turning off. */
-void MapObject_UpdateSwitchOn(MapObject *object) {
+void MapObject_UpdatePivotSwitchOn(MapObject *object) {
     MapObject *used = D_00420D50[0];
 
     if (used == object && ((D_0038CC74[0] >> 1) & 1)) {
@@ -125,7 +125,7 @@ void MapObject_UpdateSwitchOn(MapObject *object) {
 }
 
 /* Update handler of a switch turning off: runs the animation, then it is off. */
-void MapObject_TurnSwitchOff(MapObject *object) {
+void MapObject_TurnPivotSwitchOff(MapObject *object) {
     if (MODEL_CHANNEL(object->model)->param != 0) {
         MapObject_StepAnim(object);
     } else {
@@ -136,7 +136,7 @@ void MapObject_TurnSwitchOff(MapObject *object) {
 
 /* Signal hook of a switch: turns it on (step 1 to 2) or off (step 3 to 4) when it is at rest in the other
    position. */
-void MapObject_SignalSwitch(MapTrigger *trigger, int turn_on) {
+void MapObject_SignalPivotSwitch(MapTrigger *trigger, int turn_on) {
     if (MAP_TRIGGER_FLAGS(trigger)->bits.type == 1 && !MAP_TRIGGER_FLAGS(trigger)->bits.flag_20000 && turn_on) {
         MAP_TRIGGER_FLAGS(trigger)->bits.flag_20000 = TRUE;
         MAP_TRIGGER_FLAGS(trigger)->bits.type = 2;
@@ -155,7 +155,7 @@ static inline f32 wrap_half_turn(f32 angle, f32 half_turn) {
 
 /* Every-frame hook of a switch: rebuilds its model matrices, then turns the whole model about its second
    part's pivot by that part's rotation. */
-void MapObject_PoseSwitch(MapTrigger *trigger) {
+void MapObject_PosePivotSwitch(MapTrigger *trigger) {
     f32 matrix[16];
     f32 pivot_back[4];
     ModelPart *part;

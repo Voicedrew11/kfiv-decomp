@@ -92,13 +92,13 @@ void MapObject_StartContainer(MapObject *object);
 void MapObject_UpdateContainer(MapObject *object);
 void MapObject_FadeOutContainer(MapObject *object);
 void MapObject_SetUpContainer(MapObject *object);
-void MapObject_StartSwitch(MapObject *object);
-void MapObject_UpdateSwitchOff(MapObject *object);
-void MapObject_TurnSwitchOn(MapObject *object);
-void MapObject_UpdateSwitchOn(MapObject *object);
-void MapObject_TurnSwitchOff(MapObject *object);
-void MapObject_SignalSwitch(MapTrigger *trigger, int turn_on);
-void MapObject_PoseSwitch(MapTrigger *trigger);
+void MapObject_StartPivotSwitch(MapObject *object);
+void MapObject_UpdatePivotSwitchOff(MapObject *object);
+void MapObject_TurnPivotSwitchOn(MapObject *object);
+void MapObject_UpdatePivotSwitchOn(MapObject *object);
+void MapObject_TurnPivotSwitchOff(MapObject *object);
+void MapObject_SignalPivotSwitch(MapTrigger *trigger, int turn_on);
+void MapObject_PosePivotSwitch(MapTrigger *trigger);
 void MapObject_StartFadeObject(MapTrigger *trigger);
 void func_00122CA8();
 void MapObject_FadeInObject(MapTrigger *trigger);
@@ -145,7 +145,7 @@ void (*map_object_step_handlers[0x20][16])(MapObject *) = { /* 0x3BDA30 the step
     MapObject_StartScenery, MapObject_UpdateScenery, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartScenery, MapObject_UpdateScenery, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     (void (*)(MapObject *))MapObject_StartPulse, (void (*)(MapObject *))MapObject_UpdatePulse, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
-    MapObject_StartSwitch, MapObject_UpdateSwitchOff, MapObject_TurnSwitchOn, MapObject_UpdateSwitchOn, MapObject_TurnSwitchOff, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
+    MapObject_StartPivotSwitch, MapObject_UpdatePivotSwitchOff, MapObject_TurnPivotSwitchOn, MapObject_UpdatePivotSwitchOn, MapObject_TurnPivotSwitchOff, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     (void (*)(MapObject *))MapObject_StartFadeObject, (void (*)(MapObject *))func_00122CA8, (void (*)(MapObject *))MapObject_FadeInObject, (void (*)(MapObject *))func_00122D60, (void (*)(MapObject *))MapObject_FadeOutObject, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
 };
 
@@ -179,7 +179,7 @@ void (*map_object_signal_hooks[0x20])(MapObject *, int) = { /* 0x3BE330 the kind
     MapObject_SetShooterOn, MapObject_SetDoorOpen, MapObject_SetPitfallOpen, (void (*)(MapObject *, int))func_0011F228,
     (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228,
     (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228,
-    (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))MapObject_SignalSwitch, (void (*)(MapObject *, int))MapObject_SignalFadeObject,
+    (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))MapObject_SignalPivotSwitch, (void (*)(MapObject *, int))MapObject_SignalFadeObject,
 };
 
 void (*map_object_update_hooks[0x20])(MapObject *) = { /* 0x3BE3B0 the kind's every-frame update */
@@ -190,7 +190,7 @@ void (*map_object_update_hooks[0x20])(MapObject *) = { /* 0x3BE3B0 the kind's ev
     (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMarkerMatrices,
     (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMatrices,
     (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMatrices,
-    (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_PoseSwitch, (void (*)(MapObject *))MapObject_RebuildMatrices,
+    (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_RebuildMatrices, (void (*)(MapObject *))MapObject_PosePivotSwitch, (void (*)(MapObject *))MapObject_RebuildMatrices,
 };
 
 void (*map_object_offset_hooks[0x20])(MapObject *, f32 *) = { /* 0x3BE430 the kind's move by an offset */
