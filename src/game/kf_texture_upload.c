@@ -23,7 +23,7 @@ extern char D_00441538[];           /* "CSM[%u] " */
 extern char D_00441548[];           /* "CSA[%u] " */
 extern char D_00441558[];           /* "CLD[0x%x]
 " */
-extern int D_01DFAF80[];            /* where Texture_SendTexFlush builds its packet */
+static u32 D_01DFAF80[0xC];         /* 0x1DFAF80 where Texture_SendTexFlush builds its DMA packet */
 
 int puts(char *);
 int printf(const char *, ...);

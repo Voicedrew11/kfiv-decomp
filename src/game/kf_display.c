@@ -18,7 +18,7 @@ extern char D_00441438[];
 extern char D_00441458[];
 extern char D_00446F90[];           /* "": no module arguments */
 extern char D_00441478[];           /* "(%f,%f,%f,%f)\n" */
-extern char D_01BFAF80[];
+static char D_01BFAF80[0x200000];   /* 0x1BFAF80 the area the menus' heap (D_00446F38) lies in */
 extern ClockControl D_00432820;
 extern s32 D_00446F38;
 extern GsDoubleBuffer D_00432D20;
