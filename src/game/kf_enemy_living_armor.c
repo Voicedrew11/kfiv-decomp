@@ -1,4 +1,4 @@
-/* LivingArmor: the behaviour of entity type 36 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* LivingArmor: the behaviour of entity type 36 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Living Armor. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -15,7 +15,7 @@ void Vector_Copy(void *, void *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
@@ -23,7 +23,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -84,7 +84,7 @@ void LivingArmor_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = LivingArmor_Think;
     unkE0->animate = (void (*)(void))LivingArmor_Animate;
     unkE0->on_hit = (void (*)(void))LivingArmor_OnHit;
@@ -181,7 +181,7 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -240,7 +240,7 @@ static void LivingArmor_AimPart3AtPlayer(Entity *actor) {
     model = ENTITY_MODEL(actor);
     joint = &model->parts[3];
     if (joint != NULL && actor->unkD1 == 0x11) {
-        Bone_TurnPartToLook(model, (int)joint, (int)actor->unkE0.unk30, 1, D_00413F80.position, 0, 10.0f);
+        Bone_TurnPartToLook(model, (int)joint, (int)actor->unkE0.unk30, 1, player_state.position, 0, 10.0f);
         angle = joint->unk50 - 2.0943952f;
         joint->unk50 = angle;
         joint->unk50 = EntityMath_WrapAngle(angle);

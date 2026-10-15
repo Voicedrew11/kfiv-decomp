@@ -39,22 +39,22 @@ int sceClose(int);
 /* The movie player's .data: the flags the vblank handler shares, the picture ring and the decoder state. */
 #define MOVIE_DATA4 __attribute__((section(".data"), aligned(4)))
 
-s32 D_00437820 MOVIE_DATA4 = { 1 };         /* 0x437820 nonzero: the movie has a sound stream */
-volatile s32 D_00437824 MOVIE_DATA4 = { 0 }; /* 0x437824 the vblank handler shows pictures (Movie_StartDisplay) */
-volatile s32 D_00437828 MOVIE_DATA4 = { 0 }; /* 0x437828 vblanks counted while it does */
-volatile s32 D_0043782C MOVIE_DATA4 = { 0 }; /* 0x43782C a picture was shown completely: Movie_GifDmaHandler drops it */
-volatile s32 D_00437830 MOVIE_DATA4 = { 0 }; /* 0x437830 field that starts, from GS CSR */
-volatile s32 D_00437834 MOVIE_DATA4 = { 0 }; /* 0x437834 nonzero: path 3 still busy */
-MovieOutBuffer D_00437838 = { 0 };          /* 0x437838 the ring of decoded pictures */
-MovieThreadState D_00437850 = { 0 };        /* 0x437850 the thread state, the heap and the file and display in it */
+s32 movie_has_sound_stream MOVIE_DATA4 = { 1 };         /* 0x437820 nonzero: the movie has a sound stream */
+volatile s32 movie_pictures_enabled MOVIE_DATA4 = { 0 }; /* 0x437824 the vblank handler shows pictures (Movie_StartDisplay) */
+volatile s32 movie_picture_vblanks MOVIE_DATA4 = { 0 }; /* 0x437828 vblanks counted while it does */
+volatile s32 movie_picture_shown MOVIE_DATA4 = { 0 }; /* 0x43782C a picture was shown completely: Movie_GifDmaHandler drops it */
+volatile s32 movie_start_field MOVIE_DATA4 = { 0 }; /* 0x437830 field that starts, from GS CSR */
+volatile s32 movie_path3_busy MOVIE_DATA4 = { 0 }; /* 0x437834 nonzero: path 3 still busy */
+MovieOutBuffer movie_out_buffer = { 0 };          /* 0x437838 the ring of decoded pictures */
+MovieThreadState movie_thread = { 0 };        /* 0x437850 the thread state, the heap and the file and display in it */
 u32 D_00437930[2] MOVIE_DATA4 = { 0 };      /* 0x437930 zero fill */
-MovieVideoDecoder D_00437938 = { 0 };       /* 0x437938 the video decoder and its stream in it */
-MovieAudio D_004379F0 = { 0 };              /* 0x4379F0 the sound decoder */
-s32 D_00437A4C MOVIE_DATA4 = { 0 };         /* 0x437A4C vblanks with no picture ready */
+MovieVideoDecoder movie_decoder = { 0 };       /* 0x437938 the video decoder and its stream in it */
+MovieAudio movie_audio = { 0 };              /* 0x4379F0 the sound decoder */
+s32 movie_idle_vblanks MOVIE_DATA4 = { 0 };         /* 0x437A4C vblanks with no picture ready */
 
-static char D_01E4F7C0[0x800];               /* 0x1E4F7C0 0x800 zero bytes for the IOP */
-static u32 D_01E4FFC0[0x50];                /* 0x1E4FFC0 GS packet of Movie_InitDisplay */
-static u32 D_01E50100[0x70];                /* 0x1E50100 GS packet of MovieDisplay_Clear */
+static char movie_audio_zero_buffer[0x800];               /* 0x1E4F7C0 0x800 zero bytes for the IOP */
+static u32 movie_init_display_packet[0x50];                /* 0x1E4FFC0 GS packet of Movie_InitDisplay */
+static u32 movie_clear_packet[0x70];                /* 0x1E50100 GS packet of MovieDisplay_Clear */
 extern char _gp[];
 
 /* an object of 8 bytes or less kept in .rodata, as the game keeps them, not in .sdata */
@@ -202,20 +202,20 @@ static s32 MovieFile_Read(MovieFile *file, u32 *buffer, s32 size, s32 lsn);
 
 /* Gives the movie player the block of memory it allocates its buffers from. */
 static void Movie_HeapInit(u32 start, u32 size) {
-    D_00437850.heap_start = start;
-    D_00437850.heap_next = start;
-    D_00437850.heap_end = start + size - 1;
+    movie_thread.heap_start = start;
+    movie_thread.heap_next = start;
+    movie_thread.heap_end = start + size - 1;
 }
 
 /* Takes size bytes at the next multiple of alignment from the movie player's block; NULL when it is full. */
 static void *Movie_HeapAlloc(u32 size, u32 alignment) {
-    u32 start = (D_00437850.heap_next + alignment - 1) / alignment * alignment;
+    u32 start = (movie_thread.heap_next + alignment - 1) / alignment * alignment;
     u32 end = start + size;
 
-    if (D_00437850.heap_end < end) {
+    if (movie_thread.heap_end < end) {
         return NULL;
     }
-    D_00437850.heap_next = end;
+    movie_thread.heap_next = end;
     return (void *)start;
 }
 
@@ -224,30 +224,30 @@ static void *Movie_HeapAlloc(u32 size, u32 alignment) {
 int Movie_Play(char *path, u32 heap, u32 heap_size, int (*skip_requested)(void), u32 volume, s16 video_mode,
                s16 display_x, s16 display_y) {
     Movie_HeapInit(heap, heap_size);
-    if ((D_00437850.idle_stack = Movie_HeapAlloc(0x800, 0x40)) == NULL ||
-        (D_00437850.decode_stack = Movie_HeapAlloc(0x4000, 0x40)) == NULL ||
-        (D_00437850.mpeg_work = Movie_HeapAlloc(0x13B800, 0x40)) == NULL ||
-        (D_00437850.audio_data = Movie_HeapAlloc(0xC000, 0x40)) == NULL ||
-        (D_00437850.stream_data = Movie_HeapAlloc(0x40000, 0x40)) == NULL ||
-        (D_00437850.stream_tags = Movie_HeapAlloc(0x810, 0x40)) == NULL ||
-        (D_00437850.out_pictures = Movie_HeapAlloc(0x578000, 0x40)) == NULL ||
-        (D_00437850.out_tags = Movie_HeapAlloc(0x10AF40, 0x40)) == NULL ||
-        (D_00437850.time_stamps = Movie_HeapAlloc(0x3C00, 0x40)) == NULL ||
-        (D_00437850.unk34 = Movie_HeapAlloc(0x100, 0x40)) == NULL ||
-        (D_00437850.read_buffer = (s32)Movie_HeapAlloc(0x5000C, 0x40)) == 0) {
+    if ((movie_thread.idle_stack = Movie_HeapAlloc(0x800, 0x40)) == NULL ||
+        (movie_thread.decode_stack = Movie_HeapAlloc(0x4000, 0x40)) == NULL ||
+        (movie_thread.mpeg_work = Movie_HeapAlloc(0x13B800, 0x40)) == NULL ||
+        (movie_thread.audio_data = Movie_HeapAlloc(0xC000, 0x40)) == NULL ||
+        (movie_thread.stream_data = Movie_HeapAlloc(0x40000, 0x40)) == NULL ||
+        (movie_thread.stream_tags = Movie_HeapAlloc(0x810, 0x40)) == NULL ||
+        (movie_thread.out_pictures = Movie_HeapAlloc(0x578000, 0x40)) == NULL ||
+        (movie_thread.out_tags = Movie_HeapAlloc(0x10AF40, 0x40)) == NULL ||
+        (movie_thread.time_stamps = Movie_HeapAlloc(0x3C00, 0x40)) == NULL ||
+        (movie_thread.unk34 = Movie_HeapAlloc(0x100, 0x40)) == NULL ||
+        (movie_thread.read_buffer = (s32)Movie_HeapAlloc(0x5000C, 0x40)) == 0) {
         return -1;
     }
-    D_00437850.video_mode = video_mode;
-    D_00437850.display_x = display_x;
-    D_00437850.display_y = display_y;
-    MovieDisplay_Init(&D_00437850.display, 0, 0, 0x280, 0x1C0, 0x280, 0x1C0);
-    MovieDisplay_Clear(&D_00437850.display, 0);
+    movie_thread.video_mode = video_mode;
+    movie_thread.display_x = display_x;
+    movie_thread.display_y = display_y;
+    MovieDisplay_Init(&movie_thread.display, 0, 0, 0x280, 0x1C0, 0x280, 0x1C0);
+    MovieDisplay_Clear(&movie_thread.display, 0);
     if (volume >= 0x4000) {
         volume = 0x3FFF;
     }
-    D_00437850.volume = volume;
+    movie_thread.volume = volume;
     Movie_PlayFile(path, skip_requested);
-    MovieDisplay_Delete(&D_00437850.display);
+    MovieDisplay_Delete(&movie_thread.display);
     return 0;
 }
 
@@ -256,7 +256,7 @@ static int Movie_PlayFile(char *path, int (*skip_requested)(void)) {
     int result;
 
     Movie_Setup(path);
-    result = Movie_PlayLoop(&D_00437938, MOVIE_READ_BUFFER(&D_00437850), &D_00437850.file, skip_requested);
+    result = Movie_PlayLoop(&movie_decoder, MOVIE_READ_BUFFER(&movie_thread), &movie_thread.file, skip_requested);
     Movie_Shutdown();
     return result;
 }
@@ -283,7 +283,7 @@ static int Movie_PlayLoop(MovieVideoDecoder *decoder, MovieReadBuffer *read_buff
             is_skipping = skip_requested() != 0;
         }
         if (is_skipping && ((sceMpeg *)decoder)->frameCount > 10) {
-            MovieVideo_Abort(&D_00437938);
+            MovieVideo_Abort(&movie_decoder);
         }
         put_size = MovieReadBuf_BeginPut(read_buffer, &put_dest);
         if (read_rest > 0 && put_size >= 0x10000) {
@@ -299,10 +299,10 @@ static int Movie_PlayLoop(MovieVideoDecoder *decoder, MovieReadBuffer *read_buff
             MovieReadBuf_EndGet(read_buffer, proceeded);
             write_rest -= proceeded;
         }
-        if (!is_started && MovieOut_IsFull(&D_00437838) && Movie_IsAudioReady()) {
+        if (!is_started && MovieOut_IsFull(&movie_out_buffer) && Movie_IsAudioReady()) {
             Movie_StartDisplay(1);
-            if (D_00437820 != 0) {
-                MovieAudio_Start(&D_004379F0);
+            if (movie_has_sound_stream != 0) {
+                MovieAudio_Start(&movie_audio);
             }
             is_started = TRUE;
         }
@@ -314,8 +314,8 @@ static int Movie_PlayLoop(MovieVideoDecoder *decoder, MovieReadBuffer *read_buff
         Movie_Yield();
     }
     Movie_StopDisplay();
-    if (D_00437820 != 0) {
-        MovieAudio_Reset(&D_004379F0);
+    if (movie_has_sound_stream != 0) {
+        MovieAudio_Reset(&movie_audio);
     }
     return TRUE;
 }
@@ -327,7 +327,7 @@ static void Movie_Yield(void) {
 
 /* TRUE when enough sound is buffered to start, or the movie has no sound (isAudioOK). */
 static int Movie_IsAudioReady(void) {
-    return (D_00437820 != 0) ? MovieAudio_IsPreset(&D_004379F0) : TRUE;
+    return (movie_has_sound_stream != 0) ? MovieAudio_IsPreset(&movie_audio) : TRUE;
 }
 
 /* Sets up everything a movie needs: the DMA controller, the read ring, the video and sound decoders and their
@@ -339,62 +339,62 @@ static void Movie_Setup(char *path) {
 
     *D_CTRL |= 3;
     *D_STAT = 4;
-    MovieReadBuf_Init(MOVIE_READ_BUFFER(&D_00437850));
-    MovieVideo_Init(&D_00437938, D_00437850.mpeg_work, 0x13B800, D_00437850.stream_data, D_00437850.stream_tags,
-                    0x80, D_00437850.time_stamps, 0x280);
-    MovieAudio_Init(&D_004379F0, D_00437850.audio_data, 0xC000, 0x6000);
-    MovieVideo_SetStream(&D_00437938, 0, 0, (sceMpegCallback)Movie_VideoCallback, MOVIE_READ_BUFFER(&D_00437850));
-    if (D_00437820 != 0) {
-        MovieVideo_SetStream(&D_00437938, 2, 0, (sceMpegCallback)Movie_AudioCallback,
-                             MOVIE_READ_BUFFER(&D_00437850));
+    MovieReadBuf_Init(MOVIE_READ_BUFFER(&movie_thread));
+    MovieVideo_Init(&movie_decoder, movie_thread.mpeg_work, 0x13B800, movie_thread.stream_data, movie_thread.stream_tags,
+                    0x80, movie_thread.time_stamps, 0x280);
+    MovieAudio_Init(&movie_audio, movie_thread.audio_data, 0xC000, 0x6000);
+    MovieVideo_SetStream(&movie_decoder, 0, 0, (sceMpegCallback)Movie_VideoCallback, MOVIE_READ_BUFFER(&movie_thread));
+    if (movie_has_sound_stream != 0) {
+        MovieVideo_SetStream(&movie_decoder, 2, 0, (sceMpegCallback)Movie_AudioCallback,
+                             MOVIE_READ_BUFFER(&movie_thread));
     }
-    MovieOut_Init(&D_00437838, (MovieOutPicture *)(((u32)D_00437850.out_pictures & 0x0FFFFFFF) | 0x20000000),
-                  D_00437850.out_tags, 5);
-    for (i = 0; i < D_00437838.size; i++) {
-        MovieDisplay_BuildFieldPackets(&D_00437850.display, (u32)&D_00437838.tag[i] + 0x40, (u32)&D_00437838.data[i], 0);
-        MovieDisplay_BuildFieldPackets(&D_00437850.display, (u32)&D_00437838.tag[i] + 0x1AB40, (u32)&D_00437838.data[i],
+    MovieOut_Init(&movie_out_buffer, (MovieOutPicture *)(((u32)movie_thread.out_pictures & 0x0FFFFFFF) | 0x20000000),
+                  movie_thread.out_tags, 5);
+    for (i = 0; i < movie_out_buffer.size; i++) {
+        MovieDisplay_BuildFieldPackets(&movie_thread.display, (u32)&movie_out_buffer.tag[i] + 0x40, (u32)&movie_out_buffer.data[i], 0);
+        MovieDisplay_BuildFieldPackets(&movie_thread.display, (u32)&movie_out_buffer.tag[i] + 0x1AB40, (u32)&movie_out_buffer.data[i],
                                        1);
     }
     thread_param.entry = Movie_IdleThread;
-    thread_param.stack = D_00437850.idle_stack;
+    thread_param.stack = movie_thread.idle_stack;
     thread_param.stackSize = 0x800;
     thread_param.initPriority = 1;
     thread_param.gpReg = _gp;
     thread_param.option = 0;
-    D_00437850.idle_thread = CreateThread(&thread_param);
-    StartThread(D_00437850.idle_thread, NULL);
+    movie_thread.idle_thread = CreateThread(&thread_param);
+    StartThread(movie_thread.idle_thread, NULL);
     thread_param.entry = (void (*)(void *))MovieVideo_Main;
-    thread_param.stack = D_00437850.decode_stack;
+    thread_param.stack = movie_thread.decode_stack;
     thread_param.stackSize = 0x4000;
     thread_param.initPriority = 1;
     thread_param.gpReg = _gp;
     thread_param.option = 0;
-    D_00437850.decode_thread = CreateThread(&thread_param);
-    StartThread(D_00437850.decode_thread, &D_00437938);
-    while (!MovieFile_Open(&D_00437850.file, path)) {
+    movie_thread.decode_thread = CreateThread(&thread_param);
+    StartThread(movie_thread.decode_thread, &movie_decoder);
+    while (!MovieFile_Open(&movie_thread.file, path)) {
         printf("Can't Open file %s\n", path);
     }
-    D_00437938.intc_handler = AddIntcHandler(2, Movie_VblankHandler, 0);
+    movie_decoder.intc_handler = AddIntcHandler(2, Movie_VblankHandler, 0);
     EnableIntc(2);
-    D_00437938.dmac_handler = AddDmacHandler(2, (int (*)(int))Movie_GifDmaHandler, 0);
+    movie_decoder.dmac_handler = AddDmacHandler(2, (int (*)(int))Movie_GifDmaHandler, 0);
     EnableDmac(2);
 }
 
 /* Frees what Movie_Setup set up: the threads, the handlers, the decoder, the sound buffers and the file. */
 static void Movie_Shutdown(void) {
-    MovieReadBuf_Delete((MovieReadBuffer *)D_00437850.read_buffer);
-    MovieOut_Delete(&D_00437838);
-    TerminateThread(D_00437850.decode_thread);
-    DeleteThread(D_00437850.decode_thread);
-    TerminateThread(D_00437850.idle_thread);
-    DeleteThread(D_00437850.idle_thread);
+    MovieReadBuf_Delete((MovieReadBuffer *)movie_thread.read_buffer);
+    MovieOut_Delete(&movie_out_buffer);
+    TerminateThread(movie_thread.decode_thread);
+    DeleteThread(movie_thread.decode_thread);
+    TerminateThread(movie_thread.idle_thread);
+    DeleteThread(movie_thread.idle_thread);
     DisableDmac(2);
-    RemoveDmacHandler(2, D_00437938.dmac_handler);
+    RemoveDmacHandler(2, movie_decoder.dmac_handler);
     DisableIntc(2);
-    RemoveIntcHandler(2, D_00437938.intc_handler);
-    MovieVideo_Delete(&D_00437938);
-    MovieAudio_Delete(&D_004379F0);
-    MovieFile_Close(&D_00437850.file);
+    RemoveIntcHandler(2, movie_decoder.intc_handler);
+    MovieVideo_Delete(&movie_decoder);
+    MovieAudio_Delete(&movie_audio);
+    MovieFile_Close(&movie_thread.file);
 }
 
 /* The idle thread of the movie player: yields forever (the SDK sample's defMain). */
@@ -425,16 +425,16 @@ static int Movie_VideoCallback(sceMpeg *mpeg, MovieStreamCallbackData *stream_da
         first_src_size = stream_data->len;
     }
     second_src_size = stream_data->len - first_src_size;
-    MovieVideo_BeginPut(&D_00437938, &first_dest, &first_dest_size, &second_dest, &second_dest_size);
+    MovieVideo_BeginPut(&movie_decoder, &first_dest, &first_dest_size, &second_dest, &second_dest_size);
     copied = Movie_CopyTwoAreas((u8 *)(((u32)first_dest & 0x0FFFFFFF) | 0x20000000), first_dest_size,
                                 (u8 *)(((u32)second_dest & 0x0FFFFFFF) | 0x20000000), second_dest_size, first_src,
                                 first_src_size, second_src, second_src_size);
     if (copied > 0) {
-        if (!MovieVideo_PutStamp(&D_00437938, stream_data->pts, stream_data->dts, first_dest, copied)) {
+        if (!MovieVideo_PutStamp(&movie_decoder, stream_data->pts, stream_data->dts, first_dest, copied)) {
             Movie_DebugPrint("pts buffer overflow\n");
         }
     }
-    MovieVideo_EndPut(&D_00437938, copied);
+    MovieVideo_EndPut(&movie_decoder, copied);
     return copied > 0;
 }
 
@@ -463,10 +463,10 @@ static int Movie_AudioCallback(sceMpeg *mpeg, MovieStreamCallbackData *stream_da
     first_src_size = end - first_src;
     first_src_size = (remaining < first_src_size) ? remaining : first_src_size;
     second_src_size = remaining - first_src_size;
-    MovieAudio_BeginPut(&D_004379F0, &first_dest, &first_dest_size, &second_dest, &second_dest_size);
+    MovieAudio_BeginPut(&movie_audio, &first_dest, &first_dest_size, &second_dest, &second_dest_size);
     copied = Movie_CopyTwoAreas(first_dest, first_dest_size, second_dest, second_dest_size, first_src,
                                 first_src_size, read_buffer->data, second_src_size);
-    MovieAudio_EndPut(&D_004379F0, copied);
+    MovieAudio_EndPut(&movie_audio, copied);
     return copied > 0;
 }
 
@@ -571,9 +571,9 @@ static int MovieAudio_Init(MovieAudio *audio, u8 *data, int size, int iop_buffer
     if (iop_block < 0) {
         return 0;
     }
-    memset(D_01E4F7C0, 0, 0x800);
-    Movie_SendToIop((void *)audio->iop_zero_buffer, D_01E4F7C0, 0x800);
-    MovieAudio_SetMasterVolume(D_00437850.volume);
+    memset(movie_audio_zero_buffer, 0, 0x800);
+    Movie_SendToIop((void *)audio->iop_zero_buffer, movie_audio_zero_buffer, 0x800);
+    MovieAudio_SetMasterVolume(movie_thread.volume);
     return 1;
 }
 
@@ -619,10 +619,10 @@ static int MovieAudio_Start(MovieAudio *audio) {
     sceSdRemote(1, 0x8010, 0x1081, 0x7FFF);
     sceSdRemote(1, 0x8010, 0xD81, 0x7FFF);
     sceSdRemote(1, 0x8010, 0xE81, 0x7FFF);
-    sceSdRemote(1, 0x8010, 0x980, D_00437850.volume);
-    sceSdRemote(1, 0x8010, 0xA80, D_00437850.volume);
-    sceSdRemote(1, 0x8010, 0x981, D_00437850.volume);
-    sceSdRemote(1, 0x8010, 0xA81, D_00437850.volume);
+    sceSdRemote(1, 0x8010, 0x980, movie_thread.volume);
+    sceSdRemote(1, 0x8010, 0xA80, movie_thread.volume);
+    sceSdRemote(1, 0x8010, 0x981, movie_thread.volume);
+    sceSdRemote(1, 0x8010, 0xA81, movie_thread.volume);
     audio->state = MOVIE_AUDIO_STATE_PLAY;
     return 0;
 }
@@ -1370,7 +1370,7 @@ static int MovieVideo_PutStamp(MovieVideoDecoder *decoder, s64 pts, s64 dts, u8 
     stamp.dts = dts;
     stamp.pos = start - decoder->stream.data;
     stamp.len = len;
-    return MovieStream_PutStamp(&D_00437938.stream, &stamp); // match: the global buffer, not the decoder's own (the same one)
+    return MovieStream_PutStamp(&movie_decoder.stream, &stamp); // match: the global buffer, not the decoder's own (the same one)
 }
 
 /* Bytes of stream data the decoder has not consumed yet (videoDecInputCount). */
@@ -1409,7 +1409,7 @@ static int MovieVideo_Flush(MovieVideoDecoder *decoder) {
     copied = MovieVideo_CopyTwoAreas((u8 *)(((u32)first & 0x0FFFFFFF) | 0x20000000), first_size,
                                      (u8 *)(((u32)second & 0x0FFFFFFF) | 0x20000000), second_size, end_code.bytes, 4,
                                      NULL, 0);
-    MovieVideo_EndPut(&D_00437938, copied);
+    MovieVideo_EndPut(&movie_decoder, copied);
     MovieStream_Flush(&decoder->stream);
     if (decoder->state == MOVIE_VIDEO_STATE_RUNNING) {
         decoder->state = MOVIE_VIDEO_STATE_FLUSHED;
@@ -1426,9 +1426,9 @@ static int MovieVideo_IsFlushed(MovieVideoDecoder *decoder) {
    picture to be shown and marks the decoder ended (videoDecMain). */
 static void MovieVideo_Main(MovieVideoDecoder *decoder) {
     MovieStream_Reset(&decoder->stream);
-    MovieOut_Reset(&D_00437838);
+    MovieOut_Reset(&movie_out_buffer);
     MovieVideo_DecodeAll(decoder);
-    while (D_00437838.count != 0) {
+    while (movie_out_buffer.count != 0) {
     }
     MovieVideo_SetState(decoder, MOVIE_VIDEO_STATE_ENDED);
 }
@@ -1444,13 +1444,13 @@ static int MovieVideo_DecodeAll(MovieVideoDecoder *decoder) {
             result = -1;
             break;
         }
-        while ((picture = MovieOut_GetWriteSlot(&D_00437838)) == NULL) {
+        while ((picture = MovieOut_GetWriteSlot(&movie_out_buffer)) == NULL) {
             Movie_Yield();
         }
         if (sceMpegGetPicture((sceMpeg *)decoder, (u32)picture, 0x460) < 0) {
             Movie_DebugPrint("sceMpegGetPicture() decode error");
         }
-        MovieOut_Commit(&D_00437838);
+        MovieOut_Commit(&movie_out_buffer);
         Movie_Yield();
     }
     sceMpegReset((sceMpeg *)decoder);
@@ -1467,19 +1467,19 @@ static int Movie_OnMpegError(sceMpeg *mpeg, void *callback_data, void *user_data
 static int Movie_OnMpegNoData(sceMpeg *mpeg, void *callback_data, void *user_data) {
     Movie_PumpAudio();
     Movie_Yield();
-    MovieStream_AddDma(&D_00437938.stream);
+    MovieStream_AddDma(&movie_decoder.stream);
     return 1;
 }
 
 /* libmpeg callback 2: stop the stream DMA (mpegStopDMA). */
 static int Movie_OnMpegStopDma(sceMpeg *mpeg, void *callback_data, void *user_data) {
-    MovieStream_StopDma(&D_00437938.stream);
+    MovieStream_StopDma(&movie_decoder.stream);
     return 1;
 }
 
 /* libmpeg callback 3: restart the stream DMA (mpegRestartDMA). */
 static int Movie_OnMpegRestartDma(sceMpeg *mpeg, void *callback_data, void *user_data) {
-    MovieStream_RestartDma(&D_00437938.stream);
+    MovieStream_RestartDma(&movie_decoder.stream);
     return 1;
 }
 
@@ -1493,7 +1493,7 @@ static int Movie_OnMpegBackground(sceMpeg *mpeg, void *callback_data, void *user
 static int Movie_OnMpegTimeStamp(sceMpeg *mpeg, MovieStampCallbackData *callback_data, void *user_data) {
     MovieTimeStamp stamp;
 
-    MovieStream_GetStamp(&D_00437938.stream, &stamp);
+    MovieStream_GetStamp(&movie_decoder.stream, &stamp);
     callback_data->pts = stamp.pts;
     callback_data->dts = stamp.dts;
     return 1;
@@ -1523,7 +1523,7 @@ static int MovieVideo_CopyTwoAreas(u8 *dest0, s32 dest0_size, u8 *dest1, s32 des
 
 /* Sends waiting sound to the IOP; returns 0. */
 static int Movie_PumpAudio(void) {
-    MovieAudio_SendToIop(&D_004379F0);
+    MovieAudio_SendToIop(&movie_audio);
     return 0;
 }
 
@@ -1599,11 +1599,11 @@ static void MovieDisplay_Init(MovieDisplay *display, s32 screen_x, s32 screen_y,
     s32 packet_start;
     s32 packet;
 
-    D_00437824 = 0;
-    D_00437828 = 0;
-    D_0043782C = 0;
-    D_00437830 = 0;
-    D_00437834 = 0;
+    movie_pictures_enabled = 0;
+    movie_picture_vblanks = 0;
+    movie_picture_shown = 0;
+    movie_start_field = 0;
+    movie_path3_busy = 0;
     display->screen_x = screen_x;
     display->width = width;
     display->frame_base[1] = (buffer_width * 64 * ROUND_UP(field_height, 32)) >> 11;
@@ -1612,12 +1612,12 @@ static void MovieDisplay_Init(MovieDisplay *display, s32 screen_x, s32 screen_y,
     display->picture_height = picture_height;
     display->frame_base[0] = 0;
     display->screen_y = screen_y;
-    sceGsResetGraph(0, 1, D_00437850.video_mode, 1);
-    sceGsSetDefDispEnv((sceGsDispEnv *)display, 0, width, field_height, D_00437850.display_x, D_00437850.display_y);
+    sceGsResetGraph(0, 1, movie_thread.video_mode, 1);
+    sceGsSetDefDispEnv((sceGsDispEnv *)display, 0, width, field_height, movie_thread.display_x, movie_thread.display_y);
     display->dispfb = (display->dispfb & ~0x7E00) | ((buffer_width & 0x3F) << 9);
     FlushCache(0);
     sceGsPutDispEnv(display);
-    packet_start = (u32)D_01E4FFC0 & 0x0FFFFFFF;
+    packet_start = (u32)movie_init_display_packet & 0x0FFFFFFF;
     packet = GsPacket_AddGifTag(packet_start | 0x20000000, 0xE, 1, 0, 0, 0, 1, 6);
     packet = GsPacket_AddPrmodecont(packet, 1);
     packet = GsPacket_AddFrame(packet, display->frame_base[0], ROUND_UP(display->width, 64) / 64, 0, 0);
@@ -1713,7 +1713,7 @@ static void MovieDisplay_ShowField(MovieDisplay *display, s32 second) {
 /* Fills both fields' frame buffers with one color. */
 static void MovieDisplay_Clear(MovieDisplay *display, u32 color) {
     s32 rect[4];
-    s32 packet_start = (u32)D_01E50100 & 0x0FFFFFFF;
+    s32 packet_start = (u32)movie_clear_packet & 0x0FFFFFFF;
     s32 packet;
 
     rect[0] = 0;
@@ -1911,27 +1911,27 @@ static int Movie_VblankHandler(int cause) {
     MovieOutTag *tag;
     s32 unused[4]; // match: retail keeps 0x10 bytes of stack it never touches
 
-    D_00437830 = (*GS_CSR >> 13) & 1;
-    if (D_00437824 != 0) {
-        D_00437828++;
-        D_00437834 = sceGsSyncPath(1, 0);
-        if (D_00437834 == 0) {
-            tag = MovieOut_GetOldestTag(&D_00437838);
+    movie_start_field = (*GS_CSR >> 13) & 1;
+    if (movie_pictures_enabled != 0) {
+        movie_picture_vblanks++;
+        movie_path3_busy = sceGsSyncPath(1, 0);
+        if (movie_path3_busy == 0) {
+            tag = MovieOut_GetOldestTag(&movie_out_buffer);
             if (tag == NULL) {
-                D_00437A4C++;
+                movie_idle_vblanks++;
                 __asm__ volatile("sync");
                 __asm__ volatile("ei");
                 return 0;
             }
-            if (D_00437830 == 0 && tag->status == MOVIE_OUT_STATUS_FULL) {
-                MovieDisplay_ShowField(&D_00437850.display, 1);
+            if (movie_start_field == 0 && tag->status == MOVIE_OUT_STATUS_FULL) {
+                MovieDisplay_ShowField(&movie_thread.display, 1);
                 Movie_SendGifChain((u32)tag->field_packets[0]);
                 tag->status = MOVIE_OUT_STATUS_SHOWN_EVEN;
-            } else if (D_00437830 != 0 && tag->status == MOVIE_OUT_STATUS_SHOWN_EVEN) {
-                MovieDisplay_ShowField(&D_00437850.display, 0);
+            } else if (movie_start_field != 0 && tag->status == MOVIE_OUT_STATUS_SHOWN_EVEN) {
+                MovieDisplay_ShowField(&movie_thread.display, 0);
                 Movie_SendGifChain((u32)tag->field_packets[1]);
                 tag->status = MOVIE_OUT_STATUS_EMPTY;
-                D_0043782C = 1;
+                movie_picture_shown = 1;
             }
         }
     }
@@ -1942,9 +1942,9 @@ static int Movie_VblankHandler(int cause) {
 
 /* GIF DMA end handler: once a picture has been shown on both fields, drops it from the ring. */
 static int Movie_GifDmaHandler(void) {
-    if (D_00437824 != 0 && D_0043782C != 0) {
-        MovieOut_DropOldest(&D_00437838);
-        D_0043782C = 0;
+    if (movie_pictures_enabled != 0 && movie_picture_shown != 0) {
+        MovieOut_DropOldest(&movie_out_buffer);
+        movie_picture_shown = 0;
     }
     __asm__ volatile("sync");
     __asm__ volatile("ei");
@@ -1956,15 +1956,15 @@ static int Movie_GifDmaHandler(void) {
 static void Movie_StartDisplay(s32 field) {
     while (sceGsSyncV(0) == field) {
     }
-    D_00437A4C = 0;
-    D_00437824 = 1;
-    D_00437828 = 0;
+    movie_idle_vblanks = 0;
+    movie_pictures_enabled = 1;
+    movie_picture_vblanks = 0;
 }
 
 /* Turns the vblank handler's showing off (endDisplay). */
 static void Movie_StopDisplay(void) {
-    D_00437824 = 0;
-    D_00437A4C = 0;
+    movie_pictures_enabled = 0;
+    movie_idle_vblanks = 0;
 }
 
 /* the short strings of the file functions: the game keeps them with the others in .rodata, where a literal of 8

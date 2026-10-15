@@ -1,4 +1,4 @@
-/* The behaviour of entity type 72 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* The behaviour of entity type 72 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers that function installs. */
 #include "kf_entity.h"
 
@@ -7,7 +7,7 @@ void EntityAi_SetUpdate(char *, s32);
 int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 
 static void EntityType72_Think(void);
 
@@ -22,7 +22,7 @@ void EntityType72_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))EntityType72_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = NULL;

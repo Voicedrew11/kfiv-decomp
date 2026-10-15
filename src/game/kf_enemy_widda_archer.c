@@ -1,4 +1,4 @@
-/* WiddaArcher: the behaviour of entity type 20 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* WiddaArcher: the behaviour of entity type 20 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Widda Archer Large, Widda Archer
    Small. The game names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to
    the chr.prm records by hit points and experience, with resistances and drops where two monsters share
@@ -16,7 +16,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -34,7 +34,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -51,7 +51,7 @@ int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 void EntityAi_SetAttackDelay(Entity *, s32);
-extern u8 D_00349690[];
+extern u8 map_script_flags[];
 float EntityMath_DistanceXZ(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 int Script_Start(int, int);
@@ -76,7 +76,7 @@ void WiddaArcher_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     if (entity->spawn_info->unk40 != 0) {
         unkE0->think = WiddaArcher_ThinkUseMapObject;
     } else {
@@ -156,7 +156,7 @@ static void WiddaArcher_PitchPartToPlayer(Entity *entity) {
     part = &((EntityModelPart80 *)entity->model->unkF8)[controller->unk434];
     unkE0 = &entity->unkE0;
     if (part != NULL) {
-        pitch = EntityMath_WrapAngle(atan2(D_00413F80.position[1] - entity->model->position[1], entity->distance_to_player));
+        pitch = EntityMath_WrapAngle(atan2(player_state.position[1] - entity->model->position[1], entity->distance_to_player));
         if (0.87266463f < pitch) {
             pitch = 0.87266463f;
         } else if (pitch < -0.87266463f) {
@@ -188,7 +188,7 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
         unkE0->unk50 = parts[31].unk50[0];
         unkE0->unk54 = parts[31].unk50[1];
     } else {
-        pitch = atan2f(D_00413F80.position[1] - entity->model->position[1], entity->distance_to_player);
+        pitch = atan2f(player_state.position[1] - entity->model->position[1], entity->distance_to_player);
         pitch_limit = 0.5235988f;
         if (pitch_limit < pitch) {
             pitch = pitch_limit;
@@ -288,7 +288,7 @@ static void func_00149610(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -301,7 +301,7 @@ static void func_00149610(Entity *entity, s32 unknown) {
             break;
         }
     }
-    angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+    angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
     if (entity->unk60 - entity->radius - 100.0f < 200.0f && ABS(angle) < 0.6981317f) {
         if (D_00446ED4 % 10U == entity->unkD7 % 10U &&
             rand() % 100 < (entity->params->unk0A - entity->unk2C) * 100 / entity->params->unk0A) {
@@ -360,7 +360,7 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        Vector_Copy(target, D_00413F80.position);
+        Vector_Copy(target, player_state.position);
         target[1] -= 190.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->unkFC->unk82, target, 0.17453294f, 0.17453294f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -384,7 +384,7 @@ static void WiddaArcher_RangedAttack(Entity *entity) {
 }
 
 /* The think handler of a spawn whose EntitySpawnInfo.unk40 is set: as WiddaArcher_Think, but while
-   the byte of D_00349690 that EntitySpawnInfo.unk42 and variant index is not 0 it calls
+   the byte of map_script_flags that EntitySpawnInfo.unk42 and variant index is not 0 it calls
    WiddaArcher_WalkToMapObject instead of stepping the states. */
 static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 unknown) {
     if (entity->model->unkFC->unk88 == 0 &&
@@ -400,7 +400,7 @@ static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 unknown) {
     if (entity->unkC6 != 0) {
         return;
     }
-    if (D_00349690[entity->spawn_info->unk42 + entity->spawn_info->variant * 64] != 0) {
+    if (map_script_flags[entity->spawn_info->unk42 + entity->spawn_info->variant * 64] != 0) {
         WiddaArcher_WalkToMapObject(entity, unknown);
         return;
     }

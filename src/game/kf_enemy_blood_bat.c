@@ -1,4 +1,4 @@
-/* BloodBat: the behaviour of entity type 10 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* BloodBat: the behaviour of entity type 10 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Blood Bat. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -12,7 +12,7 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_OnHit(char *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -28,7 +28,7 @@ void Vector_Subtract(void *, void *, void *);
 int EntityAi_PushTurnCommand3D(Entity *, int);
 void EntityPoint_PickNearWithHeight(f32 *, f32, f32, void *, void *);
 int rand(void);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
@@ -70,7 +70,7 @@ void BloodBat_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))BloodBat_Think;
     unkE0->animate = (void (*)(void))BloodBat_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -278,7 +278,7 @@ static int BloodBat_ThinkCombat(void *entity_arg, int unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             unkE0->unk4C = entity->params->unk432;
             unkE0->unk4C += rand() % (ENTITY_CONTROLLER(entity)->unk434 * 2) - ENTITY_CONTROLLER(entity)->unk434;
             entity->unkA0 = rand() % 60 + 120;
@@ -306,7 +306,7 @@ static int BloodBat_ThinkCombat(void *entity_arg, int unknown) {
                     entity->unkC8 |= 0x100;
                 }
             }
-            delta = D_00413F80.position[1] - unkE0->unk4C - entity->model->position[1];
+            delta = player_state.position[1] - unkE0->unk4C - entity->model->position[1];
             if (ABS(delta) > entity->params->unk54) {
                 if (delta >= 0.0f) {
                     entity->unkC8 |= 0x20;

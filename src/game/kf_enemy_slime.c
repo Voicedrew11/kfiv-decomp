@@ -1,4 +1,4 @@
-/* Slime: the behaviour of entity type 1 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Slime: the behaviour of entity type 1 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Green Slime, Poison Slime. The game
    names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm
    records by hit points and experience, with resistances and drops where two monsters share those. */
@@ -12,7 +12,7 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -29,7 +29,7 @@ void EntityPoint_PickNear(float, void *, void *, void *);
 float EntityMath_DistanceXZ(void *, void *);
 float EntityAi_RandomAngle(void);
 float EntityMath_AngleDifference(float, float);
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
@@ -70,7 +70,7 @@ void Slime_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))Slime_Think;
     unkE0->animate = (void (*)(void))Slime_Animate;
     unkE0->on_hit = (void (*)(void))Slime_OnHit;
@@ -236,7 +236,7 @@ static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             if (rand() % 100 < entity->params->unk430) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 120 + 480;
                 unkE0->unk78 = 0;
             } else {
@@ -336,7 +336,7 @@ static void Slime_Move(Entity *entity) {
 }
 
 /* The melee attack (busy bit 1): as EntityAi_MeleeAttack; a hit of any of the three parts also
-   clears D_00413F80.timed_flags[0], EntityParams.unk432 times in 100. */
+   clears player_state.timed_flags[0], EntityParams.unk432 times in 100. */
 static void Slime_MeleeAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk240 *unk240 = &entity->params->unk240[ENTITY_FLAG_BITS(entity)->bits58];
@@ -374,19 +374,19 @@ static void Slime_MeleeAttack(Entity *entity) {
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
             ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->unkFC->unk82);
             if (ENTITY_FLAG_BITS(entity)->bit54 && rand() % 100 < entity->params->unk432) {
-                D_00413F80.timed_flags[0] = 0;
+                player_state.timed_flags[0] = 0;
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
             ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->unkFC->unk82);
             if (ENTITY_FLAG_BITS(entity)->bit55 && rand() % 100 < entity->params->unk432) {
-                D_00413F80.timed_flags[0] = 0;
+                player_state.timed_flags[0] = 0;
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
             ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->unkFC->unk82);
             if (ENTITY_FLAG_BITS(entity)->bit56 && rand() % 100 < entity->params->unk432) {
-                D_00413F80.timed_flags[0] = 0;
+                player_state.timed_flags[0] = 0;
             }
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {

@@ -1,4 +1,4 @@
-/* GiantBeetle: the behaviour of entity type 76 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* GiantBeetle: the behaviour of entity type 76 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Giant Beetle. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -11,7 +11,7 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -28,7 +28,7 @@ int rand(void);
 void EntityPoint_PickNear(float, void *, void *, void *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
@@ -70,7 +70,7 @@ void GiantBeetle_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = GiantBeetle_Think;
     unkE0->animate = (void (*)(void))GiantBeetle_Animate;
     unkE0->on_hit = (void (*)(void))GiantBeetle_OnHit;
@@ -237,7 +237,7 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;

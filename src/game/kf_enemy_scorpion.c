@@ -1,4 +1,4 @@
-/* Scorpion: the behaviour of entity type 16 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Scorpion: the behaviour of entity type 16 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Scorpion. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -12,7 +12,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -25,7 +25,7 @@ int rand(void);
 int EntityAi_TurnFromPush(void *, void *);
 void EntityPoint_PickNear(float, void *, void *, void *);
 s16 EntityAi_MoveCommand(float, void *, int); // match: this file only matches with this type; EntityAi_MoveCommand.c defines it differently
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
@@ -69,7 +69,7 @@ void Scorpion_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))Scorpion_Think;
     unkE0->animate = (void (*)(void))Scorpion_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -225,14 +225,14 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
         case 1:
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (ABS(angle) > 0.17453292f) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 60 + 60;
                 unkE0->unk78 = 0;
             } else {
-                heading = EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position) - D_00413F80.unk14;
+                heading = EntityMath_AngleXZ(player_state.position, (char *)entity->model->position) - player_state.unk14;
                 heading = EntityMath_WrapAngle(heading);
                 if (ABS(heading) > 0.7853982f || rand() % 100 < entity->params->unk430) {
-                    entity->target = &D_00413F80;
+                    entity->target = &player_state;
                     entity->unkA0 = rand() % 60 + 120;
                     unkE0->unk78 = 1;
                 } else {
@@ -330,7 +330,7 @@ static void Scorpion_Move(Entity *entity) {
     s32 command;
     s32 first_command;
 
-    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     // match: read through the union, and again below once the turn speed is stored

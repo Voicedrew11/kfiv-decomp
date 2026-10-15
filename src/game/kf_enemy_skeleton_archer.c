@@ -1,4 +1,4 @@
-/* SkeletonArcher: the behaviour of entity type 9 (Entity.params->unk02, the index into D_003E6E40): its
+/* SkeletonArcher: the behaviour of entity type 9 (Entity.params->unk02, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Skeleton Archer Small,
    Skeleton Archer Large. The game names no monsters; these names are from
    https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points and experience, with
@@ -15,7 +15,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -30,7 +30,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -69,7 +69,7 @@ void SkeletonArcher_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = SkeletonArcher_Think;
     unkE0->animate = (void (*)(void))SkeletonArcher_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -143,7 +143,7 @@ static void SkeletonArcher_PitchPartToPlayer(Entity *entity) {
     f32 pitch;
 
     if (part != NULL) {
-        pitch = EntityMath_WrapAngle(atan2(D_00413F80.position[1] - model->position[1], entity->distance_to_player));
+        pitch = EntityMath_WrapAngle(atan2(player_state.position[1] - model->position[1], entity->distance_to_player));
         if (0.87266463f < pitch) {
             pitch = 0.87266463f;
         } else if (pitch < -0.87266463f) {
@@ -225,7 +225,7 @@ static void SkeletonArcher_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;

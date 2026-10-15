@@ -33,7 +33,7 @@ void *memset(void *, int, u32);
 int vsprintf(char *, const char *, char *);
 
 extern s32 D_00446F38;
-extern u16 D_00413DAA[];
+extern u16 pad_pressed[];
 extern u16 D_00446940;
 
 static TextColor text_colours[10] = {     /* 0x420B40 */
@@ -134,19 +134,19 @@ void Message_Update(void) {
                 box_open = 0;
             }
         } else if (*box->cursor == GLYPH_END) {
-            if (D_00413DAA[0] & D_00446940) {
+            if (pad_pressed[0] & D_00446940) {
                 box->closing = 1;
                 box->close_timer = 8;
             }
         } else if (box->waiting == 1) {
-            if (D_00413DAA[0] & D_00446940) {
+            if (pad_pressed[0] & D_00446940) {
                 box->waiting = 0;
                 box->start = box->end + 1;
                 box->reveal_frames = 0;
                 box->end = Message_LayoutPage(box->start, box->font);
                 box->typed = 0;
             }
-        } else if (D_00413DAA[0] & D_00446940) {
+        } else if (pad_pressed[0] & D_00446940) {
             while (message_box.cursor < message_box.end) {
                 if ((*message_box.cursor & ~0xFFF) == 0) {
                     message_box.typed++;

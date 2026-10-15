@@ -326,7 +326,7 @@ typedef struct {
    view of the same block; the two are to be unified. */
 typedef struct {
     u32 unk00_0 : 16;               /* 0x00 */
-    u32 unk02 : 8;                  /* 0x02 index into D_003E6E40 */
+    u32 unk02 : 8;                  /* 0x02 index into entity_type_handlers */
     u32 unk03_0 : 1;                /* 0x03 */
     u32 unk03_1 : 2;
     u32 unk03_3 : 5;
@@ -454,7 +454,7 @@ typedef struct {
 typedef struct {
     u8 unk00;                       /* 0x00 */
     u8 unk01;                       /* 0x01 */
-    u8 unk02;                       /* 0x02 index into D_003E6E40 */
+    u8 unk02;                       /* 0x02 index into entity_type_handlers */
     u8 unk03;                       /* 0x03 */
 } EntityParamsBytes;
 
@@ -924,8 +924,8 @@ typedef union {
 
 #define ENTITY_FLAG_WORD(flags) (((EntityFlagWord *)&(flags))->word)
 
-/* the block at D_00413F80: the player (position first). Files declare
-   `extern PlayerData D_00413F80;` themselves: older files still use an array. */
+/* the block at player_state: the player (position first). Files declare
+   `extern PlayerData player_state;` themselves: older files still use an array. */
 typedef struct {
     f32 position[4];                /* 0x00 */
     char pad10[0x04];
@@ -1033,7 +1033,7 @@ typedef union {
 } EntityCommand;
 #define ENTITY_COMMAND(entity) (((EntityCommand *)&(entity)->unkC8)->all)
 
-/* D_0034B6D0[EntityController.unk43A]: state shared by a group of entities */
+/* entity_group_state[EntityController.unk43A]: state shared by a group of entities */
 typedef struct {
     char unk00;                     /* 0x00 */
     char unk01;                     /* 0x01 */
@@ -1056,7 +1056,7 @@ typedef struct {
 #define ENTITY_POOL_FLAG_100    0x100
 #define ENTITY_POOL_FLAG_200    0x200
 
-/* one block of the entity pool, D_003D6DF0[5] (Entity_ResetAllLists.c's
+/* one block of the entity pool, entity_pool_slots[5] (Entity_ResetAllLists.c's
    EntityPoolBlock, with the first word's bit view) */
 typedef struct {
     union {
@@ -1080,9 +1080,9 @@ typedef struct {
     int base_address;               /* 0x0C */
 } EntityPoolSlot;
 
-extern EntityPoolSlot D_003D6DF0[ENTITY_POOL_SLOT_COUNT];
+extern EntityPoolSlot entity_pool_slots[ENTITY_POOL_SLOT_COUNT];
 
-/* the first 0x20 bytes of a loaded type file (D_00249680), kept in D_00474B70 while the file's
+/* the first 0x20 bytes of a loaded type file (file_load_buffer), kept in entity_type_file_header while the file's
    sound part is handed to the sound loader */
 typedef struct {
     char pad00[0x14];
@@ -1102,7 +1102,7 @@ typedef struct {
     s32 pool_model_offset;          /* 0x10 the slot's own model (func_00124B00), 0: none */
 } EntityPoolData;
 
-/* a node of the D_003E7500 pool (0x200 of them, chained through prev/next): a point
+/* a node of the linked_point_pool pool (0x200 of them, chained through prev/next): a point
    that eases toward a target over a duration or follows another vector. The two
    active lists and free list are owned by kf_linked_point.c. */
 typedef struct LinkedPoint {
@@ -1124,7 +1124,7 @@ typedef struct LinkedPoint {
 
 #define LINKED_POINT_COUNT 0x200
 
-extern LinkedPoint D_003E7500[LINKED_POINT_COUNT];
+extern LinkedPoint linked_point_pool[LINKED_POINT_COUNT];
 
 /* the scratchpad as the movement handlers of entity types 65 and 71 use it: a velocity and the
    matrix that turns it to the model's heading */
@@ -1135,7 +1135,7 @@ extern LinkedPoint D_003E7500[LINKED_POINT_COUNT];
 #define ENTITY_MODEL(entity) ((ModelInstance *)(entity)->model)
 #define ENTITY_CONTROLLER(entity) ((EntityController *)(entity)->params)
 
-/* a whole model instance (0x1C0 bytes) as func_00131390 copies it to D_003E7140[0] and [1]
+/* a whole model instance (0x1C0 bytes) as func_00131390 copies it to fire_lord_model[0] and [1]
    (afterimages drawn at half alpha): the game's struct is 8-byte aligned, the copy moves
    doublewords */
 typedef struct {

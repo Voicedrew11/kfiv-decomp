@@ -1,4 +1,4 @@
-/* AcidCrawler: the behaviour of entity type 18 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* AcidCrawler: the behaviour of entity type 18 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Acid Crawler Large, Acid Crawler
    Small. The game names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to
    the chr.prm records by hit points and experience, with resistances and drops where two monsters share
@@ -15,7 +15,7 @@ void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -32,7 +32,7 @@ void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_CanAttack(Entity *);
@@ -68,7 +68,7 @@ void AcidCrawler_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = AcidCrawler_Think;
     unkE0->animate = (void (*)(void))AcidCrawler_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -344,7 +344,7 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
             unkE0->unk79 = 0;
         }
     } else if (unkE0->unk78 == 1) {
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
             entity->unkC8 = 0x241;
@@ -368,7 +368,7 @@ static void AcidCrawler_Move(Entity *entity) {
     f32 vector[4];
     f32 turn;
 
-    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     vector[0] = vector[1] = vector[2] = vector[3] = turn = 0.0f;

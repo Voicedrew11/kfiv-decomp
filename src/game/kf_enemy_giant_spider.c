@@ -1,4 +1,4 @@
-/* GiantSpider: the behaviour of entity type 4 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* GiantSpider: the behaviour of entity type 4 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Giant Spider. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -12,7 +12,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -33,7 +33,7 @@ int EntityAi_PickAttack(char *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 void EntityAi_SetAttackDelay(Entity *, s32);
@@ -62,7 +62,7 @@ void GiantSpider_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = GiantSpider_Think;
     unkE0->animate = (void (*)(void))GiantSpider_Animate;
     unkE0->on_hit = (void (*)(void))GiantSpider_OnHit;
@@ -374,7 +374,7 @@ static void GiantSpider_RangedAttack(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        Vector_Copy(direction, &D_00413F80);
+        Vector_Copy(direction, &player_state);
         direction[1] -= 160.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction, 0.2617994f, 0.2617994f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {

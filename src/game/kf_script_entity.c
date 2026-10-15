@@ -29,11 +29,11 @@ float EntityMath_DistanceXZ(void *a, void *b);
 float EntityMath_WrapAngle(float angle);
 float Angle_Wrap(float angle);
 
-extern f32 D_0042C6F0[];
+extern f32 sine_table[];
 extern f32 D_00431AF0[16];
-extern GameStatus D_0038CC50;
-extern PlayerState D_00413F80;
-extern Entity D_003BEDF0[][0x80];
+extern GameStatus game_status;
+extern PlayerState player_state;
+extern Entity entity_pool[][0x80];
 extern s32 D_00446770;
 extern s32 D_004467D8[2];
 
@@ -128,14 +128,14 @@ void ScriptCmd_Nop217(ScriptThreadCommand *command) {
 }
 
 /* Command 218: hands the script, through `result`, the sine of the angle `input` (radians), from the
-   4096-step table D_0042C6F0, then finishes. */
+   4096-step table sine_table, then finishes. */
 void ScriptCmd_Sin(ScriptFloatQueryCommand *command) {
     ScriptArg *result = &command->result;
     int step = (int)(command->input.value * 4096.0f / 6.2831855f);
     int wrapped = step + 0x1000;
     int index = wrapped % 4096;
 
-    Script_StoreFloatResult(result, D_0042C6F0[index]);
+    Script_StoreFloatResult(result, sine_table[index]);
     command->active = 0;
 }
 
@@ -147,7 +147,7 @@ void ScriptCmd_Cos(ScriptFloatQueryCommand *command) {
     int wrapped = step + 0x1000;
     int index = wrapped % 4096;
 
-    Script_StoreFloatResult(result, D_0042C6F0[index + 0x400]);
+    Script_StoreFloatResult(result, sine_table[index + 0x400]);
     command->active = 0;
 }
 
@@ -168,14 +168,14 @@ void ScriptCmd_GetPointFromPlayer(ScriptPointAheadCommand *command) {
     f32 vector[4];
     f32 point[4];
 
-    vector[0] = D_00413F80.unk1B0;
-    vector[1] = D_00413F80.unk1AC;
-    vector[2] = D_00413F80.unk1B4;
+    vector[0] = player_state.unk1B0;
+    vector[1] = player_state.unk1AC;
+    vector[2] = player_state.unk1B4;
     vector[3] = 0.0f;
-    sceVu0RotMatrixY(matrix, D_00431AF0, D_00413F80.rotation.y);
+    sceVu0RotMatrixY(matrix, D_00431AF0, player_state.rotation.y);
     sceVu0ApplyMatrix(vector, matrix, vector);
     Vector_Scale(vector, vector, (f32)command->distance.value);
-    Vector_Add(point, &D_00413F80.position, vector);
+    Vector_Add(point, &player_state.position, vector);
     Script_StoreFloatResult((ScriptArg *)&command->x, point[0]);
     Script_StoreFloatResult((ScriptArg *)&command->y, point[1]);
     Script_StoreFloatResult((ScriptArg *)&command->z, point[2]);
@@ -198,13 +198,13 @@ void ScriptCmd_Random(ScriptQueryCommand *command) {
 /* Command 230: gives the player control (GameStatus.unk00 = 1: the player moves, the menus open), then
    finishes. */
 void ScriptCmd_GivePlayerControl(ScriptThreadCommand *command) {
-    D_0038CC50.unk00 = 1;
+    game_status.unk00 = 1;
     command->active = 0;
 }
 
 /* Command 231: takes control from the player (GameStatus.unk00 = 0), then finishes. */
 void ScriptCmd_TakePlayerControl(ScriptThreadCommand *command) {
-    D_0038CC50.unk00 = 0;
+    game_status.unk00 = 0;
     command->active = 0;
 }
 
@@ -299,7 +299,7 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
         if (entity->params->flags & 0x80) {
             switch (command->step) {
             case 0:
-                heading = EntityMath_HeadingTo(entity->model->position, &D_00413F80.position.x);
+                heading = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
                 turn = EntityMath_AngleDifference(entity->model->unkD0[1], heading);
                 if (entity->state == 5) {
                     if (ABS(turn) <= entity->params->unk438 * 0.017453292f) {
@@ -507,7 +507,7 @@ void ScriptCmd_TurnEntityToward(ScriptMoveCommand *command) {
    of those whose flag bit 16 is clear, with 2 only of those where it is set, else of all. Then
    finishes. */
 void ScriptCmd_SetEntitiesFlag5(ScriptFlagCommand *command) {
-    Entity *entity = D_003BEDF0[D_00446770];
+    Entity *entity = entity_pool[D_00446770];
     s32 i;
 
     i = D_004467D8[D_00446770];

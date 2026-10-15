@@ -1,4 +1,4 @@
-/* Onyx: the behaviour of entity type 74 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Onyx: the behaviour of entity type 74 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Onyx. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -16,7 +16,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
@@ -24,7 +24,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -73,7 +73,7 @@ void Onyx_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Onyx_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -220,7 +220,7 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             unkE0->unk7B = Onyx_PickAttack(entity);
             if (unkE0->unk7B == 0 && ENTITY_FLAG_BITS(entity)->bits58 == 0) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 60 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
@@ -243,7 +243,7 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             if (unkE0->unk7A == 0) {
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 1;
@@ -520,7 +520,7 @@ static s32 Onyx_GetKeepRangeCommand(Entity *entity, s32 turn, f32 near_range, f3
             command |= 0x100;
         }
     }
-    distance = EntityMath_DistanceXZ(entity->model->position, &D_00413F80);
+    distance = EntityMath_DistanceXZ(entity->model->position, &player_state);
     if (distance < near_range + 100.0f + entity->radius) {
         command |= 2;
     } else if (far_range + 100.0f + entity->radius < distance) {

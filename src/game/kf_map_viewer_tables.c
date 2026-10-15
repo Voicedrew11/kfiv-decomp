@@ -12,7 +12,7 @@ int func_0011BBC0(int *screen_x, int *screen_y);
 void func_0011BCD0();
 
 /* 0x38D6B0 one entry per viewer, indexed by picked_viewer */
-ViewerEntry D_0038D6B0[5] = {
+ViewerEntry viewer_entries[5] = {
     { func_0011AA08, (int)func_0011B1C0, 2 },
     { func_0011AA08, (int)func_0011B4F0, 3 },
     { func_0011AA08, (int)func_0011BAB8, 1 },
@@ -36,14 +36,14 @@ static ScreenQuad viewer_screen_rects[2] __attribute__((aligned(16))) = {
           .second_u = 0x400, .second_v = 0x400 },
 };
 
-ScreenQuad D_0038D770 = { .tag = 0x4007FC0665322BC0, .unk08 = 0x0000000000000060, .unk10 = 0x156,
+ScreenQuad viewer_marker_rect = { .tag = 0x4007FC0665322BC0, .unk08 = 0x0000000000000060, .unk10 = 0x156,
   .red = 128, .green = 128, .blue = 128, .alpha = 128,
   .first_x = 0x6C00, .first_y = 0x7200, .first_z = 0xFFFFFFFF,
   .first_u = 0, .first_v = 0x1500,
   .second_x = 0x9400, .second_y = 0x8E00, .second_z = 0xFFFFFFFF,
   .second_u = 0x800, .second_v = 0x1D00 }; /* 0x38D770 the pulsing square the player marker is drawn as */
 
-ScreenQuad D_0038D7B0 = { .tag = 0x4007FC0665322BC0, .unk08 = 0x0000000000000060, .unk10 = 0x156,
+ScreenQuad viewer_picture_rect = { .tag = 0x4007FC0665322BC0, .unk08 = 0x0000000000000060, .unk10 = 0x156,
   .red = 64, .green = 64, .blue = 64, .alpha = 128,
   .first_x = 0x6C00, .first_y = 0x7200, .first_z = 0xFFFFFFFF,
   .first_u = 0, .first_v = 0,
@@ -86,7 +86,7 @@ ScreenQuad D_0038D8F0 = { .tag = 0x4007FC05E1312BC0, .unk08 = 0x0000000000000060
   .second_u = 0x1000, .second_v = 0x800 }; /* 0x38D8F0 */
 
 /* 0x38D930 the light block the viewer's models are lit by: one grey light */
-MapSlotUnk10Lights D_0038D930 = {
+MapSlotUnk10Lights viewer_default_lights = {
     { { 0 } },
     { { 0 }, { 0 }, { 0 }, { 0.5f, 0.5f, 0.5f, 0.0f } },
 };
@@ -94,6 +94,6 @@ MapSlotUnk10Lights D_0038D930 = {
 /* 0x38D9B0 the 0x40 bytes retail keeps after that block, which nothing reads */
 static MapSlotUnk10Half viewer_light_unused = { 0 };
 
-Vector4 D_0038D9F0[4] = { /* 0x38D9F0 the colours a map object's lights are blended towards */
+Vector4 map_object_glow_colors[4] = { /* 0x38D9F0 the colours a map object's lights are blended towards */
     { 0 }, { 0 }, { 0 }, { 0.5f, 1.0f, 0.5f, 1.0f },
 };

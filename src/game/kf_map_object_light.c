@@ -1,7 +1,7 @@
 #include "kf_model.h"
 #include "kf_linked_point.h"
 
-extern f32 D_0042C6F0[];
+extern f32 sine_table[];
 
 /* Start handler of the light kind: makes a light of the colour in its source at
    a point of the model, and for the flickering sorts (0, 1) rolls the two
@@ -35,7 +35,7 @@ void func_00120A10(MapObject *object) {
 
 /* Update handler of the light kind: the flickering sorts (0 faintly, 1 strongly)
    step their two periods and scale the colour by the product of the two waves
-   read from the table D_0042C6F0 (0xA00 entries a period). */
+   read from the table sine_table (0xA00 entries a period). */
 void func_00120BB8(MapObject *object) {
     s16 *work = (s16 *)object->work;
     MapObjectUnk08Words *source = MAP_OBJECT_WORDS(object);
@@ -50,7 +50,7 @@ void func_00120BB8(MapObject *object) {
 
             work[1] = (work[1] + 1) % work[2];
             work[3] = (work[3] + 1) % work[4];
-            level = D_0042C6F0[work[1] * 0xA00 / work[2]] * D_0042C6F0[work[3] * 0xA00 / work[4]];
+            level = sine_table[work[1] * 0xA00 / work[2]] * sine_table[work[3] * 0xA00 / work[4]];
             depth *= level;
             level = depth + base;
             break;
@@ -61,7 +61,7 @@ void func_00120BB8(MapObject *object) {
 
             work[1] = (work[1] + 1) % work[2];
             work[3] = (work[3] + 1) % work[4];
-            level = D_0042C6F0[work[1] * 0xA00 / work[2]] * D_0042C6F0[work[3] * 0xA00 / work[4]];
+            level = sine_table[work[1] * 0xA00 / work[2]] * sine_table[work[3] * 0xA00 / work[4]];
             depth *= level;
             level = depth + base;
             break;

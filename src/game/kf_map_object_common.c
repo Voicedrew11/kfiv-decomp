@@ -11,7 +11,7 @@ void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
 extern int D_00446770;
-extern int D_0038A130[0x28 / 4];
+extern int sound_load_queue[0x28 / 4];
 
 /* Moves a map object and what its unk08 points at by an offset. */
 void func_0011EDC8(MapObject *object, void *offset) {
@@ -43,7 +43,7 @@ void func_0011EE78(MapObject *object) {
                 if ((MAP_OBJECT_BYTES(object)->unk00 & 1) != D_00446770) {
                     object->work[0] = 0;
                 }
-            } else if ((MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770 && D_0038A130[4] == 0 && D_0038A130[5] == 0) {
+            } else if ((MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770 && sound_load_queue[4] == 0 && sound_load_queue[5] == 0) {
                 Sound_StartTaggedAt(source->unk44, source->unk48, source->unk46, source->unk4A, (Vector4Arg *)&object->model->position);
                 object->work[0] = 1;
             }

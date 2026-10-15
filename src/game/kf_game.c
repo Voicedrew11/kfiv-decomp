@@ -11,41 +11,41 @@
 #include "kf_menu_screens.h"
 #include "kf_message.h"
 
-extern u8 D_00349680[0x10];             /* the options (func_00102930 sets their defaults) */
-extern u8 D_00349690[0x2000];
+extern u8 game_options[0x10];             /* the options (func_00102930 sets their defaults) */
+extern u8 map_script_flags[0x2000];
 extern u8 D_0034B690[0x40];
-extern u8 D_0034B6D0[0xC80];
+extern u8 entity_group_state[0xC80];
 extern RecollectionFlags recollection_flags[50];     /* per Recollection page: which messages were heard */
 extern u8 recollection_pages[50];               /* per Recollection page: 0 not met yet, else which description it shows */
 extern u8 D_0034C518[0x400];
-extern u8 D_0034C918[0x10];             /* 128 flags, one bit each */
-extern u8 D_0034C928[0x8000];           /* four flag bits per nibble, 0x100 bytes per map */
-extern u8 D_00354928[0x80][0x40];       /* a 4-bit counter per nibble, 128 per map */
-extern u8 D_00356928[0x2000];
-extern u8 D_00358928[0xA000];
-extern u8 D_00362928[0x5000];
-extern TriggerItemRecord D_00367928[TRIGGER_ITEM_RECORD_COUNT];
+extern u8 map_visited_flags[0x10];             /* 128 flags, one bit each */
+extern u8 map_entry_flags[0x8000];           /* four flag bits per nibble, 0x100 bytes per map */
+extern u8 map_entry_counters[0x80][0x40];       /* a 4-bit counter per nibble, 128 per map */
+extern u8 map_item_pickup_counts[0x2000];
+extern u8 dropped_item_records[0xA000];
+extern u8 map_object_marks[0x5000];
+extern TriggerItemRecord trigger_items[TRIGGER_ITEM_RECORD_COUNT];
 extern u16 spell_experience[6][5];
 extern u8 spell_levels[6][5];
-extern LevelRecord D_003679A0[70];
-extern LevelRecord D_003682F0[160];
+extern LevelRecord weapon_level_records[70];
+extern LevelRecord worn_item_level_records[160];
 extern DefinitionByteSet item_counts;
-extern DefinitionByteSet D_003699B0;
-extern DefinitionByteSet D_00369B30;
-extern DefinitionByteSet D_00369CB0;
-extern DefinitionByteSet D_00369E30;
-extern DefinitionByteSet D_00369FB0;
-extern u8 D_0036A130[0x20000];          /* the save image */
-extern char D_0038A130[0x28];
-extern MapSlot D_0038CD20[];
+extern DefinitionByteSet trade_stock_1;
+extern DefinitionByteSet trade_stock_2;
+extern DefinitionByteSet trade_stock_3;
+extern DefinitionByteSet trade_stock_4;
+extern DefinitionByteSet trade_stock_5;
+extern u8 save_image[0x20000];          /* the save image */
+extern char sound_load_queue[0x28];
+extern MapSlot map_slots[];
 extern const DefinitionByteSet D_0043D9B0;
 extern const DefinitionByteSet D_0043DB30;
 extern const DefinitionByteSet D_0043DCB0;
 extern const DefinitionByteSet D_0043DE30;
 extern const DefinitionByteSet D_0043DFB0;
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern GameDefinition item_name_defs[380];
-extern ItemCommonDef D_0041A6F8[150];
+extern ItemCommonDef item_common_defs[150];
 extern u8 D_00421050[0x30];
 extern s16 D_0044692C, D_0044692E, D_00446930, D_00446932, D_00446934, D_00446936, D_00446938;
 extern s16 D_0044693A, D_0044693C, D_0044693E, D_00446940, D_00446942, D_00446944, D_00446946;
@@ -58,8 +58,8 @@ extern int D_00447014;                  /* frames the fade takes */
 
 void *memcpy(void *, const void *, u32);
 void func_0010A4E8(int, int, int, int, int);
-extern int D_0038A178[8];               /* the screen depth of each haze layer */
-extern u32 D_0038A158[8];               /* the distances of the haze layers, nearest last */
+extern int haze_layer_depths[8];               /* the screen depth of each haze layer */
+extern u32 haze_layer_distances[8];               /* the distances of the haze layers, nearest last */
 extern float D_00420D00[];
 extern float D_00420D30[];
 extern float D_00420D40[];
@@ -76,11 +76,11 @@ extern int D_00446740;                  /* nonzero: func_00108020 lays its grid 
 extern u32 D_00446744;                  /* the number of haze layers */
 extern u32 D_00446ED4;
 extern int D_00446F78;
-static int D_00467680[8][11][2];     /* 0x467680 the grid as laid out */
-static int D_00467940[8][11][2];     /* 0x467940 the wobbling points */
-static int D_00467C00[8][11][2];     /* 0x467C00 the points of the frame before */
-static float D_00467EC0[8][11][2];   /* 0x467EC0 the force on each point */
-static int D_00468180[3];            /* 0x468180 the fade colour */
+static int wobble_grid_origin[8][11][2];     /* 0x467680 the grid as laid out */
+static int wobble_grid_points[8][11][2];     /* 0x467940 the wobbling points */
+static int wobble_grid_previous[8][11][2];     /* 0x467C00 the points of the frame before */
+static float wobble_grid_forces[8][11][2];   /* 0x467EC0 the force on each point */
+static int fade_color[3];            /* 0x468180 the fade colour */
 
 float sqrtf(float);
 int rand(void);
@@ -107,62 +107,62 @@ static void func_00103778(int map, int entry, int bit, int value);
 
 /* sets the options to their defaults */
 void func_00102930(void) {
-    memset(D_00349680, 0, sizeof(D_00349680));
-    D_00349680[0] = 1;
-    D_00349680[1] = 0x40;
-    D_00349680[2] = 0x40;
-    D_00349680[3] = 0x40;
-    D_00349680[4] = 1;
-    D_00349680[5] = 1;
-    D_00349680[6] = 1;
-    D_00349680[7] = 1;
-    D_00349680[8] = 0;
-    D_00349680[9] = 1;
-    D_00349680[10] = 0x88;
+    memset(game_options, 0, sizeof(game_options));
+    game_options[0] = 1;
+    game_options[1] = 0x40;
+    game_options[2] = 0x40;
+    game_options[3] = 0x40;
+    game_options[4] = 1;
+    game_options[5] = 1;
+    game_options[6] = 1;
+    game_options[7] = 1;
+    game_options[8] = 0;
+    game_options[9] = 1;
+    game_options[10] = 0x88;
 }
 
 /* clears the state a new game starts from */
 void func_001029A8(void) {
     int i;
 
-    memset(D_00349690, 0, sizeof(D_00349690));
+    memset(map_script_flags, 0, sizeof(map_script_flags));
     memset(D_0034B690, 0, sizeof(D_0034B690));
-    memset(D_0034B6D0, 0, sizeof(D_0034B6D0));
+    memset(entity_group_state, 0, sizeof(entity_group_state));
     memset(recollection_flags, 0, sizeof(recollection_flags));
     memset(recollection_pages, 0, sizeof(recollection_pages));
     recollection_pages[0] = 1;
     memset(D_0034C518, 0, sizeof(D_0034C518));
-    memset(D_0034C918, 0, sizeof(D_0034C918));
-    memset(D_0034C928, 0, sizeof(D_0034C928));
-    memset(D_00354928, 0, sizeof(D_00354928));
-    memset(D_00356928, 0, sizeof(D_00356928));
-    memset(D_00358928, 0, sizeof(D_00358928));
-    memset(D_00362928, 0, sizeof(D_00362928));
-    memset(D_00367928, 0, sizeof(D_00367928));
-    D_00367928[0].map_tag = 0x66;
-    D_00367928[0].trigger_id = 200;
-    D_00367928[0].item = 0x87;
-    D_00367928[1].map_tag = 0xD;
-    D_00367928[1].trigger_id = 200;
-    D_00367928[1].item = 0x88;
-    memset(D_003679A0, 0, sizeof(D_003679A0));
-    memset(D_003682F0, 0, sizeof(D_003682F0));
+    memset(map_visited_flags, 0, sizeof(map_visited_flags));
+    memset(map_entry_flags, 0, sizeof(map_entry_flags));
+    memset(map_entry_counters, 0, sizeof(map_entry_counters));
+    memset(map_item_pickup_counts, 0, sizeof(map_item_pickup_counts));
+    memset(dropped_item_records, 0, sizeof(dropped_item_records));
+    memset(map_object_marks, 0, sizeof(map_object_marks));
+    memset(trigger_items, 0, sizeof(trigger_items));
+    trigger_items[0].map_tag = 0x66;
+    trigger_items[0].trigger_id = 200;
+    trigger_items[0].item = 0x87;
+    trigger_items[1].map_tag = 0xD;
+    trigger_items[1].trigger_id = 200;
+    trigger_items[1].item = 0x88;
+    memset(weapon_level_records, 0, sizeof(weapon_level_records));
+    memset(worn_item_level_records, 0, sizeof(worn_item_level_records));
     for (i = 0; i < 70; i++) {
-        D_003679A0[i].level = item_name_defs[ITEM_WEAPON_FIRST + i].unk3C;
+        weapon_level_records[i].level = item_name_defs[ITEM_WEAPON_FIRST + i].unk3C;
     }
     for (i = 0; i < 160; i++) {
-        D_003682F0[i].level = item_name_defs[ITEM_WORN_FIRST + i].unk3C;
+        worn_item_level_records[i].level = item_name_defs[ITEM_WORN_FIRST + i].unk3C;
     }
     memset(&item_counts, 0, sizeof(item_counts));
-    D_003699B0 = D_0043D9B0;
-    D_00369B30 = D_0043DB30;
-    D_00369CB0 = D_0043DCB0;
-    D_00369E30 = D_0043DE30;
-    D_00369FB0 = D_0043DFB0;
+    trade_stock_1 = D_0043D9B0;
+    trade_stock_2 = D_0043DB30;
+    trade_stock_3 = D_0043DCB0;
+    trade_stock_4 = D_0043DE30;
+    trade_stock_5 = D_0043DFB0;
     memset(spell_experience, 0, sizeof(spell_experience));
     memset(spell_levels, 0, sizeof(spell_levels));
     Menu_ClearKeyItems();
-    memset(D_0038A130, 0, sizeof(D_0038A130));
+    memset(sound_load_queue, 0, sizeof(sound_load_queue));
 }
 
 /* marks what the player has equipped as found and tidies the spell tables */
@@ -171,35 +171,35 @@ void func_001030B8(void) {
     int j;
     int level;
 
-    if (D_00413F80.weapon != 0) {
-        item_counts.bytes[D_00413F80.weapon + ITEM_WEAPON_FIRST] = 1;
+    if (player_state.weapon != 0) {
+        item_counts.bytes[player_state.weapon + ITEM_WEAPON_FIRST] = 1;
     }
-    if (D_00413F80.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
-        item_counts.bytes[D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST] = 1;
+    if (player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
+        item_counts.bytes[player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[EQUIP_HELM] != ITEM_WORN_INDEX(ITEM_HELM_NONE)) {
-        item_counts.bytes[D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST] = 1;
+    if (player_state.equipment[EQUIP_HELM] != ITEM_WORN_INDEX(ITEM_HELM_NONE)) {
+        item_counts.bytes[player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[EQUIP_ARMOR] != ITEM_WORN_INDEX(ITEM_ARMOR_NONE)) {
-        item_counts.bytes[D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST] = 1;
+    if (player_state.equipment[EQUIP_ARMOR] != ITEM_WORN_INDEX(ITEM_ARMOR_NONE)) {
+        item_counts.bytes[player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[EQUIP_GAUNTLET] != ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE)) {
-        item_counts.bytes[D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST] = 1;
+    if (player_state.equipment[EQUIP_GAUNTLET] != ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE)) {
+        item_counts.bytes[player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[EQUIP_BOOT] != ITEM_WORN_INDEX(ITEM_BOOT_NONE)) {
-        item_counts.bytes[D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST] = 1;
+    if (player_state.equipment[EQUIP_BOOT] != ITEM_WORN_INDEX(ITEM_BOOT_NONE)) {
+        item_counts.bytes[player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[EQUIP_RING] != ITEM_WORN_INDEX(ITEM_RING_NONE)) {
-        item_counts.bytes[D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST] = 1;
+    if (player_state.equipment[EQUIP_RING] != ITEM_WORN_INDEX(ITEM_RING_NONE)) {
+        item_counts.bytes[player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[EQUIP_BRACELET] != ITEM_WORN_INDEX(ITEM_BRACELET_NONE)) {
-        item_counts.bytes[D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST] = 1;
+    if (player_state.equipment[EQUIP_BRACELET] != ITEM_WORN_INDEX(ITEM_BRACELET_NONE)) {
+        item_counts.bytes[player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST] = 1;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] != ITEM_WORN_INDEX(ITEM_AMULET_NONE)) {
-        item_counts.bytes[D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST] = 1;
+    if (player_state.equipment[EQUIP_AMULET] != ITEM_WORN_INDEX(ITEM_AMULET_NONE)) {
+        item_counts.bytes[player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST] = 1;
     }
     for (i = 0; i < ITEM_WEAPON_FIRST; i++) {
-        if (item_counts.bytes[i] >= 2 && (D_0041A6F8[i].flags >> 1 & 1)) {
+        if (item_counts.bytes[i] >= 2 && (item_common_defs[i].flags >> 1 & 1)) {
             item_counts.bytes[i] = 1;
         }
     }
@@ -233,8 +233,8 @@ void func_001030B8(void) {
         }
     }
     // match: through an int; a bare byte compare is narrowed and gives bnez, not bgtz
-    if (D_00413F80.equipped_magic == 0 || (level = spell_levels[(D_00413F80.equipped_magic - 1) / 15][(D_00413F80.equipped_magic - 1) / 3 % 5]) <= 0) {
-        D_00413F80.equipped_magic = 0;
+    if (player_state.equipped_magic == 0 || (level = spell_levels[(player_state.equipped_magic - 1) / 15][(player_state.equipped_magic - 1) / 3 % 5]) <= 0) {
+        player_state.equipped_magic = 0;
     }
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
@@ -260,21 +260,21 @@ void func_001030B8(void) {
             }
         }
     }
-    D_00413F80.hp_now = D_00413F80.hp_base;
-    D_00413F80.mp_now = D_00413F80.mp_base;
+    player_state.hp_now = player_state.hp_base;
+    player_state.mp_now = player_state.mp_base;
 }
 
-/* one of the 128 flags in D_0034C918 */
+/* one of the 128 flags in map_visited_flags */
 int func_001034A8(int flag) {
     if ((u32)flag < 0x80U) {
-        return D_0034C918[flag / 8] >> (flag % 8) & 1;
+        return map_visited_flags[flag / 8] >> (flag % 8) & 1;
     }
     return 0;
 }
 
 void func_001034F8(int flag) {
     if ((u32)flag < 0x80U) {
-        D_0034C918[flag / 8] |= 1 << (flag % 8);
+        map_visited_flags[flag / 8] |= 1 << (flag % 8);
     }
 }
 
@@ -283,7 +283,7 @@ int func_00103548(int map, int entry) {
     int count;
 
     if ((u32)map < 0x80U && entry >= 0 && entry < 0x80) {
-        count = D_00354928[map][entry / 2];
+        count = map_entry_counters[map][entry / 2];
         if (entry & 1) {
             count >>= 4;
         } else {
@@ -303,20 +303,20 @@ void func_001035A8(u32 map, int entry) {
     int merged;
 
     if (map < 0x80 && entry >= 0 && entry < 0x80) {
-        count = (old_byte = ((u8 *)D_00354928)[(entry / 2) + (map << 6)]);
+        count = (old_byte = ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)]);
         if (entry & 1) {
             count >>= 4;
             count++;
             shifted = count << 4;
-            ((u8 *)D_00354928)[(entry / 2) + (map << 6)] = (low_nibble = old_byte & 0xF);
+            ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = (low_nibble = old_byte & 0xF);
             count = shifted & 0xFF;
         } else {
             count &= 0xF;
             count++;
-            ((u8 *)D_00354928)[(entry / 2) + (map << 6)] = old_byte & 0xF0;
+            ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = old_byte & 0xF0;
         }
-        merged = count | ((u8 *)D_00354928)[(entry / 2) + (map << 6)]; // match: merged in an int
-        ((u8 *)D_00354928)[(entry / 2) + (map << 6)] = merged;
+        merged = count | ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)]; // match: merged in an int
+        ((u8 *)map_entry_counters)[(entry / 2) + (map << 6)] = merged;
     }
 }
 
@@ -364,7 +364,7 @@ static int func_001036F8(int map, int entry, int bit) {
     }
     mask = (mask << bit) & 0xFF;
     mask = (mask << ((entry % 2) * 4)) & 0xFF;
-    return (D_0034C928[entry / 2 + map * 0x100] & mask) != 0;
+    return (map_entry_flags[entry / 2 + map * 0x100] & mask) != 0;
 }
 
 static void func_00103778(int map, int entry, int bit, int value) {
@@ -373,7 +373,7 @@ static void func_00103778(int map, int entry, int bit, int value) {
         u8 *flag_byte;
 
         mask = (u8)(mask << ((entry % 2) * 4));
-        flag_byte = &D_0034C928[entry / 2 + map * 0x100];
+        flag_byte = &map_entry_flags[entry / 2 + map * 0x100];
         *flag_byte = *flag_byte & ~mask;
         if (value != 0) {
             *flag_byte = *flag_byte | mask;
@@ -445,7 +445,7 @@ int func_00103A18(int item, int *map_tag, int *trigger_id) {
     if (item == 0) {
         return 0;
     }
-    record = D_00367928;
+    record = trigger_items;
     for (i = 0; i < 5; i++, record++) {
         if (record->item == item) {
             u8 tag;
@@ -480,7 +480,7 @@ int func_00103AE0(int map_tag, int trigger_id) {
     if ((u32)(map_tag - 0x11) < 3) {
         map_tag = 0x11;
     }
-    record = D_00367928;
+    record = trigger_items;
     for (i = 0; i < TRIGGER_ITEM_RECORD_COUNT; i++, record++) {
         if (record->map_tag == map_tag && record->trigger_id == trigger_id) {
             return record->item;
@@ -497,7 +497,7 @@ int func_00103B38(int map_tag, int trigger_id) {
     if ((u32)(map_tag - 0x11) < 3) {
         map_tag = 0x11;
     }
-    record = D_00367928;
+    record = trigger_items;
     for (i = 0; i < TRIGGER_ITEM_RECORD_COUNT; i++, record++) {
         if (record->map_tag == map_tag && record->trigger_id == trigger_id) {
             memset(record, 0, sizeof(TriggerItemRecord));
@@ -515,7 +515,7 @@ int func_00103BA8(int map_tag, int trigger_id, int item) {
     if ((u32)(map_tag - 0x11) < 3) {
         map_tag = 0x11;
     }
-    record = D_00367928;
+    record = trigger_items;
     for (i = 0; i < TRIGGER_ITEM_RECORD_COUNT; i++, record++) {
         if (record->map_tag == 0) {
             if (record->trigger_id == 0 && record->item == 0) {
@@ -547,13 +547,13 @@ void func_00103C18(void) {
     u8 *table;
     int sum;
 
-    save_cursor = D_0036A130;
+    save_cursor = save_image;
     MapObject_SaveAllFlags();
-    memset(save_cursor, 0, sizeof(D_0036A130));
+    memset(save_cursor, 0, sizeof(save_image));
     save_cursor += 8;
-    *(int *)D_0036A130 = 0x15400;
+    *(int *)save_image = 0x15400;
     memcpy(save_cursor, &D_00446A28, 8); save_cursor += 8;
-    memcpy(save_cursor, D_00349680, 0x10); save_cursor += 0x10;
+    memcpy(save_cursor, game_options, 0x10); save_cursor += 0x10;
     memcpy(save_cursor, &D_0044692C, 2); save_cursor += 2;
     memcpy(save_cursor, &D_0044692E, 2); save_cursor += 2;
     memcpy(save_cursor, &D_00446930, 2); save_cursor += 2;
@@ -569,62 +569,62 @@ void func_00103C18(void) {
     memcpy(save_cursor, &D_00446944, 2); save_cursor += 2;
     memcpy(save_cursor, &D_00446946, 2); save_cursor += 2;
     copy_size = 0xB40;
-    memcpy(save_cursor, D_00349690, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_script_flags, copy_size); save_cursor += copy_size;
     copy_size = 0x6C0;
-    memcpy(save_cursor, D_00349690 + 0x1680, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_script_flags + 0x1680, copy_size); save_cursor += copy_size;
     memcpy(save_cursor, D_0034B690, 0x40); save_cursor += 0x40;
-    memcpy(save_cursor, D_0034B6D0, 0xC80); save_cursor += 0xC80;
+    memcpy(save_cursor, entity_group_state, 0xC80); save_cursor += 0xC80;
     memcpy(save_cursor, recollection_flags, 0x190); save_cursor += 0x190;
     memcpy(save_cursor, recollection_pages, 0x32); save_cursor += 0x32;
     memcpy(save_cursor, D_0034C518, 0x400); save_cursor += 0x400;
-    memcpy(save_cursor, D_0034C918, 0x10); save_cursor += 0x10;
-    memcpy(save_cursor, D_00367928, 0x14); save_cursor += 0x14;
+    memcpy(save_cursor, map_visited_flags, 0x10); save_cursor += 0x10;
+    memcpy(save_cursor, trigger_items, 0x14); save_cursor += 0x14;
     copy_size = 0x2D00;
-    memcpy(save_cursor, D_0034C928, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_entry_flags, copy_size); save_cursor += copy_size;
     copy_size = 0x1B00;
-    memcpy(save_cursor, D_0034C928 + 0x5A00, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_entry_flags + 0x5A00, copy_size); save_cursor += copy_size;
     copy_size = 0xB40;
-    memcpy(save_cursor, D_00354928, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_entry_counters, copy_size); save_cursor += copy_size;
     copy_size = 0x6C0;
-    memcpy(save_cursor, D_00354928[0x5A], copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_entry_counters[0x5A], copy_size); save_cursor += copy_size;
     copy_size = 0xB40;
-    memcpy(save_cursor, D_00356928, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_item_pickup_counts, copy_size); save_cursor += copy_size;
     copy_size = 0x6C0;
-    memcpy(save_cursor, D_00356928 + 0x1680, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_item_pickup_counts + 0x1680, copy_size); save_cursor += copy_size;
     copy_size = 0x3840;
-    memcpy(save_cursor, D_00358928, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, dropped_item_records, copy_size); save_cursor += copy_size;
     copy_size = 0x21C0;
-    memcpy(save_cursor, D_00358928 + 0x7080, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, dropped_item_records + 0x7080, copy_size); save_cursor += copy_size;
     copy_size = 0x1C20;
-    memcpy(save_cursor, D_00362928, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_object_marks, copy_size); save_cursor += copy_size;
     copy_size = 0x10E0;
-    memcpy(save_cursor, D_00362928 + 0x3840, copy_size); save_cursor += copy_size;
+    memcpy(save_cursor, map_object_marks + 0x3840, copy_size); save_cursor += copy_size;
     memcpy(save_cursor, spell_experience, 0x3C); save_cursor += 0x3C;
     memcpy(save_cursor, spell_levels, 0x1E); save_cursor += 0x1E;
-    memcpy(save_cursor, D_003679A0, 0x94C); save_cursor += 0x94C;
-    memcpy(save_cursor, D_003682F0, 0x1540); save_cursor += 0x1540;
+    memcpy(save_cursor, weapon_level_records, 0x94C); save_cursor += 0x94C;
+    memcpy(save_cursor, worn_item_level_records, 0x1540); save_cursor += 0x1540;
     memcpy(save_cursor, &item_counts, 0x17C); save_cursor += 0x17C;
-    memcpy(save_cursor, &D_003699B0, 0x17C); save_cursor += 0x17C;
-    memcpy(save_cursor, &D_00369B30, 0x17C); save_cursor += 0x17C;
-    memcpy(save_cursor, &D_00369CB0, 0x17C); save_cursor += 0x17C;
-    memcpy(save_cursor, &D_00369E30, 0x17C); save_cursor += 0x17C;
-    memcpy(save_cursor, &D_00369FB0, 0x17C); save_cursor += 0x17C;
-    memcpy(save_cursor, &D_00413F80, 0x10); save_cursor += 0x10;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0x10, 0x10); save_cursor += 0x10;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0x20, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0x24, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0x28, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0x2C, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0x30, 0xC); save_cursor += 0xC;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0x3C, 0x10); save_cursor += 0x10;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0x4C, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0x50, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0x54, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0xB4, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0xB8, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0xD4, 4); save_cursor += 4;
-    memcpy(save_cursor, (u8 *)&D_00413F80 + 0xD8, 4); save_cursor += 4;
-    map_tag = D_0038CD20[D_00446770].tag;
+    memcpy(save_cursor, &trade_stock_1, 0x17C); save_cursor += 0x17C;
+    memcpy(save_cursor, &trade_stock_2, 0x17C); save_cursor += 0x17C;
+    memcpy(save_cursor, &trade_stock_3, 0x17C); save_cursor += 0x17C;
+    memcpy(save_cursor, &trade_stock_4, 0x17C); save_cursor += 0x17C;
+    memcpy(save_cursor, &trade_stock_5, 0x17C); save_cursor += 0x17C;
+    memcpy(save_cursor, &player_state, 0x10); save_cursor += 0x10;
+    memcpy(save_cursor, (u8 *)&player_state + 0x10, 0x10); save_cursor += 0x10;
+    memcpy(save_cursor, (u8 *)&player_state + 0x20, 4); save_cursor += 4;
+    memcpy(save_cursor, (u8 *)&player_state + 0x24, 4); save_cursor += 4;
+    memcpy(save_cursor, (u8 *)&player_state + 0x28, 4); save_cursor += 4;
+    memcpy(save_cursor, (u8 *)&player_state + 0x2C, 4); save_cursor += 4;
+    memcpy(save_cursor, (u8 *)&player_state + 0x30, 0xC); save_cursor += 0xC;
+    memcpy(save_cursor, (u8 *)&player_state + 0x3C, 0x10); save_cursor += 0x10;
+    memcpy(save_cursor, (u8 *)&player_state + 0x4C, 4); save_cursor += 4;
+    memcpy(save_cursor, (u8 *)&player_state + 0x50, 4); save_cursor += 4;
+    memcpy(save_cursor, (u8 *)&player_state + 0x54, 4); save_cursor += 4;
+    memcpy(save_cursor, (u8 *)&player_state + 0xB4, 4); save_cursor += 4;
+    memcpy(save_cursor, (u8 *)&player_state + 0xB8, 4); save_cursor += 4;
+    memcpy(save_cursor, (u8 *)&player_state + 0xD4, 4); save_cursor += 4;
+    memcpy(save_cursor, (u8 *)&player_state + 0xD8, 4); save_cursor += 4;
+    map_tag = map_slots[D_00446770].tag;
     memcpy(save_cursor, &map_tag, 4); save_cursor += 4;
     memcpy(save_cursor, D_00421050, 0x30); save_cursor += 0x30;
     memcpy(save_cursor, &D_004469D0, 4); save_cursor += 4;
@@ -648,12 +648,12 @@ void func_00103C18(void) {
     memcpy(save_cursor, &bit_byte, 1);
     save_cursor++;
 
-    used = save_cursor - D_0036A130;
+    used = save_cursor - save_image;
     size = (u32)(used + 0x7F) / 128 * 128;
     table = save_cursor + (size - used);
-    *(int *)(D_0036A130 + 4) = size; // match: the header word is stored straight into the buffer
+    *(int *)(save_image + 4) = size; // match: the header word is stored straight into the buffer
     block_count = size / 128;
-    cursor = D_0036A130;
+    cursor = save_image;
     for (j = 0; j < block_count; j++) {
         sum = 0;
         for (k = 0; k < 128; k++) {
@@ -674,11 +674,11 @@ void func_00104EC8(void) {
     u32 flags;
     int copy_size;
 
-    save_cursor = D_0036A130;
+    save_cursor = save_image;
     memcpy(&magic, save_cursor, 4); save_cursor += 4;
     memcpy(&stored_size, save_cursor, 4); save_cursor += 4;
     memcpy(&play_time, save_cursor, 8); save_cursor += 8;
-    memcpy(D_00349680, save_cursor, 0x10); save_cursor += 0x10;
+    memcpy(game_options, save_cursor, 0x10); save_cursor += 0x10;
     memcpy(&D_0044692C, save_cursor, 2); save_cursor += 2;
     memcpy(&D_0044692E, save_cursor, 2); save_cursor += 2;
     memcpy(&D_00446930, save_cursor, 2); save_cursor += 2;
@@ -694,61 +694,61 @@ void func_00104EC8(void) {
     memcpy(&D_00446944, save_cursor, 2); save_cursor += 2;
     memcpy(&D_00446946, save_cursor, 2); save_cursor += 2;
     copy_size = 0xB40;
-    memcpy(D_00349690, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_script_flags, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x6C0;
-    memcpy(D_00349690 + 0x1680, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_script_flags + 0x1680, save_cursor, copy_size); save_cursor += copy_size;
     memcpy(D_0034B690, save_cursor, 0x40); save_cursor += 0x40;
-    memcpy(D_0034B6D0, save_cursor, 0xC80); save_cursor += 0xC80;
+    memcpy(entity_group_state, save_cursor, 0xC80); save_cursor += 0xC80;
     memcpy(recollection_flags, save_cursor, 0x190); save_cursor += 0x190;
     memcpy(recollection_pages, save_cursor, 0x32); save_cursor += 0x32;
     memcpy(D_0034C518, save_cursor, 0x400); save_cursor += 0x400;
-    memcpy(D_0034C918, save_cursor, 0x10); save_cursor += 0x10;
-    memcpy(D_00367928, save_cursor, 0x14); save_cursor += 0x14;
+    memcpy(map_visited_flags, save_cursor, 0x10); save_cursor += 0x10;
+    memcpy(trigger_items, save_cursor, 0x14); save_cursor += 0x14;
     copy_size = 0x2D00;
-    memcpy(D_0034C928, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_entry_flags, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x1B00;
-    memcpy(D_0034C928 + 0x5A00, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_entry_flags + 0x5A00, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0xB40;
-    memcpy(D_00354928, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_entry_counters, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x6C0;
-    memcpy(D_00354928[0x5A], save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_entry_counters[0x5A], save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0xB40;
-    memcpy(D_00356928, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_item_pickup_counts, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x6C0;
-    memcpy(D_00356928 + 0x1680, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_item_pickup_counts + 0x1680, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x3840;
-    memcpy(D_00358928, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(dropped_item_records, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x21C0;
-    memcpy(D_00358928 + 0x7080, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(dropped_item_records + 0x7080, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x1C20;
-    memcpy(D_00362928, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_object_marks, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x10E0;
-    memcpy(D_00362928 + 0x3840, save_cursor, copy_size); save_cursor += copy_size;
+    memcpy(map_object_marks + 0x3840, save_cursor, copy_size); save_cursor += copy_size;
     memcpy(spell_experience, save_cursor, 0x3C); save_cursor += 0x3C;
     memcpy(spell_levels, save_cursor, 0x1E); save_cursor += 0x1E;
-    memcpy(D_003679A0, save_cursor, 0x94C); save_cursor += 0x94C;
-    memcpy(D_003682F0, save_cursor, 0x1540); save_cursor += 0x1540;
+    memcpy(weapon_level_records, save_cursor, 0x94C); save_cursor += 0x94C;
+    memcpy(worn_item_level_records, save_cursor, 0x1540); save_cursor += 0x1540;
     memcpy(&item_counts, save_cursor, 0x17C); save_cursor += 0x17C;
-    memcpy(&D_003699B0, save_cursor, 0x17C); save_cursor += 0x17C;
-    memcpy(&D_00369B30, save_cursor, 0x17C); save_cursor += 0x17C;
-    memcpy(&D_00369CB0, save_cursor, 0x17C); save_cursor += 0x17C;
-    memcpy(&D_00369E30, save_cursor, 0x17C); save_cursor += 0x17C;
-    memcpy(&D_00369FB0, save_cursor, 0x17C); save_cursor += 0x17C;
-    memcpy(&D_00413F80, save_cursor, 0x10); save_cursor += 0x10;
-    memcpy((u8 *)&D_00413F80 + 0x10, save_cursor, 0x10); save_cursor += 0x10;
-    memcpy((u8 *)&D_00413F80 + 0x20, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&D_00413F80 + 0x24, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&D_00413F80 + 0x28, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&D_00413F80 + 0x2C, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&D_00413F80 + 0x30, save_cursor, 0xC); save_cursor += 0xC;
-    memcpy((u8 *)&D_00413F80 + 0x3C, save_cursor, 0x10); save_cursor += 0x10;
-    memcpy((u8 *)&D_00413F80 + 0x4C, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&D_00413F80 + 0x50, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&D_00413F80 + 0x54, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&D_00413F80 + 0xB4, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&D_00413F80 + 0xB8, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&D_00413F80 + 0xD4, save_cursor, 4); save_cursor += 4;
-    memcpy((u8 *)&D_00413F80 + 0xD8, save_cursor, 4); save_cursor += 4;
+    memcpy(&trade_stock_1, save_cursor, 0x17C); save_cursor += 0x17C;
+    memcpy(&trade_stock_2, save_cursor, 0x17C); save_cursor += 0x17C;
+    memcpy(&trade_stock_3, save_cursor, 0x17C); save_cursor += 0x17C;
+    memcpy(&trade_stock_4, save_cursor, 0x17C); save_cursor += 0x17C;
+    memcpy(&trade_stock_5, save_cursor, 0x17C); save_cursor += 0x17C;
+    memcpy(&player_state, save_cursor, 0x10); save_cursor += 0x10;
+    memcpy((u8 *)&player_state + 0x10, save_cursor, 0x10); save_cursor += 0x10;
+    memcpy((u8 *)&player_state + 0x20, save_cursor, 4); save_cursor += 4;
+    memcpy((u8 *)&player_state + 0x24, save_cursor, 4); save_cursor += 4;
+    memcpy((u8 *)&player_state + 0x28, save_cursor, 4); save_cursor += 4;
+    memcpy((u8 *)&player_state + 0x2C, save_cursor, 4); save_cursor += 4;
+    memcpy((u8 *)&player_state + 0x30, save_cursor, 0xC); save_cursor += 0xC;
+    memcpy((u8 *)&player_state + 0x3C, save_cursor, 0x10); save_cursor += 0x10;
+    memcpy((u8 *)&player_state + 0x4C, save_cursor, 4); save_cursor += 4;
+    memcpy((u8 *)&player_state + 0x50, save_cursor, 4); save_cursor += 4;
+    memcpy((u8 *)&player_state + 0x54, save_cursor, 4); save_cursor += 4;
+    memcpy((u8 *)&player_state + 0xB4, save_cursor, 4); save_cursor += 4;
+    memcpy((u8 *)&player_state + 0xB8, save_cursor, 4); save_cursor += 4;
+    memcpy((u8 *)&player_state + 0xD4, save_cursor, 4); save_cursor += 4;
+    memcpy((u8 *)&player_state + 0xD8, save_cursor, 4); save_cursor += 4;
     memcpy(&D_00446738, save_cursor, 4); save_cursor += 4;
     memcpy(D_00421050, save_cursor, 0x30); save_cursor += 0x30;
     memcpy(&D_004469D0, save_cursor, 4); save_cursor += 4;
@@ -783,8 +783,8 @@ int func_001060C0(void) {
     int sum;
     int byte_index;
 
-    cursor = D_0036A130;
-    header[0] = *(UnalignedInt *)D_0036A130;
+    cursor = save_image;
+    header[0] = *(UnalignedInt *)save_image;
     base = cursor;
     cursor = base + 4;
     if (header[0].value != 0x15400) {
@@ -810,10 +810,10 @@ int func_001060C0(void) {
 
 /* starts a fade from a colour to the picture over some frames */
 void func_00106178(int red, int green, int blue, int frames) {
-    int *color = D_00468180;
+    int *color = fade_color;
 
     D_00447000[3] = 1;
-    D_00468180[0] = red;
+    fade_color[0] = red;
     D_00447010 = frames;
     color[1] = green;
     D_00447014 = (frames > 0) ? frames : 1;
@@ -822,7 +822,7 @@ void func_00106178(int red, int green, int blue, int frames) {
 
 /* starts a fade from the picture to a colour over some frames */
 void func_001061B0(int red, int green, int blue, int frames) {
-    int *color = D_00468180;
+    int *color = fade_color;
 
     color[0] = red;
     D_00447000[3] = -1;
@@ -861,14 +861,14 @@ void func_00106208(void) {
         func_00109A80(GS_REG_TEST_1, 0x30000);
         func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
         func_00109AD0();
-        func_0010A4E8(D_00468180[0], D_00468180[1], D_00468180[2], alpha, 0x44);
+        func_0010A4E8(fade_color[0], fade_color[1], fade_color[2], alpha, 0x44);
         func_00109A50();
         func_00109A80(GS_REG_ZBUF_1, 0xA000118);
         func_00109AD0();
     }
 }
 
-/* loads the screen matrix and projects the haze layer distances D_0038A158 to screen depths */
+/* loads the screen matrix and projects the haze layer distances haze_layer_distances to screen depths */
 void func_00106318(void) {
     sceVu0FMATRIX screen_matrix;
     sceVu0FMATRIX work_matrix;
@@ -888,21 +888,21 @@ void func_00106318(void) {
     Vu0_LoadMatrix(screen_matrix);
     D_00446744 = 0;
     for (i = 0; i < 8; i++) {
-        if (D_0038A158[i] == 0) {
+        if (haze_layer_distances[i] == 0) {
             break;
         }
-        if (i > 0 && D_0038A158[i] >= D_0038A158[i - 1]) {
+        if (i > 0 && haze_layer_distances[i] >= haze_layer_distances[i - 1]) {
             break;
         }
-        translation[2] = D_0038A158[i];
+        translation[2] = haze_layer_distances[i];
         Vu0_ProjectToScreen(screen_xyz, translation);
         screen_xyz[2] /= 16;
-        D_0038A178[i] = screen_xyz[2];
+        haze_layer_depths[i] = screen_xyz[2];
         D_00446744++;
     }
 }
 
-/* draws the D_00446744 small sprites whose screen depths are in D_0038A178 */
+/* draws the D_00446744 small sprites whose screen depths are in haze_layer_depths */
 void func_00106520(void) {
     GsColor color = D_0043E450;
     int texture_base;
@@ -957,7 +957,7 @@ void func_00106520(void) {
         cursor += 4;
         *cursor++ = 0x6BF8;
         *cursor++ = 0x7200;
-        *cursor++ = D_0038A178[i];
+        *cursor++ = haze_layer_depths[i];
         *cursor++ = 0;
         *cursor++ = 0x2800;
         *cursor++ = 0x1C00;
@@ -967,7 +967,7 @@ void func_00106520(void) {
         cursor += 4;
         *cursor++ = 0x93F8;
         *cursor++ = 0x8E00;
-        *cursor++ = D_0038A178[i];
+        *cursor++ = haze_layer_depths[i];
         *cursor++ = 0;
         *cursor++ = 0;
         *cursor++ = 0;
@@ -1016,7 +1016,7 @@ void func_001067E0(void) {
         do {
             offset_index = D_00446ED4 + i;
             x_offset = offset_table.x[offset_index % 3];
-            depth = D_0038A178[i];
+            depth = haze_layer_depths[i];
             sprite.corner[1].texel_x = 0x2800;
             sprite.corner[0].x = x_offset + 0x6bf8;
             sprite.corner[1].texel_y = 0x1c00;
@@ -1739,43 +1739,43 @@ void func_00108020(int red, int green, int blue, int alpha, float blend) {
     if (D_00446740 != 0) {
         for (i = 0; i < 8; i++) {
             for (j = 0; j < 11; j++) {
-                D_00467680[i][j][0] = D_00467940[i][j][0] = j << 6;
-                D_00467680[i][j][1] = D_00467940[i][j][1] = i << 6;
+                wobble_grid_origin[i][j][0] = wobble_grid_points[i][j][0] = j << 6;
+                wobble_grid_origin[i][j][1] = wobble_grid_points[i][j][1] = i << 6;
                 if (j > 0 && j < 10) {
-                    D_00467940[i][j][0] -= 8;
-                    D_00467940[i][j][0] += (int)(rand() * 17.0f / 2147483648.0f);
+                    wobble_grid_points[i][j][0] -= 8;
+                    wobble_grid_points[i][j][0] += (int)(rand() * 17.0f / 2147483648.0f);
                 }
                 if (i > 0 && i < 7) {
-                    D_00467940[i][j][1] -= 8;
-                    D_00467940[i][j][1] += (int)(rand() * 17.0f / 2147483648.0f);
+                    wobble_grid_points[i][j][1] -= 8;
+                    wobble_grid_points[i][j][1] += (int)(rand() * 17.0f / 2147483648.0f);
                 }
-                D_00467940[i][j][0] <<= 4;
-                D_00467940[i][j][1] <<= 4;
-                D_00467680[i][j][0] <<= 4;
-                D_00467680[i][j][1] <<= 4;
+                wobble_grid_points[i][j][0] <<= 4;
+                wobble_grid_points[i][j][1] <<= 4;
+                wobble_grid_origin[i][j][0] <<= 4;
+                wobble_grid_origin[i][j][1] <<= 4;
             }
         }
     }
 
-    *(RippleGrid *)D_00467C00 = *(RippleGrid *)D_00467940; // match: copied whole, as quadwords
+    *(RippleGrid *)wobble_grid_previous = *(RippleGrid *)wobble_grid_points; // match: copied whole, as quadwords
 
     for (i = 1; i < 7; i++) {
         for (j = 1; j < 10; j++) {
             force_x = force_y = 0.0f;
-            force_x += D_00467C00[i - 1][j][0] * 0.1f;
-            force_y += D_00467C00[i - 1][j][1] * 0.1f;
-            force_x += D_00467C00[i + 1][j][0] * 0.1f;
-            force_y += D_00467C00[i + 1][j][1] * 0.1f;
-            force_x += D_00467C00[i][j - 1][0] * 0.1f;
-            force_y += D_00467C00[i][j - 1][1] * 0.1f;
-            force_x += D_00467C00[i][j + 1][0] * 0.1f;
-            force_y += D_00467C00[i][j + 1][1] * 0.1f;
-            force_x -= D_00467C00[i][j][0] * 0.4f;
-            force_y -= D_00467C00[i][j][1] * 0.4f;
-            D_00467EC0[i][j][0] += force_x;
-            D_00467EC0[i][j][1] += force_y;
-            D_00467940[i][j][0] += (int)(D_00467EC0[i][j][0] * 0.05f);
-            D_00467940[i][j][1] += (int)(D_00467EC0[i][j][1] * 0.05f);
+            force_x += wobble_grid_previous[i - 1][j][0] * 0.1f;
+            force_y += wobble_grid_previous[i - 1][j][1] * 0.1f;
+            force_x += wobble_grid_previous[i + 1][j][0] * 0.1f;
+            force_y += wobble_grid_previous[i + 1][j][1] * 0.1f;
+            force_x += wobble_grid_previous[i][j - 1][0] * 0.1f;
+            force_y += wobble_grid_previous[i][j - 1][1] * 0.1f;
+            force_x += wobble_grid_previous[i][j + 1][0] * 0.1f;
+            force_y += wobble_grid_previous[i][j + 1][1] * 0.1f;
+            force_x -= wobble_grid_previous[i][j][0] * 0.4f;
+            force_y -= wobble_grid_previous[i][j][1] * 0.4f;
+            wobble_grid_forces[i][j][0] += force_x;
+            wobble_grid_forces[i][j][1] += force_y;
+            wobble_grid_points[i][j][0] += (int)(wobble_grid_forces[i][j][0] * 0.05f);
+            wobble_grid_points[i][j][1] += (int)(wobble_grid_forces[i][j][1] * 0.05f);
         }
     }
 
@@ -1807,11 +1807,11 @@ void func_00108020(int red, int green, int blue, int alpha, float blend) {
             cursor += 2;
             for (k = 0; k < 2; k++) {
                 for (corner_col = 0; corner_col < 2; corner_col++) {
-                    target_x = D_00467940[i + k][j + corner_col][0];
-                    origin_x = D_00467680[i + k][j + corner_col][0];
+                    target_x = wobble_grid_points[i + k][j + corner_col][0];
+                    origin_x = wobble_grid_origin[i + k][j + corner_col][0];
                     *cursor++ = origin_x + fptoui((target_x - origin_x) * blend);
-                    origin_y = D_00467680[i + k][j + corner_col][1];
-                    *cursor++ = origin_y + fptoui((D_00467940[i + k][j + corner_col][1] - origin_y) * blend);
+                    origin_y = wobble_grid_origin[i + k][j + corner_col][1];
+                    *cursor++ = origin_y + fptoui((wobble_grid_points[i + k][j + corner_col][1] - origin_y) * blend);
                     *cursor++ = 0;
                     *cursor++ = 0;
                     *cursor++ = red;

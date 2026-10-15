@@ -1,4 +1,4 @@
-/* GiantLeader: the behaviour of entity type 63 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* GiantLeader: the behaviour of entity type 63 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Giant Leader. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -17,10 +17,10 @@ void EntityAi_Animate(void);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
-extern PlayerData D_00413F80;
-extern MapSlot D_0038CD20[];
+extern PlayerData player_state;
+extern MapSlot map_slots[];
 void EntityAi_SensePlayer(void *, int);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Normalize(void *, void *);
@@ -77,7 +77,7 @@ void GiantLeader_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = GiantLeader_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))GiantLeader_OnHit;
@@ -125,9 +125,9 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
         Vector_Copy(position, entity->model->position);
-        Vector_Copy(target, &D_00413F80);
+        Vector_Copy(target, &player_state);
         position[1] = entity->model->position[1] - entity->unk34 * 0.5f;
-        target[1] = D_00413F80.position[1] - 115.0f;
+        target[1] = player_state.position[1] - 115.0f;
         Vector_Subtract(delta, target, position);
         Vector_Normalize(delta, delta);
         EntityMath_Distance(position, target);
@@ -135,59 +135,59 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
         second = (Entity *)MapObject_GetById(entity->group_id, 0xA1);
         third = (Entity *)MapObject_GetById(entity->group_id, 0xA2);
         if (unkE0->unk7A == 0) {
-            records = (MapRecord *)D_0038CD20[entity->group_id].records;
+            records = (MapRecord *)map_slots[entity->group_id].records;
             if (entity->unk14 == &records[0x11]) {
-                if (EntityCollision_LineHits(first, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 1)
-                    && (EntityMath_DistanceXZ(&D_00413F80, first->model->position) < 500.0f
+                if (EntityCollision_LineHits(first, entity->model->position, &player_state) == 1 && !(unkE0->unk7B & 1)
+                    && (EntityMath_DistanceXZ(&player_state, first->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, first->model->position) < entity->radius + 400.0f)
-                    && D_00413F80.unk252 == 0x14) {
+                    && player_state.unk252 == 0x14) {
                     unkE0->unk7A = 2;
                     unkE0->unk7B |= 1;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
-                if (EntityCollision_LineHits(second, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 2)
-                    && (EntityMath_DistanceXZ(&D_00413F80, second->model->position) < 500.0f
+                if (EntityCollision_LineHits(second, entity->model->position, &player_state) == 1 && !(unkE0->unk7B & 2)
+                    && (EntityMath_DistanceXZ(&player_state, second->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, second->model->position) < entity->radius + 400.0f)
-                    && D_00413F80.unk252 == 0x16) {
+                    && player_state.unk252 == 0x16) {
                     unkE0->unk7A = 3;
                     unkE0->unk7B |= 2;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
             } else if (entity->unk14 == &records[0x14]) {
-                if (EntityCollision_LineHits(first, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 1)
-                    && (EntityMath_DistanceXZ(&D_00413F80, first->model->position) < 500.0f
+                if (EntityCollision_LineHits(first, entity->model->position, &player_state) == 1 && !(unkE0->unk7B & 1)
+                    && (EntityMath_DistanceXZ(&player_state, first->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, first->model->position) < entity->radius + 400.0f)
-                    && D_00413F80.unk252 == 0x11) {
+                    && player_state.unk252 == 0x11) {
                     unkE0->unk7A = 2;
                     unkE0->unk7B |= 1;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
-                if (EntityCollision_LineHits(third, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 4)
-                    && (EntityMath_DistanceXZ(&D_00413F80, third->model->position) < 500.0f
+                if (EntityCollision_LineHits(third, entity->model->position, &player_state) == 1 && !(unkE0->unk7B & 4)
+                    && (EntityMath_DistanceXZ(&player_state, third->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, third->model->position) < entity->radius + 400.0f)
-                    && D_00413F80.unk252 == 0x16) {
+                    && player_state.unk252 == 0x16) {
                     unkE0->unk7A = 1;
                     unkE0->unk7B |= 4;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
             } else if (entity->unk14 == &records[0x16]) {
-                if (EntityCollision_LineHits(second, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 2)
-                    && (EntityMath_DistanceXZ(&D_00413F80, second->model->position) < 500.0f
+                if (EntityCollision_LineHits(second, entity->model->position, &player_state) == 1 && !(unkE0->unk7B & 2)
+                    && (EntityMath_DistanceXZ(&player_state, second->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, second->model->position) < entity->radius + 400.0f)
-                    && D_00413F80.unk252 == 0x11) {
+                    && player_state.unk252 == 0x11) {
                     unkE0->unk7A = 3;
                     unkE0->unk7B |= 2;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
                     return;
                 }
-                if (EntityCollision_LineHits(third, entity->model->position, &D_00413F80) == 1 && !(unkE0->unk7B & 4)
-                    && (EntityMath_DistanceXZ(&D_00413F80, third->model->position) < 500.0f
+                if (EntityCollision_LineHits(third, entity->model->position, &player_state) == 1 && !(unkE0->unk7B & 4)
+                    && (EntityMath_DistanceXZ(&player_state, third->model->position) < 500.0f
                         || EntityMath_DistanceXZ(entity->model->position, third->model->position) < entity->radius + 400.0f)
-                    && D_00413F80.unk252 == 0x14) {
+                    && player_state.unk252 == 0x14) {
                     unkE0->unk7A = 1;
                     unkE0->unk7B |= 4;
                     EntityAi_StartAction(entity, GiantLeader_BreakMapObject, unknown);
@@ -264,7 +264,7 @@ static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;

@@ -11,7 +11,7 @@ typedef void (*MapObjectCircleTest)(MapObject *, f32 *, f32, f32);
    notes the object when the point tested is the player's position */
 #define NOTE_FOUND(object) \
     result = TRUE; \
-    if (centre == (f32 *)&D_00413F80) { \
+    if (centre == (f32 *)&player_state) { \
         ((PlayerState *)centre)->unk208 = (s32)(object); \
     }
 // match: the last test is called for its value, which keeps it an ordinary call
@@ -106,10 +106,10 @@ void func_001C0C50(void *, void *, void *, void *, f32);
 extern f32 D_00446980[];
 extern const f32 D_00446984[];
 extern int D_00446770;
-extern MapSlot D_0038CD20[2];
+extern MapSlot map_slots[2];
 extern const f32 D_00446988[];
 extern const f32 D_0044698C[];
-extern s32 D_004147C0[4];
+extern s32 strip_list_indices[4];
 extern const f32 D_00446990[];
 extern const f32 D_00446994[];
 extern ModelInstanceBlock *D_00432224[];
@@ -117,9 +117,9 @@ extern s32 D_00446998[2];
 extern const f32 D_004469A0[];
 extern s32 D_004467A8[2];
 extern s32 D_004467B8[2];
-extern MapObject D_003A1A30[];
+extern MapObject map_slot_objects[];
 extern MapObject D_003AFA30[];
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern char D_0043F5E8[];
 extern f32 D_004469AC[];    /* the largest float; an array so that it is not read through $gp */
 extern f32 D_004469B0[];    /* the largest float; an array so that it is not read through $gp */
@@ -276,7 +276,7 @@ int func_001C0E40(f32 reach, void *point_arg) {
     lowest = D_00446988[0];
     found = FALSE;
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &D_0038CD20[0] : &D_0038CD20[1];
+        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
         if (slot->unk00 != 0) {
             record_count = slot->header->record_count;
             record = (MapRecordBounds *)slot->records;
@@ -348,7 +348,7 @@ int func_001C1138(f32 reach, void *point_arg) {
     lowest = D_0044698C[0];
     found = FALSE;
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &D_0038CD20[0] : &D_0038CD20[1];
+        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
         if (slot->unk00 != 0) {
             record_count = slot->header->record_count;
             record = (MapRecordBounds *)slot->records;
@@ -400,7 +400,7 @@ int func_001C1138(f32 reach, void *point_arg) {
 
 /* Sweeps a point from `position_arg` along `direction` times `scale` through the loaded maps'
    records and leaves the nearest hit in the scratchpad result. Four of each mesh's strip lists
-   are tested (D_004147C0 names them); a strip's triangles alternate in winding. */
+   are tested (strip_list_indices names them); a strip's triangles alternate in winding. */
 void func_001C1430(f32 scale, void *position_arg, void *direction) {
     f32 step[4];
     f32 lowest[4];
@@ -425,7 +425,7 @@ void func_001C1430(f32 scale, void *position_arg, void *direction) {
     COLLISION_RESULT->hit = 0;
     best.result.distance = D_00446990[0];
     for (map = 0; map < 2; map++) {
-        slot = D_0038CD20;
+        slot = map_slots;
         if (D_00446770 != map) {
             slot++;
         }
@@ -463,8 +463,8 @@ void func_001C1430(f32 scale, void *position_arg, void *direction) {
                 func_001C2D08(record->model);
                 for (list = 0; list < 4; list++) {
                     mesh = (CollisionMeshLists *)record->model->strips;
-                    strips_left = mesh->strip_counts[D_004147C0[list]];
-                    strip = mesh->strip_lists[D_004147C0[list]];
+                    strips_left = mesh->strip_counts[strip_list_indices[list]];
+                    strip = mesh->strip_lists[strip_list_indices[list]];
                     while (--strips_left != -1) {
                         strip_point = strip->points;
                         points_left = strip->point_count - 2;
@@ -526,7 +526,7 @@ void func_001C1858(f32 scale, void *position_arg, void *direction, s32 lists) {
     COLLISION_RESULT->hit = 0;
     best.result.distance = D_00446994[0];
     for (map = 0; map < 2; map++) {
-        slot = D_0038CD20;
+        slot = map_slots;
         if (D_00446770 != map) {
             slot++;
         }
@@ -634,7 +634,7 @@ void func_001C1C80(f32 *position, f32 *target) {
     COLLISION_RESULT->hit = 0;
     best.distance = D_004469A0[0];
     for (map = 0; map < 2; map++) {
-        slot = D_0038CD20;
+        slot = map_slots;
         if (D_00446770 != map) {
             slot++;
         }
@@ -882,7 +882,7 @@ static inline MapObject *map_objects(s32 map) {
         if (D_00446770 != map) {
             return D_003AFA30;
         }
-        return D_003A1A30;
+        return map_slot_objects;
     }
     return NULL;
 }
@@ -2323,7 +2323,7 @@ void func_001C65F0(MapObject *object, f32 *position, f32 height, f32 radius) {
         func_001C2D08(object->model);
         Vector_Copy(centre, position);
         centre[1] -= 0.001f;
-        if (MAP_OBJECT_DEF_KIND(object->unk04) == 10 && (PlayerState *)position == &D_00413F80
+        if (MAP_OBJECT_DEF_KIND(object->unk04) == 10 && (PlayerState *)position == &player_state
             && ((PlayerState *)position)->unk20C == 0) {
             strip = mesh->unk20;
             i = mesh->unk3C;
@@ -2357,7 +2357,7 @@ void func_001C65F0(MapObject *object, f32 *position, f32 height, f32 radius) {
                     Vector_Scale(offset, offset, radius);
                     centre[0] = COLLISION_RESULT->point[0] + offset[0];
                     centre[2] = COLLISION_RESULT->point[2] + offset[2];
-                    if (MAP_OBJECT_DEF_KIND(object->unk04) == 10 && (PlayerState *)position == &D_00413F80
+                    if (MAP_OBJECT_DEF_KIND(object->unk04) == 10 && (PlayerState *)position == &player_state
                         && ((PlayerState *)position)->unk20C == 0) {
                         touched = TRUE;
                     }
@@ -2368,8 +2368,8 @@ void func_001C65F0(MapObject *object, f32 *position, f32 height, f32 radius) {
         }
         position[0] = centre[0];
         position[2] = centre[2];
-        if (touched && D_00413F80.unk20C == 0) {
-            D_00413F80.unk20C = (s32)object;
+        if (touched && player_state.unk20C == 0) {
+            player_state.unk20C = (s32)object;
         }
     }
 }
@@ -2449,7 +2449,7 @@ void func_001C68B0(MapObject *object, f32 *centre, f32 radius, f32 push) {
 static inline s32 gap_is_closed(MapObject *object, f32 *centre, f32 push, f32 first_gap, f32 second_gap) {
     s32 closed = FALSE;
 
-    if (centre == (f32 *)&D_00413F80) {
+    if (centre == (f32 *)&player_state) {
         closed = -(object->unk60 & 1);
     } else if (first_gap <= push * 2.25f || second_gap <= push * 2.25f) {
         closed = TRUE;

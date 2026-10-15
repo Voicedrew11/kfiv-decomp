@@ -36,11 +36,11 @@ void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 
 extern char *D_00446F64;
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern GameDefinition D_00416D78[70];
 extern PlayerItemDef weapon_defs[];
 extern MapSlotUnk0C D_0038A250;
-extern char D_00249680[0x80000];
+extern char file_load_buffer[0x80000];
 extern char D_0043F588[];
 extern char D_0043F5A0[];
 extern char D_0043F5B8[];
@@ -53,12 +53,12 @@ extern int D_00446970;
 extern int D_00446974;
 
 /* What lights the held item's models, its trail, its position offsets and the points of its arm. */
-MapSlotUnk10Half D_004145E0[2] = { /* 0x4145E0 the second hand's block ends with 1.0 four times */
+MapSlotUnk10Half held_item_light_blocks[2] = { /* 0x4145E0 the second hand's block ends with 1.0 four times */
     { { 0 } },
     { { 0, 0, 0, 0, 0, 0, 0x3F8000003F800000, 0x3F8000003F800000 } },
 };
 /* 0x414660 the colour, GS blend value and life of each kind of weapon trail (WeaponTrail_PickKind picks one) */
-WeaponTrailKind D_00414660[7] = {
+WeaponTrailKind weapon_trail_kinds[7] = {
     { 0x80, 0x80, 0x80, 0x40, 0x48, 3 },
     { 0xDF, 0x00, 0x29, 0x40, 0x48, 3 },
     { 0xEE, 0x9C, 0x00, 0x40, 0x48, 3 },
@@ -67,11 +67,11 @@ WeaponTrailKind D_00414660[7] = {
     { 0xFD, 0xFD, 0xC4, 0x40, 0x48, 3 },
     { 0x47, 0x4D, 0x7C, 0x40, 0x48, 3 },
 };
-f32 D_00414740[4] = { 16.0f, 19.0f, 22.0f, 1.0f }; /* 0x414740 the held model's position offsets */
+f32 held_item_offsets[4] = { 16.0f, 19.0f, 22.0f, 1.0f }; /* 0x414740 the held model's position offsets */
 /* 0x414750 twelve words after the offsets that nothing in the game reads */
 u32 D_00414750[12] = { 0x44, 0x0, 0x48, 0x0, 0x42, 0x0, 0x80, 0x80, 0x80, 0x40, 0x0, 0x0 };
-PlayerArmPoints D_00414780 = { 0 }; /* 0x414780 points 30 and 31 of the held model */
-PlayerArmPoints D_004147A0 = { 0 }; /* 0x4147A0 the same for the frame before */
+PlayerArmPoints held_item_arm_points = { 0 }; /* 0x414780 points 30 and 31 of the held model */
+PlayerArmPoints held_item_arm_points_prev = { 0 }; /* 0x4147A0 the same for the frame before */
 
 ModelInstance D_0057B6A0 __attribute__((section(".bss"))); /* 0x57B6A0 the held item; D_00446978 in asm .sdata points here */
 static ModelInstance arm_model;         /* 0x57B860 */
@@ -91,7 +91,7 @@ static s32 trail_min_life;              /* 0x447178 */
 static s32 trail_count;                 /* 0x44717C */
 static s32 trail_write_index;           /* 0x447180 */
 static s32 trail_read_index;            /* 0x447184 */
-static s32 trail_kind;                  /* 0x447188 index into D_00414660 */
+static s32 trail_kind;                  /* 0x447188 index into weapon_trail_kinds */
 
 void WeaponTrail_Reset(void);
 void WeaponTrail_SetMinLife(s32);
@@ -116,8 +116,8 @@ void HeldWeapon_Init(void) {
     memset((void *)held_item_file, 0, 0x30000);
     memset(arm_setup, 0, 0x1000);
     memset(held_item_setup, 0, 0x1000);
-    memset(&D_00414780, 0, 0x20);
-    memset(&D_004147A0, 0, 0x20);
+    memset(&held_item_arm_points, 0, 0x20);
+    memset(&held_item_arm_points_prev, 0, 0x20);
     D_00446970 = -1;
     D_00446974 = -1;
     file_handle = func_00102238(D_0043F588, 0, 1);
@@ -133,16 +133,16 @@ void Player_LoadArmModels(void) {
     char path[0x100];
     int data;
     int buffer;
-    GameDefinition *item = &D_00416D78[D_00413F80.weapon];
-    GameDefinition *arm = &D_00416D78[D_00413F80.equipment[EQUIP_GAUNTLET] + 70];
+    GameDefinition *item = &D_00416D78[player_state.weapon];
+    GameDefinition *arm = &D_00416D78[player_state.equipment[EQUIP_GAUNTLET] + 70];
     PlayerArmFile *file;
     s32 size;
     s32 handle;
 
-    if (D_00446974 != D_00413F80.weapon) {
-        D_00446974 = D_00413F80.weapon;
-        if (D_00413F80.unk258 != 0) {
-            D_00413F80.unk258 = 0;
+    if (D_00446974 != player_state.weapon) {
+        D_00446974 = player_state.weapon;
+        if (player_state.unk258 != 0) {
+            player_state.unk258 = 0;
             Effect_FreePlayerWeaponKinds();
         }
         memset((void *)held_item_file, 0, 0x30000);
@@ -155,9 +155,9 @@ void Player_LoadArmModels(void) {
         if (handle < 0) {
             handle = func_00102238(D_0043F5B8, 0, 1);
         }
-        func_001025C0(handle, D_00249680, -1);
+        func_001025C0(handle, file_load_buffer, -1);
         func_001024B0(handle);
-        file = (PlayerArmFile *)D_00249680;
+        file = (PlayerArmFile *)file_load_buffer;
         if (file->motion_size != 0) {
             size = file->motion_offset + file->motion_size;
         } else if (file->model_size != 0) {
@@ -167,7 +167,7 @@ void Player_LoadArmModels(void) {
         } else {
             size = 0x40;
         }
-        memcpy((void *)held_item_file, D_00249680, size);
+        memcpy((void *)held_item_file, file_load_buffer, size);
         file = (PlayerArmFile *)held_item_file;
         if (file->model_size != 0) {
             data = (int)file + file->model_offset;
@@ -182,18 +182,18 @@ void Player_LoadArmModels(void) {
         if (file->texture_size != 0) {
             held_item_textures = held_item_file + file->texture_offset;
         }
-        D_0057B6A0.unk148 = (s32)D_004145E0;
+        D_0057B6A0.unk148 = (s32)held_item_light_blocks;
         D_0057B6A0.unk14C = &D_0038A250;
         MODEL_CHANNEL(&D_0057B6A0)->unk8F = 0x80;
-        Sound_LoadSwBank(D_00413F80.weapon);
+        Sound_LoadSwBank(player_state.weapon);
         WeaponTrail_Reset();
         WeaponTrail_SetMinLife(3);
-        D_00414740[0] = weapon_defs[D_00413F80.weapon].unk87;
-        D_00414740[1] = weapon_defs[D_00413F80.weapon].unk88;
-        D_00414740[2] = weapon_defs[D_00413F80.weapon].unk89;
+        held_item_offsets[0] = weapon_defs[player_state.weapon].unk87;
+        held_item_offsets[1] = weapon_defs[player_state.weapon].unk88;
+        held_item_offsets[2] = weapon_defs[player_state.weapon].unk89;
     }
-    if (D_00446970 != D_00413F80.equipment[EQUIP_GAUNTLET]) {
-        D_00446970 = D_00413F80.equipment[EQUIP_GAUNTLET];
+    if (D_00446970 != player_state.equipment[EQUIP_GAUNTLET]) {
+        D_00446970 = player_state.equipment[EQUIP_GAUNTLET];
         memset((void *)arm_file, 0, 0x50000);
         memset(&arm_model, 0, 0x1C0);
         memset(arm_setup, 0, 0x1000);
@@ -204,9 +204,9 @@ void Player_LoadArmModels(void) {
         if (handle < 0) {
             handle = func_00102238(D_0043F5D0, 0, 1);
         }
-        func_001025C0(handle, D_00249680, -1);
+        func_001025C0(handle, file_load_buffer, -1);
         func_001024B0(handle);
-        file = (PlayerArmFile *)D_00249680;
+        file = (PlayerArmFile *)file_load_buffer;
         if (file->model_size != 0) {
             size = file->model_offset + file->model_size;
         } else if (file->texture_size != 0) {
@@ -214,7 +214,7 @@ void Player_LoadArmModels(void) {
         } else {
             size = 0x40;
         }
-        memcpy((void *)arm_file, D_00249680, size);
+        memcpy((void *)arm_file, file_load_buffer, size);
         file = (PlayerArmFile *)arm_file;
         if (file->model_size != 0) {
             data = (int)file + file->model_offset;
@@ -224,7 +224,7 @@ void Player_LoadArmModels(void) {
         if (file->texture_size != 0) {
             arm_textures = arm_file + file->texture_offset;
         }
-        arm_model.unk148 = (s32)D_004145E0;
+        arm_model.unk148 = (s32)held_item_light_blocks;
         arm_model.unk14C = &D_0038A250;
     }
 }
@@ -241,21 +241,21 @@ void Player_UpdateArmModels(void) {
     s32 count;
     s32 i;
 
-    D_004147A0 = D_00414780;
-    memset(&D_00414780, 0, 0x20);
-    if (D_00413F80.unk258 != 0) {
+    held_item_arm_points_prev = held_item_arm_points;
+    memset(&held_item_arm_points, 0, 0x20);
+    if (player_state.unk258 != 0) {
         sceVu0RotMatrixY(matrix, D_00431AF0, 3.1415927f);
-        sceVu0TransMatrix(matrix, matrix, D_00414740);
-        pitch = D_00413F80.rotation.x - D_00413F80.unk238;
+        sceVu0TransMatrix(matrix, matrix, held_item_offsets);
+        pitch = player_state.rotation.x - player_state.unk238;
         if (pitch > 1.0122910f) {
             pitch = 1.0122910f;
         } else if (pitch < -1.0122910f) {
             pitch = -1.0122910f;
         }
         sceVu0RotMatrixX(matrix, matrix, pitch);
-        sceVu0RotMatrixY(matrix, matrix, D_00413F80.rotation.y);
-        Vector_Copy(position, &D_00413F80);
-        position[1] = position[1] - 220.0f + D_00413F80.unk1C4 + D_00413F80.unk1F0;
+        sceVu0RotMatrixY(matrix, matrix, player_state.rotation.y);
+        Vector_Copy(position, &player_state);
+        position[1] = position[1] - 220.0f + player_state.unk1C4 + player_state.unk1F0;
         Vector_Add(position, position, D_004325A0.unk50);
         Vector_Add(position, position, D_004325A0.unk60);
         position[1] += D_004325A0.unk4C;
@@ -271,8 +271,8 @@ void Player_UpdateArmModels(void) {
                 func_0010B5D0(part);
             }
         }
-        Vector_Copy(&D_0057B6A0.rotation, &D_00413F80.rotation);
-        Vector_Copy(&arm_model.rotation, &D_00413F80.rotation);
+        Vector_Copy(&D_0057B6A0.rotation, &player_state.rotation);
+        Vector_Copy(&arm_model.rotation, &player_state.rotation);
         *(ModelMatrix *)arm_model.unk40 = *(ModelMatrix *)D_0057B6A0.unk40;
         part = D_0057B6A0.parts;
         arm_part = arm_model.parts;
@@ -285,10 +285,10 @@ void Player_UpdateArmModels(void) {
             *(ModelMatrix *)arm_part->unk00 = *(ModelMatrix *)part->unk00;
         }
         D_0057B6A0.unk1B4(&D_0057B6A0);
-        Vector_Copy(&D_00414780.points[0], (void *)D_0057B6A0.get_point(&D_0057B6A0, 30));
-        Vector_Copy(&D_00414780.points[1], (void *)D_0057B6A0.get_point(&D_0057B6A0, 31));
+        Vector_Copy(&held_item_arm_points.points[0], (void *)D_0057B6A0.get_point(&D_0057B6A0, 30));
+        Vector_Copy(&held_item_arm_points.points[1], (void *)D_0057B6A0.get_point(&D_0057B6A0, 31));
     }
-    D_004145E0[0] = D_0038A270;
+    held_item_light_blocks[0] = D_0038A270;
 }
 
 /* each frame: ages the weapon trail and queues the two ends of the held weapon, in screen space */
@@ -302,13 +302,13 @@ void WeaponTrail_Update(void) {
     s32 item;
 
     WeaponTrail_Age();
-    if (D_00413F80.unk258 != 0) {
+    if (player_state.unk258 != 0) {
         weapon = &D_0057B6A0;
         weapon->unk1B4(weapon);
-        if (weapon_defs[D_00413F80.weapon].unk63 == 2) {
+        if (weapon_defs[player_state.weapon].unk63 == 2) {
             return;
         }
-        item = D_00413F80.weapon + ITEM_WEAPON_FIRST;
+        item = player_state.weapon + ITEM_WEAPON_FIRST;
         if (item == 0x97) {
             return;
         }
@@ -348,7 +348,7 @@ void Player_DrawArm(void) {
     s32 size;
     u64 tag;
 
-    if (D_00413F80.unk258 != 0) {
+    if (player_state.unk258 != 0) {
         func_0010B238((TextureTableHeader *)shared_texture_table);
         func_00109E88();
         func_00109A50();
@@ -362,7 +362,7 @@ void Player_DrawArm(void) {
         arm_model.unk1A8(&arm_model);
         func_0010B238((TextureTableHeader *)held_item_textures);
         func_00109E88();
-        if (D_00413F80.weapon != 0x2E) {
+        if (player_state.weapon != 0x2E) {
             D_0057B6A0.unk1A8(&D_0057B6A0);
         } else {
             for (i = 0; i < D_0057B6A0.part_count; i++) {
@@ -385,7 +385,7 @@ void Player_DrawArm(void) {
     count = WeaponTrail_GetCount();
     if (count >= 4) {
         func_00109A50();
-        func_00109A80(GS_REG_ALPHA_1, D_00414660[trail_kind].blend);
+        func_00109A80(GS_REG_ALPHA_1, weapon_trail_kinds[trail_kind].blend);
         func_00109A80(GS_REG_TEST_1, 0x30000);
         func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
         func_00109AD0();
@@ -404,10 +404,10 @@ void Player_DrawArm(void) {
         packet += 2;
         for (i = 0; i < count; i++) {
             clipped >>= 1;
-            *packet++ = D_00414660[trail_kind].red;
-            *packet++ = D_00414660[trail_kind].green;
-            *packet++ = D_00414660[trail_kind].blue;
-            *packet++ = D_00414660[trail_kind].alpha * (WeaponTrail_GetLife(i) - 1) / (D_00414660[trail_kind].lifetime - 1);
+            *packet++ = weapon_trail_kinds[trail_kind].red;
+            *packet++ = weapon_trail_kinds[trail_kind].green;
+            *packet++ = weapon_trail_kinds[trail_kind].blue;
+            *packet++ = weapon_trail_kinds[trail_kind].alpha * (WeaponTrail_GetLife(i) - 1) / (weapon_trail_kinds[trail_kind].lifetime - 1);
             WeaponTrail_GetPoint(packet, i);
             packet += 3;
             /* a point off the screen keeps the three triangles it is part of from being drawn */
@@ -432,41 +432,41 @@ void WeaponTrail_PickKind(void) {
     s32 best = 0;
 
     trail_kind = 0;
-    if (D_00413F80.unk122[0] != 0 && D_00413F80.unk18E[0] > best) {
-        best = D_00413F80.unk18E[0];
+    if (player_state.unk122[0] != 0 && player_state.unk18E[0] > best) {
+        best = player_state.unk18E[0];
         trail_kind = 1;
     }
-    if (D_00413F80.unk122[1] != 0 && D_00413F80.unk18E[1] > best) {
-        best = D_00413F80.unk18E[1];
+    if (player_state.unk122[1] != 0 && player_state.unk18E[1] > best) {
+        best = player_state.unk18E[1];
         trail_kind = 2;
     }
-    if (D_00413F80.unk122[2] != 0 && D_00413F80.unk18E[2] > best) {
-        best = D_00413F80.unk18E[2];
+    if (player_state.unk122[2] != 0 && player_state.unk18E[2] > best) {
+        best = player_state.unk18E[2];
         trail_kind = 3;
     }
-    if (D_00413F80.unk122[3] != 0 && D_00413F80.unk18E[3] > best) {
-        best = D_00413F80.unk18E[3];
+    if (player_state.unk122[3] != 0 && player_state.unk18E[3] > best) {
+        best = player_state.unk18E[3];
         trail_kind = 4;
     }
-    if (D_00413F80.unk122[4] != 0 && D_00413F80.unk18E[4] > best) {
-        best = D_00413F80.unk18E[4];
+    if (player_state.unk122[4] != 0 && player_state.unk18E[4] > best) {
+        best = player_state.unk18E[4];
         trail_kind = 5;
     }
-    if (D_00413F80.unk122[5] != 0 && D_00413F80.unk18E[5] > best) {
-        best = D_00413F80.unk18E[5];
+    if (player_state.unk122[5] != 0 && player_state.unk18E[5] > best) {
+        best = player_state.unk18E[5];
         trail_kind = 6;
     }
     if (trail_kind == 0) {
-        if (D_00413F80.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_FIRE)) {
+        if (player_state.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_FIRE)) {
             trail_kind = 1;
         }
-        if (D_00413F80.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_EARTH)) {
+        if (player_state.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_EARTH)) {
             trail_kind = 2;
         }
-        if (D_00413F80.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_WIND)) {
+        if (player_state.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_WIND)) {
             trail_kind = 3;
         }
-        if (D_00413F80.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_WATER)) {
+        if (player_state.equipment[EQUIP_RING] == ITEM_WORN_INDEX(ITEM_RING_OF_WATER)) {
             trail_kind = 4;
         }
     }
@@ -516,7 +516,7 @@ void WeaponTrail_Age(void) {
 void WeaponTrail_Push(void *position) {
     if (trail_count + 1 <= 64) {
         Vector_CopyQuadword(&trail_points[trail_write_index], position);
-        trail_lives[trail_write_index] = D_00414660[trail_kind].lifetime;
+        trail_lives[trail_write_index] = weapon_trail_kinds[trail_kind].lifetime;
         trail_write_index = (trail_write_index + 1) % 64;
         trail_count++;
     }

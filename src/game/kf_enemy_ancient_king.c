@@ -1,4 +1,4 @@
-/* AncientKing: the behaviour of entity type 61 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* AncientKing: the behaviour of entity type 61 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: the Ancient King, chr.prm record
    57, whose one spawn is in 006.map with six High Skeletons as spawn ids 10-15, the entities this code
    raises again. The game names no monsters; the name is from the bestiary of Prima's official strategy
@@ -14,7 +14,7 @@ void Motion_ClearPartSlots(EntityModel *);
 void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
 s32 Motion_StepSlot(Entity *, EntityUnkE0SlotBits *, s32, s32);
 void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
@@ -26,7 +26,7 @@ void EntityAi_StepState(void *);
 s32 EntityAi_CanUseRanged(Entity *, s32);
 int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
 int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int EntityAi_LaunchShot(void *, int, void *, void *);
 void EntityEvent_OnDeath(Entity *);
 extern EntityFrameTable5 D_0043E8E8;
@@ -94,7 +94,7 @@ void AncientKing_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = AncientKing_Think;
     unkE0->animate = (void (*)(void))AncientKing_Animate;
     unkE0->move = (void (*)(void))AncientKing_Move;
@@ -275,7 +275,7 @@ static void AncientKing_Death(Entity *entity) {
         break;
     case 4:
         if ((slots->unk88.unk04 - entity->params->unk80[slots->unk88.index]) >> 8 < 0x2B && slots->unk88.unk02 >= 0x2B) {
-            Vector_Copy(target, D_00413F80.position);
+            Vector_Copy(target, player_state.position);
             EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->unk3D8[0])->unk10[0].unk00, target,
                           entity->model->unkD0);
         }
@@ -329,7 +329,7 @@ static void AncientKing_RangedAttack0(Entity *entity) {
         for (i = 0; i < 5; i++) {
             if (entity->unk2A == 0 || unk3D8->unk0C != 0) {
                 if (elapsed < launch_frames.frames[i] && ((EntityUnkE0Slot *)unkE0->unk88)->unk02 >= launch_frames.frames[i]) {
-                    Vector_Copy(target, D_00413F80.position);
+                    Vector_Copy(target, player_state.position);
                     target[0] += rand() % 1201 - 600;
                     target[2] += rand() % 1201 - 600;
                     EntityAi_LaunchShot(entity, unk3D8->unk10[0].unk00, target, entity->model->unkD0);
@@ -520,7 +520,7 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 0x78;
             unkE0->unk78 = 0;
             break;
@@ -596,7 +596,7 @@ static void AncientKing_DeathLaunchShot(Entity *entity) {
     case 2:
         if ((entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8 < 0x2B &&
             entity->model->unkFC->unk82 >= 0x2B) {
-            Vector_Copy(target, D_00413F80.position);
+            Vector_Copy(target, player_state.position);
             EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->unk3D8[0])->unk10[0].unk00, target,
                           entity->model->unkD0);
         }
@@ -645,7 +645,7 @@ static void func_0014FCC0(Entity *entity) {
         for (i = 0; i < 5; i++) {
             if (entity->unk2A == 0 || unk3D8->unk0C != 0) {
                 if (elapsed < launch_frames.frames[i] && entity->model->unkFC->unk82 >= launch_frames.frames[i]) {
-                    Vector_Copy(target, D_00413F80.position);
+                    Vector_Copy(target, player_state.position);
                     target[0] += rand() % 401 - 200;
                     target[2] += rand() % 401 - 200;
                     EntityAi_LaunchShot(entity, unk3D8->unk10[0].unk00, target, entity->model->unkD0);

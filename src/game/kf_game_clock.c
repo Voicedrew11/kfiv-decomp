@@ -6,12 +6,12 @@ extern ClockControl D_00432820;
 extern u32 D_00446ED4;              /* the frame counter */
 extern int D_00446EF0;
 
-GameClock D_00431CE8 = { 0 };       /* 0x431CE8 the game clock */
+GameClock game_clock = { 0 };       /* 0x431CE8 the game clock */
 u32 D_00431CF8[0x13E] = { 0 };      /* 0x431CF8 zero fill up to the map slot memory */
 
 /* The game clock's tick count. */
 static inline u32 Clock_GetTicks(void) {
-    GameClock *clock = &D_00431CE8;
+    GameClock *clock = &game_clock;
 
     return clock->ticks;
 }
@@ -24,16 +24,16 @@ static void GameClock_Tick(void) {
     if (D_00432820.unk213 == 0) {
         if (D_00432820.flags & 0x200) {
             if (D_00432820.unk214 == 0 && (D_00446ED4 & 3) == 0) {
-                clock = &D_00431CE8;
+                clock = &game_clock;
                 clock->ticks += 1;
             }
         } else if (D_00432820.unk214 == 0) {
-            clock = &D_00431CE8;
+            clock = &game_clock;
             clock->ticks += 1;
         }
     }
     if (D_00446EF0 & 0x400) {
-        clock = &D_00431CE8;
+        clock = &game_clock;
         clock->ticks += 0x3B;
     }
 }
@@ -52,6 +52,6 @@ static void GameClock_AdvanceTo(int hour, int minute, int second) {
     } else {
         now = 86400 - (now - target);
     }
-    clock = &D_00431CE8;
+    clock = &game_clock;
     clock->ticks += now;
 }

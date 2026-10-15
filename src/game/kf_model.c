@@ -104,7 +104,7 @@ Vector4 *func_0010E678(ModelInstance *, s32);
 int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); // match: an int return keeps $2 busy after the call
 void Matrix_Multiply(void *, void *, void *);
 float sqrtf(float);
-extern ModelLight D_003E7500[];
+extern ModelLight linked_point_pool[];
 extern f32 D_00431AF0[16];
 extern f32 D_004323E0[16];
 
@@ -285,10 +285,10 @@ void func_0010BA30(ModelInstance *model) {
     light_out = packet;
     light_out_b = packet + 0x10;
     for (i = 0; i < model->hit_count; i++) {
-        *(u_long128 *)light_out = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk00;
-        *(u_long128 *)light_out_b = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk10;
+        *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
+        *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
         light_out_b += 4;
-        ((f32 *)light_out)[3] = D_003E7500[model->hit_handles[i]].unk24;
+        ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
         light_out += 4;
     }
     packet += 0x20;
@@ -422,10 +422,10 @@ void func_0010C180(ModelInstance *model) {
     light_out = packet;
     light_out_b = packet + 0x10;
     for (i = 0; i < model->hit_count; i++) {
-        *(u_long128 *)light_out = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk00;
-        *(u_long128 *)light_out_b = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk10;
+        *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
+        *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
         light_out_b += 4;
-        ((f32 *)light_out)[3] = D_003E7500[model->hit_handles[i]].unk24;
+        ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
         light_out += 4;
     }
     packet += 0x20;
@@ -881,10 +881,10 @@ void func_0010D308(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
+            *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = D_003E7500[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
             light_out += 4;
         }
         packet += 0x20;
@@ -983,10 +983,10 @@ void func_0010D700(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
+            *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = D_003E7500[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
             light_out += 4;
         }
         packet += 0x20;
@@ -1086,10 +1086,10 @@ void func_0010DB40(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
+            *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = D_003E7500[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
             light_out += 4;
         }
         packet += 0x20;
@@ -1199,10 +1199,10 @@ void func_0010E010(ModelInstance *model) {
         light_out = packet;
         light_out_b = packet + 0x10;
         for (i = 0; i < model->hit_count; i++) {
-            *(u_long128 *)light_out = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk00;
-            *(u_long128 *)light_out_b = *(u_long128 *)D_003E7500[model->hit_handles[i]].unk10;
+            *(u_long128 *)light_out = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk00;
+            *(u_long128 *)light_out_b = *(u_long128 *)linked_point_pool[model->hit_handles[i]].unk10;
             light_out_b += 4;
-            ((f32 *)light_out)[3] = D_003E7500[model->hit_handles[i]].unk24;
+            ((f32 *)light_out)[3] = linked_point_pool[model->hit_handles[i]].unk24;
             light_out += 4;
         }
         func_00109650(packet_start, func_00109990(1)); /* the packet ends where the next one would start */

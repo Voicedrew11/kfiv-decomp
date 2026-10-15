@@ -38,10 +38,10 @@ s32 Bone_TurnPart(ModelPart *part, f32 *angles, s32 mode, f32 *goal, f32 *limits
 /* match: the call leaves the sixth argument (rate, $f12) unset */
 #define TURN_PART_NO_RATE ((int (*)(void *, f32 *, int, f32 *, f32 *))Bone_TurnPart)
 int Bone_TurnPartToLook(void *model, int part_arg, int angles_arg, int mode, void *target, int limits_arg, float rate);
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 #define SPAWN_FLAGS(spawn_info) ((EntitySpawnFlags *)&(spawn_info)->unk38)
 extern EntitySpawnInfo *D_004467D0[2];
-extern MapSlot D_0038CD20[];
+extern MapSlot map_slots[];
 int func_00103548(int, int);
 // match: reading EntityParams word 0 whole; a bit-field in byte 3 would be an lbu
 typedef union {
@@ -77,8 +77,8 @@ void func_00109E18(void);
 void func_0010A718(int);
 void Matrix_Multiply(void *, void *, void *);
 extern Entity *D_004467E0;
-extern ModelInstance D_003BE530[];
-extern char D_003E74C0[];
+extern ModelInstance entity_models[];
+extern char fire_lord_model_matrix[];
 
 static s32 func_00195990(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame_min, s32 frame_max);
 static void EntityAi_Kill(Entity *entity);
@@ -124,7 +124,7 @@ void EntityAi_SetState(Entity *entity, u8 state) {
     entity->prev_state = old_state;
 }
 
-/* Installs the entity's per-frame update (Entity.unk50; the type table D_003E6E40 gives it) and puts
+/* Installs the entity's per-frame update (Entity.unk50; the type table entity_type_handlers gives it) and puts
    action_step back to 0. */
 void EntityAi_SetUpdate(Entity *entity, s32 update) {
     entity->unk50 = update;
@@ -329,7 +329,7 @@ int EntityAi_LookAtPlayer(Entity *entity, void *target, s32 mode, void *out, f32
     f32 position[4];
     int result;
 
-    Vector_Copy(position, &D_00413F80.position);
+    Vector_Copy(position, &player_state.position);
     position[1] -= 220.0f;
     if (entity->model->unk138 == NULL || !(entity->params->flags & 0x2000)) {
         result = 0;
@@ -368,7 +368,7 @@ static int func_00196248(Entity *entity, int angles, int mode, int limits, float
     float position[2]; // match: Vector_Copy writes four floats, but retail reserves room for two
     EntityModel *model;
 
-    Vector_Copy(position, &D_00413F80.position);
+    Vector_Copy(position, &player_state.position);
     position[1] -= 115.0f;
     model = entity->model;
     if (model->unk134 == 0) {
@@ -418,7 +418,7 @@ s32 EntityAi_ShouldRespawn(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit4 && (entity->spawn_info->unk38 & (0x8000L << 46))) {
         return FALSE;
     }
-    death_count = func_00103548(D_0038CD20[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+    death_count = func_00103548(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
     if ((s8)SPAWN_FLAGS(entity->spawn_info)->bytes[5] != 0 && death_count >= (s8)SPAWN_FLAGS(entity->spawn_info)->bytes[5]) {
         return FALSE;
     }
@@ -433,7 +433,7 @@ s32 EntityAi_ShouldRespawn(Entity *entity) {
         "vwaitq\n"
         "vaddq.x $vf16, $vf0, Q\n"
         "sqc2 $vf16, 0(%3)\n"
-        : "=m"(distance) : "r"(&spawn_info->spawn_x), "r"(&D_00413F80.position), "r"(distance));
+        : "=m"(distance) : "r"(&spawn_info->spawn_x), "r"(&player_state.position), "r"(distance));
     if (distance[0] <= (f32)spawn_info->unk50) {
         if ((entity->spawn_info->unk38 & (0xC000L << 45)) == (0x8000L << 44)) {
             return TRUE;
@@ -462,12 +462,12 @@ static void func_00196548(Entity *actor) {
     f32 lower;
     f32 upper;
 
-    if (actor->unk24 != 0 || (D_00413F80.unk2E4 > 0 && actor->unk60 < D_00413F80.unk2E8)) {
+    if (actor->unk24 != 0 || (player_state.unk2E4 > 0 && actor->unk60 < player_state.unk2E8)) {
         arc *= 0.5f;
         half_height *= 0.5f;
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         arc *= 0.5f;
         half_height *= 0.5f;
         reach *= 0.5f;
@@ -483,7 +483,7 @@ static void func_00196548(Entity *actor) {
     upper = actor->model->position[1] - (actor->height + half_height) * 0.5f;
     lower = actor->model->position[1] - (actor->height - half_height) * 0.5f;
     ENTITY_FLAG_BITS(actor)->bit32 = 0;
-    if (actor->distance_to_player < actor->radius + 100.0f + reach && turn_abs < arc && upper <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= lower) {
+    if (actor->distance_to_player < actor->radius + 100.0f + reach && turn_abs < arc && upper <= player_state.position.y && player_state.position.y - 230.0f <= lower) {
         ENTITY_FLAG_BITS(actor)->bit32 = 1;
     }
 }
@@ -493,10 +493,10 @@ static void func_00196718(Entity *actor) {
     f32 reach = ENTITY_CONTROLLER(actor)->unk18;
     f32 limit;
 
-    if (actor->unk24 != 0 || (D_00413F80.unk2E4 > 0 && actor->unk60 < D_00413F80.unk2E8)) {
+    if (actor->unk24 != 0 || (player_state.unk2E4 > 0 && actor->unk60 < player_state.unk2E8)) {
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         reach *= 0.5f;
     }
     limit = actor->radius + 100.0f + reach;
@@ -528,12 +528,12 @@ void EntityAi_SensePlayer(Entity *actor, s32 mode) {
     f32 near_reach;
     f32 limit;
 
-    if (actor->unk24 != 0 || (D_00413F80.unk2E4 > 0 && actor->unk60 < D_00413F80.unk2E8)) {
+    if (actor->unk24 != 0 || (player_state.unk2E4 > 0 && actor->unk60 < player_state.unk2E8)) {
         arc *= 0.5f;
         half_height *= 0.5f;
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         arc *= 0.5f;
         half_height *= 0.5f;
         reach *= 0.5f;
@@ -549,14 +549,14 @@ void EntityAi_SensePlayer(Entity *actor, s32 mode) {
     upper = actor->model->position[1] - (actor->height + half_height) * 0.5f;
     lower = actor->model->position[1] - (actor->height - half_height) * 0.5f;
     ENTITY_FLAG_BITS(actor)->bit32 = 0;
-    if (actor->distance_to_player < actor->radius + 100.0f + reach && turn_abs < arc && upper <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= lower) {
+    if (actor->distance_to_player < actor->radius + 100.0f + reach && turn_abs < arc && upper <= player_state.position.y && player_state.position.y - 230.0f <= lower) {
         ENTITY_FLAG_BITS(actor)->bit32 = 1;
     }
     near_reach = ctrl->unk18;
-    if (actor->unk24 != 0 || (D_00413F80.unk2E4 > 0 && actor->unk60 < D_00413F80.unk2E8)) {
+    if (actor->unk24 != 0 || (player_state.unk2E4 > 0 && actor->unk60 < player_state.unk2E8)) {
         near_reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         near_reach *= 0.5f;
     }
     limit = actor->radius + 100.0f + near_reach;
@@ -937,10 +937,10 @@ s32 EntityAi_CanAttack(Entity *entity) {
     top = entity->model->position[1] - (entity->height + entity->params->unk1A) * 0.5f;
     bottom = entity->model->position[1] - (entity->height - entity->params->unk1A) * 0.5f;
     range = entity->params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         range *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         range *= 0.5f;
     }
     reach[0] = ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).unk04 != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).unk04 : 0.0f;
@@ -955,7 +955,7 @@ s32 EntityAi_CanAttack(Entity *entity) {
     reach[9] = (range < entity->params->unk3D8[0].reach_max ? range : entity->params->unk3D8[0].reach_max) + entity->radius + 100.0f;
     reach[10] = (range < entity->params->unk3D8[1].reach_max ? range : entity->params->unk3D8[1].reach_max) + entity->radius + 100.0f;
     reach[11] = (range < entity->params->unk3D8[2].reach_max ? range : entity->params->unk3D8[2].reach_max) + entity->radius + 100.0f;
-    if (entity->model->position[1] - entity->height <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= entity->model->position[1]) {
+    if (entity->model->position[1] - entity->height <= player_state.position.y && player_state.position.y - 230.0f <= entity->model->position[1]) {
         if (ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).unk00 != 0 && angle_off[0] < ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).unk08 && reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[6]) {
             return 1;
         }
@@ -966,7 +966,7 @@ s32 EntityAi_CanAttack(Entity *entity) {
             return 1;
         }
     }
-    if (top <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= bottom) {
+    if (top <= player_state.position.y && player_state.position.y - 230.0f <= bottom) {
         if (entity->params->unk3D8[0].record.unk00 != 0 && angle_off[3] < entity->params->unk3D8[0].unk08 && reach[3] <= entity->distance_to_player && entity->distance_to_player < reach[9]) {
             return 1;
         }
@@ -988,10 +988,10 @@ static s32 EntityAi_InAttackDistance(Entity *entity) {
     f32 distance;
 
     range = entity->params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         range *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         range *= 0.5f;
     }
     reach[0] = ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).unk04 != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).unk04 : 0.0f;
@@ -1126,13 +1126,13 @@ s32 EntityAi_CanMelee(Entity *entity) {
             angle_off[2] = magnitude;
         }
     }
-    lower = D_00413F80.position.y - 230.0f;
-    upper = D_00413F80.position.y + entity->height;
+    lower = player_state.position.y - 230.0f;
+    upper = player_state.position.y + entity->height;
     range = entity->params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         range *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         range *= 0.5f;
     }
     reach[0] = ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).unk04 != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_UNK240_RECORD(entity->params, 0).unk04 : 0.0f;
@@ -1194,13 +1194,13 @@ int EntityAi_CanUseMelee(Entity *entity, int index) {
     if (!(abs_diff >= 0.0f)) {
         abs_diff = -abs_diff;
     }
-    low = D_00413F80.position.y - 230.0f;
-    high = D_00413F80.position.y + entity->height;
+    low = player_state.position.y - 230.0f;
+    high = player_state.position.y + entity->height;
     reach = params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         reach *= 0.5f;
     }
     window[0] = ENTITY_PARAMS_UNK240_RECORD(params, index).unk04 != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_UNK240_RECORD(params, index).unk04 : 0.0f;
@@ -1247,13 +1247,13 @@ int EntityAi_CanUseMeleeFacing(Entity *entity, int index, float yaw) {
     if (!(abs_diff >= 0.0f)) {
         abs_diff = -abs_diff;
     }
-    low = D_00413F80.position.y - 230.0f;
-    high = D_00413F80.position.y + entity->height;
+    low = player_state.position.y - 230.0f;
+    high = player_state.position.y + entity->height;
     reach = params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         reach *= 0.5f;
     }
     window[0] = ENTITY_PARAMS_UNK240_RECORD(params, index).unk04 != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_UNK240_RECORD(params, index).unk04 : 0.0f;
@@ -1275,10 +1275,10 @@ static int EntityAi_InMeleeDistance(Entity *entity) {
 
     params = entity->params;
     reach = params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         reach *= 0.5f;
     }
     // match: the window bounds re-read entity->params, which keeps a second copy of the pointer
@@ -1306,10 +1306,10 @@ static int EntityAi_InMeleeDistanceOf(Entity *entity, int index) {
 
     params = entity->params;
     reach = params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         reach *= 0.5f;
     }
     window[0] = ENTITY_PARAMS_UNK240_RECORD(params, index).unk04 != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_UNK240_RECORD(params, index).unk04 : 0.0f;
@@ -1433,10 +1433,10 @@ s32 EntityAi_CanShoot(Entity *entity) {
     top = entity->model->position[1] - (entity->height + entity->params->unk1A) * 0.5f;
     bottom = entity->model->position[1] - (entity->height - entity->params->unk1A) * 0.5f;
     range = entity->params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         range *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         range *= 0.5f;
     }
     reach[0] = entity->params->unk3D8[0].reach_min != 0 ? entity->radius + 100.0f + entity->params->unk3D8[0].reach_min : 0.0f;
@@ -1445,7 +1445,7 @@ s32 EntityAi_CanShoot(Entity *entity) {
     reach[3] = (range < entity->params->unk3D8[0].reach_max ? range : entity->params->unk3D8[0].reach_max) + entity->radius + 100.0f;
     reach[4] = (range < entity->params->unk3D8[1].reach_max ? range : entity->params->unk3D8[1].reach_max) + entity->radius + 100.0f;
     reach[5] = (range < entity->params->unk3D8[2].reach_max ? range : entity->params->unk3D8[2].reach_max) + entity->radius + 100.0f;
-    if (top <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= bottom) {
+    if (top <= player_state.position.y && player_state.position.y - 230.0f <= bottom) {
         if (entity->params->unk3D8[0].record.unk00 != 0 && angle_off[0] < entity->params->unk3D8[0].unk08 && reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[3]) {
             return 1;
         }
@@ -1486,17 +1486,17 @@ s32 EntityAi_CanUseRanged(Entity *entity, s32 index) {
     top = model->position[1] - (height - params->unk1A) * 0.5f;
 
     farthest = params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         farthest *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         farthest *= 0.5f;
     }
 
     reach[0] = ENTITY_PARAMS_RANGED(params)[index].reach_min != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_RANGED(params)[index].reach_min : 0.0f;
     reach[1] = (farthest < ENTITY_PARAMS_RANGED(params)[index].reach_max ? farthest + entity->radius : ENTITY_PARAMS_RANGED(params)[index].reach_max + entity->radius) + 100.0f;
 
-    if (bottom <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= top && abs_diff < ENTITY_PARAMS_RANGED(params)[index].unk08 &&
+    if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top && abs_diff < ENTITY_PARAMS_RANGED(params)[index].unk08 &&
         reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[1]) {
         return TRUE;
     }
@@ -1539,15 +1539,15 @@ int EntityAi_CanUseRangedFacing(Entity *entity, int index, float yaw) {
     high = model->position[1] - (entity->height + params->unk1A) * 0.5f;
     low = model->position[1] - (entity->height - params->unk1A) * 0.5f;
     reach = params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         reach *= 0.5f;
     }
     window[0] = params->unk3D8[index].reach_min != 0 ? entity->radius + 100.0f + params->unk3D8[index].reach_min : 0.0f;
     window[1] = (reach < params->unk3D8[index].reach_max ? reach : params->unk3D8[index].reach_max) + entity->radius + 100.0f;
-    if (high <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= low && abs_diff < params->unk3D8[index].unk08) {
+    if (high <= player_state.position.y && player_state.position.y - 230.0f <= low && abs_diff < params->unk3D8[index].unk08) {
         if (window[0] <= entity->distance_to_player && entity->distance_to_player < window[1]) {
             return 1;
         }
@@ -1563,10 +1563,10 @@ static int EntityAi_InRangedDistance(Entity *entity) {
 
     params = entity->params;
     reach = params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         reach *= 0.5f;
     }
     // match: the window bounds re-read entity->params, which keeps a second copy of the pointer
@@ -1591,10 +1591,10 @@ static int EntityAi_InRangedDistanceOf(Entity *entity, int index) {
     f32 limits[2];
     f32 near_limit;
 
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         reach *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         reach *= 0.5f;
     }
     if (params->unk3D8[index].reach_min != 0) {
@@ -1813,7 +1813,7 @@ int EntityAi_TurnToPoint(Entity *entity, f32 *turn_rate, f32 *target) {
 void EntityAi_SetAttackDelay(Entity *entity, s32 base) {
     s32 delay;
 
-    delay = (D_00413F80.hp_now * 100) / D_00413F80.hp_max;
+    delay = (player_state.hp_now * 100) / player_state.hp_max;
     delay = (item_counts[ITEM_HERB] == 0) ? delay : delay + 5;
     delay = (item_counts[ITEM_HERBAL_LIQUID] != 0) ? delay + 0xF : delay;
     delay = (item_counts[ITEM_FOREST_FRUIT] != 0) ? delay + 0x1E : delay;
@@ -1958,7 +1958,7 @@ void Entity_DrawPoolModels(void) {
         if (ENTITY_FLAG_BITS(entity)->bit30) {
             continue;
         }
-        model = &D_003BE530[entity->unkD3];
+        model = &entity_models[entity->unkD3];
         if (model->parts == NULL) {
             continue;
         }
@@ -1980,7 +1980,7 @@ void Entity_DrawPoolModels(void) {
             dst++;
             src++;
         }
-        Matrix_Multiply(model->unk40, ENTITY_MODEL(entity)->unk40, D_003E74C0);
+        Matrix_Multiply(model->unk40, ENTITY_MODEL(entity)->unk40, fire_lord_model_matrix);
         model->unk148 = ENTITY_MODEL(entity)->unk148;
         model->unk14C = ENTITY_MODEL(entity)->unk14C;
         func_00109A50();

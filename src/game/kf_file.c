@@ -6,9 +6,9 @@ int sceCdMmode(int);
 
 // match: kf_file.h declares these, so a plain definition would go to COMMON
 static u8 D_004475C8[0x38] __attribute__((section(".bss"))) = { 0 }; /* 0x4475C8 */
-KFFile D_00447600[2] __attribute__((section(".bss"))) = { 0 };       /* 0x447600 the two file slots */
+KFFile file_slots[2] __attribute__((section(".bss"))) = { 0 };       /* 0x447600 the two file slots */
 static u8 D_00447658[0x28] __attribute__((section(".bss"))) = { 0 }; /* 0x447658 */
-char D_00447680[0x20000] __attribute__((section(".bss"))) = { 0 };   /* 0x447680 the KF4.DAT table of contents, read whole */
+char archive_toc[0x20000] __attribute__((section(".bss"))) = { 0 };   /* 0x447680 the KF4.DAT table of contents, read whole */
 
 /* Starts the disc drive in DVD mode. */
 void func_00102150(void) {
@@ -21,12 +21,12 @@ void func_00102150(void) {
 void func_00102178(void) {
     int file;
 
-    memset(D_00447600, 0, sizeof(D_00447600));
-    D_00447000[1] = (int)D_00447680;
-    D_00447000[2] = (int)(D_00447680 + 0x40);
+    memset(file_slots, 0, sizeof(file_slots));
+    D_00447000[1] = (int)archive_toc;
+    D_00447000[2] = (int)(archive_toc + 0x40);
     file = func_00102238("KF4.DAT", 0, 0);
-    func_001025C0(file, D_00447680, 0x20000);
-    ((KFDirHeader *)D_00447000[1])->lsn = D_00447600[file].start;
+    func_001025C0(file, archive_toc, 0x20000);
+    ((KFDirHeader *)D_00447000[1])->lsn = file_slots[file].start;
     func_001024B0(file);
 }
 
@@ -64,14 +64,14 @@ int KF_File_Open(char *name, int nowait, int pack, int unused) {
         return -1;
     }
     for (slot = 0; slot < 2; slot++) {
-        if (D_00447600[slot].active == 0) {
+        if (file_slots[slot].active == 0) {
             break;
         }
     }
     if (slot >= 2) {
         return -1;
     }
-    opened = &D_00447600[slot];
+    opened = &file_slots[slot];
     if (pack == 1) {
         strcpy(path, name);
         for (cursor = path; *cursor != 0; cursor++) {
@@ -117,22 +117,22 @@ int func_001024B0(int file) {
     if (file == -1) {
         puts("-1");
     }
-    if ((u32)file >= 2 || D_00447600[file].active == 0) {
+    if ((u32)file >= 2 || file_slots[file].active == 0) {
         return -1;
     }
     func_00102790(file, 0);
-    D_00447600[file].active = 0;
-    D_00447600[file].start = 0;
-    D_00447600[file].cur = 0;
-    D_00447600[file].size = 0;
-    D_00447600[file].remain = 0;
+    file_slots[file].active = 0;
+    file_slots[file].start = 0;
+    file_slots[file].cur = 0;
+    file_slots[file].size = 0;
+    file_slots[file].remain = 0;
     return 1;
 }
 
 /* closes every open file and unlocks the file layer */
 void func_00102558(void) {
     int i;
-    KFFile *opened = D_00447600;
+    KFFile *opened = file_slots;
 
     for (i = 0; i < 2; i++, opened++) {
         if (opened->active) {
@@ -149,14 +149,14 @@ int func_001025C0(int file, void *buf, int size) {
     KFFile *opened;
     int sectors;
 
-    if ((u32)file >= 2 || D_00447600[file].active == 0) {
+    if ((u32)file >= 2 || file_slots[file].active == 0) {
         return -1;
     }
     if (size < 0) {
         size = 0x1000000;
     }
     func_00102790(file, 0);
-    opened = &D_00447600[file];
+    opened = &file_slots[file];
     if (opened->size != 0) {
         if (opened->remain == 0) {
             return 0;
@@ -190,11 +190,11 @@ int func_001025C0(int file, void *buf, int size) {
 
 /* seeks the drive to a file's next sector */
 int func_00102728(int file) {
-    if ((u32)file >= 2 || D_00447600[file].active == 0) {
+    if ((u32)file >= 2 || file_slots[file].active == 0) {
         return -1;
     }
     func_00102790(file, 0);
-    return sceCdSeek(D_00447600[file].cur);
+    return sceCdSeek(file_slots[file].cur);
 }
 
 /* waits for the read in flight, reissuing it while the drive reports an error */
@@ -203,26 +203,26 @@ int func_00102790(int file, int mode) {
     u32 error;
     int result;
 
-    if ((u32)file >= 2 || D_00447600[file].active == 0) {
+    if ((u32)file >= 2 || file_slots[file].active == 0) {
         return -1;
     }
     result = sceCdSync(mode);
     if (result == 0) {
         error = sceCdGetError();
-        if (D_00447600[file].pending != 0) {
+        if (file_slots[file].pending != 0) {
             while (error >= 2) {
-                retry_mode = D_00447600[file].pend_mode;
-                while (sceCdRead(D_00447600[file].pend_lsn, D_00447600[file].pend_sectors,
-                                 D_00447600[file].pend_buf, &retry_mode) == 0) {
+                retry_mode = file_slots[file].pend_mode;
+                while (sceCdRead(file_slots[file].pend_lsn, file_slots[file].pend_sectors,
+                                 file_slots[file].pend_buf, &retry_mode) == 0) {
                 }
                 result = sceCdSync(0);
                 error = sceCdGetError();
             }
-            D_00447600[file].pending = 0;
-            D_00447600[file].pend_lsn = 0;
-            D_00447600[file].pend_sectors = 0;
-            D_00447600[file].pend_buf = 0;
-            memset(&D_00447600[file].pend_mode, 0, sizeof(sceCdRMode));
+            file_slots[file].pending = 0;
+            file_slots[file].pend_lsn = 0;
+            file_slots[file].pend_sectors = 0;
+            file_slots[file].pend_buf = 0;
+            memset(&file_slots[file].pend_mode, 0, sizeof(sceCdRMode));
         }
     }
     return result;
@@ -233,5 +233,5 @@ int func_00102900(int file) {
     if ((u32)file >= 2) {
         return -1;
     }
-    return D_00447600[file].size;
+    return file_slots[file].size;
 }

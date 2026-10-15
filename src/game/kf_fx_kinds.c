@@ -1,5 +1,5 @@
 /* The per-kind behaviours of the effect actors from kind 29 on (and kind 7). An effect's kind is
-   EffectDef.unk100, its row of the handler table D_00402550: a start function (column 0, called with the
+   EffectDef.unk100, its row of the handler table effect_kind_handlers: a start function (column 0, called with the
    spawner slot when the effect is made) and a per-frame update (column 1). Most updates run the scale,
    spin and colour keys (kf_fx_shared.c), move the model, check for hits and advance the frame. */
 #include "common.h"
@@ -12,7 +12,7 @@
 
 #define TWO_PI 6.2831855f
 #define PI 3.1415927f
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern float D_00431AF0[16];
 int func_001B4F90(void *);
 float func_001B0178(void *from, void *target);
@@ -42,8 +42,8 @@ typedef float Mat[4][4] __attribute__((aligned(16)));
 int rand(void);
 void sceVu0RotMatrixX(void *, void *, float);
 void Vector_Normalize(void *, void *);
-extern void (*D_00402550[][2])();
-extern u8 D_00413FBC[];
+extern void (*effect_kind_handlers[][2])();
+extern u8 player_weapon[];
 extern int D_004468E4;
 void func_0010C9E8(ModelInstance *);
 char *func_0010CAB8(char *, u32);
@@ -53,8 +53,8 @@ extern int D_004468E8;
 void func_001C1430(f32, void *, void *);
 int Sound_PlayMapAt(u8 sound, float *position);
 int func_001C1138(f32, void *);
-extern GameStatus D_0038CC50;
-extern u16 D_00413DA8[];
+extern GameStatus game_status;
+extern u16 pad_state[];
 extern u16 D_0044693C;
 int EffectHit_FindAimedEntity(void *, void *, void *);
 extern s64 D_0043EF60[2];
@@ -65,7 +65,7 @@ extern u8 D_0034A019[];
 extern u8 D_0034AFD6[];
 void Sound_PlaySw(int mode);
 /* 0x402D50 seven (weapon, effect param) pairs EffectWeaponSound_Start matches to play sound 3 */
-u32 D_00402D50[14] = { '%', '[', '&', ']', '\'', '^', '(', '\\', ')', '`', ',', 'a', '.', 'b' };
+u32 weapon_sound_pairs[14] = { '%', '[', '&', ']', '\'', '^', '(', '\\', ')', '`', ',', 'a', '.', 'b' };
 
 void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot);
 void EffectImpactLob_Update(EffectActor *actor);
@@ -202,7 +202,7 @@ void EffectSweep_Update(EffectActor *effect) {
                 motion->velocity.y = 0.0f;
                 motion->velocity.w = 0.0f;
                 motion->sweep_turn = effect->def->keys_b[3].y;
-                sceVu0RotMatrixY(matrix, D_00431AF0, wrap_angle(D_00413F80.rotation.y + effect->def->unkDC + effect->def->unkE0 * (f32)motion->level_step));
+                sceVu0RotMatrixY(matrix, D_00431AF0, wrap_angle(player_state.rotation.y + effect->def->unkDC + effect->def->unkE0 * (f32)motion->level_step));
                 sceVu0ApplyMatrix(&motion->velocity, matrix, &motion->velocity);
             }
         }
@@ -555,7 +555,7 @@ void EffectHandover_Update(EffectActor *effect) {
             }
             EffectHandover_StartNext(effect, &effect->model->position, effect_id);
         } else if (hits & 4) {
-            if (D_00402550[effect->def->unk100][0] == EffectHandover_StartBySurface && (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5)) {
+            if (effect_kind_handlers[effect->def->unk100][0] == EffectHandover_StartBySurface && (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5)) {
                 EffectHandover_StartNext(effect, &effect->model->position, effect->def->unkF2);
             } else {
                 EffectHandover_StartNext(effect, &effect->model->position, effect->def->end_effect);
@@ -650,7 +650,7 @@ void EffectBolt_StartCounted(EffectActor *effect, EffectSlot *spawn_slot) {
     s16 angle;
 
     motion = (TurningMotion *)&effect->motion;
-    if (D_00413FBC[0] != 0x26) {
+    if (player_weapon[0] != 0x26) {
         Effect_FreeSpawner(spawn_slot);
         return;
     }
@@ -692,7 +692,7 @@ void EffectBolt_Update(EffectActor *actor) {
         if (hit != 0 && actor->def->end_effect != 0xFFFF) {
             if (hit & 2) {
                 Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
-            } else if ((D_00402550[actor->def->unk100][0] == EffectBolt_StartBySurface || D_00402550[actor->def->unk100][0] == EffectBolt_StartWithTargeters) && (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5)) {
+            } else if ((effect_kind_handlers[actor->def->unk100][0] == EffectBolt_StartBySurface || effect_kind_handlers[actor->def->unk100][0] == EffectBolt_StartWithTargeters) && (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5)) {
                 Effect_Spawn(actor->def->interval, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             } else {
                 Effect_Spawn(motion->effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
@@ -779,7 +779,7 @@ void EffectBoneFade_Update(EffectActor *actor) {
     bone = func_0010CAB8((char *)actor->owner_entity->model, ENTITY_CONTROLLER(actor->owner_entity)->unkC5);
     Vector_Copy(&actor->model->position, bone);
     Vector_Copy(&actor->model->rotation, &ENTITY_MODEL(actor->owner_entity)->rotation);
-    distance = func_001B0178(&D_00413F80.position, &actor->model->position);
+    distance = func_001B0178(&player_state.position, &actor->model->position);
     if (motion->range[1] < distance) {
         fade = 1.0f;
     } else if (distance < motion->range[0]) {
@@ -818,7 +818,7 @@ void EffectDistanceFade_Update(EffectActor *effect) {
     velocity = &effect->motion.velocity;
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
-    distance_to_player = func_001B0178(&D_00413F80, &effect->model->position);
+    distance_to_player = func_001B0178(&player_state, &effect->model->position);
     if (velocity->y < distance_to_player) {
         fade = 1.0f;
     } else {
@@ -1001,7 +1001,7 @@ void EffectFloorChase_Update(EffectActor *actor) {
 
     motion = (BobbingMotion *)&actor->motion;
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
-        Vector_Subtract(&offset, &D_00413F80.position, &actor->model->position);
+        Vector_Subtract(&offset, &player_state.position, &actor->model->position);
         EffectSteer_Toward(&motion->velocity, &offset, actor->def->speed, actor->def->unkDC);
         actor->model->position.y -= actor->def->unkE0 * 0.5f;
         motion->velocity.w = 0.0f;
@@ -1050,7 +1050,7 @@ void EffectHomeOnPlayer_Update(EffectActor *effect) {
     EffectKeys_ApplyScale(effect);
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
-    Vector_Subtract(&to_player, &D_00413F80.position, &effect->model->position);
+    Vector_Subtract(&to_player, &player_state.position, &effect->model->position);
     def = effect->def;
     if (effect->frame < def->radius_half) {
         to_player.y -= 220.0f;
@@ -1345,12 +1345,12 @@ void EffectRay_StartAtPlayer(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     motion->distance_to_target = 0;
-    Vector_Subtract(&offset, &D_00413F80.position, &effect->model->position);
+    Vector_Subtract(&offset, &player_state.position, &effect->model->position);
     func_001C1430(1.0f, &effect->model->position, &offset);
     if (COLLISION_RESULT->hit != 0) {
         Vector_Copy(&motion->unk10, COLLISION_RESULT->point);
     } else {
-        Vector_Copy(&motion->unk10, &D_00413F80.position);
+        Vector_Copy(&motion->unk10, &player_state.position);
         motion->unk10.y -= 180.0f;
     }
     Vector_Subtract(&offset, &motion->unk10, &effect->model->position);
@@ -1470,7 +1470,7 @@ void EffectSeekPlayer_Update(EffectActor *actor) {
     EffectKeys_ApplySpin(actor);
     EffectKeys_ApplyColour(actor);
     if (actor->frame < actor->def->interval) {
-        Vector_Subtract(&to_player, &D_00413F80.position, &actor->model->position);
+        Vector_Subtract(&to_player, &player_state.position, &actor->model->position);
         to_player.y -= 110.0f;
         EffectSteer_Toward(velocity, &to_player, actor->def->speed, actor->def->unkDC);
     }
@@ -1544,7 +1544,7 @@ void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     offset.y = (f32)(-effect->def->interval) + offset.y;
     offset.z = (f32)effect->def->radius_half;
     offset.w = 0.0f;
-    heading = (D_00413F80.rotation.y + effect->def->rotation_base[1]) + (f32)(effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level) * effect->def->unkDC;
+    heading = (player_state.rotation.y + effect->def->rotation_base[1]) + (f32)(effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level) * effect->def->unkDC;
     heading = heading - (f32)(int)(heading / 6.2831855f) * 6.2831855f;
     if (heading > 3.1415927f) {
         heading -= 6.2831855f;
@@ -1553,8 +1553,8 @@ void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     }
     sceVu0RotMatrixY(rotation_matrix, D_00431AF0, heading);
     sceVu0ApplyMatrix(&offset, rotation_matrix, &offset);
-    Vector_Add(&effect->model->position, &D_00413F80.position, &offset);
-    Vector_Copy(&player_point, &D_00413F80.position);
+    Vector_Add(&effect->model->position, &player_state.position, &offset);
+    Vector_Copy(&player_point, &player_state.position);
     player_point.y -= 110.0f;
     Vector_Subtract(&offset, &player_point, &effect->model->position);
     EffectAngle_FromVector(&effect->model->rotation, &offset);
@@ -1585,7 +1585,7 @@ void EffectSurroundPlayer_Update(EffectActor *effect) {
             Effect_Free(effect);
         }
     } else if (effect->frame < motion->player_frame) {
-        Vector_Copy(&player_offset, &D_00413F80.position);
+        Vector_Copy(&player_offset, &player_state.position);
         player_offset.y -= 110.0f;
         Vector_Subtract(&offset, &player_offset, &effect->model->position);
         EffectAngle_FromVector(&effect->model->rotation, &offset);
@@ -1751,14 +1751,14 @@ void EffectBowDraw_Update(EffectActor *actor) {
     EffectKeys_ApplyColour(actor);
     Vector_Copy(&actor->model->position, actor->start_position);
     Vector_Copy(&actor->model->rotation, actor->start_rotation);
-    if (D_0038CC50.unk00 != 0) {
-        if (!(D_0038CC50.unk30 & 1)) {
-            if ((D_00413DA8[0] & D_0044693C) && D_00413F80.unk263 == 0) {
+    if (game_status.unk00 != 0) {
+        if (!(game_status.unk30 & 1)) {
+            if ((pad_state[0] & D_0044693C) && player_state.unk263 == 0) {
                 return;
             }
-            if (D_00413F80.unk298 != 0 && D_00413F80.unk263 == 0) {
+            if (player_state.unk298 != 0 && player_state.unk263 == 0) {
                 Effect_SpawnFromEffect(actor->def->radius_half, actor);
-                motion->scale = actor->def->speed * ((float)D_00413F80.unkBC / 5000.0f) + 1.0f;
+                motion->scale = actor->def->speed * ((float)player_state.unkBC / 5000.0f) + 1.0f;
             }
             motion->countdown = 3;
         }
@@ -1812,7 +1812,7 @@ void EffectHomeOnEntity_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     motion = (FollowerMotion *)&actor->motion;
     EffectStart_TurnModel(actor, spawn_slot);
     EffectStart_PlaceModel(actor, spawn_slot);
-    actor->unk6C = EffectHit_FindAimedEntity(actor, &D_00413F80.position, &D_00413F80.rotation);
+    actor->unk6C = EffectHit_FindAimedEntity(actor, &player_state.position, &player_state.rotation);
     speed = target->motion.velocity.x;
     motion->speed = speed;
     EffectAngle_ToVector(speed, &motion->velocity, &actor->model->rotation);
@@ -2024,10 +2024,10 @@ void EffectScatterAroundPlayer_Start(EffectActor *effect) {
     f32 matrix[16];
     EffectMotion *motion;
 
-    sceVu0RotMatrixY(matrix, D_00431AF0, D_00413F80.rotation.y);
+    sceVu0RotMatrixY(matrix, D_00431AF0, player_state.rotation.y);
     sceVu0ApplyMatrix(&offset, matrix, effect->def->offset_base);
     motion = &effect->motion;
-    Vector_Add(&effect->model->position, &D_00413F80, &offset);
+    Vector_Add(&effect->model->position, &player_state, &offset);
     effect->model->position.x += ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[0];
     effect->model->position.z += ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[2];
     effect->model->rotation.x = ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * 3.1415927f;
@@ -2431,7 +2431,7 @@ void EffectLoopUntilFlag_Update(EffectActor *effect) {
 }
 
 /* Kind 99 start: plays sound 2 of the weapon in hand (def->radius_half 2), or sound 3 when the weapon and
-   the effect's param are a pair of the table D_00402D50 (Sound_PlaySw). */
+   the effect's param are a pair of the table weapon_sound_pairs (Sound_PlaySw). */
 void EffectWeaponSound_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectDef *def;
     u32 *key;
@@ -2445,8 +2445,8 @@ void EffectWeaponSound_Start(EffectActor *effect, EffectSlot *spawn_slot) {
         Sound_PlaySw(def->radius_half);
     } else if (def->radius_half == 3) {
         // match: the table walk is two pointers stepped together; this loop form keeps retail's registers
-        for (i = 0, param = &D_00402D50[1], key = &D_00402D50[0]; i < 7; key += 2, i++) {
-            if (D_00413F80.weapon == *key && effect->effect_param == *param) {
+        for (i = 0, param = &weapon_sound_pairs[1], key = &weapon_sound_pairs[0]; i < 7; key += 2, i++) {
+            if (player_state.weapon == *key && effect->effect_param == *param) {
                 Sound_PlaySw(def->radius_half);
                 break;
             }

@@ -12,7 +12,7 @@ void Matrix_Multiply(void *, void *, void *);
 void Vector_ApplyMatrix(void *, void *, void *);
 float atan2f(float, float);
 void Vector_MultiplyComponents(float *, float *, float *);
-extern float D_00413F80[];
+extern float player_state[];
 extern float D_004325A0[];
 extern f32 D_00431B30[4][4];
 
@@ -49,7 +49,7 @@ void func_00120278(MapObject *object) {
         object->model->alpha = 127.0f;
         return;
     }
-    Vector_Subtract(&delta, &object->model->position, D_00413F80);
+    Vector_Subtract(&delta, &object->model->position, player_state);
     distance = sqrtf(delta.x * delta.x + delta.z * delta.z);
     if (distance < work->near_distance) {
         object->model->alpha = work->near_alpha;

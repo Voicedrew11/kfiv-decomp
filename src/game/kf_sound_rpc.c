@@ -2,5 +2,5 @@
 #include "common.h"
 
 u32 D_00420918[10] = { 0 };     /* 0x420918 the ten words before the argument block */
-int D_00420940[0x40] = { 0 };   /* 0x420940 the arguments of the sound RPC */
-char D_00420A40[0x100] = { 0 }; /* 0x420A40 the file name the sound RPC sends */
+int sound_rpc_args[0x40] = { 0 };   /* 0x420940 the arguments of the sound RPC */
+char sound_rpc_file_name[0x100] = { 0 }; /* 0x420A40 the file name the sound RPC sends */

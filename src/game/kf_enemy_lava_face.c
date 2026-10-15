@@ -1,4 +1,4 @@
-/* LavaFace: the behaviour of entity type 32 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* LavaFace: the behaviour of entity type 32 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Lava Face. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -14,8 +14,8 @@ void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
-extern float D_00413F80[];
+extern s32 entity_type_handlers[][2];
+extern float player_state[];
 float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
@@ -45,7 +45,7 @@ void LavaFace_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = LavaFace_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -104,7 +104,7 @@ static void LavaFace_Think(Entity *entity, s32 unknown) {
             Vector_Copy(angles, entity->model->unkD0);
             angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
         }
-        Vector_Copy(target, D_00413F80);
+        Vector_Copy(target, player_state);
         target[1] -= 190.0f;
         pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
         yaw = EntityMath_AngleXZ(from, (char *)target);

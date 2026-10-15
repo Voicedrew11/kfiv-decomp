@@ -1,4 +1,4 @@
-/* DragonFly: the behaviour of entity type 17 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* DragonFly: the behaviour of entity type 17 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dragon Fly. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -13,7 +13,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -30,7 +30,7 @@ void Vector_Subtract(void *, void *, void *);
 int rand(void);
 void EntityPoint_PickNearWithHeight(f32 *, f32, f32, void *, void *);
 int EntityAi_PushTurnCommand3D(Entity *, int);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 s32 EntityAi_CanAttack(Entity *);
 int EntityAi_PickAttack(char *);
 float EntityMath_AngleDifference(float, float);
@@ -71,7 +71,7 @@ void DragonFly_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))DragonFly_Think;
     unkE0->animate = (void (*)(void))DragonFly_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -274,7 +274,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
             unkE0->unk78 = 1;
             unkE0->unk7B = roll;
         } else {
-            unkE0->unk4C = D_00413F80.position[1] - 220.0f - (f32)(rand() % 700);
+            unkE0->unk4C = player_state.position[1] - 220.0f - (f32)(rand() % 700);
             if (entity->radius + 100.0f + 200.0f < entity->distance_to_player) {
                 unkE0->unk7A = 1;
             } else {
@@ -298,7 +298,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
                     entity->unkC8 |= 0x100;
                 }
             }
-            delta = D_00413F80.position[1] - 190.0f + (f32)unkE0->unk7B - entity->model->position[1];
+            delta = player_state.position[1] - 190.0f + (f32)unkE0->unk7B - entity->model->position[1];
             if (delta > 10.0f) {
                 entity->unkC8 |= 0x20;
             } else if (delta < -10.0f) {
@@ -328,7 +328,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
             if (unkE0->unk7A != 0) {
                 entity->unkC8 |= 0x40;
             }
-            Vector_Copy(target, &D_00413F80);
+            Vector_Copy(target, &player_state);
             target[1] = unkE0->unk4C;
             // match: the shared prototype has no result; it returns the distance
             if (((f32 (*)(f32 *, f32 *))EntityMath_Distance)(target, entity->model->position) <= 200.0f) {
@@ -362,7 +362,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
                     entity->unkC8 |= 0x100;
                 }
             }
-            delta = D_00413F80.position[1] - entity->model->position[1];
+            delta = player_state.position[1] - entity->model->position[1];
             entity->unkC8 |= 0x51;
             if (delta > 700.0f) {
                 unkE0->unk78 = 0;

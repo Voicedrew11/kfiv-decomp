@@ -1,4 +1,4 @@
-/* FireElemental: the behaviour of entity type 48 (Entity.params->unk02, the index into D_003E6E40): its
+/* FireElemental: the behaviour of entity type 48 (Entity.params->unk02, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Fire Elemental. The game
    names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm
    records by hit points and experience, with resistances and drops where two monsters share those. */
@@ -14,9 +14,9 @@ void Vector_Copy(void *, void *);
 void EntityAi_Animate(void);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -82,7 +82,7 @@ void FireElemental_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = FireElemental_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))FireElemental_OnHit;
@@ -115,7 +115,7 @@ void FireElemental_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with FireElemental_ThinkReturn for flag bit 53 and its own
    state 2: FireElemental_StandAndAttack while work byte unk7A is 0 (states 0 and others clear it),
-   then FireElemental_ThinkCombat. Work byte unk7C is put to 30 while D_00413F80.unk259 is set and
+   then FireElemental_ThinkCombat. Work byte unk7C is put to 30 while player_state.unk259 is set and
    counts down. While work word unk68 is 1 (FireElemental_AlertSameKind of another entity sets it) it
    starts FireElemental_BackAwayFromPlayer instead of all that. */
 static void FireElemental_Think(Entity *entity, s32 unknown) {
@@ -124,7 +124,7 @@ static void FireElemental_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (D_00413F80.unk259 != 0) {
+    if (player_state.unk259 != 0) {
         unkE0->unk7C = 30;
     }
     if (unkE0->unk7C > 0) {
@@ -214,7 +214,7 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -328,7 +328,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
                 break;
             }
             if (ABS(EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1])) > 0.34906584f) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 30;
                 unkE0->unk78 = 0;
             } else {
@@ -462,7 +462,7 @@ static s32 func_0015A790(Entity *entity, f32 min_distance, f32 max_angle) {
     }
     distance = entity->distance_to_player - (entity->radius + 100.0f);
     angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-    player_angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+    player_angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
     if (distance < min_distance) {
         return FALSE;
     }
@@ -567,7 +567,7 @@ static void FireElemental_AlertSameKind(Entity *entity) {
             unkE0 = &other->unkE0;
             if (unkE0->unk68 == 0
                 && EntityMath_DistanceXZ(entity->model->position, other->model->position) < (s16)entity->params->unk434
-                && EntityMath_DistanceXZ((float *)other->spawn_info, (float *)&D_00413F80) < other->spawn_info->unk4C) {
+                && EntityMath_DistanceXZ((float *)other->spawn_info, (float *)&player_state) < other->spawn_info->unk4C) {
                 unkE0->unk7A = unkE0->unk68 = 1;
             }
         }
@@ -664,7 +664,7 @@ static void FireElemental_BackAwayFromPlayer(Entity *entity) {
             }
             break;
         }
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
         side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
             entity->unkC8 = 0x202;
@@ -685,7 +685,7 @@ static void FireElemental_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 turn;
 
-    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     if (entity->unkC8 & 0x100) {

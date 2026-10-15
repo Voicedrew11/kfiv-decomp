@@ -1,4 +1,4 @@
-/* Bell: the behaviour of entity type 38 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Bell: the behaviour of entity type 38 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: chr.prm record 60, model c0060
    (a bell), 65,535 hit points, one spawn in 007.map. Struck, it calls one of the D_0043EE30 handlers
    (Sound_PlayFalloff), then waits EntityParams.unk434 frames before it answers another hit. Prima's
@@ -11,9 +11,9 @@ int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 float EntityMath_AngleXZ(float *, char *);
 float EntityMath_WrapAngle(float);
 // match: the definition names only the three integer arguments; the floats go on to the handler it calls in their registers
@@ -31,7 +31,7 @@ void Bell_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))Bell_Think;
     unkE0->animate = (void (*)(void))Bell_Animate;
     unkE0->on_hit = NULL;
@@ -84,8 +84,8 @@ static void Bell_Think(Entity *entity) {
     if ((s32)(flags >> 43) & 1) {
         if (entity->unkA0 == 0) {
             entity->flags = flags | 0x20000000ULL;
-            angle = EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position);
-            angle = EntityMath_WrapAngle(angle - D_00413F80.unk14);
+            angle = EntityMath_AngleXZ(player_state.position, (char *)entity->model->position);
+            angle = EntityMath_WrapAngle(angle - player_state.unk14);
             Sound_PlayFalloff((u8)entity->params->unk432, (u8)entity->params->unk430, entity->unkD2,
                           (f32)entity->params->unk42E, entity->unk60, angle);
             entity->unkA0 = entity->params->unk434;

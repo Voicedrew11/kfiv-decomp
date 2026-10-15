@@ -1,4 +1,4 @@
-/* Seafang: the behaviour of entity type 28 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Seafang: the behaviour of entity type 28 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Seafang. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -12,7 +12,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 // match: const, so that the store to unk48 can follow the load of it
 extern const f32 D_00446804[];
@@ -25,7 +25,7 @@ int rand(void);
 void EntityPoint_PickNearWithHeight(f32 *, f32, f32, void *, void *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand3D(Entity *, s32, f32);
-extern float D_00413F80[];
+extern float player_state[];
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
@@ -64,7 +64,7 @@ void Seafang_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     if (entity->spawn_info->unk40 != 0) {
         unkE0->think = Seafang_ThinkLowerGradually;
     } else {
@@ -198,7 +198,7 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = D_00413F80;
+            entity->target = player_state;
             unkE0->unk4C = entity->unk30 + rand() % 150;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
@@ -219,7 +219,7 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
         } else if (turn < 0) {
             entity->unkC8 = 0x141;
         } else {
-            Vector_Copy(unkE0->unk30, D_00413F80);
+            Vector_Copy(unkE0->unk30, player_state);
             unkE0->unk30[1] -= unkE0->unk4C;
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand3D(entity, 1, entity->radius + 100.0f + 30.0f);
@@ -341,7 +341,7 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = D_00413F80;
+            entity->target = player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;

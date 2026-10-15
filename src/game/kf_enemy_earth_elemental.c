@@ -1,4 +1,4 @@
-/* EarthElemental: the behaviour of entity type 49 (Entity.params->unk02, the index into D_003E6E40): its
+/* EarthElemental: the behaviour of entity type 49 (Entity.params->unk02, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Earth Elemental. The game
    names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm
    records by hit points and experience, with resistances and drops where two monsters share those. */
@@ -14,9 +14,9 @@ void Vector_Copy(void *, void *);
 void EntityAi_Animate(void);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
@@ -77,7 +77,7 @@ void EarthElemental_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = EarthElemental_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EarthElemental_OnHit;
@@ -110,7 +110,7 @@ void EarthElemental_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with EarthElemental_ThinkCombat for state 2; walking back to
    the spawn point (flag bit 53) gets command bits 0x440 added. Work byte unk7B is put to 25 to 34
-   while D_00413F80.unk259 is set and counts down; work word unk6C is EntityParams.unk438 while work
+   while player_state.unk259 is set and counts down; work word unk6C is EntityParams.unk438 while work
    word unk6E counts down and EntityParams.unkCB otherwise. While work word unk68 is 1
    (EarthElemental_AlertSameKind of another entity sets it) it only starts EarthElemental_BackAwayOrRunAtPlayer. */
 static void EarthElemental_Think(Entity *entity, s32 unknown) {
@@ -120,7 +120,7 @@ static void EarthElemental_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (D_00413F80.unk259 != 0) {
+    if (player_state.unk259 != 0) {
         unkE0->unk7B = rand() % 10 + 25;
     }
     if (unkE0->unk7B > 0) {
@@ -217,19 +217,19 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            player_angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+            player_angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
             if (ABS(player_angle) > 0.61086524f) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 60;
                 unkE0->unk78 = 1;
             } else {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 if (1.5707964f < ABS(EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1]))) {
                     unkE0->unk7A = (EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, EarthElemental_PlayTurnAnim, unknown);
                     return;
                 }
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 60 + 60;
                 unkE0->unk78 = 0;
             }
@@ -358,7 +358,7 @@ static s32 func_0015C518(Entity *entity, f32 min_distance, f32 max_angle) {
     }
     distance = entity->distance_to_player - (entity->radius + 100.0f);
     angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-    player_angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+    player_angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
     if (distance < min_distance) {
         return FALSE;
     }
@@ -399,7 +399,7 @@ static void EarthElemental_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 turn;
 
-    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     if (entity->unkC8 & 0x100) {
@@ -485,7 +485,7 @@ static void EarthElemental_AlertSameKind(Entity *entity) {
             if (unkE0->unk68 == 0
                 && EntityMath_DistanceXZ(entity->model->position, other->model->position)
                        < (s16)entity->params->unk434
-                && EntityMath_DistanceXZ((float *)other->spawn_info, D_00413F80.position) < other->spawn_info->unk4C) {
+                && EntityMath_DistanceXZ((float *)other->spawn_info, player_state.position) < other->spawn_info->unk4C) {
                 unkE0->unk68 = 1;
             }
         }
@@ -582,8 +582,8 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
             }
             break;
         }
-        entity->target = &D_00413F80;
-        angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+        entity->target = &player_state;
+        angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
         side = EntityAi_TurnFromPush(entity, direction);
         if (ABS(angle) > 0.7853982f) {
             entity->unkC8 = 2;

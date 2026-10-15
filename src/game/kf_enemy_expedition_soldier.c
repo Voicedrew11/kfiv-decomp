@@ -1,4 +1,4 @@
-/* ExpeditionSoldier: the behaviour of entity type 7 (Entity.params->unk02, the index into D_003E6E40): its
+/* ExpeditionSoldier: the behaviour of entity type 7 (Entity.params->unk02, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Expedition Soldier, Lee
    Maynor. The game names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched
    to the chr.prm records by hit points and experience, with resistances and drops where two monsters share
@@ -18,7 +18,7 @@ void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Start(void *, int, int, u32, int);
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
@@ -27,7 +27,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern float D_00413F80[];
+extern float player_state[];
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -72,7 +72,7 @@ void ExpeditionSoldier_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     switch (entity->spawn_info->variant) {
     case 1:
     case 2:
@@ -216,14 +216,14 @@ static void func_001787E0(Entity *entity, s32 unknown) {
                 angle = EntityMath_AngleDifference(entity->unk68, entity->model->unkD0[1]);
                 angle = ABS(angle);
                 if (angle > 0.7853982f) {
-                    entity->target = D_00413F80;
+                    entity->target = player_state;
                     entity->unkA0 = rand() % 30 + 0x3C;
                     unkE0->unk78 = 0;
                 } else {
                     unkE0->unk78 = -1;
                 }
             } else {
-                entity->target = D_00413F80;
+                entity->target = player_state;
                 entity->unkA0 = rand() % 60 + 0x78;
                 unkE0->unk78 = 1;
             }

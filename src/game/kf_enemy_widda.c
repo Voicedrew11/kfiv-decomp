@@ -1,4 +1,4 @@
-/* Widda: the behaviour of entity type 19 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Widda: the behaviour of entity type 19 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Widda Large, Widda. The game names
    no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records
    by hit points and experience, with resistances and drops where two monsters share those. */
@@ -14,12 +14,12 @@ void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 float atan2f(float, float);
 float EntityMath_EaseAngleToward(float *, float, float);
 float EntityMath_HeadingTo(float *, float *);
@@ -69,7 +69,7 @@ void Widda_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Widda_Think;
     unkE0->animate = (void (*)(void))Widda_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -150,7 +150,7 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
         unkE0->unk50 = parts[second].unk50[0];
         unkE0->unk54 = parts[second].unk50[1];
     } else {
-        angle = atan2f(D_00413F80.position[1] - entity->model->position[1], entity->distance_to_player);
+        angle = atan2f(player_state.position[1] - entity->model->position[1], entity->distance_to_player);
         limit = 0.5235988f;
         if (angle > limit) {
             angle = limit;
@@ -249,7 +249,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (entity->distance_to_player > 900.0f && ABS(angle) < 0.6981317f) {
                 entity->unkA0 = 300;
@@ -268,7 +268,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
             break;
         }
     }
-    angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+    angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
     if (entity->unk60 - entity->radius - 100.0f < 200.0f && ABS(angle) < 0.6981317f
         && D_00446ED4 % 10U == entity->unkD7 % 10U && rand() % 100 < ENTITY_CONTROLLER(entity)->unk434) {
         angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
@@ -283,7 +283,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
             }
         }
         entity->unkCF = entity->unkCD;
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
         entity->unkA0 = 300;
         unkE0->unk78 = entity->unkCD = 1;
         unkE0->unk7A = 0;

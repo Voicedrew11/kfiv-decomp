@@ -1,4 +1,4 @@
-/* Widdacona: the behaviour of entity type 30 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Widdacona: the behaviour of entity type 30 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Widdacona. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -15,7 +15,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to its file
 void EntityAi_Move(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -23,7 +23,7 @@ void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionHeavy(Entity *);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int Motion_Start(void *, int, int, u32, int);
 char *func_0010CAB8(char *, u32);
 void EntityEvent_OnDeath(Entity *);
@@ -69,7 +69,7 @@ void Widdacona_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Widdacona_Think;
     unkE0->animate = (void (*)(void))Widdacona_Animate;
     unkE0->on_hit = (void (*)(void))Widdacona_OnHit;
@@ -161,15 +161,15 @@ static void Widdacona_Death(Entity *entity) {
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             part = func_0010CAB8((char *)entity->model, 0x14);
             if (part != NULL) {
-                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80.position);
+                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, player_state.position);
             }
             part = func_0010CAB8((char *)entity->model, 0x15);
             if (part != NULL) {
-                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80.position);
+                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, player_state.position);
             }
             part = func_0010CAB8((char *)entity->model, 0x16);
             if (part != NULL) {
-                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, D_00413F80.position);
+                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, player_state.position);
             }
             ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
             unkE0->unk7A = 1;
@@ -225,8 +225,8 @@ static void Widdacona_Dormant(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        if (D_00413F80.position[0] > -4900.0f && D_00413F80.position[0] < -2500.0f &&
-            D_00413F80.position[2] > -5350.0f && D_00413F80.position[2] < -3350.0f) {
+        if (player_state.position[0] > -4900.0f && player_state.position[0] < -2500.0f &&
+            player_state.position[2] > -5350.0f && player_state.position[2] < -3350.0f) {
             if (entity->distance_to_player < entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
                 Motion_Start(entity, 2, 0, entity->params->unkC4, 0);
                 if (entity->params->flags & 0x100) {
@@ -313,8 +313,8 @@ static void Widdacona_Think(Entity *entity, s32 unknown) {
         return;
     }
     EntityAi_StepState(entity);
-    if (D_00413F80.position[0] < -4900.0f || D_00413F80.position[0] > -2500.0f ||
-        D_00413F80.position[2] < -5350.0f || D_00413F80.position[2] > -3350.0f) {
+    if (player_state.position[0] < -4900.0f || player_state.position[0] > -2500.0f ||
+        player_state.position[2] < -5350.0f || player_state.position[2] > -3350.0f) {
         EntityAi_StartAction(entity, Widdacona_ReturnToDormant, unknown);
         return;
     }
@@ -360,7 +360,7 @@ static void Widdacona_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -408,7 +408,7 @@ static void Widdacona_RangedAttack0(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         if (entity->model->unkFC->unk82 >= 12 && entity->model->unkFC->unk82 <= 76 && D_00446ED4 % 3 != 0) {
-            Vector_Copy(direction, &D_00413F80);
+            Vector_Copy(direction, &player_state);
             direction[1] -= 100.0f;
             EntityShot_LaunchAimed(entity, unk3D8, 12, 76, direction, 0.3926991f, 0.17453294f);
         }

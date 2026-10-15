@@ -1,4 +1,4 @@
-/* HammerSkeleton: the behaviour of entity type 37 (Entity.params->unk02, the index into D_003E6E40): its
+/* HammerSkeleton: the behaviour of entity type 37 (Entity.params->unk02, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: chr.prm record 154,
    model c0154 (a skeleton holding a small hammer), whose one spawn in 007.map stands beside the bell
    (kf_enemy_bell.c). It gives no experience and dies by itself when the player enters one of two
@@ -18,10 +18,10 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
-extern float D_00413F80[];
+extern s32 entity_type_handlers[][2];
+extern float player_state[];
 extern EntitySpawnInfo *D_004467D0[2];
-extern MapSlot D_0038CD20[];
+extern MapSlot map_slots[];
 extern int D_00446770;
 int Motion_Start(void *, int, int, u32, int);
 void func_001035A8(u32, int);
@@ -43,7 +43,7 @@ void HammerSkeleton_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = HammerSkeleton_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -76,12 +76,12 @@ static void HammerSkeleton_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (entity->unkC6 == 0) {
-        if ((-6200.0f <= D_00413F80[0] && D_00413F80[0] <= -1400.0f &&
-             -50.0f <= D_00413F80[1] && D_00413F80[1] <= 450.0f &&
-             -4200.0f <= D_00413F80[2] && D_00413F80[2] <= -600.0f) ||
-            (-6200.0f <= D_00413F80[0] && D_00413F80[0] <= -2600.0f &&
-             -50.0f <= D_00413F80[1] && D_00413F80[1] <= 450.0f &&
-             -600.0f <= D_00413F80[2] && D_00413F80[2] <= 1000.0f)) {
+        if ((-6200.0f <= player_state[0] && player_state[0] <= -1400.0f &&
+             -50.0f <= player_state[1] && player_state[1] <= 450.0f &&
+             -4200.0f <= player_state[2] && player_state[2] <= -600.0f) ||
+            (-6200.0f <= player_state[0] && player_state[0] <= -2600.0f &&
+             -50.0f <= player_state[1] && player_state[1] <= 450.0f &&
+             -600.0f <= player_state[2] && player_state[2] <= 1000.0f)) {
             EntityAi_StartAction(entity, HammerSkeleton_Death, unknown);
         } else {
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -116,7 +116,7 @@ static void HammerSkeleton_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             entity->unkA0 = 20;
-            func_001035A8(D_0038CD20[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+            func_001035A8(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
             if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
                 Script_Start(entity->spawn_info->unk36, 0);
             }

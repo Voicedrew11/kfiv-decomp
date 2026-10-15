@@ -174,18 +174,18 @@ void ScriptCmd_WaitMapObjectMotion();
 void ScriptCmd_WalkEntityTo();
 void ScriptCmd_WalkEntityToFlat();
 
-extern u8 D_00349690[];
+extern u8 map_script_flags[];
 extern u8 D_0034B690[];
-extern u8 D_0034B6D0[];
+extern u8 entity_group_state[];
 extern u8 D_0034C518[];
-extern u8 D_003679A0[];
-extern u8 D_003699B0[];
-extern u8 D_00369B30[];
-extern u8 D_00369CB0[];
-extern u8 D_00369E30[];
-extern u8 D_0038CC50[];
-extern u8 D_00413DA8[];
-extern u8 D_00413F80[];
+extern u8 weapon_level_records[];
+extern u8 trade_stock_1[];
+extern u8 trade_stock_2[];
+extern u8 trade_stock_3[];
+extern u8 trade_stock_4[];
+extern u8 game_status[];
+extern u8 pad_state[];
+extern u8 player_state[];
 extern u8 D_00420D00[];
 extern u8 D_004325A0[];
 extern u32 D_004335D0[0x10];
@@ -243,11 +243,11 @@ ScriptCommandHandler D_004331B0[0x64] = {
 }; /* 0x4331B0 commands 0 to 0x63 */
 
 u8 *D_00433340[0x40] = {
-    D_0038CC50, D_004325A0, D_00413F80, D_00420D00,
-    item_counts, D_003699B0, D_00369B30, D_00369CB0,
-    D_00369E30, spell_levels, D_00349690, D_0034B690,
-    D_0034B6D0, (u8 *)D_004335D0, (u8 *)D_00433610, D_0034C518,
-    D_003679A0, 0x00000000, 0x00000000, 0x00000000,
+    game_status, D_004325A0, player_state, D_00420D00,
+    item_counts, trade_stock_1, trade_stock_2, trade_stock_3,
+    trade_stock_4, spell_levels, map_script_flags, D_0034B690,
+    entity_group_state, (u8 *)D_004335D0, (u8 *)D_00433610, D_0034C518,
+    weapon_level_records, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
@@ -255,7 +255,7 @@ u8 *D_00433340[0x40] = {
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
-    NULL, 0x00000000, D_00413DA8, (u8 *)&D_0044692C,
+    NULL, 0x00000000, pad_state, (u8 *)&D_0044692C,
     (u8 *)&D_0044692E, (u8 *)&D_00446930, (u8 *)&D_00446932, (u8 *)&D_00446934,
     (u8 *)&D_00446936, (u8 *)&D_00446938, (u8 *)&D_0044693A, (u8 *)&D_0044693C,
     NULL, (u8 *)&D_0044693E, (u8 *)&D_00446940, (u8 *)&D_00446944,

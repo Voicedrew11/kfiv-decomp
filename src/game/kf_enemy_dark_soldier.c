@@ -1,4 +1,4 @@
-/* DarkSoldier: the behaviour of entity type 44 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* DarkSoldier: the behaviour of entity type 44 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Soldier. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -15,7 +15,7 @@ void Vector_Copy(void *, void *);
 void EntityAi_Animate(void);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
@@ -23,7 +23,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -94,7 +94,7 @@ void DarkSoldier_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = DarkSoldier_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))DarkSoldier_OnHit;
@@ -196,7 +196,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     if (entity->unkA0 == 0) {
-        angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+        angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
         if (rand() % 100 < entity->params->unk436 && ABS(angle) < 1.0471976f
             && ABS(entity->unk68 - entity->model->unkD0[1]) < 1.0471976f) {
             unkE0->unk7B = 0;
@@ -225,7 +225,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;
             }
-            angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+            angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
             if (rand() % 100 < entity->params->unk436 && ABS(angle) < 0.6981317f) {
                 unkE0->unk7B = 1;
                 EntityAi_StartAction(entity, DarkSoldier_PlayAnim6Or7BySide, unknown);
@@ -240,7 +240,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 60;
             unkE0->unk78 = 0;
             break;
@@ -412,7 +412,7 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        side = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+        side = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
         if (unkE0->unk7B == 1) {
             if (side > 0.0f) {
                 Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 1);
@@ -592,7 +592,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
     entity->unkC6 |= 8;
     switch (entity->action_step) {
     case 0:
-        if (EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position)) > 0.0f) {
+        if (EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) > 0.0f) {
             Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 1);
         } else {
             Motion_Start(entity, 7, 0, entity->params->unkC4 >> 1, 1);

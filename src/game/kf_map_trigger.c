@@ -23,7 +23,7 @@ void func_0010E8E0(void *, int, int, int, int);
 int func_0010EA08(int, void *, int *, int *, float);
 void *memset(void *, int, u32);
 int rand(void);
-extern GameStatus D_0038CC50;
+extern GameStatus game_status;
 extern void *D_00420D50[];
 extern u32 D_0038CC74[];
 extern f32 D_00431AF0[16];
@@ -38,9 +38,9 @@ void func_001226D0(MapObject *object) {
 void MapObject_UpdateSavePoint(MapObject *object) {
     MapObject *used;
 
-    if (D_0038CC50.bit1 && (used = D_00420D50[0]) == object) {
-        D_0038CC50.save_requested = TRUE;
-        D_0038CC50.save_area = MAP_OBJECT_WORDS(used)->unk44;
+    if (game_status.bit1 && (used = D_00420D50[0]) == object) {
+        game_status.save_requested = TRUE;
+        game_status.save_area = MAP_OBJECT_WORDS(used)->unk44;
     }
 }
 

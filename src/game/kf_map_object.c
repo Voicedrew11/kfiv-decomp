@@ -52,20 +52,20 @@ int Script_Start(int, int);
 void Vector_Copy(void *, void *);
 void Vector_Add(void *, void *, void *);
 
-extern MapDrawState D_0038A1B0;
+extern MapDrawState map_draw_state;
 extern int D_0038CC80[3];
-extern MapSlot D_0038CD20[];
-extern Vector4 D_0038D9F0[4];
+extern MapSlot map_slots[];
+extern Vector4 map_object_glow_colors[4];
 extern u8 item_counts[];
-extern MapObject D_003A1A30[][0x200];
-extern void (*D_003BDA30[][16])(MapObject *);
-extern void (*D_003BE230[])(MapObject *);
-extern int (*D_003BE2B0[])(MapObject *, int);
-extern void (*D_003BE330[])(MapObject *, int);
-extern void (*D_003BE3B0[])(MapObject *);
-extern void (*D_003BE430[])(MapObject *, f32 *);
-extern void (*D_003BE4B0[])(MapObject *);
-extern PlayerState D_00413F80;
+extern MapObject map_slot_objects[][0x200];
+extern void (*map_object_step_handlers[][16])(MapObject *);
+extern void (*map_object_draw_hooks[])(MapObject *);
+extern int (*map_object_item_hooks[])(MapObject *, int);
+extern void (*map_object_signal_hooks[])(MapObject *, int);
+extern void (*map_object_update_hooks[])(MapObject *);
+extern void (*map_object_offset_hooks[])(MapObject *, f32 *);
+extern void (*map_object_setup_hooks[])(MapObject *);
+extern PlayerState player_state;
 extern int D_00446770;
 
 static s32 sway_frame = 0;                      /* 0x4467A0 counts 0 to 59 */
@@ -81,8 +81,8 @@ static MapObject *plain_draw_list[2];           /* 0x447088 per map, through Map
 static MapObject *jointed_draw_list[2];         /* 0x447090 per map, through MapObject.unk1C */
 
 static MapObject *objects_by_id[2][0x100];      /* 0x472240 per map, by MapObjectUnk08.unk38.bytes[2] */
-static MapSlotUnk10Vectors glow_lights_shared;  /* 0x472A40 D_0038A1B0.unkC0 blended for the glow */
-static MapSlotUnk10Vectors glow_lights[2][0x20]; /* 0x472AC0 D_0038A1B0.unkA90 blended for the glow */
+static MapSlotUnk10Vectors glow_lights_shared;  /* 0x472A40 map_draw_state.unkC0 blended for the glow */
+static MapSlotUnk10Vectors glow_lights[2][0x20]; /* 0x472AC0 map_draw_state.unkA90 blended for the glow */
 
 /* Empties the map objects of both maps. */
 void func_0011C6E8(void) {
@@ -97,7 +97,7 @@ void func_0011C6E8(void) {
 void MapObject_InitMap(int map) {
     int i = 0;
     int count = D_004467B8[map];
-    MapObject *object = D_003A1A30[map];
+    MapObject *object = map_slot_objects[map];
     f32 scale;
     int link_id;
     int j;
@@ -142,7 +142,7 @@ void MapObject_InitMap(int map) {
                 ModelMatrix_BuildPartLocal(object->model, &object->model->parts[j], &object->model->parts[j]);
             }
         }
-        D_003BE3B0[object->unk04->kind](object);
+        map_object_update_hooks[object->unk04->kind](object);
         switch (object->unk04->bit8) {
             case 0:
                 object->model->draw = (void (*)(ModelInstance *))func_0011E8E8;
@@ -166,8 +166,8 @@ void MapObject_InitMap(int map) {
         MAP_OBJECT_BITS(object)->bit2 = FALSE;
     }
     plain_draw_list[map] = NULL;
-    for (i = ((MapSlotUnk08 *)D_0038CD20[map].header)->unk30 - 1; i >= 0; i--) {
-        for (object = &D_003A1A30[map][count - 1], j = count - 1; j >= 0; j--, object--) {
+    for (i = ((MapSlotUnk08 *)map_slots[map].header)->unk30 - 1; i >= 0; i--) {
+        for (object = &map_slot_objects[map][count - 1], j = count - 1; j >= 0; j--, object--) {
             if (MAP_OBJECT_DEF_WORD(object) & 0x400) {
                 continue;
             }
@@ -182,8 +182,8 @@ void MapObject_InitMap(int map) {
         }
     }
     jointed_draw_list[map] = NULL;
-    for (i = ((MapSlotUnk08 *)D_0038CD20[map].header)->unk32 - 1; i >= 0; i--) {
-        for (object = &D_003A1A30[map][count - 1], j = count - 1; j >= 0; j--, object--) {
+    for (i = ((MapSlotUnk08 *)map_slots[map].header)->unk32 - 1; i >= 0; i--) {
+        for (object = &map_slot_objects[map][count - 1], j = count - 1; j >= 0; j--, object--) {
             if (MAP_OBJECT_DEF_WORD(object) & 0x400) {
                 continue;
             }
@@ -201,12 +201,12 @@ void MapObject_InitMap(int map) {
 
 /* Starts the objects of a map: their flags come from the flag block of the map
    when it has been visited, else from their sources; each is then put in use or
-   handed to the handler of its kind in D_003BE4B0. */
+   handed to the handler of its kind in map_object_setup_hooks. */
 void MapObject_StartMap(int map) {
     int i = 0;
     int count = D_004467B8[map];
-    MapObject *object = D_003A1A30[map];
-    int tag = D_0038CD20[map].tag;
+    MapObject *object = map_slot_objects[map];
+    int tag = map_slots[map].tag;
     int visited = func_001034A8(tag);
     int in_use;
     int flag;
@@ -236,7 +236,7 @@ void MapObject_StartMap(int map) {
         if (in_use) {
             MapObject_Activate(object);
         } else {
-            D_003BE4B0[object->unk04->kind](object);
+            map_object_setup_hooks[object->unk04->kind](object);
         }
         MAP_OBJECT_BITS(object)->bit17 = flag;
     }
@@ -246,8 +246,8 @@ void MapObject_StartMap(int map) {
    of the map, stops their sounds, then empties the table. */
 void MapObject_UnloadMap(int map) {
     int count = D_004467B8[map];
-    MapObject *object = D_003A1A30[map];
-    int tag = D_0038CD20[map].tag;
+    MapObject *object = map_slot_objects[map];
+    int tag = map_slots[map].tag;
     int i;
 
     for (i = 0; i < count; i++, object++) {
@@ -269,10 +269,10 @@ void MapObject_SaveAllFlags(void) {
     int i;
 
     for (map = 0; map < 2; map++) {
-        if (D_0038CD20[map].unk00 != 0) {
+        if (map_slots[map].unk00 != 0) {
             count = D_004467B8[map];
-            tag = D_0038CD20[map].tag;
-            object = D_003A1A30[map];
+            tag = map_slots[map].tag;
+            object = map_slot_objects[map];
             for (i = 0; i < count; i++, object++) {
                 // match: each flag is narrowed to a byte first; without these four conversions the outer loop is
                 // small enough for the compiler to hoist the 0xE000 object-table stride out of it
@@ -285,14 +285,14 @@ void MapObject_SaveAllFlags(void) {
     }
 }
 
-/* Moves every object of a map by offset through its kind's handler in D_003BE430. */
+/* Moves every object of a map by offset through its kind's handler in map_object_offset_hooks. */
 void MapObject_OffsetAll(int map, f32 *offset) {
     int count = D_004467B8[map];
-    MapObject *object = D_003A1A30[map];
+    MapObject *object = map_slot_objects[map];
     int i;
 
     for (i = 0; i < count; i++, object++) {
-        D_003BE430[object->unk04->kind](object, offset);
+        map_object_offset_hooks[object->unk04->kind](object, offset);
     }
 }
 
@@ -300,9 +300,9 @@ void MapObject_OffsetAll(int map, f32 *offset) {
 static inline MapObject *map_objects(s32 map) {
     if (D_004467A8[D_00446770 == map ? 0 : 1] != 0) {
         if (D_00446770 != map) {
-            return D_003A1A30[1];
+            return map_slot_objects[1];
         }
-        return D_003A1A30[0];
+        return map_slot_objects[0];
     }
     return NULL;
 }
@@ -315,8 +315,8 @@ static inline s32 map_object_count(s32 map) {
 }
 
 /* Updates the map objects of both maps once a frame: remembers where each was,
-   runs the step handler of its kind (D_003BDA30) and the kind's every-frame
-   handler (D_003BE3B0), works out whether it is in view, and starts or stops
+   runs the step handler of its kind (map_object_step_handlers) and the kind's every-frame
+   handler (map_object_update_hooks), works out whether it is in view, and starts or stops
    the effect tied to it as it comes into or goes out of view. */
 void MapObject_UpdateAll(void) {
     Vector4 angles;
@@ -369,20 +369,20 @@ void MapObject_UpdateAll(void) {
             }
             kind = (object->unk10 & 0x100000) ? 0 : object->unk04->kind;
             if (MAP_OBJECT_BYTES(object)->step < 0x10) {
-                if (D_003BDA30[kind][MAP_OBJECT_BYTES(object)->step] != NULL) {
-                    D_003BDA30[kind][MAP_OBJECT_BYTES(object)->step](object);
+                if (map_object_step_handlers[kind][MAP_OBJECT_BYTES(object)->step] != NULL) {
+                    map_object_step_handlers[kind][MAP_OBJECT_BYTES(object)->step](object);
                 }
             }
             if (!(object->unk10 & 0x10000)) {
                 continue;
             }
-            D_003BE3B0[object->unk04->kind](object);
+            map_object_update_hooks[object->unk04->kind](object);
             record = (MapRecord *)object->unk0C;
             if (record != NULL) {
-                if ((MapObject *)D_00413F80.unk208 == object) {
+                if ((MapObject *)player_state.unk208 == object) {
                     object->unk10 |= 2;
                 } else if (object->unk08->unk5A != 0 && object->unk08->unk5A != 0xFF) {
-                    if (func_00116C08(D_00446770, D_00413F80.unk250, MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk5A)) {
+                    if (func_00116C08(D_00446770, player_state.unk250, MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk5A)) {
                         object->unk10 |= 2;
                     }
                 } else if (record->unk38 & 0x4000000) {
@@ -424,15 +424,15 @@ int MapObject_UseItem(MapObject *object, int item) {
     if (item_counts[item] == 0) {
         used = FALSE;
     } else {
-        used = D_003BE2B0[object->unk04->kind](object, item) != 0;
+        used = map_object_item_hooks[object->unk04->kind](object, item) != 0;
     }
     return used;
 }
 
-/* Passes a signal to a map object's kind (D_003BE330) unless a script drives it. */
+/* Passes a signal to a map object's kind (map_object_signal_hooks) unless a script drives it. */
 void MapObject_Signal(MapObject *object, int signal) {
     if (object != NULL && !(object->unk10 & 0x100000)) {
-        D_003BE330[object->unk04->kind](object, signal);
+        map_object_signal_hooks[object->unk04->kind](object, signal);
     }
 }
 
@@ -443,7 +443,7 @@ void MapObject_Signal(MapObject *object, int signal) {
 /* Draws the map objects of both maps (or of one, when only_one is set): first
    the jointed ones, then the plain ones. While the player wears item 0x9D the
    objects that allow it are lit with their light blocks blended towards
-   D_0038D9F0 and back, over 210 frames (fully at frame 105). */
+   map_object_glow_colors and back, over 210 frames (fully at frame 105). */
 void MapObject_DrawAll(int mode, int only_one, int which) {
     f32 scaled[4];
     f32 blend;
@@ -455,7 +455,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
     MapObject *object;
 
     glow_item_was_worn = glow_item_worn;
-    glow_item_worn = D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_MYUS_NECKLACE);
+    glow_item_worn = player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_MYUS_NECKLACE);
     if (glow_item_was_worn != glow_item_worn) {
         glow_frame = 0;
     } else if (glow_item_was_worn != 0) {
@@ -468,44 +468,44 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
     }
     rest = 1.0f - blend;
     for (map = 0; map < 2; map++) {
-        if (D_0038CD20[map].unk00 != 0) {
+        if (map_slots[map].unk00 != 0) {
             for (i = 0; i < 0x20; i++) {
                 dest = &glow_lights[map][i];
-                source = (MapSlotUnk10Vectors *)&D_0038A1B0.unkA90[map][i];
+                source = (MapSlotUnk10Vectors *)&map_draw_state.unkA90[map][i];
                 Vector_Copy(&dest->unk00[0], &source->unk00[0]);
                 Vector_Copy(&dest->unk00[1], &source->unk00[1]);
                 Vector_Copy(&dest->unk00[2], &source->unk00[2]);
                 Vector_Copy(&dest->unk00[3], &source->unk00[3]);
-                Vector_Scale(scaled, &D_0038D9F0[0].x, blend);
+                Vector_Scale(scaled, &map_object_glow_colors[0].x, blend);
                 Vector_Scale(&dest->unk40[0].x, &source->unk40[0].x, rest);
                 Vector_Add(&dest->unk40[0], &dest->unk40[0], scaled);
-                Vector_Scale(scaled, &D_0038D9F0[1].x, blend);
+                Vector_Scale(scaled, &map_object_glow_colors[1].x, blend);
                 Vector_Scale(&dest->unk40[1].x, &source->unk40[1].x, rest);
                 Vector_Add(&dest->unk40[1], &dest->unk40[1], scaled);
-                Vector_Scale(scaled, &D_0038D9F0[2].x, blend);
+                Vector_Scale(scaled, &map_object_glow_colors[2].x, blend);
                 Vector_Scale(&dest->unk40[2].x, &source->unk40[2].x, rest);
                 Vector_Add(&dest->unk40[2], &dest->unk40[2], scaled);
-                Vector_Scale(scaled, &D_0038D9F0[3].x, blend);
+                Vector_Scale(scaled, &map_object_glow_colors[3].x, blend);
                 Vector_Scale(&dest->unk40[3].x, &source->unk40[3].x, rest);
                 Vector_Add(&dest->unk40[3], &dest->unk40[3], scaled);
             }
         }
     }
-    Vector_Copy(&glow_lights_shared.unk00[0], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[0]);
-    Vector_Copy(&glow_lights_shared.unk00[1], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[1]);
-    Vector_Copy(&glow_lights_shared.unk00[2], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[2]);
-    Vector_Copy(&glow_lights_shared.unk00[3], &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk00[3]);
-    Vector_Scale(scaled, &D_0038D9F0[0].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[0].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[0].x, rest);
+    Vector_Copy(&glow_lights_shared.unk00[0], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[0]);
+    Vector_Copy(&glow_lights_shared.unk00[1], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[1]);
+    Vector_Copy(&glow_lights_shared.unk00[2], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[2]);
+    Vector_Copy(&glow_lights_shared.unk00[3], &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk00[3]);
+    Vector_Scale(scaled, &map_object_glow_colors[0].x, blend);
+    Vector_Scale(&glow_lights_shared.unk40[0].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[0].x, rest);
     Vector_Add(&glow_lights_shared.unk40[0], &glow_lights_shared.unk40[0], scaled);
-    Vector_Scale(scaled, &D_0038D9F0[1].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[1].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[1].x, rest);
+    Vector_Scale(scaled, &map_object_glow_colors[1].x, blend);
+    Vector_Scale(&glow_lights_shared.unk40[1].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[1].x, rest);
     Vector_Add(&glow_lights_shared.unk40[1], &glow_lights_shared.unk40[1], scaled);
-    Vector_Scale(scaled, &D_0038D9F0[2].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[2].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[2].x, rest);
+    Vector_Scale(scaled, &map_object_glow_colors[2].x, blend);
+    Vector_Scale(&glow_lights_shared.unk40[2].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[2].x, rest);
     Vector_Add(&glow_lights_shared.unk40[2], &glow_lights_shared.unk40[2], scaled);
-    Vector_Scale(scaled, &D_0038D9F0[3].x, blend);
-    Vector_Scale(&glow_lights_shared.unk40[3].x, &((MapSlotUnk10Vectors *)&D_0038A1B0.unkC0)->unk40[3].x, rest);
+    Vector_Scale(scaled, &map_object_glow_colors[3].x, blend);
+    Vector_Scale(&glow_lights_shared.unk40[3].x, &((MapSlotUnk10Vectors *)&map_draw_state.unkC0)->unk40[3].x, rest);
     Vector_Add(&glow_lights_shared.unk40[3], &glow_lights_shared.unk40[3], scaled);
     func_00109A50();
     func_00109A80(GS_REG_ALPHA_1, 0x44);
@@ -543,19 +543,19 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 }
             } else {
                 if ((s8)object->unk08->unk38.bytes[5] != -1) {
-                    object->model->unk148 = (s32)&D_0038A1B0.unkA90[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[5]];
+                    object->model->unk148 = (s32)&map_draw_state.unkA90[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->unk148 = (s32)&D_0038A1B0.unkC0;
+                    object->model->unk148 = (s32)&map_draw_state.unkC0;
                 } else {
-                    object->model->unk148 = (s32)&D_0038A1B0.unkA90[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk35];
+                    object->model->unk148 = (s32)&map_draw_state.unkA90[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk35];
                 }
             }
             if ((s8)object->unk08->unk38.bytes[4] != -1) {
-                object->model->unk14C = &D_0038A1B0.unk290[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[4]];
+                object->model->unk14C = &map_draw_state.unk290[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[4]];
             } else if (RECORD_FLAGS(object) & 0x10) {
-                object->model->unk14C = &D_0038A1B0.unkA0;
+                object->model->unk14C = &map_draw_state.unkA0;
             } else {
-                object->model->unk14C = &D_0038A1B0.unk290[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk34];
+                object->model->unk14C = &map_draw_state.unk290[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk34];
             }
             if (object->unk04->kind == 9) {
                 LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
@@ -602,21 +602,21 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 }
             } else {
                 if ((s8)object->unk08->unk38.bytes[5] != -1) {
-                    object->model->unk148 = (s32)&D_0038A1B0.unkA90[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[5]];
+                    object->model->unk148 = (s32)&map_draw_state.unkA90[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->unk148 = (s32)&D_0038A1B0.unkC0;
+                    object->model->unk148 = (s32)&map_draw_state.unkC0;
                 } else {
-                    object->model->unk148 = (s32)&D_0038A1B0.unkA90[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk35];
+                    object->model->unk148 = (s32)&map_draw_state.unkA90[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk35];
                 }
             }
             if ((s8)object->unk08->unk38.bytes[4] == -1) {
                 if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->unk14C = &D_0038A1B0.unkA0;
+                    object->model->unk14C = &map_draw_state.unkA0;
                 } else {
-                    object->model->unk14C = &D_0038A1B0.unk290[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk34];
+                    object->model->unk14C = &map_draw_state.unk290[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk34];
                 }
             } else {
-                object->model->unk14C = &D_0038A1B0.unk290[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[4]];
+                object->model->unk14C = &map_draw_state.unk290[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[4]];
             }
             if (object->unk04->kind == 9) {
                 LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
@@ -657,7 +657,7 @@ void MapObject_Activate(MapObject *object) {
 void MapObject_Deactivate(MapObject *object) {
     if (object != NULL) {
         if (MAP_OBJECT_BITS(object)->step != 0) {
-            D_003BE230[object->unk04->kind](object);
+            map_object_draw_hooks[object->unk04->kind](object);
         }
         func_0011EA80(object);
         Effect_FreeForOwner((Entity *)object); // match: shared prototype takes an Entity
@@ -696,7 +696,7 @@ void MapObject_Break(MapObject *object) {
     if (MAP_OBJECT_DEF_WORD(object) & 0x1000) {
         MapObject_StartAnim(object, 1);
     }
-    Effect_StartSpawner(object->unk04->unk50, &object->model->position, &object->model->rotation, &D_0038CD20[MAP_OBJECT_BYTES(object)->unk00 & 1]);
+    Effect_StartSpawner(object->unk04->unk50, &object->model->position, &object->model->rotation, &map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1]);
     if (object->unk08->unk42 != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
         Script_Start(object->unk08->unk42, 0);
     }
@@ -848,7 +848,7 @@ void MapObject_ClearMap(int map) {
     D_004467B8[map] = 0;
     plain_draw_list[map] = NULL;
     jointed_draw_list[map] = NULL;
-    memset(D_003A1A30[map], 0, sizeof(D_003A1A30[map]));
+    memset(map_slot_objects[map], 0, sizeof(map_slot_objects[map]));
     memset(objects_by_id[map], 0, sizeof(objects_by_id[map]));
 }
 

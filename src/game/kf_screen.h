@@ -21,15 +21,15 @@ typedef struct {
     s32 unk04;                      /* 0x04 */
 } RenderSlotArg;
 
-/* D_0038D680: the screen fade */
+/* screen_fade: the screen fade */
 typedef struct {
     Vector4 position;               /* 0x00 where the player goes in the new map */
     s32 kind;                       /* 0x10 1: func_00118848 started it, 2: func_001188E0 */
     s32 unk14;                      /* 0x14 */
-    s32 step;                       /* 0x18 index into D_0038D650, 0: no map change running */
+    s32 step;                       /* 0x18 index into screen_fade_steps, 0: no map change running */
     s32 map;                        /* 0x1C the map to change to */
     s32 file_handle;                /* 0x20 */
-    s32 draw_step;                  /* 0x24 index into D_0038D670 */
+    s32 draw_step;                  /* 0x24 index into screen_fade_draw_steps */
     int timer;                      /* 0x28 frames left */
 } ScreenFade;
 

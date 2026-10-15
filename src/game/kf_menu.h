@@ -158,7 +158,7 @@ typedef struct {
     u16 bits[12];                   /* 0x00 */
 } MenuPadBitTable;
 
-/* trade_stock_tables: per trade table, how many of each item it has in stock (D_003699B0...); copied whole like TradeValueTables */
+/* trade_stock_tables: per trade table, how many of each item it has in stock (trade_stock_1...); copied whole like TradeValueTables */
 typedef struct {
     u8 *counts[5];                  /* 0x00 */
 } TradeStockTables;

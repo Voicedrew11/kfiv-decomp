@@ -18,7 +18,7 @@ void sceVu0CopyMatrix(void *, void *);
 extern void *D_00420D50[];
 extern u32 D_0038CC74[];
 extern u8 item_counts[];
-extern float D_00413F80[];
+extern float player_state[];
 
 /* Start handler of the door-like kinds: closed (animation 4) or already open
    (animation 5). Kind 6 remembers where its second part sits and, when it starts
@@ -169,7 +169,7 @@ void func_0011F708(MapObject *object) {
     }
     if (MAP_OBJECT_WORDS(object)->unk46 == 0) {
         model = object->model;
-        player = D_00413F80;
+        player = player_state;
         delta_x = model->position.x - player[0];
         delta_z = model->position.z - player[2];
         distance = sqrtf(delta_x * delta_x + delta_z * delta_z);

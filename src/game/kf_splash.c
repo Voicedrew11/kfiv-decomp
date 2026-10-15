@@ -7,10 +7,10 @@ void *memset(void *, int, u32);
 void *memcpy(void *, const void *, u32);
 int sprintf(char *, const char *, ...);
 
-extern GameStatus D_0038CC50;
+extern GameStatus game_status;
 extern int D_0038A134[3];
 extern int D_0038CC80[3];
-extern u16 D_00413DAA[];
+extern u16 pad_pressed[];
 extern u16 D_00446940;
 extern u32 *D_00446E84;
 
@@ -68,7 +68,7 @@ static void (*splash_state_table[8])(void) = { /* 0x42C008 */
 static int D_0042C028[6] = { 0x20, 0x18, 0x10, 0x08, 0x04, 0x00 };
 
 /* 0x446E84 where Splash_BuildImagePacket builds the image packet: 0x80000 into the file-load buffer */
-u32 *D_00446E84 = (u32 *)((char *)&D_00249680 + 0x80000);
+u32 *D_00446E84 = (u32 *)((char *)&file_load_buffer + 0x80000);
 
 /* Clears splash state (idle, no image id, file not open). */
 void Splash_Reset(void) {
@@ -93,12 +93,12 @@ int Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_fram
     int fade_in;
     int fade_out;
 
-    if (!D_0038CC50.bit2 && !(D_0038CC50.bit3 && D_0038CC50.save_requested) && !(D_0038CC50.bit4 && !D_0038CC50.bit8) &&
-        !D_0038CC50.bit14) {
+    if (!game_status.bit2 && !(game_status.bit3 && game_status.save_requested) && !(game_status.bit4 && !game_status.bit8) &&
+        !game_status.bit14) {
         if (splash_state != 0) {
             return 0;
         }
-        if (D_0038CC50.unk30 != 0) {
+        if (game_status.unk30 != 0) {
             return 0;
         }
         splash_start_delay = 2;
@@ -116,7 +116,7 @@ int Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_fram
         splash_fade_out_frames = fade_out;
         splash_fade_in_counter = 0;
         splash_fade_out_counter = 0;
-        D_0038CC50.unk30 = 0x87F;
+        game_status.unk30 = 0x87F;
         func_001B9478();
         return 1;
     }
@@ -149,7 +149,7 @@ void Splash_StateStartDelay(void) {
     }
 }
 
-/* Loads the splash image file into D_00249680 and sets up its display. */
+/* Loads the splash image file into file_load_buffer and sets up its display. */
 void Splash_StateLoadImage(void) {
     char image_file_name[256];
     int image_fd;
@@ -165,8 +165,8 @@ void Splash_StateLoadImage(void) {
     if (image_fd >= 0) {
         func_00102218();
         splash_image_file_open = 1;
-        memset(&D_00249680, 0, 0x80000);
-        func_001025C0(image_fd, &D_00249680, 0x80000);
+        memset(&file_load_buffer, 0, 0x80000);
+        func_001025C0(image_fd, &file_load_buffer, 0x80000);
         func_001024B0(image_fd);
         Splash_BuildImagePacket(0x2E40, 0x3D40);
         Splash_BuildSprite();
@@ -200,7 +200,7 @@ void Splash_StateHold(void) {
             splash_state += 1;
         }
     }
-    if (splash_skippable != 0 && (D_00413DAA[0] & D_00446940) != 0) {
+    if (splash_skippable != 0 && (pad_pressed[0] & D_00446940) != 0) {
         splash_state += 1;
     }
 }
@@ -261,23 +261,23 @@ void Splash_Draw(void) {
     }
 }
 
-/* Build splash_sprite for the image at D_00249680. */
+/* Build splash_sprite for the image at file_load_buffer. */
 void Splash_BuildSprite(void) {
     int height;
     int width;
     u64 tex0;
 
-    width = 1 << ((D_00249680.tex0 >> 26) & 0xF);
-    height = 1 << ((D_00249680.tex0 >> 30) & 0xF);
+    width = 1 << ((file_load_buffer.tex0 >> 26) & 0xF);
+    height = 1 << ((file_load_buffer.tex0 >> 30) & 0xF);
 
     memset(&splash_sprite, 0, sizeof(splash_sprite));
-    tex0 = D_00249680.tex0;
+    tex0 = file_load_buffer.tex0;
     tex0 &= 0xFFFFFFFFFFFFC000UL;
     tex0 |= 0x2E40;
     tex0 &= 0xFFF8001FFFFFFFFFUL;
     tex0 |= 0xF500UL << 35;
     splash_sprite.tex0 = tex0;
-    splash_sprite.unk08 = D_00249680.unk18;
+    splash_sprite.unk08 = file_load_buffer.unk18;
     splash_sprite.gif_reg = 0x156;
     splash_sprite.red = 0x80;
     splash_sprite.green = 0x80;
@@ -323,7 +323,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     int psm;
     u64 format;
 
-    image = (SplashImageBits *)&D_00249680;
+    image = (SplashImageBits *)&file_load_buffer;
     psm = image->tex0.psm;
     width = 1 << image->tex0.tw;
     height = 1 << image->tex0.th;
@@ -390,7 +390,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     }
     *cursor++ = 0;
     *cursor++ = 0;
-    source = (char *)&D_00249680;
+    source = (char *)&file_load_buffer;
     source += sizeof(TextureHeader);
     memcpy(cursor, source, size);
     output = (char *)cursor + size;
@@ -422,7 +422,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
         packet->image_tag_high[0] = 0;
         packet->image_tag_high[1] = 0;
         output += sizeof(SplashLoadPacket);
-        source = (char *)&D_00249680;
+        source = (char *)&file_load_buffer;
         source += image->image_size + sizeof(TextureHeader);
         memcpy(output, source, palette_qwords << 4);
         // match: nothing reads this, but with no statement after it the call above becomes a tail jump

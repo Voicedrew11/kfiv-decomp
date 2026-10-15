@@ -7,7 +7,7 @@
 #include "kf_map_object.h"
 #include "kf_effect.h"
 
-#define IS_PLAYER(owner) ((owner) == (Entity *)&D_00413F80)
+#define IS_PLAYER(owner) ((owner) == (Entity *)&player_state)
 #define LARGER(first, second) ((first) < (second) ? (second) : (first))
 /* rand() scaled to 0-99 (the factor is 2 to the power -31) */
 #define ROLL_PERCENT() ((s32)(rand() * 100.0f * 0.0000000004656613f))
@@ -77,26 +77,26 @@ s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
 extern CollisionListPick2 D_00446918[];
 // match: declared without a size, so it is not addressed through $gp
 extern CollisionListPick2 D_00446920[];
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern Entity *D_004467E0;
-extern MapSlot D_0038CD20[2];
+extern MapSlot map_slots[2];
 extern s32 D_004467B8[2];
-extern MapObject D_003A1A30[][0x200];
-extern PlayerArmPoints D_00414780;
-extern PlayerArmPoints D_004147A0;
+extern MapObject map_slot_objects[][0x200];
+extern PlayerArmPoints held_item_arm_points;
+extern PlayerArmPoints held_item_arm_points_prev;
 extern CollisionListPick4 D_0043F1F0;
 extern const VuVector4 D_0043F200;
-extern GameStatus D_0038CC50;
-extern Entity D_003BEDF0[][0x80];
+extern GameStatus game_status;
+extern Entity entity_pool[][0x80];
 extern u32 D_00446ED4;
-extern Entity D_003D6C70;           /* the last entity of D_003BEDF0 */
+extern Entity D_003D6C70;           /* the last entity of entity_pool */
 extern char D_0043F210[];           /* "g_dmgLassBossCnt[%d]\n" */
 extern char D_0043F228[];           /* "HP halved!! %d / 2 = %d" in Japanese */
 extern s32 D_00446928;              /* g_dmgLassBossCnt: weapon hits the last boss still takes */
 extern PlayerItemDef weapon_defs[];
 extern LevelDef D_00416D78[];
-extern LevelRecord D_003679A0[];
-extern LevelRecord D_003682F0[];
+extern LevelRecord weapon_level_records[];
+extern LevelRecord worn_item_level_records[];
 extern LevelDef D_00417EF8[];
 extern char D_0043F248[];
 
@@ -105,10 +105,10 @@ int func_001B24B0(ModelInstance *, void *, f32);
 int func_001B2740(ModelInstance *, void *, f32);
 
 /* 0x402D88 the three hit checks of a swing, one per kind of collision shape class */
-int (*D_00402D88[3])(ModelInstance *, void *, f32) = { func_001B21F8, func_001B24B0, func_001B2740 };
+int (*swing_hit_checks[3])(ModelInstance *, void *, f32) = { func_001B21F8, func_001B24B0, func_001B2740 };
 u32 D_00402D98[4] = { 0x18, 8, 0x10, 0 }; /* 0x402D98 four words after the table, which nothing reads */
 /* 0x402DA8 the effect table, 0x110 bytes per effect id, which func_001B4EE0 loads from its file */
-FxTableEntry D_00402DA8[256] = { 0 };
+FxTableEntry fx_table[256] = { 0 };
 
 /* Runs an attack request against the world, by the request's shape (0 to 3). Only shapes
    0 and 3 do anything. */
@@ -149,11 +149,11 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 
     if (request->unk4D & 4) {
         for (index = 0; index < 2; index++) {
-            if (D_0038CD20[index].unk00 == 0) {
+            if (map_slots[index].unk00 == 0) {
                 continue;
             }
             count = D_004467B8[index];
-            object = D_003A1A30[index];
+            object = map_slot_objects[index];
             for (item = 0; item < count; item++, object++) {
                 if (!(object->unk10 & 0x10000)) {
                     continue;
@@ -181,7 +181,7 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     if (request->unk4D & 1) {
         if (!((request->unk4D & 0x80) && IS_PLAYER(request->owner))) {
-            Collision_SphereCylinder(&D_00413F80, request, 50.0f, 230.0f, request->unk30);
+            Collision_SphereCylinder(&player_state, request, 50.0f, 230.0f, request->unk30);
             if (COLLISION_RESULT->hit != 0) {
                 func_001B29C8(request, extra);
                 return 1;
@@ -247,11 +247,11 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     if (kind != -1) {
         for (index = 0; index < 2; index++) {
-            if (D_0038CD20[index].unk00 == 0) {
+            if (map_slots[index].unk00 == 0) {
                 continue;
             }
-            record = (MapRecordBounds *)D_0038CD20[index].records;
-            count = D_0038CD20[index].header->record_count;
+            record = (MapRecordBounds *)map_slots[index].records;
+            count = map_slots[index].header->record_count;
             for (item = 0; item < count; item++, record++) {
                 if (record->unk30 == 0xFFFF) {
                     continue;
@@ -265,7 +265,7 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     request->position[2] < record->lowest[2] - reach || record->highest[2] + reach < request->position[2]) {
                     continue;
                 }
-                result = D_00402D88[kind](record->model, request, reach);
+                result = swing_hit_checks[kind](record->model, request, reach);
                 if (COLLISION_RESULT->hit != 0) {
                     // match: called as void, retail reuses $2 at once
                     ((void (*)(Unk1B1470Request *, Unk1B1470Extra *))func_001B3E78)(request, extra);
@@ -329,7 +329,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 
     if (request->unk4D & 1) {
         if (!((request->unk4D & 0x80) && IS_PLAYER(request->owner))) {
-            Collision_CylinderArc(&D_00413F80, request, 50.0f, 230.0f, request->unk30, request->unk34, request->unk3C,
+            Collision_CylinderArc(&player_state, request, 50.0f, 230.0f, request->unk30, request->unk34, request->unk3C,
                           request->unk38);
             if (COLLISION_RESULT->hit != 0) {
                 func_001B29C8(request, extra);
@@ -413,24 +413,24 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         Vector_Copy(tip, request);
         tip[1] += request->unk34;
         for (index = 0; index < 2; index++) {
-            if (D_0038CD20[index].unk00 == 0) {
+            if (map_slots[index].unk00 == 0) {
                 continue;
             }
             count = D_004467B8[index];
-            object = D_003A1A30[index];
+            object = map_slot_objects[index];
             for (item = 0; item < count; item++, object++) {
-                Vector_Subtract(direction, &D_00414780.points[1], &D_00414780.points[0]);
+                Vector_Subtract(direction, &held_item_arm_points.points[1], &held_item_arm_points.points[0]);
                 length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
                 Vector_Scale(direction, direction, 1.0f / length);
-                func_001C2128(object, (f32 *)&D_00414780.points[0], direction, length);
+                func_001C2128(object, (f32 *)&held_item_arm_points.points[0], direction, length);
                 if (COLLISION_RESULT->hit != 0) {
                     func_001B3AC0(request, extra, object);
                     return 4;
                 }
-                Vector_Subtract(direction, &D_00414780.points[1], &D_004147A0.points[1]);
+                Vector_Subtract(direction, &held_item_arm_points.points[1], &held_item_arm_points_prev.points[1]);
                 length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
                 Vector_Scale(direction, direction, 1.0f / length);
-                func_001C2128(object, (f32 *)&D_004147A0.points[1], direction, length);
+                func_001C2128(object, (f32 *)&held_item_arm_points_prev.points[1], direction, length);
                 if (COLLISION_RESULT->hit != 0) {
                     func_001B3AC0(request, extra, object);
                     return 4;
@@ -441,12 +441,12 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if (!IS_PLAYER(request->owner)) {
         return 0;
     }
-    func_001C1C80((f32 *)&D_00414780.points[0], (f32 *)&D_00414780.points[1]);
+    func_001C1C80((f32 *)&held_item_arm_points.points[0], (f32 *)&held_item_arm_points.points[1]);
     if (COLLISION_RESULT->hit != 0) {
         func_001B3E78(request, extra);
         return 0x10;
     }
-    func_001C1C80((f32 *)&D_00414780.points[1], (f32 *)&D_004147A0.points[1]);
+    func_001C1C80((f32 *)&held_item_arm_points.points[1], (f32 *)&held_item_arm_points_prev.points[1]);
     if (COLLISION_RESULT->hit != 0) {
         func_001B3E78(request, extra);
         return 0x10;
@@ -744,20 +744,20 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     s32 percent;
     s32 damage;
 
-    if (owner >= D_003BEDF0[0] && owner < (Entity *)D_003D6DF0) {
+    if (owner >= entity_pool[0] && owner < (Entity *)entity_pool_slots) {
         if (extra->unk00 == 0) {
             owner->flags |= 0x8000L << 26;
         } else {
             owner->flags |= 0x8000L << 27;
         }
     }
-    if (D_00413F80.hp_now == 0) {
+    if (player_state.hp_now == 0) {
         return;
     }
-    if (D_0038CC50.unk00 == 0) {
+    if (game_status.unk00 == 0) {
         return;
     }
-    if (D_0038CC50.unk30 & 1) {
+    if (game_status.unk30 & 1) {
         return;
     }
     blocked = request->unk72;
@@ -765,22 +765,22 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         return;
     }
     percent = 100;
-    if ((u8)(D_00413F80.equipment[EQUIP_SHIELD] - 1) <= 1) {
+    if ((u8)(player_state.equipment[EQUIP_SHIELD] - 1) <= 1) {
         percent = 120;
     }
-    if ((u8)(D_00413F80.equipment[EQUIP_BOOT] - 0x6A) <= 1) {
+    if ((u8)(player_state.equipment[EQUIP_BOOT] - 0x6A) <= 1) {
         percent += 20;
     }
     func_001B3ED8(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50
-    damage = func_001B4AA8(request->unk50.unk00[0], D_00413F80.unk90.values[1], D_00413F80.power); // match: values[1] here and on the next line; values[0] is never used
-    damage += func_001B4AA8(request->unk50.unk00[1], D_00413F80.unk90.values[1], D_00413F80.power); // match: values[1] a second time
-    damage += func_001B4AA8(request->unk50.unk00[2], D_00413F80.unk90.values[2], D_00413F80.power);
-    damage += func_001B4AA8(request->unk50.unk00[3], D_00413F80.unk90.values[3], D_00413F80.magic) * percent / 100;
-    damage += func_001B4AA8(request->unk50.unk00[4], D_00413F80.unk90.values[4], D_00413F80.magic);
-    damage += func_001B4AA8(request->unk50.unk00[5], D_00413F80.unk90.values[5], D_00413F80.magic);
-    damage += func_001B4AA8(request->unk50.unk00[6], D_00413F80.unk90.values[6], D_00413F80.magic);
-    damage += func_001B4AA8(request->unk50.unk00[7], D_00413F80.unk90.values[7], D_00413F80.magic);
-    damage += func_001B4AA8(request->unk50.unk00[8], D_00413F80.unk90.values[8], D_00413F80.magic);
+    damage = func_001B4AA8(request->unk50.unk00[0], player_state.unk90.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
+    damage += func_001B4AA8(request->unk50.unk00[1], player_state.unk90.values[1], player_state.power); // match: values[1] a second time
+    damage += func_001B4AA8(request->unk50.unk00[2], player_state.unk90.values[2], player_state.power);
+    damage += func_001B4AA8(request->unk50.unk00[3], player_state.unk90.values[3], player_state.magic) * percent / 100;
+    damage += func_001B4AA8(request->unk50.unk00[4], player_state.unk90.values[4], player_state.magic);
+    damage += func_001B4AA8(request->unk50.unk00[5], player_state.unk90.values[5], player_state.magic);
+    damage += func_001B4AA8(request->unk50.unk00[6], player_state.unk90.values[6], player_state.magic);
+    damage += func_001B4AA8(request->unk50.unk00[7], player_state.unk90.values[7], player_state.magic);
+    damage += func_001B4AA8(request->unk50.unk00[8], player_state.unk90.values[8], player_state.magic);
     request->unk74 = 1;
     if (damage <= blocked) { // match: blocked is request->unk72, which is known to be 0 here
         damage = 1;
@@ -788,10 +788,10 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     func_001BB260(damage);
     func_001B2C48(&request->unk62);
     if (request->unk71 != 0) {
-        if (request->unk71 < D_00413F80.mp_now) {
-            D_00413F80.mp_now -= request->unk71;
+        if (request->unk71 < player_state.mp_now) {
+            player_state.mp_now -= request->unk71;
         } else {
-            D_00413F80.mp_now = 0;
+            player_state.mp_now = 0;
         }
     }
     if (UNK1B1470_REQUEST_UNIT(request) & UNK1B1470_UNIT_UNK4C_3) {
@@ -808,40 +808,40 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 void func_001B2C48(void *attack_chances) {
     EntityParamsUnk240PartUnk12 *chances = attack_chances;
 
-    if ((u16)chances->unk00[0] != 0 && D_00413F80.flag_timers[0] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[0] - D_00413F80.unkDC[0])) {
-            D_00413F80.timed_flags[0] = 1800;
-            D_00413F80.unk2C4 = D_00446ED4;
+    if ((u16)chances->unk00[0] != 0 && player_state.flag_timers[0] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[0] - player_state.unkDC[0])) {
+            player_state.timed_flags[0] = 1800;
+            player_state.unk2C4 = D_00446ED4;
         }
     }
-    if ((u16)chances->unk00[1] != 0 && D_00413F80.flag_timers[1] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[1] - D_00413F80.unkDC[1])) {
-            D_00413F80.timed_flags[1] = 150;
-            D_00413F80.unk2C8 = D_00446ED4;
+    if ((u16)chances->unk00[1] != 0 && player_state.flag_timers[1] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[1] - player_state.unkDC[1])) {
+            player_state.timed_flags[1] = 150;
+            player_state.unk2C8 = D_00446ED4;
         }
     }
-    if ((u16)chances->unk00[2] != 0 && D_00413F80.flag_timers[2] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[2] - D_00413F80.unkDC[2])) {
-            D_00413F80.timed_flags[2] = 3600;
-            D_00413F80.unk2CC = D_00446ED4;
+    if ((u16)chances->unk00[2] != 0 && player_state.flag_timers[2] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[2] - player_state.unkDC[2])) {
+            player_state.timed_flags[2] = 3600;
+            player_state.unk2CC = D_00446ED4;
         }
     }
-    if ((u16)chances->unk00[3] != 0 && D_00413F80.flag_timers[3] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[3] - D_00413F80.unkDC[3])) {
-            D_00413F80.timed_flags[3] = 5400;
-            D_00413F80.unk2D0 = D_00446ED4;
+    if ((u16)chances->unk00[3] != 0 && player_state.flag_timers[3] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[3] - player_state.unkDC[3])) {
+            player_state.timed_flags[3] = 5400;
+            player_state.unk2D0 = D_00446ED4;
         }
     }
-    if ((u16)chances->unk00[4] != 0 && D_00413F80.flag_timers[4] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[4] - D_00413F80.unkDC[4])) {
-            D_00413F80.timed_flags[4] = 1800;
-            D_00413F80.unk2D4 = D_00446ED4;
+    if ((u16)chances->unk00[4] != 0 && player_state.flag_timers[4] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[4] - player_state.unkDC[4])) {
+            player_state.timed_flags[4] = 1800;
+            player_state.unk2D4 = D_00446ED4;
         }
     }
-    if ((u16)chances->unk00[5] != 0 && D_00413F80.flag_timers[5] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[5] - D_00413F80.unkDC[5])) {
-            D_00413F80.timed_flags[5] = 18000;
-            D_00413F80.unk2D8 = D_00446ED4;
+    if ((u16)chances->unk00[5] != 0 && player_state.flag_timers[5] == 0) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[5] - player_state.unkDC[5])) {
+            player_state.timed_flags[5] = 18000;
+            player_state.unk2D8 = D_00446ED4;
         }
     }
 }
@@ -894,7 +894,7 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
         func_001B4B10(extra->unk24, 4);
         func_001BC058();
         Vector_Copy(&position, owner);
-        if (D_00413F80.position.x < entity->model->position[0]) {
+        if (player_state.position.x < entity->model->position[0]) {
             position.x += 100.0f;
             position.z += 100.0f;
         } else {
@@ -902,16 +902,16 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
             position.z += 100.0f;
         }
         func_001BB468(&position, 200.0f);
-        if (D_00413F80.hp_now < 2) {
+        if (player_state.hp_now < 2) {
             return;
         }
-        printf(D_0043F228, D_00413F80.hp_now, D_00413F80.hp_now / 2);
-        func_001BB260(D_00413F80.hp_now / 2);
+        printf(D_0043F228, player_state.hp_now, player_state.hp_now / 2);
+        func_001BB260(player_state.hp_now / 2);
         return;
     }
 
     // match: the range test (not one of the entities) is always true for the player
-    if (IS_PLAYER(owner) && (owner < D_003BEDF0[0] || owner > &D_003D6C70)) {
+    if (IS_PLAYER(owner) && (owner < entity_pool[0] || owner > &D_003D6C70)) {
         entity->flags |= 0x8000L << 28;
     }
     if (extra->unk00 == 1) {
@@ -983,7 +983,7 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
     damage *= scale;
 
     if (by_weapon) {
-        if (D_00413F80.weapon == 0x11) {
+        if (player_state.weapon == 0x11) {
             if ((entity->spawn_info->type_id >= 0x32 && entity->spawn_info->type_id <= 0x42) ||
                 (entity->spawn_info->type_id >= 0x5C && entity->spawn_info->type_id <= 0x61) ||
                 entity->spawn_info->type_id == 0x2F || entity->spawn_info->type_id == 0xA4 ||
@@ -1049,16 +1049,16 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
     }
 
     if (by_weapon || by_magic) {
-        if (D_00413F80.unk100 != 0 && D_00413F80.hp_now > 0) {
-            D_00413F80.hp_now += damage * D_00413F80.unk100 / 100;
-            if (D_00413F80.hp_max < D_00413F80.hp_now) {
-                D_00413F80.hp_now = D_00413F80.hp_max;
+        if (player_state.unk100 != 0 && player_state.hp_now > 0) {
+            player_state.hp_now += damage * player_state.unk100 / 100;
+            if (player_state.hp_max < player_state.hp_now) {
+                player_state.hp_now = player_state.hp_max;
             }
         }
-        if (D_00413F80.unk104 != 0) {
-            D_00413F80.mp_now += damage * D_00413F80.unk104 / 100;
-            if (D_00413F80.mp_max < D_00413F80.mp_now) {
-                D_00413F80.mp_now = D_00413F80.mp_max;
+        if (player_state.unk104 != 0) {
+            player_state.mp_now += damage * player_state.unk104 / 100;
+            if (player_state.mp_max < player_state.mp_now) {
+                player_state.mp_now = player_state.mp_max;
             }
         }
     }
@@ -1123,7 +1123,7 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
         if (extra->unk04 != 0) {
             return;
         }
-        if (D_00413F80.weapon == 0x2E) {
+        if (player_state.weapon == 0x2E) {
             MapObject_Break(object);
             return;
         }
@@ -1131,7 +1131,7 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
         func_001BBFC8();
         return;
     }
-    if (request->owner == (Entity *)&D_0038CD20[0] || request->owner == (Entity *)&D_0038CD20[1]) {
+    if (request->owner == (Entity *)&map_slots[0] || request->owner == (Entity *)&map_slots[1]) {
         MapObject_Break(object);
         return;
     }
@@ -1194,7 +1194,7 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
         MapObject_Break(object);
         return;
     }
-    if (D_00413F80.unk262 != 0) {
+    if (player_state.unk262 != 0) {
         return;
     }
     if (extra->unk00 != 0) {
@@ -1227,7 +1227,7 @@ void func_001B3ED8(EntityParamsUnk240PartUnk00 *out, Unk1B1470Request *request, 
     f32 strength;
     s32 whole;
 
-    if (request->owner == (Entity *)&D_00413F80) {
+    if (request->owner == (Entity *)&player_state) {
         if (extra->unk00 == 0) {
             STORE_ROUNDED_UP(out->unk00[0], (f32)request->unk50.unk00[0] + (f32)extra->unk20 * (f32)request->unk50.unk00[0] / 50.0f);
             STORE_ROUNDED_UP(out->unk00[1], (f32)request->unk50.unk00[1] + (f32)extra->unk20 * (f32)request->unk50.unk00[1] / 50.0f);
@@ -1249,7 +1249,7 @@ void func_001B3ED8(EntityParamsUnk240PartUnk00 *out, Unk1B1470Request *request, 
             STORE_ROUNDED_UP(out->unk00[7], request->unk50.unk00[7] + (f32)extra->unk22 * request->unk50.unk00[7] / 50.0f + extra->unk0E[4] / 50.0f);
             STORE_ROUNDED_UP(out->unk00[8], request->unk50.unk00[8] + (f32)extra->unk22 * request->unk50.unk00[8] / 50.0f + extra->unk0E[5] / 50.0f);
         }
-    } else if (request->owner >= D_003BEDF0[0] && request->owner <= &D_003D6C70) {
+    } else if (request->owner >= entity_pool[0] && request->owner <= &D_003D6C70) {
         if (extra->unk00 == 0) {
             *out = request->unk50;
         } else {
@@ -1322,7 +1322,7 @@ void func_001B4B10(int idx, int amount) {
     if (idx != 0) {
         item = &weapon_defs[idx];
         def = &D_00416D78[idx];
-        rec = &D_003679A0[idx];
+        rec = &weapon_level_records[idx];
         if (item->unk63 < 2 && rec->level >= 0x33) {
             rec->exp += amount;
             while (rec->exp >= def->exp_per_level) {
@@ -1341,8 +1341,8 @@ void func_001B4B10(int idx, int amount) {
 /* The player was hit for `damage`: what he wears gains experience by how much of his health that was.
    Without a shield everything gains double, and the piece the hit landed on (or one picked by chance) four times. */
 void func_001B4BC8(int damage, Unk1B1470Request *request) {
-    f32 percent = (f32)damage * 100.0f / (f32)D_00413F80.hp_max;
-    int amount = damage * 10 / D_00413F80.hp_max;
+    f32 percent = (f32)damage * 100.0f / (f32)player_state.hp_max;
+    int amount = damage * 10 / player_state.hp_max;
     int part;
     int shield_exp;
     int helmet_exp;
@@ -1364,7 +1364,7 @@ void func_001B4BC8(int damage, Unk1B1470Request *request) {
     } else {
         part = (int)(rand() * 4.0f * 4.656613e-10f) + 1;
     }
-    if (!((s32)(D_00413F80.unk1C8 >> 35) & 1) && D_00413F80.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
+    if (!((s32)(player_state.unk1C8 >> 35) & 1) && player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
         shield_exp = 1;
         if (!(percent < 5.0f)) {
             shield_exp = amount * 2;
@@ -1391,26 +1391,26 @@ void func_001B4BC8(int damage, Unk1B1470Request *request) {
             boots_exp = amount * 4;
         }
     }
-    if (D_00413F80.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
-        func_001B4DF8(D_00413F80.equipment[EQUIP_SHIELD], shield_exp);
+    if (player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
+        func_001B4DF8(player_state.equipment[EQUIP_SHIELD], shield_exp);
     }
-    if (D_00413F80.equipment[EQUIP_HELM] != ITEM_WORN_INDEX(ITEM_HELM_NONE)) {
-        func_001B4DF8(D_00413F80.equipment[EQUIP_HELM], helmet_exp);
+    if (player_state.equipment[EQUIP_HELM] != ITEM_WORN_INDEX(ITEM_HELM_NONE)) {
+        func_001B4DF8(player_state.equipment[EQUIP_HELM], helmet_exp);
     }
-    if (D_00413F80.equipment[EQUIP_ARMOR] != ITEM_WORN_INDEX(ITEM_ARMOR_NONE)) {
-        func_001B4DF8(D_00413F80.equipment[EQUIP_ARMOR], armor_exp);
+    if (player_state.equipment[EQUIP_ARMOR] != ITEM_WORN_INDEX(ITEM_ARMOR_NONE)) {
+        func_001B4DF8(player_state.equipment[EQUIP_ARMOR], armor_exp);
     }
-    if (D_00413F80.equipment[EQUIP_GAUNTLET] != ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE)) {
-        func_001B4DF8(D_00413F80.equipment[EQUIP_GAUNTLET], gloves_exp);
+    if (player_state.equipment[EQUIP_GAUNTLET] != ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE)) {
+        func_001B4DF8(player_state.equipment[EQUIP_GAUNTLET], gloves_exp);
     }
-    if (D_00413F80.equipment[EQUIP_BOOT] != ITEM_WORN_INDEX(ITEM_BOOT_NONE)) {
-        func_001B4DF8(D_00413F80.equipment[EQUIP_BOOT], boots_exp);
+    if (player_state.equipment[EQUIP_BOOT] != ITEM_WORN_INDEX(ITEM_BOOT_NONE)) {
+        func_001B4DF8(player_state.equipment[EQUIP_BOOT], boots_exp);
     }
 }
 
 /* Adds experience to a record, rolling over into levels (levels below 0x33 reset to 0x32). */
 void func_001B4DF8(int idx, int amount) {
-    LevelRecord *rec = &D_003682F0[idx];
+    LevelRecord *rec = &worn_item_level_records[idx];
     LevelDef *def = &D_00417EF8[idx];
 
     if (rec->level >= 0x33 && idx != ITEM_WORN_INDEX(ITEM_SHIELD_NONE) && idx != ITEM_WORN_INDEX(ITEM_HELM_NONE)
@@ -1432,14 +1432,14 @@ void func_001B4DF8(int idx, int amount) {
 
 /* Adds amount to the player's running total at 0x2A0. */
 void func_001B4EC8(int amount) {
-    D_00413F80.unk2A0 += amount;
+    player_state.unk2A0 += amount;
 }
 
-/* Loads the effect table D_00402DA8 from its file. */
+/* Loads the effect table fx_table from its file. */
 void func_001B4EE0(void) {
     int file_handle = func_00102238(D_0043F248, 0, 1);
 
-    func_001025C0(file_handle, D_00402DA8, -1);
+    func_001025C0(file_handle, fx_table, -1);
     func_001024B0(file_handle);
 }
 
@@ -1449,7 +1449,7 @@ int func_001B4F30(u16 effect_id, void *shot, void *from, void *angles, void *ent
     if (effect_id >= 0x100) {
         return 0;
     }
-    entry = &D_00402DA8[effect_id];
+    entry = &fx_table[effect_id];
     if (entry->unk102 != 0) {
         return 0;
     }
@@ -1471,7 +1471,7 @@ int func_001B4F90(void *effect_actor) {
         return 0;
     }
     if (effect->effect_param < 0x100 && effect->def->unk10B < 3) {
-        check = &D_00402DA8[effect->effect_param].hit_checks[effect->def->unk10B];
+        check = &fx_table[effect->effect_param].hit_checks[effect->def->unk10B];
         memset(&request, 0, sizeof(request));
         switch (check->shape) {
         case 0:

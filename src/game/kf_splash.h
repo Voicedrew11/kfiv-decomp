@@ -5,7 +5,7 @@
 #include "common.h"
 #include "kf_texture.h"
 
-/* the image file as loaded, at D_00249680 */
+/* the image file as loaded, at file_load_buffer */
 typedef struct {
     u64 unk00;                      /* 0x00 */
     u64 unk08;                      /* 0x08 */
@@ -35,7 +35,7 @@ typedef struct {
     int vertex1_t;                  /* 0x3C texture height << 4 */
 } SplashSprite;
 
-extern SplashImage D_00249680;
+extern SplashImage file_load_buffer;
 
 /* the GS TEX0 register as bit-fields */
 typedef struct {

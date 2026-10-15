@@ -1,4 +1,4 @@
-/* LavaBird: the behaviour of entity type 68 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* LavaBird: the behaviour of entity type 68 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Lava Bird. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -13,7 +13,7 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
 void Vector_Copy(void *, void *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 int rand(void);
 void EntityAi_SensePlayer(void *, int);
@@ -22,7 +22,7 @@ void EntityAi_StepState(void *);
 int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_TurnFromPush(void *, void *);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
@@ -89,7 +89,7 @@ void LavaBird_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = LavaBird_Think;
     unkE0->animate = (void (*)(void))LavaBird_Animate;
     unkE0->on_hit = (void (*)(void))LavaBird_OnHit;
@@ -201,13 +201,13 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->unkA0 == 0) {
         if (rand() % 100 < entity->params->unk438) {
             if (!(rand() & 1)) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 30;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
                 unkE0->unk79 = 1;
             } else {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 30;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
@@ -218,16 +218,16 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     next_action = EntityAi_PickCombatChoice(entity, 0);
-    if (D_00413F80.position[1] - entity->model->position[1] < entity->params->unk436) {
-        entity->target = &D_00413F80;
+    if (player_state.position[1] - entity->model->position[1] < entity->params->unk436) {
+        entity->target = &player_state;
         entity->unkA0 = rand() % 30 + 30;
         unkE0->unk78 = 0;
         next_action = 1;
         entity->unkCD = next_action;
         unkE0->unk79 = 2;
     }
-    if (D_00413F80.position[1] - entity->model->position[1] > (s16)entity->params->unk434) { // match: read signed here
-        entity->target = &D_00413F80;
+    if (player_state.position[1] - entity->model->position[1] > (s16)entity->params->unk434) { // match: read signed here
+        entity->target = &player_state;
         entity->unkA0 = rand() % 30 + 30;
         unkE0->unk78 = 0;
         next_action = 1;
@@ -250,12 +250,12 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 60;
             unkE0->unk78 = 0;
             break;
         default:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 60;
             unkE0->unk78 = 0;
             break;
@@ -288,7 +288,7 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     if (entity->unkA0 == 0) {
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
@@ -315,15 +315,15 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
         EntityPoint_PickNear((f32)entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
         entity->target = unkE0->unk30;
         entity->unkA0 = rand() % 60 + 60;
-        if (D_00413F80.position[1] - entity->model->position[1] < entity->params->unk436) {
-            entity->target = &D_00413F80;
+        if (player_state.position[1] - entity->model->position[1] < entity->params->unk436) {
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 30;
             unkE0->unk78 = 0;
             entity->unkCD = 1;
             unkE0->unk79 = 2;
         }
-        if (D_00413F80.position[1] - entity->model->position[1] > (s16)entity->params->unk434) { // match: read signed here
-            entity->target = &D_00413F80;
+        if (player_state.position[1] - entity->model->position[1] > (s16)entity->params->unk434) { // match: read signed here
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 30;
             unkE0->unk78 = 0;
             entity->unkCD = 1;
@@ -331,13 +331,13 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
         }
         if (rand() % 100 < entity->params->unk438) {
             if (!(rand() & 1)) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 30;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
                 unkE0->unk79 = 1;
             } else {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 30;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
@@ -618,7 +618,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
         current_frame = slots->unk80.unk02;
         launch_frame = ((EntityParamsUnk3D8Full *)unk3D8)->unk10[0].unk02;
         if (launch_frame != 0 && frame < launch_frame && launch_frame <= current_frame) {
-            LavaBird_LaunchBothShots(entity, unk3D8, frame, current_frame, D_00413F80.position, 0.7853982f, 0.7853982f);
+            LavaBird_LaunchBothShots(entity, unk3D8, frame, current_frame, player_state.position, 0.7853982f, 0.7853982f);
         }
         if (slots->unk80.unk02 > 0 && unk3D8->unk03 >= slots->unk80.unk02) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;

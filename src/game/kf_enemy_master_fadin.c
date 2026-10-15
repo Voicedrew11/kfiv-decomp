@@ -1,4 +1,4 @@
-/* MasterFadin: the behaviour of entity type 79 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* MasterFadin: the behaviour of entity type 79 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Master Fadin. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -11,10 +11,10 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 void EntityEvent_Respawn(char *);
 int Motion_Start(void *, int, int, u32, int);
-extern float D_00413F80[];
+extern float player_state[];
 float sqrtf(float);
 float atan2f(float, float);
 double atan2(double, double);
@@ -42,7 +42,7 @@ void MasterFadin_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = MasterFadin_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->dormant = (void (*)(void))MasterFadin_Dormant;
@@ -149,7 +149,7 @@ static void func_001435B0(Entity *entity, s32 unknown) {
                 Vector_Copy(angles, entity->model->unkD0);
                 angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
             }
-            Vector_Copy(target, D_00413F80);
+            Vector_Copy(target, player_state);
             target[1] -= 190.0f;
             pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
             yaw = EntityMath_AngleXZ(from, (char *)target);

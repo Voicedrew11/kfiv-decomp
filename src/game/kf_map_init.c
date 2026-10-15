@@ -25,7 +25,7 @@ void Script_Init(int);
 int Script_Start(int, int);
 extern char map_object_defs[];
 extern GameDefinition item_name_defs[380];
-extern u8 D_0041A6F8[];
+extern u8 item_common_defs[];
 extern u8 weapon_defs[];
 extern char worn_defs[];
 extern char D_0043E4E8[];
@@ -35,17 +35,17 @@ extern char D_0043E520[];
 extern char D_0043E538[];
 extern char D_0043E550[];
 extern char *D_004467C0;
-extern GameStatus D_0038CC50;
+extern GameStatus game_status;
 extern CameraState D_004325A0;
-extern MapProp *D_0038CDE0[2][0xFF];
+extern MapProp *map_slot_props[2][0xFF];
 extern int D_00446770;
 extern MapDrawRecord *D_00446778[2];
 extern MapDrawRecord *D_00446780[2];
 extern AreaNode *D_00446788;
 extern AreaNode *D_0044678C;
-extern MapSlot D_0038CD20[];
-extern MapDrawState D_0038A1B0;
-extern SoundLoadQueue D_0038A130;
+extern MapSlot map_slots[];
+extern MapDrawState map_draw_state;
+extern SoundLoadQueue sound_load_queue;
 extern MapSlotMemory D_004321F0[2];
 extern char D_0043E570[];
 extern u32 D_00446F1C;
@@ -69,7 +69,7 @@ void func_00112648(void) {
     func_001025C0(handle, item_name_defs, -1);
     func_001024B0(handle);
     handle = func_00102238(D_0043E520, 0, 1);
-    func_001025C0(handle, D_0041A6F8, -1);
+    func_001025C0(handle, item_common_defs, -1);
     func_001024B0(handle);
     handle = func_00102238(D_0043E538, 0, 1);
     func_001025C0(handle, weapon_defs, -1);
@@ -90,21 +90,21 @@ void func_00112648(void) {
 
 /* Resets the game status, the map draw state and the camera. */
 void func_001127F8(void) {
-    memset(&D_0038CC50, 0, 0x48);
-    D_0038CC50.unk07 = 1;
-    D_0038CC50.unk00 = 1;
-    D_0038CC50.unk01 = 1;
-    memset(&D_0038A1B0, 0, sizeof(MapDrawState));
-    D_0038A1B0.unk60 |= (s64)0x8000 << 31;
-    D_0038A1B0.unk60 |= (s64)0x8000 << 27;
-    D_0038A1B0.unk60 |= (s64)0x8000 << 30;
-    D_0038A1B0.unk88 = 0x40;
-    D_0038A1B0.unk68 = 1;
-    D_0038A1B0.unk6C = 0;
-    D_0038A1B0.unk70 = 0;
-    D_0038A1B0.unk74 = 0;
-    D_0038A1B0.unk78 = 0;
-    D_0038A1B0.unk80 = 0x44;
+    memset(&game_status, 0, 0x48);
+    game_status.unk07 = 1;
+    game_status.unk00 = 1;
+    game_status.unk01 = 1;
+    memset(&map_draw_state, 0, sizeof(MapDrawState));
+    map_draw_state.unk60 |= (s64)0x8000 << 31;
+    map_draw_state.unk60 |= (s64)0x8000 << 27;
+    map_draw_state.unk60 |= (s64)0x8000 << 30;
+    map_draw_state.unk88 = 0x40;
+    map_draw_state.unk68 = 1;
+    map_draw_state.unk6C = 0;
+    map_draw_state.unk70 = 0;
+    map_draw_state.unk74 = 0;
+    map_draw_state.unk78 = 0;
+    map_draw_state.unk80 = 0x44;
     memset(&D_004325A0, 0, sizeof(CameraState));
     D_004325A0.unk48 = 512.0f;
 }
@@ -112,10 +112,10 @@ void func_001127F8(void) {
 /* Empties the map slots, the map draw lists, the prop table and the area node lists. */
 void func_001128E0(void) {
     D_00446770 = 0;
-    memset(D_0038CD20, 0, 2 * sizeof(MapSlot));
+    memset(map_slots, 0, 2 * sizeof(MapSlot));
     memset(D_00446778, 0, sizeof(D_00446778));
     memset(D_00446780, 0, sizeof(D_00446780));
-    memset(D_0038CDE0, 0, sizeof(D_0038CDE0));
+    memset(map_slot_props, 0, sizeof(map_slot_props));
     D_00446788 = NULL;
     D_0044678C = NULL;
 }
@@ -123,7 +123,7 @@ void func_001128E0(void) {
 /* Loads a map into slot 0 in one go, sets everything in it up and makes it the current map. */
 void func_00112948(int map) {
     char name[0x100];
-    MapSlot *slot = &D_0038CD20[0];
+    MapSlot *slot = &map_slots[0];
     MapSlotMemory *memory = &D_004321F0[0];
     int handle;
     int size;
@@ -150,24 +150,24 @@ void func_00112948(int map) {
     MapObject_InitMap(0);
     func_001C82C0(0);
     Gold_InitMap(0);
-    D_0038CD20[0].unk00 = 1;
+    map_slots[0].unk00 = 1;
     D_00446770 = 0;
-    D_0038A1B0.unkA0 = *slot->unk0C;
-    D_0038A1B0.unkC0 = *(MapSlotUnk10Words *)slot->unk10;
-    fog = &D_0038A1B0.unk280;
-    *fog = ((MapSlotUnk08 *)D_0038CD20[0].header)->unk50;
-    D_0038A1B0.unk9A = 0;
-    D_0038A1B0.unk9B = 0;
-    D_0038A1B0.unk9C = 0;
+    map_draw_state.unkA0 = *slot->unk0C;
+    map_draw_state.unkC0 = *(MapSlotUnk10Words *)slot->unk10;
+    fog = &map_draw_state.unk280;
+    *fog = ((MapSlotUnk08 *)map_slots[0].header)->unk50;
+    map_draw_state.unk9A = 0;
+    map_draw_state.unk9B = 0;
+    map_draw_state.unk9C = 0;
     MapObject_StartMap(0);
     Entity_InitFromMapSpawns(0);
     func_00123158(0);
     func_001C87D8(0);
     Entity_ClearFlag10InSlot(0);
     func_00119360(0);
-    func_001034F8(D_0038CD20[0].tag);
-    Script_Init(D_0038CD20[0].unk5C);
+    func_001034F8(map_slots[0].tag);
+    Script_Init(map_slots[0].unk5C);
     Script_Start(0x7FFF, 0);
-    D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[0].header)->unk70;
-    D_0038A130.unk04 = 1;
+    sound_load_queue.unk00 = ((MapSlotUnk08 *)map_slots[0].header)->unk70;
+    sound_load_queue.unk04 = 1;
 }

@@ -1,4 +1,4 @@
-/* DarkOne: the behaviour of entity type 75 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* DarkOne: the behaviour of entity type 75 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: the Dark One, the last boss,
    chr.prm record 99 (ENTITY_TYPE_LAST_BOSS in func_001B2F70), whose one spawn is in 040.map, the end of
    the Dark Reality. The game's own text calls him the Dark One. func_001B2F70 gives him no damage:
@@ -17,7 +17,7 @@ void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern s32 D_00446928;
 extern u32 D_00446ED4;
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
@@ -27,7 +27,7 @@ void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkCombat(Entity *, s32);
-extern u8 D_00413FBC[];
+extern u8 player_weapon[];
 int Motion_Start(void *, int, int, u32, int);
 void EntityEvent_OnDeath(Entity *);
 
@@ -50,7 +50,7 @@ void DarkOne_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = DarkOne_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -141,11 +141,11 @@ static void DarkOne_Think(Entity *entity, s32 unknown) {
 }
 
 /* The death action in the slot: it only starts one of the two others, DarkOne_DeathByMoonlightSword with
-   flag bit 29 set when the weapon in hand (PlayerState.weapon, D_00413FBC[0]) is 0x2E, the Moonlight Sword
+   flag bit 29 set when the weapon in hand (PlayerState.weapon, player_weapon[0]) is 0x2E, the Moonlight Sword
    (item 196), else DarkOne_DeathByOtherWeapon with flag bit 29 clear.
    DarkOne_Think starts it too. */
 static void DarkOne_Death(Entity *entity) {
-    if (D_00413FBC[0] == 0x2E) {
+    if (player_weapon[0] == 0x2E) {
         ENTITY_FLAG_BITS(entity)->bit29 = TRUE;
         EntityAi_StartAction(entity, DarkOne_DeathByMoonlightSword, 1);
     } else {

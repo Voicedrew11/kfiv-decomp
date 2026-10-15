@@ -1,4 +1,4 @@
-/* Larva: the behaviour of entity type 67 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Larva: the behaviour of entity type 67 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Larva. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -8,8 +8,8 @@
 #include "kf_entity_world.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-extern MapSlot D_0038CD20[];
-extern s32 D_003E6E40[][2];
+extern MapSlot map_slots[];
+extern s32 entity_type_handlers[][2];
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
@@ -61,7 +61,7 @@ void Larva_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Larva_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -93,7 +93,7 @@ void Larva_Init(Entity *entity) {
     entity->model->unk15C = entity->unkD6;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
-    record = &((MapSlotUnk10 *)D_0038CD20[entity->group_id].unk10)[(s8)((EntityFlagWord *)&entity->spawn_info->unk38)->bytes[3]];
+    record = &((MapSlotUnk10 *)map_slots[entity->group_id].unk10)[(s8)((EntityFlagWord *)&entity->spawn_info->unk38)->bytes[3]];
     record->unk74 = 0.5f;
     record->unk70 = 1.0f;
 }
@@ -135,7 +135,7 @@ static void Larva_Think(Entity *entity, s32 unknown) {
         entity->model->unkE0[1] = unkE0->unk58 * scale;
         entity->model->unkE0[2] = unkE0->unk5C * scale;
         scale = (f32)unkE0->unk6A / 600.0f;
-        record = &((MapSlotUnk10 *)D_0038CD20[entity->group_id].unk10)[(s8)((EntityFlagWord *)&entity->spawn_info->unk38)->bytes[3]];
+        record = &((MapSlotUnk10 *)map_slots[entity->group_id].unk10)[(s8)((EntityFlagWord *)&entity->spawn_info->unk38)->bytes[3]];
         record->unk70 = scale * 0.75f + 0.25f;
         record->unk74 = scale * 0.375f + 0.125f;
         if (unkE0->unk6A <= 0) {

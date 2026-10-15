@@ -1,4 +1,4 @@
-/* Skull: the behaviour of entity type 65 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Skull: the behaviour of entity type 65 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Skull. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -14,7 +14,7 @@ void Vector_Copy(void *, void *);
 int rand(void);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
@@ -22,7 +22,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
@@ -78,7 +78,7 @@ void Skull_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Skull_Think;
     unkE0->animate = (void (*)(void))Skull_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -154,9 +154,9 @@ static void Skull_Think(Entity *entity, s32 unknown) {
     }
     if (ENTITY_FLAG_BITS(entity)->bit28 && !(entity->unkC6 & 1)) {
         if (unkE0->unk6A <= 0) {
-            if (entity->model->position[1] < D_00413F80.position[1] - 300.0f) {
+            if (entity->model->position[1] < player_state.position[1] - 300.0f) {
                 unkE0->unk7A = 1;
-            } else if (D_00413F80.position[1] - 100.0f < entity->model->position[1]) {
+            } else if (player_state.position[1] - 100.0f < entity->model->position[1]) {
                 unkE0->unk7A = 0;
             } else {
                 unkE0->unk7A = unkE0->unk7A == 0;
@@ -216,7 +216,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->unkCD) {
         case 0:
-            if (entity->model->position[1] < D_00413F80.position[1] - 50.0f && D_00413F80.position[1] - 300.0f < entity->model->position[1]) {
+            if (entity->model->position[1] < player_state.position[1] - 50.0f && player_state.position[1] - 300.0f < entity->model->position[1]) {
                 if (EntityAi_PickAttack((char *)entity)) {
                     EntityAi_StartAction(entity, Skull_RangedAttack0, unknown);
                 } else {
@@ -224,7 +224,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
                 }
                 return;
             }
-            if (entity->model->position[1] < D_00413F80.position[1]) {
+            if (entity->model->position[1] < player_state.position[1]) {
                 unkE0->unk7A = 1;
             } else {
                 unkE0->unk7A = 0;
@@ -232,7 +232,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
             unkE0->unk6A = rand() % 15 + 15;
             break;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             if (rand() % 3 == 0) {
                 unkE0->unk78 = 1;

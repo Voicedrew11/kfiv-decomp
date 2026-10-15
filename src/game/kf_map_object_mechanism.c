@@ -13,7 +13,7 @@ float sqrtf(float);
 int func_001B4F30(u16, void *, void *, void *, void *);
 extern void *D_00414188[];
 extern u32 D_0038CC74[];
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern u32 D_00446ED4;
 
 /* Starts this kind of trigger: stopped, with its state cleared. */
@@ -93,11 +93,11 @@ void func_001217C0(MapObject *object) {
     if (!((D_0038CC74[0] >> 1) & 1)) {
         return;
     }
-    if ((s32)(D_00413F80.unk1C8 >> 36) & 1) {
+    if ((s32)(player_state.unk1C8 >> 36) & 1) {
         return;
     }
     for (i = 0; i < 2; i++) {
-        Vector_Subtract(&delta, (void *)object->model->get_point(object->model, i), &D_00413F80);
+        Vector_Subtract(&delta, (void *)object->model->get_point(object->model, i), &player_state);
         if (delta.y < -75.0f) {
             continue;
         }
@@ -143,7 +143,7 @@ void func_00121968(MapObject *object) {
     if (!(object->unk10 & 0x20000)) {
         return;
     }
-    Vector_Subtract(&aim, &object->model->position, &D_00413F80);
+    Vector_Subtract(&aim, &object->model->position, &player_state);
     distance = sqrtf(aim.x * aim.x + aim.y * aim.y + aim.z * aim.z);
     if (MAP_OBJECT_WORDS(object)->unk4E < distance) {
         return;

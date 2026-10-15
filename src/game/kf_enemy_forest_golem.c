@@ -1,4 +1,4 @@
-/* Forest Golem: the behaviour of entity type 77 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Forest Golem: the behaviour of entity type 77 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. The Forest Golem: its one spawn (013.map,
    Holy Forest) says "Unable to move" when examined and takes the Forest Dew, the Golems' food. */
 #include "kf_entity.h"
@@ -14,9 +14,9 @@ int Motion_StepModel(EntityModel *, s32, s32); // match: an int result keeps $2 
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
-extern s32 D_003E6E40[][2];
-extern char D_00349690[0x2000];
-extern MapSlot D_0038CD20[];
+extern s32 entity_type_handlers[][2];
+extern char map_script_flags[0x2000];
+extern MapSlot map_slots[];
 extern int D_00446770;
 extern EntityFrameTable D_0043EAD8;
 int Motion_Start(void *, int, int, u32, int);
@@ -31,7 +31,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern float D_00413F80[];
+extern float player_state[];
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -81,7 +81,7 @@ void ForestGolem_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->animate = EntityAi_Animate;
     unkE0->move = (void (*)(void))ForestGolem_Move;
     unkE0->on_hit = NULL;
@@ -89,7 +89,7 @@ void ForestGolem_Init(Entity *entity) {
     unkE0->death = NULL;
     index = entity->params->unk432;
     index += entity->params->unk430 * 64;
-    if (((u8 *)D_00349690)[index] != 0) {
+    if (((u8 *)map_script_flags)[index] != 0) {
         unkE0->unk7A = 1;
         unkE0->think = ForestGolem_ThinkStayInPlace;
     } else {
@@ -121,7 +121,7 @@ void ForestGolem_Init(Entity *entity) {
     work->unk50 = -1430.0f;
 }
 
-/* The think handler the set-up function installs when the byte of D_00349690 that
+/* The think handler the set-up function installs when the byte of map_script_flags that
    EntityParams.unk430 and unk432 index is set, and ForestGolem_StartScriptAndRumble when it ends: copies
    the position in work floats unk48 to unk50 to the model, relative to the map origin
    EntityParams.unk43A names when the entity is on another map than D_00446770, sets the heading to
@@ -144,7 +144,7 @@ static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now) {
     z = sub->unk50;
     model->position.z = z;
     if (entity->group_id != D_00446770) {
-        slot = &D_0038CD20[D_00446770];
+        slot = &map_slots[D_00446770];
         origin = &slot->origins[ENTITY_CONTROLLER(entity)->unk43A];
         model->position.x = x - origin->x;
         model->position.y = y - origin->y;
@@ -154,7 +154,7 @@ static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now) {
     EntityAi_StartAction(entity, (void (*)(Entity *))sub->move, invoke_now);
 }
 
-/* The think handler (the set-up function installs it while that byte of D_00349690 is clear): while
+/* The think handler (the set-up function installs it while that byte of map_script_flags is clear): while
    the entity is not busy it starts ForestGolem_StartScriptAndRumble once the byte is set, and the move
    action until then. */
 static void ForestGolem_Think(Entity *entity, s32 unknown) {
@@ -164,7 +164,7 @@ static void ForestGolem_Think(Entity *entity, s32 unknown) {
         s32 index = entity->params->unk432;
 
         index += entity->params->unk430 * 64;
-        if (((u8 *)D_00349690)[index] != 0) {
+        if (((u8 *)map_script_flags)[index] != 0) {
             EntityAi_StartAction(entity, ForestGolem_StartScriptAndRumble, unknown);
             return;
         }
@@ -251,7 +251,7 @@ static void func_0017A540(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
     unkE0->move = (void (*)(void))EntityAi_Move;
@@ -356,14 +356,14 @@ static void func_0017A880(Entity *entity, s32 unknown) {
                 turn = EntityMath_AngleDifference(entity->unk68, entity->model->unkD0[1]);
                 turn = ABS(turn);
                 if (turn > 0.7853982f) {
-                    entity->target = D_00413F80;
+                    entity->target = player_state;
                     entity->unkA0 = rand() % 30 + 60;
                     unkE0->unk78 = 0;
                 } else {
                     unkE0->unk78 = -1;
                 }
             } else {
-                entity->target = D_00413F80;
+                entity->target = player_state;
                 entity->unkA0 = rand() % 60 + 120;
                 unkE0->unk78 = 1;
             }

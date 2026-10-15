@@ -12,7 +12,7 @@
 /* Starts the sound driver and resets the sound state: loads the se_com and sfx_com banks into the heap,
    reads rev_para.dat, and frees every channel, queued request and claimed voice */
 void Sound_Init(void);
-/* Applies option 0 (D_00349680[0]) to the driver: func_001CC018 when it is set, func_001CBED8 when not */
+/* Applies option 0 (game_options[0]) to the driver: func_001CC018 when it is set, func_001CBED8 when not */
 void func_0019C520(void);
 /* Once a frame: starts the queued tagged sounds; then, unless a cue change is pending (D_004470E2), updates
    the tagged channels, the map's effect level and the driver; otherwise waits for the driver to finish it */
@@ -21,12 +21,12 @@ void Sound_Update(void);
 void Sound_SetBgmVolume(s32 level);
 /* Sets one volume (func_001CDBC0) on the voices of the five sound banks and on voices 6 to 9 */
 void Sound_SetBankVolumes(int level);
-/* Sets the BGM fade level (D_00446860) to the music volume option (D_00349681) */
+/* Sets the BGM fade level (D_00446860) to the music volume option (music_volume) */
 void Sound_SyncBgmLevel(void);
-/* Starts a tracked sound with the player of `kind` in D_003EF700 (0 Sound_PlayTracked, 1
+/* Starts a tracked sound with the player of `kind` in tracked_sound_players (0 Sound_PlayTracked, 1
    Sound_PlayTrackedAt) */
 char Sound_PlayTrackedKind(int index, int first, int second, int third, int fourth);
-/* Starts a sound on the next tracked voice (0x64..0x7D) whose D_00502170 slot is free, from the mg bank
+/* Starts a sound on the next tracked voice (0x64..0x7D) whose tracked_voices slot is free, from the mg bank
    (sound below 8) or the sfx_com bank, at the sound volume option; returns the voice, -1 if 11 tries find
    none */
 int Sound_PlayTracked(int sound, int unused, float *position);
@@ -64,10 +64,10 @@ int Sound_PlayMapVolume(u8 sound, int volume);
 /* Plays a map bank sound at a point within range, the volume falling off by mode (0 and 6 linear, 1 and 7
    steep, 2 and 8 round), panned; a random bend for modes below 3 */
 int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range);
-/* Starts a tagged sound (channel kind 0x63, no position) of the map bank at volume; queued in D_00500170
+/* Starts a tagged sound (channel kind 0x63, no position) of the map bank at volume; queued in tagged_requests
    while D_004470E1 is clear */
 int Sound_StartTagged(s8 sound, u8 voice, int volume);
-/* Starts a tagged sound at a point, heard within range (SoundChannel.volume); queued in D_00500170 while
+/* Starts a tagged sound at a point, heard within range (SoundChannel.volume); queued in tagged_requests while
    D_004470E1 is clear */
 s32 Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg *position);
 /* As Sound_StartTaggedAt for a sound along the segment origin..target */

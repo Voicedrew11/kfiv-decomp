@@ -1,4 +1,4 @@
-/* LavaLizard: the behaviour of entity type 34 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* LavaLizard: the behaviour of entity type 34 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Lava Lizard. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -16,7 +16,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
@@ -24,7 +24,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern float D_00413F80[];
+extern float player_state[];
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -63,7 +63,7 @@ void LavaLizard_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     if (entity->spawn_info->unk40 != 0) {
         unkE0->think = LavaLizard_ThinkNoStates;
     } else {
@@ -179,7 +179,7 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown) {
                 EntityAi_StartAction(entity, LavaLizard_RunAtPlayer, unknown);
                 return;
             }
-            entity->target = D_00413F80;
+            entity->target = player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -344,7 +344,7 @@ static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 unknown) {
     if (entity->unkA0 == 0) {
         angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
         if (ABS(angle) > 0.5235988f) {
-            entity->target = D_00413F80;
+            entity->target = player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
         } else {

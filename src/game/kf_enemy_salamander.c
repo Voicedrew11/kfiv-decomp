@@ -1,4 +1,4 @@
-/* Salamander: the behaviour of entity type 22 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Salamander: the behaviour of entity type 22 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Salamander. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -11,7 +11,7 @@ void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
 s32 Motion_StepSlot(Entity *, EntityUnkE0SlotBits *, s32, s32);
 void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
@@ -37,7 +37,7 @@ s32 EntityAi_MoveCommand3D(Entity *, s32, f32);
 void Vector_Normalize(void *, void *);
 void Vector_Cross(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
-extern float D_00413F80[];
+extern float player_state[];
 int rand(void);
 s32 EntityAi_IsPointInView(Entity *, void *, f32, f32, f32);
 s32 EntityAi_PickRangedAttack(Entity *);
@@ -77,7 +77,7 @@ void Salamander_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Salamander_Think;
     unkE0->animate = (void (*)(void))Salamander_Animate;
     unkE0->on_hit = (void (*)(void))Salamander_OnHit;
@@ -578,7 +578,7 @@ static void func_00134DC8(Entity *entity, s32 unknown) {
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    if (EntityAi_IsPointInView(entity, D_00413F80, entity->params->unk43A * 0.017453292f,
+    if (EntityAi_IsPointInView(entity, player_state, entity->params->unk43A * 0.017453292f,
                       entity->params->unk43C * 0.017453292f, entity->params->unk43E) &&
         unkE0->unk6A <= 0) {
         EntityAi_PickRangedAttack(entity);
@@ -629,7 +629,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
         case 0: {
             f32 *point = unkE0->unk30;
 
-            Vector_Copy(point, D_00413F80);
+            Vector_Copy(point, player_state);
             unkE0->unk30[1] -= 220.0f;
             entity->target = point;
             entity->unkC8 = EntityAi_MoveCommand3D(entity, 0, entity->radius + 100.0f + 30.0f);
@@ -641,7 +641,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
         case 1: {
             f32 *point = unkE0->unk30;
 
-            Vector_Copy(point, D_00413F80);
+            Vector_Copy(point, player_state);
             unkE0->unk30[1] -= 190.0f;
             entity->target = point;
             if (EntityAi_IsPointInView(entity, point, entity->params->unk43A * 0.017453292f,
@@ -664,7 +664,7 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
             direction[0] = EntityMath_WrapAngle(entity->unk68 + 3.1415927f);
             EntityMath_FacingVector((Vector4 *)point, direction[0]);
             Vector_Scale(point, point, 800.0f);
-            Vector_Add(point, point, D_00413F80);
+            Vector_Add(point, point, player_state);
             entity->target = point;
             unkE0->unk30[1] = entity->spawn_info->spawn_y;
             entity->unkC8 = EntityAi_MoveCommand3D(entity, 0, 50.0f);

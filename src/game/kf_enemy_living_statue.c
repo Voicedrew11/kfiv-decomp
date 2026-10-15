@@ -1,4 +1,4 @@
-/* LivingStatue: the behaviour of entity type 82 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* LivingStatue: the behaviour of entity type 82 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Living Statue. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -16,7 +16,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Start(void *, int, int, u32, int);
 
 static void LivingStatue_ThinkHoldAnim1(Entity *entity);
@@ -35,7 +35,7 @@ void LivingStatue_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     if (entity->spawn_info->unk40 != 0) {
         unkE0->animate = EntityAi_Animate;
         unkE0->think = (void (*)(Entity *, s32))LivingStatue_ThinkHoldAnim1;

@@ -4,7 +4,7 @@
 
 #include "common.h"
 
-/* D_0038CC50 (cleared as 0x48 bytes by func_001127F8). Other files still
+/* game_status (cleared as 0x48 bytes by func_001127F8). Other files still
    declare it as char[]/int[], so the extern stays in each file. */
 typedef struct {
     char unk00;                     /* 0x00 nonzero: script blends are skipped */
@@ -66,7 +66,7 @@ typedef struct {
     char bytes[8];
 } PlayTime;
 
-/* the first 8 bytes of the save buffer D_0036A130 (func_00103C18 writes them, func_001060C0 checks them) */
+/* the first 8 bytes of the save buffer save_image (func_00103C18 writes them, func_001060C0 checks them) */
 typedef struct {
     s32 magic;                      /* 0x00 SAVE_MAGIC */
     s32 size;                       /* 0x04 bytes of state, header included, rounded up to SAVE_BLOCK_SIZE; one checksum
@@ -157,7 +157,7 @@ typedef struct {
     int tm_isdst;                   /* 0x20 */
 } CalendarTime;
 
-/* D_00431CE8: the game clock (kf_game_clock.c) */
+/* game_clock: the game clock (kf_game_clock.c) */
 typedef struct {
     char pad00[0x08];
     int ticks;                      /* 0x08 */
@@ -274,7 +274,7 @@ typedef struct {
     int x[3];
 } LayerOffsets;
 
-/* D_00467680, D_00467940, D_00467C00: an 8 x 11 grid of points func_00108020 wobbles */
+/* wobble_grid_origin, wobble_grid_points, wobble_grid_previous: an 8 x 11 grid of points func_00108020 wobbles */
 typedef struct {
     int points[8][11][2];
 } __attribute__((aligned(16))) RippleGrid;
@@ -544,7 +544,7 @@ typedef struct {
     void *texture;                  /* 0x04 a TextureHeader (kf_texture.h) */
 } PoolPartSource;
 
-/* D_00413DB8[2]: a controller as the game reads it, one per port (func_001B5590). D_00413DA8 is the copy
+/* pad_states[2]: a controller as the game reads it, one per port (func_001B5590). pad_state is the copy
    of port 0 that the game tests. */
 typedef struct {
     u16 held;                       /* 0x00 buttons held, the stick directions among them */

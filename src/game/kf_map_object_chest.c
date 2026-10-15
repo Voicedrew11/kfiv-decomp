@@ -15,12 +15,12 @@ void MapObject_UpdateOpenChest(MapObject *);
 ModelNode *func_001C9580(int);
 void MapObject_UpdateClosedChest(void *, int);
 void func_0011FC10(MapObject *);
-extern void (*D_003BE3B0[])(MapObject *);
+extern void (*map_object_update_hooks[])(MapObject *);
 extern Qword D_0043E780;
 extern u32 D_0038CC74[];
 extern void *D_00420D50[];
 extern u8 item_counts[];
-extern GameStatus D_0038CC50;
+extern GameStatus game_status;
 extern EventRunner D_00420D00;
 
 /* Update handler: when the player uses an object that holds an item it is handed
@@ -56,7 +56,7 @@ void func_0011FC10(MapObject *object) {
 }
 
 /* Hands out the item the object holds, unless it was handed out already: runs the
-   kind's every-frame handler (D_003BE3B0) and rebuilds the model first. */
+   kind's every-frame handler (map_object_update_hooks) and rebuilds the model first. */
 void func_0011FC18(MapObject *object) {
     s64 drop_params[2];
 
@@ -64,7 +64,7 @@ void func_0011FC18(MapObject *object) {
     drop_params[1] = D_0043E780.unk08;
     if (object->unk08->unk44 != 0) {
         if (!(object->unk10 & 0x40000)) {
-            D_003BE3B0[object->unk04->kind](object);
+            map_object_update_hooks[object->unk04->kind](object);
             object->model->unk1B4(object->model);
             func_001C9340((u8)object->unk10 & 1, object->unk08->unk44, (void *)object->model->get_point(object->model, 0),
                           &object->model->rotation, drop_params, object);
@@ -207,19 +207,19 @@ void MapObject_UpdateOpenChest(MapObject *object) {
 void func_00120128(void) {
 }
 
-/* Sets D_0038CC50 bit 1 and makes the event the current one while MapObject_UpdateClosedChest runs. */
+/* Sets game_status bit 1 and makes the event the current one while MapObject_UpdateClosedChest runs. */
 void func_00120130(GameEvent *event, int mode) {
     void *saved;
     int bit;
 
     if ((event->flags & 0x2FF00) == 0x100 && mode != 0) {
         saved = D_00420D00.current;
-        bit = D_0038CC50.bit1;
-        D_0038CC50.bit1 = 1;
+        bit = game_status.bit1;
+        game_status.bit1 = 1;
         D_00420D00.current = event;
         MapObject_UpdateClosedChest(event, mode);
         D_00420D00.current = saved;
-        D_0038CC50.bit1 = bit;
+        game_status.bit1 = bit;
     }
 }
 

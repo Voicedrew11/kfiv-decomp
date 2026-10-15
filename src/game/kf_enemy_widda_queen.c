@@ -1,4 +1,4 @@
-/* WiddaQueen: the behaviour of entity type 46 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* WiddaQueen: the behaviour of entity type 46 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Widda Queen. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -13,7 +13,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -31,7 +31,7 @@ float EntityMath_WrapAngle(float);
 void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 // match: the definitions take the float last, but retail sets it up before the index
 int EntityAi_CanUseMeleeFacing(Entity *, f32, s32);
@@ -67,7 +67,7 @@ void WiddaQueen_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = WiddaQueen_Think;
     unkE0->animate = (void (*)(void))WiddaQueen_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -355,7 +355,7 @@ static void WiddaQueen_RangedAttack0(Entity *entity) {
             EntityEvent_StartEffectAtPoint((char **)entity, 0x373, 8, (int)entity->model->unkD0);
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        Vector_Copy(target, D_00413F80.position);
+        Vector_Copy(target, player_state.position);
         target[1] -= 190.0f;
         EntityShot_LaunchAimed(entity, (EntityParamsUnk3D8 *)unk3D8, elapsed, entity->model->unkFC->unk82, target, 1.5707964f, 1.5707964f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {

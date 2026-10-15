@@ -18,20 +18,20 @@ extern int D_00446F60;
 extern int D_004467E8;
 extern int D_004467D8[2];
 extern u32 D_00446ED4;
-extern float D_00413F80[];
-extern char D_00249680[0x80000];
-extern SoundLoadQueue D_0038A130;
+extern float player_state[];
+extern char file_load_buffer[0x80000];
+extern SoundLoadQueue sound_load_queue;
 extern char *D_004467C0;
 extern int D_004467C4;
 extern char D_004467C8[];
 extern char D_0043E790[];
-extern Entity D_003BEDF0[][0x80];
-extern s64 D_003D6E40[];
-extern ModelInstance D_003BE530[ENTITY_POOL_SLOT_COUNT];
+extern Entity entity_pool[][0x80];
+extern s64 entity_work_area[];
+extern ModelInstance entity_models[ENTITY_POOL_SLOT_COUNT];
 
-static EntityTypeFileHeader D_00474B70;                            /* 0x474B70 the loaded type file's first 0x20 bytes */
-static char D_00474B90[ENTITY_POOL_SLOT_COUNT][0x2000];            /* 0x474B90 the type data of each slot */
-char D_0047EB90[0x80000] __attribute__((section(".bss")));         /* 0x47EB90 param/chr.prm, read whole */
+static EntityTypeFileHeader entity_type_file_header;                            /* 0x474B70 the loaded type file's first 0x20 bytes */
+static char entity_pool_slot_buffers[ENTITY_POOL_SLOT_COUNT][0x2000];            /* 0x474B90 the type data of each slot */
+char character_params[0x80000] __attribute__((section(".bss")));         /* 0x47EB90 param/chr.prm, read whole */
 
 int func_00102790(int, int);
 int func_001024B0(int);
@@ -114,7 +114,7 @@ void Entity_ResetAllLists(void) {
 
     memset((void *)D_00446F60, 0, D_00446F14);
 
-    memset(D_003D6DF0, 0, sizeof(D_003D6DF0));
+    memset(entity_pool_slots, 0, sizeof(entity_pool_slots));
     D_004470A8 = NULL;
     D_004467E8 = -1;
     D_004470B0 = NULL;
@@ -126,9 +126,9 @@ void Entity_ResetAllLists(void) {
     D_004470B8 = 0;
     D_004470BC = 0;
     D_004470C0 = 0;
-    memset(D_003BE530, 0, 0x8C0);
+    memset(entity_models, 0, 0x8C0);
     block_address = D_00446F60;
-    block = D_003D6DF0;
+    block = entity_pool_slots;
     blocks_left = ENTITY_POOL_SLOT_COUNT - 1;
     do {
         block->base_address = block_address;
@@ -150,7 +150,7 @@ int func_00123108(void) {
     int kind;
 
     for (i = 0; i < ENTITY_POOL_SLOT_COUNT; i++) {
-        kind = D_003D6DF0[i].head.fields.kind;
+        kind = entity_pool_slots[i].head.fields.kind;
         if (kind != ENTITY_POOL_FREE && kind != ENTITY_POOL_READY && kind != ENTITY_POOL_EXTENSION) {
             return TRUE;
         }
@@ -160,7 +160,7 @@ int func_00123108(void) {
 
 void func_00123158(int idx) {
     int i;
-    Entity *group_entity = D_003BEDF0[idx];
+    Entity *group_entity = entity_pool[idx];
     int group_count = D_004467D8[idx];
     for (i = 0; i < group_count; i++) {
         func_00124BC8(group_entity);
@@ -222,7 +222,7 @@ static void func_001232C0(void) {
 
         distance = func_00124DE0(entity);
         entity->distance_to_player = distance;
-        height_difference = ABS(D_00413F80[1] - entity->spawn_info->spawn_y);
+        height_difference = ABS(player_state[1] - entity->spawn_info->spawn_y);
         if (entity->unkD3 >= 0 ||
             (distance <= (float)entity->spawn_info->despawn_range &&
              (entity->spawn_info->vertical_despawn_range == 0 ||
@@ -243,25 +243,25 @@ static void func_001232C0(void) {
                 if (ENTITY_CONTROLLER(entity)->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
                     entity->unkD3 = func_00123ED8(entity->spawn_info->pool_size);
                     if (entity->unkD3 >= 0) {
-                        D_003D6DF0[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
-                        D_003D6DF0[entity->unkD3 + 1].head.word |= ENTITY_POOL_FLAG_200;
+                        entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
+                        entity_pool_slots[entity->unkD3 + 1].head.word |= ENTITY_POOL_FLAG_200;
                     }
                 } else {
                     entity->unkD3 = func_00123DD8(entity->spawn_info->pool_size);
                     if (entity->unkD3 >= 0) {
-                        D_003D6DF0[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
+                        entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
                     }
                 }
             } else if (ENTITY_CONTROLLER(entity)->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
                 entity->unkD3 = func_00123C30();
                 if (entity->unkD3 >= 0) {
-                    D_003D6DF0[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
-                    D_003D6DF0[entity->unkD3 + 1].head.word |= ENTITY_POOL_FLAG_200;
+                    entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
+                    entity_pool_slots[entity->unkD3 + 1].head.word |= ENTITY_POOL_FLAG_200;
                 }
             } else {
                 entity->unkD3 = func_00123B40();
                 if (entity->unkD3 >= 0) {
-                    D_003D6DF0[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
+                    entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
                 }
             }
             if (entity->unkD3 >= 0) {
@@ -284,7 +284,7 @@ static void func_001234F0(void) {
 
     entity = D_004470B0;
     while (entity != NULL) {
-        if (D_003D6DF0[entity->unkD3].head.fields.kind == ENTITY_POOL_READY) {
+        if (entity_pool_slots[entity->unkD3].head.fields.kind == ENTITY_POOL_READY) {
             current = entity;
             entity = entity->next;
             if (func_00123918(current)) {
@@ -310,7 +310,7 @@ void Entity_DespawnOutOfRange(void) {
         distance = func_00124DE0(entity);
         entity->distance_to_player = distance;
         spawn_info = entity->spawn_info;
-        height_difference = D_00413F80[1] - spawn_info->spawn_y;
+        height_difference = player_state[1] - spawn_info->spawn_y;
         height_difference = ABS(height_difference);
         out_of_range = FALSE;
         if ((float)spawn_info->despawn_range + ENTITY_DESPAWN_MARGIN < distance ||
@@ -343,7 +343,7 @@ static void func_00123690(void) {
 
     queued = NULL;
     busy = FALSE;
-    for (i = 0, slot = D_003D6DF0; i < ENTITY_POOL_SLOT_COUNT; i++, slot++) {
+    for (i = 0, slot = entity_pool_slots; i < ENTITY_POOL_SLOT_COUNT; i++, slot++) {
         switch (slot->head.fields.kind) {
         case ENTITY_POOL_FREE:
             break;
@@ -361,16 +361,16 @@ static void func_00123690(void) {
                 func_001024B0(D_004467C4);
                 func_00124428(slot);
                 func_00124B00(i);
-                D_00474B70 = *(EntityTypeFileHeader *)D_00249680;
+                entity_type_file_header = *(EntityTypeFileHeader *)file_load_buffer;
                 D_004467C4 = -1;
-                if (D_00474B70.unk18 != 0 && D_00474B70.unk14 != 0) {
-                    D_00474B70.unk18 += (int)D_00249680;
-                    D_00474B70.unk14 += (int)D_00249680;
+                if (entity_type_file_header.unk18 != 0 && entity_type_file_header.unk14 != 0) {
+                    entity_type_file_header.unk18 += (int)file_load_buffer;
+                    entity_type_file_header.unk14 += (int)file_load_buffer;
                     slot->head.fields.kind = ENTITY_POOL_UNPACKING;
-                    D_0038A130.unk1C = (int)&D_00474B70;
-                    D_0038A130.unk18 = 1;
-                    D_0038A130.unk20 = i;
-                    D_0038A130.unk24 = (int)slot;
+                    sound_load_queue.unk1C = (int)&entity_type_file_header;
+                    sound_load_queue.unk18 = 1;
+                    sound_load_queue.unk20 = i;
+                    sound_load_queue.unk24 = (int)slot;
                 } else {
                     slot->head.fields.kind = ENTITY_POOL_READY;
                 }
@@ -378,7 +378,7 @@ static void func_00123690(void) {
             busy = TRUE;
             break;
         case ENTITY_POOL_UNPACKING:
-            if (D_0038A130.unk18 == 0) {
+            if (sound_load_queue.unk18 == 0) {
                 slot->head.fields.kind = ENTITY_POOL_READY;
                 func_00102228();
                 D_00447098 = NULL;
@@ -404,7 +404,7 @@ static void func_00123690(void) {
     if (busy) {
         return;
     }
-    if (D_0038A130.unk04 != 0) {
+    if (sound_load_queue.unk04 != 0) {
         return;
     }
     if (func_00102230() != 0) {
@@ -417,7 +417,7 @@ static void func_00123690(void) {
         return;
     }
     queued->head.fields.kind = ENTITY_POOL_READING;
-    func_001025C0(D_004467C4, D_00249680, -1);
+    func_001025C0(D_004467C4, file_load_buffer, -1);
     func_00102218();
     D_00447098 = queued;
 }
@@ -426,7 +426,7 @@ static void func_00123690(void) {
 static int func_00123918(Entity *entity) {
     int data_address;
     int work_address;
-    EntityPoolSlot *slot = &D_003D6DF0[entity->unkD3];
+    EntityPoolSlot *slot = &entity_pool_slots[entity->unkD3];
     EntityPoolData *data = (EntityPoolData *)slot->base_address;
     ModelInstance *model;
     int work_index;
@@ -451,7 +451,7 @@ static int func_00123918(Entity *entity) {
         model->draw = func_00124960;
         model->unk1B0 = func_00124AF8;
         D_004467E8 = entity->spawn_info->type_id;
-        work_address = (int)D_003D6E40;
+        work_address = (int)entity_work_area;
         work_address = (int)func_0010CE08(model, (s64 *)work_address);
     }
     data_address = slot->base_address + (int)data->motion_offset;
@@ -479,7 +479,7 @@ static int func_00123AF0(int type_id) {
     EntityPoolSlot *slot;
 
     for (i = 0; i < ENTITY_POOL_SLOT_COUNT; i++) {
-        slot = &D_003D6DF0[i];
+        slot = &entity_pool_slots[i];
         if ((u32)(slot->head.fields.kind - 1) < 4 && slot->head.fields.unk2 == type_id) {
             return i;
         }
@@ -495,21 +495,21 @@ static int func_00123B40(void) {
 
     best = -1;
     for (i = 0; i < 5; i++) {
-        slot = &D_003D6DF0[i];
+        slot = &entity_pool_slots[i];
         if ((slot->head.word >> 9) & 1) { continue; }
         if ((slot->head.word >> 8) & 1) { continue; }
         if (slot->head.fields.kind == 0) { return i; }
         if (slot->head.fields.kind != 4) { continue; }
         if (slot->unk4 != 0) { continue; }
         if (slot->unk6 != 0) { continue; }
-        if (best == -1 || (u32)slot->age < (u32)D_003D6DF0[best].age) {
+        if (best == -1 || (u32)slot->age < (u32)entity_pool_slots[best].age) {
             best = i;
         }
     }
     if (best >= 0) {
-        D_003D6DF0[best].head.fields.kind = 0;
-        if ((i = best + 1) < 5 && D_003D6DF0[i].head.fields.kind == 5) {
-            D_003D6DF0[i].head.fields.kind = 0;
+        entity_pool_slots[best].head.fields.kind = 0;
+        if ((i = best + 1) < 5 && entity_pool_slots[i].head.fields.kind == 5) {
+            entity_pool_slots[i].head.fields.kind = 0;
         }
     }
     return best;
@@ -525,47 +525,47 @@ static int func_00123C30(void) {
     best = -1;
     for (i = 0; i < 2; i++) {
         pair = i * 2;
-        if (D_003D6DF0[pair].head.bits.flag_200) { continue; }
-        if (D_003D6DF0[pair + 1].head.bits.flag_200) { continue; }
-        if (D_003D6DF0[pair].head.bits.flag_100) { continue; }
-        if (D_003D6DF0[pair + 1].head.bits.flag_100) { continue; }
-        if (D_003D6DF0[pair].head.fields.kind == ENTITY_POOL_FREE && D_003D6DF0[pair + 1].head.fields.kind == ENTITY_POOL_FREE) {
+        if (entity_pool_slots[pair].head.bits.flag_200) { continue; }
+        if (entity_pool_slots[pair + 1].head.bits.flag_200) { continue; }
+        if (entity_pool_slots[pair].head.bits.flag_100) { continue; }
+        if (entity_pool_slots[pair + 1].head.bits.flag_100) { continue; }
+        if (entity_pool_slots[pair].head.fields.kind == ENTITY_POOL_FREE && entity_pool_slots[pair + 1].head.fields.kind == ENTITY_POOL_FREE) {
             return pair;
         }
     }
     // match: a second counter, so the pair index gets the register retail uses
     for (j = 0; j < 2; j++) {
         pair = j * 2;
-        if (D_003D6DF0[pair].head.bits.flag_200) { continue; }
-        if (D_003D6DF0[pair + 1].head.bits.flag_200) { continue; }
-        if (D_003D6DF0[pair].head.bits.flag_100) { continue; }
-        if (D_003D6DF0[pair + 1].head.bits.flag_100) { continue; }
-        if (D_003D6DF0[pair].head.fields.kind != ENTITY_POOL_FREE) {
-            if (D_003D6DF0[pair].head.fields.kind != ENTITY_POOL_READY) { continue; }
-            if (D_003D6DF0[pair].unk4 != 0) { continue; }
-            if (D_003D6DF0[pair].unk6 != 0) { continue; }
+        if (entity_pool_slots[pair].head.bits.flag_200) { continue; }
+        if (entity_pool_slots[pair + 1].head.bits.flag_200) { continue; }
+        if (entity_pool_slots[pair].head.bits.flag_100) { continue; }
+        if (entity_pool_slots[pair + 1].head.bits.flag_100) { continue; }
+        if (entity_pool_slots[pair].head.fields.kind != ENTITY_POOL_FREE) {
+            if (entity_pool_slots[pair].head.fields.kind != ENTITY_POOL_READY) { continue; }
+            if (entity_pool_slots[pair].unk4 != 0) { continue; }
+            if (entity_pool_slots[pair].unk6 != 0) { continue; }
         }
-        if (D_003D6DF0[pair + 1].head.fields.kind == ENTITY_POOL_FREE || D_003D6DF0[pair + 1].head.fields.kind == ENTITY_POOL_EXTENSION) {
+        if (entity_pool_slots[pair + 1].head.fields.kind == ENTITY_POOL_FREE || entity_pool_slots[pair + 1].head.fields.kind == ENTITY_POOL_EXTENSION) {
             best = pair;
             break;
         }
-        if (D_003D6DF0[pair + 1].head.fields.kind != ENTITY_POOL_READY) { continue; }
-        if (D_003D6DF0[pair + 1].unk4 != 0) { continue; }
-        if (D_003D6DF0[pair + 1].unk6 != 0) { continue; }
+        if (entity_pool_slots[pair + 1].head.fields.kind != ENTITY_POOL_READY) { continue; }
+        if (entity_pool_slots[pair + 1].unk4 != 0) { continue; }
+        if (entity_pool_slots[pair + 1].unk6 != 0) { continue; }
         best = pair;
         break;
     }
     if (best >= 0) {
-        D_003D6DF0[best].head.fields.kind = ENTITY_POOL_FREE;
-        if ((j = best + 1) < 5 && D_003D6DF0[j].head.fields.kind == ENTITY_POOL_EXTENSION) {
-            D_003D6DF0[j].head.fields.kind = ENTITY_POOL_FREE;
+        entity_pool_slots[best].head.fields.kind = ENTITY_POOL_FREE;
+        if ((j = best + 1) < 5 && entity_pool_slots[j].head.fields.kind == ENTITY_POOL_EXTENSION) {
+            entity_pool_slots[j].head.fields.kind = ENTITY_POOL_FREE;
         }
     }
     return best;
 }
 
 static int func_00123DD8(int idx) {
-    EntityPoolSlot *slot = &D_003D6DF0[idx];
+    EntityPoolSlot *slot = &entity_pool_slots[idx];
 
     if (slot->head.word & ENTITY_POOL_FLAG_200) {
         return -1;
@@ -596,8 +596,8 @@ static int func_00123DD8(int idx) {
 
 /* Claims a pair of pool blocks starting at this one for a two-block type; returns its index or -1. */
 static int func_00123ED8(int pool_size) {
-    EntityPoolSlot *slot = &D_003D6DF0[pool_size];
-    EntityPoolSlot *next = &D_003D6DF0[pool_size + 1];
+    EntityPoolSlot *slot = &entity_pool_slots[pool_size];
+    EntityPoolSlot *next = &entity_pool_slots[pool_size + 1];
     int first_free;
     int second_free;
 
@@ -644,7 +644,7 @@ static int func_00123ED8(int pool_size) {
 static int func_00124008(int slot_index) {
     Entity *entity;
 
-    if (D_003D6DF0[slot_index].head.fields.kind == ENTITY_POOL_EXTENSION) {
+    if (entity_pool_slots[slot_index].head.fields.kind == ENTITY_POOL_EXTENSION) {
         slot_index--;
     }
 
@@ -707,7 +707,7 @@ static void func_001241A0(int slot_index) {
     Entity *next;
     EntityPoolSlot *slot;
 
-    slot = &D_003D6DF0[slot_index];
+    slot = &entity_pool_slots[slot_index];
     entity = D_004470B0;
     while (entity != NULL) {
         if (slot_index == entity->unkD3) {
@@ -768,7 +768,7 @@ static void func_001241A0(int slot_index) {
 
 /* Marks a pool slot QUEUED for a type id; a two-block type also marks the next slot as its extension. */
 static void func_00124318(int slot_index, int type_id, int two_blocks) {
-    EntityPoolSlot *slot = &D_003D6DF0[slot_index];
+    EntityPoolSlot *slot = &entity_pool_slots[slot_index];
 
     slot->head.fields.kind = ENTITY_POOL_QUEUED;
     slot->head.fields.unk2 = type_id;
@@ -787,12 +787,12 @@ static void func_00124318(int slot_index, int type_id, int two_blocks) {
 
 /* Adds a user to a pool block and clears its flags; a two-block type's second block gets the same flag clear. */
 static void func_00124370(int slot_index) {
-    D_003D6DF0[slot_index].head.bits.flag_100 = 0;
-    D_003D6DF0[slot_index].unk4++;
-    D_003D6DF0[slot_index].head.bits.flag_200 = 0;
-    if (slot_index < 4 && D_003D6DF0[slot_index + 1].head.fields.kind == ENTITY_POOL_EXTENSION) {
-        D_003D6DF0[slot_index + 1].head.bits.flag_100 = 0;
-        D_003D6DF0[slot_index + 1].head.bits.flag_200 = 0;
+    entity_pool_slots[slot_index].head.bits.flag_100 = 0;
+    entity_pool_slots[slot_index].unk4++;
+    entity_pool_slots[slot_index].head.bits.flag_200 = 0;
+    if (slot_index < 4 && entity_pool_slots[slot_index + 1].head.fields.kind == ENTITY_POOL_EXTENSION) {
+        entity_pool_slots[slot_index + 1].head.bits.flag_100 = 0;
+        entity_pool_slots[slot_index + 1].head.bits.flag_200 = 0;
     }
 }
 
@@ -800,7 +800,7 @@ static void func_00124370(int slot_index) {
 static void func_001243E8(int slot_index) {
     EntityPoolSlot *slot;
 
-    slot = &D_003D6DF0[slot_index];
+    slot = &entity_pool_slots[slot_index];
     if (--slot->unk4 <= 0) {
         slot->unk6 = 2;
         slot->age = D_00446ED4;
@@ -816,7 +816,7 @@ static void func_00124428(EntityPoolSlot *slot) {
     int size;
 
     controller = (EntityController *)(D_004467C0 + slot->head.fields.unk2 * 0x450);
-    file = (int *)D_00249680;
+    file = (int *)file_load_buffer;
     size = 0;
     // match: header words of the loaded file, no named struct yet
     if ((table_offset = file[4]) != 0 || (table_offset = file[3]) != 0) {
@@ -832,7 +832,7 @@ static void func_00124428(EntityPoolSlot *slot) {
     } else if (size > 0x80000) {
         goto hang;
     }
-    memcpy((void *)slot->base_address, D_00249680, size);
+    memcpy((void *)slot->base_address, file_load_buffer, size);
     return;
 hang:
     goto hang;
@@ -879,7 +879,7 @@ static void func_00124570(void) {
     list_b = D_004470B0;
     list_c = D_004467E0;
     slot_index = 0;
-    slot = D_003D6DF0;
+    slot = entity_pool_slots;
     while (slot_index < ENTITY_POOL_SLOT_COUNT) {
         if ((slot->head.word & 0x2FF) == (ENTITY_POOL_FLAG_200 | ENTITY_POOL_READY)) {
             for (entity = list_a; entity != NULL; entity = entity->next) {
@@ -1025,15 +1025,15 @@ static void func_00124AF8(void) {
 static void func_00124B00(int slot_index) {
     char *model_data;
     char *buffer;
-    ModelInstance *model = &D_003BE530[slot_index];
+    ModelInstance *model = &entity_models[slot_index];
     // match: never used, but it leaves the table address and the scaled index in registers before the calls
-    EntityPoolSlot *unused_slot = &D_003D6DF0[slot_index];
+    EntityPoolSlot *unused_slot = &entity_pool_slots[slot_index];
     EntityPoolData *data;
 
-    buffer = D_00474B90[slot_index];
+    buffer = entity_pool_slot_buffers[slot_index];
     memset(model, 0, sizeof(ModelInstance));
-    memset(buffer, 0, sizeof(D_00474B90[slot_index]));
-    data = (EntityPoolData *)D_003D6DF0[slot_index].base_address;
+    memset(buffer, 0, sizeof(entity_pool_slot_buffers[slot_index]));
+    data = (EntityPoolData *)entity_pool_slots[slot_index].base_address;
     if (data->pool_model_offset != 0) {
         model_data = (char *)data + data->pool_model_offset;
         func_0010D018(model, &model_data, &buffer);
@@ -1169,7 +1169,7 @@ float func_00124DE0(Entity *entity) {
     float delta_x;
     float delta_z;
 
-    delta_x = entity->spawn_info->spawn_x - D_00413F80[0];
-    delta_z = entity->spawn_info->spawn_z - D_00413F80[2];
+    delta_x = entity->spawn_info->spawn_x - player_state[0];
+    delta_z = entity->spawn_info->spawn_z - player_state[2];
     return sqrtf(delta_x * delta_x + delta_z * delta_z);
 }

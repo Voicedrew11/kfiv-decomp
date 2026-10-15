@@ -24,7 +24,7 @@ float EntityAi_RandomAngle(void);
 void func_00195878(int float_value, int int_value);
 /* Sets Entity.state and keeps the old value in prev_state */
 void EntityAi_SetState(Entity *entity, u8 state);
-/* Installs the entity's per-frame update (Entity.unk50; the type table D_003E6E40 gives it) and puts
+/* Installs the entity's per-frame update (Entity.unk50; the type table entity_type_handlers gives it) and puts
    action_step back to 0 */
 void EntityAi_SetUpdate(Entity *entity, s32 update);
 /* Switches the entity's handler, keeping the old one as prev_handler; optionally runs the new one now */

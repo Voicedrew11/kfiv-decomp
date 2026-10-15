@@ -5,7 +5,7 @@
 
 #include "common.h"
 
-/* the sound stream's state on its way to the IOP (the SDK sample's AudioDec, D_004379F0) */
+/* the sound stream's state on its way to the IOP (the SDK sample's AudioDec, movie_audio) */
 typedef struct {
     int state;                      /* 0x00 MOVIE_AUDIO_STATE_* */
     u8 header[0x28];                /* 0x04 the stream's "SShd" and "SSbd" headers */
@@ -84,7 +84,7 @@ typedef struct {
     s32 picture_height;             /* 0x44 */
 } MovieDisplay;
 
-/* D_00437850: the movie player's buffers, threads, file and display */
+/* movie_thread: the movie player's buffers, threads, file and display */
 typedef struct {
     u32 heap_start;                 /* 0x00 the block Movie_Play is given to allocate from */
     u32 heap_next;                  /* 0x04 first free byte (Movie_HeapAlloc) */
@@ -139,7 +139,7 @@ typedef struct {
 #define MOVIE_OUT_STATUS_SHOWN_EVEN 1   /* the even field has been sent, the odd one is next */
 #define MOVIE_OUT_STATUS_FULL 2
 
-/* D_00437838: ring of decoded pictures waiting to be shown (the SDK sample's VoBuf); the vblank handler takes
+/* movie_out_buffer: ring of decoded pictures waiting to be shown (the SDK sample's VoBuf); the vblank handler takes
    pictures out while the decode thread puts them in */
 typedef struct {
     MovieOutPicture *data;          /* 0x00 */
@@ -193,7 +193,7 @@ typedef struct {
    (MovieStream_BeginPut only matches this way) */
 #define MOVIE_STREAM_DATA_ADDRESS(stream) (*(s32 *)&(stream)->data)
 
-/* D_00437938: the libmpeg handle, its stream buffer and the decoder state (the SDK sample's VideoDec) */
+/* movie_decoder: the libmpeg handle, its stream buffer and the decoder state (the SDK sample's VideoDec) */
 typedef struct {
     char mpeg[0x48];                /* 0x00 an sceMpeg */
     MovieStreamBuffer stream;       /* 0x48 */

@@ -1,4 +1,4 @@
-/* EyePedestal: the behaviour of entity type 31 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* EyePedestal: the behaviour of entity type 31 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: chr.prm record 91, model
    c0091 (an eye set in a stone pedestal), whose eight spawns stand in two rows of four in 006.map. They
    neither move nor take hits; each turns its eye after the player, except the one spawned with
@@ -13,14 +13,14 @@ void EntityAi_SetUpdate(char *, s32);
 void Motion_ClearPartSlots(EntityModel *);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPoint(void *, int, int, int, int, float);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 int Motion_Start(void *, int, int, u32, int);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 
 static void EyePedestal_Animate(Entity *entity);
 static void EyePedestal_Think(Entity *entity);
@@ -39,7 +39,7 @@ void EyePedestal_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))EyePedestal_Think;
     unkE0->animate = (void (*)(void))EyePedestal_Animate;
     unkE0->on_hit = NULL;
@@ -113,9 +113,9 @@ static void EyePedestal_Think(Entity *entity) {
     if (unkE0->unk7A != 0) {
         unkE0->unk7A--;
     } else {
-        unkE0->unk48 = D_00413F80.position[0];
-        unkE0->unk4C = D_00413F80.position[1] - 220.0f;
-        unkE0->unk50 = D_00413F80.position[2];
+        unkE0->unk48 = player_state.position[0];
+        unkE0->unk4C = player_state.position[1] - 220.0f;
+        unkE0->unk50 = player_state.position[2];
         unkE0->unk7A = (u8)entity->params->unk436;
     }
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;

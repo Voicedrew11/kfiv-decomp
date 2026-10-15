@@ -1,4 +1,4 @@
-/* Minion: the behaviour of entity type 60 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Minion: the behaviour of entity type 60 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Minion. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -14,7 +14,7 @@ void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
 int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
@@ -23,7 +23,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
@@ -85,7 +85,7 @@ void Minion_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Minion_Think;
     unkE0->animate = (void (*)(void))Minion_Animate;
     unkE0->on_hit = (void (*)(void))Minion_OnHit;
@@ -203,7 +203,7 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -472,7 +472,7 @@ static void Minion_Move(Entity *entity) {
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
     f32 turn;
 
-    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     if (entity->unkC8 & 0x100) {
@@ -687,7 +687,7 @@ static void Minion_Dodge(Entity *entity) {
     entity->unkC6 |= 8;
     switch (entity->action_step) {
     case 0:
-        if (EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position)) * 57.29578f > 0.0f) {
+        if (EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * 57.29578f > 0.0f) {
             EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, 6, 0, entity->params->unkC4 >> 1, 1);
             if (unkE0->unk79 == 0) {
                 EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk88, 1, 6, 0, entity->params->unkC4 >> 1, 1);

@@ -120,7 +120,7 @@ typedef struct {
     char pad4D8[0x08];              /* the block in .bss is 0x4E0 bytes */
 } SoundState;
 
-/* D_0038A130: the sound loads waiting to run, one at a time (func_00101618). Other files
+/* sound_load_queue: the sound loads waiting to run, one at a time (func_00101618). Other files
    still declare it as int[]/char[], so the extern stays in each file. */
 typedef struct {
     int unk00;                      /* 0x00 first argument of Sound_LoadBgm */
@@ -147,7 +147,7 @@ typedef struct {
     u32 bit31 : 1;
 } SoundVoiceStatus;
 
-/* D_004FF558[]: a sound cue, the arguments of func_001CEE78 */
+/* bgm_cues[]: a sound cue, the arguments of func_001CEE78 */
 typedef struct {
     int flags;                      /* 0x00 */
     s16 unk04;                      /* 0x04 */
@@ -250,8 +250,8 @@ typedef struct {
     char pad02[0x76];
 } SoundScriptState;
 
-/* D_003EF710[128]: a sound channel (0x40 bytes); unk3A is -1 when it is free.
-   D_00500170[128] are queued requests of the same shape; there unk38 is -1 when free. */
+/* sound_channels[128]: a sound channel (0x40 bytes); unk3A is -1 when it is free.
+   tagged_requests[128] are queued requests of the same shape; there unk38 is -1 when free. */
 typedef struct {
     Vector4Arg origin;              /* 0x00 */
     Vector4Arg target;              /* 0x10 */

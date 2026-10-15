@@ -1,4 +1,4 @@
-/* The player: the state block at D_00413F80 and the level/experience tables. */
+/* The player: the state block at player_state and the level/experience tables. */
 #ifndef KF_PLAYER_H
 #define KF_PLAYER_H
 
@@ -51,9 +51,9 @@ typedef struct {
     char pad28[0x08];
 } PlayerShot;
 
-/* D_00413F80. Files still declare it as float[]/int[]/char[] too, so the
+/* player_state. Files still declare it as float[]/int[]/char[] too, so the
    extern stays in each file until they agree; D_00413F84 is position.y and
-   D_00413F90 is rotation. */
+   player_rotation is rotation. */
 typedef struct {
     Vector4 position;               /* 0x00 */
     Vector4 rotation;               /* 0x10 y is the heading */
@@ -206,7 +206,7 @@ typedef struct {
     char pad2F4[0x0C];              /* the block is 0x300 bytes (func_001B5810 clears and copies that many) */
 } PlayerState;
 
-/* D_00414660[7]: colour and life of the weapon trail, one per kind (D_00447188) */
+/* weapon_trail_kinds[7]: colour and life of the weapon trail, one per kind (D_00447188) */
 typedef struct {
     s32 red;                        /* 0x00 */
     s32 green;                      /* 0x04 */
@@ -217,7 +217,7 @@ typedef struct {
     char pad1C[0x04];
 } WeaponTrailKind;
 
-/* D_00414580 (0x48 bytes): the colours laid over the screen for what happens to the player; each
+/* player_screen_tint (0x48 bytes): the colours laid over the screen for what happens to the player; each
    strength is the alpha Player_DrawScreenTints draws with */
 typedef struct {
     s32 unk00;                      /* 0x00 set to 10 by func_001BB360 */
@@ -279,7 +279,7 @@ typedef struct {
     u8 magic_gain;                  /* 0x07 added to PlayerState.magic_base */
 } PlayerLevelStep;
 
-/* worn_defs[160]: param/item_pct.prm (func_00112648), a row per item from ITEM_WORN_FIRST, one per LevelRecord of D_003682F0 */
+/* worn_defs[160]: param/item_pct.prm (func_00112648), a row per item from ITEM_WORN_FIRST, one per LevelRecord of worn_item_level_records */
 typedef struct {
     s16 unk00[9];                   /* 0x00 the base of the nine values; LevelRecord.unk00 is added (func_001BB728) */
     u16 unk12[6];                   /* 0x12 added to PlayerState.unkDC while the item is worn (func_001BB020) */
@@ -290,7 +290,7 @@ typedef struct {
     u8 unk3F;                       /* 0x3F added to PlayerItemDef.unk7C for the shield in hand (Menu_UpdateEquip) */
 } LevelRecordDef;
 
-/* D_003682F0[160]: what has been gained per item (0x22 bytes each) */
+/* worn_item_level_records[160]: what has been gained per item (0x22 bytes each) */
 typedef struct {
     s16 unk00[9];                   /* 0x00 added to the PlayerItemDef's row (func_001BA310) */
     u8 level;                       /* 0x12 */
@@ -345,7 +345,7 @@ typedef struct {
     u16 unk82;                      /* 0x82 the motion frame the drawing sound starts on */
     char pad84[0x02];
     u8 unk86;                       /* 0x86 copied to Unk1B1470Request.unk6F */
-    s8 unk87;                       /* 0x87 unk87 to unk89 become D_00414740 (x, y, z) when the item's model is loaded */
+    s8 unk87;                       /* 0x87 unk87 to unk89 become held_item_offsets (x, y, z) when the item's model is loaded */
     s8 unk88;                       /* 0x88 */
     s8 unk89;                       /* 0x89 */
     u16 unk8A;                      /* 0x8A the least PlayerState.power for magic unk42 (Player_SwingWeapon) */
@@ -353,7 +353,7 @@ typedef struct {
     char pad8E[0x02];
 } PlayerItemDef;
 
-/* D_00414780, D_004147A0: points 30 and 31 of the held item's model, this frame's and the frame before's */
+/* held_item_arm_points, held_item_arm_points_prev: points 30 and 31 of the held item's model, this frame's and the frame before's */
 typedef struct {
     VuVector4 points[2];
 } PlayerArmPoints;

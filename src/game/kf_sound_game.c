@@ -16,13 +16,13 @@ int func_001CBD20(void);
 int func_00102790(int, int);
 int func_001CD6B8(int);
 
-extern LoadJob D_003EF5B8;
-extern SoundJob D_003EF5E8;
-extern SoundJob D_003EF618;
-extern SoundFileBuffer D_003EF500;
-extern SoundFileBuffer D_003EF520;
-extern SoundChannel D_003EF710[];
-extern char D_002496BF[];
+extern LoadJob bgm_load_job;
+extern SoundJob se_com_job;
+extern SoundJob sfx_com_job;
+extern SoundFileBuffer se_com_bank;
+extern SoundFileBuffer sfx_com_bank;
+extern SoundChannel sound_channels[];
+extern char sound_heap_base[];
 extern int D_004468BC;
 extern float D_004468C0;
 extern int D_004468C4;
@@ -39,25 +39,25 @@ int func_001CB778(void);
 void func_001CBE60(void);
 int func_001CE690(u32 slot, int voice_index, char channel, char program, char note, char volume, s16 bend, char pan);
 int func_001CE8B0(u32 key_index);
-extern u8 D_00349680[];
+extern u8 game_options[];
 void func_001CBED8(void);
 void func_001CC018(void);
 int func_001CEBE0(void);
-extern f32 D_003EF6E0[4];
-extern u8 D_003EF6F0[][2];
+extern f32 sound_cos_polynomial[4];
+extern u8 voice_ranges[][2];
 extern u8 D_00446880[8];
 int func_001CBAE0(int, ...);
 int func_001CE468(u32 bank_index, int value);
 int func_001CE620(int, s16);
 int func_001CDBC0(u32, s16);
-extern SoundJob D_003EF648;
-extern SoundJob D_003EF678;
-extern SoundJob D_003EF6A8;
-extern u8 D_00349681[];
+extern SoundJob map_bank_job;
+extern SoundJob sw_bank_job;
+extern SoundJob mg_bank_job;
+extern u8 music_volume[];
 extern int D_00446860;
-extern void *D_003EF700[];
-extern PlayerState D_00413F80;
-extern u8 D_00349682[];
+extern void *tracked_sound_players[];
+extern PlayerState player_state;
+extern u8 sfx_volume[];
 double sqrt(double);
 int func_001CE9A0(int kind, u32 slot, int value);
 int rand(void);
@@ -112,27 +112,27 @@ extern SoundScriptState D_0043EE78;
 extern u8 D_00446895;
 extern int D_004468B4;
 extern int (*D_0043ED90[])(void);
-extern SoundBankSpec D_003EF5A0;
-extern SoundFileBuffer D_003EF560;
-extern SoundFileBuffer D_003EF580;
+extern SoundBankSpec map_bank_files;
+extern SoundFileBuffer sw_bank;
+extern SoundFileBuffer mg_bank;
 int func_001CD0E0(int, int, int, int, int, int, int);
-extern int D_0038A130[0x28 / 4];
-extern MapSlot D_0038CD20[];
+extern int sound_load_queue[0x28 / 4];
+extern MapSlot map_slots[];
 extern int D_00446770;
 
-static char D_004FF3C0[0x80];         /* 0x4FF3C0 a file name for sprintf */
-static char D_004FF440[0x80];         /* 0x4FF440 the map bank's file name */
-static SoundStartSpec D_004FF4C0;     /* 0x4FF4C0 the spec of the sound file load */
-static SoundJob D_004FF4D8;           /* 0x4FF4D8 the sound file load job */
+static char sound_file_path[0x80];         /* 0x4FF3C0 a file name for sprintf */
+static char map_bank_file_path[0x80];         /* 0x4FF440 the map bank's file name */
+static SoundStartSpec sound_load_spec;     /* 0x4FF4C0 the spec of the sound file load */
+static SoundJob sound_load_job;           /* 0x4FF4D8 the sound file load job */
 static u8 D_004FF4F8[0x18];           /* 0x4FF4F8 */
-static SoundBankSpec D_004FF510;      /* 0x4FF510 the spec of the map bank load */
-static SoundJob D_004FF528;           /* 0x4FF528 the map bank load job */
+static SoundBankSpec map_bank_spec;      /* 0x4FF510 the spec of the map bank load */
+static SoundJob map_bank_load_job;           /* 0x4FF528 the map bank load job */
 static u8 D_004FF548[0x10];           /* 0x4FF548 */
-static char D_004FF558[0x400];        /* 0x4FF558 the bgm cue table, 0x40 cues */
-static char D_004FF958[0x800];        /* 0x4FF958 the map bank cue table, 0x80 cues */
-static char D_00500158[0x18];         /* 0x500158 a claim flag per voice 0x54..0x6B */
-static SoundChannel D_00500170[0x80]; /* 0x500170 the queued tagged requests */
-static s32 D_00502170[30][2];         /* 0x502170 the tracked voices */
+static char bgm_cues[0x400];        /* 0x4FF558 the bgm cue table, 0x40 cues */
+static char map_bank_cues[0x800];        /* 0x4FF958 the map bank cue table, 0x80 cues */
+static char tagged_voice_flags[0x18];         /* 0x500158 a claim flag per voice 0x54..0x6B */
+static SoundChannel tagged_requests[0x80]; /* 0x500170 the queued tagged requests */
+static s32 tracked_voices[30][2];         /* 0x502170 the tracked voices */
 
 static void func_0019C4A0(void);
 static void Sound_CosSin(f32 angle, f32 *cos_out, f32 *sin_out);
@@ -174,29 +174,29 @@ void Sound_Init(void) {
     D_004470E6 = 0;
     D_004470E0 = 0;
     D_004470E7 = 0xFF;
-    memset(D_00502170, 0, 0xD0);
+    memset(tracked_voices, 0, 0xD0);
     func_001CB778();
     func_001CBAE0(1, 0x100, 0xA, 0x800);
     func_001CBE60();
-    D_003EF500.used = 0;
-    D_003EF500.base = heap_start = ((u32)D_002496BF >> 6) << 6;
-    D_003EF500.limit = heap_start + 0xA0000;
-    Sound_LoadJob(&D_003EF5E8);
-    D_003EF520.base = D_003EF500.base;
-    D_003EF520.limit = D_003EF500.limit;
-    Sound_LoadJob(&D_003EF618);
+    se_com_bank.used = 0;
+    se_com_bank.base = heap_start = ((u32)sound_heap_base >> 6) << 6;
+    se_com_bank.limit = heap_start + 0xA0000;
+    Sound_LoadJob(&se_com_job);
+    sfx_com_bank.base = se_com_bank.base;
+    sfx_com_bank.limit = se_com_bank.limit;
+    Sound_LoadJob(&sfx_com_job);
     for (i = 0; i < 0x80; i++) {
-        D_003EF710[i].unk3A = -1;
+        sound_channels[i].unk3A = -1;
     }
     Sound_LoadReverbParams();
     for (i = 0; i < 0x80; i++) {
-        D_00500170[i].unk38 = -1;
+        tagged_requests[i].unk38 = -1;
     }
     for (i = 0; i < 0x10; i++) {
-        D_00500158[i] = -1;
+        tagged_voice_flags[i] = -1;
     }
-    D_003EF5B8.unk10 = 0;
-    D_003EF5B8.unk14 = 0;
+    bgm_load_job.unk10 = 0;
+    bgm_load_job.unk14 = 0;
 }
 
 /* Starts and at once stops sound 0 of the sfx_com bank on each tracked voice (0x64..0x7D). Nothing calls it. */
@@ -204,14 +204,14 @@ static void func_0019C4A0(void) {
     s32 i;
 
     for (i = 0x64; i < 0x7E; i++) {
-        func_001CE690(i, D_003EF618.result, 0, 0, 0x3C, D_00349680[2], 0, 0x3F);
+        func_001CE690(i, sfx_com_job.result, 0, 0, 0x3C, game_options[2], 0, 0x3F);
         func_001CE8B0(i);
     }
 }
 
-/* Applies option 0 (D_00349680[0]) to the driver: func_001CC018 when it is set, func_001CBED8 when not. */
+/* Applies option 0 (game_options[0]) to the driver: func_001CC018 when it is set, func_001CBED8 when not. */
 void func_0019C520(void) {
-    if (D_00349680[0] != 0) {
+    if (game_options[0] != 0) {
         func_001CC018();
         return;
     }
@@ -251,7 +251,7 @@ static void Sound_CosSin(f32 angle, f32 *cos_out, f32 *sin_out) {
         "1:\n"
         "mfc1 $8, %0\n"
         "qmtc2 $8, $vf6\n"
-        "la $8, D_003EF6E0\n"
+        "la $8, sound_cos_polynomial\n"
         "lqc2 $vf5, 0($8)\n"
         "vmr32.w $vf6, $vf6\n"
         "vaddx.x $vf4, $vf0, $vf6x\n"
@@ -308,11 +308,11 @@ static float Sound_Delta(f32 *out, f32 *point_a, f32 *point_b) {
     return length[0];
 }
 
-/* Steps the cursor of voice group `group` round its range (D_003EF6F0) and returns the next voice. */
+/* Steps the cursor of voice group `group` round its range (voice_ranges) and returns the next voice. */
 static int Sound_NextVoice(int slot) {
     s8 index = slot;
-    u8 low = D_003EF6F0[index][0];
-    s8 high = D_003EF6F0[index][1];
+    u8 low = voice_ranges[index][0];
+    s8 high = voice_ranges[index][1];
     s8 offset = D_00446880[index] - low + 1;
     int next = offset % (high - (s8)low + 1) + low;
 
@@ -325,7 +325,7 @@ static s8 Sound_ClaimTaggedVoice(void) {
     s8 *flag;
     s32 i;
 
-    flag = D_00500158;
+    flag = tagged_voice_flags;
     for (i = 0; i < 16; i++, flag++) {
         if (*flag < 0) {
             *flag = 1;
@@ -343,14 +343,14 @@ static void func_0019C748(void) {
     func_001CBAE0(1, 0xD0, 0xE81, 0x7FFF);
 }
 
-/* func_001CE468 on the BGM bank (D_003EF5B8.unk14) with value. Nothing calls it. */
+/* func_001CE468 on the BGM bank (bgm_load_job.unk14) with value. Nothing calls it. */
 static void func_0019C7C0(int value) {
-    func_001CE468(D_003EF5B8.unk14, value);
+    func_001CE468(bgm_load_job.unk14, value);
 }
 
 /* Sets the BGM bank's volume (func_001CE620) to level, at most 0x7F: the fades of the BGM load steps. */
 static void Sound_SetBgmFade(s32 level) {
-    func_001CE620(D_003EF5B8.unk14, (s16)(level < 0x80 ? level : 0x7F));
+    func_001CE620(bgm_load_job.unk14, (s16)(level < 0x80 ? level : 0x7F));
 }
 
 /* Sets the BGM voice's volume (func_001CDBC0) to level, kept within 0..0x7F: the music volume option. */
@@ -361,39 +361,39 @@ void Sound_SetBgmVolume(s32 level) {
     if (level > 0x7F) {
         level = 0x7F;
     }
-    func_001CDBC0(D_003EF5B8.unk10, level);
+    func_001CDBC0(bgm_load_job.unk10, level);
 }
 
 /* Sets one volume (func_001CDBC0) on the voices of the five sound banks and on voices 6 to 9. */
 void Sound_SetBankVolumes(int level) {
     s16 short_level = level;
 
-    func_001CDBC0(D_003EF5E8.result, short_level);
-    func_001CDBC0(D_003EF6A8.result, short_level);
-    func_001CDBC0(D_003EF678.result, short_level);
-    func_001CDBC0(D_003EF648.result, short_level);
-    func_001CDBC0(D_003EF618.result, short_level);
+    func_001CDBC0(se_com_job.result, short_level);
+    func_001CDBC0(mg_bank_job.result, short_level);
+    func_001CDBC0(sw_bank_job.result, short_level);
+    func_001CDBC0(map_bank_job.result, short_level);
+    func_001CDBC0(sfx_com_job.result, short_level);
     func_001CDBC0(6, short_level);
     func_001CDBC0(7, short_level);
     func_001CDBC0(8, short_level);
     func_001CDBC0(9, short_level);
 }
 
-/* Sets the BGM fade level (D_00446860) to the music volume option (D_00349681). */
+/* Sets the BGM fade level (D_00446860) to the music volume option (music_volume). */
 void Sound_SyncBgmLevel(void) {
-    D_00446860 = D_00349681[0];
+    D_00446860 = music_volume[0];
 }
 
-/* Starts a tracked sound with the player of `kind` in D_003EF700 (0 Sound_PlayTracked, 1
+/* Starts a tracked sound with the player of `kind` in tracked_sound_players (0 Sound_PlayTracked, 1
    Sound_PlayTrackedAt). */
 char Sound_PlayTrackedKind(int index, int first, int second, int third, int fourth) {
     int (*handler)(int, int, int, char);
 
-    handler = D_003EF700[index];
+    handler = tracked_sound_players[index];
     return handler(first, second, third, (char)fourth);
 }
 
-/* Starts a sound on the next tracked voice (0x64..0x7D) whose D_00502170 slot is free, from the mg bank
+/* Starts a sound on the next tracked voice (0x64..0x7D) whose tracked_voices slot is free, from the mg bank
    (sound below 8) or the sfx_com bank, at the sound volume option; returns the voice, -1 if 11 tries find
    none. */
 int Sound_PlayTracked(int sound, int unused, float *position) {
@@ -406,31 +406,31 @@ int Sound_PlayTracked(int sound, int unused, float *position) {
     int tries;
 
     if (sound < 8) {
-        bank = &D_003EF6A8;
+        bank = &mg_bank_job;
     } else if (sound < 0x7F) {
-        bank = &D_003EF618;
+        bank = &sfx_com_job;
     } else {
         return -1;
     }
     tries = 0;
-    Sound_Delta(diff, position, &D_00413F80.position.x);
-    Sound_CosSin(D_00413F80.rotation.y, origin, offset);
+    Sound_Delta(diff, position, &player_state.position.x);
+    Sound_CosSin(player_state.rotation.y, origin, offset);
     direction[0] = origin[0];
     direction[1] = 0.0f;
     direction[2] = -offset[0];
     for (;;) {
         slot = Sound_NextVoice(5);
         tries++;
-        if (D_00502170[slot - 100][0] == 0) {
+        if (tracked_voices[slot - 100][0] == 0) {
             break;
         }
         if (tries >= 0xB) {
             return -1;
         }
     }
-    func_001CE690(slot, bank->result, 0, sound, 0x3C, D_00349680[2], 0, 0x3F);
-    D_00502170[slot - 100][0] = 1;
-    D_00502170[slot - 100][1] = (u8)D_00349680[2];
+    func_001CE690(slot, bank->result, 0, sound, 0x3C, game_options[2], 0, 0x3F);
+    tracked_voices[slot - 100][0] = 1;
+    tracked_voices[slot - 100][1] = (u8)game_options[2];
     return slot;
 }
 
@@ -455,8 +455,8 @@ int Sound_PlayTrackedAt(int sound, int unused, float *position) {
         return -1;
     }
     tries = 0;
-    distance = Sound_Delta(diff, position, &D_00413F80.position.x);
-    Sound_CosSin(D_00413F80.rotation.y, origin, offset);
+    distance = Sound_Delta(diff, position, &player_state.position.x);
+    Sound_CosSin(player_state.rotation.y, origin, offset);
     direction[0] = origin[0];
     direction[1] = 0.0f;
     direction[2] = -offset[0];
@@ -465,7 +465,7 @@ int Sound_PlayTrackedAt(int sound, int unused, float *position) {
     if (volume < 0) {
         volume = 0;
     }
-    volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+    volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
     if (volume >= 0x80) {
         volume = 0x7F;
     }
@@ -473,16 +473,16 @@ int Sound_PlayTrackedAt(int sound, int unused, float *position) {
     for (;;) {
         slot = Sound_NextVoice(5);
         tries++;
-        if (D_00502170[slot - 100][0] == 0) {
+        if (tracked_voices[slot - 100][0] == 0) {
             break;
         }
         if (tries >= 0xB) {
             return -1;
         }
     }
-    func_001CE690(slot, D_003EF618.result, 0, sound, 0x3C, volume, 0, (char) pan);
-    D_00502170[slot - 100][0] = TRUE;
-    D_00502170[slot - 100][1] = volume;
+    func_001CE690(slot, sfx_com_job.result, 0, sound, 0x3C, volume, 0, (char) pan);
+    tracked_voices[slot - 100][0] = TRUE;
+    tracked_voices[slot - 100][1] = volume;
     return slot;
 }
 
@@ -491,7 +491,7 @@ void Sound_MuteTracked(void) {
     int i;
 
     for (i = 0; i < 0x1A; i++) {
-        if (D_00502170[i][0] > 0) {
+        if (tracked_voices[i][0] > 0) {
             func_001CE9A0(0, i + 100, 0);
         }
     }
@@ -501,15 +501,15 @@ void Sound_MuteTracked(void) {
 void Sound_UnmuteTracked(void) {
     s32 i;
     for (i = 0; i < 0x1A; i++) {
-        if (D_00502170[i][0] > 0)
-            func_001CE9A0(0, i + 100, D_00502170[i][1]);
+        if (tracked_voices[i][0] > 0)
+            func_001CE9A0(0, i + 100, tracked_voices[i][1]);
     }
 }
 
 /* Stops a tracked voice and frees its slot. */
 void Sound_StopTracked(s8 slot) {
     if (slot > 0) {
-        D_00502170[slot - 100][0] = 0;
+        tracked_voices[slot - 100][0] = 0;
         func_001CE8B0(slot);
     }
 }
@@ -524,14 +524,14 @@ void Sound_StopVoice(s8 slot) {
 /* Plays a sound of the se_com bank on voice 1 unless it is 0xFF (none): the menu sounds. */
 s32 Sound_PlayMenu(s32 sound) {
     if (sound != 0xFF) {
-        func_001CE690(1, D_003EF5E8.result, 0, (char)sound, 0x3C, D_00349682[0], 0, 0x3F);
+        func_001CE690(1, se_com_job.result, 0, (char)sound, 0x3C, sfx_volume[0], 0, 0x3F);
     }
     /* match: no return; an s32 function, so $2 stays live and the beq delay slot takes the second lui */
 }
 
 /* Plays a sound of the sw bank on voice 2. */
 void Sound_PlaySw(int mode) {
-    func_001CE690(2, D_003EF678.result, 0, (char)mode, 0x3C, D_00349682[0], 0, 0x3F);
+    func_001CE690(2, sw_bank_job.result, 0, (char)mode, 0x3C, sfx_volume[0], 0, 0x3F);
 }
 
 /* Plays a map bank sound at a point (while D_004470E1 is set): the volume falls off with the distance from
@@ -551,8 +551,8 @@ int Sound_PlayMapAt(u8 sound, void *position) {
     if (D_004470E1 == 0) {
         return -1;
     }
-    distance = Sound_Delta(diff, position, &D_00413F80.position.x);
-    Sound_CosSin(D_00413F80.rotation.y, origin, offset);
+    distance = Sound_Delta(diff, position, &player_state.position.x);
+    Sound_CosSin(player_state.rotation.y, origin, offset);
     direction[0] = origin[0];
     direction[1] = 0.0f;
     direction[2] = -offset[0];
@@ -561,13 +561,13 @@ int Sound_PlayMapAt(u8 sound, void *position) {
     if (level < 0.0f) {
         level = 0.0f;
     }
-    volume = level * (float) D_00349682[0] * 0.015625f;
+    volume = level * (float) sfx_volume[0] * 0.015625f;
     if (volume >= 0x80) {
         volume = 0x7F;
     }
     pan = ((diff[0] * direction[0] + diff[1] * direction[1] + diff[2] * direction[2]) / distance + 1.0f) * 63.0f;
     detune = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
-    func_001CE690(Sound_NextVoice(3), D_003EF648.result, 0, sound, 0x3C, volume, detune, (char) pan);
+    func_001CE690(Sound_NextVoice(3), map_bank_job.result, 0, sound, 0x3C, volume, detune, (char) pan);
     return 1;
 }
 
@@ -579,15 +579,15 @@ int Sound_PlayFootstep(int sound) {
     int bend;
 
     if (sound < 0x22 || sound == 0x24 || sound == 0x25) {
-        bank = &D_003EF5E8;
+        bank = &se_com_job;
     } else if (sound < 0x28) {
-        bank = &D_003EF648;
+        bank = &map_bank_job;
     } else {
         return -1;
     }
     slot = Sound_NextVoice(1);
     bend = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
-    func_001CE690(slot, bank->result, 0, sound, 0x3C, D_00349682[0], bend, 0x3F);
+    func_001CE690(slot, bank->result, 0, sound, 0x3C, sfx_volume[0], bend, 0x3F);
     return slot;
 }
 
@@ -596,7 +596,7 @@ s32 Sound_PlayCommon(s32 value) {
     s32 slot;
 
     slot = Sound_NextVoice(1);
-    func_001CE690(slot, D_003EF5E8.result, 0, (char)value, 0x3C, D_00349682[0], 0, 0x3F);
+    func_001CE690(slot, se_com_job.result, 0, (char)value, 0x3C, sfx_volume[0], 0, 0x3F);
     return slot;
 }
 
@@ -605,7 +605,7 @@ int Sound_PlayMap(int value) {
     int result;
 
     result = Sound_NextVoice(1);
-    func_001CE690(result, D_003EF648.result, 0, (char)value, 0x3C, D_00349682[0], 0, 0x3F);
+    func_001CE690(result, map_bank_job.result, 0, (char)value, 0x3C, sfx_volume[0], 0, 0x3F);
     return result;
 }
 
@@ -621,9 +621,9 @@ int Sound_PlayCommonAt(float range, int sound, float *position) {
     int pan_pos;
     int slot;
 
-    distance = Sound_Delta(diff, position, &D_00413F80.position.x);
+    distance = Sound_Delta(diff, position, &player_state.position.x);
     if (!(range < distance)) {
-        angle = atan2f(position[0] - D_00413F80.position.x, position[2] - D_00413F80.position.z) - D_00413F80.rotation.y;
+        angle = atan2f(position[0] - player_state.position.x, position[2] - player_state.position.z) - player_state.rotation.y;
         angle -= (int)(angle / 6.2831855f) * 6.2831855f;
         if (3.1415927f < angle) {
             angle -= 6.2831855f;
@@ -634,12 +634,12 @@ int Sound_PlayCommonAt(float range, int sound, float *position) {
         volume = (range - distance) * 64.0f * (1.0f / range);
         if (!((float) volume < 0.0f)) {
             pan_pos = (offset[0] + 1.0f) * 63.0f;
-            volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+            volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
             if (volume >= 128) {
                 volume = 127;
             }
             slot = Sound_NextVoice(3);
-            func_001CE690(slot, D_003EF5E8.result, 0, sound, 0x3C, volume, 0, (char) pan_pos);
+            func_001CE690(slot, se_com_job.result, 0, sound, 0x3C, volume, 0, (char) pan_pos);
             return slot;
         }
     }
@@ -657,14 +657,14 @@ int Sound_PlayMapVolume(u8 sound, int volume) {
     if (volume < 0) {
         volume = 0;
     }
-    volume = (int) ((float) volume * (float) D_00349682[0] * 0.015625f);
+    volume = (int) ((float) volume * (float) sfx_volume[0] * 0.015625f);
     if (volume >= 128) {
         volume = 127;
     }
     bend = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
     slot = Sound_NextVoice(3);
     if (volume != 0) {
-        func_001CE690(slot, D_003EF648.result, 0, sound, 0x3C, volume, bend, 0x3F);
+        func_001CE690(slot, map_bank_job.result, 0, sound, 0x3C, volume, bend, 0x3F);
     }
     return 1;
 }
@@ -686,7 +686,7 @@ int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range) {
     if (D_004470E1 == 0) {
         return -1;
     }
-    distance = Sound_Delta(diff, position, &D_00413F80.position.x);
+    distance = Sound_Delta(diff, position, &player_state.position.x);
     switch (mode) {
     case 0:
     case 6:
@@ -709,11 +709,11 @@ int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range) {
     if (level < 0.0f) {
         level = 0.0f;
     }
-    volume = level * (float) D_00349682[0] * 0.015625f;
+    volume = level * (float) sfx_volume[0] * 0.015625f;
     if (volume >= 0x80) {
         volume = 0x7F;
     }
-    angle = atan2f(position[0] - D_00413F80.position.x, position[2] - D_00413F80.position.z) - D_00413F80.rotation.y;
+    angle = atan2f(position[0] - player_state.position.x, position[2] - player_state.position.z) - player_state.rotation.y;
     angle -= (int)(angle / 6.2831855f) * 6.2831855f;
     if (3.1415927f < angle) {
         angle -= 6.2831855f;
@@ -729,12 +729,12 @@ int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range) {
     }
     slot = Sound_NextVoice(3);
     if (volume != 0) {
-        func_001CE690(slot, D_003EF648.result, 0, sound, 0x3C, volume, detune, (char) pan);
+        func_001CE690(slot, map_bank_job.result, 0, sound, 0x3C, volume, detune, (char) pan);
     }
     return 1;
 }
 
-/* Starts a tagged sound (channel kind 0x63, no position) of the map bank at volume; queued in D_00500170
+/* Starts a tagged sound (channel kind 0x63, no position) of the map bank at volume; queued in tagged_requests
    while D_004470E1 is clear. */
 int Sound_StartTagged(s8 sound, u8 voice, int volume) {
     SoundChannel *channel;
@@ -742,14 +742,14 @@ int Sound_StartTagged(s8 sound, u8 voice, int volume) {
     int i;
     s8 voice_id;
 
-    volume = (int) ((float) volume * (float) D_00349682[0] * 0.015625f);
+    volume = (int) ((float) volume * (float) sfx_volume[0] * 0.015625f);
     if (volume >= 0x80) {
         volume = 0x7F;
     }
     if (D_004470E1 == 0) {
         for (i = 0; i < 0x80; i++) {
-            if (D_00500170[i].unk38 == -1) {
-                request = &D_00500170[i];
+            if (tagged_requests[i].unk38 == -1) {
+                request = &tagged_requests[i];
                 request->unk38 = 1;
                 request->unk3A = sound;
                 request->unk3B = voice;
@@ -760,19 +760,19 @@ int Sound_StartTagged(s8 sound, u8 voice, int volume) {
         }
     }
     for (i = 0; i < 0x80; i++) {
-        if (D_003EF710[i].unk3A < 0) {
+        if (sound_channels[i].unk3A < 0) {
             break;
         }
     }
-    channel = &D_003EF710[i];
+    channel = &sound_channels[i];
     channel->unk3A = sound;
     channel->unk3C = 0x63;
     channel->unk30 = volume;
     voice_id = channel->unk3B = Sound_ClaimTaggedVoice();
-    func_001CE690(voice_id, D_003EF648.result, 0, voice, 0x3C, volume, 0, 0x3F);
+    func_001CE690(voice_id, map_bank_job.result, 0, voice, 0x3C, volume, 0, 0x3F);
 }
 
-/* Starts a tagged sound at a point, heard within range (SoundChannel.volume); queued in D_00500170 while
+/* Starts a tagged sound at a point, heard within range (SoundChannel.volume); queued in tagged_requests while
    D_004470E1 is clear. Sound_UpdateTagged gives it a voice. */
 s32 Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg *position) {
     SoundChannel *request;
@@ -781,8 +781,8 @@ s32 Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg *
 
     if (D_004470E1 == 0) {
         for (i = 0; i < 0x80; i++) {
-            if (D_00500170[i].unk38 == -1) {
-                request = &D_00500170[i];
+            if (tagged_requests[i].unk38 == -1) {
+                request = &tagged_requests[i];
                 request->unk3A = sound_id;
                 request->unk3B = voice;
                 request->volume = volume;
@@ -796,11 +796,11 @@ s32 Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg *
         }
     }
     for (i = 0; i < 0x80; i++) {
-        if (D_003EF710[i].unk3A < 0) {
+        if (sound_channels[i].unk3A < 0) {
             break;
         }
     }
-    channel = &D_003EF710[i];
+    channel = &sound_channels[i];
     channel->unk3A = sound_id;
     channel->unk38 = voice;
     channel->unk3B = -1;
@@ -821,8 +821,8 @@ s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, V
 
     if (D_004470E1 == 0) {
         for (i = 0; i < 0x80; i++) {
-            if (D_00500170[i].unk38 == -1) {
-                request = &D_00500170[i];
+            if (tagged_requests[i].unk38 == -1) {
+                request = &tagged_requests[i];
                 request->unk38 = 1;
                 request->unk3A = sound_id;
                 request->unk3B = voice;
@@ -840,11 +840,11 @@ s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, V
         }
     }
     for (i = 0; i < 0x80; i++) {
-        if (D_003EF710[i].unk3A < 0) {
+        if (sound_channels[i].unk3A < 0) {
             break;
         }
     }
-    channel = &D_003EF710[i];
+    channel = &sound_channels[i];
     channel->unk3A = sound_id;
     channel->unk38 = voice;
     channel->unk3B = -1;
@@ -876,41 +876,41 @@ void Sound_UpdateTagged(void) {
     s8 voice;
 
     for (i = 0; i < 0x80; i++, D_00446888 = 0) {
-        if (D_003EF710[i].unk3A >= 0 && D_003EF710[i].unk3C != 0x63) {
+        if (sound_channels[i].unk3A >= 0 && sound_channels[i].unk3C != 0x63) {
             Sound_TaggedNearestPoint(i, &nearest);
-            distance = Sound_Delta(diff, &nearest.x, &D_00413F80.position.x);
-            if (D_003EF710[i].volume < distance) {
-                if (D_003EF710[i].unk3B > 0) {
-                    func_001CE8B0(D_003EF710[i].unk3B);
-                    D_00500158[D_003EF710[i].unk3B - 0x54] = D_003EF710[i].unk3B = -1;
+            distance = Sound_Delta(diff, &nearest.x, &player_state.position.x);
+            if (sound_channels[i].volume < distance) {
+                if (sound_channels[i].unk3B > 0) {
+                    func_001CE8B0(sound_channels[i].unk3B);
+                    tagged_voice_flags[sound_channels[i].unk3B - 0x54] = sound_channels[i].unk3B = -1;
                 }
             } else {
                 if (D_004470E6 == 0) {
-                    switch ((u8) D_003EF710[i].unk39) {
+                    switch ((u8) sound_channels[i].unk39) {
                     case 0:
                     case 6:
-                        volume = (D_003EF710[i].volume - distance) * 64.0f * (1.0f / D_003EF710[i].volume);
+                        volume = (sound_channels[i].volume - distance) * 64.0f * (1.0f / sound_channels[i].volume);
                         break;
                     case 1:
                     case 7:
-                        level = D_003EF710[i].volume - distance;
-                        level = D_003EF710[i].volume * D_003EF710[i].volume - level * level;
-                        volume = (int)((1.0 - sqrt(level) / D_003EF710[i].volume) * 64.0) * 1.5f;
+                        level = sound_channels[i].volume - distance;
+                        level = sound_channels[i].volume * sound_channels[i].volume - level * level;
+                        volume = (int)((1.0 - sqrt(level) / sound_channels[i].volume) * 64.0) * 1.5f;
                         break;
                     case 2:
                     case 8:
-                        level = D_003EF710[i].volume * D_003EF710[i].volume - distance * distance;
-                        volume = sqrt(level) / D_003EF710[i].volume * 64.0;
+                        level = sound_channels[i].volume * sound_channels[i].volume - distance * distance;
+                        volume = sqrt(level) / sound_channels[i].volume * 64.0;
                         break;
                     }
                     if (volume <= 0) {
-                        if (D_003EF710[i].unk3B > 0) {
-                            func_001CE8B0(D_003EF710[i].unk3B);
-                            D_00500158[D_003EF710[i].unk3B - 0x54] = D_003EF710[i].unk3B = -1;
+                        if (sound_channels[i].unk3B > 0) {
+                            func_001CE8B0(sound_channels[i].unk3B);
+                            tagged_voice_flags[sound_channels[i].unk3B - 0x54] = sound_channels[i].unk3B = -1;
                         }
                         continue;
                     } else {
-                        volume = (float) volume * (float) D_00349680[2] * 0.015625f;
+                        volume = (float) volume * (float) game_options[2] * 0.015625f;
                         if (volume >= 0x80) {
                             volume = 0x7F;
                         }
@@ -918,8 +918,8 @@ void Sound_UpdateTagged(void) {
                 } else {
                     volume = 0;
                 }
-                angle = atan2f(nearest.x - D_00413F80.position.x, nearest.z - D_00413F80.position.z) -
-                        D_00413F80.rotation.y;
+                angle = atan2f(nearest.x - player_state.position.x, nearest.z - player_state.position.z) -
+                        player_state.rotation.y;
                 angle -= (int)(angle / 6.2831855f) * 6.2831855f;
                 if (3.1415927f < angle) {
                     angle -= 6.2831855f;
@@ -928,7 +928,7 @@ void Sound_UpdateTagged(void) {
                 }
                 Sound_CosSin(angle, origin, offset);
                 pan = (offset[0] * 0.6f + 1.0f) * 63.0f;
-                if ((u8) D_003EF710[i].unk39 < 6 || (u8) D_003EF710[i].unk39 > 8) {
+                if ((u8) sound_channels[i].unk39 < 6 || (u8) sound_channels[i].unk39 > 8) {
                     if (D_00446894 != 0) {
                         D_00446888 -= rand() % 60;
                     } else {
@@ -941,15 +941,15 @@ void Sound_UpdateTagged(void) {
                         D_0044688C = rand() % 0x555 + 0x555;
                         D_00446894 = 0;
                     }
-                    func_001CE9A0(2, D_003EF710[i].unk3B, D_00446888);
+                    func_001CE9A0(2, sound_channels[i].unk3B, D_00446888);
                 }
-                if (D_003EF710[i].unk3B < 0) {
-                    voice = D_003EF710[i].unk3B = Sound_ClaimTaggedVoice();
-                    func_001CE690(voice, D_003EF648.result, 0, D_003EF710[i].unk38, 0x3C, volume, D_00446888, (char) pan);
+                if (sound_channels[i].unk3B < 0) {
+                    voice = sound_channels[i].unk3B = Sound_ClaimTaggedVoice();
+                    func_001CE690(voice, map_bank_job.result, 0, sound_channels[i].unk38, 0x3C, volume, D_00446888, (char) pan);
                     continue;
                 }
-                func_001CE9A0(0, D_003EF710[i].unk3B, volume);
-                func_001CE9A0(1, D_003EF710[i].unk3B, pan);
+                func_001CE9A0(0, sound_channels[i].unk3B, volume);
+                func_001CE9A0(1, sound_channels[i].unk3B, pan);
             }
         }
     }
@@ -978,28 +978,28 @@ static int Sound_TaggedNearestPoint(s32 index, Vector4 *nearest) {
     f32 cos_end;
     f32 along;
 
-    switch (D_003EF710[index].unk3C) {
+    switch (sound_channels[index].unk3C) {
     case 1:
-        nearest->x = D_003EF710[index].origin.x;
-        nearest->y = D_003EF710[index].origin.y;
-        nearest->z = D_003EF710[index].origin.z;
+        nearest->x = sound_channels[index].origin.x;
+        nearest->y = sound_channels[index].origin.y;
+        nearest->z = sound_channels[index].origin.z;
         break;
     case 2:
-        start = D_003EF710[index].origin;
+        start = sound_channels[index].origin;
         // match: retail adds the 0x10 to the table base before the index
-        end = (&D_003EF710[0].target)[index * 4];
-        to_start_x = D_00413F80.position.x - start.x;
+        end = (&sound_channels[0].target)[index * 4];
+        to_start_x = player_state.position.x - start.x;
         seg_x = end.x - start.x;
-        to_start_y = D_00413F80.position.y - start.y;
+        to_start_y = player_state.position.y - start.y;
         seg_y = end.y - start.y;
         back_x = start.x - end.x;
         back_y = start.y - end.y;
         back_z = start.z - end.z;
-        to_end_x = D_00413F80.position.x - end.x;
-        to_start_z = D_00413F80.position.z - start.z;
+        to_end_x = player_state.position.x - end.x;
+        to_start_z = player_state.position.z - start.z;
         seg_z = end.z - start.z;
-        to_end_y = D_00413F80.position.y - end.y;
-        to_end_z = D_00413F80.position.z - end.z;
+        to_end_y = player_state.position.y - end.y;
+        to_end_z = player_state.position.z - end.z;
         dot_start = to_start_x * seg_x + to_start_y * seg_y + to_start_z * seg_z;
         cos_start = dot_start / (sqrt(to_start_x * to_start_x + to_start_y * to_start_y + to_start_z * to_start_z) * sqrt(seg_x * seg_x + seg_y * seg_y + seg_z * seg_z));
         cos_end = (to_end_x * back_x + to_end_y * back_y + to_end_z * back_z) / (sqrt(to_end_x * to_end_x + to_end_y * to_end_y + to_end_z * to_end_z) * sqrt(back_x * back_x + back_y * back_y + back_z * back_z));
@@ -1050,17 +1050,17 @@ static f32 func_0019E478(Vector4 *start, Vector4 *end, Vector4 *nearest, f32 sta
         nearest->y = end->y;
         nearest->z = end->z;
     }
-    return sqrt((D_00413F80.position.x - nearest->x) * (D_00413F80.position.x - nearest->x) + (D_00413F80.position.z - nearest->z) * (D_00413F80.position.z - nearest->z));
+    return sqrt((player_state.position.x - nearest->x) * (player_state.position.x - nearest->x) + (player_state.position.z - nearest->z) * (player_state.position.z - nearest->z));
 }
 
-/* Starts the sounds queued in D_00500170 once D_004470E1 is set, freeing each request. */
+/* Starts the sounds queued in tagged_requests once D_004470E1 is set, freeing each request. */
 static void Sound_StartQueued(void) {
     int i;
     SoundChannel *request;
 
     if (D_004470E1 != 0) {
         for (i = 0; i < 0x80; i++) {
-            request = &D_00500170[i];
+            request = &tagged_requests[i];
             if (request->unk38 > 0) {
                 switch (request->unk39) {
                 case 1:
@@ -1070,15 +1070,15 @@ static void Sound_StartQueued(void) {
                 case 2:
                     request->unk38 = -1;
                     // match: target is indexed off the array; through request it is not strength-reduced
-                    Sound_StartTaggedAlong(request->unk3A, request->unk3B, request->unk3C, &request->origin, &D_00500170[i].target, request->volume);
+                    Sound_StartTaggedAlong(request->unk3A, request->unk3B, request->unk3C, &request->origin, &tagged_requests[i].target, request->volume);
                     break;
                 case 0x63:
-                    D_003EF710[i].unk3A = request->unk3A;
-                    D_003EF710[i].unk3C = 0x63;
-                    D_003EF710[i].unk30 = request->unk30;
+                    sound_channels[i].unk3A = request->unk3A;
+                    sound_channels[i].unk3C = 0x63;
+                    sound_channels[i].unk30 = request->unk30;
                     request->unk38 = -1;
-                    D_003EF710[i].unk3B = Sound_ClaimTaggedVoice();
-                    func_001CE690(D_003EF710[i].unk3B, D_003EF648.result, 0, request->unk3B, 0x3C, request->unk30, 0, 0x3F);
+                    sound_channels[i].unk3B = Sound_ClaimTaggedVoice();
+                    func_001CE690(sound_channels[i].unk3B, map_bank_job.result, 0, request->unk3B, 0x3C, request->unk30, 0, 0x3F);
                     break;
                 }
             }
@@ -1088,7 +1088,7 @@ static void Sound_StartQueued(void) {
 
 /* Turns the volume of every playing unpositioned tagged sound (kind 0x63) to 0. */
 void Sound_MuteTagged(void) {
-    SoundChannel *entry = D_003EF710;
+    SoundChannel *entry = sound_channels;
     int n = 0x7F;
 
     do {
@@ -1102,14 +1102,14 @@ void Sound_MuteTagged(void) {
 
 /* Gives every playing unpositioned tagged sound its volume back. */
 void Sound_UnmuteTagged(void) {
-    SoundChannel *channel = D_003EF710;
+    SoundChannel *channel = sound_channels;
     int n = 0x7F;
     int volume;
 
     do {
         n--;
         if (channel->unk3A >= 0 && channel->unk3C == 0x63) {
-            volume = (int)((float)channel->unk30 * (float)D_00349680[2] * 0.015625f);
+            volume = (int)((float)channel->unk30 * (float)game_options[2] * 0.015625f);
             func_001CE9A0(0, channel->unk3B, (volume >= 0x80) ? 0x7F : volume);
         }
         channel++;
@@ -1121,19 +1121,19 @@ int Sound_StopTagged(char sound) {
     int i;
 
     for (i = 0; i < 0x80; i++) {
-        if (D_003EF710[i].unk3A == sound) {
+        if (sound_channels[i].unk3A == sound) {
             break;
         }
     }
     if (i >= 0x80) {
         return -1;
     }
-    if ((D_003EF710 + i)->unk3B > 0) {
-        func_001CE8B0((D_003EF710 + i)->unk3B);
-        (D_003EF710 + i)->unk3A = -1;
-        D_00500158[(D_003EF710 + i)->unk3B - 0x54] = -1;
+    if ((sound_channels + i)->unk3B > 0) {
+        func_001CE8B0((sound_channels + i)->unk3B);
+        (sound_channels + i)->unk3A = -1;
+        tagged_voice_flags[(sound_channels + i)->unk3B - 0x54] = -1;
     } else {
-        (D_003EF710 + i)->unk3A = -1;
+        (sound_channels + i)->unk3A = -1;
     }
 }
 
@@ -1149,19 +1149,19 @@ void Sound_StopAll(int clear_queue) {
         func_001CE8B0(i);
     }
     for (i = 0; i < 0x80; i++) {
-        D_003EF710[i].unk3A = -1;
-        D_00500158[D_003EF710[i].unk3B - 0x54] = -1;
+        sound_channels[i].unk3A = -1;
+        tagged_voice_flags[sound_channels[i].unk3B - 0x54] = -1;
     }
     if (clear_queue != 0) {
         for (i = 0; i < 0x80; i++) {
-            D_00500170[i].unk38 = -1;
+            tagged_requests[i].unk38 = -1;
         }
     }
 }
 
 /* Plays a sound of the se_com bank on voice 0. Nothing calls it. */
 static int func_0019EB70(char sound) {
-    func_001CE690(0, D_003EF5E8.result, 0, sound, 0x3C, D_00349682[0], 0, 0x3F);
+    func_001CE690(0, se_com_job.result, 0, sound, 0x3C, sfx_volume[0], 0, 0x3F);
     return 0;
 }
 
@@ -1232,7 +1232,7 @@ int func_0019EC90(IopLoadJob *job) {
             D_00446860 = 0;
         }
         level = D_00446860;
-        Sound_SetBgmFade((level < D_00349681[0]) ? level : D_00349681[0]);
+        Sound_SetBgmFade((level < music_volume[0]) ? level : music_volume[0]);
         if (D_00446860 == 0) {
             D_00446858 += 1;
             return 0;
@@ -1365,9 +1365,9 @@ int Sound_BgmFadeIn(int unused, int mode) {
     D_0044685C = 1;
     D_00446860 += 3;
     if (mode != 0x12) {
-        Sound_SetBgmFade((D_00446860 < D_00349681[0]) ? D_00446860 : D_00349681[0]);
+        Sound_SetBgmFade((D_00446860 < music_volume[0]) ? D_00446860 : music_volume[0]);
     }
-    if (D_00446860 >= 0x100 || D_00349681[0] < D_00446860) {
+    if (D_00446860 >= 0x100 || music_volume[0] < D_00446860) {
         D_00446858 += 1;
         return 1;
     }
@@ -1386,7 +1386,7 @@ int Sound_BgmStartCue(void *context, int cue_index) {
     if (D_00446896 < 4U) {
         func_001CEF48((char)D_00446896);
     }
-    cue = (SoundCue *)(D_004FF558 + cue_index * 0x10);
+    cue = (SoundCue *)(bgm_cues + cue_index * 0x10);
     D_00446896 = func_001CEE78(cue->flags, cue->unk04, cue->unk06, cue->unk08, cue->unk0A, cue->unk0C, cue->unk0E, 0);
     D_00446858 += 1;
     return 0;
@@ -1420,12 +1420,12 @@ static int func_0019F298(LoadJob *job, int index) {
     if (func_001CBD20() != 0) {
         switch (D_004468A4) {
         case 0:
-            heap_start = ((u32)&D_002496BF >> 6) << 6;
+            heap_start = ((u32)&sound_heap_base >> 6) << 6;
             D_004470F4 = heap_start;
             *job->buffers = heap_start;
             D_004470F4 = heap_start + 0xA0000;
-            sprintf(D_004FF3C0, job->name, index);
-            file = func_00102238(D_004FF3C0, 1, 1);
+            sprintf(sound_file_path, job->name, index);
+            file = func_00102238(sound_file_path, 1, 1);
             D_004470D4 = file;
             func_001025C0(file, (void *)*job->buffers, -1);
             D_004468A4 += 1;
@@ -1454,8 +1454,8 @@ s32 func_0019F3A0(LoadRequest *request) {
             buffer = D_004470F4;
             request->target->buffer = (void *)buffer;
             D_004470F4 = (((buffer + 0x2003F) >> 6) << 6);
-            sprintf(D_004FF440, request->name, D_0038CD28[0]->unk70);
-            D_004470DC = func_00102238(D_004FF440, TRUE, TRUE);
+            sprintf(map_bank_file_path, request->name, D_0038CD28[0]->unk70);
+            D_004470DC = func_00102238(map_bank_file_path, TRUE, TRUE);
             func_001025C0(D_004470DC, request->target->buffer, -1);
             D_004468A8 += 1;
             break;
@@ -1535,7 +1535,7 @@ int Sound_LoadBgm(int bgm, int pending) {
             pending = 0;
         } else {
             D_0044685C = 0;
-            done = Sound_StepBgmLoad(&D_003EF5B8, bgm);
+            done = Sound_StepBgmLoad(&bgm_load_job, bgm);
             D_004470E5 = 1;
             if (done == 0) {
                 D_004470E4 = bgm;
@@ -1565,13 +1565,13 @@ int func_0019F6B8(LoadJob *job) {
     return 1;
 }
 
-/* Reads snd/rev_para.dat into the two cue tables D_004FF558 and D_004FF958. */
+/* Reads snd/rev_para.dat into the two cue tables bgm_cues and map_bank_cues. */
 static int Sound_LoadReverbParams(void) {
     int file;
 
     file = func_00102238(D_0043EE18, 0, 1);
-    func_001025C0(file, D_004FF558, 0x400);
-    func_001025C0(file, D_004FF958, 0x800);
+    func_001025C0(file, bgm_cues, 0x400);
+    func_001025C0(file, map_bank_cues, 0x800);
     func_001024B0(file);
     return 1;
 }
@@ -1644,7 +1644,7 @@ void Sound_PlayLinear(u8 sound, int bank, float range, float distance, float ang
         Sound_CosSin(angle, origin, offset);
         volume = (range - distance) * 64.0f * (1.0f / range);
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         if (volume >= 128) {
             volume = 127;
         }
@@ -1667,7 +1667,7 @@ void Sound_PlaySteep(u8 sound, int bank, float range, float distance, float angl
         volume = (1.0 - sqrt(range * range - (range - distance) * (range - distance)) / range) * 64.0;
         volume *= 1.5f;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         if (volume >= 128) {
             volume = 127;
         }
@@ -1690,7 +1690,7 @@ void Sound_PlayRound(u8 sound, int bank, float range, float distance, float angl
         Sound_CosSin(angle, origin, offset);
         volume = sqrt(range * range - distance * distance) / range * 64.0;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         if (volume >= 128) {
             volume = 127;
         }
@@ -1712,7 +1712,7 @@ void Sound_PlayLinearSteady(u8 sound, int bank, float range, float distance, flo
         Sound_CosSin(angle, origin, offset);
         volume = (range - distance) * 64.0f * (1.0f / range);
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         if (volume >= 128) {
             volume = 127;
         }
@@ -1733,7 +1733,7 @@ void Sound_PlaySteepSteady(u8 sound, int bank, float range, float distance, floa
         Sound_CosSin(angle, origin, offset);
         volume = (1.0 - sqrt(range * range - (range - distance) * (range - distance)) / range) * 64.0;
         volume = (float) volume * 1.5f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
         if (volume >= 128) {
             volume = 127;
@@ -1754,7 +1754,7 @@ void Sound_PlayRoundSteady(u8 sound, int bank, float range, float distance, floa
     if (!(range < distance) && sound != 0xFF) {
         Sound_CosSin(angle, origin, offset);
         volume = sqrt(range * range - distance * distance) / range * 64.0;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
         if (volume >= 128) {
             volume = 127;
@@ -1776,12 +1776,12 @@ void Sound_PlaySfxLinear(u8 sound, float range, float distance, float angle) {
         Sound_CosSin(angle, origin, offset);
         volume = (range - distance) * 64.0f * (1.0f / range);
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         if (volume >= 128) {
             volume = 127;
         }
         pan = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
-        func_001CE690(Sound_NextVoice(2), D_003EF618.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
+        func_001CE690(Sound_NextVoice(2), sfx_com_job.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
     }
 }
 
@@ -1800,12 +1800,12 @@ void Sound_PlaySfxSteep(u8 sound, float range, float distance, float angle) {
         volume = (1.0 - sqrt(reach) / range) * 64.0;
         volume *= 1.5f;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         if (volume >= 128) {
             volume = 127;
         }
         pan = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
-        func_001CE690(Sound_NextVoice(2), D_003EF618.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
+        func_001CE690(Sound_NextVoice(2), sfx_com_job.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
     }
 }
 
@@ -1822,13 +1822,13 @@ void Sound_PlaySfxRound(u8 sound, float range, float distance, float angle) {
         Sound_CosSin(angle, origin, offset);
         volume = sqrt(range * range - distance * distance) / range * 64.0;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         if (volume >= 128) {
             volume = 127;
         }
         pan = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
         slot = Sound_NextVoice(2);
-        func_001CE690(slot, D_003EF618.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
+        func_001CE690(slot, sfx_com_job.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
     }
 }
 
@@ -1845,13 +1845,13 @@ void Sound_PlayMapLinear(u8 sound, float range, float distance, float angle) {
         Sound_CosSin(angle, origin, offset);
         volume = (range - distance) * 64.0f * (1.0f / range);
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         if (volume >= 128) {
             volume = 127;
         }
         pan = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
         slot = Sound_NextVoice(2);
-        func_001CE690(slot, D_003EF648.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
+        func_001CE690(slot, map_bank_job.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
     }
 }
 
@@ -1871,13 +1871,13 @@ void Sound_PlayMapSteep(u8 sound, float range, float distance, float angle) {
         volume = (1.0 - sqrt(falloff) / range) * 64.0;
         volume = (float) volume * 1.5f;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         if (volume >= 128) {
             volume = 127;
         }
         pan = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
         slot = Sound_NextVoice(2);
-        func_001CE690(slot, D_003EF648.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
+        func_001CE690(slot, map_bank_job.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
     }
 }
 
@@ -1894,13 +1894,13 @@ void Sound_PlayMapRound(u8 sound, float range, float distance, float angle) {
         Sound_CosSin(angle, origin, offset);
         volume = sqrt(range * range - distance * distance) / range * 64.0;
         pan_pos = (offset[0] + 1.0f) * 63.0f;
-        volume = (float) volume * (float) D_00349682[0] * 0.015625f;
+        volume = (float) volume * (float) sfx_volume[0] * 0.015625f;
         if (volume >= 128) {
             volume = 127;
         }
         pan = ((u64) rand() << 11) / 0x7FFFFFFF - 0x400;
         slot = Sound_NextVoice(2);
-        func_001CE690(slot, D_003EF648.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
+        func_001CE690(slot, map_bank_job.result, 0, sound, 0x3C, volume, pan, (char) pan_pos);
     }
 }
 
@@ -1945,16 +1945,16 @@ int func_001A0C18(int args_addr, int index, int voice_out) {
     SoundStartArgs *args = (SoundStartArgs *)args_addr;
     int pending = 1;
 
-    D_004FF4D8.unk18 = index + 6;
-    D_004FF4D8.unk1C = index * 0x11800 + 0x138810;
-    D_004FF4C0.buffer_a = (void *)args->buffer_a;
-    D_004FF4C0.buffer_b = (void *)args->buffer_b;
-    D_004FF4C0.size_a = args->size_a;
-    D_004FF4C0.size_b = args->size_b;
-    D_004FF4D8.spec = (SoundJobSpec *)&D_004FF4C0;
-    D_004FF4D8.result = index + 6;
-    if (func_001A0BD0(&D_004FF4D8, index) == 0) {
-        *(u8 *)voice_out = D_004FF4D8.result;
+    sound_load_job.unk18 = index + 6;
+    sound_load_job.unk1C = index * 0x11800 + 0x138810;
+    sound_load_spec.buffer_a = (void *)args->buffer_a;
+    sound_load_spec.buffer_b = (void *)args->buffer_b;
+    sound_load_spec.size_a = args->size_a;
+    sound_load_spec.size_b = args->size_b;
+    sound_load_job.spec = (SoundJobSpec *)&sound_load_spec;
+    sound_load_job.result = index + 6;
+    if (func_001A0BD0(&sound_load_job, index) == 0) {
+        *(u8 *)voice_out = sound_load_job.result;
         pending = 0;
     }
     return pending;
@@ -2017,7 +2017,7 @@ int func_001A0DF8(void) {
     if (D_00446895 < 4U) {
         func_001CEF48((char)D_00446895);
     }
-    cue = (SoundCue *)(D_004FF958 + state.cue_index * 0x10);
+    cue = (SoundCue *)(map_bank_cues + state.cue_index * 0x10);
     D_00446895 = func_001CEE78(cue->flags, cue->unk04, cue->unk06, cue->unk08, cue->unk0A, cue->unk0C, cue->unk0E, 1);
     D_00446868 += 1;
     return 0;
@@ -2068,15 +2068,15 @@ int Sound_LoadMapBankStep(int slot_addr, int pending) {
     if (pending == 0) {
         return 0;
     }
-    D_004FF528.unk1C = 0x106810;
-    D_004FF528.unk18 = 3;
+    map_bank_load_job.unk1C = 0x106810;
+    map_bank_load_job.unk18 = 3;
     bank = (SoundBankInfo *)slot->unk34;
-    D_004FF528.spec = (SoundJobSpec *)&D_004FF510;
-    D_004FF510.size_a = bank->size_a;
-    D_004FF510.buffer_a = bank->buffer_a;
-    D_004FF510.buffer_b = bank->buffer_b;
-    D_004FF510.size_b = bank->size_b;
-    if (func_001A1000(&D_004FF528, slot->tag) == 0) {
+    map_bank_load_job.spec = (SoundJobSpec *)&map_bank_spec;
+    map_bank_spec.size_a = bank->size_a;
+    map_bank_spec.buffer_a = bank->buffer_a;
+    map_bank_spec.buffer_b = bank->buffer_b;
+    map_bank_spec.size_b = bank->size_b;
+    if (func_001A1000(&map_bank_load_job, slot->tag) == 0) {
         pending = 0;
     }
     return pending;
@@ -2086,15 +2086,15 @@ int Sound_LoadMapBankStep(int slot_addr, int pending) {
 int Sound_LoadMapBank(MapSlot *slot) {
     SoundBankInfo *bank;
 
-    D_003EF648.unk18 = 3;
-    D_003EF648.unk1C = 0x106810;
+    map_bank_job.unk18 = 3;
+    map_bank_job.unk1C = 0x106810;
     bank = (SoundBankInfo *)slot->unk34;
-    D_003EF648.spec = (SoundJobSpec *)&D_003EF5A0;
-    D_003EF5A0.size_a = bank->size_a;
-    D_003EF5A0.buffer_a = bank->buffer_a;
-    D_003EF5A0.buffer_b = bank->buffer_b;
-    D_003EF5A0.size_b = bank->size_b;
-    while (func_001A1000(&D_003EF648, 1) > 0) {
+    map_bank_job.spec = (SoundJobSpec *)&map_bank_files;
+    map_bank_files.size_a = bank->size_a;
+    map_bank_files.buffer_a = bank->buffer_a;
+    map_bank_files.buffer_b = bank->buffer_b;
+    map_bank_files.size_b = bank->size_b;
+    while (func_001A1000(&map_bank_job, 1) > 0) {
     }
     return 0;
 }
@@ -2109,22 +2109,22 @@ void Sound_LoadSwBank(int file_id) {
     int buffer_limit;
 
     file_number = file_id + 0x96;
-    sprintf(path_a, D_003EF678.name_a, file_number);
-    sprintf(path_b, D_003EF678.name_b, file_number);
-    buffer_base = ((u32)D_002496BF >> 6) << 6;
-    D_003EF560.base = buffer_base;
+    sprintf(path_a, sw_bank_job.name_a, file_number);
+    sprintf(path_b, sw_bank_job.name_b, file_number);
+    buffer_base = ((u32)sound_heap_base >> 6) << 6;
+    sw_bank.base = buffer_base;
     buffer_limit = buffer_base + 0x20000;
-    D_003EF560.limit = buffer_limit;
-    D_003EF560.used = 0;
+    sw_bank.limit = buffer_limit;
+    sw_bank.used = 0;
     D_004470F4 = buffer_limit + 0x8000;
     while (func_001A1438() == 0) {
     }
-    D_003EF678.result = Sound_LoadFilePair(path_a, path_b, D_003EF678.spec, D_003EF678.unk18, D_003EF678.unk1C);
+    sw_bank_job.result = Sound_LoadFilePair(path_a, path_b, sw_bank_job.spec, sw_bank_job.unk18, sw_bank_job.unk1C);
     while (func_001A1438() == 0) {
     }
     while (func_001CD6B8(0) == 0) {
     }
-    func_001CD7E0(D_003EF678.result);
+    func_001CD7E0(sw_bank_job.result);
     FlushCache(0);
 }
 
@@ -2136,19 +2136,19 @@ void Sound_LoadMgBank(int file_number) {
     int heap_start;
     int buffer_end;
 
-    sprintf(path_a, D_003EF6A8.name_a, file_number);
-    sprintf(path_b, D_003EF6A8.name_b, file_number);
-    heap_start = ((u32)D_002496BF >> 6) << 6;
-    D_003EF580.base = heap_start;
+    sprintf(path_a, mg_bank_job.name_a, file_number);
+    sprintf(path_b, mg_bank_job.name_b, file_number);
+    heap_start = ((u32)sound_heap_base >> 6) << 6;
+    mg_bank.base = heap_start;
     buffer_end = heap_start + 0x10000;
-    D_003EF580.limit = buffer_end;
-    D_003EF580.used = 0;
+    mg_bank.limit = buffer_end;
+    mg_bank.used = 0;
     D_004470F4 = buffer_end + 0x8000;
     while (func_001A1438() == 0);
-    D_003EF6A8.result = Sound_LoadFilePair(path_a, path_b, D_003EF6A8.spec, D_003EF6A8.unk18, D_003EF6A8.unk1C);
+    mg_bank_job.result = Sound_LoadFilePair(path_a, path_b, mg_bank_job.spec, mg_bank_job.unk18, mg_bank_job.unk1C);
     while (func_001A1438() == 0);
     while (func_001CD6B8(0) == 0);
-    func_001CD7E0(D_003EF6A8.result);
+    func_001CD7E0(mg_bank_job.result);
     FlushCache(0);
 }
 
@@ -2196,16 +2196,16 @@ static int func_001A14D8(void) {
     int cached;
     int wanted;
 
-    if (D_0038A130[3] == 0 && D_0038A130[6] == 0 && D_0038A130[1] == 0) {
-        slot = &D_0038CD20[D_00446770];
+    if (sound_load_queue[3] == 0 && sound_load_queue[6] == 0 && sound_load_queue[1] == 0) {
+        slot = &map_slots[D_00446770];
         cached = D_004470E3;
-        if ((u8)slot->records[(D_00413F80.map_index << 7) + 0x4D] != cached) {
+        if ((u8)slot->records[(player_state.map_index << 7) + 0x4D] != cached) {
             if (cached >= 0x40) {
                 D_004470E3 = 0x3F;
             } else if (cached < 0) {
                 D_004470E3 = 0;
             }
-            wanted = (u8)slot->records[(D_00413F80.map_index << 7) + 0x4D];
+            wanted = (u8)slot->records[(player_state.map_index << 7) + 0x4D];
             D_004470E3 = wanted;
             func_001CBAE0(1, 0xD0, 0xB81, (s8)wanted << 8);
             return func_001CBAE0(1, 0xD0, 0xC81, D_004470E3 << 8);

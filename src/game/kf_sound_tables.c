@@ -31,29 +31,29 @@ typedef struct {
     char pad18[0x08];               /* 0x18 */
 } SoundBankSlot;
 
-SoundBankSlot D_003EF500 = { /* 0x3EF500 the se_com bank */
+SoundBankSlot se_com_bank = { /* 0x3EF500 the se_com bank */
     .size_a = 0x2D000, .size_b = 0x1400,
 };
 
-SoundBankSlot D_003EF520 = { /* 0x3EF520 the sfx_com bank */
+SoundBankSlot sfx_com_bank = { /* 0x3EF520 the sfx_com bank */
     .size_a = 0x89800, .size_b = 0x2800,
 };
 
-SoundBankSlot D_003EF540 = { /* 0x3EF540 the BGM's buffers (D_003EF5B8's) */
+SoundBankSlot bgm_buffers = { /* 0x3EF540 the BGM's buffers (bgm_load_job's) */
     .size_a = 0x4B000, .size_b = 0x1400, .unk14 = 0x5000,
 };
-asm(".globl D_003EF544\nD_003EF544 = D_003EF540 + 0x4");  /* 0x3EF544 the BGM's second buffer (Sound_BgmReadHeader) */
-asm(".globl D_003EF548\nD_003EF548 = D_003EF540 + 0x8");  /* 0x3EF548 the BGM's third buffer (Sound_BgmReadSequence) */
+asm(".globl D_003EF544\nD_003EF544 = bgm_buffers + 0x4");  /* 0x3EF544 the BGM's second buffer (Sound_BgmReadHeader) */
+asm(".globl D_003EF548\nD_003EF548 = bgm_buffers + 0x8");  /* 0x3EF548 the BGM's third buffer (Sound_BgmReadSequence) */
 
-SoundBankSlot D_003EF560 = { /* 0x3EF560 the sw bank (Sound_LoadSwBank) */
+SoundBankSlot sw_bank = { /* 0x3EF560 the sw bank (Sound_LoadSwBank) */
     .size_a = 0x1A400, .size_b = 0x1400,
 };
 
-SoundBankSlot D_003EF580 = { /* 0x3EF580 the mg bank (Sound_LoadMgBank) */
+SoundBankSlot mg_bank = { /* 0x3EF580 the mg bank (Sound_LoadMgBank) */
     .size_a = 0x8C00, .size_b = 0x1400,
 };
 
-SoundBankSpec D_003EF5A0 = { /* 0x3EF5A0 the map bank's two files (Sound_LoadMapBank) */
+SoundBankSpec map_bank_files = { /* 0x3EF5A0 the map bank's two files (Sound_LoadMapBank) */
     .size_a = 0x32000, .size_b = 0x1400,
 };
 
@@ -64,9 +64,9 @@ typedef struct {
     int unk2C;                      /* 0x2C */
 } __attribute__((aligned(8))) LoadJobSlot;
 
-LoadJobSlot D_003EF5B8 = { /* 0x3EF5B8 the BGM load job */
+LoadJobSlot bgm_load_job = { /* 0x3EF5B8 the BGM load job */
     .job = {
-        .buffers = (int *)&D_003EF540, .name = D_0043ECA0, .unk08 = D_0043EC90,
+        .buffers = (int *)&bgm_buffers, .name = D_0043ECA0, .unk08 = D_0043EC90,
         .name_format = D_0043EC80, .file_handle = -1,
         /* 0x1C, inside the shared LoadJob's pad18: 0xBB810, the size of a BGM file */
         .pad18 = { 0, 0, 0, 0, 0x10, 0xB8, 0x0B, 0, 0, 0, 0, 0 },
@@ -80,47 +80,47 @@ typedef struct {
     SoundBank bank;                 /* 0x20 */
 } SoundJobSlot;
 
-SoundJobSlot D_003EF5E8 = { /* 0x3EF5E8 the se_com bank's job */
-    .job = { .spec = (SoundJobSpec *)&D_003EF500, .name_a = D_0043ECC0, .name_b = D_0043ECB0,
+SoundJobSlot se_com_job = { /* 0x3EF5E8 the se_com bank's job */
+    .job = { .spec = (SoundJobSpec *)&se_com_bank, .name_a = D_0043ECC0, .name_b = D_0043ECB0,
              .result = 1, .unk18 = 1, .unk1C = 0x5010 },
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };
 
-SoundJobSlot D_003EF618 = { /* 0x3EF618 the sfx_com bank's job */
-    .job = { .spec = (SoundJobSpec *)&D_003EF520, .name_a = D_0043ECE0, .name_b = D_0043ECD0,
+SoundJobSlot sfx_com_job = { /* 0x3EF618 the sfx_com bank's job */
+    .job = { .spec = (SoundJobSpec *)&sfx_com_bank, .name_a = D_0043ECE0, .name_b = D_0043ECD0,
              .result = 2, .unk18 = 2, .unk1C = 0x32010 },
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };
 
-SoundJobSlot D_003EF648 = { /* 0x3EF648 the map bank's job (snd/map000) */
-    .job = { .spec = (SoundJobSpec *)&D_003EF5A0, .name_a = D_0043ED00, .name_b = D_0043ECF0,
+SoundJobSlot map_bank_job = { /* 0x3EF648 the map bank's job (snd/map000) */
+    .job = { .spec = (SoundJobSpec *)&map_bank_files, .name_a = D_0043ED00, .name_b = D_0043ECF0,
              .result = 3, .unk18 = 3, .unk1C = 0x106810 },
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };
 
-SoundJobSlot D_003EF678 = { /* 0x3EF678 the sw bank's job */
-    .job = { .spec = (SoundJobSpec *)&D_003EF560, .name_a = D_0043ED20, .name_b = D_0043ED10,
+SoundJobSlot sw_bank_job = { /* 0x3EF678 the sw bank's job */
+    .job = { .spec = (SoundJobSpec *)&sw_bank, .name_a = D_0043ED20, .name_b = D_0043ED10,
              .result = 4, .unk18 = 4, .unk1C = 0x190010 },
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };
 
-SoundJobSlot D_003EF6A8 = { /* 0x3EF6A8 the mg bank's job */
-    .job = { .spec = (SoundJobSpec *)&D_003EF580, .name_a = D_0043ED40, .name_b = D_0043ED30,
+SoundJobSlot mg_bank_job = { /* 0x3EF6A8 the mg bank's job */
+    .job = { .spec = (SoundJobSpec *)&mg_bank, .name_a = D_0043ED40, .name_b = D_0043ED30,
              .result = 5, .unk18 = 5, .unk1C = 0x1AA410 },
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };
 
-f32 D_003EF6E0[4] __attribute__((aligned(16))) = { /* 0x3EF6E0 what func_001CE408 loads into VU0 */
+f32 sound_cos_polynomial[4] __attribute__((aligned(16))) = { /* 0x3EF6E0 what func_001CE408 loads into VU0 */
     2.60188699e-06f, -0.000198074136f, 0.0083330255f, -0.166666567f,
 };
 
-u8 D_003EF6F0[8][2] = { /* 0x3EF6F0 the voice range of each group Sound_NextVoice walks */
+u8 voice_ranges[8][2] = { /* 0x3EF6F0 the voice range of each group Sound_NextVoice walks */
     { 4, 5 }, { 6, 0x11 }, { 0x12, 0x39 }, { 0x3A, 0x53 },
     { 0x54, 0x63 }, { 0x64, 0x7D }, { 0, 0 }, { 0, 0 },
 };
 
-void *D_003EF700[4] = { /* 0x3EF700 the player Sound_PlayTrackedKind starts a tracked sound with */
+void *tracked_sound_players[4] = { /* 0x3EF700 the player Sound_PlayTrackedKind starts a tracked sound with */
     (void *)Sound_PlayTracked, (void *)Sound_PlayTrackedAt, NULL, NULL,
 };
 
-SoundChannel D_003EF710[128] = { 0 }; /* 0x3EF710 the channels; unk3A is -1 when one is free */
+SoundChannel sound_channels[128] = { 0 }; /* 0x3EF710 the channels; unk3A is -1 when one is free */

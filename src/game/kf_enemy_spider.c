@@ -1,4 +1,4 @@
-/* Spider: the behaviour of entity type 3 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Spider: the behaviour of entity type 3 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Spider, Blue Spider. The game names
    no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records
    by hit points and experience, with resistances and drops where two monsters share those. */
@@ -12,7 +12,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -25,7 +25,7 @@ int rand(void);
 int EntityAi_TurnFromPush(void *, void *);
 void EntityPoint_PickNear(float, void *, void *, void *);
 s16 EntityAi_MoveCommand(float, void *, int); // match: this file only matches with this type; EntityAi_MoveCommand.c defines it differently
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
@@ -87,7 +87,7 @@ void Spider_Init(Entity *entity) {
     for (i = 6 - 1; i != -1; i--) {
         entity->unkC0[i] = 0x80;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->unk38 & (0x8000L << 43)) {
@@ -244,8 +244,8 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            if (EntityMath_DistanceXZ(&D_00413F80, entity->spawn_info) < (f32)entity->spawn_info->unk4C) {
-                entity->target = &D_00413F80;
+            if (EntityMath_DistanceXZ(&player_state, entity->spawn_info) < (f32)entity->spawn_info->unk4C) {
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 60 + 120;
                 unkE0->unk78 = 0;
             } else {
@@ -340,7 +340,7 @@ static void Spider_RangedAttack(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        Vector_Copy(direction, &D_00413F80);
+        Vector_Copy(direction, &player_state);
         direction[1] -= 30.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction, 0.7853982f, 0.17453294f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {

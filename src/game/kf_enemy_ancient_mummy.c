@@ -1,4 +1,4 @@
-/* AncientMummy: the behaviour of entity type 42 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* AncientMummy: the behaviour of entity type 42 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Ancient Mummy. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -15,7 +15,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
@@ -23,7 +23,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -66,7 +66,7 @@ void AncientMummy_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = AncientMummy_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -159,7 +159,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+    angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
     if (entity->unk60 - entity->radius - 100.0f < 300.0f && ABS(angle) < 0.6981317f && unkE0->unk68 == 0) {
         entity->unkC6 = 0;
         entity->unkC8 = 0;
@@ -171,7 +171,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
         angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
         if (ABS(angle) < 1.5707964f) {
             unkE0->unk78 = 1;
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkCD = 1;
             entity->unkA0 = rand() % 60 + 90;
         }
@@ -192,7 +192,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -323,8 +323,8 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
             EntityPoint_PickNearFromDistance(destination, position, EntityMath_DistanceXZ(position, (float *)entity->spawn_info), entity->spawn_info->unk4C);
             height = EntityCollision_DistanceToPropFloor(entity->unk14, destination);
             if (height != D_00446810[0]) {
-                yaw = EntityMath_AngleXZ(D_00413F80.position, (char *)destination);
-                if (EntityMath_WrapAngle(yaw - D_00413F80.unk14) < -1.5707964f || EntityMath_WrapAngle(yaw - D_00413F80.unk14) > 1.5707964f) {
+                yaw = EntityMath_AngleXZ(player_state.position, (char *)destination);
+                if (EntityMath_WrapAngle(yaw - player_state.unk14) < -1.5707964f || EntityMath_WrapAngle(yaw - player_state.unk14) > 1.5707964f) {
                     unkE0->unk7A = 1;
                     unkE0->unk30[1] += height;
                 }
@@ -378,7 +378,7 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
         break;
     case 1:
         if (entity->params->unk436 < unkE0->unk6A++) {
-            entity->model->unkD0[1] = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->model->unkD0[1] = EntityMath_HeadingTo(entity->model->position, player_state.position);
             entity->action_step++;
         }
         break;

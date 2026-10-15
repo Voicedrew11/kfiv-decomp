@@ -6,7 +6,7 @@
 #include "kf_map.h"
 #include "kf_collision.h"
 
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 void Vector_Normalize(void *, void *);
 double sqrt(double);
 void Vector_Subtract(void *, void *, void *);
@@ -22,12 +22,12 @@ u32 func_00112618(u32, u32, int);
 u32 func_001124E0(int, u32, u32);
 void func_001C0A88(void *corner_a, void *corner_b, void *corner_c, void *point);
 void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
-extern MapSlot D_0038CD20[2];
+extern MapSlot map_slots[2];
 void Vector_Copy(void *, void *);
 extern int D_00446770;
 extern s32 D_004467A8[2];
 extern s32 D_004467B8[2];
-extern MapObject D_003A1A30[];
+extern MapObject map_slot_objects[];
 extern MapObject D_003AFA30[];
 void Collision_CylinderEdge(void *, void *, f32, void *, f32, f32);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
@@ -84,7 +84,7 @@ static inline MapObject *map_objects(s32 map) {
         if (D_00446770 != map) {
             return D_003AFA30;
         }
-        return D_003A1A30;
+        return map_slot_objects;
     }
     return NULL;
 }
@@ -129,9 +129,9 @@ void EntityCollision_PushApart(Entity *entity) {
     if (!(type_id >= 0x14 && type_id <= 0x16) && (u16)type_id != 0x2D && (u16)type_id != 0x63 && (u16)type_id != 0x97
         && ((s32)(entity->flags >> 1) & 1) && entity->unk2C != 0 && !(entity->flags & 0x8010000)) {
         if (((EntityParamsWord *)entity->params)->unk00 & 0x8000000) {
-            EntityCollision_SphereCylinder(entity->model->position, D_00413F80.position, entity->radius, 100.0f, 230.0f);
+            EntityCollision_SphereCylinder(entity->model->position, player_state.position, entity->radius, 100.0f, 230.0f);
         } else {
-            EntityCollision_CylinderCylinder(entity->model->position, D_00413F80.position, entity->radius, entity->height, 100.0f, 230.0f);
+            EntityCollision_CylinderCylinder(entity->model->position, player_state.position, entity->radius, entity->height, 100.0f, 230.0f);
         }
         if (COLLISION_RESULT->hit != 0) {
             entity->model->position[0] = COLLISION_RESULT->point[0];
@@ -616,8 +616,8 @@ void EntityCollision_WalkAgainstMap(Entity *entity) {
         height += entity->unk48;
     }
     unused[0] = unused[1] = NULL;
-    slots[0] = &D_0038CD20[entity->group_id];
-    slots[1] = &D_0038CD20[(char)(entity->group_id ^ 1)];
+    slots[0] = &map_slots[entity->group_id];
+    slots[1] = &map_slots[(char)(entity->group_id ^ 1)];
     for (map = 0; map < 2; map++) {
         if (slots[map]->unk00 != 0) {
             record = (MapRecordBounds *)slots[map]->records;
@@ -1067,8 +1067,8 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
         position[1] += 0.1f;
         lift = entity->unk48;
     }
-    slots[0] = &D_0038CD20[entity->group_id];
-    slots[1] = &D_0038CD20[(char)(entity->group_id ^ 1)];
+    slots[0] = &map_slots[entity->group_id];
+    slots[1] = &map_slots[(char)(entity->group_id ^ 1)];
     for (map = 0; map < 2; map++) {
         if (slots[map]->unk00 != 0) {
             record = (MapRecordBounds *)slots[map]->records;
@@ -2529,8 +2529,8 @@ s32 EntityCollision_RayProps(f32 *origin, f32 *direction, void *out_point, f32 l
     }
     nearest = 3.4028235e38f; // match: FLT_MAX as a literal (the compiler keeps it in .sdata: D_0044684C)
     result = 0;
-    slots[0] = &D_0038CD20[D_00446770];
-    slots[1] = &D_0038CD20[D_00446770 ^ 1];
+    slots[0] = &map_slots[D_00446770];
+    slots[1] = &map_slots[D_00446770 ^ 1];
     for (map = 0; map < 2; map++) {
         if (slots[map]->unk00 != 0) {
             record = (MapRecord *)slots[map]->records;
@@ -2587,7 +2587,7 @@ s32 EntityCollision_RayHitsPropWall(f32 *origin, f32 *direction, f32 length, f32
     Vector_Scale(end, direction, length);
     Vector_Add(end, end, origin);
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &D_0038CD20[0] : &D_0038CD20[1];
+        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
         record = (MapRecord *)slot->records;
         if (slot->unk00 != 0) {
             for (i = 0; i < slot->header->record_count; i++, record++) {
@@ -2684,7 +2684,7 @@ f32 EntityCollision_DistanceToGround(f32 *point) {
     s32 points_left;
 
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &D_0038CD20[0] : &D_0038CD20[1];
+        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
         if (slot->unk00 != 0) {
             record = (MapRecord *)slot->records;
             record_count = slot->header->record_count;

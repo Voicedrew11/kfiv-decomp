@@ -24,14 +24,14 @@
 #include "kf_save_card.h"
 #include "kf_item.h"
 
-extern LevelRecord D_003679A0[70];
-extern LevelRecord D_003682F0[160];
+extern LevelRecord weapon_level_records[70];
+extern LevelRecord worn_item_level_records[160];
 extern u8 spell_levels[6][5];
 extern u8 item_counts[380];
-extern FxTableEntry D_00402DA8[];
-extern PlayerState D_00413F80;
+extern FxTableEntry fx_table[];
+extern PlayerState player_state;
 extern LevelDef item_name_defs[380];
-extern ItemCommonDef D_0041A6F8[];
+extern ItemCommonDef item_common_defs[];
 extern MenuItem **D_00420D90[11];
 extern MenuItem D_004210D0[150];
 extern MenuItem D_00421A30[380];
@@ -292,7 +292,7 @@ void MenuModel_DrawTinted(ChunkUpload *upload, s32 draw_param, RenderSlotArg slo
 #define DRAW_NODE_MODEL(node, matrix, colour) ((void (*)(LinkNode *, f32 *, ColorBytes))MenuModel_DrawTinted)(node, matrix, colour)
 void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
 extern u64 D_004261A0[47];             /* the frame register of the first buffer ([0]) and of the second ([46]) */
-extern u8 D_00349680[0x10];  /* the options block */
+extern u8 game_options[0x10];  /* the options block */
 extern char D_00426220[];
 extern char D_00426310[];           /* inside D_00426140: the second buffer's draw environments */
 extern char D_00426390[];
@@ -348,7 +348,7 @@ int func_001F92D0(void);
 int func_001F93A8(void);
 void MenuSprite_Draw(int, int, int, int);
 extern u8 D_00446B39;
-extern GameStatus D_0038CC50;
+extern GameStatus game_status;
 extern f32 D_00421000[4];
 extern f32 D_00446B3C;              /* the shown item model's turn about y */
 extern s32 D_00446B40;
@@ -370,7 +370,7 @@ extern s32 D_00446DF8;
 extern s8 D_004472C8;               /* 0: fading in, 1: open, 2: waiting for the models, 3: fading out */
 int MenuText_SetGlyphSize(GsPackedWord);
 s32 MenuText_DrawLine(u16 *text, s32 limit);
-extern u8 D_00413FBC[];
+extern u8 player_weapon[];
 extern MenuItem **D_00420D60[11];
 extern LinkNode *D_00420DC8[];
 extern f32 D_00421020[4];
@@ -563,7 +563,7 @@ s32 SaveCard_GetSaveMask(void);
 void SaveCard_ClearLoadFailed(s32);
 s32 SaveCard_IsChecking(void);
 s8 SaveCard_IsPresent(s32);
-extern u8 D_0036A130[];
+extern u8 save_image[];
 extern s8 D_00446BDD;
 extern s32 D_00446E34;
 extern s32 D_00446E38;
@@ -798,15 +798,15 @@ static void Menu_BuildItemRings(void) {
     count = 0;
     for (i = 1; i < 380; i++) {
         if (item_counts[i] != 0 && !(item_name_defs[i].state & 2)) {
-            if ((i >= 0 && i < 150) || (i >= 150 && i < 220 && D_003679A0[i - 150].unk18 == 0) ||
-                (i >= 220 && i < 250 && D_003682F0[i - 220].unk18 == 0) ||
-                (i >= 250 && i < 275 && D_003682F0[i - 220].unk18 == 0) ||
-                (i >= 275 && i < 300 && D_003682F0[i - 220].unk18 == 0) ||
-                (i >= 300 && i < 325 && D_003682F0[i - 220].unk18 == 0) ||
-                (i >= 325 && i < 350 && D_003682F0[i - 220].unk18 == 0) ||
-                (i >= 350 && i < 360 && D_003682F0[i - 220].unk18 == 0) ||
-                (i >= 360 && i < 370 && D_003682F0[i - 220].unk18 == 0) ||
-                (i >= 370 && D_003682F0[i - 220].unk18 == 0)) {
+            if ((i >= 0 && i < 150) || (i >= 150 && i < 220 && weapon_level_records[i - 150].unk18 == 0) ||
+                (i >= 220 && i < 250 && worn_item_level_records[i - 220].unk18 == 0) ||
+                (i >= 250 && i < 275 && worn_item_level_records[i - 220].unk18 == 0) ||
+                (i >= 275 && i < 300 && worn_item_level_records[i - 220].unk18 == 0) ||
+                (i >= 300 && i < 325 && worn_item_level_records[i - 220].unk18 == 0) ||
+                (i >= 325 && i < 350 && worn_item_level_records[i - 220].unk18 == 0) ||
+                (i >= 350 && i < 360 && worn_item_level_records[i - 220].unk18 == 0) ||
+                (i >= 360 && i < 370 && worn_item_level_records[i - 220].unk18 == 0) ||
+                (i >= 370 && worn_item_level_records[i - 220].unk18 == 0)) {
                 count++;
                 if (count == 7) {
                     D_005CE870[0] = &D_00421A30[i];
@@ -843,12 +843,12 @@ static void Menu_BuildItemRings(void) {
     last = NULL;
     first = NULL;
     for (i = 0; i < 150; i++) {
-        if (item_counts[i] != 0 && (item_name_defs[i].state & 1) && !((u8)D_0041A6F8[i].flags & 1) && !(i >= 145 && i < 148)) {
+        if (item_counts[i] != 0 && (item_name_defs[i].state & 1) && !((u8)item_common_defs[i].flags & 1) && !(i >= 145 && i < 148)) {
             LINK_ITEM(&D_00424600[i])
         }
     }
     for (i = 150, spell = 0; i < 241; i++, spell++) {
-        if (SPELL_IS_SET(spell) && D_00402DA8[spell].unk102 == 1) {
+        if (SPELL_IS_SET(spell) && fx_table[spell].unk102 == 1) {
             LINK_ITEM(&D_00424600[i])
         }
     }
@@ -856,61 +856,61 @@ static void Menu_BuildItemRings(void) {
     // would be written through NULL
     first->next = last;
     last->prev = first;
-    switch (D_00413F80.shortcut_type) {
+    switch (player_state.shortcut_type) {
     case 0:
         D_005CE810.item = D_005CE6A0.item = D_00424600;
         // match: no break, case 0 goes on into case 1, which sets both again
     case 1:
-        if (item_counts[D_00413F80.shortcut] != 0) {
-            D_005CE810.item = D_005CE6A0.item = &D_00424600[D_00413F80.shortcut];
+        if (item_counts[player_state.shortcut] != 0) {
+            D_005CE810.item = D_005CE6A0.item = &D_00424600[player_state.shortcut];
         } else {
-            D_00413F80.shortcut = 0;
+            player_state.shortcut = 0;
             D_005CE810.item = D_005CE6A0.item = D_00424600;
         }
         break;
     case 2:
-        D_005CE810.item = D_005CE6A0.item = &D_00424600[D_00413F80.shortcut + 150];
+        D_005CE810.item = D_005CE6A0.item = &D_00424600[player_state.shortcut + 150];
         break;
     }
 
     last = NULL;
     first = NULL;
     for (i = 0; i < 70; i++) {
-        if (item_counts[150 + i] != 0 && (item_name_defs[150 + i].state & 1) && D_003679A0[i].unk18 == 0) {
+        if (item_counts[150 + i] != 0 && (item_name_defs[150 + i].state & 1) && weapon_level_records[i].unk18 == 0) {
             LINK_ITEM(&D_004231F0[i])
         }
     }
     first->next = last;
     last->prev = first;
-    D_005CE770.item = D_005CE6B0.item = &D_004231F0[D_00413F80.weapon];
+    D_005CE770.item = D_005CE6B0.item = &D_004231F0[player_state.weapon];
 
-    LINK_GROUP(D_00423650, D_003682F0, 0, 220, 30, D_005CE780, D_005CE6C0, D_00413F80.equipment[EQUIP_SHIELD])
-    LINK_GROUP(D_00423830, D_003682F0, 30, 250, 25, D_005CE790, D_005CE6D0, D_00413F80.equipment[EQUIP_HELM])
-    LINK_GROUP(D_004239C0, D_003682F0, 55, 275, 25, D_005CE7A0, D_005CE6E0, D_00413F80.equipment[EQUIP_ARMOR])
-    LINK_GROUP(D_00423B50, D_003682F0, 80, 300, 25, D_005CE7B0, D_005CE6F0, D_00413F80.equipment[EQUIP_GAUNTLET])
-    LINK_GROUP(D_00423CE0, D_003682F0, 105, 325, 25, D_005CE7C0, D_005CE700, D_00413F80.equipment[EQUIP_BOOT])
-    LINK_GROUP(D_00423E70, D_003682F0, 130, 350, 10, D_005CE7D0, D_005CE710, D_00413F80.equipment[EQUIP_RING])
-    LINK_GROUP(D_00423F10, D_003682F0, 140, 360, 10, D_005CE7E0, D_005CE720, D_00413F80.equipment[EQUIP_BRACELET])
-    LINK_GROUP(D_00423FB0, D_003682F0, 150, 370, 10, D_005CE7F0, D_005CE730, D_00413F80.equipment[EQUIP_AMULET])
+    LINK_GROUP(D_00423650, worn_item_level_records, 0, 220, 30, D_005CE780, D_005CE6C0, player_state.equipment[EQUIP_SHIELD])
+    LINK_GROUP(D_00423830, worn_item_level_records, 30, 250, 25, D_005CE790, D_005CE6D0, player_state.equipment[EQUIP_HELM])
+    LINK_GROUP(D_004239C0, worn_item_level_records, 55, 275, 25, D_005CE7A0, D_005CE6E0, player_state.equipment[EQUIP_ARMOR])
+    LINK_GROUP(D_00423B50, worn_item_level_records, 80, 300, 25, D_005CE7B0, D_005CE6F0, player_state.equipment[EQUIP_GAUNTLET])
+    LINK_GROUP(D_00423CE0, worn_item_level_records, 105, 325, 25, D_005CE7C0, D_005CE700, player_state.equipment[EQUIP_BOOT])
+    LINK_GROUP(D_00423E70, worn_item_level_records, 130, 350, 10, D_005CE7D0, D_005CE710, player_state.equipment[EQUIP_RING])
+    LINK_GROUP(D_00423F10, worn_item_level_records, 140, 360, 10, D_005CE7E0, D_005CE720, player_state.equipment[EQUIP_BRACELET])
+    LINK_GROUP(D_00423FB0, worn_item_level_records, 150, 370, 10, D_005CE7F0, D_005CE730, player_state.equipment[EQUIP_AMULET])
 
     last = NULL;
     first = NULL;
     for (i = 0; i < 91; i++) {
-        if (i == 0 || (SPELL_IS_SET(i) && D_00402DA8[i].unk102 == 0)) {
+        if (i == 0 || (SPELL_IS_SET(i) && fx_table[i].unk102 == 0)) {
             LINK_ITEM(&D_00424050[i])
         }
     }
     first->next = last;
     last->prev = first;
     D_005CE890[0] = NULL;
-    D_005CE800.item = D_005CE740.item = &D_00424050[D_00413F80.equipped_magic];
+    D_005CE800.item = D_005CE740.item = &D_00424050[player_state.equipped_magic];
     D_005CE8A0[0] = NULL;
 
     last = NULL;
     first = NULL;
     count = 0;
     for (i = 1; i < 91; i++) {
-        if (SPELL_IS_SET(i) && D_00402DA8[i].unk102 == 1) {
+        if (SPELL_IS_SET(i) && fx_table[i].unk102 == 1) {
             LINK_COUNTED_ITEM(&D_00424050[i], D_005CE8A0)
         }
     }
@@ -1523,15 +1523,15 @@ static void Menu_SetEquipModelNames(void) {
 
 /* Writes the model file names of the player's weapon and the eight things worn into their upload nodes. */
 static void Menu_SetWornModelNames(void) {
-    sprintf(D_005CE9F8, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.weapon + ITEM_WEAPON_FIRST].file_number);
-    sprintf(D_005CEA98, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEAE8, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEB38, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEB88, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEBD8, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEC28, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEC78, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CECC8, "menu/equip/i%04d.mod", item_name_defs[D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CE9F8, "menu/equip/i%04d.mod", item_name_defs[player_state.weapon + ITEM_WEAPON_FIRST].file_number);
+    sprintf(D_005CEA98, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEAE8, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEB38, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEB88, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEBD8, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEC28, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CEC78, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST].file_number);
+    sprintf(D_005CECC8, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST].file_number);
     D_005CED40.unk20 = 0;
 }
 
@@ -1960,17 +1960,17 @@ void Menu_Init(void) {
     }
     for (i = 0; i < 150; i++) {
         D_00424600[i].unk0C = i;
-        D_00424600[i].unk00 = (int)&D_0041A6F8[i];
+        D_00424600[i].unk00 = (int)&item_common_defs[i];
         D_00424600[i].group = 11;
     }
     for (i = 150; i < 241; i++) {
-        D_00424600[i].unk00 = (int)&D_00402DA8[i - 150];
+        D_00424600[i].unk00 = (int)&fx_table[i - 150];
         D_00424600[i].unk0C = i - 150;
         D_00424600[i].group = 1;
     }
     number = 0;
     for (i = 0; i < 150; i++) {
-        D_00421A30[number].unk00 = (int)&D_0041A6F8[i];
+        D_00421A30[number].unk00 = (int)&item_common_defs[i];
         D_00421A30[number].unk0C = number;
         D_00421A30[number].group = 12;
         number++;
@@ -2031,7 +2031,7 @@ void Menu_Init(void) {
     }
     number = 0;
     for (i = 0; i < 150; i++) {
-        D_004210D0[i].unk00 = (int)&D_0041A6F8[i];
+        D_004210D0[i].unk00 = (int)&item_common_defs[i];
         D_004210D0[i].unk0C = number;
         D_004210D0[i].group = 11;
         number++;
@@ -2092,7 +2092,7 @@ void Menu_Init(void) {
     }
     for (i = 0; i < 91; i++) {
         D_00424050[i].unk0C = i;
-        D_00424050[i].unk00 = (int)&D_00402DA8[i];
+        D_00424050[i].unk00 = (int)&fx_table[i];
         D_00424050[i].group = 1;
     }
     D_005CE760.group = 11;
@@ -2705,7 +2705,7 @@ static int Menu_ReturnTrue(void) {
 s32 Menu_EndFrame(s32 run_handler) {
     s32 even_field;
 
-    func_001E5070(D_00349680[10]);
+    func_001E5070(game_options[10]);
     func_001CEBE0();
     sceGsSyncPath(0, 0);
     D_00446C98 = Timer_GetTicks();
@@ -2721,7 +2721,7 @@ s32 Menu_EndFrame(s32 run_handler) {
     sceGsSyncPath(0, 0);
     sceGsSwapDBuffDc(&D_00426140, D_00446F78);
     if (run_handler != 0) {
-        frame_end_drawers[(s8)D_00349680[8]]();
+        frame_end_drawers[(s8)game_options[8]]();
     }
     D_00446F78 = D_00446F78 == 0;
     D_00446F7C = D_00446F7C == 0;
@@ -3222,8 +3222,8 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
     if ((D_00446DE8 & 0x4000) && D_004472DA != 0 && D_00426110[0] != NULL) {
         if (D_00426110[0]->unk0C < ITEM_ARROW || D_00426110[0]->unk0C > ITEM_WIDDAS_ARROW) {
             Sound_PlayMenu(0);
-            D_0038CC50.bit6 = TRUE;
-            D_0038CC50.unk20 = D_00426110[0]->unk0C;
+            game_status.bit6 = TRUE;
+            game_status.unk20 = D_00426110[0]->unk0C;
             D_004472C5 = 2;
             D_004472DA = 0;
             if (D_00446C90 != NULL) {
@@ -3360,7 +3360,7 @@ static void Menu_UpdateCastSpell(s32 context) {
     i = 0;
     number = D_005CE880[0]->unk0C; /* the selected magic's number */
     page = (number - 1) / 15;
-    D_00446DF4 = D_00402DA8[number].unkFC;
+    D_00446DF4 = fx_table[number].unkFC;
     D_00446DF8 = (number - 1) % 3 + 1;
     for (; i < D_00446A38; i++) {
         kind = D_00447234[i].unk3E;
@@ -3390,7 +3390,7 @@ static void Menu_UpdateCastSpell(s32 context) {
     item = D_005CE890[0];
     MenuText_SetColor(D_00446C78);
     for (row = 0; row < 7; row++, item = item->prev) {
-        MenuText_DrawLine((u16 *)&D_00402DA8[item->unk0C], 0x1A);
+        MenuText_DrawLine((u16 *)&fx_table[item->unk0C], 0x1A);
         word.f.mid16 += 0xB0; // match: dead, left over from the item menu (Menu_UpdateUseItem), which sets the row's place here
         word.f.lo16 = 0x7080; // match: dead as well; without the two lines the loop is compiled differently
         if (D_005CE8A0[0]->prev == item) {
@@ -3427,9 +3427,9 @@ static void Menu_UpdateCastSpell(s32 context) {
     *D2_CHCR = 0x100;
     DRAW_NODE_MODEL(&D_00426470, local, D_00446C78);
     if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
-        if (D_00413F80.mp_now >= ((FxTableEntry *)D_005CE880[0]->unk00)->unkFC && D_00413F80.unkC0 >= 5000) {
+        if (player_state.mp_now >= ((FxTableEntry *)D_005CE880[0]->unk00)->unkFC && player_state.unkC0 >= 5000) {
             Sound_PlayMenu(0);
-            D_0038CC50.unk28 = D_005CE880[0]->unk0C;
+            game_status.unk28 = D_005CE880[0]->unk0C;
             D_004472C8 = 2;
             D_004472DA = 0;
             if (D_00446C90 != NULL) {
@@ -3486,7 +3486,7 @@ static void Menu_UpdateCastSpell(s32 context) {
             D_00425510[i] -= D_00447234[i].alpha / 10.0f;
             if (D_00425510[i] < 0.0f) {
                 D_004472C8 = 0;
-                if (D_0038CC50.unk28 != 0) {
+                if (game_status.unk28 != 0) {
                     D_00446B20 = NULL;
                     D_00446AC8++;
                 } else {
@@ -3595,7 +3595,7 @@ static void Menu_UpdateEquip(void) {
     }
     index = CURRENT_ITEM->unk0C - bases.first_item[CURRENT_ITEM->group];
     if (CURRENT_ITEM->group == 0) {
-        D_00446E30 = D_003679A0[index].unk14 + 1;
+        D_00446E30 = weapon_level_records[index].unk14 + 1;
     } else if (CURRENT_ITEM->group == 1) {
         D_00446E30 = (index - 1) % 3 + 1;
     }
@@ -3643,18 +3643,18 @@ static void Menu_UpdateEquip(void) {
     node.pool_node = &D_004472B8;
     node.unk20 = 1;
     node.unk00 = 0;
-    D_00446ACC = weapon_defs[D_00413F80.weapon].unk7C;
-    if (weapon_defs[D_00413F80.weapon].unk63 == 0) {
-        D_00446ACC += worn_defs[D_00413F80.equipment[EQUIP_SHIELD]].unk3F;
+    D_00446ACC = weapon_defs[player_state.weapon].unk7C;
+    if (weapon_defs[player_state.weapon].unk63 == 0) {
+        D_00446ACC += worn_defs[player_state.equipment[EQUIP_SHIELD]].unk3F;
     }
     PoolNode_Pose((RelocEntry *)D_005CEE60[D_00446ACC]->frames, D_0042A8F0, weapon_matrix, D_00446B5C);
     D_00446B5C++;
     D_00446B5C %= D_005CEE60[D_00446ACC]->frame_count;
     // match: a pointer-typed load, as in CURRENT_ITEM
     D_00446ACC = ((PlayerItemDef *)((MenuItemList *)D_005CE6B0.item)->item)->unk7D;
-    switch (weapon_defs[D_00413F80.weapon].unk63) {
+    switch (weapon_defs[player_state.weapon].unk63) {
     case 0:
-        D_00446ACC += D_00413F80.equipment[EQUIP_SHIELD] == ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
+        D_00446ACC += player_state.equipment[EQUIP_SHIELD] == ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
         break;
     case 1:
         D_00446ACC++;
@@ -3736,27 +3736,27 @@ static void Menu_UpdateEquip(void) {
     }
     sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     if (CURRENT_ITEM->group == 1) {
-        definition = &D_00402DA8[CURRENT_ITEM->unk0C];
+        definition = &fx_table[CURRENT_ITEM->unk0C];
     } else {
         definition = &item_name_defs[CURRENT_ITEM->unk0C];
     }
     if (D_00446AD4 != 0) {
         switch (CURRENT_ITEM->group) {
         case 0:
-            D_00446DF4 = (D_003679A0[index].unk00[0] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[0]) * D_003679A0[index].level / 100;
-            D_00446DF8 = (D_003679A0[index].unk00[1] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[1]) * D_003679A0[index].level / 100;
-            D_00446DFC = (D_003679A0[index].unk00[2] + weapon_defs[index].unk00[D_003679A0[index].unk14].values[2]) * D_003679A0[index].level / 100;
-            D_00446E00 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[3] * D_003679A0[index].level / 100;
-            D_00446E04 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[4] * D_003679A0[index].level / 100;
-            D_00446E08 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[5] * D_003679A0[index].level / 100;
-            D_00446E0C = weapon_defs[index].unk00[D_003679A0[index].unk14].values[6] * D_003679A0[index].level / 100;
-            D_00446E10 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[7] * D_003679A0[index].level / 100;
-            D_00446E14 = weapon_defs[index].unk00[D_003679A0[index].unk14].values[8] * D_003679A0[index].level / 100;
+            D_00446DF4 = (weapon_level_records[index].unk00[0] + weapon_defs[index].unk00[weapon_level_records[index].unk14].values[0]) * weapon_level_records[index].level / 100;
+            D_00446DF8 = (weapon_level_records[index].unk00[1] + weapon_defs[index].unk00[weapon_level_records[index].unk14].values[1]) * weapon_level_records[index].level / 100;
+            D_00446DFC = (weapon_level_records[index].unk00[2] + weapon_defs[index].unk00[weapon_level_records[index].unk14].values[2]) * weapon_level_records[index].level / 100;
+            D_00446E00 = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[3] * weapon_level_records[index].level / 100;
+            D_00446E04 = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[4] * weapon_level_records[index].level / 100;
+            D_00446E08 = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[5] * weapon_level_records[index].level / 100;
+            D_00446E0C = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[6] * weapon_level_records[index].level / 100;
+            D_00446E10 = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[7] * weapon_level_records[index].level / 100;
+            D_00446E14 = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[8] * weapon_level_records[index].level / 100;
             D_00446E1C = (s32)(weapon_defs[index].unk68 * 0.03281f * 10.0f);
-            D_00446E20 = D_003679A0[index].level;
+            D_00446E20 = weapon_level_records[index].level;
             D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].unk3E;
             D_00446E24 = 100;
-            D_00446E28 = D_00413FBC[EQUIP_LIST->group];
+            D_00446E28 = player_weapon[EQUIP_LIST->group];
             if (D_004472C7 == 1) {
                 RESET_ALPHAS(D_0044723C, D_00446A40);
             }
@@ -3773,8 +3773,8 @@ static void Menu_UpdateEquip(void) {
             count = D_00446A40;
             break;
         case 1:
-            if (D_00402DA8[CURRENT_ITEM->unk0C].unk102 == 0) {
-                magic = &D_00402DA8[index];
+            if (fx_table[CURRENT_ITEM->unk0C].unk102 == 0) {
+                magic = &fx_table[index];
                 D_00446DF4 = magic->hit_checks[0].strengths.unk00[0];
                 D_00446DF8 = magic->hit_checks[0].strengths.unk00[1];
                 D_00446DFC = magic->hit_checks[0].strengths.unk00[2];
@@ -3800,7 +3800,7 @@ static void Menu_UpdateEquip(void) {
                 parts = D_00447244;
                 count = D_00446A48;
             } else {
-                D_00446E1C = D_00402DA8[index].unkFC;
+                D_00446E1C = fx_table[index].unkFC;
                 if (D_004472C7 == 1) {
                     RESET_ALPHAS(D_00446C6C, D_00446AC0);
                 }
@@ -3842,18 +3842,18 @@ static void Menu_UpdateEquip(void) {
         case 4:
         case 5:
         case 6:
-            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446DF4 = (worn_item_level_records[index].unk00[0] + worn_defs[index].unk00[0]) * worn_item_level_records[index].level / 100;
+            D_00446DF8 = (worn_item_level_records[index].unk00[1] + worn_defs[index].unk00[1]) * worn_item_level_records[index].level / 100;
+            D_00446DFC = (worn_item_level_records[index].unk00[2] + worn_defs[index].unk00[2]) * worn_item_level_records[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * worn_item_level_records[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * worn_item_level_records[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * worn_item_level_records[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * worn_item_level_records[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * worn_item_level_records[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * worn_item_level_records[index].level / 100;
             D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].unk3E;
-            D_00446E1C = D_00413FBC[EQUIP_LIST->group];
-            D_00446E20 = D_003682F0[index].level;
+            D_00446E1C = player_weapon[EQUIP_LIST->group];
+            D_00446E20 = worn_item_level_records[index].level;
             D_00446E24 = 100;
             if (index != 0 && index != 30 && index != 55 && index != 80 && index != 105) {
                 if (D_00446B50 != 0) {
@@ -3873,17 +3873,17 @@ static void Menu_UpdateEquip(void) {
         case 7:
         case 8:
         case 9:
-            D_00446DF4 = (D_003682F0[index].unk00[0] + worn_defs[index].unk00[0]) * D_003682F0[index].level / 100;
-            D_00446DF8 = (D_003682F0[index].unk00[1] + worn_defs[index].unk00[1]) * D_003682F0[index].level / 100;
-            D_00446DFC = (D_003682F0[index].unk00[2] + worn_defs[index].unk00[2]) * D_003682F0[index].level / 100;
-            D_00446E00 = worn_defs[index].unk00[3] * D_003682F0[index].level / 100;
-            D_00446E04 = worn_defs[index].unk00[4] * D_003682F0[index].level / 100;
-            D_00446E08 = worn_defs[index].unk00[5] * D_003682F0[index].level / 100;
-            D_00446E0C = worn_defs[index].unk00[6] * D_003682F0[index].level / 100;
-            D_00446E10 = worn_defs[index].unk00[7] * D_003682F0[index].level / 100;
-            D_00446E14 = worn_defs[index].unk00[8] * D_003682F0[index].level / 100;
+            D_00446DF4 = (worn_item_level_records[index].unk00[0] + worn_defs[index].unk00[0]) * worn_item_level_records[index].level / 100;
+            D_00446DF8 = (worn_item_level_records[index].unk00[1] + worn_defs[index].unk00[1]) * worn_item_level_records[index].level / 100;
+            D_00446DFC = (worn_item_level_records[index].unk00[2] + worn_defs[index].unk00[2]) * worn_item_level_records[index].level / 100;
+            D_00446E00 = worn_defs[index].unk00[3] * worn_item_level_records[index].level / 100;
+            D_00446E04 = worn_defs[index].unk00[4] * worn_item_level_records[index].level / 100;
+            D_00446E08 = worn_defs[index].unk00[5] * worn_item_level_records[index].level / 100;
+            D_00446E0C = worn_defs[index].unk00[6] * worn_item_level_records[index].level / 100;
+            D_00446E10 = worn_defs[index].unk00[7] * worn_item_level_records[index].level / 100;
+            D_00446E14 = worn_defs[index].unk00[8] * worn_item_level_records[index].level / 100;
             D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].unk3E;
-            D_00446E1C = D_00413FBC[EQUIP_LIST->group];
+            D_00446E1C = player_weapon[EQUIP_LIST->group];
             if (index != 130 && index != 140 && index != 150) {
                 if (D_00446B50 != 0) {
                     Sound_PlayMenu(1);
@@ -4009,10 +4009,10 @@ static void Menu_UpdateEquip(void) {
         }
         for (i = 0; i < 11; i++) {
             if (i == 1) {
-                listed = &D_00402DA8[(*D_00420D60[1])->unk0C];
+                listed = &fx_table[(*D_00420D60[1])->unk0C];
             } else if (i == 10) {
                 if ((*D_00420D60[10])->group == 1) {
-                    listed = &D_00402DA8[(*D_00420D60[10])->unk0C];
+                    listed = &fx_table[(*D_00420D60[10])->unk0C];
                 } else {
                     listed = &item_name_defs[(*D_00420D60[10])->unk0C];
                 }
@@ -4031,47 +4031,47 @@ static void Menu_UpdateEquip(void) {
 
         if (*D_00420D60[EQUIP_LIST->group] != *D_00420D90[EQUIP_LIST->group]) {
             Sound_PlayMenu(0);
-            if (weapon_defs[D_00413F80.weapon].unk63 == 2 && EQUIP_LIST->group == 0
+            if (weapon_defs[player_state.weapon].unk63 == 2 && EQUIP_LIST->group == 0
                 && weapon_defs[index].unk63 != 2) {
 *D_00420D60[2] = D_00423650;
-D_00413F80.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
+player_state.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
 D_0042A8F0[20].part = NULL;
             }
-            (&D_00413F80.weapon)[EQUIP_LIST->group] = index;
+            (&player_state.weapon)[EQUIP_LIST->group] = index;
             *D_00420D60[EQUIP_LIST->group] = CURRENT_ITEM;
-            if (weapon_defs[D_00413F80.weapon].unk63 != 0 && EQUIP_LIST->group == 0) {
+            if (weapon_defs[player_state.weapon].unk63 != 0 && EQUIP_LIST->group == 0) {
 *D_00420D60[2] = D_00423650;
-D_00413F80.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
+player_state.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
 D_0042A8F0[20].part = NULL;
             }
-            if (weapon_defs[D_00413F80.weapon].unk63 != 0 && EQUIP_LIST->group == 2) {
+            if (weapon_defs[player_state.weapon].unk63 != 0 && EQUIP_LIST->group == 2) {
 *D_00420D60[0] = D_004231F0;
-D_00413F80.weapon = 0;
+player_state.weapon = 0;
 D_0042A8F0[15].part = NULL;
             }
             if (EQUIP_LIST->group == 10) {
                 if (CURRENT_ITEM->unk0C != 0) {
                     switch (CURRENT_ITEM->group) {
                     case 11:
-                        D_00413F80.shortcut_type = 1;
+                        player_state.shortcut_type = 1;
                         break;
                     case 1:
-                        D_00413F80.shortcut_type = 2;
+                        player_state.shortcut_type = 2;
                         break;
                     default:
-                        D_00413F80.shortcut_type = 0;
+                        player_state.shortcut_type = 0;
                         break;
                     }
                 } else {
-                    D_00413F80.shortcut_type = 0;
+                    player_state.shortcut_type = 0;
                 }
             }
             func_001BA310();
-            if (D_00413F80.hp_max < D_00413F80.hp_now) {
-                D_00413F80.hp_now = D_00413F80.hp_max;
+            if (player_state.hp_max < player_state.hp_now) {
+                player_state.hp_now = player_state.hp_max;
             }
-            if (D_00413F80.mp_now > D_00413F80.mp_max) {
-                D_00413F80.mp_now = D_00413F80.mp_max;
+            if (player_state.mp_now > player_state.mp_max) {
+                player_state.mp_now = player_state.mp_max;
             }
             if (CURRENT_ITEM->group != 1 && CURRENT_ITEM->group != 11) {
                 Menu_SetWornModelNames();
@@ -4551,7 +4551,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
-    show_picture = (s8)D_00349680[7] != 0;
+    show_picture = (s8)game_options[7] != 0;
     if (D_005CEEE0.done != 0 && show_picture) {
         memset(view, 0, 0x40);
         view[10] = view[5] = view[0] = 0.8f;
@@ -4863,34 +4863,34 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         }
         Sound_PlayMenu(0);
         number = selected->unk0C;
-        if (number == D_00413F80.weapon + ITEM_WEAPON_FIRST) {
-            D_00413F80.weapon = 0;
-        } else if (number == D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST) {
-            D_00413F80.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
-        } else if (number == D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST) {
-            D_00413F80.equipment[EQUIP_ARMOR] = ITEM_WORN_INDEX(ITEM_ARMOR_NONE);
-        } else if (number == D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST) {
-            D_00413F80.equipment[EQUIP_HELM] = ITEM_WORN_INDEX(ITEM_HELM_NONE);
-        } else if (number == D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST) {
-            D_00413F80.equipment[EQUIP_GAUNTLET] = ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE);
-        } else if (number == D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST) {
-            D_00413F80.equipment[EQUIP_BOOT] = ITEM_WORN_INDEX(ITEM_BOOT_NONE);
-        } else if (number == D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST) {
-            D_00413F80.equipment[EQUIP_RING] = ITEM_WORN_INDEX(ITEM_RING_NONE);
-        } else if (number == D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST) {
-            D_00413F80.equipment[EQUIP_BRACELET] = ITEM_WORN_INDEX(ITEM_BRACELET_NONE);
-        } else if (number == D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST) {
-            D_00413F80.equipment[EQUIP_AMULET] = ITEM_WORN_INDEX(ITEM_AMULET_NONE);
-        } else if (number == D_00413F80.shortcut) {
-            D_00413F80.shortcut_type = 0;
-            D_00413F80.shortcut = 0;
+        if (number == player_state.weapon + ITEM_WEAPON_FIRST) {
+            player_state.weapon = 0;
+        } else if (number == player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST) {
+            player_state.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
+        } else if (number == player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST) {
+            player_state.equipment[EQUIP_ARMOR] = ITEM_WORN_INDEX(ITEM_ARMOR_NONE);
+        } else if (number == player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST) {
+            player_state.equipment[EQUIP_HELM] = ITEM_WORN_INDEX(ITEM_HELM_NONE);
+        } else if (number == player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST) {
+            player_state.equipment[EQUIP_GAUNTLET] = ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE);
+        } else if (number == player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST) {
+            player_state.equipment[EQUIP_BOOT] = ITEM_WORN_INDEX(ITEM_BOOT_NONE);
+        } else if (number == player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST) {
+            player_state.equipment[EQUIP_RING] = ITEM_WORN_INDEX(ITEM_RING_NONE);
+        } else if (number == player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST) {
+            player_state.equipment[EQUIP_BRACELET] = ITEM_WORN_INDEX(ITEM_BRACELET_NONE);
+        } else if (number == player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST) {
+            player_state.equipment[EQUIP_AMULET] = ITEM_WORN_INDEX(ITEM_AMULET_NONE);
+        } else if (number == player_state.shortcut) {
+            player_state.shortcut_type = 0;
+            player_state.shortcut = 0;
         }
         func_001BA310();
-        if (D_00413F80.hp_max < D_00413F80.hp_now) {
-            D_00413F80.hp_now = D_00413F80.hp_max;
+        if (player_state.hp_max < player_state.hp_now) {
+            player_state.hp_now = player_state.hp_max;
         }
-        if (D_00413F80.mp_now > D_00413F80.mp_max) {
-            D_00413F80.mp_now = D_00413F80.mp_max;
+        if (player_state.mp_now > player_state.mp_max) {
+            player_state.mp_now = player_state.mp_max;
         }
     }
     if (D_004472CB == 2) {
@@ -4903,7 +4903,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     record = D_005CE850[0]->unk0C - bases.first_item[D_005CE850[0]->group];
     D_00446DF4 = item_counts[D_005CE850[0]->unk0C];
     if (D_005CE850[0]->group == 0) {
-        D_00446E30 = D_003679A0[record].unk14 + 1;
+        D_00446E30 = weapon_level_records[record].unk14 + 1;
     }
     for (i = 0; i < D_00446A58; i++) {
         kind = D_00447254[i].unk3E;
@@ -5024,59 +5024,59 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         case 4:
         case 5:
         case 6:
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E18 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
-            D_00446E24 = D_003682F0[record].level;
+            D_00446DF8 = ScaleValue(worn_item_level_records[record].unk00[0] + worn_defs[record].unk00[0], worn_item_level_records[record].level, 100);
+            D_00446DFC = ScaleValue(worn_item_level_records[record].unk00[1] + worn_defs[record].unk00[1], worn_item_level_records[record].level, 100);
+            D_00446E00 = ScaleValue(worn_item_level_records[record].unk00[2] + worn_defs[record].unk00[2], worn_item_level_records[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[3], worn_item_level_records[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[4], worn_item_level_records[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[5], worn_item_level_records[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[6], worn_item_level_records[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[7], worn_item_level_records[record].level, 100);
+            D_00446E18 = ScaleValue(worn_defs[record].unk00[8], worn_item_level_records[record].level, 100);
+            D_00446E24 = worn_item_level_records[record].level;
             D_00446E28 = 100;
             D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].unk3E;
             if (D_004472CC == 1) {
                 FILL_FADE(D_00425910, D_00447274, D_00446A88)
             }
-            DRAW_PACKETS(D_00447274, D_00446A88, D_00413FBC[D_005CE850[0]->group])
+            DRAW_PACKETS(D_00447274, D_00446A88, player_weapon[D_005CE850[0]->group])
             packets = D_00447274;
             count = D_00446A88;
             break;
         case 7:
         case 8:
         case 9:
-            D_00446DF8 = ScaleValue(D_003682F0[record].unk00[0] + worn_defs[record].unk00[0], D_003682F0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003682F0[record].unk00[1] + worn_defs[record].unk00[1], D_003682F0[record].level, 100);
-            D_00446E00 = ScaleValue(D_003682F0[record].unk00[2] + worn_defs[record].unk00[2], D_003682F0[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].unk00[3], D_003682F0[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].unk00[4], D_003682F0[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].unk00[5], D_003682F0[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].unk00[6], D_003682F0[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].unk00[7], D_003682F0[record].level, 100);
-            D_00446E18 = ScaleValue(worn_defs[record].unk00[8], D_003682F0[record].level, 100);
+            D_00446DF8 = ScaleValue(worn_item_level_records[record].unk00[0] + worn_defs[record].unk00[0], worn_item_level_records[record].level, 100);
+            D_00446DFC = ScaleValue(worn_item_level_records[record].unk00[1] + worn_defs[record].unk00[1], worn_item_level_records[record].level, 100);
+            D_00446E00 = ScaleValue(worn_item_level_records[record].unk00[2] + worn_defs[record].unk00[2], worn_item_level_records[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].unk00[3], worn_item_level_records[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].unk00[4], worn_item_level_records[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].unk00[5], worn_item_level_records[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].unk00[6], worn_item_level_records[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].unk00[7], worn_item_level_records[record].level, 100);
+            D_00446E18 = ScaleValue(worn_defs[record].unk00[8], worn_item_level_records[record].level, 100);
             D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].unk3E;
             if (D_004472CC == 1) {
                 FILL_FADE(D_00425910, D_00447278, D_00446A8C)
             }
-            DRAW_PACKETS(D_00447278, D_00446A8C, D_00413FBC[D_005CE850[0]->group])
+            DRAW_PACKETS(D_00447278, D_00446A8C, player_weapon[D_005CE850[0]->group])
             packets = D_00447278;
             count = D_00446A8C;
             break;
         case 0:
-            D_00446DF8 = ScaleValue(D_003679A0[record].unk00[0] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[0], D_003679A0[record].level, 100);
-            D_00446DFC = ScaleValue(D_003679A0[record].unk00[1] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[1], D_003679A0[record].level, 100);
-            D_00446E00 = ScaleValue(D_003679A0[record].unk00[2] + weapon_defs[record].unk00[D_003679A0[record].unk14].values[2], D_003679A0[record].level, 100);
-            D_00446E04 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[3], D_003679A0[record].level, 100);
-            D_00446E08 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[4], D_003679A0[record].level, 100);
-            D_00446E0C = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[5], D_003679A0[record].level, 100);
-            D_00446E10 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[6], D_003679A0[record].level, 100);
-            D_00446E14 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[7], D_003679A0[record].level, 100);
-            D_00446E18 = ScaleValue(weapon_defs[record].unk00[D_003679A0[record].unk14].values[8], D_003679A0[record].level, 100);
+            D_00446DF8 = ScaleValue(weapon_level_records[record].unk00[0] + weapon_defs[record].unk00[weapon_level_records[record].unk14].values[0], weapon_level_records[record].level, 100);
+            D_00446DFC = ScaleValue(weapon_level_records[record].unk00[1] + weapon_defs[record].unk00[weapon_level_records[record].unk14].values[1], weapon_level_records[record].level, 100);
+            D_00446E00 = ScaleValue(weapon_level_records[record].unk00[2] + weapon_defs[record].unk00[weapon_level_records[record].unk14].values[2], weapon_level_records[record].level, 100);
+            D_00446E04 = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[3], weapon_level_records[record].level, 100);
+            D_00446E08 = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[4], weapon_level_records[record].level, 100);
+            D_00446E0C = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[5], weapon_level_records[record].level, 100);
+            D_00446E10 = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[6], weapon_level_records[record].level, 100);
+            D_00446E14 = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[7], weapon_level_records[record].level, 100);
+            D_00446E18 = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[8], weapon_level_records[record].level, 100);
             D_00446E20 = (s32)(weapon_defs[record].unk68 * 0.03281f * 10.0f);
-            D_00446E24 = D_003679A0[record].level;
+            D_00446E24 = weapon_level_records[record].level;
             D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].unk3E;
-            D_00446E28 = D_00413FBC[D_005CE850[0]->group];
+            D_00446E28 = player_weapon[D_005CE850[0]->group];
             D_00446E2C = 100;
             if (D_004472CC == 1) {
                 FILL_FADE(D_00425910, D_00447270, D_00446A84)
@@ -5320,7 +5320,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
         }
     }
 
-    if (D_0038CC50.bit9) {
+    if (game_status.bit9) {
         context->unk04 = 0;
         D_004472E8 = 0;
         D_00446B20 = (void *)Menu_OpenMain;
@@ -5388,7 +5388,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
                         D_00446AC8++;
                         context->unk04 = 0;
                         D_004472E8 = 0;
-                        D_0038CC50.bit9 = 1;
+                        game_status.bit9 = 1;
                     }
                     D_00446C70 = 0;
                     D_00446BD8 = 1;
@@ -5756,7 +5756,7 @@ static void Menu_UpdateCardSlot(void) {
                 }
             } else {
                 report = Pad_GetReport(0, 0);
-                if (((report->pressed & 0x2000) && D_004472D0 != 0xFF) || D_0038CC50.bit9) {
+                if (((report->pressed & 0x2000) && D_004472D0 != 0xFF) || game_status.bit9) {
                     Sound_PlayMenu(2);
                     if (D_005CF2F0.unk12 != -1) {
                         D_005CF2F0.unk12 = -1;
@@ -6059,17 +6059,17 @@ static void Menu_UpdateSaveList(void) {
         D_005CF2F0.unk13 = 3;
     }
     if (D_005CF2F0.unk00 < 0) {
-        if (SaveCard_GetLoadFailed(D_005CF2F0.unk0C) != 0 && !D_0038CC50.bit9) {
+        if (SaveCard_GetLoadFailed(D_005CF2F0.unk0C) != 0 && !game_status.bit9) {
             D_005CF2F0.unk13 = 23;
             SaveCard_ClearLoadFailed(D_005CF2F0.unk0C);
             SaveCard_StartCheck(0);
         } else if (D_005CF2F0.unk13 != 3) {
-            if (!D_0038CC50.bit9) {
+            if (!game_status.bit9) {
                 D_005CF2F0.unk13 = 10;
             }
         }
     }
-    if (D_0038CC50.bit9) {
+    if (game_status.bit9) {
         if (D_005CF2F0.unk13 == -1 && D_00446BDD == 0) {
             SaveCard_Init();
             D_005CF2F0.unk18 = 1;
@@ -6115,8 +6115,8 @@ static void Menu_UpdateSaveList(void) {
                 if (D_005CF2F0.unk0E == 0) {
                     Sound_PlayMenu(0);
                     D_005CF2F0.unk13 = 1;
-                    memset(D_0036A130, 0, 0x20000);
-                    SaveCard_StartLoad(D_005CF2F0.unk0C, D_005CF2F0.unk0D, (s32 *)D_0036A130, 0x20000);
+                    memset(save_image, 0, 0x20000);
+                    SaveCard_StartLoad(D_005CF2F0.unk0C, D_005CF2F0.unk0D, (s32 *)save_image, 0x20000);
                 } else {
                     Sound_PlayMenu(2);
                     D_005CF2F0.unk13 = -1;
@@ -6130,7 +6130,7 @@ static void Menu_UpdateSaveList(void) {
             case 10:
                 Sound_PlayMenu(0);
                 D_005CF2F0.unk18 = 1;
-                if (!D_0038CC50.bit9) {
+                if (!game_status.bit9) {
                     D_00446C70 = 3;
                     SaveCard_ResetCard(D_005CF2F0.unk0C);
                 } else {
@@ -6152,7 +6152,7 @@ static void Menu_UpdateSaveList(void) {
                 switch (D_005CF2F0.unk13) {
                 case 10:
                     D_005CF2F0.unk18 = 1;
-                    if (!D_0038CC50.bit9) {
+                    if (!game_status.bit9) {
                         D_00446C70 = 3;
                         SaveCard_ResetCard(D_005CF2F0.unk0C);
                     } else {
@@ -6294,13 +6294,13 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         if ((D_00446DE8 & 0xA0) && D_004472DA != 0) {
             Sound_PlayMenu(1);
             if (D_00446BE4 != 1) {
-                D_00446BE0 = D_00349680[0];
+                D_00446BE0 = game_options[0];
             }
             D_00446BE4 = 1;
-            D_00349680[0]++;
-            D_00349680[0] %= 2;
+            game_options[0]++;
+            game_options[0] %= 2;
         } else if (D_00446BE4 == 1 && !(D_00446DE8 & 0xA0) && D_004472DA != 0) {
-            if (D_00349680[0] == 0) {
+            if (game_options[0] == 0) {
                 if (D_00446BE0 != 0) {
                     D_00446BE4 = 2;
                     func_001CBED8();
@@ -6318,55 +6318,55 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         }
         break;
     case 1:
-        if ((D_00446DE8 & 0x20) && D_00349680[1] < 0x7F && D_004472DA != 0) {
-            D_00349680[1] += 4;
+        if ((D_00446DE8 & 0x20) && game_options[1] < 0x7F && D_004472DA != 0) {
+            game_options[1] += 4;
             Sound_PlayMenu(1);
-        } else if ((D_00446DE8 & 0x80) && D_00349680[1] != 0 && D_004472DA != 0) {
-            D_00349680[1] -= 4;
+        } else if ((D_00446DE8 & 0x80) && game_options[1] != 0 && D_004472DA != 0) {
+            game_options[1] -= 4;
             Sound_PlayMenu(1);
         }
-        Sound_SetBgmVolume(D_00349680[1]);
+        Sound_SetBgmVolume(game_options[1]);
         Sound_SyncBgmLevel();
         break;
     case 2:
-        if ((D_00446DE8 & 0x20) && D_00349680[2] < 0x7F && D_004472DA != 0) {
-            D_00349680[2] += 4;
+        if ((D_00446DE8 & 0x20) && game_options[2] < 0x7F && D_004472DA != 0) {
+            game_options[2] += 4;
             Sound_PlayMenu(1);
-        } else if ((D_00446DE8 & 0x80) && D_00349680[2] != 0 && D_004472DA != 0) {
-            D_00349680[2] -= 4;
+        } else if ((D_00446DE8 & 0x80) && game_options[2] != 0 && D_004472DA != 0) {
+            game_options[2] -= 4;
             Sound_PlayMenu(1);
         }
         break;
     case 3:
         if ((D_00446DE8 & 0xA0) && D_004472DA != 0) {
-            D_00349680[5]++;
+            game_options[5]++;
             Sound_PlayMenu(1);
         }
-        D_00349680[5] = (s8)D_00349680[5] % 2;
+        game_options[5] = (s8)game_options[5] % 2;
         break;
     case 4:
         if ((D_00446DE8 & 0xA0) && D_004472DA != 0) {
-            D_00349680[6]++;
+            game_options[6]++;
             Sound_PlayMenu(1);
         }
-        D_00349680[6] = (s8)D_00349680[6] % 2;
+        game_options[6] = (s8)game_options[6] % 2;
         break;
     case 5:
         if ((D_00446DE8 & 0xA0) && D_004472DA != 0) {
             Sound_PlayMenu(1);
-            D_00349680[9]++;
+            game_options[9]++;
         }
-        D_00349680[9] = (s8)D_00349680[9] % 2;
+        game_options[9] = (s8)game_options[9] % 2;
         break;
     case 6:
         if ((D_00446DE8 & 0x20) && D_004472DA != 0) {
             Sound_PlayMenu(1);
-            D_00349680[8]++;
+            game_options[8]++;
         } else if ((D_00446DE8 & 0x80) && D_004472DA != 0) {
             Sound_PlayMenu(1);
-            D_00349680[8]--;
+            game_options[8]--;
         }
-        D_00349680[8] = (s8)(D_00349680[8] + 3) % 3;
+        game_options[8] = (s8)(game_options[8] + 3) % 3;
         break;
     }
 
@@ -6422,7 +6422,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
                     D_00446C70 = 0;
                     context->unk04 = 0;
                     if (D_00446BE4 == 1) {
-                        if (D_00349680[0] == 0) {
+                        if (game_options[0] == 0) {
                             if (D_00446BE0 != 0) {
                                 D_00446BE4 = 2;
                                 func_001CBED8();
@@ -7018,17 +7018,17 @@ static void Menu_UpdateBrightness(void) {
 
     if ((D_00446DE8 & 0x20) && D_004472DA != 0) {
         Sound_PlayMenu(1);
-        if (D_00349680[10] < 0xFC) {
-            D_00349680[10] += 4;
+        if (game_options[10] < 0xFC) {
+            game_options[10] += 4;
         } else {
-            D_00349680[10] = 0x20;
+            game_options[10] = 0x20;
         }
     } else if ((D_00446DE8 & 0x80) && D_004472DA != 0) {
         Sound_PlayMenu(1);
-        if (D_00349680[10] > 0x20) {
-            D_00349680[10] -= 4;
+        if (game_options[10] > 0x20) {
+            game_options[10] -= 4;
         } else {
-            D_00349680[10] = 0xFC;
+            game_options[10] = 0xFC;
         }
     } else if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
         Sound_PlayMenu(0);
@@ -7036,11 +7036,11 @@ static void Menu_UpdateBrightness(void) {
         D_00446C70 = 2;
     } else if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
         Sound_PlayMenu(2);
-        D_00349680[10] = D_004472CF;
+        game_options[10] = D_004472CF;
         D_00446C70 = 3;
         D_004472DA = 0;
     }
-    D_00447228 = (D_00349680[10] - 32.0f) * 402.0f / 220.0f;
+    D_00447228 = (game_options[10] - 32.0f) * 402.0f / 220.0f;
     for (i = 0; i < D_00446AB0; i++) {
         kind = D_00446C5C[i].unk3E;
         func_001E5210(D_00446C5C[i].unk42);
@@ -7538,48 +7538,48 @@ void func_001E54A8(s8 slot) {
     switch (slot) {
         case 0:
             *D_00420D60[0] = D_004231F0;
-            D_00413F80.weapon = 0;
+            player_state.weapon = 0;
             break;
         case 1:
             *D_00420D60[1] = D_00424050;
-            D_00413F80.equipped_magic = 0;
+            player_state.equipped_magic = 0;
             break;
         case 2:
             *D_00420D60[2] = D_00423650;
-            D_00413F80.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
+            player_state.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
             break;
         case 3:
             *D_00420D60[3] = D_00423830;
-            D_00413F80.equipment[EQUIP_HELM] = ITEM_WORN_INDEX(ITEM_HELM_NONE);
+            player_state.equipment[EQUIP_HELM] = ITEM_WORN_INDEX(ITEM_HELM_NONE);
             break;
         case 4:
             *D_00420D60[4] = D_004239C0;
-            D_00413F80.equipment[EQUIP_ARMOR] = ITEM_WORN_INDEX(ITEM_ARMOR_NONE);
+            player_state.equipment[EQUIP_ARMOR] = ITEM_WORN_INDEX(ITEM_ARMOR_NONE);
             break;
         case 5:
             *D_00420D60[5] = D_00423B50;
-            D_00413F80.equipment[EQUIP_GAUNTLET] = ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE);
+            player_state.equipment[EQUIP_GAUNTLET] = ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE);
             break;
         case 6:
             *D_00420D60[6] = D_00423CE0;
-            D_00413F80.equipment[EQUIP_BOOT] = ITEM_WORN_INDEX(ITEM_BOOT_NONE);
+            player_state.equipment[EQUIP_BOOT] = ITEM_WORN_INDEX(ITEM_BOOT_NONE);
             break;
         case 7:
             *D_00420D60[7] = D_00423E70;
-            D_00413F80.equipment[EQUIP_RING] = ITEM_WORN_INDEX(ITEM_RING_NONE);
+            player_state.equipment[EQUIP_RING] = ITEM_WORN_INDEX(ITEM_RING_NONE);
             break;
         case 8:
             *D_00420D60[8] = D_00423F10;
-            D_00413F80.equipment[EQUIP_BRACELET] = ITEM_WORN_INDEX(ITEM_BRACELET_NONE);
+            player_state.equipment[EQUIP_BRACELET] = ITEM_WORN_INDEX(ITEM_BRACELET_NONE);
             break;
         case 9:
             *D_00420D60[9] = D_00423FB0;
-            D_00413F80.equipment[EQUIP_AMULET] = ITEM_WORN_INDEX(ITEM_AMULET_NONE);
+            player_state.equipment[EQUIP_AMULET] = ITEM_WORN_INDEX(ITEM_AMULET_NONE);
             break;
         case 11:
             *D_00420D60[10] = D_00424600;
-            D_00413F80.shortcut_type = 0;
-            D_00413F80.shortcut = 0;
+            player_state.shortcut_type = 0;
+            player_state.shortcut = 0;
             break;
     }
 }
@@ -7588,58 +7588,58 @@ void func_001E54A8(s8 slot) {
 int func_001E5660(u32 slot, s32 kind, s32 value) {
     switch (slot) {
         case 0:
-            if (value == D_00413F80.weapon + ITEM_WEAPON_FIRST) {
+            if (value == player_state.weapon + ITEM_WEAPON_FIRST) {
                 return TRUE;
             }
             break;
         case 1:
-            if (value == D_00413F80.equipped_magic) {
+            if (value == player_state.equipped_magic) {
                 return TRUE;
             }
             break;
         case 2:
-            if (value == D_00413F80.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST) {
+            if (value == player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST) {
                 return TRUE;
             }
             break;
         case 3:
-            if (value == D_00413F80.equipment[EQUIP_HELM] + ITEM_WORN_FIRST) {
+            if (value == player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST) {
                 return TRUE;
             }
             break;
         case 4:
-            if (value == D_00413F80.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST) {
+            if (value == player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST) {
                 return TRUE;
             }
             break;
         case 5:
-            if (value == D_00413F80.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST) {
+            if (value == player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST) {
                 return TRUE;
             }
             break;
         case 6:
-            if (value == D_00413F80.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST) {
+            if (value == player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST) {
                 return TRUE;
             }
             break;
         case 7:
-            if (value == D_00413F80.equipment[EQUIP_RING] + ITEM_WORN_FIRST) {
+            if (value == player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST) {
                 return TRUE;
             }
             break;
         case 8:
-            if (value == D_00413F80.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST) {
+            if (value == player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST) {
                 return TRUE;
             }
             break;
         case 9:
-            if (value == D_00413F80.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST) {
+            if (value == player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST) {
                 return TRUE;
             }
             break;
         case 10:
-            if ((kind == 11 && D_00413F80.shortcut_type < 2) || (kind == 1 && D_00413F80.shortcut_type == 2)) {
-                if (value == D_00413F80.shortcut) {
+            if ((kind == 11 && player_state.shortcut_type < 2) || (kind == 1 && player_state.shortcut_type == 2)) {
+                if (value == player_state.shortcut) {
                     return TRUE;
                 }
             }

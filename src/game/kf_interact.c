@@ -23,13 +23,13 @@ int func_001090E0(char *); // match: its u16 is halved as an int
 int Script_Start(int, int);
 int Script_IsRunning(int);
 int func_001C9AB0(ItemNode *);
-extern GameStatus D_0038CC50;
-extern PlayerState D_00413F80;
+extern GameStatus game_status;
+extern PlayerState player_state;
 extern EventRunner D_00420D00;
 extern CameraState D_004325A0;
 extern f32 D_00431AF0[16];
-extern MapSlot D_0038CD20[2];
-extern MapObject D_003A1A30[][0x200];
+extern MapSlot map_slots[2];
+extern MapObject map_slot_objects[][0x200];
 extern s32 D_004467B8[2];
 extern int D_00446770;
 extern ItemNode *D_004469D4;
@@ -47,16 +47,16 @@ void func_001D0800(void) {
     Vector_Copy(D_00420D00.unk20, D_00420D00.unk00);
     Vector_Copy(D_00420D00.unk30, D_00420D00.unk10);
     D_00420D00.unk44 = D_00420D00.unk40;
-    if (D_0038CC50.unk03 == 0) {
-        Vector_Copy(D_00420D00.unk00, &D_00413F80);
-        D_00420D00.unk00[1] = D_00420D00.unk00[1] - 220.0f + D_00413F80.unk1F0 + D_004325A0.unk4C;
-        pitch = D_00413F80.rotation.x - D_00413F80.unk238;
+    if (game_status.unk03 == 0) {
+        Vector_Copy(D_00420D00.unk00, &player_state);
+        D_00420D00.unk00[1] = D_00420D00.unk00[1] - 220.0f + player_state.unk1F0 + D_004325A0.unk4C;
+        pitch = player_state.rotation.x - player_state.unk238;
         if (pitch > 1.012291f) {
             pitch = 1.012291f;
         } else if (pitch < -1.012291f) {
             pitch = -1.012291f;
         }
-        heading = D_00413F80.rotation.y;
+        heading = player_state.rotation.y;
     } else {
         Vector_Copy(D_00420D00.unk00, &D_004325A0);
         pitch = D_004325A0.unk10;
@@ -115,7 +115,7 @@ void func_001D0970(void) {
             continue;
         }
         reach = entity->radius + 100.0f + 200.0f;
-        distance = func_001D1260(reach, (float *)&D_00413F80, (float *)&ENTITY_MODEL(entity)->position);
+        distance = func_001D1260(reach, (float *)&player_state, (float *)&ENTITY_MODEL(entity)->position);
         if (distance < nearest) {
             nearest = distance;
         }
@@ -133,11 +133,11 @@ void func_001D0970(void) {
         }
     }
     for (map = 0; map < 2; map++) {
-        if (D_0038CD20[map].unk00 == 0) {
+        if (map_slots[map].unk00 == 0) {
             continue;
         }
         count = D_004467B8[map];
-        object = D_003A1A30[map];
+        object = map_slot_objects[map];
         for (i = 0; i < count; i++, object++) {
             if (!(object->unk10 & 0x10000)) {
                 continue;
@@ -176,7 +176,7 @@ void func_001D0970(void) {
     }
     facing = D_00420D00.current;
     if (facing != NULL && facing->unk04->unk64 != 0.0f) {
-        turn = MapObject_GetTurnToward(facing, &D_00413F80.position);
+        turn = MapObject_GetTurnToward(facing, &player_state.position);
         limit = ((MapObject *)D_00420D00.current)->unk04->unk64;
         if (turn < -limit || limit < turn) {
             D_00420D00.current = NULL;
@@ -186,10 +186,10 @@ void func_001D0970(void) {
         if (!func_001C9B00(node)) {
             continue;
         }
-        if (node->model->position.y < D_00413F80.position.y - 50.0f - 230.0f) {
+        if (node->model->position.y < player_state.position.y - 50.0f - 230.0f) {
             continue;
         }
-        if (D_00413F80.position.y + 50.0f < node->model->position.y) {
+        if (player_state.position.y + 50.0f < node->model->position.y) {
             continue;
         }
         sceVu0SubVector(delta, &node->model->position, &D_004325A0);
@@ -208,9 +208,9 @@ void func_001D0970(void) {
         def = node->def;
         if (def != NULL) {
             item_map = node->flags & 1;
-            if (D_0038CD20[item_map].unk00 != 0) {
+            if (map_slots[item_map].unk00 != 0) {
                 object = NULL;
-                switch (D_0038CD20[item_map].tag) {
+                switch (map_slots[item_map].tag) {
                 case 0xC:
                     if (def->slot_id == 0xFA) {
                         object = MapObject_GetById(item_map, def->slot_id);
@@ -252,8 +252,8 @@ void func_001D0970(void) {
     if (D_00420D00.unk40 == D_00446A08[0]) {
         D_00420D00.unk40 = 2000.0f;
     }
-    if (D_00413F80.unk1A8 == 0) {
-        can_act = D_0038CC50.bit1;
+    if (player_state.unk1A8 == 0) {
+        can_act = game_status.bit1;
         pickup = D_00420D00.unk58;
         if (pickup != NULL && can_act) {
             if (pickup->def != NULL && pickup->def->unk34 != 0) {
@@ -274,7 +274,7 @@ void func_001D0970(void) {
                         Script_Start(((Entity *)D_00420D00.unk54)->spawn_info->unk4E, 0);
                     }
                 }
-                D_0038CC50.bit1 = FALSE;
+                game_status.bit1 = FALSE;
             }
         } else {
             used = D_00420D00.current;
@@ -284,7 +284,7 @@ void func_001D0970(void) {
                         Script_Start(((MapObject *)D_00420D00.current)->unk08->unk40, 0);
                     }
                 }
-                D_0038CC50.bit1 = FALSE;
+                game_status.bit1 = FALSE;
             }
         }
     }

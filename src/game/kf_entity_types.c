@@ -88,7 +88,7 @@ void func_00124E48(Entity *entity);
 void func_00124EF0();
 
 /* 0x3E6E40 [type][0] set-up, [type][1] update; types without a row act as type 0 */
-s32 D_003E6E40[0x60][2] = {
+s32 entity_type_handlers[0x60][2] = {
     (s32)EntityAi_InitDefaults, (s32)EntityAi_Update, (s32)Slime_Init, (s32)EntityAi_Update,
     (s32)Reaper_Init, (s32)EntityAi_Update, (s32)Spider_Init, (s32)EntityAi_Update,
     (s32)GiantSpider_Init, (s32)EntityAi_Update, (s32)Beetle_Init, (s32)EntityAi_Update,
@@ -139,12 +139,12 @@ s32 D_003E6E40[0x60][2] = {
     (s32)func_00124E48, (s32)func_00124EF0, (s32)func_00124E48, (s32)func_00124EF0,
 };
 
-ModelInstanceBlock D_003E7140[2] = { 0 }; /* 0x3E7140 the Fire Lord's model, copied for its two draws */
+ModelInstanceBlock fire_lord_model[2] = { 0 }; /* 0x3E7140 the Fire Lord's model, copied for its two draws */
 /* the second of the two, which other files name on its own */
-asm(".globl D_003E7300\nD_003E7300 = D_003E7140 + 0x1C0");  /* 0x3E7300 the model the set-up function copied */
+asm(".globl D_003E7300\nD_003E7300 = fire_lord_model + 0x1C0");  /* 0x3E7300 the model the set-up function copied */
 
 /* 0x3E74C0 the Fire Lord's model matrix (second row zero in retail) */
-ModelMatrix D_003E74C0 = {
+ModelMatrix fire_lord_model_matrix = {
     { { 1.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f, 0.0f },
       { 0.0f, -5.0f, 0.0f, 1.0f } },
 };

@@ -20,7 +20,7 @@ void EntityAi_RaiseAttackWeight(Entity *);
 void EntityAi_RaiseRangedWeights(Entity *);
 void EntityAi_UpdateCollision(Entity *);
 void EntityAi_SetUpdate(char *, s32);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
@@ -29,7 +29,7 @@ void Vector_Normalize(void *, void *);
 void Vector_Cross(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 int rand(void);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 void func_00196D48(Entity *);
 extern f32 D_00431AF0[16];
 void sceVu0RotMatrixX(float *, float *, float);
@@ -561,7 +561,7 @@ void EntityAi_RangedAttack(Entity *entity) {
     }
 }
 
-/* The per-frame update of 82 entity types (D_003E6E40): runs the death action, the on_hit or the think
+/* The per-frame update of 82 entity types (entity_type_handlers): runs the death action, the on_hit or the think
    handler, then the reaction or the action, counts unkA0 and unkA2 down, animates, and applies this frame's
    move (three quarters of it while the unk28 timer runs). */
 void EntityAi_Update(Entity *entity) {
@@ -627,7 +627,7 @@ void EntityAi_Update(Entity *entity) {
     EntityAi_UpdateCollision(entity);
 }
 
-/* The set-up function of entity type 0 (D_003E6E40[0]): clears the work area, installs the default handlers
+/* The set-up function of entity type 0 (entity_type_handlers[0]): clears the work area, installs the default handlers
    (EntityAi_Think, EntityAi_Animate, EntityAi_OnHit, EntityAi_Move, EntityAi_Dormant, EntityAi_Death), sets
    the choice weights unkBC and unkC0 to 0x80, and starts the dormant action (spawn flag bit 58) or the move
    action. */
@@ -644,7 +644,7 @@ void EntityAi_InitDefaults(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = EntityAi_Think;
     unkE0->animate = (void (*)(void))EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -868,7 +868,7 @@ void EntityAi_ThinkPursue(Entity *entity, int extra) {
     ENTITY_FLAG_BITS(entity)->bit10 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = 0;
     if (entity->unkA0 == 0) {
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
     }
     result = EntityAi_TurnFromPush(entity, &buf);
     if (result > 0) {
@@ -923,7 +923,7 @@ void EntityAi_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 0x78;
             unkE0->unk78 = 0;
             break;
@@ -977,7 +977,7 @@ void EntityAi_Move(Entity *entity) {
     f32 turn;
     f32 amount;
 
-    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     if (entity->unkC8 & 0x100) {

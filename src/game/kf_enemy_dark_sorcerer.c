@@ -1,4 +1,4 @@
-/* DarkSorcerer: the behaviour of entity type 53 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* DarkSorcerer: the behaviour of entity type 53 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Sorcerer. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -14,7 +14,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
@@ -29,7 +29,7 @@ void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 f32 EntityCollision_DistanceToPropFloor(void *, void *);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -63,7 +63,7 @@ extern EntityActionWeights3 D_0043EA88;
 int EntityAi_LaunchShot(void *, int, void *, void *);
 int Sound_PlayMapAtRange(u8, u8, float *, float);
 extern s32 D_00446770;
-extern MapSlot D_0038CD20[];
+extern MapSlot map_slots[];
 void *func_00116160(int, int);
 int Script_Start(int, int);
 
@@ -98,7 +98,7 @@ void DarkSorcerer_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = DarkSorcerer_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))DarkSorcerer_OnHit;
@@ -236,13 +236,13 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             if ((f32)entity->params->unk438 < entity->distance_to_player) {
                 unkE0->unk78 = 0;
             } else if (entity->distance_to_player < (f32)entity->params->unk436) {
                 unkE0->unk78 = 1;
-            } else if (EntityMath_AngleDifference(D_00413F80.unk14,
-                                     EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position)) > 0.0f) {
+            } else if (EntityMath_AngleDifference(player_state.unk14,
+                                     EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) > 0.0f) {
                 unkE0->unk78 = 2;
             } else {
                 unkE0->unk78 = 3;
@@ -250,7 +250,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
             entity->unkA0 = entity->params->unk43A;
             break;
         case 2:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 30;
             unkE0->unk78 = 4;
             break;
@@ -576,7 +576,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
             entity->unkC8 |= EntityAi_TurnCommand(entity);
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        Vector_Copy(target, &D_00413F80);
+        Vector_Copy(target, &player_state);
         target[1] -= 190.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->unkFC->unk82, target, 0.7853982f, 0.0f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -660,8 +660,8 @@ static s32 DarkSorcerer_PickAction(Entity *entity) {
     if (entity->unkE0.unk6A > 0) {
         return FALSE;
     }
-    if (D_00413F80.position[0] < -16900.0f || D_00413F80.position[0] > -16500.0f || D_00413F80.position[2] < 2500.0f
-        || D_00413F80.position[2] > 3600.0f) {
+    if (player_state.position[0] < -16900.0f || player_state.position[0] > -16500.0f || player_state.position[2] < 2500.0f
+        || player_state.position[2] > 3600.0f) {
         chances.weights[2] = 90;
     }
     total = chances.weights[0] + chances.weights[1] + chances.weights[2];
@@ -899,11 +899,11 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
 }
 
 /* Helper of DarkSorcerer_PlayAnim19StartScripts: when the entity's map is the current one, starts script
-   unk4E + 10000 of the map record D_00413F80.unk252 picks, and of up to two of the records
+   unk4E + 10000 of the map record player_state.unk252 picks, and of up to two of the records
    func_00116160 gives for 0x6B to 0x88, drawn at random. */
 static void DarkSorcerer_StartMapScripts(Entity *entity) {
-    MapSlot *slot = &D_0038CD20[D_00446770];
-    MapRecord *record = &((MapRecord *)slot->records)[D_00413F80.unk252];
+    MapSlot *slot = &map_slots[D_00446770];
+    MapRecord *record = &((MapRecord *)slot->records)[player_state.unk252];
     s32 remaining;
     s32 chance;
     s32 i;

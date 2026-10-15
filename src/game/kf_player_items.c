@@ -18,10 +18,10 @@ void func_001BB5E8(void);
 int func_001BC990(int);
 
 extern u8 item_counts[];
-extern ItemCommonDef D_0041A6F8[];
-extern GameStatus D_0038CC50;
+extern ItemCommonDef item_common_defs[];
+extern GameStatus game_status;
 extern EventRunner D_00420D00;
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern void *D_00414188[];
 extern int D_00446770;
 extern u32 D_00446ED4;
@@ -35,7 +35,7 @@ int Player_CannotCarryItem(int idx) {
     if (idx < 0) {
         return 0;
     }
-    entry = D_0041A6F8 + idx;
+    entry = item_common_defs + idx;
     if (entry->flags >> 1 & 1) {
         if (item_counts[idx] != 0) {
             return 1;
@@ -63,7 +63,7 @@ void Player_AddItem(int index) {
             item_counts[index] = 1;
         }
     } else if (index >= 0) {
-        def = &D_0041A6F8[index];
+        def = &item_common_defs[index];
         if (def->flags >> 1 & 1) {
             if (item_counts[index] == 0) {
                 item_counts[index] = 1;
@@ -92,19 +92,19 @@ void func_001BC2A0(u32 index) {
 /* Uses the item GameStatus.unk20 names once GameStatus.bit6 asks for it: an entity or a map object in front of
    the player may take it for a script of its own; otherwise it does what its type says and one is used up. */
 void Player_UseItem(void) {
-    int item = D_0038CC50.unk20;
-    ItemCommonDef *def = &D_0041A6F8[item];
+    int item = game_status.unk20;
+    ItemCommonDef *def = &item_common_defs[item];
     Entity *entity;
     MapObject *object;
     MapObject *stood_on;
     u16 timed;
 
-    if (D_0038CC50.unk44 > 0) {
-        D_0038CC50.unk44--;
+    if (game_status.unk44 > 0) {
+        game_status.unk44--;
     }
-    if (D_0038CC50.bit6) {
-        D_0038CC50.bit6 = FALSE;
-        D_0038CC50.unk44 = 1;
+    if (game_status.bit6) {
+        game_status.bit6 = FALSE;
+        game_status.unk44 = 1;
         if (item_counts[item] != 0) {
             entity = D_00420D00.unk54;
             if (entity != NULL && entity->spawn_info->unk58 != 0 && entity->group_id == D_00446770) {
@@ -125,38 +125,38 @@ void Player_UseItem(void) {
             Player_ApplyItem(item);
             switch (def->type) {
             case 0:
-                D_00413F80.hp_now += def->hp_heal;
-                if (D_00413F80.hp_now > D_00413F80.hp_max) {
-                    D_00413F80.hp_now = D_00413F80.hp_max;
+                player_state.hp_now += def->hp_heal;
+                if (player_state.hp_now > player_state.hp_max) {
+                    player_state.hp_now = player_state.hp_max;
                 }
-                D_00413F80.mp_now += def->mp_heal;
-                if (D_00413F80.mp_now > D_00413F80.mp_max) {
-                    D_00413F80.mp_now = D_00413F80.mp_max;
+                player_state.mp_now += def->mp_heal;
+                if (player_state.mp_now > player_state.mp_max) {
+                    player_state.mp_now = player_state.mp_max;
                 }
                 timed = def->unk08;
                 if (timed & 1) {
-                    D_00413F80.timed_flags[0] = 0;
-                    D_00413F80.flag_timers[0] = 60;
+                    player_state.timed_flags[0] = 0;
+                    player_state.flag_timers[0] = 60;
                 }
                 if (timed & 2) {
-                    D_00413F80.timed_flags[1] = 0;
-                    D_00413F80.flag_timers[1] = 60;
+                    player_state.timed_flags[1] = 0;
+                    player_state.flag_timers[1] = 60;
                 }
                 if (timed & 4) {
-                    D_00413F80.timed_flags[2] = 0;
-                    D_00413F80.flag_timers[2] = 60;
+                    player_state.timed_flags[2] = 0;
+                    player_state.flag_timers[2] = 60;
                 }
                 if (timed & 8) {
-                    D_00413F80.timed_flags[3] = 0;
-                    D_00413F80.flag_timers[3] = 60;
+                    player_state.timed_flags[3] = 0;
+                    player_state.flag_timers[3] = 60;
                 }
                 if (timed & 0x10) {
-                    D_00413F80.timed_flags[4] = 0;
-                    D_00413F80.flag_timers[4] = 60;
+                    player_state.timed_flags[4] = 0;
+                    player_state.flag_timers[4] = 60;
                 }
                 if (timed & 0x20) {
-                    D_00413F80.timed_flags[5] = 0;
-                    D_00413F80.flag_timers[5] = 60;
+                    player_state.timed_flags[5] = 0;
+                    player_state.flag_timers[5] = 60;
                 }
                 break;
             case 1:
@@ -210,31 +210,31 @@ void Player_ApplyItem(int kind) {
 
     switch (kind) {
     case ITEM_POWER_SEED:
-        D_00413F80.power_seed_timer = 1800;
+        player_state.power_seed_timer = 1800;
         break;
     case ITEM_WIDDA_NEEDLE:
-        D_00413F80.widda_needle_timer = 1800;
+        player_state.widda_needle_timer = 1800;
         break;
     case ITEM_WISE_MANS_FRUIT:
-        if (D_00413F80.magic_base < 999) {
+        if (player_state.magic_base < 999) {
             Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_MAGIC_POWER_UP);
-            D_00413F80.magic_base++;
+            player_state.magic_base++;
         } else {
             Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
         }
         break;
     case ITEM_FOOLS_FRUIT:
-        if (D_00413F80.power_base < 999) {
-            D_00413F80.power_base++;
+        if (player_state.power_base < 999) {
+            player_state.power_base++;
             Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_PHYSICAL_UP);
         } else {
             Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
         }
         break;
     case ITEM_MAGIC_CRYSTAL:
-        D_00413F80.mp_base++;
-        if (D_00413F80.mp_base > 999) {
-            D_00413F80.mp_base = 999;
+        player_state.mp_base++;
+        if (player_state.mp_base > 999) {
+            player_state.mp_base = 999;
         }
         func_001BA310();
         ItemEffect_Start(kind, 0);
@@ -246,12 +246,12 @@ void Player_ApplyItem(int kind) {
     case ITEM_LIGHT_CRYSTAL:
     case ITEM_DARK_CRYSTAL:
         marked = func_001BC990(kind - ITEM_FIRE_CRYSTAL);
-        D_00413F80.mp_base++;
-        if (D_00413F80.mp_base > 999) {
-            D_00413F80.mp_base = 999;
+        player_state.mp_base++;
+        if (player_state.mp_base > 999) {
+            player_state.mp_base = 999;
         }
         func_001BA310();
-        if (D_00413F80.unk264 == 0) {
+        if (player_state.unk264 == 0) {
             func_001BB5E8();
         }
         ItemEffect_Start(kind, marked);
@@ -263,12 +263,12 @@ void Player_ApplyItem(int kind) {
     case ITEM_LIGHT_CRYSTAL_2:
     case ITEM_DARK_CRYSTAL_2:
         marked = func_001BC990(kind - ITEM_FIRE_CRYSTAL_2);
-        D_00413F80.mp_base += 5;
-        if (D_00413F80.mp_base > 999) {
-            D_00413F80.mp_base = 999;
+        player_state.mp_base += 5;
+        if (player_state.mp_base > 999) {
+            player_state.mp_base = 999;
         }
         func_001BA310();
-        if (D_00413F80.unk264 == 0) {
+        if (player_state.unk264 == 0) {
             func_001BB5E8();
         }
         ItemEffect_Start(kind, marked);
@@ -279,8 +279,8 @@ void Player_ApplyItem(int kind) {
 /* Kind 0x12 starts the first timed flag: 1800 frames from now. */
 void func_001BC968(int kind) {
     if (kind == 0x12) {
-        D_00413F80.timed_flags[0] = 1800;
-        D_00413F80.unk2C4 = D_00446ED4;
+        player_state.timed_flags[0] = 1800;
+        player_state.unk2C4 = D_00446ED4;
     }
 }
 

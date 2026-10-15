@@ -5,11 +5,11 @@
 #include "kf_player.h"
 
 extern char D_004410A8[];           /* "ini/%4.4d.ini" */
-extern char D_00249680[];           /* where the file is read to */
-extern PlayerState D_00413F80;
+extern char file_load_buffer[];           /* where the file is read to */
+extern PlayerState player_state;
 extern u8 item_counts[380];
-extern LevelRecord D_003679A0[70];
-extern LevelRecord D_003682F0[160];
+extern LevelRecord weapon_level_records[70];
+extern LevelRecord worn_item_level_records[160];
 extern u8 spell_levels[6][5];
 extern u16 spell_experience[6][5];
 
@@ -116,9 +116,9 @@ void Ini_Load(int number) {
             return;
         }
     }
-    line = (char *)func_001025C0(file, D_00249680, -1);
+    line = (char *)func_001025C0(file, file_load_buffer, -1);
     func_001024B0(file);
-    Ini_SetText(D_00249680, (int)line);
+    Ini_SetText(file_load_buffer, (int)line);
     while ((line = Ini_ReadLine()) != NULL) {
         for (i = 0; D_0042B810[i].handler != NULL; i++) {
             if (strncmp(line, D_0042B810[i].key, strlen(D_0042B810[i].key)) == 0) {
@@ -131,44 +131,44 @@ void Ini_Load(int number) {
 
 /* ini/NNNN.ini, key "hp=": sets PlayerState.hp_base. */
 void Ini_SetHp(char *text) {
-    D_00413F80.hp_base = atoi(text);
+    player_state.hp_base = atoi(text);
 }
 
 /* ini/NNNN.ini, key "mp=": sets PlayerState.mp_base. */
 void Ini_SetMp(char *text) {
-    D_00413F80.mp_base = atoi(text);
+    player_state.mp_base = atoi(text);
 }
 
 /* ini/NNNN.ini, key "power=": sets PlayerState.power_base. */
 void Ini_SetPower(char *text) {
-    D_00413F80.power_base = atoi(text);
+    player_state.power_base = atoi(text);
 }
 
 /* ini/NNNN.ini, key "magic=": sets PlayerState.magic_base. */
 void Ini_SetMagic(char *text) {
-    D_00413F80.magic_base = atoi(text);
+    player_state.magic_base = atoi(text);
 }
 
 /* ini/NNNN.ini, key "level=": sets PlayerState.level. */
 void Ini_SetLevel(char *text) {
-    D_00413F80.level = atoi(text);
+    player_state.level = atoi(text);
 }
 
 /* ini/NNNN.ini, key "exp=": sets PlayerState.experience. */
 void Ini_SetExp(char *text) {
-    D_00413F80.experience = atoi(text);
+    player_state.experience = atoi(text);
 }
 
 /* ini/NNNN.ini, key "gold=": sets PlayerState.gold. */
 void Ini_SetGold(char *text) {
-    D_00413F80.gold = atoi(text);
+    player_state.gold = atoi(text);
 }
 
 /* ini/NNNN.ini, key "equip_weapon=": the number is the item; the weapon in hand is that less ITEM_WEAPON_FIRST
    (adding 0x100 - ITEM_WEAPON_FIRST to a byte), or none when it is negative. */
 void Ini_SetEquipWeapon(char *text) {
     int number = atoi(text);
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     if (number >= 0) {
         player->weapon = number + (0x100 - ITEM_WEAPON_FIRST);
@@ -184,14 +184,14 @@ void Ini_SetEquipMagic(char *text) {
     if (number < 0) {
         number = 0;
     }
-    D_00413F80.equipped_magic = number;
+    player_state.equipped_magic = number;
 }
 
 /* ini/NNNN.ini, key "equip_shield=": the number is the item; the slot holds it less ITEM_WORN_FIRST (adding
    0x100 - ITEM_WORN_FIRST to a byte), or none when it is negative. */
 void Ini_SetEquipShield(char *text) {
     int number = atoi(text);
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     if (number >= 0) {
         player->equipment[EQUIP_SHIELD] = number + (0x100 - ITEM_WORN_FIRST);
@@ -204,7 +204,7 @@ void Ini_SetEquipShield(char *text) {
    0x100 - ITEM_WORN_FIRST to a byte), or the group's "None" when it is negative. */
 void Ini_SetEquipHelm(char *text) {
     int number = atoi(text);
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     if (number >= 0) {
         player->equipment[EQUIP_HELM] = number + (0x100 - ITEM_WORN_FIRST);
@@ -217,7 +217,7 @@ void Ini_SetEquipHelm(char *text) {
    0x100 - ITEM_WORN_FIRST to a byte), or the group's "None" when it is negative. */
 void Ini_SetEquipArmor(char *text) {
     int number = atoi(text);
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     if (number >= 0) {
         player->equipment[EQUIP_ARMOR] = number + (0x100 - ITEM_WORN_FIRST);
@@ -230,7 +230,7 @@ void Ini_SetEquipArmor(char *text) {
    0x100 - ITEM_WORN_FIRST to a byte), or the group's "None" when it is negative. */
 void Ini_SetEquipGauntlet(char *text) {
     int number = atoi(text);
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     if (number >= 0) {
         player->equipment[EQUIP_GAUNTLET] = number + (0x100 - ITEM_WORN_FIRST);
@@ -243,7 +243,7 @@ void Ini_SetEquipGauntlet(char *text) {
    0x100 - ITEM_WORN_FIRST to a byte), or the group's "None" when it is negative. */
 void Ini_SetEquipBoot(char *text) {
     int number = atoi(text);
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     if (number >= 0) {
         player->equipment[EQUIP_BOOT] = number + (0x100 - ITEM_WORN_FIRST);
@@ -256,7 +256,7 @@ void Ini_SetEquipBoot(char *text) {
    0x100 - ITEM_WORN_FIRST to a byte), or the group's "None" when it is negative. */
 void Ini_SetEquipRing(char *text) {
     int number = atoi(text);
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     if (number >= 0) {
         player->equipment[EQUIP_RING] = number + (0x100 - ITEM_WORN_FIRST);
@@ -269,7 +269,7 @@ void Ini_SetEquipRing(char *text) {
    0x100 - ITEM_WORN_FIRST to a byte), or the group's "None" when it is negative. */
 void Ini_SetEquipBracelet(char *text) {
     int number = atoi(text);
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     if (number >= 0) {
         player->equipment[EQUIP_BRACELET] = number + (0x100 - ITEM_WORN_FIRST);
@@ -282,7 +282,7 @@ void Ini_SetEquipBracelet(char *text) {
    0x100 - ITEM_WORN_FIRST to a byte), or the group's "None" when it is negative. */
 void Ini_SetEquipAmulet(char *text) {
     int number = atoi(text);
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     if (number >= 0) {
         player->equipment[EQUIP_AMULET] = number + (0x100 - ITEM_WORN_FIRST);
@@ -294,7 +294,7 @@ void Ini_SetEquipAmulet(char *text) {
 /* ini/NNNN.ini, key "equip_shortcut_type=": 0 to 2 goes to PlayerState.shortcut_type, anything else gives 0. */
 void Ini_SetShortcutType(char *text) {
     int number = atoi(text);
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     if ((u32)number < 3) {
         player->shortcut_type = number;
@@ -310,7 +310,7 @@ void Ini_SetShortcut(char *text) {
     if (number < 0) {
         number = 0;
     }
-    D_00413F80.shortcut = number;
+    player_state.shortcut = number;
 }
 
 /* ini/NNNN.ini, key "item_NNN=count,level,time": how many of item NNN the player has; for a weapon (150 to 219)
@@ -337,7 +337,7 @@ void Ini_SetItem(char *text) {
             } else if (number > 100) {
                 number = 100;
             }
-            D_003679A0[index].level = number;
+            weapon_level_records[index].level = number;
             comma = strchr(text, ',');
             if (comma != NULL) {
                 comma = strrchr(comma + 1, ',');
@@ -350,13 +350,13 @@ void Ini_SetItem(char *text) {
                 } else if (time > 480) {
                     time = 480;
                 }
-                D_003679A0[index].unk16 = time;
+                weapon_level_records[index].unk16 = time;
                 if (time >= 480) {
-                    D_003679A0[index].unk14 = 2;
+                    weapon_level_records[index].unk14 = 2;
                 } else if (time >= 180) {
-                    D_003679A0[index].unk14 = 1;
+                    weapon_level_records[index].unk14 = 1;
                 } else {
-                    D_003679A0[index].unk14 = 0;
+                    weapon_level_records[index].unk14 = 0;
                 }
             }
         } else if ((u32)(item - 160) < 160) { // match: tests 160 to 319 where the index below is item - 220, so 320 to 379 get no level
@@ -370,7 +370,7 @@ void Ini_SetItem(char *text) {
             } else if (number > 100) {
                 number = 100;
             }
-            D_003682F0[item - 220].level = number;
+            worn_item_level_records[item - 220].level = number;
         }
     }
 }

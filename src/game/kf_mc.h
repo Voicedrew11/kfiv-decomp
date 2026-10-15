@@ -48,7 +48,7 @@ typedef struct {
     int result[2][4];               /* 0x60 result of the sceMcGetInfo call */
 } McCardInfo;
 
-/* the request in progress and what it works on (D_01E4F278) */
+/* the request in progress and what it works on (mc_request) */
 typedef struct {
     McCardInfo cards;               /* 0x00 */
     int port;                       /* 0x80 0..2 */

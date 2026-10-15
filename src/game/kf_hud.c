@@ -13,9 +13,9 @@ void func_00109A80(int, s64);
 void func_00109AD0(void);
 void func_0010A100(void *);
 
-extern char D_00349680[0x10]; // match: read as a signed byte here
+extern char game_options[0x10]; // match: read as a signed byte here
 extern s32 D_0038A218[];
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern char *D_00446F6C;        /* the HUD area, where gage.tx2 is loaded */
 
 static TextureTableHeader *pause_texture_table; /* 0x4471F0 pause.tx2, loaded after gage.tx2 */
@@ -107,7 +107,7 @@ void Hud_Draw(void) {
     ScreenSprite sprite;
     s32 fade;
 
-    if (D_00349680[9] != 0 && D_0038A218[0] != 0) {
+    if (game_options[9] != 0 && D_0038A218[0] != 0) {
         func_0010B238((TextureTableHeader *)D_00446F6C);
         func_00109A50();
         func_00109A80(GS_REG_ALPHA_1, 0x44);
@@ -120,19 +120,19 @@ void Hud_Draw(void) {
         func_00109A80(8, 0);
         func_00109AD0();
         sprite = hud_sprites[1];
-        sprite.vertex[1].x = sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * D_00413F80.unkBC / 5000;
+        sprite.vertex[1].x = sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.unkBC / 5000;
         sprite.vertex[1].tex_s =
-            sprite.vertex[0].tex_s + (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * D_00413F80.unkBC / 5000;
+            sprite.vertex[0].tex_s + (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.unkBC / 5000;
         func_0010A100(&sprite);
         sprite = hud_sprites[2];
-        sprite.vertex[1].x = sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * D_00413F80.unkC0 / 5000;
+        sprite.vertex[1].x = sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.unkC0 / 5000;
         sprite.vertex[1].tex_s =
-            sprite.vertex[0].tex_s + (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * D_00413F80.unkC0 / 5000;
+            sprite.vertex[0].tex_s + (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.unkC0 / 5000;
         func_0010A100(&sprite);
         sprite = hud_sprites[3];
-        sprite.vertex[0].y = sprite.vertex[1].y - (sprite.vertex[1].y - sprite.vertex[0].y) * D_00413F80.unk1A4 / 49;
+        sprite.vertex[0].y = sprite.vertex[1].y - (sprite.vertex[1].y - sprite.vertex[0].y) * player_state.unk1A4 / 49;
         sprite.vertex[0].tex_t =
-            sprite.vertex[1].tex_t - (sprite.vertex[1].tex_t - sprite.vertex[0].tex_t) * D_00413F80.unk1A4 / 49;
+            sprite.vertex[1].tex_t - (sprite.vertex[1].tex_t - sprite.vertex[0].tex_t) * player_state.unk1A4 / 49;
         func_0010A100(&sprite);
         func_00109A50();
         func_00109A80(GS_REG_ALPHA_1, 0x48);
@@ -146,8 +146,8 @@ void Hud_Draw(void) {
         sprite.rgba[1] = 0;
         sprite.rgba[0] = 0;
         func_0010A100(&sprite);
-        if (D_00413F80.mp_max > 0) {
-            fade = D_00413F80.unk1A6 * 255 / D_00413F80.mp_max;
+        if (player_state.mp_max > 0) {
+            fade = player_state.unk1A6 * 255 / player_state.mp_max;
         } else {
             fade = 0;
         }
@@ -170,11 +170,11 @@ void Hud_Draw(void) {
         func_00109A80(GS_REG_TEST_1, 0x31001);
         func_00109AD0();
         sprite = hud_sprites[7];
-        if (D_00413F80.unkD0 != 0) {
+        if (player_state.unkD0 != 0) {
             sprite.vertex[1].x =
-                sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * D_00413F80.unkCC / D_00413F80.unkD0;
+                sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.unkCC / player_state.unkD0;
             sprite.vertex[1].tex_s = sprite.vertex[0].tex_s +
-                (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * D_00413F80.unkCC / D_00413F80.unkD0;
+                (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.unkCC / player_state.unkD0;
             func_0010A100(&sprite);
         }
         sprite = hud_sprites[8];

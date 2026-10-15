@@ -15,10 +15,10 @@ void SyncDCache(void *start, void *end);
 void *MenuHeap_Alloc(int);
 int func_00102258(char *, int, int);
 
-extern GameStatus D_0038CC50;
+extern GameStatus game_status;
 extern int D_00446734;
 extern s32 D_0038CC84[];
-extern s32 D_00413F80[];
+extern s32 player_state[];
 extern PlayTime D_00446A28;
 
 static sceMcTblGetDir *dir_entries;     /* 0x447334 the eleven directory entries a directory request fills */
@@ -770,7 +770,7 @@ static s32 SaveCard_StepLoad(void) {
         } else {
             D_00446734 = 1;
             result = 1;
-            D_0038CC50.bit9 = 1;
+            game_status.bit9 = 1;
         }
         break;
     }
@@ -1338,15 +1338,15 @@ static void SaveCard_FillSaveInfo(void *unused_arg0, s32 index) {
     info->exists = 1;
     info->damaged = 0;
     info->numbers[0] = D_0038CC84[0];
-    info->numbers[1] = D_00413F80[20];
-    info->numbers[2] = D_00413F80[21];
-    info->numbers[3] = D_00413F80[45];
-    info->numbers[4] = D_00413F80[22];
-    info->numbers[5] = D_00413F80[46];
-    info->numbers[6] = D_00413F80[23];
-    info->numbers[7] = D_00413F80[10];
-    info->numbers[8] = D_00413F80[11];
-    info->numbers[9] = D_00413F80[19];
+    info->numbers[1] = player_state[20];
+    info->numbers[2] = player_state[21];
+    info->numbers[3] = player_state[45];
+    info->numbers[4] = player_state[22];
+    info->numbers[5] = player_state[46];
+    info->numbers[6] = player_state[23];
+    info->numbers[7] = player_state[10];
+    info->numbers[8] = player_state[11];
+    info->numbers[9] = player_state[19];
     info->play_time = D_00446A28;
     SyncDCache(save_infos, save_infos + 3);
 }

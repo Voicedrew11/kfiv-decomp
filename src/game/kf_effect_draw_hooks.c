@@ -10,7 +10,7 @@ void Effect_PrepareSubtractiveDrawOnTop(ModelInstance *model);
 void Effect_PrepareBlendedDrawOnTop(ModelInstance *model);
 void Effect_PrepareCutoutDrawOnTop(ModelInstance *model);
 
-void (*D_003F1710[4][4])(ModelInstance *) = { /* 0x3F1710 [placement][blend mode] */
+void (*effect_draw_hooks[4][4])(ModelInstance *) = { /* 0x3F1710 [placement][blend mode] */
     Effect_PrepareAdditiveDraw, Effect_PrepareSubtractiveDraw, Effect_PrepareBlendedDraw, Effect_PrepareCutoutDraw,
     Effect_PrepareAdditiveDrawOnTop, Effect_PrepareSubtractiveDrawOnTop, Effect_PrepareBlendedDrawOnTop, Effect_PrepareCutoutDrawOnTop,
     Effect_PrepareAdditiveDrawOnTop, Effect_PrepareSubtractiveDrawOnTop, Effect_PrepareBlendedDrawOnTop, Effect_PrepareCutoutDrawOnTop,

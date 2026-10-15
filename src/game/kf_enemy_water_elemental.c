@@ -1,4 +1,4 @@
-/* WaterElemental: the behaviour of entity type 51 (Entity.params->unk02, the index into D_003E6E40): its
+/* WaterElemental: the behaviour of entity type 51 (Entity.params->unk02, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Water Elemental. The game
    names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm
    records by hit points and experience, with resistances and drops where two monsters share those. */
@@ -16,9 +16,9 @@ void EntityAi_Animate(void);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
@@ -75,7 +75,7 @@ void WaterElemental_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = WaterElemental_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))WaterElemental_OnHit;
@@ -106,7 +106,7 @@ void WaterElemental_Init(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with WaterElemental_ThinkCombat for state 2. Work byte unk7B
-   is put to 30 while D_00413F80.unk259 is set and counts down. While work word unk68 is 1
+   is put to 30 while player_state.unk259 is set and counts down. While work word unk68 is 1
    (WaterElemental_AlertSameKind of another entity sets it; states 0 and 1 clear it) it only starts
    WaterElemental_RunAtPlayer. Once the pause in work word unk6C is over and Entity.unk2C is below
    EntityParams.unk436 percent of EntityParams.unk0A it starts WaterElemental_RecoverHealth with a
@@ -121,7 +121,7 @@ static void WaterElemental_Think(Entity *entity, s32 unknown) {
     if (unkE0->unk6C > 0) {
         unkE0->unk6C--;
     }
-    if (D_00413F80.unk259 != 0) {
+    if (player_state.unk259 != 0) {
         unkE0->unk7B = 30;
     }
     if (unkE0->unk7B > 0) {
@@ -215,7 +215,7 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -354,7 +354,7 @@ static s32 func_0015F298(Entity *entity, f32 min_distance, f32 max_angle) {
     }
     distance = entity->distance_to_player - (entity->radius + 100.0f);
     angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-    player_angle = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+    player_angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
     if (distance < min_distance) {
         return FALSE;
     }
@@ -381,7 +381,7 @@ static void WaterElemental_AlertSameKind(Entity *entity) {
             if (unkE0->unk68 == 0
                 && EntityMath_DistanceXZ(entity->model->position, other->model->position)
                        < (s16)entity->params->unk434
-                && EntityMath_DistanceXZ(other->spawn_info, D_00413F80.position) < other->spawn_info->unk4C) {
+                && EntityMath_DistanceXZ(other->spawn_info, player_state.position) < other->spawn_info->unk4C) {
                 unkE0->unk68 = 1;
             }
         }
@@ -473,7 +473,7 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
             }
             break;
         }
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
         side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
             entity->unkC8 = 0x241;

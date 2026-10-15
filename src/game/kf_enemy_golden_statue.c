@@ -1,4 +1,4 @@
-/* GoldenStatue: the behaviour of entity type 29 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* GoldenStatue: the behaviour of entity type 29 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Golden Statue. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -14,7 +14,7 @@ void Vector_Copy(void *, void *);
 void EntityAi_Think(Entity *, s32);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
@@ -32,7 +32,7 @@ void EntityAi_RangedAttack(Entity *);
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(void *);
 void EntityAi_CheckFarFromSpawn(void *);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 extern char D_0043E8C0[];
 int printf(const char *, ...);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
@@ -81,7 +81,7 @@ void GoldenStatue_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->animate = (void (*)(void))GoldenStatue_Animate;
     unkE0->on_hit = (void (*)(void))GoldenStatue_OnHit;
     unkE0->move = (void (*)(void))GoldenStatue_Move;
@@ -310,7 +310,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (EntityMath_DistanceXZ(entity->spawn_info, &D_00413F80) > entity->spawn_info->unk4C) {
+    if (EntityMath_DistanceXZ(entity->spawn_info, &player_state) > entity->spawn_info->unk4C) {
         if (ENTITY_FLAG_BITS(entity)->bit32) {
             if (EntityAi_CanShoot(entity) && !EntitySight_EntityInWay((int *)entity)) {
                 EntityAi_PickRangedAttack(entity);
@@ -326,8 +326,8 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
         }
     }
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
-    if (D_00413F80.position[0] < -7900.0f) {
-        Vector_Copy(post, &D_00413F80);
+    if (player_state.position[0] < -7900.0f) {
+        Vector_Copy(post, &player_state);
         post[0] = -8000.0f;
         if (post[2] > 3350.0f) {
             post[2] = 3550.0f;
@@ -383,7 +383,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
             }
         }
     } else {
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
     }
     func_00196D48(entity);
     if (ENTITY_FLAG_BITS(entity)->bit31) {
@@ -471,7 +471,7 @@ static void GoldenStatue_AimPart15AbovePlayer(Entity *entity) {
     if (part != NULL) {
         frame = model->unkFC->unk82;
         if (frame < 43) {
-            Vector_Copy(point, D_00413F80.position);
+            Vector_Copy(point, player_state.position);
             point[1] += 400.0f;
             pitch = EntityMath_WrapAngle(atan2(point[1] - model->position[1], entity->distance_to_player));
             EntityMath_EaseAngleToward(&unkE0->unk4C, pitch, 10.0f);

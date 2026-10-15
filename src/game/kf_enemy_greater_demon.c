@@ -1,4 +1,4 @@
-/* GreaterDemon: the behaviour of entity type 56 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* GreaterDemon: the behaviour of entity type 56 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Greater Demon. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -9,12 +9,12 @@
 
 extern u32 D_00446ED4;
 extern s32 D_00446770;
-extern PlayerData D_00413F80;
-extern MapSlot D_0038CD20[];
+extern PlayerData player_state;
+extern MapSlot map_slots[];
 extern f32 D_00446824[];
 extern f32 D_00446828[];
 
-static KfVector D_004FF390[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
+static KfVector climb_points[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
 void EntityAi_SetUpdate(char *, s32);
 void Motion_ClearPartSlots(EntityModel *);
@@ -24,7 +24,7 @@ void Vector_Copy(void *, void *);
 void EntityAi_Animate(void);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 static void GreaterDemon_Think(Entity *entity, s32 unknown);
 static void GreaterDemon_Move(Entity *entity);
@@ -93,7 +93,7 @@ void GreaterDemon_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = GreaterDemon_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))GreaterDemon_OnHit;
@@ -134,7 +134,7 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (D_00413F80.unk259 != 0) {
+    if (player_state.unk259 != 0) {
         unkE0->unk7C = 30;
     }
     if (unkE0->unk7C > 0) {
@@ -146,19 +146,19 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
         unkE0->unk7A = 1;
     }
     if (unkE0->unk6A < 5) {
-        EntityPoint_PickNear(500.0f, &D_004FF390[unkE0->unk6A], &D_00413F80, &D_00413F80);
-        slot = &D_0038CD20[D_00446770];
-        height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + D_00413F80.unk252, &D_004FF390[unkE0->unk6A]);
+        EntityPoint_PickNear(500.0f, &climb_points[unkE0->unk6A], &player_state, &player_state);
+        slot = &map_slots[D_00446770];
+        height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.unk252, &climb_points[unkE0->unk6A]);
         no_floor = D_00446824[0];
         if (height == no_floor) {
-            height = EntityCollision_DistanceToPropFloor(entity->unk14, &D_004FF390[unkE0->unk6A]);
+            height = EntityCollision_DistanceToPropFloor(entity->unk14, &climb_points[unkE0->unk6A]);
             if (height != no_floor) {
-                point = &D_004FF390[unkE0->unk6A];
+                point = &climb_points[unkE0->unk6A];
                 point->y += height;
                 unkE0->unk6A++;
             }
         } else {
-            point = &D_004FF390[unkE0->unk6A];
+            point = &climb_points[unkE0->unk6A];
             point->y += height;
             unkE0->unk6A++;
         }
@@ -247,13 +247,13 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             if (unkE0->unk7A == 1 && unkE0->unk7B == 0 && EntitySight_EntityInWay((int *)entity) == 0) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 60 + 0xF0;
                 unkE0->unk78 = 0;
                 EntityAi_StartAction(entity, GreaterDemon_Rise, unknown);
                 return;
             }
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 0x78;
             unkE0->unk78 = 0;
             break;
@@ -283,7 +283,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
             }
         } else if (unkE0->unk7A == 1) {
             if (EntitySight_EntityInWay((int *)entity) == 0 && unkE0->unk7B == 0) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 60 + 0xF0;
                 unkE0->unk78 = 0;
                 EntityAi_StartAction(entity, GreaterDemon_Rise, unknown);
@@ -315,7 +315,7 @@ static void GreaterDemon_Move(Entity *entity) {
     EntityParams *params;
     f32 turn;
 
-    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     params = entity->params;
@@ -615,7 +615,7 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        if (0.0f < EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position)) * 57.29578f) {
+        if (0.0f < EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * 57.29578f) {
             Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 1);
         } else {
             Motion_Start(entity, 7, 0, entity->params->unkC4 >> 1, 1);
@@ -759,7 +759,7 @@ static s32 GreaterDemon_ShouldGuard(Entity *entity, f32 min_gap, f32 max_angle) 
     EntityUnkE0Kind168160 *unkE0 = (EntityUnkE0Kind168160 *)&entity->unkE0;
     f32 gap = entity->distance_to_player - (entity->radius + 100.0f);
     f32 angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-    f32 facing = EntityMath_AngleDifference(D_00413F80.unk14, EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position));
+    f32 facing = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
 
     if (entity->unkC6 != 0 || gap < min_gap || max_angle < ABS(angle) || 0.7853982f < ABS(facing) || unkE0->unk7C <= 0) {
         return FALSE;
@@ -801,17 +801,17 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
             entity->action_step++;
         }
         if (unkE0->unk6A < 5) {
-            EntityPoint_PickNear(500.0f, &D_004FF390[unkE0->unk6A], &D_00413F80, &D_00413F80);
-            slot = &D_0038CD20[D_00446770];
-            height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + D_00413F80.unk252, &D_004FF390[unkE0->unk6A]);
+            EntityPoint_PickNear(500.0f, &climb_points[unkE0->unk6A], &player_state, &player_state);
+            slot = &map_slots[D_00446770];
+            height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.unk252, &climb_points[unkE0->unk6A]);
             no_floor = D_00446828[0];
             if (height == no_floor) {
-                height = EntityCollision_DistanceToPropFloor(entity->unk14, &D_004FF390[unkE0->unk6A]);
+                height = EntityCollision_DistanceToPropFloor(entity->unk14, &climb_points[unkE0->unk6A]);
                 if (height == no_floor) {
                     break;
                 }
             }
-            floor_point = &D_004FF390[unkE0->unk6A];
+            floor_point = &climb_points[unkE0->unk6A];
             floor_point->y += height;
             unkE0->unk6A++;
         }
@@ -831,8 +831,8 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
                     minion = Entity_GetBySpawnId(minion_index + 10);
                     if (minion != NULL && (minion->flags & 3) == 1 &&
                         (((s32)(minion->flags >> 2) & 3) == 0 || ((s32)(minion->flags >> 2) & 3) == 3)) {
-                        point = &D_004FF390[point_index];
-                        if (EntityMath_DistanceXZ(point, &D_00413F80) > 180.0f) {
+                        point = &climb_points[point_index];
+                        if (EntityMath_DistanceXZ(point, &player_state) > 180.0f) {
                             EntityEvent_Respawn((char *)minion);
                             minion->model->position[0] = point->x;
                             minion->model->position[1] = point->y;

@@ -28,13 +28,13 @@ int func_001C8C80(int, int);
 void *func_00116160(int, int);
 void func_00115550(MapRecordBounds *, f32 *);
 void *func_001C8AF0(int);
-extern MapSlot D_0038CD20[];
-extern u8 D_00349690[];
-extern u8 D_0034B6D0[];
+extern MapSlot map_slots[];
+extern u8 map_script_flags[];
+extern u8 entity_group_state[];
 extern u8 D_0034B69C[];
 extern u8 D_0034B696[];
 extern u8 D_00349D55[];
-extern f32 D_0034C524[];
+extern f32 map_record_height[];
 extern u8 D_00349F56[];
 extern u8 D_0034A017[];
 extern u8 D_0034A0D5[];
@@ -44,7 +44,7 @@ void func_0011A428(int);
 
 /* Runs the set-up function of the map in the slot, picked by the map's tag. */
 void func_00119360(int slot) {
-    switch (D_0038CD20[slot].tag) {
+    switch (map_slots[slot].tag) {
     case 0xB:
         func_00119590(slot);
         break;
@@ -108,7 +108,7 @@ void func_00119520(void) {
     MapSlot *slot;
 
     for (map = 0; map < 2; map++) {
-        slot = &D_0038CD20[map];
+        slot = &map_slots[map];
         if (slot->unk00 != 0 && slot->tag == 0x1B) {
             func_00119E10(map);
         }
@@ -120,10 +120,10 @@ void func_00119590(int map) {
     MapObject *object;
     Entity *entity;
 
-    if (D_00349690[0x2C5] != 0) {
+    if (map_script_flags[0x2C5] != 0) {
         func_001C8C80(map, 0x46);
     }
-    if (D_0034B6D0[0x5C6] == 1 && D_00349690[0x2C5] == 0) {
+    if (entity_group_state[0x5C6] == 1 && map_script_flags[0x2C5] == 0) {
         object = MapObject_GetById(map, 0xA);
         if (object != NULL) {
             MapObject_SetScripted(object, 1);
@@ -133,7 +133,7 @@ void func_00119590(int map) {
             MapObject_SetScripted(object, 1);
         }
         ((int (*)(int, int))func_001C8C80)(map, 0x46); // match: called as returning a value, so the next test uses $3
-        if (D_0034B6D0[0x5C0] == 0) {
+        if (entity_group_state[0x5C0] == 0) {
             entity = Entity_GetBySpawnIdForMap(map, 0x17);
             if (entity != NULL) {
                 entity->flags |= 2;
@@ -244,7 +244,7 @@ void func_001197F0(int map) {
         show_found_record(target);
         break;
     }
-    target = &D_0038CD20[map];
+    target = &map_slots[map];
     block = (MapSlotUnk0CValues *)((MapSlot *)target)->unk0C;
     light = ((MapSlot *)target)->unk10;
     block[2].unk00 = block[2].unk04 = 0.0f;
@@ -265,7 +265,7 @@ void func_001197F0(int map) {
 /* Set-up of map 0x18: at stage flag 0 a light grey fog in block 5, otherwise a thin black one,
    two light colours and all three light directions cleared in light block 9. */
 void func_00119A48(int map) {
-    MapSlot *slot = &D_0038CD20[map];
+    MapSlot *slot = &map_slots[map];
     MapSlotUnk0CValues *fog;
     MapSlotUnk10Lights *lights;
 
@@ -352,7 +352,7 @@ void func_00119B20(int map) {
         rotation[1] = rotation[0] = 3.14f;
         rotation[2] = 0.0f;
         rotation[3] = 0.0f;
-        Effect_StartSpawner(0x1DF, position, rotation, &D_0038CD20[map]);
+        Effect_StartSpawner(0x1DF, position, rotation, &map_slots[map]);
     }
     object = MapObject_GetById(map, 0x67);
     if (object != NULL) {
@@ -362,7 +362,7 @@ void func_00119B20(int map) {
 
 /* Set-up of map 0x1B: once its stage flag is 1, new fog in blocks 0, 1 and 4. */
 void func_00119D90(int map) {
-    MapSlot *slot = &D_0038CD20[map];
+    MapSlot *slot = &map_slots[map];
     MapSlotUnk0CValues *fog;
 
     if (D_00349D55[0] == 1) {
@@ -390,15 +390,15 @@ void func_00119E18(int map) {
     MapRecordBounds *record;
     f32 offset[4];
 
-    if (D_00349690[0x740] == 0) {
-        D_0034C524[0] = 590.0f;
-        D_00349690[0x747] = 0;
-        D_00349690[0x746] = 1;
+    if (map_script_flags[0x740] == 0) {
+        map_record_height[0] = 590.0f;
+        map_script_flags[0x747] = 0;
+        map_script_flags[0x746] = 1;
     }
     record = func_00116160(map, 5);
     if (record != NULL) {
         offset[0] = 0.0f;
-        offset[1] = D_0034C524[0] - 590.0f;
+        offset[1] = map_record_height[0] - 590.0f;
         offset[2] = 0.0f;
         offset[3] = 0.0f;
         func_00115550(record, offset);
@@ -423,7 +423,7 @@ void func_00119E90(int map) {
 
 /* Set-up of map 0x26: once its stage flag is 1, new fog in blocks 1 and 2. */
 void func_0011A048(int map) {
-    MapSlot *slot = &D_0038CD20[map];
+    MapSlot *slot = &map_slots[map];
 
     if (D_0034A017[0] == 1) {
         MapSlotUnk0CValues *fog = (MapSlotUnk0CValues *)slot->unk0C;
@@ -442,7 +442,7 @@ void func_0011A048(int map) {
 /* Set-up of map 0x29: once its stage flag is 1, new fog in blocks 2 and 3 and a dim light colour
    in light block 1. */
 void func_0011A0B8(int map) {
-    MapSlot *slot = &D_0038CD20[map];
+    MapSlot *slot = &map_slots[map];
 
     if (D_0034A0D5[0] == 1) {
         MapSlotUnk0CValues *fog = (MapSlotUnk0CValues *)slot->unk0C;
@@ -466,8 +466,8 @@ void func_0011A0B8(int map) {
 void func_0011A138(int map) {
     MapObject *object;
 
-    if (D_00349690[0xA85] != 0) {
-        if (D_00349690[0xA86] == 0) {
+    if (map_script_flags[0xA85] != 0) {
+        if (map_script_flags[0xA86] == 0) {
             func_001C8C80(map, 0xC9);
             object = MapObject_GetById(map, 0x67);
             if (object != NULL) {
@@ -494,14 +494,14 @@ void func_0011A210(int map_slot) {
     Entity *entity;
 
     entity = Entity_GetBySpawnIdForMap(map_slot, 1);
-    if (D_0034B6D0[0x340] == 0) {
-        if (D_0034B6D0[0x345] != 0 && D_0034B6D0[0x346] == 0) {
-            D_0034B6D0[0x346] = 1;
+    if (entity_group_state[0x340] == 0) {
+        if (entity_group_state[0x345] != 0 && entity_group_state[0x346] == 0) {
+            entity_group_state[0x346] = 1;
         }
-        if (D_0034B6D0[0x346] == 1) {
-            if (D_00349690[0x1905] == 0) {
-                D_00349690[0x1905] = 1;
-                D_0034B6D0[0x345] = 0x11;
+        if (entity_group_state[0x346] == 1) {
+            if (map_script_flags[0x1905] == 0) {
+                map_script_flags[0x1905] = 1;
+                entity_group_state[0x345] = 0x11;
             }
             return;
         }
@@ -535,12 +535,12 @@ void func_0011A2B8(int map) {
     }
 }
 
-/* Map script: once flag D_00349690[0x1C0A] is set, sets 0x1ADB and swaps map object 0x75 for 0x76. */
+/* Map script: once flag map_script_flags[0x1C0A] is set, sets 0x1ADB and swaps map object 0x75 for 0x76. */
 void func_0011A370(int map) {
     MapObject *object;
 
-    if (D_00349690[0x1C0A] != 0) {
-        D_00349690[0x1ADB] = 1;
+    if (map_script_flags[0x1C0A] != 0) {
+        map_script_flags[0x1ADB] = 1;
         object = MapObject_GetById(map, 0x75);
         if (object != NULL) {
             MapObject_Deactivate(object);

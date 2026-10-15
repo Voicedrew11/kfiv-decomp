@@ -1,4 +1,4 @@
-/* DarkArcher: the behaviour of entity type 55 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* DarkArcher: the behaviour of entity type 55 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Archer. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -17,12 +17,12 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 void EntityAi_Move(Entity *);
 // match: read as pointers, so that the int store to target is not taken to alias the table
-extern void *D_003E6E40[][2];
+extern void *entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 extern f32 D_00431AF0[16];
 double atan2(double, double);
 float EntityMath_WrapAngle(float);
@@ -49,7 +49,7 @@ void EntityAi_SensePlayer(void *, int);
 int Motion_Start(void *, int, int, u32, int);
 // match: the size is unknown; a complete small type would be read through $gp
 extern u8 D_0034A018[];
-extern MapSlot D_0038CD20[];
+extern MapSlot map_slots[];
 extern EntitySpawnInfo *D_004467D0[2];
 void func_001035A8(u32, int);
 void EntityAi_CheckFarFromSpawn(void *);
@@ -115,7 +115,7 @@ void DarkArcher_Init(Entity *entity) {
     }
     entity->flags &= ~0x10000000;
     *(s32 *)&entity->target = 0; // match: stored as an int, so it can move ahead of the params load
-    EntityAi_SetUpdate((char *)entity, (s32)D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, (s32)entity_type_handlers[entity->params->unk02][1]);
     if (entity->spawn_info->unk40 != 0) {
         unkE0->think = DarkArcher_ThinkShootOrTurn;
         unkE0->animate = (void (*)(void))DarkArcher_Animate;
@@ -195,7 +195,7 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
     f32 rate;
 
     if (bone != NULL) {
-        pitch = EntityMath_WrapAngle(atan2(D_00413F80.position[1] - entity->model->position[1], entity->distance_to_player));
+        pitch = EntityMath_WrapAngle(atan2(player_state.position[1] - entity->model->position[1], entity->distance_to_player));
         if (pitch > 1.0471976f) {
             pitch = 1.0471976f;
         } else if (pitch < -1.0471976f) {
@@ -285,7 +285,7 @@ static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
         if (busy == 0 && entity->unkA2 == 0 && EntityAi_CanUseRanged(entity, 2) != 0) {
             EntityAi_StartAttack(entity, DarkArcher_RangedAttack, unknown, 1, 2);
         } else {
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkC8 = EntityAi_TurnCommand(entity);
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
         }
@@ -388,7 +388,7 @@ static void func_0016B228(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit27 = 1;
             ENTITY_FLAG_BITS(entity)->bit26 = 1;
             entity->unkA0 = 20;
-            func_001035A8(D_0038CD20[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+            func_001035A8(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
             Effect_FreeForOwner(entity);
             entity->action_step++;
         }
@@ -444,7 +444,7 @@ static void DarkArcher_Think(Entity *entity, s32 unknown) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but the ranged attack is
    DarkArcher_RangedAttack (with flag bit 10 set), and instead of closing in it starts
    DarkArcher_MoveAlongArc when work byte unk7A is set, the player is nearer than
-   EntityParams.unk436 and D_00413F80.unk14 is within 40 degrees of Entity.unk68. */
+   EntityParams.unk436 and player_state.unk14 is within 40 degrees of Entity.unk68. */
 static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -485,8 +485,8 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
-            angle = EntityMath_AngleDifference(D_00413F80.unk14, entity->unk68);
+            entity->target = &player_state;
+            angle = EntityMath_AngleDifference(player_state.unk14, entity->unk68);
             if (unkE0->unk7A != 0 && entity->distance_to_player < (f32)entity->params->unk436 && ABS(angle) < 0.6981317f) {
                 EntityAi_StartAction(entity, DarkArcher_MoveAlongArc, unknown);
                 return;

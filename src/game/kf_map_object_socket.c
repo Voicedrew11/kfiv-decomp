@@ -14,11 +14,11 @@ void sceVu0RotMatrixY(float *, float *, float);
 void Vector_Scale(float *, float *, float);
 void Vector_Add(void *, void *, void *);
 void Player_AddItem(int);
-extern GameStatus D_0038CC50;
+extern GameStatus game_status;
 extern void *D_00420D50[];
-extern float D_00413F80[];
+extern float player_state[];
 extern f32 D_00431AF0[16];
-extern ItemCommonDef D_0041A6F8[];
+extern ItemCommonDef item_common_defs[];
 
 /* Start handler of a sliding kind: part 2, closed (animation 4, step 1) or, with bit 17 set,
    open (animation 5, step 4). */
@@ -50,7 +50,7 @@ void func_00120F48(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (D_0038CC50.bit1 && D_00420D50[0] == object) {
+    if (game_status.bit1 && D_00420D50[0] == object) {
         if (work->timer > 0) {
             return;
         }
@@ -66,7 +66,7 @@ void func_00120F48(MapObject *object) {
         origin.x = origin.y = origin.z = 0.0f;
         Vector_ApplyMatrix(&origin, part, &origin);
         Vector_ApplyMatrix(&origin, object->model->unk40, &origin);
-        Vector_Copy(&target, D_00413F80);
+        Vector_Copy(&target, player_state);
         target.y -= 115.0f;
         Vector_Subtract(work, &origin, &target);
         sceVu0RotMatrixX(matrix, D_00431AF0, object->model->rotation.x);
@@ -76,7 +76,7 @@ void func_00120F48(MapObject *object) {
         work->frames = distance / 6.6666665f;
         Vector_Subtract(part->unk40, part->unk40, work);
         Vector_Scale(&work->step.x, &work->step.x, 1.0f / work->frames);
-        D_0038CC50.unk30 |= 1;
+        game_status.unk30 |= 1;
     }
 }
 
@@ -96,7 +96,7 @@ void func_001211B0(MapObject *object) {
 }
 
 /* Step handler: counts the timer down and runs the animation; at its end starts
-   animation 5 at step 4 and clears bit 0 of D_0038CC50.unk30. */
+   animation 5 at step 4 and clears bit 0 of game_status.unk30. */
 void func_00121228(MapObject *object) {
     MapObjectWork *work = MAP_OBJECT_WORK(object);
 
@@ -109,7 +109,7 @@ void func_00121228(MapObject *object) {
     }
     MapObject_StartAnim(object, 5);
     MAP_OBJECT_BYTES(object)->step = 4;
-    D_0038CC50.unk30 &= ~1U;
+    game_status.unk30 &= ~1U;
 }
 
 /* Update handler of a sliding kind, step 3: used by the player, it gives back
@@ -118,12 +118,12 @@ void func_00121228(MapObject *object) {
 void func_001212B0(MapObject *object) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     MapObjectUnk08Words *source = MAP_OBJECT_WORDS(object);
-    ItemCommonDef *item_def = &D_0041A6F8[source->unk44];
+    ItemCommonDef *item_def = &item_common_defs[source->unk44];
 
     if (work->timer > 0) {
         work->timer--;
     }
-    if (D_0038CC50.bit1 && D_00420D50[0] == object) {
+    if (game_status.bit1 && D_00420D50[0] == object) {
         if (item_def->type == 5) {
             if (work->timer > 0) {
                 return;
@@ -134,7 +134,7 @@ void func_001212B0(MapObject *object) {
             MAP_OBJECT_BYTES(object)->step = 5;
             object->unk10 &= ~0x20000;
             Player_AddItem(source->unk44);
-            D_0038CC50.unk30 |= 1;
+            game_status.unk30 |= 1;
         }
     }
 }
@@ -163,7 +163,7 @@ void func_00121398(MapObject *object) {
     origin.x = origin.y = origin.z = 0.0f;
     Vector_ApplyMatrix(&origin, part, &origin);
     Vector_ApplyMatrix(&origin, object->model->unk40, &origin);
-    Vector_Copy(&target, D_00413F80);
+    Vector_Copy(&target, player_state);
     target.y -= 115.0f;
     Vector_Subtract(work, &target, &origin);
     distance = sqrtf(((MapObjectWorkSlide *)object->work)->step.x * ((MapObjectWorkSlide *)object->work)->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
@@ -176,7 +176,7 @@ void func_00121398(MapObject *object) {
 }
 
 /* Update handler of a sliding kind: moves the part one step; after the last one it
-   starts animation 4 at step 1 and clears bit 0 of D_0038CC50.unk30. */
+   starts animation 4 at step 1 and clears bit 0 of game_status.unk30. */
 void func_00121578(MapObject *object) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     ModelPart *part = &object->model->parts[work->part];
@@ -188,7 +188,7 @@ void func_00121578(MapObject *object) {
     if (--work->frames <= 0) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
-        D_0038CC50.unk30 &= ~1U;
+        game_status.unk30 &= ~1U;
     }
 }
 

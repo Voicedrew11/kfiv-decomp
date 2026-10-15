@@ -8,18 +8,18 @@
 void *memset(void *, int, u32);
 int rand(void);
 
-extern MapSlot D_0038CD20[];
+extern MapSlot map_slots[];
 extern MapSlotMemory D_004321F0[2];
-extern Entity D_003BEDF0[][0x80];
+extern Entity entity_pool[][0x80];
 extern int D_004467D8[2];
 extern EntitySpawnInfo *D_004467D0[2];
 extern char *D_004467C0;
 extern Vector4Arg D_0043E7C0;
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern int D_0038CC80[3];
 extern Entity *D_004467E0;
-extern PlayerData D_00413F80;
-extern MapDrawState D_0038A1B0;
+extern PlayerData player_state;
+extern MapDrawState map_draw_state;
 extern f32 D_00431AF0[16];
 extern u32 D_00446ED4;
 extern int D_00446770;
@@ -78,7 +78,7 @@ void func_00124E48(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
 }
 
 void func_00124EF0(void) {
@@ -97,13 +97,13 @@ void Entity_InitFromMapSpawns(int map) {
     MapSlot *slot;
     MapSlotMemory *memory;
 
-    slot = &D_0038CD20[map];
+    slot = &map_slots[map];
     memory = &D_004321F0[map];
-    entity = D_003BEDF0[map];
+    entity = entity_pool[map];
     spawn_info = D_004467D0[map];
     model = memory->unk44;
     D_004467D8[map] = ((MapSlotUnk08 *)slot->header)->unk42;
-    memset(entity, 0, sizeof(D_003BEDF0[map]));
+    memset(entity, 0, sizeof(entity_pool[map]));
     memset(entity_by_spawn_id[map], 0, sizeof(entity_by_spawn_id[map]));
     count = D_004467D8[map];
     for (i = 0; i < count; i++, entity++, spawn_info++, model++) {
@@ -162,7 +162,7 @@ void Entity_ClearFlag10InSlot(int array_index) {
     Entity *entity;
     int i;
 
-    entity = D_003BEDF0[array_index];
+    entity = entity_pool[array_index];
     for (i = 0; i < D_004467D8[array_index]; i++, entity++) {
         entity->flags &= ~0x10;
     }
@@ -236,7 +236,7 @@ void Entity_ResetToSpawn(Entity *entity) {
     entity->unk40 = ABS(entity->unk40);
     entity->model->unk13C = (entity->unk30 < entity->unk34) ? entity->unk34 : entity->unk30;
     Motion_Start(entity, 0, 0, 0, 1);
-    ((void (*)(Entity *))D_003E6E40[entity->params->unk02][0])(entity);
+    ((void (*)(Entity *))entity_type_handlers[entity->params->unk02][0])(entity);
     Entity_RebuildModelMatrices(entity);
 }
 
@@ -247,9 +247,9 @@ void Entity_ClearMapSlot(int array_index) {
     int i;
 
     D_004467D8[array_index] = 0;
-    memset(D_003BEDF0[array_index], 0, sizeof(D_003BEDF0[array_index]));
+    memset(entity_pool[array_index], 0, sizeof(entity_pool[array_index]));
     for (i = 0; i < 0x80; i++) {
-        entity = &D_003BEDF0[array_index ^ 1][i];
+        entity = &entity_pool[array_index ^ 1][i];
         if (entity->unk14 != NULL && ((u8)(((MapRecord *)entity->unk14)->unk38 >> 27) & 1) == array_index) {
             entity->unk14 = NULL;
         }
@@ -266,7 +266,7 @@ void Entity_OffsetAllInSlot(int array_index, f32 *offset) {
     int i;
     int count;
 
-    entity = D_003BEDF0[array_index];
+    entity = entity_pool[array_index];
     count = D_004467D8[array_index];
     for (i = 0; i < count; i++, entity++) {
         Vector_Add(entity->model->position, entity->model->position, offset);
@@ -306,9 +306,9 @@ void Entity_UpdateAll(void) {
             entity->unk28 = 0;
             entity->unk2A = 0;
         }
-        entity->unk60 = ((f32 (*)(f32 *, f32 *))EntityMath_Distance)(entity->model->position, D_00413F80.position); // match: returns the distance (other files declare it void)
-        entity->distance_to_player = EntityMath_DistanceXZ(entity->model->position, D_00413F80.position);
-        entity->unk68 = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+        entity->unk60 = ((f32 (*)(f32 *, f32 *))EntityMath_Distance)(entity->model->position, player_state.position); // match: returns the distance (other files declare it void)
+        entity->distance_to_player = EntityMath_DistanceXZ(entity->model->position, player_state.position);
+        entity->unk68 = EntityMath_HeadingTo(entity->model->position, player_state.position);
         entity->unk84 = entity->unk88 = entity->unk8C = entity->unk90 = entity->unk94 = entity->unk98 = 0.0f;
         if (!Entity_IsMapRecordActive(entity)) {
             if (!ENTITY_FLAG_BITS(entity)->bit30) {
@@ -381,14 +381,14 @@ void Entity_UpdateAll(void) {
         }
         spawn_info = entity->spawn_info;
         if ((s8)SPAWN_FLAGS(spawn_info)->bytes[2] != -1 || entity->unk14 == NULL) {
-            ENTITY_MODEL(entity)->unk14C = &D_0038A1B0.unk290[entity->group_id][(s8)SPAWN_FLAGS(spawn_info)->bytes[2]];
+            ENTITY_MODEL(entity)->unk14C = &map_draw_state.unk290[entity->group_id][(s8)SPAWN_FLAGS(spawn_info)->bytes[2]];
         } else {
-            ENTITY_MODEL(entity)->unk14C = &D_0038A1B0.unk290[(u8)(MAP_RECORD(entity)->unk38 >> 27) & 1][MAP_RECORD(entity)->unk36];
+            ENTITY_MODEL(entity)->unk14C = &map_draw_state.unk290[(u8)(MAP_RECORD(entity)->unk38 >> 27) & 1][MAP_RECORD(entity)->unk36];
         }
         if ((s8)SPAWN_FLAGS(spawn_info)->bytes[3] != -1 || entity->unk14 == NULL) {
-            ENTITY_MODEL(entity)->unk148 = (s32)&D_0038A1B0.unkA90[entity->group_id][(s8)SPAWN_FLAGS(spawn_info)->bytes[3]];
+            ENTITY_MODEL(entity)->unk148 = (s32)&map_draw_state.unkA90[entity->group_id][(s8)SPAWN_FLAGS(spawn_info)->bytes[3]];
         } else {
-            ENTITY_MODEL(entity)->unk148 = (s32)&D_0038A1B0.unkA90[(u8)(MAP_RECORD(entity)->unk38 >> 27) & 1][MAP_RECORD(entity)->unk37];
+            ENTITY_MODEL(entity)->unk148 = (s32)&map_draw_state.unkA90[(u8)(MAP_RECORD(entity)->unk38 >> 27) & 1][MAP_RECORD(entity)->unk37];
         }
         func_0010C9E8(ENTITY_MODEL(entity));
     }
@@ -544,8 +544,8 @@ static int Entity_IsMapRecordActive(Entity *entity) {
     }
     found = FALSE;
     for (index = 0; index < 2; index++) {
-        record = (MapRecordBounds *)D_0038CD20[index].records;
-        for (record_index = 0; record_index < D_0038CD20[index].header->record_count; record_index++, record++) {
+        record = (MapRecordBounds *)map_slots[index].records;
+        for (record_index = 0; record_index < map_slots[index].header->record_count; record_index++, record++) {
             if (record == entity->unk14) {
                 found = TRUE;
                 break;
@@ -562,16 +562,16 @@ static int Entity_IsMapRecordActive(Entity *entity) {
         return FALSE;
     }
     if (index == D_00446770) {
-        slot = &D_0038CD20[index];
+        slot = &map_slots[index];
         bits = slot->flag_blocks[D_004141D0[0]].bits;
         if (slot->unk00 == 0) {
             return FALSE;
         }
         return (bits[record->unk38 >> 3] >> (record->unk38 & 7)) & 1;
     }
-    slot = &D_0038CD20[D_00446770];
+    slot = &map_slots[D_00446770];
     block = &slot->flag_blocks[D_004141D0[0]];
-    slot = &D_0038CD20[D_00446770 ^ 1];
+    slot = &map_slots[D_00446770 ^ 1];
     if (slot->unk00 == 0) {
         return FALSE;
     }
@@ -605,8 +605,8 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
     reach = (entity->unk34 < entity->unk30) ? entity->unk30 : entity->unk34;
     Vector_Copy(position, entity->model->position);
     position[1] -= (reach < 75.0f) ? 75.0f : reach;
-    slots[0] = &D_0038CD20[entity->group_id];
-    slots[1] = &D_0038CD20[(char)(entity->group_id ^ 1)];
+    slots[0] = &map_slots[entity->group_id];
+    slots[1] = &map_slots[(char)(entity->group_id ^ 1)];
     for (map = 0; map < 2; map++) {
         if (slots[map]->unk00 != 0) {
             record = (MapRecordBounds *)slots[map]->records;

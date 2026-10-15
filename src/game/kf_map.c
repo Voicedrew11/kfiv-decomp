@@ -18,7 +18,7 @@
 #include "kf_texture.h"
 
 #define FOG_COLOR() \
-    ((u64)D_0038A1B0.unk280.red | ((u64)D_0038A1B0.unk280.green << 8) | ((u64)D_0038A1B0.unk280.blue << 16) | \
+    ((u64)map_draw_state.unk280.red | ((u64)map_draw_state.unk280.green << 8) | ((u64)map_draw_state.unk280.blue << 16) | \
      ((u64)0x80 << 24))
 #define USABLE(node) (!((node)->flags & 0x40000000))
 #define IN_X(node) ((node)->left - margin <= point[0] && point[0] <= (node)->right + margin)
@@ -106,36 +106,36 @@ void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 int func_00116C08(int, int, int, int);
 void Vu0_ProjectToScreen3(int *, int *, int *, f32 *, f32 *, f32 *);
-extern MapSlot D_0038CD20[];
-extern MapDrawState D_0038A1B0;
+extern MapSlot map_slots[];
+extern MapDrawState map_draw_state;
 extern s64 D_00432E20[];
 extern s64 D_00433050[];
 extern MapDrawRecord *D_00446778[2];
 extern int D_00446770;
 extern MapDrawRecord *D_00446780[2];
-extern MapObject D_003A1A30[][0x200];
-extern Entity D_003BEDF0[][0x80];
+extern MapObject map_slot_objects[][0x200];
+extern Entity entity_pool[][0x80];
 extern MapSlotMemory D_004321F0[2];
 extern int D_004467B0[2];
 extern EntitySpawnInfo *D_004467D0[2];
 extern MapItemDef *D_004469B8[2];
 extern s16 *D_004469C0[2];
 extern u8 *D_004469C8[2];
-extern MapProp *D_0038CDE0[2][0xFF];
+extern MapProp *map_slot_props[2][0xFF];
 extern char map_object_defs[];
 extern s32 D_004467B8[2];
-extern MapLoadState D_0038D610;
-extern SoundLoadQueue D_0038A130;
+extern MapLoadState map_load_state;
+extern SoundLoadQueue sound_load_queue;
 extern f32 D_00431AF0[16];
 extern f32 D_004323E0[16];
 extern AreaNode *D_00446788;
 extern AreaNode *D_0044678C;
 extern f32 D_00446768[]; /* the largest float */
 extern f32 D_0044676C[]; /* the largest float */
-extern GameStatus D_0038CC50;
-extern u16 D_00413DA8[];
-extern PlayerState D_00413F80;
-extern MapSlotUnk10Words D_0038CCA0;
+extern GameStatus game_status;
+extern u16 pad_state[];
+extern PlayerState player_state;
+extern MapSlotUnk10Words map_object_default_lights;
 extern TextureTableHeader *D_00446790;
 extern u8 D_004141D0[];
 
@@ -154,17 +154,17 @@ void func_00114198(int mode) {
     D_00433050[0] = FOG_COLOR();
     D_00433050[30] = FOG_COLOR();
     active = 0;
-    if (D_0038CD20[0].unk00 != 0) {
-        active = D_0038CD20[0].unk02 != 0;
+    if (map_slots[0].unk00 != 0) {
+        active = map_slots[0].unk02 != 0;
     }
-    if (D_0038CD20[1].unk00 != 0) {
-        if (D_0038CD20[1].unk02 != 0) {
+    if (map_slots[1].unk00 != 0) {
+        if (map_slots[1].unk02 != 0) {
             active++;
         }
     }
     for (map = 0; map < 2; map++) {
         record = D_00446778[map];
-        slot = &D_0038CD20[map];
+        slot = &map_slots[map];
         if (slot->unk00 != 0) {
             func_00116AD8(map, 0);
             func_00116AD8(map, 1);
@@ -197,11 +197,11 @@ void func_00114198(int mode) {
                     continue;
                 }
                 if (flags & 0x10) {
-                    record->model->unk148 = (s32)&D_0038A1B0.unkC0;
-                    record->model->unk14C = &D_0038A1B0.unkA0;
+                    record->model->unk148 = (s32)&map_draw_state.unkC0;
+                    record->model->unk14C = &map_draw_state.unkA0;
                 } else {
-                    record->model->unk148 = (s32)&D_0038A1B0.unkA90[map][record->unk35];
-                    record->model->unk14C = &D_0038A1B0.unk290[map][record->unk34];
+                    record->model->unk148 = (s32)&map_draw_state.unkA90[map][record->unk35];
+                    record->model->unk14C = &map_draw_state.unk290[map][record->unk34];
                 }
                 LinkedPoint_FindHitsForMapDraw(record, record->model);
                 if (record->flags & 0x200) {
@@ -232,17 +232,17 @@ void func_00114528(int mode) {
     int old_z_mask;
 
     active = 0;
-    if (D_0038CD20[0].unk00 != 0) {
-        active = D_0038CD20[0].unk02 != 0;
+    if (map_slots[0].unk00 != 0) {
+        active = map_slots[0].unk02 != 0;
     }
-    if (D_0038CD20[1].unk00 != 0) {
-        if (D_0038CD20[1].unk02 != 0) {
+    if (map_slots[1].unk00 != 0) {
+        if (map_slots[1].unk02 != 0) {
             active++;
         }
     }
     for (map = 0; map < 2; map++) {
         record = D_00446780[map];
-        slot = &D_0038CD20[map];
+        slot = &map_slots[map];
         if (slot->unk00 != 0) {
             func_00116AD8(map, 2);
             func_00116AD8(map, 5);
@@ -281,11 +281,11 @@ void func_00114528(int mode) {
                     func_00109AD0();
                 }
                 if (record->flags & 0x10) {
-                    record->model->unk148 = (s32)&D_0038A1B0.unkC0;
-                    record->model->unk14C = &D_0038A1B0.unkA0;
+                    record->model->unk148 = (s32)&map_draw_state.unkC0;
+                    record->model->unk14C = &map_draw_state.unkA0;
                 } else {
-                    record->model->unk148 = (s32)&D_0038A1B0.unkA90[map][record->unk35];
-                    record->model->unk14C = &D_0038A1B0.unk290[map][record->unk34];
+                    record->model->unk148 = (s32)&map_draw_state.unkA90[map][record->unk35];
+                    record->model->unk14C = &map_draw_state.unk290[map][record->unk34];
                 }
                 LinkedPoint_FindHitsForMapDraw(record, record->model);
                 if (record->flags & 0x200) {
@@ -333,9 +333,9 @@ void func_00114840(int map) {
     int size;
     u32 address;
 
-    slot = &D_0038CD20[map];
-    memset(D_003A1A30[map], 0, sizeof(D_003A1A30[map]));
-    memset(D_003BEDF0[map], 0, sizeof(D_003BEDF0[map]));
+    slot = &map_slots[map];
+    memset(map_slot_objects[map], 0, sizeof(map_slot_objects[map]));
+    memset(entity_pool[map], 0, sizeof(entity_pool[map]));
     header = (MapSlotUnk08 *)memory->unk1C;
     work = memory->unk18;
 
@@ -429,7 +429,7 @@ void func_00114AA8(int map) {
     char *work;
     int next;
     MapSlotMemory *memory = &D_004321F0[map];
-    MapSlot *slot = &D_0038CD20[map];
+    MapSlot *slot = &map_slots[map];
     MapSlotUnk08 *header = (MapSlotUnk08 *)memory->unk1C;
     int record_count;
     MapRecordBounds *record;
@@ -494,12 +494,12 @@ void func_00114AA8(int map) {
     }
     memory->unk18 = work;
     slot->unk02 = 0;
-    memset(D_0038CDE0[map], 0, sizeof(D_0038CDE0[map]));
+    memset(map_slot_props[map], 0, sizeof(map_slot_props[map]));
     record = (MapRecordBounds *)slot->records;
     for (i = 0; i < record_count; i++, record++) {
         if (((MapRecord *)record)->unk4E != 0) {
-            if (D_0038CDE0[map][((MapRecord *)record)->unk4E] == NULL) {
-                D_0038CDE0[map][((MapRecord *)record)->unk4E] = (MapProp *)record;
+            if (map_slot_props[map][((MapRecord *)record)->unk4E] == NULL) {
+                map_slot_props[map][((MapRecord *)record)->unk4E] = (MapProp *)record;
             }
         }
         if ((s32)record->unk3C < 0) {
@@ -507,7 +507,7 @@ void func_00114AA8(int map) {
         }
     }
     D_004467B8[map] = header->unk40;
-    object = D_003A1A30[map];
+    object = map_slot_objects[map];
     work = memory->unk18;
     model = (ModelInstance *)memory->unk3C;
     info = *(MapObjectUnk08 **)&D_004467B0[map]; // match: read as a pointer; read as an int it waits for the stores above
@@ -520,7 +520,7 @@ void func_00114AA8(int map) {
     }
     cursor = (int)header + header->unk0C;
     for (i = 0; i < header->unk30; i++) {
-        object = D_003A1A30[map];
+        object = map_slot_objects[map];
         for (j = 0; j < header->unk40; j++, object++) {
             if (object->unk04->unk04 != 0xFFFF && !(MAP_OBJECT_DEF_WORD(object) & 0x100) && object->unk08->unk32 == i) {
                 next = cursor; // match: retail bug, only set when an object uses this model (see cursor = next)
@@ -536,7 +536,7 @@ void func_00114AA8(int map) {
     }
     cursor = (int)header + header->unk10;
     for (i = 0; i < header->unk32; i++) {
-        object = D_003A1A30[map];
+        object = map_slot_objects[map];
         for (j = 0; j < header->unk40; j++, object++) {
             if (object->unk04->unk04 != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & 0x100) && object->unk08->unk32 == i) {
                 next = cursor; // match: retail bug, as in the loop above
@@ -553,7 +553,7 @@ void func_00114AA8(int map) {
     cursor = (int)header + header->unk14;
     for (i = 0; i < header->unk34; i++) {
         next = cursor;
-        object = D_003A1A30[map];
+        object = map_slot_objects[map];
         first = NULL;
         for (j = 0; j < header->unk40; j++, object++) {
             if (object->unk04->unk06 != 0xFFFF && object->unk08->unk34 == i) {
@@ -568,7 +568,7 @@ void func_00114AA8(int map) {
     }
     cursor = (int)header + header->unk18;
     for (i = 0; i < header->unk36; i++) {
-        object = D_003A1A30[map];
+        object = map_slot_objects[map];
         for (j = 0; j < header->unk40; j++, object++) {
             if (object->unk04->unk04 != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & 0x200) && object->unk08->unk36 == i) {
                 next = ((int (*)(int, int *, ModelInstance *, int))func_00108940)(cursor, (int *)&work, object->model, 1); // match: the callee returns where the motion ends
@@ -588,9 +588,9 @@ void func_001152B8(int map) {
     MapSlot *loading;
 
     if (D_00446770 != map) {
-        offset = &D_0038D610.position.x;
-        slot = &D_0038CD20[map];
-        queue = &D_0038A130;
+        offset = &map_load_state.position.x;
+        slot = &map_slots[map];
+        queue = &sound_load_queue;
         D_00446770 = map;
         func_001B93B8(offset);
         func_001D1210(offset);
@@ -608,21 +608,21 @@ void func_001152B8(int map) {
         func_001C8990(1, offset);
         Gold_MoveMap(0, offset);
         Gold_MoveMap(1, offset);
-        D_0038D610.position.x = -D_0038D610.position.x;
-        D_0038D610.position.y = -D_0038D610.position.y;
-        D_0038D610.position.z = -D_0038D610.position.z;
-        Script_Init(D_0038CD20[map].unk5C);
+        map_load_state.position.x = -map_load_state.position.x;
+        map_load_state.position.y = -map_load_state.position.y;
+        map_load_state.position.z = -map_load_state.position.z;
+        Script_Init(map_slots[map].unk5C);
         Script_Start(0x7FFF, 0);
         loading = queue->unk10;
         if (loading != slot && queue->unk14 != slot) {
             func_001BB590();
             Sound_StopAll(1);
             queue->unk14 = slot;
-        } else if (loading == slot && D_0038A130.unk14 != slot) {
-            D_0038A130.unk14 = NULL;
+        } else if (loading == slot && sound_load_queue.unk14 != slot) {
+            sound_load_queue.unk14 = NULL;
         }
-        D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[map].header)->unk70;
-        D_0038A130.unk04 = 1;
+        sound_load_queue.unk00 = ((MapSlotUnk08 *)map_slots[map].header)->unk70;
+        sound_load_queue.unk04 = 1;
         MapScroll_CarryPairs(map == 0, map);
     }
 }
@@ -634,7 +634,7 @@ void func_001154D8(int map, f32 *offset) {
     int remaining;
     MapSlot *slot;
 
-    slot = &D_0038CD20[map];
+    slot = &map_slots[map];
     record = (MapRecordBounds *)slot->records;
     if (record != NULL) {
         count = ((MapSlotUnk08 *)slot->header)->record_count;
@@ -663,7 +663,7 @@ void func_00115550(MapRecordBounds *record, f32 *offset) {
 
 /* Puts the model of every record of a map where the record says, and builds its matrices. */
 void func_001155F8(int map) {
-    MapSlot *slot = &D_0038CD20[map];
+    MapSlot *slot = &map_slots[map];
     MapRecordBounds *record;
     ModelInstance *model;
     f32 (*matrix)[4];
@@ -868,7 +868,7 @@ int func_001160B0(f32 *point, AreaNode *node, f32 margin) {
 /* Returns prop prop_id of the map in the given slot, NULL when either is out of range. */
 void *func_00116160(int slot, int prop_id) {
     if ((u32)slot < 2 && prop_id >= 0 && prop_id < 0x100) {
-        return D_0038CDE0[slot][prop_id];
+        return map_slot_props[slot][prop_id];
     }
     return NULL;
 }
@@ -883,8 +883,8 @@ void func_001161A8(void) {
     reset_held = FALSE;
     memset(&position, 0, sizeof(position));
     position.z = 10000.0f;
-    rotation = (VuVector4){ -1.5707964f, D_00413F80.rotation.y, 0.0f, 0.0f };
-    if (D_0038CC50.bit7) {
+    rotation = (VuVector4){ -1.5707964f, player_state.rotation.y, 0.0f, 0.0f };
+    if (game_status.bit7) {
         f32 world_screen[16];
         f32 view_screen[16];
         f32 world_view[16];
@@ -900,50 +900,50 @@ void func_001161A8(void) {
             func_0010B000();
             func_001B5460();
             move.x = move.y = move.z = move.w = 0.0f;
-            if (D_00413DA8[0] & 0x2000) {
-                if (D_00413DA8[0] & 0x40) {
+            if (pad_state[0] & 0x2000) {
+                if (pad_state[0] & 0x40) {
                     rotation.x = Angle_Wrap(rotation.x + 0.08726646f);
                 }
-                if (D_00413DA8[0] & 0x10) {
+                if (pad_state[0] & 0x10) {
                     rotation.x = Angle_Wrap(rotation.x - 0.08726646f);
                 }
-                if (D_00413DA8[0] & 0x80) {
+                if (pad_state[0] & 0x80) {
                     rotation.y = Angle_Wrap(rotation.y + 0.08726646f);
                 }
-                if (D_00413DA8[0] & 0x20) {
+                if (pad_state[0] & 0x20) {
                     rotation.y = Angle_Wrap(rotation.y - 0.08726646f);
                 }
             } else {
-                if (D_00413DA8[0] & 0x80) {
+                if (pad_state[0] & 0x80) {
                     move.x = -1.0f;
                 }
-                if (D_00413DA8[0] & 0x20) {
+                if (pad_state[0] & 0x20) {
                     move.x += 1.0f;
                 }
-                if (D_00413DA8[0] & 0x10) {
+                if (pad_state[0] & 0x10) {
                     move.y -= 1.0f;
                 }
-                if (D_00413DA8[0] & 0x40) {
+                if (pad_state[0] & 0x40) {
                     move.y += 1.0f;
                 }
             }
             if (!reset_held) {
-                if ((*(s32 *)D_00413DA8 & 0xC00) == 0xC00) {
+                if ((*(s32 *)pad_state & 0xC00) == 0xC00) {
                     reset_held = TRUE;
                     position.z = 10000.0f;
                     rotation.x = -1.5707964f;
-                    rotation.y = D_00413F80.rotation.y;
+                    rotation.y = player_state.rotation.y;
                     position.x = 0.0f;
                     position.y = 0.0f;
                     position.w = 0.0f;
                     rotation.z = 0.0f;
                     rotation.w = 0.0f;
-                } else if (D_00413DA8[0] & 0x400) {
+                } else if (pad_state[0] & 0x400) {
                     move.z += 1.0f;
-                } else if (D_00413DA8[0] & 0x800) {
+                } else if (pad_state[0] & 0x800) {
                     move.z -= 1.0f;
                 }
-            } else if (!(*(s32 *)D_00413DA8 & 0xC00)) {
+            } else if (!(*(s32 *)pad_state & 0xC00)) {
                 reset_held = FALSE;
             }
             if (move.x != 0.0f || move.y != 0.0f || move.z != 0.0f) {
@@ -957,12 +957,12 @@ void func_001161A8(void) {
                     position.z = 50000.0f;
                 }
             }
-            Vector_Scale(&move.x, &D_00413F80.position.x, -1.0f);
+            Vector_Scale(&move.x, &player_state.position.x, -1.0f);
             sceVu0TransMatrix(world_view, D_00431AF0, &move.x);
             sceVu0RotMatrixY(world_view, world_view, -rotation.y);
             sceVu0RotMatrixX(world_view, world_view, -rotation.x);
-            sceVu0TransMatrix(world_view, world_view, &D_00413F80.position.x);
-            Vector_Subtract(&move, &D_00413F80, &position);
+            sceVu0TransMatrix(world_view, world_view, &player_state.position.x);
+            Vector_Subtract(&move, &player_state, &position);
             Vector_Scale(&move.x, &move.x, -1.0f);
             sceVu0TransMatrix(world_view, world_view, &move.x);
             sceVu0MulMatrix(world_screen, view_screen, world_view);
@@ -973,8 +973,8 @@ void func_001161A8(void) {
             func_001095D8();
             func_00101618();
             func_00109800();
-        } while (!(D_00413DA8[1] & 0x2000));
-        D_0038CC50.bit7 = FALSE;
+        } while (!(pad_state[1] & 0x2000));
+        game_status.bit7 = FALSE;
     }
 }
 
@@ -1002,22 +1002,22 @@ void func_00116610(void) {
     func_00109AD0();
     func_00109E18();
     for (map = 0; map < 2; map++) {
-        slot = &D_0038CD20[map];
+        slot = &map_slots[map];
         record = (MapDrawRecord *)slot->records;
         if (slot->unk00 != 0) {
             for (i = 0; i < ((MapSlotUnk08 *)slot->header)->record_count; i++, record++) {
                 if (!(record->flags & 0x80000000)) {
                     if (record->flags & 0x10) {
-                        record->model->unk148 = (s32)&D_0038A1B0.unkC0;
-                        record->model->unk14C = &D_0038A1B0.unkA0;
+                        record->model->unk148 = (s32)&map_draw_state.unkC0;
+                        record->model->unk14C = &map_draw_state.unkA0;
                     } else {
-                        record->model->unk148 = (s32)&D_0038A1B0.unkA90[map][record->unk35];
-                        record->model->unk14C = &D_0038A1B0.unk290[map][record->unk34];
+                        record->model->unk148 = (s32)&map_draw_state.unkA90[map][record->unk35];
+                        record->model->unk14C = &map_draw_state.unk290[map][record->unk34];
                     }
                     record->model->hit_count = 0;
                     // match: both blocks chosen above are replaced at once by the viewer's own
-                    record->model->unk148 = (s32)&D_0038CCA0;
-                    record->model->unk14C = &D_0038A1B0.unkA0;
+                    record->model->unk148 = (s32)&map_object_default_lights;
+                    record->model->unk14C = &map_draw_state.unkA0;
                     func_0010D308(record->model);
                 }
             }
@@ -1115,14 +1115,14 @@ void func_00116AA0(void) {
     MapSlot *slot;
     MapSlotUnk08 *header;
 
-    slot = &D_0038CD20[D_00446770];
+    slot = &map_slots[D_00446770];
     header = (MapSlotUnk08 *)slot->header;
     func_0010A4E8(header->unk78, header->unk79, header->unk7A, header->unk7B, 0x44);
 }
 
 /* Queues packet index of the map slot for sending. */
 void func_00116AD8(int slot, int index) {
-    MapSlot *map_slot = &D_0038CD20[slot];
+    MapSlot *map_slot = &map_slots[slot];
     u32 *packet_start;
     u32 *packet;
 
@@ -1151,7 +1151,7 @@ void func_00116B60(int *packet) {
 
 /* Returns packet index of the map slot. */
 u32 *func_00116BD0(int slot, int index) {
-    MapSlot *map_slot = &D_0038CD20[slot];
+    MapSlot *map_slot = &map_slots[slot];
     MapSlotPackets *packets = &map_slot->unk40;
 
     if (packets != NULL) {
@@ -1162,7 +1162,7 @@ u32 *func_00116BD0(int slot, int index) {
 
 /* Tests a flag bit in this slot's block, or looks it up among the 16 entries tagged with another slot. */
 int func_00116C08(int slot, int index, int other_slot, int bit) {
-    MapFlagBlock *block = D_0038CD20[slot].flag_blocks + index;
+    MapFlagBlock *block = map_slots[slot].flag_blocks + index;
     int other_offset = other_slot * 0x60; /* byte offset: retail multiplies before the branch */
     int i;
 
@@ -1170,7 +1170,7 @@ int func_00116C08(int slot, int index, int other_slot, int bit) {
         return (block->bits[bit / 8] >> (bit - bit / 8 * 8)) & 1;
     }
     for (i = 0; i < 0x10; i++) {
-        if (block->tags[i] == ((MapSlot *)((char *)D_0038CD20 + other_offset))->tag && block->values[i] == bit) {
+        if (block->tags[i] == ((MapSlot *)((char *)map_slots + other_offset))->tag && block->values[i] == bit) {
             return 1;
         }
     }
@@ -1191,7 +1191,7 @@ int func_00116CB0(MapDrawRecord *draw_record, ModelInstance *model) {
     int screen2[4];
     int outside;
 
-    if (!MAP_DRAW_FLAG_BITS(&D_0038A1B0)->bit46) {
+    if (!MAP_DRAW_FLAG_BITS(&map_draw_state)->bit46) {
         return 1;
     }
     if (bounds->unk3C & 0x40) {

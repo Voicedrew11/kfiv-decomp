@@ -1,4 +1,4 @@
-/* DarkFlower: the behaviour of entity type 71 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* DarkFlower: the behaviour of entity type 71 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Flower. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -15,7 +15,7 @@ void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(void *);
@@ -32,7 +32,7 @@ void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 extern f32 D_00431AF0[16];
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 void sceVu0RotMatrixY(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Normalize(void *, void *);
@@ -63,7 +63,7 @@ void DarkFlower_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = DarkFlower_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -208,7 +208,7 @@ static void DarkFlower_Move(Entity *entity) {
     f32 heading;
     f32 amount;
 
-    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     if (entity->unkC8 & 0x100) {

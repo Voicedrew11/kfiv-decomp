@@ -1,4 +1,4 @@
-/* Aqualizard: the behaviour of entity type 57 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Aqualizard: the behaviour of entity type 57 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Aqualizard. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -16,7 +16,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
@@ -24,7 +24,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern float D_00413F80[];
+extern float player_state[];
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -68,7 +68,7 @@ void Aqualizard_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Aqualizard_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -169,7 +169,7 @@ static void Aqualizard_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = D_00413F80;
+            entity->target = player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -260,8 +260,8 @@ static void Aqualizard_MeleeAttack2(Entity *entity) {
         if (entity->model->unkFC->unk82 >= 0x1B && entity->model->unkFC->unk82 <= 0x1F && unkE0->unk7A == 1) {
             D_0038CC57[0] = 0;
             if (entity->radius + 50.0f + 100.0f < entity->distance_to_player) {
-                D_00413F80[0] -= sinf(EntityMath_WrapAngle(EntityMath_AngleXZ(entity->model->position, (char *)D_00413F80))) * 30.0f;
-                D_00413F80[2] -= cosf(EntityMath_WrapAngle(EntityMath_AngleXZ(entity->model->position, (char *)D_00413F80))) * 30.0f;
+                player_state[0] -= sinf(EntityMath_WrapAngle(EntityMath_AngleXZ(entity->model->position, (char *)player_state))) * 30.0f;
+                player_state[2] -= cosf(EntityMath_WrapAngle(EntityMath_AngleXZ(entity->model->position, (char *)player_state))) * 30.0f;
             }
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {

@@ -110,11 +110,11 @@ int func_00122F48(MapTrigger *trigger);
 
 char map_object_defs[0x14000] = { 0 }; /* 0x38DA30 the param/obj.prm row of every object */
 
-MapObject D_003A1A30[2][0x200] = { 0 }; /* 0x3A1A30 the objects of both map slots, a row each */
+MapObject map_slot_objects[2][0x200] = { 0 }; /* 0x3A1A30 the objects of both map slots, a row each */
 /* its second row, which other files name on its own */
-asm(".globl D_003AFA30\nD_003AFA30 = D_003A1A30 + 0xE000");  /* 0x3AFA30 the objects of the other loaded map */
+asm(".globl D_003AFA30\nD_003AFA30 = map_slot_objects + 0xE000");  /* 0x3AFA30 the objects of the other loaded map */
 
-void (*D_003BDA30[0x20][16])(MapObject *) = { /* 0x3BDA30 the step handler of each object kind */
+void (*map_object_step_handlers[0x20][16])(MapObject *) = { /* 0x3BDA30 the step handler of each object kind */
     func_0011EE18, func_0011EE78, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, func_0011EFC8,
     func_0011F238, MapObject_UpdateClosedDoor, func_0011F498, func_0011F708, func_0011F7E0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, func_0011EFC8,
     func_0011F238, MapObject_UpdateClosedDoor, func_0011F498, func_0011F708, func_0011F7E0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, func_0011EFC8,
@@ -149,7 +149,7 @@ void (*D_003BDA30[0x20][16])(MapObject *) = { /* 0x3BDA30 the step handler of ea
     (void (*)(MapObject *))func_00122BE8, (void (*)(MapObject *))func_00122CA8, (void (*)(MapObject *))func_00122CB0, (void (*)(MapObject *))func_00122D60, (void (*)(MapObject *))func_00122D68, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, func_0011EFC8,
 };
 
-void (*D_003BE230[0x20])(MapObject *) = { /* 0x3BE230 the kind's draw hook */
+void (*map_object_draw_hooks[0x20])(MapObject *) = { /* 0x3BE230 the kind's draw hook */
     (void (*)(MapObject *))func_0011F0D8, (void (*)(MapObject *))func_0011F0D8, (void (*)(MapObject *))func_0011F0D8, (void (*)(MapObject *))func_0011F0D8,
     (void (*)(MapObject *))func_0011F0D8, (void (*)(MapObject *))func_0011F0D8, (void (*)(MapObject *))func_0011F0D8, (void (*)(MapObject *))func_0011F0D8,
     (void (*)(MapObject *))func_0011F0D8, func_00120D38, (void (*)(MapObject *))func_0011F0D8, (void (*)(MapObject *))func_0011F0D8,
@@ -160,7 +160,7 @@ void (*D_003BE230[0x20])(MapObject *) = { /* 0x3BE230 the kind's draw hook */
     (void (*)(MapObject *))func_0011F0D8, (void (*)(MapObject *))func_0011F0D8, (void (*)(MapObject *))func_0011F0D8, (void (*)(MapObject *))func_0011F0D8,
 };
 
-int (*D_003BE2B0[0x20])(MapObject *, int) = { /* 0x3BE2B0 the kind's item hook */
+int (*map_object_item_hooks[0x20])(MapObject *, int) = { /* 0x3BE2B0 the kind's item hook */
     (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220,
     (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220,
     (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220,
@@ -171,7 +171,7 @@ int (*D_003BE2B0[0x20])(MapObject *, int) = { /* 0x3BE2B0 the kind's item hook *
     (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220, (int (*)(MapObject *, int))func_0011F220,
 };
 
-void (*D_003BE330[0x20])(MapObject *, int) = { /* 0x3BE330 the kind's signal hook */
+void (*map_object_signal_hooks[0x20])(MapObject *, int) = { /* 0x3BE330 the kind's signal hook */
     (void (*)(MapObject *, int))func_0011F228, func_0011F910, func_0011F910, (void (*)(MapObject *, int))func_0011F228,
     (void (*)(MapObject *, int))func_00120130, (void (*)(MapObject *, int))func_0011F228, func_0011F910, (void (*)(MapObject *, int))func_0011F228,
     func_00120908, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228,
@@ -182,7 +182,7 @@ void (*D_003BE330[0x20])(MapObject *, int) = { /* 0x3BE330 the kind's signal hoo
     (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_00122960, (void (*)(MapObject *, int))func_00122E18,
 };
 
-void (*D_003BE3B0[0x20])(MapObject *) = { /* 0x3BE3B0 the kind's every-frame update */
+void (*map_object_update_hooks[0x20])(MapObject *) = { /* 0x3BE3B0 the kind's every-frame update */
     (void (*)(MapObject *))func_0011F148, (void (*)(MapObject *))func_0011F148, (void (*)(MapObject *))func_0011F148, (void (*)(MapObject *))func_0011F148,
     (void (*)(MapObject *))func_0011F148, func_001203F0, func_0011F980, (void (*)(MapObject *))func_0011F148,
     (void (*)(MapObject *))func_0011F148, (void (*)(MapObject *))func_0011F148, (void (*)(MapObject *))func_0011F148, (void (*)(MapObject *))func_0011F148,
@@ -193,7 +193,7 @@ void (*D_003BE3B0[0x20])(MapObject *) = { /* 0x3BE3B0 the kind's every-frame upd
     (void (*)(MapObject *))func_0011F148, (void (*)(MapObject *))func_0011F148, (void (*)(MapObject *))func_001229D0, (void (*)(MapObject *))func_0011F148,
 };
 
-void (*D_003BE430[0x20])(MapObject *, f32 *) = { /* 0x3BE430 the kind's move by an offset */
+void (*map_object_offset_hooks[0x20])(MapObject *, f32 *) = { /* 0x3BE430 the kind's move by an offset */
     (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8,
     (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8,
     (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8,
@@ -204,7 +204,7 @@ void (*D_003BE430[0x20])(MapObject *, f32 *) = { /* 0x3BE430 the kind's move by 
     (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8, (void (*)(MapObject *, f32 *))func_0011EDC8,
 };
 
-void (*D_003BE4B0[0x20])(MapObject *) = { /* 0x3BE4B0 the kind's set-up */
+void (*map_object_setup_hooks[0x20])(MapObject *) = { /* 0x3BE4B0 the kind's set-up */
     (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, func_0011FC10,
     func_001201D8, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230,
     (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230,

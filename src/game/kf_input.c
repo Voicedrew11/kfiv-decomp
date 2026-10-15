@@ -6,8 +6,8 @@ void func_001B5590(int);
 void func_001B57A0(u8, u8, u8);
 void func_001B5460(void);
 
-extern PadState D_00413DA8;
-extern PadState D_00413DB8[2];
+extern PadState pad_state;
+extern PadState pad_states[2];
 extern u16 D_0044692C;
 extern u16 D_0044692E;
 extern u16 D_00446930;
@@ -22,7 +22,7 @@ extern u16 D_00446940;
 extern s16 D_00446942;
 extern s16 D_00446944;
 extern s16 D_00446946;
-extern s8 D_00349682[];
+extern s8 sfx_volume[];
 extern u8 D_00446949;
 extern u8 D_0044694A;
 extern u8 D_0044694B;
@@ -34,8 +34,8 @@ void func_001B5390(void) {
     Pad_Init(0);
     Pad_OpenPort(0, 0);
     Pad_Update();
-    memset(&D_00413DA8, 0, 0x10);
-    memset(D_00413DB8, 0, 0x20);
+    memset(&pad_state, 0, 0x10);
+    memset(pad_states, 0, 0x20);
 }
 
 /* Store a fixed set of 14 bit-mask constants into consecutive globals. */
@@ -66,8 +66,8 @@ void func_001B5460(void) {
     }
     Pad_Update();
     func_001B5590(0);
-    D_00413DA8 = D_00413DB8[0];
-    if (D_00349682[4] != 0) {
+    pad_state = pad_states[0];
+    if (sfx_volume[4] != 0) {
         if (D_00446949 != 0 && D_0044694E == 0) {
             if (D_0044694B != 0) {
                 if (D_0044694D != 0) {
@@ -94,7 +94,7 @@ void func_001B5460(void) {
 /* Reads the controller in a port into its PadState; the sticks count as direction buttons unless
    the matching buttons are held. */
 void func_001B5590(int port) {
-    PadState *pad = &D_00413DB8[port];
+    PadState *pad = &pad_states[port];
     PadReport *report;
 
     pad->type = Pad_GetMode(port, 0);
@@ -157,9 +157,9 @@ void func_001B5778(void) {
     func_001B5460();
 }
 
-/* Requests a controller rumble (only when the option at D_00349682[4] is on). */
+/* Requests a controller rumble (only when the option at sfx_volume[4] is on). */
 void func_001B57A0(u8 strength, u8 duration, u8 delay) {
-    if (D_00349682[4] != 0) {
+    if (sfx_volume[4] != 0) {
         D_0044694A = strength;
         D_00446949 = 1;
         D_0044694B = D_0044694C = duration;

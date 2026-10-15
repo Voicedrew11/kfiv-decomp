@@ -1,4 +1,4 @@
-/* DarkKnight: the behaviour of entity type 64 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* DarkKnight: the behaviour of entity type 64 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Knight. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -16,13 +16,13 @@ void EntityAi_Animate(void);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 float sqrtf(float);
 float atan2f(float, float);
@@ -89,7 +89,7 @@ void DarkKnight_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = DarkKnight_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))DarkKnight_OnHit;
@@ -137,7 +137,7 @@ static void DarkKnight_OnHit(Entity *entity) {
    while work word unk68 counts down (DarkKnight_RangedAttack0 sets it), for the first
    EntityParams.unk436 frames it starts one of effects 0x21F to 0x221 at point 4 and writes
    EntityParams.unk438 into unk10[n].unk00.unk00[8] of the three melee records, and 0 once the count
-   is over; it counts down work word unk6C, set to EntityParams.unk43A while D_00413F80.unk259 is
+   is over; it counts down work word unk6C, set to EntityParams.unk43A while player_state.unk259 is
    not 0; and while work word unk6A counts down it keeps flag bit 35 set, with effect 0x25C every
    third frame. */
 static void DarkKnight_Think(Entity *entity, s32 unknown) {
@@ -211,7 +211,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
     if (unkE0->unk6C > 0) {
         unkE0->unk6C--;
     }
-    if (D_00413F80.unk259 != 0) {
+    if (player_state.unk259 != 0) {
         unkE0->unk6C = entity->params->unk43A;
     }
     if (unkE0->unk6A > 0) {
@@ -300,7 +300,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             unkE0->unk78 = 0;
             if (entity->distance_to_player > 500.0f) {
                 entity->unkA0 = rand() % 30 + 60;

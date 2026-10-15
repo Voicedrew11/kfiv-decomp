@@ -1,8 +1,8 @@
 #include "common.h"
 
-/* The sine table the script interpreter and the light flicker read through D_0042C6F0. */
+/* The sine table the script interpreter and the light flicker read through sine_table. */
 
-f32 D_0042C6F0[0x1400] = {
+f32 sine_table[0x1400] = {
     0.0f, 0.00153400004f, 0.00306800008f, 0.00460200012f,
     0.00613600016f, 0.0076700002f, 0.00920400023f, 0.0107380003f,
     0.0122720003f, 0.0138050001f, 0.0153390002f, 0.0168730002f,

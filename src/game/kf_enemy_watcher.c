@@ -1,4 +1,4 @@
-/* Watcher: the behaviour of entity type 73 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Watcher: the behaviour of entity type 73 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Watcher. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -12,7 +12,7 @@ void Vector_Copy(void *, void *);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_CanUseRanged(Entity *, s32);
@@ -39,7 +39,7 @@ void Watcher_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Watcher_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = NULL;

@@ -1,4 +1,4 @@
-/* StoneGuardian: the behaviour of entity type 23 (Entity.params->unk02, the index into D_003E6E40): its
+/* StoneGuardian: the behaviour of entity type 23 (Entity.params->unk02, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Stone Guardian. The game
    names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm
    records by hit points and experience, with resistances and drops where two monsters share those. */
@@ -14,7 +14,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void EntityAi_Think(Entity *, s32);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -27,7 +27,7 @@ float EntityMath_AngleDifference(float, float);
 int func_0019A3F0(void *, int);
 float EntityMath_EaseAngleToward(float *, float, float);
 extern u32 D_00446ED4;
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_CanAttack(Entity *);
 int EntityAi_PickAttack(char *);
@@ -88,7 +88,7 @@ void StoneGuardian_Init(Entity *entity) {
     }
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->animate = (void (*)(void))StoneGuardian_Animate;
     unkE0->on_hit = (void (*)(void))StoneGuardian_OnHit;
     unkE0->move = (void (*)(void))StoneGuardian_Move;
@@ -314,8 +314,8 @@ static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown) {
             is_open = (map_object->unk10 >> 17) & 1;
         }
         player_in_zone = FALSE;
-        if (D_00413F80.position[0] > -9700.0f && D_00413F80.position[0] < -700.0f &&
-            D_00413F80.position[2] > -4800.0f && D_00413F80.position[2] < -3600.0f) {
+        if (player_state.position[0] > -9700.0f && player_state.position[0] < -700.0f &&
+            player_state.position[2] > -4800.0f && player_state.position[2] < -3600.0f) {
             player_in_zone = TRUE;
         }
         entity->prev_state = entity->state;
@@ -397,19 +397,19 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
         }
         return;
     }
-    if (D_00413F80.position[0] < -6000.0f) {
+    if (player_state.position[0] < -6000.0f) {
         post[0] = -5200.0f;
         post[1] = entity->spawn_info->spawn_y;
         post[2] = -4400.0f;
         post[3] = 0.0f;
         facing = 1.5707964f;
-    } else if (D_00413F80.position[0] > -4350.0f) {
+    } else if (player_state.position[0] > -4350.0f) {
         post[0] = -5200.0f;
         post[1] = entity->spawn_info->spawn_y;
         post[2] = -4400.0f;
         post[3] = 0.0f;
         facing = -1.5707964f;
-    } else if (D_00413F80.position[2] < -4000.0f) {
+    } else if (player_state.position[2] < -4000.0f) {
         post[0] = -5200.0f;
         post[1] = entity->spawn_info->spawn_y;
         post[2] = entity->unk30 + -4800.0f;
@@ -465,7 +465,7 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
         return;
     }
     range = 100.0f;
-    if (D_00413F80.position[0] < -8400.0f) {
+    if (player_state.position[0] < -8400.0f) {
         unkE0->unk30[0] = entity->unk30 + -8400.0f;
         unkE0->unk30[1] = entity->spawn_info->spawn_y;
         unkE0->unk30[3] = 0.0f;
@@ -474,8 +474,8 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
-            entity->target = &D_00413F80;
-            direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->target = &player_state;
+            direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
@@ -485,7 +485,7 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
                 }
             }
         }
-    } else if (D_00413F80.position[0] > -1950.0f) {
+    } else if (player_state.position[0] > -1950.0f) {
         unkE0->unk30[0] = -1950.0f - entity->unk30;
         unkE0->unk30[1] = entity->spawn_info->spawn_y;
         unkE0->unk30[3] = 0.0f;
@@ -494,8 +494,8 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
-            entity->target = &D_00413F80;
-            direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->target = &player_state;
+            direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
@@ -505,7 +505,7 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
                 }
             }
         }
-    } else if (D_00413F80.position[2] > -4000.0f) {
+    } else if (player_state.position[2] > -4000.0f) {
         unkE0->unk30[0] = -5200.0f;
         unkE0->unk30[1] = entity->spawn_info->spawn_y;
         unkE0->unk30[2] = -4000.0f - entity->unk30;
@@ -514,8 +514,8 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
-            entity->target = &D_00413F80;
-            direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->target = &player_state;
+            direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
@@ -525,8 +525,8 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
                 }
             }
         }
-    } else if (D_00413F80.position[2] < -4800.0f && D_00413F80.position[0] > -5600.0f &&
-               D_00413F80.position[0] < -4800.0f) {
+    } else if (player_state.position[2] < -4800.0f && player_state.position[0] > -5600.0f &&
+               player_state.position[0] < -4800.0f) {
         unkE0->unk30[0] = -5200.0f;
         unkE0->unk30[1] = entity->spawn_info->spawn_y;
         unkE0->unk30[2] = entity->unk30 + -4800.0f;
@@ -535,8 +535,8 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
-            entity->target = &D_00413F80;
-            direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->target = &player_state;
+            direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
@@ -547,7 +547,7 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             }
         }
     } else {
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
         entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
     }
     ((void (*)(Entity *))unkE0->move)(entity);
@@ -614,7 +614,7 @@ static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 unknown) {
             is_open = (map_object->unk10 >> 17) & 1;
         }
         player_in_zone = FALSE;
-        if (D_00413F80.position[2] > -6000.0f && D_00413F80.position[2] < -2800.0f &&
+        if (player_state.position[2] > -6000.0f && player_state.position[2] < -2800.0f &&
             entity->model->position[2] >= -4800.0f) {
             player_in_zone = TRUE;
         }
@@ -723,7 +723,7 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
         return;
     }
     range = 100.0f;
-    if (D_00413F80.position[0] < 4800.0f) {
+    if (player_state.position[0] < 4800.0f) {
         unkE0->unk30[0] = 4800.0f;
         unkE0->unk30[1] = entity->spawn_info->spawn_y;
         unkE0->unk30[3] = 0.0f;
@@ -732,8 +732,8 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
-            entity->target = &D_00413F80;
-            direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->target = &player_state;
+            direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
@@ -743,7 +743,7 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
                 }
             }
         }
-    } else if (D_00413F80.position[0] > 6650.0f) {
+    } else if (player_state.position[0] > 6650.0f) {
         unkE0->unk30[0] = 6650.0f - entity->unk30;
         unkE0->unk30[1] = entity->spawn_info->spawn_y;
         unkE0->unk30[3] = 0.0f;
@@ -752,8 +752,8 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
-            entity->target = &D_00413F80;
-            direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->target = &player_state;
+            direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
@@ -764,7 +764,7 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
             }
         }
     } else {
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
         entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + range + 30.0f);
     }
     ((void (*)(Entity *))unkE0->move)(entity);
@@ -831,7 +831,7 @@ static void StoneGuardian_ThinkMode4StayInBounds(Entity *entity, s32 unknown) {
             is_open = (map_object->unk10 >> 17) & 1;
         }
         player_in_zone = FALSE;
-        if (D_00413F80.position[2] > -6000.0f && D_00413F80.position[2] < -2800.0f &&
+        if (player_state.position[2] > -6000.0f && player_state.position[2] < -2800.0f &&
             entity->model->position[2] <= -4000.0f) {
             player_in_zone = TRUE;
         }
@@ -938,7 +938,7 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
         return;
     }
     range = 100.0f;
-    if (D_00413F80.position[0] < 6150.0f) {
+    if (player_state.position[0] < 6150.0f) {
         unkE0->unk30[0] = entity->unk30 + 6150.0f;
         unkE0->unk30[1] = entity->spawn_info->spawn_y;
         unkE0->unk30[3] = 0.0f;
@@ -947,8 +947,8 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
-            entity->target = &D_00413F80;
-            direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->target = &player_state;
+            direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
@@ -958,7 +958,7 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
                 }
             }
         }
-    } else if (D_00413F80.position[0] > 8000.0f) {
+    } else if (player_state.position[0] > 8000.0f) {
         unkE0->unk30[0] = 8000.0f;
         unkE0->unk30[1] = entity->spawn_info->spawn_y;
         unkE0->unk30[3] = 0.0f;
@@ -967,8 +967,8 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
-            entity->target = &D_00413F80;
-            direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->target = &player_state;
+            direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
@@ -979,7 +979,7 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
             }
         }
     } else {
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
         entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + range + 30.0f);
     }
     ((void (*)(Entity *))unkE0->move)(entity);
@@ -1044,8 +1044,8 @@ static void StoneGuardian_ThinkMode5StayInBounds(Entity *entity, s32 unknown) {
             is_open = (map_object->unk10 >> 17) & 1;
         }
         player_in_zone = FALSE;
-        if (D_00413F80.position[0] > -20300.0f && D_00413F80.position[0] < -13350.0f &&
-            D_00413F80.position[2] > -250.0f && D_00413F80.position[2] < 1800.0f &&
+        if (player_state.position[0] > -20300.0f && player_state.position[0] < -13350.0f &&
+            player_state.position[2] > -250.0f && player_state.position[2] < 1800.0f &&
             entity->model->position[2] <= 950.0f) {
             player_in_zone = TRUE;
         }
@@ -1152,7 +1152,7 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
         return;
     }
     range = 100.0f;
-    if (D_00413F80.position[0] < -18300.0f) {
+    if (player_state.position[0] < -18300.0f) {
         unkE0->unk30[0] = -18300.0f;
         unkE0->unk30[1] = entity->model->position[1];
         unkE0->unk30[3] = 0.0f;
@@ -1161,8 +1161,8 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
-            entity->target = &D_00413F80;
-            direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->target = &player_state;
+            direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
@@ -1172,7 +1172,7 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
                 }
             }
         }
-    } else if (D_00413F80.position[0] > -16050.0f) {
+    } else if (player_state.position[0] > -16050.0f) {
         unkE0->unk30[0] = -16050.0f;
         unkE0->unk30[1] = entity->model->position[1];
         unkE0->unk30[3] = 0.0f;
@@ -1181,8 +1181,8 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
             entity->target = unkE0->unk30;
             entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
         } else {
-            entity->target = &D_00413F80;
-            direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+            entity->target = &player_state;
+            direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
@@ -1193,7 +1193,7 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
             }
         }
     } else {
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
         entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + range + 30.0f);
     }
     ((void (*)(Entity *))unkE0->move)(entity);
@@ -1270,7 +1270,7 @@ static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
         return;
     }
     if (!both_open && unkE0->unk7A != 0) {
-        if (EntityMath_DistanceXZ(entity->spawn_info, &D_00413F80) > 5400.0f) {
+        if (EntityMath_DistanceXZ(entity->spawn_info, &player_state) > 5400.0f) {
             Vector_Copy(entity->model->position, entity->spawn_info);
             unkE0->unk7A = 0;
         }

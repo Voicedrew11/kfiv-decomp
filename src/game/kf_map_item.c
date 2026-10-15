@@ -24,7 +24,7 @@ void func_001CA0E0(void);
 void func_001CA1E8(void);
 
 /* 0x4147E0 the steps of the item pickup in progress, func_001C9C00 runs the current one */
-void (*D_004147E0[6])(void) = { func_001C9C40, func_001C9EB0, func_001C9FB0, func_001CA0E0, func_001CA1E8, 0 };
+void (*pickup_step_handlers[6])(void) = { func_001C9C40, func_001C9EB0, func_001C9FB0, func_001CA0E0, func_001CA1E8, 0 };
 
 int func_001C8B58(int, int);
 ItemNode *func_001CA520(ItemNode *);
@@ -71,34 +71,34 @@ extern ItemNode *D_004469D8;            /* the one being picked up */
 extern s32 D_00447198;
 extern f32 D_0044719C;
 extern s32 D_004471A4;
-extern MapSlot D_0038CD20[];
-extern DroppedItemRecord D_00358928[0x80][16];
+extern MapSlot map_slots[];
+extern DroppedItemRecord dropped_item_records[0x80][16];
 extern MapItemDef *D_004469B8[2];
 extern s16 *D_004469C0[2];
 extern s32 D_00447190[2];
 extern u8 *D_004469C8[2];
 extern int D_00446770;
-extern u8 D_00356928[0x80][0x40];
+extern u8 map_item_pickup_counts[0x80][0x40];
 extern const Vector4Arg D_0043F610;
-extern MapLoadState D_0038D610;
+extern MapLoadState map_load_state;
 extern int D_0038CC80[3];
-extern MapDrawState D_0038A1B0;
+extern MapDrawState map_draw_state;
 extern f32 D_00431AF0[16];
-extern GameStatus D_0038CC50;
-extern PlayerState D_00413F80;
+extern GameStatus game_status;
+extern PlayerState player_state;
 extern EventRunner D_00420D00;
 extern f32 D_004471A8;
 extern int D_004471AC;
 extern int D_004471B0;
-extern float D_00413F90[];
-extern u16 D_00413DAA[];
+extern float player_rotation[];
+extern u16 pad_pressed[];
 extern u8 item_counts[];
-extern u8 D_003699B0[];
-extern u8 D_00369B30[];
-extern u8 D_00369CB0[];
-extern u8 D_00369E30[];
-extern u8 D_00369FB0[];
-extern ItemCommonDef D_0041A6F8[];
+extern u8 trade_stock_1[];
+extern u8 trade_stock_2[];
+extern u8 trade_stock_3[];
+extern u8 trade_stock_4[];
+extern u8 trade_stock_5[];
+extern ItemCommonDef item_common_defs[];
 
 /* The per-map item blocks: nodes, models and the model data behind them, one set for each map. */
 static ItemModelSource D_0057E040[2][32];   /* 0x57E040 where the model and texture of each item kind lie */
@@ -149,7 +149,7 @@ void func_001C82C0(int map) {
     f32 offset[4];
     char *model_data;
     char *cursor;
-    MapSlot *slot = &D_0038CD20[map];
+    MapSlot *slot = &map_slots[map];
     s16 *kinds = D_004469C0[map];
     MapHeader *header;
     MapItemDef *def;
@@ -195,8 +195,8 @@ void func_001C82C0(int map) {
             func_0010B510(source->texture, 0x3B40, 0x3EC0);
         }
     }
-    saved = *(DroppedItemRecords *)D_00358928[D_0038CD20[map].tag];
-    memset(D_00358928[D_0038CD20[map].tag], 0, sizeof(D_00358928[0]));
+    saved = *(DroppedItemRecords *)dropped_item_records[map_slots[map].tag];
+    memset(dropped_item_records[map_slots[map].tag], 0, sizeof(dropped_item_records[0]));
     position[3] = rotation[3] = scale[3] = 1.0f;
     record = saved.records;
     for (i = 0; i < 16; i++, record++) {
@@ -296,7 +296,7 @@ void *func_001C8AF0(int slot) {
    items lying about. Returns 0 when it cannot (already linked, no model, or its flag byte has reached the limit). */
 int func_001C8B58(int map, int index) {
     ItemNode *node;
-    u8 tag = D_0038CD20[map].tag;
+    u8 tag = map_slots[map].tag;
 
     if (index < 0 || index >= D_00447190[map]) {
         return 0;
@@ -305,7 +305,7 @@ int func_001C8B58(int map, int index) {
     if (node->prev != NULL || node->next != NULL || node == D_004469D4 || node->model == NULL) {
         return 0;
     }
-    if (node->def->required_flag != 0 && D_00356928[tag][node->index] >= node->def->required_flag) {
+    if (node->def->required_flag != 0 && map_item_pickup_counts[tag][node->index] >= node->def->required_flag) {
         return 0;
     }
     Vector_Copy(&node->model->position, &node->def->position);
@@ -373,7 +373,7 @@ s32 func_001C8CB0(Entity *entity) {
     if (entity->group_id == D_00446770) {
         offset[0] = offset[1] = offset[2] = offset[3] = 0.0f;
     } else {
-        Vector_Copy(offset, &D_0038D610.position);
+        Vector_Copy(offset, &map_load_state.position);
     }
     value = func_001C8F18(entity->group_id, item, priority, position, COLLISION_RESULT->point[1], offset, rotation,
                           (f32 *)&scale, 0xFFFFFFFF);
@@ -435,7 +435,7 @@ s32 func_001C8F18(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f
     node->item = item;
     node->def = NULL;
     node->model = &D_0058F6C0[map][index];
-    node->record = &D_00358928[D_0038CD20[map].tag][index];
+    node->record = &dropped_item_records[map_slots[map].tag][index];
     ITEM_NODE_BITS(node)->map = map;
     Vector_Copy(&node->model->position, position);
     Vector_Copy(&node->model->rotation, rotation);
@@ -599,8 +599,8 @@ void func_001C9650(int with_picked) {
         for (i = 0; i < count; i++, part++) {
             ModelMatrix_BuildPartLocal(node->model, part, part);
         }
-        node->model->unk148 = (s32)&D_0038A1B0.unkA90[node->flags & 1][D_0038CD20[node->flags & 1].header->unk71];
-        node->model->unk14C = &D_0038A1B0.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
+        node->model->unk148 = (s32)&map_draw_state.unkA90[node->flags & 1][map_slots[node->flags & 1].header->unk71];
+        node->model->unk14C = &map_draw_state.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
         LinkedPoint_FindHitsForModel(node->model);
         func_0010AEB8(node->model);
         func_0010DB40(node->model);
@@ -652,8 +652,8 @@ void func_001C97E8(int hidden) {
         sceVu0RotMatrixY((f32 *)part, (f32 *)part, wrap_angle(turn[1]));
         sceVu0TransMatrix((f32 *)part, (f32 *)part, offset);
     }
-    node->model->unk148 = (s32)&D_0038A1B0.unkA90[node->flags & 1][D_0038CD20[node->flags & 1].header->unk71];
-    node->model->unk14C = &D_0038A1B0.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
+    node->model->unk148 = (s32)&map_draw_state.unkA90[node->flags & 1][map_slots[node->flags & 1].header->unk71];
+    node->model->unk14C = &map_draw_state.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
     LinkedPoint_FindHitsForModel(node->model);
     func_0010AEB8(node->model);
     func_0010DB40(node->model);
@@ -718,7 +718,7 @@ int func_001C9B58(int item_id, int may_put_back) {
 /* Runs the current step of the pickup in progress, if there is one. */
 void func_001C9C00(void) {
     if (D_004469D8 != NULL) {
-        D_004147E0[D_004471A4]();
+        pickup_step_handlers[D_004471A4]();
     }
 }
 
@@ -728,16 +728,16 @@ void func_001C9C40(void) {
     f32 delta[4];
     f32 distance;
 
-    if (D_0038CC50.unk30 != 0) {
+    if (game_status.unk30 != 0) {
         return;
     }
-    D_0038CC50.unk30 = 0x87F;
+    game_status.unk30 = 0x87F;
     func_001B9478();
     Vector_Copy(D_005B60C0, &D_004469D8->model->position);
     Vector_Copy(D_005B60D0, &D_004469D8->model->rotation);
     D_005B60D0[1] = Angle_Wrap(D_005B60D0[1]);
-    D_005B60E0[0] = D_00420D00.unk00[0] + sinf(D_00413F80.rotation.y) * 150.0f;
-    D_005B60E0[2] = D_00420D00.unk00[2] + cosf(D_00413F80.rotation.y) * 150.0f;
+    D_005B60E0[0] = D_00420D00.unk00[0] + sinf(player_state.rotation.y) * 150.0f;
+    D_005B60E0[2] = D_00420D00.unk00[2] + cosf(player_state.rotation.y) * 150.0f;
     D_005B60E0[1] = D_004469D8->model->position.y - 100.0f;
     if (D_005B60E0[1] < D_00420D00.unk00[1]) {
         D_005B60E0[1] = D_00420D00.unk00[1];
@@ -767,13 +767,13 @@ void func_001C9EB0(void) {
         Angle_EaseToward(0.0f, &D_004469D8->model->rotation.x, D_004471B0);
         Angle_EaseToward(0.0f, &D_004469D8->model->rotation.y, D_004471B0);
         Angle_EaseToward(0.0f, &D_004469D8->model->rotation.z, D_004471B0);
-        Angle_EaseToward(D_004471A8, D_00413F90, D_004471B0);
+        Angle_EaseToward(D_004471A8, player_rotation, D_004471B0);
         D_0044719C = (float)D_004471B0 / (float)D_004471AC;
         return;
     }
     Vector_Copy(&D_004469D8->model->position, D_005B60E0);
     D_0044719C = 0.0f;
-    D_00413F90[0] = D_004471A8;
+    player_rotation[0] = D_004471A8;
     D_004471A4++;
 }
 
@@ -783,9 +783,9 @@ void func_001C9FB0(void) {
 
     D_0044719C = 0.0f;
     D_004469D8->model->rotation.y = Angle_Wrap(D_004469D8->model->rotation.y + 0.08377580f);
-    if (D_00413DAA[0] & 0x4000) {
+    if (pad_pressed[0] & 0x4000) {
         if (!Player_CannotCarryItem((s16)D_004469D8->item)) {
-            Vector_Copy(D_005B60E0, &D_00413F80);
+            Vector_Copy(D_005B60E0, &player_state);
             D_005B60E0[1] -= 115.0f;
             Vector_Subtract(delta, D_005B60E0, &D_004469D8->model->position);
             Vector_Scale(D_005B60F0, delta, 0.06666667f);
@@ -794,7 +794,7 @@ void func_001C9FB0(void) {
             return;
         }
         Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_CANT_CARRY_ANY_MORE);
-    } else if (!(D_00413DAA[0] & 0x2000) || D_00447198 != 0) {
+    } else if (!(pad_pressed[0] & 0x2000) || D_00447198 != 0) {
         return;
     }
     Vector_Scale(D_005B60F0, D_005B60F0, -1.0f);
@@ -813,7 +813,7 @@ void func_001CA0E0(void) {
     }
     Player_AddItem((s16)node->item);
     if (node->def != NULL && node->def->required_flag != 0) {
-        D_00356928[D_0038CD20[node->flags & 1].tag][node->index]++;
+        map_item_pickup_counts[map_slots[node->flags & 1].tag][node->index]++;
     } else if (node->unk08 != 0) {
         MapObject_MarkEmptied((MapObject *)node->unk08);
     } else if (node->record != NULL) {
@@ -939,7 +939,7 @@ int func_001CA5B0(int slot, int object_id) {
 }
 
 int func_001CA5E0(int item) {
-    if (item_counts[item] != 0 && (item >= 0x96 || ((D_0041A6F8 + item)->flags >> 1 & 1))) {
+    if (item_counts[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return 0;
     }
     return 1;
@@ -947,19 +947,19 @@ int func_001CA5E0(int item) {
 
 /* Returns FALSE when one of the five tables after item_counts holds the item and it is one of a kind. */
 int func_001CA630(int item) {
-    if (D_003699B0[item] != 0 && (item >= 0x96 || ((D_0041A6F8 + item)->flags >> 1 & 1))) {
+    if (trade_stock_1[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
-    if (D_00369B30[item] != 0 && (item >= 0x96 || ((D_0041A6F8 + item)->flags >> 1 & 1))) {
+    if (trade_stock_2[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
-    if (D_00369CB0[item] != 0 && (item >= 0x96 || ((D_0041A6F8 + item)->flags >> 1 & 1))) {
+    if (trade_stock_3[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
-    if (D_00369E30[item] != 0 && (item >= 0x96 || ((D_0041A6F8 + item)->flags >> 1 & 1))) {
+    if (trade_stock_4[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
-    if (D_00369FB0[item] != 0 && (item >= 0x96 || ((D_0041A6F8 + item)->flags >> 1 & 1))) {
+    if (trade_stock_5[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
     return TRUE;
@@ -971,9 +971,9 @@ int func_001CA788(int item) {
     int j;
     DroppedItemRecord *record;
     ItemCommonDef *common;
-    char *base = (char *)D_00358928;
+    char *base = (char *)dropped_item_records;
 
-    common = D_0041A6F8 + item;
+    common = item_common_defs + item;
     for (i = 0; i < 0x80; i++) {
         for (j = 0, record = (DroppedItemRecord *)(i * 0x140 + (int)base); j < 0x10; j++) {
             if (record->used != 0 && record->item == item) {

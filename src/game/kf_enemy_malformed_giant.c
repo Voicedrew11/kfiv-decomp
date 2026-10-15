@@ -1,4 +1,4 @@
-/* MalformedGiant: the behaviour of entity type 41 (Entity.params->unk02, the index into D_003E6E40): its
+/* MalformedGiant: the behaviour of entity type 41 (Entity.params->unk02, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Malformed Giant. The game
    names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm
    records by hit points and experience, with resistances and drops where two monsters share those. */
@@ -17,13 +17,13 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(Entity *);
 void EntityAi_SensePlayer(Entity *, int);
 void EntityAi_CheckFarFromSpawn(Entity *);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -61,7 +61,7 @@ void MalformedGiant_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = MalformedGiant_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -185,7 +185,7 @@ static void MalformedGiant_ThinkCombat(Entity *entity, s32 unknown) {
                 unkE0->unk7A = 0;
                 return;
             }
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -278,7 +278,7 @@ static void MalformedGiant_ThinkPursue(Entity *entity, s32 unknown) {
             unkE0->unk7A = 0;
             return;
         }
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {

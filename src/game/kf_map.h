@@ -52,13 +52,13 @@ typedef struct {
     u64 unk00[16];                  /* 0x00 */
 } MapSlotUnk10Words;
 
-/* the first half of such a block: what the held item's models are lit by (D_004145E0, Player_UpdateArmModels) */
+/* the first half of such a block: what the held item's models are lit by (held_item_light_blocks, Player_UpdateArmModels) */
 typedef struct {
     u64 unk00[8];                   /* 0x00 */
 } MapSlotUnk10Half;
 
 /* a MapSlotUnk10Words block as the eight vectors it holds; MapObject_DrawAll blends the last four
-   towards D_0038D9F0 */
+   towards map_object_glow_colors */
 typedef struct {
     Vector4 unk00[4];               /* 0x00 */
     Vector4 unk40[4];               /* 0x40 */
@@ -71,13 +71,13 @@ typedef struct {
     Vector4 colors[4];              /* 0x40 */
 } MapSlotUnk10Lights;
 
-/* D_0038A1B0 as func_001012D8 reads it: the first word of MapDrawState.unk60 as a float */
+/* map_draw_state as func_001012D8 reads it: the first word of MapDrawState.unk60 as a float */
 typedef struct {
     char pad00[0x60];
     f32 mirror_height;              /* 0x60 the mirrored view is flipped about this height */
 } MapDrawStateMirror;
 
-/* D_0038A1B0: what the maps are drawn with */
+/* map_draw_state: what the maps are drawn with */
 typedef struct {
     char pad00[0x60];
     s64 unk60;                      /* 0x60 */
@@ -115,7 +115,7 @@ typedef struct {
 
 #define MAP_DRAW_FLAG_BITS(state) ((MapDrawFlagBits *)&(state)->unk60)
 
-/* D_0038A1B0 as func_001005E8 reads it: MapDrawState.unk60 as bit-fields inside the block, so that
+/* map_draw_state as func_001005E8 reads it: MapDrawState.unk60 as bit-fields inside the block, so that
    they are addressed from the block's start like the fields after them */
 typedef struct {
     char pad00[0x60];
@@ -230,7 +230,7 @@ typedef struct {
     u8 unk71;                       /* 0x71 which block of MapDrawState.unkA90 the items lying in the map are drawn with */
 } MapHeader;
 
-/* one 0x60-byte entry of D_0038CD20, indexed by the current map/slot D_00446770 */
+/* one 0x60-byte entry of map_slots, indexed by the current map/slot D_00446770 */
 typedef struct MapSlot {
     u8 unk00;                       /* 0x00 */
     u8 tag;                         /* 0x01 matched against MapFlagBlock.tags */
@@ -310,7 +310,7 @@ typedef struct {
     ModelInstance *model;           /* 0x7C */
 } MapRecordInfo;
 
-/* where a map change leads: a position in the new map and the map's number. D_0038D640 is one. */
+/* where a map change leads: a position in the new map and the map's number. map_load_request is one. */
 typedef struct {
     f32 x;                          /* 0x00 */
     f32 y;                          /* 0x04 */
@@ -318,7 +318,7 @@ typedef struct {
     u16 map;                        /* 0x0C the low byte becomes MapSlot.tag */
 } MapLoadRequest;
 
-/* D_0038D610: the background load of a neighbouring map into the slot that is not current */
+/* map_load_state: the background load of a neighbouring map into the slot that is not current */
 typedef struct {
     Vector4 position;               /* 0x00 the request's, kept once the load is done */
     s32 step;                       /* 0x10 index into the step handlers */
@@ -415,7 +415,7 @@ typedef struct {
     f32 unk10;                      /* 0x10 grows while it moves */
 } MapTriggerShotKind122BE8;
 
-/* D_00367928[5]: which item was placed on which trigger (func_00103BA8 records, func_00103AE0 looks up) */
+/* trigger_items[5]: which item was placed on which trigger (func_00103BA8 records, func_00103AE0 looks up) */
 typedef struct {
     u8 map_tag;                     /* 0x00 MapSlot.tag; 0x11-0x13 are stored as 0x11 */
     u8 trigger_id;                  /* 0x01 byte 0x3A of the trigger's source */
@@ -424,7 +424,7 @@ typedef struct {
 
 #define TRIGGER_ITEM_RECORD_COUNT 5
 
-/* D_0041A6F8[150]: param/item_cmn.prm, a row for each item below ITEM_WEAPON_FIRST; type says what using it
+/* item_common_defs[150]: param/item_cmn.prm, a row for each item below ITEM_WEAPON_FIRST; type says what using it
    does (Player_UseItem): 0 heals (the Herb...), 1 and 5 are used on a map object, 2 on the map object the player
    stands on (the wands), 3 are the keys, 6 the maps, 8 "Nothing happened" */
 typedef struct {
@@ -491,7 +491,7 @@ typedef struct {
 #define MAP_ACTOR_BITS(actor) ((MapActorBits *)&(actor)->flags)
 #define MAP_ACTOR_COUNT 16
 
-/* D_00362928[MapSlot.tag][16]: where a map object is marked (0xA bytes) */
+/* map_object_marks[MapSlot.tag][16]: where a map object is marked (0xA bytes) */
 typedef struct {
     s16 x;                          /* 0x00 */
     s16 y;                          /* 0x02 */

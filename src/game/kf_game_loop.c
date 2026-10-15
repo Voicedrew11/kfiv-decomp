@@ -152,21 +152,21 @@ void func_0010A100(void *);
 void func_001D20E0(void);
 void func_001B57D8(void);
 void func_001B5800(void);
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern int D_00446734;          /* nonzero: a saved game was loaded */
-extern u8 D_00349680[0x10];
-extern PlayTime D_0036A138[];   /* the play time in the loaded save (D_0036A130 + 8) */
-extern SoundLoadQueue D_0038A130;
-extern GameStatus D_0038CC50;
-extern MapSlot D_0038CD20[];
-extern MapLoadState D_0038D610;
-extern u16 D_00413DA8[];
+extern u8 game_options[0x10];
+extern PlayTime save_play_time[];   /* the play time in the loaded save (save_image + 8) */
+extern SoundLoadQueue sound_load_queue;
+extern GameStatus game_status;
+extern MapSlot map_slots[];
+extern MapLoadState map_load_state;
+extern u16 pad_state[];
 extern f32 D_004323E0[16];
 extern s64 D_00432E20[];
 extern s64 D_00433050[];
 extern u32 D_00446ED4;
 extern u8 D_00349F56[];
-extern MapDrawStateOverlays D_0038A1B0;
+extern MapDrawStateOverlays map_draw_state;
 extern int D_00446708;
 extern int D_00446770;
 extern f32 D_00431B30[4][4];
@@ -177,9 +177,9 @@ extern f32 D_00431AF0[16];      /* the unit matrix */
 extern f32 D_004322A0[16];      /* view to screen */
 extern f32 D_00432320[16];      /* world to view */
 extern f32 D_00432360[16];      /* the camera's rotation, inverted */
-extern LevelRecord D_003679A0[];
-extern PlayerState D_00414280;
-extern ItemCommonDef D_0041A6F8[];
+extern LevelRecord weapon_level_records[];
+extern PlayerState player_previous;
+extern ItemCommonDef item_common_defs[];
 extern PlayerItemDef weapon_defs[];
 extern int D_00446F78;
 extern int D_00446F7C;
@@ -214,7 +214,7 @@ void func_001000C8(int arg) {
     }
     func_001B5A10();
     Player_LoadArmModels();
-    Sound_LoadMgBank(D_00413F80.equipped_magic);
+    Sound_LoadMgBank(player_state.equipped_magic);
     func_0019C520();
 }
 
@@ -227,27 +227,27 @@ void func_001001C0(int arg) {
     func_00112948(arg);
     if (D_00446734 == 0) {
         func_001D20A0();
-        header = (MapSlotUnk08 *)D_0038CD20[0].header;
-        D_00413F80.position.x = header->unk60;
-        D_00413F80.position.y = header->unk64;
-        D_00413F80.position.z = header->unk68;
-        D_00413F80.rotation.y = header->unk6C;
+        header = (MapSlotUnk08 *)map_slots[0].header;
+        player_state.position.x = header->unk60;
+        player_state.position.y = header->unk64;
+        player_state.position.z = header->unk68;
+        player_state.rotation.y = header->unk6C;
     } else {
         D_00446734 = 0;
-        func_001D2048(D_0036A138[0]);
+        func_001D2048(save_play_time[0]);
         func_00106178(0, 0, 0, 0x1E);
     }
-    D_0038D610.flags.raw |= 1;
+    map_load_state.flags.raw |= 1;
     func_001095E0();
     func_001095E0();
-    while (!D_0038CC50.bit9) {
-        if (!(D_0038CC50.bit12 && D_0038CC50.bit13)) {
+    while (!game_status.bit9) {
+        if (!(game_status.bit12 && game_status.bit13)) {
             Display_SwapBuffers(1);
         }
         D_00446ED4++;
         Timer_GetTicks();
         Timer_Restart();
-        if (!(D_0038CC50.bit12 && D_0038CC50.bit13)) {
+        if (!(game_status.bit12 && game_status.bit13)) {
             func_001096E8();
             Timer_GetTicks();
             func_001095E0();
@@ -255,14 +255,14 @@ void func_001001C0(int arg) {
             func_00111D58();
             func_001B5460();
         }
-        if (D_0038CC50.bit12 && !D_0038CC50.bit13) {
-            if (D_00413DA8[1] & 8) {
-                D_00413DA8[1] = 0;
-                D_0038CC50.bit13 = TRUE;
-                D_00413DA8[0] = 0;
+        if (game_status.bit12 && !game_status.bit13) {
+            if (pad_state[1] & 8) {
+                pad_state[1] = 0;
+                game_status.bit13 = TRUE;
+                pad_state[0] = 0;
             }
         }
-        if (!(D_0038CC50.unk30 & 0x40) && D_00413F80.unk1A8 == 0) {
+        if (!(game_status.unk30 & 0x40) && player_state.unk1A8 == 0) {
             Script_UpdateAll();
         }
         Player_Update();
@@ -281,7 +281,7 @@ void func_001001C0(int arg) {
         Effect_UpdateAll();
         LinkedPoint_UpdateFollows();
         Hud_Update();
-        if (!(D_0038CC50.bit12 && D_0038CC50.bit13)) {
+        if (!(game_status.bit12 && game_status.bit13)) {
             func_00101618();
             Sound_Update();
         }
@@ -292,7 +292,7 @@ void func_001001C0(int arg) {
         func_001012D8(0, 0);
         func_0010A7E0(D_004323E0);
         WeaponTrail_Update();
-        if (!(D_0038CC50.bit12 && D_0038CC50.bit13)) {
+        if (!(game_status.bit12 && game_status.bit13)) {
             func_001005E8(1);
             func_00109800();
         }
@@ -309,21 +309,21 @@ void func_001001C0(int arg) {
     func_001B5778();
     Message_CloseBox();
     Message_ClearNotices();
-    saved = D_00349680[1];
-    D_00349680[1] = 0;
+    saved = game_options[1];
+    game_options[1] = 0;
     Sound_SetBgmVolume(0);
     Sound_SetBankVolumes(0);
-    while (D_0038A130.unk0C != 0 ||
-           ((D_0038A130.unk04 != 0 || D_0038A130.unk18 != 0) &&
-            (D_0038A130.unk18 != 0 || D_0038A130.unk04 == 0 || func_0019F6B0() == 0))) {
+    while (sound_load_queue.unk0C != 0 ||
+           ((sound_load_queue.unk04 != 0 || sound_load_queue.unk18 != 0) &&
+            (sound_load_queue.unk18 != 0 || sound_load_queue.unk04 == 0 || func_0019F6B0() == 0))) {
         while (sceGsSyncV(0) != 1) {
         }
         Timer_Restart();
         func_00101618();
         Sound_Update();
     }
-    D_00349680[1] = saved;
-    D_0038CC50.bit9 = FALSE;
+    game_options[1] = saved;
+    game_status.bit9 = FALSE;
     func_00102558();
     func_001095E0();
     func_00109800();
@@ -341,7 +341,7 @@ int func_001005E8(int arg) {
     func_001112B0();
     func_001095D0();
     func_0010A008();
-    switch (D_0038A1B0.mode) {
+    switch (map_draw_state.mode) {
     case 0:
         func_001012D8(0, 0);
         func_0010A7E0(D_004323E0);
@@ -456,13 +456,13 @@ int func_001005E8(int arg) {
     }
     func_001012D8(0, 0);
     func_0010A7E0(D_004323E0);
-    if ((s32)(D_00413F80.unk1C8 >> 39) & 1) {
+    if ((s32)(player_state.unk1C8 >> 39) & 1) {
         func_0010A040(0x2BC0);
         tinted = TRUE;
         func_00108020(0x80, 0x80, 0x80, 0x80, 1.0f);
     }
-    if (D_00413F80.unk29C != 0) {
-        tint = (f32)D_00413F80.unk29C * 0.125f;
+    if (player_state.unk29C != 0) {
+        tint = (f32)player_state.unk29C * 0.125f;
         red = (int)(tint * -58.0f + 128.0f);
         green = (int)(tint * -78.0f + 128.0f);
         blue = (int)(tint * 12.0f + 128.0f);
@@ -471,25 +471,25 @@ int func_001005E8(int arg) {
         func_00108020(red, green, blue, 0x80, tint);
     }
     func_001BBA58();
-    if (D_0038A1B0.bit44) {
+    if (map_draw_state.bit44) {
         func_00106520();
     }
-    if (D_0038A1B0.bit41) {
+    if (map_draw_state.bit41) {
         func_00106980();
     }
-    if (D_0038A1B0.bit42) {
+    if (map_draw_state.bit42) {
         func_00106C58();
     }
-    if (D_0038A1B0.bit43) {
+    if (map_draw_state.bit43) {
         func_00106DC8();
     }
-    if (D_0038A1B0.bit40) {
-        func_00106FB8(D_0038A1B0.unk88);
+    if (map_draw_state.bit40) {
+        func_00106FB8(map_draw_state.unk88);
     }
-    if (D_00413F80.aim_speed > 0.0f) {
+    if (player_state.aim_speed > 0.0f) {
         func_00106FB8(0x40);
     }
-    if (arg != 0 && D_0038A1B0.bit45) {
+    if (arg != 0 && map_draw_state.bit45) {
         func_00107528();
     }
     func_0010A698();
@@ -499,18 +499,18 @@ int func_001005E8(int arg) {
     func_0010B140(3, 0);
     Player_DrawArm();
     Player_DrawScreenTints();
-    if ((s32)(D_00413F80.unk1C8 >> 39) & 1) {
-        if (D_0038CD20[D_00446770].tag == 0x23 && D_00349F56[0] == 0) {
+    if ((s32)(player_state.unk1C8 >> 39) & 1) {
+        if (map_slots[D_00446770].tag == 0x23 && D_00349F56[0] == 0) {
             func_0010A4E8(0x40, 0x80, 0x40, 0x78, 0x44);
         } else {
             func_00107E70(0x5E, 0x87, 0x92);
         }
     }
     Hud_Draw();
-    if (D_0038A1B0.unk78 > 0) {
+    if (map_draw_state.unk78 > 0) {
         // match: the last argument is passed as the 64-bit word
-        ((void (*)(int, int, int, int, s64))func_0010A4E8)(D_0038A1B0.unk6C, D_0038A1B0.unk70, D_0038A1B0.unk74,
-                                                             D_0038A1B0.unk78, D_0038A1B0.unk80);
+        ((void (*)(int, int, int, int, s64))func_0010A4E8)(map_draw_state.unk6C, map_draw_state.unk70, map_draw_state.unk74,
+                                                             map_draw_state.unk78, map_draw_state.unk80);
     }
     func_00106208();
     Splash_Draw();
@@ -531,11 +531,11 @@ int func_001005E8(int arg) {
         func_0010A4E8(0, 0, 0, D_00446708, 0x44);
     }
     Message_Update();
-    if (D_0038CC50.paused) {
+    if (game_status.paused) {
         func_0010A4E8(0, 0, 0, 0x40, 0x44);
         Hud_DrawPaused();
     }
-    func_00107CD8(D_00349680[10]);
+    func_00107CD8(game_options[10]);
     func_001095D8();
 }
 
@@ -545,11 +545,11 @@ void func_00100D10(void) {
     MapRecordInfo *record;
     f32 angle;
 
-    if (D_0038CC50.unk03 != 0) {
+    if (game_status.unk03 != 0) {
         record = func_00115CD0(&D_004325A0, 100.0f, D_00446770);
         if (record != NULL) {
-            D_00413F80.map_index = (u32)((char *)record - D_0038CD20[D_00446770].records) >> 14; // match: the byte offset of 0x80-byte records shifted by 14; 7 would give the record number
-            D_00413F80.unk250 = record->unk38;
+            player_state.map_index = (u32)((char *)record - map_slots[D_00446770].records) >> 14; // match: the byte offset of 0x80-byte records shifted by 14; 7 would give the record number
+            player_state.unk250 = record->unk38;
         }
     }
     if (D_004325A0.unk74 != 0 && D_004325A0.unk70 > 0.0f) {
@@ -600,14 +600,14 @@ void func_00100FC8(void) {
     f32 pitch;
     f32 length;
 
-    switch (D_0038CC50.unk03) {
+    switch (game_status.unk03) {
     case 0:
         Vector_Scale(target, D_00420D00.unk10, D_00420D00.unk40);
         Vector_Add(target, target, D_00420D00.unk00);
-        D_004325A0.position[0] = D_00413F80.position.x;
-        D_004325A0.position[2] = D_00413F80.position.z;
+        D_004325A0.position[0] = player_state.position.x;
+        D_004325A0.position[2] = player_state.position.z;
         D_004325A0.position[1] =
-            D_00413F80.position.y - 220.0f + D_00413F80.unk1C4 + D_00413F80.unk1F0 + D_004325A0.unk4C;
+            player_state.position.y - 220.0f + player_state.unk1C4 + player_state.unk1F0 + D_004325A0.unk4C;
         Vector_Subtract(direction, target, D_004325A0.position);
         D_004325A0.unk10 =
             atan2f(-direction[1], sqrtf(direction[0] * direction[0] + direction[2] * direction[2]));
@@ -615,7 +615,7 @@ void func_00100FC8(void) {
         D_004325A0.unk18 = 0.0f;
         break;
     case 1:
-        if (D_0038CC50.unk05 != 0) {
+        if (game_status.unk05 != 0) {
             Vector_Subtract(direction, D_004325A0.unk30, D_004325A0.position);
             length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
             if (D_004325A0.unk44 < length) {
@@ -629,12 +629,12 @@ void func_00100FC8(void) {
     case 2:
         break;
     }
-    if (D_0038CC50.unk03 != 0 && (s8)D_0038CC50.unk04 != 0) {
+    if (game_status.unk03 != 0 && (s8)game_status.unk04 != 0) {
         Vector_Subtract(direction, D_004325A0.unk20, D_004325A0.position);
         yaw = atan2f(direction[0], direction[2]);
         length = sqrtf(direction[0] * direction[0] + direction[2] * direction[2]);
         pitch = atan2f(-direction[1], length);
-        switch ((s8)D_0038CC50.unk04) {
+        switch ((s8)game_status.unk04) {
         case 1:
             D_004325A0.unk10 = pitch;
             D_004325A0.unk14 = yaw;
@@ -681,13 +681,13 @@ void func_001012D8(int projection, int mode) {
         sceVu0MulMatrix(D_004323E0, D_004322A0, D_00432320);
         break;
     case 1:
-        translation[1] = ((MapDrawStateMirror *)&D_0038A1B0)->mirror_height;
+        translation[1] = ((MapDrawStateMirror *)&map_draw_state)->mirror_height;
         translation[0] = translation[2] = translation[3] = 0.0f;
         sceVu0TransMatrix(local, D_00431AF0, translation);
         sceVu0CopyMatrix(other, D_00431AF0);
         other[5] = -1.0f;
         sceVu0MulMatrix(local, local, other);
-        translation[1] = -((MapDrawStateMirror *)&D_0038A1B0)->mirror_height;
+        translation[1] = -((MapDrawStateMirror *)&map_draw_state)->mirror_height;
         sceVu0TransMatrix(other, D_00431AF0, translation);
         sceVu0MulMatrix(local, local, other);
         sceVu0MulMatrix(D_004323E0, D_004322A0, D_00432320);
@@ -706,50 +706,50 @@ void func_001012D8(int projection, int mode) {
 
 /* Runs the queued sound loads, one at a time. */
 void func_00101618(void) {
-    if (D_0038A130.unk10 == NULL && D_0038A130.unk14 != NULL) {
-        D_0038A130.unk10 = D_0038A130.unk14;
-        D_0038A130.unk0C = 1;
-        D_0038A130.unk14 = NULL;
+    if (sound_load_queue.unk10 == NULL && sound_load_queue.unk14 != NULL) {
+        sound_load_queue.unk10 = sound_load_queue.unk14;
+        sound_load_queue.unk0C = 1;
+        sound_load_queue.unk14 = NULL;
     }
-    if (D_0038A130.step == 3 && (D_0038A130.unk0C != 0 || D_0038A130.unk18 != 0)) {
+    if (sound_load_queue.step == 3 && (sound_load_queue.unk0C != 0 || sound_load_queue.unk18 != 0)) {
         if (func_0019F6B0() != 0) {
-            D_0038A130.step = 0;
+            sound_load_queue.step = 0;
         }
     }
-    if (D_0038A130.step == 0) {
-        if (D_0038A130.unk0C != 0) {
-            D_0038A130.step = 1;
+    if (sound_load_queue.step == 0) {
+        if (sound_load_queue.unk0C != 0) {
+            sound_load_queue.step = 1;
             Sound_StopAll(0);
-        } else if (D_0038A130.unk18 != 0) {
-            D_0038A130.step = 2;
-        } else if (D_0038A130.unk04 != 0) {
-            D_0038A130.step = 3;
+        } else if (sound_load_queue.unk18 != 0) {
+            sound_load_queue.step = 2;
+        } else if (sound_load_queue.unk04 != 0) {
+            sound_load_queue.step = 3;
         }
     }
-    switch (D_0038A130.step) {
+    switch (sound_load_queue.step) {
     case 1:
-        D_0038A130.unk0C = Sound_LoadMapBankStep((int)D_0038A130.unk10, D_0038A130.unk0C);
-        if (D_0038A130.unk0C == 0) {
-            D_0038A130.unk10 = NULL;
-            D_0038A130.step = 0;
+        sound_load_queue.unk0C = Sound_LoadMapBankStep((int)sound_load_queue.unk10, sound_load_queue.unk0C);
+        if (sound_load_queue.unk0C == 0) {
+            sound_load_queue.unk10 = NULL;
+            sound_load_queue.step = 0;
         }
         break;
     case 2:
-        if (D_0038A130.unk18 != 0) {
-            D_0038A130.unk18 = func_001A0C18(D_0038A130.unk1C, D_0038A130.unk20, D_0038A130.unk24 + 7);
-            if (D_0038A130.unk18 == 0) {
-                D_0038A130.step = 0;
+        if (sound_load_queue.unk18 != 0) {
+            sound_load_queue.unk18 = func_001A0C18(sound_load_queue.unk1C, sound_load_queue.unk20, sound_load_queue.unk24 + 7);
+            if (sound_load_queue.unk18 == 0) {
+                sound_load_queue.step = 0;
             }
         }
         break;
     case 3:
-        if (D_0038A130.unk04 != 0) {
-            D_0038A130.unk04 = Sound_LoadBgm(D_0038A130.unk00, D_0038A130.unk04);
-            if (D_0038A130.unk04 == 0) {
-                D_0038A130.step = 0;
+        if (sound_load_queue.unk04 != 0) {
+            sound_load_queue.unk04 = Sound_LoadBgm(sound_load_queue.unk00, sound_load_queue.unk04);
+            if (sound_load_queue.unk04 == 0) {
+                sound_load_queue.step = 0;
             }
         } else {
-            D_0038A130.step = 0;
+            sound_load_queue.step = 0;
         }
         break;
     }
@@ -758,37 +758,37 @@ void func_00101618(void) {
 /* Opens the menu or screen GameStatus asks for (bits 2 to 5), once the sound loads and the map load allow it,
    then puts back what the menu changed and fades the game in again. */
 void func_001017A8(void) {
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
     int menu_ran = FALSE;
     int faded_out = FALSE;
-    u8 brightness = D_00349680[10];
+    u8 brightness = game_options[10];
     int load_held;
     PlayerItemDef *item_def;
 
-    if (!D_0038CC50.bit2 && !D_0038CC50.bit3 && !D_0038CC50.bit4 && !D_0038CC50.save_requested && !D_0038CC50.bit8 &&
-        !D_0038CC50.bit14) {
+    if (!game_status.bit2 && !game_status.bit3 && !game_status.bit4 && !game_status.save_requested && !game_status.bit8 &&
+        !game_status.bit14) {
         return;
     }
     if (D_00446F78 == 0) {
         return;
     }
-    if (D_0038CC50.unk30 & 1) {
+    if (game_status.unk30 & 1) {
         return;
     }
     if (player->unk1A8 != 0) {
         return;
     }
-    if (D_0038A130.unk0C != 0) {
+    if (sound_load_queue.unk0C != 0) {
         return;
     }
-    if (D_0038A130.unk18 != 0) {
+    if (sound_load_queue.unk18 != 0) {
         return;
     }
-    if (D_0038A130.unk04 != 0 && func_0019F6B0() == 0) {
+    if (sound_load_queue.unk04 != 0 && func_0019F6B0() == 0) {
         return;
     }
     load_held = FALSE;
-    if (D_0038D610.step >= 2 && D_0038D610.step <= 4) {
+    if (map_load_state.step >= 2 && map_load_state.step <= 4) {
         func_00118788();
         if (func_001187D8() == 0) {
             return;
@@ -801,47 +801,47 @@ void func_001017A8(void) {
         return;
     }
     func_001B5778();
-    if (D_0038CC50.bit14 && D_00413F80.unk254 >= 2) {
+    if (game_status.bit14 && player_state.unk254 >= 2) {
         Player_LoadArmModels();
-        D_0038CC50.bit14 = FALSE;
+        game_status.bit14 = FALSE;
     }
-    if (D_0038CC50.bit3) {
+    if (game_status.bit3) {
         if (!faded_out) { // match: always true here, and so in the three branches below; without the test 39 instructions differ
             faded_out = TRUE;
             func_00101CE0();
         }
-        D_0038CC50.bit3 = FALSE;
+        game_status.bit3 = FALSE;
         menu_ran = TRUE;
-        Trade_Run(D_0038CC50.unk2C);
+        Trade_Run(game_status.unk2C);
         func_001095E0();
         func_001095E0();
-    } else if (D_0038CC50.bit4) {
+    } else if (game_status.bit4) {
         if (!faded_out) {
             faded_out = TRUE;
             func_00101CE0();
         }
-        D_0038CC50.bit4 = FALSE;
+        game_status.bit4 = FALSE;
         menu_ran = TRUE;
         Smith_Run();
         func_001095E0();
         func_001095E0();
-    } else if (D_0038CC50.save_requested && D_0038CC50.unk00 != 0) {
+    } else if (game_status.save_requested && game_status.unk00 != 0) {
         if (!faded_out) {
             faded_out = TRUE;
             func_00101CE0();
         }
-        D_0038CC50.save_requested = FALSE;
+        game_status.save_requested = FALSE;
         SaveScreen_Run();
         func_001095E0();
         func_001095E0();
-    } else if (D_0038CC50.bit2 && D_0038CC50.unk00 != 0) {
+    } else if (game_status.bit2 && game_status.unk00 != 0) {
         if (!faded_out) {
             faded_out = TRUE;
             func_00101CE0();
         }
-        D_0038CC50.bit2 = FALSE;
-        D_0038CC50.bit6 = FALSE;
-        D_0038CC50.unk28 = 0;
+        game_status.bit2 = FALSE;
+        game_status.bit6 = FALSE;
+        game_status.unk28 = 0;
         menu_ran = TRUE;
         Menu_Run(0);
         func_001095E0();
@@ -849,39 +849,39 @@ void func_001017A8(void) {
     }
     if (menu_ran) {
         Player_LoadArmModels();
-        if (D_0038CC50.unk28 != 0) {
-            Player_CastMagic(D_0038CC50.unk28);
-            D_0038CC50.unk28 = 0;
+        if (game_status.unk28 != 0) {
+            Player_CastMagic(game_status.unk28);
+            game_status.unk28 = 0;
         }
-        if (D_00413F80.weapon != D_00414280.weapon) {
-            D_00413F80.unkBC = 0;
+        if (player_state.weapon != player_previous.weapon) {
+            player_state.unkBC = 0;
         }
-        if (D_00413F80.equipped_magic != 0 && D_00414280.equipped_magic != D_00413F80.equipped_magic) {
-            D_00413F80.unk264 = D_00413F80.equipped_magic;
-            D_00413F80.unkC0 = 0;
-        } else if (D_00413F80.shortcut_type == 2 &&
-                   (D_00414280.shortcut_type != D_00413F80.shortcut_type || D_00413F80.shortcut != D_00414280.shortcut)) {
-            D_00413F80.unkC0 = 0;
-            D_00413F80.unk264 = D_00413F80.shortcut;
-        } else if (D_00413F80.weapon != D_00414280.weapon) {
-            item_def = &weapon_defs[D_00413F80.weapon];
+        if (player_state.equipped_magic != 0 && player_previous.equipped_magic != player_state.equipped_magic) {
+            player_state.unk264 = player_state.equipped_magic;
+            player_state.unkC0 = 0;
+        } else if (player_state.shortcut_type == 2 &&
+                   (player_previous.shortcut_type != player_state.shortcut_type || player_state.shortcut != player_previous.shortcut)) {
+            player_state.unkC0 = 0;
+            player_state.unk264 = player_state.shortcut;
+        } else if (player_state.weapon != player_previous.weapon) {
+            item_def = &weapon_defs[player_state.weapon];
             if (item_def->unk63 != 2) {
                 if (item_def->unk42 != 0xFFFF) {
-                    D_00413F80.unkC0 = 0;
-                    D_00413F80.unk264 = item_def->unk42;
-                } else if (item_def->unk52 != 0xFFFF && D_003679A0[D_00413F80.weapon].unk14 + 1 == 3) {
-                    D_00413F80.unkC0 = 0;
-                    D_00413F80.unk264 = item_def->unk52;
+                    player_state.unkC0 = 0;
+                    player_state.unk264 = item_def->unk42;
+                } else if (item_def->unk52 != 0xFFFF && weapon_level_records[player_state.weapon].unk14 + 1 == 3) {
+                    player_state.unkC0 = 0;
+                    player_state.unk264 = item_def->unk52;
                 }
             }
         }
-        if (D_0038CC50.bit6 && D_0041A6F8[D_0038CC50.unk20].type == 6) {
-            func_0011A438(D_0038CC50.unk20);
-            D_0038CC50.unk20 = 0;
-            D_0038CC50.bit6 = FALSE;
+        if (game_status.bit6 && item_common_defs[game_status.unk20].type == 6) {
+            func_0011A438(game_status.unk20);
+            game_status.unk20 = 0;
+            game_status.bit6 = FALSE;
         }
     }
-    if (D_0038CC50.bit8 && !D_0038CC50.bit9) {
+    if (game_status.bit8 && !game_status.bit9) {
         if (faded_out) {
             func_00101D48(brightness);
             faded_out = FALSE;
@@ -890,14 +890,14 @@ void func_001017A8(void) {
         }
         func_0011A500();
     }
-    if (D_0038D610.step != 0) {
+    if (map_load_state.step != 0) {
         if (load_held) {
             func_00102218();
         }
         func_001187B0();
     }
     if (faded_out) {
-        if (!D_0038CC50.bit9) {
+        if (!game_status.bit9) {
             func_00101D48(brightness);
         } else {
             func_00101EF0();
@@ -923,10 +923,10 @@ void func_00101CE0(void) {
     func_001095E0();
     func_001095E0();
     func_0010B000();
-    saved_unk68 = D_0038A1B0.unk68;
-    D_0038A1B0.unk68 = 0;
+    saved_unk68 = map_draw_state.unk68;
+    map_draw_state.unk68 = 0;
     func_001005E8(0);
-    D_0038A1B0.unk68 = saved_unk68;
+    map_draw_state.unk68 = saved_unk68;
     func_00109800();
     Display_SwapBuffers(0);
     func_001096E8();
@@ -939,7 +939,7 @@ void func_00101D48(int divisor) {
     int brightness;
     int pass;
 
-    brightness = (D_00349680[10] << 7) / divisor;
+    brightness = (game_options[10] << 7) / divisor;
     if (brightness > 0xFF) {
         brightness = 0xFF;
     }
@@ -1015,9 +1015,9 @@ void func_00101EF0(void) {
 void func_00101F90(void) {
     PlayTime play_time;
 
-    if (D_00413DA8[1] & D_00446946) {
+    if (pad_state[1] & D_00446946) {
         func_001D20E0();
-        D_0038CC50.paused = TRUE;
+        game_status.paused = TRUE;
         play_time = D_00446A28;
         Display_SwapBuffers(0);
         func_001096E8();
@@ -1039,9 +1039,9 @@ void func_00101F90(void) {
             while (sceGsSyncV(0) != 1) {
             }
             func_001B5460();
-        } while (!(D_00413DA8[1] & D_00446946));
+        } while (!(pad_state[1] & D_00446946));
         func_001B5800();
-        D_0038CC50.paused = FALSE;
+        game_status.paused = FALSE;
         func_001096E8();
         func_001095E0();
         func_0010B000();
@@ -1053,14 +1053,14 @@ void func_00101F90(void) {
 }
 
 void func_001020F8(void) {
-    if (D_0038CC50.bit2 || D_0038CC50.bit3 || D_0038CC50.bit4 || D_0038CC50.save_requested ||
-        D_0038CC50.bit8 || D_0038CC50.bit14) {
-        D_0038CC50.bit2 = 0;
-        D_0038CC50.bit3 = 0;
-        D_0038CC50.save_requested = 0;
-        D_0038CC50.bit4 = 0;
-        D_0038CC50.bit8 = 0;
-        D_0038CC50.bit14 = 0;
+    if (game_status.bit2 || game_status.bit3 || game_status.bit4 || game_status.save_requested ||
+        game_status.bit8 || game_status.bit14) {
+        game_status.bit2 = 0;
+        game_status.bit3 = 0;
+        game_status.save_requested = 0;
+        game_status.bit4 = 0;
+        game_status.bit8 = 0;
+        game_status.bit14 = 0;
         func_001187B0();
     }
 }

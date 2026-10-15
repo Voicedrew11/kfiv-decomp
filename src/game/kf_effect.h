@@ -40,7 +40,7 @@ typedef struct {
     u16 interval;                   /* 0xEE frames between collision checks, or a range */
     u16 unkF0;                      /* 0xF0 effect ids passed to Effect_SpawnFromEffect */
     u16 unkF2;                      /* 0xF2 */
-    u8 unkF4;                       /* 0xF4 with the placement bits, picks the model's draw routine from D_003F1710 */
+    u8 unkF4;                       /* 0xF4 with the placement bits, picks the model's draw routine from effect_draw_hooks */
     u8 unkF5;                       /* 0xF5 bit 0: drawn with the map's own light block; bit 1: not drawn in the second pass */
     u8 unkF6;                       /* 0xF6 how the texture frames run: 0 loop, 1 once, 2 once and hold the last */
     u8 unkF7;                       /* 0xF7 how many texture frames, 0: not animated */
@@ -49,7 +49,7 @@ typedef struct {
     u8 unkFC;                       /* 0xFC effect frames per texture frame, less one */
     u8 unkFD;                       /* 0xFD */
     u16 unkFE;                      /* 0xFE */
-    u16 unk100;                     /* 0x100 index into the handler tables D_00402550 and D_00402DA8 */
+    u16 unk100;                     /* 0x100 index into the handler tables effect_kind_handlers and fx_table */
     u16 keyframe_end;               /* 0x102 last keyframe; kinds that loop restart here */
     f32 gravity;                    /* 0x104 */
     u16 max_frames;                 /* 0x108 0: no limit; the low bits of EFFECT_DEF_FLAGS */
@@ -1033,7 +1033,7 @@ typedef struct {
     u8 unk27;                       /* 0x27 goes to Unk1B1470Request.unk70 */
 } FxTableHitCheck;
 
-/* D_00402DA8[]: a table entry of 0x110 bytes, indexed by effect id (func_001B4F30) */
+/* fx_table[]: a table entry of 0x110 bytes, indexed by effect id (func_001B4F30) */
 typedef struct {
     char pad00[0x34];
     FxTableHitCheck hit_checks[3];  /* 0x34 */

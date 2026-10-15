@@ -1,4 +1,4 @@
-/* Snake: the behaviour of entity type 21 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* Snake: the behaviour of entity type 21 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Snake. The game names no monsters;
    these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by hit points
    and experience, with resistances and drops where two monsters share those. */
@@ -17,10 +17,10 @@ void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetState(char *, u8);
-extern u8 D_00349690[];
+extern u8 map_script_flags[];
 f32 EntityCollision_DistanceToPropFloor(void *, void *);
 void EntityMath_FacingVector(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
@@ -34,7 +34,7 @@ int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 void EntityAi_ThinkCombat(Entity *, s32);
 extern EntitySpawnInfo *D_004467D0[2];
-extern MapSlot D_0038CD20[];
+extern MapSlot map_slots[];
 extern int D_00446770;
 void func_001035A8(u32, int);
 int Script_Start(int, int);
@@ -59,7 +59,7 @@ void Snake_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Snake_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -159,7 +159,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
    within EntitySpawnInfo.unk54, plays it past frame 30, then moves the entity along its heading by
    EntityParams.unk436 a frame (unk438 in y) until flag bit 44 is set or EntityCollision_DistanceToPropFloor reads below
    100, plays the rest, goes to state 2 and thinks. While it waits it removes the entity once
-   EntitySpawnInfo.variant is set and D_00349690[unk43 + unk42 * 64] is not 0. */
+   EntitySpawnInfo.variant is set and map_script_flags[unk43 + unk42 * 64] is not 0. */
 static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -182,7 +182,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
         break;
     case 1:
         if (entity->spawn_info->variant != 0 &&
-            D_00349690[entity->spawn_info->unk43 + entity->spawn_info->unk42 * 64] != 0) {
+            map_script_flags[entity->spawn_info->unk43 + entity->spawn_info->unk42 * 64] != 0) {
             ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
             ENTITY_FLAG_BITS(entity)->bits2 = 3;
             break;
@@ -286,7 +286,7 @@ static void Snake_Dormant(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, but first, for a spawn in mode 1 whose
-   EntitySpawnInfo.variant is 1, it starts Snake_Death once D_00349690[unk43 + unk42 * 64] is
+   EntitySpawnInfo.variant is 1, it starts Snake_Death once map_script_flags[unk43 + unk42 * 64] is
    not 0. */
 static void Snake_Think(Entity *entity, s32 unknown) {
     s32 index;
@@ -294,7 +294,7 @@ static void Snake_Think(Entity *entity, s32 unknown) {
     if (entity->spawn_info->unk40 == 1 && entity->spawn_info->variant == 1) {
         index = entity->spawn_info->unk43;
         index += entity->spawn_info->unk42 * 64;
-        if (D_00349690[index] != 0) {
+        if (map_script_flags[index] != 0) {
             EntityAi_StartAction(entity, Snake_Death, 1);
             return;
         }
@@ -357,7 +357,7 @@ static void Snake_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             entity->unkA0 = 20;
-            func_001035A8(D_0038CD20[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+            func_001035A8(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
             Effect_FreeForOwner(entity);
             if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
                 Script_Start(entity->spawn_info->unk36, 0);

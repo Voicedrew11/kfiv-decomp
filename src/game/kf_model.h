@@ -390,7 +390,7 @@ typedef struct ModelInstance {
     ModelPart *unk130;              /* 0x130 the part whose placement Entity_RebuildModelMatrices leaves out (the root?) */
     char pad134[0x08];
     f32 radius;                     /* 0x13C how far the model reaches around its position (a map object's MapObject.unk14) */
-    u8 hit_handles[4];              /* 0x140 handles of the linked points (D_003E7500) that touch it; the drawing code lights it by them */
+    u8 hit_handles[4];              /* 0x140 handles of the linked points (linked_point_pool) that touch it; the drawing code lights it by them */
     u8 hit_count;                   /* 0x144 how many of hit_handles are used */
     u8 unk145;                      /* 0x145 */
     s16 unk146;                     /* 0x146 */
@@ -428,7 +428,7 @@ typedef struct {
     f32 unk30[4];                   /* 0x30 */
 } BlendVertex;
 
-/* one of the 0x40-byte lights at D_003E7500, as the drawing code copies it into a packet */
+/* one of the 0x40-byte lights at linked_point_pool, as the drawing code copies it into a packet */
 typedef struct {
     f32 unk00[4];                   /* 0x00 sent whole, but for the last word */
     f32 unk10[4];                   /* 0x10 sent whole */
@@ -771,7 +771,7 @@ typedef struct ModelNode {
     void *unk14;                    /* 0x14 the MapRecordInfo (kf_map.h) it is standing in, found every frame */
     ModelInstance *model;           /* 0x18 non-null while the node is in use */
     s16 item;                       /* 0x1C which item it is (index into item_name_defs) */
-    s16 unk1E;                      /* 0x1E index into the map's row of D_00356928 */
+    s16 unk1E;                      /* 0x1E index into the map's row of map_item_pickup_counts */
     struct ModelNode *prev;         /* 0x20 */
     struct ModelNode *next;         /* 0x24 */
     char pad28[0x14];
@@ -785,14 +785,14 @@ typedef struct {
     u16 item;                       /* 0x30 which LevelDef (item_name_defs) it is */
     char pad32[0x02];
     u16 unk34;                      /* 0x34 passed to Script_Start in place of picking the item up, 0: nothing (func_001D0970) */
-    u8 required_flag;               /* 0x36 nonzero: it only appears while its byte of D_00356928 is below this */
+    u8 required_flag;               /* 0x36 nonzero: it only appears while its byte of map_item_pickup_counts is below this */
     u8 chance;                      /* 0x37 percent chance that it appears (func_001C87D8) */
     u8 group;                       /* 0x38 0-15: picks the roll and the map's threshold it is tested against */
     char pad39[0x06];
     u8 slot_id;                     /* 0x3F its slot in D_005B5EC0 */
 } MapItemDef;
 
-/* an item lying where it was dropped, as it is saved (0x14 bytes, 16 per map at D_00358928) */
+/* an item lying where it was dropped, as it is saved (0x14 bytes, 16 per map at dropped_item_records) */
 typedef struct {
     s16 position[3];                /* 0x00 */
     s8 rotation[3];                 /* 0x06 in 1/16 radian */
@@ -803,7 +803,7 @@ typedef struct {
     s32 order;                      /* 0x10 D_004469D0 when it was dropped: the oldest is replaced first */
 } DroppedItemRecord;
 
-/* a map's 16 dropped items (a row of D_00358928), for copying them all at once */
+/* a map's 16 dropped items (a row of dropped_item_records), for copying them all at once */
 typedef struct {
     DroppedItemRecord records[16];  /* 0x00 */
 } DroppedItemRecords;

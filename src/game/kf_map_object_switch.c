@@ -6,7 +6,7 @@ void func_001207D0(void *);
 void func_00120868(void *);
 extern u32 D_0038CC74[];
 extern void *D_00420D50[];
-extern GameStatus D_0038CC50;
+extern GameStatus game_status;
 extern EventRunner D_00420D00;
 
 /* Start handler: animation 4, step 1. */
@@ -105,19 +105,19 @@ void func_00120908(MapObject *object, int turn_on) {
 
     if ((object->unk10 & 0x2FF00) == 0x100 && turn_on != 0) {
         saved = D_00420D00.current;
-        bit = D_0038CC50.bit1;
-        D_0038CC50.bit1 = 1;
+        bit = game_status.bit1;
+        game_status.bit1 = 1;
         D_00420D00.current = object;
         func_001207D0(object);
         D_00420D00.current = saved;
-        D_0038CC50.bit1 = bit;
+        game_status.bit1 = bit;
     } else if ((object->unk10 & 0x2FF00) == 0x20300 && turn_on == 0) {
         saved = D_00420D00.current;
-        bit = D_0038CC50.bit1;
-        D_0038CC50.bit1 = 1;
+        bit = game_status.bit1;
+        game_status.bit1 = 1;
         D_00420D00.current = object;
         func_00120868(object);
         D_00420D00.current = saved;
-        D_0038CC50.bit1 = bit;
+        game_status.bit1 = bit;
     }
 }

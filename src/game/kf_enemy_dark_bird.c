@@ -1,4 +1,4 @@
-/* DarkBird: the behaviour of entity type 59 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* DarkBird: the behaviour of entity type 59 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Bird. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -7,7 +7,7 @@
 #include "kf_shot.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void Motion_ClearPartSlots(EntityModel *);
@@ -22,7 +22,7 @@ void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 f32 EntityCollision_DistanceToPropFloor(void *, void *);
@@ -98,7 +98,7 @@ void DarkBird_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = DarkBird_Think;
     unkE0->animate = (void (*)(void))DarkBird_Animate;
     unkE0->on_hit = (void (*)(void))DarkBird_OnHit;
@@ -210,13 +210,13 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
     if (entity->unkA0 == 0) {
         if (rand() % 100 < entity->params->unk438) {
             if (!(rand() & 1)) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
                 unkE0->unk79 = 1;
             } else {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
@@ -231,7 +231,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
         if (EntityCollision_DistanceToPropFloor(entity->unk14, entity->model->position) < (f32)entity->params->unk436 ||
             ENTITY_FLAG_BITS(entity)->bit44 == 1) {
             side = 1;
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 0x1E;
             unkE0->unk78 = 0;
             entity->unkCD = 1;
@@ -239,7 +239,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
         } else if (EntityCollision_DistanceToPropFloor(entity->unk14, entity->model->position) > (f32)(s16)entity->params->unk434 ||
                    ENTITY_FLAG_BITS(entity)->bit46 == 1) {
             side = 1;
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 0x1E;
             unkE0->unk78 = 0;
             entity->unkCD = 1;
@@ -250,7 +250,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
                 (f32)entity->spawn_info->unk42 * (entity->spawn_info->unk43 != 0 ? 100.0f : -100.0f) ||
             ENTITY_FLAG_BITS(entity)->bit44 == 1) {
             side = 1;
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 0x1E;
             unkE0->unk78 = 0;
             entity->unkCD = 1;
@@ -258,7 +258,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
         } else if (entity->spawn_info->spawn_y - entity->model->position[1] > (f32)entity->spawn_info->variant * 100.0f ||
                    ENTITY_FLAG_BITS(entity)->bit46 == 1) {
             side = 1;
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 0x1E;
             unkE0->unk78 = 0;
             entity->unkCD = 1;
@@ -276,8 +276,8 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
         switch (entity->unkCD) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
-                if (D_00413F80.position[1] - entity->model->position[1] < 200.0f) {
-                    entity->target = &D_00413F80;
+                if (player_state.position[1] - entity->model->position[1] < 200.0f) {
+                    entity->target = &player_state;
                     entity->unkA0 = rand() % 30 + 0x1E;
                     unkE0->unk78 = 0;
                     entity->unkCD = 1;
@@ -287,7 +287,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
                     return;
                 }
             } else {
-                height = D_00413F80.position[1] - entity->model->position[1];
+                height = player_state.position[1] - entity->model->position[1];
                 if (100.0f < height && height < 400.0f) {
                     EntityAi_StartAction(entity, DarkBird_MeleeAttack, unknown);
                 } else {
@@ -297,12 +297,12 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
             }
             break;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 0x3C;
             unkE0->unk78 = 0;
             break;
         default:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 0x3C;
             unkE0->unk78 = 0;
             break;
@@ -342,13 +342,13 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
         entity->unkA0 = rand() % 60 + 0x3C;
         if (entity->spawn_info->unk40 == 0) {
             if (EntityCollision_DistanceToPropFloor(entity->unk14, entity->model->position) < (f32)entity->params->unk436) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
                 unkE0->unk79 = 2;
             } else if (EntityCollision_DistanceToPropFloor(entity->unk14, entity->model->position) > (f32)(s16)entity->params->unk434) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
@@ -358,14 +358,14 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
             if (entity->spawn_info->spawn_y - entity->model->position[1] <
                     (f32)entity->spawn_info->unk42 * (entity->spawn_info->unk43 != 0 ? 100.0f : -100.0f) ||
                 ENTITY_FLAG_BITS(entity)->bit44 == 1) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
                 unkE0->unk79 = 2;
             } else if (entity->spawn_info->spawn_y - entity->model->position[1] > (f32)entity->spawn_info->variant * 100.0f ||
                        ENTITY_FLAG_BITS(entity)->bit46 == 1) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
@@ -374,13 +374,13 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
         }
         if (rand() % 100 < entity->params->unk438) {
             if (!(rand() & 1)) {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
                 unkE0->unk79 = 1;
             } else {
-                entity->target = &D_00413F80;
+                entity->target = &player_state;
                 entity->unkA0 = rand() % 30 + 0x1E;
                 unkE0->unk78 = 0;
                 entity->unkCD = 1;
@@ -605,12 +605,12 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bit10 = 1;
         ENTITY_FLAG_BITS(entity)->bit9 = 1;
-        entity->target = &D_00413F80;
+        entity->target = &player_state;
         unkE0->unk68 = 0;
         entity->action_step++;
     case 1:
         if (entity->distance_to_player < entity->radius + 250.0f + 100.0f) {
-            f32 above = D_00413F80.position[1] - entity->model->position[1];
+            f32 above = player_state.position[1] - entity->model->position[1];
 
             if (100.0f < above && above < 400.0f) {
                 entity->unkC6 = 0;
@@ -640,7 +640,7 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
             // match: retail passes two more arguments here and takes the result as 16 bits
             entity->unkC8 = ((s16 (*)(Entity *, s32, f32))func_00172BB8)(entity, 0, 0.0f);
         }
-        height = D_00413F80.position[1] - entity->model->position[1];
+        height = player_state.position[1] - entity->model->position[1];
         if (height < 200.0f || ENTITY_FLAG_BITS(entity)->bit44 == 1 || ENTITY_FLAG_BITS(entity)->bit45 == 1) {
             unkE0->unk79 = 2;
         } else if (400.0f < height || ENTITY_FLAG_BITS(entity)->bit46 == 1) {
@@ -780,7 +780,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
                 }
                 if (launch_frame != 0 && elapsed < launch_frame && frame >= launch_frame) {
                     point = (f32 *)func_0010CAB8((char *)entity->model, 0);
-                    angles[0] = EntityMath_WrapAngle(-atan2(D_00413F80.position[1] - point[1], EntityMath_DistanceXZ(point, &D_00413F80)));
+                    angles[0] = EntityMath_WrapAngle(-atan2(player_state.position[1] - point[1], EntityMath_DistanceXZ(point, &player_state)));
                     if (!(rand() & 1)) {
                         angles[1] = EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f + (f32)(rand() % 15) * 0.017453292f);
                     } else {
@@ -791,7 +791,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
                 }
             }
         } else {
-            Vector_Copy(target, &D_00413F80);
+            Vector_Copy(target, &player_state);
             target[1] -= 200.0f;
             if (record->unk10[0].unk02 != 0 && elapsed < record->unk10[0].unk02 && frame >= record->unk10[0].unk02) {
                 DarkBird_LaunchBothShots(entity, (EntityParamsUnk3D8 *)record, elapsed, unkE0->unk80.unk02, target, 0.7853982f, 0.0f);

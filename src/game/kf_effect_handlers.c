@@ -1,4 +1,4 @@
-/* D_00402550: the start and update handler of every kind of effect, the row EffectDef.unk100 picks
+/* effect_kind_handlers: the start and update handler of every kind of effect, the row EffectDef.unk100 picks
    (Effect_SpawnFromEffect and Effect_UpdateAll call them); only the first 128 rows are set. */
 #include "common.h"
 #include "kf_effect.h"
@@ -185,7 +185,7 @@ void EffectWhileGroundFan_Update(EffectActor *effect);
 void EffectWobble_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectWobble_Update(EffectActor *effect);
 
-void (*D_00402550[256][2])() = { /* 0x402550 */
+void (*effect_kind_handlers[256][2])() = { /* 0x402550 */
     { EffectFly_Start, EffectFly_Update },
     { EffectFly_StartRaised, EffectFly_Update },
     { EffectAtTarget_Start, EffectAtTarget_Update },

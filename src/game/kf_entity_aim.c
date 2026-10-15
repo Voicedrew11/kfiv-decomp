@@ -11,7 +11,7 @@ extern EntityRangeWeights D_0043EB68;
 float sinf(float);
 float cosf(float);
 void Vector_Add(void *, void *, void *);
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern f32 D_00431AF0[16];
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, int *, float *);
@@ -32,11 +32,11 @@ float sqrtf(float);
 extern int D_00446770;
 extern s32 D_004467A8[2];
 extern s32 D_004467B8[2];
-extern MapObject D_003A1A30[];
+extern MapObject map_slot_objects[];
 extern MapObject D_003AFA30[];
 void Vector_Copy(void *, void *);
 void func_001C2128(MapObject *, f32 *, f32 *, f32);
-extern MapSlot D_0038CD20[];
+extern MapSlot map_slots[];
 void func_001B2C48(void *);
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
@@ -56,7 +56,7 @@ static inline MapObject *map_objects(s32 map) {
         if (D_00446770 != map) {
             return D_003AFA30;
         }
-        return D_003A1A30;
+        return map_slot_objects;
     }
     return NULL;
 }
@@ -175,14 +175,14 @@ void EntityPoint_PickNearFromDistance(f32 *point, f32 *centre, f32 distance, f32
 void func_0018BC78(f32 *point, s32 distance) {
     f32 offset[4];
 
-    offset[0] = D_00413F80.unk1B0;
-    offset[1] = D_00413F80.unk1AC;
-    offset[2] = D_00413F80.unk1B4;
+    offset[0] = player_state.unk1B0;
+    offset[1] = player_state.unk1AC;
+    offset[2] = player_state.unk1B4;
     offset[3] = 0.0f;
-    sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, D_00431AF0, D_00413F80.rotation.y);
+    sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, D_00431AF0, player_state.rotation.y);
     sceVu0ApplyMatrix(offset, (int *)MODEL_MATRIX_SCRATCH, offset);
     Vector_Scale(offset, offset, distance);
-    Vector_Add(point, &D_00413F80, offset);
+    Vector_Add(point, &player_state, offset);
 }
 
 /* Looks for `target` in the tree of parts under `part` and multiplies `matrix` by the transforms on the way
@@ -396,7 +396,7 @@ s32 EntitySight_ObjectInWay(Entity *entity) {
 
     Vector_Copy(position, entity->model->position);
     position[1] -= entity->unk34 * 0.5f;
-    Vector_Copy(target, &D_00413F80);
+    Vector_Copy(target, &player_state);
     target[1] -= 115.0f;
     __asm__ volatile(
         "lqc2 $vf16, 0(%0)\n"
@@ -477,7 +477,7 @@ s32 EntitySight_EntityInWay(Entity *entity) {
     while (other != NULL) {
         flags = other->flags;
         if (((s32)(flags >> 1) & 1) && ((s32)(flags >> 2) & 3) < 2 && other != entity) {
-            if (EntityCollision_PointNearSegment(other->radius, (int *)&D_00413F80, (int)entity->model->position, (int)other->model->position)) {
+            if (EntityCollision_PointNearSegment(other->radius, (int *)&player_state, (int)entity->model->position, (int)other->model->position)) {
                 return TRUE;
             }
         }
@@ -497,10 +497,10 @@ s32 EntitySight_PropInWay(Entity *entity) {
     s32 hit;
 
     // match: index first, or the two address registers swap
-    player_record = &((MapRecord *)(D_00446770 + D_0038CD20)->records)[D_00413F80.map_index];
+    player_record = &((MapRecord *)(D_00446770 + map_slots)->records)[player_state.map_index];
     Vector_Copy(position, entity->model->position);
     position[1] -= entity->unk34 * 0.5f;
-    Vector_Copy(target, &D_00413F80);
+    Vector_Copy(target, &player_state);
     target[1] -= 115.0f;
     __asm__ volatile(
         "lqc2 $vf16, 0(%0)\n"
@@ -536,7 +536,7 @@ s32 EntitySight_WallInWay(Entity *entity) {
 
     Vector_Copy(position, entity->model->position);
     position[1] -= entity->unk34 * 0.5f;
-    Vector_Copy(target, &D_00413F80);
+    Vector_Copy(target, &player_state);
     target[1] -= 115.0f;
     if (position[0] < target[0]) {
         bounds[0] = position[0];
@@ -564,10 +564,10 @@ s32 EntityAim_AilPlayerInArc(void *target, f32 *point, f32 max_angle, f32 max_he
     f32 distance_out[4];
     f32 angle;
 
-    if (point[1] < D_00413F80.position.y - 230.0f) {
+    if (point[1] < player_state.position.y - 230.0f) {
         return FALSE;
     }
-    if (D_00413F80.position.y < point[1] - max_height) {
+    if (player_state.position.y < point[1] - max_height) {
         return FALSE;
     }
     __asm__ volatile(
@@ -580,11 +580,11 @@ s32 EntityAim_AilPlayerInArc(void *target, f32 *point, f32 max_angle, f32 max_he
         "vwaitq\n"
         "vaddq.x $vf16, $vf0, Q\n"
         "sqc2 $vf16, 0(%2)\n"
-        : : "r"(point), "r"(&D_00413F80), "r"(distance_out) : "memory");
+        : : "r"(point), "r"(&player_state), "r"(distance_out) : "memory");
     if (max_distance < distance_out[0]) {
         return FALSE;
     }
-    angle = heading - atan2f(D_00413F80.position.x - point[0], D_00413F80.position.z - point[2]);
+    angle = heading - atan2f(player_state.position.x - point[0], player_state.position.z - point[2]);
     angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
     if (angle > 3.1415927f) {
         angle -= 6.2831855f;

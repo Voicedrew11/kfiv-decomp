@@ -41,15 +41,15 @@ void Menu_AddKeyItem(u32, u32, int); // match: three arguments are passed; the d
 
 extern int D_00446770;
 extern int D_00446794;
-extern GameStatus D_0038CC50;
-extern MapSlot D_0038CD20[];
-extern PlayerState D_00413F80;
+extern GameStatus game_status;
+extern MapSlot map_slots[];
+extern PlayerState player_state;
 extern CameraState D_004325A0;
-extern MapLoadState D_0038D610;
-extern MapLoadRequest D_0038D640;
-extern MapDrawStateOverlays D_0038A1B0;
+extern MapLoadState map_load_state;
+extern MapLoadRequest map_load_request;
+extern MapDrawStateOverlays map_draw_state;
 extern u8 item_counts[];
-extern ItemCommonDef D_0041A6F8[];
+extern ItemCommonDef item_common_defs[];
 
 static s32 waiting_for_menu = 0;            /* 0x446FD4 ScriptCmd_OpenMenu is waiting for the menu */
 static s32 waiting_for_trade = 0;           /* 0x446FD8 ScriptCmd_OpenTrade is waiting */
@@ -553,9 +553,9 @@ void ScriptCmd_PauseMapObjectAnim(ScriptObjectCommand *command) {
 /* Command 120: eases the player toward the position x, y, z over `frames` frames; finishes at once while
    GameStatus.unk00 is set. */
 void ScriptCmd_MovePlayerTo(ScriptTripleCommand *command) {
-    if (D_0038CC50.unk00 != 0 ||
-        (command->x.value == D_00413F80.position.x && command->y.value == D_00413F80.position.y &&
-         command->z.value == D_00413F80.position.z)) {
+    if (game_status.unk00 != 0 ||
+        (command->x.value == player_state.position.x && command->y.value == player_state.position.y &&
+         command->z.value == player_state.position.z)) {
         command->active = 0;
     } else {
         int frames = command->frames.value;
@@ -569,9 +569,9 @@ void ScriptCmd_MovePlayerTo(ScriptTripleCommand *command) {
         divisor = (f32)frames;
         frames_left = frames - 1;
         command->frames.value = frames_left;
-        D_00413F80.position.x += (command->x.value - D_00413F80.position.x) / divisor;
-        D_00413F80.position.y += (command->y.value - D_00413F80.position.y) / divisor;
-        D_00413F80.position.z += (command->z.value - D_00413F80.position.z) / divisor;
+        player_state.position.x += (command->x.value - player_state.position.x) / divisor;
+        player_state.position.y += (command->y.value - player_state.position.y) / divisor;
+        player_state.position.z += (command->z.value - player_state.position.z) / divisor;
         if (frames_left == 0) {
             command->active = 0;
         }
@@ -581,12 +581,12 @@ void ScriptCmd_MovePlayerTo(ScriptTripleCommand *command) {
 /* Command 121: turns the player toward the rotation x (`target_a`) and heading (`target_b`) over `frames`
    frames; finishes at once while GameStatus.unk00 is set. */
 void ScriptCmd_TurnPlayerTo(ScriptBlendCommand *command) {
-    if (D_0038CC50.unk00 != 0 ||
-        (command->target_a.value == D_00413F80.rotation.x && command->target_b.value == D_00413F80.rotation.y)) {
+    if (game_status.unk00 != 0 ||
+        (command->target_a.value == player_state.rotation.x && command->target_b.value == player_state.rotation.y)) {
         command->active = 0;
     } else {
-        Angle_EaseToward(command->target_a.value, &D_00413F80.rotation.x, command->frames.value);
-        Angle_EaseToward(command->target_b.value, &D_00413F80.rotation.y, command->frames.value);
+        Angle_EaseToward(command->target_a.value, &player_state.rotation.x, command->frames.value);
+        Angle_EaseToward(command->target_b.value, &player_state.rotation.y, command->frames.value);
         if (--command->frames.value == 0) {
             command->active = 0;
         }
@@ -618,13 +618,13 @@ void ScriptCmd_AddItem(ScriptPairCommand *command) {
         }
         if ((int)item < 150) {
             def_offset = item << 5; // match: the byte offset of the item's ItemCommonDef, kept for both reads
-            def = (u8 *)D_0041A6F8 + def_offset;
+            def = (u8 *)item_common_defs + def_offset;
             if (((ItemCommonDef *)def)->flags >> 1 & 1) {
                 if (item_counts[item] >= 2) {
                     item_counts[item] = 1;
                 }
             }
-            if (((u8 *)D_0041A6F8)[def_offset] == 3) {
+            if (((u8 *)item_common_defs)[def_offset] == 3) {
                 Menu_AddKeyItem(item, item, def_offset);
             }
         } else {
@@ -652,7 +652,7 @@ void ScriptCmd_GetItemCount(ScriptQueryCommand *command) {
 
 /* Command 124: adds `value` to the player's HP, keeping it from 0 to the most it can be, then finishes. */
 void ScriptCmd_AddPlayerHp(ScriptValueCommand *command) {
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
     s32 amount;
 
     amount = command->value.value + player->hp_now;
@@ -668,7 +668,7 @@ void ScriptCmd_AddPlayerHp(ScriptValueCommand *command) {
 
 /* Command 125: adds `value` to the player's MP, keeping it from 0 to the most it can be, then finishes. */
 void ScriptCmd_AddPlayerMp(ScriptValueCommand *command) {
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
     s32 amount;
 
     amount = command->value.value + player->mp_now;
@@ -684,21 +684,21 @@ void ScriptCmd_AddPlayerMp(ScriptValueCommand *command) {
 
 /* Command 126: lets the player run (`value` nonzero) or not, then finishes. */
 void ScriptCmd_SetPlayerCanRun(ScriptValueCommand *command) {
-    D_0038CC50.unk06 = command->value.value == 0;
+    game_status.unk06 = command->value.value == 0;
     command->active = 0;
 }
 
 /* Command 127: hands the script the player's step counter (PlayerState.unk258) through `value`, then
    finishes. */
 void ScriptCmd_GetPlayerStepCounter(ScriptValueCommand *command) {
-    Script_StoreResult(&command->value, D_00413F80.unk258);
+    Script_StoreResult(&command->value, player_state.unk258);
     command->active = 0;
 }
 
 /* Command 128: hands the script the player's HP and the most it can be through `first` and `second`,
    then finishes. */
 void ScriptCmd_GetPlayerHp(ScriptPairCommand *command) {
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     Script_StoreResult(&command->first, player->hp_now);
     Script_StoreResult(&command->second, player->hp_max);
@@ -708,7 +708,7 @@ void ScriptCmd_GetPlayerHp(ScriptPairCommand *command) {
 /* Command 129: hands the script the player's MP and the most it can be through `first` and `second`,
    then finishes. */
 void ScriptCmd_GetPlayerMp(ScriptPairCommand *command) {
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     Script_StoreResult(&command->first, player->mp_now);
     Script_StoreResult(&command->second, player->mp_max);
@@ -721,7 +721,7 @@ void ScriptCmd_StartEffect(ScriptPointCommand *command) {
     VuVector4 position = (VuVector4){ command->from_x.value, command->from_y.value, command->from_z.value, 0.0f };
     VuVector4 rotation = (VuVector4){ command->to_x.value, command->to_y.value, command->to_z.value, 0.0f };
 
-    Effect_StartSpawner(command->object_id.value, &position, &rotation, &D_0038CD20[D_00446770]);
+    Effect_StartSpawner(command->object_id.value, &position, &rotation, &map_slots[D_00446770]);
     command->active = 0;
 }
 
@@ -733,7 +733,7 @@ void ScriptCmd_FlashScreenRed(ScriptThreadCommand *command) {
 
 /* Command 132: starts the effect `value` at the player's position and rotation, then finishes. */
 void ScriptCmd_StartEffectAtPlayer(ScriptValueCommand *command) {
-    PlayerState *player = &D_00413F80;
+    PlayerState *player = &player_state;
 
     Effect_StartSpawner(command->value.value, &player->position, &player->rotation, player);
     command->active = 0;
@@ -750,7 +750,7 @@ void ScriptCmd_LaunchShot(ScriptPointCommand *command) {
     shot->unk00 = 1;
     shot->unk20 = 0;
     shot->unk22 = 0;
-    func_001B4F30(command->object_id.value, shot, &from, &angles, &D_0038CD20[D_00446770]);
+    func_001B4F30(command->object_id.value, shot, &from, &angles, &map_slots[D_00446770]);
     command->active = 0;
 }
 
@@ -758,7 +758,7 @@ void ScriptCmd_LaunchShot(ScriptPointCommand *command) {
    script places it), then finishes. */
 void ScriptCmd_SetCameraMode(ScriptValueCommand *command) {
     if ((u32)command->value.value < 2) {
-        D_0038CC50.unk03 = command->value.value;
+        game_status.unk03 = command->value.value;
     }
     command->active = 0;
 }
@@ -766,10 +766,10 @@ void ScriptCmd_SetCameraMode(ScriptValueCommand *command) {
 /* Command 141: while the script places the camera, sets how it looks at a point (GameStatus.unk04,
    `object_id` 0 or 1) and the point (`from`), then finishes. */
 void ScriptCmd_SetCameraLookAt(ScriptPointCommand *command) {
-    if (D_0038CC50.unk03) {
+    if (game_status.unk03) {
         if (command->object_id.value >= 0) {
             if (command->object_id.value < 2) {
-                D_0038CC50.unk04 = command->object_id.value;
+                game_status.unk04 = command->object_id.value;
                 D_004325A0.unk20[0] = command->from_x.value;
                 D_004325A0.unk20[1] = command->from_y.value;
                 D_004325A0.unk20[2] = command->from_z.value;
@@ -782,7 +782,7 @@ void ScriptCmd_SetCameraLookAt(ScriptPointCommand *command) {
 /* Command 142: while the script places the camera, eases it toward the position x, y, z over `frames`
    frames. */
 void ScriptCmd_MoveCameraTo(ScriptTripleCommand *command) {
-    if (D_0038CC50.unk03 != 0 &&
+    if (game_status.unk03 != 0 &&
         (command->x.value != D_004325A0.position[0] || command->y.value != D_004325A0.position[1] ||
          command->z.value != D_004325A0.position[2])) {
         int frames = command->frames.value;
@@ -808,7 +808,7 @@ void ScriptCmd_MoveCameraTo(ScriptTripleCommand *command) {
 /* Command 143: while the script places the camera, turns it toward the rotation x, y, z over `frames`
    frames. */
 void ScriptCmd_TurnCameraTo(ScriptTripleCommand *command) {
-    if (D_0038CC50.unk03 == 0 ||
+    if (game_status.unk03 == 0 ||
         (command->x.value == D_004325A0.unk10 && command->y.value == D_004325A0.unk14 &&
          command->z.value == D_004325A0.unk18)) {
         command->active = 0;
@@ -848,15 +848,15 @@ void ScriptCmd_SetPropColor(ScriptObjectValuesCommand *command) {
    frames. */
 void ScriptCmd_LoadMap(ScriptValueCommand *command) {
     if ((u32)command->value.value < 0x80) {
-        if (D_0038D610.step == 0 && D_0038D640.map == 0xFFFF) {
-            D_0038D640.map = command->value.value;
-            D_0038D640.x = 0.0f;
-            D_0038D640.y = 0.0f;
-            D_0038D640.z = 0.0f;
-            D_0038D610.step = 0;
-            D_0038D610.request = &D_0038D640;
-            D_0038D610.next_request = NULL;
-            D_0038D610.timer = 2;
+        if (map_load_state.step == 0 && map_load_request.map == 0xFFFF) {
+            map_load_request.map = command->value.value;
+            map_load_request.x = 0.0f;
+            map_load_request.y = 0.0f;
+            map_load_request.z = 0.0f;
+            map_load_state.step = 0;
+            map_load_state.request = &map_load_request;
+            map_load_state.next_request = NULL;
+            map_load_state.timer = 2;
             command->active = 0;
         }
         return;
@@ -865,9 +865,9 @@ void ScriptCmd_LoadMap(ScriptValueCommand *command) {
 }
 
 /* Command 149: commits the scripted map load ScriptCmd_LoadMap asked for: with a background load running
-   and a request pending it sets D_00446794, which makes the loader take D_0038D640 and finish at once. */
+   and a request pending it sets D_00446794, which makes the loader take map_load_request and finish at once. */
 void ScriptCmd_CommitMapLoad(ScriptThreadCommand *command) {
-    if (D_0038D610.step != 0 && D_0038D640.map != 0xFFFF) {
+    if (map_load_state.step != 0 && map_load_request.map != 0xFFFF) {
         D_00446794 = 1;
     }
     command->active = 0;
@@ -1028,7 +1028,7 @@ void ScriptCmd_SetMapFog(ScriptFogCommand *command) {
     int green;
     int blue;
 
-    slot = &D_0038CD20[D_00446770];
+    slot = &map_slots[D_00446770];
     block_index = command->block.value;
     near_value = command->near_value.value;
     far_value = command->far_value.value;
@@ -1052,7 +1052,7 @@ void ScriptCmd_SetMapFog(ScriptFogCommand *command) {
 /* Command 158: sets the direction and colour (0 to 255) of one of the three lights of light block `block`
    of the current map, then finishes. */
 void ScriptCmd_SetMapLight(ScriptLightCommand *command) {
-    MapSlot *slot = &D_0038CD20[D_00446770];
+    MapSlot *slot = &map_slots[D_00446770];
     VuVector4 direction = (VuVector4){ command->dir_x.value, command->dir_y.value, command->dir_z.value };
     MapSlotUnk10Lights *lights;
 
@@ -1076,7 +1076,7 @@ void ScriptCmd_SetMapAmbientLight(ScriptColorCommand *command) {
     MapSlotUnk10Lights *lights;
     MapSlot *slot;
 
-    slot = &D_0038CD20[D_00446770];
+    slot = &map_slots[D_00446770];
     block_index = command->block.value;
     if (block_index < 0x20) {
         // match: the block's offset is added to the address as a number
@@ -1184,10 +1184,10 @@ void ScriptCmd_PlayVoiceSound(ScriptCallCommand *command) {
 void ScriptCmd_OpenMenu(ScriptThreadCommand *command) {
     if (waiting_for_menu == 0) {
         waiting_for_menu = 1;
-        D_0038CC50.bit2 = TRUE;
+        game_status.bit2 = TRUE;
         return;
     }
-    if (!D_0038CC50.bit2) {
+    if (!game_status.bit2) {
         waiting_for_menu = 0;
         command->active = 0;
     }
@@ -1197,7 +1197,7 @@ void ScriptCmd_OpenMenu(ScriptThreadCommand *command) {
    unk2C, Trade_Run) and waits until it has. */
 void ScriptCmd_OpenTrade(ScriptValueCommand *command) {
     if (waiting_for_trade == 0) {
-        GameStatus *status = &D_0038CC50;
+        GameStatus *status = &game_status;
         int value;
 
         status->bit3 = TRUE;
@@ -1206,7 +1206,7 @@ void ScriptCmd_OpenTrade(ScriptValueCommand *command) {
         status->unk2C = value;
         return;
     }
-    if (!D_0038CC50.bit3) {
+    if (!game_status.bit3) {
         waiting_for_trade = 0;
         command->active = 0;
     }
@@ -1216,13 +1216,13 @@ void ScriptCmd_OpenTrade(ScriptValueCommand *command) {
    waits until it has. */
 void ScriptCmd_OpenSmith(ScriptThreadCommand *command) {
     if (waiting_for_smith == 0) {
-        GameStatus *status = &D_0038CC50;
+        GameStatus *status = &game_status;
 
         waiting_for_smith = 1;
         status->bit4 = TRUE;
         return;
     }
-    if (!D_0038CC50.bit4) {
+    if (!game_status.bit4) {
         waiting_for_smith = 0;
         command->active = 0;
     }
@@ -1232,13 +1232,13 @@ void ScriptCmd_OpenSmith(ScriptThreadCommand *command) {
    SaveScreen_Run) and waits until it has. */
 void ScriptCmd_OpenSaveScreen(ScriptThreadCommand *command) {
     if (waiting_for_save == 0) {
-        GameStatus *status = &D_0038CC50;
+        GameStatus *status = &game_status;
 
         waiting_for_save = 1;
         status->save_requested = TRUE;
         return;
     }
-    if (!D_0038CC50.save_requested) {
+    if (!game_status.save_requested) {
         waiting_for_save = 0;
         command->active = 0;
     }
@@ -1253,7 +1253,7 @@ void ScriptCmd_ChangeMap(ScriptValueCommand *command) {
 /* Command 175: leaves the main loop (GameStatus bits 9 and 10), with bit 11 set when `value` is not 0,
    then finishes. */
 void ScriptCmd_ExitMainLoop(ScriptValueCommand *command) {
-    GameStatusSplitBits *status = GAME_STATUS_SPLIT_BITS(&D_0038CC50);
+    GameStatusSplitBits *status = GAME_STATUS_SPLIT_BITS(&game_status);
 
     status->bit9 = TRUE;
     status->bit10 = TRUE;
@@ -1265,12 +1265,12 @@ void ScriptCmd_ExitMainLoop(ScriptValueCommand *command) {
    reading input at the next START press, while `value` 0 clears both bits. Then finishes. */
 void ScriptCmd_HoldFrameOnStart(ScriptValueCommand *command) {
     if (command->value.value != 0) {
-        if (!D_0038CC50.bit12) {
-            GAME_STATUS_FLAG_WORD(&D_0038CC50) = (GAME_STATUS_FLAG_WORD(&D_0038CC50) | 0x1000) & ~0x2000;
+        if (!game_status.bit12) {
+            GAME_STATUS_FLAG_WORD(&game_status) = (GAME_STATUS_FLAG_WORD(&game_status) | 0x1000) & ~0x2000;
         }
     } else {
-        D_0038CC50.bit12 = FALSE;
-        D_0038CC50.bit13 = FALSE;
+        game_status.bit12 = FALSE;
+        game_status.bit13 = FALSE;
     }
     command->active = 0;
 }
@@ -1284,13 +1284,13 @@ void ScriptCmd_ReloadArmModels(ScriptWaitCommand *command) {
         command->started = 1;
         break;
     case 1:
-        if (!D_0038CC50.bit14) {
-            D_0038CC50.bit14 = TRUE;
+        if (!game_status.bit14) {
+            game_status.bit14 = TRUE;
             command->started = 2;
         }
         break;
     case 2:
-        if (!D_0038CC50.bit14) {
+        if (!game_status.bit14) {
             command->active = 0;
         }
         break;
@@ -1303,14 +1303,14 @@ void ScriptCmd_ReloadArmModels(ScriptWaitCommand *command) {
 /* Command 196: sets whether the HUD is drawn (MapDrawStateOverlays.unk68, which Hud_Draw tests before it
    draws anything), then finishes. */
 void ScriptCmd_SetHudShown(ScriptValueCommand *command) {
-    D_0038A1B0.unk68 = command->value.value;
+    map_draw_state.unk68 = command->value.value;
     command->active = 0;
 }
 
 /* Command 197: sets the colour and alpha the screen is covered with (func_0010A4E8), then finishes. The
    blend mode is meant to come from `blend`, but the switch has no breaks and it always ends as 0x44. */
 void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command) {
-    MapDrawStateOverlays *overlays = &D_0038A1B0;
+    MapDrawStateOverlays *overlays = &map_draw_state;
 
     overlays->unk6C = command->red.value;
     overlays->unk70 = command->green.value;
@@ -1320,11 +1320,11 @@ void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command) {
     case 0:
         overlays->unk80 = 0x44;
     case 1: // match: no break in any case, so the blend mode always ends as 0x44
-        D_0038A1B0.unk80 = 0x48;
+        map_draw_state.unk80 = 0x48;
     case 2:
-        D_0038A1B0.unk80 = 0x42;
+        map_draw_state.unk80 = 0x42;
     default:
-        D_0038A1B0.unk80 = 0x44;
+        map_draw_state.unk80 = 0x44;
     }
     command->active = 0;
 }

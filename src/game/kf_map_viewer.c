@@ -72,15 +72,15 @@ void func_00106C58(void);
 void func_00107E70(int, int, int);
 void func_0010D308(ModelInstance *);
 
-extern int D_0038CC50[];
-extern MapSlot D_0038CD20[];
+extern int game_status[];
+extern MapSlot map_slots[];
 extern int D_00446770;
-extern u8 D_00349680[0x10];
-extern u16 D_00413DA8[];
-extern PlayerState D_00413F80;
-extern ViewerEntry D_0038D6B0[];
-extern ScreenQuad D_0038D770;
-extern ScreenQuad D_0038D7B0;
+extern u8 game_options[0x10];
+extern u16 pad_state[];
+extern PlayerState player_state;
+extern ViewerEntry viewer_entries[];
+extern ScreenQuad viewer_marker_rect;
+extern ScreenQuad viewer_picture_rect;
 extern ScreenQuad D_0038D7F0;
 extern ScreenQuad D_0038D830;
 extern ScreenQuad D_0038D870;
@@ -91,8 +91,8 @@ extern char D_0043E748[];       /* "map_view/pointer.omd" */
 extern f32 D_00446798[];        /* the largest float */
 extern f32 D_0044679C[];        /* the lowest float */
 extern f32 D_00431AF0[16];      /* the unit matrix */
-extern MapDrawState D_0038A1B0;
-extern MapSlotUnk10Words D_0038D930;
+extern MapDrawState map_draw_state;
+extern MapSlotUnk10Words viewer_default_lights;
 extern char D_0038D8B0[0x40];
 extern char D_0038D8F0[0x40];
 extern s64 D_00432E20[];
@@ -101,7 +101,7 @@ extern s64 D_00433050[];
 /* the map viewer: the picture data read into the spare area, the viewer picked, and its animation */
 static char *viewer_data;                   /* 0x44705C the spare area the viewer's textures are read into */
 static int viewer_data_size;                /* 0x447060 */
-static int picked_viewer;                   /* 0x447064 index into D_0038D6B0 */
+static int picked_viewer;                   /* 0x447064 index into viewer_entries */
 static int viewer_picture;                  /* 0x447068 which of the viewer's pictures is shown */
 static int pulse_frame;                     /* 0x44706C frame of the 60-frame pulse of the player marker */
 static int square_pulse_frame;              /* 0x447070 frame of the pulse of the fixed square */
@@ -117,9 +117,9 @@ void func_0011A438(int viewer_number) {
     u32 viewer_index;
     u8 *row;
 
-    if (!(((u32)D_0038CC50[9] >> 8) & 1) && ((viewer_index = viewer_number - 1) < 5U)) {
+    if (!(((u32)game_status[9] >> 8) & 1) && ((viewer_index = viewer_number - 1) < 5U)) {
         if (viewer_number == 5) {
-            row = (u8 *)D_0038CD20 + D_00446770 * 0x60;
+            row = (u8 *)map_slots + D_00446770 * 0x60;
             if (func_0011C678(row[1]) == 0) {
                 Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_UNABLE_TO_USE_HERE);
                 return;
@@ -128,7 +128,7 @@ void func_0011A438(int viewer_number) {
         picked_viewer = viewer_index;
         pulse_frame = 0;
         square_pulse_frame = 0;
-        D_0038CC50[9] |= 0x100;
+        game_status[9] |= 0x100;
     }
 }
 
@@ -140,7 +140,7 @@ void func_0011A500(void) {
         Sound_UpdateTagged();
         Sound_MuteTracked();
         func_001CEBE0();
-        D_0038D6B0[picked_viewer].run();
+        viewer_entries[picked_viewer].run();
         Sound_UnmuteTagged();
         Sound_UnmutePositional();
         Sound_UnmuteTracked();
@@ -150,7 +150,7 @@ void func_0011A500(void) {
 }
 
 void func_0011A598(void) {
-    int *game_state = (int *)D_0038CC50;
+    int *game_state = (int *)game_status;
 
     picked_viewer = 0;
     viewer_picture = 0;
@@ -216,10 +216,10 @@ static int func_0011A600(void) {
     buffer = align16(buffer);
     func_0010D018(&pointer_model, &model_data, &buffer);
     func_0010E6A8(&pointer_model, 0x260, 0x240);
-    Vector_Copy(&pointer_model.position, &D_00413F80);
+    Vector_Copy(&pointer_model.position, &player_state);
     pointer_model.position.y -= 100.0f;
     pointer_model.rotation.x = 0.0f;
-    pointer_model.rotation.y = D_00413F80.rotation.y;
+    pointer_model.rotation.y = player_state.rotation.y;
     pointer_model.rotation.z = 0.0f;
     pointer_model.unkE0 = pointer_model.unkE4 = pointer_model.unkE8 = pointer_model.rotation.w = 4.0f;
     pointer_model.unkEC = 1.0f;
@@ -235,9 +235,9 @@ static int func_0011A600(void) {
     bounds_min.z = bounds_min.y = bounds_min.x = D_00446798[0];
     bounds_max.z = bounds_max.y = bounds_max.x = D_0044679C[0];
     for (i = 0; i < 2; i++) {
-        if (D_0038CD20[i].unk00 != 0 && func_0011C678(D_0038CD20[i].tag) != 0) {
-            count = ((MapSlotUnk08 *)D_0038CD20[i].header)->record_count;
-            record = (MapRecordBounds *)D_0038CD20[i].records;
+        if (map_slots[i].unk00 != 0 && func_0011C678(map_slots[i].tag) != 0) {
+            count = ((MapSlotUnk08 *)map_slots[i].header)->record_count;
+            record = (MapRecordBounds *)map_slots[i].records;
             for (j = 0; j < count; j++, record++) {
                 if (bounds_min.x > record->unk40[0]) {
                     bounds_min.x = record->unk40[0];
@@ -267,7 +267,7 @@ void func_0011AA08(void) {
     int next_picture;
     ViewerEntry *viewer;
 
-    viewer = &D_0038D6B0[picked_viewer];
+    viewer = &viewer_entries[picked_viewer];
     do {
         Display_SwapBuffers(0);
         func_001096E8();
@@ -277,16 +277,16 @@ void func_0011AA08(void) {
         func_0011AAE8();
         func_001095D8();
         func_001B5460();
-        if ((D_00413DA8[1] & 0x10) && (viewer_picture > 0)) {
+        if ((pad_state[1] & 0x10) && (viewer_picture > 0)) {
             viewer_picture -= 1;
-        } else if (D_00413DA8[1] & 0x40) {
+        } else if (pad_state[1] & 0x40) {
             next_picture = viewer_picture + 1;
             if (next_picture < viewer->count) {
                 viewer_picture = next_picture;
             }
         }
         func_00109800();
-    } while ((D_00413DA8[1] & 0x2000) == 0);
+    } while ((pad_state[1] & 0x2000) == 0);
 }
 
 /* Draws the picked viewer's picture and the player's marker on it: a turned, pulsing arrow where the
@@ -299,7 +299,7 @@ void func_0011AAE8(void) {
     int corner_ys[4];
     int x;
     int y;
-    ViewerEntry *entry = &D_0038D6B0[picked_viewer];
+    ViewerEntry *entry = &viewer_entries[picked_viewer];
     int found;
     int alpha;
     int i;
@@ -316,7 +316,7 @@ void func_0011AAE8(void) {
     func_0010B410((TextureTableHeader *)viewer_data, viewer_picture);
     func_00109E88();
     func_00109E18();
-    func_0010A100(&D_0038D7B0);
+    func_0010A100(&viewer_picture_rect);
     found = ((int (*)(int *, int *))entry->unk04)(&x, &y);
     if (found == 1) {
         func_00109A50();
@@ -333,8 +333,8 @@ void func_0011AAE8(void) {
             alpha = 0;
         }
         pulse_frame = (pulse_frame + 1) % 60;
-        cosine = cosf(D_00413F80.rotation.y);
-        sine = sinf(D_00413F80.rotation.y);
+        cosine = cosf(player_state.rotation.y);
+        sine = sinf(player_state.rotation.y);
         corner_xs[0] = x + (int)((cosine * -32.0f - sine * -44.0f) * 0.5f);
         corner_ys[0] = y + (int)((sine * -32.0f + cosine * -44.0f) * 0.5f);
         corner_xs[1] = x + (int)((cosine * 32.0f - sine * -44.0f) * 0.5f);
@@ -386,19 +386,19 @@ void func_0011AAE8(void) {
     }
     if (found == -1) {
         if (square_pulse_frame < 45) {
-            D_0038D770.alpha = sinf(square_pulse_frame * 3.1415927f / 45.0f) * 128.0f;
+            viewer_marker_rect.alpha = sinf(square_pulse_frame * 3.1415927f / 45.0f) * 128.0f;
         } else {
-            D_0038D770.alpha = 0;
+            viewer_marker_rect.alpha = 0;
         }
         square_pulse_frame = (square_pulse_frame + 1) % 60;
-        D_0038D770.first_x = (x + 0x690) << 4;
-        D_0038D770.first_y = (y + 0x6F0) << 4;
-        D_0038D770.second_x = (x + 0x6F0) << 4;
-        D_0038D770.second_y = (y + 0x750) << 4;
+        viewer_marker_rect.first_x = (x + 0x690) << 4;
+        viewer_marker_rect.first_y = (y + 0x6F0) << 4;
+        viewer_marker_rect.second_x = (x + 0x6F0) << 4;
+        viewer_marker_rect.second_y = (y + 0x750) << 4;
         func_00109A50();
         func_00109A80(GS_REG_ALPHA_1, 0x48);
         func_00109AD0();
-        func_0010A100(&D_0038D770);
+        func_0010A100(&viewer_marker_rect);
     }
     if (entry->count >= 2) {
         func_0010B410((TextureTableHeader *)viewer_data, entry->count * 2 | 1);
@@ -426,7 +426,7 @@ void func_0011AAE8(void) {
     func_00109A50();
     func_00109A80(GS_REG_ZBUF_1, 0xA000118);
     func_00109AD0();
-    func_00107CD8(D_00349680[10]);
+    func_00107CD8(game_options[10]);
 }
 
 /* Where the player's marker goes on the map viewer's picture viewer_picture: -1 for a fixed spot on the
@@ -434,10 +434,10 @@ void func_0011AAE8(void) {
 int func_0011B1C0(int *screen_x, int *screen_y) {
     switch (viewer_picture) {
     case 0:
-        switch (D_0038CD20[D_00446770].tag) {
+        switch (map_slots[D_00446770].tag) {
         case 0:
-            if (D_00413F80.map_index != 0xFFFF
-                && ((MapRecord *)D_0038CD20[D_00446770].records)[D_00413F80.map_index].unk4E == 0xC8) {
+            if (player_state.map_index != 0xFFFF
+                && ((MapRecord *)map_slots[D_00446770].records)[player_state.map_index].unk4E == 0xC8) {
                 *screen_x = 0x96;
                 *screen_y = 0xDB;
             } else {
@@ -446,8 +446,8 @@ int func_0011B1C0(int *screen_x, int *screen_y) {
             }
             return -1;
         case 2:
-            if (D_00413F80.map_index != 0xFFFF
-                && ((MapRecord *)D_0038CD20[D_00446770].records)[D_00413F80.map_index].unk4E == 0xC8) {
+            if (player_state.map_index != 0xFFFF
+                && ((MapRecord *)map_slots[D_00446770].records)[player_state.map_index].unk4E == 0xC8) {
                 *screen_x = 0x96;
                 *screen_y = 0xDB;
             } else {
@@ -476,24 +476,24 @@ int func_0011B1C0(int *screen_x, int *screen_y) {
             return FALSE;
         }
     case 1:
-        if (D_00413F80.position.y > -700.0f) {
-            switch (D_0038CD20[D_00446770].tag) {
+        if (player_state.position.y > -700.0f) {
+            switch (map_slots[D_00446770].tag) {
             case 0x5F:
             case 0x60:
             case 0x61:
-                *screen_x = (D_00413F80.position.x - 0.0f) * 24.615385f / 1000.0f + 148.0f;
-                *screen_y = 273.0f - (D_00413F80.position.z - 0.0f) * 24.88889f / 1000.0f;
+                *screen_x = (player_state.position.x - 0.0f) * 24.615385f / 1000.0f + 148.0f;
+                *screen_y = 273.0f - (player_state.position.z - 0.0f) * 24.88889f / 1000.0f;
                 return TRUE;
             }
         } else {
-            switch (D_0038CD20[D_00446770].tag) {
+            switch (map_slots[D_00446770].tag) {
             case 0x5F:
-                if (D_00413F80.position.x > 4800.0f && D_00413F80.position.z > 8000.0f) {
+                if (player_state.position.x > 4800.0f && player_state.position.z > 8000.0f) {
                     return FALSE;
                 }
             case 0x60:
-                *screen_x = (D_00413F80.position.x - 3600.0f) * 24.615385f / 1000.0f + 490.0f;
-                *screen_y = 143.0f - (D_00413F80.position.z - 5200.0f) * 24.88889f / 1000.0f;
+                *screen_x = (player_state.position.x - 3600.0f) * 24.615385f / 1000.0f + 490.0f;
+                *screen_y = 143.0f - (player_state.position.z - 5200.0f) * 24.88889f / 1000.0f;
                 return TRUE;
             case 0x61: // match: named although it does what the default does; it shapes the compare tree
             default:
@@ -510,67 +510,67 @@ int func_0011B1C0(int *screen_x, int *screen_y) {
 int func_0011B4F0(int *screen_x, int *screen_y) {
     switch (viewer_picture) {
     case 0:
-        switch (D_0038CD20[D_00446770].tag) {
+        switch (map_slots[D_00446770].tag) {
         case 0x70:
         case 0x71:
-            *screen_x = (D_00413F80.position.x - 0.0f) * 18.626263f / 1000.0f + 321.0f;
-            *screen_y = 280.0f - (D_00413F80.position.z - 0.0f) * 18.666666f / 1000.0f;
+            *screen_x = (player_state.position.x - 0.0f) * 18.626263f / 1000.0f + 321.0f;
+            *screen_y = 280.0f - (player_state.position.z - 0.0f) * 18.666666f / 1000.0f;
             return TRUE;
         case 0x73:
-            *screen_x = (D_00413F80.position.x - -10500.0f) * 18.626263f / 1000.0f + 321.0f;
-            *screen_y = 280.0f - (D_00413F80.position.z - 500.0f) * 18.666666f / 1000.0f;
+            *screen_x = (player_state.position.x - -10500.0f) * 18.626263f / 1000.0f + 321.0f;
+            *screen_y = 280.0f - (player_state.position.z - 500.0f) * 18.666666f / 1000.0f;
             return TRUE;
         case 0x74:
-            *screen_x = (D_00413F80.position.x - -9700.0f) * 18.626263f / 1000.0f + 321.0f;
-            *screen_y = 280.0f - (D_00413F80.position.z - -8900.0f) * 18.666666f / 1000.0f;
+            *screen_x = (player_state.position.x - -9700.0f) * 18.626263f / 1000.0f + 321.0f;
+            *screen_y = 280.0f - (player_state.position.z - -8900.0f) * 18.666666f / 1000.0f;
             return TRUE;
         }
         break;
     case 1:
-        switch (D_0038CD20[D_00446770].tag) {
+        switch (map_slots[D_00446770].tag) {
         case 0x1F:
-            *screen_x = (D_00413F80.position.x - 0.0f) * 11.243243f / 1000.0f + 348.0f;
-            *screen_y = 263.0f - (D_00413F80.position.z - -12100.0f) * 11.48718f / 1000.0f;
+            *screen_x = (player_state.position.x - 0.0f) * 11.243243f / 1000.0f + 348.0f;
+            *screen_y = 263.0f - (player_state.position.z - -12100.0f) * 11.48718f / 1000.0f;
             return TRUE;
         case 0x6B:
         case 0x6C:
         case 0x6D:
         case 0x6E:
         case 0x6F:
-            *screen_x = (D_00413F80.position.x - 0.0f) * 11.243243f / 1000.0f + 348.0f;
-            *screen_y = 263.0f - (D_00413F80.position.z - 0.0f) * 11.48718f / 1000.0f;
+            *screen_x = (player_state.position.x - 0.0f) * 11.243243f / 1000.0f + 348.0f;
+            *screen_y = 263.0f - (player_state.position.z - 0.0f) * 11.48718f / 1000.0f;
             return TRUE;
         case 0x73:
-            *screen_x = (D_00413F80.position.x - -10500.0f) * 11.243243f / 1000.0f + 348.0f;
-            *screen_y = 263.0f - (D_00413F80.position.z - 500.0f) * 11.48718f / 1000.0f;
+            *screen_x = (player_state.position.x - -10500.0f) * 11.243243f / 1000.0f + 348.0f;
+            *screen_y = 263.0f - (player_state.position.z - 500.0f) * 11.48718f / 1000.0f;
             return TRUE;
         }
         break;
     case 2:
-        switch (D_0038CD20[D_00446770].tag) {
+        switch (map_slots[D_00446770].tag) {
         case 0xF:
-            *screen_x = (D_00413F80.position.x - 9300.0f) * 11.186992f / 1000.0f + 194.0f;
-            *screen_y = 167.0f - (D_00413F80.position.z - -4400.0f) * 11.2f / 1000.0f;
+            *screen_x = (player_state.position.x - 9300.0f) * 11.186992f / 1000.0f + 194.0f;
+            *screen_y = 167.0f - (player_state.position.z - -4400.0f) * 11.2f / 1000.0f;
             return TRUE;
         case 0x10:
-            *screen_x = (D_00413F80.position.x - 700.0f) * 11.186992f / 1000.0f + 335.0f;
-            *screen_y = 328.0f - (D_00413F80.position.z - 1650.0f) * 11.2f / 1000.0f;
+            *screen_x = (player_state.position.x - 700.0f) * 11.186992f / 1000.0f + 335.0f;
+            *screen_y = 328.0f - (player_state.position.z - 1650.0f) * 11.2f / 1000.0f;
             return TRUE;
         case 0x64:
         case 0x69:
         case 0x6A:
-            *screen_x = (D_00413F80.position.x - 0.0f) * 11.186992f / 1000.0f + 326.0f;
-            *screen_y = 168.0f - (D_00413F80.position.z - 0.0f) * 11.2f / 1000.0f;
+            *screen_x = (player_state.position.x - 0.0f) * 11.186992f / 1000.0f + 326.0f;
+            *screen_y = 168.0f - (player_state.position.z - 0.0f) * 11.2f / 1000.0f;
             return TRUE;
         case 0x65:
-            *screen_x = (D_00413F80.position.x - 3800.0f) * 11.186992f / 1000.0f + 326.0f;
-            *screen_y = 168.0f - (D_00413F80.position.z - -7900.0f) * 11.2f / 1000.0f;
+            *screen_x = (player_state.position.x - 3800.0f) * 11.186992f / 1000.0f + 326.0f;
+            *screen_y = 168.0f - (player_state.position.z - -7900.0f) * 11.2f / 1000.0f;
             return TRUE;
         case 0x66:
         case 0x67:
         case 0x68:
-            *screen_x = (D_00413F80.position.x - -7050.0f) * 11.186992f / 1000.0f + 326.0f;
-            *screen_y = 168.0f - (D_00413F80.position.z - 0.0f) * 11.2f / 1000.0f;
+            *screen_x = (player_state.position.x - -7050.0f) * 11.186992f / 1000.0f + 326.0f;
+            *screen_y = 168.0f - (player_state.position.z - 0.0f) * 11.2f / 1000.0f;
             return TRUE;
         }
         break;
@@ -583,18 +583,18 @@ int func_0011BAB8(int *map_x, int *map_y) {
     int area;
     char *entry;
 
-    entry = (char *)D_0038CD20 + D_00446770 * 0x60;
+    entry = (char *)map_slots + D_00446770 * 0x60;
     area = ((u8 *)entry)[1];
     if (area >= 0x11) {
         if (area < 0x14) {
-            *map_x = (D_00413F80.position.x - 0.0f) * 22.857143f / 1000.0f + 360.0f;
-            *map_y = 206.0f - (D_00413F80.position.z - 0.0f) * 22.4f / 1000.0f;
+            *map_x = (player_state.position.x - 0.0f) * 22.857143f / 1000.0f + 360.0f;
+            *map_y = 206.0f - (player_state.position.z - 0.0f) * 22.4f / 1000.0f;
             return TRUE;
         }
         if (area < 0x1A) {
             if (area >= 0x18) {
-                *map_x = (D_00413F80.position.x - 0.0f) * 22.857143f / 1000.0f + 205.0f;
-                *map_y = 368.0f - (D_00413F80.position.z - 0.0f) * 22.4f / 1000.0f;
+                *map_x = (player_state.position.x - 0.0f) * 22.857143f / 1000.0f + 205.0f;
+                *map_y = 368.0f - (player_state.position.z - 0.0f) * 22.4f / 1000.0f;
                 return TRUE;
             }
         }
@@ -604,14 +604,14 @@ int func_0011BAB8(int *map_x, int *map_y) {
 
 /* Turns the player's position into a point on the map picture of maps 0x1A and 0x1B; FALSE on other maps. */
 int func_0011BBC0(int *screen_x, int *screen_y) {
-    switch (D_0038CD20[D_00446770].tag) {
+    switch (map_slots[D_00446770].tag) {
     case 0x1A:
-        *screen_x = (D_00413F80.position.x - -3200.0f) * 21.333334f / 1000.0f + 438.0f;
-        *screen_y = 214.0f - (D_00413F80.position.z - -5600.0f) * 20.363636f / 1000.0f;
+        *screen_x = (player_state.position.x - -3200.0f) * 21.333334f / 1000.0f + 438.0f;
+        *screen_y = 214.0f - (player_state.position.z - -5600.0f) * 20.363636f / 1000.0f;
         break;
     case 0x1B:
-        *screen_x = (D_00413F80.position.x - -8800.0f) * 21.333334f / 1000.0f + 320.0f;
-        *screen_y = 82.0f - (D_00413F80.position.z - 900.0f) * 20.363636f / 1000.0f;
+        *screen_x = (player_state.position.x - -8800.0f) * 21.333334f / 1000.0f + 320.0f;
+        *screen_y = 82.0f - (player_state.position.z - 900.0f) * 20.363636f / 1000.0f;
         break;
     default:
         return FALSE;
@@ -629,7 +629,7 @@ void func_0011BCD0(void) {
     reset_held = FALSE;
     memset(&position, 0, sizeof(position));
     position.z = 10000.0f;
-    rotation = (VuVector4){ -1.5707964f, D_00413F80.rotation.y, 0.0f, 0.0f };
+    rotation = (VuVector4){ -1.5707964f, player_state.rotation.y, 0.0f, 0.0f };
     {
         f32 world_screen[16];
         f32 view_screen[16];
@@ -647,8 +647,8 @@ void func_0011BCD0(void) {
             func_001095E0();
             func_0010B000();
             func_001B5460();
-            held = D_00413DA8[0];
-            pressed = D_00413DA8[1];
+            held = pad_state[0];
+            pressed = pad_state[1];
             move.x = move.y = move.z = move.w = 0.0f;
             if (held & 0x4000) {
                 if (held & 0x40) {
@@ -682,7 +682,7 @@ void func_0011BCD0(void) {
                     reset_held = TRUE;
                     position.z = 10000.0f;
                     rotation.x = -1.5707964f;
-                    rotation.y = D_00413F80.rotation.y;
+                    rotation.y = player_state.rotation.y;
                     position.x = 0.0f;
                     position.y = 0.0f;
                     position.w = 0.0f;
@@ -700,17 +700,17 @@ void func_0011BCD0(void) {
                 Vector_Normalize(&move, &move);
                 Vector_Scale(&move.x, &move.x, 100.0f);
                 Vector_Add(&position, &position, &move);
-                if (position.x < D_00413F80.position.x + -48000.0f) {
-                    position.x = D_00413F80.position.x + -48000.0f;
+                if (position.x < player_state.position.x + -48000.0f) {
+                    position.x = player_state.position.x + -48000.0f;
                 }
-                if (position.x > D_00413F80.position.x + 48000.0f) {
-                    position.x = D_00413F80.position.x + 48000.0f;
+                if (position.x > player_state.position.x + 48000.0f) {
+                    position.x = player_state.position.x + 48000.0f;
                 }
-                if (position.y < D_00413F80.position.y + -48000.0f) {
-                    position.y = D_00413F80.position.y + -48000.0f;
+                if (position.y < player_state.position.y + -48000.0f) {
+                    position.y = player_state.position.y + -48000.0f;
                 }
-                if (position.y > D_00413F80.position.y + 48000.0f) {
-                    position.y = D_00413F80.position.y + 48000.0f;
+                if (position.y > player_state.position.y + 48000.0f) {
+                    position.y = player_state.position.y + 48000.0f;
                 }
                 if (position.z < 2500.0f) {
                     position.z = 2500.0f;
@@ -719,12 +719,12 @@ void func_0011BCD0(void) {
                     position.z = 50000.0f;
                 }
             }
-            Vector_Scale(&move.x, &D_00413F80.position.x, -1.0f);
+            Vector_Scale(&move.x, &player_state.position.x, -1.0f);
             sceVu0TransMatrix(world_view, D_00431AF0, &move.x);
             sceVu0RotMatrixY(world_view, world_view, -rotation.y);
             sceVu0RotMatrixX(world_view, world_view, -rotation.x);
-            sceVu0TransMatrix(world_view, world_view, &D_00413F80.position.x);
-            Vector_Subtract(&move, &D_00413F80, &position);
+            sceVu0TransMatrix(world_view, world_view, &player_state.position.x);
+            Vector_Subtract(&move, &player_state, &position);
             Vector_Scale(&move.x, &move.x, -1.0f);
             sceVu0TransMatrix(world_view, world_view, &move.x);
             sceVu0MulMatrix(world_screen, view_screen, world_view);
@@ -762,9 +762,9 @@ static void func_0011C160(void) {
     func_00109A80(GS_REG_TEST_2, 0x51001);
     func_00109A80(GS_REG_ALPHA_2, ((s64)alpha << 32) | 0x68);
     func_00109AD0();
-    pointer_model.unk148 = (s32)&D_0038D930;
+    pointer_model.unk148 = (s32)&viewer_default_lights;
     pointer_model.hit_count = 0;
-    pointer_model.unk14C = &D_0038A1B0.unkA0;
+    pointer_model.unk14C = &map_draw_state.unkA0;
     func_0010D308(&pointer_model);
     func_00109A50();
     func_00109A80(0x1A, 0);
@@ -775,7 +775,7 @@ static void func_0011C160(void) {
     func_00109AD0();
     func_00109E18();
     for (map = 0; map < 2; map++) {
-        slot = &D_0038CD20[map];
+        slot = &map_slots[map];
         record = (MapDrawRecord *)slot->records;
         if (slot->unk00 != 0) {
             switch (slot->tag) {
@@ -800,15 +800,15 @@ static void func_0011C160(void) {
                             continue;
                         }
                         if (flags & 0x10) {
-                            record->model->unk148 = (s32)&D_0038A1B0.unkC0;
-                            record->model->unk14C = &D_0038A1B0.unkA0;
+                            record->model->unk148 = (s32)&map_draw_state.unkC0;
+                            record->model->unk14C = &map_draw_state.unkA0;
                         } else {
-                            record->model->unk148 = (s32)&D_0038A1B0.unkA90[map][record->unk35];
-                            record->model->unk14C = &D_0038A1B0.unk290[map][record->unk34];
+                            record->model->unk148 = (s32)&map_draw_state.unkA90[map][record->unk35];
+                            record->model->unk14C = &map_draw_state.unk290[map][record->unk34];
                         }
                         record->model->hit_count = 0;
-                        record->model->unk148 = (s32)&D_0038D930;
-                        record->model->unk14C = &D_0038A1B0.unkA0;
+                        record->model->unk148 = (s32)&viewer_default_lights;
+                        record->model->unk14C = &map_draw_state.unkA0;
                         func_0010D308(record->model);
                     }
                     break;
@@ -862,7 +862,7 @@ static void func_0011C160(void) {
     func_00109AD0();
     func_00109E18();
     func_0010A100(D_0038D8F0);
-    func_00107CD8(D_00349680[10]);
+    func_00107CD8(game_options[10]);
 }
 
 /* Whether a map object of this kind is one of the ordinary ones. */

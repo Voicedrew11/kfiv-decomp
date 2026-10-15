@@ -4,7 +4,7 @@
 
 extern u8 item_counts[];
 extern u8 spell_levels[6][5];
-extern char D_00402DA8[];
+extern char fx_table[];
 
 int func_001F91F8(void) {
     int screen = 0;
@@ -52,7 +52,7 @@ int func_001F93A8(void) {
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
             if (spell_levels[i][j] != 0) {
-                if (D_00402DA8[(15 * i + 3 * j + spell_levels[i][j]) * 0x110 + 0x102] == 1) {
+                if (fx_table[(15 * i + 3 * j + spell_levels[i][j]) * 0x110 + 0x102] == 1) {
                     return 1;
                 }
             }

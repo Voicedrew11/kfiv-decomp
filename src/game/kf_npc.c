@@ -11,13 +11,13 @@
 void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void Vector_Copy(void *, void *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern EntityGroupRecord D_0034B6D0[];
+extern EntityGroupRecord entity_group_state[];
 int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now);
 void EntityAi_SetState(char *, u8);
-extern PlayerData D_00413F80;
-extern u8 D_00349690[0x80][0x40];
+extern PlayerData player_state;
+extern u8 map_script_flags[0x80][0x40];
 int func_0019A3F0(void *, int);
 void EntityAi_SetAttackDelay(Entity *, s32);
 extern char D_0034B690[0x40];
@@ -71,7 +71,7 @@ void Npc_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = Npc_Think;
     unkE0->animate = (void (*)(void))Npc_Animate;
     unkE0->on_hit = (void (*)(void))Npc_OnHit;
@@ -138,14 +138,14 @@ static void Npc_Animate(Entity *entity) {
 
 /* The on_hit handler of type 15: lowers the weights of the last choice (EntityAi_LowerWeightsAfterHit),
    forgets the target, stops the head following it, starts Npc_ReactionHeavy and marks its group record
-   (D_0034B6D0[EntityParams.unk43A].unk02). */
+   (entity_group_state[EntityParams.unk43A].unk02). */
 static void Npc_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit(entity);
     entity->flags &= ~0x400;
     entity->target = NULL;
     entity->flags &= ~0x200;
     EntityAi_SetReaction(entity, (void (*)(void))Npc_ReactionHeavy, 0);
-    D_0034B6D0[ENTITY_CONTROLLER(entity)->unk43A].unk02 = 1;
+    entity_group_state[ENTITY_CONTROLLER(entity)->unk43A].unk02 = 1;
 }
 
 /* The think handler of type 15, while not busy: state 4 turns to the player, state 5 watches the player until
@@ -199,7 +199,7 @@ static void Npc_ThinkReactToPlayer(Entity *entity, s32 run_now) {
     f32 limit;
     f32 direction;
 
-    direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+    direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
     angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
     limit = (f32)ENTITY_CONTROLLER(entity)->unk438 * 0.017453292f;
     if (0.0f <= angle ? limit < angle : limit < -angle) {
@@ -224,7 +224,7 @@ static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
     f32 limit;
     f32 direction;
 
-    direction = EntityMath_HeadingTo(entity->model->position, D_00413F80.position);
+    direction = EntityMath_HeadingTo(entity->model->position, player_state.position);
     angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction);
     limit = (f32)ENTITY_CONTROLLER(entity)->unk438 * 0.017453292f;
     if (0.0f <= angle ? limit < angle : limit < -angle) {
@@ -279,7 +279,7 @@ static void Npc_ThinkTurnBack(Entity *entity, s32 run_now) {
 }
 
 /* An action (busy bit 0x1000): plays the turning animation for the side the player is on (27 or 28; 30 or 31
-   in spawn mode 1 when its D_00349690 entry is set) and turns the body to the heading towards the player
+   in spawn mode 1 when its map_script_flags entry is set) and turns the body to the heading towards the player
    (Entity.unk68). */
 static void Npc_TurnToPlayer(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -291,7 +291,7 @@ static void Npc_TurnToPlayer(Entity *entity) {
     case 0:
         angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
         if (entity->spawn_info->unk40 == 1
-            && D_00349690[entity->spawn_info->variant][entity->spawn_info->unk42] == entity->spawn_info->unk43) {
+            && map_script_flags[entity->spawn_info->variant][entity->spawn_info->unk42] == entity->spawn_info->unk43) {
             if (0.0f <= angle) {
                 Motion_Start(entity, 0x1F, 0, entity->params->unkC4, 0);
             } else {
@@ -342,7 +342,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
     case 0:
         angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->spawn_info->unk14);
         if (entity->spawn_info->unk40 == 1
-            && D_00349690[entity->spawn_info->variant][entity->spawn_info->unk42] == entity->spawn_info->unk43) {
+            && map_script_flags[entity->spawn_info->variant][entity->spawn_info->unk42] == entity->spawn_info->unk43) {
             if (0.0f <= angle) {
                 Motion_Start(entity, 0x1F, 0, entity->params->unkC4, 0);
             } else {
@@ -382,7 +382,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
 }
 
 /* The reaction to every hit (busy bit 4): as EntityAi_ReactionHeavy, with animation 18 instead of 15 in spawn
-   mode 1 when its D_00349690 entry is set. */
+   mode 1 when its map_script_flags entry is set. */
 static void Npc_ReactionHeavy(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParams *params;
@@ -392,7 +392,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
     switch (entity->unkCB) {
     case 0:
         if (entity->spawn_info->unk40 == 1
-            && D_00349690[entity->spawn_info->variant][entity->spawn_info->unk42] == entity->spawn_info->unk43) {
+            && map_script_flags[entity->spawn_info->variant][entity->spawn_info->unk42] == entity->spawn_info->unk43) {
             Motion_Start(entity, 0x12, 0, 5, 1);
         } else {
             Motion_Start(entity, 0xF, 0, 5, 1);
@@ -441,7 +441,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
 }
 
 /* The death action of types 15 and 81 (busy bit 0x40): as EntityAi_Death (animation 19 instead of 16 in spawn
-   mode 1 when its D_00349690 entry is set); also writes into its group record whether the player killed it
+   mode 1 when its map_script_flags entry is set); also writes into its group record whether the player killed it
    (1) or not (2), and sets D_0034B690[13] when the player did. */
 static void Npc_Death(Entity *entity) {
     EntityParams *params;
@@ -451,7 +451,7 @@ static void Npc_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         if (entity->spawn_info->unk40 == 1
-            && D_00349690[entity->spawn_info->variant][entity->spawn_info->unk42] == entity->spawn_info->unk43) {
+            && map_script_flags[entity->spawn_info->variant][entity->spawn_info->unk42] == entity->spawn_info->unk43) {
             Motion_Start(entity, 0x13, 0, 5, 1);
         } else {
             Motion_Start(entity, 0x10, 0, 5, 1);
@@ -485,7 +485,7 @@ static void Npc_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             EntityEvent_OnDeath(entity);
-            D_0034B6D0[ENTITY_CONTROLLER(entity)->unk43A].unk00 = ((s32)(entity->flags >> 38) & 3) ? 1 : 2;
+            entity_group_state[ENTITY_CONTROLLER(entity)->unk43A].unk00 = ((s32)(entity->flags >> 38) & 3) ? 1 : 2;
             if ((s32)(entity->flags >> 38) & 3) {
                 D_0034B690[0xD] = 1;
             }
@@ -504,7 +504,7 @@ static void Npc_Death(Entity *entity) {
 }
 
 /* The move action of types 15 and 81: as EntityAi_Move for forward and back only; plays animation 17 in spawn
-   mode 1 when its D_00349690 entry is set, and animations 26-28 for the commands 0x1000, 0x2000 and 0x4000. */
+   mode 1 when its map_script_flags entry is set, and animations 26-28 for the commands 0x1000, 0x2000 and 0x4000. */
 static void Npc_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 *vector;
@@ -564,7 +564,7 @@ static void Npc_Move(Entity *entity) {
         unkE0->unk44 = 0.0f;
     }
     if (entity->spawn_info->unk40 == 1
-        && D_00349690[entity->spawn_info->variant][entity->spawn_info->unk42] == entity->spawn_info->unk43) {
+        && map_script_flags[entity->spawn_info->variant][entity->spawn_info->unk42] == entity->spawn_info->unk43) {
         Motion_Start(entity, 0x11, 0, entity->params->unkC4, 0);
     } else if (entity->unkC8 & 1) {
         if (entity->unkC8 & 0x40) {
@@ -603,7 +603,7 @@ void Npc_InitType81(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))Npc_ThinkType81;
     unkE0->animate = (void (*)(void))Npc_Animate;
     unkE0->on_hit = (void (*)(void))Npc_OnHitType81;
@@ -645,7 +645,7 @@ static void Npc_OnHitType81(Entity *entity) {
     entity->flags &= ~0x400;
     entity->flags &= ~0x200;
     EntityAi_SetReaction(entity, (void (*)(void))Npc_ReactionHeavy, 0);
-    D_0034B6D0[ENTITY_CONTROLLER(entity)->unk43A].unk02 = 1;
+    entity_group_state[ENTITY_CONTROLLER(entity)->unk43A].unk02 = 1;
     if (((u64)entity->flags >> 38) & 3) {
         entity->flags |= 0x20000000;
     }

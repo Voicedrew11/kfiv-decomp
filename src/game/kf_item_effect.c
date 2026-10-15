@@ -7,10 +7,10 @@
 #include "kf_splash.h"
 #include "kf_message.h"
 
-extern char D_0038A440[];
-extern LevelRecord D_003679A0[];
-extern GameStatus D_0038CC50;
-extern PlayerState D_00413F80;
+extern char map_draw_slot_blocks[];
+extern LevelRecord weapon_level_records[];
+extern GameStatus game_status;
+extern PlayerState player_state;
 extern EventRunner D_00420D00;
 extern ItemUseEffectDef D_0042BBE0[];
 extern char D_004410C8[];
@@ -237,11 +237,11 @@ void ItemEffect_Start(int kind, int marked) {
     func_0010E8E0(item_effect_model, 0x80, 0x80, 0x80, item_effect_brightness);
     Vector_Scale((float *)&item_effect_model->position, D_00420D00.unk10, 75.0f);
     Vector_Add(&item_effect_model->position, &item_effect_model->position, D_00420D00.unk00);
-    Vector_Copy(&item_effect_model->rotation, &D_00413F80.rotation);
+    Vector_Copy(&item_effect_model->rotation, &player_state.rotation);
     item_effect_model->unkE0 = item_effect_model->unkE4 = item_effect_model->unkE8 = 1.0f;
     item_effect_model->unkEC = 1.0f;
     item_effect_model->unk148 = (s32)D_0042C110;
-    item_effect_model->unk14C = &D_0038A440[D_00446770 * 0x400];
+    item_effect_model->unk14C = &map_draw_slot_blocks[D_00446770 * 0x400];
     for (i = 0; i < item_effect_model->part_count; i++) {
         if (i == 0) {
             MODEL_PART_FLAG_BITS(&item_effect_model->parts[0])->bit41 = TRUE;
@@ -271,12 +271,12 @@ void ItemEffect_Update(void) {
     if (item_effect_pending_effects != 0 && item_effect_model != NULL &&
         MODEL_CHANNEL(item_effect_model)->param >= item_effect_def->unk08) {
         Effect_StartSpawner(item_effect_def->unk0C, &origin, &origin, item_effect_model);
-        Effect_StartSpawner(0x26A, &D_00413F80.position, &D_00413F80.rotation, item_effect_model);
-        def = &weapon_defs[D_00413F80.weapon];
+        Effect_StartSpawner(0x26A, &player_state.position, &player_state.rotation, item_effect_model);
+        def = &weapon_defs[player_state.weapon];
         item_effect_pending_effects = 0;
-        if (D_00413F80.equipped_magic != 0 || def->unk42 != 0xFFFF ||
-            (def->unk52 != 0xFFFF && D_003679A0[D_00413F80.weapon].unk14 + 1 >= 3) || func_001BF6E8() != 0) {
-            D_00413F80.unkC0 = 5000;
+        if (player_state.equipped_magic != 0 || def->unk42 != 0xFFFF ||
+            (def->unk52 != 0xFFFF && weapon_level_records[player_state.weapon].unk14 + 1 >= 3) || func_001BF6E8() != 0) {
+            player_state.unkC0 = 5000;
         }
         if (item_effect_marked != 0) {
             Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_MAGIC_LEARNED);
@@ -297,9 +297,9 @@ void ItemEffect_Update(void) {
 
 /* Item-effect step 0: asks the game for status 0xC5F and frees spawner 0x5D. */
 void ItemEffect_StepRequestGameStatus(void) {
-    if (D_0038CC50.unk30 == 0) {
-        D_0038CC50.unk30 = 0xC5F;
-        D_0038CC50.unk40 = item_effect_model;
+    if (game_status.unk30 == 0) {
+        game_status.unk30 = 0xC5F;
+        game_status.unk40 = item_effect_model;
         item_effect_step += 2;
         Effect_FreeSpawnersByParam(0x5D);
     }
@@ -308,8 +308,8 @@ void ItemEffect_StepRequestGameStatus(void) {
 /* Item-effect step 1: waits until the confirmation overlay flag is clear. */
 void ItemEffect_StepWaitOverlay(void) {
     if (D_004141D8[0] == 0) {
-        D_0038CC50.unk30 = 0xC5F;
-        D_0038CC50.unk40 = item_effect_model;
+        game_status.unk30 = 0xC5F;
+        game_status.unk40 = item_effect_model;
         item_effect_step++;
     }
 }
@@ -327,7 +327,7 @@ void ItemEffect_StepFadeOut(void) {
     int brightness;
 
     if (MODEL_CHANNEL(item_effect_model)->param <= 0 && item_effect_brightness <= 0) {
-        int *status_words = (int *)&D_0038CC50; // match: field stores get scheduled in the other order
+        int *status_words = (int *)&game_status; // match: field stores get scheduled in the other order
 
         item_effect_active = 0;
         item_effect_step = 0;

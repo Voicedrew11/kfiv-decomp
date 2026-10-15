@@ -31,11 +31,11 @@ extern ScriptCommandHandler D_00433440[];
 extern ScriptCommandHandler D_00433650[];
 extern f32 D_004325E8[];
 extern u8 recollection_pages[50];
-extern u8 D_00349680[];
-extern SoundLoadQueue D_0038A130;
-extern Entity D_003BEDF0[][0x80];
-extern MapSlot D_0038CD20[];
-extern PlayerState D_00413F80;
+extern u8 game_options[];
+extern SoundLoadQueue sound_load_queue;
+extern Entity entity_pool[][0x80];
+extern MapSlot map_slots[];
+extern PlayerState player_state;
 
 static ScriptThread *current_thread = NULL; /* 0x446FD0 the thread being stepped */
 static int command_count;                   /* 0x4473E4 commands in use, as Script_StepHeldCommands counts them */
@@ -1119,12 +1119,12 @@ void ScriptCmd_ShowSplash(ScriptWaitCommand *command) {
     }
 }
 
-/* Command 34: sets both volumes (options bytes 1 and 2 of D_00349680, through Sound_SetBgmVolume and
+/* Command 34: sets both volumes (options bytes 1 and 2 of game_options, through Sound_SetBgmVolume and
    Sound_SetBankVolumes) to `value` 64ths (0 to 64) of what the options say, then finishes. */
 void ScriptCmd_SetVolumes(ScriptValueCommand *command) {
     if (command->value.value >= 0 && command->value.value <= 64) {
-        Sound_SetBgmVolume(D_00349680[1] * command->value.value / 64);
-        Sound_SetBankVolumes(D_00349680[2] * command->value.value / 64);
+        Sound_SetBgmVolume(game_options[1] * command->value.value / 64);
+        Sound_SetBankVolumes(game_options[2] * command->value.value / 64);
     }
     command->active = 0;
 }
@@ -1133,7 +1133,7 @@ void ScriptCmd_SetVolumes(ScriptValueCommand *command) {
    `value` 64ths of it, then finishes. */
 void ScriptCmd_SetSeVolume(ScriptValueCommand *command) {
     if (command->value.value >= 0 && command->value.value <= 64) {
-        Sound_SetBankVolumes(D_00349680[2] * command->value.value / 64);
+        Sound_SetBankVolumes(game_options[2] * command->value.value / 64);
     }
     command->active = 0;
 }
@@ -1153,9 +1153,9 @@ void ScriptCmd_MarkMessageHeard(ScriptValueCommand *command) {
 /* Command 40: asks for the step 3 sound load of `value` unless it is the one asked for already, then
    finishes. */
 void ScriptCmd_RequestSoundLoad(ScriptValueCommand *command) {
-    if (D_0038A130.unk00 != command->value.value) {
-        D_0038A130.unk00 = command->value.value;
-        D_0038A130.unk04 = 1;
+    if (sound_load_queue.unk00 != command->value.value) {
+        sound_load_queue.unk00 = command->value.value;
+        sound_load_queue.unk04 = 1;
     }
     command->active = 0;
 }
@@ -1167,7 +1167,7 @@ void ScriptCmd_SetBgmVolume(ScriptValueCommand *command) {
 
     value = command->value.value;
     if (value < 65) {
-        Sound_SetBgmVolume((int)(D_00349680[1] * value) / 64);
+        Sound_SetBgmVolume((int)(game_options[1] * value) / 64);
     }
     command->active = 0;
 }
@@ -1202,8 +1202,8 @@ void ScriptCmd_GetEntityCounter(ScriptCallCommand *command) {
     if (entity != NULL) {
         map_slot = entity->group_id;
         entry_index = func_00103548(
-            D_0038CD20[map_slot].tag,
-            (s32)(((u32)((char *)entity - (char *)D_003BEDF0[map_slot])) / sizeof(Entity))); // match: divu
+            map_slots[map_slot].tag,
+            (s32)(((u32)((char *)entity - (char *)entity_pool[map_slot])) / sizeof(Entity))); // match: divu
         Script_StoreResult(&command->first, entry_index);
     } else {
         Script_StoreResult(&command->first, -1);
@@ -1214,7 +1214,7 @@ void ScriptCmd_GetEntityCounter(ScriptCallCommand *command) {
 /* Command 43: empties the player's two gauges (the weapon's, unkBC, and the magic one, unkC0), then
    finishes. */
 void ScriptCmd_EmptyPlayerGauges(ScriptThreadCommand *command) {
-    D_00413F80.unkC0 = D_00413F80.unkBC = 0;
+    player_state.unkC0 = player_state.unkBC = 0;
     command->active = 0;
 }
 

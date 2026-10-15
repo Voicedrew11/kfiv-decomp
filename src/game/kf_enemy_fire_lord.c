@@ -1,4 +1,4 @@
-/* FireLord: the behaviour of entity type 24 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* FireLord: the behaviour of entity type 24 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Fire Lord. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -14,16 +14,16 @@ void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
-extern ModelInstanceBlock D_003E7140[2];
-// match: D_003E7140[1], which the set-up function reaches by its own address
+extern ModelInstanceBlock fire_lord_model[2];
+// match: fire_lord_model[1], which the set-up function reaches by its own address
 extern ModelInstanceBlock D_003E7300;
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 extern u32 D_00446ED4;
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -86,7 +86,7 @@ void FireLord_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = FireLord_Think;
     unkE0->animate = (void (*)(void))FireLord_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -115,7 +115,7 @@ void FireLord_Init(Entity *entity) {
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
     D_003E7300 = *(ModelInstanceBlock *)entity->model;
-    D_003E7140[0] = *(ModelInstanceBlock *)entity->model;
+    fire_lord_model[0] = *(ModelInstanceBlock *)entity->model;
 }
 
 /* The animate handler: as EntityAi_Animate, without that one's test of the EntityParams kind bits
@@ -151,25 +151,25 @@ static void FireLord_Animate(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with FireLord_ThinkIdle for state 0 and
    FireLord_ThinkCombat for states 1 and 2. Before that it keeps the model's last two frames in
-   D_003E7140, each at half the alpha of the one before, clears work byte unk7E, and counts down
-   work word unk6A, which it sets to EntityParams.unk434 while D_00413F80.unk259 is not 0. Counts
+   fire_lord_model, each at half the alpha of the one before, clears work byte unk7E, and counts down
+   work word unk6A, which it sets to EntityParams.unk434 while player_state.unk259 is not 0. Counts
    down work byte unk7D. */
 static void FireLord_Think(Entity *entity, s32 unknown) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
     ModelInstanceBlock *block;
     ModelInstanceBlock *previous;
 
-    block = &D_003E7140[1];
+    block = &fire_lord_model[1];
     previous = block - 1;
     *block = *previous;
-    D_003E7140[0] = *(ModelInstanceBlock *)entity->model;
-    D_003E7140[0].model.alpha *= 0.5f;
-    D_003E7140[1].model.alpha *= 0.5f;
+    fire_lord_model[0] = *(ModelInstanceBlock *)entity->model;
+    fire_lord_model[0].model.alpha *= 0.5f;
+    fire_lord_model[1].model.alpha *= 0.5f;
     unkE0->unk7E = 0;
     if (unkE0->unk6A > 0) {
         unkE0->unk6A--;
     }
-    if (D_00413F80.unk259 != 0) {
+    if (player_state.unk259 != 0) {
         unkE0->unk6A = entity->params->unk434;
     }
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
@@ -262,7 +262,7 @@ static void FireLord_ThinkCombat(Entity *entity, s32 unknown) {
 static void FireLord_ThinkCombatApproach(Entity *entity, int invoke_now) {
     EntityUnkE0 *sub = &entity->unkE0;
 
-    entity->target = &D_00413F80;
+    entity->target = &player_state;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
     entity->unkC8 = EntityAi_MoveCommand(entity, 1, 50.0f);
@@ -282,7 +282,7 @@ static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 unknown) {
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
-    entity->target = &D_00413F80;
+    entity->target = &player_state;
     entity->unkC8 = EntityAi_MoveCommand(entity, 1, 50.0f);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -301,7 +301,7 @@ static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 unknown) 
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7Alternately, unknown);
         return;
     }
-    entity->target = &D_00413F80;
+    entity->target = &player_state;
     entity->unkC8 = EntityAi_MoveCommand(entity, 1, 50.0f);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -348,7 +348,7 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -431,7 +431,7 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 120;
             unkE0->unk78 = 0;
             break;
@@ -752,7 +752,7 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-        player = &D_00413F80;
+        player = &player_state;
         if (EntityMath_AngleDifference(player->unk14, EntityMath_AngleXZ(player->position, (char *)entity->model->position)) >= 0.0f) {
             Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 0);
         } else {
@@ -789,7 +789,7 @@ static void FireLord_Move(Entity *entity) {
     EntityParams *params;
     f32 turn;
 
-    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     params = entity->params;
@@ -862,11 +862,11 @@ void func_00133708(Entity *entity, s32 unknown) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
 
     if (unkE0->unk7E != 0 && ENTITY_FLAG_BITS(entity)->bits2 == 0) {
-        D_003E7140[0].model.unk14C = ENTITY_MODEL(entity)->unk14C;
-        D_003E7140[0].model.unk148 = ENTITY_MODEL(entity)->unk148;
-        D_003E7140[1].model.unk14C = ENTITY_MODEL(entity)->unk14C;
-        D_003E7140[1].model.unk148 = ENTITY_MODEL(entity)->unk148;
-        func_0010B018(&D_003E7140[0].model, 0, unknown);
-        func_0010B018(&D_003E7140[1].model, 0, unknown);
+        fire_lord_model[0].model.unk14C = ENTITY_MODEL(entity)->unk14C;
+        fire_lord_model[0].model.unk148 = ENTITY_MODEL(entity)->unk148;
+        fire_lord_model[1].model.unk14C = ENTITY_MODEL(entity)->unk14C;
+        fire_lord_model[1].model.unk148 = ENTITY_MODEL(entity)->unk148;
+        func_0010B018(&fire_lord_model[0].model, 0, unknown);
+        func_0010B018(&fire_lord_model[1].model, 0, unknown);
     }
 }

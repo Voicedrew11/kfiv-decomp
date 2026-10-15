@@ -1,4 +1,4 @@
-/* DarkPuppet: the behaviour of entity type 52 (Entity.params->unk02, the index into D_003E6E40): its set-up
+/* DarkPuppet: the behaviour of entity type 52 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Puppet. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -14,7 +14,7 @@ void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 void EntityAi_Dormant(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
 void EntityAi_SetState(char *, u8);
@@ -31,7 +31,7 @@ int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 f32 EntityCollision_DistanceToPropFloor(void *, void *);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -89,7 +89,7 @@ void DarkPuppet_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = DarkPuppet_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))DarkPuppet_OnHit;
@@ -238,13 +238,13 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             if ((f32)entity->params->unk438 < entity->distance_to_player) {
                 unkE0->unk78 = 0;
             } else if (entity->distance_to_player < (f32)entity->params->unk436) {
                 unkE0->unk78 = 1;
-            } else if (EntityMath_AngleDifference(D_00413F80.unk14,
-                                     EntityMath_AngleXZ(D_00413F80.position, (char *)entity->model->position)) > 0.0f) {
+            } else if (EntityMath_AngleDifference(player_state.unk14,
+                                     EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) > 0.0f) {
                 unkE0->unk78 = 2;
             } else {
                 unkE0->unk78 = 3;
@@ -252,7 +252,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
             entity->unkA0 = entity->params->unk43A;
             break;
         case 2:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 30 + 30;
             unkE0->unk78 = 4;
             break;
@@ -361,7 +361,7 @@ static void DarkPuppet_Move(Entity *entity) {
 /* Carries out the movement command in Entity.unkC8; DarkPuppet_Think, DarkPuppet_MeleeAttack
    and the ranged attacks call it. It turns the entity and speeds up or slows down along its three
    axes by EntityParams.unk50 a frame up to unk54 (work floats unk44, unk48 and unk4C), twice as
-   fast for command bit 0x40. No command when the entity is D_00413F80.unk204 and EntityParams.flags
+   fast for command bit 0x40. No command when the entity is player_state.unk204 and EntityParams.flags
    has 0x800. */
 static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     EntityUnkE0Kind16BF98 *unkE0 = (EntityUnkE0Kind16BF98 *)&entity->unkE0;
@@ -369,7 +369,7 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     f32 step;
     f32 limit;
 
-    if (entity == D_00413F80.unk204 && (entity->params->flags & 0x800)) {
+    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     turn = 0.0f;

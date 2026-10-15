@@ -7,8 +7,8 @@
 #include "kf_menu_screens.h"
 #include "kf_timer.h"
 
-extern GameStatus D_0038CC50;
-extern PlayerState D_00413F80;
+extern GameStatus game_status;
+extern PlayerState player_state;
 extern int D_00446734;          /* nonzero: a saved game was loaded */
 extern int D_00446738;
 extern u32 D_00446ED4;          /* the frame counter */
@@ -95,7 +95,7 @@ int main(void) {
         func_001001C0(D_00446734 != 0 ? D_00446738 : 0x63);
         func_001CB9A0();
         Sound_Init();
-        if (D_00413F80.unk1A8 != 0) {
+        if (player_state.unk1A8 != 0) {
             sceGsSyncV(0);
             Vram_Clear(0, 0x4000);
             do {
@@ -106,7 +106,7 @@ int main(void) {
             } while (Menu_Run(1) == 0);
             sceGsSyncV(0);
             Vram_Clear(0, 0x4000);
-        } else if (D_0038CC50.bits10 & 1) {
+        } else if (game_status.bits10 & 1) {
             Movie_PlayEnding();
         }
     }

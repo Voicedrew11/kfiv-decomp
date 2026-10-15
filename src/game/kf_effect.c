@@ -37,16 +37,16 @@ void func_0010D018(ModelInstance *, char **, char **);
 int func_00111C78(ModelInstance *model, int first, int last);
 u32 *func_00116BD0(int, int);
 
-extern GameStatus D_0038CC50;
-extern MapSlot D_0038CD20[2];
-extern char D_0038A440[];
-extern MapObject D_003A1A30[][0x200];
-extern Entity D_003BEDF0[][0x80];
-extern Entity D_003D6C70;           /* the last entity of D_003BEDF0 */
-extern void (*D_003F1710[4][4])(ModelInstance *);
-extern void (*D_00402550[][2])();
-extern FxTableEntry D_00402DA8[];
-extern PlayerState D_00413F80;
+extern GameStatus game_status;
+extern MapSlot map_slots[2];
+extern char map_draw_slot_blocks[];
+extern MapObject map_slot_objects[][0x200];
+extern Entity entity_pool[][0x80];
+extern Entity D_003D6C70;           /* the last entity of entity_pool */
+extern void (*effect_draw_hooks[4][4])(ModelInstance *);
+extern void (*effect_kind_handlers[][2])();
+extern FxTableEntry fx_table[];
+extern PlayerState player_state;
 extern Vector4 D_00431C80;
 extern int D_00446770;
 extern char *D_00446F5C;
@@ -201,7 +201,7 @@ void Effect_DebugFreeAllButPlayer(void) {
             if (!(slot->flags & EFFECT_SLOT_LIVE)) {
                 continue;
             }
-            if (slot->owner_entity == (Entity *)&D_00413F80) {
+            if (slot->owner_entity == (Entity *)&player_state) {
                 continue;
             }
             Effect_FreeSpawner(slot);
@@ -217,7 +217,7 @@ void Effect_DebugFreeAllButPlayer(void) {
             if (!(effect->flags & EFFECT_FLAG_LIVE)) {
                 continue;
             }
-            if (effect->owner_entity == (Entity *)&D_00413F80) {
+            if (effect->owner_entity == (Entity *)&player_state) {
                 continue;
             }
             Effect_Free(effect);
@@ -351,8 +351,8 @@ void Effect_UpdateAll(void) {
     int i;
     int key;
 
-    if (D_0038CC50.unk30 & 0x400) {
-        only_owner = D_0038CC50.unk40;
+    if (game_status.unk30 & 0x400) {
+        only_owner = game_status.unk40;
     }
     if (effect_slot_count > 0) {
         slot = effect_slots;
@@ -391,7 +391,7 @@ void Effect_UpdateAll(void) {
                         Effect_SpawnFromEffect(effect->def->unk10C[key], effect);
                     }
                 }
-                D_00402550[effect->def->unk100][1](effect);
+                effect_kind_handlers[effect->def->unk100][1](effect);
             }
         }
     }
@@ -442,8 +442,8 @@ void Effect_DrawAll(int pass) {
             if (((int (*)(f32 *, f32, AreaNode *))func_001160B0)((f32 *)&model->position, 0.0f, (AreaNode *)effect->unk58) == 0) {
                 effect->unk58 = (char *)func_00115950((f32 *)&effect->model->position, 0.0f);
             }
-            if (effect->unk58 == NULL && effect->owner_entity == (Entity *)&D_00413F80 && ((PlayerState *)effect->owner_entity)->map_index != 0xFFFF) {
-                effect->unk58 = D_0038CD20[D_00446770].records + (((PlayerState *)effect->owner_entity)->map_index << 7);
+            if (effect->unk58 == NULL && effect->owner_entity == (Entity *)&player_state && ((PlayerState *)effect->owner_entity)->map_index != 0xFFFF) {
+                effect->unk58 = map_slots[D_00446770].records + (((PlayerState *)effect->owner_entity)->map_index << 7);
             }
             if (pass == 0 && effect->unk58 == NULL) {
                 if (effect->frame >= effect->def->keyframe_end) {
@@ -484,12 +484,12 @@ void Effect_DrawAll(int pass) {
         for (part_index = 0; part_index < model->part_count; part_index++, part++) {
             ModelMatrix_BuildPartLocal(model, part, part);
         }
-        model->unk14C = D_0038A440 + (D_00446770 << 10);
+        model->unk14C = map_draw_slot_blocks + (D_00446770 << 10);
         // match: the flag is read through the union so the test stays behind the unk14C store
         if (!(((EntityFlagWord *)&effect->def->unkF0)->word & (0x8000L << 25))) {
             model->unk148 = (s32)effect_light_block;
         } else {
-            model->unk148 = (s32)(D_0038A440 - 0x1D0);
+            model->unk148 = (s32)(map_draw_slot_blocks - 0x1D0);
         }
         model->hit_count = 0;
         if (pass == 0 || !(EFFECT_DEF_WORD_F0(effect->def) & (0x8000L << 26))) {
@@ -555,11 +555,11 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         effect->unk90 = 4; /* frames the actor stays reserved once it is freed */
         effect->unk6C = 0;
         Effect_SetupModel(index);
-        D_00402550[effect->def->unk100][0](effect, slot);
+        effect_kind_handlers[effect->def->unk100][0](effect, slot);
         EFFECT_FLAG_BITS(effect)->bit59 = effect->def->unk11A != 0;
-        if (D_00402DA8[effect->effect_param].unk102 != 0) {
-            EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&D_00413F80, EFFECT_FLAG_PARTS(effect)->unk46);
-        } else if (EFFECT_FLAG_BITS(effect)->bit59 || effect->effect_param == D_00413F80.equipped_magic) {
+        if (fx_table[effect->effect_param].unk102 != 0) {
+            EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&player_state, EFFECT_FLAG_PARTS(effect)->unk46);
+        } else if (EFFECT_FLAG_BITS(effect)->bit59 || effect->effect_param == player_state.equipped_magic) {
             EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&effect->model->position, EFFECT_FLAG_PARTS(effect)->unk46);
         }
         if (EFFECT_FLAG_PARTS(effect)->unk46 > 0) {
@@ -702,17 +702,17 @@ static void Effect_SetupModel(int index) {
     file_cursor = effect_model_table[def->unkFE];
     memory = effect_model_memory + (index << 11);
     func_0010D018(model, &file_cursor, &memory);
-    model->draw = D_003F1710[((EffectTableEntry *)effect->def)->placement][effect->def->unkF4];
+    model->draw = effect_draw_hooks[((EffectTableEntry *)effect->def)->placement][effect->def->unkF4];
     model->unk100 |= 0x800;
     if (func_00111C78(model, 0x3BC0, 0x3C3F) != 0) {
         // match: the owner is read from the effect again for every test (a macro in the game, most likely)
-        if (effect->owner_entity == (Entity *)&D_0038CD20[0]) {
+        if (effect->owner_entity == (Entity *)&map_slots[0]) {
             map = 0; /* the owner is a map slot itself */
-        } else if (effect->owner_entity == (Entity *)&D_0038CD20[1]) {
+        } else if (effect->owner_entity == (Entity *)&map_slots[1]) {
             map = 1;
-        } else if ((MapObject *)effect->owner_entity >= D_003A1A30[0] && (MapObject *)effect->owner_entity <= &D_003A1A30[1][0x1FF]) {
+        } else if ((MapObject *)effect->owner_entity >= map_slot_objects[0] && (MapObject *)effect->owner_entity <= &map_slot_objects[1][0x1FF]) {
             map = (u8)((MapObject *)effect->owner_entity)->unk10 & 1;
-        } else if (effect->owner_entity >= D_003BEDF0[0] && effect->owner_entity <= &D_003D6C70) {
+        } else if (effect->owner_entity >= entity_pool[0] && effect->owner_entity <= &D_003D6C70) {
             map = effect->owner_entity->group_id; /* an entity: the map it is in */
         } else {
             map = D_00446770;
@@ -789,13 +789,13 @@ void Effect_OffsetAll(void *offset) {
 /* Frees the spawner slots and effects owned by anything of map slot map (its entities, its
    map objects, the slot itself) and makes the other effects forget what they knew of it. */
 void Effect_FreeForMap(int map) {
-    MapSlot *map_slot = &D_0038CD20[map];
+    MapSlot *map_slot = &map_slots[map];
     char *first_record = map_slot->records;
     char *last_record = first_record + map_slot->header->record_count * 0x80;
-    Entity *first_entity = D_003BEDF0[map];
-    Entity *last_entity = &D_003BEDF0[map][0x7F];
-    MapObject *first_object = D_003A1A30[map];
-    MapObject *last_object = &D_003A1A30[map][0x1FF];
+    Entity *first_entity = entity_pool[map];
+    Entity *last_entity = &entity_pool[map][0x7F];
+    MapObject *first_object = map_slot_objects[map];
+    MapObject *last_object = &map_slot_objects[map][0x1FF];
     EffectActor *effect = D_003F3550;
     EffectSlot *slot = effect_slots;
     Entity *owner;
@@ -910,14 +910,14 @@ void Effect_FreePlayerWeaponKinds(void) {
         if ((slot->flags & EFFECT_SLOT_LIVE) &&
             (EFFECT_SLOT_FLAG_PARTS(slot)->def == &effect_table.defs[0x280] || EFFECT_SLOT_FLAG_PARTS(slot)->def == &effect_table.defs[0x282] ||
              EFFECT_SLOT_FLAG_PARTS(slot)->def == &effect_table.defs[0x284]) &&
-            slot->owner_entity == (Entity *)&D_00413F80) {
+            slot->owner_entity == (Entity *)&player_state) {
             Effect_FreeSpawner(slot);
         }
     }
     for (i = 0; i < EFFECT_COUNT && effect_count > 0; i++, effect++) {
         if ((effect->flags & EFFECT_FLAG_LIVE) &&
             (effect->def == &effect_table.defs[0x280] || effect->def == &effect_table.defs[0x282] || effect->def == &effect_table.defs[0x284]) &&
-            effect->owner_entity == (Entity *)&D_00413F80) {
+            effect->owner_entity == (Entity *)&player_state) {
             Effect_Free(effect);
         }
     }
@@ -932,15 +932,15 @@ void Effect_FreePlayerMagic(void) {
     slot = effect_slots;
     effect = D_003F3550;
     for (i = 0; i < EFFECT_SLOT_COUNT && effect_slot_count > 0; i++, slot++) {
-        if ((slot->flags & EFFECT_SLOT_LIVE) && slot->owner_entity == (Entity *)&D_00413F80 && slot->effect_param != 0 &&
-            D_00402DA8[slot->effect_param].unk102 == 0 && EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x280] &&
+        if ((slot->flags & EFFECT_SLOT_LIVE) && slot->owner_entity == (Entity *)&player_state && slot->effect_param != 0 &&
+            fx_table[slot->effect_param].unk102 == 0 && EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x280] &&
             EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x282] && EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x284]) {
             Effect_FreeSpawner(slot);
         }
     }
     for (i = 0; i < EFFECT_COUNT && effect_count > 0; i++, effect++) {
-        if ((effect->flags & EFFECT_FLAG_LIVE) && effect->owner_entity == (Entity *)&D_00413F80 && effect->effect_param != 0 &&
-            D_00402DA8[effect->effect_param].unk102 == 0 && effect->def != &effect_table.defs[0x280] &&
+        if ((effect->flags & EFFECT_FLAG_LIVE) && effect->owner_entity == (Entity *)&player_state && effect->effect_param != 0 &&
+            fx_table[effect->effect_param].unk102 == 0 && effect->def != &effect_table.defs[0x280] &&
             effect->def != &effect_table.defs[0x282] && effect->def != &effect_table.defs[0x284]) {
             Effect_Free(effect);
         }
@@ -992,7 +992,7 @@ int Effect_IsDefRangeInUse(int first_def, int last_def) {
     return 0;
 }
 
-/* GS values for the model draw hooks below (D_003F1710, picked by Effect_SetupModel) */
+/* GS values for the model draw hooks below (effect_draw_hooks, picked by Effect_SetupModel) */
 #define EFFECT_ZBUF_NO_WRITE 0x10A000118L       /* ZBUF_1: the depth buffer, masked: no depth writes */
 #define EFFECT_ZBUF_WRITE 0xA000118L            /* ZBUF_1: the depth buffer, written */
 #define EFFECT_ALPHA_ADD 0x48                   /* ALPHA_1: Cs * As + Cd */

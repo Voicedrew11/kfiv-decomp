@@ -16,11 +16,11 @@ char *func_0010CAB8(char *, u32);
 void Vector_Copy(void *, void *);
 int func_001B4F30(u16, void *, void *, void *, void *);
 extern char *D_004467C0;
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 // match: Sound_PlayFalloff.c has not been given its real arguments yet
 void Sound_PlayFalloff(float, int, int, char, float, float);
 extern EntitySpawnInfo *D_004467D0[2];
-extern MapSlot D_0038CD20[];
+extern MapSlot map_slots[];
 extern int D_00446770;
 s32 func_001C8CB0(Entity *);
 void Player_AddExperience(s32);
@@ -268,7 +268,7 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
     record = (EntityParamsUnk1B0 *)(D_004467C0 + entity->params->unk1B0[animation]);
     count = entity->params->unk110[animation];
     if (count > 0 && record != NULL) {
-        angle = atan2f(entity->model->position[0] - D_00413F80.position.x, entity->model->position[2] - D_00413F80.position.z) - D_00413F80.rotation.y;
+        angle = atan2f(entity->model->position[0] - player_state.position.x, entity->model->position[2] - player_state.position.z) - player_state.rotation.y;
         angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
         if (angle > 3.1415927f) {
             angle -= 6.2831855f;
@@ -296,7 +296,7 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
 void EntityEvent_StartCue(Entity *entity, s32 unknown1, s32 unknown2, s32 skip_if_unk2A) {
     f32 angle;
 
-    angle = atan2f(entity->model->position[0] - D_00413F80.position.x, entity->model->position[2] - D_00413F80.position.z) - D_00413F80.rotation.y;
+    angle = atan2f(entity->model->position[0] - player_state.position.x, entity->model->position[2] - player_state.position.z) - player_state.rotation.y;
     angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
     if (angle > 3.1415927f) {
         angle -= 6.2831855f;
@@ -314,8 +314,8 @@ void EntityEvent_StartCueAlways(Entity *entity, s32 unknown1, s32 unknown2) {
     f32 angle;
     f32 wrapped;
 
-    angle = atan2f(entity->model->position[0] - D_00413F80.position.x, entity->model->position[2] - D_00413F80.position.z);
-    angle -= D_00413F80.rotation.y;
+    angle = atan2f(entity->model->position[0] - player_state.position.x, entity->model->position[2] - player_state.position.z);
+    angle -= player_state.rotation.y;
     wrapped = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
     if (wrapped > 3.1415927f) {
         wrapped -= 6.2831855f;
@@ -350,7 +350,7 @@ void EntityEvent_OnDeath(Entity *entity) {
     if ((s32)(entity->flags >> 38) & 3) {
         Player_AddExperience(entity->params->unk0E);
     }
-    func_001035A8(D_0038CD20[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+    func_001035A8(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
     Effect_FreeForOwner(entity);
     if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
         Script_Start(entity->spawn_info->unk36, 0);

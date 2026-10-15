@@ -15,8 +15,8 @@
 #include "kf_map_scroll.h"
 #include "kf_sound.h"
 
-extern void (*D_0038D650[])(void);
-extern void (*D_0038D670[])(void);
+extern void (*screen_fade_steps[])(void);
+extern void (*screen_fade_draw_steps[])(void);
 int func_00103A18(int, int *, int *);
 void func_00101618(void);
 void func_001020F8(void);
@@ -66,12 +66,12 @@ void Script_Init(int);
 int Script_Start(int, int);
 void Vector_Copy(void *, void *);
 extern int D_00446770;
-extern MapSlot D_0038CD20[2];
-extern ScreenFade D_0038D680;
-extern PlayerState D_00413F80;
-extern GameStatus D_0038CC50;
-extern MapLoadState D_0038D610;
-extern MapProp *D_0038CDE0[2][0xFF];
+extern MapSlot map_slots[2];
+extern ScreenFade screen_fade;
+extern PlayerState player_state;
+extern GameStatus game_status;
+extern MapLoadState map_load_state;
+extern MapProp *map_slot_props[2][0xFF];
 extern MapDrawRecord *D_00446778[2];
 extern MapDrawRecord *D_00446780[2];
 extern AreaNode *D_00446788;
@@ -81,43 +81,43 @@ extern char D_0043E720[];
 extern u32 D_00446F1C;
 extern char *D_00446F50;
 extern char *D_00446F54;
-extern SoundLoadQueue D_0038A130;
+extern SoundLoadQueue sound_load_queue;
 
 /* Start a transition to new_value unless one is running or it is already current. */
 void func_001187F0(int new_value) {
     MapSlot *slot;
 
-    slot = &D_0038CD20[D_00446770];
-    if (D_0038D680.step == FALSE && slot->tag != new_value) {
-        D_0038D680.step = TRUE;
-        D_0038D680.timer = 0x1E;
-        D_0038D680.map = new_value;
-        D_0038D680.draw_step = 0;
-        D_0038D680.kind = 0;
+    slot = &map_slots[D_00446770];
+    if (screen_fade.step == FALSE && slot->tag != new_value) {
+        screen_fade.step = TRUE;
+        screen_fade.timer = 0x1E;
+        screen_fade.map = new_value;
+        screen_fade.draw_step = 0;
+        screen_fade.kind = 0;
     }
 }
 
 /* Moves the player to position in the current map, or starts the change to another map. */
 void func_00118848(int map, Vector4 *position) {
-    MapSlot *slot = &D_0038CD20[D_00446770];
+    MapSlot *slot = &map_slots[D_00446770];
 
-    if (D_0038D680.step == 0) {
+    if (screen_fade.step == 0) {
         if (slot->tag == map) {
             if (position != NULL) {
-                D_00413F80.position.x = position->x;
-                D_00413F80.position.y = position->y;
-                D_00413F80.position.z = position->z;
+                player_state.position.x = position->x;
+                player_state.position.y = position->y;
+                player_state.position.z = position->z;
             }
         } else {
-            D_0038D680.map = map;
-            D_0038D680.position.x = position->x;
-            D_0038D680.position.y = position->y;
-            D_0038D680.position.z = position->z;
-            D_0038D680.timer = 30;
-            D_0038D680.step = 1;
-            D_0038D680.kind = 1;
-            D_0038D680.draw_step = 0;
-            D_0038D680.position.w = 0.0f;
+            screen_fade.map = map;
+            screen_fade.position.x = position->x;
+            screen_fade.position.y = position->y;
+            screen_fade.position.z = position->z;
+            screen_fade.timer = 30;
+            screen_fade.step = 1;
+            screen_fade.kind = 1;
+            screen_fade.draw_step = 0;
+            screen_fade.position.w = 0.0f;
         }
     }
 }
@@ -127,25 +127,25 @@ int func_001188E0(int entry) {
     int target[2];
     int map;
 
-    if (D_0038D680.step != 0) {
+    if (screen_fade.step != 0) {
         return FALSE;
     }
     if (func_00103A18(entry - 5, &target[0], &target[1]) == 0) {
         return FALSE;
     }
     map = target[0];
-    D_0038D680.step = 1;
-    D_0038D680.unk14 = target[1];
-    D_0038D680.timer = 30;
-    D_0038D680.map = map;
-    D_0038D680.kind = 2;
-    D_0038D680.draw_step = 0;
+    screen_fade.step = 1;
+    screen_fade.unk14 = target[1];
+    screen_fade.timer = 30;
+    screen_fade.map = map;
+    screen_fade.kind = 2;
+    screen_fade.draw_step = 0;
     return TRUE;
 }
 
 /* Runs a pending map change to the end, drawing its own frames meanwhile. */
 void func_00118958(void) {
-    if (D_0038D680.step != 0) {
+    if (screen_fade.step != 0) {
         func_00118A50();
         func_001020F8();
         Splash_Abort();
@@ -155,13 +155,13 @@ void func_00118958(void) {
             func_001096E8();
             func_001095E0();
             func_0010B000();
-            D_0038D670[D_0038D680.draw_step]();
-            D_0038D650[D_0038D680.step]();
+            screen_fade_draw_steps[screen_fade.draw_step]();
+            screen_fade_steps[screen_fade.step]();
             func_00101618();
             ((u8 (*)(void))func_00109800)(); // match: called as returning a value, so the loop test uses $3
-        } while (D_0038D680.step != 0);
-        D_0038CC50.bit2 = FALSE;
-        D_0038CC50.save_requested = FALSE;
+        } while (screen_fade.step != 0);
+        game_status.bit2 = FALSE;
+        game_status.save_requested = FALSE;
     }
 }
 
@@ -200,7 +200,7 @@ void func_00118A98(void) {
     quad.second_v = 0x1C00;
     quad.first_u = 0;
     quad.first_v = 0;
-    quad.red = quad.green = quad.blue = (D_0038D680.timer << 7) / total;
+    quad.red = quad.green = quad.blue = (screen_fade.timer << 7) / total;
     quad.alpha = 0x80;
     do {
         remaining--;
@@ -213,8 +213,8 @@ void func_00118A98(void) {
     func_00109A50();
     func_00109A80(GS_REG_ZBUF_1, 0xA000118);
     func_00109AD0();
-    if (--D_0038D680.timer <= 0) {
-        D_0038D680.draw_step++;
+    if (--screen_fade.timer <= 0) {
+        screen_fade.draw_step++;
     }
 }
 
@@ -241,12 +241,12 @@ void func_00118CA8(void) {
     {
         int total = 30; /* two separate 30s, as retail keeps both */
         int span = 30;
-        func_0010A4E8(0, 0, 0, ((total - D_0038D680.timer) << 7) / span, 0x88);
+        func_0010A4E8(0, 0, 0, ((total - screen_fade.timer) << 7) / span, 0x88);
     }
     func_00109A50();
     func_00109A80(GS_REG_ZBUF_1, 0xA000118);
     func_00109AD0();
-    D_0038D680.timer--;
+    screen_fade.timer--;
 }
 
 void func_00118D78(void) {
@@ -257,10 +257,10 @@ void func_00118D80(void) {
     func_00117CC8();
     func_00123288();
     Sound_Update();
-    if (D_0038D610.step == 0 || D_0038D610.step == 5) {
-        if (func_00123108() == 0 && D_0038A130.unk0C == 0 && D_0038A130.unk04 == 0 && D_0038A130.unk18 == 0 &&
+    if (map_load_state.step == 0 || map_load_state.step == 5) {
+        if (func_00123108() == 0 && sound_load_queue.unk0C == 0 && sound_load_queue.unk04 == 0 && sound_load_queue.unk18 == 0 &&
             func_00102230() == 0) {
-            D_0038D680.step++;
+            screen_fade.step++;
         }
     }
 }
@@ -270,7 +270,7 @@ void func_00118E20(void) {
     int slot;
 
     for (slot = 0; slot < 2; slot++) {
-        if (D_0038CD20[slot].unk00 != 0) {
+        if (map_slots[slot].unk00 != 0) {
             func_00115878(slot);
             Effect_FreeForMap(slot);
             MapObject_UnloadMap(slot);
@@ -287,61 +287,61 @@ void func_00118E20(void) {
     func_001BC128();
     Effect_FreePlayerMagic();
     D_00446770 = 0;
-    memset(D_0038CD20, 0, sizeof(D_0038CD20));
+    memset(map_slots, 0, sizeof(map_slots));
     memset(D_00446778, 0, sizeof(D_00446778));
     memset(D_00446780, 0, sizeof(D_00446780));
-    memset(D_0038CDE0, 0, sizeof(D_0038CDE0));
+    memset(map_slot_props, 0, sizeof(map_slot_props));
     D_00446788 = NULL;
     D_0044678C = NULL;
-    D_0038D680.step++;
+    screen_fade.step++;
 }
 
 /* Map change step: opens the new map file and starts reading all of it into the memory of slot 0. */
 void func_00118F40(void) {
     char name[0x100];
-    MapSlot *slot = &D_0038CD20[0];
+    MapSlot *slot = &map_slots[0];
     MapSlotMemory *memory = &D_004321F0[0];
     int size;
 
-    sprintf(name, D_0043E720, D_0038D680.map);
-    D_0038D680.file_handle = func_00102238(name, 1, 1);
-    if (D_0038D680.file_handle < 0) {
+    sprintf(name, D_0043E720, screen_fade.map);
+    screen_fade.file_handle = func_00102238(name, 1, 1);
+    if (screen_fade.file_handle < 0) {
         for (;;) {
         }
     }
     func_00102218();
-    size = (func_00102900(D_0038D680.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
+    size = (func_00102900(screen_fade.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
     memory->unk14 = memory->unk1C = D_00446F50;
     memory->unk18 = memory->unk20 = D_00446F54;
     slot->unk04 = size;
     memset(memory->unk1C, 0, slot->unk04);
     memset(memory->unk20, 0, D_00446F1C / 2);
-    func_001025C0(D_0038D680.file_handle, memory->unk14, -1);
-    D_0038D680.step++;
+    func_001025C0(screen_fade.file_handle, memory->unk14, -1);
+    screen_fade.step++;
 }
 
 /* Map change step: once the whole file is read, closes it and goes on. */
 void func_00119068(void) {
     int next_step;
 
-    if (func_00102790(D_0038D680.file_handle, 1) == 0) {
-        func_001024B0(D_0038D680.file_handle);
+    if (func_00102790(screen_fade.file_handle, 1) == 0) {
+        func_001024B0(screen_fade.file_handle);
         func_00102228();
-        next_step = D_0038D680.step + 1;
-        D_0038D680.file_handle = -1;
-        D_0038D680.step = next_step;
+        next_step = screen_fade.step + 1;
+        screen_fade.file_handle = -1;
+        screen_fade.step = next_step;
     }
 }
 
 /* Map change step: sets the loaded map up in slot 0, puts the player in it and ends the change. */
 void func_001190C8(void) {
-    MapSlot *slot = &D_0038CD20[0];
+    MapSlot *slot = &map_slots[0];
     MapObject *object;
     MapSlotUnk08 *header;
     f32 sine;
     f32 cosine;
 
-    slot->tag = D_0038D680.map;
+    slot->tag = screen_fade.map;
     func_00114840(0);
     func_00114AA8(0);
     func_001155F8(0);
@@ -350,55 +350,55 @@ void func_001190C8(void) {
     MapObject_InitMap(0);
     func_001C82C0(0);
     Gold_InitMap(0);
-    switch (D_0038D680.kind) {
+    switch (screen_fade.kind) {
     case 1:
-        Vector_Copy(&D_00413F80, &D_0038D680);
+        Vector_Copy(&player_state, &screen_fade);
         break;
     case 2:
-        object = MapObject_GetById(0, D_0038D680.unk14);
+        object = MapObject_GetById(0, screen_fade.unk14);
         if (object != NULL) {
             sine = sinf(-object->model->rotation.y);
             cosine = cosf(-object->model->rotation.y);
-            Vector_Copy(&D_00413F80, &object->model->position);
-            D_00413F80.position.x += cosine * 0.0f - sine * -250.0f;
-            D_00413F80.position.z += sine * 0.0f + cosine * -250.0f;
-            D_00413F80.rotation.y = object->model->rotation.y;
+            Vector_Copy(&player_state, &object->model->position);
+            player_state.position.x += cosine * 0.0f - sine * -250.0f;
+            player_state.position.z += sine * 0.0f + cosine * -250.0f;
+            player_state.rotation.y = object->model->rotation.y;
             break;
         }
     case 0:
         header = slot->header;
-        D_00413F80.position.x = header->unk60;
-        D_00413F80.position.y = header->unk64;
-        D_00413F80.position.z = header->unk68;
-        D_00413F80.rotation.y = header->unk6C;
+        player_state.position.x = header->unk60;
+        player_state.position.y = header->unk64;
+        player_state.position.z = header->unk68;
+        player_state.rotation.y = header->unk6C;
         break;
     }
-    D_00413F80.map_index = 0xFFFF;
-    D_00413F80.unk250 = 0xFF;
-    D_00413F80.unk208 = 0;
-    D_00413F80.unk204 = 0;
-    D_00413F80.unk20C = 0;
-    D_0038CD20[0].unk00 = 1;
+    player_state.map_index = 0xFFFF;
+    player_state.unk250 = 0xFF;
+    player_state.unk208 = 0;
+    player_state.unk204 = 0;
+    player_state.unk20C = 0;
+    map_slots[0].unk00 = 1;
     MapObject_StartMap(0);
     Entity_InitFromMapSpawns(0);
     func_00123158(0);
     func_001C87D8(0);
     Entity_ClearFlag10InSlot(0);
     func_00119360(0);
-    func_001034F8(D_0038CD20[0].tag);
-    Script_Init(D_0038CD20[0].unk5C);
+    func_001034F8(map_slots[0].tag);
+    Script_Init(map_slots[0].unk5C);
     Script_Start(0x7FFF, 0);
-    D_0038A130.unk00 = ((MapSlotUnk08 *)D_0038CD20[0].header)->unk70;
-    D_0038A130.unk04 = 1;
+    sound_load_queue.unk00 = ((MapSlotUnk08 *)map_slots[0].header)->unk70;
+    sound_load_queue.unk04 = 1;
     Sound_StopAll(1);
-    D_0038A130.unk14 = &D_0038CD20[0];
+    sound_load_queue.unk14 = &map_slots[0];
     func_00106178(0, 0, 0, 30);
-    D_0038D680.step = 0;
+    screen_fade.step = 0;
 }
 
 /* Map change step: ends the change once the timer has run out. */
 void func_00119340(void) {
-    if (D_0038D680.timer <= 0) {
-        D_0038D680.step = 0;
+    if (screen_fade.timer <= 0) {
+        screen_fade.step = 0;
     }
 }

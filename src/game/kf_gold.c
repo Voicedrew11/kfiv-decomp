@@ -29,14 +29,14 @@ float cosf(float);
 float sinf(float);
 
 void Vector_Subtract(void *, void *, void *);
-extern MapDrawState D_0038A1B0;
-extern MapSlot D_0038CD20[];
-extern ObjectMarkRow D_00362928[];
-extern MapLoadState D_0038D610;
-extern GameStatus D_0038CC50;
+extern MapDrawState map_draw_state;
+extern MapSlot map_slots[];
+extern ObjectMarkRow map_object_marks[];
+extern MapLoadState map_load_state;
+extern GameStatus game_status;
 extern f32 D_00431AF0[16];
-extern u16 D_00413DAA[];
-extern PlayerState D_00413F80;
+extern u16 pad_pressed[];
+extern PlayerState player_state;
 extern u16 D_00446940;
 extern int D_00446770;
 extern f32 D_004469DC[];
@@ -120,15 +120,15 @@ void Gold_InitMap(int map) {
         source = (int)map_gold_model;
         func_0010B758(model, &source, &work);
         copy_matrix((ModelMatrixQwords *)matrix, (ModelMatrixQwords *)D_00431AF0);
-        model->unk148 = (s32)&D_0038A1B0.unkC0;
-        model->unk14C = &D_0038A1B0.unkA0;
+        model->unk148 = (s32)&map_draw_state.unkC0;
+        model->unk14C = &map_draw_state.unkA0;
         model->unk194 = (int)map_gold_texture;
         model->unk190 = 2;
         model->draw = (void (*)(ModelInstance *))func_001CB710;
     }
-    tag = D_0038CD20[map].tag; // match: kept in a variable, retail does not read it again after the copy
-    marks = D_00362928[tag];
-    memset(&D_00362928[tag], 0, sizeof(ObjectMarkRow));
+    tag = map_slots[map].tag; // match: kept in a variable, retail does not read it again after the copy
+    marks = map_object_marks[tag];
+    memset(&map_object_marks[tag], 0, sizeof(ObjectMarkRow));
     for (i = 0; i < MAP_ACTOR_COUNT; i++) {
         if (marks.marks[i].unk08 != 0) {
             position[0] = marks.marks[i].x;
@@ -208,7 +208,7 @@ void Gold_Update(void) {
         }
         actor->body->unk145 = actor->body->unk146 < 0x80;
         if (actor->flags & 2) {
-            Vector_Subtract(delta, &actor->body->position, &D_00413F80);
+            Vector_Subtract(delta, &actor->body->position, &player_state);
             distance = delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2];
             if (distance < nearest_distance) {
                 nearest_distance = distance;
@@ -217,14 +217,14 @@ void Gold_Update(void) {
         }
         actor = actor->next;
     }
-    if (nearest != NULL && (D_00413DAA[0] & D_00446940) && !(D_0038CC50.unk30 & 1) && D_0038CC50.unk00 != 0) {
+    if (nearest != NULL && (pad_pressed[0] & D_00446940) && !(game_status.unk30 & 1) && game_status.unk00 != 0) {
         MAP_ACTOR_BITS(nearest)->in_reach = FALSE;
         nearest->step = 2;
         nearest->fade_timer = 15;
         amount = MAP_ACTOR_WORDS(nearest)->amount;
-        D_00413F80.gold += amount;
-        if (D_00413F80.gold >= GOLD_MAX) {
-            D_00413F80.gold = GOLD_MAX;
+        player_state.gold += amount;
+        if (player_state.gold >= GOLD_MAX) {
+            player_state.gold = GOLD_MAX;
         }
         Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_GOLD, amount);
     }
@@ -299,11 +299,11 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
         other_map = FALSE;
     }
     if (other_map) {
-        Vector_Add(&actor->body->position, &actor->body->position, &D_0038D610);
+        Vector_Add(&actor->body->position, &actor->body->position, &map_load_state);
     }
     Gold_SaveMark(actor);
     if (other_map) {
-        Vector_Subtract(&actor->body->position, &actor->body->position, &D_0038D610);
+        Vector_Subtract(&actor->body->position, &actor->body->position, &map_load_state);
     }
     return TRUE;
 }
@@ -411,8 +411,8 @@ void Gold_SaveMark(MapActor *actor) {
     ObjectMark *mark;
 
     map_slot = (actor->flags >> 2) & 1;
-    entry = &D_0038CD20[map_slot];
-    mark = &D_00362928[entry->tag].marks[((char *)actor - (char *)map_actors[map_slot]) / sizeof(MapActor)];
+    entry = &map_slots[map_slot];
+    mark = &map_object_marks[entry->tag].marks[((char *)actor - (char *)map_actors[map_slot]) / sizeof(MapActor)];
     memset(mark, 0, sizeof(ObjectMark));
     mark->x = actor->body->position.x;
     mark->y = actor->body->position.y;
@@ -430,10 +430,10 @@ void Gold_ClearMark(MapActor *actor) {
     ObjectMark *mark;
 
     map_slot = (actor->flags >> 2) & 1;
-    entry = &D_0038CD20[map_slot];
+    entry = &map_slots[map_slot];
     slot = ((char *)actor - (char *)map_actors[map_slot]) / sizeof(MapActor);
     // match: retail adds the tag row and the slot before the table base
-    mark = (ObjectMark *)((u8 *)D_00362928 + (entry->tag * sizeof(D_00362928[0]) + slot * sizeof(ObjectMark)));
+    mark = (ObjectMark *)((u8 *)map_object_marks + (entry->tag * sizeof(map_object_marks[0]) + slot * sizeof(ObjectMark)));
     memset(mark, 0, sizeof(ObjectMark));
 }
 

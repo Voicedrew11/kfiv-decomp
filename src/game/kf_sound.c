@@ -31,10 +31,10 @@ extern char D_0043F688[];
 extern int D_004469E8;
 extern int D_00446704;
 extern int (*const D_0043F670[])(int *, int *);
-extern int D_00420940[];
+extern int sound_rpc_args[];
 extern char D_004469F0[];
 extern int D_004469F8;
-extern char D_00420A40[];
+extern char sound_rpc_file_name[];
 
 
 /* the step func_001CD020 runs keeps its source position here between calls */
@@ -901,7 +901,7 @@ int func_001CD020(int word0, int word1, int word2, int word3, int word4, int wor
     args[4] = word4;
     args[5] = word5;
     args[6] = word6;
-    advance = D_0043F670[D_004469E8](args, D_00420940);
+    advance = D_0043F670[D_004469E8](args, sound_rpc_args);
     voice_load_source = args[3];
     D_004469E8 += advance;
     if (D_004469E8 == 6) {
@@ -912,7 +912,7 @@ int func_001CD020(int word0, int word1, int word2, int word3, int word4, int wor
         D_00446704++;
     }
     if (D_004469E8 == 0) {
-        return D_00420940[5];
+        return sound_rpc_args[5];
     }
     return -3;
 }
@@ -1938,9 +1938,9 @@ int func_001CEBE0(void) {
 }
 
 int func_001CECB8(int stream, char *file_name, int value) {
-    strcpy(D_00420A40, file_name);
+    strcpy(sound_rpc_file_name, file_name);
     stream &= 1;
-    sceSifCallRpc(sound_rpc_client, stream | 0x3000, 0, D_00420A40, 0x100, (int *)&sound_rpc_buffer, 1, 0, 0);
+    sceSifCallRpc(sound_rpc_client, stream | 0x3000, 0, sound_rpc_file_name, 0x100, (int *)&sound_rpc_buffer, 1, 0, 0);
     if (sound_rpc_buffer.self == 0) {
         if (func_001CBAE0(1, 0x3040, stream, value) != 0) {
             func_001CBAE0(1, 0x3030, stream);
@@ -1956,8 +1956,8 @@ int func_001CED78(int stream, char *file_name, int value) {
         func_001CBAE0(1, 0x3030, stream);
         return -1;
     }
-    strcpy(D_00420A40, file_name);
-    sceSifCallRpc(sound_rpc_client, stream | 0x30A0, 0, D_00420A40, 0x100, (int *)&sound_rpc_buffer, 1, 0, 0);
+    strcpy(sound_rpc_file_name, file_name);
+    sceSifCallRpc(sound_rpc_client, stream | 0x30A0, 0, sound_rpc_file_name, 0x100, (int *)&sound_rpc_buffer, 1, 0, 0);
     if (sound_rpc_buffer.self != 0) {
         func_001CBAE0(1, 0x3030, stream);
         return -1;

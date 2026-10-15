@@ -26,7 +26,7 @@ void Display_SwapBuffers(int);
 extern DebugStartMenuSpacer D_0043EF70;
 extern DebugStartMenuPrompt D_0043EF90;
 extern DebugStartMenuItems D_0043EFD8;
-extern u16 D_00413DA8[];
+extern u16 pad_state[];
 extern s64 D_00432E20[];
 extern s64 D_00433050[];
 extern char D_0043F1D8[];
@@ -239,7 +239,7 @@ int func_001B0A78(void) {
     do {
         while (running) {
             func_001B5460();
-            if (D_00413DA8[1] & 8) {
+            if (pad_state[1] & 8) {
                 break;
             }
             func_001095E0();
@@ -257,13 +257,13 @@ int func_001B0A78(void) {
         selected = 0;
         while (running) {
             func_001B5460();
-            if (D_00413DA8[1] & 0x10) {
+            if (pad_state[1] & 0x10) {
                 selected = (selected + 3) % 4;
-            } else if (D_00413DA8[1] & 0x40) {
+            } else if (pad_state[1] & 0x40) {
                 selected = (selected + 1) % 4;
-            } else if (D_00413DA8[1] & 0x2000) {
+            } else if (pad_state[1] & 0x2000) {
                 break;
-            } else if (D_00413DA8[1] & 0x4000) {
+            } else if (pad_state[1] & 0x4000) {
                 chosen = selected;
                 running = FALSE;
             }

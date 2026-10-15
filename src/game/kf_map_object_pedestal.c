@@ -21,13 +21,13 @@ void func_00122530(char *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 int func_00103BA8(int, int, int);
-extern MapSlot D_0038CD20[];
-extern GameStatus D_0038CC50;
+extern MapSlot map_slots[];
+extern GameStatus game_status;
 extern void *D_00420D50[];
-extern float D_00413F80[];
+extern float player_state[];
 extern EventRunner D_00420D00;
 extern f32 D_00431AF0[16];
-extern ItemCommonDef D_0041A6F8[];
+extern ItemCommonDef item_common_defs[];
 
 /* Start handler: a pedestal that starts with an item on it stays so only while
    the map's trigger records still hold an item for it (func_00103AE0); its model
@@ -40,7 +40,7 @@ void func_00121DA8(MapObject *object) {
     work->fired = 0;
     item = 0;
     if (object->unk10 & 0x20000) {
-        item = func_00103AE0(D_0038CD20[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->unk08->unk38.bytes[2]);
+        item = func_00103AE0(map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->unk08->unk38.bytes[2]);
         if (item <= 0) {
             object->unk10 &= ~0x20000;
         }
@@ -70,7 +70,7 @@ void func_00121E78(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (D_0038CC50.bit1 && D_00420D50[0] == object) {
+    if (game_status.bit1 && D_00420D50[0] == object) {
         if (work->timer > 0) {
             return;
         }
@@ -84,7 +84,7 @@ void func_00121E78(MapObject *object) {
         func_0011F148((char *)object);
         Vector_Copy(&origin, part->unk40);
         origin.w = 1.0f;
-        Vector_Copy(&target, D_00413F80);
+        Vector_Copy(&target, player_state);
         target.w = 1.0f;
         target.y -= 220.0f;
         Matrix_Multiply(matrix, object->model->unk40, part);
@@ -95,7 +95,7 @@ void func_00121E78(MapObject *object) {
         work->frames = distance / 6.6666665f;
         Vector_Copy(part->unk40, &target);
         Vector_Scale(&work->step.x, &work->step.x, 1.0f / work->frames);
-        D_0038CC50.unk30 |= 1;
+        game_status.unk30 |= 1;
     }
 }
 
@@ -114,7 +114,7 @@ void func_001220B8(MapObject *object) {
 }
 
 /* Update handler: runs the animation; at its end the object is at step 4 and
-   D_0038CC50.unk30 bit 0 is cleared. */
+   game_status.unk30 bit 0 is cleared. */
 void func_00122138(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
 
@@ -126,7 +126,7 @@ void func_00122138(MapObject *object) {
     } else {
         MapObject_StartAnim(object, 5);
         MAP_OBJECT_BYTES(object)->step = 4;
-        D_0038CC50.unk30 &= ~1U;
+        game_status.unk30 &= ~1U;
     }
 }
 
@@ -136,13 +136,13 @@ void func_00122138(MapObject *object) {
 void func_001221C0(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
     u8 timer = work->timer;
-    u8 tag = D_0038CD20[MAP_OBJECT_BYTES(object)->unk00 & 1].tag;
+    u8 tag = map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag;
     int item;
 
     if (work->timer > 0) {
         work->timer = timer - 1;
     }
-    if (D_0038CC50.bit1 && D_00420D00.current == object) {
+    if (game_status.bit1 && D_00420D00.current == object) {
         MAP_OBJECT_BYTES(object)->step = 5;
         // match: two leftover arguments are passed
         item = ((int (*)(int, int, void *, int))func_00103AE0)(tag, object->unk08->unk38.bytes[2], work, timer);
@@ -151,7 +151,7 @@ void func_001221C0(MapObject *object) {
         func_0011F148((char *)object);
         Player_AddItem(item);
         object->unk10 &= ~0x20000;
-        D_0038CC50.unk30 |= 1;
+        game_status.unk30 |= 1;
     }
 }
 
@@ -178,7 +178,7 @@ void func_001222C0(MapObject *object) {
     object->model->unk1B4(object->model);
     point = (void *)object->model->get_point(object->model, 0);
     Vector_Copy(&origin, point);
-    Vector_Copy(&target, D_00413F80);
+    Vector_Copy(&target, player_state);
     target.y -= 115.0f;
     Vector_Subtract(work, &target, &origin);
     distance = sqrtf(((MapObjectWorkKind121DA8 *)object->work)->step.x * ((MapObjectWorkKind121DA8 *)object->work)->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
@@ -203,7 +203,7 @@ void func_00122480(MapObject *object) {
         func_00122600(object, 0);
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
-        D_0038CC50.unk30 &= ~1U;
+        game_status.unk30 &= ~1U;
     }
 }
 
@@ -218,8 +218,8 @@ int func_00122538(MapTrigger *trigger, int type_index) {
     int tag;
     MapTriggerShot *shot = &trigger->shot;
 
-    type = D_0041A6F8[type_index].type;
-    slot = &D_0038CD20[trigger->unk10 & 1];
+    type = item_common_defs[type_index].type;
+    slot = &map_slots[trigger->unk10 & 1];
     tag = slot->tag;
     if (trigger->type == 1 && shot->fired == 0 && type == trigger->type &&
         func_00103BA8(tag, (u8)trigger->unk08[0x3A], type_index)) {

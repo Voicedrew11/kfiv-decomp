@@ -1,4 +1,4 @@
-/* ExpeditionArcher: the behaviour of entity type 13 (Entity.params->unk02, the index into D_003E6E40): its
+/* ExpeditionArcher: the behaviour of entity type 13 (Entity.params->unk02, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Expedition Archer. The game
    names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm
    records by hit points and experience, with resistances and drops where two monsters share those. */
@@ -15,7 +15,7 @@ void Vector_Copy(void *, void *);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
-extern s32 D_003E6E40[][2];
+extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
@@ -30,7 +30,7 @@ void EntityAi_StepState(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
-extern PlayerData D_00413F80;
+extern PlayerData player_state;
 int rand(void);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -74,7 +74,7 @@ void ExpeditionArcher_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
     unkE0->think = ExpeditionArcher_Think;
     unkE0->animate = (void (*)(void))ExpeditionArcher_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -157,7 +157,7 @@ static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
     float angle;
 
     if (part != NULL) {
-        angle = EntityMath_WrapAngle(atan2(D_00413F80.position[1] - model->position.y, actor->distance_to_player));
+        angle = EntityMath_WrapAngle(atan2(player_state.position[1] - model->position.y, actor->distance_to_player));
         if (0.87266463f < angle) {
             angle = 0.87266463f;
         } else if (angle < -0.87266463f) {
@@ -246,7 +246,7 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            entity->target = &D_00413F80;
+            entity->target = &player_state;
             entity->unkA0 = rand() % 60 + 0x78;
             unkE0->unk78 = 0;
             break;
@@ -330,7 +330,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        Vector_Copy(target, D_00413F80.position);
+        Vector_Copy(target, player_state.position);
         target[1] -= 170.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->unkFC->unk82, target, 0.17453294f, 0.17453294f);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -408,7 +408,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
     case 4:
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        Vector_Copy(target, D_00413F80.position);
+        Vector_Copy(target, player_state.position);
         target[1] -= 170.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->unkFC->unk82, target, 0.17453294f, 0.17453294f);
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {

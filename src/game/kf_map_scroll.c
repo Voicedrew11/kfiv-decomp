@@ -3,7 +3,7 @@
 #include "kf_map.h"
 #include "kf_packet.h"
 
-extern MapSlot D_0038CD20[];
+extern MapSlot map_slots[];
 extern u32 D_00446ED4;
 
 void func_00109650(u32 *, u32 *);
@@ -54,7 +54,7 @@ void MapScroll_PrepareCopy(void) {
 void MapScroll_UpdateCopy(int map, int mode) {
     MapScrollCopy *texture;
     MapSlotPair *pair = map_scroll_copy_pairs[map];
-    MapSlot *slot = &D_0038CD20[map];
+    MapSlot *slot = &map_slots[map];
     int base;
     int format;
     int width;
@@ -183,7 +183,7 @@ void MapScroll_PrepareDraw(void) {
    goes with it, and moves the pair along. */
 void MapScroll_UpdateDraw(int map, int mode) {
     ScreenQuad quad;
-    MapSlot *slot = &D_0038CD20[map];
+    MapSlot *slot = &map_slots[map];
     MapSlotPair *pair = map_scroll_draw_pairs[map];
     MapScrollTexture *texture;
     int i;
@@ -274,8 +274,8 @@ void MapScroll_UpdateDraw(int map, int mode) {
 
 /* Carries pairs over from one map slot to the other for the maps that share them. */
 void MapScroll_CarryPairs(int from_slot, int to_slot) {
-    int from_tag = D_0038CD20[from_slot].tag;
-    int to_tag = D_0038CD20[to_slot].tag;
+    int from_tag = map_slots[from_slot].tag;
+    int to_tag = map_slots[to_slot].tag;
 
     if ((from_tag == 4 && to_tag == 0x63) || (from_tag == 0x63 && to_tag == 4) ||
         (from_tag == 0x62 && to_tag == 0x63) || (from_tag == 0x63 && to_tag == 0x62)) {

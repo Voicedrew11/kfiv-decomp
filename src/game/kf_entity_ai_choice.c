@@ -13,7 +13,7 @@ void Vector_Cross(void *, void *, void *);
 extern u8 D_004141D8[];
 extern EntityModel *D_00446978;
 int rand(void);
-extern PlayerState D_00413F80;
+extern PlayerState player_state;
 extern u32 D_00446ED4;
 float atan2f(float, float);
 
@@ -93,10 +93,10 @@ static inline s32 player_in_reach(Entity *entity, EntityParams *params) {
     bottom = entity->model->position[1] - (height + params->unk1A) * 0.5f;
     top = entity->model->position[1] - (height - params->unk1A) * 0.5f;
     farthest = params->unk18;
-    if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
         farthest *= 0.5f;
     }
-    if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+    if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         farthest *= 0.5f;
     }
     reach[0][0] = params->unk240[0].unk04 != 0 ? entity->radius + 100.0f + params->unk240[0].unk04 : 0.0f;
@@ -111,7 +111,7 @@ static inline s32 player_in_reach(Entity *entity, EntityParams *params) {
     reach[1][3] = (farthest < ENTITY_PARAMS_RANGED(params)[0].reach_max ? farthest + entity->radius : ENTITY_PARAMS_RANGED(params)[0].reach_max + entity->radius) + 100.0f;
     reach[1][4] = (farthest < ENTITY_PARAMS_RANGED(params)[1].reach_max ? farthest + entity->radius : ENTITY_PARAMS_RANGED(params)[1].reach_max + entity->radius) + 100.0f;
     reach[1][5] = (farthest < ENTITY_PARAMS_RANGED(params)[2].reach_max ? farthest + entity->radius : ENTITY_PARAMS_RANGED(params)[2].reach_max + entity->radius) + 100.0f;
-    if (entity->model->position[1] - height <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= entity->model->position[1]) {
+    if (entity->model->position[1] - height <= player_state.position.y && player_state.position.y - 230.0f <= entity->model->position[1]) {
         if (params->unk240[0].unk00 != 0 && angles[0] < params->unk240[0].unk08 && reach[0][0] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][0]) {
             return TRUE;
@@ -125,7 +125,7 @@ static inline s32 player_in_reach(Entity *entity, EntityParams *params) {
             return TRUE;
         }
     }
-    if (bottom <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= top) {
+    if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top) {
         if (ENTITY_PARAMS_RANGED(params)[0].record.unk00 != 0 && angles[3] < ENTITY_PARAMS_RANGED(params)[0].unk08 && reach[0][3] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][3]) {
             return TRUE;
@@ -363,12 +363,12 @@ s32 EntityAi_PickAttack(Entity *entity) {
             difference = wrap_angle(entity->unk68 - wrap_angle(entity->model->unkD0[1] + angle));
             difference = ABS(difference);
             farthest = entity->params->unk18;
-            bottom = D_00413F80.position.y - 230.0f;
-            top = D_00413F80.position.y + entity->height;
-            if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+            bottom = player_state.position.y - 230.0f;
+            top = player_state.position.y + entity->height;
+            if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
                 farthest *= 0.5f;
             }
-            if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+            if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
                 farthest *= 0.5f;
             }
             if (entity->params->unk240[i].unk04 != 0) {
@@ -410,10 +410,10 @@ s32 EntityAi_PickAttack(Entity *entity) {
             farthest = entity->params->unk18;
             bottom = entity->model->position[1] - (entity->height + entity->params->unk1A) * 0.5f;
             top = entity->model->position[1] - (entity->height - entity->params->unk1A) * 0.5f;
-            if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+            if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
                 farthest *= 0.5f;
             }
-            if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+            if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
                 farthest *= 0.5f;
             }
             if (ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].reach_min != 0) {
@@ -425,7 +425,7 @@ s32 EntityAi_PickAttack(Entity *entity) {
             radius = entity->radius; // match: as in the melee half
             reach[1] = (farthest < ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].reach_max ? farthest + radius : ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].reach_max + radius) + 100.0f;
             in_reach = FALSE;
-            if (bottom <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= top && difference < ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].unk08 &&
+            if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top && difference < ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].unk08 &&
                 reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[1]) {
                 in_reach = TRUE;
             }
@@ -493,12 +493,12 @@ s32 EntityAi_PickMeleeAttack(Entity *entity) {
         angle = attack_angle(model, entity->model, entity->unk68, entity->params->unk240[i].unk0E);
         angle = ABS(angle);
         farthest = entity->params->unk18;
-        bottom = D_00413F80.position.y - 230.0f;
-        top = D_00413F80.position.y + height;
-        if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+        bottom = player_state.position.y - 230.0f;
+        top = player_state.position.y + height;
+        if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
             farthest *= 0.5f;
         }
-        if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+        if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
             farthest *= 0.5f;
         }
         if (entity->params->unk240[i].unk04 != 0) {
@@ -575,10 +575,10 @@ s32 EntityAi_PickRangedAttack(Entity *entity) {
         bottom = entity->model->position[1] - (entity->height + entity->params->unk1A) * 0.5f;
         top = entity->model->position[1] - (entity->height - entity->params->unk1A) * 0.5f;
         farthest = entity->params->unk18;
-        if (entity->unk24 != 0 || (D_00413F80.unk2E4 > 0 && entity->unk60 < D_00413F80.unk2E8)) {
+        if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
             farthest *= 0.5f;
         }
-        if (D_00413F80.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
+        if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
             farthest *= 0.5f;
         }
         if (ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].reach_min != 0) {
@@ -591,7 +591,7 @@ s32 EntityAi_PickRangedAttack(Entity *entity) {
                                                                                                : ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].reach_max + radius) + 100.0f;
         reach[1] = farthest;
         in_reach = FALSE;
-        if (bottom <= D_00413F80.position.y && D_00413F80.position.y - 230.0f <= top &&
+        if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top &&
             angle < ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].unk08 && reach[0] <= entity->distance_to_player &&
             entity->distance_to_player < farthest) {
             in_reach = TRUE;
