@@ -20,8 +20,8 @@ typedef struct {
 
 /* A random whole number of degrees as an angle in radians, wrapped to -pi..pi */
 float EntityAi_RandomAngle(void);
-/* Sets D_004325A0[30] to float_value and D_004325A0[31] to int_value */
-void func_00195878(int float_value, int int_value);
+/* Starts the second camera shake: its reach (CameraState.unk78) and its frames (unk7C) */
+void EntityAi_ShakeCamera(int float_value, int int_value);
 /* Sets Entity.state and keeps the old value in prev_state */
 void EntityAi_SetState(Entity *entity, u8 state);
 /* Installs the entity's per-frame update (Entity.unk50; the type table entity_type_handlers gives it) and puts
@@ -69,8 +69,8 @@ void EntityAi_CheckFarFromSpawn3D(Entity *entity);
 /* Sets flag 53 while the model is farther from its spawn point than EntitySpawnInfo.unk4C (in x and z),
    clears it otherwise */
 void EntityAi_CheckFarFromSpawn(Entity *entity);
-/* Clears flag bit 31 */
-void func_00196D48(Entity *entity);
+/* Clears flag bit 31, which makes closing in a turn on the spot; nothing sets it */
+void EntityAi_ClearTurnInPlace(Entity *entity);
 /* Tests whether the target is within a distance and inside the horizontal and vertical view cones (each
    given as a full angle); a limit of 0 skips that test */
 s32 EntityAi_IsPointInView(Entity *entity, f32 *target, f32 yaw_range, f32 pitch_range, f32 max_distance);
@@ -111,12 +111,13 @@ int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now);
 void EntityAi_RaiseAttackWeight(Entity *entity);
 /* Raises the weight factors of the three ranged attacks (Entity.unkC0[3..5]) by 2, kept within 0x40..0xC0 */
 void EntityAi_RaiseRangedWeights(Entity *entity);
-/* func_0019A418 for the motion of animation index (EntityParams.unk60) */
-int func_0019A3F0(Entity *entity, s32 index);
-/* The u16 in the four bytes in front of the block ModelInstance.level_tables[index] points at */
-u16 func_0019A418(ModelInstance *model, int index);
-/* Sets byte unk6C of model part index */
-void func_0019A430(ModelInstance *model, int index, u8 value);
+/* The frame count of the motion animation index plays (Motion_FrameCount of EntityParams.unk60[index]) */
+int EntityAi_AnimationFrameCount(Entity *entity, s32 index);
+/* The frame count of motion index: MotionData.frame_count, the u16 in front of the part tables
+   ModelInstance.level_tables[index] points at */
+u16 Motion_FrameCount(ModelInstance *model, int index);
+/* Puts model part index in motion slot value (ModelPart.unk6C) */
+void Motion_SetPartSlot(ModelInstance *model, int index, u8 value);
 /* Starts animation in a motion slot of the work area on channel, from frame, over frames (a quarter longer
    while Entity.unk28 runs and it is not busy); 1 without a change when the slot already plays it and force
    is 0 */

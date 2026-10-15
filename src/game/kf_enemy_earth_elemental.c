@@ -28,7 +28,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
@@ -59,10 +59,10 @@ void EntityAi_SetAttackDelay(Entity *, s32);
 static void EarthElemental_Think(Entity *entity, s32 unknown);
 static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown);
 static void EarthElemental_PlayTurnAnim(Entity *entity);
-static s32 func_0015C518(Entity *entity, f32 min_distance, f32 max_angle);
-static s32 func_0015C688(Entity *entity, f32 max_distance, f32 max_angle);
+static s32 EarthElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle);
+static s32 EarthElemental_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle);
 static void EarthElemental_Move(Entity *entity);
-static s32 func_0015C958(Entity *entity, s32 unused, f32 reach);
+static s32 EarthElemental_BackwardsCommand(Entity *entity, s32 unused, f32 reach);
 static void EarthElemental_AlertSameKind(Entity *entity);
 static void EarthElemental_OnHit(Entity *entity);
 static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity);
@@ -165,10 +165,10 @@ static void EarthElemental_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but it first starts EntityAi_Dodge when
-   func_0015C518 says so and guards when func_0015C688 says so; an attack sets work word unk6E to
+   EarthElemental_ShouldDodgeMagic says so and guards when EarthElemental_ShouldGuard says so; an attack sets work word unk6E to
    EntityParams.unk436. Closing in is one of three things: with the entity more than 35 degrees off
    the player's facing it goes backwards for 60 to 89 frames (work byte unk78 is 1, command from
-   func_0015C958); else it runs at the player for 60 to 119 frames (unk78 is 0); with the player
+   EarthElemental_BackwardsCommand); else it runs at the player for 60 to 119 frames (unk78 is 0); with the player
    more than 90 degrees off its heading it starts EarthElemental_PlayTurnAnim. Work word unk6A counts
    the frames it is not going for the player; above EntityParams.unk43A, with the player within 30
    degrees ahead and nearer than 1000, it starts EarthElemental_RangedAttack0. */
@@ -185,11 +185,11 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         entity->flags = (entity->flags & ~0x3800) | 0x800;
     }
-    if (func_0015C518(entity, 200.0f, 1.0471976f)) {
+    if (EarthElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (func_0015C688(entity, 300.0f, 0.5235988f)) {
+    if (EarthElemental_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
@@ -255,7 +255,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
         unkE0->unk6A++;
     }
     if (entity->unkCD == 1) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if ((s32)(entity->flags >> 31) & 1) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -300,7 +300,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
                         return;
                     }
                     // match: called like EntityAi_MoveCommand, with a mode the callee ignores
-                    entity->unkC8 = func_0015C958(entity, 1, entity->radius + 100.0f + 30.0f);
+                    entity->unkC8 = EarthElemental_BackwardsCommand(entity, 1, entity->radius + 100.0f + 30.0f);
                 }
                 unkE0->unk6A = 0;
                 break;
@@ -348,7 +348,11 @@ static void EarthElemental_PlayTurnAnim(Entity *entity) {
     }
 }
 
-static s32 func_0015C518(Entity *entity, f32 min_distance, f32 max_angle) {
+/* Whether to dodge a magic: only while work byte unk7B is 1 to 15 (EarthElemental_Think puts it to 25 to 34
+   when the player casts one, player_state.unk259), with the player at least min_distance away (less the radius
+   and 100), Entity.unk68 within max_angle of the heading and the entity within 30 degrees of the player's
+   facing; then EntityParams.unkCA / 10 times in 100. */
+static s32 EarthElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle) {
     f32 distance;
     f32 angle;
     f32 player_angle;
@@ -371,7 +375,9 @@ static s32 func_0015C518(Entity *entity, f32 min_distance, f32 max_angle) {
     return rand() % 100 < entity->params->unkCA / 10;
 }
 
-static s32 func_0015C688(Entity *entity, f32 max_distance, f32 max_angle) {
+/* As EntityAi_ShouldGuard, but by a chance of work word unk6C / 5 percent (EntityParams.unk438 for a while
+   after an attack, EntityParams.unkCB otherwise; EarthElemental_Think sets it). */
+static s32 EarthElemental_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 distance;
     f32 angle;
@@ -444,9 +450,10 @@ static void EarthElemental_Move(Entity *entity) {
     }
 }
 
-/* The movement command for walking to the target: a turn bit when the target is off the heading by more than
-   the turn limit, and bit 1 while it is farther away than reach. */
-static s32 func_0015C958(Entity *entity, s32 unused, f32 reach) {
+/* The movement command for going backwards: a turn bit (0x100 / 0x200) while the target is off the heading by
+   more than the turn limit, and command bit 2 (backwards) while it is farther than reach; 0 without a target.
+   The second parameter is not used. */
+static s32 EarthElemental_BackwardsCommand(Entity *entity, s32 unused, f32 reach) {
     f32 turn;
     f32 limit;
     f32 heading;
@@ -513,7 +520,7 @@ static void EarthElemental_OnHit(Entity *entity) {
 
 /* An action (busy bit 0x3000) that EarthElemental_Think starts while work word unk68 is 1
    (EarthElemental_AlertSameKind of another entity sets it). It starts no animation of its own. Each
-   frame it dodges or guards (func_0015C518, func_0015C688, EntityAi_ShouldDodge), starts the attack
+   frame it dodges or guards (EarthElemental_ShouldDodgeMagic, EarthElemental_ShouldGuard, EntityAi_ShouldDodge), starts the attack
    EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses attacking (unk68 becomes 2), and else gives a
    command with the player as target and calls the move handler itself: backwards (bit 2) while the
    entity is more than 45 degrees off the player's facing, forwards at the run (0x41) while it is
@@ -538,11 +545,11 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
         }
         break;
     case 2:
-        if (func_0015C518(entity, 200.0f, 1.0471976f)) {
+        if (EarthElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;
         }
-        if (func_0015C688(entity, 300.0f, 0.5235988f)) {
+        if (EarthElemental_ShouldGuard(entity, 300.0f, 0.5235988f)) {
             EntityAi_StartAction(entity, EntityAi_Guard, 1);
             break;
         }
@@ -596,7 +603,7 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
             entity->unkC8 |= 0x100;
         } else if (ABS(angle) > 0.7853982f) {
             // match: the caller passes a second integer argument the callee does not take
-            entity->unkC8 = func_0015C958(entity, 1, entity->radius + 100.0f + 30.0f);
+            entity->unkC8 = EarthElemental_BackwardsCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         } else {
             entity->unkC8 = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }

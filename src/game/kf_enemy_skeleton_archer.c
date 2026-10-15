@@ -184,7 +184,7 @@ static void SkeletonArcher_Think(Entity *entity, s32 unknown) {
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but ranged record 0 is
    SkeletonArcher_RangedAttack0 (flag bit 10 is set for a ranged attack), and closing in does not use
-   func_00196D48, takes its command from EntityAi_TurnCommand where the shared one calls EntityAi_MoveCommand, and
+   EntityAi_ClearTurnInPlace, takes its command from EntityAi_TurnCommand where the shared one calls EntityAi_MoveCommand, and
    never runs. */
 static void SkeletonArcher_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;

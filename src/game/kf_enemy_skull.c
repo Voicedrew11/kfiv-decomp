@@ -28,7 +28,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
@@ -250,7 +250,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkCD == 1) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if ((s32)(entity->flags >> 31) & 1) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {

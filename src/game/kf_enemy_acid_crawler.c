@@ -37,7 +37,7 @@ s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_CanAttack(Entity *);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
@@ -330,7 +330,7 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         unkE0->unk7A = 1;
     }
-    func_00196D48(entity);
+    EntityAi_ClearTurnInPlace(entity);
     if (ENTITY_FLAG_BITS(entity)->bit31) {
         angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
         if (unkE0->unk79 == 0) {

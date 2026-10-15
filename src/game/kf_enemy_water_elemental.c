@@ -31,7 +31,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
@@ -55,7 +55,7 @@ static void WaterElemental_Think(Entity *entity, s32 unknown);
 static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown);
 static void WaterElemental_PlayTurnAnim(Entity *entity);
 static void WaterElemental_RecoverHealth(Entity *entity);
-static s32 func_0015F298(Entity *entity, f32 min_distance, f32 max_angle);
+static s32 WaterElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle);
 static void WaterElemental_AlertSameKind(Entity *entity);
 static void WaterElemental_OnHit(Entity *entity);
 static void WaterElemental_RunAtPlayer(Entity *entity);
@@ -165,7 +165,7 @@ static void WaterElemental_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but it first starts EntityAi_Dodge when
-   func_0015F298 says so, or on every fifteenth frame with the player nearer than the radius plus
+   WaterElemental_ShouldDodgeMagic says so, or on every fifteenth frame with the player nearer than the radius plus
    400 and less than 90 degrees off its heading. Closing in is at the run; it starts
    WaterElemental_PlayTurnAnim now and then when the player is more than 90 degrees off its heading.
    */
@@ -184,7 +184,7 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
     if ((entity->distance_to_player < entity->radius + 400.0f
          && ABS(EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1])) < 1.5707964f && D_00446ED4 % 15U == 0
          && rand() % 50 < 80)
-        || func_0015F298(entity, 200.0f, 1.0471976f)) {
+        || WaterElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -229,7 +229,7 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (unkE0->unk78 == 0) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if ((s32)(entity->flags >> 31) & 1) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -344,7 +344,11 @@ static void WaterElemental_RecoverHealth(Entity *entity) {
     }
 }
 
-static s32 func_0015F298(Entity *entity, f32 min_distance, f32 max_angle) {
+/* Whether to dodge a magic: only while work byte unk7B is 1 to 15 (WaterElemental_Think puts it to 30 when the
+   player casts one, player_state.unk259), with the player at least min_distance away (less the radius and 100),
+   Entity.unk68 within max_angle of the heading and the entity within 30 degrees of the player's facing; then
+   EntityParams.unkCA / 10 times in 100. */
+static s32 WaterElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle) {
     f32 distance;
     f32 angle;
     f32 player_angle;
@@ -431,7 +435,7 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
         }
         break;
     case 2:
-        if (func_0015F298(entity, 200.0f, 1.0471976f)) {
+        if (WaterElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;
         }

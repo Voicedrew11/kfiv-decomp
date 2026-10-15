@@ -38,7 +38,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
@@ -64,15 +64,15 @@ static void DarkKnight_OnHit(Entity *entity);
 static void DarkKnight_Think(Entity *entity, s32 unknown);
 static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown);
 static void DarkKnight_PlayTurnAnim(Entity *entity);
-static void func_001639A8(Entity *entity);
-static void func_00163B28(Entity *entity);
+static void DarkKnight_HoldGuardPose(Entity *entity);
+static void DarkKnight_GuardThenMeleeAttack(Entity *entity);
 static void DarkKnight_MeleeAttack2(Entity *entity);
 static void DarkKnight_RangedAttack0(Entity *entity);
 static void DarkKnight_RangedAttack1(Entity *entity);
 static s32 DarkKnight_ShouldRangedAttack0(Entity *entity);
 static s32 DarkKnight_ShouldHoldAnim13(Entity *entity, f32 min_distance, f32 max_angle);
-static s32 func_00164A60(Entity *entity, s32 mode);
-static s32 func_00164C88(Entity *entity);
+static s32 DarkKnight_PickCombatChoice(Entity *entity, s32 mode);
+static s32 DarkKnight_PickAttack(Entity *entity);
 
 /* Set-up of a type 64 entity: clears its work area and installs the type's handlers. */
 void DarkKnight_Init(Entity *entity) {
@@ -248,7 +248,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, with these changes. In place of the guard
-   it starts func_001639A8 when DarkKnight_ShouldHoldAnim13 says so; it starts
+   it starts DarkKnight_HoldGuardPose when DarkKnight_ShouldHoldAnim13 says so; it starts
    DarkKnight_RangedAttack0 whenever DarkKnight_ShouldRangedAttack0 says so; ranged index 1 has
    DarkKnight_RangedAttack1 and melee index 3 DarkKnight_MeleeAttack2; closing in from more than
    500 away adds command bits 0x40 and 0x400; and with Entity.unk68 more than 90 degrees off the
@@ -263,7 +263,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
 
     entity->flags = (entity->flags & ~0x3800) | 0x800;
     if (DarkKnight_ShouldHoldAnim13(entity, 200.0f, 2.443461f)) {
-        EntityAi_StartAction(entity, func_001639A8, 1);
+        EntityAi_StartAction(entity, DarkKnight_HoldGuardPose, 1);
         return;
     }
     if (EntityAi_ShouldDodge(entity, 300.0f, 0.5235988f)) {
@@ -318,7 +318,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (unkE0->unk78 == 0) {
         side = EntityAi_TurnFromPush(entity, direction);
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if ((s32)(entity->flags >> 31) & 1) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -402,7 +402,11 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
     }
 }
 
-static void func_001639A8(Entity *entity) {
+/* An action (busy bit 0x10) that DarkKnight_ThinkCombat starts when DarkKnight_ShouldHoldAnim13 says so: as
+   EntityAi_Guard (animation 13 held for EntityParams.unkCE frames with the motion stopped), but without flag
+   35, so it adds no defence and a hit still starts a reaction; once the motion has blended in it puts work word
+   unk6A to EntityParams.unk43C, the pause before the next. */
+static void DarkKnight_HoldGuardPose(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x10;
@@ -438,7 +442,11 @@ static void func_001639A8(Entity *entity) {
     }
 }
 
-static void func_00163B28(Entity *entity) {
+/* A melee attack (busy bit 1) that nothing starts. With Entity.unk68 within 30 degrees of the heading it plays
+   animation 17 (record 0), 30 to 90 degrees to one side 18 or 19 (record 2), guarding (flag 35) until the
+   strike has blended in; then animation 20 (record 0) or 22 (record 2), checking part 0 of the record ahead
+   and, if that misses, behind, and part 2. */
+static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk240 *unk240 = &entity->params->unk240[unkE0->unk7A];
     s32 frame;
@@ -703,7 +711,7 @@ static s32 DarkKnight_ShouldRangedAttack0(Entity *entity) {
     return entity->unkE0.unk68 < 1;
 }
 
-/* Helper of DarkKnight_ThinkCombat: whether to start func_001639A8, the action (busy bit 0x10)
+/* Helper of DarkKnight_ThinkCombat: whether to start DarkKnight_HoldGuardPose, the action (busy bit 0x10)
    that starts animation 13 and stops the motion for EntityParams.unkCE frames. Only while work word
    unk6C runs and unk6A does not, the entity is not busy, the player is at least min_distance away
    (less the radius and 100) and Entity.unk68 is within max_angle of the heading; then
@@ -733,7 +741,10 @@ static s32 DarkKnight_ShouldHoldAnim13(Entity *entity, f32 min_distance, f32 max
     return rand() % 100 < entity->params->unkCB / 5;
 }
 
-static s32 func_00164A60(Entity *entity, s32 mode) {
+/* As EntityAi_PickCombatChoice, but the attack is left out only when EntityAi_CanMelee finds no melee record in
+   reach and either unkA2 runs or EntityAi_CanShoot finds no ranged one. Returns the choice, -1 when none can be
+   chosen. Nothing calls it. */
+static s32 DarkKnight_PickCombatChoice(Entity *entity, s32 mode) {
     s32 chances[4];
     s32 weights[4];
     s32 choice = -1;
@@ -797,9 +808,10 @@ static s32 func_00164A60(Entity *entity, s32 mode) {
     return choice;
 }
 
-/* Picks the next attack by weighted chance: three melee attacks (EntityParams.unk240), then the
-   three ranged ones, each only if its test passes; the choice goes into flag bits 57-59. */
-static s32 func_00164C88(Entity *entity) {
+/* As EntityAi_PickAttack, with the reach tests of EntityAi_CanUseMelee and EntityAi_CanUseRanged, and no ranged
+   attack while unkA2 runs: a weighted draw among the six attacks, the choice in flag bits 57-59; returns bit
+   57. Nothing calls it. */
+static s32 DarkKnight_PickAttack(Entity *entity) {
     s32 chances[6];
     s32 choice = 0;
     s32 total = 0;

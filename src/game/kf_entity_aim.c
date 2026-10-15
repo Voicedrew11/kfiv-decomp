@@ -170,9 +170,9 @@ void EntityPoint_PickNearFromDistance(f32 *point, f32 *centre, f32 distance, f32
     Vector_Add(point, point, centre);
 }
 
-/* A point `distance` away from the player along the player's vector (unk1B0, unk1AC, unk1B4) turned by the
-   player's heading. Nothing calls it. */
-void func_0018BC78(f32 *point, s32 distance) {
+/* Where the player will be after `frames` frames at his present speed: his position plus his sideways,
+   falling and walking speeds (unk1B0, unk1AC, unk1B4), turned by his heading, times frames. Nothing calls it. */
+void EntityAim_PredictPlayerPosition(f32 *point, s32 frames) {
     f32 offset[4];
 
     offset[0] = player_state.unk1B0;
@@ -181,7 +181,7 @@ void func_0018BC78(f32 *point, s32 distance) {
     offset[3] = 0.0f;
     sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, D_00431AF0, player_state.rotation.y);
     sceVu0ApplyMatrix(offset, (int *)MODEL_MATRIX_SCRATCH, offset);
-    Vector_Scale(offset, offset, distance);
+    Vector_Scale(offset, offset, frames);
     Vector_Add(point, &player_state, offset);
 }
 

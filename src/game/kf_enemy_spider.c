@@ -32,7 +32,7 @@ s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
 float EntityMath_DistanceXZ(void *, void *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 void EntityAi_Dodge(Entity *);
@@ -64,8 +64,8 @@ static void Spider_RangedAttack(Entity *entity);
 static void Spider_Dormant(Entity *entity);
 static void Spider_OnHit(Entity *entity);
 static void Spider_Death(Entity *entity);
-static void func_001299F8(Entity *entity);
-static void func_00129CA0(Entity *entity);
+static void Spider_DropToFloor(Entity *entity);
+static void Spider_LevelOut(Entity *entity);
 
 /* Set-up of a type 3 entity: clears its work area and installs the type's handlers (one handler table when it
    starts with its action, another when it starts asleep). */
@@ -105,7 +105,7 @@ void Spider_Init(Entity *entity) {
         unkE0->move = (void (*)(void))EntityAi_Move;
         unkE0->dormant = (void (*)(void))Spider_Dormant;
         unkE0->death = (void (*)(void))Spider_Death;
-        EntityAi_StartAction(entity, func_001299F8, 1);
+        EntityAi_StartAction(entity, Spider_DropToFloor, 1);
     }
     unkE0->unk40 = 0.5f;
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
@@ -141,8 +141,8 @@ static void Spider_Animate(Entity *entity) {
 
 /* The think handler (installed in both branches of the set-up function): as EntityAi_Think, with an
    if in place of the switch: Spider_ThinkCombat in state 2, Spider_ThinkWander in the other states.
-   Before that, while work byte unk7A is set (func_001299F8 sets it), it clears it and starts
-   func_00129CA0 once the player is within EntityParams.unk432. */
+   Before that, while work byte unk7A is set (Spider_DropToFloor sets it), it clears it and starts
+   Spider_LevelOut once the player is within EntityParams.unk432. */
 static void Spider_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
@@ -154,7 +154,7 @@ static void Spider_Think(Entity *entity, s32 unknown) {
     }
     if (unkE0->unk7A != 0 && entity->distance_to_player < (float)entity->params->unk432) {
         unkE0->unk7A = 0;
-        EntityAi_StartAction(entity, func_00129CA0, 1);
+        EntityAi_StartAction(entity, Spider_LevelOut, 1);
         return;
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
@@ -265,7 +265,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkCD == 1) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -402,13 +402,13 @@ static void Spider_Dormant(Entity *entity) {
 }
 
 /* The on_hit handler that the set-up function installs when the spawn has flag bit 58 clear, and
-   func_001299F8 again when the drop ends on result 2 or 3; otherwise, and once func_00129CA0 has
-   ended, the slot holds EntityAi_OnHit. No reaction: it starts func_00129CA0 and goes to state 2.
+   Spider_DropToFloor again when the drop ends on result 2 or 3; otherwise, and once Spider_LevelOut has
+   ended, the slot holds EntityAi_OnHit. No reaction: it starts Spider_LevelOut and goes to state 2.
    */
 static void Spider_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    EntityAi_StartAction(entity, func_00129CA0, 0);
+    EntityAi_StartAction(entity, Spider_LevelOut, 0);
     EntityAi_SetState((char *)entity, 2);
 }
 
@@ -466,8 +466,10 @@ static void Spider_Death(Entity *entity) {
     }
 }
 
-/* Action: drops along its own up axis until it lands on a floor (awake) or on something else (asleep). */
-static void func_001299F8(Entity *entity) {
+/* An action (busy bit 0x1000): drops 20 a frame along its own up axis until a prop is hit within 200
+   (EntityCollision_RayProps). On result 1 it stands there with the shared on_hit and death; on result 2 or 3 it
+   clings there (work byte unk7A, Spider_OnHit and Spider_Death installed). Then it thinks. */
+static void Spider_DropToFloor(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 landing[4];
     f32 direction[4];
@@ -533,8 +535,9 @@ static void func_001299F8(Entity *entity) {
     }
 }
 
-/* Action: levels the model out (pitch and roll back to 0), then goes back to its handler. */
-static void func_00129CA0(Entity *entity) {
+/* An action (busy bit 0x2000): eases the model's pitch and roll back to 0; once both are there and flag bit 44
+   or 50 is set, it puts back the shared on_hit and death and starts the move action. */
+static void Spider_LevelOut(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 pitch_left;
     f32 roll_left;

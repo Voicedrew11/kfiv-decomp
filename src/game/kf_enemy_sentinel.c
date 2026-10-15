@@ -32,7 +32,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
@@ -49,7 +49,7 @@ void EntityAi_SetAttackDelay(Entity *, s32);
 s32 Motion_Step(Entity *, s32);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
-int func_0019A3F0(Entity *, s32);
+int EntityAi_AnimationFrameCount(Entity *, s32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 
 static void Sentinel_Think(Entity *entity, s32 unknown);
@@ -191,7 +191,7 @@ static void Sentinel_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (unkE0->unk78 == 0) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -338,7 +338,7 @@ static void Sentinel_Animate(Entity *entity) {
             } else {
                 rate = 1.0f / (f32)blend_frames;
                 step = entity->model->unkFC->unk82;
-                if (step < func_0019A3F0(entity, entity->unkD1) - 1) {
+                if (step < EntityAi_AnimationFrameCount(entity, entity->unkD1) - 1) {
                     entity->model->unkFC->unk82++;
                 }
             }

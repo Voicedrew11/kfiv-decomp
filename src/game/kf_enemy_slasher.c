@@ -36,9 +36,9 @@ float EntityMath_DistanceXZ(void *, void *);
 
 static void Slasher_OnHit(Entity *entity);
 static void Slasher_Think(Entity *entity, s32 unknown);
-static void func_00140878(Entity *entity, s32 unknown);
+static void Slasher_ThinkStandStill(Entity *entity, s32 unknown);
 static void Slasher_WaitForPlayerNear(Entity *entity);
-static void func_001409D0(Entity *entity);
+static void Slasher_AlertSameKind(Entity *entity);
 
 /* Set-up of a type 26 entity: clears its work area and installs the type's handlers. */
 void Slasher_Init(Entity *entity) {
@@ -86,7 +86,7 @@ void Slasher_Init(Entity *entity) {
 
 /* The on_hit handler: as EntityAi_OnHit, but a light hit starts EntityAi_ReactionHeavy too
    (EntityAi_ReactionRewind while flag bit 19 is set); it then sets work byte unk7A and flag bits 32
-   and 33 and calls func_001409D0. */
+   and 33 and calls Slasher_AlertSameKind. */
 static void Slasher_OnHit(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     u64 flags;
@@ -110,7 +110,7 @@ static void Slasher_OnHit(Entity *entity) {
     unkE0->unk7A = 1;
     ENTITY_FLAG_BITS(entity)->bit32 = 1;
     ENTITY_FLAG_BITS(entity)->bit33 = 1;
-    func_001409D0(entity);
+    Slasher_AlertSameKind(entity);
 }
 
 /* The think handler: as EntityAi_Think, but states 1 and 2 both have EntityAi_ThinkCombat (and
@@ -148,7 +148,9 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
     Effect_StartSpawner(entity->params->unk43A, part, entity->model->unkD0, entity);
 }
 
-static void func_00140878(Entity *entity, s32 unknown) {
+/* A think function nothing refers to: gives no movement command, lets the head follow the target (flag 9) and
+   starts the move action. */
+static void Slasher_ThinkStandStill(Entity *entity, s32 unknown) {
     entity->unkC8 = 0;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
@@ -157,7 +159,7 @@ static void func_00140878(Entity *entity, s32 unknown) {
 
 /* An action (busy bit 0x1000) that the set-up function and state 0 of Slasher_Think start:
    keeps animation 0 until the player is within EntityParams.unk436 or work byte unk7A is set; then
-   it sets flag bits 32 and 33 and unk7A, calls func_001409D0 and thinks. */
+   it sets flag bits 32 and 33 and unk7A, calls Slasher_AlertSameKind and thinks. */
 static void Slasher_WaitForPlayerNear(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
@@ -169,7 +171,7 @@ static void Slasher_WaitForPlayerNear(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit32 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit33 = TRUE;
         unkE0->unk7A = 1;
-        func_001409D0(entity);
+        Slasher_AlertSameKind(entity);
         entity->unkC6 = 0;
         entity->unkC8 = 0;
         entity->unkA0 = 0;
@@ -181,7 +183,9 @@ static void Slasher_WaitForPlayerNear(Entity *entity) {
     }
 }
 
-static void func_001409D0(Entity *entity) {
+/* Sets work byte unk7A of every other live entity with the same params within EntityParams.unk438 (on the
+   ground) of this one, which ends its Slasher_WaitForPlayerNear. */
+static void Slasher_AlertSameKind(Entity *entity) {
     Entity *other_entity = D_004467E0;
     while (other_entity != NULL) {
         if (entity->params == other_entity->params) {

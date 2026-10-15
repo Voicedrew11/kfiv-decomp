@@ -433,7 +433,7 @@ typedef struct {
 #define ENTITY_PARAMS_RECORD(params, index) (&(params)->unk3D8[index])
 
 /* EntityParams with the three ranged-attack records as a real array member: indexed this way the
-   compiler adds the scaled index to the params pointer, base first (func_00164C88 needs that) */
+   compiler adds the scaled index to the params pointer, base first (DarkKnight_PickAttack needs that) */
 typedef struct {
     char pad00[0x3D8];
     EntityParamsUnk3D8Array ranged[3]; /* 0x3D8 */
@@ -951,7 +951,7 @@ typedef struct {
 } EntityRangeWeights;
 
 /* five animation frame numbers, copied whole from read-only data like
-   EntityFrameTable (AncientKing_RangedAttack0, func_0014FCC0) */
+   EntityFrameTable (AncientKing_RangedAttack0, AncientKing_RangedAttack0AfterSwitch) */
 typedef struct {
     s32 frames[5];                  /* 0x00 */
 } EntityFrameTable5;

@@ -15,7 +15,7 @@
 extern PlayerState player_state;
 extern float D_00431AF0[16];
 int func_001B4F90(void *);
-float func_001B0178(void *from, void *target);
+float Effect_Distance(void *from, void *target);
 void EffectAngle_FromVector(void *angles, void *direction);
 void Vector_Copy(void *dst, void *src);
 void Vector_Add(void *dst, void *lhs, void *rhs);
@@ -33,7 +33,7 @@ static inline f32 wrap_angle(f32 angle) {
     }
     return angle;
 }
-s16 func_001B0208(float, void *, void *, void *);
+s16 Effect_FramesToImpact(float, void *, void *, void *);
 void EffectHit_CheckAndEnd(EffectActor *effect, void *state);
 void sceVu0AddVector(void *, void *, void *);
 extern int D_004468E0;
@@ -227,13 +227,13 @@ void EffectSweep_Update(EffectActor *effect) {
                 }
             }
         }
-        effect->model->unkE8 = func_001B0178(&motion->aim, &effect->model->position) / 100.0f + 1.0f;
+        effect->model->unkE8 = Effect_Distance(&motion->aim, &effect->model->position) / 100.0f + 1.0f;
     }
     effect->frame++;
 }
 
 /* Kind 34 start: launches along the heading, takes the frame it reaches what lies ahead and the kind of
-   surface there (func_001B0208), and spawns def->unkF0 unless a kind-34 effect younger than def->interval
+   surface there (Effect_FramesToImpact), and spawns def->unkF0 unless a kind-34 effect younger than def->interval
    frames already did. */
 void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     FallingMotion *motion;
@@ -245,7 +245,7 @@ void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(actor, spawn_slot);
     EffectStart_PlaceModel(actor, spawn_slot);
     EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
-    motion->end_frame = func_001B0208((float)actor->def->radius_half, actor, motion, scratch);
+    motion->end_frame = Effect_FramesToImpact((float)actor->def->radius_half, actor, motion, scratch);
     if (motion->end_frame != 0xFFFF) {
         motion->mode = COLLISION_RESULT->unk18;
     }
@@ -473,7 +473,7 @@ void EffectHandover_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     EffectAngle_ToVector(effect->def->speed, &effect->motion.velocity, &effect->model->rotation);
-    angle = func_001B0208(effect->def->unkDC, effect, motion, &motion->unk10);
+    angle = Effect_FramesToImpact(effect->def->unkDC, effect, motion, &motion->unk10);
     motion->unk22 = angle;
     if (effect->def->unkF0 < (u32)(angle & 0xFFFF)) {
         *(u16 *)&motion->unk22 = 0xFFFF; // match: stored as an unsigned halfword
@@ -613,7 +613,7 @@ void EffectBolt_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(actor, spawn_slot);
     EffectStart_PlaceModel(actor, spawn_slot);
     EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
-    angle = func_001B0208((float)actor->def->radius_half, actor, motion, motion->unk10);
+    angle = Effect_FramesToImpact((float)actor->def->radius_half, actor, motion, motion->unk10);
     motion->unk24 = 0;
     motion->unk22 = angle;
     def = actor->def;
@@ -658,7 +658,7 @@ void EffectBolt_StartCounted(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_PlaceModel(effect, spawn_slot);
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     effect->model->position.y -= 220.0f;
-    angle = func_001B0208((float)effect->def->radius_half, effect, motion, &motion->unk10);
+    angle = Effect_FramesToImpact((float)effect->def->radius_half, effect, motion, &motion->unk10);
     motion->unk24 = 0;
     motion->unk22 = angle;
     motion->unk20 = effect->def->end_effect;
@@ -779,7 +779,7 @@ void EffectBoneFade_Update(EffectActor *actor) {
     bone = func_0010CAB8((char *)actor->owner_entity->model, ENTITY_CONTROLLER(actor->owner_entity)->unkC5);
     Vector_Copy(&actor->model->position, bone);
     Vector_Copy(&actor->model->rotation, &ENTITY_MODEL(actor->owner_entity)->rotation);
-    distance = func_001B0178(&player_state.position, &actor->model->position);
+    distance = Effect_Distance(&player_state.position, &actor->model->position);
     if (motion->range[1] < distance) {
         fade = 1.0f;
     } else if (distance < motion->range[0]) {
@@ -818,7 +818,7 @@ void EffectDistanceFade_Update(EffectActor *effect) {
     velocity = &effect->motion.velocity;
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
-    distance_to_player = func_001B0178(&player_state, &effect->model->position);
+    distance_to_player = Effect_Distance(&player_state, &effect->model->position);
     if (velocity->y < distance_to_player) {
         fade = 1.0f;
     } else {
@@ -1332,7 +1332,7 @@ void EffectRay_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     } else {
         Vector_Add(&motion->unk10, &offset, &effect->model->position);
     }
-    motion->distance_to_target = func_001B0178(&motion->unk10, &effect->model->position);
+    motion->distance_to_target = Effect_Distance(&motion->unk10, &effect->model->position);
     EffectAngle_ToVector(100.0f, &motion->velocity, &effect->model->rotation);
 }
 
@@ -1355,7 +1355,7 @@ void EffectRay_StartAtPlayer(EffectActor *effect, EffectSlot *spawn_slot) {
     }
     Vector_Subtract(&offset, &motion->unk10, &effect->model->position);
     EffectAngle_FromVector(&effect->model->rotation, &offset);
-    motion->distance_to_target = func_001B0178(&motion->unk10, &effect->model->position);
+    motion->distance_to_target = Effect_Distance(&motion->unk10, &effect->model->position);
     EffectAngle_ToVector(100.0f, &motion->velocity, &effect->model->rotation);
 }
 
@@ -1853,7 +1853,7 @@ void EffectHomeOnEntity_Update(EffectActor *actor) {
             func_001C1430(1.0f, &actor->model->position, motion);
             if (COLLISION_RESULT->hit != 0) {
                 motion->unk20 = 1;
-                func_001B0178(COLLISION_RESULT->point, &actor->model->position);
+                Effect_Distance(COLLISION_RESULT->point, &actor->model->position);
                 return;
             }
         }
@@ -1874,7 +1874,7 @@ void EffectImpactShot_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_PlaceModel(effect, spawn_slot);
     effect->model->position.y -= 220.0f;
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
-    motion->end_frame = func_001B0208((float)effect->def->radius_half, effect, motion, motion->unk10);
+    motion->end_frame = Effect_FramesToImpact((float)effect->def->radius_half, effect, motion, motion->unk10);
     motion->done = 0;
 }
 
@@ -2080,7 +2080,7 @@ void EffectDrop_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     if (COLLISION_RESULT->hit != 0) {
         Vector_Copy(&actor->motion, COLLISION_RESULT);
         motion->unk16 = *(u8 *)&COLLISION_RESULT->unk18; // match: a byte load of the word's low byte
-        distance = func_001B0178(&actor->motion, &actor->model->position);
+        distance = Effect_Distance(&actor->motion, &actor->model->position);
         velocity = 0.0f;
         fallen = 0.0f;
         for (i = 0; i < actor->def->keyframe_end; i++) {

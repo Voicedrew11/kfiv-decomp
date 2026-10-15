@@ -31,7 +31,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
@@ -56,7 +56,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown);
 static void WindElemental_PlayTurnAnim(Entity *entity);
 static void WindElemental_Dodge(Entity *entity);
 static void WindElemental_DodgeNoAttack(Entity *entity);
-static s32 func_0015E000(Entity *entity, f32 min_distance, f32 max_angle);
+static s32 WindElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle);
 static void WindElemental_AlertSameKind(Entity *entity);
 static void WindElemental_OnHit(Entity *entity);
 static void WindElemental_RunAtPlayer(Entity *entity);
@@ -156,7 +156,7 @@ static void WindElemental_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but it first starts WindElemental_Dodge
-   when func_0015E000 says so, and the dodge of the player's swing is WindElemental_DodgeNoAttack. Closing
+   when WindElemental_ShouldDodgeMagic says so, and the dodge of the player's swing is WindElemental_DodgeNoAttack. Closing
    in is at the run with command bit 0x400, or one time in five at a walk (work byte unk78 is 1);
    running, it starts WindElemental_PlayTurnAnim now and then when the player is more than 90 degrees
    off its heading. */
@@ -172,7 +172,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         entity->flags = (entity->flags & ~0x3800) | 0x800;
     }
-    if (func_0015E000(entity, 200.0f, 1.0471976f)) {
+    if (WindElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
         EntityAi_StartAction(entity, WindElemental_Dodge, 1);
         return;
     }
@@ -221,7 +221,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkCD == 1) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if ((s32)(entity->flags >> 31) & 1) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -301,7 +301,7 @@ static void WindElemental_PlayTurnAnim(Entity *entity) {
 
 /* The dodge action (busy bit 8): as EntityAi_Dodge, but the animation is drawn among 10, 6 and 7,
    and when it ends, one time in two and with the player within 30 degrees of the heading, it starts
-   EntityAi_RangedAttack with record 1. Started when func_0015E000 says so. */
+   EntityAi_RangedAttack with record 1. Started when WindElemental_ShouldDodgeMagic says so. */
 static void WindElemental_Dodge(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
@@ -392,7 +392,11 @@ static void WindElemental_DodgeNoAttack(Entity *entity) {
     }
 }
 
-static s32 func_0015E000(Entity *entity, f32 min_distance, f32 max_angle) {
+/* Whether to dodge a magic: only while work byte unk7B is 1 to 15 (WindElemental_Think puts it to 30 when the
+   player casts one, player_state.unk259), with the player at least min_distance away (less the radius and 100),
+   Entity.unk68 within max_angle of the heading and the entity within 30 degrees of the player's facing; then
+   EntityParams.unkCA / 10 times in 100. */
+static s32 WindElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle) {
     f32 distance;
     f32 angle;
     f32 player_angle;
@@ -457,7 +461,7 @@ static void WindElemental_OnHit(Entity *entity) {
 
 /* An action (busy bit 0x3000) that WindElemental_Think starts while work word unk68 is 1: plays
    animation 3, then each frame guards or dodges the player's swing (WindElemental_Dodge when
-   func_0015E000 says so), starts the attack EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses
+   WindElemental_ShouldDodgeMagic says so), starts the attack EntityAi_PickAttack picks once EntityAi_PickCombatChoice chooses
    attacking (unk68 becomes 2), and else gives the command to run at the player and calls the move
    handler itself. Flag bit 53 ends it with unk68 at 2. */
 static void WindElemental_RunAtPlayer(Entity *entity) {
@@ -480,7 +484,7 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
         }
         break;
     case 2:
-        if (func_0015E000(entity, 200.0f, 1.0471976f)) {
+        if (WindElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
             EntityAi_StartAction(entity, WindElemental_Dodge, 1);
             break;
         }

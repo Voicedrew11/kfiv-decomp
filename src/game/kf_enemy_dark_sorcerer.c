@@ -57,7 +57,7 @@ extern u8 D_0034B21C[];
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
-int func_0019A3F0(void *, int);
+int EntityAi_AnimationFrameCount(void *, int);
 void EntityEvent_OnDeath(Entity *);
 extern EntityActionWeights3 D_0043EA88;
 int EntityAi_LaunchShot(void *, int, void *, void *);
@@ -627,7 +627,7 @@ static void DarkSorcerer_Death(Entity *entity) {
         break;
     case 2:
         if ((s16)entity->params->unk434 < entity->model->unkFC->unk82) {
-            entity->unkA0 = unkE0->unk68 = func_0019A3F0(entity, entity->unkD1) - entity->model->unkFC->unk82;
+            entity->unkA0 = unkE0->unk68 = EntityAi_AnimationFrameCount(entity, entity->unkD1) - entity->model->unkFC->unk82;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             EntityEvent_OnDeath(entity);

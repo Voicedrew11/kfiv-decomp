@@ -84,8 +84,8 @@ void Widda_Init(Entity *entity);
 void Widdacona_Init(Entity *entity);
 void WindElemental_Init(Entity *entity);
 void Zombie_Init(Entity *entity);
-void func_00124E48(Entity *entity);
-void func_00124EF0();
+void Entity_InitInert(Entity *entity);
+void Entity_UpdateInert();
 
 /* 0x3E6E40 [type][0] set-up, [type][1] update; types without a row act as type 0 */
 s32 entity_type_handlers[0x60][2] = {
@@ -102,7 +102,7 @@ s32 entity_type_handlers[0x60][2] = {
     (s32)WiddaArcher_Init, (s32)EntityAi_Update, (s32)Snake_Init, (s32)EntityAi_Update,
     (s32)Salamander_Init, (s32)EntityAi_Update, (s32)StoneGuardian_Init, (s32)EntityAi_Update,
     (s32)FireLord_Init, (s32)EntityAi_Update, (s32)Critter_Init, (s32)EntityAi_Update,
-    (s32)Slasher_Init, (s32)EntityAi_Update, (s32)func_00124E48, (s32)func_00124EF0,
+    (s32)Slasher_Init, (s32)EntityAi_Update, (s32)Entity_InitInert, (s32)Entity_UpdateInert,
     (s32)Seafang_Init, (s32)EntityAi_Update, (s32)GoldenStatue_Init, (s32)EntityAi_Update,
     (s32)Widdacona_Init, (s32)EntityAi_Update, (s32)EyePedestal_Init, (s32)EntityAi_Update,
     (s32)LavaFace_Init, (s32)EntityAi_Update, (s32)Sentinel_Init, (s32)EntityAi_Update,
@@ -130,13 +130,13 @@ s32 entity_type_handlers[0x60][2] = {
     (s32)GiantBeetle_Init, (s32)EntityAi_Update, (s32)ForestGolem_Init, (s32)EntityAi_Update,
     (s32)Makara_Init, (s32)EntityAi_Update, (s32)MasterFadin_Init, (s32)EntityAi_Update,
     (s32)Fadin_Init, (s32)EntityAi_Update, (s32)Npc_InitType81, (s32)EntityAi_Update,
-    (s32)LivingStatue_Init, (s32)EntityAi_Update, (s32)func_00124E48, (s32)func_00124EF0,
-    (s32)func_00124E48, (s32)func_00124EF0, (s32)func_00124E48, (s32)func_00124EF0,
-    (s32)func_00124E48, (s32)func_00124EF0, (s32)func_00124E48, (s32)func_00124EF0,
-    (s32)func_00124E48, (s32)func_00124EF0, (s32)func_00124E48, (s32)func_00124EF0,
-    (s32)func_00124E48, (s32)func_00124EF0, (s32)func_00124E48, (s32)func_00124EF0,
-    (s32)func_00124E48, (s32)func_00124EF0, (s32)func_00124E48, (s32)func_00124EF0,
-    (s32)func_00124E48, (s32)func_00124EF0, (s32)func_00124E48, (s32)func_00124EF0,
+    (s32)LivingStatue_Init, (s32)EntityAi_Update, (s32)Entity_InitInert, (s32)Entity_UpdateInert,
+    (s32)Entity_InitInert, (s32)Entity_UpdateInert, (s32)Entity_InitInert, (s32)Entity_UpdateInert,
+    (s32)Entity_InitInert, (s32)Entity_UpdateInert, (s32)Entity_InitInert, (s32)Entity_UpdateInert,
+    (s32)Entity_InitInert, (s32)Entity_UpdateInert, (s32)Entity_InitInert, (s32)Entity_UpdateInert,
+    (s32)Entity_InitInert, (s32)Entity_UpdateInert, (s32)Entity_InitInert, (s32)Entity_UpdateInert,
+    (s32)Entity_InitInert, (s32)Entity_UpdateInert, (s32)Entity_InitInert, (s32)Entity_UpdateInert,
+    (s32)Entity_InitInert, (s32)Entity_UpdateInert, (s32)Entity_InitInert, (s32)Entity_UpdateInert,
 };
 
 ModelInstanceBlock fire_lord_model[2] = { 0 }; /* 0x3E7140 the Fire Lord's model, copied for its two draws */

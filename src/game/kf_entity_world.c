@@ -48,7 +48,7 @@ void func_00109AD0(void);
 void func_0010B018(ModelInstance *, s32, s32);
 void func_0010AEB8(void *);
 void func_0010BA30(ModelInstance *);
-void func_00133708(Entity *, s32);
+void FireLord_DrawAfterimages(Entity *, s32);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
 f32 EntityCollision_DistanceToPropFloor(void *, void *);
@@ -67,8 +67,10 @@ static inline void entity_draw_set_model_tint(Entity *entity, f32 red, f32 green
 
 void EntityAi_SetUpdate(char *, s32);
 
-/* Default init of an entity: clears the work area, sets flags 22-28 and the model of its kind. */
-void func_00124E48(Entity *entity) {
+/* The set-up function entity_type_handlers gives types 27 and 83 to 95, which have no AI: puts the motion at
+   animation 0, clears the work area, sets flags 22-28 and installs the table's update (Entity_UpdateInert).
+   No handlers. */
+void Entity_InitInert(Entity *entity) {
     Motion_Start(entity, 0, 0, 0, 0);
     memset(&entity->unkE0, 0, ENTITY_WORK_AREA_SIZE);
     ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
@@ -81,9 +83,11 @@ void func_00124E48(Entity *entity) {
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
 }
 
-void func_00124EF0(void) {
+/* The per-frame update entity_type_handlers gives the types Entity_InitInert sets up: does nothing. */
+void Entity_UpdateInert(void) {
 }
 
+/* Empty. main calls it once among the set-up calls at start; what it was for is not known. */
 void func_00124EF8(void) {
 }
 
@@ -483,7 +487,7 @@ void Entity_DrawAll(int list) {
                     func_0010BA30(ENTITY_MODEL(entity));
                 }
                 if (entity->spawn_info->type_id == 0xF) {
-                    func_00133708(entity, list);
+                    FireLord_DrawAfterimages(entity, list);
                 }
             }
         }
@@ -704,10 +708,12 @@ Entity *Entity_GetBySpawnIdForMap(int map_index, int entity_id) {
     return entity_by_spawn_id[map_index][entity_id];
 }
 
+/* Returns 0. Nothing calls it. */
 int func_00126818(void) {
     return 0;
 }
 
+/* Returns 0. Nothing calls it. */
 int func_00126820(void) {
     return 0;
 }

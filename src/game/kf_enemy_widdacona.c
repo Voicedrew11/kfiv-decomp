@@ -27,7 +27,7 @@ extern PlayerData player_state;
 int Motion_Start(void *, int, int, u32, int);
 char *func_0010CAB8(char *, u32);
 void EntityEvent_OnDeath(Entity *);
-int func_0019A3F0(void *, int);
+int EntityAi_AnimationFrameCount(void *, int);
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
@@ -266,7 +266,7 @@ static void Widdacona_Dormant(Entity *entity) {
 }
 
 /* An action (busy bit 0x1000) that Widdacona_Think starts while the player is outside the
-   rectangle: starts animation 2 at frame func_0019A3F0(entity, 2) - 1 with flag bits 15 and 18 set;
+   rectangle: starts animation 2 at frame EntityAi_AnimationFrameCount(entity, 2) - 1 with flag bits 15 and 18 set;
    when the motion has ended it copies EntitySpawnInfo.unk10 to the model's angles and starts the
    dormant action. */
 static void Widdacona_ReturnToDormant(Entity *entity) {
@@ -275,7 +275,7 @@ static void Widdacona_ReturnToDormant(Entity *entity) {
     entity->unkC6 |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 2, func_0019A3F0(entity, 2) - 1, entity->params->unkC4, 1);
+        Motion_Start(entity, 2, EntityAi_AnimationFrameCount(entity, 2) - 1, entity->params->unkC4, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bit15 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;

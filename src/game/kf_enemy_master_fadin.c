@@ -29,7 +29,7 @@ void EntityEvent_StartCue(Entity *, s32, s32, s32);
 void EntityEvent_OnDeath(Entity *);
 
 static void MasterFadin_Think(Entity *entity, s32 unknown);
-static void func_001435B0(Entity *entity, s32 unknown);
+static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown);
 static void MasterFadin_Dormant(Entity *entity);
 static void MasterFadin_Death(Entity *entity);
 static void MasterFadin_AlertPartner(Entity *entity);
@@ -73,7 +73,7 @@ void MasterFadin_Init(Entity *entity) {
    (EntitySpawnInfo.unk40) it takes the state of the entity whose spawn id is
    EntitySpawnInfo.variant, and starts the death action once that one's flag bits 2-3 are 2 or more.
    In mode 1 it calls EntityEvent_Respawn for every other entity with the same params whose flag bit 1 is
-   clear or whose bits 2-3 are 3. While the entity is not busy it calls func_001435B0 in states 1
+   clear or whose bits 2-3 are 3. While the entity is not busy it calls MasterFadin_ThinkShootAtPlayer in states 1
    and 2, and in state 0 starts what the move slot holds (the set-up function leaves it NULL). Keeps
    animation 0; once work word unk68 has run out it puts the state back to 0. */
 static void MasterFadin_Think(Entity *entity, s32 unknown) {
@@ -106,7 +106,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
         switch (entity->state) {
         case 1:
         case 2:
-            func_001435B0(entity, unknown);
+            MasterFadin_ThinkShootAtPlayer(entity, unknown);
             break;
         case 0:
         default:
@@ -122,7 +122,11 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
     }
 }
 
-static void func_001435B0(Entity *entity, s32 unknown) {
+/* The think function of states 1 and 2: each time Entity.unkA0 has run out it launches shot EntityParams.unk430
+   from model point unk432 (along the line to the next point; point 0xFF: along the heading turned round),
+   turned towards the player 190 above his feet by at most unk436 in pitch and unk438 in yaw, starts cue 0 and
+   sets unkA0 to unk434. Keeps animation 0 and starts the move action. */
+static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 angles[4];
     f32 target[4];

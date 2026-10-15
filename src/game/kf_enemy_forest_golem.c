@@ -55,9 +55,9 @@ static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now);
 static void ForestGolem_Think(Entity *entity, s32 unknown);
 static void ForestGolem_StartScriptAndRumble(Entity *entity);
 static void ForestGolem_Move(Entity *entity);
-static void func_0017A540(Entity *entity);
+static void ForestGolem_InitByVariant(Entity *entity);
 static void ForestGolem_ThinkByState(Entity *entity, s32 unknown);
-static void func_0017A880(Entity *entity, s32 unknown);
+static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown);
 static void ForestGolem_Death(Entity *entity);
 static void ForestGolem_SignalMapObject(Entity *entity);
 static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown);
@@ -238,7 +238,11 @@ static void ForestGolem_Move(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
 }
 
-static void func_0017A540(Entity *entity) {
+/* A set-up function nothing refers to: as ForestGolem_Init, but it installs EntityAi_OnHit, EntityAi_Move and
+   ForestGolem_Death, and picks the think handler by EntitySpawnInfo.variant (1
+   ForestGolem_ThinkUseMapObjectsPosX, 2 ForestGolem_ThinkUseMapObjectsNegX, else ForestGolem_ThinkByState)
+   where ForestGolem_Init tests a map script flag. */
+static void ForestGolem_InitByVariant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     u8 *unkBC = entity->unkBC;
     u8 *unkC0 = entity->unkC0;
@@ -283,8 +287,8 @@ static void func_0017A540(Entity *entity) {
     Motion_StepModel(entity->model, 0, 0);
 }
 
-/* A think handler only func_0017A540 installs (for an EntitySpawnInfo.variant other than 1 and 2),
-   a set-up function nothing refers to: as EntityAi_Think, with func_0017A880 for state 2. The same
+/* A think handler only ForestGolem_InitByVariant installs (for an EntitySpawnInfo.variant other than 1 and 2),
+   a set-up function nothing refers to: as EntityAi_Think, with ForestGolem_ThinkCombat for state 2. The same
    as ExpeditionSoldier_Think. */
 static void ForestGolem_ThinkByState(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
@@ -307,13 +311,15 @@ static void ForestGolem_ThinkByState(Entity *entity, s32 unknown) {
         EntityAi_ThinkPursue(entity, unknown);
         return;
     case 2:
-        func_0017A880(entity, unknown);
+        ForestGolem_ThinkCombat(entity, unknown);
         return;
     }
     EntityAi_ThinkIdle(entity, unknown);
 }
 
-static void func_0017A880(Entity *entity, s32 unknown) {
+/* The think function of state 2 of the think handlers ForestGolem_InitByVariant installs: as
+   ExpeditionSoldier_ThinkCombat without the EntityAi_ClearTurnInPlace test. */
+static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 range;
@@ -403,7 +409,7 @@ static void func_0017A880(Entity *entity, s32 unknown) {
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-/* A death action (busy bit 0x40) only func_0017A540 puts in the death slot, a set-up function
+/* A death action (busy bit 0x40) only ForestGolem_InitByVariant puts in the death slot, a set-up function
    nothing refers to; ForestGolem_Init leaves the slot empty. As EntityAi_Death; when the fade
    starts and EntitySpawnInfo.unk40 is set, it calls EntityEvent_Respawn for the entity with that spawn id
    (if its flag bit 0 is set) and puts it at this entity's position. */
@@ -501,8 +507,8 @@ static void ForestGolem_SignalMapObject(Entity *entity) {
     }
 }
 
-/* A think handler only func_0017A540 installs (for EntitySpawnInfo.variant 1), a set-up function
-   nothing refers to: as ForestGolem_ThinkByState (with func_0017A880 for state 1 too), but it
+/* A think handler only ForestGolem_InitByVariant installs (for EntitySpawnInfo.variant 1), a set-up function
+   nothing refers to: as ForestGolem_ThinkByState (with ForestGolem_ThinkCombat for state 1 too), but it
    first reads bit 17 of the two map objects EntitySpawnInfo.unk42 and unk43 name into work bytes
    unk79 and unk7A, and while either is clear it calls ForestGolem_WalkToMapObjectPosX instead of
    stepping the states. The same as ExpeditionSoldier_ThinkUseMapObjectsPosX. */
@@ -539,7 +545,7 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
         break;
     case 1:
     case 2:
-        func_0017A880(entity, unknown);
+        ForestGolem_ThinkCombat(entity, unknown);
         return;
     }
     EntityAi_ThinkIdle(entity, unknown);
@@ -613,7 +619,7 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-/* A think handler only func_0017A540 installs (for EntitySpawnInfo.variant 2), a set-up function
+/* A think handler only ForestGolem_InitByVariant installs (for EntitySpawnInfo.variant 2), a set-up function
    nothing refers to: as ForestGolem_ThinkUseMapObjectsPosX, with ForestGolem_WalkToMapObjectNegX
    (the points at x -950 and -900). */
 static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
@@ -649,7 +655,7 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
         break;
     case 1:
     case 2:
-        func_0017A880(entity, unknown);
+        ForestGolem_ThinkCombat(entity, unknown);
         return;
     }
     EntityAi_ThinkIdle(entity, unknown);

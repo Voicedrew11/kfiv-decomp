@@ -34,8 +34,8 @@ void Vector_Normalize(void *dst, void *src);
 void Vector_Scale(void *, void *, float);
 void Vector_Add(void *, void *, void *);
 extern Entity *D_004467E0;
-int func_001B0040(Entity *entity);
-float func_001B0178(void *, void *);
+int Effect_IsEntityUntargetable(Entity *entity);
+float Effect_Distance(void *, void *);
 f32 func_001B0950(f32);
 void Vector_Subtract(void *, void *, void *);
 
@@ -352,10 +352,10 @@ int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *r
     f32 score;
 
     for (entity = D_004467E0; entity != NULL; entity = entity->next) {
-        if (func_001B0040(entity) != 0) {
+        if (Effect_IsEntityUntargetable(entity) != 0) {
             continue;
         }
-        distance = func_001B0178(&ENTITY_MODEL(entity)->position, position);
+        distance = Effect_Distance(&ENTITY_MODEL(entity)->position, position);
         if ((f32)effect->def->interval < distance) {
             continue;
         }
@@ -393,10 +393,10 @@ Entity *EffectHit_FindNearestEntity(EffectActor *effect, Vector4 *position, Vect
     f32 stack_reserve[8]; // match: unused, keeps the retail stack frame size
 
     for (entity = D_004467E0; entity != NULL; entity = entity->next) {
-        if (func_001B0040(entity) != 0) {
+        if (Effect_IsEntityUntargetable(entity) != 0) {
             continue;
         }
-        distance = func_001B0178(&ENTITY_MODEL(entity)->position, position);
+        distance = Effect_Distance(&ENTITY_MODEL(entity)->position, position);
         if ((f32)effect->def->interval < distance) {
             continue;
         }
