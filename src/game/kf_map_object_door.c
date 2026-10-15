@@ -3,7 +3,7 @@
 #include "kf_message.h"
 
 void Vector_Copy(void *, void *);
-void func_0011F498(MapObject *);
+void MapObject_UpdateOpeningDoor(MapObject *);
 void MapObject_ShowKeyUsed(int);
 int Sound_PlayMapAtRange(u8, u8, float *, float);
 void Vector_Subtract(void *, void *, void *);
@@ -23,7 +23,7 @@ extern float player_state[];
 /* Start handler of the door-like kinds: closed (animation 4) or already open
    (animation 5). Kind 6 remembers where its second part sits and, when it starts
    open, is run until it gets there. */
-void func_0011F238(MapObject *object) {
+void MapObject_StartDoor(MapObject *object) {
     MapObjectWork *work = MAP_OBJECT_WORK(object);
     ModelPart *part;
 
@@ -39,7 +39,7 @@ void func_0011F238(MapObject *object) {
         if (MAP_OBJECT_FLAGS(object) & 0x20000) {
             MAP_OBJECT_BYTES(object)->step = 2;
             do {
-                func_0011F498(object);
+                MapObject_UpdateOpeningDoor(object);
             } while (MAP_OBJECT_BYTES(object)->step != 3);
         }
     } else {
@@ -98,7 +98,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
 /* Update handler of an opening door-like object: runs the animation (kind 6
    moves with its second part; kind 2 clears unk60 bit 0 once both pairs of its
    points are more than 225 apart); at its end the object is open. */
-void func_0011F498(MapObject *object) {
+void MapObject_UpdateOpeningDoor(MapObject *object) {
     MapObjectWork *work = MAP_OBJECT_WORK(object);
     Vector4 delta;
     Vector4 offset;
@@ -155,7 +155,7 @@ void func_0011F498(MapObject *object) {
 
 /* Update handler of an open door that shuts by itself (unless its second word is
    set) once the player is further than its reach plus 100. */
-void func_0011F708(MapObject *object) {
+void MapObject_UpdateOpenDoor(MapObject *object) {
     ModelInstance *model;
     MapObjectWork *work;
     float *player;
@@ -182,7 +182,7 @@ void func_0011F708(MapObject *object) {
 
 /* Update handler of a closing door-like object: runs the animation (kind 6 moves
    with its second part); at its end the object is closed again. */
-void func_0011F7E0(MapObject *object) {
+void MapObject_UpdateClosingDoor(MapObject *object) {
     MapObjectWork *work = MAP_OBJECT_WORK(object);
     Vector4 delta;
     Vector4 offset;
@@ -211,8 +211,8 @@ void func_0011F7E0(MapObject *object) {
     }
 }
 
-/* Opens a closed door-like object (step 1 to 2) or closes an open one (3 to 4). */
-void func_0011F910(MapObject *object, int open) {
+/* Signal hook of the doors: opens a closed door (step 1 to 2) or closes an open one (3 to 4). */
+void MapObject_SetDoorOpen(MapObject *object, int open) {
     if ((object->unk10 & 0x2FF00) == 0x100 && open) {
         object->unk10 |= 0x20000;
         MAP_OBJECT_BYTES(object)->step = 2;
@@ -222,9 +222,9 @@ void func_0011F910(MapObject *object, int open) {
     }
 }
 
-/* Rebuilds the model matrices of a kind 6 object with its second part put where
-   it was when the object started, then puts the part back. */
-void func_0011F980(MapObject *object) {
+/* Every-frame hook of kind 6, the door that moves with its second part: rebuilds the model matrices with that
+   part put back where it was when the door started, then puts the part back. */
+void MapObject_RebuildMovingDoorMatrices(MapObject *object) {
     Vector4 saved;
     int i;
     ModelPart *part;
@@ -253,7 +253,7 @@ void func_0011F980(MapObject *object) {
     object->model->unk1B4(object->model);
 }
 
-/* Start handler: step 1. */
-void func_0011FAA0(MapObject *object) {
+/* Step 0 of the bones and gravestones that hold an item (kind 3): step 1. */
+void MapObject_StartItemHolder(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
 }

@@ -14,13 +14,13 @@ void sceVu0Normalize(float *, float *);
 void Vector_Scale(float *, float *, float);
 void Vector_Add(void *, void *, void *);
 int rand(void);
-u32 func_001125A8(u32, u32, int);
+u32 Collision_GetSurfaceEffect(u32, u32, int);
 extern u32 D_00446ED4;
-int func_001C2D08(void *);
-u32 func_001125F0(u32, u32, int);
-u32 func_00112618(u32, u32, int);
-u32 func_001124E0(int, u32, u32);
-void func_001C0A88(void *corner_a, void *corner_b, void *corner_c, void *point);
+int Collision_TransformMeshPoints(void *);
+u32 Collision_GetBarrierLevel(u32, u32, int);
+u32 Collision_IsBarrierFloor(u32, u32, int);
+u32 Collision_GetFloorMaterial(int, u32, u32);
+void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, void *point);
 void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
 extern MapSlot map_slots[2];
 void Vector_Copy(void *, void *);
@@ -32,7 +32,7 @@ extern MapObject D_003AFA30[];
 void Collision_CylinderEdge(void *, void *, f32, void *, f32, f32);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 void Collision_BallEdge(void *, void *, f32, void *, f32);
-void func_001C2128(MapObject *, f32 *, f32 *, f32);
+void Collision_HitRayObj(MapObject *, f32 *, f32 *, f32);
 extern ModelInstanceBlock *D_00432224[];
 
 /* tests the entity's upright capsule against the triangle at `point` and pushes `position`
@@ -419,7 +419,7 @@ static void EntityCollision_SphereSphere(f32 *center_a, f32 *center_b, f32 radiu
     }
 }
 
-/* Applies the effect of a surface the entity touches; func_001125A8 picks it from the triangle: 1 and 2 start
+/* Applies the effect of a surface the entity touches; Collision_GetSurfaceEffect picks it from the triangle: 1 and 2 start
    the unk20 timer (1800 frames) by a chance EntityParams.unkEA lowers, 3 starts it outright, 4 takes up to 50
    less a resistance term (EntityParams.unkE8 + unkDA) of Entity.unk2C (its health), 5 takes 30; 4 and 5 also
    clear flag bits 38-39 and set unkA3 to 3. */
@@ -427,7 +427,7 @@ void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 unknown_a, s32 unkno
     s32 chance;
     s32 amount;
 
-    switch (func_001125A8(unknown_a, unknown_b, unknown_c)) {
+    switch (Collision_GetSurfaceEffect(unknown_a, unknown_b, unknown_c)) {
     case 1:
         chance = 20 - entity->params->unkEA;
         if (chance <= 0) {
@@ -490,7 +490,7 @@ s32 EntityCollision_WalkAgainstMesh(Entity *entity, ModelInstance *model, f32 *p
     s32 j;
 
     hit_floor = FALSE;
-    func_001C2D08(model);
+    Collision_TransformMeshPoints(model);
     period = 30;
     mesh = (CollisionMesh *)model->strips;
     if (D_00446ED4 % period == entity->unkD7 % 10U) {
@@ -500,7 +500,7 @@ s32 EntityCollision_WalkAgainstMesh(Entity *entity, ModelInstance *model, f32 *p
             point = strip->points;
             j = strip->point_count - 2;
             do {
-                func_001C0A88(point[0].position, point[1].position, point[2].position, entity->model->position);
+                Collision_DropOnTriangle(point[0].position, point[1].position, point[2].position, entity->model->position);
                 if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] <= entity->model->position[1]
                     && entity->model->position[1] - entity->unk34 <= COLLISION_RESULT->point[1]) {
                     EntityCollision_ApplySurfaceEffect(entity, point->unk04, point->unk08, point->unk0C);
@@ -544,10 +544,10 @@ walls:
         while (--i != -1) {
             point = strip->points;
             j = strip->point_count - 2;
-            if (func_001125F0(point->unk04, point->unk08, point->unk0C) >= entity->spawn_info->unk35) {
-                if (func_00112618(point->unk04, point->unk08, point->unk0C)) {
+            if (Collision_GetBarrierLevel(point->unk04, point->unk08, point->unk0C) >= entity->spawn_info->unk35) {
+                if (Collision_IsBarrierFloor(point->unk04, point->unk08, point->unk0C)) {
                     do {
-                        func_001C0A88(point[0].position, point[1].position, point[2].position, entity->model->position);
+                        Collision_DropOnTriangle(point[0].position, point[1].position, point[2].position, entity->model->position);
                         if (COLLISION_RESULT->hit != 0
                             && entity->model->position[1] - entity->params->unk42C <= COLLISION_RESULT->point[1]
                             && COLLISION_RESULT->point[1] <= *floor_y) {
@@ -575,13 +575,13 @@ walls:
             point = strip->points;
             j = strip->point_count - 2;
             do {
-                func_001C0A88(point[0].position, point[1].position, point[2].position, entity->model->position);
+                Collision_DropOnTriangle(point[0].position, point[1].position, point[2].position, entity->model->position);
                 if (COLLISION_RESULT->hit != 0
                     && entity->model->position[1] - entity->params->unk42C <= COLLISION_RESULT->point[1]
                     && COLLISION_RESULT->point[1] <= *floor_y) {
                     hit_floor = TRUE;
                     *floor_y = COLLISION_RESULT->point[1];
-                    ENTITY_FLAG_BITS(entity)->bits60 = func_001124E0(point->unk04, point->unk08, point->unk0C);
+                    ENTITY_FLAG_BITS(entity)->bits60 = Collision_GetFloorMaterial(point->unk04, point->unk08, point->unk0C);
                 }
                 point++;
             } while (--j != 0);
@@ -955,7 +955,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
     s32 j;
 
     hit_floor = FALSE;
-    func_001C2D08(model);
+    Collision_TransformMeshPoints(model);
     mesh = (CollisionMesh *)model->strips;
     if (!((s32)(entity->flags >> 23) & 1)) {
         strip = mesh->unk18;
@@ -1004,7 +1004,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
     while (--i != -1) {
         point = strip->points;
         j = strip->point_count - 2;
-        if (func_001125F0(point->unk04, point->unk08, point->unk0C) >= entity->spawn_info->unk35) {
+        if (Collision_GetBarrierLevel(point->unk04, point->unk08, point->unk0C) >= entity->spawn_info->unk35) {
             do {
                 EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->unk30);
                 if (COLLISION_RESULT->hit != 0) {
@@ -1961,7 +1961,7 @@ static void EntityCollision_MoveOnMesh(CollisionOwner *owner, f32 *centre, f32 s
     hit_wall = 0;
     hit_floor = 0;
     COLLISION_RESULT->hit = 0;
-    func_001C2D08(owner->model);
+    Collision_TransformMeshPoints(owner->model);
     mesh = (CollisionMesh *)owner->model->strips;
     floor_y = 3.4028235e38f; // match: FLT_MAX as a literal (the compiler keeps it in .sdata: D_00446840)
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
@@ -1972,7 +1972,7 @@ static void EntityCollision_MoveOnMesh(CollisionOwner *owner, f32 *centre, f32 s
         point = strip->points;
         j = strip->point_count - 2;
         do {
-            func_001C0A88(point[0].position, point[1].position, point[2].position, centre);
+            Collision_DropOnTriangle(point[0].position, point[1].position, point[2].position, centre);
             if (COLLISION_RESULT->hit != 0) {
                 if (centre[1] - step <= COLLISION_RESULT->point[1] && COLLISION_RESULT->point[1] <= centre[1] + 10.0f
                     && COLLISION_RESULT->point[1] < floor_y) {
@@ -2265,7 +2265,7 @@ static void EntityCollision_SphereMesh(CollisionOwner *owner, void *centre, f32 
     hit_floor = FALSE;
     hit_unk18 = FALSE;
     hit_unk20 = FALSE;
-    func_001C2D08(owner->model);
+    Collision_TransformMeshPoints(owner->model);
     mesh = (CollisionMesh *)owner->model->strips;
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
     Vector_Copy(position, centre);
@@ -2333,14 +2333,14 @@ static void EntityCollision_SphereMesh(CollisionOwner *owner, void *centre, f32 
     }
 }
 
-/* Tests the line from `from` to `destination` against `target` with func_001C2128; returns the result's hit. */
+/* Tests the line from `from` to `destination` against `target` with Collision_HitRayObj; returns the result's hit. */
 s32 EntityCollision_LineHits(Entity *target, f32 *from, PlayerData *destination) {
     f32 direction[4];
 
     Vector_Subtract(direction, destination, from);
     Vector_Normalize(direction, direction);
     // match: EntityMath_Distance returns the distance (other files declare it void)
-    func_001C2128((MapObject *)target, from, direction, ((f32 (*)(f32 *, void *))EntityMath_Distance)(from, destination));
+    Collision_HitRayObj((MapObject *)target, from, direction, ((f32 (*)(f32 *, void *))EntityMath_Distance)(from, destination));
     return COLLISION_RESULT->hit;
 }
 
@@ -2364,7 +2364,7 @@ f32 EntityCollision_DistanceToPropFloor(void *prop_arg, void *position_arg) {
     }
     found = FALSE;
     // match: called as if it returned nothing (other files declare it int)
-    ((void (*)(void *))func_001C2D08)(prop->model);
+    ((void (*)(void *))Collision_TransformMeshPoints)(prop->model);
     mesh = (CollisionMesh *)prop->model->strips;
     strip = mesh->floor_strips;
     i = mesh->floor_strip_count;
@@ -2372,7 +2372,7 @@ f32 EntityCollision_DistanceToPropFloor(void *prop_arg, void *position_arg) {
         point = strip->points;
         j = strip->point_count - 2;
         do {
-            func_001C0A88(point[0].position, point[1].position, point[2].position, position);
+            Collision_DropOnTriangle(point[0].position, point[1].position, point[2].position, position);
             if (COLLISION_RESULT->hit != 0) {
                 f32 y = COLLISION_RESULT->point[1];
 
@@ -2409,7 +2409,7 @@ s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 len
     }
     kind = 0;
     // match: called as if it returned nothing (other files declare it int)
-    ((void (*)(void *))func_001C2D08)(prop->model);
+    ((void (*)(void *))Collision_TransformMeshPoints)(prop->model);
     mesh = (CollisionMesh *)prop->model->strips;
     nearest = 3.4028235e38f;
     strip = mesh->floor_strips;
@@ -2613,7 +2613,7 @@ s32 EntityCollision_RayHitsPropWall(f32 *origin, f32 *direction, f32 length, f32
                     continue;
                 }
                 // match: called as void, or the model pointer does not take $2
-                ((void (*)(void *))func_001C2D08)(((MapProp *)record)->model);
+                ((void (*)(void *))Collision_TransformMeshPoints)(((MapProp *)record)->model);
                 mesh = (CollisionMesh *)((MapProp *)record)->model->strips;
                 strips_left = mesh->unk38;
                 strip = mesh->unk18;
@@ -2698,7 +2698,7 @@ f32 EntityCollision_DistanceToGround(f32 *point) {
                     continue;
                 }
                 // match: called as void, or the mesh pointer does not take $2
-                ((void (*)(void *))func_001C2D08)(model);
+                ((void (*)(void *))Collision_TransformMeshPoints)(model);
                 mesh = (CollisionMesh *)model->model.strips;
                 strips_left = mesh->unk42;
                 strip = mesh->unk2C;
@@ -2706,7 +2706,7 @@ f32 EntityCollision_DistanceToGround(f32 *point) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        func_001C0A88(strip_point[0].position, strip_point[1].position, strip_point[2].position, point);
+                        Collision_DropOnTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, point);
                         if (COLLISION_RESULT->hit != 0) {
                             return COLLISION_RESULT->point[1] - point[1];
                         }

@@ -4,7 +4,7 @@
 #include "kf_message.h"
 #include "kf_map.h"
 
-void func_0011F148(char *);
+void MapObject_RebuildMatrices(char *);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Copy(void *, void *);
 void Vector_Subtract(void *, void *, void *);
@@ -20,9 +20,9 @@ extern float player_state[];
 extern f32 D_00431AF0[16];
 extern ItemCommonDef item_common_defs[];
 
-/* Start handler of a sliding kind: part 2, closed (animation 4, step 1) or, with bit 17 set,
-   open (animation 5, step 4). */
-void func_00120EE0(MapObject *object) {
+/* Step 0 of the pedestals (kind 0xD: the Bridge, Binding and Release Pedestals); the item sits on part 2.
+   Empty: animation 4, step 1; with bit 17 set it holds its item: animation 5, step 4. */
+void MapObject_StartPedestal(MapObject *object) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
 
     work->part = 2;
@@ -36,10 +36,10 @@ void func_00120EE0(MapObject *object) {
     }
 }
 
-/* Update handler of a sliding kind, step 1: used by the player it only shows a
-   message; once fired (func_00121620) it puts the part at a point 115 below the
-   player and works out the steps that carry it back (6.67 a frame). */
-void func_00120F48(MapObject *object) {
+/* Step 1 of a pedestal: used by the player it only shows its name, at most every 45 frames. Once its item has
+   been placed (MapObject_PlaceItemOnPedestal) the item's part is put 115 above the player's feet (y grows
+   downward) and given the steps (6.67 a frame) that carry it back onto the pedestal; step 2. */
+void MapObject_UpdateEmptyPedestal(MapObject *object) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     ModelPart *part = &object->model->parts[work->part];
     f32 matrix[16];
@@ -61,7 +61,7 @@ void func_00120F48(MapObject *object) {
         object->unk10 |= 0x20000;
         MAP_OBJECT_BYTES(object)->step = 2;
         MapObject_StepAnim(object);
-        func_0011F148((char *)object);
+        MapObject_RebuildMatrices((char *)object);
         origin.w = 1.0f;
         origin.x = origin.y = origin.z = 0.0f;
         Vector_ApplyMatrix(&origin, part, &origin);
@@ -80,9 +80,8 @@ void func_00120F48(MapObject *object) {
     }
 }
 
-/* Update handler of a sliding kind, step 2: moves the part one step; after the
-   last one it is at step 3. */
-void func_001211B0(MapObject *object) {
+/* Step 2 of a pedestal: moves the item's part one step toward the pedestal; after the last one, step 3. */
+void MapObject_MovePedestalItemIn(MapObject *object) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     ModelPart *part = &object->model->parts[work->part];
 
@@ -95,9 +94,9 @@ void func_001211B0(MapObject *object) {
     }
 }
 
-/* Step handler: counts the timer down and runs the animation; at its end starts
-   animation 5 at step 4 and clears bit 0 of game_status.unk30. */
-void func_00121228(MapObject *object) {
+/* Step 3 of a pedestal: runs the animation; at its end the pedestal holds the item (animation 5, step 4) and
+   game_status.unk30 bit 0 is cleared. */
+void MapObject_SettlePedestalItem(MapObject *object) {
     MapObjectWork *work = MAP_OBJECT_WORK(object);
 
     if (work->timer > 0) {
@@ -112,10 +111,10 @@ void func_00121228(MapObject *object) {
     game_status.unk30 &= ~1U;
 }
 
-/* Update handler of a sliding kind, step 3: used by the player, it gives back
-   the item it holds and goes to step 5, unless the item is of type 5: then a
-   message is shown, at most every 45 frames. */
-void func_001212B0(MapObject *object) {
+/* Step 4 of a pedestal: used by the player, it gives its item back (Player_AddItem) and goes to step 5,
+   unless the item is of use type 5 (altar icons and keys, which stay): then its name is shown, at most every
+   45 frames. */
+void MapObject_UpdateFilledPedestal(MapObject *object) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     MapObjectUnk08Words *source = MAP_OBJECT_WORDS(object);
     ItemCommonDef *item_def = &item_common_defs[source->unk44];
@@ -139,9 +138,9 @@ void func_001212B0(MapObject *object) {
     }
 }
 
-/* Update handler of a sliding kind, step 5: once the animation has ended, works
-   out the steps that carry the part to a point 115 below the player (6.67 a frame). */
-void func_00121398(MapObject *object) {
+/* Step 5 of a pedestal: once the animation has ended, works out the steps (6.67 a frame) that carry the
+   item's part to 115 above the player's feet; step 6. */
+void MapObject_LiftPedestalItem(MapObject *object) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     ModelPart *part = &object->model->parts[work->part];
     f32 matrix[16];
@@ -158,7 +157,7 @@ void func_00121398(MapObject *object) {
         return;
     }
     MAP_OBJECT_BYTES(object)->step = 6;
-    func_0011F148((char *)object);
+    MapObject_RebuildMatrices((char *)object);
     origin.w = 1.0f;
     origin.x = origin.y = origin.z = 0.0f;
     Vector_ApplyMatrix(&origin, part, &origin);
@@ -175,9 +174,9 @@ void func_00121398(MapObject *object) {
     Vector_Scale(&work->step.x, &work->step.x, 1.0f / frames);
 }
 
-/* Update handler of a sliding kind: moves the part one step; after the last one it
-   starts animation 4 at step 1 and clears bit 0 of game_status.unk30. */
-void func_00121578(MapObject *object) {
+/* Step 6 of a pedestal: moves the item's part one step toward the player; after the last one the pedestal is
+   empty again (animation 4, step 1) and game_status.unk30 bit 0 is cleared. */
+void MapObject_MovePedestalItemOut(MapObject *object) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     ModelPart *part = &object->model->parts[work->part];
 
@@ -192,13 +191,14 @@ void func_00121578(MapObject *object) {
     }
 }
 
-void func_00121618(char *object) {
-    func_0011F148(object);
+/* Every-frame hook of the pedestals: MapObject_RebuildMatrices. */
+void MapObject_RebuildPedestalMatrices(char *object) {
+    MapObject_RebuildMatrices(object);
 }
 
-/* Fires a resting object of this kind (step 1, not fired yet) when the item is
-   the one it waits for; returns whether it fired. */
-int func_00121620(MapObject *object, int item) {
+/* Item hook of the pedestals: an empty pedestal (step 1) that has taken nothing yet takes the item it waits
+   for (its source's unk44); returns whether it took it. */
+int MapObject_PlaceItemOnPedestal(MapObject *object, int item) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     u8 step = MAP_OBJECT_BYTES(object)->step;
 

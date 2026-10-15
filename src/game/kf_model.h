@@ -528,7 +528,7 @@ typedef struct {
     char pad49[0x01];
     s16 unk4A;                      /* 0x4A */
     char pad4C[0x06];
-    u16 unk52;                      /* 0x52 1 to 6: touching it starts PlayerState.timed_flags[unk52 - 1] (func_001BF350) */
+    u16 unk52;                      /* 0x52 1 to 6: touching it starts PlayerState.timed_flags[unk52 - 1] (Player_CollideWithMapObjects) */
     u16 unk54;                      /* 0x54 passed to Effect_StartSpawner when the object comes into view, 0: nothing */
     u8 unk56;                       /* 0x56 the model point it starts at; the next one gives its direction */
     char pad57[0x01];
@@ -587,7 +587,7 @@ typedef struct {
     MapObjectAnim anims[8];         /* 0x10 by MapObjectBytes.anim; entry anim + 2 holds a second sound for anims 4 and 5 */
     u16 unk50;                      /* 0x50 passed to Effect_StartSpawner */
     s16 unk52[9];                   /* 0x52 percent of each of a hit's nine strengths that it shrugs off, 200: all of it (func_001B3AC0) */
-    f32 unk64;                      /* 0x64 above 0: the player must face it within this angle to act on it (func_001D0970) */
+    f32 unk64;                      /* 0x64 above 0: the player must face it within this angle to act on it (Interact_FindTarget) */
     u32 unk68;                      /* 0x68 flags; the low half is also the message id of its name ("Corpse", "Jail Door"...), shown when used */
     f32 unk6C;                      /* 0x6C MapObject.unk3C is this times the scale, plus 100 */
     f32 unk70;                      /* 0x70 how far its sounds carry, 0: 800 */
@@ -606,7 +606,7 @@ typedef struct {
 #define MAP_OBJECT_DEF_FLAGS(def) (*(u32 *)(def))
 #define MAP_OBJECT_DEF_CARRIES 0x8000   /* bit15 */
 
-/* MapObjectUnk04.kind read as the byte it is, where retail compares it that way (func_001C65F0) */
+/* MapObjectUnk04.kind read as the byte it is, where retail compares it that way (Collision_PushOutOfMeshObj) */
 #define MAP_OBJECT_DEF_KIND(def) (*(u8 *)(def))
 
 /* AnimObject+0x40 */
@@ -639,7 +639,7 @@ typedef struct {
     s32 unk0C;                      /* 0x0C what Map_FindRecordAtInSlot returns for its position */
     u32 unk10;                      /* 0x10 flags, MAP_OBJECT_BITS */
     f32 unk14;                      /* 0x14 how far around its position it reaches, 0: nothing to hit */
-    f32 unk18;                      /* 0x18 how far it is from the point last tested against the map objects (func_001C2758, func_001C2A38) */
+    f32 unk18;                      /* 0x18 how far it is from the point last tested against the map objects (Collision_PushOutOfObjects, Collision_StandOnObjects) */
     void *unk1C;                    /* 0x1C the next MapObject of its draw list (MapObject_InitMap) */
     f32 unk20;                      /* 0x20 the model's position (x, y, z) as of the last update */
     f32 unk24;                      /* 0x24 */
@@ -669,7 +669,7 @@ typedef struct {
 
 #define MAP_OBJECT_WORK(object) ((MapObjectWork *)(object)->work)
 
-/* MapObject.work of the kind that fades with the distance to the player (func_001201E0) */
+/* MapObject.work of the kind that fades with the distance to the player (MapObject_StartDistanceFade) */
 typedef struct {
     f32 near_distance;              /* 0x00 */
     f32 far_distance;               /* 0x04 */
@@ -677,7 +677,7 @@ typedef struct {
     f32 far_alpha;                  /* 0x0C */
 } MapObjectWorkFade;
 
-/* MapObject.work of the kinds that slide one part of their model (func_001211B0) */
+/* MapObject.work of the kinds that slide one part of their model (MapObject_MovePedestalItemIn) */
 typedef struct {
     Vector4 step;                   /* 0x00 added to the part each frame */
     s32 frames;                     /* 0x10 how many frames are left */
@@ -686,7 +686,7 @@ typedef struct {
     s32 timer;                      /* 0x1C counts down to 0 */
 } MapObjectWorkSlide;
 
-/* the same for the kind of func_00121DA8, whose timer is a byte */
+/* the same for the kind of MapObject_StartMarker, whose timer is a byte */
 typedef struct {
     Vector4 step;                   /* 0x00 */
     s32 frames;                     /* 0x10 */
@@ -784,7 +784,7 @@ typedef struct {
     Vector4 scale;                  /* 0x20 */
     u16 item;                       /* 0x30 which LevelDef (item_name_defs) it is */
     char pad32[0x02];
-    u16 unk34;                      /* 0x34 passed to Script_Start in place of picking the item up, 0: nothing (func_001D0970) */
+    u16 unk34;                      /* 0x34 passed to Script_Start in place of picking the item up, 0: nothing (Interact_FindTarget) */
     u8 required_flag;               /* 0x36 nonzero: it only appears while its byte of map_item_pickup_counts is below this */
     u8 chance;                      /* 0x37 percent chance that it appears (MapItem_RollFixedItems) */
     u8 group;                       /* 0x38 0-15: picks the roll and the map's threshold it is tested against */
@@ -854,7 +854,7 @@ typedef struct {
     char *texture;                  /* 0x04 becomes the model's unk194 */
 } ItemModelSource;
 
-/* the object func_001C5170 tests against a model's points */
+/* the object Collision_HitCapsuleQuadObj tests against a model's points */
 typedef struct {
     ModelInstance *model;           /* 0x00 */
     char pad04[0x0C];

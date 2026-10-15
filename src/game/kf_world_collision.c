@@ -58,50 +58,50 @@ typedef int (*CornerTest)(void *, f32, f32, void *, f32, f32);
     ((point)[0] == (position).x && (point)[1] == (position).y && (point)[2] == (position).z)
 
 void Vector_Subtract(void *, void *, void *);
-int func_001C2D08(void *);
-void func_001C0A88(void *, void *, void *, void *);
-u32 func_001124E0(int, u32, u32);
+int Collision_TransformMeshPoints(void *);
+void Collision_DropOnTriangle(void *, void *, void *, void *);
+u32 Collision_GetFloorMaterial(int, u32, u32);
 void Vector_Scale(float *, float *, float);
 void Vector_Copy(void *, void *);
 float sqrtf(float);
-void func_001C2F30(void *, int, int, float);
-void func_001C31E8(void *, int, int, float);
-s32 func_001C3910(AnimObject *, s32, s32, f32);
-void func_001C3A18(void *, int, int, float);
-void func_001C2E48(MapObject *, f32 *, f32 *, f32);
-int func_001C3DF8(MapObject *, f32 *, f32);
-int func_001C3FA0(MapObject *, f32 *, f32);
-void func_001C43A8(MapObject *, f32 *, f32);
-void func_001C4498(MapObject *, f32 *, f32);
-void func_001C3D00(CollisionOwner *, int, float);
-int func_001C48A8(MapObject *, f32 *, f32, f32);
-void func_001C4B10(MapObject *, f32 *, f32, f32);
-int func_001C5170(CollisionOwner *, int, float, float);
+void Collision_HitRayBoxObj(void *, int, int, float);
+void Collision_HitRayDoubleDoorObj(void *, int, int, float);
+s32 Collision_HitRayQuadObj(AnimObject *, s32, s32, f32);
+void Collision_HitRayPitfallObj(void *, int, int, float);
+void Collision_HitRayMeshObj(MapObject *, f32 *, f32 *, f32);
+int Collision_HitSphereBoxObj(MapObject *, f32 *, f32);
+int Collision_HitSphereDoubleDoorObj(MapObject *, f32 *, f32);
+void Collision_HitSphereQuadObj(MapObject *, f32 *, f32);
+void Collision_HitSpherePitfallObj(MapObject *, f32 *, f32);
+void Collision_HitSphereMeshObj(CollisionOwner *, int, float);
+int Collision_HitCapsuleBoxObj(MapObject *, f32 *, f32, f32);
+void Collision_HitCapsuleDoubleDoorObj(MapObject *, f32 *, f32, f32);
+int Collision_HitCapsuleQuadObj(CollisionOwner *, int, float, float);
 void func_001C5278(void);
-void func_001C47A0(MapObject *, f32 *, f32, f32);
+void Collision_HitCapsuleMeshObj(MapObject *, f32 *, f32, f32);
 float sinf(float);
 float cosf(float);
 float Angle_Wrap(float);
-void func_001C5538(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
-void func_001C58F0(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
-void func_001C6360(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
+void Collision_HitFanBoxObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
+void Collision_HitFanDoubleDoorObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
+void Collision_HitFanQuadObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
 void func_001C65E8(void);
-void func_001C5280(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
-void func_001C68B0(MapObject *, f32 *, f32, f32);
-void func_001C6B88(MapObject *, f32 *, f32, f32);
-void func_001C7960(CollisionOwner *, f32 *, f32, f32);
+void Collision_HitFanMeshObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
+void Collision_PushOutOfBoxObj(MapObject *, f32 *, f32, f32);
+void Collision_PushOutOfDoubleDoorObj(MapObject *, f32 *, f32, f32);
+void Collision_PushOutOfQuadObj(CollisionOwner *, f32 *, f32, f32);
 void func_001C7AF0(void);
-void func_001C65F0(MapObject *, f32 *, f32, f32);
-s32 func_001C7C60(CollisionOwner *, f32 *, f32);
-s32 func_001C7E48(MapObject *, f32 *, f32);
-s32 func_001C7AF8(CollisionOwner *, f32 *, f32);
+void Collision_PushOutOfMeshObj(MapObject *, f32 *, f32, f32);
+s32 Collision_StandOnQuadObj(CollisionOwner *, f32 *, f32);
+s32 Collision_StandOnPitfallObj(MapObject *, f32 *, f32);
+s32 Collision_StandOnMeshObj(CollisionOwner *, f32 *, f32);
 void Vu0_LoadMatrix(void *);
 int puts(char *);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 void sceVu0Normalize(float *, float *);
 void Vector_TriangleNormal(float *, float *, float *, float *);
 void Vector_Normalize(void *, void *);
-void func_001C0C50(void *, void *, void *, void *, f32);
+void Collision_DropOnTriangleWithin(void *, void *, void *, void *, f32);
 
 extern f32 D_00446980[];
 extern const f32 D_00446984[];
@@ -128,8 +128,9 @@ extern f32 D_004469A4[]; // match: the largest float; declared without a size, i
 extern f32 D_004469A8[]; // match: the largest float; declared without a size, it is not reached through $gp
 
 /* Drops a vertical line through `point` onto a triangle: on a hit the scratchpad result gets the
-   height where it meets the triangle and how far that is above the point. */
-void func_001C0A88(void *corner_a, void *corner_b, void *corner_c, void *point) {
+   height where it meets the triangle and how far that is from the point (positive: below it, as y grows
+   downward). */
+void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, void *point) {
     f32 hit_point[4];
     f32 edge_a[4];
     f32 edge_c[4];
@@ -188,8 +189,9 @@ void func_001C0A88(void *corner_a, void *corner_b, void *corner_c, void *point) 
     }
 }
 
-/* func_001C0A88 with a limit: the triangle must be above the point, by no more than `reach`. */
-void func_001C0C50(void *corner_a, void *corner_b, void *corner_c, void *point, f32 reach) {
+/* Collision_DropOnTriangle with a limit: the triangle must lie at or below the point (y grows downward), by
+   no more than reach. */
+void Collision_DropOnTriangleWithin(void *corner_a, void *corner_b, void *corner_c, void *point, f32 reach) {
     f32 hit_point[4];
     f32 edge_a[4];
     f32 edge_c[4];
@@ -254,9 +256,10 @@ void func_001C0C50(void *corner_a, void *corner_b, void *corner_c, void *point, 
     }
 }
 
-/* Looks for the lowest floor of the loaded maps' records that is above `point_arg`, by no more
-   than `reach`. Returns TRUE and leaves that hit in the scratchpad result when there is one. */
-int func_001C0E40(f32 reach, void *point_arg) {
+/* Looks for the floor of the loaded maps' records nearest below `point_arg` (y grows downward), by no more
+   than `reach`. Returns TRUE and leaves that hit, with its floor material, in the scratchpad result when
+   there is one. */
+int Collision_FindFloorBelow(f32 reach, void *point_arg) {
     CollisionResultCopy best;
     s32 found;
     f32 *point = point_arg;
@@ -291,7 +294,7 @@ int func_001C0E40(f32 reach, void *point_arg) {
                     record->highest[2] < point[2]) {
                     continue;
                 }
-                func_001C2D08(record->model);
+                Collision_TransformMeshPoints(record->model);
                 mesh = (CollisionMesh *)record->model->strips;
                 strips_left = mesh->floor_strip_count;
                 strip = mesh->floor_strips;
@@ -299,11 +302,11 @@ int func_001C0E40(f32 reach, void *point_arg) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        func_001C0A88(strip_point[0].position, strip_point[1].position, strip_point[2].position, point);
+                        Collision_DropOnTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, point);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest &&
                             point[1] <= COLLISION_RESULT->point[1] && COLLISION_RESULT->point[1] <= point[1] + reach) {
                             found = TRUE;
-                            COLLISION_RESULT->unk18 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                             best = *COLLISION_RESULT_COPY;
                             lowest = COLLISION_RESULT->point[1];
                         }
@@ -326,9 +329,10 @@ int func_001C0E40(f32 reach, void *point_arg) {
     return found;
 }
 
-/* func_001C0E40 for the records' other strips (CollisionMesh.unk2C): looks for the lowest of
-   them that is above `point_arg`, by no more than `reach`. Returns TRUE and leaves that hit in the scratchpad result when there is one. */
-int func_001C1138(f32 reach, void *point_arg) {
+/* Collision_FindFloorBelow for the records' water surfaces (CollisionMesh.unk2C, where Player_CollideWithMap
+   finds the water): the nearest one below `point_arg`, by no more than `reach`. Returns TRUE and leaves that
+   hit in the scratchpad result when there is one. */
+int Collision_FindWaterBelow(f32 reach, void *point_arg) {
     CollisionResultCopy best;
     s32 found;
     f32 *point = point_arg;
@@ -363,7 +367,7 @@ int func_001C1138(f32 reach, void *point_arg) {
                     record->highest[2] < point[2]) {
                     continue;
                 }
-                func_001C2D08(record->model);
+                Collision_TransformMeshPoints(record->model);
                 mesh = (CollisionMesh *)record->model->strips;
                 strips_left = mesh->unk42;
                 strip = mesh->unk2C;
@@ -371,11 +375,11 @@ int func_001C1138(f32 reach, void *point_arg) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
                     do {
-                        func_001C0A88(strip_point[0].position, strip_point[1].position, strip_point[2].position, point);
+                        Collision_DropOnTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, point);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest &&
                             point[1] <= COLLISION_RESULT->point[1] && COLLISION_RESULT->point[1] <= point[1] + reach) {
                             found = TRUE;
-                            COLLISION_RESULT->unk18 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                             best = *COLLISION_RESULT_COPY;
                             lowest = COLLISION_RESULT->point[1];
                         }
@@ -401,7 +405,7 @@ int func_001C1138(f32 reach, void *point_arg) {
 /* Sweeps a point from `position_arg` along `direction` times `scale` through the loaded maps'
    records and leaves the nearest hit in the scratchpad result. Four of each mesh's strip lists
    are tested (strip_list_indices names them); a strip's triangles alternate in winding. */
-void func_001C1430(f32 scale, void *position_arg, void *direction) {
+void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction) {
     f32 step[4];
     f32 lowest[4];
     f32 highest[4];
@@ -460,7 +464,7 @@ void func_001C1430(f32 scale, void *position_arg, void *direction) {
                     highest[1] < position[1] || position[2] < lowest[2] || highest[2] < position[2]) {
                     continue;
                 }
-                func_001C2D08(record->model);
+                Collision_TransformMeshPoints(record->model);
                 for (list = 0; list < 4; list++) {
                     mesh = (CollisionMeshLists *)record->model->strips;
                     strips_left = mesh->strip_counts[strip_list_indices[list]];
@@ -480,7 +484,7 @@ void func_001C1430(f32 scale, void *position_arg, void *direction) {
                             forward ^= 1;
                             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->distance < best.result.distance) {
                                 best = *COLLISION_RESULT_COPY;
-                                best.result.unk18 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                                best.result.unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                             }
                             strip_point++;
                         } while (--points_left != 0);
@@ -499,9 +503,9 @@ void func_001C1430(f32 scale, void *position_arg, void *direction) {
     *&COLLISION_RESULT_COPY->doublewords[5] = best.doublewords[5];
 }
 
-/* func_001C1430 with the strip lists to test given as a mask: bit n set tests list n of each
+/* Collision_CastRayAtMap with the strip lists to test given as a mask: bit n set tests list n of each
    mesh's seven (CollisionMeshLists). */
-void func_001C1858(f32 scale, void *position_arg, void *direction, s32 lists) {
+void Collision_CastRayAtMapLists(f32 scale, void *position_arg, void *direction, s32 lists) {
     f32 step[4];
     f32 lowest[4];
     f32 highest[4];
@@ -562,7 +566,7 @@ void func_001C1858(f32 scale, void *position_arg, void *direction, s32 lists) {
                     continue;
                 }
                 list_bit = 1; // match: set ahead of the call, so it takes a saved register
-                func_001C2D08(record->model);
+                Collision_TransformMeshPoints(record->model);
                 for (list = 0; list < 7; list++, list_bit <<= 1) {
                     if (!(lists & list_bit)) {
                         continue;
@@ -585,7 +589,7 @@ void func_001C1858(f32 scale, void *position_arg, void *direction, s32 lists) {
                             forward ^= 1;
                             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->distance < best.result.distance) {
                                 best = *COLLISION_RESULT_COPY;
-                                best.result.unk18 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                                best.result.unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                             }
                             strip_point++;
                         } while (--points_left != 0);
@@ -607,7 +611,7 @@ void func_001C1858(f32 scale, void *position_arg, void *direction, s32 lists) {
 /* Sweeps a point from `position` to `target` through the loaded maps' records and leaves the
    nearest hit in the scratchpad result. Two of each mesh's strip lists are tested (D_00446998
    names them); a strip's triangles alternate in winding. */
-void func_001C1C80(f32 *position, f32 *target) {
+void Collision_CastSegmentAtMap(f32 *position, f32 *target) {
     f32 direction[4];
     f32 lowest[4];
     f32 highest[4];
@@ -671,7 +675,7 @@ void func_001C1C80(f32 *position, f32 *target) {
                     highest[1] < position[1] || position[2] < lowest[2] || highest[2] < position[2]) {
                     continue;
                 }
-                func_001C2D08(model);
+                Collision_TransformMeshPoints(model);
                 for (list = 0; list < 2; list++) {
                     mesh = (CollisionMeshLists *)model->model.strips;
                     strips_left = mesh->strip_counts[D_00446998[list]];
@@ -691,7 +695,7 @@ void func_001C1C80(f32 *position, f32 *target) {
                             forward ^= 1;
                             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->distance < best.distance) {
                                 best = *COLLISION_RESULT_ALIGNED;
-                                best.unk18 = func_001124E0(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                                best.unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                             }
                             strip_point++;
                         } while (--points_left != 0);
@@ -710,24 +714,27 @@ void func_001C1C80(f32 *position, f32 *target) {
     *&COLLISION_RESULT_COPY->doublewords[5] = ((CollisionResultCopy *)&best)->doublewords[5];
 }
 
-void func_001C2128(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
+/* Tests a ray (from `origin` along `direction`, no further than `reach` times it) against a map object with
+   the test that fits its kind: the box (1), the double door (2), the quad (17), the pitfall (18), else its
+   collision mesh. The result is left in COLLISION_RESULT. */
+void Collision_HitRayObj(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
     COLLISION_RESULT->hit = 0;
     switch (object->unk04->kind) {
     case 1:
-        func_001C2F30(object, (int)origin, (int)direction, reach);
+        Collision_HitRayBoxObj(object, (int)origin, (int)direction, reach);
         break;
     case 2:
-        func_001C31E8(object, (int)origin, (int)direction, reach);
+        Collision_HitRayDoubleDoorObj(object, (int)origin, (int)direction, reach);
         break;
     case 17:
-        func_001C3910((AnimObject *)object, (s32)origin, (s32)direction, reach);
+        Collision_HitRayQuadObj((AnimObject *)object, (s32)origin, (s32)direction, reach);
         break;
     case 18:
-        func_001C3A18(object, (int)origin, (int)direction, reach);
+        Collision_HitRayPitfallObj(object, (int)origin, (int)direction, reach);
         break;
     default:
         if (object->model->strips != NULL) {
-            func_001C2E48(object, origin, direction, reach);
+            Collision_HitRayMeshObj(object, origin, direction, reach);
         }
         break;
     }
@@ -735,7 +742,7 @@ void func_001C2128(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
 
 /* Tests a point (with a reach) against a map object: first the object's own reach around its
    model, then the test that fits the object's kind. The result is left in COLLISION_RESULT. */
-void func_001C21C0(MapObject *object, f32 *point, f32 reach) {
+void Collision_HitSphereObj(MapObject *object, f32 *point, f32 reach) {
     ModelInstance *model = object->model;
     f32 delta_x;
     f32 delta_z;
@@ -757,20 +764,20 @@ void func_001C21C0(MapObject *object, f32 *point, f32 reach) {
     }
     switch (object->unk04->kind) {
     case 1:
-        func_001C3DF8(object, point, reach);
+        Collision_HitSphereBoxObj(object, point, reach);
         break;
     case 2:
-        func_001C3FA0(object, point, reach);
+        Collision_HitSphereDoubleDoorObj(object, point, reach);
         break;
     case 17:
-        func_001C43A8(object, point, reach);
+        Collision_HitSphereQuadObj(object, point, reach);
         break;
     case 18:
-        func_001C4498(object, point, reach);
+        Collision_HitSpherePitfallObj(object, point, reach);
         break;
     default:
         if (model->strips != NULL) {
-            func_001C3D00((CollisionOwner *)object, (int)point, reach);
+            Collision_HitSphereMeshObj((CollisionOwner *)object, (int)point, reach);
         }
         break;
     }
@@ -778,7 +785,7 @@ void func_001C21C0(MapObject *object, f32 *point, f32 reach) {
 
 /* Tests a point (with two reaches) against a map object: first the object's own reach around
    its model, then the test that fits the object's kind. The result is left in COLLISION_RESULT. */
-void func_001C2300(MapObject *object, f32 *point, f32 reach, f32 height) {
+void Collision_HitCapsuleObj(MapObject *object, f32 *point, f32 reach, f32 height) {
     f32 delta_x;
     f32 delta_z;
 
@@ -796,13 +803,13 @@ void func_001C2300(MapObject *object, f32 *point, f32 reach, f32 height) {
     }
     switch (object->unk04->kind) {
     case 1:
-        func_001C48A8(object, point, reach, height);
+        Collision_HitCapsuleBoxObj(object, point, reach, height);
         break;
     case 2:
-        func_001C4B10(object, point, reach, height);
+        Collision_HitCapsuleDoubleDoorObj(object, point, reach, height);
         break;
     case 17:
-        func_001C5170((CollisionOwner *)object, (int)point, reach, height);
+        Collision_HitCapsuleQuadObj((CollisionOwner *)object, (int)point, reach, height);
         break;
     case 18:
         // match: the pitfall test is an empty function, but it is passed everything the others are
@@ -810,7 +817,7 @@ void func_001C2300(MapObject *object, f32 *point, f32 reach, f32 height) {
         break;
     default:
         if (object->model->strips != NULL) {
-            func_001C47A0(object, point, reach, height);
+            Collision_HitCapsuleMeshObj(object, point, reach, height);
         }
         break;
     }
@@ -820,7 +827,7 @@ void func_001C2300(MapObject *object, f32 *point, f32 reach, f32 height) {
    against a map object: first the object's own reach around its model, then the test that fits
    the object's kind, which is given the fan's two edge points. The result is left in
    COLLISION_RESULT. */
-void func_001C24C0(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 spread, f32 heading) {
+void Collision_HitFanObj(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 spread, f32 heading) {
     f32 first_angle;
     f32 second_angle;
     f32 first_x;
@@ -856,13 +863,13 @@ void func_001C24C0(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
     }
     switch (object->unk04->kind) {
     case 1:
-        func_001C5538(object, origin, radius, push, first_x, first_z, second_x, second_z);
+        Collision_HitFanBoxObj(object, origin, radius, push, first_x, first_z, second_x, second_z);
         break;
     case 2:
-        func_001C58F0(object, origin, radius, push, first_x, first_z, second_x, second_z);
+        Collision_HitFanDoubleDoorObj(object, origin, radius, push, first_x, first_z, second_x, second_z);
         break;
     case 17:
-        func_001C6360(object, origin, radius, push, first_x, first_z, second_x, second_z);
+        Collision_HitFanQuadObj(object, origin, radius, push, first_x, first_z, second_x, second_z);
         break;
     case 18:
         // match: the pitfall test is an empty function, but it is passed everything the others are
@@ -870,7 +877,7 @@ void func_001C24C0(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
         break;
     default:
         if (object->model->strips != NULL) {
-            func_001C5280(object, origin, radius, push, first_x, first_z, second_x, second_z);
+            Collision_HitFanMeshObj(object, origin, radius, push, first_x, first_z, second_x, second_z);
         }
         break;
     }
@@ -897,7 +904,7 @@ static inline s32 map_object_count(s32 map) {
 /* Collides a circle with every map object of both loaded maps that is near enough. With
    `measure` set the distance to each object is worked out and kept in the object (unk18);
    otherwise the distances kept by an earlier call are used. */
-void func_001C2758(f32 *centre, s32 measure, f32 radius, f32 push) {
+void Collision_PushOutOfObjects(f32 *centre, s32 measure, f32 radius, f32 push) {
     MapObject *object;
     f32 reach;
     f32 delta_x;
@@ -936,13 +943,13 @@ void func_001C2758(f32 *centre, s32 measure, f32 radius, f32 push) {
             }
             switch (object->unk04->kind) {
             case 1:
-                func_001C68B0(object, centre, radius, push);
+                Collision_PushOutOfBoxObj(object, centre, radius, push);
                 break;
             case 2:
-                func_001C6B88(object, centre, radius, push);
+                Collision_PushOutOfDoubleDoorObj(object, centre, radius, push);
                 break;
             case 17:
-                func_001C7960((CollisionOwner *)object, centre, radius, push);
+                Collision_PushOutOfQuadObj((CollisionOwner *)object, centre, radius, push);
                 break;
             case 18:
                 // match: the pitfall test is an empty function, but it is passed everything the others are
@@ -950,7 +957,7 @@ void func_001C2758(f32 *centre, s32 measure, f32 radius, f32 push) {
                 break;
             default:
                 if (object->model->strips != NULL) {
-                    func_001C65F0(object, centre, radius, push);
+                    Collision_PushOutOfMeshObj(object, centre, radius, push);
                 }
                 break;
             }
@@ -960,8 +967,8 @@ void func_001C2758(f32 *centre, s32 measure, f32 radius, f32 push) {
 
 /* Tests a point against every map object of both loaded maps that is near enough and that can
    be stood on (kinds 1 and 2 are left out); TRUE if any test says so. When the point is the
-   player's position the object is noted in the player state. `measure` is as in func_001C2758. */
-s32 func_001C2A38(f32 *centre, s32 measure, f32 radius, f32 push) {
+   player's position the object is noted in the player state. `measure` is as in Collision_PushOutOfObjects. */
+s32 Collision_StandOnObjects(f32 *centre, s32 measure, f32 radius, f32 push) {
     MapObject *object;
     f32 reach;
     f32 delta_x;
@@ -1005,17 +1012,17 @@ s32 func_001C2A38(f32 *centre, s32 measure, f32 radius, f32 push) {
             case 2:
                 break;
             case 17:
-                if (func_001C7C60((CollisionOwner *)object, centre, radius)) {
+                if (Collision_StandOnQuadObj((CollisionOwner *)object, centre, radius)) {
                     NOTE_FOUND(object);
                 }
                 break;
             case 18:
-                if (func_001C7E48(object, centre, radius)) {
+                if (Collision_StandOnPitfallObj(object, centre, radius)) {
                     NOTE_FOUND(object);
                 }
                 break;
             default:
-                if (object->model->strips != NULL && func_001C7AF8((CollisionOwner *)object, centre, radius)) {
+                if (object->model->strips != NULL && Collision_StandOnMeshObj((CollisionOwner *)object, centre, radius)) {
                     NOTE_FOUND(object);
                 }
                 break;
@@ -1029,7 +1036,7 @@ s32 func_001C2A38(f32 *centre, s32 measure, f32 radius, f32 push) {
    matrix and written to the scratchpad (COLLISION_WORLD_POINTS), three at a time and then the
    one or two left over. */
 // match: nothing is returned, but the callers that read $2 after it need the int
-int func_001C2D08(void *target) {
+int Collision_TransformMeshPoints(void *target) {
     ModelInstance *model = target;
     CollisionMesh *mesh;
     Vector4 *world = COLLISION_WORLD_POINTS;
@@ -1093,7 +1100,7 @@ int func_001C2D08(void *target) {
 /* Tests a ray (from `origin` along `direction`, no further than `reach` times it) against every triangle of
    the strips of the object's model, if the object has flag 0x10000 and the mesh unk0C is 4 or more; stops at
    the first hit. */
-void func_001C2E48(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
+void Collision_HitRayMeshObj(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
     CollisionMesh *mesh;
     CollisionStrip *strip;
     CollisionStripPoint *point;
@@ -1103,7 +1110,7 @@ void func_001C2E48(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
     if (object->unk10 & 0x10000) {
         mesh = (CollisionMesh *)object->model->strips;
         if (mesh != NULL && mesh->unk0C >= 4) {
-            func_001C2D08(object->model);
+            Collision_TransformMeshPoints(object->model);
             strip = mesh->strips;
             strips_left = mesh->strip_count;
             do {
@@ -1124,9 +1131,9 @@ void func_001C2E48(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
 }
 
 /* Tests a ray against the four walls of a box-like map object (kind 1), two triangles a wall.
-   Model points 0 to 3 are the top corners; the bottom ones lie below them by the height that
-   point 0x1F gives. Stops at the first triangle hit. */
-void func_001C2F30(void *target, int from, int direction, float distance) {
+   Model points 0 to 3 are the bottom corners; the top ones lie above them at the height of point
+   0x1F (y grows downward). Stops at the first triangle hit. */
+void Collision_HitRayBoxObj(void *target, int from, int direction, float distance) {
     MapObject *object = target;
     Vector4 bottom[4];
     f32 *corner0;
@@ -1185,10 +1192,10 @@ void func_001C2F30(void *target, int from, int direction, float distance) {
 }
 
 /* Tests a ray against the walls of a two-box map object (kind 2), two triangles a wall. Model
-   points 0 to 3 and 4 to 7 are the top corners of its two halves; the bottom ones lie below
-   them by the height that point 0x1F gives. While the object is on frame 1 of animation 4 the
+   points 0 to 3 and 4 to 7 are the bottom corners of its two halves; the top ones lie above
+   them at the height of point 0x1F (y grows downward). While the object is on frame 1 of animation 4 the
    halves are tested as one box (corners 0, 1, 6, 7). Stops at the first triangle hit. */
-void func_001C31E8(void *target, int from, int direction, float distance) {
+void Collision_HitRayDoubleDoorObj(void *target, int from, int direction, float distance) {
     MapObject *object = target;
     Vector4 bottom[4];
     f32 *corner0;
@@ -1341,7 +1348,7 @@ typedef s32 (*RayTriangleValue)(s32, s32, s32, s32, s32, f32);
 
 /* Tests a ray against the quad of the object's model points 0 to 3 as two triangles, if the object has flag
    0x10000; the second triangle only when the first is missed. */
-s32 func_001C3910(AnimObject *object, s32 param1, s32 param2, f32 param3) {
+s32 Collision_HitRayQuadObj(AnimObject *object, s32 param1, s32 param2, f32 param3) {
     s32 point0;
     s32 point1;
     s32 point2;
@@ -1364,10 +1371,10 @@ s32 func_001C3910(AnimObject *object, s32 param1, s32 param2, f32 param3) {
 }
 
 /* Tests a ray against a map object of kind 18 (a pitfall). With flag 0x20000 clear the object's
-   collision strips are tested, as func_001C2E48 does. With it set, model points 0 to 0x1F are
+   collision strips are tested, as Collision_HitRayMeshObj does. With it set, model points 0 to 0x1F are
    taken four at a time as quads, up to the first quad with a corner at the model's own position
    (an unused point). */
-void func_001C3A18(void *target, int from, int direction, float distance) {
+void Collision_HitRayPitfallObj(void *target, int from, int direction, float distance) {
     MapObject *object = target;
     ModelStripList *list;
     Strip *strip;
@@ -1386,7 +1393,7 @@ void func_001C3A18(void *target, int from, int direction, float distance) {
     if (!(object->unk10 & 0x20000)) {
         list = object->model->strips;
         if (list != NULL && list->unk0C >= 4U) {
-            func_001C2D08(object->model);
+            Collision_TransformMeshPoints(object->model);
             strip = list->strips;
             strips_left = list->strip_count;
             do {
@@ -1432,7 +1439,10 @@ void func_001C3A18(void *target, int from, int direction, float distance) {
     }
 }
 
-void func_001C3D00(CollisionOwner *owner, int mode, float factor) {
+/* Tests a point (with a reach) against every triangle of the strips of a map object's collision mesh, if the
+   object is in use and the mesh has 4 points or more. At the first hit it stops and notes the floor material
+   in COLLISION_RESULT->unk18. */
+void Collision_HitSphereMeshObj(CollisionOwner *owner, int mode, float factor) {
     ModelStripList *list;
     Strip *strip;
     StripVertex *vertex;
@@ -1441,7 +1451,7 @@ void func_001C3D00(CollisionOwner *owner, int mode, float factor) {
     if (owner->flags & 0x10000) {
         list = owner->model->strips;
         if (list != NULL && list->unk0C >= 4U) {
-            func_001C2D08(owner->model);
+            Collision_TransformMeshPoints(owner->model);
             strip = list->strips;
             i = list->strip_count;
             do {
@@ -1450,7 +1460,7 @@ void func_001C3D00(CollisionOwner *owner, int mode, float factor) {
                 do {
                     Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, mode, factor);
                     if (COLLISION_RESULT->hit != 0) {
-                        COLLISION_RESULT->unk18 = func_001124E0(vertex->unk04, vertex->unk08, vertex->unk0C);
+                        COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(vertex->unk04, vertex->unk08, vertex->unk0C);
                         return;
                     }
                     vertex++;
@@ -1463,7 +1473,7 @@ void func_001C3D00(CollisionOwner *owner, int mode, float factor) {
 
 /* Tests a point against the four walls of a box-like map object (kind 1): model points 0 to 3
    are its corners and point 0x1F gives its height. Stops at the first wall hit. */
-int func_001C3DF8(MapObject *object, f32 *point, f32 reach) {
+int Collision_HitSphereBoxObj(MapObject *object, f32 *point, f32 reach) {
     f32 *corner0;
     f32 *corner1;
     f32 *corner2;
@@ -1521,7 +1531,7 @@ int func_001C3DF8(MapObject *object, f32 *point, f32 reach) {
    4 to 7 are the corners of its two halves and point 0x1F gives its height. While the object
    is at the start of animation 4 the halves are tested as one box (corners 0, 1, 6, 7).
    Stops at the first wall hit. */
-int func_001C3FA0(MapObject *object, f32 *point, f32 reach) {
+int Collision_HitSphereDoubleDoorObj(MapObject *object, f32 *point, f32 reach) {
     f32 *corner0;
     f32 *corner1;
     f32 *corner2;
@@ -1653,7 +1663,7 @@ int func_001C3FA0(MapObject *object, f32 *point, f32 reach) {
 
 /* Tests a point (with a reach) against the quad of the object's model points 0 to 3, as two triangles, if the
    object has flag 0x10000. */
-void func_001C43A8(MapObject *object, f32 *point, f32 reach) {
+void Collision_HitSphereQuadObj(MapObject *object, f32 *point, f32 reach) {
     f32 *corner_0;
     f32 *corner_1;
     f32 *corner_2;
@@ -1672,11 +1682,11 @@ void func_001C43A8(MapObject *object, f32 *point, f32 reach) {
     }
 }
 
-/* Tests a point against a map object of kind 18. With flag 0x20000 clear the object's collision
-   strips are tested, as func_001C3D00 does. With it set, model points 0 to 0x1F are taken four
-   at a time as quads, up to the first quad with a corner at the model's own position (an unused
-   point). */
-void func_001C4498(MapObject *object, f32 *point, f32 reach) {
+/* Tests a point against a pitfall (kind 18); the game's own debug print names it ("Hit HitSpherePitfallObj()"
+   on a quad hit). Closed (flag 0x20000 clear) its collision strips are tested, as Collision_HitSphereMeshObj
+   does; open, model points 0 to 0x1F are taken four at a time as quads, up to the first quad with a corner at
+   the model's own position (an unused point). */
+void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
     ModelStripList *list;
     Strip *strip;
     StripVertex *vertex;
@@ -1694,7 +1704,7 @@ void func_001C4498(MapObject *object, f32 *point, f32 reach) {
     if (!(object->unk10 & 0x20000)) {
         list = object->model->strips;
         if (list != NULL && list->unk0C >= 4U) {
-            func_001C2D08(object->model);
+            Collision_TransformMeshPoints(object->model);
             strip = list->strips;
             strips_left = list->strip_count;
             do {
@@ -1703,7 +1713,7 @@ void func_001C4498(MapObject *object, f32 *point, f32 reach) {
                 do {
                     Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, (int)point, reach);
                     if (COLLISION_RESULT->hit != 0) {
-                        COLLISION_RESULT->unk18 = func_001124E0(vertex->unk04, vertex->unk08, vertex->unk0C);
+                        COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(vertex->unk04, vertex->unk08, vertex->unk0C);
                         return;
                     }
                     vertex++;
@@ -1745,8 +1755,8 @@ void func_001C4498(MapObject *object, f32 *point, f32 reach) {
 
 /* Tests an upright capsule (`centre`, `radius`, `height`) against every triangle of the strips of the object's
    model, if the object has flag 0x10000 and the mesh unk0C is 4 or more. At the first hit it stops and puts
-   func_001124E0 of the hit point's three words in COLLISION_RESULT->unk18. */
-void func_001C47A0(MapObject *object, f32 *centre, f32 height, f32 radius) {
+   Collision_GetFloorMaterial of the hit point's three words in COLLISION_RESULT->unk18. */
+void Collision_HitCapsuleMeshObj(MapObject *object, f32 *centre, f32 height, f32 radius) {
     CollisionMesh *mesh;
     CollisionStrip *strip;
     CollisionStripPoint *point;
@@ -1756,7 +1766,7 @@ void func_001C47A0(MapObject *object, f32 *centre, f32 height, f32 radius) {
     if (object->unk10 & 0x10000) {
         mesh = (CollisionMesh *)object->model->strips;
         if (mesh != NULL && mesh->unk0C >= 4) {
-            func_001C2D08(object->model);
+            Collision_TransformMeshPoints(object->model);
             strip = mesh->strips;
             strips_left = mesh->strip_count;
             do {
@@ -1766,7 +1776,7 @@ void func_001C47A0(MapObject *object, f32 *centre, f32 height, f32 radius) {
                     Collision_CapsuleTriangle(point[0].position, point[1].position, point[2].position, centre, radius,
                                               height);
                     if (COLLISION_RESULT->hit != 0) {
-                        COLLISION_RESULT->unk18 = func_001124E0(point->unk04, point->unk08, point->unk0C);
+                        COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(point->unk04, point->unk08, point->unk0C);
                         return;
                     }
                     point++;
@@ -1780,7 +1790,7 @@ void func_001C47A0(MapObject *object, f32 *centre, f32 height, f32 radius) {
 /* Tests a moving point against a box-like map object (kind 1): its four walls (model points
    0 to 3 are the corners, point 0x1F gives the height), then its four corner edges. Stops at
    the first hit. */
-int func_001C48A8(MapObject *object, f32 *point, f32 radius, f32 push) {
+int Collision_HitCapsuleBoxObj(MapObject *object, f32 *point, f32 radius, f32 push) {
     f32 *corner0;
     f32 *corner1;
     f32 *corner2;
@@ -1854,7 +1864,7 @@ int func_001C48A8(MapObject *object, f32 *point, f32 radius, f32 push) {
 /* Tests a circle against the walls and corner posts of a map object's outline and stops at the
    first hit: points 0, 1, 6, 7 while its fifth animation is on frame 0 or 1, otherwise the two
    quads 0-3 and 4-7. The result is left in the scratchpad. */
-void func_001C4B10(MapObject *object, f32 *centre, f32 radius, f32 push) {
+void Collision_HitCapsuleDoubleDoorObj(MapObject *object, f32 *centre, f32 radius, f32 push) {
     f32 *point0, *point1, *point2, *point3, *point4, *point5, *point6, *point7;
     f32 *top;
     f32 height;
@@ -1953,7 +1963,7 @@ typedef int (*CapsuleTriangleValue)(int, int, int, int, float, float);
 
 /* Tests an upright capsule against the quad of the owner's model points 0 to 3 as two triangles, if the owner
    has flag 0x10000; the second triangle only when the first is missed. */
-int func_001C5170(CollisionOwner *owner, int context, float first_value, float second_value) {
+int Collision_HitCapsuleQuadObj(CollisionOwner *owner, int context, float first_value, float second_value) {
     int point_a, point_b, point_c, point_d, result;
 
     if (owner->flags & 0x10000) {
@@ -1970,13 +1980,15 @@ int func_001C5170(CollisionOwner *owner, int context, float first_value, float s
     }
 }
 
+/* Does nothing: the pitfall case of Collision_HitCapsuleObj, which passes it the same arguments as the
+   others. */
 void func_001C5278(void) {
 }
 
 /* Tests the capsule at `origin` against every triangle of a map object's collision mesh,
    leaving out the triangles whose corners all lie outside the wedge from the origin to
    (first_x, first_z) and (second_x, second_z). Stops at the first hit and notes its surface. */
-void func_001C5280(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x,
+void Collision_HitFanMeshObj(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x,
                    f32 second_z) {
     CollisionMesh *mesh;
     CollisionStrip *strip;
@@ -1994,7 +2006,7 @@ void func_001C5280(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
         if (mesh->unk0C < 4) {
             return;
         }
-        func_001C2D08(object->model);
+        Collision_TransformMeshPoints(object->model);
         strip = mesh->strips;
         i = mesh->strip_count;
         do {
@@ -2017,7 +2029,7 @@ void func_001C5280(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
                         Collision_CapsuleTriangle((int)point[-2U].position, (int)point[-1U].position, (int)point->position,
                                       (int)origin, push, radius);
                         if (COLLISION_RESULT->hit != 0) {
-                            COLLISION_RESULT->unk18 = func_001124E0(point->unk04, point->unk08, point->unk0C);
+                            COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(point->unk04, point->unk08, point->unk0C);
                             return;
                         }
                     }
@@ -2036,7 +2048,7 @@ void func_001C5280(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
 /* Tests the capsule at `origin` against the four walls of a map object's outline (points 0-3),
    leaving out a wall whose two ends both lie outside the wedge from the origin to
    (first_x, first_z) and (second_x, second_z). Stops at the first hit. */
-void func_001C5538(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x,
+void Collision_HitFanBoxObj(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x,
                    f32 second_z) {
     Vector4 *point0, *point1, *point2, *point3;
     Vector4 *top;
@@ -2095,7 +2107,7 @@ void func_001C5538(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
 /* Collides a circle with the outline of a map object, leaving out every edge that lies wholly left of the first line from
    the origin or wholly right of the second. The outline is points 0, 1, 6, 7 while the object's fifth animation is on its
    first frames, otherwise the two quads 0-3 and 4-7. Stops at the first edge that hits. */
-void func_001C58F0(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x,
+void Collision_HitFanDoubleDoorObj(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x,
                    f32 second_z) {
     Vector4 *point0, *point1, *point2, *point3, *point4, *point5, *point6, *point7;
     Vector4 *base;
@@ -2262,7 +2274,7 @@ void func_001C58F0(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
 /* Tests the capsule at `origin` against the two triangles of a map object's face (points 1, 2,
    0, 3 as a strip), leaving out a triangle whose corners all lie outside the wedge from the
    origin to (first_x, first_z) and (second_x, second_z). Stops at the first hit. */
-void func_001C6360(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x,
+void Collision_HitFanQuadObj(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32 first_x, f32 first_z, f32 second_x,
                    f32 second_z) {
     f32 *points[4];
     s32 second_sides;
@@ -2283,7 +2295,7 @@ void func_001C6360(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
         first_sides <<= 1;
         second_sides <<= 1;
         for (i = 2; i < 4; i++) {
-            // match: the notes are not moved up a bit here (func_001C5280 does), so on the second triangle bit 0 is point 0 or point 3
+            // match: the notes are not moved up a bit here (Collision_HitFanMeshObj does), so on the second triangle bit 0 is point 0 or point 3
             TEST_SIDES(points[i]);
             if (second_sides != 7 && first_sides != 7) {
                 Collision_CapsuleTriangle((int)points[i - 2], (int)points[i - 1], (int)points[i], (int)origin, push, radius);
@@ -2295,13 +2307,14 @@ void func_001C6360(MapObject *object, Vector4 *origin, f32 radius, f32 push, f32
     }
 }
 
+/* Does nothing: the pitfall case of Collision_HitFanObj, which passes it the same arguments as the others. */
 void func_001C65E8(void) {
 }
 
 /* Pushes `position` (an upright capsule of this height and radius) sideways out of the wall
    strips of a map object's mesh. When the object is of kind 10 and the position is the
    player's, the object the player touched is noted in the player state. */
-void func_001C65F0(MapObject *object, f32 *position, f32 height, f32 radius) {
+void Collision_PushOutOfMeshObj(MapObject *object, f32 *position, f32 height, f32 radius) {
     f32 centre[4];
     f32 offset[4];
     s32 touched;
@@ -2320,7 +2333,7 @@ void func_001C65F0(MapObject *object, f32 *position, f32 height, f32 radius) {
         if (mesh->unk0C < 4) {
             return;
         }
-        func_001C2D08(object->model);
+        Collision_TransformMeshPoints(object->model);
         Vector_Copy(centre, position);
         centre[1] -= 0.001f;
         if (MAP_OBJECT_DEF_KIND(object->unk04) == 10 && (PlayerState *)position == &player_state
@@ -2376,7 +2389,7 @@ void func_001C65F0(MapObject *object, f32 *position, f32 height, f32 radius) {
 
 /* Pushes a circle out of the four walls of a map object's outline (points 0-3), or else out of
    the first corner post it touches. */
-void func_001C68B0(MapObject *object, f32 *centre, f32 radius, f32 push) {
+void Collision_PushOutOfBoxObj(MapObject *object, f32 *centre, f32 radius, f32 push) {
     f32 *point0, *point1, *point2, *point3;
     f32 *top;
     f32 height;
@@ -2460,7 +2473,7 @@ static inline s32 gap_is_closed(MapObject *object, f32 *centre, f32 push, f32 fi
 /* Pushes a circle out of the walls and corner posts of a map object's outline: points 0, 1, 6, 7 while its fifth animation
    is on frame 1, otherwise the two quads 0-3 and 4-7. When the gap between the quads is too narrow for the circle (or, for
    the player, when the object says so), the gap is walled off instead of the quads' facing sides. */
-void func_001C6B88(MapObject *object, f32 *centre, f32 radius, f32 push) {
+void Collision_PushOutOfDoubleDoorObj(MapObject *object, f32 *centre, f32 radius, f32 push) {
     f32 *point0, *point1, *point2, *point3, *point4, *point5, *point6, *point7;
     f32 *top;
     f32 height;
@@ -2635,7 +2648,7 @@ void func_001C6B88(MapObject *object, f32 *centre, f32 radius, f32 push) {
 
 /* Pushes `position` out of the upright side of the owner's model that runs from its point 0
    to its point 3; does nothing when that side lies nearly flat. */
-void func_001C7960(CollisionOwner *owner, f32 *position, f32 radius, f32 push) {
+void Collision_PushOutOfQuadObj(CollisionOwner *owner, f32 *position, f32 radius, f32 push) {
     f32 normal[4];
     f32 *point0;
     f32 *point1;
@@ -2667,12 +2680,14 @@ void func_001C7960(CollisionOwner *owner, f32 *position, f32 radius, f32 push) {
     }
 }
 
+/* Does nothing: the pitfall case of Collision_PushOutOfObjects, which passes it the same arguments as the
+   others. */
 void func_001C7AF0(void) {
 }
 
-/* Drops a ball of this radius at `position` onto the floor strips of the owner's model and
-   moves it to the lowest hit. Returns TRUE if it hit one. */
-s32 func_001C7AF8(CollisionOwner *owner, f32 *position, f32 radius) {
+/* Drops a ball of this radius at `position` onto the floor strips of the owner's collision mesh and puts it 1
+   above the highest hit (y grows downward). Returns TRUE if it hit one. */
+s32 Collision_StandOnMeshObj(CollisionOwner *owner, f32 *position, f32 radius) {
     f32 centre[4];
     CollisionMesh *mesh;
     CollisionStrip *strip;
@@ -2689,7 +2704,7 @@ s32 func_001C7AF8(CollisionOwner *owner, f32 *position, f32 radius) {
         if (mesh->unk0C < 4) {
             return FALSE;
         }
-        func_001C2D08(owner->model);
+        Collision_TransformMeshPoints(owner->model);
         Vector_Copy(centre, position);
         lowest = D_004469AC[0];
         centre[1] = centre[1] - 1.0f - radius;
@@ -2699,7 +2714,7 @@ s32 func_001C7AF8(CollisionOwner *owner, f32 *position, f32 radius) {
             point = strip->points;
             j = strip->point_count - 2;
             do {
-                func_001C0C50(point[0].position, point[1].position, point[2].position, centre, radius);
+                Collision_DropOnTriangleWithin(point[0].position, point[1].position, point[2].position, centre, radius);
                 if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                     lowest = COLLISION_RESULT->point[1];
                 }
@@ -2715,9 +2730,9 @@ s32 func_001C7AF8(CollisionOwner *owner, f32 *position, f32 radius) {
     return FALSE;
 }
 
-/* Drops a ball of this radius at `position` onto the four-cornered face of the owner's model,
-   unless the face stands upright, and moves it to the lowest hit. Returns TRUE if it hit. */
-s32 func_001C7C60(CollisionOwner *owner, f32 *position, f32 radius) {
+/* Drops a ball of this radius at `position` onto the four-cornered face of the owner's model, unless the face
+   stands upright, and puts it 1 above the highest hit (y grows downward). Returns TRUE if it hit. */
+s32 Collision_StandOnQuadObj(CollisionOwner *owner, f32 *position, f32 radius) {
     f32 centre[4];
     f32 normal[4];
     f32 *point0;
@@ -2739,11 +2754,11 @@ s32 func_001C7C60(CollisionOwner *owner, f32 *position, f32 radius) {
         Vector_Copy(centre, position);
         lowest = D_004469B0[0];
         centre[1] = centre[1] - 1.0f - radius;
-        func_001C0C50(point0, point1, point2, centre, radius);
+        Collision_DropOnTriangleWithin(point0, point1, point2, centre, radius);
         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
             lowest = COLLISION_RESULT->point[1];
         }
-        func_001C0C50(point0, point2, point3, centre, radius);
+        Collision_DropOnTriangleWithin(point0, point2, point3, centre, radius);
         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
             lowest = COLLISION_RESULT->point[1];
         }
@@ -2755,7 +2770,7 @@ s32 func_001C7C60(CollisionOwner *owner, f32 *position, f32 radius) {
     return FALSE;
 }
 
-/* The test of func_001C7AF8 over again (retail has it inline here, with its own copy of the limit). */
+/* The test of Collision_StandOnMeshObj over again (retail has it inline here, with its own copy of the limit). */
 static inline s32 drop_on_floor_strips(MapObject *object, f32 *position, f32 radius) {
     f32 centre[4];
     CollisionMesh *mesh;
@@ -2772,7 +2787,7 @@ static inline s32 drop_on_floor_strips(MapObject *object, f32 *position, f32 rad
     if (mesh->unk0C < 4) {
         return FALSE;
     }
-    func_001C2D08(object->model);
+    Collision_TransformMeshPoints(object->model);
     Vector_Copy(centre, position);
     lowest = D_004469B4[0];
     centre[1] = centre[1] - 1.0f - radius;
@@ -2782,7 +2797,7 @@ static inline s32 drop_on_floor_strips(MapObject *object, f32 *position, f32 rad
         point = strip->points;
         points_left = strip->point_count - 2;
         do {
-            func_001C0C50(point[0].position, point[1].position, point[2].position, centre, radius);
+            Collision_DropOnTriangleWithin(point[0].position, point[1].position, point[2].position, centre, radius);
             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                 lowest = COLLISION_RESULT->point[1];
             }
@@ -2797,10 +2812,10 @@ static inline s32 drop_on_floor_strips(MapObject *object, f32 *position, f32 rad
     return FALSE;
 }
 
-/* Drops a ball of this radius at `position` onto a map object and moves it to the lowest hit:
-   onto the floor strips of its mesh while it rests in animation 4, else onto the eight
+/* Drops a ball of this radius at `position` onto a pitfall and puts it 1 above the highest hit (y grows
+   downward): onto the floor strips of its mesh while it rests closed (animation 4), else onto the eight
    four-cornered faces its model's points make. Returns TRUE if it hit. */
-s32 func_001C7E48(MapObject *object, f32 *position, f32 radius) {
+s32 Collision_StandOnPitfallObj(MapObject *object, f32 *position, f32 radius) {
     f32 centre[4];
     f32 unused[4];
     s32 i;
@@ -2827,11 +2842,11 @@ s32 func_001C7E48(MapObject *object, f32 *position, f32 radius) {
                 || SAME_POINT(point2, object->model->position) || SAME_POINT(point3, object->model->position)) {
                 return FALSE;
             }
-            func_001C0C50(point0, point1, point2, centre, radius);
+            Collision_DropOnTriangleWithin(point0, point1, point2, centre, radius);
             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                 lowest = COLLISION_RESULT->point[1];
             }
-            func_001C0C50(point0, point2, point3, centre, radius);
+            Collision_DropOnTriangleWithin(point0, point2, point3, centre, radius);
             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                 lowest = COLLISION_RESULT->point[1];
             }

@@ -132,7 +132,7 @@ typedef struct {
     s32 unk1C0;                     /* 0x1C0 */
     f32 unk1C4;                     /* 0x1C4 added to the camera's height */
     u64 unk1C8;                     /* 0x1C8 status bits; bit 38 is tested */
-    f32 unk1D0;                     /* 0x1D0 set with status bit 33 when a step up is too high to take at once (func_001BF350) */
+    f32 unk1D0;                     /* 0x1D0 set with status bit 33 when a step up is too high to take at once (Player_CollideWithMapObjects) */
     f32 unk1D4;                     /* 0x1D4 16.67 then */
     f32 unk1D8;                     /* 0x1D8 position.y when the player left the ground: the height a fall is measured from */
     f32 unk1DC;                     /* 0x1DC */
@@ -148,8 +148,8 @@ typedef struct {
     s32 unk204;                     /* 0x204 */
     s32 unk208;                     /* 0x208 */
     s32 unk20C;                     /* 0x20C */
-    u8 unk210;                      /* 0x210 3: the second row of the movement tables is used; 6: see func_001BEA50 */
-    u8 unk211;                      /* 0x211 set to 6 with unk210 before the floors are looked for (func_001BDDC0) */
+    u8 unk210;                      /* 0x210 3: the second row of the movement tables is used; 6: see Player_FindFloorMaterial */
+    u8 unk211;                      /* 0x211 set to 6 with unk210 before the floors are looked for (Player_CollideWithMap) */
     char pad212[0x02];
     f32 unk214;                     /* 0x214 */
     char pad218[0x08];

@@ -21,7 +21,7 @@ void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void func_0010AEB8(void *);
 void func_0010BA30(ModelInstance *);
 void func_0010B018(ModelInstance *, s32, s32);
-int func_001C0E40(f32, void *);
+int Collision_FindFloorBelow(f32, void *);
 void Vector_Copy(void *, void *);
 void Vector_Add(void *, void *, void *);
 int rand(void);
@@ -262,7 +262,7 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
     if (amount > 0xFFFF) {
         amount = 0xFFFF;
     }
-    if (on_ground && !func_001C0E40(1000.0f, position)) {
+    if (on_ground && !Collision_FindFloorBelow(1000.0f, position)) {
         return FALSE;
     }
     actor = Gold_FindFree(map);

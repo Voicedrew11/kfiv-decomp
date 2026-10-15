@@ -32,7 +32,7 @@ void Vector_Add(void *, void *, void *);
 int MapItem_GetFixedIndex(int, int);
 void Vector_Copy(void *, void *);
 void MapItem_Link(ListNode *);
-int func_001C0E40(f32, void *);
+int Collision_FindFloorBelow(f32, void *);
 float Angle_Wrap(float);
 int MapItem_UniqueNotCarried(int);
 int MapItem_UniqueNotInTradeStock(int);
@@ -368,7 +368,7 @@ s32 MapItem_DropFromEnemy(Entity *entity) {
     position[2] = entity->model->position[2];
     rotation[1] = (s32)(rand() * 361.0f * 4.656613e-10f);
     rotation[1] = Angle_Wrap(rotation[1] * 0.017453292f);
-    if (!func_001C0E40(2000.0f, position)) {
+    if (!Collision_FindFloorBelow(2000.0f, position)) {
         return FALSE;
     }
     if (entity->group_id == D_00446770) {

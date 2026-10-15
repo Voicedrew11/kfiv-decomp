@@ -16,8 +16,8 @@ extern u32 D_0038CC74[];
 extern PlayerState player_state;
 extern u32 D_00446ED4;
 
-/* Starts this kind of trigger: stopped, with its state cleared. */
-void func_00121660(MapTrigger *trigger) {
+/* Step 0 of kind 0xE, a platform that sinks under the player: at rest, with its state cleared; step 1. */
+void MapObject_StartSinkingPlatform(MapTrigger *trigger) {
     MapTriggerShotKind121660 *shot = (MapTriggerShotKind121660 *)&trigger->shot;
 
     shot->unk00 = 0.0f;
@@ -26,11 +26,10 @@ void func_00121660(MapTrigger *trigger) {
     trigger->type = 1;
 }
 
-/* Update handler of the kind of func_00121660 (a platform): it rises while the
-   player stands on it, after a wait of unk4E frames, and sinks back when he does
-   not. unk46 and unk48 are the speeds up and down, or accelerations when unk4A
-   and unk4C are set; unk44 is how far it rises. */
-void func_00121680(MapObject *object) {
+/* Step 1 of kind 0xE: while the player stands on it (after a wait of unk4E frames) it sinks, at most unk44
+   below where it started (y grows downward), and when he does not it rises back; unk46 and unk48 are the
+   speeds down and up, or accelerations when unk4A and unk4C are set. */
+void MapObject_UpdateSinkingPlatform(MapObject *object) {
     MapTriggerShotKind121660 *shot = (MapTriggerShotKind121660 *)object->work;
     MapObjectUnk08Words *source;
     ModelInstance *model;
@@ -77,14 +76,14 @@ void func_00121680(MapObject *object) {
 }
 
 /* Start handler of the ladder kind: step 1. */
-void func_001217B0(MapObject *object) {
+void MapObject_StartLadder(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
 }
 
 /* Update handler: when the player (using it, status bit 36 clear) is within
    75 in height, within the radius and inside the angle of one of its two
    points, Ladder_Start is called for that point. */
-void func_001217C0(MapObject *object) {
+void MapObject_UpdateLadder(MapObject *object) {
     Vector4 delta;
     int i;
     f32 turn;
@@ -121,15 +120,15 @@ void func_001217C0(MapObject *object) {
     }
 }
 
-/* Start handler of the shooting kind: step 1. */
-void func_00121958(MapObject *object) {
+/* Step 0 of kind 0x10, which shoots at the player: step 1. */
+void MapObject_StartShooter(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
 }
 
 /* Update handler of the shooting kind: every so many frames (or all the time
    when its model is animated), while it is on and the player is in range, it
    launches something from a point of the model, turned by two angles of its source. */
-void func_00121968(MapObject *object) {
+void MapObject_UpdateShooter(MapObject *object) {
     Vector4 aim;
     f32 distance;
     void *point;
@@ -161,14 +160,15 @@ void func_00121968(MapObject *object) {
     ((void (*)(u16, void *, void *, void *, void *))func_001B4F30)(MAP_OBJECT_WORDS(object)->unk44, shot, point, &aim, object);
 }
 
-/* Sets or clears bit 17 of a map object. */
-void func_00121B10(MapObject *object, int enabled) {
+/* Signal hook of kind 0x10: turns its shooting on or off (bit 17). */
+void MapObject_SetShooterOn(MapObject *object, int enabled) {
     MAP_OBJECT_BITS(object)->bit17 = enabled != 0;
 }
 
-/* Start handler: off (animation 4, step 1) or on (animation 5, step 3), with
-   the wait that goes with it. */
-void func_00121B38(MapObject *object) {
+/* Step 0 of the pitfalls (kind 0x12, the name the game's own debug print gives in
+   Collision_HitSpherePitfallObj): closed (animation 4, step 1) or open (animation 5, step 3), with the wait
+   that goes with it. */
+void MapObject_StartPitfall(MapObject *object) {
     if (!(object->unk10 & 0x20000)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
@@ -180,9 +180,8 @@ void func_00121B38(MapObject *object) {
     }
 }
 
-/* Update handler, step 1: stepped on by the player, it turns on (unless its
-   first wait is negative). */
-void func_00121BA8(MapObject *object) {
+/* Step 1 of a pitfall: stepped on by the player, it opens (step 2) unless its first wait (unk44) is negative. */
+void MapObject_UpdateClosedPitfall(MapObject *object) {
     MapObject *stood_on = D_00414188[0];
 
     if (stood_on == object && MAP_OBJECT_WORDS(stood_on)->unk44 >= 0) {
@@ -191,9 +190,9 @@ void func_00121BA8(MapObject *object) {
     }
 }
 
-/* Step handler: waits out a delay (counted only while unk44 is positive), then runs the
-   animation and, once it ends, starts animation 5 at step 3 with the delay reloaded from unk46. */
-void func_00121BE8(MapObject *object) {
+/* Step 2 of a pitfall: waits out its delay (counted down only while unk44 is positive), then runs the opening
+   animation; at its end it is open (animation 5, step 3) with the delay reloaded from unk46. */
+void MapObject_UpdateOpeningPitfall(MapObject *object) {
     int delay = object->work[0];
     char reserved[0x10]; // match: unused, but retail reserves the 0x10 bytes
 
@@ -212,17 +211,17 @@ void func_00121BE8(MapObject *object) {
     }
 }
 
-/* Update handler, step 3: turns off again (unless its second wait is negative). */
-void func_00121C68(MapObject *object) {
+/* Step 3 of a pitfall: closes again (step 4) unless its second wait (unk46) is negative. */
+void MapObject_UpdateOpenPitfall(MapObject *object) {
     if (MAP_OBJECT_WORDS(object)->unk46 >= 0) {
         object->unk10 &= ~0x20000;
         MAP_OBJECT_BYTES(object)->step = 4;
     }
 }
 
-/* Update handler, step 4: waits, then runs the animation back; at its end the
-   object is off again. */
-void func_00121CA0(MapObject *object) {
+/* Step 4 of a pitfall: waits, then runs the closing animation; at its end it is closed again (animation 4,
+   step 1). */
+void MapObject_UpdateClosingPitfall(MapObject *object) {
     if (object->work[0] != 0) {
         if (MAP_OBJECT_WORDS(object)->unk46 > 0) {
             object->work[0]--;
@@ -236,8 +235,9 @@ void func_00121CA0(MapObject *object) {
     }
 }
 
-/* Turns a pressure plate on (step 1 to 2) or off (3 to 4) from outside, with no wait. */
-void func_00121D20(MapObject *object, int turn_on) {
+/* Signal hook of the pitfalls: opens a closed one (step 1 to 2) or closes an open one (3 to 4) at once, with
+   no wait. */
+void MapObject_SetPitfallOpen(MapObject *object, int turn_on) {
     s32 *wait = object->work;
     int flags = object->unk10;
 

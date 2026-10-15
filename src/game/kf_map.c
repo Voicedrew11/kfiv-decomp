@@ -58,9 +58,9 @@ void func_0010E820(ModelInstance *, s64);
 MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
 void func_00111E28(ModelInstance *, u32 *);
 void Vector_Copy(void *, void *);
-char *func_00112400(char *, ModelInstance *, int);
+char *Collision_RelocateMesh(char *, ModelInstance *, int);
 void func_001B93B8(f32 *);
-void func_001D1210(f32 *);
+void Interact_OffsetViewRay(f32 *);
 void Map_OffsetRecords(int, f32 *);
 void Map_OffsetRecord(MapRecordBounds *, f32 *);
 void Map_PlaceRecordModels(int);
@@ -487,7 +487,7 @@ void Map_BuildModels(int map) {
                 while (k-- > 0) {
                     cursor += (int)((CollisionMesh *)cursor)->unk14;
                 }
-                cursor = (int)func_00112400((char *)cursor, model, 1);
+                cursor = (int)Collision_RelocateMesh((char *)cursor, model, 1);
             } else {
                 model->strips = ((ModelInstance *)memory->unk34)[j].strips;
             }
@@ -559,7 +559,7 @@ void Map_BuildModels(int map) {
         for (j = 0; j < header->unk40; j++, object++) {
             if (object->unk04->unk06 != 0xFFFF && object->unk08->unk34 == i) {
                 if (first == NULL) {
-                    cursor = (int)func_00112400((char *)next, object->model, 1);
+                    cursor = (int)Collision_RelocateMesh((char *)next, object->model, 1);
                     first = object->model;
                 } else {
                     object->model->strips = first->strips;
@@ -594,7 +594,7 @@ void Map_MakeCurrent(int map) {
         queue = &sound_load_queue;
         D_00446770 = map;
         func_001B93B8(offset);
-        func_001D1210(offset);
+        Interact_OffsetViewRay(offset);
         Map_OffsetRecords(0, offset);
         Map_OffsetRecords(1, offset);
         Map_PlaceRecordModels(0);

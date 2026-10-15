@@ -360,7 +360,7 @@ typedef struct {
     int fired;                      /* 0x18 the type it fired for, 0 before */
 } MapTriggerShot;
 
-/* MapTrigger.shot as func_00121660 (start) and func_00121680 (update) use it */
+/* MapTrigger.shot as MapObject_StartSinkingPlatform (start) and MapObject_UpdateSinkingPlatform (update) use it */
 typedef struct {
     f32 unk00;                      /* 0x00 a speed, added to the model's y */
     s32 unk04;                      /* 0x04 frames to wait */
@@ -368,13 +368,13 @@ typedef struct {
     s32 unk0C;                      /* 0x0C unk08 of the frame before */
 } MapTriggerShotKind121660;
 
-/* what MapTrigger.unk08 points at, as func_0011F0D8 reads it */
+/* what MapTrigger.unk08 points at, as MapObject_StopAmbientSound reads it */
 typedef struct {
     char pad00[0x44];
     u16 unk44;                      /* 0x44 */
 } TriggerSource;
 
-/* a map event trigger (func_00122538) */
+/* a map event trigger (MapObject_PlaceStoneOnMarker) */
 typedef struct {
     ModelInstance *model;           /* 0x00 */
     u8 *unk04;                      /* 0x04 */

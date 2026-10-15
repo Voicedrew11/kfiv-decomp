@@ -35,12 +35,12 @@ void func_0010B018(ModelInstance *, s32, s32);
 void func_0010E010(ModelInstance *);
 MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
 int Map_TestFlagBlockBit(int, int, int, int);
-void func_0011E8E8(int *);
-void func_0011E8F0(ModelInstance *);
-void func_0011E9D0(void *);
+void MapObject_DrawModel(int *);
+void MapObject_DrawModelWithAlpha(ModelInstance *);
+void MapObject_DrawModelNoDepthWrite(void *);
 void func_0011EA70(void);
-char *func_0011EA78(char *);
-void func_0011EA80(MapObject *);
+char *MapObject_GetPositionAsPoint(char *);
+void MapObject_StopSound(MapObject *);
 float Angle_Wrap(float);
 int Sound_PlayCommonAt(float, int, void *);
 int Sound_PlayMapAtRange(u8, u8, float *, float);
@@ -85,7 +85,7 @@ static MapSlotUnk10Vectors glow_lights_shared;  /* 0x472A40 map_draw_state.unkC0
 static MapSlotUnk10Vectors glow_lights[2][0x20]; /* 0x472AC0 map_draw_state.unkA90 blended for the glow */
 
 /* Empties the map objects of both maps. */
-void func_0011C6E8(void) {
+void MapObject_ClearAllMaps(void) {
     MapObject_ClearMap(0);
     MapObject_ClearMap(1);
 }
@@ -105,7 +105,7 @@ void MapObject_InitMap(int map) {
     for (; i < count; i++, object++) {
         MAP_OBJECT_BYTES(object)->step = 0;
         if (object->unk04->unk04 == 0xFFFF) {
-            object->model->get_point = (int (*)(void *, int))func_0011EA78;
+            object->model->get_point = (int (*)(void *, int))MapObject_GetPositionAsPoint;
             object->model->unk1B4 = (void (*)(ModelInstance *))func_0011EA70;
         }
         if (object->unk08->unk38.bytes[2] != 0) {
@@ -145,18 +145,18 @@ void MapObject_InitMap(int map) {
         map_object_update_hooks[object->unk04->kind](object);
         switch (object->unk04->bit8) {
             case 0:
-                object->model->draw = (void (*)(ModelInstance *))func_0011E8E8;
+                object->model->draw = (void (*)(ModelInstance *))MapObject_DrawModel;
                 object->model->unk1A8 = func_0010E010;
                 break;
             case 1:
-                object->model->draw = func_0011E8F0;
+                object->model->draw = MapObject_DrawModelWithAlpha;
                 break;
             default:
                 object->model->draw = NULL;
                 break;
         }
         if (object->unk04->kind == 5) {
-            object->model->draw = (void (*)(ModelInstance *))func_0011E9D0;
+            object->model->draw = (void (*)(ModelInstance *))MapObject_DrawModelNoDepthWrite;
         }
         if (object->unk08->unk30 == 0x91) {
             object->model->unk1BC = (void (*)(ModelInstance *))ScrollTexture_DrawAll;
@@ -255,7 +255,7 @@ void MapObject_UnloadMap(int map) {
         func_001036E8(tag, i, MAP_OBJECT_BITS(object)->bit17);
         func_00103648(tag, i, 0, MAP_OBJECT_BITS(object)->bit18);
         func_00103648(tag, i, 1, MAP_OBJECT_BITS(object)->bit19);
-        func_0011EA80(object);
+        MapObject_StopSound(object);
     }
     MapObject_ClearMap(map);
 }
@@ -659,7 +659,7 @@ void MapObject_Deactivate(MapObject *object) {
         if (MAP_OBJECT_BITS(object)->step != 0) {
             map_object_draw_hooks[object->unk04->kind](object);
         }
-        func_0011EA80(object);
+        MapObject_StopSound(object);
         Effect_FreeForOwner((Entity *)object); // match: shared prototype takes an Entity
         object->unk10 &= ~0x10000;
         MAP_OBJECT_BITS(object)->step = 0;
@@ -758,7 +758,7 @@ int MapObject_StepAnim(MapObject *object) {
             if (object->unk04->unk70 > 0.0f) {
                 range = object->unk04->unk70;
             }
-            func_0011EA80(object);
+            MapObject_StopSound(object);
             switch (anim->sound_kind) {
                 case 0:
                     Sound_PlayCommonAt(range, anim->sound, &object->model->position);
@@ -776,7 +776,7 @@ int MapObject_StepAnim(MapObject *object) {
     object->unk10 |= 8;
     model = object->model;
     if (MODEL_CHANNEL(model)->param == 0) {
-        func_0011EA80(object);
+        MapObject_StopSound(object);
         model = object->model; // match: re-read here although the return reads it again; keeps the model in $6
     }
     return MODEL_CHANNEL(object->model)->param != 0;
@@ -852,13 +852,14 @@ void MapObject_ClearMap(int map) {
     memset(objects_by_id[map], 0, sizeof(objects_by_id[map]));
 }
 
-/* Draws the model with the GS state as it is. */
-void func_0011E8E8(int *model) {
+/* Draw hook of a map object model drawn with the GS state as it is: draws the model. */
+void MapObject_DrawModel(int *model) {
     func_0010AEB8(model);
 }
 
-/* Sets the GS Z-buffer, alpha and test registers for model, then hands it on. */
-void func_0011E8F0(ModelInstance *model) {
+/* Draw hook of an alpha-blended map object model: sets the GS alpha and test registers and the Z buffer (not
+   written while the model is translucent, alpha below 128), then draws the model. */
+void MapObject_DrawModelWithAlpha(ModelInstance *model) {
     func_00109A50();
     if (model->alpha < 128.0f) {
         func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
@@ -875,8 +876,9 @@ void func_0011E8F0(ModelInstance *model) {
     func_0010AEB8(model);
 }
 
-/* Sets the GS registers for drawing a map object's model, then draws it. */
-void func_0011E9D0(void *model) {
+/* Draw hook of the distance-fading kind (5): sets the GS registers for alpha blending without Z-buffer
+   writes, then draws the model. */
+void MapObject_DrawModelNoDepthWrite(void *model) {
     func_00109A50();
     func_00109A80(0x4E, 0x10A000118);
     func_00109A80(0x4F, 0x10A000118);
@@ -888,16 +890,17 @@ void func_0011E9D0(void *model) {
     func_0010AEB8(model);
 }
 
+/* Does nothing: the point-update hook (ModelInstance.unk1B4) of a map object model without points. */
 void func_0011EA70(void) {
 }
 
-/* get_point of a model without points: its position, whatever the index. */
-char *func_0011EA78(char *model) {
+/* get_point hook of a map object model without points: returns the model's position, whatever the index. */
+char *MapObject_GetPositionAsPoint(char *model) {
     return (char *)&((ModelInstance *)model)->position;
 }
 
 /* Stops the sound a map object is playing, if any. */
-void func_0011EA80(MapObject *object) {
+void MapObject_StopSound(MapObject *object) {
     if (object->sound != 0) {
         Sound_StopTagged(object->sound);
         object->sound = 0;

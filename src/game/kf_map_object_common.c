@@ -13,14 +13,15 @@ void sceVu0CopyMatrix(void *, void *);
 extern int D_00446770;
 extern int sound_load_queue[0x28 / 4];
 
-/* Moves a map object and what its unk08 points at by an offset. */
-void func_0011EDC8(MapObject *object, void *offset) {
+/* Offset hook of every kind: moves the model and the object's source position by offset. */
+void MapObject_MoveByOffset(MapObject *object, void *offset) {
     Vector_Add(&object->model->position, &object->model->position, offset);
     Vector_Add(object->unk08, object->unk08, offset);
 }
 
-/* Start handler shared by several kinds: restarts the animation it is on. */
-void func_0011EE18(MapObject *object) {
+/* Step 0 of the scenery kinds (0 and 0x16 to 0x1C): restarts the animation the object is on (kind 0 also
+   forgets its ambient sound) and goes to step 1. */
+void MapObject_StartScenery(MapObject *object) {
     if (object->unk04->kind == 0) {
         object->work[0] = 0;
     }
@@ -31,9 +32,10 @@ void func_0011EE18(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
 }
 
-/* Update handler: keeps a kind 0 object's sound playing while its map is the
-   current one, and runs its animation when it is allowed to. */
-void func_0011EE78(MapObject *object) {
+/* Step 1 of the scenery kinds: a kind 0 object whose source names an ambient sound channel (0x40 to 0x7F)
+   starts that sound while its map is the current one and no sound is loading, and forgets it when its map is
+   not; the animation runs while a script lets it or while the source says it runs by itself. */
+void MapObject_UpdateScenery(MapObject *object) {
     MapObjectUnk08 *source;
 
     if (object->unk04->kind == 0) {
@@ -62,10 +64,10 @@ void func_0011EE78(MapObject *object) {
     }
 }
 
-/* Update handler: runs the animation, fading the model out over it when the
-   definition asks for that; once it has ended the object goes out of use and
-   the object named by its source comes into use. */
-void func_0011EFC8(MapObject *object) {
+/* Step 0xF of most kinds, after MapObject_Break: runs the animation, fading the model out over it when the
+   definition asks for that (unk68 bit 0x20000); once it has ended the object goes out of use and, when it did
+   not fade, the object named by its source comes into use. */
+void MapObject_UpdateBreaking(MapObject *object) {
     int total;
     int alpha;
     MapObject *other;
@@ -97,7 +99,9 @@ void func_0011EFC8(MapObject *object) {
     }
 }
 
-void func_0011F0D8(MapTrigger *trigger) {
+/* End hook of every kind but the light (map_object_draw_hooks, run by MapObject_Deactivate): a kind 0 object
+   that started its ambient sound stops it, if its map is still the current one, and forgets it. */
+void MapObject_StopAmbientSound(MapTrigger *trigger) {
     TriggerSource *source;
 
     if (*trigger->unk04 == 0) {
@@ -113,8 +117,9 @@ void func_0011F0D8(MapTrigger *trigger) {
     }
 }
 
-/* Rebuilds a map object's model matrices from its position and rotation. */
-void func_0011F148(char *arg) {
+/* Every-frame hook of most kinds: rebuilds the model matrices from the model's position and rotation (and the
+   parts' animation), then updates the model's points. */
+void MapObject_RebuildMatrices(char *arg) {
     MapObject *object = (MapObject *)arg;
     int i;
     ModelPart *part;
@@ -138,12 +143,15 @@ void func_0011F148(char *arg) {
     object->model->unk1B4(object->model);
 }
 
-int func_0011F220(void) {
+/* Item hook of the kinds that take no item: returns FALSE (the item is not used). */
+int MapObject_RefuseItem(void) {
     return 0;
 }
 
+/* Does nothing: the signal hook of the kinds that take no signal. */
 void func_0011F228(void) {
 }
 
+/* Does nothing: the set-up hook of the kinds that need none. */
 void func_0011F230(void) {
 }

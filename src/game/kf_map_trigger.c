@@ -5,8 +5,8 @@
 #include "kf_map.h"
 #include "kf_item.h"
 
-void func_0011FBE8(MapObject *);
-void func_0011FC10(MapObject *);
+void MapObject_UpdateBreakingItemHolder(MapObject *);
+void MapObject_SetupItemHolder(MapObject *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B5D0(ModelPart *);
@@ -72,14 +72,14 @@ void MapObject_UpdateContainer(MapObject *object) {
 }
 
 /* Last step of a container (the step the others fade out in): puts out the item it holds, then fades
-   out like the other kinds (func_0011FBE8). */
+   out like the other kinds (MapObject_UpdateBreakingItemHolder). */
 void MapObject_FadeOutContainer(MapObject *object) {
-    func_0011FBE8(object);
+    MapObject_UpdateBreakingItemHolder(object);
 }
 
-/* Set-up of a container: puts out the item it holds (func_0011FC10, as for kind 3). */
+/* Set-up of a container: puts out the item it holds (MapObject_SetupItemHolder, as for kind 3). */
 void MapObject_SetUpContainer(MapObject *object) {
-    func_0011FC10(object);
+    MapObject_SetupItemHolder(object);
 }
 
 /* Start handler of a switch (kind 30): off (animation 4, step 1) or, with bit 17 set, on (animation 5,

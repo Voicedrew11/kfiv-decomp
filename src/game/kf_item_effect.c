@@ -41,7 +41,7 @@ void func_0010E6A8(ModelInstance *, s64, s64);
 void func_0010E770(ModelInstance *, u64, s64);
 void func_0010E820(ModelInstance *, s64);
 void func_0010E8E0(void *, int, int, int, int);
-int func_001BF6E8(void);
+int Player_KnowsItemMenuMagic(void);
 void func_0010AEB8(void *);
 void func_00109A50(void);
 void func_00109A80(int, s64);
@@ -275,7 +275,7 @@ void ItemEffect_Update(void) {
         def = &weapon_defs[player_state.weapon];
         item_effect_pending_effects = 0;
         if (player_state.equipped_magic != 0 || def->unk42 != 0xFFFF ||
-            (def->unk52 != 0xFFFF && weapon_level_records[player_state.weapon].unk14 + 1 >= 3) || func_001BF6E8() != 0) {
+            (def->unk52 != 0xFFFF && weapon_level_records[player_state.weapon].unk14 + 1 >= 3) || Player_KnowsItemMenuMagic() != 0) {
             player_state.unkC0 = 5000;
         }
         if (item_effect_marked != 0) {

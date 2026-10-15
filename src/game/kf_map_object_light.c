@@ -6,7 +6,7 @@ extern f32 sine_table[];
 /* Start handler of the light kind: makes a light of the colour in its source at
    a point of the model, and for the flickering sorts (0, 1) rolls the two
    flicker periods and where in them it starts. */
-void func_00120A10(MapObject *object) {
+void MapObject_StartLight(MapObject *object) {
     s16 *work = (s16 *)object->work;
     Vector4 colour;
     MapObjectUnk08Words *source = MAP_OBJECT_WORDS(object);
@@ -36,7 +36,7 @@ void func_00120A10(MapObject *object) {
 /* Update handler of the light kind: the flickering sorts (0 faintly, 1 strongly)
    step their two periods and scale the colour by the product of the two waves
    read from the table sine_table (0xA00 entries a period). */
-void func_00120BB8(MapObject *object) {
+void MapObject_UpdateLight(MapObject *object) {
     s16 *work = (s16 *)object->work;
     MapObjectUnk08Words *source = MAP_OBJECT_WORDS(object);
     Vector4 colour;
@@ -78,8 +78,9 @@ void func_00120BB8(MapObject *object) {
     LinkedPoint_Retarget(source->unk4A, work[0], &colour);
 }
 
-/* End handler: releases the handle the kind keeps in its work area, if any. */
-void func_00120D38(MapObject *object) {
+/* End hook of the light kind (9): releases its light (the LinkedPoint handle in its work area), if it has
+   one. */
+void MapObject_ReleaseLight(MapObject *object) {
     s16 *handle = (s16 *)object->work;
 
     if (*handle >= 0) {
@@ -88,10 +89,13 @@ void func_00120D38(MapObject *object) {
     }
 }
 
-/* Start handler: step 1. */
-void func_00120D78(MapObject *object) {
+/* Step 0 of kind 10: step 1, where nothing happens. Its effect comes from touching it:
+   Collision_PushOutOfMeshObj notes the object the player touches and Player_CollideWithMapObjects starts the
+   timed status its source names (unk52). */
+void MapObject_StartTouchTrap(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
 }
 
+/* Does nothing: step 1 of kind 10. */
 void func_00120D88(void) {
 }

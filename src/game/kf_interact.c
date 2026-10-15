@@ -9,11 +9,11 @@
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 int Timer_GetTicks(void);
-void func_001D0800(void);
-void func_001C1858(f32, void *, void *, s32);
-float func_001D1260(float, float *, float *);
+void Interact_UpdateViewRay(void);
+void Collision_CastRayAtMapLists(f32, void *, void *, s32);
+float Interact_GetDistanceWithin(float, float *, float *);
 void Collision_RayCylinder(f32, f32, f32, void *, void *, void *);
-void func_001C2128(MapObject *, f32 *, f32 *, f32);
+void Collision_HitRayObj(MapObject *, f32 *, f32 *, f32);
 void sceVu0SubVector(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 float sceVu0InnerProduct(float *, float *);
@@ -39,7 +39,7 @@ extern float D_00446A0C[];
 
 /* Keep last frame's view ray, then rebuild it: from the player's eyes (or the camera, in a cutscene) along the
    direction looked in. */
-void func_001D0800(void) {
+void Interact_UpdateViewRay(void) {
     f32 rotation[16];
     f32 pitch;
     f32 heading;
@@ -75,7 +75,7 @@ void func_001D0800(void) {
 /* Finds what is in front of the player: how far the view reaches before a wall or a map object (unk40), and the
    entity, map object or item near enough to act on. Then, when an event may start (GameStatus.bit1), starts the
    script of whichever was found. */
-void func_001D0970(void) {
+void Interact_FindTarget(void) {
     f32 delta[4];
     f32 unit[4];
     f32 nearest;
@@ -100,12 +100,12 @@ void func_001D0970(void) {
     f32 turn;
 
     Timer_GetTicks();
-    func_001D0800();
+    Interact_UpdateViewRay();
     nearest = D_00420D00.unk4C = D_00420D00.unk40 = D_00446A08[0];
     D_00420D00.unk54 = NULL;
     D_00420D00.current = NULL;
     D_00420D00.unk58 = NULL;
-    func_001C1858(2000.0f, D_00420D00.unk00, D_00420D00.unk10, 7);
+    Collision_CastRayAtMapLists(2000.0f, D_00420D00.unk00, D_00420D00.unk10, 7);
     if (COLLISION_RESULT->hit != 0) {
         D_00420D00.unk40 = COLLISION_RESULT->distance;
         nearest = COLLISION_RESULT->distance;
@@ -115,7 +115,7 @@ void func_001D0970(void) {
             continue;
         }
         reach = entity->radius + 100.0f + 200.0f;
-        distance = func_001D1260(reach, (float *)&player_state, (float *)&ENTITY_MODEL(entity)->position);
+        distance = Interact_GetDistanceWithin(reach, (float *)&player_state, (float *)&ENTITY_MODEL(entity)->position);
         if (distance < nearest) {
             nearest = distance;
         }
@@ -157,7 +157,7 @@ void func_001D0970(void) {
                 sceVu0SubVector(delta, &object->model->position, &D_004325A0);
                 distance = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
             } else {
-                func_001C2128(object, (f32 *)&D_004325A0, D_00420D00.unk10, reach);
+                Collision_HitRayObj(object, (f32 *)&D_004325A0, D_00420D00.unk10, reach);
                 if (COLLISION_RESULT->hit == 0) {
                     continue;
                 }
@@ -293,13 +293,13 @@ void func_001D0970(void) {
 
 /* Moves the event runner's position and its copy from the frame before by offset (the other map slot became
    the current one). */
-void func_001D1210(f32 *offset) {
+void Interact_OffsetViewRay(f32 *offset) {
     Vector_Add(D_00420D00.unk00, D_00420D00.unk00, offset);
     Vector_Add(D_00420D00.unk20, D_00420D00.unk20, offset);
 }
 
 /* Distance from pos to target if within radius on every axis and overall, else D_00446A0C. */
-float func_001D1260(float radius, float *pos, float *target) {
+float Interact_GetDistanceWithin(float radius, float *pos, float *target) {
     float diff[4];
     float dist;
 

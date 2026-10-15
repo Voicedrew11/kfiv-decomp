@@ -102,18 +102,18 @@ typedef struct {
 typedef struct {
     f32 unk00[4];                   /* 0x00 a position the camera is put in front of (func_00100FC8) */
     f32 unk10[4];                   /* 0x10 a direction from it */
-    f32 unk20[4];                   /* 0x20 unk00 as it was the frame before (func_001D0800) */
+    f32 unk20[4];                   /* 0x20 unk00 as it was the frame before (Interact_UpdateViewRay) */
     f32 unk30[4];                   /* 0x30 unk10 as it was the frame before */
     f32 unk40;                      /* 0x40 how far along unk10 */
     f32 unk44;                      /* 0x44 unk40 as it was the frame before */
-    f32 unk48;                      /* 0x48 distance to the nearest entity around the player (func_001D0970) */
+    f32 unk48;                      /* 0x48 distance to the nearest entity around the player (Interact_FindTarget) */
     f32 unk4C;                      /* 0x4C distance to what `current`, unk54 or unk58 names */
     void *current;                  /* 0x50 the event being run */
     void *unk54;                    /* 0x54 an Entity whose spawn info can answer the use of an item (Player_UseItem) */
-    void *unk58;                    /* 0x58 the ItemNode (kf_model.h) in front of the player, NULL: none (func_001D0970) */
+    void *unk58;                    /* 0x58 the ItemNode (kf_model.h) in front of the player, NULL: none (Interact_FindTarget) */
 } EventRunner;
 
-/* an event func_00120130 hands to MapObject_UpdateClosedChest */
+/* an event MapObject_OpenChestOnSignal hands to MapObject_UpdateClosedChest */
 typedef struct {
     char pad00[0x10];
     u32 flags;                      /* 0x10 */

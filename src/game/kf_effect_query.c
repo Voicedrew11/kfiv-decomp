@@ -5,7 +5,7 @@
 #include "kf_collision.h"
 
 float func_001B0178(void *, void *);
-void func_001C1430(f32, void *, void *);
+void Collision_CastRayAtMap(f32, void *, void *);
 
 extern Entity *D_004467E0;
 
@@ -101,7 +101,7 @@ s16 func_001B0208(float radius, void *effect, void *motion, void *hit_point) {
     f32 distance;
     f32 stack_reserve[4]; // match: unused, keeps the retail stack frame size
 
-    func_001C1430(actor->def->keyframe_end, &actor->model->position, motion);
+    Collision_CastRayAtMap(actor->def->keyframe_end, &actor->model->position, motion);
     if (COLLISION_RESULT->hit != 0) {
         distance = func_001B0178(COLLISION_RESULT->point, &actor->model->position);
         Vector_Copy(hit_point, COLLISION_RESULT->point);

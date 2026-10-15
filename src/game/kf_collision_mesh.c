@@ -10,7 +10,7 @@ void func_001123F8(void) {
 
 /* Makes a collision mesh that was just loaded usable: turns its offsets into pointers and, if
    asked, its point numbers into scratchpad addresses. Returns where the mesh ends. */
-char *func_00112400(char *data, ModelInstance *model, int use_scratchpad) {
+char *Collision_RelocateMesh(char *data, ModelInstance *model, int use_scratchpad) {
     char *cursor = data;
     CollisionStrip *strip;
     CollisionStripPoint *point;
@@ -45,9 +45,10 @@ char *func_00112400(char *data, ModelInstance *model, int use_scratchpad) {
     return cursor + MODEL_MESH(model)->unk0C * 0x10;
 }
 
-/* Surface attribute: the third value of (0, 0xFF, 0-7) or (0xFF, 0, 0-7), the second of (0xFF, 0-7, 0xFF),
-   5 for (0xFF, 0xFF, 0xFE-0xFF), 6 otherwise. */
-u32 func_001124E0(int first, u32 second, u32 third) {
+/* The floor material from the three words of a triangle's strip point: the third value of (0, 0xFF, 0-7) or
+   (0xFF, 0, 0-7), the second of (0xFF, 0-7, 0xFF), 5 for (0xFF, 0xFF, 0xFE-0xFF), 6 otherwise. The player's
+   footsteps sound by it (PlayerState.unk210). */
+u32 Collision_GetFloorMaterial(int first, u32 second, u32 third) {
     if (first == 0 && second == 0xFF && third < 8) {
         return third;
     }
@@ -63,7 +64,8 @@ u32 func_001124E0(int first, u32 second, u32 third) {
     return 6;
 }
 
-/* Surface attribute: the first value of (0-7, 0xFF, 0xFF), the third of (0xFF, 0xFF, 0xFE-0xFF), 0 otherwise. */
+/* Decodes the three words of a strip point: the first value of (0-7, 0xFF, 0xFF), the third of (0xFF, 0xFF,
+   0xFE-0xFF), 0 otherwise. Nothing calls it. */
 u32 func_00112560(u32 first, u32 second, u32 third) {
     if (first < 8 && second == 0xFF && third == 0xFF) {
         return first;
@@ -74,15 +76,17 @@ u32 func_00112560(u32 first, u32 second, u32 third) {
     return 0;
 }
 
-/* Surface attribute: the first value when the triple is (0-7, 0xFF, 0xFF), 6 otherwise. */
-u32 func_001125A8(u32 first, u32 second, int third) {
+/* The effect of a hazard surface (the CollisionMesh.unk28 strips) from the three words of a strip point: the
+   first value of (0-7, 0xFF, 0xFF), 6 otherwise (EntityCollision_ApplySurfaceEffect, Player_CollideWithMap). */
+u32 Collision_GetSurfaceEffect(u32 first, u32 second, int third) {
     if (first < 8 && second == 0xFF && third == 0xFF) {
         return first;
     }
     return 6;
 }
 
-/* Surface attribute: the third value when the triple is (0xFF, 0xFF, 0xFE-0xFF), 1 otherwise. */
+/* Decodes the three words of a strip point: the third value of (0xFF, 0xFF, 0xFE-0xFF), 1 otherwise. Nothing
+   calls it. */
 u32 func_001125D0(u32 first, u32 second, u32 third) {
     if (first == 0xFF && second == 0xFF && third >= 0xFE) {
         return third;
@@ -90,16 +94,19 @@ u32 func_001125D0(u32 first, u32 second, u32 third) {
     return 1;
 }
 
-/* Surface attribute: the first value when the triple is (0-7, 0-1, 0xFF), 0 otherwise. */
-u32 func_001125F0(u32 first, u32 second, int third) {
+/* The level of an entity barrier (the CollisionMesh.unk24 strips) from the three words of a strip point: the
+   first value of (0-7, 0-1, 0xFF), 0 otherwise. It holds back the entities whose EntitySpawnInfo.unk35 is not
+   above it. */
+u32 Collision_GetBarrierLevel(u32 first, u32 second, int third) {
     if (first < 8 && second < 2 && third == 255) {
         return first;
     }
     return 0;
 }
 
-/* Surface attribute: the second value when the triple is (0-7, 0-1, 0xFF), 0xFFFFFFFF otherwise. */
-u32 func_00112618(u32 first, u32 second, int third) {
+/* Whether an entity barrier (the CollisionMesh.unk24 strips) is stood on rather than walked into: the second
+   value of (0-7, 0-1, 0xFF); 0xFFFFFFFF for any other triple. */
+u32 Collision_IsBarrierFloor(u32 first, u32 second, int third) {
     if (first < 8 && second < 2 && third == 0xFF) {
         return second;
     }

@@ -109,7 +109,7 @@ void func_001BB5E8(void);
 void func_001BB728(u16 *, u32);
 void func_001BB908(void);
 void func_001BB978(void);
-int func_001BF6E8(void);
+int Player_KnowsItemMenuMagic(void);
 void func_001B4B10(int, int);
 void func_001B4DF8(int idx, int amount);
 
@@ -1067,11 +1067,11 @@ void sceVu0RotMatrixZ(float *, float *, float);
 float Angle_Wrap(float);
 int Angle_Approach(float *, float, float);
 int Sound_PlayMap(int);
-int func_001BDDC0(void);
-void func_001BE760(void);
-void func_001BEA50(void);
-void func_001BECA8(int);
-void func_001BF350(int);
+int Player_CollideWithMap(void);
+void Player_PushOutOfWalls(void);
+void Player_FindFloorMaterial(void);
+void Player_CollideWithEntities(int);
+void Player_CollideWithMapObjects(int);
 
 #define PLAYER_FLAG_32 0x100000000L /* the view is levelling out */
 #define PLAYER_FLAG_37 0x2000000000L /* the view dips after a landing */
@@ -1397,19 +1397,19 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                 Vector_Copy(&player_state, &player_previous);
                 do {
                     Vector_Add(&player_state, &player_state, &step);
-                    func_001BECA8(0);
-                    func_001BF350(0);
-                    func_001BE760();
+                    Player_CollideWithEntities(0);
+                    Player_CollideWithMapObjects(0);
+                    Player_PushOutOfWalls();
                 } while (--steps != 0);
                 Vector_Add(&player_state, &player_state, &delta);
             }
         }
-        func_001BECA8(1);
+        Player_CollideWithEntities(1);
         if (!((s32)(player_state.unk1C8 >> 36) & 1)) {
-            func_001BDDC0();
-            func_001BF350(1);
+            Player_CollideWithMap();
+            Player_CollideWithMapObjects(1);
             if (player_state.unk210 == 6 && player_state.unk208 != 0 && ((MapObject *)player_state.unk208)->unk04->kind == 12) {
-                func_001BEA50();
+                Player_FindFloorMaterial();
             }
             if (!((s32)(player_state.unk1C8 >> 34) & 1)) {
                 if (((s32)(player_previous.unk1C8 >> 34) & 1) && player_state.unk1A8 == 0) {
@@ -1872,7 +1872,7 @@ void func_001B96C8(void) {
         }
     }
     if (player_state.equipped_magic == 0 && item_def->unk42 == 0xFFFF
-        && (item_def->unk52 == 0xFFFF || (weapon_level_records + player_state.weapon)->unk14 + 1 < 3) && func_001BF6E8() == 0) {
+        && (item_def->unk52 == 0xFFFF || (weapon_level_records + player_state.weapon)->unk14 + 1 < 3) && Player_KnowsItemMenuMagic() == 0) {
         player_state.unkC0 = 0;
         player_state.unk264 = 0;
     }
