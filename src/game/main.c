@@ -16,7 +16,7 @@ extern u32 D_00446ED4;          /* the frame counter */
 void System_Init(void);
 void Display_Init(void);
 int sceGsSyncV(int);
-void func_0019BDA0(int, int);
+void Vram_Clear(int, int);
 int func_001CB778(void);
 void func_001CB9A0(void);
 void System_InitMemory(void);
@@ -31,7 +31,7 @@ void func_00112648(void);
 void func_001029A8(void);
 void func_001B5808(void);
 void func_00124EF8(void);
-void func_0019C300(void);
+void Sound_Init(void);
 s32 SaveCard_Init(void);
 void func_00109410(void);
 void func_00111D00(void);
@@ -50,7 +50,7 @@ int main(void) {
     System_Init();
     Display_Init();
     sceGsSyncV(0);
-    func_0019BDA0(0, 0x4000);
+    Vram_Clear(0, 0x4000);
     func_001CB778();
     func_001CB9A0();
     System_InitMemory();
@@ -68,7 +68,7 @@ int main(void) {
     ItemEffect_Load();
     Message_Init();
     Menu_Init();
-    func_0019C300();
+    Sound_Init();
     SaveCard_Init();
     func_00109410();
     func_00111D00();
@@ -77,27 +77,27 @@ int main(void) {
     Menu_Run(4);
     sceGsSyncV(0);
     sceGsSyncV(0);
-    func_0019BDA0(0, 0x4000);
+    Vram_Clear(0, 0x4000);
     srand(Timer_GetTicks());
 
     for (;;) {
         if (D_00446734 == 0) {
             sceGsSyncV(0);
-            func_0019BDA0(0, 0x4000);
+            Vram_Clear(0, 0x4000);
             if (func_001F91F8() == 0) {
                 Menu_Run(5);
                 Movie_PlayOpening();
             }
             sceGsSyncV(0);
-            func_0019BDA0(0, 0x4000);
+            Vram_Clear(0, 0x4000);
         }
         func_001000C8(0x263);
         func_001001C0(D_00446734 != 0 ? D_00446738 : 0x63);
         func_001CB9A0();
-        func_0019C300();
+        Sound_Init();
         if (D_00413F80.unk1A8 != 0) {
             sceGsSyncV(0);
-            func_0019BDA0(0, 0x4000);
+            Vram_Clear(0, 0x4000);
             do {
                 // match: retail passes a zero the function does not take
                 if (((int (*)(int))Title_RunGameOver)(0) != 1) {
@@ -105,7 +105,7 @@ int main(void) {
                 }
             } while (Menu_Run(1) == 0);
             sceGsSyncV(0);
-            func_0019BDA0(0, 0x4000);
+            Vram_Clear(0, 0x4000);
         } else if (D_0038CC50.bits10 & 1) {
             Movie_PlayEnding();
         }

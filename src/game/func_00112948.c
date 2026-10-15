@@ -22,7 +22,7 @@ int func_00102900(int);
 int sprintf(char *, char *, ...);
 void func_00114840(int);
 void func_00114AA8(int);
-int func_001A10D8(MapSlot *);
+int Sound_LoadMapBank(MapSlot *);
 void func_001155F8(int);
 void func_001A15F0(void);
 void func_001C82C0(int);
@@ -56,7 +56,7 @@ void func_00112948(int map) {
     slot->unk04 = (size + 0x3FFFF) / 0x40000 * 0x40000;
     func_00114840(0);
     func_00114AA8(0);
-    func_001A10D8(slot);
+    Sound_LoadMapBank(slot);
     func_001155F8(0);
     MapScroll_ClearPairs(0);
     func_001A15F0();

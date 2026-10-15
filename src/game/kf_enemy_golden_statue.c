@@ -6,7 +6,7 @@
 #include "common.h"
 #include "kf_entity_world.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -16,14 +16,14 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 void func_00190A30(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 extern void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
+void EntityAi_SensePlayer(void *, int);
 s32 func_00190F90(Entity *, s32, f32);
 float func_00194F80(void *, void *);
-s32 func_00197078(Entity *);
+s32 EntityAi_CanAttack(Entity *);
 int func_0018CA50(int *);
 int func_0018F030(char *);
 float func_001957B8(float, float);
@@ -31,14 +31,14 @@ void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 int EntityAi_ThinkReturn(void *, int);
 void func_0018E9C0(void *);
-void func_00196CC0(void *);
+void EntityAi_CheckFarFromSpawn(void *);
 extern PlayerData D_00413F80;
 extern char D_0043E8C0[];
 int printf(const char *, ...);
 s32 func_0018ED98(Entity *, f32, f32);
 s32 func_0018EEE0(Entity *, f32, f32);
-s32 func_00198D10(Entity *);
-s32 func_00197F00(Entity *);
+s32 EntityAi_CanShoot(Entity *);
+s32 EntityAi_CanMelee(Entity *);
 s32 func_0018F9C0(Entity *);
 s32 func_0018F648(Entity *);
 void func_00196D48(Entity *);
@@ -81,7 +81,7 @@ void GoldenStatue_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->animate = (void (*)(void))GoldenStatue_Animate;
     unkE0->on_hit = (void (*)(void))GoldenStatue_OnHit;
     unkE0->move = (void (*)(void))GoldenStatue_Move;
@@ -130,7 +130,7 @@ static void GoldenStatue_OnHit(Entity *entity) {
     if (((flags >> 36) & 3) == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The think handler of mode 1 (EntitySpawnInfo.unk40 is 1): no states. Once the entity
@@ -155,7 +155,7 @@ static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 unknown) {
     }
     phase = D_00446ED4 % 10U;
     if (phase == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
         if (unkE0->unk78 == 0) {
@@ -197,7 +197,7 @@ static void GoldenStatue_WalkToPost(Entity *entity, s32 unknown) {
 
 /* Helper of GoldenStatue_ThinkWaitAtPost, called while work bytes unk78 and unk79 are set: clears unk78
    when the entity is more than 100 from the point (-7900, spawn y, 3050); starts the attack
-   func_0018F030 picks when func_00197078 says so and func_0018CA50 does not; else turns on the spot
+   func_0018F030 picks when EntityAi_CanAttack says so and func_0018CA50 does not; else turns on the spot
    to the heading in work float unk48, clears unk79 once it is within the turn limit of it, and
    starts the move action. */
 static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
@@ -213,8 +213,8 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
     if (func_00194F80(entity->model->position, home) > range) {
         unkE0->unk78 = 0;
     }
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity) && !func_0018CA50((int *)entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity) && !func_0018CA50((int *)entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -243,8 +243,8 @@ static void GoldenStatue_StandAtPost(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 angle;
 
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity) && !func_0018CA50((int *)entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity) && !func_0018CA50((int *)entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -268,13 +268,13 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
 
     phase = D_00446ED4 % 10U;
     if (phase == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
     if ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) != 0x06000000) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
     }
     func_0018E9C0(entity);
     if ((s32)(entity->flags >> 53) & 1) {
@@ -285,8 +285,8 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
 }
 
 /* Decides for GoldenStatue_ThinkNoStates: guards or dodges the player's swing; while flag bit 32 is
-   set starts EntityAi_RangedAttack (func_00198D10, func_0018F9C0) with the player farther from the
-   spawn point than EntitySpawnInfo.unk4C and EntityAi_MeleeAttack (func_00197F00, func_0018F648)
+   set starts EntityAi_RangedAttack (EntityAi_CanShoot, func_0018F9C0) with the player farther from the
+   spawn point than EntitySpawnInfo.unk4C and EntityAi_MeleeAttack (EntityAi_CanMelee, func_0018F648)
    with the player nearer. While the player's x is below -7900 it goes to one of three posts at x
    -8000, picked by the player's z, and from there turns to the player and starts the ranged attack
    only (work byte unk78 says it is at the post; on arriving it prints D_0043E8C0, "tuitayo",
@@ -312,14 +312,14 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
     }
     if (func_00194F80(entity->spawn_info, &D_00413F80) > entity->spawn_info->unk4C) {
         if (ENTITY_FLAG_BITS(entity)->bit32) {
-            if (func_00198D10(entity) && !func_0018CA50((int *)entity)) {
+            if (EntityAi_CanShoot(entity) && !func_0018CA50((int *)entity)) {
                 func_0018F9C0(entity);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;
             }
         }
     } else if (ENTITY_FLAG_BITS(entity)->bit32) {
-        if (func_00197F00(entity) && !func_0018CA50((int *)entity)) {
+        if (EntityAi_CanMelee(entity) && !func_0018CA50((int *)entity)) {
             func_0018F648(entity);
             EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             return;
@@ -367,7 +367,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
                 unkE0->unk78 = 0;
                 return;
             }
-            if (ENTITY_FLAG_BITS(entity)->bit32 && func_00198D10(entity) && !func_0018CA50((int *)entity)) {
+            if (ENTITY_FLAG_BITS(entity)->bit32 && EntityAi_CanShoot(entity) && !func_0018CA50((int *)entity)) {
                 func_0018F9C0(entity);
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 return;

@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 #include "common.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -19,8 +19,8 @@ int func_00194368(EntityModel *, f32);
 extern u32 D_00446ED4;
 int EntityAi_ThinkReturn(void *, int);
 void func_0018E9C0(void *);
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(void *);
 int rand(void);
 int func_0018EAC0(void *, void *);
 void func_0018B778(float, void *, void *, void *);
@@ -47,7 +47,7 @@ void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 void Vector_Scale(float *, float *, float);
-float func_00199E68(Entity *, float);
+float EntityAi_Accelerate(Entity *, float);
 int func_00192C98(void *, int, int, u32, int);
 
 static void Scorpion_Animate(Entity *entity);
@@ -69,7 +69,7 @@ void Scorpion_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))Scorpion_Think;
     unkE0->animate = (void (*)(void))Scorpion_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -122,12 +122,12 @@ static void Scorpion_Think(Entity *entity, s32 unknown) {
 
     phase = D_00446ED4 % 10U;
     if (phase == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0(entity);
+    EntityAi_CheckFarFromSpawn(entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -389,7 +389,7 @@ static void Scorpion_Move(Entity *entity) {
             vector[1] += amount;
         }
         if (command & 0x3F) {
-            unkE0->unk44 = func_00199E68(entity, unkE0->unk44);
+            unkE0->unk44 = EntityAi_Accelerate(entity, unkE0->unk44);
             amount = unkE0->unk44;
             if (entity->unkC8 & 0x40) {
                 amount += amount;

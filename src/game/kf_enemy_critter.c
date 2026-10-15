@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -16,18 +16,18 @@ void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 int func_00192C98(void *, int, int, u32, int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 extern u32 D_00446ED4;
 extern f32 D_004467FC[];
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void func_0018E9C0(void *);
 f32 func_0018B518(f32 *);
 int EntityAi_ThinkReturn(void *, int);
 int rand(void);
 int func_0018EAC0(void *, void *);
 float func_00194FB8(float);
-s32 func_00195AC0(Entity *, void *, s32, s32, s32);
+s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 float func_001957B8(float, float);
 extern PlayerData D_00413F80;
 s32 func_0018ED98(Entity *, f32, f32);
@@ -61,7 +61,7 @@ void Critter_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Critter_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -123,7 +123,7 @@ static void Critter_Dormant(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
@@ -142,7 +142,7 @@ static void Critter_Dormant(Entity *entity) {
    func_0018B518 gives a reading for the entity's position. */
 static void Critter_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (func_0018B518(entity->model->position) != D_004467FC[0]) {
         ENTITY_FLAG_BITS(entity)->bits60 = 5;
@@ -150,7 +150,7 @@ static void Critter_Think(Entity *entity, s32 unknown) {
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -168,7 +168,7 @@ static void Critter_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 0 (called after the switch, which `case 0:` leaves): gives command
-   0x41 and, once in each such run, checks part 0 of melee record 1 for a hit (func_00195AC0, work
+   0x41 and, once in each such run, checks part 0 of melee record 1 for a hit (EntityAi_CheckMeleeHit, work
    byte unk7C). When the entity is pushed and the pause in work byte unk7B is over, it picks a
    heading 90 degrees to the side of the one func_0018EAC0 gives, give or take 70 degrees (work
    float unk48), turns to it with command bit 0x400 and no movement (work byte unk7A set), then sets
@@ -197,7 +197,7 @@ static void Critter_ThinkIdle(Entity *entity, s32 unknown) {
             unkE0->unk7B--;
         }
         if (unkE0->unk7C == 0) {
-            unkE0->unk7C = func_00195AC0(entity, &entity->params->unk240[1], 0, 1, 1);
+            unkE0->unk7C = EntityAi_CheckMeleeHit(entity, &entity->params->unk240[1], 0, 1, 1);
         }
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;

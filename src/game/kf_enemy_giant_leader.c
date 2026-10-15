@@ -7,7 +7,7 @@
 #include "kf_map_object.h"
 #include "common.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -21,13 +21,13 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
 extern MapSlot D_0038CD20[];
-void func_00196870(void *, int);
+void EntityAi_SensePlayer(void *, int);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 f32 func_00194F48(f32 *, f32 *);
 s32 func_0018A970(Entity *, f32 *, PlayerData *);
 float func_00194F80(void *, void *);
-void func_00196CC0(char *);
+void EntityAi_CheckFarFromSpawn(char *);
 void func_0018E9C0(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -49,16 +49,16 @@ void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 int func_00192C98(void *, int, int, u32, int);
 float func_00194FB8(float);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 extern int D_00446770;
 void func_00190A30(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
 void func_001B4EC8(s32);
-s32 func_00199EB8(Entity *, f32 *, f32);
-s32 func_00195AC0(Entity *, void *, s32, s32, s32);
-s32 func_00195BD8(Entity *, void *, s32, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
+s32 EntityAi_SendMeleeHit(Entity *, void *, s32, f32);
 
 static void GiantLeader_Think(Entity *entity, s32 unknown);
 static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown);
@@ -77,7 +77,7 @@ void GiantLeader_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = GiantLeader_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))GiantLeader_OnHit;
@@ -123,7 +123,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
     MapRecord *records;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
         Vector_Copy(position, entity->model->position);
         Vector_Copy(target, &D_00413F80);
         position[1] = entity->model->position[1] - entity->unk34 * 0.5f;
@@ -197,7 +197,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0((char *)entity);
+        EntityAi_CheckFarFromSpawn((char *)entity);
         func_0018E9C0(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -359,7 +359,7 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -519,7 +519,7 @@ static void GiantLeader_OnHit(Entity *entity) {
     }
     ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The melee attack with record 1 (busy bit 1): animation 21, as EntityAi_MeleeAttack; the first
@@ -545,24 +545,24 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
             entity->action_step++;
         }
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -577,7 +577,7 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -588,9 +588,9 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
     }
 }
 
-/* Helper of GiantLeader_MeleeAttack0: runs the hit check func_00195BD8 for one part of an attack
+/* Helper of GiantLeader_MeleeAttack0: runs the hit check EntityAi_SendMeleeHit for one part of an attack
    record, unless the animation frames [frame_from, frame_to] lie outside the frames the part is
-   active on (as func_00195B68). Parts 3 to 5 take their frames from the four frame marks at
+   active on (as EntityAi_CheckMeleeHitAt). Parts 3 to 5 take their frames from the four frame marks at
    EntityParams.unk434 instead and run as part 1, 0 and 1. */
 static s32 GiantLeader_CheckPartHit(Entity *entity, EntityParamsUnk240 *unk240, s32 part, s32 frame_from, s32 frame_to, f32 angle) {
     if (part < 3) {
@@ -622,5 +622,5 @@ static s32 GiantLeader_CheckPartHit(Entity *entity, EntityParamsUnk240 *unk240, 
         }
         part = 1;
     }
-    return func_00195BD8(entity, unk240, part, angle);
+    return EntityAi_SendMeleeHit(entity, unk240, part, angle);
 }

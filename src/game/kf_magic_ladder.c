@@ -29,8 +29,8 @@ void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(void *, void *, float);
 int func_001B4F30(u16, void *, void *, void *, void *);
 void Player_CountMagicUse(int);
-int func_0019B908(float *, float, float);
-int func_0019D020(int);
+int Angle_Approach(float *, float, float);
+int Sound_PlayFootstep(int);
 
 static Vector4 ladder_foot_position;              /* 0x57B350 foot the player walks to before climbing */
 static Vector4 ladder_walk_step;                  /* 0x57B360 unit step toward the foot each frame */
@@ -490,7 +490,7 @@ void Ladder_WalkToFoot(void) {
             Vector_Copy(&D_00413F80.position, &ladder_foot_position);
         }
     }
-    if (func_0019B908(&D_00413F80.rotation.y, ladder_facing_y, 0.029088821f) && ladder_walk_frames_remaining <= 0) {
+    if (Angle_Approach(&D_00413F80.rotation.y, ladder_facing_y, 0.029088821f) && ladder_walk_frames_remaining <= 0) {
         ladder_state_index++;
     }
 }
@@ -595,12 +595,12 @@ int Ladder_PlayStepSound(void) {
         kind = ladder_object->unk08->unk30;
         switch (kind) {
         case 0x56:
-            return func_0019D020(0x22);
+            return Sound_PlayFootstep(0x22);
         case 0x167:
         case 0x1B1:
-            return func_0019D020(0x20);
+            return Sound_PlayFootstep(0x20);
         default:
-            func_0019D020(0x20);
+            Sound_PlayFootstep(0x20);
             break;
         }
     }

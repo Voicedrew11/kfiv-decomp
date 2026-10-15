@@ -20,7 +20,7 @@
 extern char *D_00446F50;
 
 int func_001CED78(int, char *, int);
-s32 func_0019CDC0(s32);
+s32 Sound_PlayMenu(s32);
 int func_001CEBE0(void);
 void Texture_SendTexFlush(void);
 
@@ -523,12 +523,12 @@ int Title_UpdateGameOver(void) {
         }
         brightness = screen_timer / 30.0f;
     } else if (report->pressed & (PAD_CROSS | PAD_START)) {
-        func_0019CDC0(0);
+        Sound_PlayMenu(0);
         game_over_confirmed = TRUE;
         screen_timer = TITLE_FADE_FRAMES;
         game_over_choice_sprites[game_over_choice].track = &game_over_confirm_track;
     } else if ((stick_pressed | report->pressed) & (PAD_UP | PAD_DOWN)) {
-        func_0019CDC0(1);
+        Sound_PlayMenu(1);
         game_over_choice_tracks[game_over_choice].length = 0;
         // match: read through the union, or the reload moves ahead of the store above
         if ((stick_pressed | ((PadReportUnion *)report)->pressed.buttons) & PAD_UP) {

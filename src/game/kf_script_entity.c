@@ -23,11 +23,11 @@ int func_00192EB0(void *, int);
 int func_00194368(f32, void *); // match: retail leaves a value in $2
 float func_001954A8(float *from, float *to);
 float func_001957B8(float angle, float heading);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 f32 func_00194F48(f32 *a, f32 *b);
 float func_00194F80(void *a, void *b);
 float func_00194FB8(float angle);
-float func_0019B838(float angle);
+float Angle_Wrap(float angle);
 
 extern f32 D_0042C6F0[];
 extern f32 D_00431AF0[16];
@@ -282,7 +282,7 @@ int ScriptCmd_BlendEntityMotion(ScriptMotionBlendCommand *command) {
     command->active = 0;
 }
 
-/* Command 238: puts the entity `target_id` in state 4 (func_00195898; unless it is in state 5 already,
+/* Command 238: puts the entity `target_id` in state 4 (EntityAi_SetState; unless it is in state 5 already,
    for a kind with params flag 0x80 also facing the player), then waits `frames` frames and for state 5. */
 void func_00215310(ScriptStateWaitCommand *command) {
     Entity *entity;
@@ -305,7 +305,7 @@ void func_00215310(ScriptStateWaitCommand *command) {
                         return;
                     }
                 }
-                func_00195898((char *)entity, 4);
+                EntityAi_SetState((char *)entity, 4);
                 command->step++;
                 return;
             case 1:
@@ -327,7 +327,7 @@ void func_00215310(ScriptStateWaitCommand *command) {
                     command->active = 0;
                     return;
                 }
-                func_00195898((char *)entity, 4);
+                EntityAi_SetState((char *)entity, 4);
                 command->step++;
                 return;
             case 1:
@@ -347,7 +347,7 @@ void func_00215310(ScriptStateWaitCommand *command) {
     command->active = 0;
 }
 
-/* Command 243: puts the entity `object_id` in state 6 once (func_00195898), then waits until it is back
+/* Command 243: puts the entity `object_id` in state 6 once (EntityAi_SetState), then waits until it is back
    in state 0. */
 void func_00215488(ScriptWaitCommand *command) {
     Entity *entity;
@@ -358,7 +358,7 @@ void func_00215488(ScriptWaitCommand *command) {
             return;
         }
         if (command->started == 0) {
-            func_00195898((char *)entity, 6);
+            EntityAi_SetState((char *)entity, 6);
             command->started = 1;
         }
         if (entity->state != 0) {
@@ -486,13 +486,13 @@ void ScriptCmd_TurnEntityToward(ScriptMoveCommand *command) {
         command->active = 0;
         return;
     }
-    heading = func_0019B838(atan2f(command->x.value - ENTITY_MODEL(target)->position.x,
+    heading = Angle_Wrap(atan2f(command->x.value - ENTITY_MODEL(target)->position.x,
                                    command->z.value - ENTITY_MODEL(target)->position.z) + 3.1415927f);
     if (heading == ENTITY_MODEL(target)->rotation.y) {
         command->active = 0;
         return;
     }
-    ENTITY_MODEL(target)->rotation.y += func_0019B838(heading - ENTITY_MODEL(target)->rotation.y) / (f32)command->frames.value;
+    ENTITY_MODEL(target)->rotation.y += Angle_Wrap(heading - ENTITY_MODEL(target)->rotation.y) / (f32)command->frames.value;
     if (command->animate.value != 0) {
         func_00192EB0(target, command->motion.value);
     }
@@ -534,7 +534,7 @@ void ScriptCmd_IsEntityFacing(ScriptFacingCommand *command) {
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
-        angle = func_0019B838(entity->unk68 - entity->model->unkD0[1]);
+        angle = Angle_Wrap(entity->unk68 - entity->model->unkD0[1]);
         angle = ABS(angle);
         angle *= 57.29578f;
         if (angle <= command->range.value / 2) {
@@ -799,7 +799,7 @@ void ScriptCmd_SetEntityPosition(ScriptEntityVectorCommand *command) {
     command->active = 0;
 }
 
-/* Command 256: sets the rotation of the entity `target_id` to x, y, z (each wrapped by func_0019B838),
+/* Command 256: sets the rotation of the entity `target_id` to x, y, z (each wrapped by Angle_Wrap),
    then finishes. */
 void ScriptCmd_SetEntityRotation(ScriptEntityVectorCommand *command) {
     Entity *entity;
@@ -809,9 +809,9 @@ void ScriptCmd_SetEntityRotation(ScriptEntityVectorCommand *command) {
         entity->model->unkD0[0] = command->x.value;
         entity->model->unkD0[1] = command->y.value;
         entity->model->unkD0[2] = command->z.value;
-        entity->model->unkD0[0] = func_0019B838(entity->model->unkD0[0]);
-        entity->model->unkD0[1] = func_0019B838(entity->model->unkD0[1]);
-        entity->model->unkD0[2] = func_0019B838(entity->model->unkD0[2]);
+        entity->model->unkD0[0] = Angle_Wrap(entity->model->unkD0[0]);
+        entity->model->unkD0[1] = Angle_Wrap(entity->model->unkD0[1]);
+        entity->model->unkD0[2] = Angle_Wrap(entity->model->unkD0[2]);
     }
     command->active = 0;
 }

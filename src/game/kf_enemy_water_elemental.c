@@ -6,7 +6,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -20,8 +20,8 @@ extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
 int rand(void);
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(void *);
 void func_0018E9C0(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -45,7 +45,7 @@ int func_00192C98(void *, int, int, u32, int);
 float func_00195478(float *, char *);
 float func_00194F80(void *, void *);
 void func_00190A30(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
@@ -75,7 +75,7 @@ void WaterElemental_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = WaterElemental_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))WaterElemental_OnHit;
@@ -116,7 +116,7 @@ static void WaterElemental_Think(Entity *entity, s32 unknown) {
 
     unkE0 = &entity->unkE0;
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (unkE0->unk6C > 0) {
         unkE0->unk6C--;
@@ -134,7 +134,7 @@ static void WaterElemental_Think(Entity *entity, s32 unknown) {
         return;
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
         func_0018E9C0(entity);
         if (unkE0->unk6C == 0 && (s32)(entity->unk2C * 100.0f / entity->params->unk0A) < entity->params->unk436
             && rand() % 100 < entity->params->unk438) {
@@ -403,7 +403,7 @@ static void WaterElemental_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
     WaterElemental_AlertSameKind(entity);
 }
 

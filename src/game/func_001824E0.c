@@ -1,11 +1,11 @@
 #include "kf_entity.h"
 
 void Vector_Copy(void *, void *);
-void func_0019A348(Entity *);
-void func_0019A388(Entity *);
+void EntityAi_RaiseAttackWeight(Entity *);
+void EntityAi_RaiseRangedWeights(Entity *);
 int EntityAi_StartAction(char *, void (*)(void), int);
 float func_00194FB8(float);
-void func_00199BB0(Entity *);
+void EntityAi_UpdateCollision(Entity *);
 
 /* per-frame update of an enemy: run its handlers, count its timers down, apply this frame's move */
 void EntityAi_Update(Entity *entity) {
@@ -13,10 +13,10 @@ void EntityAi_Update(Entity *entity) {
 
     Vector_Copy(entity->unk70, entity->model->position);
     if (ENTITY_FLAG_BITS(entity)->bit41) {
-        func_0019A348(entity);
+        EntityAi_RaiseAttackWeight(entity);
     }
     if (ENTITY_FLAG_BITS(entity)->bit42) {
-        func_0019A388(entity);
+        EntityAi_RaiseRangedWeights(entity);
     }
     if (!(entity->unkC6 & 0x60)) {
         if (entity->unk2C == 0) {
@@ -68,5 +68,5 @@ void EntityAi_Update(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bits36 = 0;
     entity->unkC8 = 0;
     ENTITY_FLAG_BITS(entity)->bit43 = FALSE;
-    func_00199BB0(entity);
+    EntityAi_UpdateCollision(entity);
 }

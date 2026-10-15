@@ -1,6 +1,6 @@
 #include "kf_entity.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(char *, void (*)(void), int);
 void func_00191478(EntityModel *);
 void func_00193378(EntityModel *, s32, s32);
@@ -30,7 +30,7 @@ void func_00183A40(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = func_00183E98;
     unkE0->animate = func_00183C78;
     unkE0->on_hit = (void (*)(void))func_00183E20;

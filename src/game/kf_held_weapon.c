@@ -23,7 +23,7 @@ void func_00109AD0(void);
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
 void func_0010B5D0(ModelPart *);
-void func_001A1160(int);
+void Sound_LoadSwBank(int);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
@@ -170,7 +170,7 @@ void Player_LoadArmModels(void) {
         D_0057B6A0.unk148 = (s32)D_004145E0;
         D_0057B6A0.unk14C = &D_0038A250;
         MODEL_CHANNEL(&D_0057B6A0)->unk8F = 0x80;
-        func_001A1160(D_00413F80.weapon);
+        Sound_LoadSwBank(D_00413F80.weapon);
         WeaponTrail_Reset();
         WeaponTrail_SetMinLife(3);
         D_00414740[0] = weapon_defs[D_00413F80.weapon].unk87;

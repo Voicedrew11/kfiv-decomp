@@ -6,7 +6,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -18,8 +18,8 @@ int func_00192EB0(void *, int);
 int func_00194368(EntityModel *, f32);
 extern u32 D_00446ED4;
 void func_0018E9C0(void *);
-void func_00196870(void *, int);
-void func_00196C28(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn3D(char *);
 int func_0018EAC0(void *, void *);
 s32 func_00190D50(Entity *, s32, f32);
 void Vector_Normalize(void *, void *);
@@ -45,9 +45,9 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-float func_00199E68(Entity *, float);
+float EntityAi_Accelerate(Entity *, float);
 int func_00192C98(void *, int, int, u32, int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 
 static void BloodBat_Animate(Entity *entity);
 static void BloodBat_Think(Entity *entity, s32 unknown);
@@ -70,7 +70,7 @@ void BloodBat_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))BloodBat_Think;
     unkE0->animate = (void (*)(void))BloodBat_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -118,7 +118,7 @@ static void BloodBat_Animate(Entity *entity) {
     }
 }
 
-/* The think handler: as EntityAi_Think, with func_00196C28 where that one calls func_00196CC0,
+/* The think handler: as EntityAi_Think, with EntityAi_CheckFarFromSpawn3D where that one calls EntityAi_CheckFarFromSpawn,
    BloodBat_ThinkReturn while flag bit 53 is set, BloodBat_ThinkCombat for state 2 and
    BloodBat_ThinkWander for the other states. */
 static void BloodBat_Think(Entity *entity, s32 unknown) {
@@ -126,12 +126,12 @@ static void BloodBat_Think(Entity *entity, s32 unknown) {
 
     phase = D_00446ED4 % 10U;
     if (phase == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196C28((char *)entity);
+    EntityAi_CheckFarFromSpawn3D((char *)entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         BloodBat_ThinkReturn(entity, unknown);
@@ -391,7 +391,7 @@ static void BloodBat_Move(Entity *entity) {
             vector[1] += amount;
         }
         if (entity->unkC8 & 0x3F) {
-            unkE0->unk44 = func_00199E68(entity, unkE0->unk44);
+            unkE0->unk44 = EntityAi_Accelerate(entity, unkE0->unk44);
             amount = unkE0->unk44;
             if (entity->unkC8 & 0x40) {
                 amount += amount;
@@ -444,7 +444,7 @@ static void BloodBat_Dormant(Entity *entity) {
         break;
     case 1:
         if (entity->distance_to_player < entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit24 = FALSE;

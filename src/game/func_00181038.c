@@ -1,7 +1,7 @@
 #include "kf_entity.h"
 
 int func_00192C98(void *, int, int, u32, int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_StartAction(char *, void (*)(void), int);
 
 /* The default dormant action (busy bit 0x20): holds animation 1 until the player is within
@@ -49,7 +49,7 @@ void EntityAi_Dormant(Entity *entity) {
         break;
     case 3:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
             ENTITY_FLAG_BITS(entity)->bit23 = 0;

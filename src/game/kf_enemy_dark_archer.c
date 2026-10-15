@@ -8,7 +8,7 @@
 #include "kf_effect.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -36,7 +36,7 @@ void func_0018C4B8(void *, void *);
 void Matrix_Multiply(void *, void *, void *);
 float func_00195388(float *, float, float);
 void func_00190A30(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
@@ -44,15 +44,15 @@ void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
 int func_00190BE0(Entity *);
 int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
-int func_001992F0(Entity *, int);
-void func_00196870(void *, int);
+int EntityAi_CanUseRanged(Entity *, int);
+void EntityAi_SensePlayer(void *, int);
 int func_00192C98(void *, int, int, u32, int);
 // match: the size is unknown; a complete small type would be read through $gp
 extern u8 D_0034A018[];
 extern MapSlot D_0038CD20[];
 extern EntitySpawnInfo *D_004467D0[2];
 void func_001035A8(u32, int);
-void func_00196CC0(void *);
+void EntityAi_CheckFarFromSpawn(void *);
 void func_0018E9C0(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -70,10 +70,10 @@ s32 func_00190F90(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
-s32 func_00199EB8(Entity *, f32 *, f32);
-void func_00195EF8(Entity *, s32, s32);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void func_0019A290(Entity *, s32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+void EntityAi_SpawnBoneEffect(Entity *, s32, s32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 extern const f32 D_0044682C[];
 f32 func_0018A9F0(void *, void *);
 f32 func_00195018(f32, f32, f32);
@@ -115,7 +115,7 @@ void DarkArcher_Init(Entity *entity) {
     }
     entity->flags &= ~0x10000000;
     *(s32 *)&entity->target = 0; // match: stored as an int, so it can move ahead of the params load
-    func_001958A8((char *)entity, (s32)D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, (s32)D_003E6E40[entity->params->unk02][1]);
     if (entity->spawn_info->unk40 != 0) {
         unkE0->think = DarkArcher_ThinkShootOrTurn;
         unkE0->animate = (void (*)(void))DarkArcher_Animate;
@@ -261,19 +261,19 @@ static void DarkArcher_OnHit(Entity *entity) {
     } else if (hit_strength == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The think handler of a spawn whose EntitySpawnInfo.unk40 is set: no states. While the entity is
    not busy it starts DarkArcher_RangedAttack with ranged record 2 when flag bit 63 is clear, the
-   pause Entity.unkA2 is over and func_001992F0 finds the player in reach of that record; else it
+   pause Entity.unkA2 is over and EntityAi_CanUseRanged finds the player in reach of that record; else it
    starts the move action with the command of func_00190BE0, the player as target. Keeps flag bit 10
    clear and bits 11 to 13 at 0. */
 static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     entity->flags &= ~0x400;
     if (entity->unkC6 == 0) {
@@ -282,7 +282,7 @@ static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
 
         entity->flags = flags;
         busy = (u32)(flags >> 63);
-        if (busy == 0 && entity->unkA2 == 0 && func_001992F0(entity, 2) != 0) {
+        if (busy == 0 && entity->unkA2 == 0 && EntityAi_CanUseRanged(entity, 2) != 0) {
             EntityAi_StartAttack(entity, DarkArcher_RangedAttack, unknown, 1, 2);
         } else {
             entity->target = &D_00413F80;
@@ -410,10 +410,10 @@ static void DarkArcher_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
         func_0018E9C0(entity);
         if ((s32)(entity->flags >> 53) & 1) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -533,7 +533,7 @@ done:
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but it keeps flag bit 10 set and starts
-   effect 0x379 at model point 8 (func_00195EF8) on frames 21 to 31 with record 0, on frames 36 to
+   effect 0x379 at model point 8 (EntityAi_SpawnBoneEffect) on frames 21 to 31 with record 0, on frames 36 to
    55 with the others. */
 static void DarkArcher_RangedAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -556,26 +556,26 @@ static void DarkArcher_RangedAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
         ENTITY_FLAG_BITS(entity)->bit10 = 1;
         if (((s32)(entity->flags >> 58) & 3) == 0) {
             if (entity->model->unkFC->unk82 >= 0x15 && entity->model->unkFC->unk82 < 0x20) {
-                func_00195EF8(entity, 0x379, 8);
+                EntityAi_SpawnBoneEffect(entity, 0x379, 8);
             }
         } else {
             if (entity->model->unkFC->unk82 >= 0x24 && entity->model->unkFC->unk82 < 0x38) {
-                func_00195EF8(entity, 0x379, 8);
+                EntityAi_SpawnBoneEffect(entity, 0x379, 8);
             }
         }
-        func_00195ED0(entity, unk3D8, (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
+        EntityAi_LaunchShots(entity, unk3D8, (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
                       entity->model->unkFC->unk82);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;
@@ -586,7 +586,7 @@ static void DarkArcher_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

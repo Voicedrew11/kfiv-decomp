@@ -20,7 +20,7 @@ float sqrtf(float);
 float atan2f(float, float);
 float asinf(float);
 float cosf(float);
-float func_0019B838(float);
+float Angle_Wrap(float);
 
 /* records a hit at `from`. The result is written through constant addresses (*&), not through
    a shared base register. */
@@ -933,7 +933,7 @@ void Collision_CylinderArc(f32 *base, f32 *other, f32 radius, f32 height, f32 ot
     }
     half_angle += atan2f(radius + radius, sqrtf(distance));
     angle = -(atan2f(delta[2], delta[0]) - 1.5707964f);
-    angle = func_0019B838(angle - facing);
+    angle = Angle_Wrap(angle - facing);
     if (angle < -half_angle) {
         return;
     }
@@ -1001,7 +1001,7 @@ void Collision_CylinderArcPitch(f32 *base, f32 *other, f32 radius, f32 height, f
     flat = sqrtf(distance);
     half_angle += atan2f(radius + radius, flat);
     angle = -(atan2f(delta[2], delta[0]) - 1.5707964f);
-    angle = func_0019B838(angle - facing);
+    angle = Angle_Wrap(angle - facing);
     if (angle < -half_angle) {
         return;
     }
@@ -1234,7 +1234,7 @@ void Collision_BallSwing(void *ball_centre, void *swing_origin, f32 radius, f32 
         return;
     }
     half_angle += atan2f(radius + radius, sqrtf(bottom));
-    top = func_0019B838(-(atan2f(delta[2], delta[0]) - 1.5707964f) - facing);
+    top = Angle_Wrap(-(atan2f(delta[2], delta[0]) - 1.5707964f) - facing);
     if (top < -half_angle) {
         return;
     }
@@ -1292,7 +1292,7 @@ void Collision_BallSwingPitch(void *ball_centre, void *swing_origin, f32 radius,
     flat_distance = sqrtf(bottom);
     twice_radius = radius + radius;
     half_angle += atan2f(twice_radius, flat_distance);
-    top = func_0019B838(-(atan2f(delta[2], delta[0]) - 1.5707964f) - facing);
+    top = Angle_Wrap(-(atan2f(delta[2], delta[0]) - 1.5707964f) - facing);
     if (top < -half_angle) {
         return;
     }

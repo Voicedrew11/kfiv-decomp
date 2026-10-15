@@ -5,11 +5,11 @@
 
 #include "common.h"
 
-/* a file load job (func_0019EBB8, func_0019EDA8, func_0019EF68, func_0019F6B8) */
+/* a file load job (Sound_BgmReadBody, Sound_BgmCloseBody, Sound_BgmReadSequence, func_0019F6B8) */
 typedef struct {
     int *buffers;                   /* 0x00 [0]/[2]: where the data goes */
     char *name;                     /* 0x04 file name, or a sprintf format of the index */
-    char pad08[0x04];
+    char *unk08;                    /* 0x08 sprintf format of the index (Sound_BgmReadHeader) */
     char *name_format;              /* 0x0C sprintf format of the index */
     int unk10;                      /* 0x10 */
     int unk14;                      /* 0x14 */

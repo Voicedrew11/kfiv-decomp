@@ -26,7 +26,7 @@ void func_001B4EE0(void);
 int func_001060C0(void);
 void func_00104EC8(void);
 void func_001B5A10(void);
-void func_001A1260(int);
+void Sound_LoadMgBank(int);
 void func_0019C520(void);
 
 /* Resets every game system for a new session; a loaded save is then applied on top. */
@@ -57,6 +57,6 @@ void func_001000C8(int arg) {
     }
     func_001B5A10();
     Player_LoadArmModels();
-    func_001A1260(D_00413F80.equipped_magic);
+    Sound_LoadMgBank(D_00413F80.equipped_magic);
     func_0019C520();
 }

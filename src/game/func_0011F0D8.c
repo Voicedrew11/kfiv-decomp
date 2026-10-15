@@ -1,7 +1,7 @@
 #include "kf_map.h"
 
 extern int D_00446770;
-int func_0019E9E0(char);
+int Sound_StopTagged(char);
 
 void func_0011F0D8(MapTrigger *trigger) {
     TriggerSource *source;
@@ -13,7 +13,7 @@ void func_0011F0D8(MapTrigger *trigger) {
                 trigger->shot.unk00[0] = 0;
                 return;
             }
-            func_0019E9E0((char)source->unk44);
+            Sound_StopTagged((char)source->unk44);
             trigger->shot.unk00[0] = 0;
         }
     }

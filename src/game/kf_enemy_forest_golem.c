@@ -7,7 +7,7 @@
 #include "kf_map_object.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32); // match: an int result keeps $2 busy after the call
@@ -25,8 +25,8 @@ void func_001B57A0(u8, u8, u8);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void func_0018E9C0(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -48,7 +48,7 @@ void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 void func_0018DCD8(Entity *);
 void func_0018DC40(char *);
-s32 func_00197078(Entity *);
+s32 EntityAi_CanAttack(Entity *);
 float func_00194F80(void *, void *);
 
 static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now);
@@ -81,7 +81,7 @@ void ForestGolem_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->animate = EntityAi_Animate;
     unkE0->move = (void (*)(void))ForestGolem_Move;
     unkE0->on_hit = NULL;
@@ -251,7 +251,7 @@ static void func_0017A540(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
     unkE0->move = (void (*)(void))EntityAi_Move;
@@ -288,12 +288,12 @@ static void func_0017A540(Entity *entity) {
    as ExpeditionSoldier_Think. */
 static void ForestGolem_ThinkByState(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -511,7 +511,7 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
     MapObject *map_object;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
@@ -528,7 +528,7 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
         ForestGolem_WalkToMapObjectPosX(entity, unknown);
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -546,7 +546,7 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
 }
 
 /* Helper of ForestGolem_ThinkUseMapObjectsPosX, which calls it in place of the state functions: attacks when
-   func_00197078 says so; else walks to a fixed point (x 950) and from there to a point next to the
+   EntityAi_CanAttack says so; else walks to a fixed point (x 950) and from there to a point next to the
    map object whose bit is clear, turns to face it and starts ForestGolem_SignalMapObject for it;
    until then it starts the move action. */
 static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
@@ -556,7 +556,7 @@ static void ForestGolem_WalkToMapObjectPosX(Entity *entity, s32 unknown) {
     f32 range;
 
     // match: takes the entity; the shared prototype has no parameters
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -621,7 +621,7 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
     MapObject *map_object;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
@@ -638,7 +638,7 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
         ForestGolem_WalkToMapObjectNegX(entity, unknown);
         return;
     }
-    func_00196CC0((char *)entity);
+    EntityAi_CheckFarFromSpawn((char *)entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         EntityAi_ThinkReturn(entity, unknown);
@@ -664,7 +664,7 @@ static void ForestGolem_WalkToMapObjectNegX(Entity *entity, s32 unknown) {
     f32 range;
 
     // match: takes the entity; the shared prototype has no parameters
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {

@@ -12,7 +12,7 @@ extern int D_00446770;
 
 MapRecordInfo *func_00115CD0(CameraState *, f32, int);
 int rand(void);
-float func_0019B838(float);
+float Angle_Wrap(float);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0RotMatrixX(float *, float *, float);
@@ -35,7 +35,7 @@ void func_00100D10(void) {
     }
     if (D_004325A0.unk74 != 0 && D_004325A0.unk70 > 0.0f) {
         angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * 0.017453292f;
-        angle = func_0019B838(angle + D_004325A0.unk18);
+        angle = Angle_Wrap(angle + D_004325A0.unk18);
         D_004325A0.unk50[0] = D_004325A0.unk70;
         D_004325A0.unk50[1] = 0.0f;
         D_004325A0.unk50[2] = 0.0f;
@@ -53,7 +53,7 @@ void func_00100D10(void) {
     }
     if (D_004325A0.unk7C != 0 && D_004325A0.unk78 > 0.0f) {
         angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * 0.017453292f;
-        angle = func_0019B838(angle + D_004325A0.unk18);
+        angle = Angle_Wrap(angle + D_004325A0.unk18);
         D_004325A0.unk60[0] = D_004325A0.unk78;
         D_004325A0.unk60[1] = 0.0f;
         D_004325A0.unk60[2] = 0.0f;

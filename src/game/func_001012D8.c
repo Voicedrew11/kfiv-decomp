@@ -17,7 +17,7 @@ void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0InversMatrix(void *, void *);
 void sceVu0MulMatrix(void *, void *, void *);
 void sceVu0CopyMatrix(void *, void *);
-float func_0019B838(float);
+float Angle_Wrap(float);
 
 /* Builds the camera matrices: the projection, world to view, and world to screen for the given mode. */
 void func_001012D8(int projection, int mode) {
@@ -42,8 +42,8 @@ void func_001012D8(int projection, int mode) {
     sceVu0TransMatrix(D_00432320, D_00431AF0, translation);
     sceVu0RotMatrixY(D_00432320, D_00432320, -D_004325A0.unk14);
     sceVu0RotMatrixX(D_00432320, D_00432320, -D_004325A0.unk10);
-    sceVu0RotMatrixY(D_00432360, D_00431AF0, func_0019B838(3.1415927f - D_004325A0.unk14));
-    sceVu0RotMatrixX(D_00432360, D_00432360, func_0019B838(-D_004325A0.unk10));
+    sceVu0RotMatrixY(D_00432360, D_00431AF0, Angle_Wrap(3.1415927f - D_004325A0.unk14));
+    sceVu0RotMatrixX(D_00432360, D_00432360, Angle_Wrap(-D_004325A0.unk10));
     sceVu0RotMatrixZ(D_00432360, D_00432360, D_004325A0.unk18);
     sceVu0InversMatrix(D_00432360, D_00432360);
     switch (mode) {

@@ -7,7 +7,7 @@
 #include "kf_map_object.h"
 #include "kf_entity_world.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -19,7 +19,7 @@ int func_00192EB0(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int func_00194368(EntityModel *, f32);
 void func_00190A30(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
 int func_00192C98(void *, int, int, u32, int);
@@ -28,8 +28,8 @@ int func_0019A3F0(void *, int);
 float func_00195388(float *, float, float);
 extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
-void func_00196870(void *, int);
-s32 func_00197078(Entity *);
+void EntityAi_SensePlayer(void *, int);
+s32 EntityAi_CanAttack(Entity *);
 int func_0018F030(char *);
 float func_00194F80(void *, void *);
 void Vector_Copy(void *, void *);
@@ -88,7 +88,7 @@ void StoneGuardian_Init(Entity *entity) {
     }
     entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
     entity->model->unk15C = entity->unkD6;
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->animate = (void (*)(void))StoneGuardian_Animate;
     unkE0->on_hit = (void (*)(void))StoneGuardian_OnHit;
     unkE0->move = (void (*)(void))StoneGuardian_Move;
@@ -164,7 +164,7 @@ static void StoneGuardian_OnHit(Entity *entity) {
     if (((entity->flags >> 36) & 3) == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The move handler: turns only while the command also walks or runs; picks animation 3 or 4
@@ -305,7 +305,7 @@ static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown) {
 
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 0);
+        EntityAi_SensePlayer(entity, 0);
     }
     if (entity->unkC6 == 0) {
         is_open = 0;
@@ -379,7 +379,7 @@ static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown) {
     }
 }
 
-/* The action of state 1 in mode 2: attacks when func_00197078 says so; else goes to a post picked
+/* The action of state 1 in mode 2: attacks when EntityAi_CanAttack says so; else goes to a post picked
    by where the player is and turns to a fixed heading there. */
 static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -388,8 +388,8 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
     f32 angle;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (!(s32)(entity->flags >> 63) && ((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (!(s32)(entity->flags >> 63) && ((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -446,7 +446,7 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
     ((void (*)(Entity *))unkE0->move)(entity);
 }
 
-/* The action of state 2 in mode 2: attacks when func_00197078 says so; else goes for the player,
+/* The action of state 2 in mode 2: attacks when EntityAi_CanAttack says so; else goes for the player,
    stopping at the edge of its bounds and turning to the player there. */
 static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -455,8 +455,8 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
     f32 range;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (!(s32)(entity->flags >> 63) && ((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (!(s32)(entity->flags >> 63) && ((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -555,7 +555,7 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
 
 /* The action of state 3 in mode 2: after the pause in work word unk6A goes back to its spawn point,
    turns to its spawn heading (StoneGuardian_TurnToSpawnHeading) and goes to state 0; still attacks when
-   func_00197078 says so. */
+   EntityAi_CanAttack says so. */
 static void StoneGuardian_Mode2ReturnToSpawn(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 angle;
@@ -565,8 +565,8 @@ static void StoneGuardian_Mode2ReturnToSpawn(Entity *entity) {
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (!(s32)(entity->flags >> 63) && ((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (!(s32)(entity->flags >> 63) && ((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -664,7 +664,7 @@ static void StoneGuardian_ThinkMode3StayInBounds(Entity *entity, s32 unknown) {
     }
 }
 
-/* The action of state 1 in mode 3: attacks when func_00197078 says so; else goes to a fixed post
+/* The action of state 1 in mode 3: attacks when EntityAi_CanAttack says so; else goes to a fixed post
    and turns to a fixed heading there. */
 static void StoneGuardian_Mode3WalkToPost(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -673,8 +673,8 @@ static void StoneGuardian_Mode3WalkToPost(Entity *entity) {
     f32 range;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -704,7 +704,7 @@ static void StoneGuardian_Mode3WalkToPost(Entity *entity) {
     ((void (*)(Entity *))unkE0->move)(entity);
 }
 
-/* The action of state 2 in mode 3: attacks when func_00197078 says so; else goes for the player,
+/* The action of state 2 in mode 3: attacks when EntityAi_CanAttack says so; else goes for the player,
    stopping at the edge of its bounds and turning to the player there. */
 static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -713,8 +713,8 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
     f32 range;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -772,7 +772,7 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
 
 /* The action of state 3 in mode 3: after the pause in work word unk6A goes back to its spawn point,
    turns to its spawn heading (StoneGuardian_TurnToSpawnHeading) and goes to state 0; still attacks when
-   func_00197078 says so. */
+   EntityAi_CanAttack says so. */
 static void StoneGuardian_Mode3ReturnToSpawn(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 angle;
@@ -782,8 +782,8 @@ static void StoneGuardian_Mode3ReturnToSpawn(Entity *entity) {
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -889,8 +889,8 @@ static void StoneGuardian_Mode4WalkToPost(Entity *entity) {
     f32 range;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -928,8 +928,8 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
     f32 range;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -995,8 +995,8 @@ static void StoneGuardian_Mode4ReturnToSpawn(Entity *entity) {
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -1103,8 +1103,8 @@ static void StoneGuardian_Mode5WalkToPost(Entity *entity) {
     f32 range;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -1142,8 +1142,8 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
     f32 range;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {
@@ -1209,8 +1209,8 @@ static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
         return;
     }
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    // match: func_00197078 takes the entity
-    if (((int (*)(Entity *))func_00197078)(entity)) {
+    // match: EntityAi_CanAttack takes the entity
+    if (((int (*)(Entity *))EntityAi_CanAttack)(entity)) {
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         } else {

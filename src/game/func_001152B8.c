@@ -20,7 +20,7 @@ void func_001C8990(int, f32 *);
 void Script_Init(int);
 int Script_Start(int, int);
 void func_001BB590(void);
-void func_0019EA98(int);
+void Sound_StopAll(int);
 
 /* Makes the other map slot the current one: moves everything by the load's offset and switches
    the sound over. */
@@ -59,7 +59,7 @@ void func_001152B8(int map) {
         loading = queue->unk10;
         if (loading != slot && queue->unk14 != slot) {
             func_001BB590();
-            func_0019EA98(1);
+            Sound_StopAll(1);
             queue->unk14 = slot;
         } else if (loading == slot && D_0038A130.unk14 != slot) {
             D_0038A130.unk14 = NULL;

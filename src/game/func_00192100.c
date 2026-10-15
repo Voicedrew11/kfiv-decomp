@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-void func_0019A590(void *, void *, void *, void *, void *, f32);
+void Vector_Hermite(void *, void *, void *, void *, void *, f32);
 
 /* Eases the parts of one type toward the pose between the motion keys around a frame; returns whether the weight reached 1. */
 s32 func_00192100(ModelInstance *model, s32 type, s32 table, s16 frame, f32 weight) {
@@ -55,7 +55,7 @@ s32 func_00192100(ModelInstance *model, s32 type, s32 table, s16 frame, f32 weig
                         tangent0->w = 1.0f;
                         *(MotionVector *)tangent1 = vectors[next->rotation_in];
                         tangent1->w = 1.0f;
-                        func_0019A590(result, point0, point1, tangent0, tangent1, ratio);
+                        Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
                         diff = result->x - part->unk50;
                         diff -= (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
                         if (3.1415927f < diff) {
@@ -109,7 +109,7 @@ s32 func_00192100(ModelInstance *model, s32 type, s32 table, s16 frame, f32 weig
                         *(MotionVector *)point1 = vectors[next->position];
                         *(MotionVector *)tangent0 = vectors[key->position_out];
                         *(MotionVector *)tangent1 = vectors[next->position_in];
-                        func_0019A590(result, point0, point1, tangent0, tangent1, ratio);
+                        Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
                         part->unk40[0] += (result->x - part->unk40[0]) * weight;
                         part->unk40[1] += (result->y - part->unk40[1]) * weight;
                         part->unk40[2] += (result->z - part->unk40[2]) * weight;

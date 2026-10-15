@@ -10,7 +10,7 @@ void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Add(void *, void *, void *);
 void Vector_Copy(void *, void *);
-int func_0019B908(float *, float, float);
+int Angle_Approach(float *, float, float);
 float atan2f(float, float);
 float sqrtf(float);
 
@@ -64,8 +64,8 @@ void func_00100FC8(void) {
             D_004325A0.unk14 = yaw;
             break;
         case 2:
-            func_0019B908(&D_004325A0.unk10, pitch, D_004325A0.unk40);
-            func_0019B908(&D_004325A0.unk14, yaw, D_004325A0.unk40);
+            Angle_Approach(&D_004325A0.unk10, pitch, D_004325A0.unk40);
+            Angle_Approach(&D_004325A0.unk14, yaw, D_004325A0.unk40);
             break;
         }
     }

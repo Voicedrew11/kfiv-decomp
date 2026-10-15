@@ -4,7 +4,7 @@
 void func_001AF298(void *, void *);
 void Vector_Copy(void *, void *);
 void func_001AF5B0(void *, void *);
-void func_0019CE30(u8, void *);
+int Sound_PlayMapAt(u8, void *);
 void Vector_Subtract(void *, void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 
@@ -23,7 +23,7 @@ void func_001AC8E8(EffectActor *effect) {
     if (effect->frame >= motion->end_frame) {
         if (effect->frame == motion->end_frame) {
             func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
-            func_0019CE30((u8)effect->def->unkE0, &effect->model->position);
+            Sound_PlayMapAt((u8)effect->def->unkE0, &effect->model->position);
         }
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
         func_001AF298(effect, motion->unk24);

@@ -2,7 +2,7 @@
 #include "kf_entity.h"
 
 /* Moves *level by delta, keeping it between 0x40 and max.
-   match: max is a parameter so the 0xC0 cap stays in a register (slt/movn), as in func_0019A348 */
+   match: max is a parameter so the 0xC0 cap stays in a register (slt/movn), as in EntityAi_RaiseAttackWeight */
 static inline void adjust_level(u8 *level, s32 delta, s32 max) {
     s32 value = *level + delta;
 

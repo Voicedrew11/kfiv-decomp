@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-void func_0019A590(void *, void *, void *, void *, void *, f32);
+void Vector_Hermite(void *, void *, void *, void *, void *, f32);
 
 /* Blends the parts toward the pose between the motion keys around the channel's frame, advances the frame and reports whether it ended. */
 s32 func_00193A58(ModelInstance *model, s32 step, s32 backwards, f32 weight) {
@@ -83,7 +83,7 @@ s32 func_00193A58(ModelInstance *model, s32 step, s32 backwards, f32 weight) {
             tangent0->w = 1.0f;
             *(MotionVector *)tangent1 = vectors[next->rotation_in];
             tangent1->w = 1.0f;
-            func_0019A590(result, point0, point1, tangent0, tangent1, ratio);
+            Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
             angle = result->x;
             angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
             if (3.1415927f < angle) {
@@ -140,7 +140,7 @@ s32 func_00193A58(ModelInstance *model, s32 step, s32 backwards, f32 weight) {
             *(MotionVector *)point1 = vectors[next->position];
             *(MotionVector *)tangent0 = vectors[key->position_out];
             *(MotionVector *)tangent1 = vectors[next->position_in];
-            func_0019A590(result, point0, point1, tangent0, tangent1, ratio);
+            Vector_Hermite(result, point0, point1, tangent0, tangent1, ratio);
             part->unk40[0] = part->unk40[0] * (1.0f - weight) + result->x * weight;
             part->unk40[1] = part->unk40[1] * (1.0f - weight) + result->y * weight;
             part->unk40[2] = part->unk40[2] * (1.0f - weight) + result->z * weight;

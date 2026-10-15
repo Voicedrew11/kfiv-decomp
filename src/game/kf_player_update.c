@@ -60,8 +60,8 @@ extern u16 D_00446944; // match: u16 here; kf_game.c declares this pad mask as s
 void *memset(void *, int, u32);
 float sinf(float);
 int rand(void);
-int func_0019D020(int);
-int func_0019D0F0(int);
+int Sound_PlayFootstep(int);
+int Sound_PlayCommon(int);
 int func_001B4F30(u16, void *, void *, void *, void *);
 void Player_Move(u16 held, u16 pressed); // match: retail passes both pad words
 void func_001B9078(void);
@@ -295,37 +295,37 @@ void Player_Update(void) {
         D_00446958 = -1;
         if ((s32)(D_00413F80.unk1C8 >> 39) & 1) {
             PLAYER_STATUS(&D_00413F80)->step_sounded = TRUE;
-            D_00446958 = func_0019D020(0x25);
+            D_00446958 = Sound_PlayFootstep(0x25);
         } else if ((s32)(D_00413F80.unk1C8 >> 38) & 1) {
             PLAYER_STATUS(&D_00413F80)->step_sounded = TRUE;
-            D_00446958 = func_0019D020(0x24);
+            D_00446958 = Sound_PlayFootstep(0x24);
         } else if (D_00413F80.unk1E0 != 0 && D_00413F80.unk1E4 == 4) {
             PLAYER_STATUS(&D_00413F80)->step_sounded = TRUE;
             if (sound_free) {
-                D_00446958 = func_0019D020(0x27);
+                D_00446958 = Sound_PlayFootstep(0x27);
             }
         } else {
             PLAYER_STATUS(&D_00413F80)->step_sounded = TRUE;
             switch (D_00413F80.unk210) {
             case 1:
-                func_0019D020(0x21);
+                Sound_PlayFootstep(0x21);
                 break;
             case 2:
                 if (sound_free) {
-                    D_00446958 = func_0019D020(0x22);
+                    D_00446958 = Sound_PlayFootstep(0x22);
                 }
                 break;
             case 3:
                 if (sound_free) {
-                    D_00446958 = func_0019D020(0x23);
+                    D_00446958 = Sound_PlayFootstep(0x23);
                 }
                 break;
             case 5:
-                func_0019D020(0x24);
+                Sound_PlayFootstep(0x24);
                 break;
             case 0:
             case 6:
-                func_0019D020(0x20);
+                Sound_PlayFootstep(0x20);
                 break;
             default:
                 PLAYER_STATUS(&D_00413F80)->step_sounded = FALSE;
@@ -336,7 +336,7 @@ void Player_Update(void) {
     /* the warning sound while unkB4 is at a tenth of unk58 or less */
     if (D_00413F80.unk1A8 == 0 && D_00413F80.hp_now > 0 && D_00413F80.hp_now * 100 / D_00413F80.hp_max < 11 &&
         D_00446ED4 % 27 == 0) {
-        func_0019D0F0(0x29);
+        Sound_PlayCommon(0x29);
     }
 
     Player_UpdateActions(held, pressed);
@@ -629,7 +629,7 @@ extern u16 D_00446940;
 void *memset(void *, int, u32);
 void func_00108A08(ModelInstance *, int);
 void func_00108AC8(void *);
-void func_0019CE00(int mode);
+void Sound_PlaySw(int mode);
 s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
 void Vector_Copy(void *, void *);
 
@@ -726,7 +726,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             func_001B1470(&request, (Unk1B1470Extra *)&D_00413F80.unk268);
         }
         if (!D_00413F80.unk260_0 && def->unk80 != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->unk82) {
-            ((int (*)(int))func_0019CE00)(def->unk80); // match: called as if it returned a value
+            ((int (*)(int))Sound_PlaySw)(def->unk80); // match: called as if it returned a value
             D_00413F80.unk260_0 = 1;
         }
         if (D_0044693E & pressed) {
@@ -829,8 +829,8 @@ extern u16 D_0044693C;
 void *memset(void *, s32, u32);
 void func_00108AC8(void *);
 int func_00109098(ModelInstance *model, u8 index, u16 speed);
-void func_0019CDA0(s8 slot);
-void func_0019CE00(int mode);
+void Sound_StopVoice(s8 slot);
+void Sound_PlaySw(int mode);
 
 
 /* Handler of a drawn weapon while the button is held: the draw motion runs to its last frame and the
@@ -850,7 +850,7 @@ void Player_DrawBow(u16 held, u16 pressed) {
     }
     if (D_00413F80.unk263 == 0 && !((s32)(D_00413F80.unk1C8 >> 39) & 1) && Player_CanFireAtAim()) {
         if (!D_00413F80.unk260_0 && def->unk80 != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->unk82) {
-            ((int (*)(int))func_0019CE00)(0); // match: called as if it returned a value
+            ((int (*)(int))Sound_PlaySw)(0); // match: called as if it returned a value
             D_00413F80.unk260_0 = 1;
         }
         if (D_0044693C & held) {
@@ -866,7 +866,7 @@ void Player_DrawBow(u16 held, u16 pressed) {
         }
         if (D_00413F80.unk298 != 0) {
             if (D_00413F80.unk260_0) {
-                func_0019CDA0(2);
+                Sound_StopVoice(2);
             }
             item_shot->unk02 = D_00413F80.unkBC;
             item_shot->unk24 = D_00413F80.weapon;
@@ -902,10 +902,10 @@ void Player_DrawBow(u16 held, u16 pressed) {
 
 extern PlayerState D_00413F80;
 
-void func_0019CE00(int mode);
+void Sound_PlaySw(int mode);
 
 void Player_PlayEquipSound(void) {
-    func_0019CE00(1);
+    Sound_PlaySw(1);
     D_00413F80.unkBC = 0;
     D_00413F80.unk258++;
 }
@@ -1021,10 +1021,10 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-float func_0019B838(float);
-int func_0019B908(float *, float, float);
-int func_0019D0F0(int);
-int func_0019D158(int);
+float Angle_Wrap(float);
+int Angle_Approach(float *, float, float);
+int Sound_PlayCommon(int);
+int Sound_PlayMap(int);
 void func_001B92C0(float);
 void func_001B9610(void);
 int func_001BDDC0(void);
@@ -1078,9 +1078,9 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     platform = (MapObject *)D_00414280.unk208;
     if (platform != NULL && (platform->unk10 & 0x10000) && (MAP_OBJECT_DEF_FLAGS(platform->unk04) & MAP_OBJECT_DEF_CARRIES)) {
         Vector_Subtract(&turn, &platform->model->rotation, &platform->unk30);
-        turn.x = func_0019B838(turn.x);
-        turn.y = func_0019B838(turn.y);
-        turn.z = func_0019B838(turn.z);
+        turn.x = Angle_Wrap(turn.x);
+        turn.y = Angle_Wrap(turn.y);
+        turn.z = Angle_Wrap(turn.z);
         sceVu0RotMatrixZ(matrix, D_00431AF0, turn.z);
         sceVu0RotMatrixX(matrix, matrix, turn.x);
         sceVu0RotMatrixY(matrix, matrix, turn.y);
@@ -1197,7 +1197,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
             }
         }
     } else if ((D_00446938 & buttons) && (D_0044693A & buttons)) {
-        func_0019B908(&D_00413F80.rotation.x, 0.0f, level_step);
+        Angle_Approach(&D_00413F80.rotation.x, 0.0f, level_step);
     } else {
         D_00413F80.unk1C8 &= ~PLAYER_FLAG_32;
     }
@@ -1328,7 +1328,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
         delta.x *= 0.5f;
         delta.y *= 0.5f;
     }
-    D_00413F80.rotation.y = func_0019B838(D_00413F80.rotation.y + delta.y);
+    D_00413F80.rotation.y = Angle_Wrap(D_00413F80.rotation.y + delta.y);
     D_00413F80.rotation.x += delta.x;
     if (D_00413F80.rotation.x > 1.012291f) {
         D_00413F80.rotation.x = 1.012291f;
@@ -1379,9 +1379,9 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                 if (((s32)(D_00414280.unk1C8 >> 34) & 1) && D_00413F80.unk1A8 == 0) {
                     if (D_00413F80.position.y - D_00413F80.unk1D8 > 110.0f) {
                         if (!((s32)(D_00413F80.unk1C8 >> 38) & 1)) {
-                            func_0019D0F0(0x22);
+                            Sound_PlayCommon(0x22);
                         } else if (!((s32)(D_00414280.unk1C8 >> 38) & 1)) {
-                            func_0019D158(0x38);
+                            Sound_PlayMap(0x38);
                         }
                     }
                     if (D_00414280.unk1AC >= 66.666664f) {

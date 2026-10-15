@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 #include "common.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -18,8 +18,8 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void func_0018E9C0(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -39,13 +39,13 @@ s32 func_00190F90(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
-s32 func_001984B0(Entity *, s32);
+s32 EntityAi_CanUseMelee(Entity *, s32);
 int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
 int func_00192C98(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void func_0019A290(Entity *, s32);
-s32 func_001992F0(Entity *, s32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
+s32 EntityAi_CanUseRanged(Entity *, s32);
 
 static void LavaLizard_Think(Entity *entity, s32 unknown);
 static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown);
@@ -63,7 +63,7 @@ void LavaLizard_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     if (entity->spawn_info->unk40 != 0) {
         unkE0->think = LavaLizard_ThinkNoStates;
     } else {
@@ -107,10 +107,10 @@ static void LavaLizard_Think(Entity *entity, s32 unknown) {
         unkE0->unk7A = entity->params->unk438;
     }
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0((char *)entity);
+        EntityAi_CheckFarFromSpawn((char *)entity);
         func_0018E9C0(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -229,7 +229,7 @@ static void LavaLizard_RunAtPlayer(Entity *entity) {
     f32 direction[4];
 
     entity->unkC6 |= 0x1000;
-    if (func_001984B0(entity, 0)) {
+    if (EntityAi_CanUseMelee(entity, 0)) {
         EntityAi_StartAttack(entity, EntityAi_MeleeAttack, 1, 0, 0);
         return;
     }
@@ -242,7 +242,7 @@ static void LavaLizard_RunAtPlayer(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         entity->unk94 += entity->unk94;
         if (entity->unkA0 == 0 || func_0018EAC0(entity, direction) != 0) {
             entity->unkC6 = 0;
@@ -276,17 +276,17 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
         if (entity->model->unkFC->unk82 >= 50 && entity->model->unkFC->unk82 <= 150 && (D_00446ED4 & 1)) {
-            func_00195ED0(entity, unk3D8, 50, 150);
+            EntityAi_LaunchShots(entity, unk3D8, 50, 150);
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
@@ -297,7 +297,7 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -314,7 +314,7 @@ static void LavaLizard_ThinkNoStates(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
         LavaLizard_ThinkDecideShootOrTurn(entity, unknown);
@@ -325,7 +325,7 @@ static void LavaLizard_ThinkNoStates(Entity *entity, s32 unknown) {
 }
 
 /* Decides for LavaLizard_ThinkNoStates: guards the player's swing, starts LavaLizard_RangedAttack0
-   when func_001992F0 finds the player in reach, else turns on the spot towards the player from time
+   when EntityAi_CanUseRanged finds the player in reach, else turns on the spot towards the player from time
    to time. */
 static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -337,7 +337,7 @@ static void LavaLizard_ThinkDecideShootOrTurn(Entity *entity, s32 unknown) {
         return;
     }
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    if (entity->unkA2 == 0 && func_001992F0(entity, 1)) {
+    if (entity->unkA2 == 0 && EntityAi_CanUseRanged(entity, 1)) {
         EntityAi_StartAttack(entity, LavaLizard_RangedAttack0, unknown, 1, 0);
         return;
     }

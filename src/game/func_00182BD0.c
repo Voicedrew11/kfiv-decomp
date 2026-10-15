@@ -1,7 +1,7 @@
 #include "kf_entity.h"
 
 void func_00190A30(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(Entity *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
@@ -24,5 +24,5 @@ void EntityAi_OnHit(Entity *entity) {
     } else if (ENTITY_FLAG_BITS(entity)->bits36 == 2) {
         EntityAi_SetReaction(entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }

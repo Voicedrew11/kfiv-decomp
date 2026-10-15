@@ -2,7 +2,7 @@
 
 void Vector_Add(void *, void *, void *);
 void Vector_Copy(void *, void *);
-int func_0019B9F0(float, float *, int);
+int Angle_EaseToward(float, float *, int);
 extern ModelNode *D_004469D8;
 extern float D_00413F90[];
 extern float D_0044719C;
@@ -18,10 +18,10 @@ void func_001C9EB0(void) {
     D_004471B0--;
     if (D_004471B0 > 0) {
         Vector_Add(&D_004469D8->model->position, &D_004469D8->model->position, D_005B60F0);
-        func_0019B9F0(0.0f, &D_004469D8->model->rotation.x, D_004471B0);
-        func_0019B9F0(0.0f, &D_004469D8->model->rotation.y, D_004471B0);
-        func_0019B9F0(0.0f, &D_004469D8->model->rotation.z, D_004471B0);
-        func_0019B9F0(D_004471A8, D_00413F90, D_004471B0);
+        Angle_EaseToward(0.0f, &D_004469D8->model->rotation.x, D_004471B0);
+        Angle_EaseToward(0.0f, &D_004469D8->model->rotation.y, D_004471B0);
+        Angle_EaseToward(0.0f, &D_004469D8->model->rotation.z, D_004471B0);
+        Angle_EaseToward(D_004471A8, D_00413F90, D_004471B0);
         D_0044719C = (float)D_004471B0 / (float)D_004471AC;
         return;
     }

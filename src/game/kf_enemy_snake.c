@@ -7,7 +7,7 @@
 #include "kf_map.h"
 #include "kf_effect.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -19,15 +19,15 @@ void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 D_003E6E40[][2];
 int func_00192C98(void *, int, int, u32, int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 extern u8 D_00349690[];
 f32 func_0018A9F0(void *, void *);
 void func_00195588(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
 float func_00194F80(void *, void *);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void func_0018E9C0(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -59,7 +59,7 @@ void Snake_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Snake_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -134,7 +134,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
@@ -215,7 +215,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
         break;
     case 4:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
@@ -265,7 +265,7 @@ static void Snake_Dormant(Entity *entity) {
         break;
     case 2:
         if (func_00194F80(entity->model->position, entity->spawn_info) >= (f32)entity->params->unk43A) {
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
@@ -300,11 +300,11 @@ static void Snake_Think(Entity *entity, s32 unknown) {
         }
     }
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
         if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) != 0x6000000) {
-            func_00196CC0((char *)entity);
+            EntityAi_CheckFarFromSpawn((char *)entity);
         }
         func_0018E9C0(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {

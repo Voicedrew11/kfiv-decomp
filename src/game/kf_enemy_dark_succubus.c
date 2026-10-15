@@ -7,7 +7,7 @@
 #include "kf_entity_world.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -16,7 +16,7 @@ void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
 void func_00190A30(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionRewind(Entity *);
 int func_00192EB0(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
@@ -28,8 +28,8 @@ extern u8 D_0034A018[];
 // match: the size is unknown; a complete small type would be read through $gp
 extern f32 D_0044681C[];
 int rand(void);
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(void *);
 void func_0018E9C0(void *);
 s32 func_00190F90(Entity *, s32, f32);
 int EntityAi_ThinkReturn(void *, int);
@@ -40,7 +40,7 @@ void func_0018DA38(Entity *, s32, s32, s32);
 s32 func_0018EEE0(Entity *, f32, f32);
 float func_00195478(float *, char *);
 float func_001957B8(float angle_from, float angle_to);
-s32 func_00197F00(Entity *);
+s32 EntityAi_CanMelee(Entity *);
 s32 func_0018F648(Entity *);
 s32 func_0018FD50(Entity *, s32);
 void func_00190B88(Entity *, s32);
@@ -57,9 +57,9 @@ void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 void func_0018D8B8(Entity *, s32, s32, s32);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 void func_0018DCD8(Entity *);
-s32 func_00195AC0(Entity *, void *, s32, s32, s32);
+s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 int func_0018CF30(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 // match: the size is unknown (a complete small type would be read through $gp) and it is
 // const: the store to unk54 may then be scheduled after the lui of this address
@@ -103,7 +103,7 @@ void DarkSuccubus_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = DarkSuccubus_Think;
     unkE0->animate = (void (*)(void))DarkSuccubus_Animate;
     unkE0->on_hit = (void (*)(void))DarkSuccubus_OnHit;
@@ -152,7 +152,7 @@ static void DarkSuccubus_OnHit(Entity *entity) {
     } else if (((s32)(entity->flags >> 36) & 3) == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))DarkSuccubus_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
     unkE0->unk68 = 0;
     unkE0->unk6A = entity->params->unk438;
     entity->unkD6 = 0x80;
@@ -205,7 +205,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
     f32 height;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (D_0034A018[0] == 0) {
         entity->model->unk102 |= 0x800;
@@ -224,7 +224,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
     }
     DarkSuccubus_CountLiveSpawns(entity);
     if (entity->unkC6 == 0) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
         func_0018E9C0(entity);
         if (D_00413F80.position[0] >= 6600.0f) {
             ENTITY_FLAGS(entity) |= 0x40000;
@@ -309,7 +309,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
 
 /* The think function of state 2 while work byte unk7C is 0 (func_00160630 and func_00160B30 are the
    other two): starts DarkSuccubus_DodgeAnim29Or30 when DarkSuccubus_ShouldDodgeAnim29Or30 says so and DarkSuccubus_Dodge for
-   the player's swing; starts DarkSuccubus_MeleeAttack when func_00197F00 finds a melee record in
+   the player's swing; starts DarkSuccubus_MeleeAttack when EntityAi_CanMelee finds a melee record in
    reach (func_0018F648 picks it); else, each time the timer runs out, starts
    DarkSuccubus_MoveAlongArc with the player nearer than 350 and Entity.unk68 within 40 degrees of
    the player's facing, or goes sideways round the player for 30 frames (work byte unk78: 2 or 3 the
@@ -334,7 +334,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
     func_001957B8(D_00413F80.unk14, func_00195478(D_00413F80.position, (char *)entity->model->position));
     unkE0->unk5C = 100.0f;
     unkE0->unk60 = 250.0f;
-    if (entity->unkA2 == 0 && func_00197F00(entity)) {
+    if (entity->unkA2 == 0 && EntityAi_CanMelee(entity)) {
         func_0018F648(entity);
         EntityAi_StartAction(entity, DarkSuccubus_MeleeAttack, unknown);
         return;
@@ -821,7 +821,7 @@ static void DarkSuccubus_ReactionLight(Entity *entity) {
         }
         break;
     case 2:
-        func_0019A290(entity, entity->params->unkC8);
+        EntityAi_SetAttackDelay(entity, entity->params->unkC8);
         EntityAi_SetReaction((char *)entity, NULL, 0);
         entity->unkC6 = 0;
         entity->unkC8 = 0;
@@ -858,7 +858,7 @@ static void DarkSuccubus_ReactionHeavy(Entity *entity) {
         break;
     case 2:
         if ((s32)(entity->flags >> 34) & 1) {
-            func_0019A290(entity, entity->params->unkC8);
+            EntityAi_SetAttackDelay(entity, entity->params->unkC8);
             EntityAi_SetReaction((char *)entity, NULL, 0);
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -956,13 +956,13 @@ static void DarkSuccubus_MeleeAttack(Entity *entity) {
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -973,7 +973,7 @@ static void DarkSuccubus_MeleeAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -1030,7 +1030,7 @@ static void DarkSuccubus_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

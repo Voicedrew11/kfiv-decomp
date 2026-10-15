@@ -6,7 +6,7 @@
 #include "common.h"
 #include "kf_player.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -18,16 +18,16 @@ int func_00192EB0(void *, int);
 int func_00194368(EntityModel *, f32);
 void func_00190A30(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
 void func_0018E9C0(void *);
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(void *);
 int rand(void);
 void func_0018B778(float, void *, void *, void *);
 float func_00194F80(void *, void *);
-float func_00195818(void);
+float EntityAi_RandomAngle(void);
 float func_001957B8(float, float);
 extern PlayerState D_00413F80;
 s32 func_0018ED98(Entity *, f32, f32);
@@ -41,12 +41,12 @@ void sceVu0RotMatrixY(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 void Vector_Scale(float *, float *, float);
-float func_00199E68(Entity *, float);
+float EntityAi_Accelerate(Entity *, float);
 float func_001954A8(void *, void *);
 int func_00192C98(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
-s32 func_00195AC0(Entity *, void *, s32, s32, s32);
-void func_0019A290(Entity *, s32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void Slime_Animate(Entity *entity);
 static void Slime_OnHit(Entity *entity);
@@ -70,7 +70,7 @@ void Slime_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))Slime_Think;
     unkE0->animate = (void (*)(void))Slime_Animate;
     unkE0->on_hit = (void (*)(void))Slime_OnHit;
@@ -121,7 +121,7 @@ static void Slime_Animate(Entity *entity) {
 static void Slime_OnHit(Entity *entity) {
     func_00190A30((char *)entity);
     EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The think handler: as EntityAi_Think, with an if in place of the switch: Slime_ThinkReturn
@@ -132,12 +132,12 @@ static void Slime_Think(Entity *entity, s32 unknown) {
 
     phase = D_00446ED4 % 10U;
     if (phase == entity->unkD7 % 10U) {
-        func_00196870(entity, 0);
+        EntityAi_SensePlayer(entity, 0);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196CC0(entity);
+    EntityAi_CheckFarFromSpawn(entity);
     func_0018E9C0(entity);
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         Slime_ThinkReturn(entity, unknown);
@@ -164,7 +164,7 @@ static void Slime_ThinkReturn(Entity *entity, s32 unknown) {
 
 /* The think function of every state but 2 (Slime_Think calls it): wanders. Each time the
    timer runs out it draws: walk to a point near the spawn point (func_0018B778; forward command
-   while farther than 50), turn on the spot to a random heading (func_00195818), or stand; then
+   while farther than 50), turn on the spot to a random heading (EntityAi_RandomAngle), or stand; then
    starts the move action. */
 static void Slime_ThinkWander(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -180,7 +180,7 @@ static void Slime_ThinkWander(Entity *entity, s32 unknown) {
             entity->unkA0 = rand() % 120 + 240;
             unkE0->unk78 = 0;
         } else if (roll > 40) {
-            unkE0->unk48 = func_00195818();
+            unkE0->unk48 = EntityAi_RandomAngle();
             entity->unkA0 = rand() % 30 + 60;
             unkE0->unk78 = 1;
         } else {
@@ -306,7 +306,7 @@ static void Slime_Move(Entity *entity) {
         vector[0] = vector[1] = vector[3] = 0.0f;
         amount = -1.0f;
         vector[2] = amount;
-        unkE0->unk44 = func_00199E68(entity, unkE0->unk44);
+        unkE0->unk44 = EntityAi_Accelerate(entity, unkE0->unk44);
         amount = unkE0->unk44;
         if (entity->unkC8 & 0x40) {
             amount += amount;
@@ -361,30 +361,30 @@ static void Slime_MeleeAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->unkFC->unk82);
             if (ENTITY_FLAG_BITS(entity)->bit54 && rand() % 100 < entity->params->unk432) {
                 D_00413F80.timed_flags[0] = 0;
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->unkFC->unk82);
             if (ENTITY_FLAG_BITS(entity)->bit55 && rand() % 100 < entity->params->unk432) {
                 D_00413F80.timed_flags[0] = 0;
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->unkFC->unk82);
             if (ENTITY_FLAG_BITS(entity)->bit56 && rand() % 100 < entity->params->unk432) {
                 D_00413F80.timed_flags[0] = 0;
             }
@@ -398,7 +398,7 @@ static void Slime_MeleeAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {

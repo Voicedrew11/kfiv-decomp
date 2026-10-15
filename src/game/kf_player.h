@@ -63,7 +63,7 @@ typedef struct {
     s32 magic_base;                 /* 0x2C ini "magic"; raised by "Magic Power UP" */
     s16 timed_flags[6];             /* 0x30 held at 0 while the matching timer runs */
     u8 weapon;                      /* 0x3C ini "equip_weapon": the weapon in hand, its item number less ITEM_WEAPON_FIRST (its row of weapon_defs) */
-    u8 equipped_magic;              /* 0x3D ini "equip_magic": the magic in hand; passed to func_001A1260 at start-up */
+    u8 equipped_magic;              /* 0x3D ini "equip_magic": the magic in hand; passed to Sound_LoadMgBank at start-up */
     u8 equipment[8];                /* 0x3E what is worn, by EQUIP_ slot: the item number less ITEM_WORN_FIRST */
     u16 shortcut;                   /* 0x46 ini "equip_shortcut": the item or magic of the shortcut */
     u8 shortcut_type;               /* 0x48 ini "equip_shortcut_type": 0 none, 1 an item, 2 a magic */

@@ -23,7 +23,7 @@ void Player_CountMagicUse(int);
 void Player_CountWeaponUse(int);
 void func_001BBFC8(void);
 void func_001BC058(void);
-s32 func_0019D0F0(s32);
+s32 Sound_PlayCommon(s32);
 
 #define IS_PLAYER(owner) ((owner) == (Entity *)&D_00413F80)
 /* rand() scaled to 0-99 (the factor is 2 to the power -31) */
@@ -261,11 +261,11 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
 
     if (by_weapon && extra->unk04 == 0) {
         if (attack.unk00[0] >= attack.unk00[1] && attack.unk00[0] >= attack.unk00[2]) {
-            func_0019D0F0(0x32);
+            Sound_PlayCommon(0x32);
         } else if (attack.unk00[1] >= attack.unk00[2]) {
-            func_0019D0F0(0x33);
+            Sound_PlayCommon(0x33);
         } else {
-            func_0019D0F0(0x34);
+            Sound_PlayCommon(0x34);
         }
     }
 }

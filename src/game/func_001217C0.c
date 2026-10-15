@@ -6,7 +6,7 @@ extern PlayerState D_00413F80;
 
 void Vector_Subtract(void *, void *, void *);
 float atan2f(float, float);
-float func_0019B838(float);
+float Angle_Wrap(float);
 /* Update handler: when the player (using it, status bit 36 clear) is within
    75 in height, within the radius and inside the angle of one of its two
    points, Ladder_Start is called for that point. */
@@ -33,7 +33,7 @@ void func_001217C0(MapObject *object) {
         if ((f32)MAP_OBJECT_WORD_ARRAY(object)[i * 3] * (f32)MAP_OBJECT_WORD_ARRAY(object)[i * 3] < delta.x * delta.x + delta.z * delta.z) {
             continue;
         }
-        turn = func_0019B838(atan2f(delta.x, delta.z) - object->model->rotation.y);
+        turn = Angle_Wrap(atan2f(delta.x, delta.z) - object->model->rotation.y);
         half_angle = MAP_OBJECT_WORD_ARRAY(object)[i * 3 + 1];
         half_angle = half_angle * 0.017453292f * 0.5f;
         if (turn < -half_angle) {

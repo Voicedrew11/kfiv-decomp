@@ -8,7 +8,7 @@
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
 extern s32 D_003E6E40[][2];
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 void func_001914B0(EntityModel *, s32, s32, s32);
@@ -16,9 +16,9 @@ int func_00193378(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void EntityAi_Dormant(Entity *);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-int func_0019A448(void *, void *, int, int, int, int, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
+void EntityAi_CheckFarFromSpawn(void *);
 void func_0018E9C0(void *);
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
@@ -41,11 +41,11 @@ float func_001957B8(float, float);
 float sinf(float);
 float cosf(float);
 int func_00192C98(void *, int, int, u32, int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 float func_00194FB8(float);
-s32 func_00199EB8(Entity *, f32 *, f32);
-int func_00195AC0(Entity *, void *, s32, s32, s32);
-void func_0019A290(Entity *entity, s32 base);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
+void EntityAi_SetAttackDelay(Entity *entity, s32 base);
 double atan2(double, double);
 char *func_0010CAB8(char *, u32);
 float func_00194F80(void *, void *);
@@ -58,10 +58,10 @@ void func_00190A30(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result keeps $2 busy after the call
 void func_0018D8B8(Entity *, s32, s32, s32);
 void func_0018DCD8(Entity *);
-int func_0019A538(void *, void *, int);
+int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
 s32 func_00191600(Entity *, EntityUnkE0SlotBits *, s32, s32);
 void func_0018D670(Entity *, s32, s32, s32);
-int func_001960C0(void *, int, int, int, int, float);
+int EntityAi_LookAtPoint(Entity *, int, int, int, int, float);
 int func_00196120(Entity *, void *, s32, void *, f32);
 
 static void DarkBird_Think(Entity *entity, s32 unknown);
@@ -98,7 +98,7 @@ void DarkBird_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = DarkBird_Think;
     unkE0->animate = (void (*)(void))DarkBird_Animate;
     unkE0->on_hit = (void (*)(void))DarkBird_OnHit;
@@ -145,7 +145,7 @@ static void DarkBird_Think(Entity *entity, s32 unknown) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 & 0x40) {
         entity->flags &= ~0x10000000;
@@ -153,10 +153,10 @@ static void DarkBird_Think(Entity *entity, s32 unknown) {
         entity->flags |= 0x10000000;
     }
     if (!(entity->unkC6 & 0x45)) {
-        func_0019A448(entity, &unkE0->unk88, 1, 3, 0, entity->params->unkC4, 0);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk88, 1, 3, 0, entity->params->unkC4, 0);
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
         func_0018E9C0(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -406,8 +406,8 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
    does the turning and the moving. */
 static void DarkBird_Move(Entity *entity) {
     entity->flags &= ~0x3800UL;
-    func_0019A448(entity, entity->unkE0.unk80, 0, 3, 0, entity->params->unkC4, 0);
-    func_0019A448(entity, entity->unkE0.unk88, 1, 3, 0, entity->params->unkC4, 0);
+    EntityAi_StartSlotMotion(entity, entity->unkE0.unk80, 0, 3, 0, entity->params->unkC4, 0);
+    EntityAi_StartSlotMotion(entity, entity->unkE0.unk88, 1, 3, 0, entity->params->unkC4, 0);
 }
 
 /* Carries out the movement command in Entity.unkC8; DarkBird_Think and
@@ -562,7 +562,7 @@ static void DarkBird_DormantMoveToCircle(Entity *entity) {
     case 1:
         if (entity->distance_to_player < (f32)entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
-            func_00195898((char *)entity, 2);
+            EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit22 = 0;
             ENTITY_FLAG_BITS(entity)->bit23 = 0;
@@ -600,8 +600,8 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
     entity->unkC6 |= 0x3000;
     switch (entity->action_step) {
     case 0:
-        func_0019A448(entity, &unkE0->unk80, 0, 3, 0, entity->params->unkC4, 0);
-        func_0019A448(entity, &unkE0->unk88, 1, 3, 0, entity->params->unkC4, 0);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, 3, 0, entity->params->unkC4, 0);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk88, 1, 3, 0, entity->params->unkC4, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bit10 = 1;
         ENTITY_FLAG_BITS(entity)->bit9 = 1;
@@ -663,8 +663,8 @@ static void DarkBird_MeleeAttack(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_0019A448(entity, &unkE0->unk80, 0, kind | 0x14, 0, entity->params->unkC4 >> 1, 1);
-        func_0019A448(entity, &unkE0->unk88, 1, ((s32)(entity->flags >> 58) & 3) | 0x14, 0, entity->params->unkC4 >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, kind | 0x14, 0, entity->params->unkC4 >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk88, 1, ((s32)(entity->flags >> 58) & 3) | 0x14, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -680,24 +680,24 @@ static void DarkBird_MeleeAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, (f32 *)&unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, (f32 *)&unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unkE0->unk80.unk02 <= unk240->unk01) {
-            func_00199EB8(entity, (f32 *)&unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, (f32 *)&unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0;
         }
         elapsed = (unkE0->unk80.unk04 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, elapsed, unkE0->unk80.unk02);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, unkE0->unk80.unk02);
         }
         if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, elapsed, unkE0->unk80.unk02);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, unkE0->unk80.unk02);
         }
         if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, elapsed, unkE0->unk80.unk02);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, unkE0->unk80.unk02);
         }
         if (unkE0->unk80.unk02 > 0 && unk240->unk03 >= unkE0->unk80.unk02) {
             entity->flags |= 0x80000;
@@ -708,7 +708,7 @@ static void DarkBird_MeleeAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -740,8 +740,8 @@ static void DarkBird_RangedAttack(Entity *entity) {
     entity->unkC6 |= 1;
     switch (entity->action_step) {
     case 0:
-        func_0019A448(entity, &unkE0->unk80, 0, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
-        func_0019A448(entity, &unkE0->unk88, 1, ((s32)(entity->flags >> 58) & 3) + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk88, 1, ((s32)(entity->flags >> 58) & 3) + 0x17, 0, entity->params->unkC4 >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -754,12 +754,12 @@ static void DarkBird_RangedAttack(Entity *entity) {
             entity->action_step++;
         }
         if (record->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unkE0->unk80.unk02 <= record->unk01) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -902,7 +902,7 @@ static void DarkBird_OnHit(Entity *entity) {
     } else if (((s32)(entity->flags >> 36) & 3) == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))DarkBird_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The reaction to a light hit (busy bit 2): as EntityAi_ReactionLight, on the motion slots
@@ -914,8 +914,8 @@ static void DarkBird_ReactionLight(Entity *entity) {
     switch (entity->unkCB) {
     case 0:
         func_0018D8B8(entity, 0xE, 0, 0);
-        func_0019A448(entity, &unkE0->unk80, 0, 0xE, 0, 5, 1);
-        func_0019A448(entity, &unkE0->unk88, 1, 3, 0, 5, 0);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, 0xE, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk88, 1, 3, 0, 5, 0);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -935,7 +935,7 @@ static void DarkBird_ReactionLight(Entity *entity) {
         }
         break;
     case 2:
-        func_0019A290(entity, entity->params->unkC8);
+        EntityAi_SetAttackDelay(entity, entity->params->unkC8);
         EntityAi_SetReaction((char *)entity, NULL, 0);
         entity->unkC6 = 0;
         entity->unkC8 = 0;
@@ -956,8 +956,8 @@ static void DarkBird_ReactionHeavy(Entity *entity) {
     entity->unkC6 = 4;
     switch (entity->unkCB) {
     case 0:
-        func_0019A448(entity, &unkE0->unk80, 0, 0xF, 0, 5, 1);
-        func_0019A448(entity, &unkE0->unk88, 1, 0xF, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, 0xF, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk88, 1, 0xF, 0, 5, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -986,7 +986,7 @@ static void DarkBird_ReactionHeavy(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            func_0019A290(entity, entity->params->unkC8);
+            EntityAi_SetAttackDelay(entity, entity->params->unkC8);
             EntityAi_SetReaction((char *)entity, NULL, 0);
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -1008,8 +1008,8 @@ static void DarkBird_Death(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
-        func_0019A448(entity, &unkE0->unk80, 0, 0x10, 0, 5, 1);
-        func_0019A448(entity, &unkE0->unk88, 1, 0x10, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, 0x10, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &unkE0->unk88, 1, 0x10, 0, 5, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -1058,7 +1058,7 @@ static void DarkBird_Death(Entity *entity) {
 }
 
 /* The animate handler: plays the two motion slots of the work area (unk80 and unk88) where
-   EntityAi_Animate plays the model's one motion, then turns the head (func_001960C0 with the target
+   EntityAi_Animate plays the model's one motion, then turns the head (EntityAi_LookAtPoint with the target
    while flag bit 9 is set and there is one). */
 static void DarkBird_Animate(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -1078,7 +1078,7 @@ static void DarkBird_Animate(Entity *entity) {
             rate = 1.0f / slots->unk80.unk01;
         }
         // match: the caller passes a float the callee does not take
-        ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))func_0019A538)(entity, &slots->unk80, 0, rate);
+        ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->unk80, 0, rate);
     } else {
         previous = slots->unk80.unk04;
         ENTITY_FLAG_BITS(entity)->bit34 = func_00191600(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits11);
@@ -1094,7 +1094,7 @@ static void DarkBird_Animate(Entity *entity) {
             rate = 1.0f / slots->unk88.unk01;
         }
         // match: the caller passes a float the callee does not take
-        ((int (*)(void *, void *, int, float))func_0019A538)(entity, &slots->unk88, 1, rate);
+        ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->unk88, 1, rate);
     } else {
         previous = slots->unk88.unk04;
         func_00191600(entity, &slots->unk88, 1, ENTITY_FLAG_BITS(entity)->bits11);
@@ -1108,7 +1108,7 @@ static void DarkBird_Animate(Entity *entity) {
     limits[3] = entity->params->unk432 * 0.017453292f;
     limits[2] = -entity->params->unk432 * 0.017453292f;
     if (ENTITY_FLAG_BITS(entity)->bit9 && entity->target != NULL) {
-        func_001960C0(entity, (int)unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, (int)entity->target, (int)limits, 12.0f);
+        EntityAi_LookAtPoint(entity, (int)unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, (int)entity->target, (int)limits, 12.0f);
     } else {
         func_00196120(entity, unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, NULL, 8.0f);
     }

@@ -4,7 +4,7 @@ extern PlayerData D_00413F80;
 extern f32 D_00445894;
 float func_001954A8(float *, float *);
 float func_001957B8(float, float);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 
 void func_00183FC8(Entity *entity, s32 run_now) {
@@ -26,6 +26,6 @@ void func_00183FC8(Entity *entity, s32 run_now) {
         unkE0->unk68 = 0x1000;
     }
     entity->unkC8 = unkE0->unk68;
-    func_00195898((char *)entity, 5);
+    EntityAi_SetState((char *)entity, 5);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, run_now);
 }

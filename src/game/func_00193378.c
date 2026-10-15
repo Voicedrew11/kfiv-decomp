@@ -1,6 +1,6 @@
 #include "kf_model.h"
 
-void func_0019A590(void *, void *, void *, void *, void *, f32);
+void Vector_Hermite(void *, void *, void *, void *, void *, f32);
 
 /* Poses every part between the motion keys around the model's playback position, steps the position and reports whether it wrapped. */
 s32 func_00193378(ModelInstance *model, s32 step, s32 backwards) {
@@ -83,7 +83,7 @@ s32 func_00193378(ModelInstance *model, s32 step, s32 backwards) {
             tangent0->w = 1.0f;
             *(MotionVector *)tangent1 = vectors[next->rotation_in];
             tangent1->w = 1.0f;
-            func_0019A590(&part->unk50, point0, point1, tangent0, tangent1, ratio);
+            Vector_Hermite(&part->unk50, point0, point1, tangent0, tangent1, ratio);
             angle = part->unk50;
             angle -= (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
             if (3.1415927f < angle) {
@@ -113,7 +113,7 @@ s32 func_00193378(ModelInstance *model, s32 step, s32 backwards) {
             *(MotionVector *)point1 = vectors[next->position];
             *(MotionVector *)tangent0 = vectors[key->position_out];
             *(MotionVector *)tangent1 = vectors[next->position_in];
-            func_0019A590(part->unk40, point0, point1, tangent0, tangent1, ratio);
+            Vector_Hermite(part->unk40, point0, point1, tangent0, tangent1, ratio);
 
             part->unk60[0] = vectors[key->scale].x * (1.0f - ratio) + vectors[next->scale].x * ratio;
             part->unk60[1] = vectors[key->scale].y * (1.0f - ratio) + vectors[next->scale].y * ratio;

@@ -4,7 +4,7 @@
    hit points and experience, with resistances and drops where two monsters share those. */
 #include "kf_entity.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -35,7 +35,7 @@ void LivingStatue_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     if (entity->spawn_info->unk40 != 0) {
         unkE0->animate = EntityAi_Animate;
         unkE0->think = (void (*)(Entity *, s32))LivingStatue_ThinkHoldAnim1;

@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
@@ -14,8 +14,8 @@ int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void EntityAi_Animate(void);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-s32 func_001992F0(Entity *, s32);
+void EntityAi_SensePlayer(void *, int);
+s32 EntityAi_CanUseRanged(Entity *, s32);
 void func_001B4EC8(s32);
 int func_00192C98(void *, int, int, u32, int);
 void func_0018DB58(void *, int, int);
@@ -39,7 +39,7 @@ void Watcher_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Watcher_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = NULL;
@@ -66,7 +66,7 @@ void Watcher_Init(Entity *entity) {
 }
 
 /* The think handler: no states and no actions. Every tenth frame updates what the entity knows of
-   the player; while it is not busy and func_001992F0 finds the player in reach of ranged record 0
+   the player; while it is not busy and EntityAi_CanUseRanged finds the player in reach of ranged record 0
    (and flag bit 63 is clear) it calls func_001B4EC8 with EntityParams.unk434, sets work byte unk7A
    and flag bit 9 and plays animation 2, else clears them and plays animation 0. Calls func_0018DB58
    with 1 when unk7A changes. */
@@ -75,11 +75,11 @@ static void Watcher_Think(Entity *entity, s32 unknown) {
     s8 previous;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
         previous = unkE0->unk7A;
-        if (!(s32)(entity->flags >> 63) && func_001992F0(entity, 0)) {
+        if (!(s32)(entity->flags >> 63) && EntityAi_CanUseRanged(entity, 0)) {
             func_001B4EC8((s16)entity->params->unk434);
             unkE0->unk7A = 1;
             ENTITY_FLAG_BITS(entity)->bit9 = TRUE;

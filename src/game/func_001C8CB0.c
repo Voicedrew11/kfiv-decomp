@@ -4,7 +4,7 @@
 
 s32 func_001C8F18(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
 int func_001C0E40(f32, void *);
-float func_0019B838(float);
+float Angle_Wrap(float);
 void Vector_Copy(void *, void *);
 extern const Vector4Arg D_0043F610;
 extern MapLoadState D_0038D610;
@@ -57,7 +57,7 @@ s32 func_001C8CB0(Entity *entity) {
     position[1] = entity->model->position[1] - entity->height * 0.5f;
     position[2] = entity->model->position[2];
     rotation[1] = (s32)(rand() * 361.0f * 4.656613e-10f);
-    rotation[1] = func_0019B838(rotation[1] * 0.017453292f);
+    rotation[1] = Angle_Wrap(rotation[1] * 0.017453292f);
     if (!func_001C0E40(2000.0f, position)) {
         return FALSE;
     }

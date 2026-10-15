@@ -143,7 +143,7 @@ typedef struct {
     u16 unk26;                      /* 0x26 last animation frame it is active on */
 } EntityParamsUnk240Part;
 
-/* EntityParamsUnk240Part.unk1E as func_00195BD8 reads it: bit 1 of the halfword at 0x1E
+/* EntityParamsUnk240Part.unk1E as EntityAi_SendMeleeHit reads it: bit 1 of the halfword at 0x1E
    says unk1F is copied (reached by cast: a union changes gcc's scheduling) */
 typedef struct {
     u16 flags;                      /* 0x1E bit 1: unk1F is copied */
@@ -514,7 +514,7 @@ typedef struct {
     char unk88[0x08];               /* 0x88 (Entity+0x168) passed by address; an EntityUnkE0Slot */
 } EntityUnkE0;
 
-/* one of the two 8-byte slots func_0019A448 fills */
+/* one of the two 8-byte slots EntityAi_StartSlotMotion fills */
 typedef struct {
     u8 unk00;                       /* 0x00 */
     u8 unk01;                       /* 0x01 */
@@ -615,7 +615,7 @@ typedef struct {
 
 /* an 8-byte slot of the work area as the bit-fields the init functions set */
 typedef struct {
-    u8 index : 5;                   /* what func_0019A448 looks up */
+    u8 index : 5;                   /* what EntityAi_StartSlotMotion looks up */
     u64 bit5 : 1;
     u64 bit6 : 1;
     u64 pad7 : 1;
@@ -776,7 +776,7 @@ typedef struct Entity {
     u16 timer;                      /* 0x9C frames left in state 1 (func_0018E9C0) */
     u16 unk9E;                      /* 0x9E */
     u16 unkA0;                      /* 0xA0 a timer for the think functions and the actions; EntityAi_Update counts it down */
-    u8 unkA2;                       /* 0xA2 frames before the next attack: set when an attack or a reaction ends (func_0019A290), counted down by EntityAi_Update */
+    u8 unkA2;                       /* 0xA2 frames before the next attack: set when an attack or a reaction ends (EntityAi_SetAttackDelay), counted down by EntityAi_Update */
     u8 unkA3;                       /* 0xA3 */
     f32 unkA4[3];                   /* 0xA4 a push applied while flag bit 45 or 46 is set */
     f32 unkB0[3];                   /* 0xB0 a push applied while flag bit 48 is set */
@@ -1032,12 +1032,6 @@ typedef union {
     u16 all;
 } EntityCommand;
 #define ENTITY_COMMAND(entity) (((EntityCommand *)&(entity)->unkC8)->all)
-
-/* a turn request handed to func_00195AC0 with the entity */
-typedef struct {
-    char pad00[0x0E];
-    s16 degrees;                    /* 0x0E */
-} TurnCommand;
 
 /* D_0034B6D0[EntityController.unk43A]: state shared by a group of entities */
 typedef struct {

@@ -26,8 +26,8 @@ AreaNode *func_00115950(f32 *point, f32 margin);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B018(ModelInstance *, s32, s32);
-char func_0019C8D0(int index, int first, int second, int third, int fourth);
-void func_0019CD70(s8 handle);
+char Sound_PlayTrackedKind(int index, int first, int second, int third, int fourth);
+void Sound_StopTracked(s8 handle);
 void func_0010D018(ModelInstance *, char **, char **);
 int func_00111C78(ModelInstance *model, int first, int last);
 u32 *func_00116BD0(int, int);
@@ -553,9 +553,9 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         D_00402550[effect->def->unk100][0](effect, slot);
         EFFECT_FLAG_BITS(effect)->bit59 = effect->def->unk11A != 0;
         if (D_00402DA8[effect->effect_param].unk102 != 0) {
-            EFFECT_FLAG_PARTS(effect)->unk46 = func_0019C8D0(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&D_00413F80, EFFECT_FLAG_PARTS(effect)->unk46);
+            EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&D_00413F80, EFFECT_FLAG_PARTS(effect)->unk46);
         } else if (EFFECT_FLAG_BITS(effect)->bit59 || effect->effect_param == D_00413F80.equipped_magic) {
-            EFFECT_FLAG_PARTS(effect)->unk46 = func_0019C8D0(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&effect->model->position, EFFECT_FLAG_PARTS(effect)->unk46);
+            EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&effect->model->position, EFFECT_FLAG_PARTS(effect)->unk46);
         }
         if (EFFECT_FLAG_PARTS(effect)->unk46 > 0) {
             D_004468C8++;
@@ -617,7 +617,7 @@ void Effect_Free(EffectActor *effect) {
     if (EFFECT_FLAG_PARTS(effect)->unk46 > 0) {
         D_004468C8--;
     }
-    func_0019CD70(EFFECT_FLAG_PARTS(effect)->unk46);
+    Sound_StopTracked(EFFECT_FLAG_PARTS(effect)->unk46);
     EFFECT_FLAG_PARTS(effect)->unk46 = -1;
     if (EFFECT_FLAG_PARTS(effect)->unk44 != -1) {
         LinkedPoint_ReleaseIndex(EFFECT_FLAG_PARTS(effect)->unk44);

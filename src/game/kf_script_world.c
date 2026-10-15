@@ -20,22 +20,22 @@ int func_001C8C80(int map, int item_id);
 int func_001C9B58(int item_id, int value);
 ItemNode *func_001C8AF0(int item_id);
 s32 func_001C8CB0(Entity *entity);
-int func_0019B9F0(float target, float *angle, int frames);
-float func_0019B838(float angle);
+int Angle_EaseToward(float target, float *angle, int frames);
+float Angle_Wrap(float angle);
 MapRecordBounds *func_00116160(int map, int prop_id);
 void func_00115550(MapRecordBounds *record, f32 *offset);
 void func_0010E8E0(ModelInstance *model, int red, int green, int blue, int alpha);
 void func_001BB360(void);
 int func_001B4F30(u16, void *, void *, void *, void *);
 void func_001187F0(int map_tag);
-int func_0019D1C0(float range, int sound, float *position);
-int func_0019D490(u8 sound, u8 mode, float *position, float range);
-void func_0019D980(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg position); // match: retail passes the position as a struct; the definition takes a pointer
-int func_0019E9E0(char tag);
-s32 func_0019DAA8(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, Vector4Arg *target, f32 volume);
-int func_0019D3A0(u8 sound, int volume);
-int func_0019D7D0(s8 sound, u8 voice, int volume);
-void func_0019CDA0(s8 slot);
+int Sound_PlayCommonAt(float range, int sound, float *position);
+int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range);
+void Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg position); // match: retail passes the position as a struct; the definition takes a pointer
+int Sound_StopTagged(char tag);
+s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, Vector4Arg *target, f32 volume);
+int Sound_PlayMapVolume(u8 sound, int volume);
+int Sound_StartTagged(s8 sound, u8 voice, int volume);
+void Sound_StopVoice(s8 slot);
 void func_001B57A0(u8 strength, u8 duration, u8 delay);
 void Menu_AddKeyItem(u32, u32, int); // match: three arguments are passed; the definition takes the first alone
 
@@ -118,9 +118,9 @@ void ScriptCmd_TurnItemTo(ScriptMoveCommand *command) {
         command->active = 0;
         return;
     }
-    func_0019B9F0(command->x.value, &node->model->rotation.x, command->frames.value);
-    func_0019B9F0(command->y.value, &node->model->rotation.y, command->frames.value);
-    func_0019B9F0(command->z.value, &node->model->rotation.z, command->frames.value);
+    Angle_EaseToward(command->x.value, &node->model->rotation.x, command->frames.value);
+    Angle_EaseToward(command->y.value, &node->model->rotation.y, command->frames.value);
+    Angle_EaseToward(command->z.value, &node->model->rotation.z, command->frames.value);
     if (--command->frames.value == 0) {
         command->active = 0;
     }
@@ -178,9 +178,9 @@ void ScriptCmd_TurnItemBy(ScriptMoveCommand *command) {
     if (node == NULL || command->frames.value <= 0) {
         command->active = 0;
     } else {
-        node->model->rotation.x = func_0019B838(node->model->rotation.x + command->x.value);
-        node->model->rotation.y = func_0019B838(node->model->rotation.y + command->y.value);
-        node->model->rotation.z = func_0019B838(node->model->rotation.z + command->z.value);
+        node->model->rotation.x = Angle_Wrap(node->model->rotation.x + command->x.value);
+        node->model->rotation.y = Angle_Wrap(node->model->rotation.y + command->y.value);
+        node->model->rotation.z = Angle_Wrap(node->model->rotation.z + command->z.value);
         frames = command->frames.value - 1;
         command->frames.value = frames;
         if (frames == 0) {
@@ -285,9 +285,9 @@ void ScriptCmd_TurnMapObjectTo(ScriptMoveCommand *command) {
         command->active = 0;
         return;
     }
-    func_0019B9F0(command->x.value, &object->model->rotation.x, command->frames.value);
-    func_0019B9F0(command->y.value, &object->model->rotation.y, command->frames.value);
-    func_0019B9F0(command->z.value, &object->model->rotation.z, command->frames.value);
+    Angle_EaseToward(command->x.value, &object->model->rotation.x, command->frames.value);
+    Angle_EaseToward(command->y.value, &object->model->rotation.y, command->frames.value);
+    Angle_EaseToward(command->z.value, &object->model->rotation.z, command->frames.value);
     if (--command->frames.value < 0) {
         command->active = 0;
     }
@@ -474,9 +474,9 @@ void ScriptCmd_TurnMapObjectBy(ScriptMoveCommand *command) {
     if (map_object == NULL || command->frames.value <= 0) {
         command->active = 0;
     } else {
-        map_object->model->rotation.x = func_0019B838(map_object->model->rotation.x + command->x.value);
-        map_object->model->rotation.y = func_0019B838(map_object->model->rotation.y + command->y.value);
-        map_object->model->rotation.z = func_0019B838(map_object->model->rotation.z + command->z.value);
+        map_object->model->rotation.x = Angle_Wrap(map_object->model->rotation.x + command->x.value);
+        map_object->model->rotation.y = Angle_Wrap(map_object->model->rotation.y + command->y.value);
+        map_object->model->rotation.z = Angle_Wrap(map_object->model->rotation.z + command->z.value);
         frames = command->frames.value - 1;
         command->frames.value = frames;
         if (frames <= 0) {
@@ -583,8 +583,8 @@ void ScriptCmd_TurnPlayerTo(ScriptBlendCommand *command) {
         (command->target_a.value == D_00413F80.rotation.x && command->target_b.value == D_00413F80.rotation.y)) {
         command->active = 0;
     } else {
-        func_0019B9F0(command->target_a.value, &D_00413F80.rotation.x, command->frames.value);
-        func_0019B9F0(command->target_b.value, &D_00413F80.rotation.y, command->frames.value);
+        Angle_EaseToward(command->target_a.value, &D_00413F80.rotation.x, command->frames.value);
+        Angle_EaseToward(command->target_b.value, &D_00413F80.rotation.y, command->frames.value);
         if (--command->frames.value == 0) {
             command->active = 0;
         }
@@ -811,9 +811,9 @@ void ScriptCmd_TurnCameraTo(ScriptTripleCommand *command) {
          command->z.value == D_004325A0.unk18)) {
         command->active = 0;
     } else {
-        func_0019B9F0(command->x.value, &D_004325A0.unk10, command->frames.value);
-        func_0019B9F0(command->y.value, &D_004325A0.unk14, command->frames.value);
-        func_0019B9F0(command->z.value, &D_004325A0.unk18, command->frames.value);
+        Angle_EaseToward(command->x.value, &D_004325A0.unk10, command->frames.value);
+        Angle_EaseToward(command->y.value, &D_004325A0.unk14, command->frames.value);
+        Angle_EaseToward(command->z.value, &D_004325A0.unk18, command->frames.value);
         if (--command->frames.value == 0) {
             command->active = 0;
         }
@@ -939,9 +939,9 @@ void ScriptCmd_TurnPropTo(ScriptMoveCommand *command) {
     if (command->frames.value == 0) {
         command->frames.value = 1;
     }
-    func_0019B9F0(command->x.value, &prop->model->rotation.x, command->frames.value);
-    func_0019B9F0(command->y.value, &prop->model->rotation.y, command->frames.value);
-    func_0019B9F0(command->z.value, &prop->model->rotation.z, command->frames.value);
+    Angle_EaseToward(command->x.value, &prop->model->rotation.x, command->frames.value);
+    Angle_EaseToward(command->y.value, &prop->model->rotation.y, command->frames.value);
+    Angle_EaseToward(command->z.value, &prop->model->rotation.z, command->frames.value);
     if (--command->frames.value == 0) {
         command->active = 0;
     }
@@ -972,9 +972,9 @@ void ScriptCmd_TurnPropBy(ScriptMoveCommand *command) {
         command->active = 0;
         return;
     }
-    prop->model->rotation.x = func_0019B838(prop->model->rotation.x + command->x.value);
-    prop->model->rotation.y = func_0019B838(prop->model->rotation.y + command->y.value);
-    prop->model->rotation.z = func_0019B838(prop->model->rotation.z + command->z.value);
+    prop->model->rotation.x = Angle_Wrap(prop->model->rotation.x + command->x.value);
+    prop->model->rotation.y = Angle_Wrap(prop->model->rotation.y + command->y.value);
+    prop->model->rotation.z = Angle_Wrap(prop->model->rotation.z + command->z.value);
     steps_left = command->frames.value - 1;
     command->frames.value = steps_left;
     if (steps_left < 0) {
@@ -1086,7 +1086,7 @@ void ScriptCmd_SetMapAmbientLight(ScriptColorCommand *command) {
     command->active = 0;
 }
 
-/* Command 160: plays the sound `sound` at the point x, y, z (func_0019D1C0, which is handed z as the
+/* Command 160: plays the sound `sound` at the point x, y, z (Sound_PlayCommonAt, which is handed z as the
    range too), then finishes. */
 void ScriptCmd_PlaySoundAt(ScriptSoundAtCommand *command) {
     ScriptPosition copy;
@@ -1100,50 +1100,50 @@ void ScriptCmd_PlaySoundAt(ScriptSoundAtCommand *command) {
     position.floats[2] = z;
     copy.halves[0] = position.halves[0];
     copy.halves[1] = position.halves[1];
-    func_0019D1C0(z, command->sound.value, copy.floats);
+    Sound_PlayCommonAt(z, command->sound.value, copy.floats);
     command->active = 0;
 }
 
 /* Command 161: plays the sound `sound` at the point x, y, z, within the distance `range`, at the volume
-   level `mode` (func_0019D490), then finishes. */
+   level `mode` (Sound_PlayMapAtRange), then finishes. */
 void ScriptCmd_PlaySoundAtPoint(ScriptPointSoundCommand *command) {
     Vector4Arg position = { command->x.value, command->y.value, command->z.value, 1.0f };
 
-    func_0019D490(command->sound.value, command->mode.value, (f32 *)&position, command->range.value);
+    Sound_PlayMapAtRange(command->sound.value, command->mode.value, (f32 *)&position, command->range.value);
     command->active = 0;
 }
 
 /* Command 162: plays the sound `sound` on the voice `voice` at the volume `volume` at the point x, y, z
-   (func_0019D980), then finishes. */
+   (Sound_StartTaggedAt), then finishes. */
 void ScriptCmd_PlayVoiceSoundAt(ScriptVoiceSoundCommand *command) {
     Vector4Arg position = { command->x.value, command->y.value, command->z.value, 1.0f };
 
-    func_0019D980(command->sound.value, command->voice.value, 0, command->volume.value, position);
+    Sound_StartTaggedAt(command->sound.value, command->voice.value, 0, command->volume.value, position);
     command->active = 0;
 }
 
 /* Command 168: plays the sound `sound` on the voice `voice` with the mode `mode` at the volume `volume` at
-   the point x, y, z (func_0019D980), then finishes. */
+   the point x, y, z (Sound_StartTaggedAt), then finishes. */
 void ScriptCmd_PlayVoiceSoundAtWithMode(ScriptVoiceSoundModeCommand *command) {
     Vector4Arg position = { command->x.value, command->y.value, command->z.value, 1.0f };
 
-    func_0019D980(command->sound.value, command->voice.value, command->mode.value, command->volume.value, position);
+    Sound_StartTaggedAt(command->sound.value, command->voice.value, command->mode.value, command->volume.value, position);
     command->active = 0;
 }
 
-/* Command 163: stops the sound playing under the tag `value` (func_0019E9E0), then finishes. */
+/* Command 163: stops the sound playing under the tag `value` (Sound_StopTagged), then finishes. */
 void ScriptCmd_StopSound(ScriptValueCommand *command) {
-    func_0019E9E0(command->value.value);
+    Sound_StopTagged(command->value.value);
     command->active = 0;
 }
 
 /* Command 164: plays the sound `sound` on the voice `voice`, moving from `from` to `to`, at the volume
-   `volume` (func_0019DAA8), then finishes. */
+   `volume` (Sound_StartTaggedAlong), then finishes. */
 void ScriptCmd_PlayMovingSound(ScriptMovingSoundCommand *command) {
     VuVector4 origin = (VuVector4){ command->from_x.value, command->from_y.value, command->from_z.value, 1.0f };
     VuVector4 destination = (VuVector4){ command->to_x.value, command->to_y.value, command->to_z.value, 1.0f };
 
-    func_0019DAA8(command->sound.value, command->voice.value, 0, (Vector4Arg *)&origin,
+    Sound_StartTaggedAlong(command->sound.value, command->voice.value, 0, (Vector4Arg *)&origin,
                   (Vector4Arg *)&destination, command->volume.value);
     command->active = 0;
 }
@@ -1157,23 +1157,23 @@ void ScriptCmd_PlayMovingSoundWithMode(ScriptMovingSoundModeCommand *command) {
         Vector4Arg destination;
 
         destination = (Vector4Arg){ command->to_x.value, command->to_y.value, command->to_z.value, 1.0f };
-        func_0019DAA8(command->sound.value, command->voice.value, command->mode.value, &origin, &destination,
+        Sound_StartTaggedAlong(command->sound.value, command->voice.value, command->mode.value, &origin, &destination,
                       command->volume.value);
     }
     command->active = 0;
 }
 
-/* Command 166: plays the sound `target_id` at the volume `first` with a random pan (func_0019D3A0), then
+/* Command 166: plays the sound `target_id` at the volume `first` with a random pan (Sound_PlayMapVolume), then
    finishes. */
 void ScriptCmd_PlaySound(ScriptCallCommand *command) {
-    func_0019D3A0(command->target_id.value, command->first.value);
+    Sound_PlayMapVolume(command->target_id.value, command->first.value);
     command->active = 0;
 }
 
-/* Command 167: plays the sound `target_id` on the voice `first` at the volume `second` (func_0019D7D0),
+/* Command 167: plays the sound `target_id` on the voice `first` at the volume `second` (Sound_StartTagged),
    then finishes. */
 void ScriptCmd_PlayVoiceSound(ScriptCallCommand *command) {
-    func_0019D7D0(command->target_id.value, command->first.value, command->second.value);
+    Sound_StartTagged(command->target_id.value, command->first.value, command->second.value);
     command->active = 0;
 }
 
@@ -1279,7 +1279,7 @@ void func_00214A58(ScriptValueCommand *command) {
 void ScriptCmd_ReloadArmModels(ScriptWaitCommand *command) {
     switch (command->started) {
     case 0:
-        func_0019CDA0(2);
+        Sound_StopVoice(2);
         command->started = 1;
         break;
     case 1:

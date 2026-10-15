@@ -5,7 +5,7 @@ extern char D_00413F80[];
 
 int func_001B4F90(void *);
 int func_001C0E40(f32, void *);
-char func_0019C8D0(int index, int first, int second, int third, int fourth);
+char Sound_PlayTrackedKind(int index, int first, int second, int third, int fourth);
 void func_001A6498(EffectActor *effect, int effect_id, float angle);
 void Vector_Add(void *, void *, void *);
 
@@ -57,7 +57,7 @@ void func_001A6538(EffectActor *effect) {
         return;
     }
     if (effect->frame == 0) {
-        result = func_0019C8D0(1, 10, 0, (int)D_00413F80, EFFECT_FLAG_PARTS(effect)->unk46);
+        result = Sound_PlayTrackedKind(1, 10, 0, (int)D_00413F80, EFFECT_FLAG_PARTS(effect)->unk46);
         EFFECT_FLAG_PARTS(effect)->unk46 = result;
         if ((s8)result > 0) {
             D_004468C8 += 1;

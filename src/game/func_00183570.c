@@ -12,7 +12,7 @@ void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 void Vector_Scale(float *, float *, float);
-float func_00199E68(Entity *, float);
+float EntityAi_Accelerate(Entity *, float);
 int func_00192C98(void *, int, int, u32, int);
 
 /* default movement: turn and move as the command bits in Entity.unkC8 say, and pick the animation to go with it */
@@ -74,7 +74,7 @@ void EntityAi_Move(Entity *entity) {
             vector[1] += amount;
         }
         if (entity->unkC8 & 0x3F) {
-            unkE0->unk44 = func_00199E68(entity, unkE0->unk44);
+            unkE0->unk44 = EntityAi_Accelerate(entity, unkE0->unk44);
             amount = unkE0->unk44;
             if (entity->unkC8 & 0x40) {
                 amount += amount;

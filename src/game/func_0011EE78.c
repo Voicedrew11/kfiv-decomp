@@ -4,7 +4,7 @@
 extern int D_00446770;
 extern int D_0038A130[0x28 / 4];
 
-void func_0019D980(char, u8, u8, f32, Vector4Arg);
+s32 Sound_StartTaggedAt(s8, u8, u8, f32, Vector4Arg *);
 
 /* Update handler: keeps a kind 0 object's sound playing while its map is the
    current one, and runs its animation when it is allowed to. */
@@ -20,7 +20,7 @@ void func_0011EE78(MapObject *object) {
                 }
             } else if ((MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770 && D_0038A130[4] == 0 && D_0038A130[5] == 0) {
                 // match: the vector goes by address
-                ((int (*)(char, u8, u8, f32, Vector4 *))func_0019D980)(source->unk44, source->unk48, source->unk46, source->unk4A, &object->model->position);
+                ((int (*)(char, u8, u8, f32, Vector4 *))Sound_StartTaggedAt)(source->unk44, source->unk48, source->unk46, source->unk4A, &object->model->position);
                 object->work[0] = 1;
             }
         }

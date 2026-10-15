@@ -7,7 +7,7 @@
 #include "kf_map.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -16,7 +16,7 @@ void Vector_Copy(void *, void *);
 void EntityAi_Animate(void);
 extern s32 D_003E6E40[][2];
 void func_00190A30(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
@@ -24,8 +24,8 @@ void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
 // match: the size is unknown; a complete small type would be read through $gp
 extern f32 D_00446830[];
-void func_00196870(void *, int);
-void func_00196CC0(void *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(void *);
 void func_0018E9C0(void *);
 int EntityAi_ThinkReturn(void *, int);
 f32 func_0018A9F0(void *, void *);
@@ -54,14 +54,14 @@ void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 // match: the size is unknown; a complete small type would be read through $gp
 extern u8 D_0034B21C[];
-int func_00195AC0(Entity *, void *, s32, s32, s32);
-void func_0019A290(Entity *, s32);
+int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 int func_0018CF30(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 int func_0019A3F0(void *, int);
 void func_0018DCD8(Entity *);
 extern EntityActionWeights3 D_0043EA88;
-int func_00195E48(void *, int, void *, void *);
-int func_0019D490(u8, u8, float *, float);
+int EntityAi_LaunchShot(void *, int, void *, void *);
+int Sound_PlayMapAtRange(u8, u8, float *, float);
 extern s32 D_00446770;
 extern MapSlot D_0038CD20[];
 void *func_00116160(int, int);
@@ -98,7 +98,7 @@ void DarkSorcerer_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = DarkSorcerer_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))DarkSorcerer_OnHit;
@@ -140,7 +140,7 @@ static void DarkSorcerer_OnHit(Entity *entity) {
     } else if (hit_strength == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
 }
 
 /* The think handler: no states. While the entity is not busy it calls EntityAi_ThinkReturn when
@@ -154,10 +154,10 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
     f32 height;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0(entity);
+        EntityAi_CheckFarFromSpawn(entity);
         func_0018E9C0(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -512,13 +512,13 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
         }
         elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
         }
         if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
         }
         if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;
@@ -529,7 +529,7 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
                 return;
@@ -588,7 +588,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -728,7 +728,7 @@ static void DarkSorcerer_PlayAnim17AndShoot(Entity *entity) {
 }
 
 /* Helper of DarkSorcerer_PlayAnim17AndShoot: launches shot 0xCA from 18 fixed points along the four sides
-   of a rectangle (func_00195E48) and calls func_0019D490 with sound 0x42 at five fixed points. */
+   of a rectangle (EntityAi_LaunchShot) and calls Sound_PlayMapAtRange with sound 0x42 at five fixed points. */
 static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
     f32 position[4];
     f32 direction[4];
@@ -744,7 +744,7 @@ static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
     direction[3] = 0.0f;
     for (i = -17300; i <= -16100; i += 400) {
         position[0] = i;
-        func_00195E48(entity, 0xCA, position, direction);
+        EntityAi_LaunchShot(entity, 0xCA, position, direction);
     }
     position[0] = -17300.0f;
     position[1] = 2930.0f;
@@ -756,7 +756,7 @@ static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
     direction[3] = 0.0f;
     for (i = -17300; i <= -16100; i += 400) {
         position[0] = i;
-        func_00195E48(entity, 0xCA, position, direction);
+        EntityAi_LaunchShot(entity, 0xCA, position, direction);
     }
     position[0] = -17700.0f;
     position[1] = 2830.0f;
@@ -768,7 +768,7 @@ static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
     direction[3] = 0.0f;
     for (i = 2000; i <= 4000; i += 400) {
         position[2] = i;
-        func_00195E48(entity, 0xCA, position, direction);
+        EntityAi_LaunchShot(entity, 0xCA, position, direction);
     }
     position[0] = -15700.0f;
     position[1] = 2830.0f;
@@ -780,43 +780,43 @@ static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
     direction[3] = 0.0f;
     for (i = 3200; i <= 4000; i += 400) {
         position[2] = i;
-        func_00195E48(entity, 0xCA, position, direction);
+        EntityAi_LaunchShot(entity, 0xCA, position, direction);
     }
     position[0] = -15700.0f;
     position[1] = 2830.0f;
     position[2] = 2000.0f;
     position[3] = 0.0f;
-    func_00195E48(entity, 0xCA, position, direction);
+    EntityAi_LaunchShot(entity, 0xCA, position, direction);
     position[0] = -15700.0f;
     position[1] = 2830.0f;
     position[2] = 3600.0f;
     position[3] = 0.0f;
-    func_0019D490(0x42, 0, position, 2000.0f);
+    Sound_PlayMapAtRange(0x42, 0, position, 2000.0f);
     position[0] = -16900.0f;
     position[1] = 2930.0f;
     position[2] = 4200.0f;
     position[3] = 0.0f;
-    func_0019D490(0x42, 0, position, 2000.0f);
+    Sound_PlayMapAtRange(0x42, 0, position, 2000.0f);
     position[0] = -17700.0f;
     position[1] = 2830.0f;
     position[2] = 3200.0f;
     position[3] = 0.0f;
-    func_0019D490(0x42, 0, position, 2000.0f);
+    Sound_PlayMapAtRange(0x42, 0, position, 2000.0f);
     position[0] = -17300.0f;
     position[1] = 2930.0f;
     position[2] = 2200.0f;
     position[3] = 0.0f;
-    func_0019D490(0x42, 0, position, 2000.0f);
+    Sound_PlayMapAtRange(0x42, 0, position, 2000.0f);
     position[0] = -15700.0f;
     position[1] = 2830.0f;
     position[2] = 2000.0f;
     position[3] = 0.0f;
-    func_0019D490(0x42, 0, position, 2000.0f);
+    Sound_PlayMapAtRange(0x42, 0, position, 2000.0f);
 }
 
 /* An action (busy bit 0x2000) that DarkSorcerer_PickAction starts: plays animation 18 to its
    end; at frame 16 it launches shot 0xC9 from the entity's position along the model's angles
-   (func_00195E48) and sets the pause, work word unk6A, to 90. Calls DarkSorcerer_ApplyMoveCommand every frame. */
+   (EntityAi_LaunchShot) and sets the pause, work word unk6A, to 90. Calls DarkSorcerer_ApplyMoveCommand every frame. */
 static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
@@ -834,7 +834,7 @@ static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
         break;
     case 2:
         if (entity->model->unkFC->unk82 >= 0x10) {
-            func_00195E48(entity, 0xC9, entity->model->position, entity->model->unkD0);
+            EntityAi_LaunchShot(entity, 0xC9, entity->model->position, entity->model->unkD0);
             unkE0->unk6A = 0x5A;
             entity->action_step++;
         }

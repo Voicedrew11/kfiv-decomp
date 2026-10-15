@@ -6,7 +6,7 @@
 #include "common.h"
 
 #define ENTITY_WORK_AREA_SIZE 0xA0
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -18,8 +18,8 @@ int func_00192EB0(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int func_00194368(EntityModel *, f32);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196C28(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn3D(char *);
 void func_0018E9C0(void *);
 f32 func_0018B518(f32 *);
 int func_0018EAC0(void *, void *);
@@ -31,7 +31,7 @@ int rand(void);
 void func_0018B6F8(f32 *, f32, f32, void *, void *);
 int func_00191340(Entity *, int);
 extern PlayerData D_00413F80;
-s32 func_00197078(Entity *);
+s32 EntityAi_CanAttack(Entity *);
 int func_0018F030(char *);
 float func_001957B8(float, float);
 void Vector_Copy(void *, void *);
@@ -42,12 +42,12 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
-float func_00199E68(Entity *, float);
+float EntityAi_Accelerate(Entity *, float);
 int func_00192C98(void *, int, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
-s32 func_00195AC0(Entity *, void *, s32, s32, s32);
-void func_0019A290(Entity *, s32);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 
 static void DragonFly_Animate(Entity *entity);
 static void DragonFly_Think(Entity *entity, s32 unknown);
@@ -71,7 +71,7 @@ void DragonFly_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = (void (*)(Entity *, s32))DragonFly_Think;
     unkE0->animate = (void (*)(void))DragonFly_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -117,7 +117,7 @@ static void DragonFly_Animate(Entity *entity) {
     }
 }
 
-/* The think handler: as EntityAi_Think, with func_00196C28 where that one calls func_00196CC0,
+/* The think handler: as EntityAi_Think, with EntityAi_CheckFarFromSpawn3D where that one calls EntityAi_CheckFarFromSpawn,
    DragonFly_ThinkReturn while flag bit 53 is set, DragonFly_ThinkCombat for state 2 and
    DragonFly_ThinkWander for the other states. It also moves the entity in y so that the ground
    func_0018B518 finds is no nearer than Entity.unk30. */
@@ -125,12 +125,12 @@ static void DragonFly_Think(Entity *entity, s32 unknown) {
     f32 floor_distance;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
         return;
     }
-    func_00196C28((char *)entity);
+    EntityAi_CheckFarFromSpawn3D((char *)entity);
     func_0018E9C0(entity);
     floor_distance = func_0018B518(entity->model->position);
     if (floor_distance < entity->unk30) {
@@ -242,7 +242,7 @@ static void DragonFly_ThinkWander(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: it has none of EntityAi_ThinkCombat's guard, dodge and draw among
-   the actions. Whenever the pause Entity.unkA2 is over and func_00197078 finds the player in reach
+   the actions. Whenever the pause Entity.unkA2 is over and EntityAi_CanAttack finds the player in reach
    (and the way is not 4) it starts DragonFly_RangedAttack or DragonFly_MeleeAttack, as
    func_0018F030 draws. Otherwise it gives the command for one of the ways kept in work byte unk78:
    1 forward at the level of the player's y less 190 plus work byte unk7B; 2 forward to the level
@@ -258,7 +258,7 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
     s32 roll;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    if (unkE0->unk78 != 4 && entity->unkA2 == 0 && ((int (*)(Entity *))func_00197078)(entity)) { // match: the entity is passed
+    if (unkE0->unk78 != 4 && entity->unkA2 == 0 && ((int (*)(Entity *))EntityAi_CanAttack)(entity)) { // match: the entity is passed
         if (func_0018F030((char *)entity)) {
             EntityAi_StartAction(entity, DragonFly_RangedAttack, unknown);
         } else {
@@ -444,7 +444,7 @@ static void DragonFly_Move(Entity *entity) {
         vector[1] += amount;
     }
     if (entity->unkC8 & 0x3F) {
-        unkE0->unk44 = func_00199E68(entity, unkE0->unk44);
+        unkE0->unk44 = EntityAi_Accelerate(entity, unkE0->unk44);
         amount = unkE0->unk44;
         if (entity->unkC8 & 0x40) {
             amount += amount;
@@ -506,24 +506,24 @@ static void DragonFly_MeleeAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk240->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
         frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = func_00195AC0(entity, unk240, 0, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = func_00195AC0(entity, unk240, 1, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->unkFC->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = func_00195AC0(entity, unk240, 2, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
@@ -534,7 +534,7 @@ static void DragonFly_MeleeAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk240->unk02);
+            EntityAi_SetAttackDelay(entity, unk240->unk02);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -563,16 +563,16 @@ static void DragonFly_RangedAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
-        func_00195ED0(entity, unk3D8,
+        EntityAi_LaunchShots(entity, unk3D8,
                       (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
                       entity->model->unkFC->unk82);
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -584,7 +584,7 @@ static void DragonFly_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

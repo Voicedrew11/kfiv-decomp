@@ -6,7 +6,7 @@ extern u32 D_0038CC74[];
 extern u8 item_counts[];
 
 void MapObject_ShowKeyUsed(int);
-void func_0019D490(s32, s32, f32 *, f32);
+int Sound_PlayMapAtRange(u8, u8, float *, float);
 /* Update handler of a closed door (kinds 1, 2, 6 and 0x11): when the player uses it, it opens if it needs no
    item or the player holds the item (the key), else its name ("Jail Door", ...) or "Locked" is shown. */
 void MapObject_UpdateClosedDoor(MapObject *object) {
@@ -28,7 +28,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
                     range = object->unk04->unk70;
                 }
                 // match: it returns a value
-                ((int (*)(s32, s32, f32 *, f32))func_0019D490)(0x2E, 0, &object->model->position.x, range);
+                ((int (*)(s32, s32, f32 *, f32))Sound_PlayMapAtRange)(0x2E, 0, &object->model->position.x, range);
                 object->unk10 |= 0x40000;
             } else {
                 if (work->timer > 0) {

@@ -6,7 +6,7 @@ void func_001840B8(char *, int);
 void func_001841B0(Entity *, int);
 void func_001841E0(Entity *, int);
 void func_00184240(char *, int);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 
 void func_00183E98(Entity *entity, s32 unknown) {
     if (entity->unkC6 == 0) {
@@ -21,7 +21,7 @@ void func_00183E98(Entity *entity, s32 unknown) {
         case 5:
             func_001841B0(entity, unknown);
             if (entity->params->unk18 < entity->distance_to_player) {
-                func_00195898((char *)entity, 6);
+                EntityAi_SetState((char *)entity, 6);
             }
             break;
         case 6:

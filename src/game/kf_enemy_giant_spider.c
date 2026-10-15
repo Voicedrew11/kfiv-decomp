@@ -5,7 +5,7 @@
 #include "kf_entity.h"
 #include "common.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -19,11 +19,11 @@ int func_00194368(EntityModel *, f32);
 float func_001957B8(float, float);
 float func_00195388(float *, float, float);
 void func_00190A30(char *);
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
+void EntityAi_SensePlayer(void *, int);
 void func_0018E9C0(void *);
 int rand(void);
 s32 func_0018ED98(Entity *, f32, f32);
@@ -34,9 +34,9 @@ void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 int func_00192C98(void *, int, int, u32, int);
 extern PlayerData D_00413F80;
-s32 func_00199EB8(Entity *, f32 *, f32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 int func_0018CF30(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
-void func_0019A290(Entity *, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void GiantSpider_Animate(Entity *entity);
 static void GiantSpider_OnHit(Entity *entity);
@@ -62,7 +62,7 @@ void GiantSpider_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = GiantSpider_Think;
     unkE0->animate = (void (*)(void))GiantSpider_Animate;
     unkE0->on_hit = (void (*)(void))GiantSpider_OnHit;
@@ -138,16 +138,16 @@ static void GiantSpider_OnHit(Entity *entity) {
     func_00190A30((char *)entity);
     entity->flags &= ~0x200;
     EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
-    func_00195898((char *)entity, 2);
+    EntityAi_SetState((char *)entity, 2);
     unkE0->unk7A = 1;
 }
 
-/* The think handler: as EntityAi_Think without func_00196CC0 and the return to the spawn point,
+/* The think handler: as EntityAi_Think without EntityAi_CheckFarFromSpawn and the return to the spawn point,
    flag bit 9 kept set, with GiantSpider_ThinkCombat for state 2 and GiantSpider_ThinkTurnToPlayer for the other
    states. */
 static void GiantSpider_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 0);
+        EntityAi_SensePlayer(entity, 0);
     }
     if (entity->unkC6 != 0) {
         return;
@@ -364,12 +364,12 @@ static void GiantSpider_RangedAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
@@ -386,7 +386,7 @@ static void GiantSpider_RangedAttack(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

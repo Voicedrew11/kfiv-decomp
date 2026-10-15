@@ -6,7 +6,7 @@
 #include "common.h"
 #include "kf_shot.h"
 
-void func_001958A8(char *, s32);
+void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *, void (*)(Entity *), int);
 void func_00191478(EntityModel *);
 int func_00193378(EntityModel *, s32, s32);
@@ -16,8 +16,8 @@ void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 extern s32 D_003E6E40[][2];
 extern u32 D_00446ED4;
-void func_00196870(void *, int);
-void func_00196CC0(char *);
+void EntityAi_SensePlayer(void *, int);
+void EntityAi_CheckFarFromSpawn(char *);
 void func_0018E9C0(void *);
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
@@ -51,9 +51,9 @@ int func_00194368(EntityModel *, f32);
 char *func_0010CAB8(char *, u32);
 int func_001B4F30(u16, void *, void *, void *, void *);
 void func_0018D600(char **, int, u32, int);
-s32 func_00199EB8(Entity *, f32 *, f32);
-int func_00195ED0(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void func_0019A290(Entity *, s32);
+s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
+int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
+void EntityAi_SetAttackDelay(Entity *, s32);
 
 static void Skull_Think(Entity *entity, s32 unknown);
 static void Skull_ThinkCombat(Entity *entity, s32 unknown);
@@ -78,7 +78,7 @@ void Skull_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    func_001958A8((char *)entity, D_003E6E40[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, D_003E6E40[entity->params->unk02][1]);
     unkE0->think = Skull_Think;
     unkE0->animate = (void (*)(void))Skull_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -118,7 +118,7 @@ static void Skull_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
-        func_00196870(entity, 1);
+        EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 & 0x40) {
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
@@ -128,7 +128,7 @@ static void Skull_Think(Entity *entity, s32 unknown) {
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
     }
     if (entity->unkC6 == 0) {
-        func_00196CC0((char *)entity);
+        EntityAi_CheckFarFromSpawn((char *)entity);
         func_0018E9C0(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -555,18 +555,18 @@ static void Skull_RangedAttack0(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            func_00199EB8(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            func_00199EB8(entity, &entity->unkE0.unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
         } else {
             unkE0->unk1C = 0.0f;
         }
         if (entity->model->unkFC->unk82 >= entity->params->unk43A && entity->model->unkFC->unk82 <= entity->params->unk43C &&
             (D_00446ED4 & 1)) {
-            func_00195ED0(entity, unk3D8, entity->params->unk43A, entity->params->unk43C);
+            EntityAi_LaunchShots(entity, unk3D8, entity->params->unk43A, entity->params->unk43C);
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
@@ -577,7 +577,7 @@ static void Skull_RangedAttack0(Entity *entity) {
             entity->unkC6 = 0;
             entity->unkC8 = 0;
             entity->unkA0 = 0;
-            func_0019A290(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

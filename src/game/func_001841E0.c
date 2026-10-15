@@ -1,6 +1,6 @@
 #include "kf_entity.h"
 
-void func_00195898(char *, u8);
+void EntityAi_SetState(char *, u8);
 int EntityAi_StartAction(char *, void (*)(void), int);
 
 void func_001841E0(Entity *entity, int unknown) {
@@ -8,6 +8,6 @@ void func_001841E0(Entity *entity, int unknown) {
 
     unkE0->unk68 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    func_00195898((char *)entity, 0);
+    EntityAi_SetState((char *)entity, 0);
     EntityAi_StartAction((char *)entity, unkE0->move, unknown);
 }
