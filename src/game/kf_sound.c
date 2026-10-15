@@ -1,3 +1,7 @@
+/* The sound driver layer: the EE side of FromSoftware's sound driver on the IOP (fssnd; its RPC wrapper
+   names itself fssnd_Remote). Commands go over SIF RPC (SoundDriver_Remote); voices (a header and its
+   samples, the samples sent on to sound memory), sequences, notes queued into a command list that is sent
+   once a frame, streams, reverb settings. */
 #include "kf_load.h"
 #include "kf_sound.h"
 
@@ -6,19 +10,18 @@ typedef char *va_list;
 #define va_start(ap, last) ((ap) = (char *)__builtin_next_arg(last) - 0x38)
 #define va_arg(ap, type) (*(type *)((ap += 8) - 8))
 
-static void func_001CBEA0(void);
-void FlushCache(int); // match: void as in eekernel.h; an int result changes func_001CB778's registers
+static void SoundDriver_DisableOutput(void);
+void FlushCache(int); // match: void as in eekernel.h; an int result changes SoundDriver_Init's registers
 int sceSifBindRpc(int *, int, int);
 int sceSifCheckStatRpc(int *);
 int printf(const char *, ...);
 int sceSifCallRpc(int *, int, int, char *, int, int *, int, int, int);
 int sceSifSetDma(int *, int);
 int sceSifDmaStat(int);
-static int func_001CF070(const char *);
-static int func_001CF110(char *, void *);
+static int SoundDriver_GetFileSize(const char *);
+static int SoundDriver_LoadIopFile(char *, void *);
 int sceSifAllocIopHeap(int);
 int sceSifFreeIopHeap(int);
-int func_001CBD20(void);
 int puts(char *);
 char *strcpy(char *, const char *);
 int sceClose(int);
@@ -37,16 +40,16 @@ extern int D_004469F8;
 extern char sound_rpc_file_name[];
 
 
-/* the step func_001CD020 runs keeps its source position here between calls */
+/* SoundDriver_LoadVoiceStep keeps the position in the sample data here between calls */
 static int voice_load_source;                   /* 0x4471C0 */
-/* the bank func_001CDF90 is loading, step by step */
+/* the sequence SoundDriver_LoadSequenceStep is loading, step by step */
 static int bank_load_index;                     /* 0x4471C4 */
 static SoundBank *bank_load_bank;               /* 0x4471C8 */
 static SoundVoice *bank_load_voice;             /* 0x4471CC */
 static int bank_load_voice_data;                /* 0x4471D0 */
 static SoundState *sound_state;                 /* 0x4471D4 points at sound_state_storage */
 
-static int sound_command_list[256];             /* 0x5BEE80 commands for the driver, sent by func_001CEBE0 */
+static int sound_command_list[256];             /* 0x5BEE80 commands for the driver, sent by SoundDriver_FlushCommands */
 static SoundRpcRequest sound_rpc_buffer;        /* 0x5BF280 */
 static SoundState sound_state_storage;          /* 0x5BF380 */
 static SoundDmaRequest sound_dma;               /* 0x5BF860 */
@@ -55,8 +58,8 @@ static int sound_rpc_client[10];                /* 0x5BF890 sceSifClientData of 
 static SoundDmaRequest sound_command_dma;       /* 0x5BF8B8 sends sound_command_list */
 
 /* Starts the sound driver: binds its RPC service on the IOP, then resets the driver state,
-   every voice, bank and effect slot. */
-int func_001CB778(void) {
+   every voice, sequence and reverb slot. Returns 0. */
+int SoundDriver_Init(void) {
     SoundVoice *voice;
     SoundBank *bank;
     SoundEffectFields *effect;
@@ -73,11 +76,11 @@ int func_001CB778(void) {
     } while (sound_rpc_client[9] == 0);
     FlushCache(0);
     sound_state = &sound_state_storage;
-    sound_state->dma_src = func_001CBAE0(1, 0x10);
+    sound_state->dma_src = SoundDriver_Remote(1, 0x10);
     *(int *)sound_state->unk4D0 = 0x3FFF; // match: the int at 0x4D0; the header has six chars there
-    func_001CBAE0(1, 0x30, 0x3FFF, 0x3FFF);
+    SoundDriver_Remote(1, 0x30, 0x3FFF, 0x3FFF);
     sound_state->load_addr = NULL;
-    sound_state->unk4C8 = func_001CBAE0(1, 0xA0);
+    sound_state->unk4C8 = SoundDriver_Remote(1, 0xA0);
     // match: retail stores these three as pointers (the header has them as integers)
     *(int **)&sound_state->dma_dest = sound_command_list;
     sound_command_list[0] = 0;
@@ -114,34 +117,37 @@ int func_001CB778(void) {
     return 0;
 }
 
-void func_001CB9A0(void) {
+/* Turns the sound output off, stops both streams (command 0x3030), frees every sequence and voice and
+   sends command 0x20. main calls it before each Sound_Init, the movie players before a movie. */
+void SoundDriver_ReleaseAll(void) {
     SoundBank *bank;
     SoundVoice *voice;
     int i;
 
-    func_001CBEA0();
-    func_001CBAE0(1, 0x3030, 0);
-    func_001CBAE0(1, 0x3030, 1);
+    SoundDriver_DisableOutput();
+    SoundDriver_Remote(1, 0x3030, 0);
+    SoundDriver_Remote(1, 0x3030, 1);
     bank = sound_state->banks;
     for (i = 0; i < 4; i++) {
         if (bank->iop_heap != 0) {
-            func_001CE408(i);
+            SoundDriver_FreeSequence(i);
         }
         bank++;
     }
     voice = sound_state->voices;
     for (i = 0; i < 16; i++) {
         if (voice->unk00 != 0) {
-            func_001CD6E0(i);
+            SoundDriver_FreeVoice(i);
         }
         voice++;
     }
-    func_001CBAE0(1, 0x20);
+    SoundDriver_Remote(1, 0x20);
     FlushCache(0);
 }
 
-/* Polls the SIF RPC status until it is no longer 1, giving up after 0x989680 tries. */
-static int func_001CBA58(void) {
+/* Waits until the driver's last RPC call has finished: 1, or -1 after 0x989680 tries (it then prints
+   "sceSifCheckStatRpc() == 1 in fssnd_Remote"). */
+static int SoundDriver_WaitRpc(void) {
     int retries = 0x989680;
 
     while (sceSifCheckStatRpc(sound_rpc_client) == 1) {
@@ -155,13 +161,14 @@ static int func_001CBA58(void) {
 }
 
 /* The state of the sound driver's RPC client: 1 while a call is still running. */
-int func_001CBAC0(void) {
+int SoundDriver_IsBusy(void) {
     return sceSifCheckStatRpc(sound_rpc_client);
 }
 
-/* Sends a command and its arguments to the sound driver on the IOP (the game's own sceSdRemote)
-   and returns the driver's answer. */
-int func_001CBAE0(int blocking, ...) {
+/* Sends a command and its arguments to the sound driver on the IOP (the game's own sceSdRemote;
+   fssnd_Remote in its timeout message) and returns the driver's answer. Commands with 0x80000 send
+   the record and take the reply into a buffer, those with 0x40000 send a buffer. */
+int SoundDriver_Remote(int blocking, ...) {
     va_list ap;
     int command;
     int no_wait;
@@ -179,7 +186,7 @@ int func_001CBAE0(int blocking, ...) {
     if (blocking == 0) {
         no_wait = TRUE;
     }
-    result = func_001CBA58();
+    result = SoundDriver_WaitRpc();
     if (result < 0) {
         return result;
     }
@@ -198,9 +205,9 @@ int func_001CBAE0(int blocking, ...) {
     return result;
 }
 
-/* Starts sending size bytes at src to dest in sound memory, 0x4000 bytes at a time (func_001CBD20
+/* Starts sending size bytes at src to dest in sound memory, 0x4000 bytes at a time (SoundDriver_StepUpload
    sends the rest). Returns 0, or -1 if the DMA could not be queued. */
-static int func_001CBC30(int dest, int src, u32 size) {
+static int SoundDriver_StartUpload(int dest, int src, u32 size) {
     SoundDmaRequest *dma;
     int iop_buffer;
     int dma_id;
@@ -232,9 +239,9 @@ static int func_001CBC30(int dest, int src, u32 size) {
     return (dma_id != 0) ? 0 : -1;
 }
 
-/* Keeps the upload func_001CBC30 started going: once the piece in flight has arrived it is
+/* Keeps the upload SoundDriver_StartUpload started going: once the piece in flight has arrived it is
    written to sound memory and the next one is sent. Returns 1 when nothing is left to send. */
-int func_001CBD20(void) {
+int SoundDriver_StepUpload(void) {
     SoundDmaRequest *dma;
     int iop_buffer;
     int dma_id;
@@ -245,7 +252,7 @@ int func_001CBD20(void) {
     if (sceSifDmaStat(sound_upload.dma_id) >= 0) {
         return 0;
     }
-    func_001CBAE0(1, 0xB0, sound_upload.dest, sound_upload.piece_size);
+    SoundDriver_Remote(1, 0xB0, sound_upload.dest, sound_upload.piece_size);
     sound_upload.remaining -= sound_upload.piece_size;
     if (sound_upload.remaining <= 0) {
         sound_upload.active = 0;
@@ -277,32 +284,33 @@ int func_001CBD20(void) {
 }
 
 /* Turns the sound output on, once. */
-void func_001CBE60(void) {
+void SoundDriver_EnableOutput(void) {
     if (sound_state->active != TRUE) {
-        func_001CBAE0(1, 0x40);
+        SoundDriver_Remote(1, 0x40);
         sound_state->active = TRUE;
     }
 }
 
 /* Turns the sound output off if it is on. */
-static void func_001CBEA0(void) {
+static void SoundDriver_DisableOutput(void) {
     if (sound_state->active != FALSE) {
-        func_001CBAE0(1, 0x50);
+        SoundDriver_Remote(1, 0x50);
         sound_state->active = FALSE;
     }
 }
 
-/* Switches every loaded voice and bank to its second data block (unk04). */
-void func_001CBED8(void) {
+/* Mono output (the sound option): tells the driver (command 0xC0, 0) and switches every loaded voice
+   and sequence to its mono header copy (unk04); SoundDriver_NoteOn then centres every pan. */
+void SoundDriver_SetMono(void) {
     SoundVoice *voice;
     SoundBank *bank;
     int i;
 
     if (sound_state->active != 0) {
-        func_001CBAE0(1, 0x50);
+        SoundDriver_Remote(1, 0x50);
     }
     *(u16 *)&sound_state->unk4D0[4] = 0; // match: the u16 at 0x4D4; the header has six chars there
-    func_001CBAE0(1, 0xC0, 0);
+    SoundDriver_Remote(1, 0xC0, 0);
     voice = sound_state->voices;
     for (i = 0; i < 16; i++) {
         voice->unk1C = 0;
@@ -315,7 +323,7 @@ void func_001CBED8(void) {
         if (voice->unk04 == 0) {
             continue;
         }
-        func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, voice->unk04, voice->unk1B);
+        SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, voice->unk04, voice->unk1B);
         voice++; // match: retail only steps to the next voice after a reload
     }
     bank = sound_state->banks;
@@ -327,25 +335,26 @@ void func_001CBED8(void) {
             continue;
         }
         voice = &sound_state->voices[bank->voice];
-        func_001CBAE0(1, 0x2070, bank->unk0C, voice->unk0C, voice->unk04, voice->unk1B, 0);
+        SoundDriver_Remote(1, 0x2070, bank->unk0C, voice->unk0C, voice->unk04, voice->unk1B, 0);
         bank++; // match: as above
     }
     if (sound_state->active != 0) {
-        func_001CBAE0(1, 0x40);
+        SoundDriver_Remote(1, 0x40);
     }
 }
 
-/* Switches every loaded voice and bank to its first data block (unk00). */
-void func_001CC018(void) {
+/* Stereo output (the sound option): tells the driver (command 0xC0, 1) and switches every loaded voice
+   and sequence to its stereo header copy (unk00). */
+void SoundDriver_SetStereo(void) {
     SoundVoice *voice;
     SoundBank *bank;
     int i;
 
     if (sound_state->active != 0) {
-        func_001CBAE0(1, 0x50);
+        SoundDriver_Remote(1, 0x50);
     }
     *(u16 *)&sound_state->unk4D0[4] = 1; // match: the u16 at 0x4D4; the header has six chars there
-    func_001CBAE0(1, 0xC0, 1);
+    SoundDriver_Remote(1, 0xC0, 1);
     voice = sound_state->voices;
     for (i = 0; i < 16; i++) {
         voice->unk1C = 1;
@@ -358,7 +367,7 @@ void func_001CC018(void) {
         if (voice->unk04 == 0) {
             continue;
         }
-        func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, voice->unk00, voice->unk1B);
+        SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, voice->unk00, voice->unk1B);
         voice++; // match: retail only steps to the next voice after a reload
     }
     bank = sound_state->banks;
@@ -370,16 +379,16 @@ void func_001CC018(void) {
             continue;
         }
         voice = &sound_state->voices[bank->voice];
-        func_001CBAE0(1, 0x2070, bank->unk0C, voice->unk0C, voice->unk00, voice->unk1B, 1);
+        SoundDriver_Remote(1, 0x2070, bank->unk0C, voice->unk0C, voice->unk00, voice->unk1B, 1);
         bank++; // match: as above
     }
     if (sound_state->active != 0) {
-        func_001CBAE0(1, 0x40);
+        SoundDriver_Remote(1, 0x40);
     }
 }
 
 /* The index of the first free voice, or -1 when all 16 are taken. */
-int func_001CC160(void) {
+int SoundDriver_FindFreeVoice(void) {
     SoundVoice *voice = sound_state->voices;
     int i;
 
@@ -396,7 +405,7 @@ int func_001CC160(void) {
 
 /* Loads a voice from files: the header file to its two IOP blocks and, if one is named, the
    sample file. Returns the voice, -2 when none is free, -1 on failure. */
-int func_001CC1A8(int voice_id, char *header_name, char *sample_name, int unk1B) {
+int SoundDriver_LoadVoiceFiles(int voice_id, char *header_name, char *sample_name, int unk1B) {
     SoundVoice *voice = sound_state->voices;
     int voice_index;
     int block;
@@ -417,7 +426,7 @@ int func_001CC1A8(int voice_id, char *header_name, char *sample_name, int unk1B)
     }
     voice->unk1B = unk1B;
     voice->unk18 = voice_id;
-    size = func_001CF070(header_name);
+    size = SoundDriver_GetFileSize(header_name);
     if (size < 0) {
         return -1;
     }
@@ -432,19 +441,19 @@ int func_001CC1A8(int voice_id, char *header_name, char *sample_name, int unk1B)
     voice->unk04 = sceSifAllocIopHeap(size);
     if (voice->unk00 == 0 || voice->unk04 == 0 || (u32)(voice->unk00 + voice->unk10) > 0x1FFFFF ||
         (u32)(voice->unk04 + voice->unk10) > 0x1FFFFF) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
-    if (func_001CF110(header_name, (void *)voice->unk00) != 0) {
-        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
+    if (SoundDriver_LoadIopFile(header_name, (void *)voice->unk00) != 0) {
+        return -1; // match: the voice is not released here (the other loaders call SoundDriver_FreeVoice first)
     }
-    func_001CBAE0(1, 0x1070, voice->unk04, voice->unk00, size);
+    SoundDriver_Remote(1, 0x1070, voice->unk04, voice->unk00, size);
     if (sample_name == NULL) {
         return voice_index;
     }
-    size = func_001CF070(sample_name);
+    size = SoundDriver_GetFileSize(sample_name);
     if (size < 0) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
     voice->unk14 = size;
@@ -456,15 +465,15 @@ int func_001CC1A8(int voice_id, char *header_name, char *sample_name, int unk1B)
     }
     voice->iop_heap = sceSifAllocIopHeap(size);
     if (voice->iop_heap == 0 || (u32)(voice->iop_heap + voice->unk14) > 0x1FFFFF) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
-    if (func_001CF110(sample_name, (void *)voice->iop_heap) != 0) {
-        func_001CD6E0(voice_index);
+    if (SoundDriver_LoadIopFile(sample_name, (void *)voice->iop_heap) != 0) {
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
     if (0x1E7FBF - voice->unk0C < voice->unk14) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
     if (voice->unk1C != 0) {
@@ -472,8 +481,8 @@ int func_001CC1A8(int voice_id, char *header_name, char *sample_name, int unk1B)
     } else {
         block = voice->unk04;
     }
-    if (func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
-        func_001CD6E0(voice_index);
+    if (SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
     FlushCache(0);
@@ -482,7 +491,7 @@ int func_001CC1A8(int voice_id, char *header_name, char *sample_name, int unk1B)
 
 /* Loads a voice from memory: header data to its two IOP blocks, sample data to sound memory.
    Returns the voice, -2 when none is free, -1 on failure. */
-int func_001CC400(int voice_id, int header_data, int header_size, int sample_data, int sample_size, int unk1B) {
+int SoundDriver_LoadVoice(int voice_id, int header_data, int header_size, int sample_data, int sample_size, int unk1B) {
     SoundVoice *voice = sound_state->voices;
     int voice_index;
     int block;
@@ -518,13 +527,13 @@ int func_001CC400(int voice_id, int header_data, int header_size, int sample_dat
     voice->unk04 = sceSifAllocIopHeap(voice->unk10);
     if (voice->unk00 == 0 || voice->unk04 == 0 || (u32)(voice->unk00 + voice->unk10) > 0x1FFFFF ||
         (u32)(voice->unk04 + voice->unk10) > 0x1FFFFF) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
-    func_001CBC30(voice->unk00, header_data, voice->unk10);
-    while (func_001CBD20() == 0) {
+    SoundDriver_StartUpload(voice->unk00, header_data, voice->unk10);
+    while (SoundDriver_StepUpload() == 0) {
     }
-    func_001CBAE0(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
+    SoundDriver_Remote(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
     while (sample_size & 0xF) {
         sample_size++;
     }
@@ -537,14 +546,14 @@ int func_001CC400(int voice_id, int header_data, int header_size, int sample_dat
     }
     voice->iop_heap = sceSifAllocIopHeap(voice->unk14);
     if (voice->iop_heap == 0 || (u32)(voice->iop_heap + voice->unk14) > 0x1FFFFF) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
-    func_001CBC30(voice->iop_heap, sample_data, voice->unk14);
-    while (func_001CBD20() == 0) {
+    SoundDriver_StartUpload(voice->iop_heap, sample_data, voice->unk14);
+    while (SoundDriver_StepUpload() == 0) {
     }
     if (0x1E7FBF - voice->unk0C < voice->unk14) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
     if (voice->unk1C != 0) {
@@ -552,8 +561,8 @@ int func_001CC400(int voice_id, int header_data, int header_size, int sample_dat
     } else {
         block = voice->unk04;
     }
-    if (func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
-        func_001CD6E0(voice_index);
+    if (SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
     FlushCache(0);
@@ -562,7 +571,7 @@ int func_001CC400(int voice_id, int header_data, int header_size, int sample_dat
 
 /* Sets up a free voice with its own header data but the sample data of another voice.
    Returns the voice, -2 when none is free, -1 on failure. */
-int func_001CC6A0(int voice_id, int source_index, int header_data, int header_size, int unk1B) {
+int SoundDriver_LoadVoiceSharedSamples(int voice_id, int source_index, int header_data, int header_size, int unk1B) {
     SoundVoice *source = &sound_state->voices[source_index];
     SoundVoice *voice = sound_state->voices;
     int voice_index;
@@ -601,13 +610,13 @@ int func_001CC6A0(int voice_id, int source_index, int header_data, int header_si
     voice->unk04 = sceSifAllocIopHeap(voice->unk10);
     if (voice->unk00 == 0 || voice->unk04 == 0 || (u32)(voice->unk00 + voice->unk10) > 0x1FFFFF ||
         (u32)(voice->unk04 + voice->unk10) > 0x1FFFFF) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
-    func_001CBC30(voice->unk00, header_data, voice->unk10);
-    while (func_001CBD20() == 0) {
+    SoundDriver_StartUpload(voice->unk00, header_data, voice->unk10);
+    while (SoundDriver_StepUpload() == 0) {
     }
-    func_001CBAE0(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
+    SoundDriver_Remote(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
     sample_size = source->unk14;
     sample_addr = source->unk0C;
     voice->unk14 = sample_size;
@@ -618,18 +627,18 @@ int func_001CC6A0(int voice_id, int source_index, int header_data, int header_si
     } else {
         block = voice->unk04;
     }
-    if (func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
-        func_001CD6E0(voice_index);
+    if (SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
     FlushCache(0);
     return voice_index;
 }
 
-/* Loads a voice from memory like func_001CC400, but sends the sample data through a temporary
+/* Loads a voice from memory like SoundDriver_LoadVoice, but sends the sample data through a temporary
    IOP block, as large as the heap allows, a piece at a time.
    Returns the voice, -2 when none is free, -1 on failure. */
-int func_001CC888(int voice_id, int header_data, int header_size, int sample_data, int sample_size, int unk1B) {
+int SoundDriver_LoadVoiceBuffered(int voice_id, int header_data, int header_size, int sample_data, int sample_size, int unk1B) {
     SoundVoice *voice = sound_state->voices;
     u32 heap_size = 0x100000;
     int voice_index;
@@ -671,13 +680,13 @@ int func_001CC888(int voice_id, int header_data, int header_size, int sample_dat
     voice->unk04 = sceSifAllocIopHeap(voice->unk10);
     if (voice->unk00 == 0 || voice->unk04 == 0 || (u32)(voice->unk00 + voice->unk10) > 0x1FFFFF ||
         (u32)(voice->unk04 + voice->unk10) > 0x1FFFFF) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
-    func_001CBC30(voice->unk00, header_data, voice->unk10);
-    while (func_001CBD20() == 0) {
+    SoundDriver_StartUpload(voice->unk00, header_data, voice->unk10);
+    while (SoundDriver_StepUpload() == 0) {
     }
-    func_001CBAE0(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
+    SoundDriver_Remote(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
     while (sample_size & 0xF) {
         sample_size++;
     }
@@ -694,7 +703,7 @@ int func_001CC888(int voice_id, int header_data, int header_size, int sample_dat
     }
     dest = voice->unk0C;
     if (0x1E7FBF - dest < padded_size) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
     do {
@@ -710,19 +719,19 @@ int func_001CC888(int voice_id, int header_data, int header_size, int sample_dat
             sound_dma.src = sample_data;
             sound_dma.dest = heap;
             sound_dma.mode = 0;
-            func_001CBAE0(1, 0x80, voice->unk1A, 1);
+            SoundDriver_Remote(1, 0x80, voice->unk1A, 1);
             i = sceSifSetDma((int *)&sound_dma, 1); // match: the loop counter doubles as the DMA id
             if (i == 0) {
                 sceSifFreeIopHeap(heap);
-                func_001CD6E0(voice_index);
+                SoundDriver_FreeVoice(voice_index);
                 return -1;
             }
             while (sceSifDmaStat(i) >= 0) {
             }
-            sent = func_001CBAE0(1, 0x90, voice->unk1A, 0, heap, dest, sound_dma.size);
+            sent = SoundDriver_Remote(1, 0x90, voice->unk1A, 0, heap, dest, sound_dma.size);
             if (sent != sound_dma.size) {
                 sceSifFreeIopHeap(heap);
-                func_001CD6E0(voice_index);
+                SoundDriver_FreeVoice(voice_index);
                 return -1;
             }
             sample_data += sent;
@@ -730,30 +739,30 @@ int func_001CC888(int voice_id, int header_data, int header_size, int sample_dat
             remaining -= sent;
         } while (remaining > 0);
     }
-    func_001CBAE0(1, 0x80, voice->unk1A, 1);
+    SoundDriver_Remote(1, 0x80, voice->unk1A, 1);
     sceSifFreeIopHeap(heap);
     if (voice->unk1C != 0) {
         block = voice->unk00;
     } else {
         block = voice->unk04;
     }
-    if (func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
-        func_001CD6E0(voice_index);
+    if (SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
     FlushCache(0);
     return voice_index;
 }
 
-/* Sound load step: gives the voice up again. */
-int func_001CCC08(int *args) {
-    func_001CD6E0(args[0]);
+/* SoundDriver_LoadVoiceStep's first step: frees whatever the voice held. Returns 1 (on). */
+int SoundDriver_VoiceLoadRelease(int *args) {
+    SoundDriver_FreeVoice(args[0]);
     return 1;
 }
 
-/* Sound load step 0: clears the request, gets the voice's two data blocks on the IOP and
-   uploads the first data to them. */
-int func_001CCC28(SoundLoadArgs *args, SoundReloadRequest *request) {
+/* SoundDriver_LoadVoiceStep: clears the request, takes the voice's two header blocks on the IOP and
+   sends the header there (the mono copy made by command 0x1070). 1 (on), or -1 on failure. */
+int SoundDriver_VoiceLoadSendHeader(SoundLoadArgs *args, SoundReloadRequest *request) {
     SoundVoice *voice;
     int voice_index;
 
@@ -777,20 +786,21 @@ int func_001CCC28(SoundLoadArgs *args, SoundReloadRequest *request) {
     voice->unk04 = sceSifAllocIopHeap(voice->unk10);
     if (voice->unk00 == 0 || voice->unk04 == 0 || (u32)(voice->unk00 + voice->unk10) > 0x1FFFFF ||
         (u32)(voice->unk04 + voice->unk10) > 0x1FFFFF) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
-    func_001CBC30(voice->unk00, args->unk04, voice->unk10);
-    while (func_001CBD20() == 0) {
+    SoundDriver_StartUpload(voice->unk00, args->unk04, voice->unk10);
+    while (SoundDriver_StepUpload() == 0) {
     }
-    func_001CBAE0(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
+    SoundDriver_Remote(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
     request->voice = voice;
     request->unk14 = voice_index;
     return 1;
 }
 
-/* Rounds the request size up to 16, then allocates the largest IOP heap block it can (halving from 1 MB). */
-int func_001CCD78(IopLoadRequest *request, IopLoadContext *context) {
+/* SoundDriver_LoadVoiceStep: rounds the sample size up to 16, notes it and the place in sound memory,
+   then takes the largest IOP block it can (halving from 1 MB) to send the samples through. Returns 1. */
+int SoundDriver_VoiceLoadAllocBuffer(IopLoadRequest *request, IopLoadContext *context) {
     u32 heap_size = 0x100000;
     IopLoadBuffer *buffer;
     s32 unk18;
@@ -811,8 +821,9 @@ int func_001CCD78(IopLoadRequest *request, IopLoadContext *context) {
     return 1;
 }
 
-/* Sound load step: sends the next piece of the voice's data to IOP memory. */
-int func_001CCDF0(SoundLoadArgs *args, SoundReloadRequest *request) {
+/* SoundDriver_LoadVoiceStep: once the last transfer to sound memory has finished, starts the DMA of the
+   next piece of the samples to the IOP block. 1 (on), 0 while waiting ("waiting..."), -1 on failure. */
+int SoundDriver_VoiceLoadSendPiece(SoundLoadArgs *args, SoundReloadRequest *request) {
     int dma_id;
     int heap_addr;
     u32 remaining;
@@ -829,31 +840,31 @@ int func_001CCDF0(SoundLoadArgs *args, SoundReloadRequest *request) {
     sound_dma.src = (int)args->unk0C;
     sound_dma.dest = heap_addr;
     sound_dma.mode = 0;
-    if (func_001CBAE0(1, 0x80, request->voice->unk1A, 0) == 0) {
+    if (SoundDriver_Remote(1, 0x80, request->voice->unk1A, 0) == 0) {
         printf(D_0043F688);
         return 0;
     }
     dma_id = sceSifSetDma((int *)&sound_dma, 1);
     if (dma_id == 0) {
         sceSifFreeIopHeap(request->heap_addr);
-        func_001CD6E0(request->unk14);
+        SoundDriver_FreeVoice(request->unk14);
         return -1;
     }
     request->unk1C = dma_id;
     return 1;
 }
 
-/* Sound load step: once the piece in flight has arrived it is written to sound memory;
-   -1 goes back a step while more is left to send. */
-int func_001CCEB8(SoundLoadArgs *args, SoundReloadRequest *request) {
+/* SoundDriver_LoadVoiceStep: once the piece has arrived on the IOP, sends it on to sound memory
+   (command 0x90). 1 when all is sent, -1 (back a step) while more is left, 0 while the DMA runs. */
+int SoundDriver_VoiceLoadWritePiece(SoundLoadArgs *args, SoundReloadRequest *request) {
     int sent;
 
     if (sceSifDmaStat(request->unk1C) >= 0) {
         return 0;
     }
-    if (func_001CBAE0(1, 0x90, request->voice->unk1A, 0, request->heap_addr, request->unk0C, sound_dma.size) < 0) {
+    if (SoundDriver_Remote(1, 0x90, request->voice->unk1A, 0, request->heap_addr, request->unk0C, sound_dma.size) < 0) {
         sceSifFreeIopHeap(request->heap_addr);
-        func_001CD6E0(request->unk14);
+        SoundDriver_FreeVoice(request->unk14);
         return -1;
     }
     sent = sound_dma.size;
@@ -863,21 +874,23 @@ int func_001CCEB8(SoundLoadArgs *args, SoundReloadRequest *request) {
     return (request->unk08 <= 0) ? 1 : -1;
 }
 
-int func_001CCF80(s32 unused, SoundReloadRequest *request) {
+/* SoundDriver_LoadVoiceStep's last step: once the transfer to sound memory has finished, frees the IOP
+   block and hands the voice to the driver (command 0x1010). 1 when done, 0 while waiting, -1 on failure. */
+int SoundDriver_VoiceLoadBind(s32 unused, SoundReloadRequest *request) {
     SoundVoice *desc;
     s32 heap_src;
 
     desc = request->voice;
-    if (func_001CBAE0(1, 0x80, desc->unk1A, 0) != 0) {
+    if (SoundDriver_Remote(1, 0x80, desc->unk1A, 0) != 0) {
         sceSifFreeIopHeap(request->heap_addr);
         if (desc->unk1C != 0) {
             heap_src = desc->unk00;
         } else {
             heap_src = desc->unk04;
         }
-        if (func_001CBAE0(1, 0x1010, desc->unk18, desc->unk0C, heap_src,
+        if (SoundDriver_Remote(1, 0x1010, desc->unk18, desc->unk0C, heap_src,
                           desc->unk1B) != 0) {
-            func_001CD6E0(request->unk14);
+            SoundDriver_FreeVoice(request->unk14);
             return -1;
         }
         FlushCache(0);
@@ -886,21 +899,25 @@ int func_001CCF80(s32 unused, SoundReloadRequest *request) {
     return 0;
 }
 
-/* Runs the handler for the current step with a packed argument block, then advances the step. */
-int func_001CD020(int word0, int word1, int word2, int word3, int word4, int word5, int word6) {
+/* SoundDriver_LoadVoiceAt a step a call, to be called until it stops returning -3: runs the current step
+   (D_0043F670: free the voice, send the header, take an IOP block, send a piece of the samples to it, send
+   the piece on to sound memory, bind the voice) and moves on by what it returns. Once done, returns the
+   voice the request holds; a failed step counts in D_00446704. */
+int SoundDriver_LoadVoiceStep(int voice_index, int header_data, int header_size, int sample_data, int sample_size,
+                              int unk1B, int dest) {
     int args[7];
     int advance;
 
     if (D_004469E8 == 0) {
-        voice_load_source = word3;
+        voice_load_source = sample_data;
     }
-    args[0] = word0;
-    args[1] = word1;
-    args[2] = word2;
+    args[0] = voice_index;
+    args[1] = header_data;
+    args[2] = header_size;
     args[3] = voice_load_source;
-    args[4] = word4;
-    args[5] = word5;
-    args[6] = word6;
+    args[4] = sample_size;
+    args[5] = unk1B;
+    args[6] = dest;
     advance = D_0043F670[D_004469E8](args, sound_rpc_args);
     voice_load_source = args[3];
     D_004469E8 += advance;
@@ -917,9 +934,9 @@ int func_001CD020(int word0, int word1, int word2, int word3, int word4, int wor
     return -3;
 }
 
-/* Loads a voice from memory like func_001CC888, into a voice and a place in sound memory the
+/* Loads a voice from memory like SoundDriver_LoadVoiceBuffered, into a voice and a place in sound memory the
    caller chooses. Returns the voice, or -1 on failure. */
-int func_001CD0E0(int voice_index, int header_data, int header_size, int sample_data, int sample_size, int unk1B,
+int SoundDriver_LoadVoiceAt(int voice_index, int header_data, int header_size, int sample_data, int sample_size, int unk1B,
                   int dest) {
     SoundVoice *voice = &sound_state->voices[voice_index];
     u32 heap_size = 0x100000;
@@ -946,13 +963,13 @@ int func_001CD0E0(int voice_index, int header_data, int header_size, int sample_
     voice->unk04 = sceSifAllocIopHeap(voice->unk10);
     if (voice->unk00 == 0 || voice->unk04 == 0 || (u32)(voice->unk00 + voice->unk10) > 0x1FFFFF ||
         (u32)(voice->unk04 + voice->unk10) > 0x1FFFFF) {
-        func_001CD6E0(voice_index);
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
-    func_001CBC30(voice->unk00, header_data, voice->unk10);
-    while (func_001CBD20() == 0) {
+    SoundDriver_StartUpload(voice->unk00, header_data, voice->unk10);
+    while (SoundDriver_StepUpload() == 0) {
     }
-    func_001CBAE0(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
+    SoundDriver_Remote(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
     while (sample_size & 0xF) {
         sample_size++;
     }
@@ -973,19 +990,19 @@ int func_001CD0E0(int voice_index, int header_data, int header_size, int sample_
             sound_dma.src = sample_data;
             sound_dma.dest = heap;
             sound_dma.mode = 0;
-            func_001CBAE0(1, 0x80, voice->unk1A, 1);
+            SoundDriver_Remote(1, 0x80, voice->unk1A, 1);
             i = sceSifSetDma((int *)&sound_dma, 1); // match: the loop counter doubles as the DMA id
             if (i == 0) {
                 sceSifFreeIopHeap(heap);
-                func_001CD6E0(voice_index);
+                SoundDriver_FreeVoice(voice_index);
                 return -1;
             }
             while (sceSifDmaStat(i) >= 0) {
             }
-            sent = func_001CBAE0(1, 0x90, voice->unk1A, 0, heap, write_addr, sound_dma.size);
+            sent = SoundDriver_Remote(1, 0x90, voice->unk1A, 0, heap, write_addr, sound_dma.size);
             if (sent != sound_dma.size) {
                 sceSifFreeIopHeap(heap);
-                func_001CD6E0(voice_index);
+                SoundDriver_FreeVoice(voice_index);
                 return -1;
             }
             sample_data += sent;
@@ -993,15 +1010,15 @@ int func_001CD0E0(int voice_index, int header_data, int header_size, int sample_
             remaining -= sent;
         } while (remaining > 0);
     }
-    func_001CBAE0(1, 0x80, voice->unk1A, 1);
+    SoundDriver_Remote(1, 0x80, voice->unk1A, 1);
     sceSifFreeIopHeap(heap);
     if (voice->unk1C != 0) {
         block = voice->unk00;
     } else {
         block = voice->unk04;
     }
-    if (func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
-        func_001CD6E0(voice_index);
+    if (SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
+        SoundDriver_FreeVoice(voice_index);
         return -1;
     }
     FlushCache(0);
@@ -1010,7 +1027,7 @@ int func_001CD0E0(int voice_index, int header_data, int header_size, int sample_
 
 /* Sets up a free voice from data that is already on the IOP: its first header block and its
    sample block. Returns the voice, -2 when none is free, -1 on failure. */
-int func_001CD3D0(int voice_id, int header_block, int header_size, int sample_block, int sample_size, int unk1B) {
+int SoundDriver_BindIopVoice(int voice_id, int header_block, int header_size, int sample_block, int sample_size, int unk1B) {
     SoundVoice *voice = sound_state->voices;
     int voice_index;
     int block;
@@ -1039,12 +1056,12 @@ int func_001CD3D0(int voice_id, int header_block, int header_size, int sample_bl
     }
     voice->unk04 = sceSifAllocIopHeap(header_size);
     if (voice->unk04 == 0) {
-        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
+        return -1; // match: the voice is not released here (the other loaders call SoundDriver_FreeVoice first)
     }
     if ((u32)(voice->unk04 + voice->unk10) > 0x1FFFFF) {
-        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
+        return -1; // match: the voice is not released here (the other loaders call SoundDriver_FreeVoice first)
     }
-    func_001CBAE0(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
+    SoundDriver_Remote(1, 0x1070, voice->unk04, voice->unk00, voice->unk10);
     voice->unk14 = sample_size;
     voice->iop_heap = sample_block;
     if (voice->unk0C == 0) {
@@ -1054,34 +1071,36 @@ int func_001CD3D0(int voice_id, int header_block, int header_size, int sample_bl
         sound_state->unk4C0 = voice->unk0C + voice->unk14;
     }
     if (voice->iop_heap == 0) {
-        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
+        return -1; // match: the voice is not released here (the other loaders call SoundDriver_FreeVoice first)
     }
     if (0x1E7FBF - voice->unk0C < voice->unk14) {
-        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
+        return -1; // match: the voice is not released here (the other loaders call SoundDriver_FreeVoice first)
     }
     if (voice->unk1C != 0) {
         block = voice->unk00;
     } else {
         block = voice->unk04;
     }
-    if (func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
-        return -1; // match: the voice is not released here (the other loaders call func_001CD6E0 first)
+    if (SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
+        return -1; // match: the voice is not released here (the other loaders call SoundDriver_FreeVoice first)
     }
     FlushCache(0);
     return voice_index;
 }
 
-/* Moves a voice to another channel and reloads its data there; 0 on success, -1 if the driver sent less. */
-int func_001CD578(int voice_index, int channel) {
+/* Sets a voice's transfer channel and sends its samples from the IOP copy to sound memory again;
+   0 on success, -1 if the driver sent less. */
+int SoundDriver_ResendVoiceSamples(int voice_index, int channel) {
     SoundVoice *voice;
 
     voice = &sound_state->voices[voice_index];
     voice->unk1A = channel;
-    return ((func_001CBAE0(1, 0x90, (char)channel, 0, voice->iop_heap, voice->unk0C, voice->unk14) ^ voice->unk14) == 0) ? 0 : -1;
+    return ((SoundDriver_Remote(1, 0x90, (char)channel, 0, voice->iop_heap, voice->unk0C, voice->unk14) ^ voice->unk14) == 0) ? 0 : -1;
 }
 
-/* Moves a voice to channel and to spu_addr in sound memory and reloads it; 0 on success, -1 on failure. */
-int func_001CD5E0(int voice_index, char channel, u32 spu_addr) {
+/* Moves a voice's samples to spu_addr in sound memory (sent again from the IOP copy over channel) and
+   rebinds the voice; 0 on success, -1 on failure. */
+int SoundDriver_MoveVoiceSamples(int voice_index, char channel, u32 spu_addr) {
     SoundVoice *voice;
     int sent;
     u32 end_addr;
@@ -1095,10 +1114,10 @@ int func_001CD5E0(int voice_index, char channel, u32 spu_addr) {
         return -1;
     }
     voice->unk0C = spu_addr;
-    if (func_001CBAE0(1, 0x1010, voice->unk18, spu_addr, voice->unk00, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, voice->unk18, spu_addr, voice->unk00, voice->unk1B) != 0) {
         return -1;
     }
-    sent = func_001CBAE0(1, 0x90, voice->unk1A, 0, voice->iop_heap, voice->unk0C, voice->unk14);
+    sent = SoundDriver_Remote(1, 0x90, voice->unk1A, 0, voice->iop_heap, voice->unk0C, voice->unk14);
     if (sent != voice->unk14) {
         return -1;
     }
@@ -1109,11 +1128,15 @@ int func_001CD5E0(int voice_index, char channel, u32 spu_addr) {
     return 0;
 }
 
-int func_001CD6B8(int value) {
-    return func_001CBAE0(1, 0x80, value, 0);
+/* Asks the driver (command 0x80 without waiting) whether the sample transfer on a channel has finished;
+   nonzero once it has. Command 0x80 with 1 waits for it instead. */
+int SoundDriver_IsTransferDone(int channel) {
+    return SoundDriver_Remote(1, 0x80, channel, 0);
 }
 
-int func_001CD6E0(u32 voice_index) {
+/* Frees a voice: its IOP sample copy and both header copies, then finds the end of the used sound memory
+   again from the voices left. 0, or -1 for a bad index or a failed free. */
+int SoundDriver_FreeVoice(u32 voice_index) {
     SoundVoice *voice;
     u32 used_end;
     int block_base;
@@ -1161,8 +1184,9 @@ int func_001CD6E0(u32 voice_index) {
     return 0;
 }
 
-/* Release the IOP heap block of a voice; returns -1 if none was held or the free failed. */
-int func_001CD7E0(int voice_index) {
+/* Frees the IOP copy of a voice's samples, which is no longer needed once they are in sound memory
+   (prints "@#$%"); 0, or -1 if none was held or the free failed. */
+int SoundDriver_FreeSampleBuffer(int voice_index) {
     SoundVoice *voice;
 
     voice = &sound_state->voices[voice_index];
@@ -1178,8 +1202,8 @@ int func_001CD7E0(int voice_index) {
     return 0;
 }
 
-/* Frees a voice's two data blocks on the IOP; -1 if either was missing or would not free. */
-int func_001CD840(int voice_index) {
+/* Frees a voice's two header copies on the IOP; -1 if either was missing or would not free. */
+int SoundDriver_FreeVoiceHeaders(int voice_index) {
     SoundVoice *voice = &sound_state->voices[voice_index];
     int result = 0;
 
@@ -1207,7 +1231,7 @@ int func_001CD840(int voice_index) {
 
 /* Packs sound memory: sorts the voices by where their sample data sits, moves each one down
    to close the gaps, then rebinds every voice and bank. Returns -1 on failure. */
-int func_001CD8C8(void) {
+int SoundDriver_CompactMemory(void) {
     SoundVoice *sorted[16];
     char moved[16]; // match: cleared and never read
     SoundVoice *voice;
@@ -1251,19 +1275,19 @@ int func_001CD8C8(void) {
         }
         if (next_addr < (u32)voice->unk0C) {
             voice->unk0C = next_addr;
-            func_001CBAE0(1, 0x80, voice->unk1A, 1);
-            sent = func_001CBAE0(1, 0x90, voice->unk1A, 0, voice->iop_heap, voice->unk0C, voice->unk14);
+            SoundDriver_Remote(1, 0x80, voice->unk1A, 1);
+            sent = SoundDriver_Remote(1, 0x90, voice->unk1A, 0, voice->iop_heap, voice->unk0C, voice->unk14);
             if (sent != voice->unk14) {
                 return -1;
             }
             next_addr += sent;
-            func_001CBAE0(1, 0x80, voice->unk1A, 1);
+            SoundDriver_Remote(1, 0x80, voice->unk1A, 1);
             if (voice->unk1C != 0) {
                 block = voice->unk00;
             } else {
                 block = voice->unk04;
             }
-            if (func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
+            if (SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, block, voice->unk1B) != 0) {
                 return -1;
             }
         } else {
@@ -1285,7 +1309,7 @@ int func_001CD8C8(void) {
         } else {
             block = voice->unk04;
         }
-        if (func_001CBAE0(1, 0x1010, bank->unk0C, voice->unk0C, block, voice->unk1B) != 0) {
+        if (SoundDriver_Remote(1, 0x1010, bank->unk0C, voice->unk0C, block, voice->unk1B) != 0) {
             return -1;
         }
     }
@@ -1294,7 +1318,7 @@ int func_001CD8C8(void) {
 }
 
 /* Sets where in sound memory a voice's data goes. */
-int func_001CDB58(u32 voice_index, int address) {
+int SoundDriver_SetVoiceAddress(u32 voice_index, int address) {
     if (voice_index >= 16) {
         return -1;
     }
@@ -1302,15 +1326,21 @@ int func_001CDB58(u32 voice_index, int address) {
     return 0;
 }
 
+/* Sends driver command 0x1040 with the voice's driver id and a byte. Nothing calls it; what the command
+   sets is not known. */
 void func_001CDB80(int voice_index, u8 value) {
-    func_001CBAE0(1, 0x1040, sound_state->voices[voice_index].unk18, value);
+    SoundDriver_Remote(1, 0x1040, sound_state->voices[voice_index].unk18, value);
 }
 
+/* Sends driver command 0x1050 with the voice's driver id and a byte. Nothing calls it; what the command
+   sets is not known. */
 void func_001CDBA0(int voice_index, u8 value) {
-    func_001CBAE0(1, 0x1050, sound_state->voices[voice_index].unk18, value);
+    SoundDriver_Remote(1, 0x1050, sound_state->voices[voice_index].unk18, value);
 }
 
-int func_001CDBC0(u32 voice_index, s16 value) {
+/* Sets a voice's volume (command 0x1060; Sound_SetBgmVolume passes 0..0x7F). 0, or -1 for a bad index
+   or a free voice. */
+int SoundDriver_SetVoiceVolume(u32 voice_index, s16 value) {
     SoundVoice *voice;
 
     if (voice_index >= 0x11U) {
@@ -1320,11 +1350,13 @@ int func_001CDBC0(u32 voice_index, s16 value) {
     if (voice->unk00 == 0) {
         return -1;
     }
-    func_001CBAE0(1, 0x1060, voice->unk18, value);
+    SoundDriver_Remote(1, 0x1060, voice->unk18, value);
     return 0;
 }
 
-int func_001CDC18(int voice_index) {
+/* SoundDriver_SetMono for one voice and the sequences that play it: output off while the voice is
+   rebound to its mono header copy. 0, or -1 if the driver refused. */
+int SoundDriver_SetVoiceMono(int voice_index) {
     SoundVoice *voice;
     SoundBank *bank;
     int banks_left;
@@ -1334,24 +1366,25 @@ int func_001CDC18(int voice_index) {
     voice->unk1C = 0;
     bank = sound_state->banks;
     if (sound_state->active != 0) {
-        func_001CBAE0(1, 0x50);
+        SoundDriver_Remote(1, 0x50);
     }
     banks_left = 4;
-    result = (func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, voice->unk04, voice->unk1B) != 0) ? -1 : 0;
+    result = (SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, voice->unk04, voice->unk1B) != 0) ? -1 : 0;
     while (--banks_left != -1) {
-        if (bank->voice == voice_index && func_001CBAE0(1, 0x2070, bank->unk0C, voice->unk0C, voice->unk04, voice->unk1B, 0) != 0) {
+        if (bank->voice == voice_index && SoundDriver_Remote(1, 0x2070, bank->unk0C, voice->unk0C, voice->unk04, voice->unk1B, 0) != 0) {
             result = -1;
             break;
         }
         bank++;
     }
     if (sound_state->active != 0) {
-        func_001CBAE0(1, 0x40);
+        SoundDriver_Remote(1, 0x40);
     }
     return result;
 }
 
-int func_001CDD20(int voice_index) {
+/* SoundDriver_SetStereo for one voice and the sequences that play it. 0, or -1 if the driver refused. */
+int SoundDriver_SetVoiceStereo(int voice_index) {
     SoundVoice *voice = &sound_state->voices[voice_index];
     SoundBank *bank = sound_state->banks;
     int result = 0;
@@ -1359,28 +1392,28 @@ int func_001CDD20(int voice_index) {
 
     voice->unk1C = 1;
     if (sound_state->active != 0) {
-        func_001CBAE0(1, 0x50);
+        SoundDriver_Remote(1, 0x50);
     }
-    if (func_001CBAE0(1, 0x1010, voice->unk18, voice->unk0C, voice->unk00, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, voice->unk18, voice->unk0C, voice->unk00, voice->unk1B) != 0) {
         result = -1;
     }
     for (i = 4; --i != -1; bank++) {
         if (bank->voice == voice_index) {
-            if (func_001CBAE0(1, 0x2070, bank->unk0C, voice->unk0C, voice->unk00, voice->unk1B, 1) != 0) {
+            if (SoundDriver_Remote(1, 0x2070, bank->unk0C, voice->unk0C, voice->unk00, voice->unk1B, 1) != 0) {
                 result = -1;
                 break;
             }
         }
     }
     if (sound_state->active != 0) {
-        func_001CBAE0(1, 0x40);
+        SoundDriver_Remote(1, 0x40);
     }
     return result;
 }
 
-/* Loads a bank file to the IOP and binds it to a voice.
-   Returns the bank, -2 when none is free, -1 on failure. */
-int func_001CDE28(int bank_id, int voice_index, char *name) {
+/* Loads a sequence file to the IOP and hands it to the driver with the voice it plays (commands 0x1010,
+   0x2000). Returns the sequence slot, -2 when none is free, -1 on failure. */
+int SoundDriver_LoadSequenceFile(int bank_id, int voice_index, char *name) {
     SoundBank *bank = sound_state->banks;
     SoundVoice *voice;
     int bank_index;
@@ -1405,7 +1438,7 @@ int func_001CDE28(int bank_id, int voice_index, char *name) {
     bank->unk0C = bank_id;
     voice = &sound_state->voices[voice_index];
     bank->voice = voice_index;
-    size = func_001CF070(name);
+    size = SoundDriver_GetFileSize(name);
     if (size < 0) {
         return -1;
     }
@@ -1417,7 +1450,7 @@ int func_001CDE28(int bank_id, int voice_index, char *name) {
     if ((u32)(bank->iop_heap + bank->unk04) > 0x1FFFFF) {
         return -1;
     }
-    if (func_001CF110(name, (void *)bank->iop_heap) != 0) {
+    if (SoundDriver_LoadIopFile(name, (void *)bank->iop_heap) != 0) {
         return -1;
     }
     if (voice->unk1C != 0) {
@@ -1425,20 +1458,20 @@ int func_001CDE28(int bank_id, int voice_index, char *name) {
     } else {
         block = voice->unk04;
     }
-    if (func_001CBAE0(1, 0x1010, bank->unk0C, voice->unk0C, block, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, bank->unk0C, voice->unk0C, block, voice->unk1B) != 0) {
         return -1;
     }
-    if (func_001CBAE0(1, 0x2000, bank->unk0C, bank->iop_heap) != 0) {
+    if (SoundDriver_Remote(1, 0x2000, bank->unk0C, bank->iop_heap) != 0) {
         return -1;
     }
     FlushCache(0);
     return bank_index;
 }
 
-/* func_001CE170 in steps, to be called every frame until it stops returning -1: step 0 takes a free
-   bank, allocates IOP memory and starts sending the data, step 1 waits for the transfer, step 2 hands
-   bank and voice to the driver. Returns the bank's index when done, -2 when it failed. */
-int func_001CDF90(int bank_id, int voice_index, int data, u32 size) {
+/* SoundDriver_LoadSequence in steps, to be called every frame until it stops returning -1: step 0 takes a
+   free sequence slot, allocates IOP memory and starts sending the data, step 1 waits for the transfer, step 2
+   hands sequence and voice to the driver. Returns the slot when done, -2 when it failed. */
+int SoundDriver_LoadSequenceStep(int bank_id, int voice_index, int data, u32 size) {
     int index;
     int iop_heap;
 
@@ -1469,15 +1502,15 @@ int func_001CDF90(int bank_id, int voice_index, int data, u32 size) {
         iop_heap = sceSifAllocIopHeap(size);
         bank_load_bank->iop_heap = iop_heap;
         if (iop_heap == 0 || (u32)(iop_heap + bank_load_bank->unk04) > 0x1FFFFFU) {
-            func_001CE408(bank_load_index);
+            SoundDriver_FreeSequence(bank_load_index);
             D_004469F8 = 0;
             return -2;
         }
-        func_001CBC30(iop_heap, data, bank_load_bank->unk04);
+        SoundDriver_StartUpload(iop_heap, data, bank_load_bank->unk04);
         D_004469F8++;
         break;
     case 1:
-        if (func_001CBD20() != 0) {
+        if (SoundDriver_StepUpload() != 0) {
             D_004469F8++;
         }
         break;
@@ -1487,9 +1520,9 @@ int func_001CDF90(int bank_id, int voice_index, int data, u32 size) {
         } else {
             bank_load_voice_data = bank_load_voice->unk04;
         }
-        if (func_001CBAE0(1, 0x1010, bank_load_bank->unk0C, bank_load_voice->unk0C, bank_load_voice_data, bank_load_voice->unk1B) != 0 ||
-            func_001CBAE0(1, 0x2000, bank_load_bank->unk0C, bank_load_bank->iop_heap) != 0) {
-            func_001CE408(bank_load_index);
+        if (SoundDriver_Remote(1, 0x1010, bank_load_bank->unk0C, bank_load_voice->unk0C, bank_load_voice_data, bank_load_voice->unk1B) != 0 ||
+            SoundDriver_Remote(1, 0x2000, bank_load_bank->unk0C, bank_load_bank->iop_heap) != 0) {
+            SoundDriver_FreeSequence(bank_load_index);
             D_004469F8 = 0;
             return -2;
         }
@@ -1503,10 +1536,10 @@ int func_001CDF90(int bank_id, int voice_index, int data, u32 size) {
     return bank_load_index;
 }
 
-/* Loads a voice's data into the first free bank: allocates IOP memory for it, sends the data there
-   (waiting until the transfer is done) and hands bank and voice to the driver.
-   Returns the bank's index, -2 when all four are taken, -1 on any other failure. */
-int func_001CE170(int bank_id, int voice_index, int data, int size) {
+/* Loads a sequence from memory into the first free of the four sequence slots: allocates IOP memory for
+   it, sends the data there (waiting until the transfer is done) and hands sequence and voice to the driver.
+   Returns the slot, -2 when all four are taken, -1 on any other failure. */
+int SoundDriver_LoadSequence(int bank_id, int voice_index, int data, int size) {
     SoundState *state = sound_state;
     SoundBank *bank;
     SoundVoice *voice;
@@ -1541,29 +1574,29 @@ int func_001CE170(int bank_id, int voice_index, int data, int size) {
     iop_heap = sceSifAllocIopHeap(size);
     bank->iop_heap = iop_heap;
     if (iop_heap == 0 || (u32)(iop_heap + bank->unk04) > 0x1FFFFFU) {
-        func_001CE408(free_index);
+        SoundDriver_FreeSequence(free_index);
         return -1;
     }
-    func_001CBC30(iop_heap, data, bank->unk04);
-    while (func_001CBD20() == 0) {
+    SoundDriver_StartUpload(iop_heap, data, bank->unk04);
+    while (SoundDriver_StepUpload() == 0) {
     }
     if (voice->unk1C != 0) {
         heap_src = voice->unk00;
     } else {
         heap_src = voice->unk04;
     }
-    if (func_001CBAE0(1, 0x1010, bank->unk0C, voice->unk0C, heap_src, voice->unk1B) != 0 ||
-        func_001CBAE0(1, 0x2000, bank->unk0C, bank->iop_heap) != 0) {
-        func_001CE408(free_index);
+    if (SoundDriver_Remote(1, 0x1010, bank->unk0C, voice->unk0C, heap_src, voice->unk1B) != 0 ||
+        SoundDriver_Remote(1, 0x2000, bank->unk0C, bank->iop_heap) != 0) {
+        SoundDriver_FreeSequence(free_index);
         return -1;
     }
     FlushCache(0);
     return free_index;
 }
 
-/* Takes the first free bank for a voice's data in IOP memory and hands both to the driver.
-   Returns the bank's index, -2 when all four are taken, -1 on any other failure. */
-int func_001CE300(int bank_id, int voice_index, int iop_heap, int size) {
+/* Takes the first free sequence slot for sequence data already in IOP memory and hands it and its voice
+   to the driver. Returns the slot, -2 when all four are taken, -1 on any other failure. */
+int SoundDriver_BindIopSequence(int bank_id, int voice_index, int iop_heap, int size) {
     SoundState *state = sound_state;
     SoundBank *bank;
     SoundVoice *voice;
@@ -1600,17 +1633,18 @@ int func_001CE300(int bank_id, int voice_index, int iop_heap, int size) {
     } else {
         heap_src = voice->unk04;
     }
-    if (func_001CBAE0(1, 0x1010, bank->unk0C, voice->unk0C, heap_src, voice->unk1B) != 0) {
+    if (SoundDriver_Remote(1, 0x1010, bank->unk0C, voice->unk0C, heap_src, voice->unk1B) != 0) {
         return -1;
     }
-    if (func_001CBAE0(1, 0x2000, bank->unk0C, bank->iop_heap) != 0) {
+    if (SoundDriver_Remote(1, 0x2000, bank->unk0C, bank->iop_heap) != 0) {
         return -1;
     }
     FlushCache(0);
     return free_index;
 }
 
-int func_001CE408(int i) {
+/* Frees a sequence's IOP memory; 0, or -1 if it held none or the free failed. */
+int SoundDriver_FreeSequence(int i) {
     SoundBank *bank = &sound_state->banks[i];
 
     if (bank->iop_heap == 0) {
@@ -1624,7 +1658,9 @@ int func_001CE408(int i) {
     return 0;
 }
 
-int func_001CE468(u32 bank_index, int value) {
+/* Starts a sequence playing (command 0x2030; the BGM loader passes 0 once the sequence is loaded).
+   0, or -1 with the output off, a bad index or an empty slot. */
+int SoundDriver_PlaySequence(u32 bank_index, int value) {
     SoundBank *bank;
 
     if (sound_state->active == 0) {
@@ -1637,10 +1673,11 @@ int func_001CE468(u32 bank_index, int value) {
     if (bank->iop_heap == 0) {
         return -1;
     }
-    return func_001CBAE0(1, 0x2030, bank->unk0C, value) == 0 ? 0 : -1;
+    return SoundDriver_Remote(1, 0x2030, bank->unk0C, value) == 0 ? 0 : -1;
 }
 
-/* Sends driver command 0x2010 with bank bank_index's second word; -1 for a bad index. */
+/* Sends driver command 0x2010 with a sequence's driver id and returns the answer; -1 for a bad index.
+   Nothing calls it. */
 int func_001CE4D0(u32 bank_index) {
     SoundBank *bank;
 
@@ -1648,10 +1685,12 @@ int func_001CE4D0(u32 bank_index) {
         return -1;
     }
     bank = &sound_state->banks[bank_index];
-    return func_001CBAE0(1, 0x2010, bank->unk0C);
+    return SoundDriver_Remote(1, 0x2010, bank->unk0C);
 }
 
-int func_001CE510(u32 bank_index) {
+/* Stops a sequence (command 0x2040; the BGM loader calls it before freeing the old BGM).
+   0, or -1 for a bad index or an empty slot. */
+int SoundDriver_StopSequence(u32 bank_index) {
     SoundBank *bank;
 
     if (bank_index >= 5) {
@@ -1661,10 +1700,11 @@ int func_001CE510(u32 bank_index) {
     if (bank->iop_heap == 0) {
         return -1;
     }
-    return func_001CBAE0(1, 0x2040, bank->unk0C) == 0 ? 0 : -1;
+    return SoundDriver_Remote(1, 0x2040, bank->unk0C) == 0 ? 0 : -1;
 }
 
-/* Sends driver command 0x2050 with bank bank_index's second word if the bank holds IOP memory; -1 if not. */
+/* Sends driver command 0x2050 with a sequence's driver id if the slot holds one; -1 if not. Nothing calls
+   it (a pause, perhaps: it does not need the output on, as the stop does not). */
 int func_001CE568(u32 bank_index) {
     SoundBank *bank;
 
@@ -1675,10 +1715,11 @@ int func_001CE568(u32 bank_index) {
     if (bank->iop_heap == 0) {
         return -1;
     }
-    return (func_001CBAE0(1, 0x2050, bank->unk0C) == 0) ? 0 : -1;
+    return (SoundDriver_Remote(1, 0x2050, bank->unk0C) == 0) ? 0 : -1;
 }
 
-/* Sends bank bank_index's second word to the driver if the bank holds IOP memory; -1 if not. */
+/* Sends driver command 0x2060 with a sequence's driver id if the output is on and the slot holds one;
+   -1 if not. Nothing calls it (a resume, perhaps: it needs the output on, as the start does). */
 int func_001CE5C0(u32 bank_index) {
     SoundBank *bank;
 
@@ -1692,23 +1733,23 @@ int func_001CE5C0(u32 bank_index) {
     if (bank->iop_heap == 0) {
         return -1;
     }
-    return (func_001CBAE0(1, 0x2060, bank->unk0C) == 0) ? 0 : -1;
+    return (SoundDriver_Remote(1, 0x2060, bank->unk0C) == 0) ? 0 : -1;
 }
 
-/* Sends driver command 0x1060 with bank bank_index's second word and a signed 16-bit value. */
-int func_001CE620(int bank_index, s16 value) {
-    return func_001CBAE0(1, 0x1060, sound_state->banks[bank_index].unk0C, value);
+/* Sets a sequence's volume (command 0x1060, as for a voice): the BGM fades. */
+int SoundDriver_SetSequenceVolume(int bank_index, s16 value) {
+    return SoundDriver_Remote(1, 0x1060, sound_state->banks[bank_index].unk0C, value);
 }
 
-/* Sends driver command 0x2080 with bank bank_index's second word and an unsigned 16-bit value. */
+/* Sends driver command 0x2080 with a sequence's driver id and a 16-bit value. Nothing calls it. */
 int func_001CE658(int bank_index, u16 value) {
-    return func_001CBAE0(1, 0x2080, sound_state->banks[bank_index].unk0C, value);
+    return SoundDriver_Remote(1, 0x2080, sound_state->banks[bank_index].unk0C, value);
 }
 
-/* Starts a note in slot `slot` on a voice: queues, in the buffer the IOP reads, an optional program
-   change, the pan (0x3F unless the voice allows one), the bend as two 7-bit halves, the volume and the
-   note itself. Returns the slot; -1: no driver or bad slot, -2: the buffer is full. */
-int func_001CE690(u32 slot, int voice_index, char channel, char program, char note, char volume, s16 bend, char pan) {
+/* Starts a note in slot `slot` on a voice: queues, in the command list SoundDriver_FlushCommands sends,
+   an optional program change, the pan (0x3F, centre, with mono output), the bend as two 7-bit halves,
+   the volume and the note itself. Returns the slot; -1: output off or bad slot, -2: the list is full. */
+int SoundDriver_NoteOn(u32 slot, int voice_index, char channel, char program, char note, char volume, s16 bend, char pan) {
     SoundState *state = sound_state;
     int *queue_size;
     int queued;
@@ -1778,7 +1819,9 @@ int func_001CE690(u32 slot, int voice_index, char channel, char program, char no
     return slot;
 }
 
-int func_001CE8B0(u32 key_index) {
+/* Ends the note in a slot: queues its note command with velocity 0 and marks the slot stopped.
+   0; -1: output off or bad slot, -2: the list is full. */
+int SoundDriver_NoteOff(u32 key_index) {
     u8 *write_ptr;
     int *command_list;
     SoundKey *key;
@@ -1814,10 +1857,9 @@ int func_001CE8B0(u32 key_index) {
     return 0;
 }
 
-/* Queues a 10-byte command for the note in slot `slot` in the buffer the IOP reads:
-   kind 0 and 1 send `value` as they are (1 forces 0x3F unless the voice allows a volume),
-   kind 2 sends it as two 7-bit halves. -1: no driver or bad slot, -2: the buffer is full. */
-int func_001CE9A0(int kind, u32 slot, int value) {
+/* Changes the note in slot `slot`: queues a 10-byte command, kind 0 its volume, 1 its pan (0x3F with mono
+   output), 2 its bend (as two 7-bit halves). 0; -1: output off or bad slot, -2: the list is full. */
+int SoundDriver_SetNoteControl(int kind, u32 slot, int value) {
     SoundState *state = sound_state;
     int *queue_size;
     int queued;
@@ -1881,7 +1923,9 @@ int func_001CE9A0(int kind, u32 slot, int value) {
     return 0;
 }
 
-int func_001CEB38(int voice_index, char first_value, char second_value) {
+/* Queues a program change (0xC0 + channel, program) for a voice, as SoundDriver_NoteOn does before a note.
+   Nothing calls it. 0; -1: output off, -2: the list is full. */
+int SoundDriver_ProgramChange(int voice_index, char first_value, char second_value) {
     int *command_list;
     int list_used;
     int write_offset;
@@ -1906,8 +1950,10 @@ int func_001CEB38(int voice_index, char first_value, char second_value) {
     return 0;
 }
 
-/* Starts a DMA transfer with a 16-byte aligned size and waits for it, then clears the uncached word. */
-int func_001CEBE0(void) {
+/* Sends the queued note commands (sound_command_list, its byte count first) to the driver's buffer on the
+   IOP, waits for the DMA, empties the list and has the driver run it (command 0x1080). Once a frame.
+   0, or -1 with the output off or when the DMA could not start. */
+int SoundDriver_FlushCommands(void) {
     int *flag;
     int size;
     int transfer_id;
@@ -1933,17 +1979,19 @@ int func_001CEBE0(void) {
     while (sceSifDmaStat(transfer_id) >= 0) {
     }
     *flag = 0;
-    func_001CBAE0(1, 0x1080);
+    SoundDriver_Remote(1, 0x1080);
     return 0;
 }
 
+/* As SoundDriver_PlayStreamFile with stream & 1, but the file name goes first, with command 0x3000.
+   Nothing calls it. Returns the stream, or -1. */
 int func_001CECB8(int stream, char *file_name, int value) {
     strcpy(sound_rpc_file_name, file_name);
     stream &= 1;
     sceSifCallRpc(sound_rpc_client, stream | 0x3000, 0, sound_rpc_file_name, 0x100, (int *)&sound_rpc_buffer, 1, 0, 0);
     if (sound_rpc_buffer.self == 0) {
-        if (func_001CBAE0(1, 0x3040, stream, value) != 0) {
-            func_001CBAE0(1, 0x3030, stream);
+        if (SoundDriver_Remote(1, 0x3040, stream, value) != 0) {
+            SoundDriver_Remote(1, 0x3030, stream);
             return -1;
         }
         return stream;
@@ -1951,27 +1999,31 @@ int func_001CECB8(int stream, char *file_name, int value) {
     return -1;
 }
 
-int func_001CED78(int stream, char *file_name, int value) {
-    if (func_001CBAE0(1, 0x3040, stream, value) != 0) {
-        func_001CBAE0(1, 0x3030, stream);
+/* Starts a stream (command 0x3040) and sends it the name of the file to play (command 0x30A0 + stream);
+   stops it again (0x3030) if either fails. The title screen music (TITLE.ADS). Returns the stream, or -1. */
+int SoundDriver_PlayStreamFile(int stream, char *file_name, int value) {
+    if (SoundDriver_Remote(1, 0x3040, stream, value) != 0) {
+        SoundDriver_Remote(1, 0x3030, stream);
         return -1;
     }
     strcpy(sound_rpc_file_name, file_name);
     sceSifCallRpc(sound_rpc_client, stream | 0x30A0, 0, sound_rpc_file_name, 0x100, (int *)&sound_rpc_buffer, 1, 0, 0);
     if (sound_rpc_buffer.self != 0) {
-        func_001CBAE0(1, 0x3030, stream);
+        SoundDriver_Remote(1, 0x3030, stream);
         return -1;
     }
     return stream;
 }
 
-/* Sends driver command 0x30C0 for a stream with two values; returns the stream, or -1 when the driver refuses. */
+/* Sends driver command 0x30C0 for a stream with two values; returns the stream, or -1 when the driver
+   refuses. Nothing calls it. */
 int func_001CEE30(int stream, int first_value, int second_value) {
-    return (func_001CBAE0(1, 0x30C0, stream, first_value, second_value) == 0) ? stream : -1;
+    return (SoundDriver_Remote(1, 0x30C0, stream, first_value, second_value) == 0) ? stream : -1;
 }
 
-/* Stores an effect setting in the first free of the four slots; returns the slot, or -2 when all are taken. */
-int func_001CEE78(int effect_flags, s16 param1, s16 param2, s16 param3, s16 param4, s16 param5, s16 param6, int effect_id) {
+/* Stores reverb settings (a rev_para.dat entry: mode, depths, delay, feedback) for SPU2 core effect_id in
+   the first free of the four slots; returns the slot, or -2 when all are taken. */
+int SoundDriver_AddReverb(int effect_flags, s16 param1, s16 param2, s16 param3, s16 param4, s16 param5, s16 param6, int effect_id) {
     SoundEffectFields *effect;
     int i;
     int slot;
@@ -1998,7 +2050,8 @@ int func_001CEE78(int effect_flags, s16 param1, s16 param2, s16 param3, s16 para
     return slot;
 }
 
-int func_001CEF48(u32 effect_index) {
+/* Frees a reverb slot; 0, or -1 for a bad index or a free slot. */
+int SoundDriver_FreeReverb(u32 effect_index) {
     SoundEffectFields *effect;
 
     if (effect_index >= 5U) {
@@ -2013,23 +2066,24 @@ int func_001CEF48(u32 effect_index) {
     return 0;
 }
 
-void func_001CEFA0(u32 effect_index) {
+/* Sends the settings of a reverb slot to the driver (command 0x40070), waiting for the call. */
+void SoundDriver_ApplyReverb(u32 effect_index) {
     if (effect_index < 5) {
         sound_state->effect = sound_state->effects[effect_index];
-        func_001CBAE0(1, 0x40070, &sound_state->effect);
+        SoundDriver_Remote(1, 0x40070, &sound_state->effect);
     }
 }
 
-/* Copy entry index (0-4) of the table into the current record, then pass it to func_001CBAE0. */
-void func_001CF008(u32 index) {
+/* SoundDriver_ApplyReverb without waiting for the call. Nothing calls it. */
+void SoundDriver_ApplyReverbNoWait(u32 index) {
     if (index < 5) {
         sound_state->effect = sound_state->effects[index];
-        func_001CBAE0(0, 0x40070, &sound_state->effect);
+        SoundDriver_Remote(0, 0x40070, &sound_state->effect);
     }
 }
 
 /* Opens the file (retrying until it works), takes its size, and rounds it up to a multiple of 64. */
-static int func_001CF070(const char *name) {
+static int SoundDriver_GetFileSize(const char *name) {
     int handle;
     int size;
 
@@ -2048,7 +2102,9 @@ static int func_001CF070(const char *name) {
     return size;
 }
 
-static int func_001CF110(char *name, void *addr) {
+/* Loads a file into IOP memory at addr (sceSifLoadIopHeap, retried until it works) and remembers the
+   first address it loaded to. Returns 0. */
+static int SoundDriver_LoadIopFile(char *name, void *addr) {
     if (sound_state->load_addr == NULL) {
         sound_state->load_addr = addr;
     }
@@ -2057,12 +2113,14 @@ static int func_001CF110(char *name, void *addr) {
     return 0;
 }
 
+/* Sends driver command 0x1090 with selector and copies the first 16 bytes of the answer to buffer.
+   Nothing calls it; what it reads is not known. */
 void func_001CF168(void *buffer, int selector) {
     u8 *out_bytes;
     int *word;
     int words_left;
 
-    func_001CBAE0(1, 0x1090, selector);
+    SoundDriver_Remote(1, 0x1090, selector);
     out_bytes = buffer;
     word = (int *)&sound_rpc_buffer;
     words_left = 3;
@@ -2077,13 +2135,14 @@ void func_001CF168(void *buffer, int selector) {
     } while (words_left >= 0);
 }
 
-/* Sends slot voice_index's two words with param; the reply is re-packed into *status (some fields inverted). */
-void func_001CF1F0(int voice_index, int param, SoundVoiceStatus *status) {
+/* Reads an envelope from a voice's header (command 0x110 with the header, its size and param) into
+   *status: the SPU2 ADSR pair, the rate fields turned round (0x7F - rate and so on). */
+void SoundDriver_GetAdsr(int voice_index, int param, SoundVoiceStatus *status) {
     SoundVoice *slot;
     u32 reply, inverted;
 
     slot = &sound_state->voices[voice_index];
-    reply = func_001CBAE0(1, 0x110, slot->unk00, slot->unk10, param);
+    reply = SoundDriver_Remote(1, 0x110, slot->unk00, slot->unk10, param);
     inverted = ~reply;
     status->bit31 = reply >> 31;
     status->bits24_30 = inverted >> 24;
@@ -2095,8 +2154,9 @@ void func_001CF1F0(int voice_index, int param, SoundVoiceStatus *status) {
     status->bits0_4 = inverted;
 }
 
-/* Send voice's two words with value, and status with its bit fields re-packed (some inverted). */
-void func_001CF2E8(int voice_index, int value, u32 status) {
+/* Writes an envelope into a voice's header (command 0x120): the ADSR pair in status, the rates turned
+   round as SoundDriver_GetAdsr reads them. */
+void SoundDriver_SetAdsr(int voice_index, int value, u32 status) {
     SoundVoice *voice;
     u32 packed;
 
@@ -2109,5 +2169,5 @@ void func_001CF2E8(int voice_index, int value, u32 status) {
     packed |= ((((status >> 6) & 0x7F) ^ 0x7F) << 6);
     packed |= status & 0x20;
     packed |= (status & 0x1F) ^ 0x1F;
-    func_001CBAE0(1, 0x120, voice->unk00, voice->unk10, value, packed);
+    SoundDriver_Remote(1, 0x120, voice->unk00, voice->unk10, value, packed);
 }

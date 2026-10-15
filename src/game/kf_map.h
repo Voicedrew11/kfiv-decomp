@@ -217,7 +217,7 @@ typedef struct {
     u32 *items[7];                  /* 0x00 */
 } MapSlotPackets;
 
-/* what MapSlot.header points at: the loaded map's header, as func_0019F3A0 reads it */
+/* what MapSlot.header points at: the loaded map's header, as Sound_ReadMapBankFileStep reads it */
 typedef struct {
     char pad00[0x20];
     s32 item_models_offset;         /* 0x20 from the header to the item models: sized blocks, a model then its texture per kind */

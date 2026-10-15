@@ -5,7 +5,7 @@
 
 #include "common.h"
 
-/* a file load job (Sound_BgmReadBody, Sound_BgmCloseBody, Sound_BgmReadSequence, func_0019F6B8) */
+/* a file load job (Sound_BgmReadBody, Sound_BgmCloseBody, Sound_BgmReadSequence, Sound_ReadJobFile) */
 typedef struct {
     int *buffers;                   /* 0x00 [0]/[2]: where the data goes */
     char *name;                     /* 0x04 file name, or a sprintf format of the index */
@@ -17,7 +17,7 @@ typedef struct {
     int file_handle;                /* 0x24 -1 when closed */
 } LoadJob;
 
-/* the job func_0019EC90 and func_0019F498 step: control words, the IOP handle it got and its arguments */
+/* the job Sound_BgmFadeOut and Sound_BgmLoadVoice step: control words, the IOP handle it got and its arguments */
 typedef struct {
     int *ctl;                       /* 0x00 */
     char pad04[0x0C];
@@ -27,13 +27,13 @@ typedef struct {
     s32 unk1C;                      /* 0x1C */
 } IopLoadJob;
 
-/* LoadRequest.target (func_0019F788) */
+/* LoadRequest.target (Sound_ReadRequestFile) */
 typedef struct {
     s32 unk00;                      /* 0x00 */
     void *buffer;                   /* 0x04 where the file is read to */
 } LoadBuffer;
 
-/* a request to read a named file into a buffer (func_0019F788) */
+/* a request to read a named file into a buffer (Sound_ReadRequestFile) */
 typedef struct {
     LoadBuffer *target;             /* 0x00 */
     char pad04[0x04];
@@ -72,7 +72,7 @@ typedef struct {
     s32 size;                       /* 0x14 */
 } IopLoadBuffer;
 
-/* the request func_001CCD78 reads: the data size and a second value */
+/* the request SoundDriver_VoiceLoadAllocBuffer reads: the data size and a second value */
 typedef struct {
     char pad00[0x10];
     s32 size;                       /* 0x10 rounded up to 16 */

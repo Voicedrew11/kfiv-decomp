@@ -39,7 +39,7 @@ void func_0010A4E8(s64, s64, s64, s64, s64); // match: retail passes the last va
 void func_001095D8(void);
 void func_001096E8(void);
 void func_00109800(void);
-void func_001CB9A0(void);
+void SoundDriver_ReleaseAll(void);
 void Sound_Init(void);
 int sceGsSyncV(int);
 void Vram_Clear(int, int);
@@ -94,7 +94,7 @@ void Movie_PlayOpening(void) {
     func_001096E8();
     func_00109800();
     Display_SwapBuffers(0);
-    func_001CB9A0();
+    SoundDriver_ReleaseAll();
     Sound_Init();
 }
 
@@ -112,7 +112,7 @@ void Movie_PlayEnding(void) {
     sceGsSyncV(0);
     sceGsSyncV(0);
     Vram_Clear(0, 0x4000);
-    func_001CB9A0();
+    SoundDriver_ReleaseAll();
     Sound_Init();
 }
 
