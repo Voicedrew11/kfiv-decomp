@@ -42,10 +42,10 @@ void func_001095E0(void);
 void func_0010B000(void);
 void func_001095D0(void);
 void func_001095D8(void);
-void func_001B5460(void);
+void Input_Update(void);
 float cosf(float);
 float sinf(float);
-void func_00107CD8(int);
+void Game_ApplyBrightness(int);
 void func_00109650(u32 *, u32 *);
 u32 *func_00109990(int);
 void func_00109A50(void);
@@ -68,8 +68,8 @@ void func_0011AAE8(void);
 float Angle_Wrap(float);
 void Vector_Add(void *, void *, void *);
 void Vector_Normalize(void *, void *);
-void func_00106C58(void);
-void func_00107E70(int, int, int);
+void Game_BlendScreenOffsetDown(void);
+void Game_TintScreen(int, int, int);
 void func_0010D308(ModelInstance *);
 
 extern int game_status[];
@@ -276,7 +276,7 @@ void func_0011AA08(void) {
         func_001095D0();
         func_0011AAE8();
         func_001095D8();
-        func_001B5460();
+        Input_Update();
         if ((pad_state[1] & 0x10) && (viewer_picture > 0)) {
             viewer_picture -= 1;
         } else if (pad_state[1] & 0x40) {
@@ -426,7 +426,7 @@ void func_0011AAE8(void) {
     func_00109A50();
     func_00109A80(GS_REG_ZBUF_1, 0xA000118);
     func_00109AD0();
-    func_00107CD8(game_options[10]);
+    Game_ApplyBrightness(game_options[10]);
 }
 
 /* Where the player's marker goes on the map viewer's picture viewer_picture: -1 for a fixed spot on the
@@ -646,7 +646,7 @@ void func_0011BCD0(void) {
             func_001096E8();
             func_001095E0();
             func_0010B000();
-            func_001B5460();
+            Input_Update();
             held = pad_state[0];
             pressed = pad_state[1];
             move.x = move.y = move.z = move.w = 0.0f;
@@ -820,9 +820,9 @@ static void func_0011C160(void) {
     func_00109A80(0x1A, 1);
     func_00109AD0();
     func_00109E18();
-    func_00106C58();
+    Game_BlendScreenOffsetDown();
     func_00109E18();
-    func_00107E70(0xEA, 0xB2, 0x46);
+    Game_TintScreen(0xEA, 0xB2, 0x46);
     func_0010B410((TextureTableHeader *)viewer_data, 0);
     func_00109E88();
     func_00109E18();
@@ -862,7 +862,7 @@ static void func_0011C160(void) {
     func_00109AD0();
     func_00109E18();
     func_0010A100(D_0038D8F0);
-    func_00107CD8(game_options[10]);
+    Game_ApplyBrightness(game_options[10]);
 }
 
 /* Whether a map object of this kind is one of the ordinary ones. */

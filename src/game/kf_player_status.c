@@ -10,19 +10,19 @@
 #define ADD_SCALED(n) totals[n] += (def->unk00[n] + record->unk00[n]) * record->level / 100
 
 void Vector_Normalize(void *dst, void *src);
-void func_001B57A0(u8, u8, u8);
-void func_001B9610(void);
-void func_001BB020(int);
-void func_001BB2E8(int);
-int func_001BB308(int);
-void func_001BB360(void);
+void Input_StartRumble(u8, u8, u8);
+void Player_UpdateDying(void);
+void Player_AddItemBonuses(int);
+void Player_TakeDamageNoRumble(int);
+int Player_LoseHp(int);
+void Player_FlashDamage(void);
 MapRecordInfo *func_00115CD0(CameraState *, f32, int);
 int func_00109098(ModelInstance *model, u8 index, u16 speed);
 void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
 void func_0010A4E8(int, int, int, int, int);
-int Sound_PlaySw(int); // match: an int return (the definition is void) keeps $2 busy in func_001BBFC8
+int Sound_PlaySw(int); // match: an int return (the definition is void) keeps $2 busy in Player_BounceWeapon
 int Sound_PlayCommon(int);
 
 extern PlayerState player_state;
@@ -47,7 +47,7 @@ extern u16 spell_experience[6][5];
 
 /* Works out what the worn items add: clears unkDC to unk10C, lets every worn item add its part, then
    turns the four rates into frame counts. */
-void func_001BAE88(void) {
+void Player_SumWornBonuses(void) {
     player_state.unkE8 = 0;
     player_state.unkEC = 0;
     player_state.unkF0 = 0;
@@ -64,15 +64,15 @@ void func_001BAE88(void) {
     player_state.unkDC[3] = 0;
     player_state.unkDC[4] = 0;
     player_state.unkDC[5] = 0;
-    func_001BB020(player_state.weapon + ITEM_WEAPON_FIRST);
-    func_001BB020(player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST);
-    func_001BB020(player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST);
-    func_001BB020(player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST);
-    func_001BB020(player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST);
-    func_001BB020(player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST);
-    func_001BB020(player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST);
-    func_001BB020(player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST);
-    func_001BB020(player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST);
+    Player_AddItemBonuses(player_state.weapon + ITEM_WEAPON_FIRST);
+    Player_AddItemBonuses(player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST);
+    Player_AddItemBonuses(player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST);
+    Player_AddItemBonuses(player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST);
+    Player_AddItemBonuses(player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST);
+    Player_AddItemBonuses(player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST);
+    Player_AddItemBonuses(player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST);
+    Player_AddItemBonuses(player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST);
+    Player_AddItemBonuses(player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST);
     if (player_state.unkF0 != 0) {
         player_state.unkF0 = 150 / (s32)player_state.unkF0;
         if (player_state.unkF0 == 0) {
@@ -100,7 +100,7 @@ void func_001BAE88(void) {
 }
 
 /* Adds what wearing item `index` gives (a weapon from ITEM_WEAPON_FIRST, the rest from ITEM_WORN_FIRST) to the player. */
-void func_001BB020(int index) {
+void Player_AddItemBonuses(int index) {
     u8 *kinds;
     u8 *amounts;
     int i;
@@ -167,27 +167,31 @@ void func_001BB020(int index) {
     }
 }
 
-void func_001BB260(int damage)
+/* The player takes damage: HP goes down, the screen flashes red and the pad rumbles by how much of half the
+   most HP it was. */
+void Player_TakeDamage(int damage)
 {
     int tint;
 
-    if (func_001BB308(damage) != 0) {
-        func_001BB360();
+    if (Player_LoseHp(damage) != 0) {
+        Player_FlashDamage();
         tint = ((damage << 7) / (player_hp_max[0] / 2)) + 0x7F;
         if (tint >= 0x100)
             tint = 0xFF;
-        func_001B57A0(tint, 4, 0);
+        Input_StartRumble(tint, 4, 0);
         D_0044695C = 6;
     }
 }
 
-void func_001BB2E8(int value) {
-    func_001BB308(value);
-    func_001BB360();
+/* The player takes damage without the rumble (poison, the ground). */
+void Player_TakeDamageNoRumble(int value) {
+    Player_LoseHp(value);
+    Player_FlashDamage();
 }
 
-/* Takes amount from the counter, clamped at zero; fails for a non-positive amount or while the block is locked. */
-int func_001BB308(int amount) {
+/* Takes amount off HP, not below zero; FALSE for a non-positive amount or while the game is not being played
+   (GameStatus.unk00 clear or bit 0 of unk30 set). */
+int Player_LoseHp(int amount) {
     if (amount > 0 && game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
         if (amount < player_state.hp_now) {
             player_state.hp_now -= amount;
@@ -199,13 +203,15 @@ int func_001BB308(int amount) {
     return 0;
 }
 
-void func_001BB360(void) {
+/* Starts the red damage flash (PlayerScreenTint.unk00), while the game is being played. */
+void Player_FlashDamage(void) {
     if (game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
         player_screen_tint.unk00 = 10;
     }
 }
 
-void func_001BB390(void *source, int damage) {
+/* Knocks the player back away from source (along x/z), faster the bigger the damage is against the most HP. */
+void Player_KnockBackFromHit(void *source, int damage) {
     PlayerState *player;
     float speed;
 
@@ -229,8 +235,8 @@ void func_001BB390(void *source, int damage) {
     }
 }
 
-/* Sets the player aim vector (+0x220) to the flattened, normalised direction from target, and its speed. */
-void func_001BB468(Vector4 *target, f32 speed) {
+/* Knocks the player back away from target (along x/z) at the speed given (PlayerState.aim and aim_speed). */
+void Player_KnockBack(Vector4 *target, f32 speed) {
     player_state.aim.x = player_state.position.x - target->x;
     player_state.aim.y = 0.0f;
     player_state.aim.z = player_state.position.z - target->z;
@@ -238,7 +244,9 @@ void func_001BB468(Vector4 *target, f32 speed) {
     player_state.aim_speed = speed;
 }
 
-void func_001BB4D0(int damage) {
+/* A hit of at least a tenth of the most HP throws the view back (PlayerState.unk238 grows) for frames that
+   grow with the damage and shrink with power. */
+void Player_TiltViewFromHit(int damage) {
     PlayerState *player;
     int frames;
 
@@ -259,25 +267,26 @@ void func_001BB4D0(int damage) {
 
 int Sound_StopVoice(int); // match: an int return (the definition is void) keeps -1 in $3
 
-/* Stops the sound slot D_00446958 holds, if any. */
-void func_001BB590(void) {
+/* Stops the last footstep sound (D_00446958), if one plays. */
+void Player_StopFootstepSound(void) {
     if (D_00446958 >= 0) {
         Sound_StopVoice(D_00446958);
         D_00446958 = -1;
     }
 }
 
-void func_001BB5C0(void) {
+/* Kills the player: HP and the drawn bar to 0, and the dying starts. */
+void Player_Kill(void) {
     if (player_state.unk1A8 == 0) {
         player_state.hp_now = 0;
         player_state.unk1A4 = 0;
-        func_001B9610();
+        Player_UpdateDying();
     }
 }
 
-/* Picks PlayerState.unk264: unk3D, else unk46, else what the current PlayerItemDef names, else the first
-   marked slot of spell_levels whose effect is ready. */
-void func_001BB5E8(void) {
+/* Picks the magic the magic gauge charges for (PlayerState.unk264): the equipped magic, else a magic shortcut,
+   else the weapon's magic, else the first learned magic cast from the menu (fx_table unk102 == 1). */
+void Player_PickChargingMagic(void) {
     PlayerItemDef *def;
     int i;
     int j;
@@ -315,7 +324,7 @@ void func_001BB5E8(void) {
 }
 
 /* Adds the item's nine values (base plus what was gained), scaled by its level in percent, to the totals. */
-void func_001BB728(u16 *totals, u32 index) {
+void Player_AddWornItemValues(u16 *totals, u32 index) {
     LevelRecordDef *def;
     LevelRecord *record;
 
@@ -335,7 +344,7 @@ void func_001BB728(u16 *totals, u32 index) {
 }
 
 /* Finds the map record the player stands in and notes its index. */
-void func_001BB908(void) {
+void Player_FindMapRecord(void) {
     PlayerState *player = &player_state;
     MapRecordInfo *record;
 
@@ -347,7 +356,9 @@ void func_001BB908(void) {
     }
 }
 
-void func_001BB978(void) {
+/* Steps the screen fade amount (unk2A8): stepping onto a map record whose byte 0x4C is lower than the last one
+   starts a quick dip toward black; the amount then eases back to 0. */
+void Player_UpdateScreenFade(void) {
     PlayerState *player;
     MapSlot *slot;
     char area;
@@ -386,7 +397,7 @@ void func_001BB978(void) {
 }
 
 /* Fades the screen toward white (player_state.unk2A8 > 0) or black (< 0) by that amount. */
-void func_001BBA58(void) {
+void Player_DrawScreenFade(void) {
     if (player_state.unk2A8 != 0.0f) {
         func_00109A50();
         func_00109A80(GS_REG_TEST_1, 0x30000);
@@ -503,7 +514,9 @@ void Player_CountWeaponUse(int weapon) {
     }
 }
 
-void func_001BBFC8(void) {
+/* The weapon bounces off: unless it already did this swing, its sound stops, sound 1 plays and the weapon
+   model goes back to motion 0; the swing hits nothing more (unk261). */
+void Player_BounceWeapon(void) {
     if (player_state.unk261 == 0 && weapon_defs[player_state.weapon].unk63 != 2) {
         Sound_StopVoice(2);
         Sound_PlaySw(1);
@@ -512,8 +525,8 @@ void func_001BBFC8(void) {
     }
 }
 
-/* Kick off a request once the flag at 0x261 is clear and the table entry at 0x63 is not 2. */
-void func_001BC058(void) {
+/* Player_BounceWeapon without the sound (the last boss's hits). */
+void Player_BounceWeaponQuietly(void) {
     DisplayContext *display;
 
     if (player_state.unk261 == 0 && weapon_defs[player_state.weapon].unk63 != 2) {
@@ -524,7 +537,8 @@ void func_001BC058(void) {
     }
 }
 
-void func_001BC0E0(int with_sound) {
+/* The swing struck a map object it cannot break: notes it for the swing (unk262), with sound 0x23 when asked. */
+void Player_StrikeSolidObject(int with_sound) {
     PlayerState *player = &player_state;
 
     if (player->unk262 == 0) {
@@ -535,7 +549,8 @@ void func_001BC0E0(int with_sound) {
     }
 }
 
-void func_001BC128(void) {
+/* While a swing runs, keeps it from hitting anything more (unk263; a map change). */
+void Player_EndSwingHits(void) {
     if (player_state.unk258 != 0) {
         player_state.unk263 = 1;
     }

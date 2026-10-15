@@ -30,7 +30,7 @@ float sqrtf(float);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 void func_001C2758(f32 *, s32, f32, f32);
 s32 func_001C2A38(f32 *, s32, f32, f32);
-void func_001BB360(void);
+void Player_FlashDamage(void);
 
 extern PlayerState player_state;
 extern PlayerState player_previous;      /* the player as of the frame before */
@@ -601,7 +601,7 @@ void func_001BF350(s32 climb) {
             player_state.unk2D8 = D_00446ED4;
             break;
         }
-        func_001BB360();
+        Player_FlashDamage();
     }
     if (player_state.unk208 != 0 && ((MapObject *)player_state.unk208)->unk08->unk30 == 0x165) {
         player_state.unk210 = 2;

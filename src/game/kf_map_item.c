@@ -53,7 +53,7 @@ void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
 void func_00109E18(void);
-void func_001B9478(void);
+void Player_StopWalking(void);
 float sinf(float);
 float cosf(float);
 float atan2f(float, float);
@@ -732,7 +732,7 @@ void func_001C9C40(void) {
         return;
     }
     game_status.unk30 = 0x87F;
-    func_001B9478();
+    Player_StopWalking();
     Vector_Copy(D_005B60C0, &D_004469D8->model->position);
     Vector_Copy(D_005B60D0, &D_004469D8->model->rotation);
     D_005B60D0[1] = Angle_Wrap(D_005B60D0[1]);

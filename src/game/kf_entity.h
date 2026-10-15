@@ -166,16 +166,16 @@ typedef struct {
     EntityParamsUnk240Part unk10[3]; /* 0x10 */
 } EntityParamsUnk240;
 
-/* the two blocks ParaStool_CheckPartHitInPlayerView fills for func_001B1470 */
+/* the two blocks ParaStool_CheckPartHitInPlayerView fills for Attack_Run */
 typedef struct {
     f32 position[4];                /* 0x00 */
-    f32 unk10[4];                   /* 0x10 an earlier position: func_001B2F70 takes the hit direction from it */
-    f32 unk20[4];                   /* 0x20 shape 2: a second point (func_001B4F90) */
+    f32 unk10[4];                   /* 0x10 an earlier position: Attack_HitEntity takes the hit direction from it */
+    f32 unk20[4];                   /* 0x20 shape 2: a second point (Attack_RunEffectHitCheck) */
     f32 unk30;                      /* 0x30 */
     f32 unk34;                      /* 0x34 */
     f32 unk38;                      /* 0x38 */
     f32 unk3C;                      /* 0x3C */
-    f32 unk40;                      /* 0x40 unk40, unk44, unk78 and unk7C: more of the shape of the player's swept requests (func_001B1B90) */
+    f32 unk40;                      /* 0x40 unk40, unk44, unk78 and unk7C: more of the shape of the player's swept requests (Attack_RunSwept) */
     f32 unk44;                      /* 0x44 */
     struct Entity *owner;           /* 0x48 */
     u64 unk4C_0 : 2;                /* 0x4C */
@@ -187,10 +187,10 @@ typedef struct {
     u8 unk4F;                       /* 0x4F copied to Entity.unk82 by a hit of kind 1 */
     EntityParamsUnk240PartUnk00 unk50; /* 0x50 */
     EntityParamsUnk240PartUnk12 unk62; /* 0x62 */
-    u8 unk6E;                       /* 0x6E a weapon hit's damage to a map object is multiplied by it when the object asks (func_001B3AC0) */
+    u8 unk6E;                       /* 0x6E a weapon hit's damage to a map object is multiplied by it when the object asks (Attack_HitMapObject) */
     u8 unk6F;                       /* 0x6F chance in percent that the hit counts double */
     u8 unk70;                       /* 0x70 chance in percent that the hit kills outright */
-    u8 unk71;                       /* 0x71 taken off PlayerState.mp_now when the hit lands on the player (func_001B29C8) */
+    u8 unk71;                       /* 0x71 taken off PlayerState.mp_now when the hit lands on the player (Attack_HitPlayer) */
     u16 unk72;                      /* 0x72 not 0: the hit does nothing to the player */
     u8 unk74;                       /* 0x74 set once the hit has landed on the player */
     char pad75[0x03];
@@ -214,7 +214,7 @@ typedef struct {
     char pad28[0x08];
 } Unk1B1470Extra;
 
-/* Unk1B1470Request with the bits at 0x4C as byte-sized fields: func_001B2F70 reads unk4C_3 as a u8 */
+/* Unk1B1470Request with the bits at 0x4C as byte-sized fields: Attack_HitEntity reads unk4C_3 as a u8 */
 typedef struct {
     char pad00[0x4C];
     u8 unk4C_0 : 3;                 /* 0x4C */
@@ -224,7 +224,7 @@ typedef struct {
 } __attribute__((aligned(8))) Unk1B1470RequestBits;
 
 /* Unk1B1470Request with the four flag bytes from 0x4C as one 32-bit field, the way
-   func_001B1470 reads the shape in the low two bits */
+   Attack_Run reads the shape in the low two bits */
 typedef struct {
     char pad00[0x48];
     struct Entity *owner;           /* 0x48 */
@@ -232,7 +232,7 @@ typedef struct {
 } Unk1B1470RequestWord;
 
 /* Unk1B1470Request with the owner and the flag bytes after it as the one 64-bit word
-   func_001B1510 and func_001B29C8 test bits of (the flag bytes are its upper half) */
+   Attack_RunSphere and Attack_HitPlayer test bits of (the flag bytes are its upper half) */
 typedef struct {
     char pad00[0x48];
     u64 owner_and_flags;            /* 0x48 */
@@ -259,7 +259,7 @@ typedef struct {
 
 /* one launch of a record at EntityParams+0x3D8 */
 typedef struct {
-    u8 unk00;                       /* 0x00 passed to func_001B4F30 */
+    u8 unk00;                       /* 0x00 passed to Attack_LaunchMagicEffect */
     u8 unk01;                       /* 0x01 passed to func_0010CAB8; 0xFF: use the model's direction */
     u16 unk02;                      /* 0x02 animation frame it happens on, 0: unused */
 } EntityParamsUnk3D8Launch;
@@ -319,7 +319,7 @@ typedef struct {
     } unk00;
     u16 unk04;                      /* 0x04 its radius, before the model's x scale */
     u16 unk06;                      /* 0x06 its height, before the model's y scale */
-    f32 unk08;                      /* 0x08 a hit on this body counts this many times over (func_001B1510) */
+    f32 unk08;                      /* 0x08 a hit on this body counts this many times over (Attack_RunSphere) */
 } EntityBodyPoint;
 
 /* what Entity.params points at: per-kind tuning values. EntityController below is a second
@@ -362,7 +362,7 @@ typedef struct {
     u8 unkD1;                       /* 0xD1 */
     u8 unkD2;                       /* 0xD2 the model's scale in percent */
     char padD3;
-    s16 unkD4;                      /* 0xD4 unkD4 to unkE4: nine resistances, 100 and up: immune (func_001B2F70) */
+    s16 unkD4;                      /* 0xD4 unkD4 to unkE4: nine resistances, 100 and up: immune (Attack_HitEntity) */
     s16 unkD6;                      /* 0xD6 */
     s16 unkD8;                      /* 0xD8 */
     s16 unkDA;                      /* 0xDA */
@@ -373,7 +373,7 @@ typedef struct {
     s16 unkE4;                      /* 0xE4 */
     u16 unkE6;                      /* 0xE6 */
     u16 unkE8;                      /* 0xE8 */
-    u8 unkEA;                       /* 0xEA unkEA to unkED: percent taken off a hit's chance to start each of the four ailments (func_001B3908) */
+    u8 unkEA;                       /* 0xEA unkEA to unkED: percent taken off a hit's chance to start each of the four ailments (Attack_RollEntityAilments) */
     u8 unkEB;                       /* 0xEB */
     u8 unkEC;                       /* 0xEC */
     u8 unkED;                       /* 0xED */
@@ -886,7 +886,7 @@ typedef struct {
 
 #define ENTITY_FLAG_BITS(entity) ((EntityFlagBits *)&(entity)->flags)
 
-/* Entity.flags with bits 36-37 and 38-39 as two fields, the way func_001B2F70 sets them on a hit */
+/* Entity.flags with bits 36-37 and 38-39 as two fields, the way Attack_HitEntity sets them on a hit */
 typedef struct {
     u64 pad0 : 36;
     u32 hit_strength : 2;           /* bits 36-37: 1 below the threshold D_00446214 (percent of EntityParams.unk0A), else 2 */

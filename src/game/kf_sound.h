@@ -120,7 +120,7 @@ typedef struct {
     char pad4D8[0x08];              /* the block in .bss is 0x4E0 bytes */
 } SoundState;
 
-/* sound_load_queue: the sound loads waiting to run, one at a time (func_00101618). Other files
+/* sound_load_queue: the sound loads waiting to run, one at a time (GameLoop_RunSoundLoads). Other files
    still declare it as int[]/char[], so the extern stays in each file. */
 typedef struct {
     int unk00;                      /* 0x00 first argument of Sound_LoadBgm */

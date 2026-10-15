@@ -4,7 +4,7 @@
 #include "kf_game.h"
 #include "kf_message.h"
 
-int func_00103AE0(int, int);
+int Game_GetTriggerItem(int, int);
 void func_00122600(MapObject *, int);
 void func_0011F148(char *);
 void Matrix_Multiply(void *, void *, void *);
@@ -15,12 +15,12 @@ void Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 void Vector_Scale(float *, float *, float);
 void Vector_Add(void *, void *, void *);
-int func_00103B38(int, int);
+int Game_ClearTriggerItem(int, int);
 void Player_AddItem(int);
 void func_00122530(char *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
-int func_00103BA8(int, int, int);
+int Game_AddTriggerItem(int, int, int);
 extern MapSlot map_slots[];
 extern GameStatus game_status;
 extern void *D_00420D50[];
@@ -30,7 +30,7 @@ extern f32 D_00431AF0[16];
 extern ItemCommonDef item_common_defs[];
 
 /* Start handler: a pedestal that starts with an item on it stays so only while
-   the map's trigger records still hold an item for it (func_00103AE0); its model
+   the map's trigger records still hold an item for it (Game_GetTriggerItem); its model
    shows that item. */
 void func_00121DA8(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
@@ -40,7 +40,7 @@ void func_00121DA8(MapObject *object) {
     work->fired = 0;
     item = 0;
     if (object->unk10 & 0x20000) {
-        item = func_00103AE0(map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->unk08->unk38.bytes[2]);
+        item = Game_GetTriggerItem(map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->unk08->unk38.bytes[2]);
         if (item <= 0) {
             object->unk10 &= ~0x20000;
         }
@@ -145,8 +145,8 @@ void func_001221C0(MapObject *object) {
     if (game_status.bit1 && D_00420D00.current == object) {
         MAP_OBJECT_BYTES(object)->step = 5;
         // match: two leftover arguments are passed
-        item = ((int (*)(int, int, void *, int))func_00103AE0)(tag, object->unk08->unk38.bytes[2], work, timer);
-        func_00103B38(tag, object->unk08->unk38.bytes[2]);
+        item = ((int (*)(int, int, void *, int))Game_GetTriggerItem)(tag, object->unk08->unk38.bytes[2], work, timer);
+        Game_ClearTriggerItem(tag, object->unk08->unk38.bytes[2]);
         MapObject_StepAnim(object);
         func_0011F148((char *)object);
         Player_AddItem(item);
@@ -222,7 +222,7 @@ int func_00122538(MapTrigger *trigger, int type_index) {
     slot = &map_slots[trigger->unk10 & 1];
     tag = slot->tag;
     if (trigger->type == 1 && shot->fired == 0 && type == trigger->type &&
-        func_00103BA8(tag, (u8)trigger->unk08[0x3A], type_index)) {
+        Game_AddTriggerItem(tag, (u8)trigger->unk08[0x3A], type_index)) {
         func_00122600((MapObject *)trigger, type_index);
         shot->fired = type;
         return TRUE;

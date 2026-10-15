@@ -27,7 +27,7 @@ void func_00109AD0(void);
 void func_00109E88(void);
 void func_0010A100(void *);
 void func_0010A4E8(int, int, int, int, int);
-void func_001B9478(void);
+void Player_StopWalking(void);
 static void Splash_BuildImagePacket(int tbp, int cbp);
 
 static s32 splash_state;              /* 0x447358 state machine index (0 = idle) */
@@ -117,7 +117,7 @@ int Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_fram
         splash_fade_in_counter = 0;
         splash_fade_out_counter = 0;
         game_status.unk30 = 0x87F;
-        func_001B9478();
+        Player_StopWalking();
         return 1;
     }
     return 0;
@@ -142,7 +142,7 @@ void Splash_StateIdle(void) {
 
 /* State 1: count down the start delay, then advance to loading the image. */
 void Splash_StateStartDelay(void) {
-    func_001B9478();
+    Player_StopWalking();
     splash_start_delay -= 1;
     if (splash_start_delay < 0) {
         splash_state += 1;

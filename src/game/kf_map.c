@@ -59,7 +59,7 @@ MapRecordInfo *func_00115CD0(CameraState *, f32, int);
 void func_00111E28(ModelInstance *, u32 *);
 void Vector_Copy(void *, void *);
 char *func_00112400(char *, ModelInstance *, int);
-void func_001B93B8(f32 *);
+void Player_MoveByOffset(f32 *);
 void func_001D1210(f32 *);
 void func_001154D8(int, f32 *);
 void func_00115550(MapRecordBounds *, f32 *);
@@ -67,7 +67,7 @@ void func_001155F8(int);
 void func_001C8990(int, f32 *);
 void Script_Init(int);
 int Script_Start(int, int);
-void func_001BB590(void);
+void Player_StopFootstepSound(void);
 void Sound_StopAll(int);
 void Vector_Add(void *, void *, void *);
 void Matrix_Multiply(void *, void *, void *);
@@ -81,7 +81,7 @@ void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, fl
 void sceVu0MulMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
-void func_00101618(void);
+void GameLoop_RunSoundLoads(void);
 void func_001095D0(void);
 void func_001095D8(void);
 void func_001095E0(void);
@@ -91,10 +91,10 @@ void func_0010A7E0(void *);
 void func_0010B000(void);
 void func_00116610(void);
 float Angle_Wrap(float);
-void func_001B5460(void);
+void Input_Update(void);
 void Display_SwapBuffers(int);
 void Vector_Normalize(void *, void *);
-void func_00106C58(void);
+void Game_BlendScreenOffsetDown(void);
 void func_0010A100(void *);
 void func_0010B238(TextureTableHeader *);
 void func_0010D308(ModelInstance *);
@@ -592,7 +592,7 @@ void func_001152B8(int map) {
         slot = &map_slots[map];
         queue = &sound_load_queue;
         D_00446770 = map;
-        func_001B93B8(offset);
+        Player_MoveByOffset(offset);
         func_001D1210(offset);
         func_001154D8(0, offset);
         func_001154D8(1, offset);
@@ -615,7 +615,7 @@ void func_001152B8(int map) {
         Script_Start(0x7FFF, 0);
         loading = queue->unk10;
         if (loading != slot && queue->unk14 != slot) {
-            func_001BB590();
+            Player_StopFootstepSound();
             Sound_StopAll(1);
             queue->unk14 = slot;
         } else if (loading == slot && sound_load_queue.unk14 != slot) {
@@ -898,7 +898,7 @@ void func_001161A8(void) {
             func_001096E8();
             func_001095E0();
             func_0010B000();
-            func_001B5460();
+            Input_Update();
             move.x = move.y = move.z = move.w = 0.0f;
             if (pad_state[0] & 0x2000) {
                 if (pad_state[0] & 0x40) {
@@ -971,7 +971,7 @@ void func_001161A8(void) {
             func_00116610();
             Message_Update();
             func_001095D8();
-            func_00101618();
+            GameLoop_RunSoundLoads();
             func_00109800();
         } while (!(pad_state[1] & 0x2000));
         game_status.bit7 = FALSE;
@@ -1023,7 +1023,7 @@ void func_00116610(void) {
             }
         }
     }
-    func_00106C58();
+    Game_BlendScreenOffsetDown();
     func_00109A50();
     func_00109A80(0x1A, 1);
     func_00109A80(GS_REG_ZBUF_2, 0xA000118);

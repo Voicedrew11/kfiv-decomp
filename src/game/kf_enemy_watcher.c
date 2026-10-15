@@ -16,7 +16,7 @@ extern s32 entity_type_handlers[][2];
 extern u32 D_00446ED4;
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_CanUseRanged(Entity *, s32);
-void func_001B4EC8(s32);
+void Attack_DrainPlayerMp(s32);
 int Motion_Start(void *, int, int, u32, int);
 void EntityEvent_StartCueAlways(void *, int, int);
 void EntityEvent_OnDeath(Entity *);
@@ -67,7 +67,7 @@ void Watcher_Init(Entity *entity) {
 
 /* The think handler: no states and no actions. Every tenth frame updates what the entity knows of
    the player; while it is not busy and EntityAi_CanUseRanged finds the player in reach of ranged record 0
-   (and flag bit 63 is clear) it calls func_001B4EC8 with EntityParams.unk434, sets work byte unk7A
+   (and flag bit 63 is clear) it calls Attack_DrainPlayerMp with EntityParams.unk434, sets work byte unk7A
    and flag bit 9 and plays animation 2, else clears them and plays animation 0. Calls EntityEvent_StartCueAlways
    with 1 when unk7A changes. */
 static void Watcher_Think(Entity *entity, s32 unknown) {
@@ -80,7 +80,7 @@ static void Watcher_Think(Entity *entity, s32 unknown) {
     if (entity->unkC6 == 0) {
         previous = unkE0->unk7A;
         if (!(s32)(entity->flags >> 63) && EntityAi_CanUseRanged(entity, 0)) {
-            func_001B4EC8((s16)entity->params->unk434);
+            Attack_DrainPlayerMp((s16)entity->params->unk434);
             unkE0->unk7A = 1;
             ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
             Motion_Start(entity, 2, 0, entity->params->unkC4, 0);

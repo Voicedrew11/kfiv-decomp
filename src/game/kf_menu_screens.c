@@ -271,7 +271,7 @@ void Sound_MuteTagged(void);
 void Sound_UnmuteTagged(void);
 void Sound_UnmutePositional(void);
 void Sound_MutePositional(void);
-void func_001B5460(void);
+void Input_Update(void);
 int func_001CEBE0(void);
 s16 MenuPad_Update(void);
 extern GsDrawEnv D_00432D80;
@@ -298,7 +298,7 @@ extern char D_00426310[];           /* inside D_00426140: the second buffer's dr
 extern char D_00426390[];
 extern s32 D_00446C98;
 extern u8 D_00447208;
-void func_001E5070(s32);
+void Menu_DrawBrightness(s32);
 int Timer_GetTicks(void);
 int Timer_Restart(void); // match: an int result keeps $2 clear of the pad test after the call
 int sceGsSyncPath(int, int);
@@ -310,7 +310,7 @@ int sceGsSwapDBuffDc(GsDoubleBufferDc *, int);
 #define SET_TEST(value) ((void (*)(int, s64))MenuDraw_SetGsRegister)(GS_REG_TEST_1, value)
 
 extern ColorBytes D_00446B18[]; // match: the initialiser of the local below ({ 0x10, 0x10, 0x10 }); an array so it is not reached through $gp
-int func_001E5210(u8);
+int Menu_SetBlendMode(u8);
 void MenuSprite_DrawPlain(int owner, int index, int param);
 extern s32 D_00446AC8;
 extern char D_005CE0E0[];
@@ -344,8 +344,8 @@ extern s8 D_004472DA;
 extern s8 D_004472C4;               /* 0: fading in, 1: open, 2: fading out to the chosen screen, 3: fading out to leave */
 extern s8 D_004472D8;
 s32 Sound_PlayMenu(s32);
-int func_001F92D0(void);
-int func_001F93A8(void);
+int Menu_OwnsAnyItem(void);
+int Menu_KnowsCastableSpell(void);
 void MenuSprite_Draw(int, int, int, int);
 extern u8 D_00446B39;
 extern GameStatus game_status;
@@ -403,9 +403,9 @@ extern s8 D_004472C7;
 // match: D_004472C7 is the second byte of what the symbol list has as one two-byte object. It has to be a variable of
 // its own: a store to `D_004472C6[1]` is never put in a delay slot, and retail has it there.
 __asm__("D_004472C7 = D_004472C6 + 1");
-void func_001BA310(void);
-int func_001E4FE0(s32, u32);
-int func_001E5660(u32, s32, s32);
+void Player_RecomputeStats(void);
+int Menu_IsEquipSlotFilled(s32, u32);
+int Menu_IsEquipped(u32, s32, s32);
 s8 MenuDraw_GetWordStart(s32);
 void MenuDraw_Word(KindObject *);
 s32 MenuText_DrawLineCentered(u16 *, s32);
@@ -419,7 +419,7 @@ s32 MenuDraw_SetGsRegister(int, s64);
 #define EQUIP_LIST (((MenuItem **)D_005CE840)[0])
 #define CURRENT_ITEM (((MenuItemList *)EQUIP_LIST)->item)
 // match: called as a void function, so the result register is free at once
-#define SET_BLEND(mode) ((void (*)(u8))func_001E5210)(mode)
+#define SET_BLEND(mode) ((void (*)(u8))Menu_SetBlendMode)(mode)
 #define DRAW_ITEM_MODEL(matrix) DRAW_NODE_MODEL(&D_00426470, matrix, D_00446C88)
 // match: called with the slot alone
 #define DRAW_SLOT(slot) ((void (*)(PoolSlot *))PoolSlot_Draw)(slot)
@@ -497,9 +497,9 @@ static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
 /* Draws a list of packets at their current fade levels. */
 #define DRAW_PACKETS(packets, count, param)                                                             \
     for (i = 0; i < (count); i++) {                                                                     \
-        func_001E5210((packets)[i].unk42);                                                              \
+        Menu_SetBlendMode((packets)[i].unk42);                                                              \
         MenuSprite_Draw((int)&(packets)[i], (packets)[i].unk3E + 1000, (param), (int)D_00425910[i]);      \
-        ((void (*)(u8))func_001E5210)(0);                                                               \
+        ((void (*)(u8))Menu_SetBlendMode)(0);                                                               \
     }
 extern s32 D_004472E8;
 extern s32 D_00446BD8;
@@ -519,7 +519,7 @@ extern s16 D_00446942;
 extern s16 D_00446944;
 // match: both are called as void functions, so the result register is free at once
 #define PLAY_MENU_SOUND(sound) ((void (*)(s32))Sound_PlayMenu)(sound)
-#define SET_PART_MODE(mode) ((void (*)(u8))func_001E5210)(mode)
+#define SET_PART_MODE(mode) ((void (*)(u8))Menu_SetBlendMode)(mode)
 s32 SaveCard_Open(void);
 s32 SaveCard_StartCheck(s8);
 #define PAGE_ROWS 7
@@ -2187,7 +2187,7 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
     while (func_001CEBE0(), menu_run_steps[D_00446AC4]() != 0) {
         sceGsSyncPath(0, 0);
         D_00447200 = Menu_EndFrame(1);
-        func_001B5460();
+        Input_Update();
         status = Pad_GetMode(0, 0);
         D_004472D0 = status;
         if (status != D_004472D4) {
@@ -2705,7 +2705,7 @@ static int Menu_ReturnTrue(void) {
 s32 Menu_EndFrame(s32 run_handler) {
     s32 even_field;
 
-    func_001E5070(game_options[10]);
+    Menu_DrawBrightness(game_options[10]);
     func_001CEBE0();
     sceGsSyncPath(0, 0);
     D_00446C98 = Timer_GetTicks();
@@ -2786,9 +2786,9 @@ static void Menu_DrawBackdropItemSelParts(void) {
 
     for (i = 0; i < D_00446A4C; i++) {
         if (D_00447248[i].unk3E == 2) {
-            func_001E5210(D_00447248[i].unk42);
+            Menu_SetBlendMode(D_00447248[i].unk42);
             MenuSprite_DrawPlain((int)&D_00447248[i], 2, 0);
-            func_001E5210(0);
+            Menu_SetBlendMode(0);
         }
     }
 }
@@ -2799,9 +2799,9 @@ static void Menu_DrawBackdropPreshopParts(void) {
 
     for (i = 0; i < D_00446A74; i++) {
         if (D_00446BFC[i].unk3E == 2) {
-            func_001E5210(D_00446BFC[i].unk42);
+            Menu_SetBlendMode(D_00446BFC[i].unk42);
             MenuSprite_DrawPlain((int)&D_00446BFC[i], 2, 0);
-            func_001E5210(0);
+            Menu_SetBlendMode(0);
         }
     }
 }
@@ -2970,7 +2970,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
         D_004472CD++;
         Sound_PlayMenu(1);
     } else if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
-        if ((func_001F92D0() == 0 && D_004472CD == 5) || (func_001F93A8() == 0 && D_004472CD == 1)) {
+        if ((Menu_OwnsAnyItem() == 0 && D_004472CD == 5) || (Menu_KnowsCastableSpell() == 0 && D_004472CD == 1)) {
             Sound_PlayMenu(3);
         } else {
             Sound_PlayMenu(0);
@@ -2996,13 +2996,13 @@ static void Menu_UpdateMain(HandlerContext *context) {
 
     for (i = 0; i < D_00446A30; i++) {
         kind = D_0044722C[i].unk3E;
-        func_001E5210(D_0044722C[i].unk42);
+        Menu_SetBlendMode(D_0044722C[i].unk42);
         if (D_004472C4 != 1) {
             MenuSprite_Draw((int)&D_0044722C[i], kind + 1000, D_004472CD, (int)D_00425510[i]);
         } else {
             MenuSprite_Draw((int)&D_0044722C[i], kind, D_004472CD, (int)D_00425510[i]);
         }
-        func_001E5210(0);
+        Menu_SetBlendMode(0);
     }
 
     switch (D_004472C4) {
@@ -3028,11 +3028,11 @@ static void Menu_UpdateMain(HandlerContext *context) {
                 if (D_0044722C[i].unk3E != 1 || D_004472CD != D_0044722C[i].slot) {
                     memset(D_00425510, 0, 0x400);
                     if (D_004472C4 == 2) {
-                        if (func_001F92D0() == 0 && D_004472CD == 5) {
+                        if (Menu_OwnsAnyItem() == 0 && D_004472CD == 5) {
                             D_004472C4 = 0;
                             break;
                         }
-                        if (func_001F93A8() != 0 || D_004472CD != 1) {
+                        if (Menu_KnowsCastableSpell() != 0 || D_004472CD != 1) {
                             D_00446B20 = (void *)Menu_OpenChosenScreen;
                             context->unk04 = D_004472CD;
                             switch (context->unk04) {
@@ -3155,13 +3155,13 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
     }
     for (i = 0; i < D_00446A34; i++) {
         kind = D_00447230[i].unk3E;
-        ((void (*)(u8))func_001E5210)(D_00447230[i].unk42); // match: called as if it returned nothing
+        ((void (*)(u8))Menu_SetBlendMode)(D_00447230[i].unk42); // match: called as if it returned nothing
         if (D_00426110[0] != NULL) {
             MenuSprite_Draw((int)&D_00447230[i], kind + 1000, 0, (int)D_00425510[i]);
         } else {
             MenuSprite_Draw((int)&D_00447230[i], kind + 1000, 1, (int)D_00425510[i]);
         }
-        ((void (*)(u8))func_001E5210)(0); // match: called as if it returned nothing
+        ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as if it returned nothing
     }
     D_00446B40++;
     if (D_00446B40 >= 0x80) {
@@ -3364,9 +3364,9 @@ static void Menu_UpdateCastSpell(s32 context) {
     D_00446DF8 = (number - 1) % 3 + 1;
     for (; i < D_00446A38; i++) {
         kind = D_00447234[i].unk3E;
-        func_001E5210(D_00447234[i].unk42);
+        Menu_SetBlendMode(D_00447234[i].unk42);
         MenuSprite_Draw((int)&D_00447234[i], kind + 1000, page, (int)D_00425510[i]);
-        ((void (*)(u8))func_001E5210)(0); // match: called as if it returned nothing
+        ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as if it returned nothing
     }
     for (row = 0; row < 7; row++, item = item->prev) {
         if (D_005CE880[0] == item) {
@@ -3602,7 +3602,7 @@ static void Menu_UpdateEquip(void) {
     for (i = 0; i < D_00446A3C; i++) {
         kind = D_00447238[i].unk3E;
         SET_BLEND(D_00447238[i].unk42);
-        if (func_001E5660(D_004472E0, CURRENT_ITEM->group, CURRENT_ITEM->unk0C)) {
+        if (Menu_IsEquipped(D_004472E0, CURRENT_ITEM->group, CURRENT_ITEM->unk0C)) {
             MenuSprite_Draw((int)&D_00447238[i], kind + 1000, 0, (int)D_00425510[i]);
         } else {
             MenuSprite_Draw((int)&D_00447238[i], kind + 1000, 1, (int)D_00425510[i]);
@@ -3610,7 +3610,7 @@ static void Menu_UpdateEquip(void) {
         SET_BLEND(0);
     }
     if ((D_00446DE8 & 0x1000) && D_00446AD5 == 0 && D_004472DA != 0
-        && func_001E4FE0(index, CURRENT_ITEM->group)) {
+        && Menu_IsEquipSlotFilled(index, CURRENT_ITEM->group)) {
         if (D_00446AD4 == 0) {
             D_00446B50 = 1;
             D_00446AD4 = 1;
@@ -4066,7 +4066,7 @@ D_0042A8F0[15].part = NULL;
                     player_state.shortcut_type = 0;
                 }
             }
-            func_001BA310();
+            Player_RecomputeStats();
             if (player_state.hp_max < player_state.hp_now) {
                 player_state.hp_now = player_state.hp_max;
             }
@@ -4162,9 +4162,9 @@ static void Menu_UpdateStatus(void) {
     u32 full_alpha;
 
     for (i = 0; i < D_00446A50; i++) {
-        func_001E5210(D_0044724C[i].unk42);
+        Menu_SetBlendMode(D_0044724C[i].unk42);
         MenuSprite_Draw((int)&D_0044724C[i], D_0044724C[i].unk3E + 1000, 0, (int)D_00425510[i]);
-        ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
+        ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
     if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
@@ -4331,9 +4331,9 @@ static void Menu_UpdateKeyItems(void) {
     D_00446BB8 %= 3;
     sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     for (i = 0; i < D_00446A6C; i++) {
-        func_001E5210(D_00447260[i].unk42);
+        Menu_SetBlendMode(D_00447260[i].unk42);
         MenuSprite_Draw((int)&D_00447260[i], 1000, 0, (int)D_00425510[i]);
-        ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
+        ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
     D_00446BBC++;
     for (i = 0; (s32)i < 6; i++) {
@@ -4546,9 +4546,9 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     }
 
     for (i = 0; i < D_00446A54; i++) {
-        func_001E5210(D_00447250[i].unk42);
+        Menu_SetBlendMode(D_00447250[i].unk42);
         MenuSprite_Draw((int)&D_00447250[i], 1000, 0, (int)D_00425510[i]);
-        ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
+        ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
     show_picture = (s8)game_options[7] != 0;
@@ -4742,9 +4742,9 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     page = (context->unk04 - 3000) / 50;
     for (i = 0; i < D_00446A54; i++) {
         kind = D_00447250[i].unk3E;
-        func_001E5210(D_00447250[i].unk42);
+        Menu_SetBlendMode(D_00447250[i].unk42);
         MenuSprite_DrawPlain((int)&D_00447250[i], kind, 1);
-        ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
+        ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
     if (D_005CEEE0.done != 0) {
         memset(view, 0, 0x40);
@@ -4885,7 +4885,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             player_state.shortcut_type = 0;
             player_state.shortcut = 0;
         }
-        func_001BA310();
+        Player_RecomputeStats();
         if (player_state.hp_max < player_state.hp_now) {
             player_state.hp_now = player_state.hp_max;
         }
@@ -4907,13 +4907,13 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
     for (i = 0; i < D_00446A58; i++) {
         kind = D_00447254[i].unk3E;
-        func_001E5210(D_00447254[i].unk42);
+        Menu_SetBlendMode(D_00447254[i].unk42);
         if (D_005CE850[0]->group != 12) {
             MenuSprite_Draw((int)&D_00447254[i], kind + 1000, 0, (int)D_00425510[i]);
         } else {
             MenuSprite_Draw((int)&D_00447254[i], kind + 1000, 1, (int)D_00425510[i]);
         }
-        ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
+        ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
     for (i = 0; i < 7; i++, item = item->prev) {
@@ -4982,13 +4982,13 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     for (i = 0; i < D_00446A4C; i++) {
         kind = D_00447248[i].unk3E;
         if (kind != 2) {
-            ((void (*)(u8))func_001E5210)(D_00447248[i].unk42); // match: called as returning nothing
+            ((void (*)(u8))Menu_SetBlendMode)(D_00447248[i].unk42); // match: called as returning nothing
             if (D_004472CB != 1 && ((worn_mask >> D_00447248[i].slot) & 1)) {
                 MenuSprite_Draw((int)&D_00447248[i], kind + 1000, worn_mask, (int)D_00425510[i + 200]);
             } else {
                 MenuSprite_DrawPlain((int)&D_00447248[i], kind, worn_mask);
             }
-            func_001E5210(0);
+            Menu_SetBlendMode(0);
         }
     }
 
@@ -5000,7 +5000,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     sceVu0TransMatrix(local, local, D_004210A0);
     Menu_DrawItemModel(local);
 
-    if ((D_00446DE8 & 0x1000) && D_004472DA != 0 && func_001E4FE0(record, D_005CE850[0]->group)) {
+    if ((D_00446DE8 & 0x1000) && D_004472DA != 0 && Menu_IsEquipSlotFilled(record, D_005CE850[0]->group)) {
         Sound_PlayMenu(1);
         if (D_00446AD4 == 0) {
             D_00446AD4 = 1;
@@ -5614,7 +5614,7 @@ static void Menu_UpdateCardSlot(void) {
 
     for (i = 0; i < D_00446A60; i++) {
         kind = D_00446BF4[i].unk3E;
-        func_001E5210(D_00446BF4[i].unk42);
+        Menu_SetBlendMode(D_00446BF4[i].unk42);
         switch (kind) {
         case 2:
             MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 1, D_00425510[i]);
@@ -5966,7 +5966,7 @@ static void Menu_UpdateSaveList(void) {
     for (i = 0; i < D_00446A64; i++) {
         kind = D_00446BF8[i].unk3E;
         slot = D_00446BF8[i].slot;
-        func_001E5210(D_00446BF8[i].unk42);
+        Menu_SetBlendMode(D_00446BF8[i].unk42);
         switch (kind) {
         case 2:
             MenuSprite_Draw((int)&D_00446BF8[i], 0x3EA, 1, D_00425510[i]);
@@ -6372,9 +6372,9 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
 
     for (i = 0; i < D_00446A68; i++) {
         kind = D_0044725C[i].unk3E;
-        func_001E5210(D_0044725C[i].unk42);
+        Menu_SetBlendMode(D_0044725C[i].unk42);
         MenuSprite_Draw((int)&D_0044725C[i], kind + 1000, context->unk04, (int)D_00425510[i]);
-        ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
+        ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
     if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
@@ -6622,7 +6622,7 @@ static void Menu_UpdateButtonConfig(void) {
                 MenuDraw_Bar(&bar);
             }
         }
-        ((void (*)(u8))func_001E5210)(D_00447264[i].unk42); // match: called as returning nothing, which frees $2 for the switch
+        ((void (*)(u8))Menu_SetBlendMode)(D_00447264[i].unk42); // match: called as returning nothing, which frees $2 for the switch
         switch (kind) {
         case 2:
             if (D_00446BF0 != 0) {
@@ -6672,7 +6672,7 @@ static void Menu_UpdateButtonConfig(void) {
             MenuSprite_Draw((int)&D_00447264[i], kind + 1000, slot, D_00425510[i]);
             break;
         }
-        ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
+        ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
     if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
@@ -6889,7 +6889,7 @@ static void Menu_UpdateCardCheck(void) {
     if (D_005CF2F0.unk1C == 0) {
         for (i = 0; i < D_00446ABC; i++) {
             kind = D_00446C68[i].unk3E;
-            ((void (*)(u8))func_001E5210)(D_00446C68[i].unk42); // match: called as returning nothing, which frees $2 for the switch
+            ((void (*)(u8))Menu_SetBlendMode)(D_00446C68[i].unk42); // match: called as returning nothing, which frees $2 for the switch
             switch (D_005CF2F0.unk12) {
             case 0x10:
                 MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x10, D_00425510[i]);
@@ -6904,7 +6904,7 @@ static void Menu_UpdateCardCheck(void) {
                 MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x13, D_00425510[i]);
                 break;
             }
-            func_001E5210(0);
+            Menu_SetBlendMode(0);
         }
     }
 
@@ -7043,9 +7043,9 @@ static void Menu_UpdateBrightness(void) {
     D_00447228 = (game_options[10] - 32.0f) * 402.0f / 220.0f;
     for (i = 0; i < D_00446AB0; i++) {
         kind = D_00446C5C[i].unk3E;
-        func_001E5210(D_00446C5C[i].unk42);
+        Menu_SetBlendMode(D_00446C5C[i].unk42);
         MenuSprite_Draw((int)&D_00446C5C[i], kind + 1000, (int)D_00447228 + 0x72C, (int)D_00425510[i]);
-        func_001E5210(0);
+        Menu_SetBlendMode(0);
     }
     switch (D_00446C70) {
     case 0:
@@ -7400,7 +7400,7 @@ static void Menu_OpenCardSlot(void) {
 }
 
 /* Tells whether value (an equipment slot's number) differs from the "None" of the slot the given step stands for. */
-int func_001E4FE0(s32 value, u32 step) {
+int Menu_IsEquipSlotFilled(s32 value, u32 step) {
     switch (step) {
         case 0:
         case 1:
@@ -7427,7 +7427,7 @@ int func_001E4FE0(s32 value, u32 step) {
 }
 
 /* Sends a five-quadword packet that draws one sprite in the grey level given, into the frame buffer D_00446F78 selects. */
-void func_001E5070(s32 level) {
+void Menu_DrawBrightness(s32 level) {
     GsPacketWord *packet;
     GsPacketWord *cursor;
     u32 colour;
@@ -7467,7 +7467,7 @@ void func_001E5070(s32 level) {
 }
 
 /* Sets the alpha test and the blend mode of ALPHA_1 from mode and writes them; the value is never seeded. */
-int func_001E5210(u8 mode) {
+int Menu_SetBlendMode(u8 mode) {
     GsAlphaReg reg;
 
     if (mode == 0) {
@@ -7503,7 +7503,7 @@ int func_001E5210(u8 mode) {
 }
 
 /* Sets the blend mode of ALPHA_1 from mode and writes it; the value is never seeded. */
-s32 func_001E53A8(u8 mode, char flag) {
+s32 Menu_SetBlendModeAndTest(u8 mode, char flag) {
     GsAlphaReg reg;
 
     if (flag == 0) {
@@ -7534,7 +7534,7 @@ s32 func_001E53A8(u8 mode, char flag) {
 }
 
 /* Empties one equipment slot: its menu entry goes back to the first item of its list and the player's number to the "nothing" one. */
-void func_001E54A8(s8 slot) {
+void Menu_ClearEquipSlot(s8 slot) {
     switch (slot) {
         case 0:
             *D_00420D60[0] = D_004231F0;
@@ -7585,7 +7585,7 @@ void func_001E54A8(s8 slot) {
 }
 
 /* Tells whether the item numbered value is the one the player has in the given equipment slot. */
-int func_001E5660(u32 slot, s32 kind, s32 value) {
+int Menu_IsEquipped(u32 slot, s32 kind, s32 value) {
     switch (slot) {
         case 0:
             if (value == player_state.weapon + ITEM_WEAPON_FIRST) {

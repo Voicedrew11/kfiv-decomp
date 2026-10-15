@@ -304,7 +304,7 @@ static void WaterElemental_PlayTurnAnim(Entity *entity) {
    EntityParams.unk436 percent of EntityParams.unk0A: plays animation 18 to its end; on frame
    EntityParams.unk43E it adds EntityParams.unk43A percent of unk0A to Entity.unk2C, once, and sets
    the pause in work word unk6C to unk43C. Entity.unk2C is the entity's health: Entity_ResetToSpawn
-   loads it from EntityParams.unk0A, func_001B2F70 takes the damage of a hit off it, and
+   loads it from EntityParams.unk0A, Attack_HitEntity takes the damage of a hit off it, and
    EntityAi_Update starts the death action when it is 0. */
 static void WaterElemental_RecoverHealth(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;

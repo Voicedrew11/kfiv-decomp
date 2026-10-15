@@ -53,7 +53,7 @@ char *func_0010CAB8(char *, u32);
 float EntityMath_WrapAngle(float);
 float EntityMath_DistanceXZ(void *, void *);
 f32 EntityMath_Approach(f32, f32, f32);
-int func_001B4F30(u16, void *, void *, void *, void *);
+int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void *memset(void *, int, u32);
 void sceVu0TransMatrix(float *, float *, float *);
 void sceVu0RotMatrixX(float *, float *, float);
@@ -776,7 +776,7 @@ static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 fr
                     angles[0] = EntityMath_Approach(angles[0], pitch, pitch_rate);
                     angles[1] = EntityMath_Approach(angles[1], yaw, yaw_rate);
                 }
-                func_001B4F30(record->unk10[i].unk00, shot, from, angles, entity);
+                Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, from, angles, entity);
             }
         }
     }

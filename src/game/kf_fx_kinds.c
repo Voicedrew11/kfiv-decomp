@@ -14,7 +14,7 @@
 #define PI 3.1415927f
 extern PlayerState player_state;
 extern float D_00431AF0[16];
-int func_001B4F90(void *);
+int Attack_RunEffectHitCheck(void *);
 float func_001B0178(void *from, void *target);
 void EffectAngle_FromVector(void *angles, void *direction);
 void Vector_Copy(void *dst, void *src);
@@ -219,7 +219,7 @@ void EffectSweep_Update(EffectActor *effect) {
             if (motion->hit_spawned == 0) {
                 Vector_Copy(&saved_position, &effect->model->position);
                 Vector_Copy(&effect->model->position, &motion->aim);
-                hits = func_001B4F90(effect);
+                hits = Attack_RunEffectHitCheck(effect);
                 Vector_Copy(&effect->model->position, &saved_position);
                 if (hits != 0) {
                     Effect_Spawn(effect->def->unkF0, &motion->aim, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
@@ -547,7 +547,7 @@ void EffectHandover_Update(EffectActor *effect) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     }
     if (effect->frame <= effect->def->unkF0) {
-        hits = func_001B4F90(effect);
+        hits = Attack_RunEffectHitCheck(effect);
         if (hits & 2) {
             effect_id = (int)effect->def->unkE0;
             if (effect_id <= 0) {
@@ -688,7 +688,7 @@ void EffectBolt_Update(EffectActor *actor) {
         Effect_Spawn(motion->effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
         motion->ended = 1;
     } else if (actor->def->unk10B != 0xFF) {
-        hit = func_001B4F90(actor);
+        hit = Attack_RunEffectHitCheck(actor);
         if (hit != 0 && actor->def->end_effect != 0xFFFF) {
             if (hit & 2) {
                 Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
@@ -1017,7 +1017,7 @@ void EffectFloorChase_Update(EffectActor *actor) {
         Effect_Free(actor);
     } else if (actor->frame == 0) {
         actor->model->position.y -= 100.0f;
-        check = func_001B4F90(actor);
+        check = Attack_RunEffectHitCheck(actor);
         actor->model->position.y += 100.0f;
         if (check & 0x10) {
             motion->ending = 1;
@@ -1475,7 +1475,7 @@ void EffectSeekPlayer_Update(EffectActor *actor) {
         EffectSteer_Toward(velocity, &to_player, actor->def->speed, actor->def->unkDC);
     }
     sceVu0AddVector(&actor->model->position, &actor->model->position, velocity);
-    if (func_001B4F90(actor) != 0 && actor->def->end_effect != 0xFFFF) {
+    if (Attack_RunEffectHitCheck(actor) != 0 && actor->def->end_effect != 0xFFFF) {
         if (COLLISION_RESULT->unk18 != 5) {
             Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
         }

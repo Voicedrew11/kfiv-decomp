@@ -586,7 +586,7 @@ typedef struct {
     f32 unk0C;                      /* 0x0C above 0: MapObject.unk14 is this times the scale, plus 100 */
     MapObjectAnim anims[8];         /* 0x10 by MapObjectBytes.anim; entry anim + 2 holds a second sound for anims 4 and 5 */
     u16 unk50;                      /* 0x50 passed to Effect_StartSpawner */
-    s16 unk52[9];                   /* 0x52 percent of each of a hit's nine strengths that it shrugs off, 200: all of it (func_001B3AC0) */
+    s16 unk52[9];                   /* 0x52 percent of each of a hit's nine strengths that it shrugs off, 200: all of it (Attack_HitMapObject) */
     f32 unk64;                      /* 0x64 above 0: the player must face it within this angle to act on it (func_001D0970) */
     u32 unk68;                      /* 0x68 flags; the low half is also the message id of its name ("Corpse", "Jail Door"...), shown when used */
     f32 unk6C;                      /* 0x6C MapObject.unk3C is this times the scale, plus 100 */
@@ -597,7 +597,7 @@ typedef struct {
 /* MapObjectUnk04's first word as two halves */
 typedef struct {
     u16 flags;                      /* 0x00 */
-    u16 toughness;                  /* 0x02 the damage one hit must do to break the object (func_001B3AC0) */
+    u16 toughness;                  /* 0x02 the damage one hit must do to break the object (Attack_HitMapObject) */
 } MapObjectDefHalves;
 
 #define MAP_OBJECT_DEF_TOUGHNESS(def) (((MapObjectDefHalves *)(def))->toughness)

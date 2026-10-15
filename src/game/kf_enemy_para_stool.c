@@ -42,8 +42,8 @@ void *memset(void *, int, u32);
 float EntityMath_AngleXZ(float *, char *);
 float EntityMath_AngleDifference(float, float);
 float EntityMath_WrapAngle(float);
-void func_001B2C48(void *);
-s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
+void Attack_RollPlayerAilments(void *);
+s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 
 static void ParaStool_Think(Entity *entity, s32 unknown);
 static void ParaStool_ThinkCombat(Entity *entity, s32 unknown);
@@ -269,8 +269,8 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
 /* Helper of ParaStool_MeleeAttack0: the hit check of EntityAi_CheckMeleeHitAt and EntityAi_SendMeleeHit for one
    part of the record on the part's frames, written out, with conditions of its own: the entity must
    be within EntityParams.unk432 degrees of the player's facing and unk434 degrees of the player's
-   pitch, and Entity.unk68 within the angle of part 0 of its heading. It then calls func_001B2C48
-   before the check (func_001B1470). */
+   pitch, and Entity.unk68 within the angle of part 0 of its heading. It then calls Attack_RollPlayerAilments
+   before the check (Attack_Run). */
 static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240 *record, s32 index, s32 frame, s32 current_frame, f32 angle) {
     Unk1B1470Request request;
     Unk1B1470Extra extra;
@@ -285,7 +285,7 @@ static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240
         if (ABS(yaw) < entity->params->unk432 * 0.017453292f && ABS(pitch) < (s16)entity->params->unk434 * 0.017453292f) {
             spread = EntityMath_WrapAngle(record->unk10[0].unk22 * 0.017453292f);
             if (ABS(EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1])) < spread) {
-                func_001B2C48(&entity->params->unk240[0].unk10[0].unk12);
+                Attack_RollPlayerAilments(&entity->params->unk240[0].unk10[0].unk12);
                 memset(&request, 0, sizeof(request));
                 memset(&extra, 0, sizeof(extra));
                 Vector_Copy(request.position, entity->model->position);
@@ -304,7 +304,7 @@ static s32 ParaStool_CheckPartHitInPlayerView(Entity *entity, EntityParamsUnk240
                 extra.unk20 = 0;
                 extra.unk22 = 0;
                 request.unk4C_3 = record->unk10[index].unk1E & 1;
-                return func_001B1470(&request, &extra);
+                return Attack_Run(&request, &extra);
             }
         }
     }

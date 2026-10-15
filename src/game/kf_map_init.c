@@ -20,7 +20,7 @@ void func_001C82C0(int);
 void func_00123158(int);
 void func_001C87D8(int);
 void func_00119360(int);
-void func_001034F8(int);
+void Game_MarkMapVisited(int);
 void Script_Init(int);
 int Script_Start(int, int);
 extern char map_object_defs[];
@@ -165,7 +165,7 @@ void func_00112948(int map) {
     func_001C87D8(0);
     Entity_ClearFlag10InSlot(0);
     func_00119360(0);
-    func_001034F8(map_slots[0].tag);
+    Game_MarkMapVisited(map_slots[0].tag);
     Script_Init(map_slots[0].unk5C);
     Script_Start(0x7FFF, 0);
     sound_load_queue.unk00 = ((MapSlotUnk08 *)map_slots[0].header)->unk70;

@@ -6,7 +6,8 @@ extern u8 item_counts[];
 extern u8 spell_levels[6][5];
 extern char fx_table[];
 
-int func_001F91F8(void) {
+/* The title screen's loop: runs Title_Run and the menus it leads to; 0 for a new game, 1 once a game was loaded. */
+int TitleMenu_Run(void) {
     int screen = 0;
 
     do {
@@ -31,7 +32,8 @@ int func_001F91F8(void) {
     } while (screen != -1);
 }
 
-int func_001F92D0(void) {
+/* Whether the player has any item other than the keys and the "none" items (the main menu's item screen). */
+int Menu_OwnsAnyItem(void) {
     int i;
 
     for (i = 0; i < ITEM_COUNT; i++) {
@@ -45,7 +47,8 @@ int func_001F92D0(void) {
     return FALSE;
 }
 
-int func_001F93A8(void) {
+/* Whether the player knows a magic cast from the menu (fx_table unk102 == 1; the main menu's spell screen). */
+int Menu_KnowsCastableSpell(void) {
     int i;
     int j;
 

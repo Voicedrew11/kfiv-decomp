@@ -36,7 +36,7 @@ void EntityAi_ThinkCombat(Entity *, s32);
 extern EntitySpawnInfo *D_004467D0[2];
 extern MapSlot map_slots[];
 extern int D_00446770;
-void func_001035A8(u32, int);
+void Game_CountSpawnDeath(u32, int);
 int Script_Start(int, int);
 
 static void Snake_DormantHoldAnim2(Entity *entity);
@@ -329,7 +329,7 @@ static void Snake_Think(Entity *entity, s32 unknown) {
 }
 
 /* A death action (busy bit 0x40) that Snake_Think starts; the death slot holds
-   EntityAi_Death. As EntityAi_Death, but when the motion has ended it calls func_001035A8, frees
+   EntityAi_Death. As EntityAi_Death, but when the motion has ended it calls Game_CountSpawnDeath, frees
    the entity's effects and starts script EntitySpawnInfo.unk36 where that one calls EntityEvent_OnDeath.
    */
 static void Snake_Death(Entity *entity) {
@@ -357,7 +357,7 @@ static void Snake_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             entity->unkA0 = 20;
-            func_001035A8(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+            Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
             Effect_FreeForOwner(entity);
             if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
                 Script_Start(entity->spawn_info->unk36, 0);

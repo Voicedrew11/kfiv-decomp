@@ -13,7 +13,7 @@ int func_00102238(char *, int, int);
 int func_001025C0(int, void *, int);
 int func_001024B0(int);
 void func_0010B758(ModelInstance *, int *, int *);
-void func_001CB710(OverlaySprite *);
+void Gold_DrawFaded(OverlaySprite *);
 void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
@@ -124,7 +124,7 @@ void Gold_InitMap(int map) {
         model->unk14C = &map_draw_state.unkA0;
         model->unk194 = (int)map_gold_texture;
         model->unk190 = 2;
-        model->draw = (void (*)(ModelInstance *))func_001CB710;
+        model->draw = (void (*)(ModelInstance *))Gold_DrawFaded;
     }
     tag = map_slots[map].tag; // match: kept in a variable, retail does not read it again after the copy
     marks = map_object_marks[tag];
@@ -437,7 +437,8 @@ void Gold_ClearMark(MapActor *actor) {
     memset(mark, 0, sizeof(ObjectMark));
 }
 
-void func_001CB710(OverlaySprite *sprite) {
+/* Draw hook of a gold pile's model: blends it by its fade alpha (unk146), then draws it. */
+void Gold_DrawFaded(OverlaySprite *sprite) {
     func_00109A50();
     func_00109A80(GS_REG_ALPHA_1, ((s64)sprite->unk146 << 32) | 0x64);
     func_00109A80(GS_REG_TEST_1, 0x51001);

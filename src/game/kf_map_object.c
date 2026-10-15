@@ -16,14 +16,14 @@ float sqrtf(float);
 float atan2f(float, float);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
-int func_001034A8(int);
-int func_00103698(int, int);
-int func_001036C8(int, int);
-int func_00103668(int, int, u32);
-int func_00103AE0(int, int);
-void func_001036B8(int, int, int);
-void func_001036E8(int, int, int);
-void func_00103648(int, int, u32, int);
+int Game_IsMapVisited(int);
+int Game_GetObjectActive(int, int);
+int Game_GetObjectState(int, int);
+int Game_GetObjectFlag(int, int, u32);
+int Game_GetTriggerItem(int, int);
+void Game_SetObjectActive(int, int, int);
+void Game_SetObjectState(int, int, int);
+void Game_SetObjectFlag(int, int, u32, int);
 void func_00108A08(ModelInstance *, int);
 void func_00108AC8(void *);
 void func_00109A50(void);
@@ -207,7 +207,7 @@ void MapObject_StartMap(int map) {
     int count = D_004467B8[map];
     MapObject *object = map_slot_objects[map];
     int tag = map_slots[map].tag;
-    int visited = func_001034A8(tag);
+    int visited = Game_IsMapVisited(tag);
     int in_use;
     int flag;
     MapObjectUnk08 *source;
@@ -219,17 +219,17 @@ void MapObject_StartMap(int map) {
         flag = 0;
         in_use = ((s32)(source->unk38.flags >> 49) ^ 1) & 1;
         if (visited) {
-            in_use = func_00103698(tag, i);
-            flag = func_001036C8(tag, i);
-            MAP_OBJECT_BITS(object)->bit18 = func_00103668(tag, i, 0);
-            MAP_OBJECT_BITS(object)->bit19 = func_00103668(tag, i, 1);
+            in_use = Game_GetObjectActive(tag, i);
+            flag = Game_GetObjectState(tag, i);
+            MAP_OBJECT_BITS(object)->bit18 = Game_GetObjectFlag(tag, i, 0);
+            MAP_OBJECT_BITS(object)->bit19 = Game_GetObjectFlag(tag, i, 1);
         } else {
             kind = object->unk04->kind;
             if (kind == 8 || kind == 4 || kind == 0xD || kind == 0x10) {
                 flag = ((MapObjectUnk08Words *)source)->unk52;
             }
         }
-        if (func_00103AE0(tag, object->unk08->unk38.bytes[2])) {
+        if (Game_GetTriggerItem(tag, object->unk08->unk38.bytes[2])) {
             flag = 1;
         }
         object->unk0C = (s32)func_00115CD0((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->unk00 & 1);
@@ -251,10 +251,10 @@ void MapObject_UnloadMap(int map) {
     int i;
 
     for (i = 0; i < count; i++, object++) {
-        func_001036B8(tag, i, MAP_OBJECT_BITS(object)->bit16);
-        func_001036E8(tag, i, MAP_OBJECT_BITS(object)->bit17);
-        func_00103648(tag, i, 0, MAP_OBJECT_BITS(object)->bit18);
-        func_00103648(tag, i, 1, MAP_OBJECT_BITS(object)->bit19);
+        Game_SetObjectActive(tag, i, MAP_OBJECT_BITS(object)->bit16);
+        Game_SetObjectState(tag, i, MAP_OBJECT_BITS(object)->bit17);
+        Game_SetObjectFlag(tag, i, 0, MAP_OBJECT_BITS(object)->bit18);
+        Game_SetObjectFlag(tag, i, 1, MAP_OBJECT_BITS(object)->bit19);
         func_0011EA80(object);
     }
     MapObject_ClearMap(map);
@@ -276,10 +276,10 @@ void MapObject_SaveAllFlags(void) {
             for (i = 0; i < count; i++, object++) {
                 // match: each flag is narrowed to a byte first; without these four conversions the outer loop is
                 // small enough for the compiler to hoist the 0xE000 object-table stride out of it
-                func_001036B8(tag, i, (u8)MAP_OBJECT_BITS(object)->bit16);
-                func_001036E8(tag, i, (u8)MAP_OBJECT_BITS(object)->bit17);
-                func_00103648(tag, i, 0, (u8)MAP_OBJECT_BITS(object)->bit18);
-                func_00103648(tag, i, 1, (u8)MAP_OBJECT_BITS(object)->bit19);
+                Game_SetObjectActive(tag, i, (u8)MAP_OBJECT_BITS(object)->bit16);
+                Game_SetObjectState(tag, i, (u8)MAP_OBJECT_BITS(object)->bit17);
+                Game_SetObjectFlag(tag, i, 0, (u8)MAP_OBJECT_BITS(object)->bit18);
+                Game_SetObjectFlag(tag, i, 1, (u8)MAP_OBJECT_BITS(object)->bit19);
             }
         }
     }

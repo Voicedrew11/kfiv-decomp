@@ -10,7 +10,7 @@ void Vector_Subtract(void *, void *, void *);
 float atan2f(float, float);
 float Angle_Wrap(float);
 float sqrtf(float);
-int func_001B4F30(u16, void *, void *, void *, void *);
+int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 extern void *D_00414188[];
 extern u32 D_0038CC74[];
 extern PlayerState player_state;
@@ -158,7 +158,7 @@ void func_00121968(MapObject *object) {
     shot->unk00 = 1;
     shot->unk22 = 0;
     // match: the id is passed as 16 bits
-    ((void (*)(u16, void *, void *, void *, void *))func_001B4F30)(MAP_OBJECT_WORDS(object)->unk44, shot, point, &aim, object);
+    ((void (*)(u16, void *, void *, void *, void *))Attack_LaunchMagicEffect)(MAP_OBJECT_WORDS(object)->unk44, shot, point, &aim, object);
 }
 
 /* Sets or clears bit 17 of a map object. */

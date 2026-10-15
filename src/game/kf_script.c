@@ -19,8 +19,8 @@
 void *memset(void *, int, u32);
 void Sound_SetBgmVolume(int level);
 void Sound_SetBankVolumes(int level);
-void func_001BB5C0(void);
-int func_00103548(int map, int entry);
+void Player_Kill(void);
+int Game_GetSpawnDeathCount(int map, int entry);
 void Game_MoveRecollectionPage(u32 source_page, u32 dest_page);
 void Game_MarkMessageHeard(int flag);
 
@@ -1172,10 +1172,10 @@ void ScriptCmd_SetBgmVolume(ScriptValueCommand *command) {
     command->active = 0;
 }
 
-/* Command 37: sets the player's HP to 0 (func_001BB5C0; not while PlayerState.unk1A8 is set), then
+/* Command 37: sets the player's HP to 0 (Player_Kill; not while PlayerState.unk1A8 is set), then
    finishes. */
 void ScriptCmd_KillPlayer(ScriptThreadCommand *command) {
-    func_001BB5C0();
+    Player_Kill();
     command->active = 0;
 }
 
@@ -1192,7 +1192,7 @@ void ScriptCmd_ShowSplashTimed(ScriptSplashCommand *command) {
 }
 
 /* Command 42: hands the script, through `first`, the 4-bit counter its map keeps for the entity
-   `target_id` (func_00103548), -1 when there is no such entity, then finishes. */
+   `target_id` (Game_GetSpawnDeathCount), -1 when there is no such entity, then finishes. */
 void ScriptCmd_GetEntityCounter(ScriptCallCommand *command) {
     Entity *entity;
     int map_slot;
@@ -1201,7 +1201,7 @@ void ScriptCmd_GetEntityCounter(ScriptCallCommand *command) {
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
         map_slot = entity->group_id;
-        entry_index = func_00103548(
+        entry_index = Game_GetSpawnDeathCount(
             map_slots[map_slot].tag,
             (s32)(((u32)((char *)entity - (char *)entity_pool[map_slot])) / sizeof(Entity))); // match: divu
         Script_StoreResult(&command->first, entry_index);

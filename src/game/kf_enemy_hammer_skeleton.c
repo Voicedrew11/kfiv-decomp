@@ -24,7 +24,7 @@ extern EntitySpawnInfo *D_004467D0[2];
 extern MapSlot map_slots[];
 extern int D_00446770;
 int Motion_Start(void *, int, int, u32, int);
-void func_001035A8(u32, int);
+void Game_CountSpawnDeath(u32, int);
 int Script_Start(int, int);
 
 static void HammerSkeleton_Think(Entity *entity, s32 unknown);
@@ -92,7 +92,7 @@ static void HammerSkeleton_Think(Entity *entity, s32 unknown) {
 /* A death action (busy bit 0x40) that HammerSkeleton_Think starts; the death slot holds
    EntityAi_Death. Animation 16, the fade over 20 frames and the removal, as EntityAi_Death with
    other flag settings; it frees the entity's effects at the start, and when the motion has ended
-   calls func_001035A8 and starts script EntitySpawnInfo.unk36 where that one calls EntityEvent_OnDeath.
+   calls Game_CountSpawnDeath and starts script EntitySpawnInfo.unk36 where that one calls EntityEvent_OnDeath.
    */
 static void HammerSkeleton_Death(Entity *entity) {
     entity->unkC6 = 0x40;
@@ -116,7 +116,7 @@ static void HammerSkeleton_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             entity->unkA0 = 20;
-            func_001035A8(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+            Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
             if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
                 Script_Start(entity->spawn_info->unk36, 0);
             }

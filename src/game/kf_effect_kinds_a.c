@@ -31,9 +31,9 @@ int func_001B00A0(float radius, void *point);
 float func_001B0178(void *from, void *target);
 float func_001B01B0(float *origin, float *target);
 s16 func_001B0208(float radius, void *effect, void *motion, void *hit_point);
-f32 func_001B0950(f32 fparg0);
-float func_001B0970(void *left, void *right);
-int func_001B4F90(void *effect_actor);
+f32 Debug_AbsFloat(f32 fparg0);
+float Debug_DotProduct3(void *left, void *right);
+int Attack_RunEffectHitCheck(void *effect_actor);
 int func_001C0E40(f32 reach, void *point_arg);
 void func_001C1430(f32 scale, void *position_arg, void *direction);
 
@@ -338,7 +338,7 @@ void EffectTrailHoming_Update(EffectActor *actor) {
                 motion->unk20 = (((rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 200.0f;
             }
             delta.y -= ((Entity *)actor->unk6C)->height;
-            if (func_001B0970(&delta, motion) < 0.0f) {
+            if (Debug_DotProduct3(&delta, motion) < 0.0f) {
                 delta.x += motion->unk1C;
                 delta.y -= 50.0f;
                 delta.z += motion->unk20;
@@ -356,7 +356,7 @@ void EffectTrailHoming_Update(EffectActor *actor) {
     }
     motion->unk14--;
     COLLISION_RESULT->unk18 = 6;
-    hit = func_001B4F90(actor);
+    hit = Attack_RunEffectHitCheck(actor);
     if (hit != 0) {
         if (hit & 2) {
             if (motion->unk14 < 0) {
@@ -423,7 +423,7 @@ void EffectAimedHoming_Update(EffectActor *actor) {
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
         sceVu0AddVector(&actor->model->position, &actor->model->position, &motion->velocity);
     }
-    hit = func_001B4F90(actor);
+    hit = Attack_RunEffectHitCheck(actor);
     if (hit != 0) {
         Effect_FreeSpawnersOf(actor);
         if (hit & 2) {
@@ -469,7 +469,7 @@ void EffectShot_Update(EffectActor *effect) {
     if (effect->frame < effect->def->max_frames || effect->def->max_frames == 0) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     }
-    if (func_001B4F90(effect) != 0 || motion->end_frame == effect->frame) {
+    if (Attack_RunEffectHitCheck(effect) != 0 || motion->end_frame == effect->frame) {
         model = effect->model;
         Effect_Spawn(effect->def->end_effect, &model->position, &model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         Effect_Free(effect);
@@ -511,7 +511,7 @@ void EffectLob_Update(EffectActor *effect) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, motion);
         EffectAngle_FromVector(&effect->model->rotation.x, &motion->velocity.x);
     }
-    if (func_001B4F90(effect)) {
+    if (Attack_RunEffectHitCheck(effect)) {
         spawn_id = COLLISION_RESULT->unk18 == 5 ? 0x16 : effect->def->end_effect;
         Effect_Spawn(spawn_id, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         Effect_Spawn(0x122, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
@@ -636,7 +636,7 @@ void EffectFall_Update(EffectActor *effect) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, motion);
         EffectAngle_FromVector(&effect->model->rotation.x, &motion->velocity.x);
     }
-    hit = func_001B4F90(effect);
+    hit = Attack_RunEffectHitCheck(effect);
     if (hit & 8) {
         if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
             if (COLLISION_RESULT->unk18 == 5) {
@@ -708,7 +708,7 @@ void EffectChase_Update(EffectActor *actor) {
     if (actor->unk6C != 0) {
         if (((u32)(((Entity *)actor->unk6C)->flags >> 2) & 3) < 2) {
             Vector_Subtract(delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
-            if (func_001B0970(delta, motion) > 0.0f) {
+            if (Debug_DotProduct3(delta, motion) > 0.0f) {
                 motion->turn += actor->def->unkE0;
                 delta[1] -= ((Entity *)actor->unk6C)->height * 0.5f;
             } else {
@@ -813,7 +813,7 @@ void EffectGroundRun_Update(EffectActor *effect) {
         }
         if (effect->frame >= effect->def->radius_half && effect->frame <= effect->def->interval) {
             effect->model->position.y -= motion->hit_offset;
-            if (func_001B4F90(effect) & 0x14) {
+            if (Attack_RunEffectHitCheck(effect) & 0x14) {
                 if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
                     Effect_Spawn(effect->def->unkF0, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                     Effect_Spawn(0x123, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
@@ -891,7 +891,7 @@ void EffectFloorSkim_Update(EffectActor *effect) {
         Effect_Free(effect);
     } else {
         motion->unk22 -= 1;
-        hits = func_001B4F90(effect);
+        hits = Attack_RunEffectHitCheck(effect);
         if (hits != 0) {
             if ((hits & 2) && effect->def->unkF2 != 0) {
                 Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
@@ -1009,7 +1009,7 @@ void EffectGroundSway_Update(EffectActor *effect) {
         }
     }
     effect->model->position.y -= 110.0f;
-    hits = func_001B4F90(effect);
+    hits = Attack_RunEffectHitCheck(effect);
     effect->model->position.y += 110.0f;
     if (hits & 0x14) {
         Effect_Free(effect);
@@ -1103,7 +1103,7 @@ void EffectGroundTrail_Update(EffectActor *effect) {
         }
     }
     effect->model->position.y -= 110.0f;
-    hits = func_001B4F90(effect);
+    hits = Attack_RunEffectHitCheck(effect);
     effect->model->position.y += 110.0f;
     if (hits & 0x14) {
         Effect_Free(effect);
@@ -1184,7 +1184,7 @@ void EffectArc_Update(EffectActor *actor) {
     if (actor->frame < 0x14) {
         if (motion->unk10 != 0) {
             Effect_Free(actor);
-        } else if (func_001B4F90(actor) != 0) {
+        } else if (Attack_RunEffectHitCheck(actor) != 0) {
             if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
                 end_effect = actor->def->unkF0;
                 Effect_Spawn(0x122, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
@@ -2098,7 +2098,7 @@ void EffectAimedChase_Update(EffectActor *actor) {
     if (actor->unk6C != 0) {
         if (ENTITY_FLAG_BITS((Entity *)actor->unk6C)->bits2 == 0) {
             Vector_Subtract(delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
-            if (func_001B0970(delta, motion) > 0.0f) {
+            if (Debug_DotProduct3(delta, motion) > 0.0f) {
                 motion->turn += actor->def->unkE0;
                 delta[1] -= ((Entity *)actor->unk6C)->height * 0.5f;
             }
@@ -2174,7 +2174,7 @@ static void EffectSweep_AimAt(EffectActor *actor, Vector4 *target) {
     Vector_Subtract(&offset, target, &actor->model->position);
     EffectAngle_FromVector(&actor->model->rotation.x, &offset.x);
     distance = func_001B0178(target, &actor->model->position);
-    motion->unk24 = func_001B0950((distance - actor->def->radius_half) / 500.0f);
+    motion->unk24 = Debug_AbsFloat((distance - actor->def->radius_half) / 500.0f);
     Vector_Copy(&motion->unk10, target);
 }
 

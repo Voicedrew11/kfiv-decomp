@@ -18,7 +18,7 @@ extern float D_004325A0[];
 s32 EntityAim_AilPlayerInArc(void *target, f32 *point, f32 max_angle, f32 max_height, f32 max_distance, f32 heading);
 void *memset(void *, int, u32);
 void Vector_Copy(void *, void *);
-s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
+s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
     angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
@@ -29,7 +29,7 @@ static inline f32 wrap_angle(f32 angle) {
     }
     return angle;
 }
-int func_001B4F30(u16, void *, void *, void *, void *);
+int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 float sqrtf(float);
 float atan2f(float, float);
@@ -42,7 +42,7 @@ extern PlayerState player_state;
 #define SPAWN_FLAGS(spawn_info) ((EntitySpawnFlags *)&(spawn_info)->unk38)
 extern EntitySpawnInfo *D_004467D0[2];
 extern MapSlot map_slots[];
-int func_00103548(int, int);
+int Game_GetSpawnDeathCount(int, int);
 // match: reading EntityParams word 0 whole; a bit-field in byte 3 would be an lbu
 typedef union {
     u32 word;
@@ -212,7 +212,7 @@ s32 EntityAi_CheckMeleeHitAt(Entity *entity, EntityParamsUnk240 *unk240, s32 par
 }
 
 /* Builds the attack request of one part of a melee record (reach, height, angle, power) and runs it with
-   func_001B1470; returns its result. */
+   Attack_Run; returns its result. */
 s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index, f32 angle) {
     Unk1B1470Request request;
     Unk1B1470Extra extra;
@@ -240,11 +240,11 @@ s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index,
     extra.unk02 = 0;
     extra.unk20 = 0;
     extra.unk22 = 0;
-    return func_001B1470(&request, &extra);
+    return Attack_Run(&request, &extra);
 }
 
 /* Allocates a shot carrying EntityParams.unk238 and launches effect effect_id from origin along angles
-   (func_001B4F30) for the entity. */
+   (Attack_LaunchMagicEffect) for the entity. */
 int EntityAi_LaunchShot(Entity *entity, int effect_id, void *origin, void *angles) {
     EntityUnk1B1390 *shot;
 
@@ -252,7 +252,7 @@ int EntityAi_LaunchShot(Entity *entity, int effect_id, void *origin, void *angle
     shot->unk22 = shot->unk20 = 0;
     shot->unk00 = 1;
     shot->unk28 = entity->params->unk238;
-    return func_001B4F30((u16)effect_id, shot, origin, angles, entity);
+    return Attack_LaunchMagicEffect((u16)effect_id, shot, origin, angles, entity);
 }
 
 /* EntityShot_LaunchAimed with no target: launches the shots of a ranged record whose frame lies in (frame_from,
@@ -418,7 +418,7 @@ s32 EntityAi_ShouldRespawn(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit4 && (entity->spawn_info->unk38 & (0x8000L << 46))) {
         return FALSE;
     }
-    death_count = func_00103548(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+    death_count = Game_GetSpawnDeathCount(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
     if ((s8)SPAWN_FLAGS(entity->spawn_info)->bytes[5] != 0 && death_count >= (s8)SPAWN_FLAGS(entity->spawn_info)->bytes[5]) {
         return FALSE;
     }
