@@ -23,9 +23,9 @@ void func_001A6C98(EffectActor *effect) {
         Effect_Free(effect);
         return;
     }
-    func_001AEC48(effect);
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplyScale(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     if (motion->aimed == 0 && (s8)target_motion->flag14 != 0) {
         motion->aimed = 1;
         if (!func_001A6BF8(effect, &effect->target->model->position.x, motion) && !func_001A6BF8(effect, &effect->model->position.x, motion)) {
@@ -47,7 +47,7 @@ void func_001A6C98(EffectActor *effect) {
             motion->turn = 65535.0f;
         }
         if (effect->frame >= 13) {
-            func_001AFC88(&motion->velocity, &to_aim, effect->def->speed, motion->turn);
+            EffectSteer_Toward(&motion->velocity, &to_aim, effect->def->speed, motion->turn);
         }
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
         if (motion->aimed == 1) {

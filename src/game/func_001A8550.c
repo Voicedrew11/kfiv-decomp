@@ -3,7 +3,7 @@
 
 extern f32 D_00431AF0[16];
 
-void func_001AF5B0(void *, void *);
+void EffectAngle_FromVector(void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(void *, void *, void *);
@@ -18,14 +18,14 @@ void func_001A8550(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector4 angles;
 
     motion = &effect->motion;
-    func_001AF640(effect, spawn_slot);
+    EffectStart_PlaceModel(effect, spawn_slot);
     up_vector.y = 1.0f;
     up_vector.x = up_vector.z = up_vector.w = 0.0f;
-    func_001AF5B0(&angles, &effect->target->motion);
+    EffectAngle_FromVector(&angles, &effect->target->motion);
     sceVu0RotMatrixX(rotation_matrix, D_00431AF0, angles.x);
     sceVu0RotMatrixY(rotation_matrix, rotation_matrix, angles.y);
     sceVu0ApplyMatrix(&up_vector, rotation_matrix, &up_vector);
-    func_001AF5B0(&effect->model->rotation, &up_vector);
+    EffectAngle_FromVector(&effect->model->rotation, &up_vector);
     effect->model->rotation.z = effect->model->rotation.z + (effect->def->rotation_base[2] + ((float)(rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->rotation_spread[2]);
     Vector_Copy(motion, &effect->target->model->position);
     Vector_Copy(&motion->unk10, &effect->target->model->rotation);

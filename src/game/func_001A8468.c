@@ -3,8 +3,8 @@
 extern float D_00413F80[];
 
 void sceVu0AddVector(void *, void *, void *);
-void func_001AF298(void *, void *);
-void func_001AF5B0(void *, void *);
+void EffectHit_CheckAndEnd(void *, void *);
+void EffectAngle_FromVector(void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 
@@ -17,14 +17,14 @@ void func_001A8468(EffectActor *actor) {
     motion = (ScaledFallMotion *)&actor->motion;
     if (actor->frame >= actor->def->radius_half) {
         if (actor->frame == actor->def->radius_half) {
-            func_001AF538(actor->def->speed, &motion->velocity, &actor->model->rotation);
+            EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
         }
         sceVu0AddVector(&actor->model->position, &actor->model->position, &motion->velocity);
-        func_001AF298(actor, &motion->unk1C[8]);
+        EffectHit_CheckAndEnd(actor, &motion->unk1C[8]);
     } else {
         Vector_Subtract(&offset, D_00413F80, &actor->model->position);
         offset.y -= 200.0f;
-        func_001AF5B0(&actor->model->rotation, &offset);
+        EffectAngle_FromVector(&actor->model->rotation, &offset);
         Vector_Normalize(&motion->velocity, &offset);
     }
     actor->frame++;

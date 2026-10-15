@@ -9,10 +9,10 @@ s16 func_001B0208(float, void *, void *, void *);
 void func_001A8E48(EffectActor *actor, EffectSlot *spawn_slot) {
     CountedMotion *motion;
 
-    func_001AF928(actor, spawn_slot);
-    func_001AF640(actor, spawn_slot);
+    EffectStart_TurnModel(actor, spawn_slot);
+    EffectStart_PlaceModel(actor, spawn_slot);
     motion = (CountedMotion *)&actor->motion;
-    func_001AF538(actor->def->speed, &motion->velocity, &actor->model->rotation);
+    EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
     motion->count = func_001B0208(actor->def->radius_half, actor, motion, &motion->unk10);
     motion->flag = 0;
 }

@@ -9,10 +9,10 @@ void func_001A77D0(EffectActor *effect) {
     DriftMotion *motion;
     EffectDef *def;
 
-    func_001AEC48(effect);
+    EffectKeys_ApplyScale(effect);
     motion = (DriftMotion *)&effect->motion;
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     def = effect->def;
     if (effect->frame < def->max_frames || def->max_frames == 0) {
         motion->unk20 += def->scale_per_frame;

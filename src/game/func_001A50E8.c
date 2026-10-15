@@ -20,7 +20,7 @@ void func_001A50E8(EffectActor *actor) {
         if (target != NULL) {
             if (((int)(target->flags >> 2) & 3) == 0) { // match: the int cast gives retail's dsll/dsra32
                 Vector_Subtract(&offset, &target->model->position, &actor->model->position);
-                func_001AFC88(&motion->velocity, &offset, actor->def->speed, actor->def->unkDC);
+                EffectSteer_Toward(&motion->velocity, &offset, actor->def->speed, actor->def->unkDC);
             } else {
                 actor->unk6C = 0;
             }

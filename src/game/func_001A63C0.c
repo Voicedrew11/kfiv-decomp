@@ -11,9 +11,9 @@ void func_001A63C0(EffectActor *effect, EffectSlot *spawn_slot) {
     float point[3];
 
     motion = (ProbeFlatMotion *)&effect->motion;
-    func_001AF640(effect, spawn_slot);
-    func_001AF928(effect, spawn_slot);
-    func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
+    EffectStart_PlaceModel(effect, spawn_slot);
+    EffectStart_TurnModel(effect, spawn_slot);
+    EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     motion->radius = effect->def->unkDC;
     motion->unk14 = 0.0f;
     motion->on_ground = 0;

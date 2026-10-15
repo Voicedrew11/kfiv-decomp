@@ -1,7 +1,7 @@
 #include "common.h"
 #include "kf_effect.h"
 
-int func_001AFD08(void *, void *, void *);
+int EffectHit_FindAimedEntity(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 double sqrt(double);
 
@@ -12,11 +12,11 @@ void func_001A5598(EffectActor *actor, EffectSlot *spawn_slot) {
     double remaining;
 
     motion = (NearTargetMotion *)&actor->motion;
-    func_001AF928(actor, spawn_slot);
-    func_001AF640(actor, spawn_slot);
+    EffectStart_TurnModel(actor, spawn_slot);
+    EffectStart_PlaceModel(actor, spawn_slot);
     actor->model->position.y -= 220.0f;
-    func_001AF538(actor->def->speed, &motion->velocity, &actor->model->rotation);
-    actor->unk6C = func_001AFD08(actor, &actor->model->position, &actor->model->rotation);
+    EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
+    actor->unk6C = EffectHit_FindAimedEntity(actor, &actor->model->position, &actor->model->rotation);
     motion->near_target = 0;
     if (actor->unk6C != 0) {
         target = *(ModelInstance **)actor->unk6C;

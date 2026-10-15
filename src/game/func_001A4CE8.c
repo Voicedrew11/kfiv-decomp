@@ -8,10 +8,10 @@ void func_001A4CE8(EffectActor *effect) {
     ProjectileMotion *motion;
     ModelInstance *model;
 
-    func_001AEC48(effect);
+    EffectKeys_ApplyScale(effect);
     motion = (ProjectileMotion *)&effect->motion;
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     if (effect->frame < effect->def->max_frames || effect->def->max_frames == 0) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     }

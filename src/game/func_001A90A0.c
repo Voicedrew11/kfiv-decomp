@@ -4,7 +4,7 @@
 
 extern PlayerState D_00413F80;
 
-int func_001AFD08(EffectActor *effect, Vector4 *position, Vector4 *reference);
+int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *reference);
 void func_001A8FF0(EffectActor *actor, Vector4 *target);
 void Vector_Copy(void *, void *);
 void Vector_Add(void *, void *, void *);
@@ -25,12 +25,12 @@ void func_001A90A0(EffectActor *effect, EffectSlot *spawn_slot) {
     f32 distance;
 
     motion = (SweepMotion *)&effect->motion;
-    func_001AF928(effect, spawn_slot);
-    func_001AF640(effect, spawn_slot);
+    EffectStart_TurnModel(effect, spawn_slot);
+    EffectStart_PlaceModel(effect, spawn_slot);
     motion->arrived = 0;
     motion->on_ground = 0;
     motion->hit_spawned = 0;
-    effect->unk6C = func_001AFD08(effect, &D_00413F80.position, &D_00413F80.rotation);
+    effect->unk6C = EffectHit_FindAimedEntity(effect, &D_00413F80.position, &D_00413F80.rotation);
     motion->level_step = effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level;
     if (effect->unk6C != 0) {
         func_001A8FF0(effect, &((EffectTarget *)effect->unk6C)->model->position);

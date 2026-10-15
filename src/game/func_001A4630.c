@@ -1,7 +1,7 @@
 #include "common.h"
 #include "kf_effect.h"
 
-int func_001AFD08(EffectActor *effect, Vector4 *position, Vector4 *reference);
+int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *reference);
 
 /* EffectActor.flags bit 58, set when the effect starts */
 
@@ -15,11 +15,11 @@ typedef union {
 void func_001A4630(EffectActor *effect, EffectSlot *spawn_slot) {
     HomingMotion *motion = (HomingMotion *)&effect->motion;
 
-    func_001AF928(effect, spawn_slot);
-    func_001AF640(effect, spawn_slot);
+    EffectStart_TurnModel(effect, spawn_slot);
+    EffectStart_PlaceModel(effect, spawn_slot);
     effect->model->position.y -= 220.0f;
-    effect->unk6C = func_001AFD08(effect, &effect->model->position, &effect->model->rotation);
-    func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
+    effect->unk6C = EffectHit_FindAimedEntity(effect, &effect->model->position, &effect->model->rotation);
+    EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     motion->unk14 = 0;
     motion->unkDC = effect->def->unkDC;
     motion->unk18 = 0;

@@ -8,10 +8,10 @@ void func_001A6828(EffectActor *effect, EffectSlot *spawn_slot) {
     char stack_reserve[0x10]; /* match: retail reserves 0x10 bytes of stack here */
 
     motion = (SpawnMotion *)&effect->motion;
-    func_001AF640(effect, spawn_slot);
-    func_001AF928(effect, spawn_slot);
+    EffectStart_PlaceModel(effect, spawn_slot);
+    EffectStart_TurnModel(effect, spawn_slot);
     effect->model->rotation.x = 0.0f;
-    func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
+    EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     motion->velocity.y = effect->def->unkDC;
     if (effect->def->unkF2 != 0) {
         Effect_SpawnFromEffect(effect->def->unkF2, effect);

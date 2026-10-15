@@ -5,9 +5,9 @@ extern float D_00413F80[];
 extern f32 D_00431AF0[16];
 
 void Vector_Subtract(void *, void *, void *);
-int func_001AF358(void *, void *);
-void func_001AF5B0(void *, void *);
-int func_001AFD08(void *, void *, void *);
+int EffectHit_CheckAndEndByFlag(void *, void *);
+void EffectAngle_FromVector(void *, void *);
+int EffectHit_FindAimedEntity(void *, void *, void *);
 void Vector_Copy(void *, void *);
 void Vector_Add(void *, void *, void *);
 void sceVu0RotMatrixX(float *, float *, float);
@@ -30,14 +30,14 @@ void func_001A8218(EffectActor *effect) {
         if ((gone_bits & 3) == 0) {
             Vector_Subtract(&offset, &((EffectTarget *)effect->unk6C)->model->position, &effect->model->position);
             offset.y -= ((EffectTarget *)effect->unk6C)->height * 0.5f;
-            func_001AFC88(&motion->velocity, &offset, effect->def->speed, effect->def->unkDC);
+            EffectSteer_Toward(&motion->velocity, &offset, effect->def->speed, effect->def->unkDC);
         } else {
             effect->unk6C = 0;
         }
     }
     if (effect->frame >= effect->def->radius_half) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, motion);
-        hit = func_001AF358(effect, &motion->unk24);
+        hit = EffectHit_CheckAndEndByFlag(effect, &motion->unk24);
         if (hit == 1 && effect->def->interval != 0) {
             motion->timer = effect->def->unkF0;
         }
@@ -46,7 +46,7 @@ void func_001A8218(EffectActor *effect) {
         sceVu0RotMatrixY(rotation_matrix, rotation_matrix, D_00413F80[5]);
         sceVu0ApplyMatrix(&offset, rotation_matrix, &motion->unk10);
         Vector_Copy(&effect->model->rotation, &D_00413F80[4]);
-        func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
+        EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
         Vector_Add(&effect->model->position, D_00413F80, &offset);
         effect->model->position.y -= 220.0f;
     }
@@ -55,8 +55,8 @@ void func_001A8218(EffectActor *effect) {
         timer -= 1;
         motion->timer = timer;
         if (timer == 0) {
-            func_001AF5B0(&angles, motion);
-            effect->unk6C = func_001AFD08(effect, &effect->model->position, &angles);
+            EffectAngle_FromVector(&angles, motion);
+            effect->unk6C = EffectHit_FindAimedEntity(effect, &effect->model->position, &angles);
         }
     }
     effect->frame += 1;

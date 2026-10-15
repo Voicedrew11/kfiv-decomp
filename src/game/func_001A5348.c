@@ -5,7 +5,7 @@
 int func_001B4F90(void *);
 int func_001C0E40(f32, void *);
 void sceVu0AddVector(void *, void *, void *);
-void func_001AF5B0(void *, void *);
+void EffectAngle_FromVector(void *, void *);
 void Vector_Copy(void *, void *);
 
 /* Falls under gravity (no faster than 45 a frame) until its hit check reports something. On a
@@ -17,17 +17,17 @@ void func_001A5348(EffectActor *effect) {
     EffectMotion *motion;
     int hit;
 
-    func_001AEC48(effect);
+    EffectKeys_ApplyScale(effect);
     motion = &effect->motion;
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     if (effect->frame < effect->def->max_frames || effect->def->max_frames == 0) {
         motion->velocity.y += effect->def->gravity;
         if (motion->velocity.y > 45.0f) {
             motion->velocity.y = 45.0f;
         }
         sceVu0AddVector(&effect->model->position, &effect->model->position, motion);
-        func_001AF5B0(&effect->model->rotation, motion);
+        EffectAngle_FromVector(&effect->model->rotation, motion);
     }
     hit = func_001B4F90(effect);
     if (hit & 8) {

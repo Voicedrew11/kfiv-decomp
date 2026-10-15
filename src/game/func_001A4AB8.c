@@ -17,16 +17,16 @@ void func_001A4AB8(EffectActor *actor) {
     int hit;
     u16 end_effect;
 
-    func_001AEC48(actor);
+    EffectKeys_ApplyScale(actor);
     motion = (ScaledFallMotion *)&actor->motion;
-    func_001AED58(actor);
-    func_001AF0B0(actor);
+    EffectKeys_ApplySpin(actor);
+    EffectKeys_ApplyColour(actor);
     if (actor->unk6C != 0) {
         if (((u32)(((Entity *)actor->unk6C)->flags >> 2) & 3) == 0) {
             Vector_Subtract(&vec, &((Entity *)actor->unk6C)->model->position, &actor->model->position);
             motion->fall_speed += actor->def->unkE0;
             vec.y -= ((Entity *)actor->unk6C)->height * 0.5f;
-            func_001AFC88(&motion->velocity, &vec, actor->def->speed, motion->fall_speed);
+            EffectSteer_Toward(&motion->velocity, &vec, actor->def->speed, motion->fall_speed);
         } else {
             actor->unk6C = 0;
         }

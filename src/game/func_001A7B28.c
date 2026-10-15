@@ -2,7 +2,7 @@
 #include "kf_effect.h"
 
 
-Entity *func_001AFF78(EffectActor *effect, Vector4 *position);
+Entity *EffectHit_FindNearestEntity(EffectActor *effect, Vector4 *position, Vector4 *unused_rotation);
 void func_001A7AC8(EffectActor *effect);
 float func_001B0178(void *, void *);
 void Vector_Scale(void *, void *, float);
@@ -22,9 +22,9 @@ void func_001A7B28(EffectActor *effect) {
     if (motion->countdown != 0) {
         motion->countdown--;
     }
-    func_001AEC48(effect);
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplyScale(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     if (effect->frame < effect->def->max_frames || effect->def->max_frames == 0) {
         motion->velocity_scale += effect->def->scale_per_frame;
         Vector_Scale(&step, &motion->velocity, motion->velocity_scale);
@@ -40,7 +40,7 @@ void func_001A7B28(EffectActor *effect) {
     effect->model->position.y += motion->bob_speed;
     if (effect->frame == effect->def->max_frames && effect->def->interval != 0) {
         // match: retail passes the rotation as a third argument the function does not take
-        effect->unk6C = (int)((Entity *(*)(EffectActor *, Vector4 *, Vector4 *))func_001AFF78)(effect, &effect->model->position, &effect->model->rotation);
+        effect->unk6C = (int)EffectHit_FindNearestEntity(effect, &effect->model->position, &effect->model->rotation);
         motion->turn = 0.0f;
     }
     if (effect->unk6C != 0) {
@@ -52,7 +52,7 @@ void func_001A7B28(EffectActor *effect) {
             } else {
                 motion->turn += 0.1; /* the double is D_0043EF50 */
             }
-            func_001AFC88(&motion->velocity, &to_target, motion->turn, 100.0f);
+            EffectSteer_Toward(&motion->velocity, &to_target, motion->turn, 100.0f);
             sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
         } else {
             effect->unk6C = 0;
@@ -68,7 +68,7 @@ void func_001A7B28(EffectActor *effect) {
         Effect_Free(effect);
         return;
     }
-    if (effect->frame >= 3 && effect->frame < effect->def->keyframe_end - 3 && func_001AF4E0(effect) != 0) {
+    if (effect->frame >= 3 && effect->frame < effect->def->keyframe_end - 3 && EffectHit_Check(effect) != 0) {
         func_001A7AC8(effect);
     }
     if (motion->ended == 0) {

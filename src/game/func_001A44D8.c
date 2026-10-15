@@ -8,8 +8,8 @@ void func_001A44D8(EffectActor *effect, EffectSlot *spawn_slot) {
     SpawnerMotion *motion = (SpawnerMotion *)&effect->motion;
     EffectDef *def;
 
-    func_001AF928(effect, spawn_slot);
-    func_001AF640(effect, spawn_slot);
+    EffectStart_TurnModel(effect, spawn_slot);
+    EffectStart_PlaceModel(effect, spawn_slot);
     motion->spawn_count = 0;
     def = effect->def;
     motion->spawn_effect_id = def->radius_half;

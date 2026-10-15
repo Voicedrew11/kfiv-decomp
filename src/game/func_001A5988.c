@@ -4,7 +4,7 @@
 
 int func_001B4F90(void *);
 void func_001C1430(f32, void *, void *);
-void func_001AF298(void *, void *);
+void EffectHit_CheckAndEnd(void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 
 /* Runs along the ground: moves level, follows the ground up at once and down by falling, and
@@ -18,9 +18,9 @@ void func_001A5988(EffectActor *effect) {
         Effect_Free(effect);
         return;
     }
-    func_001AEC48(effect);
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplyScale(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     if (effect->def->unkF2 == 0) {
         if (effect->frame < effect->def->max_frames || effect->def->max_frames == 0) {
             motion->velocity.w = 0;
@@ -61,7 +61,7 @@ void func_001A5988(EffectActor *effect) {
             effect->model->position.y += motion->hit_offset;
         }
     } else {
-        func_001AF298(effect, &motion->ended);
+        EffectHit_CheckAndEnd(effect, &motion->ended);
     }
     effect->frame += 1;
 }

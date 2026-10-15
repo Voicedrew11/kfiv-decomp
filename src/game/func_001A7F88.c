@@ -1,7 +1,7 @@
 #include "common.h"
 #include "kf_effect.h"
 
-void func_001AF298(void *, void *);
+void EffectHit_CheckAndEnd(void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 void Vector_Scale(void *, void *, float);
 
@@ -17,9 +17,9 @@ void func_001A7F88(EffectActor *effect) {
         Effect_Free(effect);
         return;
     }
-    func_001AEC48(effect);
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplyScale(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     def = effect->def;
     max_frames = def->max_frames;
     if (effect->frame < max_frames || max_frames == 0) {
@@ -36,7 +36,7 @@ void func_001A7F88(EffectActor *effect) {
     }
     effect->model->position.y += motion->bob_speed;
     if (effect->frame >= 3 && effect->frame < 48) {
-        func_001AF298(effect, &motion->ended);
+        EffectHit_CheckAndEnd(effect, &motion->ended);
         if (motion->ended != 0) {
             Effect_Spawn(0xDF, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         }

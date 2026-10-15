@@ -3,8 +3,8 @@
 #include "kf_entity.h"
 
 int rand(void);
-void func_001AF5B0(void *, void *);
-Entity *func_001AFF78(EffectActor *, void *, void *);
+void EffectAngle_FromVector(void *, void *);
+Entity *EffectHit_FindNearestEntity(EffectActor *, void *, void *);
 float func_001B0970(void *, void *);
 int func_001B4F90(void *);
 void sceVu0AddVector(void *, void *, void *);
@@ -18,10 +18,10 @@ void func_001A46F0(EffectActor *actor) {
     int mode;
     u16 effect_id;
 
-    func_001AEC48(actor);
+    EffectKeys_ApplyScale(actor);
     motion = (HomingMotion *)&actor->motion;
-    func_001AED58(actor);
-    func_001AF0B0(actor);
+    EffectKeys_ApplySpin(actor);
+    EffectKeys_ApplyColour(actor);
     if (motion->unk24 != 0) {
         Effect_Free(actor);
         return;
@@ -43,10 +43,10 @@ void func_001A46F0(EffectActor *actor) {
                 delta.z += motion->unk20;
             }
         }
-        func_001AFC88(&motion->velocity, &delta, actor->def->speed, motion->unkDC);
-        func_001AF5B0(&actor->model->rotation, motion);
+        EffectSteer_Toward(&motion->velocity, &delta, actor->def->speed, motion->unkDC);
+        EffectAngle_FromVector(&actor->model->rotation, motion);
         if (ENTITY_FLAG_BITS((Entity *)actor->unk6C)->bits2 > 0) {
-            actor->unk6C = (int)func_001AFF78(actor, &actor->model->position, &actor->model->rotation);
+            actor->unk6C = (int)EffectHit_FindNearestEntity(actor, &actor->model->position, &actor->model->rotation);
         }
     }
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {

@@ -12,9 +12,9 @@ void func_001A72F0(EffectActor *effect) {
         Effect_Free(effect);
         return;
     }
-    func_001AEC48(effect);
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplyScale(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     model = effect->model;
     def = effect->def;
     model->unkE8 *= motion->scale_per_mille / 1000.0f;

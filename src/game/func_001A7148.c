@@ -17,8 +17,8 @@ void func_001A7148(EffectActor *actor, EffectSlot *spawn_slot) {
     Entity *chosen;
     f32 offset[4];
 
-    func_001AF928(actor, spawn_slot);
-    func_001AF640(actor, spawn_slot);
+    EffectStart_TurnModel(actor, spawn_slot);
+    EffectStart_PlaceModel(actor, spawn_slot);
     motion->ended = 0;
     motion->scale_per_mille = 0;
     chosen = picked->entity[EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level - 1];

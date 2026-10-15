@@ -6,8 +6,8 @@ int rand(void);
 void func_001A80E8(EffectActor *actor, EffectSlot *spawn_slot) {
     EndAtFrameMotion *motion;
 
-    func_001AF928(actor, spawn_slot);
-    func_001AF640(actor, spawn_slot);
+    EffectStart_TurnModel(actor, spawn_slot);
+    EffectStart_PlaceModel(actor, spawn_slot);
     motion = (EndAtFrameMotion *)&actor->motion;
     motion->end_position.x = actor->def->offset_base[0] + ((rand() & 0xFFFF) * (1.0f / 32768) - 1.0f) * actor->def->offset_spread[0];
     motion->end_position.y = actor->def->offset_base[1] + ((rand() & 0xFFFF) * (1.0f / 32768) - 1.0f) * actor->def->offset_spread[1];

@@ -3,7 +3,7 @@
 
 extern char D_00413F80[];
 
-void func_001AF298(void *, void *);
+void EffectHit_CheckAndEnd(void *, void *);
 int func_001B4F90(void *);
 void sceVu0AddVector(void *, void *, void *);
 void Vector_Scale(void *, void *, float);
@@ -28,9 +28,9 @@ void func_001A6118(EffectActor *effect) {
         Effect_Free(effect);
         return;
     }
-    func_001AEC48(effect);
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplyScale(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     motion->velocity.y = -(motion->unk10 * 0.5f);
     motion->velocity.w = 0.0f;
     offset.y = 0.0f;

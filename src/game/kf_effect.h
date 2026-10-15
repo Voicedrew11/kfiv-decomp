@@ -11,8 +11,8 @@
 #define EFFECT_DEF_COUNT 0x400      /* entries of the definition table param/sfx.prm */
 
 /* the effect's definition, EffectActor.def: one 0x120-byte entry of the table at D_00502260.
-   Three channels are keyframed over the effect's life: keys_a (func_001AEC48), keys_b
-   (func_001AED58) and the colour (func_001AF0B0), each at frames 0, two own keyframes and
+   Three channels are keyframed over the effect's life: keys_a (EffectKeys_ApplyScale), keys_b
+   (EffectKeys_ApplySpin) and the colour (EffectKeys_ApplyColour), each at frames 0, two own keyframes and
    keyframe_end. Most kinds read the fields from rotation_base on their own way. */
 typedef struct {
     Vector4 keys_a[4];              /* 0x00 */
@@ -68,7 +68,7 @@ typedef struct {
 /* the 64-bit flag word at EffectDef+0x108, whose low 16 bits are max_frames */
 #define EFFECT_DEF_FLAGS(def) (*(s64 *)&(def)->max_frames)
 
-/* the same word read through a union, which keeps the read behind any earlier store (func_001AF640) */
+/* the same word read through a union, which keeps the read behind any earlier store (EffectStart_PlaceModel) */
 #define EFFECT_DEF_FLAG_WORD(def) (((EntityFlagWord *)&(def)->max_frames)->word)
 
 /* EffectActor+0x10, which the update functions keep a pointer to. Each kind of
@@ -87,7 +87,7 @@ typedef struct {
     char pad12[0x1E];
 } ProjectileMotion;
 
-/* EffectMotion as func_001A96B0 uses it: falls under gravity */
+/* EffectMotion as EffectLob_Update uses it: falls under gravity */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     int mode;                       /* 0x10 3 or 5: spawn effect 0x15 on landing */
@@ -96,7 +96,7 @@ typedef struct {
     char unk17[0x19];               /* 0x17 passed by address */
 } FallingMotion;
 
-/* EffectMotion as func_001A98D0 uses it: checks for hits every interval frames */
+/* EffectMotion as EffectGroundFan_Update uses it: checks for hits every interval frames */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x04];
@@ -124,7 +124,7 @@ typedef struct {
     char pad27[0x09];
 } TurningMotion;
 
-/* EffectMotion as func_001AA230 uses it: the definition's collision radius and
+/* EffectMotion as EffectHitWindow_Start uses it: the definition's collision radius and
    interval copied over the start of the velocity */
 typedef struct {
     u16 radius_half;                /* 0x00 */
@@ -132,14 +132,14 @@ typedef struct {
     char pad04[0x2C];
 } PulseMotion;
 
-/* EffectMotion as func_001ACE80 (stays attached to another model) uses it */
+/* EffectMotion as EffectLaunchFromOwner_Update (stays attached to another model) uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     ModelInstance **anchor;         /* 0x10 the model it is attached to */
     char unk14[0x1C];               /* 0x14 passed by address */
 } AttachedMotion;
 
-/* EffectMotion as func_001A40E8 and func_001AD278 use it: follows EffectActor.target */
+/* EffectMotion as func_001A40E8 and EffectHomeOnEntity_Start use it: follows EffectActor.target */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 speed;                      /* 0x10 the target's velocity.x */
@@ -151,7 +151,7 @@ typedef struct {
     char pad21[0x0F];
 } FollowerMotion;
 
-/* EffectMotion as func_001ABBE0 uses it */
+/* EffectMotion as EffectDelayedShot_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x0C];
@@ -167,7 +167,7 @@ typedef struct {
     char pad28[0x08];
 } CooldownMotion;
 
-/* EffectMotion as func_001A3E30 and func_001AA040 use it */
+/* EffectMotion as func_001A3E30 and EffectHandover_Update use it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     int unk10;                      /* 0x10 */
@@ -312,7 +312,7 @@ typedef struct {
     u8 flag18;                      /* 0x18 */
 } SpeedMotion;
 
-/* EffectMotion as func_001A6828 and func_001ACA28 use it */
+/* EffectMotion as func_001A6828 and EffectChain_Start use it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     u8 unk10;                       /* 0x10 */
@@ -433,7 +433,7 @@ typedef struct {
     s16 unk24;                      /* 0x24 */
 } ScaledMotion;
 
-/* EffectMotion as func_001A9790 uses it: a heading in velocity.y, the frame counter and phase */
+/* EffectMotion as EffectGroundFan_Start uses it: a heading in velocity.y, the frame counter and phase */
 typedef struct {
     Vector4 velocity;               /* 0x00 velocity.y is the heading */
     int frame_stamp;                /* 0x10 the global spawn_slot counter when it started */
@@ -441,19 +441,19 @@ typedef struct {
     u8 unk18;                       /* 0x18 */
 } PhaseMotion;
 
-/* EffectMotion as func_001A9A28 uses it: an int step count */
+/* EffectMotion as EffectLevelHeight_Update uses it: an int step count */
 typedef struct {
     int progress;                   /* 0x00 */
 } ProgressMotion;
 
-/* EffectMotion as func_001A9F98 uses it: the start frame and the flag set after it */
+/* EffectMotion as EffectHandover_StartNext uses it: the start frame and the flag set after it */
 typedef struct {
     char pad00[0x25];
     u8 unk25;                       /* 0x25 set to 1 once started */
     u8 unk26;                       /* 0x26 the start frame */
 } StartFrameMotion;
 
-/* EffectMotion as func_001AA590 uses it */
+/* EffectMotion as EffectBolt_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char unk10[0x10];               /* 0x10 */
@@ -462,14 +462,14 @@ typedef struct {
     s8 spent;                       /* 0x24 */
 } OneShotSpawnMotion;
 
-/* EffectMotion as func_001AABA0 and func_001AAD40 use it: velocity, spin and acceleration */
+/* EffectMotion as EffectSpray_Start and EffectSpray_Update use it: velocity, spin and acceleration */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     Vector4 spin;                   /* 0x10 */
     Vector4 accel;                  /* 0x20 */
 } SprayMotion;
 
-/* EffectMotion as func_001AAEA0 uses it: a launch velocity, then the radius and flags */
+/* EffectMotion as EffectLateFall_Start uses it: a launch velocity, then the radius and flags */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     int unk10;                      /* 0x10 */
@@ -479,7 +479,7 @@ typedef struct {
     char pad1D[0x03];
 } RadiusMotion;
 
-/* EffectMotion as func_001AAF58 uses it */
+/* EffectMotion as EffectLateFall_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x08];
@@ -487,21 +487,21 @@ typedef struct {
     char unk1C[0x0C];               /* 0x1C passed by address */
 } DelayedFallMotion;
 
-/* EffectMotion as func_001AB018, func_001AB470 and func_001ADF40 use it: a heading velocity and a flag byte */
+/* EffectMotion as EffectFallToFloor_Start, EffectHomeOnPlayer_Start and EffectRepeater_Start use it: a heading velocity and a flag byte */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     u8 unk10;                       /* 0x10 cleared on spawn */
     char pad11[0x0F];
 } HeadingMotion;
 
-/* EffectMotion as func_001AB080 uses it */
+/* EffectMotion as EffectFallToFloor_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char ending;                    /* 0x10 set once the end effect is spawned */
     char pad11[0x0F];
 } EndingMotion;
 
-/* EffectMotion as func_001AB188 uses it: a velocity and a countdown to the next target check */
+/* EffectMotion as EffectFloorChase_Start uses it: a velocity and a countdown to the next target check */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     u8 countdown;                   /* 0x10 */
@@ -509,7 +509,7 @@ typedef struct {
     char pad12[0x0E];
 } FollowCountMotion;
 
-/* EffectMotion as func_001AB2C0 uses it: a bobbing velocity and the ending flag */
+/* EffectMotion as EffectFloorChase_Update uses it: a bobbing velocity and the ending flag */
 typedef struct {
     Vector4 velocity;               /* 0x00 (w is cleared each frame) */
     char pad10;
@@ -517,13 +517,13 @@ typedef struct {
     char pad12[0x0E];
 } BobbingMotion;
 
-/* EffectMotion as func_001AB940 uses it: the spawn count, compared with the frame */
+/* EffectMotion as EffectFloorDelay_Update uses it: the spawn count, compared with the frame */
 typedef struct {
     int spawn_count;                /* 0x00 (EffectActor+0x10) */
     char pad04[0x1C];
 } SpawnCountMotion;
 
-/* EffectMotion as func_001AB9C0 uses it */
+/* EffectMotion as EffectFan_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     int start_frame;                /* 0x10 */
@@ -532,7 +532,7 @@ typedef struct {
     char pad19[0x07];
 } SpinBurstMotion;
 
-/* EffectMotion as func_001ABCF8 uses it */
+/* EffectMotion as EffectLevelFan_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 scale;                      /* 0x10 */
@@ -540,14 +540,14 @@ typedef struct {
     char pad15[0x1B];
 } LevelMotion;
 
-/* EffectMotion as func_001ABE20 uses it */
+/* EffectMotion as EffectLevelFan_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 scale;                      /* 0x10 */
     char unk14[0x1C];               /* 0x14 passed by address */
 } GrowingMotion;
 
-/* EffectMotion as func_001ABEF8 and func_001ABFD0 use it: a float at 0x20 holding the distance to the target */
+/* EffectMotion as EffectBeam_Start and EffectBeam_StartAtPlayer use it: a float at 0x20 holding the distance to the target */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     Vector4 unk10;                  /* 0x10 */
@@ -555,34 +555,34 @@ typedef struct {
     char pad24[0x0C];
 } TargetDistanceMotion;
 
-/* EffectMotion as func_001AC198 uses it */
+/* EffectMotion as EffectBeamStretch_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x10];
     f32 unk20;                      /* 0x20 */
 } LinkedMotion;
 
-/* EffectMotion as func_001AC270 and func_001AE570 use it */
+/* EffectMotion as EffectWobble_Start and EffectJitterWobble_Start use it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     int unk10;                      /* 0x10 */
 } ResetMotion;
 
-/* EffectMotion as func_001AC2C0 uses it */
+/* EffectMotion as EffectWobble_Update uses it */
 typedef struct {
     char pad00[0xE0];
     f32 drift_x;
     f32 drift_y;
 } DriftModel;
 
-/* EffectMotion as func_001AC2C0 uses it */
+/* EffectMotion as EffectWobble_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 heading;                    /* 0x10 */
     char pad14[0x1C];
 } HeadingAngleMotion;
 
-/* EffectMotion as func_001AC8E8 uses it */
+/* EffectMotion as EffectSurroundPlayer_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x10];
@@ -591,27 +591,27 @@ typedef struct {
     char unk24[0x0C];               /* 0x24 passed by address */
 } PlayerChaseMotion;
 
-/* EffectMotion as func_001ACCA0 uses it */
+/* EffectMotion as EffectChain_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 scale_per_mille;            /* 0x10 */
     char pad14[0x0C];
 } ScaleRateMotion;
 
-/* EffectMotion as func_001ACE08 uses it: the spawn argument is kept after the velocity */
+/* EffectMotion as EffectLaunchFromOwner_Start uses it: the spawn argument is kept after the velocity */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     Entity *owner_entity;           /* 0x10 a copy of EffectActor.owner_entity */
     u8 unk14;                       /* 0x14 cleared on spawn */
 } SavedArgMotion;
 
-/* EffectMotion as func_001ACF70 uses it */
+/* EffectMotion as EffectBowDraw_Start uses it */
 typedef struct {
     char pad00[4];
     u8 state;                       /* 0x04 */
 } StateFlagMotion;
 
-/* EffectMotion as func_001AD130 uses it */
+/* EffectMotion as EffectInheritSpeed_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 speed;                      /* 0x10 the target's velocity.x */
@@ -621,14 +621,14 @@ typedef struct {
     char pad1D[0x03];
 } TargetFollowerMotion;
 
-/* EffectMotion as func_001AD1B8 uses it: falls after radius_half frames */
+/* EffectMotion as EffectInheritSpeed_Update uses it: falls after radius_half frames */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x0C];
     char unk1C[0x14];               /* 0x1C passed by address */
 } FallingLateMotion;
 
-/* EffectMotion as func_001AD4B8 uses it: turns toward a point */
+/* EffectMotion as EffectImpactShot_Start uses it: turns toward a point */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char unk10[0x10];               /* 0x10 passed by address */
@@ -637,7 +637,7 @@ typedef struct {
     char pad25[0x0B];
 } TurnMotion;
 
-/* EffectMotion as func_001AD558 uses it: ends in another effect at end_frame */
+/* EffectMotion as EffectImpactShot_Update uses it: ends in another effect at end_frame */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     Vector4 unk10;                  /* 0x10 */
@@ -646,7 +646,7 @@ typedef struct {
     char pad25[0x0B];
 } EndFrameMotion;
 
-/* EffectMotion as func_001AD7F8 uses it: a spiral */
+/* EffectMotion as EffectSpiral_Start uses it: a spiral */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 start_angle;                /* 0x10 model heading plus EffectDef.unkE0 */
@@ -658,7 +658,7 @@ typedef struct {
     char pad22[0x0E];
 } SpiralMotion;
 
-/* EffectMotion as func_001AB670 and func_001AD8E8 use it: spins and sways */
+/* EffectMotion as EffectTiltFall_Update and EffectSpiral_Update use it: spins and sways */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 angle;                      /* 0x10 */
@@ -670,7 +670,7 @@ typedef struct {
     char pad22[0x0E];
 } SwingMotion;
 
-/* EffectMotion as func_001ADDD0 uses it: falls under gravity, spawns an effect on landing */
+/* EffectMotion as EffectDrop_Update uses it: falls under gravity, spawns an effect on landing */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 vertical_speed;             /* 0x10 added to the model's height each frame */
@@ -679,14 +679,14 @@ typedef struct {
     char pad17[0x09];
 } GravityMotion;
 
-/* EffectMotion as func_001ADFC0 uses it: spawns an effect every reload frames */
+/* EffectMotion as EffectRepeater_Update uses it: spawns an effect every reload frames */
 typedef struct {
     int countdown;                  /* 0x00 frames until the next spawn */
     u16 reload_frames;              /* 0x04 */
     char pad06[0x1A];
 } RepeaterMotion;
 
-/* EffectMotion as func_001AB5C8 and func_001AE060 use it */
+/* EffectMotion as EffectTiltFall_Start and EffectCorkscrew_Start use it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char unk10[0x10];               /* 0x10 passed by address */
@@ -694,7 +694,7 @@ typedef struct {
     f32 unk24;                      /* 0x24 */
 } SpreadMotion;
 
-/* EffectMotion as func_001AE118 uses it */
+/* EffectMotion as EffectCorkscrew_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char unk10[0x10];               /* 0x10 passed by address */
@@ -702,7 +702,7 @@ typedef struct {
     f32 unk24;                      /* 0x24 spin speed */
 } SpinAngleMotion;
 
-/* EffectMotion as func_001AE5C0 uses it */
+/* EffectMotion as EffectJitterWobble_Update uses it */
 typedef struct {
     char pad00[0xE4];
     f32 unkE4;                      /* 0xE4 */
@@ -714,7 +714,7 @@ typedef struct {
     f32 spin_angle;                 /* 0x10 */
 } TiltMotion;
 
-/* EffectMotion as func_001AE730 uses it */
+/* EffectMotion as EffectJitterOrbit_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char unk10[0x10];               /* 0x10 passed by address */
@@ -722,7 +722,7 @@ typedef struct {
     f32 unk24;                      /* 0x24 */
 } StartMotion;
 
-/* EffectMotion as func_001AE7B0 uses it */
+/* EffectMotion as EffectJitterOrbit_Update uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char unk10[0x10];               /* 0x10 passed by address */
@@ -730,13 +730,13 @@ typedef struct {
     f32 pitch;                      /* 0x24 */
 } YawPitchMotion;
 
-/* EffectMotion as func_001AEAB0 uses it: loops until a game flag is set */
+/* EffectMotion as EffectLoopUntilFlag_Update uses it: loops until a game flag is set */
 typedef struct {
     int stopped;                    /* 0x00 set once D_0034AFD6 is 3 */
     char pad04[0x1C];
 } LoopMotion;
 
-/* EffectMotion as func_001AA590 uses it: spawns effect_id at end_frame or on a hit */
+/* EffectMotion as EffectBolt_Update uses it: spawns effect_id at end_frame or on a hit */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x10];
@@ -746,7 +746,7 @@ typedef struct {
     char pad25[0x0B];
 } DelayedMotion;
 
-/* EffectMotion as func_001AE060 and func_001AE730 set it up: an end position and two floats */
+/* EffectMotion as EffectCorkscrew_Start and EffectJitterOrbit_Start set it up: an end position and two floats */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     Vector4 end_position;           /* 0x10 */
@@ -755,26 +755,26 @@ typedef struct {
     char pad28[0x08];
 } DriftMotion;
 
-/* EffectMotion as func_001AA940 uses it: the distances the effect fades in over */
+/* EffectMotion as EffectBoneFade_Update uses it: the distances the effect fades in over */
 typedef struct {
     f32 range[2];                   /* 0x00 fade-in distance, full-size distance */
     char pad08[0x28];
 } FadingMotion;
 
-/* EffectMotion as func_001ACD18 uses it: a flag byte at the very start */
+/* EffectMotion as EffectOnFloor_Start uses it: a flag byte at the very start */
 typedef struct {
-    u8 grounded;                    /* 0x00 set when the model is dropped onto the entity */
+    u8 no_floor;                    /* 0x00 set when EffectOnFloor_Start finds no floor */
     char pad01[0x2F];
 } GroundedMotion;
 
-/* EffectMotion as func_001ADF40 uses it: the heading in degrees, and as a word */
+/* EffectMotion as EffectRepeater_Start uses it: the heading in degrees, and as a word */
 typedef struct {
     s32 heading_word;               /* 0x00 the heading, zero-extended */
     u16 heading;                    /* 0x04 degrees */
     char pad06[0x2A];
 } HeadingWordMotion;
 
-/* EffectMotion as func_001ADCA8 uses it: the frame the effect lands at */
+/* EffectMotion as EffectDrop_Start uses it: the frame the effect lands at */
 typedef struct {
     char pad00[0x14];
     u16 landing_frame;              /* 0x14 */
@@ -806,7 +806,7 @@ typedef struct {
     char pad25[0x0B];
 } ScalingEndMotion;
 
-/* EffectMotion as func_001ACFC0 uses it: a scale and a countdown byte */
+/* EffectMotion as EffectBowDraw_Update uses it: a scale and a countdown byte */
 typedef struct {
     f32 scale;                      /* 0x00 */
     s8 countdown;                   /* 0x04 frames the model is held still */
@@ -820,7 +820,7 @@ typedef struct {
     char pad05[0x1B];
 } SnappedMotion;
 
-/* EffectMotion as func_001AD558 uses it: spawns the end effect at end_frame */
+/* EffectMotion as EffectImpactShot_Update uses it: spawns the end effect at end_frame */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     Vector4 end_position;           /* 0x10 where the end effect appears */
@@ -863,7 +863,7 @@ typedef struct {
     char pad1E[0x12];
 } BobbingGrowMotion;
 
-/* EffectMotion as func_001AA040 reads it (set up by func_001A9E88 and func_001A9F98): a
+/* EffectMotion as EffectHandover_Update reads it (set up by EffectHandover_Start and EffectHandover_StartNext): a
    turning effect that hands over to a sub-effect and restarts from start_frame */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
@@ -876,7 +876,7 @@ typedef struct {
     char pad27[0x09];
 } RestartMotion;
 
-/* EffectMotion as func_001AB5C8 and func_001AB670 use it: tilts to and fro while it falls */
+/* EffectMotion as EffectTiltFall_Start and EffectTiltFall_Update use it: tilts to and fro while it falls */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 tilt_speed;                 /* 0x10 added to the model's rotation.x each frame */
@@ -887,7 +887,7 @@ typedef struct {
     char pad21[0x0F];
 } TiltFallMotion;
 
-/* EffectMotion as func_001A90A0 and func_001A92A8 use it (func_001A8FF0 fills aim and
+/* EffectMotion as func_001A90A0 and EffectSweep_Update use it (func_001A8FF0 fills aim and
    arrival_frame): flies to a point, then sweeps on from there */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
@@ -903,7 +903,7 @@ typedef struct {
     char pad2C[0x04];
 } SweepMotion;
 
-/* EffectMotion as func_001ACA28 uses it: one link of a chain of effects, each spawning the next */
+/* EffectMotion as EffectChain_Start uses it: one link of a chain of effects, each spawning the next */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 length;                     /* 0x10 how far on the next link starts */
@@ -948,7 +948,7 @@ typedef struct EffectActor {
     char pad94[0x0C];
 } EffectActor;
 
-/* EffectActor+0x00 as func_001AF0B0 writes it: the colour, whose alpha is EffectActor.scale */
+/* EffectActor+0x00 as EffectKeys_ApplyColour writes it: the colour, whose alpha is EffectActor.scale */
 typedef struct {
     f32 red;                        /* 0x00 */
     f32 green;                      /* 0x04 */
@@ -1136,13 +1136,13 @@ int Effect_IsDefRangeInUse(int first_def, int last_def);
 /* helpers every effect kind calls */
 void func_001A3E30(EffectActor *effect, EffectSlot *spawn_slot);
 void func_001A4480(EffectActor *effect);
-int func_001AEC48(EffectActor *effect);
-int func_001AED58(EffectActor *effect);
-int func_001AF0B0(EffectActor *effect);
-int func_001AF4E0(EffectActor *effect);
-void func_001AF538(float length, Vector4 *out, Vector4 *angles);
-void func_001AF640(EffectActor *effect, EffectSlot *spawn_slot);
-void func_001AF928(EffectActor *effect, EffectSlot *spawn_slot);
-void func_001AFC88(Vector4 *velocity, Vector4 *direction, float speed, float turn);
+int EffectKeys_ApplyScale(EffectActor *effect);
+int EffectKeys_ApplySpin(EffectActor *effect);
+int EffectKeys_ApplyColour(EffectActor *effect);
+int EffectHit_Check(EffectActor *effect);
+void EffectAngle_ToVector(float length, Vector4 *out, Vector4 *angles);
+void EffectStart_PlaceModel(EffectActor *effect, EffectSlot *spawn_slot);
+void EffectStart_TurnModel(EffectActor *effect, EffectSlot *spawn_slot);
+void EffectSteer_Toward(Vector4 *velocity, Vector4 *direction, float speed, float turn);
 
 #endif

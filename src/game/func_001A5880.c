@@ -1,75 +1,41 @@
 #include "common.h"
+#include "kf_effect.h"
+#include "kf_collision.h"
 
-typedef struct {
-    char pad0[0xC0];
-    float vC0;
-    float vC4;
-    char padC8[0x8];
-    char vD0[0x10];
-} T50;
-
-typedef struct {
-    char pad0[0xD8];
-    float fD8;
-    float fDC;
-    float fE0;
-    char padE4[0xE];
-    u16 hF2;
-} T54;
-
-void func_001AF640(void *, int);
-void func_001AF928(void *, int);
-void func_001AF538(float, void *, void *);
 void func_001C1430(f32, void *, void *);
 
-typedef struct {
-    char pad[0x10];
-    float w10;
-    float f14;
-    float w18;
-    float w1C;
-    float f20;
-    float w24;
-    float f28;
-    char c2C;
-} Sub;
+/* Starts an effect that runs along the ground: launches along the heading and settles on the ground found
+   within def->unkDC below half that height; marks it ended where there is none. */
+void func_001A5880(EffectActor *effect, EffectSlot *spawn_slot) {
+    GroundRunMotion *motion = (GroundRunMotion *)&effect->motion;
+    ModelInstance *model;
+    f32 saved_y;
+    f32 height;
+    f32 half_height;
 
-typedef struct {
-    char pad0[0x10];
-    Sub sub;
-    char pad40[0x10];
-    T50 *p50;
-    T54 *p54;
-} Obj;
-
-void func_001A5880(Obj *a, int arg1) {
-    Sub *s = &a->sub;
-    T50 *q;
-    float f, g, h;
-
-    func_001AF640(a, arg1);
-    func_001AF928(a, arg1);
-    if (a->p54->hF2 == 0) {
-        func_001AF538(a->p54->fD8, s, a->p50->vD0);
-        g = a->p54->fDC;
-        h = g * 0.5f;
-        s->c2C = 0;
-        s->f20 = g;
-        s->w24 = 0;
-        s->w10 = 0;
-        s->f14 = a->p54->fDC;
-        s->w18 = 0;
-        s->w1C = 0;
-        q = a->p50;
-        f = q->vC4;
-        q->vC4 -= h;
-        func_001C1430(1.0f, &q->vC0, (char *)a + 0x20);
-        a->p50->vC4 = f;
-        if (*(int *)0x70000010 == 0) {
-            s->c2C = 1;
+    EffectStart_PlaceModel(effect, spawn_slot);
+    EffectStart_TurnModel(effect, spawn_slot);
+    if (effect->def->unkF2 == 0) {
+        EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
+        height = effect->def->unkDC;
+        half_height = height * 0.5f;
+        motion->ended = 0;
+        motion->height = height;
+        motion->fall_speed = 0;
+        motion->probe.x = 0;
+        motion->probe.y = effect->def->unkDC;
+        motion->probe.z = 0;
+        motion->probe.w = 0;
+        model = effect->model;
+        saved_y = model->position.y;
+        model->position.y -= half_height;
+        func_001C1430(1.0f, &model->position, &motion->probe);
+        effect->model->position.y = saved_y;
+        if (COLLISION_RESULT->hit == 0) {
+            motion->ended = 1;
         } else {
-            a->p50->vC4 = *(float *)0x70000004;
+            effect->model->position.y = COLLISION_RESULT->point[1];
         }
-        s->f28 = a->p54->fE0;
+        motion->hit_offset = effect->def->unkE0;
     }
 }

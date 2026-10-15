@@ -18,8 +18,8 @@ void func_001A6EE8(EffectActor *effect, EffectSlot *spawn_slot) {
     int moved;
 
     motion = (PickedMotion *)&effect->motion;
-    func_001AF928(effect, spawn_slot);
-    func_001AF640(effect, spawn_slot);
+    EffectStart_TurnModel(effect, spawn_slot);
+    EffectStart_PlaceModel(effect, spawn_slot);
     for (slot = 0; slot < 4; slot++) {
         motion->list_index[slot] = -1;
         motion->entity[slot] = NULL;

@@ -10,9 +10,9 @@ void func_001A6748(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector4 position;
 
     motion = (SpeedMotion *)&effect->motion;
-    func_001AF640(effect, spawn_slot);
-    func_001AF928(effect, spawn_slot);
-    func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
+    EffectStart_PlaceModel(effect, spawn_slot);
+    EffectStart_TurnModel(effect, spawn_slot);
+    EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     motion->unk14 = 0;
     motion->speed = effect->def->unkDC;
     Vector_Copy(&position, &effect->model->position);

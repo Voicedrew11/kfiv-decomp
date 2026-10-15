@@ -1,7 +1,7 @@
 #include "common.h"
 #include "kf_effect.h"
 
-void func_001AF298(EffectActor *effect, void *unk10);
+void EffectHit_CheckAndEnd(EffectActor *effect, void *unk10);
 int func_001B00A0(float, void *);
 void sceVu0AddVector(void *out, void *a, void *b);
 
@@ -17,9 +17,9 @@ void func_001A6A90(EffectActor *effect) {
         Effect_Free(effect);
         return;
     }
-    func_001AEC48(effect);
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplyScale(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     def = effect->def;
     expired = def->radius_half < effect->frame;
     max_frames = def->max_frames;
@@ -27,7 +27,7 @@ void func_001A6A90(EffectActor *effect) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     }
     if (effect->frame != 0) {
-        func_001AF298(effect, &motion->flag14);
+        EffectHit_CheckAndEnd(effect, &motion->flag14);
         if (func_001B00A0(150.0f, &effect->model->position)) {
             motion->flag14 = 1;
         }

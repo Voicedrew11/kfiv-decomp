@@ -3,7 +3,7 @@
 
 extern char D_00413F80[];
 
-int func_001AFD08(void *, void *, void *);
+int EffectHit_FindAimedEntity(void *, void *, void *);
 int func_001C0E40(f32, void *);
 
 /* Starts an effect like func_001A4128, then settles the model onto the ground half a height up. */
@@ -12,13 +12,13 @@ void func_001A4248(EffectActor *actor, EffectSlot *spawn_slot) {
     Entity *source;
     ModelInstance *source_model;
 
-    source = (Entity *)func_001AFD08(actor, D_00413F80, D_00413F80 + 0x10);
+    source = (Entity *)EffectHit_FindAimedEntity(actor, D_00413F80, D_00413F80 + 0x10);
     motion = (SnappedMotion *)&actor->motion;
     actor->unk6C = (int)source;
     motion->unk04 = 1;
     if (actor->unk6C == 0) {
-        func_001AF640(actor, spawn_slot);
-        func_001AF928(actor, spawn_slot);
+        EffectStart_PlaceModel(actor, spawn_slot);
+        EffectStart_TurnModel(actor, spawn_slot);
         motion->unk04 = 0;
     } else {
         source_model = ENTITY_MODEL((Entity *)actor->unk6C);

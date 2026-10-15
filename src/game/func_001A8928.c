@@ -6,8 +6,8 @@ extern f32 D_00431AF0[16];
 #define TWO_PI 6.2831855f
 #define PI 3.14159265f
 
-int func_001AF358(void *, void *);
-void func_001AF5B0(void *, void *);
+int EffectHit_CheckAndEndByFlag(void *, void *);
+void EffectAngle_FromVector(void *, void *);
 void func_001A88A8(void *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -29,9 +29,9 @@ void func_001A8928(EffectActor *effect) {
     if (motion->cooldown != 0) {
         motion->cooldown -= 1;
     }
-    func_001AEC48(effect);
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplyScale(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     if (effect->frame < effect->def->max_frames || effect->def->max_frames == 0) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     }
@@ -40,7 +40,7 @@ void func_001A8928(EffectActor *effect) {
         func_001A88A8(effect);
         Effect_Free(effect);
     } else {
-        hit = func_001AF358(effect, &motion->unk28);
+        hit = EffectHit_CheckAndEndByFlag(effect, &motion->unk28);
         if (hit != 0) {
             func_001A88A8(effect);
             if (hit == 1 && effect->def->interval != 0) {
@@ -58,7 +58,7 @@ void func_001A8928(EffectActor *effect) {
                     sceVu0RotMatrixX(rotation_matrix, rotation_matrix, effect->model->rotation.x);
                     sceVu0RotMatrixY(rotation_matrix, rotation_matrix, effect->model->rotation.y);
                     sceVu0ApplyMatrix(&forward, rotation_matrix, &forward);
-                    func_001AF5B0(&angles, &forward);
+                    EffectAngle_FromVector(&angles, &forward);
                     Effect_Spawn(effect->def->unkF0, &effect->model->position, &angles, effect->owner_entity, effect->effect_param, effect->owner);
                     next_angle = turn_angle + effect->def->unkE0;
                     next_angle -= (float)(int)(next_angle / TWO_PI) * TWO_PI;

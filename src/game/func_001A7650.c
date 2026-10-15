@@ -16,8 +16,8 @@ void func_001A7650(EffectActor *actor, EffectSlot *spawn_slot) {
     f32 step;
 
     motion = (ScalingEndMotion *)&actor->motion;
-    func_001AF928(actor, spawn_slot);
-    func_001AF640(actor, spawn_slot);
+    EffectStart_TurnModel(actor, spawn_slot);
+    EffectStart_PlaceModel(actor, spawn_slot);
     actor->motion.velocity.x = motion->velocity.y = motion->velocity.w = 0.0f;
     motion->velocity.z = actor->def->unkE8;
     sceVu0RotMatrixY(matrix, D_00431AF0, spawn_slot->unk10.y);

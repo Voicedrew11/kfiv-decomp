@@ -26,9 +26,9 @@ void func_001A6538(EffectActor *effect) {
         Effect_Free(effect);
         return;
     }
-    func_001AEC48(effect);
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplyScale(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     motion->velocity.y = -(motion->radius * 0.5f);
     motion->velocity.w = 0.0f;
     Vector_Add(&effect->model->position, &effect->model->position, &motion->velocity);

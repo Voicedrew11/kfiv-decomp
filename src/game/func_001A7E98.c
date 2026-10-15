@@ -11,9 +11,9 @@ void func_001A7E98(EffectActor *effect, EffectSlot *spawn_slot) {
     float spin_rate;
 
     motion = (SpinMotion *)&effect->motion;
-    ((void (*)(void))func_001AF928)(); // match: retail calls with no arguments
-    func_001AF640(effect, spawn_slot);
-    func_001AF538(effect->def->speed, &motion->velocity, &effect->model->rotation);
+    ((void (*)(void))EffectStart_TurnModel)(); // match: retail calls with no arguments
+    EffectStart_PlaceModel(effect, spawn_slot);
+    EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     effect->flags |= EFFECT_FLAG_HAS_TARGETERS;
     motion->unk10 = (((float)(rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 0.5f;
     random_fraction = (float)(rand() & 0xFFFF);

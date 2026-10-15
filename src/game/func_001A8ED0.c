@@ -1,17 +1,17 @@
 #include "common.h"
 #include "kf_effect.h"
 
-void func_001AF298(void *, void *);
+void EffectHit_CheckAndEnd(void *, void *);
 void sceVu0AddVector(void *, void *, void *);
 
 void func_001A8ED0(EffectActor *actor) {
     EndCountdownMotion *motion;
     s8 spawn_flag = 0;
 
-    func_001AEC48(actor);
+    EffectKeys_ApplyScale(actor);
     motion = (EndCountdownMotion *)&actor->motion;
-    func_001AED58(actor);
-    func_001AF0B0(actor);
+    EffectKeys_ApplySpin(actor);
+    EffectKeys_ApplyColour(actor);
     if (motion->countdown > 0) {
         motion->countdown--;
         if (motion->countdown <= 0) {
@@ -26,7 +26,7 @@ void func_001A8ED0(EffectActor *actor) {
             Effect_Spawn(actor->def->end_effect, &motion->unk10, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             spawn_flag = 1;
         } else {
-            func_001AF298(actor, &spawn_flag);
+            EffectHit_CheckAndEnd(actor, &spawn_flag);
         }
         if (spawn_flag) {
             Effect_FreeSpawnersOf(actor);

@@ -13,9 +13,9 @@ void func_001A7880(EffectActor *actor, EffectSlot *spawn_slot) {
     f32 *identity;
     EffectDef *def;
 
-    func_001AF928(actor, spawn_slot);
+    EffectStart_TurnModel(actor, spawn_slot);
     motion = (OffsetSprayMotion *)&actor->motion;
-    func_001AF640(actor, spawn_slot);
+    EffectStart_PlaceModel(actor, spawn_slot);
     def = actor->def;
     identity = D_00431AF0;
     actor->motion.velocity.x = motion->velocity.y = motion->velocity.w = 0.0f;

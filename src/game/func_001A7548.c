@@ -2,19 +2,19 @@
 #include "kf_effect.h"
 
 void sceVu0AddVector(Vector4 *dest, Vector4 *a, Vector4 *b);
-void func_001AF5B0(Vector4 *rotation, Vector4 *velocity);
+void EffectAngle_FromVector(Vector4 *rotation, Vector4 *velocity);
 
 void func_001A7548(EffectActor *effect) {
     SelectMotion *motion;
 
-    func_001AEC48(effect);
+    EffectKeys_ApplyScale(effect);
     motion = (SelectMotion *)&effect->motion;
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     if (effect->frame == 0) {
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
-        func_001AF5B0(&effect->model->rotation, &motion->velocity);
-        if (func_001AF4E0(effect) != 0) {
+        EffectAngle_FromVector(&effect->model->rotation, &motion->velocity);
+        if (EffectHit_Check(effect) != 0) {
             Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         } else {
             if (motion->unk24 == 0) {

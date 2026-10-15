@@ -21,9 +21,9 @@ void func_001A5DA8(EffectActor *effect) {
     int spawn_id;
 
     motion = (TurningMotion *)&effect->motion;
-    func_001AEC48(effect);
-    func_001AED58(effect);
-    func_001AF0B0(effect);
+    EffectKeys_ApplyScale(effect);
+    EffectKeys_ApplySpin(effect);
+    EffectKeys_ApplyColour(effect);
     sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     if ((s8)motion->unk25 != 0) { // match: retail loads unk25 as a signed byte
         Effect_Free(effect);

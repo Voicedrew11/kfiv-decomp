@@ -1,6 +1,6 @@
 #include "kf_effect.h"
 
-void func_001AF5B0(void *, void *);
+void EffectAngle_FromVector(void *, void *);
 int func_001B4F90(void *);
 void sceVu0AddVector(void *, void *, void *);
 
@@ -10,14 +10,14 @@ void func_001A68C8(EffectActor *actor) {
     u16 end_effect;
     char pad[0x10]; /* unused, but retail reserves the 0x10 bytes */
 
-    func_001AEC48(actor);
+    EffectKeys_ApplyScale(actor);
     motion = (LiftedMotion *)&actor->motion;
-    func_001AED58(actor);
-    func_001AF0B0(actor);
+    EffectKeys_ApplySpin(actor);
+    EffectKeys_ApplyColour(actor);
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
         motion->velocity.y += actor->def->gravity;
         sceVu0AddVector(&actor->model->position, &actor->model->position, &motion->velocity);
-        func_001AF5B0(&actor->model->rotation, &motion->velocity);
+        EffectAngle_FromVector(&actor->model->rotation, &motion->velocity);
     }
     if (actor->frame < 0x14) {
         if (motion->unk10 != 0) {
