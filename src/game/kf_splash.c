@@ -13,7 +13,6 @@ extern int D_0038CC80[3];
 extern u16 D_00413DAA[];
 extern u16 D_00446940;
 extern u32 *D_00446E84;
-extern int D_0042C028[6];          /* bits per pixel of each pixel format (& 7) */
 
 void func_00102218(void);
 void func_00102228(void);
@@ -64,6 +63,12 @@ static void (*splash_state_table[8])(void) = { /* 0x42C008 */
     Splash_StateClose,
     NULL,
 };
+
+/* 0x42C028 the bits per pixel of each pixel format (& 7), read by Splash_BuildImagePacket */
+static int D_0042C028[6] = { 0x20, 0x18, 0x10, 0x08, 0x04, 0x00 };
+
+/* 0x446E84 where Splash_BuildImagePacket builds the image packet: 0x80000 into the file-load buffer */
+u32 *D_00446E84 = (u32 *)((char *)&D_00249680 + 0x80000);
 
 /* Clears splash state (idle, no image id, file not open). */
 void Splash_Reset(void) {

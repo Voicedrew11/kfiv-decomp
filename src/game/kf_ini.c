@@ -6,7 +6,6 @@
 
 extern char D_004410A8[];           /* "ini/%4.4d.ini" */
 extern char D_00249680[];           /* where the file is read to */
-extern IniKeyHandler D_0042B810[];  /* the keys and their handlers, ended by a NULL handler */
 extern PlayerState D_00413F80;
 extern u8 item_counts[380];
 extern LevelRecord D_003679A0[70];
@@ -28,6 +27,73 @@ int func_001024B0(int);
 static char *ini_cursor;          /* 0x447350 start of the next line */
 static int ini_remaining;         /* 0x447354 bytes left after ini_cursor */
 static char ini_line[0x400];      /* 0x5F9700 the line Ini_ReadLine returns */
+
+/* what reads each key of ini/NNNN.ini */
+void Ini_SetHp(char *text);
+void Ini_SetMp(char *text);
+void Ini_SetPower(char *text);
+void Ini_SetMagic(char *text);
+void Ini_SetLevel(char *text);
+void Ini_SetExp(char *text);
+void Ini_SetGold(char *text);
+void Ini_SetEquipWeapon(char *text);
+void Ini_SetEquipMagic(char *text);
+void Ini_SetEquipShield(char *text);
+void Ini_SetEquipHelm(char *text);
+void Ini_SetEquipArmor(char *text);
+void Ini_SetEquipGauntlet(char *text);
+void Ini_SetEquipBoot(char *text);
+void Ini_SetEquipRing(char *text);
+void Ini_SetEquipBracelet(char *text);
+void Ini_SetEquipAmulet(char *text);
+void Ini_SetShortcutType(char *text);
+void Ini_SetShortcut(char *text);
+void Ini_SetItem(char *text);
+void Ini_SetMagicFire(char *text);
+void Ini_SetMagicEarth(char *text);
+void Ini_SetMagicWind(char *text);
+void Ini_SetMagicWater(char *text);
+void Ini_SetMagicHoly(char *text);
+void Ini_SetMagicDark(char *text);
+void Ini_SetDebugAutoRecv(void);
+void Ini_SetDebugDash(void);
+void Ini_SetDebugMagicRapidFire(void);
+
+/* 0x42B810 the keys of ini/NNNN.ini and what reads each, ended by a NULL handler */
+IniKeyHandler D_0042B810[30] = {
+    { "hp=", Ini_SetHp },
+    { "mp=", Ini_SetMp },
+    { "power=", Ini_SetPower },
+    { "magic=", Ini_SetMagic },
+    { "level=", Ini_SetLevel },
+    { "exp=", Ini_SetExp },
+    { "gold=", Ini_SetGold },
+    { "equip_weapon=", Ini_SetEquipWeapon },
+    { "equip_magic=", Ini_SetEquipMagic },
+    { "equip_shield=", Ini_SetEquipShield },
+    { "equip_helm=", Ini_SetEquipHelm },
+    { "equip_armor=", Ini_SetEquipArmor },
+    { "equip_guntlet=", Ini_SetEquipGauntlet },
+    { "equip_boot=", Ini_SetEquipBoot },
+    { "equip_ring=", Ini_SetEquipRing },
+    { "equip_bracelet=", Ini_SetEquipBracelet },
+    { "equip_amulet=", Ini_SetEquipAmulet },
+    { "equip_shortcut_type=", Ini_SetShortcutType },
+    { "equip_shortcut=", Ini_SetShortcut },
+    { "item_", Ini_SetItem },
+    { "magic_fire_", Ini_SetMagicFire },
+    { "magic_earth", Ini_SetMagicEarth },
+    { "magic_wind", Ini_SetMagicWind },
+    { "magic_water", Ini_SetMagicWater },
+    { "magic_holy", Ini_SetMagicHoly },
+    { "magic_dark", Ini_SetMagicDark },
+    { "debug_auto_recv", (void (*)(char *))Ini_SetDebugAutoRecv },
+    { "debug_dash", (void (*)(char *))Ini_SetDebugDash },
+    { "debug_magic_rapid_fire", (void (*)(char *))Ini_SetDebugMagicRapidFire },
+    { "", NULL },
+};
+/* 0x42BBE0 kf_item_effect.c's item_effect_defs as indexed from item kind 0 */
+asm(".globl D_0042BBE0\nD_0042BBE0 = D_0042B810 + 0x3D0\n");
 
 static void Ini_SetText(char *text, int length);
 static char *Ini_ReadLine(void);

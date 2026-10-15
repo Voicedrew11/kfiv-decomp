@@ -13,8 +13,6 @@ extern GameStatus D_0038CC50;
 extern PlayerState D_00413F80;
 extern EventRunner D_00420D00;
 extern ItemUseEffectDef D_0042BBE0[];
-extern char D_0042C110[];
-extern void (*D_0042C190[4])(void);
 extern char D_004410C8[];
 extern char D_004410E0[];
 extern char D_004410F8[];
@@ -49,6 +47,10 @@ void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
 static void ItemEffect_DrawModel(ModelInstance *model);
+void ItemEffect_StepRequestGameStatus(void);
+void ItemEffect_StepWaitOverlay(void);
+void ItemEffect_StepPlayMotion(void);
+void ItemEffect_StepFadeOut(void);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void Vector_Copy(void *, void *);
@@ -68,6 +70,38 @@ static int item_effect_pending_effects;     /* 0x4473AC set until motion reaches
 static int item_effect_marked;              /* 0x4473B0 spell slot marked by func_001BC990 */
 
 static char *item_effect_textures[7];       /* 0x5F9B40 loaded i0040..i0046.tx2 */
+
+/* 0x42C040 the effect def of each item kind 0x46 to 0x52 */
+ItemUseEffectDef item_effect_defs[13] = {
+    { 0x5A, 0x06, 0x55, -1 },
+    { 0x5A, 0x06, 0x55, 0x27C },
+    { 0x5A, 0x06, 0x55, 0x279 },
+    { 0x5A, 0x06, 0x55, 0x276 },
+    { 0x5A, 0x06, 0x55, 0x272 },
+    { 0x5A, 0x06, 0x55, 0x26F },
+    { 0x5A, 0x06, 0x55, 0x26B },
+    { 0x5A, 0x06, 0x55, 0x27C },
+    { 0x5A, 0x06, 0x55, 0x279 },
+    { 0x5A, 0x06, 0x55, 0x276 },
+    { 0x5A, 0x06, 0x55, 0x272 },
+    { 0x5A, 0x06, 0x55, 0x26F },
+    { 0x5A, 0x06, 0x55, 0x26B },
+};
+
+/* 0x42C110 the light block the effect's model is lit by (ItemEffect_Start, see effect_light_block) */
+Vector4 D_0042C110[8] = {
+    { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f },
+    { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f },
+};
+
+/* 0x42C190 the four steps of an item effect, one a frame (ItemEffect_Update) */
+void (*D_0042C190[4])(void) = {
+    ItemEffect_StepRequestGameStatus,
+    ItemEffect_StepWaitOverlay,
+    ItemEffect_StepPlayMotion,
+    ItemEffect_StepFadeOut,
+};
 
 static inline char *align16(char *address) {
     if ((int)address & 0xF) {
