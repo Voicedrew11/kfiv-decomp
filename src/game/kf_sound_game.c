@@ -19,12 +19,9 @@ int func_001CD6B8(int);
 extern LoadJob D_003EF5B8;
 extern SoundJob D_003EF5E8;
 extern SoundJob D_003EF618;
-extern s32 D_00502170[][2];
 extern SoundFileBuffer D_003EF500;
 extern SoundFileBuffer D_003EF520;
 extern SoundChannel D_003EF710[];
-extern SoundChannel D_00500170[];
-extern char D_00500158[];
 extern char D_002496BF[];
 extern int D_004468BC;
 extern float D_004468C0;
@@ -90,30 +87,24 @@ int func_001025C0(int file, void *buf, int size);
 extern int D_003EF548[];
 extern int D_004470F0;
 extern u8 D_00446896;
-extern char D_004FF558[];
 int func_001CEF48(u32);
 int func_001CEE78(int, s16, s16, s16, s16, s16, s16, int);
 void func_001CEFA0(u32);
 extern int D_004468A4;
 extern int D_004470D4;
-extern char D_004FF3C0[];
 int func_001024B0(int file);
 extern s32 D_004468A8;
 extern s32 D_004470DC;
-extern char D_004FF440[];
 extern MapHeader *D_0038CD28[];
 int func_001CD7E0(int);
 int FlushCache(int);
 int sceCdBreak(void);
 extern int (*const D_0043ED50[])(LoadJob *, s32);
 extern char D_0043EE18[];
-extern char D_004FF958[];
 extern s32 D_004468AC;
 extern s32 (*const D_0043EDA8[])(void);
 extern int D_00446864;
 extern int (*D_0043ED88[])(void);
-extern SoundJob D_004FF4D8;
-extern SoundStartSpec D_004FF4C0;
 /* the falloff players Sound_PlayFalloff picks from (the Sfx and Map ones take no bank) */
 extern int (*D_0043EE30[])(int, int); // match: an int result, though the players are void
 extern int D_00446868;
@@ -121,8 +112,6 @@ extern SoundScriptState D_0043EE78;
 extern u8 D_00446895;
 extern int D_004468B4;
 extern int (*D_0043ED90[])(void);
-extern SoundJob D_004FF528;
-extern SoundBankSpec D_004FF510;
 extern SoundBankSpec D_003EF5A0;
 extern SoundFileBuffer D_003EF560;
 extern SoundFileBuffer D_003EF580;
@@ -130,6 +119,20 @@ int func_001CD0E0(int, int, int, int, int, int, int);
 extern int D_0038A130[0x28 / 4];
 extern MapSlot D_0038CD20[];
 extern int D_00446770;
+
+static char D_004FF3C0[0x80];         /* 0x4FF3C0 a file name for sprintf */
+static char D_004FF440[0x80];         /* 0x4FF440 the map bank's file name */
+static SoundStartSpec D_004FF4C0;     /* 0x4FF4C0 the spec of the sound file load */
+static SoundJob D_004FF4D8;           /* 0x4FF4D8 the sound file load job */
+static u8 D_004FF4F8[0x18];           /* 0x4FF4F8 */
+static SoundBankSpec D_004FF510;      /* 0x4FF510 the spec of the map bank load */
+static SoundJob D_004FF528;           /* 0x4FF528 the map bank load job */
+static u8 D_004FF548[0x10];           /* 0x4FF548 */
+static char D_004FF558[0x400];        /* 0x4FF558 the bgm cue table, 0x40 cues */
+static char D_004FF958[0x800];        /* 0x4FF958 the map bank cue table, 0x80 cues */
+static char D_00500158[0x18];         /* 0x500158 a claim flag per voice 0x54..0x6B */
+static SoundChannel D_00500170[0x80]; /* 0x500170 the queued tagged requests */
+static s32 D_00502170[30][2];         /* 0x502170 the tracked voices */
 
 static void func_0019C4A0(void);
 static void Sound_CosSin(f32 angle, f32 *cos_out, f32 *sin_out);

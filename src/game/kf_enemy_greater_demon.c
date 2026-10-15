@@ -11,9 +11,10 @@ extern u32 D_00446ED4;
 extern s32 D_00446770;
 extern PlayerData D_00413F80;
 extern MapSlot D_0038CD20[];
-extern KfVector D_004FF390[];
 extern f32 D_00446824[];
 extern f32 D_00446828[];
+
+static KfVector D_004FF390[3]; /* 0x4FF390 the points GreaterDemon_Think climbs over (it indexes up to 5) */
 
 void EntityAi_SetUpdate(char *, s32);
 void Motion_ClearPartSlots(EntityModel *);

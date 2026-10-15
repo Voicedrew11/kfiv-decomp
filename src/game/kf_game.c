@@ -55,7 +55,6 @@ extern s32 D_004469D0;
 extern char D_00446A28[8];
 extern int D_00447010;                  /* frames of the fade left */
 extern int D_00447014;                  /* frames the fade takes */
-extern int D_00468180[3];               /* the fade colour */
 
 void *memcpy(void *, const void *, u32);
 void func_0010A4E8(int, int, int, int, int);
@@ -77,10 +76,11 @@ extern int D_00446740;                  /* nonzero: func_00108020 lays its grid 
 extern u32 D_00446744;                  /* the number of haze layers */
 extern u32 D_00446ED4;
 extern int D_00446F78;
-extern int D_00467680[8][11][2];
-extern int D_00467940[8][11][2];
-extern int D_00467C00[8][11][2];
-extern float D_00467EC0[8][11][2];
+static int D_00467680[8][11][2];     /* 0x467680 the grid as laid out */
+static int D_00467940[8][11][2];     /* 0x467940 the wobbling points */
+static int D_00467C00[8][11][2];     /* 0x467C00 the points of the frame before */
+static float D_00467EC0[8][11][2];   /* 0x467EC0 the force on each point */
+static int D_00468180[3];            /* 0x468180 the fade colour */
 
 float sqrtf(float);
 int rand(void);

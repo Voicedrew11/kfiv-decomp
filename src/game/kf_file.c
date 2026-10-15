@@ -4,6 +4,12 @@
 int sceCdInit(int);
 int sceCdMmode(int);
 
+// match: kf_file.h declares these, so a plain definition would go to COMMON
+static u8 D_004475C8[0x38] __attribute__((section(".bss"))) = { 0 }; /* 0x4475C8 */
+KFFile D_00447600[2] __attribute__((section(".bss"))) = { 0 };       /* 0x447600 the two file slots */
+static u8 D_00447658[0x28] __attribute__((section(".bss"))) = { 0 }; /* 0x447658 */
+char D_00447680[0x20000] __attribute__((section(".bss"))) = { 0 };   /* 0x447680 the KF4.DAT table of contents, read whole */
+
 /* Starts the disc drive in DVD mode. */
 void func_00102150(void) {
     while (sceCdInit(0) == 0) {

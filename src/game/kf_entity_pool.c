@@ -20,16 +20,18 @@ extern int D_004467D8[2];
 extern u32 D_00446ED4;
 extern float D_00413F80[];
 extern char D_00249680[0x80000];
-extern EntityTypeFileHeader D_00474B70;
 extern SoundLoadQueue D_0038A130;
 extern char *D_004467C0;
 extern int D_004467C4;
 extern char D_004467C8[];
 extern char D_0043E790[];
-extern char D_00474B90[ENTITY_POOL_SLOT_COUNT][0x2000];
 extern Entity D_003BEDF0[][0x80];
 extern s64 D_003D6E40[];
 extern ModelInstance D_003BE530[ENTITY_POOL_SLOT_COUNT];
+
+static EntityTypeFileHeader D_00474B70;                            /* 0x474B70 the loaded type file's first 0x20 bytes */
+static char D_00474B90[ENTITY_POOL_SLOT_COUNT][0x2000];            /* 0x474B90 the type data of each slot */
+char D_0047EB90[0x80000] __attribute__((section(".bss")));         /* 0x47EB90 param/chr.prm, read whole */
 
 int func_00102790(int, int);
 int func_001024B0(int);
