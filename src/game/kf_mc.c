@@ -11,26 +11,28 @@ int sceRead(int, void *, int);
 int sceLseek(int, int, int);
 int sceClose(int);
 
-extern McState D_01E4F278;
-extern McFileProgress D_01E4F240;
-extern McFileWork D_01E4F334;
-extern sceMcTblGetDir D_01E4F780;               /* the entry of the file a write or copy goes to */
-extern u8 D_01E4F338[0x400];                    /* D_01E4F334.buffer: the block being written or read */
-extern u32 D_01E4F244 __attribute__((section(".bss"))); /* D_01E4F240.offset */
-extern int D_01E4F248 __attribute__((section(".bss"))); /* D_01E4F240.chunk_size */
-extern int D_01E4F24C[]; /* bytes of the data read so far */
-extern int D_01E4F250[]; /* the data length the file starts with */
-extern int D_01E4F254[]; /* where the end mark is in the last 0x20 bytes of the file */
-extern int D_01E4F258[]; /* size of the whole file, a multiple of 0x20 */
-extern u32 D_01E4F25C[]; /* bytes written so far */
-extern int D_01E4F260[]; /* bytes to hand to sceMcWrite this step */
-extern int D_01E4F264[]; /* the file being copied from */
-extern int D_01E4F268[]; /* bytes read from it this step */
-extern int D_01E4F26C[]; /* its size */
-extern int D_01E4F270[]; /* bytes copied so far */
-extern u32 D_01E4F274[]; /* bytes read so far */
-extern s32 D_01E4F30C[64]; /* D_01E4F278.dir_count */
-extern int D_01E4F310[];   /* D_01E4F278.status */
+/* The module's .bss: a work area and the file state, packed at four bytes. */
+#define MC_4BYTE __attribute__((section(".bss"), aligned(4)))
+
+static u8 D_01E10000[0x3F240];      /* 0x1E10000 a zeroed work area no code of this unit names */
+static int D_01E4F240 MC_4BYTE;      /* 0x1E4F240 size of the file being written (McFileProgress.total_size) */
+static u32 D_01E4F244 MC_4BYTE;      /* 0x1E4F244 bytes of it written so far (McFileProgress.offset) */
+static int D_01E4F248 MC_4BYTE;      /* 0x1E4F248 bytes to hand to sceMcWrite each step (McFileProgress.chunk_size) */
+static int D_01E4F24C MC_4BYTE;  /* 0x1E4F24C bytes of the data read so far */
+static int D_01E4F250 MC_4BYTE;  /* 0x1E4F250 the data length the file starts with */
+static int D_01E4F254 MC_4BYTE;  /* 0x1E4F254 where the end mark is in the last 0x20 bytes of the file */
+static int D_01E4F258 MC_4BYTE;  /* 0x1E4F258 size of the whole file, a multiple of 0x20 */
+static u32 D_01E4F25C MC_4BYTE;  /* 0x1E4F25C bytes written so far */
+static int D_01E4F260 MC_4BYTE;  /* 0x1E4F260 bytes to hand to sceMcWrite this step */
+static int D_01E4F264 MC_4BYTE;  /* 0x1E4F264 the file being copied from */
+static int D_01E4F268 MC_4BYTE;  /* 0x1E4F268 bytes read from it this step */
+static int D_01E4F26C MC_4BYTE;  /* 0x1E4F26C its size */
+static int D_01E4F270 MC_4BYTE;  /* 0x1E4F270 bytes copied so far */
+static u32 D_01E4F274 MC_4BYTE;  /* 0x1E4F274 bytes read so far */
+static McState D_01E4F278;          /* 0x1E4F278 the request in progress and what it works on */
+static int D_01E4F334 MC_4BYTE;         /* 0x1E4F334 the open file (McFileWork.file_fd) */
+static u8 D_01E4F338[0x448] MC_4BYTE;    /* 0x1E4F338 the block being built (McFileWork.buffer) */
+static sceMcTblGetDir D_01E4F780;       /* 0x1E4F780 the entry of the file a write or copy goes to */
 
 #define MC_CARD_INFO ((McCardInfo *)&D_01E4F278)
 
@@ -123,34 +125,34 @@ static int Mc_GetInfoStatus(int result) {
 /* Sets the status for a failed sceMcOpen (or any negative library result). */
 static void Mc_SetErrorStatus(int error) {
     if (error >= 0) {
-        D_01E4F310[0] = MC_STATUS_OK;
+        D_01E4F278.status = MC_STATUS_OK;
         return;
     }
     if (error == -2) {
-        D_01E4F310[0] = MC_STATUS_UNFORMATTED;
+        D_01E4F278.status = MC_STATUS_UNFORMATTED;
         return;
     }
     if (error == -3) {
-        D_01E4F310[0] = MC_STATUS_CARD_FULL;
+        D_01E4F278.status = MC_STATUS_CARD_FULL;
         return;
     }
     if (error == -4) {
-        D_01E4F310[0] = MC_STATUS_ERROR;
+        D_01E4F278.status = MC_STATUS_ERROR;
         return;
     }
     if (error == -5) {
-        D_01E4F310[0] = MC_STATUS_ERROR;
+        D_01E4F278.status = MC_STATUS_ERROR;
         return;
     }
     if (error == -7) {
-        D_01E4F310[0] = MC_STATUS_ERROR;
+        D_01E4F278.status = MC_STATUS_ERROR;
         return;
     }
     if (error < -0xA) {
-        D_01E4F310[0] = MC_STATUS_NO_CARD;
+        D_01E4F278.status = MC_STATUS_NO_CARD;
         return;
     }
-    D_01E4F310[0] = MC_STATUS_ERROR;
+    D_01E4F278.status = MC_STATUS_ERROR;
 }
 
 /* Steps the "check the card" request: 0 while it runs, 1 when a usable card is there, -10 otherwise. */
@@ -291,7 +293,7 @@ static int Mc_StepWriteChecked(void) {
 
     switch (step) {
     case 0:
-        D_01E4F334.file_fd = 0;
+        D_01E4F334 = 0;
         D_01E4F244 = 0;
         D_01E4F278.step++;
         D_01E4F278.retries = 0;
@@ -368,12 +370,12 @@ static int Mc_StepWriteChecked(void) {
             return -6;
         }
         quantity -= 0x3FB;
-        D_01E4F240.total_size = D_01E4F278.size + 6;
+        D_01E4F240 = D_01E4F278.size + 6;
         if (quantity > 0) {
-            D_01E4F240.total_size += (quantity + 0x3FE) / 0x3FF;
+            D_01E4F240 += (quantity + 0x3FE) / 0x3FF;
         }
-        D_01E4F240.total_size = (D_01E4F240.total_size + 0x1F) & 0xFFFFFFE0;
-        quantity = (u32)(D_01E4F240.total_size + 0x3FF) >> 10;
+        D_01E4F240 = (D_01E4F240 + 0x1F) & 0xFFFFFFE0;
+        quantity = (u32)(D_01E4F240 + 0x3FF) >> 10;
         reserved = 2;
         if (D_01E4F780.FileSizeByte != 0) {
             reserved = 0;
@@ -418,14 +420,14 @@ static int Mc_StepWriteChecked(void) {
                 D_01E4F278.retries++;
                 D_01E4F278.step--;
             } else {
-                D_01E4F334.file_fd = result;
+                D_01E4F334 = result;
                 D_01E4F278.step++;
                 D_01E4F278.retries = 0;
             }
         }
         break;
     case 12:
-        if (sceMcSeek(D_01E4F334.file_fd, D_01E4F240.total_size - 0x20, 0) != 0) {
+        if (sceMcSeek(D_01E4F334, D_01E4F240 - 0x20, 0) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_WRITE_FAILED;
                 D_01E4F278.step = 0x64;
@@ -457,7 +459,7 @@ static int Mc_StepWriteChecked(void) {
         memset(D_01E4F338, 0, 0x20);
         D_01E4F278.step++;
     case 15:
-        if (sceMcWrite(D_01E4F334.file_fd, D_01E4F338, 0x20) != 0) {
+        if (sceMcWrite(D_01E4F334, D_01E4F338, 0x20) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_WRITE_FAILED;
                 D_01E4F278.step = 0x64;
@@ -485,7 +487,7 @@ static int Mc_StepWriteChecked(void) {
         }
         break;
     case 17:
-        if (sceMcSeek(D_01E4F334.file_fd, 0, 0) != 0) {
+        if (sceMcSeek(D_01E4F334, 0, 0) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_WRITE_FAILED;
                 D_01E4F278.step = 0x64;
@@ -545,7 +547,7 @@ static int Mc_StepWriteChecked(void) {
         }
         break;
     case 20:
-        if (sceMcWrite(D_01E4F334.file_fd, D_01E4F338, D_01E4F248) != 0) {
+        if (sceMcWrite(D_01E4F334, D_01E4F338, D_01E4F248) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_WRITE_FAILED;
                 D_01E4F278.step = 0x64;
@@ -573,7 +575,7 @@ static int Mc_StepWriteChecked(void) {
         }
         break;
     case 22:
-        if (sceMcClose(D_01E4F334.file_fd) != 0) {
+        if (sceMcClose(D_01E4F334) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_WRITE_FAILED;
                 D_01E4F278.step = 0x64;
@@ -602,7 +604,7 @@ static int Mc_StepWriteChecked(void) {
         break;
     case 100:
         if (sceMcSync(1, NULL, &result) != 0) {
-            if (D_01E4F334.file_fd < 0) { // match: never true, the descriptor is 0 or a sceMcSync result that was not negative
+            if (D_01E4F334 < 0) { // match: never true, the descriptor is 0 or a sceMcSync result that was not negative
                 D_01E4F278.status = MC_STATUS_WRITE_FAILED;
                 D_01E4F278.request = MC_REQUEST_NONE;
                 return D_01E4F278.info_step > -1 ? -999 : D_01E4F278.info_step;
@@ -612,7 +614,7 @@ static int Mc_StepWriteChecked(void) {
         }
         break;
     case 101:
-        if (sceMcClose(D_01E4F334.file_fd) != 0) {
+        if (sceMcClose(D_01E4F334) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_WRITE_FAILED;
                 D_01E4F278.request = MC_REQUEST_NONE;
@@ -653,10 +655,10 @@ static int Mc_StepReadChecked(void) {
 
     switch (D_01E4F278.step) {
     case 0:
-        D_01E4F334.file_fd = -1;
+        D_01E4F334 = -1;
         D_01E4F278.step++;
         D_01E4F278.retries = 0;
-        D_01E4F24C[0] = 0;
+        D_01E4F24C = 0;
     case 1:
         if ((D_01E4F278.info_step = Mc_StepGetInfo(port, slot, &MC_CARD_INFO->type[port][slot],
                                                    &MC_CARD_INFO->free_clusters[port][slot],
@@ -707,14 +709,14 @@ static int Mc_StepReadChecked(void) {
                 D_01E4F278.retries++;
                 D_01E4F278.step--;
             } else {
-                D_01E4F334.file_fd = result;
+                D_01E4F334 = result;
                 D_01E4F278.step++;
                 D_01E4F278.retries = 0;
             }
         }
         break;
     case 4:
-        if (sceMcRead(D_01E4F334.file_fd, D_01E4F250, 4) != 0) {
+        if (sceMcRead(D_01E4F334, &D_01E4F250, 4) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_READ_FAILED;
                 D_01E4F278.step = 100;
@@ -741,21 +743,21 @@ static int Mc_StepReadChecked(void) {
         }
         break;
     case 6:
-        remaining = D_01E4F250[0];
-        D_01E4F258[0] = remaining + 6;
+        remaining = D_01E4F250;
+        D_01E4F258 = remaining + 6;
         remaining -= 0x3FB;
         if (remaining > 0) {
-            D_01E4F258[0] += (remaining + 0x3FE) / 0x3FF;
+            D_01E4F258 += (remaining + 0x3FE) / 0x3FF;
         }
-        padded_size = D_01E4F258[0] + 0x1F;
+        padded_size = D_01E4F258 + 0x1F;
         total_size = padded_size & 0xFFFFFFE0;
-        D_01E4F254[0] = padded_size - total_size;
+        D_01E4F254 = padded_size - total_size;
         D_01E4F278.retries = 0;
         D_01E4F278.step++;
-        D_01E4F258[0] = total_size;
+        D_01E4F258 = total_size;
         break;
     case 7:
-        if (sceMcSeek(D_01E4F334.file_fd, D_01E4F258[0] - 0x20, 0) != 0) {
+        if (sceMcSeek(D_01E4F334, D_01E4F258 - 0x20, 0) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_READ_FAILED;
                 D_01E4F278.step = 100;
@@ -783,7 +785,7 @@ static int Mc_StepReadChecked(void) {
         }
         break;
     case 9:
-        if (sceMcRead(D_01E4F334.file_fd, D_01E4F338, 0x20) != 0) {
+        if (sceMcRead(D_01E4F334, D_01E4F338, 0x20) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_READ_FAILED;
                 D_01E4F278.step = 100;
@@ -804,7 +806,7 @@ static int Mc_StepReadChecked(void) {
                     D_01E4F278.retries++;
                     D_01E4F278.step--;
                 }
-            } else if (D_01E4F338[D_01E4F254[0]] != 1) {
+            } else if (D_01E4F338[D_01E4F254] != 1) {
                 D_01E4F278.status = MC_STATUS_READ_FAILED;
                 D_01E4F278.step = 100;
             } else {
@@ -814,7 +816,7 @@ static int Mc_StepReadChecked(void) {
         }
         break;
     case 11:
-        if (sceMcSeek(D_01E4F334.file_fd, 4, 0) != 0) {
+        if (sceMcSeek(D_01E4F334, 4, 0) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_READ_FAILED;
                 D_01E4F278.step = 100;
@@ -844,10 +846,10 @@ static int Mc_StepReadChecked(void) {
         break;
     case 13:
         read_size = 0x400;
-        if (D_01E4F24C[0] == 0) {
+        if (D_01E4F24C == 0) {
             read_size = 0x3FC;
         }
-        if (sceMcRead(D_01E4F334.file_fd, D_01E4F338, read_size) != 0) {
+        if (sceMcRead(D_01E4F334, D_01E4F338, read_size) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_READ_FAILED;
                 D_01E4F278.step = 100;
@@ -877,10 +879,10 @@ static int Mc_StepReadChecked(void) {
                 D_01E4F278.step--;
             } else {
                 chunk_max = 0x3FF;
-                if (D_01E4F24C[0] == 0) {
+                if (D_01E4F24C == 0) {
                     chunk_max = 0x3FB;
                 }
-                chunk = D_01E4F250[0] - D_01E4F24C[0];
+                chunk = D_01E4F250 - D_01E4F24C;
                 if (chunk_max < chunk) {
                     chunk = chunk_max;
                 }
@@ -890,15 +892,15 @@ static int Mc_StepReadChecked(void) {
                         checksum += ~D_01E4F338[index];
                     }
                     if (checksum == D_01E4F338[chunk]) {
-                        if ((u32)D_01E4F278.size < (u32)D_01E4F250[0]) {
-                            chunk = D_01E4F278.size - D_01E4F24C[0];
+                        if ((u32)D_01E4F278.size < (u32)D_01E4F250) {
+                            chunk = D_01E4F278.size - D_01E4F24C;
                         } else {
-                            chunk = D_01E4F250[0] - D_01E4F24C[0];
+                            chunk = D_01E4F250 - D_01E4F24C;
                         }
                         if (chunk_max < chunk) {
                             chunk = chunk_max;
                         }
-                        memcpy(D_01E4F278.read_buffer + D_01E4F24C[0], D_01E4F338, chunk);
+                        memcpy(D_01E4F278.read_buffer + D_01E4F24C, D_01E4F338, chunk);
                         if (chunk < chunk_max) {
                             D_01E4F278.step++;
                             break;
@@ -910,7 +912,7 @@ static int Mc_StepReadChecked(void) {
                         break;
                     }
                 }
-                D_01E4F24C[0] += chunk;
+                D_01E4F24C += chunk;
                 D_01E4F278.retries = 0;
                 D_01E4F278.step--;
             }
@@ -921,7 +923,7 @@ static int Mc_StepReadChecked(void) {
         D_01E4F278.step++;
         break;
     case 16:
-        if (sceMcClose(D_01E4F334.file_fd) != 0) {
+        if (sceMcClose(D_01E4F334) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.request = MC_REQUEST_NONE;
                 D_01E4F278.status = MC_STATUS_READ_FAILED;
@@ -950,7 +952,7 @@ static int Mc_StepReadChecked(void) {
         }
         break;
     case 100:
-        if (D_01E4F334.file_fd < 0) {
+        if (D_01E4F334 < 0) {
             D_01E4F278.request = MC_REQUEST_NONE;
             return -100;
         }
@@ -958,7 +960,7 @@ static int Mc_StepReadChecked(void) {
         D_01E4F278.step++;
         break;
     case 101:
-        if (sceMcClose(D_01E4F334.file_fd) != 0) {
+        if (sceMcClose(D_01E4F334) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.status = MC_STATUS_READ_FAILED;
                 return -1;
@@ -991,8 +993,8 @@ static int Mc_StepWrite(void) {
 
     switch (D_01E4F278.step) {
     case 0:
-        D_01E4F334.file_fd = 0;
-        D_01E4F25C[0] = 0;
+        D_01E4F334 = 0;
+        D_01E4F25C = 0;
         D_01E4F278.step++;
         break;
     case 1:
@@ -1108,21 +1110,21 @@ static int Mc_StepWrite(void) {
                 D_01E4F278.retries++;
                 D_01E4F278.step--;
             } else {
-                D_01E4F334.file_fd = result;
+                D_01E4F334 = result;
                 D_01E4F278.step++;
             }
         }
         break;
     case 10:
-        D_01E4F260[0] = D_01E4F278.size - D_01E4F25C[0];
-        if (D_01E4F260[0] > 0x400) {
-            D_01E4F260[0] = 0x400;
+        D_01E4F260 = D_01E4F278.size - D_01E4F25C;
+        if (D_01E4F260 > 0x400) {
+            D_01E4F260 = 0x400;
         }
         D_01E4F278.retries = 0;
         D_01E4F278.step++;
         break;
     case 11:
-        if (sceMcWrite(D_01E4F334.file_fd, D_01E4F278.write_data + D_01E4F25C[0], D_01E4F260[0]) != 0) {
+        if (sceMcWrite(D_01E4F334, D_01E4F278.write_data + D_01E4F25C, D_01E4F260) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.info_step = -1;
                 D_01E4F278.step = 100;
@@ -1144,9 +1146,9 @@ static int Mc_StepWrite(void) {
                     D_01E4F278.step--;
                 }
             } else {
-                D_01E4F25C[0] += result;
+                D_01E4F25C += result;
                 D_01E4F278.retries = 0;
-                if (D_01E4F25C[0] >= (u32)D_01E4F278.size) {
+                if (D_01E4F25C >= (u32)D_01E4F278.size) {
                     D_01E4F278.step++;
                 } else {
                     D_01E4F278.step = 10;
@@ -1155,7 +1157,7 @@ static int Mc_StepWrite(void) {
         }
         break;
     case 13:
-        if (sceMcClose(D_01E4F334.file_fd) != 0) {
+        if (sceMcClose(D_01E4F334) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.info_step = -1;
                 D_01E4F278.step = 100;
@@ -1183,7 +1185,7 @@ static int Mc_StepWrite(void) {
         }
         break;
     case 100:
-        if (D_01E4F334.file_fd < 0) {
+        if (D_01E4F334 < 0) {
             D_01E4F278.status = MC_STATUS_WRITE_FAILED;
             D_01E4F278.request = MC_REQUEST_NONE;
             return -999;
@@ -1192,7 +1194,7 @@ static int Mc_StepWrite(void) {
         D_01E4F278.step++;
         break;
     case 101:
-        if (sceMcClose(D_01E4F334.file_fd) != 0) {
+        if (sceMcClose(D_01E4F334) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.request = MC_REQUEST_NONE;
                 D_01E4F278.status = MC_STATUS_WRITE_FAILED;
@@ -1229,9 +1231,9 @@ static int Mc_StepCopyFile(void) {
 
     switch (D_01E4F278.step) {
     case 0:
-        D_01E4F334.file_fd = 0;
-        D_01E4F26C[0] = 0;
-        D_01E4F270[0] = 0;
+        D_01E4F334 = 0;
+        D_01E4F26C = 0;
+        D_01E4F270 = 0;
         D_01E4F278.step++;
         D_01E4F278.retries = 0;
         break;
@@ -1303,23 +1305,23 @@ static int Mc_StepCopyFile(void) {
         }
         strcpy(path, D_01E4F278.second_path);
         source = sceOpen(path, 1);
-        D_01E4F264[0] = source;
+        D_01E4F264 = source;
         if (source < 0) {
             D_01E4F278.request = MC_REQUEST_NONE;
             D_01E4F278.status = MC_STATUS_WRITE_FAILED;
             return source;
         }
         if (D_01E4F278.count != 0) {
-            D_01E4F26C[0] = D_01E4F278.count;
+            D_01E4F26C = D_01E4F278.count;
         } else {
-            D_01E4F26C[0] = sceLseek(source, 0, 2);
-            sceLseek(D_01E4F264[0], 0, 0);
+            D_01E4F26C = sceLseek(source, 0, 2);
+            sceLseek(D_01E4F264, 0, 0);
         }
         reserve = 2;
         if (D_01E4F780.FileSizeByte != 0) {
             reserve = 0;
         }
-        if (available - reserve < (D_01E4F26C[0] + 0x3FF) / 0x400) {
+        if (available - reserve < (D_01E4F26C + 0x3FF) / 0x400) {
             D_01E4F278.status = MC_STATUS_WRITE_FAILED;
             D_01E4F278.request = MC_REQUEST_NONE;
             return -101;
@@ -1358,13 +1360,13 @@ static int Mc_StepCopyFile(void) {
                 D_01E4F278.retries++;
                 D_01E4F278.step--;
             } else {
-                D_01E4F334.file_fd = result;
+                D_01E4F334 = result;
                 D_01E4F278.step++;
             }
         }
         break;
     case 10:
-        if ((D_01E4F268[0] = sceRead(D_01E4F264[0], D_01E4F338, 0x400)) <= 0) {
+        if ((D_01E4F268 = sceRead(D_01E4F264, D_01E4F338, 0x400)) <= 0) {
             D_01E4F278.step = 13;
         } else {
             D_01E4F278.retries = 0;
@@ -1372,7 +1374,7 @@ static int Mc_StepCopyFile(void) {
         }
         break;
     case 11:
-        if (sceMcWrite(D_01E4F334.file_fd, D_01E4F338, D_01E4F268[0]) != 0) {
+        if (sceMcWrite(D_01E4F334, D_01E4F338, D_01E4F268) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.info_step = -1;
                 D_01E4F278.step = 100;
@@ -1394,9 +1396,9 @@ static int Mc_StepCopyFile(void) {
                     D_01E4F278.step--;
                 }
             } else {
-                D_01E4F270[0] += D_01E4F268[0];
+                D_01E4F270 += D_01E4F268;
                 D_01E4F278.retries = 0;
-                if (D_01E4F270[0] < D_01E4F26C[0]) {
+                if (D_01E4F270 < D_01E4F26C) {
                     D_01E4F278.step -= 2;
                 } else {
                     D_01E4F278.step++;
@@ -1405,11 +1407,11 @@ static int Mc_StepCopyFile(void) {
         }
         break;
     case 13:
-        sceClose(D_01E4F264[0]);
+        sceClose(D_01E4F264);
         D_01E4F278.step++;
         break;
     case 14:
-        if (sceMcClose(D_01E4F334.file_fd) != 0) {
+        if (sceMcClose(D_01E4F334) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.info_step = -1;
                 D_01E4F278.step = 100;
@@ -1438,10 +1440,10 @@ static int Mc_StepCopyFile(void) {
         }
         break;
     case 100:
-        if (D_01E4F264[0] != 0) {
-            sceClose(D_01E4F264[0]);
+        if (D_01E4F264 != 0) {
+            sceClose(D_01E4F264);
         }
-        if (D_01E4F334.file_fd < 0) {
+        if (D_01E4F334 < 0) {
             D_01E4F278.status = MC_STATUS_WRITE_FAILED;
             D_01E4F278.request = MC_REQUEST_NONE;
             return -999;
@@ -1449,7 +1451,7 @@ static int Mc_StepCopyFile(void) {
         D_01E4F278.retries = 0; // match: the step is not advanced here, so the request stays in step 100
         break;
     case 101:
-        if (sceMcClose(D_01E4F334.file_fd) != 0) {
+        if (sceMcClose(D_01E4F334) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.request = MC_REQUEST_NONE;
                 D_01E4F278.status = MC_STATUS_WRITE_FAILED;
@@ -1480,8 +1482,8 @@ static int Mc_StepRead(void) {
 
     switch (D_01E4F278.step) {
     case 0:
-        D_01E4F334.file_fd = 0;
-        D_01E4F274[0] = 0;
+        D_01E4F334 = 0;
+        D_01E4F274 = 0;
         D_01E4F278.step++;
         D_01E4F278.retries = 0;
     case 1:
@@ -1529,7 +1531,7 @@ static int Mc_StepRead(void) {
                 D_01E4F278.retries++;
                 D_01E4F278.step--;
             } else {
-                D_01E4F334.file_fd = result;
+                D_01E4F334 = result;
                 D_01E4F278.step++;
             }
         }
@@ -1540,7 +1542,7 @@ static int Mc_StepRead(void) {
         D_01E4F278.step++;
         break;
     case 5:
-        if (sceMcRead(D_01E4F334.file_fd, D_01E4F338, 0x400) != 0) {
+        if (sceMcRead(D_01E4F334, D_01E4F338, 0x400) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.step = 100;
                 break;
@@ -1562,13 +1564,13 @@ static int Mc_StepRead(void) {
                 D_01E4F278.step--;
             } else {
                 D_01E4F278.retries = 0;
-                if ((u32)D_01E4F278.size < D_01E4F274[0] + result) { // match: looks inverted: the clipped copy goes back to read again, the other goes on to close
-                    result = D_01E4F278.size - D_01E4F274[0];
-                    memcpy(D_01E4F278.read_buffer + D_01E4F274[0], D_01E4F338, result);
+                if ((u32)D_01E4F278.size < D_01E4F274 + result) { // match: looks inverted: the clipped copy goes back to read again, the other goes on to close
+                    result = D_01E4F278.size - D_01E4F274;
+                    memcpy(D_01E4F278.read_buffer + D_01E4F274, D_01E4F338, result);
                     D_01E4F278.step--;
                 } else {
-                    memcpy(D_01E4F278.read_buffer + D_01E4F274[0], D_01E4F338, result);
-                    D_01E4F274[0] += result;
+                    memcpy(D_01E4F278.read_buffer + D_01E4F274, D_01E4F338, result);
+                    D_01E4F274 += result;
                     D_01E4F278.step++;
                 }
             }
@@ -1579,7 +1581,7 @@ static int Mc_StepRead(void) {
         D_01E4F278.step++;
         break;
     case 8:
-        if (sceMcClose(D_01E4F334.file_fd) != 0) {
+        if (sceMcClose(D_01E4F334) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.request = MC_REQUEST_NONE;
                 D_01E4F278.status = MC_STATUS_READ_FAILED;
@@ -1607,7 +1609,7 @@ static int Mc_StepRead(void) {
         }
         break;
     case 100:
-        if (D_01E4F334.file_fd < 0) {
+        if (D_01E4F334 < 0) {
             D_01E4F278.status = MC_STATUS_READ_FAILED;
             D_01E4F278.request = MC_REQUEST_NONE;
             return D_01E4F278.info_step;
@@ -1616,7 +1618,7 @@ static int Mc_StepRead(void) {
         D_01E4F278.step++;
         break;
     case 101:
-        if (sceMcClose(D_01E4F334.file_fd) != 0) {
+        if (sceMcClose(D_01E4F334) != 0) {
             if (D_01E4F278.retries == 2) {
                 D_01E4F278.request = MC_REQUEST_NONE;
                 D_01E4F278.status = MC_STATUS_READ_FAILED;
@@ -2212,12 +2214,12 @@ int Mc_GetCardType(int port, int slot) {
 
 /* How many entries the last directory request found. */
 s32 Mc_GetDirCount(void) {
-    return D_01E4F30C[0];
+    return D_01E4F278.dir_count;
 }
 
 /* The status of the last request. */
 s32 Mc_GetStatus(void) {
-    return D_01E4F310[0];
+    return D_01E4F278.status;
 }
 
 /* Returns clusters when the card has that many free (less two), -1 when it is full and -2 when it has too few;

@@ -2,10 +2,12 @@
    day. Nothing calls either function. */
 #include "kf_game.h"
 
-extern GameClock D_00431CE8;
 extern ClockControl D_00432820;
 extern u32 D_00446ED4;              /* the frame counter */
 extern int D_00446EF0;
+
+GameClock D_00431CE8 = { 0 };       /* 0x431CE8 the game clock */
+u32 D_00431CF8[0x13E] = { 0 };      /* 0x431CF8 zero fill up to the map slot memory */
 
 /* The game clock's tick count. */
 static inline u32 Clock_GetTicks(void) {

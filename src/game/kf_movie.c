@@ -36,23 +36,25 @@ int sceRead(int, void *, int);
 int sceLseek(int, int, int);
 int sceClose(int);
 
-extern s32 D_00437820[];                    /* nonzero: the movie has a sound stream */
-extern volatile s32 D_00437824[];           /* the vblank handler shows pictures (Movie_StartDisplay) */
-extern volatile s32 D_00437828[];           /* vblanks counted while it does */
-extern volatile s32 D_0043782C[];           /* a picture was shown completely: Movie_GifDmaHandler drops it */
-extern volatile s32 D_00437830[];           /* field that starts, from GS CSR */
-extern volatile s32 D_00437834[];           /* nonzero: path 3 still busy */
-extern MovieOutBuffer D_00437838;
-extern MovieThreadState D_00437850;
-extern MovieFile D_0043789C;                /* D_00437850.file */
-extern MovieDisplay D_004378D0;             /* D_00437850.display */
-extern MovieVideoDecoder D_00437938;
-extern MovieStreamBuffer D_00437980;        /* D_00437938.stream */
-extern MovieAudio D_004379F0;
-extern s32 D_00437A4C[];                    /* vblanks with no picture ready */
-extern char D_01E4F7C0[];                   /* 0x800 zero bytes for the IOP */
-extern u32 D_01E4FFC0[];                    /* GS packet of Movie_InitDisplay */
-extern u32 D_01E50100[];                    /* GS packet of MovieDisplay_Clear */
+/* The movie player's .data: the flags the vblank handler shares, the picture ring and the decoder state. */
+#define MOVIE_DATA4 __attribute__((section(".data"), aligned(4)))
+
+s32 D_00437820 MOVIE_DATA4 = { 1 };         /* 0x437820 nonzero: the movie has a sound stream */
+volatile s32 D_00437824 MOVIE_DATA4 = { 0 }; /* 0x437824 the vblank handler shows pictures (Movie_StartDisplay) */
+volatile s32 D_00437828 MOVIE_DATA4 = { 0 }; /* 0x437828 vblanks counted while it does */
+volatile s32 D_0043782C MOVIE_DATA4 = { 0 }; /* 0x43782C a picture was shown completely: Movie_GifDmaHandler drops it */
+volatile s32 D_00437830 MOVIE_DATA4 = { 0 }; /* 0x437830 field that starts, from GS CSR */
+volatile s32 D_00437834 MOVIE_DATA4 = { 0 }; /* 0x437834 nonzero: path 3 still busy */
+MovieOutBuffer D_00437838 = { 0 };          /* 0x437838 the ring of decoded pictures */
+MovieThreadState D_00437850 = { 0 };        /* 0x437850 the thread state, the heap and the file and display in it */
+u32 D_00437930[2] MOVIE_DATA4 = { 0 };      /* 0x437930 zero fill */
+MovieVideoDecoder D_00437938 = { 0 };       /* 0x437938 the video decoder and its stream in it */
+MovieAudio D_004379F0 = { 0 };              /* 0x4379F0 the sound decoder */
+s32 D_00437A4C MOVIE_DATA4 = { 0 };         /* 0x437A4C vblanks with no picture ready */
+
+static char D_01E4F7C0[0x800];               /* 0x1E4F7C0 0x800 zero bytes for the IOP */
+static u32 D_01E4FFC0[0x50];                /* 0x1E4FFC0 GS packet of Movie_InitDisplay */
+static u32 D_01E50100[0x70];                /* 0x1E50100 GS packet of MovieDisplay_Clear */
 extern char _gp[];
 
 /* an object of 8 bytes or less kept in .rodata, as the game keeps them, not in .sdata */
@@ -299,7 +301,7 @@ static int Movie_PlayLoop(MovieVideoDecoder *decoder, MovieReadBuffer *read_buff
         }
         if (!is_started && MovieOut_IsFull(&D_00437838) && Movie_IsAudioReady()) {
             Movie_StartDisplay(1);
-            if (D_00437820[0] != 0) {
+            if (D_00437820 != 0) {
                 MovieAudio_Start(&D_004379F0);
             }
             is_started = TRUE;
@@ -312,7 +314,7 @@ static int Movie_PlayLoop(MovieVideoDecoder *decoder, MovieReadBuffer *read_buff
         Movie_Yield();
     }
     Movie_StopDisplay();
-    if (D_00437820[0] != 0) {
+    if (D_00437820 != 0) {
         MovieAudio_Reset(&D_004379F0);
     }
     return TRUE;
@@ -325,7 +327,7 @@ static void Movie_Yield(void) {
 
 /* TRUE when enough sound is buffered to start, or the movie has no sound (isAudioOK). */
 static int Movie_IsAudioReady(void) {
-    return (D_00437820[0] != 0) ? MovieAudio_IsPreset(&D_004379F0) : TRUE;
+    return (D_00437820 != 0) ? MovieAudio_IsPreset(&D_004379F0) : TRUE;
 }
 
 /* Sets up everything a movie needs: the DMA controller, the read ring, the video and sound decoders and their
@@ -342,15 +344,15 @@ static void Movie_Setup(char *path) {
                     0x80, D_00437850.time_stamps, 0x280);
     MovieAudio_Init(&D_004379F0, D_00437850.audio_data, 0xC000, 0x6000);
     MovieVideo_SetStream(&D_00437938, 0, 0, (sceMpegCallback)Movie_VideoCallback, MOVIE_READ_BUFFER(&D_00437850));
-    if (D_00437820[0] != 0) {
+    if (D_00437820 != 0) {
         MovieVideo_SetStream(&D_00437938, 2, 0, (sceMpegCallback)Movie_AudioCallback,
                              MOVIE_READ_BUFFER(&D_00437850));
     }
     MovieOut_Init(&D_00437838, (MovieOutPicture *)(((u32)D_00437850.out_pictures & 0x0FFFFFFF) | 0x20000000),
                   D_00437850.out_tags, 5);
     for (i = 0; i < D_00437838.size; i++) {
-        MovieDisplay_BuildFieldPackets(&D_004378D0, (u32)&D_00437838.tag[i] + 0x40, (u32)&D_00437838.data[i], 0);
-        MovieDisplay_BuildFieldPackets(&D_004378D0, (u32)&D_00437838.tag[i] + 0x1AB40, (u32)&D_00437838.data[i],
+        MovieDisplay_BuildFieldPackets(&D_00437850.display, (u32)&D_00437838.tag[i] + 0x40, (u32)&D_00437838.data[i], 0);
+        MovieDisplay_BuildFieldPackets(&D_00437850.display, (u32)&D_00437838.tag[i] + 0x1AB40, (u32)&D_00437838.data[i],
                                        1);
     }
     thread_param.entry = Movie_IdleThread;
@@ -369,7 +371,7 @@ static void Movie_Setup(char *path) {
     thread_param.option = 0;
     D_00437850.decode_thread = CreateThread(&thread_param);
     StartThread(D_00437850.decode_thread, &D_00437938);
-    while (!MovieFile_Open(&D_0043789C, path)) {
+    while (!MovieFile_Open(&D_00437850.file, path)) {
         printf("Can't Open file %s\n", path);
     }
     D_00437938.intc_handler = AddIntcHandler(2, Movie_VblankHandler, 0);
@@ -1368,7 +1370,7 @@ static int MovieVideo_PutStamp(MovieVideoDecoder *decoder, s64 pts, s64 dts, u8 
     stamp.dts = dts;
     stamp.pos = start - decoder->stream.data;
     stamp.len = len;
-    return MovieStream_PutStamp(&D_00437980, &stamp); // match: the global buffer, not the decoder's own (the same one)
+    return MovieStream_PutStamp(&D_00437938.stream, &stamp); // match: the global buffer, not the decoder's own (the same one)
 }
 
 /* Bytes of stream data the decoder has not consumed yet (videoDecInputCount). */
@@ -1465,19 +1467,19 @@ static int Movie_OnMpegError(sceMpeg *mpeg, void *callback_data, void *user_data
 static int Movie_OnMpegNoData(sceMpeg *mpeg, void *callback_data, void *user_data) {
     Movie_PumpAudio();
     Movie_Yield();
-    MovieStream_AddDma(&D_00437980);
+    MovieStream_AddDma(&D_00437938.stream);
     return 1;
 }
 
 /* libmpeg callback 2: stop the stream DMA (mpegStopDMA). */
 static int Movie_OnMpegStopDma(sceMpeg *mpeg, void *callback_data, void *user_data) {
-    MovieStream_StopDma(&D_00437980);
+    MovieStream_StopDma(&D_00437938.stream);
     return 1;
 }
 
 /* libmpeg callback 3: restart the stream DMA (mpegRestartDMA). */
 static int Movie_OnMpegRestartDma(sceMpeg *mpeg, void *callback_data, void *user_data) {
-    MovieStream_RestartDma(&D_00437980);
+    MovieStream_RestartDma(&D_00437938.stream);
     return 1;
 }
 
@@ -1491,7 +1493,7 @@ static int Movie_OnMpegBackground(sceMpeg *mpeg, void *callback_data, void *user
 static int Movie_OnMpegTimeStamp(sceMpeg *mpeg, MovieStampCallbackData *callback_data, void *user_data) {
     MovieTimeStamp stamp;
 
-    MovieStream_GetStamp(&D_00437980, &stamp);
+    MovieStream_GetStamp(&D_00437938.stream, &stamp);
     callback_data->pts = stamp.pts;
     callback_data->dts = stamp.dts;
     return 1;
@@ -1597,11 +1599,11 @@ static void MovieDisplay_Init(MovieDisplay *display, s32 screen_x, s32 screen_y,
     s32 packet_start;
     s32 packet;
 
-    D_00437824[0] = 0;
-    D_00437828[0] = 0;
-    D_0043782C[0] = 0;
-    D_00437830[0] = 0;
-    D_00437834[0] = 0;
+    D_00437824 = 0;
+    D_00437828 = 0;
+    D_0043782C = 0;
+    D_00437830 = 0;
+    D_00437834 = 0;
     display->screen_x = screen_x;
     display->width = width;
     display->frame_base[1] = (buffer_width * 64 * ROUND_UP(field_height, 32)) >> 11;
@@ -1909,27 +1911,27 @@ static int Movie_VblankHandler(int cause) {
     MovieOutTag *tag;
     s32 unused[4]; // match: retail keeps 0x10 bytes of stack it never touches
 
-    D_00437830[0] = (*GS_CSR >> 13) & 1;
-    if (D_00437824[0] != 0) {
-        D_00437828[0]++;
-        D_00437834[0] = sceGsSyncPath(1, 0);
-        if (D_00437834[0] == 0) {
+    D_00437830 = (*GS_CSR >> 13) & 1;
+    if (D_00437824 != 0) {
+        D_00437828++;
+        D_00437834 = sceGsSyncPath(1, 0);
+        if (D_00437834 == 0) {
             tag = MovieOut_GetOldestTag(&D_00437838);
             if (tag == NULL) {
-                D_00437A4C[0]++;
+                D_00437A4C++;
                 __asm__ volatile("sync");
                 __asm__ volatile("ei");
                 return 0;
             }
-            if (D_00437830[0] == 0 && tag->status == MOVIE_OUT_STATUS_FULL) {
-                MovieDisplay_ShowField(&D_004378D0, 1);
+            if (D_00437830 == 0 && tag->status == MOVIE_OUT_STATUS_FULL) {
+                MovieDisplay_ShowField(&D_00437850.display, 1);
                 Movie_SendGifChain((u32)tag->field_packets[0]);
                 tag->status = MOVIE_OUT_STATUS_SHOWN_EVEN;
-            } else if (D_00437830[0] != 0 && tag->status == MOVIE_OUT_STATUS_SHOWN_EVEN) {
-                MovieDisplay_ShowField(&D_004378D0, 0);
+            } else if (D_00437830 != 0 && tag->status == MOVIE_OUT_STATUS_SHOWN_EVEN) {
+                MovieDisplay_ShowField(&D_00437850.display, 0);
                 Movie_SendGifChain((u32)tag->field_packets[1]);
                 tag->status = MOVIE_OUT_STATUS_EMPTY;
-                D_0043782C[0] = 1;
+                D_0043782C = 1;
             }
         }
     }
@@ -1940,9 +1942,9 @@ static int Movie_VblankHandler(int cause) {
 
 /* GIF DMA end handler: once a picture has been shown on both fields, drops it from the ring. */
 static int Movie_GifDmaHandler(void) {
-    if (D_00437824[0] != 0 && D_0043782C[0] != 0) {
+    if (D_00437824 != 0 && D_0043782C != 0) {
         MovieOut_DropOldest(&D_00437838);
-        D_0043782C[0] = 0;
+        D_0043782C = 0;
     }
     __asm__ volatile("sync");
     __asm__ volatile("ei");
@@ -1954,15 +1956,15 @@ static int Movie_GifDmaHandler(void) {
 static void Movie_StartDisplay(s32 field) {
     while (sceGsSyncV(0) == field) {
     }
-    D_00437A4C[0] = 0;
-    D_00437824[0] = 1;
-    D_00437828[0] = 0;
+    D_00437A4C = 0;
+    D_00437824 = 1;
+    D_00437828 = 0;
 }
 
 /* Turns the vblank handler's showing off (endDisplay). */
 static void Movie_StopDisplay(void) {
-    D_00437824[0] = 0;
-    D_00437A4C[0] = 0;
+    D_00437824 = 0;
+    D_00437A4C = 0;
 }
 
 /* the short strings of the file functions: the game keeps them with the others in .rodata, where a literal of 8
