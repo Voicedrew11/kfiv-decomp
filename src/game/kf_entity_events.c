@@ -17,8 +17,8 @@ void Vector_Copy(void *, void *);
 int func_001B4F30(u16, void *, void *, void *, void *);
 extern char *D_004467C0;
 extern PlayerState D_00413F80;
-// match: func_001A0CD0.c has not been given its real arguments yet
-void func_001A0CD0(float, int, int, char, float, float);
+// match: Sound_PlayFalloff.c has not been given its real arguments yet
+void Sound_PlayFalloff(float, int, int, char, float, float);
 extern EntitySpawnInfo *D_004467D0[2];
 extern MapSlot D_0038CD20[];
 extern int D_00446770;
@@ -256,7 +256,7 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
     }
 }
 
-/* Passes to func_001A0CD0 what animation `animation` lists for the frames from `frame_from` up to `frame_to`
+/* Passes to Sound_PlayFalloff what animation `animation` lists for the frames from `frame_from` up to `frame_to`
    (both in 1/256 frames), with where the entity is as seen from the player. */
 void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s32 frame_to) {
     EntityParamsUnk1B0 *record;
@@ -286,12 +286,12 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
             if (entity->unk2A != 0 && record->unk04 != 0) {
                 continue;
             }
-            func_001A0CD0(entity->params->unk42E, record->unk00, record->unk01, entity->unkD2, entity->unk60, angle);
+            Sound_PlayFalloff(entity->params->unk42E, record->unk00, record->unk01, entity->unkD2, entity->unk60, angle);
         }
     }
 }
 
-/* Passes a cue to func_001A0CD0 with where the entity is as seen from the player; not while the unk2A timer
+/* Passes a cue to Sound_PlayFalloff with where the entity is as seen from the player; not while the unk2A timer
    runs if `skip_if_unk2A` is set. */
 void EntityEvent_StartCue(Entity *entity, s32 unknown1, s32 unknown2, s32 skip_if_unk2A) {
     f32 angle;
@@ -306,7 +306,7 @@ void EntityEvent_StartCue(Entity *entity, s32 unknown1, s32 unknown2, s32 skip_i
     if (entity->unk2A != 0 && skip_if_unk2A != 0) {
         return;
     }
-    func_001A0CD0(entity->params->unk42E, (u8)unknown1, (u8)unknown2, entity->unkD2, entity->unk60, angle);
+    Sound_PlayFalloff(entity->params->unk42E, (u8)unknown1, (u8)unknown2, entity->unkD2, entity->unk60, angle);
 }
 
 /* As EntityEvent_StartCue, without the unk2A test. */
@@ -322,7 +322,7 @@ void EntityEvent_StartCueAlways(Entity *entity, s32 unknown1, s32 unknown2) {
     } else if (wrapped < -3.1415927f) {
         wrapped += 6.2831855f;
     }
-    func_001A0CD0(entity->params->unk42E, (u8)unknown1, (u8)unknown2, entity->unkD2, entity->unk60, wrapped);
+    Sound_PlayFalloff(entity->params->unk42E, (u8)unknown1, (u8)unknown2, entity->unkD2, entity->unk60, wrapped);
 }
 
 /* Puts the entity back at its spawn point (Entity_ResetToSpawn), sets flag bits 1 and 8 and clears bits 2-3,

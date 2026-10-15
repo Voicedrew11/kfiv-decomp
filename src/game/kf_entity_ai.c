@@ -325,7 +325,7 @@ int EntityAi_LookAtPoint(Entity *entity, int angles, int mode, int target, int l
 }
 
 /* As EntityAi_LookAtPoint, at the player's position 220 above his feet. */
-int func_00196120(Entity *entity, void *target, s32 mode, void *out, f32 range) {
+int EntityAi_LookAtPlayer(Entity *entity, void *target, s32 mode, void *out, f32 range) {
     f32 position[4];
     int result;
 

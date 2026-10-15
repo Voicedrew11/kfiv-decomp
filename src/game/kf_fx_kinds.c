@@ -66,8 +66,8 @@ extern u8 D_0034AFD6[];
 void Sound_PlaySw(int mode);
 extern u32 D_00402D50[14];
 
-void EffectLob_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectLob_Update(EffectActor *actor);
+void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot);
+void EffectImpactLob_Update(EffectActor *actor);
 void EffectGroundFan_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectGroundFan_Update(EffectActor *actor);
 void EffectLevelHeight_Start(EffectActor *actor, EffectSlot *spawn_slot);
@@ -112,15 +112,15 @@ void EffectTiltFall_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectTiltFall_Update(EffectActor *effect);
 void EffectFloorDelay_Start(EffectActor *actor, EffectSlot *spawn_slot);
 void EffectFloorDelay_Update(EffectActor *effect);
-void EffectFan_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectFan_Update(EffectActor *effect);
+void EffectTurnFan_Start(EffectActor *effect, EffectSlot *spawn_slot);
+void EffectTurnFan_Update(EffectActor *effect);
 void EffectDelayedShot_Start(EffectActor *actor, EffectSlot *spawn_slot);
 void EffectDelayedShot_Update(EffectActor *effect);
 void EffectLevelFan_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectLevelFan_Update(EffectActor *effect);
-void EffectBeam_Start(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectBeam_StartAtPlayer(EffectActor *effect, EffectSlot *spawn_slot);
-void EffectBeam_Update(EffectActor *effect);
+void EffectRay_Start(EffectActor *effect, EffectSlot *spawn_slot);
+void EffectRay_StartAtPlayer(EffectActor *effect, EffectSlot *spawn_slot);
+void EffectRay_Update(EffectActor *effect);
 void EffectBeamStretch_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectBeamStretch_Update(EffectActor *effect);
 void EffectWobble_Start(EffectActor *effect, EffectSlot *spawn_slot);
@@ -133,8 +133,8 @@ void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectSurroundPlayer_Update(EffectActor *effect);
 void EffectChain_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectChain_Update(EffectActor *effect);
-void EffectOnFloor_Start(EffectActor *actor, EffectSlot *spawn_slot);
-void EffectOnFloor_Update(EffectActor *effect);
+void EffectOwnerFloor_Start(EffectActor *actor, EffectSlot *spawn_slot);
+void EffectOwnerFloor_Update(EffectActor *effect);
 void EffectLaunchFromOwner_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectLaunchFromOwner_Update(EffectActor *effect);
 void EffectBowDraw_Start(EffectActor *effect, EffectSlot *spawn_slot);
@@ -234,7 +234,7 @@ void EffectSweep_Update(EffectActor *effect) {
 /* Kind 34 start: launches along the heading, takes the frame it reaches what lies ahead and the kind of
    surface there (func_001B0208), and spawns def->unkF0 unless a kind-34 effect younger than def->interval
    frames already did. */
-void EffectLob_Start(EffectActor *actor, EffectSlot *spawn_slot) {
+void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     FallingMotion *motion;
     EffectActor *slot;
     int i;
@@ -266,7 +266,7 @@ void EffectLob_Start(EffectActor *actor, EffectSlot *spawn_slot) {
 
 /* Kind 34 update: falls under def->gravity; past the impact frame spawns effect 0x15 on surface kinds 3 and
    5 and ends; checks for hits. */
-void EffectLob_Update(EffectActor *actor) {
+void EffectImpactLob_Update(EffectActor *actor) {
     FallingMotion *motion;
     EffectKeys_ApplyScale(actor);
     motion = (FallingMotion *)&actor->motion;
@@ -1176,7 +1176,7 @@ void EffectFloorDelay_Update(EffectActor *effect) {
 
 /* Kind 61 start: turns the heading by def->unkDC for each kind-61 effect started before it this frame,
    launches along it and lowers velocity.y by def->radius_half. */
-void EffectFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
+void EffectTurnFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     SpinBurstMotion *motion;
     Vector4 angles;
     f32 heading;
@@ -1205,7 +1205,7 @@ void EffectFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 
 /* Kind 61 update: moves, its x and z growing by def->scale_per_frame, until def->max_frames; checks for hits
    after frame def->unkF0. Resets the fan count for the next frame. */
-void EffectFan_Update(EffectActor *effect) {
+void EffectTurnFan_Update(EffectActor *effect) {
     Vector4 velocity;
     EffectMotion *motion = &effect->motion;
     EffectDef *def;
@@ -1317,7 +1317,7 @@ void EffectLevelFan_Update(EffectActor *effect) {
 
 /* Kind 74 start: sweeps 1000 along the heading and keeps the hit point (or the end) and its distance; steps
    of 100 along the heading. */
-void EffectBeam_Start(EffectActor *effect, EffectSlot *spawn_slot) {
+void EffectRay_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     TargetDistanceMotion *motion = (TargetDistanceMotion *)&effect->motion;
     Vector4 offset;
 
@@ -1337,7 +1337,7 @@ void EffectBeam_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 
 /* Kind 64 start: sweeps toward the player and keeps the hit point (or 180 above the player) and its
    distance; turned toward it, steps of 100. */
-void EffectBeam_StartAtPlayer(EffectActor *effect, EffectSlot *spawn_slot) {
+void EffectRay_StartAtPlayer(EffectActor *effect, EffectSlot *spawn_slot) {
     TargetDistanceMotion *motion = (TargetDistanceMotion *)&effect->motion;
     Vector4 offset;
 
@@ -1360,7 +1360,7 @@ void EffectBeam_StartAtPlayer(EffectActor *effect, EffectSlot *spawn_slot) {
 
 /* Kinds 64 and 74 update: at frame def->radius_half steps along the beam, one step per 100 of its length,
    with a hit check at each; runs no keys. */
-void EffectBeam_Update(EffectActor *effect) {
+void EffectRay_Update(EffectActor *effect) {
     ScalerMotion *motion = (ScalerMotion *)&effect->motion;
     s32 i;
     s32 steps;
@@ -1653,7 +1653,7 @@ void EffectChain_Update(EffectActor *effect) {
 
 /* Kind 77 start: lifted by the owner's height, looks for a floor (the other strips, func_001C1138) within
    that reach and sits on it; marks it when there is none. */
-void EffectOnFloor_Start(EffectActor *actor, EffectSlot *spawn_slot) {
+void EffectOwnerFloor_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     GroundedMotion *motion;
     Entity *target;
 
@@ -1672,7 +1672,7 @@ void EffectOnFloor_Start(EffectActor *actor, EffectSlot *spawn_slot) {
 }
 
 /* Kind 77 update: ends when no floor was found, else runs its keys. */
-void EffectOnFloor_Update(EffectActor *effect) {
+void EffectOwnerFloor_Update(EffectActor *effect) {
     if (*(s8 *)&effect->motion != 0) { // match: velocity.x's first byte is read as a signed byte
         return Effect_Free(effect);
     }

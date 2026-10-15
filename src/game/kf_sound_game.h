@@ -164,7 +164,7 @@ int func_001A0B70(SoundJob *job);
    else 1 */
 int func_001A0C18(int args_addr, int index, int voice_out);
 /* Plays sound from bank with the falloff player kind of D_0043EE30 */
-void func_001A0CD0(int sound, int kind, int bank);
+void Sound_PlayFalloff(int sound, int kind, int bank);
 /* Map bank load step: moves on */
 s32 func_001A0D08(void);
 /* Map bank load step: waits for a pending cue change, then hands the job's spec to the driver

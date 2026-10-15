@@ -12,12 +12,12 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
 extern s32 D_003E6E40[][2];
-int EntityAi_StepSlotMotion(void *, void *, int);
+int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
 s32 Motion_StepSlot(Entity *, EntityUnkE0SlotBits *, s32, s32);
 void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 int EntityAi_LookAtPoint(void *, int, int, int, int, float);
-int func_00196120(Entity *, void *, s32, void *, f32);
+int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *entity, void (*callback)(void), int run);
 void EntityAi_SetState(char *, u8);
@@ -164,7 +164,7 @@ static void Salamander_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit9 && entity->target != NULL) {
         EntityAi_LookAtPoint(entity, (int)unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, (int)entity->target, (int)limits, 12.0f);
     } else {
-        func_00196120(entity, unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, NULL, 8.0f);
+        EntityAi_LookAtPlayer(entity, unkE0->unk20, ENTITY_FLAG_BITS(entity)->bit9, NULL, 8.0f);
     }
 }
 

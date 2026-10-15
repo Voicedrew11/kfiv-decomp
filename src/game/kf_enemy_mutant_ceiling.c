@@ -42,7 +42,7 @@ int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
-int func_00196120(Entity *, void *, s32, void *, f32);
+int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 
 static void MutantCeiling_Think(Entity *entity, s32 unknown);
 static void MutantCeiling_ThinkCombat(Entity *entity, s32 unknown);
@@ -359,9 +359,9 @@ static void MutantCeiling_Animate(Entity *entity) {
         limits[2] = -params->unk432 * 0.017453292f;
         look_at_target = (s32)(entity->flags >> 9) & 1;
         if (look_at_target == 1) {
-            func_00196120(entity, unkE0->unk20, look_at_target, limits, 12.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->unk20, look_at_target, limits, 12.0f);
         } else {
-            func_00196120(entity, unkE0->unk20, 0, NULL, 8.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->unk20, 0, NULL, 8.0f);
         }
     }
 }

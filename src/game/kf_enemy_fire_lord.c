@@ -21,7 +21,7 @@ extern s32 D_003E6E40[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
-int func_00196120(Entity *, void *, s32, void *, f32);
+int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 extern u32 D_00446ED4;
 extern PlayerData D_00413F80;
 void EntityAi_SensePlayer(void *, int);
@@ -142,9 +142,9 @@ static void FireLord_Animate(Entity *entity) {
         limits[3] = entity->params->unk432 * 0.017453292f;
         limits[2] = -entity->params->unk432 * 0.017453292f;
         if (look_at_target) {
-            func_00196120(entity, unkE0->unk20, look_at_target, limits, 12.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->unk20, look_at_target, limits, 12.0f);
         } else {
-            func_00196120(entity, unkE0->unk20, 0, NULL, 8.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->unk20, 0, NULL, 8.0f);
         }
     }
 }

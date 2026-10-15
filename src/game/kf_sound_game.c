@@ -114,7 +114,7 @@ extern int D_00446864;
 extern int (*D_0043ED88[])(void);
 extern SoundJob D_004FF4D8;
 extern SoundStartSpec D_004FF4C0;
-/* the falloff players func_001A0CD0 picks from (the Sfx and Map ones take no bank) */
+/* the falloff players Sound_PlayFalloff picks from (the Sfx and Map ones take no bank) */
 extern int (*D_0043EE30[])(int, int); // match: an int result, though the players are void
 extern int D_00446868;
 extern SoundScriptState D_0043EE78;
@@ -1960,7 +1960,7 @@ int func_001A0C18(int args_addr, int index, int voice_out) {
 /* Plays sound from bank with the falloff player kind of D_0043EE30 while distance is within range, panned by
    angle (EntityEvent_StartCueAlways calls it for the sounds of an entity's animation). Range, distance and angle pass through in
    $f12..$f14; match: declared without them, which keeps the registers retail uses. */
-void func_001A0CD0(int sound, int kind, int bank) {
+void Sound_PlayFalloff(int sound, int kind, int bank) {
     D_0043EE30[kind & 0xFF](sound & 0xFF, bank);
 }
 

@@ -12,7 +12,7 @@ void EntityAi_SetUpdate(char *, s32);
 int EntityAi_StartAction(Entity *entity, void (*handler)(Entity *), int run_now);
 void Vector_Copy(void *, void *);
 extern s32 D_003E6E40[][2];
-int func_00196120(Entity *, void *, s32, void *, f32);
+int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 extern EntityGroupRecord D_0034B6D0[];
 int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now);
 void EntityAi_SetState(char *, u8);
@@ -129,9 +129,9 @@ static void Npc_Animate(Entity *entity) {
         limits[3] = entity->params->unk432 * 0.017453292f;
         limits[2] = -entity->params->unk432 * 0.017453292f;
         if (look_at_target) {
-            func_00196120(entity, unkE0->unk20, look_at_target, limits, ENTITY_CONTROLLER(entity)->unk434);
+            EntityAi_LookAtPlayer(entity, unkE0->unk20, look_at_target, limits, ENTITY_CONTROLLER(entity)->unk434);
         } else {
-            func_00196120(entity, unkE0->unk20, 0, NULL, entity->params->unk436);
+            EntityAi_LookAtPlayer(entity, unkE0->unk20, 0, NULL, entity->params->unk436);
         }
     }
 }

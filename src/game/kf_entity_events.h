@@ -19,10 +19,10 @@ void EntityEvent_StartEffectAtPoint(char **entity, int effect_id, u32 point_id, 
 /* Starts the effects animation `animation` lists for the frames in [frame_from, frame_to). */
 void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from, s32 frame_to);
 
-/* Passes to func_001A0CD0 what animation `animation` lists for the frames in [frame_from, frame_to). */
+/* Passes to Sound_PlayFalloff what animation `animation` lists for the frames in [frame_from, frame_to). */
 void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s32 frame_to);
 
-/* Passes a cue to func_001A0CD0 with where the entity is as seen from the player. */
+/* Passes a cue to Sound_PlayFalloff with where the entity is as seen from the player. */
 void EntityEvent_StartCue(Entity *entity, s32 unknown1, s32 unknown2, s32 skip_if_unk2A);
 
 /* EntityEvent_StartCue without the unk2A test. */

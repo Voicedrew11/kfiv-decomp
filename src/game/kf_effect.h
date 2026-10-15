@@ -87,7 +87,7 @@ typedef struct {
     char pad12[0x1E];
 } ProjectileMotion;
 
-/* EffectMotion as EffectLob_Update uses it: falls under gravity */
+/* EffectMotion as EffectImpactLob_Update uses it: falls under gravity */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     int mode;                       /* 0x10 3 or 5: spawn effect 0x15 on landing */
@@ -104,7 +104,7 @@ typedef struct {
     char unk18[0x18];               /* 0x18 passed by address */
 } EmitterMotion;
 
-/* EffectMotion as EffectBeam_Update, EffectFan_Start and others use it: scales its model */
+/* EffectMotion as EffectBeam_Update, EffectRay_Update and EffectBeamStretch_Update use it: scales its model */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     char pad10[0x10];
@@ -481,7 +481,7 @@ typedef struct {
     char pad04[0x1C];
 } SpawnCountMotion;
 
-/* EffectMotion as EffectFan_Start uses it */
+/* EffectMotion as EffectTurnFan_Start uses it */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     int start_frame;                /* 0x10 */
@@ -505,7 +505,7 @@ typedef struct {
     char unk14[0x1C];               /* 0x14 passed by address */
 } GrowingMotion;
 
-/* EffectMotion as EffectBeam_Start and EffectBeam_StartAtPlayer use it: a float at 0x20 holding the distance to the target */
+/* EffectMotion as EffectRay_Start and EffectRay_StartAtPlayer use it: a float at 0x20 holding the distance to the target */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
     Vector4 unk10;                  /* 0x10 */
@@ -719,9 +719,9 @@ typedef struct {
     char pad08[0x28];
 } FadingMotion;
 
-/* EffectMotion as EffectOnFloor_Start uses it: a flag byte at the very start */
+/* EffectMotion as EffectOwnerFloor_Start uses it: a flag byte at the very start */
 typedef struct {
-    u8 no_floor;                    /* 0x00 set when EffectOnFloor_Start finds no floor */
+    u8 no_floor;                    /* 0x00 set when EffectOwnerFloor_Start finds no floor */
     char pad01[0x2F];
 } GroundedMotion;
 

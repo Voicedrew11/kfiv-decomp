@@ -18,7 +18,7 @@ int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPoint(void *, int, int, int, int, float);
-int func_00196120(Entity *, void *, s32, void *, f32);
+int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 int Motion_Start(void *, int, int, u32, int);
 extern PlayerData D_00413F80;
 
@@ -98,7 +98,7 @@ static void EyePedestal_Animate(Entity *entity) {
         if (look_at_target) {
             EntityAi_LookAtPoint(entity, (s32)unkE0->unk20, look_at_target, (s32)point, (s32)limits, (f32)(s16)params->unk434);
         } else {
-            func_00196120(entity, unkE0->unk20, 0, NULL, 8.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->unk20, 0, NULL, 8.0f);
         }
     }
 }

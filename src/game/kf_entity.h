@@ -417,10 +417,10 @@ typedef struct {
     s8 unk05;                       /* 0x05 not 0: EntityParams.unk440 picks what to start */
 } EntityParamsUnk130;
 
-/* what EntityParams.unk1B0[n] leads to: something func_001A0CD0 starts on an animation frame */
+/* what EntityParams.unk1B0[n] leads to: something Sound_PlayFalloff starts on an animation frame */
 typedef struct {
-    u8 unk00;                       /* 0x00 passed to func_001A0CD0 */
-    u8 unk01;                       /* 0x01 passed to func_001A0CD0 */
+    u8 unk00;                       /* 0x00 passed to Sound_PlayFalloff */
+    u8 unk01;                       /* 0x01 passed to Sound_PlayFalloff */
     u16 unk02;                      /* 0x02 the animation frame */
     u8 unk04;                       /* 0x04 not 0: left out while Entity.unk2A is set */
     char pad05[0x03];

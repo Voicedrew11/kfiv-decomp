@@ -52,7 +52,7 @@ void EntityAi_SpawnBoneEffect(char **model, int effect_id, int point);
    set; FALSE without it */
 int EntityAi_LookAtPoint(Entity *entity, int angles, int mode, int target, int limits, float rate);
 /* As EntityAi_LookAtPoint, at the player's position 220 above his feet */
-int func_00196120(Entity *entity, void *target, s32 mode, void *out, f32 range);
+int EntityAi_LookAtPlayer(Entity *entity, void *target, s32 mode, void *out, f32 range);
 /* Once the model is below y 10000 (fallen out of the map): frees its effects, clears flag bit 1 and returns
    1; else 0 */
 s32 EntityAi_RemoveIfFallen(Entity *entity);
