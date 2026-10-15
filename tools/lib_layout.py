@@ -303,10 +303,19 @@ def layout(objdir):
         _, size, align, data = o.secs[sec]
         rbase, rdata = retail[sec]
         m = o.mask(sec)
+        named = [(v, n) for s, v, n in o.datasyms if s == sec and n in syms[0]]
         hits, start = [], 0
         probe = data[:4] if m and m[0] == 0xFFFFFFFF else None
+        # a named symbol leaves one candidate (all-zero data has no probe word)
+        fixed = sorted({syms[0][n] - v - rbase for v, n in named})
         while True:
-            if probe is not None:
+            if named:
+                if not fixed:
+                    break
+                i = fixed.pop(0)
+                if i < 0:
+                    continue
+            elif probe is not None:
                 i = rdata.find(probe, start)
             else:
                 i = start if start + size <= len(rdata) else -1
@@ -320,7 +329,6 @@ def layout(objdir):
                      & m[k] == 0 for k in range(size // 4))
             if ok and seg[size // 4 * 4:] == data[size // 4 * 4:]:
                 hits.append(rbase + i)
-        named = [(v, n) for s, v, n in o.datasyms if s == sec and n in syms[0]]
         if named:
             hits = [h for h in hits if all(syms[0][n] == h + v for v, n in named)]
         return hits

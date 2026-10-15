@@ -25,6 +25,8 @@ OBJDIFF_SCHEMA = "https://raw.githubusercontent.com/encounter/objdiff/main/confi
 # the instruction comment of splat's function files: /* ROMOFF VRAM BYTES */
 INSN = re.compile(r"/\* [0-9A-Fa-f]+ ([0-9A-Fa-f]{8}) ")
 # a load from the literal pool in a function file
+# the address comment of a splat data line: /* ROMOFF VRAM ... */, or /* VRAM */ in .bss
+DATA_ADDR = re.compile(r"/\* ([0-9A-F]+)(?: ([0-9A-F]{8}))?(?: [0-9A-F]+)? \*/")
 LIT4_LOAD = re.compile(r"\blwc1(\s+)(\$f\d+), (D_[0-9A-F]{8})$")
 TARGET_HEAD = ('.include "macro.inc"\n\n.set noat\n.set noreorder\n\n'
                '.section .text, "ax"\n.align 3\n\n')
@@ -189,6 +191,70 @@ def li_s(text: str, lit4: dict[str, str]) -> str:
     return "".join(out)
 
 
+def base_data_names(src: str, datas: list[Path]) -> dict[int, str] | None:
+    """address -> name of each data symbol the compiled C object defines, placed
+    by the start address of splat's file for that section; None before the
+    object is built."""
+    from elftools.elf.elffile import ELFFile
+    path = ROOT / obj_for(src)
+    if not path.exists():
+        return None
+    starts = {}
+    for d in datas:
+        m = DATA_ADDR.search(d.read_text())
+        if m:
+            starts["." + d.name.rsplit(".", 2)[-2]] = int(m.group(2) or m.group(1), 16)
+    out = {}
+    with open(path, "rb") as f:
+        e = ELFFile(f)
+        secs = [s.name for s in e.iter_sections()]
+        for s in e.get_section_by_name(".symtab").iter_symbols():
+            shndx = s["st_shndx"]
+            sec = secs[shndx] if isinstance(shndx, int) else None
+            if (sec in starts and s.name and not s.name.startswith(".L")
+                    and s["st_info"]["type"] not in ("STT_SECTION", "STT_FUNC")):
+                out.setdefault(starts[sec] + s["st_value"], s.name)
+    return out
+
+
+def name_like_base(text: str, data: str, names: dict[int, str]) -> tuple[str, str]:
+    """Give the data labels the C object's names, so objdiff pairs them.
+
+    A label at an address where the C object has a symbol takes its name (a
+    static the C names, which splat calls D_XXXXXXXX). A label where the C
+    object has none (a string literal, a jump table, a pointer into an array)
+    becomes a local .L label, as gcc's .LC labels are."""
+    lines = data.splitlines(keepends=True)
+    rename = {}
+    for i, l in enumerate(lines):
+        if not l.startswith("dlabel "):
+            continue
+        label = l.split()[1]
+        m = next((DATA_ADDR.search(x) for x in lines[i + 1:i + 3] if DATA_ADDR.search(x)), None)
+        if not m:
+            continue
+        addr = int(m.group(2) or m.group(1), 16)
+        new = names.get(addr, ".L" + label)
+        if new != label:
+            rename[label] = new
+    if not rename:
+        return text, data
+    word = re.compile(r"(?<![\w.$])(" + "|".join(map(re.escape, rename)) + r")\b")
+    out = []
+    for l in data.splitlines(keepends=True):
+        parts = l.split()
+        if parts[:1] in (["dlabel"], ["enddlabel"], ["nonmatching"]) and \
+                rename.get(parts[1].rstrip(","), "").startswith(".L"):
+            if parts[0] == "dlabel":
+                out.append(rename[parts[1]] + ":\n")
+            continue
+        out.append(word.sub(lambda m: rename[m.group(1)], l))
+    text = "".join(l for l in text.splitlines(keepends=True)
+                   if not (l.startswith(".extern ") and
+                           rename.get(l.split()[1].rstrip(","), "").startswith(".L")))
+    return word.sub(lambda m: rename[m.group(1)], text), "".join(out)
+
+
 def target_text(src: str) -> str:
     """One assembly file for a C unit: its functions in address order, then its
     data. Its .lit4 comes from li.s in the functions, not from the data file."""
@@ -197,12 +263,16 @@ def target_text(src: str) -> str:
     lit4 = [d for d in datas if d.name.endswith(".lit4.s")]
     if lit4:
         text = li_s(text, lit4_values(lit4[0]))
-    text = TARGET_HEAD + text
+    data = ""
     for d in datas:
         if d in lit4:
             continue
         body = trailing_fill(jtbl_fill(d.read_text())).splitlines(keepends=True)
-        text += "".join(l for l in body if l.strip() != '.include "macro.inc"')
+        data += "".join(l for l in body if l.strip() != '.include "macro.inc"')
+    names = base_data_names(src, [d for d in datas if d not in lit4])
+    if names is not None:
+        text, data = name_like_base(text, data, names)
+    text = TARGET_HEAD + text + data
     return text if text.endswith("\n") else text + "\n"
 
 
@@ -220,7 +290,8 @@ def categories(srcs: list[str]) -> list[str]:
     is sce. Names cannot tell them apart: game C units split the game's asm
     into text_XXXXXXXX units just as library units do."""
     lib = next(i for i, s in enumerate(srcs) if i and s.startswith("src/sce/"))
-    return ["sce" if i >= lib or s.startswith("src/sce/") else "game"
+    return ["game" if s.startswith("src/game/") else
+            "sce" if i >= lib or s.startswith("src/sce/") else "game"
             for i, s in enumerate(srcs)]
 
 
@@ -309,7 +380,8 @@ def main() -> None:
         # object is not rebuilt needlessly
         t = f"build/target/{stem(s)}.s"
         funcs, datas = c_parts(s)
-        deps = " ".join(["tools/gen_ninja.py"] + [str(p.relative_to(ROOT)) for p in funcs + datas])
+        # the C object names the data labels (name_like_base)
+        deps = " ".join(["tools/gen_ninja.py", obj_for(s)] + [str(p.relative_to(ROOT)) for p in funcs + datas])
         n.append(f"build {t}: target_src | {deps}")
         n.append(f"build build/target/{stem(s)}.o: as {t} | include/macro.inc")
     # splat's lists of addresses referenced but not defined yet, given to ld
