@@ -15,7 +15,7 @@
 #define SCRIPT_WORD_END_NO_WAIT     0x195
 #define SCRIPT_WORD_SET             0x196   /* a variable, then operands and operators */
 #define SCRIPT_WORD_JUMP            0x197   /* the low half is a signed word count */
-#define SCRIPT_WORD_19D             0x19D   /* broken: the cursor becomes NULL */
+#define SCRIPT_WORD_HALT            0x19D   /* halts the thread: Script_HaltCursor returns a NULL cursor */
 #define SCRIPT_LABEL_END            0x7FFE  /* the label after the last script */
 
 /* the kinds of argument (the low byte of an argument's opcode word) */
@@ -101,7 +101,7 @@ typedef struct {
     ScriptArg value;                /* 0x04 value at 0x08 */
 } ScriptValueCommand;
 
-/* a command with one float argument (func_00211FF0) */
+/* a command with one float argument (ScriptCmd_SetCameraUnk48) */
 typedef struct {
     int active;                     /* 0x00 */
     ScriptFloatArg value;           /* 0x04 value at 0x08 */
@@ -129,7 +129,8 @@ typedef struct {
     ScriptArg result;               /* 0x0C */
 } ScriptFloatQueryCommand;
 
-/* a command whose only argument in use is the eighth, a result (ScriptCmd_StoreUnset9, ScriptCmd_StoreUnset10) */
+/* a command whose only argument in use is the eighth, a result (ScriptCmd_StoreUninitializedResult9,
+   ScriptCmd_StoreUninitializedResult10) */
 typedef struct {
     int active;                     /* 0x00 */
     char pad04[0x38];
@@ -435,7 +436,7 @@ typedef struct {
     ScriptFloatArg weight;          /* 0x0C value at 0x10 */
 } ScriptMotionBlendCommand;
 
-/* puts an entity in state 4 and waits `frames` and for state 5 (func_00215310) */
+/* turns an entity to face the player and waits for the turn (ScriptCmd_TurnEntityToPlayer) */
 typedef struct {
     int active;                     /* 0x00 */
     ScriptArg target_id;            /* 0x04 value at 0x08 */

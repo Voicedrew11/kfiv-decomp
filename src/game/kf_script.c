@@ -17,7 +17,6 @@
 #include "kf_splash.h"
 
 void *memset(void *, int, u32);
-void func_002108F8(void *dest, int count, int value);
 void func_0019C7F0(int level);
 void func_0019C820(int level);
 void func_001BB5C0(void);
@@ -63,8 +62,17 @@ static void Script_WriteSharedVar(ScriptArg *source, u32 code, int offset);
 static void Script_WriteCurrentLocalVar(ScriptArg *source, u32 code, int offset);
 static void Script_WriteLocalVar(ScriptArg *source, ScriptThread *thread, u32 code, int offset);
 static u32 *Script_StartCommand(ScriptThread *thread, u32 *cursor);
-static int func_00211CF0(void);
-static int func_00212440(void);
+static int Script_HaltCursor(void);
+static int Script_UnusedStub(void);
+
+/* Fills count words at dest with value. */
+void Script_FillWords(void *dest, int count, int value) {
+    int *word = dest;
+
+    while (count-- != 0) {
+        *word++ = value;
+    }
+}
 
 /* Gets the interpreter ready for a map's script (MapSlot.unk5C, its address as a word): every thread is
    freed and set at the top of it, and the shared variables are cleared. */
@@ -81,7 +89,7 @@ void Script_Init(s32 script_data) {
     end = (u8 *)thread + 24 * sizeof(ScriptThread);
     do {
         thread->cursor = script_top;
-        func_002108F8(first_command, sizeof(ScriptThreadCommand) / 4, 0);
+        Script_FillWords(first_command, sizeof(ScriptThreadCommand) / 4, 0);
         thread->script_id = 0;
         thread++;
         first_command += sizeof(ScriptThread);
@@ -232,7 +240,7 @@ static u32 *Script_SkipWord(u32 *cursor) {
     case SCRIPT_WORD_SET:
         cursor += operand;
         break;
-    case SCRIPT_WORD_19D:
+    case SCRIPT_WORD_HALT:
         cursor += operand + 1;
         break;
     default:
@@ -389,9 +397,9 @@ static int Script_Advance(ScriptThread *thread) {
         case SCRIPT_WORD_SET:
             cursor = Script_EvalSet(thread, cursor);
             break;
-        case SCRIPT_WORD_19D:
-            // match: func_00211CF0 is a stub that takes nothing and returns 0, so the cursor becomes NULL
-            cursor = (u32 *)((int (*)(u32 *))func_00211CF0)(cursor);
+        case SCRIPT_WORD_HALT:
+            // match: Script_HaltCursor is a stub that takes nothing and returns 0, so the cursor becomes NULL
+            cursor = (u32 *)((int (*)(u32 *))Script_HaltCursor)(cursor);
             running = no_wait;
             started = TRUE;
             thread->commands[Script_FindFreeCommand(thread)].active = 4;
@@ -880,12 +888,12 @@ static u32 *Script_StartCommand(ScriptThread *thread, u32 *cursor) {
         Script_ReadArg(thread, cursor, &thread->commands[index].args[arg]);
         cursor += 2;
     }
-    func_002108F8(&thread->commands[index].args[16], 8, 0);
+    Script_FillWords(&thread->commands[index].args[16], 8, 0);
     return cursor;
 }
 
-/* What word 0x19D runs: a stub that returns 0. */
-static int func_00211CF0(void) {
+/* The handler of word 0x19D: returns 0, so the thread's cursor becomes NULL and it halts. */
+static int Script_HaltCursor(void) {
     return 0;
 }
 
@@ -971,8 +979,8 @@ void ScriptCmd_Nop3(ScriptThreadCommand *command) {
     command->active = 0;
 }
 
-/* Command 4 (also what word 0x19D starts): does nothing and never finishes. */
-void ScriptCmd_Stall4(void) {
+/* Command 4, and what word 0x19D starts: never finishes, so the thread waits until something stops it. */
+void ScriptCmd_WaitForever4(void) {
 }
 
 /* Command 5: stops every script: frees all 24 threads and their commands, this one too. */
@@ -1007,7 +1015,7 @@ void ScriptCmd_Nop7(ScriptThreadCommand *command) {
 }
 
 /* Command 9: hands the script, through its eighth argument, a value that is never set, then finishes. */
-void ScriptCmd_StoreUnset9(ScriptLateResultCommand *command) {
+void ScriptCmd_StoreUninitializedResult9(ScriptLateResultCommand *command) {
     int unused[4];
     int value;
 
@@ -1016,7 +1024,7 @@ void ScriptCmd_StoreUnset9(ScriptLateResultCommand *command) {
 }
 
 /* Command 10: the same as command 9. */
-void ScriptCmd_StoreUnset10(ScriptLateResultCommand *command) {
+void ScriptCmd_StoreUninitializedResult10(ScriptLateResultCommand *command) {
     int unused[4];
     int value;
 
@@ -1044,17 +1052,17 @@ void ScriptCmd_Nop18(ScriptThreadCommand *command) {
     command->active = 0;
 }
 
-/* Command 19: does nothing and never finishes. */
-void ScriptCmd_Stall19(void) {
+/* Command 19: never finishes, so the thread waits until something stops it. */
+void ScriptCmd_WaitForever19(void) {
 }
 
-/* Command 20: does nothing and never finishes. */
-void ScriptCmd_Stall20(void) {
+/* Command 20: never finishes, so the thread waits until something stops it. */
+void ScriptCmd_WaitForever20(void) {
 }
 
-/* Command 29: stores the float argument in the camera's word at 0x48 (D_004325E8, CameraState.pad48),
-   then finishes. */
-void func_00211FF0(ScriptFloatValueCommand *command) {
+/* Command 29: sets the camera's word at 0x48 (D_004325E8, which func_001127F8 starts at 512.0f) to the
+   float argument, then finishes. No reader of the word is known. */
+void ScriptCmd_SetCameraUnk48(ScriptFloatValueCommand *command) {
     D_004325E8[0] = command->value.value;
     command->active = 0;
 }
@@ -1121,9 +1129,9 @@ void ScriptCmd_SetVolumes(ScriptValueCommand *command) {
     command->active = 0;
 }
 
-/* Command 35: sets the second volume (options byte 2, func_0019C820) to `value` 64ths of what the
-   options say, then finishes. */
-void ScriptCmd_SetVolume2(ScriptValueCommand *command) {
+/* Command 35: sets the sound effect volume (the nine voices func_0019C820 sets; the options' byte 2) to
+   `value` 64ths of it, then finishes. */
+void ScriptCmd_SetSeVolume(ScriptValueCommand *command) {
     if (command->value.value >= 0 && command->value.value <= 64) {
         func_0019C820(D_00349680[2] * command->value.value / 64);
     }
@@ -1152,9 +1160,9 @@ void ScriptCmd_RequestSoundLoad(ScriptValueCommand *command) {
     command->active = 0;
 }
 
-/* Command 36: sets the first volume (options byte 1, func_0019C7F0) to `value` 64ths (0 to 64) of what
-   the options say, then finishes. */
-void ScriptCmd_SetVolume1(ScriptValueCommand *command) {
+/* Command 36: sets the BGM volume (the one voice func_0019C7F0 sets; the options' byte 1) to `value`
+   64ths of it, then finishes. */
+void ScriptCmd_SetBgmVolume(ScriptValueCommand *command) {
     u32 value;
 
     value = command->value.value;
@@ -1211,6 +1219,6 @@ void ScriptCmd_EmptyPlayerGauges(ScriptThreadCommand *command) {
 }
 
 /* Returns 0. Nothing calls it. */
-static int func_00212440(void) {
+static int Script_UnusedStub(void) {
     return 0;
 }

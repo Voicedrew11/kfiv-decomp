@@ -282,9 +282,11 @@ int ScriptCmd_BlendEntityMotion(ScriptMotionBlendCommand *command) {
     command->active = 0;
 }
 
-/* Command 238: puts the entity `target_id` in state 4 (func_00195898; unless it is in state 5 already,
-   for a kind with params flag 0x80 also facing the player), then waits `frames` frames and for state 5. */
-void func_00215310(ScriptStateWaitCommand *command) {
+/* Command 238: turns the entity `target_id` to face the player (state 4, func_00195898: on the spot for
+   a kind with params flag 0x80, else through Entity.unkC8's turn bits), then waits `frames` frames and
+   for state 5; done at once if it is in state 5 already, for the 0x80 kind only if it faces the player
+   within params->unk438 degrees. */
+void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
     Entity *entity;
     f32 heading;
     f32 turn;
@@ -347,9 +349,9 @@ void func_00215310(ScriptStateWaitCommand *command) {
     command->active = 0;
 }
 
-/* Command 243: puts the entity `object_id` in state 6 once (func_00195898), then waits until it is back
-   in state 0. */
-void func_00215488(ScriptWaitCommand *command) {
+/* Command 243: turns the entity `object_id` back to its own heading (state 6, func_00195898), then waits
+   until it is in state 0. */
+void ScriptCmd_TurnEntityBack(ScriptWaitCommand *command) {
     Entity *entity;
 
     entity = Entity_GetBySpawnId(command->object_id.value);
