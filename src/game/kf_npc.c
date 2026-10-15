@@ -18,7 +18,7 @@ int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now);
 void EntityAi_SetState(char *, u8);
 extern PlayerData player_state;
 extern u8 map_script_flags[0x80][0x40];
-int func_0019A3F0(void *, int);
+int EntityAi_AnimationFrameCount(void *, int);
 void EntityAi_SetAttackDelay(Entity *, s32);
 extern char D_0034B690[0x40];
 extern f32 D_00431AF0[16];
@@ -308,7 +308,7 @@ static void Npc_TurnToPlayer(Entity *entity) {
         entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->unkA0 = func_0019A3F0(entity, entity->unkD1);
+            entity->unkA0 = EntityAi_AnimationFrameCount(entity, entity->unkD1);
             entity->action_step++;
         }
         break;
@@ -359,7 +359,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
         entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            entity->unkA0 = func_0019A3F0(entity, entity->unkD1);
+            entity->unkA0 = EntityAi_AnimationFrameCount(entity, entity->unkD1);
             entity->action_step++;
         }
         break;

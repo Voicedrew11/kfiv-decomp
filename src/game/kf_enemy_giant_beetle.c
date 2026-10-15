@@ -39,7 +39,7 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 float EntityMath_EaseAngleToward(float *, float, float);
 int Motion_Start(void *, int, int, u32, int);
@@ -47,7 +47,7 @@ s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
-void func_00195878(s32, s32);
+void EntityAi_ShakeCamera(s32, s32);
 void Input_StartRumble(u8, u8, u8);
 void EntityEvent_OnDeath(Entity *);
 
@@ -59,7 +59,7 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown);
 static void GiantBeetle_TurnParts7And12(Entity *entity);
 static void GiantBeetle_TurnParts23To32(Entity *entity);
 static void GiantBeetle_MeleeAttack0(Entity *entity);
-static void func_00137970(Entity *entity);
+static void GiantBeetle_RangedAttack0(Entity *entity);
 static void GiantBeetle_Death(Entity *entity);
 
 /* Set-up of a type 76 entity: clears its work area and installs the type's handlers. */
@@ -197,7 +197,7 @@ static void GiantBeetle_ThinkWander(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but attack index 0 has the type's own
-   actions (func_00137970 for the ranged one, GiantBeetle_MeleeAttack0 for the melee one); closing
+   actions (GiantBeetle_RangedAttack0 for the ranged one, GiantBeetle_MeleeAttack0 for the melee one); closing
    in it takes the command of EntityAi_MoveCommand (range: the radius plus 101) with no turn away from a
    push, and it leaves flag bits 9 and 10 as they are. */
 static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
@@ -226,7 +226,7 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
-                    EntityAi_StartAction(entity, func_00137970, unknown);
+                    EntityAi_StartAction(entity, GiantBeetle_RangedAttack0, unknown);
                 } else {
                     EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
                 }
@@ -251,7 +251,7 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (unkE0->unk78 == 0) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -396,7 +396,10 @@ static void GiantBeetle_MeleeAttack0(Entity *entity) {
     }
 }
 
-static void func_00137970(Entity *entity) {
+/* The ranged attack with record 0 (busy bit 1): animation 23, launching the record's shots as
+   EntityAi_RangedAttack does, and also checking the hits of melee record 1; at frame 19 it shakes the camera
+   (EntityAi_ShakeCamera, reach 10 for 26 frames) and calls Input_StartRumble(0x80, 13, 0). */
+static void GiantBeetle_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
     EntityParamsUnk240 *unk240 = &entity->params->unk240[1];
@@ -438,7 +441,7 @@ static void func_00137970(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
         }
         if (entity->model->unkFC->unk82 == 0x13) {
-            func_00195878(10, 0x1A);
+            EntityAi_ShakeCamera(10, 0x1A);
             Input_StartRumble(0x80, 0xD, 0);
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {

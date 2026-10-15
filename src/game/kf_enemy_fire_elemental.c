@@ -28,7 +28,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
@@ -62,14 +62,14 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown);
 static void FireElemental_StandAndAttack(Entity *entity);
 static void FireElemental_PlayTurnAnim(Entity *entity);
 static void FireElemental_Dodge(Entity *entity);
-static s32 func_0015A790(Entity *entity, f32 min_distance, f32 max_angle);
+static s32 FireElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle);
 static s32 FireElemental_ShouldDodge(Entity *entity, f32 max_distance, f32 max_angle);
 static void FireElemental_RangedAttack1(Entity *entity);
 static void FireElemental_AlertSameKind(Entity *entity);
 static void FireElemental_OnHit(Entity *entity);
 static void FireElemental_BackAwayFromPlayer(Entity *entity);
 static void FireElemental_Move(Entity *entity);
-static s32 func_0015B340(Entity *entity, s32 unused, f32 reach);
+static s32 FireElemental_BackwardsCommand(Entity *entity, s32 unused, f32 reach);
 static void FireElemental_ThinkReturn(Entity *entity, s32 unknown);
 static void FireElemental_RangedAttack0(Entity *entity);
 
@@ -166,8 +166,8 @@ static void FireElemental_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but it first starts EntityAi_Dodge when
-   func_0015A790 says so, ranged record 1 is FireElemental_RangedAttack1, and closing in gives the
-   backwards command (bit 2, from func_0015B340) where the shared one gives the forwards one. */
+   FireElemental_ShouldDodgeMagic says so, ranged record 1 is FireElemental_RangedAttack1, and closing in gives the
+   backwards command (bit 2, from FireElemental_BackwardsCommand) where the shared one gives the forwards one. */
 static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -180,7 +180,7 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
-    if (func_0015A790(entity, 200.0f, 1.0471976f)) {
+    if (FireElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
@@ -228,7 +228,7 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (unkE0->unk78 == 0) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -249,7 +249,7 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
                 entity->unkC8 = 0x102;
             } else {
                 // match: called like EntityAi_MoveCommand, with a mode the callee ignores
-                entity->unkC8 = ((s16 (*)(float, void *, int))func_0015B340)(entity->radius + 100.0f + 30.0f, entity, 1);
+                entity->unkC8 = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
             }
         }
     }
@@ -259,7 +259,7 @@ done:
 
 /* An action (busy bit 0x1000) that FireElemental_Think starts in state 2 while work byte unk7A is 0:
    plays animation 17 turning to the player, then stays in its last step and decides each frame. It
-   sets unk7A and starts FireElemental_Dodge when func_0015A790 or FireElemental_ShouldDodge
+   sets unk7A and starts FireElemental_Dodge when FireElemental_ShouldDodgeMagic or FireElemental_ShouldDodge
    says so, or EntityAi_MeleeAttack with record 1 when the player is within EntityParams.unk436 plus
    100 plus the radius and 20 degrees ahead. Each time the timer runs out it starts
    FireElemental_RangedAttack0 (and sets unk7A) when the pause in work word unk6A is over and the
@@ -291,7 +291,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
             unkE0->unk6A--;
         }
         ENTITY_FLAG_BITS(entity)->bit9 = 1;
-        if (func_0015A790(entity, 200.0f, 1.0471976f) || FireElemental_ShouldDodge(entity, 300.0f, 0.5235988f)) {
+        if (FireElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f) || FireElemental_ShouldDodge(entity, 300.0f, 0.5235988f)) {
             unkE0->unk7A = 1;
             entity->unkC6 = 0;
             entity->unkC8 = 0;
@@ -452,7 +452,11 @@ static void FireElemental_Dodge(Entity *entity) {
     }
 }
 
-static s32 func_0015A790(Entity *entity, f32 min_distance, f32 max_angle) {
+/* Whether to dodge a magic: only while work byte unk7C runs (FireElemental_Think puts it to 30 when the player
+   casts one, player_state.unk259), with the player at least min_distance away (less the radius and 100),
+   Entity.unk68 within max_angle of the heading and the entity within 30 degrees of the player's facing; then
+   EntityParams.unkCA / 10 times in 100. */
+static s32 FireElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 max_angle) {
     f32 distance;
     f32 angle;
     f32 player_angle;
@@ -618,7 +622,7 @@ static void FireElemental_BackAwayFromPlayer(Entity *entity) {
         }
         break;
     case 2:
-        if (func_0015A790(entity, 200.0f, 1.0471976f)) {
+        if (FireElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
             EntityAi_StartAction(entity, EntityAi_Dodge, 1);
             break;
         }
@@ -672,7 +676,7 @@ static void FireElemental_BackAwayFromPlayer(Entity *entity) {
             entity->unkC8 = 0x102;
         } else {
             // match: called like EntityAi_MoveCommand, with a mode the callee ignores
-            entity->unkC8 = ((s16 (*)(float, void *, int))func_0015B340)(entity->radius + 100.0f + 30.0f, entity, 1);
+            entity->unkC8 = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
         }
         ((void (*)(Entity *))unkE0->move)(entity);
         break;
@@ -730,9 +734,10 @@ static void FireElemental_Move(Entity *entity) {
     }
 }
 
-/* The movement command for walking to the target: a turn bit when the target is off the heading by more than
-   the turn limit, and bit 1 while it is farther away than reach. */
-static s32 func_0015B340(Entity *entity, s32 unused, f32 reach) {
+/* The movement command for going backwards: a turn bit (0x100 / 0x200) while the target is off the heading by
+   more than the turn limit, and command bit 2 (backwards) while it is farther than reach; 0 without a target.
+   The second parameter is not used. */
+static s32 FireElemental_BackwardsCommand(Entity *entity, s32 unused, f32 reach) {
     f32 turn;
     f32 limit;
     f32 heading;
@@ -759,7 +764,7 @@ static s32 func_0015B340(Entity *entity, s32 unused, f32 reach) {
 
 /* The think function while flag bit 53 is set: as EntityAi_ThinkReturn (walk back to the spawn
    point, turning away from whatever is pushing the entity), but with the backwards command of
-   func_0015B340 where the shared one gives the forwards one. */
+   FireElemental_BackwardsCommand where the shared one gives the forwards one. */
 static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 to_spawn[4];
@@ -775,7 +780,7 @@ static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
     if (turn == 0) {
         entity->target = entity->spawn_info;
         // match: called like EntityAi_MoveCommand, with a mode the callee ignores
-        entity->unkC8 = ((s16 (*)(float, void *, int))func_0015B340)(entity->radius + 100.0f + 30.0f, entity, 1);
+        entity->unkC8 = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
     } else {
         push[0] = push[1] = push[2] = push[3] = 0.0f;
         if (entity->flags & (0xC000L << 31)) {
@@ -804,7 +809,7 @@ static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
             entity->unkC8 = 0x102;
         } else {
             // match: called like EntityAi_MoveCommand, with a mode the callee ignores
-            entity->unkC8 = ((s16 (*)(float, void *, int))func_0015B340)(entity->radius + 100.0f + 30.0f, entity, 1);
+            entity->unkC8 = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);

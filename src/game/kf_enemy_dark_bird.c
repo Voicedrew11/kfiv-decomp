@@ -69,7 +69,7 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown);
 static void DarkBird_ThinkIdle(Entity *entity, s32 unknown);
 static void DarkBird_Move(Entity *entity);
 static void DarkBird_ApplyMoveCommand(Entity *entity);
-static int func_00172BB8(Entity *entity);
+static int DarkBird_SteerToTargetCommand(Entity *entity);
 static void DarkBird_DormantMoveToCircle(Entity *entity);
 static void DarkBird_ApproachForMelee(Entity *entity);
 static void DarkBird_MeleeAttack(Entity *entity);
@@ -189,7 +189,7 @@ static void DarkBird_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat without the guard and the dodge, and with
-   the command of func_00172BB8. It also picks the pitch command, work byte unk79: 1 or -1 at random
+   the command of DarkBird_SteerToTargetCommand. It also picks the pitch command, work byte unk79: 1 or -1 at random
    (EntityParams.unk438 times in 100), 2 or -2 to keep the height in bounds (in mode 0 EntityCollision_DistanceToPropFloor
    between EntityParams.unk436 and unk434, in modes 1 and 2 the y against the spawn point's). A
    ranged attack is DarkBird_RangedAttack, but only when the player's y less its own is 200 or
@@ -316,14 +316,14 @@ static void DarkBird_ThinkCombat(Entity *entity, s32 unknown) {
             entity->unkC8 = 0x101;
         } else {
             // match: retail passes two more arguments here and takes the result as 16 bits
-            entity->unkC8 = ((s16 (*)(Entity *, s32, f32))func_00172BB8)(entity, 0, 0.0f);
+            entity->unkC8 = ((s16 (*)(Entity *, s32, f32))DarkBird_SteerToTargetCommand)(entity, 0, 0.0f);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
 /* The think function of state 0: as EntityAi_ThinkIdle, always with a point to go to, the head
-   following, the command of func_00172BB8, and the pitch command (work byte unk79) picked as in
+   following, the command of DarkBird_SteerToTargetCommand, and the pitch command (work byte unk79) picked as in
    DarkBird_ThinkCombat. */
 static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
@@ -397,7 +397,7 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
         entity->unkC8 = 0x101;
     } else {
         // match: retail passes two more arguments here and takes the result as 16 bits
-        entity->unkC8 = ((s16 (*)(Entity *, s32, f32))func_00172BB8)(entity, 0, 0.0f);
+        entity->unkC8 = ((s16 (*)(Entity *, s32, f32))DarkBird_SteerToTargetCommand)(entity, 0, 0.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -513,8 +513,9 @@ static void DarkBird_ApplyMoveCommand(Entity *entity) {
     entity->unk8C += ENTITY_SCRATCH_VECTOR[2];
 }
 
-/* Returns 0 with no target, 1 if the turn to it is within the limit, else 0x101/0x201 by turn direction. */
-static int func_00172BB8(Entity *entity) {
+/* The movement command for flying at the target: forward (1) always, with a turn bit (0x101 / 0x201) while the
+   target is off the heading by more than the turn limit; 0 without a target. */
+static int DarkBird_SteerToTargetCommand(Entity *entity) {
     float angle;
     float limit;
     int result;
@@ -588,7 +589,7 @@ static void DarkBird_DormantMoveToCircle(Entity *entity) {
 }
 
 /* An action (busy bits 0x3000): animation 3 on both motion slots; for up to 212 frames it goes for
-   the player (func_00172BB8, DarkBird_ApplyMoveCommand) with the pitch command that brings the player's y less
+   the player (DarkBird_SteerToTargetCommand, DarkBird_ApplyMoveCommand) with the pitch command that brings the player's y less
    its own between 200 and 400, and starts DarkBird_MeleeAttack once the player is within the
    radius plus 350 and that difference is between 100 and 400. */
 static void DarkBird_ApproachForMelee(Entity *entity) {
@@ -638,7 +639,7 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
             entity->unkC8 = 0x101;
         } else {
             // match: retail passes two more arguments here and takes the result as 16 bits
-            entity->unkC8 = ((s16 (*)(Entity *, s32, f32))func_00172BB8)(entity, 0, 0.0f);
+            entity->unkC8 = ((s16 (*)(Entity *, s32, f32))DarkBird_SteerToTargetCommand)(entity, 0, 0.0f);
         }
         height = player_state.position[1] - entity->model->position[1];
         if (height < 200.0f || ENTITY_FLAG_BITS(entity)->bit44 == 1 || ENTITY_FLAG_BITS(entity)->bit45 == 1) {

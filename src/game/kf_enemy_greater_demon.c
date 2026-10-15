@@ -46,7 +46,7 @@ s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
 int EntitySight_EntityInWay(int *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
@@ -268,7 +268,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
     }
     if (entity->unkCD == 1) {
         turn = EntityAi_TurnFromPush(entity, direction);
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {

@@ -61,7 +61,7 @@ static void WiddaArcher_Animate(Entity *entity);
 static void WiddaArcher_PitchPartToPlayer(Entity *entity);
 static void WiddaArcher_AimPartsAtTarget(Entity *entity);
 static void WiddaArcher_Think(Entity *entity, s32 unknown);
-static void func_00149610(Entity *entity, s32 unknown);
+static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown);
 static void WiddaArcher_RangedAttack(Entity *entity);
 static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 unknown);
 static void WiddaArcher_WalkToMapObject(Entity *entity, s32 unknown);
@@ -216,7 +216,7 @@ static void WiddaArcher_AimPartsAtTarget(Entity *entity) {
     }
 }
 
-/* The think handler: as EntityAi_Think, with func_00149610 for state 2. Before that it sets bit 40
+/* The think handler: as EntityAi_Think, with WiddaArcher_ThinkCombat for state 2. Before that it sets bit 40
    of model part 29's unk68 during frames 7 to 35 of animation 23 and frames 25 to 49 of animation
    24, and clears it otherwise. */
 static void WiddaArcher_Think(Entity *entity, s32 unknown) {
@@ -247,13 +247,18 @@ static void WiddaArcher_Think(Entity *entity, s32 unknown) {
         EntityAi_ThinkPursue(entity, unknown);
         return;
     case 2:
-        func_00149610(entity, unknown);
+        WiddaArcher_ThinkCombat(entity, unknown);
         return;
     }
     EntityAi_ThinkIdle(entity, unknown);
 }
 
-static void func_00149610(Entity *entity, s32 unknown) {
+/* The think function of state 2: as EntityAi_ThinkCombat, with WiddaArcher_RangedAttack for a ranged attack and
+   a 40-degree arc for the dodge; closing in only turns to the player (EntityAi_TurnCommand) for 120 to 179
+   frames. On every tenth frame, with Entity.unk60 less the radius and 100 under 200 and the entity within 40
+   degrees of the player's facing, it may start EntityAi_Dodge (the more health lost, the likelier) when
+   Entity.unk68 is 40 to 90 degrees off the heading. */
+static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 angle;
@@ -418,7 +423,7 @@ static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 unknown) {
         EntityAi_ThinkPursue(entity, unknown);
         return;
     case 2:
-        func_00149610(entity, unknown);
+        WiddaArcher_ThinkCombat(entity, unknown);
         return;
     }
     EntityAi_ThinkIdle(entity, unknown);

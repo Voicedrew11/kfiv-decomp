@@ -1,16 +1,18 @@
+/* Questions the effect code asks: whether an entity can be hit, whether a point is near one, distances, and
+   when a moving effect reaches what it is heading for. */
 #include "kf_entity.h"
 #include "kf_model.h"
 #include "kf_effect.h"
 #include "kf_vu0.h"
 #include "kf_collision.h"
 
-float func_001B0178(void *, void *);
+float Effect_Distance(void *, void *);
 void Collision_CastRayAtMap(f32, void *, void *);
 
 extern Entity *D_004467E0;
 
 /* Nonzero if the entity cannot be targeted: not live, dying, or flagged out. */
-int func_001B0040(Entity *entity) {
+int Effect_IsEntityUntargetable(Entity *entity) {
     int excluded;
 
     if (!ENTITY_FLAG_BITS(entity)->bit1 || ENTITY_FLAG_BITS(entity)->bits2 > 0) {
@@ -26,8 +28,8 @@ int func_001B0040(Entity *entity) {
     return excluded;
 }
 
-/* Nonzero if the point is within radius of any live entity centre. */
-int func_001B00A0(float radius, void *point) {
+/* Nonzero if the point is within radius (plus the entity's own radius) of the middle of any live entity. */
+int Effect_IsNearAnyEntity(float radius, void *point) {
     float position[4] __attribute__((aligned(16)));
     Entity *entity;
 
@@ -36,13 +38,13 @@ int func_001B00A0(float radius, void *point) {
         if (((int)(entity->flags >> 2) & 3) > 0) continue;
         Vector_Copy(position, &ENTITY_MODEL(entity)->position);
         position[1] -= entity->height * 0.5f;
-        if (func_001B0178(point, position) <= radius + entity->radius) return TRUE;
+        if (Effect_Distance(point, position) <= radius + entity->radius) return TRUE;
     }
     return FALSE;
 }
 
 /* Distance between two points. */
-float func_001B0178(void *from, void *target) {
+float Effect_Distance(void *from, void *target) {
     f32 distance[4];
 
     __asm__ volatile(
@@ -61,7 +63,7 @@ float func_001B0178(void *from, void *target) {
 }
 
 // Horizontal (XZ-plane) distance between origin and target.
-float func_001B01B0(float *origin, float *target) {
+float Effect_DistanceXZ(float *origin, float *target) {
     Vector4 out;
     Vector4 target_at_origin_height;
 
@@ -96,14 +98,14 @@ static inline f32 absolute_value(f32 value) {
 
 /* Casts the effect's path forward; stores where it lands in hit_point and returns the
    number of frames to get within radius of it, or -1 if it hits nothing. */
-s16 func_001B0208(float radius, void *effect, void *motion, void *hit_point) {
+s16 Effect_FramesToImpact(float radius, void *effect, void *motion, void *hit_point) {
     EffectActor *actor = effect;
     f32 distance;
     f32 stack_reserve[4]; // match: unused, keeps the retail stack frame size
 
     Collision_CastRayAtMap(actor->def->keyframe_end, &actor->model->position, motion);
     if (COLLISION_RESULT->hit != 0) {
-        distance = func_001B0178(COLLISION_RESULT->point, &actor->model->position);
+        distance = Effect_Distance(COLLISION_RESULT->point, &actor->model->position);
         Vector_Copy(hit_point, COLLISION_RESULT->point);
         return absolute_value((distance - radius) / actor->def->speed);
     }

@@ -74,7 +74,7 @@ static void Minion_ReactionHeavy(Entity *entity);
 static void Minion_Death(Entity *entity);
 static void Minion_Dodge(Entity *entity);
 static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from, s32 frame_to, f32 *target, f32 pitch_rate, f32 yaw_rate);
-static void func_00153F60(Entity *entity, f32 *result, f32 *point);
+static void Minion_WorldToLocal(Entity *entity, f32 *result, f32 *point);
 
 /* Set-up of a type 60 entity: clears its work area and installs the type's handlers. */
 void Minion_Init(Entity *entity) {
@@ -783,8 +783,9 @@ static s32 Minion_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 fr
     return 0;
 }
 
-/* Turns a point from world space into the entity's own space: undoes the model's position, then its rotation. */
-static void func_00153F60(Entity *entity, f32 *result, f32 *point) {
+/* Turns a point from world space into the entity's own space: undoes the model's position, then its rotation.
+   Nothing calls it. */
+static void Minion_WorldToLocal(Entity *entity, f32 *result, f32 *point) {
     f32 matrix[16];
     f32 offset[4];
 

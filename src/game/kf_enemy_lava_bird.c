@@ -64,7 +64,7 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 unknown);
 static void LavaBird_ThinkIdle(Entity *entity, s32 unknown);
 static void LavaBird_Move(Entity *entity);
 static void LavaBird_ApplyMoveCommand(Entity *entity);
-static s32 func_0017EA98(Entity *entity, s32 mark_far, f32 range);
+static s32 LavaBird_SteerToTargetCommand(Entity *entity, s32 mark_far, f32 range);
 static void LavaBird_Dormant(Entity *entity);
 static void LavaBird_RangedAttack(Entity *entity);
 static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from, s32 frame_to, f32 *target, f32 pitch_rate, f32 yaw_rate);
@@ -126,7 +126,7 @@ void LavaBird_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think, with the type's own functions for the three states. It
    keeps flag bit 28 set except in the death action, and animation 3 on the second motion slot
    outside heavy-hit reactions and the death; every 60th frame it draws work float unk54 (0 to 9).
-   After the state's function, every frame outside the death, it gives the command of func_0017EA98
+   After the state's function, every frame outside the death, it gives the command of LavaBird_SteerToTargetCommand
    (or the turn away from a push) and calls LavaBird_ApplyMoveCommand. */
 static void LavaBird_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -180,14 +180,14 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
             entity->unkC8 = 0x101;
         } else {
             // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
-            entity->unkC8 = func_0017EA98(entity, 0, 0.0f);
+            entity->unkC8 = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
         }
         LavaBird_ApplyMoveCommand(entity);
     }
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat without the guard and the dodge, with the
-   command of func_0017EA98. It also picks the pitch command, work byte unk79: 1 or -1 at random
+   command of LavaBird_SteerToTargetCommand. It also picks the pitch command, work byte unk79: 1 or -1 at random
    (EntityParams.unk438 times in 100), 2 while the player's y less its own is below
    EntityParams.unk436, -2 while it is above unk434. Its only attack is LavaBird_RangedAttack,
    when EntityAi_PickAttack draws a ranged one. */
@@ -270,7 +270,7 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
                 entity->unkC8 = 0x101;
             } else {
                 // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
-                entity->unkC8 = func_0017EA98(entity, 0, 0.0f);
+                entity->unkC8 = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
             }
         }
     }
@@ -278,7 +278,7 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 1: as EntityAi_ThinkPursue, with flag bits 11 to 13 at 0 and the
-   command of func_0017EA98. */
+   command of LavaBird_SteerToTargetCommand. */
 static void LavaBird_ThinkPursue(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[2];
@@ -296,13 +296,13 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 unknown) {
     } else if (turn < 0) {
         entity->unkC8 = 0x101;
     } else {
-        entity->unkC8 = func_0017EA98(entity, 0, 50.0f);
+        entity->unkC8 = LavaBird_SteerToTargetCommand(entity, 0, 50.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
 /* The think function of state 0: as EntityAi_ThinkIdle, always with a point to go to, the head
-   following, the command of func_0017EA98, and the pitch command (work byte unk79) picked as in
+   following, the command of LavaBird_SteerToTargetCommand, and the pitch command (work byte unk79) picked as in
    LavaBird_ThinkCombat. */
 static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -354,7 +354,7 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
         entity->unkC8 = 0x101;
     } else {
         // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
-        entity->unkC8 = func_0017EA98(entity, 0, 0.0f);
+        entity->unkC8 = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -483,8 +483,10 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     entity->unk8C += ENTITY_SCRATCH_VECTOR[2];
 }
 
-/* Called like EntityAi_MoveCommand; the last two parameters are not used. */
-static s32 func_0017EA98(Entity *entity, s32 mark_far, f32 range) {
+/* The movement command for flying at the target: forward (1) always, with a turn bit (0x101 / 0x201) while the
+   target is off the heading by more than the turn limit; 0 without a target. Called like EntityAi_MoveCommand;
+   the last two parameters are not used. */
+static s32 LavaBird_SteerToTargetCommand(Entity *entity, s32 mark_far, f32 range) {
     s32 result;
     f32 angle;
     f32 limit;

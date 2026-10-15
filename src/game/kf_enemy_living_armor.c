@@ -30,7 +30,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
@@ -65,7 +65,7 @@ static void LivingArmor_AimPart3AtPlayer(Entity *actor);
 static void LivingArmor_Animate(Entity *entity);
 static void LivingArmor_OnHit(Entity *entity);
 static void LivingArmor_ReactionHeavy(Entity *entity);
-static void func_0013D9D0(Entity *entity);
+static void LivingArmor_WaitToStrike(Entity *entity);
 static void LivingArmor_MeleeAttack1(Entity *entity);
 static void LivingArmor_Dormant(Entity *entity);
 static void LivingArmor_MeleeAttack0(Entity *entity);
@@ -195,7 +195,7 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (unkE0->unk78 == 0) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -294,7 +294,7 @@ static void LivingArmor_OnHit(Entity *entity) {
 }
 
 /* The reaction to a hit of either strength (busy bit 4): as EntityAi_ReactionHeavy with animation
-   16; when it has ended it starts animation 1 and the action func_0013D9D0. */
+   16; when it has ended it starts animation 1 and the action LivingArmor_WaitToStrike. */
 static void LivingArmor_ReactionHeavy(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
@@ -325,13 +325,17 @@ static void LivingArmor_ReactionHeavy(Entity *entity) {
             entity->unkC8 = 0;
             entity->unkA0 = 0;
             Motion_Start(entity, 1, 0, 5, 1);
-            EntityAi_StartAction(entity, func_0013D9D0, 1);
+            EntityAi_StartAction(entity, LivingArmor_WaitToStrike, 1);
         }
         break;
     }
 }
 
-static void func_0013D9D0(Entity *entity) {
+/* An action (busy bit 0x1000) that LivingArmor_ReactionHeavy and LivingArmor_MeleeAttack1 start with animation
+   1 playing: it starts LivingArmor_MeleeAttack1 when the player comes within EntityParams.unk434 (plus the
+   radius and 100) with nothing in the way, and goes back to LivingArmor_Dormant once work word unk68 has
+   counted down. */
+static void LivingArmor_WaitToStrike(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->unkC6 |= 0x1000;
@@ -349,10 +353,10 @@ static void func_0013D9D0(Entity *entity) {
     }
 }
 
-/* The melee attack with record 1 (busy bit 1), which func_0013D9D0 starts: animation 17, its hits
+/* The melee attack with record 1 (busy bit 1), which LivingArmor_WaitToStrike starts: animation 17, its hits
    checked at the angle Entity.unk68 (EntityAi_CheckMeleeHitAt); on frames 10 to 22 it starts effect 0x222
    along the path of the point Model_GetSkinnedBonePoint gives for 9. At its end, EntityParams.unk432 times in
-   100, it goes back to animation 1 and func_0013D9D0 with a new count in work word unk68; else it
+   100, it goes back to animation 1 and LivingArmor_WaitToStrike with a new count in work word unk68; else it
    starts LivingArmor_Dormant. */
 static void LivingArmor_MeleeAttack1(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -442,7 +446,7 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
                 ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
                 ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
                 Motion_Start(entity, 1, 0, 5, 1);
-                EntityAi_StartAction(entity, func_0013D9D0, 1);
+                EntityAi_StartAction(entity, LivingArmor_WaitToStrike, 1);
             } else {
                 entity->unkC6 = 0;
                 entity->unkC8 = 0;
@@ -458,7 +462,7 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
     }
 }
 
-/* A dormant action (busy bit 0x20) that func_0013D9D0 and LivingArmor_MeleeAttack1 start; the
+/* A dormant action (busy bit 0x20) that LivingArmor_WaitToStrike and LivingArmor_MeleeAttack1 start; the
    dormant slot holds EntityAi_Dormant. It is the second half of that one: plays animation 2 to its
    end, goes to state 2, clears flag bits 18, 20 and 21 and thinks. */
 static void LivingArmor_Dormant(Entity *entity) {

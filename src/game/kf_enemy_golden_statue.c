@@ -41,7 +41,7 @@ s32 EntityAi_CanShoot(Entity *);
 s32 EntityAi_CanMelee(Entity *);
 s32 EntityAi_PickRangedAttack(Entity *);
 s32 EntityAi_PickMeleeAttack(Entity *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 void EntityAi_Dodge(Entity *);
@@ -385,7 +385,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
     } else {
         entity->target = &player_state;
     }
-    func_00196D48(entity);
+    EntityAi_ClearTurnInPlace(entity);
     if (ENTITY_FLAG_BITS(entity)->bit31) {
         chase_angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
         if (unkE0->unk79 == 0) {

@@ -59,7 +59,7 @@ static void Salamander_MeleeAttack(Entity *entity);
 static void Salamander_RangedAttack(Entity *entity);
 static void Salamander_Think(Entity *entity, s32 unknown);
 static void Salamander_ThinkReturn(Entity *entity, s32 unknown);
-static void func_00134DC8(Entity *entity, s32 unknown);
+static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown);
 static void Salamander_ThinkCombat(Entity *entity, s32 unknown);
 static void Salamander_Move(Entity *entity);
 
@@ -468,7 +468,7 @@ static void Salamander_RangedAttack(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with EntityAi_CheckFarFromSpawn3D where that one calls EntityAi_CheckFarFromSpawn,
    Salamander_ThinkReturn while flag bit 53 is set, Salamander_ThinkCombat for states 1 and 2,
-   and func_00134DC8 for state 0 and, as long as work byte unk7A is 0 (Salamander_OnHit sets it),
+   and Salamander_ThinkWanderAndShoot for state 0 and, as long as work byte unk7A is 0 (Salamander_OnHit sets it),
    for every state. Keeps animation 3 on the second motion slot except in the death action. */
 static void Salamander_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -489,7 +489,7 @@ static void Salamander_Think(Entity *entity, s32 unknown) {
         return;
     }
     if (unkE0->unk7A == 0) {
-        func_00134DC8(entity, unknown);
+        Salamander_ThinkWanderAndShoot(entity, unknown);
         return;
     }
     switch (entity->state) {
@@ -500,7 +500,7 @@ static void Salamander_Think(Entity *entity, s32 unknown) {
         Salamander_ThinkCombat(entity, unknown);
         return;
     }
-    func_00134DC8(entity, unknown);
+    Salamander_ThinkWanderAndShoot(entity, unknown);
 }
 
 /* The think function while flag bit 53 is set: walks back to the spawn point, turning away from
@@ -570,7 +570,12 @@ static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-static void func_00134DC8(Entity *entity, s32 unknown) {
+/* The think function of state 0, and of every state until Salamander_OnHit sets work byte unk7A: starts
+   Salamander_RangedAttack (EntityAi_PickRangedAttack picks the record) when the player is in view
+   (EntityAi_IsPointInView with EntityParams.unk43A and unk43C degrees and unk43E) and the pause in work word
+   unk6A (EntityParams.unk438) is over; else moves in three dimensions to a random point near the spawn point
+   (EntityPoint_PickNearWithHeight), a new one every 240 to 359 frames. */
+static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 *point;

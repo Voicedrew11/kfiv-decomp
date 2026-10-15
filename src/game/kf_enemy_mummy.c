@@ -29,7 +29,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleXZ(float *, char *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
@@ -49,7 +49,7 @@ float EntityMath_DistanceXZ(void *, void *);
 static void Mummy_Think(Entity *entity, s32 unknown);
 static void Mummy_ThinkCombat(Entity *entity, s32 unknown);
 static void Mummy_OnHit(Entity *entity);
-static s32 func_00154CD0(Entity *entity, s32 unused, f32 reach);
+static s32 Mummy_BackwardsCommand(Entity *entity, s32 unused, f32 reach);
 
 /* Set-up of a type 39 entity: clears its work area and installs the type's handlers. */
 void Mummy_Init(Entity *entity) {
@@ -128,7 +128,7 @@ static void Mummy_Think(Entity *entity, s32 unknown) {
 /* The think function of state 2: as EntityAi_ThinkCombat, but closing in runs once work byte unk7A
    is set. When the player is near, the entity is within 40 degrees of the player's facing and the
    player is 40 to 90 degrees off its heading, it goes backwards for 90 to 149 frames instead (work
-   byte unk78 is 1), with the command func_00154CD0 gives. */
+   byte unk78 is 1), with the command Mummy_BackwardsCommand gives. */
 static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -195,7 +195,7 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
     }
     mode = entity->unkCD;
     if (mode == 1) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -237,7 +237,7 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
                     entity->unkC8 = 0x202;
                 } else {
                     // match: the caller passes an integer argument the callee does not take
-                    entity->unkC8 = func_00154CD0(entity, 0, entity->radius + 100.0f + 30.0f);
+                    entity->unkC8 = Mummy_BackwardsCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             }
@@ -260,9 +260,10 @@ static void Mummy_OnHit(Entity *entity) {
     EntityAi_SetState((char *)entity, 2);
 }
 
-/* The movement command for walking to the target: a turn bit when the target is off the heading by more than
-   the turn limit, and bit 1 while it is farther away than reach. */
-static s32 func_00154CD0(Entity *entity, s32 unused, f32 reach) {
+/* The movement command for going backwards: a turn bit (0x100 / 0x200) while the target is off the heading by
+   more than the turn limit, and command bit 2 (backwards) while it is farther than reach; 0 without a target.
+   The second parameter is not used. */
+static s32 Mummy_BackwardsCommand(Entity *entity, s32 unused, f32 reach) {
     f32 turn;
     f32 limit;
     f32 heading;

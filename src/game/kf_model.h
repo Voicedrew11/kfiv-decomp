@@ -75,7 +75,7 @@ typedef struct ModelPart {
     f32 unk58;                      /* 0x58 angle about z */
     f32 unk5C;                      /* 0x5C 1.0 */
     f32 unk60[3];                   /* 0x60 the third vector of a motion key (scale, it seems) */
-    u8 unk6C;                       /* 0x6C set by func_0019A430 */
+    u8 unk6C;                       /* 0x6C the part's motion slot (Motion_SetPartSlots, Motion_SetPartSlot) */
     char pad6D[0x03];
     struct ModelPart *child;        /* 0x70 first part hanging off this one, NULL: none */
     struct ModelPart *sibling;      /* 0x74 next part on the same parent, NULL: none */
@@ -312,7 +312,7 @@ typedef struct {
 
 /* the 4 bytes in front of each block ModelInstance.level_tables[n] points at */
 typedef struct {
-    u16 unk00;                      /* 0x00 read by func_0019A418 */
+    u16 unk00;                      /* 0x00 the motion's frame count, MotionData.frame_count (Motion_FrameCount) */
     char pad02[0x02];
 } ModelTableHeader;
 

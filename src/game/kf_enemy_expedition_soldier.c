@@ -34,7 +34,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
@@ -50,7 +50,7 @@ float EntityMath_DistanceXZ(void *, void *);
 
 static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity);
 static void ExpeditionSoldier_Think(Entity *entity, s32 unknown);
-static void func_001787E0(Entity *entity, s32 unknown);
+static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown);
 static void ExpeditionSoldier_Death(Entity *entity);
 static void ExpeditionSoldier_SignalMapObject(Entity *entity);
 static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown);
@@ -150,7 +150,7 @@ static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity) {
 }
 
 /* The think handler (the set-up function's default, for any EntitySpawnInfo.variant but 1 to 4): as
-   EntityAi_Think, with func_001787E0 for state 2. */
+   EntityAi_Think, with ExpeditionSoldier_ThinkCombat for state 2. */
 static void ExpeditionSoldier_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
@@ -172,13 +172,16 @@ static void ExpeditionSoldier_Think(Entity *entity, s32 unknown) {
         EntityAi_ThinkPursue(entity, unknown);
         return;
     case 2:
-        func_001787E0(entity, unknown);
+        ExpeditionSoldier_ThinkCombat(entity, unknown);
         return;
     }
     EntityAi_ThinkIdle(entity, unknown);
 }
 
-static void func_001787E0(Entity *entity, s32 unknown) {
+/* The think function of state 2: as EntityAi_ThinkCombat, but closing in from farther than EntityParams.unk434
+   only turns to the player (60 to 89 frames, when he is more than 45 degrees off the heading), and from nearer
+   walks at him for 120 to 179 frames. */
+static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 angle;
@@ -238,7 +241,7 @@ static void func_001787E0(Entity *entity, s32 unknown) {
         }
     }
     if (entity->unkCD == 1) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -381,7 +384,7 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
 }
 
 /* The think handler the set-up function installs for EntitySpawnInfo.variant 3: as
-   ExpeditionSoldier_Think (with func_001787E0 for state 1 too), but it first reads bit 17 of the two map
+   ExpeditionSoldier_Think (with ExpeditionSoldier_ThinkCombat for state 1 too), but it first reads bit 17 of the two map
    objects EntitySpawnInfo.unk42 and unk43 name into work bytes unk7A and unk7B, and while either is
    clear it calls ExpeditionSoldier_WalkToMapObjectPosX instead of stepping the states. PosX: its points
    are at x 950 and 900; ExpeditionSoldier_ThinkUseMapObjectsNegX has them at -950 and -900. */
@@ -418,7 +421,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown
         break;
     case 1:
     case 2:
-        func_001787E0(entity, unknown);
+        ExpeditionSoldier_ThinkCombat(entity, unknown);
         return;
     }
     EntityAi_ThinkIdle(entity, unknown);
@@ -528,7 +531,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown
         break;
     case 1:
     case 2:
-        func_001787E0(entity, unknown);
+        ExpeditionSoldier_ThinkCombat(entity, unknown);
         return;
     }
     EntityAi_ThinkIdle(entity, unknown);

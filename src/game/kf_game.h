@@ -94,8 +94,8 @@ typedef struct {
     f32 unk60[4];                   /* 0x60 the second shake's offset */
     f32 unk70;                      /* 0x70 how far the first shake reaches */
     s32 unk74;                      /* 0x74 frames of it left */
-    f32 unk78;                      /* 0x78 set with unk7C by func_00195878 */
-    s32 unk7C;                      /* 0x7C */
+    f32 unk78;                      /* 0x78 how far the second shake reaches (EntityAi_ShakeCamera) */
+    s32 unk7C;                      /* 0x7C frames of it left */
 } CameraState;
 
 /* D_00420D00: the event runner */

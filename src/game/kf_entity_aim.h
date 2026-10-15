@@ -15,8 +15,8 @@ void EntityPoint_PickNear(float range, void *point_arg, void *centre, void *posi
 /* EntityPoint_PickNear for a caller that already knows how far from `centre` it is. */
 void EntityPoint_PickNearFromDistance(f32 *point, f32 *centre, f32 distance, f32 range);
 
-/* A point `distance` away from the player along the player's vector unk1AC (unused). */
-void func_0018BC78(f32 *point, s32 distance);
+/* Where the player will be after `frames` frames at his present speed (unused). */
+void EntityAim_PredictPlayerPosition(f32 *point, s32 frames);
 
 /* Multiplies `matrix` by the transforms on the way from `part` down to `target`; FALSE: not found. */
 s32 Bone_MultiplyPathTo(void *part_arg, void *target_arg, void *matrix);

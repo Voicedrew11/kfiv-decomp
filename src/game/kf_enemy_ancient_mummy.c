@@ -30,7 +30,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleXZ(float *, char *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnCommand(Entity *);
@@ -53,7 +53,7 @@ void EntityAi_SetState(char *, u8);
 
 static void AncientMummy_Think(Entity *entity, s32 unknown);
 static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown);
-static s32 func_00155678(Entity *entity, s32 unused, f32 reach);
+static s32 AncientMummy_BackwardsCommand(Entity *entity, s32 unused, f32 reach);
 static void AncientMummy_ShootAndRelocate(Entity *entity);
 static void AncientMummy_FadeBackIn(Entity *entity);
 
@@ -135,7 +135,7 @@ static void AncientMummy_Think(Entity *entity, s32 unknown) {
    the player's facing it first starts AncientMummy_ShootAndRelocate when the player is nearer than 300
    and the pause is over, or, with the player nearer than 800 and less than 90 degrees off its
    heading, goes backwards for 90 to 149 frames (work byte unk78 is 1) with the command
-   func_00155678 gives. Closing in never runs. */
+   AncientMummy_BackwardsCommand gives. Closing in never runs. */
 static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -207,7 +207,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
     }
     mode = entity->unkCD;
     if (mode == 1) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {
@@ -239,7 +239,7 @@ static void AncientMummy_ThinkCombat(Entity *entity, s32 unknown) {
                     entity->unkC8 = 0x202;
                 } else {
                     // match: the caller passes an integer argument the callee does not take
-                    entity->unkC8 = func_00155678(entity, 0, entity->radius + 100.0f + 30.0f);
+                    entity->unkC8 = AncientMummy_BackwardsCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             }
@@ -249,9 +249,10 @@ done:
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-/* The movement command for walking to the target: a turn bit when the target is off the heading by more than
-   the turn limit, and bit 1 while it is farther away than reach. */
-static s32 func_00155678(Entity *entity, s32 unused, f32 reach) {
+/* The movement command for going backwards: a turn bit (0x100 / 0x200) while the target is off the heading by
+   more than the turn limit, and command bit 2 (backwards) while it is farther than reach; 0 without a target.
+   The second parameter is not used. */
+static s32 AncientMummy_BackwardsCommand(Entity *entity, s32 unused, f32 reach) {
     f32 turn;
     f32 limit;
     f32 heading;

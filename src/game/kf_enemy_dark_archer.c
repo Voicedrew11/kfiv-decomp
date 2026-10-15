@@ -63,7 +63,7 @@ s32 EntityAi_ShouldDodge(Entity *, f32, f32);
 s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
-void func_00196D48(Entity *);
+void EntityAi_ClearTurnInPlace(Entity *);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_TurnFromPush(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
@@ -86,7 +86,7 @@ static void DarkArcher_OnHit(Entity *entity);
 static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown);
 static void DarkArcher_MoveTurnOnly(Entity *entity);
 static void DarkArcher_DormantFadeIn(Entity *entity);
-static void func_0016B228(Entity *entity);
+static void DarkArcher_DeathWithoutReward(Entity *entity);
 static void DarkArcher_Think(Entity *entity, s32 unknown);
 static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown);
 static void DarkArcher_RangedAttack(Entity *entity);
@@ -367,7 +367,11 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
     entity->model->unk15C = entity->unkD6;
 }
 
-static void func_0016B228(Entity *entity) {
+/* A death action (busy bit 0x40) that nothing refers to: plays animation 0, and once it has blended in counts
+   the death for the spawn (Game_CountSpawnDeath), frees the entity's effects, fades it out over 20 frames and removes
+   it. Unlike EntityAi_Death it plays no death animation and does not call EntityEvent_OnDeath (no item, gold,
+   experience or script). */
+static void DarkArcher_DeathWithoutReward(Entity *entity) {
     entity->unkC6 = 0x40;
     switch (entity->action_step) {
     case 0:
@@ -504,7 +508,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     if (unkE0->unk78 == 0) {
-        func_00196D48(entity);
+        EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (unkE0->unk79 == 0) {

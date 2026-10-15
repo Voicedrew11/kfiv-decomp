@@ -24,7 +24,7 @@ int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
 int Motion_Start(void *, int, int, u32, int);
 float EntityMath_AngleDifference(float, float);
-int func_0019A3F0(void *, int);
+int EntityAi_AnimationFrameCount(void *, int);
 float EntityMath_EaseAngleToward(float *, float, float);
 extern u32 D_00446ED4;
 extern PlayerData player_state;
@@ -240,7 +240,7 @@ static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
         entity->action_step++;
     case 1:
         if (entity->model->unkFC->unk88 == 0) {
-            frames = func_0019A3F0(entity, entity->unkD1);
+            frames = EntityAi_AnimationFrameCount(entity, entity->unkD1);
             entity->unkA0 = frames;
             if (entity->unk28 != 0) {
                 entity->unkA0 = frames * 2;
