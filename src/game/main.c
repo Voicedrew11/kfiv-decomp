@@ -27,7 +27,7 @@ void Timer_CountOverflow(void);
 int Timer_Setup(u32, int, int, void *);
 void Timer_Restart(void);
 void func_00102178(void);
-void func_00112648(void);
+void Map_LoadParamFiles(void);
 void func_001029A8(void);
 void func_001B5808(void);
 void func_00124EF8(void);
@@ -61,7 +61,7 @@ int main(void) {
     Timer_Setup(0, 0x1C1, 0xEA60, Timer_CountOverflow);
     Timer_Restart();
     func_00102178();
-    func_00112648();
+    Map_LoadParamFiles();
     func_001029A8();
     func_001B5808();
     func_00124EF8();

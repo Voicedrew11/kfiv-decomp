@@ -512,7 +512,7 @@ typedef struct {
     Vector4 rotation;               /* 0x10 */
     Vector4 scale;                  /* 0x20 */
     u16 unk30;                      /* 0x30 its row of map_object_defs (param/obj.prm) */
-    u16 unk32;                      /* 0x32 which of the map's object models it uses (func_00114AA8) */
+    u16 unk32;                      /* 0x32 which of the map's object models it uses (Map_BuildModels) */
     u16 unk34;                      /* 0x34 which of the map's object collision meshes */
     u16 unk36;                      /* 0x36 which of the map's object motions */
     union {
@@ -533,7 +533,7 @@ typedef struct {
     u8 unk56;                       /* 0x56 the model point it starts at; the next one gives its direction */
     char pad57[0x01];
     u16 unk58;                      /* 0x58 passed to Script_Start when an item is used on the object, 0: nothing */
-    u8 unk5A;                       /* 0x5A 0, 0xFF: in view with its map record; else by func_00116C08 */
+    u8 unk5A;                       /* 0x5A 0, 0xFF: in view with its map record; else by Map_TestFlagBlockBit */
     char pad5B[0x25];
 } MapObjectUnk08;
 
@@ -636,7 +636,7 @@ typedef struct {
     ModelInstance *model;           /* 0x00 */
     MapObjectUnk04 *unk04;          /* 0x04 */
     MapObjectUnk08 *unk08;          /* 0x08 */
-    s32 unk0C;                      /* 0x0C what func_00115CD0 returns for its position */
+    s32 unk0C;                      /* 0x0C what Map_FindRecordAtInSlot returns for its position */
     u32 unk10;                      /* 0x10 flags, MAP_OBJECT_BITS */
     f32 unk14;                      /* 0x14 how far around its position it reaches, 0: nothing to hit */
     f32 unk18;                      /* 0x18 how far it is from the point last tested against the map objects (func_001C2758, func_001C2A38) */
@@ -752,7 +752,7 @@ typedef struct {
 
 #define MAP_OBJECT_BITS_LOW(object) ((MapObjectBitsLow *)&(object)->unk10)
 
-/* the props of a map, looked up by func_00116160(map, id) */
+/* the props of a map, looked up by Map_GetRecordById(map, id) */
 typedef struct {
     char pad00[0x32];
     u16 unk32;                      /* 0x32 0xFFFF: nothing to collide with */
@@ -786,7 +786,7 @@ typedef struct {
     char pad32[0x02];
     u16 unk34;                      /* 0x34 passed to Script_Start in place of picking the item up, 0: nothing (func_001D0970) */
     u8 required_flag;               /* 0x36 nonzero: it only appears while its byte of map_item_pickup_counts is below this */
-    u8 chance;                      /* 0x37 percent chance that it appears (func_001C87D8) */
+    u8 chance;                      /* 0x37 percent chance that it appears (MapItem_RollFixedItems) */
     u8 group;                       /* 0x38 0-15: picks the roll and the map's threshold it is tested against */
     char pad39[0x06];
     u8 slot_id;                     /* 0x3F its slot in D_005B5EC0 */
@@ -836,7 +836,7 @@ typedef struct {
 
 #define ITEM_NODE_MAP_BIT(node) ((ItemNodeMapBit *)&(node)->flags)
 
-/* ItemNode with all of its flags as bit-fields (func_001C8F18) */
+/* ItemNode with all of its flags as bit-fields (MapItem_Drop) */
 typedef struct {
     char pad00[0x0C];
     u32 map : 1;                    /* 0x0C which of the two loaded maps it lies in */
@@ -848,7 +848,7 @@ typedef struct {
 
 #define ITEM_NODE_BITS(node) ((ItemNodeBits *)(node))
 
-/* D_0057E040[map][32]: what is loaded for each kind of item a map holds (func_001CA498 finds one) */
+/* D_0057E040[map][32]: what is loaded for each kind of item a map holds (MapItem_FindModelSource finds one) */
 typedef struct {
     char *model_data;               /* 0x00 handed to func_0010D018 */
     char *texture;                  /* 0x04 becomes the model's unk194 */

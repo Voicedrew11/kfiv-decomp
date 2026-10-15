@@ -4,7 +4,7 @@
 
 #include "common.h"
 
-/* game_status (cleared as 0x48 bytes by func_001127F8). Other files still
+/* game_status (cleared as 0x48 bytes by Map_ResetGameState). Other files still
    declare it as char[]/int[], so the extern stays in each file. */
 typedef struct {
     char unk00;                     /* 0x00 nonzero: script blends are skipped */
@@ -88,7 +88,7 @@ typedef struct {
     f32 unk30[4];                   /* 0x30 the point to move to (GameStatus.unk05) */
     f32 unk40;                      /* 0x40 how fast it turns to unk20 */
     f32 unk44;                      /* 0x44 how far it moves to unk30 in a frame */
-    f32 unk48;                      /* 0x48 512.0 after func_001127F8 */
+    f32 unk48;                      /* 0x48 512.0 after Map_ResetGameState */
     f32 unk4C;                      /* 0x4C added to the height above the player */
     f32 unk50[4];                   /* 0x50 the first shake's offset (func_00100D10) */
     f32 unk60[4];                   /* 0x60 the second shake's offset */
@@ -119,14 +119,14 @@ typedef struct {
     u32 flags;                      /* 0x10 */
 } GameEvent;
 
-/* the viewers func_0011A500 runs, indexed by picked_viewer (kf_map_viewer.c), 0xC bytes each */
+/* the viewers MapViewer_Run runs, indexed by picked_viewer (kf_map_viewer.c), 0xC bytes each */
 typedef struct {
     void (*run)(void);              /* 0x00 loops until the viewer is left */
     int unk04;                      /* 0x04 */
     int count;                      /* 0x08 the number of pictures; viewer_picture stays below it */
 } ViewerEntry;
 
-/* four texture coordinates, one per corner of the viewer's player marker: a local table func_0011AAE8
+/* four texture coordinates, one per corner of the viewer's player marker: a local table MapViewer_DrawPictureMap
    copies whole from read-only data (D_0043E760, D_0043E770) */
 typedef struct {
     s32 values[4];                  /* 0x00 */
@@ -224,7 +224,7 @@ typedef struct {
     char text[0x800];               /* 0x50 */
 } TextLog;
 
-/* item_name_defs[ITEM_COUNT]: param/item_nam.prm, read by func_00112648: a row per item, starting with its
+/* item_name_defs[ITEM_COUNT]: param/item_nam.prm, read by Map_LoadParamFiles: a row per item, starting with its
    name (the items carried, then 70 weapons from ITEM_WEAPON_FIRST, then 160 worn ones from ITEM_WORN_FIRST) */
 typedef struct {
     char pad00[0x30];

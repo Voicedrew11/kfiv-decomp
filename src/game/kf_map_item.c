@@ -8,39 +8,39 @@
 #include "kf_message.h"
 #include "kf_map_object.h"
 
-void func_001CA338(int);
-s32 func_001C8F18(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
-void *func_001CA498(int, int);
+void MapItem_ClearMap(int);
+s32 MapItem_Drop(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
+void *MapItem_FindModelSource(int, int);
 void func_0010D018(ModelInstance *, char **, char **);
 void func_0010ED80(char *, int, int);
 void func_0010E8E0(void *, int, int, int, int);
 void func_0010B510(char *, int, int);
-void func_001CA578(void *);
+void MapItem_PrepareDraw(void *);
 
-void func_001C9C40(void);
-void func_001C9EB0(void);
-void func_001C9FB0(void);
-void func_001CA0E0(void);
-void func_001CA1E8(void);
+void MapItem_PickupAim(void);
+void MapItem_PickupBringUp(void);
+void MapItem_PickupHold(void);
+void MapItem_PickupTake(void);
+void MapItem_PickupPutBack(void);
 
-/* 0x4147E0 the steps of the item pickup in progress, func_001C9C00 runs the current one */
-void (*pickup_step_handlers[6])(void) = { func_001C9C40, func_001C9EB0, func_001C9FB0, func_001CA0E0, func_001CA1E8, 0 };
+/* 0x4147E0 the steps of the item pickup in progress, MapItem_UpdatePickup runs the current one */
+void (*pickup_step_handlers[6])(void) = { MapItem_PickupAim, MapItem_PickupBringUp, MapItem_PickupHold, MapItem_PickupTake, MapItem_PickupPutBack, 0 };
 
-int func_001C8B58(int, int);
-ItemNode *func_001CA520(ItemNode *);
+int MapItem_PlaceFixed(int, int);
+ItemNode *MapItem_Unlink(ItemNode *);
 void Vector_Add(void *, void *, void *);
-int func_001CA5B0(int, int);
+int MapItem_GetFixedIndex(int, int);
 void Vector_Copy(void *, void *);
-void func_001CA500(ListNode *);
+void MapItem_Link(ListNode *);
 int func_001C0E40(f32, void *);
 float Angle_Wrap(float);
-int func_001CA5E0(int);
-int func_001CA630(int);
-int func_001CA788(int);
+int MapItem_UniqueNotCarried(int);
+int MapItem_UniqueNotInTradeStock(int);
+int MapItem_UniqueNotDropped(int);
 void func_00109A50(void);
 void func_00109A80(int, s64);
 void func_00109AD0(void);
-MapRecordInfo *func_00115CD0(CameraState *, f32, int);
+MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
 void Vector_Scale(float *, float *, float);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
@@ -117,8 +117,9 @@ static f32 D_005B60D0[4];                   /* 0x5B60D0 its rotation */
 static f32 D_005B60E0[4];                   /* 0x5B60E0 where it is being taken to */
 static f32 D_005B60F0[4];                   /* 0x5B60F0 its speed */
 
-/* Resets the model node lists and marks every unset item record state as 1. */
-void func_001C8238(void) {
+/* Resets the item code: no items lying about, none being picked up, both map slots' tables cleared; and
+   every item definition whose state is 0 gets 1. */
+void MapItem_Init(void) {
     LevelDef *def;
     s32 i;
 
@@ -128,8 +129,8 @@ void func_001C8238(void) {
     D_00447198 = 0;
     D_004471A4 = 0;
     D_004469D0 = 0;
-    func_001CA338(0);
-    func_001CA338(1);
+    MapItem_ClearMap(0);
+    MapItem_ClearMap(1);
     def = (LevelDef *)item_name_defs;
     for (i = 0; i < 0x17C; i++, def++) {
         if (def->state == 0) {
@@ -141,7 +142,7 @@ void func_001C8238(void) {
 /* Sets up a map's items once it is loaded: notes where the model and texture of each kind of
    item lie in the map file, gives every fixed item its node and model, and lays the dropped
    items of the map's save record down again. */
-void func_001C82C0(int map) {
+void MapItem_InitMap(int map) {
     DroppedItemRecords saved;
     f32 position[4];
     f32 rotation[4];
@@ -176,7 +177,7 @@ void func_001C82C0(int map) {
     for (i = 0; i < count; i++, def++, node++) {
         D_005B5EC0[map][def->slot_id] = i;
         definition = &item_name_defs[def->item];
-        source = func_001CA498(map, definition->unk30);
+        source = MapItem_FindModelSource(map, definition->unk30);
         if (source != NULL) {
             ITEM_NODE_BITS(node)->map = map;
             node->def = def;
@@ -189,7 +190,7 @@ void func_001C82C0(int map) {
             func_0010D018(node->model, &model_data, &cursor);
             func_0010ED80((char *)node->model, 0x3B40, 0x3EC0);
             func_0010E8E0(node->model, 0xFF, 0xFF, 0xFF, -1);
-            node->model->draw = (void (*)(ModelInstance *))func_001CA578;
+            node->model->draw = (void (*)(ModelInstance *))MapItem_PrepareDraw;
             node->model->unk194 = (int)source->texture;
             node->model->unk190 = 2;
             func_0010B510(source->texture, 0x3B40, 0x3EC0);
@@ -210,7 +211,7 @@ void func_001C82C0(int map) {
             scale[0] = record->scale[0] * 0.0625f;
             scale[1] = record->scale[1] * 0.0625f;
             scale[2] = record->scale[2] * 0.0625f;
-            func_001C8F18(map, record->item, record->priority, position, position[1], offset, rotation, scale,
+            MapItem_Drop(map, record->item, record->priority, position, position[1], offset, rotation, scale,
                           record->order);
         }
     }
@@ -218,7 +219,7 @@ void func_001C82C0(int map) {
 
 /* Rolls which of a map's fixed items appear: one roll per group against the map's threshold
    for it, then one per item against its own chance. */
-void func_001C87D8(int map) {
+void MapItem_RollFixedItems(int map) {
     u8 rolls[16];
     u8 *thresholds = D_004469C8[map];
     s32 i;
@@ -231,30 +232,30 @@ void func_001C87D8(int map) {
     for (i = 0; i < D_00447190[map]; i++, node++) {
         if (rolls[node->def->group] < thresholds[node->def->group]) {
             if ((s32)(rand() * 100.0f * 4.656613e-10f) < node->def->chance) {
-                func_001C8B58(map, i);
+                MapItem_PlaceFixed(map, i);
             }
         }
     }
 }
 
 /* Unlinks every item of a map from the list of the ones lying about and clears the map's item tables. */
-void func_001C8938(int map) {
+void MapItem_UnloadMap(int map) {
     ItemNode *node;
 
     node = D_004469D4;
     while (node != 0) {
         if ((node->flags & 1) == map) {
-            node = func_001CA520(node);
+            node = MapItem_Unlink(node);
         } else {
             node = node->next;
         }
     }
-    func_001CA338(map);
+    MapItem_ClearMap(map);
 }
 
 /* Moves every item of a map by `offset`: the fixed items' definitions and models, and the
    dropped items lying about. */
-void func_001C8990(int map, f32 *offset) {
+void MapItem_MoveMap(int map, f32 *offset) {
     s32 i;
     ItemNode *node;
 
@@ -282,9 +283,9 @@ void func_001C8990(int map, f32 *offset) {
     }
 }
 
-/* Returns the node at the current map slot for slot, or NULL when the index is invalid or the node is unused. */
-void *func_001C8AF0(int slot) {
-    int index = func_001CA5B0(D_00446770, slot);
+/* Returns the current map's fixed item with this id, or NULL when the id is invalid or the item has no model. */
+void *MapItem_GetFixedById(int slot) {
+    int index = MapItem_GetFixedIndex(D_00446770, slot);
 
     if (index >= 0 && D_0057E240[D_00446770][index].model != NULL) {
         return &D_0057E240[D_00446770][index];
@@ -294,7 +295,7 @@ void *func_001C8AF0(int slot) {
 
 /* Puts fixed item `index` of a map where its definition says and links it into the list of
    items lying about. Returns 0 when it cannot (already linked, no model, or its flag byte has reached the limit). */
-int func_001C8B58(int map, int index) {
+int MapItem_PlaceFixed(int map, int index) {
     ItemNode *node;
     u8 tag = map_slots[map].tag;
 
@@ -311,18 +312,18 @@ int func_001C8B58(int map, int index) {
     Vector_Copy(&node->model->position, &node->def->position);
     Vector_Copy(&node->model->rotation, &node->def->rotation);
     Vector_Copy(&node->model->unkE0, &node->def->scale);
-    func_001CA500((ListNode *)node);
+    MapItem_Link((ListNode *)node);
 }
 
-/* Puts the fixed item with this id of a map in place (func_001C8B58). */
-int func_001C8C80(int map, int item_id) {
-    return func_001C8B58(map, func_001CA5B0(map, item_id));
+/* Puts the fixed item with this id of a map in place (MapItem_PlaceFixed). */
+int MapItem_PlaceFixedById(int map, int item_id) {
+    return MapItem_PlaceFixed(map, MapItem_GetFixedIndex(map, item_id));
 }
 
 /* Makes a dying enemy drop its item under itself: the one its spawn record names when bit 62
    of that record's flags is set, otherwise the first or second item of its kind by their
    chances. Returns FALSE when nothing was dropped. */
-s32 func_001C8CB0(Entity *entity) {
+s32 MapItem_DropFromEnemy(Entity *entity) {
     f32 position[4];
     f32 rotation[4];
     Vector4Arg scale;
@@ -375,7 +376,7 @@ s32 func_001C8CB0(Entity *entity) {
     } else {
         Vector_Copy(offset, &map_load_state.position);
     }
-    value = func_001C8F18(entity->group_id, item, priority, position, COLLISION_RESULT->point[1], offset, rotation,
+    value = MapItem_Drop(entity->group_id, item, priority, position, COLLISION_RESULT->point[1], offset, rotation,
                           (f32 *)&scale, 0xFFFFFFFF);
     return value;
 }
@@ -384,7 +385,7 @@ s32 func_001C8CB0(Entity *entity) {
    one whose priority is not above this one's, sets up its model and fills in the record that is
    saved for it. `order` is the record's own when it is put back from a save, 0xFFFFFFFF for a
    new drop. Returns FALSE when the player may not have another of the item or nothing is free. */
-s32 func_001C8F18(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f32 *offset, f32 *rotation, f32 *scale,
+s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f32 *offset, f32 *rotation, f32 *scale,
                   u32 order) {
     char *model_data;
     char *buffer;
@@ -394,16 +395,16 @@ s32 func_001C8F18(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f
     s32 index;
     s32 i;
 
-    if (!func_001CA5E0(item)) {
+    if (!MapItem_UniqueNotCarried(item)) {
         return FALSE;
     }
-    if (!func_001CA630(item)) {
+    if (!MapItem_UniqueNotInTradeStock(item)) {
         return FALSE;
     }
-    if (!func_001CA788(item)) {
+    if (!MapItem_UniqueNotDropped(item)) {
         return FALSE;
     }
-    source = func_001CA498(map, (item_name_defs + item)->unk30);
+    source = MapItem_FindModelSource(map, (item_name_defs + item)->unk30);
     if (source == NULL) {
         return FALSE;
     }
@@ -430,7 +431,7 @@ s32 func_001C8F18(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f
             return FALSE;
         }
         node = oldest;
-        func_001CA520(node);
+        MapItem_Unlink(node);
     }
     node->item = item;
     node->def = NULL;
@@ -468,27 +469,27 @@ s32 func_001C8F18(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f
     node->record->priority = priority;
     node->record->used = TRUE;
     node->record->order = order;
-    func_001CA500((ListNode *)node);
+    MapItem_Link((ListNode *)node);
     return TRUE;
 }
 
 /* Puts an item into a map for a map object (a chest's contents, say): takes a free node of the 32 at
    D_005807C0 and sets up its model. Returns NULL when the player may not have another of the item, when
    the object already has one out, or when no node or no model for the item is there. */
-ItemNode *func_001C9340(int map, int item, void *position, void *rotation, void *scale, void *object) {
+ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotation, void *scale, void *object) {
     char *sources[2];
     ItemNode *node;
     ItemModelSource *source;
     ModelInstance *model;
     s32 i;
 
-    if (!func_001CA5E0(item)) {
+    if (!MapItem_UniqueNotCarried(item)) {
         return NULL;
     }
-    if (!func_001CA630(item)) {
+    if (!MapItem_UniqueNotInTradeStock(item)) {
         return NULL;
     }
-    if (!func_001CA788(item)) {
+    if (!MapItem_UniqueNotDropped(item)) {
         return NULL;
     }
     node = D_005807C0[map];
@@ -503,7 +504,7 @@ ItemNode *func_001C9340(int map, int item, void *position, void *rotation, void 
     if (i >= 32) {
         return NULL;
     }
-    source = func_001CA498(map, (item_name_defs + item)->unk30);
+    source = MapItem_FindModelSource(map, (item_name_defs + item)->unk30);
     if (source == NULL) {
         return NULL;
     }
@@ -523,12 +524,12 @@ ItemNode *func_001C9340(int map, int item, void *position, void *rotation, void 
     node->model->unk190 = 2;
     node->model->unk194 = (int)source->texture;
     func_0010B510(source->texture, 0x3B40, 0x3EC0);
-    func_001CA500((ListNode *)node);
+    MapItem_Link((ListNode *)node);
     return node;
 }
 
-/* Returns the node in use whose unk08 is object, or NULL. */
-ItemNode *func_001C9580(int object) {
+/* Returns the item lying about that a map object put out (MapItem_PutOutForObject), or NULL. */
+ItemNode *MapItem_FindForObject(int object) {
     ItemNode *node;
 
     for (node = D_004469D4; node != NULL; node = node->next) {
@@ -541,7 +542,7 @@ ItemNode *func_001C9580(int object) {
 
 /* Lets the dropped items that are still falling (flag bit 2) fall one more frame, faster each frame,
    until they reach the floor below them. */
-void func_001C95B0(void) {
+void MapItem_UpdateFalling(void) {
     ItemNode *node;
     int flags;
     float height;
@@ -573,7 +574,7 @@ void func_001C95B0(void) {
 
 /* Draws the items lying in the maps, lit like the map record each lies in. The one being picked up is left
    out unless with_picked is set. */
-void func_001C9650(int with_picked) {
+void MapItem_DrawAll(int with_picked) {
     f32 scale[4];
     f32 unused[8];
     ItemNode *node;
@@ -585,7 +586,7 @@ void func_001C9650(int with_picked) {
     func_00109A80(0x47, 0x5000D);
     func_00109AD0();
     for (node = D_004469D4; node != NULL; node = node->next) {
-        node->map_record = func_00115CD0((CameraState *)&node->model->position, 0.0f, node->flags & 1);
+        node->map_record = Map_FindRecordAtInSlot((CameraState *)&node->model->position, 0.0f, node->flags & 1);
         if (node->map_record == NULL) {
             continue;
         }
@@ -615,7 +616,7 @@ static inline f32 wrap_angle(f32 angle) {
 
 /* Draws the item being picked up, over everything else: each part's own offset and turn are scaled by
    D_0044719C, so that the model folds flat while it is held up. Nothing is drawn when hidden is set. */
-void func_001C97E8(int hidden) {
+void MapItem_DrawPicked(int hidden) {
     f32 scale[4];
     f32 offset[4];
     f32 turn[4];
@@ -627,7 +628,7 @@ void func_001C97E8(int hidden) {
     if (node == NULL || hidden != 0) {
         return;
     }
-    node->map_record = func_00115CD0((CameraState *)&node->model->position, 0.0f, node->flags & 1);
+    node->map_record = Map_FindRecordAtInSlot((CameraState *)&node->model->position, 0.0f, node->flags & 1);
     if (node->map_record == NULL) {
         return;
     }
@@ -661,7 +662,7 @@ void func_001C97E8(int hidden) {
 }
 
 /* Makes node the one being picked up, if none is yet and it is on the list of the ones in use. */
-int func_001C9AB0(ItemNode *node) {
+int MapItem_StartPickup(ItemNode *node) {
     if (node == NULL || D_004469D8 != NULL) {
         return FALSE;
     }
@@ -674,8 +675,9 @@ int func_001C9AB0(ItemNode *node) {
     return TRUE;
 }
 
-/* Whether node is on the list of items in use and does not belong to a kind 4 map object. */
-int func_001C9B00(ItemNode *node) {
+/* Whether the player may reach for the item: it lies about (is on the list) and is not inside a chest
+   (a kind 4 map object). */
+int MapItem_IsPickable(ItemNode *node) {
     MapObject *object;
     ItemNode *head;
     int result;
@@ -697,11 +699,11 @@ int func_001C9B00(ItemNode *node) {
 
 /* Makes the current map's fixed item with this id the one being picked up, if none is yet and it
    is lying about; without may_put_back it cannot be put back. */
-int func_001C9B58(int item_id, int may_put_back) {
+int MapItem_StartPickupById(int item_id, int may_put_back) {
     int n;
     ItemNode *node;
 
-    n = func_001CA5B0(D_00446770, item_id);
+    n = MapItem_GetFixedIndex(D_00446770, item_id);
     if (D_004469D8 != 0 || n < 0) {
         return 0;
     }
@@ -716,7 +718,7 @@ int func_001C9B58(int item_id, int may_put_back) {
 }
 
 /* Runs the current step of the pickup in progress, if there is one. */
-void func_001C9C00(void) {
+void MapItem_UpdatePickup(void) {
     if (D_004469D8 != NULL) {
         pickup_step_handlers[D_004471A4]();
     }
@@ -724,7 +726,7 @@ void func_001C9C00(void) {
 
 /* Pickup step 0: remembers where the item lies and aims it at a point in front of the player's eyes, five units
    a frame when it is near and in fifteen frames when it is not. */
-void func_001C9C40(void) {
+void MapItem_PickupAim(void) {
     f32 delta[4];
     f32 distance;
 
@@ -759,8 +761,9 @@ void func_001C9C40(void) {
     D_004471A4++;
 }
 
-/* Counts down a blend: steps the actor's vectors toward a target, resetting when done. */
-void func_001C9EB0(void) {
+/* Pickup step 1: moves the item to the point in front of the player while its rotation eases to 0 and it
+   folds flat (D_0044719C), and tilts the player's view toward it; then on to step 2. */
+void MapItem_PickupBringUp(void) {
     D_004471B0--;
     if (D_004471B0 > 0) {
         Vector_Add(&D_004469D8->model->position, &D_004469D8->model->position, D_005B60F0);
@@ -778,7 +781,7 @@ void func_001C9EB0(void) {
 }
 
 /* Pickup step 2: the item turns in front of the player until it is taken (0x4000) or put back (0x2000). */
-void func_001C9FB0(void) {
+void MapItem_PickupHold(void) {
     f32 delta[4];
 
     D_0044719C = 0.0f;
@@ -803,7 +806,7 @@ void func_001C9FB0(void) {
 }
 
 /* Pickup step 3: moves the item to the player, then hands it over and frees its node. */
-void func_001CA0E0(void) {
+void MapItem_PickupTake(void) {
     ItemNode *node = D_004469D8;
 
     D_004471B0--;
@@ -819,7 +822,7 @@ void func_001CA0E0(void) {
     } else if (node->record != NULL) {
         memset(node->record, 0, sizeof(DroppedItemRecord));
     }
-    func_001CA520(D_004469D8);
+    MapItem_Unlink(D_004469D8);
     D_0038CC80[0] = 0;
     D_0044719C = 1.0f;
     D_004469D8 = NULL;
@@ -827,7 +830,7 @@ void func_001CA0E0(void) {
 }
 
 /* Pickup step 4 (put back): moves the item back to where it lay and lets go of it. */
-void func_001CA1E8(void) {
+void MapItem_PickupPutBack(void) {
     MapObject *object;
 
     D_004471B0--;
@@ -843,7 +846,7 @@ void func_001CA1E8(void) {
     Vector_Copy(&D_004469D8->model->rotation, D_005B60D0);
     object = (MapObject *)D_004469D8->unk08;
     if (object != NULL && (object->unk10 & 0x10000) && object->unk04->kind == 3) {
-        func_001CA520(D_004469D8);
+        MapItem_Unlink(D_004469D8);
     }
     D_0038CC80[0] = 0;
     D_0044719C = 1.0f;
@@ -852,7 +855,7 @@ void func_001CA1E8(void) {
 }
 
 /* Clears everything the item code keeps for a map slot. */
-void func_001CA338(int map) {
+void MapItem_ClearMap(int map) {
     int i;
 
     D_00447190[map] = 0; // match: this order of the three gives the retail register for each table
@@ -870,8 +873,9 @@ void func_001CA338(int map) {
     }
 }
 
-/* Scans the slot's list of up to 32 ids for key; returns the matching 8-byte entry, or NULL. */
-void *func_001CA498(int slot, int key) {
+/* Returns where the model and texture of item kind key lie in the slot's map (the map lists up to 32
+   kinds), or NULL when the map has none for it. */
+void *MapItem_FindModelSource(int slot, int key) {
     s16 *cursor;
     s16 value;
     int i;
@@ -889,8 +893,8 @@ void *func_001CA498(int slot, int key) {
     return NULL;
 }
 
-/* Pushes a node onto the front of the list at D_004469D4. */
-void func_001CA500(ListNode *node) {
+/* Puts an item on the front of the list of items lying about (D_004469D4). */
+void MapItem_Link(ListNode *node) {
     ListNode *head = (ListNode *)D_004469D4;
 
     node->prev = NULL;
@@ -901,8 +905,9 @@ void func_001CA500(ListNode *node) {
     D_004469D4 = (ItemNode *)node;
 }
 
-/* Unlinks node from the model node list and returns the node that followed it. */
-ItemNode *func_001CA520(ItemNode *node) {
+/* Takes an item off the list of items lying about, frees its object and drop record links, and returns
+   the item that followed it. */
+ItemNode *MapItem_Unlink(ItemNode *node) {
     ItemNode *next;
 
     next = node->next;
@@ -923,22 +928,24 @@ ItemNode *func_001CA520(ItemNode *node) {
 }
 
 /* Sends the model's textures and sets GS register 0x47 for drawing it. */
-void func_001CA578(void *model) {
+void MapItem_PrepareDraw(void *model) {
     func_0010AEB8(model);
     func_00109A50();
     func_00109A80(0x47, 0x5000D);
     func_00109AD0();
 }
 
-/* Returns the node index the slot's map has for object_id (1..255), or -1. */
-int func_001CA5B0(int slot, int object_id) {
+/* Returns the index of the slot's fixed item with this id (1..255), or -1. */
+int MapItem_GetFixedIndex(int slot, int object_id) {
     if ((u32)(object_id - 1) < 0xFF) {
         return D_005B5EC0[slot][object_id];
     }
     return -1;
 }
 
-int func_001CA5E0(int item) {
+/* Returns FALSE when the player carries the item and it is one of a kind (equipment, or ItemCommonDef.flags
+   bit 1). */
+int MapItem_UniqueNotCarried(int item) {
     if (item_counts[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return 0;
     }
@@ -946,7 +953,7 @@ int func_001CA5E0(int item) {
 }
 
 /* Returns FALSE when one of the five tables after item_counts holds the item and it is one of a kind. */
-int func_001CA630(int item) {
+int MapItem_UniqueNotInTradeStock(int item) {
     if (trade_stock_1[item] != 0 && (item >= 0x96 || ((item_common_defs + item)->flags >> 1 & 1))) {
         return FALSE;
     }
@@ -966,7 +973,7 @@ int func_001CA630(int item) {
 }
 
 /* Returns FALSE when an item of a kind the player may hold only one of lies dropped in any map. */
-int func_001CA788(int item) {
+int MapItem_UniqueNotDropped(int item) {
     int i;
     int j;
     DroppedItemRecord *record;

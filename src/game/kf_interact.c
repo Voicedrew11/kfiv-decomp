@@ -18,11 +18,11 @@ void sceVu0SubVector(void *, void *, void *);
 void sceVu0Normalize(float *, float *);
 float sceVu0InnerProduct(float *, float *);
 float sqrtf(float);
-int func_001C9B00(void *);
+int MapItem_IsPickable(void *);
 int func_001090E0(char *); // match: its u16 is halved as an int
 int Script_Start(int, int);
 int Script_IsRunning(int);
-int func_001C9AB0(ItemNode *);
+int MapItem_StartPickup(ItemNode *);
 extern GameStatus game_status;
 extern PlayerState player_state;
 extern EventRunner D_00420D00;
@@ -183,7 +183,7 @@ void func_001D0970(void) {
         }
     }
     for (node = D_004469D4; node != NULL; node = node->next) {
-        if (!func_001C9B00(node)) {
+        if (!MapItem_IsPickable(node)) {
             continue;
         }
         if (node->model->position.y < player_state.position.y - 50.0f - 230.0f) {
@@ -262,7 +262,7 @@ void func_001D0970(void) {
                 }
                 can_act = FALSE;
             } else if (D_004469D8 == NULL) {
-                func_001C9AB0(D_00420D00.unk58);
+                MapItem_StartPickup(D_00420D00.unk58);
                 can_act = FALSE;
             }
         }

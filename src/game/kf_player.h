@@ -279,7 +279,7 @@ typedef struct {
     u8 magic_gain;                  /* 0x07 added to PlayerState.magic_base */
 } PlayerLevelStep;
 
-/* worn_defs[160]: param/item_pct.prm (func_00112648), a row per item from ITEM_WORN_FIRST, one per LevelRecord of worn_item_level_records */
+/* worn_defs[160]: param/item_pct.prm (Map_LoadParamFiles), a row per item from ITEM_WORN_FIRST, one per LevelRecord of worn_item_level_records */
 typedef struct {
     s16 unk00[9];                   /* 0x00 the base of the nine values; LevelRecord.unk00 is added (func_001BB728) */
     u16 unk12[6];                   /* 0x12 added to PlayerState.unkDC while the item is worn (func_001BB020) */
@@ -306,7 +306,7 @@ typedef struct {
     char pad21[0x01];
 } LevelRecord;
 
-/* weapon_defs[70]: param/item_wpn.prm (func_00112648), 0x90 bytes per weapon from ITEM_WEAPON_FIRST; PlayerState.weapon picks one */
+/* weapon_defs[70]: param/item_wpn.prm (Map_LoadParamFiles), 0x90 bytes per weapon from ITEM_WEAPON_FIRST; PlayerState.weapon picks one */
 typedef struct {
     PlayerShotStats unk00[3];       /* 0x00 one row per LevelRecord.unk14 */
     PlayerItemRates unk36;          /* 0x36 */

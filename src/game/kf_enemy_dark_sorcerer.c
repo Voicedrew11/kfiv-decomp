@@ -64,7 +64,7 @@ int EntityAi_LaunchShot(void *, int, void *, void *);
 int Sound_PlayMapAtRange(u8, u8, float *, float);
 extern s32 D_00446770;
 extern MapSlot map_slots[];
-void *func_00116160(int, int);
+void *Map_GetRecordById(int, int);
 int Script_Start(int, int);
 
 static void DarkSorcerer_OnHit(Entity *entity);
@@ -900,7 +900,7 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
 
 /* Helper of DarkSorcerer_PlayAnim19StartScripts: when the entity's map is the current one, starts script
    unk4E + 10000 of the map record player_state.unk252 picks, and of up to two of the records
-   func_00116160 gives for 0x6B to 0x88, drawn at random. */
+   Map_GetRecordById gives for 0x6B to 0x88, drawn at random. */
 static void DarkSorcerer_StartMapScripts(Entity *entity) {
     MapSlot *slot = &map_slots[D_00446770];
     MapRecord *record = &((MapRecord *)slot->records)[player_state.unk252];
@@ -920,7 +920,7 @@ static void DarkSorcerer_StartMapScripts(Entity *entity) {
     chance = 200;
     for (; i < 0x1E; i++) {
         if (rand() % roll_range < chance / slots_left) {
-            record = func_00116160(entity->group_id, i + 0x6B);
+            record = Map_GetRecordById(entity->group_id, i + 0x6B);
             if (record != NULL && record->unk4E != 0 && entity->group_id == D_00446770) {
                 chance -= 100;
                 remaining--;

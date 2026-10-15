@@ -4,15 +4,15 @@
 #include "kf_gold.h"
 #include "kf_game.h"
 
-ItemNode *func_001C9340(int, int, void *, void *, void *, void *);
-int func_001C9AB0(ModelNode *);
+ItemNode *MapItem_PutOutForObject(int, int, void *, void *, void *, void *);
+int MapItem_StartPickup(ModelNode *);
 void func_0011FC18(MapObject *);
 void func_0011EFC8(MapObject *);
 void *memset(void *, int, u32);
 void MapObject_ShowKeyUsed(int);
 int Sound_PlayMapAtRange(u8, u8, float *, float);
 void MapObject_UpdateOpenChest(MapObject *);
-ModelNode *func_001C9580(int);
+ModelNode *MapItem_FindForObject(int);
 void MapObject_UpdateClosedChest(void *, int);
 void func_0011FC10(MapObject *);
 extern void (*map_object_update_hooks[])(MapObject *);
@@ -24,7 +24,7 @@ extern GameStatus game_status;
 extern EventRunner D_00420D00;
 
 /* Update handler: when the player uses an object that holds an item it is handed
-   out (func_001C9340), else a message is shown, at most every 45 frames. */
+   out (MapItem_PutOutForObject), else a message is shown, at most every 45 frames. */
 void func_0011FAB0(MapObject *object) {
     Qword unk_value = D_0043E780;
     s32 *work = object->work;
@@ -35,7 +35,7 @@ void func_0011FAB0(MapObject *object) {
     if (((D_0038CC74[0] >> 1) & 1) && D_00420D50[0] == object) {
         if (object->unk08->unk44 != 0 && !(object->unk10 & 0x40000)) {
             object->model->unk1B4(object->model);
-            func_001C9AB0((ModelNode *)func_001C9340(
+            MapItem_StartPickup((ModelNode *)MapItem_PutOutForObject(
                 MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk44, (void *)object->model->get_point(object->model, 0),
                 &object->model->rotation, &unk_value, object));
         } else if (work[0] <= 0) {
@@ -66,14 +66,14 @@ void func_0011FC18(MapObject *object) {
         if (!(object->unk10 & 0x40000)) {
             map_object_update_hooks[object->unk04->kind](object);
             object->model->unk1B4(object->model);
-            func_001C9340((u8)object->unk10 & 1, object->unk08->unk44, (void *)object->model->get_point(object->model, 0),
+            MapItem_PutOutForObject((u8)object->unk10 & 1, object->unk08->unk44, (void *)object->model->get_point(object->model, 0),
                           &object->model->rotation, drop_params, object);
         }
     }
 }
 
 /* Start handler of a chest: closed (animation 4, step 1) or open (animation 5, step 3);
-   an open chest that isn't emptied yet drops its item (MapObjectUnk08.unk44) through func_001C9340. */
+   an open chest that isn't emptied yet drops its item (MapObjectUnk08.unk44) through MapItem_PutOutForObject. */
 void func_0011FCF8(MapObject *object) {
     f32 drop_position[3];
     s64 drop_params[2];
@@ -94,7 +94,7 @@ void func_0011FCF8(MapObject *object) {
             drop_position[0] = model->position.x;
             drop_position[1] = model->position.y - 25.0f;
             drop_position[2] = model->position.z;
-            func_001C9340((u8)object->unk10 & 1, source->unk44, drop_position, &model->rotation, drop_params, object);
+            MapItem_PutOutForObject((u8)object->unk10 & 1, source->unk44, drop_position, &model->rotation, drop_params, object);
         }
     }
 }
@@ -151,7 +151,7 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
             position.x = object->model->position.x;
             position.y = object->model->position.y - 25.0f;
             position.z = object->model->position.z;
-            func_001C9340(MAP_OBJECT_BYTES(object)->unk00 & 1, source->unk44, &position, &object->model->rotation, &unk_value, object);
+            MapItem_PutOutForObject(MAP_OBJECT_BYTES(object)->unk00 & 1, source->unk44, &position, &object->model->rotation, &unk_value, object);
             MAP_OBJECT_BITS(object)->bit18 = FALSE;
         } else if (((MapObjectUnk08Words *)source)->unk48 > 0) {
             position.x = object->model->position.x;
@@ -178,7 +178,7 @@ void func_0011FFF8(MapObject *object) {
 }
 
 /* Update handler of an open chest (kind 4, step 3): when the player uses one that still holds something it
-   is handed out (func_001C9580), else "Empty" is shown, at most every 45 frames. */
+   is handed out (MapItem_FindForObject), else "Empty" is shown, at most every 45 frames. */
 void MapObject_UpdateOpenChest(MapObject *object) {
     s32 *work = object->work;
     MapObjectUnk08Words *source;
@@ -190,9 +190,9 @@ void MapObject_UpdateOpenChest(MapObject *object) {
     if (((D_0038CC74[0] >> 1) & 1) && D_00420D50[0] == object) {
         if (!(object->unk10 & 0x40000) &&
             ((source = MAP_OBJECT_WORDS(object))->unk44 != 0 || source->unk48 != 0)) {
-            pickup = func_001C9580((int)object);
+            pickup = MapItem_FindForObject((int)object);
             if (pickup != NULL) {
-                func_001C9AB0(pickup);
+                MapItem_StartPickup(pickup);
             }
         } else {
             if (work[1] > 0) {

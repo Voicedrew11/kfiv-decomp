@@ -383,7 +383,7 @@ typedef struct {
     s32 unk130[0x20];               /* 0x130 offsets from D_004467C0 to EntityParamsUnk130 records, by animation */
     s32 unk1B0[0x20];               /* 0x1B0 offsets from D_004467C0 to EntityParamsUnk1B0 records, by animation */
     u16 gold;                       /* 0x230 how much gold it drops (Gold_DropFromEntity): half of it for sure, the rest by chance */
-    u16 drop_item;                  /* 0x232 the item it may drop (func_001C8CB0), 0xFFFF: none */
+    u16 drop_item;                  /* 0x232 the item it may drop (MapItem_DropFromEnemy), 0xFFFF: none */
     u16 second_drop_item;           /* 0x234 the item it may drop when the first one's roll fails, 0xFFFF: none */
     s8 drop_chance;                 /* 0x236 percent */
     s8 second_drop_chance;          /* 0x237 percent */

@@ -4,20 +4,20 @@
 #include "kf_packet.h"
 
 /* the viewers and the functions that find where the marker goes (kf_map_viewer.c) */
-void func_0011AA08();
-int func_0011B1C0(int *screen_x, int *screen_y);
-int func_0011B4F0(int *screen_x, int *screen_y);
-int func_0011BAB8(int *map_x, int *map_y);
-int func_0011BBC0(int *screen_x, int *screen_y);
-void func_0011BCD0();
+void MapViewer_RunPictureMap();
+int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y);
+int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y);
+int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y);
+int MapViewer_LocateOnWiddasMap(int *screen_x, int *screen_y);
+void MapViewer_RunKingsMap();
 
 /* 0x38D6B0 one entry per viewer, indexed by picked_viewer */
 ViewerEntry viewer_entries[5] = {
-    { func_0011AA08, (int)func_0011B1C0, 2 },
-    { func_0011AA08, (int)func_0011B4F0, 3 },
-    { func_0011AA08, (int)func_0011BAB8, 1 },
-    { func_0011AA08, (int)func_0011BBC0, 1 },
-    { func_0011BCD0, 0, 0 },
+    { MapViewer_RunPictureMap, (int)MapViewer_LocateOnCaretakersMap, 2 },
+    { MapViewer_RunPictureMap, (int)MapViewer_LocateOnZastarisMap, 3 },
+    { MapViewer_RunPictureMap, (int)MapViewer_LocateOnEarthFolksMap, 1 },
+    { MapViewer_RunPictureMap, (int)MapViewer_LocateOnWiddasMap, 1 },
+    { MapViewer_RunKingsMap, 0, 0 },
 };
 
 /* 0x38D6F0 two unused screen rectangles */

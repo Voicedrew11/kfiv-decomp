@@ -24,7 +24,7 @@ typedef struct {
 /* screen_fade: the screen fade */
 typedef struct {
     Vector4 position;               /* 0x00 where the player goes in the new map */
-    s32 kind;                       /* 0x10 1: func_00118848 started it, 2: func_001188E0 */
+    s32 kind;                       /* 0x10 1: MapChange_StartToPosition started it, 2: MapChange_StartPassage */
     s32 unk14;                      /* 0x14 */
     s32 step;                       /* 0x18 index into screen_fade_steps, 0: no map change running */
     s32 map;                        /* 0x1C the map to change to */
@@ -53,7 +53,7 @@ typedef struct {
     DisplaySettings *settings;      /* 0xFC */
 } DisplayContext;
 
-/* the nodes func_001157D8 sorts into the lists D_00446788 and D_0044678C by box area */
+/* the nodes Map_InsertRecordBySize sorts into the lists D_00446788 and D_0044678C by box area */
 typedef struct AreaNode {
     char pad00[0x3C];
     s32 flags;                      /* 0x3C bit 25 skips insertion, bit 31 picks the second list */

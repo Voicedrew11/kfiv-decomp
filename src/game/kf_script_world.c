@@ -16,18 +16,18 @@
 
 void *memset(void *, int, u32);
 int Script_StoreFloatResult(ScriptArg *target, double value); // match: the definition takes a float, but retail converts the argument to double here (fptodp): there was no prototype in scope
-int func_001C8C80(int map, int item_id);
-int func_001C9B58(int item_id, int value);
-ItemNode *func_001C8AF0(int item_id);
-s32 func_001C8CB0(Entity *entity);
+int MapItem_PlaceFixedById(int map, int item_id);
+int MapItem_StartPickupById(int item_id, int value);
+ItemNode *MapItem_GetFixedById(int item_id);
+s32 MapItem_DropFromEnemy(Entity *entity);
 int Angle_EaseToward(float target, float *angle, int frames);
 float Angle_Wrap(float angle);
-MapRecordBounds *func_00116160(int map, int prop_id);
-void func_00115550(MapRecordBounds *record, f32 *offset);
+MapRecordBounds *Map_GetRecordById(int map, int prop_id);
+void Map_OffsetRecord(MapRecordBounds *record, f32 *offset);
 void func_0010E8E0(ModelInstance *model, int red, int green, int blue, int alpha);
 void func_001BB360(void);
 int func_001B4F30(u16, void *, void *, void *, void *);
-void func_001187F0(int map_tag);
+void MapChange_StartToMap(int map_tag);
 int Sound_PlayCommonAt(float range, int sound, float *position);
 int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range);
 void Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg position); // match: retail passes the position as a struct; the definition takes a pointer
@@ -61,16 +61,16 @@ void ScriptCmd_Nop109(ScriptThreadCommand *command) {
     command->active = 0;
 }
 
-/* Command 100: puts the current map's fixed item `value` in place (func_001C8C80), then finishes. */
+/* Command 100: puts the current map's fixed item `value` in place (MapItem_PlaceFixedById), then finishes. */
 void ScriptCmd_PlaceMapItem(ScriptValueCommand *command) {
-    func_001C8C80(D_00446770, command->value.value);
+    MapItem_PlaceFixedById(D_00446770, command->value.value);
     command->active = 0;
 }
 
-/* Command 101: starts the pickup of the fixed item `first` of the current map (func_001C9B58 makes its node
+/* Command 101: starts the pickup of the fixed item `first` of the current map (MapItem_StartPickupById makes its node
    D_004469D8 the one being picked up); `second` 0 marks it as one the player cannot put back. Then finishes. */
 void ScriptCmd_StartItemPickup(ScriptPairCommand *command) {
-    func_001C9B58(command->first.value, command->second.value);
+    MapItem_StartPickupById(command->first.value, command->second.value);
     command->active = 0;
 }
 
@@ -81,7 +81,7 @@ void ScriptCmd_MoveItemTo(ScriptMoveCommand *command) {
     int frames;
     int frames_left;
 
-    node = func_001C8AF0(command->target_id.value);
+    node = MapItem_GetFixedById(command->target_id.value);
     if (node != NULL) {
         if (command->x.value != node->model->position.x || command->y.value != node->model->position.y ||
             command->z.value != node->model->position.z) {
@@ -108,7 +108,7 @@ void ScriptCmd_MoveItemTo(ScriptMoveCommand *command) {
 void ScriptCmd_TurnItemTo(ScriptMoveCommand *command) {
     ItemNode *node;
 
-    node = func_001C8AF0(command->target_id.value);
+    node = MapItem_GetFixedById(command->target_id.value);
     if (node == NULL) {
         command->active = 0;
         return;
@@ -126,7 +126,7 @@ void ScriptCmd_TurnItemTo(ScriptMoveCommand *command) {
     }
 }
 
-/* Command 104: makes the entity `object_id` drop the item `value` (func_001C8CB0, with the item of its
+/* Command 104: makes the entity `object_id` drop the item `value` (MapItem_DropFromEnemy, with the item of its
    spawn record swapped for `value` during the call), then finishes. */
 void ScriptCmd_DropItemFromEntity(ScriptSetValueCommand *command) {
     u16 saved_value;
@@ -138,7 +138,7 @@ void ScriptCmd_DropItemFromEntity(ScriptSetValueCommand *command) {
         spawn_info = entity->spawn_info;
         saved_value = *(u16 *)&spawn_info->unk38; // match: the low 16 bits of the 64-bit field
         *(u16 *)&spawn_info->unk38 = command->value.value;
-        func_001C8CB0(entity);
+        MapItem_DropFromEnemy(entity);
         spawn_info = entity->spawn_info;
         *(u16 *)&spawn_info->unk38 = saved_value;
     }
@@ -150,7 +150,7 @@ void ScriptCmd_MoveItemBy(ScriptMoveCommand *command) {
     ItemNode *node;
     int frames_left;
 
-    node = func_001C8AF0(command->target_id.value);
+    node = MapItem_GetFixedById(command->target_id.value);
     if (node == NULL) {
         command->active = 0;
         return;
@@ -174,7 +174,7 @@ void ScriptCmd_TurnItemBy(ScriptMoveCommand *command) {
     ItemNode *node;
     s32 frames;
 
-    node = func_001C8AF0(command->target_id.value);
+    node = MapItem_GetFixedById(command->target_id.value);
     if (node == NULL || command->frames.value <= 0) {
         command->active = 0;
     } else {
@@ -194,7 +194,7 @@ void ScriptCmd_TurnItemBy(ScriptMoveCommand *command) {
 void ScriptCmd_GetItemPosition(ScriptMoveCommand *command) {
     ItemNode *node;
 
-    node = func_001C8AF0(command->target_id.value);
+    node = MapItem_GetFixedById(command->target_id.value);
     if (node != NULL) {
         Script_StoreFloatResult((ScriptArg *)&command->x, node->model->position.x);
         Script_StoreFloatResult((ScriptArg *)&command->y, node->model->position.y);
@@ -208,7 +208,7 @@ void ScriptCmd_GetItemPosition(ScriptMoveCommand *command) {
 void ScriptCmd_GetItemRotation(ScriptMoveCommand *command) {
     ItemNode *node;
 
-    node = func_001C8AF0(command->target_id.value);
+    node = MapItem_GetFixedById(command->target_id.value);
     if (node != NULL) {
         Script_StoreFloatResult((ScriptArg *)&command->x, node->model->rotation.x);
         Script_StoreFloatResult((ScriptArg *)&command->y, node->model->rotation.y);
@@ -835,7 +835,7 @@ void ScriptCmd_ShakeCamera(ScriptCameraShakeCommand *command) {
 void ScriptCmd_SetPropColor(ScriptObjectValuesCommand *command) {
     MapRecordBounds *prop;
 
-    prop = func_00116160(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(D_00446770, command->target_id.value);
     if (prop != NULL) {
         func_0010E8E0(prop->model, command->values[0].value, command->values[1].value, command->values[2].value,
                       command->values[3].value);
@@ -878,7 +878,7 @@ void ScriptCmd_CommitMapLoad(ScriptThreadCommand *command) {
 void ScriptCmd_SetPropSolid(ScriptCallCommand *command) {
     MapRecordBounds *prop;
 
-    prop = func_00116160(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(D_00446770, command->target_id.value);
     if (prop != NULL) {
         if (command->first.value != 0) {
             prop->unk3C &= ~0x40000000;
@@ -897,7 +897,7 @@ void ScriptCmd_MovePropTo(ScriptMoveCommand *command) {
     int frames;
     f32 divisor;
 
-    prop = func_00116160(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(D_00446770, command->target_id.value);
     if (prop == NULL) {
         command->active = 0;
         return;
@@ -918,7 +918,7 @@ void ScriptCmd_MovePropTo(ScriptMoveCommand *command) {
     offset[1] = (command->y.value - prop->model->position.y) / divisor;
     offset[2] = (command->z.value - prop->model->position.z) / divisor;
     offset[3] = 0.0f;
-    func_00115550(prop, offset);
+    Map_OffsetRecord(prop, offset);
     if (--command->frames.value == 0) {
         command->active = 0;
     }
@@ -928,7 +928,7 @@ void ScriptCmd_MovePropTo(ScriptMoveCommand *command) {
 void ScriptCmd_TurnPropTo(ScriptMoveCommand *command) {
     MapRecordBounds *prop;
 
-    prop = func_00116160(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(D_00446770, command->target_id.value);
     if (prop == NULL) {
         command->active = 0;
         return;
@@ -951,11 +951,11 @@ void ScriptCmd_TurnPropTo(ScriptMoveCommand *command) {
 
 /* Command 153: moves the prop `target_id` by x, y, z every frame for `frames` frames. */
 void ScriptCmd_MovePropBy(ScriptMoveCommand *command) {
-    MapRecordBounds *prop = func_00116160(D_00446770, command->target_id.value);
+    MapRecordBounds *prop = Map_GetRecordById(D_00446770, command->target_id.value);
     VuVector4 offset = (VuVector4){ command->x.value, command->y.value, command->z.value, 0.0f };
 
     if (prop != NULL && command->frames.value > 0) {
-        func_00115550(prop, &offset.x);
+        Map_OffsetRecord(prop, &offset.x);
         if (--command->frames.value < 0) {
             command->active = 0;
         }
@@ -969,7 +969,7 @@ void ScriptCmd_TurnPropBy(ScriptMoveCommand *command) {
     MapRecordBounds *prop;
     int steps_left;
 
-    prop = func_00116160(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(D_00446770, command->target_id.value);
     if (prop == NULL || command->frames.value <= 0) {
         command->active = 0;
         return;
@@ -989,7 +989,7 @@ void ScriptCmd_TurnPropBy(ScriptMoveCommand *command) {
 void ScriptCmd_GetPropPosition(ScriptPointCommand *command) {
     MapRecordBounds *prop;
 
-    prop = func_00116160(D_00446770, command->object_id.value);
+    prop = Map_GetRecordById(D_00446770, command->object_id.value);
     if (prop != NULL) {
         Script_StoreFloatResult((ScriptArg *)&command->from_x, prop->model->position.x);
         Script_StoreFloatResult((ScriptArg *)&command->from_y, prop->model->position.y);
@@ -1003,7 +1003,7 @@ void ScriptCmd_GetPropPosition(ScriptPointCommand *command) {
 void ScriptCmd_GetPropRotation(ScriptMoveCommand *command) {
     MapRecordBounds *prop;
 
-    prop = func_00116160(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(D_00446770, command->target_id.value);
     if (prop != NULL) {
         Script_StoreFloatResult((ScriptArg *)&command->x, prop->model->rotation.x);
         Script_StoreFloatResult((ScriptArg *)&command->y, prop->model->rotation.y);
@@ -1244,9 +1244,9 @@ void ScriptCmd_OpenSaveScreen(ScriptThreadCommand *command) {
     }
 }
 
-/* Command 174: starts the change to the map with the tag `value` (func_001187F0), then finishes. */
+/* Command 174: starts the change to the map with the tag `value` (MapChange_StartToMap), then finishes. */
 void ScriptCmd_ChangeMap(ScriptValueCommand *command) {
-    func_001187F0(command->value.value);
+    MapChange_StartToMap(command->value.value);
     command->active = 0;
 }
 

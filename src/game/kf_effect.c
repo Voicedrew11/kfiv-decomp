@@ -26,8 +26,8 @@ void func_0010AEB8(void *model_arg);
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
 void func_00109E88(void);
-int func_001160B0(f32 *point, AreaNode *node, f32 margin);
-AreaNode *func_00115950(f32 *point, f32 margin);
+int Map_IsPointInRecord(f32 *point, AreaNode *node, f32 margin);
+AreaNode *Map_FindRecordAt(f32 *point, f32 margin);
 void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void func_0010B018(ModelInstance *, s32, s32);
@@ -35,7 +35,7 @@ char Sound_PlayTrackedKind(int index, int first, int second, int third, int four
 void Sound_StopTracked(s8 handle);
 void func_0010D018(ModelInstance *, char **, char **);
 int func_00111C78(ModelInstance *model, int first, int last);
-u32 *func_00116BD0(int, int);
+u32 *Map_GetSlotPacket(int, int);
 
 extern GameStatus game_status;
 extern MapSlot map_slots[2];
@@ -439,8 +439,8 @@ void Effect_DrawAll(int pass) {
         model = effect->model;
         if (placement == 0 || placement == 0x600000) {
             // match: the margin is set up before the node, so the call passes it first
-            if (((int (*)(f32 *, f32, AreaNode *))func_001160B0)((f32 *)&model->position, 0.0f, (AreaNode *)effect->unk58) == 0) {
-                effect->unk58 = (char *)func_00115950((f32 *)&effect->model->position, 0.0f);
+            if (((int (*)(f32 *, f32, AreaNode *))Map_IsPointInRecord)((f32 *)&model->position, 0.0f, (AreaNode *)effect->unk58) == 0) {
+                effect->unk58 = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
             }
             if (effect->unk58 == NULL && effect->owner_entity == (Entity *)&player_state && ((PlayerState *)effect->owner_entity)->map_index != 0xFFFF) {
                 effect->unk58 = map_slots[D_00446770].records + (((PlayerState *)effect->owner_entity)->map_index << 7);
@@ -567,7 +567,7 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         }
         placement = EFFECT_DEF_FLAGS(effect->def) & 0x600000;
         if (placement == 0 || placement == 0x600000) {
-            effect->unk58 = (char *)func_00115950((f32 *)&effect->model->position, 0.0f);
+            effect->unk58 = (char *)Map_FindRecordAt((f32 *)&effect->model->position, 0.0f);
         }
         def = EFFECT_SLOT_VIEW(slot)->def;
     }
@@ -718,9 +718,9 @@ static void Effect_SetupModel(int index) {
             map = D_00446770;
         }
         effect->model->unk190 = 3;
-        effect->model->unk194 = (int)func_00116BD0(map, 4);
+        effect->model->unk194 = (int)Map_GetSlotPacket(map, 4);
         effect->model->unk192 = 0;
-        effect->model->unk198 = (int)func_00116BD0(map, 5);
+        effect->model->unk198 = (int)Map_GetSlotPacket(map, 5);
     }
 }
 

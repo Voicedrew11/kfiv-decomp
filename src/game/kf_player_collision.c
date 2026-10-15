@@ -25,7 +25,7 @@ void func_001C0A88(void *, void *, void *, void *);
 void func_001C0C50(void *, void *, void *, void *, f32);
 u32 func_001124E0(int, u32, u32);
 u32 func_001125A8(u32, u32, int);
-void func_001152B8(int);
+void Map_MakeCurrent(int);
 float sqrtf(float);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 void func_001C2758(f32 *, s32, f32, f32);
@@ -256,7 +256,7 @@ int func_001BDDC0(void) {
     } else {
         player_state.unk1E8 = 0;
     }
-    func_001152B8(floor_map);
+    Map_MakeCurrent(floor_map);
     return found;
 }
 

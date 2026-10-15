@@ -43,7 +43,7 @@ void func_00102218(void);
 void func_0010B758(ModelInstance *, int *, int *);
 s64 *func_0010CE08(ModelInstance *, s64 *);
 MotionData *func_00108940(MotionFile *, ModelChannel **, ModelInstance *, int);
-u32 *func_00116BD0(int, int);
+u32 *Map_GetSlotPacket(int, int);
 void func_0010D018(ModelInstance *, char **, char **);
 void func_0010E8A0(ModelInstance *, s32);
 void func_0010E6A8(ModelInstance *, s64, s64);
@@ -459,8 +459,8 @@ static int func_00123918(Entity *entity) {
     data_address = slot->base_address + data->unk0C;
     ENTITY_MODEL(entity)->unk194 = data_address;
     ENTITY_MODEL(entity)->unk190 = 0;
-    ENTITY_MODEL(entity)->unk19C = (int)func_00116BD0(entity->group_id, 3);
-    ENTITY_MODEL(entity)->unk1A0 = (int)func_00116BD0(entity->group_id, 5);
+    ENTITY_MODEL(entity)->unk19C = (int)Map_GetSlotPacket(entity->group_id, 3);
+    ENTITY_MODEL(entity)->unk1A0 = (int)Map_GetSlotPacket(entity->group_id, 5);
     entity->unkD2 = slot->unk7;
     func_00124370(entity->unkD3);
     ((void (*)(Entity *))Entity_ResetToSpawn)(entity); // match: declared without its argument elsewhere

@@ -16,7 +16,7 @@ void func_001BB020(int);
 void func_001BB2E8(int);
 int func_001BB308(int);
 void func_001BB360(void);
-MapRecordInfo *func_00115CD0(CameraState *, f32, int);
+MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
 int func_00109098(ModelInstance *model, u8 index, u16 speed);
 void func_00109A50(void);
 void func_00109A80(int, s64);
@@ -339,7 +339,7 @@ void func_001BB908(void) {
     PlayerState *player = &player_state;
     MapRecordInfo *record;
 
-    record = func_00115CD0((CameraState *)player, 100.0f, D_00446770);
+    record = Map_FindRecordAtInSlot((CameraState *)player, 100.0f, D_00446770);
     if (record != NULL) {
         // match: retail shifts by 14, not by 7 (the records are 0x80 bytes each)
         player->map_index = (u32)((char *)record - map_slots[D_00446770].records) >> 14;

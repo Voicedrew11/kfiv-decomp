@@ -11,8 +11,8 @@ int Script_IsRunning(int);
 int Script_Start(int, int);
 void Player_ApplyItem(int);
 void func_001BC968(int);
-int func_001188E0(int);
-void func_0011A438(int);
+int MapChange_StartPassage(int);
+void MapViewer_OpenForItem(int);
 void func_001BA310(void);
 void func_001BB5E8(void);
 int func_001BC990(int);
@@ -27,7 +27,7 @@ extern int D_00446770;
 extern u32 D_00446ED4;
 extern u8 spell_levels[6][5];
 
-/* TRUE when the player cannot take one more of the item ("Can't carry any more", func_001C9FB0): a one-of-a-kind
+/* TRUE when the player cannot take one more of the item ("Can't carry any more", MapItem_PickupHold): a one-of-a-kind
    item already carried, or 99 of another. */
 int Player_CannotCarryItem(int idx) {
     ItemCommonDef *entry;
@@ -169,7 +169,7 @@ void Player_UseItem(void) {
                 break;
             case 2:
                 stood_on = D_00414188[0];
-                if (stood_on == NULL || stood_on->unk04->kind != MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE || !func_001188E0(item)) {
+                if (stood_on == NULL || stood_on->unk04->kind != MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE || !MapChange_StartPassage(item)) {
                     Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
                     return;
                 }
@@ -177,7 +177,7 @@ void Player_UseItem(void) {
             case 3:
                 return;
             case 6:
-                func_0011A438(item);
+                MapViewer_OpenForItem(item);
                 break;
             case 7:
                 break;

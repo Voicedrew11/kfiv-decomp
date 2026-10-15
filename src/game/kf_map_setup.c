@@ -1,3 +1,5 @@
+/* The per-map set-up run when a map is loaded. A map's tag is its file number (NNN.map); the place names
+   are those docs/GAME_DATA.md gives the map numbers, taken from Prima's official strategy guide (2004). */
 #include "kf_map.h"
 #include "kf_entity.h"
 #include "kf_entity_world.h"
@@ -6,28 +8,28 @@
 #include "kf_collision.h"
 #include "kf_effect.h"
 
-void func_00119590(int);
-void func_00119730(int);
-void func_00119770(int);
-void func_001197B0(int);
-void func_001197F0(int);
-void func_00119A48(int);
-void func_00119B20(int);
-void func_00119D90(int);
-void func_00119E18(int);
-void func_00119E90(int);
-void func_0011A048(int);
-void func_0011A0B8(int);
-void func_0011A138(int);
-void func_0011A210(int);
-void func_0011A2B8(int);
-void func_0011A370(int);
-void func_0011A3E8(int);
+void MapSetup_Armory(int);
+void MapSetup_Forge017(int);
+void MapSetup_Forge018(int);
+void MapSetup_Forge019(int);
+void MapSetup_EarthFolksVillage(int);
+void MapSetup_CavernOfLava(int);
+void MapSetup_FireLordsDomain(int);
+void MapSetup_OceanShore(int);
+void MapSetup_UndergroundCanal(int);
+void MapSetup_GuardiansRoom(int);
+void MapSetup_DarkSanctuary(int);
+void MapSetup_KingsThroneAlcoves(int);
+void MapSetup_SanctuaryOfLight(int);
+void MapSetup_CentralTowerLevel3(int);
+void MapSetup_CraftsmansRoom(int);
+void MapSetup_CentralTowerLevel2(int);
+void MapSetup_PlaceItemLowered(int);
 void func_00119E10(int);
-int func_001C8C80(int, int);
-void *func_00116160(int, int);
-void func_00115550(MapRecordBounds *, f32 *);
-void *func_001C8AF0(int);
+int MapItem_PlaceFixedById(int, int);
+void *Map_GetRecordById(int, int);
+void Map_OffsetRecord(MapRecordBounds *, f32 *);
+void *MapItem_GetFixedById(int);
 extern MapSlot map_slots[];
 extern u8 map_script_flags[];
 extern u8 entity_group_state[];
@@ -42,59 +44,60 @@ extern u8 D_0034B098[];
 
 void func_0011A428(int);
 
-/* Runs the set-up function of the map in the slot, picked by the map's tag. */
-void func_00119360(int slot) {
+/* Runs the set-up function of the map in the slot, picked by the map's number (its tag): it puts the map's
+   records, objects, fog and lights in the state the story flags call for. */
+void MapSetup_RunForMap(int slot) {
     switch (map_slots[slot].tag) {
     case 0xB:
-        func_00119590(slot);
+        MapSetup_Armory(slot);
         break;
     case 0x11:
-        func_00119730(slot);
+        MapSetup_Forge017(slot);
         break;
     case 0x12:
-        func_00119770(slot);
+        MapSetup_Forge018(slot);
         break;
     case 0x13:
-        func_001197B0(slot);
+        MapSetup_Forge019(slot);
         break;
     case 0x14:
-        func_001197F0(slot);
+        MapSetup_EarthFolksVillage(slot);
         break;
     case 0x18:
-        func_00119A48(slot);
+        MapSetup_CavernOfLava(slot);
         break;
     case 0x19:
-        func_00119B20(slot);
+        MapSetup_FireLordsDomain(slot);
         break;
     case 0x1B:
-        func_00119D90(slot);
+        MapSetup_OceanShore(slot);
         break;
     case 0x1D:
-        func_00119E18(slot);
+        MapSetup_UndergroundCanal(slot);
         break;
     case 0x23:
-        func_00119E90(slot);
+        MapSetup_GuardiansRoom(slot);
         break;
     case 0x26:
-        func_0011A048(slot);
+        MapSetup_DarkSanctuary(slot);
         break;
     case 0x29:
-        func_0011A0B8(slot);
+        MapSetup_KingsThroneAlcoves(slot);
         break;
     case 0x2A:
-        func_0011A138(slot);
+        MapSetup_SanctuaryOfLight(slot);
         break;
     case 0x64:
-        func_0011A210(slot);
+        MapSetup_CentralTowerLevel3(slot);
         break;
     case 0x68:
-        func_0011A2B8(slot);
+        MapSetup_CraftsmansRoom(slot);
         break;
     case 0x6B:
-        func_0011A370(slot);
+        MapSetup_CentralTowerLevel2(slot);
         break;
     case 0xFB:
-        func_0011A3E8(slot);
+        MapSetup_PlaceItemLowered(slot);
         break;
     case 0xFC:
         func_0011A428(slot);
@@ -102,8 +105,8 @@ void func_00119360(int slot) {
     }
 }
 
-/* Runs the every-frame function of map 0x1B in whichever slot holds it. */
-void func_00119520(void) {
+/* Runs the every-frame function of the Ocean Shore (map 027) in whichever slot holds it. Nothing calls it. */
+void MapSetup_UpdateOceanShore(void) {
     int map;
     MapSlot *slot;
 
@@ -115,13 +118,14 @@ void func_00119520(void) {
     }
 }
 
-/* Sets map objects 0xA, 0xB and 0x22 and entity 0x17 up from the stage flags. */
-void func_00119590(int map) {
+/* Set-up of the Armory (map 011): fixed item 0x46, map objects 0xA, 0xB and 0x22 and entity 0x17 from the
+   story flags. */
+void MapSetup_Armory(int map) {
     MapObject *object;
     Entity *entity;
 
     if (map_script_flags[0x2C5] != 0) {
-        func_001C8C80(map, 0x46);
+        MapItem_PlaceFixedById(map, 0x46);
     }
     if (entity_group_state[0x5C6] == 1 && map_script_flags[0x2C5] == 0) {
         object = MapObject_GetById(map, 0xA);
@@ -132,7 +136,7 @@ void func_00119590(int map) {
         if (object != NULL) {
             MapObject_SetScripted(object, 1);
         }
-        ((int (*)(int, int))func_001C8C80)(map, 0x46); // match: called as returning a value, so the next test uses $3
+        ((int (*)(int, int))MapItem_PlaceFixedById)(map, 0x46); // match: called as returning a value, so the next test uses $3
         if (entity_group_state[0x5C0] == 0) {
             entity = Entity_GetBySpawnIdForMap(map, 0x17);
             if (entity != NULL) {
@@ -160,8 +164,8 @@ void func_00119590(int map) {
     }
 }
 
-/* Sets flag 0x20000 of map object 0x65 once the stage flag is set. */
-void func_00119730(int map) {
+/* Set-up of the Forge as map 017: sets flag 0x20000 of map object 0x65 once the story flag is set. */
+void MapSetup_Forge017(int map) {
     MapObject *object;
 
     if (D_0034B69C[0] != 0) {
@@ -172,8 +176,8 @@ void func_00119730(int map) {
     }
 }
 
-/* Sets flag 0x20000 of map object 0x65 once the stage flag is set. */
-void func_00119770(int map) {
+/* The same for the Forge as map 018. */
+void MapSetup_Forge018(int map) {
     MapObject *object;
 
     if (D_0034B69C[0] != 0) {
@@ -184,8 +188,8 @@ void func_00119770(int map) {
     }
 }
 
-/* Sets flag 0x20000 of map object 0x65 once the stage flag is set. */
-void func_001197B0(int map) {
+/* The same for the Forge as map 019. */
+void MapSetup_Forge019(int map) {
     MapObject *object;
 
     if (D_0034B69C[0] != 0) {
@@ -208,39 +212,40 @@ static inline void show_found_record(MapRecordBounds *record) {
     }
 }
 
-/* Shows the map records that go with the stage flag (0, 1 or more) and, past 0, changes block 2 and 4 of the map. */
-void func_001197F0(int map) {
+/* Set-up of the Earth Folks' Village (map 020): shows the map records that go with the story flag (0, 1 or
+   more) and, past 0, changes fog block 2 and light block 4. */
+void MapSetup_EarthFolksVillage(int map) {
     void *target; // match: one variable for every record and then the map slot; it gives the slot the records' register
     MapSlotUnk0CValues *block;
     MapSlotUnk10 *light;
 
     switch (D_0034B696[0]) {
     case 0:
-        target = func_00116160(map, 0x33);
+        target = Map_GetRecordById(map, 0x33);
         show_found_record(target);
-        target = func_00116160(map, 0x6D);
+        target = Map_GetRecordById(map, 0x6D);
         hide_found_record(target);
-        target = func_00116160(map, 0x6E);
+        target = Map_GetRecordById(map, 0x6E);
         hide_found_record(target);
         return;
     case 1:
-        target = func_00116160(map, 2);
+        target = Map_GetRecordById(map, 2);
         hide_found_record(target);
-        target = func_00116160(map, 0x33);
+        target = Map_GetRecordById(map, 0x33);
         hide_found_record(target);
-        target = func_00116160(map, 0x6D);
+        target = Map_GetRecordById(map, 0x6D);
         show_found_record(target);
-        target = func_00116160(map, 0x6E);
+        target = Map_GetRecordById(map, 0x6E);
         hide_found_record(target);
         break;
     default:
-        target = func_00116160(map, 2);
+        target = Map_GetRecordById(map, 2);
         hide_found_record(target);
-        target = func_00116160(map, 0x33);
+        target = Map_GetRecordById(map, 0x33);
         hide_found_record(target);
-        target = func_00116160(map, 0x6D);
+        target = Map_GetRecordById(map, 0x6D);
         hide_found_record(target);
-        target = func_00116160(map, 0x6E);
+        target = Map_GetRecordById(map, 0x6E);
         show_found_record(target);
         break;
     }
@@ -262,9 +267,9 @@ void func_001197F0(int map) {
     light[4].unk78 = 0.27450982f;
 }
 
-/* Set-up of map 0x18: at stage flag 0 a light grey fog in block 5, otherwise a thin black one,
+/* Set-up of the Cavern of Lava (map 024): at story flag 0 a light grey fog in block 5, otherwise a thin black one,
    two light colours and all three light directions cleared in light block 9. */
-void func_00119A48(int map) {
+void MapSetup_CavernOfLava(int map) {
     MapSlot *slot = &map_slots[map];
     MapSlotUnk0CValues *fog;
     MapSlotUnk10Lights *lights;
@@ -306,7 +311,7 @@ void func_00119A48(int map) {
 }
 
 static inline void hide_record(int map, int record_id) {
-    MapRecordBounds *record = func_00116160(map, record_id);
+    MapRecordBounds *record = Map_GetRecordById(map, record_id);
 
     if (record != NULL) {
         record->unk3C |= 0x40000000;
@@ -314,15 +319,16 @@ static inline void hide_record(int map, int record_id) {
 }
 
 static inline void show_record(int map, int record_id) {
-    MapRecordBounds *record = func_00116160(map, record_id);
+    MapRecordBounds *record = Map_GetRecordById(map, record_id);
 
     if (record != NULL) {
         record->unk3C &= ~0x40000000;
     }
 }
 
-/* Shows the map records that go with the stage flag; at 2 also moves object 0x66 and spawns effect 0x1DF. */
-void func_00119B20(int map) {
+/* Set-up of the Fire Lord's Domain (map 025): shows the map records that go with the story flag; at 2 also
+   moves object 0x66 and starts effect 0x1DF. */
+void MapSetup_FireLordsDomain(int map) {
     MapObject *object;
     f32 position[4];
     f32 rotation[4];
@@ -360,8 +366,8 @@ void func_00119B20(int map) {
     }
 }
 
-/* Set-up of map 0x1B: once its stage flag is 1, new fog in blocks 0, 1 and 4. */
-void func_00119D90(int map) {
+/* Set-up of the Ocean Shore (map 027): once its story flag is 1, new fog in blocks 0, 1 and 4. */
+void MapSetup_OceanShore(int map) {
     MapSlot *slot = &map_slots[map];
     MapSlotUnk0CValues *fog;
 
@@ -382,11 +388,13 @@ void func_00119D90(int map) {
     }
 }
 
+/* Every-frame function of the Ocean Shore: empty. */
 void func_00119E10(int map) {
 }
 
-/* Puts map record 5 at the height the stage keeps for it, 590 the first time. */
-void func_00119E18(int map) {
+/* Set-up of the Underground Canal (map 029): puts map record 5 at the height the story state keeps for it,
+   590 the first time. */
+void MapSetup_UndergroundCanal(int map) {
     MapRecordBounds *record;
     f32 offset[4];
 
@@ -395,18 +403,19 @@ void func_00119E18(int map) {
         map_script_flags[0x747] = 0;
         map_script_flags[0x746] = 1;
     }
-    record = func_00116160(map, 5);
+    record = Map_GetRecordById(map, 5);
     if (record != NULL) {
         offset[0] = 0.0f;
         offset[1] = map_record_height[0] - 590.0f;
         offset[2] = 0.0f;
         offset[3] = 0.0f;
-        func_00115550(record, offset);
+        Map_OffsetRecord(record, offset);
     }
 }
 
-/* Once the stage flag is set, swaps map records 8-12 for 0x29-0x2D. */
-void func_00119E90(int map) {
+/* Set-up of the Guardian's Room (map 035): once the story flag is set, swaps map records 8-12 for
+   0x29-0x2D. */
+void MapSetup_GuardiansRoom(int map) {
     if (D_00349F56[0] != 0) {
         hide_record(map, 8);
         hide_record(map, 9);
@@ -421,8 +430,8 @@ void func_00119E90(int map) {
     }
 }
 
-/* Set-up of map 0x26: once its stage flag is 1, new fog in blocks 1 and 2. */
-void func_0011A048(int map) {
+/* Set-up of the Dark Sanctuary (map 038): once its story flag is 1, new fog in blocks 1 and 2. */
+void MapSetup_DarkSanctuary(int map) {
     MapSlot *slot = &map_slots[map];
 
     if (D_0034A017[0] == 1) {
@@ -439,9 +448,9 @@ void func_0011A048(int map) {
     }
 }
 
-/* Set-up of map 0x29: once its stage flag is 1, new fog in blocks 2 and 3 and a dim light colour
+/* Set-up of the King's Throne, Alcoves (map 041): once its story flag is 1, new fog in blocks 2 and 3 and a dim light colour
    in light block 1. */
-void func_0011A0B8(int map) {
+void MapSetup_KingsThroneAlcoves(int map) {
     MapSlot *slot = &map_slots[map];
 
     if (D_0034A0D5[0] == 1) {
@@ -462,13 +471,14 @@ void func_0011A0B8(int map) {
     }
 }
 
-/* Parks or reveals the pair of scene objects 0x66/0x67 depending on the stage flags. */
-void func_0011A138(int map) {
+/* Set-up of the Sanctuary of Light (map 042): takes map objects 0x66 and 0x67 out of use, or once the
+   story flag is set (and until the next one is) puts fixed item 0xC9 out and moves 0x67 into place. */
+void MapSetup_SanctuaryOfLight(int map) {
     MapObject *object;
 
     if (map_script_flags[0xA85] != 0) {
         if (map_script_flags[0xA86] == 0) {
-            func_001C8C80(map, 0xC9);
+            MapItem_PlaceFixedById(map, 0xC9);
             object = MapObject_GetById(map, 0x67);
             if (object != NULL) {
                 MapObject_Activate(object);
@@ -489,8 +499,9 @@ void func_0011A138(int map) {
     }
 }
 
-/* Map tag 0x64: clears two flag bits on spawn id 1 while a cutscene gate runs. */
-void func_0011A210(int map_slot) {
+/* Set-up of the Ancient City, Level 3, Central Tower (map 100): steps the story flags around entity
+   spawn id 1 and, unless that stops it, clears its flag bits 1 and 7. */
+void MapSetup_CentralTowerLevel3(int map_slot) {
     Entity *entity;
 
     entity = Entity_GetBySpawnIdForMap(map_slot, 1);
@@ -512,9 +523,9 @@ void func_0011A210(int map_slot) {
     }
 }
 
-/* Map script: until flag D_0034B098[0] is set, takes map objects 0x77 and 0x76 out of
+/* Set-up of the Craftsman's Room (map 104): until flag D_0034B098[0] is set, takes map objects 0x77 and 0x76 out of
    use, giving 0x77 (when it is of kind 9) the values 0xFF, 0x80, 0x18, 0. */
-void func_0011A2B8(int map) {
+void MapSetup_CraftsmansRoom(int map) {
     MapObject *object;
 
     if (D_0034B098[0] == 0) {
@@ -535,8 +546,8 @@ void func_0011A2B8(int map) {
     }
 }
 
-/* Map script: once flag map_script_flags[0x1C0A] is set, sets 0x1ADB and swaps map object 0x75 for 0x76. */
-void func_0011A370(int map) {
+/* Set-up of the Ancient City, Level 2, Central Tower (map 107): once flag map_script_flags[0x1C0A] is set, sets 0x1ADB and swaps map object 0x75 for 0x76. */
+void MapSetup_CentralTowerLevel2(int map) {
     MapObject *object;
 
     if (map_script_flags[0x1C0A] != 0) {
@@ -552,17 +563,19 @@ void func_0011A370(int map) {
     }
 }
 
-/* Lowers the model of node 0x37 by 400 after func_001C8C80 has set it up. */
-void func_0011A3E8(int map) {
+/* Set-up of map 251, which is not on the disc: puts fixed item 0x37 out (MapItem_PlaceFixedById) and lowers
+   its model by 400. */
+void MapSetup_PlaceItemLowered(int map) {
     ModelNode *node;
     Vector4 unused;
 
-    func_001C8C80(map, 0x37);
-    node = func_001C8AF0(0x37);
+    MapItem_PlaceFixedById(map, 0x37);
+    node = MapItem_GetFixedById(0x37);
     if (node != NULL) {
         node->model->position.y -= 400.0f;
     }
 }
 
+/* Set-up of map 252, which is not on the disc: empty. */
 void func_0011A428(int map) {
 }

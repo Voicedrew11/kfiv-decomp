@@ -16,7 +16,7 @@ typedef struct {
 typedef struct {
     char pad00[0x38];
     u64 pad38_0 : 27;
-    u64 map : 1;                    /* which of the two map slots it belongs to (func_00114AA8) */
+    u64 map : 1;                    /* which of the two map slots it belongs to (Map_BuildModels) */
     u64 pad38_28 : 36;
 } MapRecordBits;
 
@@ -36,7 +36,7 @@ typedef struct {
     u64 unk00[4];                   /* 0x00 */
 } MapSlotUnk0C;
 
-/* a MapSlotUnk0C block as the per-map set-up functions (func_00119360) fill it */
+/* a MapSlotUnk0C block as the per-map set-up functions (MapSetup_RunForMap) fill it */
 typedef struct {
     f32 unk00;                      /* 0x00 */
     f32 unk04;                      /* 0x04 */
@@ -109,7 +109,7 @@ typedef struct {
 /* MapDrawState.unk60 as bit-fields */
 typedef struct {
     u64 pad00 : 46;
-    u32 bit46 : 1;                  /* set: func_00116CB0 tests map records against the screen */
+    u32 bit46 : 1;                  /* set: Map_ClassifyRecordOnScreen tests map records against the screen */
     u64 pad47 : 17;
 } MapDrawFlagBits;
 
@@ -403,13 +403,13 @@ typedef union {
 #define MAP_TRIGGER_FLAGS(trigger) ((MapTriggerFlags *)&(trigger)->unk10)
 #define MAP_TRIGGER_FLAG_20000  0x20000
 
-/* MapTrigger.shot as the kind started by func_00122E88 uses it (func_00122F48 steps it) */
+/* MapTrigger.shot as the kind started by MapObject_StartPulse uses it (MapObject_UpdatePulse steps it) */
 typedef struct {
     s32 phase;                      /* 0x00 */
     s32 period;                     /* 0x04 */
 } MapTriggerShotKind122E88;
 
-/* MapTrigger.shot as the kind started by func_00122BE8 uses it */
+/* MapTrigger.shot as the kind started by MapObject_StartFadeObject uses it */
 typedef struct {
     f32 unk00[4];                   /* 0x00 a vector handed to func_0010EA08 */
     f32 unk10;                      /* 0x10 grows while it moves */

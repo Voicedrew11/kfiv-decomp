@@ -22,7 +22,7 @@ void Sound_PlayFalloff(float, int, int, char, float, float);
 extern EntitySpawnInfo *D_004467D0[2];
 extern MapSlot map_slots[];
 extern int D_00446770;
-s32 func_001C8CB0(Entity *);
+s32 MapItem_DropFromEnemy(Entity *);
 void Player_AddExperience(s32);
 void func_001035A8(u32, int);
 int Script_Start(int, int);
@@ -345,7 +345,7 @@ void EntityEvent_Respawn(Entity *entity) {
    the player killed it (flag bits 38-39), passes the map tag and spawn index to func_001035A8, frees its
    effects and starts the spawn's script. */
 void EntityEvent_OnDeath(Entity *entity) {
-    func_001C8CB0(entity);
+    MapItem_DropFromEnemy(entity);
     Gold_DropFromEntity(entity);
     if ((s32)(entity->flags >> 38) & 3) {
         Player_AddExperience(entity->params->unk0E);

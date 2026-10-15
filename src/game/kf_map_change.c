@@ -24,7 +24,7 @@ void func_001095E0(void);
 void func_001096E8(void);
 void func_00109800(void);
 void func_0010B000(void);
-void func_00118A50(void);
+void MapChange_CaptureFrame(void);
 void func_001B5460(void);
 void Display_SwapBuffers(int);
 int func_001005E8(int);
@@ -34,17 +34,17 @@ void func_00109A80(int, s64);
 void func_00109AD0(void);
 void func_0010A100(void *);
 void func_0010A4E8(int, int, int, int, int);
-void func_00114198(int);
+void Map_DrawRecords(int);
 int func_00102230(void);
-void func_00117CC8(void);
+void MapLoad_Update(void);
 int func_00123108(void);
 void func_00123288(void);
 void Sound_Update(void);
-void func_00115878(int);
-void func_00117C60(void);
+void Map_UnlinkSlotRecords(int);
+void MapLoad_Reset(void);
 void func_001A15F8(void);
 void func_001BC128(void);
-void func_001C8938(int);
+void MapItem_UnloadMap(int);
 void func_00102218(void);
 void func_00102228(void);
 int func_00102900(int);
@@ -53,15 +53,15 @@ float cosf(float);
 float sinf(float);
 void func_001034F8(int);
 void func_00106178(int, int, int, int);
-void func_00114840(int);
-void func_00114AA8(int);
-void func_001155F8(int);
-void func_00119360(int);
+void Map_ParseFile(int);
+void Map_BuildModels(int);
+void Map_PlaceRecordModels(int);
+void MapSetup_RunForMap(int);
 void func_00123158(int);
 void Sound_StopAll(int);
 void func_001A15F0(void);
-void func_001C82C0(int);
-void func_001C87D8(int);
+void MapItem_InitMap(int);
+void MapItem_RollFixedItems(int);
 void Script_Init(int);
 int Script_Start(int, int);
 void Vector_Copy(void *, void *);
@@ -83,8 +83,9 @@ extern char *D_00446F50;
 extern char *D_00446F54;
 extern SoundLoadQueue sound_load_queue;
 
-/* Start a transition to new_value unless one is running or it is already current. */
-void func_001187F0(int new_value) {
+/* Starts the change to map new_value, the player to stand at the map's start, unless a change is running
+   or it is the current map. */
+void MapChange_StartToMap(int new_value) {
     MapSlot *slot;
 
     slot = &map_slots[D_00446770];
@@ -98,7 +99,7 @@ void func_001187F0(int new_value) {
 }
 
 /* Moves the player to position in the current map, or starts the change to another map. */
-void func_00118848(int map, Vector4 *position) {
+void MapChange_StartToPosition(int map, Vector4 *position) {
     MapSlot *slot = &map_slots[D_00446770];
 
     if (screen_fade.step == 0) {
@@ -122,8 +123,9 @@ void func_00118848(int map, Vector4 *position) {
     }
 }
 
-/* Starts the map change that entry (5 and up) of the table func_00103A18 reads leads to. */
-int func_001188E0(int entry) {
+/* Starts the passage a wand used on a Symbol of Passage gives: the change to the map object where the item
+   five below the wand was placed (func_00103A18). FALSE when a change runs or it was not placed. */
+int MapChange_StartPassage(int entry) {
     int target[2];
     int map;
 
@@ -144,9 +146,9 @@ int func_001188E0(int entry) {
 }
 
 /* Runs a pending map change to the end, drawing its own frames meanwhile. */
-void func_00118958(void) {
+void MapChange_RunToEnd(void) {
     if (screen_fade.step != 0) {
-        func_00118A50();
+        MapChange_CaptureFrame();
         func_001020F8();
         Splash_Abort();
         do {
@@ -165,8 +167,9 @@ void func_00118958(void) {
     }
 }
 
-/* Draws one frame with nothing in it. */
-void func_00118A50(void) {
+/* Draws one frame of the game and copies the picture to GS block 0x2BC0, where
+   MapChange_FadeOutCapture fades it out. */
+void MapChange_CaptureFrame(void) {
     Display_SwapBuffers(0);
     func_001096E8();
     func_001095E0();
@@ -176,8 +179,9 @@ void func_00118A50(void) {
     func_00109800();
 }
 
-/* Map change drawing step: darkens the screen in ten strips, more each frame, until the timer runs out. */
-void func_00118A98(void) {
+/* Map change drawing step 0: draws the captured picture in ten strips, darker each frame, until the
+   timer runs out. */
+void MapChange_FadeOutCapture(void) {
     ScreenQuad quad;
     int remaining = 9;
     int total;
@@ -219,7 +223,7 @@ void func_00118A98(void) {
 }
 
 /* Map change drawing step: keeps the screen black. */
-void func_00118C28(void) {
+void MapChange_DrawBlack(void) {
     func_00109A50();
     func_00109A80(GS_REG_TEST_1, 0x30000);
     func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
@@ -230,9 +234,10 @@ void func_00118C28(void) {
     func_00109AD0();
 }
 
-/* Draws one frame of a 30-frame fade and counts the timer down. */
-void func_00118CA8(void) {
-    func_00114198(0);
+/* Map change drawing step 2: draws the map records under a black cover that thickens over 30 frames, and
+   counts the timer down. Nothing sets this step. */
+void MapChange_FadeMapToBlack(void) {
+    Map_DrawRecords(0);
     func_00109A50();
     func_00109A80(GS_REG_TEST_1, 0x30000);
     func_00109A80(GS_REG_ZBUF_1, 0x10A000118L);
@@ -249,12 +254,13 @@ void func_00118CA8(void) {
     screen_fade.timer--;
 }
 
+/* Map change step 0: empty, no change is running. */
 void func_00118D78(void) {
 }
 
 /* Map change step: lets the background load and everything else in flight settle. */
-void func_00118D80(void) {
-    func_00117CC8();
+void MapChange_WaitForIdle(void) {
+    MapLoad_Update();
     func_00123288();
     Sound_Update();
     if (map_load_state.step == 0 || map_load_state.step == 5) {
@@ -266,22 +272,22 @@ void func_00118D80(void) {
 }
 
 /* Map change step: frees everything both map slots hold and clears the map tables. */
-void func_00118E20(void) {
+void MapChange_UnloadAll(void) {
     int slot;
 
     for (slot = 0; slot < 2; slot++) {
         if (map_slots[slot].unk00 != 0) {
-            func_00115878(slot);
+            Map_UnlinkSlotRecords(slot);
             Effect_FreeForMap(slot);
             MapObject_UnloadMap(slot);
             Entity_FreeAllInGroup(slot);
             Entity_ClearMapSlot(slot);
             Gold_UnlinkMap(slot);
-            func_001C8938(slot);
+            MapItem_UnloadMap(slot);
             LinkedPoint_ReleaseByKind(slot);
         }
     }
-    func_00117C60();
+    MapLoad_Reset();
     func_001A15F8();
     Entity_ResetAllLists();
     func_001BC128();
@@ -297,7 +303,7 @@ void func_00118E20(void) {
 }
 
 /* Map change step: opens the new map file and starts reading all of it into the memory of slot 0. */
-void func_00118F40(void) {
+void MapChange_OpenFile(void) {
     char name[0x100];
     MapSlot *slot = &map_slots[0];
     MapSlotMemory *memory = &D_004321F0[0];
@@ -321,7 +327,7 @@ void func_00118F40(void) {
 }
 
 /* Map change step: once the whole file is read, closes it and goes on. */
-void func_00119068(void) {
+void MapChange_WaitForRead(void) {
     int next_step;
 
     if (func_00102790(screen_fade.file_handle, 1) == 0) {
@@ -334,7 +340,7 @@ void func_00119068(void) {
 }
 
 /* Map change step: sets the loaded map up in slot 0, puts the player in it and ends the change. */
-void func_001190C8(void) {
+void MapChange_SetUpMap(void) {
     MapSlot *slot = &map_slots[0];
     MapObject *object;
     MapSlotUnk08 *header;
@@ -342,13 +348,13 @@ void func_001190C8(void) {
     f32 cosine;
 
     slot->tag = screen_fade.map;
-    func_00114840(0);
-    func_00114AA8(0);
-    func_001155F8(0);
+    Map_ParseFile(0);
+    Map_BuildModels(0);
+    Map_PlaceRecordModels(0);
     MapScroll_ClearPairs(0);
     func_001A15F0();
     MapObject_InitMap(0);
-    func_001C82C0(0);
+    MapItem_InitMap(0);
     Gold_InitMap(0);
     switch (screen_fade.kind) {
     case 1:
@@ -382,9 +388,9 @@ void func_001190C8(void) {
     MapObject_StartMap(0);
     Entity_InitFromMapSpawns(0);
     func_00123158(0);
-    func_001C87D8(0);
+    MapItem_RollFixedItems(0);
     Entity_ClearFlag10InSlot(0);
-    func_00119360(0);
+    MapSetup_RunForMap(0);
     func_001034F8(map_slots[0].tag);
     Script_Init(map_slots[0].unk5C);
     Script_Start(0x7FFF, 0);
@@ -396,8 +402,8 @@ void func_001190C8(void) {
     screen_fade.step = 0;
 }
 
-/* Map change step: ends the change once the timer has run out. */
-void func_00119340(void) {
+/* Map change step 6: ends the change once the timer has run out (MapChange_SetUpMap ends it itself). */
+void MapChange_EndWhenTimerDone(void) {
     if (screen_fade.timer <= 0) {
         screen_fade.step = 0;
     }

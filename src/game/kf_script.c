@@ -1060,7 +1060,7 @@ void ScriptCmd_WaitForever19(void) {
 void ScriptCmd_WaitForever20(void) {
 }
 
-/* Command 29: sets the camera's word at 0x48 (D_004325E8, which func_001127F8 starts at 512.0f) to the
+/* Command 29: sets the camera's word at 0x48 (D_004325E8, which Map_ResetGameState starts at 512.0f) to the
    float argument, then finishes. No reader of the word is known. */
 void ScriptCmd_SetCameraUnk48(ScriptFloatValueCommand *command) {
     D_004325E8[0] = command->value.value;

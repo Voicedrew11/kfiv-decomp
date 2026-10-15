@@ -1,3 +1,6 @@
+/* The map viewer the five map items open (items 1 to 5, in viewer_entries order): the Caretaker's, Zastari's,
+   Earth Folk's and Widda's Maps show pictures with the player's marker, the King's Map a free camera over
+   the map records. The names are the items' own (param/item_nam.prm). */
 #include "common.h"
 #include "kf_collision.h"
 #include "kf_entity.h"
@@ -9,10 +12,10 @@
 #include "kf_texture.h"
 #include "kf_message.h"
 
-int func_0011C678(int);
-void func_0011A598(void);
-static void func_0011A5E0(void);
-static int func_0011A600(void);
+int MapViewer_IsKingsMapUsable(int);
+void MapViewer_Reset(void);
+static void MapViewer_RestorePacketBuffers(void);
+static int MapViewer_Load(void);
 void Sound_MuteTracked(void);
 void Sound_UnmuteTracked(void);
 void Sound_UpdateTagged(void);
@@ -63,8 +66,8 @@ void sceVu0MulMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
 void func_0010A7E0(void *);
-static void func_0011C160(void);
-void func_0011AAE8(void);
+static void MapViewer_DrawKingsMap(void);
+void MapViewer_DrawPictureMap(void);
 float Angle_Wrap(float);
 void Vector_Add(void *, void *, void *);
 void Vector_Normalize(void *, void *);
@@ -109,18 +112,21 @@ static Vector4 bounds_min;                  /* 0x472060 the lowest corner of eve
 static Vector4 bounds_max;                  /* 0x472070 the highest corner */
 static ModelInstance pointer_model;         /* 0x472080 the pointer model, viewer 4 only */
 
-void func_0011A430(void) {
-    func_0011A598();
+/* Clears the map viewer at the start of a game. */
+void MapViewer_Init(void) {
+    MapViewer_Reset();
 }
 
-void func_0011A438(int viewer_number) {
+/* Asks for the map viewer of a map item (items 1 to 5, the viewer's number); the King's Map (5) only where
+   it can be used. The game loop runs it (MapViewer_Run). */
+void MapViewer_OpenForItem(int viewer_number) {
     u32 viewer_index;
     u8 *row;
 
     if (!(((u32)game_status[9] >> 8) & 1) && ((viewer_index = viewer_number - 1) < 5U)) {
         if (viewer_number == 5) {
             row = (u8 *)map_slots + D_00446770 * 0x60;
-            if (func_0011C678(row[1]) == 0) {
+            if (MapViewer_IsKingsMapUsable(row[1]) == 0) {
                 Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_UNABLE_TO_USE_HERE);
                 return;
             }
@@ -133,8 +139,8 @@ void func_0011A438(int viewer_number) {
 }
 
 /* Loads the picked viewer, runs it until it is left and frees what it loaded. */
-void func_0011A500(void) {
-    if (func_0011A600() != 0) {
+void MapViewer_Run(void) {
+    if (MapViewer_Load() != 0) {
         Sound_MuteTagged();
         Sound_MutePositional();
         Sound_UpdateTagged();
@@ -144,12 +150,13 @@ void func_0011A500(void) {
         Sound_UnmuteTagged();
         Sound_UnmutePositional();
         Sound_UnmuteTracked();
-        func_0011A5E0();
-        func_0011A598();
+        MapViewer_RestorePacketBuffers();
+        MapViewer_Reset();
     }
 }
 
-void func_0011A598(void) {
+/* Forgets the viewer picked, its picture and pulses, and what it loaded. */
+void MapViewer_Reset(void) {
     int *game_state = (int *)game_status;
 
     picked_viewer = 0;
@@ -162,7 +169,8 @@ void func_0011A598(void) {
     memset(&pointer_model, 0, sizeof(pointer_model));
 }
 
-static void func_0011A5E0(void) {
+/* Gives the packet buffers back the room MapViewer_Load took for the viewer's files. */
+static void MapViewer_RestorePacketBuffers(void) {
     func_00109800();
     func_00109878(0);
 }
@@ -176,7 +184,7 @@ static inline char *align16(char *address) {
 
 /* Loads the picked viewer's textures; for viewer 4 also the pointer model, put where the player is, and
    the box that holds every ordinary map record. FALSE when a file is missing. */
-static int func_0011A600(void) {
+static int MapViewer_Load(void) {
     char name[0x100];
     char *model_data;
     char *buffer;
@@ -235,7 +243,7 @@ static int func_0011A600(void) {
     bounds_min.z = bounds_min.y = bounds_min.x = D_00446798[0];
     bounds_max.z = bounds_max.y = bounds_max.x = D_0044679C[0];
     for (i = 0; i < 2; i++) {
-        if (map_slots[i].unk00 != 0 && func_0011C678(map_slots[i].tag) != 0) {
+        if (map_slots[i].unk00 != 0 && MapViewer_IsKingsMapUsable(map_slots[i].tag) != 0) {
             count = ((MapSlotUnk08 *)map_slots[i].header)->record_count;
             record = (MapRecordBounds *)map_slots[i].records;
             for (j = 0; j < count; j++, record++) {
@@ -263,7 +271,8 @@ static int func_0011A600(void) {
     return TRUE;
 }
 
-void func_0011AA08(void) {
+/* Frame loop of the picture maps (items 1 to 4): up and down page through the pictures, 0x2000 leaves. */
+void MapViewer_RunPictureMap(void) {
     int next_picture;
     ViewerEntry *viewer;
 
@@ -274,7 +283,7 @@ void func_0011AA08(void) {
         func_001095E0();
         func_0010B000();
         func_001095D0();
-        func_0011AAE8();
+        MapViewer_DrawPictureMap();
         func_001095D8();
         func_001B5460();
         if ((pad_state[1] & 0x10) && (viewer_picture > 0)) {
@@ -292,7 +301,7 @@ void func_0011AA08(void) {
 /* Draws the picked viewer's picture and the player's marker on it: a turned, pulsing arrow where the
    position is known, a pulsing square at a fixed spot otherwise; then the picture arrows when the viewer
    has more than one picture. */
-void func_0011AAE8(void) {
+void MapViewer_DrawPictureMap(void) {
     ViewerCornerTable corner_us;
     ViewerCornerTable corner_vs;
     int corner_xs[4];
@@ -429,9 +438,9 @@ void func_0011AAE8(void) {
     func_00107CD8(game_options[10]);
 }
 
-/* Where the player's marker goes on the map viewer's picture viewer_picture: -1 for a fixed spot on the
+/* Where the player's marker goes on picture viewer_picture of the Caretaker's Map: -1 for a fixed spot on the
    first picture, TRUE for a spot worked out from the player's position, FALSE for none. */
-int func_0011B1C0(int *screen_x, int *screen_y) {
+int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
     switch (viewer_picture) {
     case 0:
         switch (map_slots[D_00446770].tag) {
@@ -505,9 +514,9 @@ int func_0011B1C0(int *screen_x, int *screen_y) {
     return FALSE;
 }
 
-/* Where the player's marker goes on the map viewer's picture viewer_picture (0 to 2): TRUE with a spot worked
+/* Where the player's marker goes on picture viewer_picture (0 to 2) of Zastari's Map: TRUE with a spot worked
    out from the player's position when the current map is on that picture, FALSE when it is not. */
-int func_0011B4F0(int *screen_x, int *screen_y) {
+int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
     switch (viewer_picture) {
     case 0:
         switch (map_slots[D_00446770].tag) {
@@ -578,8 +587,9 @@ int func_0011B4F0(int *screen_x, int *screen_y) {
     return FALSE;
 }
 
-/* Map the player position to map-screen coordinates; FALSE if the area has no such map. */
-int func_0011BAB8(int *map_x, int *map_y) {
+/* Where the player's marker goes on the Earth Folk's Map: TRUE with a spot worked out from the player's
+   position on maps 017 to 019 and 024 to 025, FALSE elsewhere. */
+int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y) {
     int area;
     char *entry;
 
@@ -602,8 +612,9 @@ int func_0011BAB8(int *map_x, int *map_y) {
     return FALSE;
 }
 
-/* Turns the player's position into a point on the map picture of maps 0x1A and 0x1B; FALSE on other maps. */
-int func_0011BBC0(int *screen_x, int *screen_y) {
+/* Where the player's marker goes on Widda's Map: a point worked out from the player's position on maps 026
+   and 027, FALSE on other maps. */
+int MapViewer_LocateOnWiddasMap(int *screen_x, int *screen_y) {
     switch (map_slots[D_00446770].tag) {
     case 0x1A:
         *screen_x = (player_state.position.x - -3200.0f) * 21.333334f / 1000.0f + 438.0f;
@@ -619,9 +630,9 @@ int func_0011BBC0(int *screen_x, int *screen_y) {
     return TRUE;
 }
 
-/* The free-camera viewer of func_0011C160's picture: runs its own frame loop, in which the pad turns the
+/* The King's Map, a free camera over the map records: runs its own frame loop, in which the pad turns the
    camera about the player (with 0x4000 held) or moves it, and both 0x400 and 0x800 put it back. */
-void func_0011BCD0(void) {
+void MapViewer_RunKingsMap(void) {
     VuVector4 position;
     VuVector4 rotation;
     int reset_held;
@@ -730,7 +741,7 @@ void func_0011BCD0(void) {
             sceVu0MulMatrix(world_screen, view_screen, world_view);
             func_0010A7E0(world_screen);
             func_001095D0();
-            func_0011C160();
+            MapViewer_DrawKingsMap();
             func_001095D8();
             // match: it returns a value here, which keeps $2 busy
             ((int (*)(void))func_00109800)();
@@ -740,7 +751,7 @@ void func_0011BCD0(void) {
 
 /* Draws the map viewer: the pointer model, pulsing, then every record of the
    ordinary maps in one flat colour, then the viewer's four pictures. */
-static void func_0011C160(void) {
+static void MapViewer_DrawKingsMap(void) {
     int alpha = 0x10;
     int period;
     int map;
@@ -865,8 +876,9 @@ static void func_0011C160(void) {
     func_00107CD8(game_options[10]);
 }
 
-/* Whether a map object of this kind is one of the ordinary ones. */
-int func_0011C678(int kind) {
+/* Whether the King's Map works on the map with this tag: not on the maps the Caretaker's Map shows (000,
+   002, 004, 008, 009, 098, 099). */
+int MapViewer_IsKingsMapUsable(int kind) {
     switch (kind) {
         case 0:
         case 2:

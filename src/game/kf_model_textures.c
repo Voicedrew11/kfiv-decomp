@@ -5,7 +5,7 @@
 void *memset(void *, int, u32);
 void func_00109E88(void);
 void func_0010B2E0(TextureTableHeader *, s32);
-void func_00116B60(int *);
+void Map_QueuePacket(int *);
 
 static int sent_texture_19C;        /* 0x447048 last model texture sent from unk19C */
 static int sent_texture_1A0;        /* 0x44704C last model texture sent from unk1A0 */
@@ -44,24 +44,24 @@ void func_0010AEB8(void *model_arg) {
                 func_0010B2E0((TextureTableHeader *)model->unk194, (s32)model->unk178);
                 break;
             case 3:
-                func_00116B60((int *)model->unk194);
+                Map_QueuePacket((int *)model->unk194);
                 break;
             }
         }
     }
     if (model->unk198 != 0) {
         if (D_00447050[model->unk192] != model->unk198 && model->unk192 == 0) {
-            func_00116B60((int *)model->unk198);
+            Map_QueuePacket((int *)model->unk198);
         }
     }
     if (model->unk19C != 0 && sent_texture_19C != model->unk19C) {
         sent_texture_19C = model->unk19C;
-        func_00116B60((int *)model->unk19C);
+        Map_QueuePacket((int *)model->unk19C);
         changed = TRUE;
     }
     if (model->unk1A0 != 0 && sent_texture_1A0 != model->unk1A0) {
         sent_texture_1A0 = model->unk1A0;
-        func_00116B60((int *)model->unk1A0);
+        Map_QueuePacket((int *)model->unk1A0);
         changed = TRUE;
     }
     if (changed) {

@@ -1,4 +1,4 @@
-/* The item tables func_00112648 loads from the param files: a row per item, per weapon and per worn item. */
+/* The item tables Map_LoadParamFiles loads from the param files: a row per item, per weapon and per worn item. */
 #include "common.h"
 #include "kf_game.h"
 #include "kf_map.h"

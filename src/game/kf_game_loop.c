@@ -25,19 +25,19 @@ void func_001B5810(void);
 void Ini_Load(int);
 void func_001030B8(void);
 void func_001BA310(void);
-void func_001127F8(void);
-void func_001128E0(void);
-void func_00117C60(void);
-void func_0011A430(void);
+void Map_ResetGameState(void);
+void Map_ClearSlots(void);
+void MapLoad_Reset(void);
+void MapViewer_Init(void);
 void func_0011C6E8(void);
-void func_001C8238(void);
+void MapItem_Init(void);
 void func_001B4EE0(void);
 int func_001060C0(void);
 void func_00104EC8(void);
 void func_001B5A10(void);
 void Sound_LoadMgBank(int);
 void func_0019C520(void);
-void func_00112948(int);
+void Map_LoadAtOnce(int);
 int func_001D20A0(void);
 void func_001D2048(PlayTime);
 void func_00106178(int, int, int, int);
@@ -52,10 +52,10 @@ void func_001B5460(void);
 int Script_UpdateAll(void);
 void func_00100D10(void);
 void func_001D0970(void);
-void func_00117CC8(void);
+void MapLoad_Update(void);
 void func_00112BD0(void);
 void func_00123288(void);
-void func_001C95B0(void);
+void MapItem_UpdateFalling(void);
 void Player_UseItem(void);
 void func_00101618(void);
 void Sound_Update(void);
@@ -65,10 +65,10 @@ void func_001012D8(int, int);
 void func_0010A7E0(void *);
 int func_001005E8(int);
 void func_00109800(void);
-void func_001C9C00(void);
-void func_001161A8(void);
+void MapItem_UpdatePickup(void);
+void Map_RunFreeCamera(void);
 void func_001017A8(void);
-void func_00118958(void);
+void MapChange_RunToEnd(void);
 void func_00101F90(void);
 void func_001B5778(void);
 void Sound_SetBgmVolume(int);
@@ -80,16 +80,16 @@ void func_001112B0(void);
 void func_001095D0(void);
 void func_0010A008(void);
 void func_0010AE58(void);
-void func_00114198(int);
-void func_001C9650(int);
-void func_00114528(int);
+void Map_DrawRecords(int);
+void MapItem_DrawAll(int);
+void Map_DrawLateRecords(int);
 void func_0010B140(u32, u32);
 void func_00109EB8(void);
-void func_001C97E8(int);
-void func_00116AA0(void);
+void MapItem_DrawPicked(int);
+void Map_CoverScreenWithMapTint(void);
 void func_0010A698(void);
 void Entity_DrawPoolModels(void);
-void func_00116970(void);
+void Map_SetOffscreenTarget(void);
 void func_0010A5D8(void);
 void func_00109E88(void);
 void func_0010A040(int);
@@ -106,7 +106,7 @@ void func_00107E70(int, int, int);
 void func_00106208(void);
 void func_00107CD8(int);
 void func_001095D8(void);
-MapRecordInfo *func_00115CD0(CameraState *, f32, int);
+MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
 int rand(void);
 float Angle_Wrap(float);
 void sceVu0CopyMatrix(void *, void *);
@@ -129,20 +129,20 @@ void Sound_StopAll(int);
 int Sound_LoadMapBankStep(int, int);
 int func_001A0C18(int, int, int);
 int Sound_LoadBgm(int, int);
-void func_00118788(void);
-int func_001187D8(void);
+void MapLoad_RequestHold(void);
+int MapLoad_IsHeld(void);
 int func_00102230(void);
 void func_00102228(void);
 void func_00101CE0(void);
 void Trade_Run(s32);
 void Smith_Run(void);
 void SaveScreen_Run(void);
-void func_0011A438(int);
+void MapViewer_OpenForItem(int);
 void func_00101D48(int);
 void func_00101C88(void);
-void func_0011A500(void);
+void MapViewer_Run(void);
 void func_00102218(void);
-void func_001187B0(void);
+void MapLoad_Release(void);
 void func_00101EF0(void);
 void *memset(void *, int, u32);
 void func_00109A50(void);
@@ -193,16 +193,16 @@ void func_001000C8(int arg) {
     Ini_Load(arg);
     func_001030B8();
     func_001BA310();
-    func_001127F8();
+    Map_ResetGameState();
     Shot_ClearAll();
     LinkedPoint_Init();
-    func_001128E0();
-    func_00117C60();
-    func_0011A430();
+    Map_ClearSlots();
+    MapLoad_Reset();
+    MapViewer_Init();
     HeldWeapon_Init();
     Entity_ResetAllLists();
     func_0011C6E8();
-    func_001C8238();
+    MapItem_Init();
     Effect_Init();
     func_001B4EE0();
     Gold_Init();
@@ -224,7 +224,7 @@ void func_001001C0(int arg) {
     MapSlotUnk08 *header;
     u8 saved;
 
-    func_00112948(arg);
+    Map_LoadAtOnce(arg);
     if (D_00446734 == 0) {
         func_001D20A0();
         header = (MapSlotUnk08 *)map_slots[0].header;
@@ -268,13 +268,13 @@ void func_001001C0(int arg) {
         Player_Update();
         func_00100D10();
         func_001D0970();
-        func_00117CC8();
+        MapLoad_Update();
         Player_UpdateArmModels();
         func_00112BD0();
         MapObject_UpdateAll();
         func_00123288();
         Entity_UpdateAll();
-        func_001C95B0();
+        MapItem_UpdateFalling();
         Gold_Update();
         Player_UseItem();
         Player_UpdateWeaponAim();
@@ -296,10 +296,10 @@ void func_001001C0(int arg) {
             func_001005E8(1);
             func_00109800();
         }
-        func_001C9C00();
-        func_001161A8();
+        MapItem_UpdatePickup();
+        Map_RunFreeCamera();
         func_001017A8();
-        func_00118958();
+        MapChange_RunToEnd();
         func_00101F90();
     }
     D_00432E20[0] = 0xC000L << 17;
@@ -346,15 +346,15 @@ int func_001005E8(int arg) {
         func_001012D8(0, 0);
         func_0010A7E0(D_004323E0);
         func_0010AE58();
-        func_00114198(0);
+        Map_DrawRecords(0);
         MapObject_DrawAll(0, 0, 0);
         Entity_DrawPoolModels();
         Entity_DrawAll(0);
-        func_001C9650(0);
+        MapItem_DrawAll(0);
         ItemEffect_Draw();
         Gold_Draw(0);
         func_0010AE58();
-        func_00114528(0);
+        Map_DrawLateRecords(0);
         Effect_DrawAll(0);
         func_0010B140(0, 0);
         func_001012D8(0, 2);
@@ -364,39 +364,39 @@ int func_001005E8(int arg) {
         func_00109EB8();
         func_001012D8(0, 0);
         func_0010A7E0(D_004323E0);
-        func_001C97E8(0);
+        MapItem_DrawPicked(0);
         break;
     case 1:
         func_001012D8(0, 1);
         func_0010A7E0(D_004323E0);
         func_0010AE58();
-        func_00114198(1);
+        Map_DrawRecords(1);
         MapObject_DrawAll(1, 0, 0);
         Entity_DrawAll(1);
-        func_001C9650(1);
+        MapItem_DrawAll(1);
         Gold_Draw(1);
-        func_00114528(1);
+        Map_DrawLateRecords(1);
         func_0010AE58();
         Effect_DrawAll(1);
         func_0010B140(0, 1);
         func_00109EB8();
         func_001012D8(0, 1);
         func_0010A7E0(D_004323E0);
-        func_001C97E8(1);
-        func_00116AA0();
+        MapItem_DrawPicked(1);
+        Map_CoverScreenWithMapTint();
         func_0010A698();
         func_001012D8(0, 0);
         func_0010A7E0(D_004323E0);
         func_0010AE58();
-        func_00114198(0);
+        Map_DrawRecords(0);
         MapObject_DrawAll(0, 0, 0);
         Entity_DrawPoolModels();
         Entity_DrawAll(0);
-        func_001C9650(0);
+        MapItem_DrawAll(0);
         ItemEffect_Draw();
         Gold_Draw(0);
         func_0010AE58();
-        func_00114528(0);
+        Map_DrawLateRecords(0);
         Effect_DrawAll(0);
         func_0010B140(0, 0);
         func_001012D8(0, 2);
@@ -406,42 +406,42 @@ int func_001005E8(int arg) {
         func_00109EB8();
         func_001012D8(0, 0);
         func_0010A7E0(D_004323E0);
-        func_001C97E8(0);
+        MapItem_DrawPicked(0);
         break;
     case 2:
-        func_00116970();
+        Map_SetOffscreenTarget();
         func_0010A5D8();
         func_001012D8(1, 1);
         func_0010A7E0(D_004323E0);
         func_0010AE58();
-        func_00114198(2);
+        Map_DrawRecords(2);
         MapObject_DrawAll(1, 0, 0);
         Entity_DrawAll(1);
-        func_001C9650(1);
+        MapItem_DrawAll(1);
         ItemEffect_Draw();
         Gold_Draw(1);
         func_0010AE58();
-        func_00114528(2);
+        Map_DrawLateRecords(2);
         Effect_DrawAll(1);
         func_0010B140(0, 1);
         func_00109EB8();
         func_001012D8(1, 1);
         func_0010A7E0(D_004323E0);
-        func_001C97E8(1);
+        MapItem_DrawPicked(1);
         func_0010A008();
         func_00109E88();
         func_0010A698();
         func_001012D8(0, 0);
         func_0010A7E0(D_004323E0);
         func_0010AE58();
-        func_00114198(0);
+        Map_DrawRecords(0);
         MapObject_DrawAll(0, 0, 0);
         Entity_DrawPoolModels();
         Entity_DrawAll(0);
-        func_001C9650(0);
+        MapItem_DrawAll(0);
         Gold_Draw(0);
         func_0010AE58();
-        func_00114528(0);
+        Map_DrawLateRecords(0);
         Effect_DrawAll(0);
         func_0010B140(0, 0);
         func_001012D8(0, 2);
@@ -451,7 +451,7 @@ int func_001005E8(int arg) {
         func_00109EB8();
         func_001012D8(0, 0);
         func_0010A7E0(D_004323E0);
-        func_001C97E8(0);
+        MapItem_DrawPicked(0);
         break;
     }
     func_001012D8(0, 0);
@@ -546,7 +546,7 @@ void func_00100D10(void) {
     f32 angle;
 
     if (game_status.unk03 != 0) {
-        record = func_00115CD0(&D_004325A0, 100.0f, D_00446770);
+        record = Map_FindRecordAtInSlot(&D_004325A0, 100.0f, D_00446770);
         if (record != NULL) {
             player_state.map_index = (u32)((char *)record - map_slots[D_00446770].records) >> 14; // match: the byte offset of 0x80-byte records shifted by 14; 7 would give the record number
             player_state.unk250 = record->unk38;
@@ -789,8 +789,8 @@ void func_001017A8(void) {
     }
     load_held = FALSE;
     if (map_load_state.step >= 2 && map_load_state.step <= 4) {
-        func_00118788();
-        if (func_001187D8() == 0) {
+        MapLoad_RequestHold();
+        if (MapLoad_IsHeld() == 0) {
             return;
         }
         load_held = func_00102230();
@@ -876,7 +876,7 @@ void func_001017A8(void) {
             }
         }
         if (game_status.bit6 && item_common_defs[game_status.unk20].type == 6) {
-            func_0011A438(game_status.unk20);
+            MapViewer_OpenForItem(game_status.unk20);
             game_status.unk20 = 0;
             game_status.bit6 = FALSE;
         }
@@ -888,13 +888,13 @@ void func_001017A8(void) {
         } else {
             func_00101C88();
         }
-        func_0011A500();
+        MapViewer_Run();
     }
     if (map_load_state.step != 0) {
         if (load_held) {
             func_00102218();
         }
-        func_001187B0();
+        MapLoad_Release();
     }
     if (faded_out) {
         if (!game_status.bit9) {
@@ -1061,6 +1061,6 @@ void func_001020F8(void) {
         game_status.bit4 = 0;
         game_status.bit8 = 0;
         game_status.bit14 = 0;
-        func_001187B0();
+        MapLoad_Release();
     }
 }

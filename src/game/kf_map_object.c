@@ -33,8 +33,8 @@ void func_00109EB8(void);
 void func_0010AEB8(void *);
 void func_0010B018(ModelInstance *, s32, s32);
 void func_0010E010(ModelInstance *);
-MapRecordInfo *func_00115CD0(CameraState *, f32, int);
-int func_00116C08(int, int, int, int);
+MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
+int Map_TestFlagBlockBit(int, int, int, int);
 void func_0011E8E8(int *);
 void func_0011E8F0(ModelInstance *);
 void func_0011E9D0(void *);
@@ -232,7 +232,7 @@ void MapObject_StartMap(int map) {
         if (func_00103AE0(tag, object->unk08->unk38.bytes[2])) {
             flag = 1;
         }
-        object->unk0C = (s32)func_00115CD0((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->unk00 & 1);
+        object->unk0C = (s32)Map_FindRecordAtInSlot((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->unk00 & 1);
         if (in_use) {
             MapObject_Activate(object);
         } else {
@@ -382,7 +382,7 @@ void MapObject_UpdateAll(void) {
                 if ((MapObject *)player_state.unk208 == object) {
                     object->unk10 |= 2;
                 } else if (object->unk08->unk5A != 0 && object->unk08->unk5A != 0xFF) {
-                    if (func_00116C08(D_00446770, player_state.unk250, MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk5A)) {
+                    if (Map_TestFlagBlockBit(D_00446770, player_state.unk250, MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk5A)) {
                         object->unk10 |= 2;
                     }
                 } else if (record->unk38 & 0x4000000) {

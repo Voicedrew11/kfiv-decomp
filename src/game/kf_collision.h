@@ -76,7 +76,7 @@ typedef struct {
     char *unk08;                    /* 0x08 the end of the strips: unk0C 16-byte entries */
     u32 unk0C;                      /* 0x0C */
     f32 unk10;                      /* 0x10 how far it reaches from its origin, unscaled (MapObject_InitMap) */
-    char *unk14;                    /* 0x14 the next mesh of a map file starts this many bytes on (a size, typed as func_00114AA8 needs) */
+    char *unk14;                    /* 0x14 the next mesh of a map file starts this many bytes on (a size, typed as Map_BuildModels needs) */
     CollisionStrip *unk18;          /* 0x18 unk38 strips */
     CollisionStrip *floor_strips;   /* 0x1C */
     CollisionStrip *unk20;          /* 0x20 unk3C strips */
@@ -106,7 +106,7 @@ typedef struct {
     f32 position[4];                /* 0x00 */
     f32 rotation[4];                /* 0x10 */
     f32 scale[4];                   /* 0x20 */
-    u16 unk30;                      /* 0x30 0xFFFF: always drawn (func_00116CB0) */
+    u16 unk30;                      /* 0x30 0xFFFF: always drawn (Map_ClassifyRecordOnScreen) */
     u16 unk32;                      /* 0x32 0xFFFF: unused */
     char pad34[0x04];
     u8 unk38;                       /* 0x38 goes to PlayerState.unk250 when the player stands on the record */
