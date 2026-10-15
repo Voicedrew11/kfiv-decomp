@@ -38,10 +38,10 @@ int EntityAi_CheckMeleeHit(Entity *entity, EntityParamsUnk240 *record, int part,
    [frame_from, frame_to] lie outside the frames the part is active on (0 then) */
 s32 EntityAi_CheckMeleeHitAt(Entity *entity, EntityParamsUnk240 *unk240, s32 part, s32 frame_from, s32 frame_to, f32 angle);
 /* Builds the attack request of one part of a melee record (reach, height, angle, power) and runs it with
-   func_001B1470; returns its result */
+   Attack_Run; returns its result */
 s32 EntityAi_SendMeleeHit(Entity *entity, EntityParamsUnk240 *record, s32 index, f32 angle);
 /* Allocates a shot carrying EntityParams.unk238 and launches effect effect_id from origin along angles
-   (func_001B4F30) for the entity */
+   (Attack_LaunchMagicEffect) for the entity */
 int EntityAi_LaunchShot(Entity *entity, int effect_id, void *origin, void *angles);
 /* EntityShot_LaunchAimed with no target: launches the shots of a ranged record whose frame lies in (frame_from,
    frame_to] */

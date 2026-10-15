@@ -55,7 +55,7 @@ typedef struct {
     u8 unk3E;                       /* 0x3E the kind */
     s8 unk3F;                       /* 0x3F */
     char pad40[0x02];
-    u8 unk42;                       /* 0x42 passed to func_001E5210 while it is drawn */
+    u8 unk42;                       /* 0x42 passed to Menu_SetBlendMode while it is drawn */
     char pad43[0x1D];
 } Entry60;
 

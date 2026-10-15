@@ -59,7 +59,7 @@ MapRecordInfo *Map_FindRecordAtInSlot(CameraState *, f32, int);
 void func_00111E28(ModelInstance *, u32 *);
 void Vector_Copy(void *, void *);
 char *Collision_RelocateMesh(char *, ModelInstance *, int);
-void func_001B93B8(f32 *);
+void Player_MoveByOffset(f32 *);
 void Interact_OffsetViewRay(f32 *);
 void Map_OffsetRecords(int, f32 *);
 void Map_OffsetRecord(MapRecordBounds *, f32 *);
@@ -67,7 +67,7 @@ void Map_PlaceRecordModels(int);
 void MapItem_MoveMap(int, f32 *);
 void Script_Init(int);
 int Script_Start(int, int);
-void func_001BB590(void);
+void Player_StopFootstepSound(void);
 void Sound_StopAll(int);
 void Vector_Add(void *, void *, void *);
 void Matrix_Multiply(void *, void *, void *);
@@ -81,7 +81,7 @@ void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, fl
 void sceVu0MulMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 void Vector_Subtract(void *, void *, void *);
-void func_00101618(void);
+void GameLoop_RunSoundLoads(void);
 void func_001095D0(void);
 void func_001095D8(void);
 void func_001095E0(void);
@@ -91,10 +91,10 @@ void func_0010A7E0(void *);
 void func_0010B000(void);
 void Map_DrawFreeCameraView(void);
 float Angle_Wrap(float);
-void func_001B5460(void);
+void Input_Update(void);
 void Display_SwapBuffers(int);
 void Vector_Normalize(void *, void *);
-void func_00106C58(void);
+void Game_BlendScreenOffsetDown(void);
 void func_0010A100(void *);
 void func_0010B238(TextureTableHeader *);
 void func_0010D308(ModelInstance *);
@@ -593,7 +593,7 @@ void Map_MakeCurrent(int map) {
         slot = &map_slots[map];
         queue = &sound_load_queue;
         D_00446770 = map;
-        func_001B93B8(offset);
+        Player_MoveByOffset(offset);
         Interact_OffsetViewRay(offset);
         Map_OffsetRecords(0, offset);
         Map_OffsetRecords(1, offset);
@@ -616,7 +616,7 @@ void Map_MakeCurrent(int map) {
         Script_Start(0x7FFF, 0);
         loading = queue->unk10;
         if (loading != slot && queue->unk14 != slot) {
-            func_001BB590();
+            Player_StopFootstepSound();
             Sound_StopAll(1);
             queue->unk14 = slot;
         } else if (loading == slot && sound_load_queue.unk14 != slot) {
@@ -902,7 +902,7 @@ void Map_RunFreeCamera(void) {
             func_001096E8();
             func_001095E0();
             func_0010B000();
-            func_001B5460();
+            Input_Update();
             move.x = move.y = move.z = move.w = 0.0f;
             if (pad_state[0] & 0x2000) {
                 if (pad_state[0] & 0x40) {
@@ -975,7 +975,7 @@ void Map_RunFreeCamera(void) {
             Map_DrawFreeCameraView();
             Message_Update();
             func_001095D8();
-            func_00101618();
+            GameLoop_RunSoundLoads();
             func_00109800();
         } while (!(pad_state[1] & 0x2000));
         game_status.bit7 = FALSE;
@@ -1027,7 +1027,7 @@ void Map_DrawFreeCameraView(void) {
             }
         }
     }
-    func_00106C58();
+    Game_BlendScreenOffsetDown();
     func_00109A50();
     func_00109A80(0x1A, 1);
     func_00109A80(GS_REG_ZBUF_2, 0xA000118);
@@ -1077,7 +1077,7 @@ void Map_DrawFreeCameraView(void) {
 }
 
 /* Points both drawing contexts at the 256-pixel-wide 16-bit buffer at GS block 0x2BC0 with a 256x256
-   scissor: draw mode 2 draws its second view there (func_001005E8). */
+   scissor: draw mode 2 draws its second view there (GameLoop_DrawFrame). */
 void Map_SetOffscreenTarget(void) {
     func_00109F80(0xA04015E, 0xFF000000FF0000L, 0x780000007800L);
 }

@@ -397,7 +397,7 @@ void EntityAi_Dodge(Entity *entity) {
 }
 
 /* The default guard action (busy bit 0x10): blends into animation 13 and holds it for
-   EntityParams.unkCE frames with flag bit 35 set, which adds to the defence (func_001B2F70) and
+   EntityParams.unkCE frames with flag bit 35 set, which adds to the defence (Attack_HitEntity) and
    keeps a hit from starting a reaction. */
 void EntityAi_Guard(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;

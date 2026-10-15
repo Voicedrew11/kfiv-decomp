@@ -72,7 +72,7 @@ void Vram_Clear(int, int);
 void Sound_MutePositional(void);
 void Sound_UnmutePositional(void);
 void Sound_UpdateTagged(void);
-void func_001B5460(void);
+void Input_Update(void);
 s16 MenuPad_Update(void);
 void MenuHeap_FreeToMark(void);
 extern s8 D_00447318;
@@ -123,11 +123,11 @@ extern u32 D_00446A74;
 extern SpritePacket *D_00446BFC;
 extern s8 D_00447311;
 s32 Sound_PlayMenu(s32);
-int func_001E5210(u8 mode);
+int Menu_SetBlendMode(u8 mode);
 void MenuDraw_Bar(MenuCursorBar *);
 void MenuSprite_Draw(int, int, int, int);
 /* match: the part number is passed sign-extended and no result is kept (the definition takes a u8 and returns int) */
-#define SELECT_PART(part) ((void (*)(s32))func_001E5210)(part)
+#define SELECT_PART(part) ((void (*)(s32))Menu_SetBlendMode)(part)
 extern LevelRecordDef worn_defs[];
 extern PlayerItemDef weapon_defs[];
 extern u8 player_weapon[];
@@ -168,7 +168,7 @@ void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, fl
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
 int Menu_DrawItemModel(f32 *); // match: an int result keeps $2 for the load after the call
-int func_001E4FE0(s32, u32);
+int Menu_IsEquipSlotFilled(s32, u32);
 s32 MenuText_SetColor(ColorBytes bytes);
 s32 MenuText_DrawWrapped(u16 *, s32);
 s32 MenuText_DrawLine(u16 *text, s32 limit);
@@ -211,7 +211,7 @@ extern f32 D_00446CBC;
     }
 extern f32 D_00428A20[4];
 extern f32 D_00446CC0;
-void func_001E54A8(s8);
+void Menu_ClearEquipSlot(s8);
 int sprintf(char *, char *, ...);
 extern char D_00426498[];           /* the names of the five link nodes at D_00426470 */
 extern char D_004264E8[];
@@ -237,8 +237,8 @@ extern MenuItem *D_005CF390[4];
 extern MenuItem *D_005CF3A0[4];
 extern MenuItem *D_005CF3B0[];
 extern ClockTime D_00446A28;
-void func_001D20E0(void);
-int func_001D2258(ClockTime, ClockTime);
+void PlayTime_Update(void);
+int PlayTime_SecondsBetween(ClockTime, ClockTime);
 /* Adds a node to the end of the ring being built; `seventh` remembers the seventh one added. */
 #define APPEND(node, seventh) \
     count++; \
@@ -395,15 +395,15 @@ extern s32 D_00446E70;
 extern s32 D_00446E74;
 extern s32 D_00446E78;
 extern s32 D_00446E7C;
-void func_00103C18(void);
+void Game_WriteSaveImage(void);
 s32 SaveCard_StartSave(s32, s32, s32 *);
 s8 SaveCard_GetSaveState(s32);
 s32 SaveCard_HasRoomFor(s32, s32, s32);
 s32 SaveCard_GetFreeClusters(s32);
 // match: called as a void function, so the result register is free at once
-#define SET_PART_MODE(mode) ((void (*)(u8))func_001E5210)(mode)
-// match: this file hands func_001E5210 a signed byte
-#define SET_PART_MODE_OF(packet) ((void (*)(s8))func_001E5210)((s8)(packet)->unk42)
+#define SET_PART_MODE(mode) ((void (*)(u8))Menu_SetBlendMode)(mode)
+// match: this file hands Menu_SetBlendMode a signed byte
+#define SET_PART_MODE_OF(packet) ((void (*)(s8))Menu_SetBlendMode)((s8)(packet)->unk42)
 
 static s32 Trade_CopyFrameToTexture(void);
 static int Trade_RunStep(int value);
@@ -579,7 +579,7 @@ void Trade_Run(s32 value) {
     while (trade_run_steps[D_00446CA8](value) != 0) {
         sceGsSyncPath(0, 0);
         D_00447328 = Menu_EndFrame(1);
-        func_001B5460();
+        Input_Update();
         D_0044731C = Pad_GetMode(0, 0);
         if (D_0044731C != D_00447320) {
             D_00447304 = 1;
@@ -1181,7 +1181,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     }
 
     if (D_00447318 == 0) {
-        if ((D_00446DE8 & 0x1000) && func_001E4FE0(record, D_005CF380[0]->group)) {
+        if ((D_00446DE8 & 0x1000) && Menu_IsEquipSlotFilled(record, D_005CF380[0]->group)) {
             D_00446CAC = 1;
             if (D_00446C9C == 0) {
                 D_00446C9C = 1;
@@ -1533,7 +1533,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, D_00428A00);
     Menu_DrawItemModel((f32 *)local_matrix);
 
-    if (D_00447318 == 0 && (D_00446DE8 & 0x1000) && func_001E4FE0(record, D_005CF380[0]->group)) {
+    if (D_00447318 == 0 && (D_00446DE8 & 0x1000) && Menu_IsEquipSlotFilled(record, D_005CF380[0]->group)) {
         D_00446CB4 = 1;
         if (D_00446C9C == 0) {
             D_00446C9C = 1;
@@ -2008,7 +2008,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
         if (group == 11) {
             group = 12;
         }
-        if ((D_00446DE8 & 0x1000) && func_001E4FE0(record, group)) {
+        if ((D_00446DE8 & 0x1000) && Menu_IsEquipSlotFilled(record, group)) {
             details_opened = 1;
             if (D_00446C9C == 0) {
                 D_00446C9C = 1;
@@ -2321,7 +2321,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
         if (group == 11) {
             group = 12;
         }
-        if ((D_00446DE8 & 0x1000) && func_001E4FE0(record, group)) {
+        if ((D_00446DE8 & 0x1000) && Menu_IsEquipSlotFilled(record, group)) {
             info_pressed = 1;
             if (D_00446C9C == 0) {
                 D_00446C9C = 1;
@@ -2508,7 +2508,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
                 D_00426110[0]->unk0C == player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST ||
                 D_00426110[0]->unk0C == player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == player_state.shortcut) {
                 if (item_counts[D_00426110[0]->unk0C] == 0) {
-                    func_001E54A8(D_00426110[0]->group);
+                    Menu_ClearEquipSlot(D_00426110[0]->group);
                 }
             }
             if (stock.counts[context->arg][D_00426110[0]->unk0C] != 0xFF) {
@@ -2772,12 +2772,12 @@ static void Smith_BuildItemRings(s32 mode) {
     count = 0;
     D_00446C24 = NULL;
     D_00446C28 = NULL;
-    func_001D20E0();
+    PlayTime_Update();
     for (i = 1; i < 380; i++) {
         if (i >= 150) {
             if (i < 220) {
                 if (i != 150 && weapon_level_records[i - 150].unk18 != 0 && !(item_name_defs[i].state & 2) &&
-                    func_001D2258(weapon_level_records[i - 150].unk19.time, D_00446A28) >= item_name_defs[i].unk36 * 60) {
+                    PlayTime_SecondsBetween(weapon_level_records[i - 150].unk19.time, D_00446A28) >= item_name_defs[i].unk36 * 60) {
                     // match: written out; through APPEND's `(node)->next` the item pointer is reduced differently
                     count++;
                     if (count == 7) {
@@ -2793,7 +2793,7 @@ static void Smith_BuildItemRings(s32 mode) {
                 }
             } else {
                 if (i != 220 && worn_item_level_records[i - 220].unk18 != 0 && !(item_name_defs[i].state & 2) &&
-                    func_001D2258(worn_item_level_records[i - 220].unk19.time, D_00446A28) >= item_name_defs[i].unk36 * 60) {
+                    PlayTime_SecondsBetween(worn_item_level_records[i - 220].unk19.time, D_00446A28) >= item_name_defs[i].unk36 * 60) {
                     count++;
                     if (count == 7) {
                         D_005CF3A0[0] = &D_00421A30[i];
@@ -2863,7 +2863,7 @@ void Smith_Run(void) {
     while (smith_run_steps[D_00446CCC](0) != 0) {
         sceGsSyncPath(0, 0);
         D_00447328 = Menu_EndFrame(1);
-        func_001B5460();
+        Input_Update();
         D_0044731C = Pad_GetMode(0, 0);
         if (D_0044731C != D_00447320) {
             D_00447308 = 1;
@@ -3166,9 +3166,9 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
             bar.alpha = (s32)D_00425510[253];
             MenuDraw_Bar(&bar);
         }
-        ((int (*)(s8))func_001E5210)(D_00446C4C[i].unk42); // match: the byte is passed sign-extended here
+        ((int (*)(s8))Menu_SetBlendMode)(D_00446C4C[i].unk42); // match: the byte is passed sign-extended here
         MenuSprite_Draw((int)&D_00446C4C[i], 1000, 0, (int)D_00425510[i]);
-        ((void (*)(u8))func_001E5210)(0); // match: called as returning nothing, which frees $2 for the loop test
+        ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
     if (D_00446CD0 == 0) {
@@ -3436,7 +3436,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     sceVu0RotMatrixY(rotation, scale, D_00446CD8);
     sceVu0TransMatrix(rotation, rotation, D_00428A30);
     Menu_DrawItemModel(rotation);
-    if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && func_001E4FE0(index, D_00426110[0]->group)) {
+    if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && Menu_IsEquipSlotFilled(index, D_00426110[0]->group)) {
         D_00446CD4 = 1;
         if (D_00446AD4 == 0) {
             D_00446AD4 = 1;
@@ -3751,7 +3751,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     sceVu0RotMatrixY(rotation, scale, D_00446CE0);
     sceVu0TransMatrix(rotation, rotation, D_00428A40);
     Menu_DrawItemModel(rotation);
-    if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && func_001E4FE0(index, D_00426110[0]->group)) {
+    if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && Menu_IsEquipSlotFilled(index, D_00426110[0]->group)) {
         D_00446CDC = 1;
         if (D_00446AD4 == 0) {
             D_00446AD4 = 1;
@@ -4006,7 +4006,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             D_00425510[i] -= D_00446C50[i].alpha / 10.0f;
             if (D_00425510[i] < 0.0f) {
                 if (D_00447316 == 4) {
-                    func_001D20E0();
+                    PlayTime_Update();
                     bought = D_00426110[0];
                     if (bought->unk0C < 220) {
                         if (bought->unk0C == ITEM_BROKEN_KATANA) {
@@ -4032,7 +4032,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
                         D_00426110[0]->unk0C == player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST ||
                         D_00426110[0]->unk0C == player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST ||
                         D_00426110[0]->unk0C == player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == player_state.shortcut) {
-                        func_001E54A8(D_00426110[0]->group);
+                        Menu_ClearEquipSlot(D_00426110[0]->group);
                     }
                     context->unk04 = 0;
                     D_00446CC4 = Smith_UpdateSelectScreen;
@@ -4184,7 +4184,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     sceVu0RotMatrixY(rotation, scale, D_00446CE8);
     sceVu0TransMatrix(rotation, rotation, D_00428A50);
     Menu_DrawItemModel(rotation);
-    if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && func_001E4FE0(index, D_00426110[0]->group)) {
+    if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && Menu_IsEquipSlotFilled(index, D_00426110[0]->group)) {
         if (D_00446AD4 == 0) {
             D_00446CE4 = 1;
             D_00446AD4 = 1;
@@ -4465,7 +4465,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                     context->unk04 = 1;
                     D_00447315 = 0;
                 } else if (D_00447316 == 7) {
-                    func_001D20E0();
+                    PlayTime_Update();
                     if (D_00426110[0]->unk0C < 220) {
                         *(ClockTime *)weapon_level_records[D_00426110[0]->unk0C - 150].unk19.bytes = D_00446A28;
                         switch (D_00447315) {
@@ -4504,7 +4504,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                         D_00426110[0]->unk0C == player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST ||
                         D_00426110[0]->unk0C == player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST ||
                         D_00426110[0]->unk0C == player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST || D_00426110[0]->unk0C == player_state.shortcut) {
-                        func_001E54A8(D_00426110[0]->group);
+                        Menu_ClearEquipSlot(D_00426110[0]->group);
                     }
                     D_00446CC4 = Smith_UpdateSelectScreen;
                     item_counts[ITEM_EARTH_STONE]--;
@@ -4625,7 +4625,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     sceVu0RotMatrixY(rotation, scale, D_00446CEC);
     sceVu0TransMatrix(rotation, rotation, D_00428A60);
     Menu_DrawItemModel(rotation);
-    if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && func_001E4FE0(index, D_00426110[0]->group)) {
+    if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && Menu_IsEquipSlotFilled(index, D_00426110[0]->group)) {
         if (D_00446AD4 == 0) {
             play_sound = TRUE;
             D_00446AD4 = 1;
@@ -4953,7 +4953,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     sceVu0RotMatrixY(rotation, scale, D_00446CF4);
     sceVu0TransMatrix(rotation, rotation, D_00428A70);
     Menu_DrawItemModel(rotation);
-    if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && func_001E4FE0(index, D_005CF3B0[0]->group)) {
+    if ((D_00446DE8 & 0x1000) && D_00447318 == 0 && Menu_IsEquipSlotFilled(index, D_005CF3B0[0]->group)) {
         D_00446CF0 = 1;
         if (D_00446AD4 == 0) {
             D_00446AD4 = 1;
@@ -5289,7 +5289,7 @@ void SaveScreen_Run(void) {
     while (save_screen_run_steps[D_00446D00](0) != 0) {
         sceGsSyncPath(0, 0);
         D_00447328 = Menu_EndFrame(1);
-        func_001B5460();
+        Input_Update();
         field = Pad_GetMode(0, 0);
         D_0044731C = field;
         if (field != D_00447320) {
@@ -6024,7 +6024,7 @@ static void SaveScreen_UpdateSaveList(void) {
     for (i = 0; i < D_00446A64; i++) {
         kind = D_00446BF8[i].unk3E;
         slot = D_00446BF8[i].slot;
-        ((int (*)(s8))func_001E5210)((s8)D_00446BF8[i].unk42); // match: a signed byte, see SET_PART_MODE_OF
+        ((int (*)(s8))Menu_SetBlendMode)((s8)D_00446BF8[i].unk42); // match: a signed byte, see SET_PART_MODE_OF
         switch (kind) {
         case 2:
             MenuSprite_Draw((int)&D_00446BF8[i], 0x3EA, 0, D_00425510[i]);
@@ -6230,8 +6230,8 @@ static void SaveScreen_UpdateSaveList(void) {
                 if (D_005CF3C0.unk0E == 0) {
                     Sound_PlayMenu(0);
                     D_005CF3C0.unk13 = 0;
-                    func_001D20E0();
-                    func_00103C18();
+                    PlayTime_Update();
+                    Game_WriteSaveImage();
                     SaveCard_StartSave(D_005CF3C0.unk0C, D_00426610[D_005CF3C0.unk0D], (s32 *)save_image);
                 } else {
                     Sound_PlayMenu(2);

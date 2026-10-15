@@ -37,7 +37,7 @@ extern MapObject D_003AFA30[];
 void Vector_Copy(void *, void *);
 void Collision_HitRayObj(MapObject *, f32 *, f32 *, f32);
 extern MapSlot map_slots[];
-void func_001B2C48(void *);
+void Attack_RollPlayerAilments(void *);
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
 static inline f32 wrap_angle(f32 angle) {
@@ -559,7 +559,7 @@ s32 EntitySight_WallInWay(Entity *entity) {
 }
 
 /* When the player is within `max_distance` of `point` (flat), in its height band and within `max_angle` of
-   `heading`, gives the attack's ailment chances to the player (func_001B2C48) and returns TRUE. */
+   `heading`, gives the attack's ailment chances to the player (Attack_RollPlayerAilments) and returns TRUE. */
 s32 EntityAim_AilPlayerInArc(void *target, f32 *point, f32 max_angle, f32 max_height, f32 max_distance, f32 heading) {
     f32 distance_out[4];
     f32 angle;
@@ -594,6 +594,6 @@ s32 EntityAim_AilPlayerInArc(void *target, f32 *point, f32 max_angle, f32 max_he
     if (ABS(angle) > max_angle) {
         return FALSE;
     }
-    func_001B2C48(target);
+    Attack_RollPlayerAilments(target);
     return TRUE;
 }

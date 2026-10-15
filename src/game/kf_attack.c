@@ -26,14 +26,14 @@
     }
 #define SHOT_REQUEST ((Unk1B1470Request *)shot->unk04)
 
-s32 func_001B1510(Unk1B1470Request *, Unk1B1470Extra *);
+s32 Attack_RunSphere(Unk1B1470Request *, Unk1B1470Extra *);
 int func_001B1B80(void);
 int func_001B1B88(void);
-s32 func_001B1B90(Unk1B1470Request *, Unk1B1470Extra *);
-void func_001B29C8(Unk1B1470Request *, Unk1B1470Extra *);
-void func_001B2F70(Unk1B1470Request *, Unk1B1470Extra *, Entity *, f32);
-void func_001B3AC0(Unk1B1470Request *, Unk1B1470Extra *, MapObject *);
-int func_001B3E78(Unk1B1470Request *, Unk1B1470Extra *);
+s32 Attack_RunSwept(Unk1B1470Request *, Unk1B1470Extra *);
+void Attack_HitPlayer(Unk1B1470Request *, Unk1B1470Extra *);
+void Attack_HitEntity(Unk1B1470Request *, Unk1B1470Extra *, Entity *, f32);
+void Attack_HitMapObject(Unk1B1470Request *, Unk1B1470Extra *, MapObject *);
+int Attack_HitMap(Unk1B1470Request *, Unk1B1470Extra *);
 void Collision_HitSphereObj(MapObject *, f32 *, f32);
 void Collision_SphereCylinder(void *, void *, f32, f32, f32);
 float sqrtf(float);
@@ -46,32 +46,32 @@ void Collision_CylinderArc(void *, void *, f32, f32, f32, f32, f32, f32);
 void Collision_CylinderArcPitch(void *, void *, f32, f32, f32, f32, f32, f32, f32, f32, f32);
 void Vu0_LoadMatrix(void *);
 u32 Collision_GetFloorMaterial(int, u32, u32);
-void func_001B2C48(void *);
-void func_001B3ED8(EntityParamsUnk240PartUnk00 *, Unk1B1470Request *, Unk1B1470Extra *);
-int func_001B4AA8(int, int, int);
-void func_001B4BC8(int, Unk1B1470Request *);
-void func_001BB260(int);
-void func_001BB390(void *, int);
-void func_001BB4D0(int);
+void Attack_RollPlayerAilments(void *);
+void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *, Unk1B1470Request *, Unk1B1470Extra *);
+int Attack_StrengthDamageToPlayer(int, int, int);
+void Attack_WearArmorFromHit(int, Unk1B1470Request *);
+void Player_TakeDamage(int);
+void Player_KnockBackFromHit(void *, int);
+void Player_TiltViewFromHit(int);
 int rand(void);
 int printf(const char *, ...);
 float atan2f(float, float);
-int func_001B49F8(int, int, int, int);
-void func_001B3908(Entity *, EntityParamsUnk240PartUnk12 *);
-void func_001B4B10(int, int);
-void func_001BB468(Vector4 *, f32);
+int Attack_StrengthDamage(int, int, int, int);
+void Attack_RollEntityAilments(Entity *, EntityParamsUnk240PartUnk12 *);
+void Attack_WearWeapon(int, int);
+void Player_KnockBack(Vector4 *, f32);
 void Player_CountMagicUse(int);
 void Player_CountWeaponUse(int);
-void func_001BBFC8(void);
-void func_001BC058(void);
+void Player_BounceWeapon(void);
+void Player_BounceWeaponQuietly(void);
 s32 Sound_PlayCommon(s32);
-void func_001BC0E0(int with_sound);
-void func_001B4DF8(int idx, int amount);
+void Player_StrikeSolidObject(int with_sound);
+void Attack_WearWornItem(int idx, int amount);
 int func_00102238(char *, int, int);
 int func_001025C0(int, void *, int);
 int func_001024B0(int);
 void *memset(void *, int, u32);
-s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
+s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 
 // match: declared without a size, so it is not addressed through $gp
 extern CollisionListPick2 D_00446918[];
@@ -100,29 +100,29 @@ extern LevelRecord worn_item_level_records[];
 extern LevelDef D_00417EF8[];
 extern char D_0043F248[];
 
-int func_001B21F8(ModelInstance *, void *, f32);
-int func_001B24B0(ModelInstance *, void *, f32);
-int func_001B2740(ModelInstance *, void *, f32);
+int Attack_TestMapModel(ModelInstance *, void *, f32);
+int Attack_TestMapModelFloors(ModelInstance *, void *, f32);
+int Attack_TestMapModelWalls(ModelInstance *, void *, f32);
 
 /* 0x402D88 the three hit checks of a swing, one per kind of collision shape class */
-int (*swing_hit_checks[3])(ModelInstance *, void *, f32) = { func_001B21F8, func_001B24B0, func_001B2740 };
+int (*swing_hit_checks[3])(ModelInstance *, void *, f32) = { Attack_TestMapModel, Attack_TestMapModelFloors, Attack_TestMapModelWalls };
 u32 D_00402D98[4] = { 0x18, 8, 0x10, 0 }; /* 0x402D98 four words after the table, which nothing reads */
-/* 0x402DA8 the effect table, 0x110 bytes per effect id, which func_001B4EE0 loads from its file */
+/* 0x402DA8 the effect table, 0x110 bytes per effect id, which Attack_LoadMagicTable loads from its file */
 FxTableEntry fx_table[256] = { 0 };
 
 /* Runs an attack request against the world, by the request's shape (0 to 3). Only shapes
    0 and 3 do anything. */
-s32 func_001B1470(Unk1B1470Request *request, Unk1B1470Extra *extra) {
+s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     COLLISION_RESULT->unk18 = 6;
     switch ((u8)((Unk1B1470RequestWord *)request)->flags & 3) {
     case 0:
-        return func_001B1510(request, extra);
+        return Attack_RunSphere(request, extra);
     case 1:
         return func_001B1B80();
     case 2:
         return func_001B1B88();
     case 3:
-        return func_001B1B90(request, extra);
+        return Attack_RunSwept(request, extra);
     }
     return 0;
 }
@@ -131,7 +131,7 @@ s32 func_001B1470(Unk1B1470Request *request, Unk1B1470Extra *extra) {
    map objects (all of them, the first hit is kept aside), the player, the entities and
    the map's own collision meshes. Returns what was hit: 1 the player, 2 an entity, 4 a
    map object, 8, 0x10 or 0x20 the map (by the kind of surface), 0 nothing. */
-s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
+s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     CollisionResultCopy object_hit;
     s32 object_result = 0;
     Entity *entity;
@@ -174,7 +174,7 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                         object_hit.doublewords[5] = *&COLLISION_RESULT_COPY->doublewords[5];
                     }
                     *&COLLISION_RESULT->hit = 0; // match: the address is formed anew
-                    func_001B3AC0(request, extra, object);
+                    Attack_HitMapObject(request, extra, object);
                 }
             }
         }
@@ -183,7 +183,7 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         if (!((request->unk4D & 0x80) && IS_PLAYER(request->owner))) {
             Collision_SphereCylinder(&player_state, request, 50.0f, 230.0f, request->unk30);
             if (COLLISION_RESULT->hit != 0) {
-                func_001B29C8(request, extra);
+                Attack_HitPlayer(request, extra);
                 return 1;
             }
         }
@@ -209,7 +209,7 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     Collision_SphereCylinder(entity->model->position, request, entity->radius, entity->height, request->unk30);
                 }
                 if (COLLISION_RESULT->hit != 0) {
-                    func_001B2F70(request, extra, entity, 1.0f);
+                    Attack_HitEntity(request, extra, entity, 1.0f);
                     return 2;
                 }
             } else {
@@ -228,7 +228,7 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                         Collision_SphereSphere(point, request, body->unk04 * scale, request->unk30);
                     }
                     if (COLLISION_RESULT->hit != 0) {
-                        func_001B2F70(request, extra, entity, body->unk08);
+                        Attack_HitEntity(request, extra, entity, body->unk08);
                         return 2;
                     }
                 }
@@ -268,7 +268,7 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 result = swing_hit_checks[kind](record->model, request, reach);
                 if (COLLISION_RESULT->hit != 0) {
                     // match: called as void, retail reuses $2 at once
-                    ((void (*)(Unk1B1470Request *, Unk1B1470Extra *))func_001B3E78)(request, extra);
+                    ((void (*)(Unk1B1470Request *, Unk1B1470Extra *))Attack_HitMap)(request, extra);
                     switch (result) {
                     case 1:
                         result = 8;
@@ -301,10 +301,12 @@ s32 func_001B1510(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     return 0;
 }
 
+/* Attack shape 1: does nothing, returns 0. */
 int func_001B1B80(void) {
     return 0;
 }
 
+/* Attack shape 2: does nothing, returns 0. */
 int func_001B1B88(void) {
     return 0;
 }
@@ -313,7 +315,7 @@ int func_001B1B88(void) {
    entities and, for the player's own weapon, the map objects and the map along the two
    edges the weapon moved through. Returns what was hit: 1 the player, 2 an entity, 4 a
    map object, 0x10 the map, 0 nothing. */
-s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
+s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     f32 tip[4];
     f32 direction[4];
     Entity *entity;
@@ -332,7 +334,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             Collision_CylinderArc(&player_state, request, 50.0f, 230.0f, request->unk30, request->unk34, request->unk3C,
                           request->unk38);
             if (COLLISION_RESULT->hit != 0) {
-                func_001B29C8(request, extra);
+                Attack_HitPlayer(request, extra);
                 return 1;
             }
         }
@@ -361,7 +363,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                                   request->unk34, request->unk3C, request->unk38);
                 }
                 if (COLLISION_RESULT->hit != 0) {
-                    func_001B2F70(request, extra, entity, 1.0f);
+                    Attack_HitEntity(request, extra, entity, 1.0f);
                     return 2;
                 }
             } else {
@@ -399,7 +401,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                         }
                     }
                     if (COLLISION_RESULT->hit != 0) {
-                        func_001B2F70(request, extra, entity, body->unk08);
+                        Attack_HitEntity(request, extra, entity, body->unk08);
                         return 2;
                     }
                 }
@@ -424,7 +426,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 Vector_Scale(direction, direction, 1.0f / length);
                 Collision_HitRayObj(object, (f32 *)&held_item_arm_points.points[0], direction, length);
                 if (COLLISION_RESULT->hit != 0) {
-                    func_001B3AC0(request, extra, object);
+                    Attack_HitMapObject(request, extra, object);
                     return 4;
                 }
                 Vector_Subtract(direction, &held_item_arm_points.points[1], &held_item_arm_points_prev.points[1]);
@@ -432,7 +434,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 Vector_Scale(direction, direction, 1.0f / length);
                 Collision_HitRayObj(object, (f32 *)&held_item_arm_points_prev.points[1], direction, length);
                 if (COLLISION_RESULT->hit != 0) {
-                    func_001B3AC0(request, extra, object);
+                    Attack_HitMapObject(request, extra, object);
                     return 4;
                 }
             }
@@ -443,12 +445,12 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     Collision_CastSegmentAtMap((f32 *)&held_item_arm_points.points[0], (f32 *)&held_item_arm_points.points[1]);
     if (COLLISION_RESULT->hit != 0) {
-        func_001B3E78(request, extra);
+        Attack_HitMap(request, extra);
         return 0x10;
     }
     Collision_CastSegmentAtMap((f32 *)&held_item_arm_points.points[1], (f32 *)&held_item_arm_points_prev.points[1]);
     if (COLLISION_RESULT->hit != 0) {
-        func_001B3E78(request, extra);
+        Attack_HitMap(request, extra);
         return 0x10;
     }
     return 0;
@@ -456,7 +458,7 @@ s32 func_001B1B90(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 
 /* Tests a hit's sphere against four of a map model's strip lists (0, 1, 2 and 5). When it
    touches a triangle the result is left in the scratchpad and the list's number returned. */
-int func_001B21F8(ModelInstance *model, void *request, f32 reach) {
+int Attack_TestMapModel(ModelInstance *model, void *request, f32 reach) {
     CollisionListPick4 lists = D_0043F1F0;
     f32 unused_work[8]; // match: never used, keeps the retail stack frame size
     VuVector4 unused_axis = D_0043F200; // match: copied and never read
@@ -547,9 +549,9 @@ int func_001B21F8(ModelInstance *model, void *request, f32 reach) {
     }
 }
 
-/* func_001B21F8 for strip lists 1 and 5 only: returns 1 when the sphere touches a triangle
+/* Attack_TestMapModel for strip lists 1 and 5 only: returns 1 when the sphere touches a triangle
    of them (the result is left in the scratchpad), 0 when it touches none. */
-int func_001B24B0(ModelInstance *model, void *request, f32 reach) {
+int Attack_TestMapModelFloors(ModelInstance *model, void *request, f32 reach) {
     CollisionListPick2 lists = D_00446918[0];
     f32 unused_work[8]; // match: never used, keeps the retail stack frame size
     VuVector4 unused_axis = D_0043F200; // match: copied and never read
@@ -641,9 +643,9 @@ int func_001B24B0(ModelInstance *model, void *request, f32 reach) {
     return 0;
 }
 
-/* func_001B21F8 for strip lists 0 and 2 only: returns 0 when the sphere touches a triangle
+/* Attack_TestMapModel for strip lists 0 and 2 only: returns 0 when the sphere touches a triangle
    of them (the result is left in the scratchpad). */
-int func_001B2740(ModelInstance *model, void *request, f32 reach) {
+int Attack_TestMapModelWalls(ModelInstance *model, void *request, f32 reach) {
     CollisionListPick2 lists = D_00446920[0];
     f32 unused_work[8]; // match: never used, keeps the retail stack frame size
     VuVector4 unused_axis = D_0043F200; // match: copied and never read
@@ -737,7 +739,7 @@ int func_001B2740(ModelInstance *model, void *request, f32 reach) {
 /* A hit lands on the player: marks the attacking entity, works out the damage from the
    attack's nine strengths against the player's nine defences, takes it off the player's
    health and starts the ailments and the reaction. */
-void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
+void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     EntityParamsUnk240PartUnk00 attack;
     Entity *owner = request->owner;
     s32 blocked;
@@ -771,22 +773,22 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if ((u8)(player_state.equipment[EQUIP_BOOT] - 0x6A) <= 1) {
         percent += 20;
     }
-    func_001B3ED8(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50
-    damage = func_001B4AA8(request->unk50.unk00[0], player_state.unk90.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
-    damage += func_001B4AA8(request->unk50.unk00[1], player_state.unk90.values[1], player_state.power); // match: values[1] a second time
-    damage += func_001B4AA8(request->unk50.unk00[2], player_state.unk90.values[2], player_state.power);
-    damage += func_001B4AA8(request->unk50.unk00[3], player_state.unk90.values[3], player_state.magic) * percent / 100;
-    damage += func_001B4AA8(request->unk50.unk00[4], player_state.unk90.values[4], player_state.magic);
-    damage += func_001B4AA8(request->unk50.unk00[5], player_state.unk90.values[5], player_state.magic);
-    damage += func_001B4AA8(request->unk50.unk00[6], player_state.unk90.values[6], player_state.magic);
-    damage += func_001B4AA8(request->unk50.unk00[7], player_state.unk90.values[7], player_state.magic);
-    damage += func_001B4AA8(request->unk50.unk00[8], player_state.unk90.values[8], player_state.magic);
+    Attack_GetEffectiveStrengths(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50
+    damage = Attack_StrengthDamageToPlayer(request->unk50.unk00[0], player_state.unk90.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[1], player_state.unk90.values[1], player_state.power); // match: values[1] a second time
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[2], player_state.unk90.values[2], player_state.power);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[3], player_state.unk90.values[3], player_state.magic) * percent / 100;
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[4], player_state.unk90.values[4], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[5], player_state.unk90.values[5], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[6], player_state.unk90.values[6], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[7], player_state.unk90.values[7], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[8], player_state.unk90.values[8], player_state.magic);
     request->unk74 = 1;
     if (damage <= blocked) { // match: blocked is request->unk72, which is known to be 0 here
         damage = 1;
     }
-    func_001BB260(damage);
-    func_001B2C48(&request->unk62);
+    Player_TakeDamage(damage);
+    Attack_RollPlayerAilments(&request->unk62);
     if (request->unk71 != 0) {
         if (request->unk71 < player_state.mp_now) {
             player_state.mp_now -= request->unk71;
@@ -795,17 +797,17 @@ void func_001B29C8(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         }
     }
     if (UNK1B1470_REQUEST_UNIT(request) & UNK1B1470_UNIT_UNK4C_3) {
-        func_001BB390(request, damage);
+        Player_KnockBackFromHit(request, damage);
     }
-    func_001BB4D0(damage);
-    func_001B4BC8(damage, request);
+    Player_TiltViewFromHit(damage);
+    Attack_WearArmorFromHit(damage, request);
     Ladder_CancelApproach();
 }
 
 /* A hit may start the player's six timed ailments: each has a chance in percent in the
    attack, less the player's resistance to it but never under 5. One that is already
    running is left alone. */
-void func_001B2C48(void *attack_chances) {
+void Attack_RollPlayerAilments(void *attack_chances) {
     EntityParamsUnk240PartUnk12 *chances = attack_chances;
 
     if ((u16)chances->unk00[0] != 0 && player_state.flag_timers[0] == 0) {
@@ -850,7 +852,7 @@ void func_001B2C48(void *attack_chances) {
    entity's nine resistances, take it off the entity's health and start its reaction.
    The last boss takes no damage here: a weapon hit counts D_00446928 down, throws the
    player back and halves the player's health (PlayerState.hp_now). */
-void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *entity, f32 scale) {
+void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *entity, f32 scale) {
     Vector4 position;
     EntityParamsUnk240PartUnk00 attack;
     Entity *owner;
@@ -891,8 +893,8 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
         if (--D_00446928 <= 0) {
             return;
         }
-        func_001B4B10(extra->unk24, 4);
-        func_001BC058();
+        Attack_WearWeapon(extra->unk24, 4);
+        Player_BounceWeaponQuietly();
         Vector_Copy(&position, owner);
         if (player_state.position.x < entity->model->position[0]) {
             position.x += 100.0f;
@@ -901,12 +903,12 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
             position.x -= 100.0f;
             position.z += 100.0f;
         }
-        func_001BB468(&position, 200.0f);
+        Player_KnockBack(&position, 200.0f);
         if (player_state.hp_now < 2) {
             return;
         }
         printf(D_0043F228, player_state.hp_now, player_state.hp_now / 2);
-        func_001BB260(player_state.hp_now / 2);
+        Player_TakeDamage(player_state.hp_now / 2);
         return;
     }
 
@@ -930,7 +932,7 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
         return;
     }
 
-    func_001B3ED8(&attack, request, extra);
+    Attack_GetEffectiveStrengths(&attack, request, extra);
     if (ENTITY_FLAG_BITS(entity)->bit35) {
         physical_bonus = entity->params->unkD0;
         magic_bonus = entity->params->unkD1;
@@ -941,39 +943,39 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
 
     damage = 0;
     if (entity->params->unkD4 < 100) {
-        damage = func_001B49F8(attack.unk00[0], request->unk50.unk00[0], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
+        damage = Attack_StrengthDamage(attack.unk00[0], request->unk50.unk00[0], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
                                entity->params->unkE6 + physical_bonus + entity->params->unkD4);
     }
     if (entity->params->unkD6 < 100) {
-        damage += func_001B49F8(attack.unk00[1], request->unk50.unk00[1], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
+        damage += Attack_StrengthDamage(attack.unk00[1], request->unk50.unk00[1], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
                                 entity->params->unkE6 + physical_bonus + entity->params->unkD6);
     }
     if (entity->params->unkD8 < 100) {
-        damage += func_001B49F8(attack.unk00[2], request->unk50.unk00[2], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
+        damage += Attack_StrengthDamage(attack.unk00[2], request->unk50.unk00[2], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
                                 entity->params->unkE6 + physical_bonus + entity->params->unkD8);
     }
     if (entity->params->unkDA < 100) {
-        damage += func_001B49F8(attack.unk00[3], request->unk50.unk00[3], extra->unk22,
+        damage += Attack_StrengthDamage(attack.unk00[3], request->unk50.unk00[3], extra->unk22,
                                 entity->params->unkE8 + magic_bonus + entity->params->unkDA);
     }
     if (entity->params->unkDC < 100) {
-        damage += func_001B49F8(attack.unk00[4], request->unk50.unk00[4], extra->unk22,
+        damage += Attack_StrengthDamage(attack.unk00[4], request->unk50.unk00[4], extra->unk22,
                                 entity->params->unkE8 + magic_bonus + entity->params->unkDC);
     }
     if (entity->params->unkDE < 100) {
-        damage += func_001B49F8(attack.unk00[5], request->unk50.unk00[5], extra->unk22,
+        damage += Attack_StrengthDamage(attack.unk00[5], request->unk50.unk00[5], extra->unk22,
                                 entity->params->unkE8 + magic_bonus + entity->params->unkDE);
     }
     if (entity->params->unkE0 < 100) {
-        damage += func_001B49F8(attack.unk00[6], request->unk50.unk00[6], extra->unk22,
+        damage += Attack_StrengthDamage(attack.unk00[6], request->unk50.unk00[6], extra->unk22,
                                 entity->params->unkE8 + magic_bonus + entity->params->unkE0);
     }
     if (entity->params->unkE2 < 100) {
-        damage += func_001B49F8(attack.unk00[7], request->unk50.unk00[7], extra->unk22,
+        damage += Attack_StrengthDamage(attack.unk00[7], request->unk50.unk00[7], extra->unk22,
                                 entity->params->unkE8 + magic_bonus + entity->params->unkE2);
     }
     if (entity->params->unkE4 < 100) {
-        damage += func_001B49F8(attack.unk00[8], request->unk50.unk00[8], extra->unk22,
+        damage += Attack_StrengthDamage(attack.unk00[8], request->unk50.unk00[8], extra->unk22,
                                 entity->params->unkE8 + magic_bonus + entity->params->unkE4);
     }
 
@@ -1012,14 +1014,14 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
     if (by_weapon && extra->unk04 == 0) {
         percent = damage * 100.0f / entity->params->unk0A;
         if (damage <= 0) {
-            func_001B4B10(extra->unk24, 4);
-            func_001BBFC8();
+            Attack_WearWeapon(extra->unk24, 4);
+            Player_BounceWeapon();
             return;
         }
         if (percent < 10.0f) {
-            func_001B4B10(extra->unk24, 2);
+            Attack_WearWeapon(extra->unk24, 2);
         } else if (percent < 100.0f) {
-            func_001B4B10(extra->unk24, 1);
+            Attack_WearWeapon(extra->unk24, 1);
         }
     }
 
@@ -1063,7 +1065,7 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
         }
     }
 
-    func_001B3908(entity, &request->unk62);
+    Attack_RollEntityAilments(entity, &request->unk62);
     // match: flag bit 40 (still named pad40); the source bit is read as a u8 field
     ENTITY_FLAG_BITS(entity)->pad40 = ((Unk1B1470RequestBits *)request)->unk4C_3;
 
@@ -1087,7 +1089,7 @@ void func_001B2F70(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *ent
 
 /* A hit may start the entity's four ailments: each has a chance in percent in the attack,
    less the entity's resistance to it. The last one started is the one that tints the model. */
-void func_001B3908(Entity *entity, EntityParamsUnk240PartUnk12 *chances) {
+void Attack_RollEntityAilments(Entity *entity, EntityParamsUnk240PartUnk12 *chances) {
     if ((u16)chances->unk00[0] != 0 && ROLL_PERCENT() < (u16)chances->unk00[0] - entity->params->unkEA) {
         entity->unk20 = 1800;
         entity->unk26 = 1;
@@ -1108,7 +1110,7 @@ void func_001B3908(Entity *entity, EntityParamsUnk240PartUnk12 *chances) {
 
 /* A hit lands on a map object: one that can break does when the damage reaches its toughness (a map's own
    hit always breaks it); otherwise the player's weapon bounces off. */
-void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *object) {
+void Attack_HitMapObject(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *object) {
     EntityParamsUnk240PartUnk00 attack;
     s32 by_weapon;
     s32 damage;
@@ -1127,8 +1129,8 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
             MapObject_Break(object);
             return;
         }
-        func_001B4B10(extra->unk24, 4);
-        func_001BBFC8();
+        Attack_WearWeapon(extra->unk24, 4);
+        Player_BounceWeapon();
         return;
     }
     if (request->owner == (Entity *)&map_slots[0] || request->owner == (Entity *)&map_slots[1]) {
@@ -1146,42 +1148,42 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
         if (extra->unk04 != 0) {
             return;
         }
-        func_001B4B10(extra->unk24, 4);
-        func_001BBFC8();
+        Attack_WearWeapon(extra->unk24, 4);
+        Player_BounceWeapon();
         return;
     }
 
-    func_001B3ED8(&attack, request, extra);
+    Attack_GetEffectiveStrengths(&attack, request, extra);
     damage = 0;
     if (object->unk04->unk52[0] < 200) {
-        damage = func_001B49F8(attack.unk00[0], request->unk50.unk00[0], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
+        damage = Attack_StrengthDamage(attack.unk00[0], request->unk50.unk00[0], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
                                object->unk04->unk52[0]);
     }
     if (object->unk04->unk52[1] < 200) {
-        damage += func_001B49F8(attack.unk00[1], request->unk50.unk00[1], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
+        damage += Attack_StrengthDamage(attack.unk00[1], request->unk50.unk00[1], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
                                 object->unk04->unk52[1]);
     }
     if (object->unk04->unk52[2] < 200) {
-        damage += func_001B49F8(attack.unk00[2], request->unk50.unk00[2], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
+        damage += Attack_StrengthDamage(attack.unk00[2], request->unk50.unk00[2], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
                                 object->unk04->unk52[2]);
     }
     if (object->unk04->unk52[3] < 200) {
-        damage += func_001B49F8(attack.unk00[3], request->unk50.unk00[3], extra->unk22, object->unk04->unk52[3]);
+        damage += Attack_StrengthDamage(attack.unk00[3], request->unk50.unk00[3], extra->unk22, object->unk04->unk52[3]);
     }
     if (object->unk04->unk52[4] < 200) {
-        damage += func_001B49F8(attack.unk00[4], request->unk50.unk00[4], extra->unk22, object->unk04->unk52[4]);
+        damage += Attack_StrengthDamage(attack.unk00[4], request->unk50.unk00[4], extra->unk22, object->unk04->unk52[4]);
     }
     if (object->unk04->unk52[5] < 200) {
-        damage += func_001B49F8(attack.unk00[5], request->unk50.unk00[5], extra->unk22, object->unk04->unk52[5]);
+        damage += Attack_StrengthDamage(attack.unk00[5], request->unk50.unk00[5], extra->unk22, object->unk04->unk52[5]);
     }
     if (object->unk04->unk52[6] < 200) {
-        damage += func_001B49F8(attack.unk00[6], request->unk50.unk00[6], extra->unk22, object->unk04->unk52[6]);
+        damage += Attack_StrengthDamage(attack.unk00[6], request->unk50.unk00[6], extra->unk22, object->unk04->unk52[6]);
     }
     if (object->unk04->unk52[7] < 200) {
-        damage += func_001B49F8(attack.unk00[7], request->unk50.unk00[7], extra->unk22, object->unk04->unk52[7]);
+        damage += Attack_StrengthDamage(attack.unk00[7], request->unk50.unk00[7], extra->unk22, object->unk04->unk52[7]);
     }
     if (object->unk04->unk52[8] < 200) {
-        damage += func_001B49F8(attack.unk00[8], request->unk50.unk00[8], extra->unk22, object->unk04->unk52[8]);
+        damage += Attack_StrengthDamage(attack.unk00[8], request->unk50.unk00[8], extra->unk22, object->unk04->unk52[8]);
     }
 
     if (by_weapon) {
@@ -1203,27 +1205,28 @@ void func_001B3AC0(Unk1B1470Request *request, Unk1B1470Extra *extra, MapObject *
     if (extra->unk04 != 0) {
         return;
     }
-    func_001B4B10(extra->unk24, 4);
-    func_001BC0E0(object->unk08->unk30 != 0x1C && object->unk08->unk30 != 0xFF);
+    Attack_WearWeapon(extra->unk24, 4);
+    Player_StrikeSolidObject(object->unk08->unk30 != 0x1C && object->unk08->unk30 != 0xFF);
 }
 
-int func_001B3E78(Unk1B1470Request *request, Unk1B1470Extra *extra) {
+/* An attack struck the map: the player's weapon wears and bounces off. */
+int Attack_HitMap(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if (IS_PLAYER(request->owner)) {
         if (extra->unk00 == 0) {
-            func_001B4B10(extra->unk24, 4);
+            Attack_WearWeapon(extra->unk24, 4);
             if (extra->unk04 == 0) {
-                return ((int (*)(void))func_001BBFC8)(); // match: a tail call, as if it returned int
+                return ((int (*)(void))Player_BounceWeapon)(); // match: a tail call, as if it returned int
             }
         }
     }
 }
 
-/* The nine strengths of a hit as they count against the target (func_001B2F70). The player's are
+/* The nine strengths of a hit as they count against the target (Attack_HitEntity). The player's are
    raised by the weapon bonus (extra->unk20) or the magic bonus (unk22, plus unk0E[] per kind) in
    fiftieths. A hit of kind 0 from anything else counts as it is; otherwise the three physical
    strengths are dropped and the six magic ones scaled, by EntityParams.unk238 for an entity.
    The rows are spelled out as retail has them. */
-void func_001B3ED8(EntityParamsUnk240PartUnk00 *out, Unk1B1470Request *request, Unk1B1470Extra *extra) {
+void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *out, Unk1B1470Request *request, Unk1B1470Extra *extra) {
     f32 strength;
     s32 whole;
 
@@ -1284,7 +1287,7 @@ void func_001B3ED8(EntityParamsUnk240PartUnk00 *out, Unk1B1470Request *request, 
 
 /* Damage from one strength of a hit: the strength cut by the resistance (out of 200), plus
    what the base strength, and the base raised by the bonus in fiftieths, exceed half of it. */
-int func_001B49F8(int strength, int base, int bonus, int resistance) {
+int Attack_StrengthDamage(int strength, int base, int bonus, int resistance) {
     float base_strength;
     float resist;
     float base_excess;
@@ -1308,13 +1311,14 @@ int func_001B49F8(int strength, int base, int bonus, int resistance) {
 }
 
 /* Damage to the player from one strength of a hit, against the player's resistance and stat. */
-int func_001B4AA8(int strength, int resistance, int stat) {
+int Attack_StrengthDamageToPlayer(int strength, int resistance, int stat) {
     float value = (float)strength;
     return (int)((value * value) / (value + (float)resistance * 1.3f + ((float)stat + 1.0f) / 3.0f));
 }
 
-/* Adds experience to an item's record, rolling over into levels (levels below 0x33 reset to 0x32). */
-void func_001B4B10(int idx, int amount) {
+/* Wears a weapon: amount is added to its wear, and every exp_per_level of it takes one off its level, the
+   percent its values count at (down to 50). Weapons whose unk63 is 2 or more do not wear. */
+void Attack_WearWeapon(int idx, int amount) {
     PlayerItemDef *item;
     LevelRecord *rec;
     LevelDef *def;
@@ -1338,9 +1342,9 @@ void func_001B4B10(int idx, int amount) {
     }
 }
 
-/* The player was hit for `damage`: what he wears gains experience by how much of his health that was.
-   Without a shield everything gains double, and the piece the hit landed on (or one picked by chance) four times. */
-void func_001B4BC8(int damage, Unk1B1470Request *request) {
+/* The player was hit for `damage`: what he wears wears by how much of his health that was. Without a shield
+   everything wears double, and the piece the hit landed on (or one picked by chance) four times. */
+void Attack_WearArmorFromHit(int damage, Unk1B1470Request *request) {
     f32 percent = (f32)damage * 100.0f / (f32)player_state.hp_max;
     int amount = damage * 10 / player_state.hp_max;
     int part;
@@ -1392,24 +1396,24 @@ void func_001B4BC8(int damage, Unk1B1470Request *request) {
         }
     }
     if (player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
-        func_001B4DF8(player_state.equipment[EQUIP_SHIELD], shield_exp);
+        Attack_WearWornItem(player_state.equipment[EQUIP_SHIELD], shield_exp);
     }
     if (player_state.equipment[EQUIP_HELM] != ITEM_WORN_INDEX(ITEM_HELM_NONE)) {
-        func_001B4DF8(player_state.equipment[EQUIP_HELM], helmet_exp);
+        Attack_WearWornItem(player_state.equipment[EQUIP_HELM], helmet_exp);
     }
     if (player_state.equipment[EQUIP_ARMOR] != ITEM_WORN_INDEX(ITEM_ARMOR_NONE)) {
-        func_001B4DF8(player_state.equipment[EQUIP_ARMOR], armor_exp);
+        Attack_WearWornItem(player_state.equipment[EQUIP_ARMOR], armor_exp);
     }
     if (player_state.equipment[EQUIP_GAUNTLET] != ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE)) {
-        func_001B4DF8(player_state.equipment[EQUIP_GAUNTLET], gloves_exp);
+        Attack_WearWornItem(player_state.equipment[EQUIP_GAUNTLET], gloves_exp);
     }
     if (player_state.equipment[EQUIP_BOOT] != ITEM_WORN_INDEX(ITEM_BOOT_NONE)) {
-        func_001B4DF8(player_state.equipment[EQUIP_BOOT], boots_exp);
+        Attack_WearWornItem(player_state.equipment[EQUIP_BOOT], boots_exp);
     }
 }
 
-/* Adds experience to a record, rolling over into levels (levels below 0x33 reset to 0x32). */
-void func_001B4DF8(int idx, int amount) {
+/* Wears a worn item as Attack_WearWeapon wears a weapon; the "none" items do not wear. */
+void Attack_WearWornItem(int idx, int amount) {
     LevelRecord *rec = &worn_item_level_records[idx];
     LevelDef *def = &D_00417EF8[idx];
 
@@ -1430,20 +1434,22 @@ void func_001B4DF8(int idx, int amount) {
     }
 }
 
-/* Adds amount to the player's running total at 0x2A0. */
-void func_001B4EC8(int amount) {
+/* Drains amount of the player's MP: Player_Update takes it off next frame and tints the screen. */
+void Attack_DrainPlayerMp(int amount) {
     player_state.unk2A0 += amount;
 }
 
-/* Loads the effect table fx_table from its file. */
-void func_001B4EE0(void) {
+/* Loads the magic table fx_table from param/magic.prm. */
+void Attack_LoadMagicTable(void) {
     int file_handle = func_00102238(D_0043F248, 0, 1);
 
     func_001025C0(file_handle, fx_table, -1);
     func_001024B0(file_handle);
 }
 
-int func_001B4F30(u16 effect_id, void *shot, void *from, void *angles, void *entity) {
+/* Launches the effect of a magic table row (its unk100) from `from` along `angles`; returns Effect_Spawn's
+   result, 0 for an id past the table or a row that cannot be launched (unk102). */
+int Attack_LaunchMagicEffect(u16 effect_id, void *shot, void *from, void *angles, void *entity) {
     FxTableEntry *entry;
 
     if (effect_id >= 0x100) {
@@ -1458,8 +1464,8 @@ int func_001B4F30(u16 effect_id, void *shot, void *from, void *angles, void *ent
 
 /* The hit check of an effect: builds the attack request from the effect table's row
    (or, for a weapon's shot, from the request the weapon left) and runs it. Returns what
-   func_001B1470 found. */
-int func_001B4F90(void *effect_actor) {
+   Attack_Run found. */
+int Attack_RunEffectHitCheck(void *effect_actor) {
     Unk1B1470Request request;
     EffectActor *effect = effect_actor;
     FxTableHitCheck *check;
@@ -1531,7 +1537,7 @@ int func_001B4F90(void *effect_actor) {
         request.unk70 = check->unk27;
         request.unk72 = EFFECT_FLAG_PARTS(effect)->unk40;
         request.unk6F = 0;
-        hits = func_001B1470(&request, shot);
+        hits = Attack_Run(&request, shot);
         if (hits != 0 && (s8)request.unk74 != 0 && EFFECT_FLAG_PARTS(effect)->unk40 == 0) {
             EFFECT_FLAG_PARTS(effect)->unk40 = check->unk24;
         }
@@ -1542,7 +1548,7 @@ int func_001B4F90(void *effect_actor) {
         request.unk70 = 0;
         request.unk4F = 0;
         request.unk6F = SHOT_REQUEST->unk6F;
-        hits = func_001B1470(&request, shot);
+        hits = Attack_Run(&request, shot);
     }
     return hits;
 }

@@ -57,7 +57,7 @@ typedef struct {
 typedef struct {
     Vector4 position;               /* 0x00 */
     Vector4 rotation;               /* 0x10 y is the heading */
-    s32 hp_base;                    /* 0x20 ini "hp": the most HP before what is worn; hp_base to magic_base are saved one by one (func_00103C18, func_00104EC8) */
+    s32 hp_base;                    /* 0x20 ini "hp": the most HP before what is worn; hp_base to magic_base are saved one by one (Game_WriteSaveImage, Game_ReadSaveImage) */
     s32 mp_base;                    /* 0x24 ini "mp" */
     s32 power_base;                 /* 0x28 ini "power"; raised by "Physical UP" */
     s32 magic_base;                 /* 0x2C ini "magic"; raised by "Magic Power UP" */
@@ -73,7 +73,7 @@ typedef struct {
     s32 level;                      /* 0x54 ini "level"; saved */
     s32 hp_max;                     /* 0x58 the most hp_now can be: hp_base with what is worn (the Widda's Ring adds a fifth) */
     s32 mp_max;                     /* 0x5C the most mp_now can be */
-    PlayerShotStats unk60;          /* 0x60 unk60 to unkA3 and unkDC are worked out by func_001BA310 */
+    PlayerShotStats unk60;          /* 0x60 unk60 to unkA3 and unkDC are worked out by Player_RecomputeStats */
     PlayerItemRates unk72;          /* 0x72 at most 100 each */
     PlayerShotStats unk7E;          /* 0x7E copied into the shot a cast magic launches (Player_CastMagic) */
     PlayerShotStats unk90;          /* 0x90 */
@@ -84,7 +84,7 @@ typedef struct {
     s32 magic;                      /* 0xB0 magic_base in effect (the Widda Needle adds a tenth); how fast unkC0 fills (at least 20 is used) */
     s32 hp_now;                     /* 0xB4 the HP the player has (the healing items add to it) */
     s32 mp_now;                     /* 0xB8 the MP the player has; saved */
-    s32 unkBC;                      /* 0xBC cleared when weapon changes over a menu (func_001017A8) */
+    s32 unkBC;                      /* 0xBC cleared when weapon changes over a menu (GameLoop_OpenRequestedMenu) */
     s32 unkC0;                      /* 0xC0 cleared when unk264 is set */
     s32 unkC4;                      /* 0xC4 frames unkBC waits before it fills again */
     s32 unkC8;                      /* 0xC8 frames unkC0 waits before it fills again */
@@ -93,16 +93,16 @@ typedef struct {
     s32 weapon_use_count;           /* 0xD4 saved; every 100th swing gives "Physical UP" (Player_CountWeaponUse) */
     s32 magic_use_count;            /* 0xD8 saved; every 100th magic gives "Magic Power UP" (Player_CountMagicUse) */
     u16 unkDC[6];                   /* 0xDC at most 100 each */
-    s32 unkE8;                      /* 0xE8 unkE8 to unk10C are worked out by func_001BAE88 from what is worn */
-    s32 unkEC;                      /* 0xEC nonzero: mp drops every 30 frames (func_001B96C8) */
+    s32 unkE8;                      /* 0xE8 unkE8 to unk10C are worked out by Player_SumWornBonuses from what is worn */
+    s32 unkEC;                      /* 0xEC nonzero: mp drops every 30 frames (Player_UpdateStatus) */
     u32 unkF0;                      /* 0xF0 nonzero: hp rises every that many frames */
     u32 unkF4;                      /* 0xF4 nonzero: hp drops every that many frames */
     u32 unkF8;                      /* 0xF8 nonzero: mp rises every that many frames */
     u32 unkFC;                      /* 0xFC nonzero: mp drops every that many frames */
-    s32 unk100;                     /* 0x100 percent of the damage dealt that is added to hp (func_001B2F70) */
+    s32 unk100;                     /* 0x100 percent of the damage dealt that is added to hp (Attack_HitEntity) */
     s32 unk104;                     /* 0x104 percent of the damage dealt that is added to mp */
     s32 unk108;                     /* 0x108 nonzero: the player moves and turns at half speed (Player_Move) */
-    s32 unk10C;                     /* 0x10C 1 while the Ring of Sight is worn (func_001BB020) */
+    s32 unk10C;                     /* 0x10C 1 while the Ring of Sight is worn (Player_AddItemBonuses) */
     u16 unk110[6];                  /* 0x110 cleared when unk14C[i] runs out */
     s16 unk11C[3];                  /* 0x11C cleared with unk188[i] when unk158[i] runs out */
     s16 unk122[6];                  /* 0x122 nonzero: unk18E[i] competes for the weapon trail kind (WeaponTrail_PickKind) */
@@ -138,8 +138,8 @@ typedef struct {
     f32 unk1DC;                     /* 0x1DC */
     s32 unk1E0;                     /* 0x1E0 nonzero with unk1E4 4: the fifth row of the movement tables is used */
     s32 unk1E4;                     /* 0x1E4 */
-    s32 unk1E8;                     /* 0x1E8 a frame count: every 60th frame the ground may poison the player (func_001B9078) */
-    s32 unk1EC;                     /* 0x1EC nonzero: hp is held at 0 and the player dies (func_001B9078) */
+    s32 unk1E8;                     /* 0x1E8 a frame count: every 60th frame the ground may poison the player (Player_ApplyGroundEffects) */
+    s32 unk1EC;                     /* 0x1EC nonzero: hp is held at 0 and the player dies (Player_ApplyGroundEffects) */
     f32 unk1F0;                     /* 0x1F0 added to the camera's height */
     f32 unk1F4;                     /* 0x1F4 how deep the dip after a landing is: half the fall speed, at most 150 */
     s32 unk1F8;                     /* 0x1F8 how many frames the dip takes */
@@ -153,8 +153,8 @@ typedef struct {
     char pad212[0x02];
     f32 unk214;                     /* 0x214 */
     char pad218[0x08];
-    Vector4 aim;                    /* 0x220 direction the player aims along, flattened to x/z */
-    f32 aim_speed;                  /* 0x230 above 0: func_001005E8 draws func_00106FB8(0x40) */
+    Vector4 aim;                    /* 0x220 direction the player is knocked back along, flattened to x/z (Player_KnockBackFromHit) */
+    f32 aim_speed;                  /* 0x230 knock-back speed, lost by weight every frame; above 0: Game_BlendPreviousFrame(0x40) is drawn */
     s32 unk234;                     /* 0x234 frames unk238 and unk23C keep growing */
     f32 unk238;                     /* 0x238 */
     f32 unk23C;                     /* 0x23C */
@@ -176,15 +176,15 @@ typedef struct {
     u8 unk260_2 : 1;                /* tested for the second magic, never set (Player_SwingWeapon) */
     u8 unk260_3 : 5;
     u8 unk261;                      /* 0x261 */
-    u8 unk262;                      /* 0x262 set once by func_001BC0E0 */
+    u8 unk262;                      /* 0x262 set once by Player_StrikeSolidObject */
     u8 unk263;                      /* 0x263 */
-    u8 unk264;                      /* 0x264 set from equipped_magic, shortcut or the PlayerItemDef after a menu (func_001017A8) */
+    u8 unk264;                      /* 0x264 set from equipped_magic, shortcut or the PlayerItemDef after a menu (GameLoop_OpenRequestedMenu) */
     char pad265[0x03];
-    PlayerShot unk268;              /* 0x268 the swing of the weapon in hand, passed to func_001B1470 (Player_SwingWeapon) */
+    PlayerShot unk268;              /* 0x268 the swing of the weapon in hand, passed to Attack_Run (Player_SwingWeapon) */
     u8 unk298;                      /* 0x298 */
     char pad299[0x03];
-    s32 unk29C;                     /* 0x29C nonzero: the screen is tinted by it (func_001005E8) */
-    s32 unk2A0;                     /* 0x2A0 a total func_001B4EC8 adds to */
+    s32 unk29C;                     /* 0x29C nonzero: the screen is tinted by it (GameLoop_DrawFrame) */
+    s32 unk2A0;                     /* 0x2A0 a total Attack_DrainPlayerMp adds to */
     char pad2A4[0x04];
     f32 unk2A8;                     /* 0x2A8 fade amount: > 0 toward white, < 0 toward black */
     char pad2AC[0x04];
@@ -197,13 +197,13 @@ typedef struct {
     u32 unk2D0;                     /* 0x2D0 */
     u32 unk2D4;                     /* 0x2D4 */
     u32 unk2D8;                     /* 0x2D8 */
-    s32 unk2DC;                     /* 0x2DC above 0: func_001BB2E8(3) runs every 90 frames, not every 30 */
+    s32 unk2DC;                     /* 0x2DC above 0: Player_TakeDamageNoRumble(3) runs every 90 frames, not every 30 */
     s32 unk2E0;                     /* 0x2E0 frames magic 0x3D to 0x3F last */
     s32 unk2E4;                     /* 0x2E4 above 0: unk2E8 counts (EntityAi_PickMeleeAttack) */
     f32 unk2E8;                     /* 0x2E8 enemies whose unk60 is below it attack from half as far */
     s32 unk2EC;                     /* 0x2EC frames magic 0x52 to 0x54 last */
     s32 unk2F0;                     /* 0x2F0 10, 20 or 30 for magic 0x52, 0x53, 0x54 */
-    char pad2F4[0x0C];              /* the block is 0x300 bytes (func_001B5810 clears and copies that many) */
+    char pad2F4[0x0C];              /* the block is 0x300 bytes (Player_ResetForNewGame clears and copies that many) */
 } PlayerState;
 
 /* weapon_trail_kinds[7]: colour and life of the weapon trail, one per kind (D_00447188) */
@@ -220,7 +220,7 @@ typedef struct {
 /* player_screen_tint (0x48 bytes): the colours laid over the screen for what happens to the player; each
    strength is the alpha Player_DrawScreenTints draws with */
 typedef struct {
-    s32 unk00;                      /* 0x00 set to 10 by func_001BB360 */
+    s32 unk00;                      /* 0x00 set to 10 by Player_FlashDamage */
     s32 unk04;                      /* 0x04 red (dark red while unk14 shows) */
     s32 unk08;                      /* 0x08 green, shown when kind is 0 */
     s32 unk0C;                      /* 0x0C dark yellow, shown when kind is 1 */
@@ -281,10 +281,10 @@ typedef struct {
 
 /* worn_defs[160]: param/item_pct.prm (Map_LoadParamFiles), a row per item from ITEM_WORN_FIRST, one per LevelRecord of worn_item_level_records */
 typedef struct {
-    s16 unk00[9];                   /* 0x00 the base of the nine values; LevelRecord.unk00 is added (func_001BB728) */
-    u16 unk12[6];                   /* 0x12 added to PlayerState.unkDC while the item is worn (func_001BB020) */
+    s16 unk00[9];                   /* 0x00 the base of the nine values; LevelRecord.unk00 is added (Player_AddWornItemValues) */
+    u16 unk12[6];                   /* 0x12 added to PlayerState.unkDC while the item is worn (Player_AddItemBonuses) */
     char pad1E[0x01];
-    u8 bonus_kinds[2];              /* 0x1F what wearing the item does, 0: nothing (the switch of func_001BB020) */
+    u8 bonus_kinds[2];              /* 0x1F what wearing the item does, 0: nothing (the switch of Player_AddItemBonuses) */
     u8 bonus_amounts[2];            /* 0x21 */
     char pad23[0x1C];
     u8 unk3F;                       /* 0x3F added to PlayerItemDef.unk7C for the shield in hand (Menu_UpdateEquip) */
@@ -292,7 +292,7 @@ typedef struct {
 
 /* worn_item_level_records[160]: what has been gained per item (0x22 bytes each) */
 typedef struct {
-    s16 unk00[9];                   /* 0x00 added to the PlayerItemDef's row (func_001BA310) */
+    s16 unk00[9];                   /* 0x00 added to the PlayerItemDef's row (Player_RecomputeStats) */
     u8 level;                       /* 0x12 */
     u8 exp;                         /* 0x13 */
     u8 unk14;                       /* 0x14 */
@@ -370,7 +370,7 @@ typedef struct {
 } PlayerArmFile;
 
 /* item_name_defs[ITEM_COUNT]: param/item_nam.prm, 0x40 bytes per item, starting with its name. D_00417EF8 is
-   the run of them from ITEM_WORN_FIRST on (the items func_001B4DF8 reads). */
+   the run of them from ITEM_WORN_FIRST on (the items Attack_WearWornItem reads). */
 typedef struct {
     char pad00[0x30];
     u32 file_number : 16;           /* 0x30 the number in its model file's name */

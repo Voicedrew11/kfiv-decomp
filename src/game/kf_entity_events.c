@@ -14,7 +14,7 @@ float atan2f(float, float);
 double atan2(double, double);
 char *func_0010CAB8(char *, u32);
 void Vector_Copy(void *, void *);
-int func_001B4F30(u16, void *, void *, void *, void *);
+int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 extern char *D_004467C0;
 extern PlayerState player_state;
 // match: Sound_PlayFalloff.c has not been given its real arguments yet
@@ -24,7 +24,7 @@ extern MapSlot map_slots[];
 extern int D_00446770;
 s32 MapItem_DropFromEnemy(Entity *);
 void Player_AddExperience(s32);
-void func_001035A8(u32, int);
+void Game_CountSpawnDeath(u32, int);
 int Script_Start(int, int);
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
@@ -157,7 +157,7 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame
                     angles[0] = approach_angle(angles[0], pitch, pitch_rate);
                     angles[1] = approach_angle(angles[1], yaw, yaw_rate);
                 }
-                func_001B4F30(record->unk10[i].unk00, shot, from, angles, entity);
+                Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, from, angles, entity);
             }
         }
     }
@@ -184,7 +184,7 @@ int EntityShot_Launch(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from
             shot->unk28 = entity->params->unk238;
             origin = func_0010CAB8((char *)entity->model, record->unk10[i].unk01);
             if (origin != NULL) {
-                func_001B4F30(record->unk10[i].unk00, shot, origin, direction, entity);
+                Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, origin, direction, entity);
             }
         }
     }
@@ -342,7 +342,7 @@ void EntityEvent_Respawn(Entity *entity) {
 }
 
 /* What every type does when its entity dies: drops its item and gold, gives the player its experience when
-   the player killed it (flag bits 38-39), passes the map tag and spawn index to func_001035A8, frees its
+   the player killed it (flag bits 38-39), passes the map tag and spawn index to Game_CountSpawnDeath, frees its
    effects and starts the spawn's script. */
 void EntityEvent_OnDeath(Entity *entity) {
     MapItem_DropFromEnemy(entity);
@@ -350,7 +350,7 @@ void EntityEvent_OnDeath(Entity *entity) {
     if ((s32)(entity->flags >> 38) & 3) {
         Player_AddExperience(entity->params->unk0E);
     }
-    func_001035A8(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+    Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
     Effect_FreeForOwner(entity);
     if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
         Script_Start(entity->spawn_info->unk36, 0);

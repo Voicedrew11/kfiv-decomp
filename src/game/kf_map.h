@@ -71,7 +71,7 @@ typedef struct {
     Vector4 colors[4];              /* 0x40 */
 } MapSlotUnk10Lights;
 
-/* map_draw_state as func_001012D8 reads it: the first word of MapDrawState.unk60 as a float */
+/* map_draw_state as GameLoop_SetCameraMatrices reads it: the first word of MapDrawState.unk60 as a float */
 typedef struct {
     char pad00[0x60];
     f32 mirror_height;              /* 0x60 the mirrored view is flipped about this height */
@@ -115,18 +115,18 @@ typedef struct {
 
 #define MAP_DRAW_FLAG_BITS(state) ((MapDrawFlagBits *)&(state)->unk60)
 
-/* map_draw_state as func_001005E8 reads it: MapDrawState.unk60 as bit-fields inside the block, so that
+/* map_draw_state as GameLoop_DrawFrame reads it: MapDrawState.unk60 as bit-fields inside the block, so that
    they are addressed from the block's start like the fields after them */
 typedef struct {
     char pad00[0x60];
     u64 pad60 : 32;
     u32 mode : 8;                   /* 0x64 how the frame is drawn: 0 plain, 1 and 2 with a second view first */
-    u32 bit40 : 1;                  /* set: func_00106FB8(unk88) is drawn */
-    u32 bit41 : 1;                  /* set: func_00106980 is drawn */
-    u32 bit42 : 1;                  /* set: func_00106C58 is drawn */
-    u32 bit43 : 1;                  /* set: func_00106DC8 is drawn */
-    u32 bit44 : 1;                  /* set: func_00106520 is drawn */
-    u32 bit45 : 1;                  /* set: func_00107528 is drawn (only on the main loop's call) */
+    u32 bit40 : 1;                  /* set: Game_BlendPreviousFrame(unk88) is drawn */
+    u32 bit41 : 1;                  /* set: Game_DrawDepthTestSprite is drawn */
+    u32 bit42 : 1;                  /* set: Game_BlendScreenOffsetDown is drawn */
+    u32 bit43 : 1;                  /* set: Game_BlendScreenOffsetUpDown is drawn */
+    u32 bit44 : 1;                  /* set: Game_DrawHazeLayers is drawn */
+    u32 bit45 : 1;                  /* set: Game_ShiftScreenByViewTurn is drawn (only on the main loop's call) */
     u32 pad46 : 18;
     s32 unk68;                      /* 0x68 */
     s32 unk6C;                      /* 0x6C a colour func_0010A4E8 covers the screen with */
@@ -378,7 +378,7 @@ typedef struct {
 typedef struct {
     ModelInstance *model;           /* 0x00 */
     u8 *unk04;                      /* 0x04 */
-    char *unk08;                    /* 0x08 TriggerSource; byte 0x3A is passed to func_00103BA8 */
+    char *unk08;                    /* 0x08 TriggerSource; byte 0x3A is passed to Game_AddTriggerItem */
     char pad0C[0x04];
     u8 unk10;                       /* 0x10 bit 0 picks the MapSlot */
     u8 type;                        /* 0x11 */
@@ -415,7 +415,7 @@ typedef struct {
     f32 unk10;                      /* 0x10 grows while it moves */
 } MapTriggerShotKind122BE8;
 
-/* trigger_items[5]: which item was placed on which trigger (func_00103BA8 records, func_00103AE0 looks up) */
+/* trigger_items[5]: which item was placed on which trigger (Game_AddTriggerItem records, Game_GetTriggerItem looks up) */
 typedef struct {
     u8 map_tag;                     /* 0x00 MapSlot.tag; 0x11-0x13 are stored as 0x11 */
     u8 trigger_id;                  /* 0x01 byte 0x3A of the trigger's source */

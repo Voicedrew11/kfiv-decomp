@@ -14,14 +14,14 @@ void func_001B0A58(void);
 void func_001B0A60(void);
 void func_001B0A68(void);
 void func_001B0A70(void);
-int func_001B0A78(void);
+int Debug_RunStartMenu(void);
 void func_001095D0(void);
 void func_001095D8(void);
 void func_001095E0(void);
 void func_001096E8(void);
 void func_00109800(void);
 void func_0010A4E8(int, int, int, int, int);
-void func_001B5460(void);
+void Input_Update(void);
 void Display_SwapBuffers(int);
 extern DebugStartMenuSpacer D_0043EF70;
 extern DebugStartMenuPrompt D_0043EF90;
@@ -34,7 +34,9 @@ extern char D_00446900[];
 extern char D_00446908[];
 extern char D_00446910[];
 
-void func_001B02D8(int *cursor, int count) {
+/* Wraps the cursor into 0..count-1 and writes ">>" for its line and "  " for the others into D_005742E0.
+   Nothing calls it. */
+void Debug_MarkCursorLine(int *cursor, int count) {
     int i;
 
     if (*cursor < 0) {
@@ -169,7 +171,8 @@ void Debug_EditFloat(f32 *value, f32 minimum, f32 maximum, f32 step) {
     }
 }
 
-f32 func_001B0950(f32 fparg0) {
+/* The absolute value of a float. */
+f32 Debug_AbsFloat(f32 fparg0) {
     if (fparg0 < 0.0f) {
         return -fparg0;
     }
@@ -177,7 +180,7 @@ f32 func_001B0950(f32 fparg0) {
 }
 
 /* Dot product of two 3D vectors. */
-float func_001B0970(void *left, void *right) {
+float Debug_DotProduct3(void *left, void *right) {
     f32 *left_xyz = left;
     f32 *right_xyz = right;
 
@@ -185,7 +188,7 @@ float func_001B0970(void *left, void *right) {
 }
 
 /* Wraps an angle in radians into [-pi, pi]. */
-float func_001B09A0(float angle) {
+float Debug_WrapAngle(float angle) {
     float wrapped;
 
     wrapped = angle - (float)(int)(angle / 6.2831855f) * 6.2831855f;
@@ -197,37 +200,42 @@ float func_001B09A0(float angle) {
     return wrapped;
 }
 
-/* Debug menu loop: runs the menu until it returns zero. */
-int func_001B0A00(void) {
+/* Runs the debug start menu until its first line (NEW GAME) is chosen; returns 0. The four calls around it are
+   empty. Nothing calls it. */
+int Debug_LoopUntilNewGame(void) {
     func_001B0A58();
     while (TRUE) {
         func_001B0A60();
         func_001B0A68();
-        if (func_001B0A78() == 0) {
+        if (Debug_RunStartMenu() == 0) {
             return 0;
         }
         func_001B0A70();
-        if (func_001B0A78() == 0) {
+        if (Debug_RunStartMenu() == 0) {
             return 0;
         }
     }
 }
 
+/* Empty. */
 void func_001B0A58(void) {
 }
 
+/* Empty. */
 void func_001B0A60(void) {
 }
 
+/* Empty. */
 void func_001B0A68(void) {
 }
 
+/* Empty. */
 void func_001B0A70(void) {
 }
 
 /* Debug start menu: waits on a PUSH START screen, then lets up and down pick one of four
-   lines. Returns the line chosen, or -1. */
-int func_001B0A78(void) {
+   lines (the first is NEW GAME). Returns the line chosen, or -1. */
+int Debug_RunStartMenu(void) {
     DebugStartMenuSpacer spacer = D_0043EF70;
     DebugStartMenuPrompt prompt = D_0043EF90;
     DebugStartMenuItems items = D_0043EFD8;
@@ -238,7 +246,7 @@ int func_001B0A78(void) {
 
     do {
         while (running) {
-            func_001B5460();
+            Input_Update();
             if (pad_state[1] & 8) {
                 break;
             }
@@ -256,7 +264,7 @@ int func_001B0A78(void) {
         }
         selected = 0;
         while (running) {
-            func_001B5460();
+            Input_Update();
             if (pad_state[1] & 0x10) {
                 selected = (selected + 3) % 4;
             } else if (pad_state[1] & 0x40) {
@@ -287,7 +295,7 @@ int func_001B0A78(void) {
 
 /* Debug map picker: left and right (or L2 and R2 held) step *map_id through 0..254 on a
    "MAP nnn" screen. Returns TRUE if the choice was confirmed, FALSE if cancelled. */
-int func_001B0E50(int *map_id) {
+int Debug_PickMap(int *map_id) {
     s64 saved_colours[4];
     int confirmed = FALSE;
     int map = *map_id;
@@ -355,12 +363,13 @@ int func_001B0E50(int *map_id) {
     return confirmed;
 }
 
+/* Empty. Nothing calls it. */
 void func_001B1028(void) {
 }
 
 /* Debug editor for a four-digit decimal number on an "INI:" screen: left and right move
    the cursor, up and down change the digit under it. Stores the number on confirm. */
-void func_001B1030(int *value) {
+void Debug_EditIniNumber(int *value) {
     s64 saved_colours[4];
     int digits[4];
     int cursor = 0;

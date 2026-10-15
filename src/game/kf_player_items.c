@@ -10,12 +10,12 @@
 int Script_IsRunning(int);
 int Script_Start(int, int);
 void Player_ApplyItem(int);
-void func_001BC968(int);
+void Player_ApplyPoisonWater(int);
 int MapChange_StartPassage(int);
 void MapViewer_OpenForItem(int);
-void func_001BA310(void);
-void func_001BB5E8(void);
-int func_001BC990(int);
+void Player_RecomputeStats(void);
+void Player_PickChargingMagic(void);
+int Player_LearnSpellInRow(int);
 
 extern u8 item_counts[];
 extern ItemCommonDef item_common_defs[];
@@ -82,8 +82,8 @@ void Player_AddItem(int index) {
     }
 }
 
-/* Takes one from the count at the index, if there is any. */
-void func_001BC2A0(u32 index) {
+/* Takes one of the item away, if the player has any. */
+void Player_RemoveOneItem(u32 index) {
     if (index < 0x17C && item_counts[index] != 0) {
         item_counts[index]--;
     }
@@ -187,7 +187,7 @@ void Player_UseItem(void) {
             default:
                 return;
             }
-            func_001BC968(item);
+            Player_ApplyPoisonWater(item);
             switch (def->use_mode) {
             case 0:
                 item_counts[item]--;
@@ -236,7 +236,7 @@ void Player_ApplyItem(int kind) {
         if (player_state.mp_base > 999) {
             player_state.mp_base = 999;
         }
-        func_001BA310();
+        Player_RecomputeStats();
         ItemEffect_Start(kind, 0);
         break;
     case ITEM_FIRE_CRYSTAL:
@@ -245,14 +245,14 @@ void Player_ApplyItem(int kind) {
     case ITEM_WATER_CRYSTAL:
     case ITEM_LIGHT_CRYSTAL:
     case ITEM_DARK_CRYSTAL:
-        marked = func_001BC990(kind - ITEM_FIRE_CRYSTAL);
+        marked = Player_LearnSpellInRow(kind - ITEM_FIRE_CRYSTAL);
         player_state.mp_base++;
         if (player_state.mp_base > 999) {
             player_state.mp_base = 999;
         }
-        func_001BA310();
+        Player_RecomputeStats();
         if (player_state.unk264 == 0) {
-            func_001BB5E8();
+            Player_PickChargingMagic();
         }
         ItemEffect_Start(kind, marked);
         break;
@@ -262,30 +262,30 @@ void Player_ApplyItem(int kind) {
     case ITEM_WATER_CRYSTAL_2:
     case ITEM_LIGHT_CRYSTAL_2:
     case ITEM_DARK_CRYSTAL_2:
-        marked = func_001BC990(kind - ITEM_FIRE_CRYSTAL_2);
+        marked = Player_LearnSpellInRow(kind - ITEM_FIRE_CRYSTAL_2);
         player_state.mp_base += 5;
         if (player_state.mp_base > 999) {
             player_state.mp_base = 999;
         }
-        func_001BA310();
+        Player_RecomputeStats();
         if (player_state.unk264 == 0) {
-            func_001BB5E8();
+            Player_PickChargingMagic();
         }
         ItemEffect_Start(kind, marked);
         break;
     }
 }
 
-/* Kind 0x12 starts the first timed flag: 1800 frames from now. */
-void func_001BC968(int kind) {
+/* Item 18 (Poison Water) poisons the player (timed_flags[0]) for 1800 frames. */
+void Player_ApplyPoisonWater(int kind) {
     if (kind == 0x12) {
         player_state.timed_flags[0] = 1800;
         player_state.unk2C4 = D_00446ED4;
     }
 }
 
-/* Marks the first free one of the row's five slots. FALSE if all are taken. */
-int func_001BC990(int row) {
+/* Learns the next magic of a spell row: the first of its five slots at level 0 goes to 1. FALSE if all are learned. */
+int Player_LearnSpellInRow(int row) {
     int i;
 
     for (i = 0; i < 5; i++) {

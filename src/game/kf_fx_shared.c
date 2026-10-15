@@ -18,7 +18,7 @@ static inline f32 wrap_angle(f32 angle) {
     }
     return angle;
 }
-int func_001B4F90(void *effect);
+int Attack_RunEffectHitCheck(void *effect);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, float *, float *);
@@ -36,7 +36,7 @@ void Vector_Add(void *, void *, void *);
 extern Entity *D_004467E0;
 int func_001B0040(Entity *entity);
 float func_001B0178(void *, void *);
-f32 func_001B0950(f32);
+f32 Debug_AbsFloat(f32);
 void Vector_Subtract(void *, void *, void *);
 
 int EffectKeys_ApplySpin(EffectActor *effect);
@@ -152,7 +152,7 @@ void EffectHit_CheckAndEnd(EffectActor *effect, void *state_arg) {
     if (*state == 1) {
         Effect_Free(effect);
         *state = 0;
-    } else if (effect->effect_param != 0xFFFF && effect->def->unk10B != 0xFF && func_001B4F90(effect) != 0) {
+    } else if (effect->effect_param != 0xFFFF && effect->def->unk10B != 0xFF && Attack_RunEffectHitCheck(effect) != 0) {
         if (effect->def->end_effect != 0xFFFF) {
             Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             *state = 1;
@@ -173,7 +173,7 @@ int EffectHit_CheckAndEndByFlag(EffectActor *effect, s8 *state) {
         return 0;
     }
     if (effect->effect_param != 0xFFFF && effect->def->unk10B != 0xFF) {
-        hit_flags = func_001B4F90(effect);
+        hit_flags = Attack_RunEffectHitCheck(effect);
         if (hit_flags & 2) {
             if (effect->def->unkF2 != 0) {
                 Effect_Spawn(effect->def->unkF2, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
@@ -206,7 +206,7 @@ void EffectHit_End(EffectActor *effect, s8 *state) {
 int EffectHit_Check(EffectActor *effect) {
     if (effect->effect_param != 0xFFFF) {
         if (effect->def->unk10B != 0xFF) {
-            if (func_001B4F90(effect) != 0) {
+            if (Attack_RunEffectHitCheck(effect) != 0) {
                 return 1;
             }
         }
@@ -364,8 +364,8 @@ int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *r
         EffectAngle_FromVector(&angles, &offset);
         angles.x = wrap_angle(angles.x - reference->x);
         angles.y = wrap_angle(angles.y - reference->y);
-        angles.x = func_001B0950(angles.x);
-        angles.y = func_001B0950(angles.y);
+        angles.x = Debug_AbsFloat(angles.x);
+        angles.y = Debug_AbsFloat(angles.y);
         if (effect->def->unkE4 <= angles.x) {
             continue;
         }

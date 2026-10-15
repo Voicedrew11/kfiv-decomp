@@ -4,7 +4,7 @@
 #include "kf_game.h"
 #include "kf_message.h"
 
-int func_00103AE0(int, int);
+int Game_GetTriggerItem(int, int);
 void MapObject_ShowMarkerStone(MapObject *, int);
 void MapObject_RebuildMatrices(char *);
 void Matrix_Multiply(void *, void *, void *);
@@ -15,12 +15,12 @@ void Vector_Subtract(void *, void *, void *);
 float sqrtf(float);
 void Vector_Scale(float *, float *, float);
 void Vector_Add(void *, void *, void *);
-int func_00103B38(int, int);
+int Game_ClearTriggerItem(int, int);
 void Player_AddItem(int);
 void MapObject_RebuildMarkerMatrices(char *);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
-int func_00103BA8(int, int, int);
+int Game_AddTriggerItem(int, int, int);
 extern MapSlot map_slots[];
 extern GameStatus game_status;
 extern void *D_00420D50[];
@@ -30,7 +30,7 @@ extern f32 D_00431AF0[16];
 extern ItemCommonDef item_common_defs[];
 
 /* Step 0 of the Guide Stone markers (kind 0x13); the stone sits on part 2. One that starts holding a stone
-   keeps it only while the map's flag block still records a stone for it (func_00103AE0), and its model shows
+   keeps it only while the map's flag block still records a stone for it (Game_GetTriggerItem), and its model shows
    that stone (MapObject_ShowMarkerStone). Empty: animation 4, step 1; holding a stone: animation 5, step 4. */
 void MapObject_StartMarker(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
@@ -40,7 +40,7 @@ void MapObject_StartMarker(MapObject *object) {
     work->fired = 0;
     item = 0;
     if (object->unk10 & 0x20000) {
-        item = func_00103AE0(map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->unk08->unk38.bytes[2]);
+        item = Game_GetTriggerItem(map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->unk08->unk38.bytes[2]);
         if (item <= 0) {
             object->unk10 &= ~0x20000;
         }
@@ -132,7 +132,7 @@ void MapObject_SettleMarkerStone(MapObject *object) {
 }
 
 /* Step 4 of a marker: used by the player, it takes the stone recorded for it out of the map's flag block
-   (func_00103AE0, func_00103B38), gives it to the player (Player_AddItem), runs the animation and goes to
+   (Game_GetTriggerItem, Game_ClearTriggerItem), gives it to the player (Player_AddItem), runs the animation and goes to
    step 5. */
 void MapObject_UpdateFilledMarker(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
@@ -146,8 +146,8 @@ void MapObject_UpdateFilledMarker(MapObject *object) {
     if (game_status.bit1 && D_00420D00.current == object) {
         MAP_OBJECT_BYTES(object)->step = 5;
         // match: two leftover arguments are passed
-        item = ((int (*)(int, int, void *, int))func_00103AE0)(tag, object->unk08->unk38.bytes[2], work, timer);
-        func_00103B38(tag, object->unk08->unk38.bytes[2]);
+        item = ((int (*)(int, int, void *, int))Game_GetTriggerItem)(tag, object->unk08->unk38.bytes[2], work, timer);
+        Game_ClearTriggerItem(tag, object->unk08->unk38.bytes[2]);
         MapObject_StepAnim(object);
         MapObject_RebuildMatrices((char *)object);
         Player_AddItem(item);
@@ -216,7 +216,7 @@ void MapObject_RebuildMarkerMatrices(char *object) {
 }
 
 /* Item hook of the markers: an empty marker (step 1) that has taken nothing yet takes a Guide Stone (item use
-   type 1), records it in the map's flag block (func_00103BA8) and shows it on its model; returns whether it
+   type 1), records it in the map's flag block (Game_AddTriggerItem) and shows it on its model; returns whether it
    took it. */
 int MapObject_PlaceStoneOnMarker(MapTrigger *trigger, int type_index) {
     u8 type;
@@ -228,7 +228,7 @@ int MapObject_PlaceStoneOnMarker(MapTrigger *trigger, int type_index) {
     slot = &map_slots[trigger->unk10 & 1];
     tag = slot->tag;
     if (trigger->type == 1 && shot->fired == 0 && type == trigger->type &&
-        func_00103BA8(tag, (u8)trigger->unk08[0x3A], type_index)) {
+        Game_AddTriggerItem(tag, (u8)trigger->unk08[0x3A], type_index)) {
         MapObject_ShowMarkerStone((MapObject *)trigger, type_index);
         shot->fired = type;
         return TRUE;

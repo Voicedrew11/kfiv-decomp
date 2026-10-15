@@ -1,10 +1,10 @@
-/* What a save file holds: every block func_00103C18 writes and func_00104EC8 reads back. */
+/* What a save file holds: every block Game_WriteSaveImage writes and Game_ReadSaveImage reads back. */
 #include "kf_game.h"
 #include "kf_map.h"
 #include "kf_entity.h"
 #include "kf_player.h"
 
-/* 0x349680 the options; func_00102930 sets their defaults, the code names single bytes of them */
+/* 0x349680 the options; Game_SetDefaultOptions sets their defaults, the code names single bytes of them */
 u8 game_options[0x10] = { 0 };
 asm(".globl music_volume\nmusic_volume = game_options + 1\n"
     ".globl sfx_volume\nsfx_volume = game_options + 2\n"
@@ -46,7 +46,7 @@ u8 recollection_pages[50] = { 0 };
 u8 D_0034C518[0x400] = { 0 };
 asm(".globl map_record_height\nmap_record_height = D_0034C518 + 0xC\n");
 
-/* 0x34C918 a bit per map tag: the maps visited (func_001034A8, func_001034F8) */
+/* 0x34C918 a bit per map tag: the maps visited (Game_IsMapVisited, Game_MarkMapVisited) */
 u8 map_visited_flags[0x10] = { 0 };
 
 /* 0x34C928 four flag bits per nibble, 0x100 bytes per map */

@@ -30,7 +30,7 @@ void Vector_Copy(void *, void *);
 void Vector_Add(void *, void *, void *);
 void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(void *, void *, float);
-int func_001B4F30(u16, void *, void *, void *, void *);
+int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void Player_CountMagicUse(int);
 int Angle_Approach(float *, float, float);
 int Sound_PlayFootstep(int);
@@ -115,7 +115,7 @@ int Player_CastMagic(int magic_id) {
         } else if (angles.x < -1.012291f) {
             angles.x = -1.012291f;
         }
-        func_001B4F30(magic_id, shot, &player_state, &player_state.rotation, &player_state); // match: the player's rotation is passed; the clamped angles above are never used
+        Attack_LaunchMagicEffect(magic_id, shot, &player_state, &player_state.rotation, &player_state); // match: the player's rotation is passed; the clamped angles above are never used
         player_state.unk259 = 1;
     } else {
         if (stats->unk00[0] != 0) {
@@ -407,7 +407,7 @@ void Player_HoldMagic(int magic_id) {
                 angles.x = -1.012291f;
             }
             // match: the clamped angles are not what is passed
-            func_001B4F30(magic_id, D_00446964, &player_state, &player_state.rotation, &player_state);
+            Attack_LaunchMagicEffect(magic_id, D_00446964, &player_state, &player_state.rotation, &player_state);
             player_state.unk259 = 1;
         }
     }

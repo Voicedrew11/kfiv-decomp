@@ -86,7 +86,7 @@ float func_001B01B0(float *origin, float *target) {
     return out.x;
 }
 
-/* the inline twin of func_001B0950 */
+/* the inline twin of Debug_AbsFloat */
 static inline f32 absolute_value(f32 value) {
     if (value < 0.0f) {
         return -value;

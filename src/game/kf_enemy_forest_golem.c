@@ -21,7 +21,7 @@ extern int D_00446770;
 extern EntityFrameTable D_0043EAD8;
 int Motion_Start(void *, int, int, u32, int);
 int Script_Start(int, int);
-void func_001B57A0(u8, u8, u8);
+void Input_StartRumble(u8, u8, u8);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 extern u32 D_00446ED4;
@@ -175,7 +175,7 @@ static void ForestGolem_Think(Entity *entity, s32 unknown) {
 /* An action (busy bit 0x2000) that ForestGolem_Think starts: plays animation 17 to its end. Past
    frame EntityParams.unk434, on the map D_00446770, it starts script EntityParams.unk436
    (Script_Start); after that, on the four frames of D_0043EAD8 and on frame 440, it asks for a
-   controller rumble (func_001B57A0) with a strength that falls off with the player's distance up to
+   controller rumble (Input_StartRumble) with a strength that falls off with the player's distance up to
    3000. At the end it keeps the model's position in work floats unk48 to unk50, puts
    ForestGolem_ThinkStayInPlace in the think slot and calls it. */
 static void ForestGolem_StartScriptAndRumble(Entity *entity) {
@@ -207,13 +207,13 @@ static void ForestGolem_StartScriptAndRumble(Entity *entity) {
         for (i = 0; i < 4; i++) {
             if (entity->model->unkFC->unk82 == shake_frames.frames[i]) {
                 if (entity->distance_to_player < 3000.0f) {
-                    func_001B57A0((3000.0f - entity->distance_to_player) * 64.0f / 3000.0f, 5, 0);
+                    Input_StartRumble((3000.0f - entity->distance_to_player) * 64.0f / 3000.0f, 5, 0);
                 }
             }
         }
         if (entity->model->unkFC->unk82 == 0x1B8) {
             if (entity->distance_to_player < 3000.0f) {
-                func_001B57A0((3000.0f - entity->distance_to_player) * 32.0f / 3000.0f, 0x3C, 0);
+                Input_StartRumble((3000.0f - entity->distance_to_player) * 32.0f / 3000.0f, 0x3C, 0);
             }
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {

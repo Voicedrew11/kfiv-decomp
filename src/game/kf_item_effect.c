@@ -67,7 +67,7 @@ static int item_effect_load_pad;            /* 0x4473A0 cleared in ItemEffect_Lo
 static ItemUseEffectDef *item_effect_def;   /* 0x4473A4 D_0042BBE0[kind] */
 static int item_effect_brightness;          /* 0x4473A8 model colour alpha while fading */
 static int item_effect_pending_effects;     /* 0x4473AC set until motion reaches def->unk08 */
-static int item_effect_marked;              /* 0x4473B0 spell slot marked by func_001BC990 */
+static int item_effect_marked;              /* 0x4473B0 spell slot marked by Player_LearnSpellInRow */
 
 static char *item_effect_textures[7];       /* 0x5F9B40 loaded i0040..i0046.tx2 */
 
@@ -192,7 +192,7 @@ void ItemEffect_Load(void) {
 }
 
 /* Clears the item use effect state. */
-int ItemEffect_Reset(void) { // match: func_001000C8 only matches with it declared to return a value
+int ItemEffect_Reset(void) { // match: GameLoop_ResetSystems only matches with it declared to return a value
     item_effect_active = 0;
     item_effect_kind = 0;
     item_effect_step = 0;

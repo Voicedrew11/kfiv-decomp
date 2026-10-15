@@ -28,7 +28,7 @@ void func_0010B238(TextureTableHeader *);
 void func_00109E88(void);
 u32 *func_00109990(int);
 void func_00109650(u32 *, u32 *);
-int func_001D0758(int, u8 *);
+int Message_SplitDigits(int, u8 *);
 void *memset(void *, int, u32);
 int vsprintf(char *, const char *, char *);
 
@@ -442,7 +442,7 @@ static int Message_Format(u16 *format, u16 *out, va_list args) {
     while (*format != 0xFFFF) {
         if (*format & (GLYPH_NUMBER | GLYPH_RAW_NUMBER)) {
             width = (*format & 0xF00) >> 8;
-            digit_count = func_001D0758(va_arg(args, int), digits);
+            digit_count = Message_SplitDigits(va_arg(args, int), digits);
             if (*format & GLYPH_NUMBER) {
                 if (digit_count < width) {
                     for (i = 0; i < width - digit_count; i++) {
@@ -666,7 +666,7 @@ static s16 *Message_LayoutPage(s16 *text, s32 font) {
 }
 
 /* The decimal digits of `value` into `digits`, least significant first; gives how many. */
-int func_001D0758(int value, u8 *digits) {
+int Message_SplitDigits(int value, u8 *digits) {
     int n;
     int i;
 

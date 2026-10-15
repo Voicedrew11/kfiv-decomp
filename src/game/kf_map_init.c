@@ -20,7 +20,7 @@ void MapItem_InitMap(int);
 void func_00123158(int);
 void MapItem_RollFixedItems(int);
 void MapSetup_RunForMap(int);
-void func_001034F8(int);
+void Game_MarkMapVisited(int);
 void Script_Init(int);
 int Script_Start(int, int);
 extern char map_object_defs[];
@@ -166,7 +166,7 @@ void Map_LoadAtOnce(int map) {
     MapItem_RollFixedItems(0);
     Entity_ClearFlag10InSlot(0);
     MapSetup_RunForMap(0);
-    func_001034F8(map_slots[0].tag);
+    Game_MarkMapVisited(map_slots[0].tag);
     Script_Init(map_slots[0].unk5C);
     Script_Start(0x7FFF, 0);
     sound_load_queue.unk00 = ((MapSlotUnk08 *)map_slots[0].header)->unk70;

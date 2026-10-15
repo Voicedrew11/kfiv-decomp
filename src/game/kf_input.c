@@ -2,9 +2,9 @@
 #include "kf_game.h"
 
 void *memset(void *, int, u32);
-void func_001B5590(int);
-void func_001B57A0(u8, u8, u8);
-void func_001B5460(void);
+void Input_ReadPort(int);
+void Input_StartRumble(u8, u8, u8);
+void Input_Update(void);
 
 extern PadState pad_state;
 extern PadState pad_states[2];
@@ -30,7 +30,8 @@ extern u8 D_0044694C;
 extern u8 D_0044694D;
 extern u8 D_0044694E;
 
-void func_001B5390(void) {
+/* Opens controller port 0 and clears both pad states. */
+void Input_Init(void) {
     Pad_Init(0);
     Pad_OpenPort(0, 0);
     Pad_Update();
@@ -38,8 +39,8 @@ void func_001B5390(void) {
     memset(pad_states, 0, 0x20);
 }
 
-/* Store a fixed set of 14 bit-mask constants into consecutive globals. */
-void func_001B53E8(void) {
+/* Gives every control its default button (the pad masks D_0044692C to D_00446946). */
+void Input_SetDefaultControls(void) {
     D_0044692C = 0x10;
     D_0044692E = 0x40;
     D_00446930 = 0x20;
@@ -56,8 +57,8 @@ void func_001B53E8(void) {
     D_00446946 = 8;
 }
 
-/* Once a frame: reads the controller and runs the rumble that func_001B57A0 asked for. */
-void func_001B5460(void) {
+/* Once a frame: reads the controller and runs the rumble that Input_StartRumble asked for. */
+void Input_Update(void) {
     int type = Pad_GetMode(0, 0);
     int scaled;
 
@@ -65,7 +66,7 @@ void func_001B5460(void) {
         Pad_RequestAnalog(0, 0, 3);
     }
     Pad_Update();
-    func_001B5590(0);
+    Input_ReadPort(0);
     pad_state = pad_states[0];
     if (sfx_volume[4] != 0) {
         if (D_00446949 != 0 && D_0044694E == 0) {
@@ -93,7 +94,7 @@ void func_001B5460(void) {
 
 /* Reads the controller in a port into its PadState; the sticks count as direction buttons unless
    the matching buttons are held. */
-void func_001B5590(int port) {
+void Input_ReadPort(int port) {
     PadState *pad = &pad_states[port];
     PadReport *report;
 
@@ -152,13 +153,15 @@ void func_001B5590(int port) {
     }
 }
 
-void func_001B5778(void) {
-    func_001B57A0(0, 0, 0);
-    func_001B5460();
+/* Stops the rumble at once: an empty request, then a controller update. */
+void Input_StopRumble(void) {
+    Input_StartRumble(0, 0, 0);
+    Input_Update();
 }
 
-/* Requests a controller rumble (only when the option at sfx_volume[4] is on). */
-void func_001B57A0(u8 strength, u8 duration, u8 delay) {
+/* Requests a controller rumble of strength for duration frames (only when the option at sfx_volume[4] is on);
+   a nonzero last argument makes it fade out over the frames. */
+void Input_StartRumble(u8 strength, u8 duration, u8 delay) {
     if (sfx_volume[4] != 0) {
         D_0044694A = strength;
         D_00446949 = 1;
@@ -167,16 +170,19 @@ void func_001B57A0(u8 strength, u8 duration, u8 delay) {
     }
 }
 
-void func_001B57D8(void) {
+/* Holds the rumble (the game is paused): the motor stops and the request waits. */
+void Input_PauseRumble(void) {
     if (D_0044694E == 0) {
         D_0044694E = 1;
         Pad_SetRumble(0, 0, 0);
     }
 }
 
-void func_001B5800(void) {
+/* Lets a held rumble go on. */
+void Input_ResumeRumble(void) {
     D_0044694E = 0;
 }
 
+/* Empty. */
 void func_001B5808(void) {
 }

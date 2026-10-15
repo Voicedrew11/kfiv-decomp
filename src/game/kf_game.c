@@ -11,7 +11,7 @@
 #include "kf_menu_screens.h"
 #include "kf_message.h"
 
-extern u8 game_options[0x10];             /* the options (func_00102930 sets their defaults) */
+extern u8 game_options[0x10];             /* the options (Game_SetDefaultOptions sets their defaults) */
 extern u8 map_script_flags[0x2000];
 extern u8 D_0034B690[0x40];
 extern u8 entity_group_state[0xC80];
@@ -72,7 +72,7 @@ extern char D_0043E470[];
 extern ScreenRect D_0043E480;
 extern ScreenRect D_0043E490;
 extern int D_0044673C;
-extern int D_00446740;                  /* nonzero: func_00108020 lays its grid out afresh */
+extern int D_00446740;                  /* nonzero: Game_DrawWobblingScreen lays its grid out afresh */
 extern u32 D_00446744;                  /* the number of haze layers */
 extern u32 D_00446ED4;
 extern int D_00446F78;
@@ -102,11 +102,11 @@ void func_00109AD0(void);
 void func_00109E18(void);
 void func_00109E88(void);
 void func_0010A100(void *);
-static int func_001036F8(int map, int entry, int bit);
-static void func_00103778(int map, int entry, int bit, int value);
+static int Game_GetObjectBit(int map, int entry, int bit);
+static void Game_SetObjectBit(int map, int entry, int bit, int value);
 
 /* sets the options to their defaults */
-void func_00102930(void) {
+void Game_SetDefaultOptions(void) {
     memset(game_options, 0, sizeof(game_options));
     game_options[0] = 1;
     game_options[1] = 0x40;
@@ -122,7 +122,7 @@ void func_00102930(void) {
 }
 
 /* clears the state a new game starts from */
-void func_001029A8(void) {
+void Game_ResetProgress(void) {
     int i;
 
     memset(map_script_flags, 0, sizeof(map_script_flags));
@@ -166,7 +166,7 @@ void func_001029A8(void) {
 }
 
 /* marks what the player has equipped as found and tidies the spell tables */
-void func_001030B8(void) {
+void Game_NormalizeStartState(void) {
     int i;
     int j;
     int level;
@@ -265,21 +265,23 @@ void func_001030B8(void) {
 }
 
 /* one of the 128 flags in map_visited_flags */
-int func_001034A8(int flag) {
+int Game_IsMapVisited(int flag) {
     if ((u32)flag < 0x80U) {
         return map_visited_flags[flag / 8] >> (flag % 8) & 1;
     }
     return 0;
 }
 
-void func_001034F8(int flag) {
+/* marks map tag `flag` as visited (one of the 128 flags in map_visited_flags) */
+void Game_MarkMapVisited(int flag) {
     if ((u32)flag < 0x80U) {
         map_visited_flags[flag / 8] |= 1 << (flag % 8);
     }
 }
 
-/* the 4-bit counter of an entry on a map */
-int func_00103548(int map, int entry) {
+/* how many times the entity of spawn record `entry` of a map has died: a 4-bit counter (EntityAi_ShouldRespawn
+   compares it with the spawn's limit) */
+int Game_GetSpawnDeathCount(int map, int entry) {
     int count;
 
     if ((u32)map < 0x80U && entry >= 0 && entry < 0x80) {
@@ -294,8 +296,8 @@ int func_00103548(int map, int entry) {
     return 0;
 }
 
-/* adds one to the 4-bit counter of an entry on a map */
-void func_001035A8(u32 map, int entry) {
+/* counts a death of the entity of spawn record `entry` of a map (EntityEvent_OnDeath); a nibble at 15 is not held */
+void Game_CountSpawnDeath(u32 map, int entry) {
     u32 shifted;
     u32 old_byte;
     u32 low_nibble;
@@ -320,37 +322,45 @@ void func_001035A8(u32 map, int entry) {
     }
 }
 
-void func_00103648(int map, int entry, u32 bit, int value) {
+/* map_entry_flags keeps four bits for each map object: 0 and 1 (MapObject bits 18 and 19), 2 whether the object
+   is active (bit 16, MapObject_Activate) and 3 its state (bit 17: a chest opened, a mechanism switched on).
+   Sets flag 0 or 1 of a map object; other bits are ignored. */
+void Game_SetObjectFlag(int map, int entry, u32 bit, int value) {
     if (bit < 2) {
-        func_00103778(map, entry, bit, value);
+        Game_SetObjectBit(map, entry, bit, value);
     }
 }
 
-int func_00103668(int map, int entry, u32 bit) {
+/* flag 0 or 1 of a map object; 0 for other bits */
+int Game_GetObjectFlag(int map, int entry, u32 bit) {
     if (bit < 2) {
-        return func_001036F8(map, entry, bit);
+        return Game_GetObjectBit(map, entry, bit);
     }
     return 0;
 }
 
-int func_00103698(int map, int entry) {
-    return func_001036F8(map, entry, 2);
+/* whether a map object was active when its map was left (flag bit 2) */
+int Game_GetObjectActive(int map, int entry) {
+    return Game_GetObjectBit(map, entry, 2);
 }
 
-void func_001036B8(int map, int entry, int value) {
-    func_00103778(map, entry, 2, value);
+/* stores whether a map object is active (flag bit 2) */
+void Game_SetObjectActive(int map, int entry, int value) {
+    Game_SetObjectBit(map, entry, 2, value);
 }
 
-int func_001036C8(int map, int entry) {
-    return func_001036F8(map, entry, 3);
+/* the state of a map object (flag bit 3: opened, switched on) */
+int Game_GetObjectState(int map, int entry) {
+    return Game_GetObjectBit(map, entry, 3);
 }
 
-void func_001036E8(int map, int entry, int value) {
-    func_00103778(map, entry, 3, value);
+/* stores the state of a map object (flag bit 3) */
+void Game_SetObjectState(int map, int entry, int value) {
+    Game_SetObjectBit(map, entry, 3, value);
 }
 
-/* one of the four flag bits of an entry on a map */
-static int func_001036F8(int map, int entry, int bit) {
+/* one of the four flag bits of a map object; 0 when an index is out of range */
+static int Game_GetObjectBit(int map, int entry, int bit) {
     u32 mask = 1;
 
     if ((u32)map >= 0x80) {
@@ -367,7 +377,8 @@ static int func_001036F8(int map, int entry, int bit) {
     return (map_entry_flags[entry / 2 + map * 0x100] & mask) != 0;
 }
 
-static void func_00103778(int map, int entry, int bit, int value) {
+/* sets or clears one of the four flag bits of a map object */
+static void Game_SetObjectBit(int map, int entry, int bit, int value) {
     if ((u32)map < 0x80 && (u32)entry < 0x200 && (u32)bit < 4) {
         u8 mask = (u8)(1 << bit);
         u8 *flag_byte;
@@ -437,8 +448,8 @@ void Game_MoveRecollectionPage(u32 source_page, u32 dest_page) {
     }
 }
 
-/* finds where an item was placed; returns whether it was */
-int func_00103A18(int item, int *map_tag, int *trigger_id) {
+/* finds the trigger an item was placed on (its map tag and trigger id); returns whether it was */
+int Game_FindTriggerOfItem(int item, int *map_tag, int *trigger_id) {
     TriggerItemRecord *record;
     int i;
 
@@ -473,7 +484,7 @@ int func_00103A18(int item, int *map_tag, int *trigger_id) {
 }
 
 /* the item recorded for a trigger, 0 if there is none */
-int func_00103AE0(int map_tag, int trigger_id) {
+int Game_GetTriggerItem(int map_tag, int trigger_id) {
     TriggerItemRecord *record;
     int i;
 
@@ -490,7 +501,7 @@ int func_00103AE0(int map_tag, int trigger_id) {
 }
 
 /* frees the record of a trigger; returns whether there was one */
-int func_00103B38(int map_tag, int trigger_id) {
+int Game_ClearTriggerItem(int map_tag, int trigger_id) {
     TriggerItemRecord *record;
     int i;
 
@@ -508,7 +519,7 @@ int func_00103B38(int map_tag, int trigger_id) {
 }
 
 /* records an item for a trigger in the first free record; returns whether there was room */
-int func_00103BA8(int map_tag, int trigger_id, int item) {
+int Game_AddTriggerItem(int map_tag, int trigger_id, int item) {
     TriggerItemRecord *record;
     int i;
 
@@ -530,7 +541,7 @@ int func_00103BA8(int map_tag, int trigger_id, int item) {
 }
 
 /* writes the game into the save image, then the checksum table */
-void func_00103C18(void) {
+void Game_WriteSaveImage(void) {
     u8 *save_cursor;
     u8 bit_byte;
     int map_tag;
@@ -664,7 +675,7 @@ void func_00103C18(void) {
 }
 
 /* reads the game back from the save image */
-void func_00104EC8(void) {
+void Game_ReadSaveImage(void) {
     u8 *save_cursor;
     int magic;
     int stored_size;
@@ -772,7 +783,7 @@ void func_00104EC8(void) {
 }
 
 /* checks the save image: the magic word and a byte sum per 128-byte block */
-int func_001060C0(void) {
+int Game_CheckSaveImage(void) {
     UnalignedInt header[2];
     int block_count;
     int i;
@@ -809,7 +820,7 @@ int func_001060C0(void) {
 }
 
 /* starts a fade from a colour to the picture over some frames */
-void func_00106178(int red, int green, int blue, int frames) {
+void Game_StartFadeIn(int red, int green, int blue, int frames) {
     int *color = fade_color;
 
     D_00447000[3] = 1;
@@ -821,7 +832,7 @@ void func_00106178(int red, int green, int blue, int frames) {
 }
 
 /* starts a fade from the picture to a colour over some frames */
-void func_001061B0(int red, int green, int blue, int frames) {
+void Game_StartFadeOut(int red, int green, int blue, int frames) {
     int *color = fade_color;
 
     color[0] = red;
@@ -833,14 +844,14 @@ void func_001061B0(int red, int green, int blue, int frames) {
 }
 
 /* counts the fade down a frame */
-void func_001061E8(void) {
+void Game_StepFade(void) {
     if (D_00447000[3] != 0 && D_00447010 > 0) {
         D_00447010--;
     }
 }
 
 /* draws the fade */
-void func_00106208(void) {
+void Game_DrawFade(void) {
     char unused_stack[0x40]; // match: retail reserves the 0x40 bytes
     int alpha;
 
@@ -869,7 +880,7 @@ void func_00106208(void) {
 }
 
 /* loads the screen matrix and projects the haze layer distances haze_layer_distances to screen depths */
-void func_00106318(void) {
+void Game_ProjectHazeLayers(void) {
     sceVu0FMATRIX screen_matrix;
     sceVu0FMATRIX work_matrix;
     sceVu0FMATRIX view_matrix;
@@ -902,8 +913,8 @@ void func_00106318(void) {
     }
 }
 
-/* draws the D_00446744 small sprites whose screen depths are in haze_layer_depths */
-void func_00106520(void) {
+/* draws the D_00446744 haze layers: a full-screen sprite at each depth in haze_layer_depths */
+void Game_DrawHazeLayers(void) {
     GsColor color = D_0043E450;
     int texture_base;
     int texture_height_log2;
@@ -981,8 +992,9 @@ void func_00106520(void) {
     func_00109AD0();
 }
 
-/* draws the D_00446744 sprites in a strip, each at a column offset from the table D_0043E460 */
-void func_001067E0(void) {
+/* Game_DrawHazeLayers with each layer moved sideways by an offset from D_0043E460 that cycles with the frame count.
+   Nothing calls it. */
+void Game_DrawHazeLayersShifted(void) {
     LayerOffsets offset_table = D_0043E460;
     GsSpritePacket sprite;
     int texture_base;
@@ -1036,8 +1048,9 @@ void func_001067E0(void) {
     func_00109AD0();
 }
 
-/* draws one sprite at the depth in D_0044673C; the pad's up and down buttons step that depth */
-void func_00106980(void) {
+/* debug: draws one haze sprite at the depth in D_0044673C; two buttons of pad 1 (0x400, 0x100) step that depth and print it
+   ("z_value[%u]") */
+void Game_DrawDepthTestSprite(void) {
     u32 *cursor;
     int texture_height_log2;
     u32 *packet_start;
@@ -1123,8 +1136,8 @@ void func_00106980(void) {
     func_00109AD0();
 }
 
-/* draws a column of 10 gradient sprites, with the Z buffer off for the run */
-void func_00106C58(void) {
+/* blends the picture over itself one pixel lower at half strength, in ten 64-pixel strips (Z writes off) */
+void Game_BlendScreenOffsetDown(void) {
     GsSpritePacket sprite;
     int texture_base;
     int remaining;
@@ -1175,8 +1188,8 @@ void func_00106C58(void) {
     func_00109AD0();
 }
 
-/* draws two columns of 10 gradient sprites each, with the Z buffer off for the run */
-void func_00106DC8(void) {
+/* blends the picture over itself one pixel lower, then again one pixel higher, at half strength (Z writes off) */
+void Game_BlendScreenOffsetUpDown(void) {
     GsSpritePacket sprite;
     int texture_base;
     int remaining;
@@ -1247,8 +1260,8 @@ void func_00106DC8(void) {
     func_00109AD0();
 }
 
-/* draws one sprite from the screen rectangle D_0043E480 at the given alpha */
-void func_00106FB8(int alpha) {
+/* blends the other frame buffer (the frame shown before) over the whole screen at the given alpha */
+void Game_BlendPreviousFrame(int alpha) {
     ScreenRect screen_rect = D_0043E480;
     ScreenRect texel_rect = D_0043E480;
     int vertex_color[4] = { 0x80, 0x80, 0x80, alpha };
@@ -1321,8 +1334,9 @@ void func_00106FB8(int alpha) {
     func_00109650(packet_start, cursor);
 }
 
-/* draws one sprite from the screen rectangle D_0043E480, textured from D_0043E490, at the given alpha */
-void func_00107270(int alpha) {
+/* blends the other frame buffer over the whole screen at the given alpha, its texels taken from the slightly
+   smaller rectangle D_0043E490, so a little enlarged. Nothing calls it. */
+void Game_BlendPreviousFrameZoomed(int alpha) {
     ScreenRect screen_rect = D_0043E480;
     ScreenRect texel_rect = D_0043E490;
     int vertex_color[4] = { 0x80, 0x80, 0x80, alpha };
@@ -1395,8 +1409,10 @@ void func_00107270(int alpha) {
     func_00109650(packet_start, cursor);
 }
 
-/* draws the sight marker: a 20-strip sprite whose position follows the projected target */
-void func_00107528(void) {
+/* projects the point 1000 ahead along last frame's view (D_00420D00 unk20/unk30) to find how far the view
+   turned, and draws the picture again moved by that much (at most 8 pixels; not up or down while unk40 is under
+   125) over every other line, in 20 strips */
+void Game_ShiftScreenByViewTurn(void) {
     float view_matrix[16];
     float scaled_vector[4];
     int screen_xy[2];
@@ -1508,8 +1524,9 @@ void func_00107528(void) {
     func_00109AD0();
 }
 
-/* draws the target marker for the nearest entity in front of the camera, if any */
-void func_00107840(void) {
+/* Game_ShiftScreenByViewTurn measured at the nearest entity within 30 degrees ahead (or D_00420D00.unk48 away, at most
+   1000) instead of 1000 ahead. Nothing calls it. */
+void Game_ShiftScreenByFocusTurn(void) {
     sceVu0FMATRIX view_matrix;
     sceVu0FVECTOR offset_to_entity;
     sceVu0FVECTOR scratch_vector;
@@ -1619,8 +1636,9 @@ void func_00107840(void) {
     func_00109AD0();
 }
 
-/* draws a column of 10 grey sprites at the given brightness, scrolling across the screen */
-void func_00107CD8(int brightness) {
+/* draws the picture over itself in ten strips, its colour multiplied by brightness / 128: the brightness option
+   (game_options[10]) */
+void Game_ApplyBrightness(int brightness) {
     char unused_stack[0x60]; // match: retail reserves the 0x60 bytes
     GsSpritePacket sprite;
     int texture_base;
@@ -1671,8 +1689,8 @@ void func_00107CD8(int brightness) {
     func_00109E88();
 }
 
-/* draws a column of 10 sprites in the given colour, scrolling across the screen */
-void func_00107E70(int red, int green, int blue) {
+/* draws the picture over itself in ten strips, its colour multiplied by red, green and blue / 128 (under water) */
+void Game_TintScreen(int red, int green, int blue) {
     char unused_stack[0x60]; // match: retail reserves the 0x60 bytes
     GsSpritePacket sprite_packet;
     int texture_base;
@@ -1726,8 +1744,9 @@ void func_00107E70(int red, int green, int blue) {
     func_00109E88();
 }
 
-/* steps the wobbling grid (laid out afresh when D_00446740 is set) and draws its cells, blended by blend */
-void func_00108020(int red, int green, int blue, int alpha, float blend) {
+/* steps the wobbling grid (laid out afresh when D_00446740 is set) and draws the grabbed picture through its
+   cells in the colour given, the wobble scaled by blend: under water and while MP is drained */
+void Game_DrawWobblingScreen(int red, int green, int blue, int alpha, float blend) {
     char unused_stack[0x40]; // match: retail reserves the 0x40 bytes
     int j, i, k, corner_col;
     int origin_x, origin_y, target_x;

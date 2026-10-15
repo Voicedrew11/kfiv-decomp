@@ -10,8 +10,8 @@
 #include "kf_map_scroll.h"
 
 extern void (*map_load_steps[])(void);
-void func_00101618(void);
-int func_001005E8(int);
+void GameLoop_RunSoundLoads(void);
+int GameLoop_DrawFrame(int);
 int func_00102230(void);
 void func_00102228(void);
 void func_001095E0(void);
@@ -21,7 +21,7 @@ void func_0010B000(void);
 void MapLoad_FinishAndEnter(void);
 void func_00123288(void);
 void Sound_Update(void);
-void func_001B5778(void);
+void Input_StopRumble(void);
 void Display_SwapBuffers(int);
 void Map_MakeCurrent(int);
 void Map_UnlinkSlotRecords(int);
@@ -37,7 +37,7 @@ void Map_PlaceRecordModels(int);
 void func_001A15F0(void);
 void MapItem_InitMap(int);
 void MapItem_MoveMap(int, f32 *);
-void func_001034F8(int);
+void Game_MarkMapVisited(int);
 void MapLoad_Release(void);
 void MapSetup_RunForMap(int);
 void func_00123158(int);
@@ -119,9 +119,9 @@ void MapLoad_Update(void) {
     if (!((s32)(map_load_state.flags.raw >> 1) & 1)) {
         if (record != NULL && record->unk39 != 0) {
             if ((u32)(map_load_state.step - 1) < 5) {
-                func_001B5778();
+                Input_StopRumble();
                 while (map_load_state.step != 5) {
-                    func_001005E8(0);
+                    GameLoop_DrawFrame(0);
                     func_00109800();
                     Display_SwapBuffers(0);
                     func_001096E8();
@@ -129,7 +129,7 @@ void MapLoad_Update(void) {
                     func_0010B000();
                     map_load_steps[map_load_state.step]();
                     func_00123288();
-                    func_00101618();
+                    GameLoop_RunSoundLoads();
                     Sound_Update();
                 }
                 map_load_state.step = 6;
@@ -143,7 +143,7 @@ void MapLoad_Update(void) {
    and frees the old map. */
 void MapLoad_FinishAndEnter(void) {
     while (map_load_state.step != 5) {
-        func_001005E8(0);
+        GameLoop_DrawFrame(0);
         func_00109800();
         Display_SwapBuffers(0);
         func_001096E8();
@@ -334,7 +334,7 @@ void MapLoad_ActivateMap(void) {
     Entity_ClearFlag10InSlot(other_slot);
     MapScroll_CarryPairs(D_00446770, other_slot);
     MapSetup_RunForMap(other_slot);
-    func_001034F8(slot->tag);
+    Game_MarkMapVisited(slot->tag);
     map_load_state.position.x = map_load_state.request->x;
     map_load_state.position.y = map_load_state.request->y;
     map_load_state.position.z = map_load_state.request->z;

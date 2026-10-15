@@ -120,7 +120,7 @@ typedef struct {
 } MapRecordBounds;
 
 /* which of a mesh's strip lists (CollisionMeshLists) a hit is tested against: local tables
-   that func_001B21F8, func_001B24B0 and func_001B2740 copy whole from read-only data */
+   that Attack_TestMapModel, Attack_TestMapModelFloors and Attack_TestMapModelWalls copy whole from read-only data */
 typedef struct {
     s32 lists[4];                   /* 0x00 */
 } CollisionListPick4;

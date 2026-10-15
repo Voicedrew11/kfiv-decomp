@@ -91,27 +91,27 @@ float sinf(float);
 int rand(void);
 int Sound_PlayFootstep(int);
 int Sound_PlayCommon(int);
-int func_001B4F30(u16, void *, void *, void *, void *);
+int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void Player_Move(u16 held, u16 pressed); // match: retail passes both pad words
-void func_001B9078(void);
-void func_001B92C0(float);
-void func_001B9478(void);
-void func_001B94C0(void);
-void func_001B9588(void);
-void func_001B9610(void);
-void func_001B96C8(void);
-void func_001BA310(void);
-void func_001BAE88(void);
-void func_001BB260(int);
-void func_001BB2E8(int);
-int func_001BB308(int);
-void func_001BB5E8(void);
-void func_001BB728(u16 *, u32);
-void func_001BB908(void);
-void func_001BB978(void);
+void Player_ApplyGroundEffects(void);
+void Player_TakeFallDamage(float);
+void Player_StopWalking(void);
+void Player_UpdateBreath(void);
+void Player_UpdateAilmentImmunity(void);
+void Player_UpdateDying(void);
+void Player_UpdateStatus(void);
+void Player_RecomputeStats(void);
+void Player_SumWornBonuses(void);
+void Player_TakeDamage(int);
+void Player_TakeDamageNoRumble(int);
+int Player_LoseHp(int);
+void Player_PickChargingMagic(void);
+void Player_AddWornItemValues(u16 *, u32);
+void Player_FindMapRecord(void);
+void Player_UpdateScreenFade(void);
 int Player_KnowsItemMenuMagic(void);
-void func_001B4B10(int, int);
-void func_001B4DF8(int idx, int amount);
+void Attack_WearWeapon(int, int);
+void Attack_WearWornItem(int idx, int amount);
 
 extern u8 spell_levels[6][5];
 extern u64 player_status_bits[];            /* player_previous.unk1C8 */
@@ -148,7 +148,7 @@ extern LevelDef item_name_defs[0x17C];
 #define SET_SCALED(n)     player_state.unk60.values[n] = (item_def->unk00[record->unk14].values[n] + record->unk00[n]) * record->level / 100
 
 /* Sets the player up for a new game. */
-void func_001B5810(void) {
+void Player_ResetForNewGame(void) {
     int i;
     int j;
 
@@ -198,18 +198,19 @@ void func_001B5810(void) {
     player_state.unk1C4 = 0.0f;
     player_state.unk1A8 = 0;
     player_state.unk1C0 = 0;
-    func_001BA310();
-    func_001B96C8();
+    Player_RecomputeStats();
+    Player_UpdateStatus();
     player_previous = player_state;
 }
 
-void func_001B5A10(void) {
+/* Empties both gauges and the drawn HP and MP bars, then picks the magic the magic gauge charges for. */
+void Player_ResetGauges(void) {
     player_state.unkBC = 0;
     player_state.unkC0 = 0;
     player_state.unk1A4 = 0;
     player_state.unk1A6 = 0;
     player_state.unk264 = 0;
-    ((int (*)(void))func_001BB5E8)(); // match: called as if it returned something, which keeps the call from being a jump
+    ((int (*)(void))Player_PickChargingMagic)(); // match: called as if it returned something, which keeps the call from being a jump
 }
 
 /* Makes sure the player's map record index is a valid one. */
@@ -223,7 +224,7 @@ static inline void check_map_index(void) {
         player->unk250 = 0xFF;
     }
     if ((u16)map_index == 0xFFFF) { // match: see map_index
-        func_001BB908();
+        Player_FindMapRecord();
         if (player->map_index == 0xFFFF) {
             player->map_index = 0;
             player->unk250 = ((MapRecordInfo *)map_slots[D_00446770].records)->unk38;
@@ -248,7 +249,7 @@ void Player_Update(void) {
     check_map_index();
     /* not playing (unk00 clear, or bit 0 of unk30 set): the walk state is cleared */
     if (game_status.unk00 == 0 || (game_status.unk30 & 1)) {
-        func_001B9478();
+        Player_StopWalking();
     }
     held = pad_state[0];
     pressed = pad_state[1];
@@ -372,19 +373,19 @@ void Player_Update(void) {
     }
 
     if (game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
-        func_001BA310();
-        func_001B96C8();
+        Player_RecomputeStats();
+        Player_UpdateStatus();
     }
     if (game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
         Player_Move(held, pressed);
-        func_001B9078();
+        Player_ApplyGroundEffects();
         Ladder_DispatchPad(held, pressed);
-        func_001B94C0();
-        func_001B9588();
-        func_001B9610();
+        Player_UpdateBreath();
+        Player_UpdateAilmentImmunity();
+        Player_UpdateDying();
     } else if (player_state.map_index == 0xFFFF || player_state.position.x != player_previous.position.x ||
                player_state.position.y != player_previous.position.y || player_state.position.z != player_previous.position.z) {
-        func_001BB908();
+        Player_FindMapRecord();
     }
     check_map_index();
 
@@ -502,15 +503,15 @@ void Player_Update(void) {
             shot->unk00 = 1;
             shot->unk20 = 0;
             shot->unk22 = 0;
-            func_001B4F30(0x7C, shot, &player_state, &player_state.rotation, &map_slots[D_00446770]);
+            Attack_LaunchMagicEffect(0x7C, shot, &player_state, &player_state.rotation, &map_slots[D_00446770]);
             D_00446950 = 30;
         }
     }
     if (map_slots[D_00446770].tag == 0x23 && D_00349F56[0] == 0 && ((s32)(player_state.unk1C8 >> 38) & 1) &&
         game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
-        func_001BB2E8(1);
+        Player_TakeDamageNoRumble(1);
     }
-    func_001BB978();
+    Player_UpdateScreenFade();
     game_status.unk07 = 1;
 }
 
@@ -746,7 +747,7 @@ extern LevelRecord weapon_level_records[];
 void func_00108A08(ModelInstance *, int);
 void func_00108AC8(void *);
 void Sound_PlaySw(int mode);
-s32 func_001B1470(Unk1B1470Request *, Unk1B1470Extra *);
+s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 
 /* Handler of a weapon that is swung: the button starts the swing; while its motion runs the
    swing hits what it reaches, plays its sound and casts the weapon's two magics when they were
@@ -838,7 +839,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             request.unk6F = def->unk86;
             request.unk78 = player_state.position.y - 230.0f - 50.0f;
             request.unk7C = player_state.position.y + 50.0f;
-            func_001B1470(&request, (Unk1B1470Extra *)&player_state.unk268);
+            Attack_Run(&request, (Unk1B1470Extra *)&player_state.unk268);
         }
         if (!player_state.unk260_0 && def->unk80 != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->unk82) {
             ((int (*)(int))Sound_PlaySw)(def->unk80); // match: called as if it returned a value
@@ -916,7 +917,7 @@ void Player_FireProjectile(u16 held, u16 pressed) {
         item_shot->unk20 = player_state.power;
         item_shot->unk22 = player_state.magic;
         item_shot->unk02 = player_state.unkBC;
-        func_001B4F30(def->unk52, item_shot, weapon_tip_position, weapon_tip_angles, &player_state);
+        Attack_LaunchMagicEffect(def->unk52, item_shot, weapon_tip_position, weapon_tip_angles, &player_state);
     }
 }
 
@@ -1421,7 +1422,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                         }
                     }
                     if (player_previous.unk1AC >= 66.666664f) {
-                        func_001B92C0(player_previous.unk1AC);
+                        Player_TakeFallDamage(player_previous.unk1AC);
                         if (!((s32)(player_state.unk1C8 >> 38) & 1) && player_state.unk1E4 != 4) {
                             player_state.unk1C8 |= PLAYER_FLAG_37;
                             player_state.unk1F4 = player_previous.unk1AC * 0.5f;
@@ -1502,17 +1503,17 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     if (player_state.unk1A8 == 0 && player_state.unk1AC > 1000.0f) {
         player_state.hp_now = 0;
         player_state.unk1A4 = 0;
-        func_001B9610();
+        Player_UpdateDying();
     }
 }
 
 /* What the ground under the player does to him: death, poison (by chance or at once), damage, or experience. */
-void func_001B9078(void) {
+void Player_ApplyGroundEffects(void) {
     if (player_state.unk1EC != 0) {
         player_state.hp_now = 0;
         player_state.unk1A4 = 0;
         if (player_state.unk1A8 == 0) {
-            func_001B9610();
+            Player_UpdateDying();
         }
     }
     if (player_state.unk1E0 == 0) {
@@ -1548,21 +1549,23 @@ void func_001B9078(void) {
         }
         break;
     case 4:
-        func_001BB2E8(10);
+        Player_TakeDamageNoRumble(10);
         break;
     case 5:
-        func_001BB2E8(1);
-        func_001B4B10(player_state.weapon, 1);
-        func_001B4DF8(player_state.equipment[EQUIP_SHIELD], 1);
-        func_001B4DF8(player_state.equipment[EQUIP_HELM], 1);
-        func_001B4DF8(player_state.equipment[EQUIP_ARMOR], 1);
-        func_001B4DF8(player_state.equipment[EQUIP_GAUNTLET], 1);
-        func_001B4DF8(player_state.equipment[EQUIP_BOOT], 1);
+        Player_TakeDamageNoRumble(1);
+        Attack_WearWeapon(player_state.weapon, 1);
+        Attack_WearWornItem(player_state.equipment[EQUIP_SHIELD], 1);
+        Attack_WearWornItem(player_state.equipment[EQUIP_HELM], 1);
+        Attack_WearWornItem(player_state.equipment[EQUIP_ARMOR], 1);
+        Attack_WearWornItem(player_state.equipment[EQUIP_GAUNTLET], 1);
+        Attack_WearWornItem(player_state.equipment[EQUIP_BOOT], 1);
         break;
     }
 }
 
-void func_001B92C0(float speed) {
+/* A landing at the fall speed given hurts from 66.67 up (less with unk204 set, or into water); a hurt that is
+   not softened by the Absorption Boots slows the player for 60 frames (unk200). */
+void Player_TakeFallDamage(float speed) {
     int amount;
 
     if (speed < 66.666664f) {
@@ -1577,7 +1580,7 @@ void func_001B92C0(float speed) {
         }
     }
     if (amount > 0) {
-        func_001BB260(amount);
+        Player_TakeDamage(amount);
         if (player_state.equipment[EQUIP_BOOT] != ITEM_WORN_INDEX(ITEM_ABSORPTION_BOOTS)) {
             player_state.unk200 = 60;
         }
@@ -1586,7 +1589,7 @@ void func_001B92C0(float speed) {
 
 /* Moves both player records by offset (the other map slot became the current one): their positions and the
    heights kept with them. */
-void func_001B93B8(f32 *offset) {
+void Player_MoveByOffset(f32 *offset) {
     Vector_Add(&player_state.position, &player_state.position, offset);
     Vector_Add(&player_previous.position, &player_previous.position, offset);
     player_state.unk1D8 += offset[1];
@@ -1597,7 +1600,8 @@ void func_001B93B8(f32 *offset) {
     player_previous.unk214 += offset[1];
 }
 
-void func_001B9478(void) {
+/* Stops the player's walking, turning and looking speeds, the stride and the head bob. */
+void Player_StopWalking(void) {
     player_state.unk1C4 = 0.0f;
     player_state.unk1B0 = 0.0f;
     player_state.unk1B4 = 0.0f;
@@ -1607,7 +1611,9 @@ void func_001B9478(void) {
     player_state.unk1C8 &= ~0x100000000L;
 }
 
-void func_001B94C0(void) {
+/* The breath bar under water (status bit 39): full (power * 9 + 120) on going under, one less a frame (every
+   other frame with the Water Talisman), and one HP a frame once it is empty. */
+void Player_UpdateBreath(void) {
     PlayerState *player;
     u64 was_set;
     int start_full;
@@ -1638,13 +1644,13 @@ void func_001B94C0(void) {
                 player->unkCC = filled - 1;
             }
         } else {
-            func_001BB308(1);
+            Player_LoseHp(1);
         }
     }
 }
 
-/* Counts six countdown timers down to zero, clearing each matching flag on the way. */
-void func_001B9588(void) {
+/* Counts the six flag_timers down; while one runs its ailment (timed_flags) is held at 0. */
+void Player_UpdateAilmentImmunity(void) {
     PlayerState *player = &player_state;
 
     if (player->flag_timers[0] != 0) {
@@ -1673,7 +1679,9 @@ void func_001B9588(void) {
     }
 }
 
-void func_001B9610(void)
+/* Dying: once HP and the drawn HP bar are empty, starts the 60 frames in which the view tips over (unk1A8 counts
+   them, sound 0x28), then ends the main loop (GameStatus.bit9). */
+void Player_UpdateDying(void)
 {
     PlayerState *player = &player_state;
 
@@ -1701,7 +1709,7 @@ static inline s32 is_frame_multiple(u32 period) {
 }
 
 /* The per-frame bookkeeping of the player: timers, the two gauges, and the drawn bars. */
-void func_001B96C8(void) {
+void Player_UpdateStatus(void) {
     GameDefinition *definition = &D_00416D78[player_state.weapon];
     PlayerItemDef *item_def = &weapon_defs[player_state.weapon];
     FxTableEntry *fx_entry = &fx_table[player_state.unk264];
@@ -1787,7 +1795,7 @@ void func_001B96C8(void) {
     }
     if ((u16)player_state.timed_flags[0] != 0) {
         if (player_state.unk2DC <= 0 ? is_frame_multiple(30) : is_frame_multiple(90)) {
-            func_001BB2E8(3);
+            Player_TakeDamageNoRumble(3);
         }
     }
     if ((u16)player_state.timed_flags[3] != 0) {
@@ -1803,7 +1811,7 @@ void func_001B96C8(void) {
     }
     if (draining) {
         if (is_frame_multiple(30)) {
-            func_001BB2E8(1);
+            Player_TakeDamageNoRumble(1);
             player_state.mp_now--;
         }
     }
@@ -1933,7 +1941,7 @@ void func_001B96C8(void) {
 }
 
 /* Works the player's derived numbers out again from the base ones, what is worn and the magic in effect. */
-void func_001BA310(void) {
+void Player_RecomputeStats(void) {
     PlayerItemDef *item_def = &weapon_defs[player_state.weapon];
     LevelRecord *record = &weapon_level_records[player_state.weapon];
     s32 unused_third;
@@ -1951,7 +1959,7 @@ void func_001BA310(void) {
     player_state.mp_max = player_state.mp_base;
     player_state.power = player_state.power_base;
     player_state.magic = player_state.magic_base;
-    func_001BAE88();
+    Player_SumWornBonuses();
     player_state.unkA8 = player_state.power * 3 + 80;
     player_state.unkA8 = (f32)player_state.unkA8 * 2.2046;
     player_state.weight = item_name_defs[player_state.weapon + ITEM_WEAPON_FIRST].unk3E;
@@ -1992,23 +2000,23 @@ void func_001BA310(void) {
     player_state.unk72.values[4] += player_state.unk110[4];
     player_state.unk72.values[5] += player_state.unk110[5];
     memset(&player_state.unk7E, 0, sizeof(PlayerShotStats));
-    func_001BB728((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_SHIELD]);
-    func_001BB728((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_HELM]);
-    func_001BB728((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_ARMOR]);
-    func_001BB728((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_GAUNTLET]);
-    func_001BB728((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_BOOT]);
-    func_001BB728((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_RING]);
-    func_001BB728((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_BRACELET]);
-    func_001BB728((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_AMULET]);
+    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_SHIELD]);
+    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_HELM]);
+    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_ARMOR]);
+    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_GAUNTLET]);
+    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_BOOT]);
+    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_RING]);
+    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_BRACELET]);
+    Player_AddWornItemValues((u16 *)player_state.unk7E.values, player_state.equipment[EQUIP_AMULET]);
     memset(&player_state.unk90, 0, sizeof(PlayerShotStats));
-    func_001BB728((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_SHIELD]);
-    func_001BB728((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_HELM]);
-    func_001BB728((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_ARMOR]);
-    func_001BB728((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_GAUNTLET]);
-    func_001BB728((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_BOOT]);
-    func_001BB728((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_RING]);
-    func_001BB728((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_BRACELET]);
-    func_001BB728((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_AMULET]);
+    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_SHIELD]);
+    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_HELM]);
+    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_ARMOR]);
+    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_GAUNTLET]);
+    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_BOOT]);
+    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_RING]);
+    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_BRACELET]);
+    Player_AddWornItemValues((u16 *)player_state.unk90.values, player_state.equipment[EQUIP_AMULET]);
     player_state.unk90.values[0] += player_state.unk13A[0];
     player_state.unk90.values[1] += player_state.unk13A[1];
     player_state.unk90.values[2] += player_state.unk13A[2];

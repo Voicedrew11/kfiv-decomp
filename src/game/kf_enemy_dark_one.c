@@ -1,7 +1,7 @@
 /* DarkOne: the behaviour of entity type 75 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: the Dark One, the last boss,
-   chr.prm record 99 (ENTITY_TYPE_LAST_BOSS in func_001B2F70), whose one spawn is in 040.map, the end of
-   the Dark Reality. The game's own text calls him the Dark One. func_001B2F70 gives him no damage:
+   chr.prm record 99 (ENTITY_TYPE_LAST_BOSS in Attack_HitEntity), whose one spawn is in 040.map, the end of
+   the Dark Reality. The game's own text calls him the Dark One. Attack_HitEntity gives him no damage:
    each weapon hit counts D_00446928 down and throws the player back, magic does nothing, and the hit
    that takes the count to 0 kills him; Prima's official guide (2004) describes the same fight. */
 #include "kf_entity.h"

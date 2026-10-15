@@ -17,17 +17,17 @@
 
 extern void (*screen_fade_steps[])(void);
 extern void (*screen_fade_draw_steps[])(void);
-int func_00103A18(int, int *, int *);
-void func_00101618(void);
-void func_001020F8(void);
+int Game_FindTriggerOfItem(int, int *, int *);
+void GameLoop_RunSoundLoads(void);
+void GameLoop_CancelMenuRequests(void);
 void func_001095E0(void);
 void func_001096E8(void);
 void func_00109800(void);
 void func_0010B000(void);
 void MapChange_CaptureFrame(void);
-void func_001B5460(void);
+void Input_Update(void);
 void Display_SwapBuffers(int);
-int func_001005E8(int);
+int GameLoop_DrawFrame(int);
 void func_0010A040(int);
 void func_00109A50(void);
 void func_00109A80(int, s64);
@@ -43,7 +43,7 @@ void Sound_Update(void);
 void Map_UnlinkSlotRecords(int);
 void MapLoad_Reset(void);
 void func_001A15F8(void);
-void func_001BC128(void);
+void Player_EndSwingHits(void);
 void MapItem_UnloadMap(int);
 void func_00102218(void);
 void func_00102228(void);
@@ -51,8 +51,8 @@ int func_00102900(int);
 int sprintf(char *, char *, ...);
 float cosf(float);
 float sinf(float);
-void func_001034F8(int);
-void func_00106178(int, int, int, int);
+void Game_MarkMapVisited(int);
+void Game_StartFadeIn(int, int, int, int);
 void Map_ParseFile(int);
 void Map_BuildModels(int);
 void Map_PlaceRecordModels(int);
@@ -124,7 +124,7 @@ void MapChange_StartToPosition(int map, Vector4 *position) {
 }
 
 /* Starts the passage a wand used on a Symbol of Passage gives: the change to the map object where the item
-   five below the wand was placed (func_00103A18). FALSE when a change runs or it was not placed. */
+   five below the wand was placed (Game_FindTriggerOfItem). FALSE when a change runs or it was not placed. */
 int MapChange_StartPassage(int entry) {
     int target[2];
     int map;
@@ -132,7 +132,7 @@ int MapChange_StartPassage(int entry) {
     if (screen_fade.step != 0) {
         return FALSE;
     }
-    if (func_00103A18(entry - 5, &target[0], &target[1]) == 0) {
+    if (Game_FindTriggerOfItem(entry - 5, &target[0], &target[1]) == 0) {
         return FALSE;
     }
     map = target[0];
@@ -149,17 +149,17 @@ int MapChange_StartPassage(int entry) {
 void MapChange_RunToEnd(void) {
     if (screen_fade.step != 0) {
         MapChange_CaptureFrame();
-        func_001020F8();
+        GameLoop_CancelMenuRequests();
         Splash_Abort();
         do {
-            func_001B5460();
+            Input_Update();
             Display_SwapBuffers(0);
             func_001096E8();
             func_001095E0();
             func_0010B000();
             screen_fade_draw_steps[screen_fade.draw_step]();
             screen_fade_steps[screen_fade.step]();
-            func_00101618();
+            GameLoop_RunSoundLoads();
             ((u8 (*)(void))func_00109800)(); // match: called as returning a value, so the loop test uses $3
         } while (screen_fade.step != 0);
         game_status.bit2 = FALSE;
@@ -174,7 +174,7 @@ void MapChange_CaptureFrame(void) {
     func_001096E8();
     func_001095E0();
     func_0010B000();
-    func_001005E8(0);
+    GameLoop_DrawFrame(0);
     func_0010A040(0x2BC0);
     func_00109800();
 }
@@ -290,7 +290,7 @@ void MapChange_UnloadAll(void) {
     MapLoad_Reset();
     func_001A15F8();
     Entity_ResetAllLists();
-    func_001BC128();
+    Player_EndSwingHits();
     Effect_FreePlayerMagic();
     D_00446770 = 0;
     memset(map_slots, 0, sizeof(map_slots));
@@ -391,14 +391,14 @@ void MapChange_SetUpMap(void) {
     MapItem_RollFixedItems(0);
     Entity_ClearFlag10InSlot(0);
     MapSetup_RunForMap(0);
-    func_001034F8(map_slots[0].tag);
+    Game_MarkMapVisited(map_slots[0].tag);
     Script_Init(map_slots[0].unk5C);
     Script_Start(0x7FFF, 0);
     sound_load_queue.unk00 = ((MapSlotUnk08 *)map_slots[0].header)->unk70;
     sound_load_queue.unk04 = 1;
     Sound_StopAll(1);
     sound_load_queue.unk14 = &map_slots[0];
-    func_00106178(0, 0, 0, 30);
+    Game_StartFadeIn(0, 0, 0, 30);
     screen_fade.step = 0;
 }
 

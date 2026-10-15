@@ -32,7 +32,7 @@ typedef struct {
     s8 slot;                        /* 0x3F which slot the packet belongs to */
     char pad40[0x01];
     s8 unk41;                       /* 0x41 */
-    u8 unk42;                       /* 0x42 handed to func_001E5210 before the sprite is drawn */
+    u8 unk42;                       /* 0x42 handed to Menu_SetBlendMode before the sprite is drawn */
     s8 unk43;                       /* 0x43 1: the cursor bar is drawn just before this one (Smith_UpdateSelectScreen) */
     char pad44[0x1C];
 } SpritePacket;
@@ -274,7 +274,7 @@ typedef struct {
 /* hands out the next packet buffer to fill; callers use it as whichever packet they build */
 void *MenuDraw_NextPacket(void);
 
-/* one 32-bit word of a packet built in place (func_001E5070), written as an integer or as a float */
+/* one 32-bit word of a packet built in place (Menu_DrawBrightness), written as an integer or as a float */
 typedef union {
     s32 as_int;
     f32 as_float;

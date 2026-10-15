@@ -48,7 +48,7 @@ int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void func_00195878(s32, s32);
-void func_001B57A0(u8, u8, u8);
+void Input_StartRumble(u8, u8, u8);
 void EntityEvent_OnDeath(Entity *);
 
 static void GiantBeetle_Animate(Entity *entity);
@@ -439,7 +439,7 @@ static void func_00137970(Entity *entity) {
         }
         if (entity->model->unkFC->unk82 == 0x13) {
             func_00195878(10, 0x1A);
-            func_001B57A0(0x80, 0xD, 0);
+            Input_StartRumble(0x80, 0xD, 0);
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
             entity->flags |= 0x80000;

@@ -25,8 +25,8 @@ float Angle_Wrap(float angle);
 MapRecordBounds *Map_GetRecordById(int map, int prop_id);
 void Map_OffsetRecord(MapRecordBounds *record, f32 *offset);
 void func_0010E8E0(ModelInstance *model, int red, int green, int blue, int alpha);
-void func_001BB360(void);
-int func_001B4F30(u16, void *, void *, void *, void *);
+void Player_FlashDamage(void);
+int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void MapChange_StartToMap(int map_tag);
 int Sound_PlayCommonAt(float range, int sound, float *position);
 int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range);
@@ -36,7 +36,7 @@ s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, V
 int Sound_PlayMapVolume(u8 sound, int volume);
 int Sound_StartTagged(s8 sound, u8 voice, int volume);
 void Sound_StopVoice(s8 slot);
-void func_001B57A0(u8 strength, u8 duration, u8 delay);
+void Input_StartRumble(u8 strength, u8 duration, u8 delay);
 void Menu_AddKeyItem(u32, u32, int); // match: three arguments are passed; the definition takes the first alone
 
 extern int D_00446770;
@@ -725,9 +725,9 @@ void ScriptCmd_StartEffect(ScriptPointCommand *command) {
     command->active = 0;
 }
 
-/* Command 131: flashes the screen red (func_001BB360), then finishes. */
+/* Command 131: flashes the screen red (Player_FlashDamage), then finishes. */
 void ScriptCmd_FlashScreenRed(ScriptThreadCommand *command) {
-    func_001BB360();
+    Player_FlashDamage();
     command->active = 0;
 }
 
@@ -750,7 +750,7 @@ void ScriptCmd_LaunchShot(ScriptPointCommand *command) {
     shot->unk00 = 1;
     shot->unk20 = 0;
     shot->unk22 = 0;
-    func_001B4F30(command->object_id.value, shot, &from, &angles, &map_slots[D_00446770]);
+    Attack_LaunchMagicEffect(command->object_id.value, shot, &from, &angles, &map_slots[D_00446770]);
     command->active = 0;
 }
 
@@ -1329,9 +1329,9 @@ void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command) {
     command->active = 0;
 }
 
-/* Command 198: makes the controller rumble (func_001B57A0), then finishes. */
+/* Command 198: makes the controller rumble (Input_StartRumble), then finishes. */
 void ScriptCmd_RumblePad(ScriptShakeCommand *command) {
-    func_001B57A0(command->strength.value, command->duration.value, command->delay.value);
+    Input_StartRumble(command->strength.value, command->duration.value, command->delay.value);
     command->active = 0;
 }
 

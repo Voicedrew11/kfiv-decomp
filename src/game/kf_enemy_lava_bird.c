@@ -47,7 +47,7 @@ float EntityMath_WrapAngle(float);
 float EntityMath_DistanceXZ(void *, void *);
 float EntityMath_AngleXZ(float *, char *);
 f32 EntityMath_Approach(f32, f32, f32);
-int func_001B4F30(u16, void *, void *, void *, void *);
+int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
 void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *entity, void (*callback)(void), int run);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
@@ -683,7 +683,7 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
                 angles[0] = EntityMath_Approach(angles[0], pitch, pitch_rate);
                 angles[1] = EntityMath_Approach(angles[1], yaw, yaw_rate);
             }
-            func_001B4F30(record->unk10[i].unk00, shot, from, angles, entity);
+            Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, from, angles, entity);
         }
     }
     return 0;
