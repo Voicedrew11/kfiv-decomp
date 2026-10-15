@@ -71,8 +71,8 @@ static void DarkSuccubus_OnHit(Entity *entity);
 static void DarkSuccubus_Animate(Entity *entity);
 static void DarkSuccubus_Think(Entity *entity, s32 unknown);
 static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown);
-static void DarkSuccubus_ThinkCombatFewSpawns(Entity *entity, s32 unknown);
-static void DarkSuccubus_ThinkCombatManySpawns(Entity *entity, s32 unknown);
+static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown);
+static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknown);
 static void DarkSuccubus_Move(Entity *entity);
 static void DarkSuccubus_ApplyMoveCommand(Entity *entity);
 static void DarkSuccubus_ReactionLight(Entity *entity);
@@ -191,8 +191,8 @@ static void DarkSuccubus_Animate(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with three functions for state 2, picked by work byte unk7C
-   (DarkSuccubus_CountLiveSpawns sets it): DarkSuccubus_ThinkCombat at 0, DarkSuccubus_ThinkCombatFewSpawns at 1,
-   DarkSuccubus_ThinkCombatManySpawns above. While D_0034A018[0] is 0 it does nothing but set model flag 0x800, flag bits
+   (DarkSuccubus_CountLiveSpawns sets it): DarkSuccubus_ThinkCombat at 0, DarkSuccubus_ThinkCombatCircleNear at 1,
+   DarkSuccubus_ThinkCombatKeepAwayWhenFaced above. While D_0034A018[0] is 0 it does nothing but set model flag 0x800, flag bits
    18 and 21 and Entity.unkD6 to 0x80. With the player's x at 6600 or more it goes back to its spawn
    point instead of thinking. It adds command bit 0x10 or 0x20 by what EntityCollision_DistanceToPropFloor reads at the
    entity's position (work byte unk7A). While work word unk68 counts down, model flag 0x800 and flag
@@ -246,9 +246,9 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
                 if (timers->unk7C == 0) {
                     DarkSuccubus_ThinkCombat(entity, unknown);
                 } else if (timers->unk7C == 1) {
-                    DarkSuccubus_ThinkCombatFewSpawns(entity, unknown);
+                    DarkSuccubus_ThinkCombatCircleNear(entity, unknown);
                 } else {
-                    DarkSuccubus_ThinkCombatManySpawns(entity, unknown);
+                    DarkSuccubus_ThinkCombatKeepAwayWhenFaced(entity, unknown);
                 }
                 break;
             default:
@@ -307,7 +307,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
     }
 }
 
-/* The think function of state 2 while work byte unk7C is 0 (DarkSuccubus_ThinkCombatFewSpawns and DarkSuccubus_ThinkCombatManySpawns are the
+/* The think function of state 2 while work byte unk7C is 0 (DarkSuccubus_ThinkCombatCircleNear and DarkSuccubus_ThinkCombatKeepAwayWhenFaced are the
    other two): starts DarkSuccubus_DodgeAnim29Or30 when DarkSuccubus_ShouldDodgeAnim29Or30 says so and DarkSuccubus_Dodge for
    the player's swing; starts DarkSuccubus_MeleeAttack when EntityAi_CanMelee finds a melee record in
    reach (EntityAi_PickMeleeAttack picks it); else, each time the timer runs out, starts
@@ -422,7 +422,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
    DarkSuccubus_MoveAlongArc with the player nearer than 350 and Entity.unk68 within 40 degrees of his facing,
    else now and then DarkSuccubus_FadeOut, else goes sideways round the player for 30 frames, keeping 100 to 250
    from him (work byte unk78). */
-static void DarkSuccubus_ThinkCombatFewSpawns(Entity *entity, s32 unknown) {
+static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityUnkE0Kind15F8C0 *timers = (EntityUnkE0Kind15F8C0 *)unkE0;
     f32 direction[4];
@@ -542,10 +542,10 @@ static void DarkSuccubus_ThinkCombatFewSpawns(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2 while four to six of them are alive (work byte unk7C 2): as
-   DarkSuccubus_ThinkCombatFewSpawns, but while the entity is within 50 degrees of the player's facing and not
+   DarkSuccubus_ThinkCombatCircleNear, but while the entity is within 50 degrees of the player's facing and not
    faded out (work word unk68 0) it keeps 500 to 800 from him, closing in or going backwards before it goes
    sideways, and only then may start DarkSuccubus_MoveAlongArc. */
-static void DarkSuccubus_ThinkCombatManySpawns(Entity *entity, s32 unknown) {
+static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityUnkE0Kind15F8C0 *timers = (EntityUnkE0Kind15F8C0 *)unkE0;
     f32 direction[4];
@@ -1234,7 +1234,7 @@ static void DarkSuccubus_PlayAnim18Turning(Entity *entity) {
     }
 }
 
-/* An action (busy bit 0x4000) that DarkSuccubus_ThinkCombatFewSpawns and DarkSuccubus_ThinkCombatManySpawns start: plays animation 17 to its
+/* An action (busy bit 0x4000) that DarkSuccubus_ThinkCombatCircleNear and DarkSuccubus_ThinkCombatKeepAwayWhenFaced start: plays animation 17 to its
    end with the turn command of EntityAi_TurnCommand; up to frame EntityParams.unk436 it takes Entity.unkD6
    from 0x80 down to 0 (unkD6 is what EntityAi_Death's fade scales), after that it keeps work word
    unk68 at EntityParams.unk434. */

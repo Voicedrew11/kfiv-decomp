@@ -88,7 +88,7 @@ float Effect_DistanceXZ(float *origin, float *target) {
     return out.x;
 }
 
-/* the inline twin of Debug_AbsFloat */
+/* the inline twin of Math_AbsFloat */
 static inline f32 absolute_value(f32 value) {
     if (value < 0.0f) {
         return -value;

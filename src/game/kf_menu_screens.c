@@ -7502,7 +7502,8 @@ int Menu_SetBlendMode(u8 mode) {
     return MenuDraw_SetGsRegister(GS_REG_ALPHA_1, reg.raw);
 }
 
-/* Sets the blend mode of ALPHA_1 from mode and writes it; the value is never seeded. */
+/* Writes TEST_1 (Z test GREATER when flag is set, ALWAYS when not), then sets the blend mode of ALPHA_1 from
+   mode (0 to 2) and writes it; the value is never seeded. Nothing calls it. */
 s32 Menu_SetBlendModeAndTest(u8 mode, char flag) {
     GsAlphaReg reg;
 

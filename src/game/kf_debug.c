@@ -172,7 +172,7 @@ void Debug_EditFloat(f32 *value, f32 minimum, f32 maximum, f32 step) {
 }
 
 /* The absolute value of a float. */
-f32 Debug_AbsFloat(f32 fparg0) {
+f32 Math_AbsFloat(f32 fparg0) {
     if (fparg0 < 0.0f) {
         return -fparg0;
     }
@@ -180,15 +180,15 @@ f32 Debug_AbsFloat(f32 fparg0) {
 }
 
 /* Dot product of two 3D vectors. */
-float Debug_DotProduct3(void *left, void *right) {
+float Vector_Dot3(void *left, void *right) {
     f32 *left_xyz = left;
     f32 *right_xyz = right;
 
     return left_xyz[0] * right_xyz[0] + left_xyz[1] * right_xyz[1] + left_xyz[2] * right_xyz[2];
 }
 
-/* Wraps an angle in radians into [-pi, pi]. */
-float Debug_WrapAngle(float angle) {
+/* Wraps an angle in radians into [-pi, pi], as Angle_Wrap does. Nothing calls it. */
+float Angle_WrapPlusMinusPi(float angle) {
     float wrapped;
 
     wrapped = angle - (float)(int)(angle / 6.2831855f) * 6.2831855f;

@@ -36,7 +36,7 @@ void Vector_Add(void *, void *, void *);
 extern Entity *D_004467E0;
 int Effect_IsEntityUntargetable(Entity *entity);
 float Effect_Distance(void *, void *);
-f32 Debug_AbsFloat(f32);
+f32 Math_AbsFloat(f32);
 void Vector_Subtract(void *, void *, void *);
 
 int EffectKeys_ApplySpin(EffectActor *effect);
@@ -364,8 +364,8 @@ int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *r
         EffectAngle_FromVector(&angles, &offset);
         angles.x = wrap_angle(angles.x - reference->x);
         angles.y = wrap_angle(angles.y - reference->y);
-        angles.x = Debug_AbsFloat(angles.x);
-        angles.y = Debug_AbsFloat(angles.y);
+        angles.x = Math_AbsFloat(angles.x);
+        angles.y = Math_AbsFloat(angles.y);
         if (effect->def->unkE4 <= angles.x) {
             continue;
         }

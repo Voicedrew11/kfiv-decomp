@@ -73,7 +73,7 @@ static void AncientKing_SwitchHandlers(Entity *entity);
 static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown);
 static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown);
 static void AncientKing_DeathLaunchShot(Entity *entity);
-static void AncientKing_RangedAttack0AfterSwitch(Entity *entity);
+static void AncientKing_LaunchShotsNearPlayer(Entity *entity);
 static void AncientKing_RangedAttack1(Entity *entity);
 static void AncientKing_RespawnOthersAfterSwitch(Entity *entity);
 static s32 AncientKing_ShouldRespawnOthers(Entity *entity);
@@ -475,7 +475,7 @@ static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown) {
 
 /* The think function of state 2 for AncientKing_ThinkAfterSwitch: as EntityAi_ThinkCombat, but it starts
    AncientKing_RespawnOthersAfterSwitch when AncientKing_ShouldRespawnOthers says so, and ranged records 0 and 1 have the
-   type's own actions (AncientKing_RangedAttack0AfterSwitch, AncientKing_RangedAttack1). */
+   type's own actions (AncientKing_LaunchShotsNearPlayer, AncientKing_RangedAttack1). */
 static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -509,7 +509,7 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
-                    EntityAi_StartAction(entity, AncientKing_RangedAttack0AfterSwitch, unknown);
+                    EntityAi_StartAction(entity, AncientKing_LaunchShotsNearPlayer, unknown);
                 } else if (ENTITY_FLAG_BITS(entity)->bits58 == 1) {
                     EntityAi_StartAction(entity, AncientKing_RangedAttack1, unknown);
                 } else {
@@ -623,7 +623,7 @@ static void AncientKing_DeathLaunchShot(Entity *entity) {
 /* The ranged attack with record 0 (busy bit 1) of the handlers AncientKing_SwitchHandlers installs: as
    AncientKing_RangedAttack0, but animation 23 plays on the main motion and the starting points lie up to 200
    from the player's position in x and in z. */
-static void AncientKing_RangedAttack0AfterSwitch(Entity *entity) {
+static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8[0];
     f32 target[4];

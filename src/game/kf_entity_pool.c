@@ -488,7 +488,8 @@ static int EntityPool_FindType(int type_id) {
     return -1;
 }
 
-/* Claims the first free pool block, else the unused block with the lowest size; returns its index. */
+/* Claims the first free pool block, else the ready block without users that was released first (lowest
+   age); blocks flagged 0x100 or 0x200 are passed over. Returns its index, or -1. */
 static int EntityPool_ClaimBlock(void) {
     int i;
     int best;
@@ -980,7 +981,7 @@ static void Entity_PrepareModelDraw(ModelInstance *model) {
     ModelTexture_SendForModel(model);
 }
 
-/* Sets Z writes off, an always-pass depth test and additive blending, then sends the model's textures.
+/* Sets Z writes off, the Z test GEQUAL (no alpha test) and additive blending, then sends the model's textures.
    Nothing calls it. */
 void Entity_PrepareAdditiveDraw(ModelInstance *model) {
     Packet_BeginGsRegisters();

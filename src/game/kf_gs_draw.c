@@ -467,7 +467,7 @@ void GsDraw_DrawScrollingTexture(void *texture_arg, void *offset_arg) {
     GsDraw_QueueFlush();
 }
 
-/* Copy the displayed frame into a width x height texture at `fbp`. */
+/* Copy the frame being drawn (the buffer GsDraw_ResetDrawTarget draws to) into a width x height texture at `fbp`. */
 void GsDraw_CopyFrameToTexture(int fbp, int psm, int width, int height) {
     ScreenSprite sprite;
     int frame_base;

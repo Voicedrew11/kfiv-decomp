@@ -1611,8 +1611,9 @@ void Player_StopWalking(void) {
     player_state.unk1C8 &= ~0x100000000L;
 }
 
-/* The breath bar under water (status bit 39): full (power * 9 + 120) on going under, one less a frame (every
-   other frame with the Water Talisman), and one HP a frame once it is empty. */
+/* The breath bar under water (status bit 39, which Player_CollideWithMap sets while the water surface, strip
+   list 5, is 220 or more above the feet): full (power * 9 + 120) on going under, one less a frame (every other
+   frame with the Water Talisman), and one HP a frame once it is empty. */
 void Player_UpdateBreath(void) {
     PlayerState *player;
     u64 was_set;

@@ -97,7 +97,7 @@ static void func_0020BD40(void) {
 }
 
 /* Builds a matrix from the model's x and z angles with its y row cleared, turned a quarter about x and pushed
-   16 along z, and applies D_004322E0 to it (a shadow or a marker under the model, perhaps). */
+   16 along z, and applies D_004322E0 to it into the model's matrix. Nothing calls it. */
 static void ModelMatrix_BuildFlattenedTilt(ModelInstance *model) {
     f32 matrix[16];
     f32 offset[4];

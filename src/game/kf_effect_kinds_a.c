@@ -31,8 +31,8 @@ int Effect_IsNearAnyEntity(float radius, void *point);
 float Effect_Distance(void *from, void *target);
 float Effect_DistanceXZ(float *origin, float *target);
 s16 Effect_FramesToImpact(float radius, void *effect, void *motion, void *hit_point);
-f32 Debug_AbsFloat(f32 fparg0);
-float Debug_DotProduct3(void *left, void *right);
+f32 Math_AbsFloat(f32 fparg0);
+float Vector_Dot3(void *left, void *right);
 int Attack_RunEffectHitCheck(void *effect_actor);
 int Collision_FindFloorBelow(f32 reach, void *point_arg);
 void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction);
@@ -338,7 +338,7 @@ void EffectTrailHoming_Update(EffectActor *actor) {
                 motion->unk20 = (((rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 200.0f;
             }
             delta.y -= ((Entity *)actor->unk6C)->height;
-            if (Debug_DotProduct3(&delta, motion) < 0.0f) {
+            if (Vector_Dot3(&delta, motion) < 0.0f) {
                 delta.x += motion->unk1C;
                 delta.y -= 50.0f;
                 delta.z += motion->unk20;
@@ -708,7 +708,7 @@ void EffectChase_Update(EffectActor *actor) {
     if (actor->unk6C != 0) {
         if (((u32)(((Entity *)actor->unk6C)->flags >> 2) & 3) < 2) {
             Vector_Subtract(delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
-            if (Debug_DotProduct3(delta, motion) > 0.0f) {
+            if (Vector_Dot3(delta, motion) > 0.0f) {
                 motion->turn += actor->def->unkE0;
                 delta[1] -= ((Entity *)actor->unk6C)->height * 0.5f;
             } else {
@@ -2098,7 +2098,7 @@ void EffectAimedChase_Update(EffectActor *actor) {
     if (actor->unk6C != 0) {
         if (ENTITY_FLAG_BITS((Entity *)actor->unk6C)->bits2 == 0) {
             Vector_Subtract(delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
-            if (Debug_DotProduct3(delta, motion) > 0.0f) {
+            if (Vector_Dot3(delta, motion) > 0.0f) {
                 motion->turn += actor->def->unkE0;
                 delta[1] -= ((Entity *)actor->unk6C)->height * 0.5f;
             }
@@ -2174,7 +2174,7 @@ static void EffectSweep_AimAt(EffectActor *actor, Vector4 *target) {
     Vector_Subtract(&offset, target, &actor->model->position);
     EffectAngle_FromVector(&actor->model->rotation.x, &offset.x);
     distance = Effect_Distance(target, &actor->model->position);
-    motion->unk24 = Debug_AbsFloat((distance - actor->def->radius_half) / 500.0f);
+    motion->unk24 = Math_AbsFloat((distance - actor->def->radius_half) / 500.0f);
     Vector_Copy(&motion->unk10, target);
 }
 

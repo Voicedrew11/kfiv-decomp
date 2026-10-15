@@ -13,7 +13,7 @@ int File_Open(char *, int, int);
 int File_Read(int, void *, int);
 int File_Close(int);
 void Model_SetUpSkinned(ModelInstance *, int *, int *);
-void Gold_DrawFaded(OverlaySprite *);
+void Gold_PrepareFadedDraw(OverlaySprite *);
 void Packet_BeginGsRegisters(void);
 void Packet_AddGsRegister(int, s64);
 void Packet_EndGsRegisters(void);
@@ -124,7 +124,7 @@ void Gold_InitMap(int map) {
         model->unk14C = &map_draw_state.unkA0;
         model->unk194 = (int)map_gold_texture;
         model->unk190 = 2;
-        model->draw = (void (*)(ModelInstance *))Gold_DrawFaded;
+        model->draw = (void (*)(ModelInstance *))Gold_PrepareFadedDraw;
     }
     tag = map_slots[map].tag; // match: kept in a variable, retail does not read it again after the copy
     marks = map_object_marks[tag];
@@ -437,8 +437,9 @@ void Gold_ClearMark(MapActor *actor) {
     memset(mark, 0, sizeof(ObjectMark));
 }
 
-/* Draw hook of a gold pile's model: blends it by its fade alpha (unk146), then draws it. */
-void Gold_DrawFaded(OverlaySprite *sprite) {
+/* Gold pile model's ModelInstance.draw, which DrawList_Draw runs before the model is drawn: sets the blend to
+   its fade alpha (unk146) and the tests, then sends its textures. */
+void Gold_PrepareFadedDraw(OverlaySprite *sprite) {
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)sprite->unk146 << 32) | 0x64);
     Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
