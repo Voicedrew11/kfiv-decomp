@@ -274,7 +274,7 @@ void MapLoad_WaitForChunk(void) {
 }
 
 /* Map load step 5: empty; the load rests here until MapLoad_Update or MapLoad_FinishAndEnter moves it on. */
-void func_00118538(void) {
+void MapLoad_WaitForSetUp(void) {
 }
 
 /* Map load step: sets up the loaded map in the other slot, shifted so that it joins the current one. */

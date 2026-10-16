@@ -77,7 +77,7 @@ void Collision_HitSphereMeshObj(CollisionOwner *, int, float);
 int Collision_HitCapsuleBoxObj(MapObject *, f32 *, f32, f32);
 void Collision_HitCapsuleDoubleDoorObj(MapObject *, f32 *, f32, f32);
 int Collision_HitCapsuleQuadObj(CollisionOwner *, int, float, float);
-void func_001C5278(void);
+void Collision_HitCapsulePitfallObj(void);
 void Collision_HitCapsuleMeshObj(MapObject *, f32 *, f32, f32);
 float sinf(float);
 float cosf(float);
@@ -85,12 +85,12 @@ float Angle_Wrap(float);
 void Collision_HitFanBoxObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
 void Collision_HitFanDoubleDoorObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
 void Collision_HitFanQuadObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
-void func_001C65E8(void);
+void Collision_HitFanPitfallObj(void);
 void Collision_HitFanMeshObj(MapObject *, Vector4 *, f32, f32, f32, f32, f32, f32);
 void Collision_PushOutOfBoxObj(MapObject *, f32 *, f32, f32);
 void Collision_PushOutOfDoubleDoorObj(MapObject *, f32 *, f32, f32);
 void Collision_PushOutOfQuadObj(CollisionOwner *, f32 *, f32, f32);
-void func_001C7AF0(void);
+void Collision_PushOutOfPitfallObj(void);
 void Collision_PushOutOfMeshObj(MapObject *, f32 *, f32, f32);
 s32 Collision_StandOnQuadObj(CollisionOwner *, f32 *, f32);
 s32 Collision_StandOnPitfallObj(MapObject *, f32 *, f32);
@@ -813,7 +813,7 @@ void Collision_HitCapsuleObj(MapObject *object, f32 *point, f32 reach, f32 heigh
         break;
     case 18:
         // match: the pitfall test is an empty function, but it is passed everything the others are
-        ((MapObjectSweepTest)func_001C5278)(object, point, reach, height);
+        ((MapObjectSweepTest)Collision_HitCapsulePitfallObj)(object, point, reach, height);
         break;
     default:
         if (object->model->strips != NULL) {
@@ -873,7 +873,7 @@ void Collision_HitFanObj(MapObject *object, Vector4 *origin, f32 radius, f32 pus
         break;
     case 18:
         // match: the pitfall test is an empty function, but it is passed everything the others are
-        ((MapObjectFanTest)func_001C65E8)(object, origin, radius, push, first_x, first_z, second_x, second_z);
+        ((MapObjectFanTest)Collision_HitFanPitfallObj)(object, origin, radius, push, first_x, first_z, second_x, second_z);
         break;
     default:
         if (object->model->strips != NULL) {
@@ -953,7 +953,7 @@ void Collision_PushOutOfObjects(f32 *centre, s32 measure, f32 radius, f32 push) 
                 break;
             case 18:
                 // match: the pitfall test is an empty function, but it is passed everything the others are
-                ((MapObjectCircleTest)func_001C7AF0)(object, centre, radius, push);
+                ((MapObjectCircleTest)Collision_PushOutOfPitfallObj)(object, centre, radius, push);
                 break;
             default:
                 if (object->model->strips != NULL) {
@@ -1983,7 +1983,7 @@ int Collision_HitCapsuleQuadObj(CollisionOwner *owner, int context, float first_
 
 /* Does nothing: the pitfall case of Collision_HitCapsuleObj, which passes it the same arguments as the
    others. */
-void func_001C5278(void) {
+void Collision_HitCapsulePitfallObj(void) {
 }
 
 /* Tests the capsule at `origin` against every triangle of a map object's collision mesh,
@@ -2309,7 +2309,7 @@ void Collision_HitFanQuadObj(MapObject *object, Vector4 *origin, f32 radius, f32
 }
 
 /* Does nothing: the pitfall case of Collision_HitFanObj, which passes it the same arguments as the others. */
-void func_001C65E8(void) {
+void Collision_HitFanPitfallObj(void) {
 }
 
 /* Pushes `position` (an upright capsule of this height and radius) sideways out of the wall
@@ -2683,7 +2683,7 @@ void Collision_PushOutOfQuadObj(CollisionOwner *owner, f32 *position, f32 radius
 
 /* Does nothing: the pitfall case of Collision_PushOutOfObjects, which passes it the same arguments as the
    others. */
-void func_001C7AF0(void) {
+void Collision_PushOutOfPitfallObj(void) {
 }
 
 /* Drops a ball of this radius at `position` onto the floor strips of the owner's collision mesh and puts it 1

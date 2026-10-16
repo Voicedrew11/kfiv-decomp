@@ -65,6 +65,6 @@ void MapObject_StartSymbolOfPassage(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
 }
 
-/* Does nothing: step 1 of the symbols of passage. */
-void func_00120ED8(void) {
+/* Does nothing: the step a symbol of passage stays in once started (the wands look for it). */
+void MapObject_IdleSymbolOfPassage(void) {
 }

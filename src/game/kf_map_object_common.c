@@ -149,9 +149,9 @@ int MapObject_RefuseItem(void) {
 }
 
 /* Does nothing: the signal hook of the kinds that take no signal. */
-void func_0011F228(void) {
+void MapObject_IgnoreSignal(void) {
 }
 
 /* Does nothing: the set-up hook of the kinds that need none. */
-void func_0011F230(void) {
+void MapObject_SkipSetUp(void) {
 }

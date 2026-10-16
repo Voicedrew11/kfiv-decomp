@@ -219,8 +219,8 @@ void MapObject_StartFadeObject(MapTrigger *trigger) {
     }
 }
 
-/* Step 1 of the fading kind (hidden): empty. */
-void func_00122CA8(void) {
+/* Step 1 of the fading kind, at rest hidden until MapObject_SignalFadeObject starts the fade-in: empty. */
+void MapObject_KeepFadeObjectHidden(void) {
 }
 
 /* Update handler, type 2: grows the radius (up to 100000) and steps the model's
@@ -245,8 +245,8 @@ void MapObject_FadeInObject(MapTrigger *trigger) {
     }
 }
 
-/* Step 3 of the fading kind (shown): empty. */
-void func_00122D60(void) {
+/* Step 3 of the fading kind, at rest shown until MapObject_SignalFadeObject starts the fade-out: empty. */
+void MapObject_KeepFadeObjectShown(void) {
 }
 
 /* Update handler, type 4: grows the radius (up to 2000) and steps the model's

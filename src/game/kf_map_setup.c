@@ -25,7 +25,7 @@ void MapSetup_CentralTowerLevel3(int);
 void MapSetup_CraftsmansRoom(int);
 void MapSetup_CentralTowerLevel2(int);
 void MapSetup_PlaceItemLowered(int);
-void func_00119E10(int);
+void MapSetup_OceanShoreFrame(int);
 int MapItem_PlaceFixedById(int, int);
 void *Map_GetRecordById(int, int);
 void Map_OffsetRecord(MapRecordBounds *, f32 *);
@@ -113,7 +113,7 @@ void MapSetup_UpdateOceanShore(void) {
     for (map = 0; map < 2; map++) {
         slot = &map_slots[map];
         if (slot->unk00 != 0 && slot->tag == 0x1B) {
-            func_00119E10(map);
+            MapSetup_OceanShoreFrame(map);
         }
     }
 }
@@ -392,7 +392,7 @@ void MapSetup_OceanShore(int map) {
 }
 
 /* Every-frame function of the Ocean Shore: empty. */
-void func_00119E10(int map) {
+void MapSetup_OceanShoreFrame(int map) {
 }
 
 /* Set-up of the Underground Canal (map 029): puts map record 5 at the height the story state keeps for it,

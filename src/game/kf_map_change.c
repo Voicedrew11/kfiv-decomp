@@ -255,7 +255,7 @@ void MapChange_FadeMapToBlack(void) {
 }
 
 /* Map change step 0: empty, no change is running. */
-void func_00118D78(void) {
+void MapChange_Idle(void) {
 }
 
 /* Map change step: lets the background load and everything else in flight settle. */

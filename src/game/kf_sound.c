@@ -1326,16 +1326,18 @@ int SoundDriver_SetVoiceAddress(u32 voice_index, int address) {
     return 0;
 }
 
-/* Sends driver command 0x1040 with the voice's driver id and a byte. Nothing calls it; what the command
-   sets is not known. */
-void func_001CDB80(int voice_index, u8 value) {
-    SoundDriver_Remote(1, 0x1040, sound_state->voices[voice_index].unk18, value);
+/* Sets the priority of a voice's synth port (command 0x1040: FSIOPSND writes the byte to the first field
+   of the port's modhsyn environment, which modhsyn adds to each note's priority when it has to take a
+   sounding voice away for a new note). Nothing calls it. */
+void SoundDriver_SetVoicePriority(int voice_index, u8 priority) {
+    SoundDriver_Remote(1, 0x1040, sound_state->voices[voice_index].unk18, priority);
 }
 
-/* Sends driver command 0x1050 with the voice's driver id and a byte. Nothing calls it; what the command
-   sets is not known. */
-void func_001CDBA0(int voice_index, u8 value) {
-    SoundDriver_Remote(1, 0x1050, sound_state->voices[voice_index].unk18, value);
+/* Sets how many SPU2 voices a voice's synth port may sound at once (command 0x1050: FSIOPSND writes the
+   byte to the second field of the port's modhsyn environment; at that count modhsyn takes the port's own
+   lowest-priority voice for a new note). Nothing calls it. */
+void SoundDriver_SetVoiceMaxPolyphony(int voice_index, u8 max_voices) {
+    SoundDriver_Remote(1, 0x1050, sound_state->voices[voice_index].unk18, max_voices);
 }
 
 /* Sets a voice's volume (command 0x1060; Sound_SetBgmVolume passes 0..0x7F). 0, or -1 for a bad index
@@ -1676,9 +1678,9 @@ int SoundDriver_PlaySequence(u32 bank_index, int value) {
     return SoundDriver_Remote(1, 0x2030, bank->unk0C, value) == 0 ? 0 : -1;
 }
 
-/* Sends driver command 0x2010 with a sequence's driver id and returns the answer; -1 for a bad index.
-   Nothing calls it. */
-int func_001CE4D0(u32 bank_index) {
+/* Whether a sequence is playing (command 0x2010: FSIOPSND answers 1 while it is playing or paused, 0 when
+   it is stopped or only loaded); -1 for a bad index. Nothing calls it. */
+int SoundDriver_IsSequencePlaying(u32 bank_index) {
     SoundBank *bank;
 
     if (bank_index >= 5U) {
@@ -1703,9 +1705,10 @@ int SoundDriver_StopSequence(u32 bank_index) {
     return SoundDriver_Remote(1, 0x2040, bank->unk0C) == 0 ? 0 : -1;
 }
 
-/* Sends driver command 0x2050 with a sequence's driver id if the slot holds one; -1 if not. Nothing calls
-   it (a pause, perhaps: it does not need the output on, as the stop does not). */
-int func_001CE568(u32 bank_index) {
+/* Pauses a sequence (command 0x2050: FSIOPSND turns the modmidi play switch off without rewinding, unlike
+   the stop, and marks the sequence paused). 0, or -1 for a bad index, an empty slot or a refusal. Nothing
+   calls it. */
+int SoundDriver_PauseSequence(u32 bank_index) {
     SoundBank *bank;
 
     if (bank_index >= 5U) {
@@ -1718,9 +1721,10 @@ int func_001CE568(u32 bank_index) {
     return (SoundDriver_Remote(1, 0x2050, bank->unk0C) == 0) ? 0 : -1;
 }
 
-/* Sends driver command 0x2060 with a sequence's driver id if the output is on and the slot holds one;
-   -1 if not. Nothing calls it (a resume, perhaps: it needs the output on, as the start does). */
-int func_001CE5C0(u32 bank_index) {
+/* Resumes a paused sequence (command 0x2060: FSIOPSND turns the modmidi play switch back on where it
+   stopped, marks the sequence playing and sets its tempo again). 0, or -1 with the output off, a bad index,
+   an empty slot or a refusal. Nothing calls it. */
+int SoundDriver_ResumeSequence(u32 bank_index) {
     SoundBank *bank;
 
     if (sound_state->active == 0) {
@@ -1741,9 +1745,11 @@ int SoundDriver_SetSequenceVolume(int bank_index, s16 value) {
     return SoundDriver_Remote(1, 0x1060, sound_state->banks[bank_index].unk0C, value);
 }
 
-/* Sends driver command 0x2080 with a sequence's driver id and a 16-bit value. Nothing calls it. */
-int func_001CE658(int bank_index, u16 value) {
-    return SoundDriver_Remote(1, 0x2080, sound_state->banks[bank_index].unk0C, value);
+/* Sets a sequence's tempo (command 0x2080: FSIOPSND clamps the value by the sequence's own tempo and
+   passes it to sceMidi_MidiSetRelativeTempo, and keeps it for the resume). Returns the driver's answer.
+   Nothing calls it. */
+int SoundDriver_SetSequenceTempo(int bank_index, u16 tempo) {
+    return SoundDriver_Remote(1, 0x2080, sound_state->banks[bank_index].unk0C, tempo);
 }
 
 /* Starts a note in slot `slot` on a voice: queues, in the command list SoundDriver_FlushCommands sends,
@@ -1983,9 +1989,10 @@ int SoundDriver_FlushCommands(void) {
     return 0;
 }
 
-/* As SoundDriver_PlayStreamFile with stream & 1, but the file name goes first, with command 0x3000.
-   Nothing calls it. Returns the stream, or -1. */
-int func_001CECB8(int stream, char *file_name, int value) {
+/* Opens a file as stream `stream & 1` (command 0x3000 with the name: FSIOPSND's adsOpen opens and reads
+   the file), then gives the stream its buffer (0x3040); stops it (0x3030) if that fails. The other order
+   than SoundDriver_PlayStreamFile. Nothing calls it. Returns the stream, or -1. */
+int SoundDriver_OpenStreamFile(int stream, char *file_name, int value) {
     strcpy(sound_rpc_file_name, file_name);
     stream &= 1;
     sceSifCallRpc(sound_rpc_client, stream | 0x3000, 0, sound_rpc_file_name, 0x100, (int *)&sound_rpc_buffer, 1, 0, 0);
@@ -2015,10 +2022,11 @@ int SoundDriver_PlayStreamFile(int stream, char *file_name, int value) {
     return stream;
 }
 
-/* Sends driver command 0x30C0 for a stream with two values; returns the stream, or -1 when the driver
-   refuses. Nothing calls it. */
-int func_001CEE30(int stream, int first_value, int second_value) {
-    return (SoundDriver_Remote(1, 0x30C0, stream, first_value, second_value) == 0) ? stream : -1;
+/* Sets a stream to play straight from the disc (command 0x30C0: FSIOPSND's adsSetWithLsn takes a buffer
+   of buffer_size bytes and reads from sector `sector` with sceCdRead, with no file name). Returns the
+   stream, or -1 when the driver refuses. Nothing calls it. */
+int SoundDriver_SetStreamSector(int stream, int sector, int buffer_size) {
+    return (SoundDriver_Remote(1, 0x30C0, stream, sector, buffer_size) == 0) ? stream : -1;
 }
 
 /* Stores reverb settings (a rev_para.dat entry: mode, depths, delay, feedback) for SPU2 core effect_id in
@@ -2113,14 +2121,15 @@ static int SoundDriver_LoadIopFile(char *name, void *addr) {
     return 0;
 }
 
-/* Sends driver command 0x1090 with selector and copies the first 16 bytes of the answer to buffer.
-   Nothing calls it; what it reads is not known. */
-void func_001CF168(void *buffer, int selector) {
+/* Copies the status of the 16 MIDI channels of synth port `port` to buffer, one byte each (command 0x1090:
+   FSIOPSND answers with sceHSyn_GetChStat, whose bits say whether the channel has voices in its lists).
+   Nothing calls it. */
+void SoundDriver_GetChannelStatus(void *buffer, int port) {
     u8 *out_bytes;
     int *word;
     int words_left;
 
-    SoundDriver_Remote(1, 0x1090, selector);
+    SoundDriver_Remote(1, 0x1090, port);
     out_bytes = buffer;
     word = (int *)&sound_rpc_buffer;
     words_left = 3;

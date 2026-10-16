@@ -38,7 +38,7 @@ int Map_TestFlagBlockBit(int, int, int, int);
 void MapObject_DrawModel(int *);
 void MapObject_DrawModelWithAlpha(ModelInstance *);
 void MapObject_DrawModelNoDepthWrite(void *);
-void func_0011EA70(void);
+void MapObject_UpdateNoBonePoints(void);
 char *MapObject_GetPositionAsPoint(char *);
 void MapObject_StopSound(MapObject *);
 float Angle_Wrap(float);
@@ -106,7 +106,7 @@ void MapObject_InitMap(int map) {
         MAP_OBJECT_BYTES(object)->step = 0;
         if (object->unk04->unk04 == 0xFFFF) {
             object->model->get_point = (int (*)(void *, int))MapObject_GetPositionAsPoint;
-            object->model->unk1B4 = (void (*)(ModelInstance *))func_0011EA70;
+            object->model->unk1B4 = (void (*)(ModelInstance *))MapObject_UpdateNoBonePoints;
         }
         if (object->unk08->unk38.bytes[2] != 0) {
             link_id = object->unk08->unk38.bytes[2];
@@ -891,7 +891,7 @@ void MapObject_DrawModelNoDepthWrite(void *model) {
 }
 
 /* Does nothing: the point-update hook (ModelInstance.unk1B4) of a map object model without points. */
-void func_0011EA70(void) {
+void MapObject_UpdateNoBonePoints(void) {
 }
 
 /* get_point hook of a map object model without points: returns the model's position, whatever the index. */
