@@ -20,7 +20,7 @@ static u32 mc_file_offset MC_4BYTE;      /* 0x1E4F244 bytes of it written so far
 static int mc_file_chunk_size MC_4BYTE;      /* 0x1E4F248 bytes to hand to sceMcWrite each step (McFileProgress.chunk_size) */
 static int mc_read_bytes MC_4BYTE;  /* 0x1E4F24C bytes of the data read so far */
 static int mc_file_data_size MC_4BYTE;  /* 0x1E4F250 the data length the file starts with */
-static int D_01E4F254 MC_4BYTE;  /* 0x1E4F254 where the end mark is in the last 0x20 bytes of the file */
+static int mc_end_mark_offset MC_4BYTE;  /* 0x1E4F254 where the end mark is in the last 0x20 bytes of the file */
 static int mc_file_size_padded MC_4BYTE;  /* 0x1E4F258 size of the whole file, a multiple of 0x20 */
 static u32 mc_write_bytes MC_4BYTE;  /* 0x1E4F25C bytes written so far */
 static int mc_write_chunk MC_4BYTE;  /* 0x1E4F260 bytes to hand to sceMcWrite this step */
@@ -751,7 +751,7 @@ static int Mc_StepReadChecked(void) {
         }
         padded_size = mc_file_size_padded + 0x1F;
         total_size = padded_size & 0xFFFFFFE0;
-        D_01E4F254 = padded_size - total_size;
+        mc_end_mark_offset = padded_size - total_size;
         mc_request.retries = 0;
         mc_request.step++;
         mc_file_size_padded = total_size;
@@ -806,7 +806,7 @@ static int Mc_StepReadChecked(void) {
                     mc_request.retries++;
                     mc_request.step--;
                 }
-            } else if (mc_file_block[D_01E4F254] != 1) {
+            } else if (mc_file_block[mc_end_mark_offset] != 1) {
                 mc_request.status = MC_STATUS_READ_FAILED;
                 mc_request.step = 100;
             } else {

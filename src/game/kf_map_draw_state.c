@@ -14,20 +14,20 @@ int D_0038A198[6] = { 0x20, 0x18, 0x10, 0x8, 0x4, 0 };
 MapDrawStateMirror map_draw_state = { 0 };
 
 /* 0x38A218 MapDrawState.unk68 on: the HUD is drawn (kf_hud.c) */
-s32 D_0038A218[0xE] = { 0 };
+s32 hud_visible[0xE] = { 0 };
 
 /* 0x38A250 MapDrawState.unkA0: the current map's first block (kf_held_weapon.c) */
-MapSlotUnk0C D_0038A250 = { { 0 } };
+MapSlotUnk0C current_fog_block = { { 0 } };
 
 /* 0x38A270 MapDrawState.unkC0: the block as the eight vectors it holds, in two halves */
-MapSlotUnk10Half D_0038A270 = { { 0 } };
-MapSlotUnk10Half D_0038A2B0 = { { 0 } };
+MapSlotUnk10Half current_light_block = { { 0 } };
+MapSlotUnk10Half current_map_light_colors = { { 0 } };     /* its second half: the colours of the lights */
 
 /* 0x38A2F0 MapDrawState.pad140 */
 u8 D_0038A2F0[0x140] = { 0 };
 
 /* 0x38A430 MapDrawState.unk280: the current map's fog colour */
-MapFogColor D_0038A430 = { 0 };
+MapFogColor current_map_fog_color = { 0 };
 
 /* 0x38A440 MapDrawState.unk290: each map slot's 0x20 blocks (a model's unk14C points at one) */
 MapSlotUnk0C map_draw_slot_blocks[2][0x20] = { 0 };

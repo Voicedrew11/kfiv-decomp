@@ -105,8 +105,8 @@ typedef struct {
     s32 decode_thread;              /* 0x40 thread id */
     s32 idle_thread;                /* 0x44 thread id */
     char pad48[0x04];
-    MovieFile file;                 /* 0x4C D_0043789C */
-    MovieDisplay display;           /* 0x80 D_004378D0 */
+    MovieFile file;                 /* 0x4C */
+    MovieDisplay display;           /* 0x80 */
     char padC8[0x08];
     u32 volume;                     /* 0xD0 master volume of the sound, at most 0x3FFF */
     s16 video_mode;                 /* 0xD4 sceGsResetGraph's mode */
@@ -170,7 +170,7 @@ typedef struct {
     u32 ipu_ctrl;                   /* 0x20 */
 } MovieDmaRegisters;
 
-/* D_00437980: the ring of 0x800-byte blocks the video stream reaches the IPU through (the SDK sample's ViBuf) */
+/* movie_decoder.stream: the ring of 0x800-byte blocks the video stream reaches the IPU through (the SDK sample's ViBuf) */
 typedef struct {
     u8 *data;                       /* 0x00 the blocks */
     void *tags;                     /* 0x04 one DMA tag per block */

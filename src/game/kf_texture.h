@@ -50,7 +50,7 @@ typedef struct {
 
 #define TEXTURE_HEADER_BITS(header) ((TextureHeaderBits *)(header))
 
-/* D_0042A8D0: a loaded texture file (the menu font) and the two words MenuTexture_GetRegisters reads from it */
+/* menu_font_texture: a loaded texture file (the menu font) and the two words MenuTexture_GetRegisters reads from it */
 typedef struct {
     u64 tex0;                       /* 0x00 */
     u64 trailer;                    /* 0x08 the word after its CLUT */

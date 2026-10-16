@@ -16,7 +16,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -96,7 +96,7 @@ void MutantCeiling_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with MutantCeiling_ThinkCombat for state 2. */
 static void MutantCeiling_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
@@ -155,7 +155,7 @@ static void MutantCeiling_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = next_action;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         // match: called with one argument here
         ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);

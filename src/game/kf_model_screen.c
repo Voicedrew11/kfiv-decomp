@@ -54,13 +54,13 @@ void Vector_Add(void *, void *, void *);
 void ModelScreen_StepFloatVertices(BlendVertex *, BlendVertex *, BlendVertex *, int);
 void Vector_Subtract(float *, float *, float *);
 void Vector_Scale(float *, float *, float);
-extern f32 D_004323E0[16];      /* world to screen */
-extern int D_00446764;          /* triangles cut up this way */
+extern f32 world_screen_matrix[16];      /* world to screen */
+extern int cut_triangle_count;  /* triangles cut up this way */
 
 double sin(double);
 int FlushCache(int);
-extern int D_00446760;
-extern int D_00447054;
+extern int screen_uv_frame;         /* 0..59, stepped by ModelScreen_SetUvsFromScreen */
+extern int screen_uv_frame_copy;    /* the same value; nothing reads it */
 
 /* Looks for the triangles of a model that the GS could not draw as they are (a corner out of its
    range) but that are partly on the screen, and queues each cut up into smaller ones. */
@@ -83,7 +83,7 @@ void ModelScreen_CutClippedTriangles(ModelInstance *model) {
         ModelPartData *block;
 
         sceVu0MulMatrix(local_matrix, model->unk40, part);
-        sceVu0MulMatrix(screen_matrix, D_004323E0, local_matrix);
+        sceVu0MulMatrix(screen_matrix, world_screen_matrix, local_matrix);
         Vu0_LoadMatrix(screen_matrix);
         j = 0;
         count = (s32)(MODEL_PART_WORD(part) >> 53);
@@ -263,7 +263,7 @@ void ModelScreen_QueueCutTriangle(u32 *data, ModelPartVertexWords *vertex, int f
         *packet++ = 0x17000000;
     }
     Packet_AppendToChain(packet_start, packet);
-    D_00446764++;
+    cut_triangle_count++;
 }
 
 /* Writes steps + 1 vertices that lead from one vertex to another in equal steps; the position is
@@ -504,7 +504,7 @@ void ModelScreen_QueueCutFloatTriangle(u32 *data, ModelPartVertexWords *vertex, 
         *packet++ = 0x17000000;
     }
     Packet_AppendToChain(packet_start, packet);
-    D_00446764++;
+    cut_triangle_count++;
 }
 
 /* Writes steps + 1 float vertices that lead from one packed vertex to another in equal steps
@@ -603,7 +603,7 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
     int vertex_count;
     u16 length;
 
-    D_00447054 = D_00446760 = (D_00446760 + 1) % 60;
+    screen_uv_frame_copy = screen_uv_frame = (screen_uv_frame + 1) % 60;
     for (i = 0; i < 60; i++) {
         sines[i] = sin((f32)i * 6.2831855f / 60.0f) * 10.0;
     }
@@ -611,7 +611,7 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
     part_count = model->part_count;
     for (i = 0; i < part_count; i++, part++) {
         FlushCache(0);
-        sceVu0MulMatrix(matrix, D_004323E0, part);
+        sceVu0MulMatrix(matrix, world_screen_matrix, part);
         Vu0_LoadMatrix(matrix);
         ((void (*)(int))FlushCache)(0); // match: called as void, retail reuses $2 at once
         count = part->data_count;

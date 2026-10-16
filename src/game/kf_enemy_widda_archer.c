@@ -27,7 +27,7 @@ float EntityMath_EaseAngleToward(float *, float, float);
 float atan2f(float, float);
 float EntityMath_HeadingTo(float *, float *);
 float EntityMath_AngleDifference(float, float);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -55,7 +55,7 @@ extern u8 map_script_flags[];
 float EntityMath_DistanceXZ(void *, void *);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 int Script_Start(int, int);
-extern int D_00446770;
+extern int current_map_slot;
 
 static void WiddaArcher_Animate(Entity *entity);
 static void WiddaArcher_PitchPartToPlayer(Entity *entity);
@@ -227,7 +227,7 @@ static void WiddaArcher_Think(Entity *entity, s32 unknown) {
     } else {
         ((EntityModelPart80 *)entity->model->unkF8)[29].unk68 &= ~(0x8000L << 25);
     }
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
@@ -281,7 +281,7 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -308,7 +308,7 @@ static void WiddaArcher_ThinkCombat(Entity *entity, s32 unknown) {
     }
     angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
     if (entity->unk60 - entity->radius - 100.0f < 200.0f && ABS(angle) < 0.6981317f) {
-        if (D_00446ED4 % 10U == entity->unkD7 % 10U &&
+        if (frame_counter % 10U == entity->unkD7 % 10U &&
             rand() % 100 < (entity->params->unk0A - entity->unk2C) * 100 / entity->params->unk0A) {
             angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
             if (ABS(angle) > 0.6981317f && ABS(angle) < 1.5707964f) {
@@ -399,7 +399,7 @@ static void WiddaArcher_ThinkUseMapObject(Entity *entity, s32 unknown) {
     } else {
         ((EntityModelPart80 *)entity->model->unkF8)[29].unk68 &= ~(0x8000L << 25);
     }
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
@@ -472,7 +472,7 @@ static void WiddaArcher_WalkToMapObject(Entity *entity, s32 unknown) {
 
 /* An action (busy bit 0x1000) that WiddaArcher_WalkToMapObject starts: plays animation 17 to its
    end; on frame EntitySpawnInfo.unk44 it starts the script (Script_Start) of the map object
-   EntitySpawnInfo.unk43 names, when the object has one and the entity is on map D_00446770. */
+   EntitySpawnInfo.unk43 names, when the object has one and the entity is on map current_map_slot. */
 static void WiddaArcher_StartMapObjectScript(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapObject *map_object;
@@ -493,7 +493,7 @@ static void WiddaArcher_StartMapObjectScript(Entity *entity) {
     case 2:
         if (entity->model->unkFC->unk82 == entity->spawn_info->unk44) {
             map_object = MapObject_GetById(entity->group_id, entity->spawn_info->unk43);
-            if (map_object != NULL && map_object->unk08->unk40 != 0 && entity->group_id == D_00446770) {
+            if (map_object != NULL && map_object->unk08->unk40 != 0 && entity->group_id == current_map_slot) {
                 Script_Start(map_object->unk08->unk40, 0);
             }
         }

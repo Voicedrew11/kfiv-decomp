@@ -10,7 +10,7 @@ void Vector_Subtract(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 float sinf(float);
 float cosf(float);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void Vector_Hermite(void *, void *, void *, void *, void *, f32);
 
 /* dst = a * (1 - t) + b * t across the xyz lanes, on the VU0 (EntityMath_LerpVector inlined) */
@@ -153,7 +153,7 @@ s32 Motion_StepSlot(Entity *entity, EntityUnkE0SlotBits *slot_bits, s32 type, s3
         turned[1] = -turned[1];
     }
     if (mode == 1) {
-        sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, D_00431AF0, -root->unk54);
+        sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, identity_matrix, -root->unk54);
         sceVu0RotMatrixX(MODEL_MATRIX_SCRATCH, MODEL_MATRIX_SCRATCH, -root->unk50);
         sceVu0RotMatrixZ(MODEL_MATRIX_SCRATCH, MODEL_MATRIX_SCRATCH, -root->unk58);
         sceVu0RotMatrixZ(MODEL_MATRIX_SCRATCH, MODEL_MATRIX_SCRATCH, ENTITY_MODEL(entity)->rotation.z);
@@ -659,7 +659,7 @@ s32 Motion_Step(Entity *entity, s32 mode) {
         turned[1] = -turned[1];
     }
     if (mode == 1) {
-        sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, D_00431AF0, -root->unk54);
+        sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, identity_matrix, -root->unk54);
         sceVu0RotMatrixX(MODEL_MATRIX_SCRATCH, MODEL_MATRIX_SCRATCH, -root->unk50);
         sceVu0RotMatrixZ(MODEL_MATRIX_SCRATCH, MODEL_MATRIX_SCRATCH, -root->unk58);
         sceVu0RotMatrixZ(MODEL_MATRIX_SCRATCH, MODEL_MATRIX_SCRATCH, ENTITY_MODEL(entity)->rotation.z);

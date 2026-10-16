@@ -15,10 +15,10 @@ float sinf(float);
 int rand(void);
 void srand(u32);
 
-extern const float D_00444BDC;
-extern const float D_00444BE0;
-extern const float D_00444BE4;
-extern f32 D_004323E0[16];
+extern const float wobble_phase_step;       /* 2 pi / 30: a full turn of the base phase takes 30 steps */
+extern const float wobble_phase_period;     /* 2 pi */
+extern const float wobble_sine_spacing;     /* pi / 8 between neighbouring sines */
+extern f32 world_screen_matrix[16];
 
 /* the screen wobble: 16 oscillators and a table of sines they are drawn from */
 static float wobble_base_phase;                 /* 0x447058 advanced each frame by Wobble_AdvanceSines */
@@ -30,16 +30,16 @@ void Wobble_AdvanceSines(void) {
     float x;
     int i;
 
-    wobble_base_phase += D_00444BDC;
-    if (wobble_base_phase > D_00444BE0) {
-        wobble_base_phase -= D_00444BE0;
+    wobble_base_phase += wobble_phase_step;
+    if (wobble_base_phase > wobble_phase_period) {
+        wobble_base_phase -= wobble_phase_period;
     }
     x = wobble_base_phase;
     for (i = 0; i < 32; i++) {
         wobble_sines[i] = sin(x);
-        x += D_00444BE4;
-        if (x > D_00444BE0) {
-            x -= D_00444BE0;
+        x += wobble_sine_spacing;
+        if (x > wobble_phase_period) {
+            x -= wobble_phase_period;
         }
     }
 }
@@ -125,7 +125,7 @@ void Wobble_DrawRippledModel(ModelInstance *model, int unk1, int unk2, int unk3,
         part = model->parts;
         for (i = 0; i < part_count; i++, part++) {
             Matrix_Multiply(matrix, model->unk40, part);
-            Matrix_Multiply(matrix, D_004323E0, matrix);
+            Matrix_Multiply(matrix, world_screen_matrix, matrix);
             Vu0_LoadMatrix(matrix);
             data_count = part->data_count;
             next = (ModelPartData *)(int)part->data_addr;
@@ -435,7 +435,7 @@ void Wobble_SetUvsFromJitteredScreen(ModelInstance *model) {
     matrix = MODEL_PROJECT_SCRATCH->matrices[0];
     for (i = 0; i < part_count; i++, part++) {
         Matrix_Multiply(matrix, model->unk40, part);
-        Matrix_Multiply(matrix, D_004323E0, matrix);
+        Matrix_Multiply(matrix, world_screen_matrix, matrix);
         matrix += 16;
     }
     part = model->parts;

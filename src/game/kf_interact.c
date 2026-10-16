@@ -25,15 +25,15 @@ int Script_IsRunning(int);
 int MapItem_StartPickup(ItemNode *);
 extern GameStatus game_status;
 extern PlayerState player_state;
-extern EventRunner D_00420D00;
-extern CameraState D_004325A0;
-extern f32 D_00431AF0[16];
+extern EventRunner view_ray_status;
+extern CameraState camera_state;
+extern f32 identity_matrix[16];
 extern MapSlot map_slots[2];
 extern MapObject map_slot_objects[][0x200];
-extern s32 D_004467B8[2];
-extern int D_00446770;
-extern ItemNode *D_004469D4;
-extern ItemNode *D_004469D8;
+extern s32 map_object_counts[2];
+extern int current_map_slot;
+extern ItemNode *lying_items;
+extern ItemNode *pickup_item;
 extern f32 D_00446A08[];
 extern float D_00446A0C[];
 
@@ -44,12 +44,12 @@ void Interact_UpdateViewRay(void) {
     f32 pitch;
     f32 heading;
 
-    Vector_Copy(D_00420D00.unk20, D_00420D00.unk00);
-    Vector_Copy(D_00420D00.unk30, D_00420D00.unk10);
-    D_00420D00.unk44 = D_00420D00.unk40;
+    Vector_Copy(view_ray_status.unk20, view_ray_status.unk00);
+    Vector_Copy(view_ray_status.unk30, view_ray_status.unk10);
+    view_ray_status.unk44 = view_ray_status.unk40;
     if (game_status.unk03 == 0) {
-        Vector_Copy(D_00420D00.unk00, &player_state);
-        D_00420D00.unk00[1] = D_00420D00.unk00[1] - 220.0f + player_state.unk1F0 + D_004325A0.unk4C;
+        Vector_Copy(view_ray_status.unk00, &player_state);
+        view_ray_status.unk00[1] = view_ray_status.unk00[1] - 220.0f + player_state.unk1F0 + camera_state.unk4C;
         pitch = player_state.rotation.x - player_state.unk238;
         if (pitch > 1.012291f) {
             pitch = 1.012291f;
@@ -58,18 +58,18 @@ void Interact_UpdateViewRay(void) {
         }
         heading = player_state.rotation.y;
     } else {
-        Vector_Copy(D_00420D00.unk00, &D_004325A0);
-        pitch = D_004325A0.unk10;
-        heading = D_004325A0.unk14;
+        Vector_Copy(view_ray_status.unk00, &camera_state);
+        pitch = camera_state.unk10;
+        heading = camera_state.unk14;
     }
-    D_00420D00.unk10[2] = 1.0f;
-    D_00420D00.unk10[0] = 0.0f;
-    D_00420D00.unk10[1] = 0.0f;
-    D_00420D00.unk10[3] = 0.0f;
-    sceVu0RotMatrixX(rotation, D_00431AF0, pitch);
-    Vector_ApplyMatrix(D_00420D00.unk10, rotation, D_00420D00.unk10);
-    sceVu0RotMatrixY(rotation, D_00431AF0, heading);
-    Vector_ApplyMatrix(D_00420D00.unk10, rotation, D_00420D00.unk10);
+    view_ray_status.unk10[2] = 1.0f;
+    view_ray_status.unk10[0] = 0.0f;
+    view_ray_status.unk10[1] = 0.0f;
+    view_ray_status.unk10[3] = 0.0f;
+    sceVu0RotMatrixX(rotation, identity_matrix, pitch);
+    Vector_ApplyMatrix(view_ray_status.unk10, rotation, view_ray_status.unk10);
+    sceVu0RotMatrixY(rotation, identity_matrix, heading);
+    Vector_ApplyMatrix(view_ray_status.unk10, rotation, view_ray_status.unk10);
 }
 
 /* Finds what is in front of the player: how far the view reaches before a wall or a map object (unk40), and the
@@ -101,16 +101,16 @@ void Interact_FindTarget(void) {
 
     Timer_GetTicks();
     Interact_UpdateViewRay();
-    nearest = D_00420D00.unk4C = D_00420D00.unk40 = D_00446A08[0];
-    D_00420D00.unk54 = NULL;
-    D_00420D00.current = NULL;
-    D_00420D00.unk58 = NULL;
-    Collision_CastRayAtMapLists(2000.0f, D_00420D00.unk00, D_00420D00.unk10, 7);
+    nearest = view_ray_status.unk4C = view_ray_status.unk40 = D_00446A08[0];
+    view_ray_status.unk54 = NULL;
+    view_ray_status.current = NULL;
+    view_ray_status.unk58 = NULL;
+    Collision_CastRayAtMapLists(2000.0f, view_ray_status.unk00, view_ray_status.unk10, 7);
     if (COLLISION_RESULT->hit != 0) {
-        D_00420D00.unk40 = COLLISION_RESULT->distance;
+        view_ray_status.unk40 = COLLISION_RESULT->distance;
         nearest = COLLISION_RESULT->distance;
     }
-    for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+    for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         if ((entity->flags & 0xE) != 2) {
             continue;
         }
@@ -119,24 +119,24 @@ void Interact_FindTarget(void) {
         if (distance < nearest) {
             nearest = distance;
         }
-        if (D_00420D00.unk40 <= distance) {
+        if (view_ray_status.unk40 <= distance) {
             continue;
         }
-        if (D_00420D00.unk4C <= distance) {
+        if (view_ray_status.unk4C <= distance) {
             continue;
         }
-        Collision_RayCylinder(entity->radius, entity->height, reach, &ENTITY_MODEL(entity)->position, D_00420D00.unk00,
-                      D_00420D00.unk10);
+        Collision_RayCylinder(entity->radius, entity->height, reach, &ENTITY_MODEL(entity)->position, view_ray_status.unk00,
+                      view_ray_status.unk10);
         if (COLLISION_RESULT->hit != 0) {
-            D_00420D00.unk4C = distance;
-            D_00420D00.unk54 = entity;
+            view_ray_status.unk4C = distance;
+            view_ray_status.unk54 = entity;
         }
     }
     for (map = 0; map < 2; map++) {
         if (map_slots[map].unk00 == 0) {
             continue;
         }
-        count = D_004467B8[map];
+        count = map_object_counts[map];
         object = map_slot_objects[map];
         for (i = 0; i < count; i++, object++) {
             if (!(object->unk10 & 0x10000)) {
@@ -149,40 +149,40 @@ void Interact_FindTarget(void) {
             is_plain = object->unk08->unk34 == 0xFFFF && !(object->unk04->kind == 1 || object->unk04->kind == 2 ||
                        object->unk04->kind == 6 || object->unk04->kind == 0x11);
             if (is_plain) {
-                sceVu0SubVector(delta, &object->model->position, &D_004325A0);
+                sceVu0SubVector(delta, &object->model->position, &camera_state);
                 sceVu0Normalize(delta, delta);
-                if (sceVu0InnerProduct(delta, D_00420D00.unk10) < 0.866025f) {
+                if (sceVu0InnerProduct(delta, view_ray_status.unk10) < 0.866025f) {
                     continue;
                 }
-                sceVu0SubVector(delta, &object->model->position, &D_004325A0);
+                sceVu0SubVector(delta, &object->model->position, &camera_state);
                 distance = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
             } else {
-                Collision_HitRayObj(object, (f32 *)&D_004325A0, D_00420D00.unk10, reach);
+                Collision_HitRayObj(object, (f32 *)&camera_state, view_ray_status.unk10, reach);
                 if (COLLISION_RESULT->hit == 0) {
                     continue;
                 }
-                sceVu0SubVector(delta, COLLISION_RESULT, &D_004325A0);
+                sceVu0SubVector(delta, COLLISION_RESULT, &camera_state);
                 distance = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
             }
-            if (distance < object->unk3C + 100.0f && distance < D_00420D00.unk4C) {
-                D_00420D00.unk54 = NULL;
-                D_00420D00.current = object;
-                D_00420D00.unk4C = distance;
+            if (distance < object->unk3C + 100.0f && distance < view_ray_status.unk4C) {
+                view_ray_status.unk54 = NULL;
+                view_ray_status.current = object;
+                view_ray_status.unk4C = distance;
             }
-            if (!is_plain && distance < D_00420D00.unk40) {
-                D_00420D00.unk40 = distance;
+            if (!is_plain && distance < view_ray_status.unk40) {
+                view_ray_status.unk40 = distance;
             }
         }
     }
-    facing = D_00420D00.current;
+    facing = view_ray_status.current;
     if (facing != NULL && facing->unk04->unk64 != 0.0f) {
         turn = MapObject_GetTurnToward(facing, &player_state.position);
-        limit = ((MapObject *)D_00420D00.current)->unk04->unk64;
+        limit = ((MapObject *)view_ray_status.current)->unk04->unk64;
         if (turn < -limit || limit < turn) {
-            D_00420D00.current = NULL;
+            view_ray_status.current = NULL;
         }
     }
-    for (node = D_004469D4; node != NULL; node = node->next) {
+    for (node = lying_items; node != NULL; node = node->next) {
         if (!MapItem_IsPickable(node)) {
             continue;
         }
@@ -192,17 +192,17 @@ void Interact_FindTarget(void) {
         if (player_state.position.y + 50.0f < node->model->position.y) {
             continue;
         }
-        sceVu0SubVector(delta, &node->model->position, &D_004325A0);
+        sceVu0SubVector(delta, &node->model->position, &camera_state);
         distance = delta[0] * delta[0] + delta[2] * delta[2];
         if (90000.0f < distance) {
             continue;
         }
         sceVu0Normalize(unit, delta);
-        if (sceVu0InnerProduct(unit, D_00420D00.unk10) < 0.866025f) {
+        if (sceVu0InnerProduct(unit, view_ray_status.unk10) < 0.866025f) {
             continue;
         }
         distance = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
-        if (D_00420D00.unk40 < distance) {
+        if (view_ray_status.unk40 < distance) {
             continue;
         }
         def = node->def;
@@ -244,58 +244,58 @@ void Interact_FindTarget(void) {
                 }
             }
         }
-        D_00420D00.unk4C = distance;
-        D_00420D00.unk54 = NULL;
-        D_00420D00.current = NULL;
-        D_00420D00.unk58 = node;
+        view_ray_status.unk4C = distance;
+        view_ray_status.unk54 = NULL;
+        view_ray_status.current = NULL;
+        view_ray_status.unk58 = node;
     }
-    if (D_00420D00.unk40 == D_00446A08[0]) {
-        D_00420D00.unk40 = 2000.0f;
+    if (view_ray_status.unk40 == D_00446A08[0]) {
+        view_ray_status.unk40 = 2000.0f;
     }
     if (player_state.unk1A8 == 0) {
         can_act = game_status.bit1;
-        pickup = D_00420D00.unk58;
+        pickup = view_ray_status.unk58;
         if (pickup != NULL && can_act) {
             if (pickup->def != NULL && pickup->def->unk34 != 0) {
-                if ((pickup->flags & 1) == D_00446770) {
+                if ((pickup->flags & 1) == current_map_slot) {
                     Script_Start(pickup->def->unk34, 0);
                 }
                 can_act = FALSE;
-            } else if (D_004469D8 == NULL) {
-                MapItem_StartPickup(D_00420D00.unk58);
+            } else if (pickup_item == NULL) {
+                MapItem_StartPickup(view_ray_status.unk58);
                 can_act = FALSE;
             }
         }
-        user = D_00420D00.unk54;
+        user = view_ray_status.unk54;
         if (user != NULL) {
             if (can_act && user->spawn_info->unk4E != 0) {
-                if (user->group_id == D_00446770) {
+                if (user->group_id == current_map_slot) {
                     if (user->spawn_info->unk58 == 0 || Script_IsRunning(user->spawn_info->unk58) == 0) {
-                        Script_Start(((Entity *)D_00420D00.unk54)->spawn_info->unk4E, 0);
+                        Script_Start(((Entity *)view_ray_status.unk54)->spawn_info->unk4E, 0);
                     }
                 }
                 game_status.bit1 = FALSE;
             }
         } else {
-            used = D_00420D00.current;
+            used = view_ray_status.current;
             if (used != NULL && can_act && used->unk08->unk40 != 0) {
-                if ((MAP_OBJECT_BYTES(used)->unk00 & 1) == D_00446770) {
+                if ((MAP_OBJECT_BYTES(used)->unk00 & 1) == current_map_slot) {
                     if (used->unk08->unk58 == 0 || Script_IsRunning(used->unk08->unk58) == 0) {
-                        Script_Start(((MapObject *)D_00420D00.current)->unk08->unk40, 0);
+                        Script_Start(((MapObject *)view_ray_status.current)->unk08->unk40, 0);
                     }
                 }
                 game_status.bit1 = FALSE;
             }
         }
     }
-    D_00420D00.unk48 = nearest;
+    view_ray_status.unk48 = nearest;
 }
 
 /* Moves the event runner's position and its copy from the frame before by offset (the other map slot became
    the current one). */
 void Interact_OffsetViewRay(f32 *offset) {
-    Vector_Add(D_00420D00.unk00, D_00420D00.unk00, offset);
-    Vector_Add(D_00420D00.unk20, D_00420D00.unk20, offset);
+    Vector_Add(view_ray_status.unk00, view_ray_status.unk00, offset);
+    Vector_Add(view_ray_status.unk20, view_ray_status.unk20, offset);
 }
 
 /* Distance from pos to target if within radius on every axis and overall, else D_00446A0C. */

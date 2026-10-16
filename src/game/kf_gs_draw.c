@@ -14,8 +14,8 @@ void GsDraw_QueueImageTransfer(int, int, int, int, int, int, int, int, int, int,
 void GsDraw_QueueFlatSprite(void *);
 void GsDraw_QueueFlush(void);
 void GsDraw_QueueTexturedSprite(void *);
-extern int D_00446F78;
-extern u32 D_00446ED4;
+extern int context1_buffer_half;
+extern u32 frame_counter;
 
 /* Queues a GS local-to-local image transfer (BITBLTBUF, TRXPOS, TRXREG, TRXDIR). */
 void GsDraw_QueueImageTransfer(int source_base, int source_format, int source_width, int source_x, int source_y, int width,
@@ -117,7 +117,7 @@ void GsDraw_SetDrawTarget(s64 frame, s64 scissor, s64 xy_offset) {
 void GsDraw_ResetDrawTarget(void) {
     u32 frame_base = 0x1180;
 
-    if (D_00446F78 != 0) {
+    if (context1_buffer_half != 0) {
         frame_base = 0;
     }
     GsDraw_SetDrawTarget((frame_base >> 5) | 0xA0000, 0x1BF0000027F0000L, 0x720000006C00L);
@@ -125,12 +125,12 @@ void GsDraw_ResetDrawTarget(void) {
 
 /* Queues a copy of the 640x448 frame being drawn to dest_base in GS memory. */
 void GsDraw_CopyFrame(int dest_base) {
-    GsDraw_QueueImageTransfer((D_00446F78 != 0) ? 0 : 0x1180, 0, 0xA, 0, 0, 0x280, 0x1C0, dest_base, 0, 0xA, 0, 0, 2);
+    GsDraw_QueueImageTransfer((context1_buffer_half != 0) ? 0 : 0x1180, 0, 0xA, 0, 0, 0x280, 0x1C0, dest_base, 0, 0xA, 0, 0, 2);
 }
 
 /* The same as GsDraw_CopyFrame; nothing calls it. */
 void func_0010A0A0(int value) {
-    GsDraw_QueueImageTransfer((D_00446F78 != 0) ? 0 : 0x1180, 0, 0xA, 0, 0, 0x280, 0x1C0, value, 0, 0xA, 0, 0, 2);
+    GsDraw_QueueImageTransfer((context1_buffer_half != 0) ? 0 : 0x1180, 0, 0xA, 0, 0, 0x280, 0x1C0, value, 0, 0xA, 0, 0, 2);
 }
 
 /* Queue a textured screen sprite. */
@@ -399,7 +399,7 @@ void GsDraw_DrawScrollingTexture(void *texture_arg, void *offset_arg) {
     width = source_width << 4;
     height = source_height << 4;
     if (offset != NULL) {
-        if (texture->period == 0 || D_00446ED4 % texture->period == 0) {
+        if (texture->period == 0 || frame_counter % texture->period == 0) {
             if (texture->step_x != 0) {
                 offset->x += texture->step_x;
                 if (offset->x < 0) {
@@ -473,7 +473,7 @@ void GsDraw_CopyFrameToTexture(int fbp, int psm, int width, int height) {
     int frame_base;
 
     frame_base = 0x1180;
-    if (D_00446F78 != 0) {
+    if (context1_buffer_half != 0) {
         frame_base = 0;
     }
     GsDraw_SetDrawTarget((fbp >> 5) | ((u64)(width / 64) << 16) | ((u64)psm << 24),

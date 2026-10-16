@@ -16,7 +16,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
@@ -31,7 +31,7 @@ int EntityAi_PickAttack(char *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 extern PlayerData player_state;
 void sceVu0RotMatrixY(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
@@ -98,7 +98,7 @@ void DarkFlower_Init(Entity *entity) {
 static void DarkFlower_Think(Entity *entity, s32 unknown) {
     u32 phase;
 
-    phase = D_00446ED4 % 10U;
+    phase = frame_counter % 10U;
     if (phase == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -163,7 +163,7 @@ static void DarkFlower_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -257,7 +257,7 @@ static void DarkFlower_Move(Entity *entity) {
         }
         if (entity->target != NULL) {
             heading = EntityMath_HeadingTo(entity->model->position, entity->target);
-            sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, D_00431AF0, heading);
+            sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, identity_matrix, heading);
             Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
             Vector_Normalize(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR);
             Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, amount);
@@ -295,7 +295,7 @@ static void DarkFlower_RangedAttack0(Entity *entity) {
         if (entity->model->unkFC->unk82 >= entity->params->unk430 && entity->model->unkFC->unk82 <= entity->params->unk432) {
             if ((s16)entity->params->unk434 == 0) {
                 EntityAi_LaunchShots(entity, unk3D8, 30, 50);
-            } else if (D_00446ED4 % (s16)entity->params->unk434 == 0) {
+            } else if (frame_counter % (s16)entity->params->unk434 == 0) {
                 if (unkE0->unk7A != 0) {
                     EntityAi_LaunchShots(entity, unk3D8, 30, 50);
                 } else {

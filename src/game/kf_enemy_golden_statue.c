@@ -19,7 +19,7 @@ void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 extern void EntityAi_ReactionHeavy(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 float EntityMath_DistanceXZ(void *, void *);
@@ -33,7 +33,7 @@ int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(void *);
 void EntityAi_CheckFarFromSpawn(void *);
 extern PlayerData player_state;
-extern char D_0043E8C0[];
+extern char golden_statue_arrived_message[];
 int printf(const char *, ...);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -46,7 +46,7 @@ int EntityAi_TurnCommand(Entity *);
 int EntityAi_TurnFromPush(void *, void *);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
-extern int D_00414184[];
+extern int entity_under_player[];
 int Motion_Start(void *, int, int, u32, int);
 double atan2(double, double);
 float EntityMath_WrapAngle(float);
@@ -153,7 +153,7 @@ static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 unknown) {
             return;
         }
     }
-    phase = D_00446ED4 % 10U;
+    phase = frame_counter % 10U;
     if (phase == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -266,7 +266,7 @@ static void GoldenStatue_StandAtPost(Entity *entity, s32 unknown) {
 static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
     u32 phase;
 
-    phase = D_00446ED4 % 10U;
+    phase = frame_counter % 10U;
     if (phase == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -289,7 +289,7 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
    spawn point than EntitySpawnInfo.unk4C and EntityAi_MeleeAttack (EntityAi_CanMelee, EntityAi_PickMeleeAttack)
    with the player nearer. While the player's x is below -7900 it goes to one of three posts at x
    -8000, picked by the player's z, and from there turns to the player and starts the ranged attack
-   only (work byte unk78 says it is at the post; on arriving it prints D_0043E8C0, "tuitayo",
+   only (work byte unk78 says it is at the post; on arriving it prints golden_statue_arrived_message, "tuitayo",
    Japanese for "arrived"); else it closes in on the player as EntityAi_ThinkCombat does. */
 static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -346,7 +346,7 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
         if (unkE0->unk78 == 0) {
             if (EntityMath_DistanceXZ(entity->model->position, post) < margin + 60.0f) {
                 unkE0->unk78 = 1;
-                printf(D_0043E8C0);
+                printf(golden_statue_arrived_message);
             } else {
                 entity->target = post;
                 turn = EntityAi_TurnFromPush(entity, direction);
@@ -418,7 +418,7 @@ static void GoldenStatue_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 turn;
 
-    if (entity == (Entity *)D_00414184[0] && (entity->params->flags & 0x800)) {
+    if (entity == (Entity *)entity_under_player[0] && (entity->params->flags & 0x800)) {
         entity->unkC8 = 0;
     }
     if (entity->unkC8 & 0x100) {

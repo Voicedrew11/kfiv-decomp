@@ -15,14 +15,14 @@
 static s32 swing_magic_frames;                    /* 0x447114 frames the swing-cast magic still runs */
 static s32 swing_magic_id;                        /* 0x447118 magic id cast from the swing */
 static PlayerShot *item_shot;                     /* 0x44711C shot for projectile and bow handlers */
-static s32 bow_request_ring_index;                /* 0x447120 next slot in D_0057A350 for bow shots */
+static s32 bow_request_ring_index;                /* 0x447120 next slot in bow_shot_requests for bow shots */
 static f32 movement_top_speed;                    /* 0x447124 top walk speed this frame (for footsteps) */
 
 #define SHOT_REQUEST ((Unk1B1470Request *)item_shot->unk04)
 
-extern struct PlayerWeaponModel *D_00446978;
+extern struct PlayerWeaponModel *held_item_model_ptr;
 
-#define WEAPON_MODEL ((ModelInstance *)D_00446978)
+#define WEAPON_MODEL ((ModelInstance *)held_item_model_ptr)
 
 extern PlayerState player_state;
 extern PlayerState player_previous;      /* the player as of the frame before */
@@ -36,27 +36,27 @@ extern u16 pad_state[];
 extern u8 item_counts[];
 extern s8 game_options[];
 extern u8 D_00349F56[];
-extern int D_00446770;
-extern u32 D_00446ED4;
-extern int D_00446950;              /* frames until the item 0x32 may launch its effect again */
+extern int current_map_slot;
+extern u32 frame_counter;
+extern int sacrificial_mask_cooldown;              /* frames until the item 0x32 may launch its effect again */
 extern f32 D_00446954[];
-extern s8 D_00446958;               /* what the last footstep sound returned */
-extern int D_0044695C;
+extern s8 footstep_voice;               /* what the last footstep sound returned */
+extern int recent_damage_frames;
 
 /* the pad bits of each control */
-extern u16 D_0044692C;              /* forward */
-extern u16 D_0044692E;              /* back */
-extern u16 D_00446930;              /* turn right */
-extern u16 D_00446932;              /* turn left */
-extern u16 D_00446934;              /* step right */
-extern u16 D_00446936;              /* step left */
-extern u16 D_00446938;              /* look down */
-extern u16 D_0044693A;              /* look up */
-extern u16 D_0044693C;
-extern u16 D_0044693E;
-extern u16 D_00446940;              /* run */
-extern u16 D_00446942; // match: u16 here; kf_game.c declares these pad masks as s16
-extern u16 D_00446944; // match: u16 here; kf_game.c declares this pad mask as s16
+extern u16 forward_button;              /* forward */
+extern u16 back_button;              /* back */
+extern u16 turn_right_button;              /* turn right */
+extern u16 turn_left_button;              /* turn left */
+extern u16 step_right_button;              /* step right */
+extern u16 step_left_button;              /* step left */
+extern u16 look_down_button;              /* look down */
+extern u16 look_up_button;              /* look up */
+extern u16 attack_button;
+extern u16 magic_button;
+extern u16 action_button;              /* run; pressed: use what is in front */
+extern u16 menu_button;
+extern u16 shortcut_button;
 
 /* The player's movement tables, tint colours, weapon tip and held item handlers (this file's scratch). */
 /* 0x413DE0 the top speed of each row of the movement tables (see movement_row) */
@@ -115,7 +115,7 @@ void Attack_WearWornItem(int idx, int amount);
 
 extern u8 spell_levels[6][5];
 extern u64 player_status_bits[];            /* player_previous.unk1C8 */
-extern GameDefinition D_00416D78[70];
+extern GameDefinition weapon_name_defs[70];
 extern LevelRecord weapon_level_records[70];
 extern LevelDef item_name_defs[0x17C];
 
@@ -218,7 +218,7 @@ static inline void check_map_index(void) {
     PlayerState *player = &player_state;
     u32 map_index = player->map_index; // match: a wide local, narrowed where it is tested
 
-    if (map_index >= map_slots[D_00446770].header->record_count) {
+    if (map_index >= map_slots[current_map_slot].header->record_count) {
         player->map_index = 0xFFFF;
         map_index = 0xFFFF;
         player->unk250 = 0xFF;
@@ -227,7 +227,7 @@ static inline void check_map_index(void) {
         Player_FindMapRecord();
         if (player->map_index == 0xFFFF) {
             player->map_index = 0;
-            player->unk250 = ((MapRecordInfo *)map_slots[D_00446770].records)->unk38;
+            player->unk250 = ((MapRecordInfo *)map_slots[current_map_slot].records)->unk38;
         }
     }
 }
@@ -267,8 +267,8 @@ void Player_Update(void) {
     } else {
         PLAYER_STATUS(&player_state)->bit34 = FALSE;
     }
-    if (D_0044695C != 0) {
-        D_0044695C--;
+    if (recent_damage_frames != 0) {
+        recent_damage_frames--;
     }
 
     /* what the pad may do this frame */
@@ -285,23 +285,23 @@ void Player_Update(void) {
         held = 0;
     }
     if (game_status.unk07 == 0) {
-        held &= ~(D_0044692C | D_0044692E | D_00446934 | D_00446936);
-        pressed &= ~(D_0044692C | D_0044692E | D_00446934 | D_00446936);
+        held &= ~(forward_button | back_button | step_right_button | step_left_button);
+        pressed &= ~(forward_button | back_button | step_right_button | step_left_button);
     }
     if ((u16)player_state.timed_flags[1] != 0) {
-        mask = ~(D_0044693C | (D_0044692C | D_0044692E | D_00446934 | D_00446936 | D_00446930 | D_00446932 |
-                               D_00446938 | D_0044693A) | D_0044693E);
+        mask = ~(attack_button | (forward_button | back_button | step_right_button | step_left_button | turn_right_button | turn_left_button |
+                               look_down_button | look_up_button) | magic_button);
         held &= mask;
         pressed &= mask;
     }
     if (game_status.bit6 || game_status.unk44 > 0) {
-        held &= ~(D_0044693E | D_00446940 | D_00446942 | D_00446944);
-        pressed &= ~(D_0044693E | D_00446940 | D_00446942 | D_00446944);
+        held &= ~(magic_button | action_button | menu_button | shortcut_button);
+        pressed &= ~(magic_button | action_button | menu_button | shortcut_button);
     }
 
     /* the magic button: an event magic is handed to the game, any other is cast when it is charged and paid for */
-    if (!((D_0044693C | D_0044693E | D_00446940 | D_00446942) & pressed)) {
-        if ((D_00446944 & pressed) && player_state.shortcut != 0 && player_state.unk1A8 == 0 &&
+    if (!((attack_button | magic_button | action_button | menu_button) & pressed)) {
+        if ((shortcut_button & pressed) && player_state.shortcut != 0 && player_state.unk1A8 == 0 &&
             !(game_status.bit2 || game_status.bit3 || game_status.bit4)) {
             switch (player_state.shortcut_type) {
             case 0:
@@ -321,7 +321,7 @@ void Player_Update(void) {
         }
     }
     game_status.bit1 = FALSE;
-    if (D_00446940 & pressed) {
+    if (action_button & pressed) {
         game_status.bit1 = TRUE;
         if (game_status.bit6 || player_state.unk1A8 != 0) {
             game_status.bit1 = FALSE;
@@ -329,9 +329,9 @@ void Player_Update(void) {
     }
 
     /* running: the run button with forward or back, or with one of the two steps to the side */
-    if ((D_00446940 & held) &&
-        (((D_0044692C | D_0044692E) & held) || ((D_00446936 & held) && !(D_00446934 & held)) ||
-         (!(D_00446936 & held) && (D_00446934 & held)))) {
+    if ((action_button & held) &&
+        (((forward_button | back_button) & held) || ((step_left_button & held) && !(step_right_button & held)) ||
+         (!(step_left_button & held) && (step_right_button & held)))) {
         PLAYER_STATUS(&player_state)->bit35 = TRUE;
         if (game_status.unk06 != 0) {
             PLAYER_STATUS(&player_state)->bit35 = FALSE;
@@ -353,7 +353,7 @@ void Player_Update(void) {
     } else {
         PLAYER_STATUS(&player_state)->bit35 = FALSE;
     }
-    if ((D_00446942 & pressed) && !(D_00446940 & pressed)) {
+    if ((menu_button & pressed) && !(action_button & pressed)) {
         game_status.bit2 = TRUE;
     }
 
@@ -428,17 +428,17 @@ void Player_Update(void) {
         !(ABS(player_state.unk1B0) < movement_top_speed * 0.5f && ABS(player_state.unk1B4) < movement_top_speed * 0.5f) &&
         !((s32)(player_state.unk1C8 >> 34) & 1) && player_state.unk1C0 >= 0xF00) {
         sound_free = sound_load_queue.unk10 == 0 && sound_load_queue.unk14 == 0;
-        D_00446958 = -1;
+        footstep_voice = -1;
         if ((s32)(player_state.unk1C8 >> 39) & 1) {
             PLAYER_STATUS(&player_state)->step_sounded = TRUE;
-            D_00446958 = Sound_PlayFootstep(0x25);
+            footstep_voice = Sound_PlayFootstep(0x25);
         } else if ((s32)(player_state.unk1C8 >> 38) & 1) {
             PLAYER_STATUS(&player_state)->step_sounded = TRUE;
-            D_00446958 = Sound_PlayFootstep(0x24);
+            footstep_voice = Sound_PlayFootstep(0x24);
         } else if (player_state.unk1E0 != 0 && player_state.unk1E4 == 4) {
             PLAYER_STATUS(&player_state)->step_sounded = TRUE;
             if (sound_free) {
-                D_00446958 = Sound_PlayFootstep(0x27);
+                footstep_voice = Sound_PlayFootstep(0x27);
             }
         } else {
             PLAYER_STATUS(&player_state)->step_sounded = TRUE;
@@ -448,12 +448,12 @@ void Player_Update(void) {
                 break;
             case 2:
                 if (sound_free) {
-                    D_00446958 = Sound_PlayFootstep(0x22);
+                    footstep_voice = Sound_PlayFootstep(0x22);
                 }
                 break;
             case 3:
                 if (sound_free) {
-                    D_00446958 = Sound_PlayFootstep(0x23);
+                    footstep_voice = Sound_PlayFootstep(0x23);
                 }
                 break;
             case 5:
@@ -471,7 +471,7 @@ void Player_Update(void) {
     }
     /* the warning sound while unkB4 is at a tenth of unk58 or less */
     if (player_state.unk1A8 == 0 && player_state.hp_now > 0 && player_state.hp_now * 100 / player_state.hp_max < 11 &&
-        D_00446ED4 % 27 == 0) {
+        frame_counter % 27 == 0) {
         Sound_PlayCommon(0x29);
     }
 
@@ -494,8 +494,8 @@ void Player_Update(void) {
 
     /* item 0x32 worn: effect 0x7C starts at the player by chance, at most once in 30 frames, unless under water */
     if (player_state.equipment[EQUIP_HELM] == ITEM_WORN_INDEX(ITEM_SACRIFICIAL_MASK) && game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
-        if (D_00446950 > 0) {
-            D_00446950--;
+        if (sacrificial_mask_cooldown > 0) {
+            sacrificial_mask_cooldown--;
         } else if (!(((s32)(player_state.unk1C8 >> 38) & 1) &&
                      player_state.unk1DC < player_state.position.y - fx_table[0x7C].unk108) &&
                    (s32)((f32)rand() * 451.0f * 0.0000000004656613f) == 0) {
@@ -503,11 +503,11 @@ void Player_Update(void) {
             shot->unk00 = 1;
             shot->unk20 = 0;
             shot->unk22 = 0;
-            Attack_LaunchMagicEffect(0x7C, shot, &player_state, &player_state.rotation, &map_slots[D_00446770]);
-            D_00446950 = 30;
+            Attack_LaunchMagicEffect(0x7C, shot, &player_state, &player_state.rotation, &map_slots[current_map_slot]);
+            sacrificial_mask_cooldown = 30;
         }
     }
-    if (map_slots[D_00446770].tag == 0x23 && D_00349F56[0] == 0 && ((s32)(player_state.unk1C8 >> 38) & 1) &&
+    if (map_slots[current_map_slot].tag == 0x23 && D_00349F56[0] == 0 && ((s32)(player_state.unk1C8 >> 38) & 1) &&
         game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
         Player_TakeDamageNoRumble(1);
     }
@@ -550,7 +550,7 @@ void Player_DrawScreenTints(void) {
 }
 
 extern MapDrawState map_draw_state;
-extern const s8 D_0043F260[30];
+extern const s8 yellow_tint_pulse[30];
 
 /* Works out the colours laid over the screen (PlayerScreenTint) for the frame: which timed
    flag shows, how strong each tint is, and the map's glow. */
@@ -609,13 +609,13 @@ void Player_UpdateScreenTints(void) {
     }
 
     if ((u16)player_state.timed_flags[1] != 0) {
-        player_screen_tint.unk0C = D_0043F260[29 - (u16)player_state.timed_flags[1] % 30];
+        player_screen_tint.unk0C = yellow_tint_pulse[29 - (u16)player_state.timed_flags[1] % 30];
     } else {
         player_screen_tint.unk0C = 0;
     }
 
-    tick = D_00446ED4;
-    if (!(D_00446ED4 & 1)) {
+    tick = frame_counter;
+    if (!(frame_counter & 1)) {
         if ((u16)player_state.timed_flags[3] != 0) {
             player_screen_tint.unk14++;
             if (player_screen_tint.unk14 > 0x20) {
@@ -650,13 +650,13 @@ void Player_UpdateScreenTints(void) {
     player_screen_tint.green = screen_tint_colors[colour][1] * (0x20 - blend) / 32 + screen_tint_colors[next_colour][1] * blend / 32;
     player_screen_tint.blue = screen_tint_colors[colour][2] * (0x20 - blend) / 32 + screen_tint_colors[next_colour][2] * blend / 32;
     if (cycling != 0) {
-        if (!(D_00446ED4 & 1)) {
+        if (!(frame_counter & 1)) {
             player_screen_tint.unk28++;
             if (player_screen_tint.unk28 > 0x18) {
                 player_screen_tint.unk28 = 0x18;
             }
         }
-    } else if (!(D_00446ED4 & 1)) {
+    } else if (!(frame_counter & 1)) {
         player_screen_tint.unk28--;
         if (player_screen_tint.unk28 < 0) {
             player_screen_tint.unk28 = 0;
@@ -728,10 +728,10 @@ void Player_UpdateActions(u16 held, u16 pressed) {
     }
     item_action_handlers[def->unk63](held, pressed);
     if (player_state.unk258 == 0 || (player_state.unk25A == 0 && player_state.unk25B == 0)) {
-        if (D_0044693E & pressed) {
+        if (magic_button & pressed) {
             Player_CastMagic(player_state.equipped_magic);
         }
-        if (D_0044693E & held) {
+        if (magic_button & held) {
             Player_HoldMagic(player_state.equipped_magic);
         }
     }
@@ -764,14 +764,14 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             if (player_state.unk25C != 0) {
                 player_state.unk25C--;
             }
-            if (D_00446940 & pressed) {
+            if (action_button & pressed) {
                 player_state.unk25C = 15;
             }
         } else {
             player_state.unk25C = 0;
         }
         player_state.unk25D = level >= 2 && def->unk52 != 0 && def->unk52 != 0xFFFF;
-        if (D_0044693C & pressed) {
+        if (attack_button & pressed) {
             shot = &player_state.unk268;
             memset(shot, 0, sizeof(PlayerShot));
             shot->unk00 = 0;
@@ -845,7 +845,7 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             ((int (*)(int))Sound_PlaySw)(def->unk80); // match: called as if it returned a value
             player_state.unk260_0 = 1;
         }
-        if (D_0044693E & pressed) {
+        if (magic_button & pressed) {
             if (player_state.unk25C != 0 && player_state.unk25F == 0 && def->unk42 != 0xFFFF &&
                 MODEL_CHANNEL(WEAPON_MODEL)->param >= def->unk4A && MODEL_CHANNEL(WEAPON_MODEL)->param <= def->unk4C) {
                 player_state.unk25D = 0;
@@ -890,18 +890,18 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
     }
 }
 
-extern u8 D_004141D8[];
+extern u8 player_weapon_step[];
 
 void Player_InvokeTargetHandler(u16 target_id, u16 command) {
     Player_UpdateWeaponAim();
-    item_step_handlers[D_004141D8[0]](target_id, command);
+    item_step_handlers[player_weapon_step[0]](target_id, command);
 }
 
 /* Handler of an item that shoots: on the button, starts the motion and launches the item's shot. */
 void Player_FireProjectile(u16 held, u16 pressed) {
     PlayerItemDef *def = &weapon_defs[player_state.weapon];
 
-    if ((D_0044693C & pressed) && !((s32)(player_state.unk1C8 >> 39) & 1) && item_counts[def->unk62] != 0) {
+    if ((attack_button & pressed) && !((s32)(player_state.unk1C8 >> 39) & 1) && item_counts[def->unk62] != 0) {
         ModelMotion_Select(WEAPON_MODEL, 0);
         MODEL_CHANNEL(WEAPON_MODEL)->param = 0;
         MODEL_CHANNEL(WEAPON_MODEL)->param_shifted = 0;
@@ -921,9 +921,9 @@ void Player_FireProjectile(u16 held, u16 pressed) {
     }
 }
 
-extern GameDefinition D_00416D78[];
+extern GameDefinition weapon_name_defs[];
 static u8 D_0057A348[8] __attribute__((section(".bss")));  /* 0x57A348 the eight bytes before the requests */
-static Unk1B1470Request D_0057A350[32];                     /* 0x57A350 the bow's requests, one per shot */
+static Unk1B1470Request bow_shot_requests[32];                     /* 0x57A350 the bow's requests, one per shot */
 
 int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed);
 void Sound_StopVoice(s8 slot);
@@ -931,7 +931,7 @@ void Sound_StopVoice(s8 slot);
 /* Handler of a drawn weapon while the button is held: the draw motion runs to its last frame and the
    strength builds up; letting go looses the shot, anything else lowers the weapon. */
 void Player_DrawBow(u16 held, u16 pressed) {
-    GameDefinition *item = &D_00416D78[player_state.weapon];
+    GameDefinition *item = &weapon_name_defs[player_state.weapon];
     PlayerItemDef *def = &weapon_defs[player_state.weapon];
     s32 rate;
     s32 frame;
@@ -948,7 +948,7 @@ void Player_DrawBow(u16 held, u16 pressed) {
             ((int (*)(int))Sound_PlaySw)(0); // match: called as if it returned a value
             player_state.unk260_0 = 1;
         }
-        if (D_0044693C & held) {
+        if (attack_button & held) {
             rate = player_state.power;
             if (rate < 20) {
                 rate = 20;
@@ -965,7 +965,7 @@ void Player_DrawBow(u16 held, u16 pressed) {
             }
             item_shot->unk02 = player_state.unkBC;
             item_shot->unk24 = player_state.weapon;
-            item_shot->unk04 = &D_0057A350[bow_request_ring_index];
+            item_shot->unk04 = &bow_shot_requests[bow_request_ring_index];
             bow_request_ring_index = (bow_request_ring_index + 1) % 32;
             memset(item_shot->unk04, 0, sizeof(Unk1B1470Request));
             *(PlayerShotStats *)&SHOT_REQUEST->unk50 = player_state.unk60;
@@ -1019,17 +1019,17 @@ void Player_HolsterWeapon(void) {
     ModelMotion_Step(WEAPON_MODEL);
     if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
         Effect_FreePlayerWeaponKinds();
-        D_004141D8[0] = 0;
+        player_weapon_step[0] = 0;
     }
 }
 
-extern float D_00420D10[];
+extern float view_ray_direction[];
 
 int Player_CanFireAtAim(void) {
     float vec[4];
     int result;
 
-    Vector_Scale(vec, D_00420D10, 100.0f);
+    Vector_Scale(vec, view_ray_direction, 100.0f);
     Vector_Add(vec, vec, &player_state);
     vec[1] -= 186.0f;
     result = 0;
@@ -1047,16 +1047,16 @@ void Player_UpdateWeaponAim(void) {
     void *weapon_base;
     void *weapon_tip;
 
-    D_00446978->update_aim(D_00446978);
-    weapon_base = D_00446978->get_point(D_00446978, 0);
-    weapon_tip = D_00446978->get_point(D_00446978, 1);
+    held_item_model_ptr->update_aim(held_item_model_ptr);
+    weapon_base = held_item_model_ptr->get_point(held_item_model_ptr, 0);
+    weapon_tip = held_item_model_ptr->get_point(held_item_model_ptr, 1);
     Vector_Subtract(vec, weapon_tip, weapon_base);
     Vector_Copy(weapon_tip_position, weapon_tip);
     weapon_tip_angles[0] = atan2f(-vec[1], sqrtf(vec[0] * vec[0] + vec[2] * vec[2]));
     weapon_tip_angles[1] = atan2f(vec[0], vec[2]);
 }
 
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 
 /* the pad bits of each control */
 
@@ -1118,7 +1118,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
         turn.x = Angle_Wrap(turn.x);
         turn.y = Angle_Wrap(turn.y);
         turn.z = Angle_Wrap(turn.z);
-        sceVu0RotMatrixZ(matrix, D_00431AF0, turn.z);
+        sceVu0RotMatrixZ(matrix, identity_matrix, turn.z);
         sceVu0RotMatrixX(matrix, matrix, turn.x);
         sceVu0RotMatrixY(matrix, matrix, turn.y);
         Vector_Subtract(&delta, &player_state, &platform->unk20);
@@ -1168,7 +1168,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
         top_speed *= 1.6f;
     }
     if ((s32)(player_state.unk1C8 >> 36) & 1) {
-        buttons &= D_00446938 | D_0044693A;
+        buttons &= look_down_button | look_up_button;
     }
 
     if (player_state.aim_speed > 0.0f) {
@@ -1204,8 +1204,8 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
 
     /* looking up and down */
     if (!((s32)(player_state.unk1C8 >> 32) & 1)) {
-        if (D_00446938 & buttons) {
-            if (D_0044693A & buttons) {
+        if (look_down_button & buttons) {
+            if (look_up_button & buttons) {
                 player_state.unk1B8 = 0.0f;
                 player_state.unk1C8 |= PLAYER_FLAG_32;
             } else {
@@ -1214,7 +1214,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                     player_state.unk1B8 = top_look;
                 }
             }
-        } else if (D_0044693A & buttons) {
+        } else if (look_up_button & buttons) {
             player_state.unk1B8 -= look_gain;
             if (player_state.unk1B8 < -top_look) {
                 player_state.unk1B8 = -top_look;
@@ -1233,19 +1233,19 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                 }
             }
         }
-    } else if ((D_00446938 & buttons) && (D_0044693A & buttons)) {
+    } else if ((look_down_button & buttons) && (look_up_button & buttons)) {
         Angle_Approach(&player_state.rotation.x, 0.0f, level_step);
     } else {
         player_state.unk1C8 &= ~PLAYER_FLAG_32;
     }
 
     /* turning */
-    if ((D_00446932 & buttons) && !(D_00446930 & buttons)) {
+    if ((turn_left_button & buttons) && !(turn_right_button & buttons)) {
         player_state.unk1BC -= turn_gain;
         if (player_state.unk1BC < -top_turn) {
             player_state.unk1BC = -top_turn;
         }
-    } else if (!(D_00446932 & buttons) && (D_00446930 & buttons)) {
+    } else if (!(turn_left_button & buttons) && (turn_right_button & buttons)) {
         player_state.unk1BC += turn_gain;
         if (player_state.unk1BC > top_turn) {
             player_state.unk1BC = top_turn;
@@ -1267,7 +1267,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
 
     /* walking */
     movement_top_speed = top_speed;
-    if ((D_0044692C & buttons) && !(D_0044692E & buttons)) {
+    if ((forward_button & buttons) && !(back_button & buttons)) {
         if (player_state.unk1B4 < top_speed) {
             player_state.unk1B4 += speed_gain;
             if (player_state.unk1B4 > top_speed) {
@@ -1279,7 +1279,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                 player_state.unk1B4 = top_speed;
             }
         }
-    } else if (!(D_0044692C & buttons) && (D_0044692E & buttons)) {
+    } else if (!(forward_button & buttons) && (back_button & buttons)) {
         backward = -top_speed;
         if (player_state.unk1B4 > backward) {
             player_state.unk1B4 -= speed_gain;
@@ -1308,7 +1308,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     }
 
     /* stepping sideways */
-    if (!(D_00446936 & buttons) && (D_00446934 & buttons)) {
+    if (!(step_left_button & buttons) && (step_right_button & buttons)) {
         if (player_state.unk1B0 < top_speed) {
             player_state.unk1B0 += speed_gain;
             if (player_state.unk1B0 > top_speed) {
@@ -1320,7 +1320,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
                 player_state.unk1B0 = top_speed;
             }
         }
-    } else if ((D_00446936 & buttons) && !(D_00446934 & buttons)) {
+    } else if ((step_left_button & buttons) && !(step_right_button & buttons)) {
         backward = -top_speed;
         if (player_state.unk1B0 > backward) {
             player_state.unk1B0 -= speed_gain;
@@ -1380,7 +1380,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     angle = atan2f(ABS(player_state.unk1B4), ABS(player_state.unk1B0));
     delta.x *= cosf(angle);
     delta.z *= sinf(angle);
-    sceVu0RotMatrixY(matrix, D_00431AF0, player_state.rotation.y);
+    sceVu0RotMatrixY(matrix, identity_matrix, player_state.rotation.y);
     Vector_ApplyMatrix(&delta, matrix, &delta);
     player_state.position.x += delta.x;
     player_state.position.z += delta.z;
@@ -1459,8 +1459,8 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
 
     /* the push of the floor */
     if (game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
-        if (player_state.map_index != 0xFFFF && player_state.map_index < map_slots[D_00446770].header->record_count) {
-            record = &((MapRecord *)map_slots[D_00446770].records)[player_state.map_index];
+        if (player_state.map_index != 0xFFFF && player_state.map_index < map_slots[current_map_slot].header->record_count) {
+            record = &((MapRecord *)map_slots[current_map_slot].records)[player_state.map_index];
         } else {
             record = NULL;
         }
@@ -1526,7 +1526,7 @@ void Player_ApplyGroundEffects(void) {
                 // match: the chance (at least 5 in 100) is worked out after the roll, inside the comparison
                 if ((int)(rand() * 100.0f * 4.656613e-10f) < (20 - player_state.unkDC[0] > 4 ? 20 - player_state.unkDC[0] : 5)) {
                     player_state.timed_flags[0] = 1800;
-                    player_state.unk2C4 = D_00446ED4;
+                    player_state.unk2C4 = frame_counter;
                 }
             }
         }
@@ -1537,7 +1537,7 @@ void Player_ApplyGroundEffects(void) {
                 // match: the chance (at least 5 in 100) is worked out after the roll, inside the comparison
                 if ((int)(rand() * 100.0f * 4.656613e-10f) < (50 - player_state.unkDC[0] > 4 ? 50 - player_state.unkDC[0] : 5)) {
                     player_state.timed_flags[0] = 1800;
-                    player_state.unk2C4 = D_00446ED4;
+                    player_state.unk2C4 = frame_counter;
                 }
             }
         }
@@ -1545,7 +1545,7 @@ void Player_ApplyGroundEffects(void) {
     case 3:
         if ((u16)player_state.timed_flags[0] == 0) {
             player_state.timed_flags[0] = 1800;
-            player_state.unk2C4 = D_00446ED4;
+            player_state.unk2C4 = frame_counter;
         }
         break;
     case 4:
@@ -1641,7 +1641,7 @@ void Player_UpdateBreath(void) {
             filled = full;
         }
         if (filled > 0) {
-            if ((player->equipment[EQUIP_AMULET] != 0x9A) || ((D_00446ED4 & 1) != 0)) {
+            if ((player->equipment[EQUIP_AMULET] != 0x9A) || ((frame_counter & 1) != 0)) {
                 player->unkCC = filled - 1;
             }
         } else {
@@ -1706,12 +1706,12 @@ void Player_UpdateDying(void)
 
 /* TRUE once every `period` frames */
 static inline s32 is_frame_multiple(u32 period) {
-    return D_00446ED4 % period == 0;
+    return frame_counter % period == 0;
 }
 
 /* The per-frame bookkeeping of the player: timers, the two gauges, and the drawn bars. */
 void Player_UpdateStatus(void) {
-    GameDefinition *definition = &D_00416D78[player_state.weapon];
+    GameDefinition *definition = &weapon_name_defs[player_state.weapon];
     PlayerItemDef *item_def = &weapon_defs[player_state.weapon];
     FxTableEntry *fx_entry = &fx_table[player_state.unk264];
     s32 wear;
@@ -1719,7 +1719,7 @@ void Player_UpdateStatus(void) {
     s32 bar_target;
     s32 bar_step;
 
-    if (player_state.unk1A8 == 0 && player_state.unk2B4 != 0 && D_00446ED4 % player_state.unk2B4 == 0) {
+    if (player_state.unk1A8 == 0 && player_state.unk2B4 != 0 && frame_counter % player_state.unk2B4 == 0) {
         if (player_state.unk2B0 > 0) {
             if (player_state.hp_now > 0) {
                 player_state.hp_now++;
@@ -1766,16 +1766,16 @@ void Player_UpdateStatus(void) {
     RUN_DOWN(5, unk16A, unk12E);
 
     draining = player_state.unkEC != 0;
-    if (player_state.unkF0 != 0 && D_00446ED4 % player_state.unkF0 == 0 && player_state.unk1A8 == 0 && player_state.hp_now > 0) {
+    if (player_state.unkF0 != 0 && frame_counter % player_state.unkF0 == 0 && player_state.unk1A8 == 0 && player_state.hp_now > 0) {
         player_state.hp_now++;
     }
-    if (player_state.unkF4 != 0 && D_00446ED4 % player_state.unkF4 == 0 && player_state.unk1A8 == 0) {
+    if (player_state.unkF4 != 0 && frame_counter % player_state.unkF4 == 0 && player_state.unk1A8 == 0) {
         player_state.hp_now--;
     }
-    if (player_state.unkF8 != 0 && D_00446ED4 % player_state.unkF8 == 0 && player_state.unk1A8 == 0) {
+    if (player_state.unkF8 != 0 && frame_counter % player_state.unkF8 == 0 && player_state.unk1A8 == 0) {
         player_state.mp_now++;
     }
-    if (player_state.unkFC != 0 && D_00446ED4 % player_state.unkFC == 0 && player_state.unk1A8 == 0) {
+    if (player_state.unkFC != 0 && frame_counter % player_state.unkFC == 0 && player_state.unk1A8 == 0) {
         player_state.mp_now--;
     }
     if (player_state.power_seed_timer > 0) {
@@ -1935,7 +1935,7 @@ void Player_UpdateStatus(void) {
         if (is_frame_multiple(600)) {
             if ((s32)(rand() * 100.0f * 4.656613e-10f) < 70) {
                 player_state.timed_flags[0] = 1800;
-                player_state.unk2C4 = D_00446ED4;
+                player_state.unk2C4 = frame_counter;
             }
         }
     }

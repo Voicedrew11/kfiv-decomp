@@ -5,8 +5,8 @@
    blocks that do not wait) and every other word starts a command with that number, whose arguments
    follow it. A thread waits until all its commands have finished before it reads on. Commands are
    numbered in hundreds: 0 to 99 here, 100 to 199 in kf_script_world.c and 200 to 299 in
-   kf_script_entity.c, each hundred with a handler table of its own (D_004331B0, D_00433440 and
-   D_00433650). Scripts keep values in game variables (blocks of game state listed in D_00433340), in
+   kf_script_entity.c, each hundred with a handler table of its own (script_general_command_handlers, script_world_command_handlers and
+   script_entity_command_handlers). Scripts keep values in game variables (blocks of game state listed in script_game_var_blocks), in
    0x400 bytes all threads share (shared_vars) and in each thread's own 0x200 bytes. */
 #include "kf_script.h"
 #include "kf_entity.h"
@@ -24,11 +24,11 @@ int Game_GetSpawnDeathCount(int map, int entry);
 void Game_MoveRecollectionPage(u32 source_page, u32 dest_page);
 void Game_MarkMessageHeard(int flag);
 
-extern char D_00432920[];
-extern u8 *D_00433340[];
-extern ScriptCommandHandler D_004331B0[];
-extern ScriptCommandHandler D_00433440[];
-extern ScriptCommandHandler D_00433650[];
+extern char script_error_flags[];
+extern u8 *script_game_var_blocks[];
+extern ScriptCommandHandler script_general_command_handlers[];
+extern ScriptCommandHandler script_world_command_handlers[];
+extern ScriptCommandHandler script_entity_command_handlers[];
 extern f32 D_004325E8[];
 extern u8 recollection_pages[50];
 extern u8 game_options[];
@@ -117,7 +117,7 @@ int Script_Start(int script_id, int argument) {
         }
     }
     if (thread == NULL) {
-        D_00432920[SCRIPT_ERROR_NO_FREE_THREAD] = 1;
+        script_error_flags[SCRIPT_ERROR_NO_FREE_THREAD] = 1;
         return 0;
     }
     *(void **)&thread->argument = (void *)argument; // match: stored as a pointer, so the word read below does not wait for it
@@ -161,7 +161,7 @@ static int Script_StartAlways(int script_id, int argument) {
         }
     }
     if (thread == NULL) {
-        D_00432920[SCRIPT_ERROR_NO_FREE_THREAD] = 1;
+        script_error_flags[SCRIPT_ERROR_NO_FREE_THREAD] = 1;
         return 0;
     }
     *(void **)&thread->argument = (void *)argument; // match: stored as a pointer, so the word read below does not wait for it
@@ -213,7 +213,7 @@ static int Script_FindFreeCommand(ScriptThread *thread) {
         }
     }
     if (i == 16) {
-        D_00432920[SCRIPT_ERROR_NO_FREE_COMMAND] = 1;
+        script_error_flags[SCRIPT_ERROR_NO_FREE_COMMAND] = 1;
         return 0;
     }
     // match: no return here (never reached: the loop only ends with i == 16)
@@ -308,11 +308,11 @@ static int Script_StepCommands(ScriptThread *thread) {
         if (number != 0) {
             if (!(number & SCRIPT_COMMAND_HELD)) {
                 if (number >= 200) {
-                    D_00433650[number - 200](&thread->commands[i]);
+                    script_entity_command_handlers[number - 200](&thread->commands[i]);
                 } else if (number >= 100) {
-                    D_00433440[number - 100](&thread->commands[i]);
+                    script_world_command_handlers[number - 100](&thread->commands[i]);
                 } else {
-                    D_004331B0[number](&thread->commands[i]);
+                    script_general_command_handlers[number](&thread->commands[i]);
                 }
             }
             count++;
@@ -336,11 +336,11 @@ static int Script_StepHeldCommands(ScriptThread *thread) {
                 // match: the mask keeps bit 0x8000 and the tables are indexed with the unmasked number
                 index = number & 0x7FFFF;
                 if (index >= 200) {
-                    D_00433650[number - 200](&thread->commands[i]);
+                    script_entity_command_handlers[number - 200](&thread->commands[i]);
                 } else if (index >= 100) {
-                    D_00433440[number - 100](&thread->commands[i]);
+                    script_world_command_handlers[number - 100](&thread->commands[i]);
                 } else {
-                    D_004331B0[number](&thread->commands[i]);
+                    script_general_command_handlers[number](&thread->commands[i]);
                 }
             }
             command_count++;
@@ -662,18 +662,18 @@ static void Script_ReadArg(ScriptThread *thread, u32 *source, ScriptArg *result)
         result->value = value;
         break;
     default:
-        D_00432920[SCRIPT_ERROR_BAD_ARGUMENT] = 1;
+        script_error_flags[SCRIPT_ERROR_BAD_ARGUMENT] = 1;
         break;
     }
 }
 
-/* Reads a game variable: the low byte of `code` picks the block in D_00433340, the byte above it the
+/* Reads a game variable: the low byte of `code` picks the block in script_game_var_blocks, the byte above it the
    value's type. */
 static void Script_ReadGameVar(ScriptArg *result, u32 code, int offset) {
     u8 *source;
     u16 type;
 
-    source = D_00433340[code & 0xFF] + offset;
+    source = script_game_var_blocks[code & 0xFF] + offset;
     type = code >> 8;
     switch (type) {
     case 0:
@@ -706,7 +706,7 @@ static void Script_ReadSharedVar(ScriptArg *result, u32 code, int offset) {
     type = code >> 8;
     source = shared_vars + offset;
     if (offset > 0x3FC) {
-        D_00432920[SCRIPT_ERROR_BAD_SHARED_VAR] = 1;
+        script_error_flags[SCRIPT_ERROR_BAD_SHARED_VAR] = 1;
     }
     switch (type) {
     case 0:
@@ -738,7 +738,7 @@ static void Script_ReadLocalVar(ScriptArg *result, ScriptThread *thread, u32 cod
     type = code >> 8;
     source = thread->locals + offset;
     if (offset > 0x1FC) {
-        D_00432920[SCRIPT_ERROR_BAD_LOCAL_VAR] = 1;
+        script_error_flags[SCRIPT_ERROR_BAD_LOCAL_VAR] = 1;
     }
     switch (type) {
     case 0:
@@ -762,13 +762,13 @@ static void Script_ReadLocalVar(ScriptArg *result, ScriptThread *thread, u32 cod
     result->opcode = type;
 }
 
-/* Writes a game variable: the low byte of `code` picks the block in D_00433340, the byte above it the
+/* Writes a game variable: the low byte of `code` picks the block in script_game_var_blocks, the byte above it the
    value's type. */
 static void Script_WriteGameVar(ScriptArg *source, u32 code, int offset) {
     u8 *dest;
     u16 type;
 
-    dest = D_00433340[code & 0xFF] + offset;
+    dest = script_game_var_blocks[code & 0xFF] + offset;
     type = code >> 8;
     switch (type) {
     case 0:
@@ -795,7 +795,7 @@ static void Script_WriteSharedVar(ScriptArg *source, u32 code, int offset) {
     type = code >> 8;
     dest = shared_vars + offset;
     if (offset > 0x3FC) {
-        D_00432920[SCRIPT_ERROR_BAD_SHARED_VAR] = 1;
+        script_error_flags[SCRIPT_ERROR_BAD_SHARED_VAR] = 1;
     }
     switch (type) {
     case 0:
@@ -823,7 +823,7 @@ static void Script_WriteCurrentLocalVar(ScriptArg *source, u32 code, int offset)
     type = code >> 8;
     dest = current_thread->locals + offset;
     if (offset > 0x1FC) {
-        D_00432920[SCRIPT_ERROR_BAD_LOCAL_VAR] = 1;
+        script_error_flags[SCRIPT_ERROR_BAD_LOCAL_VAR] = 1;
     }
     switch (type) {
     case 0:
@@ -850,7 +850,7 @@ static void Script_WriteLocalVar(ScriptArg *source, ScriptThread *thread, u32 co
     type = code >> 8;
     dest = thread->locals + offset;
     if (offset > 0x1FC) {
-        D_00432920[SCRIPT_ERROR_BAD_LOCAL_VAR] = 1;
+        script_error_flags[SCRIPT_ERROR_BAD_LOCAL_VAR] = 1;
     }
     switch (type) {
     case 0:
@@ -917,7 +917,7 @@ int Script_StoreResult(ScriptArg *target, int value) {
     case SCRIPT_ARG_OUT_SHARED_VAR:
         return ((int (*)(ScriptArg *, int, int))Script_WriteSharedVar)(&operand, code, offset); // match: called as returning int
     default:
-        D_00432920[SCRIPT_ERROR_BAD_INT_TARGET] = 1;
+        script_error_flags[SCRIPT_ERROR_BAD_INT_TARGET] = 1;
     }
 }
 
@@ -943,7 +943,7 @@ int Script_StoreFloatResult(ScriptArg *target, f32 value) {
     case SCRIPT_ARG_OUT_SHARED_VAR:
         return ((int (*)(ScriptArg *, int, int))Script_WriteSharedVar)(&operand, code, offset); // match: called as returning int
     }
-    D_00432920[SCRIPT_ERROR_BAD_FLOAT_TARGET] = result = TRUE;
+    script_error_flags[SCRIPT_ERROR_BAD_FLOAT_TARGET] = result = TRUE;
     return result;
 }
 

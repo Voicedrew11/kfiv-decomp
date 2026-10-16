@@ -22,7 +22,7 @@ int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 extern PlayerData player_state;
 extern u8 D_0034A018[];
 // match: the size is unknown; a complete small type would be read through $gp
@@ -50,7 +50,7 @@ s32 EntityAi_IsPushedFromFront(Entity *, f32);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_PickAttack(char *);
 int Motion_Start(void *, int, int, u32, int);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -204,7 +204,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
     EntityUnkE0Kind15F8C0 *timers = (EntityUnkE0Kind15F8C0 *)unkE0;
     f32 height;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (D_0034A018[0] == 0) {
@@ -344,7 +344,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = mode;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         if (entity->unkCD == 1) {
@@ -450,7 +450,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = mode;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->unkCD) {
@@ -579,7 +579,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
         entity->unkCF = entity->unkCD;
         entity->unkCD = mode;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->unkCD) {
@@ -796,7 +796,7 @@ static void DarkSuccubus_ApplyMoveCommand(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[0] = unkE0->unk44;
     ENTITY_SCRATCH_VECTOR[1] = unkE0->unk48;
     ENTITY_SCRATCH_VECTOR[2] = unkE0->unk4C;
-    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->unkD0[2]);
+    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->unkD0[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
@@ -1114,7 +1114,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[1] = unkE0->unk54;
     ENTITY_SCRATCH_VECTOR[2] = unkE0->unk58 + unkE0->unk58;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
-    sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, D_00431AF0, unkE0->unk50);
+    sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, identity_matrix, unkE0->unk50);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
     // match: never taken, but until the compiler works that out the branch separates the
     // scratchpad stores above from the loads below, so their addresses are not kept in registers

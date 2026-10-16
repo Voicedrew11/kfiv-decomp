@@ -22,7 +22,7 @@ void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
 int rand(void);
@@ -146,7 +146,7 @@ static void GiantSpider_OnHit(Entity *entity) {
    flag bit 9 kept set, with GiantSpider_ThinkCombat for state 2 and GiantSpider_ThinkTurnToPlayer for the other
    states. */
 static void GiantSpider_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 0);
     }
     if (entity->unkC6 != 0) {
@@ -206,7 +206,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {

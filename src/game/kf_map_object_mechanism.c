@@ -11,10 +11,10 @@ float atan2f(float, float);
 float Angle_Wrap(float);
 float sqrtf(float);
 int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
-extern void *D_00414188[];
-extern u32 D_0038CC74[];
+extern void *object_under_player[];
+extern u32 game_status_flags[];
 extern PlayerState player_state;
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 
 /* Step 0 of kind 0xE, a platform that sinks under the player: at rest, with its state cleared; step 1. */
 void MapObject_StartSinkingPlatform(MapTrigger *trigger) {
@@ -36,7 +36,7 @@ void MapObject_UpdateSinkingPlatform(MapObject *object) {
     f32 top;
 
     shot->unk0C = shot->unk08;
-    shot->unk08 = D_00414188[0] == object;
+    shot->unk08 = object_under_player[0] == object;
     if (shot->unk08 != shot->unk0C) {
         shot->unk04 = MAP_OBJECT_WORDS(object)->unk4E;
     }
@@ -89,7 +89,7 @@ void MapObject_UpdateLadder(MapObject *object) {
     f32 turn;
     f32 half_angle;
 
-    if (!((D_0038CC74[0] >> 1) & 1)) {
+    if (!((game_status_flags[0] >> 1) & 1)) {
         return;
     }
     if ((s32)(player_state.unk1C8 >> 36) & 1) {
@@ -135,7 +135,7 @@ void MapObject_UpdateShooter(MapObject *object) {
     EntityUnk1B1390 *shot;
 
     if (!(object->model->unk100 & 1)) {
-        if (D_00446ED4 % MAP_OBJECT_WORDS(object)->unk46 != 0) {
+        if (frame_counter % MAP_OBJECT_WORDS(object)->unk46 != 0) {
             return;
         }
     }
@@ -182,7 +182,7 @@ void MapObject_StartPitfall(MapObject *object) {
 
 /* Step 1 of a pitfall: stepped on by the player, it opens (step 2) unless its first wait (unk44) is negative. */
 void MapObject_UpdateClosedPitfall(MapObject *object) {
-    MapObject *stood_on = D_00414188[0];
+    MapObject *stood_on = object_under_player[0];
 
     if (stood_on == object && MAP_OBJECT_WORDS(stood_on)->unk44 >= 0) {
         stood_on->unk10 |= 0x20000;

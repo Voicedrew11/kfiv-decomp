@@ -9,9 +9,9 @@
 
 extern GameStatus game_status;
 extern PlayerState player_state;
-extern int D_00446734;          /* nonzero: a saved game was loaded */
-extern int D_00446738;
-extern u32 D_00446ED4;          /* the frame counter */
+extern int save_loaded;          /* nonzero: a saved game was loaded */
+extern int saved_map_tag;
+extern u32 frame_counter;          /* the frame counter */
 
 void System_Init(void);
 void Display_Init(void);
@@ -46,7 +46,7 @@ void Movie_PlayEnding(void);
 
 /* Sets everything up, then loops for ever: the intro, the title screen, one game. */
 int main(void) {
-    D_00446ED4 = 0;
+    frame_counter = 0;
     System_Init();
     Display_Init();
     sceGsSyncV(0);
@@ -81,7 +81,7 @@ int main(void) {
     srand(Timer_GetTicks());
 
     for (;;) {
-        if (D_00446734 == 0) {
+        if (save_loaded == 0) {
             sceGsSyncV(0);
             Vram_Clear(0, 0x4000);
             if (TitleMenu_Run() == 0) {
@@ -92,7 +92,7 @@ int main(void) {
             Vram_Clear(0, 0x4000);
         }
         GameLoop_ResetSystems(0x263);
-        GameLoop_Run(D_00446734 != 0 ? D_00446738 : 0x63);
+        GameLoop_Run(save_loaded != 0 ? saved_map_tag : 0x63);
         SoundDriver_ReleaseAll();
         Sound_Init();
         if (player_state.unk1A8 != 0) {

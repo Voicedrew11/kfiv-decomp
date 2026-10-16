@@ -6,26 +6,27 @@
 #include "kf_memory.h"
 #include "kf_timer.h"
 
-extern char D_00441350[];           /* "cdrom0:\IOPRP224.IMG;1" */
-extern char D_00441368[];           /* the nine IOP modules: SIO2MAN, PADMAN, MCMAN, MCSERV, LIBSD, MODMIDI, */
-extern char D_00441388[];           /* MODHSYN, SDRDRV and FSIOPSND.IRX */
-extern char D_004413A8[];
-extern char D_004413C0[];
-extern char D_004413E0[];
-extern char D_004413F8[];
-extern char D_00441418[];
-extern char D_00441438[];
-extern char D_00441458[];
-extern char D_00446F90[];           /* "": no module arguments */
-extern char D_00441478[];           /* "(%f,%f,%f,%f)\n" */
-static char D_01BFAF80[0x200000];   /* 0x1BFAF80 the area the menus' heap (D_00446F38) lies in */
+extern char ioprp_image_path[];         /* "cdrom0:\IOPRP224.IMG;1" */
+/* the paths of the nine IOP modules, "cdrom0:\IOP\SIO2MAN.IRX;1" and so on */
+extern char sio2man_module_path[];
+extern char padman_module_path[];
+extern char mcman_module_path[];
+extern char mcserv_module_path[];
+extern char libsd_module_path[];
+extern char modmidi_module_path[];
+extern char modhsyn_module_path[];
+extern char sdrdrv_module_path[];
+extern char fsiopsnd_module_path[];
+extern char empty_module_args[];        /* "": no module arguments */
+extern char vector4_print_format[];     /* "(%f,%f,%f,%f)\n" */
+static char menu_heap_area[0x200000];   /* 0x1BFAF80 the area the menus' heap (menu_heap) lies in */
 extern ClockControl D_00432820;
-extern s32 D_00446F38;
-extern GsDoubleBuffer D_00432D20;
-extern GsDoubleBuffer D_00432F50;
-extern int D_00446F78;              /* the half of the first double buffer in use; each swap flips it */
-extern int D_00446F7C;              /* the same for the second */
-extern int D_00446FA0;              /* TRUE when the last vsync was of field 0 */
+extern s32 menu_heap;
+extern GsDoubleBuffer game_dbuff;           /* the game's frame buffers, drawn through GS context 1 */
+extern GsDoubleBuffer game_dbuff_context2;  /* the same frame buffers, drawn through GS context 2 */
+extern int context1_buffer_half;              /* the half of the first double buffer in use; each swap flips it */
+extern int context2_buffer_half;              /* the same for the second */
+extern int vsync_even_field;        /* TRUE when the last vsync was of field 0 */
 
 void sceSifInitRpc(int);
 void File_InitDrive(void);
@@ -45,27 +46,27 @@ int sceGsSyncV(int);
 void System_RebootIop(void) {
     sceSifInitRpc(0);
     File_InitDrive();
-    while (!sceSifRebootIop(D_00441350)) {
+    while (!sceSifRebootIop(ioprp_image_path)) {
     }
     while (!sceSifSyncIop()) {
     }
     sceSifInitRpc(0);
     File_InitDrive();
     sceFsReset();
-    sceSifLoadModule(D_00441368, 0, D_00446F90);
-    sceSifLoadModule(D_00441388, 0, D_00446F90);
-    sceSifLoadModule(D_004413A8, 0, D_00446F90);
-    sceSifLoadModule(D_004413C0, 0, D_00446F90);
-    sceSifLoadModule(D_004413E0, 0, D_00446F90);
-    sceSifLoadModule(D_004413F8, 0, D_00446F90);
-    sceSifLoadModule(D_00441418, 0, D_00446F90);
-    sceSifLoadModule(D_00441438, 0, D_00446F90);
-    sceSifLoadModule(D_00441458, 0, D_00446F90);
+    sceSifLoadModule(sio2man_module_path, 0, empty_module_args);
+    sceSifLoadModule(padman_module_path, 0, empty_module_args);
+    sceSifLoadModule(mcman_module_path, 0, empty_module_args);
+    sceSifLoadModule(mcserv_module_path, 0, empty_module_args);
+    sceSifLoadModule(libsd_module_path, 0, empty_module_args);
+    sceSifLoadModule(modmidi_module_path, 0, empty_module_args);
+    sceSifLoadModule(modhsyn_module_path, 0, empty_module_args);
+    sceSifLoadModule(sdrdrv_module_path, 0, empty_module_args);
+    sceSifLoadModule(fsiopsnd_module_path, 0, empty_module_args);
 }
 
 /* Prints the four floats at coords as "(x,y,z,w)". Nothing calls it. */
 static void Debug_PrintVector4(float *coords) {
-    printf(D_00441478, coords[0], coords[1], coords[2], coords[3]);
+    printf(vector4_print_format, coords[0], coords[1], coords[2], coords[3]);
 }
 
 /* Builds a perspective matrix from a screen scale and the near and far plane distances. */
@@ -79,14 +80,14 @@ void Display_BuildProjection(f32 (*matrix)[4], f32 screen_scale, f32 near_plane,
 }
 
 /* Lays out the memory areas (Memory_Init), resets the clock control's four bytes at 0x208 and points
-   D_00446F38 at D_01BFAF80. */
+   menu_heap at menu_heap_area. */
 void System_InitMemory(void) {
     Memory_Init();
     D_00432820.unk208 = 0;
     D_00432820.unk209 = 0;
     D_00432820.unk20A = 0;
     D_00432820.unk20B = 2;
-    D_00446F38 = (s32)D_01BFAF80;
+    menu_heap = (s32)menu_heap_area;
 }
 
 /* Empty. */
@@ -110,16 +111,16 @@ static void func_0020B700(void) {
 static void Display_SwapMainBuffer(void) {
     void *draw_env;
 
-    D_00446FA0 = sceGsSyncV(0) == 0;
-    if (D_00446F78 != 0) {
-        draw_env = &D_00432D20.draw1;
+    vsync_even_field = sceGsSyncV(0) == 0;
+    if (context1_buffer_half != 0) {
+        draw_env = &game_dbuff.draw1;
     } else {
-        draw_env = &D_00432D20.draw0;
+        draw_env = &game_dbuff.draw0;
     }
-    sceGsSetHalfOffset(draw_env, 0x800, 0x800, (s16)D_00446FA0);
+    sceGsSetHalfOffset(draw_env, 0x800, 0x800, (s16)vsync_even_field);
     FlushCache(0);
-    sceGsSwapDBuff(&D_00432D20, D_00446F78);
-    D_00446F78 = D_00446F78 == 0;
+    sceGsSwapDBuff(&game_dbuff, context1_buffer_half);
+    context1_buffer_half = context1_buffer_half == 0;
 }
 
 /* Swaps both double buffers. It waits for the vsync first, unless allow_late_swap is set and more than 0x4B0C7
@@ -132,23 +133,23 @@ void Display_SwapBuffers(int allow_late_swap) {
         }
     }
     FlushCache(0);
-    sceGsSwapDBuff(&D_00432D20, D_00446F78);
-    D_00446F78 = D_00446F78 == 0;
+    sceGsSwapDBuff(&game_dbuff, context1_buffer_half);
+    context1_buffer_half = context1_buffer_half == 0;
     FlushCache(0);
-    sceGsSwapDBuff(&D_00432F50, D_00446F7C);
-    D_00446F7C = D_00446F7C == 0;
+    sceGsSwapDBuff(&game_dbuff_context2, context2_buffer_half);
+    context2_buffer_half = context2_buffer_half == 0;
     FlushCache(0);
 }
 
-/* Waits for a vsync, then sets both double buffers to the half not in use, without flipping D_00446F78 and
-   D_00446F7C. Nothing calls it. */
+/* Waits for a vsync, then sets both double buffers to the half not in use, without flipping context1_buffer_half and
+   context2_buffer_half. Nothing calls it. */
 static void Display_ReapplyLastSwap(void) {
     do {
     } while (sceGsSyncV(0) == 0);
     FlushCache(0);
-    sceGsSwapDBuff(&D_00432D20, D_00446F78 == 0);
+    sceGsSwapDBuff(&game_dbuff, context1_buffer_half == 0);
     FlushCache(0);
-    sceGsSwapDBuff(&D_00432F50, D_00446F7C == 0);
+    sceGsSwapDBuff(&game_dbuff_context2, context2_buffer_half == 0);
 }
 
 /* Empty. */

@@ -22,7 +22,7 @@ void EntityAi_UpdateCollision(Entity *);
 void EntityAi_SetUpdate(char *, s32);
 extern s32 entity_type_handlers[][2];
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void Vector_Normalize(void *, void *);
@@ -31,7 +31,7 @@ void Vector_Subtract(void *, void *, void *);
 int rand(void);
 extern PlayerData player_state;
 void EntityAi_ClearTurnInPlace(Entity *);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -734,7 +734,7 @@ void EntityAi_OnHit(Entity *entity) {
    (EntityAi_SensePlayer); while the entity is not busy it steps Entity.state and calls the think function
    of that state. */
 void EntityAi_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
@@ -911,7 +911,7 @@ void EntityAi_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -1034,7 +1034,7 @@ void EntityAi_Move(Entity *entity) {
             if (entity->unkC8 & 0x40) {
                 amount += amount;
             }
-            sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->unkD0[2]);
+            sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->unkD0[2]);
             sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[0]);
             sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[1]);
             Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);

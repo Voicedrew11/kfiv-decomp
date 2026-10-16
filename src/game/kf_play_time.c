@@ -14,35 +14,35 @@ int PlayTime_ClockSecondsSinceStart(void);
 int PlayTime_DayOfYear(ClockTime);
 int sceCdReadClock(ClockTime *);
 
-extern ClockTime D_00446A10;
-extern ClockTime D_00446A18;
-extern ClockTime D_00446A20;
-extern ClockTime D_00446A28;
+extern ClockTime play_clock_start;
+extern ClockTime play_time_base;
+extern ClockTime wall_clock_time;
+extern ClockTime current_play_time;
 
 /* Restart the play clock from a saved play time: keep it as the base and read the wall clock. */
 void PlayTime_Resume(ClockTime play_time) {
-    D_00446A18.sec = play_time.sec;
-    D_00446A18.min = play_time.min;
-    D_00446A18.hour = play_time.hour;
-    D_00446A18.mday = play_time.mday;
-    D_00446A18.mon = play_time.mon;
-    D_00446A18.year = play_time.year;
-    PlayTime_ReadRealTimeClock(&D_00446A10);
+    play_time_base.sec = play_time.sec;
+    play_time_base.min = play_time.min;
+    play_time_base.hour = play_time.hour;
+    play_time_base.mday = play_time.mday;
+    play_time_base.mon = play_time.mon;
+    play_time_base.year = play_time.year;
+    PlayTime_ReadRealTimeClock(&play_clock_start);
 }
 
 /* Start the play clock from zero. */
 int PlayTime_Start(void) {
-    D_00446A18.sec = 0;
-    D_00446A18.min = 0;
-    D_00446A18.hour = 0;
-    D_00446A18.mday = 0;
-    D_00446A18.mon = 0;
-    D_00446A18.year = 0;
-    PlayTime_ReadRealTimeClock(&D_00446A10);
+    play_time_base.sec = 0;
+    play_time_base.min = 0;
+    play_time_base.hour = 0;
+    play_time_base.mday = 0;
+    play_time_base.mon = 0;
+    play_time_base.year = 0;
+    PlayTime_ReadRealTimeClock(&play_clock_start);
     return 0;
 }
 
-/* Reads the wall clock and works out the play time now (D_00446A28). */
+/* Reads the wall clock and works out the play time now (current_play_time). */
 void PlayTime_Update(void) {
     PlayTime_ReadClock();
     PlayTime_ComputeCurrent();
@@ -50,34 +50,34 @@ void PlayTime_Update(void) {
 
 /* Seconds of wall-clock time between the clock start and the last clock read. */
 int PlayTime_ClockSecondsSinceStart(void) {
-    return PlayTime_ClockSecondsBetween(D_00446A10, D_00446A20);
+    return PlayTime_ClockSecondsBetween(play_clock_start, wall_clock_time);
 }
 
 /* Minutes of wall-clock time between the clock start and the last clock read. */
 int PlayTime_ClockMinutesSinceStart(void) {
-    return PlayTime_ClockMinutesBetween(D_00446A10, D_00446A20);
+    return PlayTime_ClockMinutesBetween(play_clock_start, wall_clock_time);
 }
 
 /* Seconds from the given play time to the current play time. */
 int PlayTime_SecondsSince(ClockTime play_time) {
-    return PlayTime_ToSeconds(D_00446A28) - PlayTime_ToSeconds(play_time);
+    return PlayTime_ToSeconds(current_play_time) - PlayTime_ToSeconds(play_time);
 }
 
 /* Minutes from the given play time to the current play time. */
 int PlayTime_MinutesSince(ClockTime play_time) {
-    return PlayTime_ToMinutes(D_00446A28) - PlayTime_ToMinutes(play_time);
+    return PlayTime_ToMinutes(current_play_time) - PlayTime_ToMinutes(play_time);
 }
 
 /* The day of the week of the last clock read, 0: Sunday. */
 int PlayTime_GetWeekday(void) {
     CalendarTime calendar;
 
-    calendar.tm_sec = D_00446A20.sec;
-    calendar.tm_min = D_00446A20.min;
-    calendar.tm_hour = D_00446A20.hour;
-    calendar.tm_mday = D_00446A20.mday;
-    calendar.tm_mon = D_00446A20.mon - 1;
-    calendar.tm_year = D_00446A20.year + 0x64;
+    calendar.tm_sec = wall_clock_time.sec;
+    calendar.tm_min = wall_clock_time.min;
+    calendar.tm_hour = wall_clock_time.hour;
+    calendar.tm_mday = wall_clock_time.mday;
+    calendar.tm_mon = wall_clock_time.mon - 1;
+    calendar.tm_year = wall_clock_time.year + 0x64;
     mktime(&calendar);
     return calendar.tm_wday;
 }
@@ -89,12 +89,12 @@ int PlayTime_SecondsBetween(ClockTime start, ClockTime end) {
     return PlayTime_ToSeconds(end) - start_seconds;
 }
 
-/* Read the wall clock into D_00446A20; gives sceCdReadClock's result. */
+/* Read the wall clock into wall_clock_time; gives sceCdReadClock's result. */
 int PlayTime_ReadClock(void) {
-    return PlayTime_ReadRealTimeClock(&D_00446A20);
+    return PlayTime_ReadRealTimeClock(&wall_clock_time);
 }
 
-/* The play time now: the saved base plus the wall-clock seconds since the start, into D_00446A28. */
+/* The play time now: the saved base plus the wall-clock seconds since the start, into current_play_time. */
 int PlayTime_ComputeCurrent(void) {
     int elapsed;
     int seconds;
@@ -102,13 +102,13 @@ int PlayTime_ComputeCurrent(void) {
     int hours;
 
     elapsed = PlayTime_ClockSecondsSinceStart();
-    seconds = elapsed + PlayTime_ToSeconds(D_00446A18);
-    D_00446A28.sec = seconds % 60;
+    seconds = elapsed + PlayTime_ToSeconds(play_time_base);
+    current_play_time.sec = seconds % 60;
     minutes = seconds / 60;
-    D_00446A28.min = minutes % 60;
+    current_play_time.min = minutes % 60;
     hours = minutes / 60;
-    D_00446A28.hour = hours % 99;
-    D_00446A28.mday = hours / 99;
+    current_play_time.hour = hours % 99;
+    current_play_time.mday = hours / 99;
     return 1;
 }
 

@@ -20,11 +20,11 @@ int Player_LearnSpellInRow(int);
 extern u8 item_counts[];
 extern ItemCommonDef item_common_defs[];
 extern GameStatus game_status;
-extern EventRunner D_00420D00;
+extern EventRunner view_ray_status;
 extern PlayerState player_state;
-extern void *D_00414188[];
-extern int D_00446770;
-extern u32 D_00446ED4;
+extern void *object_under_player[];
+extern int current_map_slot;
+extern u32 frame_counter;
 extern u8 spell_levels[6][5];
 
 /* TRUE when the player cannot take one more of the item ("Can't carry any more", MapItem_PickupHold): a one-of-a-kind
@@ -106,20 +106,20 @@ void Player_UseItem(void) {
         game_status.bit6 = FALSE;
         game_status.unk44 = 1;
         if (item_counts[item] != 0) {
-            entity = D_00420D00.unk54;
-            if (entity != NULL && entity->spawn_info->unk58 != 0 && entity->group_id == D_00446770) {
+            entity = view_ray_status.unk54;
+            if (entity != NULL && entity->spawn_info->unk58 != 0 && entity->group_id == current_map_slot) {
                 if (entity->spawn_info->unk4E != 0 && Script_IsRunning(entity->spawn_info->unk4E) != 0) {
                     return;
                 }
-                Script_Start(((Entity *)D_00420D00.unk54)->spawn_info->unk58, 0);
+                Script_Start(((Entity *)view_ray_status.unk54)->spawn_info->unk58, 0);
                 return;
             }
-            object = D_00420D00.current;
-            if (object != NULL && object->unk08->unk58 != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
+            object = view_ray_status.current;
+            if (object != NULL && object->unk08->unk58 != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == current_map_slot) {
                 if (object->unk08->unk40 != 0 && Script_IsRunning(object->unk08->unk40) != 0) {
                     return;
                 }
-                Script_Start(((MapObject *)D_00420D00.current)->unk08->unk58, 0);
+                Script_Start(((MapObject *)view_ray_status.current)->unk08->unk58, 0);
                 return;
             }
             Player_ApplyItem(item);
@@ -162,13 +162,13 @@ void Player_UseItem(void) {
             case 1:
             case 4:
             case 5:
-                if (D_00420D00.current == NULL || !MapObject_UseItem(D_00420D00.current, item)) {
+                if (view_ray_status.current == NULL || !MapObject_UseItem(view_ray_status.current, item)) {
                     Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
                     return;
                 }
                 break;
             case 2:
-                stood_on = D_00414188[0];
+                stood_on = object_under_player[0];
                 if (stood_on == NULL || stood_on->unk04->kind != MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE || !MapChange_StartPassage(item)) {
                     Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
                     return;
@@ -280,7 +280,7 @@ void Player_ApplyItem(int kind) {
 void Player_ApplyPoisonWater(int kind) {
     if (kind == 0x12) {
         player_state.timed_flags[0] = 1800;
-        player_state.unk2C4 = D_00446ED4;
+        player_state.unk2C4 = frame_counter;
     }
 }
 

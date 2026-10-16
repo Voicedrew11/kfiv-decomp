@@ -18,7 +18,7 @@ int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 float EntityMath_AngleDifference(float, float);
 void sceVu0CopyMatrix(void *, void *);
 void sceVu0TransposeMatrix(void *, void *);
@@ -33,7 +33,7 @@ void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
@@ -174,17 +174,17 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
             }
             rate = 10.0f;
             EntityMath_EaseAngleToward(&unkE0->unk48, yaw, rate);
-            sceVu0CopyMatrix(parent, D_00431AF0);
+            sceVu0CopyMatrix(parent, identity_matrix);
             Bone_MultiplyPathTo(entity->model->unkF8, bone, parent);
             parent[12] = 0.0f;
             parent[13] = 0.0f;
             parent[14] = 0.0f;
             parent[15] = 1.0f;
-            sceVu0RotMatrixX(rotation, D_00431AF0, bone->unk50[0]);
+            sceVu0RotMatrixX(rotation, identity_matrix, bone->unk50[0]);
             sceVu0RotMatrixZ(rotation, rotation, bone->unk50[2]);
             sceVu0RotMatrixY(rotation, rotation, bone->unk50[1]);
             Matrix_Multiply(rotation, parent, rotation);
-            sceVu0RotMatrixY(twist, D_00431AF0, unkE0->unk48);
+            sceVu0RotMatrixY(twist, identity_matrix, unkE0->unk48);
             Matrix_Multiply(rotation, twist, rotation);
             sceVu0TransposeMatrix(parent, parent);
             Matrix_Multiply(rotation, parent, rotation);
@@ -233,7 +233,7 @@ static void FireGenie_OnHit(Entity *entity) {
 static void FireGenie_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
@@ -297,7 +297,7 @@ static void FireGenie_RangedAttack0(Entity *entity) {
         if (entity->model->unkFC->unk82 >= (s16)entity->params->unk434
             && entity->model->unkFC->unk82 <= entity->params->unk436) {
             ENTITY_FLAGS(entity) |= 0x200;
-            if (D_00446ED4 % 3U != 0) {
+            if (frame_counter % 3U != 0) {
                 EntityAi_LaunchShots(entity, unk3D8, (s16)entity->params->unk434, entity->params->unk436);
             }
         }

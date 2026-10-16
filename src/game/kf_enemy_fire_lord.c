@@ -16,13 +16,13 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern ModelInstanceBlock fire_lord_model[2];
 // match: fire_lord_model[1], which the set-up function reaches by its own address
-extern ModelInstanceBlock D_003E7300;
+extern ModelInstanceBlock fire_lord_older_afterimage;
 extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 extern PlayerData player_state;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
@@ -56,8 +56,8 @@ int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 float EntityMath_AngleXZ(float *, char *);
 s32 EntityAi_CanUseMelee(Entity *, s32);
-extern u8 D_004141D8[];
-extern EntityModel *D_00446978;
+extern u8 player_weapon_step[];
+extern EntityModel *held_item_model_ptr;
 void DrawList_Add(ModelInstance *, s32, s32);
 
 static void FireLord_Animate(Entity *entity);
@@ -114,7 +114,7 @@ void FireLord_Init(Entity *entity) {
     entity->model->unk15C = entity->unkD6;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
-    D_003E7300 = *(ModelInstanceBlock *)entity->model;
+    fire_lord_older_afterimage = *(ModelInstanceBlock *)entity->model;
     fire_lord_model[0] = *(ModelInstanceBlock *)entity->model;
 }
 
@@ -172,7 +172,7 @@ static void FireLord_Think(Entity *entity, s32 unknown) {
     if (player_state.unk259 != 0) {
         unkE0->unk6A = entity->params->unk434;
     }
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
@@ -332,7 +332,7 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -415,7 +415,7 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -843,7 +843,7 @@ static s32 FireLord_ShouldEvadeSwingOrMagic(Entity *entity, f32 max_distance, f3
     f32 distance;
     f32 angle;
 
-    if (D_004141D8[0] == 0 || D_00446978->unkFC->unk82 >= 6) {
+    if (player_weapon_step[0] == 0 || held_item_model_ptr->unkFC->unk82 >= 6) {
         if (unkE0->unk6A <= 0) {
             return FALSE;
         }

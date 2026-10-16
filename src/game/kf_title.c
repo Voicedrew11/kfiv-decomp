@@ -17,7 +17,7 @@
 #define PRESS_START_FRAMES  3600 /* the PRESS START screen goes back to the logos after this long */
 #define TITLE_FADE_FRAMES   30
 
-extern char *D_00446F50;
+extern char *map_file_area;
 
 int SoundDriver_PlayStreamFile(int, char *, int);
 s32 Sound_PlayMenu(s32);
@@ -120,7 +120,7 @@ int Title_Init(void) {
     sceGsSetDefDBuff(&title_dbuff, 0, 640, 224, 3, 0, 1);
     title_dbuff.clear1.rgbaq = title_dbuff.clear0.rgbaq = 0x180000000;
     ((int (*)(void))Title_SwapBuffers)(); // match: called as if it returned a value, which keeps $2 busy
-    texture_cursor = (TextureHeader *)D_00446F50;
+    texture_cursor = (TextureHeader *)map_file_area;
     Title_LoadTexture("title\\logo.tm2", TITLE_TEXTURE_LOGO);
     Title_LoadTexture("title\\title_menu1.tm2", TITLE_TEXTURE_PRESS_START);
     Title_LoadTexture("title\\title_menu2.tm2", TITLE_TEXTURE_MENU_CHOICE + 0);
@@ -473,7 +473,7 @@ int Title_InitGameOver(void) {
     sceGsSetDefDBuff(&title_dbuff, 0, 640, 224, 3, 0, 1);
     title_dbuff.clear1.rgbaq = title_dbuff.clear0.rgbaq = 0x180000000L;
     ((int (*)(void))Title_SwapBuffers)(); // match: called as if it returned a value, which keeps $2 busy
-    texture_cursor = (TextureHeader *)D_00446F50;
+    texture_cursor = (TextureHeader *)map_file_area;
     Title_LoadTexture("title\\gameover_load.tm2", TITLE_TEXTURE_GAME_OVER_LOAD);
     Title_LoadTexture("title\\gameover_quit.tm2", TITLE_TEXTURE_GAME_OVER_QUIT);
     Title_LoadTexture("title\\gameover_ok.tm2", TITLE_TEXTURE_GAME_OVER_OK);

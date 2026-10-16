@@ -1,4 +1,4 @@
-/* Linked nodes: the five chained 0x50-byte nodes at D_00426470. */
+/* Linked nodes: the five chained 0x50-byte nodes at model_load_shown. */
 #ifndef KF_LINK_H
 #define KF_LINK_H
 
@@ -13,7 +13,7 @@ typedef struct LinkNode {
     void (*callback)(void);         /* 0x18 */
     s32 unk1C;                      /* 0x1C */
     s32 unk20;                      /* 0x20 */
-    s8 slot;                        /* 0x24 which D_00420DF0 entry its file is for (Menu_FinishWornModelLoad) */
+    s8 slot;                        /* 0x24 which pool_part_sources entry its file is for (Menu_FinishWornModelLoad) */
     char pad25[0x03];
     char name[0x28];                /* 0x28 file name built with sprintf */
 } LinkNode;
@@ -26,7 +26,8 @@ typedef struct {
     s32 second_offset;              /* 0x0C */
 } LinkFile;
 
-/* D_0043F720: the second argument of PoolSlot_LoadGroup for each slot (the D_00420DF0 entries are PoolPartSource, kf_game.h) */
+/* slot_pool_groups: the pool group (PoolSlot_LoadGroup's second argument) of each slot
+   (the pool_part_sources entries are PoolPartSource, kf_game.h) */
 typedef struct {
     u8 value[12];
 } LinkSlotValues;

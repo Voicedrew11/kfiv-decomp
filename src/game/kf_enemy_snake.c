@@ -25,7 +25,7 @@ f32 EntityCollision_DistanceToPropFloor(void *, void *);
 void EntityMath_FacingVector(Vector4 *, float);
 void Vector_Scale(float *, float *, float);
 float EntityMath_DistanceXZ(void *, void *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -33,9 +33,9 @@ int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_ThinkPursue(Entity *, s32);
 void EntityAi_ThinkCombat(Entity *, s32);
-extern EntitySpawnInfo *D_004467D0[2];
+extern EntitySpawnInfo *map_spawn_infos[2];
 extern MapSlot map_slots[];
-extern int D_00446770;
+extern int current_map_slot;
 void Game_CountSpawnDeath(u32, int);
 int Script_Start(int, int);
 
@@ -299,7 +299,7 @@ static void Snake_Think(Entity *entity, s32 unknown) {
             return;
         }
     }
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
@@ -357,9 +357,9 @@ static void Snake_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             entity->unkA0 = 20;
-            Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+            Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - map_spawn_infos[entity->group_id]);
             Effect_FreeForOwner(entity);
-            if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
+            if (entity->spawn_info->unk36 != 0 && entity->group_id == current_map_slot) {
                 Script_Start(entity->spawn_info->unk36, 0);
             }
             entity->action_step++;

@@ -9,6 +9,6 @@ ItemCommonDef item_common_defs[150] = { 0 };      /* 0x41A6F8 the common block, 
 PlayerItemDef weapon_defs[70] = { 0 };      /* 0x41B9B8 param/item_wpn.prm */
 LevelRecordDef worn_defs[160] = { 0 };      /* 0x41E118 param/item_pct.prm */
 
-/* The weapons and the worn items inside item_name_defs (items 150 and 220 on), read by their old names. */
-asm(".globl D_00416D78\nD_00416D78 = item_name_defs + 0x2580\n");
-asm(".globl D_00417EF8\nD_00417EF8 = item_name_defs + 0x3700\n");
+/* The weapons and the worn items inside item_name_defs (items 150 and 220 on). */
+asm(".globl weapon_name_defs\nweapon_name_defs = item_name_defs + 0x2580\n");
+asm(".globl worn_name_defs\nworn_name_defs = item_name_defs + 0x3700\n");

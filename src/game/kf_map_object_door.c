@@ -15,8 +15,8 @@ void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void Model_MultiplyChildMatrices(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
-extern void *D_00420D50[];
-extern u32 D_0038CC74[];
+extern void *faced_object[];
+extern u32 game_status_flags[];
 extern u8 item_counts[];
 extern float player_state[];
 
@@ -65,7 +65,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (D_00420D50[0] == object && ((D_0038CC74[0] >> 1) & 1)) {
+    if (faced_object[0] == object && ((game_status_flags[0] >> 1) & 1)) {
         item = object->unk08->unk44;
         if (item != 0 && !(object->unk10 & 0x40000)) {
             if (item_counts[item] != 0) {

@@ -7,8 +7,8 @@
 #include "kf_entity.h"
 #include "kf_map.h"
 
-extern u32 D_00446ED4;
-extern s32 D_00446770;
+extern u32 frame_counter;
+extern s32 current_map_slot;
 extern PlayerData player_state;
 extern MapSlot map_slots[];
 extern f32 D_00446824[];
@@ -131,7 +131,7 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
     f32 height;
     f32 no_floor;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (player_state.unk259 != 0) {
@@ -147,7 +147,7 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
     }
     if (unkE0->unk6A < 5) {
         EntityPoint_PickNear(500.0f, &climb_points[unkE0->unk6A], &player_state, &player_state);
-        slot = &map_slots[D_00446770];
+        slot = &map_slots[current_map_slot];
         height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.unk252, &climb_points[unkE0->unk6A]);
         no_floor = D_00446824[0];
         if (height == no_floor) {
@@ -228,7 +228,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -802,7 +802,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
         }
         if (unkE0->unk6A < 5) {
             EntityPoint_PickNear(500.0f, &climb_points[unkE0->unk6A], &player_state, &player_state);
-            slot = &map_slots[D_00446770];
+            slot = &map_slots[current_map_slot];
             height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.unk252, &climb_points[unkE0->unk6A]);
             no_floor = D_00446828[0];
             if (height == no_floor) {

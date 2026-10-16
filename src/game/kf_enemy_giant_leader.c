@@ -18,7 +18,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 extern PlayerData player_state;
 extern MapSlot map_slots[];
 void EntityAi_SensePlayer(void *, int);
@@ -50,7 +50,7 @@ void EntityAi_RangedAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
 float EntityMath_WrapAngle(float);
 void EntityAi_SetAttackDelay(Entity *, s32);
-extern int D_00446770;
+extern int current_map_slot;
 void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
@@ -122,7 +122,7 @@ static void GiantLeader_Think(Entity *entity, s32 unknown) {
     Entity *third;
     MapRecord *records;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
         Vector_Copy(position, entity->model->position);
         Vector_Copy(target, &player_state);
@@ -248,7 +248,7 @@ static void GiantLeader_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -450,7 +450,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
         if (entity->model->unkFC->unk82 == entity->params->unk43C) {
             switch (unkE0->unk7A) {
             case 1:
-                if (entity->group_id == D_00446770) {
+                if (entity->group_id == current_map_slot) {
                     map_object = MapObject_GetById(entity->group_id, 0xA2);
                     if (map_object != NULL) {
                         MapObject_Break(map_object);
@@ -458,7 +458,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
                 }
                 break;
             case 2:
-                if (entity->group_id == D_00446770) {
+                if (entity->group_id == current_map_slot) {
                     map_object = MapObject_GetById(entity->group_id, 0xA0);
                     if (map_object != NULL) {
                         MapObject_Break(map_object);
@@ -466,7 +466,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
                 }
                 break;
             case 3:
-                if (entity->group_id == D_00446770) {
+                if (entity->group_id == current_map_slot) {
                     map_object = MapObject_GetById(entity->group_id, 0xA1);
                     if (map_object != NULL) {
                         MapObject_Break(map_object);

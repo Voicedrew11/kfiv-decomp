@@ -17,7 +17,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 extern PlayerData player_state;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
@@ -114,7 +114,7 @@ static void WindElemental_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0;
 
     unkE0 = &entity->unkE0;
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (player_state.unk259 != 0) {
@@ -190,7 +190,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = mode;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         // match: called with the entity alone here
         ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
@@ -244,7 +244,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
                     entity->unkC8 = 0x141;
                 } else {
                     if (ABS(EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1])) > 1.5707964f
-                        && D_00446ED4 % 15U == 0 && !(rand() & 1)) {
+                        && frame_counter % 15U == 0 && !(rand() & 1)) {
                         unkE0->unk7A = (EntityMath_WrapAngle(entity->unk68 - entity->model->unkD0[1]) > 0.0f) ? 1 : -1;
                         EntityAi_StartAction(entity, WindElemental_PlayTurnAnim, unknown);
                         return;
@@ -425,7 +425,7 @@ static s32 WindElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 
 static void WindElemental_AlertSameKind(Entity *entity) {
     Entity *other;
 
-    for (other = D_004467E0; other != NULL; other = other->next) {
+    for (other = active_entities_head; other != NULL; other = other->next) {
         if (entity->params == other->params && ((s32)other->flags & 1) && ((s32)(other->flags >> 1) & 1)
             && ((s32)(other->flags >> 2) & 3) == 0 && other != entity) {
             EntityUnkE0 *unkE0 = &other->unkE0;
@@ -513,7 +513,7 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
             entity->unkCF = entity->unkCD;
             entity->unkCD = 0;
             if (entity->unkCF != 0) {
-                entity->unk9E = D_00446ED4;
+                entity->unk9E = frame_counter;
             }
             EntityAi_LowerChoiceWeight(entity, 0);
             if (entity->unkCD == 0) {

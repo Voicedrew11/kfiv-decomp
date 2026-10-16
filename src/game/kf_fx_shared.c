@@ -22,7 +22,7 @@ int Attack_RunEffectHitCheck(void *effect);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, float *, float *);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 float sqrtf(float);
 float atan2f(float, float);
 int rand(void);
@@ -33,7 +33,7 @@ double cos(double);
 void Vector_Normalize(void *dst, void *src);
 void Vector_Scale(void *, void *, float);
 void Vector_Add(void *, void *, void *);
-extern Entity *D_004467E0;
+extern Entity *active_entities_head;
 int Effect_IsEntityUntargetable(Entity *entity);
 float Effect_Distance(void *, void *);
 f32 Math_AbsFloat(f32);
@@ -220,7 +220,7 @@ void EffectAngle_ToVector(float length, Vector4 *out, Vector4 *angles) {
 
     out->x = out->y = out->w = 0.0f;
     out->z = length;
-    sceVu0RotMatrixX(matrix, D_00431AF0, angles->x);
+    sceVu0RotMatrixX(matrix, identity_matrix, angles->x);
     sceVu0RotMatrixY(matrix, matrix, angles->y);
     sceVu0ApplyMatrix(&out->x, matrix, &out->x);
 }
@@ -351,7 +351,7 @@ int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *r
     f32 distance;
     f32 score;
 
-    for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+    for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         if (Effect_IsEntityUntargetable(entity) != 0) {
             continue;
         }
@@ -392,7 +392,7 @@ Entity *EffectHit_FindNearestEntity(EffectActor *effect, Vector4 *position, Vect
     f32 distance;
     f32 stack_reserve[8]; // match: unused, keeps the retail stack frame size
 
-    for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+    for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         if (Effect_IsEntityUntargetable(entity) != 0) {
             continue;
         }

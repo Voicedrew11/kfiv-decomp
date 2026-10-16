@@ -2,7 +2,7 @@
 
 void *memset(void *, s32, u32);
 
-extern s32 D_00446928;
+extern s32 dark_one_hits_left;
 
 #define SHOT_RING_SLOTS 0x100
 #define SHOT_SLOT_SIZE 0x30
@@ -18,7 +18,7 @@ void Shot_ClearAll(void) {
     memset(shot_ring, 0, sizeof(shot_ring));
     second_ring_next = 0;
     memset(second_ring, 0, sizeof(second_ring));
-    D_00446928 = 3;
+    dark_one_hits_left = 3;
 }
 
 /* Claims the next shot slot, cleared; the oldest is reused once all are taken. */

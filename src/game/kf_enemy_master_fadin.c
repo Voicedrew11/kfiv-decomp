@@ -94,7 +94,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
         }
     }
     if (entity->spawn_info->unk40 == 1) {
-        for (other = D_004467E0; other != NULL; other = other->next) {
+        for (other = active_entities_head; other != NULL; other = other->next) {
             if (other->params == entity->params && other != entity && ((s32)other->flags & 1)) {
                 if (!ENTITY_FLAG_BITS(other)->bit1 || ENTITY_FLAG_BITS(other)->bits2 >= 3) {
                     EntityEvent_Respawn((char *)other);

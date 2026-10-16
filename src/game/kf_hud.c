@@ -14,9 +14,9 @@ void Packet_EndGsRegisters(void);
 void GsDraw_QueueTexturedSprite(void *);
 
 extern char game_options[0x10]; // match: read as a signed byte here
-extern s32 D_0038A218[];
+extern s32 hud_visible[];
 extern PlayerState player_state;
-extern char *D_00446F6C;        /* the HUD area, where gage.tx2 is loaded */
+extern char *hud_area;          /* the HUD area, where gage.tx2 is loaded */
 
 static TextureTableHeader *pause_texture_table; /* 0x4471F0 pause.tx2, loaded after gage.tx2 */
 static ScreenSprite hud_sprites[10];            /* 0x5CDE18 the frame and bars of the HUD */
@@ -59,7 +59,7 @@ static inline char *align16(char *address) {
 /* Loads the HUD textures (gage.tx2) into the HUD area and the pause label (pause.tx2) after them, uploads the
    latter at once and sets up the sprites drawn from them. */
 void Hud_Load(void) {
-    char *address = D_00446F6C;
+    char *address = hud_area;
     int file;
     int size;
 
@@ -107,8 +107,8 @@ void Hud_Draw(void) {
     ScreenSprite sprite;
     s32 fade;
 
-    if (game_options[9] != 0 && D_0038A218[0] != 0) {
-        TextureTable_QueueAll((TextureTableHeader *)D_00446F6C);
+    if (game_options[9] != 0 && hud_visible[0] != 0) {
+        TextureTable_QueueAll((TextureTableHeader *)hud_area);
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);
         Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);

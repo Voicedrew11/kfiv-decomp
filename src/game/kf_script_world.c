@@ -1,6 +1,6 @@
-/* Script commands 100 to 199 (handler table D_00433440): the map's fixed items, objects and props, the
+/* Script commands 100 to 199 (handler table script_world_command_handlers): the map's fixed items, objects and props, the
    player, the camera, the map's fog and lights, sounds, the screens the main loop runs between frames and
-   the screen overlay. A command that names an object looks it up in the current map (D_00446770); one
+   the screen overlay. A command that names an object looks it up in the current map (current_map_slot); one
    that eases something toward a goal moves it 1/frames of the way each frame. */
 #include "kf_script.h"
 #include "kf_collision.h"
@@ -39,12 +39,12 @@ void Sound_StopVoice(s8 slot);
 void Input_StartRumble(u8 strength, u8 duration, u8 delay);
 void Menu_AddKeyItem(u32, u32, int); // match: three arguments are passed; the definition takes the first alone
 
-extern int D_00446770;
-extern int D_00446794;
+extern int current_map_slot;
+extern int map_load_committed;
 extern GameStatus game_status;
 extern MapSlot map_slots[];
 extern PlayerState player_state;
-extern CameraState D_004325A0;
+extern CameraState camera_state;
 extern MapLoadState map_load_state;
 extern MapLoadRequest map_load_request;
 extern MapDrawStateOverlays map_draw_state;
@@ -63,12 +63,12 @@ void ScriptCmd_Nop109(ScriptThreadCommand *command) {
 
 /* Command 100: puts the current map's fixed item `value` in place (MapItem_PlaceFixedById), then finishes. */
 void ScriptCmd_PlaceMapItem(ScriptValueCommand *command) {
-    MapItem_PlaceFixedById(D_00446770, command->value.value);
+    MapItem_PlaceFixedById(current_map_slot, command->value.value);
     command->active = 0;
 }
 
 /* Command 101: starts the pickup of the fixed item `first` of the current map (MapItem_StartPickupById makes its node
-   D_004469D8 the one being picked up); `second` 0 marks it as one the player cannot put back. Then finishes. */
+   pickup_item the one being picked up); `second` 0 marks it as one the player cannot put back. Then finishes. */
 void ScriptCmd_StartItemPickup(ScriptPairCommand *command) {
     MapItem_StartPickupById(command->first.value, command->second.value);
     command->active = 0;
@@ -221,7 +221,7 @@ void ScriptCmd_GetItemRotation(ScriptMoveCommand *command) {
 void ScriptCmd_ActivateMapObject(ScriptObjectCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->object_id.value);
+    object = MapObject_GetById(current_map_slot, command->object_id.value);
     if (object != NULL) {
         MapObject_Activate(object);
     }
@@ -232,7 +232,7 @@ void ScriptCmd_ActivateMapObject(ScriptObjectCommand *command) {
 void ScriptCmd_DeactivateMapObject(ScriptObjectCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->object_id.value);
+    object = MapObject_GetById(current_map_slot, command->object_id.value);
     if (object != NULL) {
         MapObject_Deactivate(object);
     }
@@ -241,7 +241,7 @@ void ScriptCmd_DeactivateMapObject(ScriptObjectCommand *command) {
 
 /* Command 112: eases the map object `target_id` toward the position x, y, z over `frames` frames. */
 void ScriptCmd_MoveMapObjectTo(ScriptMoveCommand *command) {
-    MapObject *object = MapObject_GetById(D_00446770, command->target_id.value);
+    MapObject *object = MapObject_GetById(current_map_slot, command->target_id.value);
     int frames;
     f32 divisor;
     int frames_left;
@@ -275,7 +275,7 @@ void ScriptCmd_MoveMapObjectTo(ScriptMoveCommand *command) {
 void ScriptCmd_TurnMapObjectTo(ScriptMoveCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object == NULL) {
         command->active = 0;
         return;
@@ -297,7 +297,7 @@ void ScriptCmd_TurnMapObjectTo(ScriptMoveCommand *command) {
 void ScriptCmd_BreakMapObject(ScriptObjectCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->object_id.value);
+    object = MapObject_GetById(current_map_slot, command->object_id.value);
     if (object != NULL) {
         MapObject_Break(object);
     }
@@ -309,7 +309,7 @@ void ScriptCmd_BreakMapObject(ScriptObjectCommand *command) {
 void ScriptCmd_IsMapObjectOpen(ScriptCallCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL) {
         Script_StoreResult(&command->first, MAP_OBJECT_BITS(object)->bit17);
     } else {
@@ -323,7 +323,7 @@ void ScriptCmd_IsMapObjectOpen(ScriptCallCommand *command) {
 void ScriptCmd_SetMapObjectScripted(ScriptCallCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL) {
         MapObject_SetScripted(object, command->first.value);
     }
@@ -335,7 +335,7 @@ void ScriptCmd_SetMapObjectScripted(ScriptCallCommand *command) {
 void ScriptCmd_PlayMapObjectAnimRunning(ScriptCallCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL) {
         MapObject_PlayScriptedAnim(object, command->first.value, command->second.value);
         MapObject_SetScriptedBit21(object, 1);
@@ -348,7 +348,7 @@ void ScriptCmd_PlayMapObjectAnimRunning(ScriptCallCommand *command) {
 void ScriptCmd_WaitMapObjectMotion(ScriptObjectCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->object_id.value);
+    object = MapObject_GetById(current_map_slot, command->object_id.value);
     if (object == NULL || !(object->model->unk100 & 1) || (object->unk10 & 0x400000) ||
         MODEL_CHANNEL(object->model)->param == 0) {
         command->active = 0;
@@ -358,7 +358,7 @@ void ScriptCmd_WaitMapObjectMotion(ScriptObjectCommand *command) {
 /* Command 119: hands the script, through `first`, whether the motion of the map object `target_id` has
    run out (-1 when it has none, or bit 22 is set), then finishes. */
 void ScriptCmd_IsMapObjectMotionDone(ScriptCallCommand *command) {
-    MapObject *object = MapObject_GetById(D_00446770, command->target_id.value);
+    MapObject *object = MapObject_GetById(current_map_slot, command->target_id.value);
 
     if (object != NULL && (object->model->unk100 & 1) && !(object->unk10 & 0x400000)) {
         Script_StoreResult(&command->first, MODEL_CHANNEL(object->model)->param < 1);
@@ -373,7 +373,7 @@ void ScriptCmd_IsMapObjectMotionDone(ScriptCallCommand *command) {
 void ScriptCmd_SetMapObjectColor(ScriptObjectValuesCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL && object->model != NULL) {
         object->model->unk150 = command->values[0].value;
         object->model->unk154 = command->values[1].value;
@@ -389,7 +389,7 @@ void ScriptCmd_SetMapObjectPartShown(ScriptCallCommand *command) {
     MapObject *object;
     int part;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL && object->model != NULL) {
         part = command->first.value;
         if (part >= 0 && part < object->model->part_count) {
@@ -404,7 +404,7 @@ void ScriptCmd_SetMapObjectPartShown(ScriptCallCommand *command) {
 void ScriptCmd_SignalMapObject(ScriptCallCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL) {
         MapObject_Signal(object, command->first.value);
     }
@@ -416,7 +416,7 @@ void ScriptCmd_SignalMapObject(ScriptCallCommand *command) {
 void ScriptCmd_GetMapObjectParams(ScriptObjectValuesCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL && object->model != NULL && object->unk04->kind == 9) {
         Script_StoreResult(&command->values[0], MAP_OBJECT_WORDS(object)->unk44);
         Script_StoreResult(&command->values[1], MAP_OBJECT_WORDS(object)->unk46);
@@ -432,7 +432,7 @@ void ScriptCmd_SetMapObjectParams(ScriptObjectShortsCommand *command) {
     MapObject *object;
     MapObjectUnk08Words *source;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL && object->model != NULL && object->unk04->kind == 9) {
         source = MAP_OBJECT_WORDS(object);
         source->unk44 = command->values[0].value;
@@ -449,7 +449,7 @@ void ScriptCmd_MoveMapObjectBy(ScriptMoveCommand *command) {
     ModelInstance *model;
     int frames_left;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object == NULL || command->frames.value <= 0) {
         command->active = 0;
         return;
@@ -470,7 +470,7 @@ void ScriptCmd_TurnMapObjectBy(ScriptMoveCommand *command) {
     MapObject *map_object;
     s32 frames;
 
-    map_object = MapObject_GetById(D_00446770, command->target_id.value);
+    map_object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (map_object == NULL || command->frames.value <= 0) {
         command->active = 0;
     } else {
@@ -490,7 +490,7 @@ void ScriptCmd_TurnMapObjectBy(ScriptMoveCommand *command) {
 void ScriptCmd_GetMapObjectPosition(ScriptPointCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->object_id.value);
+    object = MapObject_GetById(current_map_slot, command->object_id.value);
     if (object != NULL) {
         Script_StoreFloatResult((ScriptArg *)&command->from_x, object->model->position.x);
         Script_StoreFloatResult((ScriptArg *)&command->from_y, object->model->position.y);
@@ -504,7 +504,7 @@ void ScriptCmd_GetMapObjectPosition(ScriptPointCommand *command) {
 void ScriptCmd_GetMapObjectRotation(ScriptMoveCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL) {
         Script_StoreFloatResult((ScriptArg *)&command->x, object->model->rotation.x);
         Script_StoreFloatResult((ScriptArg *)&command->y, object->model->rotation.y);
@@ -518,7 +518,7 @@ void ScriptCmd_GetMapObjectRotation(ScriptMoveCommand *command) {
 void ScriptCmd_PlayMapObjectAnim(ScriptCallCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->target_id.value);
+    object = MapObject_GetById(current_map_slot, command->target_id.value);
     if (object != NULL) {
         MapObject_PlayScriptedAnim(object, command->first.value, command->second.value);
         MapObject_SetScriptedBit21(object, 0);
@@ -531,7 +531,7 @@ void ScriptCmd_PlayMapObjectAnim(ScriptCallCommand *command) {
 void ScriptCmd_ResumeMapObjectAnim(ScriptObjectCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->object_id.value);
+    object = MapObject_GetById(current_map_slot, command->object_id.value);
     if (object != NULL) {
         MapObject_SetScriptedBit21(object, 1);
     }
@@ -543,7 +543,7 @@ void ScriptCmd_ResumeMapObjectAnim(ScriptObjectCommand *command) {
 void ScriptCmd_PauseMapObjectAnim(ScriptObjectCommand *command) {
     MapObject *object;
 
-    object = MapObject_GetById(D_00446770, command->object_id.value);
+    object = MapObject_GetById(current_map_slot, command->object_id.value);
     if (object != NULL) {
         MapObject_SetScriptedBit21(object, 0);
     }
@@ -721,7 +721,7 @@ void ScriptCmd_StartEffect(ScriptPointCommand *command) {
     VuVector4 position = (VuVector4){ command->from_x.value, command->from_y.value, command->from_z.value, 0.0f };
     VuVector4 rotation = (VuVector4){ command->to_x.value, command->to_y.value, command->to_z.value, 0.0f };
 
-    Effect_StartSpawner(command->object_id.value, &position, &rotation, &map_slots[D_00446770]);
+    Effect_StartSpawner(command->object_id.value, &position, &rotation, &map_slots[current_map_slot]);
     command->active = 0;
 }
 
@@ -750,7 +750,7 @@ void ScriptCmd_LaunchShot(ScriptPointCommand *command) {
     shot->unk00 = 1;
     shot->unk20 = 0;
     shot->unk22 = 0;
-    Attack_LaunchMagicEffect(command->object_id.value, shot, &from, &angles, &map_slots[D_00446770]);
+    Attack_LaunchMagicEffect(command->object_id.value, shot, &from, &angles, &map_slots[current_map_slot]);
     command->active = 0;
 }
 
@@ -770,9 +770,9 @@ void ScriptCmd_SetCameraLookAt(ScriptPointCommand *command) {
         if (command->object_id.value >= 0) {
             if (command->object_id.value < 2) {
                 game_status.unk04 = command->object_id.value;
-                D_004325A0.unk20[0] = command->from_x.value;
-                D_004325A0.unk20[1] = command->from_y.value;
-                D_004325A0.unk20[2] = command->from_z.value;
+                camera_state.unk20[0] = command->from_x.value;
+                camera_state.unk20[1] = command->from_y.value;
+                camera_state.unk20[2] = command->from_z.value;
             }
         }
     }
@@ -783,8 +783,8 @@ void ScriptCmd_SetCameraLookAt(ScriptPointCommand *command) {
    frames. */
 void ScriptCmd_MoveCameraTo(ScriptTripleCommand *command) {
     if (game_status.unk03 != 0 &&
-        (command->x.value != D_004325A0.position[0] || command->y.value != D_004325A0.position[1] ||
-         command->z.value != D_004325A0.position[2])) {
+        (command->x.value != camera_state.position[0] || command->y.value != camera_state.position[1] ||
+         command->z.value != camera_state.position[2])) {
         int frames = command->frames.value;
         f32 divisor;
 
@@ -795,9 +795,9 @@ void ScriptCmd_MoveCameraTo(ScriptTripleCommand *command) {
         divisor = (f32)frames;
         frames--;
         command->frames.value = frames;
-        D_004325A0.position[0] += (command->x.value - D_004325A0.position[0]) / divisor;
-        D_004325A0.position[1] += (command->y.value - D_004325A0.position[1]) / divisor;
-        D_004325A0.position[2] += (command->z.value - D_004325A0.position[2]) / divisor;
+        camera_state.position[0] += (command->x.value - camera_state.position[0]) / divisor;
+        camera_state.position[1] += (command->y.value - camera_state.position[1]) / divisor;
+        camera_state.position[2] += (command->z.value - camera_state.position[2]) / divisor;
         if (frames != 0) {
             return;
         }
@@ -809,13 +809,13 @@ void ScriptCmd_MoveCameraTo(ScriptTripleCommand *command) {
    frames. */
 void ScriptCmd_TurnCameraTo(ScriptTripleCommand *command) {
     if (game_status.unk03 == 0 ||
-        (command->x.value == D_004325A0.unk10 && command->y.value == D_004325A0.unk14 &&
-         command->z.value == D_004325A0.unk18)) {
+        (command->x.value == camera_state.unk10 && command->y.value == camera_state.unk14 &&
+         command->z.value == camera_state.unk18)) {
         command->active = 0;
     } else {
-        Angle_EaseToward(command->x.value, &D_004325A0.unk10, command->frames.value);
-        Angle_EaseToward(command->y.value, &D_004325A0.unk14, command->frames.value);
-        Angle_EaseToward(command->z.value, &D_004325A0.unk18, command->frames.value);
+        Angle_EaseToward(command->x.value, &camera_state.unk10, command->frames.value);
+        Angle_EaseToward(command->y.value, &camera_state.unk14, command->frames.value);
+        Angle_EaseToward(command->z.value, &camera_state.unk18, command->frames.value);
         if (--command->frames.value == 0) {
             command->active = 0;
         }
@@ -824,7 +824,7 @@ void ScriptCmd_TurnCameraTo(ScriptTripleCommand *command) {
 
 /* Command 144: shakes the camera: how far the shake reaches and for how many frames. Then finishes. */
 void ScriptCmd_ShakeCamera(ScriptCameraShakeCommand *command) {
-    CameraState *camera = &D_004325A0;
+    CameraState *camera = &camera_state;
 
     camera->unk74 = command->frames.value;
     camera->unk70 = command->reach.value;
@@ -835,7 +835,7 @@ void ScriptCmd_ShakeCamera(ScriptCameraShakeCommand *command) {
 void ScriptCmd_SetPropColor(ScriptObjectValuesCommand *command) {
     MapRecordBounds *prop;
 
-    prop = Map_GetRecordById(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     if (prop != NULL) {
         Model_SetVertexColour(prop->model, command->values[0].value, command->values[1].value, command->values[2].value,
                       command->values[3].value);
@@ -865,10 +865,10 @@ void ScriptCmd_LoadMap(ScriptValueCommand *command) {
 }
 
 /* Command 149: commits the scripted map load ScriptCmd_LoadMap asked for: with a background load running
-   and a request pending it sets D_00446794, which makes the loader take map_load_request and finish at once. */
+   and a request pending it sets map_load_committed, which makes the loader take map_load_request and finish at once. */
 void ScriptCmd_CommitMapLoad(ScriptThreadCommand *command) {
     if (map_load_state.step != 0 && map_load_request.map != 0xFFFF) {
-        D_00446794 = 1;
+        map_load_committed = 1;
     }
     command->active = 0;
 }
@@ -878,7 +878,7 @@ void ScriptCmd_CommitMapLoad(ScriptThreadCommand *command) {
 void ScriptCmd_SetPropSolid(ScriptCallCommand *command) {
     MapRecordBounds *prop;
 
-    prop = Map_GetRecordById(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     if (prop != NULL) {
         if (command->first.value != 0) {
             prop->unk3C &= ~0x40000000;
@@ -897,7 +897,7 @@ void ScriptCmd_MovePropTo(ScriptMoveCommand *command) {
     int frames;
     f32 divisor;
 
-    prop = Map_GetRecordById(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     if (prop == NULL) {
         command->active = 0;
         return;
@@ -928,7 +928,7 @@ void ScriptCmd_MovePropTo(ScriptMoveCommand *command) {
 void ScriptCmd_TurnPropTo(ScriptMoveCommand *command) {
     MapRecordBounds *prop;
 
-    prop = Map_GetRecordById(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     if (prop == NULL) {
         command->active = 0;
         return;
@@ -951,7 +951,7 @@ void ScriptCmd_TurnPropTo(ScriptMoveCommand *command) {
 
 /* Command 153: moves the prop `target_id` by x, y, z every frame for `frames` frames. */
 void ScriptCmd_MovePropBy(ScriptMoveCommand *command) {
-    MapRecordBounds *prop = Map_GetRecordById(D_00446770, command->target_id.value);
+    MapRecordBounds *prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     VuVector4 offset = (VuVector4){ command->x.value, command->y.value, command->z.value, 0.0f };
 
     if (prop != NULL && command->frames.value > 0) {
@@ -969,7 +969,7 @@ void ScriptCmd_TurnPropBy(ScriptMoveCommand *command) {
     MapRecordBounds *prop;
     int steps_left;
 
-    prop = Map_GetRecordById(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     if (prop == NULL || command->frames.value <= 0) {
         command->active = 0;
         return;
@@ -989,7 +989,7 @@ void ScriptCmd_TurnPropBy(ScriptMoveCommand *command) {
 void ScriptCmd_GetPropPosition(ScriptPointCommand *command) {
     MapRecordBounds *prop;
 
-    prop = Map_GetRecordById(D_00446770, command->object_id.value);
+    prop = Map_GetRecordById(current_map_slot, command->object_id.value);
     if (prop != NULL) {
         Script_StoreFloatResult((ScriptArg *)&command->from_x, prop->model->position.x);
         Script_StoreFloatResult((ScriptArg *)&command->from_y, prop->model->position.y);
@@ -1003,7 +1003,7 @@ void ScriptCmd_GetPropPosition(ScriptPointCommand *command) {
 void ScriptCmd_GetPropRotation(ScriptMoveCommand *command) {
     MapRecordBounds *prop;
 
-    prop = Map_GetRecordById(D_00446770, command->target_id.value);
+    prop = Map_GetRecordById(current_map_slot, command->target_id.value);
     if (prop != NULL) {
         Script_StoreFloatResult((ScriptArg *)&command->x, prop->model->rotation.x);
         Script_StoreFloatResult((ScriptArg *)&command->y, prop->model->rotation.y);
@@ -1028,7 +1028,7 @@ void ScriptCmd_SetMapFog(ScriptFogCommand *command) {
     int green;
     int blue;
 
-    slot = &map_slots[D_00446770];
+    slot = &map_slots[current_map_slot];
     block_index = command->block.value;
     near_value = command->near_value.value;
     far_value = command->far_value.value;
@@ -1052,7 +1052,7 @@ void ScriptCmd_SetMapFog(ScriptFogCommand *command) {
 /* Command 158: sets the direction and colour (0 to 255) of one of the three lights of light block `block`
    of the current map, then finishes. */
 void ScriptCmd_SetMapLight(ScriptLightCommand *command) {
-    MapSlot *slot = &map_slots[D_00446770];
+    MapSlot *slot = &map_slots[current_map_slot];
     VuVector4 direction = (VuVector4){ command->dir_x.value, command->dir_y.value, command->dir_z.value };
     MapSlotUnk10Lights *lights;
 
@@ -1076,7 +1076,7 @@ void ScriptCmd_SetMapAmbientLight(ScriptColorCommand *command) {
     MapSlotUnk10Lights *lights;
     MapSlot *slot;
 
-    slot = &map_slots[D_00446770];
+    slot = &map_slots[current_map_slot];
     block_index = command->block.value;
     if (block_index < 0x20) {
         // match: the block's offset is added to the address as a number

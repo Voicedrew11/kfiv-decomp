@@ -12,19 +12,19 @@ int sprintf(char *, char *, ...);
 #define ENTITY_POOL_BLOCK_SIZE  0x80000
 
 /* the game's own data and functions, outside this file */
-extern Entity *D_004467E4;
-extern int D_00446F14;
-extern int D_00446F60;
-extern int D_004467E8;
-extern int D_004467D8[2];
-extern u32 D_00446ED4;
+extern Entity *active_entities_tail;        /* list C tail */
+extern int entity_pool_area_size;           /* the bytes of the pool blocks and work areas */
+extern char *entity_pool_area;              /* where they start */
+extern int screen_textured_entity_type;     /* type of the last entity given the screen-textured draw, -1: none */
+extern int map_spawn_counts[2];
+extern u32 frame_counter;
 extern float player_state[];
 extern char file_load_buffer[0x80000];
 extern SoundLoadQueue sound_load_queue;
-extern char *D_004467C0;
-extern int D_004467C4;
-extern char D_004467C8[];
-extern char D_0043E790[];
+extern char *entity_params;
+extern int chr_file_slot;                   /* the file slot of the .chr being read, -1: none */
+extern char chr_directory[];                /* "chr/" */
+extern char chr_file_path_format[];         /* "%sc%4.4d.chr" */
 extern Entity entity_pool[][0x80];
 extern s64 entity_work_area[];
 extern ModelInstance entity_models[ENTITY_POOL_SLOT_COUNT];
@@ -92,17 +92,18 @@ static void Entity_StartLoadsInRange(void);
 static void Entity_ActivateLoaded(void);
 static void EntityPool_StepLoads(void);
 
-/* Entity pool state. Lists A, B and C hold the entities; the pool blocks and work areas are below. */
-static EntityPoolSlot *D_00447098;      /* 0x447098 the block being read or unpacked */
-static int D_0044709C;                  /* 0x44709C base of the work areas */
-static u8 D_004470A0[8];                /* 0x4470A0 bit per work area in use */
-static Entity *D_004470A8;              /* 0x4470A8 list A head */
-static Entity *D_004470AC;              /* 0x4470AC list A tail */
-static Entity *D_004470B0;              /* 0x4470B0 list B head */
-static Entity *D_004470B4;              /* 0x4470B4 list B tail */
-static int D_004470B8;                  /* 0x4470B8 list A count */
-static int D_004470BC;                  /* 0x4470BC list B count */
-static int D_004470C0;                  /* 0x4470C0 list C count */
+/* Entity pool state. Lists A (waiting for a pool block), B (waiting for the block to load) and C (active) hold
+   the entities; the pool blocks and work areas are below. */
+static EntityPoolSlot *loading_pool_slot;   /* 0x447098 the block being read or unpacked */
+static int entity_work_areas_base;          /* 0x44709C base of the work areas */
+static u8 entity_work_areas_used[8];        /* 0x4470A0 bit per work area in use */
+static Entity *waiting_entities_head;       /* 0x4470A8 list A head */
+static Entity *waiting_entities_tail;       /* 0x4470AC list A tail */
+static Entity *loading_entities_head;       /* 0x4470B0 list B head */
+static Entity *loading_entities_tail;       /* 0x4470B4 list B tail */
+static int waiting_entity_count;            /* 0x4470B8 list A count */
+static int loading_entity_count;            /* 0x4470BC list B count */
+static int active_entity_count;             /* 0x4470C0 list C count */
 
 float sqrtf(float);
 
@@ -112,22 +113,22 @@ void Entity_ResetAllLists(void) {
     int block_address;
     int blocks_left;
 
-    memset((void *)D_00446F60, 0, D_00446F14);
+    memset(entity_pool_area, 0, entity_pool_area_size);
 
     memset(entity_pool_slots, 0, sizeof(entity_pool_slots));
-    D_004470A8 = NULL;
-    D_004467E8 = -1;
-    D_004470B0 = NULL;
-    D_004467E0 = NULL;
-    D_004470AC = NULL;
-    D_004470B4 = NULL;
-    D_004467E4 = 0;
-    memset(D_004470A0, 0, 8);
-    D_004470B8 = 0;
-    D_004470BC = 0;
-    D_004470C0 = 0;
+    waiting_entities_head = NULL;
+    screen_textured_entity_type = -1;
+    loading_entities_head = NULL;
+    active_entities_head = NULL;
+    waiting_entities_tail = NULL;
+    loading_entities_tail = NULL;
+    active_entities_tail = 0;
+    memset(entity_work_areas_used, 0, 8);
+    waiting_entity_count = 0;
+    loading_entity_count = 0;
+    active_entity_count = 0;
     memset(entity_models, 0, 0x8C0);
-    block_address = D_00446F60;
+    block_address = (int)entity_pool_area;
     block = entity_pool_slots;
     blocks_left = ENTITY_POOL_SLOT_COUNT - 1;
     do {
@@ -141,7 +142,7 @@ void Entity_ResetAllLists(void) {
         block->age = 0;
         block++;
     } while (blocks_left >= 0);
-    D_0044709C = block_address;
+    entity_work_areas_base = block_address;
 }
 
 /* Returns TRUE while any pool block is held by a loading or unpacking job. */
@@ -162,7 +163,7 @@ int EntityPool_IsLoading(void) {
 void Entity_AddGroupToWaiting(int idx) {
     int i;
     Entity *group_entity = entity_pool[idx];
-    int group_count = D_004467D8[idx];
+    int group_count = map_spawn_counts[idx];
     for (i = 0; i < group_count; i++) {
         Entity_AppendToWaiting(group_entity);
         group_entity++;
@@ -173,7 +174,7 @@ void Entity_AddGroupToWaiting(int idx) {
 void Entity_FreeAllInGroup(int group_id) {
     Entity *entity;
 
-    entity = D_004470A8;
+    entity = waiting_entities_head;
     while (entity != NULL) {
         if (entity->group_id == group_id) {
             entity = Entity_UnlinkWaiting(entity);
@@ -182,7 +183,7 @@ void Entity_FreeAllInGroup(int group_id) {
         }
     }
 
-    entity = D_004470B0;
+    entity = loading_entities_head;
     while (entity != NULL) {
         if (entity->group_id == group_id) {
             entity = Entity_UnlinkLoading(entity);
@@ -191,7 +192,7 @@ void Entity_FreeAllInGroup(int group_id) {
         }
     }
 
-    entity = D_004467E0;
+    entity = active_entities_head;
     while (entity != NULL) {
         if (entity->group_id == group_id) {
             EntityPool_RemoveUser(entity->unkD3);
@@ -215,7 +216,7 @@ void Entity_UpdatePool(void) {
 
 /* Gives each entity a pool block and queues its load; out-of-range entities without a block are skipped. */
 static void Entity_StartLoadsInRange(void) {
-    Entity *entity = D_004470A8;
+    Entity *entity = waiting_entities_head;
     while (entity != NULL) {
         Entity *queued;
         float distance;
@@ -278,12 +279,12 @@ static void Entity_StartLoadsInRange(void) {
     }
 }
 
-/* Walks the D_004470B0 list and finishes each entity whose pool block is ready. */
+/* Walks list B (loading_entities_head) and finishes each entity whose pool block is ready. */
 static void Entity_ActivateLoaded(void) {
     Entity *entity;
     Entity *current;
 
-    entity = D_004470B0;
+    entity = loading_entities_head;
     while (entity != NULL) {
         if (entity_pool_slots[entity->unkD3].head.fields.kind == ENTITY_POOL_READY) {
             current = entity;
@@ -300,7 +301,7 @@ static void Entity_ActivateLoaded(void) {
 
 /* Free entities that are out of range of the player. */
 void Entity_DespawnOutOfRange(void) {
-    Entity *entity = D_004467E0;
+    Entity *entity = active_entities_head;
     while (entity != NULL) {
         EntitySpawnInfo *spawn_info;
         float distance;
@@ -354,16 +355,16 @@ static void EntityPool_StepLoads(void) {
             }
             break;
         case ENTITY_POOL_READING:
-            if (File_Sync(D_004467C4, 1) == 0) {
-                if (((EntityController *)(D_004467C0 + slot->head.fields.unk2 * 0x450))->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
+            if (File_Sync(chr_file_slot, 1) == 0) {
+                if (((EntityController *)(entity_params + slot->head.fields.unk2 * 0x450))->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
                     slot[1].head.fields.kind = ENTITY_POOL_EXTENSION;
                     slot[1].head.fields.unk2 = 0xFFFF;
                 }
-                File_Close(D_004467C4);
+                File_Close(chr_file_slot);
                 EntityPool_CopyLoadedFile(slot);
                 EntityPool_BuildBlockModel(i);
                 entity_type_file_header = *(EntityTypeFileHeader *)file_load_buffer;
-                D_004467C4 = -1;
+                chr_file_slot = -1;
                 if (entity_type_file_header.unk18 != 0 && entity_type_file_header.unk14 != 0) {
                     entity_type_file_header.unk18 += (int)file_load_buffer;
                     entity_type_file_header.unk14 += (int)file_load_buffer;
@@ -382,7 +383,7 @@ static void EntityPool_StepLoads(void) {
             if (sound_load_queue.unk18 == 0) {
                 slot->head.fields.kind = ENTITY_POOL_READY;
                 File_Unlock();
-                D_00447098 = NULL;
+                loading_pool_slot = NULL;
             }
             busy = TRUE;
             break;
@@ -411,16 +412,16 @@ static void EntityPool_StepLoads(void) {
     if (File_IsLocked() != 0) {
         return;
     }
-    sprintf(path, D_0043E790, D_004467C8, ((EntityParams *)(D_004467C0 + queued->head.fields.unk2 * 0x450))->unk00_0);
-    D_004467C4 = File_Open(path, 1, 1);
-    if (D_004467C4 < 0) {
+    sprintf(path, chr_file_path_format, chr_directory, ((EntityParams *)(entity_params + queued->head.fields.unk2 * 0x450))->unk00_0);
+    chr_file_slot = File_Open(path, 1, 1);
+    if (chr_file_slot < 0) {
         EntityPool_AbandonLoad(queued);
         return;
     }
     queued->head.fields.kind = ENTITY_POOL_READING;
-    File_Read(D_004467C4, file_load_buffer, -1);
+    File_Read(chr_file_slot, file_load_buffer, -1);
     File_Lock();
-    D_00447098 = queued;
+    loading_pool_slot = queued;
 }
 
 /* Gives an entity whose pool block is ready its work area and model; FALSE if it has to wait. */
@@ -451,7 +452,7 @@ static int Entity_TryActivate(Entity *entity) {
         model->unk102 |= MODEL_FLAG_800;
         model->draw = Entity_PrepareScreenTexturedDraw;
         model->unk1B0 = func_00124AF8;
-        D_004467E8 = entity->spawn_info->type_id;
+        screen_textured_entity_type = entity->spawn_info->type_id;
         work_address = (int)entity_work_area;
         work_address = (int)Model_SaveGsWordsAndUvs(model, (s64 *)work_address);
     }
@@ -652,7 +653,7 @@ static int EntityPool_HasFixedUser(int slot_index) {
         slot_index--;
     }
 
-    entity = D_004470B0;
+    entity = loading_entities_head;
     while (entity != NULL) {
         if (slot_index == entity->unkD3 && entity->spawn_info->pool_size >= 0 && entity->spawn_info->pool_size < 5) {
             return TRUE;
@@ -660,7 +661,7 @@ static int EntityPool_HasFixedUser(int slot_index) {
         entity = entity->next;
     }
 
-    entity = D_004467E0;
+    entity = active_entities_head;
     while (entity != NULL) {
         if (slot_index == entity->unkD3 && entity->spawn_info->pool_size >= 0 && entity->spawn_info->pool_size < 5) {
             return TRUE;
@@ -676,7 +677,7 @@ static void EntityPool_EvictBlockUsers(int group_id) {
     Entity *next;
     int other; /* never assigned: retail compares against callee-saved $19 */
 
-    entity = D_004470B0;
+    entity = loading_entities_head;
     while (entity != NULL) {
         if (group_id == entity->unkD3 ||
             (ENTITY_CONTROLLER(entity)->flags & 0x8000 && entity->unkD3 == other && entity->unkD3 >= 0)) {
@@ -689,7 +690,7 @@ static void EntityPool_EvictBlockUsers(int group_id) {
         }
     }
 
-    entity = D_004467E0;
+    entity = active_entities_head;
     while (entity != NULL) {
         if (group_id == entity->unkD3) {
             Effect_FreeForOwner(entity);
@@ -713,7 +714,7 @@ static void EntityPool_EmptyBlock(int slot_index) {
     EntityPoolSlot *slot;
 
     slot = &entity_pool_slots[slot_index];
-    entity = D_004470B0;
+    entity = loading_entities_head;
     while (entity != NULL) {
         if (slot_index == entity->unkD3) {
             // match: nested ifs keep the signed pool_size compares
@@ -726,7 +727,7 @@ static void EntityPool_EmptyBlock(int slot_index) {
         entity = entity->next;
     }
 
-    entity = D_004467E0;
+    entity = active_entities_head;
     while (entity != NULL) {
         if (slot_index == entity->unkD3) {
             // match: nested ifs keep the signed pool_size compares
@@ -739,7 +740,7 @@ static void EntityPool_EmptyBlock(int slot_index) {
         entity = entity->next;
     }
 
-    entity = D_004470B0;
+    entity = loading_entities_head;
     while (entity != NULL) {
         if (slot_index == entity->unkD3) {
             next = entity->next;
@@ -751,7 +752,7 @@ static void EntityPool_EmptyBlock(int slot_index) {
         }
     }
 
-    entity = D_004467E0;
+    entity = active_entities_head;
     while (entity != NULL) {
         if (slot_index == entity->unkD3) {
             Effect_FreeForOwner(entity);
@@ -808,7 +809,7 @@ static void EntityPool_RemoveUser(int slot_index) {
     slot = &entity_pool_slots[slot_index];
     if (--slot->unk4 <= 0) {
         slot->unk6 = 2;
-        slot->age = D_00446ED4;
+        slot->age = frame_counter;
         slot->unk4 = 0;
     }
 }
@@ -820,7 +821,7 @@ static void EntityPool_CopyLoadedFile(EntityPoolSlot *slot) {
     int table_offset;
     int size;
 
-    controller = (EntityController *)(D_004467C0 + slot->head.fields.unk2 * 0x450);
+    controller = (EntityController *)(entity_params + slot->head.fields.unk2 * 0x450);
     file = (int *)file_load_buffer;
     size = 0;
     // match: header words of the loaded file, no named struct yet
@@ -848,7 +849,7 @@ hang:
 static void EntityPool_AbandonLoad(EntityPoolSlot *slot) {
     Entity *entity;
 
-    entity = D_004470A8;
+    entity = waiting_entities_head;
     while (entity != NULL) {
         if (entity->spawn_info->type_id == slot->head.fields.unk2) {
             entity = Entity_UnlinkWaiting(entity);
@@ -857,7 +858,7 @@ static void EntityPool_AbandonLoad(EntityPoolSlot *slot) {
         }
     }
 
-    entity = D_004470B0;
+    entity = loading_entities_head;
     while (entity != NULL) {
         if (entity->spawn_info->type_id == slot->head.fields.unk2) {
             entity = Entity_UnlinkLoading(entity);
@@ -881,9 +882,9 @@ static void EntityPool_FreeUnusedBlocks(void) {
     Entity *list_c;
     int slot_index;
 
-    list_a = D_004470A8;
-    list_b = D_004470B0;
-    list_c = D_004467E0;
+    list_a = waiting_entities_head;
+    list_b = loading_entities_head;
+    list_c = active_entities_head;
     slot_index = 0;
     slot = entity_pool_slots;
     while (slot_index < ENTITY_POOL_SLOT_COUNT) {
@@ -922,7 +923,7 @@ in_use:
 
 /* Returns the index of the first clear bit among the 60 flag bits, or -1. */
 static int Entity_FindFreeWorkArea(void) {
-    u8 *flags = D_004470A0;
+    u8 *flags = entity_work_areas_used;
     int i;
     int j;
     u8 bit;
@@ -943,8 +944,8 @@ static int Entity_FindFreeWorkArea(void) {
 static int Entity_ClaimWorkArea(int index) {
     int work_area;
 
-    D_004470A0[index / 8] |= 1 << (index % 8);
-    work_area = D_0044709C + index * 0x2200;
+    entity_work_areas_used[index / 8] |= 1 << (index % 8);
+    work_area = entity_work_areas_base + index * 0x2200;
     memset((void *)work_area, 0, 0x2200);
     return work_area;
 }
@@ -955,8 +956,8 @@ static void Entity_FreeWorkArea(int index) {
     int work_area;
 
     bit = 1 << (index % 8);
-    D_004470A0[index / 8] &= ~bit;
-    work_area = D_0044709C + index * 0x2200;
+    entity_work_areas_used[index / 8] &= ~bit;
+    work_area = entity_work_areas_base + index * 0x2200;
     memset((void *)work_area, 0, 0x2200);
 }
 
@@ -1057,19 +1058,19 @@ static void EntityPool_BuildBlockModel(int slot_index) {
 static void Entity_AppendToWaiting(Entity *entity) {
     Entity *tail;
 
-    if (D_004470A8 != NULL) {
-        tail = D_004470AC;
-        D_004470AC = entity;
+    if (waiting_entities_head != NULL) {
+        tail = waiting_entities_tail;
+        waiting_entities_tail = entity;
         tail->next = entity;
         entity->prev = tail;
         entity->next = NULL;
     } else {
-        D_004470A8 = entity;
-        D_004470AC = entity;
+        waiting_entities_head = entity;
+        waiting_entities_tail = entity;
         entity->prev = NULL;
         entity->next = NULL;
     }
-    D_004470B8++;
+    waiting_entity_count++;
 }
 
 /* Unlinks an entity from list A and returns the next one. */
@@ -1077,11 +1078,11 @@ static Entity *Entity_UnlinkWaiting(Entity *entity) {
     Entity *next;
 
     next = entity->next;
-    if (D_004470A8 == entity) {
-        D_004470A8 = next;
+    if (waiting_entities_head == entity) {
+        waiting_entities_head = next;
     }
-    if (D_004470AC == entity) {
-        D_004470AC = entity->prev;
+    if (waiting_entities_tail == entity) {
+        waiting_entities_tail = entity->prev;
     }
     if (entity->prev != NULL) {
         entity->prev->next = next;
@@ -1089,7 +1090,7 @@ static Entity *Entity_UnlinkWaiting(Entity *entity) {
     if (entity->next != NULL) {
         entity->next->prev = entity->prev;
     }
-    D_004470B8--;
+    waiting_entity_count--;
     return next;
 }
 
@@ -1097,19 +1098,19 @@ static Entity *Entity_UnlinkWaiting(Entity *entity) {
 static void Entity_AppendToLoading(Entity *entity) {
     Entity *tail;
 
-    if (D_004470B0 != NULL) {
-        tail = D_004470B4;
-        D_004470B4 = entity;
+    if (loading_entities_head != NULL) {
+        tail = loading_entities_tail;
+        loading_entities_tail = entity;
         tail->next = entity;
         entity->prev = tail;
         entity->next = NULL;
     } else {
-        D_004470B0 = entity;
-        D_004470B4 = entity;
+        loading_entities_head = entity;
+        loading_entities_tail = entity;
         entity->prev = NULL;
         entity->next = NULL;
     }
-    D_004470BC++;
+    loading_entity_count++;
 }
 
 /* Unlinks an entity from list B and returns the next one. */
@@ -1117,11 +1118,11 @@ static Entity *Entity_UnlinkLoading(Entity *entity) {
     Entity *next;
 
     next = entity->next;
-    if (D_004470B0 == entity) {
-        D_004470B0 = next;
+    if (loading_entities_head == entity) {
+        loading_entities_head = next;
     }
-    if (D_004470B4 == entity) {
-        D_004470B4 = entity->prev;
+    if (loading_entities_tail == entity) {
+        loading_entities_tail = entity->prev;
     }
     if (entity->prev != 0) {
         entity->prev->next = next;
@@ -1129,7 +1130,7 @@ static Entity *Entity_UnlinkLoading(Entity *entity) {
     if (entity->next != 0) {
         entity->next->prev = entity->prev;
     }
-    D_004470BC--;
+    loading_entity_count--;
     return next;
 }
 
@@ -1137,20 +1138,20 @@ static Entity *Entity_UnlinkLoading(Entity *entity) {
 static void Entity_AppendToActive(Entity *entity) {
     Entity *tail;
 
-    if (D_004467E0 != NULL) {
-        tail = D_004467E4;
-        D_004467E4 = entity;
+    if (active_entities_head != NULL) {
+        tail = active_entities_tail;
+        active_entities_tail = entity;
         tail->next = entity;
         entity->prev = tail;
         entity->next = NULL;
     } else {
-        D_004467E0 = entity;
-        D_004467E4 = entity;
+        active_entities_head = entity;
+        active_entities_tail = entity;
         entity->prev = NULL;
         entity->next = NULL;
     }
     ENTITY_FLAG_BITS(entity)->bit0 = 1;
-    D_004470C0++;
+    active_entity_count++;
 }
 
 /* Unlinks an entity from list C and returns the next one. */
@@ -1158,11 +1159,11 @@ static Entity *Entity_UnlinkActive(Entity *entity) {
     Entity *next;
 
     next = entity->next;
-    if (D_004467E0 == entity) {
-        D_004467E0 = next;
+    if (active_entities_head == entity) {
+        active_entities_head = next;
     }
-    if (D_004467E4 == entity) {
-        D_004467E4 = entity->prev;
+    if (active_entities_tail == entity) {
+        active_entities_tail = entity->prev;
     }
     if (entity->prev != NULL) {
         entity->prev->next = next;
@@ -1172,7 +1173,7 @@ static Entity *Entity_UnlinkActive(Entity *entity) {
     }
     Entity_SetSpawnedFlags(entity);
     entity->flags &= ~1;
-    D_004470C0--;
+    active_entity_count--;
     return next;
 }
 

@@ -24,9 +24,9 @@ int Model_FadeVertexColoursNear(int, void *, int *, int *, float);
 void *memset(void *, int, u32);
 int rand(void);
 extern GameStatus game_status;
-extern void *D_00420D50[];
-extern u32 D_0038CC74[];
-extern f32 D_00431AF0[16];
+extern void *faced_object[];
+extern u32 game_status_flags[];
+extern f32 identity_matrix[16];
 
 /* Start handler of the save point: step 1. */
 void MapObject_StartSavePoint(MapObject *object) {
@@ -38,7 +38,7 @@ void MapObject_StartSavePoint(MapObject *object) {
 void MapObject_UpdateSavePoint(MapObject *object) {
     MapObject *used;
 
-    if (game_status.bit1 && (used = D_00420D50[0]) == object) {
+    if (game_status.bit1 && (used = faced_object[0]) == object) {
         game_status.save_requested = TRUE;
         game_status.save_area = MAP_OBJECT_WORDS(used)->unk44;
     }
@@ -58,7 +58,7 @@ void MapObject_UpdateContainer(MapObject *object) {
     if (object->work[0] > 0) {
         object->work[0]--;
     }
-    if (((D_0038CC74[0] >> 1) & 1) && D_00420D50[0] == object) {
+    if (((game_status_flags[0] >> 1) & 1) && faced_object[0] == object) {
         if (object->work[0] > 0) {
             return;
         }
@@ -96,9 +96,9 @@ void MapObject_StartPivotSwitch(MapObject *object) {
 
 /* Update handler of a switch that is off (step 1): used by the player, it starts turning on. */
 void MapObject_UpdatePivotSwitchOff(MapObject *object) {
-    MapObject *used = D_00420D50[0];
+    MapObject *used = faced_object[0];
 
-    if (used == object && ((D_0038CC74[0] >> 1) & 1)) {
+    if (used == object && ((game_status_flags[0] >> 1) & 1)) {
         used->unk10 |= 0x20000;
         MAP_OBJECT_BYTES(used)->step = 2;
     }
@@ -116,9 +116,9 @@ void MapObject_TurnPivotSwitchOn(MapObject *object) {
 
 /* Update handler of a switch that is on (step 3): used by the player, it starts turning off. */
 void MapObject_UpdatePivotSwitchOn(MapObject *object) {
-    MapObject *used = D_00420D50[0];
+    MapObject *used = faced_object[0];
 
-    if (used == object && ((D_0038CC74[0] >> 1) & 1)) {
+    if (used == object && ((game_status_flags[0] >> 1) & 1)) {
         used->unk10 &= ~0x20000;
         MAP_OBJECT_BYTES(used)->step = 4;
     }
@@ -182,7 +182,7 @@ void MapObject_PosePivotSwitch(MapTrigger *trigger) {
     }
     joint = part;
     half_turn = 3.1415927f;
-    sceVu0CopyMatrix(matrix, D_00431AF0);
+    sceVu0CopyMatrix(matrix, identity_matrix);
     // match: an empty loop here (a debug macro compiled out?) keeps the scheduler from moving anything across
     // this point, which is what leaves the half_turn load in front of the call above
     do { } while (0);

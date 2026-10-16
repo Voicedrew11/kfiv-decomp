@@ -112,7 +112,7 @@ char map_object_defs[0x14000] = { 0 }; /* 0x38DA30 the param/obj.prm row of ever
 
 MapObject map_slot_objects[2][0x200] = { 0 }; /* 0x3A1A30 the objects of both map slots, a row each */
 /* its second row, which other files name on its own */
-asm(".globl D_003AFA30\nD_003AFA30 = map_slot_objects + 0xE000");  /* 0x3AFA30 the objects of the other loaded map */
+asm(".globl map_slot1_objects\nmap_slot1_objects = map_slot_objects + 0xE000");  /* 0x3AFA30 the objects of map slot 1 */
 
 void (*map_object_step_handlers[0x20][16])(MapObject *) = { /* 0x3BDA30 the step handler of each object kind */
     MapObject_StartScenery, MapObject_UpdateScenery, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,

@@ -13,11 +13,11 @@
 
 extern u8 game_options[0x10];             /* the options (Game_SetDefaultOptions sets their defaults) */
 extern u8 map_script_flags[0x2000];
-extern u8 D_0034B690[0x40];
+extern u8 story_flags[0x40];
 extern u8 entity_group_state[0xC80];
 extern RecollectionFlags recollection_flags[50];     /* per Recollection page: which messages were heard */
 extern u8 recollection_pages[50];               /* per Recollection page: 0 not met yet, else which description it shows */
-extern u8 D_0034C518[0x400];
+extern u8 story_values[0x400];
 extern u8 map_visited_flags[0x10];             /* 128 flags, one bit each */
 extern u8 map_entry_flags[0x8000];           /* four flag bits per nibble, 0x100 bytes per map */
 extern u8 map_entry_counters[0x80][0x40];       /* a 4-bit counter per nibble, 128 per map */
@@ -38,44 +38,44 @@ extern DefinitionByteSet trade_stock_5;
 extern u8 save_image[0x20000];          /* the save image */
 extern char sound_load_queue[0x28];
 extern MapSlot map_slots[];
-extern const DefinitionByteSet D_0043D9B0;
-extern const DefinitionByteSet D_0043DB30;
-extern const DefinitionByteSet D_0043DCB0;
-extern const DefinitionByteSet D_0043DE30;
-extern const DefinitionByteSet D_0043DFB0;
+extern const DefinitionByteSet initial_trade_stock_1;
+extern const DefinitionByteSet initial_trade_stock_2;
+extern const DefinitionByteSet initial_trade_stock_3;
+extern const DefinitionByteSet initial_trade_stock_4;
+extern const DefinitionByteSet initial_trade_stock_5;
 extern PlayerState player_state;
 extern GameDefinition item_name_defs[380];
 extern ItemCommonDef item_common_defs[150];
-extern u8 D_00421050[0x30];
-extern s16 D_0044692C, D_0044692E, D_00446930, D_00446932, D_00446934, D_00446936, D_00446938;
-extern s16 D_0044693A, D_0044693C, D_0044693E, D_00446940, D_00446942, D_00446944, D_00446946;
-extern s32 D_00446738;
-extern volatile int D_00446770;         // match: volatile keeps the load where the save writer reads it
-extern s32 D_004469D0;
-extern char D_00446A28[8];
-extern int D_00447010;                  /* frames of the fade left */
-extern int D_00447014;                  /* frames the fade takes */
+extern u8 key_item_slots[0x30];
+extern u16 forward_button, back_button, turn_right_button, turn_left_button, step_right_button, step_left_button, look_down_button;
+extern u16 look_up_button, attack_button, magic_button, action_button, menu_button, shortcut_button, pause_button;
+extern s32 saved_map_tag;
+extern volatile int current_map_slot;         // match: volatile keeps the load where the save writer reads it
+extern s32 item_drop_counter;
+extern char current_play_time[8];
+extern int fade_frames_left;                  /* frames of the fade left */
+extern int fade_frames;                  /* frames the fade takes */
 
 void *memcpy(void *, const void *, u32);
 void GsDraw_FillScreen(int, int, int, int, int);
 extern int haze_layer_depths[8];               /* the screen depth of each haze layer */
 extern u32 haze_layer_distances[8];               /* the distances of the haze layers, nearest last */
-extern float D_00420D00[];
-extern float D_00420D30[];
-extern float D_00420D40[];
-extern sceVu0FMATRIX D_00431AF0;
-extern sceVu0FMATRIX D_00432320;
-extern sceVu0FMATRIX D_004323E0;
-extern GsColor D_0043E450;
-extern LayerOffsets D_0043E460;
-extern char D_0043E470[];
-extern ScreenRect D_0043E480;
-extern ScreenRect D_0043E490;
-extern int D_0044673C;
-extern int D_00446740;                  /* nonzero: Game_DrawWobblingScreen lays its grid out afresh */
-extern u32 D_00446744;                  /* the number of haze layers */
-extern u32 D_00446ED4;
-extern int D_00446F78;
+extern float view_ray_status[];
+extern float view_ray_previous_direction[];
+extern float view_ray_length[];
+extern sceVu0FMATRIX identity_matrix;
+extern sceVu0FMATRIX world_view_matrix;
+extern sceVu0FMATRIX world_screen_matrix;
+extern GsColor haze_sprite_color;
+extern LayerOffsets haze_layer_x_offsets;
+extern char z_value_format[];
+extern ScreenRect full_screen_rect;
+extern ScreenRect inset_screen_rect;
+extern int depth_test_sprite_z;
+extern int wobble_grid_reset;                  /* nonzero: Game_DrawWobblingScreen lays its grid out afresh */
+extern u32 haze_layer_count;                  /* the number of haze layers */
+extern u32 frame_counter;
+extern int context1_buffer_half;
 static int wobble_grid_origin[8][11][2];     /* 0x467680 the grid as laid out */
 static int wobble_grid_points[8][11][2];     /* 0x467940 the wobbling points */
 static int wobble_grid_previous[8][11][2];     /* 0x467C00 the points of the frame before */
@@ -126,12 +126,12 @@ void Game_ResetProgress(void) {
     int i;
 
     memset(map_script_flags, 0, sizeof(map_script_flags));
-    memset(D_0034B690, 0, sizeof(D_0034B690));
+    memset(story_flags, 0, sizeof(story_flags));
     memset(entity_group_state, 0, sizeof(entity_group_state));
     memset(recollection_flags, 0, sizeof(recollection_flags));
     memset(recollection_pages, 0, sizeof(recollection_pages));
     recollection_pages[0] = 1;
-    memset(D_0034C518, 0, sizeof(D_0034C518));
+    memset(story_values, 0, sizeof(story_values));
     memset(map_visited_flags, 0, sizeof(map_visited_flags));
     memset(map_entry_flags, 0, sizeof(map_entry_flags));
     memset(map_entry_counters, 0, sizeof(map_entry_counters));
@@ -154,11 +154,11 @@ void Game_ResetProgress(void) {
         worn_item_level_records[i].level = item_name_defs[ITEM_WORN_FIRST + i].unk3C;
     }
     memset(&item_counts, 0, sizeof(item_counts));
-    trade_stock_1 = D_0043D9B0;
-    trade_stock_2 = D_0043DB30;
-    trade_stock_3 = D_0043DCB0;
-    trade_stock_4 = D_0043DE30;
-    trade_stock_5 = D_0043DFB0;
+    trade_stock_1 = initial_trade_stock_1;
+    trade_stock_2 = initial_trade_stock_2;
+    trade_stock_3 = initial_trade_stock_3;
+    trade_stock_4 = initial_trade_stock_4;
+    trade_stock_5 = initial_trade_stock_5;
     memset(spell_experience, 0, sizeof(spell_experience));
     memset(spell_levels, 0, sizeof(spell_levels));
     Menu_ClearKeyItems();
@@ -465,7 +465,7 @@ int Game_FindTriggerOfItem(int item, int *map_tag, int *trigger_id) {
             tag = record->map_tag;
             *map_tag = tag;
             if ((u32)(tag - 0x11) < 3) {
-                switch ((u8)D_0034B690[6]) {
+                switch ((u8)story_flags[6]) {
                 case 0:
                     *map_tag = 0x11;
                     break;
@@ -563,31 +563,31 @@ void Game_WriteSaveImage(void) {
     memset(save_cursor, 0, sizeof(save_image));
     save_cursor += 8;
     *(int *)save_image = 0x15400;
-    memcpy(save_cursor, &D_00446A28, 8); save_cursor += 8;
+    memcpy(save_cursor, &current_play_time, 8); save_cursor += 8;
     memcpy(save_cursor, game_options, 0x10); save_cursor += 0x10;
-    memcpy(save_cursor, &D_0044692C, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_0044692E, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_00446930, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_00446932, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_00446934, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_00446936, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_00446938, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_0044693A, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_0044693C, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_0044693E, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_00446940, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_00446942, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_00446944, 2); save_cursor += 2;
-    memcpy(save_cursor, &D_00446946, 2); save_cursor += 2;
+    memcpy(save_cursor, &forward_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &back_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &turn_right_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &turn_left_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &step_right_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &step_left_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &look_down_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &look_up_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &attack_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &magic_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &action_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &menu_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &shortcut_button, 2); save_cursor += 2;
+    memcpy(save_cursor, &pause_button, 2); save_cursor += 2;
     copy_size = 0xB40;
     memcpy(save_cursor, map_script_flags, copy_size); save_cursor += copy_size;
     copy_size = 0x6C0;
     memcpy(save_cursor, map_script_flags + 0x1680, copy_size); save_cursor += copy_size;
-    memcpy(save_cursor, D_0034B690, 0x40); save_cursor += 0x40;
+    memcpy(save_cursor, story_flags, 0x40); save_cursor += 0x40;
     memcpy(save_cursor, entity_group_state, 0xC80); save_cursor += 0xC80;
     memcpy(save_cursor, recollection_flags, 0x190); save_cursor += 0x190;
     memcpy(save_cursor, recollection_pages, 0x32); save_cursor += 0x32;
-    memcpy(save_cursor, D_0034C518, 0x400); save_cursor += 0x400;
+    memcpy(save_cursor, story_values, 0x400); save_cursor += 0x400;
     memcpy(save_cursor, map_visited_flags, 0x10); save_cursor += 0x10;
     memcpy(save_cursor, trigger_items, 0x14); save_cursor += 0x14;
     copy_size = 0x2D00;
@@ -635,10 +635,10 @@ void Game_WriteSaveImage(void) {
     memcpy(save_cursor, (u8 *)&player_state + 0xB8, 4); save_cursor += 4;
     memcpy(save_cursor, (u8 *)&player_state + 0xD4, 4); save_cursor += 4;
     memcpy(save_cursor, (u8 *)&player_state + 0xD8, 4); save_cursor += 4;
-    map_tag = map_slots[D_00446770].tag;
+    map_tag = map_slots[current_map_slot].tag;
     memcpy(save_cursor, &map_tag, 4); save_cursor += 4;
-    memcpy(save_cursor, D_00421050, 0x30); save_cursor += 0x30;
-    memcpy(save_cursor, &D_004469D0, 4); save_cursor += 4;
+    memcpy(save_cursor, key_item_slots, 0x30); save_cursor += 0x30;
+    memcpy(save_cursor, &item_drop_counter, 4); save_cursor += 4;
 
     bit_byte = 0;
     mask = 1;
@@ -690,29 +690,29 @@ void Game_ReadSaveImage(void) {
     memcpy(&stored_size, save_cursor, 4); save_cursor += 4;
     memcpy(&play_time, save_cursor, 8); save_cursor += 8;
     memcpy(game_options, save_cursor, 0x10); save_cursor += 0x10;
-    memcpy(&D_0044692C, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_0044692E, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_00446930, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_00446932, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_00446934, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_00446936, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_00446938, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_0044693A, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_0044693C, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_0044693E, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_00446940, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_00446942, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_00446944, save_cursor, 2); save_cursor += 2;
-    memcpy(&D_00446946, save_cursor, 2); save_cursor += 2;
+    memcpy(&forward_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&back_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&turn_right_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&turn_left_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&step_right_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&step_left_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&look_down_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&look_up_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&attack_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&magic_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&action_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&menu_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&shortcut_button, save_cursor, 2); save_cursor += 2;
+    memcpy(&pause_button, save_cursor, 2); save_cursor += 2;
     copy_size = 0xB40;
     memcpy(map_script_flags, save_cursor, copy_size); save_cursor += copy_size;
     copy_size = 0x6C0;
     memcpy(map_script_flags + 0x1680, save_cursor, copy_size); save_cursor += copy_size;
-    memcpy(D_0034B690, save_cursor, 0x40); save_cursor += 0x40;
+    memcpy(story_flags, save_cursor, 0x40); save_cursor += 0x40;
     memcpy(entity_group_state, save_cursor, 0xC80); save_cursor += 0xC80;
     memcpy(recollection_flags, save_cursor, 0x190); save_cursor += 0x190;
     memcpy(recollection_pages, save_cursor, 0x32); save_cursor += 0x32;
-    memcpy(D_0034C518, save_cursor, 0x400); save_cursor += 0x400;
+    memcpy(story_values, save_cursor, 0x400); save_cursor += 0x400;
     memcpy(map_visited_flags, save_cursor, 0x10); save_cursor += 0x10;
     memcpy(trigger_items, save_cursor, 0x14); save_cursor += 0x14;
     copy_size = 0x2D00;
@@ -760,9 +760,9 @@ void Game_ReadSaveImage(void) {
     memcpy((u8 *)&player_state + 0xB8, save_cursor, 4); save_cursor += 4;
     memcpy((u8 *)&player_state + 0xD4, save_cursor, 4); save_cursor += 4;
     memcpy((u8 *)&player_state + 0xD8, save_cursor, 4); save_cursor += 4;
-    memcpy(&D_00446738, save_cursor, 4); save_cursor += 4;
-    memcpy(D_00421050, save_cursor, 0x30); save_cursor += 0x30;
-    memcpy(&D_004469D0, save_cursor, 4); save_cursor += 4;
+    memcpy(&saved_map_tag, save_cursor, 4); save_cursor += 4;
+    memcpy(key_item_slots, save_cursor, 0x30); save_cursor += 0x30;
+    memcpy(&item_drop_counter, save_cursor, 4); save_cursor += 4;
 
     for (i = 0; i < 380; i++) {
         if (i & 7) {
@@ -825,9 +825,9 @@ void Game_StartFadeIn(int red, int green, int blue, int frames) {
 
     D_00447000[3] = 1;
     fade_color[0] = red;
-    D_00447010 = frames;
+    fade_frames_left = frames;
     color[1] = green;
-    D_00447014 = (frames > 0) ? frames : 1;
+    fade_frames = (frames > 0) ? frames : 1;
     color[2] = blue;
 }
 
@@ -839,14 +839,14 @@ void Game_StartFadeOut(int red, int green, int blue, int frames) {
     D_00447000[3] = -1;
     color[1] = green;
     color[2] = blue;
-    D_00447014 = (frames > 0) ? frames : 1;
-    D_00447010 = frames;
+    fade_frames = (frames > 0) ? frames : 1;
+    fade_frames_left = frames;
 }
 
 /* counts the fade down a frame */
 void Game_StepFade(void) {
-    if (D_00447000[3] != 0 && D_00447010 > 0) {
-        D_00447010--;
+    if (D_00447000[3] != 0 && fade_frames_left > 0) {
+        fade_frames_left--;
     }
 }
 
@@ -859,10 +859,10 @@ void Game_DrawFade(void) {
     case 0:
         return;
     case 1:
-        alpha = (D_00447010 << 7) / D_00447014;
+        alpha = (fade_frames_left << 7) / fade_frames;
         break;
     case -1:
-        alpha = 0x80 - (D_00447010 << 7) / D_00447014;
+        alpha = 0x80 - (fade_frames_left << 7) / fade_frames;
         break;
     default:
         return;
@@ -890,14 +890,14 @@ void Game_ProjectHazeLayers(void) {
 
     memset(translation, 0, sizeof(translation));
     translation[3] = 1.0f;
-    sceVu0TransMatrix(work_matrix, D_00431AF0, translation);
-    sceVu0RotMatrixY(work_matrix, D_00432320, 0.0f);
-    sceVu0RotMatrixX(work_matrix, D_00432320, 0.0f);
+    sceVu0TransMatrix(work_matrix, identity_matrix, translation);
+    sceVu0RotMatrixY(work_matrix, world_view_matrix, 0.0f);
+    sceVu0RotMatrixX(work_matrix, world_view_matrix, 0.0f);
     sceVu0ViewScreenMatrix(view_matrix, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f, 65535.0f);
     sceVu0MulMatrix(screen_matrix, view_matrix, work_matrix);
-    sceVu0MulMatrix(screen_matrix, screen_matrix, D_00431AF0);
+    sceVu0MulMatrix(screen_matrix, screen_matrix, identity_matrix);
     Vu0_LoadMatrix(screen_matrix);
-    D_00446744 = 0;
+    haze_layer_count = 0;
     for (i = 0; i < 8; i++) {
         if (haze_layer_distances[i] == 0) {
             break;
@@ -909,13 +909,13 @@ void Game_ProjectHazeLayers(void) {
         Vu0_ProjectToScreen(screen_xyz, translation);
         screen_xyz[2] /= 16;
         haze_layer_depths[i] = screen_xyz[2];
-        D_00446744++;
+        haze_layer_count++;
     }
 }
 
-/* draws the D_00446744 haze layers: a full-screen sprite at each depth in haze_layer_depths */
+/* draws the haze_layer_count haze layers: a full-screen sprite at each depth in haze_layer_depths */
 void Game_DrawHazeLayers(void) {
-    GsColor color = D_0043E450;
+    GsColor color = haze_sprite_color;
     int texture_base;
     int texture_height_log2;
     u32 i;
@@ -924,10 +924,10 @@ void Game_DrawHazeLayers(void) {
     u32 *cursor;
 
     texture_base = 0x1180;
-    if (D_00446F78 != 0) {
+    if (context1_buffer_half != 0) {
         texture_base = 0;
     }
-    if (D_00446744 == 0) {
+    if (haze_layer_count == 0) {
         return;
     }
     Packet_BeginGsRegisters();
@@ -936,7 +936,7 @@ void Game_DrawHazeLayers(void) {
     Packet_AddGsRegister(GS_REG_CLAMP_1, 5);
     Packet_EndGsRegisters();
 
-    for (i = 0; i < D_00446744; i++) {
+    for (i = 0; i < haze_layer_count; i++) {
         packet_start = cursor = Packet_Alloc(0xD);
         *cursor++ = 0x1000000B;
         *cursor++ = 0;
@@ -992,10 +992,10 @@ void Game_DrawHazeLayers(void) {
     Packet_EndGsRegisters();
 }
 
-/* Game_DrawHazeLayers with each layer moved sideways by an offset from D_0043E460 that cycles with the frame count.
+/* Game_DrawHazeLayers with each layer moved sideways by an offset from haze_layer_x_offsets that cycles with the frame count.
    Nothing calls it. */
 void Game_DrawHazeLayersShifted(void) {
-    LayerOffsets offset_table = D_0043E460;
+    LayerOffsets offset_table = haze_layer_x_offsets;
     GsSpritePacket sprite;
     int texture_base;
     int texture_height_log2;
@@ -1006,7 +1006,7 @@ void Game_DrawHazeLayersShifted(void) {
     int depth;
 
     texture_base = 0x1180;
-    if (D_00446F78 != 0) {
+    if (context1_buffer_half != 0) {
         texture_base = 0;
     }
     Packet_BeginGsRegisters();
@@ -1024,9 +1024,9 @@ void Game_DrawHazeLayersShifted(void) {
     sprite.rgba[2] = 0x80;
     sprite.rgba[3] = 0x80;
     i = 0;
-    if (D_00446744 != 0) {
+    if (haze_layer_count != 0) {
         do {
-            offset_index = D_00446ED4 + i;
+            offset_index = frame_counter + i;
             x_offset = offset_table.x[offset_index % 3];
             depth = haze_layer_depths[i];
             sprite.corner[1].texel_x = 0x2800;
@@ -1041,36 +1041,36 @@ void Game_DrawHazeLayersShifted(void) {
             sprite.corner[1].z = depth;
             GsDraw_QueueTexturedSprite(&sprite);
             i++;
-        } while (i < D_00446744);
+        } while (i < haze_layer_count);
     }
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_CLAMP_1, 0);
     Packet_EndGsRegisters();
 }
 
-/* debug: draws one haze sprite at the depth in D_0044673C; two buttons of pad 1 (0x400, 0x100) step that depth and print it
+/* debug: draws one haze sprite at the depth in depth_test_sprite_z; two buttons of pad 1 (0x400, 0x100) step that depth and print it
    ("z_value[%u]") */
 void Game_DrawDepthTestSprite(void) {
     u32 *cursor;
     int texture_height_log2;
     u32 *packet_start;
-    GsColor color = D_0043E450;
+    GsColor color = haze_sprite_color;
     int texture_base;
     u16 pad_buttons;
     u64 tex0_low;
 
     texture_base = 0x1180;
-    if (D_00446F78 != 0) {
+    if (context1_buffer_half != 0) {
         texture_base = 0;
     }
     pad_buttons = Pad_GetReport(1, 0)->held;
     if (pad_buttons & 0x400) {
-        D_0044673C += 0xFF;
-        printf(D_0043E470, D_0044673C);
+        depth_test_sprite_z += 0xFF;
+        printf(z_value_format, depth_test_sprite_z);
     }
     if (pad_buttons & 0x100) {
-        D_0044673C -= 0xFF;
-        printf(D_0043E470, D_0044673C);
+        depth_test_sprite_z -= 0xFF;
+        printf(z_value_format, depth_test_sprite_z);
     }
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ALPHA_1, 0x80000000A8L);
@@ -1109,7 +1109,7 @@ void Game_DrawDepthTestSprite(void) {
     cursor += 4;
     *cursor++ = 0x6BF8;
     *cursor++ = 0x7200;
-    *cursor++ = D_0044673C;
+    *cursor++ = depth_test_sprite_z;
     *cursor++ = 0;
     *cursor++ = 0x2800;
     *cursor++ = 0x1C00;
@@ -1119,7 +1119,7 @@ void Game_DrawDepthTestSprite(void) {
     cursor += 4;
     *cursor++ = 0x93F8;
     *cursor++ = 0x8E00;
-    *cursor++ = D_0044673C;
+    *cursor++ = depth_test_sprite_z;
     *cursor++ = 0;
     *cursor++ = 0;
     *cursor++ = 0;
@@ -1145,7 +1145,7 @@ void Game_BlendScreenOffsetDown(void) {
     u64 tex0_low;
 
     texture_base = 0x1180;
-    if (D_00446F78 != 0) {
+    if (context1_buffer_half != 0) {
         texture_base = 0;
     }
     Packet_BeginGsRegisters();
@@ -1197,7 +1197,7 @@ void Game_BlendScreenOffsetUpDown(void) {
     u64 tex0_low;
 
     texture_base = 0x1180;
-    if (D_00446F78 != 0) {
+    if (context1_buffer_half != 0) {
         texture_base = 0;
     }
     Packet_BeginGsRegisters();
@@ -1262,8 +1262,8 @@ void Game_BlendScreenOffsetUpDown(void) {
 
 /* blends the other frame buffer (the frame shown before) over the whole screen at the given alpha */
 void Game_BlendPreviousFrame(int alpha) {
-    ScreenRect screen_rect = D_0043E480;
-    ScreenRect texel_rect = D_0043E480;
+    ScreenRect screen_rect = full_screen_rect;
+    ScreenRect texel_rect = full_screen_rect;
     int vertex_color[4] = { 0x80, 0x80, 0x80, alpha };
     int texture_base;
     int texture_height_log2;
@@ -1272,7 +1272,7 @@ void Game_BlendPreviousFrame(int alpha) {
     u32 *cursor;
 
     texture_base = 0x1180;
-    if (D_00446F78 == 0) {
+    if (context1_buffer_half == 0) {
         texture_base = 0;
     }
     Packet_BeginGsRegisters();
@@ -1335,10 +1335,10 @@ void Game_BlendPreviousFrame(int alpha) {
 }
 
 /* blends the other frame buffer over the whole screen at the given alpha, its texels taken from the slightly
-   smaller rectangle D_0043E490, so a little enlarged. Nothing calls it. */
+   smaller rectangle inset_screen_rect, so a little enlarged. Nothing calls it. */
 void Game_BlendPreviousFrameZoomed(int alpha) {
-    ScreenRect screen_rect = D_0043E480;
-    ScreenRect texel_rect = D_0043E490;
+    ScreenRect screen_rect = full_screen_rect;
+    ScreenRect texel_rect = inset_screen_rect;
     int vertex_color[4] = { 0x80, 0x80, 0x80, alpha };
     int texture_base;
     int texture_height_log2;
@@ -1347,7 +1347,7 @@ void Game_BlendPreviousFrameZoomed(int alpha) {
     u32 *cursor;
 
     texture_base = 0x1180;
-    if (D_00446F78 == 0) {
+    if (context1_buffer_half == 0) {
         texture_base = 0;
     }
     Packet_BeginGsRegisters();
@@ -1409,7 +1409,7 @@ void Game_BlendPreviousFrameZoomed(int alpha) {
     Packet_AppendToChain(packet_start, cursor);
 }
 
-/* projects the point 1000 ahead along last frame's view (D_00420D00 unk20/unk30) to find how far the view
+/* projects the point 1000 ahead along last frame's view (view_ray_status unk20/unk30) to find how far the view
    turned, and draws the picture again moved by that much (at most 8 pixels; not up or down while unk40 is under
    125) over every other line, in 20 strips */
 void Game_ShiftScreenByViewTurn(void) {
@@ -1422,7 +1422,7 @@ void Game_ShiftScreenByViewTurn(void) {
     int offset_x, offset_y;
     int strip;
 
-    texture_base = D_00446F78 ? 0 : 0x1180;
+    texture_base = context1_buffer_half ? 0 : 0x1180;
 
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ALPHA_1, 10);
@@ -1431,10 +1431,10 @@ void Game_ShiftScreenByViewTurn(void) {
     Packet_AddGsRegister(GS_REG_SCANMSK, 3);
     Packet_EndGsRegisters();
 
-    sceVu0MulMatrix(view_matrix, D_004323E0, D_00431AF0);
+    sceVu0MulMatrix(view_matrix, world_screen_matrix, identity_matrix);
     Vu0_LoadMatrix(view_matrix);
-    Vector_Scale(scaled_vector, D_00420D30, 1000.0f);
-    Vector_Add(scaled_vector, scaled_vector, D_00420D30 - 4);
+    Vector_Scale(scaled_vector, view_ray_previous_direction, 1000.0f);
+    Vector_Add(scaled_vector, scaled_vector, view_ray_previous_direction - 4);
     scaled_vector[3] = 1.0f;
     Vu0_ProjectToScreen(screen_xy, scaled_vector);
 
@@ -1458,7 +1458,7 @@ void Game_ShiftScreenByViewTurn(void) {
     } else if (offset_y < -0x80) {
         offset_y = -0x80;
     }
-    if (D_00420D40[0] < 125.0f) {
+    if (view_ray_length[0] < 125.0f) {
         offset_y = 0;
     }
 
@@ -1524,7 +1524,7 @@ void Game_ShiftScreenByViewTurn(void) {
     Packet_EndGsRegisters();
 }
 
-/* Game_ShiftScreenByViewTurn measured at the nearest entity within 30 degrees ahead (or D_00420D00.unk48 away, at most
+/* Game_ShiftScreenByViewTurn measured at the nearest entity within 30 degrees ahead (or view_ray_status.unk48 away, at most
    1000) instead of 1000 ahead. Nothing calls it. */
 void Game_ShiftScreenByFocusTurn(void) {
     sceVu0FMATRIX view_matrix;
@@ -1540,28 +1540,28 @@ void Game_ShiftScreenByFocusTurn(void) {
     u64 tex0_low;
 
     texture_base = 0x1180;
-    if (D_00446F78 != 0) texture_base = 0;
-    focus_distance = D_00420D00[18] > 1000.0f ? 1000.0f : D_00420D00[18];
+    if (context1_buffer_half != 0) texture_base = 0;
+    focus_distance = view_ray_status[18] > 1000.0f ? 1000.0f : view_ray_status[18];
     nearest_distance_squared = focus_distance * focus_distance;
-    for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+    for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         if (((int)(entity->flags >> 1) & 1) == 0) continue;
         if (focus_distance < entity->distance_to_player) continue;
         Vector_Copy(offset_to_entity, entity->model->position);
         offset_to_entity[1] -= entity->height * 0.5f;
-        Vector_Subtract(offset_to_entity, offset_to_entity, D_00420D00);
+        Vector_Subtract(offset_to_entity, offset_to_entity, view_ray_status);
         Vector_MultiplyComponents(scratch_vector, offset_to_entity, offset_to_entity);
         distance_squared = scratch_vector[0] + scratch_vector[1] + scratch_vector[2];
         if (nearest_distance_squared < distance_squared) continue;
         sceVu0Normalize(scratch_vector, offset_to_entity);
-        if (sceVu0InnerProduct(scratch_vector, D_00420D00 + 4) < 0.86602497f) continue; /* about cos 30 degrees */
+        if (sceVu0InnerProduct(scratch_vector, view_ray_status + 4) < 0.86602497f) continue; /* about cos 30 degrees */
         nearest_distance_squared = distance_squared;
         focus_distance = sqrtf(distance_squared);
     }
 
-    sceVu0MulMatrix(view_matrix, D_004323E0, D_00431AF0);
+    sceVu0MulMatrix(view_matrix, world_screen_matrix, identity_matrix);
     Vu0_LoadMatrix(view_matrix);
-    Vector_Scale(scratch_vector, D_00420D00 + 12, focus_distance);
-    Vector_Add(scratch_vector, scratch_vector, D_00420D00 + 8);
+    Vector_Scale(scratch_vector, view_ray_status + 12, focus_distance);
+    Vector_Add(scratch_vector, scratch_vector, view_ray_status + 8);
     scratch_vector[3] = 1.0f;
     Vu0_ProjectToScreen(screen_position, scratch_vector);
 
@@ -1646,7 +1646,7 @@ void Game_ApplyBrightness(int brightness) {
     int texture_height_log2;
     u64 tex0_low;
 
-    texture_base = D_00446F78 ? 0 : 0x1180;
+    texture_base = context1_buffer_half ? 0 : 0x1180;
     remaining = 9;
     GsDraw_QueueTexFlush();
     GsDraw_QueueFlush();
@@ -1696,7 +1696,7 @@ void Game_TintScreen(int red, int green, int blue) {
     int texture_base;
     int remaining;
 
-    texture_base = D_00446F78 ? 0 : 0x1180;
+    texture_base = context1_buffer_half ? 0 : 0x1180;
     remaining = 9;
     GsDraw_QueueTexFlush();
     GsDraw_QueueFlush();
@@ -1744,7 +1744,7 @@ void Game_TintScreen(int red, int green, int blue) {
     GsDraw_QueueTexFlush();
 }
 
-/* steps the wobbling grid (laid out afresh when D_00446740 is set) and draws the grabbed picture through its
+/* steps the wobbling grid (laid out afresh when wobble_grid_reset is set) and draws the grabbed picture through its
    cells in the colour given, the wobble scaled by blend: under water and while MP is drained */
 void Game_DrawWobblingScreen(int red, int green, int blue, int alpha, float blend) {
     char unused_stack[0x40]; // match: retail reserves the 0x40 bytes
@@ -1755,7 +1755,7 @@ void Game_DrawWobblingScreen(int red, int green, int blue, int alpha, float blen
     u32 *packet_start;
     u32 *cursor;
 
-    if (D_00446740 != 0) {
+    if (wobble_grid_reset != 0) {
         for (i = 0; i < 8; i++) {
             for (j = 0; j < 11; j++) {
                 wobble_grid_origin[i][j][0] = wobble_grid_points[i][j][0] = j << 6;
@@ -1855,7 +1855,7 @@ void Game_DrawWobblingScreen(int red, int green, int blue, int alpha, float blen
         }
     }
 
-    D_00446740 = 0;
+    wobble_grid_reset = 0;
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
     Packet_EndGsRegisters();

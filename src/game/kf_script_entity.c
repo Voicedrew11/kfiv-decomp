@@ -1,4 +1,4 @@
-/* Script commands 200 to 299 (handler table D_00433650): arithmetic for scripts (sine, cosine, random
+/* Script commands 200 to 299 (handler table script_entity_command_handlers): arithmetic for scripts (sine, cosine, random
    numbers, angles and distances), whether the player is in control, the message box and notices, and the
    entities of the map (monsters and people), which a command names by spawn id (Entity_GetBySpawnId):
    their motions, walking and turning, their flags, positions and rotations. */
@@ -30,12 +30,12 @@ float EntityMath_WrapAngle(float angle);
 float Angle_Wrap(float angle);
 
 extern f32 sine_table[];
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 extern GameStatus game_status;
 extern PlayerState player_state;
 extern Entity entity_pool[][0x80];
-extern s32 D_00446770;
-extern s32 D_004467D8[2];
+extern s32 current_map_slot;
+extern s32 map_spawn_counts[2];
 
 /* Command 200, and every unused number from 200 to 299: finishes at once. */
 void ScriptCmd_Nop200(ScriptThreadCommand *command) {
@@ -172,7 +172,7 @@ void ScriptCmd_GetPointFromPlayer(ScriptPointAheadCommand *command) {
     vector[1] = player_state.unk1AC;
     vector[2] = player_state.unk1B4;
     vector[3] = 0.0f;
-    sceVu0RotMatrixY(matrix, D_00431AF0, player_state.rotation.y);
+    sceVu0RotMatrixY(matrix, identity_matrix, player_state.rotation.y);
     sceVu0ApplyMatrix(vector, matrix, vector);
     Vector_Scale(vector, vector, (f32)command->distance.value);
     Vector_Add(point, &player_state.position, vector);
@@ -507,10 +507,10 @@ void ScriptCmd_TurnEntityToward(ScriptMoveCommand *command) {
    of those whose flag bit 16 is clear, with 2 only of those where it is set, else of all. Then
    finishes. */
 void ScriptCmd_SetEntitiesFlag5(ScriptFlagCommand *command) {
-    Entity *entity = entity_pool[D_00446770];
+    Entity *entity = entity_pool[current_map_slot];
     s32 i;
 
-    i = D_004467D8[D_00446770];
+    i = map_spawn_counts[current_map_slot];
     while (--i != -1) {
         if (command->kind.value == 1) {
             if (!ENTITY_FLAG_BITS(entity)->bit16) {

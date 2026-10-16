@@ -16,7 +16,7 @@ extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -47,7 +47,7 @@ void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 float EntityMath_EaseAngleToward(float *, float, float);
 void EntityEvent_OnDeath(Entity *);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -146,7 +146,7 @@ static void Spider_Animate(Entity *entity) {
 static void Spider_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
@@ -232,7 +232,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -487,7 +487,7 @@ static void Spider_DropToFloor(Entity *entity) {
     direction[2] = 0.0f;
     direction[3] = 0.0f;
     entity->unkC6 = 0x1000;
-    sceVu0RotMatrixZ(matrix, D_00431AF0, entity->model->unkD0[2]);
+    sceVu0RotMatrixZ(matrix, identity_matrix, entity->model->unkD0[2]);
     sceVu0RotMatrixX(matrix, matrix, entity->model->unkD0[0]);
     sceVu0RotMatrixY(matrix, matrix, entity->model->unkD0[1]);
     sceVu0ApplyMatrix(direction, (int *)matrix, direction);

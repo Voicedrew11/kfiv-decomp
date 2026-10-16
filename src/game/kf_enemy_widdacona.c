@@ -28,7 +28,7 @@ int Motion_Start(void *, int, int, u32, int);
 char *Model_GetSkinnedBonePoint(char *, u32);
 void EntityEvent_OnDeath(Entity *);
 int EntityAi_AnimationFrameCount(void *, int);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
 int rand(void);
@@ -306,7 +306,7 @@ static void Widdacona_ReturnToDormant(Entity *entity) {
 static void Widdacona_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 2);
     }
     if (entity->unkC6 != 0) {
@@ -348,7 +348,7 @@ static void Widdacona_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -407,7 +407,7 @@ static void Widdacona_RangedAttack0(Entity *entity) {
         } else {
             unkE0->unk1C = 0.0f;
         }
-        if (entity->model->unkFC->unk82 >= 12 && entity->model->unkFC->unk82 <= 76 && D_00446ED4 % 3 != 0) {
+        if (entity->model->unkFC->unk82 >= 12 && entity->model->unkFC->unk82 <= 76 && frame_counter % 3 != 0) {
             Vector_Copy(direction, &player_state);
             direction[1] -= 100.0f;
             EntityShot_LaunchAimed(entity, unk3D8, 12, 76, direction, 0.3926991f, 0.17453294f);

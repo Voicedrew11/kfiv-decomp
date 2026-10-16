@@ -19,19 +19,20 @@ int puts(char *);
 void FlushCache(int); // match: void, the return value is unused and int changes the code
 
 /* the game's own data and functions, outside this file */
-extern int D_00446748;          /* which of the two packet buffers is being filled */
-extern int D_0044674C;          /* quadwords handed out */
-extern int D_00446750;          /* bytes in both buffers together */
-extern int D_00446F58;          /* start of the packet area */
-extern char D_0043E4A0[];
-extern u32 *D_00446754;         /* the register list being built, NULL: none */
-extern int D_00446758;          /* registers in it */
-/* the VIF1 packets that upload the VU1 microprograms */
-extern u32 D_0043B1D0[];
-extern u32 D_0043BB20[];
-extern u32 D_0043BB90[];
-extern u32 D_0043CD40[];
-extern u32 D_0043D290[];
+extern int packet_fill_index;       /* which of the two packet buffers is being filled */
+extern int packet_quadwords_used;   /* quadwords handed out */
+extern int packet_buffers_size;     /* bytes in both buffers together */
+extern int packet_area;              /* start of the packet area */
+extern char packet_overflow_message[];   /* a line of 70 '!', printed when a packet overruns the buffer */
+extern u32 *gs_register_list;       /* the register list being built, NULL: none */
+extern int gs_register_count;       /* registers in it */
+/* the VIF1 packets that upload the VU1 microprograms, by the VU1 address each one starts at (the MSCAL
+   that runs it) */
+extern u32 vu1_packed_vertex_program[]; /* 0x000: triangles of packed vertices (ModelScreen_QueueCutTriangle) */
+extern u32 vu1_gif_kick_program[];      /* 0x276: passes a GIF packet on (Packet_EndGsRegisters) */
+extern u32 vu1_float_vertex_program[];  /* 0x280: triangles of float vertices (ModelScreen_QueueCutFloatTriangle) */
+extern u32 vu1_posed_model_program[];   /* 0x5A0: the pool blocks' posed models (Model_SetVu1Program) */
+extern u32 D_0043D290[];                /* 0x700: no C code starts it */
 void Packet_UploadVu1Programs(void);
 void Packet_AppendToChain(u32 *, u32 *);
 void Packet_LayOutBuffers(int);
@@ -59,10 +60,10 @@ void Packet_Init(void) {
 void Packet_UploadVu1Programs(void) {
     DmaChan *channel;
 
-    SEND_TO_VIF1(D_0043B1D0);
-    SEND_TO_VIF1(D_0043BB20);
-    SEND_TO_VIF1(D_0043BB90);
-    SEND_TO_VIF1(D_0043CD40);
+    SEND_TO_VIF1(vu1_packed_vertex_program);
+    SEND_TO_VIF1(vu1_gif_kick_program);
+    SEND_TO_VIF1(vu1_float_vertex_program);
+    SEND_TO_VIF1(vu1_posed_model_program);
     SEND_TO_VIF1(D_0043D290);
 }
 
@@ -76,11 +77,11 @@ void func_001095D8(void) {
 
 /* Starts filling the other packet buffer: its chain is emptied and the buffer cleared. */
 void Packet_SwapBuffers(void) {
-    D_00446748 = D_00446748 == 0;
-    packet_chain_head[D_00446748] = packet_chain_tail[D_00446748] = NULL;
-    packet_next = packet_buffer[D_00446748];
-    memset(packet_next, 0, D_00446750 / 2);
-    D_0044674C = 0;
+    packet_fill_index = packet_fill_index == 0;
+    packet_chain_head[packet_fill_index] = packet_chain_tail[packet_fill_index] = NULL;
+    packet_next = packet_buffer[packet_fill_index];
+    memset(packet_next, 0, packet_buffers_size / 2);
+    packet_quadwords_used = 0;
     packet_overflowed = 0;
 }
 
@@ -89,11 +90,11 @@ void Packet_AppendToChain(u32 *packet, u32 *packet_end) {
     void **packet_head;
     void **packet_tail;
 
-    packet_head = &packet_chain_head[D_00446748];
-    packet_tail = &packet_chain_tail[D_00446748];
+    packet_head = &packet_chain_head[packet_fill_index];
+    packet_tail = &packet_chain_tail[packet_fill_index];
     if (packet_overflowed == 0) {
         if ((u32)packet_end >= (u32)packet_next) {
-            puts(D_0043E4A0);
+            puts(packet_overflow_message);
             while (1) {
             }
         } else {
@@ -116,14 +117,14 @@ void Packet_SendChain(void) {
     void **chain_head;
     DmaTag *end_tag;
 
-    chain_head = &packet_chain_head[D_00446748];
+    chain_head = &packet_chain_head[packet_fill_index];
     if (*chain_head != 0) {
         if (packet_overflowed == 0) {
             gs_send_pending[0] = 1;
             Packet_BeginGsRegisters();
             Packet_AddGsRegister(GS_REG_FINISH, 0xFFFFFFFFUL);
             Packet_EndGsRegisters();
-            end_tag = packet_chain_tail[D_00446748];
+            end_tag = packet_chain_tail[packet_fill_index];
             end_tag->id_and_qwc = 0x70000000;
             end_tag->address = 0;
             end_tag->unk08 = 0;
@@ -159,27 +160,27 @@ void Packet_LayOutBuffers(int size_index) {
     int base;
     int half;
 
-    D_00446748 = 0;
+    packet_fill_index = 0;
     packet_chain_head[1] = NULL;
     packet_chain_head[0] = NULL;
     packet_chain_tail[1] = NULL;
     packet_chain_tail[0] = NULL;
     switch (size_index) {
     case 0:
-        D_00446750 = 0x280000;
+        packet_buffers_size = 0x280000;
         break;
     case 1:
-        D_00446750 = 0x180000;
+        packet_buffers_size = 0x180000;
         break;
     case 2:
-        D_00446750 = 0x100000;
+        packet_buffers_size = 0x100000;
         break;
     case 3:
-        D_00446750 = 0x80000;
+        packet_buffers_size = 0x80000;
         break;
     }
-    size = D_00446750;
-    base = D_00446F58;
+    size = packet_buffers_size;
+    base = packet_area;
     packet_buffer[0] = (u32 *)base;
     half = (int)(size + (size >> 31)) >> 1;
     base += half;
@@ -187,7 +188,7 @@ void Packet_LayOutBuffers(int size_index) {
     memset(packet_buffer[0], 0, half);
     base += half;
     memset(packet_buffer[1], 0, half);
-    D_0044674C = 0;
+    packet_quadwords_used = 0;
     packet_next = packet_buffer[0];
     packet_overflowed = 0;
     if (size_index == 0) {
@@ -196,22 +197,22 @@ void Packet_LayOutBuffers(int size_index) {
         return;
     }
     spare_area_addr = base;
-    spare_area_size = 0x280000 - D_00446750;
+    spare_area_size = 0x280000 - packet_buffers_size;
 }
 
 /* Takes quadwords from the packet buffer; once it overflows everything gets the start of the buffer. */
 u32 *Packet_Alloc(int quadwords) {
     u32 *result = packet_next;
 
-    D_0044674C += quadwords;
+    packet_quadwords_used += quadwords;
     if (packet_overflowed == 0) {
-        if (D_00446750 / 16 >= D_0044674C) {
+        if (packet_buffers_size / 16 >= packet_quadwords_used) {
             packet_next = result + quadwords * 4;
             return result;
         }
         packet_overflowed = 1;
-        packet_next = packet_buffer[D_00446748];
-        memset(packet_next, 0, D_00446750 / 2);
+        packet_next = packet_buffer[packet_fill_index];
+        memset(packet_next, 0, packet_buffers_size / 2);
     }
     return packet_next;
 }
@@ -226,20 +227,20 @@ void Packet_GetSpareArea(int *addr, int *size) {
 
 /* Starts a list of GS register writes. */
 void Packet_BeginGsRegisters(void) {
-    if (D_00446754 == NULL) {
-        D_00446754 = Packet_Alloc(3);
-        D_00446758 = 0;
+    if (gs_register_list == NULL) {
+        gs_register_list = Packet_Alloc(3);
+        gs_register_count = 0;
     }
 }
 
 /* Adds a GS register write to the list. */
 void Packet_AddGsRegister(int reg, s64 value) {
-    if (D_00446754 != NULL) {
+    if (gs_register_list != NULL) {
         s64 *entry = (s64 *)Packet_Alloc(1);
 
         entry[0] = value;
         entry[1] = reg;
-        D_00446758++;
+        gs_register_count++;
     }
 }
 
@@ -251,20 +252,20 @@ void Packet_EndGsRegisters(void) {
     int blocks;
     u64 descriptors = 0xE;
 
-    if (D_00446754 != NULL) {
-        packet = D_00446754;
+    if (gs_register_list != NULL) {
+        packet = gs_register_list;
         i = 0;
-        *packet++ = (D_00446758 + 4) | 0x10000000;
+        *packet++ = (gs_register_count + 4) | 0x10000000;
         *packet++ = 0;
         *packet++ = 0;
         *packet++ = 0;
         *packet++ = 0;
         *packet++ = 0;
         *packet++ = 0;
-        *packet++ = ((D_00446758 + 1) << 16) | 0x6C00C000;
-        count = D_00446758 / 16;
+        *packet++ = ((gs_register_count + 1) << 16) | 0x6C00C000;
+        count = gs_register_count / 16;
         blocks = count;
-        count = D_00446758 - blocks * 16;
+        count = gs_register_count - blocks * 16;
         *(u64 *)packet = (u64)((blocks + 1) | 0x8000) | ((u64)count << 60);
         packet += 2;
         *(u64 *)packet = 0;
@@ -287,8 +288,8 @@ void Packet_EndGsRegisters(void) {
         *packet++ = 0;
         *packet++ = 0;
         *packet++ = 0x13000000;
-        Packet_AppendToChain(D_00446754, Packet_Alloc(1));
-        D_00446754 = NULL;
-        D_00446758 = 0;
+        Packet_AppendToChain(gs_register_list, Packet_Alloc(1));
+        gs_register_list = NULL;
+        gs_register_count = 0;
     }
 }

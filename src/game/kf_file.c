@@ -32,17 +32,17 @@ void File_LoadArchiveToc(void) {
 
 /* Locks the file layer while a background read is in flight: KF_File_Open refuses to open anything. */
 void File_Lock(void) {
-    D_00446710 = 1;
+    file_layer_locked = 1;
 }
 
 /* Unlocks the file layer. */
 void File_Unlock(void) {
-    D_00446710 = 0;
+    file_layer_locked = 0;
 }
 
 /* Whether the file layer is locked (File_Lock). */
 int File_IsLocked(void) {
-    return D_00446710;
+    return file_layer_locked;
 }
 
 /* Opens a file (KF_File_Open with 1 as its ignored fourth argument); returns the slot or -1. */
@@ -64,7 +64,7 @@ int KF_File_Open(char *name, int nowait, int pack, int unused) {
     int slot;
     char *cursor;
 
-    if (D_00446710 != 0) {
+    if (file_layer_locked != 0) {
         printf("KF_File_Open() File open error!! [lock]\n");
         return -1;
     }
@@ -145,7 +145,7 @@ void File_CloseAll(void) {
             File_Close(i);
         }
     }
-    D_00446710 = 0;
+    file_layer_locked = 0;
 }
 
 /* Reads size bytes (all of a negative size: up to 16 MB) at the file's position into buf, waiting for them

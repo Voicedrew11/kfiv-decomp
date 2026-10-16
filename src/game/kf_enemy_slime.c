@@ -20,7 +20,7 @@ void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionHeavy(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
@@ -36,7 +36,7 @@ void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
 void EntityAi_Guard(Entity *);
 void EntityAi_RangedAttack(Entity *);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixY(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Normalize(void *, void *);
@@ -130,7 +130,7 @@ static void Slime_OnHit(Entity *entity) {
 static void Slime_Think(Entity *entity, s32 unknown) {
     u32 phase;
 
-    phase = D_00446ED4 % 10U;
+    phase = frame_counter % 10U;
     if (phase == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 0);
     }
@@ -223,7 +223,7 @@ static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -312,7 +312,7 @@ static void Slime_Move(Entity *entity) {
             amount += amount;
         }
         heading = EntityMath_HeadingTo(entity->model->position, entity->target);
-        sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, D_00431AF0, heading);
+        sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, identity_matrix, heading);
         Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
         Vector_Normalize(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR);
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, amount);

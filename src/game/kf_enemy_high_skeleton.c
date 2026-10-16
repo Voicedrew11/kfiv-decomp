@@ -18,7 +18,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -84,12 +84,12 @@ void HighSkeleton_Init(Entity *entity) {
 static void HighSkeleton_Think(Entity *entity, s32 unknown) {
     Entity *other;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->spawn_info->unk40 != 0 && entity->spawn_info->variant != 0) {
         other = Entity_GetBySpawnId(entity->spawn_info->variant);
-        if (other != NULL && D_00446ED4 % entity->unkD7 == 0) {
+        if (other != NULL && frame_counter % entity->unkD7 == 0) {
             if (ENTITY_FLAG_BITS(other)->bits2 >= 2 || !ENTITY_FLAG_BITS(other)->bit1) {
                 EntityAi_StartAction(entity, HighSkeleton_Death, 1);
                 return;

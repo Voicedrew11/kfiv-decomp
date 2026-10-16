@@ -27,7 +27,7 @@ int Sound_PlayCommon(int);
 
 extern PlayerState player_state;
 extern int player_hp_max[];            /* player_state.hp_max */
-extern int D_00414524[];            /* player_previous + 0x2A4 */
+extern int player_previous_fade_level[];            /* player_previous + 0x2A4 */
 /* 0x414580 the tint the damage and the statuses fade the screen with (Player_DrawScreenTints draws it) */
 PlayerScreenTint player_screen_tint = { 0 };
 extern PlayerItemDef weapon_defs[];
@@ -35,13 +35,13 @@ extern FxTableEntry fx_table[];
 extern LevelRecord weapon_level_records[70];
 extern LevelRecord worn_item_level_records[];
 extern LevelRecordDef worn_defs[];
-extern const PlayerLevelStep D_0043E130[];
+extern const PlayerLevelStep player_level_steps[];
 extern GameStatus game_status;
 extern MapSlot map_slots[];
-extern DisplayContext *D_00446978;
-extern int D_00446770;
-extern s8 D_00446958;
-extern int D_0044695C;
+extern DisplayContext *held_item_model_ptr;
+extern int current_map_slot;
+extern s8 footstep_voice;
+extern int recent_damage_frames;
 extern u8 spell_levels[6][5];
 extern u16 spell_experience[6][5];
 
@@ -179,7 +179,7 @@ void Player_TakeDamage(int damage)
         if (tint >= 0x100)
             tint = 0xFF;
         Input_StartRumble(tint, 4, 0);
-        D_0044695C = 6;
+        recent_damage_frames = 6;
     }
 }
 
@@ -267,11 +267,11 @@ void Player_TiltViewFromHit(int damage) {
 
 int Sound_StopVoice(int); // match: an int return (the definition is void) keeps -1 in $3
 
-/* Stops the last footstep sound (D_00446958), if one plays. */
+/* Stops the last footstep sound (footstep_voice), if one plays. */
 void Player_StopFootstepSound(void) {
-    if (D_00446958 >= 0) {
-        Sound_StopVoice(D_00446958);
-        D_00446958 = -1;
+    if (footstep_voice >= 0) {
+        Sound_StopVoice(footstep_voice);
+        footstep_voice = -1;
     }
 }
 
@@ -348,10 +348,10 @@ void Player_FindMapRecord(void) {
     PlayerState *player = &player_state;
     MapRecordInfo *record;
 
-    record = Map_FindRecordAtInSlot((CameraState *)player, 100.0f, D_00446770);
+    record = Map_FindRecordAtInSlot((CameraState *)player, 100.0f, current_map_slot);
     if (record != NULL) {
         // match: retail shifts by 14, not by 7 (the records are 0x80 bytes each)
-        player->map_index = (u32)((char *)record - map_slots[D_00446770].records) >> 14;
+        player->map_index = (u32)((char *)record - map_slots[current_map_slot].records) >> 14;
         player->unk250 = record->unk38;
     }
 }
@@ -366,11 +366,11 @@ void Player_UpdateScreenFade(void) {
     float fade;
     float next;
 
-    slot = &map_slots[D_00446770];
+    slot = &map_slots[current_map_slot];
     player = &player_state;
     area = *(char *)((player->map_index << 7) + (int)slot->records + 0x4C); // match: summed as integers, index first
     *(s32 *)player->pad2A4 = area;
-    if (area - D_00414524[0] < 0) {
+    if (area - player_previous_fade_level[0] < 0) {
         *(s32 *)player->pad2AC = -0x30;
     }
     step = *(s32 *)player->pad2AC;
@@ -426,12 +426,12 @@ void Player_AddExperience(int amount) {
         player_state.experience = 999999;
     }
     for (level = player_state.level + 1; level < 100; level++) {
-        if (player_state.experience >= D_0043E130[level].experience) {
+        if (player_state.experience >= player_level_steps[level].experience) {
             player_state.level++;
-            player_state.hp_base += D_0043E130[level].hp_gain;
-            player_state.mp_base += D_0043E130[level].mp_gain;
-            player_state.power_base += D_0043E130[level].power_gain;
-            player_state.magic_base += D_0043E130[level].magic_gain;
+            player_state.hp_base += player_level_steps[level].hp_gain;
+            player_state.mp_base += player_level_steps[level].mp_gain;
+            player_state.power_base += player_level_steps[level].power_gain;
+            player_state.magic_base += player_level_steps[level].magic_gain;
             Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_LEVEL_UP);
         }
     }
@@ -521,7 +521,7 @@ void Player_BounceWeapon(void) {
         Sound_StopVoice(2);
         Sound_PlaySw(1);
         player_state.unk261 = 1;
-        ModelMotion_BlendInto((ModelInstance *)D_00446978, 0, D_00446978->settings->unk82);
+        ModelMotion_BlendInto((ModelInstance *)held_item_model_ptr, 0, held_item_model_ptr->settings->unk82);
     }
 }
 
@@ -531,7 +531,7 @@ void Player_BounceWeaponQuietly(void) {
 
     if (player_state.unk261 == 0 && weapon_defs[player_state.weapon].unk63 != 2) {
         Sound_StopVoice(2);
-        display = D_00446978;
+        display = held_item_model_ptr;
         player_state.unk261 = 1;
         ModelMotion_BlendInto((ModelInstance *)display, 0, display->settings->unk82);
     }

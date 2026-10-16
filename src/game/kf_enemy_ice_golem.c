@@ -16,7 +16,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
@@ -101,7 +101,7 @@ void IceGolem_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think, with IceGolem_ThinkCombat for state 2. Every third
    frame it starts effect 0x3AD at point 0xFF of the model (EntityEvent_StartEffectAtPoint). */
 static void IceGolem_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
@@ -126,7 +126,7 @@ static void IceGolem_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (D_00446ED4 % 3U == 0) {
+    if (frame_counter % 3U == 0) {
         EntityEvent_StartEffectAtPoint((char **)entity, 0x3AD, 0xFF, (int)entity->model->unkD0);
     }
 }
@@ -157,7 +157,7 @@ static void IceGolem_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {

@@ -18,7 +18,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 int EntityAi_ThinkReturn(void *, int);
 int EntityAi_ThinkIdle(void *, int);
 void EntityAi_StepState(Entity *);
@@ -99,7 +99,7 @@ void EarthKing_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with EarthKing_ThinkCombat for states 1 and 2. */
 static void EarthKing_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {
@@ -147,7 +147,7 @@ static void EarthKing_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -299,7 +299,7 @@ static void EarthKing_RangedAttack0(Entity *entity) {
         if (entity->model->unkFC->unk82 >= (s16)entity->params->unk434
             && entity->model->unkFC->unk82 <= entity->params->unk436) {
             ENTITY_FLAGS(entity) |= 0x200;
-            if (D_00446ED4 & 1) {
+            if (frame_counter & 1) {
                 EntityAi_LaunchShots(entity, unk3D8, (s16)entity->params->unk434, entity->params->unk436);
             }
         }

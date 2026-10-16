@@ -18,7 +18,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(Entity *);
 void EntityAi_SensePlayer(Entity *, int);
@@ -96,7 +96,7 @@ void MalformedGiant_Init(Entity *entity) {
 static void MalformedGiant_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (ENTITY_FLAG_BITS(entity)->bit41 == 1) {
@@ -164,7 +164,7 @@ static void MalformedGiant_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {

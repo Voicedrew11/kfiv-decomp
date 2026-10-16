@@ -8,22 +8,22 @@
 #define TEX0_BITS(header) ((TextureTex0Bits *)&(header)->tex0)
 #define DMA_TAG_ID_END (7 << 28)    /* a DMA tag of id 7: end the chain after its data */
 
-extern char D_004414A0[];           /* "load_tm2() tbp:0 !!!!" */
-extern char D_004414B8[];           /* "load_tm2()" */
-extern char D_004414C8[];           /* "TBP[%u] " */
-extern char D_004414D8[];           /* "TBW[%u] " */
-extern char D_004414E8[];           /* "PSM[0x%x] " */
-extern char D_00446FA8[];           /* "TW[%u] " */
-extern char D_00446FB0[];           /* "TH[%u] " */
-extern char D_004414F8[];           /* "TCC[%u] " */
-extern char D_00441508[];           /* "TFX[0x%x] " */
-extern char D_00441518[];           /* "CBP[%u] " */
-extern char D_00441528[];           /* "CPSM[0x%x] " */
-extern char D_00441538[];           /* "CSM[%u] " */
-extern char D_00441548[];           /* "CSA[%u] " */
-extern char D_00441558[];           /* "CLD[0x%x]
+extern char tm2_tbp_zero_message[]; /* "load_tm2() tbp:0 !!!!" */
+extern char tm2_header_label[];     /* "load_tm2()" */
+extern char tex0_tbp_format[];      /* "TBP[%u] " */
+extern char tex0_tbw_format[];      /* "TBW[%u] " */
+extern char tex0_psm_format[];      /* "PSM[0x%x] " */
+extern char tex0_tw_format[];       /* "TW[%u] " */
+extern char tex0_th_format[];       /* "TH[%u] " */
+extern char tex0_tcc_format[];      /* "TCC[%u] " */
+extern char tex0_tfx_format[];      /* "TFX[0x%x] " */
+extern char tex0_cbp_format[];      /* "CBP[%u] " */
+extern char tex0_cpsm_format[];     /* "CPSM[0x%x] " */
+extern char tex0_csm_format[];      /* "CSM[%u] " */
+extern char tex0_csa_format[];      /* "CSA[%u] " */
+extern char tex0_cld_format[];      /* "CLD[0x%x]
 " */
-static u32 D_01DFAF80[0xC];         /* 0x1DFAF80 where Texture_SendTexFlush builds its DMA packet */
+static u32 texflush_packet[0xC];    /* 0x1DFAF80 where Texture_SendTexFlush builds its DMA packet */
 
 int puts(char *);
 int printf(const char *, ...);
@@ -54,7 +54,7 @@ static void Texture_LoadTm2(TextureHeader *header) {
     s16 height;
 
     if ((int)(header->tex0 & 0x3FFF) == 0) {
-        puts(D_004414A0);
+        puts(tm2_tbp_zero_message);
         return;
     }
     image_format = (header->tex0 >> 20) & 0x3F;
@@ -264,28 +264,28 @@ static void Texture_BuildPacket(char **texture, char **packet) {
     tex0_words = (u32 *)&header->tex0;
     tex0_high = tex0_words[1];
     tex0_low = tex0_words[0];
-    printf(D_004414B8);
-    printf(D_004414C8, tex0_low & 0x3FFF);
-    printf(D_004414D8, (tex0_low >> 14) & 0x3F);
-    printf(D_004414E8, (tex0_low >> 20) & 0x3F);
-    printf(D_00446FA8, (tex0_low >> 26) & 0xF);
-    printf(D_00446FB0, (tex0_low >> 30) | ((tex0_high & 3) << 2));
-    printf(D_004414F8, (tex0_high >> 2) & 1);
-    printf(D_00441508, (tex0_high >> 3) & 3);
-    printf(D_00441518, (tex0_high >> 5) & 0x3FFF);
-    printf(D_00441528, (tex0_high >> 19) & 0xF);
-    printf(D_00441538, (tex0_high >> 23) & 1);
-    printf(D_00441548, (tex0_high >> 24) & 0x1F);
-    printf(D_00441558, tex0_high >> 29);
+    printf(tm2_header_label);
+    printf(tex0_tbp_format, tex0_low & 0x3FFF);
+    printf(tex0_tbw_format, (tex0_low >> 14) & 0x3F);
+    printf(tex0_psm_format, (tex0_low >> 20) & 0x3F);
+    printf(tex0_tw_format, (tex0_low >> 26) & 0xF);
+    printf(tex0_th_format, (tex0_low >> 30) | ((tex0_high & 3) << 2));
+    printf(tex0_tcc_format, (tex0_high >> 2) & 1);
+    printf(tex0_tfx_format, (tex0_high >> 3) & 3);
+    printf(tex0_cbp_format, (tex0_high >> 5) & 0x3FFF);
+    printf(tex0_cpsm_format, (tex0_high >> 19) & 0xF);
+    printf(tex0_csm_format, (tex0_high >> 23) & 1);
+    printf(tex0_csa_format, (tex0_high >> 24) & 0x1F);
+    printf(tex0_cld_format, tex0_high >> 29);
     *packet = bytes;
 }
 
 /* Sends the GS a TEXFLUSH through a DMA chain on channel 2 (GIF): an end tag, a GIF tag of one A+D register,
-   and the register write, built at D_01DFAF80. Returns at once, without waiting for the transfer. */
+   and the register write, built at texflush_packet. Returns at once, without waiting for the transfer. */
 void Texture_SendTexFlush(void) {
     u32 *cursor;
 
-    cursor = (u32 *)D_01DFAF80;
+    cursor = (u32 *)texflush_packet;
     *cursor++ = DMA_TAG_ID_END | 2;
     *cursor++ = 0;
     *cursor++ = 0;
@@ -302,7 +302,7 @@ void Texture_SendTexFlush(void) {
     while (*D2_CHCR & 0x100) {
     }
     *D2_MADR = 0;
-    *D2_TADR = (int)D_01DFAF80;
+    *D2_TADR = (int)texflush_packet;
     *D2_CHCR = 0x105;
 }
 

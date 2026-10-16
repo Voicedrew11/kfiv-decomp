@@ -248,7 +248,8 @@ typedef struct {
     int used;                       /* 0x08 */
 } SoundFileBuffer;
 
-/* D_0043EE78: the sound script state (0x78 bytes) */
+/* map_reverb_cue_indices: 0x78 cue indices (0 to 3) into map_bank_cues; Sound_MapBankAddReverb copies
+   the whole table and takes entry 1 (cue_index) */
 typedef struct {
     u8 unk00;                       /* 0x00 */
     s8 cue_index;                   /* 0x01 index into the cue table */

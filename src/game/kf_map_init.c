@@ -28,30 +28,30 @@ extern GameDefinition item_name_defs[380];
 extern u8 item_common_defs[];
 extern u8 weapon_defs[];
 extern char worn_defs[];
-extern char D_0043E4E8[];
-extern char D_0043E4F8[];
-extern char D_0043E508[];
-extern char D_0043E520[];
-extern char D_0043E538[];
-extern char D_0043E550[];
-extern char *D_004467C0;
+extern char obj_prm_path[];
+extern char chr_prm_path[];
+extern char item_nam_prm_path[];
+extern char item_cmn_prm_path[];
+extern char item_wpn_prm_path[];
+extern char item_pct_prm_path[];
+extern char *entity_params;
 extern GameStatus game_status;
-extern CameraState D_004325A0;
+extern CameraState camera_state;
 extern MapProp *map_slot_props[2][0xFF];
-extern int D_00446770;
-extern MapDrawRecord *D_00446778[2];
-extern MapDrawRecord *D_00446780[2];
-extern AreaNode *D_00446788;
-extern AreaNode *D_0044678C;
+extern int current_map_slot;
+extern MapDrawRecord *record_draw_lists[2];
+extern MapDrawRecord *late_record_draw_lists[2];
+extern AreaNode *record_boxes;
+extern AreaNode *backdrop_record_boxes;
 extern MapSlot map_slots[];
 extern MapDrawState map_draw_state;
 extern SoundLoadQueue sound_load_queue;
-extern MapSlotMemory D_004321F0[2];
-extern char D_0043E570[];
-extern u32 D_00446F1C;
-extern int D_00446F20;
-extern char *D_00446F50;
-extern char *D_00446F54;
+extern MapSlotMemory map_slot_memory[2];
+extern char map_file_name_format[];
+extern u32 map_work_area_size;
+extern int map_file_area_size;
+extern char *map_file_area;
+extern char *map_work_area;
 
 /* Reads the six parameter files (param/obj.prm, chr.prm, item_nam.prm, item_cmn.prm, item_wpn.prm and
    item_pct.prm), then turns each item's weight from kilograms into pounds. */
@@ -60,22 +60,22 @@ void Map_LoadParamFiles(void) {
     int handle;
     int i;
 
-    handle = File_Open(D_0043E4E8, 0, 1);
+    handle = File_Open(obj_prm_path, 0, 1);
     File_Read(handle, map_object_defs, -1);
     File_Close(handle);
-    handle = File_Open(D_0043E4F8, 0, 1);
-    File_Read(handle, D_004467C0, -1);
+    handle = File_Open(chr_prm_path, 0, 1);
+    File_Read(handle, entity_params, -1);
     File_Close(handle);
-    handle = File_Open(D_0043E508, 0, 1);
+    handle = File_Open(item_nam_prm_path, 0, 1);
     File_Read(handle, item_name_defs, -1);
     File_Close(handle);
-    handle = File_Open(D_0043E520, 0, 1);
+    handle = File_Open(item_cmn_prm_path, 0, 1);
     File_Read(handle, item_common_defs, -1);
     File_Close(handle);
-    handle = File_Open(D_0043E538, 0, 1);
+    handle = File_Open(item_wpn_prm_path, 0, 1);
     File_Read(handle, weapon_defs, -1);
     File_Close(handle);
-    handle = File_Open(D_0043E550, 0, 1);
+    handle = File_Open(item_pct_prm_path, 0, 1);
     File_Read(handle, worn_defs, -1);
     File_Close(handle);
     definition = item_name_defs;
@@ -106,36 +106,36 @@ void Map_ResetGameState(void) {
     map_draw_state.unk74 = 0;
     map_draw_state.unk78 = 0;
     map_draw_state.unk80 = 0x44;
-    memset(&D_004325A0, 0, sizeof(CameraState));
-    D_004325A0.unk48 = 512.0f;
+    memset(&camera_state, 0, sizeof(CameraState));
+    camera_state.unk48 = 512.0f;
 }
 
 /* Empties the map slots, the map draw lists, the records-by-id table and the two lists of record boxes. */
 void Map_ClearSlots(void) {
-    D_00446770 = 0;
+    current_map_slot = 0;
     memset(map_slots, 0, 2 * sizeof(MapSlot));
-    memset(D_00446778, 0, sizeof(D_00446778));
-    memset(D_00446780, 0, sizeof(D_00446780));
+    memset(record_draw_lists, 0, sizeof(record_draw_lists));
+    memset(late_record_draw_lists, 0, sizeof(late_record_draw_lists));
     memset(map_slot_props, 0, sizeof(map_slot_props));
-    D_00446788 = NULL;
-    D_0044678C = NULL;
+    record_boxes = NULL;
+    backdrop_record_boxes = NULL;
 }
 
 /* Loads a map into slot 0 in one go, sets everything in it up and makes it the current map. */
 void Map_LoadAtOnce(int map) {
     char name[0x100];
     MapSlot *slot = &map_slots[0];
-    MapSlotMemory *memory = &D_004321F0[0];
+    MapSlotMemory *memory = &map_slot_memory[0];
     int handle;
     int size;
     MapFogColor *fog;
 
     ((int (*)(void *, int))Memory_ClearWords)(slot, 0x18); // match: the callee returns a value here, which keeps $2 busy
-    memory->unk14 = memory->unk1C = D_00446F50;
-    memory->unk18 = memory->unk20 = D_00446F54;
-    Memory_ClearWords(memory->unk1C, (u32)D_00446F20 / 4);
-    Memory_ClearWords(memory->unk20, D_00446F1C / 4);
-    sprintf(name, D_0043E570, map);
+    memory->unk14 = memory->unk1C = map_file_area;
+    memory->unk18 = memory->unk20 = map_work_area;
+    Memory_ClearWords(memory->unk1C, (u32)map_file_area_size / 4);
+    Memory_ClearWords(memory->unk20, map_work_area_size / 4);
+    sprintf(name, map_file_name_format, map);
     handle = File_Open(name, 0, 1);
     size = File_GetSize(handle);
     File_Read(handle, memory->unk14, -1);
@@ -152,7 +152,7 @@ void Map_LoadAtOnce(int map) {
     MapItem_InitMap(0);
     Gold_InitMap(0);
     map_slots[0].unk00 = 1;
-    D_00446770 = 0;
+    current_map_slot = 0;
     map_draw_state.unkA0 = *slot->unk0C;
     map_draw_state.unkC0 = *(MapSlotUnk10Words *)slot->unk10;
     fog = &map_draw_state.unk280;

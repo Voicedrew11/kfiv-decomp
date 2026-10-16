@@ -15,7 +15,7 @@ void Vector_Scale(float *, float *, float);
 void Vector_Add(void *, void *, void *);
 int rand(void);
 u32 Collision_GetSurfaceEffect(u32, u32, int);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 int Collision_TransformMeshPoints(void *);
 u32 Collision_GetBarrierLevel(u32, u32, int);
 u32 Collision_IsBarrierFloor(u32, u32, int);
@@ -24,16 +24,16 @@ void Collision_DropOnTriangle(void *corner_a, void *corner_b, void *corner_c, vo
 void Collision_CapsuleTriangle(f32 *, f32 *, f32 *, f32 *, f32, f32);
 extern MapSlot map_slots[2];
 void Vector_Copy(void *, void *);
-extern int D_00446770;
-extern s32 D_004467A8[2];
-extern s32 D_004467B8[2];
+extern int current_map_slot;
+extern s32 map_objects_started[2];
+extern s32 map_object_counts[2];
 extern MapObject map_slot_objects[];
-extern MapObject D_003AFA30[];
+extern MapObject map_slot1_objects[];
 void Collision_CylinderEdge(void *, void *, f32, void *, f32, f32);
 void Collision_CylinderCylinder(void *, f32, f32, void *, f32, f32);
 void Collision_BallEdge(void *, void *, f32, void *, f32);
 void Collision_HitRayObj(MapObject *, f32 *, f32 *, f32);
-extern ModelInstanceBlock *D_00432224[];
+extern ModelInstanceBlock *map_slot_record_models[];
 
 /* tests the entity's upright capsule against the triangle at `point` and pushes `position`
    sideways out of it */
@@ -80,9 +80,9 @@ extern ModelInstanceBlock *D_00432224[];
 
 /* the objects of the current map (map 0) or the other loaded one (map 1), which the game inlines */
 static inline MapObject *map_objects(s32 map) {
-    if (D_004467A8[D_00446770 == map ? 0 : 1] != 0) {
-        if (D_00446770 != map) {
-            return D_003AFA30;
+    if (map_objects_started[current_map_slot == map ? 0 : 1] != 0) {
+        if (current_map_slot != map) {
+            return map_slot1_objects;
         }
         return map_slot_objects;
     }
@@ -90,8 +90,8 @@ static inline MapObject *map_objects(s32 map) {
 }
 
 static inline s32 map_object_count(s32 map) {
-    if (D_004467A8[D_00446770 == map ? 0 : 1] != 0) {
-        return D_004467B8[D_00446770 == map ? 0 : 1];
+    if (map_objects_started[current_map_slot == map ? 0 : 1] != 0) {
+        return map_object_counts[current_map_slot == map ? 0 : 1];
     }
     return 0;
 }
@@ -148,7 +148,7 @@ void EntityCollision_PushApart(Entity *entity) {
     push[2] = 0.0f;
     push[3] = 0.0f;
     if (!((s32)(entity->flags >> 26) & 1)) {
-        for (other = D_004467E0; other != NULL; other = other->next) {
+        for (other = active_entities_head; other != NULL; other = other->next) {
             if (!((s32)(other->flags >> 1) & 1)) {
                 continue;
             }
@@ -493,7 +493,7 @@ s32 EntityCollision_WalkAgainstMesh(Entity *entity, ModelInstance *model, f32 *p
     Collision_TransformMeshPoints(model);
     period = 30;
     mesh = (CollisionMesh *)model->strips;
-    if (D_00446ED4 % period == entity->unkD7 % 10U) {
+    if (frame_counter % period == entity->unkD7 % 10U) {
         strip = mesh->unk28;
         i = mesh->unk40;
         while (--i != -1) {
@@ -1963,7 +1963,7 @@ static void EntityCollision_MoveOnMesh(CollisionOwner *owner, f32 *centre, f32 s
     COLLISION_RESULT->hit = 0;
     Collision_TransformMeshPoints(owner->model);
     mesh = (CollisionMesh *)owner->model->strips;
-    floor_y = 3.4028235e38f; // match: FLT_MAX as a literal (the compiler keeps it in .sdata: D_00446840)
+    floor_y = 3.4028235e38f; // match: FLT_MAX as a literal (the compiler keeps it in .sdata, at 0x446840)
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
     Vector_Copy(position, centre);
     strip = mesh->floor_strips;
@@ -2527,10 +2527,10 @@ s32 EntityCollision_RayProps(f32 *origin, f32 *direction, void *out_point, f32 l
         lowest[2] = end[2];
         highest[2] = origin[2];
     }
-    nearest = 3.4028235e38f; // match: FLT_MAX as a literal (the compiler keeps it in .sdata: D_0044684C)
+    nearest = 3.4028235e38f; // match: FLT_MAX as a literal (the compiler keeps it in .sdata, at 0x44684C)
     result = 0;
-    slots[0] = &map_slots[D_00446770];
-    slots[1] = &map_slots[D_00446770 ^ 1];
+    slots[0] = &map_slots[current_map_slot];
+    slots[1] = &map_slots[current_map_slot ^ 1];
     for (map = 0; map < 2; map++) {
         if (slots[map]->unk00 != 0) {
             record = (MapRecord *)slots[map]->records;
@@ -2587,7 +2587,7 @@ s32 EntityCollision_RayHitsPropWall(f32 *origin, f32 *direction, f32 length, f32
     Vector_Scale(end, direction, length);
     Vector_Add(end, end, origin);
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
+        slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];
         record = (MapRecord *)slot->records;
         if (slot->unk00 != 0) {
             for (i = 0; i < slot->header->record_count; i++, record++) {
@@ -2684,11 +2684,11 @@ f32 EntityCollision_DistanceToGround(f32 *point) {
     s32 points_left;
 
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
+        slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];
         if (slot->unk00 != 0) {
             record = (MapRecord *)slot->records;
             record_count = slot->header->record_count;
-            model = D_00432224[D_00446770 == map ? 0 : 22];
+            model = map_slot_record_models[current_map_slot == map ? 0 : 22];
             for (i = 0; i < record_count; i++, model++, record++) {
                 if (record->unk32 == 0xFFFF) {
                     continue;

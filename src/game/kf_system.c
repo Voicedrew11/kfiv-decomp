@@ -9,26 +9,26 @@
 
 #define PAD_BUTTON_START 0x0008
 
-extern int D_00446E90;          /* set once START was pressed during the opening movie */
-extern char *D_00446F50;        /* the memory area the movie player is given as its heap */
-extern int D_00446F20;          /* the size it is given for that heap */
-extern int D_00446F78;          /* the half of the first double buffer in use; each swap flips it */
-extern int D_00446F7C;          /* the same for the second */
+extern int opening_movie_skipped; /* set once START was pressed during the opening movie */
+extern char *map_file_area;        /* the memory area the movie player is given as its heap */
+extern int map_file_area_size;          /* the size it is given for that heap */
+extern int context1_buffer_half;          /* the half of the first double buffer in use; each swap flips it */
+extern int context2_buffer_half;          /* the same for the second */
 extern int D_00446F80;
-extern u32 D_0038CC74[];
-extern s64 D_00432E20[];
-extern s64 D_00433050[];
-extern char D_004412E0[];       /* "cdrom0:\DATA\KF4OP.PSS;1" */
-extern char D_00441300[];       /* "cdrom0:\DATA\KF4ED.PSS;1" */
-extern char D_00441320[];       /* "cdrom0:\DATA\KF4STAFF.PSS;1" */
-extern f32 D_00431AF0[16];
-extern f32 D_00432320[16];
+extern u32 game_status_flags[];
+extern s64 game_dbuff_clear_color[];
+extern s64 game_dbuff_context2_clear_color[];
+extern char opening_movie_path[];       /* "cdrom0:\DATA\KF4OP.PSS;1" */
+extern char ending_movie_path[];        /* "cdrom0:\DATA\KF4ED.PSS;1" */
+extern char staff_roll_movie_path[];    /* "cdrom0:\DATA\KF4STAFF.PSS;1" */
+extern f32 identity_matrix[16];
+extern f32 world_view_matrix[16];
 extern f32 D_004323A0[16];
-extern f32 D_00432560[4][4];
-extern GsDoubleBuffer D_00432D20;
-extern GsDoubleBuffer D_00432F50;
-extern GsRegisterPair D_00433180;
-extern GsRegisterPair D_00433190;
+extern f32 projection_matrix[4][4];
+extern GsDoubleBuffer game_dbuff;           /* the game's frame buffers, drawn through GS context 1 */
+extern GsDoubleBuffer game_dbuff_context2;  /* the same frame buffers, drawn through GS context 2 */
+extern GsRegisterPair frame_dispfb_regs;    /* the DISPFB values of the two frames */
+extern GsRegisterPair frame_display_regs;   /* the DISPLAY values of the two frames */
 
 int Movie_Play(char *, u32, u32, int (*)(void), u32, s16, s16, s16);
 void Packet_SwapBuffers(void);
@@ -61,36 +61,36 @@ void sceVu0CopyMatrix(void *, void *);
 static int Movie_PollSkip(void) {
     Pad_Update();
     if (Pad_GetReport(0, 0)->pressed & PAD_BUTTON_START) {
-        D_00446E90 = TRUE;
+        opening_movie_skipped = TRUE;
         return TRUE;
     }
     return FALSE;
 }
 
-/* Plays the opening movie KF4OP.PSS, which START skips (D_00446E90 then set), then resets both double buffers'
+/* Plays the opening movie KF4OP.PSS, which START skips (opening_movie_skipped then set), then resets both double buffers'
    frame registers and the draw state, and swaps. */
 void Movie_PlayOpening(void) {
     s64 temp;
     char buf[0x40]; /* unused, but retail reserves the 0x40 bytes */
 
-    D_00446E90 = 0;
-    Movie_Play(D_004412E0, (u32)D_00446F50, D_00446F20, Movie_PollSkip, 0x3FFF, 2, 0, 0);
+    opening_movie_skipped = 0;
+    Movie_Play(opening_movie_path, (u32)map_file_area, map_file_area_size, Movie_PollSkip, 0x3FFF, 2, 0, 0);
     temp = (s64)0xC000 << 17;
-    D_00432E20[0] = temp;
-    D_00432E20[30] = temp;
-    D_00433050[0] = temp;
-    D_00433050[30] = temp;
+    game_dbuff_clear_color[0] = temp;
+    game_dbuff_clear_color[30] = temp;
+    game_dbuff_context2_clear_color[0] = temp;
+    game_dbuff_context2_clear_color[30] = temp;
     Packet_SwapBuffers();
     Packet_SwapBuffers();
     DrawList_Clear();
     func_001095D0();
-    D_00446F78 = 0;
-    D_00446F7C = 0;
+    context1_buffer_half = 0;
+    context2_buffer_half = 0;
     GsDraw_ResetDrawTarget();
     GsDraw_FillScreen(0, 0, 0, 0x80, 0x100000044L);
     func_001095D8();
-    D_00446F78 = 1;
-    D_00446F7C = 1;
+    context1_buffer_half = 1;
+    context2_buffer_half = 1;
     Packet_SendChain();
     Packet_WaitForSend();
     Display_SwapBuffers(0);
@@ -98,16 +98,16 @@ void Movie_PlayOpening(void) {
     Sound_Init();
 }
 
-/* Plays the ending movie KF4ED.PSS when bit 11 of D_0038CC74 is set, the staff roll KF4STAFF.PSS otherwise;
+/* Plays the ending movie KF4ED.PSS when bit 11 of game_status_flags is set, the staff roll KF4STAFF.PSS otherwise;
    neither can be skipped. */
 void Movie_PlayEnding(void) {
     char buf[0x40]; /* unused, but retail reserves the 0x40 bytes */
 
-    D_00446E90 = 0;
-    if ((D_0038CC74[0] >> 11) & 1) {
-        Movie_Play(D_00441300, (u32)D_00446F50, D_00446F20, 0, 0x3FFF, 2, 0, 0);
+    opening_movie_skipped = 0;
+    if ((game_status_flags[0] >> 11) & 1) {
+        Movie_Play(ending_movie_path, (u32)map_file_area, map_file_area_size, 0, 0x3FFF, 2, 0, 0);
     } else {
-        Movie_Play(D_00441320, (u32)D_00446F50, D_00446F20, 0, 0x3FFF, 2, 0, 0);
+        Movie_Play(staff_roll_movie_path, (u32)map_file_area, map_file_area_size, 0, 0x3FFF, 2, 0, 0);
     }
     sceGsSyncV(0);
     sceGsSyncV(0);
@@ -147,50 +147,50 @@ void System_Init(void) {
 /* Sets up the game's two double buffers (the second one draws through GS context 2), the view
    matrices and the projection. */
 void Display_Init(void) {
-    sceGsSetDefDBuff(&D_00432D20, 0, 0x280, 0x1C0, 3, 0x3A, 1);
-    D_00432D20.disp[0].dispfb.fbp = 0;
-    D_00432D20.disp[1].dispfb.fbp = 0x8C;
-    D_00432D20.draw0.frame.fbp = 0x8C;
-    D_00432D20.draw1.frame.fbp = 0;
-    D_00432D20.draw0.zbuf.zbp = 0x118;
-    D_00432D20.draw1.zbuf.zbp = 0x118;
-    sceVu0CopyMatrix(D_00432320, D_00431AF0);
-    sceVu0CopyMatrix(D_004323A0, D_00431AF0);
-    Display_BuildProjection(D_00432560, 512.0f, 1.0f, 65536.0f);
-    D_00446F78 = 0;
+    sceGsSetDefDBuff(&game_dbuff, 0, 0x280, 0x1C0, 3, 0x3A, 1);
+    game_dbuff.disp[0].dispfb.fbp = 0;
+    game_dbuff.disp[1].dispfb.fbp = 0x8C;
+    game_dbuff.draw0.frame.fbp = 0x8C;
+    game_dbuff.draw1.frame.fbp = 0;
+    game_dbuff.draw0.zbuf.zbp = 0x118;
+    game_dbuff.draw1.zbuf.zbp = 0x118;
+    sceVu0CopyMatrix(world_view_matrix, identity_matrix);
+    sceVu0CopyMatrix(D_004323A0, identity_matrix);
+    Display_BuildProjection(projection_matrix, 512.0f, 1.0f, 65536.0f);
+    context1_buffer_half = 0;
     D_00446F80 = 0;
-    D_00432D20.clear1.rgbaq = D_00432D20.clear0.rgbaq = 0x100000000L;
-    sceGsSetDefDBuff(&D_00432F50, 0, 0x280, 0x1C0, 3, 0x3A, 1);
-    D_00432F50.disp[0].dispfb.fbp = 0;
-    D_00432F50.disp[1].dispfb.fbp = 0x8C;
-    D_00432F50.draw0.frame.fbp = 0x8C;
-    D_00432F50.draw1.frame.fbp = 0;
-    D_00432F50.draw0.zbuf.zbp = 0x118;
-    D_00432F50.draw1.zbuf.zbp = 0x118;
-    D_00432F50.draw0.frame_addr = 0x4D;
-    D_00432F50.draw0.zbuf_addr = 0x4F;
-    D_00432F50.draw0.xyoffset_addr = 0x19;
-    D_00432F50.draw0.scissor_addr = 0x41;
-    D_00432F50.draw0.test_addr = 0x48;
-    D_00432F50.clear0.test_a_addr = 0x48;
-    D_00432F50.clear0.prim |= 0x200;
-    D_00432F50.clear0.test_b_addr = 0x48;
-    D_00432F50.draw1.frame_addr = 0x4D;
-    D_00432F50.draw1.zbuf_addr = 0x4F;
-    D_00432F50.draw1.xyoffset_addr = 0x19;
-    D_00432F50.draw1.scissor_addr = 0x41;
-    D_00432F50.draw1.test_addr = 0x48;
-    D_00432F50.clear1.test_a_addr = 0x48;
-    D_00432F50.clear1.prim |= 0x200;
-    D_00432F50.clear1.test_b_addr = 0x48;
-    D_00446F7C = 0;
-    D_00433180.first = *(u64 *)&D_00432D20.disp[0].dispfb;
-    D_00433180.second = *(u64 *)&D_00432D20.disp[1].dispfb;
-    D_00433190.first = D_00432D20.disp[0].display;
-    D_00433190.second = D_00432D20.disp[1].display;
+    game_dbuff.clear1.rgbaq = game_dbuff.clear0.rgbaq = 0x100000000L;
+    sceGsSetDefDBuff(&game_dbuff_context2, 0, 0x280, 0x1C0, 3, 0x3A, 1);
+    game_dbuff_context2.disp[0].dispfb.fbp = 0;
+    game_dbuff_context2.disp[1].dispfb.fbp = 0x8C;
+    game_dbuff_context2.draw0.frame.fbp = 0x8C;
+    game_dbuff_context2.draw1.frame.fbp = 0;
+    game_dbuff_context2.draw0.zbuf.zbp = 0x118;
+    game_dbuff_context2.draw1.zbuf.zbp = 0x118;
+    game_dbuff_context2.draw0.frame_addr = 0x4D;
+    game_dbuff_context2.draw0.zbuf_addr = 0x4F;
+    game_dbuff_context2.draw0.xyoffset_addr = 0x19;
+    game_dbuff_context2.draw0.scissor_addr = 0x41;
+    game_dbuff_context2.draw0.test_addr = 0x48;
+    game_dbuff_context2.clear0.test_a_addr = 0x48;
+    game_dbuff_context2.clear0.prim |= 0x200;
+    game_dbuff_context2.clear0.test_b_addr = 0x48;
+    game_dbuff_context2.draw1.frame_addr = 0x4D;
+    game_dbuff_context2.draw1.zbuf_addr = 0x4F;
+    game_dbuff_context2.draw1.xyoffset_addr = 0x19;
+    game_dbuff_context2.draw1.scissor_addr = 0x41;
+    game_dbuff_context2.draw1.test_addr = 0x48;
+    game_dbuff_context2.clear1.test_a_addr = 0x48;
+    game_dbuff_context2.clear1.prim |= 0x200;
+    game_dbuff_context2.clear1.test_b_addr = 0x48;
+    context2_buffer_half = 0;
+    frame_dispfb_regs.first = *(u64 *)&game_dbuff.disp[0].dispfb;
+    frame_dispfb_regs.second = *(u64 *)&game_dbuff.disp[1].dispfb;
+    frame_display_regs.first = game_dbuff.disp[0].display;
+    frame_display_regs.second = game_dbuff.disp[1].display;
     // match: the four stores below come out in retail order only when written in this one
-    D_00432F50.draw1.xyoffset.ofy = 0x7200;
-    D_00432F50.draw0.xyoffset.ofy = 0x7200;
-    D_00432D20.draw1.xyoffset.ofy = 0x7200;
-    D_00432D20.draw0.xyoffset.ofy = 0x7200;
+    game_dbuff_context2.draw1.xyoffset.ofy = 0x7200;
+    game_dbuff_context2.draw0.xyoffset.ofy = 0x7200;
+    game_dbuff.draw1.xyoffset.ofy = 0x7200;
+    game_dbuff.draw0.xyoffset.ofy = 0x7200;
 }

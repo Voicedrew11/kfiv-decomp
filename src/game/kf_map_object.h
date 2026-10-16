@@ -11,9 +11,9 @@
 #define MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE   12      /* where the wands take the player (Player_UseItem) */
 #define MAP_OBJECT_KIND_CONTAINER           21      /* barrels, pots and wooden boxes */
 
-extern s32 D_004467A8[2];
-extern int D_004467B0[2];
-extern s32 D_004467B8[2];
+extern s32 map_objects_started[2];
+extern int map_object_placements[2];
+extern s32 map_object_counts[2];
 
 void MapObject_InitMap(int map);
 void MapObject_StartMap(int map);

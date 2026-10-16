@@ -405,7 +405,7 @@ typedef struct ModelInstance {
     void *unk178;                   /* 0x178 passed to TextureTable_QueueEnabled with unk194: bit n set skips chunk n (a mask, but not stored as an int) */
     int found_record_id;            /* 0x17C the id Effect_FindModelRecord last found; sent after the colour at unk150 by Model_DrawPosed, in its alpha slot */
     int found_record[4];            /* 0x180 a copy of that record, its id bits replaced; a quadword sent after it */
-    u16 unk190;                     /* 0x190 slot of unk194 in D_00468190 (0..2), 3: always sent */
+    u16 unk190;                     /* 0x190 slot of unk194 in texture_slots (0..2), 3: always sent */
     s16 unk192;                     /* 0x192 */
     int unk194;                     /* 0x194 */
     int unk198;                     /* 0x198 */
@@ -760,7 +760,7 @@ typedef struct {
     ModelInstance *model;           /* 0x7C */
 } MapProp;
 
-/* what D_004469D8 points at: one of the nodes at D_0057E240. D_004469D4 heads
+/* what pickup_item points at: one of the nodes at fixed_items. lying_items heads
    the list of the ones in use. */
 typedef struct ModelNode {
     s32 unk00;                      /* 0x00 */
@@ -777,7 +777,7 @@ typedef struct ModelNode {
     char pad28[0x14];
 } ModelNode;
 
-/* one of a map's fixed items: where it lies and what it is (0x40 bytes, D_004469B8[map]) */
+/* one of a map's fixed items: where it lies and what it is (0x40 bytes, map_item_defs[map]) */
 typedef struct {
     Vector4 position;               /* 0x00 */
     Vector4 rotation;               /* 0x10 */
@@ -789,7 +789,7 @@ typedef struct {
     u8 chance;                      /* 0x37 percent chance that it appears (MapItem_RollFixedItems) */
     u8 group;                       /* 0x38 0-15: picks the roll and the map's threshold it is tested against */
     char pad39[0x06];
-    u8 slot_id;                     /* 0x3F its slot in D_005B5EC0 */
+    u8 slot_id;                     /* 0x3F its slot in fixed_item_by_id */
 } MapItemDef;
 
 /* an item lying where it was dropped, as it is saved (0x14 bytes, 16 per map at dropped_item_records) */
@@ -800,7 +800,7 @@ typedef struct {
     u16 item;                       /* 0x0C */
     u8 used;                        /* 0x0E */
     u8 priority;                    /* 0x0F ItemNodeBits.priority */
-    s32 order;                      /* 0x10 D_004469D0 when it was dropped: the oldest is replaced first */
+    s32 order;                      /* 0x10 item_drop_counter when it was dropped: the oldest is replaced first */
 } DroppedItemRecord;
 
 /* a map's 16 dropped items (a row of dropped_item_records), for copying them all at once */
@@ -808,8 +808,8 @@ typedef struct {
     DroppedItemRecord records[16];  /* 0x00 */
 } DroppedItemRecords;
 
-/* a ModelNode as the item code reads it: 64 fixed items per map at D_0057E240, then 16
-   dropped ones per map at D_00580040 */
+/* a ModelNode as the item code reads it: 64 fixed items per map at fixed_items, then 16
+   dropped ones per map at dropped_items */
 typedef struct ItemNode {
     MapItemDef *def;                /* 0x00 NULL on a dropped item */
     DroppedItemRecord *record;      /* 0x04 NULL on a fixed item */
@@ -848,7 +848,7 @@ typedef struct {
 
 #define ITEM_NODE_BITS(node) ((ItemNodeBits *)(node))
 
-/* D_0057E040[map][32]: what is loaded for each kind of item a map holds (MapItem_FindModelSource finds one) */
+/* item_model_sources[map][32]: what is loaded for each kind of item a map holds (MapItem_FindModelSource finds one) */
 typedef struct {
     char *model_data;               /* 0x00 handed to Model_SetUpPosed */
     char *texture;                  /* 0x04 becomes the model's unk194 */

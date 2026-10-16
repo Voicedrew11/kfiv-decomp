@@ -41,7 +41,7 @@ typedef struct {
     u8 unk00;                       /* 0x00 */
     char pad01[0x01];
     u16 unk02;                      /* 0x02 PlayerState.unkBC */
-    void *unk04;                    /* 0x04 the Unk1B1470Request (kf_entity.h) of a weapon's shot, in D_0057A350 */
+    void *unk04;                    /* 0x04 the Unk1B1470Request (kf_entity.h) of a weapon's shot, in bow_shot_requests */
     PlayerShotStats unk08;          /* 0x08 PlayerState.unk7E */
     char pad1A[0x06];
     u16 unk20;                      /* 0x20 PlayerState.power */
@@ -52,8 +52,7 @@ typedef struct {
 } PlayerShot;
 
 /* player_state. Files still declare it as float[]/int[]/char[] too, so the
-   extern stays in each file until they agree; D_00413F84 is position.y and
-   player_rotation is rotation. */
+   extern stays in each file until they agree; player_rotation is rotation. */
 typedef struct {
     Vector4 position;               /* 0x00 */
     Vector4 rotation;               /* 0x10 y is the heading */
@@ -191,7 +190,7 @@ typedef struct {
     s32 unk2B0;                     /* 0x2B0 moved one toward 0 every unk2B4 frames; hp moves with it */
     s32 unk2B4;                     /* 0x2B4 frames per step of unk2B0; cleared when unk2B0 reaches 0 */
     u16 flag_timers[6];             /* 0x2B8 frames left, one per timed_flags entry */
-    u32 unk2C4;                     /* 0x2C4 the frame counter D_00446ED4 when timed_flags[0] was started */
+    u32 unk2C4;                     /* 0x2C4 the frame counter frame_counter when timed_flags[0] was started */
     u32 unk2C8;                     /* 0x2C8 the same for timed_flags[1] to [5] */
     u32 unk2CC;                     /* 0x2CC */
     u32 unk2D0;                     /* 0x2D0 */
@@ -206,7 +205,7 @@ typedef struct {
     char pad2F4[0x0C];              /* the block is 0x300 bytes (Player_ResetForNewGame clears and copies that many) */
 } PlayerState;
 
-/* weapon_trail_kinds[7]: colour and life of the weapon trail, one per kind (D_00447188) */
+/* weapon_trail_kinds[7]: colour and life of the weapon trail, one per kind (trail_kind picks one) */
 typedef struct {
     s32 red;                        /* 0x00 */
     s32 green;                      /* 0x04 */
@@ -270,7 +269,7 @@ typedef struct {
 
 #define PLAYER_STATUS_BITS(player) ((PlayerStatusBits *)&(player)->unk1C8)
 
-/* D_0043E130[100]: the experience a level needs (PlayerState.experience against level) and what reaching it adds */
+/* player_level_steps[100]: the experience a level needs (PlayerState.experience against level) and what reaching it adds */
 typedef struct {
     s32 experience;                 /* 0x00 */
     u8 hp_gain;                     /* 0x04 added to PlayerState.hp_base */
@@ -316,7 +315,7 @@ typedef struct {
     u16 unk48;                      /* 0x48 the motion frame from which PlayerState.unk260_1 is set */
     u16 unk4A;                      /* 0x4A first and last motion frame on which magic unk42 may be asked for */
     u16 unk4C;                      /* 0x4C */
-    u16 unk4E;                      /* 0x4E frames magic unk42 stays (D_00447114) */
+    u16 unk4E;                      /* 0x4E frames magic unk42 stays (swing_magic_frames) */
     char pad50[0x02];
     u16 unk52;                      /* 0x52 0xFFFF: none */
     u16 unk54;                      /* 0x54 as unk44 to unk4E, for magic unk52 */
@@ -332,13 +331,13 @@ typedef struct {
     u8 bonus_amounts[2];            /* 0x66 */
     u16 unk68;                      /* 0x68 shown on the trade screen in tenths of a foot (Trade_UpdateStockList) */
     char pad6A[0x02];
-    f32 unk6C;                      /* 0x6C twice Unk1B1470Request.unk44 of a swing, before D_00446240 (Player_SwingWeapon) */
-    f32 unk70;                      /* 0x70 twice Unk1B1470Request.unk3C of a swing, before D_00446240 */
+    f32 unk6C;                      /* 0x6C twice Unk1B1470Request.unk44 of a swing, in degrees (Player_SwingWeapon) */
+    f32 unk70;                      /* 0x70 twice Unk1B1470Request.unk3C of a swing, in degrees */
     f32 unk74;                      /* 0x74 how far a swing reaches, less 100 */
     u16 unk78;                      /* 0x78 the motion frame from which a held shot is ready (Player_DrawBow) */
     u16 unk7A;                      /* 0x7A the frame the drawing motion stops at */
-    u8 unk7C;                       /* 0x7C which D_005CEE60 motion the weapon shown on the equipment screen plays (Menu_UpdateEquip) */
-    u8 unk7D;                       /* 0x7D which D_0042A290 function draws it there */
+    u8 unk7C;                       /* 0x7C which equip_weapon_motions motion the weapon shown on the equipment screen plays (Menu_UpdateEquip) */
+    u8 unk7D;                       /* 0x7D which pool_slot_drawers function draws it there */
     u8 unk7E;                       /* 0x7E goes to PlayerState.unkC4 when a swing starts (Player_SwingWeapon) */
     u8 unk7F;                       /* 0x7F copied to Unk1B1470Request.unk6E */
     u16 unk80;                      /* 0x80 0xFFFF: no sound while drawing */
@@ -369,7 +368,7 @@ typedef struct {
     s32 motion_offset;              /* 0x1C */
 } PlayerArmFile;
 
-/* item_name_defs[ITEM_COUNT]: param/item_nam.prm, 0x40 bytes per item, starting with its name. D_00417EF8 is
+/* item_name_defs[ITEM_COUNT]: param/item_nam.prm, 0x40 bytes per item, starting with its name. worn_name_defs is
    the run of them from ITEM_WORN_FIRST on (the items Attack_WearWornItem reads). */
 typedef struct {
     char pad00[0x30];
@@ -386,7 +385,7 @@ typedef struct {
     u16 unk3E;                      /* 0x3E summed into PlayerState.weight for everything worn */
 } LevelDef;
 
-/* D_0042B810[]: the keys of ini/NNNN.ini ("hp=", "equip_weapon=", "item_", ...) and what reads each; a NULL handler ends it */
+/* ini_keys[]: the keys of ini/NNNN.ini ("hp=", "equip_weapon=", "item_", ...) and what reads each; a NULL handler ends it */
 typedef struct {
     char key[0x40];                 /* 0x00 the start of the line */
     void (*handler)(char *);        /* 0x40 gets the text after the "=" */

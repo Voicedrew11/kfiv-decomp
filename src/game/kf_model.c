@@ -107,8 +107,8 @@ int ModelMatrix_BuildDrawMatrices(ModelInstance *, s32, s32, void *, void *); //
 void Matrix_Multiply(void *, void *, void *);
 float sqrtf(float);
 extern ModelLight linked_point_pool[];
-extern f32 D_00431AF0[16];
-extern f32 D_004323E0[16];
+extern f32 identity_matrix[16];
+extern f32 world_screen_matrix[16];
 
 /* Multiply the matrices of a part's children by the part's own matrix. */
 void Model_MultiplyChildMatrices(ModelPart *part) {
@@ -243,7 +243,7 @@ void Model_DrawSkinned(ModelInstance *model) {
     i = 0;
     pitch = -asinf(((f32 *)model->unk148)[4]);
     yaw = Angle_Wrap(atan2f(((f32 *)model->unk148)[8], ((f32 *)model->unk148)[0]) + 1.5707964f);
-    sceVu0RotMatrixY(MODEL_TURN_SCRATCH, D_00431AF0, yaw);
+    sceVu0RotMatrixY(MODEL_TURN_SCRATCH, identity_matrix, yaw);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, pitch);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.x));
     sceVu0RotMatrixY(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.y));
@@ -380,7 +380,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     i = 0;
     pitch = -asinf(((f32 *)model->unk148)[4]);
     yaw = Angle_Wrap(atan2f(((f32 *)model->unk148)[8], ((f32 *)model->unk148)[0]) + 1.5707964f);
-    sceVu0RotMatrixY(MODEL_TURN_SCRATCH, D_00431AF0, yaw);
+    sceVu0RotMatrixY(MODEL_TURN_SCRATCH, identity_matrix, yaw);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, pitch);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.x));
     sceVu0RotMatrixY(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.y));
@@ -608,7 +608,7 @@ void Model_SetUvsFromScreen(void *model_arg) {
     matrix = MODEL_PROJECT_SCRATCH->matrices[0];
     for (i = 0; i < part_count; i++, part++) {
         Matrix_Multiply(matrix, model->unk40, part);
-        Matrix_Multiply(matrix, D_004323E0, matrix);
+        Matrix_Multiply(matrix, world_screen_matrix, matrix);
         matrix += 16;
     }
     i = 0;

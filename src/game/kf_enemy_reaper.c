@@ -16,7 +16,7 @@ void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
 int rand(void);
@@ -92,7 +92,7 @@ void Reaper_Init(Entity *entity) {
 static void Reaper_Think(Entity *entity, s32 unknown) {
     u32 phase;
 
-    phase = D_00446ED4 % 10U;
+    phase = frame_counter % 10U;
     if (phase == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -134,7 +134,7 @@ static void Reaper_ThinkCombat(Entity *entity, s32 unknown) {
             entity->unkCF = entity->unkCD;
             entity->unkCD = side;
             if (entity->unkCD != entity->unkCF) {
-                entity->unk9E = D_00446ED4;
+                entity->unk9E = frame_counter;
             }
             EntityAi_LowerChoiceWeight(entity, side);
             if (entity->unkCD == 0) {

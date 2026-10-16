@@ -20,9 +20,9 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 extern float player_state[];
-extern EntitySpawnInfo *D_004467D0[2];
+extern EntitySpawnInfo *map_spawn_infos[2];
 extern MapSlot map_slots[];
-extern int D_00446770;
+extern int current_map_slot;
 int Motion_Start(void *, int, int, u32, int);
 void Game_CountSpawnDeath(u32, int);
 int Script_Start(int, int);
@@ -116,8 +116,8 @@ static void HammerSkeleton_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             entity->unkA0 = 20;
-            Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
-            if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
+            Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - map_spawn_infos[entity->group_id]);
+            if (entity->spawn_info->unk36 != 0 && entity->group_id == current_map_slot) {
                 Script_Start(entity->spawn_info->unk36, 0);
             }
             entity->action_step++;

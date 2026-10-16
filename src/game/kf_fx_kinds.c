@@ -13,7 +13,7 @@
 #define TWO_PI 6.2831855f
 #define PI 3.1415927f
 extern PlayerState player_state;
-extern float D_00431AF0[16];
+extern float identity_matrix[16];
 int Attack_RunEffectHitCheck(void *);
 float Effect_Distance(void *from, void *target);
 void EffectAngle_FromVector(void *angles, void *direction);
@@ -36,7 +36,7 @@ static inline f32 wrap_angle(f32 angle) {
 s16 Effect_FramesToImpact(float, void *, void *, void *);
 void EffectHit_CheckAndEnd(EffectActor *effect, void *state);
 void sceVu0AddVector(void *, void *, void *);
-extern int D_004468E0;
+extern int ground_fan_index;
 int Collision_FindFloorBelow(f32, void *);
 typedef float Mat[4][4] __attribute__((aligned(16)));
 int rand(void);
@@ -44,20 +44,20 @@ void sceVu0RotMatrixX(void *, void *, float);
 void Vector_Normalize(void *, void *);
 extern void (*effect_kind_handlers[][2])();
 extern u8 player_weapon[];
-extern int D_004468E4;
+extern int bolt_start_count;
 void Model_UpdateSkinnedBonePoints(ModelInstance *);
 char *Model_GetSkinnedBonePoint(char *, u32);
 void sceVu0RotMatrixZ(void *, void *, float);
 void *memset(void *, int, u32);
-extern int D_004468E8;
+extern int turn_fan_index;
 void Collision_CastRayAtMap(f32, void *, void *);
 int Sound_PlayMapAt(u8 sound, float *position);
 int Collision_FindWaterBelow(f32, void *);
 extern GameStatus game_status;
 extern u16 pad_state[];
-extern u16 D_0044693C;
+extern u16 attack_button;
 int EffectHit_FindAimedEntity(void *, void *, void *);
-extern s64 D_0043EF60[2];
+extern s64 light_point_start_target[2];
 /* LinkedPoint_StartDefault called as returning s16 (the caller keeps the handle in a halfword) */
 // match: only this type matches; kf_linked_point.c defines it as returning int
 #define LINKED_POINT_START_S16 ((s16(*)(f32, void *, void *))LinkedPoint_StartDefault)
@@ -202,7 +202,7 @@ void EffectSweep_Update(EffectActor *effect) {
                 motion->velocity.y = 0.0f;
                 motion->velocity.w = 0.0f;
                 motion->sweep_turn = effect->def->keys_b[3].y;
-                sceVu0RotMatrixY(matrix, D_00431AF0, wrap_angle(player_state.rotation.y + effect->def->unkDC + effect->def->unkE0 * (f32)motion->level_step));
+                sceVu0RotMatrixY(matrix, identity_matrix, wrap_angle(player_state.rotation.y + effect->def->unkDC + effect->def->unkE0 * (f32)motion->level_step));
                 sceVu0ApplyMatrix(&motion->velocity, matrix, &motion->velocity);
             }
         }
@@ -210,7 +210,7 @@ void EffectSweep_Update(EffectActor *effect) {
     }
     if (motion->arrived != 0) {
         if (motion->on_ground != 0 && motion->arrival_frame + 10 < effect->frame) {
-            sceVu0RotMatrixY(matrix, D_00431AF0, motion->sweep_turn);
+            sceVu0RotMatrixY(matrix, identity_matrix, motion->sweep_turn);
             sceVu0ApplyMatrix(&motion->velocity, matrix, &motion->velocity);
             Vector_Scale(&motion->velocity, &motion->velocity, 1.02f);
             Vector_Add(&motion->aim, &motion->aim, &motion->velocity);
@@ -251,7 +251,7 @@ void EffectImpactLob_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     }
     motion->unk17[0] = 0;
     motion->spawned = 0;
-    slot = D_003F3550;
+    slot = effect_pool;
     for (i = 0; i < EFFECT_COUNT; i++, slot++) {
         if (slot->flags & EFFECT_FLAG_LIVE) {
             if (slot->def->unk100 == actor->def->unk100 && slot->frame < actor->def->interval) {
@@ -301,7 +301,7 @@ void EffectGroundFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion = (PhaseMotion *)&effect->motion;
     Vector_Copy(&heading, &effect->model->rotation);
     def = effect->def;
-    heading.y = heading.y + (float)D_004468E0 * def->unkDC;
+    heading.y = heading.y + (float)ground_fan_index * def->unkDC;
     angle = heading.y;
     quotient = (int)(angle / 6.28318548f);
     angle = angle - (float)quotient * 6.28318548f;
@@ -315,10 +315,10 @@ void EffectGroundFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_FromVector(&effect->model->rotation, motion);
     new_y = motion->velocity.y - (float)effect->def->radius_half;
     motion->unk18 = 0;
-    motion->frame_stamp = D_004468E0;
+    motion->frame_stamp = ground_fan_index;
     motion->velocity.y = new_y;
-    motion->phase = D_004468E0 % effect->def->interval;
-    D_004468E0 += 1;
+    motion->phase = ground_fan_index % effect->def->interval;
+    ground_fan_index += 1;
 }
 
 /* Kind 35 update: every def->interval frames steps by its velocity and settles on the floor there, ending
@@ -328,7 +328,7 @@ void EffectGroundFan_Update(EffectActor *actor) {
     int countdown;
     u16 interval;
 
-    D_004468E0 = 0;
+    ground_fan_index = 0;
     EffectKeys_ApplyScale(actor);
     motion = (EmitterMotion *)&actor->motion;
     EffectKeys_ApplySpin(actor);
@@ -389,7 +389,7 @@ void EffectWhileGroundFan_Update(EffectActor *effect) {
     EffectActor *candidate;
     int i;
 
-    candidate = D_003F3550;
+    candidate = effect_pool;
     for (i = 0; i < EFFECT_COUNT; i++, candidate++) {
         if ((candidate->flags & EFFECT_FLAG_LIVE) && candidate->def->unk100 == 0x23) {
             effect->frame++;
@@ -414,7 +414,7 @@ void EffectConverge_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     random_angle_y = ((float)(rand() & 0xFFFF) * 3.0517578125e-05f - 1.0f) * 3.1415f;
     effect->model->rotation.w = effect->model->rotation.z = 0.0f;
     effect->model->rotation.y = random_angle_y;
-    sceVu0RotMatrixX(rotation_matrix, D_00431AF0, effect->model->rotation.x);
+    sceVu0RotMatrixX(rotation_matrix, identity_matrix, effect->model->rotation.x);
     sceVu0RotMatrixY(rotation_matrix, rotation_matrix, effect->model->rotation.y);
     sceVu0ApplyMatrix(&offset, rotation_matrix, &offset);
     Vector_Add(&effect->model->position, &effect->model->position, &offset);
@@ -439,7 +439,7 @@ void EffectConverge_StartInSpread(EffectActor *effect, EffectSlot *spawn_slot) {
     random_angle_y = ((float)(rand() & 0xFFFF) * 3.0517578125e-05f - 1.0f) * effect->def->unkE0;
     effect->model->rotation.w = effect->model->rotation.z = 0.0f;
     effect->model->rotation.y += random_angle_y;
-    sceVu0RotMatrixX(rotation_matrix, D_00431AF0, effect->model->rotation.x);
+    sceVu0RotMatrixX(rotation_matrix, identity_matrix, effect->model->rotation.x);
     sceVu0RotMatrixY(rotation_matrix, rotation_matrix, effect->model->rotation.y);
     sceVu0ApplyMatrix(&offset, rotation_matrix, &offset);
     Vector_Add(&effect->model->position, &effect->model->position, &offset);
@@ -662,12 +662,12 @@ void EffectBolt_StartCounted(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->unk24 = 0;
     motion->unk22 = angle;
     motion->unk20 = effect->def->end_effect;
-    D_004468E4 += 1;
-    if (D_004468E4 < effect->def->interval) {
+    bolt_start_count += 1;
+    if (bolt_start_count < effect->def->interval) {
         return;
     }
     Effect_Spawn(effect->def->unkF0, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
-    D_004468E4 = 0;
+    bolt_start_count = 0;
 }
 
 /* Kinds 30, 38, 39 and 41 update: moves; past the impact frame spawns its effect and ends. On a hit spawns
@@ -873,7 +873,7 @@ void EffectSpray_Update(EffectActor *effect) {
         }
         sceVu0AddVector(&motion->velocity, &motion->velocity, &motion->accel);
     }
-    sceVu0RotMatrixZ(matrix, D_00431AF0, effect->model->rotation.z);
+    sceVu0RotMatrixZ(matrix, identity_matrix, effect->model->rotation.z);
     sceVu0RotMatrixX(matrix, matrix, effect->model->rotation.x);
     sceVu0RotMatrixY(matrix, matrix, effect->model->rotation.y);
     sceVu0ApplyMatrix(offset, matrix, &motion->velocity.x);
@@ -1186,7 +1186,7 @@ void EffectTurnFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     Vector_Copy(&angles, &effect->model->rotation);
-    angles.y += (f32)D_004468E8 * effect->def->unkDC;
+    angles.y += (f32)turn_fan_index * effect->def->unkDC;
     heading = angles.y;
     heading = heading - (f32)(int)(heading / 6.2831855f) * 6.2831855f;
     if (heading > 3.1415927f) {
@@ -1199,9 +1199,9 @@ void EffectTurnFan_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_FromVector(&effect->model->rotation, motion);
     motion->velocity.y -= effect->def->radius_half;
     motion->unk18 = 0;
-    motion->start_frame = D_004468E8;
+    motion->start_frame = turn_fan_index;
     motion->unk14 = 1.0f;
-    D_004468E8 = motion->start_frame + 1;
+    turn_fan_index = motion->start_frame + 1;
 }
 
 /* Kind 61 update: moves, its x and z growing by def->scale_per_frame, until def->max_frames; checks for hits
@@ -1213,7 +1213,7 @@ void EffectTurnFan_Update(EffectActor *effect) {
     u16 max_frames;
     float scale;
 
-    D_004468E8 = 0;
+    turn_fan_index = 0;
     EffectKeys_ApplyScale(effect);
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
@@ -1439,7 +1439,7 @@ void EffectWobble_Update(EffectActor *effect) {
         heading += 6.2831855f;
     }
     motion->heading = heading;
-    sceVu0RotMatrixZ(rotation_matrix, D_00431AF0, heading);
+    sceVu0RotMatrixZ(rotation_matrix, identity_matrix, heading);
     sceVu0ApplyMatrix(&forward.x, rotation_matrix, &forward.x);
     model = (DriftModel *)effect->model;
     model->drift_x += effect->def->unkE0 * forward.x;
@@ -1551,7 +1551,7 @@ void EffectSurroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     } else if (heading < -3.1415927f) {
         heading += 6.2831855f;
     }
-    sceVu0RotMatrixY(rotation_matrix, D_00431AF0, heading);
+    sceVu0RotMatrixY(rotation_matrix, identity_matrix, heading);
     sceVu0ApplyMatrix(&offset, rotation_matrix, &offset);
     Vector_Add(&effect->model->position, &player_state.position, &offset);
     Vector_Copy(&player_point, &player_state.position);
@@ -1729,7 +1729,7 @@ void EffectBowDraw_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->state = 0;
 }
 
-/* Kind 80 update: at its start pose while the attack button (D_0044693C) is held. Once it is let go (and
+/* Kind 80 update: at its start pose while the attack button (attack_button) is held. Once it is let go (and
    the game status allows), spawns def->radius_half scaled by the draw strength (PlayerState.unkBC, up to
    5000) if the draw was full, and ends three frames later with its scale at 0. */
 void EffectBowDraw_Update(EffectActor *actor) {
@@ -1753,7 +1753,7 @@ void EffectBowDraw_Update(EffectActor *actor) {
     Vector_Copy(&actor->model->rotation, actor->start_rotation);
     if (game_status.unk00 != 0) {
         if (!(game_status.unk30 & 1)) {
-            if ((pad_state[0] & D_0044693C) && player_state.unk263 == 0) {
+            if ((pad_state[0] & attack_button) && player_state.unk263 == 0) {
                 return;
             }
             if (player_state.unk298 != 0 && player_state.unk263 == 0) {
@@ -1906,8 +1906,8 @@ void EffectFollowLight_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector4 *velocity;
 
     velocity = &effect->motion.velocity;
-    constant_copy[0] = D_0043EF60[0];
-    constant_copy[1] = D_0043EF60[1];
+    constant_copy[0] = light_point_start_target[0];
+    constant_copy[1] = light_point_start_target[1];
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     EFFECT_FLAG_PARTS(effect)->unk44 = LINKED_POINT_START_S16(0.0f, &effect->model->position, constant_copy);
@@ -1932,8 +1932,8 @@ void EffectFollowLight_Update(EffectActor *effect) {
 void EffectLight_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     s64 constant_copy[2];
 
-    constant_copy[0] = D_0043EF60[0];
-    constant_copy[1] = D_0043EF60[1];
+    constant_copy[0] = light_point_start_target[0];
+    constant_copy[1] = light_point_start_target[1];
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     EFFECT_FLAG_PARTS(effect)->unk44 = LINKED_POINT_START_S16(0.0f, &effect->model->position, constant_copy);
@@ -2010,7 +2010,7 @@ void EffectSpiral_Update(EffectActor *effect) {
         angle += TWO_PI;
     }
     motion->angle = angle;
-    sceVu0RotMatrixY(matrix, D_00431AF0, angle);
+    sceVu0RotMatrixY(matrix, identity_matrix, angle);
     sceVu0ApplyMatrix(&spin, matrix, &spin);
     Vector_Add(&effect->model->position, &motion->velocity, &spin);
     effect->frame++;
@@ -2024,7 +2024,7 @@ void EffectScatterAroundPlayer_Start(EffectActor *effect) {
     f32 matrix[16];
     EffectMotion *motion;
 
-    sceVu0RotMatrixY(matrix, D_00431AF0, player_state.rotation.y);
+    sceVu0RotMatrixY(matrix, identity_matrix, player_state.rotation.y);
     sceVu0ApplyMatrix(&offset, matrix, effect->def->offset_base);
     motion = &effect->motion;
     Vector_Add(&effect->model->position, &player_state, &offset);
@@ -2222,7 +2222,7 @@ void EffectCorkscrew_Update(EffectActor *effect) {
         angle += 6.2831855f;
     }
     motion->unk20 = angle;
-    sceVu0RotMatrixZ(matrix, D_00431AF0, angle);
+    sceVu0RotMatrixZ(matrix, identity_matrix, angle);
     sceVu0RotMatrixX(matrix, matrix, effect->model->rotation.x);
     sceVu0RotMatrixY(matrix, matrix, effect->model->rotation.y);
     sceVu0ApplyMatrix(spin_vector, matrix, spin_vector);
@@ -2250,7 +2250,7 @@ void EffectWander_Update(EffectActor *effect) {
     EffectKeys_ApplyScale(effect);
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
-    sceVu0RotMatrixX(matrix, D_00431AF0, ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->unkDC);
+    sceVu0RotMatrixX(matrix, identity_matrix, ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->unkDC);
     sceVu0RotMatrixY(matrix, matrix, ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->unkDC);
     sceVu0ApplyMatrix(&motion->velocity.x, matrix, &motion->velocity.x);
     if (effect->def->unkE0 < effect->model->position.y && 0.0f < motion->velocity.y) {
@@ -2321,7 +2321,7 @@ void EffectJitterWobble_Update(EffectActor *effect) {
         angle += 6.2831855f;
     }
     motion->spin_angle = angle;
-    sceVu0RotMatrixZ(matrix, D_00431AF0, angle);
+    sceVu0RotMatrixZ(matrix, identity_matrix, angle);
     sceVu0ApplyMatrix(axis, matrix, axis);
     effect->model->unkE0 = effect->model->unkE0 + effect->def->unkE0 * axis[0];
     ((TiltModel *)effect->model)->unkE4 = ((TiltModel *)effect->model)->unkE4 + effect->def->unkE0 * axis[1];
@@ -2364,7 +2364,7 @@ void EffectJitterOrbit_Update(EffectActor *effect) {
     if (motion->pitch < -0.15f) {
         motion->pitch = -0.15f;
     }
-    sceVu0RotMatrixX(rotation_matrix, D_00431AF0, motion->yaw);
+    sceVu0RotMatrixX(rotation_matrix, identity_matrix, motion->yaw);
     sceVu0RotMatrixY(rotation_matrix, rotation_matrix, motion->pitch);
     sceVu0ApplyMatrix(motion, rotation_matrix, motion);
     Vector_Add(&effect->model->position, motion->unk10, motion);

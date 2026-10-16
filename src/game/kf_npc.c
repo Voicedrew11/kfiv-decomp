@@ -20,8 +20,8 @@ extern PlayerData player_state;
 extern u8 map_script_flags[0x80][0x40];
 int EntityAi_AnimationFrameCount(void *, int);
 void EntityAi_SetAttackDelay(Entity *, s32);
-extern char D_0034B690[0x40];
-extern f32 D_00431AF0[16];
+extern char story_flags[0x40];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -29,7 +29,7 @@ void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Normalize(void *, void *);
 void Vector_Scale(float *, float *, float);
 float EntityAi_Accelerate(Entity *, float);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(Entity *, s32);
 void EntityAi_CheckFarFromSpawn(char *);
 
@@ -442,7 +442,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
 
 /* The death action of types 15 and 81 (busy bit 0x40): as EntityAi_Death (animation 19 instead of 16 in spawn
    mode 1 when its map_script_flags entry is set); also writes into its group record whether the player killed it
-   (1) or not (2), and sets D_0034B690[13] when the player did. */
+   (1) or not (2), and sets story_flags[13] when the player did. */
 static void Npc_Death(Entity *entity) {
     EntityParams *params;
     s32 kind;
@@ -487,7 +487,7 @@ static void Npc_Death(Entity *entity) {
             EntityEvent_OnDeath(entity);
             entity_group_state[ENTITY_CONTROLLER(entity)->unk43A].unk00 = ((s32)(entity->flags >> 38) & 3) ? 1 : 2;
             if ((s32)(entity->flags >> 38) & 3) {
-                D_0034B690[0xD] = 1;
+                story_flags[0xD] = 1;
             }
             entity->action_step++;
         }
@@ -548,7 +548,7 @@ static void Npc_Move(Entity *entity) {
             if (entity->unkC8 & 0x40) {
                 amount += amount;
             }
-            sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->unkD0[2]);
+            sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->unkD0[2]);
             sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[0]);
             sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[1]);
             Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
@@ -657,7 +657,7 @@ static void Npc_ThinkType81(Entity *entity, s32 run_now) {
     s32 mask = ~0x20000000;
 
     entity->flags &= mask;
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 != 0) {

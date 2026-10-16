@@ -64,26 +64,26 @@ ScreenQuad D_0038D830 = { .tag = 0x4007FC059D30ABC0, .unk08 = 0x0000000000000060
   .second_x = 0x7800, .second_y = 0x8D00, .second_z = 0xFFFFFFFF,
   .second_u = 0x800, .second_v = 0x400 }; /* 0x38D830 */
 
-ScreenQuad D_0038D870 = { .tag = 0x4007FC055D40ABC0, .unk08 = 0x0000000000000060, .unk10 = 0x156,
+ScreenQuad viewer_picture_label_rect = { .tag = 0x4007FC055D40ABC0, .unk08 = 0x0000000000000060, .unk10 = 0x156,
   .red = 64, .green = 64, .blue = 64, .alpha = 128,
   .first_x = 0x8B00, .first_y = 0x8B00, .first_z = 0xFFFFFFFF,
   .first_u = 0, .first_v = 0,
   .second_x = 0x9300, .second_y = 0x8D00, .second_z = 0xFFFFFFFF,
-  .second_u = 0x800, .second_v = 0x200 }; /* 0x38D870 */
+  .second_u = 0x800, .second_v = 0x200 }; /* 0x38D870 the small picture of the page shown (texture pages + 1 + page) */
 
-ScreenQuad D_0038D8B0 = { .tag = 0x4007FC0665322BC0, .unk08 = 0x0000000000000060, .unk10 = 0x156,
+ScreenQuad kings_map_overlay_rect = { .tag = 0x4007FC0665322BC0, .unk08 = 0x0000000000000060, .unk10 = 0x156,
   .red = 64, .green = 64, .blue = 64, .alpha = 128,
   .first_x = 0x6C00, .first_y = 0x7200, .first_z = 0xFFFFFFFF,
   .first_u = 0, .first_v = 0,
   .second_x = 0x9400, .second_y = 0x8E00, .second_z = 0xFFFFFFFF,
-  .second_u = 0x2000, .second_v = 0x1800 }; /* 0x38D8B0 one of the picture list's rectangles */
+  .second_u = 0x2000, .second_v = 0x1800 }; /* 0x38D8B0 the King's Map's full-screen overlay (textures 0 and 1) */
 
-ScreenQuad D_0038D8F0 = { .tag = 0x4007FC05E1312BC0, .unk08 = 0x0000000000000060, .unk10 = 0x156,
+ScreenQuad kings_map_corner_rect = { .tag = 0x4007FC05E1312BC0, .unk08 = 0x0000000000000060, .unk10 = 0x156,
   .red = 64, .green = 64, .blue = 64, .alpha = 128,
   .first_x = 0x6D00, .first_y = 0x8700, .first_z = 0xFFFFFFFF,
   .first_u = 0, .first_v = 0,
   .second_x = 0x7B00, .second_y = 0x8D00, .second_z = 0xFFFFFFFF,
-  .second_u = 0x1000, .second_v = 0x800 }; /* 0x38D8F0 */
+  .second_u = 0x1000, .second_v = 0x800 }; /* 0x38D8F0 the King's Map's bottom-left panel (textures 2 and 3) */
 
 /* 0x38D930 the light block the viewer's models are lit by: one grey light */
 MapSlotUnk10Lights viewer_default_lights = {

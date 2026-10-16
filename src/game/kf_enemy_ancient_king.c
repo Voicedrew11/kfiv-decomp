@@ -20,7 +20,7 @@ s32 Motion_StepSlot(Entity *, EntityUnkE0SlotBits *, s32, s32);
 void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
 s32 EntityAi_CanUseRanged(Entity *, s32);
@@ -29,7 +29,7 @@ int EntityAi_StartSlotMotion(void *, void *, int, int, int, int, int);
 extern PlayerData player_state;
 int EntityAi_LaunchShot(void *, int, void *, void *);
 void EntityEvent_OnDeath(Entity *);
-extern EntityFrameTable5 D_0043E8E8;
+extern EntityFrameTable5 ancient_king_near_shot_frames;
 int rand(void);
 void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
@@ -56,7 +56,7 @@ void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-extern EntityFrameTable D_0043E900;
+extern EntityFrameTable ancient_king_bone_shot_frames;
 float atan2f(float, float);
 char *Model_GetSkinnedBonePoint(char *, u32);
 float EntityMath_WrapAngle(float);
@@ -184,7 +184,7 @@ static void AncientKing_Animate(Entity *entity) {
 static void AncientKing_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 0);
     }
     if (entity->unkC6 == 0) {
@@ -300,14 +300,14 @@ static void AncientKing_Death(Entity *entity) {
 }
 
 /* The ranged attack with record 0 (busy bit 1) of the first set of handlers: animation 23 on the
-   second motion slot; on each of the five frames in D_0043E8E8 it launches the record's shot
+   second motion slot; on each of the five frames in ancient_king_near_shot_frames it launches the record's shot
    unk10[0].unk00, its starting point up to 600 from the player's position in x and in z
    (EntityAi_LaunchShot). */
 static void AncientKing_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8[0];
     f32 target[4];
-    EntityFrameTable5 launch_frames = D_0043E8E8;
+    EntityFrameTable5 launch_frames = ancient_king_near_shot_frames;
     s32 elapsed;
     s32 i;
 
@@ -444,7 +444,7 @@ static void AncientKing_SwitchHandlers(Entity *entity) {
 static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 0);
     }
     if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) > 160.0f) {
@@ -502,7 +502,7 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -627,7 +627,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->unk3D8[0];
     f32 target[4];
-    EntityFrameTable5 launch_frames = D_0043E8E8;
+    EntityFrameTable5 launch_frames = ancient_king_near_shot_frames;
     s32 elapsed;
     s32 i;
 
@@ -671,14 +671,14 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
 }
 
 /* The ranged attack with record 1 (busy bit 1): animation 24; on each of the four frames in
-   D_0043E900 it launches the record's shot unk10[0].unk00 from the point Model_GetSkinnedBonePoint gives for
+   ancient_king_bone_shot_frames it launches the record's shot unk10[0].unk00 from the point Model_GetSkinnedBonePoint gives for
    EntityParams.unk43E, heading away from the entity's own position, with a pitch of -10 degrees
    (EntityAi_LaunchShot). */
 static void AncientKing_RangedAttack1(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)ENTITY_PARAMS_UNK3D8(entity->params, 1);
     f32 direction[4];
-    EntityFrameTable launch_frames = D_0043E900;
+    EntityFrameTable launch_frames = ancient_king_bone_shot_frames;
     f32 *source;
     f32 delta_x;
     f32 delta_z;

@@ -23,10 +23,10 @@ void sceVu0RotMatrixY(float *, float *, float);
 int Game_AddTriggerItem(int, int, int);
 extern MapSlot map_slots[];
 extern GameStatus game_status;
-extern void *D_00420D50[];
+extern void *faced_object[];
 extern float player_state[];
-extern EventRunner D_00420D00;
-extern f32 D_00431AF0[16];
+extern EventRunner view_ray_status;
+extern f32 identity_matrix[16];
 extern ItemCommonDef item_common_defs[];
 
 /* Step 0 of the Guide Stone markers (kind 0x13); the stone sits on part 2. One that starts holding a stone
@@ -70,7 +70,7 @@ void MapObject_UpdateEmptyMarker(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (game_status.bit1 && D_00420D50[0] == object) {
+    if (game_status.bit1 && faced_object[0] == object) {
         if (work->timer > 0) {
             return;
         }
@@ -143,7 +143,7 @@ void MapObject_UpdateFilledMarker(MapObject *object) {
     if (work->timer > 0) {
         work->timer = timer - 1;
     }
-    if (game_status.bit1 && D_00420D00.current == object) {
+    if (game_status.bit1 && view_ray_status.current == object) {
         MAP_OBJECT_BYTES(object)->step = 5;
         // match: two leftover arguments are passed
         item = ((int (*)(int, int, void *, int))Game_GetTriggerItem)(tag, object->unk08->unk38.bytes[2], work, timer);
@@ -183,8 +183,8 @@ void MapObject_LiftMarkerStone(MapObject *object) {
     target.y -= 115.0f;
     Vector_Subtract(work, &target, &origin);
     distance = sqrtf(((MapObjectWorkKind121DA8 *)object->work)->step.x * ((MapObjectWorkKind121DA8 *)object->work)->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
-    sceVu0RotMatrixX(matrix, D_00431AF0, object->model->rotation.x);
-    sceVu0RotMatrixY(matrix, D_00431AF0, -object->model->rotation.y);
+    sceVu0RotMatrixX(matrix, identity_matrix, object->model->rotation.x);
+    sceVu0RotMatrixY(matrix, identity_matrix, -object->model->rotation.y);
     Vector_ApplyMatrix(work, matrix, work);
     frames = distance / 6.6666665f;
     work->frames = frames;

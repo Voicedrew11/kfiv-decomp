@@ -4,43 +4,43 @@
 #define MEMORY_ARENA_SIZE 0x1600000
 
 /* the sizes of the areas, in bytes */
-extern int D_00446F0C;
-extern int D_00446F10;
-extern int D_00446F14;
-extern int D_00446F18;
-extern int D_00446F1C;
-extern int D_00446F20;
-extern int D_00446F24;
-extern int D_00446F28;
-extern int D_00446F2C;
+extern int packet_area_size;        /* the packet buffers' area */
+extern int effect_area_size;        /* the effects' textures and models (kf_effect.c) */
+extern int entity_pool_area_size;   /* entity_pool_area */
+extern int held_weapon_area_size;   /* the arm and held item files (kf_held_weapon.c) */
+extern u32 map_work_area_size;
+extern int map_file_area_size;
+extern int hud_area_size;           /* hud_area */
+extern int item_effect_area_size;
+extern int D_00446F2C;              /* set, but no area is placed with it */
 
 /* the areas, as Memory_PlaceAreas lays them out */
-extern MapSlotMemory D_004321F0[2];
-extern MapSlotMemory *D_00446F08;
-extern char *D_00446F50;
-extern char *D_00446F54;
-extern char *D_00446F58;            /* the packet area */
-extern char *D_00446F5C;
-extern char *D_00446F60;
-extern char *D_00446F64;
-extern char *D_00446F68;
-extern char *D_00446F6C;
-extern char *D_00446F70;
-extern char *D_00446F74;
+extern MapSlotMemory map_slot_memory[2];
+extern MapSlotMemory *map_slot_area;  /* the two map slots' memory, the array above */
+extern char *map_file_area;
+extern char *map_work_area;
+extern int packet_area;              /* the packet area */
+extern char *effect_area;
+extern char *entity_pool_area;      /* the entity pool blocks and work areas (kf_entity_pool.c) */
+extern char *held_weapon_area;
+extern int trade_menu_arena;
+extern char *hud_area;              /* the HUD textures (kf_hud.c) */
+extern char *item_effect_area;
+extern char *sound_bank_area;
 
 static char memory_arena[MEMORY_ARENA_SIZE]; /* 0x5FAF80 every area lies in it */
 
 /* Clears the arena, sets the size of each area and lays them out. */
 void Memory_Init(void) {
     Memory_ClearWords(memory_arena, sizeof(memory_arena) / 4);
-    D_00446F0C = 0x280000;
-    D_00446F10 = 0x1D0000;
-    D_00446F18 = 0xA0000;
-    D_00446F1C = 0x200000;
-    D_00446F20 = 0xA80000;
-    D_00446F14 = 0x300000;
-    D_00446F24 = 0x20000;
-    D_00446F28 = 0x80000;
+    packet_area_size = 0x280000;
+    effect_area_size = 0x1D0000;
+    held_weapon_area_size = 0xA0000;
+    map_work_area_size = 0x200000;
+    map_file_area_size = 0xA80000;
+    entity_pool_area_size = 0x300000;
+    hud_area_size = 0x20000;
+    item_effect_area_size = 0x80000;
     D_00446F2C = 0x60000;
     Memory_PlaceAreas();
 }
@@ -94,23 +94,23 @@ void Memory_Copy128(char *src, char *dest, u32 byte_count) {
 void Memory_PlaceAreas(void) {
     char *next_area = memory_arena;
 
-    D_00446F08 = D_004321F0;
-    D_00446F58 = next_area;
-    next_area += D_00446F0C;
-    D_00446F68 = D_00446F58;
-    D_00446F5C = next_area;
-    next_area += D_00446F10;
-    D_00446F60 = next_area;
-    next_area += D_00446F14;
-    D_00446F64 = next_area;
-    next_area += D_00446F18;
-    D_00446F50 = next_area;
-    next_area += D_00446F20;
-    D_00446F54 = next_area;
-    next_area += D_00446F1C;
-    D_00446F6C = next_area;
-    next_area += D_00446F24;
-    D_00446F70 = next_area;
-    next_area += D_00446F28;
-    D_00446F74 = next_area;
+    map_slot_area = map_slot_memory;
+    packet_area = (int)next_area;
+    next_area += packet_area_size;
+    trade_menu_arena = packet_area;
+    effect_area = next_area;
+    next_area += effect_area_size;
+    entity_pool_area = next_area;
+    next_area += entity_pool_area_size;
+    held_weapon_area = next_area;
+    next_area += held_weapon_area_size;
+    map_file_area = next_area;
+    next_area += map_file_area_size;
+    map_work_area = next_area;
+    next_area += map_work_area_size;
+    hud_area = next_area;
+    next_area += hud_area_size;
+    item_effect_area = next_area;
+    next_area += item_effect_area_size;
+    sound_bank_area = next_area;
 }

@@ -20,7 +20,7 @@ void EntityAi_LowerWeightsAfterHit(char *);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionLight(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 int rand(void);
 int Motion_Start(void *, int, int, u32, int);
@@ -102,7 +102,7 @@ static void Phagos_OnHit(Entity *entity) {
 /* The think handler: no states. While the entity is not busy it starts Phagos_RunAwayAndRemove; it
    tests for state 3, but both branches start the same action. */
 static void Phagos_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10 == entity->unkD7 % 10) {
+    if (frame_counter % 10 == entity->unkD7 % 10) {
         EntityAi_SensePlayer(entity, 2);
     }
     if (entity->unkC6 == 0) {

@@ -32,9 +32,9 @@ int Message_SplitDigits(int, u8 *);
 void *memset(void *, int, u32);
 int vsprintf(char *, const char *, char *);
 
-extern s32 D_00446F38;
+extern s32 menu_heap;
 extern u16 pad_pressed[];
-extern u16 D_00446940;
+extern u16 action_button;
 
 static TextColor text_colours[10] = {     /* 0x420B40 */
     { 0x80, 0x80, 0x80, 0x80 }, { 0x00, 0x00, 0x00, 0x80 }, { 0x00, 0x00, 0x80, 0x80 }, { 0x00, 0x80, 0x00, 0x80 },
@@ -90,10 +90,10 @@ void Message_Init(void) {
     int i;
 
     file_handle = File_Open("font.tmr", 0, 1);
-    File_Read(file_handle, (void *)Message_GetFontTexture(D_00446F38), -1);
+    File_Read(file_handle, (void *)Message_GetFontTexture(menu_heap), -1);
     File_Close(file_handle);
     file_handle = File_Open("font.txc", 0, 1);
-    File_Read(file_handle, (void *)Message_GetFontText(D_00446F38), -1);
+    File_Read(file_handle, (void *)Message_GetFontText(menu_heap), -1);
     File_Close(file_handle);
     glyph_count = 0;
     notice_free = notices;
@@ -134,19 +134,19 @@ void Message_Update(void) {
                 box_open = 0;
             }
         } else if (*box->cursor == GLYPH_END) {
-            if (pad_pressed[0] & D_00446940) {
+            if (pad_pressed[0] & action_button) {
                 box->closing = 1;
                 box->close_timer = 8;
             }
         } else if (box->waiting == 1) {
-            if (pad_pressed[0] & D_00446940) {
+            if (pad_pressed[0] & action_button) {
                 box->waiting = 0;
                 box->start = box->end + 1;
                 box->reveal_frames = 0;
                 box->end = Message_LayoutPage(box->start, box->font);
                 box->typed = 0;
             }
-        } else if (pad_pressed[0] & D_00446940) {
+        } else if (pad_pressed[0] & action_button) {
             while (message_box.cursor < message_box.end) {
                 if ((*message_box.cursor & ~0xFFF) == 0) {
                     message_box.typed++;
@@ -197,7 +197,7 @@ static void Message_Draw(void) {
     u64 *texture;
 
     if (box_open != 0 || notices_active != 0 || debug_line_count != 0) {
-        TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
+        TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(menu_heap));
         GsDraw_QueueTexFlush();
         if (box_open != 0) {
             glyph_count += message_box.typed;
@@ -683,7 +683,7 @@ int Message_SplitDigits(int value, u8 *digits) {
 
 /* Address of message message_id: the offset table entry after the table's first word, then the text it points to. */
 int Message_GetText(int message_id) {
-    s32 *offset = (s32 *)Message_GetFontText(D_00446F38 + (message_id + 1) * 4);
+    s32 *offset = (s32 *)Message_GetFontText(menu_heap + (message_id + 1) * 4);
 
-    return Message_GetFontText(D_00446F38 + *offset);
+    return Message_GetFontText(menu_heap + *offset);
 }

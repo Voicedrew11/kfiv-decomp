@@ -15,9 +15,9 @@ void Vector_Scale(float *, float *, float);
 void Vector_Add(void *, void *, void *);
 void Player_AddItem(int);
 extern GameStatus game_status;
-extern void *D_00420D50[];
+extern void *faced_object[];
 extern float player_state[];
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 extern ItemCommonDef item_common_defs[];
 
 /* Step 0 of the pedestals (kind 0xD: the Bridge, Binding and Release Pedestals); the item sits on part 2.
@@ -50,7 +50,7 @@ void MapObject_UpdateEmptyPedestal(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (game_status.bit1 && D_00420D50[0] == object) {
+    if (game_status.bit1 && faced_object[0] == object) {
         if (work->timer > 0) {
             return;
         }
@@ -69,8 +69,8 @@ void MapObject_UpdateEmptyPedestal(MapObject *object) {
         Vector_Copy(&target, player_state);
         target.y -= 115.0f;
         Vector_Subtract(work, &origin, &target);
-        sceVu0RotMatrixX(matrix, D_00431AF0, object->model->rotation.x);
-        sceVu0RotMatrixY(matrix, D_00431AF0, -object->model->rotation.y);
+        sceVu0RotMatrixX(matrix, identity_matrix, object->model->rotation.x);
+        sceVu0RotMatrixY(matrix, identity_matrix, -object->model->rotation.y);
         Vector_ApplyMatrix(work, matrix, work);
         distance = sqrtf(work->step.x * work->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
         work->frames = distance / 6.6666665f;
@@ -122,7 +122,7 @@ void MapObject_UpdateFilledPedestal(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (game_status.bit1 && D_00420D50[0] == object) {
+    if (game_status.bit1 && faced_object[0] == object) {
         if (item_def->type == 5) {
             if (work->timer > 0) {
                 return;
@@ -166,8 +166,8 @@ void MapObject_LiftPedestalItem(MapObject *object) {
     target.y -= 115.0f;
     Vector_Subtract(work, &target, &origin);
     distance = sqrtf(((MapObjectWorkSlide *)object->work)->step.x * ((MapObjectWorkSlide *)object->work)->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
-    sceVu0RotMatrixX(matrix, D_00431AF0, object->model->rotation.x);
-    sceVu0RotMatrixY(matrix, D_00431AF0, -object->model->rotation.y);
+    sceVu0RotMatrixX(matrix, identity_matrix, object->model->rotation.x);
+    sceVu0RotMatrixY(matrix, identity_matrix, -object->model->rotation.y);
     Vector_ApplyMatrix(work, matrix, work);
     frames = distance / 6.6666665f;
     work->frames = frames;

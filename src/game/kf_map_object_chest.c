@@ -16,24 +16,24 @@ ModelNode *MapItem_FindForObject(int);
 void MapObject_UpdateClosedChest(void *, int);
 void MapObject_SetupItemHolder(MapObject *);
 extern void (*map_object_update_hooks[])(MapObject *);
-extern Qword D_0043E780;
-extern u32 D_0038CC74[];
-extern void *D_00420D50[];
+extern Qword object_item_scale;
+extern u32 game_status_flags[];
+extern void *faced_object[];
 extern u8 item_counts[];
 extern GameStatus game_status;
-extern EventRunner D_00420D00;
+extern EventRunner view_ray_status;
 
 /* Step 1 of the bones and gravestones (kind 3): used by the player, one that still holds its item spawns it
    at its point 0 (MapItem_PutOutForObject) and the player picks it up at once (MapItem_StartPickup); otherwise its name is
    shown, at most every 45 frames. */
 void MapObject_UpdateItemHolder(MapObject *object) {
-    Qword unk_value = D_0043E780;
+    Qword unk_value = object_item_scale;
     s32 *work = object->work;
 
     if (object->work[0] > 0) {
         object->work[0]--;
     }
-    if (((D_0038CC74[0] >> 1) & 1) && D_00420D50[0] == object) {
+    if (((game_status_flags[0] >> 1) & 1) && faced_object[0] == object) {
         if (object->unk08->unk44 != 0 && !(object->unk10 & 0x40000)) {
             object->model->unk1B4(object->model);
             MapItem_StartPickup((ModelNode *)MapItem_PutOutForObject(
@@ -64,8 +64,8 @@ void MapObject_SetupItemHolder(MapObject *object) {
 void MapObject_SpawnHeldItem(MapObject *object) {
     s64 drop_params[2];
 
-    drop_params[0] = D_0043E780.unk00;
-    drop_params[1] = D_0043E780.unk08;
+    drop_params[0] = object_item_scale.unk00;
+    drop_params[1] = object_item_scale.unk08;
     if (object->unk08->unk44 != 0) {
         if (!(object->unk10 & 0x40000)) {
             map_object_update_hooks[object->unk04->kind](object);
@@ -84,8 +84,8 @@ void MapObject_StartChest(MapObject *object) {
     ModelInstance *model;
     MapObjectUnk08 *source;
 
-    drop_params[0] = D_0043E780.unk00;
-    drop_params[1] = D_0043E780.unk08;
+    drop_params[0] = object_item_scale.unk00;
+    drop_params[1] = object_item_scale.unk08;
     if (!(object->unk10 & 0x20000)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
@@ -119,11 +119,11 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
 
     memset(&turn, 0, sizeof(turn));
     work = object->work;
-    unk_value = D_0043E780;
+    unk_value = object_item_scale;
     if (work[1] > 0) {
         work[1]--;
     }
-    if (((D_0038CC74[0] >> 1) & 1) && D_00420D50[0] == object) {
+    if (((game_status_flags[0] >> 1) & 1) && faced_object[0] == object) {
         source = object->unk08;
         key = ((MapObjectUnk08Words *)source)->unk46;
         if (key != 0) {
@@ -191,7 +191,7 @@ void MapObject_UpdateOpenChest(MapObject *object) {
     if (work[1] > 0) {
         work[1]--;
     }
-    if (((D_0038CC74[0] >> 1) & 1) && D_00420D50[0] == object) {
+    if (((game_status_flags[0] >> 1) & 1) && faced_object[0] == object) {
         if (!(object->unk10 & 0x40000) &&
             ((source = MAP_OBJECT_WORDS(object))->unk44 != 0 || source->unk48 != 0)) {
             pickup = MapItem_FindForObject((int)object);
@@ -220,12 +220,12 @@ void MapObject_OpenChestOnSignal(GameEvent *event, int mode) {
     int bit;
 
     if ((event->flags & 0x2FF00) == 0x100 && mode != 0) {
-        saved = D_00420D00.current;
+        saved = view_ray_status.current;
         bit = game_status.bit1;
         game_status.bit1 = 1;
-        D_00420D00.current = event;
+        view_ray_status.current = event;
         MapObject_UpdateClosedChest(event, mode);
-        D_00420D00.current = saved;
+        view_ray_status.current = saved;
         game_status.bit1 = bit;
     }
 }

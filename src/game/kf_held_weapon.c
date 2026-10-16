@@ -35,22 +35,22 @@ void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
 
-extern char *D_00446F64;
+extern char *held_weapon_area;
 extern PlayerState player_state;
-extern GameDefinition D_00416D78[70];
+extern GameDefinition weapon_name_defs[70];
 extern PlayerItemDef weapon_defs[];
-extern MapSlotUnk0C D_0038A250;
+extern MapSlotUnk0C current_fog_block;
 extern char file_load_buffer[0x80000];
-extern char D_0043F588[];
-extern char D_0043F5A0[];
-extern char D_0043F5B8[];
-extern char D_0043F5D0[];
-extern MapSlotUnk10Half D_0038A270;
-extern CameraState D_004325A0;
-extern f32 D_00431AF0[16];
-extern f32 D_004323E0[16];
-extern int D_00446970;
-extern int D_00446974;
+extern char arm_phong_texture_path[];
+extern char item_arm_path_format[];
+extern char default_held_item_path[];
+extern char default_arm_path[];
+extern MapSlotUnk10Half current_light_block;
+extern CameraState camera_state;
+extern f32 identity_matrix[16];
+extern f32 world_screen_matrix[16];
+extern int loaded_arm_gauntlet;
+extern int loaded_held_weapon;
 
 /* What lights the held item's models, its trail, its position offsets and the points of its arm. */
 MapSlotUnk10Half held_item_light_blocks[2] = { /* 0x4145E0 the second hand's block ends with 1.0 four times */
@@ -73,7 +73,7 @@ u32 D_00414750[12] = { 0x44, 0x0, 0x48, 0x0, 0x42, 0x0, 0x80, 0x80, 0x80, 0x40, 
 PlayerArmPoints held_item_arm_points = { 0 }; /* 0x414780 points 30 and 31 of the held model */
 PlayerArmPoints held_item_arm_points_prev = { 0 }; /* 0x4147A0 the same for the frame before */
 
-ModelInstance D_0057B6A0 __attribute__((section(".bss"))); /* 0x57B6A0 the held item; D_00446978 in asm .sdata points here */
+ModelInstance held_item_model __attribute__((section(".bss"))); /* 0x57B6A0 the held item; held_item_model_ptr in asm .sdata points here */
 static ModelInstance arm_model;         /* 0x57B860 */
 static char held_item_channels[0x90];   /* 0x57BA20 */
 static char held_item_setup[0x1000];    /* 0x57BAB0 */
@@ -104,23 +104,23 @@ int WeaponTrail_GetCount(void);
 void HeldWeapon_Init(void) {
     int file_handle;
     u32 heap_cursor;
-    heap_cursor = (u32)D_00446F64; // match: retail treats the heap cursor as a plain address
+    heap_cursor = (u32)held_weapon_area; // match: retail treats the heap cursor as a plain address
     shared_texture_table = heap_cursor;
     heap_cursor += 0x20000;
     arm_file = heap_cursor;
     heap_cursor += 0x50000;
     held_item_file = heap_cursor;
     memset(&arm_model, 0, 0x1C0);
-    memset(&D_0057B6A0, 0, 0x1C0);
+    memset(&held_item_model, 0, 0x1C0);
     memset((void *)arm_file, 0, 0x50000);
     memset((void *)held_item_file, 0, 0x30000);
     memset(arm_setup, 0, 0x1000);
     memset(held_item_setup, 0, 0x1000);
     memset(&held_item_arm_points, 0, 0x20);
     memset(&held_item_arm_points_prev, 0, 0x20);
-    D_00446970 = -1;
-    D_00446974 = -1;
-    file_handle = File_Open(D_0043F588, 0, 1);
+    loaded_arm_gauntlet = -1;
+    loaded_held_weapon = -1;
+    file_handle = File_Open(arm_phong_texture_path, 0, 1);
     File_Read(file_handle, (int)shared_texture_table, -1);
     File_Close(file_handle);
     Player_LoadArmModels();
@@ -133,27 +133,27 @@ void Player_LoadArmModels(void) {
     char path[0x100];
     int data;
     int buffer;
-    GameDefinition *item = &D_00416D78[player_state.weapon];
-    GameDefinition *arm = &D_00416D78[player_state.equipment[EQUIP_GAUNTLET] + 70];
+    GameDefinition *item = &weapon_name_defs[player_state.weapon];
+    GameDefinition *arm = &weapon_name_defs[player_state.equipment[EQUIP_GAUNTLET] + 70];
     PlayerArmFile *file;
     s32 size;
     s32 handle;
 
-    if (D_00446974 != player_state.weapon) {
-        D_00446974 = player_state.weapon;
+    if (loaded_held_weapon != player_state.weapon) {
+        loaded_held_weapon = player_state.weapon;
         if (player_state.unk258 != 0) {
             player_state.unk258 = 0;
             Effect_FreePlayerWeaponKinds();
         }
         memset((void *)held_item_file, 0, 0x30000);
-        memset(&D_0057B6A0, 0, 0x1C0);
+        memset(&held_item_model, 0, 0x1C0);
         memset(held_item_setup, 0, 0x1000);
         memset(held_item_channels, 0, 0x90);
         held_item_textures = 0;
-        sprintf(path, D_0043F5A0, item->unk30);
+        sprintf(path, item_arm_path_format, item->unk30);
         handle = File_Open(path, 0, 1);
         if (handle < 0) {
-            handle = File_Open(D_0043F5B8, 0, 1);
+            handle = File_Open(default_held_item_path, 0, 1);
         }
         File_Read(handle, file_load_buffer, -1);
         File_Close(handle);
@@ -172,19 +172,19 @@ void Player_LoadArmModels(void) {
         if (file->model_size != 0) {
             data = (int)file + file->model_offset;
             buffer = (int)held_item_setup;
-            Model_SetUpSkinned(&D_0057B6A0, &data, &buffer);
+            Model_SetUpSkinned(&held_item_model, &data, &buffer);
         }
         if (file->motion_size != 0) {
             data = held_item_file + file->motion_offset;
             buffer = (int)held_item_channels;
-            ModelMotion_LoadFile(data, &buffer, &D_0057B6A0, 1);
+            ModelMotion_LoadFile(data, &buffer, &held_item_model, 1);
         }
         if (file->texture_size != 0) {
             held_item_textures = held_item_file + file->texture_offset;
         }
-        D_0057B6A0.unk148 = (s32)held_item_light_blocks;
-        D_0057B6A0.unk14C = &D_0038A250;
-        MODEL_CHANNEL(&D_0057B6A0)->unk8F = 0x80;
+        held_item_model.unk148 = (s32)held_item_light_blocks;
+        held_item_model.unk14C = &current_fog_block;
+        MODEL_CHANNEL(&held_item_model)->unk8F = 0x80;
         Sound_LoadSwBank(player_state.weapon);
         WeaponTrail_Reset();
         WeaponTrail_SetMinLife(3);
@@ -192,17 +192,17 @@ void Player_LoadArmModels(void) {
         held_item_offsets[1] = weapon_defs[player_state.weapon].unk88;
         held_item_offsets[2] = weapon_defs[player_state.weapon].unk89;
     }
-    if (D_00446970 != player_state.equipment[EQUIP_GAUNTLET]) {
-        D_00446970 = player_state.equipment[EQUIP_GAUNTLET];
+    if (loaded_arm_gauntlet != player_state.equipment[EQUIP_GAUNTLET]) {
+        loaded_arm_gauntlet = player_state.equipment[EQUIP_GAUNTLET];
         memset((void *)arm_file, 0, 0x50000);
         memset(&arm_model, 0, 0x1C0);
         memset(arm_setup, 0, 0x1000);
         memset(arm_channels, 0, 0x90);
         arm_textures = 0;
-        sprintf(path, D_0043F5A0, arm->unk30);
+        sprintf(path, item_arm_path_format, arm->unk30);
         handle = File_Open(path, 0, 1);
         if (handle < 0) {
-            handle = File_Open(D_0043F5D0, 0, 1);
+            handle = File_Open(default_arm_path, 0, 1);
         }
         File_Read(handle, file_load_buffer, -1);
         File_Close(handle);
@@ -225,7 +225,7 @@ void Player_LoadArmModels(void) {
             arm_textures = arm_file + file->texture_offset;
         }
         arm_model.unk148 = (s32)held_item_light_blocks;
-        arm_model.unk14C = &D_0038A250;
+        arm_model.unk14C = &current_fog_block;
     }
 }
 
@@ -244,7 +244,7 @@ void Player_UpdateArmModels(void) {
     held_item_arm_points_prev = held_item_arm_points;
     memset(&held_item_arm_points, 0, 0x20);
     if (player_state.unk258 != 0) {
-        sceVu0RotMatrixY(matrix, D_00431AF0, 3.1415927f);
+        sceVu0RotMatrixY(matrix, identity_matrix, 3.1415927f);
         sceVu0TransMatrix(matrix, matrix, held_item_offsets);
         pitch = player_state.rotation.x - player_state.unk238;
         if (pitch > 1.0122910f) {
@@ -256,39 +256,39 @@ void Player_UpdateArmModels(void) {
         sceVu0RotMatrixY(matrix, matrix, player_state.rotation.y);
         Vector_Copy(position, &player_state);
         position[1] = position[1] - 220.0f + player_state.unk1C4 + player_state.unk1F0;
-        Vector_Add(position, position, D_004325A0.unk50);
-        Vector_Add(position, position, D_004325A0.unk60);
-        position[1] += D_004325A0.unk4C;
-        sceVu0TransMatrix((f32 *)D_0057B6A0.unk40, matrix, position);
-        count = D_0057B6A0.part_count;
-        part = D_0057B6A0.parts;
+        Vector_Add(position, position, camera_state.unk50);
+        Vector_Add(position, position, camera_state.unk60);
+        position[1] += camera_state.unk4C;
+        sceVu0TransMatrix((f32 *)held_item_model.unk40, matrix, position);
+        count = held_item_model.part_count;
+        part = held_item_model.parts;
         for (i = 0; i < count; i++, part++) {
-            ModelMatrix_BuildPartLocal(&D_0057B6A0, part, part);
+            ModelMatrix_BuildPartLocal(&held_item_model, part, part);
         }
-        if (D_0057B6A0.unk100 & 1) {
-            part = D_0057B6A0.parts;
+        if (held_item_model.unk100 & 1) {
+            part = held_item_model.parts;
             for (i = 0; i < count; i++, part++) {
                 Model_MultiplyChildMatrices(part);
             }
         }
-        Vector_Copy(&D_0057B6A0.rotation, &player_state.rotation);
+        Vector_Copy(&held_item_model.rotation, &player_state.rotation);
         Vector_Copy(&arm_model.rotation, &player_state.rotation);
-        *(ModelMatrix *)arm_model.unk40 = *(ModelMatrix *)D_0057B6A0.unk40;
-        part = D_0057B6A0.parts;
+        *(ModelMatrix *)arm_model.unk40 = *(ModelMatrix *)held_item_model.unk40;
+        part = held_item_model.parts;
         arm_part = arm_model.parts;
         // match: retail takes the larger part count of the two models, not the smaller
-        count = D_0057B6A0.part_count > arm_model.part_count ? D_0057B6A0.part_count : arm_model.part_count;
+        count = held_item_model.part_count > arm_model.part_count ? held_item_model.part_count : arm_model.part_count;
         for (i = 0; i < count; i++, part++, arm_part++) {
             Vector_Copy(arm_part->unk40, part->unk40);
             Vector_Copy(&arm_part->unk50, &part->unk50);
             Vector_Copy(arm_part->unk60, part->unk60);
             *(ModelMatrix *)arm_part->unk00 = *(ModelMatrix *)part->unk00;
         }
-        D_0057B6A0.unk1B4(&D_0057B6A0);
-        Vector_Copy(&held_item_arm_points.points[0], (void *)D_0057B6A0.get_point(&D_0057B6A0, 30));
-        Vector_Copy(&held_item_arm_points.points[1], (void *)D_0057B6A0.get_point(&D_0057B6A0, 31));
+        held_item_model.unk1B4(&held_item_model);
+        Vector_Copy(&held_item_arm_points.points[0], (void *)held_item_model.get_point(&held_item_model, 30));
+        Vector_Copy(&held_item_arm_points.points[1], (void *)held_item_model.get_point(&held_item_model, 31));
     }
-    held_item_light_blocks[0] = D_0038A270;
+    held_item_light_blocks[0] = current_light_block;
 }
 
 /* each frame: ages the weapon trail and queues the two ends of the held weapon, in screen space */
@@ -303,7 +303,7 @@ void WeaponTrail_Update(void) {
 
     WeaponTrail_Age();
     if (player_state.unk258 != 0) {
-        weapon = &D_0057B6A0;
+        weapon = &held_item_model;
         weapon->unk1B4(weapon);
         if (weapon_defs[player_state.weapon].unk63 == 2) {
             return;
@@ -317,7 +317,7 @@ void WeaponTrail_Update(void) {
         }
         blade_base = (void *)weapon->get_point(weapon, 0);
         blade_tip = (void *)weapon->get_point(weapon, 1);
-        sceVu0MulMatrix(world_screen, D_004323E0, D_00431AF0);
+        sceVu0MulMatrix(world_screen, world_screen_matrix, identity_matrix);
         Vu0_LoadMatrix(world_screen);
         Vu0_ProjectToScreen((int *)&point, blade_base);
         point.z = (s32)point.z >> 4;
@@ -363,22 +363,22 @@ void Player_DrawArm(void) {
         TextureTable_QueueAll((TextureTableHeader *)held_item_textures);
         GsDraw_QueueTexFlush();
         if (player_state.weapon != 0x2E) {
-            D_0057B6A0.unk1A8(&D_0057B6A0);
+            held_item_model.unk1A8(&held_item_model);
         } else {
-            for (i = 0; i < D_0057B6A0.part_count; i++) {
-                MODEL_PART_FLAG_BITS(&D_0057B6A0.parts[i])->bit40 = i == 5;
+            for (i = 0; i < held_item_model.part_count; i++) {
+                MODEL_PART_FLAG_BITS(&held_item_model.parts[i])->bit40 = i == 5;
             }
-            D_0057B6A0.unk1A8(&D_0057B6A0);
-            for (i = 0; i < D_0057B6A0.part_count; i++) {
-                MODEL_PART_FLAG_BITS(&D_0057B6A0.parts[i])->bit40 = i != 5;
+            held_item_model.unk1A8(&held_item_model);
+            for (i = 0; i < held_item_model.part_count; i++) {
+                MODEL_PART_FLAG_BITS(&held_item_model.parts[i])->bit40 = i != 5;
             }
             Packet_BeginGsRegisters();
             Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
             Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
             Packet_EndGsRegisters();
-            D_0057B6A0.unk1A8(&D_0057B6A0);
-            for (i = 0; i < D_0057B6A0.part_count; i++) {
-                MODEL_PART_FLAG_BITS(&D_0057B6A0.parts[i])->bit40 = FALSE;
+            held_item_model.unk1A8(&held_item_model);
+            for (i = 0; i < held_item_model.part_count; i++) {
+                MODEL_PART_FLAG_BITS(&held_item_model.parts[i])->bit40 = FALSE;
             }
         }
     }

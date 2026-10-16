@@ -29,14 +29,14 @@ int sceLseek(int, int, int);
 int sceOpen(const char *, int);
 /* SDK: loads an IOP heap file, returns below zero until the IOP is ready */
 int sceSifLoadIopHeap(char *name, void *addr);
-extern char D_0043F640[];
-extern char D_0043F688[];
-extern int D_004469E8;
-extern int D_00446704;
-extern int (*const D_0043F670[])(int *, int *);
+extern char rpc_timeout_message[];
+extern char voice_load_waiting_message[];
+extern int voice_load_step;
+extern int voice_load_failures;
+extern int (*const voice_load_steps[])(int *, int *);
 extern int sound_rpc_args[];
-extern char D_004469F0[];
-extern int D_004469F8;
+extern char sample_buffer_freed_message[];
+extern int sequence_load_step;
 extern char sound_rpc_file_name[];
 
 
@@ -152,7 +152,7 @@ static int SoundDriver_WaitRpc(void) {
 
     while (sceSifCheckStatRpc(sound_rpc_client) == 1) {
         if (retries < 0) {
-            printf(D_0043F640);
+            printf(rpc_timeout_message);
             return -1;
         }
         retries--;
@@ -841,7 +841,7 @@ int SoundDriver_VoiceLoadSendPiece(SoundLoadArgs *args, SoundReloadRequest *requ
     sound_dma.dest = heap_addr;
     sound_dma.mode = 0;
     if (SoundDriver_Remote(1, 0x80, request->voice->unk1A, 0) == 0) {
-        printf(D_0043F688);
+        printf(voice_load_waiting_message);
         return 0;
     }
     dma_id = sceSifSetDma((int *)&sound_dma, 1);
@@ -900,15 +900,15 @@ int SoundDriver_VoiceLoadBind(s32 unused, SoundReloadRequest *request) {
 }
 
 /* SoundDriver_LoadVoiceAt a step a call, to be called until it stops returning -3: runs the current step
-   (D_0043F670: free the voice, send the header, take an IOP block, send a piece of the samples to it, send
+   (voice_load_steps: free the voice, send the header, take an IOP block, send a piece of the samples to it, send
    the piece on to sound memory, bind the voice) and moves on by what it returns. Once done, returns the
-   voice the request holds; a failed step counts in D_00446704. */
+   voice the request holds; a failed step counts in voice_load_failures. */
 int SoundDriver_LoadVoiceStep(int voice_index, int header_data, int header_size, int sample_data, int sample_size,
                               int unk1B, int dest) {
     int args[7];
     int advance;
 
-    if (D_004469E8 == 0) {
+    if (voice_load_step == 0) {
         voice_load_source = sample_data;
     }
     args[0] = voice_index;
@@ -918,17 +918,17 @@ int SoundDriver_LoadVoiceStep(int voice_index, int header_data, int header_size,
     args[4] = sample_size;
     args[5] = unk1B;
     args[6] = dest;
-    advance = D_0043F670[D_004469E8](args, sound_rpc_args);
+    advance = voice_load_steps[voice_load_step](args, sound_rpc_args);
     voice_load_source = args[3];
-    D_004469E8 += advance;
-    if (D_004469E8 == 6) {
-        D_004469E8 = 0;
+    voice_load_step += advance;
+    if (voice_load_step == 6) {
+        voice_load_step = 0;
     }
-    if (D_004469E8 < 0) {
-        D_004469E8 = 0;
-        D_00446704++;
+    if (voice_load_step < 0) {
+        voice_load_step = 0;
+        voice_load_failures++;
     }
-    if (D_004469E8 == 0) {
+    if (voice_load_step == 0) {
         return sound_rpc_args[5];
     }
     return -3;
@@ -1196,7 +1196,7 @@ int SoundDriver_FreeSampleBuffer(int voice_index) {
     if (sceSifFreeIopHeap(voice->iop_heap) != 0) {
         return -1;
     }
-    puts(D_004469F0);
+    puts(sample_buffer_freed_message);
     voice->iop_heap = 0;
     FlushCache(0);
     return 0;
@@ -1475,7 +1475,7 @@ int SoundDriver_LoadSequenceStep(int bank_id, int voice_index, int data, u32 siz
     int index;
     int iop_heap;
 
-    switch (D_004469F8) {
+    switch (sequence_load_step) {
     case 0:
         bank_load_bank = sound_state->banks;
         for (index = 0; index < 4; index++) {
@@ -1486,7 +1486,7 @@ int SoundDriver_LoadSequenceStep(int bank_id, int voice_index, int data, u32 siz
             bank_load_bank++;
         }
         if (index >= 4) {
-            D_004469F8 = 0;
+            sequence_load_step = 0;
             return -2;
         }
         if (bank_id == -1) {
@@ -1503,15 +1503,15 @@ int SoundDriver_LoadSequenceStep(int bank_id, int voice_index, int data, u32 siz
         bank_load_bank->iop_heap = iop_heap;
         if (iop_heap == 0 || (u32)(iop_heap + bank_load_bank->unk04) > 0x1FFFFFU) {
             SoundDriver_FreeSequence(bank_load_index);
-            D_004469F8 = 0;
+            sequence_load_step = 0;
             return -2;
         }
         SoundDriver_StartUpload(iop_heap, data, bank_load_bank->unk04);
-        D_004469F8++;
+        sequence_load_step++;
         break;
     case 1:
         if (SoundDriver_StepUpload() != 0) {
-            D_004469F8++;
+            sequence_load_step++;
         }
         break;
     case 2:
@@ -1523,14 +1523,14 @@ int SoundDriver_LoadSequenceStep(int bank_id, int voice_index, int data, u32 siz
         if (SoundDriver_Remote(1, 0x1010, bank_load_bank->unk0C, bank_load_voice->unk0C, bank_load_voice_data, bank_load_voice->unk1B) != 0 ||
             SoundDriver_Remote(1, 0x2000, bank_load_bank->unk0C, bank_load_bank->iop_heap) != 0) {
             SoundDriver_FreeSequence(bank_load_index);
-            D_004469F8 = 0;
+            sequence_load_step = 0;
             return -2;
         }
         FlushCache(0);
-        D_004469F8 = 0;
+        sequence_load_step = 0;
         break;
     }
-    if (D_004469F8 != 0) {
+    if (sequence_load_step != 0) {
         return -1;
     }
     return bank_load_index;

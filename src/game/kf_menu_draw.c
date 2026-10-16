@@ -31,15 +31,15 @@ static s32 heap_mark;               /* 0x447348 what MenuHeap_FreeToMark goes ba
 static s32 heap_top;                /* 0x44734C where the next block of the menus' heap comes from */
 static u32 long_text_packets[2][0x3700]; /* 0x5DDF00 the two packet buffers of the long text drawers */
 
-extern s32 D_00446F38;              /* the base of the menus' heap */
+extern s32 menu_heap;              /* the base of the menus' heap */
 
 /* the menus' words and font */
-extern u64 *D_00420DC0[];           /* where the TEX0 of each font page is kept */
+extern u64 *menu_font_page_tex0[];  /* where the TEX0 of each font page is kept */
 
 /* the numbers a menu sprite can stand for (MenuDraw_GetNumber) */
 extern PlayerState player_state;
-extern ClockTime D_00446A20;
-extern ClockTime D_00446A28;
+extern ClockTime wall_clock_time;
+extern ClockTime current_play_time;
 extern s32 D_00446DF4;              /* numbers 44 to 54: set by the screen that shows them */
 extern s32 D_00446DF8;
 extern s32 D_00446DFC;
@@ -76,11 +76,11 @@ extern s32 D_00446E74;
 extern s32 D_00446E78;
 extern s32 D_00446E7C;
 extern s32 D_00446E80;
-extern int D_00446DEC;              /* how many */
-extern u16 D_00446DE8;              /* this frame's buttons, as the menus read them (MenuPad_Update) */
+extern int menu_file_block_count;              /* how many */
+extern u16 menu_buttons;              /* this frame's buttons, as the menus read them (MenuPad_Update) */
 
 /* the models: 32 pool slots, each showing one part */
-extern void *D_00446DF0;            /* the head of the slots' free list */
+extern void *pool_slot_free_list;   /* the head of the slots' free list */
 
 /* the loaded menu file */
 
@@ -94,16 +94,16 @@ extern u8 game_options[];             /* the options block, a byte per setting *
 extern u8 music_volume[];
 extern u8 sfx_volume[];
 extern u8 D_00349683[];
-extern s8 D_00349685[];
-extern s8 D_00349686[];
-extern s8 D_00349688[];
-extern s8 D_00349689[];
-extern f32 D_00446C04;              /* the alpha of the pulsing sprite, 80 to 128 */
-extern s8 D_00446C08;               /* TRUE while that alpha falls */
+extern s8 head_bob_option[];
+extern s8 rumble_option[];
+extern s8 menu_backdrop_option[];
+extern s8 hud_option[];
+extern f32 pulse_sprite_alpha;              /* the alpha of the pulsing sprite, 80 to 128 */
+extern s8 pulse_sprite_falling;               /* TRUE while that alpha falls */
 
 
 /* 0x428BD0 the matrix the menu model drawer multiplies the light by */
-f32 D_00428BD0[16] = {
+f32 menu_model_light_colors[16] = {
     0.4f, 0.4f, 0.4f, 0.0f,
     0.4f, 0.4f, 0.4f, 0.0f,
     0.4f, 0.4f, 0.4f, 0.0f,
@@ -111,7 +111,7 @@ f32 D_00428BD0[16] = {
 };
 
 /* 0x428C10 the identity matrix the model drawer uses as it is */
-f32 D_00428C10[16] = {
+f32 menu_model_light_directions[16] = {
     1.0f, 0.0f, 0.0f, 0.0f,
     0.0f, 1.0f, 0.0f, 0.0f,
     0.0f, 0.0f, 1.0f, 0.0f,
@@ -119,7 +119,7 @@ f32 D_00428C10[16] = {
 };
 
 /* 0x428C50 the glyph codes of the menus' words, one after the other */
-u16 D_00428C50[2580] = {
+u16 menu_word_glyphs[2580] = {
     0x0041, 0x001C, 0x0020, 0x0018, 0xFFFF, 0x0040, 0x0018, 0x001F, 0x001F, 0xFFFF, 0x0032, 0x002B, 0x0016, 0x001B,
     0x0014, 0x0021, 0x001A, 0x0018, 0xFFFF, 0x002E, 0x0029, 0x0014, 0x001C, 0x001F, 0x0014, 0x0015, 0x001F, 0x0018,
     0xFFFF, 0x0020, 0x001C, 0x0021, 0x000D, 0xFFFF, 0x0031, 0x0028, 0x0023, 0x001F, 0x001C, 0x0016, 0x0014, 0x0027,
@@ -307,8 +307,8 @@ u16 D_00428C50[2580] = {
     0x0028, 0x002C, 0x0000, 0x0000,
 };
 
-/* 0x42A078 where each word starts in D_00428C50 */
-u16 D_0042A078[268] = {
+/* 0x42A078 where each word starts in menu_word_glyphs */
+u16 menu_word_starts[268] = {
     0x0000, 0x0005, 0x000A, 0x0013, 0x001D, 0x0022, 0x003C, 0x0046, 0x0051, 0x0055, 0x005B, 0x005F, 0x0062, 0x0065,
     0x006E, 0x0076, 0x007B, 0x0085, 0x008C, 0x0093, 0x0097, 0x009D, 0x00A1, 0x00A6, 0x00AB, 0x00B1, 0x00B6, 0x00BC,
     0x00BE, 0x00C5, 0x00CC, 0x00D9, 0x00DC, 0x00DF, 0x00ED, 0x00F7, 0x0107, 0x010C, 0x0112, 0x0118, 0x0122, 0x012C,
@@ -332,25 +332,26 @@ u16 D_0042A078[268] = {
 };
 
 /* 0x42A290 the four ways the pool's slots are drawn */
-void (*D_0042A290[4])(RenderSlot *, RenderSlotArg) = {
+void (*pool_slot_drawers[4])(RenderSlot *, RenderSlotArg) = {
     PoolSlot_DrawAll,
     PoolSlot_DrawFirst20,
     PoolSlot_DrawAllBut15,
     PoolSlot_DrawFirst20But15,
 };
 
-/* 0x42A2A0 one entry per block of the loaded menu file (D_00446DEC of them) */
-LoadedBlockRef D_0042A2A0[66] = { { 0 } };
+/* 0x42A2A0 one entry per block of the loaded menu file (menu_file_block_count of them) */
+LoadedBlockRef menu_file_blocks[66] = { { 0 } };
 
-/* 0x42A8D0 the loaded menu font and the two words MenuTexture_GetRegisters reads from it */
-LoadedTexture D_0042A8D0 = { 0 };
-asm(".globl D_0042A8D8\nD_0042A8D8 = D_0042A8D0 + 8\n");
+/* 0x42A8D0 the loaded menu font and the two words MenuTexture_GetRegisters reads from it; the second
+   (menu_font_second_tex0) is the TEX0 of the font's second page of glyphs */
+LoadedTexture menu_font_texture = { 0 };
+asm(".globl menu_font_second_tex0\nmenu_font_second_tex0 = menu_font_texture + 8\n");
 
 /* 0x42A8E8 8 zero bytes after the loaded font the code never refers to */
 static u64 D_0042A8E8 __attribute__((section(".data"))) = 0;
 
 /* 0x42A8F0 the 32 pool slots, chained into a free list through their next pointers */
-PoolSlot D_0042A8F0[32] = { { 0 } };
+PoolSlot pool_slots[32] = { { 0 } };
 
 /* 0x42B6F0 0x50 zero bytes after the pool the code never refers to */
 static PoolPart D_0042B6F0 = { 0 };
@@ -362,7 +363,7 @@ void *D_0042B740[8] = { 0 };
 char D_0042B760[0x70] = { 0 };
 
 /* 0x42B7D0 the view-to-screen matrix the model drawer fills in */
-f32 D_0042B7D0[16] = { 0 };
+f32 menu_view_screen_matrix[16] = { 0 };
 
 /* the two packet buffers in the scratchpad */
 #define PACKET_BUFFER_0 ((void *)((char *)POOL_DRAW_SCRATCH + 0x800))
@@ -499,7 +500,7 @@ static const SpriteHandler sprite_handlers[50] = {
 
 /* Empties the menus' heap: its mark and its top both go back to the base. */
 void MenuHeap_Reset(void) {
-    heap_mark = heap_top = D_00446F38;
+    heap_mark = heap_top = menu_heap;
 }
 
 /* Sets the heap's mark at its top: what is allocated so far survives MenuHeap_FreeToMark. */
@@ -536,7 +537,7 @@ void MenuHeap_FreeToMark(void) {
 
 /* Empties the heap like MenuHeap_Reset (the same two stores, the other way round). */
 static void MenuHeap_Clear(void) {
-    heap_top = heap_mark = D_00446F38;
+    heap_top = heap_mark = menu_heap;
 }
 
 /* the second allocator */
@@ -624,10 +625,10 @@ void MenuDraw_Sprite(KindObject *object) {
 /* Returns where word `index` starts in the glyph codes MenuDraw_Word draws from (its low byte: callers only
    subtract two starts to measure a word). */
 s8 MenuDraw_GetWordStart(s32 index) {
-    return ((s8 *)D_0042A078)[index * 2]; // match: only the low byte of the 16-bit start is read
+    return ((s8 *)menu_word_starts)[index * 2]; // match: only the low byte of the 16-bit start is read
 }
 
-/* Draws a sprite of kind 1, a word: the glyph codes D_00428C50 holds from D_0042A078[unk32] up to the next
+/* Draws a sprite of kind 1, a word: the glyph codes menu_word_glyphs holds from menu_word_starts[unk32] up to the next
    entry (less one), one textured quad per glyph, spread evenly between the sprite's two corners, in the
    sprite's colour; then sends the packet to the GS over DMA channel 2. */
 void MenuDraw_Word(KindObject *object) {
@@ -650,8 +651,8 @@ void MenuDraw_Word(KindObject *object) {
         return;
     }
     packet = MenuDraw_NextPacket();
-    count = D_0042A078[sprite->unk32 + 1] - D_0042A078[sprite->unk32] - 1; // match: before `start`; 0 traps in the divisions below
-    start = D_0042A078[sprite->unk32];
+    count = menu_word_starts[sprite->unk32 + 1] - menu_word_starts[sprite->unk32] - 1; // match: before `start`; 0 traps in the divisions below
+    start = menu_word_starts[sprite->unk32];
     first.f.lo16 = sprite->xyz0.X;
     second.f.lo16 = sprite->xyz1.X;
     first.f.mid16 = sprite->xyz0.Y;
@@ -665,8 +666,8 @@ void MenuDraw_Word(KindObject *object) {
     *cursor++ = 0xC4000000;
     *cursor++ = 0x25252106;
     *cursor++ = 0xFFFFF525;
-    for (index = 0; index < count && (code = D_00428C50[start + index]) != 0xFFFF; index++) {
-        *((u64 *)cursor)++ = *D_00420DC0[code / 625];
+    for (index = 0; index < count && (code = menu_word_glyphs[start + index]) != 0xFFFF; index++) {
+        *((u64 *)cursor)++ = *menu_font_page_tex0[code / 625];
         code %= 625;
         column = code % 25;
         row = code / 25;
@@ -808,25 +809,25 @@ int MenuDraw_GetNumber(int number) {
     case 33:
         return player_state.magic;
     case 34:
-        return D_00446A28.mday;
+        return current_play_time.mday;
     case 35:
-        return D_00446A28.hour;
+        return current_play_time.hour;
     case 36:
-        return D_00446A28.min;
+        return current_play_time.min;
     case 37:
-        return D_00446A28.sec;
+        return current_play_time.sec;
     case 38:
-        return D_00446A20.year + 2000;
+        return wall_clock_time.year + 2000;
     case 39:
-        return D_00446A20.mon;
+        return wall_clock_time.mon;
     case 40:
-        return D_00446A20.mday;
+        return wall_clock_time.mday;
     case 41:
-        return D_00446A20.hour;
+        return wall_clock_time.hour;
     case 42:
-        return D_00446A20.min;
+        return wall_clock_time.min;
     case 43:
-        return D_00446A20.sec;
+        return wall_clock_time.sec;
     case 44:
         return D_00446DF4;
     case 45:
@@ -1021,7 +1022,7 @@ int MenuDraw_Number(KindObject *object) { // match: returns int, though no path 
         code = glyphs[index];
         column = code % 25;
         row = code / 25;
-        *((u64 *)cursor)++ = *D_00420DC0[0];
+        *((u64 *)cursor)++ = *menu_font_page_tex0[0];
         base = (s32)first.f.lo16 + (count << 5);
         left = index * (s32)step.f.lo16 - ((index * 6) << 4) + (count << 6);
         right = (index + 1) * (s32)step.f.lo16 - ((index * 6) << 4) + (count << 6);
@@ -1094,14 +1095,14 @@ static void MenuDraw_TextAt(u16 *text, GsPackedWord origin) {
             code += 0x47E;
             column = code % 50;
             row = code / 50;
-            *((u64 *)cursor)++ = *D_00420DC0[0];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[0];
             top.f.lo16 = bottom.f.lo16;
             bottom.f.lo16 += 0xA0;
             scale[0] = 0.01953125f;
             scale[1] = 0.0390625f;
         } else {
             code = text[index];
-            *((u64 *)cursor)++ = *D_00420DC0[code / 625];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[code / 625];
             code %= 625;
             top.f.lo16 = bottom.f.lo16;
             bottom.f.lo16 += 0x140;
@@ -1184,14 +1185,14 @@ static void MenuDraw_TextRightAligned(u16 *text, GsPackedWord origin) {
             code += 0x47E;
             column = code % 50;
             row = code / 50;
-            *((u64 *)cursor)++ = *D_00420DC0[0];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[0];
             top.f.lo16 = bottom.f.lo16;
             bottom.f.lo16 += 0xA0;
             scale[0] = 0.01953125f;
             scale[1] = 0.0390625f;
         } else {
             code = text[index];
-            *((u64 *)cursor)++ = *D_00420DC0[code / 625];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[code / 625];
             code %= 625;
             top.f.lo16 = bottom.f.lo16;
             bottom.f.lo16 += 0x140;
@@ -1370,13 +1371,13 @@ s32 MenuText_DrawWrapped(u16 *text, s32 limit) {
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
-            *((u64 *)cursor)++ = *D_00420DC0[1];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[1];
             scale[0] = 0.01953125f;
             scale[1] = 0.0390625f;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
         } else {
             glyph = text[i];
-            *((u64 *)cursor)++ = *D_00420DC0[(glyph / 625) % 2]; // match: % 2, not & 1
+            *((u64 *)cursor)++ = *menu_font_page_tex0[(glyph / 625) % 2]; // match: % 2, not & 1
             glyph %= 625;
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
@@ -1497,12 +1498,12 @@ s32 MenuText_DrawWrappedLong(u16 *text, s32 limit) {
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
-            *((u64 *)cursor)++ = *D_00420DC0[1];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[1];
             scale[0] = 0.01953125f;
             scale[1] = 0.0390625f;
         } else {
             glyph = text[i];
-            *((u64 *)cursor)++ = *D_00420DC0[(glyph / 625) % 2]; // match: % 2, not & 1
+            *((u64 *)cursor)++ = *menu_font_page_tex0[(glyph / 625) % 2]; // match: % 2, not & 1
             glyph %= 625;
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
@@ -1598,14 +1599,14 @@ s32 MenuText_DrawLine(u16 *text, s32 limit) {
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
-            *((u64 *)cursor)++ = *D_00420DC0[1];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[1];
             scale[0] = 0.01953125f;
             scale[1] = 0.0390625f;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
         } else {
             glyph = text[i];
             top_left.pos_x = bottom_right.pos_x;
-            *((u64 *)cursor)++ = *D_00420DC0[glyph / 625];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[glyph / 625];
             glyph %= 625;
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
@@ -1716,14 +1717,14 @@ s32 MenuText_DrawLineShortened(u16 *text, s32 limit) {
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
-            *((u64 *)cursor)++ = *D_00420DC0[1];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[1];
             scale[0] = 0.01953125f;
             scale[1] = 0.0390625f;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
         } else {
             glyph = text[i];
             top_left.pos_x = bottom_right.pos_x;
-            *((u64 *)cursor)++ = *D_00420DC0[glyph / 625];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[glyph / 625];
             glyph %= 625;
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
@@ -1825,14 +1826,14 @@ s32 MenuText_DrawLineCentered(u16 *text, s32 limit) {
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
-            *((u64 *)cursor)++ = *D_00420DC0[1];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[1];
             scale[0] = 0.01953125f;
             scale[1] = 0.0390625f;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
         } else {
             glyph = text[i];
             top_left.pos_x = bottom_right.pos_x;
-            *((u64 *)cursor)++ = *D_00420DC0[glyph / 625];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[glyph / 625];
             glyph %= 625;
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
@@ -1946,14 +1947,14 @@ static s32 MenuText_DrawWordWrapped(u16 *text, s32 limit) {
             glyph_column = glyph % 50;
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
-            *((u64 *)cursor)++ = *D_00420DC0[1];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[1];
             scale[0] = 0.01953125f;
             scale[1] = 0.0390625f;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
         } else {
             glyph = text[i];
             top_left.pos_x = bottom_right.pos_x;
-            *((u64 *)cursor)++ = *D_00420DC0[glyph / 625];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[glyph / 625];
             glyph %= 625;
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
@@ -2075,7 +2076,7 @@ s32 MenuText_DrawWordWrappedLong(u16 *text, s32 limit) {
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
-            *((u64 *)cursor)++ = *D_00420DC0[1];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[1];
             scale[0] = 0.01953125f;
             scale[1] = 0.0390625f;
         } else if (text[i] == 0x8000) {
@@ -2086,12 +2087,12 @@ s32 MenuText_DrawWordWrappedLong(u16 *text, s32 limit) {
             glyph_row = glyph / 50;
             top_left.pos_x = bottom_right.pos_x;
             bottom_right.pos_x += (s32)text_glyph_size.pos_x >> 1;
-            *((u64 *)cursor)++ = *D_00420DC0[1];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[1];
             scale[0] = 0.01953125f;
             scale[1] = 0.0390625f;
         } else {
             glyph = text[i];
-            *((u64 *)cursor)++ = *D_00420DC0[glyph / 625];
+            *((u64 *)cursor)++ = *menu_font_page_tex0[glyph / 625];
             glyph %= 625;
             glyph_column = glyph % 25;
             glyph_row = glyph / 25;
@@ -2213,8 +2214,8 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
     sceVu0RotMatrixY(scratch->world, scratch->world, part->rotation[1]);
     sceVu0TransMatrix(scratch->world, scratch->world, part->position);
     sceVu0MulMatrix(scratch->world, (void *)parent, scratch->world);
-    sceVu0MulMatrix(scratch->screen, D_0042B7D0, scratch->world);
-    sceVu0MulMatrix(scratch->light, scratch->world, D_00428C10);
+    sceVu0MulMatrix(scratch->screen, menu_view_screen_matrix, scratch->world);
+    sceVu0MulMatrix(scratch->light, scratch->world, menu_model_light_directions);
     __asm__ volatile("lqc2 $vf12, 0x0(%0)\n"
                      "lqc2 $vf13, 0x10(%0)\n"
                      "lqc2 $vf14, 0x20(%0)\n"
@@ -2235,7 +2236,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
                      "lqc2 $vf9, 0x10(%0)\n"
                      "lqc2 $vf10, 0x20(%0)\n"
                      "lqc2 $vf11, 0x30(%0)\n"
-                     : : "r"(D_00428BD0));
+                     : : "r"(menu_model_light_colors));
     __asm__ volatile("vaddw.xyzw $vf20, $vf0, $vf0w\n"
                      "vdiv Q, $vf0w, $vf20w\n"
                      "vmul.xyzw $vf21, $vf0, $vf0\n"
@@ -2439,8 +2440,8 @@ void PoolPart_Draw(PoolPart *part, s32 parent) {
     sceVu0RotMatrixY(scratch->world, scratch->world, part->rotation[1]);
     sceVu0TransMatrix(scratch->world, scratch->world, part->position);
     sceVu0MulMatrix(scratch->world, (void *)parent, scratch->world);
-    sceVu0MulMatrix(scratch->screen, D_0042B7D0, scratch->world);
-    sceVu0MulMatrix(scratch->light, scratch->world, D_00428C10);
+    sceVu0MulMatrix(scratch->screen, menu_view_screen_matrix, scratch->world);
+    sceVu0MulMatrix(scratch->light, scratch->world, menu_model_light_directions);
     __asm__ volatile("lqc2 $vf12, 0x0(%0)\n"
                      "lqc2 $vf13, 0x10(%0)\n"
                      "lqc2 $vf14, 0x20(%0)\n"
@@ -2461,7 +2462,7 @@ void PoolPart_Draw(PoolPart *part, s32 parent) {
                      "lqc2 $vf9, 0x10(%0)\n"
                      "lqc2 $vf10, 0x20(%0)\n"
                      "lqc2 $vf11, 0x30(%0)\n"
-                     : : "r"(D_00428BD0));
+                     : : "r"(menu_model_light_colors));
     __asm__ volatile("vaddw.xyzw $vf20, $vf0, $vf0w\n"
                      "vdiv Q, $vf0w, $vf20w\n"
                      "vmul.xyzw $vf21, $vf0, $vf0\n"
@@ -2677,8 +2678,8 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
     if (record != NULL) {
         scratch->parent_point_count = record->unk00;
         scratch->parent_normal_count = record->unk04;
-        sceVu0MulMatrix(scratch->screen, D_0042B7D0, POOL(slot)->unk40);
-        sceVu0MulMatrix(scratch->light, POOL(slot)->unk40, D_00428C10);
+        sceVu0MulMatrix(scratch->screen, menu_view_screen_matrix, POOL(slot)->unk40);
+        sceVu0MulMatrix(scratch->light, POOL(slot)->unk40, menu_model_light_directions);
         __asm__ volatile("lqc2 $vf12, 0x0(%0)\n"
                          "lqc2 $vf13, 0x10(%0)\n"
                          "lqc2 $vf14, 0x20(%0)\n"
@@ -2697,7 +2698,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
                          "lqc2 $vf9, 0x10(%0)\n"
                          "lqc2 $vf10, 0x20(%0)\n"
                          "lqc2 $vf11, 0x30(%0)\n"
-                         : : "r"(D_00428BD0));
+                         : : "r"(menu_model_light_colors));
         __asm__ volatile("vaddw.xyzw $vf20, $vf0, $vf0w\n"
                          "vdiv Q, $vf0w, $vf20w\n"
                          "vmul.xyzw $vf21, $vf0, $vf0\n"
@@ -2741,8 +2742,8 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
         }
         scratch->normal_index = scratch->parent_normal_count;
     }
-    sceVu0MulMatrix(scratch->screen, D_0042B7D0, slot);
-    sceVu0MulMatrix(scratch->light, slot, D_00428C10);
+    sceVu0MulMatrix(scratch->screen, menu_view_screen_matrix, slot);
+    sceVu0MulMatrix(scratch->light, slot, menu_model_light_directions);
     __asm__ volatile("lqc2 $vf12, 0x0(%0)\n"
                      "lqc2 $vf13, 0x10(%0)\n"
                      "lqc2 $vf14, 0x20(%0)\n"
@@ -2761,7 +2762,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
                      "lqc2 $vf9, 0x10(%0)\n"
                      "lqc2 $vf10, 0x20(%0)\n"
                      "lqc2 $vf11, 0x30(%0)\n"
-                     : : "r"(D_00428BD0));
+                     : : "r"(menu_model_light_colors));
     __asm__ volatile("vaddw.xyzw $vf20, $vf0, $vf0w\n"
                      "vdiv Q, $vf0w, $vf20w\n"
                      "vmul.xyzw $vf21, $vf0, $vf0\n"
@@ -2987,7 +2988,7 @@ static void PoolSlot_SetAllParts(PoolPartFile *file) {
     u32 i;
 
     for (i = 0; i < 21; i++) {
-        D_0042A8F0[i].part = &file->parts[i];
+        pool_slots[i].part = &file->parts[i];
     }
 }
 
@@ -3007,32 +3008,32 @@ void PoolSlot_SetGroupParts(PoolPartFile *file, s32 group) {
     if (group != 5) {
         part = file->parts;
         for (i = 0; i < group_sizes[group]; i++) {
-            D_0042A8F0[groups[group][i]].part = part;
+            pool_slots[groups[group][i]].part = part;
             part++;
         }
     } else {
         for (i = 0; i < group_sizes[group]; i++) {
-            D_0042A8F0[groups[group][i]].part = NULL;
+            pool_slots[groups[group][i]].part = NULL;
         }
     }
 }
 
-/* Chains the 32 pool slots into the free list D_00446DF0 and points D_0042B740[0] at D_0042B760. */
+/* Chains the 32 pool slots into the free list pool_slot_free_list and points D_0042B740[0] at D_0042B760. */
 static void PoolSlot_InitFreeList(void) {
     PoolSlot **link;
     PoolSlot *next_slot;
     s32 i;
 
     D_0042B740[0] = D_0042B760;
-    D_00446DF0 = D_0042A8F0;
-    link = &D_0042A8F0[0].next;
-    next_slot = D_0042A8F0 + 1;
+    pool_slot_free_list = pool_slots;
+    link = &pool_slots[0].next;
+    next_slot = pool_slots + 1;
     for (i = 0x1F; i != 0; i--) {
         *link = next_slot;
         link += sizeof(PoolSlot) / sizeof(PoolSlot *); // match: steps the next pointer one slot on
         next_slot++;
     }
-    D_0042A8F0[31].next = NULL;
+    pool_slots[31].next = NULL;
 }
 
 /* Uploads a group's texture to its place in GS memory and gives the group's slots the file's parts. */
@@ -3071,25 +3072,25 @@ void PoolSlot_LoadGroup(PoolPartSource *source, u32 group) {
         for (i = 0; i < group_sizes[group]; i++) {
             slots = groups[group];
             remaining = group_sizes[group] - i;
-            D_0042A8F0[slots[i]].part = part;
+            pool_slots[slots[i]].part = part;
             // match: tex0 and unk18 go across as one 16-byte struct
-            POOL_SLOT_REGISTERS(&D_0042A8F0[slots[i]]) = *(PoolSlotRegisters *)&texture->tex0;
+            POOL_SLOT_REGISTERS(&pool_slots[slots[i]]) = *(PoolSlotRegisters *)&texture->tex0;
             record = (PoolPartRecord *)((char *)file + (s32)file->records_end) - remaining;
             if (record->unk00 > 0) {
-                D_0042A8F0[slots[i]].unk48 = record;
-                D_0042A8F0[slots[i]].unk40 = &D_0042A8F0[slots[record->unk08]];
+                pool_slots[slots[i]].unk48 = record;
+                pool_slots[slots[i]].unk40 = &pool_slots[slots[record->unk08]];
             } else {
-                D_0042A8F0[slots[i]].unk48 = NULL;
-                D_0042A8F0[slots[i]].unk40 = NULL;
+                pool_slots[slots[i]].unk48 = NULL;
+                pool_slots[slots[i]].unk40 = NULL;
             }
             part++;
         }
     } else {
         part = file->parts;
-        D_0042A8F0[groups[group][0]].part = part;
-        POOL_SLOT_REGISTERS(&D_0042A8F0[groups[group][0]]) = *(PoolSlotRegisters *)&texture->tex0; // match: as above
-        D_0042A8F0[groups[group][0]].unk48 = NULL;
-        D_0042A8F0[groups[group][0]].unk40 = NULL;
+        pool_slots[groups[group][0]].part = part;
+        POOL_SLOT_REGISTERS(&pool_slots[groups[group][0]]) = *(PoolSlotRegisters *)&texture->tex0; // match: as above
+        pool_slots[groups[group][0]].unk48 = NULL;
+        pool_slots[groups[group][0]].unk40 = NULL;
     }
 }
 
@@ -3098,7 +3099,7 @@ s32 PoolSlot_ClearParts(void) {
     u32 i;
 
     for (i = 0; i < 32; i++) {
-        D_0042A8F0[i].part = NULL;
+        pool_slots[i].part = NULL;
     }
     return TRUE;
 }
@@ -3311,16 +3312,16 @@ static s32 MenuFile_LoadHostBlock(const char *name, void *buffer) {
     return 1;
 }
 
-/* Notes the blocks of the loaded menu file: how many in D_00446DEC, and where each one is in D_0042A2A0. */
+/* Notes the blocks of the loaded menu file: how many in menu_file_block_count, and where each one is in menu_file_blocks. */
 void MenuFile_IndexBlocks(char *file) {
     TextureTableEntry *entries = (TextureTableEntry *)(file + sizeof(TextureTableHeader));
     int i;
     int count = ((TextureTableHeader *)file)->entry_count;
 
-    D_00446DEC = count;
+    menu_file_block_count = count;
     for (i = 0; i < count; i++) {
         s32 offset = entries[i].offset;
-        LoadedBlockRef *block = &D_0042A2A0[i];
+        LoadedBlockRef *block = &menu_file_blocks[i];
 
         block->data = (char *)(offset + (s32)file);
     }
@@ -3396,9 +3397,9 @@ static void MenuTexture_UploadInStrips(TextureHeader *header) {
     int clut_width;
     int clut_height;
 
-    // match: D_00420DC0 is a table of pointers; its address is never NULL and the store overwrites two of them
-    if (D_00420DC0 != NULL) {
-        *(u64 *)D_00420DC0 = header->tex0;
+    // match: menu_font_page_tex0 is a table of pointers; its address is never NULL and the store overwrites two of them
+    if (menu_font_page_tex0 != NULL) {
+        *(u64 *)menu_font_page_tex0 = header->tex0;
     }
     image = (char *)header + sizeof(TextureHeader);
     strip_rows = 131068.0f / (((f32)(u32)header->data_offset - 16.0f) / width);
@@ -3895,26 +3896,26 @@ static SpritePacket *MenuSprite_ShowIfOptionChosen(SpritePacket *packet) {
         break;
     case 2:
     case 3:
-        if (packet->slot - 2 == D_00349685[0]) {
+        if (packet->slot - 2 == head_bob_option[0]) {
             return packet;
         }
         break;
     case 4:
     case 5:
-        if (packet->slot - 4 == D_00349686[0]) {
+        if (packet->slot - 4 == rumble_option[0]) {
             return packet;
         }
         break;
     case 6:
     case 7:
-        if (packet->slot - 6 == D_00349689[0]) {
+        if (packet->slot - 6 == hud_option[0]) {
             return packet;
         }
         break;
     case 8:
     case 9:
     case 10:
-        if (packet->slot - 8 == D_00349688[0]) {
+        if (packet->slot - 8 == menu_backdrop_option[0]) {
             return packet;
         }
         break;
@@ -4000,21 +4001,21 @@ static SpritePacket *MenuSprite_PulseYellow(SpritePacket *packet, int slot) {
     copy = *packet;
 
     if (packet->slot == slot) {
-        if (D_00446C08 == 0) {
-            D_00446C04 += 0.8f;
-            if (D_00446C04 > 128.0f) {
-                D_00446C04 = 128.0f;
-                D_00446C08 = 1;
+        if (pulse_sprite_falling == 0) {
+            pulse_sprite_alpha += 0.8f;
+            if (pulse_sprite_alpha > 128.0f) {
+                pulse_sprite_alpha = 128.0f;
+                pulse_sprite_falling = 1;
             }
         } else {
-            D_00446C04 -= 0.8f;
-            if (D_00446C04 < 80.0f) {
-                D_00446C04 = 80.0f;
-                D_00446C08 = 0;
+            pulse_sprite_alpha -= 0.8f;
+            if (pulse_sprite_alpha < 80.0f) {
+                pulse_sprite_alpha = 80.0f;
+                pulse_sprite_falling = 0;
             }
         }
         copy.red = 0xFF;
-        copy.alpha = (char)D_00446C04;
+        copy.alpha = (char)pulse_sprite_alpha;
         copy.blue = 0x78;
         copy.green = 0xFF;
     }
@@ -4027,23 +4028,23 @@ static SpritePacket *MenuSprite_PulseBlue(SpritePacket *packet, int slot) {
     copy = *packet;
 
     if (packet->slot == slot) {
-        if (D_00446C08 == 0) {
-            D_00446C04 += 0.8f;
-            if (D_00446C04 > 128.0f) {
-                D_00446C04 = 128.0f;
-                D_00446C08 = 1;
+        if (pulse_sprite_falling == 0) {
+            pulse_sprite_alpha += 0.8f;
+            if (pulse_sprite_alpha > 128.0f) {
+                pulse_sprite_alpha = 128.0f;
+                pulse_sprite_falling = 1;
             }
         } else {
-            D_00446C04 -= 0.8f;
-            if (D_00446C04 < 80.0f) {
-                D_00446C04 = 80.0f;
-                D_00446C08 = 0;
+            pulse_sprite_alpha -= 0.8f;
+            if (pulse_sprite_alpha < 80.0f) {
+                pulse_sprite_alpha = 80.0f;
+                pulse_sprite_falling = 0;
             }
         }
         copy.red = 0x7A;
         copy.green = 0x99;
         copy.blue = 0xC2;
-        copy.alpha = (char)D_00446C04;
+        copy.alpha = (char)pulse_sprite_alpha;
     }
     return &copy;
 }
@@ -4208,7 +4209,7 @@ static SpritePacket *MenuSprite_TintShortfall(SpritePacket *packet) {
     return &copy;
 }
 
-/* Builds the menu's buttons for this frame in D_00446DE8: what was pressed, the held shoulder buttons, and the
+/* Builds the menu's buttons for this frame in menu_buttons: what was pressed, the held shoulder buttons, and the
    directions as repeating steps, from the directional buttons and, in analog mode, from the left stick. */
 s16 MenuPad_Update(void) {
     PadReport *report = Pad_GetReport(0, 0);
@@ -4217,21 +4218,21 @@ s16 MenuPad_Update(void) {
     int mode;
     u16 stick;
 
-    D_00446DE8 = report->pressed & 0xFF0F;
-    D_00446DE8 |= report->held & 0xF00;
+    menu_buttons = report->pressed & 0xFF0F;
+    menu_buttons |= report->held & 0xF00;
     horizontal = MenuPad_StepHorizontal(1);
     vertical = MenuPad_StepVertical(1);
     if (horizontal > 0) {
-        D_00446DE8 |= 0x20;
+        menu_buttons |= 0x20;
     }
     if (horizontal < 0) {
-        D_00446DE8 |= 0x80;
+        menu_buttons |= 0x80;
     }
     if (vertical > 0) {
-        D_00446DE8 |= 0x10;
+        menu_buttons |= 0x10;
     }
     if (vertical < 0) {
-        D_00446DE8 |= 0x40;
+        menu_buttons |= 0x40;
     }
     mode = Pad_GetMode(0, 0);
     if (mode == 1 && ((PadReportAxes *)report)->left_stick != 0) {
@@ -4252,23 +4253,23 @@ s16 MenuPad_Update(void) {
             horizontal = MenuPad_StepHorizontalFrom(1, stick);
             vertical = MenuPad_StepVerticalFrom(1, stick);
             if (horizontal > 0) {
-                D_00446DE8 |= 0x20;
+                menu_buttons |= 0x20;
             }
             if (horizontal < 0) {
-                D_00446DE8 |= 0x80;
+                menu_buttons |= 0x80;
             }
             if (vertical > 0) {
-                D_00446DE8 |= 0x10;
+                menu_buttons |= 0x10;
             }
             if (vertical < 0) {
-                D_00446DE8 |= 0x40;
+                menu_buttons |= 0x40;
             }
         }
     }
     if (mode == 0xFF) {
-        D_00446DE8 = 0;
+        menu_buttons = 0;
     }
-    return D_00446DE8;
+    return menu_buttons;
 }
 
 /* the directional buttons' right and left */
@@ -4448,13 +4449,13 @@ static s32 stick_vertical_idle_frames = 0;  /* 0x446DE0 */
 static s32 stick_vertical_held_frames = 0;  /* 0x446DE4 */
 
 /* 0x446DE8 the buttons this frame, as the menus read them (MenuPad_Update) */
-u16 D_00446DE8 = 0;
+u16 menu_buttons = 0;
 
 /* 0x446DEC how many blocks the loaded menu file has (MenuFile_IndexBlocks) */
-int D_00446DEC = 0;
+int menu_file_block_count = 0;
 
 /* 0x446DF0 the head of the pool slots' free list */
-void *D_00446DF0 = NULL;
+void *pool_slot_free_list = NULL;
 
 /* 0x446DF4 to 0x446E80 the numbers a menu sprite can stand for (MenuDraw_GetNumber) */
 s32 D_00446DF4 = 0;                 /* 0x446DF4 numbers 44 to 54: set by the screen that shows them */

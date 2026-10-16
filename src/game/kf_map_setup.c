@@ -33,8 +33,8 @@ void *MapItem_GetFixedById(int);
 extern MapSlot map_slots[];
 extern u8 map_script_flags[];
 extern u8 entity_group_state[];
-extern u8 D_0034B69C[];
-extern u8 D_0034B696[];
+extern u8 forge_door_open[];
+extern u8 forge_stage[];
 extern u8 D_00349D55[];
 extern f32 map_record_height[];
 extern u8 D_00349F56[];
@@ -171,7 +171,7 @@ void MapSetup_Armory(int map) {
 void MapSetup_Forge017(int map) {
     MapObject *object;
 
-    if (D_0034B69C[0] != 0) {
+    if (forge_door_open[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
             object->unk10 |= 0x20000;
@@ -183,7 +183,7 @@ void MapSetup_Forge017(int map) {
 void MapSetup_Forge018(int map) {
     MapObject *object;
 
-    if (D_0034B69C[0] != 0) {
+    if (forge_door_open[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
             object->unk10 |= 0x20000;
@@ -195,7 +195,7 @@ void MapSetup_Forge018(int map) {
 void MapSetup_Forge019(int map) {
     MapObject *object;
 
-    if (D_0034B69C[0] != 0) {
+    if (forge_door_open[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
             object->unk10 |= 0x20000;
@@ -222,7 +222,7 @@ void MapSetup_EarthFolksVillage(int map) {
     MapSlotUnk0CValues *block;
     MapSlotUnk10 *light;
 
-    switch (D_0034B696[0]) {
+    switch (forge_stage[0]) {
     case 0:
         target = Map_GetRecordById(map, 0x33);
         show_found_record(target);
@@ -277,7 +277,7 @@ void MapSetup_CavernOfLava(int map) {
     MapSlotUnk0CValues *fog;
     MapSlotUnk10Lights *lights;
 
-    if (D_0034B696[0] == 0) {
+    if (forge_stage[0] == 0) {
         ((MapSlotUnk0CValues *)slot->unk0C)[5].unk00 = ((MapSlotUnk0CValues *)slot->unk0C)[5].unk04 = 0.0f;
         ((MapSlotUnk0CValues *)slot->unk0C)[5].unk08 = -28.333328f;
         ((MapSlotUnk0CValues *)slot->unk0C)[5].unk0C = 113333.336f;
@@ -336,7 +336,7 @@ void MapSetup_FireLordsDomain(int map) {
     f32 position[4];
     f32 rotation[4];
 
-    if (D_0034B696[0] != 2) {
+    if (forge_stage[0] != 2) {
         hide_record(map, 0x42);
         hide_record(map, 0x43);
         hide_record(map, 0x44);

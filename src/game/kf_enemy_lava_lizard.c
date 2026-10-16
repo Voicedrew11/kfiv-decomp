@@ -17,7 +17,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -106,7 +106,7 @@ static void LavaLizard_Think(Entity *entity, s32 unknown) {
     if (entity->flags & (0xD000L << 33)) {
         unkE0->unk7A = entity->params->unk438;
     }
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {
@@ -161,7 +161,7 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown) {
         entity->unkCF = entity->unkCD;
         entity->unkCD = side;
         if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+            entity->unk9E = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->unkCD) {
@@ -285,7 +285,7 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
         } else {
             unkE0->unk1C = 0.0f;
         }
-        if (entity->model->unkFC->unk82 >= 50 && entity->model->unkFC->unk82 <= 150 && (D_00446ED4 & 1)) {
+        if (entity->model->unkFC->unk82 >= 50 && entity->model->unkFC->unk82 <= 150 && (frame_counter & 1)) {
             EntityAi_LaunchShots(entity, unk3D8, 50, 150);
         }
         if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
@@ -313,7 +313,7 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
 static void LavaLizard_ThinkNoStates(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->unkC6 == 0) {

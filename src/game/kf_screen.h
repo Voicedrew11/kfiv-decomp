@@ -42,7 +42,7 @@ typedef struct {
     f32 phase;                      /* 0x0C */
 } WaveOscillator;
 
-/* what D_00446978 points at */
+/* what held_item_model_ptr points at */
 typedef struct {
     char pad00[0x82];
     u16 unk82;                      /* 0x82 */
@@ -53,7 +53,7 @@ typedef struct {
     DisplaySettings *settings;      /* 0xFC */
 } DisplayContext;
 
-/* the nodes Map_InsertRecordBySize sorts into the lists D_00446788 and D_0044678C by box area */
+/* the nodes Map_InsertRecordBySize sorts into the lists record_boxes and backdrop_record_boxes by box area */
 typedef struct AreaNode {
     char pad00[0x3C];
     s32 flags;                      /* 0x3C bit 25 skips insertion, bit 31 picks the second list */

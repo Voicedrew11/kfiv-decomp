@@ -105,22 +105,22 @@ void Collision_DropOnTriangleWithin(void *, void *, void *, void *, f32);
 
 extern f32 D_00446980[];
 extern const f32 D_00446984[];
-extern int D_00446770;
+extern int current_map_slot;
 extern MapSlot map_slots[2];
 extern const f32 D_00446988[];
 extern const f32 D_0044698C[];
 extern s32 strip_list_indices[4];
 extern const f32 D_00446990[];
 extern const f32 D_00446994[];
-extern ModelInstanceBlock *D_00432224[];
-extern s32 D_00446998[2];
+extern ModelInstanceBlock *map_slot_record_models[];
+extern s32 segment_strip_lists[2];
 extern const f32 D_004469A0[];
-extern s32 D_004467A8[2];
-extern s32 D_004467B8[2];
+extern s32 map_objects_started[2];
+extern s32 map_object_counts[2];
 extern MapObject map_slot_objects[];
-extern MapObject D_003AFA30[];
+extern MapObject map_slot1_objects[];
 extern PlayerState player_state;
-extern char D_0043F5E8[];
+extern char hit_sphere_pitfall_message[];
 extern f32 D_004469AC[];    /* the largest float; an array so that it is not read through $gp */
 extern f32 D_004469B0[];    /* the largest float; an array so that it is not read through $gp */
 extern f32 D_004469B4[];    /* the largest float; an array so that it is not read through $gp */
@@ -279,7 +279,7 @@ int Collision_FindFloorBelow(f32 reach, void *point_arg) {
     lowest = D_00446988[0];
     found = FALSE;
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
+        slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];
         if (slot->unk00 != 0) {
             record_count = slot->header->record_count;
             record = (MapRecordBounds *)slot->records;
@@ -352,7 +352,7 @@ int Collision_FindWaterBelow(f32 reach, void *point_arg) {
     lowest = D_0044698C[0];
     found = FALSE;
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
+        slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];
         if (slot->unk00 != 0) {
             record_count = slot->header->record_count;
             record = (MapRecordBounds *)slot->records;
@@ -430,7 +430,7 @@ void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction) {
     best.result.distance = D_00446990[0];
     for (map = 0; map < 2; map++) {
         slot = map_slots;
-        if (D_00446770 != map) {
+        if (current_map_slot != map) {
             slot++;
         }
         if (slot->unk00 != 0) {
@@ -531,7 +531,7 @@ void Collision_CastRayAtMapLists(f32 scale, void *position_arg, void *direction,
     best.result.distance = D_00446994[0];
     for (map = 0; map < 2; map++) {
         slot = map_slots;
-        if (D_00446770 != map) {
+        if (current_map_slot != map) {
             slot++;
         }
         if (slot->unk00 != 0) {
@@ -609,7 +609,7 @@ void Collision_CastRayAtMapLists(f32 scale, void *position_arg, void *direction,
 }
 
 /* Sweeps a point from `position` to `target` through the loaded maps' records and leaves the
-   nearest hit in the scratchpad result. Two of each mesh's strip lists are tested (D_00446998
+   nearest hit in the scratchpad result. Two of each mesh's strip lists are tested (segment_strip_lists
    names them); a strip's triangles alternate in winding. */
 void Collision_CastSegmentAtMap(f32 *position, f32 *target) {
     f32 direction[4];
@@ -639,13 +639,13 @@ void Collision_CastSegmentAtMap(f32 *position, f32 *target) {
     best.distance = D_004469A0[0];
     for (map = 0; map < 2; map++) {
         slot = map_slots;
-        if (D_00446770 != map) {
+        if (current_map_slot != map) {
             slot++;
         }
         if (slot->unk00 != 0) {
             record_count = slot->header->record_count;
             record = (MapRecordBounds *)slot->records;
-            model = D_00432224[D_00446770 == map ? 0 : 22];
+            model = map_slot_record_models[current_map_slot == map ? 0 : 22];
             for (i = 0; i < record_count; i++, model++, record++) {
                 if (model->model.strips == NULL) {
                     continue;
@@ -678,8 +678,8 @@ void Collision_CastSegmentAtMap(f32 *position, f32 *target) {
                 Collision_TransformMeshPoints(model);
                 for (list = 0; list < 2; list++) {
                     mesh = (CollisionMeshLists *)model->model.strips;
-                    strips_left = mesh->strip_counts[D_00446998[list]];
-                    strip = mesh->strip_lists[D_00446998[list]];
+                    strips_left = mesh->strip_counts[segment_strip_lists[list]];
+                    strip = mesh->strip_lists[segment_strip_lists[list]];
                     while (--strips_left != -1) {
                         strip_point = strip->points;
                         points_left = strip->point_count - 2;
@@ -885,9 +885,9 @@ void Collision_HitFanObj(MapObject *object, Vector4 *origin, f32 radius, f32 pus
 
 /* the objects of the current map (map 0) or the other loaded one (map 1), which the game inlines */
 static inline MapObject *map_objects(s32 map) {
-    if (D_004467A8[D_00446770 == map ? 0 : 1] != 0) {
-        if (D_00446770 != map) {
-            return D_003AFA30;
+    if (map_objects_started[current_map_slot == map ? 0 : 1] != 0) {
+        if (current_map_slot != map) {
+            return map_slot1_objects;
         }
         return map_slot_objects;
     }
@@ -895,8 +895,8 @@ static inline MapObject *map_objects(s32 map) {
 }
 
 static inline s32 map_object_count(s32 map) {
-    if (D_004467A8[D_00446770 == map ? 0 : 1] != 0) {
-        return D_004467B8[D_00446770 == map ? 0 : 1];
+    if (map_objects_started[current_map_slot == map ? 0 : 1] != 0) {
+        return map_object_counts[current_map_slot == map ? 0 : 1];
     }
     return 0;
 }
@@ -1742,12 +1742,12 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
         }
         Collision_PointTriangle(corner0, corner1, corner2, (int)point, reach);
         if (COLLISION_RESULT->hit != 0) {
-            puts(D_0043F5E8);
+            puts(hit_sphere_pitfall_message);
             return;
         }
         Collision_PointTriangle(corner0, corner2, corner3, (int)point, reach);
         if (COLLISION_RESULT->hit != 0) {
-            puts(D_0043F5E8);
+            puts(hit_sphere_pitfall_message);
             return;
         }
     }
