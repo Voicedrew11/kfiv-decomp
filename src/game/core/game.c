@@ -1064,11 +1064,11 @@ void Game_DrawDepthTestSprite(void) {
         texture_base = 0;
     }
     pad_buttons = Pad_GetReport(1, 0)->held;
-    if (pad_buttons & 0x400) {
+    if (pad_buttons & PAD_L1) {
         depth_test_sprite_z += 0xFF;
         printf(z_value_format, depth_test_sprite_z);
     }
-    if (pad_buttons & 0x100) {
+    if (pad_buttons & PAD_L2) {
         depth_test_sprite_z -= 0xFF;
         printf(z_value_format, depth_test_sprite_z);
     }

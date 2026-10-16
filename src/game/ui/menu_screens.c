@@ -435,10 +435,10 @@ s32 MenuDraw_SetGsRegister(int, s64);
     first += second;                                            \
     second += first
 #define GIF_SEND(packet, count)                                 \
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));          \
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)); \
     *D2_QWC = count;                                            \
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;                                              \
-    *D2_CHCR = 0x100
+    *D2_CHCR = D_CHCR_STR
 #define RESET_ALPHAS(parts, count)                                                                   \
     for (i = 0; i < count; i++) {                                                                    \
         alpha = parts[i].alpha;                                                                      \
@@ -2247,10 +2247,10 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         packet[42] = 0x3F;
         packet[43] = 0;
         packet[0] = 0x800A;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 11;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
         context2_buffer_half = context1_buffer_half = 1;
     }
     menu_run_step = 0;
@@ -2391,10 +2391,10 @@ static void Menu_SendUnusedFlatSprite(void) {
     (cursor++)->as_int = 0x41;
     (cursor++)->as_int = 0;
     packet[0].as_int = 0x8000 | ((cursor - packet) / 4 - 1);
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* Sends a fifteen-quadword packet: GS settings, one textured sprite, GS settings again. Nothing calls it. */
@@ -2465,10 +2465,10 @@ static void Menu_SendUnusedSpriteFirst(void) {
     (cursor++)->as_int = 0x42;
     (cursor++)->as_int = 0;
     packet[0].as_int = 0x8000 | ((cursor - packet) / 4 - 1);
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* As Menu_SendUnusedSpriteFirst, with the sprite at another place. Nothing calls it. */
@@ -2539,10 +2539,10 @@ static void Menu_SendUnusedSpriteSecond(void) {
     (cursor++)->as_int = 0x42;
     (cursor++)->as_int = 0;
     packet[0].as_int = 0x8000 | ((cursor - packet) / 4 - 1);
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* Draws the menu's item model with the matrix given: sends a three-quadword packet of GS settings,
@@ -2563,10 +2563,10 @@ int Menu_DrawItemModel(f32 *matrix) { // match: callers declare an int result; n
     packet[9] = 0;
     packet[10] = 0x43;
     packet[11] = 0;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 3;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     DRAW_NODE_MODEL(&model_load_shown, matrix, menu_draw_color);
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
 }
@@ -2683,10 +2683,10 @@ static s32 Menu_CopyFrameToTexture(void) {
         packet[102] = 0x42;
         packet[103] = 0;
         packet[0] = 0x8019;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 26;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
     }
     sceGsSyncPath(0, 0);
     menu_run_step++;
@@ -2710,7 +2710,7 @@ s32 Menu_EndFrame(s32 run_handler) {
     menu_frame_ticks = Timer_GetTicks();
     even_field = sceGsSyncV(0) == 0;
     Timer_Restart();
-    if (menu_buttons & 0x100) {
+    if (menu_buttons & PAD_L2) {
         D_00447208++;
     }
     D_00447208 %= 3;
@@ -2753,10 +2753,10 @@ static void Menu_DrawBackdropPlain(void) {
         *(f32 *)&packet[15] = 0.4375f;
         packet[16] = 0x87009400;
         packet[17] = 1;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 5;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
         sceGsSyncPath(0, 0);
         packet = MenuDraw_NextPacket();
         packet[0] = 0x8001;
@@ -2771,10 +2771,10 @@ static void Menu_DrawBackdropPlain(void) {
         packet[9] = 2;
         packet[10] = 0x87009400;
         packet[11] = 2;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
     }
 }
 
@@ -2845,10 +2845,10 @@ static s32 Menu_Start(void) {
     packet[5] = 0;
     packet[6] = 0x3F;
     packet[7] = 0;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 2;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     if (menu_mode == 0) {
         equip_group_shown = 0;
         Menu_BuildItemRings();
@@ -2962,13 +2962,13 @@ static void Menu_UpdateMain(HandlerContext *context) {
     u8 kind;
 
     line_count = 7;
-    if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_UP) && menu_input_enabled != 0) {
         main_menu_line--;
         Sound_PlayMenu(1);
-    } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_DOWN) && menu_input_enabled != 0) {
         main_menu_line++;
         Sound_PlayMenu(1);
-    } else if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0) {
         if ((Menu_OwnsAnyItem() == 0 && main_menu_line == 5) || (Menu_KnowsCastableSpell() == 0 && main_menu_line == 1)) {
             Sound_PlayMenu(3);
         } else {
@@ -2981,7 +2981,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
                 }
             }
         }
-    } else if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         menu_input_enabled = 0;
         main_menu_state = 3;
         Sound_PlayMenu(2);
@@ -3218,7 +3218,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
             MenuText_DrawWordWrappedLong((u16 *)text, 0x33);
         }
     }
-    if ((menu_buttons & 0x4000) && menu_input_enabled != 0 && item_list_cursor[0] != NULL) {
+    if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0 && item_list_cursor[0] != NULL) {
         if (item_list_cursor[0]->unk0C < ITEM_ARROW || item_list_cursor[0]->unk0C > ITEM_WIDDAS_ARROW) {
             Sound_PlayMenu(0);
             game_status.bit6 = TRUE;
@@ -3231,14 +3231,14 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         } else {
             Sound_PlayMenu(2);
         }
-    } else if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         use_item_state = 3;
         menu_input_enabled = 0;
         if (model_load_chain != NULL) {
             model_load_chain->next = NULL;
         }
-    } else if ((menu_buttons & 0x8000) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_SQUARE) && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
         use_item_state = 4;
         menu_input_enabled = 0;
@@ -3420,12 +3420,12 @@ static void Menu_UpdateCastSpell(s32 context) {
     packet[9] = 0;
     packet[10] = 0x43;
     packet[11] = 0;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 3;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     DRAW_NODE_MODEL(&model_load_shown, local, menu_draw_color);
-    if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0) {
         if (player_state.mp_now >= ((FxTableEntry *)castable_spell_cursor[0]->unk00)->mp_cost && player_state.magic_gauge >= 5000) {
             Sound_PlayMenu(0);
             game_status.magic_to_cast = castable_spell_cursor[0]->unk0C;
@@ -3437,7 +3437,7 @@ static void Menu_UpdateCastSpell(s32 context) {
         } else {
             Sound_PlayMenu(3);
         }
-    } else if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         cast_spell_state = 2;
         menu_input_enabled = 0;
@@ -3574,12 +3574,12 @@ static void Menu_UpdateEquip(void) {
     {
     void *definition;
     SpritePacket *parts;
-    if ((menu_buttons & 0x10) && equip_model_shown != 0 && menu_input_enabled != 0 && worn_model_loading == 0) {
+    if ((menu_buttons & PAD_UP) && equip_model_shown != 0 && menu_input_enabled != 0 && worn_model_loading == 0) {
         EQUIP_LIST = EQUIP_LIST->next;
         ((void (*)(s32))Menu_ShiftEquipModelsNextList)(0); // match: called with the number alone
         equip_group_shown--;
         Sound_PlayMenu(1);
-    } else if ((menu_buttons & 0x40) && equip_model_shown != 0 && menu_input_enabled != 0 && worn_model_loading == 0) {
+    } else if ((menu_buttons & PAD_DOWN) && equip_model_shown != 0 && menu_input_enabled != 0 && worn_model_loading == 0) {
         EQUIP_LIST = EQUIP_LIST->prev;
         ((void (*)(s32))Menu_ShiftEquipModelsPrevList)(0); // match: called with the number alone
         equip_group_shown++;
@@ -3608,7 +3608,7 @@ static void Menu_UpdateEquip(void) {
         }
         SET_BLEND(0);
     }
-    if ((menu_buttons & 0x1000) && equipped_list_open == 0 && menu_input_enabled != 0
+    if ((menu_buttons & PAD_TRIANGLE) && equipped_list_open == 0 && menu_input_enabled != 0
         && Menu_IsEquipSlotFilled(index, CURRENT_ITEM->group)) {
         if (detail_panel_open == 0) {
             detail_panel_sound_pending = 1;
@@ -3620,7 +3620,7 @@ static void Menu_UpdateEquip(void) {
             equip_panel_state = 0;
         }
     }
-    if ((menu_buttons & 0x8000) && detail_panel_open == 0 && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_SQUARE) && detail_panel_open == 0 && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
         if (equipped_list_open == 0) {
             equipped_list_open = 1;
@@ -3631,9 +3631,9 @@ static void Menu_UpdateEquip(void) {
         }
     }
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    if (menu_buttons & 0x800) {
+    if (menu_buttons & PAD_R1) {
         equip_weapon_model_angle += 0.03f;
-    } else if (menu_buttons & 0x400) {
+    } else if (menu_buttons & PAD_L1) {
         equip_weapon_model_angle -= 0.03f;
     }
     equip_weapon_model_angle -= (f32)(s32)(equip_weapon_model_angle / 3.1415927f) * 6.2831855f;
@@ -4024,7 +4024,7 @@ static void Menu_UpdateEquip(void) {
             word.f.mid16 += 0xD0;
         }
     }
-    if ((menu_buttons & 0x4000) && equip_model_shown != 0 && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_CROSS) && equip_model_shown != 0 && menu_input_enabled != 0) {
         EquipGroupBytes unused_bytes = D_0043FDD0;
         f32 unused_pair[32];
 
@@ -4090,7 +4090,7 @@ pool_slots[15].part = NULL;
                 worn_model_loading = 1;
             }
         }
-    } else if ((menu_buttons & 0x2000) && equip_model_shown != 0 && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_CIRCLE) && equip_model_shown != 0 && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         equip_state = 2;
         menu_input_enabled = 0;
@@ -4166,7 +4166,7 @@ static void Menu_UpdateStatus(void) {
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
-    if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         menu_input_enabled = 0;
         key_items_state = 3;
@@ -4319,10 +4319,10 @@ static void Menu_UpdateKeyItems(void) {
     memset(view, 0, 0x40);
     view[10] = view[5] = view[0] = 1.0f;
     view[15] = 1.0f;
-    if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_UP) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
         key_item_row--;
-    } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_DOWN) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
         key_item_row++;
     }
@@ -4368,14 +4368,14 @@ static void Menu_UpdateKeyItems(void) {
         }
     }
 
-    if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         key_items_state = 3;
         menu_input_enabled = 0;
         if (model_load_chain != NULL) {
             model_load_chain->next = NULL;
         }
-    } else if ((menu_buttons & 0x8000) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_SQUARE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         key_items_state = 2;
         menu_input_enabled = 0;
@@ -4461,7 +4461,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
 
     bar_origin.raw = 0x0001869F7C307EE0;
     /* left and right step to the next page that has entries */
-    if ((menu_buttons & 0x20) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_RIGHT) && menu_input_enabled != 0) {
         do {
             recollection_page += LIST_PAGES + 1; // match: two statements; one expression computes the sum in another register
             recollection_page %= LIST_PAGES;
@@ -4478,7 +4478,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
             Sound_PlayMenu(1);
         }
         recollection_page_before = recollection_page;
-    } else if ((menu_buttons & 0x80) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_LEFT) && menu_input_enabled != 0) {
         do {
             recollection_page += LIST_PAGES - 1;
             recollection_page %= LIST_PAGES;
@@ -4512,7 +4512,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         counter %= 8;
     }
 
-    if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_UP) && menu_input_enabled != 0) {
         if (row_count >= 2) {
             Sound_PlayMenu(1);
         }
@@ -4526,7 +4526,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         if (recollection_cursor < 0) {
             recollection_cursor = row_count - 1;
         }
-    } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_DOWN) && menu_input_enabled != 0) {
         if (row_count >= 2) {
             Sound_PlayMenu(1);
         }
@@ -4570,10 +4570,10 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         packet[9] = 0;
         packet[10] = 0x43;
         packet[11] = 0;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
         chunk = (PackageChunk *)((char *)npc_package_load.pool_node->buffer + 0x10);
         for (i = 0; i < recollection_page; i++) {
             chunk = (PackageChunk *)((char *)chunk + chunk->unk0C + chunk->unk08);
@@ -4644,12 +4644,12 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         }
     }
 
-    if ((menu_buttons & 0x4000) && recollection_state == 1 && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_CROSS) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
         menu_screen_handler = (void *)Menu_UpdateRecollectionPage;
         context->unk04 = recollection_page * LIST_PAGES + rows[recollection_cursor] + MSG_RECOLLECTION_FIRST;
         menu_input_enabled = 0;
-    } else if ((menu_buttons & 0x2000) && recollection_state == 1 && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_CIRCLE) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         menu_input_enabled = 0;
         recollection_state = 2;
@@ -4764,10 +4764,10 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
         packet[9] = 0;
         packet[10] = 0x43;
         packet[11] = 0;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
         chunk = (PackageChunk *)((char *)npc_package_load.pool_node->buffer + 0x10);
         for (i = 0; (s32)i < page; i++) {
             chunk = (PackageChunk *)((char *)chunk + chunk->unk0C + chunk->unk08);
@@ -4801,7 +4801,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
             MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x1B);
         }
     }
-    if (menu_buttons & 0x2000) {
+    if (menu_buttons & PAD_CIRCLE) {
         Sound_PlayMenu(2);
         context->unk04 = 0;
         menu_screen_handler = (void *)Menu_UpdateRecollection;
@@ -4853,7 +4853,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     selected = owned_list_current[0];
     item = owned_list_top[0];
     corner.raw = 0x0A09C4007C306FE0;
-    if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0) {
         {
             // match: the value read first is used only to set the bit; the test and the clearing read the field again
             u8 state = item_name_defs[selected->unk0C].state;
@@ -4999,7 +4999,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     sceVu0TransMatrix(local, local, visible_item_model_position);
     Menu_DrawItemModel(local);
 
-    if ((menu_buttons & 0x1000) && menu_input_enabled != 0 && Menu_IsEquipSlotFilled(record, owned_list_current[0]->group)) {
+    if ((menu_buttons & PAD_TRIANGLE) && menu_input_enabled != 0 && Menu_IsEquipSlotFilled(record, owned_list_current[0]->group)) {
         Sound_PlayMenu(1);
         if (detail_panel_open == 0) {
             detail_panel_open = 1;
@@ -5119,7 +5119,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         }
     }
 
-    if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         visible_item_state = 2;
         menu_input_enabled = 0;
@@ -5197,18 +5197,18 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
     PadReport *report;
 
     if (system_screen_state != 4) {
-        if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
+        if ((menu_buttons & PAD_UP) && menu_input_enabled != 0) {
             PLAY_MENU_SOUND(1);
             system_menu_line--;
-        } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
+        } else if ((menu_buttons & PAD_DOWN) && menu_input_enabled != 0) {
             PLAY_MENU_SOUND(1);
             system_menu_line++;
         }
     } else {
-        if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
+        if ((menu_buttons & PAD_UP) && menu_input_enabled != 0) {
             PLAY_MENU_SOUND(1);
             quit_choice--;
-        } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
+        } else if ((menu_buttons & PAD_DOWN) && menu_input_enabled != 0) {
             PLAY_MENU_SOUND(1);
             quit_choice++;
         }
@@ -5251,7 +5251,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
     }
 
     report = Pad_GetReport(0, 0);
-    if ((report->pressed & 0x4000) && pad_mode != 0xFF && menu_input_enabled != 0) {
+    if ((report->pressed & PAD_CROSS) && pad_mode != 0xFF && menu_input_enabled != 0) {
         if (system_screen_state != 4) {
             PLAY_MENU_SOUND(0);
             switch (system_menu_line) {
@@ -5308,7 +5308,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
             PLAY_MENU_SOUND(2);
             system_screen_state = 1;
         }
-    } else if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         PLAY_MENU_SOUND(2);
         if (system_screen_state != 4) {
             menu_input_enabled = 0;
@@ -5407,7 +5407,7 @@ s32 Menu_MoveItemListCursor(HandlerContext *context, s32 locked) {
     s32 rows;
 
     if (cursor != NULL) {
-        if ((menu_buttons & 0x10) && !locked) {
+        if ((menu_buttons & PAD_UP) && !locked) {
             next = cursor->next;
             if (next != NULL) {
                 if (cursor == item_list_top[0] && next != item_list_page_mark[0]->prev) {
@@ -5418,7 +5418,7 @@ s32 Menu_MoveItemListCursor(HandlerContext *context, s32 locked) {
                 Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsNext(0);
-        } else if ((menu_buttons & 0x40) && !locked) {
+        } else if ((menu_buttons & PAD_DOWN) && !locked) {
             if (cursor->prev != NULL) {
                 if (item_list_page_mark[0]->prev == item_list_cursor[0] && item_list_top[0]->next != item_list_page_mark[0]->prev) {
                     item_list_page_mark[0] = item_list_page_mark[0]->prev;
@@ -5428,7 +5428,7 @@ s32 Menu_MoveItemListCursor(HandlerContext *context, s32 locked) {
                 item_list_cursor[0] = cursor->prev;
             }
             Menu_ShiftListModelsPrev(0);
-        } else if ((menu_buttons & 0x20) && item_list_count >= 8 && !locked) {
+        } else if ((menu_buttons & PAD_RIGHT) && item_list_count >= 8 && !locked) {
             if (cursor->prev != NULL) {
                 if (item_list_top[0]->next != item_list_page_mark[0]->prev) {
                     rows = 0;
@@ -5441,7 +5441,7 @@ s32 Menu_MoveItemListCursor(HandlerContext *context, s32 locked) {
                 Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsPageUp(0);
-        } else if ((menu_buttons & 0x80) && item_list_count >= 8 && !locked) {
+        } else if ((menu_buttons & PAD_LEFT) && item_list_count >= 8 && !locked) {
             if (cursor->next != NULL) {
                 if (item_list_top[0]->next != item_list_page_mark[0]->prev) {
                     rows = 0;
@@ -5470,7 +5470,7 @@ static int Menu_MoveSpellCursor(void) {
     MenuItem *n;
 
     if (cur != NULL) {
-        if (menu_buttons & 0x10) {
+        if (menu_buttons & PAD_UP) {
             n = cur->next;
             if (n != NULL) {
                 if (cur == castable_spell_top[0] && n != castable_spell_page_mark[0]->prev) {
@@ -5481,7 +5481,7 @@ static int Menu_MoveSpellCursor(void) {
                 castable_spell_cursor[0] = cur->next;
             }
             Menu_ShiftSpellModelsNext(0);
-        } else if (menu_buttons & 0x40) {
+        } else if (menu_buttons & PAD_DOWN) {
             if (cur->prev != NULL) {
                 if (cur == castable_spell_page_mark[0]->prev && castable_spell_top[0]->next != cur) {
                     castable_spell_page_mark[0] = cur;
@@ -5509,7 +5509,7 @@ static int Menu_MoveEquipCursor(void) {
         item = equip_list_shown[0]->item;
     }
     if (item != NULL) {
-        if (menu_buttons & 0x80) {
+        if (menu_buttons & PAD_LEFT) {
             MenuItem *next = item->next;
             if (next != NULL) {
                 equip_list_shown[0]->item = next;
@@ -5518,7 +5518,7 @@ static int Menu_MoveEquipCursor(void) {
                 return 1;
             }
         }
-        if (menu_buttons & 0x20) {
+        if (menu_buttons & PAD_RIGHT) {
             MenuItem *prev = item->prev;
             if (prev != NULL) {
                 equip_list_shown[0]->item = prev;
@@ -5539,7 +5539,7 @@ static s32 Menu_MoveAllItemsCursor(void) {
     s32 rows;
 
     if (cursor != NULL) {
-        if (menu_buttons & 0x10) {
+        if (menu_buttons & PAD_UP) {
             next = cursor->next;
             if (next != NULL) {
                 if (cursor == owned_list_top[0] && next != owned_list_page_mark[0]->prev) {
@@ -5550,7 +5550,7 @@ static s32 Menu_MoveAllItemsCursor(void) {
                 owned_list_current[0] = cursor->next;
             }
             Menu_ShiftListModelsNext(0);
-        } else if (menu_buttons & 0x40) {
+        } else if (menu_buttons & PAD_DOWN) {
             if (cursor->prev != NULL) {
                 if (owned_list_page_mark[0]->prev == cursor && owned_list_top[0]->next != cursor) {
                     owned_list_page_mark[0] = cursor;
@@ -5560,7 +5560,7 @@ static s32 Menu_MoveAllItemsCursor(void) {
                 owned_list_current[0] = cursor->prev;
             }
             Menu_ShiftListModelsPrev(0);
-        } else if ((menu_buttons & 0x20) && owned_list_count >= 8) {
+        } else if ((menu_buttons & PAD_RIGHT) && owned_list_count >= 8) {
             if (cursor->prev != NULL) {
                 if (owned_list_top[0]->next != owned_list_page_mark[0]->prev) {
                     rows = 0;
@@ -5573,7 +5573,7 @@ static s32 Menu_MoveAllItemsCursor(void) {
                 Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsPageUp(0);
-        } else if ((menu_buttons & 0x80) && owned_list_count >= 8) {
+        } else if ((menu_buttons & PAD_LEFT) && owned_list_count >= 8) {
             if (cursor->next != NULL) {
                 if (owned_list_top[0]->next != owned_list_page_mark[0]->prev) {
                     rows = 0;
@@ -5728,12 +5728,12 @@ static void Menu_UpdateCardSlot(void) {
         card_screen_state.dialog_id = 10;
         SaveCard_StartCheck(1);
     } else if (card_screen_state.card_op_running == 0 && card_screen_state.input_locked == 0) {
-        if ((menu_buttons & 0xA0) && pad_mode != 0xFF && card_screen_state.dialog_id == -1) {
+        if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && pad_mode != 0xFF && card_screen_state.dialog_id == -1) {
             Sound_PlayMenu(1);
             card_screen_state.selected_card = (card_screen_state.selected_card + 1) & 1;
         } else {
             report = Pad_GetReport(0, 0);
-            if ((report->pressed & 0x4000) && pad_mode != 0xFF) {
+            if ((report->pressed & PAD_CROSS) && pad_mode != 0xFF) {
                 if (card_screen_state.dialog_id != -1) {
                     Sound_PlayMenu(0);
                     card_screen_state.dialog_id = -1;
@@ -5755,7 +5755,7 @@ static void Menu_UpdateCardSlot(void) {
                 }
             } else {
                 report = Pad_GetReport(0, 0);
-                if (((report->pressed & 0x2000) && pad_mode != 0xFF) || game_status.bit9) {
+                if (((report->pressed & PAD_CIRCLE) && pad_mode != 0xFF) || game_status.bit9) {
                     Sound_PlayMenu(2);
                     if (card_screen_state.dialog_id != -1) {
                         card_screen_state.dialog_id = -1;
@@ -6078,10 +6078,10 @@ static void Menu_UpdateSaveList(void) {
     }
 
     report = Pad_GetReport(0, 0);
-    if ((report->pressed & 0x4000) && pad_mode != 0xFF) {
+    if ((report->pressed & PAD_CROSS) && pad_mode != 0xFF) {
         if (card_screen_state.list_step != 1) {
             report = Pad_GetReport(0, 0);
-            if (report->held & 0x50) {
+            if (report->held & (PAD_UP | PAD_DOWN)) {
                 card_screen_state.confirm_press_state = 1;
             } else {
                 card_screen_state.confirm_press_state = 3;
@@ -6093,8 +6093,8 @@ static void Menu_UpdateSaveList(void) {
     }
     if (card_screen_state.confirm_press_state == 1) {
         report = Pad_GetReport(0, 0);
-        if (report->held & 0x50) {
-            if (menu_buttons & 0x50) {
+        if (report->held & (PAD_UP | PAD_DOWN)) {
+            if (menu_buttons & (PAD_UP | PAD_DOWN)) {
                 card_screen_state.confirm_press_state = 2;
             }
         } else {
@@ -6146,7 +6146,7 @@ static void Menu_UpdateSaveList(void) {
             }
         } else {
             report = Pad_GetReport(0, 0);
-            if ((report->pressed & 0x2000) && pad_mode != 0xFF && card_screen_state.confirm_press_state == 0) {
+            if ((report->pressed & PAD_CIRCLE) && pad_mode != 0xFF && card_screen_state.confirm_press_state == 0) {
                 Sound_PlayMenu(2);
                 switch (card_screen_state.list_step) {
                 case 10:
@@ -6173,7 +6173,7 @@ static void Menu_UpdateSaveList(void) {
                     card_screen_state.confirm_choice = 1;
                     break;
                 }
-            } else if ((menu_buttons & 0x40) && card_screen_state.input_locked == 0) {
+            } else if ((menu_buttons & PAD_DOWN) && card_screen_state.input_locked == 0) {
                 switch (card_screen_state.list_step) {
                 case -1:
                     card_screen_state.selected_save++;
@@ -6192,7 +6192,7 @@ static void Menu_UpdateSaveList(void) {
                     card_screen_state.confirm_choice = (card_screen_state.confirm_choice + 1) & 1;
                     break;
                 }
-            } else if ((menu_buttons & 0x10) && card_screen_state.input_locked == 0) {
+            } else if ((menu_buttons & PAD_UP) && card_screen_state.input_locked == 0) {
                 switch (card_screen_state.list_step) {
                 case -1:
                     card_screen_state.selected_save--;
@@ -6278,10 +6278,10 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
     u8 kind;
     u32 full_alpha;
 
-    if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_UP) && menu_input_enabled != 0) {
         context->unk04--;
         Sound_PlayMenu(1);
-    } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_DOWN) && menu_input_enabled != 0) {
         context->unk04++;
         Sound_PlayMenu(1);
     }
@@ -6290,7 +6290,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
 
     switch (context->unk04) {
     case 0:
-        if ((menu_buttons & 0xA0) && menu_input_enabled != 0) {
+        if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             if (sound_mode_change != 1) {
                 sound_mode_before = game_options[0];
@@ -6298,7 +6298,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
             sound_mode_change = 1;
             game_options[0]++;
             game_options[0] %= 2;
-        } else if (sound_mode_change == 1 && !(menu_buttons & 0xA0) && menu_input_enabled != 0) {
+        } else if (sound_mode_change == 1 && !(menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
             if (game_options[0] == 0) {
                 if (sound_mode_before != 0) {
                     sound_mode_change = 2;
@@ -6317,10 +6317,10 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         }
         break;
     case 1:
-        if ((menu_buttons & 0x20) && game_options[1] < 0x7F && menu_input_enabled != 0) {
+        if ((menu_buttons & PAD_RIGHT) && game_options[1] < 0x7F && menu_input_enabled != 0) {
             game_options[1] += 4;
             Sound_PlayMenu(1);
-        } else if ((menu_buttons & 0x80) && game_options[1] != 0 && menu_input_enabled != 0) {
+        } else if ((menu_buttons & PAD_LEFT) && game_options[1] != 0 && menu_input_enabled != 0) {
             game_options[1] -= 4;
             Sound_PlayMenu(1);
         }
@@ -6328,40 +6328,40 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         Sound_SyncBgmLevel();
         break;
     case 2:
-        if ((menu_buttons & 0x20) && game_options[2] < 0x7F && menu_input_enabled != 0) {
+        if ((menu_buttons & PAD_RIGHT) && game_options[2] < 0x7F && menu_input_enabled != 0) {
             game_options[2] += 4;
             Sound_PlayMenu(1);
-        } else if ((menu_buttons & 0x80) && game_options[2] != 0 && menu_input_enabled != 0) {
+        } else if ((menu_buttons & PAD_LEFT) && game_options[2] != 0 && menu_input_enabled != 0) {
             game_options[2] -= 4;
             Sound_PlayMenu(1);
         }
         break;
     case 3:
-        if ((menu_buttons & 0xA0) && menu_input_enabled != 0) {
+        if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
             game_options[5]++;
             Sound_PlayMenu(1);
         }
         game_options[5] = (s8)game_options[5] % 2;
         break;
     case 4:
-        if ((menu_buttons & 0xA0) && menu_input_enabled != 0) {
+        if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
             game_options[6]++;
             Sound_PlayMenu(1);
         }
         game_options[6] = (s8)game_options[6] % 2;
         break;
     case 5:
-        if ((menu_buttons & 0xA0) && menu_input_enabled != 0) {
+        if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             game_options[9]++;
         }
         game_options[9] = (s8)game_options[9] % 2;
         break;
     case 6:
-        if ((menu_buttons & 0x20) && menu_input_enabled != 0) {
+        if ((menu_buttons & PAD_RIGHT) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             game_options[8]++;
-        } else if ((menu_buttons & 0x80) && menu_input_enabled != 0) {
+        } else if ((menu_buttons & PAD_LEFT) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             game_options[8]--;
         }
@@ -6376,7 +6376,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
-    if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         menu_input_enabled = 0;
         system_screen_state = 2;
@@ -6528,7 +6528,7 @@ static void Menu_UpdateButtonConfig(void) {
     s32 other;
     u32 full_alpha;
 
-    if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_UP) && menu_input_enabled != 0) {
         if (button_prompt == 0) {
             Sound_PlayMenu(1);
             // match: only this loop, in the function's first run of code, is loop-optimised in retail; the others keep their entry tests until late
@@ -6539,7 +6539,7 @@ static void Menu_UpdateButtonConfig(void) {
         } else {
             button_prompt_choice = (button_prompt_choice + 1) & 1;
         }
-    } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_DOWN) && menu_input_enabled != 0) {
         if (button_prompt == 0) {
             Sound_PlayMenu(1);
             for (i = 0; i < choice_count; i++) {
@@ -6564,10 +6564,10 @@ static void Menu_UpdateButtonConfig(void) {
     }
 
     if (button_line != choice_count && button_prompt == 0) {
-        if ((menu_buttons & 0x20) && menu_input_enabled != 0) {
+        if ((menu_buttons & PAD_RIGHT) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             button_choices[button_line] = (s8)(button_choices[button_line] + 1) % wrap;
-        } else if ((menu_buttons & 0x80) && menu_input_enabled != 0) {
+        } else if ((menu_buttons & PAD_LEFT) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             button_choices[button_line] = (s8)(button_choices[button_line] + 11) % wrap;
         }
@@ -6674,7 +6674,7 @@ static void Menu_UpdateButtonConfig(void) {
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
-    if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         if (button_prompt != 0) {
             button_prompt = 0;
@@ -6687,7 +6687,7 @@ static void Menu_UpdateButtonConfig(void) {
         } else {
             button_prompt = 1;
         }
-    } else if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
         if (button_prompt == 0) {
             if (button_line != choice_count) {
@@ -6943,7 +6943,7 @@ static void Menu_UpdateCardCheck(void) {
         SaveCard_Close();
     } else {
         report = Pad_GetReport(0, 0);
-        if ((report->pressed & 0x4000) && pad_mode != 0xFF) {
+        if ((report->pressed & PAD_CROSS) && pad_mode != 0xFF) {
             Sound_PlayMenu(0);
             card_screen_state.is_leaving = 1;
             SaveCard_StartCheck(1);
@@ -6953,7 +6953,7 @@ static void Menu_UpdateCardCheck(void) {
             } else {
                 system_screen_state = 3;
             }
-        } else if ((menu_buttons & 0x50) && pad_mode != 0xFF) {
+        } else if ((menu_buttons & (PAD_UP | PAD_DOWN)) && pad_mode != 0xFF) {
             Sound_PlayMenu(1);
             card_screen_state.selected_card = (card_screen_state.selected_card + 1) & 1;
         }
@@ -7015,25 +7015,25 @@ static void Menu_UpdateBrightness(void) {
     u8 kind;
     u32 full_alpha;
 
-    if ((menu_buttons & 0x20) && menu_input_enabled != 0) {
+    if ((menu_buttons & PAD_RIGHT) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
         if (game_options[10] < 0xFC) {
             game_options[10] += 4;
         } else {
             game_options[10] = 0x20;
         }
-    } else if ((menu_buttons & 0x80) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_LEFT) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
         if (game_options[10] > 0x20) {
             game_options[10] -= 4;
         } else {
             game_options[10] = 0xFC;
         }
-    } else if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_CROSS) && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
         menu_input_enabled = 0;
         system_screen_state = 2;
-    } else if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+    } else if ((menu_buttons & PAD_CIRCLE) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
         game_options[10] = brightness_before;
         system_screen_state = 3;
@@ -7085,7 +7085,7 @@ static void Menu_UpdateBrightness(void) {
 /* The fifth entry of system_menu_screens: goes back to the main menu on the cancel button. The System Config
    screen never installs it. */
 static void Menu_WaitForCancel(void) {
-    if (Pad_GetReport(0, 0)->pressed & 0x2000) {
+    if (Pad_GetReport(0, 0)->pressed & PAD_CIRCLE) {
         if (pad_mode != 0xFF) {
             menu_screen_handler = (void *)Menu_OpenMain;
             Sound_PlayMenu(2);
@@ -7459,10 +7459,10 @@ void Menu_DrawBrightness(s32 level) {
     (cursor++)->as_float = 0.4375f;
     cursor[0].as_int = 0x86F89400;
     cursor[1].as_int = 0xFFFFF;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 5;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x105;
+    *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN;
 }
 
 /* Sets the alpha test and the blend mode of ALPHA_1 from mode and writes them; the value is never seeded. */

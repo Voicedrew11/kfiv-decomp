@@ -1068,12 +1068,12 @@ void TextLog_LoadFont(int font_base, int palette_base) {
     sceGsSetDefLoadImage(&image, text_log.font_base, text_log.font_buffer_width, 0x14, 0, 0, 0x100, 0x80);
     FlushCache(0);
     sceGsExecLoadImage(&image, text_log_font);
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     sceGsSetDefLoadImage(&image, text_log.palette_base, 1, 0, 0, 0, 8, 2);
     FlushCache(0);
     sceGsExecLoadImage(&image, text_log_font_palette);
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     packet = (u32 *)((u32)font_flush_packet | 0x20000000);
     *packet++ = 0x8001;
@@ -1084,11 +1084,11 @@ void TextLog_LoadFont(int font_base, int palette_base) {
     *packet++ = 0;
     *packet++ = 3;
     *packet = 0;
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = 2;
     *D2_MADR = (int)font_flush_packet;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* Places the text log's window (x, y, width and height in frame pixels, on a screen of the given size whose
@@ -1177,11 +1177,11 @@ void TextLog_SendGsRegs(void) {
     packet += 2;
     *(u64 *)packet = 1;
     ((u64 *)packet)[1] = 0x1C;
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = 6;
     *D2_MADR = (int)gs_regs_packet;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* printf-style append to the text log, cut off at its 0x800 bytes. */
@@ -1249,11 +1249,11 @@ void TextLog_Flush(void) {
         packet->tag[2] = 0x413;
         packet->tag[3] = 0;
         FlushCache(0);
-        while (*D2_CHCR & 0x100) {
+        while (*D2_CHCR & D_CHCR_STR) {
         }
         *D2_QWC = ((int)text_log.packet - (int)&text_log_packet) >> 4;
         *D2_MADR = (u32)&text_log_packet & 0x7FFFFFFF;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
     }
     text_log.used = 0;
 }

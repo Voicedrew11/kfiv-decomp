@@ -382,16 +382,16 @@ static inline s32 text_color(u16 code) {
 
 /* Hands a packet in the scratchpad to the GIF once it is idle. */
 static inline void send_packet(u32 *packet, s32 size) {
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     *D2_QWC = size;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x105;
+    *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN;
 }
 
 /* Waits until the GIF is idle. */
 static inline void wait_gif(void) {
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
 }
 
@@ -615,10 +615,10 @@ void MenuDraw_Sprite(KindObject *object) {
         *(f32 *)&packet[23] = rect->first_t;
         packet[24] = rect->second.pos_x | ((s32)rect->first.pos_y << 16);
         packet[25] = rect->first.depth;
-        while (*D2_CHCR & 0x100);
+        while (*D2_CHCR & D_CHCR_STR);
         *D2_QWC = 7;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
     }
 }
 
@@ -694,11 +694,11 @@ void MenuDraw_Word(KindObject *object) {
         *cursor++ = 0;
         *cursor++ = 0;
     }
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = count * 6 + 1;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* Sends a four-quadword packet that draws a flat rectangle as a four-corner strip. */
@@ -732,10 +732,10 @@ void MenuDraw_Bar(MenuCursorBar *bar) {
         packet[13] = rect->first.depth;
         packet[14] = (s32)second.pos_x | ((s32)first.pos_y << 16);
         packet[15] = rect->first.depth;
-        while (*D2_CHCR & 0x100);
+        while (*D2_CHCR & D_CHCR_STR);
         *D2_QWC = 4;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
     }
 }
 
@@ -1049,11 +1049,11 @@ int MenuDraw_Number(KindObject *object) { // match: returns int, though no path 
         *cursor++ = 0;
         *cursor++ = 0;
     }
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = count * 6 + 1;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* Draws a line of text at a screen position (origin: x, y, z and the line height in 16ths): one textured
@@ -1136,11 +1136,11 @@ static void MenuDraw_TextAt(u16 *text, GsPackedWord origin) {
         count++;
     }
     *packet = count | 0x8000;
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = count * 6 + 1;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* Draws a line of text like MenuDraw_TextAt, but first moves the origin right by 160 for every glyph the text
@@ -1226,11 +1226,11 @@ static void MenuDraw_TextRightAligned(u16 *text, GsPackedWord origin) {
         count++;
     }
     *packet = count | 0x8000;
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = count * 6 + 1;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* the text pen */
@@ -1403,11 +1403,11 @@ s32 MenuText_DrawWrapped(u16 *text, s32 limit) {
     }
     packet[0] = count | 0x8000;
     text_pen.pos_y = bottom_right.pos_y;
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     return count;
 }
 
@@ -1530,11 +1530,11 @@ s32 MenuText_DrawWrappedLong(u16 *text, s32 limit) {
     packet[0] = count | 0x8000;
     text_pen.pos_y = bottom_right.pos_y;
     FlushCache(0);
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = (u32)packet & 0x7FFFFFFF;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     return count;
 }
 
@@ -1630,11 +1630,11 @@ s32 MenuText_DrawLine(u16 *text, s32 limit) {
     }
     packet[0] = count | 0x8000;
     text_pen.pos_y = bottom_right.pos_y;
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     return count;
 }
 
@@ -1748,11 +1748,11 @@ s32 MenuText_DrawLineShortened(u16 *text, s32 limit) {
     }
     packet[0] = count | 0x8000;
     text_pen.pos_y = bottom_right.pos_y;
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     return count;
 }
 
@@ -1857,11 +1857,11 @@ s32 MenuText_DrawLineCentered(u16 *text, s32 limit) {
     }
     packet[0] = count | 0x8000;
     text_pen.pos_y = bottom_right.pos_y;
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     return count;
 }
 
@@ -1978,11 +1978,11 @@ static s32 MenuText_DrawWordWrapped(u16 *text, s32 limit) {
     }
     packet[0] = count | 0x8000;
     text_pen.pos_y = bottom_right.pos_y;
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     return count;
 }
 
@@ -2119,12 +2119,12 @@ s32 MenuText_DrawWordWrappedLong(u16 *text, s32 limit) {
     packet[0] = count | 0x8000;
     text_pen.pos_y = bottom_right.pos_y;
     FlushCache(0);
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = (u32)packet & 0x7FFFFFFF;
     *D2_TADR = 0;
-    *D2_CHCR = 0x105;
+    *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN;
     return count;
 }
 
@@ -3355,21 +3355,21 @@ void MenuTexture_Upload(TextureHeader *header, LoadedBlockRef *block) {
         sceGsSetDefLoadImage(&image_load, HEADER_TEX0(header)->tbp0, HEADER_TEX0(header)->tbw, HEADER_TEX0(header)->psm, 0, 0, width, height >> 1);
         FlushCache(0);
         sceGsExecLoadImage(&image_load, (char *)header + sizeof(TextureHeader));
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
         sceGsSetDefLoadImage(&image_load, HEADER_TEX0(header)->tbp0, HEADER_TEX0(header)->tbw, HEADER_TEX0(header)->psm, 0, height >> 1, width, height >> 1);
         FlushCache(0);
         sceGsExecLoadImage(&image_load, (char *)header + ((width * height * pixel_size >> 2) + sizeof(TextureHeader)));
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     } else {
         sceGsSetDefLoadImage(&image_load, HEADER_TEX0(header)->tbp0, HEADER_TEX0(header)->tbw, HEADER_TEX0(header)->psm, 0, 0, width, height);
         FlushCache(0);
         sceGsExecLoadImage(&image_load, (char *)header + sizeof(TextureHeader));
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     }
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     pixel_format = HEADER_TEX0(header)->psm;
     if ((pixel_format >> 4) == 0 || (pixel_format >> 4) == 3) {
@@ -3380,7 +3380,7 @@ void MenuTexture_Upload(TextureHeader *header, LoadedBlockRef *block) {
     sceGsSetDefLoadImage(&clut_load, HEADER_TEX0(header)->cbp, 1, HEADER_TEX0(header)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
     sceGsExecLoadImage(&clut_load, (char *)header + (header->image_size + sizeof(TextureHeader)));
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
 }
 
@@ -3422,7 +3422,7 @@ static void MenuTexture_UploadInStrips(TextureHeader *header) {
             height = 0;
         }
     }
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     pixel_format = HEADER_TEX0(header)->psm;
     if ((pixel_format >> 4) == 0 || (pixel_format >> 4) == 3) {
@@ -3433,7 +3433,7 @@ static void MenuTexture_UploadInStrips(TextureHeader *header) {
     sceGsSetDefLoadImage(&load_image, HEADER_TEX0(header)->cbp, 1, HEADER_TEX0(header)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
     sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
 }
 
@@ -3504,7 +3504,7 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
             height = 0;
         }
     }
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     pixel_format = HEADER_TEX0(header)->psm;
     if ((pixel_format >> 4) == 0 || (pixel_format >> 4) == 3) {
@@ -3521,7 +3521,7 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
     sceGsSetDefLoadImage(&load_image, HEADER_TEX0(header)->cbp, 1, HEADER_TEX0(header)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
     sceGsExecLoadImage(&load_image, (char *)header + (header->image_size + sizeof(TextureHeader)));
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     trailer = (u64 *)((char *)header + clut_width * clut_height * 4 + (header->image_size + sizeof(TextureHeader)));
     if (trailer_out != NULL) {
@@ -3530,7 +3530,7 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
     sceGsSetDefLoadImage(&second_load, ((BootTex0 *)trailer)->cbp, 1, ((BootTex0 *)trailer)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
     sceGsExecLoadImage(&second_load, (char *)header + header->unk0C);
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
 }
 
@@ -4218,51 +4218,51 @@ s16 MenuPad_Update(void) {
     int mode;
     u16 stick;
 
-    menu_buttons = report->pressed & 0xFF0F;
-    menu_buttons |= report->held & 0xF00;
+    menu_buttons = report->pressed & ~PAD_DIRECTIONS;
+    menu_buttons |= report->held & (PAD_L2 | PAD_R2 | PAD_L1 | PAD_R1);
     horizontal = MenuPad_StepHorizontal(1);
     vertical = MenuPad_StepVertical(1);
     if (horizontal > 0) {
-        menu_buttons |= 0x20;
+        menu_buttons |= PAD_RIGHT;
     }
     if (horizontal < 0) {
-        menu_buttons |= 0x80;
+        menu_buttons |= PAD_LEFT;
     }
     if (vertical > 0) {
-        menu_buttons |= 0x10;
+        menu_buttons |= PAD_UP;
     }
     if (vertical < 0) {
-        menu_buttons |= 0x40;
+        menu_buttons |= PAD_DOWN;
     }
     mode = Pad_GetMode(0, 0);
     if (mode == 1 && ((PadReportAxes *)report)->left_stick != 0) {
         stick = 0;
         if (report->left_stick_x < 0x40) {
-            stick |= 0x80;
+            stick |= PAD_LEFT;
         }
         if (report->left_stick_x > 0xC0) {
-            stick |= 0x20;
+            stick |= PAD_RIGHT;
         }
         if (report->left_stick_y < 0x40) {
-            stick |= 0x10;
+            stick |= PAD_UP;
         }
         if (report->left_stick_y > 0xC0) {
-            stick |= 0x40;
+            stick |= PAD_DOWN;
         }
-        if (!(report->held & 0xF0)) {
+        if (!(report->held & PAD_DIRECTIONS)) {
             horizontal = MenuPad_StepHorizontalFrom(1, stick);
             vertical = MenuPad_StepVerticalFrom(1, stick);
             if (horizontal > 0) {
-                menu_buttons |= 0x20;
+                menu_buttons |= PAD_RIGHT;
             }
             if (horizontal < 0) {
-                menu_buttons |= 0x80;
+                menu_buttons |= PAD_LEFT;
             }
             if (vertical > 0) {
-                menu_buttons |= 0x10;
+                menu_buttons |= PAD_UP;
             }
             if (vertical < 0) {
-                menu_buttons |= 0x40;
+                menu_buttons |= PAD_DOWN;
             }
         }
     }
@@ -4293,7 +4293,7 @@ static int MenuPad_StepHorizontal(int repeat_start) {
         horizontal_idle_frames = 10;
     }
     horizontal_idle_frames++;
-    if (!(Pad_GetReport(0, 0)->held & 0xA0)) {
+    if (!(Pad_GetReport(0, 0)->held & (PAD_LEFT | PAD_RIGHT))) {
         if (horizontal_held_frames != 0 && horizontal_repeating == 0 && horizontal_idle_frames > 10) {
             int backward = horizontal_held_frames < 1; // match: the test as a value, or the compare turns round
             int back_step = -1;         // match: -1 loaded before step is set
@@ -4309,7 +4309,7 @@ static int MenuPad_StepHorizontal(int repeat_start) {
             horizontal_held_frames = 0;
         }
     }
-    if (Pad_GetReport(0, 0)->held & 0x20) {
+    if (Pad_GetReport(0, 0)->held & PAD_RIGHT) {
         horizontal_held_frames++;
         if (horizontal_held_frames > 10) {
             step = 1;
@@ -4317,7 +4317,7 @@ static int MenuPad_StepHorizontal(int repeat_start) {
             horizontal_repeating = 1;
             horizontal_idle_frames = 0;
         }
-    } else if (Pad_GetReport(0, 0)->held & 0x80) {
+    } else if (Pad_GetReport(0, 0)->held & PAD_LEFT) {
         horizontal_held_frames--;
         if (horizontal_held_frames < -10) {
             horizontal_held_frames = -repeat_start;
@@ -4350,7 +4350,7 @@ static int MenuPad_StepVertical(int repeat_start) {
         vertical_idle_frames = 10;
     }
     vertical_idle_frames++;
-    if (!(Pad_GetReport(0, 0)->held & 0x50)) {
+    if (!(Pad_GetReport(0, 0)->held & (PAD_UP | PAD_DOWN))) {
         if (vertical_held_frames != 0 && vertical_repeating == 0 && vertical_idle_frames > 10) {
             int backward = vertical_held_frames < 1; // match: the test as a value, or the compare turns round
             int back_step = -1;         // match: -1 loaded before step is set
@@ -4366,7 +4366,7 @@ static int MenuPad_StepVertical(int repeat_start) {
             vertical_held_frames = 0;
         }
     }
-    if (Pad_GetReport(0, 0)->held & 0x10) {
+    if (Pad_GetReport(0, 0)->held & PAD_UP) {
         vertical_held_frames++;
         if (vertical_held_frames > 10) {
             step = 1;
@@ -4374,7 +4374,7 @@ static int MenuPad_StepVertical(int repeat_start) {
             vertical_repeating = 1;
             vertical_idle_frames = 0;
         }
-    } else if (Pad_GetReport(0, 0)->held & 0x40) {
+    } else if (Pad_GetReport(0, 0)->held & PAD_DOWN) {
         vertical_held_frames--;
         if (vertical_held_frames < -10) {
             vertical_held_frames = -repeat_start;
@@ -4407,7 +4407,7 @@ static int MenuPad_StepHorizontalFrom(int repeat_start, u16 buttons) {
         stick_horizontal_idle_frames = 10;
     }
     stick_horizontal_idle_frames++;
-    if (!(buttons & 0xA0)) {
+    if (!(buttons & (PAD_LEFT | PAD_RIGHT))) {
         if (stick_horizontal_held_frames != 0 && stick_horizontal_repeating == 0 && stick_horizontal_idle_frames > 10) {
             int backward = stick_horizontal_held_frames < 1; // match: the test as a value, or the compare turns round
             int back_step = -1;         // match: -1 loaded before step is set
@@ -4423,7 +4423,7 @@ static int MenuPad_StepHorizontalFrom(int repeat_start, u16 buttons) {
             stick_horizontal_held_frames = 0;
         }
     }
-    if (buttons & 0x20) {
+    if (buttons & PAD_RIGHT) {
         stick_horizontal_held_frames++;
         if (stick_horizontal_held_frames > 10) {
             step = 1;
@@ -4431,7 +4431,7 @@ static int MenuPad_StepHorizontalFrom(int repeat_start, u16 buttons) {
             stick_horizontal_repeating = 1;
             stick_horizontal_idle_frames = 0;
         }
-    } else if (buttons & 0x80) {
+    } else if (buttons & PAD_LEFT) {
         stick_horizontal_held_frames--;
         if (stick_horizontal_held_frames < -10) {
             stick_horizontal_held_frames = -repeat_start;
@@ -4511,7 +4511,7 @@ static int MenuPad_StepVerticalFrom(int repeat_start, u16 buttons) {
         stick_vertical_idle_frames = 10;
     }
     stick_vertical_idle_frames++;
-    if (!(buttons & 0x50)) {
+    if (!(buttons & (PAD_UP | PAD_DOWN))) {
         if (stick_vertical_held_frames != 0 && stick_vertical_repeating == 0 && stick_vertical_idle_frames > 10) {
             int backward = stick_vertical_held_frames < 1; // match: the test as a value, or the compare turns round
             int back_step = -1;         // match: -1 loaded before step is set
@@ -4527,7 +4527,7 @@ static int MenuPad_StepVerticalFrom(int repeat_start, u16 buttons) {
             stick_vertical_held_frames = 0;
         }
     }
-    if (buttons & 0x10) {
+    if (buttons & PAD_UP) {
         stick_vertical_held_frames++;
         if (stick_vertical_held_frames > 10) {
             step = 1;
@@ -4535,7 +4535,7 @@ static int MenuPad_StepVerticalFrom(int repeat_start, u16 buttons) {
             stick_vertical_repeating = 1;
             stick_vertical_idle_frames = 0;
         }
-    } else if (buttons & 0x40) {
+    } else if (buttons & PAD_DOWN) {
         stick_vertical_held_frames--;
         if (stick_vertical_held_frames < -10) {
             stick_vertical_held_frames = -repeat_start;
@@ -4564,12 +4564,12 @@ s32 MenuDraw_SetGsRegister(int reg_address, s64 reg_value) {
     *cursor = 0;
     FlushCache(0);
     cursor++;
-    while (*D2_CHCR & 0x100) {
+    while (*D2_CHCR & D_CHCR_STR) {
     }
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = (u32)packet & 0x7FFFFFFF;
     *D2_TADR = 0;
-    *D2_CHCR = 0x105;
+    *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN;
     /* match: retail tail-calls sceGsSyncPath and returns its result; a written return defeats the tail call */
     sceGsSyncPath(0, 0);
 }

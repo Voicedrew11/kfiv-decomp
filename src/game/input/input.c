@@ -41,20 +41,20 @@ void Input_Init(void) {
 
 /* Gives every control its default button (the pad masks forward_button to pause_button). */
 void Input_SetDefaultControls(void) {
-    forward_button = 0x10;
-    back_button = 0x40;
-    turn_right_button = 0x20;
-    turn_left_button = 0x80;
-    step_right_button = 0x800;
-    step_left_button = 0x400;
-    look_down_button = 0x100;
-    look_up_button = 0x200;
-    attack_button = 0x8000;
-    magic_button = 0x1000;
-    action_button = 0x4000;
-    menu_button = 0x2000;
-    shortcut_button = 1;
-    pause_button = 8;
+    forward_button = PAD_UP;
+    back_button = PAD_DOWN;
+    turn_right_button = PAD_RIGHT;
+    turn_left_button = PAD_LEFT;
+    step_right_button = PAD_R1;
+    step_left_button = PAD_L1;
+    look_down_button = PAD_L2;
+    look_up_button = PAD_R2;
+    attack_button = PAD_SQUARE;
+    magic_button = PAD_TRIANGLE;
+    action_button = PAD_CROSS;
+    menu_button = PAD_CIRCLE;
+    shortcut_button = PAD_SELECT;
+    pause_button = PAD_START;
 }
 
 /* Once a frame: reads the controller and runs the rumble that Input_StartRumble asked for. */
@@ -107,12 +107,12 @@ void Input_ReadPort(int port) {
             pad->prev_look_buttons = pad->look_buttons;
             pad->look_buttons = 0;
             if (report->right_stick_y < 0x40) {
-                pad->look_buttons = 0x200;
+                pad->look_buttons = PAD_R2;
             }
             if (report->right_stick_y > 0xC0) {
-                pad->look_buttons |= 0x100;
+                pad->look_buttons |= PAD_L2;
             }
-            if (!(report->held & 0x300)) {
+            if (!(report->held & (PAD_L2 | PAD_R2))) {
                 pad->held |= pad->look_buttons;
                 pad->pressed |= pad->look_buttons & ~pad->prev_look_buttons;
             }
@@ -124,18 +124,18 @@ void Input_ReadPort(int port) {
             pad->prev_move_buttons = pad->move_buttons;
             pad->move_buttons = 0;
             if (report->left_stick_x < 0x40) {
-                pad->move_buttons = 0x80;
+                pad->move_buttons = PAD_LEFT;
             }
             if (report->left_stick_x > 0xC0) {
-                pad->move_buttons |= 0x20;
+                pad->move_buttons |= PAD_RIGHT;
             }
             if (report->left_stick_y < 0x40) {
-                pad->move_buttons |= 0x10;
+                pad->move_buttons |= PAD_UP;
             }
             if (report->left_stick_y > 0xC0) {
-                pad->move_buttons |= 0x40;
+                pad->move_buttons |= PAD_DOWN;
             }
-            if (!(report->held & 0xF0)) {
+            if (!(report->held & PAD_DIRECTIONS)) {
                 pad->held |= pad->move_buttons;
                 pad->pressed |= pad->move_buttons & ~pad->prev_move_buttons;
             }

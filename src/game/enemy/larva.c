@@ -188,7 +188,7 @@ static void Larva_Dormant(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit23 = 0;
             ENTITY_FLAG_BITS(entity)->bit24 = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
-            if (!(((EntityParamsWord *)entity->params)->unk00 & 0x06000000)) {
+            if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
                 ENTITY_FLAG_BITS(entity)->bit28 = 0;
             }
             entity->busy_flags = 0;

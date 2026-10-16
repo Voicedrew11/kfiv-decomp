@@ -82,7 +82,7 @@ void EntityAi_StandOnce(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         unkE0->turn_rate = 0.0f;
         entity->action_step++;
@@ -120,7 +120,7 @@ void EntityAi_Dormant(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         unkE0->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
@@ -139,7 +139,7 @@ void EntityAi_Dormant(Entity *entity) {
             if (entity->params->flags & 0x100) {
                 ENTITY_FLAG_BITS(entity)->bits11 = 0;
             } else {
-                ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+                ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
             }
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
             entity->action_step++;
@@ -158,7 +158,7 @@ void EntityAi_Dormant(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit23 = 0;
             ENTITY_FLAG_BITS(entity)->bit24 = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
-            if (!(((EntityParamsWord *)entity->params)->unk00 & 0x6000000)) {
+            if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
                 ENTITY_FLAG_BITS(entity)->bit28 = 0;
             }
             entity->busy_flags = 0;
@@ -195,7 +195,7 @@ void EntityAi_ReactionRewind(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             kind = 1;
-            if ((((EntityParamsWord *)params)->unk00 & 0x6000000) == 0x2000000) {
+            if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_1) {
                 kind = 2;
             }
             ENTITY_FLAG_BITS(entity)->bits11 = kind;
@@ -226,7 +226,7 @@ void EntityAi_ReactionLight(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) == 0x02000000) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
         unkE0->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit14 = 1;
@@ -268,13 +268,13 @@ void EntityAi_ReactionHeavy(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) == 0x02000000) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
         unkE0->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit14 = 1;
         ENTITY_FLAG_BITS(entity)->bit19 = 0;
         ENTITY_FLAG_BITS(entity)->bit35 = 0;
-        if (!(((EntityParamsWord *)entity->params)->unk00 & 0x06000000)) {
+        if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
             ENTITY_FLAG_BITS(entity)->bit28 = 0;
         }
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
@@ -316,9 +316,9 @@ void EntityAi_Death(Entity *entity) {
         if (params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
-        if ((((EntityParamsWord *)params)->unk00 & 0x6000000) == 0x4000000) {
+        if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_FLY) {
             entity->collision_radius = 20.0f;
         }
         ENTITY_FLAG_BITS(entity)->bit14 = 1;
@@ -371,7 +371,7 @@ void EntityAi_Dodge(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0xA, 0, 5, 1);
-        ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+        ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         unkE0->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
@@ -409,7 +409,7 @@ void EntityAi_Guard(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         unkE0->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
@@ -455,7 +455,7 @@ void EntityAi_MeleeAttack(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -521,7 +521,7 @@ void EntityAi_RangedAttack(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) == 0x02000000) ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
@@ -688,7 +688,7 @@ void EntityAi_Animate(Entity *entity) {
     flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x6000000) {
+        if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
             entity->flags = flags & ~0x3800L;
         }
         blend_frames = entity->model->level_tables->unk88;

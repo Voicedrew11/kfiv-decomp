@@ -914,7 +914,7 @@ static int MovieStream_Init(MovieStreamBuffer *stream, u8 *data, MovieDmaTag *ta
     *D4_QWC = 0;
     *D4_MADR = (u32)stream->data & 0x0FFFFFFF;
     *D4_TADR = (u32)stream->tags & 0x0FFFFFFF;
-    Movie_SetD4Chcr(5);
+    Movie_SetD4Chcr(D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN);
     return TRUE;
 }
 
@@ -938,7 +938,7 @@ static int MovieStream_Reset(MovieStreamBuffer *stream) {
     *D4_QWC = 0;
     *D4_MADR = (u32)stream->data & 0x0FFFFFFF;
     *D4_TADR = (u32)stream->tags & 0x0FFFFFFF;
-    Movie_SetD4Chcr(5);
+    Movie_SetD4Chcr(D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN);
     return TRUE;
 }
 
@@ -995,7 +995,7 @@ static int MovieStream_AddDma(MovieStreamBuffer *stream) {
         return FALSE; // match: leaves without SignalSema, as the SDK sample does
     }
     /* stop the channel; D4_CHCR then holds the tag it stopped on */
-    Movie_SetD4Chcr(5);
+    Movie_SetD4Chcr(D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN);
     d4_chcr = *D4_CHCR;
     index = MovieStream_GetBlockIndex(stream, *D4_MADR);
     consumed = (index + stream->block_count - stream->dma_start) % stream->block_count;
@@ -1021,7 +1021,7 @@ static int MovieStream_AddDma(MovieStreamBuffer *stream) {
         if (is_new_data) {
             d4_chcr = (d4_chcr & 0x0FFFFFFF) | 0x30000000;
         }
-        Movie_SetD4Chcr(d4_chcr | 0x100);
+        Movie_SetD4Chcr(d4_chcr | D_CHCR_STR);
     }
     SignalSema(stream->sema);
     return TRUE;
@@ -1031,7 +1031,7 @@ static int MovieStream_AddDma(MovieStreamBuffer *stream) {
 static int MovieStream_StopDma(MovieStreamBuffer *stream) {
     WaitSema(stream->sema);
     stream->is_active = FALSE;
-    Movie_SetD4Chcr(5);
+    Movie_SetD4Chcr(D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN);
     stream->saved.d4_madr = *D4_MADR;
     stream->saved.d4_tadr = *D4_TADR;
     stream->saved.d4_qwc = *D4_QWC;
@@ -1059,7 +1059,7 @@ static int MovieStream_RestartDma(MovieStreamBuffer *stream) {
     u32 d4_madr_next = stream->saved.d4_madr - ((fifo_pending + fifo_count) << 4);
     u32 d4_qwc_next = stream->saved.d4_qwc + (fifo_pending + fifo_count);
     u32 d4_tadr_next = stream->saved.d4_tadr;
-    u32 d4_chcr_next = stream->saved.d4_chcr | 0x100;
+    u32 d4_chcr_next = stream->saved.d4_chcr | D_CHCR_STR;
     s32 tag_id;
     s32 index;
     s32 index_next;
@@ -1073,7 +1073,7 @@ static int MovieStream_RestartDma(MovieStreamBuffer *stream) {
                   stream->saved.d4_madr == (u32)stream->data + (stream->block_count << 11))
                      ? 0
                      : 3;
-        d4_chcr_next = (stream->saved.d4_chcr & 0x0FFFFFFF) | (tag_id << 28) | 0x100;
+        d4_chcr_next = (stream->saved.d4_chcr & 0x0FFFFFFF) | (tag_id << 28) | D_CHCR_STR;
         if (!IS_IN_REGION(0, stream->dma_start, stream->dma_count, stream->block_count)) {
             stream->dma_start = stream->block_count - 1;
             stream->dma_count++;
@@ -1088,7 +1088,7 @@ static int MovieStream_RestartDma(MovieStreamBuffer *stream) {
                       (u32)stream->data + (((stream->dma_start + stream->dma_count) % stream->block_count) << 11))
                          ? 0
                          : 3;
-            d4_chcr_next = (stream->saved.d4_chcr & 0x0FFFFFFF) | (tag_id << 28) | 0x100;
+            d4_chcr_next = (stream->saved.d4_chcr & 0x0FFFFFFF) | (tag_id << 28) | D_CHCR_STR;
             if (!IS_IN_REGION(index_next, stream->dma_start, stream->dma_count, stream->block_count)) {
                 stream->dma_start = index_next;
                 stream->dma_count++;
@@ -1098,7 +1098,7 @@ static int MovieStream_RestartDma(MovieStreamBuffer *stream) {
     if (stream->saved.d3_madr != 0 && stream->saved.d3_qwc != 0) {
         *D3_MADR = stream->saved.d3_madr;
         *D3_QWC = stream->saved.d3_qwc;
-        Movie_SetD3Chcr(stream->saved.d3_chcr | 0x100);
+        Movie_SetD3Chcr(stream->saved.d3_chcr | D_CHCR_STR);
     }
     if (stream->dma_count != 0) {
         while (*IPU_CTRL < 0) {
@@ -1121,7 +1121,7 @@ static int MovieStream_RestartDma(MovieStreamBuffer *stream) {
 
 /* Stops DMA channel 4, clears its registers and deletes the stream's semaphore (viBufDelete). */
 static int MovieStream_Delete(MovieStreamBuffer *stream) {
-    Movie_SetD4Chcr(5);
+    Movie_SetD4Chcr(D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN);
     *D4_QWC = 0;
     *D4_MADR = 0;
     *D4_TADR = 0;
@@ -1627,7 +1627,7 @@ static void MovieDisplay_Init(MovieDisplay *display, s32 screen_x, s32 screen_y,
     packet = GsPacket_AddClamp(packet, 1, 1, 0, 0, 0, 0);
     *D2_MADR = packet_start;
     *D2_QWC = 7;
-    *D2_CHCR = 0x101;
+    *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY;
     sceGsSyncPath(0, 0);
 }
 
@@ -1726,7 +1726,7 @@ static void MovieDisplay_Clear(MovieDisplay *display, u32 color) {
     GS_PACKET_ADD_SCISSOR_32(packet, 0, display->width - 1, 0, display->height - 1);
     *D2_MADR = packet_start;
     *D2_QWC = 7;
-    *D2_CHCR = 0x101;
+    *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY;
     sceGsSyncPath(0, 0);
 }
 
@@ -1903,7 +1903,7 @@ static const char vblank_format[] = "GS_CSR=%s vbct=%d isvb%d\n";
 static void Movie_SendGifChain(u32 chain) {
     *D2_TADR = chain & 0x0FFFFFFF;
     *D2_QWC = 0;
-    *D2_CHCR = 0x105;
+    *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN;
 }
 
 /* Vblank handler of the movie player: sends the waiting picture's packets for the field that starts. */

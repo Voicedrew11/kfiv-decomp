@@ -517,7 +517,7 @@ s32 EntitySight_PropInWay(Entity *entity) {
     distance = distance_out[0];
     Vector_Subtract(target, target, position);
     Vector_Normalize(target, target);
-    if (entity->map_record != player_record && (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) != 0x4000000) {
+    if (entity->map_record != player_record && ENTITY_PARAMS_MOVEMENT_KIND(entity->params) != ENTITY_PARAMS_MOVEMENT_FLY) {
         hit = EntityCollision_RayProp(entity->map_record, position, target, distance, 0);
         if (hit != 0) {
             return hit;

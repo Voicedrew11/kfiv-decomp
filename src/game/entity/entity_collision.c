@@ -128,7 +128,7 @@ void EntityCollision_PushApart(Entity *entity) {
     type_id = entity->spawn_info->type_id;
     if (!(type_id >= 0x14 && type_id <= 0x16) && (u16)type_id != 0x2D && (u16)type_id != 0x63 && (u16)type_id != 0x97
         && ((s32)(entity->flags >> 1) & 1) && entity->hit_points != 0 && !(entity->flags & 0x8010000)) {
-        if (((EntityParamsWord *)entity->params)->unk00 & 0x8000000) {
+        if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
             EntityCollision_SphereCylinder(entity->model->position, player_state.position, entity->radius, 100.0f, 230.0f);
         } else {
             EntityCollision_CylinderCylinder(entity->model->position, player_state.position, entity->radius, entity->height, 100.0f, 230.0f);
@@ -159,15 +159,15 @@ void EntityCollision_PushApart(Entity *entity) {
                 continue;
             }
             if (other->params->flags & 0x10) {
-                if (((EntityParamsWord *)entity->params)->unk00 & 0x8000000) {
-                    if (((EntityParamsWord *)other->params)->unk00 & 0x8000000) {
+                if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
+                    if (ENTITY_PARAMS_IS_SPHERE(other->params)) {
                         EntityCollision_SphereSphere(entity->model->position, other->model->position, entity->radius, other->radius);
                     } else {
                         EntityCollision_SphereCylinder(entity->model->position, other->model->position, entity->radius, other->radius,
                                       other->height);
                     }
                 } else {
-                    if (((EntityParamsWord *)other->params)->unk00 & 0x8000000) {
+                    if (ENTITY_PARAMS_IS_SPHERE(other->params)) {
                         EntityCollision_CylinderSphere(entity->model->position, other->model->position, entity->radius, entity->height,
                                       other->radius);
                     } else {

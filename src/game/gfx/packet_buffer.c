@@ -9,9 +9,9 @@
 /* sends a packet to VIF1 and waits for the transfer to end */
 #define SEND_TO_VIF1(packet)                    \
     channel = sceDmaGetChan(1);                 \
-    channel->chcr |= 0x40;                      \
+    channel->chcr |= D_CHCR_TTE;                \
     sceDmaSend(channel, (u32)(packet));         \
-    while (*D1_CHCR & 0x100) {                  \
+    while (*D1_CHCR & D_CHCR_STR) {             \
     }
 
 void *memset(void *, int, u32);
@@ -131,13 +131,13 @@ void Packet_SendChain(void) {
             end_tag->unk0C = 0;
             FlushCache(0);
             do {
-            } while (*D1_CHCR & 0x100);
+            } while (*D1_CHCR & D_CHCR_STR);
             *GS_CSR |= 2;
             FlushCache(0);
             *D1_QWC = 0;
             *D1_MADR = 0;
             *D1_TADR = (u32)*chain_head;
-            *D1_CHCR = 0x105;
+            *D1_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN;
         }
     }
 }
@@ -147,7 +147,7 @@ void Packet_WaitForSend(void) {
     if (gs_send_pending[0] != 0) {
         gs_send_pending[0] = 0;
         do {
-        } while (*D1_CHCR & 0x100);
+        } while (*D1_CHCR & D_CHCR_STR);
         sceGsSyncPath(0, 0);
         do {
         } while ((*GS_CSR & 2) == 0);

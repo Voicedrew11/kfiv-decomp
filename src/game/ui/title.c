@@ -8,11 +8,6 @@
 #include <libgraph.h>
 #include "ui/menu_screens.h"
 
-#define PAD_UP    0x0010
-#define PAD_DOWN  0x0040
-#define PAD_START 0x0008
-#define PAD_CROSS 0x4000
-
 #define LOGO_FRAMES         300  /* each logo stays this long */
 #define PRESS_START_FRAMES  3600 /* the PRESS START screen goes back to the logos after this long */
 #define TITLE_FADE_FRAMES   30
@@ -163,14 +158,14 @@ int Title_UploadTexture(int index) {
                          title_textures[index].tex0.psm, 0, 0, width, height);
     FlushCache(0);
     sceGsExecLoadImage(&load_image, (char *)title_textures[index].file + sizeof(TextureHeader));
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
     if (title_textures[index].tex0.psm == 0x13) {
         sceGsSetDefLoadImage(&load_image, title_textures[index].tex0.cbp, 1, title_textures[index].tex0.cpsm, 0, 0, 16, 16);
         FlushCache(0);
         sceGsExecLoadImage(&load_image,
                            (char *)title_textures[index].file + (title_textures[index].file->image_size + sizeof(TextureHeader)));
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00)) {
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
         }
     }
     Texture_SendTexFlush();
@@ -248,10 +243,10 @@ int Title_DrawSprite(float scale, BootSprite *sprite, int blend) {
 /* Sends a packet to the GS through DMA channel 2 and waits for it. */
 int Title_SendPacket(u32 packet, u32 qword_count) {
     FlushCache(0);
-    while (*D2_CHCR & 0x100);
+    while (*D2_CHCR & D_CHCR_STR);
     *D2_QWC = qword_count;
     *D2_MADR = packet;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     sceGsSyncPath(0, 0);
     return 0;
 }

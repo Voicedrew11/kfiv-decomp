@@ -402,7 +402,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             kind = 1;
-            if ((((EntityParamsWord *)params)->unk00 & 0x6000000) == 0x2000000) {
+            if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_1) {
                 kind = 2;
             }
             ENTITY_FLAG_BITS(entity)->bits11 = kind;
@@ -411,7 +411,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit14 = 1;
         ENTITY_FLAG_BITS(entity)->bit19 = 0;
         ENTITY_FLAG_BITS(entity)->bit35 = 0;
-        if (!(((EntityParamsWord *)params)->unk00 & 0x06000000)) {
+        if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_WALK) {
             ENTITY_FLAG_BITS(entity)->bit28 = 0;
         }
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
@@ -461,7 +461,7 @@ static void Npc_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             kind = 1;
-            if ((((EntityParamsWord *)params)->unk00 & 0x6000000) == 0x2000000) {
+            if (ENTITY_PARAMS_MOVEMENT_KIND(params) == ENTITY_PARAMS_MOVEMENT_1) {
                 kind = 2;
             }
             ENTITY_FLAG_BITS(entity)->bits11 = kind;

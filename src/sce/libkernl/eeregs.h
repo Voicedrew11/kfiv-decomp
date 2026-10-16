@@ -6,7 +6,8 @@
  * the literal cast was.  A site that reads a register with a different type
  * (unsigned, 64-bit, or without the qualifier) keeps that cast on the name.
  * The three quadword FIFOs are untyped: each TU names its own 128-bit type
- * (u_long128, u128, u128_ipu) and casts the FIFO to it.
+ * (u_long128, u128, u128_ipu) and casts the FIFO to it.  A mask defined under a
+ * register is one of that register's bit fields, from the same public map.
  *
  * The header is this project's own.  Its file name follows the public naming
  * of the PS2 SDK header for these registers; nothing is copied from an SDK
@@ -40,6 +41,7 @@
 /* GIF. */
 #define GIF_CTRL ((volatile int *)0x10003000) /* derived name */
 #define GIF_STAT ((volatile int *)0x10003020)
+#define GIF_STAT_APATH 0xC00 /* derived name; bits 10-11, the path in use (0 = idle) */
 
 /* VIF0. */ /* derived name */
 #define VIF0_FBRST ((volatile int *)0x10003810)
@@ -95,6 +97,12 @@
 #define D9_QWC ((volatile int *)0x1000D420)
 #define D9_TADR ((volatile int *)0x1000D430)
 #define D9_SADR ((volatile int *)0x1000D480)
+
+/* Dn_CHCR fields, shared by every channel's control register. */ /* derived name */
+#define D_CHCR_DIR_FROM_MEMORY 0x1 /* bit0: DIR, the transfer reads memory */
+#define D_CHCR_MOD_CHAIN 0x4       /* bits2-3: MOD, DMAtag chain */
+#define D_CHCR_TTE 0x40            /* bit6: TTE, transfer the DMAtag too */
+#define D_CHCR_STR 0x100           /* bit8: STR, start; set while the transfer runs */
 
 /* DMA controller. */
 #define D_CTRL ((volatile int *)0x1000E000)

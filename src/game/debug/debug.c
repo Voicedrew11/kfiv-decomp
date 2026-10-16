@@ -65,21 +65,21 @@ static inline int debug_pad_modifier(int mask) {
 /* Debug editor for an int: left and right change *value by step (times 10, 100 or 1000
    with the modifier buttons), clamped to [minimum, maximum]. */
 void Debug_EditInt(s32 *value, s32 minimum, s32 maximum, s32 step) {
-    if (debug_pad_step(0x80) && debug_pad_modifier(0x3000) == 0x3000) {
+    if (debug_pad_step(PAD_LEFT) && debug_pad_modifier(PAD_TRIANGLE | PAD_CIRCLE) == (PAD_TRIANGLE | PAD_CIRCLE)) {
         *value -= step * 1000;
-    } else if (debug_pad_step(0x20) && debug_pad_modifier(0x3000) == 0x3000) {
+    } else if (debug_pad_step(PAD_RIGHT) && debug_pad_modifier(PAD_TRIANGLE | PAD_CIRCLE) == (PAD_TRIANGLE | PAD_CIRCLE)) {
         *value += step * 1000;
-    } else if (debug_pad_step(0x80) && debug_pad_modifier(0x1000)) {
+    } else if (debug_pad_step(PAD_LEFT) && debug_pad_modifier(PAD_TRIANGLE)) {
         *value -= step * 100;
-    } else if (debug_pad_step(0x20) && debug_pad_modifier(0x1000)) {
+    } else if (debug_pad_step(PAD_RIGHT) && debug_pad_modifier(PAD_TRIANGLE)) {
         *value += step * 100;
-    } else if (debug_pad_step(0x80) && debug_pad_modifier(0x2000)) {
+    } else if (debug_pad_step(PAD_LEFT) && debug_pad_modifier(PAD_CIRCLE)) {
         *value -= step * 10;
-    } else if (debug_pad_step(0x20) && debug_pad_modifier(0x2000)) {
+    } else if (debug_pad_step(PAD_RIGHT) && debug_pad_modifier(PAD_CIRCLE)) {
         *value += step * 10;
-    } else if (debug_pad_step(0x80)) {
+    } else if (debug_pad_step(PAD_LEFT)) {
         *value -= step;
-    } else if (debug_pad_step(0x20)) {
+    } else if (debug_pad_step(PAD_RIGHT)) {
         *value += step;
     }
     if (*value < minimum) {
@@ -92,21 +92,21 @@ void Debug_EditInt(s32 *value, s32 minimum, s32 maximum, s32 step) {
 
 /* Debug_EditInt for a u16. */
 void Debug_EditU16(u16 *value, u16 minimum, u16 maximum, u16 step) {
-    if (debug_pad_step(0x80) && debug_pad_modifier(0x3000) == 0x3000) {
+    if (debug_pad_step(PAD_LEFT) && debug_pad_modifier(PAD_TRIANGLE | PAD_CIRCLE) == (PAD_TRIANGLE | PAD_CIRCLE)) {
         *value -= step * 1000;
-    } else if (debug_pad_step(0x20) && debug_pad_modifier(0x3000) == 0x3000) {
+    } else if (debug_pad_step(PAD_RIGHT) && debug_pad_modifier(PAD_TRIANGLE | PAD_CIRCLE) == (PAD_TRIANGLE | PAD_CIRCLE)) {
         *value += step * 1000;
-    } else if (debug_pad_step(0x80) && debug_pad_modifier(0x1000)) {
+    } else if (debug_pad_step(PAD_LEFT) && debug_pad_modifier(PAD_TRIANGLE)) {
         *value -= step * 100;
-    } else if (debug_pad_step(0x20) && debug_pad_modifier(0x1000)) {
+    } else if (debug_pad_step(PAD_RIGHT) && debug_pad_modifier(PAD_TRIANGLE)) {
         *value += step * 100;
-    } else if (debug_pad_step(0x80) && debug_pad_modifier(0x2000)) {
+    } else if (debug_pad_step(PAD_LEFT) && debug_pad_modifier(PAD_CIRCLE)) {
         *value -= step * 10;
-    } else if (debug_pad_step(0x20) && debug_pad_modifier(0x2000)) {
+    } else if (debug_pad_step(PAD_RIGHT) && debug_pad_modifier(PAD_CIRCLE)) {
         *value += step * 10;
-    } else if (debug_pad_step(0x80)) {
+    } else if (debug_pad_step(PAD_LEFT)) {
         *value -= step;
-    } else if (debug_pad_step(0x20)) {
+    } else if (debug_pad_step(PAD_RIGHT)) {
         *value += step;
     }
     if (*value < minimum) {
@@ -119,21 +119,21 @@ void Debug_EditU16(u16 *value, u16 minimum, u16 maximum, u16 step) {
 
 /* Debug_EditInt for a byte. */
 void Debug_EditU8(u8 *value, u8 minimum, u8 maximum, u8 step) {
-    if (debug_pad_step(0x80) && debug_pad_modifier(0x3000) == 0x3000) {
+    if (debug_pad_step(PAD_LEFT) && debug_pad_modifier(PAD_TRIANGLE | PAD_CIRCLE) == (PAD_TRIANGLE | PAD_CIRCLE)) {
         *value -= step * 1000;
-    } else if (debug_pad_step(0x20) && debug_pad_modifier(0x3000) == 0x3000) {
+    } else if (debug_pad_step(PAD_RIGHT) && debug_pad_modifier(PAD_TRIANGLE | PAD_CIRCLE) == (PAD_TRIANGLE | PAD_CIRCLE)) {
         *value += step * 1000;
-    } else if (debug_pad_step(0x80) && debug_pad_modifier(0x1000)) {
+    } else if (debug_pad_step(PAD_LEFT) && debug_pad_modifier(PAD_TRIANGLE)) {
         *value -= step * 100;
-    } else if (debug_pad_step(0x20) && debug_pad_modifier(0x1000)) {
+    } else if (debug_pad_step(PAD_RIGHT) && debug_pad_modifier(PAD_TRIANGLE)) {
         *value += step * 100;
-    } else if (debug_pad_step(0x80) && debug_pad_modifier(0x2000)) {
+    } else if (debug_pad_step(PAD_LEFT) && debug_pad_modifier(PAD_CIRCLE)) {
         *value -= step * 10;
-    } else if (debug_pad_step(0x20) && debug_pad_modifier(0x2000)) {
+    } else if (debug_pad_step(PAD_RIGHT) && debug_pad_modifier(PAD_CIRCLE)) {
         *value += step * 10;
-    } else if (debug_pad_step(0x80)) {
+    } else if (debug_pad_step(PAD_LEFT)) {
         *value -= step;
-    } else if (debug_pad_step(0x20)) {
+    } else if (debug_pad_step(PAD_RIGHT)) {
         *value += step;
     }
     if (*value < minimum) {
@@ -247,7 +247,7 @@ int Debug_RunStartMenu(void) {
     do {
         while (running) {
             Input_Update();
-            if (pad_state[1] & 8) {
+            if (pad_state[1] & PAD_START) {
                 break;
             }
             Packet_SwapBuffers();
@@ -265,13 +265,13 @@ int Debug_RunStartMenu(void) {
         selected = 0;
         while (running) {
             Input_Update();
-            if (pad_state[1] & 0x10) {
+            if (pad_state[1] & PAD_UP) {
                 selected = (selected + 3) % 4;
-            } else if (pad_state[1] & 0x40) {
+            } else if (pad_state[1] & PAD_DOWN) {
                 selected = (selected + 1) % 4;
-            } else if (pad_state[1] & 0x2000) {
+            } else if (pad_state[1] & PAD_CIRCLE) {
                 break;
-            } else if (pad_state[1] & 0x4000) {
+            } else if (pad_state[1] & PAD_CROSS) {
                 chosen = selected;
                 running = FALSE;
             }
@@ -293,7 +293,7 @@ int Debug_RunStartMenu(void) {
     return chosen;
 }
 
-/* Debug map picker: left and right (or L2 and R2 held) step *map_id through 0..254 on a
+/* Debug map picker: left and right (or L1 and R1 held) step *map_id through 0..254 on a
    "MAP nnn" screen. Returns TRUE if the choice was confirmed, FALSE if cancelled. */
 int Debug_PickMap(int *map_id) {
     s64 saved_colours[4];
@@ -317,22 +317,22 @@ int Debug_PickMap(int *map_id) {
         report = Pad_GetReport(0, 0);
         pressed = report->pressed;
         held = report->held;
-        if (pressed & 0x80) {
+        if (pressed & PAD_LEFT) {
             map--;
             if (map < 0) {
                 map = 0xFE;
             }
-        } else if (pressed & 0x20) {
+        } else if (pressed & PAD_RIGHT) {
             map++;
             if (map > 0xFE) {
                 map = 0;
             }
-        } else if (held & 0x400) {
+        } else if (held & PAD_L1) {
             map--;
             if (map < 0) {
                 map = 0xFE;
             }
-        } else if (held & 0x800) {
+        } else if (held & PAD_R1) {
             map++;
             if (map > 0xFE) {
                 map = 0;
@@ -345,12 +345,12 @@ int Debug_PickMap(int *map_id) {
         func_001095D8();
         Packet_SendChain();
         ((int (*)(void))Packet_WaitForSend)(); // match: a result keeps $2 busy after the call
-        if (pressed & 0x2000) {
+        if (pressed & PAD_CIRCLE) {
             *map_id = map;
             confirmed = TRUE;
             break;
         }
-    } while (!(pressed & 0x4000));
+    } while (!(pressed & PAD_CROSS));
     do {
         Display_SwapBuffers(0);
         Pad_Update();
@@ -394,13 +394,13 @@ void Debug_EditIniNumber(int *value) {
         Pad_Update();
         report = Pad_GetReport(0, 0);
         pressed = report->pressed;
-        if ((pressed & 0x80) && cursor < 3) {
+        if ((pressed & PAD_LEFT) && cursor < 3) {
             cursor++;
-        } else if ((pressed & 0x20) && cursor > 0) {
+        } else if ((pressed & PAD_RIGHT) && cursor > 0) {
             cursor--;
-        } else if (pressed & 0x10) {
+        } else if (pressed & PAD_UP) {
             digits[cursor] = (digits[cursor] + 1) % 10;
-        } else if (pressed & 0x40) {
+        } else if (pressed & PAD_DOWN) {
             digits[cursor] = (digits[cursor] + 9) % 10;
         }
         Packet_SwapBuffers();
@@ -416,11 +416,11 @@ void Debug_EditIniNumber(int *value) {
         func_001095D8();
         Packet_SendChain();
         ((int (*)(void))Packet_WaitForSend)(); // match: a result keeps $2 busy after the call
-        if (pressed & 0x2000) {
+        if (pressed & PAD_CIRCLE) {
             *value = digits[0] + digits[1] * 10 + digits[2] * 100 + digits[3] * 1000;
             break;
         }
-    } while (!(pressed & 0x4000));
+    } while (!(pressed & PAD_CROSS));
     do {
         Display_SwapBuffers(0);
         Pad_Update();

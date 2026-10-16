@@ -132,7 +132,7 @@ static void HighSkeleton_Dormant(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
@@ -152,7 +152,7 @@ static void HighSkeleton_Dormant(Entity *entity) {
             if (entity->params->flags & 0x100) {
                 ENTITY_FLAG_BITS(entity)->bits11 = 0;
             } else {
-                ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+                ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
             }
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
             entity->action_step++;
@@ -173,7 +173,7 @@ static void HighSkeleton_Dormant(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit24 = 0;
             ENTITY_FLAG_BITS(entity)->bit25 = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
-            if (!(((EntityParamsWord *)entity->params)->unk00 & 0x6000000)) {
+            if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
                 ENTITY_FLAG_BITS(entity)->bit28 = 0;
             }
             entity->busy_flags = 0;

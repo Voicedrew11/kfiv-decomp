@@ -259,7 +259,7 @@ static void LivingArmor_Animate(Entity *entity) {
     flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x6000000) {
+        if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
             entity->flags = flags & ~0x3800L;
         }
         blend_frames = entity->model->level_tables->unk88;
@@ -307,7 +307,7 @@ static void LivingArmor_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit35 = FALSE;
-        if (!(((EntityParamsWord *)entity->params)->unk00 & 0x6000000)) {
+        if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
             ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
         }
         entity->reaction_step++;
@@ -498,7 +498,7 @@ static void LivingArmor_Dormant(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            if (!(((EntityParamsWord *)entity->params)->unk00 & 0x6000000)) {
+            if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
                 ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
             }
             entity->busy_flags = 0;

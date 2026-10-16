@@ -303,7 +303,7 @@ static void Snake_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
-        if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) != 0x6000000) {
+        if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) != ENTITY_PARAMS_MOVEMENT_FIXED) {
             EntityAi_CheckFarFromSpawn((char *)entity);
         }
         EntityAi_StepState(entity);
