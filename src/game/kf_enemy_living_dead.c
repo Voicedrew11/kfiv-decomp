@@ -59,7 +59,7 @@ void LivingDead_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = (void (*)(Entity *, s32))LivingDead_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))LivingDead_OnHit;
@@ -67,10 +67,10 @@ void LivingDead_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 3; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 5; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
@@ -79,9 +79,9 @@ void LivingDead_Init(Entity *entity) {
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -111,13 +111,13 @@ static void LivingDead_OnHit(Entity *entity) {
 }
 
 /* The reaction to a light hit (busy bit 2): as EntityAi_ReactionLight, but when it ends and
-   EntitySpawnInfo.unk40 is 0 it starts EntityAi_RangedAttack with record 0, with a chance of
-   EntityParams.unk436 in 100. */
+   EntitySpawnInfo.spawn_mode is 0 it starts EntityAi_RangedAttack with record 0, with a chance of
+   EntityParams.near_distance in 100. */
 static void LivingDead_ReactionLight(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 = 2;
-    switch (entity->unkCB) {
+    entity->busy_flags = 2;
+    switch (entity->reaction_step) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
         Motion_Start(entity, 0xE, 0, 5, 1);
@@ -126,26 +126,26 @@ static void LivingDead_ReactionLight(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
         }
-        unkE0->unk1C = 0.0f;
+        unkE0->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit14 = 1;
         ENTITY_FLAG_BITS(entity)->bit19 = 0;
         ENTITY_FLAG_BITS(entity)->bit35 = 0;
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->unkCB++;
+        entity->reaction_step++;
         break;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
-            entity->unkCB++;
+        if (entity->model->level_tables->unk88 == 0) {
+            entity->reaction_step++;
         }
         break;
     case 2:
-        EntityAi_SetAttackDelay(entity, entity->params->unkC8);
+        EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
         EntityAi_SetReaction((char *)entity, NULL, 0);
-        entity->unkC6 = 0;
-        entity->unkC8 = 0;
-        entity->unkA0 = 0;
-        if (entity->spawn_info->unk40 == 0 && rand() % 100 < entity->params->unk436) {
+        entity->busy_flags = 0;
+        entity->move_command = 0;
+        entity->action_timer = 0;
+        if (entity->spawn_info->spawn_mode == 0 && rand() % 100 < entity->params->near_distance) {
             ENTITY_FLAG_BITS(entity)->bit57 = 1;
             ENTITY_FLAG_BITS(entity)->bits58 = 0;
             EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -159,13 +159,13 @@ static void LivingDead_ReactionLight(Entity *entity) {
 }
 
 /* The reaction to a heavy hit (busy bit 4): as EntityAi_ReactionHeavy, but when it ends and
-   EntitySpawnInfo.unk40 is 0 it starts EntityAi_RangedAttack with record 0, with a chance of
-   EntityParams.unk436 in 100. */
+   EntitySpawnInfo.spawn_mode is 0 it starts EntityAi_RangedAttack with record 0, with a chance of
+   EntityParams.near_distance in 100. */
 static void LivingDead_ReactionHeavy(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 = 4;
-    switch (entity->unkCB) {
+    entity->busy_flags = 4;
+    switch (entity->reaction_step) {
     case 0:
         Motion_Start(entity, 0xF, 0, 5, 1);
         if (entity->params->flags & 0x100) {
@@ -173,7 +173,7 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
         }
-        unkE0->unk1C = 0.0f;
+        unkE0->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit14 = 1;
         ENTITY_FLAG_BITS(entity)->bit19 = 0;
         ENTITY_FLAG_BITS(entity)->bit35 = 0;
@@ -182,21 +182,21 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
-        entity->unkCB++;
+        entity->reaction_step++;
         break;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
-            entity->unkCB++;
+        if (entity->model->level_tables->unk88 == 0) {
+            entity->reaction_step++;
         }
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            EntityAi_SetAttackDelay(entity, entity->params->unkC8);
+            EntityAi_SetAttackDelay(entity, entity->params->attack_delay);
             EntityAi_SetReaction((char *)entity, NULL, 0);
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
-            if (entity->spawn_info->unk40 == 0 && rand() % 100 < entity->params->unk436) {
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
+            if (entity->spawn_info->spawn_mode == 0 && rand() % 100 < entity->params->near_distance) {
                 ENTITY_FLAG_BITS(entity)->bit57 = 1;
                 ENTITY_FLAG_BITS(entity)->bits58 = 0;
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
@@ -216,10 +216,10 @@ static void LivingDead_Think(Entity *entity, s32 unknown) {
     u32 phase;
 
     phase = D_00446ED4 % 10U;
-    if (phase == entity->unkD7 % 10U) {
+    if (phase == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->unkC6 != 0) {
+    if (entity->busy_flags != 0) {
         return;
     }
     EntityAi_CheckFarFromSpawn(entity);
@@ -239,9 +239,9 @@ static void LivingDead_Think(Entity *entity, s32 unknown) {
     EntityAi_ThinkIdle(entity, unknown);
 }
 
-/* The think function of state 2: as EntityAi_ThinkCombat, but with EntitySpawnInfo.unk40 at 0, on
+/* The think function of state 2: as EntityAi_ThinkCombat, but with EntitySpawnInfo.spawn_mode at 0, on
    each frame whose count divides by 120 plus work byte unk7A, it draws unk7A anew (0 to 59) and
-   starts EntityAi_RangedAttack with record 0 with a chance of EntityParams.unk434 in 100. Closing
+   starts EntityAi_RangedAttack with record 0 with a chance of EntityParams.action_frames in 100. Closing
    in never runs; waiting lasts 60 to 89 frames. */
 static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -259,9 +259,9 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (entity->spawn_info->unk40 == 0 && D_00446ED4 % (u32)(unkE0->unk7A + 0x78) == 0) {
-        unkE0->unk7A = rand() % 60;
-        if (rand() % 100 < (s16)entity->params->unk434) {
+    if (entity->spawn_info->spawn_mode == 0 && D_00446ED4 % (u32)(unkE0->step_index + 0x78) == 0) {
+        unkE0->step_index = rand() % 60;
+        if (rand() % 100 < (s16)entity->params->action_frames) {
             ENTITY_FLAG_BITS(entity)->bit57 = 1;
             ENTITY_FLAG_BITS(entity)->bits58 = 0;
             EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
@@ -269,14 +269,14 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
@@ -286,40 +286,40 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &player_state;
-            entity->unkA0 = rand() % 60 + 0x78;
-            unkE0->unk78 = 0;
+            entity->action_timer = rand() % 60 + 0x78;
+            unkE0->move_choice = 0;
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 0x3C;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 0x3C;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (unkE0->unk78 == 0) {
+    if (unkE0->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-            if (unkE0->unk79 == 0) {
-                unkE0->unk79 = ABS(angle) > 0.5235988f;
-                if (unkE0->unk79 == 0) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
+            if (unkE0->turn_in_place == 0) {
+                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
+                if (unkE0->turn_in_place == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = EntityAi_TurnCommand(entity);
-            if (entity->unkC8 == 0) {
-                unkE0->unk79 = 0;
+            entity->move_command = EntityAi_TurnCommand(entity);
+            if (entity->move_command == 0) {
+                unkE0->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->unkC8 = 0x201;
+                entity->move_command = 0x201;
             } else if (turn < 0) {
-                entity->unkC8 = 0x101;
+                entity->move_command = 0x101;
             } else {
-                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
         }
     }

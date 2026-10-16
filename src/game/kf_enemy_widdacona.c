@@ -57,9 +57,9 @@ static void Widdacona_RangedAttack0(Entity *entity);
 /* Set-up of a type 30 entity: clears its work area and installs the type's handlers. */
 void Widdacona_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
-    char *unk138 = entity->model->unk138;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
+    char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: the three fills name their target inside the loop; unkBC and unkC0 above are
@@ -69,7 +69,7 @@ void Widdacona_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = Widdacona_Think;
     unkE0->animate = (void (*)(void))Widdacona_Animate;
     unkE0->on_hit = (void (*)(void))Widdacona_OnHit;
@@ -77,24 +77,24 @@ void Widdacona_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))Widdacona_Dormant;
     unkE0->death = (void (*)(void))Widdacona_Death;
     for (i = 3; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 5; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
     entity->flags |= 0x10000000;
-    if (ENTITY_FLAG_WORD(entity->spawn_info->unk38) & (0x8000L << 43)) {
+    if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -108,9 +108,9 @@ static void Widdacona_Animate(Entity *entity) {
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        blend_frames = entity->model->unkFC->unk88;
+        blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
@@ -131,20 +131,20 @@ static void Widdacona_OnHit(Entity *entity) {
 
 /* The death action (busy bit 0x40): animation 16; when it has ended it starts effect 0x3BC at the
    points Model_GetSkinnedBonePoint gives for 20 to 22, sets work byte unk7A and waits until the entity whose
-   spawn id is EntitySpawnInfo.unk40 has its unk7A set too; then the fade over 20 frames and the
+   spawn id is EntitySpawnInfo.spawn_mode has its unk7A set too; then the fade over 20 frames and the
    removal, as EntityAi_Death. */
 static void Widdacona_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     Entity *other;
     char *part;
 
-    entity->unkC6 = 0x40;
+    entity->busy_flags = 0x40;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x4000000) {
-            entity->unk30 = 20.0f;
+            entity->collision_radius = 20.0f;
         }
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
@@ -153,7 +153,7 @@ static void Widdacona_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
@@ -161,37 +161,37 @@ static void Widdacona_Death(Entity *entity) {
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             part = Model_GetSkinnedBonePoint((char *)entity->model, 0x14);
             if (part != NULL) {
-                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, player_state.position);
+                Effect_StartSpawner(0x3BC, part, entity->model->rotation, player_state.position);
             }
             part = Model_GetSkinnedBonePoint((char *)entity->model, 0x15);
             if (part != NULL) {
-                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, player_state.position);
+                Effect_StartSpawner(0x3BC, part, entity->model->rotation, player_state.position);
             }
             part = Model_GetSkinnedBonePoint((char *)entity->model, 0x16);
             if (part != NULL) {
-                Effect_StartSpawner(0x3BC, part, entity->model->unkD0, player_state.position);
+                Effect_StartSpawner(0x3BC, part, entity->model->rotation, player_state.position);
             }
             ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-            unkE0->unk7A = 1;
+            unkE0->step_index = 1;
             entity->action_step++;
         }
         break;
     case 3:
-        other = Entity_GetBySpawnIdForMap(entity->group_id, entity->spawn_info->unk40);
-        if (other != NULL && ((s32)other->flags & 1) && other->unkE0.unk7A != 0) {
+        other = Entity_GetBySpawnIdForMap(entity->group_id, entity->spawn_info->spawn_mode);
+        if (other != NULL && ((s32)other->flags & 1) && other->unkE0.step_index != 0) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
-            entity->unkA0 = 20;
+            entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
     case 4:
-        if (entity->unkA0 != 0) {
-            entity->model->unk15C = (f32)entity->unkD6 * (f32)entity->unkA0 / 20.0f;
+        if (entity->action_timer != 0) {
+            entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
             ENTITY_FLAG_BITS(entity)->bits2 = 3;
             ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
@@ -206,7 +206,7 @@ static void Widdacona_Death(Entity *entity) {
 static void Widdacona_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 |= 0x20;
+    entity->busy_flags |= 0x20;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
@@ -215,7 +215,7 @@ static void Widdacona_Dormant(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
         }
-        unkE0->unk1C = 0.0f;
+        unkE0->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit22 = 1;
         ENTITY_FLAG_BITS(entity)->bit23 = 1;
@@ -227,8 +227,8 @@ static void Widdacona_Dormant(Entity *entity) {
     case 1:
         if (player_state.position[0] > -4900.0f && player_state.position[0] < -2500.0f &&
             player_state.position[2] > -5350.0f && player_state.position[2] < -3350.0f) {
-            if (entity->distance_to_player < entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
-                Motion_Start(entity, 2, 0, entity->params->unkC4, 0);
+            if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bit43) {
+                Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
                 if (entity->params->flags & 0x100) {
                     ENTITY_FLAG_BITS(entity)->bits11 = 0;
                 } else {
@@ -240,7 +240,7 @@ static void Widdacona_Dormant(Entity *entity) {
         }
         break;
     case 2:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
@@ -252,9 +252,9 @@ static void Widdacona_Dormant(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit23 = 0;
             ENTITY_FLAG_BITS(entity)->bit24 = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 entity->unkE0.think(entity, 1);
             } else {
@@ -267,32 +267,32 @@ static void Widdacona_Dormant(Entity *entity) {
 
 /* An action (busy bit 0x1000) that Widdacona_Think starts while the player is outside the
    rectangle: starts animation 2 at frame EntityAi_AnimationFrameCount(entity, 2) - 1 with flag bits 15 and 18 set;
-   when the motion has ended it copies EntitySpawnInfo.unk10 to the model's angles and starts the
+   when the motion has ended it copies EntitySpawnInfo.spawn_rotation_x to the model's angles and starts the
    dormant action. */
 static void Widdacona_ReturnToDormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 |= 0x1000;
+    entity->busy_flags |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 2, EntityAi_AnimationFrameCount(entity, 2) - 1, entity->params->unkC4, 1);
+        Motion_Start(entity, 2, EntityAi_AnimationFrameCount(entity, 2) - 1, entity->params->motion_blend_frames, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bit15 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if ((s32)(entity->flags >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             ENTITY_FLAG_BITS(entity)->bit15 = FALSE;
-            Vector_Copy(entity->model->unkD0, &entity->spawn_info->unk10);
+            Vector_Copy(entity->model->rotation, &entity->spawn_info->spawn_rotation_x);
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
         }
         break;
@@ -306,10 +306,10 @@ static void Widdacona_ReturnToDormant(Entity *entity) {
 static void Widdacona_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 2);
     }
-    if (entity->unkC6 != 0) {
+    if (entity->busy_flags != 0) {
         return;
     }
     EntityAi_StepState(entity);
@@ -344,14 +344,14 @@ static void Widdacona_ThinkCombat(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 3);
     ENTITY_FLAG_BITS(entity)->bit9 = 0;
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, Widdacona_RangedAttack0, unknown);
@@ -361,20 +361,20 @@ static void Widdacona_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &player_state;
-            entity->unkA0 = rand() % 60 + 120;
-            unkE0->unk78 = 0;
+            entity->action_timer = rand() % 60 + 120;
+            unkE0->move_choice = 0;
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 30;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 30;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (unkE0->unk78 == 0) {
-        entity->unkC8 = EntityAi_TurnCommand(entity);
+    if (unkE0->move_choice == 0) {
+        entity->move_command = EntityAi_TurnCommand(entity);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -383,44 +383,44 @@ static void Widdacona_ThinkCombat(Entity *entity, s32 unknown) {
    three, launches the record's shots at a point 100 below the player (EntityShot_LaunchAimed). */
 static void Widdacona_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
+    EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
     f32 direction[4];
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAGS(entity) &= ~0x3800;
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
-        if (entity->model->unkFC->unk82 >= 12 && entity->model->unkFC->unk82 <= 76 && D_00446ED4 % 3 != 0) {
+        if (entity->model->level_tables->unk82 >= 12 && entity->model->level_tables->unk82 <= 76 && D_00446ED4 % 3 != 0) {
             Vector_Copy(direction, &player_state);
             direction[1] -= 100.0f;
             EntityShot_LaunchAimed(entity, unk3D8, 12, 76, direction, 0.3926991f, 0.17453294f);
         }
-        if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
+        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);

@@ -2054,7 +2054,7 @@ static int Sound_RunMapBankLoad(void *sequence, int kind) {
     return 1;
 }
 
-/* Loads the sound bank of a map slot (MapSlot.unk34) a step a call while pending; returns 0 once it is done. */
+/* Loads the sound bank of a map slot (MapSlot.sound_bank) a step a call while pending; returns 0 once it is done. */
 int Sound_LoadMapBankStep(int slot_addr, int pending) {
     MapSlot *slot = (MapSlot *)slot_addr;
     SoundBankInfo *bank;
@@ -2064,7 +2064,7 @@ int Sound_LoadMapBankStep(int slot_addr, int pending) {
     }
     map_bank_load_job.unk1C = 0x106810;
     map_bank_load_job.unk18 = 3;
-    bank = (SoundBankInfo *)slot->unk34;
+    bank = (SoundBankInfo *)slot->sound_bank;
     map_bank_load_job.spec = (SoundJobSpec *)&map_bank_spec;
     map_bank_spec.size_a = bank->size_a;
     map_bank_spec.buffer_a = bank->buffer_a;
@@ -2076,13 +2076,13 @@ int Sound_LoadMapBankStep(int slot_addr, int pending) {
     return pending;
 }
 
-/* Loads the sound bank of a map slot (MapSlot.unk34), waiting until it is done. */
+/* Loads the sound bank of a map slot (MapSlot.sound_bank), waiting until it is done. */
 int Sound_LoadMapBank(MapSlot *slot) {
     SoundBankInfo *bank;
 
     map_bank_job.unk18 = 3;
     map_bank_job.unk1C = 0x106810;
-    bank = (SoundBankInfo *)slot->unk34;
+    bank = (SoundBankInfo *)slot->sound_bank;
     map_bank_job.spec = (SoundJobSpec *)&map_bank_files;
     map_bank_files.size_a = bank->size_a;
     map_bank_files.buffer_a = bank->buffer_a;

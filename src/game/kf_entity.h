@@ -14,37 +14,37 @@ typedef struct {
     f32 spawn_y;                    /* 0x04 */
     f32 spawn_z;                    /* 0x08 */
     char pad0C[0x04];
-    f32 unk10;                      /* 0x10 start of the rotation it spawns with (unk14 is its y) */
-    f32 unk14;                      /* 0x14 an angle (the facing it spawns with?) */
-    f32 unk18;                      /* 0x18 third rotation component (ScriptCmd_GetEntitySpawnRotation) */
+    f32 spawn_rotation_x;           /* 0x10 start of the rotation it spawns with (unk14 is its y) */
+    f32 spawn_rotation_y;           /* 0x14 an angle (the facing it spawns with?) */
+    f32 spawn_rotation_z;           /* 0x18 third rotation component (ScriptCmd_GetEntitySpawnRotation) */
     char pad1C[0x04];
-    f32 unk20[4];                   /* 0x20 the scale it spawns with */
+    f32 spawn_scale[4];             /* 0x20 the scale it spawns with */
     u16 type_id;                    /* 0x30 which pool block holds its data */
     char pad32[0x02];
     s8 pool_size;                   /* 0x34 0-4: one pool block, else two */
-    u8 unk35;                       /* 0x35 strips of CollisionMesh.unk24 rated below it are skipped (EntityCollision_SphereAgainstMesh) */
-    u16 unk36;                      /* 0x36 what Script_Start gets when the entity dies */
-    u64 unk38;                      /* 0x38 */
-    u8 unk40;                       /* 0x40 the mode of this spawn: picks among the behaviours of its type, most often the think handler the set-up function installs */
+    u8 barrier_level;               /* 0x35 strips of CollisionMesh.barrier_strips rated below it are skipped (EntityCollision_SphereAgainstMesh) */
+    u16 death_script_id;            /* 0x36 what Script_Start gets when the entity dies */
+    u64 spawn_flags;                /* 0x38 flags of the spawn: id, death limits, respawn, despawn */
+    u8 spawn_mode;                  /* 0x40 the mode of this spawn: picks among the behaviours of its type, most often the think handler the set-up function installs */
     u8 variant;                     /* 0x41 picks the animation set */
-    u8 unk42;                       /* 0x42 ids of two map objects (see MapObject_GetById) */
-    u8 unk43;                       /* 0x43 */
-    u8 unk44;                       /* 0x44 an animation frame number */
+    u8 map_object_id;               /* 0x42 ids of two map objects (see MapObject_GetById) */
+    u8 second_map_object_id;        /* 0x43 id of the second map object it uses */
+    u8 script_anim_frame;           /* 0x44 an animation frame number */
     char pad45[0x03];
     u16 vertical_despawn_range;     /* 0x48 0: no vertical limit */
     char pad4A[0x02];
-    u16 unk4C;                      /* 0x4C */
-    u16 unk4E;                      /* 0x4E asked of Script_IsRunning before unk58 is used, 0: nothing */
-    u16 unk50;                      /* 0x50 0: Entity_InitFromMapSpawns makes it 1800 */
-    u8 unk52;                       /* 0x52 0: Entity_InitFromMapSpawns makes it 100 */
+    u16 wander_radius;              /* 0x4C radius round the spawn point it wanders and is held in */
+    u16 talk_script_id;             /* 0x4E asked of Script_IsRunning before unk58 is used, 0: nothing */
+    u16 respawn_distance;           /* 0x50 0: Entity_InitFromMapSpawns makes it 1800 */
+    u8 respawn_chance;              /* 0x52 0: Entity_InitFromMapSpawns makes it 100 */
     char pad53;
-    u16 unk54;                      /* 0x54 how near the player has to come for a dormant entity to get up (EntityAi_Dormant) */
-    u16 unk56;                      /* 0x56 */
-    u16 unk58;                      /* 0x58 passed to Script_Start when an item is used on the entity, 0: nothing */
+    u16 wake_distance;              /* 0x54 how near the player has to come for a dormant entity to get up (EntityAi_Dormant) */
+    u16 wander_height_range;        /* 0x56 half-range of the random height of picked wander points */
+    u16 item_script_id;             /* 0x58 passed to Script_Start when an item is used on the entity, 0: nothing */
     u16 despawn_range;              /* 0x5A */
 } EntitySpawnInfo;
 
-/* EntitySpawnInfo.unk38 read through a union. The game's field is a union member:
+/* EntitySpawnInfo.spawn_flags read through a union. The game's field is a union member:
    only then does the compiler keep earlier stores of other types ahead of the read. */
 typedef union {
     u64 word;
@@ -52,21 +52,21 @@ typedef union {
     u8 bytes[8];                    /* [4]: spawn id for entity_by_spawn_id; [6]: 0 becomes 80 (Entity_InitFromMapSpawns) */
 } EntitySpawnFlags;
 
-#define ENTITY_SPAWN_FLAGS(entity) (((EntitySpawnFlags *)&(entity)->spawn_info->unk38)->word)
+#define ENTITY_SPAWN_FLAGS(entity) (((EntitySpawnFlags *)&(entity)->spawn_info->spawn_flags)->word)
 
 struct Entity;
 
-/* what EntityModel.unkFC points at */
+/* what EntityModel.level_tables points at */
 typedef struct {
     char pad00[0x81];
     u8 unk81;                       /* 0x81 */
     s16 unk82;                      /* 0x82 */
     s32 unk84;                      /* 0x84 */
     s32 unk88;                      /* 0x88 */
-    u16 unk8C;                      /* 0x8C set from EntityParams.unk80[] */
+    u16 unk8C;                      /* 0x8C set from EntityParams.motion_speeds[] */
 } EntityModelUnkFC;
 
-/* one 0x100-byte element of what EntityModel.unkF8 points at */
+/* one 0x100-byte element of what EntityModel.parts points at */
 typedef struct {
     char pad00[0x50];
     f32 unk50[4];                   /* 0x50 */
@@ -75,7 +75,7 @@ typedef struct {
     char pad70[0x90];
 } EntityModelUnkF8;
 
-/* what EntityModel.unkF8 points at, seen as 0x80-byte elements: MutantWall_TurnPart2ToPlayer indexes
+/* what EntityModel.parts points at, seen as 0x80-byte elements: MutantWall_TurnPart2ToPlayer indexes
    it that way (element 2 is at 0x100) */
 typedef struct {
     char pad00[0x50];
@@ -107,19 +107,19 @@ typedef struct {
 typedef struct {
     char pad00[0xC0];
     f32 position[4];                /* 0xC0 */
-    f32 unkD0[4];                   /* 0xD0 */
-    f32 unkE0[4];                   /* 0xE0 */
+    f32 rotation[4];                /* 0xD0 x, y (heading), z angles in radians */
+    f32 scale[4];                   /* 0xE0 the model's x, y and z scale */
     char padF0[0x08];
-    EntityModelUnkF8 *unkF8;        /* 0xF8 */
-    EntityModelUnkFC *unkFC;        /* 0xFC */
+    EntityModelUnkF8 *parts;        /* 0xF8 the model's part array (0x80 or 0x100 bytes per part) */
+    EntityModelUnkFC *level_tables; /* 0xFC the model's animation channel (ModelInstance.level_tables) */
     char pad100[0x02];
-    u16 unk102;                     /* 0x102 */
+    u16 draw_flags;                 /* 0x102 0x800: drawn with its own texture (same word as ModelInstance) */
     char pad104[0x30];
-    s32 unk134;                     /* 0x134 */
-    void *unk138;                   /* 0x138 */
-    f32 unk13C;                     /* 0x13C the larger of Entity.unk30 and unk34 */
+    s32 aim_part;                   /* 0x134 the part the model file marks 2; turned towards a target */
+    void *look_at_part;             /* 0x138 the part look-at turns (the third the model file marks) */
+    f32 radius;                     /* 0x13C the larger of Entity.collision_radius and unk34 */
     char pad140[0x1C];
-    f32 unk15C;                     /* 0x15C */
+    f32 alpha;                      /* 0x15C the model's alpha, 0x80 is opaque */
 } EntityModel;
 
 /* two blocks of an EntityParamsUnk240Part that ParaStool_CheckPartHitInPlayerView copies whole into its request */
@@ -151,66 +151,66 @@ typedef struct {
 
 #define ENTITY_PART_FLAGS(part) ((EntityParamsUnk240PartFlags *)&(part)->unk1E)
 
-/* one of the 0x88-byte records at EntityParams+0x240 (EntityParams.unk350 is the third) */
+/* one of the 0x88-byte records at EntityParams+0x240 (EntityParams.melee_attack_third is the third) */
 typedef struct {
-    u8 unk00;                       /* 0x00 */
-    u8 unk01;                       /* 0x01 */
-    u8 unk02;                       /* 0x02 */
-    u8 unk03;                       /* 0x03 */
-    u16 unk04;                      /* 0x04 nearest the player may be for it, 0: no limit */
-    u16 unk06;                      /* 0x06 farthest the player may be for it */
-    f32 unk08;                      /* 0x08 widest angle to the player for it */
-    u8 unk0C;                       /* 0x0C */
+    u8 attack_weight;               /* 0x00 weight in the six-attack draw; 0: the attack is not used */
+    u8 hit_start_frame;             /* 0x01 animation frame the attack starts on, turned to the player up to it */
+    u8 attack_delay;                /* 0x02 base frames before the next attack after this one */
+    u8 hit_end_frame;               /* 0x03 animation frame the hit window ends on, held by flag bit 19 */
+    u16 reach_min;                  /* 0x04 nearest the player may be for it, 0: no limit */
+    u16 reach_max;                  /* 0x06 farthest the player may be for it */
+    f32 reach_angle;                /* 0x08 widest angle to the player for it */
+    u8 wear_armour_part;            /* 0x0C which piece of the player's armour the hit wears out */
     char pad0D;
-    s16 unk0E;                      /* 0x0E degrees its direction is off the entity's heading */
-    EntityParamsUnk240Part unk10[3]; /* 0x10 */
+    s16 heading_offset_deg;         /* 0x0E degrees its direction is off the entity's heading */
+    EntityParamsUnk240Part hit_parts[3]; /* 0x10 the three hit parts of the attack: window, arc, power, ailments */
 } EntityParamsUnk240;
 
 /* the two blocks ParaStool_CheckPartHitInPlayerView fills for Attack_Run */
 typedef struct {
     f32 position[4];                /* 0x00 */
-    f32 unk10[4];                   /* 0x10 an earlier position: Attack_HitEntity takes the hit direction from it */
-    f32 unk20[4];                   /* 0x20 shape 2: a second point (Attack_RunEffectHitCheck) */
-    f32 unk30;                      /* 0x30 */
-    f32 unk34;                      /* 0x34 */
-    f32 unk38;                      /* 0x38 */
-    f32 unk3C;                      /* 0x3C */
-    f32 unk40;                      /* 0x40 unk40, unk44, unk78 and unk7C: more of the shape of the player's swept requests (Attack_RunSwept) */
-    f32 unk44;                      /* 0x44 */
+    f32 previous_position[4];       /* 0x10 an earlier position: Attack_HitEntity takes the hit direction from it */
+    f32 second_point[4];            /* 0x20 shape 2: a second point (Attack_RunEffectHitCheck) */
+    f32 radius;                     /* 0x30 radius of the hit: sphere, sweep or cylinder */
+    f32 height;                     /* 0x34 height of the hit's cylinder above its position */
+    f32 facing;                     /* 0x38 heading the hit is aimed at, in radians */
+    f32 half_angle;                 /* 0x3C half the hit's arc either side of facing */
+    f32 pitch;                      /* 0x40 pitch, half_pitch, unk78 and highest_y: more of the shape of the player's swept requests (Attack_RunSwept) */
+    f32 half_pitch;                 /* 0x44 half the swing's pitch window */
     struct Entity *owner;           /* 0x48 */
-    u64 unk4C_0 : 2;                /* 0x4C */
+    u64 shape : 2;                  /* 0x4C which hit shape: 0 sphere, 3 swept, 1 and 2 do nothing */
     u64 unk4C_2 : 1;
-    u64 unk4C_3 : 1;
+    u64 knockback : 1;              /* not 0: the hit knocks the player back */
     u64 unk4C_4 : 4;
-    u8 unk4D;                       /* 0x4D */
-    u8 unk4E;                       /* 0x4E */
-    u8 unk4F;                       /* 0x4F copied to Entity.unk82 by a hit of kind 1 */
+    u8 target_mask;                 /* 0x4D what it may hit: 1 player, 2 entities, 4 objects, 8/0x10 the map */
+    u8 hit_armor_part;              /* 0x4E which worn piece a hit on the player wears out, 1 to 4 */
+    u8 stun_frames;                 /* 0x4F copied to Entity.stun_frames by a hit of kind 1 */
     EntityParamsUnk240PartUnk00 unk50; /* 0x50 */
     EntityParamsUnk240PartUnk12 unk62; /* 0x62 */
-    u8 unk6E;                       /* 0x6E a weapon hit's damage to a map object is multiplied by it when the object asks (Attack_HitMapObject) */
-    u8 unk6F;                       /* 0x6F chance in percent that the hit counts double */
-    u8 unk70;                       /* 0x70 chance in percent that the hit kills outright */
-    u8 unk71;                       /* 0x71 taken off PlayerState.mp_now when the hit lands on the player (Attack_HitPlayer) */
-    u16 unk72;                      /* 0x72 not 0: the hit does nothing to the player */
-    u8 unk74;                       /* 0x74 set once the hit has landed on the player */
+    u8 map_object_damage_multiplier; /* 0x6E a weapon hit's damage to a map object is multiplied by it when the object asks (Attack_HitMapObject) */
+    u8 double_hit_chance_percent;   /* 0x6F chance in percent that the hit counts double */
+    u8 instant_kill_chance_percent; /* 0x70 chance in percent that the hit kills outright */
+    u8 mp_damage;                   /* 0x71 taken off PlayerState.mp_now when the hit lands on the player (Attack_HitPlayer) */
+    u16 player_hit_cooldown;        /* 0x72 not 0: the hit does nothing to the player */
+    u8 landed_on_player;            /* 0x74 set once the hit has landed on the player */
     char pad75[0x03];
-    f32 unk78;                      /* 0x78 */
-    f32 unk7C;                      /* 0x7C */
+    f32 lowest_y;                   /* 0x78 lowest y of the player's swung hit window */
+    f32 highest_y;                  /* 0x7C highest y of the player's swung hit window */
 } Unk1B1470Request;
 
 typedef struct {
-    u8 unk00;                       /* 0x00 */
+    u8 is_magic_shot;               /* 0x00 0: the hit is a weapon's, 1: a magic's */
     char pad01;
-    s16 unk02;                      /* 0x02 */
-    s32 unk04;                      /* 0x04 */
+    s16 strength_gauge;             /* 0x02 the power gauge's charge when the hit was launched */
+    s32 attack_request;             /* 0x04 the request a weapon's shot reuses, 0 for a magic */
     char pad08[0x06];
-    s16 unk0E[6];                   /* 0x0E */
+    s16 worn_magic_bonus[6];        /* 0x0E per magic kind bonus from worn items, in fiftieths */
     char pad1A[0x02];
-    s32 unk1C;                      /* 0x1C */
-    s16 unk20;                      /* 0x20 */
-    s16 unk22;                      /* 0x22 */
-    s16 unk24;                      /* 0x24 */
-    s16 unk26;                      /* 0x26 */
+    s32 magic_use_counted;          /* 0x1C set once this hit has counted a magic use */
+    s16 player_power;               /* 0x20 the attacker's power, in fiftieths of the strengths */
+    s16 player_magic;               /* 0x22 the attacker's magic, in fiftieths of the strengths */
+    s16 weapon_index;               /* 0x24 the weapon this hit wears and counts a use of */
+    s16 magic_id;                   /* 0x26 the magic this hit counts a use of */
     char pad28[0x08];
 } Unk1B1470Extra;
 
@@ -297,10 +297,10 @@ typedef struct {
     char pad12[0x0A];
 } EntityParamsUnk3D8Array;
 
-/* one of the four bodies of an entity kind the player collides with piece by piece (EntityParams.unk20) */
+/* one of the four bodies of an entity kind the player collides with piece by piece (EntityParams.body_points) */
 /* the same slot as the motion code reads it: every flag a byte-wide bit-field (Motion_StepSlot) */
 typedef struct {
-    u8 index : 5;                   /* 0x00 which EntityParams.unk60 entry (motion) it plays */
+    u8 index : 5;                   /* 0x00 which EntityParams.motion_ids entry (motion) it plays */
     u8 moves_entity : 1;            /* the root part's movement in the motion is handed to the entity */
     u8 bit6 : 1;
     u8 backwards : 1;               /* the motion plays from its last frame to its first */
@@ -325,111 +325,111 @@ typedef struct {
 /* what Entity.params points at: per-kind tuning values. EntityController below is a second
    view of the same block; the two are to be unified. */
 typedef struct {
-    u32 unk00_0 : 16;               /* 0x00 */
-    u32 unk02 : 8;                  /* 0x02 index into entity_type_handlers */
+    u32 model_number : 16;          /* 0x00 the chr/cNNNN.chr model file number, 0xFFFF: none */
+    u32 entity_type : 8;            /* 0x02 index into entity_type_handlers */
     u32 unk03_0 : 1;                /* 0x03 */
     u32 unk03_1 : 2;
     u32 unk03_3 : 5;
-    u16 unk04;                      /* 0x04 Entity.unk44 before scaling */
-    u16 unk06;                      /* 0x06 Entity.unk30 before scaling */
-    u16 unk08;                      /* 0x08 Entity.unk34 before scaling */
-    u16 unk0A;                      /* 0x0A what Entity.unk2C is measured against */
-    u16 unk0C;                      /* 0x0C 0: Entity_InitFromMapSpawns makes it 70 */
-    u16 unk0E;                      /* 0x0E passed to Player_AddExperience when the entity dies */
+    u16 unk04;                      /* 0x04 Entity.body_radius before scaling */
+    u16 map_collision_radius;       /* 0x06 Entity.collision_radius before scaling */
+    u16 map_collision_height;       /* 0x08 Entity.collision_height before scaling */
+    u16 hit_points;                 /* 0x0A what Entity.hit_points is measured against */
+    u16 body_volume;                /* 0x0C 0: Entity_InitFromMapSpawns makes it 70 */
+    u16 experience_reward;          /* 0x0E passed to Player_AddExperience when the entity dies */
     u16 flags;                      /* 0x10 */
     char pad12[0x02];
-    u8 unk14[4];                    /* 0x14 weights of the four actions, scaled by Entity.unkBC */
-    u16 unk18;                      /* 0x18 a distance to the player (see Npc_Think) */
-    u16 unk1A;                      /* 0x1A a height: ranged attacks need the player level with it (EntityAi_PickCombatChoice) */
+    u8 combat_choice_weights[4];    /* 0x14 weights of the four actions, scaled by Entity.choice_weights */
+    u16 attack_range;               /* 0x18 a distance to the player (see Npc_Think) */
+    u16 attack_height_band;         /* 0x1A a height: ranged attacks need the player level with it (EntityAi_PickCombatChoice) */
     char pad1C[0x04];
-    EntityBodyPoint unk20[4];       /* 0x20 what the player collides with for the kinds made of several bodies (Player_CollideWithEntities) */
-    f32 unk50;                      /* 0x50 */
-    f32 unk54;                      /* 0x54 */
-    f32 unk58;                      /* 0x58 */
+    EntityBodyPoint body_points[4]; /* 0x20 what the player collides with for the kinds made of several bodies (Player_CollideWithEntities) */
+    f32 speed_step_per_frame;       /* 0x50 how much its movement speeds change each frame */
+    f32 max_speed;                  /* 0x54 the most the movement speeds it builds up reach */
+    f32 turn_step_per_frame;        /* 0x58 how much its turn speed changes each frame */
     f32 turn_limit;                 /* 0x5C */
-    u8 unk60[0x20];                 /* 0x60 byte table */
-    u16 unk80[0x22];                /* 0x80 indexed by Entity.unkD1 */
-    u8 unkC4;                       /* 0xC4 */
-    u8 unkC5;                       /* 0xC5 bone index for Model_GetSkinnedBonePoint (EntityEvent_Respawn) */
-    u16 unkC6;                      /* 0xC6 */
-    u8 unkC8;                       /* 0xC8 */
-    u8 unkC9;                       /* 0xC9 */
-    u8 unkCA;                       /* 0xCA */
-    u8 unkCB;                       /* 0xCB */
-    u16 unkCC;                      /* 0xCC Entity.radius before scaling */
-    u16 unkCE;                      /* 0xCE */
-    u8 unkD0;                       /* 0xD0 */
-    u8 unkD1;                       /* 0xD1 */
-    u8 unkD2;                       /* 0xD2 the model's scale in percent */
+    u8 motion_ids[0x20];            /* 0x60 byte table */
+    u16 motion_speeds[0x22];        /* 0x80 indexed by Entity.animation_index */
+    u8 motion_blend_frames;         /* 0xC4 frames Motion_Start blends the new animation in over */
+    u8 respawn_effect_bone;         /* 0xC5 bone index for Model_GetSkinnedBonePoint (EntityEvent_Respawn) */
+    u16 respawn_effect_id;          /* 0xC6 effect started at that bone when it respawns, 0xFFFF: none */
+    u8 attack_delay;                /* 0xC8 base frames before its next attack, plus a player-HP term */
+    u8 critical_defence;            /* 0xC9 percent off a hit's chance to double or to kill outright */
+    u8 dodge_chance;                /* 0xCA chance out of 500 that it dodges the player's swing */
+    u8 guard_chance;                /* 0xCB chance out of 500 that it guards the player's swing */
+    u16 body_radius;                /* 0xCC Entity.radius before scaling */
+    u16 guard_frames;               /* 0xCE frames the default guard holds animation 13 with flag bit 35 */
+    u8 guard_physical_bonus;        /* 0xD0 added to each physical resistance while the guard flag is set */
+    u8 guard_magic_bonus;           /* 0xD1 added to each magic resistance while the guard flag is set */
+    u8 model_scale_percent;         /* 0xD2 the model's scale in percent */
     char padD3;
-    s16 unkD4;                      /* 0xD4 unkD4 to unkE4: nine resistances, 100 and up: immune (Attack_HitEntity) */
-    s16 unkD6;                      /* 0xD6 */
-    s16 unkD8;                      /* 0xD8 */
-    s16 unkDA;                      /* 0xDA */
-    s16 unkDC;                      /* 0xDC */
-    s16 unkDE;                      /* 0xDE */
-    s16 unkE0;                      /* 0xE0 */
-    s16 unkE2;                      /* 0xE2 */
-    s16 unkE4;                      /* 0xE4 */
-    u16 unkE6;                      /* 0xE6 */
-    u16 unkE8;                      /* 0xE8 */
-    u8 unkEA;                       /* 0xEA unkEA to unkED: percent taken off a hit's chance to start each of the four ailments (Attack_RollEntityAilments) */
-    u8 unkEB;                       /* 0xEB */
-    u8 unkEC;                       /* 0xEC */
-    u8 unkED;                       /* 0xED */
-    u16 unkEE;                      /* 0xEE Entity.height before scaling */
-    u8 unkF0[0x20];                 /* 0xF0 how many records unk130[n] leads to */
-    u8 unk110[0x20];                /* 0x110 how many records unk1B0[n] leads to */
-    s32 unk130[0x20];               /* 0x130 offsets from D_004467C0 to EntityParamsUnk130 records, by animation */
-    s32 unk1B0[0x20];               /* 0x1B0 offsets from D_004467C0 to EntityParamsUnk1B0 records, by animation */
+    s16 resist_slash;               /* 0xD4 unkD4 to resist_dark: nine resistances, 100 and up: immune (Attack_HitEntity) */
+    s16 resist_hit;                 /* 0xD6 hit (blunt) resistance; 100 and up: immune */
+    s16 resist_stab;                /* 0xD8 stab resistance; 100 and up: immune */
+    s16 resist_fire;                /* 0xDA fire resistance; 100 and up: immune */
+    s16 resist_earth;               /* 0xDC earth resistance */
+    s16 resist_wind;                /* 0xDE wind resistance */
+    s16 resist_water;               /* 0xE0 water resistance */
+    s16 resist_light;               /* 0xE2 light resistance */
+    s16 resist_dark;                /* 0xE4 dark resistance */
+    u16 physical_defence;           /* 0xE6 added to each of the three physical resistances */
+    u16 magic_defence;              /* 0xE8 added to each of the six magic resistances */
+    u8 ailment_defence_1;           /* 0xEA unkEA to ailment_defence_4: percent taken off a hit's chance to start each of the four ailments (Attack_RollEntityAilments) */
+    u8 ailment_defence_2;           /* 0xEB percent off the hit's chance to start ailment 2 of its four */
+    u8 ailment_defence_3;           /* 0xEC percent off the hit's chance to start ailment 3 of its four */
+    u8 ailment_defence_4;           /* 0xED percent off the hit's chance to start ailment 4 of its four */
+    u16 body_height;                /* 0xEE Entity.height before scaling */
+    u8 anim_effect_counts[0x20];    /* 0xF0 how many records anim_effect_offsets[n] leads to */
+    u8 anim_sound_counts[0x20];     /* 0x110 how many records anim_sound_offsets[n] leads to */
+    s32 anim_effect_offsets[0x20];  /* 0x130 offsets from D_004467C0 to EntityParamsUnk130 records, by animation */
+    s32 anim_sound_offsets[0x20];   /* 0x1B0 offsets from D_004467C0 to EntityParamsUnk1B0 records, by animation */
     u16 gold;                       /* 0x230 how much gold it drops (Gold_DropFromEntity): half of it for sure, the rest by chance */
     u16 drop_item;                  /* 0x232 the item it may drop (MapItem_DropFromEnemy), 0xFFFF: none */
     u16 second_drop_item;           /* 0x234 the item it may drop when the first one's roll fails, 0xFFFF: none */
     s8 drop_chance;                 /* 0x236 percent */
     s8 second_drop_chance;          /* 0x237 percent */
     EntityUnaligned64 unk238;       /* 0x238 */
-    EntityParamsUnk240 unk240[2];   /* 0x240 indexed by flag bits 58-59 */
-    char unk350[0x88];              /* 0x350 */
-    EntityParamsUnk3D8Array unk3D8[3]; /* 0x3D8 */
-    u8 unk42C;                      /* 0x42C how far below its position a floor may be to count (EntityCollision_WalkAgainstMesh) */
-    u8 unk42D;                      /* 0x42D what it does at a ledge (EntityCollision_WalkAgainstMap): 0 walks off, 1 steps down at most Entity.unk34, else stops */
-    u16 unk42E;                     /* 0x42E */
-    s16 unk430;                     /* 0x430 */
-    s16 unk432;                     /* 0x432 */
-    u16 unk434;                     /* 0x434 */
-    s16 unk436;                     /* 0x436 */
-    s16 unk438;                     /* 0x438 */
+    EntityParamsUnk240 melee_attacks[2]; /* 0x240 indexed by flag bits 58-59 */
+    char melee_attack_third[0x88];  /* 0x350 the third melee attack record, reached past unk240 */
+    EntityParamsUnk3D8Array ranged_attacks[3]; /* 0x3D8 the three ranged attack records: weight, bone, frame, shots */
+    u8 floor_probe_depth;           /* 0x42C how far below its position a floor may be to count (EntityCollision_WalkAgainstMesh) */
+    u8 ledge_behavior;              /* 0x42D what it does at a ledge (EntityCollision_WalkAgainstMap): 0 walks off, 1 steps down at most Entity.collision_height, else stops */
+    u16 sound_id;                   /* 0x42E id passed to Sound_PlayFalloff for its animation cues */
+    s16 pitch_limit_deg;            /* 0x430 limit in degrees on the pitch of its aim arcs */
+    s16 yaw_limit_deg;              /* 0x432 limit in degrees on the yaw of its aim arcs */
+    u16 action_frames;              /* 0x434 frames its actions run for, loaded into the work timers */
+    s16 near_distance;              /* 0x436 the nearer of the two distances it keeps from the player */
+    s16 far_distance;               /* 0x438 the farther of the two distances it keeps from the player */
     s16 unk43A;                     /* 0x43A */
     s16 unk43C;                     /* 0x43C */
     s16 unk43E;                     /* 0x43E */
-    u16 unk440[8];                  /* 0x440 indexed by flag bits 60-62; passed to Effect_StartSpawner */
+    u16 variant_effect_ids[8];      /* 0x440 indexed by flag bits 60-62; passed to Effect_StartSpawner */
 } EntityParams;
 
 /* record index of the 0x88-byte records at +0x240, reached by stepping the whole params pointer
    (the match keeps the index scaling apart from the +0x240) */
-#define ENTITY_PARAMS_UNK240_RECORD(params, index) (((EntityParams *)((char *)(params) + (index) * sizeof(EntityParamsUnk240)))->unk240[0])
+#define ENTITY_PARAMS_UNK240_RECORD(params, index) (((EntityParams *)((char *)(params) + (index) * sizeof(EntityParamsUnk240)))->melee_attacks[0])
 
-/* what EntityParams.unk130[n] leads to: something Effect_StartSpawner starts at a bone on an animation frame */
+/* what EntityParams.anim_effect_offsets[n] leads to: something Effect_StartSpawner starts at a bone on an animation frame */
 typedef struct {
     u16 unk00;                      /* 0x00 passed to Effect_StartSpawner */
     u16 unk02;                      /* 0x02 the animation frame */
     u8 unk04;                       /* 0x04 passed to Model_GetSkinnedBonePoint (and the one after it) */
-    s8 unk05;                       /* 0x05 not 0: EntityParams.unk440 picks what to start */
+    s8 unk05;                       /* 0x05 not 0: EntityParams.variant_effect_ids picks what to start */
 } EntityParamsUnk130;
 
-/* what EntityParams.unk1B0[n] leads to: something Sound_PlayFalloff starts on an animation frame */
+/* what EntityParams.anim_sound_offsets[n] leads to: something Sound_PlayFalloff starts on an animation frame */
 typedef struct {
     u8 unk00;                       /* 0x00 passed to Sound_PlayFalloff */
     u8 unk01;                       /* 0x01 passed to Sound_PlayFalloff */
     u16 unk02;                      /* 0x02 the animation frame */
-    u8 unk04;                       /* 0x04 not 0: left out while Entity.unk2A is set */
+    u8 unk04;                       /* 0x04 not 0: left out while Entity.ailment_4_frames is set */
     char pad05[0x03];
 } EntityParamsUnk1B0;
 
-/* the first word of an EntityParams.unk3D8 record, as the AI functions take it */
-#define ENTITY_PARAMS_UNK3D8(params, index) (&(params)->unk3D8[index].record)
+/* the first word of an EntityParams.ranged_attacks record, as the AI functions take it */
+#define ENTITY_PARAMS_UNK3D8(params, index) (&(params)->ranged_attacks[index].record)
 /* the three ranged attacks */
-#define ENTITY_PARAMS_RANGED(params) ((params)->unk3D8)
+#define ENTITY_PARAMS_RANGED(params) ((params)->ranged_attacks)
 #define ENTITY_PARAMS_RECORD(params, index) (&(params)->unk3D8[index])
 
 /* EntityParams with the three ranged-attack records as a real array member: indexed this way the
@@ -476,42 +476,42 @@ typedef struct {
        is set: starts the reaction */
     void (*on_hit)(void);
     /* 0x0C while set, called every frame in place of Entity.handler (see EntityAi_SetReaction);
-       Entity.unkCB is its step. It clears itself when it is done. */
+       Entity.reaction_step is its step. It clears itself when it is done. */
     void (*reaction)(void);
     /* 0x10 the action the set-up function starts when the spawn has flag bit 58: wait for the
        player to come near, then get up */
     void (*dormant)(void);
-    /* 0x14 the action EntityAi_Update starts when Entity.unk2C is 0 */
+    /* 0x14 the action EntityAi_Update starts when Entity.hit_points is 0 */
     void (*death)(void);
-    /* 0x18 the action between the others: carries out the movement command in Entity.unkC8.
+    /* 0x18 the action between the others: carries out the movement command in Entity.move_command.
        think ends by starting it; an action that has ended starts it when flag bit 5 is clear. */
     void (*move)(void);
-    f32 unk1C;                      /* 0x1C */
-    f32 unk20[4];                   /* 0x20 */
-    f32 unk30[4];                   /* 0x30 (Entity+0x110) a point to walk to (Entity.target points here) */
-    f32 unk40;                      /* 0x40 */
-    f32 unk44;                      /* 0x44 */
-    f32 unk48;                      /* 0x48 */
-    f32 unk4C;                      /* 0x4C */
-    f32 unk50;                      /* 0x50 */
-    f32 unk54;                      /* 0x54 */
-    f32 unk58;                      /* 0x58 */
-    f32 unk5C;                      /* 0x5C */
-    f32 unk60;                      /* 0x60 */
+    f32 turn_rate;                  /* 0x1C turn speed built up towards EntityParams.turn_limit */
+    f32 look_part_angles[4];        /* 0x20 the look part's angles, updated in place each frame */
+    f32 target_point[4];            /* 0x30 (Entity+0x110) a point to walk to (Entity.target points here) */
+    f32 pose_blend_weight;          /* 0x40 weight Motion_BlendToPose blends the pose in with */
+    f32 move_speed;                 /* 0x44 speed the movement builds up with EntityAi_Accelerate */
+    f32 part_angle_x;               /* 0x48 a model part's x angle eased in animate (y speed in some) */
+    f32 part_angle_y;               /* 0x4C a model part's y angle eased in animate (z speed in some) */
+    f32 part_angle_z;               /* 0x50 a model part's z angle; heading or launch speed in places */
+    f32 pitch_speed;                /* 0x54 y speed or pitch the type eases (a heading in some types) */
+    f32 heading_speed;              /* 0x58 speed the type eases along the heading (a jump's y in some) */
+    f32 keep_min_distance;          /* 0x5C the entity stays no nearer than this to the player */
+    f32 keep_max_distance;          /* 0x60 the entity closes in while farther than this */
     char pad64[0x04];
-    s16 unk68;                      /* 0x68 */
-    s16 unk6A;                      /* 0x6A one bit per entity 10..15 */
-    s16 unk6C;                      /* 0x6C */
-    s16 unk6E;                      /* 0x6E */
+    s16 pause_timer;                /* 0x68 frame countdown: attack pause, phase or animation length */
+    s16 sub_timer;                  /* 0x6A one bit per entity 10..15 */
+    s16 mode_timer;                 /* 0x6C frame countdown or value the think handler reloads */
+    s16 reload_timer;               /* 0x6E countdown after which other work fields are reloaded */
     char pad70[0x08];
-    s8 unk78;                       /* 0x78 */
-    s8 unk79;                       /* 0x79 */
-    char unk7A;                     /* 0x7A */
-    char unk7B;                     /* 0x7B */
-    char unk7C;                     /* 0x7C */
+    s8 move_choice;                 /* 0x78 the way the entity closes in (0 turn in place, 1 back) */
+    s8 turn_in_place;               /* 0x79 set while it must turn in place towards the player */
+    char step_index;                /* 0x7A per-type step or state the think handler switches on */
+    char action_flags;              /* 0x7B per-type flag byte: turn side, one-shot bits, amount */
+    char action_counter;            /* 0x7C per-type counter, timer, half period or map object id */
     char pad7D[0x03];
-    char unk80[0x08];               /* 0x80 (Entity+0x160) passed by address; an EntityUnkE0Slot */
-    char unk88[0x08];               /* 0x88 (Entity+0x168) passed by address; an EntityUnkE0Slot */
+    char motion_slot_0[0x08];       /* 0x80 (Entity+0x160) passed by address; an EntityUnkE0Slot */
+    char motion_slot_1[0x08];       /* 0x88 (Entity+0x168) passed by address; an EntityUnkE0Slot */
 } EntityUnkE0;
 
 /* one of the two 8-byte slots EntityAi_StartSlotMotion fills */
@@ -527,19 +527,19 @@ typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
     void (*move)(void);             /* 0x18 */
-    s32 unk1C;                      /* 0x1C */
+    s32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
     char pad20[0x10];
-    f32 unk30[4];                   /* 0x30 a point to move towards */
+    f32 target_point[4];            /* 0x30 a point to move towards */
     char pad40[0x08];
-    f32 unk48;                      /* 0x48 */
-    f32 unk4C;                      /* 0x4C */
-    f32 unk50;                      /* 0x50 */
+    f32 point_x;                    /* 0x48 x of a stored point: the entity position or look point */
+    f32 point_y;                    /* 0x4C y of that point (a part angle or heading in some types) */
+    f32 point_z;                    /* 0x50 z of that point (a countdown or speed in some types) */
     char pad54[0x14];
-    s16 unk68;                      /* 0x68 */
+    s16 action_frames;              /* 0x68 frames the current action has run (limit 211) */
     char pad6A[0x0E];
-    s8 unk78;                       /* 0x78 */
-    s8 unk79;                       /* 0x79 */
-    s8 unk7A;                       /* 0x7A */
+    s8 steer_to_target;             /* 0x78 0 while the action should steer towards the target */
+    s8 climb_command;               /* 0x79 1/-1 climb, 2/-2 keep the height in bounds, 0 level out */
+    s8 think_flag;                  /* 0x7A 0/1 flag or countdown the type's think handler keeps */
     char pad7B[0x05];
     EntityUnkE0Slot unk80;          /* 0x80 */
     EntityUnkE0Slot unk88;          /* 0x88 */
@@ -550,14 +550,14 @@ typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
     void (*move)(void);             /* 0x18 */
-    f32 unk1C;                      /* 0x1C turn speed */
+    f32 turn_rate;                  /* 0x1C turn speed */
     char pad20[0x24];
-    f32 unk44;                      /* 0x44 speed sideways */
-    f32 unk48;                      /* 0x48 speed forwards */
-    f32 unk4C;                      /* 0x4C pitch speed */
+    f32 side_speed;                 /* 0x44 speed sideways */
+    f32 forward_speed;              /* 0x48 speed forwards */
+    f32 pitch_speed;                /* 0x4C pitch speed */
     char pad50[0x28];
     s8 unk78;                       /* 0x78 */
-    s8 unk79;                       /* 0x79 climb (above 0), dive (below 0) or level out (0) */
+    s8 climb_command;               /* 0x79 climb (above 0), dive (below 0) or level out (0) */
     char pad7A[0x06];
     EntityUnkE0Slot unk80;          /* 0x80 */
     EntityUnkE0Slot unk88;          /* 0x88 */
@@ -569,13 +569,13 @@ typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
     void (*move)(void);             /* 0x18 */
-    s32 unk1C;                      /* 0x1C */
+    s32 turn_rate;                  /* 0x1C turn rate of the move command, cleared when one starts */
     f32 unk20[4];                   /* 0x20 */
-    f32 unk30[4];                   /* 0x30 where the entity walks to (Entity.target points here) */
+    f32 target_point[4];            /* 0x30 where the entity walks to (Entity.target points here) */
     char pad40[0x3A];
-    s8 unk7A;                       /* 0x7A state of map object spawn_info->unk42 */
-    s8 unk7B;                       /* 0x7B state of map object spawn_info->unk43 */
-    s8 unk7C;                       /* 0x7C id of the map object to operate */
+    s8 map_object_42_state;         /* 0x7A state of map object spawn_info->unk42 */
+    s8 map_object_43_state;         /* 0x7B state of map object spawn_info->unk43 */
+    s8 map_object_to_operate_id;    /* 0x7C id of the map object to operate */
     char pad7D[0x23];
 } EntityUnkE0Kind178358;
 
@@ -683,15 +683,15 @@ typedef struct {
     void (*think)(struct Entity *entity, s32 run_now); /* 0x00 */
     char pad04[0x14];
     void (*move)(void);             /* 0x18 */
-    f32 unk1C;                      /* 0x1C */
+    f32 turn_rate;                  /* 0x1C turn speed used by EntityAi_TurnToHeading */
     char pad20[0x4A];
-    s16 unk6A;                      /* 0x6A counts down; reloaded from EntityParams.unk434 */
+    s16 player_cast_timer;          /* 0x6A counts down; reloaded from EntityParams.action_frames */
     char pad6C[0x0E];
     s8 unk7A;                       /* 0x7A */
-    s8 unk7B;                       /* 0x7B */
-    s8 unk7C;                       /* 0x7C distance band to the player, 0 (far) to 4 (near) */
-    s8 unk7D;                       /* 0x7D frames until unk7C is picked again */
-    s8 unk7E;                       /* 0x7E */
+    s8 alternate_anim_flag;         /* 0x7B picks animation 6 or 7, flipped each time it plays */
+    s8 distance_band;               /* 0x7C distance band to the player, 0 (far) to 4 (near) */
+    s8 distance_band_timer;         /* 0x7D frames until unk7C is picked again */
+    s8 afterimage_active;           /* 0x7E set by the actions that play animation 6 or 7 */
     char pad7F[0x21];
 } EntityUnkE0Kind131390;
 
@@ -709,24 +709,24 @@ typedef struct {
 typedef struct {
     char pad00[0x10];
     u16 flags;                      /* 0x10 */
-    u16 unk12;                      /* 0x12 reload value for Entity.timer */
+    u16 state_timer_reload;         /* 0x12 reload value for Entity.timer */
     char pad14[0x04];
-    u16 unk18;                      /* 0x18 */
-    u16 unk1A;                      /* 0x1A */
-    f32 unk1C;                      /* 0x1C */
+    u16 attack_range;               /* 0x18 how near the player has to be for it to notice and attack */
+    u16 attack_height_band;         /* 0x1A height band around its middle the player is seen in */
+    f32 attack_arc;                 /* 0x1C widest angle off its heading the player is seen in, radians */
     char pad20[0x3C];
     f32 turn_limit;                 /* 0x5C */
     char pad60[0x64];
-    u8 unkC4;                       /* 0xC4 */
-    u8 unkC5;                       /* 0xC5 */
-    u16 unkC6;                      /* 0xC6 */
+    u8 motion_blend_frames;         /* 0xC4 frames Motion_Start blends a new animation in over */
+    u8 respawn_effect_bone;         /* 0xC5 bone the effect starts at when the entity respawns */
+    u16 respawn_effect_id;          /* 0xC6 respawn effect id, 0xFFFF: none */
     char padC8[0x368];
-    s16 unk430;                     /* 0x430 */
+    s16 pitch_limit_deg;            /* 0x430 limit in degrees on the pitch of its look-at arcs */
     char pad432[0x02];
-    s16 unk434;                     /* 0x434 */
+    s16 action_frames;              /* 0x434 frames its actions run for, loaded into work timers */
     char pad436[0x02];
-    s16 unk438;                     /* 0x438 */
-    s16 unk43A;                     /* 0x43A */
+    s16 far_distance;               /* 0x438 the farther of the two distances it keeps from the player */
+    s16 entity_group_index;         /* 0x43A index of its group entry (entity_group_state, origins) */
 } EntityController;
 
 /* EntityController.flags: the type needs two pool blocks (0x100000 bytes) */
@@ -737,75 +737,75 @@ typedef struct Entity {
     char pad04[0x08];
     EntityParams *params;           /* 0x0C ENTITY_CONTROLLER() is the EntityController view */
     EntitySpawnInfo *spawn_info;    /* 0x10 */
-    void *unk14;                    /* 0x14 */
+    void *map_record;               /* 0x14 the map record (MapRecord *) the entity stands on */
     struct Entity *prev;            /* 0x18 */
     struct Entity *next;            /* 0x1C */
-    u16 unk20;                      /* 0x20 a timer, set to 1800 by EntityCollision_ApplySurfaceEffect */
+    u16 ailment_1_frames;           /* 0x20 a timer, set to 1800 by EntityCollision_ApplySurfaceEffect */
     char pad22[0x02];
-    u16 unk24;                      /* 0x24 not 0: attacks reach half as far (EntityAi_PickMeleeAttack) */
-    u16 unk26;                      /* 0x26 1-4: which of the timers unk20, unk24, unk28, unk2A tints the model (Entity_DrawAll) */
-    u16 unk28;                      /* 0x28 */
-    u16 unk2A;                      /* 0x2A */
-    u16 unk2C;                      /* 0x2C */
-    u16 unk2E;                      /* 0x2E capped at EntityParams.unk0A; Entity.unk4C is set from it (Entity_UpdateAll) */
-    f32 unk30;                      /* 0x30 */
-    f32 unk34;                      /* 0x34 */
+    u16 ailment_2_frames;           /* 0x24 not 0: attacks reach half as far (EntityAi_PickMeleeAttack) */
+    u16 ailment_tint_index;         /* 0x26 1-4: which of the timers ailment_1_frames, ailment_2_frames, ailment_3_frames, unk2A tints the model (Entity_DrawAll) */
+    u16 ailment_3_frames;           /* 0x28 frames the third entity ailment lasts; slows its moves */
+    u16 ailment_4_frames;           /* 0x2A frames the fourth entity ailment lasts */
+    u16 hit_points;                 /* 0x2C hit points; at 0 the death action starts */
+    u16 last_hit_damage;            /* 0x2E capped at EntityParams.hit_points; Entity.knockback_speed is set from it (Entity_UpdateAll) */
+    f32 collision_radius;           /* 0x30 radius used against the map mesh and map objects */
+    f32 collision_height;           /* 0x34 half-height used against the map mesh */
     f32 radius;                     /* 0x38 */
     f32 height;                     /* 0x3C */
-    f32 unk40;                      /* 0x40 EntityParams.unk0C scaled three ways (a volume or weight?) */
-    f32 unk44;                      /* 0x44 EntityParams.unk04 scaled */
-    f32 unk48;                      /* 0x48 how far above the floor it is kept (see EntityCollision_SphereAgainstMap) */
-    f32 unk4C;                      /* 0x4C */
-    s32 unk50;                      /* 0x50 */
-    void (*handler)(struct Entity *entity);      /* 0x54 the current action; EntityAi_Update calls it every frame while flag bit 6 is set and no reaction is */
+    f32 knockback_damping;          /* 0x40 EntityParams.body_volume scaled three ways (a volume or weight?) */
+    f32 body_radius;                /* 0x44 EntityParams.unk04 scaled */
+    f32 floor_lift;                 /* 0x48 how far above the floor it is kept (see EntityCollision_SphereAgainstMap) */
+    f32 knockback_speed;            /* 0x4C speed the knockback pushes the entity along at */
+    s32 update_func;                /* 0x50 the type's per-frame update (entity_type_handlers) */
+    void (*handler)(struct Entity *entity); /* 0x54 the current action; EntityAi_Update calls it every frame while flag bit 6 is set and no reaction is */
     void (*prev_handler)(struct Entity *entity); /* 0x58 the action before the last EntityAi_StartAction */
     void *target;                   /* 0x5C */
-    f32 unk60;                      /* 0x60 */
+    f32 distance_to_player_3d;      /* 0x60 distance to the player, height included */
     f32 distance_to_player;         /* 0x64 */
-    f32 unk68;                      /* 0x68 */
-    f32 unk6C;                      /* 0x6C the heading Entity.unk4C pushes it along (Entity_UpdateAll) */
-    f32 unk70[4];                   /* 0x70 the model's position before this frame's move */
-    u16 unk80;                      /* 0x80 */
-    u16 unk82;                      /* 0x82 */
-    f32 unk84;                      /* 0x84 */
-    f32 unk88;                      /* 0x88 */
-    f32 unk8C;                      /* 0x8C */
-    f32 unk90;                      /* 0x90 */
-    f32 unk94;                      /* 0x94 */
-    f32 unk98;                      /* 0x98 */
+    f32 heading_to_player;          /* 0x68 heading (yaw) from the entity to the player */
+    f32 knockback_heading;          /* 0x6C the heading Entity.knockback_speed pushes it along (Entity_UpdateAll) */
+    f32 prev_position[4];           /* 0x70 the model's position before this frame's move */
+    u16 hit_cooldown_frames;        /* 0x80 frames after a hit during which hits are ignored */
+    u16 stun_frames;                /* 0x82 frames the entity's whole update is skipped */
+    f32 move_delta_x;               /* 0x84 this frame's x move, added to the position */
+    f32 move_delta_y;               /* 0x88 this frame's y move, added to the position */
+    f32 move_delta_z;               /* 0x8C this frame's z move, added to the position */
+    f32 turn_delta_pitch;           /* 0x90 this frame's x rotation, added to the model's */
+    f32 turn_delta_yaw;             /* 0x94 this frame's y rotation (heading), added to the model's */
+    f32 turn_delta_roll;            /* 0x98 this frame's z rotation, added to the model's */
     u16 timer;                      /* 0x9C frames left in state 1 (EntityAi_StepState) */
-    u16 unk9E;                      /* 0x9E */
-    u16 unkA0;                      /* 0xA0 a timer for the think functions and the actions; EntityAi_Update counts it down */
-    u8 unkA2;                       /* 0xA2 frames before the next attack: set when an attack or a reaction ends (EntityAi_SetAttackDelay), counted down by EntityAi_Update */
-    u8 unkA3;                       /* 0xA3 */
-    f32 unkA4[3];                   /* 0xA4 a push applied while flag bit 45 or 46 is set */
-    f32 unkB0[3];                   /* 0xB0 a push applied while flag bit 48 is set */
-    u8 unkBC[4];                    /* 0xBC */
-    u8 unkC0[6];                    /* 0xC0 */
+    u16 choice_change_frame;        /* 0x9E frame counter when the current combat choice was picked */
+    u16 action_timer;               /* 0xA0 a timer for the think functions and the actions; EntityAi_Update counts it down */
+    u8 attack_delay_frames;         /* 0xA2 frames before the next attack: set when an attack or a reaction ends (EntityAi_SetAttackDelay), counted down by EntityAi_Update */
+    u8 hit_flash_frames;            /* 0xA3 frames the model is drawn red after a hit */
+    f32 wall_push[3];               /* 0xA4 a push applied while flag bit 45 or 46 is set */
+    f32 entity_push[3];             /* 0xB0 a push applied while flag bit 48 is set */
+    u8 choice_weights[4];           /* 0xBC weights of the four combat choices, 0x40 to 0xC0 */
+    u8 attack_weights[6];           /* 0xC0 weights of the six attacks, 0x40 to 0xC0 */
     /* 0xC6 busy bits: what the current action or reaction is. 1 an attack, 2 the reaction to a light hit,
        4 to a heavy hit, 8 a dodge, 0x10 a guard, 0x20 dormant, 0x40 death, 0x1000 and up an action of
        the type's own. The think handlers decide nothing while it is not 0. */
-    u16 unkC6;
+    u16 busy_flags;                 /* 0xC6 bits naming the action or reaction that is running */
     /* 0xC8 this frame's movement command, for the move action: 1 forward, 2 back, 4 and 8 sideways,
        0x10 and 0x20 up and down, 0x40 at the run, 0x100 and 0x200 turn, 0x400 turn at twice the speed.
        EntityAi_Update clears it. */
-    u16 unkC8;
+    u16 move_command;               /* 0xC8 this frame's movement command for the move action */
     s8 action_step;                 /* 0xCA step of the current action; EntityAi_StartAction puts it back to 0 */
-    s8 unkCB;                       /* 0xCB step of the reaction (EntityUnkE0.reaction); EntityAi_SetReaction puts it back to 0 */
+    s8 reaction_step;               /* 0xCB step of the reaction (EntityUnkE0.reaction); EntityAi_SetReaction puts it back to 0 */
     /* 0xCC what the entity knows of the player (EntityAi_StepState): 0 nothing, 2 the player is noticed
        (flag bit 33), 1 it was and Entity.timer still runs. Scripts and some types set other values. */
     s8 state;
-    s8 unkCD;                       /* 0xCD */
+    s8 combat_choice;               /* 0xCD which of the four combat choices is running */
     char prev_state;                /* 0xCE state before the last change */
-    s8 unkCF;                       /* 0xCF */
-    u8 unkD0;                       /* 0xD0 the motion of the animation before (Motion_Start) */
-    s8 unkD1;                       /* 0xD1 the current animation (Motion_Start) */
-    char unkD2;                     /* 0xD2 copied from its pool block */
-    char unkD3;                     /* 0xD3 pool block index, -1: none */
-    char unkD4;                     /* 0xD4 work area index, -1: none */
+    s8 prev_combat_choice;          /* 0xCF combat choice before the last change */
+    u8 prev_motion_id;              /* 0xD0 the motion of the animation before (Motion_Start) */
+    s8 animation_index;             /* 0xD1 the current animation (Motion_Start) */
+    char sound_bank;                /* 0xD2 copied from its pool block */
+    char pool_slot_index;           /* 0xD3 pool block index, -1: none */
+    char work_area_index;           /* 0xD4 work area index, -1: none */
     char group_id;                  /* 0xD5 */
-    u8 unkD6;                       /* 0xD6 */
-    u8 unkD7;                       /* 0xD7 */
+    u8 model_alpha;                 /* 0xD6 the model's alpha, 0x80 (0x40 for some kinds) */
+    u8 spawn_index;                 /* 0xD7 spawn record index; staggers the periodic checks */
     u64 flags;                      /* 0xD8 */
     EntityUnkE0 unkE0;              /* 0xE0 */
     char pad170[0x10];              /* 0x170 the record is 0x180 bytes */
@@ -817,7 +817,7 @@ typedef struct Entity {
 
 typedef struct {
     char pad00[0xE0];
-    u8 work_bytes[ENTITY_WORK_AREA_SIZE];   /* 0xE0 */
+    u8 work_bytes[ENTITY_WORK_AREA_SIZE]; /* 0xE0 */
 } EntityWorkBytes;
 
 #define ENTITY_WORK_BYTES(entity) (((EntityWorkBytes *)(entity))->work_bytes)
@@ -889,7 +889,7 @@ typedef struct {
 /* Entity.flags with bits 36-37 and 38-39 as two fields, the way Attack_HitEntity sets them on a hit */
 typedef struct {
     u64 pad0 : 36;
-    u32 hit_strength : 2;           /* bits 36-37: 1 below the threshold D_00446214 (percent of EntityParams.unk0A), else 2 */
+    u32 hit_strength : 2;           /* bits 36-37: 1 below the threshold D_00446214 (percent of EntityParams.hit_points), else 2 */
     u32 hit_source : 2;             /* bits 38-39: 1 the player's weapon, 2 the player's magic, 0 anything else */
     u64 pad40 : 24;
 } EntityFlagHitBits;
@@ -929,13 +929,13 @@ typedef union {
 typedef struct {
     f32 position[4];                /* 0x00 */
     char pad10[0x04];
-    f32 unk14;                      /* 0x14 */
+    f32 heading;                    /* 0x14 the player's heading angle, PlayerState.rotation.y */
     char pad18[0x1EC];
-    Entity *unk204;                 /* 0x204 */
+    Entity *stood_on_entity;        /* 0x204 the entity the player was put on top of when climbing */
     char pad208[0x4A];
-    u16 unk252;                     /* 0x252 */
+    u16 map_record_index;           /* 0x252 picks the MapSlot record the player is in */
     char pad254[0x05];
-    u8 unk259;                      /* 0x259 */
+    u8 magic_shot_launched;         /* 0x259 set when a cast magic launches a shot, cleared each frame */
 } PlayerData;
 
 /* four animation frame numbers: a local table that a function copies whole
@@ -979,40 +979,40 @@ typedef struct {
 /* one of the 0x80-byte records MapSlot.records (kf_map.h) points at */
 typedef struct {
     char pad00[0x1C];
-    f32 unk1C;                      /* 0x1C the heading its floor pushes the player along (Player_Move) */
+    f32 push_heading;               /* 0x1C the heading its floor pushes the player along (Player_Move) */
     char pad20[0x0C];
-    u16 unk2C;                      /* 0x2C the most speed the push gives, 0: no push */
-    u16 unk2E;                      /* 0x2E how much speed the push adds per frame, 0: no push */
+    u16 push_max_speed;             /* 0x2C the most speed the push gives, 0: no push */
+    u16 push_acceleration;          /* 0x2E how much speed the push adds per frame, 0: no push */
     char pad30[0x02];
-    u16 unk32;                      /* 0x32 0xFFFF: unused */
+    u16 collision_mesh_index;       /* 0x32 0xFFFF: unused */
     char pad34[0x02];
-    u8 unk36;                       /* 0x36 which MapSlotUnk0C block the entities standing on it are drawn with */
-    u8 unk37;                       /* 0x37 which MapSlotUnk10Words block they are drawn with */
-    u64 unk38;                      /* 0x38 flags; 0x4000000: EntityEvent_StartFrameEffects does its work */
+    u8 draw_block_index;            /* 0x36 which MapSlotUnk0C block the entities standing on it are drawn with */
+    u8 light_block_index;           /* 0x37 which MapSlotUnk10Words block they are drawn with */
+    u64 record_flags;               /* 0x38 flags; 0x4000000: EntityEvent_StartFrameEffects does its work */
     char pad40[0x0E];
-    u8 unk4E;                       /* 0x4E */
+    u8 prop_id;                     /* 0x4E which prop of the map it is, 0: none */
     char pad4F[0x11];
-    f32 unk60[4];                   /* 0x60 lowest x, y, z it covers */
-    f32 unk70[4];                   /* 0x70 highest x, y, z it covers */
+    f32 lowest[4];                  /* 0x60 lowest x, y, z it covers */
+    f32 highest[4];                 /* 0x70 highest x, y, z it covers */
 } MapRecord;
 
-/* one of the 0x80-byte records MapSlot.unk10 (kf_map.h) points at, indexed by byte 3 of
-   EntitySpawnInfo.unk38 */
+/* one of the 0x80-byte records MapSlot.light_blocks (kf_map.h) points at, indexed by byte 3 of
+   EntitySpawnInfo.spawn_flags */
 typedef struct {
     char pad00[0x04];
-    f32 unk04;                      /* 0x04 */
+    f32 light1_direction_x;         /* 0x04 x of light 1's direction in this light block */
     char pad08[0x0C];
-    f32 unk14;                      /* 0x14 */
+    f32 light1_direction_y;         /* 0x14 y of light 1's direction in this light block */
     char pad18[0x0C];
-    f32 unk24;                      /* 0x24 */
+    f32 light1_direction_z;         /* 0x24 z of light 1's direction in this light block */
     char pad28[0x28];
-    f32 unk50;                      /* 0x50 */
-    f32 unk54;                      /* 0x54 */
-    f32 unk58;                      /* 0x58 */
+    f32 light1_red;                 /* 0x50 red of light 1's colour, 0 to 1 */
+    f32 light1_green;               /* 0x54 green of light 1's colour, 0 to 1 */
+    f32 light1_blue;                /* 0x58 blue of light 1's colour, 0 to 1 */
     char pad5C[0x14];
-    f32 unk70;                      /* 0x70 */
-    f32 unk74;                      /* 0x74 */
-    f32 unk78;                      /* 0x78 */
+    f32 ambient_red;                /* 0x70 red of the block's ambient colour (its fourth colour) */
+    f32 ambient_green;              /* 0x74 green of the block's ambient colour */
+    f32 ambient_blue;               /* 0x78 blue of the block's ambient colour */
     char pad7C[0x04];
 } MapSlotUnk10;
 
@@ -1026,14 +1026,14 @@ typedef union {
 } EntityFlags;
 #define ENTITY_FLAGS(entity) (((EntityFlags *)&(entity)->flags)->all)
 
-/* Entity.unkC8 (the movement command bits) read through a union: the value then does not survive a
+/* Entity.move_command (the movement command bits) read through a union: the value then does not survive a
    store of another type, and Scorpion_Move reads the field again after it (see ENTITY_FLAGS) */
 typedef union {
     u16 all;
 } EntityCommand;
-#define ENTITY_COMMAND(entity) (((EntityCommand *)&(entity)->unkC8)->all)
+#define ENTITY_COMMAND(entity) (((EntityCommand *)&(entity)->move_command)->all)
 
-/* entity_group_state[EntityController.unk43A]: state shared by a group of entities */
+/* entity_group_state[EntityController.entity_group_index]: state shared by a group of entities */
 typedef struct {
     char unk00;                     /* 0x00 */
     char unk01;                     /* 0x01 */
@@ -1075,7 +1075,7 @@ typedef struct {
     } head;
     s16 unk4;                       /* 0x04 entities using it */
     u8 unk6;                        /* 0x06 */
-    u8 unk7;                        /* 0x07 copied to Entity.unkD2 */
+    u8 unk7;                        /* 0x07 copied to Entity.sound_bank */
     int age;                        /* 0x08 D_00446ED4 when last released; the oldest is reused first */
     int base_address;               /* 0x0C */
 } EntityPoolSlot;
@@ -1098,7 +1098,7 @@ typedef struct {
     char *model_offset;             /* 0x04 handed to Model_SetUpSkinned with the entity's model. The two are
                                        pointer typed: only then does Entity_TryActivate load them after base_address */
     char *motion_offset;            /* 0x08 handed to ModelMotion_LoadFile */
-    s32 unk0C;                      /* 0x0C becomes ModelInstance.unk194 */
+    s32 unk0C;                      /* 0x0C becomes ModelInstance.texture_data */
     s32 pool_model_offset;          /* 0x10 the slot's own model (EntityPool_BuildBlockModel), 0: none */
 } EntityPoolData;
 

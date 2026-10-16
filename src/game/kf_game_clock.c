@@ -21,13 +21,13 @@ static inline u32 Clock_GetTicks(void) {
 static void GameClock_Tick(void) {
     GameClock *clock;
 
-    if (D_00432820.unk213 == 0) {
+    if (D_00432820.clock_stopped == 0) {
         if (D_00432820.flags & 0x200) {
-            if (D_00432820.unk214 == 0 && (D_00446ED4 & 3) == 0) {
+            if (D_00432820.tick_held == 0 && (D_00446ED4 & 3) == 0) {
                 clock = &game_clock;
                 clock->ticks += 1;
             }
-        } else if (D_00432820.unk214 == 0) {
+        } else if (D_00432820.tick_held == 0) {
             clock = &game_clock;
             clock->ticks += 1;
         }

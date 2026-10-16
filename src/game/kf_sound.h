@@ -10,16 +10,16 @@
 /* one of the 16 voices, SoundState.voices[n]: a header (two copies on the IOP) and its sample data
    (an IOP copy at iop_heap, sent on to sound memory at unk0C) */
 typedef struct {
-    int unk00;                      /* 0x00 IOP block of the header, the stereo copy; 0 when the voice is free */
-    int unk04;                      /* 0x04 IOP block of the mono copy (driver command 0x1070 makes it) */
+    int stereo_header_block;        /* 0x00 IOP block of the header, the stereo copy; 0 when the voice is free */
+    int mono_header_block;          /* 0x04 IOP block of the mono copy (driver command 0x1070 makes it) */
     int iop_heap;                   /* 0x08 IOP copy of the samples, 0 when freed */
-    int unk0C;                      /* 0x0C where the samples are in sound memory */
-    int unk10;                      /* 0x10 size of each header copy */
-    int unk14;                      /* 0x14 size of the block at iop_heap */
-    s16 unk18;                      /* 0x18 the driver's id for the voice */
-    char unk1A;                     /* 0x1A the transfer channel of the samples (commands 0x80, 0x90) */
+    int sample_spu_addr;            /* 0x0C where the samples are in sound memory */
+    int header_size;                /* 0x10 size of each header copy */
+    int sample_size;                /* 0x14 size of the block at iop_heap */
+    s16 driver_voice_id;            /* 0x18 the driver's id for the voice */
+    char dma_channel;               /* 0x1A the transfer channel of the samples (commands 0x80, 0x90) */
     char unk1B;                     /* 0x1B */
-    int unk1C;                      /* 0x1C 1: the stereo copy is in use, 0: the mono one */
+    int stereo_selected;            /* 0x1C 1: the stereo copy is in use, 0: the mono one */
 } SoundVoice;
 
 /* SoundState.banks[4]: a sequence (the .sq data of a BGM, on the IOP) and the voice it plays */
@@ -126,16 +126,16 @@ typedef struct {
 /* sound_load_queue: the sound loads waiting to run, one at a time (GameLoop_RunSoundLoads). Other files
    still declare it as int[]/char[], so the extern stays in each file. */
 typedef struct {
-    int unk00;                      /* 0x00 first argument of Sound_LoadBgm */
-    int unk04;                      /* 0x04 nonzero: a step 3 load is wanted; Sound_LoadBgm clears it */
+    int bgm_id;                     /* 0x00 first argument of Sound_LoadBgm */
+    int bgm_load_pending;           /* 0x04 nonzero: a step 3 load is wanted; Sound_LoadBgm clears it */
     int step;                       /* 0x08 0: idle, 1-3: which load is running */
-    int unk0C;                      /* 0x0C nonzero: a step 1 load is wanted; Sound_LoadMapBankStep clears it */
-    struct MapSlot *unk10;          /* 0x10 the map slot whose sound bank the step 1 load loads */
-    struct MapSlot *unk14;          /* 0x14 the next unk10, taken once unk10 is NULL */
-    int unk18;                      /* 0x18 nonzero: a step 2 load is wanted; Sound_LoadEntityBankStep clears it */
-    int unk1C;                      /* 0x1C arguments of Sound_LoadEntityBankStep */
-    int unk20;                      /* 0x20 */
-    int unk24;                      /* 0x24 */
+    int map_bank_load_pending;      /* 0x0C nonzero: a step 1 load is wanted; Sound_LoadMapBankStep clears it */
+    struct MapSlot *pending_map_slot; /* 0x10 the map slot whose sound bank the step 1 load loads */
+    struct MapSlot *next_map_slot;  /* 0x14 the next pending_map_slot, taken once unk10 is NULL */
+    int entity_bank_load_pending;   /* 0x18 nonzero: a step 2 load is wanted; Sound_LoadEntityBankStep clears it */
+    int entity_bank_args;           /* 0x1C arguments of Sound_LoadEntityBankStep */
+    int entity_slot_index;          /* 0x20 entity pool slot the step 2 load binds its voice to */
+    int entity_slot_voice_out;      /* 0x24 pool slot whose voice byte takes the loaded voice index */
 } SoundLoadQueue;
 
 /* a voice's envelope as SoundDriver_GetAdsr unpacks it: the two SPU2 ADSR registers (ADSR1 in the upper
@@ -174,7 +174,7 @@ typedef struct {
     int size_b;                     /* 0x10 */
 } SoundJobSpec;
 
-/* four words that fill a SoundJobSpec: what MapSlot.unk34 points at */
+/* four words that fill a SoundJobSpec: what MapSlot.sound_bank points at */
 typedef struct SoundSpecSource {
     int size_b;                     /* 0x00 */
     void *buffer_b;                 /* 0x04 */
@@ -224,7 +224,7 @@ typedef struct {
     int size_b;                     /* 0x10 */
 } SoundStartSpec;
 
-/* what MapSlot.unk34 points at: the sound bank of a map, two buffers and their sizes */
+/* what MapSlot.sound_bank points at: the sound bank of a map, two buffers and their sizes */
 typedef struct {
     int size_b;                     /* 0x00 */
     void *buffer_b;                 /* 0x04 */

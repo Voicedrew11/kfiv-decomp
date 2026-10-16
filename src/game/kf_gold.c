@@ -120,10 +120,10 @@ void Gold_InitMap(int map) {
         source = (int)map_gold_model;
         Model_SetUpSkinned(model, &source, &work);
         copy_matrix((ModelMatrixQwords *)matrix, (ModelMatrixQwords *)D_00431AF0);
-        model->unk148 = (s32)&map_draw_state.unkC0;
-        model->unk14C = &map_draw_state.unkA0;
-        model->unk194 = (int)map_gold_texture;
-        model->unk190 = 2;
+        model->light_block = (s32)&map_draw_state.unkC0;
+        model->fog_block = &map_draw_state.unkA0;
+        model->texture_data = (int)map_gold_texture;
+        model->texture_slot = 2;
         model->draw = (void (*)(ModelInstance *))Gold_PrepareFadedDraw;
     }
     tag = map_slots[map].tag; // match: kept in a variable, retail does not read it again after the copy
@@ -183,10 +183,10 @@ void Gold_Update(void) {
         case 0:
             actor->fade_timer--;
             if (actor->fade_timer != 0) {
-                actor->body->unk146 = ((15 - actor->fade_timer) << 7) / 15;
-                MAP_ACTOR_BITS(actor)->in_reach = actor->body->unk146 > 0x10;
+                actor->body->fade_alpha = ((15 - actor->fade_timer) << 7) / 15;
+                MAP_ACTOR_BITS(actor)->in_reach = actor->body->fade_alpha > 0x10;
             } else {
-                actor->body->unk146 = 0x80;
+                actor->body->fade_alpha = 0x80;
                 actor->step = 1;
             }
             break;
@@ -195,7 +195,7 @@ void Gold_Update(void) {
         case 2:
             actor->fade_timer--;
             if (actor->fade_timer != 0) {
-                actor->body->unk146 = (actor->fade_timer << 7) / 15;
+                actor->body->fade_alpha = (actor->fade_timer << 7) / 15;
             } else {
                 if (MAP_ACTOR_WORDS(actor)->object_id != 0) {
                     MapObject_MarkEmptiedById(MAP_ACTOR_BITS(actor)->map, MAP_ACTOR_WORDS(actor)->object_id);
@@ -206,7 +206,7 @@ void Gold_Update(void) {
             }
             break;
         }
-        actor->body->unk145 = actor->body->unk146 < 0x80;
+        actor->body->fade_enabled = actor->body->fade_alpha < 0x80;
         if (actor->flags & 2) {
             Vector_Subtract(delta, &actor->body->position, &player_state);
             distance = delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2];
@@ -217,7 +217,7 @@ void Gold_Update(void) {
         }
         actor = actor->next;
     }
-    if (nearest != NULL && (pad_pressed[0] & D_00446940) && !(game_status.unk30 & 1) && game_status.unk00 != 0) {
+    if (nearest != NULL && (pad_pressed[0] & D_00446940) && !(game_status.update_hold_flags & 1) && game_status.player_control != 0) {
         MAP_ACTOR_BITS(nearest)->in_reach = FALSE;
         nearest->step = 2;
         nearest->fade_timer = 15;
@@ -241,8 +241,8 @@ void Gold_Draw(s32 list) {
     Packet_AddGsRegister(0x48, 0x5000D);
     Packet_EndGsRegisters();
     for (actor = D_004469E0; actor != NULL; actor = actor->next) {
-        ModelMatrix_Build(actor->body, &actor->body->position, &actor->body->rotation, &actor->body->unkE0);
-        if (actor->body->unk145 == 0) {
+        ModelMatrix_Build(actor->body, &actor->body->position, &actor->body->rotation, &actor->body->scale_x);
+        if (actor->body->fade_enabled == 0) {
             ModelTexture_SendForModel(actor->body);
             Model_DrawSkinned(actor->body);
         } else {
@@ -287,10 +287,10 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
     MAP_ACTOR_WORDS(actor)->amount = amount;
     Vector_Copy(&actor->body->position, position);
     Vector_Copy(&actor->body->rotation, rotation);
-    actor->body->unkE8 = 1.5f; // match: z, y, x, w in this order gives the stores in retail order
-    actor->body->unkE4 = 1.5f;
-    actor->body->unkE0 = 1.5f;
-    actor->body->unkEC = 1.0f;
+    actor->body->scale_z = 1.5f; // match: z, y, x, w in this order gives the stores in retail order
+    actor->body->scale_y = 1.5f;
+    actor->body->scale_x = 1.5f;
+    actor->body->scale_w = 1.0f;
     if (on_ground) {
         actor->body->position.y = actor->unk14;
     }
@@ -441,7 +441,7 @@ void Gold_ClearMark(MapActor *actor) {
    its fade alpha (unk146) and the tests, then sends its textures. */
 void Gold_PrepareFadedDraw(OverlaySprite *sprite) {
     Packet_BeginGsRegisters();
-    Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)sprite->unk146 << 32) | 0x64);
+    Packet_AddGsRegister(GS_REG_ALPHA_1, ((s64)sprite->fade_alpha << 32) | 0x64);
     Packet_AddGsRegister(GS_REG_TEST_1, 0x51001);
     Packet_AddGsRegister(0x48, 0x30001);
     Packet_EndGsRegisters();

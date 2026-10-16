@@ -55,8 +55,8 @@ f32 EntityCollision_DistanceToPropFloor(void *, void *);
 
 #define SCRATCH_MATRIX ((f32 *)0x70000000)
 #define SCRATCH_VECTOR ((f32 *)0x70000040)
-#define MAP_RECORD(entity) ((MapRecord *)(entity)->unk14)
-#define SPAWN_FLAGS(spawn_info) ((EntitySpawnFlags *)&(spawn_info)->unk38)
+#define MAP_RECORD(entity) ((MapRecord *)(entity)->map_record)
+#define SPAWN_FLAGS(spawn_info) ((EntitySpawnFlags *)&(spawn_info)->spawn_flags)
 
 static Entity *entity_by_spawn_id[2][0x100]; /* 0x4FEB90 entity lookup by spawn id byte per map slot */
 
@@ -80,7 +80,7 @@ void Entity_InitInert(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
 }
 
 /* The per-frame update entity_type_handlers gives the types Entity_InitInert sets up: does nothing. */
@@ -105,8 +105,8 @@ void Entity_InitFromMapSpawns(int map) {
     memory = &D_004321F0[map];
     entity = entity_pool[map];
     spawn_info = D_004467D0[map];
-    model = memory->unk44;
-    D_004467D8[map] = ((MapSlotUnk08 *)slot->header)->unk42;
+    model = memory->entity_models;
+    D_004467D8[map] = ((MapSlotUnk08 *)slot->header)->spawn_count;
     memset(entity, 0, sizeof(entity_pool[map]));
     memset(entity_by_spawn_id[map], 0, sizeof(entity_by_spawn_id[map]));
     count = D_004467D8[map];
@@ -114,7 +114,7 @@ void Entity_InitFromMapSpawns(int map) {
         entity->group_id = map;
         entity->model = (EntityModel *)model;
         entity->params = (EntityParams *)(D_004467C0 + spawn_info->type_id * sizeof(EntityParams));
-        entity->unkD3 = -1;
+        entity->pool_slot_index = -1;
         entity->spawn_info = spawn_info;
         entity_by_spawn_id[map][SPAWN_FLAGS(spawn_info)->bytes[4]] = entity;
         if ((SPAWN_FLAGS(spawn_info)->word & (0xC000L << 45)) == (0x8000L << 45)) {
@@ -122,23 +122,23 @@ void Entity_InitFromMapSpawns(int map) {
         } else {
             ENTITY_FLAG_BITS(entity)->bit7 = TRUE;
         }
-        entity->unkD7 = i;
+        entity->spawn_index = i;
         ENTITY_FLAG_BITS(entity)->bit5 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit6 = TRUE;
-        if (entity->spawn_info->unk4C == 0) {
-            entity->spawn_info->unk4C = 1500;
+        if (entity->spawn_info->wander_radius == 0) {
+            entity->spawn_info->wander_radius = 1500;
         }
-        if (entity->spawn_info->unk56 == 0) {
-            entity->spawn_info->unk56 = 500;
+        if (entity->spawn_info->wander_height_range == 0) {
+            entity->spawn_info->wander_height_range = 500;
         }
-        if (entity->spawn_info->unk50 == 0) {
-            entity->spawn_info->unk50 = 1800;
+        if (entity->spawn_info->respawn_distance == 0) {
+            entity->spawn_info->respawn_distance = 1800;
         }
-        if (entity->spawn_info->unk52 == 0) {
-            entity->spawn_info->unk52 = 100;
+        if (entity->spawn_info->respawn_chance == 0) {
+            entity->spawn_info->respawn_chance = 100;
         }
-        if (entity->spawn_info->unk54 == 0) {
-            entity->spawn_info->unk54 = 800;
+        if (entity->spawn_info->wake_distance == 0) {
+            entity->spawn_info->wake_distance = 800;
         }
         if (entity->spawn_info->despawn_range == 0) {
             entity->spawn_info->despawn_range = 2000;
@@ -146,17 +146,17 @@ void Entity_InitFromMapSpawns(int map) {
         if (SPAWN_FLAGS(entity->spawn_info)->bytes[6] == 0) {
             SPAWN_FLAGS(entity->spawn_info)->bytes[6] = 80;
         }
-        if (entity->params->unk42C == 0) {
-            entity->params->unk42C = 75;
+        if (entity->params->floor_probe_depth == 0) {
+            entity->params->floor_probe_depth = 75;
         }
-        if (entity->params->unk0A == 0) {
-            entity->params->unk0A = 30;
+        if (entity->params->hit_points == 0) {
+            entity->params->hit_points = 30;
         }
-        if (entity->params->unk0C == 0) {
-            entity->params->unk0C = 70;
+        if (entity->params->body_volume == 0) {
+            entity->params->body_volume = 70;
         }
-        if (entity->params->unk42E == 0) {
-            entity->params->unk42E = 1500;
+        if (entity->params->sound_id == 0) {
+            entity->params->sound_id = 1500;
         }
     }
 }
@@ -178,7 +178,7 @@ void Entity_ResetToSpawn(Entity *entity) {
     f32 widest;
 
     // match: read first; after the stores below, the scheduler would hold this load back behind them
-    entity->unk2C = entity->params->unk0A;
+    entity->hit_points = entity->params->hit_points;
     ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
     ENTITY_FLAG_BITS(entity)->bits2 = 0;
     ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
@@ -199,53 +199,53 @@ void Entity_ResetToSpawn(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit17 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit31 = FALSE;
-    entity->unk50 = 0;
+    entity->update_func = 0;
     entity->handler = NULL;
     entity->prev_handler = NULL;
-    entity->unk82 = 0;
-    entity->unk80 = 0;
-    entity->unkA3 = 0;
-    entity->unk9E = 0;
-    entity->unkA2 = 0;
-    entity->unk20 = 0;
-    entity->unk24 = 0;
-    entity->unk28 = 0;
-    entity->unk2A = 0;
+    entity->stun_frames = 0;
+    entity->hit_cooldown_frames = 0;
+    entity->hit_flash_frames = 0;
+    entity->choice_change_frame = 0;
+    entity->attack_delay_frames = 0;
+    entity->ailment_1_frames = 0;
+    entity->ailment_2_frames = 0;
+    entity->ailment_3_frames = 0;
+    entity->ailment_4_frames = 0;
     entity->action_step = 0;
-    entity->unkCB = 0;
+    entity->reaction_step = 0;
     entity->state = 0;
-    entity->unkCD = 0;
+    entity->combat_choice = 0;
     entity->prev_state = 0;
-    entity->unkCF = 0;
+    entity->prev_combat_choice = 0;
     ((EntityFlags *)&entity->flags)->halves[1] = 0;
-    entity->unkC6 = 0;
-    entity->unkC8 = 0;
-    entity->unkA0 = 0;
-    entity->unk48 = 10.0f;
+    entity->busy_flags = 0;
+    entity->move_command = 0;
+    entity->action_timer = 0;
+    entity->floor_lift = 10.0f;
     Vector_Copy(entity->model->position, entity->spawn_info);
-    Vector_Copy(entity->model->unkD0, &entity->spawn_info->unk10);
-    Vector_Scale(entity->model->unkE0, &scale.x, (f32)entity->params->unkD2 / 100.0f);
-    Vector_Copy(&scale, entity->spawn_info->unk20);
+    Vector_Copy(entity->model->rotation, &entity->spawn_info->spawn_rotation_x);
+    Vector_Scale(entity->model->scale, &scale.x, (f32)entity->params->model_scale_percent / 100.0f);
+    Vector_Copy(&scale, entity->spawn_info->spawn_scale);
     if (!(entity->params->flags & 0x240)) {
         Vector_Scale(&scale.x, &scale.x, (f32)(rand() % 11 + 95) / 100.0f);
     }
-    Vector_MultiplyComponents(entity->model->unkE0, entity->model->unkE0, &scale.x);
+    Vector_MultiplyComponents(entity->model->scale, entity->model->scale, &scale.x);
     widest = (scale.z < scale.x) ? scale.x : scale.z;
-    entity->unk30 = (f32)entity->params->unk06 * widest;
-    entity->unk34 = (f32)entity->params->unk08 * scale.y;
-    entity->radius = (f32)entity->params->unkCC * widest;
-    entity->height = (f32)entity->params->unkEE * scale.y;
-    entity->unk44 = (f32)entity->params->unk04 * widest;
-    entity->unk40 = (f32)entity->params->unk0C * scale.x * scale.y * scale.z;
-    entity->unk40 = ABS(entity->unk40);
-    entity->model->unk13C = (entity->unk30 < entity->unk34) ? entity->unk34 : entity->unk30;
+    entity->collision_radius = (f32)entity->params->map_collision_radius * widest;
+    entity->collision_height = (f32)entity->params->map_collision_height * scale.y;
+    entity->radius = (f32)entity->params->body_radius * widest;
+    entity->height = (f32)entity->params->body_height * scale.y;
+    entity->body_radius = (f32)entity->params->unk04 * widest;
+    entity->knockback_damping = (f32)entity->params->body_volume * scale.x * scale.y * scale.z;
+    entity->knockback_damping = ABS(entity->knockback_damping);
+    entity->model->radius = (entity->collision_radius < entity->collision_height) ? entity->collision_height : entity->collision_radius;
     Motion_Start(entity, 0, 0, 0, 1);
-    ((void (*)(Entity *))entity_type_handlers[entity->params->unk02][0])(entity);
+    ((void (*)(Entity *))entity_type_handlers[entity->params->entity_type][0])(entity);
     Entity_RebuildModelMatrices(entity);
 }
 
 /* Empties one of the two entity arrays and makes the other array's entities forget the map
-   records (Entity.unk14) that belonged to its map. */
+   records (Entity.map_record) that belonged to its map. */
 void Entity_ClearMapSlot(int array_index) {
     Entity *entity;
     int i;
@@ -254,8 +254,8 @@ void Entity_ClearMapSlot(int array_index) {
     memset(entity_pool[array_index], 0, sizeof(entity_pool[array_index]));
     for (i = 0; i < 0x80; i++) {
         entity = &entity_pool[array_index ^ 1][i];
-        if (entity->unk14 != NULL && ((u8)(((MapRecord *)entity->unk14)->unk38 >> 27) & 1) == array_index) {
-            entity->unk14 = NULL;
+        if (entity->map_record != NULL && ((u8)(((MapRecord *)entity->map_record)->record_flags >> 27) & 1) == array_index) {
+            entity->map_record = NULL;
         }
     }
 }
@@ -274,7 +274,7 @@ void Entity_OffsetAllInSlot(int array_index, f32 *offset) {
     count = D_004467D8[array_index];
     for (i = 0; i < count; i++, entity++) {
         Vector_Add(entity->model->position, entity->model->position, offset);
-        Vector_Add(entity->unk70, entity->unk70, offset);
+        Vector_Add(entity->prev_position, entity->prev_position, offset);
         Vector_Add(entity->spawn_info, entity->spawn_info, offset);
     }
 }
@@ -299,67 +299,67 @@ void Entity_UpdateAll(void) {
         if (EntityAi_RemoveIfFallen(entity)) {
             continue;
         }
-        if (entity->unk82 != 0) {
-            entity->unk82--;
+        if (entity->stun_frames != 0) {
+            entity->stun_frames--;
             continue;
         }
         if (ENTITY_FLAG_BITS(entity)->bit16) {
-            entity->unk20 = 0;
-            entity->unk24 = 0;
+            entity->ailment_1_frames = 0;
+            entity->ailment_2_frames = 0;
             ENTITY_FLAG_BITS(entity)->pad40 = FALSE;
-            entity->unk28 = 0;
-            entity->unk2A = 0;
+            entity->ailment_3_frames = 0;
+            entity->ailment_4_frames = 0;
         }
-        entity->unk60 = ((f32 (*)(f32 *, f32 *))EntityMath_Distance)(entity->model->position, player_state.position); // match: returns the distance (other files declare it void)
+        entity->distance_to_player_3d = ((f32 (*)(f32 *, f32 *))EntityMath_Distance)(entity->model->position, player_state.position); // match: returns the distance (other files declare it void)
         entity->distance_to_player = EntityMath_DistanceXZ(entity->model->position, player_state.position);
-        entity->unk68 = EntityMath_HeadingTo(entity->model->position, player_state.position);
-        entity->unk84 = entity->unk88 = entity->unk8C = entity->unk90 = entity->unk94 = entity->unk98 = 0.0f;
+        entity->heading_to_player = EntityMath_HeadingTo(entity->model->position, player_state.position);
+        entity->move_delta_x = entity->move_delta_y = entity->move_delta_z = entity->turn_delta_pitch = entity->turn_delta_yaw = entity->turn_delta_roll = 0.0f;
         if (!Entity_IsMapRecordActive(entity)) {
             if (!ENTITY_FLAG_BITS(entity)->bit30) {
-                ModelMatrix_Build(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->unkE0);
+                ModelMatrix_Build(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->scale_x);
             }
             ENTITY_FLAG_BITS(entity)->bit30 = TRUE;
             continue;
         }
         ENTITY_FLAG_BITS(entity)->bit30 = FALSE;
-        if (entity->unk80 != 0) {
-            entity->unk80--;
+        if (entity->hit_cooldown_frames != 0) {
+            entity->hit_cooldown_frames--;
         }
-        if (entity->unkA3 != 0) {
-            entity->unkA3--;
+        if (entity->hit_flash_frames != 0) {
+            entity->hit_flash_frames--;
         }
-        if (entity->unk24 != 0) {
-            entity->unk24--;
+        if (entity->ailment_2_frames != 0) {
+            entity->ailment_2_frames--;
         }
-        if (entity->unk28 != 0) {
-            entity->unk28--;
+        if (entity->ailment_3_frames != 0) {
+            entity->ailment_3_frames--;
         }
-        if (entity->unk2A != 0) {
-            entity->unk2A--;
+        if (entity->ailment_4_frames != 0) {
+            entity->ailment_4_frames--;
         }
-        if (entity->unk20 != 0) {
-            if (entity->unk20 % 30 == 0) {
-                entity->unk2C = (entity->unk2C < 3) ? 0 : entity->unk2C - 3;
+        if (entity->ailment_1_frames != 0) {
+            if (entity->ailment_1_frames % 30 == 0) {
+                entity->hit_points = (entity->hit_points < 3) ? 0 : entity->hit_points - 3;
                 entity->flags &= ~(3L << 38);
             }
-            entity->unk20--;
+            entity->ailment_1_frames--;
         }
         if (ENTITY_FLAG_BITS(entity)->bits36 != 0) {
-            if (entity->params->unk0A < entity->unk2E) {
-                entity->unk2E = entity->params->unk0A;
+            if (entity->params->hit_points < entity->last_hit_damage) {
+                entity->last_hit_damage = entity->params->hit_points;
             }
             if (ENTITY_FLAG_BITS(entity)->pad40) {
-                entity->unk4C = (f32)entity->unk2E * 75.0f / (f32)entity->params->unk0A;
-                entity->unkA3 = 6;
+                entity->knockback_speed = (f32)entity->last_hit_damage * 75.0f / (f32)entity->params->hit_points;
+                entity->hit_flash_frames = 6;
             } else {
-                entity->unk4C = (f32)entity->unk2E * 25.0f / (f32)entity->params->unk0A;
-                entity->unkA3 = 3;
+                entity->knockback_speed = (f32)entity->last_hit_damage * 25.0f / (f32)entity->params->hit_points;
+                entity->hit_flash_frames = 3;
             }
         }
         if (entity->params->flags & 0x1000) {
-            entity->unk4C = 0.0f;
+            entity->knockback_speed = 0.0f;
         }
-        if (entity->unk4C > 0.0f) {
+        if (entity->knockback_speed > 0.0f) {
             f32 forward = 1.0f; // match: declared ahead of the pointer, or the pointer is hoisted out of the loop
             f32 *push = SCRATCH_VECTOR;
 
@@ -367,32 +367,32 @@ void Entity_UpdateAll(void) {
             push[1] = 0.0f;
             push[2] = forward;
             push[3] = 0.0f;
-            sceVu0RotMatrixY(SCRATCH_MATRIX, D_00431AF0, EntityMath_WrapAngle(entity->unk6C));
+            sceVu0RotMatrixY(SCRATCH_MATRIX, D_00431AF0, EntityMath_WrapAngle(entity->knockback_heading));
             sceVu0ApplyMatrix(SCRATCH_VECTOR, SCRATCH_MATRIX, SCRATCH_VECTOR);
-            Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, entity->unk4C);
+            Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, entity->knockback_speed);
             Vector_Add(entity->model->position, entity->model->position, SCRATCH_VECTOR);
         }
-        if (entity->unk50 == 0) {
+        if (entity->update_func == 0) {
             continue;
         }
-        ((void (*)(Entity *))entity->unk50)(entity);
-        if (entity->unk4C > 0.0f) {
-            entity->unk4C -= entity->unk40 * 4.0f / 10.0f;
+        ((void (*)(Entity *))entity->update_func)(entity);
+        if (entity->knockback_speed > 0.0f) {
+            entity->knockback_speed -= entity->knockback_damping * 4.0f / 10.0f;
         }
         Entity_RebuildModelMatrices(entity);
-        if (entity->unk14 == NULL) {
-            entity->unk14 = Entity_FindMapRecordUnder(entity);
+        if (entity->map_record == NULL) {
+            entity->map_record = Entity_FindMapRecordUnder(entity);
         }
         spawn_info = entity->spawn_info;
-        if ((s8)SPAWN_FLAGS(spawn_info)->bytes[2] != -1 || entity->unk14 == NULL) {
-            ENTITY_MODEL(entity)->unk14C = &map_draw_state.unk290[entity->group_id][(s8)SPAWN_FLAGS(spawn_info)->bytes[2]];
+        if ((s8)SPAWN_FLAGS(spawn_info)->bytes[2] != -1 || entity->map_record == NULL) {
+            ENTITY_MODEL(entity)->fog_block = &map_draw_state.fog_blocks[entity->group_id][(s8)SPAWN_FLAGS(spawn_info)->bytes[2]];
         } else {
-            ENTITY_MODEL(entity)->unk14C = &map_draw_state.unk290[(u8)(MAP_RECORD(entity)->unk38 >> 27) & 1][MAP_RECORD(entity)->unk36];
+            ENTITY_MODEL(entity)->fog_block = &map_draw_state.fog_blocks[(u8)(MAP_RECORD(entity)->record_flags >> 27) & 1][MAP_RECORD(entity)->draw_block_index];
         }
-        if ((s8)SPAWN_FLAGS(spawn_info)->bytes[3] != -1 || entity->unk14 == NULL) {
-            ENTITY_MODEL(entity)->unk148 = (s32)&map_draw_state.unkA90[entity->group_id][(s8)SPAWN_FLAGS(spawn_info)->bytes[3]];
+        if ((s8)SPAWN_FLAGS(spawn_info)->bytes[3] != -1 || entity->map_record == NULL) {
+            ENTITY_MODEL(entity)->light_block = (s32)&map_draw_state.light_blocks[entity->group_id][(s8)SPAWN_FLAGS(spawn_info)->bytes[3]];
         } else {
-            ENTITY_MODEL(entity)->unk148 = (s32)&map_draw_state.unkA90[(u8)(MAP_RECORD(entity)->unk38 >> 27) & 1][MAP_RECORD(entity)->unk37];
+            ENTITY_MODEL(entity)->light_block = (s32)&map_draw_state.light_blocks[(u8)(MAP_RECORD(entity)->record_flags >> 27) & 1][MAP_RECORD(entity)->light_block_index];
         }
         Model_UpdateSkinnedBonePoints(ENTITY_MODEL(entity));
     }
@@ -402,10 +402,10 @@ void Entity_UpdateAll(void) {
 static inline void entity_draw_set_model_tint(Entity *entity, f32 red, f32 green, f32 blue) {
     ModelInstance *model = ENTITY_MODEL(entity);
 
-    model->unk150 = red;
-    model->unk154 = green;
-    model->unk158 = blue;
-    model->alpha = (f32)entity->unkD6;
+    model->colour_red = red;
+    model->colour_green = green;
+    model->colour_blue = blue;
+    model->alpha = (f32)entity->model_alpha;
 }
 
 /* Draws the entities of both maps, pool block by pool block: red while one is hit, pulsing in the colour of
@@ -438,20 +438,20 @@ void Entity_DrawAll(int list) {
                 if (entity->group_id != map) {
                     continue;
                 }
-                if (entity->unkD3 != block) {
+                if (entity->pool_slot_index != block) {
                     continue;
                 }
-                if (entity->unk14 == NULL) {
+                if (entity->map_record == NULL) {
                     continue;
                 }
                 if (ENTITY_FLAG_BITS(entity)->bit30) {
                     continue;
                 }
-                if (entity->unkA3 != 0 && entity->unk82 == 0) {
-                    ENTITY_MODEL(entity)->unk150 = 255.0f;
-                    ENTITY_MODEL(entity)->unk154 = 64.0f;
-                    ENTITY_MODEL(entity)->unk158 = 64.0f;
-                    ENTITY_MODEL(entity)->alpha = (f32)entity->unkD6;
+                if (entity->hit_flash_frames != 0 && entity->stun_frames == 0) {
+                    ENTITY_MODEL(entity)->colour_red = 255.0f;
+                    ENTITY_MODEL(entity)->colour_green = 64.0f;
+                    ENTITY_MODEL(entity)->colour_blue = 64.0f;
+                    ENTITY_MODEL(entity)->alpha = (f32)entity->model_alpha;
                 } else if (ENTITY_FLAG_BITS(entity)->bits2 < 2) {
                     half = 20;
                     phase = D_00446ED4 % period;
@@ -459,28 +459,28 @@ void Entity_DrawAll(int list) {
                     if (phase >= half) {
                         phase = falling;
                     }
-                    if (entity->unk20 != 0 && entity->unk26 == 1) {
+                    if (entity->ailment_1_frames != 0 && entity->ailment_tint_index == 1) {
                         entity_draw_set_model_tint(entity, 128.0f - phase * 64.0f / half, phase * 127.0f / half + 128.0f, 128.0f - phase * 64.0f / half);
-                    } else if (entity->unk24 != 0 && entity->unk26 == 2) {
+                    } else if (entity->ailment_2_frames != 0 && entity->ailment_tint_index == 2) {
                         entity_draw_set_model_tint(entity, phase * 127.0f / half + 128.0f, 128.0f - phase * 64.0f / half, phase * 127.0f / half + 128.0f);
-                    } else if (entity->unk28 != 0 && entity->unk26 == 3) {
+                    } else if (entity->ailment_3_frames != 0 && entity->ailment_tint_index == 3) {
                         entity_draw_set_model_tint(entity, phase * 127.0f / half + 128.0f, phase * 127.0f / half + 128.0f, 128.0f - phase * 64.0f / half);
-                    } else if (entity->unk2A != 0 && entity->unk26 == 4) {
+                    } else if (entity->ailment_4_frames != 0 && entity->ailment_tint_index == 4) {
                         entity_draw_set_model_tint(entity, 128.0f - phase * 64.0f / half, phase * 127.0f / half + 128.0f, phase * 127.0f / half + 128.0f);
-                    } else if (entity->unk20 != 0) {
+                    } else if (entity->ailment_1_frames != 0) {
                         entity_draw_set_model_tint(entity, 128.0f - phase * 64.0f / half, phase * 127.0f / half + 128.0f, 128.0f - phase * 64.0f / half);
-                    } else if (entity->unk24 != 0) {
+                    } else if (entity->ailment_2_frames != 0) {
                         entity_draw_set_model_tint(entity, phase * 127.0f / half + 128.0f, 128.0f - phase * 64.0f / half, phase * 127.0f / half + 128.0f);
-                    } else if (entity->unk28 != 0) {
+                    } else if (entity->ailment_3_frames != 0) {
                         entity_draw_set_model_tint(entity, phase * 127.0f / half + 128.0f, phase * 127.0f / half + 128.0f, 128.0f - phase * 64.0f / half);
-                    } else if (entity->unk2A != 0) {
+                    } else if (entity->ailment_4_frames != 0) {
                         entity_draw_set_model_tint(entity, 128.0f - phase * 64.0f / half, phase * 127.0f / half + 128.0f, phase * 127.0f / half + 128.0f);
                     } else {
                         entity_draw_set_model_tint(entity, 128.0f, 128.0f, 128.0f);
                     }
                 }
                 LinkedPoint_FindHitsForModel(ENTITY_MODEL(entity));
-                if (ENTITY_MODEL(entity)->alpha < 128.0f || (ENTITY_MODEL(entity)->unk100 & 0x200) || entity->spawn_info->type_id == 0x10) {
+                if (ENTITY_MODEL(entity)->alpha < 128.0f || (ENTITY_MODEL(entity)->model_flags & 0x200) || entity->spawn_info->type_id == 0x10) {
                     DrawList_Add(ENTITY_MODEL(entity), 0, list);
                 } else {
                     ModelTexture_SendForModel(ENTITY_MODEL(entity));
@@ -503,20 +503,20 @@ static void Entity_RebuildModelMatrices(Entity *entity) {
     int part_count;
     int i;
 
-    root = ENTITY_MODEL(entity)->unk130;
+    root = ENTITY_MODEL(entity)->root_part;
     part_count = ENTITY_MODEL(entity)->part_count;
-    ModelMatrix_Build(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->unkE0);
-    Vector_Copy(saved_offset, root->unk40);
-    Vector_Copy(saved_rotation, &root->unk50);
-    root->unk40[0] = root->unk40[1] = root->unk40[2] = 0.0f;
-    root->unk50 = root->unk54 = root->unk58 = 0.0f;
+    ModelMatrix_Build(ENTITY_MODEL(entity), &ENTITY_MODEL(entity)->position, &ENTITY_MODEL(entity)->rotation, &ENTITY_MODEL(entity)->scale_x);
+    Vector_Copy(saved_offset, root->position);
+    Vector_Copy(saved_rotation, &root->rotation_x);
+    root->position[0] = root->position[1] = root->position[2] = 0.0f;
+    root->rotation_x = root->rotation_y = root->rotation_z = 0.0f;
     part = ENTITY_MODEL(entity)->parts;
     for (i = 0; i < part_count; i++) {
         ModelMatrix_BuildPartLocal(ENTITY_MODEL(entity), part, part);
         part++;
     }
-    Vector_Copy(root->unk40, saved_offset);
-    Vector_Copy(&root->unk50, saved_rotation);
+    Vector_Copy(root->position, saved_offset);
+    Vector_Copy(&root->rotation_x, saved_rotation);
     part = ENTITY_MODEL(entity)->parts;
     for (i = 0; i < part_count; i++) {
         Model_MultiplyChildMatrices(part);
@@ -524,7 +524,7 @@ static void Entity_RebuildModelMatrices(Entity *entity) {
     }
 }
 
-/* Whether the map record the entity belongs to (Entity.unk14) is switched on: FALSE when the record
+/* Whether the map record the entity belongs to (Entity.map_record) is switched on: FALSE when the record
    is flagged off or its map flag is clear. The record's map flag is a bit of the current map's
    flag block; for a record of the other map it is looked up among the 16 flags the block keeps
    for other maps. TRUE for an entity without a record and for types 0x10, 0x2F, 0x53 and 0x9E. */
@@ -539,7 +539,7 @@ static int Entity_IsMapRecordActive(Entity *entity) {
     int result;
     u8 tag;
 
-    if (entity->unk14 == NULL) {
+    if (entity->map_record == NULL) {
         return TRUE;
     }
     if (entity->spawn_info->type_id == 0x10 || entity->spawn_info->type_id == 0x2F ||
@@ -550,7 +550,7 @@ static int Entity_IsMapRecordActive(Entity *entity) {
     for (index = 0; index < 2; index++) {
         record = (MapRecordBounds *)map_slots[index].records;
         for (record_index = 0; record_index < map_slots[index].header->record_count; record_index++, record++) {
-            if (record == entity->unk14) {
+            if (record == entity->map_record) {
                 found = TRUE;
                 break;
             }
@@ -562,27 +562,27 @@ static int Entity_IsMapRecordActive(Entity *entity) {
     if (!found) {
         return TRUE;
     }
-    if (record->unk3C & 0x40000000) {
+    if (record->record_flags & 0x40000000) {
         return FALSE;
     }
     if (index == D_00446770) {
         slot = &map_slots[index];
         bits = slot->flag_blocks[D_004141D0[0]].bits;
-        if (slot->unk00 == 0) {
+        if (slot->loaded == 0) {
             return FALSE;
         }
-        return (bits[record->unk38 >> 3] >> (record->unk38 & 7)) & 1;
+        return (bits[record->flag_block_bit >> 3] >> (record->flag_block_bit & 7)) & 1;
     }
     slot = &map_slots[D_00446770];
     block = &slot->flag_blocks[D_004141D0[0]];
     slot = &map_slots[D_00446770 ^ 1];
-    if (slot->unk00 == 0) {
+    if (slot->loaded == 0) {
         return FALSE;
     }
     tag = slot->tag;
     result = FALSE;
     for (index = 0; index < 0x10; index++) {
-        if (tag == block->tags[index] && record->unk38 == block->values[index]) {
+        if (tag == block->tags[index] && record->flag_block_bit == block->values[index]) {
             result = TRUE;
         }
     }
@@ -606,19 +606,19 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
 
     nearest = NULL;
     nearest_distance = D_004467F8[0];
-    reach = (entity->unk34 < entity->unk30) ? entity->unk30 : entity->unk34;
+    reach = (entity->collision_height < entity->collision_radius) ? entity->collision_radius : entity->collision_height;
     Vector_Copy(position, entity->model->position);
     position[1] -= (reach < 75.0f) ? 75.0f : reach;
     slots[0] = &map_slots[entity->group_id];
     slots[1] = &map_slots[(char)(entity->group_id ^ 1)];
     for (map = 0; map < 2; map++) {
-        if (slots[map]->unk00 != 0) {
+        if (slots[map]->loaded != 0) {
             record = (MapRecordBounds *)slots[map]->records;
             for (i = 0; i < ((MapSlotUnk08 *)slots[map]->header)->record_count; i++, record++) {
-                if (record->unk3C & 0x40000000) {
+                if (record->record_flags & 0x40000000) {
                     continue;
                 }
-                if (record->unk32 == 0xFFFF) {
+                if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
                 if (record->model->strips == NULL) {
@@ -651,33 +651,33 @@ static MapRecordBounds *Entity_FindMapRecordUnder(Entity *entity) {
         }
     }
     for (map = 0; map < 2; map++) {
-        if (slots[map]->unk00 != 0) {
+        if (slots[map]->loaded != 0) {
             record = (MapRecordBounds *)slots[map]->records;
             for (i = 0; i < ((MapSlotUnk08 *)slots[map]->header)->record_count; i++, record++) {
-                if (record->unk3C & 0x40000000) {
+                if (record->record_flags & 0x40000000) {
                     continue;
                 }
-                if (entity->model->position[0] < record->unk40[0] - reach) {
+                if (entity->model->position[0] < record->box_lowest[0] - reach) {
                     continue;
                 }
-                if (record->unk50[0] + reach < entity->model->position[0]) {
+                if (record->box_highest[0] + reach < entity->model->position[0]) {
                     continue;
                 }
-                if (entity->model->position[1] < record->unk40[1] - reach) {
+                if (entity->model->position[1] < record->box_lowest[1] - reach) {
                     continue;
                 }
-                if (record->unk50[1] + reach < entity->model->position[1]) {
+                if (record->box_highest[1] + reach < entity->model->position[1]) {
                     continue;
                 }
-                if (entity->model->position[2] < record->unk40[2] - reach) {
+                if (entity->model->position[2] < record->box_lowest[2] - reach) {
                     continue;
                 }
-                if (record->unk50[2] + reach < entity->model->position[2]) {
+                if (record->box_highest[2] + reach < entity->model->position[2]) {
                     continue;
                 }
-                middle[0] = (record->unk40[0] + record->unk50[0]) * 0.5f;
-                middle[1] = (record->unk40[1] + record->unk50[1]) * 0.5f;
-                middle[2] = (record->unk40[2] + record->unk50[2]) * 0.5f;
+                middle[0] = (record->box_lowest[0] + record->box_highest[0]) * 0.5f;
+                middle[1] = (record->box_lowest[1] + record->box_highest[1]) * 0.5f;
+                middle[2] = (record->box_lowest[2] + record->box_highest[2]) * 0.5f;
                 distance = ((f32 (*)(f32 *, f32 *))EntityMath_Distance)(middle, entity->model->position); // match: returns the distance (other files declare it void)
                 if (distance < nearest_distance) {
                     nearest_distance = distance;

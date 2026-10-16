@@ -178,9 +178,9 @@ int Sound_MapBankApplyReverb(void);
 /* Map bank load step: the first time after Sound_Init moves on to the reverb steps; after that lets map
    sounds start (D_004470E1) and ends the load */
 int Sound_MapBankFinishUnlessFirst(void);
-/* Loads the sound bank of a map slot (MapSlot.unk34) a step a call while pending; returns 0 once it is done */
+/* Loads the sound bank of a map slot (MapSlot.sound_bank) a step a call while pending; returns 0 once it is done */
 int Sound_LoadMapBankStep(int slot_addr, int pending);
-/* Loads the sound bank of a map slot (MapSlot.unk34), waiting until it is done */
+/* Loads the sound bank of a map slot (MapSlot.sound_bank), waiting until it is done */
 int Sound_LoadMapBank(MapSlot *slot);
 /* Loads the sw bank file_id (sw%03d with 0x96 added) into the sound heap and hands it to the driver, waiting
    until it is done */

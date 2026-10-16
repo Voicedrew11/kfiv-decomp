@@ -16,16 +16,16 @@ extern int sound_load_queue[0x28 / 4];
 /* Offset hook of every kind: moves the model and the object's source position by offset. */
 void MapObject_MoveByOffset(MapObject *object, void *offset) {
     Vector_Add(&object->model->position, &object->model->position, offset);
-    Vector_Add(object->unk08, object->unk08, offset);
+    Vector_Add(object->source, object->source, offset);
 }
 
 /* Step 0 of the scenery kinds (0 and 0x16 to 0x1C): restarts the animation the object is on (kind 0 also
    forgets its ambient sound) and goes to step 1. */
 void MapObject_StartScenery(MapObject *object) {
-    if (object->unk04->kind == 0) {
+    if (object->definition->kind == 0) {
         object->work[0] = 0;
     }
-    if (object->model->unk100 & 1) {
+    if (object->model->model_flags & 1) {
         MapObject_StartAnim(object, MAP_OBJECT_BYTES(object)->anim);
         MapObject_StepAnim(object);
     }
@@ -38,27 +38,27 @@ void MapObject_StartScenery(MapObject *object) {
 void MapObject_UpdateScenery(MapObject *object) {
     MapObjectUnk08 *source;
 
-    if (object->unk04->kind == 0) {
-        source = object->unk08;
-        if ((u32)((u16)source->unk44 - 0x40) < 0x40) {
+    if (object->definition->kind == 0) {
+        source = object->source;
+        if ((u32)((u16)source->kind_param_0 - 0x40) < 0x40) {
             if (object->work[0] != 0) {
                 if ((MAP_OBJECT_BYTES(object)->unk00 & 1) != D_00446770) {
                     object->work[0] = 0;
                 }
             } else if ((MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770 && sound_load_queue[4] == 0 && sound_load_queue[5] == 0) {
-                Sound_StartTaggedAt(source->unk44, source->unk48, source->unk46, source->unk4A, (Vector4Arg *)&object->model->position);
+                Sound_StartTaggedAt(source->kind_param_0, source->kind_param_2, source->kind_param_1, source->kind_param_3, (Vector4Arg *)&object->model->position);
                 object->work[0] = 1;
             }
         }
     }
-    if (object->model->unk100 & 1) {
-        if (object->unk10 & 0x100000) {
-            if (object->unk10 & 0x200000) {
-                if ((object->unk10 & 0x400000) || MODEL_CHANNEL(object->model)->param != 0) {
+    if (object->model->model_flags & 1) {
+        if (object->state_flags & 0x100000) {
+            if (object->state_flags & 0x200000) {
+                if ((object->state_flags & 0x400000) || MODEL_CHANNEL(object->model)->param != 0) {
                     MapObject_StepAnim(object);
                 }
             }
-        } else if (object->unk08->unk38.flags & (0x8000L << 35)) {
+        } else if (object->source->spawn_flags.flags & (0x8000L << 35)) {
             MapObject_StepAnim(object);
         }
     }
@@ -73,24 +73,24 @@ void MapObject_UpdateBreaking(MapObject *object) {
     MapObject *other;
 
     if (MODEL_CHANNEL(object->model) != NULL && MODEL_CHANNEL(object->model)->param != 0) {
-        if (object->unk04->unk68 & 0x20000) {
+        if (object->definition->definition_flags & 0x20000) {
             total = ModelMotion_GetLastFrame((char *)object->model);
             if (total != 0) {
                 alpha = ((total - MODEL_CHANNEL(object->model)->param) << 7) / total;
             } else {
                 alpha = total; // match: 0, through the variable
             }
-            if (object->model->unk100 & 0x4000) {
+            if (object->model->model_flags & 0x4000) {
                 object->model->alpha = alpha;
             } else {
-                object->model->unk145 = 1;
-                object->model->unk146 = alpha;
+                object->model->fade_enabled = 1;
+                object->model->fade_alpha = alpha;
             }
         }
         MapObject_StepAnim(object);
     } else {
-        if (!(object->unk04->unk68 & 0x20000)) {
-            other = MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk38.bytes[3]);
+        if (!(object->definition->definition_flags & 0x20000)) {
+            other = MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->spawn_flags.bytes[3]);
             if (other != NULL) {
                 MapObject_Activate(other);
             }
@@ -125,22 +125,22 @@ void MapObject_RebuildMatrices(char *arg) {
     ModelPart *part;
     int part_count;
 
-    ModelMatrix_Build(object->model, &object->model->position, &object->model->rotation, &object->model->unkE0);
+    ModelMatrix_Build(object->model, &object->model->position, &object->model->rotation, &object->model->scale_x);
     part_count = object->model->part_count;
     part = object->model->parts;
     for (i = 0; i < part_count; i++) {
         ModelMatrix_BuildPartLocal(object->model, part, part);
         part++;
     }
-    if (object->model->unk100 & 1) {
+    if (object->model->model_flags & 1) {
         part = object->model->parts;
         for (i = 0; i < part_count; i++) {
             Model_MultiplyChildMatrices(part);
             part++;
         }
     }
-    sceVu0CopyMatrix(object->model->unk80, object->model->unk40);
-    object->model->unk1B4(object->model);
+    sceVu0CopyMatrix(object->model->collision_matrix, object->model->model_matrix);
+    object->model->update_bone_points(object->model);
 }
 
 /* Item hook of the kinds that take no item: returns FALSE (the item is not used). */

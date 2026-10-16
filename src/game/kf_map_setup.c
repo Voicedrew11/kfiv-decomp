@@ -112,7 +112,7 @@ void MapSetup_UpdateOceanShore(void) {
 
     for (map = 0; map < 2; map++) {
         slot = &map_slots[map];
-        if (slot->unk00 != 0 && slot->tag == 0x1B) {
+        if (slot->loaded != 0 && slot->tag == 0x1B) {
             func_00119E10(map);
         }
     }
@@ -148,12 +148,12 @@ void MapSetup_Armory(int map) {
         object = MapObject_GetById(map, 0xA);
         if (object != NULL) {
             MapObject_SetScripted(object, 0);
-            object->unk10 |= 0x20000;
+            object->state_flags |= 0x20000;
         }
         object = MapObject_GetById(map, 0xB);
         if (object != NULL) {
             MapObject_SetScripted(object, 0);
-            object->unk10 |= 0x20000;
+            object->state_flags |= 0x20000;
         }
         object = MapObject_GetById(map, 0x22);
         if (object != NULL) {
@@ -174,7 +174,7 @@ void MapSetup_Forge017(int map) {
     if (D_0034B69C[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
-            object->unk10 |= 0x20000;
+            object->state_flags |= 0x20000;
         }
     }
 }
@@ -186,7 +186,7 @@ void MapSetup_Forge018(int map) {
     if (D_0034B69C[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
-            object->unk10 |= 0x20000;
+            object->state_flags |= 0x20000;
         }
     }
 }
@@ -198,20 +198,20 @@ void MapSetup_Forge019(int map) {
     if (D_0034B69C[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
-            object->unk10 |= 0x20000;
+            object->state_flags |= 0x20000;
         }
     }
 }
 
 static inline void hide_found_record(MapRecordBounds *record) {
     if (record != NULL) {
-        record->unk3C |= 0x40000000;
+        record->record_flags |= 0x40000000;
     }
 }
 
 static inline void show_found_record(MapRecordBounds *record) {
     if (record != NULL) {
-        record->unk3C &= ~0x40000000;
+        record->record_flags &= ~0x40000000;
     }
 }
 
@@ -253,21 +253,21 @@ void MapSetup_EarthFolksVillage(int map) {
         break;
     }
     target = &map_slots[map];
-    block = (MapSlotUnk0CValues *)((MapSlot *)target)->unk0C;
-    light = ((MapSlot *)target)->unk10;
+    block = (MapSlotUnk0CValues *)((MapSlot *)target)->fog_blocks;
+    light = ((MapSlot *)target)->light_blocks;
     block[2].unk00 = block[2].unk04 = 0.0f;
     block[2].unk08 = -43.40425f;
     block[2].unk0C = 238723.4f;
     block[2].unk10 = 0;
-    light[4].unk14 = 0.0f;
-    light[4].unk24 = 0.0f;
-    light[4].unk04 = -1.57f;
-    light[4].unk50 = 0.50980395f;
-    light[4].unk54 = 0.13725491f;
-    light[4].unk58 = 0.0f;
-    light[4].unk70 = 0.6666667f;
-    light[4].unk74 = 0.38431373f;
-    light[4].unk78 = 0.27450982f;
+    light[4].light1_direction_y = 0.0f;
+    light[4].light1_direction_z = 0.0f;
+    light[4].light1_direction_x = -1.57f;
+    light[4].light1_red = 0.50980395f;
+    light[4].light1_green = 0.13725491f;
+    light[4].light1_blue = 0.0f;
+    light[4].ambient_red = 0.6666667f;
+    light[4].ambient_green = 0.38431373f;
+    light[4].ambient_blue = 0.27450982f;
 }
 
 /* Set-up of the Cavern of Lava (map 024): at story flag 0 a light grey fog in block 5, otherwise a thin black one,
@@ -278,13 +278,13 @@ void MapSetup_CavernOfLava(int map) {
     MapSlotUnk10Lights *lights;
 
     if (D_0034B696[0] == 0) {
-        ((MapSlotUnk0CValues *)slot->unk0C)[5].unk00 = ((MapSlotUnk0CValues *)slot->unk0C)[5].unk04 = 0.0f;
-        ((MapSlotUnk0CValues *)slot->unk0C)[5].unk08 = -28.333328f;
-        ((MapSlotUnk0CValues *)slot->unk0C)[5].unk0C = 113333.336f;
-        ((MapSlotUnk0CValues *)slot->unk0C)[5].unk10 = 0x8C8C8C;
+        ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk00 = ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk04 = 0.0f;
+        ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk08 = -28.333328f;
+        ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk0C = 113333.336f;
+        ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk10 = 0x8C8C8C;
     } else {
-        fog = (MapSlotUnk0CValues *)slot->unk0C;
-        lights = slot->unk10;
+        fog = (MapSlotUnk0CValues *)slot->fog_blocks;
+        lights = slot->light_blocks;
         fog[5].unk00 = fog[5].unk04 = 0.0f;
         fog[5].unk08 = -318.75f;
         fog[5].unk0C = 1.1475e+06f;
@@ -317,7 +317,7 @@ static inline void hide_record(int map, int record_id) {
     MapRecordBounds *record = Map_GetRecordById(map, record_id);
 
     if (record != NULL) {
-        record->unk3C |= 0x40000000;
+        record->record_flags |= 0x40000000;
     }
 }
 
@@ -325,7 +325,7 @@ static inline void show_record(int map, int record_id) {
     MapRecordBounds *record = Map_GetRecordById(map, record_id);
 
     if (record != NULL) {
-        record->unk3C &= ~0x40000000;
+        record->record_flags &= ~0x40000000;
     }
 }
 
@@ -365,7 +365,7 @@ void MapSetup_FireLordsDomain(int map) {
     }
     object = MapObject_GetById(map, 0x67);
     if (object != NULL) {
-        object->model->unk150 = object->model->unk154 = object->model->unk158 = 255.0f;
+        object->model->colour_red = object->model->colour_green = object->model->colour_blue = 255.0f;
     }
 }
 
@@ -375,7 +375,7 @@ void MapSetup_OceanShore(int map) {
     MapSlotUnk0CValues *fog;
 
     if (D_00349D55[0] == 1) {
-        fog = (MapSlotUnk0CValues *)slot->unk0C;
+        fog = (MapSlotUnk0CValues *)slot->fog_blocks;
         fog[0].unk00 = fog[0].unk04 = 0.0f;
         fog[0].unk08 = -9.705887f;
         fog[0].unk0C = 476470.62f;
@@ -438,7 +438,7 @@ void MapSetup_DarkSanctuary(int map) {
     MapSlot *slot = &map_slots[map];
 
     if (D_0034A017[0] == 1) {
-        MapSlotUnk0CValues *fog = (MapSlotUnk0CValues *)slot->unk0C;
+        MapSlotUnk0CValues *fog = (MapSlotUnk0CValues *)slot->fog_blocks;
 
         fog[1].unk00 = fog[1].unk04 = 0.0f;
         fog[1].unk08 = 46.666664f;
@@ -457,8 +457,8 @@ void MapSetup_KingsThroneAlcoves(int map) {
     MapSlot *slot = &map_slots[map];
 
     if (D_0034A0D5[0] == 1) {
-        MapSlotUnk0CValues *fog = (MapSlotUnk0CValues *)slot->unk0C;
-        MapSlotUnk10 *light = slot->unk10;
+        MapSlotUnk0CValues *fog = (MapSlotUnk0CValues *)slot->fog_blocks;
+        MapSlotUnk10 *light = slot->light_blocks;
 
         fog[2].unk00 = fog[2].unk04 = 0.0f;
         fog[2].unk08 = -127.5f;
@@ -468,9 +468,9 @@ void MapSetup_KingsThroneAlcoves(int map) {
         fog[3].unk08 = -127.5f;
         fog[3].unk0C = 382500.0f;
         fog[3].unk10 = 0;
-        light[1].unk70 = 0.29803923f;
-        light[1].unk74 = 0.29803923f;
-        light[1].unk78 = 0.30980393f;
+        light[1].ambient_red = 0.29803923f;
+        light[1].ambient_green = 0.29803923f;
+        light[1].ambient_blue = 0.30980393f;
     }
 }
 
@@ -535,11 +535,11 @@ void MapSetup_CraftsmansRoom(int map) {
         object = MapObject_GetById(map, 0x77);
         if (object != NULL) {
             MapObject_Deactivate(object);
-            if (object->model != NULL && object->unk04->kind == 9) {
-                MAP_OBJECT_WORDS(object)->unk44 = 0xFF;
-                MAP_OBJECT_WORDS(object)->unk46 = 0x80;
-                MAP_OBJECT_WORDS(object)->unk48 = 0x18;
-                MAP_OBJECT_WORDS(object)->unk4A = 0;
+            if (object->model != NULL && object->definition->kind == 9) {
+                MAP_OBJECT_WORDS(object)->kind_param_0 = 0xFF;
+                MAP_OBJECT_WORDS(object)->kind_param_1 = 0x80;
+                MAP_OBJECT_WORDS(object)->kind_param_2 = 0x18;
+                MAP_OBJECT_WORDS(object)->kind_param_3 = 0;
             }
         }
         object = MapObject_GetById(map, 0x76);

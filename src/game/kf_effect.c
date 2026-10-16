@@ -61,7 +61,7 @@ static int effect_count = 0;        /* 0x4468D0 live effects */
 static u32 *effect_texture_packet;  /* 0x4470F8 DMA packet holding the effect textures read back from the GS */
 static char *effect_model_file;     /* 0x4470FC sfx/sfx.dat */
 static char *effect_model_memory;   /* 0x447100 0x800 bytes of model memory per effect */
-static char **effect_model_table;   /* 0x447104 the model of each EffectDef.unkFE, inside effect_model_file */
+static char **effect_model_table;   /* 0x447104 the model of each EffectDef.model_index, inside effect_model_file */
 
 /* 0x502260 param/sfx.prm; entries is the view whose bit-field tests stay array reads */
 static union {
@@ -139,8 +139,8 @@ void Effect_Init(void) {
         def->rotation_spread[0] *= scale;
         def->rotation_spread[1] *= scale;
         def->rotation_spread[2] *= scale;
-        if (def->unkFA != 0) {
-            def->unkFA += 0x1400;
+        if (def->texture_record_base != 0) {
+            def->texture_record_base += 0x1400;
         }
     }
 }
@@ -279,7 +279,7 @@ int Effect_StartSpawner(int effect_id, void *position, void *rotation, void *own
         return -1;
     }
     def = &effect_table.defs[effect_id];
-    if (def->unkFE >= 0x200) {
+    if (def->model_index >= 0x200) {
         return -1;
     }
     if (effect_slot_count >= EFFECT_SLOT_COUNT) {
@@ -297,7 +297,7 @@ int Effect_StartSpawner(int effect_id, void *position, void *rotation, void *own
     slot->flags |= EFFECT_SLOT_LIVE;
     effect_slot_count++;
     EFFECT_SLOT_FLAG_PARTS(slot)->level = def->max_level;
-    EFFECT_SLOT_FLAG_PARTS(slot)->unk27 = def->unkFD;
+    EFFECT_SLOT_FLAG_PARTS(slot)->unk27 = def->spawn_start_delay;
     slot->owner_entity = owner_entity;
     EFFECT_SLOT_FLAG_PARTS(slot)->def = def;
     EFFECT_SLOT_FLAG_PARTS(slot)->unk26 = 0;
@@ -351,8 +351,8 @@ void Effect_UpdateAll(void) {
     int i;
     int key;
 
-    if (game_status.unk30 & 0x400) {
-        only_owner = game_status.unk40;
+    if (game_status.update_hold_flags & 0x400) {
+        only_owner = game_status.effect_owner;
     }
     if (effect_slot_count > 0) {
         slot = effect_slots;
@@ -387,11 +387,11 @@ void Effect_UpdateAll(void) {
                     EFFECT_FLAG_PARTS(effect)->unk40--;
                 }
                 for (key = 0; key < 3; key++) {
-                    if (effect->def->unk112[key] == effect->frame) {
-                        Effect_SpawnFromEffect(effect->def->unk10C[key], effect);
+                    if (effect->def->frame_spawn_frames[key] == effect->frame) {
+                        Effect_SpawnFromEffect(effect->def->frame_spawn_effects[key], effect);
                     }
                 }
-                effect_kind_handlers[effect->def->unk100][1](effect);
+                effect_kind_handlers[effect->def->kind_index][1](effect);
             }
         }
     }
@@ -452,21 +452,21 @@ void Effect_DrawAll(int pass) {
                 continue;
             }
         }
-        if (effect->def->unkF7 != 0) {
-            step = (effect->frame + 1) / (effect->def->unkFC + 1);
-            switch (effect->def->unkF6) {
+        if (effect->def->texture_frame_count != 0) {
+            step = (effect->frame + 1) / (effect->def->texture_frame_interval + 1);
+            switch (effect->def->texture_anim_mode) {
             case 0:
-                record_id = step % effect->def->unkF7;
+                record_id = step % effect->def->texture_frame_count;
                 break;
             case 1:
                 // match: past the last frame record_id keeps whatever the effect before left in it
-                if (step < effect->def->unkF7) {
+                if (step < effect->def->texture_frame_count) {
                     record_id = step;
                 }
                 break;
             case 2:
-                record_id = effect->def->unkF7 - 1;
-                if (step < effect->def->unkF7) {
+                record_id = effect->def->texture_frame_count - 1;
+                if (step < effect->def->texture_frame_count) {
                     record_id = step;
                 }
                 break;
@@ -474,22 +474,22 @@ void Effect_DrawAll(int pass) {
                 record_id = 0;
                 break;
             }
-            record_id = effect->def->unkFA + record_id * effect->def->unkF8;
-            Effect_FindModelRecord(model, model->unk104, effect->def->unkFA, record_id);
+            record_id = effect->def->texture_record_base + record_id * effect->def->texture_frame_stride;
+            Effect_FindModelRecord(model, model->unk104, effect->def->texture_record_base, record_id);
         }
-        Vector_Copy(&model->unk150, effect);
+        Vector_Copy(&model->colour_red, effect);
         // match: it returns a value
-        ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))ModelMatrix_Build)(model, &model->position, &model->rotation, &model->unkE0);
+        ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))ModelMatrix_Build)(model, &model->position, &model->rotation, &model->scale_x);
         part = effect->model->parts;
         for (part_index = 0; part_index < model->part_count; part_index++, part++) {
             ModelMatrix_BuildPartLocal(model, part, part);
         }
-        model->unk14C = map_draw_slot_blocks + (D_00446770 << 10);
+        model->fog_block = map_draw_slot_blocks + (D_00446770 << 10);
         // match: the flag is read through the union so the test stays behind the unk14C store
-        if (!(((EntityFlagWord *)&effect->def->unkF0)->word & (0x8000L << 25))) {
-            model->unk148 = (s32)effect_light_block;
+        if (!(((EntityFlagWord *)&effect->def->sub_effect_id)->word & (0x8000L << 25))) {
+            model->light_block = (s32)effect_light_block;
         } else {
-            model->unk148 = (s32)(map_draw_slot_blocks - 0x1D0);
+            model->light_block = (s32)(map_draw_slot_blocks - 0x1D0);
         }
         model->hit_count = 0;
         if (pass == 0 || !(EFFECT_DEF_WORD_F0(effect->def) & (0x8000L << 26))) {
@@ -515,13 +515,13 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         return;
     }
     def = EFFECT_SLOT_VIEW(slot)->def;
-    if (def->unkA7 != 0) {
+    if (def->spawn_interval != 0) {
         u8 timer = EFFECT_SLOT_VIEW(slot)->unk26--;
 
         if (timer != 0) {
             return;
         }
-        EFFECT_SLOT_VIEW(slot)->unk26 = def->unkA7;
+        EFFECT_SLOT_VIEW(slot)->unk26 = def->spawn_interval;
     }
     if (effect_count >= EFFECT_COUNT) {
         if (--EFFECT_SLOT_VIEW(slot)->level == 0) {
@@ -529,7 +529,7 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         }
         return;
     }
-    for (made = 0; made < def->unkA5; made++) {
+    for (made = 0; made < def->spawn_batch_count; made++) {
         effect = D_003F3550;
         for (index = 0; index < EFFECT_COUNT; index++, effect++) {
             if (!(effect->flags & EFFECT_FLAG_LIVE) && effect->unk90 == 0) {
@@ -555,12 +555,12 @@ static void Effect_RunSpawner(EffectSlot *slot) {
         effect->unk90 = 4; /* frames the actor stays reserved once it is freed */
         effect->unk6C = 0;
         Effect_SetupModel(index);
-        effect_kind_handlers[effect->def->unk100][0](effect, slot);
-        EFFECT_FLAG_BITS(effect)->bit59 = effect->def->unk11A != 0;
-        if (fx_table[effect->effect_param].unk102 != 0) {
-            EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&player_state, EFFECT_FLAG_PARTS(effect)->unk46);
+        effect_kind_handlers[effect->def->kind_index][0](effect, slot);
+        EFFECT_FLAG_BITS(effect)->bit59 = effect->def->sound_id != 0;
+        if (fx_table[effect->effect_param].item_menu_magic != 0) {
+            EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->sound_id, 0, (int)&player_state, EFFECT_FLAG_PARTS(effect)->unk46);
         } else if (EFFECT_FLAG_BITS(effect)->bit59 || effect->effect_param == player_state.equipped_magic) {
-            EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->unk11A, 0, (int)&effect->model->position, EFFECT_FLAG_PARTS(effect)->unk46);
+            EFFECT_FLAG_PARTS(effect)->unk46 = Sound_PlayTrackedKind(EFFECT_FLAG_BITS(effect)->bit59, effect->def->sound_id, 0, (int)&effect->model->position, EFFECT_FLAG_PARTS(effect)->unk46);
         }
         if (EFFECT_FLAG_PARTS(effect)->unk46 > 0) {
             D_004468C8++;
@@ -693,17 +693,17 @@ static void Effect_SetupModel(int index) {
     def = effect->def;
     if (EFFECT_DEF_FLAGS(def) & 0x20000) {
         if ((EFFECT_DEF_FLAGS(def) & 0x600000) == 0 || (EFFECT_DEF_FLAGS(def) & 0x600000) == 0x600000) {
-            model->unk102 |= 0x300;
+            model->draw_flags |= 0x300;
         } else {
-            model->unk102 |= 0x400;
+            model->draw_flags |= 0x400;
         }
     }
-    model->unk100 |= 0x1800;
-    file_cursor = effect_model_table[def->unkFE];
+    model->model_flags |= 0x1800;
+    file_cursor = effect_model_table[def->model_index];
     memory = effect_model_memory + (index << 11);
     Model_SetUpPosed(model, &file_cursor, &memory);
-    model->draw = effect_draw_hooks[((EffectTableEntry *)effect->def)->placement][effect->def->unkF4];
-    model->unk100 |= 0x800;
+    model->draw = effect_draw_hooks[((EffectTableEntry *)effect->def)->placement][effect->def->draw_hook_index];
+    model->model_flags |= 0x800;
     if (Wobble_ModelUsesTextures(model, 0x3BC0, 0x3C3F) != 0) {
         // match: the owner is read from the effect again for every test (a macro in the game, most likely)
         if (effect->owner_entity == (Entity *)&map_slots[0]) {
@@ -711,16 +711,16 @@ static void Effect_SetupModel(int index) {
         } else if (effect->owner_entity == (Entity *)&map_slots[1]) {
             map = 1;
         } else if ((MapObject *)effect->owner_entity >= map_slot_objects[0] && (MapObject *)effect->owner_entity <= &map_slot_objects[1][0x1FF]) {
-            map = (u8)((MapObject *)effect->owner_entity)->unk10 & 1;
+            map = (u8)((MapObject *)effect->owner_entity)->state_flags & 1;
         } else if (effect->owner_entity >= entity_pool[0] && effect->owner_entity <= &D_003D6C70) {
             map = effect->owner_entity->group_id; /* an entity: the map it is in */
         } else {
             map = D_00446770;
         }
-        effect->model->unk190 = 3;
-        effect->model->unk194 = (int)Map_GetSlotPacket(map, 4);
-        effect->model->unk192 = 0;
-        effect->model->unk198 = (int)Map_GetSlotPacket(map, 5);
+        effect->model->texture_slot = 3;
+        effect->model->texture_data = (int)Map_GetSlotPacket(map, 4);
+        effect->model->shared_texture_slot = 0;
+        effect->model->shared_texture_packet = (int)Map_GetSlotPacket(map, 5);
     }
 }
 
@@ -933,14 +933,14 @@ void Effect_FreePlayerMagic(void) {
     effect = D_003F3550;
     for (i = 0; i < EFFECT_SLOT_COUNT && effect_slot_count > 0; i++, slot++) {
         if ((slot->flags & EFFECT_SLOT_LIVE) && slot->owner_entity == (Entity *)&player_state && slot->effect_param != 0 &&
-            fx_table[slot->effect_param].unk102 == 0 && EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x280] &&
+            fx_table[slot->effect_param].item_menu_magic == 0 && EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x280] &&
             EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x282] && EFFECT_SLOT_FLAG_PARTS(slot)->def != &effect_table.defs[0x284]) {
             Effect_FreeSpawner(slot);
         }
     }
     for (i = 0; i < EFFECT_COUNT && effect_count > 0; i++, effect++) {
         if ((effect->flags & EFFECT_FLAG_LIVE) && effect->owner_entity == (Entity *)&player_state && effect->effect_param != 0 &&
-            fx_table[effect->effect_param].unk102 == 0 && effect->def != &effect_table.defs[0x280] &&
+            fx_table[effect->effect_param].item_menu_magic == 0 && effect->def != &effect_table.defs[0x280] &&
             effect->def != &effect_table.defs[0x282] && effect->def != &effect_table.defs[0x284]) {
             Effect_Free(effect);
         }

@@ -24,46 +24,46 @@ typedef struct {
     u8 modes_a[3];                  /* 0x9C easing between the keys_a stages */
     u8 modes_b[3];                  /* 0x9F */
     u8 colour_modes[3];             /* 0xA2 */
-    u8 unkA5;                       /* 0xA5 how many effects the spawner makes each time it fires */
+    u8 spawn_batch_count;           /* 0xA5 how many effects the spawner makes each time it fires */
     u8 max_level;                   /* 0xA6 the spawner's level counts down from this */
-    u8 unkA7;                       /* 0xA7 frames between two firings of the spawner, 0: every frame */
+    u8 spawn_interval;              /* 0xA7 frames between two firings of the spawner, 0: every frame */
     f32 rotation_base[3];           /* 0xA8 */
     f32 rotation_spread[3];         /* 0xB4 random +- range around rotation_base */
     f32 offset_base[3];             /* 0xC0 */
     f32 offset_spread[3];           /* 0xCC random +- range around offset_base */
     f32 speed;                      /* 0xD8 */
-    f32 unkDC;                      /* 0xDC per kind: spin, turn rate, spread */
-    f32 unkE0;                      /* 0xE0 per kind: height, drift, count */
-    f32 unkE4;                      /* 0xE4 */
-    f32 unkE8;                      /* 0xE8 */
+    f32 turn_rate;                  /* 0xDC per kind: spin, turn rate, spread */
+    f32 ground_height;              /* 0xE0 per kind: height, drift, count */
+    f32 spread_angle;               /* 0xE4 per kind: widest random turn or the aim pitch tolerance */
+    f32 spin_rate;                  /* 0xE8 per kind: spin/heading rate a frame; elsewhere a count */
     u16 radius_half;                /* 0xEC */
     u16 interval;                   /* 0xEE frames between collision checks, or a range */
-    u16 unkF0;                      /* 0xF0 effect ids passed to Effect_SpawnFromEffect */
-    u16 unkF2;                      /* 0xF2 */
-    u8 unkF4;                       /* 0xF4 with the placement bits, picks the model's draw routine from effect_draw_hooks */
+    u16 sub_effect_id;              /* 0xF0 effect ids passed to Effect_SpawnFromEffect */
+    u16 child_effect_id;            /* 0xF2 effect spawned each frame or on hit; a link count for chains */
+    u8 draw_hook_index;             /* 0xF4 with the placement bits, picks the model's draw routine from effect_draw_hooks */
     u8 unkF5;                       /* 0xF5 bit 0: drawn with the map's own light block; bit 1: not drawn in the second pass */
-    u8 unkF6;                       /* 0xF6 how the texture frames run: 0 loop, 1 once, 2 once and hold the last */
-    u8 unkF7;                       /* 0xF7 how many texture frames, 0: not animated */
-    u16 unkF8;                      /* 0xF8 record ids between two texture frames */
-    u16 unkFA;                      /* 0xFA nonzero: an id that Effect_Init moves up by 0x1400; the first texture frame's record */
-    u8 unkFC;                       /* 0xFC effect frames per texture frame, less one */
-    u8 unkFD;                       /* 0xFD */
-    u16 unkFE;                      /* 0xFE */
-    u16 unk100;                     /* 0x100 index into the handler tables effect_kind_handlers and fx_table */
+    u8 texture_anim_mode;           /* 0xF6 how the texture frames run: 0 loop, 1 once, 2 once and hold the last */
+    u8 texture_frame_count;         /* 0xF7 how many texture frames, 0: not animated */
+    u16 texture_frame_stride;       /* 0xF8 record ids between two texture frames */
+    u16 texture_record_base;        /* 0xFA nonzero: an id that Effect_Init moves up by 0x1400; the first texture frame's record */
+    u8 texture_frame_interval;      /* 0xFC effect frames per texture frame, less one */
+    u8 spawn_start_delay;           /* 0xFD frames before the spawner's first firing */
+    u16 model_index;                /* 0xFE index of the effect's model in effect_model_table */
+    u16 kind_index;                 /* 0x100 index into the handler tables effect_kind_handlers and fx_table */
     u16 keyframe_end;               /* 0x102 last keyframe; kinds that loop restart here */
     f32 gravity;                    /* 0x104 */
     u16 max_frames;                 /* 0x108 0: no limit; the low bits of EFFECT_DEF_FLAGS */
     char pad10A;
-    u8 unk10B;                      /* 0x10B 0xFF: no hit check */
-    u16 unk10C[3];                  /* 0x10C */
-    u16 unk112[3];                  /* 0x112 */
+    u8 hit_check_index;             /* 0x10B 0xFF: no hit check */
+    u16 frame_spawn_effects[3];     /* 0x10C effect spawned when its frame in frame_spawn_frames comes */
+    u16 frame_spawn_frames[3];      /* 0x112 frame each frame_spawn_effects entry is spawned at */
     u16 end_effect;                 /* 0x118 spawned when the effect ends */
-    u16 unk11A;                     /* 0x11A not 0: sets EffectActor flag bit 59; passed to Sound_PlayTrackedKind */
+    u16 sound_id;                   /* 0x11A not 0: sets EffectActor flag bit 59; passed to Sound_PlayTrackedKind */
     f32 scale_per_frame;            /* 0x11C */
 } EffectDef;
 
 /* the 64-bit word at EffectDef+0xF0 as Effect_DrawAll tests it (bits 40 and 41 are unkF5's bits 0 and 1) */
-#define EFFECT_DEF_WORD_F0(def) (*(s64 *)&(def)->unkF0)
+#define EFFECT_DEF_WORD_F0(def) (*(s64 *)&(def)->sub_effect_id)
 
 /* the 64-bit flag word at EffectDef+0x108, whose low 16 bits are max_frames */
 #define EFFECT_DEF_FLAGS(def) (*(s64 *)&(def)->max_frames)
@@ -258,7 +258,7 @@ typedef struct {
 /* EffectMotion as EffectChase_Start and EffectAimedChase_Start set it up: chases the entity in EffectActor.unk6C */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    f32 turn;                       /* 0x10 how sharply it turns toward the entity; grows by EffectDef.unkE0 */
+    f32 turn;                       /* 0x10 how sharply it turns toward the entity; grows by EffectDef.ground_height */
     s8 ended;                       /* 0x14 set once the end effect is spawned */
     char pad15[0x0B];
 } ChaseMotion;
@@ -277,10 +277,10 @@ typedef struct {
 /* EffectMotion of the effect that winds along the floor (EffectGroundSway_*) */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    f32 height;                     /* 0x10 EffectDef.unkDC: the floor is looked for within it */
+    f32 height;                     /* 0x10 EffectDef.turn_rate: the floor is looked for within it */
     f32 fall_speed;                 /* 0x14 */
-    f32 sway_rate;                  /* 0x18 EffectDef.unkE0: the sway is the sine of this times angle */
-    f32 angle_speed;                /* 0x1C EffectDef.unkE4, grows by unkE8 each frame */
+    f32 sway_rate;                  /* 0x18 EffectDef.ground_height: the sway is the sine of this times angle */
+    f32 angle_speed;                /* 0x1C EffectDef.spread_angle, grows by unkE8 each frame */
     f32 angle;                      /* 0x20 */
     s8 ended;                       /* 0x24 set when it starts with no floor under it */
 } GroundSwayMotion;
@@ -288,7 +288,7 @@ typedef struct {
 /* EffectMotion of the effect that runs along the floor leaving effects (EffectGroundTrail_*) */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    f32 height;                     /* 0x10 EffectDef.unkDC: the floor is looked for within it */
+    f32 height;                     /* 0x10 EffectDef.turn_rate: the floor is looked for within it */
     f32 fall_speed;                 /* 0x14 */
     s8 ended;                       /* 0x18 set when it starts with no floor under it */
 } GroundTrailMotion;
@@ -607,7 +607,7 @@ typedef struct {
 /* EffectMotion as EffectSpiral_Start uses it: a spiral */
 typedef struct {
     Vector4 velocity;               /* 0x00 */
-    f32 start_angle;                /* 0x10 model heading plus EffectDef.unkE0 */
+    f32 start_angle;                /* 0x10 model heading plus EffectDef.ground_height */
     int unk14;                      /* 0x14 */
     f32 unk18;                      /* 0x18 EffectDef.radius_half over half of keyframe_end */
     f32 unk1C;                      /* 0x1C EffectDef.interval over keyframe_end */
@@ -860,7 +860,7 @@ typedef struct {
     Vector4 velocity;               /* 0x00 */
     f32 bob_speed;                  /* 0x10 added to the model's height each frame */
     f32 bob_limit;                  /* 0x14 the bob turns round at +- this speed */
-    f32 turn;                       /* 0x18 how sharply it turns toward its target; grows to EffectDef.unkE0 */
+    f32 turn;                       /* 0x18 how sharply it turns toward its target; grows to EffectDef.ground_height */
     f32 velocity_scale;             /* 0x1C grows by EffectDef.scale_per_frame */
     u16 countdown;                  /* 0x20 */
     s8 ended;                       /* 0x22 */
@@ -998,7 +998,7 @@ typedef struct {
     u8 unk24;                       /* 0x24 */
     u8 level;                       /* 0x25 the firings left */
     u8 unk26;                       /* 0x26 frames to the next firing */
-    u8 unk27;                       /* 0x27 frames before the first firing, from EffectDef.unkFD */
+    u8 unk27;                       /* 0x27 frames before the first firing, from EffectDef.spawn_start_delay */
     char pad28[0x0C];
     Vector4 *start_rotation;        /* 0x34 EffectSlot.unk34 */
     char pad38[0x18];
@@ -1009,28 +1009,28 @@ typedef struct {
 /* FxTableEntry+0xAC: what casting the magic does to the player (Player_CastMagic) */
 typedef struct {
     u16 unk00[6];                   /* 0x00 nonzero: PlayerState.timed_flags[i] is cleared */
-    u16 unk0C[6];                   /* 0x0C goes to PlayerState.unk110 */
-    s16 unk18[9];                   /* 0x18 goes to PlayerState.unk11C and unk122 */
-    u16 unk2A[6];                   /* 0x2A goes to PlayerState.unk12E */
-    s16 unk36[9];                   /* 0x36 goes to PlayerState.unk13A and unk140 */
+    u16 unk0C[6];                   /* 0x0C goes to PlayerState.ailment_attack_bonus */
+    s16 unk18[9];                   /* 0x18 goes to PlayerState.physical_strength_bonus and unk122 */
+    u16 unk2A[6];                   /* 0x2A goes to PlayerState.ailment_defence_bonus */
+    s16 unk36[9];                   /* 0x36 goes to PlayerState.physical_defence_bonus and unk140 */
     u16 duration;                   /* 0x48 frames the values above last */
     s16 unk4A;                      /* 0x4A healing in all; 999 and more: all of it */
     s16 unk4C;                      /* 0x4C healing given at once */
     s16 unk4E;                      /* 0x4E frames per point of the rest */
 } FxTableStats;
 
-/* FxTableEntry+0x34: one of the three hit checks of an effect, EffectDef.unk10B picks it (Attack_RunEffectHitCheck) */
+/* FxTableEntry+0x34: one of the three hit checks of an effect, EffectDef.hit_check_index picks it (Attack_RunEffectHitCheck) */
 typedef struct {
     EntityParamsUnk240PartUnk00 strengths; /* 0x00 goes to Unk1B1470Request.unk50 */
     EntityParamsUnk240PartUnk12 unk12; /* 0x12 goes to Unk1B1470Request.unk62 */
-    s16 unk1E;                      /* 0x1E goes to Unk1B1470Request.unk30 */
-    s16 unk20;                      /* 0x20 goes to Unk1B1470Request.unk34 (shape 1) */
-    u8 shape;                       /* 0x22 0 to 2: Unk1B1470Request.unk4C_0 */
-    u8 unk23;                       /* 0x23 bits copied to Unk1B1470Request.unk4D (all but 0x40) */
+    s16 unk1E;                      /* 0x1E goes to Unk1B1470Request.radius */
+    s16 unk20;                      /* 0x20 goes to Unk1B1470Request.height (shape 1) */
+    u8 shape;                       /* 0x22 0 to 2: Unk1B1470Request.shape */
+    u8 unk23;                       /* 0x23 bits copied to Unk1B1470Request.target_mask (all but 0x40) */
     u8 unk24;                       /* 0x24 goes to EffectActorFlagParts.unk40 once the hit has landed */
-    u8 unk25;                       /* 0x25 goes to Unk1B1470Request.unk4F */
-    u8 unk26;                       /* 0x26 not 0: Unk1B1470Request.unk4C_3 */
-    u8 unk27;                       /* 0x27 goes to Unk1B1470Request.unk70 */
+    u8 unk25;                       /* 0x25 goes to Unk1B1470Request.stun_frames */
+    u8 unk26;                       /* 0x26 not 0: Unk1B1470Request.knockback */
+    u8 unk27;                       /* 0x27 goes to Unk1B1470Request.instant_kill_chance_percent */
 } FxTableHitCheck;
 
 /* fx_table[]: a table entry of 0x110 bytes, indexed by effect id (Attack_LaunchMagicEffect) */
@@ -1038,14 +1038,14 @@ typedef struct {
     char pad00[0x34];
     FxTableHitCheck hit_checks[3];  /* 0x34 */
     FxTableStats unkAC;             /* 0xAC */
-    u16 unkFC;                      /* 0xFC taken from PlayerState.mp_now to cast it (Player_CastMagic) */
-    u16 unkFE;                      /* 0xFE divides how fast PlayerState.unkC0 fills (Player_UpdateStatus) */
-    u16 unk100;                     /* 0x100 */
-    s8 unk102;                      /* 0x102 nonzero: the effect cannot be started */
+    u16 mp_cost;                    /* 0xFC taken from PlayerState.mp_now to cast it (Player_CastMagic) */
+    u16 gauge_charge_divisor;       /* 0xFE divides how fast PlayerState.magic_gauge fills (Player_UpdateStatus) */
+    u16 effect_id;                  /* 0x100 the effect the spell spawns when it is cast */
+    s8 item_menu_magic;             /* 0x102 nonzero: the effect cannot be started */
     char pad103[0x01];
-    u16 unk104;                     /* 0x104 goes to PlayerState.unkC8 when it is cast */
+    u16 gauge_refill_delay;         /* 0x104 goes to PlayerState.magic_gauge_delay when it is cast */
     char pad106[0x02];
-    f32 unk108;                     /* 0x108 */
+    f32 effect_depth_below;         /* 0x108 how far below the caster the magic's effect is placed */
     char pad10C[0x04];
 } FxTableEntry;
 

@@ -175,9 +175,9 @@ void EntityPoint_PickNearFromDistance(f32 *point, f32 *centre, f32 distance, f32
 void EntityAim_PredictPlayerPosition(f32 *point, s32 frames) {
     f32 offset[4];
 
-    offset[0] = player_state.unk1B0;
-    offset[1] = player_state.unk1AC;
-    offset[2] = player_state.unk1B4;
+    offset[0] = player_state.strafe_speed;
+    offset[1] = player_state.fall_speed;
+    offset[2] = player_state.walk_speed;
     offset[3] = 0.0f;
     sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, D_00431AF0, player_state.rotation.y);
     sceVu0ApplyMatrix(offset, (int *)MODEL_MATRIX_SCRATCH, offset);
@@ -194,16 +194,16 @@ s32 Bone_MultiplyPathTo(void *part_arg, void *target_arg, void *matrix) {
     s32 found;
 
     if (part == target) {
-        sceVu0TransMatrix(local, D_00431AF0, target->unk40);
+        sceVu0TransMatrix(local, D_00431AF0, target->position);
         Matrix_Multiply(matrix, matrix, local);
         return TRUE;
     }
     if (part->child != NULL && Bone_MultiplyPathTo(part->child, target, matrix) != 0) {
         if ((s32)(MODEL_PART_WORD(part) >> 32) & 0x7F) {
-            sceVu0RotMatrixX(local, D_00431AF0, wrap_angle(part->unk50));
-            sceVu0RotMatrixZ(local, local, wrap_angle(part->unk58));
-            sceVu0RotMatrixY(local, local, wrap_angle(part->unk54));
-            sceVu0TransMatrix(local, local, part->unk40);
+            sceVu0RotMatrixX(local, D_00431AF0, wrap_angle(part->rotation_x));
+            sceVu0RotMatrixZ(local, local, wrap_angle(part->rotation_z));
+            sceVu0RotMatrixY(local, local, wrap_angle(part->rotation_y));
+            sceVu0TransMatrix(local, local, part->position);
             Matrix_Multiply(matrix, local, matrix);
         }
         return TRUE;
@@ -224,7 +224,7 @@ s32 Bone_GetMatrix(ModelInstance *model, void *bone, f32 *matrix) {
     if (Bone_MultiplyPathTo(model->parts, bone, matrix) == 0) {
         return FALSE;
     }
-    Matrix_Multiply(matrix, model->unk40, matrix);
+    Matrix_Multiply(matrix, model->model_matrix, matrix);
     return TRUE;
 }
 
@@ -272,7 +272,7 @@ s32 Bone_LookAngles(ModelInstance *model, void *part, f32 *target, f32 *limits, 
     if (Bone_MultiplyPathTo(model->parts, part, part_matrix) == 0) {
         return FALSE;
     }
-    Matrix_Multiply(part_matrix, model->unk40, part_matrix);
+    Matrix_Multiply(part_matrix, model->model_matrix, part_matrix);
     sceVu0CopyMatrix(look, D_00431AF0);
     Vector_Subtract(vector, &part_matrix[12], target);
     if (limits != NULL) {
@@ -287,7 +287,7 @@ s32 Bone_LookAngles(ModelInstance *model, void *part, f32 *target, f32 *limits, 
     Vector_Normalize(look, look);
     Vector_Cross(&look[4], &look[8], look);
     Vector_Normalize(&look[4], &look[4]);
-    if (model->unkE0 < 0.0f) {
+    if (model->scale_x < 0.0f) {
         Vector_Scale(look, look, -1.0f);
     }
     look[3] = look[7] = look[11] = 0.0f;
@@ -395,7 +395,7 @@ s32 EntitySight_ObjectInWay(Entity *entity) {
     s32 i;
 
     Vector_Copy(position, entity->model->position);
-    position[1] -= entity->unk34 * 0.5f;
+    position[1] -= entity->collision_height * 0.5f;
     Vector_Copy(target, &player_state);
     target[1] -= 115.0f;
     __asm__ volatile(
@@ -438,8 +438,8 @@ s32 EntitySight_ObjectInWay(Entity *entity) {
         object = map_objects(map);
         count = map_object_count(map);
         for (i = 0; i < count; i++, object++) {
-            if (object->unk04->kind == 1 || object->unk04->kind == 2 || object->unk04->kind == 0x11 || object->unk04->kind == 6) {
-                reach = object->unk14;
+            if (object->definition->kind == 1 || object->definition->kind == 2 || object->definition->kind == 0x11 || object->definition->kind == 6) {
+                reach = object->reach_radius;
                 if (reach <= 0.0f) {
                     continue;
                 }
@@ -499,7 +499,7 @@ s32 EntitySight_PropInWay(Entity *entity) {
     // match: index first, or the two address registers swap
     player_record = &((MapRecord *)(D_00446770 + map_slots)->records)[player_state.map_index];
     Vector_Copy(position, entity->model->position);
-    position[1] -= entity->unk34 * 0.5f;
+    position[1] -= entity->collision_height * 0.5f;
     Vector_Copy(target, &player_state);
     target[1] -= 115.0f;
     __asm__ volatile(
@@ -517,8 +517,8 @@ s32 EntitySight_PropInWay(Entity *entity) {
     distance = distance_out[0];
     Vector_Subtract(target, target, position);
     Vector_Normalize(target, target);
-    if (entity->unk14 != player_record && (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) != 0x4000000) {
-        hit = EntityCollision_RayProp(entity->unk14, position, target, distance, 0);
+    if (entity->map_record != player_record && (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) != 0x4000000) {
+        hit = EntityCollision_RayProp(entity->map_record, position, target, distance, 0);
         if (hit != 0) {
             return hit;
         }
@@ -535,7 +535,7 @@ s32 EntitySight_WallInWay(Entity *entity) {
     f32 distance;
 
     Vector_Copy(position, entity->model->position);
-    position[1] -= entity->unk34 * 0.5f;
+    position[1] -= entity->collision_height * 0.5f;
     Vector_Copy(target, &player_state);
     target[1] -= 115.0f;
     if (position[0] < target[0]) {

@@ -82,20 +82,20 @@ typedef struct DataNode {
    Menu_UpdateSaveList reads it: what a save on the card says about itself */
 typedef struct {
     char pad00[0x04];
-    s32 unk04;                      /* 0x04 GameStatus.save_area: the message id of its area name, from 400 */
-    s32 unk08;                      /* 0x08 unk08 to unk28: numbers put into the text (D_00446DF4...) */
-    s32 unk0C;                      /* 0x0C */
-    s32 unk10;                      /* 0x10 */
-    s32 unk14;                      /* 0x14 */
-    s32 unk18;                      /* 0x18 */
-    s32 unk1C;                      /* 0x1C */
-    s32 unk20;                      /* 0x20 */
-    s32 unk24;                      /* 0x24 */
-    s32 unk28;                      /* 0x28 */
+    s32 save_area;                  /* 0x04 GameStatus.save_area: the message id of its area name, from 400 */
+    s32 experience;                 /* 0x08 unk08 to gold: numbers put into the text (D_00446DF4...) */
+    s32 level;                      /* 0x0C the player's level */
+    s32 hp_now;                     /* 0x10 the HP the player had */
+    s32 hp_max;                     /* 0x14 the most HP the player could have */
+    s32 mp_now;                     /* 0x18 the MP the player had */
+    s32 mp_max;                     /* 0x1C the most MP the player could have */
+    s32 power_base;                 /* 0x20 the player's power base */
+    s32 magic_base;                 /* 0x24 the player's magic base */
+    s32 gold;                       /* 0x28 the gold the player had */
     char pad2C[0x14D];
-    u8 unk179;                      /* 0x179 unk179 to unk17B: three more numbers for the text */
-    u8 unk17A;                      /* 0x17A */
-    u8 unk17B;                      /* 0x17B */
+    u8 play_seconds;                /* 0x179 unk179 to play_hours: three more numbers for the text */
+    u8 play_minutes;                /* 0x17A the play time's minutes */
+    u8 play_hours;                  /* 0x17B the play time's hours */
     char pad17C[0x04];
 } CardSaveInfo;
 
@@ -116,30 +116,30 @@ typedef struct {
 
 /* D_005CF2F0: state of the menu screen Menu_UpdateCardSlot runs; Menu_OpenCardSlot resets it */
 typedef struct {
-    s32 unk00;                      /* 0x00 */
-    s32 unk04;                      /* 0x04 */
+    s32 card_update_result;         /* 0x00 SaveCard_Update's result: negative marks a card failure */
+    s32 card_problem_codes;         /* 0x04 four bits per card slot: 1 usable, 2 format it, 4 another problem */
     char pad08[0x04];
-    s8 unk0C;                       /* 0x0C */
-    s8 unk0D;                       /* 0x0D */
-    s8 unk0E;                       /* 0x0E starts as 1 */
+    s8 selected_card;               /* 0x0C the card the cursor is on (0 or 1) */
+    s8 selected_save;               /* 0x0D the save line the cursor is on (0 to 2) */
+    s8 confirm_choice;              /* 0x0E starts as 1 */
     char pad0F[0x01];
-    s8 unk10;                       /* 0x10 */
-    s8 unk11;                       /* 0x11 */
-    s8 unk12;                       /* 0x12 starts as -1 */
-    s8 unk13;                       /* 0x13 step of the screen Menu_UpdateSaveList runs, -1: waiting for input */
-    s8 unk14;                       /* 0x14 */
+    s8 card_saves_found;            /* 0x10 1: the card's save list was read and has saves */
+    s8 is_leaving;                  /* 0x11 1: the screen is being left (the cards were closed) */
+    s8 dialog_id;                   /* 0x12 starts as -1 */
+    s8 list_step;                   /* 0x13 step of the screen Menu_UpdateSaveList runs, -1: waiting for input */
+    s8 card_op_running;             /* 0x14 1 while a card operation the screen started runs */
     char pad15[0x01];
-    s8 unk16;                       /* 0x16 */
-    s8 unk17;                       /* 0x17 */
-    s8 unk18;                       /* 0x18 starts as 1 */
-    s8 unk19;                       /* 0x19 what SaveCard_GetSavesState said of the first slot's card, unk1A of the second's (Menu_CardsHaveSaves) */
-    s8 unk1A;                       /* 0x1A */
-    s8 unk1B;                       /* 0x1B */
-    s8 unk1C;                       /* 0x1C */
-    s8 unk1D;                       /* 0x1D */
-    s8 unk1E;                       /* 0x1E */
-    s8 unk1F;                       /* 0x1F */
-    s8 unk20;                       /* 0x20 */
+    s8 save_loaded;                 /* 0x16 1: a save was loaded, Menu_Run gives its caller 1 for it */
+    s8 check_step;                  /* 0x17 the step of the card check screen (0 to 4) */
+    s8 input_locked;                /* 0x18 starts as 1 */
+    s8 card0_saves_state;           /* 0x19 what SaveCard_GetSavesState said of the first slot's card, unk1A of the second's (Menu_CardsHaveSaves) */
+    s8 card1_saves_state;           /* 0x1A what SaveCard_GetSavesState said of the second card */
+    s8 check_finished;              /* 0x1B 0 until the first card check has finished */
+    s8 skip_drawing;                /* 0x1C 1: the screen draws nothing and leaves at once */
+    s8 confirm_press_state;         /* 0x1D how the confirm press is stepped: 0 idle, 3 fires, 1 and 2 wait */
+    s8 save_state_0;                /* 0x1E what SaveCard_GetSaveState says of save 0 (1: there is one) */
+    s8 save_state_1;                /* 0x1F what SaveCard_GetSaveState says of save 1 */
+    s8 save_state_2;                /* 0x20 what SaveCard_GetSaveState says of save 2 */
 } MenuScreenState;
 
 /* one item's two values in a trade table (0x17C entries each, the first at 0x00426650); looks like a shop's prices */

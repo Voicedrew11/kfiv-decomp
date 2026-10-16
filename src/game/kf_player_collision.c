@@ -72,17 +72,17 @@ int Player_CollideWithMap(void) {
     u32 surface;
     f32 drop;
 
-    step_bit = (s32)(player_state.unk1C8 >> 33) & 1;
+    step_bit = (s32)(player_state.status_bits >> 33) & 1;
     stepping = step_bit; // match: tested as the bit, kept as a byte
     if (step_bit) {
-        if (player_state.unk1D0 <= player_state.unk1D4) {
-            player_state.position.y -= player_state.unk1D0;
-            player_state.unk1C8 &= ~(0x8000L << 18);
-            player_state.unk1D4 = 0.0f;
-            player_state.unk1D0 = 0.0f;
+        if (player_state.step_remainder <= player_state.step_per_frame) {
+            player_state.position.y -= player_state.step_remainder;
+            player_state.status_bits &= ~(0x8000L << 18);
+            player_state.step_per_frame = 0.0f;
+            player_state.step_remainder = 0.0f;
         } else {
-            player_state.unk1D0 -= player_state.unk1D4;
-            player_state.position.y -= player_state.unk1D4;
+            player_state.step_remainder -= player_state.step_per_frame;
+            player_state.position.y -= player_state.step_per_frame;
         }
     }
     floor_height = D_00446968[0];
@@ -91,23 +91,23 @@ int Player_CollideWithMap(void) {
     wall_point->y -= 1.0f;
     Vector_Copy(floor_point, &player_state.position);
     floor_point->y -= 75.0f;
-    reach = player_state.unk1AC + 75.0f;
+    reach = player_state.fall_speed + 75.0f;
     Vector_Copy(&raised_point, &player_state.position);
     floor_map = D_00446770;
-    player_state.unk211 = player_state.unk210 = 6;
+    player_state.unk211 = player_state.floor_material = 6;
     player_state.unk214 = 0.0f;
     raised_point.y += 3.0f; // match: the raised point is never used
     for (map = 0; map < 2; map++) {
         slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
-        if (slot->unk00 != 0) {
+        if (slot->loaded != 0) {
             record_count = slot->header->record_count;
-            model = (ModelInstance *)D_004321F0[D_00446770 == map ? 0 : 1].unk34;
+            model = (ModelInstance *)D_004321F0[D_00446770 == map ? 0 : 1].record_models;
             record = (MapRecordBounds *)slot->records;
             for (i = 0; i < record_count; i++, record++, model++) {
-                if (record->unk32 == 0xFFFF) {
+                if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
-                if (record->unk3C & 0x40000000) {
+                if (record->record_flags & 0x40000000) {
                     continue;
                 }
                 if (player_state.position.x < record->lowest[0] - 100.0f
@@ -118,9 +118,9 @@ int Player_CollideWithMap(void) {
                 }
                 mesh = (CollisionMesh *)model->strips;
                 ((void (*)(void *))Collision_TransformMeshPoints)(model); // match: called as if it returned nothing
-                if (player_state.unk1E0 == 0) {
-                    strips_left = mesh->unk40;
-                    strip = mesh->unk28;
+                if (player_state.ground_effect_active == 0) {
+                    strips_left = mesh->hazard_strip_count;
+                    strip = mesh->hazard_strips;
                     while (--strips_left != -1) {
                         strip_point = strip->points;
                         points_left = strip->point_count - 2;
@@ -131,10 +131,10 @@ int Player_CollideWithMap(void) {
                                 && COLLISION_RESULT->point[1] <= player_state.position.y) {
                                 surface = Collision_GetSurfaceEffect(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                                 if (surface != 0) {
-                                    player_state.unk1E4 = surface;
-                                    player_state.unk1E0 = 1;
+                                    player_state.ground_effect_kind = surface;
+                                    player_state.ground_effect_active = 1;
                                 } else {
-                                    player_state.unk1EC = 1;
+                                    player_state.ground_kills = 1;
                                 }
                             }
                             strip_point++;
@@ -142,8 +142,8 @@ int Player_CollideWithMap(void) {
                         strip = (CollisionStrip *)&strip_point[2];
                     }
                 }
-                strips_left = mesh->unk38;
-                strip = mesh->unk18;
+                strips_left = mesh->wall_strip_count;
+                strip = mesh->wall_strips;
                 while (--strips_left != -1) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
@@ -164,8 +164,8 @@ int Player_CollideWithMap(void) {
                     strip = (CollisionStrip *)&strip_point[2];
                 }
                 if (map == 0) {
-                    strips_left = mesh->unk42;
-                    strip = mesh->unk2C;
+                    strips_left = mesh->water_strip_count;
+                    strip = mesh->water_strips;
                     while (--strips_left != -1) {
                         strip_point = strip->points;
                         points_left = strip->point_count - 2;
@@ -173,14 +173,14 @@ int Player_CollideWithMap(void) {
                             Collision_DropOnTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position,
                                           &player_state.position);
                             if (COLLISION_RESULT->hit != 0
-                                && COLLISION_RESULT->point[1] <= player_state.position.y + player_state.unk1AC
-                                && (!((s32)(player_state.unk1C8 >> 38) & 1) || COLLISION_RESULT->point[1] < player_state.unk1DC)) {
-                                player_state.unk1DC = COLLISION_RESULT->point[1];
-                                player_state.unk1C8 |= 0x8000L << 23;
+                                && COLLISION_RESULT->point[1] <= player_state.position.y + player_state.fall_speed
+                                && (!((s32)(player_state.status_bits >> 38) & 1) || COLLISION_RESULT->point[1] < player_state.water_surface_y)) {
+                                player_state.water_surface_y = COLLISION_RESULT->point[1];
+                                player_state.status_bits |= 0x8000L << 23;
                                 if (COLLISION_RESULT->point[1] <= player_state.position.y - 220.0f) {
-                                    player_state.unk1C8 |= 0x8000L << 24;
+                                    player_state.status_bits |= 0x8000L << 24;
                                 } else {
-                                    player_state.unk1C8 &= ~(0x8000L << 24);
+                                    player_state.status_bits &= ~(0x8000L << 24);
                                 }
                             }
                             strip_point++;
@@ -191,8 +191,8 @@ int Player_CollideWithMap(void) {
                 if (stepping) {
                     continue;
                 }
-                if (player_state.unk208 != 0
-                    && (MAP_OBJECT_DEF_FLAGS(((MapObject *)player_state.unk208)->unk04) & MAP_OBJECT_DEF_CARRIES)) {
+                if (player_state.floor_map_object != 0
+                    && (MAP_OBJECT_DEF_FLAGS(((MapObject *)player_state.floor_map_object)->definition) & MAP_OBJECT_DEF_CARRIES)) {
                     continue;
                 }
                 strips_left = mesh->floor_strip_count;
@@ -206,9 +206,9 @@ int Player_CollideWithMap(void) {
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < floor_height) {
                             found = TRUE;
                             floor_height = COLLISION_RESULT->point[1];
-                            player_state.unk250 = record->unk38;
+                            player_state.record_flag_block = record->flag_block_bit;
                             player_state.map_index = i;
-                            player_state.unk210 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            player_state.floor_material = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                             floor_map = D_00446770 != map;
                         }
                         strip_point++;
@@ -226,41 +226,41 @@ int Player_CollideWithMap(void) {
             if (drop < 16.666666f) {
                 player_state.position.y = floor_height;
             } else {
-                player_state.unk1C8 |= 0x8000L << 18;
-                player_state.unk1D4 = 16.666666f;
+                player_state.status_bits |= 0x8000L << 18;
+                player_state.step_per_frame = 16.666666f;
                 player_state.position.y -= 16.666666f;
-                player_state.unk1D0 = drop - 16.666666f + 5.0f;
+                player_state.step_remainder = drop - 16.666666f + 5.0f;
             }
-            player_state.unk1AC = 0.0f;
-        } else if (player_state.unk1A8 == 0) {
-            player_state.position.y += player_state.unk1AC;
+            player_state.fall_speed = 0.0f;
+        } else if (player_state.death_timer == 0) {
+            player_state.position.y += player_state.fall_speed;
         } else {
-            player_state.position.y += player_state.unk1AC * (f32)(60 - player_state.unk1A8) / 60.0f;
+            player_state.position.y += player_state.fall_speed * (f32)(60 - player_state.death_timer) / 60.0f;
         }
     }
-    if (((s32)(player_state.unk1C8 >> 33) & 1) || found) {
-        player_state.unk1C8 &= ~(0x8000L << 19);
+    if (((s32)(player_state.status_bits >> 33) & 1) || found) {
+        player_state.status_bits &= ~(0x8000L << 19);
     }
-    if (!((s32)(player_previous.unk1C8 >> 38) & 1) && ((s32)(player_state.unk1C8 >> 38) & 1)) {
-        player_state.unk1AC = 0.0f;
-        player_state.unk1C8 &= ~(0x8000L << 19);
+    if (!((s32)(player_previous.status_bits >> 38) & 1) && ((s32)(player_state.status_bits >> 38) & 1)) {
+        player_state.fall_speed = 0.0f;
+        player_state.status_bits &= ~(0x8000L << 19);
     }
-    if (player_previous.unk1E4 != 4 && player_state.unk1E4 == 4) {
-        player_state.unk1AC = 0.0f;
-        player_state.unk1C8 &= ~(0x8000L << 19);
+    if (player_previous.ground_effect_kind != 4 && player_state.ground_effect_kind == 4) {
+        player_state.fall_speed = 0.0f;
+        player_state.status_bits &= ~(0x8000L << 19);
     }
-    if (player_state.unk1E0 == 0) {
-        player_state.unk1E8 = 0;
-    } else if (player_previous.unk1E0 != 0 && player_previous.unk1E4 == player_state.unk1E4) {
-        player_state.unk1E8++;
+    if (player_state.ground_effect_active == 0) {
+        player_state.ground_effect_frames = 0;
+    } else if (player_previous.ground_effect_active != 0 && player_previous.ground_effect_kind == player_state.ground_effect_kind) {
+        player_state.ground_effect_frames++;
     } else {
-        player_state.unk1E8 = 0;
+        player_state.ground_effect_frames = 0;
     }
     Map_MakeCurrent(floor_map);
     return found;
 }
 
-/* Keeps the player 100 units away from the wall triangles (CollisionMesh.unk18) of the records around him:
+/* Keeps the player 100 units away from the wall triangles (CollisionMesh.wall_strips) of the records around him:
    each one that is hit pushes him straight out, level with the ground. */
 void Player_PushOutOfWalls(void) {
     Vector4 *point = &COLLISION_SCRATCH->point;
@@ -279,14 +279,14 @@ void Player_PushOutOfWalls(void) {
     point->y -= 1.0f;
     for (map = 0; map < 2; map++) {
         slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
-        if (slot->unk00 != 0) {
+        if (slot->loaded != 0) {
             record_count = slot->header->record_count;
             record = (MapRecordBounds *)slot->records;
             for (i = 0; i < record_count; i++, record++) {
-                if (record->unk32 == 0xFFFF) {
+                if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
-                if (record->unk3C & 0x40000000) {
+                if (record->record_flags & 0x40000000) {
                     continue;
                 }
                 if (player_state.position.x < record->lowest[0] - 100.0f
@@ -297,8 +297,8 @@ void Player_PushOutOfWalls(void) {
                 }
                 Collision_TransformMeshPoints(record->model);
                 mesh = (CollisionMesh *)record->model->strips;
-                strips_left = mesh->unk38;
-                strip = mesh->unk18;
+                strips_left = mesh->wall_strip_count;
+                strip = mesh->wall_strips;
                 while (--strips_left != -1) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;
@@ -326,7 +326,7 @@ void Player_PushOutOfWalls(void) {
 }
 
 /* Finds the floor triangle under the player (the highest one within 10 below his feet; y grows downward) in
-   the records around him and notes its material in PlayerState.unk210. */
+   the records around him and notes its material in PlayerState.floor_material. */
 void Player_FindFloorMaterial(void) {
     f32 lowest;
     MapSlot *slot;
@@ -344,14 +344,14 @@ void Player_FindFloorMaterial(void) {
     Vector_Copy(&COLLISION_SCRATCH->point, &player_state.position);
     for (map = 0; map < 2; map++) {
         slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
-        if (slot->unk00 != 0) {
+        if (slot->loaded != 0) {
             record_count = slot->header->record_count;
             record = (MapRecordBounds *)slot->records;
             for (i = 0; i < record_count; i++, record++) {
-                if (record->unk32 == 0xFFFF) {
+                if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
-                if (record->unk3C & 0x40000000) {
+                if (record->record_flags & 0x40000000) {
                     continue;
                 }
                 if (player_state.position.x < record->lowest[0] - 100.0f
@@ -372,7 +372,7 @@ void Player_FindFloorMaterial(void) {
                                       &COLLISION_SCRATCH->point, 10.0f);
                         if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] < lowest) {
                             lowest = COLLISION_RESULT->point[1];
-                            player_state.unk210 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                            player_state.floor_material = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
                         }
                         strip_point++;
                     } while (--points_left != 0);
@@ -404,12 +404,12 @@ void Player_CollideWithEntities(int climb) {
     f32 length;
     s32 i;
 
-    player_state.unk204 = 0;
+    player_state.stepped_on_entity = 0;
     if (climb) {
         Vector_Copy(old_position, &player_state);
         player_state.position.y += 1.0f;
-        reach = player_state.unk1AC + 75.0f;
-        if (!((s32)(player_state.unk1C8 >> 33) & 1)) {
+        reach = player_state.fall_speed + 75.0f;
+        if (!((s32)(player_state.status_bits >> 33) & 1)) {
             for (entity = D_004467E0; entity != NULL; entity = entity->next) {
                 if (!((s32)(entity->flags >> 1) & 1)) {
                     continue;
@@ -459,7 +459,7 @@ void Player_CollideWithEntities(int climb) {
                 }
                 player_state.position.y = top;
                 stepped = TRUE;
-                player_state.unk204 = (s32)entity;
+                player_state.stepped_on_entity = (s32)entity;
             }
         }
         player_state.position.y -= 1.0f;
@@ -468,12 +468,12 @@ void Player_CollideWithEntities(int climb) {
             rise = old_position[1] - player_state.position.y;
             if (step < rise) {
                 player_state.position.y = old_position[1] - step;
-                player_state.unk1D0 = rise - step + 5.0f;
-                player_state.unk1D4 = step;
-                player_state.unk1C8 |= 1L << 33;
+                player_state.step_remainder = rise - step + 5.0f;
+                player_state.step_per_frame = step;
+                player_state.status_bits |= 1L << 33;
             }
-            player_state.unk1AC = 0.0f;
-            player_state.unk1C8 &= ~(1L << 34);
+            player_state.fall_speed = 0.0f;
+            player_state.status_bits &= ~(1L << 34);
         }
     }
     for (entity = D_004467E0; entity != NULL; entity = entity->next) {
@@ -494,8 +494,8 @@ void Player_CollideWithEntities(int climb) {
         case 0x14:
         case 0x97:
         case 0x9B:
-            ENTITY_MODEL(entity)->unk1B4(ENTITY_MODEL(entity));
-            body = entity->params->unk20;
+            ENTITY_MODEL(entity)->update_bone_points(ENTITY_MODEL(entity));
+            body = entity->params->body_points;
             for (i = 0; i < 4; i++, body++) {
                 COLLISION_RESULT->hit = 0;
                 if (!(body->unk00.flags & ENTITY_BODY_USED)) {
@@ -507,10 +507,10 @@ void Player_CollideWithEntities(int climb) {
                 point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                 Vector_Copy(position, point);
                 if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
-                    radius = body->unk04 * ENTITY_MODEL(entity)->unkE0;
-                    height = body->unk06 * ENTITY_MODEL(entity)->unkE4;
+                    radius = body->unk04 * ENTITY_MODEL(entity)->scale_x;
+                    height = body->unk06 * ENTITY_MODEL(entity)->scale_y;
                 } else {
-                    radius = body->unk04 * ENTITY_MODEL(entity)->unkE0;
+                    radius = body->unk04 * ENTITY_MODEL(entity)->scale_x;
                     position[1] += radius;
                     height = radius + radius;
                 }
@@ -543,68 +543,68 @@ void Player_CollideWithMapObjects(s32 climb) {
     f32 rise;
     f32 step;
 
-    player_state.unk208 = 0;
-    player_state.unk20C = 0;
+    player_state.floor_map_object = 0;
+    player_state.touched_map_object = 0;
     if (climb) {
         Vector_Copy(old_position, &player_state);
         player_state.position.y += 1.0f;
-        reach = player_state.unk1AC + 75.0f;
-        if (player_previous.unk208 != 0) {
+        reach = player_state.fall_speed + 75.0f;
+        if (player_previous.floor_map_object != 0) {
             player_state.position.y += 30.0f;
             reach += 30.0f;
         }
-        if (!((s32)(player_state.unk1C8 >> 33) & 1)) {
+        if (!((s32)(player_state.status_bits >> 33) & 1)) {
             hit = Collision_StandOnObjects((f32 *)&player_state, 1, reach, 100.0f);
         }
         if (hit) {
             step = 16.666666f;
             rise = old_position[1] - player_state.position.y;
-            if (step < rise && player_previous.unk208 != player_state.unk208) {
+            if (step < rise && player_previous.floor_map_object != player_state.floor_map_object) {
                 player_state.position.y = old_position[1] - step;
-                player_state.unk1D0 = rise - step + 5.0f;
-                player_state.unk1D4 = step;
-                player_state.unk1C8 |= 1L << 33;
+                player_state.step_remainder = rise - step + 5.0f;
+                player_state.step_per_frame = step;
+                player_state.status_bits |= 1L << 33;
             }
-            player_state.unk1AC = 0.0f;
-            player_state.unk1C8 &= ~(1L << 34);
+            player_state.fall_speed = 0.0f;
+            player_state.status_bits &= ~(1L << 34);
         } else {
             Vector_Copy(&player_state, old_position);
         }
     }
-    if (!((s32)(player_state.unk1C8 >> 33) & 1)) {
+    if (!((s32)(player_state.status_bits >> 33) & 1)) {
         Collision_PushOutOfObjects((f32 *)&player_state, 0, 230.0f, 100.0f);
     }
-    if (player_state.unk20C != 0 && player_state.unk20C != player_previous.unk20C) {
-        switch ((s16)((MapObject *)player_state.unk20C)->unk08->unk52) {
+    if (player_state.touched_map_object != 0 && player_state.touched_map_object != player_previous.touched_map_object) {
+        switch ((s16)((MapObject *)player_state.touched_map_object)->source->touch_status_flag) {
         case 1:
             player_state.timed_flags[0] = 1800;
-            player_state.unk2C4 = D_00446ED4;
+            player_state.ailment0_start_frame = D_00446ED4;
             break;
         case 2:
             player_state.timed_flags[1] = 150;
-            player_state.unk2C8 = D_00446ED4;
+            player_state.ailment1_start_frame = D_00446ED4;
             break;
         case 3:
             player_state.timed_flags[2] = 3600;
-            player_state.unk2CC = D_00446ED4;
+            player_state.ailment2_start_frame = D_00446ED4;
             break;
         case 4:
             player_state.timed_flags[3] = 5400;
-            player_state.unk2D0 = D_00446ED4;
+            player_state.ailment3_start_frame = D_00446ED4;
             break;
         case 5:
             player_state.timed_flags[4] = 1800;
-            player_state.unk2D4 = D_00446ED4;
+            player_state.ailment4_start_frame = D_00446ED4;
             break;
         case 6:
             player_state.timed_flags[5] = 18000;
-            player_state.unk2D8 = D_00446ED4;
+            player_state.ailment5_start_frame = D_00446ED4;
             break;
         }
         Player_FlashDamage();
     }
-    if (player_state.unk208 != 0 && ((MapObject *)player_state.unk208)->unk08->unk30 == 0x165) {
-        player_state.unk210 = 2;
+    if (player_state.floor_map_object != 0 && ((MapObject *)player_state.floor_map_object)->source->def_index == 0x165) {
+        player_state.floor_material = 2;
     }
 }
 
@@ -632,7 +632,7 @@ int Player_KnowsShotMagic(void) {
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
             if (spell_levels[i][j] != 0) {
-                if (fx_table[15 * i + 3 * j + 1].unk102 == 0) {
+                if (fx_table[15 * i + 3 * j + 1].item_menu_magic == 0) {
                     return 1;
                 }
             }
@@ -655,7 +655,7 @@ int Player_KnowsItemMenuMagic(void) {
             if (spell_levels[i][j] != 0) {
                 k = 15 * i + 3 * j + 1;
                 effect = &fx_table[k];
-                if (effect->unk102 == 1) {
+                if (effect->item_menu_magic == 1) {
                     return 1;
                 }
             }

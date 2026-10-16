@@ -34,40 +34,40 @@ void ModelTexture_SendForModel(void *model_arg) {
     int changed;
 
     changed = FALSE;
-    if (model->unk194 != 0) {
-        if (texture_slots[(s16)model->unk190] != model->unk194 || model->unk178 != NULL) {
-            switch ((s16)model->unk190) {
+    if (model->texture_data != 0) {
+        if (texture_slots[(s16)model->texture_slot] != model->texture_data || model->chunk_skip_mask != NULL) {
+            switch ((s16)model->texture_slot) {
             case 0:
             case 1:
             case 2:
-                texture_slots[(s16)model->unk190] = model->unk194;
+                texture_slots[(s16)model->texture_slot] = model->texture_data;
                 changed = TRUE;
-                TextureTable_QueueEnabled((TextureTableHeader *)model->unk194, (s32)model->unk178);
+                TextureTable_QueueEnabled((TextureTableHeader *)model->texture_data, (s32)model->chunk_skip_mask);
                 break;
             case 3:
-                Map_QueuePacket((int *)model->unk194);
+                Map_QueuePacket((int *)model->texture_data);
                 break;
             }
         }
     }
-    if (model->unk198 != 0) {
-        if (D_00447050[model->unk192] != model->unk198 && model->unk192 == 0) {
-            Map_QueuePacket((int *)model->unk198);
+    if (model->shared_texture_packet != 0) {
+        if (D_00447050[model->shared_texture_slot] != model->shared_texture_packet && model->shared_texture_slot == 0) {
+            Map_QueuePacket((int *)model->shared_texture_packet);
         }
     }
-    if (model->unk19C != 0 && sent_texture_19C != model->unk19C) {
-        sent_texture_19C = model->unk19C;
-        Map_QueuePacket((int *)model->unk19C);
+    if (model->texture_packet_3 != 0 && sent_texture_19C != model->texture_packet_3) {
+        sent_texture_19C = model->texture_packet_3;
+        Map_QueuePacket((int *)model->texture_packet_3);
         changed = TRUE;
     }
-    if (model->unk1A0 != 0 && sent_texture_1A0 != model->unk1A0) {
-        sent_texture_1A0 = model->unk1A0;
-        Map_QueuePacket((int *)model->unk1A0);
+    if (model->texture_packet_5 != 0 && sent_texture_1A0 != model->texture_packet_5) {
+        sent_texture_1A0 = model->texture_packet_5;
+        Map_QueuePacket((int *)model->texture_packet_5);
         changed = TRUE;
     }
     if (changed) {
-        if (model->unk1BC != NULL) {
-            model->unk1BC(model);
+        if (model->on_textures_sent != NULL) {
+            model->on_textures_sent(model);
         }
         GsDraw_QueueTexFlush();
     }

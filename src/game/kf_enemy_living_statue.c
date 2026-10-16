@@ -24,9 +24,9 @@ static void LivingStatue_ThinkHoldAnim1(Entity *entity);
 /* Set-up of a type 82 entity: clears its work area and installs the type's handlers. */
 void LivingStatue_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
-    char *unk138 = entity->model->unk138;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
+    char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
@@ -35,8 +35,8 @@ void LivingStatue_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
-    if (entity->spawn_info->unk40 != 0) {
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    if (entity->spawn_info->spawn_mode != 0) {
         unkE0->animate = EntityAi_Animate;
         unkE0->think = (void (*)(Entity *, s32))LivingStatue_ThinkHoldAnim1;
     } else {
@@ -48,29 +48,29 @@ void LivingStatue_Init(Entity *entity) {
         unkE0->death = (void (*)(void))EntityAi_Death;
     }
     for (i = 4 - 1; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 6 - 1; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+    if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
 
-/* The think handler of a spawn whose EntitySpawnInfo.unk40 is set: keeps the entity in animation 1
+/* The think handler of a spawn whose EntitySpawnInfo.spawn_mode is set: keeps the entity in animation 1
    with flag bits 16, 18, 21 to 25 and 28 set and starts no action. */
 static void LivingStatue_ThinkHoldAnim1(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit22 = TRUE;

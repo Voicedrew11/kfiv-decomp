@@ -120,19 +120,19 @@ void Hud_Draw(void) {
         Packet_AddGsRegister(8, 0);
         Packet_EndGsRegisters();
         sprite = hud_sprites[1];
-        sprite.vertex[1].x = sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.unkBC / 5000;
+        sprite.vertex[1].x = sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.power_gauge / 5000;
         sprite.vertex[1].tex_s =
-            sprite.vertex[0].tex_s + (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.unkBC / 5000;
+            sprite.vertex[0].tex_s + (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.power_gauge / 5000;
         GsDraw_QueueTexturedSprite(&sprite);
         sprite = hud_sprites[2];
-        sprite.vertex[1].x = sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.unkC0 / 5000;
+        sprite.vertex[1].x = sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.magic_gauge / 5000;
         sprite.vertex[1].tex_s =
-            sprite.vertex[0].tex_s + (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.unkC0 / 5000;
+            sprite.vertex[0].tex_s + (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.magic_gauge / 5000;
         GsDraw_QueueTexturedSprite(&sprite);
         sprite = hud_sprites[3];
-        sprite.vertex[0].y = sprite.vertex[1].y - (sprite.vertex[1].y - sprite.vertex[0].y) * player_state.unk1A4 / 49;
+        sprite.vertex[0].y = sprite.vertex[1].y - (sprite.vertex[1].y - sprite.vertex[0].y) * player_state.hp_bar_level / 49;
         sprite.vertex[0].tex_t =
-            sprite.vertex[1].tex_t - (sprite.vertex[1].tex_t - sprite.vertex[0].tex_t) * player_state.unk1A4 / 49;
+            sprite.vertex[1].tex_t - (sprite.vertex[1].tex_t - sprite.vertex[0].tex_t) * player_state.hp_bar_level / 49;
         GsDraw_QueueTexturedSprite(&sprite);
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
@@ -147,7 +147,7 @@ void Hud_Draw(void) {
         sprite.rgba[0] = 0;
         GsDraw_QueueTexturedSprite(&sprite);
         if (player_state.mp_max > 0) {
-            fade = player_state.unk1A6 * 255 / player_state.mp_max;
+            fade = player_state.mp_bar_level * 255 / player_state.mp_max;
         } else {
             fade = 0;
         }
@@ -170,11 +170,11 @@ void Hud_Draw(void) {
         Packet_AddGsRegister(GS_REG_TEST_1, 0x31001);
         Packet_EndGsRegisters();
         sprite = hud_sprites[7];
-        if (player_state.unkD0 != 0) {
+        if (player_state.breath_max != 0) {
             sprite.vertex[1].x =
-                sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.unkCC / player_state.unkD0;
+                sprite.vertex[0].x + (sprite.vertex[1].x - sprite.vertex[0].x) * player_state.breath_now / player_state.breath_max;
             sprite.vertex[1].tex_s = sprite.vertex[0].tex_s +
-                (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.unkCC / player_state.unkD0;
+                (sprite.vertex[1].tex_s - sprite.vertex[0].tex_s) * player_state.breath_now / player_state.breath_max;
             GsDraw_QueueTexturedSprite(&sprite);
         }
         sprite = hud_sprites[8];

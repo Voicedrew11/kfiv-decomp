@@ -84,10 +84,10 @@ void MapLoad_Update(void) {
     } else {
         record = NULL;
     }
-    if (record != NULL && record->unk3A != 0xFF) {
-        request = (MapLoadRequest *)&current->origins[record->unk3A];
+    if (record != NULL && record->neighbour_origin_index != 0xFF) {
+        request = (MapLoadRequest *)&current->origins[record->neighbour_origin_index];
         if (current->tag != request->map) {
-            if (other->unk00 == 0 || other->tag != request->map) {
+            if (other->loaded == 0 || other->tag != request->map) {
                 if (map_load_state.request == NULL || map_load_state.request->map != request->map) {
                     if (map_load_state.step == 0) {
                         map_load_state.request = request;
@@ -117,7 +117,7 @@ void MapLoad_Update(void) {
         }
     }
     if (!((s32)(map_load_state.flags.raw >> 1) & 1)) {
-        if (record != NULL && record->unk39 != 0) {
+        if (record != NULL && record->needs_neighbour_map != 0) {
             if ((u32)(map_load_state.step - 1) < 5) {
                 Input_StopRumble();
                 while (map_load_state.step != 5) {
@@ -156,17 +156,17 @@ void MapLoad_FinishAndEnter(void) {
         map_load_steps[map_load_state.step]();
     } while (map_load_state.step != 0);
     Map_MakeCurrent(D_00446770 == 0);
-    player_state.position.x = ((MapSlotUnk08 *)map_slots[D_00446770].header)->unk60;
-    player_state.position.y = ((MapSlotUnk08 *)map_slots[D_00446770].header)->unk64;
-    player_state.position.z = ((MapSlotUnk08 *)map_slots[D_00446770].header)->unk68;
-    player_state.rotation.y = ((MapSlotUnk08 *)map_slots[D_00446770].header)->unk6C;
+    player_state.position.x = ((MapSlotUnk08 *)map_slots[D_00446770].header)->player_start_x;
+    player_state.position.y = ((MapSlotUnk08 *)map_slots[D_00446770].header)->player_start_y;
+    player_state.position.z = ((MapSlotUnk08 *)map_slots[D_00446770].header)->player_start_z;
+    player_state.rotation.y = ((MapSlotUnk08 *)map_slots[D_00446770].header)->player_start_heading;
     map_load_request.map = 0xFFFF;
     D_00446794 = 0;
-    player_state.unk1AC = player_state.unk1B0 = player_state.unk1B4 = 0.0f;
-    player_state.unk1B8 = player_state.unk1BC = 0.0f;
+    player_state.fall_speed = player_state.strafe_speed = player_state.walk_speed = 0.0f;
+    player_state.look_speed = player_state.turn_speed = 0.0f;
     map_load_request.x = map_load_request.z = map_load_request.y = 0.0f;
     PLAYER_STATUS_BITS(&player_state)->bit34 = FALSE;
-    map_slots[D_00446770 == 0].unk00 = 0;
+    map_slots[D_00446770 == 0].loaded = 0;
     Map_UnlinkSlotRecords(D_00446770 == 0);
     Effect_FreeForMap(D_00446770 == 0);
     MapObject_UnloadMap(D_00446770 == 0);
@@ -187,8 +187,8 @@ void MapLoad_StartRequest(void) {
     other_map = D_00446770 == 0;
     other = D_00446770 == 0 ? &map_slots[1] : &map_slots[0];
     if (map_load_state.request != NULL) {
-        if (other->unk00 != 0) {
-            other->unk00 = 0;
+        if (other->loaded != 0) {
+            other->loaded = 0;
             Map_UnlinkSlotRecords(other_map);
             Effect_FreeForMap(other_map);
             MapObject_UnloadMap(other_map);
@@ -225,24 +225,24 @@ void MapLoad_OpenFile(void) {
             map_load_state.file_handle = File_Open(name, 1, 1);
         } while (map_load_state.file_handle < 0);
         File_Lock();
-        other->unk04 = (File_GetSize(map_load_state.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
+        other->rounded_file_size = (File_GetSize(map_load_state.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
         limit = D_00446F20;
-        if (limit < (u32)(other->unk04 + current->unk04)) {
+        if (limit < (u32)(other->rounded_file_size + current->rounded_file_size)) {
             other->tag = map_load_state.request->map;
             for (;;) {
             }
         }
         if (D_00446770 != 0) {
-            memory->unk1C = D_00446F50;
-            memory->unk20 = D_00446F54;
-            memory->unk14 = D_00446F50;
-            memory->unk18 = D_00446F54;
+            memory->file_base = D_00446F50;
+            memory->work_base = D_00446F54;
+            memory->file_read_cursor = D_00446F50;
+            memory->work_cursor = D_00446F54;
         } else {
-            memory->unk14 = memory->unk1C = D_00446F50 + limit - other->unk04;
-            memory->unk18 = memory->unk20 = D_00446F54 + D_00446F1C / 2;
+            memory->file_read_cursor = memory->file_base = D_00446F50 + limit - other->rounded_file_size;
+            memory->work_cursor = memory->work_base = D_00446F54 + D_00446F1C / 2;
         }
-        memset(memory->unk1C, 0, other->unk04);
-        memset(memory->unk20, 0, D_00446F1C / 2);
+        memset(memory->file_base, 0, other->rounded_file_size);
+        memset(memory->work_base, 0, D_00446F1C / 2);
         map_load_state.step++;
     }
 }
@@ -254,14 +254,14 @@ void MapLoad_ReadChunk(void) {
     if (D_00446770 == 0) {
         memory = &D_004321F0[1];
     }
-    if (File_Read(map_load_state.file_handle, memory->unk14, 0x80000) > 0) {
-        memory->unk14 += 0x80000;
+    if (File_Read(map_load_state.file_handle, memory->file_read_cursor, 0x80000) > 0) {
+        memory->file_read_cursor += 0x80000;
         map_load_state.step++;
     } else {
         File_Close(map_load_state.file_handle);
         File_Unlock();
         map_load_state.file_handle = -1;
-        memory->unk14 = memory->unk1C;
+        memory->file_read_cursor = memory->file_base;
         map_load_state.step += 2;
     }
 }
@@ -325,7 +325,7 @@ void MapLoad_ActivateMap(void) {
     offset[1] = -map_load_state.request->y;
     offset[2] = -map_load_state.request->z;
     offset[3] = 0.0f;
-    slot->unk00 = 1;
+    slot->loaded = 1;
     MapObject_StartMap(other_slot);
     Entity_InitFromMapSpawns(other_slot);
     Entity_OffsetAllInSlot(other_slot, offset);

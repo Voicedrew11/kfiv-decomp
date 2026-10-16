@@ -155,18 +155,18 @@ void Map_DrawRecords(int mode) {
     D_00433050[0] = FOG_COLOR();
     D_00433050[30] = FOG_COLOR();
     active = 0;
-    if (map_slots[0].unk00 != 0) {
-        active = map_slots[0].unk02 != 0;
+    if (map_slots[0].loaded != 0) {
+        active = map_slots[0].has_flag_80000000_record != 0;
     }
-    if (map_slots[1].unk00 != 0) {
-        if (map_slots[1].unk02 != 0) {
+    if (map_slots[1].loaded != 0) {
+        if (map_slots[1].has_flag_80000000_record != 0) {
             active++;
         }
     }
     for (map = 0; map < 2; map++) {
         record = D_00446778[map];
         slot = &map_slots[map];
-        if (slot->unk00 != 0) {
+        if (slot->loaded != 0) {
             Map_QueueSlotPacket(map, 0);
             Map_QueueSlotPacket(map, 1);
             Map_QueueSlotPacket(map, 5);
@@ -198,18 +198,18 @@ void Map_DrawRecords(int mode) {
                     continue;
                 }
                 if (flags & 0x10) {
-                    record->model->unk148 = (s32)&map_draw_state.unkC0;
-                    record->model->unk14C = &map_draw_state.unkA0;
+                    record->model->light_block = (s32)&map_draw_state.unkC0;
+                    record->model->fog_block = &map_draw_state.unkA0;
                 } else {
-                    record->model->unk148 = (s32)&map_draw_state.unkA90[map][record->unk35];
-                    record->model->unk14C = &map_draw_state.unk290[map][record->unk34];
+                    record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
+                    record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
                 }
                 LinkedPoint_FindHitsForMapDraw(record, record->model);
                 if (record->flags & 0x200) {
                     header = slot->header;
-                    Wobble_DrawRippledModel(record->model, header->unk78, header->unk79, header->unk7A, header->unk7B);
+                    Wobble_DrawRippledModel(record->model, header->screen_tint_red, header->screen_tint_green, header->screen_tint_blue, header->screen_tint_alpha);
                 }
-                record->model->unk1A8(record->model);
+                record->model->draw_parts(record->model);
                 if (Map_ClassifyRecordOnScreen(record, record->model) == 0) {
                     ModelScreen_CutClippedTriangles(record->model);
                 }
@@ -233,18 +233,18 @@ void Map_DrawLateRecords(int mode) {
     int old_z_mask;
 
     active = 0;
-    if (map_slots[0].unk00 != 0) {
-        active = map_slots[0].unk02 != 0;
+    if (map_slots[0].loaded != 0) {
+        active = map_slots[0].has_flag_80000000_record != 0;
     }
-    if (map_slots[1].unk00 != 0) {
-        if (map_slots[1].unk02 != 0) {
+    if (map_slots[1].loaded != 0) {
+        if (map_slots[1].has_flag_80000000_record != 0) {
             active++;
         }
     }
     for (map = 0; map < 2; map++) {
         record = D_00446780[map];
         slot = &map_slots[map];
-        if (slot->unk00 != 0) {
+        if (slot->loaded != 0) {
             Map_QueueSlotPacket(map, 2);
             Map_QueueSlotPacket(map, 5);
             GsDraw_QueueTexFlush();
@@ -282,18 +282,18 @@ void Map_DrawLateRecords(int mode) {
                     Packet_EndGsRegisters();
                 }
                 if (record->flags & 0x10) {
-                    record->model->unk148 = (s32)&map_draw_state.unkC0;
-                    record->model->unk14C = &map_draw_state.unkA0;
+                    record->model->light_block = (s32)&map_draw_state.unkC0;
+                    record->model->fog_block = &map_draw_state.unkA0;
                 } else {
-                    record->model->unk148 = (s32)&map_draw_state.unkA90[map][record->unk35];
-                    record->model->unk14C = &map_draw_state.unk290[map][record->unk34];
+                    record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
+                    record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
                 }
                 LinkedPoint_FindHitsForMapDraw(record, record->model);
                 if (record->flags & 0x200) {
                     header = slot->header;
-                    Wobble_DrawRippledModel(record->model, header->unk78, header->unk79, header->unk7A, header->unk7B);
+                    Wobble_DrawRippledModel(record->model, header->screen_tint_red, header->screen_tint_green, header->screen_tint_blue, header->screen_tint_alpha);
                 }
-                record->model->unk1A8(record->model);
+                record->model->draw_parts(record->model);
                 if (Map_ClassifyRecordOnScreen(record, record->model) == 0) {
                     ModelScreen_CutClippedTriangles(record->model);
                 }
@@ -337,63 +337,63 @@ void Map_ParseFile(int map) {
     slot = &map_slots[map];
     memset(map_slot_objects[map], 0, sizeof(map_slot_objects[map]));
     memset(entity_pool[map], 0, sizeof(entity_pool[map]));
-    header = (MapSlotUnk08 *)memory->unk1C;
-    work = memory->unk18;
+    header = (MapSlotUnk08 *)memory->file_base;
+    work = memory->work_cursor;
 
     /* the working memory: the models, then the two tables of the slot */
     // match: stored as a model pointer (it is room for models); as a char * it is scheduled earlier
-    *(ModelInstance **)&memory->unk34 = (ModelInstance *)work;
+    *(ModelInstance **)&memory->record_models = (ModelInstance *)work;
     work += header->record_count * 0x1C0;
-    memory->unk3C = work;
-    work += header->unk40 * 0x1C0;
-    memory->unk44 = (ModelInstance *)work;
-    work += header->unk42 * 0x1C0;
-    memory->unk48 = work;
-    work += header->unk3A * 0x1C0;
-    slot->unk24 = work;
-    work += header->unk2C * 4;
-    slot->unk28 = work;
-    work += header->unk2C;
+    memory->object_models = work;
+    work += header->object_count * 0x1C0;
+    memory->entity_models = (ModelInstance *)work;
+    work += header->spawn_count * 0x1C0;
+    memory->extra_models = work;
+    work += header->extra_model_count * 0x1C0;
+    slot->record_model_table = work;
+    work += header->record_model_count * 4;
+    slot->record_model_spare_bytes = work;
+    work += header->record_model_count;
     // match: stored as a u8 *; as a char * the read of header->unk4C below comes one instruction late
-    *(u8 **)&memory->unk18 = (u8 *)work;
+    *(u8 **)&memory->work_cursor = (u8 *)work;
 
     /* the file: its fixed parts, then the tables whose sizes the header gives */
     cursor = (char *)header;
     slot->header = (MapHeader *)cursor;
     cursor = (char *)header + 0x80;
-    slot->unk0C = (MapSlotUnk0C *)cursor;
+    slot->fog_blocks = (MapSlotUnk0C *)cursor;
     cursor = (char *)header + 0x480;
-    slot->unk10 = cursor;
+    slot->light_blocks = cursor;
     cursor = (char *)header + 0x1480;
-    slot->unk38 = cursor;
+    slot->scroll_copy_textures = cursor;
     cursor = (char *)header + 0x1540;
-    slot->unk3C = cursor;
+    slot->scroll_draw_textures = cursor;
     cursor = (char *)header + 0x17C0;
     slot->records = cursor;
     cursor += header->record_count * 0x80;
     slot->flag_blocks = (MapFlagBlock *)cursor;
-    cursor += header->unk3E * 0x40;
+    cursor += header->flag_block_count * 0x40;
     slot->origins = (Vector4 *)cursor;
     cursor += 0x200;
     D_004467B0[map] = (int)cursor;
-    cursor += header->unk40 * 0x80;
+    cursor += header->object_count * 0x80;
     D_004467D0[map] = (EntitySpawnInfo *)cursor;
-    cursor += header->unk42 * 0x60;
+    cursor += header->spawn_count * 0x60;
     D_004469B8[map] = (MapItemDef *)cursor;
-    cursor += header->unk44 * 0x40;
+    cursor += header->item_count * 0x40;
     D_004469C0[map] = (s16 *)cursor;
     cursor += 0x40;
     D_004469C8[map] = (u8 *)cursor;
 
     /* the parts the header gives offsets for */
     cursor = (char *)header;
-    cursor += header->unk4C;
-    slot->unk5C = (s32)cursor;
-    offset = header->unk28;
+    cursor += header->script_offset;
+    slot->script = (s32)cursor;
+    offset = header->sound_bank_offset;
     cursor = (char *)header;
-    cursor += header->unk24;
-    slot->unk30 = cursor;
-    size = header->unk00;
+    cursor += header->packet_table_offset;
+    slot->packet_data = cursor;
+    size = header->file_size;
     packet = (u32 *)cursor;
     for (i = 0; i < 6; i++) {
         // match: stored as a char *, the type memory->unk1C has (see the note on slot)
@@ -402,13 +402,13 @@ void Map_ParseFile(int map) {
     }
     cursor = (char *)header;
     cursor += offset;
-    slot->unk34 = (s32 *)cursor;
+    slot->sound_bank = (s32 *)cursor;
     /* two offsets in that part become addresses */
-    ((char **)cursor)[1] += (s32)memory->unk1C;
-    ((char **)cursor)[3] += (s32)memory->unk1C;
-    address = (u32)memory->unk1C;
+    ((char **)cursor)[1] += (s32)memory->file_base;
+    ((char **)cursor)[3] += (s32)memory->file_base;
+    address = (u32)memory->file_base;
     address += size;
-    memory->unk14 = (char *)align_16(address);
+    memory->file_read_cursor = (char *)align_16(address);
 }
 
 
@@ -431,7 +431,7 @@ void Map_BuildModels(int map) {
     int next;
     MapSlotMemory *memory = &D_004321F0[map];
     MapSlot *slot = &map_slots[map];
-    MapSlotUnk08 *header = (MapSlotUnk08 *)memory->unk1C;
+    MapSlotUnk08 *header = (MapSlotUnk08 *)memory->file_base;
     int record_count;
     MapRecordBounds *record;
     MapRecordBounds *other;
@@ -446,118 +446,118 @@ void Map_BuildModels(int map) {
 
     record_count = header->record_count;
     record = (MapRecordBounds *)slot->records;
-    model = (ModelInstance *)memory->unk34;
-    work = memory->unk18;
+    model = (ModelInstance *)memory->record_models;
+    work = memory->work_cursor;
     work = (char *)round_up_16((u32)work);
     for (i = 0; i < record_count; i++, model++, record++) {
         Map_InsertRecordBySize((AreaNode *)record);
         MAP_RECORD_BITS(record)->map = (u8)map;
         record->model = model;
-        if (record->unk30 != 0xFFFF) {
-            cursor = (int)header + header->unk04;
-            k = record->unk30;
+        if (record->model_index != 0xFFFF) {
+            cursor = (int)header + header->record_models_offset;
+            k = record->model_index;
             while (k-- > 0) {
                 cursor += *(int *)cursor;
             }
             Model_SetUpPosed(model, (char **)&cursor, &work);
-            if (record->unk3C & 0x100) {
+            if (record->record_flags & 0x100) {
                 Vector_Copy(&model->position, record);
                 model->position.w = 1.0f;
                 ((void (*)(ModelInstance *, u32 *, int))Wobble_BuildWaveUvs)(model, (u32 *)&work, 0); // match: a third argument the callee does not take
             }
-            if (((ModelInstance **)slot->unk24)[record->unk30] == NULL) {
-                ((ModelInstance **)slot->unk24)[record->unk30] = model;
+            if (((ModelInstance **)slot->record_model_table)[record->model_index] == NULL) {
+                ((ModelInstance **)slot->record_model_table)[record->model_index] = model;
             }
             Model_SetPrimBits(model, 0x20, 0x20);
-            if (record->unk3C & 0x202) {
+            if (record->record_flags & 0x202) {
                 Model_SetPrimBits(model, 0x60, 0x60);
                 Model_SetAlphaBlend(model, 0x48);
             }
         }
-        if (record->unk32 != 0xFFFF) {
+        if (record->collision_mesh_index != 0xFFFF) {
             other = (MapRecordBounds *)slot->records;
             for (j = 0; j < i; j++, other++) {
-                if (record->unk32 == other->unk32) {
+                if (record->collision_mesh_index == other->collision_mesh_index) {
                     break;
                 }
             }
             if (j >= i) {
-                cursor = (int)header + header->unk08;
-                k = record->unk32;
+                cursor = (int)header + header->record_collision_offset;
+                k = record->collision_mesh_index;
                 while (k-- > 0) {
-                    cursor += (int)((CollisionMesh *)cursor)->unk14;
+                    cursor += (int)((CollisionMesh *)cursor)->mesh_size;
                 }
                 cursor = (int)Collision_RelocateMesh((char *)cursor, model, 1);
             } else {
-                model->strips = ((ModelInstance *)memory->unk34)[j].strips;
+                model->strips = ((ModelInstance *)memory->record_models)[j].strips;
             }
         }
     }
-    memory->unk18 = work;
-    slot->unk02 = 0;
+    memory->work_cursor = work;
+    slot->has_flag_80000000_record = 0;
     memset(map_slot_props[map], 0, sizeof(map_slot_props[map]));
     record = (MapRecordBounds *)slot->records;
     for (i = 0; i < record_count; i++, record++) {
-        if (((MapRecord *)record)->unk4E != 0) {
-            if (map_slot_props[map][((MapRecord *)record)->unk4E] == NULL) {
-                map_slot_props[map][((MapRecord *)record)->unk4E] = (MapProp *)record;
+        if (((MapRecord *)record)->prop_id != 0) {
+            if (map_slot_props[map][((MapRecord *)record)->prop_id] == NULL) {
+                map_slot_props[map][((MapRecord *)record)->prop_id] = (MapProp *)record;
             }
         }
-        if ((s32)record->unk3C < 0) {
-            slot->unk02 = 1;
+        if ((s32)record->record_flags < 0) {
+            slot->has_flag_80000000_record = 1;
         }
     }
-    D_004467B8[map] = header->unk40;
+    D_004467B8[map] = header->object_count;
     object = map_slot_objects[map];
-    work = memory->unk18;
-    model = (ModelInstance *)memory->unk3C;
+    work = memory->work_cursor;
+    model = (ModelInstance *)memory->object_models;
     info = *(MapObjectUnk08 **)&D_004467B0[map]; // match: read as a pointer; read as an int it waits for the stores above
-    for (i = 0; i < header->unk40; i++, model++, info++, object++) {
+    for (i = 0; i < header->object_count; i++, model++, info++, object++) {
         object->model = model;
-        object->unk08 = info;
-        object->unk04 = (MapObjectUnk04 *)&map_object_defs[info->unk30 * 0x80];
-        object->unk0C = (s32)Map_FindRecordAtInSlot((CameraState *)info, 0.0f, map);
+        object->source = info;
+        object->definition = (MapObjectUnk04 *)&map_object_defs[info->def_index * 0x80];
+        object->map_record = (s32)Map_FindRecordAtInSlot((CameraState *)info, 0.0f, map);
         MAP_OBJECT_BITS(object)->map = (u8)map;
     }
-    cursor = (int)header + header->unk0C;
-    for (i = 0; i < header->unk30; i++) {
+    cursor = (int)header + header->object_model_offset;
+    for (i = 0; i < header->plain_object_model_count; i++) {
         object = map_slot_objects[map];
-        for (j = 0; j < header->unk40; j++, object++) {
-            if (object->unk04->unk04 != 0xFFFF && !(MAP_OBJECT_DEF_WORD(object) & 0x100) && object->unk08->unk32 == i) {
+        for (j = 0; j < header->object_count; j++, object++) {
+            if (object->definition->model_index != 0xFFFF && !(MAP_OBJECT_DEF_WORD(object) & 0x100) && object->source->model_index == i) {
                 next = cursor; // match: retail bug, only set when an object uses this model (see cursor = next)
                 Model_SetUpPosed(object->model, (char **)&next, &work);
-                object->model->unk190 = 1;
-                object->model->unk194 = next;
+                object->model->texture_slot = 1;
+                object->model->texture_data = next;
                 next += *(int *)next;
-                object->model->unk19C = 0;
-                object->model->unk1A0 = 0;
+                object->model->texture_packet_3 = 0;
+                object->model->texture_packet_5 = 0;
             }
         }
         cursor = next; // match: retail bug, next is stale (or never set) when no object uses this model
     }
-    cursor = (int)header + header->unk10;
-    for (i = 0; i < header->unk32; i++) {
+    cursor = (int)header + header->skinned_object_model_offset;
+    for (i = 0; i < header->skinned_object_model_count; i++) {
         object = map_slot_objects[map];
-        for (j = 0; j < header->unk40; j++, object++) {
-            if (object->unk04->unk04 != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & 0x100) && object->unk08->unk32 == i) {
+        for (j = 0; j < header->object_count; j++, object++) {
+            if (object->definition->model_index != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & 0x100) && object->source->model_index == i) {
                 next = cursor; // match: retail bug, as in the loop above
                 Model_SetUpSkinned(object->model, &next, (int *)&work);
-                object->model->unk190 = 1;
-                object->model->unk194 = next;
+                object->model->texture_slot = 1;
+                object->model->texture_data = next;
                 next += *(int *)next;
-                object->model->unk19C = (int)Map_GetSlotPacket(map, 3);
-                object->model->unk1A0 = (int)Map_GetSlotPacket(map, 5);
+                object->model->texture_packet_3 = (int)Map_GetSlotPacket(map, 3);
+                object->model->texture_packet_5 = (int)Map_GetSlotPacket(map, 5);
             }
         }
         cursor = next; // match: retail bug, as in the loop above
     }
-    cursor = (int)header + header->unk14;
-    for (i = 0; i < header->unk34; i++) {
+    cursor = (int)header + header->object_collision_offset;
+    for (i = 0; i < header->object_collision_count; i++) {
         next = cursor;
         object = map_slot_objects[map];
         first = NULL;
-        for (j = 0; j < header->unk40; j++, object++) {
-            if (object->unk04->unk06 != 0xFFFF && object->unk08->unk34 == i) {
+        for (j = 0; j < header->object_count; j++, object++) {
+            if (object->definition->collision_mesh_index != 0xFFFF && object->source->collision_mesh_index == i) {
                 if (first == NULL) {
                     cursor = (int)Collision_RelocateMesh((char *)next, object->model, 1);
                     first = object->model;
@@ -567,17 +567,17 @@ void Map_BuildModels(int map) {
             }
         }
     }
-    cursor = (int)header + header->unk18;
-    for (i = 0; i < header->unk36; i++) {
+    cursor = (int)header + header->object_motion_offset;
+    for (i = 0; i < header->object_motion_count; i++) {
         object = map_slot_objects[map];
-        for (j = 0; j < header->unk40; j++, object++) {
-            if (object->unk04->unk04 != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & 0x200) && object->unk08->unk36 == i) {
+        for (j = 0; j < header->object_count; j++, object++) {
+            if (object->definition->model_index != 0xFFFF && (MAP_OBJECT_DEF_WORD(object) & 0x200) && object->source->motion_index == i) {
                 next = ((int (*)(int, int *, ModelInstance *, int))ModelMotion_LoadFile)(cursor, (int *)&work, object->model, 1); // match: the callee returns where the motion ends
             }
         }
         cursor = next; // match: retail bug, as above: next is only set when an object uses this motion
     }
-    memory->unk18 = work;
+    memory->work_cursor = work;
 }
 
 /* Makes the other map slot the current one: moves everything by the load's offset and switches
@@ -612,18 +612,18 @@ void Map_MakeCurrent(int map) {
         map_load_state.position.x = -map_load_state.position.x;
         map_load_state.position.y = -map_load_state.position.y;
         map_load_state.position.z = -map_load_state.position.z;
-        Script_Init(map_slots[map].unk5C);
+        Script_Init(map_slots[map].script);
         Script_Start(0x7FFF, 0);
-        loading = queue->unk10;
-        if (loading != slot && queue->unk14 != slot) {
+        loading = queue->pending_map_slot;
+        if (loading != slot && queue->next_map_slot != slot) {
             Player_StopFootstepSound();
             Sound_StopAll(1);
-            queue->unk14 = slot;
-        } else if (loading == slot && sound_load_queue.unk14 != slot) {
-            sound_load_queue.unk14 = NULL;
+            queue->next_map_slot = slot;
+        } else if (loading == slot && sound_load_queue.next_map_slot != slot) {
+            sound_load_queue.next_map_slot = NULL;
         }
-        sound_load_queue.unk00 = ((MapSlotUnk08 *)map_slots[map].header)->unk70;
-        sound_load_queue.unk04 = 1;
+        sound_load_queue.bgm_id = ((MapSlotUnk08 *)map_slots[map].header)->sound_bank_file_index;
+        sound_load_queue.bgm_load_pending = 1;
         MapScroll_CarryPairs(map == 0, map);
     }
 }
@@ -655,8 +655,8 @@ void Map_OffsetRecord(MapRecordBounds *record, f32 *offset) {
     if (record != NULL) {
         Vector_Add(&record->model->position, &record->model->position, offset);
         Vector_Add(record, record, offset);
-        Vector_Add(record->unk40, record->unk40, offset);
-        Vector_Add(record->unk50, record->unk50, offset);
+        Vector_Add(record->box_lowest, record->box_lowest, offset);
+        Vector_Add(record->box_highest, record->box_highest, offset);
         Vector_Add(record->lowest, record->lowest, offset);
         Vector_Add(record->highest, record->highest, offset);
     }
@@ -681,13 +681,13 @@ void Map_PlaceRecordModels(int map) {
             model->position.w = 1.0f;
             Vector_Copy(&model->rotation, record->rotation);
             model->rotation.w = 1.0f;
-            Vector_Copy(&model->unkE0, record->scale);
-            model->unkEC = 1.0f;
-            matrix = (f32 (*)[4])model->unk40;
+            Vector_Copy(&model->scale_x, record->scale);
+            model->scale_w = 1.0f;
+            matrix = (f32 (*)[4])model->model_matrix;
             sceVu0CopyMatrix(matrix, D_00431AF0);
-            MODEL_MATRIX(model)[0][0] *= model->unkE0;
-            MODEL_MATRIX(model)[1][1] *= model->unkE4;
-            MODEL_MATRIX(model)[2][2] *= model->unkE8;
+            MODEL_MATRIX(model)[0][0] *= model->scale_x;
+            MODEL_MATRIX(model)[1][1] *= model->scale_y;
+            MODEL_MATRIX(model)[2][2] *= model->scale_z;
             sceVu0RotMatrixX((f32 *)matrix, (f32 *)matrix, model->rotation.x);
             sceVu0RotMatrixY((f32 *)matrix, (f32 *)matrix, model->rotation.y);
             sceVu0RotMatrixZ((f32 *)matrix, (f32 *)matrix, model->rotation.z);
@@ -697,7 +697,7 @@ void Map_PlaceRecordModels(int map) {
                 // match: the callee returns a value here, which keeps $2 busy
                 ((int (*)(ModelInstance *, ModelPart *, ModelPart *))ModelMatrix_BuildPartLocal)(model, &model->parts[j], &model->parts[j]);
             }
-            sceVu0CopyMatrix(model->unk80, matrix);
+            sceVu0CopyMatrix(model->collision_matrix, matrix);
         }
     }
 }
@@ -868,7 +868,7 @@ int Map_IsPointInRecord(f32 *point, AreaNode *node, f32 margin) {
     return FALSE;
 }
 
-/* Returns the first map record of the slot with id prop_id (MapRecord.unk4E), NULL when there is none or
+/* Returns the first map record of the slot with id prop_id (MapRecord.prop_id), NULL when there is none or
    either is out of range. */
 void *Map_GetRecordById(int slot, int prop_id) {
     if ((u32)slot < 2 && prop_id >= 0 && prop_id < 0x100) {
@@ -1008,20 +1008,20 @@ void Map_DrawFreeCameraView(void) {
     for (map = 0; map < 2; map++) {
         slot = &map_slots[map];
         record = (MapDrawRecord *)slot->records;
-        if (slot->unk00 != 0) {
+        if (slot->loaded != 0) {
             for (i = 0; i < ((MapSlotUnk08 *)slot->header)->record_count; i++, record++) {
                 if (!(record->flags & 0x80000000)) {
                     if (record->flags & 0x10) {
-                        record->model->unk148 = (s32)&map_draw_state.unkC0;
-                        record->model->unk14C = &map_draw_state.unkA0;
+                        record->model->light_block = (s32)&map_draw_state.unkC0;
+                        record->model->fog_block = &map_draw_state.unkA0;
                     } else {
-                        record->model->unk148 = (s32)&map_draw_state.unkA90[map][record->unk35];
-                        record->model->unk14C = &map_draw_state.unk290[map][record->unk34];
+                        record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
+                        record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
                     }
                     record->model->hit_count = 0;
                     // match: both blocks chosen above are replaced at once by the viewer's own
-                    record->model->unk148 = (s32)&map_object_default_lights;
-                    record->model->unk14C = &map_draw_state.unkA0;
+                    record->model->light_block = (s32)&map_object_default_lights;
+                    record->model->fog_block = &map_draw_state.unkA0;
                     Model_DrawPosed(record->model);
                 }
             }
@@ -1124,7 +1124,7 @@ void Map_CoverScreenWithMapTint(void) {
 
     slot = &map_slots[D_00446770];
     header = (MapSlotUnk08 *)slot->header;
-    GsDraw_FillScreen(header->unk78, header->unk79, header->unk7A, header->unk7B, 0x44);
+    GsDraw_FillScreen(header->screen_tint_red, header->screen_tint_green, header->screen_tint_blue, header->screen_tint_alpha, 0x44);
 }
 
 /* Queues prebuilt packet index of the map slot (MapSlot.unk40) for sending. */
@@ -1203,13 +1203,13 @@ int Map_ClassifyRecordOnScreen(MapDrawRecord *draw_record, ModelInstance *model)
     if (!MAP_DRAW_FLAG_BITS(&map_draw_state)->bit46) {
         return 1;
     }
-    if (bounds->unk3C & 0x40) {
+    if (bounds->record_flags & 0x40) {
         return 1;
     }
-    if (bounds->unk30 == 0xFFFF) {
+    if (bounds->model_index == 0xFFFF) {
         return 1;
     }
-    if (Map_TestFlagBlockBit(D_00446770, D_004141D0[0], (u8)(record->unk38 >> 27) & 1, (u8)record->unk38) == 0) {
+    if (Map_TestFlagBlockBit(D_00446770, D_004141D0[0], (u8)(record->record_flags >> 27) & 1, (u8)record->record_flags) == 0) {
         return 1;
     }
     sceVu0MulMatrix(matrix, D_004323E0, D_00431AF0);
@@ -1217,40 +1217,40 @@ int Map_ClassifyRecordOnScreen(MapDrawRecord *draw_record, ModelInstance *model)
     corner2[3] = 1.0f;
     corner1[3] = 1.0f;
     corner0[3] = 1.0f;
-    corner0[0] = bounds->unk40[0];
-    corner0[1] = bounds->unk40[1];
-    corner0[2] = bounds->unk40[2];
-    corner1[0] = bounds->unk40[0];
-    corner1[1] = bounds->unk40[1];
-    corner1[2] = bounds->unk50[2];
-    corner2[0] = bounds->unk40[0];
-    corner2[1] = bounds->unk50[1];
-    corner2[2] = bounds->unk40[2];
+    corner0[0] = bounds->box_lowest[0];
+    corner0[1] = bounds->box_lowest[1];
+    corner0[2] = bounds->box_lowest[2];
+    corner1[0] = bounds->box_lowest[0];
+    corner1[1] = bounds->box_lowest[1];
+    corner1[2] = bounds->box_highest[2];
+    corner2[0] = bounds->box_lowest[0];
+    corner2[1] = bounds->box_highest[1];
+    corner2[2] = bounds->box_lowest[2];
     Vu0_ProjectToScreen3(screen0, screen1, screen2, corner0, corner1, corner2);
     outside = (u32)screen0[2] > 0xFFFF0;
     outside += (u32)screen1[2] > 0xFFFF0;
     outside += (u32)screen2[2] > 0xFFFF0;
-    corner0[0] = bounds->unk40[0];
-    corner0[1] = bounds->unk50[1];
-    corner0[2] = bounds->unk50[2];
-    corner1[0] = bounds->unk50[0];
-    corner1[1] = bounds->unk40[1];
-    corner1[2] = bounds->unk40[2];
-    corner2[0] = bounds->unk50[0];
-    corner2[1] = bounds->unk40[1];
-    corner2[2] = bounds->unk50[2];
+    corner0[0] = bounds->box_lowest[0];
+    corner0[1] = bounds->box_highest[1];
+    corner0[2] = bounds->box_highest[2];
+    corner1[0] = bounds->box_highest[0];
+    corner1[1] = bounds->box_lowest[1];
+    corner1[2] = bounds->box_lowest[2];
+    corner2[0] = bounds->box_highest[0];
+    corner2[1] = bounds->box_lowest[1];
+    corner2[2] = bounds->box_highest[2];
     Vu0_ProjectToScreen3(screen0, screen1, screen2, corner0, corner1, corner2);
     outside += (u32)screen0[2] > 0xFFFF0;
     outside += (u32)screen1[2] > 0xFFFF0;
     outside += (u32)screen2[2] > 0xFFFF0;
-    corner0[0] = bounds->unk50[0];
-    corner0[1] = bounds->unk50[1];
-    corner0[2] = bounds->unk40[2];
+    corner0[0] = bounds->box_highest[0];
+    corner0[1] = bounds->box_highest[1];
+    corner0[2] = bounds->box_lowest[2];
     Vu0_ProjectToScreen(screen0, corner0);
     outside += (u32)screen0[2] > 0xFFFF0;
-    corner0[0] = bounds->unk50[0];
-    corner0[1] = bounds->unk50[1];
-    corner0[2] = bounds->unk50[2];
+    corner0[0] = bounds->box_highest[0];
+    corner0[1] = bounds->box_highest[1];
+    corner0[2] = bounds->box_highest[2];
     Vu0_ProjectToScreen(screen0, corner0);
     outside += (u32)screen0[2] > 0xFFFF0;
     if (outside == 0) {

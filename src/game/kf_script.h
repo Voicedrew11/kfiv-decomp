@@ -244,14 +244,14 @@ typedef struct {
     ScriptFloatArg to_z;            /* 0x34 value at 0x38 */
 } ScriptPointCommand;
 
-/* shakes the camera: CameraState.unk70 and unk74 (ScriptCmd_ShakeCamera) */
+/* shakes the camera: CameraState.script_shake_reach and unk74 (ScriptCmd_ShakeCamera) */
 typedef struct {
     int active;                     /* 0x00 */
     ScriptFloatArg reach;           /* 0x04 value at 0x08 */
     ScriptArg frames;               /* 0x0C value at 0x10 */
 } ScriptCameraShakeCommand;
 
-/* sets the fog of a block of the current map's MapSlot.unk0C (ScriptCmd_SetMapFog) */
+/* sets the fog of a block of the current map's MapSlot.fog_blocks (ScriptCmd_SetMapFog) */
 typedef struct {
     int active;                     /* 0x00 */
     ScriptArg block;                /* 0x04 value at 0x08, below 32 */
@@ -264,7 +264,7 @@ typedef struct {
     ScriptArg blue;                 /* 0x3C value at 0x40 */
 } ScriptFogCommand;
 
-/* sets one of the three lights of a block of the current map's MapSlot.unk10: its direction
+/* sets one of the three lights of a block of the current map's MapSlot.light_blocks: its direction
    and its colour, 0 to 255 (ScriptCmd_SetMapLight) */
 typedef struct {
     int active;                     /* 0x00 */
@@ -367,7 +367,7 @@ typedef union {
     s64 halves[2];
 } ScriptPosition;
 
-/* sets the colour the screen is covered with: MapDrawStateOverlays.unk6C to unk80 (ScriptCmd_SetScreenColor) */
+/* sets the colour the screen is covered with: MapDrawStateOverlays.screen_fill_red to unk80 (ScriptCmd_SetScreenColor) */
 typedef struct {
     int active;                     /* 0x00 */
     ScriptArg red;                  /* 0x04 value at 0x08 */

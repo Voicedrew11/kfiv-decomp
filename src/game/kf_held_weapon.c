@@ -141,8 +141,8 @@ void Player_LoadArmModels(void) {
 
     if (D_00446974 != player_state.weapon) {
         D_00446974 = player_state.weapon;
-        if (player_state.unk258 != 0) {
-            player_state.unk258 = 0;
+        if (player_state.item_action_step != 0) {
+            player_state.item_action_step = 0;
             Effect_FreePlayerWeaponKinds();
         }
         memset((void *)held_item_file, 0, 0x30000);
@@ -150,7 +150,7 @@ void Player_LoadArmModels(void) {
         memset(held_item_setup, 0, 0x1000);
         memset(held_item_channels, 0, 0x90);
         held_item_textures = 0;
-        sprintf(path, D_0043F5A0, item->unk30);
+        sprintf(path, D_0043F5A0, item->model_file_number);
         handle = File_Open(path, 0, 1);
         if (handle < 0) {
             handle = File_Open(D_0043F5B8, 0, 1);
@@ -182,15 +182,15 @@ void Player_LoadArmModels(void) {
         if (file->texture_size != 0) {
             held_item_textures = held_item_file + file->texture_offset;
         }
-        D_0057B6A0.unk148 = (s32)held_item_light_blocks;
-        D_0057B6A0.unk14C = &D_0038A250;
+        D_0057B6A0.light_block = (s32)held_item_light_blocks;
+        D_0057B6A0.fog_block = &D_0038A250;
         MODEL_CHANNEL(&D_0057B6A0)->unk8F = 0x80;
         Sound_LoadSwBank(player_state.weapon);
         WeaponTrail_Reset();
         WeaponTrail_SetMinLife(3);
-        held_item_offsets[0] = weapon_defs[player_state.weapon].unk87;
-        held_item_offsets[1] = weapon_defs[player_state.weapon].unk88;
-        held_item_offsets[2] = weapon_defs[player_state.weapon].unk89;
+        held_item_offsets[0] = weapon_defs[player_state.weapon].held_offset_x;
+        held_item_offsets[1] = weapon_defs[player_state.weapon].held_offset_y;
+        held_item_offsets[2] = weapon_defs[player_state.weapon].held_offset_z;
     }
     if (D_00446970 != player_state.equipment[EQUIP_GAUNTLET]) {
         D_00446970 = player_state.equipment[EQUIP_GAUNTLET];
@@ -199,7 +199,7 @@ void Player_LoadArmModels(void) {
         memset(arm_setup, 0, 0x1000);
         memset(arm_channels, 0, 0x90);
         arm_textures = 0;
-        sprintf(path, D_0043F5A0, arm->unk30);
+        sprintf(path, D_0043F5A0, arm->model_file_number);
         handle = File_Open(path, 0, 1);
         if (handle < 0) {
             handle = File_Open(D_0043F5D0, 0, 1);
@@ -224,8 +224,8 @@ void Player_LoadArmModels(void) {
         if (file->texture_size != 0) {
             arm_textures = arm_file + file->texture_offset;
         }
-        arm_model.unk148 = (s32)held_item_light_blocks;
-        arm_model.unk14C = &D_0038A250;
+        arm_model.light_block = (s32)held_item_light_blocks;
+        arm_model.fog_block = &D_0038A250;
     }
 }
 
@@ -243,10 +243,10 @@ void Player_UpdateArmModels(void) {
 
     held_item_arm_points_prev = held_item_arm_points;
     memset(&held_item_arm_points, 0, 0x20);
-    if (player_state.unk258 != 0) {
+    if (player_state.item_action_step != 0) {
         sceVu0RotMatrixY(matrix, D_00431AF0, 3.1415927f);
         sceVu0TransMatrix(matrix, matrix, held_item_offsets);
-        pitch = player_state.rotation.x - player_state.unk238;
+        pitch = player_state.rotation.x - player_state.view_tilt_pitch;
         if (pitch > 1.0122910f) {
             pitch = 1.0122910f;
         } else if (pitch < -1.0122910f) {
@@ -255,17 +255,17 @@ void Player_UpdateArmModels(void) {
         sceVu0RotMatrixX(matrix, matrix, pitch);
         sceVu0RotMatrixY(matrix, matrix, player_state.rotation.y);
         Vector_Copy(position, &player_state);
-        position[1] = position[1] - 220.0f + player_state.unk1C4 + player_state.unk1F0;
-        Vector_Add(position, position, D_004325A0.unk50);
-        Vector_Add(position, position, D_004325A0.unk60);
-        position[1] += D_004325A0.unk4C;
-        sceVu0TransMatrix((f32 *)D_0057B6A0.unk40, matrix, position);
+        position[1] = position[1] - 220.0f + player_state.head_bob_offset + player_state.landing_dip_offset;
+        Vector_Add(position, position, D_004325A0.script_shake_offset);
+        Vector_Add(position, position, D_004325A0.entity_shake_offset);
+        position[1] += D_004325A0.height_offset;
+        sceVu0TransMatrix((f32 *)D_0057B6A0.model_matrix, matrix, position);
         count = D_0057B6A0.part_count;
         part = D_0057B6A0.parts;
         for (i = 0; i < count; i++, part++) {
             ModelMatrix_BuildPartLocal(&D_0057B6A0, part, part);
         }
-        if (D_0057B6A0.unk100 & 1) {
+        if (D_0057B6A0.model_flags & 1) {
             part = D_0057B6A0.parts;
             for (i = 0; i < count; i++, part++) {
                 Model_MultiplyChildMatrices(part);
@@ -273,18 +273,18 @@ void Player_UpdateArmModels(void) {
         }
         Vector_Copy(&D_0057B6A0.rotation, &player_state.rotation);
         Vector_Copy(&arm_model.rotation, &player_state.rotation);
-        *(ModelMatrix *)arm_model.unk40 = *(ModelMatrix *)D_0057B6A0.unk40;
+        *(ModelMatrix *)arm_model.model_matrix = *(ModelMatrix *)D_0057B6A0.model_matrix;
         part = D_0057B6A0.parts;
         arm_part = arm_model.parts;
         // match: retail takes the larger part count of the two models, not the smaller
         count = D_0057B6A0.part_count > arm_model.part_count ? D_0057B6A0.part_count : arm_model.part_count;
         for (i = 0; i < count; i++, part++, arm_part++) {
-            Vector_Copy(arm_part->unk40, part->unk40);
-            Vector_Copy(&arm_part->unk50, &part->unk50);
-            Vector_Copy(arm_part->unk60, part->unk60);
-            *(ModelMatrix *)arm_part->unk00 = *(ModelMatrix *)part->unk00;
+            Vector_Copy(arm_part->position, part->position);
+            Vector_Copy(&arm_part->rotation_x, &part->rotation_x);
+            Vector_Copy(arm_part->scale, part->scale);
+            *(ModelMatrix *)arm_part->matrix = *(ModelMatrix *)part->matrix;
         }
-        D_0057B6A0.unk1B4(&D_0057B6A0);
+        D_0057B6A0.update_bone_points(&D_0057B6A0);
         Vector_Copy(&held_item_arm_points.points[0], (void *)D_0057B6A0.get_point(&D_0057B6A0, 30));
         Vector_Copy(&held_item_arm_points.points[1], (void *)D_0057B6A0.get_point(&D_0057B6A0, 31));
     }
@@ -302,10 +302,10 @@ void WeaponTrail_Update(void) {
     s32 item;
 
     WeaponTrail_Age();
-    if (player_state.unk258 != 0) {
+    if (player_state.item_action_step != 0) {
         weapon = &D_0057B6A0;
-        weapon->unk1B4(weapon);
-        if (weapon_defs[player_state.weapon].unk63 == 2) {
+        weapon->update_bone_points(weapon);
+        if (weapon_defs[player_state.weapon].action_handler_index == 2) {
             return;
         }
         item = player_state.weapon + ITEM_WEAPON_FIRST;
@@ -348,7 +348,7 @@ void Player_DrawArm(void) {
     s32 size;
     u64 tag;
 
-    if (player_state.unk258 != 0) {
+    if (player_state.item_action_step != 0) {
         TextureTable_QueueAll((TextureTableHeader *)shared_texture_table);
         GsDraw_QueueTexFlush();
         Packet_BeginGsRegisters();
@@ -359,16 +359,16 @@ void Player_DrawArm(void) {
         Packet_EndGsRegisters();
         TextureTable_QueueAll((TextureTableHeader *)arm_textures);
         GsDraw_QueueTexFlush();
-        arm_model.unk1A8(&arm_model);
+        arm_model.draw_parts(&arm_model);
         TextureTable_QueueAll((TextureTableHeader *)held_item_textures);
         GsDraw_QueueTexFlush();
         if (player_state.weapon != 0x2E) {
-            D_0057B6A0.unk1A8(&D_0057B6A0);
+            D_0057B6A0.draw_parts(&D_0057B6A0);
         } else {
             for (i = 0; i < D_0057B6A0.part_count; i++) {
                 MODEL_PART_FLAG_BITS(&D_0057B6A0.parts[i])->bit40 = i == 5;
             }
-            D_0057B6A0.unk1A8(&D_0057B6A0);
+            D_0057B6A0.draw_parts(&D_0057B6A0);
             for (i = 0; i < D_0057B6A0.part_count; i++) {
                 MODEL_PART_FLAG_BITS(&D_0057B6A0.parts[i])->bit40 = i != 5;
             }
@@ -376,7 +376,7 @@ void Player_DrawArm(void) {
             Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
             Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
             Packet_EndGsRegisters();
-            D_0057B6A0.unk1A8(&D_0057B6A0);
+            D_0057B6A0.draw_parts(&D_0057B6A0);
             for (i = 0; i < D_0057B6A0.part_count; i++) {
                 MODEL_PART_FLAG_BITS(&D_0057B6A0.parts[i])->bit40 = FALSE;
             }
@@ -432,28 +432,28 @@ void WeaponTrail_PickKind(void) {
     s32 best = 0;
 
     trail_kind = 0;
-    if (player_state.unk122[0] != 0 && player_state.unk18E[0] > best) {
-        best = player_state.unk18E[0];
+    if (player_state.magic_strength_bonus[0] != 0 && player_state.magic_bonus_stamp[0] > best) {
+        best = player_state.magic_bonus_stamp[0];
         trail_kind = 1;
     }
-    if (player_state.unk122[1] != 0 && player_state.unk18E[1] > best) {
-        best = player_state.unk18E[1];
+    if (player_state.magic_strength_bonus[1] != 0 && player_state.magic_bonus_stamp[1] > best) {
+        best = player_state.magic_bonus_stamp[1];
         trail_kind = 2;
     }
-    if (player_state.unk122[2] != 0 && player_state.unk18E[2] > best) {
-        best = player_state.unk18E[2];
+    if (player_state.magic_strength_bonus[2] != 0 && player_state.magic_bonus_stamp[2] > best) {
+        best = player_state.magic_bonus_stamp[2];
         trail_kind = 3;
     }
-    if (player_state.unk122[3] != 0 && player_state.unk18E[3] > best) {
-        best = player_state.unk18E[3];
+    if (player_state.magic_strength_bonus[3] != 0 && player_state.magic_bonus_stamp[3] > best) {
+        best = player_state.magic_bonus_stamp[3];
         trail_kind = 4;
     }
-    if (player_state.unk122[4] != 0 && player_state.unk18E[4] > best) {
-        best = player_state.unk18E[4];
+    if (player_state.magic_strength_bonus[4] != 0 && player_state.magic_bonus_stamp[4] > best) {
+        best = player_state.magic_bonus_stamp[4];
         trail_kind = 5;
     }
-    if (player_state.unk122[5] != 0 && player_state.unk18E[5] > best) {
-        best = player_state.unk18E[5];
+    if (player_state.magic_strength_bonus[5] != 0 && player_state.magic_bonus_stamp[5] > best) {
+        best = player_state.magic_bonus_stamp[5];
         trail_kind = 6;
     }
     if (trail_kind == 0) {

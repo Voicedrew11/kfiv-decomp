@@ -42,7 +42,7 @@ void MasterFadin_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = MasterFadin_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->dormant = (void (*)(void))MasterFadin_Dormant;
@@ -50,10 +50,10 @@ void MasterFadin_Init(Entity *entity) {
     unkE0->on_hit = NULL;
     unkE0->move = NULL;
     for (i = 3; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 5; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_FLAG_BITS(entity)->bit28 = 1;
     entity->target = NULL;
@@ -62,15 +62,15 @@ void MasterFadin_Init(Entity *entity) {
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: it sets Entity.state itself and does not call EntityAi_StepState. In mode 2
-   (EntitySpawnInfo.unk40) it takes the state of the entity whose spawn id is
+   (EntitySpawnInfo.spawn_mode) it takes the state of the entity whose spawn id is
    EntitySpawnInfo.variant, and starts the death action once that one's flag bits 2-3 are 2 or more.
    In mode 1 it calls EntityEvent_Respawn for every other entity with the same params whose flag bit 1 is
    clear or whose bits 2-3 are 3. While the entity is not busy it calls MasterFadin_ThinkShootAtPlayer in states 1
@@ -81,7 +81,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
     Entity *leader;
     Entity *other;
 
-    if (entity->spawn_info->unk40 == 2) {
+    if (entity->spawn_info->spawn_mode == 2) {
         leader = Entity_GetBySpawnId(entity->spawn_info->variant);
         if (leader != NULL) {
             if (ENTITY_FLAG_BITS(leader)->bits2 >= 2) {
@@ -93,7 +93,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
             entity->state = leader->state;
         }
     }
-    if (entity->spawn_info->unk40 == 1) {
+    if (entity->spawn_info->spawn_mode == 1) {
         for (other = D_004467E0; other != NULL; other = other->next) {
             if (other->params == entity->params && other != entity && ((s32)other->flags & 1)) {
                 if (!ENTITY_FLAG_BITS(other)->bit1 || ENTITY_FLAG_BITS(other)->bits2 >= 3) {
@@ -102,7 +102,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (entity->unkC6 == 0) {
+    if (entity->busy_flags == 0) {
         switch (entity->state) {
         case 1:
         case 2:
@@ -114,15 +114,15 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
             break;
         }
     }
-    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
-    if (unkE0->unk68 > 0) {
-        unkE0->unk68--;
+    Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
+    if (unkE0->pause_timer > 0) {
+        unkE0->pause_timer--;
     } else {
         entity->state = 0;
     }
 }
 
-/* The think function of states 1 and 2: each time Entity.unkA0 has run out it launches shot EntityParams.unk430
+/* The think function of states 1 and 2: each time Entity.action_timer has run out it launches shot EntityParams.pitch_limit_deg
    from model point unk432 (along the line to the next point; point 0xFF: along the heading turned round),
    turned towards the player 190 above his feet by at most unk436 in pitch and unk438 in yaw, starts cue 0 and
    sets unkA0 to unk434. Keeps animation 0 and starts the move action. */
@@ -138,11 +138,11 @@ static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
     f32 pitch;
     f32 yaw;
 
-    if (entity->unkA0 == 0) {
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unk432);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unk432 + 1);
+    if (entity->action_timer == 0) {
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->yaw_limit_deg);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->yaw_limit_deg + 1);
         if (from != NULL && tip != NULL) {
-            if (entity->params->unk432 != 0xFF) {
+            if (entity->params->yaw_limit_deg != 0xFF) {
                 delta_x = tip[0] - from[0];
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
@@ -150,21 +150,21 @@ static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
                 angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                 angles[2] = angles[3] = 0.0f;
             } else {
-                Vector_Copy(angles, entity->model->unkD0);
+                Vector_Copy(angles, entity->model->rotation);
                 angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
             }
             Vector_Copy(target, player_state);
             target[1] -= 190.0f;
             pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
             yaw = EntityMath_AngleXZ(from, (char *)target);
-            angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->unk436);
-            angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->unk438);
-            EntityAi_LaunchShot(entity, entity->params->unk430, from, angles);
+            angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->near_distance);
+            angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->far_distance);
+            EntityAi_LaunchShot(entity, entity->params->pitch_limit_deg, from, angles);
             EntityEvent_StartCue(entity, 0, 0, 0);
-            entity->unkA0 = entity->params->unk434;
+            entity->action_timer = entity->params->action_frames;
         }
     }
-    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
@@ -173,7 +173,7 @@ static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
 static void MasterFadin_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 |= 0x20;
+    entity->busy_flags |= 0x20;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
@@ -188,15 +188,15 @@ static void MasterFadin_Dormant(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        if (entity->distance_to_player < entity->spawn_info->unk54) {
-            Motion_Start(entity, 2, 0, entity->params->unkC4, 0);
+        if (entity->distance_to_player < entity->spawn_info->wake_distance) {
+            Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
             entity->action_step++;
         }
         break;
     case 2:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
@@ -207,9 +207,9 @@ static void MasterFadin_Dormant(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit24 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -224,7 +224,7 @@ static void MasterFadin_Dormant(Entity *entity) {
    EntityAi_Death with other flag settings; in mode 2 it calls MasterFadin_AlertPartner where that
    one calls EntityEvent_OnDeath. */
 static void MasterFadin_Death(Entity *entity) {
-    entity->unkC6 = 0x40;
+    entity->busy_flags = 0x40;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -237,7 +237,7 @@ static void MasterFadin_Death(Entity *entity) {
         entity->flags &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
@@ -246,8 +246,8 @@ static void MasterFadin_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit14 = 0;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
-            entity->unkA0 = 20;
-            if (entity->spawn_info->unk40 != 2) {
+            entity->action_timer = 20;
+            if (entity->spawn_info->spawn_mode != 2) {
                 EntityEvent_OnDeath(entity);
             } else {
                 MasterFadin_AlertPartner(entity);
@@ -256,8 +256,8 @@ static void MasterFadin_Death(Entity *entity) {
         }
         break;
     case 3:
-        if (entity->unkA0 != 0) {
-            entity->model->unk15C = (f32)entity->unkD6 * (f32)entity->unkA0 / 20.0f;
+        if (entity->action_timer != 0) {
+            entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
             entity->flags |= 0xC;
             entity->flags &= ~2;
@@ -276,7 +276,7 @@ static void MasterFadin_AlertPartner(Entity *entity) {
     if (partner != NULL) {
         if ((partner->flags & 0xE) == 2) {
             partner->state = 2;
-            partner->unkE0.unk68 = partner->params->unk43A;
+            partner->unkE0.pause_timer = partner->params->unk43A;
         }
     }
 }

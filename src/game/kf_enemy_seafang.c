@@ -64,8 +64,8 @@ void Seafang_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
-    if (entity->spawn_info->unk40 != 0) {
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
+    if (entity->spawn_info->spawn_mode != 0) {
         unkE0->think = Seafang_ThinkLowerGradually;
     } else {
         unkE0->think = Seafang_Think;
@@ -76,10 +76,10 @@ void Seafang_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))Seafang_Death;
     for (i = 3; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 5; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_FLAG_BITS(entity)->bit28 = 1;
     entity->target = NULL;
@@ -88,9 +88,9 @@ void Seafang_Init(Entity *entity) {
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -101,16 +101,16 @@ void Seafang_Init(Entity *entity) {
 static void Seafang_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->unkC6 == 0) {
+    if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn3D((char *)entity);
         EntityAi_StepState(entity);
-        unkE0->unk48 = EntityCollision_DistanceToGround(entity->model->position);
-        if (unkE0->unk48 != D_00446804[0] && -entity->unk34 < unkE0->unk48) {
-            entity->model->position[1] += entity->unk34 + unkE0->unk48;
-            if (unkE0->unk48 > 0.0f) {
+        unkE0->part_angle_x = EntityCollision_DistanceToGround(entity->model->position);
+        if (unkE0->part_angle_x != D_00446804[0] && -entity->collision_height < unkE0->part_angle_x) {
+            entity->model->position[1] += entity->collision_height + unkE0->part_angle_x;
+            if (unkE0->part_angle_x > 0.0f) {
                 EntityAi_StartAction(entity, Seafang_DeathWithoutDrop, 1);
                 return;
             }
@@ -140,23 +140,23 @@ static void Seafang_ThinkIdle(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    if (entity->unkA0 == 0) {
+    if (entity->action_timer == 0) {
         if (rand() % 100 > 20) {
-            EntityPoint_PickNearWithHeight(unkE0->unk30, entity->spawn_info->unk4C, entity->spawn_info->unk56, entity->spawn_info, entity->model->position);
-            entity->target = unkE0->unk30;
-            entity->unkA0 = rand() % 60 + 120;
+            EntityPoint_PickNearWithHeight(unkE0->target_point, entity->spawn_info->wander_radius, entity->spawn_info->wander_height_range, entity->spawn_info, entity->model->position);
+            entity->target = unkE0->target_point;
+            entity->action_timer = rand() % 60 + 120;
         } else {
             entity->target = NULL;
-            entity->unkA0 = rand() % 30 + 60;
+            entity->action_timer = rand() % 30 + 60;
         }
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->unkC8 = 0x201;
+        entity->move_command = 0x201;
     } else if (turn < 0) {
-        entity->unkC8 = 0x101;
+        entity->move_command = 0x101;
     } else {
-        entity->unkC8 = EntityAi_MoveCommand3D(entity, 0, 50.0f);
+        entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -180,14 +180,14 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
@@ -199,37 +199,37 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = player_state;
-            unkE0->unk4C = entity->unk30 + rand() % 150;
-            entity->unkA0 = rand() % 60 + 120;
-            unkE0->unk78 = 0;
+            unkE0->part_angle_y = entity->collision_radius + rand() % 150;
+            entity->action_timer = rand() % 60 + 120;
+            unkE0->move_choice = 0;
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 30;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 30;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (unkE0->unk78 == 0) {
+    if (unkE0->move_choice == 0) {
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
-            entity->unkC8 = 0x241;
+            entity->move_command = 0x241;
         } else if (turn < 0) {
-            entity->unkC8 = 0x141;
+            entity->move_command = 0x141;
         } else {
-            Vector_Copy(unkE0->unk30, player_state);
-            unkE0->unk30[1] -= unkE0->unk4C;
-            entity->target = unkE0->unk30;
-            entity->unkC8 = EntityAi_MoveCommand3D(entity, 1, entity->radius + 100.0f + 30.0f);
+            Vector_Copy(unkE0->target_point, player_state);
+            unkE0->target_point[1] -= unkE0->part_angle_y;
+            entity->target = unkE0->target_point;
+            entity->move_command = EntityAi_MoveCommand3D(entity, 1, entity->radius + 100.0f + 30.0f);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-/* The think handler of a spawn whose EntitySpawnInfo.unk40 is set: as Seafang_Think, but where
-   that one puts the entity at once at Entity.unk34 past the surface EntityCollision_DistanceToGround finds, this one
+/* The think handler of a spawn whose EntitySpawnInfo.spawn_mode is set: as Seafang_Think, but where
+   that one puts the entity at once at Entity.collision_height past the surface EntityCollision_DistanceToGround finds, this one
    moves it 5 a frame in y (y grows downward: EntityCollision_DistanceToPropFloor measures the floor below as a larger y);
    and it has its own functions for the states (Seafang_ThinkWander,
    Seafang_ThinkCombatRunAtPlayer). Starts Seafang_DeathWithoutDrop when EntityCollision_DistanceToGround
@@ -237,16 +237,16 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
 static void Seafang_ThinkLowerGradually(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->unkC6 == 0) {
+    if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn3D((char *)entity);
         EntityAi_StepState(entity);
-        unkE0->unk48 = EntityCollision_DistanceToGround(entity->model->position);
-        if (unkE0->unk48 != D_00446808[0] && -entity->unk34 < unkE0->unk48) {
+        unkE0->part_angle_x = EntityCollision_DistanceToGround(entity->model->position);
+        if (unkE0->part_angle_x != D_00446808[0] && -entity->collision_height < unkE0->part_angle_x) {
             entity->model->position[1] += 5.0f;
-            if (unkE0->unk48 > 0.0f) {
+            if (unkE0->part_angle_x > 0.0f) {
                 EntityAi_StartAction(entity, Seafang_DeathWithoutDrop, 1);
                 return;
             }
@@ -279,23 +279,23 @@ static void Seafang_ThinkWander(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    if (entity->unkA0 == 0) {
+    if (entity->action_timer == 0) {
         if (rand() % 100 > 20) {
-            EntityPoint_PickNear(entity->spawn_info->unk4C, unkE0->unk30, entity->spawn_info, entity->model->position);
-            entity->target = unkE0->unk30;
-            entity->unkA0 = rand() % 60 + 120;
+            EntityPoint_PickNear(entity->spawn_info->wander_radius, unkE0->target_point, entity->spawn_info, entity->model->position);
+            entity->target = unkE0->target_point;
+            entity->action_timer = rand() % 60 + 120;
         } else {
             entity->target = NULL;
-            entity->unkA0 = rand() % 30 + 60;
+            entity->action_timer = rand() % 30 + 60;
         }
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->unkC8 = 0x201;
+        entity->move_command = 0x201;
     } else if (turn < 0) {
-        entity->unkC8 = 0x101;
+        entity->move_command = 0x101;
     } else {
-        entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
+        entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -321,19 +321,19 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {
-                if (unkE0->unk48 < -80.0f) {
+                if (unkE0->part_angle_x < -80.0f) {
                     ENTITY_FLAG_BITS(entity)->bit57 = 0;
                     ENTITY_FLAG_BITS(entity)->bits58 = 0;
                 }
@@ -342,26 +342,26 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = player_state;
-            entity->unkA0 = rand() % 60 + 120;
-            unkE0->unk78 = 0;
+            entity->action_timer = rand() % 60 + 120;
+            unkE0->move_choice = 0;
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 30;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 30;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (unkE0->unk78 == 0) {
+    if (unkE0->move_choice == 0) {
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
-            entity->unkC8 = 0x241;
+            entity->move_command = 0x241;
         } else if (turn < 0) {
-            entity->unkC8 = 0x141;
+            entity->move_command = 0x141;
         } else {
-            entity->unkC8 = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
+            entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -375,53 +375,53 @@ static void Seafang_Move(Entity *entity) {
     f32 pitch;
     f32 rate;
 
-    if (entity->unkC8 & 0x100) {
-        unkE0->unk1C -= entity->params->unk58;
-        if (unkE0->unk1C < -entity->params->turn_limit) {
-            unkE0->unk1C = -entity->params->turn_limit;
+    if (entity->move_command & 0x100) {
+        unkE0->turn_rate -= entity->params->turn_step_per_frame;
+        if (unkE0->turn_rate < -entity->params->turn_limit) {
+            unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->unkC8 & 0x200) {
-        unkE0->unk1C += entity->params->unk58;
-        if (unkE0->unk1C > entity->params->turn_limit) {
-            unkE0->unk1C = entity->params->turn_limit;
+    } else if (entity->move_command & 0x200) {
+        unkE0->turn_rate += entity->params->turn_step_per_frame;
+        if (unkE0->turn_rate > entity->params->turn_limit) {
+            unkE0->turn_rate = entity->params->turn_limit;
         }
     } else {
-        unkE0->unk1C = 0.0f;
+        unkE0->turn_rate = 0.0f;
     }
-    value = unkE0->unk1C;
-    if (entity->unkC8 & 0x400) {
+    value = unkE0->turn_rate;
+    if (entity->move_command & 0x400) {
         value += value;
     }
-    entity->unk94 += value;
-    if (entity->unkC8 & 0x10) {
+    entity->turn_delta_yaw += value;
+    if (entity->move_command & 0x10) {
         pitch = -0.5235988f;
-    } else if (entity->unkC8 & 0x20) {
+    } else if (entity->move_command & 0x20) {
         pitch = 0.5235988f;
     } else {
         pitch = 0.0f;
     }
-    if (ABS(pitch - entity->model->unkD0[0]) > 0.5235988f) {
+    if (ABS(pitch - entity->model->rotation[0]) > 0.5235988f) {
         rate = 60.0f;
     } else {
         rate = 30.0f;
     }
-    value = entity->model->unkD0[0];
+    value = entity->model->rotation[0];
     EntityMath_EaseAngleToward(&value, pitch, rate);
-    entity->unk90 += value - entity->model->unkD0[0];
-    if (entity->unkC8 & 1) {
-        if (entity->unkC8 & 0x40) {
-            Motion_Start(entity, 4, 0, entity->params->unkC4 >> 1, 0);
+    entity->turn_delta_pitch += value - entity->model->rotation[0];
+    if (entity->move_command & 1) {
+        if (entity->move_command & 0x40) {
+            Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
-            Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->unkC8 & 0x10) {
-        Motion_Start(entity, 8, 0, entity->params->unkC4, 0);
-    } else if (entity->unkC8 & 0x20) {
-        Motion_Start(entity, 9, 0, entity->params->unkC4, 0);
-    } else if (entity->unkC8 & 0x300) {
-        Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
+    } else if (entity->move_command & 0x10) {
+        Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
+    } else if (entity->move_command & 0x20) {
+        Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
+    } else if (entity->move_command & 0x300) {
+        Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
     } else {
-        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
     }
 }
 
@@ -431,9 +431,9 @@ static void Seafang_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 fall = 0.0f;
 
-    entity->unkC6 = 0x40;
-    unkE0->unk48 = EntityCollision_DistanceToGround(entity->model->position);
-    if (unkE0->unk48 != D_0044680C[0] && unkE0->unk48 < fall) {
+    entity->busy_flags = 0x40;
+    unkE0->part_angle_x = EntityCollision_DistanceToGround(entity->model->position);
+    if (unkE0->part_angle_x != D_0044680C[0] && unkE0->part_angle_x < fall) {
         fall = 2.0f;
     }
     switch (entity->action_step) {
@@ -447,7 +447,7 @@ static void Seafang_Death(Entity *entity) {
         entity->flags |= 0x4000000;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
@@ -456,22 +456,22 @@ static void Seafang_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit14 = 0;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
-            entity->unkA0 = 20;
+            entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
     case 3:
         fall = 0.0f;
-        if (entity->unkA0 != 0) {
-            entity->model->unk15C = (f32)entity->unkD6 * (f32)entity->unkA0 / 20.0f;
+        if (entity->action_timer != 0) {
+            entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
             entity->flags |= 0xC;
             entity->flags &= ~2;
         }
         break;
     }
-    entity->unk88 -= fall;
+    entity->move_delta_y -= fall;
 }
 
 /* A second death action (busy bit 0x40), which the think handlers start when EntityCollision_DistanceToGround reads
@@ -479,13 +479,13 @@ static void Seafang_Death(Entity *entity) {
    y and without EntityEvent_OnDeath, which is what drops the gold (Gold_DropFromEntity), frees the
    effects and starts the spawn's script when an entity dies. */
 static void Seafang_DeathWithoutDrop(Entity *entity) {
-    entity->unkC6 = 0x40;
+    entity->busy_flags = 0x40;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x4000000) {
-            entity->unk30 = 20.0f;
+            entity->collision_radius = 20.0f;
         }
         ENTITY_FLAG_BITS(entity)->bit14 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
@@ -495,13 +495,13 @@ static void Seafang_DeathWithoutDrop(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit28 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            entity->unkA0 = 20;
+            entity->action_timer = 20;
             ENTITY_FLAG_BITS(entity)->bit14 = 0;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
@@ -509,8 +509,8 @@ static void Seafang_DeathWithoutDrop(Entity *entity) {
         }
         break;
     case 3:
-        if (entity->unkA0 != 0) {
-            entity->model->unk15C = (f32)entity->unkD6 * (f32)entity->unkA0 / 20.0f;
+        if (entity->action_timer != 0) {
+            entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
             ENTITY_FLAG_BITS(entity)->bits2 = 3;
             ENTITY_FLAG_BITS(entity)->bit1 = 0;

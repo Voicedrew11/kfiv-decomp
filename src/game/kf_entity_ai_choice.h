@@ -1,6 +1,6 @@
 /* The choices of the shared entity AI: what the entity knows of the player (Entity.state), guarding and
    dodging, which attack and which combat choice to take and how their weights change, and the movement
-   commands (Entity.unkC8) that take it towards its target or aside from a push. */
+   commands (Entity.move_command) that take it towards its target or aside from a push. */
 #ifndef KF_ENTITY_AI_CHOICE_H
 #define KF_ENTITY_AI_CHOICE_H
 
@@ -16,10 +16,10 @@ int EntityAi_TurnFromPush(void *entity_arg, void *heading_out);
 /* Whether the push the entity is under (flags 45, 46, 48) comes against `heading` (from the front). */
 s32 EntityAi_IsPushedFromFront(Entity *entity, f32 heading);
 
-/* Whether to guard against the player's swing (chance EntityParams.unkCB / 5 percent). */
+/* Whether to guard against the player's swing (chance EntityParams.guard_chance / 5 percent). */
 s32 EntityAi_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle);
 
-/* As EntityAi_ShouldGuard, by a chance of EntityParams.unkCA / 5 percent. */
+/* As EntityAi_ShouldGuard, by a chance of EntityParams.dodge_chance / 5 percent. */
 s32 EntityAi_ShouldDodge(Entity *entity, f32 max_distance, f32 max_angle);
 
 /* Picks one of the six attacks the player is in reach of; returns flag bit 57 (ranged). */
@@ -31,7 +31,7 @@ s32 EntityAi_PickMeleeAttack(Entity *entity);
 /* Picks one of the three ranged attacks the player is in reach of; returns it. */
 s32 EntityAi_PickRangedAttack(Entity *entity);
 
-/* Picks the next of the four combat choices (Entity.unkCD. */
+/* Picks the next of the four combat choices (Entity.combat_choice. */
 s32 EntityAi_PickCombatChoice(Entity *entity, s32 mode);
 
 /* After a hit in state 2, makes the choice (and attack) the entity was on less likely. */

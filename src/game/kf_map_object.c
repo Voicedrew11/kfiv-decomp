@@ -77,10 +77,10 @@ s32 D_004467B8[2] = { 0, 0 };                   /* how many objects each map has
 static s32 glow_item_worn;                      /* 0x447078 Myu's Necklace is worn */
 static s32 glow_item_was_worn;                  /* 0x44707C the same, last frame */
 static s32 glow_frame;                          /* 0x447080 0 to 209 */
-static MapObject *plain_draw_list[2];           /* 0x447088 per map, through MapObject.unk1C */
-static MapObject *jointed_draw_list[2];         /* 0x447090 per map, through MapObject.unk1C */
+static MapObject *plain_draw_list[2];           /* 0x447088 per map, through MapObject.next_in_draw_list */
+static MapObject *jointed_draw_list[2];         /* 0x447090 per map, through MapObject.next_in_draw_list */
 
-static MapObject *objects_by_id[2][0x100];      /* 0x472240 per map, by MapObjectUnk08.unk38.bytes[2] */
+static MapObject *objects_by_id[2][0x100];      /* 0x472240 per map, by MapObjectUnk08.spawn_flags.bytes[2] */
 static MapSlotUnk10Vectors glow_lights_shared;  /* 0x472A40 map_draw_state.unkC0 blended for the glow */
 static MapSlotUnk10Vectors glow_lights[2][0x20]; /* 0x472AC0 map_draw_state.unkA90 blended for the glow */
 
@@ -104,49 +104,49 @@ void MapObject_InitMap(int map) {
 
     for (; i < count; i++, object++) {
         MAP_OBJECT_BYTES(object)->step = 0;
-        if (object->unk04->unk04 == 0xFFFF) {
+        if (object->definition->model_index == 0xFFFF) {
             object->model->get_point = (int (*)(void *, int))MapObject_GetPositionAsPoint;
-            object->model->unk1B4 = (void (*)(ModelInstance *))func_0011EA70;
+            object->model->update_bone_points = (void (*)(ModelInstance *))func_0011EA70;
         }
-        if (object->unk08->unk38.bytes[2] != 0) {
-            link_id = object->unk08->unk38.bytes[2];
+        if (object->source->spawn_flags.bytes[2] != 0) {
+            link_id = object->source->spawn_flags.bytes[2];
             if (objects_by_id[map][link_id] == NULL) {
                 objects_by_id[map][link_id] = object;
             }
         }
-        Vector_Copy(&object->model->position, &object->unk08->position);
-        Vector_Copy(&object->model->rotation, &object->unk08->rotation);
-        Vector_Copy(&object->model->unkE0, &object->unk08->scale);
-        object->unk20 = object->model->position.x;
-        object->unk24 = object->model->position.y;
-        object->unk28 = object->model->position.z;
-        object->unk30 = object->model->rotation.x;
-        object->unk34 = object->model->rotation.y;
-        object->unk38 = object->model->rotation.z;
-        scale = ABS(object->unk08->scale.x) > ABS(object->unk08->scale.z) ? ABS(object->unk08->scale.x) : ABS(object->unk08->scale.z);
-        if (object->unk04->unk0C > 0.0f) {
-            object->unk14 = object->unk04->unk0C * scale + 100.0f;
+        Vector_Copy(&object->model->position, &object->source->position);
+        Vector_Copy(&object->model->rotation, &object->source->rotation);
+        Vector_Copy(&object->model->scale_x, &object->source->scale);
+        object->last_position_x = object->model->position.x;
+        object->last_position_y = object->model->position.y;
+        object->last_position_z = object->model->position.z;
+        object->last_rotation_x = object->model->rotation.x;
+        object->last_rotation_y = object->model->rotation.y;
+        object->last_rotation_z = object->model->rotation.z;
+        scale = ABS(object->source->scale.x) > ABS(object->source->scale.z) ? ABS(object->source->scale.x) : ABS(object->source->scale.z);
+        if (object->definition->collision_radius > 0.0f) {
+            object->reach_radius = object->definition->collision_radius * scale + 100.0f;
         } else if (object->model->strips != NULL) {
-            object->unk14 = ((CollisionMesh *)object->model->strips)->unk10 * scale + 100.0f;
+            object->reach_radius = ((CollisionMesh *)object->model->strips)->reach_radius * scale + 100.0f;
         } else {
-            object->unk14 = 0.0f;
+            object->reach_radius = 0.0f;
         }
-        object->unk3C = object->unk04->unk6C * scale + 100.0f;
-        object->model->radius = object->unk14;
-        if (object->model->unk100 & 1) {
+        object->interact_radius = object->definition->interact_radius * scale + 100.0f;
+        object->model->radius = object->reach_radius;
+        if (object->model->model_flags & 1) {
             MAP_OBJECT_BYTES(object)->anim = 0;
         } else {
             MAP_OBJECT_BYTES(object)->anim = -1;
-            ModelMatrix_Build(object->model, &object->model->position, &object->model->rotation, &object->model->unkE0);
+            ModelMatrix_Build(object->model, &object->model->position, &object->model->rotation, &object->model->scale_x);
             for (j = 0; j < object->model->part_count; j++) {
                 ModelMatrix_BuildPartLocal(object->model, &object->model->parts[j], &object->model->parts[j]);
             }
         }
-        map_object_update_hooks[object->unk04->kind](object);
-        switch (object->unk04->bit8) {
+        map_object_update_hooks[object->definition->kind](object);
+        switch (object->definition->bit8) {
             case 0:
                 object->model->draw = (void (*)(ModelInstance *))MapObject_DrawModel;
-                object->model->unk1A8 = Model_DrawPosedWithAlpha;
+                object->model->draw_parts = Model_DrawPosedWithAlpha;
                 break;
             case 1:
                 object->model->draw = MapObject_DrawModelWithAlpha;
@@ -155,18 +155,18 @@ void MapObject_InitMap(int map) {
                 object->model->draw = NULL;
                 break;
         }
-        if (object->unk04->kind == 5) {
+        if (object->definition->kind == 5) {
             object->model->draw = (void (*)(ModelInstance *))MapObject_DrawModelNoDepthWrite;
         }
-        if (object->unk08->unk30 == 0x91) {
-            object->model->unk1BC = (void (*)(ModelInstance *))ScrollTexture_DrawAll;
+        if (object->source->def_index == 0x91) {
+            object->model->on_textures_sent = (void (*)(ModelInstance *))ScrollTexture_DrawAll;
             ScrollTexture_Init();
         }
         MAP_OBJECT_BITS(object)->bit1 = FALSE;
         MAP_OBJECT_BITS(object)->bit2 = FALSE;
     }
     plain_draw_list[map] = NULL;
-    for (i = ((MapSlotUnk08 *)map_slots[map].header)->unk30 - 1; i >= 0; i--) {
+    for (i = ((MapSlotUnk08 *)map_slots[map].header)->plain_object_model_count - 1; i >= 0; i--) {
         for (object = &map_slot_objects[map][count - 1], j = count - 1; j >= 0; j--, object--) {
             if (MAP_OBJECT_DEF_WORD(object) & 0x400) {
                 continue;
@@ -174,15 +174,15 @@ void MapObject_InitMap(int map) {
             if (MAP_OBJECT_DEF_WORD(object) & 0x100) {
                 continue;
             }
-            if (object->unk08->unk32 != i) {
+            if (object->source->model_index != i) {
                 continue;
             }
-            object->unk1C = plain_draw_list[map];
+            object->next_in_draw_list = plain_draw_list[map];
             plain_draw_list[map] = object;
         }
     }
     jointed_draw_list[map] = NULL;
-    for (i = ((MapSlotUnk08 *)map_slots[map].header)->unk32 - 1; i >= 0; i--) {
+    for (i = ((MapSlotUnk08 *)map_slots[map].header)->skinned_object_model_count - 1; i >= 0; i--) {
         for (object = &map_slot_objects[map][count - 1], j = count - 1; j >= 0; j--, object--) {
             if (MAP_OBJECT_DEF_WORD(object) & 0x400) {
                 continue;
@@ -190,10 +190,10 @@ void MapObject_InitMap(int map) {
             if (!(MAP_OBJECT_DEF_WORD(object) & 0x100)) {
                 continue;
             }
-            if (object->unk08->unk32 != i) {
+            if (object->source->model_index != i) {
                 continue;
             }
-            object->unk1C = jointed_draw_list[map];
+            object->next_in_draw_list = jointed_draw_list[map];
             jointed_draw_list[map] = object;
         }
     }
@@ -215,28 +215,28 @@ void MapObject_StartMap(int map) {
 
     D_004467A8[map] = 1;
     for (; i < count; i++, object++) {
-        source = object->unk08;
+        source = object->source;
         flag = 0;
-        in_use = ((s32)(source->unk38.flags >> 49) ^ 1) & 1;
+        in_use = ((s32)(source->spawn_flags.flags >> 49) ^ 1) & 1;
         if (visited) {
             in_use = Game_GetObjectActive(tag, i);
             flag = Game_GetObjectState(tag, i);
             MAP_OBJECT_BITS(object)->bit18 = Game_GetObjectFlag(tag, i, 0);
             MAP_OBJECT_BITS(object)->bit19 = Game_GetObjectFlag(tag, i, 1);
         } else {
-            kind = object->unk04->kind;
+            kind = object->definition->kind;
             if (kind == 8 || kind == 4 || kind == 0xD || kind == 0x10) {
-                flag = ((MapObjectUnk08Words *)source)->unk52;
+                flag = ((MapObjectUnk08Words *)source)->kind_param_7;
             }
         }
-        if (Game_GetTriggerItem(tag, object->unk08->unk38.bytes[2])) {
+        if (Game_GetTriggerItem(tag, object->source->spawn_flags.bytes[2])) {
             flag = 1;
         }
-        object->unk0C = (s32)Map_FindRecordAtInSlot((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->unk00 & 1);
+        object->map_record = (s32)Map_FindRecordAtInSlot((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->unk00 & 1);
         if (in_use) {
             MapObject_Activate(object);
         } else {
-            map_object_setup_hooks[object->unk04->kind](object);
+            map_object_setup_hooks[object->definition->kind](object);
         }
         MAP_OBJECT_BITS(object)->bit17 = flag;
     }
@@ -269,7 +269,7 @@ void MapObject_SaveAllFlags(void) {
     int i;
 
     for (map = 0; map < 2; map++) {
-        if (map_slots[map].unk00 != 0) {
+        if (map_slots[map].loaded != 0) {
             count = D_004467B8[map];
             tag = map_slots[map].tag;
             object = map_slot_objects[map];
@@ -292,7 +292,7 @@ void MapObject_OffsetAll(int map, f32 *offset) {
     int i;
 
     for (i = 0; i < count; i++, object++) {
-        map_object_offset_hooks[object->unk04->kind](object, offset);
+        map_object_offset_hooks[object->definition->kind](object, offset);
     }
 }
 
@@ -348,67 +348,67 @@ void MapObject_UpdateAll(void) {
         object = map_objects(map);
         count = map_object_count(map);
         for (i = 0; i < count; i++, object++) {
-            if (!(object->unk10 & 0x10000)) {
+            if (!(object->state_flags & 0x10000)) {
                 continue;
             }
             model = object->model;
-            object->unk20 = model->position.x;
-            object->unk24 = model->position.y;
-            object->unk28 = model->position.z;
-            object->unk30 = model->rotation.x;
-            object->unk34 = model->rotation.y;
-            object->unk38 = model->rotation.z;
+            object->last_position_x = model->position.x;
+            object->last_position_y = model->position.y;
+            object->last_position_z = model->position.z;
+            object->last_rotation_x = model->rotation.x;
+            object->last_rotation_y = model->rotation.y;
+            object->last_rotation_z = model->rotation.z;
             MAP_OBJECT_BITS(object)->bit2 = MAP_OBJECT_BITS(object)->bit1;
             MAP_OBJECT_BITS(object)->bit1 = FALSE;
             MAP_OBJECT_BITS_LOW(object)->bit3 = FALSE;
             if (MODEL_UNK100_BITS(model)->has_motion) {
-                anim = &object->unk04->anims[MAP_OBJECT_BYTES(object)->anim];
+                anim = &object->definition->anims[MAP_OBJECT_BYTES(object)->anim];
                 if (anim->unk06 == MODEL_CHANNEL(model)->param) {
                     Effect_StartSpawner(anim->unk02, &model->position, &model->rotation, object);
                 }
             }
-            kind = (object->unk10 & 0x100000) ? 0 : object->unk04->kind;
+            kind = (object->state_flags & 0x100000) ? 0 : object->definition->kind;
             if (MAP_OBJECT_BYTES(object)->step < 0x10) {
                 if (map_object_step_handlers[kind][MAP_OBJECT_BYTES(object)->step] != NULL) {
                     map_object_step_handlers[kind][MAP_OBJECT_BYTES(object)->step](object);
                 }
             }
-            if (!(object->unk10 & 0x10000)) {
+            if (!(object->state_flags & 0x10000)) {
                 continue;
             }
-            map_object_update_hooks[object->unk04->kind](object);
-            record = (MapRecord *)object->unk0C;
+            map_object_update_hooks[object->definition->kind](object);
+            record = (MapRecord *)object->map_record;
             if (record != NULL) {
-                if ((MapObject *)player_state.unk208 == object) {
-                    object->unk10 |= 2;
-                } else if (object->unk08->unk5A != 0 && object->unk08->unk5A != 0xFF) {
-                    if (Map_TestFlagBlockBit(D_00446770, player_state.unk250, MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk5A)) {
-                        object->unk10 |= 2;
+                if ((MapObject *)player_state.floor_map_object == object) {
+                    object->state_flags |= 2;
+                } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
+                    if (Map_TestFlagBlockBit(D_00446770, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->linked_point_owner)) {
+                        object->state_flags |= 2;
                     }
-                } else if (record->unk38 & 0x4000000) {
-                    object->unk10 |= 2;
+                } else if (record->record_flags & 0x4000000) {
+                    object->state_flags |= 2;
                 }
             }
-            source = object->unk08;
-            if (source->unk54 == 0) {
+            source = object->source;
+            if (source->appear_effect == 0) {
                 continue;
             }
-            in_view = object->unk10 & 6;
+            in_view = object->state_flags & 6;
             if (in_view == 2) {
                 shown = object->model;
                 if (shown->parts != NULL) {
-                    shown->unk1B4(shown);
-                    from = (f32 *)object->model->get_point(object->model, object->unk08->unk56);
-                    next = (f32 *)object->model->get_point(object->model, object->unk08->unk56 + 1);
+                    shown->update_bone_points(shown);
+                    from = (f32 *)object->model->get_point(object->model, object->source->effect_start_point);
+                    next = (f32 *)object->model->get_point(object->model, object->source->effect_start_point + 1);
                     delta_x = next[0] - from[0];
                     delta_y = next[1] - from[1];
                     delta_z = next[2] - from[2];
                     angles.x = atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
                     angles.y = Angle_Wrap(-atan2f(delta_z, delta_x) + 1.5707964f);
                     angles.z = angles.w = 0.0f;
-                    Effect_StartSpawner(object->unk08->unk54, from, &angles, object);
+                    Effect_StartSpawner(object->source->appear_effect, from, &angles, object);
                 } else {
-                    Effect_StartSpawner(source->unk54, &shown->position, &shown->rotation, object);
+                    Effect_StartSpawner(source->appear_effect, &shown->position, &shown->rotation, object);
                 }
             } else if (in_view == 4) {
                 Effect_FreeForOwner((Entity *)object);
@@ -424,21 +424,21 @@ int MapObject_UseItem(MapObject *object, int item) {
     if (item_counts[item] == 0) {
         used = FALSE;
     } else {
-        used = map_object_item_hooks[object->unk04->kind](object, item) != 0;
+        used = map_object_item_hooks[object->definition->kind](object, item) != 0;
     }
     return used;
 }
 
 /* Passes a signal to a map object's kind (map_object_signal_hooks) unless a script drives it. */
 void MapObject_Signal(MapObject *object, int signal) {
-    if (object != NULL && !(object->unk10 & 0x100000)) {
-        map_object_signal_hooks[object->unk04->kind](object, signal);
+    if (object != NULL && !(object->state_flags & 0x100000)) {
+        map_object_signal_hooks[object->definition->kind](object, signal);
     }
 }
 
 /* the flags of the map record an object stands in, and which of the two maps that record is of */
-#define RECORD_FLAGS(object) (((MapDrawRecord *)(object)->unk0C)->flags)
-#define RECORD_MAP(object) ((u8)(((MapRecord *)(object)->unk0C)->unk38 >> 27) & 1)
+#define RECORD_FLAGS(object) (((MapDrawRecord *)(object)->map_record)->flags)
+#define RECORD_MAP(object) ((u8)(((MapRecord *)(object)->map_record)->record_flags >> 27) & 1)
 
 /* Draws the map objects of both maps (or of one, when only_one is set): first
    the jointed ones, then the plain ones. While the player wears item 0x9D the
@@ -468,10 +468,10 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
     }
     rest = 1.0f - blend;
     for (map = 0; map < 2; map++) {
-        if (map_slots[map].unk00 != 0) {
+        if (map_slots[map].loaded != 0) {
             for (i = 0; i < 0x20; i++) {
                 dest = &glow_lights[map][i];
-                source = (MapSlotUnk10Vectors *)&map_draw_state.unkA90[map][i];
+                source = (MapSlotUnk10Vectors *)&map_draw_state.light_blocks[map][i];
                 Vector_Copy(&dest->unk00[0], &source->unk00[0]);
                 Vector_Copy(&dest->unk00[1], &source->unk00[1]);
                 Vector_Copy(&dest->unk00[2], &source->unk00[2]);
@@ -517,58 +517,58 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
         if (only_one != 0 && which != map) {
             continue;
         }
-        for (object = jointed_draw_list[map]; object != NULL; object = object->unk1C) {
-            if (!(object->unk10 & 2)) {
+        for (object = jointed_draw_list[map]; object != NULL; object = object->next_in_draw_list) {
+            if (!(object->state_flags & 2)) {
                 continue;
             }
             if (mode != 0 && !(RECORD_FLAGS(object) & 0x20)) {
                 continue;
             }
             if (only_one != 0) {
-                if (!(object->unk04->unk68 & 0x10000)) {
+                if (!(object->definition->definition_flags & 0x10000)) {
                     continue;
                 }
             } else {
-                if (object->unk04->unk68 & 0x10000) {
+                if (object->definition->definition_flags & 0x10000) {
                     continue;
                 }
             }
             if ((MAP_OBJECT_DEF_WORD(object) & 0x4000) && glow_item_worn != 0) {
-                if ((s8)object->unk08->unk38.bytes[5] != -1) {
-                    object->model->unk148 = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[5]];
+                if ((s8)object->source->spawn_flags.bytes[5] != -1) {
+                    object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->unk148 = (s32)&glow_lights_shared;
+                    object->model->light_block = (s32)&glow_lights_shared;
                 } else {
-                    object->model->unk148 = (s32)&glow_lights[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk35];
+                    object->model->light_block = (s32)&glow_lights[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
                 }
             } else {
-                if ((s8)object->unk08->unk38.bytes[5] != -1) {
-                    object->model->unk148 = (s32)&map_draw_state.unkA90[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[5]];
+                if ((s8)object->source->spawn_flags.bytes[5] != -1) {
+                    object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->unk148 = (s32)&map_draw_state.unkC0;
+                    object->model->light_block = (s32)&map_draw_state.unkC0;
                 } else {
-                    object->model->unk148 = (s32)&map_draw_state.unkA90[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk35];
+                    object->model->light_block = (s32)&map_draw_state.light_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
                 }
             }
-            if ((s8)object->unk08->unk38.bytes[4] != -1) {
-                object->model->unk14C = &map_draw_state.unk290[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[4]];
+            if ((s8)object->source->spawn_flags.bytes[4] != -1) {
+                object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[4]];
             } else if (RECORD_FLAGS(object) & 0x10) {
-                object->model->unk14C = &map_draw_state.unkA0;
+                object->model->fog_block = &map_draw_state.unkA0;
             } else {
-                object->model->unk14C = &map_draw_state.unk290[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk34];
+                object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
             }
-            if (object->unk04->kind == 9) {
+            if (object->definition->kind == 9) {
                 LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
-            } else if (object->unk08->unk5A != 0 && object->unk08->unk5A != 0xFF) {
-                LinkedPoint_FindHitsForOwner(object->model, object->unk08->unk5A);
+            } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
+                LinkedPoint_FindHitsForOwner(object->model, object->source->linked_point_owner);
             } else {
-                LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
+                LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->map_record)->flag_block_bit);
             }
-            if ((object->unk08->unk38.flags & 0x1000000000000L) || (object->model->alpha < 128.0f && !(object->unk04->unk68 & 0x10000))) {
+            if ((object->source->spawn_flags.flags & 0x1000000000000L) || (object->model->alpha < 128.0f && !(object->definition->definition_flags & 0x10000))) {
                 DrawList_Add(object->model, 0, mode);
             } else {
                 ModelTexture_SendForModel(object->model);
-                object->model->unk1A8(object->model);
+                object->model->draw_parts(object->model);
             }
         }
     }
@@ -576,60 +576,60 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
         if (only_one != 0 && which != map) {
             continue;
         }
-        for (object = plain_draw_list[map]; object != NULL; object = object->unk1C) {
-            if (!(object->unk10 & 2)) {
+        for (object = plain_draw_list[map]; object != NULL; object = object->next_in_draw_list) {
+            if (!(object->state_flags & 2)) {
                 continue;
             }
             if (mode != 0 && !(RECORD_FLAGS(object) & 0x20)) {
                 continue;
             }
             if (only_one != 0) {
-                if (!(object->unk04->unk68 & 0x10000)) {
+                if (!(object->definition->definition_flags & 0x10000)) {
                     continue;
                 }
             } else {
-                if (object->unk04->unk68 & 0x10000) {
+                if (object->definition->definition_flags & 0x10000) {
                     continue;
                 }
             }
             if ((MAP_OBJECT_DEF_WORD(object) & 0x4000) && glow_item_worn != 0) {
-                if ((s8)object->unk08->unk38.bytes[5] != -1) {
-                    object->model->unk148 = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[5]];
+                if ((s8)object->source->spawn_flags.bytes[5] != -1) {
+                    object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->unk148 = (s32)&glow_lights_shared;
+                    object->model->light_block = (s32)&glow_lights_shared;
                 } else {
-                    object->model->unk148 = (s32)&glow_lights[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk35];
+                    object->model->light_block = (s32)&glow_lights[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
                 }
             } else {
-                if ((s8)object->unk08->unk38.bytes[5] != -1) {
-                    object->model->unk148 = (s32)&map_draw_state.unkA90[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[5]];
+                if ((s8)object->source->spawn_flags.bytes[5] != -1) {
+                    object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->unk148 = (s32)&map_draw_state.unkC0;
+                    object->model->light_block = (s32)&map_draw_state.unkC0;
                 } else {
-                    object->model->unk148 = (s32)&map_draw_state.unkA90[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk35];
+                    object->model->light_block = (s32)&map_draw_state.light_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->light_block_index];
                 }
             }
-            if ((s8)object->unk08->unk38.bytes[4] == -1) {
+            if ((s8)object->source->spawn_flags.bytes[4] == -1) {
                 if (RECORD_FLAGS(object) & 0x10) {
-                    object->model->unk14C = &map_draw_state.unkA0;
+                    object->model->fog_block = &map_draw_state.unkA0;
                 } else {
-                    object->model->unk14C = &map_draw_state.unk290[RECORD_MAP(object)][((MapDrawRecord *)object->unk0C)->unk34];
+                    object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
                 }
             } else {
-                object->model->unk14C = &map_draw_state.unk290[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->unk08->unk38.bytes[4]];
+                object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[4]];
             }
-            if (object->unk04->kind == 9) {
+            if (object->definition->kind == 9) {
                 LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
-            } else if (object->unk08->unk5A != 0 && object->unk08->unk5A != 0xFF) {
-                LinkedPoint_FindHitsForOwner(object->model, object->unk08->unk5A);
+            } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
+                LinkedPoint_FindHitsForOwner(object->model, object->source->linked_point_owner);
             } else {
-                LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->unk0C)->unk38);
+                LinkedPoint_FindHitsForOwner(object->model, ((MapRecordInfo *)object->map_record)->flag_block_bit);
             }
-            if ((object->unk08->unk38.flags & 0x1000000000000L) || (object->model->unk145 != 0 && (s16)object->model->unk146 < 0x80 && !(object->unk04->unk68 & 0x10000))) {
+            if ((object->source->spawn_flags.flags & 0x1000000000000L) || (object->model->fade_enabled != 0 && (s16)object->model->fade_alpha < 0x80 && !(object->definition->definition_flags & 0x10000))) {
                 DrawList_Add(object->model, 0, mode);
             } else {
                 ModelTexture_SendForModel(object->model);
-                object->model->unk1A8(object->model);
+                object->model->draw_parts(object->model);
             }
         }
     }
@@ -640,16 +640,16 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
 void MapObject_Activate(MapObject *object) {
     ModelInstance *model;
 
-    if (object != NULL && !(object->unk10 & 0x10000)) {
-        object->unk10 |= 0x10000;
+    if (object != NULL && !(object->state_flags & 0x10000)) {
+        object->state_flags |= 0x10000;
         MAP_OBJECT_BITS(object)->step = 0;
         MAP_OBJECT_BITS(object)->bit1 = FALSE;
         MAP_OBJECT_BITS(object)->bit2 = FALSE;
         MAP_OBJECT_BITS(object)->anim = 4;
         model = object->model;
-        model->unk145 = 0;
-        model->unk150 = model->unk154 = model->unk158 = model->alpha = 128.0f;
-        object->model->unk146 = 0x80;
+        model->fade_enabled = 0;
+        model->colour_red = model->colour_green = model->colour_blue = model->alpha = 128.0f;
+        object->model->fade_alpha = 0x80;
     }
 }
 
@@ -657,11 +657,11 @@ void MapObject_Activate(MapObject *object) {
 void MapObject_Deactivate(MapObject *object) {
     if (object != NULL) {
         if (MAP_OBJECT_BITS(object)->step != 0) {
-            map_object_end_hooks[object->unk04->kind](object);
+            map_object_end_hooks[object->definition->kind](object);
         }
         MapObject_StopSound(object);
         Effect_FreeForOwner((Entity *)object); // match: shared prototype takes an Entity
-        object->unk10 &= ~0x10000;
+        object->state_flags &= ~0x10000;
         MAP_OBJECT_BITS(object)->step = 0;
         MAP_OBJECT_BITS(object)->bit1 = FALSE;
         MAP_OBJECT_BITS(object)->bit2 = FALSE;
@@ -691,17 +691,17 @@ void MapObject_Break(MapObject *object) {
     if (MAP_OBJECT_BYTES(object)->step == 0xF) {
         return;
     }
-    object->unk10 &= ~0x100000;
+    object->state_flags &= ~0x100000;
     MAP_OBJECT_BYTES(object)->step = 0xF;
     if (MAP_OBJECT_DEF_WORD(object) & 0x1000) {
         MapObject_StartAnim(object, 1);
     }
-    Effect_StartSpawner(object->unk04->unk50, &object->model->position, &object->model->rotation, &map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1]);
-    if (object->unk08->unk42 != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
-        Script_Start(object->unk08->unk42, 0);
+    Effect_StartSpawner(object->definition->break_effect, &object->model->position, &object->model->rotation, &map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1]);
+    if (object->source->break_script != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
+        Script_Start(object->source->break_script, 0);
     }
-    if (object->unk04->unk68 & 0x20000) {
-        other = MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk38.bytes[3]);
+    if (object->definition->definition_flags & 0x20000) {
+        other = MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->spawn_flags.bytes[3]);
         if (other != NULL) {
             MapObject_Activate(other);
         }
@@ -713,7 +713,7 @@ void MapObject_Break(MapObject *object) {
 s16 MapObject_StartAnim(MapObject *object, int anim) {
     ModelChannel *channel;
 
-    ModelMotion_Select(object->model, object->unk04->anims[anim].anim);
+    ModelMotion_Select(object->model, object->definition->anims[anim].anim);
     MAP_OBJECT_BYTES(object)->anim = anim;
     channel = MODEL_CHANNEL(object->model);
     channel->param = 0;
@@ -724,7 +724,7 @@ s16 MapObject_StartAnim(MapObject *object, int anim) {
 /* Advances a map object's animation one frame, starting the sounds tied to the
    frame it is on; returns whether the animation is still running. */
 int MapObject_StepAnim(MapObject *object) {
-    MapObjectAnim *anim = &object->unk04->anims[MAP_OBJECT_BYTES(object)->anim];
+    MapObjectAnim *anim = &object->definition->anims[MAP_OBJECT_BYTES(object)->anim];
     ModelInstance *model;
     f32 range;
 
@@ -732,8 +732,8 @@ int MapObject_StepAnim(MapObject *object) {
         model = object->model;
         if (anim->sound_frame == MODEL_CHANNEL(model)->param) {
             range = 800.0f;
-            if (object->unk04->unk70 > 0.0f) {
-                range = object->unk04->unk70;
+            if (object->definition->sound_range > 0.0f) {
+                range = object->definition->sound_range;
             }
             switch (anim->sound_kind) {
                 case 0:
@@ -741,10 +741,10 @@ int MapObject_StepAnim(MapObject *object) {
                     break;
                 case 1:
                     // match: the range is evaluated before the position
-                    ((int (*)(u8, u8, f32, f32 *))Sound_PlayMapAtRange)(anim->sound, object->unk04->unk74, range, &model->position.x);
+                    ((int (*)(u8, u8, f32, f32 *))Sound_PlayMapAtRange)(anim->sound, object->definition->sound_falloff_mode, range, &model->position.x);
                     break;
                 case 2:
-                    Sound_StartTaggedAt((u8)next_sound_channel + 0x20, anim->sound, object->unk04->unk74, range, (Vector4Arg *)&model->position);
+                    Sound_StartTaggedAt((u8)next_sound_channel + 0x20, anim->sound, object->definition->sound_falloff_mode, range, (Vector4Arg *)&model->position);
                     object->sound = (u8)next_sound_channel + 0x20;
                     next_sound_channel = (next_sound_channel + 1) % 32;
                     break;
@@ -752,11 +752,11 @@ int MapObject_StepAnim(MapObject *object) {
         }
     }
     if (MAP_OBJECT_BITS(object)->anim == 4 || MAP_OBJECT_BITS(object)->anim == 5) {
-        anim = &object->unk04->anims[MAP_OBJECT_BYTES(object)->anim + 2];
+        anim = &object->definition->anims[MAP_OBJECT_BYTES(object)->anim + 2];
         if (anim->sound != 0xFFFF && anim->sound_frame == MODEL_CHANNEL(object->model)->param) {
             range = 800.0f;
-            if (object->unk04->unk70 > 0.0f) {
-                range = object->unk04->unk70;
+            if (object->definition->sound_range > 0.0f) {
+                range = object->definition->sound_range;
             }
             MapObject_StopSound(object);
             switch (anim->sound_kind) {
@@ -764,7 +764,7 @@ int MapObject_StepAnim(MapObject *object) {
                     Sound_PlayCommonAt(range, anim->sound, &object->model->position);
                     break;
                 case 1:
-                    Sound_PlayMapAtRange(anim->sound, object->unk04->unk74, &object->model->position.x, range);
+                    Sound_PlayMapAtRange(anim->sound, object->definition->sound_falloff_mode, &object->model->position.x, range);
                     break;
                 case 2:
                     break;
@@ -772,8 +772,8 @@ int MapObject_StepAnim(MapObject *object) {
         }
     }
     ModelMotion_Step(object->model);
-    object->model->unk1B4(object->model);
-    object->unk10 |= 8;
+    object->model->update_bone_points(object->model);
+    object->state_flags |= 8;
     model = object->model;
     if (MODEL_CHANNEL(model)->param == 0) {
         MapObject_StopSound(object);
@@ -784,11 +784,11 @@ int MapObject_StepAnim(MapObject *object) {
 
 /* Marks a map object that holds something (bones and gravestones, chests, containers) of the map's own sources as emptied. */
 void MapObject_MarkEmptied(MapObject *object) {
-    u8 kind = object->unk04->kind;
+    u8 kind = object->definition->kind;
 
     if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
-        ((u32)(((int)object->unk08 - D_004467B0[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
-        object->unk10 |= 0x40000;
+        ((u32)(((int)object->source - D_004467B0[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
+        object->state_flags |= 0x40000;
     }
 }
 
@@ -798,10 +798,10 @@ void MapObject_MarkEmptiedById(int map, int object_id) {
     u8 kind;
 
     if (object != NULL) {
-        kind = object->unk04->kind;
+        kind = object->definition->kind;
         if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
-            ((u32)(((int)object->unk08 - D_004467B0[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
-            object->unk10 |= 0x40000;
+            ((u32)(((int)object->source - D_004467B0[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
+            object->state_flags |= 0x40000;
         }
     }
 }
@@ -827,7 +827,7 @@ void MapObject_SetScripted(MapObject *object, int scripted) {
 
 /* Restarts a scripted map object (model flag 1, bit 20) on another animation. */
 void MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22) {
-    if ((object->model->unk100 & 1) && (object->unk10 & 0x100000)) {
+    if ((object->model->model_flags & 1) && (object->state_flags & 0x100000)) {
         MAP_OBJECT_BITS(object)->bit21 = FALSE;
         MAP_OBJECT_BITS(object)->bit22 = bit22;
         MAP_OBJECT_BITS(object)->anim = anim;
@@ -837,7 +837,7 @@ void MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22) {
 
 /* Sets bit 21 of a scripted map object (model flag 1, bit 20). */
 void MapObject_SetScriptedBit21(MapObject *object, int bit21) {
-    if ((object->model->unk100 & 1) && (object->unk10 & 0x100000)) {
+    if ((object->model->model_flags & 1) && (object->state_flags & 0x100000)) {
         MAP_OBJECT_BITS(object)->bit21 = bit21;
     }
 }
@@ -890,7 +890,7 @@ void MapObject_DrawModelNoDepthWrite(void *model) {
     ModelTexture_SendForModel(model);
 }
 
-/* Does nothing: the point-update hook (ModelInstance.unk1B4) of a map object model without points. */
+/* Does nothing: the point-update hook (ModelInstance.update_bone_points) of a map object model without points. */
 void func_0011EA70(void) {
 }
 

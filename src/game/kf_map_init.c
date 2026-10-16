@@ -80,10 +80,10 @@ void Map_LoadParamFiles(void) {
     File_Close(handle);
     definition = item_name_defs;
     for (i = 379; i >= 0; i--) {
-        if (definition->unk33 != 0) {
-            definition->unk3E = (f32)definition->unk33 * 2.2046; /* kilograms to pounds; the double is D_0043E568 */
+        if (definition->weight_tenths_of_kilogram != 0) {
+            definition->weight_tenths_of_pound = (f32)definition->weight_tenths_of_kilogram * 2.2046; /* kilograms to pounds; the double is D_0043E568 */
         } else {
-            definition->unk3E = 0;
+            definition->weight_tenths_of_pound = 0;
         }
         definition++;
     }
@@ -92,22 +92,22 @@ void Map_LoadParamFiles(void) {
 /* Resets the game status, the map draw state and the camera. */
 void Map_ResetGameState(void) {
     memset(&game_status, 0, 0x48);
-    game_status.unk07 = 1;
-    game_status.unk00 = 1;
+    game_status.movement_input_enabled = 1;
+    game_status.player_control = 1;
     game_status.unk01 = 1;
     memset(&map_draw_state, 0, sizeof(MapDrawState));
-    map_draw_state.unk60 |= (s64)0x8000 << 31;
-    map_draw_state.unk60 |= (s64)0x8000 << 27;
-    map_draw_state.unk60 |= (s64)0x8000 << 30;
-    map_draw_state.unk88 = 0x40;
-    map_draw_state.unk68 = 1;
-    map_draw_state.unk6C = 0;
-    map_draw_state.unk70 = 0;
-    map_draw_state.unk74 = 0;
-    map_draw_state.unk78 = 0;
-    map_draw_state.unk80 = 0x44;
+    map_draw_state.draw_flags |= (s64)0x8000 << 31;
+    map_draw_state.draw_flags |= (s64)0x8000 << 27;
+    map_draw_state.draw_flags |= (s64)0x8000 << 30;
+    map_draw_state.previous_frame_alpha = 0x40;
+    map_draw_state.hud_shown = 1;
+    map_draw_state.screen_fill_red = 0;
+    map_draw_state.screen_fill_green = 0;
+    map_draw_state.screen_fill_blue = 0;
+    map_draw_state.screen_fill_alpha = 0;
+    map_draw_state.screen_fill_blend = 0x44;
     memset(&D_004325A0, 0, sizeof(CameraState));
-    D_004325A0.unk48 = 512.0f;
+    D_004325A0.screen_scale = 512.0f;
 }
 
 /* Empties the map slots, the map draw lists, the records-by-id table and the two lists of record boxes. */
@@ -131,17 +131,17 @@ void Map_LoadAtOnce(int map) {
     MapFogColor *fog;
 
     ((int (*)(void *, int))Memory_ClearWords)(slot, 0x18); // match: the callee returns a value here, which keeps $2 busy
-    memory->unk14 = memory->unk1C = D_00446F50;
-    memory->unk18 = memory->unk20 = D_00446F54;
-    Memory_ClearWords(memory->unk1C, (u32)D_00446F20 / 4);
-    Memory_ClearWords(memory->unk20, D_00446F1C / 4);
+    memory->file_read_cursor = memory->file_base = D_00446F50;
+    memory->work_cursor = memory->work_base = D_00446F54;
+    Memory_ClearWords(memory->file_base, (u32)D_00446F20 / 4);
+    Memory_ClearWords(memory->work_base, D_00446F1C / 4);
     sprintf(name, D_0043E570, map);
     handle = File_Open(name, 0, 1);
     size = File_GetSize(handle);
-    File_Read(handle, memory->unk14, -1);
+    File_Read(handle, memory->file_read_cursor, -1);
     File_Close(handle);
     slot->tag = map;
-    slot->unk04 = (size + 0x3FFFF) / 0x40000 * 0x40000;
+    slot->rounded_file_size = (size + 0x3FFFF) / 0x40000 * 0x40000;
     Map_ParseFile(0);
     Map_BuildModels(0);
     Sound_LoadMapBank(slot);
@@ -151,12 +151,12 @@ void Map_LoadAtOnce(int map) {
     MapObject_InitMap(0);
     MapItem_InitMap(0);
     Gold_InitMap(0);
-    map_slots[0].unk00 = 1;
+    map_slots[0].loaded = 1;
     D_00446770 = 0;
-    map_draw_state.unkA0 = *slot->unk0C;
-    map_draw_state.unkC0 = *(MapSlotUnk10Words *)slot->unk10;
+    map_draw_state.unkA0 = *slot->fog_blocks;
+    map_draw_state.unkC0 = *(MapSlotUnk10Words *)slot->light_blocks;
     fog = &map_draw_state.unk280;
-    *fog = ((MapSlotUnk08 *)map_slots[0].header)->unk50;
+    *fog = ((MapSlotUnk08 *)map_slots[0].header)->fog_color;
     map_draw_state.unk9A = 0;
     map_draw_state.unk9B = 0;
     map_draw_state.unk9C = 0;
@@ -167,8 +167,8 @@ void Map_LoadAtOnce(int map) {
     Entity_ClearFlag10InSlot(0);
     MapSetup_RunForMap(0);
     Game_MarkMapVisited(map_slots[0].tag);
-    Script_Init(map_slots[0].unk5C);
+    Script_Init(map_slots[0].script);
     Script_Start(0x7FFF, 0);
-    sound_load_queue.unk00 = ((MapSlotUnk08 *)map_slots[0].header)->unk70;
-    sound_load_queue.unk04 = 1;
+    sound_load_queue.bgm_id = ((MapSlotUnk08 *)map_slots[0].header)->sound_bank_file_index;
+    sound_load_queue.bgm_load_pending = 1;
 }

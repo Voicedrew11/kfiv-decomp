@@ -9,7 +9,7 @@
 
 /* EntityMotionSlot (kf_entity.h) as EntityAi_StartSlotMotion fills it: the bit-fields in one word */
 typedef struct {
-    u32 index : 5;                  /* 0x00 which EntityParams.unk60 entry (motion) it plays */
+    u32 index : 5;                  /* 0x00 which EntityParams.motion_ids entry (motion) it plays */
     u32 moves_entity : 1;           /* the root part's movement in the motion is handed to the entity */
     u32 bit6 : 1;
     u32 backwards : 1;
@@ -20,11 +20,11 @@ typedef struct {
 
 /* A random whole number of degrees as an angle in radians, wrapped to -pi..pi */
 float EntityAi_RandomAngle(void);
-/* Starts the second camera shake: its reach (CameraState.unk78) and its frames (unk7C) */
+/* Starts the second camera shake: its reach (CameraState.entity_shake_reach) and its frames (unk7C) */
 void EntityAi_ShakeCamera(int float_value, int int_value);
 /* Sets Entity.state and keeps the old value in prev_state */
 void EntityAi_SetState(Entity *entity, u8 state);
-/* Installs the entity's per-frame update (Entity.unk50; the type table entity_type_handlers gives it) and puts
+/* Installs the entity's per-frame update (Entity.update_func; the type table entity_type_handlers gives it) and puts
    action_step back to 0 */
 void EntityAi_SetUpdate(Entity *entity, s32 update);
 /* Switches the entity's handler, keeping the old one as prev_handler; optionally runs the new one now */
@@ -48,7 +48,7 @@ int EntityAi_LaunchShot(Entity *entity, int effect_id, void *origin, void *angle
 int EntityAi_LaunchShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 elapsed, s32 unk82);
 /* Spawns an effect at a model point, facing along the line to the next point */
 void EntityAi_SpawnBoneEffect(char **model, int effect_id, int point);
-/* Turns the model part at EntityModel.unk138 to look at target (Bone_TurnPartToLook) while params flag 0x2000 is
+/* Turns the model part at EntityModel.look_at_part to look at target (Bone_TurnPartToLook) while params flag 0x2000 is
    set; FALSE without it */
 int EntityAi_LookAtPoint(Entity *entity, int angles, int mode, int target, int limits, float rate);
 /* As EntityAi_LookAtPoint, at the player's position 220 above his feet */
@@ -63,10 +63,10 @@ s32 EntityAi_ShouldRespawn(Entity *entity);
    grows as he comes nearer; flag 63 when something stands between them, which clears flag 32 (mode below 2)
    and flag 33 (mode 0) */
 void EntityAi_SensePlayer(Entity *actor, s32 mode);
-/* Sets flag 53 while the model is farther from its spawn point than EntitySpawnInfo.unk4C (in x, y and z),
+/* Sets flag 53 while the model is farther from its spawn point than EntitySpawnInfo.wander_radius (in x, y and z),
    clears it otherwise */
 void EntityAi_CheckFarFromSpawn3D(Entity *entity);
-/* Sets flag 53 while the model is farther from its spawn point than EntitySpawnInfo.unk4C (in x and z),
+/* Sets flag 53 while the model is farther from its spawn point than EntitySpawnInfo.wander_radius (in x and z),
    clears it otherwise */
 void EntityAi_CheckFarFromSpawn(Entity *entity);
 /* Clears flag bit 31, which makes closing in a turn on the spot; nothing sets it */
@@ -94,32 +94,32 @@ int EntityAi_CanUseRangedFacing(Entity *entity, int index, float yaw);
 /* Per-frame collision of an entity: clears its push and state bits, sets bits 22-27 from its params, then
    runs its entity, map object and map piece checks */
 void EntityAi_UpdateCollision(Entity *entity);
-/* speed plus EntityParams.unk50, at most EntityParams.unk54 */
+/* speed plus EntityParams.speed_step_per_frame, at most EntityParams.max_speed */
 float EntityAi_Accelerate(Entity *entity, float speed);
 /* Turns the entity's heading toward target at a rate that builds up to EntityParams.turn_limit; returns 1
    once it is there */
 s32 EntityAi_TurnToHeading(Entity *entity, f32 *speed, f32 target);
 /* As EntityAi_TurnToHeading, toward a point */
 int EntityAi_TurnToPoint(Entity *entity, f32 *turn_rate, f32 *target);
-/* Sets the pause before the next attack (Entity.unkA2): base plus a share of the player's health in percent,
+/* Sets the pause before the next attack (Entity.attack_delay_frames): base plus a share of the player's health in percent,
    more for each kind of healing item he carries */
 void EntityAi_SetAttackDelay(Entity *entity, s32 base);
 /* Sets the entity's reaction, the handler that runs in place of its action until it clears itself (NULL
-   clears it), and puts the reaction's step, Entity.unkCB, back to 0; optionally runs it now */
+   clears it), and puts the reaction's step, Entity.reaction_step, back to 0; optionally runs it now */
 int EntityAi_SetReaction(Entity *entity, void (*reaction)(void), int run_now);
-/* Raises the weight factor (Entity.unkC0) of the attack in flag bits 58-59 by 5, kept within 0x40..0xC0 */
+/* Raises the weight factor (Entity.attack_weights) of the attack in flag bits 58-59 by 5, kept within 0x40..0xC0 */
 void EntityAi_RaiseAttackWeight(Entity *entity);
-/* Raises the weight factors of the three ranged attacks (Entity.unkC0[3..5]) by 2, kept within 0x40..0xC0 */
+/* Raises the weight factors of the three ranged attacks (Entity.attack_weights[3..5]) by 2, kept within 0x40..0xC0 */
 void EntityAi_RaiseRangedWeights(Entity *entity);
-/* The frame count of the motion animation index plays (Motion_FrameCount of EntityParams.unk60[index]) */
+/* The frame count of the motion animation index plays (Motion_FrameCount of EntityParams.motion_ids[index]) */
 int EntityAi_AnimationFrameCount(Entity *entity, s32 index);
 /* The frame count of motion index: MotionData.frame_count, the u16 in front of the part tables
    ModelInstance.level_tables[index] points at */
 u16 Motion_FrameCount(ModelInstance *model, int index);
-/* Puts model part index in motion slot value (ModelPart.unk6C) */
+/* Puts model part index in motion slot value (ModelPart.motion_slot) */
 void Motion_SetPartSlot(ModelInstance *model, int index, u8 value);
 /* Starts animation in a motion slot of the work area on channel, from frame, over frames (a quarter longer
-   while Entity.unk28 runs and it is not busy); 1 without a change when the slot already plays it and force
+   while Entity.ailment_3_frames runs and it is not busy); 1 without a change when the slot already plays it and force
    is 0 */
 int EntityAi_StartSlotMotion(Entity *entity, EntityMotionSlotWord *slot, int channel, int animation, int frame, int frames, int force);
 /* Plays a motion slot a step on (Motion_BlendSlotToPose with weight) and returns its frames left, counted down by one */

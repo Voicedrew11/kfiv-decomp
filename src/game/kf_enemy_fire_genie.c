@@ -70,9 +70,9 @@ static void FireGenie_SignalRespawned(Entity *entity);
 /* Set-up of a type 66 entity: clears its work area and installs the type's handlers. */
 void FireGenie_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
-    char *unk138 = entity->model->unk138;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
+    char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: the three fills name their target inside the loop; unkBC and unkC0 above are
@@ -82,7 +82,7 @@ void FireGenie_Init(Entity *entity) {
 
         work_area[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = FireGenie_Think;
     unkE0->animate = (void (*)(void))FireGenie_Animate;
     unkE0->on_hit = (void (*)(void))FireGenie_OnHit;
@@ -90,24 +90,24 @@ void FireGenie_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))FireGenie_Death;
     for (i = 3; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 5; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
     entity->flags |= 0x10000000;
-    if (ENTITY_FLAG_WORD(entity->spawn_info->unk38) & (0x8000L << 43)) {
+    if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -126,36 +126,36 @@ static void FireGenie_Animate(Entity *entity) {
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        blend_frames = entity->model->unkFC->unk88;
+        blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
             FireGenie_TurnPart3ToPlayer(entity, 0);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
-            if (entity->model->unkFC->unk82) {
+            if (entity->model->level_tables->unk82) {
                 FireGenie_TurnPart3ToPlayer(entity, 1);
             }
         }
-        limits[1] = entity->params->unk430 * 0.017453292f;
-        limits[0] = -entity->params->unk430 * 0.017453292f;
-        limits[3] = entity->params->unk432 * 0.017453292f;
-        limits[2] = -entity->params->unk432 * 0.017453292f;
+        limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
+        limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
+        limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
+        limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
         look_at_target = (s32)(entity->flags >> 9) & 1;
         if (look_at_target) {
-            EntityAi_LookAtPlayer(entity, unkE0->unk20, look_at_target, limits, 12.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, look_at_target, limits, 12.0f);
         } else {
-            EntityAi_LookAtPlayer(entity, unkE0->unk20, 0, NULL, 8.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, 0, NULL, 8.0f);
         }
     }
 }
 
-/* Helper of FireGenie_Animate: in mode 1 turns model part 3 by the angle of Entity.unk68 off the
+/* Helper of FireGenie_Animate: in mode 1 turns model part 3 by the angle of Entity.heading_to_player off the
    heading, kept between 0 and 40 degrees (work float unk48), worked out through the part's parent
    matrix; the part's three angles are work floats unk4C to unk54. In mode 0 it only puts those back
    on the part. */
 static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityModelPart80 *bone = &((EntityModelPart80 *)entity->model->unkF8)[3];
+    EntityModelPart80 *bone = &((EntityModelPart80 *)entity->model->parts)[3];
     f32 parent[16];
     f32 rotation[16];
     f32 twist[16];
@@ -165,7 +165,7 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
 
     if (bone != NULL) {
         if (mode != 0) {
-            yaw = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+            yaw = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (yaw > 0.6981317f) {
                 yaw = 0.6981317f;
             }
@@ -173,9 +173,9 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
                 yaw = 0.0f;
             }
             rate = 10.0f;
-            EntityMath_EaseAngleToward(&unkE0->unk48, yaw, rate);
+            EntityMath_EaseAngleToward(&unkE0->part_angle_x, yaw, rate);
             sceVu0CopyMatrix(parent, D_00431AF0);
-            Bone_MultiplyPathTo(entity->model->unkF8, bone, parent);
+            Bone_MultiplyPathTo(entity->model->parts, bone, parent);
             parent[12] = 0.0f;
             parent[13] = 0.0f;
             parent[14] = 0.0f;
@@ -184,21 +184,21 @@ static void FireGenie_TurnPart3ToPlayer(Entity *entity, s32 mode) {
             sceVu0RotMatrixZ(rotation, rotation, bone->unk50[2]);
             sceVu0RotMatrixY(rotation, rotation, bone->unk50[1]);
             Matrix_Multiply(rotation, parent, rotation);
-            sceVu0RotMatrixY(twist, D_00431AF0, unkE0->unk48);
+            sceVu0RotMatrixY(twist, D_00431AF0, unkE0->part_angle_x);
             Matrix_Multiply(rotation, twist, rotation);
             sceVu0TransposeMatrix(parent, parent);
             Matrix_Multiply(rotation, parent, rotation);
             Bone_MatrixToAngles(angles, rotation);
-            EntityMath_EaseAngleToward(&unkE0->unk4C, angles[0], rate);
-            EntityMath_EaseAngleToward(&unkE0->unk50, angles[1], rate);
-            EntityMath_EaseAngleToward(&unkE0->unk54, angles[2], rate);
-            bone->unk50[0] = unkE0->unk4C;
-            bone->unk50[1] = unkE0->unk50;
-            bone->unk50[2] = unkE0->unk54;
+            EntityMath_EaseAngleToward(&unkE0->part_angle_y, angles[0], rate);
+            EntityMath_EaseAngleToward(&unkE0->part_angle_z, angles[1], rate);
+            EntityMath_EaseAngleToward(&unkE0->pitch_speed, angles[2], rate);
+            bone->unk50[0] = unkE0->part_angle_y;
+            bone->unk50[1] = unkE0->part_angle_z;
+            bone->unk50[2] = unkE0->pitch_speed;
         } else {
-            bone->unk50[0] = unkE0->unk4C;
-            bone->unk50[1] = unkE0->unk50;
-            bone->unk50[2] = unkE0->unk54;
+            bone->unk50[0] = unkE0->part_angle_y;
+            bone->unk50[1] = unkE0->part_angle_z;
+            bone->unk50[2] = unkE0->pitch_speed;
         }
     }
 }
@@ -217,13 +217,13 @@ static void FireGenie_OnHit(Entity *entity) {
         ENTITY_UNK5C(entity)->as_s32 = 0;
         entity->flags &= ~0x200;
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
-        if (unkE0->unk7C) {
-            other = Entity_GetBySpawnId(unkE0->unk7B);
+        if (unkE0->action_counter) {
+            other = Entity_GetBySpawnId(unkE0->action_flags);
             if (other != NULL) {
-                other->unkE0.unk7A = -1;
+                other->unkE0.step_index = -1;
             }
         }
-        unkE0->unk7C = 0;
+        unkE0->action_counter = 0;
     }
     EntityAi_SetState((char *)entity, 2);
 }
@@ -233,15 +233,15 @@ static void FireGenie_OnHit(Entity *entity) {
 static void FireGenie_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->unkC6 == 0) {
+    if (entity->busy_flags == 0) {
         EntityAi_StepState(entity);
         FireGenie_ThinkDecide(entity, unknown);
     }
-    if (unkE0->unk68 != 0) {
-        unkE0->unk68--;
+    if (unkE0->pause_timer != 0) {
+        unkE0->pause_timer--;
     }
 }
 
@@ -259,7 +259,7 @@ static void FireGenie_ThinkDecide(Entity *entity, s32 unknown) {
         entity->flags |= 0x200;
         if (FireGenie_ShouldRespawnOther(entity)) {
             EntityAi_StartAction(entity, FireGenie_RespawnOther, unknown);
-        } else if (entity->unkA2 == 0 && FireGenie_CanAttack(entity)) {
+        } else if (entity->attack_delay_frames == 0 && FireGenie_CanAttack(entity)) {
             if (FireGenie_PickAttack(entity)) {
                 if (((s32)(entity->flags >> 58) & 3) == 0) {
                     EntityAi_StartAction(entity, FireGenie_RangedAttack0, unknown);
@@ -276,40 +276,40 @@ static void FireGenie_ThinkDecide(Entity *entity, s32 unknown) {
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, no turning; from frame
-   EntityParams.unk434 to unk436 it sets flag bit 9 and launches the record's shots on two frames in
+   EntityParams.action_frames to unk436 it sets flag bit 9 and launches the record's shots on two frames in
    three. */
 static void FireGenie_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
+    EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (entity->model->unkFC->unk82 >= (s16)entity->params->unk434
-            && entity->model->unkFC->unk82 <= entity->params->unk436) {
+        if (entity->model->level_tables->unk82 >= (s16)entity->params->action_frames
+            && entity->model->level_tables->unk82 <= entity->params->near_distance) {
             ENTITY_FLAGS(entity) |= 0x200;
             if (D_00446ED4 % 3U != 0) {
-                EntityAi_LaunchShots(entity, unk3D8, (s16)entity->params->unk434, entity->params->unk436);
+                EntityAi_LaunchShots(entity, unk3D8, (s16)entity->params->action_frames, entity->params->near_distance);
             }
         }
-        if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
+        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
@@ -323,43 +323,43 @@ static void FireGenie_RangedAttack0(Entity *entity) {
 
 /* An action (busy bit 0x1000) that FireGenie_ThinkDecide starts when
    FireGenie_ShouldRespawnOther says so: plays animation 17 to its end. Past frame
-   EntityParams.unk438 it calls FireGenie_RespawnOneOther and sets work byte unk7C; past frame
+   EntityParams.far_distance it calls FireGenie_RespawnOneOther and sets work byte unk7C; past frame
    unk43A it calls FireGenie_SignalRespawned and clears unk7C. */
 static void FireGenie_RespawnOther(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 |= 0x1000;
+    entity->busy_flags |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x11, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (entity->params->unk438 < entity->model->unkFC->unk82) {
+        if (entity->params->far_distance < entity->model->level_tables->unk82) {
             FireGenie_RespawnOneOther(entity);
             ENTITY_FLAGS(entity) |= 0x200;
-            unkE0->unk7C = 1;
+            unkE0->action_counter = 1;
             entity->action_step++;
         }
         break;
     case 3:
-        if (entity->params->unk43A < entity->model->unkFC->unk82) {
+        if (entity->params->unk43A < entity->model->level_tables->unk82) {
             FireGenie_SignalRespawned(entity);
-            unkE0->unk7C = 0;
+            unkE0->action_counter = 0;
             entity->action_step++;
         }
         break;
     case 4:
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -376,7 +376,7 @@ static void FireGenie_RespawnOther(Entity *entity) {
 static void FireGenie_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 = 0x40;
+    entity->busy_flags = 0x40;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -385,17 +385,17 @@ static void FireGenie_Death(Entity *entity) {
         ENTITY_FLAGS(entity) |= 0x100000;
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0xC) | 4;
         ENTITY_FLAGS(entity) &= ~0x200;
-        if (unkE0->unk7C != 0) {
-            Entity *other = Entity_GetBySpawnId(unkE0->unk7B);
+        if (unkE0->action_counter != 0) {
+            Entity *other = Entity_GetBySpawnId(unkE0->action_flags);
 
             if (other != NULL) {
-                other->unkE0.unk7A = -1;
+                other->unkE0.step_index = -1;
             }
         }
-        unkE0->unk7C = 0;
+        unkE0->action_counter = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
@@ -406,14 +406,14 @@ static void FireGenie_Death(Entity *entity) {
             ENTITY_FLAGS(entity) |= 0x10;
             ENTITY_FLAGS(entity) |= 0x8000000;
             ENTITY_FLAGS(entity) |= 0x4000000;
-            entity->unkA0 = 20;
+            entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
     case 3:
-        if (entity->unkA0 != 0) {
-            entity->model->unk15C = (f32)entity->unkD6 * (f32)entity->unkA0 / 20.0f;
+        if (entity->action_timer != 0) {
+            entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
             ENTITY_FLAGS(entity) |= 0xC;
             ENTITY_FLAGS(entity) &= ~2;
@@ -424,13 +424,13 @@ static void FireGenie_Death(Entity *entity) {
 
 /* The move handler: this type stays where it is; keeps animation 0. */
 static void FireGenie_Move(Entity *entity) {
-    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
 }
 
 /* Whether the player is in reach of any of the six attack records (EntityAi_CanUseMeleeFacing for the melee
    ones, EntityAi_CanUseRangedFacing for the ranged), along the heading of the turned part (work float unk48). */
 static s32 FireGenie_CanAttack(Entity *entity) {
-    f32 angle = EntityMath_WrapAngle(entity->model->unkD0[1] + entity->unkE0.unk48);
+    f32 angle = EntityMath_WrapAngle(entity->model->rotation[1] + entity->unkE0.part_angle_x);
 
     if (EntityAi_CanUseMeleeFacing(entity, angle, 0)) {
         return TRUE;
@@ -463,23 +463,23 @@ static s32 FireGenie_PickAttack(Entity *entity) {
     s32 sum;
     f32 angle;
 
-    angle = EntityMath_WrapAngle(entity->model->unkD0[1] + entity->unkE0.unk48);
-    chance = EntityAi_CanUseMeleeFacing(entity, angle, 0) ? (entity->unkC0[0] * entity->params->unk240[0].unk00) >> 6 : 0;
+    angle = EntityMath_WrapAngle(entity->model->rotation[1] + entity->unkE0.part_angle_x);
+    chance = EntityAi_CanUseMeleeFacing(entity, angle, 0) ? (entity->attack_weights[0] * entity->params->melee_attacks[0].attack_weight) >> 6 : 0;
     chances[0] = chance;
     total += chance;
-    chance = EntityAi_CanUseMeleeFacing(entity, angle, 1) ? (entity->unkC0[1] * entity->params->unk240[1].unk00) >> 6 : 0;
+    chance = EntityAi_CanUseMeleeFacing(entity, angle, 1) ? (entity->attack_weights[1] * entity->params->melee_attacks[1].attack_weight) >> 6 : 0;
     chances[1] = chance;
     total += chance;
-    chance = EntityAi_CanUseMeleeFacing(entity, angle, 2) ? (entity->unkC0[2] * ((EntityParamsUnk240 *)entity->params->unk350)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseMeleeFacing(entity, angle, 2) ? (entity->attack_weights[2] * ((EntityParamsUnk240 *)entity->params->melee_attack_third)->attack_weight) >> 6 : 0;
     chances[2] = chance;
     total += chance;
-    chance = EntityAi_CanUseRangedFacing(entity, angle, 0) ? (entity->unkC0[3] * ENTITY_PARAMS_UNK3D8(entity->params, 0)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 0) ? (entity->attack_weights[3] * ENTITY_PARAMS_UNK3D8(entity->params, 0)->unk00) >> 6 : 0;
     chances[3] = chance;
     total += chance;
-    chance = EntityAi_CanUseRangedFacing(entity, angle, 1) ? (entity->unkC0[4] * ENTITY_PARAMS_UNK3D8(entity->params, 1)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 1) ? (entity->attack_weights[4] * ENTITY_PARAMS_UNK3D8(entity->params, 1)->unk00) >> 6 : 0;
     chances[4] = chance;
     total += chance;
-    chance = EntityAi_CanUseRangedFacing(entity, angle, 2) ? (entity->unkC0[5] * ENTITY_PARAMS_UNK3D8(entity->params, 2)->unk00) >> 6 : 0;
+    chance = EntityAi_CanUseRangedFacing(entity, angle, 2) ? (entity->attack_weights[5] * ENTITY_PARAMS_UNK3D8(entity->params, 2)->unk00) >> 6 : 0;
     chances[5] = chance;
     total += chance;
     if (total == 0) {
@@ -514,17 +514,17 @@ static s32 FireGenie_ShouldRespawnOther(Entity *entity) {
     s32 count = 0;
     s32 i;
 
-    unkE0->unk6A = 0;
+    unkE0->sub_timer = 0;
     for (i = 0; i < entity->params->unk43C; i++) {
         Entity *other = Entity_GetBySpawnId(i + 10);
         if (other != NULL && (other->flags & 3) == 3 && ((s32)(other->flags >> 2) & 3) < 3) {
-            unkE0->unk6A |= 1 << i;
+            unkE0->sub_timer |= 1 << i;
             count++;
         }
     }
-    unkE0->unk7A = count;
-    if (unkE0->unk7A < entity->params->unk43C) {
-        if (unkE0->unk68 < 1) {
+    unkE0->step_index = count;
+    if (unkE0->step_index < entity->params->unk43C) {
+        if (unkE0->pause_timer < 1) {
             return TRUE;
         }
     }
@@ -539,16 +539,16 @@ static void FireGenie_RespawnOneOther(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 remaining = 1;
     s32 i;
-    s32 slots_left = entity->params->unk43C - unkE0->unk7A;
+    s32 slots_left = entity->params->unk43C - unkE0->step_index;
 
     for (i = 0; i < entity->params->unk43C; i++) {
-        if (!((unkE0->unk6A >> i) & 1)) {
+        if (!((unkE0->sub_timer >> i) & 1)) {
             if (rand() % 100 < remaining * 100 / slots_left) {
                 s32 other_id = i + 10;
                 Entity *other = Entity_GetBySpawnId(other_id);
                 if (other != NULL && ((s32)other->flags & 1)) {
                     EntityEvent_Respawn((char *)other);
-                    unkE0->unk7B = other_id;
+                    unkE0->action_flags = other_id;
                     remaining--;
                 }
             }
@@ -561,15 +561,15 @@ static void FireGenie_RespawnOneOther(Entity *entity) {
             }
         }
     }
-    unkE0->unk68 = entity->params->unk43E;
+    unkE0->pause_timer = entity->params->unk43E;
 }
 
 /* Helper of FireGenie_RespawnOther: puts 1 in work byte unk7A of the entity
    FireGenie_RespawnOneOther respawned (its spawn id is in work byte unk7B). */
 static void FireGenie_SignalRespawned(Entity *entity) {
-    Entity *other = Entity_GetBySpawnId(entity->unkE0.unk7B);
+    Entity *other = Entity_GetBySpawnId(entity->unkE0.action_flags);
 
     if (other != NULL) {
-        other->unkE0.unk7A = 1;
+        other->unkE0.step_index = 1;
     }
 }

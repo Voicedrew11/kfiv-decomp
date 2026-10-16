@@ -1,4 +1,4 @@
-/* effect_kind_handlers: the start and update handler of every kind of effect, the row EffectDef.unk100 picks
+/* effect_kind_handlers: the start and update handler of every kind of effect, the row EffectDef.kind_index picks
    (Effect_SpawnFromEffect and Effect_UpdateAll call them); only the first 128 rows are set. */
 #include "common.h"
 #include "kf_effect.h"

@@ -264,7 +264,7 @@ void MapChange_WaitForIdle(void) {
     Entity_UpdatePool();
     Sound_Update();
     if (map_load_state.step == 0 || map_load_state.step == 5) {
-        if (EntityPool_IsLoading() == 0 && sound_load_queue.unk0C == 0 && sound_load_queue.unk04 == 0 && sound_load_queue.unk18 == 0 &&
+        if (EntityPool_IsLoading() == 0 && sound_load_queue.map_bank_load_pending == 0 && sound_load_queue.bgm_load_pending == 0 && sound_load_queue.entity_bank_load_pending == 0 &&
             File_IsLocked() == 0) {
             screen_fade.step++;
         }
@@ -276,7 +276,7 @@ void MapChange_UnloadAll(void) {
     int slot;
 
     for (slot = 0; slot < 2; slot++) {
-        if (map_slots[slot].unk00 != 0) {
+        if (map_slots[slot].loaded != 0) {
             Map_UnlinkSlotRecords(slot);
             Effect_FreeForMap(slot);
             MapObject_UnloadMap(slot);
@@ -317,12 +317,12 @@ void MapChange_OpenFile(void) {
     }
     File_Lock();
     size = (File_GetSize(screen_fade.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
-    memory->unk14 = memory->unk1C = D_00446F50;
-    memory->unk18 = memory->unk20 = D_00446F54;
-    slot->unk04 = size;
-    memset(memory->unk1C, 0, slot->unk04);
-    memset(memory->unk20, 0, D_00446F1C / 2);
-    File_Read(screen_fade.file_handle, memory->unk14, -1);
+    memory->file_read_cursor = memory->file_base = D_00446F50;
+    memory->work_cursor = memory->work_base = D_00446F54;
+    slot->rounded_file_size = size;
+    memset(memory->file_base, 0, slot->rounded_file_size);
+    memset(memory->work_base, 0, D_00446F1C / 2);
+    File_Read(screen_fade.file_handle, memory->file_read_cursor, -1);
     screen_fade.step++;
 }
 
@@ -373,18 +373,18 @@ void MapChange_SetUpMap(void) {
         }
     case 0:
         header = slot->header;
-        player_state.position.x = header->unk60;
-        player_state.position.y = header->unk64;
-        player_state.position.z = header->unk68;
-        player_state.rotation.y = header->unk6C;
+        player_state.position.x = header->player_start_x;
+        player_state.position.y = header->player_start_y;
+        player_state.position.z = header->player_start_z;
+        player_state.rotation.y = header->player_start_heading;
         break;
     }
     player_state.map_index = 0xFFFF;
-    player_state.unk250 = 0xFF;
-    player_state.unk208 = 0;
-    player_state.unk204 = 0;
-    player_state.unk20C = 0;
-    map_slots[0].unk00 = 1;
+    player_state.record_flag_block = 0xFF;
+    player_state.floor_map_object = 0;
+    player_state.stepped_on_entity = 0;
+    player_state.touched_map_object = 0;
+    map_slots[0].loaded = 1;
     MapObject_StartMap(0);
     Entity_InitFromMapSpawns(0);
     Entity_AddGroupToWaiting(0);
@@ -392,12 +392,12 @@ void MapChange_SetUpMap(void) {
     Entity_ClearFlag10InSlot(0);
     MapSetup_RunForMap(0);
     Game_MarkMapVisited(map_slots[0].tag);
-    Script_Init(map_slots[0].unk5C);
+    Script_Init(map_slots[0].script);
     Script_Start(0x7FFF, 0);
-    sound_load_queue.unk00 = ((MapSlotUnk08 *)map_slots[0].header)->unk70;
-    sound_load_queue.unk04 = 1;
+    sound_load_queue.bgm_id = ((MapSlotUnk08 *)map_slots[0].header)->sound_bank_file_index;
+    sound_load_queue.bgm_load_pending = 1;
     Sound_StopAll(1);
-    sound_load_queue.unk14 = &map_slots[0];
+    sound_load_queue.next_map_slot = &map_slots[0];
     Game_StartFadeIn(0, 0, 0, 30);
     screen_fade.step = 0;
 }

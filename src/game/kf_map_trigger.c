@@ -40,7 +40,7 @@ void MapObject_UpdateSavePoint(MapObject *object) {
 
     if (game_status.bit1 && (used = D_00420D50[0]) == object) {
         game_status.save_requested = TRUE;
-        game_status.save_area = MAP_OBJECT_WORDS(used)->unk44;
+        game_status.save_area = MAP_OBJECT_WORDS(used)->kind_param_0;
     }
 }
 
@@ -62,7 +62,7 @@ void MapObject_UpdateContainer(MapObject *object) {
         if (object->work[0] > 0) {
             return;
         }
-        message = (s16)object->unk04->unk68;
+        message = (s16)object->definition->definition_flags;
         if (message == 0) {
             return;
         }
@@ -85,7 +85,7 @@ void MapObject_SetUpContainer(MapObject *object) {
 /* Start handler of a switch (kind 30): off (animation 4, step 1) or, with bit 17 set, on (animation 5,
    step 3). */
 void MapObject_StartPivotSwitch(MapObject *object) {
-    if (!(object->unk10 & 0x20000)) {
+    if (!(object->state_flags & 0x20000)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
@@ -99,7 +99,7 @@ void MapObject_UpdatePivotSwitchOff(MapObject *object) {
     MapObject *used = D_00420D50[0];
 
     if (used == object && ((D_0038CC74[0] >> 1) & 1)) {
-        used->unk10 |= 0x20000;
+        used->state_flags |= 0x20000;
         MAP_OBJECT_BYTES(used)->step = 2;
     }
 }
@@ -119,7 +119,7 @@ void MapObject_UpdatePivotSwitchOn(MapObject *object) {
     MapObject *used = D_00420D50[0];
 
     if (used == object && ((D_0038CC74[0] >> 1) & 1)) {
-        used->unk10 &= ~0x20000;
+        used->state_flags &= ~0x20000;
         MAP_OBJECT_BYTES(used)->step = 4;
     }
 }
@@ -165,7 +165,7 @@ void MapObject_PosePivotSwitch(MapTrigger *trigger) {
     ModelPart *joint;
     f32 half_turn;
 
-    ModelMatrix_Build(trigger->model, &trigger->model->position, &trigger->model->rotation, &trigger->model->unkE0);
+    ModelMatrix_Build(trigger->model, &trigger->model->position, &trigger->model->rotation, &trigger->model->scale_x);
     part_count = trigger->model->part_count;
     part = trigger->model->parts;
     for (i = 0; i < part_count; i++) {
@@ -173,7 +173,7 @@ void MapObject_PosePivotSwitch(MapTrigger *trigger) {
         part++;
     }
     part = trigger->model->parts;
-    if (trigger->model->unk100 & 1) {
+    if (trigger->model->model_flags & 1) {
         for (i = 0; i < part_count; i++) {
             Model_MultiplyChildMatrices(part);
             part++;
@@ -186,16 +186,16 @@ void MapObject_PosePivotSwitch(MapTrigger *trigger) {
     // match: an empty loop here (a debug macro compiled out?) keeps the scheduler from moving anything across
     // this point, which is what leaves the half_turn load in front of the call above
     do { } while (0);
-    pivot = joint[1].unk40;
+    pivot = joint[1].position;
     Vector_Scale(pivot_back, pivot, -1.0f);
     joint++;
     sceVu0TransMatrix(matrix, matrix, pivot_back);
-    sceVu0RotMatrixX(matrix, matrix, wrap_half_turn(joint->unk50, half_turn));
-    sceVu0RotMatrixZ(matrix, matrix, wrap_half_turn(joint->unk58, half_turn));
-    sceVu0RotMatrixY(matrix, matrix, wrap_half_turn(joint->unk54, half_turn));
+    sceVu0RotMatrixX(matrix, matrix, wrap_half_turn(joint->rotation_x, half_turn));
+    sceVu0RotMatrixZ(matrix, matrix, wrap_half_turn(joint->rotation_z, half_turn));
+    sceVu0RotMatrixY(matrix, matrix, wrap_half_turn(joint->rotation_y, half_turn));
     sceVu0TransMatrix(matrix, matrix, pivot);
-    Matrix_Multiply(trigger->model->unk80, trigger->model->unk40, matrix);
-    trigger->model->unk1B4(trigger->model);
+    Matrix_Multiply(trigger->model->collision_matrix, trigger->model->model_matrix, matrix);
+    trigger->model->update_bone_points(trigger->model);
 }
 
 /* Start handler of the fading kind (kind 31): at rest hidden (step 1, alpha 0) or, with bit 17 set, shown
@@ -288,9 +288,9 @@ void MapObject_StartPulse(MapTrigger *trigger) {
     MapTriggerShotKind122E88 *shot = (MapTriggerShotKind122E88 *)&trigger->shot;
     ModelInstance *model = trigger->model;
 
-    model->unk102 |= 0x200;
-    model->unk145 = 1;
-    trigger->model->unk146 = 0;
+    model->draw_flags |= 0x200;
+    model->fade_enabled = 1;
+    trigger->model->fade_alpha = 0;
     /* 4.656613e-10f is 1 / 2^31: rand() scaled to 0..1 */
     shot->period = (int)((float)rand() * 61.0f * 4.656613e-10f) + 0x78;
     shot->phase = (int)((float)(shot->period + 1) * (float)rand() * 4.656613e-10f);
@@ -317,7 +317,7 @@ int MapObject_UpdatePulse(MapTrigger *trigger) {
         level = (float)(period - phase) / (float)period * 0.5f;
     }
     value = (int)(level * 128.0f);
-    trigger->model->unk146 = value;
+    trigger->model->fade_alpha = value;
     return value;
 }
 

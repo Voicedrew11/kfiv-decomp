@@ -228,10 +228,10 @@ void GameLoop_Run(int arg) {
     if (D_00446734 == 0) {
         PlayTime_Start();
         header = (MapSlotUnk08 *)map_slots[0].header;
-        player_state.position.x = header->unk60;
-        player_state.position.y = header->unk64;
-        player_state.position.z = header->unk68;
-        player_state.rotation.y = header->unk6C;
+        player_state.position.x = header->player_start_x;
+        player_state.position.y = header->player_start_y;
+        player_state.position.z = header->player_start_z;
+        player_state.rotation.y = header->player_start_heading;
     } else {
         D_00446734 = 0;
         PlayTime_Resume(save_play_time[0]);
@@ -262,7 +262,7 @@ void GameLoop_Run(int arg) {
                 pad_state[0] = 0;
             }
         }
-        if (!(game_status.unk30 & 0x40) && player_state.unk1A8 == 0) {
+        if (!(game_status.update_hold_flags & 0x40) && player_state.death_timer == 0) {
             Script_UpdateAll();
         }
         Player_Update();
@@ -313,9 +313,9 @@ void GameLoop_Run(int arg) {
     game_options[1] = 0;
     Sound_SetBgmVolume(0);
     Sound_SetBankVolumes(0);
-    while (sound_load_queue.unk0C != 0 ||
-           ((sound_load_queue.unk04 != 0 || sound_load_queue.unk18 != 0) &&
-            (sound_load_queue.unk18 != 0 || sound_load_queue.unk04 == 0 || Sound_BgmLoadCanYield() == 0))) {
+    while (sound_load_queue.map_bank_load_pending != 0 ||
+           ((sound_load_queue.bgm_load_pending != 0 || sound_load_queue.entity_bank_load_pending != 0) &&
+            (sound_load_queue.entity_bank_load_pending != 0 || sound_load_queue.bgm_load_pending == 0 || Sound_BgmLoadCanYield() == 0))) {
         while (sceGsSyncV(0) != 1) {
         }
         Timer_Restart();
@@ -456,13 +456,13 @@ int GameLoop_DrawFrame(int arg) {
     }
     GameLoop_SetCameraMatrices(0, 0);
     GsDraw_QueueVu1Matrix(D_004323E0);
-    if ((s32)(player_state.unk1C8 >> 39) & 1) {
+    if ((s32)(player_state.status_bits >> 39) & 1) {
         GsDraw_CopyFrame(0x2BC0);
         tinted = TRUE;
         Game_DrawWobblingScreen(0x80, 0x80, 0x80, 0x80, 1.0f);
     }
-    if (player_state.unk29C != 0) {
-        tint = (f32)player_state.unk29C * 0.125f;
+    if (player_state.mp_drain_tint != 0) {
+        tint = (f32)player_state.mp_drain_tint * 0.125f;
         red = (int)(tint * -58.0f + 128.0f);
         green = (int)(tint * -78.0f + 128.0f);
         blue = (int)(tint * 12.0f + 128.0f);
@@ -484,7 +484,7 @@ int GameLoop_DrawFrame(int arg) {
         Game_BlendScreenOffsetUpDown();
     }
     if (map_draw_state.bit40) {
-        Game_BlendPreviousFrame(map_draw_state.unk88);
+        Game_BlendPreviousFrame(map_draw_state.previous_frame_alpha);
     }
     if (player_state.aim_speed > 0.0f) {
         Game_BlendPreviousFrame(0x40);
@@ -499,7 +499,7 @@ int GameLoop_DrawFrame(int arg) {
     DrawList_Draw(3, 0);
     Player_DrawArm();
     Player_DrawScreenTints();
-    if ((s32)(player_state.unk1C8 >> 39) & 1) {
+    if ((s32)(player_state.status_bits >> 39) & 1) {
         if (map_slots[D_00446770].tag == 0x23 && D_00349F56[0] == 0) {
             GsDraw_FillScreen(0x40, 0x80, 0x40, 0x78, 0x44);
         } else {
@@ -507,10 +507,10 @@ int GameLoop_DrawFrame(int arg) {
         }
     }
     Hud_Draw();
-    if (map_draw_state.unk78 > 0) {
+    if (map_draw_state.screen_fill_alpha > 0) {
         // match: the last argument is passed as the 64-bit word
-        ((void (*)(int, int, int, int, s64))GsDraw_FillScreen)(map_draw_state.unk6C, map_draw_state.unk70, map_draw_state.unk74,
-                                                             map_draw_state.unk78, map_draw_state.unk80);
+        ((void (*)(int, int, int, int, s64))GsDraw_FillScreen)(map_draw_state.screen_fill_red, map_draw_state.screen_fill_green, map_draw_state.screen_fill_blue,
+                                                             map_draw_state.screen_fill_alpha, map_draw_state.screen_fill_blend);
     }
     Game_DrawFade();
     Splash_Draw();
@@ -545,48 +545,48 @@ void GameLoop_UpdateCameraShake(void) {
     MapRecordInfo *record;
     f32 angle;
 
-    if (game_status.unk03 != 0) {
+    if (game_status.camera_mode != 0) {
         record = Map_FindRecordAtInSlot(&D_004325A0, 100.0f, D_00446770);
         if (record != NULL) {
             player_state.map_index = (u32)((char *)record - map_slots[D_00446770].records) >> 14; // match: the byte offset of 0x80-byte records shifted by 14; 7 would give the record number
-            player_state.unk250 = record->unk38;
+            player_state.record_flag_block = record->flag_block_bit;
         }
     }
-    if (D_004325A0.unk74 != 0 && D_004325A0.unk70 > 0.0f) {
+    if (D_004325A0.script_shake_frames != 0 && D_004325A0.script_shake_reach > 0.0f) {
         angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * 0.017453292f;
-        angle = Angle_Wrap(angle + D_004325A0.unk18);
-        D_004325A0.unk50[0] = D_004325A0.unk70;
-        D_004325A0.unk50[1] = 0.0f;
-        D_004325A0.unk50[2] = 0.0f;
-        D_004325A0.unk50[3] = 1.0f;
+        angle = Angle_Wrap(angle + D_004325A0.roll);
+        D_004325A0.script_shake_offset[0] = D_004325A0.script_shake_reach;
+        D_004325A0.script_shake_offset[1] = 0.0f;
+        D_004325A0.script_shake_offset[2] = 0.0f;
+        D_004325A0.script_shake_offset[3] = 1.0f;
         sceVu0CopyMatrix(matrix, D_00431B30);
         sceVu0RotMatrixZ(matrix[0], matrix[0], angle);
-        sceVu0RotMatrixX(matrix[0], matrix[0], D_004325A0.unk10);
-        sceVu0RotMatrixY(matrix[0], matrix[0], D_004325A0.unk14);
-        sceVu0ApplyMatrix(D_004325A0.unk50, (int *)matrix, D_004325A0.unk50);
-        if (D_004325A0.unk74 > 0) {
-            D_004325A0.unk74--;
+        sceVu0RotMatrixX(matrix[0], matrix[0], D_004325A0.pitch);
+        sceVu0RotMatrixY(matrix[0], matrix[0], D_004325A0.yaw);
+        sceVu0ApplyMatrix(D_004325A0.script_shake_offset, (int *)matrix, D_004325A0.script_shake_offset);
+        if (D_004325A0.script_shake_frames > 0) {
+            D_004325A0.script_shake_frames--;
         }
     } else {
-        Vector_Copy(D_004325A0.unk50, D_00431C80);
+        Vector_Copy(D_004325A0.script_shake_offset, D_00431C80);
     }
-    if (D_004325A0.unk7C != 0 && D_004325A0.unk78 > 0.0f) {
+    if (D_004325A0.entity_shake_frames != 0 && D_004325A0.entity_shake_reach > 0.0f) {
         angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * 0.017453292f;
-        angle = Angle_Wrap(angle + D_004325A0.unk18);
-        D_004325A0.unk60[0] = D_004325A0.unk78;
-        D_004325A0.unk60[1] = 0.0f;
-        D_004325A0.unk60[2] = 0.0f;
-        D_004325A0.unk60[3] = 1.0f;
+        angle = Angle_Wrap(angle + D_004325A0.roll);
+        D_004325A0.entity_shake_offset[0] = D_004325A0.entity_shake_reach;
+        D_004325A0.entity_shake_offset[1] = 0.0f;
+        D_004325A0.entity_shake_offset[2] = 0.0f;
+        D_004325A0.entity_shake_offset[3] = 1.0f;
         sceVu0CopyMatrix(matrix, D_00431B30);
         sceVu0RotMatrixZ(matrix[0], matrix[0], angle);
-        sceVu0RotMatrixX(matrix[0], matrix[0], D_004325A0.unk10);
-        sceVu0RotMatrixY(matrix[0], matrix[0], D_004325A0.unk14);
-        sceVu0ApplyMatrix(D_004325A0.unk60, (int *)matrix, D_004325A0.unk60);
-        if (D_004325A0.unk7C > 0) {
-            D_004325A0.unk7C--;
+        sceVu0RotMatrixX(matrix[0], matrix[0], D_004325A0.pitch);
+        sceVu0RotMatrixY(matrix[0], matrix[0], D_004325A0.yaw);
+        sceVu0ApplyMatrix(D_004325A0.entity_shake_offset, (int *)matrix, D_004325A0.entity_shake_offset);
+        if (D_004325A0.entity_shake_frames > 0) {
+            D_004325A0.entity_shake_frames--;
         }
     } else {
-        Vector_Copy(D_004325A0.unk60, D_00431C80);
+        Vector_Copy(D_004325A0.entity_shake_offset, D_00431C80);
     }
 }
 
@@ -600,53 +600,53 @@ void GameLoop_UpdateCamera(void) {
     f32 pitch;
     f32 length;
 
-    switch (game_status.unk03) {
+    switch (game_status.camera_mode) {
     case 0:
-        Vector_Scale(target, D_00420D00.unk10, D_00420D00.unk40);
-        Vector_Add(target, target, D_00420D00.unk00);
+        Vector_Scale(target, D_00420D00.view_direction, D_00420D00.view_distance);
+        Vector_Add(target, target, D_00420D00.view_origin);
         D_004325A0.position[0] = player_state.position.x;
         D_004325A0.position[2] = player_state.position.z;
         D_004325A0.position[1] =
-            player_state.position.y - 220.0f + player_state.unk1C4 + player_state.unk1F0 + D_004325A0.unk4C;
+            player_state.position.y - 220.0f + player_state.head_bob_offset + player_state.landing_dip_offset + D_004325A0.height_offset;
         Vector_Subtract(direction, target, D_004325A0.position);
-        D_004325A0.unk10 =
+        D_004325A0.pitch =
             atan2f(-direction[1], sqrtf(direction[0] * direction[0] + direction[2] * direction[2]));
-        D_004325A0.unk14 = atan2f(direction[0], direction[2]);
-        D_004325A0.unk18 = 0.0f;
+        D_004325A0.yaw = atan2f(direction[0], direction[2]);
+        D_004325A0.roll = 0.0f;
         break;
     case 1:
-        if (game_status.unk05 != 0) {
-            Vector_Subtract(direction, D_004325A0.unk30, D_004325A0.position);
+        if (game_status.camera_move_enabled != 0) {
+            Vector_Subtract(direction, D_004325A0.move_to_point, D_004325A0.position);
             length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
-            if (D_004325A0.unk44 < length) {
-                Vector_Scale(direction, direction, D_004325A0.unk44 / length);
+            if (D_004325A0.move_speed < length) {
+                Vector_Scale(direction, direction, D_004325A0.move_speed / length);
                 Vector_Add(D_004325A0.position, D_004325A0.position, direction);
             } else {
-                Vector_Copy(D_004325A0.position, D_004325A0.unk30);
+                Vector_Copy(D_004325A0.position, D_004325A0.move_to_point);
             }
         }
         break;
     case 2:
         break;
     }
-    if (game_status.unk03 != 0 && (s8)game_status.unk04 != 0) {
-        Vector_Subtract(direction, D_004325A0.unk20, D_004325A0.position);
+    if (game_status.camera_mode != 0 && (s8)game_status.camera_look_mode != 0) {
+        Vector_Subtract(direction, D_004325A0.look_at_point, D_004325A0.position);
         yaw = atan2f(direction[0], direction[2]);
         length = sqrtf(direction[0] * direction[0] + direction[2] * direction[2]);
         pitch = atan2f(-direction[1], length);
-        switch ((s8)game_status.unk04) {
+        switch ((s8)game_status.camera_look_mode) {
         case 1:
-            D_004325A0.unk10 = pitch;
-            D_004325A0.unk14 = yaw;
+            D_004325A0.pitch = pitch;
+            D_004325A0.yaw = yaw;
             break;
         case 2:
-            Angle_Approach(&D_004325A0.unk10, pitch, D_004325A0.unk40);
-            Angle_Approach(&D_004325A0.unk14, yaw, D_004325A0.unk40);
+            Angle_Approach(&D_004325A0.pitch, pitch, D_004325A0.turn_speed);
+            Angle_Approach(&D_004325A0.yaw, yaw, D_004325A0.turn_speed);
             break;
         }
     }
-    Vector_Add(D_004325A0.position, D_004325A0.position, D_004325A0.unk50);
-    Vector_Add(D_004325A0.position, D_004325A0.position, D_004325A0.unk60);
+    Vector_Add(D_004325A0.position, D_004325A0.position, D_004325A0.script_shake_offset);
+    Vector_Add(D_004325A0.position, D_004325A0.position, D_004325A0.entity_shake_offset);
 }
 
 /* Builds the camera matrices: the projection, world to view, and world to screen for the given mode. */
@@ -670,11 +670,11 @@ void GameLoop_SetCameraMatrices(int projection, int mode) {
     translation[2] = -D_004325A0.position[2];
     translation[3] = 0.0f;
     sceVu0TransMatrix(D_00432320, D_00431AF0, translation);
-    sceVu0RotMatrixY(D_00432320, D_00432320, -D_004325A0.unk14);
-    sceVu0RotMatrixX(D_00432320, D_00432320, -D_004325A0.unk10);
-    sceVu0RotMatrixY(D_00432360, D_00431AF0, Angle_Wrap(3.1415927f - D_004325A0.unk14));
-    sceVu0RotMatrixX(D_00432360, D_00432360, Angle_Wrap(-D_004325A0.unk10));
-    sceVu0RotMatrixZ(D_00432360, D_00432360, D_004325A0.unk18);
+    sceVu0RotMatrixY(D_00432320, D_00432320, -D_004325A0.yaw);
+    sceVu0RotMatrixX(D_00432320, D_00432320, -D_004325A0.pitch);
+    sceVu0RotMatrixY(D_00432360, D_00431AF0, Angle_Wrap(3.1415927f - D_004325A0.yaw));
+    sceVu0RotMatrixX(D_00432360, D_00432360, Angle_Wrap(-D_004325A0.pitch));
+    sceVu0RotMatrixZ(D_00432360, D_00432360, D_004325A0.roll);
     sceVu0InversMatrix(D_00432360, D_00432360);
     switch (mode) {
     case 0:
@@ -706,46 +706,46 @@ void GameLoop_SetCameraMatrices(int projection, int mode) {
 
 /* Runs the queued sound loads, one at a time. */
 void GameLoop_RunSoundLoads(void) {
-    if (sound_load_queue.unk10 == NULL && sound_load_queue.unk14 != NULL) {
-        sound_load_queue.unk10 = sound_load_queue.unk14;
-        sound_load_queue.unk0C = 1;
-        sound_load_queue.unk14 = NULL;
+    if (sound_load_queue.pending_map_slot == NULL && sound_load_queue.next_map_slot != NULL) {
+        sound_load_queue.pending_map_slot = sound_load_queue.next_map_slot;
+        sound_load_queue.map_bank_load_pending = 1;
+        sound_load_queue.next_map_slot = NULL;
     }
-    if (sound_load_queue.step == 3 && (sound_load_queue.unk0C != 0 || sound_load_queue.unk18 != 0)) {
+    if (sound_load_queue.step == 3 && (sound_load_queue.map_bank_load_pending != 0 || sound_load_queue.entity_bank_load_pending != 0)) {
         if (Sound_BgmLoadCanYield() != 0) {
             sound_load_queue.step = 0;
         }
     }
     if (sound_load_queue.step == 0) {
-        if (sound_load_queue.unk0C != 0) {
+        if (sound_load_queue.map_bank_load_pending != 0) {
             sound_load_queue.step = 1;
             Sound_StopAll(0);
-        } else if (sound_load_queue.unk18 != 0) {
+        } else if (sound_load_queue.entity_bank_load_pending != 0) {
             sound_load_queue.step = 2;
-        } else if (sound_load_queue.unk04 != 0) {
+        } else if (sound_load_queue.bgm_load_pending != 0) {
             sound_load_queue.step = 3;
         }
     }
     switch (sound_load_queue.step) {
     case 1:
-        sound_load_queue.unk0C = Sound_LoadMapBankStep((int)sound_load_queue.unk10, sound_load_queue.unk0C);
-        if (sound_load_queue.unk0C == 0) {
-            sound_load_queue.unk10 = NULL;
+        sound_load_queue.map_bank_load_pending = Sound_LoadMapBankStep((int)sound_load_queue.pending_map_slot, sound_load_queue.map_bank_load_pending);
+        if (sound_load_queue.map_bank_load_pending == 0) {
+            sound_load_queue.pending_map_slot = NULL;
             sound_load_queue.step = 0;
         }
         break;
     case 2:
-        if (sound_load_queue.unk18 != 0) {
-            sound_load_queue.unk18 = Sound_LoadEntityBankStep(sound_load_queue.unk1C, sound_load_queue.unk20, sound_load_queue.unk24 + 7);
-            if (sound_load_queue.unk18 == 0) {
+        if (sound_load_queue.entity_bank_load_pending != 0) {
+            sound_load_queue.entity_bank_load_pending = Sound_LoadEntityBankStep(sound_load_queue.entity_bank_args, sound_load_queue.entity_slot_index, sound_load_queue.entity_slot_voice_out + 7);
+            if (sound_load_queue.entity_bank_load_pending == 0) {
                 sound_load_queue.step = 0;
             }
         }
         break;
     case 3:
-        if (sound_load_queue.unk04 != 0) {
-            sound_load_queue.unk04 = Sound_LoadBgm(sound_load_queue.unk00, sound_load_queue.unk04);
-            if (sound_load_queue.unk04 == 0) {
+        if (sound_load_queue.bgm_load_pending != 0) {
+            sound_load_queue.bgm_load_pending = Sound_LoadBgm(sound_load_queue.bgm_id, sound_load_queue.bgm_load_pending);
+            if (sound_load_queue.bgm_load_pending == 0) {
                 sound_load_queue.step = 0;
             }
         } else {
@@ -772,19 +772,19 @@ void GameLoop_OpenRequestedMenu(void) {
     if (D_00446F78 == 0) {
         return;
     }
-    if (game_status.unk30 & 1) {
+    if (game_status.update_hold_flags & 1) {
         return;
     }
-    if (player->unk1A8 != 0) {
+    if (player->death_timer != 0) {
         return;
     }
-    if (sound_load_queue.unk0C != 0) {
+    if (sound_load_queue.map_bank_load_pending != 0) {
         return;
     }
-    if (sound_load_queue.unk18 != 0) {
+    if (sound_load_queue.entity_bank_load_pending != 0) {
         return;
     }
-    if (sound_load_queue.unk04 != 0 && Sound_BgmLoadCanYield() == 0) {
+    if (sound_load_queue.bgm_load_pending != 0 && Sound_BgmLoadCanYield() == 0) {
         return;
     }
     load_held = FALSE;
@@ -801,7 +801,7 @@ void GameLoop_OpenRequestedMenu(void) {
         return;
     }
     Input_StopRumble();
-    if (game_status.bit14 && player_state.unk254 >= 2) {
+    if (game_status.bit14 && player_state.frames_since_item_action >= 2) {
         Player_LoadArmModels();
         game_status.bit14 = FALSE;
     }
@@ -812,7 +812,7 @@ void GameLoop_OpenRequestedMenu(void) {
         }
         game_status.bit3 = FALSE;
         menu_ran = TRUE;
-        Trade_Run(game_status.unk2C);
+        Trade_Run(game_status.trade_screen_id);
         Packet_SwapBuffers();
         Packet_SwapBuffers();
     } else if (game_status.bit4) {
@@ -825,7 +825,7 @@ void GameLoop_OpenRequestedMenu(void) {
         Smith_Run();
         Packet_SwapBuffers();
         Packet_SwapBuffers();
-    } else if (game_status.save_requested && game_status.unk00 != 0) {
+    } else if (game_status.save_requested && game_status.player_control != 0) {
         if (!faded_out) {
             faded_out = TRUE;
             GameLoop_DrawFrameWithoutHud();
@@ -834,14 +834,14 @@ void GameLoop_OpenRequestedMenu(void) {
         SaveScreen_Run();
         Packet_SwapBuffers();
         Packet_SwapBuffers();
-    } else if (game_status.bit2 && game_status.unk00 != 0) {
+    } else if (game_status.bit2 && game_status.player_control != 0) {
         if (!faded_out) {
             faded_out = TRUE;
             GameLoop_DrawFrameWithoutHud();
         }
         game_status.bit2 = FALSE;
         game_status.bit6 = FALSE;
-        game_status.unk28 = 0;
+        game_status.magic_to_cast = 0;
         menu_ran = TRUE;
         Menu_Run(0);
         Packet_SwapBuffers();
@@ -849,35 +849,35 @@ void GameLoop_OpenRequestedMenu(void) {
     }
     if (menu_ran) {
         Player_LoadArmModels();
-        if (game_status.unk28 != 0) {
-            Player_CastMagic(game_status.unk28);
-            game_status.unk28 = 0;
+        if (game_status.magic_to_cast != 0) {
+            Player_CastMagic(game_status.magic_to_cast);
+            game_status.magic_to_cast = 0;
         }
         if (player_state.weapon != player_previous.weapon) {
-            player_state.unkBC = 0;
+            player_state.power_gauge = 0;
         }
         if (player_state.equipped_magic != 0 && player_previous.equipped_magic != player_state.equipped_magic) {
-            player_state.unk264 = player_state.equipped_magic;
-            player_state.unkC0 = 0;
+            player_state.charging_magic = player_state.equipped_magic;
+            player_state.magic_gauge = 0;
         } else if (player_state.shortcut_type == 2 &&
                    (player_previous.shortcut_type != player_state.shortcut_type || player_state.shortcut != player_previous.shortcut)) {
-            player_state.unkC0 = 0;
-            player_state.unk264 = player_state.shortcut;
+            player_state.magic_gauge = 0;
+            player_state.charging_magic = player_state.shortcut;
         } else if (player_state.weapon != player_previous.weapon) {
             item_def = &weapon_defs[player_state.weapon];
-            if (item_def->unk63 != 2) {
-                if (item_def->unk42 != 0xFFFF) {
-                    player_state.unkC0 = 0;
-                    player_state.unk264 = item_def->unk42;
-                } else if (item_def->unk52 != 0xFFFF && weapon_level_records[player_state.weapon].unk14 + 1 == 3) {
-                    player_state.unkC0 = 0;
-                    player_state.unk264 = item_def->unk52;
+            if (item_def->action_handler_index != 2) {
+                if (item_def->first_magic_id != 0xFFFF) {
+                    player_state.magic_gauge = 0;
+                    player_state.charging_magic = item_def->first_magic_id;
+                } else if (item_def->second_magic_id != 0xFFFF && weapon_level_records[player_state.weapon].unk14 + 1 == 3) {
+                    player_state.magic_gauge = 0;
+                    player_state.charging_magic = item_def->second_magic_id;
                 }
             }
         }
-        if (game_status.bit6 && item_common_defs[game_status.unk20].type == 6) {
-            MapViewer_OpenForItem(game_status.unk20);
-            game_status.unk20 = 0;
+        if (game_status.bit6 && item_common_defs[game_status.item_to_use].type == 6) {
+            MapViewer_OpenForItem(game_status.item_to_use);
+            game_status.item_to_use = 0;
             game_status.bit6 = FALSE;
         }
     }
@@ -918,17 +918,17 @@ void GameLoop_RedrawFrame(void) {
     Display_SwapBuffers(0);
 }
 
-/* Draws a game frame with the HUD off (MapDrawStateOverlays.unk68) and shows it: the picture a menu opens over. */
+/* Draws a game frame with the HUD off (MapDrawStateOverlays.hud_shown) and shows it: the picture a menu opens over. */
 void GameLoop_DrawFrameWithoutHud(void) {
     int saved_unk68;
 
     Packet_SwapBuffers();
     Packet_SwapBuffers();
     DrawList_Clear();
-    saved_unk68 = map_draw_state.unk68;
-    map_draw_state.unk68 = 0;
+    saved_unk68 = map_draw_state.hud_shown;
+    map_draw_state.hud_shown = 0;
     GameLoop_DrawFrame(0);
-    map_draw_state.unk68 = saved_unk68;
+    map_draw_state.hud_shown = saved_unk68;
     Packet_WaitForSend();
     Display_SwapBuffers(0);
     Packet_SendChain();

@@ -32,8 +32,8 @@ static void Stool_Think(Entity *entity, s32 unknown);
 /* Set-up of a type 8 entity: clears its work area and installs the type's handlers. */
 void Stool_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
@@ -42,7 +42,7 @@ void Stool_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = Stool_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))Stool_OnHit;
@@ -50,21 +50,21 @@ void Stool_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 6 - 1; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+    if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -94,14 +94,14 @@ static void Stool_OnHit(Entity *entity) {
 }
 
 /* The think handler: no states and no look at the player. While the entity is not busy it starts
-   the attack EntityAi_PickAttack picks when EntityAi_CanAttack says so and the pause Entity.unkA2 is over;
+   the attack EntityAi_PickAttack picks when EntityAi_CanAttack says so and the pause Entity.attack_delay_frames is over;
    else it starts the move action. */
 static void Stool_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0;
 
     unkE0 = &entity->unkE0;
-    if (entity->unkC6 == 0) {
-        if (EntityAi_CanAttack(entity) != 0 && entity->unkA2 == 0) {
+    if (entity->busy_flags == 0) {
+        if (EntityAi_CanAttack(entity) != 0 && entity->attack_delay_frames == 0) {
             if (EntityAi_PickAttack((char *)entity) != 0) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
             } else {

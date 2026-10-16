@@ -58,9 +58,9 @@ static s32 Onyx_GetKeepRangeCommand(Entity *entity, s32 turn, f32 near_range, f3
 /* Set-up of a type 74 entity: clears its work area and installs the type's handlers. */
 void Onyx_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
-    char *unk138 = entity->model->unk138;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
+    char *unk138 = entity->model->look_at_part;
     EntityModelPart80 *part;
     s32 i;
     s32 part_index;
@@ -73,7 +73,7 @@ void Onyx_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = Onyx_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -81,67 +81,67 @@ void Onyx_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 6 - 1; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+    if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
-    unkE0->unk68 = entity->params->unk3D8[0].record.unk00;
-    unkE0->unk6A = entity->params->unk240[1].unk00;
-    unkE0->unk6C = (u8)entity->params->unk350[0];
-    unkE0->unk7A = 3;
+    unkE0->pause_timer = entity->params->ranged_attacks[0].record.unk00;
+    unkE0->sub_timer = entity->params->melee_attacks[1].attack_weight;
+    unkE0->mode_timer = (u8)entity->params->melee_attack_third[0];
+    unkE0->step_index = 3;
     for (part_index = 0; part_index < 25; part_index++) {
-        part = &((EntityModelPart80 *)entity->model->unkF8)[part_index + 8];
+        part = &((EntityModelPart80 *)entity->model->parts)[part_index + 8];
         ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = TRUE;
         ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
-        unkE0->unk68 = 0;
-        unkE0->unk6A = 0;
-        unkE0->unk6C = 0;
+        unkE0->pause_timer = 0;
+        unkE0->sub_timer = 0;
+        unkE0->mode_timer = 0;
     }
-    switch (unkE0->unk7A) {
+    switch (unkE0->step_index) {
     case 0:
         first_part = 0x16;
         part_count = 10;
-        unkE0->unk68 = entity->params->unk3D8[0].record.unk00;
+        unkE0->pause_timer = entity->params->ranged_attacks[0].record.unk00;
         break;
     case 1:
         first_part = 0xB;
         part_count = 2;
-        unkE0->unk6A = entity->params->unk240[1].unk00;
+        unkE0->sub_timer = entity->params->melee_attacks[1].attack_weight;
         break;
     case 2:
         first_part = 0xD;
         part_count = 9;
-        unkE0->unk6C = (u8)entity->params->unk350[0];
+        unkE0->mode_timer = (u8)entity->params->melee_attack_third[0];
         break;
     default:
         first_part = 8;
         part_count = 3;
-        unkE0->unk68 = entity->params->unk3D8[0].record.unk00;
-        unkE0->unk6A = entity->params->unk240[1].unk00;
-        unkE0->unk6C = (u8)entity->params->unk350[0];
+        unkE0->pause_timer = entity->params->ranged_attacks[0].record.unk00;
+        unkE0->sub_timer = entity->params->melee_attacks[1].attack_weight;
+        unkE0->mode_timer = (u8)entity->params->melee_attack_third[0];
         break;
     }
     for (part_index = 0; part_index < part_count; part_index++) {
-        part = &((EntityModelPart80 *)entity->model->unkF8)[first_part + part_index];
+        part = &((EntityModelPart80 *)entity->model->parts)[first_part + part_index];
         ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = FALSE;
         ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = FALSE;
     }
-    unkE0->unk6E = entity->params->unk434;
+    unkE0->reload_timer = entity->params->action_frames;
     Motion_StepModel(entity->model, 0, 0);
 }
 
@@ -151,18 +151,18 @@ void Onyx_Init(Entity *entity) {
 static void Onyx_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (unkE0->unk6E > 0) {
-        unkE0->unk6E--;
+    if (unkE0->reload_timer > 0) {
+        unkE0->reload_timer--;
     }
-    if (!(entity->unkC6 & 0x1000) && unkE0->unk6E == 0) {
-        unkE0->unk68 = entity->params->unk3D8[0].record.unk00;
-        unkE0->unk6A = entity->params->unk240[1].unk00;
-        unkE0->unk6C = (u8)entity->params->unk350[0];
+    if (!(entity->busy_flags & 0x1000) && unkE0->reload_timer == 0) {
+        unkE0->pause_timer = entity->params->ranged_attacks[0].record.unk00;
+        unkE0->sub_timer = entity->params->melee_attacks[1].attack_weight;
+        unkE0->mode_timer = (u8)entity->params->melee_attack_third[0];
     }
-    if (entity->unkC6 != 0) {
+    if (entity->busy_flags != 0) {
         return;
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
@@ -209,89 +209,89 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
-            unkE0->unk7B = Onyx_PickAttack(entity);
-            if (unkE0->unk7B == 0 && ENTITY_FLAG_BITS(entity)->bits58 == 0) {
+            unkE0->action_flags = Onyx_PickAttack(entity);
+            if (unkE0->action_flags == 0 && ENTITY_FLAG_BITS(entity)->bits58 == 0) {
                 entity->target = &player_state;
-                entity->unkA0 = rand() % 60 + 0x1E;
-                unkE0->unk78 = 0;
-                entity->unkCD = 1;
+                entity->action_timer = rand() % 60 + 0x1E;
+                unkE0->move_choice = 0;
+                entity->combat_choice = 1;
                 return;
             }
-            if (unkE0->unk7B != 0) {
-                if (ENTITY_FLAG_BITS(entity)->bits58 == unkE0->unk7A) {
+            if (unkE0->action_flags != 0) {
+                if (ENTITY_FLAG_BITS(entity)->bits58 == unkE0->step_index) {
                     EntityAi_StartAction(entity, Onyx_RangedAttack0, unknown);
                 } else {
-                    unkE0->unk7A = ENTITY_FLAG_BITS(entity)->bits58;
+                    unkE0->step_index = ENTITY_FLAG_BITS(entity)->bits58;
                     EntityAi_StartAction(entity, Onyx_SwitchAttack, unknown);
                 }
             } else {
-                if (ENTITY_FLAG_BITS(entity)->bits58 == unkE0->unk7A) {
+                if (ENTITY_FLAG_BITS(entity)->bits58 == unkE0->step_index) {
                     EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
                 } else {
-                    unkE0->unk7A = ENTITY_FLAG_BITS(entity)->bits58;
+                    unkE0->step_index = ENTITY_FLAG_BITS(entity)->bits58;
                     EntityAi_StartAction(entity, Onyx_SwitchAttack, unknown);
                 }
             }
             return;
         case 1:
             entity->target = &player_state;
-            if (unkE0->unk7A == 0) {
-                entity->unkA0 = rand() % 30 + 0x1E;
-                unkE0->unk78 = 1;
+            if (unkE0->step_index == 0) {
+                entity->action_timer = rand() % 30 + 0x1E;
+                unkE0->move_choice = 1;
             } else {
-                entity->unkA0 = rand() % 60 + 0x3C;
-                unkE0->unk78 = 0;
+                entity->action_timer = rand() % 60 + 0x3C;
+                unkE0->move_choice = 0;
             }
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 0x1E;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 0x1E;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (entity->unkCD == 1) {
+    if (entity->combat_choice == 1) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-            if (unkE0->unk79 == 0) {
-                unkE0->unk79 = ABS(angle) > 0.5235988f;
-                if (unkE0->unk79 == 0) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
+            if (unkE0->turn_in_place == 0) {
+                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
+                if (unkE0->turn_in_place == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = EntityAi_TurnCommand(entity);
-            if (entity->unkC8 == 0) {
-                unkE0->unk79 = 0;
+            entity->move_command = EntityAi_TurnCommand(entity);
+            if (entity->move_command == 0) {
+                unkE0->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
-            switch (unkE0->unk78) {
+            switch (unkE0->move_choice) {
             case 0:
                 if (turn > 0) {
-                    entity->unkC8 = 0x201;
+                    entity->move_command = 0x201;
                 } else if (turn < 0) {
-                    entity->unkC8 = 0x101;
+                    entity->move_command = 0x101;
                 } else {
-                    entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
+                    entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             case 1:
                 if (turn == 0) {
-                    entity->unkC8 = Onyx_GetKeepRangeCommand(entity, 0, 200.0f, 800.0f);
+                    entity->move_command = Onyx_GetKeepRangeCommand(entity, 0, 200.0f, 800.0f);
                 } else {
-                    entity->unkC8 = Onyx_GetKeepRangeCommand(entity, turn, 200.0f, 800.0f);
+                    entity->move_command = Onyx_GetKeepRangeCommand(entity, turn, 200.0f, 800.0f);
                 }
                 break;
             }
@@ -302,43 +302,43 @@ done:
 }
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, turning to the player throughout;
-   from frame EntityParams.unk436 to unk438 it sets flag bit 9 and launches the record's shots on
+   from frame EntityParams.near_distance to unk438 it sets flag bit 9 and launches the record's shots on
    two frames in three. */
 static void Onyx_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
+    EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
-        EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         break;
     case 2:
-        EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
-        if (entity->model->unkFC->unk82 >= entity->params->unk436
-            && entity->model->unkFC->unk82 <= entity->params->unk438) {
+        EntityAi_TurnToHeading(entity, &entity->unkE0.turn_rate, entity->heading_to_player);
+        if (entity->model->level_tables->unk82 >= entity->params->near_distance
+            && entity->model->level_tables->unk82 <= entity->params->far_distance) {
             ENTITY_FLAGS(entity) |= 0x200;
             if (D_00446ED4 % 3U != 0) {
-                EntityAi_LaunchShots(entity, unk3D8, entity->params->unk436, entity->params->unk438);
+                EntityAi_LaunchShots(entity, unk3D8, entity->params->near_distance, entity->params->far_distance);
             }
         }
-        if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
+        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);
@@ -354,7 +354,7 @@ static void Onyx_RangedAttack0(Entity *entity) {
    two it sets bits 40 and 41 of model parts 8 to 32 and clears them for the parts that go with the
    attack in work byte unk7A (0: parts 22 to 31, 1: 11 and 12, 2: 13 to 21, else 8 to 10), and
    leaves only that attack its weight in work words unk68 to unk6C. At the end it sets work word
-   unk6E to EntityParams.unk434. */
+   unk6E to EntityParams.action_frames. */
 static void Onyx_SwitchAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityModelPart80 *part;
@@ -362,44 +362,44 @@ static void Onyx_SwitchAttack(Entity *entity) {
     s32 first_part;
     s32 part_count;
 
-    entity->unkC6 |= 0x1000;
+    entity->busy_flags |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x11, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            Motion_Start(entity, 0x12, 0, entity->params->unkC4 >> 1, 1);
+            Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames >> 1, 1);
             for (part_index = 0; part_index < 25; part_index++) {
-                part = &((EntityModelPart80 *)entity->model->unkF8)[part_index + 8];
+                part = &((EntityModelPart80 *)entity->model->parts)[part_index + 8];
                 ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = TRUE;
                 ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
-                unkE0->unk68 = 0;
-                unkE0->unk6A = 0;
-                unkE0->unk6C = 0;
+                unkE0->pause_timer = 0;
+                unkE0->sub_timer = 0;
+                unkE0->mode_timer = 0;
             }
-            switch (unkE0->unk7A) {
+            switch (unkE0->step_index) {
             case 0:
                 first_part = 0x16;
                 part_count = 10;
-                unkE0->unk68 = entity->params->unk3D8[0].record.unk00;
+                unkE0->pause_timer = entity->params->ranged_attacks[0].record.unk00;
                 break;
             case 1:
                 first_part = 0xB;
                 part_count = 2;
-                unkE0->unk6A = entity->params->unk240[1].unk00;
+                unkE0->sub_timer = entity->params->melee_attacks[1].attack_weight;
                 break;
             case 2:
                 first_part = 0xD;
                 part_count = 9;
-                unkE0->unk6C = (u8)entity->params->unk350[0];
+                unkE0->mode_timer = (u8)entity->params->melee_attack_third[0];
                 break;
             default:
                 first_part = 8;
@@ -407,7 +407,7 @@ static void Onyx_SwitchAttack(Entity *entity) {
                 break;
             }
             for (part_index = 0; part_index < part_count; part_index++) {
-                part = &((EntityModelPart80 *)entity->model->unkF8)[first_part + part_index];
+                part = &((EntityModelPart80 *)entity->model->parts)[first_part + part_index];
                 ENTITY_MODEL_PART_FLAG_BITS(part)->bit40 = FALSE;
                 ENTITY_MODEL_PART_FLAG_BITS(part)->bit41 = FALSE;
             }
@@ -415,16 +415,16 @@ static void Onyx_SwitchAttack(Entity *entity) {
         }
         break;
     case 3:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 4:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
-            unkE0->unk6E = entity->params->unk434;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
+            unkE0->reload_timer = entity->params->action_frames;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -452,13 +452,13 @@ static s32 Onyx_PickAttack(Entity *entity) {
     for (i = 0; i < 6; i++) {
         if (i < 3) {
             if (EntityAi_CanUseMelee(entity, i) && (i == 1 || i == 2)) {
-                chance = (entity->unkC0[i] * ((EntityUnkE0Kind17FC60 *)&entity->unkE0)->unk68[i]) >> 6;
+                chance = (entity->attack_weights[i] * ((EntityUnkE0Kind17FC60 *)&entity->unkE0)->unk68[i]) >> 6;
             } else {
                 chance = 0;
             }
         } else {
             if (EntityAi_CanUseRanged(entity, i - 3) && i == 3) {
-                chance = (entity->unkC0[3] * unkE0->unk68) >> 6;
+                chance = (entity->attack_weights[3] * unkE0->pause_timer) >> 6;
             } else {
                 chance = 0;
             }
@@ -505,7 +505,7 @@ static s32 Onyx_GetKeepRangeCommand(Entity *entity, s32 turn, f32 near_range, f3
     }
     if (turn == 0) {
         angle = EntityMath_HeadingTo(entity->model->position, entity->target);
-        angle = EntityMath_AngleDifference(entity->model->unkD0[1], angle);
+        angle = EntityMath_AngleDifference(entity->model->rotation[1], angle);
         turn_limit = entity->params->turn_limit;
         if (0.0f <= angle ? turn_limit < angle : turn_limit < -angle) {
             command = 0x100;

@@ -55,7 +55,7 @@ typedef struct {
 typedef struct {
     u16 vertex_count;               /* 0x00 */
     char pad02[0x1E];
-    StripVertex vertices[1];      /* 0x20 vertex_count of them */
+    StripVertex vertices[1];        /* 0x20 vertex_count of them */
 } Strip;
 
 /* ModelInstance.strips: the strips back to back */
@@ -68,19 +68,19 @@ typedef struct {
 
 /* one 0x80-byte part (joint) of a model, ModelInstance.parts[i] */
 typedef struct ModelPart {
-    char unk00[0x40];               /* 0x00 the part's matrix, passed by address */
-    f32 unk40[4];                   /* 0x40 where it sits on its parent */
-    f32 unk50;                      /* 0x50 an angle, wrapped to +-pi (about x) */
-    f32 unk54;                      /* 0x54 angle about y */
-    f32 unk58;                      /* 0x58 angle about z */
-    f32 unk5C;                      /* 0x5C 1.0 */
-    f32 unk60[3];                   /* 0x60 the third vector of a motion key (scale, it seems) */
-    u8 unk6C;                       /* 0x6C the part's motion slot (Motion_SetPartSlots, Motion_SetPartSlot) */
+    char matrix[0x40];              /* 0x00 the part's matrix, passed by address */
+    f32 position[4];                /* 0x40 where it sits on its parent */
+    f32 rotation_x;                 /* 0x50 an angle, wrapped to +-pi (about x) */
+    f32 rotation_y;                 /* 0x54 angle about y */
+    f32 rotation_z;                 /* 0x58 angle about z */
+    f32 rotation_w;                 /* 0x5C 1.0 */
+    f32 scale[3];                   /* 0x60 the third vector of a motion key (scale, it seems) */
+    u8 motion_slot;                 /* 0x6C the part's motion slot (Motion_SetPartSlots, Motion_SetPartSlot) */
     char pad6D[0x03];
     struct ModelPart *child;        /* 0x70 first part hanging off this one, NULL: none */
     struct ModelPart *sibling;      /* 0x74 next part on the same parent, NULL: none */
     u64 data_addr : 32;             /* 0x78 */
-    u64 unk78_32 : 7;               /* MotionPart.unk02 of the motion last loaded */
+    u64 part_flags : 7;             /* MotionPart.unk02 of the motion last loaded */
     u64 level : 7;                  /* detail level picked by Motion_SeekKeys */
     u64 pad78_46 : 7;
     u64 data_count : 11;
@@ -93,8 +93,8 @@ typedef struct {
     s16 z;                          /* 0x04 */
     char pad06[0x08];
     u16 unk0E;                      /* 0x0E flag bits Wobble_DrawRippledModel passes on to the GS vertex */
-    u16 tex_u;                          /* 0x10 texture coordinates */
-    u16 tex_v;                          /* 0x12 */
+    u16 tex_u;                      /* 0x10 texture coordinates */
+    u16 tex_v;                      /* 0x12 */
     u16 unk14;                      /* 0x14 set to 1 by ModelScreen_SetUvsFromScreen */
     char pad16[0x02];
     s16 colour[4];                  /* 0x18 red, green, blue, alpha: 0..0xFF each (set by Model_SetVertexColour) */
@@ -109,8 +109,8 @@ typedef struct {
     s16 unk06;                      /* 0x06 1 on a vertex built between two others */
     s16 unk08[3];                   /* 0x08 a normal, it seems */
     u16 unk0E;                      /* 0x0E 0; 0x8000 on the first two vertices of a strip (ModelScreen_QueueCutTriangle) */
-    s16 tex_u;                          /* 0x10 */
-    s16 tex_v;                          /* 0x12 */
+    s16 tex_u;                      /* 0x10 */
+    s16 tex_v;                      /* 0x12 */
     s16 unk14;                      /* 0x14 0x1000 */
     s16 unk16;                      /* 0x16 0x7FFF on a vertex built between two others, 0 on the two ends */
     s16 colour[4];                  /* 0x18 */
@@ -139,12 +139,12 @@ typedef struct {
     char pad02[0x2E];
     ModelPartDataBits30 unk30;      /* 0x30 */
     char pad38[0x08];
-    u64 unk40;                      /* 0x40 low 14 bits: the texture it draws with */
+    u64 tex0;                       /* 0x40 low 14 bits: the texture it draws with */
     char pad48[0x08];
-    u64 unk50;                      /* 0x50 set by Model_SetAlphaBlend */
+    u64 blend;                      /* 0x50 set by Model_SetAlphaBlend */
     char pad58[0x18];
-    s32 unk70;                      /* 0x70 low 15 bits: how many vertices */
-    s32 unk74;                      /* 0x74 */
+    s32 vertex_count;               /* 0x70 low 15 bits: how many vertices */
+    s32 gif_tag_high;               /* 0x74 high word of the block's GIF tag: the primitive blend bit */
     char pad78[0x18];
     ModelPartVertex vertices[1];    /* 0x90 */
 } ModelPartData;
@@ -183,8 +183,8 @@ typedef union {
 typedef struct {
     f32 position[4];                /* 0x00 */
     f32 offset[4];                  /* 0x10 added to the position before it is projected (Model_SetUvsFromScreen) */
-    f32 tex_s;                          /* 0x20 texture coordinates, 0 to 1 across the screen */
-    f32 tex_t;                          /* 0x24 */
+    f32 tex_s;                      /* 0x20 texture coordinates, 0 to 1 across the screen */
+    f32 tex_t;                      /* 0x24 */
     char pad28[0x04];
     s32 on_parent;                  /* 0x2C 0: placed by its own part's matrix, otherwise by the parent part's */
     char pad30[0x10];
@@ -209,9 +209,9 @@ typedef struct {
 
 /* one part of a PosedModelFile */
 typedef struct {
-    f32 position[3];                /* 0x00 where the part rests: ModelPart.unk40 */
-    f32 rotation[3];                /* 0x0C ModelPart.unk50, unk54, unk58 */
-    f32 scale[3];                   /* 0x18 ModelPart.unk60 */
+    f32 position[3];                /* 0x00 where the part rests: ModelPart.position */
+    f32 rotation[3];                /* 0x0C ModelPart.rotation_x, unk54, unk58 */
+    f32 scale[3];                   /* 0x18 ModelPart.scale */
     s32 data_offset;                /* 0x24 from the start of the file to the part's ModelPartData blocks */
     u16 data_count;                 /* 0x28 how many blocks */
     char pad2A[0x06];
@@ -251,7 +251,7 @@ typedef struct {
 typedef struct {
     u8 count;                       /* 0x00 */
     char pad01;
-    u8 unk02;                       /* 0x02 low 7 bits go to ModelPart.unk78_32 */
+    u8 unk02;                       /* 0x02 low 7 bits go to ModelPart.part_flags */
     u8 child;                       /* 0x03 index of the part's first child, 0: none */
     u8 sibling;                     /* 0x04 index of the next part on the same parent, 0: none */
     char pad05[0x03];
@@ -320,7 +320,7 @@ typedef struct {
 typedef struct {
     s32 data_offset;                /* 0x00 from the start of the file to the part's ModelPartData blocks */
     u16 data_count;                 /* 0x04 how many blocks */
-    u8 unk06;                       /* 0x06 1..3: the part goes to ModelInstance.unk130[unk06 - 1] */
+    u8 unk06;                       /* 0x06 1..3: the part goes to ModelInstance.root_part[unk06 - 1] */
     s8 unk07;                       /* 0x07 */
     char pad08[0x08];
 } ModelFilePart;
@@ -346,7 +346,7 @@ typedef union {
 #define MODEL_FLAG_800  0x800
 
 /* ModelInstance with the three part slots at 0x130 as the array Model_SetUpSkinned fills
-   (ModelInstance.unk130 is the first) */
+   (ModelInstance.root_part is the first) */
 typedef struct {
     char pad00[0x130];
     ModelPart *parts[3];            /* 0x130 the parts whose ModelFilePart.unk06 is 1, 2 and 3 */
@@ -356,28 +356,28 @@ typedef struct {
 
 /* a vertex's own texture coordinates and the wave (kf_screen.h WaveOscillator) that moves them */
 typedef struct ModelWaveUv {
-    u16 tex_u;                          /* 0x00 */
-    u16 tex_v;                          /* 0x02 */
+    u16 tex_u;                      /* 0x00 */
+    u16 tex_v;                      /* 0x02 */
     s32 wave;                       /* 0x04 0-15 */
 } ModelWaveUv;
 
 typedef struct ModelInstance {
     char pad00[0x40];
-    char unk40[0x40];               /* 0x40 a matrix, passed by address */
-    char unk80[0x40];               /* 0x80 a copy of unk40 */
+    char model_matrix[0x40];        /* 0x40 a matrix, passed by address */
+    char collision_matrix[0x40];    /* 0x80 a copy of unk40 */
     Vector4 position;               /* 0xC0 */
     Vector4 rotation;               /* 0xD0 x, y (heading), z in radians */
-    f32 unkE0;                      /* 0xE0 its sign picks the turn direction; the x scale */
-    f32 unkE4;                      /* 0xE4 the y scale */
-    f32 unkE8;                      /* 0xE8 the z scale */
-    f32 unkEC;                      /* 0xEC */
+    f32 scale_x;                    /* 0xE0 its sign picks the turn direction; the x scale */
+    f32 scale_y;                    /* 0xE4 the y scale */
+    f32 scale_z;                    /* 0xE8 the z scale */
+    f32 scale_w;                    /* 0xEC the fourth value of the scale vector, 1.0 */
     u16 part_count;                 /* 0xF0 */
-    u16 unkF2;                      /* 0xF2 set to the part count too */
+    u16 file_part_count;            /* 0xF2 set to the part count too */
     char padF4[0x04];
     ModelPart *parts;               /* 0xF8 */
     ModelPartLevels **level_tables; /* 0xFC */
-    u16 unk100;                     /* 0x100 */
-    u16 unk102;                     /* 0x102 MODEL_FLAG_800: drawn with its own texture */
+    u16 model_flags;                /* 0x100 bits: 1 motion on, 0x200 draw-list, 0x400 unlit, 0x800 record sent */
+    u16 draw_flags;                 /* 0x102 MODEL_FLAG_800: drawn with its own texture */
     int unk104;                     /* 0x104 passed to Effect_FindModelRecord, which does not read it */
     char pad108[0x08];
     ModelStripList *strips;         /* 0x110 also read as a CollisionMesh (kf_collision.h), NULL: none */
@@ -387,37 +387,37 @@ typedef struct ModelInstance {
     BoneAnchor *bone_anchors;       /* 0x120 32 of them */
     Vector4 *bone_positions;        /* 0x124 32 of them, written from bone_anchors */
     struct ModelInstance *draw_next[2]; /* 0x128 next model in the same depth bucket, per draw list */
-    ModelPart *unk130;              /* 0x130 the part whose placement Entity_RebuildModelMatrices leaves out (the root?) */
+    ModelPart *root_part;           /* 0x130 the part whose placement Entity_RebuildModelMatrices leaves out (the root?) */
     char pad134[0x08];
-    f32 radius;                     /* 0x13C how far the model reaches around its position (a map object's MapObject.unk14) */
+    f32 radius;                     /* 0x13C how far the model reaches around its position (a map object's MapObject.reach_radius) */
     u8 hit_handles[4];              /* 0x140 handles of the linked points (linked_point_pool) that touch it; the drawing code lights it by them */
     u8 hit_count;                   /* 0x144 how many of hit_handles are used */
-    u8 unk145;                      /* 0x145 */
-    s16 unk146;                     /* 0x146 */
-    s32 unk148;                     /* 0x148 */
-    void *unk14C;                   /* 0x14C */
-    f32 unk150;                     /* 0x150 */
-    f32 unk154;                     /* 0x154 */
-    f32 unk158;                     /* 0x158 */
+    u8 fade_enabled;                /* 0x145 1: drawn with fade_alpha instead of the parts' own alpha */
+    s16 fade_alpha;                 /* 0x146 alpha (0..0x100) the model fades with while fade_enabled */
+    s32 light_block;                /* 0x148 pointer to the model's lights: two 0x40 matrices */
+    void *fog_block;                /* 0x14C pointer to the model's fog block (near, far, colour) */
+    f32 colour_red;                 /* 0x150 the model's red tint */
+    f32 colour_green;               /* 0x154 the model's green tint */
+    f32 colour_blue;                /* 0x158 the model's blue tint */
     f32 alpha;                      /* 0x15C below 128: drawn without z writes */
     s32 unk160[4];                  /* 0x160 */
     char pad170[0x08];
-    void *unk178;                   /* 0x178 passed to TextureTable_QueueEnabled with unk194: bit n set skips chunk n (a mask, but not stored as an int) */
+    void *chunk_skip_mask;          /* 0x178 passed to TextureTable_QueueEnabled with texture_data: bit n set skips chunk n (a mask, but not stored as an int) */
     int found_record_id;            /* 0x17C the id Effect_FindModelRecord last found; sent after the colour at unk150 by Model_DrawPosed, in its alpha slot */
     int found_record[4];            /* 0x180 a copy of that record, its id bits replaced; a quadword sent after it */
-    u16 unk190;                     /* 0x190 slot of unk194 in D_00468190 (0..2), 3: always sent */
-    s16 unk192;                     /* 0x192 */
-    int unk194;                     /* 0x194 */
-    int unk198;                     /* 0x198 */
-    int unk19C;                     /* 0x19C */
-    int unk1A0;                     /* 0x1A0 */
+    u16 texture_slot;               /* 0x190 slot of unk194 in D_00468190 (0..2), 3: always sent */
+    s16 shared_texture_slot;        /* 0x192 which entry of the shared last-sent texture record applies */
+    int texture_data;               /* 0x194 the model's texture: a chunk table, or a raw packet */
+    int shared_texture_packet;      /* 0x198 map texture packet 5, tracked in the shared record */
+    int texture_packet_3;           /* 0x19C the map's texture packet 3, queued when it changes */
+    int texture_packet_5;           /* 0x1A0 the map's texture packet 5, queued when it changes */
     struct ModelWaveUv *wave_uvs;   /* 0x1A4 one per vertex, built by Wobble_BuildWaveUvs */
-    void (*unk1A8)(struct ModelInstance *model);    /* 0x1A8 */
-    void (*draw)(struct ModelInstance *model);  /* 0x1AC sets the GS state and draws */
-    void (*unk1B0)();               /* 0x1B0 called with the model by DrawList_Draw */
-    void (*unk1B4)(struct ModelInstance *model);    /* 0x1B4 */
-    int (*get_point)(void *model, int index);   /* 0x1B8 */
-    void (*unk1BC)(struct ModelInstance *model);    /* 0x1BC called when ModelTexture_SendForModel sent new textures */
+    void (*draw_parts)(struct ModelInstance *model); /* 0x1A8 queues the model's part packets */
+    void (*draw)(struct ModelInstance *model); /* 0x1AC sets the GS state and draws */
+    void (*after_draw)();           /* 0x1B0 called with the model by DrawList_Draw */
+    void (*update_bone_points)(struct ModelInstance *model); /* 0x1B4 recomputes the 32 bone positions from the bone anchors */
+    int (*get_point)(void *model, int index); /* 0x1B8 */
+    void (*on_textures_sent)(struct ModelInstance *model); /* 0x1BC called when ModelTexture_SendForModel sent new textures */
 } ModelInstance;
 
 /* a 0x40-byte vertex of four vectors; ModelScreen_StepFloatVertices fills the steps between two of them */
@@ -445,7 +445,7 @@ typedef struct {
     s32 unk0C;                      /* 0x0C */
 } ModelScreenPoint;
 
-/* a 4x4 matrix (ModelInstance.unk40, ModelPart.unk00) as retail copies it whole: by doublewords */
+/* a 4x4 matrix (ModelInstance.model_matrix, ModelPart.matrix) as retail copies it whole: by doublewords */
 typedef struct {
     f32 rows[4][4];
 } __attribute__((aligned(16))) ModelMatrix;
@@ -455,11 +455,11 @@ typedef struct {
     Uint128 rows[4];
 } ModelMatrixQwords;
 
-/* ModelInstance.unk40 as the 4x4 matrix it is */
-#define MODEL_MATRIX(model) ((f32 (*)[4])(model)->unk40)
+/* ModelInstance.model_matrix as the 4x4 matrix it is */
+#define MODEL_MATRIX(model) ((f32 (*)[4])(model)->model_matrix)
 
-/* ModelPart.unk00 as the 4x4 matrix it is */
-#define PART_MATRIX(part) ((f32 (*)[4])(part)->unk00)
+/* ModelPart.matrix as the 4x4 matrix it is */
+#define PART_MATRIX(part) ((f32 (*)[4])(part)->matrix)
 
 /* the scratchpad as Wobble_SetUvsFromJitteredScreen uses it: a matrix per part, then one point and where it lands */
 typedef struct {
@@ -506,51 +506,51 @@ typedef struct {
 #define MODEL_CUT_BLEND_ROW_A ((BlendVertex *)0x70000340)
 #define MODEL_CUT_BLEND_ROW_B ((BlendVertex *)0x70000480)
 
-/* what MapObject.unk08 points at */
+/* what MapObject.source points at */
 typedef struct {
     Vector4 position;               /* 0x00 where the object rests */
     Vector4 rotation;               /* 0x10 */
     Vector4 scale;                  /* 0x20 */
-    u16 unk30;                      /* 0x30 its row of map_object_defs (param/obj.prm) */
-    u16 unk32;                      /* 0x32 which of the map's object models it uses (Map_BuildModels) */
-    u16 unk34;                      /* 0x34 which of the map's object collision meshes */
-    u16 unk36;                      /* 0x36 which of the map's object motions */
+    u16 def_index;                  /* 0x30 its row of map_object_defs (param/obj.prm) */
+    u16 model_index;                /* 0x32 which of the map's object models it uses (Map_BuildModels) */
+    u16 collision_mesh_index;       /* 0x34 which of the map's object collision meshes */
+    u16 motion_index;               /* 0x36 which of the map's object motions */
     union {
         u64 flags;
         u8 bytes[8];                /* bytes[2] 0x3A, bytes[3] 0x3B: the id of another map object */
-    } unk38;                        /* 0x38 */
-    u16 unk40;                      /* 0x40 passed to Script_Start, 0: nothing */
-    u16 unk42;                      /* 0x42 the same, by MapObject_Break */
-    s16 unk44;                      /* 0x44 an item (item_counts) or, 0x40 to 0x7F, a sound */
-    u8 unk46;                       /* 0x46 */
+    } spawn_flags;                  /* 0x38 flags, the linked object's id and two block indices */
+    u16 use_script;                 /* 0x40 passed to Script_Start, 0: nothing */
+    u16 break_script;               /* 0x42 the same, by MapObject_Break */
+    s16 kind_param_0;               /* 0x44 an item (item_counts) or, 0x40 to 0x7F, a sound */
+    u8 kind_param_1;                /* 0x46 kind parameter 1: key item, sound mode */
     char pad47[0x01];
-    u8 unk48;                       /* 0x48 */
+    u8 kind_param_2;                /* 0x48 kind parameter 2: sound id, gold to drop */
     char pad49[0x01];
-    s16 unk4A;                      /* 0x4A */
+    s16 kind_param_3;               /* 0x4A kind parameter 3: sound range, aim angle */
     char pad4C[0x06];
-    u16 unk52;                      /* 0x52 1 to 6: touching it starts PlayerState.timed_flags[unk52 - 1] (Player_CollideWithMapObjects) */
-    u16 unk54;                      /* 0x54 passed to Effect_StartSpawner when the object comes into view, 0: nothing */
-    u8 unk56;                       /* 0x56 the model point it starts at; the next one gives its direction */
+    u16 touch_status_flag;          /* 0x52 1 to 6: touching it starts PlayerState.timed_flags[unk52 - 1] (Player_CollideWithMapObjects) */
+    u16 appear_effect;              /* 0x54 passed to Effect_StartSpawner when the object comes into view, 0: nothing */
+    u8 effect_start_point;          /* 0x56 the model point it starts at; the next one gives its direction */
     char pad57[0x01];
-    u16 unk58;                      /* 0x58 passed to Script_Start when an item is used on the object, 0: nothing */
-    u8 unk5A;                       /* 0x5A 0, 0xFF: in view with its map record; else by Map_TestFlagBlockBit */
+    u16 item_use_script;            /* 0x58 passed to Script_Start when an item is used on the object, 0: nothing */
+    u8 linked_point_owner;          /* 0x5A 0, 0xFF: in view with its map record; else by Map_TestFlagBlockBit */
     char pad5B[0x25];
 } MapObjectUnk08;
 
 /* MapObjectUnk08 with its four parameters as words; what they mean depends on the kind */
 typedef struct {
     char pad00[0x44];
-    s16 unk44;                      /* 0x44 */
-    s16 unk46;                      /* 0x46 */
-    s16 unk48;                      /* 0x48 */
-    s16 unk4A;                      /* 0x4A */
-    s16 unk4C;                      /* 0x4C */
-    s16 unk4E;                      /* 0x4E */
-    s16 unk50;                      /* 0x50 */
-    s16 unk52;                      /* 0x52 */
+    s16 kind_param_0;               /* 0x44 kind parameter 0: fade distance, light red, item id */
+    s16 kind_param_1;               /* 0x46 kind parameter 1: fade distance, light green, key item */
+    s16 kind_param_2;               /* 0x48 kind parameter 2: fade alpha, light blue, gold dropped */
+    s16 kind_param_3;               /* 0x4A kind parameter 3: fade alpha, light owner, aim angle */
+    s16 kind_param_4;               /* 0x4C kind parameter 4: light flag, aim angle y */
+    s16 kind_param_5;               /* 0x4E kind parameter 5: shot speed, light owner */
+    s16 kind_param_6;               /* 0x50 kind parameter 6: light sort order */
+    s16 kind_param_7;               /* 0x52 kind parameter 7: light model point, object flag */
 } MapObjectUnk08Words;
 
-#define MAP_OBJECT_WORDS(object) ((MapObjectUnk08Words *)(object)->unk08)
+#define MAP_OBJECT_WORDS(object) ((MapObjectUnk08Words *)(object)->source)
 
 /* the same parameters as an array */
 typedef struct {
@@ -558,7 +558,7 @@ typedef struct {
     s16 words[8];                   /* 0x44 */
 } MapObjectUnk08Array;
 
-#define MAP_OBJECT_WORD_ARRAY(object) (((MapObjectUnk08Array *)(object)->unk08)->words)
+#define MAP_OBJECT_WORD_ARRAY(object) (((MapObjectUnk08Array *)(object)->source)->words)
 
 /* one animation of a map object's definition */
 typedef struct {
@@ -570,7 +570,7 @@ typedef struct {
     u8 sound_frame;                 /* 0x07 the animation frame the sound starts on */
 } MapObjectAnim;
 
-/* what MapObject.unk04 points at: its row of param/obj.prm (map_object_defs) */
+/* what MapObject.definition points at: its row of param/obj.prm (map_object_defs) */
 typedef struct {
     u32 kind : 8;                   /* 0x00 1, 2, 6, 0x11: EntitySight_ObjectInWay tests lines of sight against it */
     u32 bit8 : 1;                   /* which function draws it (MapObject_InitMap) */
@@ -580,18 +580,18 @@ typedef struct {
     u32 pad00_13 : 2;
     u32 bit15 : 1;                  /* the player standing on it is carried and turned with it (Player_Move) */
     u32 pad00_16 : 16;
-    u16 unk04;                      /* 0x04 0xFFFF: it has no model */
-    u16 unk06;                      /* 0x06 0xFFFF: it has no collision mesh */
+    u16 model_index;                /* 0x04 0xFFFF: it has no model */
+    u16 collision_mesh_index;       /* 0x06 0xFFFF: it has no collision mesh */
     char pad08[0x04];
-    f32 unk0C;                      /* 0x0C above 0: MapObject.unk14 is this times the scale, plus 100 */
+    f32 collision_radius;           /* 0x0C above 0: MapObject.reach_radius is this times the scale, plus 100 */
     MapObjectAnim anims[8];         /* 0x10 by MapObjectBytes.anim; entry anim + 2 holds a second sound for anims 4 and 5 */
-    u16 unk50;                      /* 0x50 passed to Effect_StartSpawner */
-    s16 unk52[9];                   /* 0x52 percent of each of a hit's nine strengths that it shrugs off, 200: all of it (Attack_HitMapObject) */
-    f32 unk64;                      /* 0x64 above 0: the player must face it within this angle to act on it (Interact_FindTarget) */
-    u32 unk68;                      /* 0x68 flags; the low half is also the message id of its name ("Corpse", "Jail Door"...), shown when used */
-    f32 unk6C;                      /* 0x6C MapObject.unk3C is this times the scale, plus 100 */
-    f32 unk70;                      /* 0x70 how far its sounds carry, 0: 800 */
-    u8 unk74;                       /* 0x74 */
+    u16 break_effect;               /* 0x50 passed to Effect_StartSpawner */
+    s16 hit_resist_percent[9];      /* 0x52 percent of each of a hit's nine strengths that it shrugs off, 200: all of it (Attack_HitMapObject) */
+    f32 facing_angle;               /* 0x64 above 0: the player must face it within this angle to act on it (Interact_FindTarget) */
+    u32 definition_flags;           /* 0x68 flags; the low half is also the message id of its name ("Corpse", "Jail Door"...), shown when used */
+    f32 interact_radius;            /* 0x6C MapObject.interact_radius is this times the scale, plus 100 */
+    f32 sound_range;                /* 0x70 how far its sounds carry, 0: 800 */
+    u8 sound_falloff_mode;          /* 0x74 which falloff curve its sounds use */
 } MapObjectUnk04;
 
 /* MapObjectUnk04's first word as two halves */
@@ -634,29 +634,29 @@ typedef struct {
 /* the objects of a map, looked up by MapObject_GetById(map, id) */
 typedef struct {
     ModelInstance *model;           /* 0x00 */
-    MapObjectUnk04 *unk04;          /* 0x04 */
-    MapObjectUnk08 *unk08;          /* 0x08 */
-    s32 unk0C;                      /* 0x0C what Map_FindRecordAtInSlot returns for its position */
-    u32 unk10;                      /* 0x10 flags, MAP_OBJECT_BITS */
-    f32 unk14;                      /* 0x14 how far around its position it reaches, 0: nothing to hit */
-    f32 unk18;                      /* 0x18 how far it is from the point last tested against the map objects (Collision_PushOutOfObjects, Collision_StandOnObjects) */
-    void *unk1C;                    /* 0x1C the next MapObject of its draw list (MapObject_InitMap) */
-    f32 unk20;                      /* 0x20 the model's position (x, y, z) as of the last update */
-    f32 unk24;                      /* 0x24 */
-    f32 unk28;                      /* 0x28 */
+    MapObjectUnk04 *definition;     /* 0x04 its row of param/obj.prm: kind, model, scripts, toughness */
+    MapObjectUnk08 *source;         /* 0x08 its record in the map's object list: where it stands, its model */
+    s32 map_record;                 /* 0x0C what Map_FindRecordAtInSlot returns for its position */
+    u32 state_flags;                /* 0x10 flags, MAP_OBJECT_BITS */
+    f32 reach_radius;               /* 0x14 how far around its position it reaches, 0: nothing to hit */
+    f32 tested_point_distance;      /* 0x18 how far it is from the point last tested against the map objects (Collision_PushOutOfObjects, Collision_StandOnObjects) */
+    void *next_in_draw_list;        /* 0x1C the next MapObject of its draw list (MapObject_InitMap) */
+    f32 last_position_x;            /* 0x20 the model's position (x, y, z) as of the last update */
+    f32 last_position_y;            /* 0x24 the model's y as of the last update */
+    f32 last_position_z;            /* 0x28 the model's z as of the last update */
     u8 sound;                       /* 0x2C the looping sound it plays, 0: none */
     char pad2D[0x03];
-    f32 unk30;                      /* 0x30 the model's rotation (x, y, z) as of the last update */
-    f32 unk34;                      /* 0x34 */
-    f32 unk38;                      /* 0x38 */
-    f32 unk3C;                      /* 0x3C MapObjectUnk04.unk6C times the scale, plus 100 */
+    f32 last_rotation_x;            /* 0x30 the model's rotation (x, y, z) as of the last update */
+    f32 last_rotation_y;            /* 0x34 the model's y rotation as of the last update */
+    f32 last_rotation_z;            /* 0x38 the model's z rotation as of the last update */
+    f32 interact_radius;            /* 0x3C MapObjectUnk04.interact_radius times the scale, plus 100 */
     s32 work[8];                    /* 0x40 the kind's own state (MapTrigger.shot) */
-    u32 unk60;                      /* 0x60 flags */
+    u32 door_open_flags;            /* 0x60 flags */
     char pad64[0x0C];
 } MapObject;
 
 /* the first word of the definition, whole (bit 11 0x800, bit 12 0x1000) */
-#define MAP_OBJECT_DEF_WORD(object) (*(u32 *)(object)->unk04)
+#define MAP_OBJECT_DEF_WORD(object) (*(u32 *)(object)->definition)
 
 /* MapObject.work as most kinds use it */
 typedef struct {
@@ -695,13 +695,13 @@ typedef struct {
     s8 timer;                       /* 0x1C */
 } MapObjectWorkKind121DA8;
 
-/* MapObject.unk60 as bit-fields */
+/* MapObject.door_open_flags as bit-fields */
 typedef struct {
     u32 bit0 : 1;                   /* set while a door-like object is open or opening */
     u32 bits1 : 31;
 } MapObjectUnk60Bits;
 
-#define MAP_OBJECT_UNK60_BITS(object) ((MapObjectUnk60Bits *)&(object)->unk60)
+#define MAP_OBJECT_UNK60_BITS(object) ((MapObjectUnk60Bits *)&(object)->door_open_flags)
 
 /* the word at MapObject+0x10 (and MapTrigger+0x10) as bit-fields */
 typedef struct {
@@ -721,7 +721,7 @@ typedef struct {
     u32 anim : 8;                   /* 0x13 the animation MapObject_StartAnim started */
 } MapObjectBits;
 
-#define MAP_OBJECT_BITS(object) ((MapObjectBits *)&(object)->unk10)
+#define MAP_OBJECT_BITS(object) ((MapObjectBits *)&(object)->state_flags)
 
 /* the same word as bytes */
 typedef struct {
@@ -731,7 +731,7 @@ typedef struct {
     s8 anim;                        /* 0x13 */
 } MapObjectBytes;
 
-#define MAP_OBJECT_BYTES(object) ((MapObjectBytes *)&(object)->unk10)
+#define MAP_OBJECT_BYTES(object) ((MapObjectBytes *)&(object)->state_flags)
 
 /* the same word through a union, for where retail reads it after stores of other types */
 typedef union {
@@ -739,7 +739,7 @@ typedef union {
     MapObjectBits bits;
 } MapObjectFlags;
 
-#define MAP_OBJECT_FLAGS(object) (((MapObjectFlags *)&(object)->unk10)->word)
+#define MAP_OBJECT_FLAGS(object) (((MapObjectFlags *)&(object)->state_flags)->word)
 
 /* the same word with bit 3 on its own: MapObject_UpdateAll clears it every frame, the kinds' handlers set it */
 typedef struct {
@@ -750,7 +750,7 @@ typedef struct {
     u32 bits4 : 28;
 } MapObjectBitsLow;
 
-#define MAP_OBJECT_BITS_LOW(object) ((MapObjectBitsLow *)&(object)->unk10)
+#define MAP_OBJECT_BITS_LOW(object) ((MapObjectBitsLow *)&(object)->state_flags)
 
 /* the props of a map, looked up by Map_GetRecordById(map, id) */
 typedef struct {
@@ -877,13 +877,13 @@ typedef struct {
 /* ModelInstance.level_tables points at the model's ModelChannel, whose first 0x80 bytes are the tables */
 #define MODEL_CHANNEL(model) (*(ModelChannel **)&(model)->level_tables)
 
-/* ModelInstance.unk100 as bit-fields */
+/* ModelInstance.model_flags as bit-fields */
 typedef struct {
     u16 has_motion : 1;             /* set once a motion is loaded (ModelMotion_Load); ModelMotion_Step animates only then */
     u16 bits1 : 15;
 } ModelUnk100Bits;
 
-#define MODEL_UNK100_BITS(model) ((ModelUnk100Bits *)&(model)->unk100)
+#define MODEL_UNK100_BITS(model) ((ModelUnk100Bits *)&(model)->model_flags)
 
 /* ChannelOwner.vec: the vector that is cleared on a switch */
 typedef struct {

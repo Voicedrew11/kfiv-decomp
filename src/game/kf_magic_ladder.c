@@ -70,12 +70,12 @@ int Player_CastMagic(int magic_id) {
     channeled_magic_active = 0;
     entry = &fx_table[magic_id];
     stats = &entry->unkAC;
-    if (entry->unk102 == 0) {
-        if ((s32)(player_state.unk1C8 >> 39) & 1) {
+    if (entry->item_menu_magic == 0) {
+        if ((s32)(player_state.status_bits >> 39) & 1) {
             return FALSE;
         }
-        if ((s32)(player_state.unk1C8 >> 38) & 1) {
-            if (player_state.position.y - entry->unk108 > player_state.unk1DC) {
+        if ((s32)(player_state.status_bits >> 38) & 1) {
+            if (player_state.position.y - entry->effect_depth_below > player_state.water_surface_y) {
                 return FALSE;
             }
         }
@@ -83,16 +83,16 @@ int Player_CastMagic(int magic_id) {
     if (player_state.equipment[EQUIP_ARMOR] == ITEM_WORN_INDEX(ITEM_ICE_ARMOR) && magic_id > 0 && (magic_id - 1) / 15 == 0) {
         return FALSE;
     }
-    if (player_state.unkC0 < 5000) {
+    if (player_state.magic_gauge < 5000) {
         return FALSE;
     }
-    if (player_state.mp_now < entry->unkFC) {
+    if (player_state.mp_now < entry->mp_cost) {
         return FALSE;
     }
-    player_state.mp_now -= entry->unkFC;
-    player_state.unkC8 = entry->unk104;
-    player_state.unk264 = magic_id;
-    player_state.unkC0 = 0;
+    player_state.mp_now -= entry->mp_cost;
+    player_state.magic_gauge_delay = entry->gauge_refill_delay;
+    player_state.charging_magic = magic_id;
+    player_state.magic_gauge = 0;
     if ((u32)(magic_id - 7) < 3) {
         channeled_magic_warmup_frames = 30;
         channeled_magic_active = 1;
@@ -101,22 +101,22 @@ int Player_CastMagic(int magic_id) {
         channeled_shot_ring_index = (channeled_shot_ring_index + 1) % 16;
         return FALSE;
     }
-    if (entry->unk102 == 0) {
+    if (entry->item_menu_magic == 0) {
         shot = Shot_Alloc();
-        shot->unk00 = 1;
-        shot->unk20 = player_state.power;
-        shot->unk22 = player_state.magic;
-        shot->unk26 = magic_id;
+        shot->is_magic_shot = 1;
+        shot->player_power = player_state.power;
+        shot->player_magic = player_state.magic;
+        shot->magic_id = magic_id;
         shot->unk08 = player_state.unk7E;
         Vector_Copy(&angles, &player_state.rotation);
-        angles.x += player_state.unk238;
+        angles.x += player_state.view_tilt_pitch;
         if (angles.x > 1.012291f) {
             angles.x = 1.012291f;
         } else if (angles.x < -1.012291f) {
             angles.x = -1.012291f;
         }
         Attack_LaunchMagicEffect(magic_id, shot, &player_state, &player_state.rotation, &player_state); // match: the player's rotation is passed; the clamped angles above are never used
-        player_state.unk259 = 1;
+        player_state.cast_launched_shot = 1;
     } else {
         if (stats->unk00[0] != 0) {
             player_state.timed_flags[0] = 0;
@@ -146,187 +146,187 @@ int Player_CastMagic(int magic_id) {
             if (player_state.hp_now < 0) {
                 player_state.hp_now = 0;
             }
-            player_state.unk2B0 = stats->unk4A - stats->unk4C;
-            if (player_state.unk2B0 == 0) {
-                player_state.unk2B4 = 0;
+            player_state.hp_step_remaining = stats->unk4A - stats->unk4C;
+            if (player_state.hp_step_remaining == 0) {
+                player_state.hp_step_period = 0;
             } else {
                 if (stats->unk4E > 0) {
-                    player_state.unk2B4 = stats->unk4E;
+                    player_state.hp_step_period = stats->unk4E;
                 } else {
-                    player_state.unk2B4 = 1;
+                    player_state.hp_step_period = 1;
                 }
             }
         }
         if (stats->duration != 0) {
-            if (player_state.unk11C[0] <= 0 && player_state.unk11C[1] <= 0 && player_state.unk11C[2] <= 0
-                && player_state.unk122[0] <= 0 && player_state.unk122[1] <= 0 && player_state.unk122[2] <= 0
-                && player_state.unk122[3] <= 0 && player_state.unk122[4] <= 0 && player_state.unk122[5] <= 0) {
+            if (player_state.physical_strength_bonus[0] <= 0 && player_state.physical_strength_bonus[1] <= 0 && player_state.physical_strength_bonus[2] <= 0
+                && player_state.magic_strength_bonus[0] <= 0 && player_state.magic_strength_bonus[1] <= 0 && player_state.magic_strength_bonus[2] <= 0
+                && player_state.magic_strength_bonus[3] <= 0 && player_state.magic_strength_bonus[4] <= 0 && player_state.magic_strength_bonus[5] <= 0) {
                 D_00446960 = 0;
             }
             if (stats->unk18[0] != 0) {
-                player_state.unk11C[0] = stats->unk18[0];
-                player_state.unk158[0] = stats->duration;
-                player_state.unk188[0] = ++D_00446960;
+                player_state.physical_strength_bonus[0] = stats->unk18[0];
+                player_state.physical_strength_bonus_timer[0] = stats->duration;
+                player_state.physical_bonus_stamp[0] = ++D_00446960;
             }
             if (stats->unk18[1] != 0) {
-                player_state.unk11C[1] = stats->unk18[1];
-                player_state.unk158[1] = stats->duration;
-                player_state.unk188[1] = ++D_00446960;
+                player_state.physical_strength_bonus[1] = stats->unk18[1];
+                player_state.physical_strength_bonus_timer[1] = stats->duration;
+                player_state.physical_bonus_stamp[1] = ++D_00446960;
             }
             if (stats->unk18[2] != 0) {
-                player_state.unk11C[2] = stats->unk18[2];
-                player_state.unk158[2] = stats->duration;
-                player_state.unk188[2] = ++D_00446960;
+                player_state.physical_strength_bonus[2] = stats->unk18[2];
+                player_state.physical_strength_bonus_timer[2] = stats->duration;
+                player_state.physical_bonus_stamp[2] = ++D_00446960;
             }
             if (stats->unk18[3] != 0) {
-                player_state.unk122[0] = stats->unk18[3];
-                player_state.unk15E[0] = stats->duration;
-                player_state.unk18E[0] = ++D_00446960;
+                player_state.magic_strength_bonus[0] = stats->unk18[3];
+                player_state.magic_strength_bonus_timer[0] = stats->duration;
+                player_state.magic_bonus_stamp[0] = ++D_00446960;
             }
             if (stats->unk18[4] != 0) {
-                player_state.unk122[1] = stats->unk18[4];
-                player_state.unk15E[1] = stats->duration;
-                player_state.unk18E[1] = ++D_00446960;
+                player_state.magic_strength_bonus[1] = stats->unk18[4];
+                player_state.magic_strength_bonus_timer[1] = stats->duration;
+                player_state.magic_bonus_stamp[1] = ++D_00446960;
             }
             if (stats->unk18[5] != 0) {
-                player_state.unk122[2] = stats->unk18[5];
-                player_state.unk15E[2] = stats->duration;
-                player_state.unk18E[2] = ++D_00446960;
+                player_state.magic_strength_bonus[2] = stats->unk18[5];
+                player_state.magic_strength_bonus_timer[2] = stats->duration;
+                player_state.magic_bonus_stamp[2] = ++D_00446960;
             }
             if (stats->unk18[6] != 0) {
-                player_state.unk122[3] = stats->unk18[6];
-                player_state.unk15E[3] = stats->duration;
-                player_state.unk18E[3] = ++D_00446960;
+                player_state.magic_strength_bonus[3] = stats->unk18[6];
+                player_state.magic_strength_bonus_timer[3] = stats->duration;
+                player_state.magic_bonus_stamp[3] = ++D_00446960;
             }
             if (stats->unk18[7] != 0) {
-                player_state.unk122[4] = stats->unk18[7];
-                player_state.unk15E[4] = stats->duration;
-                player_state.unk18E[4] = ++D_00446960;
+                player_state.magic_strength_bonus[4] = stats->unk18[7];
+                player_state.magic_strength_bonus_timer[4] = stats->duration;
+                player_state.magic_bonus_stamp[4] = ++D_00446960;
             }
             if (stats->unk18[8] != 0) {
-                player_state.unk122[5] = stats->unk18[8];
-                player_state.unk15E[5] = stats->duration;
-                player_state.unk18E[5] = ++D_00446960;
+                player_state.magic_strength_bonus[5] = stats->unk18[8];
+                player_state.magic_strength_bonus_timer[5] = stats->duration;
+                player_state.magic_bonus_stamp[5] = ++D_00446960;
             }
             if (stats->unk0C[0] != 0) {
-                player_state.unk110[0] = stats->unk0C[0];
-                player_state.unk14C[0] = stats->duration;
+                player_state.ailment_attack_bonus[0] = stats->unk0C[0];
+                player_state.ailment_attack_bonus_timer[0] = stats->duration;
             }
             if (stats->unk0C[1] != 0) {
-                player_state.unk110[1] = stats->unk0C[1];
-                player_state.unk14C[1] = stats->duration;
+                player_state.ailment_attack_bonus[1] = stats->unk0C[1];
+                player_state.ailment_attack_bonus_timer[1] = stats->duration;
             }
             if (stats->unk0C[2] != 0) {
-                player_state.unk110[2] = stats->unk0C[2];
-                player_state.unk14C[2] = stats->duration;
+                player_state.ailment_attack_bonus[2] = stats->unk0C[2];
+                player_state.ailment_attack_bonus_timer[2] = stats->duration;
             }
             if (stats->unk0C[3] != 0) {
-                player_state.unk110[3] = stats->unk0C[3];
-                player_state.unk14C[3] = stats->duration;
+                player_state.ailment_attack_bonus[3] = stats->unk0C[3];
+                player_state.ailment_attack_bonus_timer[3] = stats->duration;
             }
             if (stats->unk0C[4] != 0) {
-                player_state.unk110[4] = stats->unk0C[4];
-                player_state.unk14C[4] = stats->duration;
+                player_state.ailment_attack_bonus[4] = stats->unk0C[4];
+                player_state.ailment_attack_bonus_timer[4] = stats->duration;
             }
             if (stats->unk0C[5] != 0) {
-                player_state.unk110[5] = stats->unk0C[5];
-                player_state.unk14C[5] = stats->duration;
+                player_state.ailment_attack_bonus[5] = stats->unk0C[5];
+                player_state.ailment_attack_bonus_timer[5] = stats->duration;
             }
             if (stats->unk36[0] != 0) {
-                player_state.unk13A[0] = stats->unk36[0];
-                player_state.unk176[0] = stats->duration;
+                player_state.physical_defence_bonus[0] = stats->unk36[0];
+                player_state.physical_defence_bonus_timer[0] = stats->duration;
             }
             if (stats->unk36[1] != 0) {
-                player_state.unk13A[1] = stats->unk36[1];
-                player_state.unk176[1] = stats->duration;
+                player_state.physical_defence_bonus[1] = stats->unk36[1];
+                player_state.physical_defence_bonus_timer[1] = stats->duration;
             }
             if (stats->unk36[2] != 0) {
-                player_state.unk13A[2] = stats->unk36[2];
-                player_state.unk176[2] = stats->duration;
+                player_state.physical_defence_bonus[2] = stats->unk36[2];
+                player_state.physical_defence_bonus_timer[2] = stats->duration;
             }
             if (stats->unk36[3] != 0) {
-                player_state.unk140[0] = stats->unk36[3];
-                player_state.unk17C[0] = stats->duration;
+                player_state.magic_defence_bonus[0] = stats->unk36[3];
+                player_state.magic_defence_bonus_timer[0] = stats->duration;
             }
             if (stats->unk36[4] != 0) {
-                player_state.unk140[1] = stats->unk36[4];
-                player_state.unk17C[1] = stats->duration;
+                player_state.magic_defence_bonus[1] = stats->unk36[4];
+                player_state.magic_defence_bonus_timer[1] = stats->duration;
             }
             if (stats->unk36[5] != 0) {
-                player_state.unk140[2] = stats->unk36[5];
-                player_state.unk17C[2] = stats->duration;
+                player_state.magic_defence_bonus[2] = stats->unk36[5];
+                player_state.magic_defence_bonus_timer[2] = stats->duration;
             }
             if (stats->unk36[6] != 0) {
-                player_state.unk140[3] = stats->unk36[6];
-                player_state.unk17C[3] = stats->duration;
+                player_state.magic_defence_bonus[3] = stats->unk36[6];
+                player_state.magic_defence_bonus_timer[3] = stats->duration;
             }
             if (stats->unk36[7] != 0) {
-                player_state.unk140[4] = stats->unk36[7];
-                player_state.unk17C[4] = stats->duration;
+                player_state.magic_defence_bonus[4] = stats->unk36[7];
+                player_state.magic_defence_bonus_timer[4] = stats->duration;
             }
             if (stats->unk36[8] != 0) {
-                player_state.unk140[5] = stats->unk36[8];
-                player_state.unk17C[5] = stats->duration;
+                player_state.magic_defence_bonus[5] = stats->unk36[8];
+                player_state.magic_defence_bonus_timer[5] = stats->duration;
             }
             if (stats->unk2A[0] != 0) {
-                player_state.unk12E[0] = stats->unk2A[0];
-                player_state.unk16A[0] = stats->duration;
+                player_state.ailment_defence_bonus[0] = stats->unk2A[0];
+                player_state.ailment_defence_bonus_timer[0] = stats->duration;
             }
             if (stats->unk2A[1] != 0) {
-                player_state.unk12E[1] = stats->unk2A[1];
-                player_state.unk16A[1] = stats->duration;
+                player_state.ailment_defence_bonus[1] = stats->unk2A[1];
+                player_state.ailment_defence_bonus_timer[1] = stats->duration;
             }
             if (stats->unk2A[2] != 0) {
-                player_state.unk12E[2] = stats->unk2A[2];
-                player_state.unk16A[2] = stats->duration;
+                player_state.ailment_defence_bonus[2] = stats->unk2A[2];
+                player_state.ailment_defence_bonus_timer[2] = stats->duration;
             }
             if (stats->unk2A[3] != 0) {
-                player_state.unk12E[3] = stats->unk2A[3];
-                player_state.unk16A[3] = stats->duration;
+                player_state.ailment_defence_bonus[3] = stats->unk2A[3];
+                player_state.ailment_defence_bonus_timer[3] = stats->duration;
             }
             if (stats->unk2A[4] != 0) {
-                player_state.unk12E[4] = stats->unk2A[4];
-                player_state.unk16A[4] = stats->duration;
+                player_state.ailment_defence_bonus[4] = stats->unk2A[4];
+                player_state.ailment_defence_bonus_timer[4] = stats->duration;
             }
             if (stats->unk2A[5] != 0) {
-                player_state.unk12E[5] = stats->unk2A[5];
-                player_state.unk16A[5] = stats->duration;
+                player_state.ailment_defence_bonus[5] = stats->unk2A[5];
+                player_state.ailment_defence_bonus_timer[5] = stats->duration;
             }
         }
         switch (magic_id) {
         case 0x2E:
-            player_state.unk2DC = stats->duration;
+            player_state.ailment0_slow_timer = stats->duration;
             break;
         case 0x3D:
         case 0x3E:
         case 0x3F:
-            player_state.unk2E0 = stats->duration;
+            player_state.light_spell_timer = stats->duration;
             break;
         case 0x4C:
         case 0x4D:
         case 0x4E:
-            player_state.unk2E4 = stats->duration;
+            player_state.intimidate_timer = stats->duration;
             if (magic_id >= 0x4D) {
-                player_state.unk2E8 = 1000.0f;
+                player_state.intimidate_range = 1000.0f;
             } else {
-                player_state.unk2E8 = 600.0f;
+                player_state.intimidate_range = 600.0f;
             }
             break;
         case 0x52:
-            player_state.unk2EC = stats->duration;
-            player_state.unk2F0 = 10;
+            player_state.rage_timer = stats->duration;
+            player_state.rage_power_bonus = 10;
             break;
         case 0x53:
-            player_state.unk2EC = stats->duration;
-            player_state.unk2F0 = 20;
+            player_state.rage_timer = stats->duration;
+            player_state.rage_power_bonus = 20;
             break;
         case 0x54:
-            player_state.unk2EC = stats->duration;
-            player_state.unk2F0 = 30;
+            player_state.rage_timer = stats->duration;
+            player_state.rage_power_bonus = 30;
             break;
         }
         Effect_FreeByParam(magic_id);
-        Effect_Spawn(entry->unk100, &D_00431C80, &D_00431C80, (Entity *)&player_state, magic_id, NULL);
+        Effect_Spawn(entry->effect_id, &D_00431C80, &D_00431C80, (Entity *)&player_state, magic_id, NULL);
         switch (magic_id) {
         case 0x10:
         case 0x11:
@@ -367,12 +367,12 @@ void Player_HoldMagic(int magic_id) {
         if (channeled_magic_active == 0) {
             return;
         }
-        if (entry->unk102 == 0) {
-            if ((s32)(player_state.unk1C8 >> 39) & 1) {
+        if (entry->item_menu_magic == 0) {
+            if ((s32)(player_state.status_bits >> 39) & 1) {
                 goto stop;
             }
-            if ((s32)(player_state.unk1C8 >> 38) & 1) {
-                if (player_state.position.y - entry->unk108 > player_state.unk1DC) {
+            if ((s32)(player_state.status_bits >> 38) & 1) {
+                if (player_state.position.y - entry->effect_depth_below > player_state.water_surface_y) {
                     goto stop;
                 }
             }
@@ -380,8 +380,8 @@ void Player_HoldMagic(int magic_id) {
         if (player_state.equipment[EQUIP_ARMOR] == ITEM_WORN_INDEX(ITEM_ICE_ARMOR) && magic_id > 0 && (magic_id - 1) / 15 == 0) {
             return;
         }
-        player_state.unkC8 = entry->unk104;
-        player_state.unkC0 = 0;
+        player_state.magic_gauge_delay = entry->gauge_refill_delay;
+        player_state.magic_gauge = 0;
         if (channeled_magic_warmup_frames > 0) {
             channeled_magic_warmup_frames--;
         } else {
@@ -394,13 +394,13 @@ void Player_HoldMagic(int magic_id) {
         }
         if (channeled_shot_slot != NULL) {
             D_00446964 = channeled_shot_slot;
-            channeled_shot_slot->unk00 = 1;
-            D_00446964->unk20 = player_state.power;
-            D_00446964->unk22 = player_state.magic;
-            D_00446964->unk26 = magic_id;
+            channeled_shot_slot->is_magic_shot = 1;
+            D_00446964->player_power = player_state.power;
+            D_00446964->player_magic = player_state.magic;
+            D_00446964->magic_id = magic_id;
             D_00446964->unk08 = player_state.unk7E;
             Vector_Copy(&angles, &player_state.rotation);
-            angles.x += player_state.unk238;
+            angles.x += player_state.view_tilt_pitch;
             if (angles.x > 1.012291f) {
                 angles.x = 1.012291f;
             } else if (angles.x < -1.012291f) {
@@ -408,7 +408,7 @@ void Player_HoldMagic(int magic_id) {
             }
             // match: the clamped angles are not what is passed
             Attack_LaunchMagicEffect(magic_id, D_00446964, &player_state, &player_state.rotation, &player_state);
-            player_state.unk259 = 1;
+            player_state.cast_launched_shot = 1;
         }
     }
     return;
@@ -423,10 +423,10 @@ void Ladder_Start(ObjectReference *object, int from_far_end) {
     int step_count;
     ReferencedObject *def;
 
-    if ((s32)(player_state.unk1C8 >> 36) & 1) {
+    if ((s32)(player_state.status_bits >> 36) & 1) {
         return;
     }
-    if ((s32)(player_state.unk1C8 >> 34) & 1) {
+    if ((s32)(player_state.status_bits >> 34) & 1) {
         return;
     }
     Vector_Copy(&ladder_top_point, (void *)object->model->get_point(object->model, 1));
@@ -435,11 +435,11 @@ void Ladder_Start(ObjectReference *object, int from_far_end) {
     PLAYER_STATUS_BITS(&player_state)->bit36 = TRUE;
     PLAYER_STATUS_BITS(&player_state)->bit34 = FALSE;
     PLAYER_STATUS_BITS(&player_state)->bit33 = FALSE;
-    player_state.unk1AC = 0.0f;
-    player_state.unk1B0 = 0.0f;
-    player_state.unk1B4 = 0.0f;
-    player_state.unk1B8 = 0.0f;
-    player_state.unk1BC = 0.0f;
+    player_state.fall_speed = 0.0f;
+    player_state.strafe_speed = 0.0f;
+    player_state.walk_speed = 0.0f;
+    player_state.look_speed = 0.0f;
+    player_state.turn_speed = 0.0f;
     ladder_state_index = 0;
     ladder_facing_y = object->model->rotation.y;
     ladder_object = object;
@@ -470,17 +470,17 @@ void Ladder_Start(ObjectReference *object, int from_far_end) {
 /* Clears ladder approach state when the player is knocked off during a climb. */
 void Ladder_CancelApproach(void) {
     ladder_state_index = 0;
-    player_state.unk1C8 &= ~(1L << 36);
+    player_state.status_bits &= ~(1L << 36);
 }
 
 /* Dispatches pad input to the ladder state handler when the player is on a ladder. */
 int Ladder_DispatchPad(u16 held, u16 pressed) {
     PlayerState *player = &player_state;
 
-    if ((s32)(player->unk1C8 >> 36) & 1) {
+    if ((s32)(player->status_bits >> 36) & 1) {
         ladder_state_handlers[ladder_state_index](held, pressed);
     }
-    return (s32)(player->unk1C8 >> 36) & 1;
+    return (s32)(player->status_bits >> 36) & 1;
 }
 
 /* Walks the player toward the ladder foot and turns to face it. */
@@ -501,13 +501,13 @@ void Ladder_WalkToFoot(void) {
 /* Waits on a rung; up/down input starts climbing or leaves the ladder. */
 void Ladder_WaitOnRung(u16 buttons) {
     if (!(ladder_object->unk10 & 0x10000)) {
-        player_state.unk1C8 &= ~(1L << 36);
+        player_state.status_bits &= ~(1L << 36);
     }
     if (buttons & (D_00446934 | D_00446936)) {
-        player_state.unk1C8 &= ~(1L << 36);
+        player_state.status_bits &= ~(1L << 36);
     }
     if ((buttons & (D_00446930 | D_00446932)) && !(buttons & (D_0044692C | D_0044692E))) {
-        player_state.unk1C8 &= ~(1L << 36);
+        player_state.status_bits &= ~(1L << 36);
     }
     if (D_0044692C & buttons) {
         ladder_current_rung++;
@@ -527,7 +527,7 @@ void Ladder_WaitOnRung(u16 buttons) {
             return;
         }
     }
-    player_state.unk1C8 &= ~(1L << 36);
+    player_state.status_bits &= ~(1L << 36);
 }
 
 /* Moves the player one rung up along a sine ease and plays a step sound. */
@@ -537,13 +537,13 @@ void Ladder_ClimbRungUp(u16 buttons) {
     f32 fraction;
 
     if (!(ladder_object->unk10 & 0x10000)) {
-        player_state.unk1C8 &= ~(1L << 36);
+        player_state.status_bits &= ~(1L << 36);
     }
     if (buttons & (D_00446934 | D_00446936)) {
-        player_state.unk1C8 &= ~(1L << 36);
+        player_state.status_bits &= ~(1L << 36);
     }
     if ((buttons & (D_00446930 | D_00446932)) && !(buttons & (D_0044692C | D_0044692E))) {
-        player_state.unk1C8 &= ~(1L << 36);
+        player_state.status_bits &= ~(1L << 36);
     }
     ladder_rung_anim_frame++;
     angle = 1.9198622f;
@@ -567,13 +567,13 @@ void Ladder_ClimbRungDown(u16 buttons) {
     f32 fraction;
 
     if (!(ladder_object->unk10 & 0x10000)) {
-        player_state.unk1C8 &= ~(1L << 36);
+        player_state.status_bits &= ~(1L << 36);
     }
     if (buttons & (D_00446934 | D_00446936)) {
-        player_state.unk1C8 &= ~(1L << 36);
+        player_state.status_bits &= ~(1L << 36);
     }
     if ((buttons & (D_00446930 | D_00446932)) && !(buttons & (D_0044692C | D_0044692E))) {
-        player_state.unk1C8 &= ~(1L << 36);
+        player_state.status_bits &= ~(1L << 36);
     }
     ladder_rung_anim_frame--;
     angle = 1.6580628f;

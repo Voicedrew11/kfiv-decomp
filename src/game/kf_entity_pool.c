@@ -194,7 +194,7 @@ void Entity_FreeAllInGroup(int group_id) {
     entity = D_004467E0;
     while (entity != NULL) {
         if (entity->group_id == group_id) {
-            EntityPool_RemoveUser(entity->unkD3);
+            EntityPool_RemoveUser(entity->pool_slot_index);
             Entity_ReleaseWorkArea(entity);
             entity = Entity_UnlinkActive(entity);
             Effect_FreeForOwner(entity);
@@ -224,13 +224,13 @@ static void Entity_StartLoadsInRange(void) {
         distance = Entity_SpawnDistanceToPlayer(entity);
         entity->distance_to_player = distance;
         height_difference = ABS(player_state[1] - entity->spawn_info->spawn_y);
-        if (entity->unkD3 >= 0 ||
+        if (entity->pool_slot_index >= 0 ||
             (distance <= (float)entity->spawn_info->despawn_range &&
              (entity->spawn_info->vertical_despawn_range == 0 ||
               height_difference < (float)entity->spawn_info->vertical_despawn_range))) {
-            entity->unkD3 = EntityPool_FindType(entity->spawn_info->type_id);
+            entity->pool_slot_index = EntityPool_FindType(entity->spawn_info->type_id);
             // match: the slot is tested as a signed byte, as unkD3 is stored
-            if ((char)entity->unkD3 >= 0) {
+            if ((char)entity->pool_slot_index >= 0) {
                 queued = entity;
                 entity = entity->next;
                 if (Entity_TryActivate(queued)) {
@@ -242,33 +242,33 @@ static void Entity_StartLoadsInRange(void) {
             // match: pool_size is read unsigned (lbu) for this compare
             if ((u8)entity->spawn_info->pool_size < 5) {
                 if (ENTITY_CONTROLLER(entity)->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
-                    entity->unkD3 = EntityPool_ClaimFixedBlockPair(entity->spawn_info->pool_size);
-                    if (entity->unkD3 >= 0) {
-                        entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
-                        entity_pool_slots[entity->unkD3 + 1].head.word |= ENTITY_POOL_FLAG_200;
+                    entity->pool_slot_index = EntityPool_ClaimFixedBlockPair(entity->spawn_info->pool_size);
+                    if (entity->pool_slot_index >= 0) {
+                        entity_pool_slots[entity->pool_slot_index].head.word |= ENTITY_POOL_FLAG_200;
+                        entity_pool_slots[entity->pool_slot_index + 1].head.word |= ENTITY_POOL_FLAG_200;
                     }
                 } else {
-                    entity->unkD3 = EntityPool_ClaimFixedBlock(entity->spawn_info->pool_size);
-                    if (entity->unkD3 >= 0) {
-                        entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
+                    entity->pool_slot_index = EntityPool_ClaimFixedBlock(entity->spawn_info->pool_size);
+                    if (entity->pool_slot_index >= 0) {
+                        entity_pool_slots[entity->pool_slot_index].head.word |= ENTITY_POOL_FLAG_200;
                     }
                 }
             } else if (ENTITY_CONTROLLER(entity)->flags & CONTROLLER_FLAG_TWO_BLOCKS) {
-                entity->unkD3 = EntityPool_ClaimBlockPair();
-                if (entity->unkD3 >= 0) {
-                    entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
-                    entity_pool_slots[entity->unkD3 + 1].head.word |= ENTITY_POOL_FLAG_200;
+                entity->pool_slot_index = EntityPool_ClaimBlockPair();
+                if (entity->pool_slot_index >= 0) {
+                    entity_pool_slots[entity->pool_slot_index].head.word |= ENTITY_POOL_FLAG_200;
+                    entity_pool_slots[entity->pool_slot_index + 1].head.word |= ENTITY_POOL_FLAG_200;
                 }
             } else {
-                entity->unkD3 = EntityPool_ClaimBlock();
-                if (entity->unkD3 >= 0) {
-                    entity_pool_slots[entity->unkD3].head.word |= ENTITY_POOL_FLAG_200;
+                entity->pool_slot_index = EntityPool_ClaimBlock();
+                if (entity->pool_slot_index >= 0) {
+                    entity_pool_slots[entity->pool_slot_index].head.word |= ENTITY_POOL_FLAG_200;
                 }
             }
-            if (entity->unkD3 >= 0) {
+            if (entity->pool_slot_index >= 0) {
                 queued = entity;
                 entity = entity->next;
-                EntityPool_QueueLoad(queued->unkD3, queued->spawn_info->type_id, ENTITY_CONTROLLER(queued)->flags >> 15);
+                EntityPool_QueueLoad(queued->pool_slot_index, queued->spawn_info->type_id, ENTITY_CONTROLLER(queued)->flags >> 15);
                 Entity_UnlinkWaiting(queued);
                 Entity_AppendToLoading(queued);
                 continue;
@@ -285,7 +285,7 @@ static void Entity_ActivateLoaded(void) {
 
     entity = D_004470B0;
     while (entity != NULL) {
-        if (entity_pool_slots[entity->unkD3].head.fields.kind == ENTITY_POOL_READY) {
+        if (entity_pool_slots[entity->pool_slot_index].head.fields.kind == ENTITY_POOL_READY) {
             current = entity;
             entity = entity->next;
             if (Entity_TryActivate(current)) {
@@ -322,7 +322,7 @@ void Entity_DespawnOutOfRange(void) {
         despawned = entity;
         if (out_of_range) {
             entity = entity->next;
-            EntityPool_RemoveUser(despawned->unkD3);
+            EntityPool_RemoveUser(despawned->pool_slot_index);
             Entity_ReleaseWorkArea(despawned);
             Entity_UnlinkActive(despawned);
             Entity_AppendToWaiting(despawned);
@@ -368,10 +368,10 @@ static void EntityPool_StepLoads(void) {
                     entity_type_file_header.unk18 += (int)file_load_buffer;
                     entity_type_file_header.unk14 += (int)file_load_buffer;
                     slot->head.fields.kind = ENTITY_POOL_UNPACKING;
-                    sound_load_queue.unk1C = (int)&entity_type_file_header;
-                    sound_load_queue.unk18 = 1;
-                    sound_load_queue.unk20 = i;
-                    sound_load_queue.unk24 = (int)slot;
+                    sound_load_queue.entity_bank_args = (int)&entity_type_file_header;
+                    sound_load_queue.entity_bank_load_pending = 1;
+                    sound_load_queue.entity_slot_index = i;
+                    sound_load_queue.entity_slot_voice_out = (int)slot;
                 } else {
                     slot->head.fields.kind = ENTITY_POOL_READY;
                 }
@@ -379,7 +379,7 @@ static void EntityPool_StepLoads(void) {
             busy = TRUE;
             break;
         case ENTITY_POOL_UNPACKING:
-            if (sound_load_queue.unk18 == 0) {
+            if (sound_load_queue.entity_bank_load_pending == 0) {
                 slot->head.fields.kind = ENTITY_POOL_READY;
                 File_Unlock();
                 D_00447098 = NULL;
@@ -405,13 +405,13 @@ static void EntityPool_StepLoads(void) {
     if (busy) {
         return;
     }
-    if (sound_load_queue.unk04 != 0) {
+    if (sound_load_queue.bgm_load_pending != 0) {
         return;
     }
     if (File_IsLocked() != 0) {
         return;
     }
-    sprintf(path, D_0043E790, D_004467C8, ((EntityParams *)(D_004467C0 + queued->head.fields.unk2 * 0x450))->unk00_0);
+    sprintf(path, D_0043E790, D_004467C8, ((EntityParams *)(D_004467C0 + queued->head.fields.unk2 * 0x450))->model_number);
     D_004467C4 = File_Open(path, 1, 1);
     if (D_004467C4 < 0) {
         EntityPool_AbandonLoad(queued);
@@ -427,7 +427,7 @@ static void EntityPool_StepLoads(void) {
 static int Entity_TryActivate(Entity *entity) {
     int data_address;
     int work_address;
-    EntityPoolSlot *slot = &entity_pool_slots[entity->unkD3];
+    EntityPoolSlot *slot = &entity_pool_slots[entity->pool_slot_index];
     EntityPoolData *data = (EntityPoolData *)slot->base_address;
     ModelInstance *model;
     int work_index;
@@ -439,18 +439,18 @@ static int Entity_TryActivate(Entity *entity) {
     if (work_index < 0) {
         return FALSE;
     }
-    entity->unkD4 = work_index;
+    entity->work_area_index = work_index;
     work_address = Entity_ClaimWorkArea(work_index);
     data_address = slot->base_address + (int)data->model_offset;
     Model_SetUpSkinned(ENTITY_MODEL(entity), &data_address, &work_address);
     model = ENTITY_MODEL(entity);
     model->draw = Entity_PrepareModelDraw;
-    model->unk1B0 = NULL;
+    model->after_draw = NULL;
     if (entity->spawn_info->type_id == 0x47) {
-        model->unk100 |= 0x200;
-        model->unk102 |= MODEL_FLAG_800;
+        model->model_flags |= 0x200;
+        model->draw_flags |= MODEL_FLAG_800;
         model->draw = Entity_PrepareScreenTexturedDraw;
-        model->unk1B0 = func_00124AF8;
+        model->after_draw = func_00124AF8;
         D_004467E8 = entity->spawn_info->type_id;
         work_address = (int)entity_work_area;
         work_address = (int)Model_SaveGsWordsAndUvs(model, (s64 *)work_address);
@@ -458,20 +458,20 @@ static int Entity_TryActivate(Entity *entity) {
     data_address = slot->base_address + (int)data->motion_offset;
     ModelMotion_LoadFile(data_address, &work_address, ENTITY_MODEL(entity), 1);
     data_address = slot->base_address + data->unk0C;
-    ENTITY_MODEL(entity)->unk194 = data_address;
-    ENTITY_MODEL(entity)->unk190 = 0;
-    ENTITY_MODEL(entity)->unk19C = (int)Map_GetSlotPacket(entity->group_id, 3);
-    ENTITY_MODEL(entity)->unk1A0 = (int)Map_GetSlotPacket(entity->group_id, 5);
-    entity->unkD2 = slot->unk7;
-    EntityPool_AddUser(entity->unkD3);
+    ENTITY_MODEL(entity)->texture_data = data_address;
+    ENTITY_MODEL(entity)->texture_slot = 0;
+    ENTITY_MODEL(entity)->texture_packet_3 = (int)Map_GetSlotPacket(entity->group_id, 3);
+    ENTITY_MODEL(entity)->texture_packet_5 = (int)Map_GetSlotPacket(entity->group_id, 5);
+    entity->sound_bank = slot->unk7;
+    EntityPool_AddUser(entity->pool_slot_index);
     ((void (*)(Entity *))Entity_ResetToSpawn)(entity); // match: declared without its argument elsewhere
     return TRUE;
 }
 
 /* Releases the entity's work area and clears its pool and work-area indices. */
 static void Entity_ReleaseWorkArea(Entity *entity) {
-    Entity_FreeWorkArea(entity->unkD4);
-    entity->unkD4 = entity->unkD3 = -1;
+    Entity_FreeWorkArea(entity->work_area_index);
+    entity->work_area_index = entity->pool_slot_index = -1;
 }
 
 /* Returns the pool block index in use (kinds 1 to 4) for a type id, or -1. */
@@ -654,7 +654,7 @@ static int EntityPool_HasFixedUser(int slot_index) {
 
     entity = D_004470B0;
     while (entity != NULL) {
-        if (slot_index == entity->unkD3 && entity->spawn_info->pool_size >= 0 && entity->spawn_info->pool_size < 5) {
+        if (slot_index == entity->pool_slot_index && entity->spawn_info->pool_size >= 0 && entity->spawn_info->pool_size < 5) {
             return TRUE;
         }
         entity = entity->next;
@@ -662,7 +662,7 @@ static int EntityPool_HasFixedUser(int slot_index) {
 
     entity = D_004467E0;
     while (entity != NULL) {
-        if (slot_index == entity->unkD3 && entity->spawn_info->pool_size >= 0 && entity->spawn_info->pool_size < 5) {
+        if (slot_index == entity->pool_slot_index && entity->spawn_info->pool_size >= 0 && entity->spawn_info->pool_size < 5) {
             return TRUE;
         }
         entity = entity->next;
@@ -678,8 +678,8 @@ static void EntityPool_EvictBlockUsers(int group_id) {
 
     entity = D_004470B0;
     while (entity != NULL) {
-        if (group_id == entity->unkD3 ||
-            (ENTITY_CONTROLLER(entity)->flags & 0x8000 && entity->unkD3 == other && entity->unkD3 >= 0)) {
+        if (group_id == entity->pool_slot_index ||
+            (ENTITY_CONTROLLER(entity)->flags & 0x8000 && entity->pool_slot_index == other && entity->pool_slot_index >= 0)) {
             next = entity->next;
             Entity_UnlinkLoading(entity);
             Entity_AppendToWaiting(entity);
@@ -691,9 +691,9 @@ static void EntityPool_EvictBlockUsers(int group_id) {
 
     entity = D_004467E0;
     while (entity != NULL) {
-        if (group_id == entity->unkD3) {
+        if (group_id == entity->pool_slot_index) {
             Effect_FreeForOwner(entity);
-            EntityPool_RemoveUser(entity->unkD3);
+            EntityPool_RemoveUser(entity->pool_slot_index);
             Entity_ReleaseWorkArea(entity);
             next = entity->next;
             Entity_UnlinkActive(entity);
@@ -715,7 +715,7 @@ static void EntityPool_EmptyBlock(int slot_index) {
     slot = &entity_pool_slots[slot_index];
     entity = D_004470B0;
     while (entity != NULL) {
-        if (slot_index == entity->unkD3) {
+        if (slot_index == entity->pool_slot_index) {
             // match: nested ifs keep the signed pool_size compares
             if (entity->spawn_info->pool_size >= 0) {
                 if (entity->spawn_info->pool_size < 5) {
@@ -728,7 +728,7 @@ static void EntityPool_EmptyBlock(int slot_index) {
 
     entity = D_004467E0;
     while (entity != NULL) {
-        if (slot_index == entity->unkD3) {
+        if (slot_index == entity->pool_slot_index) {
             // match: nested ifs keep the signed pool_size compares
             if (entity->spawn_info->pool_size >= 0) {
                 if (entity->spawn_info->pool_size < 5) {
@@ -741,7 +741,7 @@ static void EntityPool_EmptyBlock(int slot_index) {
 
     entity = D_004470B0;
     while (entity != NULL) {
-        if (slot_index == entity->unkD3) {
+        if (slot_index == entity->pool_slot_index) {
             next = entity->next;
             Entity_UnlinkLoading(entity);
             Entity_AppendToWaiting(entity);
@@ -753,9 +753,9 @@ static void EntityPool_EmptyBlock(int slot_index) {
 
     entity = D_004467E0;
     while (entity != NULL) {
-        if (slot_index == entity->unkD3) {
+        if (slot_index == entity->pool_slot_index) {
             Effect_FreeForOwner(entity);
-            EntityPool_RemoveUser(entity->unkD3);
+            EntityPool_RemoveUser(entity->pool_slot_index);
             Entity_ReleaseWorkArea(entity);
             next = entity->next;
             Entity_UnlinkActive(entity);
@@ -996,7 +996,7 @@ void Entity_PrepareAdditiveDraw(ModelInstance *model) {
    and maps it onto the model by screen position, otherwise it puts the model's own textures and texture
    coordinates back; then sets the GS registers by the model's alpha. */
 static void Entity_PrepareScreenTexturedDraw(ModelInstance *model) {
-    if (model->unk102 & MODEL_FLAG_800) {
+    if (model->draw_flags & MODEL_FLAG_800) {
         Model_SetBlockGsWords(model, 0x220013540L, 0x60, -1, -1);
         Model_SetUvsFromScreen(model);
         GsDraw_CopyFrameToTexture(0x3540, 0, 0x100, 0x100);
@@ -1012,7 +1012,7 @@ static void Entity_PrepareScreenTexturedDraw(ModelInstance *model) {
         Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
         Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118L);
         Packet_AddGsRegister(GS_REG_TEST_1, 0x5000DL);
-        if (model->unk102 & MODEL_FLAG_800) {
+        if (model->draw_flags & MODEL_FLAG_800) {
             Packet_AddGsRegister(GS_REG_TEST_2, 0x30001L);
         } else {
             Packet_AddGsRegister(GS_REG_TEST_2, 0x5000DL);

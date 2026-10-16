@@ -438,18 +438,18 @@ s32 MenuDraw_SetGsRegister(int, s64);
 #define GIF_SEND(packet, count)                                 \
     while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));          \
     *D2_QWC = count;                                            \
-    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;         \
+    *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;                                              \
     *D2_CHCR = 0x100
-#define RESET_ALPHAS(parts, count)                              \
-    for (i = 0; i < count; i++) {                               \
-        alpha = parts[i].alpha;                                 \
-        D_00425910[i] = alpha;                                  \
+#define RESET_ALPHAS(parts, count)                                                                   \
+    for (i = 0; i < count; i++) {                                                                    \
+        alpha = parts[i].alpha;                                                                      \
+        D_00425910[i] = alpha;                                                                       \
     }
-#define DRAW_PARTS(parts, count, variant)                       \
-    for (i = 0; i < count; i++) {                               \
-        SET_BLEND(parts[i].unk42);                          \
-        MenuSprite_Draw((int)&parts[i], parts[i].unk3E + 1000, variant, (int)D_00425910[i]); \
-        SET_BLEND(0);                                       \
+#define DRAW_PARTS(parts, count, variant)                                                            \
+    for (i = 0; i < count; i++) {                                                                    \
+        SET_BLEND(parts[i].blend_mode);                                                              \
+        MenuSprite_Draw((int)&parts[i], parts[i].handler_index + 1000, variant, (int)D_00425910[i]);         \
+        SET_BLEND(0);                                                                                \
     }
 extern s8 D_004472C9;               /* 0: fading in, 1: open, 2: fading out to Menu_UpdateKeyItems, 3: fading out to leave */
 extern s32 D_00421050[12];
@@ -490,16 +490,16 @@ static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
     return value * percent / divisor;
 }
 /* Starts every packet of a list at its full alpha. match: the alpha is read as an unsigned bit-field */
-#define FILL_FADE(levels, packets, count)                               \
-    for (i = 0; i < (count); i++) {                                     \
-        (levels)[i] = SPRITE_PACKET_COLOR(&(packets)[i])->alpha;        \
+#define FILL_FADE(levels, packets, count)                                                            \
+    for (i = 0; i < (count); i++) {                                                                  \
+        (levels)[i] = SPRITE_PACKET_COLOR(&(packets)[i])->alpha;                                     \
     }
 /* Draws a list of packets at their current fade levels. */
-#define DRAW_PACKETS(packets, count, param)                                                             \
-    for (i = 0; i < (count); i++) {                                                                     \
-        Menu_SetBlendMode((packets)[i].unk42);                                                              \
-        MenuSprite_Draw((int)&(packets)[i], (packets)[i].unk3E + 1000, (param), (int)D_00425910[i]);      \
-        ((void (*)(u8))Menu_SetBlendMode)(0);                                                               \
+#define DRAW_PACKETS(packets, count, param)                                                          \
+    for (i = 0; i < (count); i++) {                                                                  \
+        Menu_SetBlendMode((packets)[i].blend_mode);                                                  \
+        MenuSprite_Draw((int)&(packets)[i], (packets)[i].handler_index + 1000, (param), (int)D_00425910[i]); \
+        ((void (*)(u8))Menu_SetBlendMode)(0);                                                        \
     }
 extern s32 D_004472E8;
 extern s32 D_00446BD8;
@@ -848,7 +848,7 @@ static void Menu_BuildItemRings(void) {
         }
     }
     for (i = 150, spell = 0; i < 241; i++, spell++) {
-        if (SPELL_IS_SET(spell) && fx_table[spell].unk102 == 1) {
+        if (SPELL_IS_SET(spell) && fx_table[spell].item_menu_magic == 1) {
             LINK_ITEM(&D_00424600[i])
         }
     }
@@ -896,7 +896,7 @@ static void Menu_BuildItemRings(void) {
     last = NULL;
     first = NULL;
     for (i = 0; i < 91; i++) {
-        if (i == 0 || (SPELL_IS_SET(i) && fx_table[i].unk102 == 0)) {
+        if (i == 0 || (SPELL_IS_SET(i) && fx_table[i].item_menu_magic == 0)) {
             LINK_ITEM(&D_00424050[i])
         }
     }
@@ -910,7 +910,7 @@ static void Menu_BuildItemRings(void) {
     first = NULL;
     count = 0;
     for (i = 1; i < 91; i++) {
-        if (SPELL_IS_SET(i) && fx_table[i].unk102 == 1) {
+        if (SPELL_IS_SET(i) && fx_table[i].item_menu_magic == 1) {
             LINK_COUNTED_ITEM(&D_00424050[i], D_005CE8A0)
         }
     }
@@ -2204,7 +2204,7 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
             }
         }
     }
-    if (D_00446C94 == 0 && D_005CF2F0.unk16 == 0) {
+    if (D_00446C94 == 0 && D_005CF2F0.save_loaded == 0) {
         packet = MenuDraw_NextPacket();
         packet[1] = 0x100B4000; // match: the tag word packet[0] is written last
         packet[2] = 0xE;
@@ -2268,7 +2268,7 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
     case 3:
     case 4:
     case 5:
-        D_005CF2F0.unk16 = 0;
+        D_005CF2F0.save_loaded = 0;
         sceGsSyncPath(0, 0);
         Menu_EndFrame(0);
         sceGsSyncV(0);
@@ -2277,8 +2277,8 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         sceGsSyncV(0);
         return 0;
     case 0:
-        if (D_005CF2F0.unk16 != 0) {
-            D_005CF2F0.unk16 = 0;
+        if (D_005CF2F0.save_loaded != 0) {
+            D_005CF2F0.save_loaded = 0;
             sceGsSyncPath(0, 0);
             Menu_EndFrame(0);
             sceGsSyncV(0);
@@ -2295,8 +2295,8 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         sceGsSyncPath(0, 0);
         Menu_EndFrame(0);
         sceGsSyncV(0);
-        if (D_005CF2F0.unk16 != 0) {
-            D_005CF2F0.unk16 = 0;
+        if (D_005CF2F0.save_loaded != 0) {
+            D_005CF2F0.save_loaded = 0;
             return 1;
         }
         return 0;
@@ -2785,8 +2785,8 @@ static void Menu_DrawBackdropItemSelParts(void) {
     u32 i;
 
     for (i = 0; i < D_00446A4C; i++) {
-        if (D_00447248[i].unk3E == 2) {
-            Menu_SetBlendMode(D_00447248[i].unk42);
+        if (D_00447248[i].handler_index == 2) {
+            Menu_SetBlendMode(D_00447248[i].blend_mode);
             MenuSprite_DrawPlain((int)&D_00447248[i], 2, 0);
             Menu_SetBlendMode(0);
         }
@@ -2798,8 +2798,8 @@ static void Menu_DrawBackdropPreshopParts(void) {
     u32 i;
 
     for (i = 0; i < D_00446A74; i++) {
-        if (D_00446BFC[i].unk3E == 2) {
-            Menu_SetBlendMode(D_00446BFC[i].unk42);
+        if (D_00446BFC[i].handler_index == 2) {
+            Menu_SetBlendMode(D_00446BFC[i].blend_mode);
             MenuSprite_DrawPlain((int)&D_00446BFC[i], 2, 0);
             Menu_SetBlendMode(0);
         }
@@ -2977,7 +2977,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
             D_004472C4 = 2;
             D_004472DA = 0;
             for (i = 0; i < D_00446A30; i++) {
-                if (D_0044722C[i].unk3E == 1 && D_004472CD == D_0044722C[i].slot) {
+                if (D_0044722C[i].handler_index == 1 && D_004472CD == D_0044722C[i].slot) {
                     D_00425510[i] = D_00446C04;
                 }
             }
@@ -2987,7 +2987,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
         D_004472C4 = 3;
         Sound_PlayMenu(2);
         for (i = 0; i < D_00446A30; i++) {
-            if (D_0044722C[i].unk3E == 1 && D_004472CD == D_0044722C[i].slot) {
+            if (D_0044722C[i].handler_index == 1 && D_004472CD == D_0044722C[i].slot) {
                 D_00425510[i] = D_00446C04;
             }
         }
@@ -2995,8 +2995,8 @@ static void Menu_UpdateMain(HandlerContext *context) {
     D_004472CD = (D_004472CD + 7) % line_count;
 
     for (i = 0; i < D_00446A30; i++) {
-        kind = D_0044722C[i].unk3E;
-        Menu_SetBlendMode(D_0044722C[i].unk42);
+        kind = D_0044722C[i].handler_index;
+        Menu_SetBlendMode(D_0044722C[i].blend_mode);
         if (D_004472C4 != 1) {
             MenuSprite_Draw((int)&D_0044722C[i], kind + 1000, D_004472CD, (int)D_00425510[i]);
         } else {
@@ -3025,7 +3025,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
             D_00425510[i] -= D_0044722C[i].alpha / 10.0f;
             if (D_00425510[i] < 0.0f) {
                 D_00425510[i] = 0.0f;
-                if (D_0044722C[i].unk3E != 1 || D_004472CD != D_0044722C[i].slot) {
+                if (D_0044722C[i].handler_index != 1 || D_004472CD != D_0044722C[i].slot) {
                     memset(D_00425510, 0, 0x400);
                     if (D_004472C4 == 2) {
                         if (Menu_OwnsAnyItem() == 0 && D_004472CD == 5) {
@@ -3154,8 +3154,8 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         D_00446DF4 = 0;
     }
     for (i = 0; i < D_00446A34; i++) {
-        kind = D_00447230[i].unk3E;
-        ((void (*)(u8))Menu_SetBlendMode)(D_00447230[i].unk42); // match: called as if it returned nothing
+        kind = D_00447230[i].handler_index;
+        ((void (*)(u8))Menu_SetBlendMode)(D_00447230[i].blend_mode); // match: called as if it returned nothing
         if (D_00426110[0] != NULL) {
             MenuSprite_Draw((int)&D_00447230[i], kind + 1000, 0, (int)D_00425510[i]);
         } else {
@@ -3223,7 +3223,7 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
         if (D_00426110[0]->unk0C < ITEM_ARROW || D_00426110[0]->unk0C > ITEM_WIDDAS_ARROW) {
             Sound_PlayMenu(0);
             game_status.bit6 = TRUE;
-            game_status.unk20 = D_00426110[0]->unk0C;
+            game_status.item_to_use = D_00426110[0]->unk0C;
             D_004472C5 = 2;
             D_004472DA = 0;
             if (D_00446C90 != NULL) {
@@ -3360,11 +3360,11 @@ static void Menu_UpdateCastSpell(s32 context) {
     i = 0;
     number = D_005CE880[0]->unk0C; /* the selected magic's number */
     page = (number - 1) / 15;
-    D_00446DF4 = fx_table[number].unkFC;
+    D_00446DF4 = fx_table[number].mp_cost;
     D_00446DF8 = (number - 1) % 3 + 1;
     for (; i < D_00446A38; i++) {
-        kind = D_00447234[i].unk3E;
-        Menu_SetBlendMode(D_00447234[i].unk42);
+        kind = D_00447234[i].handler_index;
+        Menu_SetBlendMode(D_00447234[i].blend_mode);
         MenuSprite_Draw((int)&D_00447234[i], kind + 1000, page, (int)D_00425510[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as if it returned nothing
     }
@@ -3427,9 +3427,9 @@ static void Menu_UpdateCastSpell(s32 context) {
     *D2_CHCR = 0x100;
     DRAW_NODE_MODEL(&D_00426470, local, D_00446C78);
     if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
-        if (player_state.mp_now >= ((FxTableEntry *)D_005CE880[0]->unk00)->unkFC && player_state.unkC0 >= 5000) {
+        if (player_state.mp_now >= ((FxTableEntry *)D_005CE880[0]->unk00)->mp_cost && player_state.magic_gauge >= 5000) {
             Sound_PlayMenu(0);
-            game_status.unk28 = D_005CE880[0]->unk0C;
+            game_status.magic_to_cast = D_005CE880[0]->unk0C;
             D_004472C8 = 2;
             D_004472DA = 0;
             if (D_00446C90 != NULL) {
@@ -3486,7 +3486,7 @@ static void Menu_UpdateCastSpell(s32 context) {
             D_00425510[i] -= D_00447234[i].alpha / 10.0f;
             if (D_00425510[i] < 0.0f) {
                 D_004472C8 = 0;
-                if (game_status.unk28 != 0) {
+                if (game_status.magic_to_cast != 0) {
                     D_00446B20 = NULL;
                     D_00446AC8++;
                 } else {
@@ -3600,8 +3600,8 @@ static void Menu_UpdateEquip(void) {
         D_00446E30 = (index - 1) % 3 + 1;
     }
     for (i = 0; i < D_00446A3C; i++) {
-        kind = D_00447238[i].unk3E;
-        SET_BLEND(D_00447238[i].unk42);
+        kind = D_00447238[i].handler_index;
+        SET_BLEND(D_00447238[i].blend_mode);
         if (Menu_IsEquipped(D_004472E0, CURRENT_ITEM->group, CURRENT_ITEM->unk0C)) {
             MenuSprite_Draw((int)&D_00447238[i], kind + 1000, 0, (int)D_00425510[i]);
         } else {
@@ -3643,16 +3643,16 @@ static void Menu_UpdateEquip(void) {
     node.pool_node = &D_004472B8;
     node.unk20 = 1;
     node.unk00 = 0;
-    D_00446ACC = weapon_defs[player_state.weapon].unk7C;
-    if (weapon_defs[player_state.weapon].unk63 == 0) {
+    D_00446ACC = weapon_defs[player_state.weapon].equip_menu_motion;
+    if (weapon_defs[player_state.weapon].action_handler_index == 0) {
         D_00446ACC += worn_defs[player_state.equipment[EQUIP_SHIELD]].unk3F;
     }
     PoolNode_Pose((RelocEntry *)D_005CEE60[D_00446ACC]->frames, D_0042A8F0, weapon_matrix, D_00446B5C);
     D_00446B5C++;
     D_00446B5C %= D_005CEE60[D_00446ACC]->frame_count;
     // match: a pointer-typed load, as in CURRENT_ITEM
-    D_00446ACC = ((PlayerItemDef *)((MenuItemList *)D_005CE6B0.item)->item)->unk7D;
-    switch (weapon_defs[player_state.weapon].unk63) {
+    D_00446ACC = ((PlayerItemDef *)((MenuItemList *)D_005CE6B0.item)->item)->equip_menu_draw_index;
+    switch (weapon_defs[player_state.weapon].action_handler_index) {
     case 0:
         D_00446ACC += player_state.equipment[EQUIP_SHIELD] == ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
         break;
@@ -3743,18 +3743,18 @@ static void Menu_UpdateEquip(void) {
     if (D_00446AD4 != 0) {
         switch (CURRENT_ITEM->group) {
         case 0:
-            D_00446DF4 = (weapon_level_records[index].unk00[0] + weapon_defs[index].unk00[weapon_level_records[index].unk14].values[0]) * weapon_level_records[index].level / 100;
-            D_00446DF8 = (weapon_level_records[index].unk00[1] + weapon_defs[index].unk00[weapon_level_records[index].unk14].values[1]) * weapon_level_records[index].level / 100;
-            D_00446DFC = (weapon_level_records[index].unk00[2] + weapon_defs[index].unk00[weapon_level_records[index].unk14].values[2]) * weapon_level_records[index].level / 100;
-            D_00446E00 = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[3] * weapon_level_records[index].level / 100;
-            D_00446E04 = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[4] * weapon_level_records[index].level / 100;
-            D_00446E08 = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[5] * weapon_level_records[index].level / 100;
-            D_00446E0C = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[6] * weapon_level_records[index].level / 100;
-            D_00446E10 = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[7] * weapon_level_records[index].level / 100;
-            D_00446E14 = weapon_defs[index].unk00[weapon_level_records[index].unk14].values[8] * weapon_level_records[index].level / 100;
-            D_00446E1C = (s32)(weapon_defs[index].unk68 * 0.03281f * 10.0f);
+            D_00446DF4 = (weapon_level_records[index].unk00[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[0]) * weapon_level_records[index].level / 100;
+            D_00446DF8 = (weapon_level_records[index].unk00[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[1]) * weapon_level_records[index].level / 100;
+            D_00446DFC = (weapon_level_records[index].unk00[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[2]) * weapon_level_records[index].level / 100;
+            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[3] * weapon_level_records[index].level / 100;
+            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[4] * weapon_level_records[index].level / 100;
+            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[5] * weapon_level_records[index].level / 100;
+            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[6] * weapon_level_records[index].level / 100;
+            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[7] * weapon_level_records[index].level / 100;
+            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[8] * weapon_level_records[index].level / 100;
+            D_00446E1C = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
             D_00446E20 = weapon_level_records[index].level;
-            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].unk3E;
+            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
             D_00446E24 = 100;
             D_00446E28 = player_weapon[EQUIP_LIST->group];
             if (D_004472C7 == 1) {
@@ -3773,7 +3773,7 @@ static void Menu_UpdateEquip(void) {
             count = D_00446A40;
             break;
         case 1:
-            if (fx_table[CURRENT_ITEM->unk0C].unk102 == 0) {
+            if (fx_table[CURRENT_ITEM->unk0C].item_menu_magic == 0) {
                 magic = &fx_table[index];
                 D_00446DF4 = magic->hit_checks[0].strengths.unk00[0];
                 D_00446DF8 = magic->hit_checks[0].strengths.unk00[1];
@@ -3784,7 +3784,7 @@ static void Menu_UpdateEquip(void) {
                 D_00446E0C = magic->hit_checks[0].strengths.unk00[6];
                 D_00446E10 = magic->hit_checks[0].strengths.unk00[7];
                 D_00446E14 = magic->hit_checks[0].strengths.unk00[8];
-                D_00446E1C = magic->unkFC;
+                D_00446E1C = magic->mp_cost;
                 if (D_004472C7 == 1) {
                     RESET_ALPHAS(D_00447244, D_00446A48);
                 }
@@ -3800,7 +3800,7 @@ static void Menu_UpdateEquip(void) {
                 parts = D_00447244;
                 count = D_00446A48;
             } else {
-                D_00446E1C = fx_table[index].unkFC;
+                D_00446E1C = fx_table[index].mp_cost;
                 if (D_004472C7 == 1) {
                     RESET_ALPHAS(D_00446C6C, D_00446AC0);
                 }
@@ -3827,7 +3827,7 @@ static void Menu_UpdateEquip(void) {
                 }
                 D_00446B50 = 0;
                 for (i = 0; i < D_00446A80; i++) {
-                    SET_BLEND(D_0044726C[i].unk42);
+                    SET_BLEND(D_0044726C[i].blend_mode);
                     MenuSprite_Draw((int)&D_0044726C[i], 1002, 1, (int)D_00425910[i]);
                     SET_BLEND(0);
                 }
@@ -3851,7 +3851,7 @@ static void Menu_UpdateEquip(void) {
             D_00446E0C = worn_defs[index].unk00[6] * worn_item_level_records[index].level / 100;
             D_00446E10 = worn_defs[index].unk00[7] * worn_item_level_records[index].level / 100;
             D_00446E14 = worn_defs[index].unk00[8] * worn_item_level_records[index].level / 100;
-            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].unk3E;
+            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
             D_00446E1C = player_weapon[EQUIP_LIST->group];
             D_00446E20 = worn_item_level_records[index].level;
             D_00446E24 = 100;
@@ -3882,7 +3882,7 @@ static void Menu_UpdateEquip(void) {
             D_00446E0C = worn_defs[index].unk00[6] * worn_item_level_records[index].level / 100;
             D_00446E10 = worn_defs[index].unk00[7] * worn_item_level_records[index].level / 100;
             D_00446E14 = worn_defs[index].unk00[8] * worn_item_level_records[index].level / 100;
-            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].unk3E;
+            D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
             D_00446E1C = player_weapon[EQUIP_LIST->group];
             if (index != 130 && index != 140 && index != 150) {
                 if (D_00446B50 != 0) {
@@ -3967,8 +3967,8 @@ static void Menu_UpdateEquip(void) {
         MenuDraw_SetGsRegister(0x47, 0x30000);
         word.raw = 0x000A87507AF07D00;
         for (i = 0; i < D_00446A80; i++) {
-            SET_BLEND(D_0044726C[i].unk42);
-            MenuSprite_Draw((int)&D_0044726C[i], D_0044726C[i].unk3E + 1000, 0, (int)D_00425910[i]);
+            SET_BLEND(D_0044726C[i].blend_mode);
+            MenuSprite_Draw((int)&D_0044726C[i], D_0044726C[i].handler_index + 1000, 0, (int)D_00425910[i]);
             SET_BLEND(0);
         }
         switch (D_004472C7) {
@@ -4031,20 +4031,20 @@ static void Menu_UpdateEquip(void) {
 
         if (*D_00420D60[EQUIP_LIST->group] != *D_00420D90[EQUIP_LIST->group]) {
             Sound_PlayMenu(0);
-            if (weapon_defs[player_state.weapon].unk63 == 2 && EQUIP_LIST->group == 0
-                && weapon_defs[index].unk63 != 2) {
+            if (weapon_defs[player_state.weapon].action_handler_index == 2 && EQUIP_LIST->group == 0
+                && weapon_defs[index].action_handler_index != 2) {
 *D_00420D60[2] = D_00423650;
 player_state.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
 D_0042A8F0[20].part = NULL;
             }
             (&player_state.weapon)[EQUIP_LIST->group] = index;
             *D_00420D60[EQUIP_LIST->group] = CURRENT_ITEM;
-            if (weapon_defs[player_state.weapon].unk63 != 0 && EQUIP_LIST->group == 0) {
+            if (weapon_defs[player_state.weapon].action_handler_index != 0 && EQUIP_LIST->group == 0) {
 *D_00420D60[2] = D_00423650;
 player_state.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
 D_0042A8F0[20].part = NULL;
             }
-            if (weapon_defs[player_state.weapon].unk63 != 0 && EQUIP_LIST->group == 2) {
+            if (weapon_defs[player_state.weapon].action_handler_index != 0 && EQUIP_LIST->group == 2) {
 *D_00420D60[0] = D_004231F0;
 player_state.weapon = 0;
 D_0042A8F0[15].part = NULL;
@@ -4162,8 +4162,8 @@ static void Menu_UpdateStatus(void) {
     u32 full_alpha;
 
     for (i = 0; i < D_00446A50; i++) {
-        Menu_SetBlendMode(D_0044724C[i].unk42);
-        MenuSprite_Draw((int)&D_0044724C[i], D_0044724C[i].unk3E + 1000, 0, (int)D_00425510[i]);
+        Menu_SetBlendMode(D_0044724C[i].blend_mode);
+        MenuSprite_Draw((int)&D_0044724C[i], D_0044724C[i].handler_index + 1000, 0, (int)D_00425510[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
@@ -4331,7 +4331,7 @@ static void Menu_UpdateKeyItems(void) {
     D_00446BB8 %= 3;
     sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     for (i = 0; i < D_00446A6C; i++) {
-        Menu_SetBlendMode(D_00447260[i].unk42);
+        Menu_SetBlendMode(D_00447260[i].blend_mode);
         MenuSprite_Draw((int)&D_00447260[i], 1000, 0, (int)D_00425510[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
@@ -4546,7 +4546,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     }
 
     for (i = 0; i < D_00446A54; i++) {
-        Menu_SetBlendMode(D_00447250[i].unk42);
+        Menu_SetBlendMode(D_00447250[i].blend_mode);
         MenuSprite_Draw((int)&D_00447250[i], 1000, 0, (int)D_00425510[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
@@ -4741,8 +4741,8 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
 
     page = (context->unk04 - 3000) / 50;
     for (i = 0; i < D_00446A54; i++) {
-        kind = D_00447250[i].unk3E;
-        Menu_SetBlendMode(D_00447250[i].unk42);
+        kind = D_00447250[i].handler_index;
+        Menu_SetBlendMode(D_00447250[i].blend_mode);
         MenuSprite_DrawPlain((int)&D_00447250[i], kind, 1);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
@@ -4906,8 +4906,8 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         D_00446E30 = weapon_level_records[record].unk14 + 1;
     }
     for (i = 0; i < D_00446A58; i++) {
-        kind = D_00447254[i].unk3E;
-        Menu_SetBlendMode(D_00447254[i].unk42);
+        kind = D_00447254[i].handler_index;
+        Menu_SetBlendMode(D_00447254[i].blend_mode);
         if (D_005CE850[0]->group != 12) {
             MenuSprite_Draw((int)&D_00447254[i], kind + 1000, 0, (int)D_00425510[i]);
         } else {
@@ -4980,9 +4980,9 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     }
 
     for (i = 0; i < D_00446A4C; i++) {
-        kind = D_00447248[i].unk3E;
+        kind = D_00447248[i].handler_index;
         if (kind != 2) {
-            ((void (*)(u8))Menu_SetBlendMode)(D_00447248[i].unk42); // match: called as returning nothing
+            ((void (*)(u8))Menu_SetBlendMode)(D_00447248[i].blend_mode); // match: called as returning nothing
             if (D_004472CB != 1 && ((worn_mask >> D_00447248[i].slot) & 1)) {
                 MenuSprite_Draw((int)&D_00447248[i], kind + 1000, worn_mask, (int)D_00425510[i + 200]);
             } else {
@@ -5035,7 +5035,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             D_00446E18 = ScaleValue(worn_defs[record].unk00[8], worn_item_level_records[record].level, 100);
             D_00446E24 = worn_item_level_records[record].level;
             D_00446E28 = 100;
-            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].weight_tenths_of_pound;
             if (D_004472CC == 1) {
                 FILL_FADE(D_00425910, D_00447274, D_00446A88)
             }
@@ -5055,7 +5055,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             D_00446E10 = ScaleValue(worn_defs[record].unk00[6], worn_item_level_records[record].level, 100);
             D_00446E14 = ScaleValue(worn_defs[record].unk00[7], worn_item_level_records[record].level, 100);
             D_00446E18 = ScaleValue(worn_defs[record].unk00[8], worn_item_level_records[record].level, 100);
-            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].weight_tenths_of_pound;
             if (D_004472CC == 1) {
                 FILL_FADE(D_00425910, D_00447278, D_00446A8C)
             }
@@ -5064,18 +5064,18 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             count = D_00446A8C;
             break;
         case 0:
-            D_00446DF8 = ScaleValue(weapon_level_records[record].unk00[0] + weapon_defs[record].unk00[weapon_level_records[record].unk14].values[0], weapon_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(weapon_level_records[record].unk00[1] + weapon_defs[record].unk00[weapon_level_records[record].unk14].values[1], weapon_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(weapon_level_records[record].unk00[2] + weapon_defs[record].unk00[weapon_level_records[record].unk14].values[2], weapon_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[3], weapon_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[4], weapon_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[5], weapon_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[6], weapon_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[7], weapon_level_records[record].level, 100);
-            D_00446E18 = ScaleValue(weapon_defs[record].unk00[weapon_level_records[record].unk14].values[8], weapon_level_records[record].level, 100);
-            D_00446E20 = (s32)(weapon_defs[record].unk68 * 0.03281f * 10.0f);
+            D_00446DF8 = ScaleValue(weapon_level_records[record].unk00[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[0], weapon_level_records[record].level, 100);
+            D_00446DFC = ScaleValue(weapon_level_records[record].unk00[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[1], weapon_level_records[record].level, 100);
+            D_00446E00 = ScaleValue(weapon_level_records[record].unk00[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[2], weapon_level_records[record].level, 100);
+            D_00446E04 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[3], weapon_level_records[record].level, 100);
+            D_00446E08 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[4], weapon_level_records[record].level, 100);
+            D_00446E0C = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[5], weapon_level_records[record].level, 100);
+            D_00446E10 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[6], weapon_level_records[record].level, 100);
+            D_00446E14 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[7], weapon_level_records[record].level, 100);
+            D_00446E18 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[8], weapon_level_records[record].level, 100);
+            D_00446E20 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
             D_00446E24 = weapon_level_records[record].level;
-            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].unk3E;
+            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].weight_tenths_of_pound;
             D_00446E28 = player_weapon[D_005CE850[0]->group];
             D_00446E2C = 100;
             if (D_004472CC == 1) {
@@ -5222,8 +5222,8 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
     D_004472E8 = (D_004472E8 + 5) % line_count;
 
     for (i = 0; i < D_00446A5C; i++) {
-        kind = D_00447258[i].unk3E;
-        SET_PART_MODE(D_00447258[i].unk42);
+        kind = D_00447258[i].handler_index;
+        SET_PART_MODE(D_00447258[i].blend_mode);
         if (D_00446C70 == 4 && kind == 2) {
             MenuSprite_Draw((int)&D_00447258[i], 0x3EA, 0, D_00425510[i]);
         } else if (kind != 2) {
@@ -5257,26 +5257,26 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
             PLAY_MENU_SOUND(0);
             switch (D_004472E8) {
             case 0:
-                D_005CF2F0.unk16 = 0;
-                D_005CF2F0.unk10 = 0;
-                D_005CF2F0.unk11 = 0;
-                D_005CF2F0.unk14 = 0;
-                D_005CF2F0.unk0C = 0;
-                D_005CF2F0.unk0D = 0;
-                D_005CF2F0.unk18 = 1;
-                D_005CF2F0.unk1B = 0;
-                D_005CF2F0.unk1E = 0;
-                D_005CF2F0.unk1F = 0;
-                D_005CF2F0.unk20 = 0;
-                D_005CF2F0.unk00 = 0;
-                D_005CF2F0.unk0E = 1;
-                D_005CF2F0.unk12 = -1;
+                D_005CF2F0.save_loaded = 0;
+                D_005CF2F0.card_saves_found = 0;
+                D_005CF2F0.is_leaving = 0;
+                D_005CF2F0.card_op_running = 0;
+                D_005CF2F0.selected_card = 0;
+                D_005CF2F0.selected_save = 0;
+                D_005CF2F0.input_locked = 1;
+                D_005CF2F0.check_finished = 0;
+                D_005CF2F0.save_state_0 = 0;
+                D_005CF2F0.save_state_1 = 0;
+                D_005CF2F0.save_state_2 = 0;
+                D_005CF2F0.card_update_result = 0;
+                D_005CF2F0.confirm_choice = 1;
+                D_005CF2F0.dialog_id = -1;
                 SaveCard_Open();
                 SaveCard_StartCheck(1);
                 D_00446C70 = 2;
                 D_004472DA = 0;
                 for (i = 0; i < D_00446A5C; i++) {
-                    if (D_00447258[i].unk3E == 1 && D_004472E8 == D_00447258[i].slot) {
+                    if (D_00447258[i].handler_index == 1 && D_004472E8 == D_00447258[i].slot) {
                         D_00425510[i] = D_00446C04;
                     }
                 }
@@ -5285,7 +5285,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
             case 2:
             case 3:
                 for (i = 0; i < D_00446A5C; i++) {
-                    if (D_00447258[i].unk3E == 1 && D_004472E8 == D_00447258[i].slot) {
+                    if (D_00447258[i].handler_index == 1 && D_004472E8 == D_00447258[i].slot) {
                         D_00425510[i] = D_00446C04;
                     }
                 }
@@ -5294,7 +5294,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
                 break;
             case 4:
                 for (i = 0; i < D_00446A5C; i++) {
-                    if (D_00447258[i].unk3E == 1 && D_004472E8 == D_00447258[i].slot) {
+                    if (D_00447258[i].handler_index == 1 && D_004472E8 == D_00447258[i].slot) {
                         D_00425510[i] = D_00446C04;
                     }
                 }
@@ -5356,7 +5356,7 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
             D_00425510[i] -= SPRITE_PACKET_COLOR_VIEW(&D_00447258[i])->alpha / 10.0f;
             if (D_00425510[i] < 0.0f) {
                 D_00425510[i] = 0.0f;
-                if (D_00447258[i].unk3E != 1 || D_004472E8 != D_00447258[i].slot) {
+                if (D_00447258[i].handler_index != 1 || D_004472E8 != D_00447258[i].slot) {
                     memset(D_00425510, 0, 0x400);
                     if (D_00446C70 == 2) {
                         D_004472CF = D_0034968A[0];
@@ -5604,17 +5604,17 @@ static void Menu_UpdateCardSlot(void) {
     PadReport *report;
 
     card_result = SaveCard_Update();
-    if (D_005CF2F0.unk1B == 0 && SaveCard_IsChecking() == 0) {
-        D_005CF2F0.unk18 = 0;
-        D_005CF2F0.unk1B = 1;
+    if (D_005CF2F0.check_finished == 0 && SaveCard_IsChecking() == 0) {
+        D_005CF2F0.input_locked = 0;
+        D_005CF2F0.check_finished = 1;
         if (SaveCard_IsPresent(0) == 0 && SaveCard_IsPresent(1) != 0) {
-            D_005CF2F0.unk0C = 1;
+            D_005CF2F0.selected_card = 1;
         }
     }
 
     for (i = 0; i < D_00446A60; i++) {
-        kind = D_00446BF4[i].unk3E;
-        Menu_SetBlendMode(D_00446BF4[i].unk42);
+        kind = D_00446BF4[i].handler_index;
+        Menu_SetBlendMode(D_00446BF4[i].blend_mode);
         switch (kind) {
         case 2:
             MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 1, D_00425510[i]);
@@ -5625,7 +5625,7 @@ static void Menu_UpdateCardSlot(void) {
             }
             break;
         case 3:
-            switch (D_005CF2F0.unk12) {
+            switch (D_005CF2F0.dialog_id) {
             case 4:
             case 5:
             case 9:
@@ -5635,11 +5635,11 @@ static void Menu_UpdateCardSlot(void) {
             }
             break;
         case 31:
-            if (D_005CF2F0.unk1B != 0) {
+            if (D_005CF2F0.check_finished != 0) {
                 if (D_00446C70 != 1) {
-                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, D_005CF2F0.unk0C, D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, D_005CF2F0.selected_card, D_00425510[i]);
                 } else {
-                    MenuSprite_Draw((int)&D_00446BF4[i], kind, D_005CF2F0.unk0C, D_00425510[i]);
+                    MenuSprite_Draw((int)&D_00446BF4[i], kind, D_005CF2F0.selected_card, D_00425510[i]);
                 }
             }
             break;
@@ -5674,7 +5674,7 @@ static void Menu_UpdateCardSlot(void) {
             }
             break;
         case 28:
-            switch (D_005CF2F0.unk12) {
+            switch (D_005CF2F0.dialog_id) {
             case 4:
                 MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 4);
                 break;
@@ -5696,72 +5696,72 @@ static void Menu_UpdateCardSlot(void) {
         SET_PART_MODE(0);
     }
 
-    if (D_005CF2F0.unk14 != 0) {
+    if (D_005CF2F0.card_op_running != 0) {
         if (SaveCard_CheckBusy() == 0) {
             D_00447224 = SaveCard_GetSaveMask();
             if (D_00447224 != 0) {
-                D_005CF2F0.unk18 = 1;
+                D_005CF2F0.input_locked = 1;
                 D_00446C70 = 2;
-                D_005CF2F0.unk10 = 1;
+                D_005CF2F0.card_saves_found = 1;
             } else {
-                D_005CF2F0.unk12 = 9;
+                D_005CF2F0.dialog_id = 9;
             }
-            D_005CF2F0.unk14 = 0;
+            D_005CF2F0.card_op_running = 0;
         } else if (card_result < 0) {
-            if (SaveCard_IsPresent(D_005CF2F0.unk0C) != 0) {
-                D_005CF2F0.unk12 = 9;
+            if (SaveCard_IsPresent(D_005CF2F0.selected_card) != 0) {
+                D_005CF2F0.dialog_id = 9;
             } else {
-                D_005CF2F0.unk12 = 10;
+                D_005CF2F0.dialog_id = 10;
             }
-            D_005CF2F0.unk14 = 0;
+            D_005CF2F0.card_op_running = 0;
             card_result = 0;
             SaveCard_StartCheck(1);
         }
     }
 
-    if (D_005CF2F0.unk11 != 0) {
+    if (D_005CF2F0.is_leaving != 0) {
         if (card_result < 0) {
-            D_005CF2F0.unk18 = 1;
+            D_005CF2F0.input_locked = 1;
             D_00446C70 = 3;
         }
     } else if (card_result < 0) {
-        D_005CF2F0.unk14 = 0;
-        D_005CF2F0.unk12 = 10;
+        D_005CF2F0.card_op_running = 0;
+        D_005CF2F0.dialog_id = 10;
         SaveCard_StartCheck(1);
-    } else if (D_005CF2F0.unk14 == 0 && D_005CF2F0.unk18 == 0) {
-        if ((D_00446DE8 & 0xA0) && D_004472D0 != 0xFF && D_005CF2F0.unk12 == -1) {
+    } else if (D_005CF2F0.card_op_running == 0 && D_005CF2F0.input_locked == 0) {
+        if ((D_00446DE8 & 0xA0) && D_004472D0 != 0xFF && D_005CF2F0.dialog_id == -1) {
             Sound_PlayMenu(1);
-            D_005CF2F0.unk0C = (D_005CF2F0.unk0C + 1) & 1;
+            D_005CF2F0.selected_card = (D_005CF2F0.selected_card + 1) & 1;
         } else {
             report = Pad_GetReport(0, 0);
             if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
-                if (D_005CF2F0.unk12 != -1) {
+                if (D_005CF2F0.dialog_id != -1) {
                     Sound_PlayMenu(0);
-                    D_005CF2F0.unk12 = -1;
-                } else if (SaveCard_IsPresent(D_005CF2F0.unk0C) != 0) {
+                    D_005CF2F0.dialog_id = -1;
+                } else if (SaveCard_IsPresent(D_005CF2F0.selected_card) != 0) {
                     if (SaveCard_CheckSavesIntact() > 0) {
-                        if (SaveCard_StartReadList(D_005CF2F0.unk0C, 1) == 0) {
+                        if (SaveCard_StartReadList(D_005CF2F0.selected_card, 1) == 0) {
                             Sound_PlayMenu(0);
-                            D_005CF2F0.unk14 = 1;
+                            D_005CF2F0.card_op_running = 1;
                         }
                     } else {
-                        D_005CF2F0.unk12 = 9;
+                        D_005CF2F0.dialog_id = 9;
                     }
-                } else if (D_005CF2F0.unk0C == 0) {
+                } else if (D_005CF2F0.selected_card == 0) {
                     Sound_PlayMenu(0);
-                    D_005CF2F0.unk12 = 4;
-                } else if (D_005CF2F0.unk0C == 1) {
+                    D_005CF2F0.dialog_id = 4;
+                } else if (D_005CF2F0.selected_card == 1) {
                     Sound_PlayMenu(0);
-                    D_005CF2F0.unk12 = 5;
+                    D_005CF2F0.dialog_id = 5;
                 }
             } else {
                 report = Pad_GetReport(0, 0);
                 if (((report->pressed & 0x2000) && D_004472D0 != 0xFF) || game_status.bit9) {
                     Sound_PlayMenu(2);
-                    if (D_005CF2F0.unk12 != -1) {
-                        D_005CF2F0.unk12 = -1;
+                    if (D_005CF2F0.dialog_id != -1) {
+                        D_005CF2F0.dialog_id = -1;
                     } else {
-                        D_005CF2F0.unk11 = 1;
+                        D_005CF2F0.is_leaving = 1;
                         SaveCard_Close();
                     }
                 }
@@ -5772,13 +5772,13 @@ static void Menu_UpdateCardSlot(void) {
     switch (D_00446C70) {
     case 0:
         for (i = 0; i < D_00446A60; i++) {
-            if (D_00446BF4[i].unk3E == 26) {
+            if (D_00446BF4[i].handler_index == 26) {
                 if (SaveCard_IsPresent(0) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
                 }
-            } else if (D_00446BF4[i].unk3E == 27) {
+            } else if (D_00446BF4[i].handler_index == 27) {
                 if (SaveCard_IsPresent(1) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
@@ -5791,8 +5791,8 @@ static void Menu_UpdateCardSlot(void) {
                     D_00425510[i] = SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha;
                 }
                 D_00446C70 = 1;
-                if (D_005CF2F0.unk1B != 0) {
-                    D_005CF2F0.unk18 = 0;
+                if (D_005CF2F0.check_finished != 0) {
+                    D_005CF2F0.input_locked = 0;
                 }
                 break;
             }
@@ -5801,13 +5801,13 @@ static void Menu_UpdateCardSlot(void) {
     case 2:
     case 3:
         for (i = 0; i < D_00446A60; i++) {
-            if (D_00446BF4[i].unk3E == 26) {
+            if (D_00446BF4[i].handler_index == 26) {
                 if (SaveCard_IsPresent(0) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
                 }
-            } else if (D_00446BF4[i].unk3E == 27) {
+            } else if (D_00446BF4[i].handler_index == 27) {
                 if (SaveCard_IsPresent(1) != 0) {
                     SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
                 } else {
@@ -5827,11 +5827,11 @@ static void Menu_UpdateCardSlot(void) {
                     D_00446BDC = 0;
                     D_00446C08 = 0;
                     if (D_00446C70 == 2) {
-                        D_005CF2F0.unk13 = -1;
+                        D_005CF2F0.list_step = -1;
                         D_00446B20 = (void *)Menu_UpdateSaveList;
                         D_00446B24 = (void *)Menu_UpdateCardSlot;
-                        D_005CF2F0.unk0D = 0;
-                        D_005CF2F0.unk1D = 0;
+                        D_005CF2F0.selected_save = 0;
+                        D_005CF2F0.confirm_press_state = 0;
                         SaveCard_ClearLoadFailed(0);
                         SaveCard_ClearLoadFailed(1);
                     } else if (D_00446C70 == 3) {
@@ -5841,7 +5841,7 @@ static void Menu_UpdateCardSlot(void) {
                             D_00446AC8++;
                         }
                     }
-                    D_005CF2F0.unk12 = -1;
+                    D_005CF2F0.dialog_id = -1;
                     D_00446C70 = 0;
                 }
                 break;
@@ -5868,46 +5868,46 @@ static void Menu_UpdateSaveList(void) {
     PadReport *report;
 
     info[0] = (CardSaveInfo *)SaveCard_GetSaveInfo(0);
-    D_00446DF4 = info[0]->unk0C;
-    D_00446DF8 = info[0]->unk08;
-    D_00446DFC = info[0]->unk28;
-    D_00446E00 = info[0]->unk10;
-    D_00446E04 = info[0]->unk14;
-    D_00446E08 = info[0]->unk18;
-    D_00446E0C = info[0]->unk1C;
-    D_00446E10 = info[0]->unk20;
-    D_00446E14 = info[0]->unk24;
-    D_00446E18 = info[0]->unk17B;
-    D_00446E1C = info[0]->unk17A;
-    D_00446E20 = info[0]->unk179;
+    D_00446DF4 = info[0]->level;
+    D_00446DF8 = info[0]->experience;
+    D_00446DFC = info[0]->gold;
+    D_00446E00 = info[0]->hp_now;
+    D_00446E04 = info[0]->hp_max;
+    D_00446E08 = info[0]->mp_now;
+    D_00446E0C = info[0]->mp_max;
+    D_00446E10 = info[0]->power_base;
+    D_00446E14 = info[0]->magic_base;
+    D_00446E18 = info[0]->play_hours;
+    D_00446E1C = info[0]->play_minutes;
+    D_00446E20 = info[0]->play_seconds;
     info[1] = (CardSaveInfo *)SaveCard_GetSaveInfo(1);
-    D_00446E24 = info[1]->unk0C;
-    D_00446E28 = info[1]->unk08;
-    D_00446E2C = info[1]->unk28;
-    D_00446E30 = info[1]->unk10;
-    D_00446E34 = info[1]->unk14;
-    D_00446E38 = info[1]->unk18;
-    D_00446E3C = info[1]->unk1C;
-    D_00446E40 = info[1]->unk20;
-    D_00446E44 = info[1]->unk24;
-    D_00446E48 = info[1]->unk17B;
-    D_00446E4C = info[1]->unk17A;
-    D_00446E50 = info[1]->unk179;
+    D_00446E24 = info[1]->level;
+    D_00446E28 = info[1]->experience;
+    D_00446E2C = info[1]->gold;
+    D_00446E30 = info[1]->hp_now;
+    D_00446E34 = info[1]->hp_max;
+    D_00446E38 = info[1]->mp_now;
+    D_00446E3C = info[1]->mp_max;
+    D_00446E40 = info[1]->power_base;
+    D_00446E44 = info[1]->magic_base;
+    D_00446E48 = info[1]->play_hours;
+    D_00446E4C = info[1]->play_minutes;
+    D_00446E50 = info[1]->play_seconds;
     info[2] = (CardSaveInfo *)SaveCard_GetSaveInfo(2);
-    D_00446E54 = info[2]->unk0C;
-    D_00446E58 = info[2]->unk08;
-    D_00446E5C = info[2]->unk28;
-    D_00446E60 = info[2]->unk10;
-    D_00446E64 = info[2]->unk14;
-    D_00446E68 = info[2]->unk18;
-    D_00446E6C = info[2]->unk1C;
-    D_00446E70 = info[2]->unk20;
-    D_00446E74 = info[2]->unk24;
-    D_00446E78 = info[2]->unk17B;
-    D_00446E7C = info[2]->unk17A;
-    D_00446E80 = info[2]->unk179;
+    D_00446E54 = info[2]->level;
+    D_00446E58 = info[2]->experience;
+    D_00446E5C = info[2]->gold;
+    D_00446E60 = info[2]->hp_now;
+    D_00446E64 = info[2]->hp_max;
+    D_00446E68 = info[2]->mp_now;
+    D_00446E6C = info[2]->mp_max;
+    D_00446E70 = info[2]->power_base;
+    D_00446E74 = info[2]->magic_base;
+    D_00446E78 = info[2]->play_hours;
+    D_00446E7C = info[2]->play_minutes;
+    D_00446E80 = info[2]->play_seconds;
 
-    if (D_005CF2F0.unk13 == -1) {
+    if (D_005CF2F0.list_step == -1) {
         for (i = 0; i < 3; i++) {
             MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] = SaveCard_GetSaveState(i);
         }
@@ -5915,7 +5915,7 @@ static void Menu_UpdateSaveList(void) {
             if (MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] != 1) {
                 switch (i) {
                 case 0:
-                    if (D_005CF2F0.unk1F != 0 || D_005CF2F0.unk20 != 0) {
+                    if (D_005CF2F0.save_state_1 != 0 || D_005CF2F0.save_state_2 != 0) {
                         first_arg = 1;
                         second_arg = 0;
                     } else {
@@ -5924,37 +5924,37 @@ static void Menu_UpdateSaveList(void) {
                     }
                     break;
                 case 1:
-                    if (D_005CF2F0.unk1E != 0 && D_005CF2F0.unk20 != 0) {
+                    if (D_005CF2F0.save_state_0 != 0 && D_005CF2F0.save_state_2 != 0) {
                         second_arg = 0;
                         first_arg = 1;
-                    } else if (D_005CF2F0.unk1E != 0 && D_005CF2F0.unk20 == 0) {
+                    } else if (D_005CF2F0.save_state_0 != 0 && D_005CF2F0.save_state_2 == 0) {
                         second_arg = 0;
                         first_arg = 1;
-                    } else if (D_005CF2F0.unk1E == 0 && D_005CF2F0.unk20 != 0) {
+                    } else if (D_005CF2F0.save_state_0 == 0 && D_005CF2F0.save_state_2 != 0) {
                         second_arg = 0;
                         first_arg = 2;
-                    } else if (D_005CF2F0.unk1E == 0 && D_005CF2F0.unk20 == 0) {
+                    } else if (D_005CF2F0.save_state_0 == 0 && D_005CF2F0.save_state_2 == 0) {
                         second_arg = 1;
                         first_arg = 1;
                     }
                     break;
                 case 2:
-                    if (D_005CF2F0.unk1E != 0 && D_005CF2F0.unk1F != 0) {
+                    if (D_005CF2F0.save_state_0 != 0 && D_005CF2F0.save_state_1 != 0) {
                         second_arg = 0;
                         first_arg = 1;
-                    } else if (D_005CF2F0.unk1E != 0 && D_005CF2F0.unk1F == 0) {
+                    } else if (D_005CF2F0.save_state_0 != 0 && D_005CF2F0.save_state_1 == 0) {
                         second_arg = 0;
                         first_arg = 2;
-                    } else if (D_005CF2F0.unk1E == 0 && D_005CF2F0.unk1F != 0) {
+                    } else if (D_005CF2F0.save_state_0 == 0 && D_005CF2F0.save_state_1 != 0) {
                         second_arg = 0;
                         first_arg = 2;
-                    } else if (D_005CF2F0.unk1E == 0 && D_005CF2F0.unk1F == 0) { // match: a last test, not an else: retail keeps a path that sets neither
+                    } else if (D_005CF2F0.save_state_0 == 0 && D_005CF2F0.save_state_1 == 0) { // match: a last test, not an else: retail keeps a path that sets neither
                         second_arg = 1;
                         first_arg = 2;
                     }
                     break;
                 }
-                if (SaveCard_HasRoomFor(D_005CF2F0.unk0C, first_arg, second_arg) > 0) {
+                if (SaveCard_HasRoomFor(D_005CF2F0.selected_card, first_arg, second_arg) > 0) {
                     MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] = 0;
                 } else {
                     MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] = -1;
@@ -5964,9 +5964,9 @@ static void Menu_UpdateSaveList(void) {
     }
 
     for (i = 0; i < D_00446A64; i++) {
-        kind = D_00446BF8[i].unk3E;
+        kind = D_00446BF8[i].handler_index;
         slot = D_00446BF8[i].slot;
-        Menu_SetBlendMode(D_00446BF8[i].unk42);
+        Menu_SetBlendMode(D_00446BF8[i].blend_mode);
         switch (kind) {
         case 2:
             MenuSprite_Draw((int)&D_00446BF8[i], 0x3EA, 1, D_00425510[i]);
@@ -5979,11 +5979,11 @@ static void Menu_UpdateSaveList(void) {
             break;
         case 25:
             if (MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[slot] == 1) {
-                MenuSprite_Draw((int)&D_00446BF8[i], 0x401, D_005CF2F0.unk0D, D_00425510[i]);
+                MenuSprite_Draw((int)&D_00446BF8[i], 0x401, D_005CF2F0.selected_save, D_00425510[i]);
             }
             break;
         default:
-            MenuSprite_Draw((int)&D_00446BF8[i], kind + 1000, D_005CF2F0.unk0D, D_00425510[i]);
+            MenuSprite_Draw((int)&D_00446BF8[i], kind + 1000, D_005CF2F0.selected_save, D_00425510[i]);
             break;
         }
         SET_PART_MODE(0);
@@ -5992,7 +5992,7 @@ static void Menu_UpdateSaveList(void) {
     table = Message_GetFontText(D_00446F38);
     word.raw = 0x000A87507C107120;
     for (i = 0; i < 3; i++) {
-        entry = ((s32 *)table)[info[i]->unk04 + 1];
+        entry = ((s32 *)table)[info[i]->save_area + 1];
         MenuText_SetPen(word);
         MenuText_SetColor(D_00446C78);
         if (entry != 0) {
@@ -6002,10 +6002,10 @@ static void Menu_UpdateSaveList(void) {
     }
 
     for (i = 0; i < D_00446AAC; i++) {
-        kind = D_00446C58[i].unk3E;
-        SET_PART_MODE(D_00446C58[i].unk42);
+        kind = D_00446C58[i].handler_index;
+        SET_PART_MODE(D_00446C58[i].blend_mode);
         if (kind == 3) {
-            switch (D_005CF2F0.unk13) {
+            switch (D_005CF2F0.list_step) {
             case 8:
                 MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 8);
                 break;
@@ -6023,7 +6023,7 @@ static void Menu_UpdateSaveList(void) {
                 break;
             }
         } else {
-            switch (D_005CF2F0.unk13) {
+            switch (D_005CF2F0.list_step) {
             case 1:
             case 3:
             case 8:
@@ -6036,9 +6036,9 @@ static void Menu_UpdateSaveList(void) {
         SET_PART_MODE(0);
     }
 
-    if (D_005CF2F0.unk13 == 8) {
+    if (D_005CF2F0.list_step == 8) {
         bar.first.f.lo16 = 0x7490;
-        bar.first.f.mid16 = D_005CF2F0.unk0E * 0xC0 + 0x80A0;
+        bar.first.f.mid16 = D_005CF2F0.confirm_choice * 0xC0 + 0x80A0;
         bar.first.f.mid24 = 0x5F370;
         bar.second.f.lo16 = bar.first.f.lo16 + 0x1720;
         bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
@@ -6051,28 +6051,28 @@ static void Menu_UpdateSaveList(void) {
         MenuDraw_Bar(&bar); // match: the float at bar+0x24 that MenuDraw_Bar copies is never set
     }
 
-    D_005CF2F0.unk00 = SaveCard_Update();
-    if (SaveCard_HasCard(D_005CF2F0.unk0C) == 0) {
-        D_005CF2F0.unk00 = -1;
+    D_005CF2F0.card_update_result = SaveCard_Update();
+    if (SaveCard_HasCard(D_005CF2F0.selected_card) == 0) {
+        D_005CF2F0.card_update_result = -1;
     }
-    if (D_005CF2F0.unk13 == 1 && SaveCard_CheckBusy() == 0) {
-        D_005CF2F0.unk13 = 3;
+    if (D_005CF2F0.list_step == 1 && SaveCard_CheckBusy() == 0) {
+        D_005CF2F0.list_step = 3;
     }
-    if (D_005CF2F0.unk00 < 0) {
-        if (SaveCard_GetLoadFailed(D_005CF2F0.unk0C) != 0 && !game_status.bit9) {
-            D_005CF2F0.unk13 = 23;
-            SaveCard_ClearLoadFailed(D_005CF2F0.unk0C);
+    if (D_005CF2F0.card_update_result < 0) {
+        if (SaveCard_GetLoadFailed(D_005CF2F0.selected_card) != 0 && !game_status.bit9) {
+            D_005CF2F0.list_step = 23;
+            SaveCard_ClearLoadFailed(D_005CF2F0.selected_card);
             SaveCard_StartCheck(0);
-        } else if (D_005CF2F0.unk13 != 3) {
+        } else if (D_005CF2F0.list_step != 3) {
             if (!game_status.bit9) {
-                D_005CF2F0.unk13 = 10;
+                D_005CF2F0.list_step = 10;
             }
         }
     }
     if (game_status.bit9) {
-        if (D_005CF2F0.unk13 == -1 && D_00446BDD == 0) {
+        if (D_005CF2F0.list_step == -1 && D_00446BDD == 0) {
             SaveCard_Init();
-            D_005CF2F0.unk18 = 1;
+            D_005CF2F0.input_locked = 1;
             D_00446C70 = 2;
             D_00446BDD = 1;
         }
@@ -6080,136 +6080,136 @@ static void Menu_UpdateSaveList(void) {
 
     report = Pad_GetReport(0, 0);
     if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
-        if (D_005CF2F0.unk13 != 1) {
+        if (D_005CF2F0.list_step != 1) {
             report = Pad_GetReport(0, 0);
             if (report->held & 0x50) {
-                D_005CF2F0.unk1D = 1;
+                D_005CF2F0.confirm_press_state = 1;
             } else {
-                D_005CF2F0.unk1D = 3;
+                D_005CF2F0.confirm_press_state = 3;
             }
         }
     }
-    if (D_005CF2F0.unk1D == 2) {
-        D_005CF2F0.unk1D = 3;
+    if (D_005CF2F0.confirm_press_state == 2) {
+        D_005CF2F0.confirm_press_state = 3;
     }
-    if (D_005CF2F0.unk1D == 1) {
+    if (D_005CF2F0.confirm_press_state == 1) {
         report = Pad_GetReport(0, 0);
         if (report->held & 0x50) {
             if (D_00446DE8 & 0x50) {
-                D_005CF2F0.unk1D = 2;
+                D_005CF2F0.confirm_press_state = 2;
             }
         } else {
-            D_005CF2F0.unk1D = 3;
+            D_005CF2F0.confirm_press_state = 3;
         }
     }
 
-    if (D_005CF2F0.unk13 != 1 && D_005CF2F0.unk18 == 0) {
-        if (D_005CF2F0.unk1D == 3) {
-            D_005CF2F0.unk1D = 0;
-            switch (D_005CF2F0.unk13) {
+    if (D_005CF2F0.list_step != 1 && D_005CF2F0.input_locked == 0) {
+        if (D_005CF2F0.confirm_press_state == 3) {
+            D_005CF2F0.confirm_press_state = 0;
+            switch (D_005CF2F0.list_step) {
             case -1:
                 Sound_PlayMenu(0);
-                D_005CF2F0.unk13 = 8;
+                D_005CF2F0.list_step = 8;
                 break;
             case 8:
-                if (D_005CF2F0.unk0E == 0) {
+                if (D_005CF2F0.confirm_choice == 0) {
                     Sound_PlayMenu(0);
-                    D_005CF2F0.unk13 = 1;
+                    D_005CF2F0.list_step = 1;
                     memset(save_image, 0, 0x20000);
-                    SaveCard_StartLoad(D_005CF2F0.unk0C, D_005CF2F0.unk0D, (s32 *)save_image, 0x20000);
+                    SaveCard_StartLoad(D_005CF2F0.selected_card, D_005CF2F0.selected_save, (s32 *)save_image, 0x20000);
                 } else {
                     Sound_PlayMenu(2);
-                    D_005CF2F0.unk13 = -1;
-                    D_005CF2F0.unk0E = 1;
+                    D_005CF2F0.list_step = -1;
+                    D_005CF2F0.confirm_choice = 1;
                 }
                 break;
             case 3:
                 Sound_PlayMenu(0);
-                D_005CF2F0.unk13 = -1;
+                D_005CF2F0.list_step = -1;
                 break;
             case 10:
                 Sound_PlayMenu(0);
-                D_005CF2F0.unk18 = 1;
+                D_005CF2F0.input_locked = 1;
                 if (!game_status.bit9) {
                     D_00446C70 = 3;
-                    SaveCard_ResetCard(D_005CF2F0.unk0C);
+                    SaveCard_ResetCard(D_005CF2F0.selected_card);
                 } else {
-                    D_005CF2F0.unk13 = -1;
+                    D_005CF2F0.list_step = -1;
                     D_00446C70 = 2;
                     D_00446BDD = 1;
                 }
                 break;
             case 23:
                 Sound_PlayMenu(0);
-                D_005CF2F0.unk13 = -1;
-                D_005CF2F0.unk0E = 1;
+                D_005CF2F0.list_step = -1;
+                D_005CF2F0.confirm_choice = 1;
                 break;
             }
         } else {
             report = Pad_GetReport(0, 0);
-            if ((report->pressed & 0x2000) && D_004472D0 != 0xFF && D_005CF2F0.unk1D == 0) {
+            if ((report->pressed & 0x2000) && D_004472D0 != 0xFF && D_005CF2F0.confirm_press_state == 0) {
                 Sound_PlayMenu(2);
-                switch (D_005CF2F0.unk13) {
+                switch (D_005CF2F0.list_step) {
                 case 10:
-                    D_005CF2F0.unk18 = 1;
+                    D_005CF2F0.input_locked = 1;
                     if (!game_status.bit9) {
                         D_00446C70 = 3;
-                        SaveCard_ResetCard(D_005CF2F0.unk0C);
+                        SaveCard_ResetCard(D_005CF2F0.selected_card);
                     } else {
-                        D_005CF2F0.unk13 = -1;
+                        D_005CF2F0.list_step = -1;
                         D_00446C70 = 2;
                         D_00446BDD = 1;
                     }
                     break;
                 case -1:
-                    D_005CF2F0.unk18 = 1;
+                    D_005CF2F0.input_locked = 1;
                     D_00446C70 = 3;
                     break;
                 case 3:
-                    D_005CF2F0.unk13 = -1;
+                    D_005CF2F0.list_step = -1;
                     break;
                 case 8:
                 case 23:
-                    D_005CF2F0.unk13 = -1;
-                    D_005CF2F0.unk0E = 1;
+                    D_005CF2F0.list_step = -1;
+                    D_005CF2F0.confirm_choice = 1;
                     break;
                 }
-            } else if ((D_00446DE8 & 0x40) && D_005CF2F0.unk18 == 0) {
-                switch (D_005CF2F0.unk13) {
+            } else if ((D_00446DE8 & 0x40) && D_005CF2F0.input_locked == 0) {
+                switch (D_005CF2F0.list_step) {
                 case -1:
-                    D_005CF2F0.unk0D++;
+                    D_005CF2F0.selected_save++;
                     for (i = 0; i < 3; i++) {
-                        if (SaveCard_GetSaveState((D_005CF2F0.unk0D + i) % 3) != 0) {
+                        if (SaveCard_GetSaveState((D_005CF2F0.selected_save + i) % 3) != 0) {
                             break;
                         }
                     }
                     if (i != 2) {
                         Sound_PlayMenu(1);
                     }
-                    D_005CF2F0.unk0D = (D_005CF2F0.unk0D + i) % 3;
+                    D_005CF2F0.selected_save = (D_005CF2F0.selected_save + i) % 3;
                     break;
                 case 8:
                     Sound_PlayMenu(1);
-                    D_005CF2F0.unk0E = (D_005CF2F0.unk0E + 1) & 1;
+                    D_005CF2F0.confirm_choice = (D_005CF2F0.confirm_choice + 1) & 1;
                     break;
                 }
-            } else if ((D_00446DE8 & 0x10) && D_005CF2F0.unk18 == 0) {
-                switch (D_005CF2F0.unk13) {
+            } else if ((D_00446DE8 & 0x10) && D_005CF2F0.input_locked == 0) {
+                switch (D_005CF2F0.list_step) {
                 case -1:
-                    D_005CF2F0.unk0D--;
+                    D_005CF2F0.selected_save--;
                     for (i = 0; i < 3; i++) {
-                        if (SaveCard_GetSaveState((D_005CF2F0.unk0D - i + 3) % 3) != 0) {
+                        if (SaveCard_GetSaveState((D_005CF2F0.selected_save - i + 3) % 3) != 0) {
                             break;
                         }
                     }
                     if (i != 2) {
                         Sound_PlayMenu(1);
                     }
-                    D_005CF2F0.unk0D = (D_005CF2F0.unk0D - i + 3) % 3;
+                    D_005CF2F0.selected_save = (D_005CF2F0.selected_save - i + 3) % 3;
                     break;
                 case 8:
                     Sound_PlayMenu(1);
-                    D_005CF2F0.unk0E = (D_005CF2F0.unk0E + 1) & 1;
+                    D_005CF2F0.confirm_choice = (D_005CF2F0.confirm_choice + 1) & 1;
                     break;
                 }
             }
@@ -6230,7 +6230,7 @@ static void Menu_UpdateSaveList(void) {
                     D_00425510[i] = SPRITE_PACKET_COLOR_VIEW(&D_00446BF8[i])->alpha;
                 }
                 D_00446C70 = 1;
-                D_005CF2F0.unk18 = 0;
+                D_005CF2F0.input_locked = 0;
                 break;
             }
         }
@@ -6251,7 +6251,7 @@ static void Menu_UpdateSaveList(void) {
                 D_00446C04 = 128.0f;
                 if (D_00446C70 == 2) {
                     if (D_00446BDD != 2) {
-                        D_005CF2F0.unk16 = 1;
+                        D_005CF2F0.save_loaded = 1;
                         D_00446C70 = 0;
                         D_00446B20 = (void *)Menu_UpdateCardSlot;
                         D_00446BDD = 0;
@@ -6259,7 +6259,7 @@ static void Menu_UpdateSaveList(void) {
                         D_00446AC8++;
                     }
                 } else if (D_00446C70 == 3) {
-                    D_005CF2F0.unk0E = 1;
+                    D_005CF2F0.confirm_choice = 1;
                     D_00446B20 = (void *)Menu_UpdateCardSlot;
                     D_00446C70 = 0;
                     D_00446BDD = 0;
@@ -6371,8 +6371,8 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
     }
 
     for (i = 0; i < D_00446A68; i++) {
-        kind = D_0044725C[i].unk3E;
-        Menu_SetBlendMode(D_0044725C[i].unk42);
+        kind = D_0044725C[i].handler_index;
+        Menu_SetBlendMode(D_0044725C[i].blend_mode);
         MenuSprite_Draw((int)&D_0044725C[i], kind + 1000, context->unk04, (int)D_00425510[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
@@ -6601,9 +6601,9 @@ static void Menu_UpdateButtonConfig(void) {
     bar_drawn = FALSE;
     D_00446E00 = 0;
     for (i = 0; i < D_00446A70; i++) {
-        kind = D_00447264[i].unk3E;
+        kind = D_00447264[i].handler_index;
         slot = D_00447264[i].slot;
-        if (!bar_drawn && D_00447264[i].unk43 == 1) {
+        if (!bar_drawn && D_00447264[i].has_cursor_bar == 1) {
             bar_drawn = TRUE;
             if (D_00446BF0 == 0) {
                 bar.first.f.lo16 = 0x6FE0;
@@ -6622,7 +6622,7 @@ static void Menu_UpdateButtonConfig(void) {
                 MenuDraw_Bar(&bar);
             }
         }
-        ((void (*)(u8))Menu_SetBlendMode)(D_00447264[i].unk42); // match: called as returning nothing, which frees $2 for the switch
+        ((void (*)(u8))Menu_SetBlendMode)(D_00447264[i].blend_mode); // match: called as returning nothing, which frees $2 for the switch
         switch (kind) {
         case 2:
             if (D_00446BF0 != 0) {
@@ -6783,17 +6783,17 @@ static void Menu_OpenCardCheck(void) {
         SaveCard_Update();
         memset(D_00425510, 0, 0x400);
         D_00446B20 = (void *)Menu_UpdateCardCheck;
-        D_005CF2F0.unk17 = 0;
+        D_005CF2F0.check_step = 0;
         D_00446C70 = 0;
         D_00446C09 = 0;
-        D_005CF2F0.unk11 = 0;
-        D_005CF2F0.unk0C = 0;
-        D_005CF2F0.unk1B = 0;
-        D_005CF2F0.unk1C = 0;
-        D_005CF2F0.unk04 = 0;
-        D_005CF2F0.unk19 = 0;
-        D_005CF2F0.unk1A = 0;
-        D_005CF2F0.unk12 = -1;
+        D_005CF2F0.is_leaving = 0;
+        D_005CF2F0.selected_card = 0;
+        D_005CF2F0.check_finished = 0;
+        D_005CF2F0.skip_drawing = 0;
+        D_005CF2F0.card_problem_codes = 0;
+        D_005CF2F0.card0_saves_state = 0;
+        D_005CF2F0.card1_saves_state = 0;
+        D_005CF2F0.dialog_id = -1;
     }
 }
 
@@ -6806,91 +6806,91 @@ static void Menu_UpdateCardCheck(void) {
     u32 full_alpha;
     s32 result = ((s32 (*)(void))SaveCard_Update)(); // match: its result is used here
 
-    switch (D_005CF2F0.unk17) {
+    switch (D_005CF2F0.check_step) {
     case 0:
         if (SaveCard_IsCheckDone() == 0) {
             return;
         }
         if (SaveCard_IsPresent(0) != 0 && SaveCard_IsFormatted(0) != 0) {
             SaveCard_StartReadList(0, 0);
-            D_005CF2F0.unk17 = 1;
+            D_005CF2F0.check_step = 1;
         } else if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
-            D_005CF2F0.unk17 = 2;
+            D_005CF2F0.check_step = 2;
             SaveCard_StartReadList(1, 0);
         } else {
-            D_005CF2F0.unk17 = 3;
+            D_005CF2F0.check_step = 3;
             SaveCard_StartRescan();
         }
         return;
     case 1:
         if (SaveCard_CheckBusy() == 0) {
-            D_005CF2F0.unk19 = SaveCard_GetSavesState();
+            D_005CF2F0.card0_saves_state = SaveCard_GetSavesState();
             if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
-                D_005CF2F0.unk17 = 2;
+                D_005CF2F0.check_step = 2;
                 SaveCard_StartReadList(1, 0);
             } else {
-                D_005CF2F0.unk17 = 3;
+                D_005CF2F0.check_step = 3;
                 SaveCard_StartRescan();
             }
         } else if (result < 0) {
-            D_005CF2F0.unk19 = 0;
+            D_005CF2F0.card0_saves_state = 0;
             if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
-                D_005CF2F0.unk17 = 2;
+                D_005CF2F0.check_step = 2;
                 SaveCard_StartReadList(1, 0);
             } else {
-                D_005CF2F0.unk17 = 3;
+                D_005CF2F0.check_step = 3;
                 SaveCard_StartRescan();
             }
         }
         return;
     case 2:
         if (SaveCard_CheckBusy() == 0) {
-            D_005CF2F0.unk1A = SaveCard_GetSavesState();
-            D_005CF2F0.unk17 = 3;
+            D_005CF2F0.card1_saves_state = SaveCard_GetSavesState();
+            D_005CF2F0.check_step = 3;
             SaveCard_StartRescan();
         } else if (result < 0) {
-            D_005CF2F0.unk1A = 0;
-            D_005CF2F0.unk17 = 3;
+            D_005CF2F0.card1_saves_state = 0;
+            D_005CF2F0.check_step = 3;
             SaveCard_StartRescan();
         }
         return;
     case 3:
         if (result > 0) {
-            D_005CF2F0.unk17 = 4;
+            D_005CF2F0.check_step = 4;
             for (i = 0; (s32)i < 2; i++) {
                 switch (SaveCard_GetCardProblem(i)) {
                 case 0:
-                    D_005CF2F0.unk04 |= 1 << (i * 4);
+                    D_005CF2F0.card_problem_codes |= 1 << (i * 4);
                     break;
                 case 8:
-                    D_005CF2F0.unk04 |= 2 << (i * 4);
+                    D_005CF2F0.card_problem_codes |= 2 << (i * 4);
                     break;
                 default:
-                    D_005CF2F0.unk04 |= 4 << (i * 4);
+                    D_005CF2F0.card_problem_codes |= 4 << (i * 4);
                     break;
                 }
             }
-            if (D_005CF2F0.unk04 == 0x44) {
-                D_005CF2F0.unk12 = 0x10;
-            } else if (D_005CF2F0.unk04 == 0x22) {
-                D_005CF2F0.unk12 = 0x13;
-            } else if (D_005CF2F0.unk04 == 0x42) {
-                D_005CF2F0.unk12 = 0x11;
-            } else if (D_005CF2F0.unk04 == 0x24) {
-                D_005CF2F0.unk12 = 0x12;
+            if (D_005CF2F0.card_problem_codes == 0x44) {
+                D_005CF2F0.dialog_id = 0x10;
+            } else if (D_005CF2F0.card_problem_codes == 0x22) {
+                D_005CF2F0.dialog_id = 0x13;
+            } else if (D_005CF2F0.card_problem_codes == 0x42) {
+                D_005CF2F0.dialog_id = 0x11;
+            } else if (D_005CF2F0.card_problem_codes == 0x24) {
+                D_005CF2F0.dialog_id = 0x12;
             } else {
-                D_005CF2F0.unk1C = D_005CF2F0.unk11 = 1;
+                D_005CF2F0.skip_drawing = D_005CF2F0.is_leaving = 1;
                 SaveCard_Close();
             }
         }
         return;
     }
 
-    if (D_005CF2F0.unk1C == 0) {
+    if (D_005CF2F0.skip_drawing == 0) {
         for (i = 0; i < D_00446ABC; i++) {
-            kind = D_00446C68[i].unk3E;
-            ((void (*)(u8))Menu_SetBlendMode)(D_00446C68[i].unk42); // match: called as returning nothing, which frees $2 for the switch
-            switch (D_005CF2F0.unk12) {
+            kind = D_00446C68[i].handler_index;
+            ((void (*)(u8))Menu_SetBlendMode)(D_00446C68[i].blend_mode); // match: called as returning nothing, which frees $2 for the switch
+            switch (D_005CF2F0.dialog_id) {
             case 0x10:
                 MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x10, D_00425510[i]);
                 break;
@@ -6908,9 +6908,9 @@ static void Menu_UpdateCardCheck(void) {
         }
     }
 
-    if (D_005CF2F0.unk1C == 0) {
+    if (D_005CF2F0.skip_drawing == 0) {
         bar.first.f.lo16 = 0x75D0;
-        bar.first.f.mid16 = D_005CF2F0.unk0C * 0xE0 + 0x8250;
+        bar.first.f.mid16 = D_005CF2F0.selected_card * 0xE0 + 0x8250;
         bar.first.f.mid24 = 0xDBBA0;
         bar.second.f.lo16 = bar.first.f.lo16 + 0x14A0;
         bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
@@ -6927,7 +6927,7 @@ static void Menu_UpdateCardCheck(void) {
         MenuDraw_Bar(&bar);
     }
 
-    if (D_005CF2F0.unk11 != 0) {
+    if (D_005CF2F0.is_leaving != 0) {
         if (result < 0) {
             if (D_00446C70 == 2) {
                 D_00446C70 = 4;
@@ -6939,28 +6939,28 @@ static void Menu_UpdateCardCheck(void) {
             }
         }
     } else if (result < 0) {
-        D_005CF2F0.unk11 = 1;
+        D_005CF2F0.is_leaving = 1;
         SaveCard_StartCheck(1);
         SaveCard_Close();
     } else {
         report = Pad_GetReport(0, 0);
         if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
             Sound_PlayMenu(0);
-            D_005CF2F0.unk11 = 1;
+            D_005CF2F0.is_leaving = 1;
             SaveCard_StartCheck(1);
             SaveCard_Close();
-            if (D_005CF2F0.unk0C == 0) {
+            if (D_005CF2F0.selected_card == 0) {
                 D_00446C70 = 2;
             } else {
                 D_00446C70 = 3;
             }
         } else if ((D_00446DE8 & 0x50) && D_004472D0 != 0xFF) {
             Sound_PlayMenu(1);
-            D_005CF2F0.unk0C = (D_005CF2F0.unk0C + 1) & 1;
+            D_005CF2F0.selected_card = (D_005CF2F0.selected_card + 1) & 1;
         }
     }
 
-    if (D_005CF2F0.unk1C != 0) {
+    if (D_005CF2F0.skip_drawing != 0) {
         return;
     }
     switch (D_00446C70) {
@@ -6983,8 +6983,8 @@ static void Menu_UpdateCardCheck(void) {
             D_00425510[i] -= (f32)D_00446C68[i].alpha / 10.0f;
             if (D_00425510[i] < 0.0f) {
                 memset(D_00425510, 0, 0x400);
-                D_005CF2F0.unk1B++;
-                if (D_005CF2F0.unk1B == 1) {
+                D_005CF2F0.check_finished++;
+                if (D_005CF2F0.check_finished == 1) {
                     break;
                 }
                 if (D_00446C70 == 4) {
@@ -7003,7 +7003,7 @@ static void Menu_UpdateCardCheck(void) {
 
 /* TRUE when the card check (Menu_UpdateCardCheck) found a save on the card of either slot. */
 s32 Menu_CardsHaveSaves(void) {
-    if (D_005CF2F0.unk19 > 0 || D_005CF2F0.unk1A > 0) {
+    if (D_005CF2F0.card0_saves_state > 0 || D_005CF2F0.card1_saves_state > 0) {
         return TRUE;
     }
     return FALSE;
@@ -7042,8 +7042,8 @@ static void Menu_UpdateBrightness(void) {
     }
     D_00447228 = (game_options[10] - 32.0f) * 402.0f / 220.0f;
     for (i = 0; i < D_00446AB0; i++) {
-        kind = D_00446C5C[i].unk3E;
-        Menu_SetBlendMode(D_00446C5C[i].unk42);
+        kind = D_00446C5C[i].handler_index;
+        Menu_SetBlendMode(D_00446C5C[i].blend_mode);
         MenuSprite_Draw((int)&D_00446C5C[i], kind + 1000, (int)D_00447228 + 0x72C, (int)D_00425510[i]);
         Menu_SetBlendMode(0);
     }
@@ -7378,20 +7378,20 @@ void Menu_ShiftListModelsPageDown(s32 value) {
 
 /* Resets the memory card screens' state, starts the card check and makes Menu_UpdateCardSlot the current handler. */
 static void Menu_OpenCardSlot(void) {
-    D_005CF2F0.unk16 = 0;
-    D_005CF2F0.unk10 = 0;
-    D_005CF2F0.unk11 = 0;
-    D_005CF2F0.unk14 = 0;
-    D_005CF2F0.unk0C = 0;
-    D_005CF2F0.unk0D = 0;
-    D_005CF2F0.unk18 = 1;
-    D_005CF2F0.unk1B = 0;
-    D_005CF2F0.unk1E = 0;
-    D_005CF2F0.unk1F = 0;
-    D_005CF2F0.unk20 = 0;
-    D_005CF2F0.unk00 = 0;
-    D_005CF2F0.unk0E = 1;
-    D_005CF2F0.unk12 = -1;
+    D_005CF2F0.save_loaded = 0;
+    D_005CF2F0.card_saves_found = 0;
+    D_005CF2F0.is_leaving = 0;
+    D_005CF2F0.card_op_running = 0;
+    D_005CF2F0.selected_card = 0;
+    D_005CF2F0.selected_save = 0;
+    D_005CF2F0.input_locked = 1;
+    D_005CF2F0.check_finished = 0;
+    D_005CF2F0.save_state_0 = 0;
+    D_005CF2F0.save_state_1 = 0;
+    D_005CF2F0.save_state_2 = 0;
+    D_005CF2F0.card_update_result = 0;
+    D_005CF2F0.confirm_choice = 1;
+    D_005CF2F0.dialog_id = -1;
     SaveCard_Open();
     SaveCard_ClearLoadFailed(0);
     SaveCard_ClearLoadFailed(1);

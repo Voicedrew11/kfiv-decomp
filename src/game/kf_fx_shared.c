@@ -71,13 +71,13 @@ int EffectKeys_ApplyScale(EffectActor *effect) {
     keyframe_frames[3] = effect->def->keyframe_end;
     stage = EffectKeys_FindStage(effect, keyframe_frames);
     if (keyframe_frames[stage + 1] - keyframe_frames[stage] <= 0) {
-        Vector_Copy(&effect->model->unkE0, &effect->def->keys_a[stage]);
+        Vector_Copy(&effect->model->scale_x, &effect->def->keys_a[stage]);
         return stage;
     }
     EffectKeys_Weights(&blend_a, &blend_b, effect->frame, keyframe_frames[stage], keyframe_frames[stage + 1], effect->def->modes_a[stage]);
     sceVu0ScaleVectorXYZ(&scaled_a, &effect->def->keys_a[stage], blend_a);
     sceVu0ScaleVectorXYZ(&scaled_b, &effect->def->keys_a[stage + 1], blend_b);
-    sceVu0AddVector(&effect->model->unkE0, &scaled_a, &scaled_b);
+    sceVu0AddVector(&effect->model->scale_x, &scaled_a, &scaled_b);
     return -1;
 }
 
@@ -152,7 +152,7 @@ void EffectHit_CheckAndEnd(EffectActor *effect, void *state_arg) {
     if (*state == 1) {
         Effect_Free(effect);
         *state = 0;
-    } else if (effect->effect_param != 0xFFFF && effect->def->unk10B != 0xFF && Attack_RunEffectHitCheck(effect) != 0) {
+    } else if (effect->effect_param != 0xFFFF && effect->def->hit_check_index != 0xFF && Attack_RunEffectHitCheck(effect) != 0) {
         if (effect->def->end_effect != 0xFFFF) {
             Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             *state = 1;
@@ -172,11 +172,11 @@ int EffectHit_CheckAndEndByFlag(EffectActor *effect, s8 *state) {
         *state = 0;
         return 0;
     }
-    if (effect->effect_param != 0xFFFF && effect->def->unk10B != 0xFF) {
+    if (effect->effect_param != 0xFFFF && effect->def->hit_check_index != 0xFF) {
         hit_flags = Attack_RunEffectHitCheck(effect);
         if (hit_flags & 2) {
-            if (effect->def->unkF2 != 0) {
-                Effect_Spawn(effect->def->unkF2, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+            if (effect->def->child_effect_id != 0) {
+                Effect_Spawn(effect->def->child_effect_id, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             }
             return 1;
         }
@@ -205,7 +205,7 @@ void EffectHit_End(EffectActor *effect, s8 *state) {
 /* 1 when the effect has a hit check (effect_param and def->unk10B set) and it finds something, else 0. */
 int EffectHit_Check(EffectActor *effect) {
     if (effect->effect_param != 0xFFFF) {
-        if (effect->def->unk10B != 0xFF) {
+        if (effect->def->hit_check_index != 0xFF) {
             if (Attack_RunEffectHitCheck(effect) != 0) {
                 return 1;
             }
@@ -366,10 +366,10 @@ int EffectHit_FindAimedEntity(EffectActor *effect, Vector4 *position, Vector4 *r
         angles.y = wrap_angle(angles.y - reference->y);
         angles.x = Math_AbsFloat(angles.x);
         angles.y = Math_AbsFloat(angles.y);
-        if (effect->def->unkE4 <= angles.x) {
+        if (effect->def->spread_angle <= angles.x) {
             continue;
         }
-        if (effect->def->unkE8 <= angles.y) {
+        if (effect->def->spin_rate <= angles.y) {
             continue;
         }
         score = distance * (angles.x + 1.0f) * (angles.y + 1.0f);

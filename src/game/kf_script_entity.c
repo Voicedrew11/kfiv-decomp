@@ -162,15 +162,15 @@ void ScriptCmd_RandomFloat(ScriptFloatQueryCommand *command) {
 }
 
 /* Command 227: hands the script, through x, y and z, the player's position plus `distance` times the
-   vector (PlayerState.unk1B0, unk1AC, unk1B4) turned by the player's heading, then finishes. */
+   vector (PlayerState.strafe_speed, unk1AC, unk1B4) turned by the player's heading, then finishes. */
 void ScriptCmd_GetPointFromPlayer(ScriptPointAheadCommand *command) {
     f32 matrix[16];
     f32 vector[4];
     f32 point[4];
 
-    vector[0] = player_state.unk1B0;
-    vector[1] = player_state.unk1AC;
-    vector[2] = player_state.unk1B4;
+    vector[0] = player_state.strafe_speed;
+    vector[1] = player_state.fall_speed;
+    vector[2] = player_state.walk_speed;
     vector[3] = 0.0f;
     sceVu0RotMatrixY(matrix, D_00431AF0, player_state.rotation.y);
     sceVu0ApplyMatrix(vector, matrix, vector);
@@ -195,16 +195,16 @@ void ScriptCmd_Random(ScriptQueryCommand *command) {
     command->active = 0;
 }
 
-/* Command 230: gives the player control (GameStatus.unk00 = 1: the player moves, the menus open), then
+/* Command 230: gives the player control (GameStatus.player_control = 1: the player moves, the menus open), then
    finishes. */
 void ScriptCmd_GivePlayerControl(ScriptThreadCommand *command) {
-    game_status.unk00 = 1;
+    game_status.player_control = 1;
     command->active = 0;
 }
 
-/* Command 231: takes control from the player (GameStatus.unk00 = 0), then finishes. */
+/* Command 231: takes control from the player (GameStatus.player_control = 0), then finishes. */
 void ScriptCmd_TakePlayerControl(ScriptThreadCommand *command) {
-    game_status.unk00 = 0;
+    game_status.player_control = 0;
     command->active = 0;
 }
 
@@ -233,7 +233,7 @@ void ScriptCmd_StartEntityMotion(ScriptCallCommand *command) {
     Entity *entity;
 
     entity = Entity_GetBySpawnId(command->target_id.value);
-    if (entity != NULL && (entity->flags & 0xF) == 3 && entity->unk2C != 0) {
+    if (entity != NULL && (entity->flags & 0xF) == 3 && entity->hit_points != 0) {
         Motion_Start(entity, command->first.value, 0, command->second.value, 1);
     }
     command->active = 0;
@@ -245,7 +245,7 @@ void ScriptCmd_PlayEntityMotion(ScriptMotionCommand *command) {
     Entity *entity;
 
     entity = Entity_GetBySpawnId(command->target_id.value);
-    if (entity != NULL && (entity->flags & 0xF) == 3 && entity->unk2C != 0) {
+    if (entity != NULL && (entity->flags & 0xF) == 3 && entity->hit_points != 0) {
         Motion_Step(entity, command->motion.value);
         if (--command->frames.value != 0) {
             return;
@@ -260,7 +260,7 @@ void ScriptCmd_WaitEntityMotion(ScriptCallCommand *command) {
     Entity *target;
 
     target = Entity_GetBySpawnId(command->target_id.value);
-    if (target == NULL || (target->flags & 0xF) != 3 || target->unk2C == 0 ||
+    if (target == NULL || (target->flags & 0xF) != 3 || target->hit_points == 0 ||
         Motion_Step(target, command->first.value) != 0) {
         command->active = 0;
     }
@@ -273,9 +273,9 @@ int ScriptCmd_BlendEntityMotion(ScriptMotionBlendCommand *command) {
     EntityModel *entity_model;
 
     entity = Entity_GetBySpawnId(command->target_id.value);
-    if (entity != NULL && (entity->flags & 0xF) == 3 && entity->unk2C != 0) {
+    if (entity != NULL && (entity->flags & 0xF) == 3 && entity->hit_points != 0) {
         entity_model = entity->model;
-        if (entity_model->unkFC->unk88 != 0) {
+        if (entity_model->level_tables->unk88 != 0) {
             return Motion_BlendToPose(command->weight.value, entity_model);
         }
     }
@@ -283,7 +283,7 @@ int ScriptCmd_BlendEntityMotion(ScriptMotionBlendCommand *command) {
 }
 
 /* Command 238: turns the entity `target_id` to face the player (state 4, EntityAi_SetState: on the spot for
-   a kind with params flag 0x80, else through Entity.unkC8's turn bits), then waits `frames` frames and
+   a kind with params flag 0x80, else through Entity.move_command's turn bits), then waits `frames` frames and
    for state 5; done at once if it is in state 5 already, for the 0x80 kind only if it faces the player
    within params->unk438 degrees. */
 void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
@@ -292,17 +292,17 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
     f32 turn;
 
     entity = Entity_GetBySpawnId(command->target_id.value);
-    if (entity != NULL && (entity->flags & 0xF) == 3 && entity->unk2C != 0) {
-        if (entity->unkC6 != 0) {
+    if (entity != NULL && (entity->flags & 0xF) == 3 && entity->hit_points != 0) {
+        if (entity->busy_flags != 0) {
             return;
         }
         if (entity->params->flags & 0x80) {
             switch (command->step) {
             case 0:
                 heading = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);
-                turn = EntityMath_AngleDifference(entity->model->unkD0[1], heading);
+                turn = EntityMath_AngleDifference(entity->model->rotation[1], heading);
                 if (entity->state == 5) {
-                    if (ABS(turn) <= entity->params->unk438 * 0.017453292f) {
+                    if (ABS(turn) <= entity->params->far_distance * 0.017453292f) {
                         command->active = 0;
                         return;
                     }
@@ -355,8 +355,8 @@ void ScriptCmd_TurnEntityBack(ScriptWaitCommand *command) {
     Entity *entity;
 
     entity = Entity_GetBySpawnId(command->object_id.value);
-    if (entity != NULL && (entity->flags & 0xF) == 3 && entity->unk2C != 0) {
-        if (entity->unkC6 != 0) {
+    if (entity != NULL && (entity->flags & 0xF) == 3 && entity->hit_points != 0) {
+        if (entity->busy_flags != 0) {
             return;
         }
         if (command->started == 0) {
@@ -389,27 +389,27 @@ void ScriptCmd_WalkEntityTo(ScriptWalkToCommand *command) {
             command->active = 0;
             return;
         }
-        if ((entity->flags & 0xF) == 3 && entity->unk2C != 0) {
+        if ((entity->flags & 0xF) == 3 && entity->hit_points != 0) {
             heading = EntityMath_HeadingTo(entity->model->position, point);
-            turn = EntityMath_AngleDifference(entity->model->unkD0[1], heading);
+            turn = EntityMath_AngleDifference(entity->model->rotation[1], heading);
             if (ABS(turn) > entity->params->turn_limit) {
                 if (turn >= 0.0f) {
-                    entity->unkC8 |= 0x200;
+                    entity->move_command |= 0x200;
                 } else {
-                    entity->unkC8 |= 0x100;
+                    entity->move_command |= 0x100;
                 }
             }
             rise = point[1] - entity->model->position[1];
-            if (ABS(rise) > entity->params->unk54) {
+            if (ABS(rise) > entity->params->max_speed) {
                 if (rise >= 0.0f) {
-                    entity->unkC8 |= 0x20;
+                    entity->move_command |= 0x20;
                 } else {
-                    entity->unkC8 |= 0x10;
+                    entity->move_command |= 0x10;
                 }
             }
-            entity->unkC8 |= 1;
+            entity->move_command |= 1;
             if (command->run.value != 0) {
-                entity->unkC8 |= 0x40;
+                entity->move_command |= 0x40;
             }
             ENTITY_FLAG_BITS(entity)->bits11 = command->mode.value;
             return;
@@ -436,19 +436,19 @@ void ScriptCmd_WalkEntityToFlat(ScriptWalkToFlatCommand *command) {
             command->active = 0;
             return;
         }
-        if ((entity->flags & 0xF) == 3 && entity->unk2C != 0) {
+        if ((entity->flags & 0xF) == 3 && entity->hit_points != 0) {
             heading = EntityMath_HeadingTo(entity->model->position, point);
-            turn = EntityMath_AngleDifference(entity->model->unkD0[1], heading);
+            turn = EntityMath_AngleDifference(entity->model->rotation[1], heading);
             if (ABS(turn) > entity->params->turn_limit) {
                 if (turn >= 0.0f) {
-                    entity->unkC8 |= 0x200;
+                    entity->move_command |= 0x200;
                 } else {
-                    entity->unkC8 |= 0x100;
+                    entity->move_command |= 0x100;
                 }
             }
-            entity->unkC8 |= 1;
+            entity->move_command |= 1;
             if (command->run.value != 0) {
-                entity->unkC8 |= 0x40;
+                entity->move_command |= 0x40;
             }
             ENTITY_FLAG_BITS(entity)->bits11 = command->mode.value;
             return;
@@ -463,7 +463,7 @@ void ScriptCmd_TurnEntityBy(ScriptMoveCommand *command) {
     Entity *target;
 
     target = Entity_GetBySpawnId(command->target_id.value);
-    if (target != NULL && (target->flags & 0xF) == 3 && target->unk2C != 0) {
+    if (target != NULL && (target->flags & 0xF) == 3 && target->hit_points != 0) {
         ENTITY_MODEL(target)->rotation.x = EntityMath_WrapAngle(ENTITY_MODEL(target)->rotation.x + command->x.value);
         ENTITY_MODEL(target)->rotation.y = EntityMath_WrapAngle(ENTITY_MODEL(target)->rotation.y + command->y.value);
         ENTITY_MODEL(target)->rotation.z = EntityMath_WrapAngle(ENTITY_MODEL(target)->rotation.z + command->z.value);
@@ -484,7 +484,7 @@ void ScriptCmd_TurnEntityToward(ScriptMoveCommand *command) {
     f32 heading;
 
     target = Entity_GetBySpawnId(command->target_id.value);
-    if (target == NULL || (target->flags & 0xF) != 3 || target->unk2C == 0) {
+    if (target == NULL || (target->flags & 0xF) != 3 || target->hit_points == 0) {
         command->active = 0;
         return;
     }
@@ -529,14 +529,14 @@ void ScriptCmd_SetEntitiesFlag5(ScriptFlagCommand *command) {
 }
 
 /* Command 245: hands the script, through `result`, whether the entity `target_id` faces within `range` / 2
-   degrees of its Entity.unk68 heading (FALSE when there is no such entity), then finishes. */
+   degrees of its Entity.heading_to_player heading (FALSE when there is no such entity), then finishes. */
 void ScriptCmd_IsEntityFacing(ScriptFacingCommand *command) {
     Entity *entity;
     f32 angle;
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
-        angle = Angle_Wrap(entity->unk68 - entity->model->unkD0[1]);
+        angle = Angle_Wrap(entity->heading_to_player - entity->model->rotation[1]);
         angle = ABS(angle);
         angle *= 57.29578f;
         if (angle <= command->range.value / 2) {
@@ -549,15 +549,15 @@ void ScriptCmd_IsEntityFacing(ScriptFacingCommand *command) {
     command->active = 0;
 }
 
-/* Command 246: sets how fast the entity `target_id` animates (Entity.unkD6, 0x80 the normal speed), then
+/* Command 246: sets how fast the entity `target_id` animates (Entity.model_alpha, 0x80 the normal speed), then
    finishes. */
 void ScriptCmd_SetEntityAnimSpeed(ScriptCallCommand *command) {
     Entity *entity;
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
-        entity->unkD6 = command->first.value;
-        entity->model->unk15C = entity->unkD6;
+        entity->model_alpha = command->first.value;
+        entity->model->alpha = entity->model_alpha;
     }
     command->active = 0;
 }
@@ -587,9 +587,9 @@ void ScriptCmd_GetEntityRotation(ScriptEntityVectorCommand *command) {
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->x, entity->model->unkD0[0]);
-        Script_StoreFloatResult((ScriptArg *)&command->y, entity->model->unkD0[1]);
-        Script_StoreFloatResult((ScriptArg *)&command->z, entity->model->unkD0[2]);
+        Script_StoreFloatResult((ScriptArg *)&command->x, entity->model->rotation[0]);
+        Script_StoreFloatResult((ScriptArg *)&command->y, entity->model->rotation[1]);
+        Script_StoreFloatResult((ScriptArg *)&command->z, entity->model->rotation[2]);
     } else {
         Script_StoreFloatResult((ScriptArg *)&command->x, 0);
         Script_StoreFloatResult((ScriptArg *)&command->y, 0);
@@ -623,9 +623,9 @@ void ScriptCmd_GetEntitySpawnRotation(ScriptEntityVectorCommand *command) {
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
-        Script_StoreFloatResult((ScriptArg *)&command->x, entity->spawn_info->unk10);
-        Script_StoreFloatResult((ScriptArg *)&command->y, entity->spawn_info->unk14);
-        Script_StoreFloatResult((ScriptArg *)&command->z, entity->spawn_info->unk18);
+        Script_StoreFloatResult((ScriptArg *)&command->x, entity->spawn_info->spawn_rotation_x);
+        Script_StoreFloatResult((ScriptArg *)&command->y, entity->spawn_info->spawn_rotation_y);
+        Script_StoreFloatResult((ScriptArg *)&command->z, entity->spawn_info->spawn_rotation_z);
     } else {
         Script_StoreFloatResult((ScriptArg *)&command->x, 0);
         Script_StoreFloatResult((ScriptArg *)&command->y, 0);
@@ -808,17 +808,17 @@ void ScriptCmd_SetEntityRotation(ScriptEntityVectorCommand *command) {
 
     entity = Entity_GetBySpawnId(command->target_id.value);
     if (entity != NULL) {
-        entity->model->unkD0[0] = command->x.value;
-        entity->model->unkD0[1] = command->y.value;
-        entity->model->unkD0[2] = command->z.value;
-        entity->model->unkD0[0] = Angle_Wrap(entity->model->unkD0[0]);
-        entity->model->unkD0[1] = Angle_Wrap(entity->model->unkD0[1]);
-        entity->model->unkD0[2] = Angle_Wrap(entity->model->unkD0[2]);
+        entity->model->rotation[0] = command->x.value;
+        entity->model->rotation[1] = command->y.value;
+        entity->model->rotation[2] = command->z.value;
+        entity->model->rotation[0] = Angle_Wrap(entity->model->rotation[0]);
+        entity->model->rotation[1] = Angle_Wrap(entity->model->rotation[1]);
+        entity->model->rotation[2] = Angle_Wrap(entity->model->rotation[2]);
     }
     command->active = 0;
 }
 
-/* Command 257: sets flag bit 18 of the entity `input` when its flag bits 0-1 are 3, Entity.unk82 is 0 and
+/* Command 257: sets flag bit 18 of the entity `input` when its flag bits 0-1 are 3, Entity.stun_frames is 0 and
    flag bits 2, 3, 36 and 37 are clear; hands the script, through `result`, whether it did. Then
    finishes. */
 void ScriptCmd_TrySetEntityFlag18(ScriptQueryCommand *command) {
@@ -828,7 +828,7 @@ void ScriptCmd_TrySetEntityFlag18(ScriptQueryCommand *command) {
     entity = Entity_GetBySpawnId(command->input.value);
     if (entity != NULL) {
         flags = entity->flags;
-        if (((flags & 3) == 3) && (entity->unk82 == 0) && ((flags & ((0x30L << 32) | 0xC)) == 0)) {
+        if (((flags & 3) == 3) && (entity->stun_frames == 0) && ((flags & ((0x30L << 32) | 0xC)) == 0)) {
             entity->flags = flags | 0x40000;
             Script_StoreResult(&command->result, TRUE);
             command->active = 0;
@@ -848,7 +848,7 @@ void ScriptCmd_ClearEntityFlag18(ScriptObjectCommand *command) {
     entity = Entity_GetBySpawnId(command->object_id.value);
     if (entity != NULL) {
         flags = entity->flags;
-        if (((flags & 3) == 3) && (entity->unk82 == 0) && ((flags & ((0x30L << 32) | 0xC)) == 0)) {
+        if (((flags & 3) == 3) && (entity->stun_frames == 0) && ((flags & ((0x30L << 32) | 0xC)) == 0)) {
             entity->flags = flags & ~0x40000;
         }
     }

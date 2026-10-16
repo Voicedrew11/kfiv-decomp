@@ -70,7 +70,7 @@ void GiantBeetle_Init(Entity *entity) {
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = GiantBeetle_Think;
     unkE0->animate = (void (*)(void))GiantBeetle_Animate;
     unkE0->on_hit = (void (*)(void))GiantBeetle_OnHit;
@@ -78,10 +78,10 @@ void GiantBeetle_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))GiantBeetle_Death;
     for (i = 3; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 5; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
@@ -90,9 +90,9 @@ void GiantBeetle_Init(Entity *entity) {
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -108,13 +108,13 @@ static void GiantBeetle_Animate(Entity *entity) {
     flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->unkFC->unk88;
+        blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 2) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 2) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
-        if (!(entity->unkC6 & 0x20)) {
+        if (!(entity->busy_flags & 0x20)) {
             GiantBeetle_TurnParts7And12(entity);
             GiantBeetle_TurnParts23To32(entity);
         }
@@ -140,10 +140,10 @@ static void GiantBeetle_OnHit(Entity *entity) {
 /* The think handler: as EntityAi_Think, with GiantBeetle_ThinkCombat for state 2 and GiantBeetle_ThinkWander
    for the other states. */
 static void GiantBeetle_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 0);
     }
-    if (entity->unkC6 != 0) {
+    if (entity->busy_flags != 0) {
         return;
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
@@ -174,24 +174,24 @@ static void GiantBeetle_ThinkWander(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
-    if (entity->unkA0 == 0) {
+    if (entity->action_timer == 0) {
         if (rand() % 100 > 20) {
-            point = unkE0->unk30;
-            EntityPoint_PickNear(entity->spawn_info->unk4C, point, entity->spawn_info, entity->model->position);
+            point = unkE0->target_point;
+            EntityPoint_PickNear(entity->spawn_info->wander_radius, point, entity->spawn_info, entity->model->position);
             entity->target = point;
-            entity->unkA0 = rand() % 60 + 120;
+            entity->action_timer = rand() % 60 + 120;
         } else {
             entity->target = NULL;
-            entity->unkA0 = rand() % 30 + 60;
+            entity->action_timer = rand() % 30 + 60;
         }
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->unkC8 = 0x201;
+        entity->move_command = 0x201;
     } else if (turn < 0) {
-        entity->unkC8 = 0x101;
+        entity->move_command = 0x101;
     } else {
-        entity->unkC8 = EntityAi_MoveCommand(entity, 0, 50.0f);
+        entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
@@ -215,14 +215,14 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 if (ENTITY_FLAG_BITS(entity)->bits58 == 0) {
@@ -238,34 +238,34 @@ static void GiantBeetle_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &player_state;
-            entity->unkA0 = rand() % 60 + 120;
-            unkE0->unk78 = 0;
+            entity->action_timer = rand() % 60 + 120;
+            unkE0->move_choice = 0;
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 30;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 30;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (unkE0->unk78 == 0) {
+    if (unkE0->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-            if (unkE0->unk79 == 0) {
-                unkE0->unk79 = ABS(angle) > 0.5235988f;
-                if (unkE0->unk79 == 0) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
+            if (unkE0->turn_in_place == 0) {
+                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
+                if (unkE0->turn_in_place == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = EntityAi_TurnCommand(entity);
-            if (entity->unkC8 == 0) {
-                unkE0->unk79 = 0;
+            entity->move_command = EntityAi_TurnCommand(entity);
+            if (entity->move_command == 0) {
+                unkE0->turn_in_place = 0;
             }
         } else {
-            entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 1.0f);
+            entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 1.0f);
         }
     }
 done:
@@ -282,9 +282,9 @@ static void GiantBeetle_TurnParts7And12(Entity *entity) {
     s32 i;
 
     limit = 0.34906584f;
-    if (entity->unkC8 & 0x200) {
+    if (entity->move_command & 0x200) {
         angle = limit;
-    } else if (entity->unkC8 & 0x100) {
+    } else if (entity->move_command & 0x100) {
         angle = -limit;
     } else {
         angle = 0.0f;
@@ -295,11 +295,11 @@ static void GiantBeetle_TurnParts7And12(Entity *entity) {
     } else if (angle < -limit) {
         angle = -limit;
     }
-    EntityMath_EaseAngleToward(&unkE0->unk48, angle, 10.0f);
-    part = (EntityModelPart80 *)entity->model->unkF8;
+    EntityMath_EaseAngleToward(&unkE0->part_angle_x, angle, 10.0f);
+    part = (EntityModelPart80 *)entity->model->parts;
     for (i = 0; i < ENTITY_MODEL(entity)->part_count; i++) {
         if (i == 7 || i == 12) {
-            part->unk50[1] = unkE0->unk48 * 0.5f;
+            part->unk50[1] = unkE0->part_angle_x * 0.5f;
         }
         part++;
     }
@@ -319,7 +319,7 @@ static void GiantBeetle_TurnParts23To32(Entity *entity) {
     s32 i;
 
     limit = 0.34906584f;
-    command = entity->unkC8;
+    command = entity->move_command;
     unkE0 = &entity->unkE0;
     if (command & 0x200) {
         turn = limit;
@@ -330,13 +330,13 @@ static void GiantBeetle_TurnParts23To32(Entity *entity) {
     if (limit < turn || (limit = -limit, turn < limit)) {
         turn = limit;
     }
-    EntityMath_EaseAngleToward(&unkE0->unk4C, turn, 20.0f);
+    EntityMath_EaseAngleToward(&unkE0->part_angle_y, turn, 20.0f);
     model = ENTITY_MODEL(entity);
     count = model->part_count;
     part = model->parts;
     for (i = 0; i < count; i++) {
         if (i == 0x17 || i == 0x1C || i == 0x1F || i == 0x20) {
-            part->unk54 = -unkE0->unk4C * 0.5f;
+            part->rotation_y = -unkE0->part_angle_y * 0.5f;
         }
         part++;
     }
@@ -347,12 +347,12 @@ static void GiantBeetle_TurnParts23To32(Entity *entity) {
    not when the motion ends. */
 static void GiantBeetle_MeleeAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk240 *unk240 = &entity->params->unk240[0];
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[0];
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -360,32 +360,32 @@ static void GiantBeetle_MeleeAttack0(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
-        if (unk240->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk240->hit_start_frame != 0) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
         if (!((s32)(entity->flags >> 54) & 1)) {
             ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, 1, 2);
         }
-        if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
+        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
             entity->flags |= 0x80000;
         } else {
             entity->flags &= ~0x80000;
         }
         if (entity->flags & (0x8800L << 34)) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
-            EntityAi_SetAttackDelay(entity, unk240->unk02);
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
+            EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -401,14 +401,14 @@ static void GiantBeetle_MeleeAttack0(Entity *entity) {
    (EntityAi_ShakeCamera, reach 10 for 26 frames) and calls Input_StartRumble(0x80, 13, 0). */
 static void GiantBeetle_ShotAttackShakingCamera(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk3D8 *unk3D8 = &entity->params->unk3D8[0].record;
-    EntityParamsUnk240 *unk240 = &entity->params->unk240[1];
+    EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[1];
     s32 elapsed;
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -416,43 +416,43 @@ static void GiantBeetle_ShotAttackShakingCamera(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
-        elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
-        EntityAi_LaunchShots(entity, unk3D8, elapsed, entity->model->unkFC->unk82);
+        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        EntityAi_LaunchShots(entity, unk3D8, elapsed, entity->model->level_tables->unk82);
         if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->level_tables->unk82);
         }
         if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->level_tables->unk82);
         }
         if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->level_tables->unk82);
         }
-        if (entity->model->unkFC->unk82 == 0x13) {
+        if (entity->model->level_tables->unk82 == 0x13) {
             EntityAi_ShakeCamera(10, 0x1A);
             Input_StartRumble(0x80, 0xD, 0);
         }
-        if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
+        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
             entity->flags |= 0x80000;
         } else {
             entity->flags &= ~0x80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
@@ -464,12 +464,12 @@ static void GiantBeetle_ShotAttackShakingCamera(Entity *entity) {
     }
 }
 
-/* The death action (busy bit 0x40): as EntityAi_Death without that one's setting of Entity.unk30;
+/* The death action (busy bit 0x40): as EntityAi_Death without that one's setting of Entity.collision_radius;
    flag bits 26 and 27 are set when the fade starts, not at the start. */
 static void GiantBeetle_Death(Entity *entity) {
     EntityParams *params;
 
-    entity->unkC6 = 0x40;
+    entity->busy_flags = 0x40;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -486,13 +486,13 @@ static void GiantBeetle_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            entity->unkA0 = 20;
+            entity->action_timer = 20;
             ENTITY_FLAG_BITS(entity)->bit14 = 0;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
@@ -503,8 +503,8 @@ static void GiantBeetle_Death(Entity *entity) {
         }
         break;
     case 3:
-        if (entity->unkA0 != 0) {
-            entity->model->unk15C = (f32)entity->unkD6 * (f32)entity->unkA0 / 20.0f;
+        if (entity->action_timer != 0) {
+            entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
             ENTITY_FLAG_BITS(entity)->bits2 = 3;
             ENTITY_FLAG_BITS(entity)->bit1 = 0;

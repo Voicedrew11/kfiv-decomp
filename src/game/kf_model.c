@@ -149,7 +149,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     s32 i;
     s32 j;
 
-    model->unk100 |= 0x4000;
+    model->model_flags |= 0x4000;
     cursor = (char *)*file_cursor;
     memory_base = (ModelPart *)*memory;
     model->file = (ModelFile *)cursor;
@@ -157,7 +157,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     part_count = file->part_count;
     cursor = (char *)file->bone_anchors;
     model->bone_anchors = (BoneAnchor *)cursor;
-    model->part_count = model->unkF2 = file->part_count;
+    model->part_count = model->file_part_count = file->part_count;
     file_part = file->parts;
     positions = (Vector4 *)&memory_base[part_count];
     model->parts = memory_base;
@@ -175,27 +175,27 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
             length = data->length;
             data = (ModelPartData *)((char *)data + length * 16);
         }
-        part->unk40[0] = part->unk40[1] = part->unk40[2] = 0.0f;
-        part->unk40[3] = 1.0f;
-        part->unk50 = part->unk54 = part->unk58 = 0.0f;
-        part->unk5C = 1.0f;
-        part->unk60[0] = part->unk60[1] = part->unk60[2] = 1.0f;
+        part->position[0] = part->position[1] = part->position[2] = 0.0f;
+        part->position[3] = 1.0f;
+        part->rotation_x = part->rotation_y = part->rotation_z = 0.0f;
+        part->rotation_w = 1.0f;
+        part->scale[0] = part->scale[1] = part->scale[2] = 1.0f;
         if (file_part->unk06 >= 1 && file_part->unk06 <= 3) {
             MODEL_SLOT_PARTS(model)[file_part->unk06 - 1] = part;
         }
     }
-    model->unk1A8 = Model_DrawSkinned;
+    model->draw_parts = Model_DrawSkinned;
     *file_cursor += file->size;
-    model->unk1B4 = Model_UpdateSkinnedBonePoints;
+    model->update_bone_points = Model_UpdateSkinnedBonePoints;
     model->get_point = (int (*)(void *, int))Model_GetSkinnedBonePoint;
     first = TRUE;
     model->unk160[0] = 0;
     model->unk160[1] = 0;
     model->unk160[2] = 0;
     model->unk160[3] = 0;
-    model->unk150 = 128.0f;
-    model->unk154 = 128.0f;
-    model->unk158 = 128.0f;
+    model->colour_red = 128.0f;
+    model->colour_green = 128.0f;
+    model->colour_blue = 128.0f;
     model->alpha = 128.0f;
     /* the first block with a nonzero unk37 in the whole model gets unk61 = 2 */
     for (i = 0, part = model->parts; i < file->part_count; i++, part++) {
@@ -241,18 +241,18 @@ void Model_DrawSkinned(ModelInstance *model) {
     f32 yaw;
 
     i = 0;
-    pitch = -asinf(((f32 *)model->unk148)[4]);
-    yaw = Angle_Wrap(atan2f(((f32 *)model->unk148)[8], ((f32 *)model->unk148)[0]) + 1.5707964f);
+    pitch = -asinf(((f32 *)model->light_block)[4]);
+    yaw = Angle_Wrap(atan2f(((f32 *)model->light_block)[8], ((f32 *)model->light_block)[0]) + 1.5707964f);
     sceVu0RotMatrixY(MODEL_TURN_SCRATCH, D_00431AF0, yaw);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, pitch);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.x));
     sceVu0RotMatrixY(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.y));
     sceVu0RotMatrixZ(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.z));
-    ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, MODEL_TURN_MATRIX_A, MODEL_TURN_MATRIX_B);
+    ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, MODEL_TURN_MATRIX_A, MODEL_TURN_MATRIX_B);
     part_count = model->part_count;
     part = model->parts;
     for (; i < part_count; i++, part++) {
-        Matrix_Multiply(part_matrices[i], model->unk40, part);
+        Matrix_Multiply(part_matrices[i], model->model_matrix, part);
         Matrix_Multiply(part_turns[i], MODEL_TURN_SCRATCH, part);
     }
     packet_start = packet = Packet_Alloc(0x20);
@@ -266,7 +266,7 @@ void Model_DrawSkinned(ModelInstance *model) {
     *packet = 0x10000002;
     packet += 7;
     *packet++ = 0x6C01003C;
-    *(Vector4 *)packet = *(Vector4 *)model->unk14C;
+    *(Vector4 *)packet = *(Vector4 *)model->fog_block;
     packet += 4;
     *packet = 0x10000003;
     packet += 7;
@@ -275,7 +275,7 @@ void Model_DrawSkinned(ModelInstance *model) {
     packet += 2;
     *(u64 *)packet = 0xE;
     packet += 2;
-    *(u64 *)packet = ((MapSlotUnk0CValues *)model->unk14C)->unk10;
+    *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
     packet += 2;
     *packet++ = 0x3D;
     *packet++ = 0;
@@ -303,13 +303,13 @@ void Model_DrawSkinned(ModelInstance *model) {
     *packet++ = 0;
     *packet++ = 0x6C020064;
     Vector_Copy(packet, model->unk160);
-    Vector_Copy(packet + 4, &model->unk150);
+    Vector_Copy(packet + 4, &model->colour_red);
     part = model->parts;
     for (i = 0; i < model->part_count; i++, part++) {
         if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT40) {
             continue;
         }
-        if (part->unk60[0] == 0.0f && part->unk60[1] == 0.0f && part->unk60[2] == 0.0f) {
+        if (part->scale[0] == 0.0f && part->scale[1] == 0.0f && part->scale[2] == 0.0f) {
             continue;
         }
         packet = Packet_Alloc(2);
@@ -378,18 +378,18 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     f32 yaw;
 
     i = 0;
-    pitch = -asinf(((f32 *)model->unk148)[4]);
-    yaw = Angle_Wrap(atan2f(((f32 *)model->unk148)[8], ((f32 *)model->unk148)[0]) + 1.5707964f);
+    pitch = -asinf(((f32 *)model->light_block)[4]);
+    yaw = Angle_Wrap(atan2f(((f32 *)model->light_block)[8], ((f32 *)model->light_block)[0]) + 1.5707964f);
     sceVu0RotMatrixY(MODEL_TURN_SCRATCH, D_00431AF0, yaw);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, pitch);
     sceVu0RotMatrixX(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.x));
     sceVu0RotMatrixY(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.y));
     sceVu0RotMatrixZ(MODEL_TURN_SCRATCH, MODEL_TURN_SCRATCH, wrap_angle(model->rotation.z));
-    ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, MODEL_TURN_MATRIX_A, MODEL_TURN_MATRIX_B);
+    ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, MODEL_TURN_MATRIX_A, MODEL_TURN_MATRIX_B);
     part_count = model->part_count;
     part = model->parts;
     for (; i < part_count; i++, part++) {
-        Matrix_Multiply(part_matrices[i], model->unk40, part);
+        Matrix_Multiply(part_matrices[i], model->model_matrix, part);
         Matrix_Multiply(part_turns[i], MODEL_TURN_SCRATCH, part);
     }
     packet_start = packet = Packet_Alloc(0x20);
@@ -403,7 +403,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     *packet = 0x10000002;
     packet += 7;
     *packet++ = 0x6C01003C;
-    *(Vector4 *)packet = *(Vector4 *)model->unk14C;
+    *(Vector4 *)packet = *(Vector4 *)model->fog_block;
     packet += 4;
     *packet = 0x10000003;
     packet += 7;
@@ -412,7 +412,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     packet += 2;
     *(u64 *)packet = 0xE;
     packet += 2;
-    *(u64 *)packet = ((MapSlotUnk0CValues *)model->unk14C)->unk10;
+    *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
     packet += 2;
     *packet++ = 0x3D;
     *packet++ = 0;
@@ -440,7 +440,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     *packet++ = 0;
     *packet++ = 0x6C020064;
     Vector_Copy(packet, model->unk160);
-    Vector_Copy(packet + 4, &model->unk150);
+    Vector_Copy(packet + 4, &model->colour_red);
     packet = Packet_Alloc(1); // match: packet named after packet_start's last use, or the stores go through packet_start
     Packet_AppendToChain(packet_start, packet);
     for (pass = 0; pass < 2; pass++) {
@@ -461,7 +461,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
             if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT40) {
                 continue;
             }
-            if (part->unk60[0] == 0.0f && part->unk60[1] == 0.0f && part->unk60[2] == 0.0f) {
+            if (part->scale[0] == 0.0f && part->scale[1] == 0.0f && part->scale[2] == 0.0f) {
                 continue;
             }
             packet_start = packet = Packet_Alloc(2);
@@ -529,7 +529,7 @@ void Model_UpdateSkinnedBonePoints(ModelInstance *actor) {
                 Vector_Copy(point, anchor);
                 point[3] = 1.0f;
                 Vector_ApplyMatrix(position, &actor->parts[anchor->bone], point);
-                Vector_ApplyMatrix(position, actor->unk40, position);
+                Vector_ApplyMatrix(position, actor->model_matrix, position);
             } else {
                 Vector_Copy(position, &actor->position);
             }
@@ -607,7 +607,7 @@ void Model_SetUvsFromScreen(void *model_arg) {
     part_count = model->part_count;
     matrix = MODEL_PROJECT_SCRATCH->matrices[0];
     for (i = 0; i < part_count; i++, part++) {
-        Matrix_Multiply(matrix, model->unk40, part);
+        Matrix_Multiply(matrix, model->model_matrix, part);
         Matrix_Multiply(matrix, D_004323E0, matrix);
         matrix += 16;
     }
@@ -768,9 +768,9 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
     model->file = (ModelFile *)base;
     file = (PosedModelFile *)base;
     model->parts = (ModelPart *)memory_base;
-    base = (char *)((model->unkF2 = file->part_count) * sizeof(ModelPart)); // match: base reused for the size, the count stored on the way
+    base = (char *)((model->file_part_count = file->part_count) * sizeof(ModelPart)); // match: base reused for the size, the count stored on the way
     *memory = memory_base + (u32)base;
-    model->part_count = model->unkF2; // match: copied from the store above, not from the file
+    model->part_count = model->file_part_count; // match: copied from the store above, not from the file
     part = (ModelPart *)memory_base;
     file_part = file->parts;
     if (POSED_MODEL_FILE_ANY(file).part_count != 0) { // match: the test reads the count after the cursor store
@@ -778,10 +778,10 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
             part->data_count = file_part->data_count;
             memory_base = *file_cursor + file_part->data_offset;
             part->data_addr = (u32)memory_base;
-            blended = is_blended(((ModelPartData *)memory_base)->unk74);
+            blended = is_blended(((ModelPartData *)memory_base)->gif_tag_high);
             data = (ModelPartData *)memory_base;
             opaque = FALSE;
-            if (!blended || ((GsAlphaReg *)&data->unk50)->f.a_source != 0 || ((GsAlphaReg *)&data->unk50)->f.b_source != 2 || ((GsAlphaReg *)&data->unk50)->f.d_source != 1) {
+            if (!blended || ((GsAlphaReg *)&data->blend)->f.a_source != 0 || ((GsAlphaReg *)&data->blend)->f.b_source != 2 || ((GsAlphaReg *)&data->blend)->f.d_source != 1) {
                 opaque = TRUE;
             }
             MODEL_PART_FLAG_BITS(part)->bit41 = opaque;
@@ -790,25 +790,25 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
                 data = (ModelPartData *)(u32)part->data_addr;
                 for (j = 0; j < count; j++) {
                     length = data->length;
-                    if (((ModelPartDataBits30 *)&data->unk40)->unk37 != 0) {
-                        ((ModelPartDataBits30 *)&data->unk40)->unk61 = 2;
+                    if (((ModelPartDataBits30 *)&data->tex0)->unk37 != 0) {
+                        ((ModelPartDataBits30 *)&data->tex0)->unk61 = 2;
                         first = FALSE;
                         break;
                     }
                     data = (ModelPartData *)((char *)data + (length + 1) * 16);
                 }
             }
-            part->unk40[0] = file_part->position[0];
-            part->unk40[1] = file_part->position[1];
-            part->unk40[2] = file_part->position[2];
-            part->unk40[3] = 1.0f;
-            part->unk50 = file_part->rotation[0];
-            part->unk54 = file_part->rotation[1];
-            part->unk58 = file_part->rotation[2];
-            part->unk5C = 1.0f;
-            part->unk60[0] = file_part->scale[0];
-            part->unk60[1] = file_part->scale[1];
-            part->unk60[2] = file_part->scale[2];
+            part->position[0] = file_part->position[0];
+            part->position[1] = file_part->position[1];
+            part->position[2] = file_part->position[2];
+            part->position[3] = 1.0f;
+            part->rotation_x = file_part->rotation[0];
+            part->rotation_y = file_part->rotation[1];
+            part->rotation_z = file_part->rotation[2];
+            part->rotation_w = 1.0f;
+            part->scale[0] = file_part->scale[0];
+            part->scale[1] = file_part->scale[1];
+            part->scale[2] = file_part->scale[2];
             part++;
             file_part++;
             i++;
@@ -822,13 +822,13 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
     } else {
         model->bone_anchors = NULL;
     }
-    model->unk1A8 = Model_DrawPosed;
+    model->draw_parts = Model_DrawPosed;
     *file_cursor += file->size;
-    model->unk1B4 = Model_UpdateBonePoints;
+    model->update_bone_points = Model_UpdateBonePoints;
     model->get_point = (int (*)(void *, int))Model_GetBonePoint;
 }
 
-/* Draws a model (ModelInstance.unk1A8 of the models Model_SetUpPosed sets up): queues a packet with
+/* Draws a model (ModelInstance.draw_parts of the models Model_SetUpPosed sets up): queues a packet with
    its two matrices, its MapSlotUnk0C block, its lights and, when it has one, its own colour, then
    for every part that is switched on a packet with the part's matrix and a reference to each of
    its data blocks. */
@@ -847,8 +847,8 @@ void Model_DrawPosed(ModelInstance *model) {
     f32 unused[4];
 
     if (model->parts != NULL && model->part_count != 0) {
-        ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b);
-        if (model->unk100 & 0x800) {
+        ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
+        if (model->model_flags & 0x800) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -863,7 +863,7 @@ void Model_DrawPosed(ModelInstance *model) {
         *packet = 0x10000002;
         packet += 7;
         *packet++ = 0x6C01003C;
-        *(Vector4 *)packet = *(Vector4 *)model->unk14C;
+        *(Vector4 *)packet = *(Vector4 *)model->fog_block;
         packet += 4;
         *packet = 0x10000003;
         packet += 7;
@@ -872,7 +872,7 @@ void Model_DrawPosed(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->unk14C)->unk10;
+        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -891,7 +891,7 @@ void Model_DrawPosed(ModelInstance *model) {
             light_out += 4;
         }
         packet += 0x20;
-        if (model->unk100 & 0x800) {
+        if (model->model_flags & 0x800) {
             *packet++ = 0x10000004;
             *packet++ = 0;
             *packet++ = 0;
@@ -900,7 +900,7 @@ void Model_DrawPosed(ModelInstance *model) {
             *packet++ = 0;
             *packet++ = 0;
             *packet++ = 0x6C030064;
-            Vector_Copy(packet, &model->unk150);
+            Vector_Copy(packet, &model->colour_red);
             packet += 4;
             packet[3] = model->found_record_id;
             ((u_long128 *)packet)[1] = *(u_long128 *)model->found_record;
@@ -915,7 +915,7 @@ void Model_DrawPosed(ModelInstance *model) {
             *packet = 0x10000005;
             packet += 7;
             *packet++ = 0x6C040004;
-            Matrix_Multiply(packet, model->unk40, part);
+            Matrix_Multiply(packet, model->model_matrix, part);
             packet += 0x10;
             data = (ModelPartData *)(u32)part->data_addr;
             for (j = 0; j < part->data_count; j++) {
@@ -949,8 +949,8 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
 
     if (model->parts != NULL && model->part_count != 0) {
         matrix_b_ptr = matrix_b;
-        ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b_ptr);
-        if (model->unk100 & 0x800) {
+        ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b_ptr);
+        if (model->model_flags & 0x800) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -965,7 +965,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
         *packet = 0x10000002;
         packet += 7;
         *packet++ = 0x6C01003C;
-        *(Vector4 *)packet = *(Vector4 *)model->unk14C;
+        *(Vector4 *)packet = *(Vector4 *)model->fog_block;
         packet += 4;
         *packet = 0x10000003;
         packet += 7;
@@ -974,7 +974,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->unk14C)->unk10;
+        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -993,7 +993,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
             light_out += 4;
         }
         packet += 0x20;
-        if (model->unk100 & 0x800) {
+        if (model->model_flags & 0x800) {
             *packet++ = 0x10000004;
             *packet++ = 0;
             *packet++ = 0;
@@ -1002,7 +1002,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
             *packet++ = 0;
             *packet++ = 0;
             *packet++ = 0x6C030064;
-            Vector_Copy(packet, &model->unk150);
+            Vector_Copy(packet, &model->colour_red);
             packet += 4;
             packet[3] = model->found_record_id;
             ((u_long128 *)packet)[1] = *(u_long128 *)model->found_record;
@@ -1012,7 +1012,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
             if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT40) {
                 continue;
             }
-            if (part->unk60[0] == 0.0f && part->unk60[1] == 0.0f && part->unk60[2] == 0.0f) {
+            if (part->scale[0] == 0.0f && part->scale[1] == 0.0f && part->scale[2] == 0.0f) {
                 continue;
             }
             packet = Packet_Alloc(part->data_count + 6);
@@ -1052,8 +1052,8 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
     u32 word;
 
     if (model->parts != NULL && model->part_count != 0) {
-        ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b);
-        if (model->unk100 & 0x800) {
+        ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
+        if (model->model_flags & 0x800) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -1068,7 +1068,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
         *packet = 0x10000002;
         packet += 7;
         *packet++ = 0x6C01003C;
-        *(Vector4 *)packet = *(Vector4 *)model->unk14C;
+        *(Vector4 *)packet = *(Vector4 *)model->fog_block;
         packet += 4;
         *packet = 0x10000003;
         packet += 7;
@@ -1077,7 +1077,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->unk14C)->unk10;
+        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -1096,7 +1096,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
             light_out += 4;
         }
         packet += 0x20;
-        if (model->unk100 & 0x800) {
+        if (model->model_flags & 0x800) {
             *packet++ = 0x10000004;
             *packet++ = 0;
             *packet++ = 0;
@@ -1105,7 +1105,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
             *packet++ = 0;
             *packet++ = 0;
             *packet++ = 0x6C030064;
-            Vector_Copy(packet, &model->unk150);
+            Vector_Copy(packet, &model->colour_red);
             packet += 4;
             packet[3] = model->found_record_id;
             ((u_long128 *)packet)[1] = *(u_long128 *)model->found_record;
@@ -1116,7 +1116,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
             if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT40) {
                 continue;
             }
-            if (part->unk60[0] == 0.0f && part->unk60[1] == 0.0f && part->unk60[2] == 0.0f) {
+            if (part->scale[0] == 0.0f && part->scale[1] == 0.0f && part->scale[2] == 0.0f) {
                 continue;
             }
             Packet_BeginGsRegisters();
@@ -1132,7 +1132,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
             *packet = 0x10000005;
             packet += 7;
             *packet++ = 0x6C040004;
-            Matrix_Multiply(packet, model->unk40, part);
+            Matrix_Multiply(packet, model->model_matrix, part);
             packet += 0x10;
             data = (ModelPartData *)(u32)part->data_addr;
             for (j = 0; j < part->data_count; j++) {
@@ -1164,9 +1164,9 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
     u32 word;
 
     if (model->parts != NULL && model->part_count != 0) {
-        ModelMatrix_BuildDrawMatrices(model, model->unk148, model->unk148 + 0x40, matrix_a, matrix_b);
+        ModelMatrix_BuildDrawMatrices(model, model->light_block, model->light_block + 0x40, matrix_a, matrix_b);
         /* the packet below is 0x1C quadwords either way: with the flag set the last 5 are never written */
-        if (model->unk100 & 0x800) {
+        if (model->model_flags & 0x800) {
             packet_start = packet = Packet_Alloc(0x21); // match: two calls, the compiler merges them
         } else {
             packet_start = packet = Packet_Alloc(0x1C);
@@ -1181,7 +1181,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
         *packet = 0x10000002;
         packet += 7;
         *packet++ = 0x6C01003C;
-        *(Vector4 *)packet = *(Vector4 *)model->unk14C;
+        *(Vector4 *)packet = *(Vector4 *)model->fog_block;
         packet += 4;
         *packet = 0x10000003;
         packet += 7;
@@ -1190,7 +1190,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->unk14C)->unk10;
+        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -1214,11 +1214,11 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
             if (MODEL_PART_FLAG_WORD(part) & MODEL_PART_BIT40) {
                 continue;
             }
-            if (part->unk60[0] == 0.0f && part->unk60[1] == 0.0f && part->unk60[2] == 0.0f) {
+            if (part->scale[0] == 0.0f && part->scale[1] == 0.0f && part->scale[2] == 0.0f) {
                 continue;
             }
             Packet_BeginGsRegisters();
-            if (model->unk145 == 0) {
+            if (model->fade_enabled == 0) {
                 Packet_AddGsRegister(0x1A, 1);
                 Packet_AddGsRegister(GS_REG_TEST_1, 0x5000D);
                 Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
@@ -1232,12 +1232,12 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
                 Packet_AddGsRegister(0x1B, 0x278);
                 data = (ModelPartData *)(u32)part->data_addr;
                 Packet_AddGsRegister(0x15, *(s64 *)&data->unk30);
-                Packet_AddGsRegister(0x07, data->unk40);
+                Packet_AddGsRegister(0x07, data->tex0);
                 Packet_AddGsRegister(GS_REG_ALPHA_2,
-                              (s32)((GsAlphaReg *)&data->unk50)->f.a_source | ((s32)((GsAlphaReg *)&data->unk50)->f.b_source << 2) | 0x20 |
-                                  ((s32)((GsAlphaReg *)&data->unk50)->f.d_source << 6) | ((s64)(s16)model->unk146 << 32));
+                              (s32)((GsAlphaReg *)&data->blend)->f.a_source | ((s32)((GsAlphaReg *)&data->blend)->f.b_source << 2) | 0x20 |
+                                  ((s32)((GsAlphaReg *)&data->blend)->f.d_source << 6) | ((s64)(s16)model->fade_alpha << 32));
                 Packet_AddGsRegister(GS_REG_TEST_2, 0x5000D);
-                if ((s16)model->unk146 >= 0x80) {
+                if ((s16)model->fade_alpha >= 0x80) {
                     Packet_AddGsRegister(GS_REG_ZBUF_2, 0xA000118);
                 } else {
                     Packet_AddGsRegister(GS_REG_ZBUF_2, 0x10A000118L);
@@ -1248,7 +1248,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
             *packet = 0x10000005;
             packet += 7;
             *packet++ = 0x6C040004;
-            Matrix_Multiply(packet, model->unk40, part);
+            Matrix_Multiply(packet, model->model_matrix, part);
             packet += 0x10;
             data = (ModelPartData *)(u32)part->data_addr;
             for (j = 0; j < part->data_count; j++) {
@@ -1283,8 +1283,8 @@ void Model_UpdateBonePoints(ModelInstance *model) {
             if (anchor->bone != 0xFF) {
                 Vector_Copy(point, anchor);
                 point[3] = 1.0f;
-                Vector_ApplyMatrix(bone_position, model->parts[anchor->bone].unk00, point);
-                Vector_ApplyMatrix(bone_position, model->unk40, bone_position);
+                Vector_ApplyMatrix(bone_position, model->parts[anchor->bone].matrix, point);
+                Vector_ApplyMatrix(bone_position, model->model_matrix, bone_position);
             } else {
                 Vector_Copy(bone_position, &model->position);
             }
@@ -1360,9 +1360,9 @@ void Model_SetTexture(ModelInstance *model, u64 unk40, s64 unk30) {
             block = data;
             length = block->length;
             *(s64 *)&block->unk30 = unk30;
-            block->unk40 = unk40;
+            block->tex0 = unk40;
             if (first) {
-                ((ModelPartDataBits30 *)&block->unk40)->unk61 = 2;
+                ((ModelPartDataBits30 *)&block->tex0)->unk61 = 2;
                 first = FALSE;
             }
             data = (ModelPartData *)((char *)block + (length + 1) * 16);
@@ -1385,7 +1385,7 @@ void Model_SetAlphaBlend(ModelInstance *model, s64 value) {
             ModelPartData *block = (ModelPartData *)cursor;
             u16 length = block->length;
 
-            cursor = &block->unk50;
+            cursor = &block->blend;
             *cursor = value;
             cursor = (u64 *)((char *)block + (length + 1) * 16);
         }
@@ -1433,7 +1433,7 @@ void Model_SetVertexColour(void *model_arg, int red, int green, int blue, int al
             s32 vertex_count;
             ModelPartVertex *vertex;
 
-            cursor = &block->unk70;
+            cursor = &block->vertex_count;
             vertex_count = *cursor & 0x7FFF;
             vertex = block->vertices;
             for (; k < vertex_count; k++, vertex++) {
@@ -1492,7 +1492,7 @@ int Model_FadeVertexColoursNear(int model_arg, void *centre_arg, int *steps, int
             block = (ModelPartData *)cursor;
             length = block->length;
             k = 0;
-            cursor = &block->unk70;
+            cursor = &block->vertex_count;
             vertex_count = *cursor & 0x7FFF;
             vertex = block->vertices;
             for (; k < vertex_count; k++, vertex++) {

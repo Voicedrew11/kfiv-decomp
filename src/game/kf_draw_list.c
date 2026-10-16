@@ -52,9 +52,9 @@ void DrawList_Draw(u32 layer, u32 list) {
                     if (model->draw != 0) {
                         model->draw(model);
                     }
-                    model->unk1A8(model);
-                    if (model->unk1B0 != 0) {
-                        model->unk1B0(model);
+                    model->draw_parts(model);
+                    if (model->after_draw != 0) {
+                        model->after_draw(model);
                     }
                     model = model->draw_next[list];
                 } while (model != 0);

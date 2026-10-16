@@ -98,7 +98,7 @@ int Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_fram
         if (splash_state != 0) {
             return 0;
         }
-        if (game_status.unk30 != 0) {
+        if (game_status.update_hold_flags != 0) {
             return 0;
         }
         splash_start_delay = 2;
@@ -116,7 +116,7 @@ int Splash_Begin(int splash_id, int hold_frames, int skippable, int fade_in_fram
         splash_fade_out_frames = fade_out;
         splash_fade_in_counter = 0;
         splash_fade_out_counter = 0;
-        game_status.unk30 = 0x87F;
+        game_status.update_hold_flags = 0x87F;
         Player_StopWalking();
         return 1;
     }

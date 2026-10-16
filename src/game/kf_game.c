@@ -148,10 +148,10 @@ void Game_ResetProgress(void) {
     memset(weapon_level_records, 0, sizeof(weapon_level_records));
     memset(worn_item_level_records, 0, sizeof(worn_item_level_records));
     for (i = 0; i < 70; i++) {
-        weapon_level_records[i].level = item_name_defs[ITEM_WEAPON_FIRST + i].unk3C;
+        weapon_level_records[i].level = item_name_defs[ITEM_WEAPON_FIRST + i].starting_level_percent;
     }
     for (i = 0; i < 160; i++) {
-        worn_item_level_records[i].level = item_name_defs[ITEM_WORN_FIRST + i].unk3C;
+        worn_item_level_records[i].level = item_name_defs[ITEM_WORN_FIRST + i].starting_level_percent;
     }
     memset(&item_counts, 0, sizeof(item_counts));
     trade_stock_1 = D_0043D9B0;

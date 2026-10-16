@@ -51,8 +51,8 @@ static void Critter_ThinkCombat(Entity *entity, s32 unknown);
 /* Set-up of a type 25 entity: clears its work area and installs the type's handlers. */
 void Critter_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
@@ -61,7 +61,7 @@ void Critter_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = Critter_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -69,37 +69,37 @@ void Critter_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))Critter_Dormant;
     unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 6 - 1; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+    if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The dormant action (busy bit 0x20): holds animation 2 at its start, the motion stopped, until the
-   player is within EntitySpawnInfo.unk54 or flag bit 43 is set; then plays it to its end, goes to
+   player is within EntitySpawnInfo.wake_distance or flag bit 43 is set; then plays it to its end, goes to
    state 2 and thinks. */
 static void Critter_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 |= 0x20;
+    entity->busy_flags |= 0x20;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        unkE0->unk1C = 0.0f;
+        unkE0->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit24 = TRUE;
@@ -110,7 +110,7 @@ static void Critter_Dormant(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        if (entity->distance_to_player < entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
+        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bit43) {
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
             ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
             entity->action_step++;
@@ -124,9 +124,9 @@ static void Critter_Dormant(Entity *entity) {
         if (ENTITY_FLAG_BITS(entity)->bit34) {
             ENTITY_FLAG_BITS(entity)->bit23 = FALSE;
             EntityAi_SetState((char *)entity, 2);
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -141,13 +141,13 @@ static void Critter_Dormant(Entity *entity) {
    Critter_ThinkCombat for states 1 and 2. Sets the flag field bits60 to 5 whenever
    EntityCollision_DistanceToGround gives a reading for the entity's position. */
 static void Critter_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (EntityCollision_DistanceToGround(entity->model->position) != D_004467FC[0]) {
         ENTITY_FLAG_BITS(entity)->bits60 = 5;
     }
-    if (entity->unkC6 != 0) {
+    if (entity->busy_flags != 0) {
         return;
     }
     EntityAi_CheckFarFromSpawn((char *)entity);
@@ -172,46 +172,46 @@ static void Critter_Think(Entity *entity, s32 unknown) {
    byte unk7C). When the entity is pushed and the pause in work byte unk7B is over, it picks a
    heading 90 degrees to the side of the one EntityAi_TurnFromPush gives, give or take 70 degrees (work
    float unk48), turns to it with command bit 0x400 and no movement (work byte unk7A set), then sets
-   the pause to EntityParams.unk434. */
+   the pause to EntityParams.action_frames. */
 static void Critter_ThinkIdle(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
     f32 angle;
     s32 turn;
 
-    if (unkE0->unk7A == 0) {
+    if (unkE0->step_index == 0) {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        entity->unkC8 = 0x41;
+        entity->move_command = 0x41;
         turn = EntityAi_TurnFromPush(entity, direction);
-        if (turn != 0 && unkE0->unk7B <= 0) {
+        if (turn != 0 && unkE0->action_flags <= 0) {
             if (turn > 0) {
                 direction[0] += 1.5707964f;
             } else if (turn < 0) {
                 direction[0] -= 1.5707964f;
             }
             direction[0] += (f32)(rand() % 140 - 70) * 0.017453292f;
-            unkE0->unk48 = EntityMath_WrapAngle(direction[0]);
-            unkE0->unk7A = 1;
+            unkE0->part_angle_x = EntityMath_WrapAngle(direction[0]);
+            unkE0->step_index = 1;
         }
-        if (unkE0->unk7B > 0) {
-            unkE0->unk7B--;
+        if (unkE0->action_flags > 0) {
+            unkE0->action_flags--;
         }
-        if (unkE0->unk7C == 0) {
-            unkE0->unk7C = EntityAi_CheckMeleeHit(entity, &entity->params->unk240[1], 0, 1, 1);
+        if (unkE0->action_counter == 0) {
+            unkE0->action_counter = EntityAi_CheckMeleeHit(entity, &entity->params->melee_attacks[1], 0, 1, 1);
         }
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        angle = EntityMath_AngleDifference(entity->model->unkD0[1], unkE0->unk48);
+        angle = EntityMath_AngleDifference(entity->model->rotation[1], unkE0->part_angle_x);
         if (ABS(angle) > entity->params->turn_limit) {
             if (angle >= 0.0f) {
-                entity->unkC8 |= 0x600;
+                entity->move_command |= 0x600;
             } else {
-                entity->unkC8 |= 0x500;
+                entity->move_command |= 0x500;
             }
         } else {
-            unkE0->unk7A = 0;
-            unkE0->unk7C = 0;
-            unkE0->unk7B = entity->params->unk434;
+            unkE0->step_index = 0;
+            unkE0->action_counter = 0;
+            unkE0->action_flags = entity->params->action_frames;
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -236,14 +236,14 @@ static void Critter_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
@@ -253,40 +253,40 @@ static void Critter_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &player_state;
-            entity->unkA0 = rand() % 60 + 120;
-            unkE0->unk78 = 0;
+            entity->action_timer = rand() % 60 + 120;
+            unkE0->move_choice = 0;
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 30;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 30;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (unkE0->unk78 == 0) {
+    if (unkE0->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-            if (unkE0->unk79 == 0) {
-                unkE0->unk79 = ABS(angle) > 0.5235988f;
-                if (unkE0->unk79 == 0) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
+            if (unkE0->turn_in_place == 0) {
+                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
+                if (unkE0->turn_in_place == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = EntityAi_TurnCommand(entity);
-            if (entity->unkC8 == 0) {
-                unkE0->unk79 = 0;
+            entity->move_command = EntityAi_TurnCommand(entity);
+            if (entity->move_command == 0) {
+                unkE0->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->unkC8 = 0x201;
+                entity->move_command = 0x201;
             } else if (turn < 0) {
-                entity->unkC8 = 0x101;
+                entity->move_command = 0x101;
             } else {
-                entity->unkC8 = EntityAi_MoveCommand(entity->radius + 100.0f + 30.0f, entity, 0);
+                entity->move_command = EntityAi_MoveCommand(entity->radius + 100.0f + 30.0f, entity, 0);
             }
         }
     }

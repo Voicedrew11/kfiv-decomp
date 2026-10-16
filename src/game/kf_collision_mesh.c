@@ -23,7 +23,7 @@ char *Collision_RelocateMesh(char *data, ModelInstance *model, int use_scratchpa
     MODEL_MESH(model)->strips = (CollisionStrip *)cursor;
     strip = (CollisionStrip *)cursor;
     /* the six strip lists and the two words after them are offsets from the mesh */
-    offsets = (int *)&MODEL_MESH(model)->unk18;
+    offsets = (int *)&MODEL_MESH(model)->wall_strips;
     for (i = 0; i < 8; i++) {
         offsets[i] = (int)data + offsets[i];
     }
@@ -41,13 +41,13 @@ char *Collision_RelocateMesh(char *data, ModelInstance *model, int use_scratchpa
         cursor += strip->point_count * sizeof(CollisionStripPoint);
         strip = (CollisionStrip *)point;
     }
-    MODEL_MESH(model)->unk08 = cursor;
-    return cursor + MODEL_MESH(model)->unk0C * 0x10;
+    MODEL_MESH(model)->points = cursor;
+    return cursor + MODEL_MESH(model)->point_count * 0x10;
 }
 
 /* The floor material from the three words of a triangle's strip point: the third value of (0, 0xFF, 0-7) or
    (0xFF, 0, 0-7), the second of (0xFF, 0-7, 0xFF), 5 for (0xFF, 0xFF, 0xFE-0xFF), 6 otherwise. The player's
-   footsteps sound by it (PlayerState.unk210). */
+   footsteps sound by it (PlayerState.floor_material). */
 u32 Collision_GetFloorMaterial(int first, u32 second, u32 third) {
     if (first == 0 && second == 0xFF && third < 8) {
         return third;
@@ -76,7 +76,7 @@ u32 func_00112560(u32 first, u32 second, u32 third) {
     return 0;
 }
 
-/* The effect of a hazard surface (the CollisionMesh.unk28 strips) from the three words of a strip point: the
+/* The effect of a hazard surface (the CollisionMesh.hazard_strips strips) from the three words of a strip point: the
    first value of (0-7, 0xFF, 0xFF), 6 otherwise (EntityCollision_ApplySurfaceEffect, Player_CollideWithMap). */
 u32 Collision_GetSurfaceEffect(u32 first, u32 second, int third) {
     if (first < 8 && second == 0xFF && third == 0xFF) {
@@ -94,8 +94,8 @@ u32 func_001125D0(u32 first, u32 second, u32 third) {
     return 1;
 }
 
-/* The level of an entity barrier (the CollisionMesh.unk24 strips) from the three words of a strip point: the
-   first value of (0-7, 0-1, 0xFF), 0 otherwise. It holds back the entities whose EntitySpawnInfo.unk35 is not
+/* The level of an entity barrier (the CollisionMesh.barrier_strips strips) from the three words of a strip point: the
+   first value of (0-7, 0-1, 0xFF), 0 otherwise. It holds back the entities whose EntitySpawnInfo.barrier_level is not
    above it. */
 u32 Collision_GetBarrierLevel(u32 first, u32 second, int third) {
     if (first < 8 && second < 2 && third == 255) {
@@ -104,7 +104,7 @@ u32 Collision_GetBarrierLevel(u32 first, u32 second, int third) {
     return 0;
 }
 
-/* Whether an entity barrier (the CollisionMesh.unk24 strips) is stood on rather than walked into: the second
+/* Whether an entity barrier (the CollisionMesh.barrier_strips strips) is stood on rather than walked into: the second
    value of (0-7, 0-1, 0xFF); 0xFFFFFFFF for any other triple. */
 u32 Collision_IsBarrierFloor(u32 first, u32 second, int third) {
     if (first < 8 && second < 2 && third == 0xFF) {

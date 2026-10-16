@@ -128,7 +128,7 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame
     f32 yaw;
     s32 i;
 
-    if (entity->unk2A != 0 && record->unk0C == 0) {
+    if (entity->ailment_4_frames != 0 && record->unk0C == 0) {
         return 0;
     }
     for (i = 0; i < 3; i++) {
@@ -148,7 +148,7 @@ int EntityShot_LaunchAimed(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame
                     angles[1] = wrap_angle(-atan2f(delta_z, delta_x) + 1.5707964f);
                     angles[2] = angles[3] = 0.0f;
                 } else {
-                    Vector_Copy(angles, entity->model->unkD0);
+                    Vector_Copy(angles, entity->model->rotation);
                     angles[1] = wrap_angle(angles[1] + 3.1415927f);
                 }
                 if (target != NULL) {
@@ -172,7 +172,7 @@ int EntityShot_Launch(Entity *entity, EntityParamsUnk3D8 *unk3D8, s32 frame_from
     char *origin;
     s32 i;
 
-    if (entity->unk2A != 0 && record->unk0C == 0) {
+    if (entity->ailment_4_frames != 0 && record->unk0C == 0) {
         return 0;
     }
     for (i = 0; i < 3; i++) {
@@ -216,18 +216,18 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
     s32 frame;
     s32 i;
 
-    record = (EntityParamsUnk130 *)(D_004467C0 + entity->params->unk130[animation]);
-    count = entity->params->unkF0[animation];
+    record = (EntityParamsUnk130 *)(D_004467C0 + entity->params->anim_effect_offsets[animation]);
+    count = entity->params->anim_effect_counts[animation];
     if (count <= 0) {
         return;
     }
     if (record == NULL) {
         return;
     }
-    if (entity->unk14 == NULL) {
+    if (entity->map_record == NULL) {
         return;
     }
-    if (!(((MapRecord *)entity->unk14)->unk38 & 0x4000000)) {
+    if (!(((MapRecord *)entity->map_record)->record_flags & 0x4000000)) {
         return;
     }
     for (i = 0; i < count; i++, record++) {
@@ -248,7 +248,7 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
                 continue;
             }
             if (record->unk05 != 0) {
-                Effect_StartSpawner(entity->params->unk440[(s32)(entity->flags >> 60) & 7], from, angles, entity);
+                Effect_StartSpawner(entity->params->variant_effect_ids[(s32)(entity->flags >> 60) & 7], from, angles, entity);
             } else {
                 Effect_StartSpawner(record->unk00, from, angles, entity);
             }
@@ -265,8 +265,8 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
     s32 frame;
     f32 angle;
 
-    record = (EntityParamsUnk1B0 *)(D_004467C0 + entity->params->unk1B0[animation]);
-    count = entity->params->unk110[animation];
+    record = (EntityParamsUnk1B0 *)(D_004467C0 + entity->params->anim_sound_offsets[animation]);
+    count = entity->params->anim_sound_counts[animation];
     if (count > 0 && record != NULL) {
         angle = atan2f(entity->model->position[0] - player_state.position.x, entity->model->position[2] - player_state.position.z) - player_state.rotation.y;
         angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
@@ -283,10 +283,10 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
             if (frame >= frame_to) {
                 continue;
             }
-            if (entity->unk2A != 0 && record->unk04 != 0) {
+            if (entity->ailment_4_frames != 0 && record->unk04 != 0) {
                 continue;
             }
-            Sound_PlayFalloff(entity->params->unk42E, record->unk00, record->unk01, entity->unkD2, entity->unk60, angle);
+            Sound_PlayFalloff(entity->params->sound_id, record->unk00, record->unk01, entity->sound_bank, entity->distance_to_player_3d, angle);
         }
     }
 }
@@ -303,10 +303,10 @@ void EntityEvent_StartCue(Entity *entity, s32 unknown1, s32 unknown2, s32 skip_i
     } else if (angle < -3.1415927f) {
         angle += 6.2831855f;
     }
-    if (entity->unk2A != 0 && skip_if_unk2A != 0) {
+    if (entity->ailment_4_frames != 0 && skip_if_unk2A != 0) {
         return;
     }
-    Sound_PlayFalloff(entity->params->unk42E, (u8)unknown1, (u8)unknown2, entity->unkD2, entity->unk60, angle);
+    Sound_PlayFalloff(entity->params->sound_id, (u8)unknown1, (u8)unknown2, entity->sound_bank, entity->distance_to_player_3d, angle);
 }
 
 /* As EntityEvent_StartCue, without the unk2A test. */
@@ -322,21 +322,21 @@ void EntityEvent_StartCueAlways(Entity *entity, s32 unknown1, s32 unknown2) {
     } else if (wrapped < -3.1415927f) {
         wrapped += 6.2831855f;
     }
-    Sound_PlayFalloff(entity->params->unk42E, (u8)unknown1, (u8)unknown2, entity->unkD2, entity->unk60, wrapped);
+    Sound_PlayFalloff(entity->params->sound_id, (u8)unknown1, (u8)unknown2, entity->sound_bank, entity->distance_to_player_3d, wrapped);
 }
 
 /* Puts the entity back at its spawn point (Entity_ResetToSpawn), sets flag bits 1 and 8 and clears bits 2-3,
-   frees its effects and starts the effect EntityParams.unkC6 names at bone unkC5. */
+   frees its effects and starts the effect EntityParams.respawn_effect_id names at bone unkC5. */
 void EntityEvent_Respawn(Entity *entity) {
     char *bone;
 
     Entity_ResetToSpawn(entity);
     entity->flags = ((entity->flags | 2) & ~0xC) | 0x100;
     Effect_FreeForOwner(entity);
-    if (entity->params->unkC6 != 0) {
-        if (entity->params->unkC6 != 0xFFFF) {
-            bone = Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unkC5);
-            Effect_StartSpawner(entity->params->unkC6, bone, (char *)entity->model + 0xD0, entity);
+    if (entity->params->respawn_effect_id != 0) {
+        if (entity->params->respawn_effect_id != 0xFFFF) {
+            bone = Model_GetSkinnedBonePoint((char *)entity->model, entity->params->respawn_effect_bone);
+            Effect_StartSpawner(entity->params->respawn_effect_id, bone, (char *)entity->model + 0xD0, entity);
         }
     }
 }
@@ -348,12 +348,12 @@ void EntityEvent_OnDeath(Entity *entity) {
     MapItem_DropFromEnemy(entity);
     Gold_DropFromEntity(entity);
     if ((s32)(entity->flags >> 38) & 3) {
-        Player_AddExperience(entity->params->unk0E);
+        Player_AddExperience(entity->params->experience_reward);
     }
     Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
     Effect_FreeForOwner(entity);
-    if (entity->spawn_info->unk36 != 0 && entity->group_id == D_00446770) {
-        Script_Start(entity->spawn_info->unk36, 0);
+    if (entity->spawn_info->death_script_id != 0 && entity->group_id == D_00446770) {
+        Script_Start(entity->spawn_info->death_script_id, 0);
     }
 }
 
@@ -382,14 +382,14 @@ s32 Bone_TurnPart(ModelPart *part, f32 *angles, s32 mode, f32 *goal, f32 *limits
         turn_towards(&angles[0], goal[0], rate);
         turn_towards(&angles[1], goal[1], rate);
         turn_towards(&angles[2], goal[2], rate);
-        Vector_Copy(&part->unk50, angles);
+        Vector_Copy(&part->rotation_x, angles);
     } else if (mode == 0) {
-        turn_towards(&angles[0], part->unk50, rate);
-        turn_towards(&angles[1], part->unk54, rate);
-        turn_towards(&angles[2], part->unk58, rate);
-        Vector_Copy(&part->unk50, angles);
+        turn_towards(&angles[0], part->rotation_x, rate);
+        turn_towards(&angles[1], part->rotation_y, rate);
+        turn_towards(&angles[2], part->rotation_z, rate);
+        Vector_Copy(&part->rotation_x, angles);
     } else {
-        Vector_Copy(angles, &part->unk50);
+        Vector_Copy(angles, &part->rotation_x);
     }
     return TRUE;
 }
@@ -411,14 +411,14 @@ int Bone_TurnPartToLook(void *model, int part_arg, int angles_arg, int mode, voi
         turn_towards(&angles[0], goal[0], rate);
         turn_towards(&angles[1], goal[1], rate);
         turn_towards(&angles[2], goal[2], rate);
-        Vector_Copy(&part->unk50, angles);
+        Vector_Copy(&part->rotation_x, angles);
     } else if (mode == 0) {
-        turn_towards(&angles[0], part->unk50, rate);
-        turn_towards(&angles[1], part->unk54, rate);
-        turn_towards(&angles[2], part->unk58, rate);
-        Vector_Copy(&part->unk50, angles);
+        turn_towards(&angles[0], part->rotation_x, rate);
+        turn_towards(&angles[1], part->rotation_y, rate);
+        turn_towards(&angles[2], part->rotation_z, rate);
+        Vector_Copy(&part->rotation_x, angles);
     } else {
-        Vector_Copy(angles, &part->unk50);
+        Vector_Copy(angles, &part->rotation_x);
     }
     return TRUE;
 }

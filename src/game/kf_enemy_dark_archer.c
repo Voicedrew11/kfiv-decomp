@@ -95,9 +95,9 @@ static void DarkArcher_MoveAlongArc(Entity *entity);
 /* Set-up of a type 55 entity: clears its work area and installs the type's handlers. */
 void DarkArcher_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
-    char *unk138 = entity->model->unk138;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
+    char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: the three fills name their target inside the loop; unkBC and unkC0 above are
@@ -108,15 +108,15 @@ void DarkArcher_Init(Entity *entity) {
         work_area[i] = 0;
     }
     for (i = 3; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 5; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     entity->flags &= ~0x10000000;
     *(s32 *)&entity->target = 0; // match: stored as an int, so it can move ahead of the params load
-    EntityAi_SetUpdate((char *)entity, (s32)entity_type_handlers[entity->params->unk02][1]);
-    if (entity->spawn_info->unk40 != 0) {
+    EntityAi_SetUpdate((char *)entity, (s32)entity_type_handlers[entity->params->entity_type][1]);
+    if (entity->spawn_info->spawn_mode != 0) {
         unkE0->think = DarkArcher_ThinkShootOrTurn;
         unkE0->animate = (void (*)(void))DarkArcher_Animate;
         unkE0->on_hit = (void (*)(void))DarkArcher_OnHit;
@@ -132,18 +132,18 @@ void DarkArcher_Init(Entity *entity) {
         unkE0->death = (void (*)(void))EntityAi_Death;
         unkE0->dormant = (void (*)(void))EntityAi_Dormant;
         unkE0->move = (void (*)(void))EntityAi_Move;
-        if (ENTITY_FLAG_WORD(entity->spawn_info->unk38) & (0x8000L << 43)) {
+        if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
         } else {
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
         }
-        entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-        entity->model->unk15C = entity->unkD6;
+        entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+        entity->model->alpha = entity->model_alpha;
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
-    unkE0->unk40 = 0.5f;
+    unkE0->pose_blend_weight = 0.5f;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -160,33 +160,33 @@ static void DarkArcher_Animate(Entity *entity) {
     flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->unkFC->unk88;
+        blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
         DarkArcher_PitchPart2ToPlayer(entity, (s32)((s64)(entity->flags << 22) >> 32) & 1);
         params = entity->params;
-        limits[0] = -params->unk430 * 0.017453292f;
-        limits[1] = params->unk430 * 0.017453292f;
-        limits[3] = params->unk432 * 0.017453292f;
-        limits[2] = -params->unk432 * 0.017453292f;
+        limits[0] = -params->pitch_limit_deg * 0.017453292f;
+        limits[1] = params->pitch_limit_deg * 0.017453292f;
+        limits[3] = params->yaw_limit_deg * 0.017453292f;
+        limits[2] = -params->yaw_limit_deg * 0.017453292f;
         if ((s32)(entity->flags >> 9) & 1) {
-            EntityAi_LookAtPlayer(entity, unkE0->unk20, (s32)(entity->flags >> 9) & 1, limits, 12.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, (s32)(entity->flags >> 9) & 1, limits, 12.0f);
         } else {
-            EntityAi_LookAtPlayer(entity, unkE0->unk20, -1, NULL, 8.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, -1, NULL, 8.0f);
         }
     }
 }
 
-/* Helper of DarkArcher_Animate: with mode above 0 tilts model part 2 (EntityModel.unkF8[2]) by
+/* Helper of DarkArcher_Animate: with mode above 0 tilts model part 2 (EntityModel.parts[2]) by
    the pitch from the entity to the player, at most 60 degrees up or down, easing the part's three
    angles in work floats unk48 to unk50; with mode 0 eases them back to the part's own angles; else
    copies the part's angles into them. */
 static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityModelUnkF8 *bone = &entity->model->unkF8[2];
+    EntityModelUnkF8 *bone = &entity->model->parts[2];
     f32 parent[16];
     f32 rotation[16];
     f32 tilt[16];
@@ -204,7 +204,7 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
         if (mode > 0) {
             rate = 10.0f;
             sceVu0CopyMatrix(parent, D_00431AF0);
-            Bone_MultiplyPathTo(entity->model->unkF8, bone, parent);
+            Bone_MultiplyPathTo(entity->model->parts, bone, parent);
             parent[12] = 0.0f;
             parent[13] = 0.0f;
             parent[14] = 0.0f;
@@ -218,24 +218,24 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
             sceVu0TransposeMatrix(parent, parent);
             Matrix_Multiply(rotation, parent, rotation);
             Bone_MatrixToAngles(angles, rotation);
-            EntityMath_EaseAngleToward(&unkE0->unk48, angles[0], rate);
-            EntityMath_EaseAngleToward(&unkE0->unk4C, angles[1], rate);
-            EntityMath_EaseAngleToward(&unkE0->unk50, angles[2], rate);
-            bone->unk50[0] = unkE0->unk48;
-            bone->unk50[1] = unkE0->unk4C;
-            bone->unk50[2] = unkE0->unk50;
+            EntityMath_EaseAngleToward(&unkE0->part_angle_x, angles[0], rate);
+            EntityMath_EaseAngleToward(&unkE0->part_angle_y, angles[1], rate);
+            EntityMath_EaseAngleToward(&unkE0->part_angle_z, angles[2], rate);
+            bone->unk50[0] = unkE0->part_angle_x;
+            bone->unk50[1] = unkE0->part_angle_y;
+            bone->unk50[2] = unkE0->part_angle_z;
         } else if (mode == 0) {
             rate = 10.0f;
-            EntityMath_EaseAngleToward(&unkE0->unk48, bone->unk50[0], rate);
-            EntityMath_EaseAngleToward(&unkE0->unk4C, bone->unk50[1], rate);
-            EntityMath_EaseAngleToward(&unkE0->unk50, bone->unk50[2], rate);
-            bone->unk50[0] = unkE0->unk48;
-            bone->unk50[1] = unkE0->unk4C;
-            bone->unk50[2] = unkE0->unk50;
+            EntityMath_EaseAngleToward(&unkE0->part_angle_x, bone->unk50[0], rate);
+            EntityMath_EaseAngleToward(&unkE0->part_angle_y, bone->unk50[1], rate);
+            EntityMath_EaseAngleToward(&unkE0->part_angle_z, bone->unk50[2], rate);
+            bone->unk50[0] = unkE0->part_angle_x;
+            bone->unk50[1] = unkE0->part_angle_y;
+            bone->unk50[2] = unkE0->part_angle_z;
         } else {
-            unkE0->unk48 = bone->unk50[0];
-            unkE0->unk4C = bone->unk50[1];
-            unkE0->unk50 = bone->unk50[2];
+            unkE0->part_angle_x = bone->unk50[0];
+            unkE0->part_angle_y = bone->unk50[1];
+            unkE0->part_angle_z = bone->unk50[2];
         }
     }
 }
@@ -264,73 +264,73 @@ static void DarkArcher_OnHit(Entity *entity) {
     EntityAi_SetState((char *)entity, 2);
 }
 
-/* The think handler of a spawn whose EntitySpawnInfo.unk40 is set: no states. While the entity is
+/* The think handler of a spawn whose EntitySpawnInfo.spawn_mode is set: no states. While the entity is
    not busy it starts DarkArcher_RangedAttack with ranged record 2 when flag bit 63 is clear, the
-   pause Entity.unkA2 is over and EntityAi_CanUseRanged finds the player in reach of that record; else it
+   pause Entity.attack_delay_frames is over and EntityAi_CanUseRanged finds the player in reach of that record; else it
    starts the move action with the command of EntityAi_TurnCommand, the player as target. Keeps flag bit 10
    clear and bits 11 to 13 at 0. */
 static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     entity->flags &= ~0x400;
-    if (entity->unkC6 == 0) {
+    if (entity->busy_flags == 0) {
         u64 flags = entity->flags | 0x200;
         u32 busy;
 
         entity->flags = flags;
         busy = (u32)(flags >> 63);
-        if (busy == 0 && entity->unkA2 == 0 && EntityAi_CanUseRanged(entity, 2) != 0) {
+        if (busy == 0 && entity->attack_delay_frames == 0 && EntityAi_CanUseRanged(entity, 2) != 0) {
             EntityAi_StartAttack(entity, DarkArcher_RangedAttack, unknown, 1, 2);
         } else {
             entity->target = &player_state;
-            entity->unkC8 = EntityAi_TurnCommand(entity);
+            entity->move_command = EntityAi_TurnCommand(entity);
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
         }
     }
     entity->flags &= ~0x3800;
 }
 
-/* The move handler of a spawn whose EntitySpawnInfo.unk40 is set: turns as the command says, as
+/* The move handler of a spawn whose EntitySpawnInfo.spawn_mode is set: turns as the command says, as
    EntityAi_Move does, moves nowhere and keeps animation 0. */
 static void DarkArcher_MoveTurnOnly(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u16 command = entity->unkC8;
+    u16 command = entity->move_command;
     f32 turn;
     f32 limit;
 
     if (command & 0x100) {
-        unkE0->unk1C -= entity->params->unk58;
+        unkE0->turn_rate -= entity->params->turn_step_per_frame;
         limit = -entity->params->turn_limit;
-        if (unkE0->unk1C < limit) {
-            unkE0->unk1C = limit;
+        if (unkE0->turn_rate < limit) {
+            unkE0->turn_rate = limit;
         }
     } else if (command & 0x200) {
-        unkE0->unk1C += entity->params->unk58;
+        unkE0->turn_rate += entity->params->turn_step_per_frame;
         limit = entity->params->turn_limit;
-        if (limit < unkE0->unk1C) {
-            unkE0->unk1C = limit;
+        if (limit < unkE0->turn_rate) {
+            unkE0->turn_rate = limit;
         }
     } else {
-        unkE0->unk1C = 0.0f;
+        unkE0->turn_rate = 0.0f;
     }
-    turn = unkE0->unk1C;
+    turn = unkE0->turn_rate;
     if (command & 0x400) {
         turn *= 2.0f;
     }
-    entity->unk94 += turn;
-    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
+    entity->turn_delta_yaw += turn;
+    Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
 }
 
-/* The dormant action of a spawn whose EntitySpawnInfo.unk40 is set (busy bit 0x20): animation 0,
-   unseen (Entity.unkD6 0) with flag bits 18, 20 and 21 set until D_0034A018[0] is not 0, then fades
+/* The dormant action of a spawn whose EntitySpawnInfo.spawn_mode is set (busy bit 0x20): animation 0,
+   unseen (Entity.model_alpha 0) with flag bits 18, 20 and 21 set until D_0034A018[0] is not 0, then fades
    the model in over 20 frames (counted in work byte unk7B), clears the three bits and thinks. */
 static void DarkArcher_DormantFadeIn(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 |= 0x20;
+    entity->busy_flags |= 0x20;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0, 0, 0, 1);
@@ -338,8 +338,8 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
         entity->flags |= 0x200000;
         entity->flags |= 0x100000;
         entity->flags |= 0x40000;
-        entity->unkD6 = 0;
-        unkE0->unk7B = 0;
+        entity->model_alpha = 0;
+        unkE0->action_flags = 0;
         entity->action_step++;
     case 1:
         if (D_0034A018[0] != 0) {
@@ -347,15 +347,15 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
         }
         break;
     case 2:
-        entity->unkD6 = (unkE0->unk7B << 7) / 20;
-        unkE0->unk7B++;
-        if (unkE0->unk7B > 20) {
+        entity->model_alpha = (unkE0->action_flags << 7) / 20;
+        unkE0->action_flags++;
+        if (unkE0->action_flags > 20) {
             entity->flags &= ~0x200000;
             entity->flags &= ~0x100000;
             entity->flags &= ~0x40000;
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -364,7 +364,7 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
         }
         break;
     }
-    entity->model->unk15C = entity->unkD6;
+    entity->model->alpha = entity->model_alpha;
 }
 
 /* A death action (busy bit 0x40) that nothing refers to: plays animation 0, and once it has blended in counts
@@ -372,10 +372,10 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
    it. Unlike EntityAi_Death it plays no death animation and does not call EntityEvent_OnDeath (no item, gold,
    experience or script). */
 static void DarkArcher_DeathWithoutReward(Entity *entity) {
-    entity->unkC6 = 0x40;
+    entity->busy_flags = 0x40;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 1);
         entity->flags &= ~0x3800;
         entity->flags |= 0x4000;
         entity->flags |= 0x40000;
@@ -385,21 +385,21 @@ static void DarkArcher_DeathWithoutReward(Entity *entity) {
         entity->flags &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             ENTITY_FLAG_BITS(entity)->bit14 = 0;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = 1;
             ENTITY_FLAG_BITS(entity)->bit27 = 1;
             ENTITY_FLAG_BITS(entity)->bit26 = 1;
-            entity->unkA0 = 20;
+            entity->action_timer = 20;
             Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
             Effect_FreeForOwner(entity);
             entity->action_step++;
         }
         break;
     case 2:
-        if (entity->unkA0 != 0) {
-            entity->model->unk15C = (f32)entity->unkD6 * (f32)entity->unkA0 / 20.0f;
+        if (entity->action_timer != 0) {
+            entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
             entity->flags |= 0xC;
             entity->flags &= ~2;
@@ -409,14 +409,14 @@ static void DarkArcher_DeathWithoutReward(Entity *entity) {
 }
 
 /* The think handler: as EntityAi_Think, with DarkArcher_ThinkCombat for state 2. Sets work byte
-   unk7A to whether EntityParams.unk434 is not 0 and flag bit 44 or 50 is set. */
+   unk7A to whether EntityParams.action_frames is not 0 and flag bit 44 or 50 is set. */
 static void DarkArcher_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->unkC6 == 0) {
+    if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn(entity);
         EntityAi_StepState(entity);
         if ((s32)(entity->flags >> 53) & 1) {
@@ -438,17 +438,17 @@ static void DarkArcher_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if ((s16)entity->params->unk434 != 0 && (entity->flags & (0x8200L << 35))) {
-        unkE0->unk7A = 1;
+    if ((s16)entity->params->action_frames != 0 && (entity->flags & (0x8200L << 35))) {
+        unkE0->step_index = 1;
     } else {
-        unkE0->unk7A = 0;
+        unkE0->step_index = 0;
     }
 }
 
 /* The think function of state 2: as EntityAi_ThinkCombat, but the ranged attack is
    DarkArcher_RangedAttack (with flag bit 10 set), and instead of closing in it starts
    DarkArcher_MoveAlongArc when work byte unk7A is set, the player is nearer than
-   EntityParams.unk436 and player_state.unk14 is within 40 degrees of Entity.unk68. */
+   EntityParams.near_distance and player_state.unk14 is within 40 degrees of Entity.heading_to_player. */
 static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
@@ -472,14 +472,14 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit10 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 ENTITY_FLAG_BITS(entity)->bit10 = 1;
@@ -490,45 +490,45 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &player_state;
-            angle = EntityMath_AngleDifference(player_state.unk14, entity->unk68);
-            if (unkE0->unk7A != 0 && entity->distance_to_player < (f32)entity->params->unk436 && ABS(angle) < 0.6981317f) {
+            angle = EntityMath_AngleDifference(player_state.heading, entity->heading_to_player);
+            if (unkE0->step_index != 0 && entity->distance_to_player < (f32)entity->params->near_distance && ABS(angle) < 0.6981317f) {
                 EntityAi_StartAction(entity, DarkArcher_MoveAlongArc, unknown);
                 return;
             }
-            entity->unkA0 = rand() % 60 + 0x78;
-            unkE0->unk78 = 0;
+            entity->action_timer = rand() % 60 + 0x78;
+            unkE0->move_choice = 0;
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 0x1E;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 0x1E;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (unkE0->unk78 == 0) {
+    if (unkE0->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-            if (unkE0->unk79 == 0) {
-                unkE0->unk79 = ABS(angle) > 0.5235988f;
-                if (unkE0->unk79 == 0) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
+            if (unkE0->turn_in_place == 0) {
+                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
+                if (unkE0->turn_in_place == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = EntityAi_TurnCommand(entity);
-            if (entity->unkC8 == 0) {
-                unkE0->unk79 = 0;
+            entity->move_command = EntityAi_TurnCommand(entity);
+            if (entity->move_command == 0) {
+                unkE0->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->unkC8 = 0x201;
+                entity->move_command = 0x201;
             } else if (turn < 0) {
-                entity->unkC8 = 0x101;
+                entity->move_command = 0x101;
             } else {
-                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
         }
     }
@@ -544,10 +544,10 @@ static void DarkArcher_RangedAttack(Entity *entity) {
     s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -556,40 +556,40 @@ static void DarkArcher_RangedAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
         ENTITY_FLAG_BITS(entity)->bit10 = 1;
         if (((s32)(entity->flags >> 58) & 3) == 0) {
-            if (entity->model->unkFC->unk82 >= 0x15 && entity->model->unkFC->unk82 < 0x20) {
+            if (entity->model->level_tables->unk82 >= 0x15 && entity->model->level_tables->unk82 < 0x20) {
                 EntityAi_SpawnBoneEffect(entity, 0x379, 8);
             }
         } else {
-            if (entity->model->unkFC->unk82 >= 0x24 && entity->model->unkFC->unk82 < 0x38) {
+            if (entity->model->level_tables->unk82 >= 0x24 && entity->model->level_tables->unk82 < 0x38) {
                 EntityAi_SpawnBoneEffect(entity, 0x379, 8);
             }
         }
-        EntityAi_LaunchShots(entity, unk3D8, (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
-                      entity->model->unkFC->unk82);
-        if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
+        EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8,
+                      entity->model->level_tables->unk82);
+        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
             entity->flags |= 0x80000;
         } else {
             entity->flags &= ~0x80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
@@ -613,56 +613,56 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
     f32 height;
     s32 run = FALSE;
 
-    entity->unkC6 |= 0x1000;
+    entity->busy_flags |= 0x1000;
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     ENTITY_FLAG_BITS(entity)->bit10 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    height = EntityCollision_DistanceToPropFloor(entity->unk14, entity->model->position);
+    height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 8, 0, entity->params->unkC4, 1);
-        unkE0->unk58 = 0.0f;
-        unkE0->unk5C = 0.0f;
+        Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 1);
+        unkE0->heading_speed = 0.0f;
+        unkE0->keep_min_distance = 0.0f;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (entity->model->unkFC->unk82 >= 0x11) {
-            unkE0->unk54 = EntityMath_WrapAngle(entity->model->unkD0[1] + 3.1415927f);
-            unkE0->unk58 = -entity->params->unk438;
-            unkE0->unk5C = 0.0f;
-            unkE0->unk1C = 0.0f;
+        if (entity->model->level_tables->unk82 >= 0x11) {
+            unkE0->pitch_speed = EntityMath_WrapAngle(entity->model->rotation[1] + 3.1415927f);
+            unkE0->heading_speed = -entity->params->far_distance;
+            unkE0->keep_min_distance = 0.0f;
+            unkE0->turn_rate = 0.0f;
             entity->action_step++;
         }
         break;
     case 3:
         Motion_Start(entity, 4, 0, 0, 0);
-        unkE0->unk5C = EntityMath_Approach(unkE0->unk5C, entity->params->unk54, entity->params->unk50);
-        unkE0->unk58 = EntityMath_Approach(unkE0->unk58, -entity->params->unk43C, -entity->params->unk43A);
+        unkE0->keep_min_distance = EntityMath_Approach(unkE0->keep_min_distance, entity->params->max_speed, entity->params->speed_step_per_frame);
+        unkE0->heading_speed = EntityMath_Approach(unkE0->heading_speed, -entity->params->unk43C, -entity->params->unk43A);
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
         if (height == D_0044682C[0] || height >= entity->params->unk43E) {
             entity->action_step++;
         }
         break;
     case 4:
-        unkE0->unk5C = EntityMath_Approach(unkE0->unk5C, entity->params->unk54, entity->params->unk50);
-        unkE0->unk58 = EntityMath_Approach(unkE0->unk58, entity->params->unk43C, entity->params->unk43A);
+        unkE0->keep_min_distance = EntityMath_Approach(unkE0->keep_min_distance, entity->params->max_speed, entity->params->speed_step_per_frame);
+        unkE0->heading_speed = EntityMath_Approach(unkE0->heading_speed, entity->params->unk43C, entity->params->unk43A);
         if (ENTITY_FLAGS(entity) & (0x8200L << 35)) {
             Motion_Start(entity, 9, 0, 0, 1);
-            unkE0->unk58 = 0.0f;
-            unkE0->unk5C = 0.0f;
+            unkE0->heading_speed = 0.0f;
+            unkE0->keep_min_distance = 0.0f;
             ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
             entity->action_step++;
         }
         break;
     case 5:
         if ((s32)(entity->flags >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -671,17 +671,17 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
         }
         break;
     }
-    ENTITY_SCRATCH_VECTOR[1] = unkE0->unk58;
-    ENTITY_SCRATCH_VECTOR[2] = unkE0->unk5C;
+    ENTITY_SCRATCH_VECTOR[1] = unkE0->heading_speed;
+    ENTITY_SCRATCH_VECTOR[2] = unkE0->keep_min_distance;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
-    sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, D_00431AF0, unkE0->unk54);
+    sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, D_00431AF0, unkE0->pitch_speed);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
     // match: never taken, but until the compiler works that out the branch separates the
     // scratchpad stores above from the loads below, so their addresses are not kept in registers
     if (run) {
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, 2.0f);
     }
-    entity->unk84 += ENTITY_SCRATCH_VECTOR[0];
-    entity->unk88 += ENTITY_SCRATCH_VECTOR[1];
-    entity->unk8C += ENTITY_SCRATCH_VECTOR[2];
+    entity->move_delta_x += ENTITY_SCRATCH_VECTOR[0];
+    entity->move_delta_y += ENTITY_SCRATCH_VECTOR[1];
+    entity->move_delta_z += ENTITY_SCRATCH_VECTOR[2];
 }

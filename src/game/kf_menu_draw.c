@@ -650,8 +650,8 @@ void MenuDraw_Word(KindObject *object) {
         return;
     }
     packet = MenuDraw_NextPacket();
-    count = D_0042A078[sprite->unk32 + 1] - D_0042A078[sprite->unk32] - 1; // match: before `start`; 0 traps in the divisions below
-    start = D_0042A078[sprite->unk32];
+    count = D_0042A078[sprite->word_index + 1] - D_0042A078[sprite->word_index] - 1; // match: before `start`; 0 traps in the divisions below
+    start = D_0042A078[sprite->word_index];
     first.f.lo16 = sprite->xyz0.X;
     second.f.lo16 = sprite->xyz1.X;
     first.f.mid16 = sprite->xyz0.Y;
@@ -738,7 +738,7 @@ void MenuDraw_Bar(MenuCursorBar *bar) {
     }
 }
 
-/* Gives the current value of the number a menu sprite stands for (SpritePacket.unk34). */
+/* Gives the current value of the number a menu sprite stands for (SpritePacket.number_id). */
 int MenuDraw_GetNumber(int number) {
     switch (number) {
     case 0:
@@ -870,7 +870,7 @@ int MenuDraw_GetNumber(int number) {
     case 66:
         return player_state.weight;
     case 67:
-        return player_state.unkA8;
+        return player_state.max_weight;
     case 70:
         return D_00446E20;
     case 71:
@@ -953,17 +953,17 @@ int MenuDraw_Number(KindObject *object) { // match: returns int, though no path 
     if (sprite == NULL) {
         return;
     }
-    if (sprite->unk31 == 2) {
-        value = MenuDraw_GetNumber(sprite->unk34);
+    if (sprite->kind == 2) {
+        value = MenuDraw_GetNumber(sprite->number_id);
     } else {
-        value = sprite->unk34;
+        value = sprite->number_id;
     }
     if (value < 0) {
         return;
     }
     if (value <= 999999999) {
-        if (sprite->unk33 != 0) {
-            index = sprite->unk33;
+        if (sprite->digit_count != 0) {
+            index = sprite->digit_count;
             do {
                 glyphs[index - 1] = value % 10;
                 value /= 10;
@@ -995,14 +995,14 @@ int MenuDraw_Number(KindObject *object) { // match: returns int, though no path 
             }
         }
     } else {
-        for (index = sprite->unk33; index > 0; index--) {
+        for (index = sprite->digit_count; index > 0; index--) {
             glyphs[index] = 0; // match: one too far up; glyphs[0] stays unset
         }
     }
     packet = MenuDraw_NextPacket();
     count = 5;
-    if (sprite->unk33 != 0) {
-        count = sprite->unk33;
+    if (sprite->digit_count != 0) {
+        count = sprite->digit_count;
     }
     first.f.lo16 = sprite->xyz0.X;
     second.f.lo16 = sprite->xyz1.X;
@@ -3616,7 +3616,7 @@ static SpritePacket *MenuSprite_ExceptSlotNudged(SpritePacket *packet, int slot)
 /* Sprite handler: a copy of the sprite moved left by amount / unk41 of the screen's width. */
 static SpritePacket *MenuSprite_SlideLeft(SpritePacket *packet, int amount) {
     static SpritePacket copy; /* 0x5DD580 */
-    float ratio = (float)amount / (float)packet->unk41;
+    float ratio = (float)amount / (float)packet->slide_range;
     int offset;
 
     copy = *packet;
@@ -3629,7 +3629,7 @@ static SpritePacket *MenuSprite_SlideLeft(SpritePacket *packet, int amount) {
 /* Sprite handler: a copy of the sprite moved right by amount / unk41 of the screen's width. */
 static SpritePacket *MenuSprite_SlideRight(SpritePacket *src_packet, int amount) {
     static SpritePacket copy; /* 0x5DD5E0 */
-    float ratio = (float)amount / (float)src_packet->unk41;
+    float ratio = (float)amount / (float)src_packet->slide_range;
     int offset;
 
     copy = *src_packet;
@@ -3642,7 +3642,7 @@ static SpritePacket *MenuSprite_SlideRight(SpritePacket *src_packet, int amount)
 /* Sprite handler: a copy of the sprite moved up by amount / unk41 of the screen's height. */
 static SpritePacket *MenuSprite_SlideUp(SpritePacket *src_packet, int amount) {
     static SpritePacket copy; /* 0x5DD640 */
-    float ratio = (float)amount / (float)src_packet->unk41;
+    float ratio = (float)amount / (float)src_packet->slide_range;
     int offset;
 
     copy = *src_packet;
@@ -3662,7 +3662,7 @@ static SpritePacket *MenuSprite_SlideUp(SpritePacket *src_packet, int amount) {
 /* Sprite handler: a copy of the sprite moved down by amount / unk41 of the screen's height, no further than 0xFFF0. */
 static SpritePacket *MenuSprite_SlideDown(SpritePacket *packet, int amount) {
     static SpritePacket copy; /* 0x5DD6A0 */
-    float ratio = (float)amount / (float)packet->unk41;
+    float ratio = (float)amount / (float)packet->slide_range;
     int offset;
 
     copy = *packet;
@@ -3689,7 +3689,7 @@ static SpritePacket *MenuSprite_Fade(SpritePacket *src_packet, int alpha) {
 /* Sprite handler: the same as MenuSprite_SlideRight, with a copy of its own. */
 static SpritePacket *MenuSprite_SlideRightAlt(SpritePacket *src_packet, int amount) {
     static SpritePacket copy; /* 0x5DD760 */
-    float ratio = (float)amount / (float)src_packet->unk41;
+    float ratio = (float)amount / (float)src_packet->slide_range;
     int offset;
 
     copy = *src_packet;
@@ -3719,34 +3719,34 @@ static SpritePacket *MenuSprite_TintWeaponStat(SpritePacket *packet) {
     int base;
 
     copy = *packet;
-    current = MenuDraw_GetNumber(packet->unk34);
-    switch (packet->unk34) {
+    current = MenuDraw_GetNumber(packet->number_id);
+    switch (packet->number_id) {
     case 0x2C:
-        base = (weapon_level_records[D_00446E28].unk00[0] + weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[0]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[D_00446E28].unk00[0] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[0]) * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x2D:
-        base = (weapon_level_records[D_00446E28].unk00[1] + weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[1]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[D_00446E28].unk00[1] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[1]) * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x2E:
-        base = (weapon_level_records[D_00446E28].unk00[2] + weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[2]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[D_00446E28].unk00[2] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[2]) * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x2F:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[3] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[3] * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x30:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[4] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[4] * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x31:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[5] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[5] * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x32:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[6] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[6] * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x33:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[7] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[7] * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x34:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[8] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[8] * weapon_level_records[D_00446E28].level / 100;
         break;
     default:
         base = 0;
@@ -3771,8 +3771,8 @@ static SpritePacket *MenuSprite_TintWornStat(SpritePacket *packet, int index) {
     int base;
 
     copy = *packet;
-    current = MenuDraw_GetNumber(packet->unk34);
-    switch (packet->unk34) {
+    current = MenuDraw_GetNumber(packet->number_id);
+    switch (packet->number_id) {
     case 0x2C:
         base = (worn_item_level_records[index].unk00[0] + worn_defs[index].unk00[0]) * worn_item_level_records[index].level / 100;
         break;
@@ -3823,8 +3823,8 @@ static SpritePacket *MenuSprite_TintMagicStat(SpritePacket *packet) {
     int base;
 
     copy = *packet;
-    current = MenuDraw_GetNumber(packet->unk34);
-    switch (packet->unk34) {
+    current = MenuDraw_GetNumber(packet->number_id);
+    switch (packet->number_id) {
     case 0x2C:
         base = fx_table[player_state.equipped_magic].hit_checks[0].strengths.unk00[0];
         break;
@@ -4102,34 +4102,34 @@ static SpritePacket *MenuSprite_TintWeaponStatAlt(SpritePacket *packet) {
     int base;
 
     copy = *packet;
-    current = MenuDraw_GetNumber(packet->unk34);
-    switch (packet->unk34) {
+    current = MenuDraw_GetNumber(packet->number_id);
+    switch (packet->number_id) {
     case 0x2D:
-        base = (weapon_level_records[D_00446E28].unk00[0] + weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[0]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[D_00446E28].unk00[0] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[0]) * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x2E:
-        base = (weapon_level_records[D_00446E28].unk00[1] + weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[1]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[D_00446E28].unk00[1] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[1]) * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x2F:
-        base = (weapon_level_records[D_00446E28].unk00[2] + weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[2]) * weapon_level_records[D_00446E28].level / 100;
+        base = (weapon_level_records[D_00446E28].unk00[2] + weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[2]) * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x30:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[3] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[3] * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x31:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[4] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[4] * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x32:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[5] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[5] * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x33:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[6] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[6] * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x34:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[7] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[7] * weapon_level_records[D_00446E28].level / 100;
         break;
     case 0x35:
-        base = weapon_defs[D_00446E28].unk00[weapon_level_records[D_00446E28].unk14].values[8] * weapon_level_records[D_00446E28].level / 100;
+        base = weapon_defs[D_00446E28].attack_by_level[weapon_level_records[D_00446E28].unk14].values[8] * weapon_level_records[D_00446E28].level / 100;
         break;
     default:
         base = 0;
@@ -4153,8 +4153,8 @@ static SpritePacket *MenuSprite_TintWornStatAlt(SpritePacket *packet, int index)
     int base;
 
     copy = *packet;
-    current = MenuDraw_GetNumber(packet->unk34);
-    switch (packet->unk34) {
+    current = MenuDraw_GetNumber(packet->number_id);
+    switch (packet->number_id) {
     case 0x2D:
         base = (worn_item_level_records[index].unk00[0] + worn_defs[index].unk00[0]) * worn_item_level_records[index].level / 100;
         break;
@@ -4201,7 +4201,7 @@ static SpritePacket *MenuSprite_TintWornStatAlt(SpritePacket *packet, int index)
 static SpritePacket *MenuSprite_TintShortfall(SpritePacket *packet) {
     static SpritePacket copy; /* 0x5DDD60 */
     copy = *packet;
-    if (player_state.weight > player_state.unkA8) {
+    if (player_state.weight > player_state.max_weight) {
         copy.red = 0xFF;
         copy.green = copy.blue = 0x20;
     }

@@ -48,7 +48,7 @@ void MenuDraw_Word(KindObject *object);
 /* Draws a flat rectangle (the cursor bar). */
 void MenuDraw_Bar(MenuCursorBar *bar);
 
-/* Gives the current value of the number a menu sprite stands for (SpritePacket.unk34). */
+/* Gives the current value of the number a menu sprite stands for (SpritePacket.number_id). */
 int MenuDraw_GetNumber(int number);
 
 /* Draws a sprite of kind 2 or 3, a number; no result is set. */

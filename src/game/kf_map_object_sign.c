@@ -11,11 +11,11 @@ void MapObject_StartExaminable(MapObject *object) {
     s32 *work = object->work;
     MapObjectUnk08Words *source = MAP_OBJECT_WORDS(object);
 
-    work[1] = source->unk44;
+    work[1] = source->kind_param_0;
     if (work[1] == 0) {
-        work[1] = (s16)object->unk04->unk68;
+        work[1] = (s16)object->definition->definition_flags;
     }
-    object->work[0] = source->unk46;
+    object->work[0] = source->kind_param_1;
     MAP_OBJECT_BYTES(object)->step = 1;
 }
 

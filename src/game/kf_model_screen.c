@@ -82,14 +82,14 @@ void ModelScreen_CutClippedTriangles(ModelInstance *model) {
         s32 first = TRUE;
         ModelPartData *block;
 
-        sceVu0MulMatrix(local_matrix, model->unk40, part);
+        sceVu0MulMatrix(local_matrix, model->model_matrix, part);
         sceVu0MulMatrix(screen_matrix, D_004323E0, local_matrix);
         Vu0_LoadMatrix(screen_matrix);
         j = 0;
         count = (s32)(MODEL_PART_WORD(part) >> 53);
         block = *(ModelPartData **)&MODEL_PART_WORD(part);
         for (; j < count; j++) {
-            s32 vertex_count = block->unk70 & 0x7FFF;
+            s32 vertex_count = block->vertex_count & 0x7FFF;
             ModelPartVertexWords *vertex = (ModelPartVertexWords *)block->vertices;
             s32 setup = 2;
             ModelScreenPoint *screen;
@@ -619,7 +619,7 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
         for (j = 0; j < count; j++) {
             length = next_data->length;
             data = next_data;
-            next_data = (ModelPartData *)&next_data->unk70; // match: the cursor steps on to the vertex count
+            next_data = (ModelPartData *)&next_data->vertex_count; // match: the cursor steps on to the vertex count
             vertex_count = ((ModelPartDataTail *)next_data)->unk00 & 0x7FFF;
             vertex = ((ModelPartDataTail *)next_data)->vertices;
             for (k = 0; k < vertex_count; k++) {

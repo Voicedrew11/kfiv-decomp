@@ -67,7 +67,7 @@ void EntityAi_ThinkPursue(Entity *entity, int extra);
 /* The think function of state 2: guards, dodges, attacks, closes in or waits. */
 void EntityAi_ThinkCombat(Entity *entity, s32 unknown);
 
-/* The default move action: carries out the command in Entity.unkC8 and picks the animation. */
+/* The default move action: carries out the command in Entity.move_command and picks the animation. */
 void EntityAi_Move(Entity *entity);
 
 #endif

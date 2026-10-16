@@ -89,37 +89,37 @@ void Player_RemoveOneItem(u32 index) {
     }
 }
 
-/* Uses the item GameStatus.unk20 names once GameStatus.bit6 asks for it: an entity or a map object in front of
+/* Uses the item GameStatus.item_to_use names once GameStatus.bit6 asks for it: an entity or a map object in front of
    the player may take it for a script of its own; otherwise it does what its type says and one is used up. */
 void Player_UseItem(void) {
-    int item = game_status.unk20;
+    int item = game_status.item_to_use;
     ItemCommonDef *def = &item_common_defs[item];
     Entity *entity;
     MapObject *object;
     MapObject *stood_on;
     u16 timed;
 
-    if (game_status.unk44 > 0) {
-        game_status.unk44--;
+    if (game_status.item_use_cooldown > 0) {
+        game_status.item_use_cooldown--;
     }
     if (game_status.bit6) {
         game_status.bit6 = FALSE;
-        game_status.unk44 = 1;
+        game_status.item_use_cooldown = 1;
         if (item_counts[item] != 0) {
-            entity = D_00420D00.unk54;
-            if (entity != NULL && entity->spawn_info->unk58 != 0 && entity->group_id == D_00446770) {
-                if (entity->spawn_info->unk4E != 0 && Script_IsRunning(entity->spawn_info->unk4E) != 0) {
+            entity = D_00420D00.facing_entity;
+            if (entity != NULL && entity->spawn_info->item_script_id != 0 && entity->group_id == D_00446770) {
+                if (entity->spawn_info->talk_script_id != 0 && Script_IsRunning(entity->spawn_info->talk_script_id) != 0) {
                     return;
                 }
-                Script_Start(((Entity *)D_00420D00.unk54)->spawn_info->unk58, 0);
+                Script_Start(((Entity *)D_00420D00.facing_entity)->spawn_info->item_script_id, 0);
                 return;
             }
             object = D_00420D00.current;
-            if (object != NULL && object->unk08->unk58 != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
-                if (object->unk08->unk40 != 0 && Script_IsRunning(object->unk08->unk40) != 0) {
+            if (object != NULL && object->source->item_use_script != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
+                if (object->source->use_script != 0 && Script_IsRunning(object->source->use_script) != 0) {
                     return;
                 }
-                Script_Start(((MapObject *)D_00420D00.current)->unk08->unk58, 0);
+                Script_Start(((MapObject *)D_00420D00.current)->source->item_use_script, 0);
                 return;
             }
             Player_ApplyItem(item);
@@ -169,7 +169,7 @@ void Player_UseItem(void) {
                 break;
             case 2:
                 stood_on = D_00414188[0];
-                if (stood_on == NULL || stood_on->unk04->kind != MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE || !MapChange_StartPassage(item)) {
+                if (stood_on == NULL || stood_on->definition->kind != MAP_OBJECT_KIND_SYMBOL_OF_PASSAGE || !MapChange_StartPassage(item)) {
                     Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_NOTHING_HAPPENED);
                     return;
                 }
@@ -251,7 +251,7 @@ void Player_ApplyItem(int kind) {
             player_state.mp_base = 999;
         }
         Player_RecomputeStats();
-        if (player_state.unk264 == 0) {
+        if (player_state.charging_magic == 0) {
             Player_PickChargingMagic();
         }
         ItemEffect_Start(kind, marked);
@@ -268,7 +268,7 @@ void Player_ApplyItem(int kind) {
             player_state.mp_base = 999;
         }
         Player_RecomputeStats();
-        if (player_state.unk264 == 0) {
+        if (player_state.charging_magic == 0) {
             Player_PickChargingMagic();
         }
         ItemEffect_Start(kind, marked);
@@ -280,7 +280,7 @@ void Player_ApplyItem(int kind) {
 void Player_ApplyPoisonWater(int kind) {
     if (kind == 0x12) {
         player_state.timed_flags[0] = 1800;
-        player_state.unk2C4 = D_00446ED4;
+        player_state.ailment0_start_frame = D_00446ED4;
     }
 }
 

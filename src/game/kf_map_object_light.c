@@ -14,14 +14,14 @@ void MapObject_StartLight(MapObject *object) {
     int sort;
     MapObjectUnk08Words *params;
 
-    colour.x = source->unk44;
-    colour.y = source->unk46;
-    colour.z = source->unk48;
+    colour.x = source->kind_param_0;
+    colour.y = source->kind_param_1;
+    colour.z = source->kind_param_2;
     colour.w = 1.0f;
-    point = (void *)object->model->get_point(object->model, source->unk52);
+    point = (void *)object->model->get_point(object->model, source->kind_param_7);
     params = MAP_OBJECT_WORDS(object);
-    work[0] = LinkedPoint_Allocate(params->unk4A, point, &colour, 0, MAP_OBJECT_BYTES(object)->unk00 & 1, params->unk4C != 0 ? params->unk4E : -1, 1);
-    sort = MAP_OBJECT_WORDS(object)->unk50;
+    work[0] = LinkedPoint_Allocate(params->kind_param_3, point, &colour, 0, MAP_OBJECT_BYTES(object)->unk00 & 1, params->kind_param_4 != 0 ? params->kind_param_5 : -1, 1);
+    sort = MAP_OBJECT_WORDS(object)->kind_param_6;
     if (sort >= 0) {
         if (sort <= 1) {
             work[2] = (int)(rand() * 6.0f * 4.656613e-10f) + 0x14;
@@ -42,7 +42,7 @@ void MapObject_UpdateLight(MapObject *object) {
     Vector4 colour;
     f32 level;
 
-    switch (source->unk50) {
+    switch (source->kind_param_6) {
         case 0: {
             // match: the depth and base are locals of each case
             f32 depth = 0.1f;
@@ -71,11 +71,11 @@ void MapObject_UpdateLight(MapObject *object) {
             level = 1.0f;
             break;
     }
-    colour.x = level * source->unk44;
-    colour.y = level * source->unk46;
-    colour.z = level * source->unk48;
+    colour.x = level * source->kind_param_0;
+    colour.y = level * source->kind_param_1;
+    colour.z = level * source->kind_param_2;
     colour.w = 1.0f;
-    LinkedPoint_Retarget(source->unk4A, work[0], &colour);
+    LinkedPoint_Retarget(source->kind_param_3, work[0], &colour);
 }
 
 /* End hook of the light kind (9): releases its light (the LinkedPoint handle in its work area), if it has

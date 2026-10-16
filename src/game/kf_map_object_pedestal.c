@@ -39,14 +39,14 @@ void MapObject_StartMarker(MapObject *object) {
     work->part = 2;
     work->fired = 0;
     item = 0;
-    if (object->unk10 & 0x20000) {
-        item = Game_GetTriggerItem(map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->unk08->unk38.bytes[2]);
+    if (object->state_flags & 0x20000) {
+        item = Game_GetTriggerItem(map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->source->spawn_flags.bytes[2]);
         if (item <= 0) {
-            object->unk10 &= ~0x20000;
+            object->state_flags &= ~0x20000;
         }
     }
     MapObject_ShowMarkerStone(object, item);
-    if (!(object->unk10 & 0x20000)) {
+    if (!(object->state_flags & 0x20000)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
@@ -74,28 +74,28 @@ void MapObject_UpdateEmptyMarker(MapObject *object) {
         if (work->timer > 0) {
             return;
         }
-        Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
+        Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->definition->definition_flags);
         work->timer = 0x2D;
     } else if (work->fired != 0) {
         work->fired = 0;
-        object->unk10 |= 0x20000;
+        object->state_flags |= 0x20000;
         MAP_OBJECT_BYTES(object)->step = 3;
         MapObject_StepAnim(object);
         MapObject_RebuildMatrices((char *)object);
-        Vector_Copy(&origin, part->unk40);
+        Vector_Copy(&origin, part->position);
         origin.w = 1.0f;
         Vector_Copy(&target, player_state);
         target.w = 1.0f;
         target.y -= 220.0f;
-        Matrix_Multiply(matrix, object->model->unk40, part);
+        Matrix_Multiply(matrix, object->model->model_matrix, part);
         sceVu0InversMatrix(matrix, matrix);
         Vector_ApplyMatrix(&target, matrix, &target);
         Vector_Subtract(work, &origin, &target);
         distance = sqrtf(work->step.x * work->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
         work->frames = distance / 6.6666665f;
-        Vector_Copy(part->unk40, &target);
+        Vector_Copy(part->position, &target);
         Vector_Scale(&work->step.x, &work->step.x, 1.0f / work->frames);
-        game_status.unk30 |= 1;
+        game_status.update_hold_flags |= 1;
     }
 }
 
@@ -108,7 +108,7 @@ void MapObject_MoveMarkerStoneIn(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    Vector_Add(part->unk40, part->unk40, work);
+    Vector_Add(part->position, part->position, work);
     if (--work->frames <= 0) {
         MAP_OBJECT_BYTES(object)->step = 3;
     }
@@ -127,7 +127,7 @@ void MapObject_SettleMarkerStone(MapObject *object) {
     } else {
         MapObject_StartAnim(object, 5);
         MAP_OBJECT_BYTES(object)->step = 4;
-        game_status.unk30 &= ~1U;
+        game_status.update_hold_flags &= ~1U;
     }
 }
 
@@ -146,13 +146,13 @@ void MapObject_UpdateFilledMarker(MapObject *object) {
     if (game_status.bit1 && D_00420D00.current == object) {
         MAP_OBJECT_BYTES(object)->step = 5;
         // match: two leftover arguments are passed
-        item = ((int (*)(int, int, void *, int))Game_GetTriggerItem)(tag, object->unk08->unk38.bytes[2], work, timer);
-        Game_ClearTriggerItem(tag, object->unk08->unk38.bytes[2]);
+        item = ((int (*)(int, int, void *, int))Game_GetTriggerItem)(tag, object->source->spawn_flags.bytes[2], work, timer);
+        Game_ClearTriggerItem(tag, object->source->spawn_flags.bytes[2]);
         MapObject_StepAnim(object);
         MapObject_RebuildMatrices((char *)object);
         Player_AddItem(item);
-        object->unk10 &= ~0x20000;
-        game_status.unk30 |= 1;
+        object->state_flags &= ~0x20000;
+        game_status.update_hold_flags |= 1;
     }
 }
 
@@ -176,7 +176,7 @@ void MapObject_LiftMarkerStone(MapObject *object) {
     }
     MAP_OBJECT_BYTES(object)->step = 6;
     MapObject_RebuildMarkerMatrices((char *)object);
-    object->model->unk1B4(object->model);
+    object->model->update_bone_points(object->model);
     point = (void *)object->model->get_point(object->model, 0);
     Vector_Copy(&origin, point);
     Vector_Copy(&target, player_state);
@@ -201,12 +201,12 @@ void MapObject_MoveMarkerStoneOut(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    Vector_Add(part->unk40, part->unk40, work);
+    Vector_Add(part->position, part->position, work);
     if (--work->frames <= 0) {
         MapObject_ShowMarkerStone(object, 0);
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
-        game_status.unk30 &= ~1U;
+        game_status.update_hold_flags &= ~1U;
     }
 }
 
@@ -237,13 +237,13 @@ int MapObject_PlaceStoneOnMarker(MapTrigger *trigger, int type_index) {
 }
 
 /* Shows the stone on a marker's model: items 0x86 to 0x8A (the five Guide Stones) show chunks 0 to 4 (a set
-   bit of ModelInstance.unk178 hides that chunk); any other item, or none, hides all five. */
+   bit of ModelInstance.chunk_skip_mask hides that chunk); any other item, or none, hides all five. */
 void MapObject_ShowMarkerStone(MapObject *object, int item) {
     u32 *skip_mask;
     u32 chunk;
     int shown;
 
-    skip_mask = (u32 *)&object->model->unk178;
+    skip_mask = (u32 *)&object->model->chunk_skip_mask;
     chunk = item - 0x86;
     shown = (chunk <= 4U) ? (int)chunk : -1;
 
@@ -263,8 +263,8 @@ void MapObject_ShowMarkerStone(MapObject *object, int item) {
     if (shown != 3) {
         *skip_mask |= 8;
     }
-    *(u32 *)&object->model->unk178 &= ~0x10u;
+    *(u32 *)&object->model->chunk_skip_mask &= ~0x10u;
     if (shown != 4) {
-        *(u32 *)&object->model->unk178 |= 0x10;
+        *(u32 *)&object->model->chunk_skip_mask |= 0x10;
     }
 }

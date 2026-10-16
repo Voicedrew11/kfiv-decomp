@@ -31,7 +31,7 @@ MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused)
         channel->param = 0;
         channel->param_shifted = 0;
         channel->value = 0;
-        model->unk100 |= 1;
+        model->model_flags |= 1;
         channel->tables[channel->index] = motion->parts;
         motion->vectors = (MotionVector *)((char *)motion + motion->vectors_offset);
     } while (0);
@@ -48,19 +48,19 @@ MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused)
         vectors = motion->vectors;
         key = (MotionKey *)channel->tables[channel->index][i].thresholds;
         vector = &vectors[key->position];
-        parts[i].unk40[0] = vector->x;
-        parts[i].unk40[1] = vector->y;
-        parts[i].unk40[2] = vector->z;
-        parts[i].unk40[3] = 1.0f;
+        parts[i].position[0] = vector->x;
+        parts[i].position[1] = vector->y;
+        parts[i].position[2] = vector->z;
+        parts[i].position[3] = 1.0f;
         vector = &vectors[key->rotation];
-        parts[i].unk50 = vector->x;
-        parts[i].unk54 = vector->y;
-        parts[i].unk58 = vector->z;
-        parts[i].unk5C = 1.0f;
+        parts[i].rotation_x = vector->x;
+        parts[i].rotation_y = vector->y;
+        parts[i].rotation_z = vector->z;
+        parts[i].rotation_w = 1.0f;
         vector = &vectors[key->scale];
-        parts[i].unk60[0] = vector->x;
-        parts[i].unk60[1] = vector->y;
-        parts[i].unk60[2] = vector->z;
+        parts[i].scale[0] = vector->x;
+        parts[i].scale[1] = vector->y;
+        parts[i].scale[2] = vector->z;
         if (channel->tables[channel->index][i].child != 0) {
             parts[i].child = &parts[channel->tables[channel->index][i].child];
         } else {
@@ -72,7 +72,7 @@ MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused)
             parts[i].sibling = NULL;
         }
         // match: indexing level_tables as an array swaps the addu operands
-        parts[i].unk78_32 = (*(ModelPartLevels **)((char *)model->level_tables + (channel->index << 2)))[i].unk02;
+        parts[i].part_flags = (*(ModelPartLevels **)((char *)model->level_tables + (channel->index << 2)))[i].unk02;
     }
     data = (MotionData *)((char *)motion + motion->size);
     return data;
@@ -185,20 +185,20 @@ void ModelMotion_Step(void *model_arg) {
                     tangent0->w = 1.0f;
                     *(MotionVector *)tangent1 = vectors[next->rotation_in];
                     tangent1->w = 1.0f;
-                    ModelMotion_Hermite(&part->unk50, point0, point1, tangent0, tangent1, ratio);
-                    part->unk50 = Angle_Wrap(part->unk50);
-                    part->unk54 = Angle_Wrap(part->unk54);
-                    part->unk58 = Angle_Wrap(part->unk58);
+                    ModelMotion_Hermite(&part->rotation_x, point0, point1, tangent0, tangent1, ratio);
+                    part->rotation_x = Angle_Wrap(part->rotation_x);
+                    part->rotation_y = Angle_Wrap(part->rotation_y);
+                    part->rotation_z = Angle_Wrap(part->rotation_z);
 
                     *(MotionVector *)point0 = vectors[key->position];
                     *(MotionVector *)point1 = vectors[next->position];
                     *(MotionVector *)tangent0 = vectors[key->position_out];
                     *(MotionVector *)tangent1 = vectors[next->position_in];
-                    ModelMotion_Hermite(part->unk40, point0, point1, tangent0, tangent1, ratio);
+                    ModelMotion_Hermite(part->position, point0, point1, tangent0, tangent1, ratio);
 
-                    part->unk60[0] = vectors[key->scale].x * (1.0f - ratio) + vectors[next->scale].x * ratio;
-                    part->unk60[1] = vectors[key->scale].y * (1.0f - ratio) + vectors[next->scale].y * ratio;
-                    part->unk60[2] = vectors[key->scale].z * (1.0f - ratio) + vectors[next->scale].z * ratio;
+                    part->scale[0] = vectors[key->scale].x * (1.0f - ratio) + vectors[next->scale].x * ratio;
+                    part->scale[1] = vectors[key->scale].y * (1.0f - ratio) + vectors[next->scale].y * ratio;
+                    part->scale[2] = vectors[key->scale].z * (1.0f - ratio) + vectors[next->scale].z * ratio;
                 }
             }
         }
@@ -274,15 +274,15 @@ void ModelMotion_StepBlend(ModelInstance *model) {
     for (i = 0; i < model->part_count; i++, record++, part++) {
         key = (MotionKey *)record->thresholds;
         if (key != NULL) {
-            part->unk50 += (vectors[key->rotation].x - part->unk50) / divisor;
-            part->unk54 += (vectors[key->rotation].y - part->unk54) / divisor;
-            part->unk58 += (vectors[key->rotation].z - part->unk58) / divisor;
-            part->unk40[0] += (vectors[key->position].x - part->unk40[0]) / divisor;
-            part->unk40[1] += (vectors[key->position].y - part->unk40[1]) / divisor;
-            part->unk40[2] += (vectors[key->position].z - part->unk40[2]) / divisor;
-            part->unk60[0] += (vectors[key->scale].x - part->unk60[0]) / divisor;
-            part->unk60[1] += (vectors[key->scale].y - part->unk60[1]) / divisor;
-            part->unk60[2] += (vectors[key->scale].z - part->unk60[2]) / divisor;
+            part->rotation_x += (vectors[key->rotation].x - part->rotation_x) / divisor;
+            part->rotation_y += (vectors[key->rotation].y - part->rotation_y) / divisor;
+            part->rotation_z += (vectors[key->rotation].z - part->rotation_z) / divisor;
+            part->position[0] += (vectors[key->position].x - part->position[0]) / divisor;
+            part->position[1] += (vectors[key->position].y - part->position[1]) / divisor;
+            part->position[2] += (vectors[key->position].z - part->position[2]) / divisor;
+            part->scale[0] += (vectors[key->scale].x - part->scale[0]) / divisor;
+            part->scale[1] += (vectors[key->scale].y - part->scale[1]) / divisor;
+            part->scale[2] += (vectors[key->scale].z - part->scale[2]) / divisor;
         }
     }
     if (channel->word >= channel->value) {

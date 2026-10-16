@@ -45,9 +45,9 @@ static void Reaper_RangedAttack(Entity *entity);
 /* Set-up of a type 2 entity: clears its work area and installs the type's handlers. */
 void Reaper_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
-    char *unk138 = entity->model->unk138;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
+    char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
@@ -56,7 +56,7 @@ void Reaper_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = Reaper_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -64,24 +64,24 @@ void Reaper_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))Reaper_Dormant;
     unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 6 - 1; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+    if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -93,10 +93,10 @@ static void Reaper_Think(Entity *entity, s32 unknown) {
     u32 phase;
 
     phase = D_00446ED4 % 10U;
-    if (phase == entity->unkD7 % 10U) {
+    if (phase == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->unkC6 == 0) {
+    if (entity->busy_flags == 0) {
         EntityAi_StepState(entity);
         switch (entity->state) {
         case 0:
@@ -111,7 +111,7 @@ static void Reaper_Think(Entity *entity, s32 unknown) {
 }
 
 /* The think function of state 2: guards the player's swing; starts EntityAi_MeleeAttack when
-   EntityAi_CanMelee finds a melee record in reach (EntityAi_PickMeleeAttack picks it) and the pause Entity.unkA2
+   EntityAi_CanMelee finds a melee record in reach (EntityAi_PickMeleeAttack picks it) and the pause Entity.attack_delay_frames
    is over; else sets flag bit 32 and, each time the timer runs out with EntityAi_PickCombatChoice choosing the
    attack and EntityAi_CanShoot finding a ranged record in reach (EntityAi_PickRangedAttack picks it), starts
    Reaper_RangedAttack; else starts the move action. It gives no movement command. */
@@ -124,27 +124,27 @@ static void Reaper_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
         return;
     }
-    if (EntityAi_CanMelee(entity) && entity->unkA2 == 0) {
+    if (EntityAi_CanMelee(entity) && entity->attack_delay_frames == 0) {
         EntityAi_PickMeleeAttack(entity);
         EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
     } else {
         ENTITY_FLAG_BITS(entity)->bit32 = TRUE;
         side = EntityAi_PickCombatChoice(entity, 0);
-        if (entity->unkA0 == 0) {
-            entity->unkCF = entity->unkCD;
-            entity->unkCD = side;
-            if (entity->unkCD != entity->unkCF) {
-                entity->unk9E = D_00446ED4;
+        if (entity->action_timer == 0) {
+            entity->prev_combat_choice = entity->combat_choice;
+            entity->combat_choice = side;
+            if (entity->combat_choice != entity->prev_combat_choice) {
+                entity->choice_change_frame = D_00446ED4;
             }
             EntityAi_LowerChoiceWeight(entity, side);
-            if (entity->unkCD == 0) {
+            if (entity->combat_choice == 0) {
                 if (EntityAi_CanShoot(entity)) {
                     EntityAi_PickRangedAttack(entity);
                     EntityAi_StartAction(entity, Reaper_RangedAttack, unknown);
                     return;
                 }
             } else {
-                entity->unkA0 = rand() % 60 + 0x3C;
+                entity->action_timer = rand() % 60 + 0x3C;
             }
         }
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -153,16 +153,16 @@ static void Reaper_ThinkCombat(Entity *entity, s32 unknown) {
 
 /* The move handler: this type stays where it is; keeps animation 0. */
 static void Reaper_Move(Entity *entity) {
-    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
 }
 
 /* The dormant action (busy bit 0x20): holds animation 1 with flag bit 18 set until the player is
-   within EntitySpawnInfo.unk54 or flag bit 43 is set, then goes to state 2 and thinks; unlike
+   within EntitySpawnInfo.wake_distance or flag bit 43 is set, then goes to state 2 and thinks; unlike
    EntityAi_Dormant it plays no animation 2. */
 static void Reaper_Dormant(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->unkC6 |= 0x20;
+    entity->busy_flags |= 0x20;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
@@ -171,19 +171,19 @@ static void Reaper_Dormant(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) == 0x02000000) ? 2 : 1;
         }
-        unkE0->unk1C = 0;
+        unkE0->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
         break;
     case 1:
-        if (entity->distance_to_player < entity->spawn_info->unk54 || ENTITY_FLAG_BITS(entity)->bit43) {
+        if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bit43) {
             EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -195,7 +195,7 @@ static void Reaper_Dormant(Entity *entity) {
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but the shots are launched with
-   EntityShot_Launch along the reverse of Entity.unk68. */
+   EntityShot_Launch along the reverse of Entity.heading_to_player. */
 static void Reaper_RangedAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 attack_index = (s32)(entity->flags >> 58) & 3;
@@ -203,10 +203,10 @@ static void Reaper_RangedAttack(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, attack_index + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -220,32 +220,32 @@ static void Reaper_RangedAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
+        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &entity->unkE0.turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
-        elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
+        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
         direction[0] = direction[2] = direction[3] = 0.0f;
-        direction[1] = EntityMath_WrapAngle(entity->unk68 + 3.1415927f);
-        EntityShot_Launch(entity, unk3D8, elapsed, entity->model->unkFC->unk82, direction);
-        if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
+        direction[1] = EntityMath_WrapAngle(entity->heading_to_player + 3.1415927f);
+        EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->unk82, direction);
+        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);

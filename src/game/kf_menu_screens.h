@@ -12,7 +12,7 @@ void Menu_Init(void);
 
 /* Runs a menu from opening to closing. mode 0: the game's menu, 1: the memory card screens, 2: the options,
    3: the buttons, 4: the card check, 5: the brightness. With mode 1 the result is 1 when the save list set
-   MenuScreenState.unk16 (a save was loaded, by the look of the callers); otherwise 0. */
+   MenuScreenState.save_loaded (a save was loaded, by the look of the callers); otherwise 0. */
 int Menu_Run(s8 mode);
 
 /* Ends a menu frame: brightness, vertical blank, buffer swap and (when asked) the backdrop of the next frame.

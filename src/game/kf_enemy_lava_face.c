@@ -35,8 +35,8 @@ static void LavaFace_Think(Entity *entity, s32 unknown);
 /* Set-up of a type 32 entity: clears its work area and installs the type's handlers. */
 void LavaFace_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
@@ -45,7 +45,7 @@ void LavaFace_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = LavaFace_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -53,27 +53,27 @@ void LavaFace_Init(Entity *entity) {
     unkE0->death = (void (*)(void))EntityAi_Death;
     unkE0->move = NULL;
     for (i = 4 - 1; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 6 - 1; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+    if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
 
-/* The think handler: each time the timer Entity.unkA0 runs out (and EntityParams.unk434 is not 0)
-   launches shot EntityParams.unk430 from model point unk432, aimed at the player, and sets the
+/* The think handler: each time the timer Entity.action_timer runs out (and EntityParams.action_frames is not 0)
+   launches shot EntityParams.pitch_limit_deg from model point unk432, aimed at the player, and sets the
    timer to unk434 plus 0 to 2 frames; keeps animation 0. */
 static void LavaFace_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -87,13 +87,13 @@ static void LavaFace_Think(Entity *entity, s32 unknown) {
     f32 pitch;
     f32 yaw;
 
-    if (entity->unkA0 == 0 && (s16)entity->params->unk434 != 0) {
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unk432);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unk432 + 1);
+    if (entity->action_timer == 0 && (s16)entity->params->action_frames != 0) {
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->yaw_limit_deg);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->yaw_limit_deg + 1);
         if (from == NULL || tip == NULL) {
             return;
         }
-        if (entity->params->unk432 != 0xFF) {
+        if (entity->params->yaw_limit_deg != 0xFF) {
             delta_x = tip[0] - from[0];
             delta_y = tip[1] - from[1];
             delta_z = tip[2] - from[2];
@@ -101,19 +101,19 @@ static void LavaFace_Think(Entity *entity, s32 unknown) {
             angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
             angles[2] = angles[3] = 0.0f;
         } else {
-            Vector_Copy(angles, entity->model->unkD0);
+            Vector_Copy(angles, entity->model->rotation);
             angles[1] = EntityMath_WrapAngle(angles[1] + 3.1415927f);
         }
         Vector_Copy(target, player_state);
         target[1] -= 190.0f;
         pitch = EntityMath_WrapAngle(-atan2(target[1] - from[1], EntityMath_DistanceXZ(from, target)));
         yaw = EntityMath_AngleXZ(from, (char *)target);
-        angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->unk436);
-        angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->unk438);
-        EntityAi_LaunchShot(entity, entity->params->unk430, from, angles);
+        angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->near_distance);
+        angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->far_distance);
+        EntityAi_LaunchShot(entity, entity->params->pitch_limit_deg, from, angles);
         EntityEvent_StartCue(entity, entity->params->unk43A, entity->params->unk43C, entity->params->unk43E);
-        entity->unkA0 = entity->params->unk434 + rand() % 3;
+        entity->action_timer = entity->params->action_frames + rand() % 3;
     }
-    Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
+    Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }

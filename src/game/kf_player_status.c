@@ -49,21 +49,21 @@ extern u16 spell_experience[6][5];
    turns the four rates into frame counts. */
 void Player_SumWornBonuses(void) {
     player_state.unkE8 = 0;
-    player_state.unkEC = 0;
-    player_state.unkF0 = 0;
-    player_state.unkF4 = 0;
-    player_state.unkF8 = 0;
-    player_state.unkFC = 0;
-    player_state.unk100 = 0;
-    player_state.unk104 = 0;
-    player_state.unk108 = 0;
-    player_state.unk10C = 0;
-    player_state.unkDC[0] = 0;
-    player_state.unkDC[1] = 0;
-    player_state.unkDC[2] = 0;
-    player_state.unkDC[3] = 0;
-    player_state.unkDC[4] = 0;
-    player_state.unkDC[5] = 0;
+    player_state.worn_drain_active = 0;
+    player_state.hp_regen_period = 0;
+    player_state.hp_drain_period = 0;
+    player_state.mp_regen_period = 0;
+    player_state.mp_drain_period = 0;
+    player_state.damage_to_hp_percent = 0;
+    player_state.damage_to_mp_percent = 0;
+    player_state.movement_halved = 0;
+    player_state.ring_of_sight_active = 0;
+    player_state.ailment_defence[0] = 0;
+    player_state.ailment_defence[1] = 0;
+    player_state.ailment_defence[2] = 0;
+    player_state.ailment_defence[3] = 0;
+    player_state.ailment_defence[4] = 0;
+    player_state.ailment_defence[5] = 0;
     Player_AddItemBonuses(player_state.weapon + ITEM_WEAPON_FIRST);
     Player_AddItemBonuses(player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST);
     Player_AddItemBonuses(player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST);
@@ -73,28 +73,28 @@ void Player_SumWornBonuses(void) {
     Player_AddItemBonuses(player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST);
     Player_AddItemBonuses(player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST);
     Player_AddItemBonuses(player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST);
-    if (player_state.unkF0 != 0) {
-        player_state.unkF0 = 150 / (s32)player_state.unkF0;
-        if (player_state.unkF0 == 0) {
-            player_state.unkF0 = 1;
+    if (player_state.hp_regen_period != 0) {
+        player_state.hp_regen_period = 150 / (s32)player_state.hp_regen_period;
+        if (player_state.hp_regen_period == 0) {
+            player_state.hp_regen_period = 1;
         }
     }
-    if (player_state.unkF4 != 0) {
-        player_state.unkF4 = 150 / (s32)player_state.unkF4;
-        if (player_state.unkF4 == 0) {
-            player_state.unkF4 = 1;
+    if (player_state.hp_drain_period != 0) {
+        player_state.hp_drain_period = 150 / (s32)player_state.hp_drain_period;
+        if (player_state.hp_drain_period == 0) {
+            player_state.hp_drain_period = 1;
         }
     }
-    if (player_state.unkF8 != 0) {
-        player_state.unkF8 = 150 / (s32)player_state.unkF8;
-        if (player_state.unkF8 == 0) {
-            player_state.unkF8 = 1;
+    if (player_state.mp_regen_period != 0) {
+        player_state.mp_regen_period = 150 / (s32)player_state.mp_regen_period;
+        if (player_state.mp_regen_period == 0) {
+            player_state.mp_regen_period = 1;
         }
     }
-    if (player_state.unkFC != 0) {
-        player_state.unkFC = 150 / (s32)player_state.unkFC;
-        if (player_state.unkFC == 0) {
-            player_state.unkFC = 1;
+    if (player_state.mp_drain_period != 0) {
+        player_state.mp_drain_period = 150 / (s32)player_state.mp_drain_period;
+        if (player_state.mp_drain_period == 0) {
+            player_state.mp_drain_period = 1;
         }
     }
 }
@@ -119,25 +119,25 @@ void Player_AddItemBonuses(int index) {
             player_state.unkE8 = 1;
             break;
         case 2:
-            player_state.unkEC = 1;
+            player_state.worn_drain_active = 1;
             break;
         case 3:
-            player_state.unkF0 += amounts[i];
+            player_state.hp_regen_period += amounts[i];
             break;
         case 4:
-            player_state.unkF4 += amounts[i];
+            player_state.hp_drain_period += amounts[i];
             break;
         case 5:
-            player_state.unkF8 += amounts[i];
+            player_state.mp_regen_period += amounts[i];
             break;
         case 6:
-            player_state.unkFC += amounts[i];
+            player_state.mp_drain_period += amounts[i];
             break;
         case 7:
-            player_state.unk100 = amounts[i];
+            player_state.damage_to_hp_percent = amounts[i];
             break;
         case 8:
-            player_state.unk104 = amounts[i];
+            player_state.damage_to_mp_percent = amounts[i];
             break;
         case 9:
             player_state.power += amounts[i];
@@ -152,18 +152,18 @@ void Player_AddItemBonuses(int index) {
     }
     if (index >= ITEM_WORN_FIRST) {
         rates = worn_defs[ITEM_WORN_INDEX(index)].unk12;
-        player_state.unkDC[0] += rates[0];
-        player_state.unkDC[1] += rates[1];
-        player_state.unkDC[2] += rates[2];
-        player_state.unkDC[3] += rates[3];
-        player_state.unkDC[4] += rates[4];
-        player_state.unkDC[5] += rates[5];
+        player_state.ailment_defence[0] += rates[0];
+        player_state.ailment_defence[1] += rates[1];
+        player_state.ailment_defence[2] += rates[2];
+        player_state.ailment_defence[3] += rates[3];
+        player_state.ailment_defence[4] += rates[4];
+        player_state.ailment_defence[5] += rates[5];
     }
     if (index == ITEM_DEMON_LEGS) {
-        player_state.unk108 = 1;
+        player_state.movement_halved = 1;
     }
     if (index == ITEM_RING_OF_SIGHT) {
-        player_state.unk10C = 1;
+        player_state.ring_of_sight_active = 1;
     }
 }
 
@@ -190,9 +190,9 @@ void Player_TakeDamageNoRumble(int value) {
 }
 
 /* Takes amount off HP, not below zero; FALSE for a non-positive amount or while the game is not being played
-   (GameStatus.unk00 clear or bit 0 of unk30 set). */
+   (GameStatus.player_control clear or bit 0 of unk30 set). */
 int Player_LoseHp(int amount) {
-    if (amount > 0 && game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
+    if (amount > 0 && game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
         if (amount < player_state.hp_now) {
             player_state.hp_now -= amount;
         } else {
@@ -203,10 +203,10 @@ int Player_LoseHp(int amount) {
     return 0;
 }
 
-/* Starts the red damage flash (PlayerScreenTint.unk00), while the game is being played. */
+/* Starts the red damage flash (PlayerScreenTint.damage_flash_frames), while the game is being played. */
 void Player_FlashDamage(void) {
-    if (game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
-        player_screen_tint.unk00 = 10;
+    if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
+        player_screen_tint.damage_flash_frames = 10;
     }
 }
 
@@ -215,10 +215,10 @@ void Player_KnockBackFromHit(void *source, int damage) {
     PlayerState *player;
     float speed;
 
-    if (game_status.unk00 != 0) {
-        if (!(game_status.unk30 & 1)) {
+    if (game_status.player_control != 0) {
+        if (!(game_status.update_hold_flags & 1)) {
             player = &player_state;
-            if (player->unk1A8 == 0) {
+            if (player->death_timer == 0) {
                 if (player->hp_max > 0) {
                     player->aim.x = player->position.x - ((float *)source)[0];
                     player->aim.y = 0;
@@ -244,21 +244,21 @@ void Player_KnockBack(Vector4 *target, f32 speed) {
     player_state.aim_speed = speed;
 }
 
-/* A hit of at least a tenth of the most HP throws the view back (PlayerState.unk238 grows) for frames that
+/* A hit of at least a tenth of the most HP throws the view back (PlayerState.view_tilt_pitch grows) for frames that
    grow with the damage and shrink with power. */
 void Player_TiltViewFromHit(int damage) {
     PlayerState *player;
     int frames;
 
-    if (game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
+    if (game_status.player_control != 0 && !(game_status.update_hold_flags & 1)) {
         player = &player_state;
         if (!((float)damage * 100.0f / (float)player->hp_max < 10.0f)) {
             frames = (damage * 500 / (player->hp_max + 50)) / player->power;
-            if (player->unk234 < frames) {
-                float angle = player->unk238;
+            if (player->view_tilt_frames < frames) {
+                float angle = player->view_tilt_pitch;
 
                 if (0.2617994f > angle) {
-                    player->unk234 = frames;
+                    player->view_tilt_frames = frames;
                 }
             }
         }
@@ -277,14 +277,14 @@ void Player_StopFootstepSound(void) {
 
 /* Kills the player: HP and the drawn bar to 0, and the dying starts. */
 void Player_Kill(void) {
-    if (player_state.unk1A8 == 0) {
+    if (player_state.death_timer == 0) {
         player_state.hp_now = 0;
-        player_state.unk1A4 = 0;
+        player_state.hp_bar_level = 0;
         Player_UpdateDying();
     }
 }
 
-/* Picks the magic the magic gauge charges for (PlayerState.unk264): the equipped magic, else a magic shortcut,
+/* Picks the magic the magic gauge charges for (PlayerState.charging_magic): the equipped magic, else a magic shortcut,
    else the weapon's magic, else the first learned magic cast from the menu (fx_table unk102 == 1). */
 void Player_PickChargingMagic(void) {
     PlayerItemDef *def;
@@ -293,30 +293,30 @@ void Player_PickChargingMagic(void) {
     int effect_id;
 
     if (player_state.equipped_magic != 0) {
-        player_state.unk264 = player_state.equipped_magic;
+        player_state.charging_magic = player_state.equipped_magic;
         return;
     }
     if (player_state.shortcut_type == 2 && player_state.shortcut != 0) {
-        player_state.unk264 = player_state.shortcut;
+        player_state.charging_magic = player_state.shortcut;
         return;
     }
     def = &weapon_defs[player_state.weapon];
-    if (def->unk63 != 2) {
-        if (def->unk42 != 0xFFFF) {
-            player_state.unk264 = def->unk42;
+    if (def->action_handler_index != 2) {
+        if (def->first_magic_id != 0xFFFF) {
+            player_state.charging_magic = def->first_magic_id;
             return;
         }
         // match: the pointer form puts the sum in the index register
-        if (def->unk52 != 0xFFFF && (weapon_level_records + player_state.weapon)->unk14 >= 2) {
-            player_state.unk264 = def->unk52;
+        if (def->second_magic_id != 0xFFFF && (weapon_level_records + player_state.weapon)->unk14 >= 2) {
+            player_state.charging_magic = def->second_magic_id;
             return;
         }
     }
     for (i = 0; i < 6; i++) {
         for (j = 0; j < 5; j++) {
             effect_id = 15 * i + 3 * j + spell_levels[i][j];
-            if (spell_levels[i][j] != 0 && fx_table[effect_id].unk102 == 1) {
-                player_state.unk264 = effect_id;
+            if (spell_levels[i][j] != 0 && fx_table[effect_id].item_menu_magic == 1) {
+                player_state.charging_magic = effect_id;
                 return;
             }
         }
@@ -352,7 +352,7 @@ void Player_FindMapRecord(void) {
     if (record != NULL) {
         // match: retail shifts by 14, not by 7 (the records are 0x80 bytes each)
         player->map_index = (u32)((char *)record - map_slots[D_00446770].records) >> 14;
-        player->unk250 = record->unk38;
+        player->record_flag_block = record->flag_block_bit;
     }
 }
 
@@ -375,38 +375,38 @@ void Player_UpdateScreenFade(void) {
     }
     step = *(s32 *)player->pad2AC;
     if (step != 0) {
-        next = player->unk2A8 + (float)step;
+        next = player->screen_fade + (float)step;
         *(s32 *)player->pad2AC = step / 2;
-        player->unk2A8 = next;
+        player->screen_fade = next;
         return;
     }
-    fade = player->unk2A8;
+    fade = player->screen_fade;
     if (fade < 0.0f) {
         next = fade + 0.5f;
-        player->unk2A8 = next;
+        player->screen_fade = next;
         if (next >= 0.0f) {
-            player->unk2A8 = 0.0f;
+            player->screen_fade = 0.0f;
         }
     } else if (fade > 0.0f) {
         next = fade - 4.0f;
-        player->unk2A8 = next;
+        player->screen_fade = next;
         if (next <= 0.0f) {
-            player->unk2A8 = 0.0f;
+            player->screen_fade = 0.0f;
         }
     }
 }
 
 /* Fades the screen toward white (player_state.unk2A8 > 0) or black (< 0) by that amount. */
 void Player_DrawScreenFade(void) {
-    if (player_state.unk2A8 != 0.0f) {
+    if (player_state.screen_fade != 0.0f) {
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(GS_REG_TEST_1, 0x30000);
         Packet_AddGsRegister(GS_REG_ZBUF_1, 0x10A000118L);
         Packet_EndGsRegisters();
-        if (player_state.unk2A8 > 0.0f) {
-            GsDraw_FillScreen(0xFF, 0xFF, 0xFF, (int)player_state.unk2A8, 0x48);
-        } else if (player_state.unk2A8 < 0.0f) {
-            GsDraw_FillScreen(0, 0, 0, (int)-player_state.unk2A8, 0x44);
+        if (player_state.screen_fade > 0.0f) {
+            GsDraw_FillScreen(0xFF, 0xFF, 0xFF, (int)player_state.screen_fade, 0x48);
+        } else if (player_state.screen_fade < 0.0f) {
+            GsDraw_FillScreen(0, 0, 0, (int)-player_state.screen_fade, 0x44);
         }
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118L);
@@ -450,7 +450,7 @@ void Player_CountMagicUse(int effect_id) {
     row = slot / 5;
     column = slot % 5;
     if ((u32)row < 6 && column >= 0 && column < 5 && spell_experience[row][column] < 150) {
-        if (fx_table[effect_id].unk102 == 0) {
+        if (fx_table[effect_id].item_menu_magic == 0) {
             spell_experience[row][column] += 1;
         } else if ((u32)(effect_id - 0x10) < 3) {
             spell_experience[row][column] += 1;
@@ -517,10 +517,10 @@ void Player_CountWeaponUse(int weapon) {
 /* The weapon bounces off: unless it already did this swing, its sound stops, sound 1 plays and the weapon
    model goes back to motion 0; the swing hits nothing more (unk261). */
 void Player_BounceWeapon(void) {
-    if (player_state.unk261 == 0 && weapon_defs[player_state.weapon].unk63 != 2) {
+    if (player_state.weapon_bounced == 0 && weapon_defs[player_state.weapon].action_handler_index != 2) {
         Sound_StopVoice(2);
         Sound_PlaySw(1);
-        player_state.unk261 = 1;
+        player_state.weapon_bounced = 1;
         ModelMotion_BlendInto((ModelInstance *)D_00446978, 0, D_00446978->settings->unk82);
     }
 }
@@ -529,10 +529,10 @@ void Player_BounceWeapon(void) {
 void Player_BounceWeaponQuietly(void) {
     DisplayContext *display;
 
-    if (player_state.unk261 == 0 && weapon_defs[player_state.weapon].unk63 != 2) {
+    if (player_state.weapon_bounced == 0 && weapon_defs[player_state.weapon].action_handler_index != 2) {
         Sound_StopVoice(2);
         display = D_00446978;
-        player_state.unk261 = 1;
+        player_state.weapon_bounced = 1;
         ModelMotion_BlendInto((ModelInstance *)display, 0, display->settings->unk82);
     }
 }
@@ -541,17 +541,17 @@ void Player_BounceWeaponQuietly(void) {
 void Player_StrikeSolidObject(int with_sound) {
     PlayerState *player = &player_state;
 
-    if (player->unk262 == 0) {
+    if (player->struck_solid_object == 0) {
         if (with_sound) {
             Sound_PlayCommon(0x23);
         }
-        player->unk262 = 1;
+        player->struck_solid_object = 1;
     }
 }
 
 /* While a swing runs, keeps it from hitting anything more (unk263; a map change). */
 void Player_EndSwingHits(void) {
-    if (player_state.unk258 != 0) {
-        player_state.unk263 = 1;
+    if (player_state.item_action_step != 0) {
+        player_state.swing_ended = 1;
     }
 }

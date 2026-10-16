@@ -7,16 +7,16 @@
 /* game_status (cleared as 0x48 bytes by Map_ResetGameState). Other files still
    declare it as char[]/int[], so the extern stays in each file. */
 typedef struct {
-    char unk00;                     /* 0x00 nonzero: script blends are skipped */
+    char player_control;            /* 0x00 nonzero: script blends are skipped */
     char unk01;                     /* 0x01 */
     char paused;                    /* 0x02 1 while GameLoop_UpdatePause holds the game */
-    s8 unk03;                       /* 0x03 */
-    u8 unk04;                       /* 0x04 0 or 1 */
-    s8 unk05;                       /* 0x05 nonzero: the camera moves to CameraState.unk30 */
-    char unk06;                     /* 0x06 nonzero: the player cannot run (Player_Update) */
-    char unk07;                     /* 0x07 */
+    s8 camera_mode;                 /* 0x03 0 the camera follows the player, 1 the script places it */
+    u8 camera_look_mode;            /* 0x04 0 or 1 */
+    s8 camera_move_enabled;         /* 0x05 nonzero: the camera moves to CameraState.move_to_point */
+    char player_run_disabled;       /* 0x06 nonzero: the player cannot run (Player_Update) */
+    char movement_input_enabled;    /* 0x07 0: the player's move buttons are ignored */
     char pad08[0x18];
-    int unk20;                      /* 0x20 the item to use (Player_UseItem), with bit6 */
+    int item_to_use;                /* 0x20 the item to use (Player_UseItem), with bit6 */
     u32 bit0 : 1;                   /* 0x24 */
     u32 bit1 : 1;                   /* set while MapObject_UpdateClosedChest runs an event */
     u32 bit2 : 1;
@@ -31,13 +31,13 @@ typedef struct {
     u32 bit12 : 1;                  /* bits 12 and 13 both set: the main loop skips drawing and input */
     u32 bit13 : 1;
     u32 bit14 : 1;
-    int unk28;                      /* 0x28 */
-    int unk2C;                      /* 0x2C */
-    int unk30;                      /* 0x30 */
+    int magic_to_cast;              /* 0x28 the spell the magic menu asked for, cast after it */
+    int trade_screen_id;            /* 0x2C the trade screen ScriptCmd_OpenTrade asked for */
+    int update_hold_flags;          /* 0x30 bits hold off subsystems; bit 0 takes the player's control */
     int save_area;                  /* 0x34 the message id of the area name the save list shows (MapObject_UpdateSavePoint) */
     char pad38[0x08];
-    void *unk40;                    /* 0x40 the model of the item effect that asked for unk30 = 0xC5F (ItemEffect_StepRequestGameStatus) */
-    int unk44;                      /* 0x44 counts down to 0; 1 when an item was just used (Player_UseItem) */
+    void *effect_owner;             /* 0x40 the model of the item effect that asked for unk30 = 0xC5F (ItemEffect_StepRequestGameStatus) */
+    int item_use_cooldown;          /* 0x44 counts down to 0; 1 when an item was just used (Player_UseItem) */
 } GameStatus;
 
 /* GameStatus with bits 10 and 11 of the flag word (GameStatus.bits10) apart, as ScriptCmd_ExitMainLoop
@@ -80,37 +80,37 @@ typedef struct {
    so the extern stays in each file. */
 typedef struct {
     f32 position[4];                /* 0x00 */
-    f32 unk10;                      /* 0x10 rotation about x */
-    f32 unk14;                      /* 0x14 rotation about y */
-    f32 unk18;                      /* 0x18 rotation about z */
+    f32 pitch;                      /* 0x10 rotation about x */
+    f32 yaw;                        /* 0x14 rotation about y */
+    f32 roll;                       /* 0x18 rotation about z */
     char pad1C[0x04];
-    f32 unk20[4];                   /* 0x20 the point to look at (GameStatus.unk04) */
-    f32 unk30[4];                   /* 0x30 the point to move to (GameStatus.unk05) */
-    f32 unk40;                      /* 0x40 how fast it turns to unk20 */
-    f32 unk44;                      /* 0x44 how far it moves to unk30 in a frame */
-    f32 unk48;                      /* 0x48 512.0 after Map_ResetGameState */
-    f32 unk4C;                      /* 0x4C added to the height above the player */
-    f32 unk50[4];                   /* 0x50 the first shake's offset (GameLoop_UpdateCameraShake) */
-    f32 unk60[4];                   /* 0x60 the second shake's offset */
-    f32 unk70;                      /* 0x70 how far the first shake reaches */
-    s32 unk74;                      /* 0x74 frames of it left */
-    f32 unk78;                      /* 0x78 how far the second shake reaches (EntityAi_ShakeCamera) */
-    s32 unk7C;                      /* 0x7C frames of it left */
+    f32 look_at_point[4];           /* 0x20 the point to look at (GameStatus.camera_look_mode) */
+    f32 move_to_point[4];           /* 0x30 the point to move to (GameStatus.camera_move_enabled) */
+    f32 turn_speed;                 /* 0x40 how fast it turns to unk20 */
+    f32 move_speed;                 /* 0x44 how far it moves to unk30 in a frame */
+    f32 screen_scale;               /* 0x48 512.0 after Map_ResetGameState */
+    f32 height_offset;              /* 0x4C added to the height above the player */
+    f32 script_shake_offset[4];     /* 0x50 the first shake's offset (GameLoop_UpdateCameraShake) */
+    f32 entity_shake_offset[4];     /* 0x60 the second shake's offset */
+    f32 script_shake_reach;         /* 0x70 how far the first shake reaches */
+    s32 script_shake_frames;        /* 0x74 frames of it left */
+    f32 entity_shake_reach;         /* 0x78 how far the second shake reaches (EntityAi_ShakeCamera) */
+    s32 entity_shake_frames;        /* 0x7C frames of it left */
 } CameraState;
 
 /* D_00420D00: the event runner */
 typedef struct {
-    f32 unk00[4];                   /* 0x00 a position the camera is put in front of (GameLoop_UpdateCamera) */
-    f32 unk10[4];                   /* 0x10 a direction from it */
-    f32 unk20[4];                   /* 0x20 unk00 as it was the frame before (Interact_UpdateViewRay) */
-    f32 unk30[4];                   /* 0x30 unk10 as it was the frame before */
-    f32 unk40;                      /* 0x40 how far along unk10 */
-    f32 unk44;                      /* 0x44 unk40 as it was the frame before */
-    f32 unk48;                      /* 0x48 distance to the nearest entity around the player (Interact_FindTarget) */
-    f32 unk4C;                      /* 0x4C distance to what `current`, unk54 or unk58 names */
+    f32 view_origin[4];             /* 0x00 a position the camera is put in front of (GameLoop_UpdateCamera) */
+    f32 view_direction[4];          /* 0x10 a direction from it */
+    f32 prev_view_origin[4];        /* 0x20 unk00 as it was the frame before (Interact_UpdateViewRay) */
+    f32 prev_view_direction[4];     /* 0x30 unk10 as it was the frame before */
+    f32 view_distance;              /* 0x40 how far along unk10 */
+    f32 prev_view_distance;         /* 0x44 unk40 as it was the frame before */
+    f32 nearest_entity_distance;    /* 0x48 distance to the nearest entity around the player (Interact_FindTarget) */
+    f32 target_distance;            /* 0x4C distance to what `current`, unk54 or unk58 names */
     void *current;                  /* 0x50 the event being run */
-    void *unk54;                    /* 0x54 an Entity whose spawn info can answer the use of an item (Player_UseItem) */
-    void *unk58;                    /* 0x58 the ItemNode (kf_model.h) in front of the player, NULL: none (Interact_FindTarget) */
+    void *facing_entity;            /* 0x54 an Entity whose spawn info can answer the use of an item (Player_UseItem) */
+    void *facing_item;              /* 0x58 the ItemNode (kf_model.h) in front of the player, NULL: none (Interact_FindTarget) */
 } EventRunner;
 
 /* an event MapObject_OpenChestOnSignal hands to MapObject_UpdateClosedChest */
@@ -171,8 +171,8 @@ typedef struct {
     char unk20A;                    /* 0x20A System_InitMemory clears it */
     char unk20B;                    /* 0x20B System_InitMemory sets it to 2 */
     char pad20C[0x7];
-    char unk213;                    /* 0x213 nonzero: the clock stops */
-    char unk214;                    /* 0x214 nonzero: the clock stops */
+    char clock_stopped;             /* 0x213 nonzero: the clock stops */
+    char tick_held;                 /* 0x214 nonzero: the clock stops */
     char pad215[0x73];
     int flags;                      /* 0x288 0x200: tick every fourth frame */
 } ClockControl;
@@ -228,13 +228,13 @@ typedef struct {
    name (the items carried, then 70 weapons from ITEM_WEAPON_FIRST, then 160 worn ones from ITEM_WORN_FIRST) */
 typedef struct {
     char pad00[0x30];
-    u16 unk30;                      /* 0x30 the number in the name of its item_arm file (Player_LoadArmModels) */
+    u16 model_file_number;          /* 0x30 the number in the name of its item_arm file (Player_LoadArmModels) */
     char pad32[0x01];
-    u8 unk33;                       /* 0x33 */
+    u8 weight_tenths_of_kilogram;   /* 0x33 the item's weight in tenths of a kilogram */
     char pad34[0x08];
-    u8 unk3C;                       /* 0x3C */
+    u8 starting_level_percent;      /* 0x3C the percent a level record's level starts at for it */
     char pad3D[0x01];
-    u16 unk3E;                      /* 0x3E unk33 scaled by D_0043E568, worked out after loading */
+    u16 weight_tenths_of_pound;     /* 0x3E unk33 scaled by D_0043E568, worked out after loading */
 } GameDefinition;
 
 /* a GameDefinition as the menu code reads it: the record is word-aligned (LevelDef in kf_player.h

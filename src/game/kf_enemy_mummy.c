@@ -54,13 +54,13 @@ static s32 Mummy_BackwardsCommand(Entity *entity, s32 unused, f32 reach);
 /* Set-up of a type 39 entity: clears its work area and installs the type's handlers. */
 void Mummy_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    char *unk138 = entity->model->unk138;
+    char *unk138 = entity->model->look_at_part;
     s32 i;
 
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = Mummy_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))Mummy_OnHit;
@@ -68,10 +68,10 @@ void Mummy_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 3; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 5; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
@@ -81,27 +81,27 @@ void Mummy_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
 
 /* The think handler: as EntityAi_Think, with Mummy_ThinkCombat for state 2. Sets work byte
-   unk7A once Entity.unk2C is below half of EntityParams.unk0A. */
+   unk7A once Entity.hit_points is below half of EntityParams.hit_points. */
 static void Mummy_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->unk2C < entity->params->unk0A >> 1 && unkE0->unk7A == 0) {
-        unkE0->unk7A = 1;
+    if (entity->hit_points < entity->params->hit_points >> 1 && unkE0->step_index == 0) {
+        unkE0->step_index = 1;
     }
-    if (entity->unkC6 == 0) {
+    if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
@@ -152,14 +152,14 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
@@ -169,75 +169,75 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &player_state;
-            entity->unkA0 = rand() % 60 + 120;
-            unkE0->unk78 = 0;
+            entity->action_timer = rand() % 60 + 120;
+            unkE0->move_choice = 0;
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 30;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 30;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (unkE0->unk78 != 1) {
-        angle = EntityMath_AngleDifference(player_state.unk14, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
-        if (entity->unk60 - entity->radius - 100.0f < 200.0f && ABS(angle) < 0.6981317f) {
-            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+    if (unkE0->move_choice != 1) {
+        angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
+        if (entity->distance_to_player_3d - entity->radius - 100.0f < 200.0f && ABS(angle) < 0.6981317f) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(angle) > 0.6981317f && ABS(angle) < 1.5707964f) {
-                unkE0->unk78 = 1;
+                unkE0->move_choice = 1;
                 entity->target = &player_state;
-                entity->unkCD = 1;
-                entity->unkA0 = rand() % 60 + 90;
+                entity->combat_choice = 1;
+                entity->action_timer = rand() % 60 + 90;
             }
         }
     }
-    mode = entity->unkCD;
+    mode = entity->combat_choice;
     if (mode == 1) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-            if (unkE0->unk79 == 0) {
-                unkE0->unk79 = ABS(angle) > 0.5235988f;
-                if (unkE0->unk79 == 0) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
+            if (unkE0->turn_in_place == 0) {
+                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
+                if (unkE0->turn_in_place == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = EntityAi_TurnCommand(entity);
-            if (entity->unkC8 == 0) {
-                unkE0->unk79 = 0;
+            entity->move_command = EntityAi_TurnCommand(entity);
+            if (entity->move_command == 0) {
+                unkE0->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
-            switch (unkE0->unk78) {
+            switch (unkE0->move_choice) {
             case 0:
-                if (unkE0->unk7A != 0) {
+                if (unkE0->step_index != 0) {
                     if (turn > 0) {
-                        entity->unkC8 = 0x241;
+                        entity->move_command = 0x241;
                     } else if (turn < 0) {
-                        entity->unkC8 = 0x141;
+                        entity->move_command = 0x141;
                     } else {
-                        entity->unkC8 = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
+                        entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
                     }
                 } else {
                     if (turn > 0) {
-                        entity->unkC8 = 0x201;
+                        entity->move_command = 0x201;
                     } else if (turn < 0) {
-                        entity->unkC8 = 0x101;
+                        entity->move_command = 0x101;
                     } else {
-                        entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
+                        entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                     }
                 }
                 break;
             case 1:
                 if (turn > 0) {
-                    entity->unkC8 = 0x102;
+                    entity->move_command = 0x102;
                 } else if (turn < 0) {
-                    entity->unkC8 = 0x202;
+                    entity->move_command = 0x202;
                 } else {
                     // match: the caller passes an integer argument the callee does not take
-                    entity->unkC8 = Mummy_BackwardsCommand(entity, 0, entity->radius + 100.0f + 30.0f);
+                    entity->move_command = Mummy_BackwardsCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             }
@@ -274,7 +274,7 @@ static s32 Mummy_BackwardsCommand(Entity *entity, s32 unused, f32 reach) {
         return 0;
     }
     heading = EntityMath_HeadingTo(entity->model->position, entity->target);
-    turn = EntityMath_AngleDifference(entity->model->unkD0[1], heading);
+    turn = EntityMath_AngleDifference(entity->model->rotation[1], heading);
     limit = entity->params->turn_limit;
     if (0.0f <= turn ? limit < turn : limit < -turn) {
         command = 0x100;

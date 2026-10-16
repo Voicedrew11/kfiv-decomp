@@ -13,27 +13,27 @@ typedef struct {
 
 /* D_005CF3C0: the save screen SaveScreen_UpdateCardSelect runs each frame */
 typedef struct {
-    s32 unk00;                      /* 0x00 */
+    s32 card_update_result;         /* 0x00 SaveCard_Update's result: negative marks a card failure */
     char pad04[0x04];
-    s32 unk08;                      /* 0x08 */
-    s8 unk0C;                       /* 0x0C the selected card, 0 or 1 */
-    s8 unk0D;                       /* 0x0D the yes/no cursor of a question */
-    s8 unk0E;                       /* 0x0E */
+    s32 free_clusters;              /* 0x08 the selected card's free cluster count when last read */
+    s8 selected_card;               /* 0x0C the selected card, 0 or 1 */
+    s8 selected_save;               /* 0x0D the yes/no cursor of a question */
+    s8 confirm_choice;              /* 0x0E the yes/no cursor of the question: 0 saves, 1 cancels */
     char pad0F[0x02];
-    s8 unk11;                       /* 0x11 set when the screen is being left */
-    s8 unk12;                       /* 0x12 what the screen shows, -1: the card list */
-    s8 unk13;                       /* 0x13 */
-    s8 unk14;                       /* 0x14 set while a card operation runs */
+    s8 is_leaving;                  /* 0x11 set when the screen is being left */
+    s8 dialog_id;                   /* 0x12 what the screen shows, -1: the card list */
+    s8 list_step;                   /* 0x13 the step of the save list screen; -1: waiting for input */
+    s8 card_op_running;             /* 0x14 set while a card operation runs */
     char pad15[0x03];
-    s8 unk18;                       /* 0x18 set while input is ignored */
+    s8 input_locked;                /* 0x18 set while input is ignored */
     char pad19[0x02];
-    s8 unk1B;                       /* 0x1B */
+    s8 check_finished;              /* 0x1B 0 until the first card check has finished */
     char pad1C[0x01];
-    s8 unk1D;                       /* 0x1D */
-    s8 unk1E;                       /* 0x1E */
-    s8 unk1F;                       /* 0x1F */
-    s8 unk20;                       /* 0x20 */
-    s8 unk21;                       /* 0x21 set when a choice was confirmed */
+    s8 confirm_press_state;         /* 0x1D how the confirm press is stepped: 0 idle, 3 fires, 1 and 2 wait */
+    s8 save_state_0;                /* 0x1E what SaveCard_GetSaveState says of save 0 (1: there is one) */
+    s8 save_state_1;                /* 0x1F what SaveCard_GetSaveState says of save 1 */
+    s8 save_state_2;                /* 0x20 what SaveCard_GetSaveState says of save 2 */
+    s8 confirm_pending;             /* 0x21 set when a choice was confirmed */
     char pad22[0x0E];
 } SaveScreen;
 

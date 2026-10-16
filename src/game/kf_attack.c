@@ -24,7 +24,7 @@
     if (strength - whole > 0.001f) { \
         (dest) = whole + 1; \
     }
-#define SHOT_REQUEST ((Unk1B1470Request *)shot->unk04)
+#define SHOT_REQUEST ((Unk1B1470Request *)shot->attack_request)
 
 s32 Attack_RunSphere(Unk1B1470Request *, Unk1B1470Extra *);
 int func_001B1B80(void);
@@ -147,21 +147,21 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     s32 kind;
     s32 result;
 
-    if (request->unk4D & 4) {
+    if (request->target_mask & 4) {
         for (index = 0; index < 2; index++) {
-            if (map_slots[index].unk00 == 0) {
+            if (map_slots[index].loaded == 0) {
                 continue;
             }
             count = D_004467B8[index];
             object = map_slot_objects[index];
             for (item = 0; item < count; item++, object++) {
-                if (!(object->unk10 & 0x10000)) {
+                if (!(object->state_flags & 0x10000)) {
                     continue;
                 }
-                if ((request->unk4D & 0x80) && request->owner == (Entity *)object) {
+                if ((request->target_mask & 0x80) && request->owner == (Entity *)object) {
                     continue;
                 }
-                Collision_HitSphereObj(object, request->position, request->unk30);
+                Collision_HitSphereObj(object, request->position, request->radius);
                 if (COLLISION_RESULT->hit != 0) {
                     if (object_result == 0) {
                         object_result = 4;
@@ -179,16 +179,16 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             }
         }
     }
-    if (request->unk4D & 1) {
-        if (!((request->unk4D & 0x80) && IS_PLAYER(request->owner))) {
-            Collision_SphereCylinder(&player_state, request, 50.0f, 230.0f, request->unk30);
+    if (request->target_mask & 1) {
+        if (!((request->target_mask & 0x80) && IS_PLAYER(request->owner))) {
+            Collision_SphereCylinder(&player_state, request, 50.0f, 230.0f, request->radius);
             if (COLLISION_RESULT->hit != 0) {
                 Attack_HitPlayer(request, extra);
                 return 1;
             }
         }
     }
-    if (request->unk4D & 2) {
+    if (request->target_mask & 2) {
         for (entity = D_004467E0; entity != NULL; entity = entity->next) {
             if (!((s32)(entity->flags >> 1) & 1)) {
                 continue;
@@ -199,33 +199,33 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if (((s32)(entity->flags >> 2) & 3) >= 2) {
                 continue;
             }
-            if ((request->unk4D & 0x80) && request->owner == entity) {
+            if ((request->target_mask & 0x80) && request->owner == entity) {
                 continue;
             }
             if (!(entity->params->flags & 0x400)) {
                 if (((EntityParamsWord *)entity->params)->unk00 & 0x8000000) {
-                    Collision_SphereSphere(entity->model->position, request, entity->radius, request->unk30);
+                    Collision_SphereSphere(entity->model->position, request, entity->radius, request->radius);
                 } else {
-                    Collision_SphereCylinder(entity->model->position, request, entity->radius, entity->height, request->unk30);
+                    Collision_SphereCylinder(entity->model->position, request, entity->radius, entity->height, request->radius);
                 }
                 if (COLLISION_RESULT->hit != 0) {
                     Attack_HitEntity(request, extra, entity, 1.0f);
                     return 2;
                 }
             } else {
-                scale = LARGER(ENTITY_MODEL(entity)->unkE8, ENTITY_MODEL(entity)->unkE0);
-                ENTITY_MODEL(entity)->unk1B4(ENTITY_MODEL(entity));
-                body = entity->params->unk20;
+                scale = LARGER(ENTITY_MODEL(entity)->scale_z, ENTITY_MODEL(entity)->scale_x);
+                ENTITY_MODEL(entity)->update_bone_points(ENTITY_MODEL(entity));
+                body = entity->params->body_points;
                 for (index = 0; index < 4; index++, body++) {
                     if (!(body->unk00.flags & ENTITY_BODY_USED)) {
                         continue;
                     }
                     point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                     if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
-                        Collision_SphereCylinder(point, request, body->unk04 * scale, body->unk06 * ENTITY_MODEL(entity)->unkE4,
-                                      request->unk30);
+                        Collision_SphereCylinder(point, request, body->unk04 * scale, body->unk06 * ENTITY_MODEL(entity)->scale_y,
+                                      request->radius);
                     } else {
-                        Collision_SphereSphere(point, request, body->unk04 * scale, request->unk30);
+                        Collision_SphereSphere(point, request, body->unk04 * scale, request->radius);
                     }
                     if (COLLISION_RESULT->hit != 0) {
                         Attack_HitEntity(request, extra, entity, body->unk08);
@@ -237,29 +237,29 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     }
     if ((UNK1B1470_REQUEST_UNIT(request) & (0xC000L << 29)) == (0xC000L << 29)) {
         kind = 0;
-    } else if (request->unk4D & 8) {
+    } else if (request->target_mask & 8) {
         kind = 1;
     } else {
         kind = -1;
-        if (request->unk4D & 0x10) {
+        if (request->target_mask & 0x10) {
             kind = 2;
         }
     }
     if (kind != -1) {
         for (index = 0; index < 2; index++) {
-            if (map_slots[index].unk00 == 0) {
+            if (map_slots[index].loaded == 0) {
                 continue;
             }
             record = (MapRecordBounds *)map_slots[index].records;
             count = map_slots[index].header->record_count;
             for (item = 0; item < count; item++, record++) {
-                if (record->unk30 == 0xFFFF) {
+                if (record->model_index == 0xFFFF) {
                     continue;
                 }
-                if (record->unk3C & 0x40000000) {
+                if (record->record_flags & 0x40000000) {
                     continue;
                 }
-                reach = request->unk30;
+                reach = request->radius;
                 if (request->position[0] < record->lowest[0] - reach || record->highest[0] + reach < request->position[0] ||
                     request->position[1] < record->lowest[1] - reach || record->highest[1] + reach < request->position[1] ||
                     request->position[2] < record->lowest[2] - reach || record->highest[2] + reach < request->position[2]) {
@@ -329,17 +329,17 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     s32 count;
     s32 item;
 
-    if (request->unk4D & 1) {
-        if (!((request->unk4D & 0x80) && IS_PLAYER(request->owner))) {
-            Collision_CylinderArc(&player_state, request, 50.0f, 230.0f, request->unk30, request->unk34, request->unk3C,
-                          request->unk38);
+    if (request->target_mask & 1) {
+        if (!((request->target_mask & 0x80) && IS_PLAYER(request->owner))) {
+            Collision_CylinderArc(&player_state, request, 50.0f, 230.0f, request->radius, request->height, request->half_angle,
+                          request->facing);
             if (COLLISION_RESULT->hit != 0) {
                 Attack_HitPlayer(request, extra);
                 return 1;
             }
         }
     }
-    if (request->unk4D & 2) {
+    if (request->target_mask & 2) {
         for (entity = D_004467E0; entity != NULL; entity = entity->next) {
             if (!((s32)(entity->flags >> 1) & 1)) {
                 continue;
@@ -350,33 +350,33 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if (((s32)(entity->flags >> 2) & 3) >= 2) {
                 continue;
             }
-            if ((request->unk4D & 0x80) && request->owner == entity) {
+            if ((request->target_mask & 0x80) && request->owner == entity) {
                 continue;
             }
             if (!(entity->params->flags & 0x400)) {
                 if (IS_PLAYER(request->owner)) {
-                    Collision_CylinderArcPitch(entity->model->position, request, entity->radius, entity->height, request->unk30,
-                                  request->unk78, request->unk7C, request->unk3C, request->unk38, request->unk44,
-                                  request->unk40);
+                    Collision_CylinderArcPitch(entity->model->position, request, entity->radius, entity->height, request->radius,
+                                  request->lowest_y, request->highest_y, request->half_angle, request->facing, request->half_pitch,
+                                  request->pitch);
                 } else {
-                    Collision_CylinderArc(entity->model->position, request, entity->radius, entity->height, request->unk30,
-                                  request->unk34, request->unk3C, request->unk38);
+                    Collision_CylinderArc(entity->model->position, request, entity->radius, entity->height, request->radius,
+                                  request->height, request->half_angle, request->facing);
                 }
                 if (COLLISION_RESULT->hit != 0) {
                     Attack_HitEntity(request, extra, entity, 1.0f);
                     return 2;
                 }
             } else {
-                width_scale = LARGER(ENTITY_MODEL(entity)->unkE8, ENTITY_MODEL(entity)->unkE0);
-                scale = ENTITY_MODEL(entity)->unkE0;
-                if (scale < ENTITY_MODEL(entity)->unkE4) {
-                    scale = ENTITY_MODEL(entity)->unkE4;
+                width_scale = LARGER(ENTITY_MODEL(entity)->scale_z, ENTITY_MODEL(entity)->scale_x);
+                scale = ENTITY_MODEL(entity)->scale_x;
+                if (scale < ENTITY_MODEL(entity)->scale_y) {
+                    scale = ENTITY_MODEL(entity)->scale_y;
                 }
-                if (scale < ENTITY_MODEL(entity)->unkE8) {
-                    scale = ENTITY_MODEL(entity)->unkE8;
+                if (scale < ENTITY_MODEL(entity)->scale_z) {
+                    scale = ENTITY_MODEL(entity)->scale_z;
                 }
-                ENTITY_MODEL(entity)->unk1B4(ENTITY_MODEL(entity));
-                body = entity->params->unk20;
+                ENTITY_MODEL(entity)->update_bone_points(ENTITY_MODEL(entity));
+                body = entity->params->body_points;
                 for (index = 0; index < 4; index++, body++) {
                     if (!(body->unk00.flags & ENTITY_BODY_USED)) {
                         continue;
@@ -384,20 +384,20 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                     if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
                         if (IS_PLAYER(request->owner)) {
-                            Collision_CylinderArcPitch(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->unkE4,
-                                          request->unk30, request->unk78, request->unk7C, request->unk3C, request->unk38,
-                                          request->unk44, request->unk40);
+                            Collision_CylinderArcPitch(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->scale_y,
+                                          request->radius, request->lowest_y, request->highest_y, request->half_angle, request->facing,
+                                          request->half_pitch, request->pitch);
                         } else {
-                            Collision_CylinderArc(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->unkE4,
-                                          request->unk30, request->unk34, request->unk3C, request->unk38);
+                            Collision_CylinderArc(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->scale_y,
+                                          request->radius, request->height, request->half_angle, request->facing);
                         }
                     } else {
                         if (IS_PLAYER(request->owner)) {
-                            Collision_BallSwingPitch(point, request, body->unk04 * scale, request->unk30, request->unk78, request->unk7C,
-                                          request->unk3C, request->unk38, request->unk44, request->unk40);
+                            Collision_BallSwingPitch(point, request, body->unk04 * scale, request->radius, request->lowest_y, request->highest_y,
+                                          request->half_angle, request->facing, request->half_pitch, request->pitch);
                         } else {
-                            Collision_BallSwing(point, request, body->unk04 * scale, request->unk30, request->unk34,
-                                          request->unk3C, request->unk38);
+                            Collision_BallSwing(point, request, body->unk04 * scale, request->radius, request->height,
+                                          request->half_angle, request->facing);
                         }
                     }
                     if (COLLISION_RESULT->hit != 0) {
@@ -411,11 +411,11 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if (!IS_PLAYER(request->owner)) {
         return 0;
     }
-    if (request->unk4D & 4) {
+    if (request->target_mask & 4) {
         Vector_Copy(tip, request);
-        tip[1] += request->unk34;
+        tip[1] += request->height;
         for (index = 0; index < 2; index++) {
-            if (map_slots[index].unk00 == 0) {
+            if (map_slots[index].loaded == 0) {
                 continue;
             }
             count = D_004467B8[index];
@@ -477,12 +477,12 @@ int Attack_TestMapModel(ModelInstance *model, void *request, f32 reach) {
     if (mesh == NULL) {
         return;
     }
-    if (((CollisionMesh *)mesh)->unk0C < 4) {
+    if (((CollisionMesh *)mesh)->point_count < 4) {
         return;
     }
-    Vu0_LoadMatrix(model->unk40);
-    count = ((CollisionMesh *)mesh)->unk0C;
-    local = (Vector4 *)((CollisionMesh *)mesh)->unk08;
+    Vu0_LoadMatrix(model->model_matrix);
+    count = ((CollisionMesh *)mesh)->point_count;
+    local = (Vector4 *)((CollisionMesh *)mesh)->points;
     i = count / 3;
     do {
         __asm__ volatile("pref 0, 0x30(%0)\n" : : "r"(local));
@@ -570,12 +570,12 @@ int Attack_TestMapModelFloors(ModelInstance *model, void *request, f32 reach) {
     if (mesh == NULL) {
         return;
     }
-    if (((CollisionMesh *)mesh)->unk0C < 4) {
+    if (((CollisionMesh *)mesh)->point_count < 4) {
         return;
     }
-    Vu0_LoadMatrix(model->unk40);
-    count = ((CollisionMesh *)mesh)->unk0C;
-    local = (Vector4 *)((CollisionMesh *)mesh)->unk08;
+    Vu0_LoadMatrix(model->model_matrix);
+    count = ((CollisionMesh *)mesh)->point_count;
+    local = (Vector4 *)((CollisionMesh *)mesh)->points;
     i = count / 3;
     do {
         __asm__ volatile("pref 0, 0x30(%0)\n" : : "r"(local));
@@ -664,12 +664,12 @@ int Attack_TestMapModelWalls(ModelInstance *model, void *request, f32 reach) {
     if (mesh == NULL) {
         return;
     }
-    if (((CollisionMesh *)mesh)->unk0C < 4) {
+    if (((CollisionMesh *)mesh)->point_count < 4) {
         return;
     }
-    Vu0_LoadMatrix(model->unk40);
-    count = ((CollisionMesh *)mesh)->unk0C;
-    local = (Vector4 *)((CollisionMesh *)mesh)->unk08;
+    Vu0_LoadMatrix(model->model_matrix);
+    count = ((CollisionMesh *)mesh)->point_count;
+    local = (Vector4 *)((CollisionMesh *)mesh)->points;
     i = count / 3;
     do {
         __asm__ volatile("pref 0, 0x30(%0)\n" : : "r"(local));
@@ -747,7 +747,7 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     s32 damage;
 
     if (owner >= entity_pool[0] && owner < (Entity *)entity_pool_slots) {
-        if (extra->unk00 == 0) {
+        if (extra->is_magic_shot == 0) {
             owner->flags |= 0x8000L << 26;
         } else {
             owner->flags |= 0x8000L << 27;
@@ -756,13 +756,13 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if (player_state.hp_now == 0) {
         return;
     }
-    if (game_status.unk00 == 0) {
+    if (game_status.player_control == 0) {
         return;
     }
-    if (game_status.unk30 & 1) {
+    if (game_status.update_hold_flags & 1) {
         return;
     }
-    blocked = request->unk72;
+    blocked = request->player_hit_cooldown;
     if (blocked != 0) {
         return;
     }
@@ -783,15 +783,15 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[6], player_state.unk90.values[6], player_state.magic);
     damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[7], player_state.unk90.values[7], player_state.magic);
     damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[8], player_state.unk90.values[8], player_state.magic);
-    request->unk74 = 1;
+    request->landed_on_player = 1;
     if (damage <= blocked) { // match: blocked is request->unk72, which is known to be 0 here
         damage = 1;
     }
     Player_TakeDamage(damage);
     Attack_RollPlayerAilments(&request->unk62);
-    if (request->unk71 != 0) {
-        if (request->unk71 < player_state.mp_now) {
-            player_state.mp_now -= request->unk71;
+    if (request->mp_damage != 0) {
+        if (request->mp_damage < player_state.mp_now) {
+            player_state.mp_now -= request->mp_damage;
         } else {
             player_state.mp_now = 0;
         }
@@ -811,39 +811,39 @@ void Attack_RollPlayerAilments(void *attack_chances) {
     EntityParamsUnk240PartUnk12 *chances = attack_chances;
 
     if ((u16)chances->unk00[0] != 0 && player_state.flag_timers[0] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[0] - player_state.unkDC[0])) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[0] - player_state.ailment_defence[0])) {
             player_state.timed_flags[0] = 1800;
-            player_state.unk2C4 = D_00446ED4;
+            player_state.ailment0_start_frame = D_00446ED4;
         }
     }
     if ((u16)chances->unk00[1] != 0 && player_state.flag_timers[1] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[1] - player_state.unkDC[1])) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[1] - player_state.ailment_defence[1])) {
             player_state.timed_flags[1] = 150;
-            player_state.unk2C8 = D_00446ED4;
+            player_state.ailment1_start_frame = D_00446ED4;
         }
     }
     if ((u16)chances->unk00[2] != 0 && player_state.flag_timers[2] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[2] - player_state.unkDC[2])) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[2] - player_state.ailment_defence[2])) {
             player_state.timed_flags[2] = 3600;
-            player_state.unk2CC = D_00446ED4;
+            player_state.ailment2_start_frame = D_00446ED4;
         }
     }
     if ((u16)chances->unk00[3] != 0 && player_state.flag_timers[3] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[3] - player_state.unkDC[3])) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[3] - player_state.ailment_defence[3])) {
             player_state.timed_flags[3] = 5400;
-            player_state.unk2D0 = D_00446ED4;
+            player_state.ailment3_start_frame = D_00446ED4;
         }
     }
     if ((u16)chances->unk00[4] != 0 && player_state.flag_timers[4] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[4] - player_state.unkDC[4])) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[4] - player_state.ailment_defence[4])) {
             player_state.timed_flags[4] = 1800;
-            player_state.unk2D4 = D_00446ED4;
+            player_state.ailment4_start_frame = D_00446ED4;
         }
     }
     if ((u16)chances->unk00[5] != 0 && player_state.flag_timers[5] == 0) {
-        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[5] - player_state.unkDC[5])) {
+        if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[5] - player_state.ailment_defence[5])) {
             player_state.timed_flags[5] = 18000;
-            player_state.unk2D8 = D_00446ED4;
+            player_state.ailment5_start_frame = D_00446ED4;
         }
     }
 }
@@ -867,33 +867,33 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     owner = request->owner;
     by_weapon = FALSE;
     if (IS_PLAYER(owner)) {
-        by_weapon = extra->unk00 == 0;
+        by_weapon = extra->is_magic_shot == 0;
     }
     by_magic = FALSE;
     if (IS_PLAYER(owner)) {
-        by_magic = extra->unk00 == 1;
+        by_magic = extra->is_magic_shot == 1;
     }
 
     if (entity->spawn_info->type_id == ENTITY_TYPE_LAST_BOSS) {
         if (!IS_PLAYER(owner)) {
             return;
         }
-        if (entity->unk80 != 0) {
+        if (entity->hit_cooldown_frames != 0) {
             return;
         }
         entity->flags |= 0x8000L << 28;
-        entity->unk80 = 15;
+        entity->hit_cooldown_frames = 15;
         printf(D_0043F210, D_00446928);
         if (!by_weapon) {
             return;
         }
-        if (extra->unk04 != 0) {
+        if (extra->attack_request != 0) {
             return;
         }
         if (--D_00446928 <= 0) {
             return;
         }
-        Attack_WearWeapon(extra->unk24, 4);
+        Attack_WearWeapon(extra->weapon_index, 4);
         Player_BounceWeaponQuietly();
         Vector_Copy(&position, owner);
         if (player_state.position.x < entity->model->position[0]) {
@@ -916,8 +916,8 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     if (IS_PLAYER(owner) && (owner < entity_pool[0] || owner > &D_003D6C70)) {
         entity->flags |= 0x8000L << 28;
     }
-    if (extra->unk00 == 1) {
-        entity->unk82 = request->unk4F;
+    if (extra->is_magic_shot == 1) {
+        entity->stun_frames = request->stun_frames;
     }
     if ((s32)(entity->flags >> 18) & 1) {
         return;
@@ -925,62 +925,62 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     if (!((s32)(entity->flags >> 1) & 1)) {
         return;
     }
-    if (entity->unk2C == 0) {
+    if (entity->hit_points == 0) {
         return;
     }
-    if (entity->unk80 != 0) {
+    if (entity->hit_cooldown_frames != 0) {
         return;
     }
 
     Attack_GetEffectiveStrengths(&attack, request, extra);
     if (ENTITY_FLAG_BITS(entity)->bit35) {
-        physical_bonus = entity->params->unkD0;
-        magic_bonus = entity->params->unkD1;
+        physical_bonus = entity->params->guard_physical_bonus;
+        magic_bonus = entity->params->guard_magic_bonus;
     } else {
         physical_bonus = 0;
         magic_bonus = 0;
     }
 
     damage = 0;
-    if (entity->params->unkD4 < 100) {
-        damage = Attack_StrengthDamage(attack.unk00[0], request->unk50.unk00[0], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
-                               entity->params->unkE6 + physical_bonus + entity->params->unkD4);
+    if (entity->params->resist_slash < 100) {
+        damage = Attack_StrengthDamage(attack.unk00[0], request->unk50.unk00[0], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+                               entity->params->physical_defence + physical_bonus + entity->params->resist_slash);
     }
-    if (entity->params->unkD6 < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[1], request->unk50.unk00[1], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
-                                entity->params->unkE6 + physical_bonus + entity->params->unkD6);
+    if (entity->params->resist_hit < 100) {
+        damage += Attack_StrengthDamage(attack.unk00[1], request->unk50.unk00[1], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+                                entity->params->physical_defence + physical_bonus + entity->params->resist_hit);
     }
-    if (entity->params->unkD8 < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[2], request->unk50.unk00[2], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
-                                entity->params->unkE6 + physical_bonus + entity->params->unkD8);
+    if (entity->params->resist_stab < 100) {
+        damage += Attack_StrengthDamage(attack.unk00[2], request->unk50.unk00[2], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+                                entity->params->physical_defence + physical_bonus + entity->params->resist_stab);
     }
-    if (entity->params->unkDA < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[3], request->unk50.unk00[3], extra->unk22,
-                                entity->params->unkE8 + magic_bonus + entity->params->unkDA);
+    if (entity->params->resist_fire < 100) {
+        damage += Attack_StrengthDamage(attack.unk00[3], request->unk50.unk00[3], extra->player_magic,
+                                entity->params->magic_defence + magic_bonus + entity->params->resist_fire);
     }
-    if (entity->params->unkDC < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[4], request->unk50.unk00[4], extra->unk22,
-                                entity->params->unkE8 + magic_bonus + entity->params->unkDC);
+    if (entity->params->resist_earth < 100) {
+        damage += Attack_StrengthDamage(attack.unk00[4], request->unk50.unk00[4], extra->player_magic,
+                                entity->params->magic_defence + magic_bonus + entity->params->resist_earth);
     }
-    if (entity->params->unkDE < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[5], request->unk50.unk00[5], extra->unk22,
-                                entity->params->unkE8 + magic_bonus + entity->params->unkDE);
+    if (entity->params->resist_wind < 100) {
+        damage += Attack_StrengthDamage(attack.unk00[5], request->unk50.unk00[5], extra->player_magic,
+                                entity->params->magic_defence + magic_bonus + entity->params->resist_wind);
     }
-    if (entity->params->unkE0 < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[6], request->unk50.unk00[6], extra->unk22,
-                                entity->params->unkE8 + magic_bonus + entity->params->unkE0);
+    if (entity->params->resist_water < 100) {
+        damage += Attack_StrengthDamage(attack.unk00[6], request->unk50.unk00[6], extra->player_magic,
+                                entity->params->magic_defence + magic_bonus + entity->params->resist_water);
     }
-    if (entity->params->unkE2 < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[7], request->unk50.unk00[7], extra->unk22,
-                                entity->params->unkE8 + magic_bonus + entity->params->unkE2);
+    if (entity->params->resist_light < 100) {
+        damage += Attack_StrengthDamage(attack.unk00[7], request->unk50.unk00[7], extra->player_magic,
+                                entity->params->magic_defence + magic_bonus + entity->params->resist_light);
     }
-    if (entity->params->unkE4 < 100) {
-        damage += Attack_StrengthDamage(attack.unk00[8], request->unk50.unk00[8], extra->unk22,
-                                entity->params->unkE8 + magic_bonus + entity->params->unkE4);
+    if (entity->params->resist_dark < 100) {
+        damage += Attack_StrengthDamage(attack.unk00[8], request->unk50.unk00[8], extra->player_magic,
+                                entity->params->magic_defence + magic_bonus + entity->params->resist_dark);
     }
 
     if (by_weapon) {
-        damage = damage * extra->unk02 / 5000;
+        damage = damage * extra->strength_gauge / 5000;
     }
     damage *= scale;
 
@@ -994,8 +994,8 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
             }
         }
     }
-    if (by_weapon && request->unk6F != 0) {
-        chance = request->unk6F - entity->params->unkC9;
+    if (by_weapon && request->double_hit_chance_percent != 0) {
+        chance = request->double_hit_chance_percent - entity->params->critical_defence;
         if (ROLL_PERCENT() < chance) {
             damage *= 2;
         }
@@ -1003,62 +1003,62 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
 
     if (damage > 0) {
         if (by_weapon) {
-            Player_CountWeaponUse(extra->unk24);
+            Player_CountWeaponUse(extra->weapon_index);
         }
-        if (by_magic && extra->unk1C == 0) {
-            Player_CountMagicUse(extra->unk26);
-            extra->unk1C = 1;
+        if (by_magic && extra->magic_use_counted == 0) {
+            Player_CountMagicUse(extra->magic_id);
+            extra->magic_use_counted = 1;
         }
     }
 
-    if (by_weapon && extra->unk04 == 0) {
-        percent = damage * 100.0f / entity->params->unk0A;
+    if (by_weapon && extra->attack_request == 0) {
+        percent = damage * 100.0f / entity->params->hit_points;
         if (damage <= 0) {
-            Attack_WearWeapon(extra->unk24, 4);
+            Attack_WearWeapon(extra->weapon_index, 4);
             Player_BounceWeapon();
             return;
         }
         if (percent < 10.0f) {
-            Attack_WearWeapon(extra->unk24, 2);
+            Attack_WearWeapon(extra->weapon_index, 2);
         } else if (percent < 100.0f) {
-            Attack_WearWeapon(extra->unk24, 1);
+            Attack_WearWeapon(extra->weapon_index, 1);
         }
     }
 
     if (damage <= 0) {
         return;
     }
-    if (damage < entity->unk2C) {
-        entity->unk2C -= damage;
+    if (damage < entity->hit_points) {
+        entity->hit_points -= damage;
     } else {
-        entity->unk2C = 0;
+        entity->hit_points = 0;
     }
-    entity->unk2E = damage;
-    entity->unk80 = 15;
+    entity->last_hit_damage = damage;
+    entity->hit_cooldown_frames = 15;
 
-    percent = damage * 100.0f / entity->params->unk0A;
+    percent = damage * 100.0f / entity->params->hit_points;
     ENTITY_FLAG_HIT_BITS(entity)->hit_strength = percent < 33.3334f ? 1 : 2;
     ENTITY_FLAG_HIT_BITS(entity)->hit_source = by_weapon ? 1 : by_magic ? 2 : 0; // match: a shift of by_magic in retail too
 
     // match: three stores to unk6C, one per arm, give retail's single shared call and store
-    if (by_weapon && extra->unk04 == 0) {
-        entity->unk6C = request->unk38;
-    } else if (request->position[0] != request->unk10[0] || request->position[1] != request->unk10[1] ||
-               request->position[2] != request->unk10[2]) {
-        entity->unk6C = atan2f(request->position[0] - request->unk10[0], request->position[2] - request->unk10[2]);
+    if (by_weapon && extra->attack_request == 0) {
+        entity->knockback_heading = request->facing;
+    } else if (request->position[0] != request->previous_position[0] || request->position[1] != request->previous_position[1] ||
+               request->position[2] != request->previous_position[2]) {
+        entity->knockback_heading = atan2f(request->position[0] - request->previous_position[0], request->position[2] - request->previous_position[2]);
     } else {
-        entity->unk6C = atan2f(entity->model->position[0] - request->position[0], entity->model->position[2] - request->position[2]);
+        entity->knockback_heading = atan2f(entity->model->position[0] - request->position[0], entity->model->position[2] - request->position[2]);
     }
 
     if (by_weapon || by_magic) {
-        if (player_state.unk100 != 0 && player_state.hp_now > 0) {
-            player_state.hp_now += damage * player_state.unk100 / 100;
+        if (player_state.damage_to_hp_percent != 0 && player_state.hp_now > 0) {
+            player_state.hp_now += damage * player_state.damage_to_hp_percent / 100;
             if (player_state.hp_max < player_state.hp_now) {
                 player_state.hp_now = player_state.hp_max;
             }
         }
-        if (player_state.unk104 != 0) {
-            player_state.mp_now += damage * player_state.unk104 / 100;
+        if (player_state.damage_to_mp_percent != 0) {
+            player_state.mp_now += damage * player_state.damage_to_mp_percent / 100;
             if (player_state.mp_max < player_state.mp_now) {
                 player_state.mp_now = player_state.mp_max;
             }
@@ -1069,14 +1069,14 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
     // match: flag bit 40 (still named pad40); the source bit is read as a u8 field
     ENTITY_FLAG_BITS(entity)->pad40 = ((Unk1B1470RequestBits *)request)->unk4C_3;
 
-    if (by_magic && request->unk70 != 0 && damage > 0) {
-        chance = request->unk70 - entity->params->unkC9;
+    if (by_magic && request->instant_kill_chance_percent != 0 && damage > 0) {
+        chance = request->instant_kill_chance_percent - entity->params->critical_defence;
         if (ROLL_PERCENT() < chance) {
-            entity->unk2C = 0;
+            entity->hit_points = 0;
         }
     }
 
-    if (by_weapon && extra->unk04 == 0) {
+    if (by_weapon && extra->attack_request == 0) {
         if (attack.unk00[0] >= attack.unk00[1] && attack.unk00[0] >= attack.unk00[2]) {
             Sound_PlayCommon(0x32);
         } else if (attack.unk00[1] >= attack.unk00[2]) {
@@ -1090,21 +1090,21 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
 /* A hit may start the entity's four ailments: each has a chance in percent in the attack,
    less the entity's resistance to it. The last one started is the one that tints the model. */
 void Attack_RollEntityAilments(Entity *entity, EntityParamsUnk240PartUnk12 *chances) {
-    if ((u16)chances->unk00[0] != 0 && ROLL_PERCENT() < (u16)chances->unk00[0] - entity->params->unkEA) {
-        entity->unk20 = 1800;
-        entity->unk26 = 1;
+    if ((u16)chances->unk00[0] != 0 && ROLL_PERCENT() < (u16)chances->unk00[0] - entity->params->ailment_defence_1) {
+        entity->ailment_1_frames = 1800;
+        entity->ailment_tint_index = 1;
     }
-    if ((u16)chances->unk00[2] != 0 && ROLL_PERCENT() < (u16)chances->unk00[2] - entity->params->unkEB) {
-        entity->unk24 = 3600;
-        entity->unk26 = 2;
+    if ((u16)chances->unk00[2] != 0 && ROLL_PERCENT() < (u16)chances->unk00[2] - entity->params->ailment_defence_2) {
+        entity->ailment_2_frames = 3600;
+        entity->ailment_tint_index = 2;
     }
-    if ((u16)chances->unk00[4] != 0 && ROLL_PERCENT() < (u16)chances->unk00[4] - entity->params->unkEC) {
-        entity->unk28 = 1800;
-        entity->unk26 = 3;
+    if ((u16)chances->unk00[4] != 0 && ROLL_PERCENT() < (u16)chances->unk00[4] - entity->params->ailment_defence_3) {
+        entity->ailment_3_frames = 1800;
+        entity->ailment_tint_index = 3;
     }
-    if ((u16)chances->unk00[5] != 0 && ROLL_PERCENT() < (u16)chances->unk00[5] - entity->params->unkED) {
-        entity->unk2A = 3600;
-        entity->unk26 = 4;
+    if ((u16)chances->unk00[5] != 0 && ROLL_PERCENT() < (u16)chances->unk00[5] - entity->params->ailment_defence_4) {
+        entity->ailment_4_frames = 3600;
+        entity->ailment_tint_index = 4;
     }
 }
 
@@ -1115,21 +1115,21 @@ void Attack_HitMapObject(Unk1B1470Request *request, Unk1B1470Extra *extra, MapOb
     s32 by_weapon;
     s32 damage;
 
-    if (object->unk08->unk30 == 0x201) {
+    if (object->source->def_index == 0x201) {
         if (!IS_PLAYER(request->owner)) {
             return;
         }
-        if (extra->unk00 != 0) {
+        if (extra->is_magic_shot != 0) {
             return;
         }
-        if (extra->unk04 != 0) {
+        if (extra->attack_request != 0) {
             return;
         }
         if (player_state.weapon == 0x2E) {
             MapObject_Break(object);
             return;
         }
-        Attack_WearWeapon(extra->unk24, 4);
+        Attack_WearWeapon(extra->weapon_index, 4);
         Player_BounceWeapon();
         return;
     }
@@ -1140,81 +1140,81 @@ void Attack_HitMapObject(Unk1B1470Request *request, Unk1B1470Extra *extra, MapOb
     if (!IS_PLAYER(request->owner)) {
         return;
     }
-    by_weapon = extra->unk00 == 0;
+    by_weapon = extra->is_magic_shot == 0;
     if (!(MAP_OBJECT_DEF_WORD(object) & 0x800)) {
-        if (extra->unk00 != 0) {
+        if (extra->is_magic_shot != 0) {
             return;
         }
-        if (extra->unk04 != 0) {
+        if (extra->attack_request != 0) {
             return;
         }
-        Attack_WearWeapon(extra->unk24, 4);
+        Attack_WearWeapon(extra->weapon_index, 4);
         Player_BounceWeapon();
         return;
     }
 
     Attack_GetEffectiveStrengths(&attack, request, extra);
     damage = 0;
-    if (object->unk04->unk52[0] < 200) {
-        damage = Attack_StrengthDamage(attack.unk00[0], request->unk50.unk00[0], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
-                               object->unk04->unk52[0]);
+    if (object->definition->hit_resist_percent[0] < 200) {
+        damage = Attack_StrengthDamage(attack.unk00[0], request->unk50.unk00[0], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+                               object->definition->hit_resist_percent[0]);
     }
-    if (object->unk04->unk52[1] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[1], request->unk50.unk00[1], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
-                                object->unk04->unk52[1]);
+    if (object->definition->hit_resist_percent[1] < 200) {
+        damage += Attack_StrengthDamage(attack.unk00[1], request->unk50.unk00[1], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+                                object->definition->hit_resist_percent[1]);
     }
-    if (object->unk04->unk52[2] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[2], request->unk50.unk00[2], extra->unk00 == 0 ? extra->unk20 : extra->unk22,
-                                object->unk04->unk52[2]);
+    if (object->definition->hit_resist_percent[2] < 200) {
+        damage += Attack_StrengthDamage(attack.unk00[2], request->unk50.unk00[2], extra->is_magic_shot == 0 ? extra->player_power : extra->player_magic,
+                                object->definition->hit_resist_percent[2]);
     }
-    if (object->unk04->unk52[3] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[3], request->unk50.unk00[3], extra->unk22, object->unk04->unk52[3]);
+    if (object->definition->hit_resist_percent[3] < 200) {
+        damage += Attack_StrengthDamage(attack.unk00[3], request->unk50.unk00[3], extra->player_magic, object->definition->hit_resist_percent[3]);
     }
-    if (object->unk04->unk52[4] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[4], request->unk50.unk00[4], extra->unk22, object->unk04->unk52[4]);
+    if (object->definition->hit_resist_percent[4] < 200) {
+        damage += Attack_StrengthDamage(attack.unk00[4], request->unk50.unk00[4], extra->player_magic, object->definition->hit_resist_percent[4]);
     }
-    if (object->unk04->unk52[5] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[5], request->unk50.unk00[5], extra->unk22, object->unk04->unk52[5]);
+    if (object->definition->hit_resist_percent[5] < 200) {
+        damage += Attack_StrengthDamage(attack.unk00[5], request->unk50.unk00[5], extra->player_magic, object->definition->hit_resist_percent[5]);
     }
-    if (object->unk04->unk52[6] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[6], request->unk50.unk00[6], extra->unk22, object->unk04->unk52[6]);
+    if (object->definition->hit_resist_percent[6] < 200) {
+        damage += Attack_StrengthDamage(attack.unk00[6], request->unk50.unk00[6], extra->player_magic, object->definition->hit_resist_percent[6]);
     }
-    if (object->unk04->unk52[7] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[7], request->unk50.unk00[7], extra->unk22, object->unk04->unk52[7]);
+    if (object->definition->hit_resist_percent[7] < 200) {
+        damage += Attack_StrengthDamage(attack.unk00[7], request->unk50.unk00[7], extra->player_magic, object->definition->hit_resist_percent[7]);
     }
-    if (object->unk04->unk52[8] < 200) {
-        damage += Attack_StrengthDamage(attack.unk00[8], request->unk50.unk00[8], extra->unk22, object->unk04->unk52[8]);
+    if (object->definition->hit_resist_percent[8] < 200) {
+        damage += Attack_StrengthDamage(attack.unk00[8], request->unk50.unk00[8], extra->player_magic, object->definition->hit_resist_percent[8]);
     }
 
     if (by_weapon) {
-        damage = damage * extra->unk02 / 5000;
+        damage = damage * extra->strength_gauge / 5000;
     }
     if ((MAP_OBJECT_DEF_WORD(object) & 0x2000) && by_weapon) {
-        damage *= request->unk6E;
+        damage *= request->map_object_damage_multiplier;
     }
-    if (damage >= MAP_OBJECT_DEF_TOUGHNESS(object->unk04)) {
+    if (damage >= MAP_OBJECT_DEF_TOUGHNESS(object->definition)) {
         MapObject_Break(object);
         return;
     }
-    if (player_state.unk262 != 0) {
+    if (player_state.struck_solid_object != 0) {
         return;
     }
-    if (extra->unk00 != 0) {
+    if (extra->is_magic_shot != 0) {
         return;
     }
-    if (extra->unk04 != 0) {
+    if (extra->attack_request != 0) {
         return;
     }
-    Attack_WearWeapon(extra->unk24, 4);
-    Player_StrikeSolidObject(object->unk08->unk30 != 0x1C && object->unk08->unk30 != 0xFF);
+    Attack_WearWeapon(extra->weapon_index, 4);
+    Player_StrikeSolidObject(object->source->def_index != 0x1C && object->source->def_index != 0xFF);
 }
 
 /* An attack struck the map: the player's weapon wears and bounces off. */
 int Attack_HitMap(Unk1B1470Request *request, Unk1B1470Extra *extra) {
     if (IS_PLAYER(request->owner)) {
-        if (extra->unk00 == 0) {
-            Attack_WearWeapon(extra->unk24, 4);
-            if (extra->unk04 == 0) {
+        if (extra->is_magic_shot == 0) {
+            Attack_WearWeapon(extra->weapon_index, 4);
+            if (extra->attack_request == 0) {
                 return ((int (*)(void))Player_BounceWeapon)(); // match: a tail call, as if it returned int
             }
         }
@@ -1231,29 +1231,29 @@ void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *out, Unk1B1470Req
     s32 whole;
 
     if (request->owner == (Entity *)&player_state) {
-        if (extra->unk00 == 0) {
-            STORE_ROUNDED_UP(out->unk00[0], (f32)request->unk50.unk00[0] + (f32)extra->unk20 * (f32)request->unk50.unk00[0] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[1], (f32)request->unk50.unk00[1] + (f32)extra->unk20 * (f32)request->unk50.unk00[1] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[2], (f32)request->unk50.unk00[2] + (f32)extra->unk20 * (f32)request->unk50.unk00[2] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[3], (f32)request->unk50.unk00[3] + (f32)extra->unk22 * (f32)request->unk50.unk00[3] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[4], (f32)request->unk50.unk00[4] + (f32)extra->unk22 * (f32)request->unk50.unk00[4] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[5], (f32)request->unk50.unk00[5] + (f32)extra->unk22 * (f32)request->unk50.unk00[5] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[6], (f32)request->unk50.unk00[6] + (f32)extra->unk22 * (f32)request->unk50.unk00[6] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[7], (f32)request->unk50.unk00[7] + (f32)extra->unk22 * (f32)request->unk50.unk00[7] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[8], (f32)request->unk50.unk00[8] + (f32)extra->unk22 * (f32)request->unk50.unk00[8] / 50.0f);
+        if (extra->is_magic_shot == 0) {
+            STORE_ROUNDED_UP(out->unk00[0], (f32)request->unk50.unk00[0] + (f32)extra->player_power * (f32)request->unk50.unk00[0] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[1], (f32)request->unk50.unk00[1] + (f32)extra->player_power * (f32)request->unk50.unk00[1] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[2], (f32)request->unk50.unk00[2] + (f32)extra->player_power * (f32)request->unk50.unk00[2] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[3], (f32)request->unk50.unk00[3] + (f32)extra->player_magic * (f32)request->unk50.unk00[3] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[4], (f32)request->unk50.unk00[4] + (f32)extra->player_magic * (f32)request->unk50.unk00[4] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[5], (f32)request->unk50.unk00[5] + (f32)extra->player_magic * (f32)request->unk50.unk00[5] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[6], (f32)request->unk50.unk00[6] + (f32)extra->player_magic * (f32)request->unk50.unk00[6] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[7], (f32)request->unk50.unk00[7] + (f32)extra->player_magic * (f32)request->unk50.unk00[7] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[8], (f32)request->unk50.unk00[8] + (f32)extra->player_magic * (f32)request->unk50.unk00[8] / 50.0f);
         } else {
-            STORE_ROUNDED_UP(out->unk00[0], (f32)request->unk50.unk00[0] + (f32)extra->unk22 * (f32)request->unk50.unk00[0] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[1], (f32)request->unk50.unk00[1] + (f32)extra->unk22 * (f32)request->unk50.unk00[1] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[2], (f32)request->unk50.unk00[2] + (f32)extra->unk22 * (f32)request->unk50.unk00[2] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[3], request->unk50.unk00[3] + (f32)extra->unk22 * request->unk50.unk00[3] / 50.0f + extra->unk0E[0] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[4], request->unk50.unk00[4] + (f32)extra->unk22 * request->unk50.unk00[4] / 50.0f + extra->unk0E[1] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[5], request->unk50.unk00[5] + (f32)extra->unk22 * request->unk50.unk00[5] / 50.0f + extra->unk0E[2] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[6], request->unk50.unk00[6] + (f32)extra->unk22 * request->unk50.unk00[6] / 50.0f + extra->unk0E[3] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[7], request->unk50.unk00[7] + (f32)extra->unk22 * request->unk50.unk00[7] / 50.0f + extra->unk0E[4] / 50.0f);
-            STORE_ROUNDED_UP(out->unk00[8], request->unk50.unk00[8] + (f32)extra->unk22 * request->unk50.unk00[8] / 50.0f + extra->unk0E[5] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[0], (f32)request->unk50.unk00[0] + (f32)extra->player_magic * (f32)request->unk50.unk00[0] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[1], (f32)request->unk50.unk00[1] + (f32)extra->player_magic * (f32)request->unk50.unk00[1] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[2], (f32)request->unk50.unk00[2] + (f32)extra->player_magic * (f32)request->unk50.unk00[2] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[3], request->unk50.unk00[3] + (f32)extra->player_magic * request->unk50.unk00[3] / 50.0f + extra->worn_magic_bonus[0] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[4], request->unk50.unk00[4] + (f32)extra->player_magic * request->unk50.unk00[4] / 50.0f + extra->worn_magic_bonus[1] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[5], request->unk50.unk00[5] + (f32)extra->player_magic * request->unk50.unk00[5] / 50.0f + extra->worn_magic_bonus[2] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[6], request->unk50.unk00[6] + (f32)extra->player_magic * request->unk50.unk00[6] / 50.0f + extra->worn_magic_bonus[3] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[7], request->unk50.unk00[7] + (f32)extra->player_magic * request->unk50.unk00[7] / 50.0f + extra->worn_magic_bonus[4] / 50.0f);
+            STORE_ROUNDED_UP(out->unk00[8], request->unk50.unk00[8] + (f32)extra->player_magic * request->unk50.unk00[8] / 50.0f + extra->worn_magic_bonus[5] / 50.0f);
         }
     } else if (request->owner >= entity_pool[0] && request->owner <= &D_003D6C70) {
-        if (extra->unk00 == 0) {
+        if (extra->is_magic_shot == 0) {
             *out = request->unk50;
         } else {
             Entity *owner = request->owner;
@@ -1269,7 +1269,7 @@ void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *out, Unk1B1470Req
             STORE_ROUNDED_UP(out->unk00[8], request->unk50.unk00[8] * (f32)ENTITY_HIT_SCALES(owner)[5] / 10.0f);
         }
     } else {
-        if (extra->unk00 == 0) {
+        if (extra->is_magic_shot == 0) {
             *out = request->unk50;
         } else {
             out->unk00[0] = 0;
@@ -1327,7 +1327,7 @@ void Attack_WearWeapon(int idx, int amount) {
         item = &weapon_defs[idx];
         def = &D_00416D78[idx];
         rec = &weapon_level_records[idx];
-        if (item->unk63 < 2 && rec->level >= 0x33) {
+        if (item->action_handler_index < 2 && rec->level >= 0x33) {
             rec->exp += amount;
             while (rec->exp >= def->exp_per_level) {
                 rec->exp -= def->exp_per_level;
@@ -1363,12 +1363,12 @@ void Attack_WearArmorFromHit(int damage, Unk1B1470Request *request) {
     armor_exp = 0;
     gloves_exp = 0;
     boots_exp = 0;
-    if (request->unk4E != 0) {
-        part = request->unk4E;
+    if (request->hit_armor_part != 0) {
+        part = request->hit_armor_part;
     } else {
         part = (int)(rand() * 4.0f * 4.656613e-10f) + 1;
     }
-    if (!((s32)(player_state.unk1C8 >> 35) & 1) && player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
+    if (!((s32)(player_state.status_bits >> 35) & 1) && player_state.equipment[EQUIP_SHIELD] != ITEM_WORN_INDEX(ITEM_SHIELD_NONE)) {
         shield_exp = 1;
         if (!(percent < 5.0f)) {
             shield_exp = amount * 2;
@@ -1436,7 +1436,7 @@ void Attack_WearWornItem(int idx, int amount) {
 
 /* Drains amount of the player's MP: Player_Update takes it off next frame and tints the screen. */
 void Attack_DrainPlayerMp(int amount) {
-    player_state.unk2A0 += amount;
+    player_state.pending_mp_drain += amount;
 }
 
 /* Loads the magic table fx_table from param/magic.prm. */
@@ -1456,10 +1456,10 @@ int Attack_LaunchMagicEffect(u16 effect_id, void *shot, void *from, void *angles
         return 0;
     }
     entry = &fx_table[effect_id];
-    if (entry->unk102 != 0) {
+    if (entry->item_menu_magic != 0) {
         return 0;
     }
-    return Effect_Spawn(entry->unk100, from, angles, entity, effect_id, shot);
+    return Effect_Spawn(entry->effect_id, from, angles, entity, effect_id, shot);
 }
 
 /* The hit check of an effect: builds the attack request from the effect table's row
@@ -1476,25 +1476,25 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     if (effect == NULL) {
         return 0;
     }
-    if (effect->effect_param < 0x100 && effect->def->unk10B < 3) {
-        check = &fx_table[effect->effect_param].hit_checks[effect->def->unk10B];
+    if (effect->effect_param < 0x100 && effect->def->hit_check_index < 3) {
+        check = &fx_table[effect->effect_param].hit_checks[effect->def->hit_check_index];
         memset(&request, 0, sizeof(request));
         switch (check->shape) {
         case 0:
             position = &effect->unk70;
-            request.unk30 = check->unk1E;
-            request.unk4C_0 = 0;
+            request.radius = check->unk1E;
+            request.shape = 0;
             break;
         case 1:
             position = &effect->unk70;
-            request.unk30 = check->unk1E;
-            request.unk4C_0 = 1;
-            request.unk34 = check->unk20;
+            request.radius = check->unk1E;
+            request.shape = 1;
+            request.height = check->unk20;
             break;
         case 2:
             position = &effect->unk70;
-            request.unk4C_0 = 2;
-            Vector_Copy(request.unk20, position);
+            request.shape = 2;
+            Vector_Copy(request.second_point, position);
             break;
         default:
             return 0;
@@ -1503,51 +1503,51 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
         return 0;
     }
     Vector_Copy(request.position, &effect->model->position);
-    Vector_Copy(request.unk10, position);
+    Vector_Copy(request.previous_position, position);
     request.owner = effect->owner_entity;
     request.unk4C_2 = 0;
-    request.unk4D = 0;
+    request.target_mask = 0;
     if (check->unk23 & 1) {
-        request.unk4D = 1;
+        request.target_mask = 1;
     }
     if (check->unk23 & 2) {
-        request.unk4D |= 2;
+        request.target_mask |= 2;
     }
     if (check->unk23 & 4) {
-        request.unk4D |= 4;
+        request.target_mask |= 4;
     }
     if (check->unk23 & 8) {
-        request.unk4D |= 8;
+        request.target_mask |= 8;
     }
     if (check->unk23 & 0x10) {
-        request.unk4D |= 0x10;
+        request.target_mask |= 0x10;
     }
     if (check->unk23 & 0x20) {
-        request.unk4D |= 0x20;
+        request.target_mask |= 0x20;
     }
     if (check->unk23 & 0x80) {
-        request.unk4D |= 0x80;
+        request.target_mask |= 0x80;
     }
     shot = effect->owner;
-    if (shot->unk04 == 0) {
+    if (shot->attack_request == 0) {
         request.unk50 = check->strengths;
         request.unk62 = check->unk12;
-        request.unk4C_3 = check->unk26 != 0;
-        request.unk4F = check->unk25;
-        request.unk70 = check->unk27;
-        request.unk72 = EFFECT_FLAG_PARTS(effect)->unk40;
-        request.unk6F = 0;
+        request.knockback = check->unk26 != 0;
+        request.stun_frames = check->unk25;
+        request.instant_kill_chance_percent = check->unk27;
+        request.player_hit_cooldown = EFFECT_FLAG_PARTS(effect)->unk40;
+        request.double_hit_chance_percent = 0;
         hits = Attack_Run(&request, shot);
-        if (hits != 0 && (s8)request.unk74 != 0 && EFFECT_FLAG_PARTS(effect)->unk40 == 0) {
+        if (hits != 0 && (s8)request.landed_on_player != 0 && EFFECT_FLAG_PARTS(effect)->unk40 == 0) {
             EFFECT_FLAG_PARTS(effect)->unk40 = check->unk24;
         }
     } else {
         request.unk50 = SHOT_REQUEST->unk50;
         request.unk62 = SHOT_REQUEST->unk62;
-        request.unk4C_3 = ((Unk1B1470RequestBits *)SHOT_REQUEST)->unk4C_3;
-        request.unk70 = 0;
-        request.unk4F = 0;
-        request.unk6F = SHOT_REQUEST->unk6F;
+        request.knockback = ((Unk1B1470RequestBits *)SHOT_REQUEST)->unk4C_3;
+        request.instant_kill_chance_percent = 0;
+        request.stun_frames = 0;
+        request.double_hit_chance_percent = SHOT_REQUEST->double_hit_chance_percent;
         hits = Attack_Run(&request, shot);
     }
     return hits;

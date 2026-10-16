@@ -80,13 +80,13 @@ void FireLord_DrawAfterimages(Entity *entity, s32 list);
 /* Set-up of a type 24 entity: clears its work area and installs the type's handlers. */
 void FireLord_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    char *unk138 = entity->model->unk138;
+    char *unk138 = entity->model->look_at_part;
     s32 i;
 
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = FireLord_Think;
     unkE0->animate = (void (*)(void))FireLord_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -94,10 +94,10 @@ void FireLord_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 3; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 5; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
@@ -107,11 +107,11 @@ void FireLord_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
     D_003E7300 = *(ModelInstanceBlock *)entity->model;
@@ -130,21 +130,21 @@ static void FireLord_Animate(Entity *entity) {
     flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->unkFC->unk88;
+        blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
         look_at_target = ENTITY_FLAG_BITS(entity)->bit9;
-        limits[1] = entity->params->unk430 * 0.017453292f;
-        limits[0] = -entity->params->unk430 * 0.017453292f;
-        limits[3] = entity->params->unk432 * 0.017453292f;
-        limits[2] = -entity->params->unk432 * 0.017453292f;
+        limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
+        limits[0] = -entity->params->pitch_limit_deg * 0.017453292f;
+        limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
+        limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
         if (look_at_target) {
-            EntityAi_LookAtPlayer(entity, unkE0->unk20, look_at_target, limits, 12.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, look_at_target, limits, 12.0f);
         } else {
-            EntityAi_LookAtPlayer(entity, unkE0->unk20, 0, NULL, 8.0f);
+            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, 0, NULL, 8.0f);
         }
     }
 }
@@ -152,7 +152,7 @@ static void FireLord_Animate(Entity *entity) {
 /* The think handler: as EntityAi_Think, with FireLord_ThinkIdle for state 0 and
    FireLord_ThinkCombat for states 1 and 2. Before that it keeps the model's last two frames in
    fire_lord_model, each at half the alpha of the one before, clears work byte unk7E, and counts down
-   work word unk6A, which it sets to EntityParams.unk434 while player_state.unk259 is not 0. Counts
+   work word unk6A, which it sets to EntityParams.action_frames while player_state.unk259 is not 0. Counts
    down work byte unk7D. */
 static void FireLord_Think(Entity *entity, s32 unknown) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
@@ -165,17 +165,17 @@ static void FireLord_Think(Entity *entity, s32 unknown) {
     fire_lord_model[0] = *(ModelInstanceBlock *)entity->model;
     fire_lord_model[0].model.alpha *= 0.5f;
     fire_lord_model[1].model.alpha *= 0.5f;
-    unkE0->unk7E = 0;
-    if (unkE0->unk6A > 0) {
-        unkE0->unk6A--;
+    unkE0->afterimage_active = 0;
+    if (unkE0->player_cast_timer > 0) {
+        unkE0->player_cast_timer--;
     }
-    if (player_state.unk259 != 0) {
-        unkE0->unk6A = entity->params->unk434;
+    if (player_state.magic_shot_launched != 0) {
+        unkE0->player_cast_timer = entity->params->action_frames;
     }
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->unkC6 == 0) {
+    if (entity->busy_flags == 0) {
         EntityAi_CheckFarFromSpawn((char *)entity);
         EntityAi_StepState(entity);
         if (ENTITY_FLAG_BITS(entity)->bit53) {
@@ -193,14 +193,14 @@ static void FireLord_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (unkE0->unk7D > 0) {
-        unkE0->unk7D--;
+    if (unkE0->distance_band_timer > 0) {
+        unkE0->distance_band_timer--;
     }
 }
 
 /* The think function of state 0: no command, flag bit 9 clear; starts the move action. */
 static void FireLord_ThinkIdle(Entity *entity, s32 unknown) {
-    entity->unkC8 = 0;
+    entity->move_command = 0;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     EntityAi_StartAction(entity, (void (*)(Entity *))entity->unkE0.move, unknown);
@@ -216,26 +216,26 @@ static void FireLord_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
     f32 distance;
 
-    if (unkE0->unk7D <= 0) {
+    if (unkE0->distance_band_timer <= 0) {
         distance = entity->distance_to_player - entity->radius - 100.0f;
         if (distance > 1200.0f) {
-            unkE0->unk7C = 0;
-            unkE0->unk7D = 10;
+            unkE0->distance_band = 0;
+            unkE0->distance_band_timer = 10;
         } else if (distance <= 1200.0f && distance > 800.0f) {
-            unkE0->unk7C = 1;
-            unkE0->unk7D = 10;
+            unkE0->distance_band = 1;
+            unkE0->distance_band_timer = 10;
         } else if (distance <= 800.0f && distance > 500.0f) {
-            unkE0->unk7C = 2;
-            unkE0->unk7D = 10;
+            unkE0->distance_band = 2;
+            unkE0->distance_band_timer = 10;
         } else if (distance <= 500.0f && distance > 100.0f) {
-            unkE0->unk7C = 3;
-            unkE0->unk7D = 10;
+            unkE0->distance_band = 3;
+            unkE0->distance_band_timer = 10;
         } else {
-            unkE0->unk7C = 4;
-            unkE0->unk7D = 10;
+            unkE0->distance_band = 4;
+            unkE0->distance_band_timer = 10;
         }
     }
-    switch (unkE0->unk7C) {
+    switch (unkE0->distance_band) {
     case 0:
         FireLord_ThinkCombatApproach(entity, unknown);
         break;
@@ -265,7 +265,7 @@ static void FireLord_ThinkCombatApproach(Entity *entity, int invoke_now) {
     entity->target = &player_state;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    entity->unkC8 = EntityAi_MoveCommand(entity, 1, 50.0f);
+    entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
     EntityAi_StartAction(entity, (void (*)(Entity *))sub->move, invoke_now);
 }
 
@@ -283,11 +283,11 @@ static void FireLord_ThinkCombatShootOrApproach(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
     entity->target = &player_state;
-    entity->unkC8 = EntityAi_MoveCommand(entity, 1, 50.0f);
+    entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-/* Band 2 of FireLord_ThinkCombat: when the heading is within 20 degrees of Entity.unk68, flips
+/* Band 2 of FireLord_ThinkCombat: when the heading is within 20 degrees of Entity.heading_to_player, flips
    work byte unk7B and starts FireLord_PlayAnim6Or7Alternately; else goes for the player as band 0 does. */
 static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 unknown) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
@@ -295,14 +295,14 @@ static void FireLord_ThinkCombatSideAnimOrApproach(Entity *entity, s32 unknown) 
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
-    angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+    angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
     if (!(ABS(angle) > 0.34906584f)) {
-        unkE0->unk7B = unkE0->unk7B == 0;
+        unkE0->alternate_anim_flag = unkE0->alternate_anim_flag == 0;
         EntityAi_StartAction(entity, FireLord_PlayAnim6Or7Alternately, unknown);
         return;
     }
     entity->target = &player_state;
-    entity->unkC8 = EntityAi_MoveCommand(entity, 1, 50.0f);
+    entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f);
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
@@ -328,14 +328,14 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
@@ -349,40 +349,40 @@ static void FireLord_ThinkCombatCloseIn(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &player_state;
-            entity->unkA0 = rand() % 60 + 120;
-            unkE0->unk78 = 0;
+            entity->action_timer = rand() % 60 + 120;
+            unkE0->move_choice = 0;
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 30;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 30;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (unkE0->unk78 == 0) {
+    if (unkE0->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-            if (unkE0->unk79 == 0) {
-                unkE0->unk79 = ABS(angle) > 0.5235988f;
-                if (unkE0->unk79 == 0) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
+            if (unkE0->turn_in_place == 0) {
+                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
+                if (unkE0->turn_in_place == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = EntityAi_TurnCommand(entity);
-            if (entity->unkC8 == 0) {
-                unkE0->unk79 = 0;
+            entity->move_command = EntityAi_TurnCommand(entity);
+            if (entity->move_command == 0) {
+                unkE0->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->unkC8 = 0x201;
+                entity->move_command = 0x201;
             } else if (turn < 0) {
-                entity->unkC8 = 0x101;
+                entity->move_command = 0x101;
             } else {
-                entity->unkC8 = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
+                entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
         }
     }
@@ -411,14 +411,14 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
     }
     side = EntityAi_PickCombatChoice(entity, 0);
     ENTITY_FLAG_BITS(entity)->bit9 = 1;
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
@@ -432,49 +432,49 @@ static void FireLord_ThinkCombatBackAway(Entity *entity, s32 unknown) {
             return;
         case 1:
             entity->target = &player_state;
-            entity->unkA0 = rand() % 60 + 120;
-            unkE0->unk78 = 0;
+            entity->action_timer = rand() % 60 + 120;
+            unkE0->move_choice = 0;
             break;
         case 2:
-            entity->unkA0 = rand() % 30 + 30;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 30 + 30;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    if (unkE0->unk78 == 0) {
+    if (unkE0->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
-            angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-            if (unkE0->unk79 == 0) {
-                unkE0->unk79 = ABS(angle) > 0.5235988f;
-                if (unkE0->unk79 == 0) {
+            angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
+            if (unkE0->turn_in_place == 0) {
+                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
+                if (unkE0->turn_in_place == 0) {
                     goto done;
                 }
             }
-            entity->unkC8 = EntityAi_TurnCommand(entity);
-            if (entity->unkC8 == 0) {
-                unkE0->unk79 = 0;
+            entity->move_command = EntityAi_TurnCommand(entity);
+            if (entity->move_command == 0) {
+                unkE0->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->unkC8 = 0x201;
+                entity->move_command = 0x201;
             } else if (turn < 0) {
-                entity->unkC8 = 0x101;
+                entity->move_command = 0x101;
             } else {
                 direction[0] = EntityMath_HeadingTo(entity->model->position, entity->target);
-                angle = EntityMath_AngleDifference(entity->model->unkD0[1], direction[0]);
+                angle = EntityMath_AngleDifference(entity->model->rotation[1], direction[0]);
                 if (ABS(angle) > entity->params->turn_limit) {
                     if (angle >= 0.0f) {
-                        entity->unkC8 |= 0x200;
+                        entity->move_command |= 0x200;
                     } else {
-                        entity->unkC8 |= 0x100;
+                        entity->move_command |= 0x100;
                     }
                 }
-                entity->unkC8 |= 2;
+                entity->move_command |= 2;
             }
         }
     }
@@ -483,33 +483,33 @@ done:
 }
 
 /* An action (busy bit 0x1000) that FireLord_ThinkCombatSideAnimOrApproach starts: plays animation 6 or 7
-   (work byte unk7B picks) to its end, turning to Entity.unk68. Sets work byte unk7E. */
+   (work byte unk7B picks) to its end, turning to Entity.heading_to_player. Sets work byte unk7E. */
 static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
 
-    entity->unkC6 |= 0x1000;
-    unkE0->unk7E = 1;
+    entity->busy_flags |= 0x1000;
+    unkE0->afterimage_active = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+    EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
     switch (entity->action_step) {
     case 0:
-        if (unkE0->unk7B != 0) {
-            Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 0);
+        if (unkE0->alternate_anim_flag != 0) {
+            Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
-            Motion_Start(entity, 7, 0, entity->params->unkC4 >> 1, 0);
+            Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 0);
         }
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if ((s32)(entity->flags >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -526,7 +526,7 @@ static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
    along the path of the point Model_GetSkinnedBonePoint gives for 8, pointing to the one it gives for 9. */
 static void FireLord_MeleeAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk240 *unk240 = &entity->params->unk240[0];
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[0];
     f32 position[4];
     f32 angles[4];
     f32 *from;
@@ -538,10 +538,10 @@ static void FireLord_MeleeAttack0(Entity *entity) {
     s32 i;
     s32 elapsed;
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -549,88 +549,88 @@ static void FireLord_MeleeAttack0(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (unk240->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk240->hit_start_frame != 0) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         }
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
-        if (entity->model->unkFC->unk82 >= 8) {
+        if (entity->model->level_tables->unk82 >= 8) {
             ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
-            unkE0->unk68 = 15;
+            unkE0->pause_timer = 15;
             entity->action_step++;
         }
         break;
     case 3:
-        EntityMath_FacingVector((Vector4 *)position, entity->model->unkD0[1]);
+        EntityMath_FacingVector((Vector4 *)position, entity->model->rotation[1]);
         Vector_Scale(position, position, 30.0f);
-        entity->unk84 += position[0];
-        entity->unk88 += position[1];
-        entity->unk8C += position[2];
-        unkE0->unk68--;
-        if (entity->distance_to_player - entity->radius - 100.0f < 200.0f || unkE0->unk68 < 0) {
+        entity->move_delta_x += position[0];
+        entity->move_delta_y += position[1];
+        entity->move_delta_z += position[2];
+        unkE0->pause_timer--;
+        if (entity->distance_to_player - entity->radius - 100.0f < 200.0f || unkE0->pause_timer < 0) {
             entity->action_step++;
         }
         break;
     case 4:
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
-        if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
         from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 8);
         tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 9);
         if (from != NULL && tip != NULL) {
-            if (entity->model->unkFC->unk82 >= 0x14 && entity->model->unkFC->unk82 <= 0x1A) {
+            if (entity->model->level_tables->unk82 >= 0x14 && entity->model->level_tables->unk82 <= 0x1A) {
                 delta_x = tip[0] - from[0];
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
                 angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                 angles[2] = angles[3] = 0.0f;
-                delta_x = from[0] - unkE0->unk48;
-                delta_y = from[1] - unkE0->unk4C;
-                delta_z = from[2] - unkE0->unk50;
+                delta_x = from[0] - unkE0->part_angle_x;
+                delta_y = from[1] - unkE0->part_angle_y;
+                delta_z = from[2] - unkE0->part_angle_z;
                 count = sqrtf(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z) / 30.0f + 1.0f;
                 for (i = 0; i < count; i++) {
-                    position[0] = unkE0->unk48 + delta_x * i / count;
-                    position[1] = unkE0->unk4C + delta_y * i / count;
-                    position[2] = unkE0->unk50 + delta_z * i / count;
+                    position[0] = unkE0->part_angle_x + delta_x * i / count;
+                    position[1] = unkE0->part_angle_y + delta_y * i / count;
+                    position[2] = unkE0->part_angle_z + delta_z * i / count;
                     Effect_StartSpawner(0x3A0, position, angles, entity);
                 }
             }
-            unkE0->unk48 = from[0];
-            unkE0->unk4C = from[1];
-            unkE0->unk50 = from[2];
+            unkE0->part_angle_x = from[0];
+            unkE0->part_angle_y = from[1];
+            unkE0->part_angle_z = from[2];
         }
-        elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
+        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->level_tables->unk82);
         }
         if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->level_tables->unk82);
         }
         if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->level_tables->unk82);
         }
-        if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
+        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
             entity->flags |= 0x80000;
         } else {
             entity->flags &= ~0x80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
-            EntityAi_SetAttackDelay(entity, unk240->unk02);
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
+            EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -646,7 +646,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
    the one it gives for 17. */
 static void FireLord_MeleeAttack1(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk240 *unk240 = &entity->params->unk240[1];
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[1];
     f32 position[4];
     f32 angles[4];
     f32 *from;
@@ -658,10 +658,10 @@ static void FireLord_MeleeAttack1(Entity *entity) {
     s32 i;
     s32 elapsed;
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x15, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -669,64 +669,64 @@ static void FireLord_MeleeAttack1(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (unk240->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk240->hit_start_frame != 0) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         }
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
         from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x10);
         tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x11);
         if (from != NULL && tip != NULL) {
-            if (entity->model->unkFC->unk82 >= 0x17 && entity->model->unkFC->unk82 <= 0x1B) {
+            if (entity->model->level_tables->unk82 >= 0x17 && entity->model->level_tables->unk82 <= 0x1B) {
                 delta_x = tip[0] - from[0];
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
                 angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
                 angles[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                 angles[2] = angles[3] = 0.0f;
-                delta_x = from[0] - unkE0->unk48;
-                delta_y = from[1] - unkE0->unk4C;
-                delta_z = from[2] - unkE0->unk50;
+                delta_x = from[0] - unkE0->part_angle_x;
+                delta_y = from[1] - unkE0->part_angle_y;
+                delta_z = from[2] - unkE0->part_angle_z;
                 count = sqrtf(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z) / 30.0f + 1.0f;
                 for (i = 0; i < count; i++) {
-                    position[0] = unkE0->unk48 + delta_x * i / count;
-                    position[1] = unkE0->unk4C + delta_y * i / count;
-                    position[2] = unkE0->unk50 + delta_z * i / count;
+                    position[0] = unkE0->part_angle_x + delta_x * i / count;
+                    position[1] = unkE0->part_angle_y + delta_y * i / count;
+                    position[2] = unkE0->part_angle_z + delta_z * i / count;
                     Effect_StartSpawner(0x3A0, position, angles, entity);
                 }
             }
-            unkE0->unk48 = from[0];
-            unkE0->unk4C = from[1];
-            unkE0->unk50 = from[2];
+            unkE0->part_angle_x = from[0];
+            unkE0->part_angle_y = from[1];
+            unkE0->part_angle_z = from[2];
         }
-        elapsed = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
+        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, entity->model->level_tables->unk82);
         }
         if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, entity->model->level_tables->unk82);
         }
         if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->level_tables->unk82);
         }
-        if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
+        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
             entity->flags |= 0x80000;
         } else {
             entity->flags &= ~0x80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
-            EntityAi_SetAttackDelay(entity, unk240->unk02);
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
+            EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -739,37 +739,37 @@ static void FireLord_MeleeAttack1(Entity *entity) {
 
 /* A second action with animations 6 and 7 (busy bit 0x1000), which bands 3 and 4 start in place of
    the guard: plays 6 or 7, by the side of the player's facing the entity is on, to its end, turning
-   to Entity.unk68; then starts FireLord_MeleeAttack0 when EntityAi_CanUseMelee finds the player in
+   to Entity.heading_to_player; then starts FireLord_MeleeAttack0 when EntityAi_CanUseMelee finds the player in
    reach of record 0. Sets work byte unk7E. */
 static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
     PlayerData *player;
 
-    entity->unkC6 |= 0x1000;
-    unkE0->unk7E = 1;
+    entity->busy_flags |= 0x1000;
+    unkE0->afterimage_active = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
-    EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+    EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
     switch (entity->action_step) {
     case 0:
-        EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+        EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         player = &player_state;
-        if (EntityMath_AngleDifference(player->unk14, EntityMath_AngleXZ(player->position, (char *)entity->model->position)) >= 0.0f) {
-            Motion_Start(entity, 6, 0, entity->params->unkC4 >> 1, 0);
+        if (EntityMath_AngleDifference(player->heading, EntityMath_AngleXZ(player->position, (char *)entity->model->position)) >= 0.0f) {
+            Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
-            Motion_Start(entity, 7, 0, entity->params->unkC4 >> 1, 0);
+            Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 0);
         }
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if (EntityAi_CanUseMelee(entity, 0)) {
                 EntityAi_StartAction(entity, FireLord_MeleeAttack0, 1);
             } else if (ENTITY_FLAG_BITS(entity)->bit5) {
@@ -789,17 +789,17 @@ static void FireLord_Move(Entity *entity) {
     EntityParams *params;
     f32 turn;
 
-    if (entity == player_state.unk204 && (entity->params->flags & 0x800)) {
-        entity->unkC8 = 0;
+    if (entity == player_state.stood_on_entity && (entity->params->flags & 0x800)) {
+        entity->move_command = 0;
     }
     params = entity->params;
-    if (entity->unkC8 & 0x100) {
-        unkE0->unk1C -= params->unk58;
+    if (entity->move_command & 0x100) {
+        unkE0->unk1C -= params->turn_step_per_frame;
         if (unkE0->unk1C < -params->turn_limit) {
             unkE0->unk1C = -params->turn_limit;
         }
-    } else if (entity->unkC8 & 0x200) {
-        unkE0->unk1C += params->unk58;
+    } else if (entity->move_command & 0x200) {
+        unkE0->unk1C += params->turn_step_per_frame;
         if (params->turn_limit < unkE0->unk1C) {
             unkE0->unk1C = params->turn_limit;
         }
@@ -807,50 +807,50 @@ static void FireLord_Move(Entity *entity) {
         unkE0->unk1C = 0.0f;
     }
     turn = unkE0->unk1C;
-    if (entity->unkC8 & 0x440) {
+    if (entity->move_command & 0x440) {
         turn += turn;
     }
-    entity->unk94 += turn;
-    if (entity->unkC8 & 1) {
-        if (entity->unkC8 & 0x40) {
-            Motion_Start(entity, 4, 0, params->unkC4, 0);
+    entity->turn_delta_yaw += turn;
+    if (entity->move_command & 1) {
+        if (entity->move_command & 0x40) {
+            Motion_Start(entity, 4, 0, params->motion_blend_frames, 0);
         } else {
-            Motion_Start(entity, 3, 0, params->unkC4, 0);
+            Motion_Start(entity, 3, 0, params->motion_blend_frames, 0);
         }
-    } else if (entity->unkC8 & 2) {
-        Motion_Start(entity, 5, 0, params->unkC4, 0);
-    } else if (entity->unkC8 & 0x10) {
-        Motion_Start(entity, 8, 0, params->unkC4, 0);
-    } else if (entity->unkC8 & 0x20) {
-        Motion_Start(entity, 9, 0, params->unkC4, 0);
-    } else if (entity->unkC8 & 4) {
-        Motion_Start(entity, 6, 0, params->unkC4 >> 1, 0);
-    } else if (entity->unkC8 & 8) {
-        Motion_Start(entity, 7, 0, params->unkC4 >> 1, 0);
-    } else if (entity->unkC8 & 0x300) {
-        Motion_Start(entity, 3, 0, params->unkC4, 0);
+    } else if (entity->move_command & 2) {
+        Motion_Start(entity, 5, 0, params->motion_blend_frames, 0);
+    } else if (entity->move_command & 0x10) {
+        Motion_Start(entity, 8, 0, params->motion_blend_frames, 0);
+    } else if (entity->move_command & 0x20) {
+        Motion_Start(entity, 9, 0, params->motion_blend_frames, 0);
+    } else if (entity->move_command & 4) {
+        Motion_Start(entity, 6, 0, params->motion_blend_frames >> 1, 0);
+    } else if (entity->move_command & 8) {
+        Motion_Start(entity, 7, 0, params->motion_blend_frames >> 1, 0);
+    } else if (entity->move_command & 0x300) {
+        Motion_Start(entity, 3, 0, params->motion_blend_frames, 0);
     } else {
-        Motion_Start(entity, 0, 0, params->unkC4, 0);
+        Motion_Start(entity, 0, 0, params->motion_blend_frames, 0);
     }
 }
 
 /* Whether to start FireLord_PlayAnim6Or7ThenMelee0: while the player is early in a swing or work word unk6A
    runs (FireLord_Think sets it when he casts a magic), the entity is not busy, the player is within
-   max_distance (less the radius and 100) and Entity.unk68 within max_angle of the heading; then
-   EntityParams.unkCA / 5 times in 100. */
+   max_distance (less the radius and 100) and Entity.heading_to_player within max_angle of the heading; then
+   EntityParams.dodge_chance / 5 times in 100. */
 static s32 FireLord_ShouldEvadeSwingOrMagic(Entity *entity, f32 max_distance, f32 max_angle) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 distance;
     f32 angle;
 
-    if (D_004141D8[0] == 0 || D_00446978->unkFC->unk82 >= 6) {
-        if (unkE0->unk6A <= 0) {
+    if (D_004141D8[0] == 0 || D_00446978->level_tables->unk82 >= 6) {
+        if (unkE0->sub_timer <= 0) {
             return FALSE;
         }
     }
     distance = entity->distance_to_player - (entity->radius + 100.0f);
-    angle = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
-    if (entity->unkC6 != 0) {
+    angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
+    if (entity->busy_flags != 0) {
         return FALSE;
     }
     if (max_distance < distance) {
@@ -859,7 +859,7 @@ static s32 FireLord_ShouldEvadeSwingOrMagic(Entity *entity, f32 max_distance, f3
     if (ABS(angle) > max_angle) {
         return FALSE;
     }
-    return rand() % 100 < entity->params->unkCA / 5;
+    return rand() % 100 < entity->params->dodge_chance / 5;
 }
 
 /* Puts the two older copies of the model that FireLord_Think keeps in fire_lord_model (each at half the alpha
@@ -868,11 +868,11 @@ static s32 FireLord_ShouldEvadeSwingOrMagic(Entity *entity, f32 max_distance, f3
 void FireLord_DrawAfterimages(Entity *entity, s32 list) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
 
-    if (unkE0->unk7E != 0 && ENTITY_FLAG_BITS(entity)->bits2 == 0) {
-        fire_lord_model[0].model.unk14C = ENTITY_MODEL(entity)->unk14C;
-        fire_lord_model[0].model.unk148 = ENTITY_MODEL(entity)->unk148;
-        fire_lord_model[1].model.unk14C = ENTITY_MODEL(entity)->unk14C;
-        fire_lord_model[1].model.unk148 = ENTITY_MODEL(entity)->unk148;
+    if (unkE0->afterimage_active != 0 && ENTITY_FLAG_BITS(entity)->bits2 == 0) {
+        fire_lord_model[0].model.fog_block = ENTITY_MODEL(entity)->fog_block;
+        fire_lord_model[0].model.light_block = ENTITY_MODEL(entity)->light_block;
+        fire_lord_model[1].model.fog_block = ENTITY_MODEL(entity)->fog_block;
+        fire_lord_model[1].model.light_block = ENTITY_MODEL(entity)->light_block;
         DrawList_Add(&fire_lord_model[0].model, 0, list);
         DrawList_Add(&fire_lord_model[1].model, 0, list);
     }

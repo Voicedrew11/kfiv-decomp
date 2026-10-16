@@ -17,7 +17,7 @@ typedef struct {
 
 #define COLLISION_RESULT ((CollisionResult *)0x70000000)
 
-/* the scratchpad from 0x100 on: the points of a model's collision mesh (CollisionMesh.unk08)
+/* the scratchpad from 0x100 on: the points of a model's collision mesh (CollisionMesh.points)
    placed in the world by Collision_TransformMeshPoints; the strips point at these */
 #define COLLISION_WORLD_POINTS ((Vector4 *)0x70000100)
 
@@ -73,23 +73,23 @@ typedef struct {
 typedef struct {
     s32 strip_count;                /* 0x00 */
     CollisionStrip *strips;         /* 0x04 */
-    char *unk08;                    /* 0x08 the end of the strips: unk0C 16-byte entries */
-    u32 unk0C;                      /* 0x0C */
-    f32 unk10;                      /* 0x10 how far it reaches from its origin, unscaled (MapObject_InitMap) */
-    char *unk14;                    /* 0x14 the next mesh of a map file starts this many bytes on (a size, typed as Map_BuildModels needs) */
-    CollisionStrip *unk18;          /* 0x18 unk38 strips */
+    char *points;                   /* 0x08 the end of the strips: unk0C 16-byte entries */
+    u32 point_count;                /* 0x0C how many points there are, 4 or more */
+    f32 reach_radius;               /* 0x10 how far it reaches from its origin, unscaled (MapObject_InitMap) */
+    char *mesh_size;                /* 0x14 the next mesh of a map file starts this many bytes on (a size, typed as Map_BuildModels needs) */
+    CollisionStrip *wall_strips;    /* 0x18 unk38 strips */
     CollisionStrip *floor_strips;   /* 0x1C */
-    CollisionStrip *unk20;          /* 0x20 unk3C strips */
-    CollisionStrip *unk24;          /* 0x24 unk3E strips */
-    CollisionStrip *unk28;          /* 0x28 unk40 strips */
-    CollisionStrip *unk2C;          /* 0x2C the strips EntityCollision_DistanceToGround drops a point onto */
+    CollisionStrip *second_wall_strips; /* 0x20 unk3C strips */
+    CollisionStrip *barrier_strips; /* 0x24 unk3E strips */
+    CollisionStrip *hazard_strips;  /* 0x28 unk40 strips */
+    CollisionStrip *water_strips;   /* 0x2C the strips EntityCollision_DistanceToGround drops a point onto */
     char pad30[0x08];
-    u16 unk38;                      /* 0x38 how many strips unk18 has */
+    u16 wall_strip_count;           /* 0x38 how many strips unk18 has */
     u16 floor_strip_count;          /* 0x3A */
-    u16 unk3C;                      /* 0x3C how many strips unk20 has */
-    u16 unk3E;                      /* 0x3E how many strips unk24 has */
-    u16 unk40;                      /* 0x40 how many strips unk28 has */
-    u16 unk42;                      /* 0x42 how many strips unk2C has */
+    u16 second_wall_strip_count;    /* 0x3C how many strips unk20 has */
+    u16 barrier_strip_count;        /* 0x3E how many strips unk24 has */
+    u16 hazard_strip_count;         /* 0x40 how many strips unk28 has */
+    u16 water_strip_count;          /* 0x42 how many strips unk2C has */
 } CollisionMesh;
 
 /* CollisionMesh with its strip lists and their lengths as arrays (Collision_CastRayAtMap picks them by index;
@@ -106,14 +106,14 @@ typedef struct {
     f32 position[4];                /* 0x00 */
     f32 rotation[4];                /* 0x10 */
     f32 scale[4];                   /* 0x20 */
-    u16 unk30;                      /* 0x30 0xFFFF: always drawn (Map_ClassifyRecordOnScreen) */
-    u16 unk32;                      /* 0x32 0xFFFF: unused */
+    u16 model_index;                /* 0x30 0xFFFF: always drawn (Map_ClassifyRecordOnScreen) */
+    u16 collision_mesh_index;       /* 0x32 0xFFFF: unused */
     char pad34[0x04];
-    u8 unk38;                       /* 0x38 goes to PlayerState.unk250 when the player stands on the record */
+    u8 flag_block_bit;              /* 0x38 goes to PlayerState.record_flag_block when the player stands on the record */
     char pad39[0x03];
-    u32 unk3C;                      /* 0x3C high half of MapRecord.unk38; 0x40000000: nothing collides with it */
-    f32 unk40[4];                   /* 0x40 a point, moved with the record */
-    f32 unk50[4];                   /* 0x50 a point, moved with the record */
+    u32 record_flags;               /* 0x3C high half of MapRecord.flag_block_bit; 0x40000000: nothing collides with it */
+    f32 box_lowest[4];              /* 0x40 a point, moved with the record */
+    f32 box_highest[4];             /* 0x50 a point, moved with the record */
     f32 lowest[4];                  /* 0x60 lowest x, y, z it covers */
     f32 highest[3];                 /* 0x70 highest x, y, z it covers */
     ModelInstance *model;           /* 0x7C */

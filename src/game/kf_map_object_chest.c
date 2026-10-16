@@ -34,13 +34,13 @@ void MapObject_UpdateItemHolder(MapObject *object) {
         object->work[0]--;
     }
     if (((D_0038CC74[0] >> 1) & 1) && D_00420D50[0] == object) {
-        if (object->unk08->unk44 != 0 && !(object->unk10 & 0x40000)) {
-            object->model->unk1B4(object->model);
+        if (object->source->kind_param_0 != 0 && !(object->state_flags & 0x40000)) {
+            object->model->update_bone_points(object->model);
             MapItem_StartPickup((ModelNode *)MapItem_PutOutForObject(
-                MAP_OBJECT_BYTES(object)->unk00 & 1, object->unk08->unk44, (void *)object->model->get_point(object->model, 0),
+                MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
                 &object->model->rotation, &unk_value, object));
         } else if (work[0] <= 0) {
-            Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->definition->definition_flags);
             work[0] = 0x2D;
         }
     }
@@ -59,25 +59,25 @@ void MapObject_SetupItemHolder(MapObject *object) {
     MapObject_SpawnHeldItem(object);
 }
 
-/* Spawns the item a map object holds (MapObjectUnk08.unk44) at its point 0 (MapItem_PutOutForObject), unless it was
+/* Spawns the item a map object holds (MapObjectUnk08.kind_param_0) at its point 0 (MapItem_PutOutForObject), unless it was
    handed out already (unk10 bit 0x40000); the kind's every-frame hook runs first, so the point is current. */
 void MapObject_SpawnHeldItem(MapObject *object) {
     s64 drop_params[2];
 
     drop_params[0] = D_0043E780.unk00;
     drop_params[1] = D_0043E780.unk08;
-    if (object->unk08->unk44 != 0) {
-        if (!(object->unk10 & 0x40000)) {
-            map_object_update_hooks[object->unk04->kind](object);
-            object->model->unk1B4(object->model);
-            MapItem_PutOutForObject((u8)object->unk10 & 1, object->unk08->unk44, (void *)object->model->get_point(object->model, 0),
+    if (object->source->kind_param_0 != 0) {
+        if (!(object->state_flags & 0x40000)) {
+            map_object_update_hooks[object->definition->kind](object);
+            object->model->update_bone_points(object->model);
+            MapItem_PutOutForObject((u8)object->state_flags & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
                           &object->model->rotation, drop_params, object);
         }
     }
 }
 
 /* Start handler of a chest: closed (animation 4, step 1) or open (animation 5, step 3);
-   an open chest that isn't emptied yet drops its item (MapObjectUnk08.unk44) through MapItem_PutOutForObject. */
+   an open chest that isn't emptied yet drops its item (MapObjectUnk08.kind_param_0) through MapItem_PutOutForObject. */
 void MapObject_StartChest(MapObject *object) {
     f32 drop_position[3];
     s64 drop_params[2];
@@ -86,19 +86,19 @@ void MapObject_StartChest(MapObject *object) {
 
     drop_params[0] = D_0043E780.unk00;
     drop_params[1] = D_0043E780.unk08;
-    if (!(object->unk10 & 0x20000)) {
+    if (!(object->state_flags & 0x20000)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
         MapObject_StartAnim(object, 5);
-        source = object->unk08;
+        source = object->source;
         MAP_OBJECT_BYTES(object)->step = 3;
-        if (source->unk44 != 0 && !(object->unk10 & 0x40000)) {
+        if (source->kind_param_0 != 0 && !(object->state_flags & 0x40000)) {
             model = object->model;
             drop_position[0] = model->position.x;
             drop_position[1] = model->position.y - 25.0f;
             drop_position[2] = model->position.z;
-            MapItem_PutOutForObject((u8)object->unk10 & 1, source->unk44, drop_position, &model->rotation, drop_params, object);
+            MapItem_PutOutForObject((u8)object->state_flags & 1, source->kind_param_0, drop_position, &model->rotation, drop_params, object);
         }
     }
 }
@@ -124,14 +124,14 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
         work[1]--;
     }
     if (((D_0038CC74[0] >> 1) & 1) && D_00420D50[0] == object) {
-        source = object->unk08;
-        key = ((MapObjectUnk08Words *)source)->unk46;
+        source = object->source;
+        key = ((MapObjectUnk08Words *)source)->kind_param_1;
         if (key != 0) {
             if (item_counts[key] == 0) {
                 if (work[1] > 0) {
                     return;
                 }
-                message = (s16)object->unk04->unk68;
+                message = (s16)object->definition->definition_flags;
                 if (message == 0) {
                     message = MSG_LOCKED;
                 }
@@ -141,28 +141,28 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
             }
             MapObject_ShowKeyUsed(key);
             range = 800.0f;
-            if (object->unk04->unk70 > 0.0f) {
-                range = object->unk04->unk70;
+            if (object->definition->sound_range > 0.0f) {
+                range = object->definition->sound_range;
             }
             Sound_PlayMapAtRange(0x2D, 0, &object->model->position.x, range);
-            source = object->unk08;
+            source = object->source;
         }
         MAP_OBJECT_BYTES(object)->step = 2;
         MAP_OBJECT_BITS(object)->bit17 = TRUE;
         work[1] = 0;
         MAP_OBJECT_BITS(object)->bit18 = TRUE;
-        if (source->unk44 != 0) {
+        if (source->kind_param_0 != 0) {
             position.x = object->model->position.x;
             position.y = object->model->position.y - 25.0f;
             position.z = object->model->position.z;
-            MapItem_PutOutForObject(MAP_OBJECT_BYTES(object)->unk00 & 1, source->unk44, &position, &object->model->rotation, &unk_value, object);
+            MapItem_PutOutForObject(MAP_OBJECT_BYTES(object)->unk00 & 1, source->kind_param_0, &position, &object->model->rotation, &unk_value, object);
             MAP_OBJECT_BITS(object)->bit18 = FALSE;
-        } else if (((MapObjectUnk08Words *)source)->unk48 > 0) {
+        } else if (((MapObjectUnk08Words *)source)->kind_param_2 > 0) {
             position.x = object->model->position.x;
             position.y = object->model->position.y - 25.0f;
             position.z = object->model->position.z;
             turn.y = object->model->rotation.y;
-            Gold_Drop(&position, &turn, MAP_OBJECT_BYTES(object)->unk00 & 1, ((MapObjectUnk08Words *)source)->unk48, source->unk38.bytes[2], 0, 1);
+            Gold_Drop(&position, &turn, MAP_OBJECT_BYTES(object)->unk00 & 1, ((MapObjectUnk08Words *)source)->kind_param_2, source->spawn_flags.bytes[2], 0, 1);
             MAP_OBJECT_BITS(object)->bit18 = FALSE;
         }
     }
@@ -192,8 +192,8 @@ void MapObject_UpdateOpenChest(MapObject *object) {
         work[1]--;
     }
     if (((D_0038CC74[0] >> 1) & 1) && D_00420D50[0] == object) {
-        if (!(object->unk10 & 0x40000) &&
-            ((source = MAP_OBJECT_WORDS(object))->unk44 != 0 || source->unk48 != 0)) {
+        if (!(object->state_flags & 0x40000) &&
+            ((source = MAP_OBJECT_WORDS(object))->kind_param_0 != 0 || source->kind_param_2 != 0)) {
             pickup = MapItem_FindForObject((int)object);
             if (pickup != NULL) {
                 MapItem_StartPickup(pickup);

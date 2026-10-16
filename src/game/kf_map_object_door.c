@@ -27,15 +27,15 @@ void MapObject_StartDoor(MapObject *object) {
     MapObjectWork *work = MAP_OBJECT_WORK(object);
     ModelPart *part;
 
-    if (object->unk04->kind == 6) {
+    if (object->definition->kind == 6) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
-        Vector_Copy(work, object->model->parts[1].unk40);
+        Vector_Copy(work, object->model->parts[1].position);
         work->timer = 0;
         part = object->model->parts;
-        work->unk10 = part[1].unk40[0];
-        work->unk14 = part[1].unk40[1];
-        work->unk18 = part[1].unk40[2];
+        work->unk10 = part[1].position[0];
+        work->unk14 = part[1].position[1];
+        work->unk18 = part[1].position[2];
         if (MAP_OBJECT_FLAGS(object) & 0x20000) {
             MAP_OBJECT_BYTES(object)->step = 2;
             do {
@@ -43,7 +43,7 @@ void MapObject_StartDoor(MapObject *object) {
             } while (MAP_OBJECT_BYTES(object)->step != 3);
         }
     } else {
-        if (!(object->unk10 & 0x20000)) {
+        if (!(object->state_flags & 0x20000)) {
             MapObject_StartAnim(object, 4);
             MAP_OBJECT_BYTES(object)->step = 1;
         } else {
@@ -66,21 +66,21 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
         work->timer--;
     }
     if (D_00420D50[0] == object && ((D_0038CC74[0] >> 1) & 1)) {
-        item = object->unk08->unk44;
-        if (item != 0 && !(object->unk10 & 0x40000)) {
+        item = object->source->kind_param_0;
+        if (item != 0 && !(object->state_flags & 0x40000)) {
             if (item_counts[item] != 0) {
                 MapObject_ShowKeyUsed(item);
                 range = 800.0f;
-                if (object->unk04->unk70 > 0.0f) {
-                    range = object->unk04->unk70;
+                if (object->definition->sound_range > 0.0f) {
+                    range = object->definition->sound_range;
                 }
                 Sound_PlayMapAtRange(0x2E, 0, &object->model->position.x, range);
-                object->unk10 |= 0x40000;
+                object->state_flags |= 0x40000;
             } else {
                 if (work->timer > 0) {
                     return;
                 }
-                message = (s16)object->unk04->unk68;
+                message = (s16)object->definition->definition_flags;
                 if (message == 0) {
                     message = MSG_LOCKED;
                 }
@@ -89,7 +89,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
                 return;
             }
         }
-        object->unk10 |= 0x20000;
+        object->state_flags |= 0x20000;
         MAP_OBJECT_BYTES(object)->step = 2;
         MAP_OBJECT_UNK60_BITS(object)->bit0 = TRUE;
     }
@@ -119,19 +119,19 @@ void MapObject_UpdateOpeningDoor(MapObject *object) {
     }
     if (MODEL_CHANNEL(object->model)->param != 0) {
         ((int (*)(char *))MapObject_StepAnim)((char *)object); // match: it returns a value
-        kind = object->unk04->kind;
+        kind = object->definition->kind;
         if (kind == 6) {
-            Vector_Subtract(&delta, object->model->parts[1].unk40, work);
+            Vector_Subtract(&delta, object->model->parts[1].position, work);
             sine = sinf(-object->model->rotation.y);
             cosine = cosf(-object->model->rotation.y);
             offset.y = delta.y;
             offset.x = delta.x * cosine - delta.z * sine;
             offset.z = delta.x * sine + delta.z * cosine;
             Vector_Add(&object->model->position, &object->model->position, &offset);
-            Vector_Copy(work, object->model->parts[1].unk40);
+            Vector_Copy(work, object->model->parts[1].position);
         } else if (kind == 2) {
-            if (object->unk60 & 1) {
-                object->model->unk1B4(object->model);
+            if (object->door_open_flags & 1) {
+                object->model->update_bone_points(object->model);
                 point_a = (f32 *)object->model->get_point(object->model, 2);
                 point_b = (f32 *)object->model->get_point(object->model, 3);
                 point_c = (f32 *)object->model->get_point(object->model, 4);
@@ -167,14 +167,14 @@ void MapObject_UpdateOpenDoor(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (MAP_OBJECT_WORDS(object)->unk46 == 0) {
+    if (MAP_OBJECT_WORDS(object)->kind_param_1 == 0) {
         model = object->model;
         player = player_state;
         delta_x = model->position.x - player[0];
         delta_z = model->position.z - player[2];
         distance = sqrtf(delta_x * delta_x + delta_z * delta_z);
-        if (!(distance < object->unk14 + 100.0f)) {
-            object->unk10 &= ~0x20000;
+        if (!(distance < object->reach_radius + 100.0f)) {
+            object->state_flags &= ~0x20000;
             MAP_OBJECT_BYTES(object)->step = 4;
         }
     }
@@ -194,30 +194,30 @@ void MapObject_UpdateClosingDoor(MapObject *object) {
     }
     if (MODEL_CHANNEL(object->model)->param != 0) {
         ((int (*)(char *))MapObject_StepAnim)((char *)object); // match: it returns a value
-        if (object->unk04->kind == 6) {
-            Vector_Subtract(&delta, object->model->parts[1].unk40, work);
+        if (object->definition->kind == 6) {
+            Vector_Subtract(&delta, object->model->parts[1].position, work);
             sine = sinf(-object->model->rotation.y);
             cosine = cosf(-object->model->rotation.y);
             offset.y = delta.y;
             offset.x = delta.x * cosine - delta.z * sine;
             offset.z = delta.x * sine + delta.z * cosine;
             Vector_Add(&object->model->position, &object->model->position, &offset);
-            Vector_Copy(work, object->model->parts[1].unk40);
+            Vector_Copy(work, object->model->parts[1].position);
         }
     } else {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
-        Vector_Copy(&object->model->position, object->unk08);
+        Vector_Copy(&object->model->position, object->source);
     }
 }
 
 /* Signal hook of the doors: opens a closed door (step 1 to 2) or closes an open one (3 to 4). */
 void MapObject_SetDoorOpen(MapObject *object, int open) {
-    if ((object->unk10 & 0x2FF00) == 0x100 && open) {
-        object->unk10 |= 0x20000;
+    if ((object->state_flags & 0x2FF00) == 0x100 && open) {
+        object->state_flags |= 0x20000;
         MAP_OBJECT_BYTES(object)->step = 2;
-    } else if ((object->unk10 & 0x2FF00) == 0x20300 && !open) {
-        object->unk10 &= ~0x20000;
+    } else if ((object->state_flags & 0x2FF00) == 0x20300 && !open) {
+        object->state_flags &= ~0x20000;
         MAP_OBJECT_BYTES(object)->step = 4;
     }
 }
@@ -231,26 +231,26 @@ void MapObject_RebuildMovingDoorMatrices(MapObject *object) {
     int part_count;
 
     // match: it returns a value
-    ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))ModelMatrix_Build)(object->model, &object->model->position, &object->model->rotation, &object->model->unkE0);
-    Vector_Copy(&saved, object->model->parts[1].unk40);
-    Vector_Copy(object->model->parts[1].unk40, &MAP_OBJECT_WORK(object)->unk10);
-    object->model->parts[1].unk40[3] = 1.0f;
+    ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))ModelMatrix_Build)(object->model, &object->model->position, &object->model->rotation, &object->model->scale_x);
+    Vector_Copy(&saved, object->model->parts[1].position);
+    Vector_Copy(object->model->parts[1].position, &MAP_OBJECT_WORK(object)->unk10);
+    object->model->parts[1].position[3] = 1.0f;
     part_count = object->model->part_count;
     part = object->model->parts;
     for (i = 0; i < part_count; i++) {
         ModelMatrix_BuildPartLocal(object->model, part, part);
         part++;
     }
-    Vector_Copy(object->model->parts[1].unk40, &saved);
-    if (object->model->unk100 & 1) {
+    Vector_Copy(object->model->parts[1].position, &saved);
+    if (object->model->model_flags & 1) {
         part = object->model->parts;
         for (i = 0; i < part_count; i++) {
             Model_MultiplyChildMatrices(part);
             part++;
         }
     }
-    sceVu0CopyMatrix(object->model->unk80, object->model->unk40);
-    object->model->unk1B4(object->model);
+    sceVu0CopyMatrix(object->model->collision_matrix, object->model->model_matrix);
+    object->model->update_bone_points(object->model);
 }
 
 /* Step 0 of the bones and gravestones that hold an item (kind 3): step 1. */

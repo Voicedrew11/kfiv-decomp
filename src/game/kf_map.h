@@ -12,7 +12,7 @@ typedef struct {
     u8 values[0x10];                /* 0x30 ...and the flag set for each */
 } MapFlagBlock;
 
-/* a map record with the doubleword of its flags (MapRecord.unk38) as bit-fields */
+/* a map record with the doubleword of its flags (MapRecord.record_flags) as bit-fields */
 typedef struct {
     char pad00[0x38];
     u64 pad38_0 : 27;
@@ -31,7 +31,7 @@ typedef struct {
     s32 unk04[3];                   /* 0x04 */
 } MapFogColor;
 
-/* one of the 32 0x20-byte blocks MapSlot.unk0C points at; a model's unk14C points at one */
+/* one of the 32 0x20-byte blocks MapSlot.fog_blocks points at; a model's unk14C points at one */
 typedef struct {
     u64 unk00[4];                   /* 0x00 */
 } MapSlotUnk0C;
@@ -46,7 +46,7 @@ typedef struct {
     char pad18[0x08];
 } MapSlotUnk0CValues;
 
-/* one of the 32 0x80-byte blocks MapSlot.unk10 points at, as whole doublewords (see MapSlotUnk10
+/* one of the 32 0x80-byte blocks MapSlot.light_blocks points at, as whole doublewords (see MapSlotUnk10
    in kf_entity.h); a model's unk148 points at one */
 typedef struct {
     u64 unk00[16];                  /* 0x00 */
@@ -71,7 +71,7 @@ typedef struct {
     Vector4 colors[4];              /* 0x40 */
 } MapSlotUnk10Lights;
 
-/* map_draw_state as GameLoop_SetCameraMatrices reads it: the first word of MapDrawState.unk60 as a float */
+/* map_draw_state as GameLoop_SetCameraMatrices reads it: the first word of MapDrawState.draw_flags as a float */
 typedef struct {
     char pad00[0x60];
     f32 mirror_height;              /* 0x60 the mirrored view is flipped about this height */
@@ -80,15 +80,15 @@ typedef struct {
 /* map_draw_state: what the maps are drawn with */
 typedef struct {
     char pad00[0x60];
-    s64 unk60;                      /* 0x60 */
-    s32 unk68;                      /* 0x68 */
-    s32 unk6C;                      /* 0x6C */
-    s32 unk70;                      /* 0x70 */
-    s32 unk74;                      /* 0x74 */
-    s32 unk78;                      /* 0x78 */
+    s64 draw_flags;                 /* 0x60 the overlay mode byte and the bits for the drawn overlays */
+    s32 hud_shown;                  /* 0x68 nonzero: Hud_Draw draws the HUD */
+    s32 screen_fill_red;            /* 0x6C red of the colour GsDraw_FillScreen covers the screen with */
+    s32 screen_fill_green;          /* 0x70 green of that colour */
+    s32 screen_fill_blue;           /* 0x74 blue of that colour */
+    s32 screen_fill_alpha;          /* 0x78 alpha of that colour; 0: the screen is not covered */
     char pad7C[0x04];
-    s64 unk80;                      /* 0x80 */
-    s32 unk88;                      /* 0x88 */
+    s64 screen_fill_blend;          /* 0x80 the GS ALPHA register GsDraw_FillScreen is handed */
+    s32 previous_frame_alpha;       /* 0x88 alpha Game_BlendPreviousFrame blends the last frame with */
     char pad8C[0x0E];
     u8 unk9A;                       /* 0x9A */
     u8 unk9B;                       /* 0x9B */
@@ -98,57 +98,57 @@ typedef struct {
     MapSlotUnk10Words unkC0;        /* 0xC0 the current map's first block */
     char pad140[0x140];
     MapFogColor unk280;             /* 0x280 the current map's */
-    MapSlotUnk0C unk290[2][0x20];   /* 0x290 each map slot's blocks */
-    MapSlotUnk10Words unkA90[2][0x20];  /* 0xA90 each map slot's blocks */
-    f32 unk2A90;                    /* 0x2A90 0 to 0.25: rises while PlayerState.unk2E0 or unk10C is set (Player_UpdateScreenTints) */
-    f32 unk2A94;                    /* 0x2A94 copy of unk2A90 */
-    f32 unk2A98;                    /* 0x2A98 copy of unk2A90 */
+    MapSlotUnk0C fog_blocks[2][0x20]; /* 0x290 each map slot's blocks */
+    MapSlotUnk10Words light_blocks[2][0x20]; /* 0xA90 each map slot's blocks */
+    f32 screen_tint_amount;         /* 0x2A90 0 to 0.25: rises while PlayerState.light_spell_timer or unk10C is set (Player_UpdateScreenTints) */
+    f32 screen_tint_amount_copy;    /* 0x2A94 copy of unk2A90 */
+    f32 screen_tint_amount_copy2;   /* 0x2A98 copy of unk2A90 */
     char pad2A9C[0x04];
 } MapDrawState;
 
-/* MapDrawState.unk60 as bit-fields */
+/* MapDrawState.draw_flags as bit-fields */
 typedef struct {
     u64 pad00 : 46;
     u32 bit46 : 1;                  /* set: Map_ClassifyRecordOnScreen tests map records against the screen */
     u64 pad47 : 17;
 } MapDrawFlagBits;
 
-#define MAP_DRAW_FLAG_BITS(state) ((MapDrawFlagBits *)&(state)->unk60)
+#define MAP_DRAW_FLAG_BITS(state) ((MapDrawFlagBits *)&(state)->draw_flags)
 
-/* map_draw_state as GameLoop_DrawFrame reads it: MapDrawState.unk60 as bit-fields inside the block, so that
+/* map_draw_state as GameLoop_DrawFrame reads it: MapDrawState.draw_flags as bit-fields inside the block, so that
    they are addressed from the block's start like the fields after them */
 typedef struct {
     char pad00[0x60];
     u64 pad60 : 32;
     u32 mode : 8;                   /* 0x64 how the frame is drawn: 0 plain, 1 and 2 with a second view first */
-    u32 bit40 : 1;                  /* set: Game_BlendPreviousFrame(unk88) is drawn */
+    u32 bit40 : 1;                  /* set: Game_BlendPreviousFrame(previous_frame_alpha) is drawn */
     u32 bit41 : 1;                  /* set: Game_DrawDepthTestSprite is drawn */
     u32 bit42 : 1;                  /* set: Game_BlendScreenOffsetDown is drawn */
     u32 bit43 : 1;                  /* set: Game_BlendScreenOffsetUpDown is drawn */
     u32 bit44 : 1;                  /* set: Game_DrawHazeLayers is drawn */
     u32 bit45 : 1;                  /* set: Game_ShiftScreenByViewTurn is drawn (only on the main loop's call) */
     u32 pad46 : 18;
-    s32 unk68;                      /* 0x68 */
-    s32 unk6C;                      /* 0x6C a colour GsDraw_FillScreen covers the screen with */
-    s32 unk70;                      /* 0x70 */
-    s32 unk74;                      /* 0x74 */
-    s32 unk78;                      /* 0x78 its alpha, above 0: drawn */
+    s32 hud_shown;                  /* 0x68 nonzero: Hud_Draw draws the HUD */
+    s32 screen_fill_red;            /* 0x6C a colour GsDraw_FillScreen covers the screen with */
+    s32 screen_fill_green;          /* 0x70 green of that colour */
+    s32 screen_fill_blue;           /* 0x74 blue of that colour */
+    s32 screen_fill_alpha;          /* 0x78 its alpha, above 0: drawn */
     char pad7C[0x04];
-    s64 unk80;                      /* 0x80 its blend mode */
-    s32 unk88;                      /* 0x88 */
+    s64 screen_fill_blend;          /* 0x80 its blend mode */
+    s32 previous_frame_alpha;       /* 0x88 alpha Game_BlendPreviousFrame blends the last frame with */
 } MapDrawStateOverlays;
 
 /* a map record (MapRecord in kf_entity.h) as the code that draws the maps reads it */
 typedef struct MapDrawRecord {
     char pad00[0x34];
-    u8 unk34;                       /* 0x34 which MapSlotUnk0C block it is drawn with */
-    u8 unk35;                       /* 0x35 which MapSlotUnk10Words block it is drawn with */
+    u8 fog_block_index;             /* 0x34 which MapSlotUnk0C block it is drawn with */
+    u8 light_block_index;           /* 0x35 which MapSlotUnk10Words block it is drawn with */
     char pad36[0x02];
-    u8 unk38;                       /* 0x38 low byte of MapRecord.unk38: compared with LinkedPoint.unk32 (LinkedPoint_FindHitsForMapDraw) */
+    u8 linked_point_owner;          /* 0x38 low byte of MapRecord.linked_point_owner: compared with LinkedPoint.unk32 (LinkedPoint_FindHitsForMapDraw) */
     char pad39[0x03];
-    s32 flags;                      /* 0x3C high half of MapRecord.unk38 */
-    f32 unk40[4];                   /* 0x40 lowest x, y, z of the box linked points are tested against (LinkedPoint_FindHitsForMapDraw) */
-    f32 unk50[4];                   /* 0x50 highest x, y, z of that box */
+    s32 flags;                      /* 0x3C high half of MapRecord.record_flags */
+    f32 box_min[4];                 /* 0x40 lowest x, y, z of the box linked points are tested against (LinkedPoint_FindHitsForMapDraw) */
+    f32 box_max[4];                 /* 0x50 highest x, y, z of that box */
     char pad60[0x0C];
     struct MapDrawRecord *next;     /* 0x6C next in its draw list (D_00446778, D_00446780) */
     char pad70[0x0C];
@@ -161,7 +161,7 @@ typedef struct {
     s16 unk02;                      /* 0x02 */
 } MapSlotPair;
 
-/* one of the 16 0xC-byte entries MapSlot.unk38 points at: a texture that MapScroll_UpdateCopy scrolls in
+/* one of the 16 0xC-byte entries MapSlot.scroll_copy_textures points at: a texture that MapScroll_UpdateCopy scrolls in
    place by copying it through a spare buffer, as far as the matching copy pair says */
 typedef struct {
     u16 base;                       /* 0x00 0: the entry is unused */
@@ -174,7 +174,7 @@ typedef struct {
     u8 mode;                        /* 0x0B which call of MapScroll_UpdateCopy moves it */
 } MapScrollCopy;
 
-/* one of the 16 0x28-byte entries MapSlot.unk3C points at: a texture that MapScroll_UpdateDraw draws into
+/* one of the 16 0x28-byte entries MapSlot.scroll_draw_textures points at: a texture that MapScroll_UpdateDraw draws into
    another one, moved along by the matching draw pair */
 typedef struct {
     u16 width;                      /* 0x00 */
@@ -227,83 +227,83 @@ typedef struct {
     u16 item_count;                 /* 0x44 how many fixed items (MapItemDef) the map has */
     char pad46[0x2A];
     s8 unk70;                       /* 0x70 passed to sprintf as the file-name index */
-    u8 unk71;                       /* 0x71 which block of MapDrawState.unkA90 the items lying in the map are drawn with */
+    u8 unk71;                       /* 0x71 which block of MapDrawState.light_blocks the items lying in the map are drawn with */
 } MapHeader;
 
 /* one 0x60-byte entry of map_slots, indexed by the current map/slot D_00446770 */
 typedef struct MapSlot {
-    u8 unk00;                       /* 0x00 */
+    u8 loaded;                      /* 0x00 nonzero: the slot holds a loaded map */
     u8 tag;                         /* 0x01 matched against MapFlagBlock.tags */
-    u8 unk02;                       /* 0x02 nonzero: the slot's map is being drawn */
+    u8 has_flag_80000000_record;    /* 0x02 nonzero: the slot's map is being drawn */
     char pad03[0x01];
-    s32 unk04;                      /* 0x04 the map file's size, rounded up to 0x40000 */
+    s32 rounded_file_size;          /* 0x04 the map file's size, rounded up to 0x40000 */
     MapHeader *header;              /* 0x08 */
-    MapSlotUnk0C *unk0C;            /* 0x0C 32 blocks */
-    void *unk10;                    /* 0x10 */
+    MapSlotUnk0C *fog_blocks;       /* 0x0C 32 blocks */
+    void *light_blocks;             /* 0x10 the map's 32 light blocks (MapSlotUnk10), picked per record */
     char *records;                  /* 0x14 0x80-byte records, by PlayerState.map_index */
     MapFlagBlock *flag_blocks;      /* 0x18 */
-    Vector4 *origins;               /* 0x1C by EntityController.unk43A */
+    Vector4 *origins;               /* 0x1C by EntityController.entity_group_index */
     char pad20[0x04];
-    char *unk24;                    /* 0x24 room for MapSlotUnk08.unk2C words */
-    char *unk28;                    /* 0x28 room for MapSlotUnk08.unk2C bytes */
+    char *record_model_table;       /* 0x24 room for MapSlotUnk08.record_model_count words */
+    char *record_model_spare_bytes; /* 0x28 room for MapSlotUnk08.record_model_count bytes */
     char pad2C[0x04];
-    char *unk30;                    /* 0x30 the file at MapSlotUnk08.unk24: the first of the packets */
-    struct SoundSpecSource *unk34;  /* 0x34 the file at MapSlotUnk08.unk28: the map's sound bank */
-    char *unk38;                    /* 0x38 the file at 0x1480 */
-    char *unk3C;                    /* 0x3C the file at 0x1540 */
+    char *packet_data;              /* 0x30 the file at MapSlotUnk08.record_model_table: the first of the packets */
+    struct SoundSpecSource *sound_bank; /* 0x34 the file at MapSlotUnk08.record_model_spare_bytes: the map's sound bank */
+    char *scroll_copy_textures;     /* 0x38 the file at 0x1480 */
+    char *scroll_draw_textures;     /* 0x3C the file at 0x1540 */
     MapSlotPackets unk40;           /* 0x40 */
-    s32 unk5C;                      /* 0x5C passed to Script_Init when the map becomes current */
+    s32 script;                     /* 0x5C passed to Script_Init when the map becomes current */
 } MapSlot;
 
 /* what MapSlot.unk08 points at */
 typedef struct {
-    s32 unk00;                      /* 0x00 how long the map file's first part is */
-    s32 unk04;                      /* 0x04 offset in the file of the record models (ModelFile, back to back) */
-    s32 unk08;                      /* 0x08 offset of the record collision meshes */
-    s32 unk0C;                      /* 0x0C offset of the plain object models */
-    s32 unk10;                      /* 0x10 offset of the jointed object models (Model_SetUpSkinned) */
-    s32 unk14;                      /* 0x14 offset of the object collision meshes */
-    s32 unk18;                      /* 0x18 offset of the object motions (ModelMotion_LoadFile) */
+    s32 file_size;                  /* 0x00 how long the map file's first part is */
+    s32 record_models_offset;       /* 0x04 offset in the file of the record models (ModelFile, back to back) */
+    s32 record_collision_offset;    /* 0x08 offset of the record collision meshes */
+    s32 object_model_offset;        /* 0x0C offset of the plain object models */
+    s32 skinned_object_model_offset; /* 0x10 offset of the jointed object models (Model_SetUpSkinned) */
+    s32 object_collision_offset;    /* 0x14 offset of the object collision meshes */
+    s32 object_motion_offset;       /* 0x18 offset of the object motions (ModelMotion_LoadFile) */
     char pad1C[0x08];
-    s32 unk24;                      /* 0x24 offset in the file of what MapSlot.unk30 points at */
-    s32 unk28;                      /* 0x28 offset in the file of what MapSlot.unk34 points at */
-    u16 unk2C;                      /* 0x2C how many entries MapSlot.unk24 and unk28 have */
+    s32 packet_table_offset;        /* 0x24 offset in the file of what MapSlot.packet_data points at */
+    s32 sound_bank_offset;          /* 0x28 offset in the file of what MapSlot.sound_bank points at */
+    u16 record_model_count;         /* 0x2C how many entries MapSlot.record_model_table and unk28 have */
     char pad2E[0x02];
-    u16 unk30;                      /* 0x30 how many plain object models there are */
-    u16 unk32;                      /* 0x32 how many jointed object models */
-    u16 unk34;                      /* 0x34 how many object collision meshes */
-    u16 unk36;                      /* 0x36 how many object motions */
+    u16 plain_object_model_count;   /* 0x30 how many plain object models there are */
+    u16 skinned_object_model_count; /* 0x32 how many jointed object models */
+    u16 object_collision_count;     /* 0x34 how many object collision meshes */
+    u16 object_motion_count;        /* 0x36 how many object motions */
     char pad38[0x02];
-    u16 unk3A;                      /* 0x3A how many models MapSlotMemory.unk48 has room for */
+    u16 extra_model_count;          /* 0x3A how many models MapSlotMemory.extra_models has room for */
     u16 record_count;               /* 0x3C how many MapSlot.records there are */
-    u16 unk3E;                      /* 0x3E how many MapSlot.flag_blocks there are */
-    u16 unk40;                      /* 0x40 */
-    u16 unk42;                      /* 0x42 */
-    u16 unk44;                      /* 0x44 */
+    u16 flag_block_count;           /* 0x3E how many MapSlot.flag_blocks there are */
+    u16 object_count;               /* 0x40 how many map objects (and object records) the map has */
+    u16 spawn_count;                /* 0x42 how many entity spawn records (EntitySpawnInfo) the map has */
+    u16 item_count;                 /* 0x44 how many fixed items (MapItemDef) the map has */
     char pad46[0x06];
-    s32 unk4C;                      /* 0x4C offset in the file of what MapSlot.unk5C points at */
-    MapFogColor unk50;              /* 0x50 becomes MapDrawState.unk280 when the map becomes current */
-    f32 unk60;                      /* 0x60 where the player starts: x */
-    f32 unk64;                      /* 0x64 y */
-    f32 unk68;                      /* 0x68 z */
-    f32 unk6C;                      /* 0x6C and the heading */
-    s8 unk70;                       /* 0x70 becomes SoundLoadQueue.unk00 */
+    s32 script_offset;              /* 0x4C offset in the file of what MapSlot.script points at */
+    MapFogColor fog_color;          /* 0x50 becomes MapDrawState.unk280 when the map becomes current */
+    f32 player_start_x;             /* 0x60 where the player starts: x */
+    f32 player_start_y;             /* 0x64 y */
+    f32 player_start_z;             /* 0x68 z */
+    f32 player_start_heading;       /* 0x6C and the heading */
+    s8 sound_bank_file_index;       /* 0x70 becomes SoundLoadQueue.bgm_id */
     char pad71[0x07];
-    u8 unk78;                       /* 0x78 passed to Wobble_DrawRippledModel with the three after it */
-    u8 unk79;                       /* 0x79 */
-    u8 unk7A;                       /* 0x7A */
-    u8 unk7B;                       /* 0x7B */
+    u8 screen_tint_red;             /* 0x78 passed to Wobble_DrawRippledModel with the three after it */
+    u8 screen_tint_green;           /* 0x79 green of that colour */
+    u8 screen_tint_blue;            /* 0x7A blue of that colour */
+    u8 screen_tint_alpha;           /* 0x7B alpha of that colour; Wobble takes all four as one colour */
 } MapSlotUnk08;
 
 /* a MapRecord (kf_entity.h) as the map code reads it */
 typedef struct {
     char pad00[0x34];
-    u8 unk34;                       /* 0x34 */
+    u8 draw_block_index;            /* 0x34 which block of the map's draw state its models use */
     u8 unk35;                       /* 0x35 */
     char pad36[0x02];
-    u8 unk38;                       /* 0x38 */
-    u8 unk39;                       /* 0x39 nonzero: the neighbouring map must be loaded before going on */
-    u8 unk3A;                       /* 0x3A which of MapSlot.origins leads to the neighbouring map, 0xFF: none */
+    u8 flag_block_bit;              /* 0x38 its bit in the map's flag block: are its objects in use */
+    u8 needs_neighbour_map;         /* 0x39 nonzero: the neighbouring map must be loaded before going on */
+    u8 neighbour_origin_index;      /* 0x3A which of MapSlot.origins leads to the neighbouring map, 0xFF: none */
     char pad3B[0x01];
     s32 unk3C;                      /* 0x3C flags */
     char pad40[0x3C];
@@ -340,17 +340,17 @@ typedef struct {
 /* D_004321F0[2]: the memory each map slot is loaded into */
 typedef struct {
     char pad00[0x14];
-    char *unk14;                    /* 0x14 where the next read goes */
-    char *unk18;                    /* 0x18 */
-    char *unk1C;                    /* 0x1C the start of the map file */
-    char *unk20;                    /* 0x20 */
+    char *file_read_cursor;         /* 0x14 where the next read goes */
+    char *work_cursor;              /* 0x18 next free byte of the slot's work area (models and tables) */
+    char *file_base;                /* 0x1C the start of the map file */
+    char *work_base;                /* 0x20 the start of the slot's half of the work area, cleared on load */
     char pad24[0x10];
-    char *unk34;                    /* 0x34 room for a model (0x1C0 bytes) per record */
+    char *record_models;            /* 0x34 room for a model (0x1C0 bytes) per record */
     char pad38[0x04];
-    char *unk3C;                    /* 0x3C room for MapSlotUnk08.unk40 models */
+    char *object_models;            /* 0x3C room for MapSlotUnk08.object_count models */
     char pad40[0x04];
-    ModelInstance *unk44;           /* 0x44 the models of the map's entities, one each */
-    char *unk48;                    /* 0x48 room for MapSlotUnk08.unk3A models */
+    ModelInstance *entity_models;   /* 0x44 the models of the map's entities, one each */
+    char *extra_models;             /* 0x48 room for MapSlotUnk08.extra_model_count models */
     char pad4C[0x0C];
 } MapSlotMemory;
 

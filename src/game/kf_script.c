@@ -74,7 +74,7 @@ void Script_FillWords(void *dest, int count, int value) {
     }
 }
 
-/* Gets the interpreter ready for a map's script (MapSlot.unk5C, its address as a word): every thread is
+/* Gets the interpreter ready for a map's script (MapSlot.script, its address as a word): every thread is
    freed and set at the top of it, and the shared variables are cleared. */
 void Script_Init(s32 script_data) {
     ScriptThread *thread;
@@ -1153,9 +1153,9 @@ void ScriptCmd_MarkMessageHeard(ScriptValueCommand *command) {
 /* Command 40: asks for the step 3 sound load of `value` unless it is the one asked for already, then
    finishes. */
 void ScriptCmd_RequestSoundLoad(ScriptValueCommand *command) {
-    if (sound_load_queue.unk00 != command->value.value) {
-        sound_load_queue.unk00 = command->value.value;
-        sound_load_queue.unk04 = 1;
+    if (sound_load_queue.bgm_id != command->value.value) {
+        sound_load_queue.bgm_id = command->value.value;
+        sound_load_queue.bgm_load_pending = 1;
     }
     command->active = 0;
 }
@@ -1172,7 +1172,7 @@ void ScriptCmd_SetBgmVolume(ScriptValueCommand *command) {
     command->active = 0;
 }
 
-/* Command 37: sets the player's HP to 0 (Player_Kill; not while PlayerState.unk1A8 is set), then
+/* Command 37: sets the player's HP to 0 (Player_Kill; not while PlayerState.death_timer is set), then
    finishes. */
 void ScriptCmd_KillPlayer(ScriptThreadCommand *command) {
     Player_Kill();
@@ -1214,7 +1214,7 @@ void ScriptCmd_GetEntityCounter(ScriptCallCommand *command) {
 /* Command 43: empties the player's two gauges (the weapon's, unkBC, and the magic one, unkC0), then
    finishes. */
 void ScriptCmd_EmptyPlayerGauges(ScriptThreadCommand *command) {
-    player_state.unkC0 = player_state.unkBC = 0;
+    player_state.magic_gauge = player_state.power_gauge = 0;
     command->active = 0;
 }
 

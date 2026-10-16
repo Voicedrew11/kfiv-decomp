@@ -27,7 +27,7 @@ void MapObject_StartPedestal(MapObject *object) {
 
     work->part = 2;
     work->fired = 0;
-    if (!(object->unk10 & 0x20000)) {
+    if (!(object->state_flags & 0x20000)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
@@ -54,18 +54,18 @@ void MapObject_UpdateEmptyPedestal(MapObject *object) {
         if (work->timer > 0) {
             return;
         }
-        Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
+        Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->definition->definition_flags);
         work->timer = 0x2D;
     } else if (work->fired != 0) {
         work->fired = 0;
-        object->unk10 |= 0x20000;
+        object->state_flags |= 0x20000;
         MAP_OBJECT_BYTES(object)->step = 2;
         MapObject_StepAnim(object);
         MapObject_RebuildMatrices((char *)object);
         origin.w = 1.0f;
         origin.x = origin.y = origin.z = 0.0f;
         Vector_ApplyMatrix(&origin, part, &origin);
-        Vector_ApplyMatrix(&origin, object->model->unk40, &origin);
+        Vector_ApplyMatrix(&origin, object->model->model_matrix, &origin);
         Vector_Copy(&target, player_state);
         target.y -= 115.0f;
         Vector_Subtract(work, &origin, &target);
@@ -74,9 +74,9 @@ void MapObject_UpdateEmptyPedestal(MapObject *object) {
         Vector_ApplyMatrix(work, matrix, work);
         distance = sqrtf(work->step.x * work->step.x + work->step.y * work->step.y + work->step.z * work->step.z);
         work->frames = distance / 6.6666665f;
-        Vector_Subtract(part->unk40, part->unk40, work);
+        Vector_Subtract(part->position, part->position, work);
         Vector_Scale(&work->step.x, &work->step.x, 1.0f / work->frames);
-        game_status.unk30 |= 1;
+        game_status.update_hold_flags |= 1;
     }
 }
 
@@ -88,7 +88,7 @@ void MapObject_MovePedestalItemIn(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    Vector_Add(part->unk40, part->unk40, work);
+    Vector_Add(part->position, part->position, work);
     if (--work->frames <= 0) {
         MAP_OBJECT_BYTES(object)->step = 3;
     }
@@ -108,7 +108,7 @@ void MapObject_SettlePedestalItem(MapObject *object) {
     }
     MapObject_StartAnim(object, 5);
     MAP_OBJECT_BYTES(object)->step = 4;
-    game_status.unk30 &= ~1U;
+    game_status.update_hold_flags &= ~1U;
 }
 
 /* Step 4 of a pedestal: used by the player, it gives its item back (Player_AddItem) and goes to step 5,
@@ -117,7 +117,7 @@ void MapObject_SettlePedestalItem(MapObject *object) {
 void MapObject_UpdateFilledPedestal(MapObject *object) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     MapObjectUnk08Words *source = MAP_OBJECT_WORDS(object);
-    ItemCommonDef *item_def = &item_common_defs[source->unk44];
+    ItemCommonDef *item_def = &item_common_defs[source->kind_param_0];
 
     if (work->timer > 0) {
         work->timer--;
@@ -127,13 +127,13 @@ void MapObject_UpdateFilledPedestal(MapObject *object) {
             if (work->timer > 0) {
                 return;
             }
-            Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->unk04->unk68);
+            Message_ShowNotice(0, 0, 0, 0, 0x2D, (s16)object->definition->definition_flags);
             work->timer = 0x2D;
         } else {
             MAP_OBJECT_BYTES(object)->step = 5;
-            object->unk10 &= ~0x20000;
-            Player_AddItem(source->unk44);
-            game_status.unk30 |= 1;
+            object->state_flags &= ~0x20000;
+            Player_AddItem(source->kind_param_0);
+            game_status.update_hold_flags |= 1;
         }
     }
 }
@@ -161,7 +161,7 @@ void MapObject_LiftPedestalItem(MapObject *object) {
     origin.w = 1.0f;
     origin.x = origin.y = origin.z = 0.0f;
     Vector_ApplyMatrix(&origin, part, &origin);
-    Vector_ApplyMatrix(&origin, object->model->unk40, &origin);
+    Vector_ApplyMatrix(&origin, object->model->model_matrix, &origin);
     Vector_Copy(&target, player_state);
     target.y -= 115.0f;
     Vector_Subtract(work, &target, &origin);
@@ -183,11 +183,11 @@ void MapObject_MovePedestalItemOut(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    Vector_Add(part->unk40, part->unk40, work);
+    Vector_Add(part->position, part->position, work);
     if (--work->frames <= 0) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
-        game_status.unk30 &= ~1U;
+        game_status.update_hold_flags &= ~1U;
     }
 }
 
@@ -202,7 +202,7 @@ int MapObject_PlaceItemOnPedestal(MapObject *object, int item) {
     MapObjectWorkSlide *work = (MapObjectWorkSlide *)object->work;
     u8 step = MAP_OBJECT_BYTES(object)->step;
 
-    if (step == 1 && work->fired == 0 && item == MAP_OBJECT_WORDS(object)->unk44) {
+    if (step == 1 && work->fired == 0 && item == MAP_OBJECT_WORDS(object)->kind_param_0) {
         work->fired = step;
         return TRUE;
     }

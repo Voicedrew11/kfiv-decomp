@@ -193,16 +193,16 @@ void LinkedPoint_FindHitsForMapDraw(MapDrawRecord *record, ModelInstance *model)
             if (taken[node->list_index] >= 2) {
                 continue;
             }
-            if (node->unk32 != -1 && node->unk32 != record->unk38) {
+            if (node->unk32 != -1 && node->unk32 != record->linked_point_owner) {
                 continue;
             }
             reach = node->duration;
             if (!(0.0f < reach)) {
                 continue;
             }
-            if (record->unk40[0] - reach <= node->position.x && node->position.x <= record->unk50[0] + reach &&
-                record->unk40[1] - reach <= node->position.y && node->position.y <= record->unk50[1] + reach &&
-                record->unk40[2] - reach <= node->position.z && node->position.z <= record->unk50[2] + reach) {
+            if (record->box_min[0] - reach <= node->position.x && node->position.x <= record->box_max[0] + reach &&
+                record->box_min[1] - reach <= node->position.y && node->position.y <= record->box_max[1] + reach &&
+                record->box_min[2] - reach <= node->position.z && node->position.z <= record->box_max[2] + reach) {
                 model->hit_handles[model->hit_count++] = node->handle;
                 taken[node->list_index]++;
                 if (model->hit_count >= 4) {

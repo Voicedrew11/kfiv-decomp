@@ -33,7 +33,7 @@ u8 D_0034B690[0x40] = { 0 };
 asm(".globl D_0034B696\nD_0034B696 = D_0034B690 + 6\n"
     ".globl D_0034B69C\nD_0034B69C = D_0034B690 + 0xC\n");
 
-/* 0x34B6D0 the state a group of entities shares (EntityController.unk43A picks one) */
+/* 0x34B6D0 the state a group of entities shares (EntityController.entity_group_index picks one) */
 EntityGroupRecord entity_group_state[0x32] = { { 0 } };
 
 /* 0x34C350 a Recollection page: bits 0-2 the description shown, then a bit per message heard */

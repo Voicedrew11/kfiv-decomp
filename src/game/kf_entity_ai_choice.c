@@ -1,6 +1,6 @@
 /* The choices of the shared entity AI: what the entity knows of the player (Entity.state), guarding and
    dodging, which attack and which combat choice to take and how their weights change, and the movement
-   commands (Entity.unkC8) that take it towards its target or aside from a push. */
+   commands (Entity.move_command) that take it towards its target or aside from a push. */
 #include "kf_entity_ai_choice.h"
 #include "kf_entity_aim.h"
 #include "kf_player.h"
@@ -32,10 +32,10 @@ static inline f32 wrap_angle(f32 angle) {
 static inline f32 attack_angle(EntityModel *body, EntityModel *model, f32 heading_to_player, s16 degrees) {
     f32 angle = degrees * 0.017453292f;
 
-    if (!(model->unkE0[0] >= 0.0f)) {
+    if (!(model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
-    return wrap_angle(heading_to_player - wrap_angle(body->unkD0[1] + angle));
+    return wrap_angle(heading_to_player - wrap_angle(body->rotation[1] + angle));
 }
 
 /* how much weaker than 0x80 something is `elapsed` frames into a fade of `duration` frames */
@@ -53,74 +53,74 @@ static inline s32 player_in_reach(Entity *entity, EntityParams *params) {
     f32 top;
     f32 bottom;
 
-    angle = params->unk240[0].unk0E * 0.017453292f;
-    if (!(entity->model->unkE0[0] >= 0.0f)) {
+    angle = params->melee_attacks[0].heading_offset_deg * 0.017453292f;
+    if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
-    angles[0] = wrap_angle(entity->unk68 - wrap_angle(entity->model->unkD0[1] + angle));
+    angles[0] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[0] = ABS(angles[0]);
-    angle = params->unk240[1].unk0E * 0.017453292f;
-    if (!(entity->model->unkE0[0] >= 0.0f)) {
+    angle = params->melee_attacks[1].heading_offset_deg * 0.017453292f;
+    if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
-    angles[1] = wrap_angle(entity->unk68 - wrap_angle(entity->model->unkD0[1] + angle));
+    angles[1] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[1] = ABS(angles[1]);
-    angle = params->unk240[2].unk0E * 0.017453292f;
-    if (!(entity->model->unkE0[0] >= 0.0f)) {
+    angle = params->melee_attacks[2].heading_offset_deg * 0.017453292f;
+    if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
-    angles[2] = wrap_angle(entity->unk68 - wrap_angle(entity->model->unkD0[1] + angle));
+    angles[2] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[2] = ABS(angles[2]);
     angle = ENTITY_PARAMS_RANGED(params)[0].unk0E * 0.017453292f;
-    if (!(entity->model->unkE0[0] >= 0.0f)) {
+    if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
-    angles[3] = wrap_angle(entity->unk68 - wrap_angle(entity->model->unkD0[1] + angle));
+    angles[3] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[3] = ABS(angles[3]);
     angle = ENTITY_PARAMS_RANGED(params)[1].unk0E * 0.017453292f;
-    if (!(entity->model->unkE0[0] >= 0.0f)) {
+    if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
-    angles[4] = wrap_angle(entity->unk68 - wrap_angle(entity->model->unkD0[1] + angle));
+    angles[4] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[4] = ABS(angles[4]);
     angle = ENTITY_PARAMS_RANGED(params)[2].unk0E * 0.017453292f;
-    if (!(entity->model->unkE0[0] >= 0.0f)) {
+    if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
-    angles[5] = wrap_angle(entity->unk68 - wrap_angle(entity->model->unkD0[1] + angle));
+    angles[5] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[5] = ABS(angles[5]);
     height = entity->height;
-    bottom = entity->model->position[1] - (height + params->unk1A) * 0.5f;
-    top = entity->model->position[1] - (height - params->unk1A) * 0.5f;
-    farthest = params->unk18;
-    if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
+    bottom = entity->model->position[1] - (height + params->attack_height_band) * 0.5f;
+    top = entity->model->position[1] - (height - params->attack_height_band) * 0.5f;
+    farthest = params->attack_range;
+    if (entity->ailment_2_frames != 0 || (player_state.intimidate_timer > 0 && entity->distance_to_player_3d < player_state.intimidate_range)) {
         farthest *= 0.5f;
     }
     if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
         farthest *= 0.5f;
     }
-    reach[0][0] = params->unk240[0].unk04 != 0 ? entity->radius + 100.0f + params->unk240[0].unk04 : 0.0f;
-    reach[0][1] = params->unk240[1].unk04 != 0 ? entity->radius + 100.0f + params->unk240[1].unk04 : 0.0f;
-    reach[0][2] = params->unk240[2].unk04 != 0 ? entity->radius + 100.0f + params->unk240[2].unk04 : 0.0f;
+    reach[0][0] = params->melee_attacks[0].reach_min != 0 ? entity->radius + 100.0f + params->melee_attacks[0].reach_min : 0.0f;
+    reach[0][1] = params->melee_attacks[1].reach_min != 0 ? entity->radius + 100.0f + params->melee_attacks[1].reach_min : 0.0f;
+    reach[0][2] = params->melee_attacks[2].reach_min != 0 ? entity->radius + 100.0f + params->melee_attacks[2].reach_min : 0.0f;
     reach[0][3] = ENTITY_PARAMS_RANGED(params)[0].reach_min != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_RANGED(params)[0].reach_min : 0.0f;
     reach[0][4] = ENTITY_PARAMS_RANGED(params)[1].reach_min != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_RANGED(params)[1].reach_min : 0.0f;
     reach[0][5] = ENTITY_PARAMS_RANGED(params)[2].reach_min != 0 ? entity->radius + 100.0f + ENTITY_PARAMS_RANGED(params)[2].reach_min : 0.0f;
-    reach[1][0] = (farthest < params->unk240[0].unk06 ? farthest + entity->radius : params->unk240[0].unk06 + entity->radius) + 100.0f;
-    reach[1][1] = (farthest < params->unk240[1].unk06 ? farthest + entity->radius : params->unk240[1].unk06 + entity->radius) + 100.0f;
-    reach[1][2] = (farthest < params->unk240[2].unk06 ? farthest + entity->radius : params->unk240[2].unk06 + entity->radius) + 100.0f;
+    reach[1][0] = (farthest < params->melee_attacks[0].reach_max ? farthest + entity->radius : params->melee_attacks[0].reach_max + entity->radius) + 100.0f;
+    reach[1][1] = (farthest < params->melee_attacks[1].reach_max ? farthest + entity->radius : params->melee_attacks[1].reach_max + entity->radius) + 100.0f;
+    reach[1][2] = (farthest < params->melee_attacks[2].reach_max ? farthest + entity->radius : params->melee_attacks[2].reach_max + entity->radius) + 100.0f;
     reach[1][3] = (farthest < ENTITY_PARAMS_RANGED(params)[0].reach_max ? farthest + entity->radius : ENTITY_PARAMS_RANGED(params)[0].reach_max + entity->radius) + 100.0f;
     reach[1][4] = (farthest < ENTITY_PARAMS_RANGED(params)[1].reach_max ? farthest + entity->radius : ENTITY_PARAMS_RANGED(params)[1].reach_max + entity->radius) + 100.0f;
     reach[1][5] = (farthest < ENTITY_PARAMS_RANGED(params)[2].reach_max ? farthest + entity->radius : ENTITY_PARAMS_RANGED(params)[2].reach_max + entity->radius) + 100.0f;
     if (entity->model->position[1] - height <= player_state.position.y && player_state.position.y - 230.0f <= entity->model->position[1]) {
-        if (params->unk240[0].unk00 != 0 && angles[0] < params->unk240[0].unk08 && reach[0][0] <= entity->distance_to_player &&
+        if (params->melee_attacks[0].attack_weight != 0 && angles[0] < params->melee_attacks[0].reach_angle && reach[0][0] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][0]) {
             return TRUE;
         }
-        if (params->unk240[1].unk00 != 0 && angles[1] < params->unk240[1].unk08 && reach[0][1] <= entity->distance_to_player &&
+        if (params->melee_attacks[1].attack_weight != 0 && angles[1] < params->melee_attacks[1].reach_angle && reach[0][1] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][1]) {
             return TRUE;
         }
-        if (params->unk240[2].unk00 != 0 && angles[2] < params->unk240[2].unk08 && reach[0][2] <= entity->distance_to_player &&
+        if (params->melee_attacks[2].attack_weight != 0 && angles[2] < params->melee_attacks[2].reach_angle && reach[0][2] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][2]) {
             return TRUE;
         }
@@ -157,7 +157,7 @@ static inline void adjust_level(u8 *level, s32 delta, s32 max) {
 }
 
 /* Steps Entity.state from flag bit 33 (the player is noticed): 0 nothing, 2 noticed, 1 was noticed and
-   Entity.timer (EntityController.unk12 frames) still runs; 3 stays. Clears unkA0 when the state changes. */
+   Entity.timer (EntityController.state_timer_reload frames) still runs; 3 stays. Clears unkA0 when the state changes. */
 void EntityAi_StepState(Entity *entity) {
     s64 next;
 
@@ -184,7 +184,7 @@ void EntityAi_StepState(Entity *entity) {
         if (!(((int)((u64)entity->flags >> 33) & 1))) {
             entity->state = 1;
             next = 1;
-            entity->timer = ENTITY_CONTROLLER(entity)->unk12;
+            entity->timer = ENTITY_CONTROLLER(entity)->state_timer_reload;
         }
         break;
     case 3:
@@ -197,7 +197,7 @@ void EntityAi_StepState(Entity *entity) {
         break;
     }
     if ((char)next != entity->prev_state) {
-        entity->unkA0 = 0;
+        entity->action_timer = 0;
     }
 }
 
@@ -214,19 +214,19 @@ int EntityAi_TurnFromPush(void *entity_arg, void *heading_out) {
     if (!(entity->flags & (0xB000L << 33))) {
         return 0;
     }
-    angle = entity->model->unkD0[1];
+    angle = entity->model->rotation[1];
     facing[0] = -sinf(angle);
     facing[1] = 0.0f;
     facing[2] = -cosf(angle);
     facing[3] = 1.0f;
     push[0] = push[1] = push[2] = push[3] = 0.0f;
     if (entity->flags & (0xC000L << 31)) {
-        push[0] += entity->unkA4[0];
-        push[2] += entity->unkA4[2];
+        push[0] += entity->wall_push[0];
+        push[2] += entity->wall_push[2];
     }
     if ((s32)(entity->flags >> 48) & 1) {
-        push[0] += entity->unkB0[0];
-        push[2] += entity->unkB0[2];
+        push[0] += entity->entity_push[0];
+        push[2] += entity->entity_push[2];
     }
     Vector_Normalize(push, push);
     angle = facing[0] * push[0] + facing[2] * push[2];
@@ -236,11 +236,11 @@ int EntityAi_TurnFromPush(void *entity_arg, void *heading_out) {
     angle = (f32)acos(angle) - 1.5707964f;
     Vector_Cross(facing, push, facing);
     if (facing[1] <= 0.0f) {
-        angle = entity->model->unkD0[1] + angle + 0.017453292f;
+        angle = entity->model->rotation[1] + angle + 0.017453292f;
         *(f32 *)heading_out = angle;
         return 1;
     }
-    angle = entity->model->unkD0[1] - angle - 0.017453292f;
+    angle = entity->model->rotation[1] - angle - 0.017453292f;
     *(f32 *)heading_out = angle;
     return -1;
 }
@@ -261,12 +261,12 @@ s32 EntityAi_IsPushedFromFront(Entity *entity, f32 heading) {
     facing[3] = 1.0f;
     push[0] = push[1] = push[2] = push[3] = 0.0f;
     if (entity->flags & (0xC000L << 31)) {
-        push[0] += entity->unkA4[0];
-        push[2] += entity->unkA4[2];
+        push[0] += entity->wall_push[0];
+        push[2] += entity->wall_push[2];
     }
     if ((s32)(entity->flags >> 48) & 1) {
-        push[0] += entity->unkB0[0];
-        push[2] += entity->unkB0[2];
+        push[0] += entity->entity_push[0];
+        push[2] += entity->entity_push[2];
     }
     Vector_Normalize(push, push);
     if (facing[0] * push[0] + facing[2] * push[2] >= 0.0f) {
@@ -275,10 +275,10 @@ s32 EntityAi_IsPushedFromFront(Entity *entity, f32 heading) {
     return TRUE;
 }
 
-/* Whether to guard: by a chance of EntityParams.unkCB / 5 percent while the player, within `max_distance` and
+/* Whether to guard: by a chance of EntityParams.guard_chance / 5 percent while the player, within `max_distance` and
    `max_angle` of the heading, is early in a swing, and the entity is not busy. */
 s32 EntityAi_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle) {
-    f32 angle = entity->unk68 - entity->model->unkD0[1];
+    f32 angle = entity->heading_to_player - entity->model->rotation[1];
     f32 distance = entity->distance_to_player - (entity->radius + 100.0f);
 
     angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
@@ -287,7 +287,7 @@ s32 EntityAi_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle) {
     } else if (angle < -3.1415927f) {
         angle += 6.2831855f;
     }
-    if (entity->unkC6 != 0) {
+    if (entity->busy_flags != 0) {
         return FALSE;
     }
     if (max_distance < distance) {
@@ -296,21 +296,21 @@ s32 EntityAi_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle) {
     if (ABS(angle) > max_angle) {
         return FALSE;
     }
-    if (D_004141D8[0] == 0 || D_00446978->unkFC->unk82 >= 6) {
+    if (D_004141D8[0] == 0 || D_00446978->level_tables->unk82 >= 6) {
         return FALSE;
     }
-    return rand() % 100 < entity->params->unkCB / 5;
+    return rand() % 100 < entity->params->guard_chance / 5;
 }
 
-/* As EntityAi_ShouldGuard, by a chance of EntityParams.unkCA / 5 percent. */
+/* As EntityAi_ShouldGuard, by a chance of EntityParams.dodge_chance / 5 percent. */
 s32 EntityAi_ShouldDodge(Entity *entity, f32 max_distance, f32 max_angle) {
     f32 angle;
     f32 distance;
 
-    if (D_004141D8[0] == 0 || D_00446978->unkFC->unk82 >= 6) {
+    if (D_004141D8[0] == 0 || D_00446978->level_tables->unk82 >= 6) {
         return FALSE;
     }
-    angle = entity->unk68 - entity->model->unkD0[1];
+    angle = entity->heading_to_player - entity->model->rotation[1];
     distance = entity->distance_to_player - (entity->radius + 100.0f);
     angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
     if (angle > 3.1415927f) {
@@ -318,7 +318,7 @@ s32 EntityAi_ShouldDodge(Entity *entity, f32 max_distance, f32 max_angle) {
     } else if (angle < -3.1415927f) {
         angle += 6.2831855f;
     }
-    if (entity->unkC6 != 0) {
+    if (entity->busy_flags != 0) {
         return FALSE;
     }
     if (max_distance < distance) {
@@ -327,10 +327,10 @@ s32 EntityAi_ShouldDodge(Entity *entity, f32 max_distance, f32 max_angle) {
     if (ABS(angle) > max_angle) {
         return FALSE;
     }
-    return rand() % 100 < entity->params->unkCA / 5;
+    return rand() % 100 < entity->params->dodge_chance / 5;
 }
 
-/* Picks which of the six attacks (three melee, EntityParams.unk240, then three ranged) to use: a weighted
+/* Picks which of the six attacks (three melee, EntityParams.melee_attacks, then three ranged) to use: a weighted
    draw among those the player is in reach of. Sets flag bits 58-59 to its number and bit 57 for a ranged one,
    and returns bit 57. */
 s32 EntityAi_PickAttack(Entity *entity) {
@@ -356,38 +356,38 @@ s32 EntityAi_PickAttack(Entity *entity) {
             f32 bottom;
             s32 in_reach;
 
-            angle = entity->params->unk240[i].unk0E * 0.017453292f;
-            if (!(entity->model->unkE0[0] >= 0.0f)) {
+            angle = entity->params->melee_attacks[i].heading_offset_deg * 0.017453292f;
+            if (!(entity->model->scale[0] >= 0.0f)) {
                 angle = -angle;
             }
-            difference = wrap_angle(entity->unk68 - wrap_angle(entity->model->unkD0[1] + angle));
+            difference = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
             difference = ABS(difference);
-            farthest = entity->params->unk18;
+            farthest = entity->params->attack_range;
             bottom = player_state.position.y - 230.0f;
             top = player_state.position.y + entity->height;
-            if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
+            if (entity->ailment_2_frames != 0 || (player_state.intimidate_timer > 0 && entity->distance_to_player_3d < player_state.intimidate_range)) {
                 farthest *= 0.5f;
             }
             if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
                 farthest *= 0.5f;
             }
-            if (entity->params->unk240[i].unk04 != 0) {
-                nearest = entity->radius + 100.0f + entity->params->unk240[i].unk04;
+            if (entity->params->melee_attacks[i].reach_min != 0) {
+                nearest = entity->radius + 100.0f + entity->params->melee_attacks[i].reach_min;
             } else {
                 nearest = 0.0f;
             }
             reach[0] = nearest;
             radius = entity->radius; // match: the far limit reads the radius through a local, the near one directly
-            reach[1] = (farthest < entity->params->unk240[i].unk06 ? farthest + radius : entity->params->unk240[i].unk06 + radius) + 100.0f;
+            reach[1] = (farthest < entity->params->melee_attacks[i].reach_max ? farthest + radius : entity->params->melee_attacks[i].reach_max + radius) + 100.0f;
             in_reach = FALSE;
-            if (bottom <= entity->model->position[1] && entity->model->position[1] <= top && difference < entity->params->unk240[i].unk08 &&
+            if (bottom <= entity->model->position[1] && entity->model->position[1] <= top && difference < entity->params->melee_attacks[i].reach_angle &&
                 reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[1]) {
                 in_reach = TRUE;
             }
             if (!in_reach) {
                 weight = 0;
             } else {
-                weight = (entity->unkC0[i] * entity->params->unk240[i].unk00) >> 6;
+                weight = (entity->attack_weights[i] * entity->params->melee_attacks[i].attack_weight) >> 6;
             }
         } else {
             f32 angle;
@@ -402,15 +402,15 @@ s32 EntityAi_PickAttack(Entity *entity) {
 
             j = i - 3;
             angle = ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].unk0E * 0.017453292f;
-            if (!(entity->model->unkE0[0] >= 0.0f)) {
+            if (!(entity->model->scale[0] >= 0.0f)) {
                 angle = -angle;
             }
-            difference = wrap_angle(entity->unk68 - wrap_angle(entity->model->unkD0[1] + angle));
+            difference = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
             difference = ABS(difference);
-            farthest = entity->params->unk18;
-            bottom = entity->model->position[1] - (entity->height + entity->params->unk1A) * 0.5f;
-            top = entity->model->position[1] - (entity->height - entity->params->unk1A) * 0.5f;
-            if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
+            farthest = entity->params->attack_range;
+            bottom = entity->model->position[1] - (entity->height + entity->params->attack_height_band) * 0.5f;
+            top = entity->model->position[1] - (entity->height - entity->params->attack_height_band) * 0.5f;
+            if (entity->ailment_2_frames != 0 || (player_state.intimidate_timer > 0 && entity->distance_to_player_3d < player_state.intimidate_range)) {
                 farthest *= 0.5f;
             }
             if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
@@ -431,7 +431,7 @@ s32 EntityAi_PickAttack(Entity *entity) {
             }
             weight = 0;
             if (in_reach) {
-                weight = (entity->unkC0[i] * ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].record.unk00) >> 6;
+                weight = (entity->attack_weights[i] * ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].record.unk00) >> 6;
             }
         }
         weights[i] = weight;
@@ -460,7 +460,7 @@ s32 EntityAi_PickAttack(Entity *entity) {
     return (s32)(entity->flags >> 57) & 1;
 }
 
-/* Picks which of the three melee attacks (EntityParams.unk240) to use: a weighted draw among those the player
+/* Picks which of the three melee attacks (EntityParams.melee_attacks) to use: a weighted draw among those the player
    is in reach of. Sets flag bits 58-59 to it, clears bit 57, and returns it. */
 // match: returns the bits it set (the callers declare it void and drop the value)
 s32 EntityAi_PickMeleeAttack(Entity *entity) {
@@ -490,36 +490,36 @@ s32 EntityAi_PickMeleeAttack(Entity *entity) {
         model = entity->model;
         height = entity->height;
         radius = entity->radius;
-        angle = attack_angle(model, entity->model, entity->unk68, entity->params->unk240[i].unk0E);
+        angle = attack_angle(model, entity->model, entity->heading_to_player, entity->params->melee_attacks[i].heading_offset_deg);
         angle = ABS(angle);
-        farthest = entity->params->unk18;
+        farthest = entity->params->attack_range;
         bottom = player_state.position.y - 230.0f;
         top = player_state.position.y + height;
-        if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
+        if (entity->ailment_2_frames != 0 || (player_state.intimidate_timer > 0 && entity->distance_to_player_3d < player_state.intimidate_range)) {
             farthest *= 0.5f;
         }
         if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
             farthest *= 0.5f;
         }
-        if (entity->params->unk240[i].unk04 != 0) {
-            nearest = entity->radius + 100.0f + entity->params->unk240[i].unk04;
+        if (entity->params->melee_attacks[i].reach_min != 0) {
+            nearest = entity->radius + 100.0f + entity->params->melee_attacks[i].reach_min;
         } else {
             nearest = 0.0f;
         }
         reach[0] = nearest;
-        farthest = (farthest < entity->params->unk240[i].unk06 ? farthest + radius
-                                                                                               : entity->params->unk240[i].unk06 + radius) + 100.0f;
+        farthest = (farthest < entity->params->melee_attacks[i].reach_max ? farthest + radius
+                                                                                               : entity->params->melee_attacks[i].reach_max + radius) + 100.0f;
         reach[1] = farthest;
         in_reach = FALSE;
         if (bottom <= entity->model->position[1] && entity->model->position[1] <= top &&
-            angle < entity->params->unk240[i].unk08 && reach[0] <= entity->distance_to_player &&
+            angle < entity->params->melee_attacks[i].reach_angle && reach[0] <= entity->distance_to_player &&
             entity->distance_to_player < farthest) {
             in_reach = TRUE;
         }
         if (!in_reach) {
             weight = 0;
         } else {
-            weight = (entity->unkC0[i] * entity->params->unk240[i].unk00) >> 6;
+            weight = (entity->attack_weights[i] * entity->params->melee_attacks[i].attack_weight) >> 6;
         }
         weights[i] = weight;
         total += weight;
@@ -542,7 +542,7 @@ s32 EntityAi_PickMeleeAttack(Entity *entity) {
     return ENTITY_FLAG_BITS(entity)->bits58;
 }
 
-/* Picks which of the three ranged attacks (EntityParams.unk3D8) to use: a weighted draw among those the
+/* Picks which of the three ranged attacks (EntityParams.ranged_attacks) to use: a weighted draw among those the
    player is in reach of. Sets flag bits 58-59 to it, sets bit 57, and returns it. */
 // match: returns the bits it set (the callers declare it void and drop the value)
 s32 EntityAi_PickRangedAttack(Entity *entity) {
@@ -570,12 +570,12 @@ s32 EntityAi_PickRangedAttack(Entity *entity) {
         // gives the loop its two hoisted registers for each (the second a copy of the first)
         model = entity->model;
         radius = entity->radius;
-        angle = attack_angle(model, entity->model, entity->unk68, ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].unk0E);
+        angle = attack_angle(model, entity->model, entity->heading_to_player, ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].unk0E);
         angle = ABS(angle);
-        bottom = entity->model->position[1] - (entity->height + entity->params->unk1A) * 0.5f;
-        top = entity->model->position[1] - (entity->height - entity->params->unk1A) * 0.5f;
-        farthest = entity->params->unk18;
-        if (entity->unk24 != 0 || (player_state.unk2E4 > 0 && entity->unk60 < player_state.unk2E8)) {
+        bottom = entity->model->position[1] - (entity->height + entity->params->attack_height_band) * 0.5f;
+        top = entity->model->position[1] - (entity->height - entity->params->attack_height_band) * 0.5f;
+        farthest = entity->params->attack_range;
+        if (entity->ailment_2_frames != 0 || (player_state.intimidate_timer > 0 && entity->distance_to_player_3d < player_state.intimidate_range)) {
             farthest *= 0.5f;
         }
         if (player_state.equipment[EQUIP_AMULET] == ITEM_WORN_INDEX(ITEM_THIEVES_NECKLACE)) {
@@ -599,7 +599,7 @@ s32 EntityAi_PickRangedAttack(Entity *entity) {
         if (!in_reach) {
             weight = 0;
         } else {
-            weight = (entity->unkC0[3 + i] * ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].record.unk00) >> 6;
+            weight = (entity->attack_weights[3 + i] * ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].record.unk00) >> 6;
         }
         weights[i] = weight;
         total += weight;
@@ -622,8 +622,8 @@ s32 EntityAi_PickRangedAttack(Entity *entity) {
     return ENTITY_FLAG_BITS(entity)->bits58;
 }
 
-/* Picks the next of the four combat choices (Entity.unkCD; 0 attack, 1 close in, 2 wait) by their chances
-   EntityParams.unk14 and weights unkBC, the current choice counting up to twice for 240 frames after it was
+/* Picks the next of the four combat choices (Entity.combat_choice; 0 attack, 1 close in, 2 wait) by their chances
+   EntityParams.combat_choice_weights and weights unkBC, the current choice counting up to twice for 240 frames after it was
    taken; -1 when none can be chosen. The attack is left out while unkA2 runs, while the player is in reach of
    none of the six attacks, and by `mode`. */
 s32 EntityAi_PickCombatChoice(Entity *entity, s32 mode) {
@@ -640,9 +640,9 @@ s32 EntityAi_PickCombatChoice(Entity *entity, s32 mode) {
 
     choice = -1;
     for (i = 0; i < 4; i++) {
-        chances[i] = params->unk14[i];
+        chances[i] = params->combat_choice_weights[i];
     }
-    if (entity->unkA2 != 0) {
+    if (entity->attack_delay_frames != 0) {
         chances[0] = 0;
     } else if (!player_in_reach(entity, params)) {
         chances[0] = 0;
@@ -665,8 +665,8 @@ s32 EntityAi_PickCombatChoice(Entity *entity, s32 mode) {
         return -1;
     }
     for (i = 0; i < 4; i++) {
-        if (i == entity->unkCD) {
-            elapsed = (u16)D_00446ED4 - entity->unk9E;
+        if (i == entity->combat_choice) {
+            elapsed = (u16)D_00446ED4 - entity->choice_change_frame;
             if (elapsed < 240) {
                 fade = fade_out(elapsed, 240);
                 fade += 0x80;
@@ -676,7 +676,7 @@ s32 EntityAi_PickCombatChoice(Entity *entity, s32 mode) {
         } else {
             fade = 0x80;
         }
-        weights[i] = (fade * ((entity->unkBC[i] * chances[i]) >> 6)) >> 7;
+        weights[i] = (fade * ((entity->choice_weights[i] * chances[i]) >> 6)) >> 7;
         total += weights[i];
     }
     if (total == 0) {
@@ -704,18 +704,18 @@ void EntityAi_LowerWeightsAfterHit(Entity *entity) {
 
     if (entity->state == 2) {
         for (i = 0; i < 2; i++) {
-            if (entity->unkCD == i) {
-                adjust_level(&entity->unkBC[i], -10, 0xC0);
+            if (entity->combat_choice == i) {
+                adjust_level(&entity->choice_weights[i], -10, 0xC0);
             } else {
-                adjust_level(&entity->unkBC[i], 5, 0xC0);
+                adjust_level(&entity->choice_weights[i], 5, 0xC0);
             }
         }
-        if (entity->unkCD == 0) {
+        if (entity->combat_choice == 0) {
             first = 3;
             if ((entity->flags >> 57) & 1) {
                 first = 0;
             }
-            for (i = 0, weights = entity->unkC0; i < 6; i++) {
+            for (i = 0, weights = entity->attack_weights; i < 6; i++) {
                 if (((s32)(entity->flags >> 58) & 3) + first == i) {
                     adjust_level(&weights[i], -10, 0xC0);
                 } else {
@@ -738,7 +738,7 @@ void EntityAi_LowerAttackWeight(Entity *entity) {
     } else {
         index = flags->bits58;
     }
-    level = entity->unkC0;
+    level = entity->attack_weights;
     level += index;
     adjust_level(level, -10, 0xC0);
 }
@@ -750,9 +750,9 @@ void EntityAi_LowerChoiceWeight(Entity *entity, s32 chosen) {
 
     for (i = 0; i < 2; i++) {
         if (i == chosen) {
-            adjust_level(&entity->unkBC[i], -10, 0xC0);
+            adjust_level(&entity->choice_weights[i], -10, 0xC0);
         } else {
-            adjust_level(&entity->unkBC[i], 5, 0xC0);
+            adjust_level(&entity->choice_weights[i], 5, 0xC0);
         }
     }
 }
@@ -776,7 +776,7 @@ int EntityAi_TurnCommand(Entity *entity) {
     } else if (angle < -3.1415927f) {
         angle += 6.2831855f;
     }
-    diff = angle - entity->model->unkD0[1];
+    diff = angle - entity->model->rotation[1];
     diff -= (f32)(int)(diff / 6.2831855f) * 6.2831855f;
     if (3.1415927f < diff) {
         diff -= 6.2831855f;
@@ -793,7 +793,7 @@ int EntityAi_TurnCommand(Entity *entity) {
 }
 
 /* The move command towards the target: turn (0x100, 0x200), up or down (0x10, 0x20) beyond
-   EntityParams.unk54, and forward (1, with 0x40 when `run` is set) while it is farther than `range`. */
+   EntityParams.max_speed, and forward (1, with 0x40 when `run` is set) while it is farther than `range`. */
 s32 EntityAi_MoveCommand3D(Entity *entity, s32 mark_far, f32 range) {
     s32 result;
     f32 *target;
@@ -814,7 +814,7 @@ s32 EntityAi_MoveCommand3D(Entity *entity, s32 mark_far, f32 range) {
     } else if (angle < -3.1415927f) {
         angle += 6.2831855f;
     }
-    angle -= entity->model->unkD0[1];
+    angle -= entity->model->rotation[1];
     angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f;
     if (3.1415927f < angle) {
         angle -= 6.2831855f;
@@ -826,7 +826,7 @@ s32 EntityAi_MoveCommand3D(Entity *entity, s32 mark_far, f32 range) {
         result = 0.0f <= angle ? 0x200 : 0x100;
     }
     diff = ((f32 *)entity->target)[1] - entity->model->position[1];
-    if (entity->params->unk54 < (0.0f <= diff ? diff : -diff)) {
+    if (entity->params->max_speed < (0.0f <= diff ? diff : -diff)) {
         result |= 0.0f <= diff ? 0x20 : 0x10;
     }
     __asm__ volatile(
@@ -872,7 +872,7 @@ s32 EntityAi_MoveCommand(Entity *entity, s32 mark_far, f32 range) {
     } else if (angle < -3.1415927f) {
         angle += 6.2831855f;
     }
-    diff = angle - entity->model->unkD0[1];
+    diff = angle - entity->model->rotation[1];
     diff = diff - (f32)(s32)(diff / 6.2831855f) * 6.2831855f;
     if (3.1415927f < diff) {
         diff -= 6.2831855f;
@@ -923,7 +923,7 @@ s32 EntityAi_TurnOrMoveCommand(Entity *entity, s32 far_flag, f32 reach) {
     } else if (angle < -3.1415927f) {
         angle += 6.2831855f;
     }
-    angle -= entity->model->unkD0[1];
+    angle -= entity->model->rotation[1];
     angle -= (int)(angle / 6.2831855f) * 6.2831855f;
     if (3.1415927f < angle) {
         angle -= 6.2831855f;
@@ -968,14 +968,14 @@ int EntityAi_PushTurnCommand3D(Entity *entity, int turn) {
 
     push[0] = push[1] = push[2] = push[3] = 0.0f;
     if (entity->flags & (0xC000L << 31)) {
-        push[0] += entity->unkA4[0];
-        push[1] += entity->unkA4[1];
-        push[2] += entity->unkA4[2];
+        push[0] += entity->wall_push[0];
+        push[1] += entity->wall_push[1];
+        push[2] += entity->wall_push[2];
     }
     if ((s32)(entity->flags >> 48) & 1) {
-        push[0] += entity->unkB0[0];
-        push[1] += entity->unkB0[1];
-        push[2] += entity->unkB0[2];
+        push[0] += entity->entity_push[0];
+        push[1] += entity->entity_push[1];
+        push[2] += entity->entity_push[2];
     }
     Vector_Normalize(push, push);
     if (turn > 0) {

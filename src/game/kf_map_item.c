@@ -177,7 +177,7 @@ void MapItem_InitMap(int map) {
     for (i = 0; i < count; i++, def++, node++) {
         D_005B5EC0[map][def->slot_id] = i;
         definition = &item_name_defs[def->item];
-        source = MapItem_FindModelSource(map, definition->unk30);
+        source = MapItem_FindModelSource(map, definition->model_file_number);
         if (source != NULL) {
             ITEM_NODE_BITS(node)->map = map;
             node->def = def;
@@ -191,8 +191,8 @@ void MapItem_InitMap(int map) {
             Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
             Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
             node->model->draw = (void (*)(ModelInstance *))MapItem_PrepareDraw;
-            node->model->unk194 = (int)source->texture;
-            node->model->unk190 = 2;
+            node->model->texture_data = (int)source->texture;
+            node->model->texture_slot = 2;
             TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
         }
     }
@@ -311,7 +311,7 @@ int MapItem_PlaceFixed(int map, int index) {
     }
     Vector_Copy(&node->model->position, &node->def->position);
     Vector_Copy(&node->model->rotation, &node->def->rotation);
-    Vector_Copy(&node->model->unkE0, &node->def->scale);
+    Vector_Copy(&node->model->scale_x, &node->def->scale);
     MapItem_Link((ListNode *)node);
 }
 
@@ -338,7 +338,7 @@ s32 MapItem_DropFromEnemy(Entity *entity) {
     scale = D_0043F610;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 47)) {
         // match: the low 16 bits of the 64-bit field, copied before the test
-        item = value = *(u16 *)&entity->spawn_info->unk38;
+        item = value = *(u16 *)&entity->spawn_info->spawn_flags;
         if (value == 0xFFFF) {
             return FALSE;
         }
@@ -404,7 +404,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     if (!MapItem_UniqueNotDropped(item)) {
         return FALSE;
     }
-    source = MapItem_FindModelSource(map, (item_name_defs + item)->unk30);
+    source = MapItem_FindModelSource(map, (item_name_defs + item)->model_file_number);
     if (source == NULL) {
         return FALSE;
     }
@@ -440,7 +440,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     ITEM_NODE_BITS(node)->map = map;
     Vector_Copy(&node->model->position, position);
     Vector_Copy(&node->model->rotation, rotation);
-    Vector_Copy(&node->model->unkE0, scale);
+    Vector_Copy(&node->model->scale_x, scale);
     ITEM_NODE_BITS(node)->bit2 = TRUE;
     node->unk2C = position[1];
     node->unk28 = floor_y;
@@ -450,8 +450,8 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     Model_SetUpPosed(node->model, &model_data, &buffer);
     Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
     Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
-    node->model->unk190 = 2;
-    node->model->unk194 = (int)source->texture;
+    node->model->texture_slot = 2;
+    node->model->texture_data = (int)source->texture;
     TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
     if (order == 0xFFFFFFFF) {
         order = D_004469D0++;
@@ -504,7 +504,7 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     if (i >= 32) {
         return NULL;
     }
-    source = MapItem_FindModelSource(map, (item_name_defs + item)->unk30);
+    source = MapItem_FindModelSource(map, (item_name_defs + item)->model_file_number);
     if (source == NULL) {
         return NULL;
     }
@@ -515,14 +515,14 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     node->model = model;
     Vector_Copy(&model->position, position);
     Vector_Copy(&node->model->rotation, rotation);
-    Vector_Copy(&node->model->unkE0, scale);
+    Vector_Copy(&node->model->scale_x, scale);
     sources[0] = source->model_data;
     sources[1] = D_005ADEC0[map][i];
     Model_SetUpPosed(node->model, &sources[0], &sources[1]);
     Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
     Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
-    node->model->unk190 = 2;
-    node->model->unk194 = (int)source->texture;
+    node->model->texture_slot = 2;
+    node->model->texture_data = (int)source->texture;
     TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
     MapItem_Link((ListNode *)node);
     return node;
@@ -593,15 +593,15 @@ void MapItem_DrawAll(int with_picked) {
         if (node == D_004469D8 && with_picked == 0) {
             continue;
         }
-        Vector_Scale(scale, &node->model->unkE0, 1.0f);
+        Vector_Scale(scale, &node->model->scale_x, 1.0f);
         ModelMatrix_Build(node->model, &node->model->position, &node->model->rotation, scale);
         part = node->model->parts;
         count = node->model->part_count;
         for (i = 0; i < count; i++, part++) {
             ModelMatrix_BuildPartLocal(node->model, part, part);
         }
-        node->model->unk148 = (s32)&map_draw_state.unkA90[node->flags & 1][map_slots[node->flags & 1].header->unk71];
-        node->model->unk14C = &map_draw_state.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
+        node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->unk71];
+        node->model->fog_block = &map_draw_state.fog_blocks[node->flags & 1][((MapRecordInfo *)node->map_record)->draw_block_index];
         LinkedPoint_FindHitsForModel(node->model);
         ModelTexture_SendForModel(node->model);
         Model_DrawPosedDepthByPart(node->model);
@@ -637,24 +637,24 @@ void MapItem_DrawPicked(int hidden) {
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(0x47, 0x5000D);
     Packet_EndGsRegisters();
-    Vector_Scale(scale, &node->model->unkE0, 1.0f);
+    Vector_Scale(scale, &node->model->scale_x, 1.0f);
     ModelMatrix_Build(node->model, &node->model->position, &node->model->rotation, scale);
     count = node->model->part_count;
     part = node->model->parts;
     for (; i < count; i++, part++) {
-        Vector_Scale(offset, part->unk40, D_0044719C);
-        Vector_Scale(turn, &part->unk50, D_0044719C);
+        Vector_Scale(offset, part->position, D_0044719C);
+        Vector_Scale(turn, &part->rotation_x, D_0044719C);
         sceVu0CopyMatrix(part, D_00431AF0);
-        PART_MATRIX(part)[0][0] = part->unk60[0];
-        PART_MATRIX(part)[1][1] = part->unk60[1];
-        PART_MATRIX(part)[2][2] = part->unk60[2];
+        PART_MATRIX(part)[0][0] = part->scale[0];
+        PART_MATRIX(part)[1][1] = part->scale[1];
+        PART_MATRIX(part)[2][2] = part->scale[2];
         sceVu0RotMatrixX((f32 *)part, (f32 *)part, wrap_angle(turn[0]));
         sceVu0RotMatrixZ((f32 *)part, (f32 *)part, wrap_angle(turn[2]));
         sceVu0RotMatrixY((f32 *)part, (f32 *)part, wrap_angle(turn[1]));
         sceVu0TransMatrix((f32 *)part, (f32 *)part, offset);
     }
-    node->model->unk148 = (s32)&map_draw_state.unkA90[node->flags & 1][map_slots[node->flags & 1].header->unk71];
-    node->model->unk14C = &map_draw_state.unk290[node->flags & 1][((MapRecordInfo *)node->map_record)->unk34];
+    node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->unk71];
+    node->model->fog_block = &map_draw_state.fog_blocks[node->flags & 1][((MapRecordInfo *)node->map_record)->draw_block_index];
     LinkedPoint_FindHitsForModel(node->model);
     ModelTexture_SendForModel(node->model);
     Model_DrawPosedDepthByPart(node->model);
@@ -692,7 +692,7 @@ int MapItem_IsPickable(ItemNode *node) {
     object = (MapObject *)node->unk08;
     result = 1;
     if (object != 0) {
-        result = MAP_OBJECT_DEF_KIND(object->unk04) != 4;
+        result = MAP_OBJECT_DEF_KIND(object->definition) != 4;
     }
     return result;
 }
@@ -730,22 +730,22 @@ void MapItem_PickupAim(void) {
     f32 delta[4];
     f32 distance;
 
-    if (game_status.unk30 != 0) {
+    if (game_status.update_hold_flags != 0) {
         return;
     }
-    game_status.unk30 = 0x87F;
+    game_status.update_hold_flags = 0x87F;
     Player_StopWalking();
     Vector_Copy(D_005B60C0, &D_004469D8->model->position);
     Vector_Copy(D_005B60D0, &D_004469D8->model->rotation);
     D_005B60D0[1] = Angle_Wrap(D_005B60D0[1]);
-    D_005B60E0[0] = D_00420D00.unk00[0] + sinf(player_state.rotation.y) * 150.0f;
-    D_005B60E0[2] = D_00420D00.unk00[2] + cosf(player_state.rotation.y) * 150.0f;
+    D_005B60E0[0] = D_00420D00.view_origin[0] + sinf(player_state.rotation.y) * 150.0f;
+    D_005B60E0[2] = D_00420D00.view_origin[2] + cosf(player_state.rotation.y) * 150.0f;
     D_005B60E0[1] = D_004469D8->model->position.y - 100.0f;
-    if (D_005B60E0[1] < D_00420D00.unk00[1]) {
-        D_005B60E0[1] = D_00420D00.unk00[1];
+    if (D_005B60E0[1] < D_00420D00.view_origin[1]) {
+        D_005B60E0[1] = D_00420D00.view_origin[1];
     }
     D_005B60E0[3] = 0.0f;
-    D_004471A8 = atan2f(D_00420D00.unk00[1] - D_005B60E0[1], 150.0f);
+    D_004471A8 = atan2f(D_00420D00.view_origin[1] - D_005B60E0[1], 150.0f);
     Vector_Subtract(delta, D_005B60E0, D_005B60C0);
     distance = sqrt(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
     if (distance < 75.0f) {
@@ -845,7 +845,7 @@ void MapItem_PickupPutBack(void) {
     Vector_Copy(&D_004469D8->model->position, D_005B60C0);
     Vector_Copy(&D_004469D8->model->rotation, D_005B60D0);
     object = (MapObject *)D_004469D8->unk08;
-    if (object != NULL && (object->unk10 & 0x10000) && object->unk04->kind == 3) {
+    if (object != NULL && (object->state_flags & 0x10000) && object->definition->kind == 3) {
         MapItem_Unlink(D_004469D8);
     }
     D_0038CC80[0] = 0;

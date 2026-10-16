@@ -61,8 +61,8 @@ static void DragonFly_RangedAttack(Entity *entity);
 /* Set-up of a type 17 entity: clears its work area and installs the type's handlers. */
 void DragonFly_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
@@ -71,7 +71,7 @@ void DragonFly_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = (void (*)(Entity *, s32))DragonFly_Think;
     unkE0->animate = (void (*)(void))DragonFly_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -79,21 +79,21 @@ void DragonFly_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 6 - 1; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+    if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -108,9 +108,9 @@ static void DragonFly_Animate(Entity *entity) {
     flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->unkFC->unk88;
+        blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -120,21 +120,21 @@ static void DragonFly_Animate(Entity *entity) {
 /* The think handler: as EntityAi_Think, with EntityAi_CheckFarFromSpawn3D where that one calls EntityAi_CheckFarFromSpawn,
    DragonFly_ThinkReturn while flag bit 53 is set, DragonFly_ThinkCombat for state 2 and
    DragonFly_ThinkWander for the other states. It also moves the entity in y so that the ground
-   EntityCollision_DistanceToGround finds is no nearer than Entity.unk30. */
+   EntityCollision_DistanceToGround finds is no nearer than Entity.collision_radius. */
 static void DragonFly_Think(Entity *entity, s32 unknown) {
     f32 floor_distance;
 
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->unkC6 != 0) {
+    if (entity->busy_flags != 0) {
         return;
     }
     EntityAi_CheckFarFromSpawn3D((char *)entity);
     EntityAi_StepState(entity);
     floor_distance = EntityCollision_DistanceToGround(entity->model->position);
-    if (floor_distance < entity->unk30) {
-        entity->model->position[1] -= entity->unk30 - floor_distance;
+    if (floor_distance < entity->collision_radius) {
+        entity->model->position[1] -= entity->collision_radius - floor_distance;
     }
     if (ENTITY_FLAG_BITS(entity)->bit53) {
         DragonFly_ThinkReturn(entity, unknown);
@@ -161,23 +161,23 @@ static void DragonFly_ThinkReturn(Entity *entity, s32 unknown) {
     f32 direction[4];
     s32 turn;
 
-    entity->unkA0 = 0;
+    entity->action_timer = 0;
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn == 0) {
         entity->target = entity->spawn_info;
-        entity->unkC8 = EntityAi_MoveCommand3D(entity, 1, 50.0f);
+        entity->move_command = EntityAi_MoveCommand3D(entity, 1, 50.0f);
     } else {
         push[0] = push[1] = push[2] = push[3] = 0.0f;
         if (entity->flags & (0xC000L << 31)) {
-            push[0] += entity->unkA4[0];
-            push[1] += entity->unkA4[1];
-            push[2] += entity->unkA4[2];
+            push[0] += entity->wall_push[0];
+            push[1] += entity->wall_push[1];
+            push[2] += entity->wall_push[2];
         }
         if ((s32)(entity->flags >> 48) & 1) {
-            push[0] += entity->unkB0[0];
-            push[1] += entity->unkB0[1];
-            push[2] += entity->unkB0[2];
+            push[0] += entity->entity_push[0];
+            push[1] += entity->entity_push[1];
+            push[2] += entity->entity_push[2];
         }
         Vector_Normalize(push, push);
         Vector_Subtract(to_spawn, entity->spawn_info, entity->model->position);
@@ -192,21 +192,21 @@ static void DragonFly_ThinkReturn(Entity *entity, s32 unknown) {
         }
         entity->target = entity->spawn_info;
         if (turn > 0) {
-            entity->unkC8 = 0x241;
+            entity->move_command = 0x241;
             if (push[1] > 0.0f) {
-                entity->unkC8 = 0x261;
+                entity->move_command = 0x261;
             } else if (push[1] < 0.0f) {
-                entity->unkC8 = 0x251;
+                entity->move_command = 0x251;
             }
         } else if (turn < 0) {
-            entity->unkC8 = 0x141;
+            entity->move_command = 0x141;
             if (push[1] > 0.0f) {
-                entity->unkC8 = 0x161;
+                entity->move_command = 0x161;
             } else if (push[1] < 0.0f) {
-                entity->unkC8 = 0x151;
+                entity->move_command = 0x151;
             }
         } else {
-            entity->unkC8 = EntityAi_MoveCommand3D(entity, 1, 50.0f);
+            entity->move_command = EntityAi_MoveCommand3D(entity, 1, 50.0f);
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -222,27 +222,27 @@ static void DragonFly_ThinkWander(Entity *entity, s32 unknown) {
     s32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    if (entity->unkA0 == 0) {
+    if (entity->action_timer == 0) {
         if (rand() % 100 > 20) {
-            EntityPoint_PickNearWithHeight(unkE0->unk30, entity->spawn_info->unk4C, entity->spawn_info->unk56, entity->spawn_info, entity->model->position);
-            entity->target = unkE0->unk30;
-            entity->unkA0 = rand() % 60 + 120;
+            EntityPoint_PickNearWithHeight(unkE0->target_point, entity->spawn_info->wander_radius, entity->spawn_info->wander_height_range, entity->spawn_info, entity->model->position);
+            entity->target = unkE0->target_point;
+            entity->action_timer = rand() % 60 + 120;
         } else {
             entity->target = NULL;
-            entity->unkA0 = rand() % 30 + 30;
+            entity->action_timer = rand() % 30 + 30;
         }
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn != 0) {
-        entity->unkC8 = EntityAi_PushTurnCommand3D(entity, turn);
+        entity->move_command = EntityAi_PushTurnCommand3D(entity, turn);
     } else {
-        entity->unkC8 = EntityAi_MoveCommand3D(entity, 1, 50.0f);
+        entity->move_command = EntityAi_MoveCommand3D(entity, 1, 50.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
 /* The think function of state 2: it has none of EntityAi_ThinkCombat's guard, dodge and draw among
-   the actions. Whenever the pause Entity.unkA2 is over and EntityAi_CanAttack finds the player in reach
+   the actions. Whenever the pause Entity.attack_delay_frames is over and EntityAi_CanAttack finds the player in reach
    (and the way is not 4) it starts DragonFly_RangedAttack or DragonFly_MeleeAttack, as
    EntityAi_PickAttack draws. Otherwise it gives the command for one of the ways kept in work byte unk78:
    1 forward at the level of the player's y less 190 plus work byte unk7B; 2 forward to the level
@@ -258,118 +258,118 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
     s32 roll;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    if (unkE0->unk78 != 4 && entity->unkA2 == 0 && ((int (*)(Entity *))EntityAi_CanAttack)(entity)) { // match: the entity is passed
+    if (unkE0->move_choice != 4 && entity->attack_delay_frames == 0 && ((int (*)(Entity *))EntityAi_CanAttack)(entity)) { // match: the entity is passed
         if (EntityAi_PickAttack((char *)entity)) {
             EntityAi_StartAction(entity, DragonFly_RangedAttack, unknown);
         } else {
             EntityAi_StartAction(entity, DragonFly_MeleeAttack, unknown);
         }
-        unkE0->unk48 = 0.0f;
-        unkE0->unk78 = 3;
+        unkE0->part_angle_x = 0.0f;
+        unkE0->move_choice = 3;
         return;
     }
-    if (unkE0->unk78 == 0) {
+    if (unkE0->move_choice == 0) {
         if (rand() % 100 < 75) {
             roll = rand() % 60;
-            unkE0->unk78 = 1;
-            unkE0->unk7B = roll;
+            unkE0->move_choice = 1;
+            unkE0->action_flags = roll;
         } else {
-            unkE0->unk4C = player_state.position[1] - 220.0f - (f32)(rand() % 700);
+            unkE0->part_angle_y = player_state.position[1] - 220.0f - (f32)(rand() % 700);
             if (entity->radius + 100.0f + 200.0f < entity->distance_to_player) {
-                unkE0->unk7A = 1;
+                unkE0->step_index = 1;
             } else {
-                unkE0->unk7A = 0;
+                unkE0->step_index = 0;
             }
-            entity->unkA0 = 120;
-            unkE0->unk78 = 2;
+            entity->action_timer = 120;
+            unkE0->move_choice = 2;
         }
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn != 0) {
-        entity->unkC8 = EntityAi_PushTurnCommand3D(entity, turn);
+        entity->move_command = EntityAi_PushTurnCommand3D(entity, turn);
     } else {
-        switch (unkE0->unk78) {
+        switch (unkE0->move_choice) {
         case 1:
-            delta = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+            delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
-                    entity->unkC8 |= 0x200;
+                    entity->move_command |= 0x200;
                 } else {
-                    entity->unkC8 |= 0x100;
+                    entity->move_command |= 0x100;
                 }
             }
-            delta = player_state.position[1] - 190.0f + (f32)unkE0->unk7B - entity->model->position[1];
+            delta = player_state.position[1] - 190.0f + (f32)unkE0->action_flags - entity->model->position[1];
             if (delta > 10.0f) {
-                entity->unkC8 |= 0x20;
+                entity->move_command |= 0x20;
             } else if (delta < -10.0f) {
-                entity->unkC8 |= 0x10;
+                entity->move_command |= 0x10;
             }
-            entity->unkC8 |= 1;
+            entity->move_command |= 1;
             if (entity->radius + 100.0f + 100.0f < entity->distance_to_player) {
-                entity->unkC8 |= 0x40;
+                entity->move_command |= 0x40;
             }
             break;
         case 2:
-            delta = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+            delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
-                    entity->unkC8 |= 0x200;
+                    entity->move_command |= 0x200;
                 } else {
-                    entity->unkC8 |= 0x100;
+                    entity->move_command |= 0x100;
                 }
             }
-            delta = unkE0->unk4C - entity->model->position[1];
+            delta = unkE0->part_angle_y - entity->model->position[1];
             if (delta > 30.0f) {
-                entity->unkC8 |= 0x20;
+                entity->move_command |= 0x20;
             } else if (delta < -30.0f) {
-                entity->unkC8 |= 0x10;
+                entity->move_command |= 0x10;
             }
-            entity->unkC8 |= 1;
-            if (unkE0->unk7A != 0) {
-                entity->unkC8 |= 0x40;
+            entity->move_command |= 1;
+            if (unkE0->step_index != 0) {
+                entity->move_command |= 0x40;
             }
             Vector_Copy(target, &player_state);
-            target[1] = unkE0->unk4C;
+            target[1] = unkE0->part_angle_y;
             // match: the shared prototype has no result; it returns the distance
             if (((f32 (*)(f32 *, f32 *))EntityMath_Distance)(target, entity->model->position) <= 200.0f) {
-                unkE0->unk78 = 0;
+                unkE0->move_choice = 0;
             }
             break;
         case 3:
-            delta = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+            delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
-                    entity->unkC8 |= 0x200;
+                    entity->move_command |= 0x200;
                 } else {
-                    entity->unkC8 |= 0x100;
+                    entity->move_command |= 0x100;
                 }
             }
             if (entity->radius + 100.0f + 100.0f < entity->distance_to_player) {
-                entity->unkC8 |= 0x41;
+                entity->move_command |= 0x41;
             }
-            unkE0->unk68++;
-            if (unkE0->unk68 > 90) {
-                unkE0->unk68 = 0;
-                unkE0->unk78 = 4;
+            unkE0->pause_timer++;
+            if (unkE0->pause_timer > 90) {
+                unkE0->pause_timer = 0;
+                unkE0->move_choice = 4;
             }
             break;
         case 4:
-            delta = EntityMath_AngleDifference(entity->model->unkD0[1], entity->unk68);
+            delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
-                    entity->unkC8 |= 0x200;
+                    entity->move_command |= 0x200;
                 } else {
-                    entity->unkC8 |= 0x100;
+                    entity->move_command |= 0x100;
                 }
             }
             delta = player_state.position[1] - entity->model->position[1];
-            entity->unkC8 |= 0x51;
+            entity->move_command |= 0x51;
             if (delta > 700.0f) {
-                unkE0->unk78 = 0;
+                unkE0->move_choice = 0;
             }
             break;
         default:
-            unkE0->unk78 = 0;
+            unkE0->move_choice = 0;
             break;
         }
     }
@@ -390,98 +390,98 @@ static void DragonFly_Move(Entity *entity) {
     vector = ENTITY_SCRATCH_VECTOR;
     turn = vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
     climb_step = 0.02f;
-    if (entity->unkC8 & 0x100) {
-        unkE0->unk1C -= entity->params->unk58;
-        if (unkE0->unk1C < -entity->params->turn_limit) {
-            unkE0->unk1C = -entity->params->turn_limit;
+    if (entity->move_command & 0x100) {
+        unkE0->turn_rate -= entity->params->turn_step_per_frame;
+        if (unkE0->turn_rate < -entity->params->turn_limit) {
+            unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->unkC8 & 0x200) {
-        unkE0->unk1C += entity->params->unk58;
-        if (entity->params->turn_limit < unkE0->unk1C) {
-            unkE0->unk1C = entity->params->turn_limit;
+    } else if (entity->move_command & 0x200) {
+        unkE0->turn_rate += entity->params->turn_step_per_frame;
+        if (entity->params->turn_limit < unkE0->turn_rate) {
+            unkE0->turn_rate = entity->params->turn_limit;
         }
     } else {
-        unkE0->unk1C = turn;
+        unkE0->turn_rate = turn;
     }
-    turn = unkE0->unk1C;
-    if (entity->unkC8 & 0x400) {
+    turn = unkE0->turn_rate;
+    if (entity->move_command & 0x400) {
         turn += turn;
     }
-    entity->unk94 += turn;
-    if (entity->unkC8 & 3) {
+    entity->turn_delta_yaw += turn;
+    if (entity->move_command & 3) {
         amount = 0.0f;
-        if (entity->unkC8 & 1) {
+        if (entity->move_command & 1) {
             amount = -1.0f;
-        } else if (entity->unkC8 & 2) {
+        } else if (entity->move_command & 2) {
             amount = 1.0f;
         }
         vector[2] += amount;
     }
-    if (entity->unkC8 & 0xC) {
+    if (entity->move_command & 0xC) {
         amount = 0.0f;
-        if (entity->unkC8 & 4) {
+        if (entity->move_command & 4) {
             amount = 1.0f;
-        } else if (entity->unkC8 & 8) {
+        } else if (entity->move_command & 8) {
             amount = -1.0f;
         }
         vector[0] += amount;
     }
-    if (entity->unkC8 & 0x30) {
+    if (entity->move_command & 0x30) {
         amount = 0.0f;
-        if (entity->unkC8 & 0x10) {
-            unkE0->unk48 -= climb_step;
-            if (unkE0->unk48 < -1.0f) {
-                unkE0->unk48 = -1.0f;
+        if (entity->move_command & 0x10) {
+            unkE0->part_angle_x -= climb_step;
+            if (unkE0->part_angle_x < -1.0f) {
+                unkE0->part_angle_x = -1.0f;
             }
-            amount = unkE0->unk48;
-        } else if (entity->unkC8 & 0x20) {
-            unkE0->unk48 += climb_step;
-            if (1.0f < unkE0->unk48) {
-                unkE0->unk48 = 1.0f;
+            amount = unkE0->part_angle_x;
+        } else if (entity->move_command & 0x20) {
+            unkE0->part_angle_x += climb_step;
+            if (1.0f < unkE0->part_angle_x) {
+                unkE0->part_angle_x = 1.0f;
             }
-            amount = unkE0->unk48;
+            amount = unkE0->part_angle_x;
         }
         vector[1] += amount;
     }
-    if (entity->unkC8 & 0x3F) {
-        unkE0->unk44 = EntityAi_Accelerate(entity, unkE0->unk44);
-        amount = unkE0->unk44;
-        if (entity->unkC8 & 0x40) {
+    if (entity->move_command & 0x3F) {
+        unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
+        amount = unkE0->move_speed;
+        if (entity->move_command & 0x40) {
             amount += amount;
         }
-        sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->unkD0[2]);
-        sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[0]);
-        sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->unkD0[1]);
+        sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->rotation[2]);
+        sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
+        sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
         Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
         Vector_Normalize(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR);
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, amount);
-        entity->unk84 += ENTITY_SCRATCH_VECTOR[0];
-        entity->unk88 += ENTITY_SCRATCH_VECTOR[1];
-        entity->unk8C += ENTITY_SCRATCH_VECTOR[2];
+        entity->move_delta_x += ENTITY_SCRATCH_VECTOR[0];
+        entity->move_delta_y += ENTITY_SCRATCH_VECTOR[1];
+        entity->move_delta_z += ENTITY_SCRATCH_VECTOR[2];
     } else {
-        unkE0->unk44 = 0.0f;
-        unkE0->unk48 = 0.0f;
+        unkE0->move_speed = 0.0f;
+        unkE0->part_angle_x = 0.0f;
     }
-    if (entity->unkC8 & 1) {
-        if (entity->unkC8 & 0x40) {
-            Motion_Start(entity, 4, 0, (s32)((f32)entity->params->unkC4 * 0.5f), 0);
+    if (entity->move_command & 1) {
+        if (entity->move_command & 0x40) {
+            Motion_Start(entity, 4, 0, (s32)((f32)entity->params->motion_blend_frames * 0.5f), 0);
         } else {
-            Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->unkC8 & 2) {
-        Motion_Start(entity, 5, 0, entity->params->unkC4, 0);
-    } else if (entity->unkC8 & 0x10) {
-        Motion_Start(entity, 8, 0, entity->params->unkC4, 0);
-    } else if (entity->unkC8 & 0x20) {
-        Motion_Start(entity, 9, 0, entity->params->unkC4, 0);
-    } else if (entity->unkC8 & 4) {
-        Motion_Start(entity, 6, 0, entity->params->unkC4, 0);
-    } else if (entity->unkC8 & 8) {
-        Motion_Start(entity, 7, 0, entity->params->unkC4, 0);
-    } else if (entity->unkC8 & 0x300) {
-        Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
+    } else if (entity->move_command & 2) {
+        Motion_Start(entity, 5, 0, entity->params->motion_blend_frames, 0);
+    } else if (entity->move_command & 0x10) {
+        Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
+    } else if (entity->move_command & 0x20) {
+        Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
+    } else if (entity->move_command & 4) {
+        Motion_Start(entity, 6, 0, entity->params->motion_blend_frames, 0);
+    } else if (entity->move_command & 8) {
+        Motion_Start(entity, 7, 0, entity->params->motion_blend_frames, 0);
+    } else if (entity->move_command & 0x300) {
+        Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
     } else {
-        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
     }
 }
 
@@ -489,52 +489,52 @@ static void DragonFly_Move(Entity *entity) {
    flag bit 9 as it is. */
 static void DragonFly_MeleeAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk240 *unk240 = &entity->params->unk240[ENTITY_FLAG_BITS(entity)->bits58];
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
     s32 frame;
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
         ENTITY_FLAG_BITS(entity)->bit56 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
-        if (unk240->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk240->hit_start_frame != 0) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
-        frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
+        frame = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->level_tables->unk82);
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->unkFC->unk82);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->unk82);
         }
-        if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
+        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
-            EntityAi_SetAttackDelay(entity, unk240->unk02);
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
+            EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {
@@ -552,38 +552,38 @@ static void DragonFly_RangedAttack(Entity *entity) {
     s32 kind = (s32)(entity->flags >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, kind + 0x17, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAGS(entity) &= ~0x3800;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
         EntityAi_LaunchShots(entity, unk3D8,
-                      (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8,
-                      entity->model->unkFC->unk82);
-        if (entity->model->unkFC->unk82 > 0 && unk3D8->unk03 >= entity->model->unkFC->unk82) {
+                      (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8,
+                      entity->model->level_tables->unk82);
+        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
                 unkE0->think(entity, 1);

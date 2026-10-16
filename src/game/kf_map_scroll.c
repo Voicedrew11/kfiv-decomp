@@ -69,8 +69,8 @@ void MapScroll_UpdateCopy(int map, int mode) {
     int spare_base;
     u32 *packet;
 
-    texture = (MapScrollCopy *)slot->unk38;
-    if (slot->unk00 != 0) {
+    texture = (MapScrollCopy *)slot->scroll_copy_textures;
+    if (slot->loaded != 0) {
         for (i = 15; i >= 0; i--, texture++, pair++) {
             if (texture->base != 0 && texture->mode == mode &&
                 (texture->period == 0 || D_00446ED4 % texture->period == 0)) {
@@ -194,8 +194,8 @@ void MapScroll_UpdateDraw(int map, int mode) {
     u32 height_log;
     int half;
 
-    texture = (MapScrollTexture *)slot->unk3C;
-    if (slot->unk00 != 0) {
+    texture = (MapScrollTexture *)slot->scroll_draw_textures;
+    if (slot->loaded != 0) {
         for (i = 0; i < 16; i++, texture++, pair++) {
             if (texture->target_base != 0 && texture->mode == mode) {
                 width = texture->width << 4;

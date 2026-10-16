@@ -60,8 +60,8 @@ static void Slime_MeleeAttack(Entity *entity);
 /* Set-up of a type 1 entity: clears its work area and installs the type's handlers. */
 void Slime_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
@@ -70,7 +70,7 @@ void Slime_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = (void (*)(Entity *, s32))Slime_Think;
     unkE0->animate = (void (*)(void))Slime_Animate;
     unkE0->on_hit = (void (*)(void))Slime_OnHit;
@@ -78,21 +78,21 @@ void Slime_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 6 - 1; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+    if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -107,9 +107,9 @@ static void Slime_Animate(Entity *entity) {
     flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->unkFC->unk88;
+        blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -131,10 +131,10 @@ static void Slime_Think(Entity *entity, s32 unknown) {
     u32 phase;
 
     phase = D_00446ED4 % 10U;
-    if (phase == entity->unkD7 % 10U) {
+    if (phase == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 0);
     }
-    if (entity->unkC6 != 0) {
+    if (entity->busy_flags != 0) {
         return;
     }
     EntityAi_CheckFarFromSpawn(entity);
@@ -157,8 +157,8 @@ static void Slime_ThinkReturn(Entity *entity, s32 unknown) {
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     entity->target = entity->spawn_info;
-    entity->unkC8 = 1;
-    entity->unkA0 = 0;
+    entity->move_command = 1;
+    entity->action_timer = 0;
     EntityAi_StartAction(entity, (void (*)(Entity *))entity->unkE0.move, unknown);
 }
 
@@ -172,33 +172,33 @@ static void Slime_ThinkWander(Entity *entity, s32 unknown) {
     f32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    if (entity->unkA0 == 0) {
+    if (entity->action_timer == 0) {
         roll = rand() % 100;
         if (roll > 60) {
-            EntityPoint_PickNear(entity->spawn_info->unk4C, entity->unkE0.unk30, entity->spawn_info, entity->model->position);
-            entity->target = entity->unkE0.unk30;
-            entity->unkA0 = rand() % 120 + 240;
-            unkE0->unk78 = 0;
+            EntityPoint_PickNear(entity->spawn_info->wander_radius, entity->unkE0.target_point, entity->spawn_info, entity->model->position);
+            entity->target = entity->unkE0.target_point;
+            entity->action_timer = rand() % 120 + 240;
+            unkE0->move_choice = 0;
         } else if (roll > 40) {
-            unkE0->unk48 = EntityAi_RandomAngle();
-            entity->unkA0 = rand() % 30 + 60;
-            unkE0->unk78 = 1;
+            unkE0->part_angle_x = EntityAi_RandomAngle();
+            entity->action_timer = rand() % 30 + 60;
+            unkE0->move_choice = 1;
         } else {
             entity->target = NULL;
-            entity->unkA0 = rand() % 30 + 60;
-            unkE0->unk78 = 2;
+            entity->action_timer = rand() % 30 + 60;
+            unkE0->move_choice = 2;
         }
     }
-    if (unkE0->unk78 == 0) {
+    if (unkE0->move_choice == 0) {
         if (entity->target != NULL) {
             if (EntityMath_DistanceXZ(entity->model->position, entity->target) > 50.0f) {
-                entity->unkC8 = 1;
+                entity->move_command = 1;
             }
         }
-    } else if (unkE0->unk78 == 1) {
-        turn = EntityMath_AngleDifference(entity->model->unkD0[1], unkE0->unk48);
+    } else if (unkE0->move_choice == 1) {
+        turn = EntityMath_AngleDifference(entity->model->rotation[1], unkE0->part_angle_x);
         if (ABS(turn) > entity->params->turn_limit) {
-            entity->unkC8 = (turn >= 0.0f) ? 0x200 : 0x100;
+            entity->move_command = (turn >= 0.0f) ? 0x200 : 0x100;
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -207,7 +207,7 @@ static void Slime_ThinkWander(Entity *entity, s32 unknown) {
 /* The think function of state 2 (called under `entity->state == 2`, not from a switch): guards the
    player's swing and picks among attacking, closing in and waiting as EntityAi_ThinkCombat does; it
    has no dodge, and its melee attack is Slime_MeleeAttack. Closing in is for 480 to 599
-   frames, on the player (EntityParams.unk430 times in 100) or on a point near the spawn point, with
+   frames, on the player (EntityParams.pitch_limit_deg times in 100) or on a point near the spawn point, with
    command 1 while the target is farther than the range. */
 static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -219,14 +219,14 @@ static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     side = EntityAi_PickCombatChoice(entity, 0);
-    if (entity->unkA0 == 0 || side == 0) {
-        entity->unkCF = entity->unkCD;
-        entity->unkCD = side;
-        if (entity->unkCD != entity->unkCF) {
-            entity->unk9E = D_00446ED4;
+    if (entity->action_timer == 0 || side == 0) {
+        entity->prev_combat_choice = entity->combat_choice;
+        entity->combat_choice = side;
+        if (entity->combat_choice != entity->prev_combat_choice) {
+            entity->choice_change_frame = D_00446ED4;
         }
         EntityAi_LowerChoiceWeight(entity, side);
-        switch (entity->unkCD) {
+        switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
                 EntityAi_StartAction(entity, EntityAi_RangedAttack, unknown);
@@ -235,38 +235,38 @@ static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
             EntityAi_StartAction(entity, Slime_MeleeAttack, unknown);
             return;
         case 1:
-            if (rand() % 100 < entity->params->unk430) {
+            if (rand() % 100 < entity->params->pitch_limit_deg) {
                 entity->target = &player_state;
-                entity->unkA0 = rand() % 120 + 480;
-                unkE0->unk78 = 0;
+                entity->action_timer = rand() % 120 + 480;
+                unkE0->move_choice = 0;
             } else {
-                EntityPoint_PickNear(entity->spawn_info->unk4C, entity->unkE0.unk30, entity->spawn_info, entity->model->position);
-                entity->target = entity->unkE0.unk30;
-                entity->unkA0 = rand() % 120 + 480;
-                unkE0->unk78 = 1;
+                EntityPoint_PickNear(entity->spawn_info->wander_radius, entity->unkE0.target_point, entity->spawn_info, entity->model->position);
+                entity->target = entity->unkE0.target_point;
+                entity->action_timer = rand() % 120 + 480;
+                unkE0->move_choice = 1;
             }
             break;
         case 2:
-            entity->unkA0 = rand() % 60 + 120;
-            unkE0->unk78 = -1;
+            entity->action_timer = rand() % 60 + 120;
+            unkE0->move_choice = -1;
             break;
         default:
-            unkE0->unk78 = -1;
+            unkE0->move_choice = -1;
             break;
         }
     }
-    switch (unkE0->unk78) {
+    switch (unkE0->move_choice) {
     case 0:
         if (entity->target != NULL) {
             if (EntityMath_DistanceXZ(entity->model->position, entity->target) > entity->radius + 100.0f + 30.0f) {
-                entity->unkC8 = 1;
+                entity->move_command = 1;
             }
         }
         break;
     case 1:
         if (entity->target != NULL) {
             if (EntityMath_DistanceXZ(entity->model->position, entity->target) > 50.0f) {
-                entity->unkC8 = 1;
+                entity->move_command = 1;
             }
         }
         break;
@@ -274,7 +274,7 @@ static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
 }
 
-/* The move handler: turns as the command bits in Entity.unkC8 say and, with command bit 1, moves
+/* The move handler: turns as the command bits in Entity.move_command say and, with command bit 1, moves
    straight towards the target, whatever the heading; picks animation 4 or 3 for that, else 0. */
 static void Slime_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -283,32 +283,32 @@ static void Slime_Move(Entity *entity) {
     f32 amount;
     f32 heading;
 
-    if (entity->unkC8 & 0x100) {
-        unkE0->unk1C -= entity->params->unk58;
-        if (unkE0->unk1C < -entity->params->turn_limit) {
-            unkE0->unk1C = -entity->params->turn_limit;
+    if (entity->move_command & 0x100) {
+        unkE0->turn_rate -= entity->params->turn_step_per_frame;
+        if (unkE0->turn_rate < -entity->params->turn_limit) {
+            unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->unkC8 & 0x200) {
-        unkE0->unk1C += entity->params->unk58;
-        if (entity->params->turn_limit < unkE0->unk1C) {
-            unkE0->unk1C = entity->params->turn_limit;
+    } else if (entity->move_command & 0x200) {
+        unkE0->turn_rate += entity->params->turn_step_per_frame;
+        if (entity->params->turn_limit < unkE0->turn_rate) {
+            unkE0->turn_rate = entity->params->turn_limit;
         }
     } else {
-        unkE0->unk1C = 0.0f;
+        unkE0->turn_rate = 0.0f;
     }
-    turn = unkE0->unk1C;
-    if (entity->unkC8 & 0x400) {
+    turn = unkE0->turn_rate;
+    if (entity->move_command & 0x400) {
         turn += turn;
     }
-    entity->unk94 += turn;
-    if ((entity->unkC8 & 1) && entity->target != NULL) {
+    entity->turn_delta_yaw += turn;
+    if ((entity->move_command & 1) && entity->target != NULL) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[3] = 0.0f;
         amount = -1.0f;
         vector[2] = amount;
-        unkE0->unk44 = EntityAi_Accelerate(entity, unkE0->unk44);
-        amount = unkE0->unk44;
-        if (entity->unkC8 & 0x40) {
+        unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
+        amount = unkE0->move_speed;
+        if (entity->move_command & 0x40) {
             amount += amount;
         }
         heading = EntityMath_HeadingTo(entity->model->position, entity->target);
@@ -316,36 +316,36 @@ static void Slime_Move(Entity *entity) {
         Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
         Vector_Normalize(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR);
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, amount);
-        entity->unk84 += ENTITY_SCRATCH_VECTOR[0];
-        entity->unk88 += ENTITY_SCRATCH_VECTOR[1];
-        entity->unk8C += ENTITY_SCRATCH_VECTOR[2];
+        entity->move_delta_x += ENTITY_SCRATCH_VECTOR[0];
+        entity->move_delta_y += ENTITY_SCRATCH_VECTOR[1];
+        entity->move_delta_z += ENTITY_SCRATCH_VECTOR[2];
     } else {
-        unkE0->unk44 = 0.0f;
+        unkE0->move_speed = 0.0f;
     }
-    if (entity->unkC8 & 1) {
-        if (entity->unkC8 & 0x40) {
-            Motion_Start(entity, 4, 0, entity->params->unkC4 >> 1, 0);
+    if (entity->move_command & 1) {
+        if (entity->move_command & 0x40) {
+            Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
-            Motion_Start(entity, 3, 0, entity->params->unkC4, 0);
+            Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->unkC8 & 0x300) {
-        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
+    } else if (entity->move_command & 0x300) {
+        Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
     } else {
-        Motion_Start(entity, 0, 0, entity->params->unkC4, 0);
+        Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
     }
 }
 
 /* The melee attack (busy bit 1): as EntityAi_MeleeAttack; a hit of any of the three parts also
-   clears player_state.timed_flags[0], EntityParams.unk432 times in 100. */
+   clears player_state.timed_flags[0], EntityParams.yaw_limit_deg times in 100. */
 static void Slime_MeleeAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityParamsUnk240 *unk240 = &entity->params->unk240[ENTITY_FLAG_BITS(entity)->bits58];
+    EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
     s32 frame;
 
-    entity->unkC6 |= 1;
+    entity->busy_flags |= 1;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->unkC4 >> 1, 1);
+        Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
@@ -357,48 +357,48 @@ static void Slime_MeleeAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
-        if (unk240->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->unk1C, entity->unk68);
+        if (unk240->hit_start_frame != 0) {
+            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk240->unk01 >= entity->model->unkFC->unk82) {
-            EntityAi_TurnToHeading(entity, &entity->unkE0.unk1C, entity->unk68);
+        if (unk240->hit_start_frame >= entity->model->level_tables->unk82) {
+            EntityAi_TurnToHeading(entity, &entity->unkE0.turn_rate, entity->heading_to_player);
         } else {
-            unkE0->unk1C = 0.0f;
+            unkE0->turn_rate = 0.0f;
         }
-        frame = (entity->model->unkFC->unk84 - entity->params->unk80[entity->unkD1]) >> 8;
+        frame = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->unkFC->unk82);
-            if (ENTITY_FLAG_BITS(entity)->bit54 && rand() % 100 < entity->params->unk432) {
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, frame, entity->model->level_tables->unk82);
+            if (ENTITY_FLAG_BITS(entity)->bit54 && rand() % 100 < entity->params->yaw_limit_deg) {
                 player_state.timed_flags[0] = 0;
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit55) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->unkFC->unk82);
-            if (ENTITY_FLAG_BITS(entity)->bit55 && rand() % 100 < entity->params->unk432) {
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, frame, entity->model->level_tables->unk82);
+            if (ENTITY_FLAG_BITS(entity)->bit55 && rand() % 100 < entity->params->yaw_limit_deg) {
                 player_state.timed_flags[0] = 0;
             }
         }
         if (!ENTITY_FLAG_BITS(entity)->bit56) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->unkFC->unk82);
-            if (ENTITY_FLAG_BITS(entity)->bit56 && rand() % 100 < entity->params->unk432) {
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, frame, entity->model->level_tables->unk82);
+            if (ENTITY_FLAG_BITS(entity)->bit56 && rand() % 100 < entity->params->yaw_limit_deg) {
                 player_state.timed_flags[0] = 0;
             }
         }
-        if (entity->model->unkFC->unk82 > 0 && unk240->unk03 >= entity->model->unkFC->unk82) {
+        if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
             ENTITY_FLAG_BITS(entity)->bit19 = 1;
         } else {
             ENTITY_FLAG_BITS(entity)->bit19 = 0;
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
-            EntityAi_SetAttackDelay(entity, unk240->unk02);
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
+            EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if (ENTITY_FLAG_BITS(entity)->bit5) {
                 unkE0->think(entity, 1);
             } else {

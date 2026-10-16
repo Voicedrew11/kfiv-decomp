@@ -22,14 +22,14 @@ void MapObject_StartDistanceFade(MapObject *object) {
     MapObjectWorkFade *work = (MapObjectWorkFade *)object->work;
     MapObjectUnk08Words *source;
 
-    if (object->model->unk100 & 1) {
+    if (object->model->model_flags & 1) {
         MapObject_StartAnim(object, 4);
     }
     source = MAP_OBJECT_WORDS(object);
-    ((MapObjectWorkFade *)object->work)->near_distance = source->unk44;
-    work->far_distance = source->unk46;
-    work->near_alpha = source->unk48;
-    work->far_alpha = source->unk4A;
+    ((MapObjectWorkFade *)object->work)->near_distance = source->kind_param_0;
+    work->far_distance = source->kind_param_1;
+    work->near_alpha = source->kind_param_2;
+    work->far_alpha = source->kind_param_3;
     object->model->alpha = 0.0f;
     MAP_OBJECT_BYTES(object)->step = 1;
 }
@@ -41,7 +41,7 @@ void MapObject_UpdateDistanceFade(MapObject *object) {
     Vector4 delta;
     f32 distance;
 
-    if (object->model->unk100 & 1) {
+    if (object->model->model_flags & 1) {
         MapObject_StartAnim(object, 4);
         MapObject_StepAnim(object);
     }
@@ -80,14 +80,14 @@ void MapObject_RebuildBillboardMatrices(MapObject *object) {
 
     memset(&unit, 0, sizeof(unit));
     unit.w = 1.0f;
-    ModelMatrix_Build(object->model, &object->model->position, &object->model->rotation, &object->model->unkE0);
+    ModelMatrix_Build(object->model, &object->model->position, &object->model->rotation, &object->model->scale_x);
     part_count = object->model->part_count;
     part = object->model->parts;
     for (; i < part_count; i++) {
         ModelMatrix_BuildPartLocal(object->model, part, part);
         part++;
     }
-    if (object->model->unk100 & 1) {
+    if (object->model->model_flags & 1) {
         part = object->model->parts;
         for (i = 0; i < part_count; i++) {
             Model_MultiplyChildMatrices(part);
@@ -95,23 +95,23 @@ void MapObject_RebuildBillboardMatrices(MapObject *object) {
         }
     }
     i = 0;
-    sceVu0CopyMatrix(object->model->unk80, object->model->unk40);
+    sceVu0CopyMatrix(object->model->collision_matrix, object->model->model_matrix);
     part = object->model->parts;
     for (; i < part_count; i++) {
-        Matrix_Multiply(matrix, object->model->unk40, part);
+        Matrix_Multiply(matrix, object->model->model_matrix, part);
         Vector_ApplyMatrix(&world, matrix, &unit);
         Vector_Subtract(&delta, D_004325A0, &world);
         pitch = atan2f(delta.y, sqrtf(delta.x * delta.x + delta.z * delta.z));
         yaw = atan2f(-delta.x, -delta.z);
-        part->unk40[0] = world.x;
-        part->unk40[1] = world.y;
-        part->unk40[2] = world.z;
-        part->unk40[3] = 1.0f;
-        part->unk50 = pitch;
-        part->unk54 = yaw;
-        part->unk58 = 0.0f;
-        part->unk5C = 1.0f;
-        Vector_MultiplyComponents(part->unk60, part->unk60, &object->model->unkE0);
+        part->position[0] = world.x;
+        part->position[1] = world.y;
+        part->position[2] = world.z;
+        part->position[3] = 1.0f;
+        part->rotation_x = pitch;
+        part->rotation_y = yaw;
+        part->rotation_z = 0.0f;
+        part->rotation_w = 1.0f;
+        Vector_MultiplyComponents(part->scale, part->scale, &object->model->scale_x);
         part++;
     }
     part = object->model->parts;
@@ -119,6 +119,6 @@ void MapObject_RebuildBillboardMatrices(MapObject *object) {
         ModelMatrix_BuildPartLocal(object->model, part, part);
         part++;
     }
-    sceVu0CopyMatrix(object->model->unk40, D_00431B30);
-    object->model->unk1B4(object->model);
+    sceVu0CopyMatrix(object->model->model_matrix, D_00431B30);
+    object->model->update_bone_points(object->model);
 }

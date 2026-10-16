@@ -229,10 +229,10 @@ static int MapViewer_Load(void) {
     pointer_model.rotation.x = 0.0f;
     pointer_model.rotation.y = player_state.rotation.y;
     pointer_model.rotation.z = 0.0f;
-    pointer_model.unkE0 = pointer_model.unkE4 = pointer_model.unkE8 = pointer_model.rotation.w = 4.0f;
-    pointer_model.unkEC = 1.0f;
+    pointer_model.scale_x = pointer_model.scale_y = pointer_model.scale_z = pointer_model.rotation.w = 4.0f;
+    pointer_model.scale_w = 1.0f;
     // match: it returns a value
-    ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))ModelMatrix_Build)(&pointer_model, &pointer_model.position, &pointer_model.rotation, &pointer_model.unkE0);
+    ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))ModelMatrix_Build)(&pointer_model, &pointer_model.position, &pointer_model.rotation, &pointer_model.scale_x);
     for (i = 0; i < pointer_model.part_count; i++) {
         // match: the callee returns a value here, which keeps $2 busy
         ((int (*)(ModelInstance *, ModelPart *, ModelPart *))ModelMatrix_BuildPartLocal)(&pointer_model, &pointer_model.parts[i], &pointer_model.parts[i]);
@@ -243,27 +243,27 @@ static int MapViewer_Load(void) {
     bounds_min.z = bounds_min.y = bounds_min.x = D_00446798[0];
     bounds_max.z = bounds_max.y = bounds_max.x = D_0044679C[0];
     for (i = 0; i < 2; i++) {
-        if (map_slots[i].unk00 != 0 && MapViewer_IsKingsMapUsable(map_slots[i].tag) != 0) {
+        if (map_slots[i].loaded != 0 && MapViewer_IsKingsMapUsable(map_slots[i].tag) != 0) {
             count = ((MapSlotUnk08 *)map_slots[i].header)->record_count;
             record = (MapRecordBounds *)map_slots[i].records;
             for (j = 0; j < count; j++, record++) {
-                if (bounds_min.x > record->unk40[0]) {
-                    bounds_min.x = record->unk40[0];
+                if (bounds_min.x > record->box_lowest[0]) {
+                    bounds_min.x = record->box_lowest[0];
                 }
-                if (bounds_min.y > record->unk40[1]) {
-                    bounds_min.y = record->unk40[1];
+                if (bounds_min.y > record->box_lowest[1]) {
+                    bounds_min.y = record->box_lowest[1];
                 }
-                if (bounds_min.z > record->unk40[2]) {
-                    bounds_min.z = record->unk40[2];
+                if (bounds_min.z > record->box_lowest[2]) {
+                    bounds_min.z = record->box_lowest[2];
                 }
-                if (bounds_max.x < record->unk50[0]) {
-                    bounds_max.x = record->unk50[0];
+                if (bounds_max.x < record->box_highest[0]) {
+                    bounds_max.x = record->box_highest[0];
                 }
-                if (bounds_max.y < record->unk50[1]) {
-                    bounds_max.y = record->unk50[1];
+                if (bounds_max.y < record->box_highest[1]) {
+                    bounds_max.y = record->box_highest[1];
                 }
-                if (bounds_max.z < record->unk50[2]) {
-                    bounds_max.z = record->unk50[2];
+                if (bounds_max.z < record->box_highest[2]) {
+                    bounds_max.z = record->box_highest[2];
                 }
             }
         }
@@ -446,7 +446,7 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
         switch (map_slots[D_00446770].tag) {
         case 0:
             if (player_state.map_index != 0xFFFF
-                && ((MapRecord *)map_slots[D_00446770].records)[player_state.map_index].unk4E == 0xC8) {
+                && ((MapRecord *)map_slots[D_00446770].records)[player_state.map_index].prop_id == 0xC8) {
                 *screen_x = 0x96;
                 *screen_y = 0xDB;
             } else {
@@ -456,7 +456,7 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
             return -1;
         case 2:
             if (player_state.map_index != 0xFFFF
-                && ((MapRecord *)map_slots[D_00446770].records)[player_state.map_index].unk4E == 0xC8) {
+                && ((MapRecord *)map_slots[D_00446770].records)[player_state.map_index].prop_id == 0xC8) {
                 *screen_x = 0x96;
                 *screen_y = 0xDB;
             } else {
@@ -773,9 +773,9 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_AddGsRegister(GS_REG_TEST_2, 0x51001);
     Packet_AddGsRegister(GS_REG_ALPHA_2, ((s64)alpha << 32) | 0x68);
     Packet_EndGsRegisters();
-    pointer_model.unk148 = (s32)&viewer_default_lights;
+    pointer_model.light_block = (s32)&viewer_default_lights;
     pointer_model.hit_count = 0;
-    pointer_model.unk14C = &map_draw_state.unkA0;
+    pointer_model.fog_block = &map_draw_state.unkA0;
     Model_DrawPosed(&pointer_model);
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(0x1A, 0);
@@ -788,7 +788,7 @@ static void MapViewer_DrawKingsMap(void) {
     for (map = 0; map < 2; map++) {
         slot = &map_slots[map];
         record = (MapDrawRecord *)slot->records;
-        if (slot->unk00 != 0) {
+        if (slot->loaded != 0) {
             switch (slot->tag) {
                 case 0:
                 case 2:
@@ -811,15 +811,15 @@ static void MapViewer_DrawKingsMap(void) {
                             continue;
                         }
                         if (flags & 0x10) {
-                            record->model->unk148 = (s32)&map_draw_state.unkC0;
-                            record->model->unk14C = &map_draw_state.unkA0;
+                            record->model->light_block = (s32)&map_draw_state.unkC0;
+                            record->model->fog_block = &map_draw_state.unkA0;
                         } else {
-                            record->model->unk148 = (s32)&map_draw_state.unkA90[map][record->unk35];
-                            record->model->unk14C = &map_draw_state.unk290[map][record->unk34];
+                            record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
+                            record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
                         }
                         record->model->hit_count = 0;
-                        record->model->unk148 = (s32)&viewer_default_lights;
-                        record->model->unk14C = &map_draw_state.unkA0;
+                        record->model->light_block = (s32)&viewer_default_lights;
+                        record->model->fog_block = &map_draw_state.unkA0;
                         Model_DrawPosed(record->model);
                     }
                     break;

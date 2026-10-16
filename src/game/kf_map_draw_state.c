@@ -13,7 +13,7 @@ int D_0038A198[6] = { 0x20, 0x18, 0x10, 0x8, 0x4, 0 };
 /* 0x38A1B0 the map draw state (MapDrawState): this unit's objects from here on are its fields */
 MapDrawStateMirror map_draw_state = { 0 };
 
-/* 0x38A218 MapDrawState.unk68 on: the HUD is drawn (kf_hud.c) */
+/* 0x38A218 MapDrawState.hud_shown on: the HUD is drawn (kf_hud.c) */
 s32 D_0038A218[0xE] = { 0 };
 
 /* 0x38A250 MapDrawState.unkA0: the current map's first block (kf_held_weapon.c) */
@@ -29,11 +29,11 @@ u8 D_0038A2F0[0x140] = { 0 };
 /* 0x38A430 MapDrawState.unk280: the current map's fog colour */
 MapFogColor D_0038A430 = { 0 };
 
-/* 0x38A440 MapDrawState.unk290: each map slot's 0x20 blocks (a model's unk14C points at one) */
+/* 0x38A440 MapDrawState.fog_blocks: each map slot's 0x20 blocks (a model's unk14C points at one) */
 MapSlotUnk0C map_draw_slot_blocks[2][0x20] = { 0 };
 
-/* 0x38AC40 MapDrawState.unkA90: each map slot's 0x20 0x80-byte blocks (a model's unk148) */
+/* 0x38AC40 MapDrawState.light_blocks: each map slot's 0x20 0x80-byte blocks (a model's unk148) */
 MapSlotUnk10Words map_draw_slot_draw_blocks[2][0x20] = { 0 };
 
-/* 0x38CC40 MapDrawState.unk2A90 to unk2A98: the screen tint, 0 to 0.25, and its padding */
+/* 0x38CC40 MapDrawState.screen_tint_amount to unk2A98: the screen tint, 0 to 0.25, and its padding */
 f32 map_draw_screen_tint[4] = { 0 };

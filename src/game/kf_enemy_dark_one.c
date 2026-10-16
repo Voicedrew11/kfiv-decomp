@@ -39,9 +39,9 @@ static void DarkOne_DeathByMoonlightSword(Entity *entity);
 /* Set-up of a type 75 entity: clears its work area and installs the type's handlers. */
 void DarkOne_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
-    char *unk138 = entity->model->unk138;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
+    char *unk138 = entity->model->look_at_part;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
@@ -50,7 +50,7 @@ void DarkOne_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = DarkOne_Think;
     unkE0->animate = EntityAi_Animate;
     unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
@@ -58,37 +58,37 @@ void DarkOne_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))DarkOne_Death;
     for (i = 4 - 1; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 6 - 1; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+    if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->unk20, unk138 + 0x50);
+        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
     ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
-    unkE0->unk7A = D_00446928;
+    unkE0->step_index = D_00446928;
 }
 
 /* The think handler: as EntityAi_Think without the walk back to the spawn point, with
    EntityAi_ThinkCombat for states 1 and 2. Every third frame it calls EntityEvent_StartEffectAtPoint with
-   EntityParams.unk430, unk432 or unk434, by D_00446928 (3, 2, other). In a frame with flag bit 43
+   EntityParams.pitch_limit_deg, unk432 or unk434, by D_00446928 (3, 2, other). In a frame with flag bit 43
    set it calls EntityEvent_StartEffectAtPoint with 0x13D and clears the bit; then, with D_00446928 at 0 or less, it
-   sets Entity.unkA3 to 6 and starts DarkOne_Death, and else, when D_00446928 has changed (work
+   sets Entity.hit_flash_frames to 6 and starts DarkOne_Death, and else, when D_00446928 has changed (work
    byte unk7A keeps it), calls EntityEvent_StartCue and Sound_PlayMapAtRange. */
 static void DarkOne_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -96,36 +96,36 @@ static void DarkOne_Think(Entity *entity, s32 unknown) {
     if (D_00446ED4 % 3U == 0) {
         switch (D_00446928) {
         case 3:
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk430, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
             break;
         case 2:
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk432, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->yaw_limit_deg, 0xFF, (int)entity->model->rotation);
             break;
         default:
-            EntityEvent_StartEffectAtPoint((char **)entity, (s16)entity->params->unk434, 0xFF, (int)entity->model->unkD0);
+            EntityEvent_StartEffectAtPoint((char **)entity, (s16)entity->params->action_frames, 0xFF, (int)entity->model->rotation);
             break;
         }
     }
     if (ENTITY_FLAG_BITS(entity)->bit43) {
-        EntityEvent_StartEffectAtPoint((char **)entity, 0x13D, 0xFF, (int)entity->model->unkD0);
+        EntityEvent_StartEffectAtPoint((char **)entity, 0x13D, 0xFF, (int)entity->model->rotation);
         ENTITY_FLAG_BITS(entity)->bit43 = FALSE;
         if (D_00446928 <= 0) {
-            entity->unkA3 = 6;
+            entity->hit_flash_frames = 6;
             EntityAi_StartAction(entity, DarkOne_Death, unknown);
             return;
         }
-        if (unkE0->unk7A != D_00446928) {
-            EntityEvent_StartCue(entity, entity->params->unk436, entity->params->unk438, 0);
+        if (unkE0->step_index != D_00446928) {
+            EntityEvent_StartCue(entity, entity->params->near_distance, entity->params->far_distance, 0);
             // match: an int result keeps $2 busy after the call
             ((int (*)(s32, s32, f32 *, f32))Sound_PlayMapAtRange)((u8)entity->params->unk43A, (u8)entity->params->unk43C,
-                                                           entity->model->position, entity->params->unk42E);
-            unkE0->unk7A = D_00446928;
+                                                           entity->model->position, entity->params->sound_id);
+            unkE0->step_index = D_00446928;
         }
     }
-    if (D_00446ED4 % 10U == entity->unkD7 % 10U) {
+    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->unkC6 == 0) {
+    if (entity->busy_flags == 0) {
         EntityAi_StepState(entity);
         switch (entity->state) {
         case 1:
@@ -158,7 +158,7 @@ static void DarkOne_Death(Entity *entity) {
    EntityAi_Death does, calling EntityEvent_OnDeath at the start, and when the animation has ended sets
    the flags of the fade and stops there: no fade and no removal. */
 static void DarkOne_DeathByOtherWeapon(Entity *entity) {
-    entity->unkC6 = 0x40;
+    entity->busy_flags = 0x40;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -173,7 +173,7 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bits11 = kind;
         }
         if (!ENTITY_PARAMS_BITS(entity)->bit25 && ENTITY_PARAMS_BITS(entity)->bit26) {
-            entity->unk30 = 20.0f;
+            entity->collision_radius = 20.0f;
         }
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
@@ -183,7 +183,7 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
         EntityEvent_OnDeath(entity);
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
@@ -192,7 +192,7 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
-            entity->unkA0 = 20;
+            entity->action_timer = 20;
             ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
             entity->action_step++;
@@ -204,7 +204,7 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
 /* A death action (busy bit 0x40), started by DarkOne_Death: as DarkOne_DeathByOtherWeapon with
    animation 0 in place of 16. */
 static void DarkOne_DeathByMoonlightSword(Entity *entity) {
-    entity->unkC6 = 0x40;
+    entity->busy_flags = 0x40;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0, 0, 5, 1);
@@ -217,7 +217,7 @@ static void DarkOne_DeathByMoonlightSword(Entity *entity) {
         EntityEvent_OnDeath(entity);
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
@@ -226,7 +226,7 @@ static void DarkOne_DeathByMoonlightSword(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
-            entity->unkA0 = 20;
+            entity->action_timer = 20;
             ENTITY_FLAG_BITS(entity)->bit27 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
             entity->action_step++;

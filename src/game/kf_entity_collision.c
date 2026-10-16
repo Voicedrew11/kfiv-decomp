@@ -38,16 +38,16 @@ extern ModelInstanceBlock *D_00432224[];
 /* tests the entity's upright capsule against the triangle at `point` and pushes `position`
    sideways out of it */
 #define PUSH_OUT_OF_WALL()                                                                         \
-    Collision_CapsuleTriangle(point[0].position, point[1].position, point[2].position, position,          \
-                              entity->unk30, entity->unk34);                                       \
+    Collision_CapsuleTriangle(point[0].position, point[1].position, point[2].position, position,   \
+                              entity->collision_radius, entity->collision_height);                 \
     if (COLLISION_RESULT->hit != 0) {                                                              \
         ENTITY_FLAG_BITS(entity)->bit45 = TRUE;                                                    \
         offset[0] = position[0] - COLLISION_RESULT->point[0];                                      \
         offset[1] = 0.0f;                                                                          \
         offset[2] = position[2] - COLLISION_RESULT->point[2];                                      \
         sceVu0Normalize(offset, offset);                                                           \
-        Vector_Add(normal_sum, normal_sum, offset);                                             \
-        Vector_Scale(offset, offset, entity->unk30);                                            \
+        Vector_Add(normal_sum, normal_sum, offset);                                                \
+        Vector_Scale(offset, offset, entity->collision_radius);                                    \
         position[0] = COLLISION_RESULT->point[0] + offset[0];                                      \
         position[2] = COLLISION_RESULT->point[2] + offset[2];                                      \
     }
@@ -118,7 +118,7 @@ static void EntityCollision_SphereMesh(CollisionOwner *owner, void *centre, f32 
 
 /* Keeps a living entity out of the player (a cylinder 100 wide and 230 high) and out of the other entities
    that collide (EntityParams.flags 0x10), as cylinders or spheres by EntityParams bit 27; sets flag bits
-   48-50 and leaves the summed push in Entity.unkB0. Spawn types 0x14-0x16, 0x2D, 0x63 and 0x97 are not kept
+   48-50 and leaves the summed push in Entity.entity_push. Spawn types 0x14-0x16, 0x2D, 0x63 and 0x97 are not kept
    out of the player. */
 void EntityCollision_PushApart(Entity *entity) {
     f32 push[4];
@@ -127,7 +127,7 @@ void EntityCollision_PushApart(Entity *entity) {
 
     type_id = entity->spawn_info->type_id;
     if (!(type_id >= 0x14 && type_id <= 0x16) && (u16)type_id != 0x2D && (u16)type_id != 0x63 && (u16)type_id != 0x97
-        && ((s32)(entity->flags >> 1) & 1) && entity->unk2C != 0 && !(entity->flags & 0x8010000)) {
+        && ((s32)(entity->flags >> 1) & 1) && entity->hit_points != 0 && !(entity->flags & 0x8010000)) {
         if (((EntityParamsWord *)entity->params)->unk00 & 0x8000000) {
             EntityCollision_SphereCylinder(entity->model->position, player_state.position, entity->radius, 100.0f, 230.0f);
         } else {
@@ -191,8 +191,8 @@ void EntityCollision_PushApart(Entity *entity) {
         }
     }
     Vector_Normalize(push, push);
-    entity->unkB0[0] = push[0];
-    entity->unkB0[2] = entity->unkB0[1] = push[2];
+    entity->entity_push[0] = push[0];
+    entity->entity_push[2] = entity->entity_push[1] = push[2];
 }
 
 /* Cylinder against cylinder: is `position` (a cylinder reaching `height` up from it) inside the other one,
@@ -420,8 +420,8 @@ static void EntityCollision_SphereSphere(f32 *center_a, f32 *center_b, f32 radiu
 }
 
 /* Applies the effect of a surface the entity touches; Collision_GetSurfaceEffect picks it from the triangle: 1 and 2 start
-   the unk20 timer (1800 frames) by a chance EntityParams.unkEA lowers, 3 starts it outright, 4 takes up to 50
-   less a resistance term (EntityParams.unkE8 + unkDA) of Entity.unk2C (its health), 5 takes 30; 4 and 5 also
+   the unk20 timer (1800 frames) by a chance EntityParams.ailment_defence_1 lowers, 3 starts it outright, 4 takes up to 50
+   less a resistance term (EntityParams.magic_defence + unkDA) of Entity.hit_points (its health), 5 takes 30; 4 and 5 also
    clear flag bits 38-39 and set unkA3 to 3. */
 void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 unknown_a, s32 unknown_b, s32 unknown_c) {
     s32 chance;
@@ -429,47 +429,47 @@ void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 unknown_a, s32 unkno
 
     switch (Collision_GetSurfaceEffect(unknown_a, unknown_b, unknown_c)) {
     case 1:
-        chance = 20 - entity->params->unkEA;
+        chance = 20 - entity->params->ailment_defence_1;
         if (chance <= 0) {
             return;
         }
         if (rand() % 100 >= chance) {
             return;
         }
-        entity->unk20 = 1800;
+        entity->ailment_1_frames = 1800;
         break;
     case 2:
-        chance = 50 - entity->params->unkEA;
+        chance = 50 - entity->params->ailment_defence_1;
         if (chance <= 0) {
             return;
         }
         if (rand() % 100 >= chance) {
             return;
         }
-        entity->unk20 = 1800;
+        entity->ailment_1_frames = 1800;
         break;
     case 3:
-        entity->unk20 = 1800;
+        entity->ailment_1_frames = 1800;
         break;
     case 4:
-        chance = 50 - (200 - (entity->params->unkE8 + entity->params->unkDA)) / 200;
+        chance = 50 - (200 - (entity->params->magic_defence + entity->params->resist_fire)) / 200;
         if (chance <= 0) {
             return;
         }
-        if (entity->unk2C != 0) {
-            amount = entity->unk2C;
+        if (entity->hit_points != 0) {
+            amount = entity->hit_points;
             if (chance < amount) {
                 amount = chance;
             }
-            entity->unk2C -= amount;
+            entity->hit_points -= amount;
             entity->flags &= ~0xC000000000L;
-            entity->unkA3 = 3;
+            entity->hit_flash_frames = 3;
         }
         break;
     case 5:
-        if (entity->unk2C != 0) {
-            entity->unk2C = (entity->unk2C > 30) ? entity->unk2C - 30 : 0;
-            entity->unkA3 = 3;
+        if (entity->hit_points != 0) {
+            entity->hit_points = (entity->hit_points > 30) ? entity->hit_points - 30 : 0;
+            entity->hit_flash_frames = 3;
             entity->flags &= ~0xC000000000L;
         }
         break;
@@ -493,16 +493,16 @@ s32 EntityCollision_WalkAgainstMesh(Entity *entity, ModelInstance *model, f32 *p
     Collision_TransformMeshPoints(model);
     period = 30;
     mesh = (CollisionMesh *)model->strips;
-    if (D_00446ED4 % period == entity->unkD7 % 10U) {
-        strip = mesh->unk28;
-        i = mesh->unk40;
+    if (D_00446ED4 % period == entity->spawn_index % 10U) {
+        strip = mesh->hazard_strips;
+        i = mesh->hazard_strip_count;
         while (--i != -1) {
             point = strip->points;
             j = strip->point_count - 2;
             do {
                 Collision_DropOnTriangle(point[0].position, point[1].position, point[2].position, entity->model->position);
                 if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] <= entity->model->position[1]
-                    && entity->model->position[1] - entity->unk34 <= COLLISION_RESULT->point[1]) {
+                    && entity->model->position[1] - entity->collision_height <= COLLISION_RESULT->point[1]) {
                     EntityCollision_ApplySurfaceEffect(entity, point->unk04, point->unk08, point->unk0C);
                     goto walls;
                 }
@@ -513,8 +513,8 @@ s32 EntityCollision_WalkAgainstMesh(Entity *entity, ModelInstance *model, f32 *p
     }
 walls:
     if (!((s32)(entity->flags >> 23) & 1)) {
-        strip = mesh->unk18;
-        i = mesh->unk38;
+        strip = mesh->wall_strips;
+        i = mesh->wall_strip_count;
         while (--i != -1) {
             point = strip->points;
             j = strip->point_count - 2;
@@ -526,8 +526,8 @@ walls:
         }
     }
     if (!((s32)(entity->flags >> 24) & 1)) {
-        strip = mesh->unk20;
-        i = mesh->unk3C;
+        strip = mesh->second_wall_strips;
+        i = mesh->second_wall_strip_count;
         while (--i != -1) {
             point = strip->points;
             j = strip->point_count - 2;
@@ -539,17 +539,17 @@ walls:
         }
     }
     if (entity->spawn_info->type_id != 0x12) {
-        strip = mesh->unk24;
-        i = mesh->unk3E;
+        strip = mesh->barrier_strips;
+        i = mesh->barrier_strip_count;
         while (--i != -1) {
             point = strip->points;
             j = strip->point_count - 2;
-            if (Collision_GetBarrierLevel(point->unk04, point->unk08, point->unk0C) >= entity->spawn_info->unk35) {
+            if (Collision_GetBarrierLevel(point->unk04, point->unk08, point->unk0C) >= entity->spawn_info->barrier_level) {
                 if (Collision_IsBarrierFloor(point->unk04, point->unk08, point->unk0C)) {
                     do {
                         Collision_DropOnTriangle(point[0].position, point[1].position, point[2].position, entity->model->position);
                         if (COLLISION_RESULT->hit != 0
-                            && entity->model->position[1] - entity->params->unk42C <= COLLISION_RESULT->point[1]
+                            && entity->model->position[1] - entity->params->floor_probe_depth <= COLLISION_RESULT->point[1]
                             && COLLISION_RESULT->point[1] <= *floor_y) {
                             *floor_y = COLLISION_RESULT->point[1];
                             hit_floor = TRUE;
@@ -577,7 +577,7 @@ walls:
             do {
                 Collision_DropOnTriangle(point[0].position, point[1].position, point[2].position, entity->model->position);
                 if (COLLISION_RESULT->hit != 0
-                    && entity->model->position[1] - entity->params->unk42C <= COLLISION_RESULT->point[1]
+                    && entity->model->position[1] - entity->params->floor_probe_depth <= COLLISION_RESULT->point[1]
                     && COLLISION_RESULT->point[1] <= *floor_y) {
                     hit_floor = TRUE;
                     *floor_y = COLLISION_RESULT->point[1];
@@ -613,44 +613,44 @@ void EntityCollision_WalkAgainstMap(Entity *entity) {
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
     position[1] -= 0.1f;
     if (!((s32)(entity->flags >> 28) & 1)) {
-        height += entity->unk48;
+        height += entity->floor_lift;
     }
     unused[0] = unused[1] = NULL;
     slots[0] = &map_slots[entity->group_id];
     slots[1] = &map_slots[(char)(entity->group_id ^ 1)];
     for (map = 0; map < 2; map++) {
-        if (slots[map]->unk00 != 0) {
+        if (slots[map]->loaded != 0) {
             record = (MapRecordBounds *)slots[map]->records;
             for (i = 0; i < slots[map]->header->record_count; i++, record++) {
-                if (record->unk3C & 0x40000000) {
+                if (record->record_flags & 0x40000000) {
                     continue;
                 }
-                if (record->unk32 == 0xFFFF) {
+                if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
                 if (record->model->strips == NULL) {
                     continue;
                 }
-                if (record->lowest[0] - entity->unk30 > entity->model->position[0]) {
+                if (record->lowest[0] - entity->collision_radius > entity->model->position[0]) {
                     continue;
                 }
-                if (record->highest[0] + entity->unk30 < entity->model->position[0]) {
+                if (record->highest[0] + entity->collision_radius < entity->model->position[0]) {
                     continue;
                 }
-                if (record->lowest[1] - entity->unk34 > entity->model->position[1]) {
+                if (record->lowest[1] - entity->collision_height > entity->model->position[1]) {
                     continue;
                 }
-                if (record->highest[1] + entity->unk34 < entity->model->position[1]) {
+                if (record->highest[1] + entity->collision_height < entity->model->position[1]) {
                     continue;
                 }
-                if (record->lowest[2] - entity->unk30 > entity->model->position[2]) {
+                if (record->lowest[2] - entity->collision_radius > entity->model->position[2]) {
                     continue;
                 }
-                if (record->highest[2] + entity->unk30 < entity->model->position[2]) {
+                if (record->highest[2] + entity->collision_radius < entity->model->position[2]) {
                     continue;
                 }
                 if (EntityCollision_WalkAgainstMesh(entity, record->model, position, normal_sum, &floor_y)) {
-                    entity->unk14 = record;
+                    entity->map_record = record;
                     hit_floor = TRUE;
                 }
             }
@@ -659,18 +659,18 @@ void EntityCollision_WalkAgainstMap(Entity *entity) {
             break;
         }
     }
-    normal_sum[0] += entity->unkA4[0];
-    normal_sum[1] += entity->unkA4[1];
-    normal_sum[2] += entity->unkA4[2];
+    normal_sum[0] += entity->wall_push[0];
+    normal_sum[1] += entity->wall_push[1];
+    normal_sum[2] += entity->wall_push[2];
     sceVu0Normalize(normal_sum, normal_sum);
-    entity->unkA4[0] = normal_sum[0];
-    entity->unkA4[1] = normal_sum[1];
-    entity->unkA4[2] = normal_sum[2];
+    entity->wall_push[0] = normal_sum[0];
+    entity->wall_push[1] = normal_sum[1];
+    entity->wall_push[2] = normal_sum[2];
     if (ENTITY_FLAG_BITS(entity)->bit50) {
         ENTITY_FLAG_BITS(entity)->bit44 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit52 = FALSE;
-        entity->unk48 = 10.0f;
+        entity->floor_lift = 10.0f;
         entity->model->position[0] = position[0];
         entity->model->position[2] = position[2];
         return;
@@ -679,7 +679,7 @@ void EntityCollision_WalkAgainstMap(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit44 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit52 = FALSE;
-        entity->unk48 = 10.0f;
+        entity->floor_lift = 10.0f;
         if (hit_floor && floor_y <= entity->model->position[1]) {
             ENTITY_FLAG_BITS(entity)->bit44 = TRUE;
             entity->model->position[1] = floor_y;
@@ -702,14 +702,14 @@ void EntityCollision_WalkAgainstMap(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit52 = FALSE;
         entity->model->position[1] = floor_y;
-    } else if (ENTITY_FLAG_BITS(entity)->bit44 && entity->params->unk42D != 0 && !(0.0f < entity->unk4C)
-               && (entity->params->unk42D != 1 || !(floor_y <= entity->model->position[1] + entity->unk34))) {
+    } else if (ENTITY_FLAG_BITS(entity)->bit44 && entity->params->ledge_behavior != 0 && !(0.0f < entity->knockback_speed)
+               && (entity->params->ledge_behavior != 1 || !(floor_y <= entity->model->position[1] + entity->collision_height))) {
         ENTITY_FLAG_BITS(entity)->bit44 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit52 = TRUE;
-        entity->model->position[0] = entity->unk70[0];
-        entity->model->position[1] = entity->unk70[1];
-        entity->model->position[2] = entity->unk70[2];
+        entity->model->position[0] = entity->prev_position[0];
+        entity->model->position[1] = entity->prev_position[1];
+        entity->model->position[2] = entity->prev_position[2];
         return;
     } else {
         ENTITY_FLAG_BITS(entity)->bit44 = FALSE;
@@ -958,19 +958,19 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
     Collision_TransformMeshPoints(model);
     mesh = (CollisionMesh *)model->strips;
     if (!((s32)(entity->flags >> 23) & 1)) {
-        strip = mesh->unk18;
-        i = mesh->unk38;
+        strip = mesh->wall_strips;
+        i = mesh->wall_strip_count;
         while (--i != -1) {
             point = strip->points;
             j = strip->point_count - 2;
             do {
-                EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->unk30);
+                EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->collision_radius);
                 if (COLLISION_RESULT->hit != 0) {
                     entity->flags |= 0x8000L << 30;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     Vector_Add(normal_sum, normal_sum, offset);
-                    Vector_Scale(offset, offset, entity->unk30);
+                    Vector_Scale(offset, offset, entity->collision_radius);
                     Vector_Add(position, COLLISION_RESULT, offset);
                 }
                 point++;
@@ -979,19 +979,19 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
         }
     }
     if (!((s32)(entity->flags >> 24) & 1)) {
-        strip = mesh->unk20;
-        i = mesh->unk3C;
+        strip = mesh->second_wall_strips;
+        i = mesh->second_wall_strip_count;
         while (--i != -1) {
             point = strip->points;
             j = strip->point_count - 2;
             do {
-                EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->unk30);
+                EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->collision_radius);
                 if (COLLISION_RESULT->hit != 0) {
                     entity->flags |= 0x8000L << 30;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     Vector_Add(normal_sum, normal_sum, offset);
-                    Vector_Scale(offset, offset, entity->unk30);
+                    Vector_Scale(offset, offset, entity->collision_radius);
                     Vector_Add(position, COLLISION_RESULT, offset);
                 }
                 point++;
@@ -999,20 +999,20 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
             strip = (CollisionStrip *)(point + 2);
         }
     }
-    strip = mesh->unk24;
-    i = mesh->unk3E;
+    strip = mesh->barrier_strips;
+    i = mesh->barrier_strip_count;
     while (--i != -1) {
         point = strip->points;
         j = strip->point_count - 2;
-        if (Collision_GetBarrierLevel(point->unk04, point->unk08, point->unk0C) >= entity->spawn_info->unk35) {
+        if (Collision_GetBarrierLevel(point->unk04, point->unk08, point->unk0C) >= entity->spawn_info->barrier_level) {
             do {
-                EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->unk30);
+                EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->collision_radius);
                 if (COLLISION_RESULT->hit != 0) {
                     entity->flags |= 0x8000L << 30;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     Vector_Add(normal_sum, normal_sum, offset);
-                    Vector_Scale(offset, offset, entity->unk30);
+                    Vector_Scale(offset, offset, entity->collision_radius);
                     Vector_Add(position, COLLISION_RESULT, offset);
                 }
                 point++;
@@ -1029,13 +1029,13 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
             point = strip->points;
             j = strip->point_count - 2;
             do {
-                EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->unk30);
+                EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->collision_radius);
                 if (COLLISION_RESULT->hit != 0) {
                     hit_floor = TRUE;
                     entity->flags |= 0x8000L << 29;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
-                    Vector_Scale(offset, offset, entity->unk30);
+                    Vector_Scale(offset, offset, entity->collision_radius);
                     Vector_Add(position, COLLISION_RESULT, offset);
                 }
                 point++;
@@ -1065,43 +1065,43 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
     if (!((s32)(entity->flags >> 28) & 1)) {
         entity->flags &= ~(1L << 51);
         position[1] += 0.1f;
-        lift = entity->unk48;
+        lift = entity->floor_lift;
     }
     slots[0] = &map_slots[entity->group_id];
     slots[1] = &map_slots[(char)(entity->group_id ^ 1)];
     for (map = 0; map < 2; map++) {
-        if (slots[map]->unk00 != 0) {
+        if (slots[map]->loaded != 0) {
             record = (MapRecordBounds *)slots[map]->records;
             for (i = 0; i < slots[map]->header->record_count; i++, record++) {
-                if (record->unk3C & 0x40000000) {
+                if (record->record_flags & 0x40000000) {
                     continue;
                 }
-                if (record->unk32 == 0xFFFF) {
+                if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
                 if (record->model->strips == NULL) {
                     continue;
                 }
-                if (record->lowest[0] - entity->unk30 > entity->model->position[0]) {
+                if (record->lowest[0] - entity->collision_radius > entity->model->position[0]) {
                     continue;
                 }
-                if (record->highest[0] + entity->unk30 < entity->model->position[0]) {
+                if (record->highest[0] + entity->collision_radius < entity->model->position[0]) {
                     continue;
                 }
-                if (record->lowest[1] - entity->unk30 > entity->model->position[1]) {
+                if (record->lowest[1] - entity->collision_radius > entity->model->position[1]) {
                     continue;
                 }
-                if (record->highest[1] + entity->unk30 < entity->model->position[1]) {
+                if (record->highest[1] + entity->collision_radius < entity->model->position[1]) {
                     continue;
                 }
-                if (record->lowest[2] - entity->unk30 > entity->model->position[2]) {
+                if (record->lowest[2] - entity->collision_radius > entity->model->position[2]) {
                     continue;
                 }
-                if (record->highest[2] + entity->unk30 < entity->model->position[2]) {
+                if (record->highest[2] + entity->collision_radius < entity->model->position[2]) {
                     continue;
                 }
                 if (EntityCollision_SphereAgainstMesh(entity, record->model, position, normal_sum)) {
-                    entity->unk14 = record;
+                    entity->map_record = record;
                     hit_floor = TRUE;
                 }
             }
@@ -1110,13 +1110,13 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
             break;
         }
     }
-    normal_sum[0] += entity->unkA4[0];
-    normal_sum[1] += entity->unkA4[1];
-    normal_sum[2] += entity->unkA4[2];
+    normal_sum[0] += entity->wall_push[0];
+    normal_sum[1] += entity->wall_push[1];
+    normal_sum[2] += entity->wall_push[2];
     sceVu0Normalize(normal_sum, normal_sum);
-    entity->unkA4[0] = normal_sum[0];
-    entity->unkA4[1] = normal_sum[1];
-    entity->unkA4[2] = normal_sum[2];
+    entity->wall_push[0] = normal_sum[0];
+    entity->wall_push[1] = normal_sum[1];
+    entity->wall_push[2] = normal_sum[2];
     if (ENTITY_FLAG_BITS(entity)->bit50) {
         ENTITY_FLAG_BITS(entity)->bit44 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit51 = FALSE;
@@ -1124,9 +1124,9 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
         entity->model->position[2] = position[2];
         normal_sum[1] += -1.0f;
         sceVu0Normalize(normal_sum, normal_sum);
-        entity->unkA4[0] = normal_sum[0];
-        entity->unkA4[1] = normal_sum[1];
-        entity->unkA4[2] = normal_sum[2];
+        entity->wall_push[0] = normal_sum[0];
+        entity->wall_push[1] = normal_sum[1];
+        entity->wall_push[2] = normal_sum[2];
         return;
     }
     if (hit_floor) {
@@ -1134,9 +1134,9 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
         entity->model->position[1] = position[1];
         normal_sum[1] += -1.0f;
         sceVu0Normalize(normal_sum, normal_sum);
-        entity->unkA4[0] = normal_sum[0];
-        entity->unkA4[1] = normal_sum[1];
-        entity->unkA4[2] = normal_sum[2];
+        entity->wall_push[0] = normal_sum[0];
+        entity->wall_push[1] = normal_sum[1];
+        entity->wall_push[2] = normal_sum[2];
     } else {
         ENTITY_FLAG_BITS(entity)->bit44 = FALSE;
         entity->model->position[1] = position[1] + lift;
@@ -1509,30 +1509,30 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
         object = map_objects(map);
         count = map_object_count(map);
         for (i = 0; i < count; i++, object++) {
-            if (!(object->unk10 & 0x10000)) {
+            if (!(object->state_flags & 0x10000)) {
                 continue;
             }
-            if (object->unk14 <= 0.0f) {
+            if (object->reach_radius <= 0.0f) {
                 continue;
             }
-            reach = entity->unk30 + object->unk14;
+            reach = entity->collision_radius + object->reach_radius;
             if (reach < EntityMath_DistanceXZ(position, (f32 *)&object->model->position)) {
                 continue;
             }
             COLLISION_RESULT->hit = 0;
-            switch (object->unk04->kind) {
+            switch (object->definition->kind) {
             case 1:
-                EntityCollision_PushOutOfBox((CollisionOwner *)object, position, entity->unk34, entity->unk30);
+                EntityCollision_PushOutOfBox((CollisionOwner *)object, position, entity->collision_height, entity->collision_radius);
                 break;
             case 2:
-                EntityCollision_PushOutOfBoxPair((CollisionOwner *)object, position, entity->unk34, entity->unk30);
+                EntityCollision_PushOutOfBoxPair((CollisionOwner *)object, position, entity->collision_height, entity->collision_radius);
                 break;
             case 0x11:
-                EntityCollision_PushOutOfQuad((CollisionOwner *)object, position, entity->unk34, entity->unk30);
+                EntityCollision_PushOutOfQuad((CollisionOwner *)object, position, entity->collision_height, entity->collision_radius);
                 break;
             default:
                 if (object->model->strips != NULL) {
-                    EntityCollision_MoveOnMesh((CollisionOwner *)object, position, entity->unk34, entity->unk30);
+                    EntityCollision_MoveOnMesh((CollisionOwner *)object, position, entity->collision_height, entity->collision_radius);
                 }
                 break;
             }
@@ -1549,13 +1549,13 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
             }
         }
     }
-    normal_sum[0] += entity->unkA4[0];
-    normal_sum[1] += entity->unkA4[1];
-    normal_sum[2] += entity->unkA4[2];
+    normal_sum[0] += entity->wall_push[0];
+    normal_sum[1] += entity->wall_push[1];
+    normal_sum[2] += entity->wall_push[2];
     sceVu0Normalize(sum, sum);
-    entity->unkA4[0] = normal_sum[0];
-    entity->unkA4[1] = normal_sum[1];
-    entity->unkA4[2] = normal_sum[2];
+    entity->wall_push[0] = normal_sum[0];
+    entity->wall_push[1] = normal_sum[1];
+    entity->wall_push[2] = normal_sum[2];
     entity->model->position[0] = position[0];
     entity->model->position[1] = position[1];
     entity->model->position[2] = position[2];
@@ -1582,33 +1582,33 @@ void EntityCollision_SphereAgainstObjects(Entity *entity) {
         object = map_objects(map);
         count = map_object_count(map);
         for (i = 0; i < count; i++, object++) {
-            if (!(object->unk10 & 0x10000)) {
+            if (!(object->state_flags & 0x10000)) {
                 continue;
             }
-            if (object->unk14 <= 0.0f) {
+            if (object->reach_radius <= 0.0f) {
                 continue;
             }
-            reach = entity->unk30 + object->unk14;
+            reach = entity->collision_radius + object->reach_radius;
             if (reach < EntityMath_DistanceXZ(position, (f32 *)&object->model->position)) {
                 continue;
             }
             COLLISION_RESULT->hit = 0;
-            switch (object->unk04->kind) {
+            switch (object->definition->kind) {
             case 1:
-                EntityCollision_SphereBox((CollisionOwner *)object, position, entity->unk30);
+                EntityCollision_SphereBox((CollisionOwner *)object, position, entity->collision_radius);
                 break;
             case 2:
-                EntityCollision_SphereBoxPair((CollisionOwner *)object, position, entity->unk30);
+                EntityCollision_SphereBoxPair((CollisionOwner *)object, position, entity->collision_radius);
                 break;
             case 0x11:
-                EntityCollision_SphereQuad((CollisionOwner *)object, position, entity->unk30);
+                EntityCollision_SphereQuad((CollisionOwner *)object, position, entity->collision_radius);
                 break;
             case 0x12:
-                EntityCollision_SphereQuads((CollisionOwner *)object, position, entity->unk30);
+                EntityCollision_SphereQuads((CollisionOwner *)object, position, entity->collision_radius);
                 break;
             default:
                 if (object->model->strips != NULL) {
-                    EntityCollision_SphereMesh((CollisionOwner *)object, position, entity->unk30);
+                    EntityCollision_SphereMesh((CollisionOwner *)object, position, entity->collision_radius);
                 }
                 break;
             }
@@ -1617,7 +1617,7 @@ void EntityCollision_SphereAgainstObjects(Entity *entity) {
                 Vector_Subtract(offset, position, COLLISION_RESULT);
                 sceVu0Normalize(offset, offset);
                 Vector_Add(normal_sum, normal_sum, offset);
-                Vector_Scale(offset, offset, entity->unk30);
+                Vector_Scale(offset, offset, entity->collision_radius);
                 Vector_Add(position, COLLISION_RESULT, offset);
                 ENTITY_FLAG_BITS(entity)->bit47 = TRUE;
                 ENTITY_FLAG_BITS(entity)->bit45 = TRUE;
@@ -1628,13 +1628,13 @@ void EntityCollision_SphereAgainstObjects(Entity *entity) {
             }
         }
     }
-    normal_sum[0] += entity->unkA4[0];
-    normal_sum[1] += entity->unkA4[1];
-    normal_sum[2] += entity->unkA4[2];
+    normal_sum[0] += entity->wall_push[0];
+    normal_sum[1] += entity->wall_push[1];
+    normal_sum[2] += entity->wall_push[2];
     sceVu0Normalize(sum, sum);
-    entity->unkA4[0] = normal_sum[0];
-    entity->unkA4[1] = normal_sum[1];
-    entity->unkA4[2] = normal_sum[2];
+    entity->wall_push[0] = normal_sum[0];
+    entity->wall_push[1] = normal_sum[1];
+    entity->wall_push[2] = normal_sum[2];
     entity->model->position[0] = position[0];
     entity->model->position[1] = position[1];
     entity->model->position[2] = position[2];
@@ -1727,7 +1727,7 @@ static void EntityCollision_PushOutOfBoxPair(CollisionOwner *owner, f32 *centre,
     f32 height;
 
     COLLISION_RESULT->hit = 0;
-    if (((EntityModel *)owner->model)->unkFC->unk81 == 0 && ((EntityModel *)owner->model)->unkFC->unk82 < 2) {
+    if (((EntityModel *)owner->model)->level_tables->unk81 == 0 && ((EntityModel *)owner->model)->level_tables->unk82 < 2) {
         corner_a = (f32 *)owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
@@ -1988,8 +1988,8 @@ static void EntityCollision_MoveOnMesh(CollisionOwner *owner, f32 *centre, f32 s
         position[1] = floor_y;
     }
     position[1] -= 0.1f;
-    strip = mesh->unk18;
-    i = mesh->unk38;
+    strip = mesh->wall_strips;
+    i = mesh->wall_strip_count;
     while (--i != -1) {
         point = strip->points;
         j = strip->point_count - 2;
@@ -2077,7 +2077,7 @@ static void EntityCollision_SphereBoxPair(CollisionOwner *owner, void *centre, f
     f32 height;
 
     COLLISION_RESULT->hit = 0;
-    if (((EntityModel *)owner->model)->unkFC->unk81 == 0 && ((EntityModel *)owner->model)->unkFC->unk82 < 2) {
+    if (((EntityModel *)owner->model)->level_tables->unk81 == 0 && ((EntityModel *)owner->model)->level_tables->unk82 < 2) {
         corner_a = (f32 *)owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
@@ -2288,8 +2288,8 @@ static void EntityCollision_SphereMesh(CollisionOwner *owner, void *centre, f32 
         } while (--j != 0);
         strip = (CollisionStrip *)(point + 2);
     }
-    strip = mesh->unk18;
-    i = mesh->unk38;
+    strip = mesh->wall_strips;
+    i = mesh->wall_strip_count;
     while (--i != -1) {
         point = strip->points;
         j = strip->point_count - 2;
@@ -2307,8 +2307,8 @@ static void EntityCollision_SphereMesh(CollisionOwner *owner, void *centre, f32 
         } while (--j != 0);
         strip = (CollisionStrip *)(point + 2);
     }
-    strip = mesh->unk20;
-    i = mesh->unk3C;
+    strip = mesh->second_wall_strips;
+    i = mesh->second_wall_strip_count;
     while (--i != -1) {
         point = strip->points;
         j = strip->point_count - 2;
@@ -2430,8 +2430,8 @@ s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 len
         } while (--j != 0);
         strip = (CollisionStrip *)(point + 2);
     }
-    strip = mesh->unk18;
-    i = mesh->unk38;
+    strip = mesh->wall_strips;
+    i = mesh->wall_strip_count;
     while (--i != -1) {
         point = strip->points;
         j = strip->point_count - 2;
@@ -2448,8 +2448,8 @@ s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 len
         } while (--j != 0);
         strip = (CollisionStrip *)(point + 2);
     }
-    strip = mesh->unk20;
-    i = mesh->unk3C;
+    strip = mesh->second_wall_strips;
+    i = mesh->second_wall_strip_count;
     while (--i != -1) {
         point = strip->points;
         j = strip->point_count - 2;
@@ -2466,8 +2466,8 @@ s32 EntityCollision_RayProp(void *prop_arg, f32 *origin, f32 *direction, f32 len
         } while (--j != 0);
         strip = (CollisionStrip *)(point + 2);
     }
-    strip = mesh->unk24;
-    i = mesh->unk3E;
+    strip = mesh->barrier_strips;
+    i = mesh->barrier_strip_count;
     while (--i != -1) {
         point = strip->points;
         j = strip->point_count - 2;
@@ -2532,25 +2532,25 @@ s32 EntityCollision_RayProps(f32 *origin, f32 *direction, void *out_point, f32 l
     slots[0] = &map_slots[D_00446770];
     slots[1] = &map_slots[D_00446770 ^ 1];
     for (map = 0; map < 2; map++) {
-        if (slots[map]->unk00 != 0) {
+        if (slots[map]->loaded != 0) {
             record = (MapRecord *)slots[map]->records;
             for (i = 0; i < slots[map]->header->record_count; i++, record++) {
-                if (((EntitySpawnFlags *)&record->unk38)->halves[1] & 0x40000000) {
+                if (((EntitySpawnFlags *)&record->record_flags)->halves[1] & 0x40000000) {
                     continue;
                 }
-                if (record->unk32 == 0xFFFF) {
+                if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
                 if (((MapProp *)record)->model->strips == NULL) {
                     continue;
                 }
-                if (highest[0] < record->unk60[0] || record->unk70[0] < lowest[0]) {
+                if (highest[0] < record->lowest[0] || record->highest[0] < lowest[0]) {
                     continue;
                 }
-                if (highest[1] < record->unk60[1] || record->unk70[1] < lowest[1]) {
+                if (highest[1] < record->lowest[1] || record->highest[1] < lowest[1]) {
                     continue;
                 }
-                if (highest[2] < record->unk60[2] || record->unk70[2] < lowest[2]) {
+                if (highest[2] < record->lowest[2] || record->highest[2] < lowest[2]) {
                     continue;
                 }
                 kind = EntityCollision_RayProp(record, origin, direction, length, (s32)point);
@@ -2589,34 +2589,34 @@ s32 EntityCollision_RayHitsPropWall(f32 *origin, f32 *direction, f32 length, f32
     for (map = 0; map < 2; map++) {
         slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
         record = (MapRecord *)slot->records;
-        if (slot->unk00 != 0) {
+        if (slot->loaded != 0) {
             for (i = 0; i < slot->header->record_count; i++, record++) {
-                if (record->unk32 == 0xFFFF) {
+                if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
-                if (origin[0] < record->unk60[0] && end[0] < record->unk60[0]) {
+                if (origin[0] < record->lowest[0] && end[0] < record->lowest[0]) {
                     continue;
                 }
-                if (record->unk70[0] < origin[0] && record->unk70[0] < end[0]) {
+                if (record->highest[0] < origin[0] && record->highest[0] < end[0]) {
                     continue;
                 }
-                if (origin[1] < record->unk60[1] && end[1] < record->unk60[1]) {
+                if (origin[1] < record->lowest[1] && end[1] < record->lowest[1]) {
                     continue;
                 }
-                if (record->unk70[1] < origin[1] && record->unk70[1] < end[1]) {
+                if (record->highest[1] < origin[1] && record->highest[1] < end[1]) {
                     continue;
                 }
-                if (origin[2] < record->unk60[2] && end[2] < record->unk60[2]) {
+                if (origin[2] < record->lowest[2] && end[2] < record->lowest[2]) {
                     continue;
                 }
-                if (record->unk70[2] < origin[2] && record->unk70[2] < end[2]) {
+                if (record->highest[2] < origin[2] && record->highest[2] < end[2]) {
                     continue;
                 }
                 // match: called as void, or the model pointer does not take $2
                 ((void (*)(void *))Collision_TransformMeshPoints)(((MapProp *)record)->model);
                 mesh = (CollisionMesh *)((MapProp *)record)->model->strips;
-                strips_left = mesh->unk38;
-                strip = mesh->unk18;
+                strips_left = mesh->wall_strip_count;
+                strip = mesh->wall_strips;
                 while (--strips_left != -1) {
                     point = strip->points;
                     points_left = strip->point_count - 2;
@@ -2685,23 +2685,23 @@ f32 EntityCollision_DistanceToGround(f32 *point) {
 
     for (map = 0; map < 2; map++) {
         slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
-        if (slot->unk00 != 0) {
+        if (slot->loaded != 0) {
             record = (MapRecord *)slot->records;
             record_count = slot->header->record_count;
             model = D_00432224[D_00446770 == map ? 0 : 22];
             for (i = 0; i < record_count; i++, model++, record++) {
-                if (record->unk32 == 0xFFFF) {
+                if (record->collision_mesh_index == 0xFFFF) {
                     continue;
                 }
-                if (point[0] < record->unk60[0] || record->unk70[0] < point[0] || point[2] < record->unk60[2] ||
-                    record->unk70[2] < point[2]) {
+                if (point[0] < record->lowest[0] || record->highest[0] < point[0] || point[2] < record->lowest[2] ||
+                    record->highest[2] < point[2]) {
                     continue;
                 }
                 // match: called as void, or the mesh pointer does not take $2
                 ((void (*)(void *))Collision_TransformMeshPoints)(model);
                 mesh = (CollisionMesh *)model->model.strips;
-                strips_left = mesh->unk42;
-                strip = mesh->unk2C;
+                strips_left = mesh->water_strip_count;
+                strip = mesh->water_strips;
                 while (--strips_left != -1) {
                     strip_point = strip->points;
                     points_left = strip->point_count - 2;

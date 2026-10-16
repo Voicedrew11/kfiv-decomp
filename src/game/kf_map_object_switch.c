@@ -20,7 +20,7 @@ void MapObject_UpdateIdleToggle(MapObject *object) {
     if ((D_0038CC74[0] >> 1) & 1) {
         if (D_00420D50[0] == object) {
             MAP_OBJECT_BYTES(object)->step = 2;
-            object->unk10 = (object->unk10 & ~0x20000) | ((((s32)object->unk10 >> 17) ^ 1) & 1) << 17;
+            object->state_flags = (object->state_flags & ~0x20000) | ((((s32)object->state_flags >> 17) ^ 1) & 1) << 17;
         }
     }
 }
@@ -48,7 +48,7 @@ void MapObject_UpdateMovingToggle(MapObject *object) {
 
 /* Step 0 of the switches (kind 8): off (animation 4, step 1) or, with bit 17 set, on (animation 5, step 3). */
 void MapObject_StartSwitch(MapObject *object) {
-    if (!(object->unk10 & 0x20000)) {
+    if (!(object->state_flags & 0x20000)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
@@ -63,7 +63,7 @@ void MapObject_UpdateOffSwitch(void *arg) {
 
     if (((D_0038CC74[0] >> 1) & 1) && (object = D_00420D50[0]) == arg) {
         MAP_OBJECT_BYTES(object)->step = 2;
-        object->unk10 |= 0x20000;
+        object->state_flags |= 0x20000;
     }
 }
 
@@ -83,7 +83,7 @@ void MapObject_UpdateOnSwitch(void *arg) {
 
     if (((D_0038CC74[0] >> 1) & 1) && (object = D_00420D50[0]) == arg) {
         MAP_OBJECT_BYTES(object)->step = 4;
-        object->unk10 &= ~0x20000;
+        object->state_flags &= ~0x20000;
     }
 }
 
@@ -103,7 +103,7 @@ void MapObject_SetSwitchOn(MapObject *object, int turn_on) {
     void *saved;
     int bit;
 
-    if ((object->unk10 & 0x2FF00) == 0x100 && turn_on != 0) {
+    if ((object->state_flags & 0x2FF00) == 0x100 && turn_on != 0) {
         saved = D_00420D00.current;
         bit = game_status.bit1;
         game_status.bit1 = 1;
@@ -111,7 +111,7 @@ void MapObject_SetSwitchOn(MapObject *object, int turn_on) {
         MapObject_UpdateOffSwitch(object);
         D_00420D00.current = saved;
         game_status.bit1 = bit;
-    } else if ((object->unk10 & 0x2FF00) == 0x20300 && turn_on == 0) {
+    } else if ((object->state_flags & 0x2FF00) == 0x20300 && turn_on == 0) {
         saved = D_00420D00.current;
         bit = game_status.bit1;
         game_status.bit1 = 1;

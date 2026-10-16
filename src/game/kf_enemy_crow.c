@@ -34,8 +34,8 @@ static void Crow_PlayAnim21(Entity *entity);
 /* Set-up of a type 12 entity: clears its work area and installs the type's handlers. */
 void Crow_Init(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
-    u8 *unkBC = entity->unkBC;
-    u8 *unkC0 = entity->unkC0;
+    u8 *unkBC = entity->choice_weights;
+    u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
@@ -44,7 +44,7 @@ void Crow_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->unk02][1]);
+    EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->think = Crow_Think;
     unkE0->animate = (void (*)(void))Crow_Animate;
     unkE0->on_hit = NULL;
@@ -52,21 +52,21 @@ void Crow_Init(Entity *entity) {
     unkE0->dormant = (void (*)(void))EntityAi_Dormant;
     unkE0->death = (void (*)(void))Crow_Death;
     for (i = 4 - 1; i != -1; i--) {
-        entity->unkBC[i] = 0x80;
+        entity->choice_weights[i] = 0x80;
     }
     for (i = 6 - 1; i != -1; i--) {
-        entity->unkC0[i] = 0x80;
+        entity->attack_weights[i] = 0x80;
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    if (entity->spawn_info->unk38 & (0x8000L << 43)) {
+    if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    unkE0->unk40 = 0.5f;
-    entity->unkD6 = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
-    entity->model->unk15C = entity->unkD6;
+    unkE0->pose_blend_weight = 0.5f;
+    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
 }
@@ -80,9 +80,9 @@ static void Crow_Animate(Entity *entity) {
     flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->unkFC->unk88;
+        blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->unkC6 & 0x12) ? unkE0->unk40 : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -90,13 +90,13 @@ static void Crow_Animate(Entity *entity) {
 }
 
 /* The think handler: sets Entity.state itself. While the entity is not busy it puts the state to 3
-   once the player is nearer than EntityParams.unk430; in state 3 it calls
+   once the player is nearer than EntityParams.pitch_limit_deg; in state 3 it calls
    Crow_MoveOffAndRemove, before that Crow_PickAction. */
 static void Crow_Think(Entity *entity, int frame) {
-    if (entity->unkC6 != 0) {
+    if (entity->busy_flags != 0) {
         return;
     }
-    if (entity->distance_to_player < (float)ENTITY_CONTROLLER(entity)->unk430) {
+    if (entity->distance_to_player < (float)ENTITY_CONTROLLER(entity)->pitch_limit_deg) {
         // match: retail reads the u8 state signed (lb)
         if ((s8)entity->state != 3) {
             entity->state = 3;
@@ -111,7 +111,7 @@ static void Crow_Think(Entity *entity, int frame) {
 
 /* Helper of Crow_Think, called until the state is 3: each time the timer runs out it draws
    among Crow_PlayAnim20, Crow_PlayAnim21 and a wait of 120 to 179 frames,
-   weighted by EntityParams.unk432, unk434 and unk436; else it starts the move action. */
+   weighted by EntityParams.yaw_limit_deg, unk434 and unk436; else it starts the move action. */
 static void Crow_PickAction(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 roll;
@@ -121,21 +121,21 @@ static void Crow_PickAction(Entity *entity, s32 unknown) {
     } else {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
     }
-    if (entity->unkA0 == 0) {
-        roll = entity->params->unk432 + (s16)entity->params->unk434 + entity->params->unk436;
+    if (entity->action_timer == 0) {
+        roll = entity->params->yaw_limit_deg + (s16)entity->params->action_frames + entity->params->near_distance;
         if (roll != 0) {
             roll = rand() % roll;
         }
-        if (roll < entity->params->unk432) {
+        if (roll < entity->params->yaw_limit_deg) {
             EntityAi_StartAction(entity, Crow_PlayAnim20, unknown);
             return;
         }
-        if (roll < entity->params->unk432 + (s16)entity->params->unk434) {
+        if (roll < entity->params->yaw_limit_deg + (s16)entity->params->action_frames) {
             EntityAi_StartAction(entity, Crow_PlayAnim21, unknown);
             return;
         }
-        if (roll < entity->params->unk432 + (s16)entity->params->unk434 + entity->params->unk436) {
-            entity->unkA0 = rand() % 60 + 0x78;
+        if (roll < entity->params->yaw_limit_deg + (s16)entity->params->action_frames + entity->params->near_distance) {
+            entity->action_timer = rand() % 60 + 0x78;
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -143,7 +143,7 @@ static void Crow_PickAction(Entity *entity, s32 unknown) {
 }
 
 /* Helper of Crow_Think, called in state 3: gives the forward command and starts the move
-   action; the motion never moves the entity. It calls EntityEvent_StartEffectAtPoint with EntityParams.unk438 on the
+   action; the motion never moves the entity. It calls EntityEvent_StartEffectAtPoint with EntityParams.far_distance on the
    first unk43A frames, pitches the entity to -40 degrees while its y is above -2000 and back to 0
    after, and clears flag bit 1 once it is more than 10000 from its spawn point. */
 static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
@@ -151,20 +151,20 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
     f32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    entity->unkC8 |= 1;
-    if (unkE0->unk68 < entity->params->unk43A) {
-        EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk438, 0xFF, (int)entity->model->unkD0);
-        unkE0->unk68++;
+    entity->move_command |= 1;
+    if (unkE0->pause_timer < entity->params->unk43A) {
+        EntityEvent_StartEffectAtPoint((char **)entity, entity->params->far_distance, 0xFF, (int)entity->model->rotation);
+        unkE0->pause_timer++;
     }
     // match: the whole step is written out in both arms (only the call is shared in retail)
     if (-2000.0f < entity->model->position[1]) {
-        turn = entity->model->unkD0[0];
+        turn = entity->model->rotation[0];
         EntityMath_EaseAngleToward(&turn, -0.6981317f, 20.0f);
-        entity->unk90 += turn - entity->model->unkD0[0];
+        entity->turn_delta_pitch += turn - entity->model->rotation[0];
     } else {
-        turn = entity->model->unkD0[0];
+        turn = entity->model->rotation[0];
         EntityMath_EaseAngleToward(&turn, 0.0f, 20.0f);
-        entity->unk90 += turn - entity->model->unkD0[0];
+        entity->turn_delta_pitch += turn - entity->model->rotation[0];
     }
     if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) > 10000.0f) {
         ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
@@ -177,16 +177,16 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
 static void Crow_Death(Entity *entity) {
     f32 turn;
 
-    entity->unkC6 = 0x40;
+    entity->busy_flags = 0x40;
     // match: the whole step is written out in both arms (only the call is shared in retail)
     if (!ENTITY_FLAG_BITS(entity)->bit44) {
-        turn = entity->model->unkD0[0];
+        turn = entity->model->rotation[0];
         EntityMath_EaseAngleToward(&turn, 1.5707964f, 3.0f);
-        entity->unk90 += turn - entity->model->unkD0[0];
+        entity->turn_delta_pitch += turn - entity->model->rotation[0];
     } else {
-        turn = entity->model->unkD0[0];
+        turn = entity->model->rotation[0];
         EntityMath_EaseAngleToward(&turn, 0.0f, 2.0f);
-        entity->unk90 += turn - entity->model->unkD0[0];
+        entity->turn_delta_pitch += turn - entity->model->rotation[0];
     }
     switch (entity->action_step) {
     case 0:
@@ -210,7 +210,7 @@ static void Crow_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
@@ -219,14 +219,14 @@ static void Crow_Death(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
-            entity->unkA0 = 20;
+            entity->action_timer = 20;
             EntityEvent_OnDeath(entity);
             entity->action_step++;
         }
         break;
     case 3:
-        if (entity->unkA0 != 0) {
-            entity->model->unk15C = (f32)entity->unkD6 * (f32)entity->unkA0 / 20.0f;
+        if (entity->action_timer != 0) {
+            entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
             ENTITY_FLAG_BITS(entity)->bits2 = 3;
             ENTITY_FLAG_BITS(entity)->bit1 = FALSE;
@@ -240,23 +240,23 @@ static void Crow_Death(Entity *entity) {
 static void Crow_PlayAnim20(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 |= 0x1000;
+    entity->busy_flags |= 0x1000;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x14, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
         break;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if ((s32)(entity->flags >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {
@@ -272,23 +272,23 @@ static void Crow_PlayAnim20(Entity *entity) {
 static void Crow_PlayAnim21(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->unkC6 |= 0x2000;
+    entity->busy_flags |= 0x2000;
     switch (entity->action_step) {
     case 0:
-        Motion_Start(entity, 0x15, 0, entity->params->unkC4, 1);
+        Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         entity->action_step++;
         break;
     case 1:
-        if (entity->model->unkFC->unk88 == 0) {
+        if (entity->model->level_tables->unk88 == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if ((s32)(entity->flags >> 34) & 1) {
-            entity->unkC6 = 0;
-            entity->unkC8 = 0;
-            entity->unkA0 = 0;
+            entity->busy_flags = 0;
+            entity->move_command = 0;
+            entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
                 unkE0->think(entity, 1);
             } else {

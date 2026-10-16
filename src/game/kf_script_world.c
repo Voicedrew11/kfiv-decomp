@@ -136,11 +136,11 @@ void ScriptCmd_DropItemFromEntity(ScriptSetValueCommand *command) {
     entity = Entity_GetBySpawnId(command->object_id.value);
     if (entity != NULL) {
         spawn_info = entity->spawn_info;
-        saved_value = *(u16 *)&spawn_info->unk38; // match: the low 16 bits of the 64-bit field
-        *(u16 *)&spawn_info->unk38 = command->value.value;
+        saved_value = *(u16 *)&spawn_info->spawn_flags; // match: the low 16 bits of the 64-bit field
+        *(u16 *)&spawn_info->spawn_flags = command->value.value;
         MapItem_DropFromEnemy(entity);
         spawn_info = entity->spawn_info;
-        *(u16 *)&spawn_info->unk38 = saved_value;
+        *(u16 *)&spawn_info->spawn_flags = saved_value;
     }
     command->active = 0;
 }
@@ -349,7 +349,7 @@ void ScriptCmd_WaitMapObjectMotion(ScriptObjectCommand *command) {
     MapObject *object;
 
     object = MapObject_GetById(D_00446770, command->object_id.value);
-    if (object == NULL || !(object->model->unk100 & 1) || (object->unk10 & 0x400000) ||
+    if (object == NULL || !(object->model->model_flags & 1) || (object->state_flags & 0x400000) ||
         MODEL_CHANNEL(object->model)->param == 0) {
         command->active = 0;
     }
@@ -360,7 +360,7 @@ void ScriptCmd_WaitMapObjectMotion(ScriptObjectCommand *command) {
 void ScriptCmd_IsMapObjectMotionDone(ScriptCallCommand *command) {
     MapObject *object = MapObject_GetById(D_00446770, command->target_id.value);
 
-    if (object != NULL && (object->model->unk100 & 1) && !(object->unk10 & 0x400000)) {
+    if (object != NULL && (object->model->model_flags & 1) && !(object->state_flags & 0x400000)) {
         Script_StoreResult(&command->first, MODEL_CHANNEL(object->model)->param < 1);
     } else {
         Script_StoreResult(&command->first, -1);
@@ -368,16 +368,16 @@ void ScriptCmd_IsMapObjectMotionDone(ScriptCallCommand *command) {
     command->active = 0;
 }
 
-/* Command 180: sets the colour of the model of the map object `target_id` (ModelInstance.unk150, unk154,
+/* Command 180: sets the colour of the model of the map object `target_id` (ModelInstance.colour_red, unk154,
    unk158 and alpha), then finishes. */
 void ScriptCmd_SetMapObjectColor(ScriptObjectValuesCommand *command) {
     MapObject *object;
 
     object = MapObject_GetById(D_00446770, command->target_id.value);
     if (object != NULL && object->model != NULL) {
-        object->model->unk150 = command->values[0].value;
-        object->model->unk154 = command->values[1].value;
-        object->model->unk158 = command->values[2].value;
+        object->model->colour_red = command->values[0].value;
+        object->model->colour_green = command->values[1].value;
+        object->model->colour_blue = command->values[2].value;
         object->model->alpha = command->values[3].value;
     }
     command->active = 0;
@@ -417,11 +417,11 @@ void ScriptCmd_GetMapObjectParams(ScriptObjectValuesCommand *command) {
     MapObject *object;
 
     object = MapObject_GetById(D_00446770, command->target_id.value);
-    if (object != NULL && object->model != NULL && object->unk04->kind == 9) {
-        Script_StoreResult(&command->values[0], MAP_OBJECT_WORDS(object)->unk44);
-        Script_StoreResult(&command->values[1], MAP_OBJECT_WORDS(object)->unk46);
-        Script_StoreResult(&command->values[2], MAP_OBJECT_WORDS(object)->unk48);
-        Script_StoreResult(&command->values[3], MAP_OBJECT_WORDS(object)->unk4A);
+    if (object != NULL && object->model != NULL && object->definition->kind == 9) {
+        Script_StoreResult(&command->values[0], MAP_OBJECT_WORDS(object)->kind_param_0);
+        Script_StoreResult(&command->values[1], MAP_OBJECT_WORDS(object)->kind_param_1);
+        Script_StoreResult(&command->values[2], MAP_OBJECT_WORDS(object)->kind_param_2);
+        Script_StoreResult(&command->values[3], MAP_OBJECT_WORDS(object)->kind_param_3);
     }
     command->active = 0;
 }
@@ -433,12 +433,12 @@ void ScriptCmd_SetMapObjectParams(ScriptObjectShortsCommand *command) {
     MapObjectUnk08Words *source;
 
     object = MapObject_GetById(D_00446770, command->target_id.value);
-    if (object != NULL && object->model != NULL && object->unk04->kind == 9) {
+    if (object != NULL && object->model != NULL && object->definition->kind == 9) {
         source = MAP_OBJECT_WORDS(object);
-        source->unk44 = command->values[0].value;
-        source->unk46 = command->values[1].value;
-        source->unk48 = command->values[2].value;
-        source->unk4A = command->values[3].value;
+        source->kind_param_0 = command->values[0].value;
+        source->kind_param_1 = command->values[1].value;
+        source->kind_param_2 = command->values[2].value;
+        source->kind_param_3 = command->values[3].value;
     }
     command->active = 0;
 }
@@ -551,9 +551,9 @@ void ScriptCmd_PauseMapObjectAnim(ScriptObjectCommand *command) {
 }
 
 /* Command 120: eases the player toward the position x, y, z over `frames` frames; finishes at once while
-   GameStatus.unk00 is set. */
+   GameStatus.player_control is set. */
 void ScriptCmd_MovePlayerTo(ScriptTripleCommand *command) {
-    if (game_status.unk00 != 0 ||
+    if (game_status.player_control != 0 ||
         (command->x.value == player_state.position.x && command->y.value == player_state.position.y &&
          command->z.value == player_state.position.z)) {
         command->active = 0;
@@ -579,9 +579,9 @@ void ScriptCmd_MovePlayerTo(ScriptTripleCommand *command) {
 }
 
 /* Command 121: turns the player toward the rotation x (`target_a`) and heading (`target_b`) over `frames`
-   frames; finishes at once while GameStatus.unk00 is set. */
+   frames; finishes at once while GameStatus.player_control is set. */
 void ScriptCmd_TurnPlayerTo(ScriptBlendCommand *command) {
-    if (game_status.unk00 != 0 ||
+    if (game_status.player_control != 0 ||
         (command->target_a.value == player_state.rotation.x && command->target_b.value == player_state.rotation.y)) {
         command->active = 0;
     } else {
@@ -684,14 +684,14 @@ void ScriptCmd_AddPlayerMp(ScriptValueCommand *command) {
 
 /* Command 126: lets the player run (`value` nonzero) or not, then finishes. */
 void ScriptCmd_SetPlayerCanRun(ScriptValueCommand *command) {
-    game_status.unk06 = command->value.value == 0;
+    game_status.player_run_disabled = command->value.value == 0;
     command->active = 0;
 }
 
-/* Command 127: hands the script the player's step counter (PlayerState.unk258) through `value`, then
+/* Command 127: hands the script the player's step counter (PlayerState.item_action_step) through `value`, then
    finishes. */
 void ScriptCmd_GetPlayerStepCounter(ScriptValueCommand *command) {
-    Script_StoreResult(&command->value, player_state.unk258);
+    Script_StoreResult(&command->value, player_state.item_action_step);
     command->active = 0;
 }
 
@@ -747,32 +747,32 @@ void ScriptCmd_LaunchShot(ScriptPointCommand *command) {
     PlayerShot *shot;
 
     shot = Shot_Alloc();
-    shot->unk00 = 1;
-    shot->unk20 = 0;
-    shot->unk22 = 0;
+    shot->is_magic_shot = 1;
+    shot->player_power = 0;
+    shot->player_magic = 0;
     Attack_LaunchMagicEffect(command->object_id.value, shot, &from, &angles, &map_slots[D_00446770]);
     command->active = 0;
 }
 
-/* Command 140: sets the camera mode (GameStatus.unk03) to `value`, 0 (it follows the player) or 1 (the
+/* Command 140: sets the camera mode (GameStatus.camera_mode) to `value`, 0 (it follows the player) or 1 (the
    script places it), then finishes. */
 void ScriptCmd_SetCameraMode(ScriptValueCommand *command) {
     if ((u32)command->value.value < 2) {
-        game_status.unk03 = command->value.value;
+        game_status.camera_mode = command->value.value;
     }
     command->active = 0;
 }
 
-/* Command 141: while the script places the camera, sets how it looks at a point (GameStatus.unk04,
+/* Command 141: while the script places the camera, sets how it looks at a point (GameStatus.camera_look_mode,
    `object_id` 0 or 1) and the point (`from`), then finishes. */
 void ScriptCmd_SetCameraLookAt(ScriptPointCommand *command) {
-    if (game_status.unk03) {
+    if (game_status.camera_mode) {
         if (command->object_id.value >= 0) {
             if (command->object_id.value < 2) {
-                game_status.unk04 = command->object_id.value;
-                D_004325A0.unk20[0] = command->from_x.value;
-                D_004325A0.unk20[1] = command->from_y.value;
-                D_004325A0.unk20[2] = command->from_z.value;
+                game_status.camera_look_mode = command->object_id.value;
+                D_004325A0.look_at_point[0] = command->from_x.value;
+                D_004325A0.look_at_point[1] = command->from_y.value;
+                D_004325A0.look_at_point[2] = command->from_z.value;
             }
         }
     }
@@ -782,7 +782,7 @@ void ScriptCmd_SetCameraLookAt(ScriptPointCommand *command) {
 /* Command 142: while the script places the camera, eases it toward the position x, y, z over `frames`
    frames. */
 void ScriptCmd_MoveCameraTo(ScriptTripleCommand *command) {
-    if (game_status.unk03 != 0 &&
+    if (game_status.camera_mode != 0 &&
         (command->x.value != D_004325A0.position[0] || command->y.value != D_004325A0.position[1] ||
          command->z.value != D_004325A0.position[2])) {
         int frames = command->frames.value;
@@ -808,14 +808,14 @@ void ScriptCmd_MoveCameraTo(ScriptTripleCommand *command) {
 /* Command 143: while the script places the camera, turns it toward the rotation x, y, z over `frames`
    frames. */
 void ScriptCmd_TurnCameraTo(ScriptTripleCommand *command) {
-    if (game_status.unk03 == 0 ||
-        (command->x.value == D_004325A0.unk10 && command->y.value == D_004325A0.unk14 &&
-         command->z.value == D_004325A0.unk18)) {
+    if (game_status.camera_mode == 0 ||
+        (command->x.value == D_004325A0.pitch && command->y.value == D_004325A0.yaw &&
+         command->z.value == D_004325A0.roll)) {
         command->active = 0;
     } else {
-        Angle_EaseToward(command->x.value, &D_004325A0.unk10, command->frames.value);
-        Angle_EaseToward(command->y.value, &D_004325A0.unk14, command->frames.value);
-        Angle_EaseToward(command->z.value, &D_004325A0.unk18, command->frames.value);
+        Angle_EaseToward(command->x.value, &D_004325A0.pitch, command->frames.value);
+        Angle_EaseToward(command->y.value, &D_004325A0.yaw, command->frames.value);
+        Angle_EaseToward(command->z.value, &D_004325A0.roll, command->frames.value);
         if (--command->frames.value == 0) {
             command->active = 0;
         }
@@ -826,8 +826,8 @@ void ScriptCmd_TurnCameraTo(ScriptTripleCommand *command) {
 void ScriptCmd_ShakeCamera(ScriptCameraShakeCommand *command) {
     CameraState *camera = &D_004325A0;
 
-    camera->unk74 = command->frames.value;
-    camera->unk70 = command->reach.value;
+    camera->script_shake_frames = command->frames.value;
+    camera->script_shake_reach = command->reach.value;
     command->active = 0;
 }
 
@@ -874,16 +874,16 @@ void ScriptCmd_CommitMapLoad(ScriptThreadCommand *command) {
 }
 
 /* Command 150: makes the prop `target_id` solid (`first` nonzero) or lets everything pass through it
-   (bit 30 of MapRecordBounds.unk3C), then finishes. */
+   (bit 30 of MapRecordBounds.record_flags), then finishes. */
 void ScriptCmd_SetPropSolid(ScriptCallCommand *command) {
     MapRecordBounds *prop;
 
     prop = Map_GetRecordById(D_00446770, command->target_id.value);
     if (prop != NULL) {
         if (command->first.value != 0) {
-            prop->unk3C &= ~0x40000000;
+            prop->record_flags &= ~0x40000000;
         } else {
-            prop->unk3C |= 0x40000000;
+            prop->record_flags |= 0x40000000;
         }
     }
     command->active = 0;
@@ -1040,7 +1040,7 @@ void ScriptCmd_SetMapFog(ScriptFogCommand *command) {
     if (block_index < 0x20) {
         span = far - near;
         // match: the block's offset is added to the address as a number
-        block = (MapSlotUnk0CValues *)((block_index << 5) + (u32)slot->unk0C);
+        block = (MapSlotUnk0CValues *)((block_index << 5) + (u32)slot->fog_blocks);
         block->unk10 = (s64)((blue << 16) + (green << 8) + red);
         block->unk00 = block->unk04 = 0.0f;
         block->unk0C = far * near * (far_value - near_value) / span;
@@ -1058,7 +1058,7 @@ void ScriptCmd_SetMapLight(ScriptLightCommand *command) {
 
     if ((u32)command->block.value < 0x20 && command->light.value >= 0 && command->light.value < 3) {
         // match: the block's offset is added to the address as a number; indexing the blocks swaps two registers
-        lights = (MapSlotUnk10Lights *)(command->block.value * sizeof(MapSlotUnk10Lights) + (u32)slot->unk10);
+        lights = (MapSlotUnk10Lights *)(command->block.value * sizeof(MapSlotUnk10Lights) + (u32)slot->light_blocks);
         lights->directions[0][command->light.value] = command->dir_x.value;
         lights->directions[1][command->light.value] = command->dir_y.value;
         lights->directions[2][command->light.value] = command->dir_z.value;
@@ -1080,7 +1080,7 @@ void ScriptCmd_SetMapAmbientLight(ScriptColorCommand *command) {
     block_index = command->block.value;
     if (block_index < 0x20) {
         // match: the block's offset is added to the address as a number
-        lights = (MapSlotUnk10Lights *)((block_index << 7) + (u32)slot->unk10);
+        lights = (MapSlotUnk10Lights *)((block_index << 7) + (u32)slot->light_blocks);
         lights->colors[3].x = (f32)command->red.value / 255.0f;
         lights->colors[3].y = (f32)command->green.value / 255.0f;
         lights->colors[3].z = (f32)command->blue.value / 255.0f;
@@ -1203,7 +1203,7 @@ void ScriptCmd_OpenTrade(ScriptValueCommand *command) {
         status->bit3 = TRUE;
         value = command->value.value;
         waiting_for_trade = 1;
-        status->unk2C = value;
+        status->trade_screen_id = value;
         return;
     }
     if (!game_status.bit3) {
@@ -1300,10 +1300,10 @@ void ScriptCmd_ReloadArmModels(ScriptWaitCommand *command) {
     }
 }
 
-/* Command 196: sets whether the HUD is drawn (MapDrawStateOverlays.unk68, which Hud_Draw tests before it
+/* Command 196: sets whether the HUD is drawn (MapDrawStateOverlays.hud_shown, which Hud_Draw tests before it
    draws anything), then finishes. */
 void ScriptCmd_SetHudShown(ScriptValueCommand *command) {
-    map_draw_state.unk68 = command->value.value;
+    map_draw_state.hud_shown = command->value.value;
     command->active = 0;
 }
 
@@ -1312,19 +1312,19 @@ void ScriptCmd_SetHudShown(ScriptValueCommand *command) {
 void ScriptCmd_SetScreenColor(ScriptScreenColorCommand *command) {
     MapDrawStateOverlays *overlays = &map_draw_state;
 
-    overlays->unk6C = command->red.value;
-    overlays->unk70 = command->green.value;
-    overlays->unk74 = command->blue.value;
-    overlays->unk78 = command->alpha.value;
+    overlays->screen_fill_red = command->red.value;
+    overlays->screen_fill_green = command->green.value;
+    overlays->screen_fill_blue = command->blue.value;
+    overlays->screen_fill_alpha = command->alpha.value;
     switch (command->blend.value) {
     case 0:
-        overlays->unk80 = 0x44;
+        overlays->screen_fill_blend = 0x44;
     case 1: // match: no break in any case, so the blend mode always ends as 0x44
-        map_draw_state.unk80 = 0x48;
+        map_draw_state.screen_fill_blend = 0x48;
     case 2:
-        map_draw_state.unk80 = 0x42;
+        map_draw_state.screen_fill_blend = 0x42;
     default:
-        map_draw_state.unk80 = 0x44;
+        map_draw_state.screen_fill_blend = 0x44;
     }
     command->active = 0;
 }
