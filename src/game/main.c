@@ -1,11 +1,11 @@
-#include "kf_game.h"
-#include "kf_hud.h"
-#include "kf_item_effect.h"
-#include "kf_player.h"
-#include "kf_message.h"
-#include "kf_title.h"
-#include "kf_menu_screens.h"
-#include "kf_timer.h"
+#include "core/game.h"
+#include "ui/hud.h"
+#include "effect/item_effect.h"
+#include "player/player.h"
+#include "ui/message.h"
+#include "ui/title.h"
+#include "ui/menu_screens.h"
+#include "core/timer.h"
 
 extern GameStatus game_status;
 extern PlayerState player_state;

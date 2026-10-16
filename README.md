@@ -71,6 +71,32 @@ config/    splat yaml template, symbol_addrs.txt, linker-script template,
 include/   macro.inc (splat asm macros for ee-as 2.9)
 src/       C sources as they are decompiled (src/game/, and src/sce/ for
            the libraries)
+src/game/  the game, a folder per subsystem; headers are included by
+           their path under src/game ("entity/entity.h"):
+             core/        start-up, main loop, game state, memory, files,
+                          timers, ini settings
+             debug/       debug tools, text log, host0 dumps
+             math/        angles, vectors, VU0 helpers, shared matrices
+             gfx/         GS packets and drawing, textures, screen effects,
+                          movies
+             model/       models, motions, model matrices, linked points
+             map/         map loading, changing, set-up, drawing state
+             map_object/  map objects (doors, chests, switches ...) and
+                          their tables
+             collision/   collision tests and the map's collision meshes
+             script/      the map script interpreter and its commands
+             entity/      entity pools, the shared AI, entity events, NPCs
+             enemy/       one file per monster
+             effect/      effects, effect kinds, shots, item effects
+             player/      the player: update, status, items, attacks
+             item/        item tables, items lying on maps, gold
+             input/       pads and buttons
+             sound/       the sound driver and the game's sound layer
+             ui/          menus, HUD, messages, title, trade screens,
+                          map viewer
+             save/        memory card and save files
+           main.c, common.h and the not-yet-named func_*.c files sit
+           at the top
 tools/     setup, extraction, carve, split, build generation, matching and
            check scripts
 docs/      roadmap and notes

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Flag game C that breaks the readability rules (CONTRIBUTING.md, "Readable C").
 
-    tools/lint_readability.py                  summary over src/game/*.c
+    tools/lint_readability.py                  summary over the .c files under src/game
     tools/lint_readability.py FILE...          every finding in FILE(s)
     tools/lint_readability.py --changed [REF]  findings in src/game files added since REF
                                                (default origin/main), and on the lines
@@ -19,7 +19,7 @@ Rules:
   offset-cast     raw offset access like *(int *)((char *)p + 0x10)
   hw-define       a local #define for an EE register; use eeregs.h (GIF_STAT, D1_CHCR...)
   compound-assign x = x + y instead of x += y
-  missing-common  no #include "common.h" (directly or via a kf_*.h header)
+  missing-common  no #include "common.h" (directly or via a game header)
   proto-conflict  a function declared differently from its definition, or from
                   the most common declaration when it is still asm
   pasted-types    decomp.me's typedef block or #define NULL
@@ -43,6 +43,12 @@ from collections import Counter, defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 GAME = os.path.join(ROOT, "src", "game")
+
+
+def game_files(*suffixes):
+    """The paths of the files under src/game (all its folders) ending in one of SUFFIXES."""
+    return sorted(os.path.join(root, name) for root, _, names in os.walk(GAME)
+                  for name in names if name.endswith(suffixes))
 
 TYPE = r"(?:const\s+|volatile\s+)*(?:void|char|int|float|double|[usf](?:8|16|32|64)|[A-Z]\w*)\b\s*\**"
 NAME_RULES = {"m2c-name", "short-name", "hex-name", "match-artifact", "generic-type"}  # reported once per name per file
@@ -80,7 +86,7 @@ INLINE_ADDRESS = re.compile(r"\(\s*(?:const\s+|volatile\s+)*[\w ]+?\s*\*+\s*\)\s
 SCALAR_SPELLING = {"s32": "int", "signed int": "int", "unsigned int": "u32", "unsigned": "u32", "float": "f32",
                    "char": "s8", "signed char": "s8", "unsigned char": "u8", "short": "s16",
                    "unsigned short": "u16", "double": "f64"}
-INCLUDE = re.compile(r'^#include\s+"([\w.]+)"', re.M)
+INCLUDE = re.compile(r'^#include\s+"([\w./]+)"', re.M)
 MATCH_NOTE = re.compile(r"(?://|/\*)\s*match:")
 COMMENTS_AND_STRINGS = re.compile(r"//[^\n]*|/\*.*?\*/|\"(?:\\.|[^\"\\\n])*\"|'(?:\\.|[^'\\\n])*'", re.S)
 
@@ -160,11 +166,10 @@ def signature_index():
     global _signature_index
     if _signature_index is None:
         definitions, declarations, spelling = defaultdict(Counter), defaultdict(Counter), {}
-        for file_name in os.listdir(GAME):
-            if file_name.endswith((".c", ".h")):
-                for _, name, signature, form, is_definition in prototypes(read_code(os.path.join(GAME, file_name))[1]):
-                    (definitions if is_definition else declarations)[name][form] += 1
-                    spelling.setdefault((name, form), signature)
+        for path in game_files(".c", ".h"):
+            for _, name, signature, form, is_definition in prototypes(read_code(path)[1]):
+                (definitions if is_definition else declarations)[name][form] += 1
+                spelling.setdefault((name, form), signature)
         _signature_index = {}
         for name, counts in declarations.items():
             if name in definitions:
@@ -237,13 +242,12 @@ def data_index():
     global _data_index
     if _data_index is None:
         definitions, declarations = defaultdict(Counter), defaultdict(Counter)
-        for file_name in os.listdir(GAME):
-            if file_name.endswith((".c", ".h")):
-                for _, storage, name, form in global_variables(read_code(os.path.join(GAME, file_name))[1]):
-                    if storage == "extern":
-                        declarations[name][form] += 1
-                    elif not storage:
-                        definitions[name][form] += 1
+        for path in game_files(".c", ".h"):
+            for _, storage, name, form in global_variables(read_code(path)[1]):
+                if storage == "extern":
+                    declarations[name][form] += 1
+                elif not storage:
+                    definitions[name][form] += 1
         _data_index = {}
         for name, counts in declarations.items():
             if name in definitions:
@@ -257,9 +261,9 @@ def data_index():
 def common_headers():
     """Game headers that include common.h, so including them is as good."""
     headers = {"common.h"}
-    for file_name in os.listdir(GAME):
-        if file_name.endswith(".h") and '"common.h"' in open(os.path.join(GAME, file_name), encoding="utf-8").read():
-            headers.add(file_name)
+    for path in game_files(".h"):
+        if '"common.h"' in open(path, encoding="utf-8").read():
+            headers.add(os.path.relpath(path, GAME).replace(os.sep, "/"))
     return headers
 
 
@@ -328,11 +332,14 @@ def changed_files(ref):
     """path -> lines to check: None for a new file (all of it), else the lines changed since REF."""
     base = git("merge-base", ref, "HEAD").strip()
     game = ["--", "src/game/*.c", "src/game/*.h"]
-    files = {name: None for name in git("diff", "--name-only", "--diff-filter=AR", base, *game).split()}
+    files = {name: None for name in git("diff", "--name-only", "--diff-filter=A", "-M", base, *game).split()}
     files.update({name: None for name in git("ls-files", "--others", "--exclude-standard", "src/game").split()})
-    for name in git("diff", "--name-only", "--diff-filter=M", base, *game).split():
+    # a moved file is checked on the lines that changed in the move, like a modified one
+    for line in git("diff", "--name-status", "--diff-filter=MR", "-M", base, *game).splitlines():
+        old_name, name = line.split("\t")[1], line.split("\t")[-1]
         files[name] = set()
-        for start, count in re.findall(r"^@@ -\S+ \+(\d+)(?:,(\d+))? @@", git("diff", "-U0", base, "--", name), re.M):
+        diff = git("diff", "-U0", "-M", base, "--", old_name, name)
+        for start, count in re.findall(r"^@@ -\S+ \+(\d+)(?:,(\d+))? @@", diff, re.M):
             files[name].update(range(int(start), int(start) + int(count or 1)))
     return {os.path.join(ROOT, name): lines for name, lines in sorted(files.items()) if name.endswith((".c", ".h"))}
 
@@ -354,7 +361,7 @@ def report(paths):
 
 
 def summary():
-    paths = sorted(os.path.join(GAME, name) for name in os.listdir(GAME) if name.endswith(".c"))
+    paths = game_files(".c")
     files_per_rule, clean_files, total_lines, clean_lines = Counter(), 0, 0, 0
     for path in paths:
         lines = open(path, encoding="utf-8", errors="replace").read().count("\n")

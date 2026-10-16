@@ -27,7 +27,7 @@ are the game's content, not ours.
 
 ## The archive: `DATA/KF4.DAT`
 
-One file holds all the game's data. The game opens files in it by name (`kf_file.c`).
+One file holds all the game's data. The game opens files in it by name (`core/file.c`).
 
 | offset | size | |
 | --- | --- | --- |
@@ -71,7 +71,7 @@ Text is stored as 16-bit little-endian codes, not as ASCII and not as images.
 | `0x00xx`–`0x04xx` | glyph numbers of the Japanese font; a few untranslated strings still use them |
 | other | control codes inside a message |
 
-`Message_Format` and `Message_DrawGlyphs` in `kf_message.c` are the code that reads it.
+`Message_Format` and `Message_DrawGlyphs` in `ui/message.c` are the code that reads it.
 
 ## `font.txc`: every message
 
@@ -130,7 +130,7 @@ its values).
 
 ## `chr/cNNNN.chr`: models
 
-A `chr.prm` record names its model in its first 16 bits: `kf_entity_pool.c` loads
+A `chr.prm` record names its model in its first 16 bits: `entity/entity_pool.c` loads
 `chr/c%4.4d.chr` with that number. Most records use the file of their own number; variants share
 another's (records 19 and 152, both Beetles, use `c0011`; the Widda, record 160, uses `c0044`), and
 some scripted records borrow a character's model (record 169 uses Harmurah's, record 170 the Earth
@@ -158,7 +158,7 @@ the GS's usual swap of colour table entries 8–15 and 16–23 in every 32).
 
 ## `ini/NNNN.ini`: debug presets
 
-Text files (Shift-JIS, comments in Japanese) that set up a game for testing. `kf_ini.c` reads them.
+Text files (Shift-JIS, comments in Japanese) that set up a game for testing. `core/ini.c` reads them.
 Most are titled with the area they start in and who they belong to. Their keys name the player state
 they set:
 
@@ -180,7 +180,7 @@ by tracing the code or by matching records against what players have measured:
 | offset | size | |
 | --- | --- | --- |
 | 0x00 | 2 | model: the number of its `chr/cNNNN.chr` file, 0xFFFF none |
-| 0x02 | 1 | entity type: the index into `D_003E6E40`, `entity->params->unk02`, and so which `kf_enemy_*.c` drives it |
+| 0x02 | 1 | entity type: the index into `D_003E6E40`, `entity->params->unk02`, and so which `enemy/*.c` drives it |
 | 0x0A | 2 | hit points (`Entity_ResetToSpawn` loads `Entity.unk2C` from it) |
 | 0x0E | 2 | experience given on death (`Player_AddExperience`) |
 | 0xD4–0xE4 | 2 each | signed resistance per attack kind: slash, hit, stab, fire, earth, wind, water, light, dark; below 0 is a weakness |
@@ -204,15 +204,15 @@ The game names no monsters anywhere in its data. The community's creature list a
 <https://www.cleanhit.wiki/KF4:Creatures> gives hit points, experience, weaknesses, resistances and
 drops for 91 creatures. Matching those against the spawned `chr.prm` records places all 91: 74 by hit
 points and experience alone, the rest by resistances and drops. That is where the names of the
-`kf_enemy_*.c` files come from; each file's comment lists its creatures. Six of the wiki's experience
+`enemy/*.c` files come from; each file's comment lists its creatures. Six of the wiki's experience
 values differ from the game's (the game's are in the records). Thirteen spawned records match no
 creature on the list, mostly scripted things with no experience or 65,535 hit points.
 
 The wiki's table is the bestiary of Prima's official strategy guide (2004): its names and numbers are
 the guide's. Three of the six differing experience values are the guide's own errors (Lava Face,
 Dark Succubus, Greater Demon: a factor of ten each) and three are errors in copying it. The guide also
-names one creature the wiki lacks: the Ancient King, record 57 (`kf_enemy_ancient_king.c`), whose
-description matches the record's resistances and its code. The last boss, record 99 (`kf_enemy_dark_one.c`), is the
+names one creature the wiki lacks: the Ancient King, record 57 (`enemy/ancient_king.c`), whose
+description matches the record's resistances and its code. The last boss, record 99 (`enemy/dark_one.c`), is the
 Dark One of the game's own text; the guide's account of the fight is the code's.
 Three more types are props of the King's Throne maps, placed by the guide's walkthrough and their
 models: the eye pedestals (type 31, record 91), the bell (type 38, record 60) and the skeleton with a

@@ -24,7 +24,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lint_readability import GAME, ROOT, read_code  # noqa: E402
+from lint_readability import GAME, ROOT, game_files as game_paths, read_code  # noqa: E402
 
 SYMBOL_ADDRS = os.path.join(ROOT, "config", "symbol_addrs.txt")
 SYMBOL = re.compile(r"^\s*(\w+)\s*=\s*0x([0-9A-Fa-f]+)\s*;(.*)$")
@@ -48,7 +48,7 @@ def symbols():
 
 
 def game_files():
-    return sorted(os.path.join(GAME, name) for name in os.listdir(GAME) if name.endswith((".c", ".h")))
+    return game_paths(".c", ".h")
 
 
 def line_of(code, offset):

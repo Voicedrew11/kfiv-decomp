@@ -49,15 +49,15 @@
  *    ee-gcc 2.96 already differs at the start of the function.
  *
  * The struct views below are local because the file is not part of the build; when the function matches they belong
- * in kf_map.h (MapLightBlock = MapSlotUnk10Words as two 4x4 float matrices, 8-aligned so that copies use ld/sd;
+ * in map/map.h (MapLightBlock = MapSlotUnk10Words as two 4x4 float matrices, 8-aligned so that copies use ld/sd;
  * MapDrawStateBlend = D_0038A1B0 as this function sees it; MapHeader gains fog_colors[4][4] at 0x50 and the f32 draw
  * distance at 0x7C; MapRecordBits gains bit 26, "in view").
  */
-#include "kf_map.h"
-#include "kf_entity.h"
-#include "kf_player.h"
-#include "kf_game.h"
-#include "kf_collision.h"
+#include "map/map.h"
+#include "entity/entity.h"
+#include "player/player.h"
+#include "core/game.h"
+#include "collision/collision.h"
 
 typedef struct {
     f32 unk00[4][4];

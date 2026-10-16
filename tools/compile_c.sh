@@ -66,6 +66,8 @@ esac
 
 INCS="-I${ROOT}/include"
 for d in "${ROOT}"/src/sce/*/; do [ -d "$d" ] && INCS="${INCS} -I${d%/}"; done
+# game headers are included by their path under src/game ("entity/entity.h")
+case "${SRC}" in src/sce/*) ;; *) INCS="${INCS} -I${ROOT}/src/game" ;; esac
 
 mkdir -p "$(dirname "${OUT}")"
 case "${SRC}" in

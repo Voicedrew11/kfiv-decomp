@@ -3,7 +3,7 @@
 
     tools/readability_scan.py [-o build/readability.json] [-v]
 
-Struct layouts: compiles every src/game/*.c with -g and reads each struct and
+Struct layouts: compiles every .c under src/game with -g and reads each struct and
 union defined in src/game/ from ee-gcc's stabs, which give every field's exact
 bit offset and size. A field is unknown while it is still named unkXX or
 padXX; a struct is recovered once no field is. A field whose type is another
@@ -47,7 +47,7 @@ STABS = re.compile(r'^\s*\.stabs\s+"((?:[^"\\]|\\.)*)"')
 def game_type_names() -> set:
     """Struct and union names (tag or typedef) defined in src/game sources."""
     names = set()
-    for path in sorted(GAME.glob("*.[ch]")):
+    for path in sorted(GAME.rglob("*.[ch]")):
         text = re.sub(r"/\*.*?\*/|//[^\n]*", "", path.read_text(errors="replace"), flags=re.S)
         names.update(re.findall(r"\b(?:struct|union)\s+(\w+)\s*\{", text))
         for head in re.finditer(r"\btypedef\s+(?:struct|union)\s*\w*\s*\{", text):
@@ -64,7 +64,7 @@ def game_type_names() -> set:
 
 def compile_stabs(src: Path, out_dir: Path) -> str:
     incs = [f"-I{ROOT / 'include'}"] + [f"-I{d}" for d in sorted((ROOT / "src" / "sce").iterdir())
-                                         if d.is_dir()]
+                                         if d.is_dir()] + [f"-I{GAME}"]
     out = out_dir / (src.stem + ".s")
     cmd = [str(ROOT / "tools" / "period_env.sh"), str(CC_DIR / "ee-gcc"),
            "-B", str(CC_DIR / "gcc-lib" / "ee" / "2.9-ee-991111-01") + "/",
@@ -274,7 +274,7 @@ def main():
     ap.add_argument("-v", "--verbose", action="store_true", help="list every struct")
     a = ap.parse_args()
 
-    sources = sorted(GAME.glob("*.c"))
+    sources = sorted(GAME.rglob("*.c"))
     rows = struct_rows(sources)
     measures = {
         "total_structs": len(rows),

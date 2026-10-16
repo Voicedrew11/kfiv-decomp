@@ -58,68 +58,68 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 001020F8 |  |  |  |
 | 00102150 |  | Starts the disc drive in DVD mode. | src comment |
 
-## KF4.DAT file layer (kf_file.c) (0x102178-0x102900)
+## KF4.DAT file layer (core/file.c) (0x102178-0x102900)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 00102178 |  | loads the KF4.DAT table of contents | kf_file.c |
+| 00102178 |  | loads the KF4.DAT table of contents | core/file.c |
 | 00102218 |  |  |  |
 | 00102228 |  |  |  |
 | 00102230 |  |  |  |
 | 00102238 |  |  |  |
 | 00102258 |  |  |  |
 | 00102278 | KF_File_Open |  | repo name |
-| 001024B0 |  | closes a file | kf_file.c |
-| 00102558 |  | closes every open file and unlocks the file layer | kf_file.c |
-| 001025C0 |  | reads from a file | kf_file.c |
-| 00102728 |  | seeks the drive to a file's next sector | kf_file.c |
-| 00102790 |  | waits for the read in flight, reissuing it while the drive reports an error | kf_file.c |
-| 00102900 |  | the size of a file | kf_file.c |
+| 001024B0 |  | closes a file | core/file.c |
+| 00102558 |  | closes every open file and unlocks the file layer | core/file.c |
+| 001025C0 |  | reads from a file | core/file.c |
+| 00102728 |  | seeks the drive to a file's next sector | core/file.c |
+| 00102790 |  | waits for the read in flight, reissuing it while the drive reports an error | core/file.c |
+| 00102900 |  | the size of a file | core/file.c |
 
 ## Game module: options, event flags, save image, screen fade and GS screen effects (0x102930-0x108020)
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 00102930 |  | sets the options to their defaults | kf_game.c |
-| 001029A8 |  | clears the state a new game starts from | kf_game.c |
-| 001030B8 |  | marks what the player has equipped as found and tidies the spell tables | kf_game.c |
-| 001034A8 |  | one of the 128 flags in D_0034C918 | kf_game.c |
+| 00102930 |  | sets the options to their defaults | core/game.c |
+| 001029A8 |  | clears the state a new game starts from | core/game.c |
+| 001030B8 |  | marks what the player has equipped as found and tidies the spell tables | core/game.c |
+| 001034A8 |  | one of the 128 flags in D_0034C918 | core/game.c |
 | 001034F8 |  |  |  |
-| 00103548 |  | the 4-bit counter of an entry on a map | kf_game.c |
-| 001035A8 |  | adds one to the 4-bit counter of an entry on a map | kf_game.c |
+| 00103548 |  | the 4-bit counter of an entry on a map | core/game.c |
+| 001035A8 |  | adds one to the 4-bit counter of an entry on a map | core/game.c |
 | 00103648 |  |  |  |
 | 00103668 |  |  |  |
 | 00103698 |  |  |  |
 | 001036B8 |  |  |  |
 | 001036C8 |  |  |  |
 | 001036E8 |  |  |  |
-| 001037F8 |  | one of the area flags, numbered from 3000 | kf_game.c |
+| 001037F8 |  | one of the area flags, numbered from 3000 | core/game.c |
 | 00103858 |  |  |  |
-| 00103990 |  | moves an area's flags to another area | kf_game.c |
-| 00103A18 |  | finds where an item was placed; returns whether it was | kf_game.c |
-| 00103AE0 |  | the item recorded for a trigger, 0 if there is none | kf_game.c |
-| 00103B38 |  | frees the record of a trigger; returns whether there was one | kf_game.c |
-| 00103BA8 |  | records an item for a trigger in the first free record; returns whether there was room | kf_game.c |
+| 00103990 |  | moves an area's flags to another area | core/game.c |
+| 00103A18 |  | finds where an item was placed; returns whether it was | core/game.c |
+| 00103AE0 |  | the item recorded for a trigger, 0 if there is none | core/game.c |
+| 00103B38 |  | frees the record of a trigger; returns whether there was one | core/game.c |
+| 00103BA8 |  | records an item for a trigger in the first free record; returns whether there was room | core/game.c |
 | 00103C18 | Save_Pack | The save writer: packs the whole game state into the save buffer D_0036A130 (SaveHeader magic 0x15400 + size, play time D_00446A28, map tag), one bit per GameDefinition for state 1, then one checksum byte per 0x80 bytes behind the data; calls func_0011CF88 first. (alt name: SaveDataWrite) | o1 |
 | 00104EC8 |  | Unpacks the save buffer D_0036A130 into the game state (the reader twin of func_00103C18). (unmatched) | f1 |
-| 001060C0 |  | checks the save image: the magic word and a byte sum per 128-byte block | kf_game.c |
-| 00106178 |  | starts a fade from a colour to the picture over some frames | kf_game.c |
-| 001061B0 |  | starts a fade from the picture to a colour over some frames | kf_game.c |
-| 001061E8 |  | counts the fade down a frame | kf_game.c |
-| 00106208 |  | draws the fade | kf_game.c |
-| 00106318 |  | loads the screen matrix and projects the haze layer distances D_0038A158 to screen depths | kf_game.c |
-| 00106520 |  | draws the D_00446744 small sprites whose screen depths are in D_0038A178 | kf_game.c |
-| 001067E0 |  | draws the D_00446744 sprites in a strip, each at a column offset from the table D_0043E460 | kf_game.c |
-| 00106980 |  | draws one sprite at the depth in D_0044673C; the pad's up and down buttons step that depth | kf_game.c |
-| 00106C58 |  | draws a column of 10 gradient sprites, with the Z buffer off for the run | kf_game.c |
-| 00106DC8 |  | draws two columns of 10 gradient sprites each, with the Z buffer off for the run | kf_game.c |
-| 00106FB8 |  | draws one sprite from the screen rectangle D_0043E480 at the given alpha | kf_game.c |
-| 00107270 |  | draws one sprite from the screen rectangle D_0043E480, textured from D_0043E490, at the given alpha | kf_game.c |
-| 00107528 |  | draws the sight marker: a 20-strip sprite whose position follows the projected target | kf_game.c |
-| 00107840 |  | draws the target marker for the nearest entity in front of the camera, if any | kf_game.c |
-| 00107CD8 |  | draws a column of 10 grey sprites at the given brightness, scrolling across the screen | kf_game.c |
-| 00107E70 |  | draws a column of 10 sprites in the given colour, scrolling across the screen | kf_game.c |
-| 00108020 |  | steps the wobbling grid (laid out afresh when D_00446740 is set) and draws its cells, blended by blend | kf_game.c |
+| 001060C0 |  | checks the save image: the magic word and a byte sum per 128-byte block | core/game.c |
+| 00106178 |  | starts a fade from a colour to the picture over some frames | core/game.c |
+| 001061B0 |  | starts a fade from the picture to a colour over some frames | core/game.c |
+| 001061E8 |  | counts the fade down a frame | core/game.c |
+| 00106208 |  | draws the fade | core/game.c |
+| 00106318 |  | loads the screen matrix and projects the haze layer distances D_0038A158 to screen depths | core/game.c |
+| 00106520 |  | draws the D_00446744 small sprites whose screen depths are in D_0038A178 | core/game.c |
+| 001067E0 |  | draws the D_00446744 sprites in a strip, each at a column offset from the table D_0043E460 | core/game.c |
+| 00106980 |  | draws one sprite at the depth in D_0044673C; the pad's up and down buttons step that depth | core/game.c |
+| 00106C58 |  | draws a column of 10 gradient sprites, with the Z buffer off for the run | core/game.c |
+| 00106DC8 |  | draws two columns of 10 gradient sprites each, with the Z buffer off for the run | core/game.c |
+| 00106FB8 |  | draws one sprite from the screen rectangle D_0043E480 at the given alpha | core/game.c |
+| 00107270 |  | draws one sprite from the screen rectangle D_0043E480, textured from D_0043E490, at the given alpha | core/game.c |
+| 00107528 |  | draws the sight marker: a 20-strip sprite whose position follows the projected target | core/game.c |
+| 00107840 |  | draws the target marker for the nearest entity in front of the camera, if any | core/game.c |
+| 00107CD8 |  | draws a column of 10 grey sprites at the given brightness, scrolling across the screen | core/game.c |
+| 00107E70 |  | draws a column of 10 sprites in the given colour, scrolling across the screen | core/game.c |
+| 00108020 |  | steps the wobbling grid (laid out afresh when D_00446740 is set) and draws its cells, blended by blend | core/game.c |
 
 ## Model motion playback (0x1086E8-0x1095D8)
 
@@ -144,13 +144,13 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 001095E0 |  | Starts filling the other packet buffer. | kf_packet_buffer.c |
-| 00109650 |  | Appends a packet (from packet to packet_end) to the chain of the buffer being filled. | kf_packet_buffer.c |
-| 001096E8 |  | Ends the chain of the buffer being filled and sends it to the GS by DMA. | kf_packet_buffer.c |
-| 00109800 |  | Waits for the GS to finish reading the last buffer sent. | kf_packet_buffer.c |
-| 00109878 |  | Lays out the packet buffers in the packet area for the given size (0 = largest). | kf_packet_buffer.c |
-| 00109990 |  | Takes quadwords from the packet buffer; once it overflows everything gets the start of the buffer. | kf_packet_buffer.c |
-| 00109A38 |  | Returns the spare area's address and size. | kf_packet_buffer.c |
+| 001095E0 |  | Starts filling the other packet buffer. | gfx/packet_buffer.c |
+| 00109650 |  | Appends a packet (from packet to packet_end) to the chain of the buffer being filled. | gfx/packet_buffer.c |
+| 001096E8 |  | Ends the chain of the buffer being filled and sends it to the GS by DMA. | gfx/packet_buffer.c |
+| 00109800 |  | Waits for the GS to finish reading the last buffer sent. | gfx/packet_buffer.c |
+| 00109878 |  | Lays out the packet buffers in the packet area for the given size (0 = largest). | gfx/packet_buffer.c |
+| 00109990 |  | Takes quadwords from the packet buffer; once it overflows everything gets the start of the buffer. | gfx/packet_buffer.c |
+| 00109A38 |  | Returns the spare area's address and size. | gfx/packet_buffer.c |
 | 00109A50 |  | Starts a list of GS register writes. | src comment |
 | 00109A80 |  | Adds a GS register write to the list. | src comment |
 | 00109AD0 |  | Ends the list of GS register writes: fills in its DMA, VIF and GIF tags and queues it. | src comment |
@@ -172,12 +172,12 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0010A7E0 |  | Queue a packet carrying one 4x4 matrix. | src comment |
 | 0010A880 |  | Scrolls a map/scene texture by its step (ScrollTexture, ScrollOffset) and redraws it into its target with a sprite. | f1 |
 | 0010AC80 |  | Copy the displayed frame into a width x height texture at `fbp`. | src comment |
-| 0010AE58 |  | Forgets every texture slot. | kf_model_textures.c |
-| 0010AE90 |  | Sets texture slot arg1 (0..3) to arg0. | kf_model_textures.c |
-| 0010AEB8 |  | Send the textures a model needs that are not the ones already loaded. | kf_model_textures.c |
-| 0010B000 |  | Forgets every model in the draw lists. | kf_draw_list.c |
-| 0010B018 |  | Put a model in the draw list bucket for its distance from the player. | kf_draw_list.c |
-| 0010B140 |  | Draws the models of one draw list, from the farthest bucket to the nearest. | kf_draw_list.c |
+| 0010AE58 |  | Forgets every texture slot. | model/model_textures.c |
+| 0010AE90 |  | Sets texture slot arg1 (0..3) to arg0. | model/model_textures.c |
+| 0010AEB8 |  | Send the textures a model needs that are not the ones already loaded. | model/model_textures.c |
+| 0010B000 |  | Forgets every model in the draw lists. | gfx/draw_list.c |
+| 0010B018 |  | Put a model in the draw list bucket for its distance from the player. | gfx/draw_list.c |
+| 0010B140 |  | Draws the models of one draw list, from the farthest bucket to the nearest. | gfx/draw_list.c |
 | 0010B238 |  | Queue every chunk of a texture table for sending. | src comment |
 | 0010B2E0 | Texture_QueueTableMasked | Queues the chunks of a texture table (TextureTableHeader) like func_0010B238, but skips chunks switched off (unk0C) or in the skip mask (first 32 only). | o1 |
 | 0010B410 |  | Queue one chunk of a texture table for sending. | src comment |
@@ -221,14 +221,14 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 001108E8 |  | Writes steps + 1 float vertices that lead from one packed vertex to another in equal steps (func_00110D60 does the same between two float vertices). | src comment |
 | 00110D60 |  | Writes steps + 1 vertices that lead from one vertex to another in equal steps (func_001108E8 does the same between two packed vertices). | src comment |
 | 00111010 |  | Gives every vertex texture coordinates taken from where it lands on the screen. Also steps a 60-frame counter and fills a sine table that nothing reads. | src comment |
-| 001112B0 |  | 0x471EE0 filled by func_001112B0 | kf_wobble.c |
-| 00111368 |  | Draws a model with its own packets: every vertex where it is, with the texture coordinates of the screen position it would have if it were moved up or down by a sine picked by its x and z (so a texture that holds the screen comes out rippled). | kf_wobble.c |
-| 00111BE0 |  | Queues a 12-quadword packet: a three-vertex primitive whose vertices all have 0x8000 at offset 0x0E, with the rest left for the caller to fill in. | kf_wobble.c |
-| 00111C78 |  | Whether any data block of the model draws with a texture numbered from first to last. | kf_wobble.c |
-| 00111D00 |  | Resets the 16 screen wobble oscillators, spreading their phases over one turn. | kf_wobble.c |
-| 00111D58 |  | Advances each of the 16 entries' phase and recomputes its sine offsets. | kf_wobble.c |
-| 00111E28 |  | Builds the model's table of wave texture coordinates at *alloc (16-byte aligned) and moves *alloc past it. Each vertex keeps its own coordinates and gets a wave picked from where it is. | kf_wobble.c |
-| 00112018 |  | Moves every vertex's texture coordinates by its wave. | kf_wobble.c |
+| 001112B0 |  | 0x471EE0 filled by func_001112B0 | gfx/wobble.c |
+| 00111368 |  | Draws a model with its own packets: every vertex where it is, with the texture coordinates of the screen position it would have if it were moved up or down by a sine picked by its x and z (so a texture that holds the screen comes out rippled). | gfx/wobble.c |
+| 00111BE0 |  | Queues a 12-quadword packet: a three-vertex primitive whose vertices all have 0x8000 at offset 0x0E, with the rest left for the caller to fill in. | gfx/wobble.c |
+| 00111C78 |  | Whether any data block of the model draws with a texture numbered from first to last. | gfx/wobble.c |
+| 00111D00 |  | Resets the 16 screen wobble oscillators, spreading their phases over one turn. | gfx/wobble.c |
+| 00111D58 |  | Advances each of the 16 entries' phase and recomputes its sine offsets. | gfx/wobble.c |
+| 00111E28 |  | Builds the model's table of wave texture coordinates at *alloc (16-byte aligned) and moves *alloc past it. Each vertex keeps its own coordinates and gets a wave picked from where it is. | gfx/wobble.c |
+| 00112018 |  | Moves every vertex's texture coordinates by its wave. | gfx/wobble.c |
 | 00112118 |  | Gives every vertex texture coordinates taken from where it lands on the screen, with each vertex shaken a little first. | src comment |
 | 001123F8 |  |  |  |
 | 00112400 | Collision_RelocateMesh | Makes a loaded collision mesh usable: stores it in model->strips, turns the eight offsets after 0x18 into pointers and, when asked, the strips' point numbers into scratchpad addresses (COLLISION_WORLD_POINTS); returns the end of the mesh. | o2 |
@@ -336,16 +336,16 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 0011A438 |  | 0x472080 the pointer model, viewer 4 only | kf_map_viewer.c |
-| 0011A500 |  | Loads the picked viewer, runs it until it is left and frees what it loaded. | kf_map_viewer.c |
+| 0011A438 |  | 0x472080 the pointer model, viewer 4 only | ui/map_viewer.c |
+| 0011A500 |  | Loads the picked viewer, runs it until it is left and frees what it loaded. | ui/map_viewer.c |
 | 0011A598 |  |  |  |
 | 0011AA08 |  |  |  |
-| 0011AAE8 |  | Draws the picked viewer's picture and the player's marker on it: a turned, pulsing arrow where the position is known, a pulsing square at a fixed spot otherwise; then the picture arrows when the viewer has more than one picture. | kf_map_viewer.c |
-| 0011B1C0 |  | Where the player's marker goes on the map viewer's picture viewer_picture: -1 for a fixed spot on the first picture, TRUE for a spot worked out from the player's position, FALSE for none. | kf_map_viewer.c |
-| 0011B4F0 |  | Where the player's marker goes on the map viewer's picture viewer_picture (0 to 2): TRUE with a spot worked out from the player's position when the current map is on that picture, FALSE when it is not. | kf_map_viewer.c |
-| 0011BAB8 |  | Map the player position to map-screen coordinates; FALSE if the area has no such map. | kf_map_viewer.c |
-| 0011BBC0 |  | Turns the player's position into a point on the map picture of maps 0x1A and 0x1B; FALSE on other maps. | kf_map_viewer.c |
-| 0011BCD0 |  | The free-camera viewer of func_0011C160's picture: runs its own frame loop, in which the pad turns the camera about the player (with 0x4000 held) or moves it, and both 0x400 and 0x800 put it back. | kf_map_viewer.c |
+| 0011AAE8 |  | Draws the picked viewer's picture and the player's marker on it: a turned, pulsing arrow where the position is known, a pulsing square at a fixed spot otherwise; then the picture arrows when the viewer has more than one picture. | ui/map_viewer.c |
+| 0011B1C0 |  | Where the player's marker goes on the map viewer's picture viewer_picture: -1 for a fixed spot on the first picture, TRUE for a spot worked out from the player's position, FALSE for none. | ui/map_viewer.c |
+| 0011B4F0 |  | Where the player's marker goes on the map viewer's picture viewer_picture (0 to 2): TRUE with a spot worked out from the player's position when the current map is on that picture, FALSE when it is not. | ui/map_viewer.c |
+| 0011BAB8 |  | Map the player position to map-screen coordinates; FALSE if the area has no such map. | ui/map_viewer.c |
+| 0011BBC0 |  | Turns the player's position into a point on the map picture of maps 0x1A and 0x1B; FALSE on other maps. | ui/map_viewer.c |
+| 0011BCD0 |  | The free-camera viewer of func_0011C160's picture: runs its own frame loop, in which the pad turns the camera about the player (with 0x4000 held) or moves it, and both 0x400 and 0x800 put it back. | ui/map_viewer.c |
 | 0011C678 |  | Whether a map object of this kind is one of the ordinary ones. | src comment |
 | 0011C6E8 |  | Empties the map objects of both maps. | src comment |
 
@@ -494,13 +494,13 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 
 | address | candidate name | what it does | source |
 |---|---|---|---|
-| 00123030 | Entity_ResetAllLists | Clear the entity pool and empty every entity list. | kf_entity_pool.c, repo name |
-| 00123108 |  | Returns TRUE while any pool block is held by a loading or unpacking job. | kf_entity_pool.c |
+| 00123030 | Entity_ResetAllLists | Clear the entity pool and empty every entity list. | entity/entity_pool.c, repo name |
+| 00123108 |  | Returns TRUE while any pool block is held by a loading or unpacking job. | entity/entity_pool.c |
 | 00123158 |  |  |  |
-| 001231C0 | Entity_FreeAllInGroup | Free every entity in the group from all three lists. | kf_entity_pool.c, repo name |
-| 00123288 |  | Per-frame entity update: runs the pool, list and despawn steps in order. | kf_entity_pool.c |
-| 00123580 | Entity_DespawnOutOfRange | Free entities that are out of range of the player. | kf_entity_pool.c, repo name |
-| 001248F8 |  | Sets the GS Z-buffer, alpha and test registers, then draws the model. | kf_entity_pool.c |
+| 001231C0 | Entity_FreeAllInGroup | Free every entity in the group from all three lists. | entity/entity_pool.c, repo name |
+| 00123288 |  | Per-frame entity update: runs the pool, list and despawn steps in order. | entity/entity_pool.c |
+| 00123580 | Entity_DespawnOutOfRange | Free entities that are out of range of the player. | entity/entity_pool.c, repo name |
+| 001248F8 |  | Sets the GS Z-buffer, alpha and test registers, then draws the model. | entity/entity_pool.c |
 | 00124DE0 |  | Horizontal distance from the entity's spawn point to the player. | src comment |
 | 00124E48 |  | Default init of an entity: clears the work area, sets flags 22-28 and the model of its kind. | src comment |
 | 00124EF0 |  |  |  |
@@ -561,7 +561,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0012A778 |  |  |  |
 | 0012A8E0 |  |  |  |
 | 0012AA48 |  |  |  |
-| 0012ACA0 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind12ACA0 | kf_entity.h |
+| 0012ACA0 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind12ACA0 | entity/entity.h |
 | 0012AE98 |  |  |  |
 | 0012B040 | Enemy_BendNeck | Bends the five neck joints (model parts 30-34, angles in EntityUnkE0Kind12ACA0.unk40[2..6]): facing the target (within 0.0001 rad) the first joint returns to 0 and each other follows the joint before it within params->turn_limit; otherwise unk1C is added to the first joint and what exceeds 15 degrees carries to the next. | o3 |
 | 0012B338 |  |  |  |
@@ -615,7 +615,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00130EF8 |  |  |  |
 | 00131128 |  |  |  |
 | 001311C8 |  |  |  |
-| 00131390 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind131390 | kf_entity.h |
+| 00131390 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind131390 | entity/entity.h |
 | 00131630 |  |  |  |
 | 001317D0 |  |  |  |
 | 001319B8 |  |  |  |
@@ -874,7 +874,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00150200 |  |  |  |
 | 001503A8 |  |  |  |
 | 00150478 |  |  |  |
-| 00150588 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind150588 | kf_entity.h |
+| 00150588 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind150588 | entity/entity.h |
 | 00150768 |  |  |  |
 | 00150818 |  |  |  |
 | 00150A98 |  |  |  |
@@ -885,7 +885,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 001515A8 |  |  |  |
 | 00151910 |  |  |  |
 | 00151B60 |  |  |  |
-| 00151D30 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind151D30 | kf_entity.h |
+| 00151D30 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind151D30 | entity/entity.h |
 | 00151F90 |  |  |  |
 | 00152158 |  |  |  |
 | 001523D0 |  |  |  |
@@ -981,7 +981,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0015F408 |  |  |  |
 | 0015F530 |  |  |  |
 | 0015F5E8 |  |  |  |
-| 0015F8C0 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind15F8C0 | kf_entity.h |
+| 0015F8C0 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind15F8C0 | entity/entity.h |
 | 0015FAC8 |  |  |  |
 | 0015FB98 |  |  |  |
 | 0015FD38 |  |  |  |
@@ -1002,7 +1002,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00162898 |  |  |  |
 | 00162A48 |  |  |  |
 | 00162B48 |  | Counts the first six objects whose flags low nibble is 3, then stores (count + 2) / 3. | src comment |
-| 00162BC8 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind162BC8 | kf_entity.h |
+| 00162BC8 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind162BC8 | entity/entity.h |
 | 00162DC0 |  |  |  |
 | 00162E38 |  |  |  |
 | 00163310 |  |  |  |
@@ -1041,10 +1041,10 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00167F08 |  |  |  |
 | 00168000 |  |  |  |
 | 00168130 |  |  |  |
-| 00168160 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind168160 | kf_entity.h |
+| 00168160 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind168160 | entity/entity.h |
 | 00168368 |  |  |  |
 | 00168C10 |  |  |  |
-| 00169918 |  | When the state field in flags is 2, resets the entity and registers func_00169990; then sets state 2. | kf_entity_ai.c |
+| 00169918 |  | When the state field in flags is 2, resets the entity and registers func_00169990; then sets state 2. | entity/entity_ai.c |
 | 0016A450 |  |  |  |
 | 0016A530 |  |  |  |
 | 0016A788 |  |  |  |
@@ -1059,7 +1059,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0016B560 |  |  |  |
 | 0016B920 |  |  |  |
 | 0016BC28 |  |  |  |
-| 0016BF98 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind16BF98 | kf_entity.h |
+| 0016BF98 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind16BF98 | entity/entity.h |
 | 0016C138 |  |  |  |
 | 0016C1E0 |  |  |  |
 | 0016C3A0 |  |  |  |
@@ -1097,7 +1097,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 001712B8 |  |  |  |
 | 00171558 |  |  |  |
 | 00171808 |  |  |  |
-| 001719F8 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind1719F8 | kf_entity.h |
+| 001719F8 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind1719F8 | entity/entity.h |
 | 00171C48 |  |  |  |
 | 00171E30 |  |  |  |
 | 00172320 |  |  |  |
@@ -1112,7 +1112,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00173D38 |  |  |  |
 | 00173E08 |  |  |  |
 | 00173E98 |  |  |  |
-| 001740A8 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind1740A8 | kf_entity.h |
+| 001740A8 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind1740A8 | entity/entity.h |
 | 001742E0 |  |  |  |
 | 00174530 |  |  |  |
 | 001747F8 |  |  |  |
@@ -1150,7 +1150,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 00177AD0 |  |  |  |
 | 00177D90 |  |  |  |
 | 00178108 |  |  |  |
-| 00178358 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind178358 | kf_entity.h |
+| 00178358 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind178358 | entity/entity.h |
 | 001785D8 |  |  |  |
 | 00178698 |  |  |  |
 | 001787E0 |  |  |  |
@@ -1211,7 +1211,7 @@ Compiled from the working reports the matching agents wrote for #40 and its left
 | 0017F5A8 |  |  |  |
 | 0017F790 |  |  |  |
 | 0017F998 |  |  |  |
-| 0017FC60 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind17FC60 | kf_entity.h |
+| 0017FC60 |  | Init of an enemy kind; its Entity+0xE0 work area is EntityUnkE0Kind17FC60 | entity/entity.h |
 | 0017FFC0 |  |  |  |
 
 ## Shared enemy code: per-frame update and default handlers (0x180170-0x185460)

@@ -10,7 +10,7 @@ from assembly to matching C.
   extracted files. `.gitignore` covers them; keep it that way.
 - A pull request must build: `./build.sh` ends with
   `build/kfiv.rom: OK (matches retail)`.
-- Commit only the sources you wrote (`src/game/*.c`), plus
+- Commit only the sources you wrote (`.c` files under `src/game/`), plus
   `config/symbol_addrs.txt` if you give something a real name. Everything
   else the build regenerates; don't commit `docs/progress/` either, the
   maintainers refresh it.
@@ -139,7 +139,7 @@ programmer would have, not the way m2c printed it:
 
 - `#include "common.h"` (or a `kf_*.h` header that includes it) for `u8`,
   `s32`, `NULL` and friends. Delete the typedef block decomp.me pastes in.
-- Use the shared structs in `src/game/*.h` (e.g. `Entity` in `kf_entity.h`)
+- Use the shared structs in the headers under `src/game/` (e.g. `Entity` in `entity/entity.h`)
   instead of a local struct or raw casts like `*(int *)(p + 0x10)`. If you
   find a new field, add it to the header (`unkXX` until you know what it is).
 - Struct-shaped data is a struct, not an array: not `extern u8 D_00413F80[]`
@@ -154,7 +154,7 @@ programmer would have, not the way m2c printed it:
   variables and fields `snake_case`, types `PascalCase`, constants and
   macros `UPPER_CASE`.
 - Write `NULL` for pointers, `TRUE`/`FALSE` for flags, and name magic
-  numbers (`ENTITY_DESPAWN_MARGIN`, `GS_REG_ZBUF_1` from `kf_gs.h`), flag
+  numbers (`ENTITY_DESPAWN_MARGIN`, `GS_REG_ZBUF_1` from `gfx/gs.h`), flag
   bits included: `ENTITY_FLAG_40000` beats a bare `0x40000`. Macros like
   `ABS()` expand to the same code, so they still match.
 - EE registers come from `eeregs.h` (`*D1_CHCR`, `*GIF_STAT`), not a local
@@ -165,7 +165,7 @@ programmer would have, not the way m2c printed it:
 - Idiomatic C: `x += y` not `x = x + y`, `if (a && b)` not nested ifs. gcc
   2.9 almost always emits the same code.
 - A function is declared the same way everywhere, matching its definition:
-  module prototypes go in the module header (`kf_entity.h`), and a function
+  module prototypes go in the module header (`entity/entity.h`), and a function
   that is still asm keeps the signature other files already use. If a match
   needs a different one, the others are wrong; fix them too.
 - Code that is odd only to match (`new_var`, a pointless cast, a union for a
@@ -175,7 +175,7 @@ programmer would have, not the way m2c printed it:
   on trivial code.
 
 `Entity_DespawnOutOfRange` in
-[`kf_entity_pool.c`](src/game/kf_entity_pool.c) is the style to aim for.
+[`entity/entity_pool.c`](src/game/entity/entity_pool.c) is the style to aim for.
 
 `tools/lint_readability.py --changed` must pass (CI runs it): files your
 PR adds must be clean, and so must the lines it changes in other files. A

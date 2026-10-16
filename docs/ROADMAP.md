@@ -145,7 +145,7 @@ coarsening of it, to be chosen as the code is understood.
 cover whole runs. The current one-function units in `src/game/` mostly sit
 inside runs, which is fine while their data stays in the asm data units.
 `.sbss` is carved like `.bss`, so a merged unit can define its small statics
-in C; `src/game/kf_entity_pool.c` (0x123030–0x124DE0) is the first.
+in C; `src/game/entity/entity_pool.c` (0x123030–0x124DE0) is the first.
 
 ### 4. Match the game functions (started)
 
@@ -172,7 +172,7 @@ in C; `src/game/kf_entity_pool.c` (0x123030–0x124DE0) is the first.
 
 ### 5. Readability (started)
 
-Done: `common.h`, `kf_entity.h`, `kf_gs.h`, the vector helpers named, and
+Done: `common.h`, `entity/entity.h`, `gfx/gs.h`, the vector helpers named, and
 the rules in `CONTRIBUTING.md`. Still to do, all without breaking the match:
 
 - **Name the globals** (`D_004467E0` → `g_entity_list`). Every file that
@@ -205,9 +205,9 @@ the rules in `CONTRIBUTING.md`. Still to do, all without breaking the match:
   in one sweep that conflicts with open PRs.
 - **Real modules.** Merge `func_*.c` files into translation units as
   regions finish (step 3), moving their data out of asm into C. Started:
-  the entity pool (`kf_entity_pool.c`) and the six other fully-C runs
-  (`kf_packet_buffer.c`, `kf_model_textures.c`, `kf_draw_list.c`,
-  `kf_wobble.c`, `kf_map_viewer.c`, `kf_entity_ai.c`).
+  the entity pool (`entity/entity_pool.c`) and the six other fully-C runs
+  (`gfx/packet_buffer.c`, `model/model_textures.c`, `gfx/draw_list.c`,
+  `gfx/wobble.c`, `ui/map_viewer.c`, `entity/entity_ai.c`).
 
 ### 6. Whole-ELF match (later)
 

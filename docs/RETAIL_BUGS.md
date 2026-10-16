@@ -436,7 +436,7 @@ returns is marked with `// match:`.
 
 ## `Message_DrawGlyphs` fills its table of glyph alphas a byte at a time
 
-`glyph_alphas` (`kf_message.c`) holds one `int` of alpha per glyph of a
+`glyph_alphas` (`ui/message.c`) holds one `int` of alpha per glyph of a
 message, 0x200 of them. The typing branch of `Message_DrawGlyphs` writes it
 as ints (`glyph_alphas[i] = 0x80`), and the draw loop reads it as ints. The
 notice branch and the box's closing branch fill it with
