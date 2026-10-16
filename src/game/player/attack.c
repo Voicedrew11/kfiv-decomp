@@ -155,7 +155,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             count = map_object_counts[index];
             object = map_slot_objects[index];
             for (item = 0; item < count; item++, object++) {
-                if (!(object->state_flags & 0x10000)) {
+                if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                     continue;
                 }
                 if ((request->target_mask & 0x80) && request->owner == (Entity *)object) {

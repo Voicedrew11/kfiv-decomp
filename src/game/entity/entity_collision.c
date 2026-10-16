@@ -1509,7 +1509,7 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
         object = map_objects(map);
         count = map_object_count(map);
         for (i = 0; i < count; i++, object++) {
-            if (!(object->state_flags & 0x10000)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                 continue;
             }
             if (object->reach_radius <= 0.0f) {
@@ -1582,7 +1582,7 @@ void EntityCollision_SphereAgainstObjects(Entity *entity) {
         object = map_objects(map);
         count = map_object_count(map);
         for (i = 0; i < count; i++, object++) {
-            if (!(object->state_flags & 0x10000)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                 continue;
             }
             if (object->reach_radius <= 0.0f) {

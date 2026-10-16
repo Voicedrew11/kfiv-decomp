@@ -52,9 +52,9 @@ void MapObject_UpdateScenery(MapObject *object) {
         }
     }
     if (object->model->model_flags & 1) {
-        if (object->state_flags & 0x100000) {
+        if (object->state_flags & MAP_OBJECT_SCRIPTED) {
             if (object->state_flags & 0x200000) {
-                if ((object->state_flags & 0x400000) || MODEL_CHANNEL(object->model)->param != 0) {
+                if ((object->state_flags & MAP_OBJECT_FLAG_400000) || MODEL_CHANNEL(object->model)->param != 0) {
                     MapObject_StepAnim(object);
                 }
             }

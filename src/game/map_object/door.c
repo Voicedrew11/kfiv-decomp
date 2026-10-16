@@ -36,14 +36,14 @@ void MapObject_StartDoor(MapObject *object) {
         work->unk10 = part[1].position[0];
         work->unk14 = part[1].position[1];
         work->unk18 = part[1].position[2];
-        if (MAP_OBJECT_FLAGS(object) & 0x20000) {
+        if (MAP_OBJECT_FLAGS(object) & MAP_OBJECT_ON) {
             MAP_OBJECT_BYTES(object)->step = 2;
             do {
                 MapObject_UpdateOpeningDoor(object);
             } while (MAP_OBJECT_BYTES(object)->step != 3);
         }
     } else {
-        if (!(object->state_flags & 0x20000)) {
+        if (!(object->state_flags & MAP_OBJECT_ON)) {
             MapObject_StartAnim(object, 4);
             MAP_OBJECT_BYTES(object)->step = 1;
         } else {
@@ -67,7 +67,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
     }
     if (faced_object[0] == object && ((game_status_flags[0] >> 1) & 1)) {
         item = object->source->kind_param_0;
-        if (item != 0 && !(object->state_flags & 0x40000)) {
+        if (item != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
             if (item_counts[item] != 0) {
                 MapObject_ShowKeyUsed(item);
                 range = 800.0f;
@@ -75,7 +75,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
                     range = object->definition->sound_range;
                 }
                 Sound_PlayMapAtRange(0x2E, 0, &object->model->position.x, range);
-                object->state_flags |= 0x40000;
+                object->state_flags |= MAP_OBJECT_EMPTIED;
             } else {
                 if (work->timer > 0) {
                     return;
@@ -89,7 +89,7 @@ void MapObject_UpdateClosedDoor(MapObject *object) {
                 return;
             }
         }
-        object->state_flags |= 0x20000;
+        object->state_flags |= MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(object)->step = 2;
         MAP_OBJECT_UNK60_BITS(object)->bit0 = TRUE;
     }
@@ -174,7 +174,7 @@ void MapObject_UpdateOpenDoor(MapObject *object) {
         delta_z = model->position.z - player[2];
         distance = sqrtf(delta_x * delta_x + delta_z * delta_z);
         if (!(distance < object->reach_radius + 100.0f)) {
-            object->state_flags &= ~0x20000;
+            object->state_flags &= ~MAP_OBJECT_ON;
             MAP_OBJECT_BYTES(object)->step = 4;
         }
     }
@@ -213,11 +213,11 @@ void MapObject_UpdateClosingDoor(MapObject *object) {
 
 /* Signal hook of the doors: opens a closed door (step 1 to 2) or closes an open one (3 to 4). */
 void MapObject_SetDoorOpen(MapObject *object, int open) {
-    if ((object->state_flags & 0x2FF00) == 0x100 && open) {
-        object->state_flags |= 0x20000;
+    if ((object->state_flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x100 && open) {
+        object->state_flags |= MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(object)->step = 2;
-    } else if ((object->state_flags & 0x2FF00) == 0x20300 && !open) {
-        object->state_flags &= ~0x20000;
+    } else if ((object->state_flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x20300 && !open) {
+        object->state_flags &= ~MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(object)->step = 4;
     }
 }

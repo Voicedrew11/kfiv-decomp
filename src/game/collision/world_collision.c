@@ -1098,7 +1098,7 @@ int Collision_TransformMeshPoints(void *target) {
 }
 
 /* Tests a ray (from `origin` along `direction`, no further than `reach` times it) against every triangle of
-   the strips of the object's model, if the object has flag 0x10000 and the mesh unk0C is 4 or more; stops at
+   the strips of the object's model, if the object has MAP_OBJECT_IN_USE and the mesh unk0C is 4 or more; stops at
    the first hit. */
 void Collision_HitRayMeshObj(MapObject *object, f32 *origin, f32 *direction, f32 reach) {
     CollisionMesh *mesh;
@@ -1107,7 +1107,7 @@ void Collision_HitRayMeshObj(MapObject *object, f32 *origin, f32 *direction, f32
     s32 strips_left;
     s32 triangles_left;
 
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         mesh = (CollisionMesh *)object->model->strips;
         if (mesh != NULL && mesh->point_count >= 4) {
             Collision_TransformMeshPoints(object->model);
@@ -1143,7 +1143,7 @@ void Collision_HitRayBoxObj(void *target, int from, int direction, float distanc
     f32 *top;
     f32 height;
 
-    if (!(object->state_flags & 0x10000)) {
+    if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
     corner0 = (f32 *)object->model->get_point(object->model, 0);
@@ -1205,7 +1205,7 @@ void Collision_HitRayDoubleDoorObj(void *target, int from, int direction, float 
     f32 *top;
     f32 height;
 
-    if (!(object->state_flags & 0x10000)) {
+    if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
     if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param == 1) {
@@ -1370,7 +1370,7 @@ s32 Collision_HitRayQuadObj(AnimObject *object, s32 param1, s32 param2, f32 para
     return result;
 }
 
-/* Tests a ray against a map object of kind 18 (a pitfall). With flag 0x20000 clear the object's
+/* Tests a ray against a map object of kind 18 (a pitfall). With MAP_OBJECT_ON clear the object's
    collision strips are tested, as Collision_HitRayMeshObj does. With it set, model points 0 to 0x1F are
    taken four at a time as quads, up to the first quad with a corner at the model's own position
    (an unused point). */
@@ -1387,10 +1387,10 @@ void Collision_HitRayPitfallObj(void *target, int from, int direction, float dis
     int triangles_left;
     int i;
 
-    if (!(object->state_flags & 0x10000)) {
+    if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
-    if (!(object->state_flags & 0x20000)) {
+    if (!(object->state_flags & MAP_OBJECT_ON)) {
         list = object->model->strips;
         if (list != NULL && list->unk0C >= 4U) {
             Collision_TransformMeshPoints(object->model);
@@ -1482,7 +1482,7 @@ int Collision_HitSphereBoxObj(MapObject *object, f32 *point, f32 reach) {
     f32 height;
     int hit;
 
-    if (!(object->state_flags & 0x10000)) {
+    if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
     if (object->model->get_point(object->model, 0x1F) == 0) {
@@ -1544,7 +1544,7 @@ int Collision_HitSphereDoubleDoorObj(MapObject *object, f32 *point, f32 reach) {
     f32 height;
     int hit;
 
-    if (!(object->state_flags & 0x10000)) {
+    if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
     if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param < 2) {
@@ -1662,14 +1662,14 @@ int Collision_HitSphereDoubleDoorObj(MapObject *object, f32 *point, f32 reach) {
 }
 
 /* Tests a point (with a reach) against the quad of the object's model points 0 to 3, as two triangles, if the
-   object has flag 0x10000. */
+   object has MAP_OBJECT_IN_USE. */
 void Collision_HitSphereQuadObj(MapObject *object, f32 *point, f32 reach) {
     f32 *corner_0;
     f32 *corner_1;
     f32 *corner_2;
     f32 *corner_3;
 
-    if (!(object->state_flags & 0x10000)) {
+    if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
     corner_0 = (f32 *)object->model->get_point(object->model, 0);
@@ -1683,7 +1683,7 @@ void Collision_HitSphereQuadObj(MapObject *object, f32 *point, f32 reach) {
 }
 
 /* Tests a point against a pitfall (kind 18); the game's own debug print names it ("Hit HitSpherePitfallObj()"
-   on a quad hit). Closed (flag 0x20000 clear) its collision strips are tested, as Collision_HitSphereMeshObj
+   on a quad hit). Closed (MAP_OBJECT_ON clear) its collision strips are tested, as Collision_HitSphereMeshObj
    does; open, model points 0 to 0x1F are taken four at a time as quads, up to the first quad with a corner at
    the model's own position (an unused point). */
 void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
@@ -1698,10 +1698,10 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
     int triangles_left;
     int i;
 
-    if (!(object->state_flags & 0x10000)) {
+    if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
-    if (!(object->state_flags & 0x20000)) {
+    if (!(object->state_flags & MAP_OBJECT_ON)) {
         list = object->model->strips;
         if (list != NULL && list->unk0C >= 4U) {
             Collision_TransformMeshPoints(object->model);
@@ -1754,7 +1754,7 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
 }
 
 /* Tests an upright capsule (`centre`, `radius`, `height`) against every triangle of the strips of the object's
-   model, if the object has flag 0x10000 and the mesh unk0C is 4 or more. At the first hit it stops and puts
+   model, if the object has MAP_OBJECT_IN_USE and the mesh unk0C is 4 or more. At the first hit it stops and puts
    Collision_GetFloorMaterial of the hit point's three words in COLLISION_RESULT->unk18. */
 void Collision_HitCapsuleMeshObj(MapObject *object, f32 *centre, f32 height, f32 radius) {
     CollisionMesh *mesh;
@@ -1763,7 +1763,7 @@ void Collision_HitCapsuleMeshObj(MapObject *object, f32 *centre, f32 height, f32
     s32 strips_left;
     s32 triangles_left;
 
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         mesh = (CollisionMesh *)object->model->strips;
         if (mesh != NULL && mesh->point_count >= 4) {
             Collision_TransformMeshPoints(object->model);
@@ -1799,7 +1799,7 @@ int Collision_HitCapsuleBoxObj(MapObject *object, f32 *point, f32 radius, f32 pu
     f32 height;
     int hit;
 
-    if (!(object->state_flags & 0x10000)) {
+    if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
     corner0 = (f32 *)object->model->get_point(object->model, 0);
@@ -1870,7 +1870,7 @@ void Collision_HitCapsuleDoubleDoorObj(MapObject *object, f32 *centre, f32 radiu
     f32 *top;
     f32 height;
 
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param < 2) {
             point0 = (f32 *)object->model->get_point(object->model, 0);
             if (point0 == NULL) {
@@ -1999,7 +1999,7 @@ void Collision_HitFanMeshObj(MapObject *object, Vector4 *origin, f32 radius, f32
     s32 second_sides;
     s32 first_sides;
 
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         mesh = (CollisionMesh *)object->model->strips;
         if (mesh == NULL) {
             return;
@@ -2058,7 +2058,7 @@ void Collision_HitFanBoxObj(MapObject *object, Vector4 *origin, f32 radius, f32 
     s32 second0, second1, second2, second3;
     s32 hit;
 
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         point0 = (Vector4 *)object->model->get_point(object->model, 0);
         point1 = (Vector4 *)object->model->get_point(object->model, 1);
         point2 = (Vector4 *)object->model->get_point(object->model, 2);
@@ -2117,7 +2117,7 @@ void Collision_HitFanDoubleDoorObj(MapObject *object, Vector4 *origin, f32 radiu
     f32 height;
     CollisionResult *result = COLLISION_RESULT; // match: one pointer, so the hit flag is reloaded only after a call
 
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param < 2) {
             point0 = (Vector4 *)object->model->get_point(object->model, 0);
             if (point0 == NULL) {
@@ -2282,7 +2282,7 @@ void Collision_HitFanQuadObj(MapObject *object, Vector4 *origin, f32 radius, f32
     s32 first_sides;
     s32 i;
 
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         second_sides = 0;
         first_sides = 0;
         points[0] = (f32 *)object->model->get_point(object->model, 1);
@@ -2326,7 +2326,7 @@ void Collision_PushOutOfMeshObj(MapObject *object, f32 *position, f32 height, f3
     s32 j;
 
     touched = FALSE;
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         mesh = (CollisionMesh *)object->model->strips;
         if (mesh == NULL) {
             return;
@@ -2395,7 +2395,7 @@ void Collision_PushOutOfBoxObj(MapObject *object, f32 *centre, f32 radius, f32 p
     f32 *top;
     f32 height;
 
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         point0 = (f32 *)object->model->get_point(object->model, 0);
         if (point0 == NULL) {
             return;
@@ -2481,7 +2481,7 @@ void Collision_PushOutOfDoubleDoorObj(MapObject *object, f32 *centre, f32 radius
     f32 delta_x, delta_z;
     f32 first_gap, second_gap;
 
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         object->model->update_bone_points(object->model);
         if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param == 1) {
             point0 = (f32 *)object->model->get_point(object->model, 0);
@@ -2826,7 +2826,7 @@ s32 Collision_StandOnPitfallObj(MapObject *object, f32 *position, f32 radius) {
     f32 *point3;
     f32 lowest;
 
-    if (object->state_flags & 0x10000) {
+    if (object->state_flags & MAP_OBJECT_IN_USE) {
         if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim
             && MODEL_CHANNEL(object->model)->param < 2) {
             return drop_on_floor_strips(object, position, radius);

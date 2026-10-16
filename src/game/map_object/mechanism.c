@@ -139,7 +139,7 @@ void MapObject_UpdateShooter(MapObject *object) {
             return;
         }
     }
-    if (!(object->state_flags & 0x20000)) {
+    if (!(object->state_flags & MAP_OBJECT_ON)) {
         return;
     }
     Vector_Subtract(&aim, &object->model->position, &player_state);
@@ -169,7 +169,7 @@ void MapObject_SetShooterOn(MapObject *object, int enabled) {
    Collision_HitSpherePitfallObj): closed (animation 4, step 1) or open (animation 5, step 3), with the wait
    that goes with it. */
 void MapObject_StartPitfall(MapObject *object) {
-    if (!(object->state_flags & 0x20000)) {
+    if (!(object->state_flags & MAP_OBJECT_ON)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
         object->work[0] = MAP_OBJECT_WORDS(object)->kind_param_0;
@@ -185,7 +185,7 @@ void MapObject_UpdateClosedPitfall(MapObject *object) {
     MapObject *stood_on = object_under_player[0];
 
     if (stood_on == object && MAP_OBJECT_WORDS(stood_on)->kind_param_0 >= 0) {
-        stood_on->state_flags |= 0x20000;
+        stood_on->state_flags |= MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(stood_on)->step = 2;
     }
 }
@@ -214,7 +214,7 @@ void MapObject_UpdateOpeningPitfall(MapObject *object) {
 /* Step 3 of a pitfall: closes again (step 4) unless its second wait (unk46) is negative. */
 void MapObject_UpdateOpenPitfall(MapObject *object) {
     if (MAP_OBJECT_WORDS(object)->kind_param_1 >= 0) {
-        object->state_flags &= ~0x20000;
+        object->state_flags &= ~MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(object)->step = 4;
     }
 }
@@ -241,17 +241,17 @@ void MapObject_SetPitfallOpen(MapObject *object, int turn_on) {
     s32 *wait = object->work;
     int flags = object->state_flags;
 
-    if ((flags & 0x2FF00) == 0x100) {
+    if ((flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x100) {
         if (turn_on != 0) {
             object->work[0] = 0;
-            object->state_flags = flags | 0x20000;
+            object->state_flags = flags | MAP_OBJECT_ON;
             MAP_OBJECT_BYTES(object)->step = 2;
             return;
         }
     }
-    if ((flags & 0x2FF00) == 0x20300 && turn_on == 0) {
+    if ((flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x20300 && turn_on == 0) {
         *wait = 0;
-        object->state_flags &= ~0x20000;
+        object->state_flags &= ~MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(object)->step = 4;
     }
 }

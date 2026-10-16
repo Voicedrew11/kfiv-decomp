@@ -124,7 +124,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bits36 != 0) {
             map_object = MapObject_GetById(entity->group_id, entity->spawn_info->variant);
             if (map_object != NULL) {
-                if (!(map_object->state_flags & 0x10000) || MAP_OBJECT_BITS(map_object)->step == 0xF) {
+                if (!(map_object->state_flags & MAP_OBJECT_IN_USE) || MAP_OBJECT_BITS(map_object)->step == 0xF) {
                     Motion_Start(entity, 0x11, 0, 0, 1);
                 }
             }

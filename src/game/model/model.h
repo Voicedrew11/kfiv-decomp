@@ -655,6 +655,16 @@ typedef struct {
     char pad64[0x0C];
 } MapObject;
 
+/* the bits of MapObject.state_flags, the word MAP_OBJECT_BITS views */
+#define MAP_OBJECT_IN_VIEW          0x2       /* bit 1: in view this frame (MapObject_DrawAll and Interact_FindTarget test it) */
+#define MAP_OBJECT_IN_VIEW_MASK     0x6       /* bits 1-2: in view this frame or the frame before (the appear and disappear effects) */
+#define MAP_OBJECT_STEP_AND_ON_MASK 0x2FF00   /* bits 8-15 and 17: the kind's state machine step plus the on bit */
+#define MAP_OBJECT_IN_USE           0x10000   /* bit 16: in use (MapObject_Activate sets it, MapObject_Deactivate clears it) */
+#define MAP_OBJECT_ON               0x20000   /* bit 17: open, on or firing (doors, switches, chests, shooters and pitfalls) */
+#define MAP_OBJECT_EMPTIED          0x40000   /* bit 18: it has given out the item or key it held (MapObject_MarkEmptied) */
+#define MAP_OBJECT_SCRIPTED         0x100000  /* bit 20: a script drives it (MapObject_SetScripted) */
+#define MAP_OBJECT_FLAG_400000      0x400000  /* bit 22: set from a script; the motion-done script commands treat it as never done */
+
 /* the first word of the definition, whole (bit 11 0x800, bit 12 0x1000) */
 #define MAP_OBJECT_DEF_WORD(object) (*(u32 *)(object)->definition)
 

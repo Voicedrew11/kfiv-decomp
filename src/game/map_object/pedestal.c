@@ -39,14 +39,14 @@ void MapObject_StartMarker(MapObject *object) {
     work->part = 2;
     work->fired = 0;
     item = 0;
-    if (object->state_flags & 0x20000) {
+    if (object->state_flags & MAP_OBJECT_ON) {
         item = Game_GetTriggerItem(map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->source->spawn_flags.bytes[2]);
         if (item <= 0) {
-            object->state_flags &= ~0x20000;
+            object->state_flags &= ~MAP_OBJECT_ON;
         }
     }
     MapObject_ShowMarkerStone(object, item);
-    if (!(object->state_flags & 0x20000)) {
+    if (!(object->state_flags & MAP_OBJECT_ON)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
@@ -78,7 +78,7 @@ void MapObject_UpdateEmptyMarker(MapObject *object) {
         work->timer = 0x2D;
     } else if (work->fired != 0) {
         work->fired = 0;
-        object->state_flags |= 0x20000;
+        object->state_flags |= MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(object)->step = 3;
         MapObject_StepAnim(object);
         MapObject_RebuildMatrices((char *)object);
@@ -151,7 +151,7 @@ void MapObject_UpdateFilledMarker(MapObject *object) {
         MapObject_StepAnim(object);
         MapObject_RebuildMatrices((char *)object);
         Player_AddItem(item);
-        object->state_flags &= ~0x20000;
+        object->state_flags &= ~MAP_OBJECT_ON;
         game_status.update_hold_flags |= 1;
     }
 }

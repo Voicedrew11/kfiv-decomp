@@ -139,7 +139,7 @@ void Interact_FindTarget(void) {
         count = map_object_counts[map];
         object = map_slot_objects[map];
         for (i = 0; i < count; i++, object++) {
-            if (!(object->state_flags & 0x10000)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                 continue;
             }
             if (!(object->state_flags & 4)) {
@@ -233,8 +233,8 @@ void Interact_FindTarget(void) {
                     }
                     break;
                 }
-                if (object != NULL && (object->state_flags & 0x10000) && MODEL_CHANNEL(object->model) != NULL) {
-                    if (!(object->state_flags & 0x20000)) {
+                if (object != NULL && (object->state_flags & MAP_OBJECT_IN_USE) && MODEL_CHANNEL(object->model) != NULL) {
+                    if (!(object->state_flags & MAP_OBJECT_ON)) {
                         continue;
                     }
                     frame = MODEL_CHANNEL(object->model)->param;

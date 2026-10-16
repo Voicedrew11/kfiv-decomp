@@ -148,12 +148,12 @@ void MapSetup_Armory(int map) {
         object = MapObject_GetById(map, 0xA);
         if (object != NULL) {
             MapObject_SetScripted(object, 0);
-            object->state_flags |= 0x20000;
+            object->state_flags |= MAP_OBJECT_ON;
         }
         object = MapObject_GetById(map, 0xB);
         if (object != NULL) {
             MapObject_SetScripted(object, 0);
-            object->state_flags |= 0x20000;
+            object->state_flags |= MAP_OBJECT_ON;
         }
         object = MapObject_GetById(map, 0x22);
         if (object != NULL) {
@@ -174,7 +174,7 @@ void MapSetup_Forge017(int map) {
     if (forge_door_open[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
-            object->state_flags |= 0x20000;
+            object->state_flags |= MAP_OBJECT_ON;
         }
     }
 }
@@ -186,7 +186,7 @@ void MapSetup_Forge018(int map) {
     if (forge_door_open[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
-            object->state_flags |= 0x20000;
+            object->state_flags |= MAP_OBJECT_ON;
         }
     }
 }
@@ -198,7 +198,7 @@ void MapSetup_Forge019(int map) {
     if (forge_door_open[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
-            object->state_flags |= 0x20000;
+            object->state_flags |= MAP_OBJECT_ON;
         }
     }
 }
