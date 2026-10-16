@@ -152,9 +152,9 @@ static void Seafang_ThinkIdle(Entity *entity, s32 unknown) {
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (turn < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
     }
@@ -215,9 +215,9 @@ static void Seafang_ThinkCombat(Entity *entity, s32 unknown) {
     if (unkE0->move_choice == 0) {
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
-            entity->move_command = 0x241;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
         } else if (turn < 0) {
-            entity->move_command = 0x141;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
         } else {
             Vector_Copy(unkE0->target_point, player_state);
             unkE0->target_point[1] -= unkE0->part_angle_y;
@@ -291,9 +291,9 @@ static void Seafang_ThinkWander(Entity *entity, s32 unknown) {
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (turn < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
@@ -357,9 +357,9 @@ static void Seafang_ThinkCombatRunAtPlayer(Entity *entity, s32 unknown) {
     if (unkE0->move_choice == 0) {
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
-            entity->move_command = 0x241;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
         } else if (turn < 0) {
-            entity->move_command = 0x141;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
         } else {
             entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
@@ -375,12 +375,12 @@ static void Seafang_Move(Entity *entity) {
     f32 pitch;
     f32 rate;
 
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (unkE0->turn_rate > entity->params->turn_limit) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -389,13 +389,13 @@ static void Seafang_Move(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     value = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         value += value;
     }
     entity->turn_delta_yaw += value;
-    if (entity->move_command & 0x10) {
+    if (entity->move_command & MOVE_COMMAND_DOWN) {
         pitch = -0.5235988f;
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         pitch = 0.5235988f;
     } else {
         pitch = 0.0f;
@@ -408,17 +408,17 @@ static void Seafang_Move(Entity *entity) {
     value = entity->model->rotation[0];
     EntityMath_EaseAngleToward(&value, pitch, rate);
     entity->turn_delta_pitch += value - entity->model->rotation[0];
-    if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->move_command & 0x10) {
+    } else if (entity->move_command & MOVE_COMMAND_DOWN) {
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x300) {
+    } else if (entity->move_command & MOVE_COMMAND_TURNS) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

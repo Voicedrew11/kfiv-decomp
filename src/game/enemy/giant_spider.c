@@ -249,16 +249,16 @@ static void GiantSpider_Move(Entity *entity) {
     u16 command;
 
     command = entity->move_command;
-    if (command & 0x100) {
-        if (command & 0x400) {
+    if (command & MOVE_COMMAND_TURN_LEFT) {
+        if (command & MOVE_COMMAND_TURN_FAST) {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 0);
             return;
         }
         Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 0);
         return;
     }
-    if (command & 0x200) {
-        if (command & 0x400) {
+    if (command & MOVE_COMMAND_TURN_RIGHT) {
+        if (command & MOVE_COMMAND_TURN_FAST) {
             Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 0);
             return;
         }

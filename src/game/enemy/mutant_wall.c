@@ -190,17 +190,17 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
         if (unkE0->move_choice == 0) {
             if ((s16)entity->params->action_frames != 0) { // match: read signed here
                 if (side > 0) {
-                    entity->move_command = 0x241;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
-                    entity->move_command = 0x141;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
                 }
             } else {
                 if (side > 0) {
-                    entity->move_command = 0x201;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
-                    entity->move_command = 0x101;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }

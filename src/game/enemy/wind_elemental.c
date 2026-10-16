@@ -135,7 +135,7 @@ static void WindElemental_Think(Entity *entity, s32 unknown) {
         if ((s32)(entity->flags >> 53) & 1) {
             // match: called as returning nothing, so $2 is free for the next statement
             ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
-            entity->move_command |= 0x440;
+            entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         } else {
             switch (entity->state) {
             case 0:
@@ -239,9 +239,9 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
             switch (unkE0->move_choice) {
             case 0:
                 if (side > 0) {
-                    entity->move_command = 0x241;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
-                    entity->move_command = 0x141;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
                         && frame_counter % 15U == 0 && !(rand() & 1)) {
@@ -249,7 +249,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
                         EntityAi_StartAction(entity, WindElemental_PlayTurnAnim, unknown);
                         return;
                     }
-                    entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f) | 0x400;
+                    entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f) | MOVE_COMMAND_TURN_FAST;
                 }
                 break;
             case 1:
@@ -529,9 +529,9 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
         entity->target = &player_state;
         side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
-            entity->move_command = 0x241;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
         } else if (side < 0) {
-            entity->move_command = 0x141;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
         } else {
             entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }

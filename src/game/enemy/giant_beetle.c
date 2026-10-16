@@ -187,9 +187,9 @@ static void GiantBeetle_ThinkWander(Entity *entity, s32 unknown) {
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (turn < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
@@ -282,9 +282,9 @@ static void GiantBeetle_TurnParts7And12(Entity *entity) {
     s32 i;
 
     limit = 0.34906584f;
-    if (entity->move_command & 0x200) {
+    if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         angle = limit;
-    } else if (entity->move_command & 0x100) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         angle = -limit;
     } else {
         angle = 0.0f;
@@ -321,10 +321,10 @@ static void GiantBeetle_TurnParts23To32(Entity *entity) {
     limit = 0.34906584f;
     command = entity->move_command;
     unkE0 = &entity->unkE0;
-    if (command & 0x200) {
+    if (command & MOVE_COMMAND_TURN_RIGHT) {
         turn = limit;
     } else {
-        turn = (command & 0x100) ? -limit : 0.0f;
+        turn = (command & MOVE_COMMAND_TURN_LEFT) ? -limit : 0.0f;
     }
     limit = 0.34906584f;
     if (limit < turn || (limit = -limit, turn < limit)) {

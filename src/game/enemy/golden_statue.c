@@ -226,9 +226,9 @@ static void GoldenStatue_TurnAtPost(Entity *entity, s32 unknown) {
     angle = EntityMath_AngleDifference(entity->model->rotation[1], unkE0->part_angle_x);
     if (ABS(angle) > entity->params->turn_limit) {
         if (angle >= 0.0f) {
-            entity->move_command |= 0x200;
+            entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
         } else {
-            entity->move_command |= 0x100;
+            entity->move_command |= MOVE_COMMAND_TURN_LEFT;
         }
     } else {
         unkE0->turn_in_place = 0;
@@ -351,9 +351,9 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
                 entity->target = post;
                 turn = EntityAi_TurnFromPush(entity, direction);
                 if (turn > 0) {
-                    entity->move_command = 0x201;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
-                    entity->move_command = 0x101;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
                 }
@@ -374,9 +374,9 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
             }
             if (ABS(angle) > 0.5235988f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x201;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else {
-                    entity->move_command = 0x101;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 }
                 EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
                 return;
@@ -401,9 +401,9 @@ static void GoldenStatue_ThinkDecideHoldPostOrCloseIn(Entity *entity, s32 unknow
     } else {
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
-            entity->move_command = 0x201;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
         } else if (turn < 0) {
-            entity->move_command = 0x101;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
         } else {
             entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
         }
@@ -421,12 +421,12 @@ static void GoldenStatue_Move(Entity *entity) {
     if (entity == (Entity *)entity_under_player[0] && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (unkE0->turn_rate > entity->params->turn_limit) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -435,19 +435,19 @@ static void GoldenStatue_Move(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
-    if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->move_command & 0x100) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

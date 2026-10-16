@@ -173,13 +173,13 @@ static void StoneGuardian_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 turn = 0.0f;
 
-    if (entity->move_command & 0x41) {
-        if (entity->move_command & 0x100) {
+    if (entity->move_command & (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN)) {
+        if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
             unkE0->turn_rate -= entity->params->turn_step_per_frame;
             if (unkE0->turn_rate < -entity->params->turn_limit) {
                 unkE0->turn_rate = -entity->params->turn_limit;
             }
-        } else if (entity->move_command & 0x200) {
+        } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
             unkE0->turn_rate += entity->params->turn_step_per_frame;
             if (unkE0->turn_rate > entity->params->turn_limit) {
                 unkE0->turn_rate = entity->params->turn_limit;
@@ -191,27 +191,27 @@ static void StoneGuardian_Move(Entity *entity) {
         unkE0->turn_rate = turn;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
-    if (entity->move_command & 1) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
         if (entity->animation_index != 3 && entity->animation_index != 4) {
-            if (entity->move_command & 0x40) {
+            if (entity->move_command & MOVE_COMMAND_RUN) {
                 Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 1);
             } else {
                 Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 1);
             }
-        } else if (entity->move_command & 0x40) {
+        } else if (entity->move_command & MOVE_COMMAND_RUN) {
             entity->animation_index = 4;
             entity->model->level_tables->unk8C = entity->params->motion_speeds[entity->animation_index];
         } else {
             entity->animation_index = 3;
             entity->model->level_tables->unk8C = entity->params->motion_speeds[entity->animation_index];
         }
-    } else if (entity->move_command & 0x100) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
@@ -433,15 +433,15 @@ static void StoneGuardian_Mode2WalkToPost(Entity *entity) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], facing);
         if (ABS(angle) > 0.5235988f) {
             if (angle >= 0.0f) {
-                entity->move_command = 0x200;
+                entity->move_command = MOVE_COMMAND_TURN_RIGHT;
             } else {
-                entity->move_command = 0x100;
+                entity->move_command = MOVE_COMMAND_TURN_LEFT;
             }
         }
     } else {
         Vector_Copy(unkE0->target_point, post);
         entity->target = unkE0->target_point;
-        entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | 0x400;
+        entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | MOVE_COMMAND_TURN_FAST;
     }
     ((void (*)(Entity *))unkE0->move)(entity);
 }
@@ -479,9 +479,9 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
             }
         }
@@ -499,9 +499,9 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
             }
         }
@@ -519,9 +519,9 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
             }
         }
@@ -540,9 +540,9 @@ static void StoneGuardian_Mode2ChaseInBounds(Entity *entity) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
             }
         }
@@ -691,15 +691,15 @@ static void StoneGuardian_Mode3WalkToPost(Entity *entity) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], 3.1415927f);
         if (ABS(angle) > 1.5707964f) {
             if (angle >= 0.0f) {
-                entity->move_command = 0x200;
+                entity->move_command = MOVE_COMMAND_TURN_RIGHT;
             } else {
-                entity->move_command = 0x100;
+                entity->move_command = MOVE_COMMAND_TURN_LEFT;
             }
         }
     } else {
         Vector_Copy(unkE0->target_point, home);
         entity->target = unkE0->target_point;
-        entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | 0x400;
+        entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | MOVE_COMMAND_TURN_FAST;
     }
     ((void (*)(Entity *))unkE0->move)(entity);
 }
@@ -737,9 +737,9 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
             }
         }
@@ -757,9 +757,9 @@ static void StoneGuardian_Mode3ChaseInBounds(Entity *entity) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
             }
         }
@@ -907,15 +907,15 @@ static void StoneGuardian_Mode4WalkToPost(Entity *entity) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], 3.1415927f);
         if (ABS(angle) > 1.5707964f) {
             if (angle >= 0.0f) {
-                entity->move_command = 0x200;
+                entity->move_command = MOVE_COMMAND_TURN_RIGHT;
             } else {
-                entity->move_command = 0x100;
+                entity->move_command = MOVE_COMMAND_TURN_LEFT;
             }
         }
     } else {
         Vector_Copy(unkE0->target_point, home);
         entity->target = unkE0->target_point;
-        entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | 0x400;
+        entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | MOVE_COMMAND_TURN_FAST;
     }
     ((void (*)(Entity *))unkE0->move)(entity);
 }
@@ -952,9 +952,9 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
             }
         }
@@ -972,9 +972,9 @@ static void StoneGuardian_Mode4ChaseInBounds(Entity *entity) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
             }
         }
@@ -1121,15 +1121,15 @@ static void StoneGuardian_Mode5WalkToPost(Entity *entity) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], 0.0f);
         if (ABS(angle) > 1.5707964f) {
             if (angle >= 0.0f) {
-                entity->move_command = 0x200;
+                entity->move_command = MOVE_COMMAND_TURN_RIGHT;
             } else {
-                entity->move_command = 0x100;
+                entity->move_command = MOVE_COMMAND_TURN_LEFT;
             }
         }
     } else {
         Vector_Copy(unkE0->target_point, home);
         entity->target = unkE0->target_point;
-        entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | 0x400;
+        entity->move_command = EntityAi_MoveCommand(entity, 1, 50.0f) | MOVE_COMMAND_TURN_FAST;
     }
     ((void (*)(Entity *))unkE0->move)(entity);
 }
@@ -1166,9 +1166,9 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
             }
         }
@@ -1186,9 +1186,9 @@ static void StoneGuardian_Mode5ChaseInBounds(Entity *entity) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], direction);
             if (ABS(angle) > 1.5707964f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
             }
         }
@@ -1435,9 +1435,9 @@ static void StoneGuardian_Mode6LeaveHiding(Entity *entity, s32 unknown) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], 1.5707964f);
             if (ABS(angle) > 0.17453292f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
                 ENTITY_FLAG_BITS(entity)->bits11 = 0;
             } else {
@@ -1544,9 +1544,9 @@ static void StoneGuardian_Mode6ReturnToHiding(Entity *entity, s32 unknown) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], -1.5707964f);
             if (ABS(angle) > 0.17453292f) {
                 if (angle >= 0.0f) {
-                    entity->move_command = 0x200;
+                    entity->move_command = MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command = 0x100;
+                    entity->move_command = MOVE_COMMAND_TURN_LEFT;
                 }
                 ENTITY_FLAG_BITS(entity)->bits11 = 0;
             } else {

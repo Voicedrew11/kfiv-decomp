@@ -394,22 +394,22 @@ void ScriptCmd_WalkEntityTo(ScriptWalkToCommand *command) {
             turn = EntityMath_AngleDifference(entity->model->rotation[1], heading);
             if (ABS(turn) > entity->params->turn_limit) {
                 if (turn >= 0.0f) {
-                    entity->move_command |= 0x200;
+                    entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command |= 0x100;
+                    entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                 }
             }
             rise = point[1] - entity->model->position[1];
             if (ABS(rise) > entity->params->max_speed) {
                 if (rise >= 0.0f) {
-                    entity->move_command |= 0x20;
+                    entity->move_command |= MOVE_COMMAND_UP;
                 } else {
-                    entity->move_command |= 0x10;
+                    entity->move_command |= MOVE_COMMAND_DOWN;
                 }
             }
-            entity->move_command |= 1;
+            entity->move_command |= MOVE_COMMAND_FORWARD;
             if (command->run.value != 0) {
-                entity->move_command |= 0x40;
+                entity->move_command |= MOVE_COMMAND_RUN;
             }
             ENTITY_FLAG_BITS(entity)->bits11 = command->mode.value;
             return;
@@ -441,14 +441,14 @@ void ScriptCmd_WalkEntityToFlat(ScriptWalkToFlatCommand *command) {
             turn = EntityMath_AngleDifference(entity->model->rotation[1], heading);
             if (ABS(turn) > entity->params->turn_limit) {
                 if (turn >= 0.0f) {
-                    entity->move_command |= 0x200;
+                    entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command |= 0x100;
+                    entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                 }
             }
-            entity->move_command |= 1;
+            entity->move_command |= MOVE_COMMAND_FORWARD;
             if (command->run.value != 0) {
-                entity->move_command |= 0x40;
+                entity->move_command |= MOVE_COMMAND_RUN;
             }
             ENTITY_FLAG_BITS(entity)->bits11 = command->mode.value;
             return;

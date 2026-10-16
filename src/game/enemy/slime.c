@@ -157,7 +157,7 @@ static void Slime_ThinkReturn(Entity *entity, s32 unknown) {
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     entity->target = entity->spawn_info;
-    entity->move_command = 1;
+    entity->move_command = MOVE_COMMAND_FORWARD;
     entity->action_timer = 0;
     EntityAi_StartAction(entity, (void (*)(Entity *))entity->unkE0.move, unknown);
 }
@@ -192,13 +192,13 @@ static void Slime_ThinkWander(Entity *entity, s32 unknown) {
     if (unkE0->move_choice == 0) {
         if (entity->target != NULL) {
             if (EntityMath_DistanceXZ(entity->model->position, entity->target) > 50.0f) {
-                entity->move_command = 1;
+                entity->move_command = MOVE_COMMAND_FORWARD;
             }
         }
     } else if (unkE0->move_choice == 1) {
         turn = EntityMath_AngleDifference(entity->model->rotation[1], unkE0->part_angle_x);
         if (ABS(turn) > entity->params->turn_limit) {
-            entity->move_command = (turn >= 0.0f) ? 0x200 : 0x100;
+            entity->move_command = (turn >= 0.0f) ? MOVE_COMMAND_TURN_RIGHT : MOVE_COMMAND_TURN_LEFT;
         }
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
@@ -259,14 +259,14 @@ static void Slime_ThinkCombat(Entity *entity, s32 unknown) {
     case 0:
         if (entity->target != NULL) {
             if (EntityMath_DistanceXZ(entity->model->position, entity->target) > entity->radius + 100.0f + 30.0f) {
-                entity->move_command = 1;
+                entity->move_command = MOVE_COMMAND_FORWARD;
             }
         }
         break;
     case 1:
         if (entity->target != NULL) {
             if (EntityMath_DistanceXZ(entity->model->position, entity->target) > 50.0f) {
-                entity->move_command = 1;
+                entity->move_command = MOVE_COMMAND_FORWARD;
             }
         }
         break;
@@ -283,12 +283,12 @@ static void Slime_Move(Entity *entity) {
     f32 amount;
     f32 heading;
 
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -297,18 +297,18 @@ static void Slime_Move(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
-    if ((entity->move_command & 1) && entity->target != NULL) {
+    if ((entity->move_command & MOVE_COMMAND_FORWARD) && entity->target != NULL) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[3] = 0.0f;
         amount = -1.0f;
         vector[2] = amount;
         unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
         amount = unkE0->move_speed;
-        if (entity->move_command & 0x40) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             amount += amount;
         }
         heading = EntityMath_HeadingTo(entity->model->position, entity->target);
@@ -322,13 +322,13 @@ static void Slime_Move(Entity *entity) {
     } else {
         unkE0->move_speed = 0.0f;
     }
-    if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->move_command & 0x300) {
+    } else if (entity->move_command & MOVE_COMMAND_TURNS) {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

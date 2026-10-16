@@ -175,9 +175,9 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
     } else {
         side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
-            entity->move_command = 0x201;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
         } else if (side < 0) {
-            entity->move_command = 0x101;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
         } else {
             // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
             entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
@@ -265,9 +265,9 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
         side = EntityAi_TurnFromPush(entity, direction);
         if (unkE0->move_choice == 0) {
             if (side > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (side < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
                 entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
@@ -292,9 +292,9 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 unknown) {
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (turn < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 50.0f);
     }
@@ -349,9 +349,9 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
     }
     side = EntityAi_TurnFromPush(entity, direction);
     if (side > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (side < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
         entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
@@ -378,13 +378,13 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     f32 step;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
         roll = (unkE0->pitch_speed + 50.0f) * 0.017453292f;
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -432,12 +432,12 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     entity->turn_delta_pitch += unkE0->part_angle_y;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[1] = ENTITY_SCRATCH_VECTOR[2] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
     step = entity->params->speed_step_per_frame;
-    if (entity->move_command & 1) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
         unkE0->part_angle_x -= step;
         if (unkE0->part_angle_x < -entity->params->max_speed) {
             unkE0->part_angle_x = -entity->params->max_speed;
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         unkE0->part_angle_x += step;
         if (entity->params->max_speed < unkE0->part_angle_x) {
             unkE0->part_angle_x = entity->params->max_speed;
@@ -449,12 +449,12 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     } else {
         unkE0->part_angle_x = 0.0f;
     }
-    if (entity->move_command & 4) {
+    if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         unkE0->move_speed += entity->params->speed_step_per_frame;
         if (entity->params->max_speed < unkE0->move_speed) {
             unkE0->move_speed = entity->params->max_speed;
         }
-    } else if (entity->move_command & 8) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         unkE0->move_speed -= entity->params->speed_step_per_frame;
         if (unkE0->move_speed < -entity->params->max_speed) {
             unkE0->move_speed = -entity->params->max_speed;
@@ -475,7 +475,7 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
     // match: a test whose result is never used (DarkSorcerer_ApplyMoveCommand doubles the speed on this bit); it leaves
     // no code, but the scratchpad reads below only get their own address loads when it is here
-    if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_RUN) {
         step += step;
     }
     entity->move_delta_x += ENTITY_SCRATCH_VECTOR[0];
@@ -578,7 +578,7 @@ static void LavaBird_Dormant(Entity *entity) {
                 EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
-        entity->move_command = 1;
+        entity->move_command = MOVE_COMMAND_FORWARD;
         LavaBird_ApplyMoveCommand(entity);
         break;
     }

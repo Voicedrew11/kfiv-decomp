@@ -550,9 +550,9 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }

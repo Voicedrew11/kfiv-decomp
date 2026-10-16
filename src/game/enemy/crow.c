@@ -151,7 +151,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
     f32 turn;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    entity->move_command |= 1;
+    entity->move_command |= MOVE_COMMAND_FORWARD;
     if (unkE0->pause_timer < entity->params->unk43A) {
         EntityEvent_StartEffectAtPoint((char **)entity, entity->params->far_distance, 0xFF, (int)entity->model->rotation);
         unkE0->pause_timer++;

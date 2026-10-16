@@ -172,9 +172,9 @@ static void Beetle_ThinkWander(Entity *entity, s32 unknown) {
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (turn < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         entity->move_command = EntityAi_MoveCommand(50.0f, entity, 0);
     }
@@ -247,9 +247,9 @@ static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->move_command = 0x241;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x141;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
             } else {
                 entity->move_command = EntityAi_MoveCommand(0.0f, entity, 1);
             }
@@ -270,9 +270,9 @@ static void Beetle_TurnParts7And12(void *entity_arg) {
     s32 i;
 
     limit = 0.34906584f;
-    if (entity->move_command & 0x200) {
+    if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         angle = limit;
-    } else if (entity->move_command & 0x100) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         angle = -limit;
     } else {
         angle = 0.0f;
@@ -309,10 +309,10 @@ static void Beetle_TurnParts23To32(Entity *entity) {
     limit = 0.34906584f;
     command = entity->move_command;
     unkE0 = &entity->unkE0;
-    if (command & 0x200) {
+    if (command & MOVE_COMMAND_TURN_RIGHT) {
         lean = limit;
     } else {
-        lean = (command & 0x100) ? -limit : 0.0f;
+        lean = (command & MOVE_COMMAND_TURN_LEFT) ? -limit : 0.0f;
     }
     limit2 = 0.34906584f;
     if (limit2 < lean || (limit2 = -limit2, lean < limit2)) {

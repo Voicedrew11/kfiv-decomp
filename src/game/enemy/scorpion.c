@@ -170,9 +170,9 @@ static int Scorpion_ThinkWander(Entity *entity, s32 unknown) {
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (turn < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         entity->move_command = EntityAi_MoveCommand(50.0f, entity, 0);
     }
@@ -277,9 +277,9 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
                 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
                 if (ABS(angle) > entity->params->turn_limit) {
                     if (angle >= 0.0f) {
-                        entity->move_command |= 0x200;
+                        entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
                     } else {
-                        entity->move_command |= 0x100;
+                        entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                     }
                 }
                 if (ABS(angle) <= 0.17453292f) {
@@ -289,9 +289,9 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
                 break;
             case 1:
                 if (turn > 0) {
-                    entity->move_command = 0x201;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
-                    entity->move_command = 0x101;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity->radius + 100.0f + 30.0f, entity, 0);
                 }
@@ -300,17 +300,17 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
                 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
                 if (ABS(angle) > entity->params->turn_limit) {
                     if (angle >= 0.0f) {
-                        entity->move_command |= 0x200;
+                        entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
                     } else {
-                        entity->move_command |= 0x100;
+                        entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                     }
                 }
                 if (entity->flags & (0xD000L << 33)) {
                     unkE0->move_choice = 1;
                 } else if (unkE0->step_index != 0) {
-                    entity->move_command |= 8;
+                    entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
                 } else {
-                    entity->move_command |= 4;
+                    entity->move_command |= MOVE_COMMAND_STEP_LEFT;
                 }
                 break;
             }
@@ -335,13 +335,13 @@ static void Scorpion_Move(Entity *entity) {
     }
     // match: read through the union, and again below once the turn speed is stored
     first_command = ENTITY_COMMAND(entity);
-    if (first_command & 0xFCFF) {
-        if (first_command & 0x100) {
+    if (first_command & ~MOVE_COMMAND_TURNS) {
+        if (first_command & MOVE_COMMAND_TURN_LEFT) {
             unkE0->turn_rate -= entity->params->turn_step_per_frame;
             if (unkE0->turn_rate < -entity->params->turn_limit) {
                 unkE0->turn_rate = -entity->params->turn_limit;
             }
-        } else if (first_command & 0x200) {
+        } else if (first_command & MOVE_COMMAND_TURN_RIGHT) {
             unkE0->turn_rate += entity->params->turn_step_per_frame;
             if (entity->params->turn_limit < unkE0->turn_rate) {
                 unkE0->turn_rate = entity->params->turn_limit;
@@ -351,7 +351,7 @@ static void Scorpion_Move(Entity *entity) {
         }
         command = entity->move_command;
         turn = unkE0->turn_rate;
-        if (command & 0x400) {
+        if (command & MOVE_COMMAND_TURN_FAST) {
             turn += turn;
         }
         entity->turn_delta_yaw += turn;
@@ -361,37 +361,37 @@ static void Scorpion_Move(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bits11 == 0) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
-        if (command & 3) {
+        if (command & MOVE_COMMAND_FORWARD_BACK) {
             amount = 0.0f;
-            if (command & 1) {
+            if (command & MOVE_COMMAND_FORWARD) {
                 amount = -1.0f;
-            } else if (command & 2) {
+            } else if (command & MOVE_COMMAND_BACK) {
                 amount = 1.0f;
             }
             vector[2] += amount;
         }
-        if (command & 0xC) {
+        if (command & MOVE_COMMAND_SIDEWAYS) {
             amount = 0.0f;
-            if (command & 4) {
+            if (command & MOVE_COMMAND_STEP_LEFT) {
                 amount = 1.0f;
-            } else if (command & 8) {
+            } else if (command & MOVE_COMMAND_STEP_RIGHT) {
                 amount = -1.0f;
             }
             vector[0] += amount;
         }
-        if (command & 0x30) {
+        if (command & MOVE_COMMAND_UP_DOWN) {
             amount = 0.0f;
-            if (command & 0x10) {
+            if (command & MOVE_COMMAND_DOWN) {
                 amount = -1.0f;
-            } else if (command & 0x20) {
+            } else if (command & MOVE_COMMAND_UP) {
                 amount = 1.0f;
             }
             vector[1] += amount;
         }
-        if (command & 0x3F) {
+        if (command & MOVE_COMMAND_DIRECTIONS) {
             unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
             amount = unkE0->move_speed;
-            if (entity->move_command & 0x40) {
+            if (entity->move_command & MOVE_COMMAND_RUN) {
                 amount += amount;
             }
             sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
@@ -410,25 +410,25 @@ static void Scorpion_Move(Entity *entity) {
     } else {
         unkE0->move_speed = 0.0f;
     }
-    if (command & 1) {
-        if (command & 0x40) {
+    if (command & MOVE_COMMAND_FORWARD) {
+        if (command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (command & 2) {
+    } else if (command & MOVE_COMMAND_BACK) {
         Motion_Start(entity, 5, 0, entity->params->motion_blend_frames, 0);
-    } else if (command & 0x10) {
+    } else if (command & MOVE_COMMAND_DOWN) {
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
-    } else if (command & 0x20) {
+    } else if (command & MOVE_COMMAND_UP) {
         Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
-    } else if (command & 4) {
+    } else if (command & MOVE_COMMAND_STEP_LEFT) {
         Motion_Start(entity, 6, 0, entity->params->motion_blend_frames, 0);
-    } else if (command & 8) {
+    } else if (command & MOVE_COMMAND_STEP_RIGHT) {
         Motion_Start(entity, 7, 0, entity->params->motion_blend_frames, 0);
-    } else if (command & 0x100) {
+    } else if (command & MOVE_COMMAND_TURN_LEFT) {
         Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 0);
-    } else if (command & 0x200) {
+    } else if (command & MOVE_COMMAND_TURN_RIGHT) {
         Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

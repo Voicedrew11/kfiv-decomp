@@ -550,18 +550,18 @@ static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
         }
         entity->target = entity->spawn_info;
         if (turn > 0) {
-            entity->move_command = 0x201;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             if (push[1] > 0.0f) {
-                entity->move_command = 0x221;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_UP | MOVE_COMMAND_TURN_RIGHT);
             } else if (push[1] < 0.0f) {
-                entity->move_command = 0x211;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_DOWN | MOVE_COMMAND_TURN_RIGHT);
             }
         } else if (turn < 0) {
-            entity->move_command = 0x101;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             if (push[1] > 0.0f) {
-                entity->move_command = 0x121;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_UP | MOVE_COMMAND_TURN_LEFT);
             } else if (push[1] < 0.0f) {
-                entity->move_command = 0x111;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_DOWN | MOVE_COMMAND_TURN_LEFT);
             }
         } else {
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
@@ -697,13 +697,13 @@ static void Salamander_Move(Entity *entity) {
     f32 pitch_change;
     f32 pitch_rate;
 
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
         roll = 0.34906584f;
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (unkE0->turn_rate > entity->params->turn_limit) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -714,14 +714,14 @@ static void Salamander_Move(Entity *entity) {
         roll = unkE0->turn_rate;
     }
     value = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         value += value;
     }
     entity->turn_delta_yaw += value;
     EntityMath_EaseAngleToward(&entity->model->rotation[2], roll, 30.0f);
-    if (entity->move_command & 0x10) {
+    if (entity->move_command & MOVE_COMMAND_DOWN) {
         pitch = -0.5235988f;
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         pitch = 0.5235988f;
     } else {
         pitch = 0.0f;

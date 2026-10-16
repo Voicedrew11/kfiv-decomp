@@ -807,9 +807,9 @@ int EntityAi_ThinkReturn(void *entity_ptr, int unknown) {
         }
         entity->target = entity->spawn_info;
         if (turn > 0) {
-            entity->move_command = 0x201;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
         } else if (turn < 0) {
-            entity->move_command = 0x101;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
         } else {
             entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
         }
@@ -844,9 +844,9 @@ int EntityAi_ThinkIdle(void *entity_ptr, int unknown) {
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (turn < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
@@ -872,9 +872,9 @@ void EntityAi_ThinkPursue(Entity *entity, int extra) {
     }
     result = EntityAi_TurnFromPush(entity, &buf);
     if (result > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (result < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
@@ -953,14 +953,14 @@ void EntityAi_ThinkCombat(Entity *entity, s32 unknown) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
             if (ENTITY_CONTROLLER(entity)->action_frames != 0) {
-                entity->move_command |= 0x40;
+                entity->move_command |= MOVE_COMMAND_RUN;
             }
         }
     }
@@ -980,12 +980,12 @@ void EntityAi_Move(Entity *entity) {
     if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -994,44 +994,44 @@ void EntityAi_Move(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
     if (ENTITY_FLAG_BITS(entity)->bits11 == 0) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
-        if (entity->move_command & 3) {
+        if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {
             amount = 0.0f;
-            if (entity->move_command & 1) {
+            if (entity->move_command & MOVE_COMMAND_FORWARD) {
                 amount = -1.0f;
-            } else if (entity->move_command & 2) {
+            } else if (entity->move_command & MOVE_COMMAND_BACK) {
                 amount = 1.0f;
             }
             vector[2] += amount;
         }
-        if (entity->move_command & 0xC) {
+        if (entity->move_command & MOVE_COMMAND_SIDEWAYS) {
             amount = 0.0f;
-            if (entity->move_command & 4) {
+            if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
                 amount = 1.0f;
-            } else if (entity->move_command & 8) {
+            } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
                 amount = -1.0f;
             }
             vector[0] += amount;
         }
-        if (entity->move_command & 0x30) {
+        if (entity->move_command & MOVE_COMMAND_UP_DOWN) {
             amount = 0.0f;
-            if (entity->move_command & 0x10) {
+            if (entity->move_command & MOVE_COMMAND_DOWN) {
                 amount = -1.0f;
-            } else if (entity->move_command & 0x20) {
+            } else if (entity->move_command & MOVE_COMMAND_UP) {
                 amount = 1.0f;
             }
             vector[1] += amount;
         }
-        if (entity->move_command & 0x3F) {
+        if (entity->move_command & MOVE_COMMAND_DIRECTIONS) {
             unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
             amount = unkE0->move_speed;
-            if (entity->move_command & 0x40) {
+            if (entity->move_command & MOVE_COMMAND_RUN) {
                 amount += amount;
             }
             sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
@@ -1049,23 +1049,23 @@ void EntityAi_Move(Entity *entity) {
     } else {
         unkE0->move_speed = 0.0f;
     }
-    if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         Motion_Start(entity, 5, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x10) {
+    } else if (entity->move_command & MOVE_COMMAND_DOWN) {
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 4) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         Motion_Start(entity, 6, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 8) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         Motion_Start(entity, 7, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x300) {
+    } else if (entity->move_command & MOVE_COMMAND_TURNS) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

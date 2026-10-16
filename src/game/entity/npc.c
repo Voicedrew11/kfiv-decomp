@@ -204,12 +204,12 @@ static void Npc_ThinkReactToPlayer(Entity *entity, s32 run_now) {
     limit = (f32)ENTITY_CONTROLLER(entity)->far_distance * 0.017453292f;
     if (0.0f <= angle ? limit < angle : limit < -angle) {
         if (0.0f <= angle) {
-            unkE0->pause_timer = 0x4000;
+            unkE0->pause_timer = MOVE_COMMAND_ANIMATION_28;
         } else {
-            unkE0->pause_timer = 0x2000;
+            unkE0->pause_timer = MOVE_COMMAND_ANIMATION_27;
         }
     } else {
-        unkE0->pause_timer = 0x1000;
+        unkE0->pause_timer = MOVE_COMMAND_ANIMATION_26;
     }
     entity->move_command = unkE0->pause_timer;
     EntityAi_SetState((char *)entity, 5);
@@ -230,8 +230,8 @@ static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
     if (0.0f <= angle ? limit < angle : limit < -angle) {
         EntityAi_StartAction(entity, Npc_TurnToPlayer, run_now);
     } else {
-        unkE0->pause_timer = 0x1000;
-        entity->move_command = 0x1000;
+        unkE0->pause_timer = MOVE_COMMAND_ANIMATION_26;
+        entity->move_command = MOVE_COMMAND_ANIMATION_26;
         EntityAi_SetState((char *)entity, 5);
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, run_now);
     }
@@ -512,12 +512,12 @@ static void Npc_Move(Entity *entity) {
     f32 amount;
 
     turn = 0.0f;
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -526,26 +526,26 @@ static void Npc_Move(Entity *entity) {
         unkE0->turn_rate = turn;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
     if (ENTITY_FLAG_BITS(entity)->bits11 == 0) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
-        if (entity->move_command & 3) {
+        if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {
             amount = 0.0f;
-            if (entity->move_command & 1) {
+            if (entity->move_command & MOVE_COMMAND_FORWARD) {
                 amount = -1.0f;
-            } else if (entity->move_command & 2) {
+            } else if (entity->move_command & MOVE_COMMAND_BACK) {
                 amount = 1.0f;
             }
             vector[2] += amount;
         }
-        if (entity->move_command & 3) {
+        if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {
             unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
             amount = unkE0->move_speed;
-            if (entity->move_command & 0x40) {
+            if (entity->move_command & MOVE_COMMAND_RUN) {
                 amount += amount;
             }
             sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
@@ -566,21 +566,21 @@ static void Npc_Move(Entity *entity) {
     if (entity->spawn_info->spawn_mode == 1
         && map_script_flags[entity->spawn_info->variant][entity->spawn_info->map_object_id] == entity->spawn_info->second_map_object_id) {
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    } else if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         Motion_Start(entity, 5, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x1000) {
+    } else if (entity->move_command & MOVE_COMMAND_ANIMATION_26) {
         Motion_Start(entity, 0x1A, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x2000) {
+    } else if (entity->move_command & MOVE_COMMAND_ANIMATION_27) {
         Motion_Start(entity, 0x1B, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x4000) {
+    } else if (entity->move_command & MOVE_COMMAND_ANIMATION_28) {
         Motion_Start(entity, 0x1C, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x300) {
+    } else if (entity->move_command & MOVE_COMMAND_TURNS) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

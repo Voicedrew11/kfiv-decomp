@@ -206,22 +206,22 @@ static void IceGolem_ThinkCombat(Entity *entity, s32 unknown) {
             switch (unkE0->move_choice) {
             case 0:
                 if (turn > 0) {
-                    entity->move_command = 0x201;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
-                    entity->move_command = 0x101;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             case 1:
                 if (turn > 0) {
-                    entity->move_command = 0x241;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
-                    entity->move_command = 0x141;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
                 }
-                entity->move_command |= 0x400;
+                entity->move_command |= MOVE_COMMAND_TURN_FAST;
                 break;
             }
         }

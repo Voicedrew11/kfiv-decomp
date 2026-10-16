@@ -214,17 +214,17 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
             case 0:
                 if (unkE0->step_index != 0) {
                     if (turn > 0) {
-                        entity->move_command = 0x241;
+                        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                     } else if (turn < 0) {
-                        entity->move_command = 0x141;
+                        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
                     } else {
                         entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
                     }
                 } else {
                     if (turn > 0) {
-                        entity->move_command = 0x201;
+                        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                     } else if (turn < 0) {
-                        entity->move_command = 0x101;
+                        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                     } else {
                         entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                     }
@@ -232,9 +232,9 @@ static void Mummy_ThinkCombat(Entity *entity, s32 unknown) {
                 break;
             case 1:
                 if (turn > 0) {
-                    entity->move_command = 0x102;
+                    entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_LEFT);
                 } else if (turn < 0) {
-                    entity->move_command = 0x202;
+                    entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_RIGHT);
                 } else {
                     // match: the caller passes an integer argument the callee does not take
                     entity->move_command = Mummy_BackwardsCommand(entity, 0, entity->radius + 100.0f + 30.0f);

@@ -230,7 +230,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
             ENTITY_FLAGS(entity) |= 0x40000;
             ENTITY_FLAGS(entity) &= ~0x3800;
             entity->target = entity->spawn_info;
-            entity->move_command = EntityAi_MoveCommand(entity, 0, 500.0f) | 0x440;
+            entity->move_command = EntityAi_MoveCommand(entity, 0, 500.0f) | (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
         } else if ((s32)(ENTITY_FLAGS(entity) >> 53) & 1) {
             EntityAi_ThinkReturn(entity, unknown);
@@ -267,9 +267,9 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
                 timers->unk7B = 1;
             }
             if (timers->unk7A != 0) {
-                entity->move_command |= 0x20;
+                entity->move_command |= MOVE_COMMAND_UP;
             } else {
-                entity->move_command |= 0x10;
+                entity->move_command |= MOVE_COMMAND_DOWN;
             }
         }
     }
@@ -368,9 +368,9 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
     case 0:
         side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
-            entity->move_command |= 0x201;
+            entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
         } else if (side < 0) {
-            entity->move_command |= 0x101;
+            entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
         } else {
             entity->move_command |= EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
         }
@@ -380,7 +380,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
             unkE0->move_choice = rand() % 3 + 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-            entity->move_command |= 2;
+            entity->move_command |= MOVE_COMMAND_BACK;
         }
         break;
     case 2:
@@ -388,11 +388,11 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
             unkE0->move_choice = 3;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-            entity->move_command |= 4;
+            entity->move_command |= MOVE_COMMAND_STEP_LEFT;
             if (entity->distance_to_player > unkE0->keep_max_distance) {
-                entity->move_command |= 1;
+                entity->move_command |= MOVE_COMMAND_FORWARD;
             } else if (entity->distance_to_player < unkE0->keep_min_distance) {
-                entity->move_command |= 2;
+                entity->move_command |= MOVE_COMMAND_BACK;
             }
         }
         break;
@@ -401,11 +401,11 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
             unkE0->move_choice = 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-            entity->move_command |= 8;
+            entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
             if (entity->distance_to_player > unkE0->keep_max_distance) {
-                entity->move_command |= 1;
+                entity->move_command |= MOVE_COMMAND_FORWARD;
             } else if (entity->distance_to_player < unkE0->keep_min_distance) {
-                entity->move_command |= 2;
+                entity->move_command |= MOVE_COMMAND_BACK;
             }
         }
         break;
@@ -493,9 +493,9 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
     case 0:
         side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
-            entity->move_command |= 0x201;
+            entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
         } else if (side < 0) {
-            entity->move_command |= 0x101;
+            entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
         } else {
             entity->move_command |= EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
         }
@@ -505,7 +505,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
             unkE0->move_choice = rand() % 3 + 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-            entity->move_command |= 2;
+            entity->move_command |= MOVE_COMMAND_BACK;
         }
         break;
     case 2:
@@ -513,11 +513,11 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
             unkE0->move_choice = 3;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-            entity->move_command |= 4;
+            entity->move_command |= MOVE_COMMAND_STEP_LEFT;
             if (entity->distance_to_player > unkE0->keep_max_distance) {
-                entity->move_command |= 1;
+                entity->move_command |= MOVE_COMMAND_FORWARD;
             } else if (entity->distance_to_player < unkE0->keep_min_distance) {
-                entity->move_command |= 2;
+                entity->move_command |= MOVE_COMMAND_BACK;
             }
         }
         break;
@@ -526,11 +526,11 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
             unkE0->move_choice = 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-            entity->move_command |= 8;
+            entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
             if (entity->distance_to_player > unkE0->keep_max_distance) {
-                entity->move_command |= 1;
+                entity->move_command |= MOVE_COMMAND_FORWARD;
             } else if (entity->distance_to_player < unkE0->keep_min_distance) {
-                entity->move_command |= 2;
+                entity->move_command |= MOVE_COMMAND_BACK;
             }
         }
         break;
@@ -628,9 +628,9 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
     case 0:
         side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
-            entity->move_command |= 0x201;
+            entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
         } else if (side < 0) {
-            entity->move_command |= 0x101;
+            entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
         } else {
             entity->move_command |= EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
         }
@@ -640,7 +640,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
             unkE0->move_choice = rand() % 3 + 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-            entity->move_command |= 2;
+            entity->move_command |= MOVE_COMMAND_BACK;
         }
         break;
     case 2:
@@ -648,11 +648,11 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
             unkE0->move_choice = 3;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-            entity->move_command |= 4;
+            entity->move_command |= MOVE_COMMAND_STEP_LEFT;
             if (entity->distance_to_player > unkE0->keep_max_distance) {
-                entity->move_command |= 1;
+                entity->move_command |= MOVE_COMMAND_FORWARD;
             } else if (entity->distance_to_player < unkE0->keep_min_distance) {
-                entity->move_command |= 2;
+                entity->move_command |= MOVE_COMMAND_BACK;
             }
         }
         break;
@@ -661,11 +661,11 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
             unkE0->move_choice = 2;
         } else {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-            entity->move_command |= 8;
+            entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
             if (entity->distance_to_player > unkE0->keep_max_distance) {
-                entity->move_command |= 1;
+                entity->move_command |= MOVE_COMMAND_FORWARD;
             } else if (entity->distance_to_player < unkE0->keep_min_distance) {
-                entity->move_command |= 2;
+                entity->move_command |= MOVE_COMMAND_BACK;
             }
         }
         break;
@@ -684,19 +684,19 @@ static void DarkSuccubus_Move(Entity *entity) {
             entity->move_command = 0;
         }
     }
-    if (entity->move_command & 4) {
+    if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         Motion_Start(entity, 6, 0, entity->params->motion_blend_frames, 0);
         return;
     }
-    if (entity->move_command & 8) {
+    if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         Motion_Start(entity, 7, 0, entity->params->motion_blend_frames, 0);
         return;
     }
-    if (entity->move_command & 1) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         return;
     }
-    if (entity->move_command & 2) {
+    if (entity->move_command & MOVE_COMMAND_BACK) {
         Motion_Start(entity, 5, 0, entity->params->motion_blend_frames, 0);
         return;
     }
@@ -717,12 +717,12 @@ static void DarkSuccubus_ApplyMoveCommand(Entity *entity) {
         entity->move_command = 0;
     }
     turn = 0.0f;
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -735,19 +735,19 @@ static void DarkSuccubus_ApplyMoveCommand(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[1] = ENTITY_SCRATCH_VECTOR[2] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
     step = entity->params->speed_step_per_frame * 0.5f;
     limit = entity->params->max_speed * 0.5f;
-    if (entity->move_command & 1) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
         unkE0->part_angle_y -= entity->params->speed_step_per_frame;
         if (unkE0->part_angle_y < -entity->params->max_speed) {
             unkE0->part_angle_y = -entity->params->max_speed;
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         unkE0->part_angle_y += entity->params->speed_step_per_frame;
         if (entity->params->max_speed < unkE0->part_angle_y) {
             unkE0->part_angle_y = entity->params->max_speed;
@@ -759,12 +759,12 @@ static void DarkSuccubus_ApplyMoveCommand(Entity *entity) {
     } else {
         unkE0->part_angle_y = 0.0f;
     }
-    if (entity->move_command & 4) {
+    if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         unkE0->move_speed += entity->params->speed_step_per_frame;
         if (entity->params->max_speed < unkE0->move_speed) {
             unkE0->move_speed = entity->params->max_speed;
         }
-    } else if (entity->move_command & 8) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         unkE0->move_speed -= entity->params->speed_step_per_frame;
         if (unkE0->move_speed < -entity->params->max_speed) {
             unkE0->move_speed = -entity->params->max_speed;
@@ -776,12 +776,12 @@ static void DarkSuccubus_ApplyMoveCommand(Entity *entity) {
     } else {
         unkE0->move_speed = 0.0f;
     }
-    if (entity->move_command & 0x10) {
+    if (entity->move_command & MOVE_COMMAND_DOWN) {
         unkE0->part_angle_x -= step;
         if (unkE0->part_angle_x < -limit) {
             unkE0->part_angle_x = -limit;
         }
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         unkE0->part_angle_x += step;
         if (limit < unkE0->part_angle_x) {
             unkE0->part_angle_x = limit;
@@ -800,7 +800,7 @@ static void DarkSuccubus_ApplyMoveCommand(Entity *entity) {
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
-    if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_RUN) {
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, 2.0f);
     }
     entity->move_delta_x += ENTITY_SCRATCH_VECTOR[0];
@@ -1090,7 +1090,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
         unkE0->pitch_speed = EntityMath_Approach(unkE0->pitch_speed, 20.0f, 2.0f);
         if (unkE0->pitch_speed > 0.0f) {
             entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-            entity->move_command |= 0x400;
+            entity->move_command |= MOVE_COMMAND_TURN_FAST;
         }
         if (entity->flags & (0x8200L << 35)) {
             Motion_Start(entity, 9, 0, 0, 1);

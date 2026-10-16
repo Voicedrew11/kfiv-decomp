@@ -211,12 +211,12 @@ static void DarkFlower_Move(Entity *entity) {
     if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -225,34 +225,34 @@ static void DarkFlower_Move(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[1] = ENTITY_SCRATCH_VECTOR[2] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
     vector = ENTITY_SCRATCH_VECTOR;
-    if (entity->move_command & 3) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {
         amount = 0.0f;
-        if (entity->move_command & 1) {
+        if (entity->move_command & MOVE_COMMAND_FORWARD) {
             amount = -1.0f;
-        } else if (entity->move_command & 2) {
+        } else if (entity->move_command & MOVE_COMMAND_BACK) {
             amount = 1.0f;
         }
         vector[2] += amount;
     }
-    if (entity->move_command & 0xC) {
+    if (entity->move_command & MOVE_COMMAND_SIDEWAYS) {
         amount = 0.0f;
-        if (entity->move_command & 4) {
+        if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
             amount = 1.0f;
-        } else if (entity->move_command & 8) {
+        } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
             amount = -1.0f;
         }
         vector[0] += amount;
     }
-    if (entity->move_command & 0xF) {
+    if (entity->move_command & (MOVE_COMMAND_FORWARD_BACK | MOVE_COMMAND_SIDEWAYS)) {
         unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
         amount = unkE0->move_speed;
-        if (entity->move_command & 0x40) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             amount += amount;
         }
         if (entity->target != NULL) {

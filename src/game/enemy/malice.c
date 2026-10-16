@@ -176,13 +176,13 @@ static void Malice_Think(Entity *entity, s32 unknown) {
                 unkE0->step_index = 0;
             }
             if (unkE0->step_index != 0) {
-                entity->move_command |= 0x20;
+                entity->move_command |= MOVE_COMMAND_UP;
             } else {
-                entity->move_command |= 0x10;
+                entity->move_command |= MOVE_COMMAND_DOWN;
             }
         } else {
             unkE0->step_index = 0;
-            entity->move_command |= 0x10;
+            entity->move_command |= MOVE_COMMAND_DOWN;
         }
     }
     if (entity->busy_flags == 0 || (entity->busy_flags & (ENTITY_BUSY_1000 | ENTITY_BUSY_2000 | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
@@ -301,9 +301,9 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
@@ -321,7 +321,7 @@ static void Malice_Move(Entity *entity) {
             entity->move_command = 0;
         }
     }
-    if (entity->move_command & 1) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         return;
     }
@@ -339,12 +339,12 @@ static void Malice_ApplyMoveCommand(Entity *entity) {
     f32 limit;
 
     turn = 0.0f;
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -357,19 +357,19 @@ static void Malice_ApplyMoveCommand(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[1] = ENTITY_SCRATCH_VECTOR[2] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
     step = entity->params->speed_step_per_frame * 0.5f;
     limit = entity->params->max_speed * 0.2f;
-    if (entity->move_command & 1) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
         unkE0->part_angle_y -= entity->params->speed_step_per_frame;
         if (unkE0->part_angle_y < -entity->params->max_speed) {
             unkE0->part_angle_y = -entity->params->max_speed;
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         unkE0->part_angle_y += entity->params->speed_step_per_frame;
         if (entity->params->max_speed < unkE0->part_angle_y) {
             unkE0->part_angle_y = entity->params->max_speed;
@@ -381,12 +381,12 @@ static void Malice_ApplyMoveCommand(Entity *entity) {
     } else {
         unkE0->part_angle_y = 0.0f;
     }
-    if (entity->move_command & 4) {
+    if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         unkE0->move_speed += entity->params->speed_step_per_frame;
         if (entity->params->max_speed < unkE0->move_speed) {
             unkE0->move_speed = entity->params->max_speed;
         }
-    } else if (entity->move_command & 8) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         unkE0->move_speed -= entity->params->speed_step_per_frame;
         if (unkE0->move_speed < -entity->params->max_speed) {
             unkE0->move_speed = -entity->params->max_speed;
@@ -398,12 +398,12 @@ static void Malice_ApplyMoveCommand(Entity *entity) {
     } else {
         unkE0->move_speed = 0.0f;
     }
-    if (entity->move_command & 0x10) {
+    if (entity->move_command & MOVE_COMMAND_DOWN) {
         unkE0->part_angle_x -= step;
         if (unkE0->part_angle_x < -limit) {
             unkE0->part_angle_x = -limit;
         }
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         unkE0->part_angle_x += step;
         if (limit < unkE0->part_angle_x) {
             unkE0->part_angle_x = limit;
@@ -422,7 +422,7 @@ static void Malice_ApplyMoveCommand(Entity *entity) {
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
-    if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_RUN) {
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, 2.0f);
     }
     entity->move_delta_x += ENTITY_SCRATCH_VECTOR[0];

@@ -219,9 +219,9 @@ static void Minion_ThinkCombat(Entity *entity, s32 unknown) {
     if (unkE0->move_choice == 0) {
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
-            entity->move_command = 0x241;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
         } else if (turn < 0) {
-            entity->move_command = 0x141;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
         } else {
             entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
         }
@@ -475,12 +475,12 @@ static void Minion_Move(Entity *entity) {
     if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (unkE0->turn_rate > entity->params->turn_limit) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -489,12 +489,12 @@ static void Minion_Move(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
-    if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             EntityAi_StartSlotMotion(entity, &slots->unk80, 0, 4, 0, entity->params->motion_blend_frames >> 1, 0);
             if (unkE0->turn_in_place == 0) {
                 EntityAi_StartSlotMotion(entity, &slots->unk88, 1, 4, 0, entity->params->motion_blend_frames >> 1, 0);
@@ -505,7 +505,7 @@ static void Minion_Move(Entity *entity) {
                 EntityAi_StartSlotMotion(entity, &slots->unk88, 1, 3, 0, entity->params->motion_blend_frames >> 1, 0);
             }
         }
-    } else if (entity->move_command & 0x300) {
+    } else if (entity->move_command & MOVE_COMMAND_TURNS) {
         EntityAi_StartSlotMotion(entity, &slots->unk80, 0, 3, 0, entity->params->motion_blend_frames >> 1, 0);
         if (unkE0->turn_in_place == 0) {
             EntityAi_StartSlotMotion(entity, &slots->unk88, 1, 3, 0, entity->params->motion_blend_frames >> 1, 0);

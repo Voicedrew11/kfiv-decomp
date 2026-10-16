@@ -762,6 +762,29 @@ typedef struct {
 /* EntityController.flags: the type needs two pool blocks (0x100000 bytes) */
 #define CONTROLLER_FLAG_TWO_BLOCKS  0x8000
 
+/* Entity.move_command bits, one per move, along the model's own axes (it faces -z, its right is -x) */
+#define MOVE_COMMAND_FORWARD        0x1     /* moves along the model's facing (-z) at the move speed, animation 3 */
+#define MOVE_COMMAND_BACK           0x2     /* moves along +z, animation 5 */
+#define MOVE_COMMAND_STEP_LEFT      0x4     /* moves along +x, its left, animation 6 */
+#define MOVE_COMMAND_STEP_RIGHT     0x8     /* moves along -x, its right, animation 7 */
+#define MOVE_COMMAND_DOWN           0x10    /* moves along -y, animation 8 */
+#define MOVE_COMMAND_UP             0x20    /* moves along +y, animation 9 */
+#define MOVE_COMMAND_RUN            0x40    /* doubles the move speed and picks the run animation 4 */
+#define MOVE_COMMAND_TURN_LEFT      0x100   /* turns towards -yaw: the turn rate steps down to -turn_limit */
+#define MOVE_COMMAND_TURN_RIGHT     0x200   /* turns towards +yaw */
+#define MOVE_COMMAND_TURN_FAST      0x400   /* doubles this frame's turn (some handlers: for the run bit too) */
+#define MOVE_COMMAND_TURN_TO_TARGET 0x800   /* AcidCrawler_Move turns to Entity.target (EntityAi_TurnToPoint) instead */
+#define MOVE_COMMAND_ANIMATION_26   0x1000  /* plays animation 26 instead of standing: Npc watching a player in front */
+#define MOVE_COMMAND_ANIMATION_27   0x2000  /* plays animation 27: Npc watching a player to its left */
+#define MOVE_COMMAND_ANIMATION_28   0x4000  /* plays animation 28: Npc watching a player to its right */
+#define MOVE_COMMAND_8000           0x8000  /* AcidCrawler_Move plays animation 17; no C code sets it */
+/* groups of the direction and turn bits the move handlers test together */
+#define MOVE_COMMAND_FORWARD_BACK   0x3     /* the forward/back axis */
+#define MOVE_COMMAND_SIDEWAYS       0xC     /* the step left/right axis */
+#define MOVE_COMMAND_UP_DOWN        0x30    /* the up/down axis */
+#define MOVE_COMMAND_DIRECTIONS     0x3F    /* all six direction bits: the command moves the entity */
+#define MOVE_COMMAND_TURNS          0x300   /* either turn bit */
+
 typedef struct Entity {
     EntityModel *model;             /* 0x00 position at +0xC0; ENTITY_MODEL() is the ModelInstance view */
     char pad04[0x08];
@@ -813,10 +836,7 @@ typedef struct Entity {
     u8 choice_weights[4];           /* 0xBC weights of the four combat choices, 0x40 to 0xC0 */
     u8 attack_weights[6];           /* 0xC0 weights of the six attacks, 0x40 to 0xC0 */
     u16 busy_flags;                 /* 0xC6 the running action or reaction, ENTITY_BUSY_ bits; think waits while set */
-    /* 0xC8 this frame's movement command, for the move action: 1 forward, 2 back, 4 and 8 sideways,
-       0x10 and 0x20 up and down, 0x40 at the run, 0x100 and 0x200 turn, 0x400 turn at twice the speed.
-       EntityAi_Update clears it. */
-    u16 move_command;               /* 0xC8 this frame's movement command for the move action */
+    u16 move_command;               /* 0xC8 this frame's MOVE_COMMAND_ bits for the move action; EntityAi_Update clears it */
     s8 action_step;                 /* 0xCA step of the current action; EntityAi_StartAction puts it back to 0 */
     s8 reaction_step;               /* 0xCB step of the reaction (EntityUnkE0.reaction); EntityAi_SetReaction puts it back to 0 */
     /* 0xCC what the entity knows of the player (EntityAi_StepState): 0 nothing, 2 the player is noticed

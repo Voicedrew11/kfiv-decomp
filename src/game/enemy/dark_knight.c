@@ -333,9 +333,9 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             }
         } else if (work->unk6E != 0) {
             if (side > 0) {
-                entity->move_command = 0x241;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
             } else if (side < 0) {
-                entity->move_command = 0x141;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
             } else {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
@@ -345,12 +345,12 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
                 }
                 entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
             }
-            entity->move_command |= 0x400;
+            entity->move_command |= MOVE_COMMAND_TURN_FAST;
         } else {
             if (side > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (side < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
                     && frame_counter % 15U == 0 && !(rand() & 1)) {

@@ -244,9 +244,9 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->move_command = 0x202;
+                entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x102;
+                entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_LEFT);
             } else {
                 // match: called like EntityAi_MoveCommand, with a mode the callee ignores
                 entity->move_command = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
@@ -341,18 +341,18 @@ static void FireElemental_StandAndAttack(Entity *entity) {
         case 0:
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames, 0);
             if (turn > 0) {
-                entity->move_command = 0x241;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x141;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
             } else {
                 entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
             }
-            if (entity->move_command & 0x100) {
+            if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
                 unkE0->turn_rate -= entity->params->turn_step_per_frame;
                 if (unkE0->turn_rate < -entity->params->turn_limit) {
                     unkE0->turn_rate = -entity->params->turn_limit;
                 }
-            } else if (entity->move_command & 0x200) {
+            } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
                 unkE0->turn_rate += entity->params->turn_step_per_frame;
                 if (entity->params->turn_limit < unkE0->turn_rate) {
                     unkE0->turn_rate = entity->params->turn_limit;
@@ -361,7 +361,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
                 unkE0->turn_rate = 0.0f;
             }
             direction[0] = unkE0->turn_rate;
-            if (entity->move_command & 0x400) {
+            if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
                 direction[0] += direction[0];
             }
             entity->turn_delta_yaw += direction[0];
@@ -671,9 +671,9 @@ static void FireElemental_BackAwayFromPlayer(Entity *entity) {
         entity->target = &player_state;
         side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
-            entity->move_command = 0x202;
+            entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_RIGHT);
         } else if (side < 0) {
-            entity->move_command = 0x102;
+            entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_LEFT);
         } else {
             // match: called like EntityAi_MoveCommand, with a mode the callee ignores
             entity->move_command = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
@@ -692,12 +692,12 @@ static void FireElemental_Move(Entity *entity) {
     if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (unkE0->turn_rate > entity->params->turn_limit) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -706,28 +706,28 @@ static void FireElemental_Move(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
     unkE0->move_speed = 0.0f;
-    if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x10) {
+    } else if (entity->move_command & MOVE_COMMAND_DOWN) {
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 4) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         Motion_Start(entity, 6, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 8) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         Motion_Start(entity, 7, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x300) {
+    } else if (entity->move_command & MOVE_COMMAND_TURNS) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
@@ -804,9 +804,9 @@ static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
         }
         entity->target = entity->spawn_info;
         if (turn > 0) {
-            entity->move_command = 0x202;
+            entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_RIGHT);
         } else if (turn < 0) {
-            entity->move_command = 0x102;
+            entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_LEFT);
         } else {
             // match: called like EntityAi_MoveCommand, with a mode the callee ignores
             entity->move_command = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);

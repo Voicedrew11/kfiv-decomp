@@ -301,13 +301,13 @@ static void DarkArcher_MoveTurnOnly(Entity *entity) {
     f32 turn;
     f32 limit;
 
-    if (command & 0x100) {
+    if (command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         limit = -entity->params->turn_limit;
         if (unkE0->turn_rate < limit) {
             unkE0->turn_rate = limit;
         }
-    } else if (command & 0x200) {
+    } else if (command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         limit = entity->params->turn_limit;
         if (limit < unkE0->turn_rate) {
@@ -317,7 +317,7 @@ static void DarkArcher_MoveTurnOnly(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     turn = unkE0->turn_rate;
-    if (command & 0x400) {
+    if (command & MOVE_COMMAND_TURN_FAST) {
         turn *= 2.0f;
     }
     entity->turn_delta_yaw += turn;
@@ -524,9 +524,9 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
