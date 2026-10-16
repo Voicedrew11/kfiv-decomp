@@ -44,16 +44,16 @@ void Entity_AddGroupToWaiting(int);
 void MapItem_RollFixedItems(int);
 extern MapLoadState map_load_state;
 extern MapLoadRequest map_load_request;
-extern int D_00446794;
+extern int map_load_committed;
 extern MapSlot map_slots[];
 extern PlayerState player_state;
-extern int D_00446770;
-extern MapSlotMemory D_004321F0[2];
-extern char D_0043E710[];
-extern u32 D_00446F1C;
-extern int D_00446F20;
-extern char *D_00446F50;
-extern char *D_00446F54;
+extern int current_map_slot;
+extern MapSlotMemory map_slot_memory[2];
+extern char map_load_file_name_format[];
+extern u32 map_work_area_size;
+extern int map_file_area_size;
+extern char *map_file_area;
+extern char *map_work_area;
 
 /* Resets the background map load and the pending request. */
 void MapLoad_Reset(void) {
@@ -61,7 +61,7 @@ void MapLoad_Reset(void) {
     map_load_state.file_handle = -1;
     map_load_state.step = 0;
     map_load_state.request = NULL;
-    D_00446794 = 0;
+    map_load_committed = 0;
     map_load_request.x = 0.0f;
     map_load_request.y = 0.0f;
     map_load_request.z = 0.0f;
@@ -70,12 +70,12 @@ void MapLoad_Reset(void) {
 
 /* Starts, queues and steps the background load of the map next to where the player stands. */
 void MapLoad_Update(void) {
-    MapSlot *current = &map_slots[D_00446770];
-    MapSlot *other = (D_00446770 == 0) ? &map_slots[1] : &map_slots[0];
+    MapSlot *current = &map_slots[current_map_slot];
+    MapSlot *other = (current_map_slot == 0) ? &map_slots[1] : &map_slots[0];
     MapRecordInfo *record;
     MapLoadRequest *request;
 
-    if (D_00446794 != 0) {
+    if (map_load_committed != 0) {
         MapLoad_FinishAndEnter();
         return;
     }
@@ -155,26 +155,26 @@ void MapLoad_FinishAndEnter(void) {
     do {
         map_load_steps[map_load_state.step]();
     } while (map_load_state.step != 0);
-    Map_MakeCurrent(D_00446770 == 0);
-    player_state.position.x = ((MapSlotUnk08 *)map_slots[D_00446770].header)->player_start_x;
-    player_state.position.y = ((MapSlotUnk08 *)map_slots[D_00446770].header)->player_start_y;
-    player_state.position.z = ((MapSlotUnk08 *)map_slots[D_00446770].header)->player_start_z;
-    player_state.rotation.y = ((MapSlotUnk08 *)map_slots[D_00446770].header)->player_start_heading;
+    Map_MakeCurrent(current_map_slot == 0);
+    player_state.position.x = ((MapSlotUnk08 *)map_slots[current_map_slot].header)->player_start_x;
+    player_state.position.y = ((MapSlotUnk08 *)map_slots[current_map_slot].header)->player_start_y;
+    player_state.position.z = ((MapSlotUnk08 *)map_slots[current_map_slot].header)->player_start_z;
+    player_state.rotation.y = ((MapSlotUnk08 *)map_slots[current_map_slot].header)->player_start_heading;
     map_load_request.map = 0xFFFF;
-    D_00446794 = 0;
+    map_load_committed = 0;
     player_state.fall_speed = player_state.strafe_speed = player_state.walk_speed = 0.0f;
     player_state.look_speed = player_state.turn_speed = 0.0f;
     map_load_request.x = map_load_request.z = map_load_request.y = 0.0f;
     PLAYER_STATUS_BITS(&player_state)->bit34 = FALSE;
-    map_slots[D_00446770 == 0].loaded = 0;
-    Map_UnlinkSlotRecords(D_00446770 == 0);
-    Effect_FreeForMap(D_00446770 == 0);
-    MapObject_UnloadMap(D_00446770 == 0);
-    Entity_FreeAllInGroup(D_00446770 == 0);
-    Entity_ClearMapSlot(D_00446770 == 0);
-    Gold_UnlinkMap(D_00446770 == 0);
-    MapItem_UnloadMap(D_00446770 == 0);
-    LinkedPoint_ReleaseByKind(D_00446770 == 0);
+    map_slots[current_map_slot == 0].loaded = 0;
+    Map_UnlinkSlotRecords(current_map_slot == 0);
+    Effect_FreeForMap(current_map_slot == 0);
+    MapObject_UnloadMap(current_map_slot == 0);
+    Entity_FreeAllInGroup(current_map_slot == 0);
+    Entity_ClearMapSlot(current_map_slot == 0);
+    Gold_UnlinkMap(current_map_slot == 0);
+    MapItem_UnloadMap(current_map_slot == 0);
+    LinkedPoint_ReleaseByKind(current_map_slot == 0);
     func_001A15F8();
 }
 
@@ -184,8 +184,8 @@ void MapLoad_StartRequest(void) {
     int other_map;
     MapSlot *other;
 
-    other_map = D_00446770 == 0;
-    other = D_00446770 == 0 ? &map_slots[1] : &map_slots[0];
+    other_map = current_map_slot == 0;
+    other = current_map_slot == 0 ? &map_slots[1] : &map_slots[0];
     if (map_load_state.request != NULL) {
         if (other->loaded != 0) {
             other->loaded = 0;
@@ -214,45 +214,45 @@ void MapLoad_WaitTimer(void) {
 /* Map load step: once the drive is free, opens the requested map file and picks the memory it loads into. */
 void MapLoad_OpenFile(void) {
     char name[0x100];
-    MapSlotMemory *memory = (D_00446770 == 0) ? &D_004321F0[1] : &D_004321F0[0];
-    MapSlot *other = (D_00446770 == 0) ? &map_slots[1] : &map_slots[0];
-    MapSlot *current = &map_slots[D_00446770];
+    MapSlotMemory *memory = (current_map_slot == 0) ? &map_slot_memory[1] : &map_slot_memory[0];
+    MapSlot *other = (current_map_slot == 0) ? &map_slots[1] : &map_slots[0];
+    MapSlot *current = &map_slots[current_map_slot];
     u32 limit;
 
     if (File_IsLocked() == 0) {
-        sprintf(name, D_0043E710, map_load_state.request->map);
+        sprintf(name, map_load_file_name_format, map_load_state.request->map);
         do {
             map_load_state.file_handle = File_Open(name, 1, 1);
         } while (map_load_state.file_handle < 0);
         File_Lock();
         other->rounded_file_size = (File_GetSize(map_load_state.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
-        limit = D_00446F20;
+        limit = map_file_area_size;
         if (limit < (u32)(other->rounded_file_size + current->rounded_file_size)) {
             other->tag = map_load_state.request->map;
             for (;;) {
             }
         }
-        if (D_00446770 != 0) {
-            memory->file_base = D_00446F50;
-            memory->work_base = D_00446F54;
-            memory->file_read_cursor = D_00446F50;
-            memory->work_cursor = D_00446F54;
+        if (current_map_slot != 0) {
+            memory->file_base = map_file_area;
+            memory->work_base = map_work_area;
+            memory->file_read_cursor = map_file_area;
+            memory->work_cursor = map_work_area;
         } else {
-            memory->file_read_cursor = memory->file_base = D_00446F50 + limit - other->rounded_file_size;
-            memory->work_cursor = memory->work_base = D_00446F54 + D_00446F1C / 2;
+            memory->file_read_cursor = memory->file_base = map_file_area + limit - other->rounded_file_size;
+            memory->work_cursor = memory->work_base = map_work_area + map_work_area_size / 2;
         }
         memset(memory->file_base, 0, other->rounded_file_size);
-        memset(memory->work_base, 0, D_00446F1C / 2);
+        memset(memory->work_base, 0, map_work_area_size / 2);
         map_load_state.step++;
     }
 }
 
 /* Map load step: reads the next 0x80000 bytes of the map file, closing it at the end. */
 void MapLoad_ReadChunk(void) {
-    MapSlotMemory *memory = &D_004321F0[0];
+    MapSlotMemory *memory = &map_slot_memory[0];
 
-    if (D_00446770 == 0) {
-        memory = &D_004321F0[1];
+    if (current_map_slot == 0) {
+        memory = &map_slot_memory[1];
     }
     if (File_Read(map_load_state.file_handle, memory->file_read_cursor, 0x80000) > 0) {
         memory->file_read_cursor += 0x80000;
@@ -274,19 +274,19 @@ void MapLoad_WaitForChunk(void) {
 }
 
 /* Map load step 5: empty; the load rests here until MapLoad_Update or MapLoad_FinishAndEnter moves it on. */
-void func_00118538(void) {
+void MapLoad_WaitForSetUp(void) {
 }
 
 /* Map load step: sets up the loaded map in the other slot, shifted so that it joins the current one. */
 void MapLoad_SetUpMap(void) {
-    int other_slot = D_00446770 == 0;
+    int other_slot = current_map_slot == 0;
     f32 offset[4];
 
     offset[0] = -map_load_state.request->x;
     offset[1] = -map_load_state.request->y;
     offset[2] = -map_load_state.request->z;
     offset[3] = 0.0f;
-    if (D_00446794 == 0) {
+    if (map_load_committed == 0) {
         map_slots[other_slot].tag = map_load_state.request->map;
     } else {
         map_slots[other_slot].tag = map_load_request.map;
@@ -317,10 +317,10 @@ void MapLoad_ActivateMap(void) {
     int other_slot;
     f32 offset[4];
 
-    if (D_00446770 == 0) {
+    if (current_map_slot == 0) {
         slot = &map_slots[1];
     }
-    other_slot = D_00446770 == 0;
+    other_slot = current_map_slot == 0;
     offset[0] = -map_load_state.request->x;
     offset[1] = -map_load_state.request->y;
     offset[2] = -map_load_state.request->z;
@@ -332,7 +332,7 @@ void MapLoad_ActivateMap(void) {
     Entity_AddGroupToWaiting(other_slot);
     MapItem_RollFixedItems(other_slot);
     Entity_ClearFlag10InSlot(other_slot);
-    MapScroll_CarryPairs(D_00446770, other_slot);
+    MapScroll_CarryPairs(current_map_slot, other_slot);
     MapSetup_RunForMap(other_slot);
     Game_MarkMapVisited(slot->tag);
     map_load_state.position.x = map_load_state.request->x;

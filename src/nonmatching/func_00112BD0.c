@@ -114,12 +114,12 @@ typedef struct {
 extern MapSlot D_0038CD20[];
 extern MapDrawStateBlend D_0038A1B0;
 extern PlayerState D_00413F80;
-extern CameraState D_004325A0;
-extern f32 D_00431AF0[16];
-extern f32 D_004323E0[16];
-extern MapDrawRecord *D_00446778[2];
-extern MapDrawRecord *D_00446780[2];
-extern int D_00446770;
+extern CameraState camera_state;
+extern f32 identity_matrix[16];
+extern f32 world_screen_matrix[16];
+extern MapDrawRecord *record_draw_lists[2];
+extern MapDrawRecord *late_record_draw_lists[2];
+extern int current_map_slot;
 
 void *memset(void *, int, u32);
 float cosf(float);
@@ -161,8 +161,8 @@ void sceVu0TransMatrix(float *, float *, float *);
 #define FOG_DIFFERS(a, b) ((a).unk08 != (b)->unk08 || (a).unk0C != (b)->unk0C || (a).unk10 != (b)->unk10)
 
 #define CORNER_DISTANCE(x, z) \
-    delta_x = (x) - D_004325A0.position[0]; \
-    delta_z = (z) - D_004325A0.position[2]; \
+    delta_x = (x) - camera_state.position[0]; \
+    delta_z = (z) - camera_state.position[2]; \
     delta_x = ABS(delta_x); \
     delta_z = ABS(delta_z); \
     if (delta_x > delta_z) { \
@@ -171,7 +171,7 @@ void sceVu0TransMatrix(float *, float *, float *);
         distance = delta_z * 0.9604f + delta_x * 0.3978f; \
     }
 
-#define UPDATE_MODEL_MATRIX(record)     sceVu0CopyMatrix((record)->model->unk40, D_00431AF0);     MODEL_MATRIX((record)->model)[0][0] *= (record)->model->unkE0;     MODEL_MATRIX((record)->model)[1][1] *= (record)->model->unkE4;     MODEL_MATRIX((record)->model)[2][2] *= (record)->model->unkE8;     sceVu0RotMatrixX((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, (record)->model->rotation.x);     sceVu0RotMatrixY((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, (record)->model->rotation.y);     sceVu0RotMatrixZ((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, (record)->model->rotation.z);     sceVu0TransMatrix((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, &(record)->model->position.x);     func_00216B48((record)->model, D_004323E0, (record)->model->unk40);     for (k = 0; k < (record)->model->part_count; k++) {         func_0020B8B0((record)->model, &(record)->model->parts[k], &(record)->model->parts[k]);     }     sceVu0CopyMatrix((record)->model->unk80, (record)->model->unk40)
+#define UPDATE_MODEL_MATRIX(record)     sceVu0CopyMatrix((record)->model->unk40, identity_matrix);     MODEL_MATRIX((record)->model)[0][0] *= (record)->model->unkE0;     MODEL_MATRIX((record)->model)[1][1] *= (record)->model->unkE4;     MODEL_MATRIX((record)->model)[2][2] *= (record)->model->unkE8;     sceVu0RotMatrixX((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, (record)->model->rotation.x);     sceVu0RotMatrixY((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, (record)->model->rotation.y);     sceVu0RotMatrixZ((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, (record)->model->rotation.z);     sceVu0TransMatrix((f32 *)(record)->model->unk40, (f32 *)(record)->model->unk40, &(record)->model->position.x);     func_00216B48((record)->model, world_screen_matrix, (record)->model->unk40);     for (k = 0; k < (record)->model->part_count; k++) {         func_0020B8B0((record)->model, &(record)->model->parts[k], &(record)->model->parts[k]);     }     sceVu0CopyMatrix((record)->model->unk80, (record)->model->unk40)
 
 typedef struct {
     u8 red;
@@ -216,7 +216,7 @@ void func_00112BD0(void) {
     func_00116F90();
     func_001175F0();
 
-    slot = &D_0038CD20[D_00446770];
+    slot = &D_0038CD20[current_map_slot];
     fog = ((MapHeaderFog *)slot->header)->fog_colors[(u8)(RECORD_FLAGS(slot->records + D_00413F80.map_index * 0x80) >> 24) & 3];
     if ((D_0038A1B0.unk9C == 0 && (fog[0] != D_0038A1B0.fog[0] || fog[1] != D_0038A1B0.fog[1] || fog[2] != D_0038A1B0.fog[2])) ||
         (D_0038A1B0.unk9C != 0 && (fog[0] != D_0038A1B0.fog_to[0] || fog[1] != D_0038A1B0.fog_to[1] || fog[2] != D_0038A1B0.fog_to[2]))) {
@@ -294,9 +294,9 @@ void func_00112BD0(void) {
         }
     }
 
-    slot = &D_0038CD20[D_00446770];
+    slot = &D_0038CD20[current_map_slot];
     record = (MapDrawRecord *)slot->records + D_00413F80.map_index;
-    fog_block = &D_0038A1B0.unk290[D_00446770][record->unk34];
+    fog_block = &D_0038A1B0.unk290[current_map_slot][record->unk34];
     if ((D_0038A1B0.unk9A == 0 && FOG_DIFFERS(D_0038A1B0.unkA0, fog_block)) || (D_0038A1B0.unk9A != 0 && FOG_DIFFERS(D_0038A1B0.unk160, fog_block))) {
         D_0038A1B0.unk9A = 30;
         D_0038A1B0.unk140 = D_0038A1B0.unkA0;
@@ -346,9 +346,9 @@ void func_00112BD0(void) {
         }
     }
 
-    slot = &D_0038CD20[D_00446770];
+    slot = &D_0038CD20[current_map_slot];
     record = (MapDrawRecord *)slot->records + D_00413F80.map_index;
-    lights = &D_0038A1B0.unkA90[D_00446770].blocks[record->unk35];
+    lights = &D_0038A1B0.unkA90[current_map_slot].blocks[record->unk35];
     if ((D_0038A1B0.unk9B == 0 && LIGHTS_DIFFER(D_0038A1B0.unkC0, lights)) || (D_0038A1B0.unk9B != 0 && LIGHTS_DIFFER(D_0038A1B0.unk200, lights))) {
         D_0038A1B0.unk9B = 30;
         D_0038A1B0.unk180 = D_0038A1B0.unkC0;
@@ -373,8 +373,8 @@ void func_00112BD0(void) {
     }
 
     D_0038A1B0.mode = 0;
-    D_00446778[0] = D_00446778[1] = NULL;
-    D_00446780[0] = D_00446780[1] = NULL;
+    record_draw_lists[0] = record_draw_lists[1] = NULL;
+    late_record_draw_lists[0] = late_record_draw_lists[1] = NULL;
     cos_heading = cosf(D_00413F80.rotation.y);
     sin_heading = sinf(D_00413F80.rotation.y);
     player_x = D_00413F80.position.x;
@@ -422,7 +422,7 @@ void func_00112BD0(void) {
                         }
                     }
                 }
-                if (func_00116C08(D_00446770, D_00413F80.unk250, i, BOUNDS(record)->unk38) == 0) {
+                if (func_00116C08(current_map_slot, D_00413F80.unk250, i, BOUNDS(record)->unk38) == 0) {
                     continue;
                 }
                 BITS2(record)->in_view = TRUE;
@@ -436,11 +436,11 @@ void func_00112BD0(void) {
                     }
                 }
                 if (!(record->flags & 1)) {
-                    record->next = D_00446778[i];
-                    D_00446778[i] = record;
+                    record->next = record_draw_lists[i];
+                    record_draw_lists[i] = record;
                 } else {
-                    record->next = D_00446780[i];
-                    D_00446780[i] = record;
+                    record->next = late_record_draw_lists[i];
+                    late_record_draw_lists[i] = record;
                 }
                 if (record->flags < 0) {
                     func_00216778(&record->model->position, &D_00413F80);

@@ -1,5 +1,5 @@
 /* Load jobs: the step-by-step loaders that open a file, read it into a
-   buffer and close it, advancing the step counter D_00446858. */
+   buffer and close it, advancing the step counter bgm_load_step. */
 #ifndef KF_LOAD_H
 #define KF_LOAD_H
 
@@ -40,7 +40,7 @@ typedef struct {
     char *name;                     /* 0x08 */
 } LoadRequest;
 
-/* a node of the free list of upload buffers (D_005CE900[16], Menu_InitLoadBuffers) */
+/* a node of the free list of upload buffers (load_buffer_nodes[16], Menu_InitLoadBuffers) */
 typedef struct ChunkPoolNode {
     struct ChunkPoolNode *next;     /* 0x00 */
     void *buffer;                   /* 0x04 the loaded package: word 0 is its chunk count */
@@ -59,7 +59,8 @@ typedef struct ChunkUpload {
     char name[0x28];                /* 0x28 */
 } ChunkUpload;
 
-/* D_0043F730: the three stage handlers, copied to the stack before the call */
+/* the three stage handlers of a ChunkUpload (model_load_stages, stream_load_stages, package_load_stages in
+   kf_menu_screens.c), copied to the stack before the call */
 typedef struct {
     void (*stage[3])(void *upload);
 } ChunkUploadStages;
@@ -116,7 +117,7 @@ typedef struct {
     s32 done;                       /* 0x20 */
 } StreamSlot;
 
-/* D_0042A2A0[D_00446DEC]: one per block of the loaded menu file (MenuFile_IndexBlocks fills them in) */
+/* menu_file_blocks[menu_file_block_count]: one per block of the loaded menu file (MenuFile_IndexBlocks fills them in) */
 typedef struct {
     char pad00[0x10];
     void *data;                     /* 0x10 the block, handed to MenuTexture_Upload */
@@ -131,7 +132,7 @@ typedef struct {
     s32 unk0C;                      /* 0x0C */
 } PackageChunk;
 
-/* a loaded key item model (the buffer of a D_005CEF30[] upload, Menu_UpdateKeyItems) */
+/* a loaded key item model (the buffer of a key_item_model_loads[] upload, Menu_UpdateKeyItems) */
 typedef struct {
     char pad00[0x04];
     s32 part_offset;                /* 0x04 from 0x10 bytes into the file to its PoolPart */

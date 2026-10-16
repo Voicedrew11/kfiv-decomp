@@ -21,7 +21,7 @@ void EntityAi_SetState(char *, u8);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 // match: the size is unknown; a complete small type would be read through $gp
 extern f32 D_00446834[];
 void EntityAi_SensePlayer(void *, int);
@@ -49,8 +49,8 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_ClearTurnInPlace(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-extern int D_00414184[];
-extern f32 D_00431AF0[16];
+extern int entity_under_player[];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -144,7 +144,7 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 height;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
@@ -222,7 +222,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -334,7 +334,7 @@ done:
 /* The move handler: only picks the animation, 6 or 7 for command bits 4 and 8, 3 forward, 5
    backwards, else 0. DarkPuppet_ApplyMoveCommand does the turning and the moving. */
 static void DarkPuppet_Move(Entity *entity) {
-    if (entity == (Entity *)D_00414184[0]) {
+    if (entity == (Entity *)entity_under_player[0]) {
         if (entity->params->flags & 0x800) {
             entity->move_command = 0;
         }
@@ -452,7 +452,7 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[0] = unkE0->unk44;
     ENTITY_SCRATCH_VECTOR[1] = unkE0->unk48;
     ENTITY_SCRATCH_VECTOR[2] = unkE0->unk4C;
-    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->rotation[2]);
+    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);

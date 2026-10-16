@@ -6,9 +6,9 @@
 static PadReport *debug_pad; /* 0x447108 the controller report the editors read; nothing in the retail game sets it */
 
 int sprintf(char *, const char *, ...);
-extern char D_004468F0[];
-extern char D_004468F8[];
-static char D_005742E0[0x68]; /* 0x5742E0 the strings the debug menus draw, four bytes apart */
+extern char debug_cursor_mark[];
+extern char debug_cursor_blank[];
+static char debug_cursor_marks[0x68]; /* 0x5742E0 the strings the debug menus draw, four bytes apart */
 
 void func_001B0A58(void);
 void func_001B0A60(void);
@@ -23,18 +23,18 @@ void Packet_WaitForSend(void);
 void GsDraw_FillScreen(int, int, int, int, int);
 void Input_Update(void);
 void Display_SwapBuffers(int);
-extern DebugStartMenuSpacer D_0043EF70;
-extern DebugStartMenuPrompt D_0043EF90;
-extern DebugStartMenuItems D_0043EFD8;
+extern DebugStartMenuSpacer debug_start_menu_spacer;
+extern DebugStartMenuPrompt debug_start_menu_prompt;
+extern DebugStartMenuItems debug_start_menu_items;
 extern u16 pad_state[];
-extern s64 D_00432E20[];
-extern s64 D_00433050[];
-extern char D_0043F1D8[];
-extern char D_00446900[];
-extern char D_00446908[];
-extern char D_00446910[];
+extern s64 game_dbuff_clear_color[];
+extern s64 game_dbuff_context2_clear_color[];
+extern char debug_map_format[];
+extern char debug_ini_prompt[];
+extern char debug_ini_digit_format[];
+extern char debug_ini_line_end[];
 
-/* Wraps the cursor into 0..count-1 and writes ">>" for its line and "  " for the others into D_005742E0.
+/* Wraps the cursor into 0..count-1 and writes ">>" for its line and "  " for the others into debug_cursor_marks.
    Nothing calls it. */
 void Debug_MarkCursorLine(int *cursor, int count) {
     int i;
@@ -47,9 +47,9 @@ void Debug_MarkCursorLine(int *cursor, int count) {
     }
     for (i = 0; i < count; i++) {
         if (i == *cursor) {
-            sprintf(&D_005742E0[i * 4], D_004468F0);
+            sprintf(&debug_cursor_marks[i * 4], debug_cursor_mark);
         } else {
-            sprintf(&D_005742E0[i * 4], D_004468F8);
+            sprintf(&debug_cursor_marks[i * 4], debug_cursor_blank);
         }
     }
 }
@@ -236,9 +236,9 @@ void func_001B0A70(void) {
 /* Debug start menu: waits on a PUSH START screen, then lets up and down pick one of four
    lines (the first is NEW GAME). Returns the line chosen, or -1. */
 int Debug_RunStartMenu(void) {
-    DebugStartMenuSpacer spacer = D_0043EF70;
-    DebugStartMenuPrompt prompt = D_0043EF90;
-    DebugStartMenuItems items = D_0043EFD8;
+    DebugStartMenuSpacer spacer = debug_start_menu_spacer;
+    DebugStartMenuPrompt prompt = debug_start_menu_prompt;
+    DebugStartMenuItems items = debug_start_menu_items;
     int chosen = -1;
     int running = TRUE;
     int selected;
@@ -303,14 +303,14 @@ int Debug_PickMap(int *map_id) {
     u16 pressed;
     u16 held;
 
-    saved_colours[0] = D_00432E20[0];
-    saved_colours[1] = D_00432E20[30];
-    saved_colours[2] = D_00433050[0];
-    saved_colours[3] = D_00433050[30];
-    D_00432E20[0] = 0xC000L << 17;
-    D_00432E20[30] = 0xC000L << 17;
-    D_00433050[0] = 0xC000L << 17;
-    D_00433050[30] = 0xC000L << 17;
+    saved_colours[0] = game_dbuff_clear_color[0];
+    saved_colours[1] = game_dbuff_clear_color[30];
+    saved_colours[2] = game_dbuff_context2_clear_color[0];
+    saved_colours[3] = game_dbuff_context2_clear_color[30];
+    game_dbuff_clear_color[0] = 0xC000L << 17;
+    game_dbuff_clear_color[30] = 0xC000L << 17;
+    game_dbuff_context2_clear_color[0] = 0xC000L << 17;
+    game_dbuff_context2_clear_color[30] = 0xC000L << 17;
     do {
         Display_SwapBuffers(0);
         Pad_Update();
@@ -340,7 +340,7 @@ int Debug_PickMap(int *map_id) {
         }
         Packet_SwapBuffers();
         func_001095D0();
-        Message_DebugPrintf(D_0043F1D8, map);
+        Message_DebugPrintf(debug_map_format, map);
         Message_Update();
         func_001095D8();
         Packet_SendChain();
@@ -356,10 +356,10 @@ int Debug_PickMap(int *map_id) {
         Pad_Update();
         report = Pad_GetReport(0, 0);
     } while (report->held != 0);
-    D_00432E20[0] = saved_colours[0];
-    D_00432E20[30] = saved_colours[1];
-    D_00433050[0] = saved_colours[2];
-    D_00433050[30] = saved_colours[3];
+    game_dbuff_clear_color[0] = saved_colours[0];
+    game_dbuff_clear_color[30] = saved_colours[1];
+    game_dbuff_context2_clear_color[0] = saved_colours[2];
+    game_dbuff_context2_clear_color[30] = saved_colours[3];
     return confirmed;
 }
 
@@ -381,14 +381,14 @@ void Debug_EditIniNumber(int *value) {
     digits[1] = *value / 10 % 10;
     digits[2] = *value / 100 % 10;
     digits[3] = *value / 1000 % 10;
-    saved_colours[0] = D_00432E20[0];
-    saved_colours[1] = D_00432E20[30];
-    saved_colours[2] = D_00433050[0];
-    saved_colours[3] = D_00433050[30];
-    D_00432E20[0] = 0xC000L << 17;
-    D_00432E20[30] = 0xC000L << 17;
-    D_00433050[0] = 0xC000L << 17;
-    D_00433050[30] = 0xC000L << 17;
+    saved_colours[0] = game_dbuff_clear_color[0];
+    saved_colours[1] = game_dbuff_clear_color[30];
+    saved_colours[2] = game_dbuff_context2_clear_color[0];
+    saved_colours[3] = game_dbuff_context2_clear_color[30];
+    game_dbuff_clear_color[0] = 0xC000L << 17;
+    game_dbuff_clear_color[30] = 0xC000L << 17;
+    game_dbuff_context2_clear_color[0] = 0xC000L << 17;
+    game_dbuff_context2_clear_color[30] = 0xC000L << 17;
     do {
         Display_SwapBuffers(0);
         Pad_Update();
@@ -406,12 +406,12 @@ void Debug_EditIniNumber(int *value) {
         Packet_SwapBuffers();
         func_001095D0();
         Message_DebugSetColor(9);
-        Message_DebugPrintf(D_00446900);
+        Message_DebugPrintf(debug_ini_prompt);
         for (i = 3; i >= 0; i--) {
             Message_DebugSetColor((cursor == i) ? 8 : 9);
-            Message_DebugPrintf(D_00446908, digits[i]);
+            Message_DebugPrintf(debug_ini_digit_format, digits[i]);
         }
-        Message_DebugPrintf(D_00446910);
+        Message_DebugPrintf(debug_ini_line_end);
         Message_Update();
         func_001095D8();
         Packet_SendChain();
@@ -426,8 +426,8 @@ void Debug_EditIniNumber(int *value) {
         Pad_Update();
         report = Pad_GetReport(0, 0);
     } while (report->held != 0);
-    D_00432E20[0] = saved_colours[0];
-    D_00432E20[30] = saved_colours[1];
-    D_00433050[0] = saved_colours[2];
-    D_00433050[30] = saved_colours[3];
+    game_dbuff_clear_color[0] = saved_colours[0];
+    game_dbuff_clear_color[30] = saved_colours[1];
+    game_dbuff_context2_clear_color[0] = saved_colours[2];
+    game_dbuff_context2_clear_color[30] = saved_colours[3];
 }

@@ -23,7 +23,7 @@ int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 float EntityMath_HeadingTo(float *, float *);
 float EntityMath_AngleDifference(float, float);
 float EntityMath_StepToward(float *, float, float);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 int rand(void);
 char *Model_GetSkinnedBonePoint(char *, u32);
 int EntityAi_LaunchShot(void *, int, void *, void *);
@@ -265,7 +265,7 @@ static void AcidCrawler_Think(Entity *entity, s32 unknown) {
             unkE0->sub_timer--;
         }
     }
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {

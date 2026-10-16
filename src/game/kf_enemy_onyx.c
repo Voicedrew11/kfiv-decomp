@@ -17,7 +17,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -151,7 +151,7 @@ void Onyx_Init(Entity *entity) {
 static void Onyx_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (unkE0->reload_timer > 0) {
@@ -213,7 +213,7 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -326,7 +326,7 @@ static void Onyx_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->unk82 >= entity->params->near_distance
             && entity->model->level_tables->unk82 <= entity->params->far_distance) {
             ENTITY_FLAGS(entity) |= 0x200;
-            if (D_00446ED4 % 3U != 0) {
+            if (frame_counter % 3U != 0) {
                 EntityAi_LaunchShots(entity, unk3D8, entity->params->near_distance, entity->params->far_distance);
             }
         }

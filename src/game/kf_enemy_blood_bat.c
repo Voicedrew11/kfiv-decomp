@@ -16,7 +16,7 @@ extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn3D(char *);
@@ -39,7 +39,7 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -124,7 +124,7 @@ static void BloodBat_Animate(Entity *entity) {
 static void BloodBat_Think(Entity *entity, s32 unknown) {
     u32 phase;
 
-    phase = D_00446ED4 % 10U;
+    phase = frame_counter % 10U;
     if (phase == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -266,7 +266,7 @@ static int BloodBat_ThinkCombat(void *entity_arg, int unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -396,7 +396,7 @@ static void BloodBat_Move(Entity *entity) {
             if (entity->move_command & 0x40) {
                 amount += amount;
             }
-            sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->rotation[2]);
+            sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
             sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
             sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
             Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);

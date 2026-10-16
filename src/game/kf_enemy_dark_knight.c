@@ -21,7 +21,7 @@ void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionHeavy(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 extern PlayerData player_state;
 int rand(void);
 float sqrtf(float);
@@ -150,7 +150,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
     f32 *second_aim;
     u16 frames;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     unkE0->pose_blend_weight = 0.5f;
@@ -215,7 +215,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
         unkE0->mode_timer = entity->params->unk43A;
     }
     if (unkE0->sub_timer > 0) {
-        if (D_00446ED4 % 3U == 0) {
+        if (frame_counter % 3U == 0) {
             EntityEvent_StartEffectAtPoint((char **)entity, 0x25C, 0, (int)entity->model->rotation);
         }
         ENTITY_FLAGS(entity) |= 0x8000L << 20;
@@ -280,7 +280,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
@@ -338,7 +338,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
                 entity->move_command = 0x141;
             } else {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
-                    && D_00446ED4 % 15U == 0 && !(rand() & 1)) {
+                    && frame_counter % 15U == 0 && !(rand() & 1)) {
                     unkE0->action_flags = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, unknown);
                     return;
@@ -353,7 +353,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
                 entity->move_command = 0x101;
             } else {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
-                    && D_00446ED4 % 15U == 0 && !(rand() & 1)) {
+                    && frame_counter % 15U == 0 && !(rand() & 1)) {
                     unkE0->action_flags = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, DarkKnight_PlayTurnAnim, unknown);
                     return;
@@ -780,7 +780,7 @@ static s32 DarkKnight_PickCombatChoice(Entity *entity, s32 mode) {
     }
     for (i = 0; i < 4; i++) {
         if (i == entity->combat_choice) {
-            elapsed = (u16)D_00446ED4 - entity->choice_change_frame;
+            elapsed = (u16)frame_counter - entity->choice_change_frame;
             if (elapsed < 240) {
                 fade = 0x80 - (elapsed * (elapsed << 7)) / 57600;
                 fade += 0x80;

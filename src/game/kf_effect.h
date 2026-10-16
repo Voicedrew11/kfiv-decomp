@@ -10,7 +10,7 @@
 #define EFFECT_COUNT 0x180          /* effects (EffectActor) */
 #define EFFECT_DEF_COUNT 0x400      /* entries of the definition table param/sfx.prm */
 
-/* the effect's definition, EffectActor.def: one 0x120-byte entry of the table at D_00502260.
+/* the effect's definition, EffectActor.def: one 0x120-byte entry of effect_table.
    Three channels are keyframed over the effect's life: keys_a (EffectKeys_ApplyScale), keys_b
    (EffectKeys_ApplySpin) and the colour (EffectKeys_ApplyColour), each at frames 0, two own keyframes and
    keyframe_end. Most kinds read the fields from rotation_base on their own way. */
@@ -751,7 +751,7 @@ typedef struct {
 typedef struct {
     struct Entity *entity[4];       /* 0x00 */
     f32 distance[4];                /* 0x10 */
-    s8 list_index[4];               /* 0x20 where the entity is in the list D_004467E0, -1: none (EffectPickTargets_Start) */
+    s8 list_index[4];               /* 0x20 where the entity is in the list active_entities_head, -1: none (EffectPickTargets_Start) */
     char pad24[0x0C];
 } PickedMotion;
 
@@ -869,7 +869,7 @@ typedef struct {
     char pad25[0x0B];
 } HomingBobMotion;
 
-/* one 0xA0-byte effect of the pool D_003F3550 (0x180 of them) */
+/* one 0xA0-byte effect of effect_pool (0x180 of them) */
 typedef struct EffectActor {
     char pad00[0x0C];
     f32 scale;                      /* 0x0C */
@@ -907,7 +907,7 @@ typedef struct {
 #define EFFECT_FLAG_HAS_SLOTS (0x8000L << 42)      /* bit 57: free its spawner slots with it */
 #define EFFECT_FLAG_HAS_TARGETERS (0x8000L << 43)  /* bit 58: free the effects aimed at it with it */
 
-/* D_00502260[effect id]: an effect's definition-table entry (0x120 bytes) */
+/* effect_table[effect id]: an effect's definition-table entry (0x120 bytes) */
 typedef struct {
     char pad00[0x108];
     u64 pad108 : 16;
@@ -948,7 +948,7 @@ typedef struct {
     s64 flags;                      /* 0xD8 */
 } EffectTarget;
 
-/* one 0x50-byte slot of the effect spawner pool D_003F1750 (0x60 of them) */
+/* one 0x50-byte slot of the effect spawner pool, effect_slots (0x60 of them) */
 typedef struct {
     Vector4 position;               /* 0x00 */
     Vector4 unk10;                  /* 0x10 */
@@ -1049,8 +1049,8 @@ typedef struct {
     char pad10C[0x04];
 } FxTableEntry;
 
-extern EffectActor D_003F3550[EFFECT_COUNT]; /* the effect pool (kf_effect.c) */
-extern int D_004468C8;                       /* live effects that hold a sound slot */
+extern EffectActor effect_pool[EFFECT_COUNT]; /* the effect pool (kf_effect.c) */
+extern int effect_sound_count;                       /* live effects that hold a sound slot */
 
 /* kf_effect.c: the spawner slot and effect pools */
 void Effect_Init(void);

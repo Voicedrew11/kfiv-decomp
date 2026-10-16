@@ -175,9 +175,9 @@ void ScriptCmd_WalkEntityTo();
 void ScriptCmd_WalkEntityToFlat();
 
 extern u8 map_script_flags[];
-extern u8 D_0034B690[];
+extern u8 story_flags[];
 extern u8 entity_group_state[];
-extern u8 D_0034C518[];
+extern u8 story_values[];
 extern u8 weapon_level_records[];
 extern u8 trade_stock_1[];
 extern u8 trade_stock_2[];
@@ -186,35 +186,26 @@ extern u8 trade_stock_4[];
 extern u8 game_status[];
 extern u8 pad_state[];
 extern u8 player_state[];
-extern u8 D_00420D00[];
-extern u8 D_004325A0[];
+extern u8 view_ray_status[];
+extern u8 camera_state[];
 extern u32 D_004335D0[0x10];
 extern u32 D_00433610[0x10];
-extern u16 D_0044692C;
-extern u16 D_0044692E;
-extern u16 D_00446930;
-extern u16 D_00446932;
-extern u16 D_00446934;
-extern u16 D_00446936;
-extern s16 D_00446938;
-extern s16 D_0044693A;
-extern u16 D_0044693C;
-extern s16 D_0044693E;
-extern u16 D_00446940;
-extern s16 D_00446944;
-extern u8 blocks[];
-extern u8 commands[];
-extern u8 fill[];
-extern u8 game[];
+extern u16 forward_button;
+extern u16 back_button;
+extern u16 turn_right_button;
+extern u16 turn_left_button;
+extern u16 step_right_button;
+extern u16 step_left_button;
+extern u16 look_down_button;
+extern u16 look_up_button;
+extern u16 attack_button;
+extern u16 magic_button;
+extern u16 action_button;
+extern u16 shortcut_button;
 extern u8 item_counts[];
-extern u8 of[];
 extern u8 spell_levels[];
-extern u8 the[];
-extern u8 to[];
-extern u8 variables[];
-extern u8 zero[];
 
-ScriptCommandHandler D_004331B0[0x64] = {
+ScriptCommandHandler script_general_command_handlers[0x64] = {
     ScriptCmd_Stall, ScriptCmd_Wait, ScriptCmd_RunScript, ScriptCmd_Nop3,
     ScriptCmd_WaitForever4, ScriptCmd_StopAllScripts, ScriptCmd_Nop6, ScriptCmd_Nop7,
     ScriptCmd_Nop8, ScriptCmd_StoreUninitializedResult9, ScriptCmd_StoreUninitializedResult10, ScriptCmd_Stall,
@@ -242,11 +233,11 @@ ScriptCommandHandler D_004331B0[0x64] = {
     ScriptCmd_Stall, ScriptCmd_Stall, ScriptCmd_Stall, ScriptCmd_Stall,
 }; /* 0x4331B0 commands 0 to 0x63 */
 
-u8 *D_00433340[0x40] = {
-    game_status, D_004325A0, player_state, D_00420D00,
+u8 *script_game_var_blocks[0x40] = {
+    game_status, camera_state, player_state, view_ray_status,
     item_counts, trade_stock_1, trade_stock_2, trade_stock_3,
-    trade_stock_4, spell_levels, map_script_flags, D_0034B690,
-    entity_group_state, (u8 *)D_004335D0, (u8 *)D_00433610, D_0034C518,
+    trade_stock_4, spell_levels, map_script_flags, story_flags,
+    entity_group_state, (u8 *)D_004335D0, (u8 *)D_00433610, story_values,
     weapon_level_records, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
@@ -255,13 +246,13 @@ u8 *D_00433340[0x40] = {
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
     NULL, 0x00000000, 0x00000000, 0x00000000,
-    NULL, 0x00000000, pad_state, (u8 *)&D_0044692C,
-    (u8 *)&D_0044692E, (u8 *)&D_00446930, (u8 *)&D_00446932, (u8 *)&D_00446934,
-    (u8 *)&D_00446936, (u8 *)&D_00446938, (u8 *)&D_0044693A, (u8 *)&D_0044693C,
-    NULL, (u8 *)&D_0044693E, (u8 *)&D_00446940, (u8 *)&D_00446944,
+    NULL, 0x00000000, pad_state, (u8 *)&forward_button,
+    (u8 *)&back_button, (u8 *)&turn_right_button, (u8 *)&turn_left_button, (u8 *)&step_right_button,
+    (u8 *)&step_left_button, (u8 *)&look_down_button, (u8 *)&look_up_button, (u8 *)&attack_button,
+    NULL, (u8 *)&magic_button, (u8 *)&action_button, (u8 *)&shortcut_button,
 }; /* 0x433340 the blocks of game variables */
 
-ScriptCommandHandler D_00433440[0x64] = {
+ScriptCommandHandler script_world_command_handlers[0x64] = {
     ScriptCmd_PlaceMapItem, ScriptCmd_StartItemPickup, ScriptCmd_MoveItemTo, ScriptCmd_TurnItemTo,
     ScriptCmd_DropItemFromEntity, ScriptCmd_MoveItemBy, ScriptCmd_TurnItemBy, ScriptCmd_GetItemPosition,
     ScriptCmd_GetItemRotation, ScriptCmd_Nop109, ScriptCmd_ActivateMapObject, ScriptCmd_DeactivateMapObject,
@@ -293,7 +284,7 @@ u32 D_004335D0[0x10]                         = { 0 }; /* 0x4335D0 zero fill */
 
 u32 D_00433610[0x10]                         = { 0 }; /* 0x433610 zero fill */
 
-ScriptCommandHandler D_00433650[0x64] = {
+ScriptCommandHandler script_entity_command_handlers[0x64] = {
     ScriptCmd_Nop200, ScriptCmd_Nop201, ScriptCmd_Nop202, ScriptCmd_Nop203,
     ScriptCmd_Nop204, ScriptCmd_Nop205, ScriptCmd_Nop206, ScriptCmd_Nop207,
     ScriptCmd_Nop208, ScriptCmd_Nop209, ScriptCmd_Nop210, ScriptCmd_Nop211,

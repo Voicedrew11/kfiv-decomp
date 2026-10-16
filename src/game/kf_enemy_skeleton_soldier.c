@@ -17,7 +17,7 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -98,7 +98,7 @@ void SkeletonSoldier_Init(Entity *entity) {
 static void SkeletonSoldier_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
@@ -254,7 +254,7 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
 static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->spawn_info->spawn_mode == 3 && EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) > 180.0f) {
@@ -369,7 +369,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
 static void SkeletonSoldier_ThinkNoStates(Entity *entity, s32 unknown) {
     u32 phase;
 
-    phase = D_00446ED4 % 10U;
+    phase = frame_counter % 10U;
     if (phase == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -410,7 +410,7 @@ static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 unknown)
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         if (entity->combat_choice == 0) {

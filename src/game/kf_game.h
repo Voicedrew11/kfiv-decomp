@@ -61,7 +61,7 @@ typedef struct {
 
 #define GAME_STATUS_FLAG_WORD(status) (((GameStatusFlagWord *)(status))->flags)
 
-/* D_00446A28: the play time as PlayTime_ComputeCurrent splits it (byte 1 seconds, 2 minutes, 3 and 5 hours), passed by value */
+/* current_play_time: the play time as PlayTime_ComputeCurrent splits it (byte 1 seconds, 2 minutes, 3 and 5 hours), passed by value */
 typedef struct {
     char bytes[8];
 } PlayTime;
@@ -76,7 +76,7 @@ typedef struct {
 #define SAVE_MAGIC      0x15400
 #define SAVE_BLOCK_SIZE 0x80
 
-/* D_004325A0 (the camera, it seems). Other files still declare it as float[],
+/* camera_state (the camera, it seems). Other files still declare it as float[],
    so the extern stays in each file. */
 typedef struct {
     f32 position[4];                /* 0x00 */
@@ -98,7 +98,8 @@ typedef struct {
     s32 entity_shake_frames;        /* 0x7C frames of it left */
 } CameraState;
 
-/* D_00420D00: the event runner */
+/* view_ray_status: the view ray from the player's eyes and what it finds in front of him (Interact_UpdateViewRay,
+   Interact_FindTarget), and the event being run */
 typedef struct {
     f32 view_origin[4];             /* 0x00 a position the camera is put in front of (GameLoop_UpdateCamera) */
     f32 view_direction[4];          /* 0x10 a direction from it */
@@ -127,7 +128,7 @@ typedef struct {
 } ViewerEntry;
 
 /* four texture coordinates, one per corner of the viewer's player marker: a local table MapViewer_DrawPictureMap
-   copies whole from read-only data (D_0043E760, D_0043E770) */
+   copies whole from read-only data (viewer_marker_corner_us, viewer_marker_corner_vs) */
 typedef struct {
     s32 values[4];                  /* 0x00 */
 } ViewerCornerTable;
@@ -269,7 +270,7 @@ typedef struct {
     int value;
 } __attribute__((packed)) UnalignedInt;
 
-/* D_0043E460: the x offsets Game_DrawHazeLayersShifted cycles its sprites through */
+/* haze_layer_x_offsets: the x offsets Game_DrawHazeLayersShifted cycles its sprites through */
 typedef struct {
     int x[3];
 } LayerOffsets;
@@ -279,15 +280,15 @@ typedef struct {
     int points[8][11][2];
 } __attribute__((aligned(16))) RippleGrid;
 
-/* a node of the doubly linked list at D_004469D4 */
+/* a node of the doubly linked list at lying_items */
 typedef struct ListNode {
     char pad00[0x20];
     struct ListNode *prev;          /* 0x20 */
     struct ListNode *next;          /* 0x24 */
 } ListNode;
 
-/* D_0042A8F0[32]: a pool of 0x70-byte slots chained into a free list through `next`;
-   D_00446DF0 holds the head */
+/* pool_slots[32]: a pool of 0x70-byte slots chained into a free list through `next`;
+   pool_slot_free_list holds the head */
 typedef struct PoolSlot {
     char pad00[0x40];
     struct PoolSlot *unk40;         /* 0x40 another slot, picked by a byte of the part's record (PoolSlot_LoadGroup) */
@@ -426,7 +427,7 @@ typedef struct {
     PoolPartMaterial *strip_at;     /* 0x188 */
     u32 *cursor;                    /* 0x18C */
     f32 (*screen_points)[4];        /* 0x190 the part's points on the screen, 12.4 fixed point */
-    f32 (*work)[4];                 /* 0x194 D_00446D40 */
+    f32 (*work)[4];                 /* 0x194 part_work_buffer */
     f32 (*normals)[4];              /* 0x198 the part's normals in the world */
     char pad19C[0x04];
     s32 unk1A0[4];                  /* 0x1A0 0, 0, 0, 0x80; stored as one quadword */
@@ -451,7 +452,7 @@ typedef struct {
 
 #define POOL_DRAW_SCRATCH_CURSOR(scratch) (((PoolDrawScratchCursorView *)(scratch))->cursor)
 
-/* the two places in GS memory that MenuModel_DrawTinted and MenuModel_Draw pick a palette's from (D_00440DC0) */
+/* the two places in GS memory that MenuModel_DrawTinted and MenuModel_Draw pick a palette's from (their local clut_pages) */
 typedef struct {
     u64 pages[2];                   /* 0x00 */
 } PoolClutPages;

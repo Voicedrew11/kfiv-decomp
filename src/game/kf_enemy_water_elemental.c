@@ -17,7 +17,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 extern PlayerData player_state;
 int rand(void);
 void EntityAi_SensePlayer(void *, int);
@@ -115,7 +115,7 @@ static void WaterElemental_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0;
 
     unkE0 = &entity->unkE0;
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (unkE0->mode_timer > 0) {
@@ -182,7 +182,7 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
         entity->flags = (entity->flags & ~0x3800) | 0x800;
     }
     if ((entity->distance_to_player < entity->radius + 400.0f
-         && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 1.5707964f && D_00446ED4 % 15U == 0
+         && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 1.5707964f && frame_counter % 15U == 0
          && rand() % 50 < 80)
         || WaterElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
@@ -202,7 +202,7 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         // match: called with the entity alone here
         ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
@@ -250,7 +250,7 @@ static void WaterElemental_ThinkCombat(Entity *entity, s32 unknown) {
                 entity->move_command = 0x141;
             } else {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
-                    && D_00446ED4 % 15U == 0 && !(rand() & 1)) {
+                    && frame_counter % 15U == 0 && !(rand() & 1)) {
                     unkE0->step_index = (EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1]) > 0.0f) ? 1 : -1;
                     EntityAi_StartAction(entity, WaterElemental_PlayTurnAnim, unknown);
                     return;
@@ -377,7 +377,7 @@ static s32 WaterElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32
 static void WaterElemental_AlertSameKind(Entity *entity) {
     Entity *other;
 
-    for (other = D_004467E0; other != NULL; other = other->next) {
+    for (other = active_entities_head; other != NULL; other = other->next) {
         if (entity->params == other->params && ((s32)other->flags & 1) && ((s32)(other->flags >> 1) & 1)
             && ((s32)(other->flags >> 2) & 3) == 0 && other != entity) {
             EntityUnkE0 *unkE0 = &other->unkE0;
@@ -464,7 +464,7 @@ static void WaterElemental_RunAtPlayer(Entity *entity) {
             entity->prev_combat_choice = entity->combat_choice;
             entity->combat_choice = 0;
             if (entity->prev_combat_choice != 0) {
-                entity->choice_change_frame = D_00446ED4;
+                entity->choice_change_frame = frame_counter;
             }
             EntityAi_LowerChoiceWeight(entity, 0);
             if (entity->combat_choice == 0) {

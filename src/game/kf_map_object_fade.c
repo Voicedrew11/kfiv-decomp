@@ -13,8 +13,8 @@ void Vector_ApplyMatrix(void *, void *, void *);
 float atan2f(float, float);
 void Vector_MultiplyComponents(float *, float *, float *);
 extern float player_state[];
-extern float D_004325A0[];
-extern f32 D_00431B30[4][4];
+extern float camera_state[];
+extern f32 scale_matrices[4][4];
 
 /* Start handler of the kind that fades with the distance to the player: takes
    the two distances and the two alphas from its source and starts invisible. */
@@ -66,7 +66,7 @@ void MapObject_UpdateDistanceFade(MapObject *object) {
 }
 
 /* Rebuilds the model matrices of an object whose parts always face the camera:
-   each part is put where it sits in the world and turned toward D_004325A0. */
+   each part is put where it sits in the world and turned toward camera_state. */
 void MapObject_RebuildBillboardMatrices(MapObject *object) {
     f32 matrix[16];
     Vector4 world;
@@ -100,7 +100,7 @@ void MapObject_RebuildBillboardMatrices(MapObject *object) {
     for (; i < part_count; i++) {
         Matrix_Multiply(matrix, object->model->model_matrix, part);
         Vector_ApplyMatrix(&world, matrix, &unit);
-        Vector_Subtract(&delta, D_004325A0, &world);
+        Vector_Subtract(&delta, camera_state, &world);
         pitch = atan2f(delta.y, sqrtf(delta.x * delta.x + delta.z * delta.z));
         yaw = atan2f(-delta.x, -delta.z);
         part->position[0] = world.x;
@@ -119,6 +119,6 @@ void MapObject_RebuildBillboardMatrices(MapObject *object) {
         ModelMatrix_BuildPartLocal(object->model, part, part);
         part++;
     }
-    sceVu0CopyMatrix(object->model->model_matrix, D_00431B30);
+    sceVu0CopyMatrix(object->model->model_matrix, scale_matrices);
     object->model->update_bone_points(object->model);
 }

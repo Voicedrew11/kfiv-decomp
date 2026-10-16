@@ -20,7 +20,7 @@
 
 /* the kinds of argument (the low byte of an argument's opcode word) */
 #define SCRIPT_ARG_CONSTANT         0       /* the type is in the high half */
-#define SCRIPT_ARG_GAME_VAR         1       /* a variable in one of the blocks of D_00433340 */
+#define SCRIPT_ARG_GAME_VAR         1       /* a variable in one of the blocks of script_game_var_blocks */
 #define SCRIPT_ARG_LOCAL_VAR        2       /* one of the thread's own variables */
 #define SCRIPT_ARG_SHARED_VAR       3       /* one of the variables all threads share */
 #define SCRIPT_ARG_OUT_GAME_VAR     0x11    /* the same three, where a command writes its answer */
@@ -33,7 +33,7 @@
 /* a command number with this bit set is not stepped by Script_StepCommands (only by the unused Script_StepHeldCommands) */
 #define SCRIPT_COMMAND_HELD         0x8000
 
-/* error flags, bytes of D_00432920 the interpreter sets to 1 */
+/* error flags, bytes of script_error_flags the interpreter sets to 1 */
 #define SCRIPT_ERROR_NO_FREE_THREAD     0
 #define SCRIPT_ERROR_NO_FREE_COMMAND    1
 #define SCRIPT_ERROR_BAD_ARGUMENT       2
@@ -78,7 +78,7 @@ typedef struct {
 /* what a command's handler is called with */
 typedef void (*ScriptCommandHandler)(ScriptThreadCommand *command);
 
-/* a script thread (0xC4C bytes, 24 at D_01DFB3B0) */
+/* a script thread (0xC4C bytes, 24 of them: threads in kf_script.c) */
 typedef struct {
     u16 script_id;                  /* 0x00 0: free */
     char pad02[0x02];
@@ -537,7 +537,7 @@ int Script_UpdateAll(void);
    Script_StoreFloatResult, is declared by its callers: they pass a double (see kf_script_world.c). */
 int Script_StoreResult(ScriptArg *target, int value);
 
-/* The command handlers are only reached through the handler tables D_004331B0, D_00433440 and
-   D_00433650, which are still in the asm. */
+/* The command handlers are only reached through the handler tables in kf_script_tables.c:
+   script_general_command_handlers, script_world_command_handlers and script_entity_command_handlers. */
 
 #endif

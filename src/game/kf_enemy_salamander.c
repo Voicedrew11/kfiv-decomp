@@ -27,7 +27,7 @@ float EntityMath_EaseAngleToward(float *, float, float);
 void EntityEvent_OnDeath(Entity *);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 int EntityAi_LaunchShots(Entity *, EntityParamsUnk3D8 *, s32, s32);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn3D(char *);
@@ -436,7 +436,7 @@ static void Salamander_RangedAttack(Entity *entity) {
         }
         if (((EntityUnkE0SlotBits *)&unkE0->unk80)->index == 0x17) {
             if (unkE0->unk80.unk02 >= 20 && unkE0->unk80.unk02 <= 44) {
-                if (D_00446ED4 & 1) {
+                if (frame_counter & 1) {
                     EntityAi_LaunchShots(entity, unk3D8, 20, 44);
                 }
                 ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
@@ -476,7 +476,7 @@ static void Salamander_Think(Entity *entity, s32 unknown) {
     if (!(entity->busy_flags & 0x40)) {
         EntityAi_StartSlotMotion(entity, unkE0->motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
     }
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {

@@ -9,7 +9,7 @@
 float Effect_Distance(void *, void *);
 void Collision_CastRayAtMap(f32, void *, void *);
 
-extern Entity *D_004467E0;
+extern Entity *active_entities_head;
 
 /* Nonzero if the entity cannot be targeted: not live, dying, or flagged out. */
 int Effect_IsEntityUntargetable(Entity *entity) {
@@ -33,7 +33,7 @@ int Effect_IsNearAnyEntity(float radius, void *point) {
     float position[4] __attribute__((aligned(16)));
     Entity *entity;
 
-    for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+    for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         if (((int)(entity->flags >> 1) & 1) == 0) continue;
         if (((int)(entity->flags >> 2) & 3) > 0) continue;
         Vector_Copy(position, &ENTITY_MODEL(entity)->position);

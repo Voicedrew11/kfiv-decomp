@@ -11,8 +11,8 @@ int sceWrite(int, const void *, int);
 int sceGsSyncPath(int, int);
 void sceGsSetDefStoreImage(void *, s16, s16, s16, s16, s16, s16, s16);
 void sceGsExecStoreImage(void *, void *);
-extern char D_0043EBB0[];
-extern char D_0043EBD0[];
+extern char clut_dump_path[];
+extern char vram_dump_path[];
 void Texture_SendTexFlush(void);
 extern int sceGsExecLoadImage(int *, int *);
 extern int sceGsSetDefLoadImage(int *, int, int, int, int, int, int, int);
@@ -20,10 +20,10 @@ extern int sceGsSetDefLoadImage(int *, int, int, int, int, int, int, int);
 #define SCREEN_HEIGHT 0x1C0
 #define SCREEN_BYTES (SCREEN_WIDTH * SCREEN_HEIGHT * 3)
 int sprintf(char *, const char *, ...);
-extern int D_00446F78;
-extern char D_0043EBF0[];
-extern char D_0043EC20[];
-extern char D_0043EC50[];
+extern int context1_buffer_half;
+extern char screenshot_bmp_path_format[];
+extern char screenshot_raw_path_format[];
+extern char data_dump_path_format[];
 
 static void ScreenDump_Vram(int first_row, int last_row);
 static void ScreenDump_Raw(u8 *buffer);
@@ -37,7 +37,7 @@ void ScreenDump_Clut(int first_row, int last_row) {
     int file;
     int row;
 
-    file = sceOpen(D_0043EBB0, 0x202);
+    file = sceOpen(clut_dump_path, 0x202);
     if (file >= 0) {
         for (row = first_row; row <= last_row; row += 0x20) {
             memset(buf, 0, 0x10000);
@@ -59,7 +59,7 @@ static void ScreenDump_Vram(int first_row, int last_row) {
     int file;
     int row;
 
-    file = sceOpen(D_0043EBD0, 0x202);
+    file = sceOpen(vram_dump_path, 0x202);
     if (file >= 0) {
         for (row = first_row; row <= last_row; row += 0x100) {
             memset(buf, 0, 0x10000);
@@ -112,7 +112,7 @@ void ScreenDump_Bmp(u8 *buffer) {
     u32 file_size;
     u32 pixel_offset;
 
-    base = D_00446F78 != 0 ? 0x1180 : 0; // the other way round from ScreenDump_Raw (the .raw screenshot)
+    base = context1_buffer_half != 0 ? 0x1180 : 0; // the other way round from ScreenDump_Raw (the .raw screenshot)
     memset(&file_header, 0, sizeof(BmpFileHeader));
     file_header.type[0] = 'B';
     file_header.type[1] = 'M';
@@ -142,7 +142,7 @@ void ScreenDump_Bmp(u8 *buffer) {
         if (!in_range) {
             break;
         }
-        sprintf(name, D_0043EBF0, i);
+        sprintf(name, screenshot_bmp_path_format, i);
         file = sceOpen(name, 2);
         if (file < 0) {
             break;
@@ -197,7 +197,7 @@ static void ScreenDump_Raw(u8 *buffer) {
     u32 misalign;
     u8 *aligned;
 
-    base = D_00446F78 != 0 ? 0 : 0x1180;
+    base = context1_buffer_half != 0 ? 0 : 0x1180;
     i = 0;
     // match: the test stays at the top only in a do loop; while/for get rotated
     do {
@@ -205,7 +205,7 @@ static void ScreenDump_Raw(u8 *buffer) {
         if (!in_range) {
             break;
         }
-        sprintf(name, D_0043EC20, i);
+        sprintf(name, screenshot_raw_path_format, i);
         file = sceOpen(name, 2);
         if (file < 0) {
             break;
@@ -244,7 +244,7 @@ static void ScreenDump_Data(void *data, int size) {
         if (!in_range) {
             break;
         }
-        sprintf(name, D_0043EC50, i);
+        sprintf(name, data_dump_path_format, i);
         file = sceOpen(name, 2);
         if (file < 0) {
             break;

@@ -24,7 +24,7 @@ float atan2f(float, float);
 float EntityMath_EaseAngleToward(float *, float, float);
 float EntityMath_HeadingTo(float *, float *);
 float EntityMath_AngleDifference(float, float);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -46,7 +46,7 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-extern int D_00414184[];
+extern int entity_under_player[];
 int Motion_Start(void *, int, int, u32, int);
 
 static void Widda_Animate(Entity *entity);
@@ -184,7 +184,7 @@ static void Widda_Think(Entity *entity, s32 unknown) {
     if ((entity->busy_flags & 8) && (entity->flags & (0xD000L << 33))) {
         unkE0->step_index = 1;
     }
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -237,7 +237,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -270,7 +270,7 @@ static void Widda_ThinkCombat(Entity *entity, s32 unknown) {
     }
     angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
     if (entity->distance_to_player_3d - entity->radius - 100.0f < 200.0f && ABS(angle) < 0.6981317f
-        && D_00446ED4 % 10U == entity->spawn_index % 10U && rand() % 100 < ENTITY_CONTROLLER(entity)->action_frames) {
+        && frame_counter % 10U == entity->spawn_index % 10U && rand() % 100 < ENTITY_CONTROLLER(entity)->action_frames) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
         if (unkE0->step_index == 0) {
             if (ABS(angle) > 0.6981317f && ABS(angle) < 1.5707964f) {
@@ -342,7 +342,7 @@ static void Widda_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 turn;
 
-    if (entity == (Entity *)D_00414184[0] && (entity->params->flags & 0x800)) {
+    if (entity == (Entity *)entity_under_player[0] && (entity->params->flags & 0x800)) {
         entity->move_command = 0;
     }
     if (entity->move_command & 0x100) {

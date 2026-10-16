@@ -237,7 +237,7 @@ float EntityMath_StepAngleToward(float *angle, float target, float step) {
 }
 
 /* Turns *angle 1/`rate` of the way to `goal` the short way round (all of it when `rate` is 1 or less);
-   returns the wrapped difference it had. The constants are literals: retail's .lit4 D_00445D0C..D_00445D20
+   returns the wrapped difference it had. The constants are literals: retail's .lit4 at 0x445D0C..0x445D20
    are these six in load order, and an extern const version does not match. */
 float EntityMath_EaseAngleToward(float *angle, float goal, float rate) {
     float old = *angle;

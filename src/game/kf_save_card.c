@@ -16,10 +16,10 @@ void *MenuHeap_Alloc(int);
 int File_OpenUnflagged(char *, int, int);
 
 extern GameStatus game_status;
-extern int D_00446734;
-extern s32 D_0038CC84[];
+extern int save_loaded;
+extern s32 save_area_name_id[];
 extern s32 player_state[];
-extern PlayTime D_00446A28;
+extern PlayTime current_play_time;
 
 static sceMcTblGetDir *dir_entries;     /* 0x447334 the eleven directory entries a directory request fills */
 static McIconSys *icon_sys;             /* 0x447338 */
@@ -768,7 +768,7 @@ static s32 SaveCard_StepLoad(void) {
             card->load_failed = 1;
             result = SaveCard_Fail();
         } else {
-            D_00446734 = 1;
+            save_loaded = 1;
             result = 1;
             game_status.bit9 = 1;
         }
@@ -1326,7 +1326,7 @@ static int SaveCard_VerifySaves(void) {
 }
 
 /* Writes what the save list shows of the game being saved into the list record of save number index:
-   D_0038CC84[0], then the player's experience, level, hit and magic points with their maximums, two more
+   save_area_name_id[0], then the player's experience, level, hit and magic points with their maximums, two more
    words and gold, and the play time. */
 static void SaveCard_FillSaveInfo(void *unused_arg0, s32 index) {
     SaveInfo *info;
@@ -1337,7 +1337,7 @@ static void SaveCard_FillSaveInfo(void *unused_arg0, s32 index) {
     info = save_infos + index;
     info->exists = 1;
     info->damaged = 0;
-    info->numbers[0] = D_0038CC84[0];
+    info->numbers[0] = save_area_name_id[0];
     info->numbers[1] = player_state[20];
     info->numbers[2] = player_state[21];
     info->numbers[3] = player_state[45];
@@ -1347,7 +1347,7 @@ static void SaveCard_FillSaveInfo(void *unused_arg0, s32 index) {
     info->numbers[7] = player_state[10];
     info->numbers[8] = player_state[11];
     info->numbers[9] = player_state[19];
-    info->play_time = D_00446A28;
+    info->play_time = current_play_time;
     SyncDCache(save_infos, save_infos + 3);
 }
 

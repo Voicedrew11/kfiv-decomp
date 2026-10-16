@@ -24,77 +24,77 @@ extern char sound_heap_base[];
 extern int D_004468BC;
 extern float D_004468C0;
 extern int D_004468C4;
-extern s8 D_004470E0;
-extern char D_004470E1;
-extern char D_004470E2;
-extern s8 D_004470E3;
-extern u8 D_004470E4;
-extern u8 D_004470E5;
-extern s8 D_004470E6;
-extern u8 D_004470E7;
+extern s8 map_reverb_set;
+extern char map_sounds_enabled;
+extern char reverb_change_pending;
+extern s8 map_reverb_volume;
+extern u8 loaded_bgm;
+extern u8 bgm_load_running;
+extern s8 positional_sounds_muted;
+extern u8 loading_bgm;
 void *memset(void *, int, u32);
 extern u8 game_options[];
 extern f32 sound_cos_polynomial[4];
 extern u8 voice_ranges[][2];
-extern u8 D_00446880[8];
+extern u8 voice_range_cursors[8];
 extern SoundJob map_bank_job;
 extern SoundJob sw_bank_job;
 extern SoundJob mg_bank_job;
 extern u8 music_volume[];
-extern int D_00446860;
+extern int bgm_fade_level;
 extern void *tracked_sound_players[];
 extern PlayerState player_state;
 extern u8 sfx_volume[];
 double sqrt(double);
 int rand(void);
 float atan2f(float, float);
-extern int D_00446888;
-extern int D_0044688C;
-extern int D_00446890;
-extern char D_00446894;
-extern int D_00446858;
-extern int D_0044685C;
-extern int D_00446F74;
-extern int D_004470E8;
-extern int D_004470F4;
+extern int tagged_bend;
+extern int tagged_bend_high;
+extern int tagged_bend_low;
+extern char tagged_bend_falling;
+extern int bgm_load_step;
+extern int bgm_load_can_yield;
+extern char *sound_bank_area;
+extern int bgm_bd_size;
+extern int sound_heap_next;
 void File_Lock(void);
 int File_GetSize(int);
 int sprintf(char *, char *, ...);
 void File_Unlock(void);
-extern int D_003EF544[];
-extern int D_004470EC;
+extern int bgm_header_buffer[];
+extern int bgm_hd_size;
 int File_Open(char *name, int nowait, int pack);
 int File_Read(int file, void *buf, int size);
-extern int D_003EF548[];
-extern int D_004470F0;
-extern u8 D_00446896;
-extern int D_004468A4;
-extern int D_004470D4;
+extern int bgm_sequence_buffer[];
+extern int bgm_sq_size;
+extern u8 bgm_reverb_slot;
+extern int heap_file_read_step;
+extern int heap_file_handle;
 int File_Close(int file);
-extern s32 D_004468A8;
-extern s32 D_004470DC;
-extern MapHeader *D_0038CD28[];
+extern s32 map_bank_file_read_step;
+extern s32 map_bank_file_handle;
+extern MapHeader *map_slot0_header[];
 int FlushCache(int);
 int sceCdBreak(void);
-extern int (*const D_0043ED50[])(LoadJob *, s32);
-extern char D_0043EE18[];
-extern s32 D_004468AC;
-extern s32 (*const D_0043EDA8[])(void);
-extern int D_00446864;
-extern int (*D_0043ED88[])(void);
+extern int (*const bgm_load_steps[])(LoadJob *, s32);
+extern char rev_para_path[];
+extern s32 sound_file_load_step;
+extern s32 (*const sound_file_load_steps[])(void);
+extern int entity_bank_load_step;
+extern int (*entity_bank_load_steps[])(void);
 /* the falloff players Sound_PlayFalloff picks from (the Sfx and Map ones take no bank) */
-extern int (*D_0043EE30[])(int, int); // match: an int result, though the players are void
-extern int D_00446868;
-extern SoundScriptState D_0043EE78;
-extern u8 D_00446895;
+extern int (*falloff_sound_players[])(int, int); // match: an int result, though the players are void
+extern int map_bank_load_step;
+extern SoundScriptState map_reverb_cue_indices;
+extern u8 map_reverb_slot;
 extern int D_004468B4;
-extern int (*D_0043ED90[])(void);
+extern int (*map_bank_load_steps[])(void);
 extern SoundBankSpec map_bank_files;
 extern SoundFileBuffer sw_bank;
 extern SoundFileBuffer mg_bank;
 extern int sound_load_queue[0x28 / 4];
 extern MapSlot map_slots[];
-extern int D_00446770;
+extern int current_map_slot;
 
 static char sound_file_path[0x80];         /* 0x4FF3C0 a file name for sprintf */
 static char map_bank_file_path[0x80];         /* 0x4FF440 the map bank's file name */
@@ -142,14 +142,14 @@ void Sound_Init(void) {
     D_004468BC = 0x40;
     D_004468C0 = 0.013f;
     D_004468C4 = 1;
-    D_004470E2 = 0;
-    D_004470E3 = 0;
-    D_004470E1 = 0;
-    D_004470E4 = 0xFF;
-    D_004470E5 = 0;
-    D_004470E6 = 0;
-    D_004470E0 = 0;
-    D_004470E7 = 0xFF;
+    reverb_change_pending = 0;
+    map_reverb_volume = 0;
+    map_sounds_enabled = 0;
+    loaded_bgm = 0xFF;
+    bgm_load_running = 0;
+    positional_sounds_muted = 0;
+    map_reverb_set = 0;
+    loading_bgm = 0xFF;
     memset(tracked_voices, 0, 0xD0);
     SoundDriver_Init();
     SoundDriver_Remote(1, 0x100, 0xA, 0x800);
@@ -196,19 +196,19 @@ void Sound_ApplyStereoOption(void) {
     SoundDriver_SetMono();
 }
 
-/* Once a frame: starts the queued tagged sounds; then, unless a reverb change is pending (D_004470E2),
+/* Once a frame: starts the queued tagged sounds; then, unless a reverb change is pending (reverb_change_pending),
    updates the tagged channels and the map's reverb volume and sends the frame's note commands; otherwise
    waits for the driver to finish the change. */
 void Sound_Update(void) {
     Sound_StartQueued();
-    if (D_004470E2 == 0) {
+    if (reverb_change_pending == 0) {
         Sound_UpdateTagged();
         Sound_UpdateMapReverbVolume();
         SoundDriver_FlushCommands();
         return;
     }
     if (SoundDriver_IsBusy() == 0) {
-        D_004470E2 = 0;
+        reverb_change_pending = 0;
     }
 }
 
@@ -292,10 +292,10 @@ static int Sound_NextVoice(int slot) {
     s8 index = slot;
     u8 low = voice_ranges[index][0];
     s8 high = voice_ranges[index][1];
-    s8 offset = D_00446880[index] - low + 1;
+    s8 offset = voice_range_cursors[index] - low + 1;
     int next = offset % (high - (s8)low + 1) + low;
 
-    D_00446880[index] = next;
+    voice_range_cursors[index] = next;
     return (s8)next;
 }
 
@@ -361,9 +361,9 @@ void Sound_SetBankVolumes(int level) {
     SoundDriver_SetVoiceVolume(9, short_level);
 }
 
-/* Sets the BGM fade level (D_00446860) to the music volume option (music_volume). */
+/* Sets the BGM fade level (bgm_fade_level) to the music volume option (music_volume). */
 void Sound_SyncBgmLevel(void) {
-    D_00446860 = music_volume[0];
+    bgm_fade_level = music_volume[0];
 }
 
 /* Starts a tracked sound with the player of `kind` in tracked_sound_players (0 Sound_PlayTracked, 1
@@ -516,7 +516,7 @@ void Sound_PlaySw(int mode) {
     SoundDriver_NoteOn(2, sw_bank_job.result, 0, (char)mode, 0x3C, sfx_volume[0], 0, 0x3F);
 }
 
-/* Plays a map bank sound at a point (while D_004470E1 is set): the volume falls off with the distance from
+/* Plays a map bank sound at a point (while map_sounds_enabled is set): the volume falls off with the distance from
    the player (silent at 2500), panned by side, with a random bend. */
 int Sound_PlayMapAt(u8 sound, void *position) {
     float origin[4];
@@ -530,7 +530,7 @@ int Sound_PlayMapAt(u8 sound, void *position) {
     int pan;
     int detune;
 
-    if (D_004470E1 == 0) {
+    if (map_sounds_enabled == 0) {
         return -1;
     }
     distance = Sound_Delta(diff, position, &player_state.position.x);
@@ -627,13 +627,13 @@ int Sound_PlayCommonAt(float range, int sound, float *position) {
     }
 }
 
-/* Plays a map bank sound at volume (scaled by the sound option) with a random bend; -1 while D_004470E1 is
+/* Plays a map bank sound at volume (scaled by the sound option) with a random bend; -1 while map_sounds_enabled is
    clear. */
 int Sound_PlayMapVolume(u8 sound, int volume) {
     int bend;
     int slot;
 
-    if (D_004470E1 == 0) {
+    if (map_sounds_enabled == 0) {
         return -1;
     }
     if (volume < 0) {
@@ -665,7 +665,7 @@ int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range) {
     int pan;
     int slot;
 
-    if (D_004470E1 == 0) {
+    if (map_sounds_enabled == 0) {
         return -1;
     }
     distance = Sound_Delta(diff, position, &player_state.position.x);
@@ -717,7 +717,7 @@ int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range) {
 }
 
 /* Starts a tagged sound (channel kind 0x63, no position) of the map bank at volume; queued in tagged_requests
-   while D_004470E1 is clear. */
+   while map_sounds_enabled is clear. */
 int Sound_StartTagged(s8 sound, u8 voice, int volume) {
     SoundChannel *channel;
     SoundChannel *request;
@@ -728,7 +728,7 @@ int Sound_StartTagged(s8 sound, u8 voice, int volume) {
     if (volume >= 0x80) {
         volume = 0x7F;
     }
-    if (D_004470E1 == 0) {
+    if (map_sounds_enabled == 0) {
         for (i = 0; i < 0x80; i++) {
             if (tagged_requests[i].unk38 == -1) {
                 request = &tagged_requests[i];
@@ -755,13 +755,13 @@ int Sound_StartTagged(s8 sound, u8 voice, int volume) {
 }
 
 /* Starts a tagged sound at a point, heard within range (SoundChannel.volume); queued in tagged_requests while
-   D_004470E1 is clear. Sound_UpdateTagged gives it a voice. */
+   map_sounds_enabled is clear. Sound_UpdateTagged gives it a voice. */
 s32 Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg *position) {
     SoundChannel *request;
     SoundChannel *channel;
     int i;
 
-    if (D_004470E1 == 0) {
+    if (map_sounds_enabled == 0) {
         for (i = 0; i < 0x80; i++) {
             if (tagged_requests[i].unk38 == -1) {
                 request = &tagged_requests[i];
@@ -801,7 +801,7 @@ s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, V
     SoundChannel *channel;
     int i;
 
-    if (D_004470E1 == 0) {
+    if (map_sounds_enabled == 0) {
         for (i = 0; i < 0x80; i++) {
             if (tagged_requests[i].unk38 == -1) {
                 request = &tagged_requests[i];
@@ -857,7 +857,7 @@ void Sound_UpdateTagged(void) {
     int i;
     s8 voice;
 
-    for (i = 0; i < 0x80; i++, D_00446888 = 0) {
+    for (i = 0; i < 0x80; i++, tagged_bend = 0) {
         if (sound_channels[i].unk3A >= 0 && sound_channels[i].unk3C != 0x63) {
             Sound_TaggedNearestPoint(i, &nearest);
             distance = Sound_Delta(diff, &nearest.x, &player_state.position.x);
@@ -867,7 +867,7 @@ void Sound_UpdateTagged(void) {
                     tagged_voice_flags[sound_channels[i].unk3B - 0x54] = sound_channels[i].unk3B = -1;
                 }
             } else {
-                if (D_004470E6 == 0) {
+                if (positional_sounds_muted == 0) {
                     switch ((u8) sound_channels[i].unk39) {
                     case 0:
                     case 6:
@@ -911,23 +911,23 @@ void Sound_UpdateTagged(void) {
                 Sound_CosSin(angle, origin, offset);
                 pan = (offset[0] * 0.6f + 1.0f) * 63.0f;
                 if ((u8) sound_channels[i].unk39 < 6 || (u8) sound_channels[i].unk39 > 8) {
-                    if (D_00446894 != 0) {
-                        D_00446888 -= rand() % 60;
+                    if (tagged_bend_falling != 0) {
+                        tagged_bend -= rand() % 60;
                     } else {
-                        D_00446888 += rand() % 60;
+                        tagged_bend += rand() % 60;
                     }
-                    if (D_0044688C < D_00446888) {
-                        D_00446890 = -(rand() % 0x555 + 0x555);
-                        D_00446894 = 1;
-                    } else if (D_00446888 < D_00446890) {
-                        D_0044688C = rand() % 0x555 + 0x555;
-                        D_00446894 = 0;
+                    if (tagged_bend_high < tagged_bend) {
+                        tagged_bend_low = -(rand() % 0x555 + 0x555);
+                        tagged_bend_falling = 1;
+                    } else if (tagged_bend < tagged_bend_low) {
+                        tagged_bend_high = rand() % 0x555 + 0x555;
+                        tagged_bend_falling = 0;
                     }
-                    SoundDriver_SetNoteControl(2, sound_channels[i].unk3B, D_00446888);
+                    SoundDriver_SetNoteControl(2, sound_channels[i].unk3B, tagged_bend);
                 }
                 if (sound_channels[i].unk3B < 0) {
                     voice = sound_channels[i].unk3B = Sound_ClaimTaggedVoice();
-                    SoundDriver_NoteOn(voice, map_bank_job.result, 0, sound_channels[i].unk38, 0x3C, volume, D_00446888, (char) pan);
+                    SoundDriver_NoteOn(voice, map_bank_job.result, 0, sound_channels[i].unk38, 0x3C, volume, tagged_bend, (char) pan);
                     continue;
                 }
                 SoundDriver_SetNoteControl(0, sound_channels[i].unk3B, volume);
@@ -1035,12 +1035,12 @@ static f32 Sound_SegmentNearestPointXZ(Vector4 *start, Vector4 *end, Vector4 *ne
     return sqrt((player_state.position.x - nearest->x) * (player_state.position.x - nearest->x) + (player_state.position.z - nearest->z) * (player_state.position.z - nearest->z));
 }
 
-/* Starts the sounds queued in tagged_requests once D_004470E1 is set, freeing each request. */
+/* Starts the sounds queued in tagged_requests once map_sounds_enabled is set, freeing each request. */
 static void Sound_StartQueued(void) {
     int i;
     SoundChannel *request;
 
-    if (D_004470E1 != 0) {
+    if (map_sounds_enabled != 0) {
         for (i = 0; i < 0x80; i++) {
             request = &tagged_requests[i];
             if (request->unk38 > 0) {
@@ -1123,7 +1123,7 @@ int Sound_StopTagged(char sound) {
 void Sound_StopAll(int clear_queue) {
     int i;
 
-    D_004470E1 = 0;
+    map_sounds_enabled = 0;
     for (i = 0x54; i < 0x64; i++) {
         SoundDriver_NoteOff(i);
     }
@@ -1155,22 +1155,22 @@ int Sound_BgmReadBody(LoadJob *job, int index) {
     int load_addr;
 
     if (File_IsLocked() != 0) {
-        D_0044685C = 1;
+        bgm_load_can_yield = 1;
         return -1;
     }
     if (SoundDriver_StepUpload() == 0) {
         return -1;
     }
-    load_addr = ((u32)(D_00446F74 + 0x3F) >> 6) << 6;
-    job->buffers[0] = D_004470F4 = load_addr;
-    D_004470F4 = load_addr + 0x80000;
+    load_addr = ((u32)(sound_bank_area + 0x3F) >> 6) << 6;
+    job->buffers[0] = sound_heap_next = load_addr;
+    sound_heap_next = load_addr + 0x80000;
     sprintf(name, job->name, index);
     handle = File_Open(name, TRUE, TRUE);
     job->file_handle = handle;
-    D_004470E8 = File_GetSize(handle);
+    bgm_bd_size = File_GetSize(handle);
     File_Lock();
     File_Read(job->file_handle, (void *)job->buffers[0], -1);
-    D_00446858 += 1;
+    bgm_load_step += 1;
     return 0;
 }
 
@@ -1209,15 +1209,15 @@ int Sound_BgmFadeOut(IopLoadJob *job) {
             }
             return -1;
         }
-        D_0044685C = 1;
-        D_00446860 -= 3;
-        if (D_00446860 < 0) {
-            D_00446860 = 0;
+        bgm_load_can_yield = 1;
+        bgm_fade_level -= 3;
+        if (bgm_fade_level < 0) {
+            bgm_fade_level = 0;
         }
-        level = D_00446860;
+        level = bgm_fade_level;
         Sound_SetBgmFade((level < music_volume[0]) ? level : music_volume[0]);
-        if (D_00446860 == 0) {
-            D_00446858 += 1;
+        if (bgm_fade_level == 0) {
+            bgm_load_step += 1;
             return 0;
         }
         return -1;
@@ -1235,8 +1235,8 @@ int Sound_BgmCloseBody(LoadJob *job) {
     SoundDriver_StopSequence(job->unk14);
     SoundDriver_FreeSequence(job->unk14);
     SoundDriver_FreeVoice(job->unk10);
-    D_0044685C = 1;
-    D_00446858 += 1;
+    bgm_load_can_yield = 1;
+    bgm_load_step += 1;
     return 0;
 }
 
@@ -1249,23 +1249,23 @@ int Sound_BgmReadHeader(LoadJob *job, int index) {
     int *buffers;
 
     if (File_IsLocked() != 0) {
-        D_0044685C = 1;
+        bgm_load_can_yield = 1;
         return -1;
     }
     if (SoundDriver_StepUpload() == 0) {
         return -1;
     }
-    heap_top = D_004470F4;
-    D_003EF544[0] = heap_top;
-    D_004470F4 = ((u32)(heap_top + 0x2003F) >> 6) << 6;
+    heap_top = sound_heap_next;
+    bgm_header_buffer[0] = heap_top;
+    sound_heap_next = ((u32)(heap_top + 0x2003F) >> 6) << 6;
     sprintf(name, job->unk08, index);
     file = File_Open(name, 1, 1);
     job->file_handle = file;
-    D_004470EC = File_GetSize(file);
+    bgm_hd_size = File_GetSize(file);
     File_Lock();
     buffers = job->buffers;
     File_Read(job->file_handle, (void *)buffers[1], -1);
-    D_00446858 += 1;
+    bgm_load_step += 1;
     return 0;
 }
 
@@ -1275,8 +1275,8 @@ int Sound_BgmCloseHeader(LoadJob *job) {
         File_Close(job->file_handle);
         File_Unlock();
         job->file_handle = -1;
-        D_0044685C = 1;
-        D_00446858 += 1;
+        bgm_load_can_yield = 1;
+        bgm_load_step += 1;
         return 0;
     }
     return -1;
@@ -1296,17 +1296,17 @@ int Sound_BgmReadSequence(LoadJob *job, int index) {
     if (SoundDriver_StepUpload() == 0) {
         return -1;
     }
-    heap_top = D_004470F4;
-    D_003EF548[0] = heap_top;
-    D_004470F4 = ((u32)(heap_top + 0x2003F) >> 6) << 6;
+    heap_top = sound_heap_next;
+    bgm_sequence_buffer[0] = heap_top;
+    sound_heap_next = ((u32)(heap_top + 0x2003F) >> 6) << 6;
     sprintf(name, job->name_format, index);
     handle = File_Open(name, TRUE, TRUE);
     job->file_handle = handle;
-    D_004470F0 = File_GetSize(handle);
+    bgm_sq_size = File_GetSize(handle);
     File_Lock();
     buffers = job->buffers;
     File_Read(job->file_handle, (void *)buffers[2], -1);
-    D_00446858 += 1;
+    bgm_load_step += 1;
     return 0;
 }
 
@@ -1318,7 +1318,7 @@ int Sound_BgmCloseSequence(LoadJob *job) {
     File_Close(job->file_handle);
     File_Unlock();
     job->file_handle = -1;
-    D_00446858 += 1;
+    bgm_load_step += 1;
     return 0;
 }
 
@@ -1333,7 +1333,7 @@ int Sound_BgmStartSequence(IopLoadJob *job) {
     job->unk14 = result;
     if (result >= 0) {
         SoundDriver_PlaySequence(result, 0);
-        D_00446858 += 1;
+        bgm_load_step += 1;
         return 0;
     }
     return -1;
@@ -1345,13 +1345,13 @@ int Sound_BgmFadeIn(int unused, int mode) {
     if (SoundDriver_IsBusy() != 0) {
         return -1;
     }
-    D_0044685C = 1;
-    D_00446860 += 3;
+    bgm_load_can_yield = 1;
+    bgm_fade_level += 3;
     if (mode != 0x12) {
-        Sound_SetBgmFade((D_00446860 < music_volume[0]) ? D_00446860 : music_volume[0]);
+        Sound_SetBgmFade((bgm_fade_level < music_volume[0]) ? bgm_fade_level : music_volume[0]);
     }
-    if (D_00446860 >= 0x100 || music_volume[0] < D_00446860) {
-        D_00446858 += 1;
+    if (bgm_fade_level >= 0x100 || music_volume[0] < bgm_fade_level) {
+        bgm_load_step += 1;
         return 1;
     }
     return -1;
@@ -1363,20 +1363,20 @@ int Sound_BgmStartCue(void *context, int cue_index) {
     SoundCue *cue;
 
     if (cue_index == 0x12) {
-        D_00446858 += 1;
+        bgm_load_step += 1;
         return 0;
     }
-    if (D_00446896 < 4U) {
-        SoundDriver_FreeReverb((char)D_00446896);
+    if (bgm_reverb_slot < 4U) {
+        SoundDriver_FreeReverb((char)bgm_reverb_slot);
     }
     cue = (SoundCue *)(bgm_cues + cue_index * 0x10);
-    D_00446896 = SoundDriver_AddReverb(cue->flags, cue->unk04, cue->unk06, cue->unk08, cue->unk0A, cue->unk0C, cue->unk0E, 0);
-    D_00446858 += 1;
+    bgm_reverb_slot = SoundDriver_AddReverb(cue->flags, cue->unk04, cue->unk06, cue->unk08, cue->unk0A, cue->unk0C, cue->unk0E, 0);
+    bgm_load_step += 1;
     return 0;
 }
 
 /* BGM load step: unless the bgm is 0x12, waits for the driver and sends the BGM's reverb settings
-   (SoundDriver_ApplyReverb), flagging the change (D_004470E2). */
+   (SoundDriver_ApplyReverb), flagging the change (reverb_change_pending). */
 int Sound_BgmApplyReverb(void *actor, int mode) {
     if (mode != 0x12) {
         if (SoundDriver_IsBusy() != 0) {
@@ -1385,12 +1385,12 @@ int Sound_BgmApplyReverb(void *actor, int mode) {
         if (SoundDriver_StepUpload() == 0) {
             return -1;
         }
-        if (D_00446896 < 4U) {
-            SoundDriver_ApplyReverb((char) D_00446896);
-            D_004470E2 = TRUE;
+        if (bgm_reverb_slot < 4U) {
+            SoundDriver_ApplyReverb((char) bgm_reverb_slot);
+            reverb_change_pending = TRUE;
         }
     }
-    D_00446858 += 1;
+    bgm_load_step += 1;
     return 0;
 }
 
@@ -1401,22 +1401,22 @@ static int Sound_ReadHeapFileStep(LoadJob *job, int index) {
     int file;
 
     if (SoundDriver_StepUpload() != 0) {
-        switch (D_004468A4) {
+        switch (heap_file_read_step) {
         case 0:
             heap_start = ((u32)&sound_heap_base >> 6) << 6;
-            D_004470F4 = heap_start;
+            sound_heap_next = heap_start;
             *job->buffers = heap_start;
-            D_004470F4 = heap_start + 0xA0000;
+            sound_heap_next = heap_start + 0xA0000;
             sprintf(sound_file_path, job->name, index);
             file = File_Open(sound_file_path, 1, 1);
-            D_004470D4 = file;
+            heap_file_handle = file;
             File_Read(file, (void *)*job->buffers, -1);
-            D_004468A4 += 1;
+            heap_file_read_step += 1;
             break;
         case 1:
-            if (File_Sync(D_004470D4, 1) == 0) {
-                File_Close(D_004470D4);
-                D_004468A4 = 0;
+            if (File_Sync(heap_file_handle, 1) == 0) {
+                File_Close(heap_file_handle);
+                heap_file_read_step = 0;
                 SoundDriver_FreeVoice(job->unk10);
                 return 1;
             }
@@ -1426,26 +1426,26 @@ static int Sound_ReadHeapFileStep(LoadJob *job, int index) {
     return -1;
 }
 
-/* Reads the file request->name formats with the current map's unk70 into a new buffer of the sound heap
+/* Reads the file request->name formats with the unk70 of map slot 0's header into a new buffer of the sound heap
    (its name in map_bank_file_path), a step a call; 1 when done. Nothing calls it. */
 s32 Sound_ReadMapBankFileStep(LoadRequest *request) {
     u32 buffer;
 
     if (SoundDriver_StepUpload() != 0) {
-        switch (D_004468A8) {
+        switch (map_bank_file_read_step) {
         case 0:
-            buffer = D_004470F4;
+            buffer = sound_heap_next;
             request->target->buffer = (void *)buffer;
-            D_004470F4 = (((buffer + 0x2003F) >> 6) << 6);
-            sprintf(map_bank_file_path, request->name, D_0038CD28[0]->unk70);
-            D_004470DC = File_Open(map_bank_file_path, TRUE, TRUE);
-            File_Read(D_004470DC, request->target->buffer, -1);
-            D_004468A8 += 1;
+            sound_heap_next = (((buffer + 0x2003F) >> 6) << 6);
+            sprintf(map_bank_file_path, request->name, map_slot0_header[0]->unk70);
+            map_bank_file_handle = File_Open(map_bank_file_path, TRUE, TRUE);
+            File_Read(map_bank_file_handle, request->target->buffer, -1);
+            map_bank_file_read_step += 1;
             break;
         case 1:
-            if (File_Sync(D_004470DC, 1) == 0) {
-                File_Close(D_004470DC);
-                D_004468A8 = 0;
+            if (File_Sync(map_bank_file_handle, 1) == 0) {
+                File_Close(map_bank_file_handle);
+                map_bank_file_read_step = 0;
                 return 1;
             }
             break;
@@ -1463,7 +1463,7 @@ int Sound_BgmLoadVoice(IopLoadJob *job) {
     result = SoundDriver_LoadVoiceStep(job->unk18, ctl[1], ctl[4], ctl[0], ctl[3], 0, job->unk1C);
     job->result = result;
     if (result >= 0) {
-        D_00446858 += 1;
+        bgm_load_step += 1;
     }
     return 0;
 }
@@ -1479,7 +1479,7 @@ int Sound_BgmFreeSampleBuffer(IopLoadJob *job) {
     }
     SoundDriver_FreeSampleBuffer(job->result);
     FlushCache(0);
-    D_00446858 += 1;
+    bgm_load_step += 1;
     return 0;
 }
 
@@ -1491,20 +1491,20 @@ static void Sound_CancelBgmLoad(LoadJob *job) {
         File_Unlock();
     }
     job->file_handle = -1;
-    D_00446858 = 0;
+    bgm_load_step = 0;
 }
 
-/* Runs the current step (D_0043ED50) of loading BGM bgm, cancelling the load in progress when bgm is a new
+/* Runs the current step (bgm_load_steps) of loading BGM bgm, cancelling the load in progress when bgm is a new
    one; 0 once the last step is done, else 1. */
 static int Sound_StepBgmLoad(LoadJob *job, s32 state) {
-    if (D_004470E7 != state) {
-        D_004470E7 = state;
+    if (loading_bgm != state) {
+        loading_bgm = state;
         Sound_CancelBgmLoad(job);
     }
-    if (D_0043ED50[D_00446858](job, state) > 0) {
-        D_0044685C = 1;
-        D_004470E7 = 0xFF;
-        D_00446858 = 0;
+    if (bgm_load_steps[bgm_load_step](job, state) > 0) {
+        bgm_load_can_yield = 1;
+        loading_bgm = 0xFF;
+        bgm_load_step = 0;
         return 0;
     }
     return 1;
@@ -1514,28 +1514,28 @@ static int Sound_StepBgmLoad(LoadJob *job, s32 state) {
 int Sound_LoadBgm(int bgm, int pending) {
     int done;
 
-    D_0044685C = 1;
+    bgm_load_can_yield = 1;
     if (pending != 0) {
-        if ((D_004470E4 == bgm) && (D_004470E5 == 0)) {
+        if ((loaded_bgm == bgm) && (bgm_load_running == 0)) {
             pending = 0;
         } else {
-            D_0044685C = 0;
+            bgm_load_can_yield = 0;
             done = Sound_StepBgmLoad(&bgm_load_job, bgm);
-            D_004470E5 = 1;
+            bgm_load_running = 1;
             if (done == 0) {
-                D_004470E4 = bgm;
+                loaded_bgm = bgm;
                 pending = 0;
-                D_004470E5 = 0;
+                bgm_load_running = 0;
             }
         }
     }
     return pending;
 }
 
-/* Whether the BGM load may be set aside for another sound load: D_0044685C, which Sound_LoadBgm clears
+/* Whether the BGM load may be set aside for another sound load: bgm_load_can_yield, which Sound_LoadBgm clears
    while it runs a step and the steps set again where they wait (the file layer busy, a fade). */
 int Sound_BgmLoadCanYield(void) {
-    return D_0044685C;
+    return bgm_load_can_yield;
 }
 
 /* Load step (Sound_RunFileLoad): reads the file job->name into the job's first buffer, waiting for it. */
@@ -1555,7 +1555,7 @@ int Sound_ReadJobFile(LoadJob *job) {
 static int Sound_LoadReverbParams(void) {
     int file;
 
-    file = File_Open(D_0043EE18, 0, 1);
+    file = File_Open(rev_para_path, 0, 1);
     File_Read(file, bgm_cues, 0x400);
     File_Read(file, map_bank_cues, 0x800);
     File_Close(file);
@@ -1584,7 +1584,7 @@ int Sound_FileLoadVoice(IopLoadJob *job) {
     result = SoundDriver_LoadVoiceStep(job->unk18, ctl[1], ctl[4], ctl[0], ctl[3], 0, job->unk1C);
     job->result = result;
     if (result >= 0) {
-        D_00446858 += 1;
+        bgm_load_step += 1;
     }
     return 0;
 }
@@ -1599,24 +1599,24 @@ int Sound_FileLoadFreeSampleBuffer(IopLoadJob *job) {
     }
     SoundDriver_FreeSampleBuffer(job->result);
     FlushCache(0);
-    D_00446858 += 1;
+    bgm_load_step += 1;
     return 0;
 }
 
-/* Runs the current step of a four-step file load (D_0043EDA8: two reads, the voice load, freeing the
+/* Runs the current step of a four-step file load (sound_file_load_steps: two reads, the voice load, freeing the
    sample copy) and moves on when it succeeds; 0 after the fourth, else 1. Nothing calls it, and it calls
    the steps without their arguments. */
 static s32 Sound_RunFileLoad(void) {
     s32 result;
 
-    result = D_0043EDA8[D_004468AC]();
+    result = sound_file_load_steps[sound_file_load_step]();
     if (result >= 0) {
-        D_004468AC += 1;
+        sound_file_load_step += 1;
     }
-    if ((u32)D_004468AC < 4U) {
+    if ((u32)sound_file_load_step < 4U) {
         return 1;
     }
-    D_004468AC = 0;
+    sound_file_load_step = 0;
     return 0;
 }
 
@@ -1901,7 +1901,7 @@ int Sound_EntityBankLoadVoice(SoundJob *job) {
 
     job->result = result;
     if (result >= 0) {
-        D_00446864 += 1;
+        entity_bank_load_step += 1;
     }
     return 0;
 }
@@ -1917,14 +1917,14 @@ int Sound_EntityBankFreeSampleBuffer(SoundJob *job) {
     }
     SoundDriver_FreeSampleBuffer(job->result);
     FlushCache(0);
-    D_00446864 += 1;
+    entity_bank_load_step += 1;
     return 1;
 }
 
-/* Runs the current step of the entity bank load (D_0043ED88); 0 when it reports done, else 1. */
+/* Runs the current step of the entity bank load (entity_bank_load_steps); 0 when it reports done, else 1. */
 static int Sound_RunEntityBankLoad(void *sequence, int index) {
-    if (D_0043ED88[D_00446864]() > 0) {
-        D_00446864 = 0;
+    if (entity_bank_load_steps[entity_bank_load_step]() > 0) {
+        entity_bank_load_step = 0;
         return 0;
     }
     return 1;
@@ -1952,16 +1952,16 @@ int Sound_LoadEntityBankStep(int args_addr, int index, int voice_out) {
     return pending;
 }
 
-/* Plays sound from bank with the falloff player kind of D_0043EE30 while distance is within range, panned by
+/* Plays sound from bank with the falloff player kind of falloff_sound_players while distance is within range, panned by
    angle (EntityEvent_StartCueAlways calls it for the sounds of an entity's animation). Range, distance and angle pass through in
    $f12..$f14; match: declared without them, which keeps the registers retail uses. */
 void Sound_PlayFalloff(int sound, int kind, int bank) {
-    D_0043EE30[kind & 0xFF](sound & 0xFF, bank);
+    falloff_sound_players[kind & 0xFF](sound & 0xFF, bank);
 }
 
 /* Map bank load step: does nothing but move on. */
 s32 Sound_MapBankNoOp(void) {
-    D_00446868 += 1;
+    map_bank_load_step += 1;
     return 0;
 }
 
@@ -1971,17 +1971,17 @@ int Sound_MapBankLoadVoice(SoundJob *job) {
     SoundJobSpec *spec;
     int result;
 
-    if (D_004470E2 != 0) {
+    if (reverb_change_pending != 0) {
         if (SoundDriver_IsBusy() != 0) {
             return -1;
         }
-        D_004470E2 = 0;
+        reverb_change_pending = 0;
     }
     spec = job->spec;
     result = SoundDriver_LoadVoiceStep(job->unk18, (int)spec->buffer_b, spec->size_b, (int)spec->buffer_a, spec->size_a, 0, job->unk1C);
     job->result = result;
     if (result >= 0) {
-        D_00446868 += 1;
+        map_bank_load_step += 1;
     }
     return 0;
 }
@@ -1997,58 +1997,58 @@ int Sound_MapBankFreeSampleBuffer(SoundJob *job) {
     }
     SoundDriver_FreeSampleBuffer(job->result);
     FlushCache(0);
-    D_00446868 += 1;
+    map_bank_load_step += 1;
     return 0;
 }
 
 /* Map bank load step: frees the reverb slot of the last map and stores the map's reverb settings (the
-   entry D_0043EE78 names in map_bank_cues) for core 1. */
+   entry map_reverb_cue_indices names in map_bank_cues) for core 1. */
 int Sound_MapBankAddReverb(void) {
     SoundScriptState state;
     SoundCue *cue;
 
-    state = D_0043EE78;
-    if (D_00446895 < 4U) {
-        SoundDriver_FreeReverb((char)D_00446895);
+    state = map_reverb_cue_indices;
+    if (map_reverb_slot < 4U) {
+        SoundDriver_FreeReverb((char)map_reverb_slot);
     }
     cue = (SoundCue *)(map_bank_cues + state.cue_index * 0x10);
-    D_00446895 = SoundDriver_AddReverb(cue->flags, cue->unk04, cue->unk06, cue->unk08, cue->unk0A, cue->unk0C, cue->unk0E, 1);
-    D_00446868 += 1;
+    map_reverb_slot = SoundDriver_AddReverb(cue->flags, cue->unk04, cue->unk06, cue->unk08, cue->unk0A, cue->unk0C, cue->unk0E, 1);
+    map_bank_load_step += 1;
     return 0;
 }
 
 /* Map bank load step: once the upload is done, sends the map's reverb settings (SoundDriver_ApplyReverb)
-   and sets D_004470E1 (map sounds may start); 1 (done). */
+   and sets map_sounds_enabled (map sounds may start); 1 (done). */
 int Sound_MapBankApplyReverb(void) {
     if (SoundDriver_StepUpload() == 0) {
         return 0;
     }
-    if (D_00446895 < 4U) {
-        SoundDriver_ApplyReverb((char) D_00446895);
-        D_004470E2 = TRUE;
+    if (map_reverb_slot < 4U) {
+        SoundDriver_ApplyReverb((char) map_reverb_slot);
+        reverb_change_pending = TRUE;
     }
-    D_004470E1 = TRUE;
-    D_00446868 += 1;
+    map_sounds_enabled = TRUE;
+    map_bank_load_step += 1;
     return 1;
 }
 
-/* Map bank load step: the first time after Sound_Init sets D_004470E0 and moves on to the reverb steps;
-   after that sets D_004470E1 (map sounds may start) and ends the load (1), so the reverb stays. */
+/* Map bank load step: the first time after Sound_Init sets map_reverb_set and moves on to the reverb steps;
+   after that sets map_sounds_enabled (map sounds may start) and ends the load (1), so the reverb stays. */
 int Sound_MapBankFinishUnlessFirst(void) {
-    D_00446868 += 1;
+    map_bank_load_step += 1;
     D_004468B4 = 0;
-    if (D_004470E0 != 0) {
-        D_004470E1 = TRUE;
+    if (map_reverb_set != 0) {
+        map_sounds_enabled = TRUE;
         return 1;
     }
-    D_004470E0 = TRUE;
+    map_reverb_set = TRUE;
     return 0;
 }
 
-/* Runs the current step of the map bank load (D_0043ED90); 0 when it reports done, else 1. */
+/* Runs the current step of the map bank load (map_bank_load_steps); 0 when it reports done, else 1. */
 static int Sound_RunMapBankLoad(void *sequence, int kind) {
-    if (D_0043ED90[D_00446868]() > 0) {
-        D_00446868 = 0;
+    if (map_bank_load_steps[map_bank_load_step]() > 0) {
+        map_bank_load_step = 0;
         return 0;
     }
     return 1;
@@ -2110,7 +2110,7 @@ void Sound_LoadSwBank(int file_id) {
     buffer_limit = buffer_base + 0x20000;
     sw_bank.limit = buffer_limit;
     sw_bank.used = 0;
-    D_004470F4 = buffer_limit + 0x8000;
+    sound_heap_next = buffer_limit + 0x8000;
     while (Sound_StepUpload() == 0) {
     }
     sw_bank_job.result = Sound_LoadFilePair(path_a, path_b, sw_bank_job.spec, sw_bank_job.unk18, sw_bank_job.unk1C);
@@ -2137,7 +2137,7 @@ void Sound_LoadMgBank(int file_number) {
     buffer_end = heap_start + 0x10000;
     mg_bank.limit = buffer_end;
     mg_bank.used = 0;
-    D_004470F4 = buffer_end + 0x8000;
+    sound_heap_next = buffer_end + 0x8000;
     while (Sound_StepUpload() == 0);
     mg_bank_job.result = Sound_LoadFilePair(path_a, path_b, mg_bank_job.spec, mg_bank_job.unk18, mg_bank_job.unk1C);
     while (Sound_StepUpload() == 0);
@@ -2185,37 +2185,37 @@ void Sound_LoadJob(SoundJob *slot) {
 
 /* Sets the reverb return volume of core 1 (SPU2 parameters EVOLL and EVOLR, 0xB81 and 0xC81 through
    command 0xD0) from the player's map record (byte 0x4D) when it differs from the one sent last
-   (D_004470E3), and only while no sound load is waiting. */
+   (map_reverb_volume), and only while no sound load is waiting. */
 static int Sound_UpdateMapReverbVolume(void) {
     MapSlot *slot;
     int cached;
     int wanted;
 
     if (sound_load_queue[3] == 0 && sound_load_queue[6] == 0 && sound_load_queue[1] == 0) {
-        slot = &map_slots[D_00446770];
-        cached = D_004470E3;
+        slot = &map_slots[current_map_slot];
+        cached = map_reverb_volume;
         if ((u8)slot->records[(player_state.map_index << 7) + 0x4D] != cached) {
             if (cached >= 0x40) {
-                D_004470E3 = 0x3F;
+                map_reverb_volume = 0x3F;
             } else if (cached < 0) {
-                D_004470E3 = 0;
+                map_reverb_volume = 0;
             }
             wanted = (u8)slot->records[(player_state.map_index << 7) + 0x4D];
-            D_004470E3 = wanted;
+            map_reverb_volume = wanted;
             SoundDriver_Remote(1, 0xD0, 0xB81, (s8)wanted << 8);
-            return SoundDriver_Remote(1, 0xD0, 0xC81, D_004470E3 << 8);
+            return SoundDriver_Remote(1, 0xD0, 0xC81, map_reverb_volume << 8);
         }
     }
 }
 
 /* Lets Sound_UpdateTagged give positioned tagged sounds their volume again. */
 void Sound_UnmutePositional(void) {
-    D_004470E6 = 0;
+    positional_sounds_muted = 0;
 }
 
 /* Makes Sound_UpdateTagged keep positioned tagged sounds at volume 0. */
 void Sound_MutePositional(void) {
-    D_004470E6 = 1;
+    positional_sounds_muted = 1;
 }
 
 /* Frees the IOP copy of a voice's samples (SoundDriver_FreeSampleBuffer); returns 0. Nothing calls it. */

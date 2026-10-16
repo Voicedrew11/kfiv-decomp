@@ -24,7 +24,7 @@ int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -120,7 +120,7 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     char *part;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
@@ -186,7 +186,7 @@ static void Slasher_WaitForPlayerNear(Entity *entity) {
 /* Sets work byte unk7A of every other live entity with the same params within EntityParams.far_distance (on the
    ground) of this one, which ends its Slasher_WaitForPlayerNear. */
 static void Slasher_AlertSameKind(Entity *entity) {
-    Entity *other_entity = D_004467E0;
+    Entity *other_entity = active_entities_head;
     while (other_entity != NULL) {
         if (entity->params == other_entity->params) {
             if (*(int *)&other_entity->flags & 1) {

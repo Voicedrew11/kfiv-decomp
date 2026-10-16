@@ -15,8 +15,8 @@ void MapObject_UpdateBreaking(MapObject *object);
 void MapObject_StopAmbientSound(MapTrigger *trigger);
 void MapObject_RebuildMatrices(char *arg);
 int MapObject_RefuseItem();
-void func_0011F228();
-void func_0011F230();
+void MapObject_IgnoreSignal();
+void MapObject_SkipSetUp();
 void MapObject_StartDoor(MapObject *object);
 void MapObject_UpdateOpeningDoor(MapObject *object);
 void MapObject_UpdateOpenDoor(MapObject *object);
@@ -48,14 +48,14 @@ void MapObject_StartLight(MapObject *object);
 void MapObject_UpdateLight(MapObject *object);
 void MapObject_ReleaseLight(MapObject *object);
 void MapObject_StartStatusOnTouch(MapObject *object);
-void func_00120D88();
+void MapObject_IdleStatusOnTouch();
 void MapObject_StartExaminable(MapObject *object);
 void MapObject_UpdateExaminable(MapObject *object);
 void MapObject_ShowExaminedSign(MapObject *object);
 void MapObject_ShowExaminedMessage(MapObject *object);
 void MapObject_WaitExaminedMessage(MapObject *object);
 void MapObject_StartSymbolOfPassage(MapObject *object);
-void func_00120ED8();
+void MapObject_IdleSymbolOfPassage();
 void MapObject_StartPedestal(MapObject *object);
 void MapObject_UpdateEmptyPedestal(MapObject *object);
 void MapObject_MovePedestalItemIn(MapObject *object);
@@ -100,9 +100,9 @@ void MapObject_TurnPivotSwitchOff(MapObject *object);
 void MapObject_SignalPivotSwitch(MapTrigger *trigger, int turn_on);
 void MapObject_PosePivotSwitch(MapTrigger *trigger);
 void MapObject_StartFadeObject(MapTrigger *trigger);
-void func_00122CA8();
+void MapObject_KeepFadeObjectHidden();
 void MapObject_FadeInObject(MapTrigger *trigger);
-void func_00122D60();
+void MapObject_KeepFadeObjectShown();
 void MapObject_FadeOutObject(MapTrigger *trigger);
 void MapObject_SignalFadeObject(MapTrigger *trigger, int turn_on);
 void MapObject_StartPulse(MapTrigger *trigger);
@@ -112,7 +112,7 @@ char map_object_defs[0x14000] = { 0 }; /* 0x38DA30 the param/obj.prm row of ever
 
 MapObject map_slot_objects[2][0x200] = { 0 }; /* 0x3A1A30 the objects of both map slots, a row each */
 /* its second row, which other files name on its own */
-asm(".globl D_003AFA30\nD_003AFA30 = map_slot_objects + 0xE000");  /* 0x3AFA30 the objects of the other loaded map */
+asm(".globl map_slot1_objects\nmap_slot1_objects = map_slot_objects + 0xE000");  /* 0x3AFA30 the objects of map slot 1 */
 
 void (*map_object_step_handlers[0x20][16])(MapObject *) = { /* 0x3BDA30 the step handler of each object kind */
     MapObject_StartScenery, MapObject_UpdateScenery, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
@@ -125,9 +125,9 @@ void (*map_object_step_handlers[0x20][16])(MapObject *) = { /* 0x3BDA30 the step
     MapObject_StartToggle, MapObject_UpdateIdleToggle, MapObject_UpdateMovingToggle, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartSwitch, (void (*)(MapObject *))MapObject_UpdateOffSwitch, MapObject_UpdateSwitchTurningOn, (void (*)(MapObject *))MapObject_UpdateOnSwitch, MapObject_UpdateSwitchTurningOff, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartLight, MapObject_UpdateLight, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
-    MapObject_StartStatusOnTouch, (void (*)(MapObject *))func_00120D88, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
+    MapObject_StartStatusOnTouch, (void (*)(MapObject *))MapObject_IdleStatusOnTouch, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartExaminable, MapObject_UpdateExaminable, MapObject_ShowExaminedSign, MapObject_ShowExaminedMessage, MapObject_WaitExaminedMessage, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
-    MapObject_StartSymbolOfPassage, (void (*)(MapObject *))func_00120ED8, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
+    MapObject_StartSymbolOfPassage, (void (*)(MapObject *))MapObject_IdleSymbolOfPassage, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartPedestal, MapObject_UpdateEmptyPedestal, MapObject_MovePedestalItemIn, MapObject_SettlePedestalItem, MapObject_UpdateFilledPedestal, MapObject_LiftPedestalItem, MapObject_MovePedestalItemOut, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     (void (*)(MapObject *))MapObject_StartSinkingPlatform, MapObject_UpdateSinkingPlatform, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartLadder, MapObject_UpdateLadder, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
@@ -146,7 +146,7 @@ void (*map_object_step_handlers[0x20][16])(MapObject *) = { /* 0x3BDA30 the step
     MapObject_StartScenery, MapObject_UpdateScenery, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     (void (*)(MapObject *))MapObject_StartPulse, (void (*)(MapObject *))MapObject_UpdatePulse, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
     MapObject_StartPivotSwitch, MapObject_UpdatePivotSwitchOff, MapObject_TurnPivotSwitchOn, MapObject_UpdatePivotSwitchOn, MapObject_TurnPivotSwitchOff, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
-    (void (*)(MapObject *))MapObject_StartFadeObject, (void (*)(MapObject *))func_00122CA8, (void (*)(MapObject *))MapObject_FadeInObject, (void (*)(MapObject *))func_00122D60, (void (*)(MapObject *))MapObject_FadeOutObject, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
+    (void (*)(MapObject *))MapObject_StartFadeObject, (void (*)(MapObject *))MapObject_KeepFadeObjectHidden, (void (*)(MapObject *))MapObject_FadeInObject, (void (*)(MapObject *))MapObject_KeepFadeObjectShown, (void (*)(MapObject *))MapObject_FadeOutObject, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, MapObject_UpdateBreaking,
 };
 
 void (*map_object_end_hooks[0x20])(MapObject *) = { /* 0x3BE230 the kind's end hook, run by MapObject_Deactivate */
@@ -172,14 +172,14 @@ int (*map_object_item_hooks[0x20])(MapObject *, int) = { /* 0x3BE2B0 the kind's 
 };
 
 void (*map_object_signal_hooks[0x20])(MapObject *, int) = { /* 0x3BE330 the kind's signal hook */
-    (void (*)(MapObject *, int))func_0011F228, MapObject_SetDoorOpen, MapObject_SetDoorOpen, (void (*)(MapObject *, int))func_0011F228,
-    (void (*)(MapObject *, int))MapObject_OpenChestOnSignal, (void (*)(MapObject *, int))func_0011F228, MapObject_SetDoorOpen, (void (*)(MapObject *, int))func_0011F228,
-    MapObject_SetSwitchOn, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228,
-    (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228,
-    MapObject_SetShooterOn, MapObject_SetDoorOpen, MapObject_SetPitfallOpen, (void (*)(MapObject *, int))func_0011F228,
-    (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228,
-    (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228,
-    (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))func_0011F228, (void (*)(MapObject *, int))MapObject_SignalPivotSwitch, (void (*)(MapObject *, int))MapObject_SignalFadeObject,
+    (void (*)(MapObject *, int))MapObject_IgnoreSignal, MapObject_SetDoorOpen, MapObject_SetDoorOpen, (void (*)(MapObject *, int))MapObject_IgnoreSignal,
+    (void (*)(MapObject *, int))MapObject_OpenChestOnSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal, MapObject_SetDoorOpen, (void (*)(MapObject *, int))MapObject_IgnoreSignal,
+    MapObject_SetSwitchOn, (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal,
+    (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal,
+    MapObject_SetShooterOn, MapObject_SetDoorOpen, MapObject_SetPitfallOpen, (void (*)(MapObject *, int))MapObject_IgnoreSignal,
+    (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal,
+    (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal,
+    (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_IgnoreSignal, (void (*)(MapObject *, int))MapObject_SignalPivotSwitch, (void (*)(MapObject *, int))MapObject_SignalFadeObject,
 };
 
 void (*map_object_update_hooks[0x20])(MapObject *) = { /* 0x3BE3B0 the kind's every-frame update */
@@ -205,12 +205,12 @@ void (*map_object_offset_hooks[0x20])(MapObject *, f32 *) = { /* 0x3BE430 the ki
 };
 
 void (*map_object_setup_hooks[0x20])(MapObject *) = { /* 0x3BE4B0 the kind's set-up */
-    (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, MapObject_SetupItemHolder,
-    MapObject_SetupChest, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230,
-    (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230,
-    (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230,
-    (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230,
-    (void (*)(MapObject *))func_0011F230, MapObject_SetUpContainer, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230,
-    (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230,
-    (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230, (void (*)(MapObject *))func_0011F230,
+    (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, MapObject_SetupItemHolder,
+    MapObject_SetupChest, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp,
+    (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp,
+    (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp,
+    (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp,
+    (void (*)(MapObject *))MapObject_SkipSetUp, MapObject_SetUpContainer, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp,
+    (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp,
+    (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp, (void (*)(MapObject *))MapObject_SkipSetUp,
 };

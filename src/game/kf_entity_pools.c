@@ -6,7 +6,7 @@ ModelInstance entity_models[ENTITY_POOL_SLOT_COUNT] = { 0 }; /* 0x3BE530 a model
 
 Entity entity_pool[2][0x80] = { 0 }; /* 0x3BEDF0 the entities of both map slots */
 /* the last entity of entity_pool, which other files name on its own */
-asm(".globl D_003D6C70\nD_003D6C70 = entity_pool + 0x17E80");  /* 0x3D6C70 the 256th entity */
+asm(".globl entity_pool_last\nentity_pool_last = entity_pool + 0x17E80");  /* 0x3D6C70 the 256th entity */
 
 EntityPoolSlot entity_pool_slots[ENTITY_POOL_SLOT_COUNT] = { 0 }; /* 0x3D6DF0 the pool slots */
 

@@ -9,21 +9,21 @@ void *memset(void *, int, u32);
 int rand(void);
 
 extern MapSlot map_slots[];
-extern MapSlotMemory D_004321F0[2];
+extern MapSlotMemory map_slot_memory[2];
 extern Entity entity_pool[][0x80];
-extern int D_004467D8[2];
-extern EntitySpawnInfo *D_004467D0[2];
-extern char *D_004467C0;
-extern Vector4Arg D_0043E7C0;
+extern int map_spawn_counts[2];
+extern EntitySpawnInfo *map_spawn_infos[2];
+extern char *entity_params;
+extern Vector4Arg entity_unit_scale;
 extern s32 entity_type_handlers[][2];
-extern int D_0038CC80[3];
-extern Entity *D_004467E0;
+extern int suspended_updates[3];
+extern Entity *active_entities_head;
 extern PlayerData player_state;
 extern MapDrawState map_draw_state;
-extern f32 D_00431AF0[16];
-extern u32 D_00446ED4;
-extern int D_00446770;
-extern u8 D_004141D0[];
+extern f32 identity_matrix[16];
+extern u32 frame_counter;
+extern int current_map_slot;
+extern u8 player_floor_block[];
 extern const f32 D_004467F8[];
 
 void Vector_Copy(void *, void *);
@@ -102,18 +102,18 @@ void Entity_InitFromMapSpawns(int map) {
     MapSlotMemory *memory;
 
     slot = &map_slots[map];
-    memory = &D_004321F0[map];
+    memory = &map_slot_memory[map];
     entity = entity_pool[map];
-    spawn_info = D_004467D0[map];
+    spawn_info = map_spawn_infos[map];
     model = memory->entity_models;
-    D_004467D8[map] = ((MapSlotUnk08 *)slot->header)->spawn_count;
+    map_spawn_counts[map] = ((MapSlotUnk08 *)slot->header)->spawn_count;
     memset(entity, 0, sizeof(entity_pool[map]));
     memset(entity_by_spawn_id[map], 0, sizeof(entity_by_spawn_id[map]));
-    count = D_004467D8[map];
+    count = map_spawn_counts[map];
     for (i = 0; i < count; i++, entity++, spawn_info++, model++) {
         entity->group_id = map;
         entity->model = (EntityModel *)model;
-        entity->params = (EntityParams *)(D_004467C0 + spawn_info->type_id * sizeof(EntityParams));
+        entity->params = (EntityParams *)(entity_params + spawn_info->type_id * sizeof(EntityParams));
         entity->pool_slot_index = -1;
         entity->spawn_info = spawn_info;
         entity_by_spawn_id[map][SPAWN_FLAGS(spawn_info)->bytes[4]] = entity;
@@ -167,14 +167,14 @@ void Entity_ClearFlag10InSlot(int array_index) {
     int i;
 
     entity = entity_pool[array_index];
-    for (i = 0; i < D_004467D8[array_index]; i++, entity++) {
+    for (i = 0; i < map_spawn_counts[array_index]; i++, entity++) {
         entity->flags &= ~0x10;
     }
 }
 
 /* Puts an entity back to how it spawns: flags, counters, position, rotation and its sizes scaled. */
 void Entity_ResetToSpawn(Entity *entity) {
-    Vector4Arg scale = D_0043E7C0;
+    Vector4Arg scale = entity_unit_scale;
     f32 widest;
 
     // match: read first; after the stores below, the scheduler would hold this load back behind them
@@ -250,7 +250,7 @@ void Entity_ClearMapSlot(int array_index) {
     Entity *entity;
     int i;
 
-    D_004467D8[array_index] = 0;
+    map_spawn_counts[array_index] = 0;
     memset(entity_pool[array_index], 0, sizeof(entity_pool[array_index]));
     for (i = 0; i < 0x80; i++) {
         entity = &entity_pool[array_index ^ 1][i];
@@ -271,7 +271,7 @@ void Entity_OffsetAllInSlot(int array_index, f32 *offset) {
     int count;
 
     entity = entity_pool[array_index];
-    count = D_004467D8[array_index];
+    count = map_spawn_counts[array_index];
     for (i = 0; i < count; i++, entity++) {
         Vector_Add(entity->model->position, entity->model->position, offset);
         Vector_Add(entity->prev_position, entity->prev_position, offset);
@@ -285,10 +285,10 @@ void Entity_UpdateAll(void) {
     Entity *entity;
     EntitySpawnInfo *spawn_info;
 
-    if (D_0038CC80[0] & 4) {
+    if (suspended_updates[0] & 4) {
         return;
     }
-    for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+    for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         Model_UpdateSkinnedBonePoints(ENTITY_MODEL(entity));
         if (ENTITY_FLAG_BITS(entity)->bits2 >= 3 || !ENTITY_FLAG_BITS(entity)->bit1) {
             if (!EntityAi_ShouldRespawn(entity)) {
@@ -367,7 +367,7 @@ void Entity_UpdateAll(void) {
             push[1] = 0.0f;
             push[2] = forward;
             push[3] = 0.0f;
-            sceVu0RotMatrixY(SCRATCH_MATRIX, D_00431AF0, EntityMath_WrapAngle(entity->knockback_heading));
+            sceVu0RotMatrixY(SCRATCH_MATRIX, identity_matrix, EntityMath_WrapAngle(entity->knockback_heading));
             sceVu0ApplyMatrix(SCRATCH_VECTOR, SCRATCH_MATRIX, SCRATCH_VECTOR);
             Vector_Scale(SCRATCH_VECTOR, SCRATCH_VECTOR, entity->knockback_speed);
             Vector_Add(entity->model->position, entity->model->position, SCRATCH_VECTOR);
@@ -428,7 +428,7 @@ void Entity_DrawAll(int list) {
     Packet_EndGsRegisters();
     for (map = 0; map < 2; map++) {
         for (block = 0; block < 5; block++) {
-            for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+            for (entity = active_entities_head; entity != NULL; entity = entity->next) {
                 if (!ENTITY_FLAG_BITS(entity)->bit1) {
                     continue;
                 }
@@ -454,7 +454,7 @@ void Entity_DrawAll(int list) {
                     ENTITY_MODEL(entity)->alpha = (f32)entity->model_alpha;
                 } else if (ENTITY_FLAG_BITS(entity)->bits2 < 2) {
                     half = 20;
-                    phase = D_00446ED4 % period;
+                    phase = frame_counter % period;
                     falling = period - phase;
                     if (phase >= half) {
                         phase = falling;
@@ -565,17 +565,17 @@ static int Entity_IsMapRecordActive(Entity *entity) {
     if (record->record_flags & 0x40000000) {
         return FALSE;
     }
-    if (index == D_00446770) {
+    if (index == current_map_slot) {
         slot = &map_slots[index];
-        bits = slot->flag_blocks[D_004141D0[0]].bits;
+        bits = slot->flag_blocks[player_floor_block[0]].bits;
         if (slot->loaded == 0) {
             return FALSE;
         }
         return (bits[record->flag_block_bit >> 3] >> (record->flag_block_bit & 7)) & 1;
     }
-    slot = &map_slots[D_00446770];
-    block = &slot->flag_blocks[D_004141D0[0]];
-    slot = &map_slots[D_00446770 ^ 1];
+    slot = &map_slots[current_map_slot];
+    block = &slot->flag_blocks[player_floor_block[0]];
+    slot = &map_slots[current_map_slot ^ 1];
     if (slot->loaded == 0) {
         return FALSE;
     }
@@ -697,7 +697,7 @@ Entity *Entity_GetBySpawnId(int entity_id) {
     if ((u32)entity_id >= 0x100) {
         return NULL;
     }
-    return entity_by_spawn_id[D_00446770][entity_id];
+    return entity_by_spawn_id[current_map_slot][entity_id];
 }
 
 /* Looks up an entity of the given map by id. */

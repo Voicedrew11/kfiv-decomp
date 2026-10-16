@@ -26,7 +26,7 @@ int Motion_Start(void *, int, int, u32, int);
 float EntityMath_AngleDifference(float, float);
 int EntityAi_AnimationFrameCount(void *, int);
 float EntityMath_EaseAngleToward(float *, float, float);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 extern PlayerData player_state;
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_CanAttack(Entity *);
@@ -37,7 +37,7 @@ s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 float EntityMath_HeadingTo(float *, float *);
-extern EntityIdTable D_0043E890;
+extern EntityIdTable stone_guardian_spawn_ids;
 
 static void StoneGuardian_Animate(Entity *entity);
 static void StoneGuardian_OnHit(Entity *entity);
@@ -304,7 +304,7 @@ static void StoneGuardian_ThinkMode2StayInBounds(Entity *entity, s32 unknown) {
     s32 player_in_zone;
 
     ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 0);
     }
     if (entity->busy_flags == 0) {
@@ -1244,7 +1244,7 @@ static void StoneGuardian_Mode5ReturnToSpawn(Entity *entity) {
 /* The think handler of mode 6: a sequence kept in work byte unk7A (1 to 7; at 0 it is
    EntityAi_Think), driven by whether the two map objects EntitySpawnInfo.variant and unk42 name
    both have bit 17 set. While both are set the entity is kept unseen at a fixed point (steps 1 and
-   2); when one clears it comes out, one entity of the five in D_0043E890 at a time (step 3,
+   2); when one clears it comes out, one entity of the five in stone_guardian_spawn_ids at a time (step 3,
    StoneGuardian_PlayAnim9, then 0); when both are set again it goes back the same way (steps 4 to 7,
    StoneGuardian_PlayAnim8). The functions named Mode6... do the work of a step. */
 static void StoneGuardian_ThinkMode6HideSequence(Entity *entity, s32 unknown) {
@@ -1635,9 +1635,9 @@ static void StoneGuardian_Mode6WalkToHidePoint(Entity *entity, s32 unknown) {
 }
 
 /* Helper of StoneGuardian_ThinkMode6HideSequence: whether none of the other live entities among the five in
-   D_0043E890 is at step `value` of the sequence. */
+   stone_guardian_spawn_ids is at step `value` of the sequence. */
 static s32 StoneGuardian_Mode6IsStepFree(Entity *entity, s32 value) {
-    EntityIdTable table = D_0043E890;
+    EntityIdTable table = stone_guardian_spawn_ids;
     s32 i;
     Entity *other;
 
@@ -1651,11 +1651,11 @@ static s32 StoneGuardian_Mode6IsStepFree(Entity *entity, s32 value) {
 }
 
 /* Helper of StoneGuardian_ThinkMode6HideSequence: whether none of the other live entities among the
-   five in D_0043E890 is at step 5 with its work float unk54 below `limit`. unk54 is the distance to
+   five in stone_guardian_spawn_ids is at step 5 with its work float unk54 below `limit`. unk54 is the distance to
    the post of step 6 that step 4 stored, and the caller passes its own, so TRUE means this entity
    is the nearest of those waiting. */
 static s32 StoneGuardian_Mode6IsNearestWaiting(Entity *entity, f32 limit) {
-    EntityIdTable table = D_0043E890;
+    EntityIdTable table = stone_guardian_spawn_ids;
     s32 i;
     Entity *other;
     EntityUnkE0 *other_unkE0;

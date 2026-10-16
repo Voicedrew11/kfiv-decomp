@@ -97,6 +97,6 @@ void MapObject_StartStatusOnTouch(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
 }
 
-/* Does nothing: step 1 of kind 10. */
-void func_00120D88(void) {
+/* Does nothing: the step a kind 10 object stays in once started (its effect comes from touching it). */
+void MapObject_IdleStatusOnTouch(void) {
 }

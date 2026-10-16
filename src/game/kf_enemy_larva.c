@@ -20,7 +20,7 @@ void EntityAi_Animate(void);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Death(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_StepState(void *);
 int EntityAi_ThinkIdle(void *, int);
@@ -109,7 +109,7 @@ static void Larva_Think(Entity *entity, s32 unknown) {
     MapSlotUnk10 *record;
     f32 scale;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
@@ -125,7 +125,7 @@ static void Larva_Think(Entity *entity, s32 unknown) {
             break;
         }
     }
-    if (D_00446ED4 % 20U == 0) {
+    if (frame_counter % 20U == 0) {
         EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43A, 0xFF, (int)entity->model->rotation);
     }
     if (unkE0->sub_timer != 0) {
@@ -366,7 +366,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
         if ((f32)entity->params->yaw_limit_deg < unkE0->part_angle_x) {
             unkE0->part_angle_x = (f32)entity->params->yaw_limit_deg;
         }
-        if (D_00446ED4 % 3U == 0) {
+        if (frame_counter % 3U == 0) {
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43C, 0xFF, (int)entity->model->rotation);
         }
         if (unkE0->action_counter == 0) {

@@ -2,7 +2,7 @@
    function, which the table names, and the handlers it installs. Used by: the Dark One, the last boss,
    chr.prm record 99 (ENTITY_TYPE_LAST_BOSS in Attack_HitEntity), whose one spawn is in 040.map, the end of
    the Dark Reality. The game's own text calls him the Dark One. Attack_HitEntity gives him no damage:
-   each weapon hit counts D_00446928 down and throws the player back, magic does nothing, and the hit
+   each weapon hit counts dark_one_hits_left down and throws the player back, magic does nothing, and the hit
    that takes the count to 0 kills him; Prima's official guide (2004) describes the same fight. */
 #include "kf_entity.h"
 
@@ -18,8 +18,8 @@ void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
-extern s32 D_00446928;
-extern u32 D_00446ED4;
+extern s32 dark_one_hits_left;
+extern u32 frame_counter;
 void EntityEvent_StartEffectAtPoint(char **, int, u32, int);
 void EntityEvent_StartCue(Entity *, s32, s32, s32);
 int Sound_PlayMapAtRange(u8, u8, float *, float);
@@ -81,20 +81,20 @@ void DarkOne_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit26 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit16 = TRUE;
-    unkE0->step_index = D_00446928;
+    unkE0->step_index = dark_one_hits_left;
 }
 
 /* The think handler: as EntityAi_Think without the walk back to the spawn point, with
    EntityAi_ThinkCombat for states 1 and 2. Every third frame it calls EntityEvent_StartEffectAtPoint with
-   EntityParams.pitch_limit_deg, unk432 or unk434, by D_00446928 (3, 2, other). In a frame with flag bit 43
-   set it calls EntityEvent_StartEffectAtPoint with 0x13D and clears the bit; then, with D_00446928 at 0 or less, it
-   sets Entity.hit_flash_frames to 6 and starts DarkOne_Death, and else, when D_00446928 has changed (work
+   EntityParams.pitch_limit_deg, unk432 or unk434, by dark_one_hits_left (3, 2, other). In a frame with flag bit 43
+   set it calls EntityEvent_StartEffectAtPoint with 0x13D and clears the bit; then, with dark_one_hits_left at 0 or less, it
+   sets Entity.hit_flash_frames to 6 and starts DarkOne_Death, and else, when dark_one_hits_left has changed (work
    byte unk7A keeps it), calls EntityEvent_StartCue and Sound_PlayMapAtRange. */
 static void DarkOne_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 3U == 0) {
-        switch (D_00446928) {
+    if (frame_counter % 3U == 0) {
+        switch (dark_one_hits_left) {
         case 3:
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->pitch_limit_deg, 0xFF, (int)entity->model->rotation);
             break;
@@ -109,20 +109,20 @@ static void DarkOne_Think(Entity *entity, s32 unknown) {
     if (ENTITY_FLAG_BITS(entity)->bit43) {
         EntityEvent_StartEffectAtPoint((char **)entity, 0x13D, 0xFF, (int)entity->model->rotation);
         ENTITY_FLAG_BITS(entity)->bit43 = FALSE;
-        if (D_00446928 <= 0) {
+        if (dark_one_hits_left <= 0) {
             entity->hit_flash_frames = 6;
             EntityAi_StartAction(entity, DarkOne_Death, unknown);
             return;
         }
-        if (unkE0->step_index != D_00446928) {
+        if (unkE0->step_index != dark_one_hits_left) {
             EntityEvent_StartCue(entity, entity->params->near_distance, entity->params->far_distance, 0);
             // match: an int result keeps $2 busy after the call
             ((int (*)(s32, s32, f32 *, f32))Sound_PlayMapAtRange)((u8)entity->params->unk43A, (u8)entity->params->unk43C,
                                                            entity->model->position, entity->params->sound_id);
-            unkE0->step_index = D_00446928;
+            unkE0->step_index = dark_one_hits_left;
         }
     }
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {

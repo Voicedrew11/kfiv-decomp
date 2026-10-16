@@ -2,8 +2,8 @@
    a point to the screen, and an index of the largest of seven values. Nothing calls any of them. */
 #include "kf_game.h"
 
-extern f32 D_00446FA4[];            /* -0.0f */
-extern f32 D_004323E0[16];          /* the world-to-screen matrix */
+extern f32 D_00446FA4[];         /* -0.0f */
+extern f32 world_screen_matrix[16];          /* the world-to-screen matrix */
 
 float sqrtf(float);
 float atan2f(float, float);
@@ -54,9 +54,9 @@ static void Angle_StepToward(f32 *angle, f32 target) {
     }
 }
 
-/* Projects a world-space point to the screen with the world-to-screen matrix D_004323E0. */
+/* Projects a world-space point to the screen with the world-to-screen matrix world_screen_matrix. */
 static void Vector_ProjectToScreen(void *point, int *screen) {
-    Vu0_LoadMatrix(D_004323E0);
+    Vu0_LoadMatrix(world_screen_matrix);
     Vu0_ProjectToScreen(screen, point);
 }
 

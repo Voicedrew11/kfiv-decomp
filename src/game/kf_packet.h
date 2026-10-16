@@ -11,7 +11,7 @@ typedef struct {
     u64 Z : 32;
 } GsXyz;
 
-/* a 0x60-byte sprite packet (two corners), D_005DD4C0/D_005DDB80/D_005DDC40 */
+/* a 0x60-byte sprite packet (two corners), like the static copies kf_menu_draw.c's sprite functions keep */
 typedef struct {
     GsXyz xyz0;                     /* 0x00 */
     s64 unk08;                      /* 0x08 */
@@ -24,7 +24,7 @@ typedef struct {
     u8 alpha;                       /* 0x23 */
     char pad24[0x0D];
     u8 kind;                        /* 0x31 the kind (KindObject.kind); 2: MenuDraw_Number asks MenuDraw_GetNumber for the number */
-    u8 word_index;                  /* 0x32 which word of D_0042A078 MenuDraw_Word draws (kind 1) */
+    u8 word_index;                  /* 0x32 which word of menu_word_starts MenuDraw_Word draws (kind 1) */
     u8 digit_count;                 /* 0x33 how many digits MenuDraw_Number draws; 0: three digits, a point and one more */
     s32 number_id;                  /* 0x34 which number the sprite stands for (MenuDraw_GetNumber gives its current value) */
     char pad38[0x06];
@@ -148,7 +148,7 @@ typedef struct {
     GsDrawEnv env;                  /* 0x10 */
 } GsDrawPacket;
 
-/* 32 bytes of GS data that D_0043EB90 holds */
+/* 32 bytes of GS data: offscreen_square_corners, two (x, y, z, 0) word vectors */
 typedef struct {
     s64 unk00;                      /* 0x00 */
     s64 unk08;                      /* 0x08 */
@@ -266,7 +266,7 @@ typedef struct {
     s32 alpha_pad;                  /* 0x19C the A+D write's last word, always 0 */
 } GsFillPacket;
 
-/* the two packet buffers MenuDraw_NextPacket alternates between (D_00446D48) */
+/* the two packet buffers MenuDraw_NextPacket alternates between (its local `buffers`) */
 typedef struct {
     void *buffers[2];
 } BufferPair;

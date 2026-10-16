@@ -23,7 +23,7 @@ int Motion_Step(void *, int);
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 extern PlayerData player_state;
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 double atan2(double, double);
 float EntityMath_WrapAngle(float);
 void sceVu0CopyMatrix(void *, void *);
@@ -41,16 +41,16 @@ int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_StartAttack(Entity *, void (*)(Entity *entity), int, int, int);
 int EntityAi_CanUseRanged(Entity *, int);
 void EntityAi_SensePlayer(void *, int);
 int Motion_Start(void *, int, int, u32, int);
 // match: the size is unknown; a complete small type would be read through $gp
-extern u8 D_0034A018[];
+extern u8 dark_succubus_fight_started[];
 extern MapSlot map_slots[];
-extern EntitySpawnInfo *D_004467D0[2];
+extern EntitySpawnInfo *map_spawn_infos[2];
 void Game_CountSpawnDeath(u32, int);
 void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
@@ -203,17 +203,17 @@ static void DarkArcher_PitchPart2ToPlayer(Entity *entity, s32 mode) {
         }
         if (mode > 0) {
             rate = 10.0f;
-            sceVu0CopyMatrix(parent, D_00431AF0);
+            sceVu0CopyMatrix(parent, identity_matrix);
             Bone_MultiplyPathTo(entity->model->parts, bone, parent);
             parent[12] = 0.0f;
             parent[13] = 0.0f;
             parent[14] = 0.0f;
             parent[15] = 1.0f;
-            sceVu0RotMatrixX(rotation, D_00431AF0, bone->unk50[0]);
+            sceVu0RotMatrixX(rotation, identity_matrix, bone->unk50[0]);
             sceVu0RotMatrixZ(rotation, rotation, bone->unk50[2]);
             sceVu0RotMatrixY(rotation, rotation, bone->unk50[1]);
             Matrix_Multiply(rotation, parent, rotation);
-            sceVu0RotMatrixX(tilt, D_00431AF0, pitch);
+            sceVu0RotMatrixX(tilt, identity_matrix, pitch);
             Matrix_Multiply(rotation, tilt, rotation);
             sceVu0TransposeMatrix(parent, parent);
             Matrix_Multiply(rotation, parent, rotation);
@@ -272,7 +272,7 @@ static void DarkArcher_OnHit(Entity *entity) {
 static void DarkArcher_ThinkShootOrTurn(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     entity->flags &= ~0x400;
@@ -325,7 +325,7 @@ static void DarkArcher_MoveTurnOnly(Entity *entity) {
 }
 
 /* The dormant action of a spawn whose EntitySpawnInfo.spawn_mode is set (busy bit 0x20): animation 0,
-   unseen (Entity.model_alpha 0) with flag bits 18, 20 and 21 set until D_0034A018[0] is not 0, then fades
+   unseen (Entity.model_alpha 0) with flag bits 18, 20 and 21 set until dark_succubus_fight_started[0] is not 0, then fades
    the model in over 20 frames (counted in work byte unk7B), clears the three bits and thinks. */
 static void DarkArcher_DormantFadeIn(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -342,7 +342,7 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
         unkE0->action_flags = 0;
         entity->action_step++;
     case 1:
-        if (D_0034A018[0] != 0) {
+        if (dark_succubus_fight_started[0] != 0) {
             entity->action_step++;
         }
         break;
@@ -392,7 +392,7 @@ static void DarkArcher_DeathWithoutReward(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit27 = 1;
             ENTITY_FLAG_BITS(entity)->bit26 = 1;
             entity->action_timer = 20;
-            Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+            Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - map_spawn_infos[entity->group_id]);
             Effect_FreeForOwner(entity);
             entity->action_step++;
         }
@@ -413,7 +413,7 @@ static void DarkArcher_DeathWithoutReward(Entity *entity) {
 static void DarkArcher_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
@@ -476,7 +476,7 @@ static void DarkArcher_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -674,7 +674,7 @@ static void DarkArcher_MoveAlongArc(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[1] = unkE0->heading_speed;
     ENTITY_SCRATCH_VECTOR[2] = unkE0->keep_min_distance;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
-    sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, D_00431AF0, unkE0->pitch_speed);
+    sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, identity_matrix, unkE0->pitch_speed);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
     // match: never taken, but until the compiler works that out the branch separates the
     // scratchpad stores above from the loads below, so their addresses are not kept in registers

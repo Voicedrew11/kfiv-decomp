@@ -1,10 +1,9 @@
 /* The start-up settings file ini/NNNN.ini: Ini_Load reads it a line at a time (Ini_ReadLine) and hands each
-   line to the handler of its key. The handlers are global because the key table D_0042B810, still data in
-   the assembly, points at them. */
+   line to the handler of its key; the key table ini_keys lists the keys and their handlers. */
 #include "kf_ini.h"
 #include "kf_player.h"
 
-extern char D_004410A8[];           /* "ini/%4.4d.ini" */
+extern char ini_path_format[];           /* "ini/%4.4d.ini" */
 extern char file_load_buffer[];           /* where the file is read to */
 extern PlayerState player_state;
 extern u8 item_counts[380];
@@ -60,7 +59,7 @@ void Ini_SetDebugDash(void);
 void Ini_SetDebugMagicRapidFire(void);
 
 /* 0x42B810 the keys of ini/NNNN.ini and what reads each, ended by a NULL handler */
-IniKeyHandler D_0042B810[30] = {
+IniKeyHandler ini_keys[30] = {
     { "hp=", Ini_SetHp },
     { "mp=", Ini_SetMp },
     { "power=", Ini_SetPower },
@@ -93,24 +92,24 @@ IniKeyHandler D_0042B810[30] = {
     { "", NULL },
 };
 /* 0x42BBE0 kf_item_effect.c's item_effect_defs as indexed from item kind 0 */
-asm(".globl D_0042BBE0\nD_0042BBE0 = D_0042B810 + 0x3D0\n");
+asm(".globl item_effect_defs_by_kind\nitem_effect_defs_by_kind = ini_keys + 0x3D0\n");
 
 static void Ini_SetText(char *text, int length);
 static char *Ini_ReadLine(void);
 static void Ini_SetMagicSchool(int school, char *text);
 
 /* Reads the start-up settings ini/NNNN.ini (ini/9999.ini when that one is missing) and hands every line that
-   starts with a key of D_0042B810 to the key's handler. */
+   starts with a key of ini_keys to the key's handler. */
 void Ini_Load(int number) {
     char path[0x100];
     int file;
     int i;
     char *line;
 
-    sprintf(path, D_004410A8, number);
+    sprintf(path, ini_path_format, number);
     file = File_Open(path, 0, 1);
     if (file < 0) {
-        sprintf(path, D_004410A8, 9999);
+        sprintf(path, ini_path_format, 9999);
         file = File_Open(path, 0, 1);
         if (file < 0) {
             return;
@@ -120,10 +119,10 @@ void Ini_Load(int number) {
     File_Close(file);
     Ini_SetText(file_load_buffer, (int)line);
     while ((line = Ini_ReadLine()) != NULL) {
-        for (i = 0; D_0042B810[i].handler != NULL; i++) {
-            if (strncmp(line, D_0042B810[i].key, strlen(D_0042B810[i].key)) == 0) {
+        for (i = 0; ini_keys[i].handler != NULL; i++) {
+            if (strncmp(line, ini_keys[i].key, strlen(ini_keys[i].key)) == 0) {
                 line = strchr(line, '=') + 1;
-                D_0042B810[i].handler(line);
+                ini_keys[i].handler(line);
             }
         }
     }

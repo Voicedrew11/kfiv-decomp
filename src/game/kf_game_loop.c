@@ -153,7 +153,7 @@ void PlayTime_Update(void);
 void Input_PauseRumble(void);
 void Input_ResumeRumble(void);
 extern PlayerState player_state;
-extern int D_00446734;          /* nonzero: a saved game was loaded */
+extern int save_loaded;          /* nonzero: a saved game was loaded */
 extern u8 game_options[0x10];
 extern PlayTime save_play_time[];   /* the play time in the loaded save (save_image + 8) */
 extern SoundLoadQueue sound_load_queue;
@@ -161,30 +161,30 @@ extern GameStatus game_status;
 extern MapSlot map_slots[];
 extern MapLoadState map_load_state;
 extern u16 pad_state[];
-extern f32 D_004323E0[16];
-extern s64 D_00432E20[];
-extern s64 D_00433050[];
-extern u32 D_00446ED4;
-extern u8 D_00349F56[];
+extern f32 world_screen_matrix[16];
+extern s64 game_dbuff_clear_color[];
+extern s64 game_dbuff_context2_clear_color[];
+extern u32 frame_counter;
+extern u8 guardians_room_water_purified[];
 extern MapDrawStateOverlays map_draw_state;
-extern int D_00446708;
-extern int D_00446770;
-extern f32 D_00431B30[4][4];
-extern f32 D_00431C80[4];
-extern CameraState D_004325A0;
-extern EventRunner D_00420D00;
-extern f32 D_00431AF0[16];      /* the unit matrix */
-extern f32 D_004322A0[16];      /* view to screen */
-extern f32 D_00432320[16];      /* world to view */
-extern f32 D_00432360[16];      /* the camera's rotation, inverted */
+extern int message_dim_alpha;
+extern int current_map_slot;
+extern f32 scale_matrices[4][4];
+extern f32 origin_point[4];
+extern CameraState camera_state;
+extern EventRunner view_ray_status;
+extern f32 identity_matrix[16];      /* the unit matrix */
+extern f32 view_screen_matrix[16];      /* view to screen */
+extern f32 world_view_matrix[16];      /* world to view */
+extern f32 inverse_camera_rotation[16];      /* the camera's rotation, inverted */
 extern LevelRecord weapon_level_records[];
 extern PlayerState player_previous;
 extern ItemCommonDef item_common_defs[];
 extern PlayerItemDef weapon_defs[];
-extern int D_00446F78;
-extern int D_00446F7C;
-extern u16 D_00446946; // match: read as u16 (lhu) here; the save code declares it s16
-extern PlayTime D_00446A28;
+extern int context1_buffer_half;
+extern int context2_buffer_half;
+extern u16 pause_button;
+extern PlayTime current_play_time;
 
 /* Resets every game system for a new session; a loaded save is then applied on top. */
 void GameLoop_ResetSystems(int arg) {
@@ -208,7 +208,7 @@ void GameLoop_ResetSystems(int arg) {
     Gold_Init();
     Splash_Reset();
     ItemEffect_Reset();
-    if (D_00446734 != 0) {
+    if (save_loaded != 0) {
         Game_CheckSaveImage();
         Game_ReadSaveImage();
     }
@@ -225,7 +225,7 @@ void GameLoop_Run(int arg) {
     u8 saved;
 
     Map_LoadAtOnce(arg);
-    if (D_00446734 == 0) {
+    if (save_loaded == 0) {
         PlayTime_Start();
         header = (MapSlotUnk08 *)map_slots[0].header;
         player_state.position.x = header->player_start_x;
@@ -233,7 +233,7 @@ void GameLoop_Run(int arg) {
         player_state.position.z = header->player_start_z;
         player_state.rotation.y = header->player_start_heading;
     } else {
-        D_00446734 = 0;
+        save_loaded = 0;
         PlayTime_Resume(save_play_time[0]);
         Game_StartFadeIn(0, 0, 0, 0x1E);
     }
@@ -244,7 +244,7 @@ void GameLoop_Run(int arg) {
         if (!(game_status.bit12 && game_status.bit13)) {
             Display_SwapBuffers(1);
         }
-        D_00446ED4++;
+        frame_counter++;
         Timer_GetTicks();
         Timer_Restart();
         if (!(game_status.bit12 && game_status.bit13)) {
@@ -290,7 +290,7 @@ void GameLoop_Run(int arg) {
         ItemEffect_Update();
         GameLoop_UpdateCamera();
         GameLoop_SetCameraMatrices(0, 0);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         WeaponTrail_Update();
         if (!(game_status.bit12 && game_status.bit13)) {
             GameLoop_DrawFrame(1);
@@ -302,10 +302,10 @@ void GameLoop_Run(int arg) {
         MapChange_RunToEnd();
         GameLoop_UpdatePause();
     }
-    D_00432E20[0] = 0xC000L << 17;
-    D_00432E20[30] = 0xC000L << 17;
-    D_00433050[0] = 0xC000L << 17;
-    D_00433050[30] = 0xC000L << 17;
+    game_dbuff_clear_color[0] = 0xC000L << 17;
+    game_dbuff_clear_color[30] = 0xC000L << 17;
+    game_dbuff_context2_clear_color[0] = 0xC000L << 17;
+    game_dbuff_context2_clear_color[30] = 0xC000L << 17;
     Input_StopRumble();
     Message_CloseBox();
     Message_ClearNotices();
@@ -344,7 +344,7 @@ int GameLoop_DrawFrame(int arg) {
     switch (map_draw_state.mode) {
     case 0:
         GameLoop_SetCameraMatrices(0, 0);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
         Map_DrawRecords(0);
         MapObject_DrawAll(0, 0, 0);
@@ -358,17 +358,17 @@ int GameLoop_DrawFrame(int arg) {
         Effect_DrawAll(0);
         DrawList_Draw(0, 0);
         GameLoop_SetCameraMatrices(0, 2);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         DrawList_Draw(1, 0);
         DrawList_Draw(2, 0);
         GsDraw_EnableDepthTest();
         GameLoop_SetCameraMatrices(0, 0);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(0);
         break;
     case 1:
         GameLoop_SetCameraMatrices(0, 1);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
         Map_DrawRecords(1);
         MapObject_DrawAll(1, 0, 0);
@@ -381,12 +381,12 @@ int GameLoop_DrawFrame(int arg) {
         DrawList_Draw(0, 1);
         GsDraw_EnableDepthTest();
         GameLoop_SetCameraMatrices(0, 1);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(1);
         Map_CoverScreenWithMapTint();
         GsDraw_ClearDepth();
         GameLoop_SetCameraMatrices(0, 0);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
         Map_DrawRecords(0);
         MapObject_DrawAll(0, 0, 0);
@@ -400,19 +400,19 @@ int GameLoop_DrawFrame(int arg) {
         Effect_DrawAll(0);
         DrawList_Draw(0, 0);
         GameLoop_SetCameraMatrices(0, 2);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         DrawList_Draw(1, 0);
         DrawList_Draw(2, 0);
         GsDraw_EnableDepthTest();
         GameLoop_SetCameraMatrices(0, 0);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(0);
         break;
     case 2:
         Map_SetOffscreenTarget();
         GsDraw_ClearFrame();
         GameLoop_SetCameraMatrices(1, 1);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
         Map_DrawRecords(2);
         MapObject_DrawAll(1, 0, 0);
@@ -426,13 +426,13 @@ int GameLoop_DrawFrame(int arg) {
         DrawList_Draw(0, 1);
         GsDraw_EnableDepthTest();
         GameLoop_SetCameraMatrices(1, 1);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(1);
         GsDraw_ResetDrawTarget();
         GsDraw_QueueTexFlush();
         GsDraw_ClearDepth();
         GameLoop_SetCameraMatrices(0, 0);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         ModelTexture_ResetSlots();
         Map_DrawRecords(0);
         MapObject_DrawAll(0, 0, 0);
@@ -445,17 +445,17 @@ int GameLoop_DrawFrame(int arg) {
         Effect_DrawAll(0);
         DrawList_Draw(0, 0);
         GameLoop_SetCameraMatrices(0, 2);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         DrawList_Draw(1, 0);
         DrawList_Draw(2, 0);
         GsDraw_EnableDepthTest();
         GameLoop_SetCameraMatrices(0, 0);
-        GsDraw_QueueVu1Matrix(D_004323E0);
+        GsDraw_QueueVu1Matrix(world_screen_matrix);
         MapItem_DrawPicked(0);
         break;
     }
     GameLoop_SetCameraMatrices(0, 0);
-    GsDraw_QueueVu1Matrix(D_004323E0);
+    GsDraw_QueueVu1Matrix(world_screen_matrix);
     if ((s32)(player_state.status_bits >> 39) & 1) {
         GsDraw_CopyFrame(0x2BC0);
         tinted = TRUE;
@@ -500,7 +500,7 @@ int GameLoop_DrawFrame(int arg) {
     Player_DrawArm();
     Player_DrawScreenTints();
     if ((s32)(player_state.status_bits >> 39) & 1) {
-        if (map_slots[D_00446770].tag == 0x23 && D_00349F56[0] == 0) {
+        if (map_slots[current_map_slot].tag == 0x23 && guardians_room_water_purified[0] == 0) {
             GsDraw_FillScreen(0x40, 0x80, 0x40, 0x78, 0x44);
         } else {
             Game_TintScreen(0x5E, 0x87, 0x92);
@@ -515,20 +515,20 @@ int GameLoop_DrawFrame(int arg) {
     Game_DrawFade();
     Splash_Draw();
     if (Message_IsBoxOpen() != 0) {
-        if (D_00446708 < 0x40) {
-            D_00446708 += 0x10;
-            if (D_00446708 > 0x40) {
-                D_00446708 = 0x40;
+        if (message_dim_alpha < 0x40) {
+            message_dim_alpha += 0x10;
+            if (message_dim_alpha > 0x40) {
+                message_dim_alpha = 0x40;
             }
         }
-    } else if (D_00446708 > 0) {
-        D_00446708 -= 0x10;
-        if (D_00446708 < 0) {
-            D_00446708 = 0;
+    } else if (message_dim_alpha > 0) {
+        message_dim_alpha -= 0x10;
+        if (message_dim_alpha < 0) {
+            message_dim_alpha = 0;
         }
     }
-    if (D_00446708 != 0) {
-        GsDraw_FillScreen(0, 0, 0, D_00446708, 0x44);
+    if (message_dim_alpha != 0) {
+        GsDraw_FillScreen(0, 0, 0, message_dim_alpha, 0x44);
     }
     Message_Update();
     if (game_status.paused) {
@@ -546,47 +546,47 @@ void GameLoop_UpdateCameraShake(void) {
     f32 angle;
 
     if (game_status.camera_mode != 0) {
-        record = Map_FindRecordAtInSlot(&D_004325A0, 100.0f, D_00446770);
+        record = Map_FindRecordAtInSlot(&camera_state, 100.0f, current_map_slot);
         if (record != NULL) {
-            player_state.map_index = (u32)((char *)record - map_slots[D_00446770].records) >> 14; // match: the byte offset of 0x80-byte records shifted by 14; 7 would give the record number
+            player_state.map_index = (u32)((char *)record - map_slots[current_map_slot].records) >> 14; // match: the byte offset of 0x80-byte records shifted by 14; 7 would give the record number
             player_state.record_flag_block = record->flag_block_bit;
         }
     }
-    if (D_004325A0.script_shake_frames != 0 && D_004325A0.script_shake_reach > 0.0f) {
+    if (camera_state.script_shake_frames != 0 && camera_state.script_shake_reach > 0.0f) {
         angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * 0.017453292f;
-        angle = Angle_Wrap(angle + D_004325A0.roll);
-        D_004325A0.script_shake_offset[0] = D_004325A0.script_shake_reach;
-        D_004325A0.script_shake_offset[1] = 0.0f;
-        D_004325A0.script_shake_offset[2] = 0.0f;
-        D_004325A0.script_shake_offset[3] = 1.0f;
-        sceVu0CopyMatrix(matrix, D_00431B30);
+        angle = Angle_Wrap(angle + camera_state.roll);
+        camera_state.script_shake_offset[0] = camera_state.script_shake_reach;
+        camera_state.script_shake_offset[1] = 0.0f;
+        camera_state.script_shake_offset[2] = 0.0f;
+        camera_state.script_shake_offset[3] = 1.0f;
+        sceVu0CopyMatrix(matrix, scale_matrices);
         sceVu0RotMatrixZ(matrix[0], matrix[0], angle);
-        sceVu0RotMatrixX(matrix[0], matrix[0], D_004325A0.pitch);
-        sceVu0RotMatrixY(matrix[0], matrix[0], D_004325A0.yaw);
-        sceVu0ApplyMatrix(D_004325A0.script_shake_offset, (int *)matrix, D_004325A0.script_shake_offset);
-        if (D_004325A0.script_shake_frames > 0) {
-            D_004325A0.script_shake_frames--;
+        sceVu0RotMatrixX(matrix[0], matrix[0], camera_state.pitch);
+        sceVu0RotMatrixY(matrix[0], matrix[0], camera_state.yaw);
+        sceVu0ApplyMatrix(camera_state.script_shake_offset, (int *)matrix, camera_state.script_shake_offset);
+        if (camera_state.script_shake_frames > 0) {
+            camera_state.script_shake_frames--;
         }
     } else {
-        Vector_Copy(D_004325A0.script_shake_offset, D_00431C80);
+        Vector_Copy(camera_state.script_shake_offset, origin_point);
     }
-    if (D_004325A0.entity_shake_frames != 0 && D_004325A0.entity_shake_reach > 0.0f) {
+    if (camera_state.entity_shake_frames != 0 && camera_state.entity_shake_reach > 0.0f) {
         angle = (f32)(int)((f32)rand() * 360.0f / 2147483648.0f) * 0.017453292f;
-        angle = Angle_Wrap(angle + D_004325A0.roll);
-        D_004325A0.entity_shake_offset[0] = D_004325A0.entity_shake_reach;
-        D_004325A0.entity_shake_offset[1] = 0.0f;
-        D_004325A0.entity_shake_offset[2] = 0.0f;
-        D_004325A0.entity_shake_offset[3] = 1.0f;
-        sceVu0CopyMatrix(matrix, D_00431B30);
+        angle = Angle_Wrap(angle + camera_state.roll);
+        camera_state.entity_shake_offset[0] = camera_state.entity_shake_reach;
+        camera_state.entity_shake_offset[1] = 0.0f;
+        camera_state.entity_shake_offset[2] = 0.0f;
+        camera_state.entity_shake_offset[3] = 1.0f;
+        sceVu0CopyMatrix(matrix, scale_matrices);
         sceVu0RotMatrixZ(matrix[0], matrix[0], angle);
-        sceVu0RotMatrixX(matrix[0], matrix[0], D_004325A0.pitch);
-        sceVu0RotMatrixY(matrix[0], matrix[0], D_004325A0.yaw);
-        sceVu0ApplyMatrix(D_004325A0.entity_shake_offset, (int *)matrix, D_004325A0.entity_shake_offset);
-        if (D_004325A0.entity_shake_frames > 0) {
-            D_004325A0.entity_shake_frames--;
+        sceVu0RotMatrixX(matrix[0], matrix[0], camera_state.pitch);
+        sceVu0RotMatrixY(matrix[0], matrix[0], camera_state.yaw);
+        sceVu0ApplyMatrix(camera_state.entity_shake_offset, (int *)matrix, camera_state.entity_shake_offset);
+        if (camera_state.entity_shake_frames > 0) {
+            camera_state.entity_shake_frames--;
         }
     } else {
-        Vector_Copy(D_004325A0.entity_shake_offset, D_00431C80);
+        Vector_Copy(camera_state.entity_shake_offset, origin_point);
     }
 }
 
@@ -602,27 +602,27 @@ void GameLoop_UpdateCamera(void) {
 
     switch (game_status.camera_mode) {
     case 0:
-        Vector_Scale(target, D_00420D00.view_direction, D_00420D00.view_distance);
-        Vector_Add(target, target, D_00420D00.view_origin);
-        D_004325A0.position[0] = player_state.position.x;
-        D_004325A0.position[2] = player_state.position.z;
-        D_004325A0.position[1] =
-            player_state.position.y - 220.0f + player_state.head_bob_offset + player_state.landing_dip_offset + D_004325A0.height_offset;
-        Vector_Subtract(direction, target, D_004325A0.position);
-        D_004325A0.pitch =
+        Vector_Scale(target, view_ray_status.view_direction, view_ray_status.view_distance);
+        Vector_Add(target, target, view_ray_status.view_origin);
+        camera_state.position[0] = player_state.position.x;
+        camera_state.position[2] = player_state.position.z;
+        camera_state.position[1] =
+            player_state.position.y - 220.0f + player_state.head_bob_offset + player_state.landing_dip_offset + camera_state.height_offset;
+        Vector_Subtract(direction, target, camera_state.position);
+        camera_state.pitch =
             atan2f(-direction[1], sqrtf(direction[0] * direction[0] + direction[2] * direction[2]));
-        D_004325A0.yaw = atan2f(direction[0], direction[2]);
-        D_004325A0.roll = 0.0f;
+        camera_state.yaw = atan2f(direction[0], direction[2]);
+        camera_state.roll = 0.0f;
         break;
     case 1:
         if (game_status.camera_move_enabled != 0) {
-            Vector_Subtract(direction, D_004325A0.move_to_point, D_004325A0.position);
+            Vector_Subtract(direction, camera_state.move_to_point, camera_state.position);
             length = sqrtf(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
-            if (D_004325A0.move_speed < length) {
-                Vector_Scale(direction, direction, D_004325A0.move_speed / length);
-                Vector_Add(D_004325A0.position, D_004325A0.position, direction);
+            if (camera_state.move_speed < length) {
+                Vector_Scale(direction, direction, camera_state.move_speed / length);
+                Vector_Add(camera_state.position, camera_state.position, direction);
             } else {
-                Vector_Copy(D_004325A0.position, D_004325A0.move_to_point);
+                Vector_Copy(camera_state.position, camera_state.move_to_point);
             }
         }
         break;
@@ -630,23 +630,23 @@ void GameLoop_UpdateCamera(void) {
         break;
     }
     if (game_status.camera_mode != 0 && (s8)game_status.camera_look_mode != 0) {
-        Vector_Subtract(direction, D_004325A0.look_at_point, D_004325A0.position);
+        Vector_Subtract(direction, camera_state.look_at_point, camera_state.position);
         yaw = atan2f(direction[0], direction[2]);
         length = sqrtf(direction[0] * direction[0] + direction[2] * direction[2]);
         pitch = atan2f(-direction[1], length);
         switch ((s8)game_status.camera_look_mode) {
         case 1:
-            D_004325A0.pitch = pitch;
-            D_004325A0.yaw = yaw;
+            camera_state.pitch = pitch;
+            camera_state.yaw = yaw;
             break;
         case 2:
-            Angle_Approach(&D_004325A0.pitch, pitch, D_004325A0.turn_speed);
-            Angle_Approach(&D_004325A0.yaw, yaw, D_004325A0.turn_speed);
+            Angle_Approach(&camera_state.pitch, pitch, camera_state.turn_speed);
+            Angle_Approach(&camera_state.yaw, yaw, camera_state.turn_speed);
             break;
         }
     }
-    Vector_Add(D_004325A0.position, D_004325A0.position, D_004325A0.script_shake_offset);
-    Vector_Add(D_004325A0.position, D_004325A0.position, D_004325A0.entity_shake_offset);
+    Vector_Add(camera_state.position, camera_state.position, camera_state.script_shake_offset);
+    Vector_Add(camera_state.position, camera_state.position, camera_state.entity_shake_offset);
 }
 
 /* Builds the camera matrices: the projection, world to view, and world to screen for the given mode. */
@@ -658,48 +658,48 @@ void GameLoop_SetCameraMatrices(int projection, int mode) {
 
     switch (projection) {
     case 0:
-        sceVu0ViewScreenMatrix(D_004322A0, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f, 65535.0f);
+        sceVu0ViewScreenMatrix(view_screen_matrix, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f, 65535.0f);
         break;
     case 1:
-        sceVu0ViewScreenMatrix(D_004322A0, 512.0f, 0.4f, 0.5714286f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f,
+        sceVu0ViewScreenMatrix(view_screen_matrix, 512.0f, 0.4f, 0.5714286f, 2048.0f, 2048.0f, 1.0f, 1048560.0f, 1.0f,
                                65535.0f);
         break;
     }
-    translation[0] = -D_004325A0.position[0];
-    translation[1] = -D_004325A0.position[1];
-    translation[2] = -D_004325A0.position[2];
+    translation[0] = -camera_state.position[0];
+    translation[1] = -camera_state.position[1];
+    translation[2] = -camera_state.position[2];
     translation[3] = 0.0f;
-    sceVu0TransMatrix(D_00432320, D_00431AF0, translation);
-    sceVu0RotMatrixY(D_00432320, D_00432320, -D_004325A0.yaw);
-    sceVu0RotMatrixX(D_00432320, D_00432320, -D_004325A0.pitch);
-    sceVu0RotMatrixY(D_00432360, D_00431AF0, Angle_Wrap(3.1415927f - D_004325A0.yaw));
-    sceVu0RotMatrixX(D_00432360, D_00432360, Angle_Wrap(-D_004325A0.pitch));
-    sceVu0RotMatrixZ(D_00432360, D_00432360, D_004325A0.roll);
-    sceVu0InversMatrix(D_00432360, D_00432360);
+    sceVu0TransMatrix(world_view_matrix, identity_matrix, translation);
+    sceVu0RotMatrixY(world_view_matrix, world_view_matrix, -camera_state.yaw);
+    sceVu0RotMatrixX(world_view_matrix, world_view_matrix, -camera_state.pitch);
+    sceVu0RotMatrixY(inverse_camera_rotation, identity_matrix, Angle_Wrap(3.1415927f - camera_state.yaw));
+    sceVu0RotMatrixX(inverse_camera_rotation, inverse_camera_rotation, Angle_Wrap(-camera_state.pitch));
+    sceVu0RotMatrixZ(inverse_camera_rotation, inverse_camera_rotation, camera_state.roll);
+    sceVu0InversMatrix(inverse_camera_rotation, inverse_camera_rotation);
     switch (mode) {
     case 0:
-        sceVu0MulMatrix(D_004323E0, D_004322A0, D_00432320);
+        sceVu0MulMatrix(world_screen_matrix, view_screen_matrix, world_view_matrix);
         break;
     case 1:
         translation[1] = ((MapDrawStateMirror *)&map_draw_state)->mirror_height;
         translation[0] = translation[2] = translation[3] = 0.0f;
-        sceVu0TransMatrix(local, D_00431AF0, translation);
-        sceVu0CopyMatrix(other, D_00431AF0);
+        sceVu0TransMatrix(local, identity_matrix, translation);
+        sceVu0CopyMatrix(other, identity_matrix);
         other[5] = -1.0f;
         sceVu0MulMatrix(local, local, other);
         translation[1] = -((MapDrawStateMirror *)&map_draw_state)->mirror_height;
-        sceVu0TransMatrix(other, D_00431AF0, translation);
+        sceVu0TransMatrix(other, identity_matrix, translation);
         sceVu0MulMatrix(local, local, other);
-        sceVu0MulMatrix(D_004323E0, D_004322A0, D_00432320);
-        sceVu0MulMatrix(D_004323E0, D_004323E0, local);
+        sceVu0MulMatrix(world_screen_matrix, view_screen_matrix, world_view_matrix);
+        sceVu0MulMatrix(world_screen_matrix, world_screen_matrix, local);
         break;
     case 2:
         translation[1] = 220.0f;
         translation[0] = translation[2] = translation[3] = angle = 0.0f;
-        sceVu0TransMatrix(local, D_00431AF0, translation);
+        sceVu0TransMatrix(local, identity_matrix, translation);
         sceVu0RotMatrixY(local, local, angle);
         sceVu0RotMatrixX(local, local, angle);
-        sceVu0MulMatrix(D_004323E0, D_004322A0, local);
+        sceVu0MulMatrix(world_screen_matrix, view_screen_matrix, local);
         break;
     }
 }
@@ -769,7 +769,7 @@ void GameLoop_OpenRequestedMenu(void) {
         !game_status.bit14) {
         return;
     }
-    if (D_00446F78 == 0) {
+    if (context1_buffer_half == 0) {
         return;
     }
     if (game_status.update_hold_flags & 1) {
@@ -968,8 +968,8 @@ void GameLoop_ShowGrabbedFrame(int divisor) {
         Packet_SwapBuffers();
         DrawList_Clear();
         func_001095D0();
-        D_00446F78 = pass;
-        D_00446F7C = pass;
+        context1_buffer_half = pass;
+        context2_buffer_half = pass;
         GsDraw_ResetDrawTarget();
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(0x47, 0x31001);
@@ -982,8 +982,8 @@ void GameLoop_ShowGrabbedFrame(int divisor) {
         Packet_EndGsRegisters();
         func_001095D8();
         if (pass == 0) {
-            D_00446F78 = 1;
-            D_00446F7C = 1;
+            context1_buffer_half = 1;
+            context2_buffer_half = 1;
             Packet_SendChain();
             Packet_WaitForSend();
             Display_SwapBuffers(0);
@@ -999,14 +999,14 @@ void GameLoop_ClearBothBuffers(void) {
         Packet_SwapBuffers();
         DrawList_Clear();
         func_001095D0();
-        D_00446F78 = pass;
-        D_00446F7C = pass;
+        context1_buffer_half = pass;
+        context2_buffer_half = pass;
         GsDraw_ResetDrawTarget();
         GsDraw_FillScreen(0, 0, 0, 0x80, 0x44);
         func_001095D8();
         if (pass == 0) {
-            D_00446F78 = 1;
-            D_00446F7C = 1;
+            context1_buffer_half = 1;
+            context2_buffer_half = 1;
             Packet_SendChain();
             Packet_WaitForSend();
             Display_SwapBuffers(0);
@@ -1018,10 +1018,10 @@ void GameLoop_ClearBothBuffers(void) {
 void GameLoop_UpdatePause(void) {
     PlayTime play_time;
 
-    if (pad_state[1] & D_00446946) {
+    if (pad_state[1] & pause_button) {
         PlayTime_Update();
         game_status.paused = TRUE;
-        play_time = D_00446A28;
+        play_time = current_play_time;
         Display_SwapBuffers(0);
         Packet_SendChain();
         Packet_SwapBuffers();
@@ -1042,7 +1042,7 @@ void GameLoop_UpdatePause(void) {
             while (sceGsSyncV(0) != 1) {
             }
             Input_Update();
-        } while (!(pad_state[1] & D_00446946));
+        } while (!(pad_state[1] & pause_button));
         Input_ResumeRumble();
         game_status.paused = FALSE;
         Packet_SendChain();

@@ -380,8 +380,8 @@ typedef struct {
     u16 body_height;                /* 0xEE Entity.height before scaling */
     u8 anim_effect_counts[0x20];    /* 0xF0 how many records anim_effect_offsets[n] leads to */
     u8 anim_sound_counts[0x20];     /* 0x110 how many records anim_sound_offsets[n] leads to */
-    s32 anim_effect_offsets[0x20];  /* 0x130 offsets from D_004467C0 to EntityParamsUnk130 records, by animation */
-    s32 anim_sound_offsets[0x20];   /* 0x1B0 offsets from D_004467C0 to EntityParamsUnk1B0 records, by animation */
+    s32 anim_effect_offsets[0x20];  /* 0x130 offsets from entity_params to EntityParamsUnk130 records, by animation */
+    s32 anim_sound_offsets[0x20];   /* 0x1B0 offsets from entity_params to EntityParamsUnk1B0 records, by animation */
     u16 gold;                       /* 0x230 how much gold it drops (Gold_DropFromEntity): half of it for sure, the rest by chance */
     u16 drop_item;                  /* 0x232 the item it may drop (MapItem_DropFromEnemy), 0xFFFF: none */
     u16 second_drop_item;           /* 0x234 the item it may drop when the first one's roll fails, 0xFFFF: none */
@@ -889,7 +889,7 @@ typedef struct {
 /* Entity.flags with bits 36-37 and 38-39 as two fields, the way Attack_HitEntity sets them on a hit */
 typedef struct {
     u64 pad0 : 36;
-    u32 hit_strength : 2;           /* bits 36-37: 1 below the threshold D_00446214 (percent of EntityParams.hit_points), else 2 */
+    u32 hit_strength : 2;           /* bits 36-37: 1 below 33.3334 percent of EntityParams.hit_points, else 2 */
     u32 hit_source : 2;             /* bits 38-39: 1 the player's weapon, 2 the player's magic, 0 anything else */
     u64 pad40 : 24;
 } EntityFlagHitBits;
@@ -1076,7 +1076,7 @@ typedef struct {
     s16 unk4;                       /* 0x04 entities using it */
     u8 unk6;                        /* 0x06 */
     u8 unk7;                        /* 0x07 copied to Entity.sound_bank */
-    int age;                        /* 0x08 D_00446ED4 when last released; the oldest is reused first */
+    int age;                        /* 0x08 frame_counter when last released; the oldest is reused first */
     int base_address;               /* 0x0C */
 } EntityPoolSlot;
 
@@ -1113,7 +1113,7 @@ typedef struct LinkedPoint {
     f32 duration;                   /* 0x28 */
     u16 handle;                     /* 0x2C index in the pool */
     u8 active;                      /* 0x2E */
-    u8 list_index;                  /* 0x2F which D_004470C8 list it is on */
+    u8 list_index;                  /* 0x2F which linked_point_heads list it is on */
     u8 kind_a;                      /* 0x30 */
     s8 kind_b;                      /* 0x31 */
     s16 unk32;                      /* 0x32 */
@@ -1142,7 +1142,7 @@ typedef struct {
     ModelInstance model;
 } __attribute__((aligned(8))) ModelInstanceBlock;
 
-extern Entity *D_004467E0;          /* entity list head */
+extern Entity *active_entities_head;          /* head of the active entities' list (list C of kf_entity_pool.c) */
 
 float Entity_SpawnDistanceToPlayer(Entity *entity);    /* distance to the player */
 

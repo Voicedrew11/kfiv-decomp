@@ -34,13 +34,13 @@ void Player_FlashDamage(void);
 
 extern PlayerState player_state;
 extern PlayerState player_previous;      /* the player as of the frame before */
-extern int D_00446770;
+extern int current_map_slot;
 extern MapSlot map_slots[2];
-extern MapSlotMemory D_004321F0[2];
+extern MapSlotMemory map_slot_memory[2];
 extern f32 D_00446968[];
 extern f32 D_0044696C[];    /* the largest float; an array so that it is not read through $gp */
-extern Entity *D_004467E0;
-extern u32 D_00446ED4;
+extern Entity *active_entities_head;
+extern u32 frame_counter;
 extern u8 spell_levels[6][5];
 extern FxTableEntry fx_table[];
 
@@ -93,15 +93,15 @@ int Player_CollideWithMap(void) {
     floor_point->y -= 75.0f;
     reach = player_state.fall_speed + 75.0f;
     Vector_Copy(&raised_point, &player_state.position);
-    floor_map = D_00446770;
+    floor_map = current_map_slot;
     player_state.unk211 = player_state.floor_material = 6;
     player_state.unk214 = 0.0f;
     raised_point.y += 3.0f; // match: the raised point is never used
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
+        slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];
         if (slot->loaded != 0) {
             record_count = slot->header->record_count;
-            model = (ModelInstance *)D_004321F0[D_00446770 == map ? 0 : 1].record_models;
+            model = (ModelInstance *)map_slot_memory[current_map_slot == map ? 0 : 1].record_models;
             record = (MapRecordBounds *)slot->records;
             for (i = 0; i < record_count; i++, record++, model++) {
                 if (record->collision_mesh_index == 0xFFFF) {
@@ -209,7 +209,7 @@ int Player_CollideWithMap(void) {
                             player_state.record_flag_block = record->flag_block_bit;
                             player_state.map_index = i;
                             player_state.floor_material = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
-                            floor_map = D_00446770 != map;
+                            floor_map = current_map_slot != map;
                         }
                         strip_point++;
                     } while (--points_left != 0);
@@ -278,7 +278,7 @@ void Player_PushOutOfWalls(void) {
     Vector_Copy(&COLLISION_SCRATCH->point, &player_state.position);
     point->y -= 1.0f;
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
+        slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];
         if (slot->loaded != 0) {
             record_count = slot->header->record_count;
             record = (MapRecordBounds *)slot->records;
@@ -343,7 +343,7 @@ void Player_FindFloorMaterial(void) {
     lowest = D_0044696C[0];
     Vector_Copy(&COLLISION_SCRATCH->point, &player_state.position);
     for (map = 0; map < 2; map++) {
-        slot = D_00446770 == map ? &map_slots[0] : &map_slots[1];
+        slot = current_map_slot == map ? &map_slots[0] : &map_slots[1];
         if (slot->loaded != 0) {
             record_count = slot->header->record_count;
             record = (MapRecordBounds *)slot->records;
@@ -410,7 +410,7 @@ void Player_CollideWithEntities(int climb) {
         player_state.position.y += 1.0f;
         reach = player_state.fall_speed + 75.0f;
         if (!((s32)(player_state.status_bits >> 33) & 1)) {
-            for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+            for (entity = active_entities_head; entity != NULL; entity = entity->next) {
                 if (!((s32)(entity->flags >> 1) & 1)) {
                     continue;
                 }
@@ -476,7 +476,7 @@ void Player_CollideWithEntities(int climb) {
             player_state.status_bits &= ~(1L << 34);
         }
     }
-    for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+    for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         if (!((s32)(entity->flags >> 1) & 1)) {
             continue;
         }
@@ -578,27 +578,27 @@ void Player_CollideWithMapObjects(s32 climb) {
         switch ((s16)((MapObject *)player_state.touched_map_object)->source->touch_status_flag) {
         case 1:
             player_state.timed_flags[0] = 1800;
-            player_state.ailment0_start_frame = D_00446ED4;
+            player_state.ailment0_start_frame = frame_counter;
             break;
         case 2:
             player_state.timed_flags[1] = 150;
-            player_state.ailment1_start_frame = D_00446ED4;
+            player_state.ailment1_start_frame = frame_counter;
             break;
         case 3:
             player_state.timed_flags[2] = 3600;
-            player_state.ailment2_start_frame = D_00446ED4;
+            player_state.ailment2_start_frame = frame_counter;
             break;
         case 4:
             player_state.timed_flags[3] = 5400;
-            player_state.ailment3_start_frame = D_00446ED4;
+            player_state.ailment3_start_frame = frame_counter;
             break;
         case 5:
             player_state.timed_flags[4] = 1800;
-            player_state.ailment4_start_frame = D_00446ED4;
+            player_state.ailment4_start_frame = frame_counter;
             break;
         case 6:
             player_state.timed_flags[5] = 18000;
-            player_state.ailment5_start_frame = D_00446ED4;
+            player_state.ailment5_start_frame = frame_counter;
             break;
         }
         Player_FlashDamage();

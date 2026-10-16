@@ -1,6 +1,6 @@
 /* Bell: the behaviour of entity type 38 (Entity.params->unk02, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: chr.prm record 60, model c0060
-   (a bell), 65,535 hit points, one spawn in 007.map. Struck, it calls one of the D_0043EE30 handlers
+   (a bell), 65,535 hit points, one spawn in 007.map. Struck, it calls one of the falloff_sound_players handlers
    (Sound_PlayFalloff), then waits EntityParams.action_frames frames before it answers another hit. Prima's
    official guide (2004): shoot the bell with a bow to ring it and destroy the skeletons. */
 #include "kf_entity.h"

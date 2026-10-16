@@ -16,7 +16,7 @@ void EntityAi_Animate(void);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(void *);
 void EntityAi_StepState(void *);
@@ -40,7 +40,7 @@ s16 EntityAi_MoveCommand(float, void *, int); // match: this file only matches w
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-extern int D_00414184[];
+extern int entity_under_player[];
 int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
@@ -132,7 +132,7 @@ static void DarkSoldier_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0;
 
     unkE0 = &entity->unkE0;
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->distance_to_player < entity->radius + 300.0f + 100.0f && unkE0->step_index == 1) {
@@ -216,7 +216,7 @@ static void DarkSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -292,7 +292,7 @@ static void DarkSoldier_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 turn;
 
-    if (entity == (Entity *)D_00414184[0] && (entity->params->flags & 0x800)) {
+    if (entity == (Entity *)entity_under_player[0] && (entity->params->flags & 0x800)) {
         entity->move_command = 0;
     }
     if (entity->move_command & 0x100) {

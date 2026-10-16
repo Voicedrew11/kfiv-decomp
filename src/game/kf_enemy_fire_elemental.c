@@ -15,7 +15,7 @@ void EntityAi_Animate(void);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 extern PlayerData player_state;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
@@ -41,8 +41,8 @@ s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 float EntityMath_WrapAngle(float);
 s32 EntityAi_MoveCommand(Entity *, s32, f32);
 float EntityMath_AngleXZ(float *, char *);
-extern u8 D_004141D8[];
-extern EntityModel *D_00446978;
+extern u8 player_weapon_step[];
+extern EntityModel *held_item_model_ptr;
 int EntityShot_Launch(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *);
 void EntityAi_SetAttackDelay(Entity *, s32);
 float EntityMath_DistanceXZ(float *a, float *b);
@@ -121,7 +121,7 @@ void FireElemental_Init(Entity *entity) {
 static void FireElemental_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (player_state.magic_shot_launched != 0) {
@@ -198,7 +198,7 @@ static void FireElemental_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -480,7 +480,7 @@ static s32 FireElemental_ShouldDodgeMagic(Entity *entity, f32 min_distance, f32 
 }
 
 /* Helper of FireElemental_StandAndAttack: whether to dodge the player's swing: the player within
-   max_distance and max_angle of the heading, D_004141D8[0] set and the motion of D_00446978 before
+   max_distance and max_angle of the heading, player_weapon_step[0] set and the motion of held_item_model_ptr before
    frame 6, then a chance of EntityParams.dodge_chance / 5 in 100. */
 static s32 FireElemental_ShouldDodge(Entity *entity, f32 max_distance, f32 max_angle) {
     f32 distance;
@@ -494,7 +494,7 @@ static s32 FireElemental_ShouldDodge(Entity *entity, f32 max_distance, f32 max_a
     if (ABS(angle) > max_angle) {
         return FALSE;
     }
-    if (D_004141D8[0] == 0 || D_00446978->level_tables->unk82 >= 6) {
+    if (player_weapon_step[0] == 0 || held_item_model_ptr->level_tables->unk82 >= 6) {
         return FALSE;
     }
     return rand() % 100 < entity->params->dodge_chance / 5;
@@ -565,7 +565,7 @@ static void FireElemental_AlertSameKind(Entity *entity) {
     Entity *other;
     EntityUnkE0 *unkE0;
 
-    for (other = D_004467E0; other != NULL; other = other->next) {
+    for (other = active_entities_head; other != NULL; other = other->next) {
         if (entity->params == other->params && ((s32)other->flags & 1) && ((s32)(other->flags >> 1) & 1)
             && ((s32)(other->flags >> 2) & 3) == 0 && other != entity) {
             unkE0 = &other->unkE0;
@@ -651,7 +651,7 @@ static void FireElemental_BackAwayFromPlayer(Entity *entity) {
             entity->prev_combat_choice = entity->combat_choice;
             entity->combat_choice = 0;
             if (entity->prev_combat_choice != 0) {
-                entity->choice_change_frame = D_00446ED4;
+                entity->choice_change_frame = frame_counter;
             }
             EntityAi_LowerChoiceWeight(entity, 0);
             if (entity->combat_choice == 0) {

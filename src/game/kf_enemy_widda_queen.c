@@ -20,7 +20,7 @@ int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 float EntityMath_AngleDifference(float, float);
 float EntityMath_EaseAngleToward(float *, float, float);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_StepState(void *);
 void EntityAi_SensePlayer(void *, int);
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
@@ -165,7 +165,7 @@ static void WiddaQueen_TurnPart9ToPlayer(Entity *entity, s32 mode) {
 static void WiddaQueen_Think(Entity *entity, s32 unknown) {
     u32 phase;
 
-    phase = D_00446ED4 % 10U;
+    phase = frame_counter % 10U;
     if (phase == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 0);
     }
@@ -406,7 +406,7 @@ static void WiddaQueen_RangedAttack1(Entity *entity) {
             unkE0->step_index = 2;
         }
         if (entity->model->level_tables->unk82 >= entity->params->far_distance && entity->model->level_tables->unk82 <= entity->params->unk43A) {
-            if (D_00446ED4 % 3U != 0) {
+            if (frame_counter % 3U != 0) {
                 EntityAi_LaunchShots(entity, unk3D8, entity->params->far_distance, entity->params->unk43A);
             }
         }

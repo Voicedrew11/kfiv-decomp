@@ -74,31 +74,31 @@ void *memset(void *, int, u32);
 s32 Attack_Run(Unk1B1470Request *, Unk1B1470Extra *);
 
 // match: declared without a size, so it is not addressed through $gp
-extern CollisionListPick2 D_00446918[];
+extern CollisionListPick2 map_hit_floor_strip_lists[];
 // match: declared without a size, so it is not addressed through $gp
-extern CollisionListPick2 D_00446920[];
+extern CollisionListPick2 map_hit_wall_strip_lists[];
 extern PlayerState player_state;
-extern Entity *D_004467E0;
+extern Entity *active_entities_head;
 extern MapSlot map_slots[2];
-extern s32 D_004467B8[2];
+extern s32 map_object_counts[2];
 extern MapObject map_slot_objects[][0x200];
 extern PlayerArmPoints held_item_arm_points;
 extern PlayerArmPoints held_item_arm_points_prev;
-extern CollisionListPick4 D_0043F1F0;
-extern const VuVector4 D_0043F200;
+extern CollisionListPick4 map_hit_strip_lists;
+extern const VuVector4 y_axis_vector;
 extern GameStatus game_status;
 extern Entity entity_pool[][0x80];
-extern u32 D_00446ED4;
-extern Entity D_003D6C70;           /* the last entity of entity_pool */
-extern char D_0043F210[];           /* "g_dmgLassBossCnt[%d]\n" */
-extern char D_0043F228[];           /* "HP halved!! %d / 2 = %d" in Japanese */
-extern s32 D_00446928;              /* g_dmgLassBossCnt: weapon hits the last boss still takes */
+extern u32 frame_counter;
+extern Entity entity_pool_last;           /* the last entity of entity_pool */
+extern char last_boss_hits_format[];           /* "g_dmgLassBossCnt[%d]\n" */
+extern char hp_halved_format[];           /* "HP halved!! %d / 2 = %d" in Japanese */
+extern s32 dark_one_hits_left;              /* g_dmgLassBossCnt: weapon hits the last boss still takes */
 extern PlayerItemDef weapon_defs[];
-extern LevelDef D_00416D78[];
+extern LevelDef weapon_name_defs[];
 extern LevelRecord weapon_level_records[];
 extern LevelRecord worn_item_level_records[];
-extern LevelDef D_00417EF8[];
-extern char D_0043F248[];
+extern LevelDef worn_name_defs[];
+extern char magic_param_path[];
 
 int Attack_TestMapModel(ModelInstance *, void *, f32);
 int Attack_TestMapModelFloors(ModelInstance *, void *, f32);
@@ -152,7 +152,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if (map_slots[index].loaded == 0) {
                 continue;
             }
-            count = D_004467B8[index];
+            count = map_object_counts[index];
             object = map_slot_objects[index];
             for (item = 0; item < count; item++, object++) {
                 if (!(object->state_flags & 0x10000)) {
@@ -189,7 +189,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         }
     }
     if (request->target_mask & 2) {
-        for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+        for (entity = active_entities_head; entity != NULL; entity = entity->next) {
             if (!((s32)(entity->flags >> 1) & 1)) {
                 continue;
             }
@@ -340,7 +340,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         }
     }
     if (request->target_mask & 2) {
-        for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+        for (entity = active_entities_head; entity != NULL; entity = entity->next) {
             if (!((s32)(entity->flags >> 1) & 1)) {
                 continue;
             }
@@ -418,7 +418,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if (map_slots[index].loaded == 0) {
                 continue;
             }
-            count = D_004467B8[index];
+            count = map_object_counts[index];
             object = map_slot_objects[index];
             for (item = 0; item < count; item++, object++) {
                 Vector_Subtract(direction, &held_item_arm_points.points[1], &held_item_arm_points.points[0]);
@@ -459,9 +459,9 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 /* Tests a hit's sphere against four of a map model's strip lists (0, 1, 2 and 5). When it
    touches a triangle the result is left in the scratchpad and the list's number returned. */
 int Attack_TestMapModel(ModelInstance *model, void *request, f32 reach) {
-    CollisionListPick4 lists = D_0043F1F0;
+    CollisionListPick4 lists = map_hit_strip_lists;
     f32 unused_work[8]; // match: never used, keeps the retail stack frame size
-    VuVector4 unused_axis = D_0043F200; // match: copied and never read
+    VuVector4 unused_axis = y_axis_vector; // match: copied and never read
     CollisionMeshLists *mesh;
     CollisionStrip *strip;
     CollisionStripPoint *strip_point;
@@ -552,9 +552,9 @@ int Attack_TestMapModel(ModelInstance *model, void *request, f32 reach) {
 /* Attack_TestMapModel for strip lists 1 and 5 only: returns 1 when the sphere touches a triangle
    of them (the result is left in the scratchpad), 0 when it touches none. */
 int Attack_TestMapModelFloors(ModelInstance *model, void *request, f32 reach) {
-    CollisionListPick2 lists = D_00446918[0];
+    CollisionListPick2 lists = map_hit_floor_strip_lists[0];
     f32 unused_work[8]; // match: never used, keeps the retail stack frame size
-    VuVector4 unused_axis = D_0043F200; // match: copied and never read
+    VuVector4 unused_axis = y_axis_vector; // match: copied and never read
     CollisionMeshLists *mesh;
     CollisionStrip *strip;
     CollisionStripPoint *strip_point;
@@ -646,9 +646,9 @@ int Attack_TestMapModelFloors(ModelInstance *model, void *request, f32 reach) {
 /* Attack_TestMapModel for strip lists 0 and 2 only: returns 0 when the sphere touches a triangle
    of them (the result is left in the scratchpad). */
 int Attack_TestMapModelWalls(ModelInstance *model, void *request, f32 reach) {
-    CollisionListPick2 lists = D_00446920[0];
+    CollisionListPick2 lists = map_hit_wall_strip_lists[0];
     f32 unused_work[8]; // match: never used, keeps the retail stack frame size
-    VuVector4 unused_axis = D_0043F200; // match: copied and never read
+    VuVector4 unused_axis = y_axis_vector; // match: copied and never read
     CollisionMeshLists *mesh;
     CollisionStrip *strip;
     CollisionStripPoint *strip_point;
@@ -813,44 +813,44 @@ void Attack_RollPlayerAilments(void *attack_chances) {
     if ((u16)chances->unk00[0] != 0 && player_state.flag_timers[0] == 0) {
         if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[0] - player_state.ailment_defence[0])) {
             player_state.timed_flags[0] = 1800;
-            player_state.ailment0_start_frame = D_00446ED4;
+            player_state.ailment0_start_frame = frame_counter;
         }
     }
     if ((u16)chances->unk00[1] != 0 && player_state.flag_timers[1] == 0) {
         if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[1] - player_state.ailment_defence[1])) {
             player_state.timed_flags[1] = 150;
-            player_state.ailment1_start_frame = D_00446ED4;
+            player_state.ailment1_start_frame = frame_counter;
         }
     }
     if ((u16)chances->unk00[2] != 0 && player_state.flag_timers[2] == 0) {
         if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[2] - player_state.ailment_defence[2])) {
             player_state.timed_flags[2] = 3600;
-            player_state.ailment2_start_frame = D_00446ED4;
+            player_state.ailment2_start_frame = frame_counter;
         }
     }
     if ((u16)chances->unk00[3] != 0 && player_state.flag_timers[3] == 0) {
         if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[3] - player_state.ailment_defence[3])) {
             player_state.timed_flags[3] = 5400;
-            player_state.ailment3_start_frame = D_00446ED4;
+            player_state.ailment3_start_frame = frame_counter;
         }
     }
     if ((u16)chances->unk00[4] != 0 && player_state.flag_timers[4] == 0) {
         if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[4] - player_state.ailment_defence[4])) {
             player_state.timed_flags[4] = 1800;
-            player_state.ailment4_start_frame = D_00446ED4;
+            player_state.ailment4_start_frame = frame_counter;
         }
     }
     if ((u16)chances->unk00[5] != 0 && player_state.flag_timers[5] == 0) {
         if (ROLL_PERCENT() < AT_LEAST_5((u16)chances->unk00[5] - player_state.ailment_defence[5])) {
             player_state.timed_flags[5] = 18000;
-            player_state.ailment5_start_frame = D_00446ED4;
+            player_state.ailment5_start_frame = frame_counter;
         }
     }
 }
 
 /* A hit lands on an entity: work out the damage from the attack's nine strengths and the
    entity's nine resistances, take it off the entity's health and start its reaction.
-   The last boss takes no damage here: a weapon hit counts D_00446928 down, throws the
+   The last boss takes no damage here: a weapon hit counts dark_one_hits_left down, throws the
    player back and halves the player's health (PlayerState.hp_now). */
 void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *entity, f32 scale) {
     Vector4 position;
@@ -883,14 +883,14 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
         }
         entity->flags |= 0x8000L << 28;
         entity->hit_cooldown_frames = 15;
-        printf(D_0043F210, D_00446928);
+        printf(last_boss_hits_format, dark_one_hits_left);
         if (!by_weapon) {
             return;
         }
         if (extra->attack_request != 0) {
             return;
         }
-        if (--D_00446928 <= 0) {
+        if (--dark_one_hits_left <= 0) {
             return;
         }
         Attack_WearWeapon(extra->weapon_index, 4);
@@ -907,13 +907,13 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
         if (player_state.hp_now < 2) {
             return;
         }
-        printf(D_0043F228, player_state.hp_now, player_state.hp_now / 2);
+        printf(hp_halved_format, player_state.hp_now, player_state.hp_now / 2);
         Player_TakeDamage(player_state.hp_now / 2);
         return;
     }
 
     // match: the range test (not one of the entities) is always true for the player
-    if (IS_PLAYER(owner) && (owner < entity_pool[0] || owner > &D_003D6C70)) {
+    if (IS_PLAYER(owner) && (owner < entity_pool[0] || owner > &entity_pool_last)) {
         entity->flags |= 0x8000L << 28;
     }
     if (extra->is_magic_shot == 1) {
@@ -1252,7 +1252,7 @@ void Attack_GetEffectiveStrengths(EntityParamsUnk240PartUnk00 *out, Unk1B1470Req
             STORE_ROUNDED_UP(out->unk00[7], request->unk50.unk00[7] + (f32)extra->player_magic * request->unk50.unk00[7] / 50.0f + extra->worn_magic_bonus[4] / 50.0f);
             STORE_ROUNDED_UP(out->unk00[8], request->unk50.unk00[8] + (f32)extra->player_magic * request->unk50.unk00[8] / 50.0f + extra->worn_magic_bonus[5] / 50.0f);
         }
-    } else if (request->owner >= entity_pool[0] && request->owner <= &D_003D6C70) {
+    } else if (request->owner >= entity_pool[0] && request->owner <= &entity_pool_last) {
         if (extra->is_magic_shot == 0) {
             *out = request->unk50;
         } else {
@@ -1325,7 +1325,7 @@ void Attack_WearWeapon(int idx, int amount) {
 
     if (idx != 0) {
         item = &weapon_defs[idx];
-        def = &D_00416D78[idx];
+        def = &weapon_name_defs[idx];
         rec = &weapon_level_records[idx];
         if (item->action_handler_index < 2 && rec->level >= 0x33) {
             rec->exp += amount;
@@ -1415,7 +1415,7 @@ void Attack_WearArmorFromHit(int damage, Unk1B1470Request *request) {
 /* Wears a worn item as Attack_WearWeapon wears a weapon; the "none" items do not wear. */
 void Attack_WearWornItem(int idx, int amount) {
     LevelRecord *rec = &worn_item_level_records[idx];
-    LevelDef *def = &D_00417EF8[idx];
+    LevelDef *def = &worn_name_defs[idx];
 
     if (rec->level >= 0x33 && idx != ITEM_WORN_INDEX(ITEM_SHIELD_NONE) && idx != ITEM_WORN_INDEX(ITEM_HELM_NONE)
         && idx != ITEM_WORN_INDEX(ITEM_ARMOR_NONE) && idx != ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE)
@@ -1441,7 +1441,7 @@ void Attack_DrainPlayerMp(int amount) {
 
 /* Loads the magic table fx_table from param/magic.prm. */
 void Attack_LoadMagicTable(void) {
-    int file_handle = File_Open(D_0043F248, 0, 1);
+    int file_handle = File_Open(magic_param_path, 0, 1);
 
     File_Read(file_handle, fx_table, -1);
     File_Close(file_handle);

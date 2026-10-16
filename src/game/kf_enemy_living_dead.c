@@ -24,7 +24,7 @@ void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 int Motion_Start(void *, int, int, u32, int);
 void EntityAi_SetAttackDelay(Entity *, s32);
 void EntityAi_RangedAttack(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 int EntityAi_ThinkIdle(void *, int);
 int EntityAi_ThinkReturn(void *, int);
 void EntityAi_StepState(void *);
@@ -215,7 +215,7 @@ static void LivingDead_ReactionHeavy(Entity *entity) {
 static void LivingDead_Think(Entity *entity, s32 unknown) {
     u32 phase;
 
-    phase = D_00446ED4 % 10U;
+    phase = frame_counter % 10U;
     if (phase == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
@@ -259,7 +259,7 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
         return;
     }
-    if (entity->spawn_info->spawn_mode == 0 && D_00446ED4 % (u32)(unkE0->step_index + 0x78) == 0) {
+    if (entity->spawn_info->spawn_mode == 0 && frame_counter % (u32)(unkE0->step_index + 0x78) == 0) {
         unkE0->step_index = rand() % 60;
         if (rand() % 100 < (s16)entity->params->action_frames) {
             ENTITY_FLAG_BITS(entity)->bit57 = 1;
@@ -273,7 +273,7 @@ static void LivingDead_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {

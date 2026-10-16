@@ -14,7 +14,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
 void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 int rand(void);
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
@@ -27,7 +27,7 @@ s32 EntityAi_PickCombatChoice(Entity *, s32);
 void EntityAi_LowerChoiceWeight(Entity *, s32);
 int EntityAi_PickAttack(char *);
 void EntityPoint_PickNear(float, void *, void *, void *);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 float EntityMath_EaseAngleToward(float *, float, float);
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
@@ -133,10 +133,10 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
     f32 direction[4];
     s32 side;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (D_00446ED4 % 60U == entity->spawn_index % 10U) {
+    if (frame_counter % 60U == entity->spawn_index % 10U) {
         unkE0->pitch_speed = rand() % 10;
     }
     if (entity->busy_flags & 0x40) {
@@ -239,7 +239,7 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = next_action;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         // match: called with one argument here
         ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
@@ -469,7 +469,7 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[0] = unkE0->move_speed;
     ENTITY_SCRATCH_VECTOR[1] = 0.0f;
     ENTITY_SCRATCH_VECTOR[2] = unkE0->part_angle_x;
-    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->rotation[2]);
+    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);

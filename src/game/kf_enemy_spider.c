@@ -16,7 +16,7 @@ extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -47,7 +47,7 @@ void EntityAi_LowerWeightsAfterHit(char *);
 void EntityAi_SetState(char *, u8);
 float EntityMath_EaseAngleToward(float *, float, float);
 void EntityEvent_OnDeath(Entity *);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -146,7 +146,7 @@ static void Spider_Animate(Entity *entity) {
 static void Spider_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -232,7 +232,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -487,7 +487,7 @@ static void Spider_DropToFloor(Entity *entity) {
     direction[2] = 0.0f;
     direction[3] = 0.0f;
     entity->busy_flags = 0x1000;
-    sceVu0RotMatrixZ(matrix, D_00431AF0, entity->model->rotation[2]);
+    sceVu0RotMatrixZ(matrix, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(matrix, matrix, entity->model->rotation[0]);
     sceVu0RotMatrixY(matrix, matrix, entity->model->rotation[1]);
     sceVu0ApplyMatrix(direction, (int *)matrix, direction);

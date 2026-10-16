@@ -15,13 +15,13 @@ double atan2(double, double);
 char *Model_GetSkinnedBonePoint(char *, u32);
 void Vector_Copy(void *, void *);
 int Attack_LaunchMagicEffect(u16, void *, void *, void *, void *);
-extern char *D_004467C0;
+extern char *entity_params;
 extern PlayerState player_state;
 // match: Sound_PlayFalloff.c has not been given its real arguments yet
 void Sound_PlayFalloff(float, int, int, char, float, float);
-extern EntitySpawnInfo *D_004467D0[2];
+extern EntitySpawnInfo *map_spawn_infos[2];
 extern MapSlot map_slots[];
-extern int D_00446770;
+extern int current_map_slot;
 s32 MapItem_DropFromEnemy(Entity *);
 void Player_AddExperience(s32);
 void Game_CountSpawnDeath(u32, int);
@@ -216,7 +216,7 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
     s32 frame;
     s32 i;
 
-    record = (EntityParamsUnk130 *)(D_004467C0 + entity->params->anim_effect_offsets[animation]);
+    record = (EntityParamsUnk130 *)(entity_params + entity->params->anim_effect_offsets[animation]);
     count = entity->params->anim_effect_counts[animation];
     if (count <= 0) {
         return;
@@ -265,7 +265,7 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
     s32 frame;
     f32 angle;
 
-    record = (EntityParamsUnk1B0 *)(D_004467C0 + entity->params->anim_sound_offsets[animation]);
+    record = (EntityParamsUnk1B0 *)(entity_params + entity->params->anim_sound_offsets[animation]);
     count = entity->params->anim_sound_counts[animation];
     if (count > 0 && record != NULL) {
         angle = atan2f(entity->model->position[0] - player_state.position.x, entity->model->position[2] - player_state.position.z) - player_state.rotation.y;
@@ -350,9 +350,9 @@ void EntityEvent_OnDeath(Entity *entity) {
     if ((s32)(entity->flags >> 38) & 3) {
         Player_AddExperience(entity->params->experience_reward);
     }
-    Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+    Game_CountSpawnDeath(map_slots[entity->group_id].tag, entity->spawn_info - map_spawn_infos[entity->group_id]);
     Effect_FreeForOwner(entity);
-    if (entity->spawn_info->death_script_id != 0 && entity->group_id == D_00446770) {
+    if (entity->spawn_info->death_script_id != 0 && entity->group_id == current_map_slot) {
         Script_Start(entity->spawn_info->death_script_id, 0);
     }
 }

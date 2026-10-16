@@ -108,28 +108,28 @@ int Map_TestFlagBlockBit(int, int, int, int);
 void Vu0_ProjectToScreen3(int *, int *, int *, f32 *, f32 *, f32 *);
 extern MapSlot map_slots[];
 extern MapDrawState map_draw_state;
-extern s64 D_00432E20[];
-extern s64 D_00433050[];
-extern MapDrawRecord *D_00446778[2];
-extern int D_00446770;
-extern MapDrawRecord *D_00446780[2];
+extern s64 game_dbuff_clear_color[];
+extern s64 game_dbuff_context2_clear_color[];
+extern MapDrawRecord *record_draw_lists[2];
+extern int current_map_slot;
+extern MapDrawRecord *late_record_draw_lists[2];
 extern MapObject map_slot_objects[][0x200];
 extern Entity entity_pool[][0x80];
-extern MapSlotMemory D_004321F0[2];
-extern int D_004467B0[2];
-extern EntitySpawnInfo *D_004467D0[2];
-extern MapItemDef *D_004469B8[2];
-extern s16 *D_004469C0[2];
-extern u8 *D_004469C8[2];
+extern MapSlotMemory map_slot_memory[2];
+extern int map_object_placements[2];
+extern EntitySpawnInfo *map_spawn_infos[2];
+extern MapItemDef *map_item_defs[2];
+extern s16 *map_item_model_kinds[2];
+extern u8 *map_item_group_thresholds[2];
 extern MapProp *map_slot_props[2][0xFF];
 extern char map_object_defs[];
-extern s32 D_004467B8[2];
+extern s32 map_object_counts[2];
 extern MapLoadState map_load_state;
 extern SoundLoadQueue sound_load_queue;
-extern f32 D_00431AF0[16];
-extern f32 D_004323E0[16];
-extern AreaNode *D_00446788;
-extern AreaNode *D_0044678C;
+extern f32 identity_matrix[16];
+extern f32 world_screen_matrix[16];
+extern AreaNode *record_boxes;
+extern AreaNode *backdrop_record_boxes;
 extern f32 D_00446768[]; /* the largest float */
 extern f32 D_0044676C[]; /* the largest float */
 extern GameStatus game_status;
@@ -137,7 +137,7 @@ extern u16 pad_state[];
 extern PlayerState player_state;
 extern MapSlotUnk10Words map_object_default_lights;
 extern TextureTableHeader *D_00446790;
-extern u8 D_004141D0[];
+extern u8 player_floor_block[];
 
 /* Draws the map records of both map slots whose flag bit 0 is clear (the list func_00112BD0 builds each
    frame), then each slot's map objects. mode 0 draws every record, the others only some; below 2 the
@@ -150,10 +150,10 @@ void Map_DrawRecords(int mode) {
     int active;
     int flags;
 
-    D_00432E20[0] = FOG_COLOR();
-    D_00432E20[30] = FOG_COLOR();
-    D_00433050[0] = FOG_COLOR();
-    D_00433050[30] = FOG_COLOR();
+    game_dbuff_clear_color[0] = FOG_COLOR();
+    game_dbuff_clear_color[30] = FOG_COLOR();
+    game_dbuff_context2_clear_color[0] = FOG_COLOR();
+    game_dbuff_context2_clear_color[30] = FOG_COLOR();
     active = 0;
     if (map_slots[0].loaded != 0) {
         active = map_slots[0].has_flag_80000000_record != 0;
@@ -164,7 +164,7 @@ void Map_DrawRecords(int mode) {
         }
     }
     for (map = 0; map < 2; map++) {
-        record = D_00446778[map];
+        record = record_draw_lists[map];
         slot = &map_slots[map];
         if (slot->loaded != 0) {
             Map_QueueSlotPacket(map, 0);
@@ -194,7 +194,7 @@ void Map_DrawRecords(int mode) {
                 if (!(flags & 0x20) && mode != 0) {
                     continue;
                 }
-                if (active >= 2 && flags < 0 && map != D_00446770) {
+                if (active >= 2 && flags < 0 && map != current_map_slot) {
                     continue;
                 }
                 if (flags & 0x10) {
@@ -242,7 +242,7 @@ void Map_DrawLateRecords(int mode) {
         }
     }
     for (map = 0; map < 2; map++) {
-        record = D_00446780[map];
+        record = late_record_draw_lists[map];
         slot = &map_slots[map];
         if (slot->loaded != 0) {
             Map_QueueSlotPacket(map, 2);
@@ -271,7 +271,7 @@ void Map_DrawLateRecords(int mode) {
                 if (!(flags & 0x20) && mode != 0) {
                     continue;
                 }
-                if (active >= 2 && flags < 0 && map != D_00446770) {
+                if (active >= 2 && flags < 0 && map != current_map_slot) {
                     continue;
                 }
                 old_z_mask = z_mask;
@@ -321,7 +321,7 @@ static inline u32 align_16(u32 address) {
 /* Finds the parts of a map file that was just read into a slot's memory, and shares out the
    slot's working memory. */
 void Map_ParseFile(int map) {
-    MapSlotMemory *memory = &D_004321F0[map];
+    MapSlotMemory *memory = &map_slot_memory[map];
     // match: set twice, the compiler no longer knows the slot is not the memory block, so the store
     // in the loop below makes it read memory->unk1C again afterwards
     MapSlot *slot = NULL;
@@ -375,15 +375,15 @@ void Map_ParseFile(int map) {
     cursor += header->flag_block_count * 0x40;
     slot->origins = (Vector4 *)cursor;
     cursor += 0x200;
-    D_004467B0[map] = (int)cursor;
+    map_object_placements[map] = (int)cursor;
     cursor += header->object_count * 0x80;
-    D_004467D0[map] = (EntitySpawnInfo *)cursor;
+    map_spawn_infos[map] = (EntitySpawnInfo *)cursor;
     cursor += header->spawn_count * 0x60;
-    D_004469B8[map] = (MapItemDef *)cursor;
+    map_item_defs[map] = (MapItemDef *)cursor;
     cursor += header->item_count * 0x40;
-    D_004469C0[map] = (s16 *)cursor;
+    map_item_model_kinds[map] = (s16 *)cursor;
     cursor += 0x40;
-    D_004469C8[map] = (u8 *)cursor;
+    map_item_group_thresholds[map] = (u8 *)cursor;
 
     /* the parts the header gives offsets for */
     cursor = (char *)header;
@@ -429,7 +429,7 @@ void Map_BuildModels(int map) {
     int cursor;
     char *work;
     int next;
-    MapSlotMemory *memory = &D_004321F0[map];
+    MapSlotMemory *memory = &map_slot_memory[map];
     MapSlot *slot = &map_slots[map];
     MapSlotUnk08 *header = (MapSlotUnk08 *)memory->file_base;
     int record_count;
@@ -507,11 +507,11 @@ void Map_BuildModels(int map) {
             slot->has_flag_80000000_record = 1;
         }
     }
-    D_004467B8[map] = header->object_count;
+    map_object_counts[map] = header->object_count;
     object = map_slot_objects[map];
     work = memory->work_cursor;
     model = (ModelInstance *)memory->object_models;
-    info = *(MapObjectUnk08 **)&D_004467B0[map]; // match: read as a pointer; read as an int it waits for the stores above
+    info = *(MapObjectUnk08 **)&map_object_placements[map]; // match: read as a pointer; read as an int it waits for the stores above
     for (i = 0; i < header->object_count; i++, model++, info++, object++) {
         object->model = model;
         object->source = info;
@@ -588,11 +588,11 @@ void Map_MakeCurrent(int map) {
     f32 *offset;
     MapSlot *loading;
 
-    if (D_00446770 != map) {
+    if (current_map_slot != map) {
         offset = &map_load_state.position.x;
         slot = &map_slots[map];
         queue = &sound_load_queue;
-        D_00446770 = map;
+        current_map_slot = map;
         Player_MoveByOffset(offset);
         Interact_OffsetViewRay(offset);
         Map_OffsetRecords(0, offset);
@@ -684,7 +684,7 @@ void Map_PlaceRecordModels(int map) {
             Vector_Copy(&model->scale_x, record->scale);
             model->scale_w = 1.0f;
             matrix = (f32 (*)[4])model->model_matrix;
-            sceVu0CopyMatrix(matrix, D_00431AF0);
+            sceVu0CopyMatrix(matrix, identity_matrix);
             MODEL_MATRIX(model)[0][0] *= model->scale_x;
             MODEL_MATRIX(model)[1][1] *= model->scale_y;
             MODEL_MATRIX(model)[2][2] *= model->scale_z;
@@ -692,7 +692,7 @@ void Map_PlaceRecordModels(int map) {
             sceVu0RotMatrixY((f32 *)matrix, (f32 *)matrix, model->rotation.y);
             sceVu0RotMatrixZ((f32 *)matrix, (f32 *)matrix, model->rotation.z);
             sceVu0TransMatrix((f32 *)matrix, (f32 *)matrix, &model->position.x);
-            Matrix_Multiply(model, D_004323E0, matrix);
+            Matrix_Multiply(model, world_screen_matrix, matrix);
             for (j = 0; j < model->part_count; j++) {
                 // match: the callee returns a value here, which keeps $2 busy
                 ((int (*)(ModelInstance *, ModelPart *, ModelPart *))ModelMatrix_BuildPartLocal)(model, &model->parts[j], &model->parts[j]);
@@ -712,7 +712,7 @@ void Map_InsertRecordBySize(AreaNode *node) {
     f32 area;
 
     if (!(node->flags & 0x02000000)) {
-        head = (node->flags & 0x80000000) ? &D_0044678C : &D_00446788;
+        head = (node->flags & 0x80000000) ? &backdrop_record_boxes : &record_boxes;
         area = (node->right - node->left) * (node->bottom - node->top);
         prev = NULL;
         cur = *head;
@@ -735,13 +735,13 @@ void Map_UnlinkSlotRecords(int map) {
     AreaNode *node;
 
     prev = NULL;
-    node = D_00446788;
+    node = record_boxes;
     while (node != NULL) {
         if (((u8)(AREA_NODE_WORD(node) >> 27) & 1) == map) {
             if (prev != NULL) {
                 prev->next = node->next;
             } else {
-                D_00446788 = node->next;
+                record_boxes = node->next;
             }
         } else {
             prev = node;
@@ -749,17 +749,17 @@ void Map_UnlinkSlotRecords(int map) {
         node = node->next;
     }
     if (prev == NULL) {
-        D_00446788 = NULL;
+        record_boxes = NULL;
     }
 
     prev = NULL;
-    node = D_0044678C;
+    node = backdrop_record_boxes;
     while (node != NULL) {
         if (((u8)(AREA_NODE_WORD(node) >> 27) & 1) == map) {
             if (prev != NULL) {
                 prev->next = node->next;
             } else {
-                D_0044678C = node->next;
+                backdrop_record_boxes = node->next;
             }
         } else {
             prev = node;
@@ -767,7 +767,7 @@ void Map_UnlinkSlotRecords(int map) {
         node = node->next;
     }
     if (prev == NULL) {
-        D_0044678C = NULL;
+        backdrop_record_boxes = NULL;
     }
 }
 
@@ -775,7 +775,7 @@ void Map_UnlinkSlotRecords(int map) {
    Failing that, the box nearest above or below it, then the nearest in z, then the nearest in x; NULL
    when none lines up with it. */
 AreaNode *Map_FindRecordAt(f32 *point, f32 margin) {
-    AreaNode *head = D_00446788;
+    AreaNode *head = record_boxes;
     AreaNode *node;
     AreaNode *best;
     f32 best_distance;
@@ -815,7 +815,7 @@ AreaNode *Map_FindRecordAt(f32 *point, f32 margin) {
 /* Map_FindRecordAt among the records of one map slot. */
 MapRecordInfo *Map_FindRecordAtInSlot(CameraState *position, f32 margin, int map) {
     f32 *point = (f32 *)position;
-    AreaNode *head = D_00446788;
+    AreaNode *head = record_boxes;
     AreaNode *node;
     AreaNode *best;
     f32 best_distance;
@@ -962,7 +962,7 @@ void Map_RunFreeCamera(void) {
                 }
             }
             Vector_Scale(&move.x, &player_state.position.x, -1.0f);
-            sceVu0TransMatrix(world_view, D_00431AF0, &move.x);
+            sceVu0TransMatrix(world_view, identity_matrix, &move.x);
             sceVu0RotMatrixY(world_view, world_view, -rotation.y);
             sceVu0RotMatrixX(world_view, world_view, -rotation.x);
             sceVu0TransMatrix(world_view, world_view, &player_state.position.x);
@@ -993,10 +993,10 @@ void Map_DrawFreeCameraView(void) {
 
     TextureTable_QueueAll(D_00446790);
     GsDraw_QueueTexFlush();
-    D_00432E20[0] = 0;
-    D_00432E20[30] = 0;
-    D_00433050[0] = 0;
-    D_00433050[30] = 0;
+    game_dbuff_clear_color[0] = 0;
+    game_dbuff_clear_color[30] = 0;
+    game_dbuff_context2_clear_color[0] = 0;
+    game_dbuff_context2_clear_color[30] = 0;
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(0x1A, 0);
     Packet_AddGsRegister(0x1B, 0x248);
@@ -1122,7 +1122,7 @@ void Map_CoverScreenWithMapTint(void) {
     MapSlot *slot;
     MapSlotUnk08 *header;
 
-    slot = &map_slots[D_00446770];
+    slot = &map_slots[current_map_slot];
     header = (MapSlotUnk08 *)slot->header;
     GsDraw_FillScreen(header->screen_tint_red, header->screen_tint_green, header->screen_tint_blue, header->screen_tint_alpha, 0x44);
 }
@@ -1209,10 +1209,10 @@ int Map_ClassifyRecordOnScreen(MapDrawRecord *draw_record, ModelInstance *model)
     if (bounds->model_index == 0xFFFF) {
         return 1;
     }
-    if (Map_TestFlagBlockBit(D_00446770, D_004141D0[0], (u8)(record->record_flags >> 27) & 1, (u8)record->record_flags) == 0) {
+    if (Map_TestFlagBlockBit(current_map_slot, player_floor_block[0], (u8)(record->record_flags >> 27) & 1, (u8)record->record_flags) == 0) {
         return 1;
     }
-    sceVu0MulMatrix(matrix, D_004323E0, D_00431AF0);
+    sceVu0MulMatrix(matrix, world_screen_matrix, identity_matrix);
     Vu0_LoadMatrix(matrix);
     corner2[3] = 1.0f;
     corner1[3] = 1.0f;

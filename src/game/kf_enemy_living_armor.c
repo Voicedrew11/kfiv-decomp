@@ -16,7 +16,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -39,7 +39,7 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-extern Qword D_0043E8B0;
+extern Qword living_armor_look_limits;
 float EntityMath_WrapAngle(float);
 int Bone_TurnPartToLook(void *, int, int, int, void *, int, float);
 int Motion_Step(void *, int);
@@ -117,7 +117,7 @@ void LivingArmor_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with LivingArmor_ThinkCombat for state 2. */
 static void LivingArmor_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -167,7 +167,7 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -236,7 +236,7 @@ static void LivingArmor_AimPart3AtPlayer(Entity *actor) {
     ModelPart *joint;
     float angle;
 
-    pair_copy = D_0043E8B0;
+    pair_copy = living_armor_look_limits;
     model = ENTITY_MODEL(actor);
     joint = &model->parts[3];
     if (joint != NULL && actor->animation_index == 0x11) {

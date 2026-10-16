@@ -77,7 +77,7 @@ void Model_DrawPosed(ModelInstance *);
 
 extern int game_status[];
 extern MapSlot map_slots[];
-extern int D_00446770;
+extern int current_map_slot;
 extern u8 game_options[0x10];
 extern u16 pad_state[];
 extern PlayerState player_state;
@@ -86,20 +86,20 @@ extern ScreenQuad viewer_marker_rect;
 extern ScreenQuad viewer_picture_rect;
 extern ScreenQuad D_0038D7F0;
 extern ScreenQuad D_0038D830;
-extern ScreenQuad D_0038D870;
-extern ViewerCornerTable D_0043E760;
-extern ViewerCornerTable D_0043E770;
-extern char D_0043E730[];       /* "map_view/%3.3d.tx2" */
-extern char D_0043E748[];       /* "map_view/pointer.omd" */
+extern ScreenQuad viewer_picture_label_rect;
+extern ViewerCornerTable viewer_marker_corner_us;
+extern ViewerCornerTable viewer_marker_corner_vs;
+extern char viewer_texture_file_name_format[];       /* "map_view/%3.3d.tx2" */
+extern char viewer_pointer_model_path[];       /* "map_view/pointer.omd" */
 extern f32 D_00446798[];        /* the largest float */
 extern f32 D_0044679C[];        /* the lowest float */
-extern f32 D_00431AF0[16];      /* the unit matrix */
+extern f32 identity_matrix[16];      /* the unit matrix */
 extern MapDrawState map_draw_state;
 extern MapSlotUnk10Words viewer_default_lights;
-extern char D_0038D8B0[0x40];
-extern char D_0038D8F0[0x40];
-extern s64 D_00432E20[];
-extern s64 D_00433050[];
+extern char kings_map_overlay_rect[0x40];
+extern char kings_map_corner_rect[0x40];
+extern s64 game_dbuff_clear_color[];
+extern s64 game_dbuff_context2_clear_color[];
 
 /* the map viewer: the picture data read into the spare area, the viewer picked, and its animation */
 static char *viewer_data;                   /* 0x44705C the spare area the viewer's textures are read into */
@@ -125,7 +125,7 @@ void MapViewer_OpenForItem(int viewer_number) {
 
     if (!(((u32)game_status[9] >> 8) & 1) && ((viewer_index = viewer_number - 1) < 5U)) {
         if (viewer_number == 5) {
-            row = (u8 *)map_slots + D_00446770 * 0x60;
+            row = (u8 *)map_slots + current_map_slot * 0x60;
             if (MapViewer_IsKingsMapUsable(row[1]) == 0) {
                 Message_ShowNotice(0, 0, 0, 1, 0x2D, MSG_UNABLE_TO_USE_HERE);
                 return;
@@ -195,7 +195,7 @@ static int MapViewer_Load(void) {
     MapRecordBounds *record;
     int count;
 
-    sprintf(name, D_0043E730, picked_viewer);
+    sprintf(name, viewer_texture_file_name_format, picked_viewer);
     file = File_Open(name, 0, 1);
     if (file < 0) {
         return FALSE;
@@ -214,7 +214,7 @@ static int MapViewer_Load(void) {
     }
     model_data = viewer_data + size;
     model_data = align16(model_data);
-    file = File_Open(D_0043E748, 0, 1);
+    file = File_Open(viewer_pointer_model_path, 0, 1);
     if (file < 0) {
         return FALSE;
     }
@@ -334,8 +334,8 @@ void MapViewer_DrawPictureMap(void) {
         TextureTable_QueueOne((TextureTableHeader *)viewer_data, entry->count);
         GsDraw_QueueTexFlush();
         GsDraw_QueueFlush();
-        corner_us = D_0043E760;
-        corner_vs = D_0043E770;
+        corner_us = viewer_marker_corner_us;
+        corner_vs = viewer_marker_corner_vs;
         if (pulse_frame < 45) {
             alpha = sinf(pulse_frame * 3.1415927f / 45.0f) * 128.0f;
         } else {
@@ -430,7 +430,7 @@ void MapViewer_DrawPictureMap(void) {
         Packet_BeginGsRegisters();
         Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
         Packet_EndGsRegisters();
-        GsDraw_QueueTexturedSprite(&D_0038D870);
+        GsDraw_QueueTexturedSprite(&viewer_picture_label_rect);
     }
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ZBUF_1, 0xA000118);
@@ -443,10 +443,10 @@ void MapViewer_DrawPictureMap(void) {
 int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
     switch (viewer_picture) {
     case 0:
-        switch (map_slots[D_00446770].tag) {
+        switch (map_slots[current_map_slot].tag) {
         case 0:
             if (player_state.map_index != 0xFFFF
-                && ((MapRecord *)map_slots[D_00446770].records)[player_state.map_index].prop_id == 0xC8) {
+                && ((MapRecord *)map_slots[current_map_slot].records)[player_state.map_index].prop_id == 0xC8) {
                 *screen_x = 0x96;
                 *screen_y = 0xDB;
             } else {
@@ -456,7 +456,7 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
             return -1;
         case 2:
             if (player_state.map_index != 0xFFFF
-                && ((MapRecord *)map_slots[D_00446770].records)[player_state.map_index].prop_id == 0xC8) {
+                && ((MapRecord *)map_slots[current_map_slot].records)[player_state.map_index].prop_id == 0xC8) {
                 *screen_x = 0x96;
                 *screen_y = 0xDB;
             } else {
@@ -486,7 +486,7 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
         }
     case 1:
         if (player_state.position.y > -700.0f) {
-            switch (map_slots[D_00446770].tag) {
+            switch (map_slots[current_map_slot].tag) {
             case 0x5F:
             case 0x60:
             case 0x61:
@@ -495,7 +495,7 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
                 return TRUE;
             }
         } else {
-            switch (map_slots[D_00446770].tag) {
+            switch (map_slots[current_map_slot].tag) {
             case 0x5F:
                 if (player_state.position.x > 4800.0f && player_state.position.z > 8000.0f) {
                     return FALSE;
@@ -519,7 +519,7 @@ int MapViewer_LocateOnCaretakersMap(int *screen_x, int *screen_y) {
 int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
     switch (viewer_picture) {
     case 0:
-        switch (map_slots[D_00446770].tag) {
+        switch (map_slots[current_map_slot].tag) {
         case 0x70:
         case 0x71:
             *screen_x = (player_state.position.x - 0.0f) * 18.626263f / 1000.0f + 321.0f;
@@ -536,7 +536,7 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
         }
         break;
     case 1:
-        switch (map_slots[D_00446770].tag) {
+        switch (map_slots[current_map_slot].tag) {
         case 0x1F:
             *screen_x = (player_state.position.x - 0.0f) * 11.243243f / 1000.0f + 348.0f;
             *screen_y = 263.0f - (player_state.position.z - -12100.0f) * 11.48718f / 1000.0f;
@@ -556,7 +556,7 @@ int MapViewer_LocateOnZastarisMap(int *screen_x, int *screen_y) {
         }
         break;
     case 2:
-        switch (map_slots[D_00446770].tag) {
+        switch (map_slots[current_map_slot].tag) {
         case 0xF:
             *screen_x = (player_state.position.x - 9300.0f) * 11.186992f / 1000.0f + 194.0f;
             *screen_y = 167.0f - (player_state.position.z - -4400.0f) * 11.2f / 1000.0f;
@@ -593,7 +593,7 @@ int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y) {
     int area;
     char *entry;
 
-    entry = (char *)map_slots + D_00446770 * 0x60;
+    entry = (char *)map_slots + current_map_slot * 0x60;
     area = ((u8 *)entry)[1];
     if (area >= 0x11) {
         if (area < 0x14) {
@@ -615,7 +615,7 @@ int MapViewer_LocateOnEarthFolksMap(int *map_x, int *map_y) {
 /* Where the player's marker goes on Widda's Map: a point worked out from the player's position on maps 026
    and 027, FALSE on other maps. */
 int MapViewer_LocateOnWiddasMap(int *screen_x, int *screen_y) {
-    switch (map_slots[D_00446770].tag) {
+    switch (map_slots[current_map_slot].tag) {
     case 0x1A:
         *screen_x = (player_state.position.x - -3200.0f) * 21.333334f / 1000.0f + 438.0f;
         *screen_y = 214.0f - (player_state.position.z - -5600.0f) * 20.363636f / 1000.0f;
@@ -731,7 +731,7 @@ void MapViewer_RunKingsMap(void) {
                 }
             }
             Vector_Scale(&move.x, &player_state.position.x, -1.0f);
-            sceVu0TransMatrix(world_view, D_00431AF0, &move.x);
+            sceVu0TransMatrix(world_view, identity_matrix, &move.x);
             sceVu0RotMatrixY(world_view, world_view, -rotation.y);
             sceVu0RotMatrixX(world_view, world_view, -rotation.x);
             sceVu0TransMatrix(world_view, world_view, &player_state.position.x);
@@ -760,10 +760,10 @@ static void MapViewer_DrawKingsMap(void) {
     MapDrawRecord *record;
     int flags;
 
-    D_00432E20[0] = 0;
-    D_00432E20[30] = 0;
-    D_00433050[0] = 0;
-    D_00433050[30] = 0;
+    game_dbuff_clear_color[0] = 0;
+    game_dbuff_clear_color[30] = 0;
+    game_dbuff_context2_clear_color[0] = 0;
+    game_dbuff_context2_clear_color[30] = 0;
     if (pulse_frame < 45) {
         alpha = (int)(sinf(pulse_frame * 3.1415927f / 45.0f) * 108.0f) + 0x10;
     }
@@ -843,7 +843,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_AddGsRegister(8, 5);
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
-    GsDraw_QueueTexturedSprite(D_0038D8B0);
+    GsDraw_QueueTexturedSprite(kings_map_overlay_rect);
     TextureTable_QueueOne((TextureTableHeader *)viewer_data, 1);
     GsDraw_QueueTexFlush();
     GsDraw_QueueFlush();
@@ -853,7 +853,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_AddGsRegister(8, 5);
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
-    GsDraw_QueueTexturedSprite(D_0038D8B0);
+    GsDraw_QueueTexturedSprite(kings_map_overlay_rect);
     TextureTable_QueueOne((TextureTableHeader *)viewer_data, 2);
     GsDraw_QueueTexFlush();
     GsDraw_QueueFlush();
@@ -863,7 +863,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_AddGsRegister(8, 0);
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
-    GsDraw_QueueTexturedSprite(D_0038D8F0);
+    GsDraw_QueueTexturedSprite(kings_map_corner_rect);
     TextureTable_QueueOne((TextureTableHeader *)viewer_data, 3);
     GsDraw_QueueTexFlush();
     GsDraw_QueueFlush();
@@ -872,7 +872,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_AddGsRegister(GS_REG_ALPHA_1, 0x48);
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
-    GsDraw_QueueTexturedSprite(D_0038D8F0);
+    GsDraw_QueueTexturedSprite(kings_map_corner_rect);
     Game_ApplyBrightness(game_options[10]);
 }
 

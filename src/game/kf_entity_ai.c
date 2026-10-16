@@ -14,7 +14,7 @@ s32 EntitySight_PropInWay(Entity *entity);
 s32 EntitySight_ObjectInWay(Entity *entity);
 #include "kf_gs.h"
 
-extern float D_004325A0[];
+extern float camera_state[];
 s32 EntityAim_AilPlayerInArc(void *target, f32 *point, f32 max_angle, f32 max_height, f32 max_distance, f32 heading);
 void *memset(void *, int, u32);
 void Vector_Copy(void *, void *);
@@ -40,7 +40,7 @@ s32 Bone_TurnPart(ModelPart *part, f32 *angles, s32 mode, f32 *goal, f32 *limits
 int Bone_TurnPartToLook(void *model, int part_arg, int angles_arg, int mode, void *target, int limits_arg, float rate);
 extern PlayerState player_state;
 #define SPAWN_FLAGS(spawn_info) ((EntitySpawnFlags *)&(spawn_info)->spawn_flags)
-extern EntitySpawnInfo *D_004467D0[2];
+extern EntitySpawnInfo *map_spawn_infos[2];
 extern MapSlot map_slots[];
 int Game_GetSpawnDeathCount(int, int);
 // match: reading EntityParams word 0 whole; a bit-field in byte 3 would be an lbu
@@ -76,7 +76,7 @@ void Packet_EndGsRegisters(void);
 void GsDraw_QueueFlush(void);
 void GsDraw_SetScreenAlpha(int);
 void Matrix_Multiply(void *, void *, void *);
-extern Entity *D_004467E0;
+extern Entity *active_entities_head;
 extern ModelInstance entity_models[];
 extern char fire_lord_model_matrix[];
 
@@ -112,8 +112,8 @@ float EntityAi_RandomAngle(void) {
 /* Starts the second camera shake (GameLoop_UpdateCameraShake plays it): its reach (CameraState.entity_shake_reach) and its frames
    (unk7C). The Giant Beetle's ranged attack uses it. */
 void EntityAi_ShakeCamera(int float_value, int int_value) {
-    D_004325A0[30] = float_value;
-    *(int *)&D_004325A0[31] = int_value;
+    camera_state[30] = float_value;
+    *(int *)&camera_state[31] = int_value;
 }
 
 /* Sets Entity.state and keeps the old value in prev_state. */
@@ -421,7 +421,7 @@ s32 EntityAi_ShouldRespawn(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit4 && (entity->spawn_info->spawn_flags & (0x8000L << 46))) {
         return FALSE;
     }
-    death_count = Game_GetSpawnDeathCount(map_slots[entity->group_id].tag, entity->spawn_info - D_004467D0[entity->group_id]);
+    death_count = Game_GetSpawnDeathCount(map_slots[entity->group_id].tag, entity->spawn_info - map_spawn_infos[entity->group_id]);
     if ((s8)SPAWN_FLAGS(entity->spawn_info)->bytes[5] != 0 && death_count >= (s8)SPAWN_FLAGS(entity->spawn_info)->bytes[5]) {
         return FALSE;
     }
@@ -1956,7 +1956,7 @@ void Entity_DrawPoolModels(void) {
     Packet_AddGsRegister(0x4B, 1);
     Packet_EndGsRegisters();
     GsDraw_QueueFlush();
-    for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+    for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         if (!ENTITY_FLAG_BITS(entity)->bit1 || entity->map_record == NULL || (f32)entity->params->unk04 <= 0.0f) {
             continue;
         }

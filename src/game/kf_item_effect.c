@@ -11,17 +11,17 @@ extern char map_draw_slot_blocks[];
 extern LevelRecord weapon_level_records[];
 extern GameStatus game_status;
 extern PlayerState player_state;
-extern EventRunner D_00420D00;
-extern ItemUseEffectDef D_0042BBE0[];
-extern char D_004410C8[];
-extern char D_004410E0[];
-extern char D_004410F8[];
-extern char D_00441110[];
-extern char D_00441128[];
-extern u8 D_004141D8[];
-extern int D_00446770;
-extern int D_00446F28;
-extern char *D_00446F70;
+extern EventRunner view_ray_status;
+extern ItemUseEffectDef item_effect_defs_by_kind[];
+extern char item_effect_small_model_path[];
+extern char item_effect_small_motion_path[];
+extern char item_effect_large_model_path[];
+extern char item_effect_large_motion_path[];
+extern char item_effect_texture_path_format[];
+extern u8 player_weapon_step[];
+extern int current_map_slot;
+extern int item_effect_area_size;
+extern char *item_effect_area;
 extern PlayerItemDef weapon_defs[];
 
 void *memset(void *, int, u32);
@@ -59,12 +59,12 @@ void Vector_Scale(float *, float *, float);
 
 static int item_effect_active;              /* 0x447388 nonzero while an effect runs */
 static int item_effect_kind;                /* 0x44738C the item kind (0x46..0x52) */
-static int item_effect_step;                /* 0x447390 index into D_0042C190 */
+static int item_effect_step;                /* 0x447390 index into item_effect_steps */
 static ModelInstance *item_effect_model_a;  /* 0x447394 the small-item model */
 static ModelInstance *item_effect_model_b;  /* 0x447398 the large-item model */
 static ModelInstance *item_effect_model;    /* 0x44739C the model shown this time */
 static int item_effect_load_pad;            /* 0x4473A0 cleared in ItemEffect_Load */
-static ItemUseEffectDef *item_effect_def;   /* 0x4473A4 D_0042BBE0[kind] */
+static ItemUseEffectDef *item_effect_def;   /* 0x4473A4 item_effect_defs_by_kind[kind] */
 static int item_effect_brightness;          /* 0x4473A8 model colour alpha while fading */
 static int item_effect_pending_effects;     /* 0x4473AC set until motion reaches def->unk08 */
 static int item_effect_marked;              /* 0x4473B0 spell slot marked by Player_LearnSpellInRow */
@@ -89,14 +89,14 @@ ItemUseEffectDef item_effect_defs[13] = {
 };
 
 /* 0x42C110 the light block the effect's model is lit by (ItemEffect_Start, see effect_light_block) */
-Vector4 D_0042C110[8] = {
+Vector4 item_effect_light_block[8] = {
     { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f },
     { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f }, { 0.0f, 0.0f, 0.0f, 0.0f },
     { 0.0f, 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f, 1.0f },
 };
 
 /* 0x42C190 the four steps of an item effect, one a frame (ItemEffect_Update) */
-void (*D_0042C190[4])(void) = {
+void (*item_effect_steps[4])(void) = {
     ItemEffect_StepRequestGameStatus,
     ItemEffect_StepWaitOverlay,
     ItemEffect_StepPlayMotion,
@@ -110,7 +110,7 @@ static inline char *align16(char *address) {
     return address;
 }
 
-/* Loads the two item-effect models, their motions and seven textures into D_00446F70. */
+/* Loads the two item-effect models, their motions and seven textures into item_effect_area. */
 void ItemEffect_Load(void) {
     char name[0x100];
     char *model_data;
@@ -119,8 +119,8 @@ void ItemEffect_Load(void) {
     int size;
     int i;
 
-    memset(D_00446F70, 0, D_00446F28);
-    buffer = D_00446F70;
+    memset(item_effect_area, 0, item_effect_area_size);
+    buffer = item_effect_area;
     item_effect_model_a = NULL;
     item_effect_model_b = NULL;
     memset(item_effect_textures, 0, sizeof(item_effect_textures));
@@ -131,7 +131,7 @@ void ItemEffect_Load(void) {
     item_effect_model_a = (ModelInstance *)buffer;
     buffer += sizeof(ModelInstance);
     buffer = align16(buffer);
-    file = File_Open(D_004410C8, 0, 1);
+    file = File_Open(item_effect_small_model_path, 0, 1);
     size = File_Read(file, buffer, -1);
     File_Close(file);
     model_data = buffer;
@@ -144,7 +144,7 @@ void ItemEffect_Load(void) {
     Model_SetTexture(item_effect_model_a, 0x4007D805E1313B40, 0x60);
     item_effect_model_a->draw_parts = Model_DrawPosedDepthByPart;
     buffer = align16(buffer);
-    file = File_Open(D_004410E0, 0, 1);
+    file = File_Open(item_effect_small_motion_path, 0, 1);
     size = File_Read(file, buffer, -1);
     File_Close(file);
     model_data = buffer;
@@ -156,7 +156,7 @@ void ItemEffect_Load(void) {
     item_effect_model_b = (ModelInstance *)buffer;
     buffer += sizeof(ModelInstance);
     buffer = align16(buffer);
-    file = File_Open(D_004410F8, 0, 1);
+    file = File_Open(item_effect_large_model_path, 0, 1);
     size = File_Read(file, buffer, -1);
     File_Close(file);
     model_data = buffer;
@@ -169,7 +169,7 @@ void ItemEffect_Load(void) {
     Model_SetTexture(item_effect_model_b, 0x4007D805E1313B40, 0x60);
     item_effect_model_a->draw_parts = Model_DrawPosedDepthByPart; // match: the first model again, not the second
     buffer = align16(buffer);
-    file = File_Open(D_00441110, 0, 1);
+    file = File_Open(item_effect_large_motion_path, 0, 1);
     size = File_Read(file, buffer, -1);
     File_Close(file);
     model_data = buffer;
@@ -178,7 +178,7 @@ void ItemEffect_Load(void) {
     ModelMotion_LoadFile((MotionFile *)model_data, (ModelChannel **)&buffer, item_effect_model_b, 1);
 
     for (i = 0; i < 7; i++) {
-        sprintf(name, D_00441128, i + 40);
+        sprintf(name, item_effect_texture_path_format, i + 40);
         file = File_Open(name, 0, 1);
         if (file >= 0) {
             buffer = align16(buffer);
@@ -215,7 +215,7 @@ void ItemEffect_Start(int kind, int marked) {
     }
     item_effect_pending_effects = item_effect_active = 1;
     item_effect_marked = marked;
-    item_effect_def = &D_0042BBE0[kind];
+    item_effect_def = &item_effect_defs_by_kind[kind];
     item_effect_kind = kind;
     item_effect_step = 0;
     if (kind >= 0x4D) {
@@ -235,13 +235,13 @@ void ItemEffect_Start(int kind, int marked) {
     ModelMotion_Step(item_effect_model);
     item_effect_brightness = 0x80;
     Model_SetVertexColour(item_effect_model, 0x80, 0x80, 0x80, item_effect_brightness);
-    Vector_Scale((float *)&item_effect_model->position, D_00420D00.view_direction, 75.0f);
-    Vector_Add(&item_effect_model->position, &item_effect_model->position, D_00420D00.view_origin);
+    Vector_Scale((float *)&item_effect_model->position, view_ray_status.view_direction, 75.0f);
+    Vector_Add(&item_effect_model->position, &item_effect_model->position, view_ray_status.view_origin);
     Vector_Copy(&item_effect_model->rotation, &player_state.rotation);
     item_effect_model->scale_x = item_effect_model->scale_y = item_effect_model->scale_z = 1.0f;
     item_effect_model->scale_w = 1.0f;
-    item_effect_model->light_block = (s32)D_0042C110;
-    item_effect_model->fog_block = &map_draw_slot_blocks[D_00446770 * 0x400];
+    item_effect_model->light_block = (s32)item_effect_light_block;
+    item_effect_model->fog_block = &map_draw_slot_blocks[current_map_slot * 0x400];
     for (i = 0; i < item_effect_model->part_count; i++) {
         if (i == 0) {
             MODEL_PART_FLAG_BITS(&item_effect_model->parts[0])->bit41 = TRUE;
@@ -264,7 +264,7 @@ void ItemEffect_Update(void) {
     if (item_effect_active == 0) {
         return;
     }
-    D_0042C190[item_effect_step]();
+    item_effect_steps[item_effect_step]();
     if (item_effect_active == 0) {
         return;
     }
@@ -307,7 +307,7 @@ void ItemEffect_StepRequestGameStatus(void) {
 
 /* Item-effect step 1: waits until the confirmation overlay flag is clear. */
 void ItemEffect_StepWaitOverlay(void) {
-    if (D_004141D8[0] == 0) {
+    if (player_weapon_step[0] == 0) {
         game_status.update_hold_flags = 0xC5F;
         game_status.effect_owner = item_effect_model;
         item_effect_step++;

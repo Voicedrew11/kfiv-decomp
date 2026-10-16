@@ -17,14 +17,14 @@ void EntityAi_Animate(void);
 extern s32 entity_type_handlers[][2];
 extern char map_script_flags[0x2000];
 extern MapSlot map_slots[];
-extern int D_00446770;
-extern EntityFrameTable D_0043EAD8;
+extern int current_map_slot;
+extern EntityFrameTable forest_golem_rumble_frames;
 int Motion_Start(void *, int, int, u32, int);
 int Script_Start(int, int);
 void Input_StartRumble(u8, u8, u8);
 void EntityAi_OnHit(char *);
 void EntityAi_Move(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -124,7 +124,7 @@ void ForestGolem_Init(Entity *entity) {
 /* The think handler the set-up function installs when the byte of map_script_flags that
    EntityParams.pitch_limit_deg and unk432 index is set, and ForestGolem_StartScriptAndRumble when it ends: copies
    the position in work floats unk48 to unk50 to the model, relative to the map origin
-   EntityParams.unk43A names when the entity is on another map than D_00446770, sets the heading to
+   EntityParams.unk43A names when the entity is on another map than current_map_slot, sets the heading to
    0 and starts the move action. */
 static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now) {
     EntityUnkE0 *sub;
@@ -143,8 +143,8 @@ static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now) {
     model->position.y = y;
     z = sub->part_angle_z;
     model->position.z = z;
-    if (entity->group_id != D_00446770) {
-        slot = &map_slots[D_00446770];
+    if (entity->group_id != current_map_slot) {
+        slot = &map_slots[current_map_slot];
         origin = &slot->origins[ENTITY_CONTROLLER(entity)->entity_group_index];
         model->position.x = x - origin->x;
         model->position.y = y - origin->y;
@@ -173,14 +173,14 @@ static void ForestGolem_Think(Entity *entity, s32 unknown) {
 }
 
 /* An action (busy bit 0x2000) that ForestGolem_Think starts: plays animation 17 to its end. Past
-   frame EntityParams.action_frames, on the map D_00446770, it starts script EntityParams.near_distance
-   (Script_Start); after that, on the four frames of D_0043EAD8 and on frame 440, it asks for a
+   frame EntityParams.action_frames, on the map current_map_slot, it starts script EntityParams.near_distance
+   (Script_Start); after that, on the four frames of forest_golem_rumble_frames and on frame 440, it asks for a
    controller rumble (Input_StartRumble) with a strength that falls off with the player's distance up to
    3000. At the end it keeps the model's position in work floats unk48 to unk50, puts
    ForestGolem_ThinkStayInPlace in the think slot and calls it. */
 static void ForestGolem_StartScriptAndRumble(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
-    EntityFrameTable shake_frames = D_0043EAD8;
+    EntityFrameTable shake_frames = forest_golem_rumble_frames;
     u32 i;
 
     entity->busy_flags |= 0x2000;
@@ -196,7 +196,7 @@ static void ForestGolem_StartScriptAndRumble(Entity *entity) {
         break;
     case 2:
         if ((s16)entity->params->action_frames < entity->model->level_tables->unk82) { // match: read signed here
-            if (entity->group_id == D_00446770) {
+            if (entity->group_id == current_map_slot) {
                 // match: an int result keeps $2 busy after the call
                 ((int (*)(s32, s32))Script_Start)(entity->params->near_distance, 0);
                 entity->action_step++;
@@ -291,7 +291,7 @@ static void ForestGolem_InitByVariant(Entity *entity) {
    a set-up function nothing refers to: as EntityAi_Think, with ForestGolem_ThinkCombat for state 2. The same
    as ExpeditionSoldier_Think. */
 static void ForestGolem_ThinkByState(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -345,7 +345,7 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = next_action;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         // match: called with one argument here
         ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
@@ -516,7 +516,7 @@ static void ForestGolem_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapObject *map_object;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -626,7 +626,7 @@ static void ForestGolem_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapObject *map_object;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {

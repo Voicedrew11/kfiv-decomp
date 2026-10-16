@@ -8,14 +8,14 @@ void MapLoad_WaitTimer();
 void MapLoad_OpenFile();
 void MapLoad_ReadChunk();
 void MapLoad_WaitForChunk();
-void func_00118538();
+void MapLoad_WaitForSetUp();
 void MapLoad_SetUpMap();
 void MapLoad_SkipStep();
 void MapLoad_ActivateMap();
 void MapChange_FadeOutCapture();
 void MapChange_DrawBlack();
 void MapChange_FadeMapToBlack();
-void func_00118D78();
+void MapChange_Idle();
 void MapChange_WaitForIdle();
 void MapChange_UnloadAll();
 void MapChange_OpenFile();
@@ -26,7 +26,7 @@ void MapChange_EndWhenTimerDone();
 void (*map_load_steps[12])(void) = { /* 0x38D5E0 what MapLoadState.step runs */
     MapLoad_StartRequest, MapLoad_WaitTimer,
     MapLoad_OpenFile, MapLoad_ReadChunk,
-    MapLoad_WaitForChunk, func_00118538,
+    MapLoad_WaitForChunk, MapLoad_WaitForSetUp,
     MapLoad_SetUpMap, MapLoad_SkipStep,
     MapLoad_ActivateMap, NULL,
     NULL, NULL,
@@ -37,7 +37,7 @@ MapLoadState map_load_state = { 0 }; /* 0x38D610 the background load of the othe
 MapLoadRequest map_load_request = { 0 }; /* 0x38D640 the map the game asked to change to */
 
 void (*screen_fade_steps[8])(void) = { /* 0x38D650 what ScreenFade.step runs */
-    func_00118D78, MapChange_WaitForIdle,
+    MapChange_Idle, MapChange_WaitForIdle,
     MapChange_UnloadAll, MapChange_OpenFile,
     MapChange_WaitForRead, MapChange_SetUpMap,
     MapChange_EndWhenTimerDone, NULL,

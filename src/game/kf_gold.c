@@ -34,11 +34,11 @@ extern MapSlot map_slots[];
 extern ObjectMarkRow map_object_marks[];
 extern MapLoadState map_load_state;
 extern GameStatus game_status;
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 extern u16 pad_pressed[];
 extern PlayerState player_state;
-extern u16 D_00446940;
-extern int D_00446770;
+extern u16 action_button;
+extern int current_map_slot;
 extern f32 D_004469DC[];
 
 MapActor *Gold_FindFree(int slot);
@@ -50,8 +50,8 @@ void Gold_ClearMark(MapActor *actor);
 
 #define GOLD_MAX 999999
 
-extern MapActor *D_004469E0;
-extern s32 D_004471B8[2];
+extern MapActor *map_actors_in_use;
+extern s32 map_actor_drop_counts[2];
 static MapActor map_actors[2][MAP_ACTOR_COUNT]; /* 0x5B6100 sixteen piles per loaded map */
 static ModelInstance map_actor_models[2][MAP_ACTOR_COUNT]; /* 0x5B6680 */
 static char map_gold_texture[0x2000];           /* 0x5B9E80 item/i0000.tx2 */
@@ -62,8 +62,8 @@ static char map_actor_matrices[2][MAP_ACTOR_COUNT][0x80]; /* 0x5BDE80 */
 void Gold_Init(void) {
     int file;
 
-    D_004469E0 = NULL;
-    memset(D_004471B8, 0, sizeof(D_004471B8));
+    map_actors_in_use = NULL;
+    memset(map_actor_drop_counts, 0, sizeof(map_actor_drop_counts));
     memset(map_actors, 0, sizeof(map_actors));
     memset(map_actor_models, 0, sizeof(map_actor_models));
     memset(map_gold_texture, 0, sizeof(map_gold_texture));
@@ -107,7 +107,7 @@ void Gold_InitMap(int map) {
     position[3] = 1.0f;
     memset(rotation, 0, sizeof(rotation));
     rotation[3] = 1.0f;
-    D_004471B8[map] = 0;
+    map_actor_drop_counts[map] = 0;
     memset(map_actors[map], 0, sizeof(map_actors[0]));
     memset(map_actor_models[map], 0, sizeof(map_actor_models[0]));
     memset(map_actor_matrices[map], 0, sizeof(map_actor_matrices[0]));
@@ -119,7 +119,7 @@ void Gold_InitMap(int map) {
         work = (int)matrix;
         source = (int)map_gold_model;
         Model_SetUpSkinned(model, &source, &work);
-        copy_matrix((ModelMatrixQwords *)matrix, (ModelMatrixQwords *)D_00431AF0);
+        copy_matrix((ModelMatrixQwords *)matrix, (ModelMatrixQwords *)identity_matrix);
         model->light_block = (s32)&map_draw_state.unkC0;
         model->fog_block = &map_draw_state.unkA0;
         model->texture_data = (int)map_gold_texture;
@@ -143,7 +143,7 @@ void Gold_InitMap(int map) {
 
 /* Takes every map actor of the slot off the list of the ones in use. */
 void Gold_UnlinkMap(int slot) {
-    MapActor *actor = D_004469E0;
+    MapActor *actor = map_actors_in_use;
 
     while (actor != NULL) {
         if (((actor->flags >> 2) & 1) == slot) {
@@ -173,7 +173,7 @@ void Gold_MoveMap(int slot, f32 *offset) {
 void Gold_Update(void) {
     f32 delta[4];
     MapActor *nearest = NULL;
-    MapActor *actor = D_004469E0;
+    MapActor *actor = map_actors_in_use;
     f32 nearest_distance = 40000.0f;
     f32 distance;
     int amount;
@@ -217,7 +217,7 @@ void Gold_Update(void) {
         }
         actor = actor->next;
     }
-    if (nearest != NULL && (pad_pressed[0] & D_00446940) && !(game_status.update_hold_flags & 1) && game_status.player_control != 0) {
+    if (nearest != NULL && (pad_pressed[0] & action_button) && !(game_status.update_hold_flags & 1) && game_status.player_control != 0) {
         MAP_ACTOR_BITS(nearest)->in_reach = FALSE;
         nearest->step = 2;
         nearest->fade_timer = 15;
@@ -240,7 +240,7 @@ void Gold_Draw(s32 list) {
     Packet_AddGsRegister(0x47, 0x5000D);
     Packet_AddGsRegister(0x48, 0x5000D);
     Packet_EndGsRegisters();
-    for (actor = D_004469E0; actor != NULL; actor = actor->next) {
+    for (actor = map_actors_in_use; actor != NULL; actor = actor->next) {
         ModelMatrix_Build(actor->body, &actor->body->position, &actor->body->rotation, &actor->body->scale_x);
         if (actor->body->fade_enabled == 0) {
             ModelTexture_SendForModel(actor->body);
@@ -278,7 +278,7 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
     MAP_ACTOR_BITS(actor)->map = map;
     MAP_ACTOR_BITS(actor)->in_reach = FALSE;
     MAP_ACTOR_WORDS(actor)->object_id = object_id;
-    actor->serial = D_004471B8[map]++;
+    actor->serial = map_actor_drop_counts[map]++;
     actor->unk08 = D_004469DC[0];
     actor->fade_timer = 15;
     actor->step = 0;
@@ -295,7 +295,7 @@ int Gold_Drop(Vector4 *position, Vector4 *rotation, int map, int amount, int obj
         actor->body->position.y = actor->unk14;
     }
     Gold_LinkInUse(actor);
-    if (map == D_00446770) {
+    if (map == current_map_slot) {
         other_map = FALSE;
     }
     if (other_map) {
@@ -375,7 +375,7 @@ MapActor *Gold_FindOldest(int slot) {
 
 /* Marks a map actor as in use and pushes it onto the front of the in-use list. */
 void Gold_LinkInUse(MapActor *actor) {
-    MapActor *head = D_004469E0;
+    MapActor *head = map_actors_in_use;
 
     actor->flags |= 1;
     actor->prev = NULL;
@@ -383,7 +383,7 @@ void Gold_LinkInUse(MapActor *actor) {
     if (head != NULL) {
         head->prev = actor;
     }
-    D_004469E0 = actor;
+    map_actors_in_use = actor;
 }
 
 /* Removes a map actor from the in-use list and clears its in-use flag; returns the next actor in the list. */
@@ -398,8 +398,8 @@ MapActor *Gold_UnlinkFromList(MapActor *actor) {
     if (actor->next != NULL) {
         actor->next->prev = actor->prev;
     }
-    if (D_004469E0 == actor) {
-        D_004469E0 = actor->next;
+    if (map_actors_in_use == actor) {
+        map_actors_in_use = actor->next;
     }
     return next;
 }

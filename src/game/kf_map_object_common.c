@@ -10,7 +10,7 @@ void ModelMatrix_Build(ModelInstance *, Vector4 *, Vector4 *, f32 *);
 void ModelMatrix_BuildPartLocal(ModelInstance *, ModelPart *, ModelPart *);
 void Model_MultiplyChildMatrices(ModelPart *);
 void sceVu0CopyMatrix(void *, void *);
-extern int D_00446770;
+extern int current_map_slot;
 extern int sound_load_queue[0x28 / 4];
 
 /* Offset hook of every kind: moves the model and the object's source position by offset. */
@@ -42,10 +42,10 @@ void MapObject_UpdateScenery(MapObject *object) {
         source = object->source;
         if ((u32)((u16)source->kind_param_0 - 0x40) < 0x40) {
             if (object->work[0] != 0) {
-                if ((MAP_OBJECT_BYTES(object)->unk00 & 1) != D_00446770) {
+                if ((MAP_OBJECT_BYTES(object)->unk00 & 1) != current_map_slot) {
                     object->work[0] = 0;
                 }
-            } else if ((MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770 && sound_load_queue[4] == 0 && sound_load_queue[5] == 0) {
+            } else if ((MAP_OBJECT_BYTES(object)->unk00 & 1) == current_map_slot && sound_load_queue[4] == 0 && sound_load_queue[5] == 0) {
                 Sound_StartTaggedAt(source->kind_param_0, source->kind_param_2, source->kind_param_1, source->kind_param_3, (Vector4Arg *)&object->model->position);
                 object->work[0] = 1;
             }
@@ -107,7 +107,7 @@ void MapObject_StopAmbientSound(MapTrigger *trigger) {
     if (*trigger->unk04 == 0) {
         source = MAP_TRIGGER_SOURCE(trigger);
         if (((u32)(source->unk44 - 0x40) < 0x40) && (trigger->shot.unk00[0] != 0)) {
-            if ((trigger->unk10 & 1) != D_00446770) {
+            if ((trigger->unk10 & 1) != current_map_slot) {
                 trigger->shot.unk00[0] = 0;
                 return;
             }
@@ -149,9 +149,9 @@ int MapObject_RefuseItem(void) {
 }
 
 /* Does nothing: the signal hook of the kinds that take no signal. */
-void func_0011F228(void) {
+void MapObject_IgnoreSignal(void) {
 }
 
 /* Does nothing: the set-up hook of the kinds that need none. */
-void func_0011F230(void) {
+void MapObject_SkipSetUp(void) {
 }

@@ -25,7 +25,7 @@ void MapSetup_CentralTowerLevel3(int);
 void MapSetup_CraftsmansRoom(int);
 void MapSetup_CentralTowerLevel2(int);
 void MapSetup_PlaceItemLowered(int);
-void func_00119E10(int);
+void MapSetup_OceanShoreFrame(int);
 int MapItem_PlaceFixedById(int, int);
 void *Map_GetRecordById(int, int);
 void Map_OffsetRecord(MapRecordBounds *, f32 *);
@@ -33,14 +33,14 @@ void *MapItem_GetFixedById(int);
 extern MapSlot map_slots[];
 extern u8 map_script_flags[];
 extern u8 entity_group_state[];
-extern u8 D_0034B69C[];
-extern u8 D_0034B696[];
-extern u8 D_00349D55[];
+extern u8 forge_door_open[];
+extern u8 forge_stage[];
+extern u8 ocean_shore_icon_of_fire_placed[];
 extern f32 map_record_height[];
-extern u8 D_00349F56[];
-extern u8 D_0034A017[];
+extern u8 guardians_room_water_purified[];
+extern u8 dark_sanctuary_fog_lifted[];
 extern u8 D_0034A0D5[];
-extern u8 D_0034B098[];
+extern u8 craftsmans_room_door_unlocked[];
 
 void func_0011A428(int);
 
@@ -113,7 +113,7 @@ void MapSetup_UpdateOceanShore(void) {
     for (map = 0; map < 2; map++) {
         slot = &map_slots[map];
         if (slot->loaded != 0 && slot->tag == 0x1B) {
-            func_00119E10(map);
+            MapSetup_OceanShoreFrame(map);
         }
     }
 }
@@ -171,7 +171,7 @@ void MapSetup_Armory(int map) {
 void MapSetup_Forge017(int map) {
     MapObject *object;
 
-    if (D_0034B69C[0] != 0) {
+    if (forge_door_open[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
             object->state_flags |= 0x20000;
@@ -183,7 +183,7 @@ void MapSetup_Forge017(int map) {
 void MapSetup_Forge018(int map) {
     MapObject *object;
 
-    if (D_0034B69C[0] != 0) {
+    if (forge_door_open[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
             object->state_flags |= 0x20000;
@@ -195,7 +195,7 @@ void MapSetup_Forge018(int map) {
 void MapSetup_Forge019(int map) {
     MapObject *object;
 
-    if (D_0034B69C[0] != 0) {
+    if (forge_door_open[0] != 0) {
         object = MapObject_GetById(map, 0x65);
         if (object != NULL) {
             object->state_flags |= 0x20000;
@@ -222,7 +222,7 @@ void MapSetup_EarthFolksVillage(int map) {
     MapSlotUnk0CValues *block;
     MapSlotUnk10 *light;
 
-    switch (D_0034B696[0]) {
+    switch (forge_stage[0]) {
     case 0:
         target = Map_GetRecordById(map, 0x33);
         show_found_record(target);
@@ -277,7 +277,7 @@ void MapSetup_CavernOfLava(int map) {
     MapSlotUnk0CValues *fog;
     MapSlotUnk10Lights *lights;
 
-    if (D_0034B696[0] == 0) {
+    if (forge_stage[0] == 0) {
         ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk00 = ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk04 = 0.0f;
         ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk08 = -28.333328f;
         ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk0C = 113333.336f;
@@ -336,7 +336,7 @@ void MapSetup_FireLordsDomain(int map) {
     f32 position[4];
     f32 rotation[4];
 
-    if (D_0034B696[0] != 2) {
+    if (forge_stage[0] != 2) {
         hide_record(map, 0x42);
         hide_record(map, 0x43);
         hide_record(map, 0x44);
@@ -369,12 +369,13 @@ void MapSetup_FireLordsDomain(int map) {
     }
 }
 
-/* Set-up of the Ocean Shore (map 027): once its story flag is 1, new fog in blocks 0, 1 and 4. */
+/* Set-up of the Ocean Shore (map 027): once the Icon of Fire is on its altar (ocean_shore_icon_of_fire_placed
+   1), the fog the map script fades to when it is placed, in blocks 0, 1 and 4. */
 void MapSetup_OceanShore(int map) {
     MapSlot *slot = &map_slots[map];
     MapSlotUnk0CValues *fog;
 
-    if (D_00349D55[0] == 1) {
+    if (ocean_shore_icon_of_fire_placed[0] == 1) {
         fog = (MapSlotUnk0CValues *)slot->fog_blocks;
         fog[0].unk00 = fog[0].unk04 = 0.0f;
         fog[0].unk08 = -9.705887f;
@@ -392,7 +393,7 @@ void MapSetup_OceanShore(int map) {
 }
 
 /* Every-frame function of the Ocean Shore: empty. */
-void func_00119E10(int map) {
+void MapSetup_OceanShoreFrame(int map) {
 }
 
 /* Set-up of the Underground Canal (map 029): puts map record 5 at the height the story state keeps for it,
@@ -416,10 +417,10 @@ void MapSetup_UndergroundCanal(int map) {
     }
 }
 
-/* Set-up of the Guardian's Room (map 035): once the story flag is set, swaps map records 8-12 for
-   0x29-0x2D. */
+/* Set-up of the Guardian's Room (map 035): once guardians_room_water_purified is set, swaps map records 8-12
+   for 0x29-0x2D (the map script makes props 8-12 non-solid and 41-45 solid at the same time). */
 void MapSetup_GuardiansRoom(int map) {
-    if (D_00349F56[0] != 0) {
+    if (guardians_room_water_purified[0] != 0) {
         hide_record(map, 8);
         hide_record(map, 9);
         hide_record(map, 0xA);
@@ -433,11 +434,12 @@ void MapSetup_GuardiansRoom(int map) {
     }
 }
 
-/* Set-up of the Dark Sanctuary (map 038): once its story flag is 1, new fog in blocks 1 and 2. */
+/* Set-up of the Dark Sanctuary (map 038): once dark_sanctuary_fog_lifted is 1, the fog the map script draws
+   back to, in blocks 1 and 2. */
 void MapSetup_DarkSanctuary(int map) {
     MapSlot *slot = &map_slots[map];
 
-    if (D_0034A017[0] == 1) {
+    if (dark_sanctuary_fog_lifted[0] == 1) {
         MapSlotUnk0CValues *fog = (MapSlotUnk0CValues *)slot->fog_blocks;
 
         fog[1].unk00 = fog[1].unk04 = 0.0f;
@@ -526,12 +528,13 @@ void MapSetup_CentralTowerLevel3(int map_slot) {
     }
 }
 
-/* Set-up of the Craftsman's Room (map 104): until flag D_0034B098[0] is set, takes map objects 0x77 and 0x76 out of
-   use, giving 0x77 (when it is a light, kind 9) the colour 0xFF, 0x80, 0x18 in its source (unk4A 0). */
+/* Set-up of the Craftsman's Room (map 104): until craftsmans_room_door_unlocked is set, takes map objects 0x77
+   and 0x76 out of use, giving 0x77 (when it is a light, kind 9) the colour 0xFF, 0x80, 0x18 in its source (unk4A
+   0); the map script turns 0x77 on when it sets the flag. */
 void MapSetup_CraftsmansRoom(int map) {
     MapObject *object;
 
-    if (D_0034B098[0] == 0) {
+    if (craftsmans_room_door_unlocked[0] == 0) {
         object = MapObject_GetById(map, 0x77);
         if (object != NULL) {
             MapObject_Deactivate(object);

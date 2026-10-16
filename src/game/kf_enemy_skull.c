@@ -15,7 +15,7 @@ int rand(void);
 void EntityAi_OnHit(char *);
 void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -38,7 +38,7 @@ void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
 void EntityEvent_OnDeath(Entity *);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -117,7 +117,7 @@ void Skull_Init(Entity *entity) {
 static void Skull_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags & 0x40) {
@@ -211,7 +211,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
@@ -457,7 +457,7 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[0] = unkE0->unk44;
     ENTITY_SCRATCH_VECTOR[1] = unkE0->unk48;
     ENTITY_SCRATCH_VECTOR[2] = unkE0->unk4C;
-    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->rotation[2]);
+    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
@@ -524,7 +524,7 @@ static void Skull_Animate(Entity *entity) {
         } else {
             unkE0->part_angle_z = 0.0f;
         }
-        if (D_00446ED4 % 10U == 0) {
+        if (frame_counter % 10U == 0) {
             shot = Shot_Alloc();
             shot->unk00 = 1;
             shot->unk20 = 0;
@@ -565,7 +565,7 @@ static void Skull_RangedAttack0(Entity *entity) {
             unkE0->turn_rate = 0.0f;
         }
         if (entity->model->level_tables->unk82 >= entity->params->unk43A && entity->model->level_tables->unk82 <= entity->params->unk43C &&
-            (D_00446ED4 & 1)) {
+            (frame_counter & 1)) {
             EntityAi_LaunchShots(entity, unk3D8, entity->params->unk43A, entity->params->unk43C);
         }
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {

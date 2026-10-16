@@ -20,7 +20,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 extern s32 entity_type_handlers[][2];
 int Motion_Start(void *, int, int, u32, int);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -152,7 +152,7 @@ static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity) {
 /* The think handler (the set-up function's default, for any EntitySpawnInfo.variant but 1 to 4): as
    EntityAi_Think, with ExpeditionSoldier_ThinkCombat for state 2. */
 static void ExpeditionSoldier_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -203,7 +203,7 @@ static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -392,7 +392,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsPosX(Entity *entity, s32 unknown
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapObject *map_object;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -502,7 +502,7 @@ static void ExpeditionSoldier_ThinkUseMapObjectsNegX(Entity *entity, s32 unknown
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapObject *map_object;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {

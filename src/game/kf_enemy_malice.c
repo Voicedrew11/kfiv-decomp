@@ -14,7 +14,7 @@ void Vector_Copy(void *, void *);
 // match: the definition takes an Actor, a struct local to EntityAi_Animate.c
 void EntityAi_Animate(void);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 extern f32 D_00446814[];
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
@@ -42,7 +42,7 @@ void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -125,7 +125,7 @@ static void Malice_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 height;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (unkE0->action_flags != 0 || unkE0->pause_timer == 1) {
@@ -238,7 +238,7 @@ static void Malice_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -418,7 +418,7 @@ static void Malice_ApplyMoveCommand(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[0] = unkE0->move_speed;
     ENTITY_SCRATCH_VECTOR[1] = unkE0->part_angle_x;
     ENTITY_SCRATCH_VECTOR[2] = unkE0->part_angle_y;
-    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->rotation[2]);
+    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
@@ -685,7 +685,7 @@ static void Malice_RangedAttack0(Entity *entity) {
             Vector_Copy(direction, entity->model->rotation);
             direction[0] = atanf((entity->model->position[1] - player_state.position[1]) / entity->distance_to_player);
             direction[1] = EntityMath_WrapAngle(direction[1] - 3.1415927f);
-            if (D_00446ED4 & 1) {
+            if (frame_counter & 1) {
                 EntityShot_Launch(entity, unk3D8, 0x1C, 0x3C, direction);
             }
         }

@@ -22,9 +22,9 @@ int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 extern PlayerData player_state;
-extern u8 D_0034A018[];
+extern u8 dark_succubus_fight_started[];
 // match: the size is unknown; a complete small type would be read through $gp
 extern f32 D_0044681C[];
 int rand(void);
@@ -50,7 +50,7 @@ s32 EntityAi_IsPushedFromFront(Entity *, f32);
 int EntityAi_TurnCommand(Entity *);
 int EntityAi_PickAttack(char *);
 int Motion_Start(void *, int, int, u32, int);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -192,8 +192,8 @@ static void DarkSuccubus_Animate(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with three functions for state 2, picked by work byte unk7C
    (DarkSuccubus_CountLiveSpawns sets it): DarkSuccubus_ThinkCombat at 0, DarkSuccubus_ThinkCombatCircleNear at 1,
-   DarkSuccubus_ThinkCombatKeepAwayWhenFaced above. While D_0034A018[0] is 0 it does nothing but set model flag 0x800, flag bits
-   18 and 21 and Entity.model_alpha to 0x80. With the player's x at 6600 or more it goes back to its spawn
+   DarkSuccubus_ThinkCombatKeepAwayWhenFaced above. Until the map script sets dark_succubus_fight_started it
+   does nothing but set model flag 0x800, flag bits 18 and 21 and Entity.model_alpha to 0x80. With the player's x at 6600 or more it goes back to its spawn
    point instead of thinking. It adds command bit 0x10 or 0x20 by what EntityCollision_DistanceToPropFloor reads at the
    entity's position (work byte unk7A). While work word unk68 counts down, model flag 0x800 and flag
    bit 21 are set and Entity.model_alpha is 0x80; work word unk6A is the pause after it. With unk7C at 0
@@ -204,10 +204,10 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
     EntityUnkE0Kind15F8C0 *timers = (EntityUnkE0Kind15F8C0 *)unkE0;
     f32 height;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (D_0034A018[0] == 0) {
+    if (dark_succubus_fight_started[0] == 0) {
         entity->model->draw_flags |= 0x800;
         ((EntityFlagWord *)&entity->spawn_info->spawn_flags)->bytes[3] = 0x1E;
         entity->model_alpha = 0x80;
@@ -344,7 +344,7 @@ static void DarkSuccubus_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         if (entity->combat_choice == 1) {
@@ -450,7 +450,7 @@ static void DarkSuccubus_ThinkCombatCircleNear(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
@@ -579,7 +579,7 @@ static void DarkSuccubus_ThinkCombatKeepAwayWhenFaced(Entity *entity, s32 unknow
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, mode);
         switch (entity->combat_choice) {
@@ -796,7 +796,7 @@ static void DarkSuccubus_ApplyMoveCommand(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[0] = unkE0->move_speed;
     ENTITY_SCRATCH_VECTOR[1] = unkE0->part_angle_x;
     ENTITY_SCRATCH_VECTOR[2] = unkE0->part_angle_y;
-    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->rotation[2]);
+    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
@@ -1114,7 +1114,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[1] = unkE0->pitch_speed;
     ENTITY_SCRATCH_VECTOR[2] = unkE0->heading_speed + unkE0->heading_speed;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
-    sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, D_00431AF0, unkE0->part_angle_z);
+    sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, identity_matrix, unkE0->part_angle_z);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
     // match: never taken, but until the compiler works that out the branch separates the
     // scratchpad stores above from the loads below, so their addresses are not kept in registers

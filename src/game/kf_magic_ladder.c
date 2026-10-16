@@ -11,20 +11,20 @@ float sinf(float);
 extern PlayerState player_state;
 extern PlayerState player_previous;
 extern FxTableEntry fx_table[];
-extern Vector4 D_00431C80;
-extern s32 D_00446960;
-extern PlayerShot *D_00446964;
-extern u32 D_00446ED4;
+extern Vector4 origin_point;
+extern s32 timed_boost_order;
+extern PlayerShot *channeled_shot;
+extern u32 frame_counter;
 /* 0x4145C8 the ladder's state handlers, one per LadderState (Ladder_DispatchPad picks one) */
 void (*ladder_state_handlers[6])(u16, u16) = {
     (void (*)(u16, u16))Ladder_WalkToFoot, Ladder_WaitOnRung, Ladder_ClimbRungUp, Ladder_ClimbRungDown,
 };
-extern u16 D_0044692C;
-extern u16 D_0044692E;
-extern u16 D_00446930;
-extern u16 D_00446932;
-extern u16 D_00446934;
-extern u16 D_00446936;
+extern u16 forward_button;
+extern u16 back_button;
+extern u16 turn_right_button;
+extern u16 turn_left_button;
+extern u16 step_right_button;
+extern u16 step_left_button;
 
 void Vector_Copy(void *, void *);
 void Vector_Add(void *, void *, void *);
@@ -161,52 +161,52 @@ int Player_CastMagic(int magic_id) {
             if (player_state.physical_strength_bonus[0] <= 0 && player_state.physical_strength_bonus[1] <= 0 && player_state.physical_strength_bonus[2] <= 0
                 && player_state.magic_strength_bonus[0] <= 0 && player_state.magic_strength_bonus[1] <= 0 && player_state.magic_strength_bonus[2] <= 0
                 && player_state.magic_strength_bonus[3] <= 0 && player_state.magic_strength_bonus[4] <= 0 && player_state.magic_strength_bonus[5] <= 0) {
-                D_00446960 = 0;
+                timed_boost_order = 0;
             }
             if (stats->unk18[0] != 0) {
                 player_state.physical_strength_bonus[0] = stats->unk18[0];
                 player_state.physical_strength_bonus_timer[0] = stats->duration;
-                player_state.physical_bonus_stamp[0] = ++D_00446960;
+                player_state.physical_bonus_stamp[0] = ++timed_boost_order;
             }
             if (stats->unk18[1] != 0) {
                 player_state.physical_strength_bonus[1] = stats->unk18[1];
                 player_state.physical_strength_bonus_timer[1] = stats->duration;
-                player_state.physical_bonus_stamp[1] = ++D_00446960;
+                player_state.physical_bonus_stamp[1] = ++timed_boost_order;
             }
             if (stats->unk18[2] != 0) {
                 player_state.physical_strength_bonus[2] = stats->unk18[2];
                 player_state.physical_strength_bonus_timer[2] = stats->duration;
-                player_state.physical_bonus_stamp[2] = ++D_00446960;
+                player_state.physical_bonus_stamp[2] = ++timed_boost_order;
             }
             if (stats->unk18[3] != 0) {
                 player_state.magic_strength_bonus[0] = stats->unk18[3];
                 player_state.magic_strength_bonus_timer[0] = stats->duration;
-                player_state.magic_bonus_stamp[0] = ++D_00446960;
+                player_state.magic_bonus_stamp[0] = ++timed_boost_order;
             }
             if (stats->unk18[4] != 0) {
                 player_state.magic_strength_bonus[1] = stats->unk18[4];
                 player_state.magic_strength_bonus_timer[1] = stats->duration;
-                player_state.magic_bonus_stamp[1] = ++D_00446960;
+                player_state.magic_bonus_stamp[1] = ++timed_boost_order;
             }
             if (stats->unk18[5] != 0) {
                 player_state.magic_strength_bonus[2] = stats->unk18[5];
                 player_state.magic_strength_bonus_timer[2] = stats->duration;
-                player_state.magic_bonus_stamp[2] = ++D_00446960;
+                player_state.magic_bonus_stamp[2] = ++timed_boost_order;
             }
             if (stats->unk18[6] != 0) {
                 player_state.magic_strength_bonus[3] = stats->unk18[6];
                 player_state.magic_strength_bonus_timer[3] = stats->duration;
-                player_state.magic_bonus_stamp[3] = ++D_00446960;
+                player_state.magic_bonus_stamp[3] = ++timed_boost_order;
             }
             if (stats->unk18[7] != 0) {
                 player_state.magic_strength_bonus[4] = stats->unk18[7];
                 player_state.magic_strength_bonus_timer[4] = stats->duration;
-                player_state.magic_bonus_stamp[4] = ++D_00446960;
+                player_state.magic_bonus_stamp[4] = ++timed_boost_order;
             }
             if (stats->unk18[8] != 0) {
                 player_state.magic_strength_bonus[5] = stats->unk18[8];
                 player_state.magic_strength_bonus_timer[5] = stats->duration;
-                player_state.magic_bonus_stamp[5] = ++D_00446960;
+                player_state.magic_bonus_stamp[5] = ++timed_boost_order;
             }
             if (stats->unk0C[0] != 0) {
                 player_state.ailment_attack_bonus[0] = stats->unk0C[0];
@@ -326,7 +326,7 @@ int Player_CastMagic(int magic_id) {
             break;
         }
         Effect_FreeByParam(magic_id);
-        Effect_Spawn(entry->effect_id, &D_00431C80, &D_00431C80, (Entity *)&player_state, magic_id, NULL);
+        Effect_Spawn(entry->effect_id, &origin_point, &origin_point, (Entity *)&player_state, magic_id, NULL);
         switch (magic_id) {
         case 0x10:
         case 0x11:
@@ -388,17 +388,17 @@ void Player_HoldMagic(int magic_id) {
             if (player_state.mp_now <= 0) {
                 goto stop;
             }
-            if (D_00446ED4 % 3 == 0) {
+            if (frame_counter % 3 == 0) {
                 player_state.mp_now--;
             }
         }
         if (channeled_shot_slot != NULL) {
-            D_00446964 = channeled_shot_slot;
+            channeled_shot = channeled_shot_slot;
             channeled_shot_slot->is_magic_shot = 1;
-            D_00446964->player_power = player_state.power;
-            D_00446964->player_magic = player_state.magic;
-            D_00446964->magic_id = magic_id;
-            D_00446964->unk08 = player_state.unk7E;
+            channeled_shot->player_power = player_state.power;
+            channeled_shot->player_magic = player_state.magic;
+            channeled_shot->magic_id = magic_id;
+            channeled_shot->unk08 = player_state.unk7E;
             Vector_Copy(&angles, &player_state.rotation);
             angles.x += player_state.view_tilt_pitch;
             if (angles.x > 1.012291f) {
@@ -407,7 +407,7 @@ void Player_HoldMagic(int magic_id) {
                 angles.x = -1.012291f;
             }
             // match: the clamped angles are not what is passed
-            Attack_LaunchMagicEffect(magic_id, D_00446964, &player_state, &player_state.rotation, &player_state);
+            Attack_LaunchMagicEffect(magic_id, channeled_shot, &player_state, &player_state.rotation, &player_state);
             player_state.cast_launched_shot = 1;
         }
     }
@@ -503,13 +503,13 @@ void Ladder_WaitOnRung(u16 buttons) {
     if (!(ladder_object->unk10 & 0x10000)) {
         player_state.status_bits &= ~(1L << 36);
     }
-    if (buttons & (D_00446934 | D_00446936)) {
+    if (buttons & (step_right_button | step_left_button)) {
         player_state.status_bits &= ~(1L << 36);
     }
-    if ((buttons & (D_00446930 | D_00446932)) && !(buttons & (D_0044692C | D_0044692E))) {
+    if ((buttons & (turn_right_button | turn_left_button)) && !(buttons & (forward_button | back_button))) {
         player_state.status_bits &= ~(1L << 36);
     }
-    if (D_0044692C & buttons) {
+    if (forward_button & buttons) {
         ladder_current_rung++;
         if (ladder_current_rung <= ladder_rung_count) {
             ladder_rung_anim_frame = 0;
@@ -517,7 +517,7 @@ void Ladder_WaitOnRung(u16 buttons) {
             return;
         }
     } else {
-        if (!(D_0044692E & buttons)) {
+        if (!(back_button & buttons)) {
             return;
         }
         ladder_current_rung--;
@@ -539,10 +539,10 @@ void Ladder_ClimbRungUp(u16 buttons) {
     if (!(ladder_object->unk10 & 0x10000)) {
         player_state.status_bits &= ~(1L << 36);
     }
-    if (buttons & (D_00446934 | D_00446936)) {
+    if (buttons & (step_right_button | step_left_button)) {
         player_state.status_bits &= ~(1L << 36);
     }
-    if ((buttons & (D_00446930 | D_00446932)) && !(buttons & (D_0044692C | D_0044692E))) {
+    if ((buttons & (turn_right_button | turn_left_button)) && !(buttons & (forward_button | back_button))) {
         player_state.status_bits &= ~(1L << 36);
     }
     ladder_rung_anim_frame++;
@@ -569,10 +569,10 @@ void Ladder_ClimbRungDown(u16 buttons) {
     if (!(ladder_object->unk10 & 0x10000)) {
         player_state.status_bits &= ~(1L << 36);
     }
-    if (buttons & (D_00446934 | D_00446936)) {
+    if (buttons & (step_right_button | step_left_button)) {
         player_state.status_bits &= ~(1L << 36);
     }
-    if ((buttons & (D_00446930 | D_00446932)) && !(buttons & (D_0044692C | D_0044692E))) {
+    if ((buttons & (turn_right_button | turn_left_button)) && !(buttons & (forward_button | back_button))) {
         player_state.status_bits &= ~(1L << 36);
     }
     ladder_rung_anim_frame--;

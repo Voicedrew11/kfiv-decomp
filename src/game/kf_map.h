@@ -150,7 +150,7 @@ typedef struct MapDrawRecord {
     f32 box_min[4];                 /* 0x40 lowest x, y, z of the box linked points are tested against (LinkedPoint_FindHitsForMapDraw) */
     f32 box_max[4];                 /* 0x50 highest x, y, z of that box */
     char pad60[0x0C];
-    struct MapDrawRecord *next;     /* 0x6C next in its draw list (D_00446778, D_00446780) */
+    struct MapDrawRecord *next;     /* 0x6C next in its draw list (record_draw_lists, late_record_draw_lists) */
     char pad70[0x0C];
     ModelInstance *model;           /* 0x7C */
 } MapDrawRecord;
@@ -230,7 +230,7 @@ typedef struct {
     u8 unk71;                       /* 0x71 which block of MapDrawState.light_blocks the items lying in the map are drawn with */
 } MapHeader;
 
-/* one 0x60-byte entry of map_slots, indexed by the current map/slot D_00446770 */
+/* one 0x60-byte entry of map_slots, indexed by the current map/slot current_map_slot */
 typedef struct MapSlot {
     u8 loaded;                      /* 0x00 nonzero: the slot holds a loaded map */
     u8 tag;                         /* 0x01 matched against MapFlagBlock.tags */
@@ -337,7 +337,7 @@ typedef struct {
     char pad2C[0x04];
 } MapLoadState;
 
-/* D_004321F0[2]: the memory each map slot is loaded into */
+/* map_slot_memory[2]: the memory each map slot is loaded into */
 typedef struct {
     char pad00[0x14];
     char *file_read_cursor;         /* 0x14 where the next read goes */
@@ -364,7 +364,7 @@ typedef struct {
 typedef struct {
     f32 unk00;                      /* 0x00 a speed, added to the model's y */
     s32 unk04;                      /* 0x04 frames to wait */
-    s32 unk08;                      /* 0x08 1 while D_00414188 is this trigger */
+    s32 unk08;                      /* 0x08 1 while object_under_player is this trigger */
     s32 unk0C;                      /* 0x0C unk08 of the frame before */
 } MapTriggerShotKind121660;
 
@@ -451,7 +451,7 @@ typedef struct {
 
 #define ITEM_COMMON_DEF_BITS(def) ((ItemCommonDefBits *)(def))
 
-/* D_005B6100[map slot][16]: a map actor (0x2C bytes); flags bit 2 is the map slot */
+/* map_actors[map slot][16] in kf_gold.c: a map actor (0x2C bytes); flags bit 2 is the map slot */
 typedef struct MapActor {
     u32 flags;                      /* 0x00 bit 0: in use, bit 1: near enough to pick up, bit 2: the map slot; the high half is MapActorWords.amount */
     s8 step;                        /* 0x04 0: fading in, 1: lying there, 2: fading out */
@@ -462,7 +462,7 @@ typedef struct MapActor {
     ModelInstance *body;            /* 0x10 */
     f32 unk14;                      /* 0x14 */
     struct MapActor *prev;          /* 0x18 */
-    struct MapActor *next;          /* 0x1C the list of the ones in use starts at D_004469E0 */
+    struct MapActor *next;          /* 0x1C the list of the ones in use starts at map_actors_in_use */
     char pad20[0x04];
     u8 unk24;                       /* 0x24 */
     char pad25[0x07];

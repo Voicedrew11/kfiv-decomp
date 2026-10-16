@@ -8,11 +8,11 @@ void *memcpy(void *, const void *, u32);
 int sprintf(char *, const char *, ...);
 
 extern GameStatus game_status;
-extern int D_0038A134[3];
-extern int D_0038CC80[3];
+extern int bgm_load_pending[3];
+extern int suspended_updates[3];
 extern u16 pad_pressed[];
-extern u16 D_00446940;
-extern u32 *D_00446E84;
+extern u16 action_button;
+extern u32 *splash_image_packet;
 
 void File_Lock(void);
 void File_Unlock(void);
@@ -65,10 +65,10 @@ static void (*splash_state_table[8])(void) = { /* 0x42C008 */
 };
 
 /* 0x42C028 the bits per pixel of each pixel format (& 7), read by Splash_BuildImagePacket */
-static int D_0042C028[6] = { 0x20, 0x18, 0x10, 0x08, 0x04, 0x00 };
+static int psm_bits_per_pixel[6] = { 0x20, 0x18, 0x10, 0x08, 0x04, 0x00 };
 
 /* 0x446E84 where Splash_BuildImagePacket builds the image packet: 0x80000 into the file-load buffer */
-u32 *D_00446E84 = (u32 *)((char *)&file_load_buffer + 0x80000);
+u32 *splash_image_packet = (u32 *)((char *)&file_load_buffer + 0x80000);
 
 /* Clears splash state (idle, no image id, file not open). */
 void Splash_Reset(void) {
@@ -154,7 +154,7 @@ void Splash_StateLoadImage(void) {
     char image_file_name[256];
     int image_fd;
 
-    if (D_0038A134[0] != 0) {
+    if (bgm_load_pending[0] != 0) {
         return;
     }
     if (File_IsLocked() != 0) {
@@ -173,7 +173,7 @@ void Splash_StateLoadImage(void) {
         splash_state += 1;
     } else {
         splash_state = 0;
-        D_0038CC80[0] = 0;
+        suspended_updates[0] = 0;
         splash_image_file_open = 0;
     }
 }
@@ -200,7 +200,7 @@ void Splash_StateHold(void) {
             splash_state += 1;
         }
     }
-    if (splash_skippable != 0 && (pad_pressed[0] & D_00446940) != 0) {
+    if (splash_skippable != 0 && (pad_pressed[0] & action_button) != 0) {
         splash_state += 1;
     }
 }
@@ -221,7 +221,7 @@ void Splash_StateFadeOut(void) {
 void Splash_StateClose(void) {
     splash_end_delay -= 1;
     if (splash_end_delay < 0) {
-        D_0038CC80[0] = 0;
+        suspended_updates[0] = 0;
         splash_state = 0;
         if (splash_image_file_open != 0) {
             File_Unlock();
@@ -245,8 +245,8 @@ void Splash_Draw(void) {
         Packet_EndGsRegisters();
 
         packet = cursor = Packet_Alloc(2);
-        *cursor++ = *D_00446E84 | 0x30000000;
-        *cursor++ = (u32)(D_00446E84 + 4);
+        *cursor++ = *splash_image_packet | 0x30000000;
+        *cursor++ = (u32)(splash_image_packet + 4);
         *cursor++ = 0;
         *cursor++ = 0;
         Packet_AppendToChain(packet, cursor);
@@ -301,7 +301,7 @@ static inline char *align16(char *address) {
     return address;
 }
 
-/* Builds, at D_00446E84, the DMA packet that sends the splash image to GS memory at `tbp`, and its palette
+/* Builds, at splash_image_packet, the DMA packet that sends the splash image to GS memory at `tbp`, and its palette
    (when it has one) to `cbp`. */
 static void Splash_BuildImagePacket(int tbp, int cbp) {
     SplashImageBits *image;
@@ -327,7 +327,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     psm = image->tex0.psm;
     width = 1 << image->tex0.tw;
     height = 1 << image->tex0.th;
-    bits = D_0042C028[psm & 7];
+    bits = psm_bits_per_pixel[psm & 7];
     size = width * height * bits / 8;
     qwords = (size + 15) / 16;
     if (bits == 4) {
@@ -354,7 +354,7 @@ static void Splash_BuildImagePacket(int tbp, int cbp) {
     }
 
     /* the image: a DMA tag, then the same layout as SplashLoadPacket, written word by word */
-    cursor = D_00446E84;
+    cursor = splash_image_packet;
     *cursor++ = (total + 1) | 0x10000000;
     *cursor++ = 0;
     *cursor++ = 0;

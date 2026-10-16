@@ -17,7 +17,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -40,7 +40,7 @@ void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_MeleeAttack(Entity *);
 void EntityAi_RangedAttack(Entity *);
-extern u8 D_0038CC57[];
+extern u8 player_can_walk[];
 int Motion_Start(void *, int, int, u32, int);
 s32 EntityAi_TurnToHeading(Entity *, f32 *, f32);
 s32 EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
@@ -100,7 +100,7 @@ void Aqualizard_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with Aqualizard_ThinkCombat for state 2. */
 static void Aqualizard_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -155,7 +155,7 @@ static void Aqualizard_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -215,7 +215,7 @@ done:
 }
 
 /* The melee attack with record 2 (EntityParams.melee_attack_third; busy bit 1): animation 22, one part checked.
-   Once flag bit 41 was set during it, frames 27 to 31 clear D_0038CC57[0] and move the player 30 a
+   Once flag bit 41 was set during it, frames 27 to 31 clear player_can_walk[0] and move the player 30 a
    frame along the line between the two while they are more than the radius plus 150 apart. */
 static void Aqualizard_MeleeAttack2(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -258,7 +258,7 @@ static void Aqualizard_MeleeAttack2(Entity *entity) {
             unkE0->step_index = 1;
         }
         if (entity->model->level_tables->unk82 >= 0x1B && entity->model->level_tables->unk82 <= 0x1F && unkE0->step_index == 1) {
-            D_0038CC57[0] = 0;
+            player_can_walk[0] = 0;
             if (entity->radius + 50.0f + 100.0f < entity->distance_to_player) {
                 player_state[0] -= sinf(EntityMath_WrapAngle(EntityMath_AngleXZ(entity->model->position, (char *)player_state))) * 30.0f;
                 player_state[2] -= cosf(EntityMath_WrapAngle(EntityMath_AngleXZ(entity->model->position, (char *)player_state))) * 30.0f;

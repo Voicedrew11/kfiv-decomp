@@ -9,7 +9,9 @@ void Map_QueuePacket(int *);
 
 static int sent_texture_19C;        /* 0x447048 last model texture sent from unk19C */
 static int sent_texture_1A0;        /* 0x44704C last model texture sent from unk1A0 */
-extern int D_00447050[2];           /* 0x447050 texture per unk192; [1] (0x447054) is shared, so stays extern */
+/* 0x447050 the model texture taken as sent from unk198, by unk192; only [0] is read, and nothing but the reset
+   writes it. A 4-byte object: [1] would be screen_uv_frame_copy (kf_model_screen.c), so it stays extern. */
+extern int D_00447050[2];
 static int texture_slots[4];        /* 0x468190 chunk table last sent for each unk190 slot */
 
 /* Forgets every texture slot. */

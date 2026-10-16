@@ -4,23 +4,23 @@
 
 void *memset(void *, int, u32);
 int FlushCache(int);
-extern GsDataBlock D_0043EB90;
-extern int D_00446F78;
-extern GsDrawEnv D_00432D80;
-extern GsDrawEnv D_00432E70;
+extern GsDataBlock offscreen_square_corners; /* two corners of a 256x256 square around (2048, 2048), 12.4 fixed point */
+extern int context1_buffer_half;
+extern GsDrawEnv game_dbuff_draw0;          /* game_dbuff.draw0 */
+extern GsDrawEnv game_dbuff_draw1;          /* game_dbuff.draw1 */
 
 static void func_0019B4A0(void);
 static void func_0019B4A8(void);
 static void DrawEnv_PutScreen(void);
 static void func_0019B618(void);
 
-/* Puts a 256x256 16-bit draw environment at frame page 0x1C2 with the data block D_0043EB90, waits, and puts
-   the normal one back. Nothing calls it by name. */
+/* Puts a 256x256 16-bit draw environment at frame page 0x1C2, waits, and puts the normal one back. The copy of
+   offscreen_square_corners in front of the packet is not sent. Nothing calls it by name. */
 void DrawEnv_PutOffscreenAndBack(void) {
     GsDrawFrame frame;
     GsDrawPacket *packet;
     memset(&frame, 0, 0x10);
-    frame.block = D_0043EB90;
+    frame.block = offscreen_square_corners;
     packet = &frame.packet;
     frame.packet.tag[0] = 0x8008;
     frame.packet.tag[1] = 0x10000000;
@@ -32,7 +32,7 @@ void DrawEnv_PutOffscreenAndBack(void) {
     FlushCache(0);
     sceGsPutDrawEnv(packet);
     sceGsSyncPath(0, 0);
-    frame.packet.env = *(D_00446F78 != 0 ? &D_00432D80 : &D_00432E70);
+    frame.packet.env = *(context1_buffer_half != 0 ? &game_dbuff_draw0 : &game_dbuff_draw1);
     FlushCache(0);
     sceGsPutDrawEnv(packet);
 }
@@ -50,7 +50,7 @@ void DrawEnv_PutOffscreen(void) {
     GsDrawFrame frame;
     GsDrawPacket *packet;
     memset(&frame, 0, 0x10);
-    frame.block = D_0043EB90;
+    frame.block = offscreen_square_corners;
     packet = &frame.packet;
     frame.packet.tag[0] = 0x8008;
     frame.packet.tag[1] = 0x10000000;
@@ -72,7 +72,7 @@ static void DrawEnv_PutScreen(void) {
     packet.tag[1] = 0x10000000;
     packet.tag[2] = 0xE;
     packet.tag[3] = 0;
-    packet.env = *(D_00446F78 != 0 ? &D_00432D80 : &D_00432E70);
+    packet.env = *(context1_buffer_half != 0 ? &game_dbuff_draw0 : &game_dbuff_draw1);
     FlushCache(0);
     sceGsPutDrawEnv(&packet);
 }

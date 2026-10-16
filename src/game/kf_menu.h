@@ -1,11 +1,11 @@
-/* Menus: the doubly linked item lists the cursor walks (D_005CE880...). */
+/* Menus: the doubly linked item lists the cursor walks (castable_spell_cursor...). */
 #ifndef KF_MENU_H
 #define KF_MENU_H
 
 #include "common.h"
 #include "kf_gs.h"
 
-/* the colour the menus draw with (D_00446C78), eight bytes passed by value to MenuText_SetColor and MenuModel_DrawTinted */
+/* the colour the menus draw with (menu_draw_color), eight bytes passed by value to MenuText_SetColor and MenuModel_DrawTinted */
 typedef struct {
     u8 red;                         /* 0x00 */
     u8 green;                       /* 0x01 */
@@ -35,15 +35,15 @@ typedef struct MenuItem {
     s8 group;                       /* 0x0E which run of LevelDefs it is in (0: 150 on, 1: the first 150, 2 to 9: 220 on), 0 to 12 */
 } MenuItem;
 
-/* a node of the list D_005CE840[0] points into: each one has its own ring of items */
+/* a node of the list equip_list_shown[0] points into: each one has its own ring of items */
 typedef struct MenuCategory {
     MenuItem *item;                 /* 0x00 the item the cursor is on */
     struct MenuCategory *next;      /* 0x04 */
     struct MenuCategory *prev;      /* 0x08 */
 } MenuCategory;
 
-/* one of the menu's item lists, a MenuCategory that knows its group: the twelve at D_005CE760, linked in
-   a ring by Menu_Init, and the eleven at D_005CE6A0 that their items are first taken from */
+/* one of the menu's item lists, a MenuCategory that knows its group: the twelve at use_item_list, linked in
+   a ring by Menu_Init, and the eleven at equipped_shortcut that their items are first taken from */
 typedef struct MenuItemList {
     MenuItem *item;                 /* 0x00 the item the cursor is on */
     struct MenuItemList *next;      /* 0x04 */
@@ -53,12 +53,12 @@ typedef struct MenuItemList {
     char pad0F[0x01];
 } MenuItemList;
 
-/* D_0043F780: per item group, the function that writes the item's model file name */
+/* item_model_name_writers: per item group, the function that writes the item's model file name */
 typedef struct {
     void (*handler[12])(char *buffer, MenuItem *item);
 } MenuNameHandlers;
 
-/* a node of the menu free list D_004472B0 (15 of them at D_005CE900) */
+/* a node of the menu free list free_load_buffers (15 of them at load_buffer_nodes) */
 typedef struct MenuFreeNode {
     struct MenuFreeNode *next;      /* 0x00 */
     int unk04;                      /* 0x04 */
@@ -70,7 +70,7 @@ typedef struct {
     MenuFreeNode *node;             /* 0x0C */
 } MenuFreeRequest;
 
-/* a node of the list *D_005CE840[0] points into (Menu_MoveEquipCursor follows next/prev) */
+/* a node of the list *equip_list_shown[0] points into (Menu_MoveEquipCursor follows next/prev) */
 typedef struct DataNode {
     int unk00;                      /* 0x00 */
     struct DataNode *next;          /* 0x04 */
@@ -108,13 +108,13 @@ typedef struct {
 
 #define MENU_SCREEN_SAVES(state) ((MenuScreenSaves *)(state))
 
-/* what the screen handler in D_00446B20 is handed */
+/* what the screen handler in menu_screen_handler is handed */
 typedef struct {
     s32 unk00;                      /* 0x00 */
     s32 unk04;                      /* 0x04 cleared when a screen is left */
 } MenuScreenContext;
 
-/* D_005CF2F0: state of the menu screen Menu_UpdateCardSlot runs; Menu_OpenCardSlot resets it */
+/* card_screen_state: state of the menu screen Menu_UpdateCardSlot runs; Menu_OpenCardSlot resets it */
 typedef struct {
     s32 card_update_result;         /* 0x00 SaveCard_Update's result: negative marks a card failure */
     s32 card_problem_codes;         /* 0x04 four bits per card slot: 1 usable, 2 format it, 4 another problem */
@@ -153,7 +153,7 @@ typedef struct {
     TradeValue *values[6];          /* 0x00 */
 } TradeValueTables;
 
-/* D_00440230: the pad button bit of each of the twelve choices of the button screen; Menu_UpdateButtonConfig copies it whole */
+/* pad_bit_table: the pad button bit of each of the twelve choices of the button screen; Menu_UpdateButtonConfig copies it whole */
 typedef struct {
     u16 bits[12];                   /* 0x00 */
 } MenuPadBitTable;
@@ -168,7 +168,7 @@ typedef struct {
     s32 first_item[13];             /* 0x00 */
 } TradeGroupBases;
 
-/* D_0043FC08: the seven weekday names (D_00446AE0...); Menu_Run copies the table whole and never reads it */
+/* weekday_names_table: the seven weekday names (sunday_name...); Menu_Run copies the table whole and never reads it */
 typedef struct {
     char *names[7];                 /* 0x00 */
 } MenuWeekdayNames;
@@ -178,18 +178,18 @@ typedef struct {
     s32 *shown_value[7];            /* 0x00 */
 } TradeValueSlots;
 
-/* D_0043FD28: per MenuItem.group, the LevelDef number its records start at, as the equipment screen
+/* equip_group_bases: per MenuItem.group, the LevelDef number its records start at, as the equipment screen
    has it (twelve groups); copied whole to a local */
 typedef struct {
     s32 first_item[12];             /* 0x00 */
 } EquipGroupBases;
 
-/* D_0043FD58: twelve pointers the equipment screen copies whole to a local and never reads */
+/* equip_group_names: twelve pointers the equipment screen copies whole to a local and never reads */
 typedef struct {
     void *unk00[12];                /* 0x00 */
 } EquipUnusedTable;
 
-/* D_0043FDC0, D_0043FDD0: one byte per MenuItem.group (the first holds the glyph that names the group);
+/* equip_group_glyphs, D_0043FDD0: one byte per MenuItem.group (the first holds the glyph that names the group);
    copied whole to a local */
 typedef struct {
     s8 per_group[11];               /* 0x00 */
@@ -211,13 +211,13 @@ typedef struct {
     char pad33[0x2D];
 } MenuGlyphSprite;
 
-/* D_00446D58: how much of a font texture one glyph cell covers across and down (1/25.6 each); the sprite
-   drawers MenuDraw_Word and MenuDraw_Number copy it whole to a local */
+/* how much of a font texture one glyph cell covers across and down (1/25.6 each); MenuDraw_Word and
+   MenuDraw_Number start a local array `cell` with these two floats (the 8 bytes at 0x446D58) */
 typedef struct {
     f32 step[2];
 } MenuGlyphCell;
 
-/* what a D_005CEE60 entry points to: a motion of the weapon model on the equipment screen */
+/* what an equip_weapon_motions entry points to: a motion of the weapon model on the equipment screen */
 typedef struct {
     char pad00[0x0C];
     u32 frame_count;                /* 0x0C */
@@ -231,22 +231,22 @@ typedef union {
     s32 words[16];
 } MenuMatrix;
 
-/* D_0043F7C8: the LevelDef numbers of the twelve key items (Menu_AddKeyItem maps them to 0..11); copied whole to a local */
+/* key_item_numbers: the LevelDef numbers of the twelve key items (Menu_AddKeyItem maps them to 0..11); copied whole to a local */
 typedef struct {
     s32 number[12];                 /* 0x00 */
 } KeyItemNumbers;
 
-/* D_0043FE48, D_0043FE60: the GS texture and CLUT base pointers of the six key item models on screen; copied whole */
+/* key_item_texture_pages, key_item_clut_pages: the GS texture and CLUT base pointers of the six key item models on screen; copied whole */
 typedef struct {
     u32 base[6];                    /* 0x00 */
 } KeyItemTexturePages;
 
-/* D_0043FE80: where the six key item models go; copied whole */
+/* key_item_positions: where the six key item models go; copied whole */
 typedef struct {
     f32 position[6][4] __attribute__((aligned(16))); /* 0x00 */
 } KeyItemPositions;
 
-/* D_0043FEE0: where the six key item names go, as MenuText_SetPen takes it; copied whole */
+/* key_item_name_pens: where the six key item names go, as MenuText_SetPen takes it; copied whole */
 typedef struct {
     GsPackedWord word[6];           /* 0x00 */
 } KeyItemNameWords;

@@ -65,22 +65,22 @@ void MapItem_RollFixedItems(int);
 void Script_Init(int);
 int Script_Start(int, int);
 void Vector_Copy(void *, void *);
-extern int D_00446770;
+extern int current_map_slot;
 extern MapSlot map_slots[2];
 extern ScreenFade screen_fade;
 extern PlayerState player_state;
 extern GameStatus game_status;
 extern MapLoadState map_load_state;
 extern MapProp *map_slot_props[2][0xFF];
-extern MapDrawRecord *D_00446778[2];
-extern MapDrawRecord *D_00446780[2];
-extern AreaNode *D_00446788;
-extern AreaNode *D_0044678C;
-extern MapSlotMemory D_004321F0[2];
-extern char D_0043E720[];
-extern u32 D_00446F1C;
-extern char *D_00446F50;
-extern char *D_00446F54;
+extern MapDrawRecord *record_draw_lists[2];
+extern MapDrawRecord *late_record_draw_lists[2];
+extern AreaNode *record_boxes;
+extern AreaNode *backdrop_record_boxes;
+extern MapSlotMemory map_slot_memory[2];
+extern char map_change_file_name_format[];
+extern u32 map_work_area_size;
+extern char *map_file_area;
+extern char *map_work_area;
 extern SoundLoadQueue sound_load_queue;
 
 /* Starts the change to map new_value, the player to stand at the map's start, unless a change is running
@@ -88,7 +88,7 @@ extern SoundLoadQueue sound_load_queue;
 void MapChange_StartToMap(int new_value) {
     MapSlot *slot;
 
-    slot = &map_slots[D_00446770];
+    slot = &map_slots[current_map_slot];
     if (screen_fade.step == FALSE && slot->tag != new_value) {
         screen_fade.step = TRUE;
         screen_fade.timer = 0x1E;
@@ -100,7 +100,7 @@ void MapChange_StartToMap(int new_value) {
 
 /* Moves the player to position in the current map, or starts the change to another map. */
 void MapChange_StartToPosition(int map, Vector4 *position) {
-    MapSlot *slot = &map_slots[D_00446770];
+    MapSlot *slot = &map_slots[current_map_slot];
 
     if (screen_fade.step == 0) {
         if (slot->tag == map) {
@@ -255,7 +255,7 @@ void MapChange_FadeMapToBlack(void) {
 }
 
 /* Map change step 0: empty, no change is running. */
-void func_00118D78(void) {
+void MapChange_Idle(void) {
 }
 
 /* Map change step: lets the background load and everything else in flight settle. */
@@ -292,13 +292,13 @@ void MapChange_UnloadAll(void) {
     Entity_ResetAllLists();
     Player_EndSwingHits();
     Effect_FreePlayerMagic();
-    D_00446770 = 0;
+    current_map_slot = 0;
     memset(map_slots, 0, sizeof(map_slots));
-    memset(D_00446778, 0, sizeof(D_00446778));
-    memset(D_00446780, 0, sizeof(D_00446780));
+    memset(record_draw_lists, 0, sizeof(record_draw_lists));
+    memset(late_record_draw_lists, 0, sizeof(late_record_draw_lists));
     memset(map_slot_props, 0, sizeof(map_slot_props));
-    D_00446788 = NULL;
-    D_0044678C = NULL;
+    record_boxes = NULL;
+    backdrop_record_boxes = NULL;
     screen_fade.step++;
 }
 
@@ -306,10 +306,10 @@ void MapChange_UnloadAll(void) {
 void MapChange_OpenFile(void) {
     char name[0x100];
     MapSlot *slot = &map_slots[0];
-    MapSlotMemory *memory = &D_004321F0[0];
+    MapSlotMemory *memory = &map_slot_memory[0];
     int size;
 
-    sprintf(name, D_0043E720, screen_fade.map);
+    sprintf(name, map_change_file_name_format, screen_fade.map);
     screen_fade.file_handle = File_Open(name, 1, 1);
     if (screen_fade.file_handle < 0) {
         for (;;) {
@@ -317,11 +317,11 @@ void MapChange_OpenFile(void) {
     }
     File_Lock();
     size = (File_GetSize(screen_fade.file_handle) + 0x3FFFF) / 0x40000 * 0x40000;
-    memory->file_read_cursor = memory->file_base = D_00446F50;
-    memory->work_cursor = memory->work_base = D_00446F54;
+    memory->file_read_cursor = memory->file_base = map_file_area;
+    memory->work_cursor = memory->work_base = map_work_area;
     slot->rounded_file_size = size;
     memset(memory->file_base, 0, slot->rounded_file_size);
-    memset(memory->work_base, 0, D_00446F1C / 2);
+    memset(memory->work_base, 0, map_work_area_size / 2);
     File_Read(screen_fade.file_handle, memory->file_read_cursor, -1);
     screen_fade.step++;
 }

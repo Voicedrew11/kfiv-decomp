@@ -25,15 +25,15 @@ int Script_IsRunning(int);
 int MapItem_StartPickup(ItemNode *);
 extern GameStatus game_status;
 extern PlayerState player_state;
-extern EventRunner D_00420D00;
-extern CameraState D_004325A0;
-extern f32 D_00431AF0[16];
+extern EventRunner view_ray_status;
+extern CameraState camera_state;
+extern f32 identity_matrix[16];
 extern MapSlot map_slots[2];
 extern MapObject map_slot_objects[][0x200];
-extern s32 D_004467B8[2];
-extern int D_00446770;
-extern ItemNode *D_004469D4;
-extern ItemNode *D_004469D8;
+extern s32 map_object_counts[2];
+extern int current_map_slot;
+extern ItemNode *lying_items;
+extern ItemNode *pickup_item;
 extern f32 D_00446A08[];
 extern float D_00446A0C[];
 
@@ -44,12 +44,12 @@ void Interact_UpdateViewRay(void) {
     f32 pitch;
     f32 heading;
 
-    Vector_Copy(D_00420D00.prev_view_origin, D_00420D00.view_origin);
-    Vector_Copy(D_00420D00.prev_view_direction, D_00420D00.view_direction);
-    D_00420D00.prev_view_distance = D_00420D00.view_distance;
+    Vector_Copy(view_ray_status.prev_view_origin, view_ray_status.view_origin);
+    Vector_Copy(view_ray_status.prev_view_direction, view_ray_status.view_direction);
+    view_ray_status.prev_view_distance = view_ray_status.view_distance;
     if (game_status.camera_mode == 0) {
-        Vector_Copy(D_00420D00.view_origin, &player_state);
-        D_00420D00.view_origin[1] = D_00420D00.view_origin[1] - 220.0f + player_state.landing_dip_offset + D_004325A0.height_offset;
+        Vector_Copy(view_ray_status.view_origin, &player_state);
+        view_ray_status.view_origin[1] = view_ray_status.view_origin[1] - 220.0f + player_state.landing_dip_offset + camera_state.height_offset;
         pitch = player_state.rotation.x - player_state.view_tilt_pitch;
         if (pitch > 1.012291f) {
             pitch = 1.012291f;
@@ -58,18 +58,18 @@ void Interact_UpdateViewRay(void) {
         }
         heading = player_state.rotation.y;
     } else {
-        Vector_Copy(D_00420D00.view_origin, &D_004325A0);
-        pitch = D_004325A0.pitch;
-        heading = D_004325A0.yaw;
+        Vector_Copy(view_ray_status.view_origin, &camera_state);
+        pitch = camera_state.pitch;
+        heading = camera_state.yaw;
     }
-    D_00420D00.view_direction[2] = 1.0f;
-    D_00420D00.view_direction[0] = 0.0f;
-    D_00420D00.view_direction[1] = 0.0f;
-    D_00420D00.view_direction[3] = 0.0f;
-    sceVu0RotMatrixX(rotation, D_00431AF0, pitch);
-    Vector_ApplyMatrix(D_00420D00.view_direction, rotation, D_00420D00.view_direction);
-    sceVu0RotMatrixY(rotation, D_00431AF0, heading);
-    Vector_ApplyMatrix(D_00420D00.view_direction, rotation, D_00420D00.view_direction);
+    view_ray_status.view_direction[2] = 1.0f;
+    view_ray_status.view_direction[0] = 0.0f;
+    view_ray_status.view_direction[1] = 0.0f;
+    view_ray_status.view_direction[3] = 0.0f;
+    sceVu0RotMatrixX(rotation, identity_matrix, pitch);
+    Vector_ApplyMatrix(view_ray_status.view_direction, rotation, view_ray_status.view_direction);
+    sceVu0RotMatrixY(rotation, identity_matrix, heading);
+    Vector_ApplyMatrix(view_ray_status.view_direction, rotation, view_ray_status.view_direction);
 }
 
 /* Finds what is in front of the player: how far the view reaches before a wall or a map object (unk40), and the
@@ -101,16 +101,16 @@ void Interact_FindTarget(void) {
 
     Timer_GetTicks();
     Interact_UpdateViewRay();
-    nearest = D_00420D00.target_distance = D_00420D00.view_distance = D_00446A08[0];
-    D_00420D00.facing_entity = NULL;
-    D_00420D00.current = NULL;
-    D_00420D00.facing_item = NULL;
-    Collision_CastRayAtMapLists(2000.0f, D_00420D00.view_origin, D_00420D00.view_direction, 7);
+    nearest = view_ray_status.target_distance = view_ray_status.view_distance = D_00446A08[0];
+    view_ray_status.facing_entity = NULL;
+    view_ray_status.current = NULL;
+    view_ray_status.facing_item = NULL;
+    Collision_CastRayAtMapLists(2000.0f, view_ray_status.view_origin, view_ray_status.view_direction, 7);
     if (COLLISION_RESULT->hit != 0) {
-        D_00420D00.view_distance = COLLISION_RESULT->distance;
+        view_ray_status.view_distance = COLLISION_RESULT->distance;
         nearest = COLLISION_RESULT->distance;
     }
-    for (entity = D_004467E0; entity != NULL; entity = entity->next) {
+    for (entity = active_entities_head; entity != NULL; entity = entity->next) {
         if ((entity->flags & 0xE) != 2) {
             continue;
         }
@@ -119,24 +119,24 @@ void Interact_FindTarget(void) {
         if (distance < nearest) {
             nearest = distance;
         }
-        if (D_00420D00.view_distance <= distance) {
+        if (view_ray_status.view_distance <= distance) {
             continue;
         }
-        if (D_00420D00.target_distance <= distance) {
+        if (view_ray_status.target_distance <= distance) {
             continue;
         }
-        Collision_RayCylinder(entity->radius, entity->height, reach, &ENTITY_MODEL(entity)->position, D_00420D00.view_origin,
-                      D_00420D00.view_direction);
+        Collision_RayCylinder(entity->radius, entity->height, reach, &ENTITY_MODEL(entity)->position, view_ray_status.view_origin,
+                      view_ray_status.view_direction);
         if (COLLISION_RESULT->hit != 0) {
-            D_00420D00.target_distance = distance;
-            D_00420D00.facing_entity = entity;
+            view_ray_status.target_distance = distance;
+            view_ray_status.facing_entity = entity;
         }
     }
     for (map = 0; map < 2; map++) {
         if (map_slots[map].loaded == 0) {
             continue;
         }
-        count = D_004467B8[map];
+        count = map_object_counts[map];
         object = map_slot_objects[map];
         for (i = 0; i < count; i++, object++) {
             if (!(object->state_flags & 0x10000)) {
@@ -149,40 +149,40 @@ void Interact_FindTarget(void) {
             is_plain = object->source->collision_mesh_index == 0xFFFF && !(object->definition->kind == 1 || object->definition->kind == 2 ||
                        object->definition->kind == 6 || object->definition->kind == 0x11);
             if (is_plain) {
-                sceVu0SubVector(delta, &object->model->position, &D_004325A0);
+                sceVu0SubVector(delta, &object->model->position, &camera_state);
                 sceVu0Normalize(delta, delta);
-                if (sceVu0InnerProduct(delta, D_00420D00.view_direction) < 0.866025f) {
+                if (sceVu0InnerProduct(delta, view_ray_status.view_direction) < 0.866025f) {
                     continue;
                 }
-                sceVu0SubVector(delta, &object->model->position, &D_004325A0);
+                sceVu0SubVector(delta, &object->model->position, &camera_state);
                 distance = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
             } else {
-                Collision_HitRayObj(object, (f32 *)&D_004325A0, D_00420D00.view_direction, reach);
+                Collision_HitRayObj(object, (f32 *)&camera_state, view_ray_status.view_direction, reach);
                 if (COLLISION_RESULT->hit == 0) {
                     continue;
                 }
-                sceVu0SubVector(delta, COLLISION_RESULT, &D_004325A0);
+                sceVu0SubVector(delta, COLLISION_RESULT, &camera_state);
                 distance = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
             }
-            if (distance < object->interact_radius + 100.0f && distance < D_00420D00.target_distance) {
-                D_00420D00.facing_entity = NULL;
-                D_00420D00.current = object;
-                D_00420D00.target_distance = distance;
+            if (distance < object->interact_radius + 100.0f && distance < view_ray_status.target_distance) {
+                view_ray_status.facing_entity = NULL;
+                view_ray_status.current = object;
+                view_ray_status.target_distance = distance;
             }
-            if (!is_plain && distance < D_00420D00.view_distance) {
-                D_00420D00.view_distance = distance;
+            if (!is_plain && distance < view_ray_status.view_distance) {
+                view_ray_status.view_distance = distance;
             }
         }
     }
-    facing = D_00420D00.current;
+    facing = view_ray_status.current;
     if (facing != NULL && facing->definition->facing_angle != 0.0f) {
         turn = MapObject_GetTurnToward(facing, &player_state.position);
-        limit = ((MapObject *)D_00420D00.current)->definition->facing_angle;
+        limit = ((MapObject *)view_ray_status.current)->definition->facing_angle;
         if (turn < -limit || limit < turn) {
-            D_00420D00.current = NULL;
+            view_ray_status.current = NULL;
         }
     }
-    for (node = D_004469D4; node != NULL; node = node->next) {
+    for (node = lying_items; node != NULL; node = node->next) {
         if (!MapItem_IsPickable(node)) {
             continue;
         }
@@ -192,17 +192,17 @@ void Interact_FindTarget(void) {
         if (player_state.position.y + 50.0f < node->model->position.y) {
             continue;
         }
-        sceVu0SubVector(delta, &node->model->position, &D_004325A0);
+        sceVu0SubVector(delta, &node->model->position, &camera_state);
         distance = delta[0] * delta[0] + delta[2] * delta[2];
         if (90000.0f < distance) {
             continue;
         }
         sceVu0Normalize(unit, delta);
-        if (sceVu0InnerProduct(unit, D_00420D00.view_direction) < 0.866025f) {
+        if (sceVu0InnerProduct(unit, view_ray_status.view_direction) < 0.866025f) {
             continue;
         }
         distance = sqrtf(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
-        if (D_00420D00.view_distance < distance) {
+        if (view_ray_status.view_distance < distance) {
             continue;
         }
         def = node->def;
@@ -244,58 +244,58 @@ void Interact_FindTarget(void) {
                 }
             }
         }
-        D_00420D00.target_distance = distance;
-        D_00420D00.facing_entity = NULL;
-        D_00420D00.current = NULL;
-        D_00420D00.facing_item = node;
+        view_ray_status.target_distance = distance;
+        view_ray_status.facing_entity = NULL;
+        view_ray_status.current = NULL;
+        view_ray_status.facing_item = node;
     }
-    if (D_00420D00.view_distance == D_00446A08[0]) {
-        D_00420D00.view_distance = 2000.0f;
+    if (view_ray_status.view_distance == D_00446A08[0]) {
+        view_ray_status.view_distance = 2000.0f;
     }
     if (player_state.death_timer == 0) {
         can_act = game_status.bit1;
-        pickup = D_00420D00.facing_item;
+        pickup = view_ray_status.facing_item;
         if (pickup != NULL && can_act) {
             if (pickup->def != NULL && pickup->def->unk34 != 0) {
-                if ((pickup->flags & 1) == D_00446770) {
+                if ((pickup->flags & 1) == current_map_slot) {
                     Script_Start(pickup->def->unk34, 0);
                 }
                 can_act = FALSE;
-            } else if (D_004469D8 == NULL) {
-                MapItem_StartPickup(D_00420D00.facing_item);
+            } else if (pickup_item == NULL) {
+                MapItem_StartPickup(view_ray_status.facing_item);
                 can_act = FALSE;
             }
         }
-        user = D_00420D00.facing_entity;
+        user = view_ray_status.facing_entity;
         if (user != NULL) {
             if (can_act && user->spawn_info->talk_script_id != 0) {
-                if (user->group_id == D_00446770) {
+                if (user->group_id == current_map_slot) {
                     if (user->spawn_info->item_script_id == 0 || Script_IsRunning(user->spawn_info->item_script_id) == 0) {
-                        Script_Start(((Entity *)D_00420D00.facing_entity)->spawn_info->talk_script_id, 0);
+                        Script_Start(((Entity *)view_ray_status.facing_entity)->spawn_info->talk_script_id, 0);
                     }
                 }
                 game_status.bit1 = FALSE;
             }
         } else {
-            used = D_00420D00.current;
+            used = view_ray_status.current;
             if (used != NULL && can_act && used->source->use_script != 0) {
-                if ((MAP_OBJECT_BYTES(used)->unk00 & 1) == D_00446770) {
+                if ((MAP_OBJECT_BYTES(used)->unk00 & 1) == current_map_slot) {
                     if (used->source->item_use_script == 0 || Script_IsRunning(used->source->item_use_script) == 0) {
-                        Script_Start(((MapObject *)D_00420D00.current)->source->use_script, 0);
+                        Script_Start(((MapObject *)view_ray_status.current)->source->use_script, 0);
                     }
                 }
                 game_status.bit1 = FALSE;
             }
         }
     }
-    D_00420D00.nearest_entity_distance = nearest;
+    view_ray_status.nearest_entity_distance = nearest;
 }
 
 /* Moves the event runner's position and its copy from the frame before by offset (the other map slot became
    the current one). */
 void Interact_OffsetViewRay(f32 *offset) {
-    Vector_Add(D_00420D00.view_origin, D_00420D00.view_origin, offset);
-    Vector_Add(D_00420D00.prev_view_origin, D_00420D00.prev_view_origin, offset);
+    Vector_Add(view_ray_status.view_origin, view_ray_status.view_origin, offset);
+    Vector_Add(view_ray_status.prev_view_origin, view_ray_status.prev_view_origin, offset);
 }
 
 /* Distance from pos to target if within radius on every axis and overall, else D_00446A0C. */

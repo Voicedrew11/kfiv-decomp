@@ -79,7 +79,7 @@ typedef struct {
     u32 image_tag_high[2];          /* 0x68 */
 } SplashLoadPacket;
 
-/* the effect shown when item `kind` is used (files item_ms/...), D_0042BBE0[kind] (kinds 0x46 to 0x52 are used) */
+/* the effect shown when item `kind` is used (files item_ms/...), item_effect_defs_by_kind[kind] (kinds 0x46 to 0x52 are used) */
 typedef struct {
     int unk00;                      /* 0x00 the motion frame at which func_00209480 goes to the next step */
     int unk04;                      /* 0x04 taken off the effect's brightness each frame while it fades (func_002094C8) */

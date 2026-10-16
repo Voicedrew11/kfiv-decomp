@@ -21,7 +21,7 @@ int EntityAi_SetReaction(char *, void (*)(void), int);
 void EntityAi_ReactionRewind(Entity *);
 void EntityAi_ReactionLight(Entity *);
 void EntityAi_ReactionHeavy(Entity *);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 // match: the size is unknown; a complete small type would be read through $gp
 extern f32 D_00446830[];
 void EntityAi_SensePlayer(void *, int);
@@ -46,23 +46,23 @@ s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 int Motion_Start(void *, int, int, u32, int);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 // match: the size is unknown; a complete small type would be read through $gp
-extern u8 D_0034B21C[];
+extern u8 dark_sorcerer_fight_started[];
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
 int EntityAi_AnimationFrameCount(void *, int);
 void EntityEvent_OnDeath(Entity *);
-extern EntityActionWeights3 D_0043EA88;
+extern EntityActionWeights3 dark_sorcerer_action_weights;
 int EntityAi_LaunchShot(void *, int, void *, void *);
 int Sound_PlayMapAtRange(u8, u8, float *, float);
-extern s32 D_00446770;
+extern s32 current_map_slot;
 extern MapSlot map_slots[];
 void *Map_GetRecordById(int, int);
 int Script_Start(int, int);
@@ -153,7 +153,7 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 height;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
@@ -224,7 +224,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -419,7 +419,7 @@ static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[0] = unkE0->unk44;
     ENTITY_SCRATCH_VECTOR[1] = unkE0->unk48;
     ENTITY_SCRATCH_VECTOR[2] = unkE0->unk4C;
-    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->rotation[2]);
+    sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
@@ -432,7 +432,7 @@ static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
 }
 
 /* The dormant action (busy bit 0x20), which the set-up function always starts: animation 0 with
-   flag bits 18, 20 and 21 set and Entity.model_alpha at 0x20 until D_0034B21C[0] is not 0; then it brings
+   flag bits 18, 20 and 21 set and Entity.model_alpha at 0x20 until dark_sorcerer_fight_started[0] is not 0; then it brings
    unkD6 up to 0x80 over 20 frames (counted in work byte unk7B), clears the three bits and thinks.
    */
 static void DarkSorcerer_Dormant(Entity *entity) {
@@ -451,7 +451,7 @@ static void DarkSorcerer_Dormant(Entity *entity) {
         unkE0->action_flags = 0;
         entity->action_step++;
     case 1:
-        if (D_0034B21C[0] != 0) {
+        if (dark_sorcerer_fight_started[0] != 0) {
             entity->action_step++;
         }
         break;
@@ -646,11 +646,11 @@ static void DarkSorcerer_Death(Entity *entity) {
 }
 
 /* Helper of DarkSorcerer_ThinkDecide: once the pause in work word unk6A is over, draws one of three
-   actions by the weights in D_0043EA88 (the third weight is 90 while the player is outside a fixed
+   actions by the weights in dark_sorcerer_action_weights (the third weight is 90 while the player is outside a fixed
    rectangle) and starts it: DarkSorcerer_PlayAnim19StartScripts, DarkSorcerer_PlayAnim18AndShoot or
    DarkSorcerer_PlayAnim17AndShoot. Returns whether it started one. */
 static s32 DarkSorcerer_PickAction(Entity *entity) {
-    EntityActionWeights3 chances = D_0043EA88;
+    EntityActionWeights3 chances = dark_sorcerer_action_weights;
     s32 choice;
     s32 total;
     s32 i;
@@ -902,7 +902,7 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
    unk4E + 10000 of the map record player_state.unk252 picks, and of up to two of the records
    Map_GetRecordById gives for 0x6B to 0x88, drawn at random. */
 static void DarkSorcerer_StartMapScripts(Entity *entity) {
-    MapSlot *slot = &map_slots[D_00446770];
+    MapSlot *slot = &map_slots[current_map_slot];
     MapRecord *record = &((MapRecord *)slot->records)[player_state.map_record_index];
     s32 remaining;
     s32 chance;
@@ -910,7 +910,7 @@ static void DarkSorcerer_StartMapScripts(Entity *entity) {
     s32 slots_left;
     s32 roll_range;
 
-    if (record->prop_id != 0 && entity->group_id == D_00446770) {
+    if (record->prop_id != 0 && entity->group_id == current_map_slot) {
         Script_Start(record->prop_id + 10000, 0);
     }
     slots_left = 0x1D;
@@ -921,7 +921,7 @@ static void DarkSorcerer_StartMapScripts(Entity *entity) {
     for (; i < 0x1E; i++) {
         if (rand() % roll_range < chance / slots_left) {
             record = Map_GetRecordById(entity->group_id, i + 0x6B);
-            if (record != NULL && record->prop_id != 0 && entity->group_id == D_00446770) {
+            if (record != NULL && record->prop_id != 0 && entity->group_id == current_map_slot) {
                 chance -= 100;
                 remaining--;
                 Script_Start(record->prop_id + 10000, 0);

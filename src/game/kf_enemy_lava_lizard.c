@@ -17,7 +17,7 @@ void EntityAi_Move(Entity *);
 void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -106,7 +106,7 @@ static void LavaLizard_Think(Entity *entity, s32 unknown) {
     if (entity->flags & (0xD000L << 33)) {
         unkE0->step_index = entity->params->far_distance;
     }
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
@@ -161,7 +161,7 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -285,7 +285,7 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
         } else {
             unkE0->turn_rate = 0.0f;
         }
-        if (entity->model->level_tables->unk82 >= 50 && entity->model->level_tables->unk82 <= 150 && (D_00446ED4 & 1)) {
+        if (entity->model->level_tables->unk82 >= 50 && entity->model->level_tables->unk82 <= 150 && (frame_counter & 1)) {
             EntityAi_LaunchShots(entity, unk3D8, 50, 150);
         }
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
@@ -313,7 +313,7 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
 static void LavaLizard_ThinkNoStates(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {

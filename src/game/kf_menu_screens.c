@@ -1,8 +1,8 @@
 /* The menu screens: the game's menu (Use Item, Cast a Spell, Equip, Status Viewer, Recollection, Visible Item,
    System Config; the names are the game's own, from a table nothing reads) with the memory card, options, button
    and brightness screens, which Menu_Run also runs on their own. The file starts with the rings of items the lists
-   walk and with the loader of the models the screens show: load nodes chained at D_00446C90, each loading one
-   file in stages. Every screen is a handler in D_00446B20 that is called once a frame. */
+   walk and with the loader of the models the screens show: load nodes chained at model_load_chain, each loading one
+   file in stages. Every screen is a handler in menu_screen_handler that is called once a frame. */
 #include "kf_menu_screens.h"
 #include "kf_menu.h"
 #include "kf_map.h"
@@ -32,64 +32,61 @@ extern FxTableEntry fx_table[];
 extern PlayerState player_state;
 extern LevelDef item_name_defs[380];
 extern ItemCommonDef item_common_defs[];
-extern MenuItem **D_00420D90[11];
-extern MenuItem D_004210D0[150];
-extern MenuItem D_00421A30[380];
-extern MenuItem D_004231F0[70];
-extern MenuItem D_00423650[30];
-extern MenuItem D_00423830[25];
-extern MenuItem D_004239C0[25];
-extern MenuItem D_00423B50[25];
-extern MenuItem D_00423CE0[25];
-extern MenuItem D_00423E70[10];
-extern MenuItem D_00423F10[10];
-extern MenuItem D_00423FB0[10];
-extern MenuItem D_00424050[];
-extern MenuItem D_00424600[];
-extern MenuItem *D_00426110[4];
-extern MenuItem *D_00426120[4];
-extern MenuItem *D_00426130[4];
-extern MenuItem *D_00446C24;
-extern MenuItem *D_00446C28;
-extern s32 D_00446C38;
-extern MenuItem *D_00446C40;
-extern MenuItem *D_00446C44;
-extern s32 D_00446C48;
-extern s32 D_004472E0;
-extern MenuItemList D_005CE6A0;
-extern MenuItemList D_005CE6B0;
-extern MenuItemList D_005CE6C0;
-extern MenuItemList D_005CE6D0;
-extern MenuItemList D_005CE6E0;
-extern MenuItemList D_005CE6F0;
-extern MenuItemList D_005CE700;
-extern MenuItemList D_005CE710;
-extern MenuItemList D_005CE720;
-extern MenuItemList D_005CE730;
-extern MenuItemList D_005CE740;
-extern MenuItemList D_005CE760;
-extern MenuItemList D_005CE770;
-extern MenuItemList D_005CE780;
-extern MenuItemList D_005CE790;
-extern MenuItemList D_005CE7A0;
-extern MenuItemList D_005CE7B0;
-extern MenuItemList D_005CE7C0;
-extern MenuItemList D_005CE7D0;
-extern MenuItemList D_005CE7E0;
-extern MenuItemList D_005CE7F0;
-extern MenuItemList D_005CE800;
-extern MenuItemList D_005CE810;
-extern MenuItem *D_005CE830[4];
-extern MenuItemList *D_005CE840[];
-extern MenuItem *D_005CE860[];
-extern MenuItem *D_005CE850[];
-extern MenuItem *D_005CE870[];
-extern MenuItem *D_005CE880[];
-extern MenuItem *D_005CE890[];
-extern MenuItem *D_005CE8A0[];
-// match: D_005CE860[0] reached from D_005CE840 (the same address). gcse numbers its hoisted address registers by a
-// hash of the symbol's name, and with the name D_005CE860 two of them ($19, $20) come out the other way round.
-#define D_005CE860_FIRST (((MenuItem **)D_005CE840)[8])
+extern MenuItem **equip_list_refs[11];
+extern MenuItem common_item_entries[150];
+extern MenuItem all_item_entries[380];
+extern MenuItem weapon_entries[70];
+extern MenuItem shield_entries[30];
+extern MenuItem helm_entries[25];
+extern MenuItem armor_entries[25];
+extern MenuItem gauntlet_entries[25];
+extern MenuItem boot_entries[25];
+extern MenuItem ring_entries[10];
+extern MenuItem bracelet_entries[10];
+extern MenuItem amulet_entries[10];
+extern MenuItem spell_entries[];
+extern MenuItem shortcut_entries[];
+extern MenuItem *item_list_cursor[4];
+extern MenuItem *item_list_top[4];
+extern MenuItem *item_list_page_mark[4];
+extern MenuItem *owned_list_first;
+extern MenuItem *owned_list_last_page;
+extern s32 owned_list_count;
+extern MenuItem *item_list_first;
+extern MenuItem *item_list_last_page;
+extern s32 item_list_count;
+extern s32 equip_group_shown;
+extern MenuItemList equipped_shortcut;
+extern MenuItemList equipped_weapon;
+extern MenuItemList equipped_shield;
+extern MenuItemList equipped_helm;
+extern MenuItemList equipped_armor;
+extern MenuItemList equipped_gauntlet;
+extern MenuItemList equipped_boot;
+extern MenuItemList equipped_ring;
+extern MenuItemList equipped_bracelet;
+extern MenuItemList equipped_amulet;
+extern MenuItemList equipped_spell;
+extern MenuItemList use_item_list;
+extern MenuItemList equip_weapon_list;
+extern MenuItemList equip_shield_list;
+extern MenuItemList equip_helm_list;
+extern MenuItemList equip_armor_list;
+extern MenuItemList equip_gauntlet_list;
+extern MenuItemList equip_boot_list;
+extern MenuItemList equip_ring_list;
+extern MenuItemList equip_bracelet_list;
+extern MenuItemList equip_amulet_list;
+extern MenuItemList equip_spell_list;
+extern MenuItemList equip_shortcut_list;
+extern MenuItem *castable_spell_first[4];
+extern MenuItemList *equip_list_shown[];
+extern MenuItem *owned_list_top[];
+extern MenuItem *owned_list_current[];
+extern MenuItem *owned_list_page_mark[];
+extern MenuItem *castable_spell_cursor[];
+extern MenuItem *castable_spell_top[];
+extern MenuItem *castable_spell_page_mark[];
 /* Appends node to the ring being built. */
 #define LINK_ITEM(node)                     \
     if (last != NULL) {                     \
@@ -122,14 +119,16 @@ extern MenuItem *D_005CE8A0[];
     (list).item = (start_list).item = &(nodes)[(worn) - (record_base)];
 /* Whether the spell is the one its slot of spell_levels holds (three spells to a slot, numbered from 1). */
 #define SPELL_IS_SET(spell) (spell_levels[((spell) - 1) / 15][(((spell) - 1) / 3) % 5] == ((spell) - 1) % 3 + 1)
-extern LinkNode *D_00446C90;
-extern LinkNode D_005CE8B0;
-extern LinkNode D_00426470;
-extern LinkNode D_004264C0;
-extern LinkNode D_00426510;
-extern LinkNode D_00426560;
-extern LinkNode D_004265B0;
-extern int D_00446AD0;
+extern LinkNode *model_load_chain;
+extern LinkNode model_load_spare;
+/* the loads of the model shown and of the four the cursor brings on with up (0x10), down (0x40), left (0x80) and
+   right (0x20): in a list a row and a page either way, on the equipment screen the next list and the next item */
+extern LinkNode model_load_shown;
+extern LinkNode model_load_up;
+extern LinkNode model_load_down;
+extern LinkNode model_load_left;
+extern LinkNode model_load_right;
+extern int model_read_file;
 int File_Open(char *, int, int);
 int File_OpenUnflagged(char *name, int nowait, int pack);
 int File_Read(int, void *, int);
@@ -137,120 +136,120 @@ int File_Close(int file);
 int File_Sync(int file, int mode);
 int FlushCache(int);
 void PoolPartFile_Relocate(char *);
-extern int D_004472F0;
-extern PoolPartSource *D_00420DF0[13];
+extern int worn_model_loading;
+extern PoolPartSource *pool_part_sources[13];
 void PoolSlot_LoadGroup(PoolPartSource *, u32);
-extern ChunkPoolNode *D_004472B0;
-extern ChunkPoolNode D_005CE900[];
+extern ChunkPoolNode *free_load_buffers;
+extern ChunkPoolNode load_buffer_nodes[];
 int sprintf(char *, char *, ...);
-extern char D_00426498[];
-extern char D_004264E8[];
-extern char D_00426538[];
-extern char D_00426588[];
-extern char D_004265D8[];
-extern char D_005CE9F8[];
-extern char D_005CEA98[];
-extern char D_005CEAE8[];
-extern char D_005CEB38[];
-extern char D_005CEB88[];
-extern char D_005CEBD8[];
-extern char D_005CEC28[];
-extern char D_005CEC78[];
-extern char D_005CECC8[];
-extern LinkNode D_005CED40;
-extern LinkNode D_005CE9D0;
-extern LinkNode D_005CEA70;
-extern LinkNode D_005CEAC0;
-extern LinkNode D_005CEB10;
-extern LinkNode D_005CEB60;
-extern LinkNode D_005CEBB0;
-extern LinkNode D_005CEC00;
-extern LinkNode D_005CEC50;
-extern LinkNode D_005CECA0;
-extern LinkNode D_005CEF30[12];
-extern s32 D_00446F58;
-extern ChunkUpload D_005CEEE0;
+extern char model_name_shown[];
+extern char model_name_up[];
+extern char model_name_down[];
+extern char model_name_left[];
+extern char model_name_right[];
+extern char weapon_model_name[];
+extern char shield_model_name[];
+extern char armor_model_name[];
+extern char helm_model_name[];
+extern char gauntlet_model_name[];
+extern char boot_model_name[];
+extern char ring_model_name[];
+extern char bracelet_model_name[];
+extern char amulet_model_name[];
+extern LinkNode worn_model_loader;
+extern LinkNode weapon_model_load;
+extern LinkNode shield_model_load;
+extern LinkNode armor_model_load;
+extern LinkNode helm_model_load;
+extern LinkNode gauntlet_model_load;
+extern LinkNode boot_model_load;
+extern LinkNode ring_model_load;
+extern LinkNode bracelet_model_load;
+extern LinkNode amulet_model_load;
+extern LinkNode key_item_model_loads[12];
+extern s32 packet_area;
+extern ChunkUpload npc_package_load;
 int MenuArena_Init(int); // match: this file only matches with an int result
 void *MenuArena_Alloc(s32, s32);
 void *MenuHeap_Alloc(int);
 int MenuFile_Load(char *, void *);
-extern u32 D_00446A30;
-extern u32 D_00446A34;
-extern u32 D_00446A38;
-extern u32 D_00446A3C;
-extern u32 D_00446A40;
-extern u32 D_00446A44;
-extern u32 D_00446A48;
-extern u32 D_00446A4C;
-extern u32 D_00446A50;
-extern u32 D_00446A54;
-extern u32 D_00446A58;
-extern u32 D_00446A5C;
-extern u32 D_00446A60;
-extern u32 D_00446A64;
-extern u32 D_00446A68;
-extern u32 D_00446A6C;
-extern u32 D_00446A70;
-extern u32 D_00446A74;
-extern u32 D_00446A78;
-extern u32 D_00446A7C;
-extern u32 D_00446A80;
-extern u32 D_00446A84;
-extern u32 D_00446A88;
-extern u32 D_00446A8C;
-extern u32 D_00446A94;
-extern u32 D_00446A98;
-extern u32 D_00446A9C;
-extern u32 D_00446AA0;
-extern u32 D_00446AA4;
-extern u32 D_00446AA8;
-extern u32 D_00446AAC;
-extern u32 D_00446AB0;
-extern u32 D_00446AB4;
-extern u32 D_00446AB8;
-extern u32 D_00446ABC;
-extern u32 D_00446AC0;
-extern SpritePacket *D_00446BF4;
-extern SpritePacket *D_00446BF8;
-extern SpritePacket *D_00446BFC;
-extern SpritePacket *D_00446C00;
-extern SpritePacket *D_00446C0C;
-extern SpritePacket *D_00446C10;
-extern SpritePacket *D_00446C14;
-extern SpritePacket *D_00446C4C;
-extern SpritePacket *D_00446C50;
-extern SpritePacket *D_00446C54;
-extern SpritePacket *D_00446C58;
-extern SpritePacket *D_00446C5C;
-extern SpritePacket *D_00446C60;
-extern SpritePacket *D_00446C64;
-extern SpritePacket *D_00446C68;
-extern SpritePacket *D_00446C6C;
-extern SpritePacket *D_0044722C;
-extern SpritePacket *D_00447230;
-extern SpritePacket *D_00447234;
-extern SpritePacket *D_00447238;
-extern SpritePacket *D_0044723C;
-extern SpritePacket *D_00447240;
-extern SpritePacket *D_00447244;
-extern SpritePacket *D_00447248;
-extern SpritePacket *D_0044724C;
-extern SpritePacket *D_00447250;
-extern SpritePacket *D_00447254;
-extern SpritePacket *D_00447258;
-extern SpritePacket *D_0044725C;
-extern SpritePacket *D_00447260;
-extern SpritePacket *D_00447264;
-extern SpritePacket *D_00447268;
-extern SpritePacket *D_0044726C;
-extern SpritePacket *D_00447270;
-extern SpritePacket *D_00447274;
-extern SpritePacket *D_00447278;
+extern u32 main_part_count;
+extern u32 item_part_count;
+extern u32 magic_part_count;
+extern u32 equip_part_count;
+extern u32 equip_a_part_count;
+extern u32 equip_g_part_count;
+extern u32 equip_m_part_count;
+extern u32 item_sel_part_count;
+extern u32 status_part_count;
+extern u32 image_part_count;
+extern u32 recol_part_count;
+extern u32 system_part_count;
+extern u32 slot_part_count;
+extern u32 data_part_count;
+extern u32 option_part_count;
+extern u32 keylist_part_count;
+extern u32 keyconf_part_count;
+extern u32 preshop_part_count;
+extern u32 shop_part_count;
+extern u32 equip_g2_part_count;
+extern u32 equip_s_part_count;
+extern u32 recol_a_part_count;
+extern u32 recol_g_part_count;
+extern u32 recol_g2_part_count;
+extern u32 shop_g2_part_count;
+extern u32 shop_a_part_count;
+extern u32 shop_g_part_count;
+extern u32 pretune_part_count;
+extern u32 tune_part_count;
+extern u32 tune_s_part_count;
+extern u32 mc_part_count;
+extern u32 bright_part_count;
+extern u32 shop_mess_part_count;
+extern u32 tune_mess_part_count;
+extern u32 mc_mess_part_count;
+extern u32 equip_m2_part_count;
+extern SpritePacket *slot_parts;
+extern SpritePacket *data_parts;
+extern SpritePacket *preshop_parts;
+extern SpritePacket *shop_parts;
+extern SpritePacket *shop_g2_parts;
+extern SpritePacket *shop_a_parts;
+extern SpritePacket *shop_g_parts;
+extern SpritePacket *pretune_parts;
+extern SpritePacket *tune_parts;
+extern SpritePacket *tune_s_parts;
+extern SpritePacket *mc_parts;
+extern SpritePacket *bright_parts;
+extern SpritePacket *shop_mess_parts;
+extern SpritePacket *tune_mess_parts;
+extern SpritePacket *mc_mess_parts;
+extern SpritePacket *equip_m2_parts;
+extern SpritePacket *main_parts;
+extern SpritePacket *item_parts;
+extern SpritePacket *magic_parts;
+extern SpritePacket *equip_parts;
+extern SpritePacket *equip_a_parts;
+extern SpritePacket *equip_g_parts;
+extern SpritePacket *equip_m_parts;
+extern SpritePacket *item_sel_parts;
+extern SpritePacket *status_parts;
+extern SpritePacket *image_parts;
+extern SpritePacket *recol_parts;
+extern SpritePacket *system_parts;
+extern SpritePacket *option_parts;
+extern SpritePacket *keylist_parts;
+extern SpritePacket *keyconf_parts;
+extern SpritePacket *equip_g2_parts;
+extern SpritePacket *equip_s_parts;
+extern SpritePacket *recol_a_parts;
+extern SpritePacket *recol_g_parts;
+extern SpritePacket *recol_g2_parts;
 extern PlayerItemDef weapon_defs[];
 extern LevelRecordDef worn_defs[];
-extern GsDoubleBufferDc D_00426140;
-extern LoadedTexture D_0042A8D0;
-extern MenuModelMotion *D_005CEE60[];
+extern GsDoubleBufferDc menu_frame_buffers;
+extern LoadedTexture menu_font_texture;
+extern MenuModelMotion *equip_weapon_motions[];
 int sceGsResetGraph(int, int, int, int);
 void sceGsSetDefDBuffDc(void *, s16, s16, s16, s16, s16, s16);
 void MenuHeap_Reset(void);
@@ -274,29 +273,29 @@ void Sound_MutePositional(void);
 void Input_Update(void);
 int SoundDriver_FlushCommands(void);
 s16 MenuPad_Update(void);
-extern GsDrawEnv D_00432D80;
-extern s32 D_00446AC4;
-extern s8 D_00446C94;
-extern u16 D_00446DE8;
-extern int D_00446F78;
-extern int D_00446F7C;
-extern s32 D_00447200;
-extern s32 D_00447204;
-extern int D_004472D0;
-extern int D_004472D4;
-extern MenuScreenState D_005CF2F0;
-extern ColorBytes D_00446C78;
-extern f32 D_0042B7D0[16];
+extern GsDrawEnv game_dbuff_draw0;
+extern s32 menu_run_step;
+extern s8 menu_mode;
+extern u16 menu_buttons;
+extern int context1_buffer_half;
+extern int context2_buffer_half;
+extern s32 menu_even_field;
+extern s32 pad_mode_change_frames;
+extern int pad_mode;
+extern int pad_mode_before;
+extern MenuScreenState card_screen_state;
+extern ColorBytes menu_draw_color;
+extern f32 menu_view_screen_matrix[16];
 void MenuModel_DrawTinted(ChunkUpload *upload, s32 draw_param, RenderSlotArg slot_arg);
 // match: called with the node, a matrix and the colour, not as the definition has it (the colour is loaded unaligned)
 #define DRAW_NODE_MODEL(node, matrix, colour) ((void (*)(LinkNode *, f32 *, ColorBytes))MenuModel_DrawTinted)(node, matrix, colour)
 void sceVu0ViewScreenMatrix(void *, float, float, float, float, float, float, float, float, float);
-extern u64 D_004261A0[47];             /* the frame register of the first buffer ([0]) and of the second ([46]) */
+extern u64 menu_first_draw_env[47];             /* the frame register of the first buffer ([0]) and of the second ([46]) */
 extern u8 game_options[0x10];  /* the options block */
-extern char D_00426220[];
-extern char D_00426310[];           /* inside D_00426140: the second buffer's draw environments */
-extern char D_00426390[];
-extern s32 D_00446C98;
+extern char menu_first_draw_env2[];
+extern char menu_second_draw_env[];           /* inside menu_frame_buffers: the second buffer's draw environments */
+extern char menu_second_draw_env2[];
+extern s32 menu_frame_ticks;
 extern u8 D_00447208;
 void Menu_DrawBrightness(s32);
 int Timer_GetTicks(void);
@@ -309,23 +308,23 @@ int sceGsSwapDBuffDc(GsDoubleBufferDc *, int);
 // match: called as a void function, so the result register is free at once
 #define SET_TEST(value) ((void (*)(int, s64))MenuDraw_SetGsRegister)(GS_REG_TEST_1, value)
 
-extern ColorBytes D_00446B18[]; // match: the initialiser of the local below ({ 0x10, 0x10, 0x10 }); an array so it is not reached through $gp
+extern ColorBytes backdrop_shade_color[]; // match: the initialiser of the local below ({ 0x10, 0x10, 0x10 }); an array so it is not reached through $gp
 int Menu_SetBlendMode(u8);
 void MenuSprite_DrawPlain(int owner, int index, int param);
-extern s32 D_00446AC8;
+extern s32 menu_step;
 extern char D_005CE0E0[];
-extern u8 D_0034968A[];
-extern LoadedBlockRef D_0042A2A0[];
-extern void *D_00446B20;
-extern float D_00446C04;
-extern char D_00446C08;
-extern s8 D_00446C09;
-extern s8 D_00446C70;
-extern ColorBytes D_00446C80;
-extern ColorBytes D_00446C88;
-extern s32 D_00446DEC;
-extern s32 D_00446F38;
-extern u8 D_004472CF;
+extern u8 brightness_option[];
+extern LoadedBlockRef menu_file_blocks[];
+extern void *menu_screen_handler;
+extern float pulse_sprite_alpha;
+extern char pulse_sprite_falling;
+extern s8 pulse_value_falling;
+extern s8 system_screen_state;
+extern ColorBytes panel_text_color;
+extern ColorBytes model_draw_color;
+extern s32 menu_file_block_count;
+extern s32 menu_heap;
+extern u8 brightness_before;
 void func_001095D0(void);
 void func_001095D8(void);
 void Packet_SwapBuffers(void);
@@ -334,26 +333,26 @@ void Packet_WaitForSend(void);
 void GsDraw_QueueTexFlush(void);
 void TextureTable_QueueAll(TextureTableHeader *);
 void MenuTexture_Upload(TextureHeader *, LoadedBlockRef *);
-extern s8 D_004472CD;
+extern s8 main_menu_line;
 void Sound_LoadMgBank(int);
 void *memset(void *, int, u32);
-extern f32 D_00425510[0x100];
-extern f32 D_00425910[0x100];
-extern char D_004472CE;
-extern s8 D_004472DA;
-extern s8 D_004472C4;               /* 0: fading in, 1: open, 2: fading out to the chosen screen, 3: fading out to leave */
-extern s8 D_004472D8;
+extern f32 screen_part_alphas[0x100];
+extern f32 panel_part_alphas[0x100];
+extern char equip_model_shown;
+extern s8 menu_input_enabled;
+extern s8 main_menu_state;               /* 0: fading in, 1: open, 2: fading out to the chosen screen, 3: fading out to leave */
+extern s8 recollection_cursor;
 s32 Sound_PlayMenu(s32);
 int Menu_OwnsAnyItem(void);
 int Menu_KnowsCastableSpell(void);
 void MenuSprite_Draw(int, int, int, int);
 extern u8 D_00446B39;
 extern GameStatus game_status;
-extern f32 D_00421000[4];
-extern f32 D_00446B3C;              /* the shown item model's turn about y */
-extern s32 D_00446B40;
+extern f32 use_item_model_position[4];
+extern f32 use_item_model_angle;              /* the shown item model's turn about y */
+extern s32 use_item_frames;
 extern s32 D_00446DF4;
-extern s8 D_004472C5;               /* 0: fading in, 1: open, 2 to 4: waiting for the models, 5 to 7: fading out */
+extern s8 use_item_state;               /* 0: fading in, 1: open, 2 to 4: waiting for the models, 5 to 7: fading out */
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0TransMatrix(float *, float *, float *);
 void MenuDraw_Bar(MenuCursorBar *);
@@ -365,25 +364,25 @@ static inline f32 wrap_angle(f32 angle) {
     angle += 3.1415927f;
     return angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
 }
-extern f32 D_00421010[4];
+extern f32 cast_spell_model_position[4];
 extern s32 D_00446DF8;
-extern s8 D_004472C8;               /* 0: fading in, 1: open, 2: waiting for the models, 3: fading out */
+extern s8 cast_spell_state;               /* 0: fading in, 1: open, 2: waiting for the models, 3: fading out */
 int MenuText_SetGlyphSize(GsPackedWord);
 s32 MenuText_DrawLine(u16 *text, s32 limit);
 extern u8 player_weapon[];
-extern MenuItem **D_00420D60[11];
-extern LinkNode *D_00420DC8[];
-extern f32 D_00421020[4];
-extern f32 D_00421040[4];
-extern void (*D_0042A290[])(PoolSlot *, ColorBytes);
-extern PoolSlot D_0042A8F0[32];
+extern MenuItem **equipped_item_refs[11];
+extern LinkNode *equip_model_loads[];
+extern f32 equip_item_model_position[4];
+extern f32 equip_weapon_model_position[4];
+extern void (*pool_slot_drawers[])(PoolSlot *, ColorBytes);
+extern PoolSlot pool_slots[32];
 extern s32 D_00446ACC;
-extern u8 D_00446AD4; // match: a byte here; kf_trade.c reads and writes it as a word
-extern u8 D_00446AD5;
-extern s8 D_00446B50;
-extern f32 D_00446B54;
-extern f32 D_00446B58;
-extern u32 D_00446B5C;
+extern u8 detail_panel_open; // match: a byte here; kf_trade.c reads and writes it as a word
+extern u8 equipped_list_open;
+extern s8 detail_panel_sound_pending;
+extern f32 equip_item_model_angle;
+extern f32 equip_weapon_model_angle;
+extern u32 equip_weapon_motion_frame;
 extern s32 D_00446DFC;
 extern s32 D_00446E00;
 extern s32 D_00446E04;
@@ -398,11 +397,11 @@ extern s32 D_00446E24;
 extern s32 D_00446E28;
 extern s32 D_00446E30;
 extern MenuFreeNode D_004472B8;
-extern s8 D_004472C6;
-extern s8 D_004472C7;
-// match: D_004472C7 is the second byte of what the symbol list has as one two-byte object. It has to be a variable of
-// its own: a store to `D_004472C6[1]` is never put in a delay slot, and retail has it there.
-__asm__("D_004472C7 = D_004472C6 + 1");
+extern s8 equip_state;
+extern s8 equip_panel_state;
+// match: equip_panel_state is the second byte of what the symbol list has as one two-byte object. It has to be a variable of
+// its own: a store to `equip_state[1]` is never put in a delay slot, and retail has it there.
+__asm__("equip_panel_state = equip_state + 1");
 void Player_RecomputeStats(void);
 int Menu_IsEquipSlotFilled(s32, u32);
 int Menu_IsEquipped(u32, s32, s32);
@@ -416,11 +415,11 @@ s32 MenuDraw_SetGsRegister(int, s64);
 /* the item the cursor is on in the category shown */
 // match: the category is a MenuItem whose first word is a MenuItem pointer; read as an int it cannot pass the GS stores
 // match: the list read as a MenuItem (next, prev and group are at the same offsets)
-#define EQUIP_LIST (((MenuItem **)D_005CE840)[0])
+#define EQUIP_LIST (((MenuItem **)equip_list_shown)[0])
 #define CURRENT_ITEM (((MenuItemList *)EQUIP_LIST)->item)
 // match: called as a void function, so the result register is free at once
 #define SET_BLEND(mode) ((void (*)(u8))Menu_SetBlendMode)(mode)
-#define DRAW_ITEM_MODEL(matrix) DRAW_NODE_MODEL(&D_00426470, matrix, D_00446C88)
+#define DRAW_ITEM_MODEL(matrix) DRAW_NODE_MODEL(&model_load_shown, matrix, model_draw_color)
 // match: called with the slot alone
 #define DRAW_SLOT(slot) ((void (*)(PoolSlot *))PoolSlot_Draw)(slot)
 // match: forty dead additions. Retail's source gave about forty more RTL instructions than this one before the GCSE
@@ -443,27 +442,27 @@ s32 MenuDraw_SetGsRegister(int, s64);
 #define RESET_ALPHAS(parts, count)                                                                   \
     for (i = 0; i < count; i++) {                                                                    \
         alpha = parts[i].alpha;                                                                      \
-        D_00425910[i] = alpha;                                                                       \
+        panel_part_alphas[i] = alpha;                                                                       \
     }
 #define DRAW_PARTS(parts, count, variant)                                                            \
     for (i = 0; i < count; i++) {                                                                    \
         SET_BLEND(parts[i].blend_mode);                                                              \
-        MenuSprite_Draw((int)&parts[i], parts[i].handler_index + 1000, variant, (int)D_00425910[i]);         \
+        MenuSprite_Draw((int)&parts[i], parts[i].handler_index + 1000, variant, (int)panel_part_alphas[i]);         \
         SET_BLEND(0);                                                                                \
     }
-extern s8 D_004472C9;               /* 0: fading in, 1: open, 2: fading out to Menu_UpdateKeyItems, 3: fading out to leave */
-extern s32 D_00421050[12];
-extern s32 D_00446BB8;              /* the row of three the list starts at, 0 to 2 */
-extern s32 D_00446BBC;
+extern s8 key_items_state;               /* 0: fading in, 1: open, 2: fading out to Menu_UpdateKeyItems, 3: fading out to leave */
+extern s32 key_item_slots[12];
+extern s32 key_item_row;              /* the row of three the list starts at, 0 to 2 */
+extern s32 key_items_frames;
 #define LIST_PAGES 50
 #define LIST_ROWS 7
 extern u8 recollection_flags[LIST_PAGES][8];
 extern u8 recollection_pages[50];
-extern f32 D_00421080[4];
-extern s32 D_00446BC0;              /* the page shown, 0 to 49 */
-extern s32 D_00446BC4;              /* the page shown the frame before */
-extern s8 D_004472CA;               /* 0: fading in, 1: open, 2: fading out */
-extern s8 D_004472D9;               /* the counter at the top of the list */
+extern f32 recollection_model_position[4];
+extern s32 recollection_page;              /* the page shown, 0 to 49 */
+extern s32 recollection_page_before;              /* the page shown the frame before */
+extern s8 recollection_state;               /* 0: fading in, 1: open, 2: fading out */
+extern s8 recollection_top;               /* the counter at the top of the list */
 int sceCdBreak(void);
 s32 MenuText_DrawWrappedLong(u16 *, s32);
 s32 MenuText_DrawLineShortened(u16 *, s32);
@@ -471,21 +470,21 @@ s32 MenuText_DrawLineShortened(u16 *, s32);
 static inline s32 GetListTextOffset(s32 table, s32 number) {
     return ((s32 *)table)[number];
 }
-extern f32 D_00421090[4];
+extern f32 recollection_page_model_position[4];
 /* The offset of text `number` in the text table, 0 when it has none. */
 static inline s32 GetPageTextOffset(s32 table, s32 number) {
     return ((s32 *)table)[number];
 }
-extern f32 D_004210A0[4];
-extern f32 D_00446BD0;              /* the turning model's angle */
+extern f32 visible_item_model_position[4];
+extern f32 visible_item_model_angle;              /* the turning model's angle */
 extern s32 D_00446E2C;
-extern MenuItem *D_00447210;
-extern MenuItem *D_00447214;
-extern MenuItem *D_00447218;
-extern MenuItem *D_0044721C;
-extern MenuItem *D_00447220;
-extern s8 D_004472CB;               /* 0: fading in, 1: open, 2: waiting for the loads, 3: fading out */
-extern s8 D_004472CC;               /* the detail panel's: 0: fading in, 1: open, 2: fading out */
+extern MenuItem *visible_bar_top;
+extern MenuItem *visible_bar_cursor;
+extern MenuItem *visible_names_top;
+extern MenuItem *visible_names_cursor;
+extern MenuItem *visible_text_item;
+extern s8 visible_item_state;               /* 0: fading in, 1: open, 2: waiting for the loads, 3: fading out */
+extern s8 visible_panel_state;               /* the detail panel's: 0: fading in, 1: open, 2: fading out */
 static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
     return value * percent / divisor;
 }
@@ -498,25 +497,25 @@ static inline s32 ScaleValue(s32 value, s32 percent, s32 divisor) {
 #define DRAW_PACKETS(packets, count, param)                                                          \
     for (i = 0; i < (count); i++) {                                                                  \
         Menu_SetBlendMode((packets)[i].blend_mode);                                                  \
-        MenuSprite_Draw((int)&(packets)[i], (packets)[i].handler_index + 1000, (param), (int)D_00425910[i]); \
+        MenuSprite_Draw((int)&(packets)[i], (packets)[i].handler_index + 1000, (param), (int)panel_part_alphas[i]); \
         ((void (*)(u8))Menu_SetBlendMode)(0);                                                        \
     }
-extern s32 D_004472E8;
-extern s32 D_00446BD8;
-extern u16 D_005CF318[13];
-extern u16 D_0044692C;
-extern u16 D_0044692E;
-extern u16 D_00446930;
-extern u16 D_00446932;
-extern u16 D_00446934;
-extern u16 D_00446936;
-extern u16 D_00446938;
-extern u16 D_0044693A;
-extern u16 D_0044693C;
-extern u16 D_0044693E;
-extern u16 D_00446940;
-extern s16 D_00446942;
-extern s16 D_00446944;
+extern s32 system_menu_line;
+extern s32 quit_choice;
+extern u16 button_settings_copy[13];
+extern u16 forward_button;
+extern u16 back_button;
+extern u16 turn_right_button;
+extern u16 turn_left_button;
+extern u16 step_right_button;
+extern u16 step_left_button;
+extern u16 look_down_button;
+extern u16 look_up_button;
+extern u16 attack_button;
+extern u16 magic_button;
+extern u16 action_button;
+extern u16 menu_button;
+extern u16 shortcut_button;
 // match: both are called as void functions, so the result register is free at once
 #define PLAY_MENU_SOUND(sound) ((void (*)(s32))Sound_PlayMenu)(sound)
 #define SET_PART_MODE(mode) ((void (*)(u8))Menu_SetBlendMode)(mode)
@@ -525,35 +524,35 @@ s32 SaveCard_StartCheck(s8);
 #define PAGE_ROWS 7
 /* Scrolls the window and the cursor up one row; FALSE once the window is at the top of the list. */
 static inline s32 ScrollItemListUp(void) {
-    D_00426120[0] = D_00426120[0]->prev;
-    D_00426130[0] = D_00426130[0]->prev;
-    D_00426110[0] = D_00426120[0];
-    return D_00426120[0] != D_00446C44;
+    item_list_top[0] = item_list_top[0]->prev;
+    item_list_page_mark[0] = item_list_page_mark[0]->prev;
+    item_list_cursor[0] = item_list_top[0];
+    return item_list_top[0] != item_list_last_page;
 }
 /* Scrolls the window and the cursor down one row; FALSE once the window is at the end of the list. */
 static inline s32 ScrollItemListDown(void) {
-    D_00426120[0] = D_00426120[0]->next;
-    D_00426130[0] = D_00426130[0]->next;
-    D_00426110[0] = D_00426120[0];
-    return D_00426120[0] != D_00446C40;
+    item_list_top[0] = item_list_top[0]->next;
+    item_list_page_mark[0] = item_list_page_mark[0]->next;
+    item_list_cursor[0] = item_list_top[0];
+    return item_list_top[0] != item_list_first;
 }
 /* Scrolls the window and the cursor up one row; FALSE once the window is at the top of the list. */
 static inline s32 ScrollAllItemsUp(void) {
-    D_005CE860[0] = D_005CE860[0]->prev;
-    D_005CE870[0] = D_005CE870[0]->prev;
-    D_005CE850[0] = D_005CE860[0];
-    return D_005CE860[0] != D_00446C28;
+    owned_list_top[0] = owned_list_top[0]->prev;
+    owned_list_page_mark[0] = owned_list_page_mark[0]->prev;
+    owned_list_current[0] = owned_list_top[0];
+    return owned_list_top[0] != owned_list_last_page;
 }
 /* Scrolls the window and the cursor down one row; FALSE once the window is at the end of the list. */
 static inline s32 ScrollAllItemsDown(void) {
-    D_005CE860[0] = D_005CE860[0]->next;
-    D_005CE870[0] = D_005CE870[0]->next;
-    D_005CE850[0] = D_005CE860[0];
-    return D_005CE860[0] != D_00446C24;
+    owned_list_top[0] = owned_list_top[0]->next;
+    owned_list_page_mark[0] = owned_list_page_mark[0]->next;
+    owned_list_current[0] = owned_list_top[0];
+    return owned_list_top[0] != owned_list_first;
 }
-extern s8 D_00446BDC;
-extern u8 D_00447224;
-extern void *D_00446B24;
+extern s8 card_slot_leave_steps;
+extern u8 card_save_mask;
+extern void *save_list_opener;
 s32 SaveCard_Update(void); // match: the result is used here
 s32 SaveCard_StartReadList(s32 card, char must_exist);
 void SaveCard_Close(void);
@@ -564,7 +563,7 @@ void SaveCard_ClearLoadFailed(s32);
 s32 SaveCard_IsChecking(void);
 s8 SaveCard_IsPresent(s32);
 extern u8 save_image[];
-extern s8 D_00446BDD;
+extern s8 save_list_leave_steps;
 extern s32 D_00446E34;
 extern s32 D_00446E38;
 extern s32 D_00446E3C;
@@ -592,19 +591,19 @@ s8 SaveCard_GetSaveState(s32);
 s32 SaveCard_HasRoomFor(s32, s32, s32);
 void SaveCard_ResetCard(s32);
 s8 SaveCard_GetLoadFailed(s32);
-extern s32 D_00446BE0;              /* option 0 as it was before it was first toggled */
-extern s8 D_00446BE4;               /* 0: option 0 untouched, 1: toggled and not applied yet, 2 to 4: applied */
-extern s8 D_00446BE5;               /* counts the two steps of leaving when the screen is a start-up step */
+extern s32 sound_mode_before;              /* option 0 as it was before it was first toggled */
+extern s8 sound_mode_change;               /* 0: option 0 untouched, 1: toggled and not applied yet, 2 to 4: applied */
+extern s8 options_leave_steps;               /* counts the two steps of leaving when the screen is a start-up step */
 void Sound_SetBgmVolume(s32);
 void Sound_SyncBgmLevel(void);
 void SoundDriver_SetMono(void);
 void SoundDriver_SetStereo(void);
-extern s8 D_004210B0[12];
-extern s8 D_004210C0[12];
-extern s8 D_00446BE6;
-extern s32 D_00446BE8;
-extern s32 D_00446BEC;
-extern s8 D_00446BF0;
+extern s8 button_choices[12];
+extern s8 button_choices_shown[12];
+extern s8 buttons_leave_steps;
+extern s32 button_line;
+extern s32 button_prompt_choice;
+extern s8 button_prompt;
 /* Runs SET with the choice number that goes with a pad button bit. */
 #define FOR_PAD_BIT(bit, SET) \
     switch (bit) {            \
@@ -645,14 +644,14 @@ extern s8 D_00446BF0;
         SET(11);              \
         break;                \
     }
-#define SET_CHOICE(n) D_004210C0[i] = D_004210B0[i] = (n)
-#define SET_SHOWN(n) D_004210C0[i] = (n)
+#define SET_CHOICE(n) button_choices_shown[i] = button_choices[i] = (n)
+#define SET_SHOWN(n) button_choices_shown[i] = (n)
 s32 SaveCard_StartRescan(void);
 s32 SaveCard_IsCheckDone(void);
 s8 SaveCard_IsFormatted(s32);
 int SaveCard_GetCardProblem(int);
 s32 SaveCard_GetSavesState(void);
-extern f32 D_00447228;
+extern f32 brightness_slider;
 
 static void Menu_BuildItemRings(void);
 static void Menu_MoveLoadToSpare(void);
@@ -757,42 +756,42 @@ static void Menu_BuildItemRings(void) {
     s32 i;
     s32 spell;
 
-    D_00426120[0] = NULL;
-    D_00426130[0] = NULL;
-    D_00446C40 = NULL;
-    D_00446C44 = NULL;
+    item_list_top[0] = NULL;
+    item_list_page_mark[0] = NULL;
+    item_list_first = NULL;
+    item_list_last_page = NULL;
     // match: the three are cleared a second time; retail's `first` and `count` are copies of `last` because of it
     last = NULL;
     first = NULL;
     count = 0;
     for (i = 1; i < 150; i++) {
         if (item_counts[i] != 0 && (item_name_defs[i].state & 1)) {
-            LINK_COUNTED_ITEM(&D_004210D0[i], D_00426130)
+            LINK_COUNTED_ITEM(&common_item_entries[i], item_list_page_mark)
         }
     }
-    D_00446C48 = count;
+    item_list_count = count;
     if (first != NULL) {
         last->prev = first;
-        D_00426110[0] = D_00426120[0] = D_005CE760.item = first;
+        item_list_cursor[0] = item_list_top[0] = use_item_list.item = first;
         first->next = last;
-        if (D_00426130[0] == NULL) {
-            D_00426130[0] = last->next;
+        if (item_list_page_mark[0] == NULL) {
+            item_list_page_mark[0] = last->next;
         } else {
-            D_00426130[0] = D_00426130[0]->next;
+            item_list_page_mark[0] = item_list_page_mark[0]->next;
         }
-        D_00446C40 = first;
-        D_00446C44 = last;
+        item_list_first = first;
+        item_list_last_page = last;
         for (i = 5; i >= 0; i--) {
-            D_00446C44 = D_00446C44->next;
+            item_list_last_page = item_list_last_page->next;
         }
     } else {
-        D_00426110[0] = NULL;
+        item_list_cursor[0] = NULL;
     }
 
-    D_005CE860_FIRST = NULL;
-    D_005CE870[0] = NULL;
-    D_00446C24 = NULL;
-    D_00446C28 = NULL;
+    owned_list_top[0] = NULL;
+    owned_list_page_mark[0] = NULL;
+    owned_list_first = NULL;
+    owned_list_last_page = NULL;
     last = NULL;
     first = NULL;
     count = 0;
@@ -809,47 +808,47 @@ static void Menu_BuildItemRings(void) {
                 (i >= 370 && worn_item_level_records[i - 220].unk18 == 0)) {
                 count++;
                 if (count == 7) {
-                    D_005CE870[0] = &D_00421A30[i];
+                    owned_list_page_mark[0] = &all_item_entries[i];
                 }
                 if (last != NULL) {
-                    D_00421A30[i].next = last;
-                    last->prev = &D_00421A30[i];
+                    all_item_entries[i].next = last;
+                    last->prev = &all_item_entries[i];
                 } else {
-                    first = &D_00421A30[i];
+                    first = &all_item_entries[i];
                 }
-                last = &D_00421A30[i];
+                last = &all_item_entries[i];
             }
         }
     }
-    D_00446C38 = count;
+    owned_list_count = count;
     if (first != NULL) {
         last->prev = first;
-        D_005CE850[0] = D_005CE860_FIRST = first;
+        owned_list_current[0] = owned_list_top[0] = first;
         first->next = last;
-        if (D_005CE870[0] == NULL) {
-            D_005CE870[0] = last->next;
+        if (owned_list_page_mark[0] == NULL) {
+            owned_list_page_mark[0] = last->next;
         } else {
-            D_005CE870[0] = D_005CE870[0]->next;
+            owned_list_page_mark[0] = owned_list_page_mark[0]->next;
         }
-        D_00446C24 = first;
-        D_00446C28 = last;
+        owned_list_first = first;
+        owned_list_last_page = last;
         for (i = 5; i >= 0; i--) {
-            D_00446C28 = D_00446C28->next;
+            owned_list_last_page = owned_list_last_page->next;
         }
     } else {
-        D_005CE850[0] = NULL;
+        owned_list_current[0] = NULL;
     }
 
     last = NULL;
     first = NULL;
     for (i = 0; i < 150; i++) {
         if (item_counts[i] != 0 && (item_name_defs[i].state & 1) && !((u8)item_common_defs[i].flags & 1) && !(i >= 145 && i < 148)) {
-            LINK_ITEM(&D_00424600[i])
+            LINK_ITEM(&shortcut_entries[i])
         }
     }
     for (i = 150, spell = 0; i < 241; i++, spell++) {
         if (SPELL_IS_SET(spell) && fx_table[spell].item_menu_magic == 1) {
-            LINK_ITEM(&D_00424600[i])
+            LINK_ITEM(&shortcut_entries[i])
         }
     }
     // match: closed without the `first != NULL` test of the counted rings (so are the rings below); an empty one
@@ -858,18 +857,18 @@ static void Menu_BuildItemRings(void) {
     last->prev = first;
     switch (player_state.shortcut_type) {
     case 0:
-        D_005CE810.item = D_005CE6A0.item = D_00424600;
+        equip_shortcut_list.item = equipped_shortcut.item = shortcut_entries;
         // match: no break, case 0 goes on into case 1, which sets both again
     case 1:
         if (item_counts[player_state.shortcut] != 0) {
-            D_005CE810.item = D_005CE6A0.item = &D_00424600[player_state.shortcut];
+            equip_shortcut_list.item = equipped_shortcut.item = &shortcut_entries[player_state.shortcut];
         } else {
             player_state.shortcut = 0;
-            D_005CE810.item = D_005CE6A0.item = D_00424600;
+            equip_shortcut_list.item = equipped_shortcut.item = shortcut_entries;
         }
         break;
     case 2:
-        D_005CE810.item = D_005CE6A0.item = &D_00424600[player_state.shortcut + 150];
+        equip_shortcut_list.item = equipped_shortcut.item = &shortcut_entries[player_state.shortcut + 150];
         break;
     }
 
@@ -877,107 +876,107 @@ static void Menu_BuildItemRings(void) {
     first = NULL;
     for (i = 0; i < 70; i++) {
         if (item_counts[150 + i] != 0 && (item_name_defs[150 + i].state & 1) && weapon_level_records[i].unk18 == 0) {
-            LINK_ITEM(&D_004231F0[i])
+            LINK_ITEM(&weapon_entries[i])
         }
     }
     first->next = last;
     last->prev = first;
-    D_005CE770.item = D_005CE6B0.item = &D_004231F0[player_state.weapon];
+    equip_weapon_list.item = equipped_weapon.item = &weapon_entries[player_state.weapon];
 
-    LINK_GROUP(D_00423650, worn_item_level_records, 0, 220, 30, D_005CE780, D_005CE6C0, player_state.equipment[EQUIP_SHIELD])
-    LINK_GROUP(D_00423830, worn_item_level_records, 30, 250, 25, D_005CE790, D_005CE6D0, player_state.equipment[EQUIP_HELM])
-    LINK_GROUP(D_004239C0, worn_item_level_records, 55, 275, 25, D_005CE7A0, D_005CE6E0, player_state.equipment[EQUIP_ARMOR])
-    LINK_GROUP(D_00423B50, worn_item_level_records, 80, 300, 25, D_005CE7B0, D_005CE6F0, player_state.equipment[EQUIP_GAUNTLET])
-    LINK_GROUP(D_00423CE0, worn_item_level_records, 105, 325, 25, D_005CE7C0, D_005CE700, player_state.equipment[EQUIP_BOOT])
-    LINK_GROUP(D_00423E70, worn_item_level_records, 130, 350, 10, D_005CE7D0, D_005CE710, player_state.equipment[EQUIP_RING])
-    LINK_GROUP(D_00423F10, worn_item_level_records, 140, 360, 10, D_005CE7E0, D_005CE720, player_state.equipment[EQUIP_BRACELET])
-    LINK_GROUP(D_00423FB0, worn_item_level_records, 150, 370, 10, D_005CE7F0, D_005CE730, player_state.equipment[EQUIP_AMULET])
+    LINK_GROUP(shield_entries, worn_item_level_records, 0, 220, 30, equip_shield_list, equipped_shield, player_state.equipment[EQUIP_SHIELD])
+    LINK_GROUP(helm_entries, worn_item_level_records, 30, 250, 25, equip_helm_list, equipped_helm, player_state.equipment[EQUIP_HELM])
+    LINK_GROUP(armor_entries, worn_item_level_records, 55, 275, 25, equip_armor_list, equipped_armor, player_state.equipment[EQUIP_ARMOR])
+    LINK_GROUP(gauntlet_entries, worn_item_level_records, 80, 300, 25, equip_gauntlet_list, equipped_gauntlet, player_state.equipment[EQUIP_GAUNTLET])
+    LINK_GROUP(boot_entries, worn_item_level_records, 105, 325, 25, equip_boot_list, equipped_boot, player_state.equipment[EQUIP_BOOT])
+    LINK_GROUP(ring_entries, worn_item_level_records, 130, 350, 10, equip_ring_list, equipped_ring, player_state.equipment[EQUIP_RING])
+    LINK_GROUP(bracelet_entries, worn_item_level_records, 140, 360, 10, equip_bracelet_list, equipped_bracelet, player_state.equipment[EQUIP_BRACELET])
+    LINK_GROUP(amulet_entries, worn_item_level_records, 150, 370, 10, equip_amulet_list, equipped_amulet, player_state.equipment[EQUIP_AMULET])
 
     last = NULL;
     first = NULL;
     for (i = 0; i < 91; i++) {
         if (i == 0 || (SPELL_IS_SET(i) && fx_table[i].item_menu_magic == 0)) {
-            LINK_ITEM(&D_00424050[i])
+            LINK_ITEM(&spell_entries[i])
         }
     }
     first->next = last;
     last->prev = first;
-    D_005CE890[0] = NULL;
-    D_005CE800.item = D_005CE740.item = &D_00424050[player_state.equipped_magic];
-    D_005CE8A0[0] = NULL;
+    castable_spell_top[0] = NULL;
+    equip_spell_list.item = equipped_spell.item = &spell_entries[player_state.equipped_magic];
+    castable_spell_page_mark[0] = NULL;
 
     last = NULL;
     first = NULL;
     count = 0;
     for (i = 1; i < 91; i++) {
         if (SPELL_IS_SET(i) && fx_table[i].item_menu_magic == 1) {
-            LINK_COUNTED_ITEM(&D_00424050[i], D_005CE8A0)
+            LINK_COUNTED_ITEM(&spell_entries[i], castable_spell_page_mark)
         }
     }
     if (first != NULL) {
         first->next = last;
-        D_005CE830[0] = first;
-        D_005CE890[0] = D_005CE880[0] = first;
+        castable_spell_first[0] = first;
+        castable_spell_top[0] = castable_spell_cursor[0] = first;
         last->prev = first;
-        if (D_005CE8A0[0] == NULL) {
-            D_005CE8A0[0] = last->next;
+        if (castable_spell_page_mark[0] == NULL) {
+            castable_spell_page_mark[0] = last->next;
         } else {
-            D_005CE8A0[0] = D_005CE8A0[0]->next;
+            castable_spell_page_mark[0] = castable_spell_page_mark[0]->next;
         }
     } else {
-        D_005CE880[0] = NULL;
+        castable_spell_cursor[0] = NULL;
     }
-    D_005CE840[0] = (MenuItemList *)D_00420D90[D_004472E0];
+    equip_list_shown[0] = (MenuItemList *)equip_list_refs[equip_group_shown];
 }
 
 /* Runs the callback of the load node at the head of the chain, or goes on to the next node when it has none or is done. */
 void Menu_StepModelLoads(int unused) {
-    LinkNode *node = D_00446C90;
+    LinkNode *node = model_load_chain;
 
     if (node != NULL) {
         if (node->unk20 == 0 && node->callback != NULL) {
             ((void (*)(LinkNode *))node->callback)(node); // match: the callback gets its node
         } else {
-            D_00446C90 = node->next;
+            model_load_chain = node->next;
         }
     }
 }
 
-/* Moves the model load in progress into the spare node D_005CE8B0, so that its own node can be reused: the
+/* Moves the model load in progress into the spare node model_load_spare, so that its own node can be reused: the
    node is reset with a fresh buffer and the chain is cut after the spare. */
 static void Menu_MoveLoadToSpare(void) {
-    LinkNode *node = D_00446C90;
+    LinkNode *node = model_load_chain;
 
-    if (node != NULL && node->callback == (void (*)(void))Menu_StepModelLoad && node != &D_005CE8B0) {
-        D_005CE8B0 = *node;
-        Menu_TakeLoadBuffer(D_00446C90);
-        D_00446C90->unk08 = -1;
-        D_00446C90->unk20 = 0;
-        D_00446C90->unk1C = 0;
-        D_00446C90 = &D_005CE8B0;
-        if (D_005CE8B0.next != NULL && D_005CE8B0.next->callback == (void (*)(void))Menu_StepModelLoad) {
-            D_005CE8B0.next = NULL;
+    if (node != NULL && node->callback == (void (*)(void))Menu_StepModelLoad && node != &model_load_spare) {
+        model_load_spare = *node;
+        Menu_TakeLoadBuffer(model_load_chain);
+        model_load_chain->unk08 = -1;
+        model_load_chain->unk20 = 0;
+        model_load_chain->unk1C = 0;
+        model_load_chain = &model_load_spare;
+        if (model_load_spare.next != NULL && model_load_spare.next->callback == (void (*)(void))Menu_StepModelLoad) {
+            model_load_spare.next = NULL;
         }
-        Menu_FreeLoadBuffer((MenuFreeRequest *)&D_005CE8B0);
+        Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_spare);
         node = NULL; // match: a statement after the call keeps it from becoming a sibling jump
     }
 }
 
-/* Copies the model load in progress into the spare node D_005CE8B0, which then loads for the node it was
+/* Copies the model load in progress into the spare node model_load_spare, which then loads for the node it was
    copied from, and cuts the chain after it. */
 static void Menu_CopyLoadToSpare(void) {
-    LinkNode *node = D_00446C90;
+    LinkNode *node = model_load_chain;
 
     if (node != NULL) {
         if (node->callback == (void (*)(void))Menu_StepModelLoad) {
-            if (node != &D_005CE8B0) {
-                D_005CE8B0 = *node;
+            if (node != &model_load_spare) {
+                model_load_spare = *node;
                 node->unk20 = 0;
                 node->unk1C = 0;
-                D_005CE8B0.unk10 = node;
-                D_00446C90 = &D_005CE8B0;
-                if (D_005CE8B0.next != NULL && D_005CE8B0.next->callback == (void (*)(void))Menu_StepModelLoad) {
-                    D_005CE8B0.next = NULL;
+                model_load_spare.unk10 = node;
+                model_load_chain = &model_load_spare;
+                if (model_load_spare.next != NULL && model_load_spare.next->callback == (void (*)(void))Menu_StepModelLoad) {
+                    model_load_spare.next = NULL;
                 }
                 return;
             }
@@ -995,38 +994,38 @@ static void Menu_ShiftEquipModelsNextList(int value, void *unused_data) {
     LinkNode *pending = NULL;
     LinkNode *current;
 
-    if (D_00446C90 == &D_004264C0 || D_00446C90 == &D_00426470) {
+    if (model_load_chain == &model_load_up || model_load_chain == &model_load_shown) {
         ((void (*)(s32))Menu_CopyLoadToSpare)(value); // match: the callee takes nothing, yet the argument is passed on
     } else {
         ((void (*)(s32))Menu_MoveLoadToSpare)(value); // match: as above
     }
-    Menu_FreeLoadBuffer((MenuFreeRequest *)&D_00426510);
-    D_00426510 = D_00426470;
-    D_00426510.next = NULL;
-    if (D_00426510.unk20 == 0) {
-        pending = &D_00426510;
+    Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_down);
+    model_load_down = model_load_shown;
+    model_load_down.next = NULL;
+    if (model_load_down.unk20 == 0) {
+        pending = &model_load_down;
     }
-    D_00426470 = D_004264C0;
-    D_00426470.next = NULL;
-    if (D_00426470.unk20 == 0) {
-        pending = &D_00426470;
+    model_load_shown = model_load_up;
+    model_load_shown.next = NULL;
+    if (model_load_shown.unk20 == 0) {
+        pending = &model_load_shown;
     }
-    Menu_TakeLoadBuffer(&D_004264C0);
+    Menu_TakeLoadBuffer(&model_load_up);
     if (pending == NULL) {
-        pending = &D_004264C0;
+        pending = &model_load_up;
     }
-    D_004264C0.unk20 = 0;
-    D_004264C0.unk1C = 0;
-    D_004264C0.unk08 = -1;
-    D_004265B0.unk20 = 0;
-    D_004265B0.unk1C = 0;
-    D_004265B0.unk08 = -1;
-    D_004265B0.next = NULL;
-    D_00426560.unk20 = 0;
-    D_00426560.unk1C = 0;
-    D_00426560.unk08 = -1;
-    D_004264C0.next = NULL;
-    current = D_00446C90;
+    model_load_up.unk20 = 0;
+    model_load_up.unk1C = 0;
+    model_load_up.unk08 = -1;
+    model_load_right.unk20 = 0;
+    model_load_right.unk1C = 0;
+    model_load_right.unk08 = -1;
+    model_load_right.next = NULL;
+    model_load_left.unk20 = 0;
+    model_load_left.unk1C = 0;
+    model_load_left.unk08 = -1;
+    model_load_up.next = NULL;
+    current = model_load_chain;
     if (current != NULL) {
         if (current->next != NULL) {
             current->next->next = pending;
@@ -1034,13 +1033,13 @@ static void Menu_ShiftEquipModelsNextList(int value, void *unused_data) {
             current->next = pending;
         }
     } else {
-        D_00446C90 = pending;
+        model_load_chain = pending;
     }
-    D_00426470.next = &D_00426510;
-    D_00426510.next = &D_004264C0;
-    D_004264C0.next = &D_00426560;
-    D_00426560.next = &D_004265B0;
-    D_004265B0.next = NULL;
+    model_load_shown.next = &model_load_down;
+    model_load_down.next = &model_load_up;
+    model_load_up.next = &model_load_left;
+    model_load_left.next = &model_load_right;
+    model_load_right.next = NULL;
     Menu_SetEquipModelNames();
 }
 
@@ -1050,38 +1049,38 @@ static void Menu_ShiftEquipModelsPrevList(int arg, void *unused_data) {
     LinkNode *pending = NULL;
     LinkNode *current;
 
-    if (D_00446C90 == &D_00426510 || D_00446C90 == &D_00426470) {
+    if (model_load_chain == &model_load_down || model_load_chain == &model_load_shown) {
         ((void (*)(int))Menu_CopyLoadToSpare)(arg); // match: defined (void); passing the handler's argument through fixes the saved registers
     } else {
         ((void (*)(int))Menu_MoveLoadToSpare)(arg); // match: as above
     }
-    Menu_FreeLoadBuffer((MenuFreeRequest *)&D_004264C0);
-    D_004264C0 = D_00426470;
-    D_004264C0.next = NULL;
-    if (D_004264C0.unk20 == 0) {
-        pending = &D_004264C0;
+    Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_up);
+    model_load_up = model_load_shown;
+    model_load_up.next = NULL;
+    if (model_load_up.unk20 == 0) {
+        pending = &model_load_up;
     }
-    D_00426470 = D_00426510;
-    D_00426470.next = NULL;
-    if (D_00426470.unk20 == 0) {
-        pending = &D_00426470;
+    model_load_shown = model_load_down;
+    model_load_shown.next = NULL;
+    if (model_load_shown.unk20 == 0) {
+        pending = &model_load_shown;
     }
-    Menu_TakeLoadBuffer(&D_00426510);
+    Menu_TakeLoadBuffer(&model_load_down);
     if (pending == NULL) {
-        pending = &D_00426510;
+        pending = &model_load_down;
     }
-    D_00426510.unk20 = 0;
-    D_00426510.unk1C = 0;
-    D_00426510.unk08 = -1;
-    D_004265B0.unk20 = 0;
-    D_004265B0.unk1C = 0;
-    D_004265B0.unk08 = -1;
-    D_004265B0.next = NULL;
-    D_00426560.unk20 = 0;
-    D_00426560.unk1C = 0;
-    D_00426560.unk08 = -1;
-    D_00426510.next = NULL;
-    current = D_00446C90;
+    model_load_down.unk20 = 0;
+    model_load_down.unk1C = 0;
+    model_load_down.unk08 = -1;
+    model_load_right.unk20 = 0;
+    model_load_right.unk1C = 0;
+    model_load_right.unk08 = -1;
+    model_load_right.next = NULL;
+    model_load_left.unk20 = 0;
+    model_load_left.unk1C = 0;
+    model_load_left.unk08 = -1;
+    model_load_down.next = NULL;
+    current = model_load_chain;
     if (current != NULL) {
         if (current->next != NULL) {
             current->next->next = pending;
@@ -1089,13 +1088,13 @@ static void Menu_ShiftEquipModelsPrevList(int arg, void *unused_data) {
             current->next = pending;
         }
     } else {
-        D_00446C90 = pending;
+        model_load_chain = pending;
     }
-    D_00426470.next = &D_004264C0;
-    D_004264C0.next = &D_00426510;
-    D_00426510.next = &D_00426560;
-    D_00426560.next = &D_004265B0;
-    D_004265B0.next = NULL;
+    model_load_shown.next = &model_load_up;
+    model_load_up.next = &model_load_down;
+    model_load_down.next = &model_load_left;
+    model_load_left.next = &model_load_right;
+    model_load_right.next = NULL;
     Menu_SetEquipModelNames();
 }
 
@@ -1105,33 +1104,33 @@ static void Menu_ShiftEquipModelsPrevItem(int unused, void *unused_data) {
     LinkNode *pending = NULL;
     LinkNode *current;
 
-    if (D_00446C90 != &D_00426560) {
+    if (model_load_chain != &model_load_left) {
         Menu_CopyLoadToSpare();
     } else {
         Menu_MoveLoadToSpare();
     }
-    Menu_FreeLoadBuffer((MenuFreeRequest *)&D_00426560);
-    D_00426560 = D_00426470;
-    D_00426560.next = NULL;
-    if (D_00426560.unk20 == 0) {
-        pending = &D_00426560;
+    Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_left);
+    model_load_left = model_load_shown;
+    model_load_left.next = NULL;
+    if (model_load_left.unk20 == 0) {
+        pending = &model_load_left;
     }
-    D_00426470 = D_004265B0;
-    D_00426470.next = NULL;
-    if (D_00426470.unk20 == 0) {
-        pending = &D_00426470;
+    model_load_shown = model_load_right;
+    model_load_shown.next = NULL;
+    if (model_load_shown.unk20 == 0) {
+        pending = &model_load_shown;
     }
-    Menu_TakeLoadBuffer(&D_004265B0);
+    Menu_TakeLoadBuffer(&model_load_right);
     if (pending == NULL) {
-        pending = &D_004265B0;
+        pending = &model_load_right;
     }
-    D_004264C0.next = NULL;
-    D_00426510.next = NULL;
-    D_004265B0.unk20 = 0;
-    D_004265B0.unk1C = 0;
-    D_004265B0.next = NULL;
-    D_004265B0.unk08 = -1;
-    current = D_00446C90;
+    model_load_up.next = NULL;
+    model_load_down.next = NULL;
+    model_load_right.unk20 = 0;
+    model_load_right.unk1C = 0;
+    model_load_right.next = NULL;
+    model_load_right.unk08 = -1;
+    current = model_load_chain;
     if (current != NULL) {
         if (current->next != NULL) {
             current->next->next = pending;
@@ -1139,13 +1138,13 @@ static void Menu_ShiftEquipModelsPrevItem(int unused, void *unused_data) {
             current->next = pending;
         }
     } else {
-        D_00446C90 = pending;
+        model_load_chain = pending;
     }
-    D_00426470.next = &D_00426560;
-    D_00426560.next = &D_004265B0;
-    D_004265B0.next = &D_004264C0;
-    D_004264C0.next = &D_00426510;
-    D_00426510.next = NULL;
+    model_load_shown.next = &model_load_left;
+    model_load_left.next = &model_load_right;
+    model_load_right.next = &model_load_up;
+    model_load_up.next = &model_load_down;
+    model_load_down.next = NULL;
     Menu_SetEquipModelNames();
 }
 
@@ -1157,38 +1156,38 @@ static void Menu_ShiftEquipModelsNextItem(int unused, void *unused_data) {
     LinkNode *node;
     s32 done;
 
-    if (D_00446C90 != &D_004265B0) {
+    if (model_load_chain != &model_load_right) {
         Menu_CopyLoadToSpare();
     } else {
         Menu_MoveLoadToSpare();
     }
-    Menu_FreeLoadBuffer((MenuFreeRequest *)&D_004265B0);
-    D_004265B0 = D_00426470;
-    node = &D_004265B0;
+    Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_right);
+    model_load_right = model_load_shown;
+    node = &model_load_right;
     done = node->unk20;
     node->next = NULL;
     pending = node;
-    node = &D_00426560; // match: unused, but keeps the address in its own register for the two lines above
+    node = &model_load_left; // match: unused, but keeps the address in its own register for the two lines above
     if (done != 0) {
         pending = NULL;
     }
-    D_00426470 = D_00426560;
-    done = D_00426470.unk20;
-    D_00426470.next = NULL;
+    model_load_shown = model_load_left;
+    done = model_load_shown.unk20;
+    model_load_shown.next = NULL;
     if (done == 0) {
-        pending = &D_00426470;
+        pending = &model_load_shown;
     }
-    Menu_TakeLoadBuffer(&D_00426560);
+    Menu_TakeLoadBuffer(&model_load_left);
     if (pending == NULL) {
-        pending = &D_00426560;
+        pending = &model_load_left;
     }
-    D_004264C0.next = NULL;
-    D_00426510.next = NULL;
-    D_00426560.unk20 = 0;
-    D_00426560.unk1C = 0;
-    D_00426560.next = NULL;
-    D_00426560.unk08 = -1;
-    current = D_00446C90;
+    model_load_up.next = NULL;
+    model_load_down.next = NULL;
+    model_load_left.unk20 = 0;
+    model_load_left.unk1C = 0;
+    model_load_left.next = NULL;
+    model_load_left.unk08 = -1;
+    current = model_load_chain;
     if (current != NULL) {
         if (current->next != NULL) {
             current->next->next = pending;
@@ -1196,13 +1195,13 @@ static void Menu_ShiftEquipModelsNextItem(int unused, void *unused_data) {
             current->next = pending;
         }
     } else {
-        D_00446C90 = pending;
+        model_load_chain = pending;
     }
-    D_00426470.next = &D_004265B0;
-    D_004265B0.next = &D_00426560;
-    D_00426560.next = &D_004264C0;
-    D_004264C0.next = &D_00426510;
-    D_00426510.next = NULL;
+    model_load_shown.next = &model_load_right;
+    model_load_right.next = &model_load_left;
+    model_load_left.next = &model_load_up;
+    model_load_up.next = &model_load_down;
+    model_load_down.next = NULL;
     Menu_SetEquipModelNames();
 }
 
@@ -1216,7 +1215,7 @@ static void Menu_OpenModelFile(ChunkUpload *upload) {
         upload->unk08 = File_Open("menu/select2/i0000.mod", 1, 1);
     }
     File_Read(upload->unk08, upload->pool_node->buffer, 0x25800);
-    D_00446AD0 = upload->unk08;
+    model_read_file = upload->unk08;
     upload->stage++;
 }
 
@@ -1227,12 +1226,12 @@ static void Menu_WaitModelRead(ChunkUpload *upload) {
     status = File_Sync(upload->unk08, 1);
     if (status == 0) {
         File_Close(upload->unk08);
-        D_00446AD0 = -1;
+        model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
         File_Close(upload->unk08);
         upload->done = upload->stage = 0;
-        D_00446AD0 = -1;
+        model_read_file = -1;
     }
 }
 
@@ -1277,7 +1276,7 @@ static void Menu_OpenWornModelFile(LinkNode *node) {
         node->unk08 = -1;
         node->unk1C = 0;
         next = node->unk10->next;
-        D_004472F0 = 0;
+        worn_model_loading = 0;
         if (next != NULL) {
             node->unk10 = next;
             return;
@@ -1286,7 +1285,7 @@ static void Menu_OpenWornModelFile(LinkNode *node) {
         return;
     }
     File_Read(file_handle, ((ChunkPoolNode *)node->pool_node)->buffer, 0x25800);
-    D_00446AD0 = node->unk08;
+    model_read_file = node->unk08;
     node->unk1C += 1;
 }
 
@@ -1297,23 +1296,23 @@ static void Menu_WaitWornModelRead(ChunkUpload *upload) {
     status = File_Sync(upload->unk08, 1);
     if (status == 0) {
         File_Close(upload->unk08);
-        D_00446AD0 = -1;
+        model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
         File_Close(upload->unk08);
         upload->done = upload->stage = 0;
-        D_00446AD0 = -1;
-        D_004472F0 = 0;
+        model_read_file = -1;
+        worn_model_loading = 0;
     }
 }
 
-/* PoolSlot_LoadGroup's second argument for each slot of D_00420DF0 */
-static const LinkSlotValues slot_part_values = { { 4, 0xFF, 5, 2, 1, 3, 0, 6, 7, 8, 0xFF, 0xFF } };
+/* per slot of pool_part_sources, the pool group (PoolSlot_LoadGroup's second argument) its model goes into */
+static const LinkSlotValues slot_pool_groups = { { 4, 0xFF, 5, 2, 1, 3, 0, 6, 7, 8, 0xFF, 0xFF } };
 
 /* Last stage of a node's load: points its slot at the two parts of the file, gives the buffer to
    the node it was loaded for and goes on to the next waiting node. */
 static void Menu_FinishWornModelLoad(LinkNode *node) {
-    LinkSlotValues values = slot_part_values;
+    LinkSlotValues values = slot_pool_groups;
     LinkNode *target = node->unk10;
     LinkNode *loaded;
     LinkNode *next;
@@ -1326,18 +1325,18 @@ static void Menu_FinishWornModelLoad(LinkNode *node) {
         return;
     }
     file = ((ChunkPoolNode *)node->pool_node)->buffer;
-    D_00420DF0[target->slot]->texture = (char *)file + file->second_offset;
-    D_00420DF0[target->slot]->file = (PoolPartFile *)((char *)file + file->first_offset);
-    PoolPartFile_Relocate((char *)D_00420DF0[target->slot]->file);
+    pool_part_sources[target->slot]->texture = (char *)file + file->second_offset;
+    pool_part_sources[target->slot]->file = (PoolPartFile *)((char *)file + file->first_offset);
+    PoolPartFile_Relocate((char *)pool_part_sources[target->slot]->file);
     pool_node = node->unk10->pool_node;
     node->unk10->pool_node = node->pool_node;
     node->pool_node = pool_node;
-    PoolSlot_LoadGroup(D_00420DF0[node->unk10->slot], values.value[node->unk10->slot]);
+    PoolSlot_LoadGroup(pool_part_sources[node->unk10->slot], values.value[node->unk10->slot]);
     loaded = node->unk10;
     node->unk1C = 0;
     node->unk08 = -1;
     loaded->unk20 = 1;
-    D_004472F0 = 0;
+    worn_model_loading = 0;
     next = loaded->next;
     if (next != NULL) {
         node->unk10 = next;
@@ -1355,7 +1354,7 @@ static const ChunkUploadStages stream_load_stages = { {
     (void (*)(void *))Menu_FinishWornModelLoad,
 } };
 
-/* The callback of the node that loads the worn models (D_005CED40): runs the stage it is at, until all are loaded. */
+/* The callback of the node that loads the worn models (worn_model_loader): runs the stage it is at, until all are loaded. */
 static void Menu_StepWornModelLoad(ChunkUpload *upload) {
     ChunkUploadStages handlers = stream_load_stages;
 
@@ -1376,7 +1375,7 @@ static void Menu_OpenPackageFile(ChunkUpload *upload) {
         upload = NULL; // match: retail goes on to read through this null pointer
     }
     File_Read(upload->unk08, upload->pool_node->buffer, 0x1A2000);
-    D_00446AD0 = upload->unk08;
+    model_read_file = upload->unk08;
     upload->stage++;
 }
 
@@ -1387,12 +1386,12 @@ static void Menu_WaitPackageRead(ChunkUpload *upload) {
     status = File_Sync(upload->unk08, 1);
     if (status == 0) {
         File_Close(upload->unk08);
-        D_00446AD0 = -1;
+        model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
         File_Close(upload->unk08);
         upload->done = upload->stage = 0;
-        D_00446AD0 = -1;
+        model_read_file = -1;
     }
 }
 
@@ -1423,7 +1422,7 @@ static const ChunkUploadStages package_load_stages = { {
     (void (*)(void *))Menu_FinishPackageLoad,
 } };
 
-/* The callback of the package load node D_005CEEE0: runs the stage it is at, until it is done. */
+/* The callback of the package load node npc_package_load: runs the stage it is at, until it is done. */
 static void Menu_StepPackageLoad(ChunkUpload *upload) {
     ChunkUploadStages stages = package_load_stages;
 
@@ -1434,40 +1433,40 @@ static void Menu_StepPackageLoad(ChunkUpload *upload) {
 
 /* Gives a load node a buffer from the free list, if one is left. Returns nothing. */
 int Menu_TakeLoadBuffer(LinkNode *node) { // match: declared int in kf_link.h, returns nothing
-    ChunkPoolNode *free_node = D_004472B0;
+    ChunkPoolNode *free_node = free_load_buffers;
 
     if (free_node != NULL) {
         node->pool_node = free_node;
-        D_004472B0 = free_node->next;
+        free_load_buffers = free_node->next;
     }
 }
 
 /* Puts a load node's buffer back on the free list. */
 static void Menu_FreeLoadBuffer(MenuFreeRequest *request) {
     ChunkPoolNode *node = (ChunkPoolNode *)request->node;
-    ChunkPoolNode *old_head = D_004472B0;
+    ChunkPoolNode *old_head = free_load_buffers;
 
-    D_004472B0 = node;
+    free_load_buffers = node;
     node->next = old_head;
 }
 
 /* Puts every load buffer back on the free list (a screen is left); a load still in progress is kept, moved to
    the spare node, with the node it was for marked as having no slot. */
 void Menu_ResetLoadBuffers(void) {
-    LinkNode *loading = D_00446C90;
+    LinkNode *loading = model_load_chain;
     u32 i;
 
-    D_004472B0 = D_005CE900;
+    free_load_buffers = load_buffer_nodes;
     for (i = 0; i < 15; i++) {
-        D_005CE900[i].next = &D_005CE900[i + 1];
+        load_buffer_nodes[i].next = &load_buffer_nodes[i + 1];
     }
-    D_005CE900[15].next = NULL;
+    load_buffer_nodes[15].next = NULL;
     if (loading != NULL) {
-        D_005CE8B0 = *loading;
-        D_00446C90 = &D_005CE8B0;
-        D_005CE8B0.next = NULL;
-        if (D_005CE8B0.unk10 != NULL) {
-            D_005CE8B0.unk10->slot = -1;
+        model_load_spare = *loading;
+        model_load_chain = &model_load_spare;
+        model_load_spare.next = NULL;
+        if (model_load_spare.unk10 != NULL) {
+            model_load_spare.unk10->slot = -1;
         }
     }
 }
@@ -1482,13 +1481,13 @@ static void Menu_WriteSpellModelName(char *buffer, MenuItem *item) {
     sprintf(buffer, "menu/select/m%04d.mod", item->unk0C);
 }
 
-/* A copy of Menu_WriteItemModelName, the entry of group 10 in item_name_writers; no item has that group. */
+/* A copy of Menu_WriteItemModelName, the entry of group 10 in item_model_name_writers; no item has that group. */
 static void Menu_WriteGroup10ModelName(char *buffer, MenuItem *item) {
     sprintf(buffer, "menu/select2/i%04d.mod", item_name_defs[item->unk0C].file_number);
 }
 
 /* per MenuItem.group, the function that writes the item's model file name */
-static const MenuNameHandlers item_name_writers = { {
+static const MenuNameHandlers item_model_name_writers = { {
     Menu_WriteItemModelName, Menu_WriteSpellModelName, Menu_WriteItemModelName, Menu_WriteItemModelName, Menu_WriteItemModelName, Menu_WriteItemModelName,
     Menu_WriteItemModelName, Menu_WriteItemModelName, Menu_WriteItemModelName, Menu_WriteItemModelName, Menu_WriteGroup10ModelName, Menu_WriteItemModelName,
 } };
@@ -1496,127 +1495,127 @@ static const MenuNameHandlers item_name_writers = { {
 /* Writes the model file names of the five items on show: the current one, those of the next and
    previous categories, and the next and previous items of this category. */
 static void Menu_SetEquipModelNames(void) {
-    MenuNameHandlers handlers = item_name_writers;
+    MenuNameHandlers handlers = item_model_name_writers;
     MenuItem *item;
     void (*handler)(char *buffer, MenuItem *item);
 
-    item = D_005CE840[0]->item;
+    item = equip_list_shown[0]->item;
     handler = handlers.handler[item->group];
-    handler(D_00426498, item);
-    item = (MenuItem *)D_005CE840[0]; // match: the category passes through the item's register
+    handler(model_name_shown, item);
+    item = (MenuItem *)equip_list_shown[0]; // match: the category passes through the item's register
     item = ((MenuCategory *)item)->next->item;
     handler = handlers.handler[item->group];
-    handler(D_004264E8, item);
-    item = (MenuItem *)D_005CE840[0]; // match: as above
+    handler(model_name_up, item);
+    item = (MenuItem *)equip_list_shown[0]; // match: as above
     item = ((MenuCategory *)item)->prev->item;
     handler = handlers.handler[item->group];
-    handler(D_00426538, item);
-    item = (MenuItem *)D_005CE840[0]; // match: as above
+    handler(model_name_down, item);
+    item = (MenuItem *)equip_list_shown[0]; // match: as above
     item = ((MenuCategory *)item)->item->next;
     handler = handlers.handler[item->group];
-    handler(D_00426588, item);
-    item = (MenuItem *)D_005CE840[0]; // match: as above
+    handler(model_name_left, item);
+    item = (MenuItem *)equip_list_shown[0]; // match: as above
     item = ((MenuCategory *)item)->item->prev;
     handler = handlers.handler[item->group];
-    handler(D_004265D8, item);
+    handler(model_name_right, item);
 }
 
 /* Writes the model file names of the player's weapon and the eight things worn into their upload nodes. */
 static void Menu_SetWornModelNames(void) {
-    sprintf(D_005CE9F8, "menu/equip/i%04d.mod", item_name_defs[player_state.weapon + ITEM_WEAPON_FIRST].file_number);
-    sprintf(D_005CEA98, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEAE8, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEB38, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEB88, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEBD8, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEC28, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CEC78, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST].file_number);
-    sprintf(D_005CECC8, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST].file_number);
-    D_005CED40.unk20 = 0;
+    sprintf(weapon_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.weapon + ITEM_WEAPON_FIRST].file_number);
+    sprintf(shield_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_SHIELD] + ITEM_WORN_FIRST].file_number);
+    sprintf(armor_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_ARMOR] + ITEM_WORN_FIRST].file_number);
+    sprintf(helm_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_HELM] + ITEM_WORN_FIRST].file_number);
+    sprintf(gauntlet_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_GAUNTLET] + ITEM_WORN_FIRST].file_number);
+    sprintf(boot_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_BOOT] + ITEM_WORN_FIRST].file_number);
+    sprintf(ring_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_RING] + ITEM_WORN_FIRST].file_number);
+    sprintf(bracelet_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_BRACELET] + ITEM_WORN_FIRST].file_number);
+    sprintf(amulet_model_name, "menu/equip/i%04d.mod", item_name_defs[player_state.equipment[EQUIP_AMULET] + ITEM_WORN_FIRST].file_number);
+    worn_model_loader.unk20 = 0;
 }
 
-/* Sets up the loads of the player's equipment models (nine nodes behind D_005CED40) and of the five
+/* Sets up the loads of the player's equipment models (nine nodes behind worn_model_loader) and of the five
    menu item models, and chains them all for the loader. */
-// match: the order of the statements decides which node address gets which register (and D_005CED40 gets none)
+// match: the order of the statements decides which node address gets which register (and worn_model_loader gets none)
 static void Menu_ChainEquipModels(void) {
-    Menu_TakeLoadBuffer(&D_005CED40);
-    Menu_TakeLoadBuffer(&D_005CE9D0);
-    Menu_TakeLoadBuffer(&D_005CEA70);
-    Menu_TakeLoadBuffer(&D_005CEAC0);
-    Menu_TakeLoadBuffer(&D_005CEB10);
-    Menu_TakeLoadBuffer(&D_005CEB60);
-    Menu_TakeLoadBuffer(&D_005CEBB0);
-    Menu_TakeLoadBuffer(&D_005CEC00);
-    Menu_TakeLoadBuffer(&D_005CEC50);
-    Menu_TakeLoadBuffer(&D_005CECA0);
+    Menu_TakeLoadBuffer(&worn_model_loader);
+    Menu_TakeLoadBuffer(&weapon_model_load);
+    Menu_TakeLoadBuffer(&shield_model_load);
+    Menu_TakeLoadBuffer(&armor_model_load);
+    Menu_TakeLoadBuffer(&helm_model_load);
+    Menu_TakeLoadBuffer(&gauntlet_model_load);
+    Menu_TakeLoadBuffer(&boot_model_load);
+    Menu_TakeLoadBuffer(&ring_model_load);
+    Menu_TakeLoadBuffer(&bracelet_model_load);
+    Menu_TakeLoadBuffer(&amulet_model_load);
     Menu_SetWornModelNames();
-    D_005CEA70.slot = 2;
-    D_005CEAC0.slot = 4;
-    D_005CEB10.slot = 3;
-    D_005CEB60.slot = 5;
-    D_005CEBB0.slot = 6;
-    D_005CEC00.slot = 7;
-    D_005CEC50.slot = 8;
-    D_005CECA0.slot = 9;
-    D_005CED40.callback = (void (*)(void))Menu_StepWornModelLoad;
-    D_005CE9D0.callback = (void (*)(void))Menu_StepWornModelLoad;
-    D_005CEA70.callback = (void (*)(void))Menu_StepWornModelLoad;
-    D_005CEAC0.callback = (void (*)(void))Menu_StepWornModelLoad;
-    D_005CEB10.callback = (void (*)(void))Menu_StepWornModelLoad;
-    D_005CEB60.callback = (void (*)(void))Menu_StepWornModelLoad;
-    D_005CEBB0.callback = (void (*)(void))Menu_StepWornModelLoad;
-    D_005CEC00.callback = (void (*)(void))Menu_StepWornModelLoad;
-    D_005CEC50.callback = (void (*)(void))Menu_StepWornModelLoad;
-    D_005CECA0.callback = (void (*)(void))Menu_StepWornModelLoad;
-    D_005CE9D0.slot = 0;
-    D_005CE9D0.unk1C = 0;
-    D_005CEA70.unk1C = 0;
-    D_005CEAC0.unk1C = 0;
-    D_005CEB10.unk1C = 0;
-    D_005CEB60.unk1C = 0;
-    D_005CEBB0.unk1C = 0;
-    D_005CEC00.unk1C = 0;
-    D_005CEC50.unk1C = 0;
-    D_005CECA0.unk1C = 0;
-    D_005CED40.unk10 = &D_005CEA70;
-    D_005CEA70.next = &D_005CE9D0;
-    D_005CE9D0.next = &D_005CEAC0;
-    D_005CED40.unk1C = 0;
-    D_005CED40.unk20 = 0;
-    D_005CEAC0.next = &D_005CEB10;
-    D_005CEB10.next = &D_005CEB60;
-    D_005CEB60.next = &D_005CEBB0;
-    D_005CEBB0.next = &D_005CEC00;
-    D_005CEC00.next = &D_005CEC50;
-    D_005CEC50.next = &D_005CECA0;
-    D_005CECA0.next = NULL;
+    shield_model_load.slot = 2;
+    armor_model_load.slot = 4;
+    helm_model_load.slot = 3;
+    gauntlet_model_load.slot = 5;
+    boot_model_load.slot = 6;
+    ring_model_load.slot = 7;
+    bracelet_model_load.slot = 8;
+    amulet_model_load.slot = 9;
+    worn_model_loader.callback = (void (*)(void))Menu_StepWornModelLoad;
+    weapon_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
+    shield_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
+    armor_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
+    helm_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
+    gauntlet_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
+    boot_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
+    ring_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
+    bracelet_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
+    amulet_model_load.callback = (void (*)(void))Menu_StepWornModelLoad;
+    weapon_model_load.slot = 0;
+    weapon_model_load.unk1C = 0;
+    shield_model_load.unk1C = 0;
+    armor_model_load.unk1C = 0;
+    helm_model_load.unk1C = 0;
+    gauntlet_model_load.unk1C = 0;
+    boot_model_load.unk1C = 0;
+    ring_model_load.unk1C = 0;
+    bracelet_model_load.unk1C = 0;
+    amulet_model_load.unk1C = 0;
+    worn_model_loader.unk10 = &shield_model_load;
+    shield_model_load.next = &weapon_model_load;
+    weapon_model_load.next = &armor_model_load;
+    worn_model_loader.unk1C = 0;
+    worn_model_loader.unk20 = 0;
+    armor_model_load.next = &helm_model_load;
+    helm_model_load.next = &gauntlet_model_load;
+    gauntlet_model_load.next = &boot_model_load;
+    boot_model_load.next = &ring_model_load;
+    ring_model_load.next = &bracelet_model_load;
+    bracelet_model_load.next = &amulet_model_load;
+    amulet_model_load.next = NULL;
     Menu_SetEquipModelNames();
-    Menu_TakeLoadBuffer(&D_00426470);
-    Menu_TakeLoadBuffer(&D_004264C0);
-    Menu_TakeLoadBuffer(&D_00426510);
-    Menu_TakeLoadBuffer(&D_00426560);
-    Menu_TakeLoadBuffer(&D_004265B0);
-    D_00426470.next = &D_004264C0;
-    D_00426470.callback = (void (*)(void))Menu_StepModelLoad;
-    D_004264C0.next = &D_00426510;
-    D_004264C0.callback = (void (*)(void))Menu_StepModelLoad;
-    D_00426510.next = &D_00426560;
-    D_00426510.callback = (void (*)(void))Menu_StepModelLoad;
-    D_00426560.next = &D_004265B0;
-    D_00426560.callback = (void (*)(void))Menu_StepModelLoad;
-    D_004265B0.next = NULL;
-    D_004265B0.callback = (void (*)(void))Menu_StepModelLoad;
-    D_00426470.unk20 = 0;
-    D_004264C0.unk20 = 0;
-    D_00426510.unk20 = 0;
-    D_00426560.unk20 = 0;
-    D_004265B0.unk20 = 0;
-    D_004264C0.unk1C = 0;
-    D_00426510.unk1C = 0;
-    D_00426560.unk1C = 0;
-    D_00426470.unk1C = D_004265B0.unk1C = 0;
-    D_00446C90 = &D_005CED40;
-    D_005CED40.next = &D_00426470;
+    Menu_TakeLoadBuffer(&model_load_shown);
+    Menu_TakeLoadBuffer(&model_load_up);
+    Menu_TakeLoadBuffer(&model_load_down);
+    Menu_TakeLoadBuffer(&model_load_left);
+    Menu_TakeLoadBuffer(&model_load_right);
+    model_load_shown.next = &model_load_up;
+    model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_up.next = &model_load_down;
+    model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_down.next = &model_load_left;
+    model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_left.next = &model_load_right;
+    model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_right.next = NULL;
+    model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_shown.unk20 = 0;
+    model_load_up.unk20 = 0;
+    model_load_down.unk20 = 0;
+    model_load_left.unk20 = 0;
+    model_load_right.unk20 = 0;
+    model_load_up.unk1C = 0;
+    model_load_down.unk1C = 0;
+    model_load_left.unk1C = 0;
+    model_load_shown.unk1C = model_load_right.unk1C = 0;
+    model_load_chain = &worn_model_loader;
+    worn_model_loader.next = &model_load_shown;
 }
 
 /* Writes the model file names of the five items on show in a long list: the current one, its two
@@ -1626,21 +1625,21 @@ static void Menu_SetAllItemsModelNames(void) {
     MenuItem *behind;
     s32 i;
 
-    ahead = behind = D_005CE860[0];
-    if (D_00446C38 >= 8) {
+    ahead = behind = owned_list_top[0];
+    if (owned_list_count >= 8) {
         for (i = 0; i < 7; i++) {
             ahead = ahead->next;
             behind = behind->prev;
-            if (ahead == D_00446C24) {
+            if (ahead == owned_list_first) {
                 i++;
-                while (i < 7 && behind != D_00446C28) {
+                while (i < 7 && behind != owned_list_last_page) {
                     i++;
                     behind = behind->prev;
                 }
                 break;
-            } else if (behind == D_00446C28) {
+            } else if (behind == owned_list_last_page) {
                 i++;
-                while (i < 7 && ahead != D_00446C24) {
+                while (i < 7 && ahead != owned_list_first) {
                     i++;
                     ahead = ahead->next;
                 }
@@ -1648,82 +1647,82 @@ static void Menu_SetAllItemsModelNames(void) {
             }
         }
     } else {
-        ahead = behind = D_00446C24;
+        ahead = behind = owned_list_first;
     }
-    sprintf(D_00426498, "menu/select2/i%04d.mod", item_name_defs[D_005CE850[0]->unk0C].file_number);
-    sprintf(D_00426538, "menu/select2/i%04d.mod", item_name_defs[D_005CE850[0]->prev->unk0C].file_number);
-    sprintf(D_004264E8, "menu/select2/i%04d.mod", item_name_defs[D_005CE850[0]->next->unk0C].file_number);
-    sprintf(D_00426588, "menu/select2/i%04d.mod", item_name_defs[ahead->unk0C].file_number);
-    sprintf(D_004265D8, "menu/select2/i%04d.mod", item_name_defs[behind->unk0C].file_number);
+    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->unk0C].file_number);
+    sprintf(model_name_down, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->prev->unk0C].file_number);
+    sprintf(model_name_up, "menu/select2/i%04d.mod", item_name_defs[owned_list_current[0]->next->unk0C].file_number);
+    sprintf(model_name_left, "menu/select2/i%04d.mod", item_name_defs[ahead->unk0C].file_number);
+    sprintf(model_name_right, "menu/select2/i%04d.mod", item_name_defs[behind->unk0C].file_number);
 }
 
 /* Opens main menu line 5: names the five models of the list of everything owned and chains their loads. */
 static void Menu_ChainAllItemsModels(void) {
-    if (D_005CE850[0] != 0) {
+    if (owned_list_current[0] != 0) {
         Menu_SetAllItemsModelNames();
-        Menu_TakeLoadBuffer(&D_00426470);
-        Menu_TakeLoadBuffer(&D_004264C0);
-        Menu_TakeLoadBuffer(&D_00426510);
-        Menu_TakeLoadBuffer(&D_00426560);
-        Menu_TakeLoadBuffer(&D_004265B0);
-        D_00426470.next = &D_004264C0;
-        D_00426470.callback = (void (*)(void))Menu_StepModelLoad;
-        D_00426470.unk20 = 0;
-        D_004264C0.next = &D_00426510;
-        D_004264C0.callback = (void (*)(void))Menu_StepModelLoad;
-        D_004264C0.unk20 = 0;
-        D_004264C0.unk1C = 0;
-        D_00426510.next = &D_00426560;
-        D_00426510.callback = (void (*)(void))Menu_StepModelLoad;
-        D_00426510.unk20 = 0;
-        D_00426510.unk1C = 0;
-        D_00426560.next = &D_004265B0;
-        D_00426560.callback = (void (*)(void))Menu_StepModelLoad;
-        D_00426560.unk20 = 0;
-        D_00426560.unk1C = 0;
-        D_004265B0.next = NULL;
-        D_004265B0.callback = (void (*)(void))Menu_StepModelLoad;
-        D_004265B0.unk20 = 0;
-        D_00426470.unk1C = D_004265B0.unk1C = 0;
-        D_00446C90 = &D_00426470;
+        Menu_TakeLoadBuffer(&model_load_shown);
+        Menu_TakeLoadBuffer(&model_load_up);
+        Menu_TakeLoadBuffer(&model_load_down);
+        Menu_TakeLoadBuffer(&model_load_left);
+        Menu_TakeLoadBuffer(&model_load_right);
+        model_load_shown.next = &model_load_up;
+        model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_shown.unk20 = 0;
+        model_load_up.next = &model_load_down;
+        model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_up.unk20 = 0;
+        model_load_up.unk1C = 0;
+        model_load_down.next = &model_load_left;
+        model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_down.unk20 = 0;
+        model_load_down.unk1C = 0;
+        model_load_left.next = &model_load_right;
+        model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_left.unk20 = 0;
+        model_load_left.unk1C = 0;
+        model_load_right.next = NULL;
+        model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_right.unk20 = 0;
+        model_load_shown.unk1C = model_load_right.unk1C = 0;
+        model_load_chain = &model_load_shown;
     }
 }
 
 /* Writes the model file names of the three spells on show: the one the cursor is on and its two neighbours. */
 static void Menu_SetSpellModelNames(void) {
-    sprintf(D_00426498, "menu/select/m%04d.mod", D_005CE880[0]->unk0C);
-    sprintf(D_00426538, "menu/select/m%04d.mod", D_005CE880[0]->prev->unk0C);
-    sprintf(D_004264E8, "menu/select/m%04d.mod", D_005CE880[0]->next->unk0C);
+    sprintf(model_name_shown, "menu/select/m%04d.mod", castable_spell_cursor[0]->unk0C);
+    sprintf(model_name_down, "menu/select/m%04d.mod", castable_spell_cursor[0]->prev->unk0C);
+    sprintf(model_name_up, "menu/select/m%04d.mod", castable_spell_cursor[0]->next->unk0C);
 }
 
 /* Opens main menu line 1: names the three spell models and chains the load nodes (nodes 3 and 4 apart, unused). */
 static void Menu_ChainSpellModels(void) {
     Menu_SetSpellModelNames();
-    Menu_TakeLoadBuffer(&D_00426470);
-    Menu_TakeLoadBuffer(&D_004264C0);
-    Menu_TakeLoadBuffer(&D_00426510);
-    Menu_TakeLoadBuffer(&D_00426560);
-    Menu_TakeLoadBuffer(&D_004265B0);
-    D_00426470.next = &D_004264C0;
-    D_00426470.callback = (void (*)(void))Menu_StepModelLoad;
-    D_004264C0.next = &D_00426510;
-    D_004264C0.callback = (void (*)(void))Menu_StepModelLoad;
-    D_00426510.next = NULL;
-    D_00426510.callback = (void (*)(void))Menu_StepModelLoad;
-    D_00426560.next = &D_004265B0;
-    D_00426560.callback = (void (*)(void))Menu_StepModelLoad;
-    D_004265B0.next = NULL;
-    D_004265B0.callback = (void (*)(void))Menu_StepModelLoad;
-    D_00426470.unk20 = 0;
-    D_004264C0.unk20 = 0;
-    D_00426510.unk20 = 0;
-    D_00426560.unk20 = 0;
-    D_004265B0.unk20 = 0;
-    D_004264C0.unk1C = 0;
-    D_00426510.unk1C = 0;
-    D_00426560.unk1C = 0;
-    D_00426470.unk1C = D_004265B0.unk1C = 0;
-    D_00446C90 = &D_00426470;
+    Menu_TakeLoadBuffer(&model_load_shown);
+    Menu_TakeLoadBuffer(&model_load_up);
+    Menu_TakeLoadBuffer(&model_load_down);
+    Menu_TakeLoadBuffer(&model_load_left);
+    Menu_TakeLoadBuffer(&model_load_right);
+    model_load_shown.next = &model_load_up;
+    model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_up.next = &model_load_down;
+    model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_down.next = NULL;
+    model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_left.next = &model_load_right;
+    model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_right.next = NULL;
+    model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
+    model_load_shown.unk20 = 0;
+    model_load_up.unk20 = 0;
+    model_load_down.unk20 = 0;
+    model_load_left.unk20 = 0;
+    model_load_right.unk20 = 0;
+    model_load_up.unk1C = 0;
+    model_load_down.unk1C = 0;
+    model_load_left.unk1C = 0;
+    model_load_shown.unk1C = model_load_right.unk1C = 0;
+    model_load_chain = &model_load_shown;
 }
 
 /* the LevelDef numbers of the twelve key items, in the order of the key item screen */
@@ -1739,25 +1738,25 @@ static void Menu_ChainKeyItemModels(void) {
     s32 i;
 
     for (i = 0; i < 12; i++) {
-        Menu_TakeLoadBuffer(&D_005CEF30[i]);
-        D_005CEF30[i].callback = (void (*)(void))Menu_StepModelLoad;
-        D_005CEF30[i].unk1C = 0;
-        D_005CEF30[i].unk20 = 0;
+        Menu_TakeLoadBuffer(&key_item_model_loads[i]);
+        key_item_model_loads[i].callback = (void (*)(void))Menu_StepModelLoad;
+        key_item_model_loads[i].unk1C = 0;
+        key_item_model_loads[i].unk20 = 0;
         if (item_counts[numbers.number[i]] != 0) {
-            sprintf(D_005CEF30[i].name, "menu/select/i%04d.mod", item_name_defs[numbers.number[i]].file_number);
+            sprintf(key_item_model_loads[i].name, "menu/select/i%04d.mod", item_name_defs[numbers.number[i]].file_number);
         } else {
-            sprintf(D_005CEF30[i].name, "menu/equip/i7000.mod");
+            sprintf(key_item_model_loads[i].name, "menu/equip/i7000.mod");
         }
     }
-    if (D_00446C90 != NULL) {
-        D_00446C90->next = &D_005CEF30[0];
+    if (model_load_chain != NULL) {
+        model_load_chain->next = &key_item_model_loads[0];
     } else {
-        D_00446C90 = &D_005CEF30[0];
+        model_load_chain = &key_item_model_loads[0];
     }
     for (i = 10; i >= 0; i--) {
-        D_005CEF30[i].next = &D_005CEF30[i + 1];
+        key_item_model_loads[i].next = &key_item_model_loads[i + 1];
     }
-    D_005CEF30[11].next = NULL;
+    key_item_model_loads[11].next = NULL;
 }
 
 /* The spell cursor went on one: the model shown moves to node 2, node 1's becomes the one shown, node 1 is
@@ -1768,44 +1767,44 @@ static void Menu_ShiftSpellModelsNext(int unused) {
     LinkNode *node;
     s32 done;
 
-    if (D_00446C90 != &D_00426510) {
+    if (model_load_chain != &model_load_down) {
         Menu_CopyLoadToSpare();
     } else {
         Menu_MoveLoadToSpare();
     }
-    Menu_FreeLoadBuffer((MenuFreeRequest *)&D_00426510);
-    D_00426510 = D_00426470;
-    node = &D_00426510;
+    Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_down);
+    model_load_down = model_load_shown;
+    node = &model_load_down;
     done = node->unk20;
     node->next = NULL;
     pending = node;
-    node = &D_004264C0; // match: unused, but keeps the address in its own register for the two lines above
+    node = &model_load_up; // match: unused, but keeps the address in its own register for the two lines above
     if (done != 0) {
         pending = NULL;
     }
-    D_00426470 = D_004264C0;
-    done = D_00426470.unk20;
-    D_00426470.next = NULL;
+    model_load_shown = model_load_up;
+    done = model_load_shown.unk20;
+    model_load_shown.next = NULL;
     if (done == 0) {
-        pending = &D_00426470;
+        pending = &model_load_shown;
     }
-    Menu_TakeLoadBuffer(&D_004264C0);
+    Menu_TakeLoadBuffer(&model_load_up);
     if (pending == NULL) {
-        pending = &D_004264C0;
+        pending = &model_load_up;
     }
-    D_004264C0.unk08 = -1;
-    D_004264C0.unk1C = 0;
-    D_004264C0.next = NULL;
-    D_004264C0.unk20 = 0;
-    current = D_00446C90;
+    model_load_up.unk08 = -1;
+    model_load_up.unk1C = 0;
+    model_load_up.next = NULL;
+    model_load_up.unk20 = 0;
+    current = model_load_chain;
     if (current != NULL) {
         current->next = pending;
     } else {
-        D_00446C90 = pending;
+        model_load_chain = pending;
     }
-    D_00426470.next = &D_004264C0;
-    D_004264C0.next = &D_00426510;
-    D_00426510.next = NULL;
+    model_load_shown.next = &model_load_up;
+    model_load_up.next = &model_load_down;
+    model_load_down.next = NULL;
 }
 
 /* The spell cursor went back one: the model shown moves to node 1, node 2's becomes the one shown, node 2 is
@@ -1816,63 +1815,63 @@ static void Menu_ShiftSpellModelsPrev(int unused) {
     LinkNode *node;
     s32 done;
 
-    if (D_00446C90 != &D_004264C0) {
+    if (model_load_chain != &model_load_up) {
         Menu_CopyLoadToSpare();
     } else {
         Menu_MoveLoadToSpare();
     }
-    Menu_FreeLoadBuffer((MenuFreeRequest *)&D_004264C0);
-    D_004264C0 = D_00426470;
-    node = &D_004264C0;
+    Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_up);
+    model_load_up = model_load_shown;
+    node = &model_load_up;
     done = node->unk20;
     node->next = NULL;
     pending = node;
-    node = &D_00426510; // match: unused, but keeps the address in its own register for the two lines above
+    node = &model_load_down; // match: unused, but keeps the address in its own register for the two lines above
     if (done != 0) {
         pending = NULL;
     }
-    D_00426470 = D_00426510;
-    done = D_00426470.unk20;
-    D_00426470.next = NULL;
+    model_load_shown = model_load_down;
+    done = model_load_shown.unk20;
+    model_load_shown.next = NULL;
     if (done == 0) {
-        pending = &D_00426470;
+        pending = &model_load_shown;
     }
-    Menu_TakeLoadBuffer(&D_00426510);
+    Menu_TakeLoadBuffer(&model_load_down);
     if (pending == NULL) {
-        pending = &D_00426510;
+        pending = &model_load_down;
     }
-    D_00426510.unk08 = -1;
-    D_00426510.unk1C = 0;
-    D_00426510.next = NULL;
-    D_00426510.unk20 = 0;
-    current = D_00446C90;
+    model_load_down.unk08 = -1;
+    model_load_down.unk1C = 0;
+    model_load_down.next = NULL;
+    model_load_down.unk20 = 0;
+    current = model_load_chain;
     if (current != NULL) {
         current->next = pending;
     } else {
-        D_00446C90 = pending;
+        model_load_chain = pending;
     }
-    D_00426470.next = &D_00426510;
-    D_00426510.next = &D_004264C0;
-    D_004264C0.next = NULL;
+    model_load_shown.next = &model_load_down;
+    model_load_down.next = &model_load_up;
+    model_load_up.next = NULL;
 }
 
 /* Allocates the sixteen 0x25800-byte load buffers, builds their free list and sets up the package load node. */
 void Menu_InitLoadBuffers(void) {
     u32 i;
 
-    MenuArena_Init(D_00446F58);
-    D_004472B0 = D_005CE900;
+    MenuArena_Init(packet_area);
+    free_load_buffers = load_buffer_nodes;
     for (i = 0; i < 15; i++) {
-        D_005CE900[i].next = &D_005CE900[i + 1];
-        D_005CE900[i].buffer = (void *)MenuArena_Alloc(0x25800, 0x10);
+        load_buffer_nodes[i].next = &load_buffer_nodes[i + 1];
+        load_buffer_nodes[i].buffer = (void *)MenuArena_Alloc(0x25800, 0x10);
     }
-    D_005CE900[15].next = NULL;
-    D_005CE900[15].buffer = (void *)MenuArena_Alloc(0x25800, 0x10);
-    D_005CEEE0.pool_node = D_005CE900;
-    D_005CEEE0.callback = Menu_StepPackageLoad;
-    D_005CEEE0.stage = 0;
-    D_005CEEE0.done = 0;
-    sprintf(D_005CEEE0.name, "menu/select/npc.mod");
+    load_buffer_nodes[15].next = NULL;
+    load_buffer_nodes[15].buffer = (void *)MenuArena_Alloc(0x25800, 0x10);
+    npc_package_load.pool_node = load_buffer_nodes;
+    npc_package_load.callback = Menu_StepPackageLoad;
+    npc_package_load.stage = 0;
+    npc_package_load.done = 0;
+    sprintf(npc_package_load.name, "menu/select/npc.mod");
 }
 
 /* Loads a file of sprite parts (0x60-byte records behind a 0x10-byte header); gives back how many and where. */
@@ -1893,42 +1892,42 @@ static void Menu_LoadPartFile(char *name, u32 *record_count, SpritePacket **reco
 
 /* Loads the 36 part files of the menu, trade and smith screens. */
 static void Menu_LoadAllParts(void) {
-    Menu_LoadPartFile("menu/main_para.dat", &D_00446A30, &D_0044722C);
-    Menu_LoadPartFile("menu/item_para.dat", &D_00446A34, &D_00447230);
-    Menu_LoadPartFile("menu/magic_para.dat", &D_00446A38, &D_00447234);
-    Menu_LoadPartFile("menu/equip_para.dat", &D_00446A3C, &D_00447238);
-    Menu_LoadPartFile("menu/equip_a_para.dat", &D_00446A40, &D_0044723C);
-    Menu_LoadPartFile("menu/equip_g_para.dat", &D_00446A44, &D_00447240);
-    Menu_LoadPartFile("menu/equip_m_para.dat", &D_00446A48, &D_00447244);
-    Menu_LoadPartFile("menu/equip_s_para.dat", &D_00446A80, &D_0044726C);
-    Menu_LoadPartFile("menu/equip_g2_para.dat", &D_00446A7C, &D_00447268);
-    Menu_LoadPartFile("menu/status_para.dat", &D_00446A50, &D_0044724C);
-    Menu_LoadPartFile("menu/keylist_para.dat", &D_00446A6C, &D_00447260);
-    Menu_LoadPartFile("menu/image_para.dat", &D_00446A54, &D_00447250);
-    Menu_LoadPartFile("menu/recol_para.dat", &D_00446A58, &D_00447254);
-    Menu_LoadPartFile("menu/recol_a_para.dat", &D_00446A84, &D_00447270);
-    Menu_LoadPartFile("menu/recol_g_para.dat", &D_00446A88, &D_00447274);
-    Menu_LoadPartFile("menu/recol_g2_para.dat", &D_00446A8C, &D_00447278);
-    Menu_LoadPartFile("menu/item_sel_para.dat", &D_00446A4C, &D_00447248);
-    Menu_LoadPartFile("menu/system_para.dat", &D_00446A5C, &D_00447258);
-    Menu_LoadPartFile("menu/option_para.dat", &D_00446A68, &D_0044725C);
-    Menu_LoadPartFile("menu/keyconf_para.dat", &D_00446A70, &D_00447264);
-    Menu_LoadPartFile("menu/preshop_para.dat", &D_00446A74, &D_00446BFC);
-    Menu_LoadPartFile("menu/shop_para.dat", &D_00446A78, &D_00446C00);
-    Menu_LoadPartFile("menu/shop_a_para.dat", &D_00446A98, &D_00446C10);
-    Menu_LoadPartFile("menu/shop_g_para.dat", &D_00446A9C, &D_00446C14);
-    Menu_LoadPartFile("menu/shop_g2_para.dat", &D_00446A94, &D_00446C0C);
-    Menu_LoadPartFile("menu/pretune_para.dat", &D_00446AA0, &D_00446C4C);
-    Menu_LoadPartFile("menu/tune_para.dat", &D_00446AA4, &D_00446C50);
-    Menu_LoadPartFile("menu/tune_s_para.dat", &D_00446AA8, &D_00446C54);
-    Menu_LoadPartFile("menu/slot_para.dat", &D_00446A60, &D_00446BF4);
-    Menu_LoadPartFile("menu/data_para.dat", &D_00446A64, &D_00446BF8);
-    Menu_LoadPartFile("menu/mc_para.dat", &D_00446AAC, &D_00446C58);
-    Menu_LoadPartFile("menu/bright_para.dat", &D_00446AB0, &D_00446C5C);
-    Menu_LoadPartFile("menu/shop_mess_para.dat", &D_00446AB4, &D_00446C60);
-    Menu_LoadPartFile("menu/tune_mess_para.dat", &D_00446AB8, &D_00446C64);
-    Menu_LoadPartFile("menu/mc_mess_para.dat", &D_00446ABC, &D_00446C68);
-    Menu_LoadPartFile("menu/equip_m2_para.dat", &D_00446AC0, &D_00446C6C);
+    Menu_LoadPartFile("menu/main_para.dat", &main_part_count, &main_parts);
+    Menu_LoadPartFile("menu/item_para.dat", &item_part_count, &item_parts);
+    Menu_LoadPartFile("menu/magic_para.dat", &magic_part_count, &magic_parts);
+    Menu_LoadPartFile("menu/equip_para.dat", &equip_part_count, &equip_parts);
+    Menu_LoadPartFile("menu/equip_a_para.dat", &equip_a_part_count, &equip_a_parts);
+    Menu_LoadPartFile("menu/equip_g_para.dat", &equip_g_part_count, &equip_g_parts);
+    Menu_LoadPartFile("menu/equip_m_para.dat", &equip_m_part_count, &equip_m_parts);
+    Menu_LoadPartFile("menu/equip_s_para.dat", &equip_s_part_count, &equip_s_parts);
+    Menu_LoadPartFile("menu/equip_g2_para.dat", &equip_g2_part_count, &equip_g2_parts);
+    Menu_LoadPartFile("menu/status_para.dat", &status_part_count, &status_parts);
+    Menu_LoadPartFile("menu/keylist_para.dat", &keylist_part_count, &keylist_parts);
+    Menu_LoadPartFile("menu/image_para.dat", &image_part_count, &image_parts);
+    Menu_LoadPartFile("menu/recol_para.dat", &recol_part_count, &recol_parts);
+    Menu_LoadPartFile("menu/recol_a_para.dat", &recol_a_part_count, &recol_a_parts);
+    Menu_LoadPartFile("menu/recol_g_para.dat", &recol_g_part_count, &recol_g_parts);
+    Menu_LoadPartFile("menu/recol_g2_para.dat", &recol_g2_part_count, &recol_g2_parts);
+    Menu_LoadPartFile("menu/item_sel_para.dat", &item_sel_part_count, &item_sel_parts);
+    Menu_LoadPartFile("menu/system_para.dat", &system_part_count, &system_parts);
+    Menu_LoadPartFile("menu/option_para.dat", &option_part_count, &option_parts);
+    Menu_LoadPartFile("menu/keyconf_para.dat", &keyconf_part_count, &keyconf_parts);
+    Menu_LoadPartFile("menu/preshop_para.dat", &preshop_part_count, &preshop_parts);
+    Menu_LoadPartFile("menu/shop_para.dat", &shop_part_count, &shop_parts);
+    Menu_LoadPartFile("menu/shop_a_para.dat", &shop_a_part_count, &shop_a_parts);
+    Menu_LoadPartFile("menu/shop_g_para.dat", &shop_g_part_count, &shop_g_parts);
+    Menu_LoadPartFile("menu/shop_g2_para.dat", &shop_g2_part_count, &shop_g2_parts);
+    Menu_LoadPartFile("menu/pretune_para.dat", &pretune_part_count, &pretune_parts);
+    Menu_LoadPartFile("menu/tune_para.dat", &tune_part_count, &tune_parts);
+    Menu_LoadPartFile("menu/tune_s_para.dat", &tune_s_part_count, &tune_s_parts);
+    Menu_LoadPartFile("menu/slot_para.dat", &slot_part_count, &slot_parts);
+    Menu_LoadPartFile("menu/data_para.dat", &data_part_count, &data_parts);
+    Menu_LoadPartFile("menu/mc_para.dat", &mc_part_count, &mc_parts);
+    Menu_LoadPartFile("menu/bright_para.dat", &bright_part_count, &bright_parts);
+    Menu_LoadPartFile("menu/shop_mess_para.dat", &shop_mess_part_count, &shop_mess_parts);
+    Menu_LoadPartFile("menu/tune_mess_para.dat", &tune_mess_part_count, &tune_mess_parts);
+    Menu_LoadPartFile("menu/mc_mess_para.dat", &mc_mess_part_count, &mc_mess_parts);
+    Menu_LoadPartFile("menu/equip_m2_para.dat", &equip_m2_part_count, &equip_m2_parts);
 }
 
 /* Sets the menus up: the frame buffers, the menu and font textures, the twenty equipment pictures, then every
@@ -1940,224 +1939,224 @@ void Menu_Init(void) {
     s32 number;
 
     sceGsResetGraph(0, 1, 2, 1);
-    sceGsSetDefDBuffDc(&D_00426140, 0, 0x280, 0xE0, 3, 0x30, 1);
-    D_00426140.clear1_rgbaq = D_00426140.clear0_rgbaq = 0x180000000L;
+    sceGsSetDefDBuffDc(&menu_frame_buffers, 0, 0x280, 0xE0, 3, 0x30, 1);
+    menu_frame_buffers.clear1_rgbaq = menu_frame_buffers.clear0_rgbaq = 0x180000000L;
     MenuHeap_Reset();
     Menu_LoadAllParts();
     menu_file = MenuHeap_Alloc(0xE0000);
     MenuFile_Load("menu/menu.tmx", menu_file);
     MenuFile_IndexBlocks(menu_file);
     MenuHeap_Mark();
-    D_0042A8D0.header = MenuHeap_Alloc(0x23000);
-    MenuFile_Load("menu/font.tmr", D_0042A8D0.header);
-    MenuTexture_GetRegisters(D_0042A8D0.header, &D_0042A8D0.tex0, &D_0042A8D0.trailer);
+    menu_font_texture.header = MenuHeap_Alloc(0x23000);
+    MenuFile_Load("menu/font.tmr", menu_font_texture.header);
+    MenuTexture_GetRegisters(menu_font_texture.header, &menu_font_texture.tex0, &menu_font_texture.trailer);
     MenuHeap_FreeToMark();
     for (i = 0; i < 20; i++) {
-        D_005CEE60[i] = MenuHeap_Alloc(0x2800);
+        equip_weapon_motions[i] = MenuHeap_Alloc(0x2800);
         sprintf(name, "menu/equip/a%03d.mi2", i);
-        MenuFile_Load(name, D_005CEE60[i]);
-        PoolNodeFile_Relocate((RelocFile *)D_005CEE60[i]);
+        MenuFile_Load(name, equip_weapon_motions[i]);
+        PoolNodeFile_Relocate((RelocFile *)equip_weapon_motions[i]);
     }
     for (i = 0; i < 150; i++) {
-        D_00424600[i].unk0C = i;
-        D_00424600[i].unk00 = (int)&item_common_defs[i];
-        D_00424600[i].group = 11;
+        shortcut_entries[i].unk0C = i;
+        shortcut_entries[i].unk00 = (int)&item_common_defs[i];
+        shortcut_entries[i].group = 11;
     }
     for (i = 150; i < 241; i++) {
-        D_00424600[i].unk00 = (int)&fx_table[i - 150];
-        D_00424600[i].unk0C = i - 150;
-        D_00424600[i].group = 1;
+        shortcut_entries[i].unk00 = (int)&fx_table[i - 150];
+        shortcut_entries[i].unk0C = i - 150;
+        shortcut_entries[i].group = 1;
     }
     number = 0;
     for (i = 0; i < 150; i++) {
-        D_00421A30[number].unk00 = (int)&item_common_defs[i];
-        D_00421A30[number].unk0C = number;
-        D_00421A30[number].group = 12;
+        all_item_entries[number].unk00 = (int)&item_common_defs[i];
+        all_item_entries[number].unk0C = number;
+        all_item_entries[number].group = 12;
         number++;
     }
     for (i = 0; i < 70; i++) {
-        D_00421A30[number].unk00 = (int)&weapon_defs[i];
-        D_00421A30[number].unk0C = number;
-        D_00421A30[number].group = 0;
+        all_item_entries[number].unk00 = (int)&weapon_defs[i];
+        all_item_entries[number].unk0C = number;
+        all_item_entries[number].group = 0;
         number++;
     }
     for (i = 0; i < 30; i++) {
-        D_00421A30[number].unk00 = (int)&worn_defs[i];
-        D_00421A30[number].unk0C = number;
-        D_00421A30[number].group = 2;
+        all_item_entries[number].unk00 = (int)&worn_defs[i];
+        all_item_entries[number].unk0C = number;
+        all_item_entries[number].group = 2;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00421A30[number].unk00 = (int)&worn_defs[i + 30];
-        D_00421A30[number].unk0C = number;
-        D_00421A30[number].group = 3;
+        all_item_entries[number].unk00 = (int)&worn_defs[i + 30];
+        all_item_entries[number].unk0C = number;
+        all_item_entries[number].group = 3;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00421A30[number].unk00 = (int)&worn_defs[i + 55];
-        D_00421A30[number].unk0C = number;
-        D_00421A30[number].group = 4;
+        all_item_entries[number].unk00 = (int)&worn_defs[i + 55];
+        all_item_entries[number].unk0C = number;
+        all_item_entries[number].group = 4;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00421A30[number].unk00 = (int)&worn_defs[i + 80];
-        D_00421A30[number].unk0C = number;
-        D_00421A30[number].group = 5;
+        all_item_entries[number].unk00 = (int)&worn_defs[i + 80];
+        all_item_entries[number].unk0C = number;
+        all_item_entries[number].group = 5;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00421A30[number].unk00 = (int)&worn_defs[i + 105];
-        D_00421A30[number].unk0C = number;
-        D_00421A30[number].group = 6;
+        all_item_entries[number].unk00 = (int)&worn_defs[i + 105];
+        all_item_entries[number].unk0C = number;
+        all_item_entries[number].group = 6;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00421A30[number].unk00 = (int)&worn_defs[i + 130];
-        D_00421A30[number].unk0C = number;
-        D_00421A30[number].group = 7;
+        all_item_entries[number].unk00 = (int)&worn_defs[i + 130];
+        all_item_entries[number].unk0C = number;
+        all_item_entries[number].group = 7;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00421A30[number].unk00 = (int)&worn_defs[i + 140];
-        D_00421A30[number].unk0C = number;
-        D_00421A30[number].group = 8;
+        all_item_entries[number].unk00 = (int)&worn_defs[i + 140];
+        all_item_entries[number].unk0C = number;
+        all_item_entries[number].group = 8;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00421A30[number].unk00 = (int)&worn_defs[i + 130];
-        D_00421A30[number].unk0C = number;
-        D_00421A30[number].group = 9;
+        all_item_entries[number].unk00 = (int)&worn_defs[i + 130];
+        all_item_entries[number].unk0C = number;
+        all_item_entries[number].group = 9;
         number++;
     }
     number = 0;
     for (i = 0; i < 150; i++) {
-        D_004210D0[i].unk00 = (int)&item_common_defs[i];
-        D_004210D0[i].unk0C = number;
-        D_004210D0[i].group = 11;
+        common_item_entries[i].unk00 = (int)&item_common_defs[i];
+        common_item_entries[i].unk0C = number;
+        common_item_entries[i].group = 11;
         number++;
     }
     for (i = 0; i < 70; i++) {
-        D_004231F0[i].unk00 = (int)&weapon_defs[i];
-        D_004231F0[i].unk0C = number;
-        D_004231F0[i].group = 0;
+        weapon_entries[i].unk00 = (int)&weapon_defs[i];
+        weapon_entries[i].unk0C = number;
+        weapon_entries[i].group = 0;
         number++;
     }
     for (i = 0; i < 30; i++) {
-        D_00423650[i].unk00 = (int)&worn_defs[i];
-        D_00423650[i].unk0C = number;
-        D_00423650[i].group = 2;
+        shield_entries[i].unk00 = (int)&worn_defs[i];
+        shield_entries[i].unk0C = number;
+        shield_entries[i].group = 2;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00423830[i].unk00 = (int)&worn_defs[i + 30];
-        D_00423830[i].unk0C = number;
-        D_00423830[i].group = 3;
+        helm_entries[i].unk00 = (int)&worn_defs[i + 30];
+        helm_entries[i].unk0C = number;
+        helm_entries[i].group = 3;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_004239C0[i].unk00 = (int)&worn_defs[i + 55];
-        D_004239C0[i].unk0C = number;
-        D_004239C0[i].group = 4;
+        armor_entries[i].unk00 = (int)&worn_defs[i + 55];
+        armor_entries[i].unk0C = number;
+        armor_entries[i].group = 4;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00423B50[i].unk00 = (int)&worn_defs[i + 80];
-        D_00423B50[i].unk0C = number;
-        D_00423B50[i].group = 5;
+        gauntlet_entries[i].unk00 = (int)&worn_defs[i + 80];
+        gauntlet_entries[i].unk0C = number;
+        gauntlet_entries[i].group = 5;
         number++;
     }
     for (i = 0; i < 25; i++) {
-        D_00423CE0[i].unk00 = (int)&worn_defs[i + 105];
-        D_00423CE0[i].unk0C = number;
-        D_00423CE0[i].group = 6;
+        boot_entries[i].unk00 = (int)&worn_defs[i + 105];
+        boot_entries[i].unk0C = number;
+        boot_entries[i].group = 6;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00423E70[i].unk00 = (int)&worn_defs[i + 130];
-        D_00423E70[i].unk0C = number;
-        D_00423E70[i].group = 7;
+        ring_entries[i].unk00 = (int)&worn_defs[i + 130];
+        ring_entries[i].unk0C = number;
+        ring_entries[i].group = 7;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00423F10[i].unk00 = (int)&worn_defs[i + 140];
-        D_00423F10[i].unk0C = number;
-        D_00423F10[i].group = 8;
+        bracelet_entries[i].unk00 = (int)&worn_defs[i + 140];
+        bracelet_entries[i].unk0C = number;
+        bracelet_entries[i].group = 8;
         number++;
     }
     for (i = 0; i < 10; i++) {
-        D_00423FB0[i].unk00 = (int)&worn_defs[i + 130];
-        D_00423FB0[i].unk0C = number;
-        D_00423FB0[i].group = 9;
+        amulet_entries[i].unk00 = (int)&worn_defs[i + 130];
+        amulet_entries[i].unk0C = number;
+        amulet_entries[i].group = 9;
         number++;
     }
     for (i = 0; i < 91; i++) {
-        D_00424050[i].unk0C = i;
-        D_00424050[i].unk00 = (int)&fx_table[i];
-        D_00424050[i].group = 1;
+        spell_entries[i].unk0C = i;
+        spell_entries[i].unk00 = (int)&fx_table[i];
+        spell_entries[i].group = 1;
     }
-    D_005CE760.group = 11;
-    D_005CE770.item = D_005CE6B0.item;
-    D_005CE770.group = 0;
-    D_005CE780.item = D_005CE6C0.item;
-    D_005CE780.group = 2;
-    D_005CE790.item = D_005CE6D0.item;
-    D_005CE790.group = 3;
-    D_005CE7A0.item = D_005CE6E0.item;
-    D_005CE7A0.group = 4;
-    D_005CE7B0.item = D_005CE6F0.item;
-    D_005CE7B0.group = 5;
-    D_005CE7C0.item = D_005CE700.item;
-    D_005CE7C0.group = 6;
-    D_005CE7D0.item = D_005CE710.item;
-    D_005CE7D0.group = 7;
-    D_005CE7E0.item = D_005CE720.item;
-    D_005CE7E0.group = 8;
-    D_005CE7F0.item = D_005CE730.item;
-    D_005CE7F0.group = 9;
-    D_005CE800.item = D_005CE740.item;
-    D_005CE800.group = 1;
-    D_005CE810.item = D_005CE6A0.item;
-    D_005CE810.group = 10;
-    D_005CE810.prev = &D_005CE770;
-    D_005CE770.prev = &D_005CE800;
-    D_005CE800.prev = &D_005CE780;
-    D_005CE780.prev = &D_005CE790;
-    D_005CE790.prev = &D_005CE7A0;
-    D_005CE7A0.prev = &D_005CE7B0;
-    D_005CE7B0.prev = &D_005CE7C0;
-    D_005CE7C0.prev = &D_005CE7D0;
-    D_005CE7D0.prev = &D_005CE7E0;
-    D_005CE7E0.prev = &D_005CE7F0;
-    D_005CE7F0.prev = &D_005CE810;
-    D_005CE770.next = &D_005CE810;
-    D_005CE800.next = &D_005CE770;
-    D_005CE780.next = &D_005CE800;
-    D_005CE790.next = &D_005CE780;
-    D_005CE7A0.next = &D_005CE790;
-    D_005CE7B0.next = &D_005CE7A0;
-    D_005CE7C0.next = &D_005CE7B0;
-    D_005CE7D0.next = &D_005CE7C0;
-    D_005CE7E0.next = &D_005CE7D0;
-    D_005CE7F0.next = &D_005CE7E0;
-    D_005CE810.next = &D_005CE7F0;
+    use_item_list.group = 11;
+    equip_weapon_list.item = equipped_weapon.item;
+    equip_weapon_list.group = 0;
+    equip_shield_list.item = equipped_shield.item;
+    equip_shield_list.group = 2;
+    equip_helm_list.item = equipped_helm.item;
+    equip_helm_list.group = 3;
+    equip_armor_list.item = equipped_armor.item;
+    equip_armor_list.group = 4;
+    equip_gauntlet_list.item = equipped_gauntlet.item;
+    equip_gauntlet_list.group = 5;
+    equip_boot_list.item = equipped_boot.item;
+    equip_boot_list.group = 6;
+    equip_ring_list.item = equipped_ring.item;
+    equip_ring_list.group = 7;
+    equip_bracelet_list.item = equipped_bracelet.item;
+    equip_bracelet_list.group = 8;
+    equip_amulet_list.item = equipped_amulet.item;
+    equip_amulet_list.group = 9;
+    equip_spell_list.item = equipped_spell.item;
+    equip_spell_list.group = 1;
+    equip_shortcut_list.item = equipped_shortcut.item;
+    equip_shortcut_list.group = 10;
+    equip_shortcut_list.prev = &equip_weapon_list;
+    equip_weapon_list.prev = &equip_spell_list;
+    equip_spell_list.prev = &equip_shield_list;
+    equip_shield_list.prev = &equip_helm_list;
+    equip_helm_list.prev = &equip_armor_list;
+    equip_armor_list.prev = &equip_gauntlet_list;
+    equip_gauntlet_list.prev = &equip_boot_list;
+    equip_boot_list.prev = &equip_ring_list;
+    equip_ring_list.prev = &equip_bracelet_list;
+    equip_bracelet_list.prev = &equip_amulet_list;
+    equip_amulet_list.prev = &equip_shortcut_list;
+    equip_weapon_list.next = &equip_shortcut_list;
+    equip_spell_list.next = &equip_weapon_list;
+    equip_shield_list.next = &equip_spell_list;
+    equip_helm_list.next = &equip_shield_list;
+    equip_armor_list.next = &equip_helm_list;
+    equip_gauntlet_list.next = &equip_armor_list;
+    equip_boot_list.next = &equip_gauntlet_list;
+    equip_ring_list.next = &equip_boot_list;
+    equip_bracelet_list.next = &equip_ring_list;
+    equip_amulet_list.next = &equip_bracelet_list;
+    equip_shortcut_list.next = &equip_amulet_list;
     MenuHeap_Mark();
 }
 
-extern char D_00446AE0[8];
-extern char D_00446AE8[8];
-extern char D_00446AF0[8];
-extern char D_00446AF8[8];
-extern char D_00446B00[8];
-extern char D_00446B08[8];
-extern char D_00446B10[8];
+extern char sunday_name[8];
+extern char monday_name[8];
+extern char tuesday_name[8];
+extern char wednesday_name[8];
+extern char thursday_name[8];
+extern char friday_name[8];
+extern char saturday_name[8];
 /* the seven weekday names (Sunday first, in Japanese); copied to a local and never read */
 static const MenuWeekdayNames weekday_names_table = { {
-    D_00446AE0, D_00446AE8, D_00446AF0, D_00446AF8, D_00446B00, D_00446B08, D_00446B10,
+    sunday_name, monday_name, tuesday_name, wednesday_name, thursday_name, friday_name, saturday_name,
 } };
 
-/* Runs the menu from opening to closing: sets up, calls the handler D_00446AC4 names every frame until it gives 0,
-   then shows the last frames. `mode` (D_00446C94) is which menu; with mode 1 the result is 1 when
-   D_005CF2F0.unk16 was set. */
+/* Runs the menu from opening to closing: sets up, calls the handler menu_run_step names every frame until it gives 0,
+   then shows the last frames. `mode` (menu_mode) is which menu; with mode 1 the result is 1 when
+   card_screen_state.unk16 was set. */
 int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign-extends a byte here
     ClockTime clock;
     int tm_fields[9];
@@ -2182,29 +2181,29 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
     tm_fields[4] = clock.mon - 1;
     tm_fields[5] = clock.year + 100;
     mktime(tm_fields);
-    D_00446C94 = mode;
-    D_004472D0 = D_004472D4 = Pad_GetMode(0, 0);
-    while (SoundDriver_FlushCommands(), menu_run_steps[D_00446AC4]() != 0) {
+    menu_mode = mode;
+    pad_mode = pad_mode_before = Pad_GetMode(0, 0);
+    while (SoundDriver_FlushCommands(), menu_run_steps[menu_run_step]() != 0) {
         sceGsSyncPath(0, 0);
-        D_00447200 = Menu_EndFrame(1);
+        menu_even_field = Menu_EndFrame(1);
         Input_Update();
         status = Pad_GetMode(0, 0);
-        D_004472D0 = status;
-        if (status != D_004472D4) {
-            D_00447204 = 1;
+        pad_mode = status;
+        if (status != pad_mode_before) {
+            pad_mode_change_frames = 1;
         }
-        D_004472D4 = status;
+        pad_mode_before = status;
         MenuPad_Update();
-        if (D_00447204 > 0) {
-            D_00447204++;
-            if (D_00447204 > 20) {
-                D_00447204 = 0;
+        if (pad_mode_change_frames > 0) {
+            pad_mode_change_frames++;
+            if (pad_mode_change_frames > 20) {
+                pad_mode_change_frames = 0;
             } else {
-                D_00446DE8 = 0;
+                menu_buttons = 0;
             }
         }
     }
-    if (D_00446C94 == 0 && D_005CF2F0.save_loaded == 0) {
+    if (menu_mode == 0 && card_screen_state.save_loaded == 0) {
         packet = MenuDraw_NextPacket();
         packet[1] = 0x100B4000; // match: the tag word packet[0] is written last
         packet[2] = 0xE;
@@ -2212,7 +2211,7 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         *(u64 *)&packet[4] = 0x66802B240;
         packet[6] = 6;
         packet[7] = 0;
-        *(u64 *)&packet[8] = D_00432D80.frame;
+        *(u64 *)&packet[8] = game_dbuff_draw0.frame;
         packet[10] = 0x4C;
         packet[11] = 0;
         packet[12] = 0;
@@ -2252,23 +2251,23 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         *D2_QWC = 11;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
         *D2_CHCR = 0x100;
-        D_00446F7C = D_00446F78 = 1;
+        context2_buffer_half = context1_buffer_half = 1;
     }
-    D_00446AC4 = 0;
+    menu_run_step = 0;
     Sound_UnmuteTagged();
     Sound_UnmutePositional();
     Sound_UnmuteTracked();
-    status = D_00446C94;
+    status = menu_mode;
     if (status == 0) {
         sceGsSyncPath(0, 0);
         while (sceGsSyncV(0) != 0);
     }
-    switch (D_00446C94) {
+    switch (menu_mode) {
     case 2:
     case 3:
     case 4:
     case 5:
-        D_005CF2F0.save_loaded = 0;
+        card_screen_state.save_loaded = 0;
         sceGsSyncPath(0, 0);
         Menu_EndFrame(0);
         sceGsSyncV(0);
@@ -2277,8 +2276,8 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         sceGsSyncV(0);
         return 0;
     case 0:
-        if (D_005CF2F0.save_loaded != 0) {
-            D_005CF2F0.save_loaded = 0;
+        if (card_screen_state.save_loaded != 0) {
+            card_screen_state.save_loaded = 0;
             sceGsSyncPath(0, 0);
             Menu_EndFrame(0);
             sceGsSyncV(0);
@@ -2295,15 +2294,15 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         sceGsSyncPath(0, 0);
         Menu_EndFrame(0);
         sceGsSyncV(0);
-        if (D_005CF2F0.save_loaded != 0) {
-            D_005CF2F0.save_loaded = 0;
+        if (card_screen_state.save_loaded != 0) {
+            card_screen_state.save_loaded = 0;
             return 1;
         }
         return 0;
     }
 }
 
-extern char D_00446B28[8];
+extern char equip_screen_name[8];
 /* the steps of a menu's start, run by Menu_RunStep until one gives 0 */
 static int (*const menu_steps[4])(void) = {
     Menu_Start,
@@ -2321,7 +2320,7 @@ static void *const system_menu_screens[6] = {
 };
 /* the names of the main menu's seven screens; nothing reads them */
 const char *const main_menu_screen_names[8] = {
-    "Use Item", "Cast a Spell", D_00446B28, "Status Viewer", "Recollection", "Visible Item", "System Config", NULL,
+    "Use Item", "Cast a Spell", equip_screen_name, "Status Viewer", "Recollection", "Visible Item", "System Config", NULL,
 };
 
 /* Sends a fifteen-quadword packet of GS settings around one flat sprite. Nothing calls it. */
@@ -2547,7 +2546,7 @@ static void Menu_SendUnusedSpriteSecond(void) {
 }
 
 /* Draws the menu's item model with the matrix given: sends a three-quadword packet of GS settings,
-   draws the model of node D_00426470 and puts the view-to-screen matrix back. */
+   draws the model of node model_load_shown and puts the view-to-screen matrix back. */
 int Menu_DrawItemModel(f32 *matrix) { // match: callers declare an int result; nothing is returned
     u32 *packet;
 
@@ -2568,8 +2567,8 @@ int Menu_DrawItemModel(f32 *matrix) { // match: callers declare an int result; n
     *D2_QWC = 3;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
     *D2_CHCR = 0x100;
-    DRAW_NODE_MODEL(&D_00426470, matrix, D_00446C78);
-    sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
+    DRAW_NODE_MODEL(&model_load_shown, matrix, menu_draw_color);
+    sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
 }
 
 /* First step of Menu_Run's loop. In the game's menu (mode 0): copies the shown frame buffer into the drawn one in
@@ -2579,16 +2578,16 @@ static s32 Menu_CopyFrameToTexture(void) {
     u32 texture_base; /* where the shown buffer is as a texture: 0x1180 when it is the second one */
     u32 *packet;
 
-    if (D_00446C94 == 0) {
+    if (menu_mode == 0) {
         packet = MenuDraw_NextPacket();
         texture_base = 0x1180;
-        if (D_00446F78 == 0) {
+        if (context1_buffer_half == 0) {
             texture_base = 0;
         }
         packet[1] = 0x100B4000; // match: the tag word packet[0] is written last
         packet[2] = 0xE;
         packet[3] = 0;
-        *(u64 *)&packet[4] = (D_004261A0[0] & ~0x1FFL) | 0x192;
+        *(u64 *)&packet[4] = (menu_first_draw_env[0] & ~0x1FFL) | 0x192;
         packet[6] = 0x4C;
         packet[7] = 0;
         packet[8] = 0;
@@ -2630,7 +2629,7 @@ static s32 Menu_CopyFrameToTexture(void) {
         packet[45] = 0;
         packet[46] = 0x3F;
         packet[47] = 0;
-        *(u64 *)&packet[48] = D_004261A0[0];
+        *(u64 *)&packet[48] = menu_first_draw_env[0];
         packet[50] = 0x4C;
         packet[51] = 0;
         *(u64 *)&packet[52] = 0x66802B240;
@@ -2652,7 +2651,7 @@ static s32 Menu_CopyFrameToTexture(void) {
         packet[69] = 0;
         packet[70] = 0x5;
         packet[71] = 0;
-        *(u64 *)&packet[72] = D_004261A0[46];
+        *(u64 *)&packet[72] = menu_first_draw_env[46];
         packet[74] = 0x4C;
         packet[75] = 0;
         packet[76] = 0;
@@ -2690,7 +2689,7 @@ static s32 Menu_CopyFrameToTexture(void) {
         *D2_CHCR = 0x100;
     }
     sceGsSyncPath(0, 0);
-    D_00446AC4++;
+    menu_run_step++;
     return 1;
 }
 
@@ -2708,23 +2707,23 @@ s32 Menu_EndFrame(s32 run_handler) {
     Menu_DrawBrightness(game_options[10]);
     SoundDriver_FlushCommands();
     sceGsSyncPath(0, 0);
-    D_00446C98 = Timer_GetTicks();
+    menu_frame_ticks = Timer_GetTicks();
     even_field = sceGsSyncV(0) == 0;
     Timer_Restart();
-    if (D_00446DE8 & 0x100) {
+    if (menu_buttons & 0x100) {
         D_00447208++;
     }
     D_00447208 %= 3;
-    sceGsSetHalfOffset(D_00446F78 != 0 ? D_00426310 : (char *)D_004261A0, 0x800, 0x800, even_field);
-    sceGsSetHalfOffset2(D_00446F78 != 0 ? D_00426390 : D_00426220, 0x800, 0x800, even_field);
+    sceGsSetHalfOffset(context1_buffer_half != 0 ? menu_second_draw_env : (char *)menu_first_draw_env, 0x800, 0x800, even_field);
+    sceGsSetHalfOffset2(context1_buffer_half != 0 ? menu_second_draw_env2 : menu_first_draw_env2, 0x800, 0x800, even_field);
     FlushCache(0);
     sceGsSyncPath(0, 0);
-    sceGsSwapDBuffDc(&D_00426140, D_00446F78);
+    sceGsSwapDBuffDc(&menu_frame_buffers, context1_buffer_half);
     if (run_handler != 0) {
         frame_end_drawers[(s8)game_options[8]]();
     }
-    D_00446F78 = D_00446F78 == 0;
-    D_00446F7C = D_00446F7C == 0;
+    context1_buffer_half = context1_buffer_half == 0;
+    context2_buffer_half = context2_buffer_half == 0;
     return even_field;
 }
 
@@ -2732,10 +2731,10 @@ s32 Menu_EndFrame(s32 run_handler) {
    rectangle of the colour { 0x10, 0x10, 0x10 } over it. */
 static void Menu_DrawBackdropPlain(void) {
     f32 unused[24];
-    ColorBytes color = D_00446B18[0];
+    ColorBytes color = backdrop_shade_color[0];
     u32 *packet;
 
-    if (D_00446C94 == 0) {
+    if (menu_mode == 0) {
         packet = MenuDraw_NextPacket();
         packet[0] = 0x8001;
         packet[1] = 0x740B4000;
@@ -2784,10 +2783,10 @@ static void Menu_DrawBackdropPlain(void) {
 static void Menu_DrawBackdropItemSelParts(void) {
     u32 i;
 
-    for (i = 0; i < D_00446A4C; i++) {
-        if (D_00447248[i].handler_index == 2) {
-            Menu_SetBlendMode(D_00447248[i].blend_mode);
-            MenuSprite_DrawPlain((int)&D_00447248[i], 2, 0);
+    for (i = 0; i < item_sel_part_count; i++) {
+        if (item_sel_parts[i].handler_index == 2) {
+            Menu_SetBlendMode(item_sel_parts[i].blend_mode);
+            MenuSprite_DrawPlain((int)&item_sel_parts[i], 2, 0);
             Menu_SetBlendMode(0);
         }
     }
@@ -2797,29 +2796,29 @@ static void Menu_DrawBackdropItemSelParts(void) {
 static void Menu_DrawBackdropPreshopParts(void) {
     u32 i;
 
-    for (i = 0; i < D_00446A74; i++) {
-        if (D_00446BFC[i].handler_index == 2) {
-            Menu_SetBlendMode(D_00446BFC[i].blend_mode);
-            MenuSprite_DrawPlain((int)&D_00446BFC[i], 2, 0);
+    for (i = 0; i < preshop_part_count; i++) {
+        if (preshop_parts[i].handler_index == 2) {
+            Menu_SetBlendMode(preshop_parts[i].blend_mode);
+            MenuSprite_DrawPlain((int)&preshop_parts[i], 2, 0);
             Menu_SetBlendMode(0);
         }
     }
 }
 
-/* Second step of Menu_Run's loop: steps the model loads, then runs the menu step D_00446AC8 names.
+/* Second step of Menu_Run's loop: steps the model loads, then runs the menu step menu_step names.
    Returns what the step returns, 1 when there is none. */
 static int Menu_RunStep(void) {
     int (*step)(char *);
 
     Menu_StepModelLoads(0);
-    step = (int (*)(char *))menu_steps[D_00446AC8]; // match: the steps take nothing, yet D_005CE0E0 is passed
+    step = (int (*)(char *))menu_steps[menu_step]; // match: the steps take nothing, yet D_005CE0E0 is passed
     if (step != NULL) {
         return step(D_005CE0E0);
     }
     return 1;
 }
 
-/* Start-up step of a menu screen: loads its textures and blocks, then picks the handler for the screen D_00446C94 names. */
+/* Start-up step of a menu screen: loads its textures and blocks, then picks the handler for the screen menu_mode names. */
 static s32 Menu_Start(void) {
     s32 i = 0;
     u32 *packet;
@@ -2827,16 +2826,16 @@ static s32 Menu_Start(void) {
 
     Packet_SwapBuffers();
     func_001095D0();
-    TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(D_00446F38));
+    TextureTable_QueueAll((TextureTableHeader *)Message_GetFontTexture(menu_heap));
     GsDraw_QueueTexFlush();
     func_001095D8();
     Packet_SendChain();
     ((s32 (*)(void))Packet_WaitForSend)(); // match: called as if it returned a value, which frees $2 for the loop below
-    for (; i < D_00446DEC; i++) {
-        block = &D_0042A2A0[i];
+    for (; i < menu_file_block_count; i++) {
+        block = &menu_file_blocks[i];
         MenuTexture_Upload(block->data, block);
     }
-    MenuArena_Init(D_00446F58);
+    MenuArena_Init(packet_area);
     packet = MenuDraw_NextPacket();
     packet[0] = 0x8001;
     packet[1] = 0x10000000;
@@ -2850,56 +2849,56 @@ static s32 Menu_Start(void) {
     *D2_QWC = 2;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
     *D2_CHCR = 0x100;
-    if (D_00446C94 == 0) {
-        D_004472E0 = 0;
+    if (menu_mode == 0) {
+        equip_group_shown = 0;
         Menu_BuildItemRings();
         Menu_InitLoadBuffers();
     }
-    switch (D_00446C94) {
+    switch (menu_mode) {
     case 0:
-        D_00446B20 = (void *)Menu_OpenMain;
+        menu_screen_handler = (void *)Menu_OpenMain;
         break;
     case 1:
-        D_00446B20 = (void *)Menu_OpenCardSlot;
+        menu_screen_handler = (void *)Menu_OpenCardSlot;
         break;
     case 2:
-        D_00446B20 = (void *)Menu_UpdateOptions;
+        menu_screen_handler = (void *)Menu_UpdateOptions;
         break;
     case 3:
         Menu_ReadButtonSettings();
-        D_00446B20 = (void *)Menu_UpdateButtonConfig;
+        menu_screen_handler = (void *)Menu_UpdateButtonConfig;
         break;
     case 4:
-        D_00446B20 = (void *)Menu_OpenCardCheck;
+        menu_screen_handler = (void *)Menu_OpenCardCheck;
         break;
     case 5:
-        D_004472CF = D_0034968A[0];
-        D_00446B20 = (void *)Menu_UpdateBrightness;
-        D_00446C09 = 0;
-        D_00446C70 = 0;
+        brightness_before = brightness_option[0];
+        menu_screen_handler = (void *)Menu_UpdateBrightness;
+        pulse_value_falling = 0;
+        system_screen_state = 0;
         break;
     }
-    D_00446C04 = 128.0f;
-    D_00446AC8++;
-    D_00446C08 = 0;
-    D_00446C78.blue = 0x80;
-    D_00446C78.green = 0x80;
-    D_00446C78.red = 0x80;
-    D_00446C78.alpha = 0;
-    D_00446C80.blue = 0x80;
-    D_00446C80.green = 0x80;
-    D_00446C80.red = 0x80;
-    D_00446C80.alpha = 0;
-    D_00446C88.blue = 0x80;
-    D_00446C88.green = 0x80;
-    D_00446C88.red = 0x80;
-    D_00446C88.alpha = 0;
+    pulse_sprite_alpha = 128.0f;
+    menu_step++;
+    pulse_sprite_falling = 0;
+    menu_draw_color.blue = 0x80;
+    menu_draw_color.green = 0x80;
+    menu_draw_color.red = 0x80;
+    menu_draw_color.alpha = 0;
+    panel_text_color.blue = 0x80;
+    panel_text_color.green = 0x80;
+    panel_text_color.red = 0x80;
+    panel_text_color.alpha = 0;
+    model_draw_color.blue = 0x80;
+    model_draw_color.green = 0x80;
+    model_draw_color.red = 0x80;
+    model_draw_color.alpha = 0;
     return TRUE;
 }
 
 /* Runs the current screen handler and reports that it ran. */
 static s32 Menu_RunHandler(void) {
-    ((void (*)(void))D_00446B20)();
+    ((void (*)(void))menu_screen_handler)();
     return TRUE;
 }
 
@@ -2908,24 +2907,24 @@ static s32 Menu_RunHandler(void) {
 static s32 Menu_CutModelChain(void) {
     LinkNode *node;
 
-    switch (D_00446C94) {
+    switch (menu_mode) {
     case 0:
-        node = D_00446C90;
+        node = model_load_chain;
         if (node == NULL) {
-            D_005CE770.item = D_005CE6B0.item;
-            D_005CE780.item = D_005CE6C0.item;
-            D_005CE800.item = D_005CE740.item;
-            D_005CE790.item = D_005CE6D0.item;
-            D_005CE7A0.item = D_005CE6E0.item;
-            D_005CE7B0.item = D_005CE6F0.item;
-            D_005CE7C0.item = D_005CE700.item;
-            D_005CE7D0.item = D_005CE710.item;
-            D_005CE7E0.item = D_005CE720.item;
-            D_005CE7F0.item = D_005CE730.item;
-            Sound_LoadMgBank(D_005CE740.item->unk0C);
-            File_Close(D_00446AD0);
-            D_00446AC8 = 0;
-            D_004472CD = 0;
+            equip_weapon_list.item = equipped_weapon.item;
+            equip_shield_list.item = equipped_shield.item;
+            equip_spell_list.item = equipped_spell.item;
+            equip_helm_list.item = equipped_helm.item;
+            equip_armor_list.item = equipped_armor.item;
+            equip_gauntlet_list.item = equipped_gauntlet.item;
+            equip_boot_list.item = equipped_boot.item;
+            equip_ring_list.item = equipped_ring.item;
+            equip_bracelet_list.item = equipped_bracelet.item;
+            equip_amulet_list.item = equipped_amulet.item;
+            Sound_LoadMgBank(equipped_spell.item->unk0C);
+            File_Close(model_read_file);
+            menu_step = 0;
+            main_menu_line = 0;
             return FALSE;
         }
         node->next = NULL;
@@ -2938,7 +2937,7 @@ static s32 Menu_CutModelChain(void) {
     case 3:
     case 4:
     case 5:
-        D_00446AC8 = 0;
+        menu_step = 0;
         return FALSE;
     }
     // match: other steps return nothing (see the report's retail bugs)
@@ -2946,13 +2945,13 @@ static s32 Menu_CutModelChain(void) {
 
 /* Makes the main menu the current screen, with its parts faded out. */
 static void Menu_OpenMain(void) {
-    D_004472CE = 0;
-    D_00446C04 = 128.0f;
-    D_00446C08 = 0;
-    D_004472DA = 0;
-    memset(D_00425510, 0, 0x400);
-    memset(D_00425910, 0, 0x400);
-    D_00446B20 = (void *)Menu_UpdateMain;
+    equip_model_shown = 0;
+    pulse_sprite_alpha = 128.0f;
+    pulse_sprite_falling = 0;
+    menu_input_enabled = 0;
+    memset(screen_part_alphas, 0, 0x400);
+    memset(panel_part_alphas, 0, 0x400);
+    menu_screen_handler = (void *)Menu_UpdateMain;
 }
 
 /* The main menu: moves the cursor over its seven lines, draws the parts, and fades out to the chosen screen. */
@@ -2963,78 +2962,78 @@ static void Menu_UpdateMain(HandlerContext *context) {
     u8 kind;
 
     line_count = 7;
-    if ((D_00446DE8 & 0x10) && D_004472DA != 0) {
-        D_004472CD--;
+    if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
+        main_menu_line--;
         Sound_PlayMenu(1);
-    } else if ((D_00446DE8 & 0x40) && D_004472DA != 0) {
-        D_004472CD++;
+    } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
+        main_menu_line++;
         Sound_PlayMenu(1);
-    } else if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
-        if ((Menu_OwnsAnyItem() == 0 && D_004472CD == 5) || (Menu_KnowsCastableSpell() == 0 && D_004472CD == 1)) {
+    } else if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
+        if ((Menu_OwnsAnyItem() == 0 && main_menu_line == 5) || (Menu_KnowsCastableSpell() == 0 && main_menu_line == 1)) {
             Sound_PlayMenu(3);
         } else {
             Sound_PlayMenu(0);
-            D_004472C4 = 2;
-            D_004472DA = 0;
-            for (i = 0; i < D_00446A30; i++) {
-                if (D_0044722C[i].handler_index == 1 && D_004472CD == D_0044722C[i].slot) {
-                    D_00425510[i] = D_00446C04;
+            main_menu_state = 2;
+            menu_input_enabled = 0;
+            for (i = 0; i < main_part_count; i++) {
+                if (main_parts[i].handler_index == 1 && main_menu_line == main_parts[i].slot) {
+                    screen_part_alphas[i] = pulse_sprite_alpha;
                 }
             }
         }
-    } else if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
-        D_004472DA = 0;
-        D_004472C4 = 3;
+    } else if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
+        menu_input_enabled = 0;
+        main_menu_state = 3;
         Sound_PlayMenu(2);
-        for (i = 0; i < D_00446A30; i++) {
-            if (D_0044722C[i].handler_index == 1 && D_004472CD == D_0044722C[i].slot) {
-                D_00425510[i] = D_00446C04;
+        for (i = 0; i < main_part_count; i++) {
+            if (main_parts[i].handler_index == 1 && main_menu_line == main_parts[i].slot) {
+                screen_part_alphas[i] = pulse_sprite_alpha;
             }
         }
     }
-    D_004472CD = (D_004472CD + 7) % line_count;
+    main_menu_line = (main_menu_line + 7) % line_count;
 
-    for (i = 0; i < D_00446A30; i++) {
-        kind = D_0044722C[i].handler_index;
-        Menu_SetBlendMode(D_0044722C[i].blend_mode);
-        if (D_004472C4 != 1) {
-            MenuSprite_Draw((int)&D_0044722C[i], kind + 1000, D_004472CD, (int)D_00425510[i]);
+    for (i = 0; i < main_part_count; i++) {
+        kind = main_parts[i].handler_index;
+        Menu_SetBlendMode(main_parts[i].blend_mode);
+        if (main_menu_state != 1) {
+            MenuSprite_Draw((int)&main_parts[i], kind + 1000, main_menu_line, (int)screen_part_alphas[i]);
         } else {
-            MenuSprite_Draw((int)&D_0044722C[i], kind, D_004472CD, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&main_parts[i], kind, main_menu_line, (int)screen_part_alphas[i]);
         }
         Menu_SetBlendMode(0);
     }
 
-    switch (D_004472C4) {
+    switch (main_menu_state) {
     case 0:
-        for (i = 0; i < D_00446A30; i++) {
-            D_00425510[i] += D_0044722C[i].alpha / 10.0f;
-            if (D_00425510[i] > D_0044722C[i].alpha) {
-                for (i = 0; i < D_00446A30; i++) {
-                    full_alpha = D_0044722C[i].alpha;
-                    D_00425510[i] = full_alpha;
+        for (i = 0; i < main_part_count; i++) {
+            screen_part_alphas[i] += main_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] > main_parts[i].alpha) {
+                for (i = 0; i < main_part_count; i++) {
+                    full_alpha = main_parts[i].alpha;
+                    screen_part_alphas[i] = full_alpha;
                 }
-                D_004472DA = D_004472C4 = 1;
+                menu_input_enabled = main_menu_state = 1;
                 break;
             }
         }
         break;
     case 2:
     case 3:
-        for (i = 0; i < D_00446A30; i++) {
-            D_00425510[i] -= D_0044722C[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                D_00425510[i] = 0.0f;
-                if (D_0044722C[i].handler_index != 1 || D_004472CD != D_0044722C[i].slot) {
-                    memset(D_00425510, 0, 0x400);
-                    if (D_004472C4 == 2) {
-                        if (Menu_OwnsAnyItem() == 0 && D_004472CD == 5) {
-                            D_004472C4 = 0;
+        for (i = 0; i < main_part_count; i++) {
+            screen_part_alphas[i] -= main_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                screen_part_alphas[i] = 0.0f;
+                if (main_parts[i].handler_index != 1 || main_menu_line != main_parts[i].slot) {
+                    memset(screen_part_alphas, 0, 0x400);
+                    if (main_menu_state == 2) {
+                        if (Menu_OwnsAnyItem() == 0 && main_menu_line == 5) {
+                            main_menu_state = 0;
                             break;
                         }
-                        if (Menu_KnowsCastableSpell() != 0 || D_004472CD != 1) {
-                            D_00446B20 = (void *)Menu_OpenChosenScreen;
-                            context->unk04 = D_004472CD;
+                        if (Menu_KnowsCastableSpell() != 0 || main_menu_line != 1) {
+                            menu_screen_handler = (void *)Menu_OpenChosenScreen;
+                            context->unk04 = main_menu_line;
                             switch (context->unk04) {
                             case 0:
                                 ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
@@ -3046,24 +3045,24 @@ static void Menu_UpdateMain(HandlerContext *context) {
                                 ((void (*)(s32))Menu_ChainEquipModels)(0); // match: the callee takes nothing
                                 break;
                             case 4:
-                                if (D_00446C90 != NULL) {
-                                    D_00446C90->next = (LinkNode *)&D_005CEEE0;
+                                if (model_load_chain != NULL) {
+                                    model_load_chain->next = (LinkNode *)&npc_package_load;
                                 } else {
-                                    D_00446C90 = (LinkNode *)&D_005CEEE0;
+                                    model_load_chain = (LinkNode *)&npc_package_load;
                                 }
-                                D_004472D8 = 0;
+                                recollection_cursor = 0;
                                 break;
                             case 5:
                                 ((void (*)(s32))Menu_ChainAllItemsModels)(0); // match: the callee takes nothing
                                 break;
                             }
                         }
-                    } else if (D_004472C4 == 3) {
+                    } else if (main_menu_state == 3) {
                         context->unk04 = 0;
-                        D_004472CD = 0;
-                        D_00446AC8++;
+                        main_menu_line = 0;
+                        menu_step++;
                     }
-                    D_004472C4 = 0;
+                    main_menu_state = 0;
                     break;
                 }
             }
@@ -3076,14 +3075,14 @@ static void Menu_UpdateMain(HandlerContext *context) {
 static void Menu_OpenChosenScreen(HandlerContext *context) {
     int *line = &context->unk04;
 
-    D_00446C04 = 128.0f;
-    D_00446B20 = main_menu_screens[*line];
+    pulse_sprite_alpha = 128.0f;
+    menu_screen_handler = main_menu_screens[*line];
     *line = 0;
-    D_00446C08 = 0;
-    D_00446C09 = 0;
+    pulse_sprite_falling = 0;
+    pulse_value_falling = 0;
 }
 
-/* Steps the seven-frame counter D_00446B39, wrapping back to 0. Nothing calls it. */
+/* Steps the counter D_00446B39 round 0 to 6. Nothing calls it, and nothing else touches the counter. */
 static void Menu_StepBlink(void) {
     D_00446B39 = (s8)(D_00446B39 + 1) % 7;
 }
@@ -3102,18 +3101,18 @@ static void Menu_MoveItemAfter(MenuItem *item, MenuItem *after) {
 static f32 Menu_PulseValue(f32 value, s32 start, s32 target) {
     f32 bound;
 
-    if (D_00446C09 == 0) {
+    if (pulse_value_falling == 0) {
         bound = (f32) target;
         value = value + ((f32) (target - start) / 60.0f);
         if (bound < value) {
             value = bound;
-            D_00446C09 = 1;
+            pulse_value_falling = 1;
         }
     } else {
         bound = (f32) start;
         value = value - ((f32) (target - start) / 60.0f);
         if (value < bound) {
-            D_00446C09 = 0;
+            pulse_value_falling = 0;
             value = bound;
         }
     }
@@ -3144,33 +3143,33 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
     view[15] = 1.0f;
     word.raw = 0x0A0AAE607C307080;
     corner.raw = 0x0A0F42407C306FE0;
-    item = D_00426120[0]; // match: dead (the magic menu, Menu_UpdateCastSpell, takes its first row here); it keeps the address's high part out of a register
-    if (D_00426110[0] != NULL) {
-        Menu_MoveItemListCursor(context, D_004472DA == 0);
+    item = item_list_top[0]; // match: dead (the magic menu, Menu_UpdateCastSpell, takes its first row here); it keeps the address's high part out of a register
+    if (item_list_cursor[0] != NULL) {
+        Menu_MoveItemListCursor(context, menu_input_enabled == 0);
     }
-    if (D_00426110[0] != NULL) {
-        D_00446DF4 = item_counts[D_00426110[0]->unk0C];
+    if (item_list_cursor[0] != NULL) {
+        D_00446DF4 = item_counts[item_list_cursor[0]->unk0C];
     } else {
         D_00446DF4 = 0;
     }
-    for (i = 0; i < D_00446A34; i++) {
-        kind = D_00447230[i].handler_index;
-        ((void (*)(u8))Menu_SetBlendMode)(D_00447230[i].blend_mode); // match: called as if it returned nothing
-        if (D_00426110[0] != NULL) {
-            MenuSprite_Draw((int)&D_00447230[i], kind + 1000, 0, (int)D_00425510[i]);
+    for (i = 0; i < item_part_count; i++) {
+        kind = item_parts[i].handler_index;
+        ((void (*)(u8))Menu_SetBlendMode)(item_parts[i].blend_mode); // match: called as if it returned nothing
+        if (item_list_cursor[0] != NULL) {
+            MenuSprite_Draw((int)&item_parts[i], kind + 1000, 0, (int)screen_part_alphas[i]);
         } else {
-            MenuSprite_Draw((int)&D_00447230[i], kind + 1000, 1, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&item_parts[i], kind + 1000, 1, (int)screen_part_alphas[i]);
         }
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as if it returned nothing
     }
-    D_00446B40++;
-    if (D_00446B40 >= 0x80) {
-        D_00446B40 = 0;
+    use_item_frames++;
+    if (use_item_frames >= 0x80) {
+        use_item_frames = 0;
     }
-    if (D_00426110[0] != NULL) {
-        bar_item = D_00426120[0];
+    if (item_list_cursor[0] != NULL) {
+        bar_item = item_list_top[0];
         for (row = 0; row < 7; row++, bar_item = bar_item->prev) {
-            if (bar_item == D_00426110[0]) {
+            if (bar_item == item_list_cursor[0]) {
                 bar.first.f.lo16 = corner.f.lo16;
                 bar.first.f.mid16 = corner.f.mid16 + row * 0xB0;
                 bar.first.f.mid24 = corner.f.mid24;
@@ -3180,102 +3179,102 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
                 bar.second.f.lo16 = bar.first.f.lo16 + 0x1240;
                 bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
                 bar.second.f.mid24 = bar.first.f.mid24;
-                if (D_004472C5 == 1) {
-                    D_00425510[253] = Menu_PulseValue(D_00425510[253], 0x10, 0x20);
+                if (use_item_state == 1) {
+                    screen_part_alphas[253] = Menu_PulseValue(screen_part_alphas[253], 0x10, 0x20);
                 }
-                bar.alpha = (s32)D_00425510[253];
+                bar.alpha = (s32)screen_part_alphas[253];
                 MenuDraw_Bar(&bar);
                 break;
             }
         }
     }
-    if (D_00426110[0] != NULL) {
-        sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-        D_00446B3C = wrap_angle(D_00446B3C);
-        sceVu0RotMatrixY(local, view, D_00446B3C);
-        sceVu0TransMatrix(local, local, D_00421000);
+    if (item_list_cursor[0] != NULL) {
+        sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
+        use_item_model_angle = wrap_angle(use_item_model_angle);
+        sceVu0RotMatrixY(local, view, use_item_model_angle);
+        sceVu0TransMatrix(local, local, use_item_model_position);
         Menu_DrawItemModel(local);
-        item = D_00426120[0];
-        MenuText_SetColor(D_00446C78);
+        item = item_list_top[0];
+        MenuText_SetColor(menu_draw_color);
         for (row = 0; row < 7; row++, item = item->prev) {
             text = (s32)&item_name_defs[item->unk0C];
             MenuText_SetPen(word);
             ((s32 (*)(s32, s32))MenuText_DrawWrapped)(text, 0x1A); // match: called as if it took and returned a number
             word.f.mid16 += 0xB0;
             word.f.lo16 = 0x7080;
-            if (D_00426130[0]->prev == item) {
+            if (item_list_page_mark[0]->prev == item) {
                 break;
             }
         }
-        item = D_00426110[0];
-        table = Message_GetFontText(D_00446F38);
+        item = item_list_cursor[0];
+        table = Message_GetFontText(menu_heap);
         slot = item->unk0C + MSG_ITEM_TEXT_FIRST + 1;
         entry = ((s32 *)table)[slot];
         word.raw = 0x000A875083207080;
         MenuText_SetPen(word);
         if (entry != 0) {
             text = table + entry;
-            MenuText_SetColor(D_00446C78);
+            MenuText_SetColor(menu_draw_color);
             MenuText_DrawWordWrappedLong((u16 *)text, 0x33);
         }
     }
-    if ((D_00446DE8 & 0x4000) && D_004472DA != 0 && D_00426110[0] != NULL) {
-        if (D_00426110[0]->unk0C < ITEM_ARROW || D_00426110[0]->unk0C > ITEM_WIDDAS_ARROW) {
+    if ((menu_buttons & 0x4000) && menu_input_enabled != 0 && item_list_cursor[0] != NULL) {
+        if (item_list_cursor[0]->unk0C < ITEM_ARROW || item_list_cursor[0]->unk0C > ITEM_WIDDAS_ARROW) {
             Sound_PlayMenu(0);
             game_status.bit6 = TRUE;
-            game_status.item_to_use = D_00426110[0]->unk0C;
-            D_004472C5 = 2;
-            D_004472DA = 0;
-            if (D_00446C90 != NULL) {
-                D_00446C90->next = NULL;
+            game_status.item_to_use = item_list_cursor[0]->unk0C;
+            use_item_state = 2;
+            menu_input_enabled = 0;
+            if (model_load_chain != NULL) {
+                model_load_chain->next = NULL;
             }
         } else {
             Sound_PlayMenu(2);
         }
-    } else if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        D_004472C5 = 3;
-        D_004472DA = 0;
-        if (D_00446C90 != NULL) {
-            D_00446C90->next = NULL;
+        use_item_state = 3;
+        menu_input_enabled = 0;
+        if (model_load_chain != NULL) {
+            model_load_chain->next = NULL;
         }
-    } else if ((D_00446DE8 & 0x8000) && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x8000) && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
-        D_004472C5 = 4;
-        D_004472DA = 0;
-        if (D_00446C90 != NULL) {
-            D_00446C90->next = NULL;
+        use_item_state = 4;
+        menu_input_enabled = 0;
+        if (model_load_chain != NULL) {
+            model_load_chain->next = NULL;
         }
     }
-    if (D_004472C5 == 2 && D_00446C90 == NULL) {
-        D_004472C5 = 5;
+    if (use_item_state == 2 && model_load_chain == NULL) {
+        use_item_state = 5;
     }
-    if (D_004472C5 == 3 && D_00446C90 == NULL) {
-        D_004472C5 = 6;
+    if (use_item_state == 3 && model_load_chain == NULL) {
+        use_item_state = 6;
     }
-    if (D_004472C5 == 4 && D_00446C90 == NULL) {
-        D_004472C5 = 7;
+    if (use_item_state == 4 && model_load_chain == NULL) {
+        use_item_state = 7;
     }
-    switch (D_004472C5) {
+    switch (use_item_state) {
     case 0:
-        D_00425510[255] += 12.8f;
-        if (D_00425510[255] > 128.0f) {
-            D_00425510[255] = 128.0f;
+        screen_part_alphas[255] += 12.8f;
+        if (screen_part_alphas[255] > 128.0f) {
+            screen_part_alphas[255] = 128.0f;
         }
-        D_00425510[253] += 1.6f;
-        D_00446C78.alpha = (s32)D_00425510[255];
-        if (D_00425510[253] > 16.0f) {
-            D_00425510[253] = 16.0f;
+        screen_part_alphas[253] += 1.6f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        if (screen_part_alphas[253] > 16.0f) {
+            screen_part_alphas[253] = 16.0f;
         }
-        for (i = 0; i < D_00446A34; i++) {
-            D_00425510[i] += D_00447230[i].alpha / 10.0f;
-            if (D_00425510[i] > D_00447230[i].alpha) {
-                for (i = 0; i < D_00446A34; i++) {
-                    full_alpha = D_00447230[i].alpha;
-                    D_00425510[i] = full_alpha;
+        for (i = 0; i < item_part_count; i++) {
+            screen_part_alphas[i] += item_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] > item_parts[i].alpha) {
+                for (i = 0; i < item_part_count; i++) {
+                    full_alpha = item_parts[i].alpha;
+                    screen_part_alphas[i] = full_alpha;
                 }
-                D_004472C5 = 1;
-                D_004472DA = D_004472C5;
+                use_item_state = 1;
+                menu_input_enabled = use_item_state;
                 return;
             }
         }
@@ -3283,35 +3282,35 @@ static void Menu_UpdateUseItem(HandlerContext *context) {
     case 5:
     case 6:
     case 7:
-        D_00425510[255] -= 12.8f;
-        if (D_00425510[255] < 0.0f) {
-            D_00425510[255] = 0.0f;
+        screen_part_alphas[255] -= 12.8f;
+        if (screen_part_alphas[255] < 0.0f) {
+            screen_part_alphas[255] = 0.0f;
         }
-        D_00425510[253] -= 1.6f;
-        D_00446C78.alpha = (s32)D_00425510[255];
-        if (D_00425510[253] < 0.0f) {
-            D_00425510[253] = 0.0f;
+        screen_part_alphas[253] -= 1.6f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        if (screen_part_alphas[253] < 0.0f) {
+            screen_part_alphas[253] = 0.0f;
         }
-        for (i = 0; i < D_00446A34; i++) {
-            D_00425510[i] -= D_00447230[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                switch (D_004472C5) {
+        for (i = 0; i < item_part_count; i++) {
+            screen_part_alphas[i] -= item_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                switch (use_item_state) {
                 case 5:
-                    D_00446B20 = NULL;
-                    D_00446AC8++;
+                    menu_screen_handler = NULL;
+                    menu_step++;
                     break;
                 case 6:
                     ((s32 (*)(s32))Menu_ResetLoadBuffers)(0); // match: called as if it took a number and returned one
-                    D_00446B20 = Menu_OpenMain;
+                    menu_screen_handler = Menu_OpenMain;
                     break;
                 case 7:
                     ((s32 (*)(s32))Menu_ResetLoadBuffers)(0); // match: called as if it took a number and returned one
                     ((void (*)(s32))Menu_ChainKeyItemModels)(0); // match: the callee takes nothing
-                    D_00446B20 = Menu_UpdateKeyItems;
+                    menu_screen_handler = Menu_UpdateKeyItems;
                     break;
                 }
-                D_004472C5 = 0;
+                use_item_state = 0;
                 return;
             }
         }
@@ -3344,32 +3343,32 @@ static void Menu_UpdateCastSpell(s32 context) {
     memset(view, 0, 0x40);
     view[10] = view[5] = view[0] = 0.8f;
     view[15] = 1.0f;
-    if (D_005CE830[0] == 0) {
-        D_00446B20 = Menu_OpenMain;
+    if (castable_spell_first[0] == 0) {
+        menu_screen_handler = Menu_OpenMain;
         return;
     }
-    if (D_004472C8 < 2) {
+    if (cast_spell_state < 2) {
         ((void (*)(s32))Menu_MoveSpellCursor)(context); // match: the callee takes nothing
     }
-    item = D_005CE890[0];
+    item = castable_spell_top[0];
     word.raw = 0x0C0AAE607C307080;
     MenuText_SetPen(word);
     corner.raw = 0x0A0F42407C307000;
     pitch.raw = 0xB00140;
     MenuText_SetGlyphSize(pitch);
     i = 0;
-    number = D_005CE880[0]->unk0C; /* the selected magic's number */
+    number = castable_spell_cursor[0]->unk0C; /* the selected magic's number */
     page = (number - 1) / 15;
     D_00446DF4 = fx_table[number].mp_cost;
     D_00446DF8 = (number - 1) % 3 + 1;
-    for (; i < D_00446A38; i++) {
-        kind = D_00447234[i].handler_index;
-        Menu_SetBlendMode(D_00447234[i].blend_mode);
-        MenuSprite_Draw((int)&D_00447234[i], kind + 1000, page, (int)D_00425510[i]);
+    for (; i < magic_part_count; i++) {
+        kind = magic_parts[i].handler_index;
+        Menu_SetBlendMode(magic_parts[i].blend_mode);
+        MenuSprite_Draw((int)&magic_parts[i], kind + 1000, page, (int)screen_part_alphas[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as if it returned nothing
     }
     for (row = 0; row < 7; row++, item = item->prev) {
-        if (D_005CE880[0] == item) {
+        if (castable_spell_cursor[0] == item) {
             bar.first.f.lo16 = corner.f.lo16;
             bar.first.f.mid16 = corner.f.mid16 + row * 0xB0;
             bar.first.f.mid24 = corner.f.mid24;
@@ -3379,26 +3378,26 @@ static void Menu_UpdateCastSpell(s32 context) {
             bar.second.f.lo16 = bar.first.f.lo16 + 0x1220;
             bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
             bar.second.f.mid24 = bar.first.f.mid24;
-            if (D_004472C8 == 1) {
-                D_00425510[253] = Menu_PulseValue(D_00425510[253], 0x10, 0x20);
+            if (cast_spell_state == 1) {
+                screen_part_alphas[253] = Menu_PulseValue(screen_part_alphas[253], 0x10, 0x20);
             }
-            bar.alpha = (s32)D_00425510[253];
+            bar.alpha = (s32)screen_part_alphas[253];
             MenuDraw_Bar(&bar);
             break;
         }
     }
-    item = D_005CE890[0];
-    MenuText_SetColor(D_00446C78);
+    item = castable_spell_top[0];
+    MenuText_SetColor(menu_draw_color);
     for (row = 0; row < 7; row++, item = item->prev) {
         MenuText_DrawLine((u16 *)&fx_table[item->unk0C], 0x1A);
         word.f.mid16 += 0xB0; // match: dead, left over from the item menu (Menu_UpdateUseItem), which sets the row's place here
         word.f.lo16 = 0x7080; // match: dead as well; without the two lines the loop is compiled differently
-        if (D_005CE8A0[0]->prev == item) {
+        if (castable_spell_page_mark[0]->prev == item) {
             break;
         }
     }
-    selected = D_005CE880[0];
-    table = Message_GetFontText(D_00446F38);
+    selected = castable_spell_cursor[0];
+    table = Message_GetFontText(menu_heap);
     slot = selected->unk0C + MSG_MAGIC_TEXT_FIRST + 1;
     entry = ((s32 *)table)[slot];
     word.raw = 0x000A875082E07000;
@@ -3406,8 +3405,8 @@ static void Menu_UpdateCastSpell(s32 context) {
     if (entry != 0) {
         MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x35);
     }
-    sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    sceVu0TransMatrix(local, view, D_00421010);
+    sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
+    sceVu0TransMatrix(local, view, cast_spell_model_position);
     packet = MenuDraw_NextPacket();
     packet[0] = 0x8002;
     packet[1] = 0x10000000;
@@ -3425,73 +3424,73 @@ static void Menu_UpdateCastSpell(s32 context) {
     *D2_QWC = 3;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
     *D2_CHCR = 0x100;
-    DRAW_NODE_MODEL(&D_00426470, local, D_00446C78);
-    if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
-        if (player_state.mp_now >= ((FxTableEntry *)D_005CE880[0]->unk00)->mp_cost && player_state.magic_gauge >= 5000) {
+    DRAW_NODE_MODEL(&model_load_shown, local, menu_draw_color);
+    if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
+        if (player_state.mp_now >= ((FxTableEntry *)castable_spell_cursor[0]->unk00)->mp_cost && player_state.magic_gauge >= 5000) {
             Sound_PlayMenu(0);
-            game_status.magic_to_cast = D_005CE880[0]->unk0C;
-            D_004472C8 = 2;
-            D_004472DA = 0;
-            if (D_00446C90 != NULL) {
-                D_00446C90->next = NULL;
+            game_status.magic_to_cast = castable_spell_cursor[0]->unk0C;
+            cast_spell_state = 2;
+            menu_input_enabled = 0;
+            if (model_load_chain != NULL) {
+                model_load_chain->next = NULL;
             }
         } else {
             Sound_PlayMenu(3);
         }
-    } else if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        D_004472C8 = 2;
-        D_004472DA = 0;
-        if (D_00446C90 != NULL) {
-            D_00446C90->next = NULL;
+        cast_spell_state = 2;
+        menu_input_enabled = 0;
+        if (model_load_chain != NULL) {
+            model_load_chain->next = NULL;
         }
     }
-    if (D_004472C8 == 2 && D_00446C90 == NULL) {
-        D_004472C8 = 3;
+    if (cast_spell_state == 2 && model_load_chain == NULL) {
+        cast_spell_state = 3;
     }
-    switch (D_004472C8) {
+    switch (cast_spell_state) {
     case 0:
-        D_00425510[255] += 12.8f;
-        if (D_00425510[255] > 128.0f) {
-            D_00425510[255] = 128.0f;
+        screen_part_alphas[255] += 12.8f;
+        if (screen_part_alphas[255] > 128.0f) {
+            screen_part_alphas[255] = 128.0f;
         }
-        D_00425510[253] += 1.6f;
-        D_00446C78.alpha = (s32)D_00425510[255];
-        if (D_00425510[253] > 16.0f) {
-            D_00425510[255] = 16.0f; // match: retail clamps the text alpha here, not the bar's ([253])
+        screen_part_alphas[253] += 1.6f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        if (screen_part_alphas[253] > 16.0f) {
+            screen_part_alphas[255] = 16.0f; // match: retail clamps the text alpha here, not the bar's ([253])
         }
-        for (i = 0; i < D_00446A38; i++) {
-            D_00425510[i] += D_00447234[i].alpha / 10.0f;
-            if (D_00425510[i] > D_00447234[i].alpha) {
-                D_004472DA = D_004472C8 = 1;
-                for (i = 0; i < D_00446A38; i++) {
-                    full_alpha = D_00447234[i].alpha;
-                    D_00425510[i] = full_alpha;
+        for (i = 0; i < magic_part_count; i++) {
+            screen_part_alphas[i] += magic_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] > magic_parts[i].alpha) {
+                menu_input_enabled = cast_spell_state = 1;
+                for (i = 0; i < magic_part_count; i++) {
+                    full_alpha = magic_parts[i].alpha;
+                    screen_part_alphas[i] = full_alpha;
                 }
                 return;
             }
         }
         break;
     case 3:
-        D_00425510[255] -= 12.8f;
-        if (D_00425510[255] < 0.0f) {
-            D_00425510[255] = 0.0f;
+        screen_part_alphas[255] -= 12.8f;
+        if (screen_part_alphas[255] < 0.0f) {
+            screen_part_alphas[255] = 0.0f;
         }
-        D_00425510[253] -= 1.6f;
-        D_00446C78.alpha = (s32)D_00425510[255];
-        if (D_00425510[253] < 0.0f) {
-            D_00425510[253] = 0.0f;
+        screen_part_alphas[253] -= 1.6f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        if (screen_part_alphas[253] < 0.0f) {
+            screen_part_alphas[253] = 0.0f;
         }
-        for (i = 0; i < D_00446A38; i++) {
-            D_00425510[i] -= D_00447234[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                D_004472C8 = 0;
+        for (i = 0; i < magic_part_count; i++) {
+            screen_part_alphas[i] -= magic_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                cast_spell_state = 0;
                 if (game_status.magic_to_cast != 0) {
-                    D_00446B20 = NULL;
-                    D_00446AC8++;
+                    menu_screen_handler = NULL;
+                    menu_step++;
                 } else {
                     ((s32 (*)(s32))Menu_ResetLoadBuffers)(0); // match: called as if it took a number and returned one
-                    D_00446B20 = Menu_OpenMain;
+                    menu_screen_handler = Menu_OpenMain;
                 }
                 return;
             }
@@ -3500,22 +3499,22 @@ static void Menu_UpdateCastSpell(s32 context) {
     }
 }
 
-extern char D_00446B60[8];
-extern char D_00446B68[8];
-extern char D_00446B70[8];
-extern char D_00446B78[8];
-extern char D_00446B80[8];
-extern char D_00446B88[8];
-extern char D_00446B90[8];
-extern char D_00446B98[8];
-extern char D_00446BA0[8];
-extern char D_00446BA8[8];
-extern char D_00446BB0[8];
+extern char group_name_weapons[8];
+extern char group_name_magic[8];
+extern char group_name_shield[8];
+extern char group_name_helm[8];
+extern char group_name_armor[8];
+extern char group_name_gauntlet[8];
+extern char group_name_boot[8];
+extern char group_name_ring[8];
+extern char group_name_bracelet[8];
+extern char group_name_amulet[8];
+extern char group_name_item[8];
 /* per MenuItem.group, the LevelDef number its records start at, as the equipment screen has it */
 static const EquipGroupBases equip_group_bases = { { 150, 0, 220, 220, 220, 220, 220, 220, 220, 220, 0, 0 } };
 /* the names of the equipment groups ("weapons", "magic", "shield"...); copied to a local and never read */
 static const EquipUnusedTable equip_group_names = { {
-    D_00446B60, D_00446B68, D_00446B70, D_00446B78, D_00446B80, D_00446B88, D_00446B90, D_00446B98, D_00446BA0, D_00446BA8, D_00446BB0, D_00446BB0,
+    group_name_weapons, group_name_magic, group_name_shield, group_name_helm, group_name_armor, group_name_gauntlet, group_name_boot, group_name_ring, group_name_bracelet, group_name_amulet, group_name_item, group_name_item,
 } };
 /* where the three models of the equipment screen go */
 static const VuVector4 equip_model_offset_low = { 55.0f, -60.0f, 400.0f, 0.0f };
@@ -3523,12 +3522,12 @@ static const VuVector4 equip_model_offset_middle = { 55.0f, 0.0f, 400.0f, 0.0f }
 static const VuVector4 equip_model_offset_high = { 55.0f, 60.0f, 400.0f, 0.0f };
 /* per MenuItem.group, the glyph that names the group */
 static const EquipGroupBytes equip_group_glyphs = { { 0x5B, 0x5C, 0x5D, 0x5E, 0x5F, 0x60, 0x61, 0x63, 0x62, 0x64, 0x65 } };
-/* per MenuItem.group, a slot number; copied to a local and never read */
-static const EquipGroupBytes equip_group_slots = { { 4, -1, 5, 2, 1, 3, 0, -1, -1, -1, -1 } };
+/* a byte per MenuItem.group (for groups 0 to 6 the values slot_pool_groups has); copied to a local and never read */
+static const EquipGroupBytes D_0043FDD0 = { { 4, -1, 5, 2, 1, 3, 0, -1, -1, -1, -1 } };
 
 /* The Equip screen (main menu line 2): moves between the eleven lists and inside the list shown, draws the
    screen's parts, the worn weapon's model and the cursor item's model, the item's detail panel (button
-   0x1000) or the list of everything worn (0x8000), equips the cursor item (0x4000) and fades in and out. */
+   0x1000) or the list of everything equipped (0x8000), equips the cursor item (0x4000) and fades in and out. */
 static void Menu_UpdateEquip(void) {
     EquipGroupBases bases = equip_group_bases;
     f32 item_matrix[16];
@@ -3575,23 +3574,23 @@ static void Menu_UpdateEquip(void) {
     {
     void *definition;
     SpritePacket *parts;
-    if ((D_00446DE8 & 0x10) && D_004472CE != 0 && D_004472DA != 0 && D_004472F0 == 0) {
+    if ((menu_buttons & 0x10) && equip_model_shown != 0 && menu_input_enabled != 0 && worn_model_loading == 0) {
         EQUIP_LIST = EQUIP_LIST->next;
         ((void (*)(s32))Menu_ShiftEquipModelsNextList)(0); // match: called with the number alone
-        D_004472E0--;
+        equip_group_shown--;
         Sound_PlayMenu(1);
-    } else if ((D_00446DE8 & 0x40) && D_004472CE != 0 && D_004472DA != 0 && D_004472F0 == 0) {
+    } else if ((menu_buttons & 0x40) && equip_model_shown != 0 && menu_input_enabled != 0 && worn_model_loading == 0) {
         EQUIP_LIST = EQUIP_LIST->prev;
         ((void (*)(s32))Menu_ShiftEquipModelsPrevList)(0); // match: called with the number alone
-        D_004472E0++;
+        equip_group_shown++;
         Sound_PlayMenu(1);
-    } else if (D_004472C6 < 2 && D_004472F0 == 0) {
+    } else if (equip_state < 2 && worn_model_loading == 0) {
         ((void (*)(s32))Menu_MoveEquipCursor)(0); // match: the callee takes nothing
     }
-    if (D_004472E0 > 10) {
-        D_004472E0 = 0;
-    } else if (D_004472E0 < 0) {
-        D_004472E0 = 10;
+    if (equip_group_shown > 10) {
+        equip_group_shown = 0;
+    } else if (equip_group_shown < 0) {
+        equip_group_shown = 10;
     }
     index = CURRENT_ITEM->unk0C - bases.first_item[CURRENT_ITEM->group];
     if (CURRENT_ITEM->group == 0) {
@@ -3599,47 +3598,47 @@ static void Menu_UpdateEquip(void) {
     } else if (CURRENT_ITEM->group == 1) {
         D_00446E30 = (index - 1) % 3 + 1;
     }
-    for (i = 0; i < D_00446A3C; i++) {
-        kind = D_00447238[i].handler_index;
-        SET_BLEND(D_00447238[i].blend_mode);
-        if (Menu_IsEquipped(D_004472E0, CURRENT_ITEM->group, CURRENT_ITEM->unk0C)) {
-            MenuSprite_Draw((int)&D_00447238[i], kind + 1000, 0, (int)D_00425510[i]);
+    for (i = 0; i < equip_part_count; i++) {
+        kind = equip_parts[i].handler_index;
+        SET_BLEND(equip_parts[i].blend_mode);
+        if (Menu_IsEquipped(equip_group_shown, CURRENT_ITEM->group, CURRENT_ITEM->unk0C)) {
+            MenuSprite_Draw((int)&equip_parts[i], kind + 1000, 0, (int)screen_part_alphas[i]);
         } else {
-            MenuSprite_Draw((int)&D_00447238[i], kind + 1000, 1, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&equip_parts[i], kind + 1000, 1, (int)screen_part_alphas[i]);
         }
         SET_BLEND(0);
     }
-    if ((D_00446DE8 & 0x1000) && D_00446AD5 == 0 && D_004472DA != 0
+    if ((menu_buttons & 0x1000) && equipped_list_open == 0 && menu_input_enabled != 0
         && Menu_IsEquipSlotFilled(index, CURRENT_ITEM->group)) {
-        if (D_00446AD4 == 0) {
-            D_00446B50 = 1;
-            D_00446AD4 = 1;
-        } else if (D_004472C7 != 2) {
+        if (detail_panel_open == 0) {
+            detail_panel_sound_pending = 1;
+            detail_panel_open = 1;
+        } else if (equip_panel_state != 2) {
             Sound_PlayMenu(1);
-            D_004472C7 = 2;
+            equip_panel_state = 2;
         } else {
-            D_004472C7 = 0;
+            equip_panel_state = 0;
         }
     }
-    if ((D_00446DE8 & 0x8000) && D_00446AD4 == 0 && D_004472DA != 0) {
+    if ((menu_buttons & 0x8000) && detail_panel_open == 0 && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
-        if (D_00446AD5 == 0) {
-            D_00446AD5 = 1;
-        } else if (D_004472C7 != 2) {
-            D_004472C7 = 2;
+        if (equipped_list_open == 0) {
+            equipped_list_open = 1;
+        } else if (equip_panel_state != 2) {
+            equip_panel_state = 2;
         } else {
-            D_004472C7 = 0;
+            equip_panel_state = 0;
         }
     }
-    sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    if (D_00446DE8 & 0x800) {
-        D_00446B58 += 0.03f;
-    } else if (D_00446DE8 & 0x400) {
-        D_00446B58 -= 0.03f;
+    sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
+    if (menu_buttons & 0x800) {
+        equip_weapon_model_angle += 0.03f;
+    } else if (menu_buttons & 0x400) {
+        equip_weapon_model_angle -= 0.03f;
     }
-    D_00446B58 -= (f32)(s32)(D_00446B58 / 3.1415927f) * 6.2831855f;
-    sceVu0RotMatrixY(weapon_matrix, unit, D_00446B58);
-    sceVu0TransMatrix(weapon_matrix, weapon_matrix, D_00421040);
+    equip_weapon_model_angle -= (f32)(s32)(equip_weapon_model_angle / 3.1415927f) * 6.2831855f;
+    sceVu0RotMatrixY(weapon_matrix, unit, equip_weapon_model_angle);
+    sceVu0TransMatrix(weapon_matrix, weapon_matrix, equip_weapon_model_position);
     node.pool_node = &D_004472B8;
     node.unk20 = 1;
     node.unk00 = 0;
@@ -3647,11 +3646,11 @@ static void Menu_UpdateEquip(void) {
     if (weapon_defs[player_state.weapon].action_handler_index == 0) {
         D_00446ACC += worn_defs[player_state.equipment[EQUIP_SHIELD]].unk3F;
     }
-    PoolNode_Pose((RelocEntry *)D_005CEE60[D_00446ACC]->frames, D_0042A8F0, weapon_matrix, D_00446B5C);
-    D_00446B5C++;
-    D_00446B5C %= D_005CEE60[D_00446ACC]->frame_count;
+    PoolNode_Pose((RelocEntry *)equip_weapon_motions[D_00446ACC]->frames, pool_slots, weapon_matrix, equip_weapon_motion_frame);
+    equip_weapon_motion_frame++;
+    equip_weapon_motion_frame %= equip_weapon_motions[D_00446ACC]->frame_count;
     // match: a pointer-typed load, as in CURRENT_ITEM
-    D_00446ACC = ((PlayerItemDef *)((MenuItemList *)D_005CE6B0.item)->item)->equip_menu_draw_index;
+    D_00446ACC = ((PlayerItemDef *)((MenuItemList *)equipped_weapon.item)->item)->equip_menu_draw_index;
     switch (weapon_defs[player_state.weapon].action_handler_index) {
     case 0:
         D_00446ACC += player_state.equipment[EQUIP_SHIELD] == ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
@@ -3663,7 +3662,7 @@ static void Menu_UpdateEquip(void) {
         D_00446ACC = 0;
         break;
     }
-    draw = D_0042A290[D_00446ACC];
+    draw = pool_slot_drawers[D_00446ACC];
     scissor_packet = MenuDraw_NextPacket();
     scissor_packet[0] = 0x8001;
     scissor_packet[1] = 0x10000000;
@@ -3677,13 +3676,13 @@ static void Menu_UpdateEquip(void) {
     first_offset = equip_model_offset_low;
     second_offset = equip_model_offset_middle;
     third_offset = equip_model_offset_high;
-    sceVu0TransMatrix((f32 *)&D_0042A8F0[21], unit, &first_offset.x);
-    sceVu0TransMatrix((f32 *)&D_0042A8F0[22], unit, &second_offset.x);
-    sceVu0TransMatrix((f32 *)&D_0042A8F0[23], unit, &third_offset.x);
-    DRAW_SLOT(&D_0042A8F0[21]);
-    DRAW_SLOT(&D_0042A8F0[22]);
-    DRAW_SLOT(&D_0042A8F0[23]);
-    draw(D_0042A8F0, D_00446C88);
+    sceVu0TransMatrix((f32 *)&pool_slots[21], unit, &first_offset.x);
+    sceVu0TransMatrix((f32 *)&pool_slots[22], unit, &second_offset.x);
+    sceVu0TransMatrix((f32 *)&pool_slots[23], unit, &third_offset.x);
+    DRAW_SLOT(&pool_slots[21]);
+    DRAW_SLOT(&pool_slots[22]);
+    DRAW_SLOT(&pool_slots[23]);
+    draw(pool_slots, model_draw_color);
     full_packet = MenuDraw_NextPacket();
     full_packet[0] = 0x8001;
     full_packet[1] = 0x10000000;
@@ -3709,38 +3708,38 @@ static void Menu_UpdateEquip(void) {
     packet[11] = 0;
     GIF_SEND(packet, 3);
     if (CURRENT_ITEM->group == 1) {
-        if (D_004472C6 != 2 && D_00426470.unk20 != 0) {
-            D_004472CE = 1;
-            D_00425510[254] += 12.8f;
-            if (D_00425510[254] > 128.0f) {
-                D_00425510[254] = 128.0f;
+        if (equip_state != 2 && model_load_shown.unk20 != 0) {
+            equip_model_shown = 1;
+            screen_part_alphas[254] += 12.8f;
+            if (screen_part_alphas[254] > 128.0f) {
+                screen_part_alphas[254] = 128.0f;
             }
-            D_00446C88.alpha = (s32)D_00425510[254];
+            model_draw_color.alpha = (s32)screen_part_alphas[254];
         }
-        sceVu0TransMatrix(item_matrix, scale, D_00421020);
+        sceVu0TransMatrix(item_matrix, scale, equip_item_model_position);
         DRAW_ITEM_MODEL(item_matrix);
     } else {
-        if (D_004472C6 != 2 && D_00426470.unk20 != 0) {
-            D_004472CE = 1;
-            D_00425510[254] += 12.8f;
-            if (D_00425510[254] > 128.0f) {
-                D_00425510[254] = 128.0f;
+        if (equip_state != 2 && model_load_shown.unk20 != 0) {
+            equip_model_shown = 1;
+            screen_part_alphas[254] += 12.8f;
+            if (screen_part_alphas[254] > 128.0f) {
+                screen_part_alphas[254] = 128.0f;
             }
-            D_00446C88.alpha = (s32)D_00425510[254];
+            model_draw_color.alpha = (s32)screen_part_alphas[254];
         }
-        angle = D_00446B54 + 3.1415927f;
-        D_00446B54 = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
-        sceVu0RotMatrixY(item_matrix, scale, D_00446B54);
-        sceVu0TransMatrix(item_matrix, item_matrix, D_00421020);
+        angle = equip_item_model_angle + 3.1415927f;
+        equip_item_model_angle = angle - (f32)(s32)(angle / 6.2831855f) * 6.2831855f - 3.1415927f;
+        sceVu0RotMatrixY(item_matrix, scale, equip_item_model_angle);
+        sceVu0TransMatrix(item_matrix, item_matrix, equip_item_model_position);
         DRAW_ITEM_MODEL(item_matrix);
     }
-    sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
+    sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
     if (CURRENT_ITEM->group == 1) {
         definition = &fx_table[CURRENT_ITEM->unk0C];
     } else {
         definition = &item_name_defs[CURRENT_ITEM->unk0C];
     }
-    if (D_00446AD4 != 0) {
+    if (detail_panel_open != 0) {
         switch (CURRENT_ITEM->group) {
         case 0:
             D_00446DF4 = (weapon_level_records[index].unk00[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[0]) * weapon_level_records[index].level / 100;
@@ -3757,20 +3756,20 @@ static void Menu_UpdateEquip(void) {
             D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
             D_00446E24 = 100;
             D_00446E28 = player_weapon[EQUIP_LIST->group];
-            if (D_004472C7 == 1) {
-                RESET_ALPHAS(D_0044723C, D_00446A40);
+            if (equip_panel_state == 1) {
+                RESET_ALPHAS(equip_a_parts, equip_a_part_count);
             }
             if (index != 0) {
-                if (D_00446B50 != 0) {
+                if (detail_panel_sound_pending != 0) {
                     Sound_PlayMenu(1);
                 }
-                D_00446B50 = 0;
-                DRAW_PARTS(D_0044723C, D_00446A40, 0);
-                MenuText_SetColor(D_00446C80);
+                detail_panel_sound_pending = 0;
+                DRAW_PARTS(equip_a_parts, equip_a_part_count, 0);
+                MenuText_SetColor(panel_text_color);
                 Menu_DrawEquipItemText(MSG_ITEM_TEXT_FIRST);
             }
-            parts = D_0044723C;
-            count = D_00446A40;
+            parts = equip_a_parts;
+            count = equip_a_part_count;
             break;
         case 1:
             if (fx_table[CURRENT_ITEM->unk0C].item_menu_magic == 0) {
@@ -3785,57 +3784,57 @@ static void Menu_UpdateEquip(void) {
                 D_00446E10 = magic->hit_checks[0].strengths.unk00[7];
                 D_00446E14 = magic->hit_checks[0].strengths.unk00[8];
                 D_00446E1C = magic->mp_cost;
-                if (D_004472C7 == 1) {
-                    RESET_ALPHAS(D_00447244, D_00446A48);
+                if (equip_panel_state == 1) {
+                    RESET_ALPHAS(equip_m_parts, equip_m_part_count);
                 }
                 if (index != 0) {
-                    if (D_00446B50 != 0) {
+                    if (detail_panel_sound_pending != 0) {
                         Sound_PlayMenu(1);
                     }
-                    D_00446B50 = 0;
-                    DRAW_PARTS(D_00447244, D_00446A48, (index - 1) / 15);
-                    MenuText_SetColor(D_00446C80);
+                    detail_panel_sound_pending = 0;
+                    DRAW_PARTS(equip_m_parts, equip_m_part_count, (index - 1) / 15);
+                    MenuText_SetColor(panel_text_color);
                     Menu_DrawEquipItemText(MSG_MAGIC_TEXT_FIRST);
                 }
-                parts = D_00447244;
-                count = D_00446A48;
+                parts = equip_m_parts;
+                count = equip_m_part_count;
             } else {
                 D_00446E1C = fx_table[index].mp_cost;
-                if (D_004472C7 == 1) {
-                    RESET_ALPHAS(D_00446C6C, D_00446AC0);
+                if (equip_panel_state == 1) {
+                    RESET_ALPHAS(equip_m2_parts, equip_m2_part_count);
                 }
                 if (index != 0) {
-                    if (D_00446B50 != 0) {
+                    if (detail_panel_sound_pending != 0) {
                         Sound_PlayMenu(1);
                     }
-                    D_00446B50 = 0;
-                    DRAW_PARTS(D_00446C6C, D_00446AC0, (index + 1) / 15);
-                    MenuText_SetColor(D_00446C80);
+                    detail_panel_sound_pending = 0;
+                    DRAW_PARTS(equip_m2_parts, equip_m2_part_count, (index + 1) / 15);
+                    MenuText_SetColor(panel_text_color);
                     Menu_DrawEquipItemText(MSG_MAGIC_TEXT_FIRST);
                 }
-                parts = D_00446C6C;
-                count = D_00446AC0;
+                parts = equip_m2_parts;
+                count = equip_m2_part_count;
             }
             break;
         case 11:
-            if (D_004472C7 == 1) {
-                RESET_ALPHAS(D_0044726C, D_00446A80);
+            if (equip_panel_state == 1) {
+                RESET_ALPHAS(equip_s_parts, equip_s_part_count);
             }
             if (index != 0) {
-                if (D_00446B50 != 0) {
+                if (detail_panel_sound_pending != 0) {
                     Sound_PlayMenu(1);
                 }
-                D_00446B50 = 0;
-                for (i = 0; i < D_00446A80; i++) {
-                    SET_BLEND(D_0044726C[i].blend_mode);
-                    MenuSprite_Draw((int)&D_0044726C[i], 1002, 1, (int)D_00425910[i]);
+                detail_panel_sound_pending = 0;
+                for (i = 0; i < equip_s_part_count; i++) {
+                    SET_BLEND(equip_s_parts[i].blend_mode);
+                    MenuSprite_Draw((int)&equip_s_parts[i], 1002, 1, (int)panel_part_alphas[i]);
                     SET_BLEND(0);
                 }
-                MenuText_SetColor(D_00446C80);
+                MenuText_SetColor(panel_text_color);
                 Menu_DrawEquipItemText(MSG_ITEM_TEXT_FIRST);
             }
-            parts = D_0044726C;
-            count = D_00446A80;
+            parts = equip_s_parts;
+            count = equip_s_part_count;
             break;
         case 2:
         case 3:
@@ -3856,19 +3855,19 @@ static void Menu_UpdateEquip(void) {
             D_00446E20 = worn_item_level_records[index].level;
             D_00446E24 = 100;
             if (index != 0 && index != 30 && index != 55 && index != 80 && index != 105) {
-                if (D_00446B50 != 0) {
+                if (detail_panel_sound_pending != 0) {
                     Sound_PlayMenu(1);
                 }
-                D_00446B50 = 0;
-                if (D_004472C7 == 1) {
-                    RESET_ALPHAS(D_00447240, D_00446A44);
+                detail_panel_sound_pending = 0;
+                if (equip_panel_state == 1) {
+                    RESET_ALPHAS(equip_g_parts, equip_g_part_count);
                 }
-                DRAW_PARTS(D_00447240, D_00446A44, D_00446E1C);
-                MenuText_SetColor(D_00446C80);
+                DRAW_PARTS(equip_g_parts, equip_g_part_count, D_00446E1C);
+                MenuText_SetColor(panel_text_color);
                 Menu_DrawEquipItemText(MSG_ITEM_TEXT_FIRST);
             }
-            parts = D_00447240;
-            count = D_00446A44;
+            parts = equip_g_parts;
+            count = equip_g_part_count;
             break;
         case 7:
         case 8:
@@ -3885,59 +3884,59 @@ static void Menu_UpdateEquip(void) {
             D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
             D_00446E1C = player_weapon[EQUIP_LIST->group];
             if (index != 130 && index != 140 && index != 150) {
-                if (D_00446B50 != 0) {
+                if (detail_panel_sound_pending != 0) {
                     Sound_PlayMenu(1);
                 }
-                D_00446B50 = 0;
-                if (D_004472C7 == 1) {
-                    RESET_ALPHAS(D_00447240, D_00446A44); // match: the armour panel's list; the parts drawn and faded in this case are D_00447268's
+                detail_panel_sound_pending = 0;
+                if (equip_panel_state == 1) {
+                    RESET_ALPHAS(equip_g_parts, equip_g_part_count); // match: the armour panel's list; the parts drawn and faded in this case are equip_g2_parts's
                 }
-                DRAW_PARTS(D_00447268, D_00446A7C, D_00446E1C);
-                MenuText_SetColor(D_00446C80);
+                DRAW_PARTS(equip_g2_parts, equip_g2_part_count, D_00446E1C);
+                MenuText_SetColor(panel_text_color);
                 Menu_DrawEquipItemText(MSG_ITEM_TEXT_FIRST);
             }
-            parts = D_00447268;
-            count = D_00446A7C;
+            parts = equip_g2_parts;
+            count = equip_g2_part_count;
             break;
         }
-        switch (D_004472C7) {
+        switch (equip_panel_state) {
         case 0:
-            D_00425910[255] += 12.8f;
-            if (D_00425910[255] > 128.0f) {
-                D_00425910[255] = 128.0f;
+            panel_part_alphas[255] += 12.8f;
+            if (panel_part_alphas[255] > 128.0f) {
+                panel_part_alphas[255] = 128.0f;
             }
-            D_00446C80.alpha = (s32)D_00425910[255];
+            panel_text_color.alpha = (s32)panel_part_alphas[255];
             for (i = 0; i < count; i++) {
-                D_00425910[i] += parts[i].alpha / 10.0f;
-                if (D_00425910[i] > parts[i].alpha) {
+                panel_part_alphas[i] += parts[i].alpha / 10.0f;
+                if (panel_part_alphas[i] > parts[i].alpha) {
                     for (i = 0; i < count; i++) {
                         alpha = parts[i].alpha;
-                        D_00425910[i] = alpha;
+                        panel_part_alphas[i] = alpha;
                     }
-                    D_004472C7 = 1;
+                    equip_panel_state = 1;
                     break;
                 }
             }
             break;
         case 2:
-            D_00425910[255] -= 12.8f;
-            if (D_00425910[255] < 0.0f) {
-                D_00425910[255] = 0.0f;
+            panel_part_alphas[255] -= 12.8f;
+            if (panel_part_alphas[255] < 0.0f) {
+                panel_part_alphas[255] = 0.0f;
             }
-            D_00446C80.alpha = (s32)D_00425910[255];
+            panel_text_color.alpha = (s32)panel_part_alphas[255];
             for (i = 0; i < count; i++) {
-                D_00425910[i] -= parts[i].alpha / 10.0f;
-                if (D_00425910[i] < 0.0f) {
-                    memset(D_00425910, 0, 0x400);
-                    D_00446AD4 = 0;
-                    D_004472C7 = 0;
+                panel_part_alphas[i] -= parts[i].alpha / 10.0f;
+                if (panel_part_alphas[i] < 0.0f) {
+                    memset(panel_part_alphas, 0, 0x400);
+                    detail_panel_open = 0;
+                    equip_panel_state = 0;
                     break;
                 }
             }
             break;
         }
     }
-    MenuText_SetColor(D_00446C78);
+    MenuText_SetColor(menu_draw_color);
     word.raw = 0x0A0A875084106EF0;
     word.f.mid24 = 0xA8750;
     MenuText_SetPen(word);
@@ -3948,10 +3947,10 @@ static void Menu_UpdateEquip(void) {
         glyph = glyphs.per_group[EQUIP_LIST->group];
         width = MenuDraw_GetWordStart(glyph + 1) - MenuDraw_GetWordStart(glyph) - 1;
         offset = (s32)(width * 0.5f * 20.0f);
-        sprite.red = D_00446C78.red;
-        sprite.green = D_00446C78.green;
-        sprite.blue = D_00446C78.blue;
-        sprite.alpha = D_00446C78.alpha;
+        sprite.red = menu_draw_color.red;
+        sprite.green = menu_draw_color.green;
+        sprite.blue = menu_draw_color.blue;
+        sprite.alpha = menu_draw_color.alpha;
         sprite.kind = 1;
         sprite.glyph = glyph;
         sprite.first.f.lo16 = (1865 << 4) - (offset << 4);
@@ -3960,48 +3959,48 @@ static void Menu_UpdateEquip(void) {
         sprite.second.f.lo16 = (width * 20 << 4) + (1865 << 4) - (offset << 4);
         sprite.second.f.mid16 = 0x7C00;
         sprite.second.f.mid24 = 0xA8750;
-        MenuText_SetColor(D_00446C78);
+        MenuText_SetColor(menu_draw_color);
         ((int (*)(KindObject *))MenuDraw_Word)((KindObject *)&sprite); // match: the result register stays taken
     }
-    if (D_00446AD5 != 0) {
+    if (equipped_list_open != 0) {
         MenuDraw_SetGsRegister(0x47, 0x30000);
         word.raw = 0x000A87507AF07D00;
-        for (i = 0; i < D_00446A80; i++) {
-            SET_BLEND(D_0044726C[i].blend_mode);
-            MenuSprite_Draw((int)&D_0044726C[i], D_0044726C[i].handler_index + 1000, 0, (int)D_00425910[i]);
+        for (i = 0; i < equip_s_part_count; i++) {
+            SET_BLEND(equip_s_parts[i].blend_mode);
+            MenuSprite_Draw((int)&equip_s_parts[i], equip_s_parts[i].handler_index + 1000, 0, (int)panel_part_alphas[i]);
             SET_BLEND(0);
         }
-        switch (D_004472C7) {
+        switch (equip_panel_state) {
         case 0:
-            D_00425910[255] += 12.8f;
-            if (D_00425910[255] > 128.0f) {
-                D_00425910[255] = 128.0f;
+            panel_part_alphas[255] += 12.8f;
+            if (panel_part_alphas[255] > 128.0f) {
+                panel_part_alphas[255] = 128.0f;
             }
-            D_00446C80.alpha = (s32)D_00425910[255];
-            for (i = 0; i < D_00446A80; i++) {
-                D_00425910[i] += D_0044726C[i].alpha / 10.0f;
-                if (D_00425910[i] > D_0044726C[i].alpha) {
-                    for (i = 0; i < D_00446A80; i++) {
-                        alpha = D_0044726C[i].alpha;
-                        D_00425910[i] = alpha;
+            panel_text_color.alpha = (s32)panel_part_alphas[255];
+            for (i = 0; i < equip_s_part_count; i++) {
+                panel_part_alphas[i] += equip_s_parts[i].alpha / 10.0f;
+                if (panel_part_alphas[i] > equip_s_parts[i].alpha) {
+                    for (i = 0; i < equip_s_part_count; i++) {
+                        alpha = equip_s_parts[i].alpha;
+                        panel_part_alphas[i] = alpha;
                     }
-                    D_004472C7 = 1;
+                    equip_panel_state = 1;
                     break;
                 }
             }
             break;
         case 2:
-            D_00425910[255] -= 12.8f;
-            if (D_00425910[255] < 0.0f) {
-                D_00425910[255] = 0.0f;
+            panel_part_alphas[255] -= 12.8f;
+            if (panel_part_alphas[255] < 0.0f) {
+                panel_part_alphas[255] = 0.0f;
             }
-            D_00446C80.alpha = (s32)D_00425910[255];
-            for (i = 0; i < D_00446A80; i++) {
-                D_00425910[i] -= D_0044726C[i].alpha / 10.0f;
-                if (D_00425910[i] < 0.0f) {
-                    memset(D_00425910, 0, 0x400);
-                    D_004472C7 = 0;
-                    D_00446AD5 = 0;
+            panel_text_color.alpha = (s32)panel_part_alphas[255];
+            for (i = 0; i < equip_s_part_count; i++) {
+                panel_part_alphas[i] -= equip_s_parts[i].alpha / 10.0f;
+                if (panel_part_alphas[i] < 0.0f) {
+                    memset(panel_part_alphas, 0, 0x400);
+                    equip_panel_state = 0;
+                    equipped_list_open = 0;
                     break;
                 }
             }
@@ -4009,45 +4008,45 @@ static void Menu_UpdateEquip(void) {
         }
         for (i = 0; i < 11; i++) {
             if (i == 1) {
-                listed = &fx_table[(*D_00420D60[1])->unk0C];
+                listed = &fx_table[(*equipped_item_refs[1])->unk0C];
             } else if (i == 10) {
-                if ((*D_00420D60[10])->group == 1) {
-                    listed = &fx_table[(*D_00420D60[10])->unk0C];
+                if ((*equipped_item_refs[10])->group == 1) {
+                    listed = &fx_table[(*equipped_item_refs[10])->unk0C];
                 } else {
-                    listed = &item_name_defs[(*D_00420D60[10])->unk0C];
+                    listed = &item_name_defs[(*equipped_item_refs[10])->unk0C];
                 }
             } else {
-                listed = &item_name_defs[(*D_00420D60[i])->unk0C];
+                listed = &item_name_defs[(*equipped_item_refs[i])->unk0C];
             }
             MenuText_SetPen(word);
-            MenuText_SetColor(D_00446C80);
+            MenuText_SetColor(panel_text_color);
             ((int (*)(void *, s32))MenuText_DrawWrapped)(listed, 0x1A); // match: the result register stays taken
             word.f.mid16 += 0xD0;
         }
     }
-    if ((D_00446DE8 & 0x4000) && D_004472CE != 0 && D_004472DA != 0) {
-        EquipGroupBytes unused_bytes = equip_group_slots;
+    if ((menu_buttons & 0x4000) && equip_model_shown != 0 && menu_input_enabled != 0) {
+        EquipGroupBytes unused_bytes = D_0043FDD0;
         f32 unused_pair[32];
 
-        if (*D_00420D60[EQUIP_LIST->group] != *D_00420D90[EQUIP_LIST->group]) {
+        if (*equipped_item_refs[EQUIP_LIST->group] != *equip_list_refs[EQUIP_LIST->group]) {
             Sound_PlayMenu(0);
             if (weapon_defs[player_state.weapon].action_handler_index == 2 && EQUIP_LIST->group == 0
                 && weapon_defs[index].action_handler_index != 2) {
-*D_00420D60[2] = D_00423650;
+*equipped_item_refs[2] = shield_entries;
 player_state.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
-D_0042A8F0[20].part = NULL;
+pool_slots[20].part = NULL;
             }
             (&player_state.weapon)[EQUIP_LIST->group] = index;
-            *D_00420D60[EQUIP_LIST->group] = CURRENT_ITEM;
+            *equipped_item_refs[EQUIP_LIST->group] = CURRENT_ITEM;
             if (weapon_defs[player_state.weapon].action_handler_index != 0 && EQUIP_LIST->group == 0) {
-*D_00420D60[2] = D_00423650;
+*equipped_item_refs[2] = shield_entries;
 player_state.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
-D_0042A8F0[20].part = NULL;
+pool_slots[20].part = NULL;
             }
             if (weapon_defs[player_state.weapon].action_handler_index != 0 && EQUIP_LIST->group == 2) {
-*D_00420D60[0] = D_004231F0;
+*equipped_item_refs[0] = weapon_entries;
 player_state.weapon = 0;
-D_0042A8F0[15].part = NULL;
+pool_slots[15].part = NULL;
             }
             if (EQUIP_LIST->group == 10) {
                 if (CURRENT_ITEM->unk0C != 0) {
@@ -4075,78 +4074,78 @@ D_0042A8F0[15].part = NULL;
             }
             if (CURRENT_ITEM->group != 1 && CURRENT_ITEM->group != 11) {
                 Menu_SetWornModelNames();
-                D_00420DC8[EQUIP_LIST->group]->unk20 = 0;
-                if (D_005CED40.unk10 != NULL) {
-                    D_00420DC8[EQUIP_LIST->group]->next = D_005CED40.unk10->next;
-                    D_005CED40.unk10->next = D_00420DC8[EQUIP_LIST->group];
+                equip_model_loads[EQUIP_LIST->group]->unk20 = 0;
+                if (worn_model_loader.unk10 != NULL) {
+                    equip_model_loads[EQUIP_LIST->group]->next = worn_model_loader.unk10->next;
+                    worn_model_loader.unk10->next = equip_model_loads[EQUIP_LIST->group];
                 } else {
-                    D_005CED40.unk10 = D_00420DC8[EQUIP_LIST->group];
+                    worn_model_loader.unk10 = equip_model_loads[EQUIP_LIST->group];
                 }
-                if (D_00446C90 != NULL) {
-                    D_005CED40.next = D_00446C90->next;
-                    D_00446C90->next = &D_005CED40;
+                if (model_load_chain != NULL) {
+                    worn_model_loader.next = model_load_chain->next;
+                    model_load_chain->next = &worn_model_loader;
                 } else {
-                    D_00446C90 = &D_005CED40;
+                    model_load_chain = &worn_model_loader;
                 }
-                D_004472F0 = 1;
+                worn_model_loading = 1;
             }
         }
-    } else if ((D_00446DE8 & 0x2000) && D_004472CE != 0 && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x2000) && equip_model_shown != 0 && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        D_004472C6 = 2;
-        D_004472DA = 0;
-        if (D_00446C90 != NULL) {
-            D_00446C90->next = NULL;
+        equip_state = 2;
+        menu_input_enabled = 0;
+        if (model_load_chain != NULL) {
+            model_load_chain->next = NULL;
         }
     }
-    if (D_004472C6 == 2 && D_00446C90 == NULL) {
-        D_004472C6 = 3;
+    if (equip_state == 2 && model_load_chain == NULL) {
+        equip_state = 3;
     }
-    switch (D_004472C6) {
+    switch (equip_state) {
     case 0:
-        D_00425510[255] += 12.8f;
-        if (D_00425510[255] > 128.0f) {
-            D_00425510[255] = 128.0f;
+        screen_part_alphas[255] += 12.8f;
+        if (screen_part_alphas[255] > 128.0f) {
+            screen_part_alphas[255] = 128.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        for (i = 0; i < D_00446A3C; i++) {
-            D_00425510[i] += D_00447238[i].alpha / 10.0f;
-            if (D_00425510[i] > D_00447238[i].alpha) {
-                for (i = 0; i < D_00446A3C; i++) {
-                    alpha = D_00447238[i].alpha;
-                    D_00425510[i] = alpha;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        for (i = 0; i < equip_part_count; i++) {
+            screen_part_alphas[i] += equip_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] > equip_parts[i].alpha) {
+                for (i = 0; i < equip_part_count; i++) {
+                    alpha = equip_parts[i].alpha;
+                    screen_part_alphas[i] = alpha;
                 }
-                D_004472C6 = 1;
-                D_004472DA = 1;
+                equip_state = 1;
+                menu_input_enabled = 1;
                 return;
             }
         }
         break;
     case 3:
-        D_00425510[255] -= 12.8f;
-        if (D_00425510[255] < 0.0f) {
-            D_00425510[255] = 0.0f;
+        screen_part_alphas[255] -= 12.8f;
+        if (screen_part_alphas[255] < 0.0f) {
+            screen_part_alphas[255] = 0.0f;
         }
-        D_00425510[254] -= 12.8f;
-        D_00446C78.alpha = (s32)D_00425510[255];
-        if (D_00425510[254] < 0.0f) {
-            D_00425510[254] = 0.0f;
+        screen_part_alphas[254] -= 12.8f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        if (screen_part_alphas[254] < 0.0f) {
+            screen_part_alphas[254] = 0.0f;
         }
-        D_00446C88.alpha = (s32)D_00425510[254];
-        for (i = 0; i < D_00446A3C; i++) {
-            D_00425510[i] -= D_00447238[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                D_00446B20 = Menu_OpenMain;
+        model_draw_color.alpha = (s32)screen_part_alphas[254];
+        for (i = 0; i < equip_part_count; i++) {
+            screen_part_alphas[i] -= equip_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                menu_screen_handler = Menu_OpenMain;
                 ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 PoolSlot_ClearParts();
-                D_00446C80.alpha = 0;
-                D_00446C80.red = D_00446C80.green = D_00446C80.blue = 0x80;
-                D_004472C6 = 0;
-                D_004472C7 = 0;
-                D_00446AD4 = 0;
-                D_00446AD5 = 0;
-                D_004472F0 = 0;
+                panel_text_color.alpha = 0;
+                panel_text_color.red = panel_text_color.green = panel_text_color.blue = 0x80;
+                equip_state = 0;
+                equip_panel_state = 0;
+                detail_panel_open = 0;
+                equipped_list_open = 0;
+                worn_model_loading = 0;
                 Menu_BuildItemRings();
                 return;
             }
@@ -4161,55 +4160,55 @@ static void Menu_UpdateStatus(void) {
     u32 i;
     u32 full_alpha;
 
-    for (i = 0; i < D_00446A50; i++) {
-        Menu_SetBlendMode(D_0044724C[i].blend_mode);
-        MenuSprite_Draw((int)&D_0044724C[i], D_0044724C[i].handler_index + 1000, 0, (int)D_00425510[i]);
+    for (i = 0; i < status_part_count; i++) {
+        Menu_SetBlendMode(status_parts[i].blend_mode);
+        MenuSprite_Draw((int)&status_parts[i], status_parts[i].handler_index + 1000, 0, (int)screen_part_alphas[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
-    if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
+    if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        D_004472DA = 0;
-        D_004472C9 = 3;
+        menu_input_enabled = 0;
+        key_items_state = 3;
     }
 
-    switch (D_004472C9) {
+    switch (key_items_state) {
     case 0:
-        D_00425510[255] += 12.8f;
-        if (D_00425510[255] > 128.0f) {
-            D_00425510[255] = 128.0f;
+        screen_part_alphas[255] += 12.8f;
+        if (screen_part_alphas[255] > 128.0f) {
+            screen_part_alphas[255] = 128.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        for (i = 0; i < D_00446A50; i++) {
-            D_00425510[i] += D_0044724C[i].alpha / 10.0f;
-            if (D_00425510[i] > D_0044724C[i].alpha) {
-                for (i = 0; i < D_00446A50; i++) {
-                    full_alpha = D_0044724C[i].alpha;
-                    D_00425510[i] = full_alpha;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        for (i = 0; i < status_part_count; i++) {
+            screen_part_alphas[i] += status_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] > status_parts[i].alpha) {
+                for (i = 0; i < status_part_count; i++) {
+                    full_alpha = status_parts[i].alpha;
+                    screen_part_alphas[i] = full_alpha;
                 }
-                D_004472DA = D_004472C9 = 1;
+                menu_input_enabled = key_items_state = 1;
                 break;
             }
         }
         break;
     case 2:
     case 3:
-        D_00425510[255] -= 12.8f;
-        if (D_00425510[255] < 0.0f) {
-            D_00425510[255] = 0.0f;
+        screen_part_alphas[255] -= 12.8f;
+        if (screen_part_alphas[255] < 0.0f) {
+            screen_part_alphas[255] = 0.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        for (i = 0; i < D_00446A50; i++) {
-            D_00425510[i] -= D_0044724C[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                if (D_004472C9 == 3) {
-                    D_00446B20 = (void *)Menu_OpenMain;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        for (i = 0; i < status_part_count; i++) {
+            screen_part_alphas[i] -= status_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                if (key_items_state == 3) {
+                    menu_screen_handler = (void *)Menu_OpenMain;
                     ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 } else {
-                    D_00446B20 = (void *)Menu_UpdateKeyItems;
+                    menu_screen_handler = (void *)Menu_UpdateKeyItems;
                 }
-                D_004472C9 = 0;
+                key_items_state = 0;
                 break;
             }
         }
@@ -4223,7 +4222,7 @@ void Menu_ClearKeyItems(void) {
     s32 empty = -1;
 
     for (i = 11; i >= 0; i--) {
-        D_00421050[i] = empty;
+        key_item_slots[i] = empty;
     }
 }
 
@@ -4232,47 +4231,47 @@ void Menu_AddKeyItem(s32 key) {
     s32 slot;
 
     for (slot = 0; slot < 12; slot++) {
-        if (D_00421050[slot] < 0) {
+        if (key_item_slots[slot] < 0) {
             break;
         }
     }
     if (slot < 12) {
         switch (key) {
         case 0x31:
-            D_00421050[slot] = 0;
+            key_item_slots[slot] = 0;
             break;
         case 0x30:
-            D_00421050[slot] = 1;
+            key_item_slots[slot] = 1;
             break;
         case 0x2F:
-            D_00421050[slot] = 2;
+            key_item_slots[slot] = 2;
             break;
         case 0x34:
-            D_00421050[slot] = 3;
+            key_item_slots[slot] = 3;
             break;
         case 0x32:
-            D_00421050[slot] = 4;
+            key_item_slots[slot] = 4;
             break;
         case 0x3A:
-            D_00421050[slot] = 5;
+            key_item_slots[slot] = 5;
             break;
         case 0x39:
-            D_00421050[slot] = 6;
+            key_item_slots[slot] = 6;
             break;
         case 0x38:
-            D_00421050[slot] = 7;
+            key_item_slots[slot] = 7;
             break;
         case 0x37:
-            D_00421050[slot] = 8;
+            key_item_slots[slot] = 8;
             break;
         case 0x33:
-            D_00421050[slot] = 9;
+            key_item_slots[slot] = 9;
             break;
         case 0x3B:
-            D_00421050[slot] = 10;
+            key_item_slots[slot] = 10;
             break;
         case 0x35:
-            D_00421050[slot] = 11;
+            key_item_slots[slot] = 11;
             break;
         }
     }
@@ -4291,7 +4290,7 @@ static const KeyItemPositions key_item_positions = { {
     { 140.0f, 55.0f, 380.0f, 0.0f },
 } };
 /* where the six key item names go, as MenuText_SetPen takes them */
-static const KeyItemNameWords key_item_name_words = { {
+static const KeyItemNameWords key_item_name_pens = { {
     { 0x0A2DC6C07F606F50 },
     { 0x0A2DC6C07F607B30 },
     { 0x0A2DC6C07F608710 },
@@ -4320,116 +4319,116 @@ static void Menu_UpdateKeyItems(void) {
     memset(view, 0, 0x40);
     view[10] = view[5] = view[0] = 1.0f;
     view[15] = 1.0f;
-    if ((D_00446DE8 & 0x10) && D_004472DA != 0) {
+    if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
-        D_00446BB8--;
-    } else if ((D_00446DE8 & 0x40) && D_004472DA != 0) {
+        key_item_row--;
+    } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
-        D_00446BB8++;
+        key_item_row++;
     }
-    D_00446BB8 += 3;
-    D_00446BB8 %= 3;
-    sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    for (i = 0; i < D_00446A6C; i++) {
-        Menu_SetBlendMode(D_00447260[i].blend_mode);
-        MenuSprite_Draw((int)&D_00447260[i], 1000, 0, (int)D_00425510[i]);
+    key_item_row += 3;
+    key_item_row %= 3;
+    sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
+    for (i = 0; i < keylist_part_count; i++) {
+        Menu_SetBlendMode(keylist_parts[i].blend_mode);
+        MenuSprite_Draw((int)&keylist_parts[i], 1000, 0, (int)screen_part_alphas[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
-    D_00446BBC++;
+    key_items_frames++;
     for (i = 0; (s32)i < 6; i++) {
-        slot = D_00421050[i + D_00446BB8 * 3];
+        slot = key_item_slots[i + key_item_row * 3];
         if (slot < 0) {
             continue;
         }
-        upload = (ChunkUpload *)((s32)D_005CEF30 + slot * sizeof(ChunkUpload)); // match: &D_005CEF30[slot] as a sum of numbers gives the madd
+        upload = (ChunkUpload *)((s32)key_item_model_loads + slot * sizeof(ChunkUpload)); // match: &key_item_model_loads[slot] as a sum of numbers gives the madd
         if (upload->done != 0) {
             file = upload->pool_node->buffer;
             texture = (TextureHeader *)((char *)file + file->texture_offset);
             part = (struct PoolPart *)((char *)file + file->part_offset + 0x10);
             TEXTURE_HEADER_BITS(texture)->tex0.f.tbp0 = texture_pages.base[i];
             TEXTURE_HEADER_BITS(texture)->tex0.f.cbp = clut_pages.base[i];
-            D_0042A8F0[31].part = part;
+            pool_slots[31].part = part;
             // match: both words are read through unions, which keeps the two NULL stores below them
-            D_0042A8F0[31].unk58 = TEXTURE_HEADER_BITS(texture)->tex0.raw;
-            D_0042A8F0[31].unk60 = TEXTURE_HEADER_BITS(texture)->unk18.raw;
-            D_0042A8F0[31].unk48 = NULL;
-            D_0042A8F0[31].unk40 = NULL;
+            pool_slots[31].unk58 = TEXTURE_HEADER_BITS(texture)->tex0.raw;
+            pool_slots[31].unk60 = TEXTURE_HEADER_BITS(texture)->unk18.raw;
+            pool_slots[31].unk48 = NULL;
+            pool_slots[31].unk40 = NULL;
             MenuTexture_Upload(texture, NULL);
-            sceVu0TransMatrix((f32 *)&D_0042A8F0[31], view, positions.position[i]);
-            PoolSlot_Draw((RenderSlot *)&D_0042A8F0[31], slot_arg); // match: slot_arg is never set
-            number = &numbers.number[D_00421050[i + D_00446BB8 * 3]];
+            sceVu0TransMatrix((f32 *)&pool_slots[31], view, positions.position[i]);
+            PoolSlot_Draw((RenderSlot *)&pool_slots[31], slot_arg); // match: slot_arg is never set
+            number = &numbers.number[key_item_slots[i + key_item_row * 3]];
             if (item_counts[*number] != 0) {
-                KeyItemNameWords words = key_item_name_words;
+                KeyItemNameWords words = key_item_name_pens;
                 LevelDef *def = &item_name_defs[*number];
 
-                MenuText_SetColor(D_00446C78);
+                MenuText_SetColor(menu_draw_color);
                 MenuText_SetPen(words.word[i]);
                 MenuText_DrawLineCentered((u16 *)def, 0x10);
             }
         }
     }
 
-    if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
+    if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        D_004472C9 = 3;
-        D_004472DA = 0;
-        if (D_00446C90 != NULL) {
-            D_00446C90->next = NULL;
+        key_items_state = 3;
+        menu_input_enabled = 0;
+        if (model_load_chain != NULL) {
+            model_load_chain->next = NULL;
         }
-    } else if ((D_00446DE8 & 0x8000) && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x8000) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        D_004472C9 = 2;
-        D_004472DA = 0;
-        if (D_00446C90 != NULL) {
-            D_00446C90->next = NULL;
+        key_items_state = 2;
+        menu_input_enabled = 0;
+        if (model_load_chain != NULL) {
+            model_load_chain->next = NULL;
         }
     }
-    if (D_004472C9 == 2 && D_00446C90 == NULL) {
-        D_004472C9 = 4;
+    if (key_items_state == 2 && model_load_chain == NULL) {
+        key_items_state = 4;
     }
-    if (D_004472C9 == 3 && D_00446C90 == NULL) {
-        D_004472C9 = 5;
+    if (key_items_state == 3 && model_load_chain == NULL) {
+        key_items_state = 5;
     }
 
-    switch (D_004472C9) {
+    switch (key_items_state) {
     case 0:
-        D_00425510[255] += 12.8f;
-        if (D_00425510[255] > 128.0f) {
-            D_00425510[255] = 128.0f;
+        screen_part_alphas[255] += 12.8f;
+        if (screen_part_alphas[255] > 128.0f) {
+            screen_part_alphas[255] = 128.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        for (i = 0; i < D_00446A6C; i++) {
-            D_00425510[i] += D_00447260[i].alpha / 10.0f;
-            if (D_00425510[i] > D_00447260[i].alpha) {
-                for (i = 0; i < D_00446A6C; i++) {
-                    full_alpha = D_00447260[i].alpha;
-                    D_00425510[i] = full_alpha;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        for (i = 0; i < keylist_part_count; i++) {
+            screen_part_alphas[i] += keylist_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] > keylist_parts[i].alpha) {
+                for (i = 0; i < keylist_part_count; i++) {
+                    full_alpha = keylist_parts[i].alpha;
+                    screen_part_alphas[i] = full_alpha;
                 }
-                D_004472DA = D_004472C9 = 1;
+                menu_input_enabled = key_items_state = 1;
                 break;
             }
         }
         break;
     case 4:
     case 5:
-        D_00425510[255] -= 12.8f;
-        if (D_00425510[255] < 0.0f) {
-            D_00425510[255] = 0.0f;
+        screen_part_alphas[255] -= 12.8f;
+        if (screen_part_alphas[255] < 0.0f) {
+            screen_part_alphas[255] = 0.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        for (i = 0; i < D_00446A6C; i++) {
-            D_00425510[i] -= D_00447260[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                D_00446BB8 = 0;
-                D_00446B20 = (void *)Menu_UpdateUseItem;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        for (i = 0; i < keylist_part_count; i++) {
+            screen_part_alphas[i] -= keylist_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                key_item_row = 0;
+                menu_screen_handler = (void *)Menu_UpdateUseItem;
                 ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
-                if (D_004472C9 == 5) {
-                    D_004472C5 = 3;
+                if (key_items_state == 5) {
+                    use_item_state = 3;
                 }
-                D_004472C9 = 0;
-                D_00446BBC = 0;
+                key_items_state = 0;
+                key_items_frames = 0;
                 break;
             }
         }
@@ -4462,40 +4461,40 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
 
     bar_origin.raw = 0x0001869F7C307EE0;
     /* left and right step to the next page that has entries */
-    if ((D_00446DE8 & 0x20) && D_004472DA != 0) {
+    if ((menu_buttons & 0x20) && menu_input_enabled != 0) {
         do {
-            D_00446BC0 += LIST_PAGES + 1; // match: two statements; one expression computes the sum in another register
-            D_00446BC0 %= LIST_PAGES;
+            recollection_page += LIST_PAGES + 1; // match: two statements; one expression computes the sum in another register
+            recollection_page %= LIST_PAGES;
             counter++; // match: counted before the test, so it sits in the branch's delay slot
-            if (recollection_pages[D_00446BC0] != 0) {
+            if (recollection_pages[recollection_page] != 0) {
                 break;
             }
         } while (counter < LIST_PAGES);
-        D_004472D9 = 0;
-        if (D_00446BC4 != 0 || D_00446BC0 != 0) {
-            D_004472D8 = 0;
+        recollection_top = 0;
+        if (recollection_page_before != 0 || recollection_page != 0) {
+            recollection_cursor = 0;
         }
-        if (D_00446BC4 != D_00446BC0) {
+        if (recollection_page_before != recollection_page) {
             Sound_PlayMenu(1);
         }
-        D_00446BC4 = D_00446BC0;
-    } else if ((D_00446DE8 & 0x80) && D_004472DA != 0) {
+        recollection_page_before = recollection_page;
+    } else if ((menu_buttons & 0x80) && menu_input_enabled != 0) {
         do {
-            D_00446BC0 += LIST_PAGES - 1;
-            D_00446BC0 %= LIST_PAGES;
+            recollection_page += LIST_PAGES - 1;
+            recollection_page %= LIST_PAGES;
             counter++; // match: counted before the test, so it sits in the branch's delay slot
-            if (recollection_pages[D_00446BC0] != 0) {
+            if (recollection_pages[recollection_page] != 0) {
                 break;
             }
         } while (counter < LIST_PAGES);
-        D_004472D9 = 0;
-        if (D_00446BC4 != 0 || D_00446BC0 != 0) {
-            D_004472D8 = 0;
+        recollection_top = 0;
+        if (recollection_page_before != 0 || recollection_page != 0) {
+            recollection_cursor = 0;
         }
-        if (D_00446BC4 != D_00446BC0) {
+        if (recollection_page_before != recollection_page) {
             Sound_PlayMenu(1);
         }
-        D_00446BC4 = D_00446BC0;
+        recollection_page_before = recollection_page;
     }
 
     /* the entries the page has: one bit each in its row of recollection_flags, from bit 3 on */
@@ -4505,7 +4504,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     row_count = 0;
     counter = 3;
     for (i = 3; i < LIST_PAGES - 1; i++) {
-        if ((recollection_flags[D_00446BC0][i / 8] >> counter) & 1) {
+        if ((recollection_flags[recollection_page][i / 8] >> counter) & 1) {
             rows[row_count] = i;
             row_count++;
         }
@@ -4513,51 +4512,51 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         counter %= 8;
     }
 
-    if ((D_00446DE8 & 0x10) && D_004472DA != 0) {
+    if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
         if (row_count >= 2) {
             Sound_PlayMenu(1);
         }
-        if (D_004472D8 == D_004472D9 && row_count >= 8) {
-            D_004472D9--;
-            if (D_004472D9 < 0) {
-                D_004472D9 = row_count - 1;
+        if (recollection_cursor == recollection_top && row_count >= 8) {
+            recollection_top--;
+            if (recollection_top < 0) {
+                recollection_top = row_count - 1;
             }
         }
-        D_004472D8--;
-        if (D_004472D8 < 0) {
-            D_004472D8 = row_count - 1;
+        recollection_cursor--;
+        if (recollection_cursor < 0) {
+            recollection_cursor = row_count - 1;
         }
-    } else if ((D_00446DE8 & 0x40) && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
         if (row_count >= 2) {
             Sound_PlayMenu(1);
         }
-        if (((D_004472D9 < D_004472D8 && D_004472D8 - D_004472D9 >= 6) ||
-             (D_004472D8 < D_004472D9 && D_004472D8 + row_count - D_004472D9 >= 6)) &&
+        if (((recollection_top < recollection_cursor && recollection_cursor - recollection_top >= 6) ||
+             (recollection_cursor < recollection_top && recollection_cursor + row_count - recollection_top >= 6)) &&
             row_count >= 8) {
-            D_004472D9++;
-            if (D_004472D9 >= row_count) {
-                D_004472D9 = 0;
+            recollection_top++;
+            if (recollection_top >= row_count) {
+                recollection_top = 0;
             }
         }
-        D_004472D8++;
-        if (D_004472D8 >= row_count) {
-            D_004472D8 = 0;
+        recollection_cursor++;
+        if (recollection_cursor >= row_count) {
+            recollection_cursor = 0;
         }
     }
 
-    for (i = 0; i < D_00446A54; i++) {
-        Menu_SetBlendMode(D_00447250[i].blend_mode);
-        MenuSprite_Draw((int)&D_00447250[i], 1000, 0, (int)D_00425510[i]);
+    for (i = 0; i < image_part_count; i++) {
+        Menu_SetBlendMode(image_parts[i].blend_mode);
+        MenuSprite_Draw((int)&image_parts[i], 1000, 0, (int)screen_part_alphas[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
     show_picture = (s8)game_options[7] != 0;
-    if (D_005CEEE0.done != 0 && show_picture) {
+    if (npc_package_load.done != 0 && show_picture) {
         memset(view, 0, 0x40);
         view[10] = view[5] = view[0] = 0.8f;
         view[15] = 1.0f;
-        sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-        sceVu0TransMatrix(local, view, D_00421080);
+        sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
+        sceVu0TransMatrix(local, view, recollection_model_position);
         packet = MenuDraw_NextPacket();
         packet[0] = 0x8002;
         packet[1] = 0x10000000;
@@ -4575,46 +4574,46 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
         *D2_CHCR = 0x100;
-        chunk = (PackageChunk *)((char *)D_005CEEE0.pool_node->buffer + 0x10);
-        for (i = 0; i < D_00446BC0; i++) {
+        chunk = (PackageChunk *)((char *)npc_package_load.pool_node->buffer + 0x10);
+        for (i = 0; i < recollection_page; i++) {
             chunk = (PackageChunk *)((char *)chunk + chunk->unk0C + chunk->unk08);
         }
-        if (D_004472C6 != 2 && D_004472C6 != 3 && D_00426470.unk20 != 0) {
-            D_00425510[254] += 12.8f;
-            if (D_00425510[254] > 128.0f) {
-                D_00425510[254] = 128.0f;
+        if (equip_state != 2 && equip_state != 3 && model_load_shown.unk20 != 0) {
+            screen_part_alphas[254] += 12.8f;
+            if (screen_part_alphas[254] > 128.0f) {
+                screen_part_alphas[254] = 128.0f;
             }
-            D_00446C88.alpha = (s32)D_00425510[254];
+            model_draw_color.alpha = (s32)screen_part_alphas[254];
         }
-        D_00426470.pool_node = &node; // match: a local of this function; the node keeps the address after it returns
-        D_00426470.unk20 = 1;
+        model_load_shown.pool_node = &node; // match: a local of this function; the node keeps the address after it returns
+        model_load_shown.unk20 = 1;
         node.buffer = chunk;
-        DRAW_NODE_MODEL(&D_00426470, local, D_00446C88);
+        DRAW_NODE_MODEL(&model_load_shown, local, model_draw_color);
     }
 
-    table = Message_GetFontText(D_00446F38);
-    first_text = D_00446BC0 * LIST_PAGES + MSG_RECOLLECTION_FIRST + 1;
+    table = Message_GetFontText(menu_heap);
+    first_text = recollection_page * LIST_PAGES + MSG_RECOLLECTION_FIRST + 1;
     entry = GetListTextOffset(table, first_text + LIST_PAGES - 1);
     word.raw = 0x000A875081106E80;
     MenuText_SetPen(word);
     if (entry != 0) {
         text = table + entry;
-        MenuText_SetColor(D_00446C78);
+        MenuText_SetColor(menu_draw_color);
         MenuText_DrawLineCentered((u16 *)text, 0x17);
     }
-    entry = GetListTextOffset(table, first_text + recollection_pages[D_00446BC0] - 1);
+    entry = GetListTextOffset(table, first_text + recollection_pages[recollection_page] - 1);
     word.raw = 0x000A875083106FE0;
     MenuText_SetPen(word);
     if (entry != 0) {
         text = table + entry;
-        MenuText_SetColor(D_00446C78);
+        MenuText_SetColor(menu_draw_color);
         MenuText_DrawWrappedLong((u16 *)text, 0x33);
     }
 
     for (i = 0; i < LIST_ROWS && i < row_count; i++) {
-        counter = D_004472D9 + i;
+        counter = recollection_top + i;
         row = counter % row_count; // match: kept in a variable, which orders the compare's operands
-        if (D_004472D8 == row) {
+        if (recollection_cursor == row) {
             bar.first.f.lo16 = bar_origin.f.lo16;
             bar.first.f.mid16 = bar_origin.f.mid16 + i * 0xB0;
             bar.first.f.mid24 = bar_origin.f.mid24;
@@ -4624,10 +4623,10 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
             bar.second.f.lo16 = bar.first.f.lo16 + 0x1250;
             bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
             bar.second.f.mid24 = bar.first.f.mid24;
-            if (D_004472CA == 1) {
-                D_00425510[253] = Menu_PulseValue(D_00425510[253], 0x10, 0x20);
+            if (recollection_state == 1) {
+                screen_part_alphas[253] = Menu_PulseValue(screen_part_alphas[253], 0x10, 0x20);
             }
-            bar.alpha = (s32)D_00425510[253];
+            bar.alpha = (s32)screen_part_alphas[253];
             MenuDraw_Bar(&bar);
             break;
         }
@@ -4636,87 +4635,87 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     word.raw = 0x000AAE607C307F80;
     MenuText_SetPen(word);
     for (i = 0; i < LIST_ROWS && i < row_count; i++) {
-        counter = D_004472D9 + i;
+        counter = recollection_top + i;
         entry = ((s32 *)table + first_text)[rows[counter % row_count]]; // match: the page's first text is added to the table, not to the row
         if (entry != 0) {
             text = table + entry;
-            MenuText_SetColor(D_00446C78);
+            MenuText_SetColor(menu_draw_color);
             MenuText_DrawLineShortened((u16 *)text, 0x1C);
         }
     }
 
-    if ((D_00446DE8 & 0x4000) && D_004472CA == 1 && D_004472DA != 0) {
+    if ((menu_buttons & 0x4000) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
-        D_00446B20 = (void *)Menu_UpdateRecollectionPage;
-        context->unk04 = D_00446BC0 * LIST_PAGES + rows[D_004472D8] + MSG_RECOLLECTION_FIRST;
-        D_004472DA = 0;
-    } else if ((D_00446DE8 & 0x2000) && D_004472CA == 1 && D_004472DA != 0) {
+        menu_screen_handler = (void *)Menu_UpdateRecollectionPage;
+        context->unk04 = recollection_page * LIST_PAGES + rows[recollection_cursor] + MSG_RECOLLECTION_FIRST;
+        menu_input_enabled = 0;
+    } else if ((menu_buttons & 0x2000) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        D_004472DA = 0;
-        D_004472CA = 2;
+        menu_input_enabled = 0;
+        recollection_state = 2;
     }
 
-    switch (D_004472CA) {
+    switch (recollection_state) {
     case 0:
-        D_00425510[255] += 12.8f;
-        if (D_00425510[255] > 128.0f) {
-            D_00425510[255] = 128.0f;
+        screen_part_alphas[255] += 12.8f;
+        if (screen_part_alphas[255] > 128.0f) {
+            screen_part_alphas[255] = 128.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        D_00425510[253] += 1.6f;
-        if (D_00425510[253] > 16.0f) {
-            D_00425510[253] = 16.0f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        screen_part_alphas[253] += 1.6f;
+        if (screen_part_alphas[253] > 16.0f) {
+            screen_part_alphas[253] = 16.0f;
         }
-        for (i = 0; i < D_00446A54; i++) {
-            D_00425510[i] += D_00447250[i].alpha / 10.0f;
-            if (D_00425510[i] > D_00447250[i].alpha) {
-                for (i = 0; i < D_00446A54; i++) {
-                    full_alpha = D_00447250[i].alpha;
-                    D_00425510[i] = full_alpha;
+        for (i = 0; i < image_part_count; i++) {
+            screen_part_alphas[i] += image_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] > image_parts[i].alpha) {
+                for (i = 0; i < image_part_count; i++) {
+                    full_alpha = image_parts[i].alpha;
+                    screen_part_alphas[i] = full_alpha;
                 }
-                D_004472DA = D_004472CA = 1;
+                menu_input_enabled = recollection_state = 1;
                 break;
             }
         }
         break;
     case 2:
-        D_00425510[255] -= 12.8f;
-        if (D_00425510[255] < 0.0f) {
-            D_00425510[255] = 0.0f;
+        screen_part_alphas[255] -= 12.8f;
+        if (screen_part_alphas[255] < 0.0f) {
+            screen_part_alphas[255] = 0.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        D_00425510[254] -= 12.8f;
-        if (D_00425510[254] < 0.0f) {
-            D_00425510[254] = 0.0f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        screen_part_alphas[254] -= 12.8f;
+        if (screen_part_alphas[254] < 0.0f) {
+            screen_part_alphas[254] = 0.0f;
         }
-        D_00446C88.alpha = (s32)D_00425510[254];
-        D_00425510[253] -= 1.6f;
-        if (D_00425510[253] < 0.0f) {
-            D_00425510[253] = 0.0f;
+        model_draw_color.alpha = (s32)screen_part_alphas[254];
+        screen_part_alphas[253] -= 1.6f;
+        if (screen_part_alphas[253] < 0.0f) {
+            screen_part_alphas[253] = 0.0f;
         }
-        for (i = 0; i < D_00446A54; i++) {
-            D_00425510[i] -= D_00447250[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                D_004472D9 = 0;
-                D_00446B20 = (void *)Menu_OpenMain;
-                D_004472D8 = 0;
-                D_00446BC0 = 0;
-                if (D_005CEEE0.done != 0) {
-                    D_005CEEE0.done = 0;
-                    D_005CEEE0.stage = 0;
-                    D_00446C90 = NULL;
+        for (i = 0; i < image_part_count; i++) {
+            screen_part_alphas[i] -= image_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                recollection_top = 0;
+                menu_screen_handler = (void *)Menu_OpenMain;
+                recollection_cursor = 0;
+                recollection_page = 0;
+                if (npc_package_load.done != 0) {
+                    npc_package_load.done = 0;
+                    npc_package_load.stage = 0;
+                    model_load_chain = NULL;
                     ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 } else {
                     sceCdBreak();
-                    File_Close(D_00446AD0);
-                    D_00446AD0 = -1;
-                    D_005CEEE0.done = 0;
-                    D_005CEEE0.stage = 0;
-                    D_00446C90 = NULL;
+                    File_Close(model_read_file);
+                    model_read_file = -1;
+                    npc_package_load.done = 0;
+                    npc_package_load.stage = 0;
+                    model_load_chain = NULL;
                     ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
                 }
-                D_004472CA = 0;
+                recollection_state = 0;
                 break;
             }
         }
@@ -4740,18 +4739,18 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     u8 kind;
 
     page = (context->unk04 - 3000) / 50;
-    for (i = 0; i < D_00446A54; i++) {
-        kind = D_00447250[i].handler_index;
-        Menu_SetBlendMode(D_00447250[i].blend_mode);
-        MenuSprite_DrawPlain((int)&D_00447250[i], kind, 1);
+    for (i = 0; i < image_part_count; i++) {
+        kind = image_parts[i].handler_index;
+        Menu_SetBlendMode(image_parts[i].blend_mode);
+        MenuSprite_DrawPlain((int)&image_parts[i], kind, 1);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
-    if (D_005CEEE0.done != 0) {
+    if (npc_package_load.done != 0) {
         memset(view, 0, 0x40);
         view[10] = view[5] = view[0] = 0.8f;
         view[15] = 1.0f;
-        sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-        sceVu0TransMatrix(local, view, D_00421090);
+        sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
+        sceVu0TransMatrix(local, view, recollection_page_model_position);
         packet = MenuDraw_NextPacket();
         packet[0] = 0x8002;
         packet[1] = 0x10000000;
@@ -4769,16 +4768,16 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
         *D2_CHCR = 0x100;
-        chunk = (PackageChunk *)((char *)D_005CEEE0.pool_node->buffer + 0x10);
+        chunk = (PackageChunk *)((char *)npc_package_load.pool_node->buffer + 0x10);
         for (i = 0; (s32)i < page; i++) {
             chunk = (PackageChunk *)((char *)chunk + chunk->unk0C + chunk->unk08);
         }
-        D_00426470.pool_node = &model_node; // match: a local of this function; the node keeps the address after it returns
-        D_00426470.unk20 = 1;
+        model_load_shown.pool_node = &model_node; // match: a local of this function; the node keeps the address after it returns
+        model_load_shown.unk20 = 1;
         model_node.buffer = chunk;
-        DRAW_NODE_MODEL(&D_00426470, local, D_00446C78);
+        DRAW_NODE_MODEL(&model_load_shown, local, menu_draw_color);
     }
-    table = Message_GetFontText(D_00446F38);
+    table = Message_GetFontText(menu_heap);
     word.raw = 0x000A875081106E80;
     number = page * 50 + MSG_RECOLLECTION_FIRST + 1;
     entry = GetPageTextOffset(table, number + 49);
@@ -4802,11 +4801,11 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
             MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x1B);
         }
     }
-    if (D_00446DE8 & 0x2000) {
+    if (menu_buttons & 0x2000) {
         Sound_PlayMenu(2);
         context->unk04 = 0;
-        D_00446B20 = (void *)Menu_UpdateRecollection;
-        D_004472DA = 1;
+        menu_screen_handler = (void *)Menu_UpdateRecollection;
+        menu_input_enabled = 1;
     }
 }
 
@@ -4848,13 +4847,13 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     worn_mask = 0;
     worn_bit = 0;
     bases = item_group_bases;
-    if (D_004472CB < 2) {
+    if (visible_item_state < 2) {
         ((void (*)(HandlerContext *))Menu_MoveAllItemsCursor)(context); // match: the callee takes nothing
     }
-    selected = D_005CE850[0];
-    item = D_005CE860[0];
+    selected = owned_list_current[0];
+    item = owned_list_top[0];
     corner.raw = 0x0A09C4007C306FE0;
-    if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
+    if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
         {
             // match: the value read first is used only to set the bit; the test and the clearing read the field again
             u8 state = item_name_defs[selected->unk0C].state;
@@ -4893,25 +4892,25 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             player_state.mp_now = player_state.mp_max;
         }
     }
-    if (D_004472CB == 2) {
-        item = D_00447210;
+    if (visible_item_state == 2) {
+        item = visible_bar_top;
     } else {
-        D_00447214 = selected;
-        D_00447210 = item;
+        visible_bar_cursor = selected;
+        visible_bar_top = item;
     }
 
-    record = D_005CE850[0]->unk0C - bases.first_item[D_005CE850[0]->group];
-    D_00446DF4 = item_counts[D_005CE850[0]->unk0C];
-    if (D_005CE850[0]->group == 0) {
+    record = owned_list_current[0]->unk0C - bases.first_item[owned_list_current[0]->group];
+    D_00446DF4 = item_counts[owned_list_current[0]->unk0C];
+    if (owned_list_current[0]->group == 0) {
         D_00446E30 = weapon_level_records[record].unk14 + 1;
     }
-    for (i = 0; i < D_00446A58; i++) {
-        kind = D_00447254[i].handler_index;
-        Menu_SetBlendMode(D_00447254[i].blend_mode);
-        if (D_005CE850[0]->group != 12) {
-            MenuSprite_Draw((int)&D_00447254[i], kind + 1000, 0, (int)D_00425510[i]);
+    for (i = 0; i < recol_part_count; i++) {
+        kind = recol_parts[i].handler_index;
+        Menu_SetBlendMode(recol_parts[i].blend_mode);
+        if (owned_list_current[0]->group != 12) {
+            MenuSprite_Draw((int)&recol_parts[i], kind + 1000, 0, (int)screen_part_alphas[i]);
         } else {
-            MenuSprite_Draw((int)&D_00447254[i], kind + 1000, 1, (int)D_00425510[i]);
+            MenuSprite_Draw((int)&recol_parts[i], kind + 1000, 1, (int)screen_part_alphas[i]);
         }
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
@@ -4921,7 +4920,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             worn_mask |= 1 << worn_bit;
         }
         worn_bit++;
-        if (item == D_00447214) {
+        if (item == visible_bar_cursor) {
             bar.first.f.lo16 = corner.f.lo16;
             bar.first.f.mid16 = corner.f.mid16 + i * 0xB0;
             bar.first.f.mid24 = corner.f.mid24;
@@ -4931,93 +4930,93 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             bar.second.f.lo16 = bar.first.f.lo16 + 0x1240;
             bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
             bar.second.f.mid24 = bar.first.f.mid24;
-            if (D_004472CB == 1) {
-                D_00425510[253] = Menu_PulseValue(D_00425510[253], 0x10, 0x20);
+            if (visible_item_state == 1) {
+                screen_part_alphas[253] = Menu_PulseValue(screen_part_alphas[253], 0x10, 0x20);
             }
-            bar.alpha = (s32)D_00425510[253];
+            bar.alpha = (s32)screen_part_alphas[253];
             MenuDraw_Bar(&bar);
         }
-        if (D_005CE870[0]->prev == item) {
+        if (owned_list_page_mark[0]->prev == item) {
             break;
         }
     }
 
-    node = D_005CE860[0];
-    cursor = D_005CE850[0];
+    node = owned_list_top[0];
+    cursor = owned_list_current[0];
     position.raw = 0x0A09EB107C3071C0;
-    if (D_004472CB == 2) {
-        node = D_00447218;
+    if (visible_item_state == 2) {
+        node = visible_names_top;
     } else {
-        D_0044721C = cursor;
-        D_00447218 = node;
+        visible_names_cursor = cursor;
+        visible_names_top = node;
     }
     for (row = 0; row < 7; row++, node = node->prev) {
         def = &item_name_defs[node->unk0C];
         MenuText_SetPen(position);
-        MenuText_SetColor(D_00446C78);
+        MenuText_SetColor(menu_draw_color);
         MenuText_DrawLine((u16 *)def, 0x1A);
         position.f.mid16 += 0xB0;
-        if (D_005CE870[0]->prev == node) {
+        if (owned_list_page_mark[0]->prev == node) {
             break;
         }
     }
 
-    if (D_004472CB != 2) {
-        node = D_005CE850[0];
-        D_00447220 = node;
+    if (visible_item_state != 2) {
+        node = owned_list_current[0];
+        visible_text_item = node;
     } else {
-        node = D_00447220;
+        node = visible_text_item;
     }
-    texts = Message_GetFontText(D_00446F38);
+    texts = Message_GetFontText(menu_heap);
     position.raw = 0x000A875083207080;
     text_index = node->unk0C + MSG_ITEM_TEXT_FIRST + 1;
     text_offset = ((s32 *)texts)[text_index];
     MenuText_SetPen(position);
     if (text_offset != 0) {
         text = texts + text_offset;
-        MenuText_SetColor(D_00446C78);
+        MenuText_SetColor(menu_draw_color);
         MenuText_DrawWordWrappedLong((u16 *)text, 0x33);
     }
 
-    for (i = 0; i < D_00446A4C; i++) {
-        kind = D_00447248[i].handler_index;
+    for (i = 0; i < item_sel_part_count; i++) {
+        kind = item_sel_parts[i].handler_index;
         if (kind != 2) {
-            ((void (*)(u8))Menu_SetBlendMode)(D_00447248[i].blend_mode); // match: called as returning nothing
-            if (D_004472CB != 1 && ((worn_mask >> D_00447248[i].slot) & 1)) {
-                MenuSprite_Draw((int)&D_00447248[i], kind + 1000, worn_mask, (int)D_00425510[i + 200]);
+            ((void (*)(u8))Menu_SetBlendMode)(item_sel_parts[i].blend_mode); // match: called as returning nothing
+            if (visible_item_state != 1 && ((worn_mask >> item_sel_parts[i].slot) & 1)) {
+                MenuSprite_Draw((int)&item_sel_parts[i], kind + 1000, worn_mask, (int)screen_part_alphas[i + 200]);
             } else {
-                MenuSprite_DrawPlain((int)&D_00447248[i], kind, worn_mask);
+                MenuSprite_DrawPlain((int)&item_sel_parts[i], kind, worn_mask);
             }
             Menu_SetBlendMode(0);
         }
     }
 
-    sceVu0ViewScreenMatrix(D_0042B7D0, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
-    D_00446BD0 += 3.1415927f;
-    D_00446BD0 -= (s32)(D_00446BD0 / 6.2831855f) * 6.2831855f;
-    D_00446BD0 -= 3.1415927f;
-    sceVu0RotMatrixY(local, view, D_00446BD0);
-    sceVu0TransMatrix(local, local, D_004210A0);
+    sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 0.5f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
+    visible_item_model_angle += 3.1415927f;
+    visible_item_model_angle -= (s32)(visible_item_model_angle / 6.2831855f) * 6.2831855f;
+    visible_item_model_angle -= 3.1415927f;
+    sceVu0RotMatrixY(local, view, visible_item_model_angle);
+    sceVu0TransMatrix(local, local, visible_item_model_position);
     Menu_DrawItemModel(local);
 
-    if ((D_00446DE8 & 0x1000) && D_004472DA != 0 && Menu_IsEquipSlotFilled(record, D_005CE850[0]->group)) {
+    if ((menu_buttons & 0x1000) && menu_input_enabled != 0 && Menu_IsEquipSlotFilled(record, owned_list_current[0]->group)) {
         Sound_PlayMenu(1);
-        if (D_00446AD4 == 0) {
-            D_00446AD4 = 1;
-        } else if (D_004472CC != 2) {
-            D_004472CC = 2;
+        if (detail_panel_open == 0) {
+            detail_panel_open = 1;
+        } else if (visible_panel_state != 2) {
+            visible_panel_state = 2;
         } else {
-            D_004472CC = 0;
+            visible_panel_state = 0;
         }
     }
 
-    if (D_00446AD4 != 0) {
+    if (detail_panel_open != 0) {
         // match: groups 1 and 10 have no case, so packets and count stay unset for the fade below
-        switch (D_005CE850[0]->group) {
+        switch (owned_list_current[0]->group) {
         case 11:
         case 12:
-            packets = D_00447274;
-            count = D_00446A88;
+            packets = recol_g_parts;
+            count = recol_g_part_count;
             break;
         case 2:
         case 3:
@@ -5035,13 +5034,13 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             D_00446E18 = ScaleValue(worn_defs[record].unk00[8], worn_item_level_records[record].level, 100);
             D_00446E24 = worn_item_level_records[record].level;
             D_00446E28 = 100;
-            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].weight_tenths_of_pound;
-            if (D_004472CC == 1) {
-                FILL_FADE(D_00425910, D_00447274, D_00446A88)
+            D_00446E1C = item_name_defs[owned_list_current[0]->unk0C].weight_tenths_of_pound;
+            if (visible_panel_state == 1) {
+                FILL_FADE(panel_part_alphas, recol_g_parts, recol_g_part_count)
             }
-            DRAW_PACKETS(D_00447274, D_00446A88, player_weapon[D_005CE850[0]->group])
-            packets = D_00447274;
-            count = D_00446A88;
+            DRAW_PACKETS(recol_g_parts, recol_g_part_count, player_weapon[owned_list_current[0]->group])
+            packets = recol_g_parts;
+            count = recol_g_part_count;
             break;
         case 7:
         case 8:
@@ -5055,13 +5054,13 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             D_00446E10 = ScaleValue(worn_defs[record].unk00[6], worn_item_level_records[record].level, 100);
             D_00446E14 = ScaleValue(worn_defs[record].unk00[7], worn_item_level_records[record].level, 100);
             D_00446E18 = ScaleValue(worn_defs[record].unk00[8], worn_item_level_records[record].level, 100);
-            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].weight_tenths_of_pound;
-            if (D_004472CC == 1) {
-                FILL_FADE(D_00425910, D_00447278, D_00446A8C)
+            D_00446E1C = item_name_defs[owned_list_current[0]->unk0C].weight_tenths_of_pound;
+            if (visible_panel_state == 1) {
+                FILL_FADE(panel_part_alphas, recol_g2_parts, recol_g2_part_count)
             }
-            DRAW_PACKETS(D_00447278, D_00446A8C, player_weapon[D_005CE850[0]->group])
-            packets = D_00447278;
-            count = D_00446A8C;
+            DRAW_PACKETS(recol_g2_parts, recol_g2_part_count, player_weapon[owned_list_current[0]->group])
+            packets = recol_g2_parts;
+            count = recol_g2_part_count;
             break;
         case 0:
             D_00446DF8 = ScaleValue(weapon_level_records[record].unk00[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[0], weapon_level_records[record].level, 100);
@@ -5075,44 +5074,44 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             D_00446E18 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[8], weapon_level_records[record].level, 100);
             D_00446E20 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
             D_00446E24 = weapon_level_records[record].level;
-            D_00446E1C = item_name_defs[D_005CE850[0]->unk0C].weight_tenths_of_pound;
-            D_00446E28 = player_weapon[D_005CE850[0]->group];
+            D_00446E1C = item_name_defs[owned_list_current[0]->unk0C].weight_tenths_of_pound;
+            D_00446E28 = player_weapon[owned_list_current[0]->group];
             D_00446E2C = 100;
-            if (D_004472CC == 1) {
-                FILL_FADE(D_00425910, D_00447270, D_00446A84)
+            if (visible_panel_state == 1) {
+                FILL_FADE(panel_part_alphas, recol_a_parts, recol_a_part_count)
             }
-            DRAW_PACKETS(D_00447270, D_00446A84, 0)
-            packets = D_00447270;
-            count = D_00446A84;
+            DRAW_PACKETS(recol_a_parts, recol_a_part_count, 0)
+            packets = recol_a_parts;
+            count = recol_a_part_count;
             break;
         }
 
-        switch (D_004472CC) {
+        switch (visible_panel_state) {
         case 0:
-            D_00425910[255] += 12.8f;
-            if (D_00425910[255] > 128.0f) {
-                D_00425910[255] = 128.0f;
+            panel_part_alphas[255] += 12.8f;
+            if (panel_part_alphas[255] > 128.0f) {
+                panel_part_alphas[255] = 128.0f;
             }
-            D_00446C80.alpha = (s32)D_00425910[255];
+            panel_text_color.alpha = (s32)panel_part_alphas[255];
             for (i = 0; i < count; i++) {
-                D_00425910[i] += (f32)packets[i].alpha / 10.0f;
-                if ((f32)packets[i].alpha < D_00425910[i]) {
-                    FILL_FADE(D_00425910, packets, count)
-                    D_004472CC = 1;
+                panel_part_alphas[i] += (f32)packets[i].alpha / 10.0f;
+                if ((f32)packets[i].alpha < panel_part_alphas[i]) {
+                    FILL_FADE(panel_part_alphas, packets, count)
+                    visible_panel_state = 1;
                     break;
                 }
             }
             break;
         case 2:
-            D_00425910[255] -= 12.8f;
-            if (D_00425910[255] < 0.0f) {
-                D_00425910[255] = 0.0f;
+            panel_part_alphas[255] -= 12.8f;
+            if (panel_part_alphas[255] < 0.0f) {
+                panel_part_alphas[255] = 0.0f;
             }
-            D_00446C80.alpha = (s32)D_00425910[255];
+            panel_text_color.alpha = (s32)panel_part_alphas[255];
             for (i = 0; i < count; i++) {
-                D_00425910[i] -= (f32)packets[i].alpha / 10.0f;
-                if (D_00425910[i] < 0.0f) {
-                    memset(D_00425910, 0, 0x400); // match: the panel's state is left at 2 and D_00446AD4 set
+                panel_part_alphas[i] -= (f32)packets[i].alpha / 10.0f;
+                if (panel_part_alphas[i] < 0.0f) {
+                    memset(panel_part_alphas, 0, 0x400); // match: the panel's state is left at 2 and detail_panel_open set
                     break;
                 }
             }
@@ -5120,67 +5119,67 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         }
     }
 
-    if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
+    if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        D_004472CB = 2;
-        D_004472DA = 0;
-        if (D_00446C90 != NULL) {
-            D_00446C90->next = NULL;
+        visible_item_state = 2;
+        menu_input_enabled = 0;
+        if (model_load_chain != NULL) {
+            model_load_chain->next = NULL;
         }
     }
-    if (D_004472CB == 2 && D_00446C90 == NULL) {
-        D_004472CB = 3;
+    if (visible_item_state == 2 && model_load_chain == NULL) {
+        visible_item_state = 3;
     }
 
-    switch (D_004472CB) {
+    switch (visible_item_state) {
     case 0:
-        D_00425510[255] += 12.8f;
-        if (D_00425510[255] > 128.0f) {
-            D_00425510[255] = 128.0f;
+        screen_part_alphas[255] += 12.8f;
+        if (screen_part_alphas[255] > 128.0f) {
+            screen_part_alphas[255] = 128.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        D_00425510[253] += 1.6f;
-        if (D_00425510[253] > 16.0f) {
-            D_00425510[253] = 16.0f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        screen_part_alphas[253] += 1.6f;
+        if (screen_part_alphas[253] > 16.0f) {
+            screen_part_alphas[253] = 16.0f;
         }
-        for (i = 0; i < D_00446A4C; i++) {
-            D_00425510[i + 200] += (f32)D_00447248[i].alpha / 10.0f;
+        for (i = 0; i < item_sel_part_count; i++) {
+            screen_part_alphas[i + 200] += (f32)item_sel_parts[i].alpha / 10.0f;
         }
-        for (i = 0; i < D_00446A58; i++) {
-            D_00425510[i] += (f32)D_00447254[i].alpha / 10.0f;
-            if ((f32)D_00447254[i].alpha < D_00425510[i]) {
-                FILL_FADE(D_00425510, D_00447254, D_00446A58)
-                for (i = 0; i < D_00446A4C; i++) {
-                    D_00425510[i + 200] = SPRITE_PACKET_COLOR(&D_00447248[i])->alpha;
+        for (i = 0; i < recol_part_count; i++) {
+            screen_part_alphas[i] += (f32)recol_parts[i].alpha / 10.0f;
+            if ((f32)recol_parts[i].alpha < screen_part_alphas[i]) {
+                FILL_FADE(screen_part_alphas, recol_parts, recol_part_count)
+                for (i = 0; i < item_sel_part_count; i++) {
+                    screen_part_alphas[i + 200] = SPRITE_PACKET_COLOR(&item_sel_parts[i])->alpha;
                 }
-                D_004472DA = D_004472CB = 1;
+                menu_input_enabled = visible_item_state = 1;
                 break;
             }
         }
         break;
     case 3:
-        D_00425510[255] -= 12.8f;
-        if (D_00425510[255] < 0.0f) {
-            D_00425510[255] = 0.0f;
+        screen_part_alphas[255] -= 12.8f;
+        if (screen_part_alphas[255] < 0.0f) {
+            screen_part_alphas[255] = 0.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        D_00425510[253] -= 1.6f;
-        if (D_00425510[253] < 0.0f) {
-            D_00425510[253] = 0.0f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        screen_part_alphas[253] -= 1.6f;
+        if (screen_part_alphas[253] < 0.0f) {
+            screen_part_alphas[253] = 0.0f;
         }
-        for (i = 0; i < D_00446A4C; i++) {
-            D_00425510[i + 200] -= (f32)D_00447248[i].alpha / 10.0f;
+        for (i = 0; i < item_sel_part_count; i++) {
+            screen_part_alphas[i + 200] -= (f32)item_sel_parts[i].alpha / 10.0f;
         }
-        for (i = 0; i < D_00446A58; i++) {
-            D_00425510[i] -= (f32)D_00447254[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
+        for (i = 0; i < recol_part_count; i++) {
+            screen_part_alphas[i] -= (f32)recol_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
                 Menu_BuildItemRings();
-                D_00446B20 = (void *)Menu_OpenMain;
+                menu_screen_handler = (void *)Menu_OpenMain;
                 ((void (*)(s32))Menu_ResetLoadBuffers)(0); // match: the callee takes nothing
-                D_004472CB = 0;
-                D_004472CC = 0;
-                D_00446AD4 = 0;
+                visible_item_state = 0;
+                visible_panel_state = 0;
+                detail_panel_open = 0;
                 break;
             }
         }
@@ -5197,48 +5196,48 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
     MenuCursorBar bar;
     PadReport *report;
 
-    if (D_00446C70 != 4) {
-        if ((D_00446DE8 & 0x10) && D_004472DA != 0) {
+    if (system_screen_state != 4) {
+        if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
             PLAY_MENU_SOUND(1);
-            D_004472E8--;
-        } else if ((D_00446DE8 & 0x40) && D_004472DA != 0) {
+            system_menu_line--;
+        } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
             PLAY_MENU_SOUND(1);
-            D_004472E8++;
+            system_menu_line++;
         }
     } else {
-        if ((D_00446DE8 & 0x10) && D_004472DA != 0) {
+        if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
             PLAY_MENU_SOUND(1);
-            D_00446BD8--;
-        } else if ((D_00446DE8 & 0x40) && D_004472DA != 0) {
+            quit_choice--;
+        } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
             PLAY_MENU_SOUND(1);
-            D_00446BD8++;
+            quit_choice++;
         }
-        if (D_00446BD8 < 0) {
-            D_00446BD8 = 1;
-        } else if (D_00446BD8 >= 2) {
-            D_00446BD8 = 0;
+        if (quit_choice < 0) {
+            quit_choice = 1;
+        } else if (quit_choice >= 2) {
+            quit_choice = 0;
         }
     }
-    D_004472E8 = (D_004472E8 + 5) % line_count;
+    system_menu_line = (system_menu_line + 5) % line_count;
 
-    for (i = 0; i < D_00446A5C; i++) {
-        kind = D_00447258[i].handler_index;
-        SET_PART_MODE(D_00447258[i].blend_mode);
-        if (D_00446C70 == 4 && kind == 2) {
-            MenuSprite_Draw((int)&D_00447258[i], 0x3EA, 0, D_00425510[i]);
+    for (i = 0; i < system_part_count; i++) {
+        kind = system_parts[i].handler_index;
+        SET_PART_MODE(system_parts[i].blend_mode);
+        if (system_screen_state == 4 && kind == 2) {
+            MenuSprite_Draw((int)&system_parts[i], 0x3EA, 0, screen_part_alphas[i]);
         } else if (kind != 2) {
-            if (D_00446C70 != 1) {
-                MenuSprite_Draw((int)&D_00447258[i], kind + 1000, D_004472E8, D_00425510[i]);
+            if (system_screen_state != 1) {
+                MenuSprite_Draw((int)&system_parts[i], kind + 1000, system_menu_line, screen_part_alphas[i]);
             } else {
-                MenuSprite_Draw((int)&D_00447258[i], kind, D_004472E8, D_00425510[i]);
+                MenuSprite_Draw((int)&system_parts[i], kind, system_menu_line, screen_part_alphas[i]);
             }
         }
         SET_PART_MODE(0);
     }
 
-    if (D_00446C70 == 4) {
+    if (system_screen_state == 4) {
         bar.first.f.lo16 = 0x7710;
-        bar.first.f.mid16 = D_00446BD8 * 0xC0 + 0x8010;
+        bar.first.f.mid16 = quit_choice * 0xC0 + 0x8010;
         bar.first.f.mid24 = 0x86470;
         bar.second.f.lo16 = bar.first.f.lo16 + 0x1250;
         bar.second.f.mid16 = bar.first.f.mid16 + 0xC0;
@@ -5246,100 +5245,100 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
         bar.red = 0xFF;
         bar.green = 0xFF;
         bar.blue = 0x78;
-        D_00425510[0xFD] = Menu_PulseValue(D_00425510[0xFD], 0x10, 0x20);
-        bar.alpha = D_00425510[0xFD];
+        screen_part_alphas[0xFD] = Menu_PulseValue(screen_part_alphas[0xFD], 0x10, 0x20);
+        bar.alpha = screen_part_alphas[0xFD];
         MenuDraw_Bar(&bar); // match: the float at bar+0x24 that MenuDraw_Bar copies is never set
     }
 
     report = Pad_GetReport(0, 0);
-    if ((report->pressed & 0x4000) && D_004472D0 != 0xFF && D_004472DA != 0) {
-        if (D_00446C70 != 4) {
+    if ((report->pressed & 0x4000) && pad_mode != 0xFF && menu_input_enabled != 0) {
+        if (system_screen_state != 4) {
             PLAY_MENU_SOUND(0);
-            switch (D_004472E8) {
+            switch (system_menu_line) {
             case 0:
-                D_005CF2F0.save_loaded = 0;
-                D_005CF2F0.card_saves_found = 0;
-                D_005CF2F0.is_leaving = 0;
-                D_005CF2F0.card_op_running = 0;
-                D_005CF2F0.selected_card = 0;
-                D_005CF2F0.selected_save = 0;
-                D_005CF2F0.input_locked = 1;
-                D_005CF2F0.check_finished = 0;
-                D_005CF2F0.save_state_0 = 0;
-                D_005CF2F0.save_state_1 = 0;
-                D_005CF2F0.save_state_2 = 0;
-                D_005CF2F0.card_update_result = 0;
-                D_005CF2F0.confirm_choice = 1;
-                D_005CF2F0.dialog_id = -1;
+                card_screen_state.save_loaded = 0;
+                card_screen_state.card_saves_found = 0;
+                card_screen_state.is_leaving = 0;
+                card_screen_state.card_op_running = 0;
+                card_screen_state.selected_card = 0;
+                card_screen_state.selected_save = 0;
+                card_screen_state.input_locked = 1;
+                card_screen_state.check_finished = 0;
+                card_screen_state.save_state_0 = 0;
+                card_screen_state.save_state_1 = 0;
+                card_screen_state.save_state_2 = 0;
+                card_screen_state.card_update_result = 0;
+                card_screen_state.confirm_choice = 1;
+                card_screen_state.dialog_id = -1;
                 SaveCard_Open();
                 SaveCard_StartCheck(1);
-                D_00446C70 = 2;
-                D_004472DA = 0;
-                for (i = 0; i < D_00446A5C; i++) {
-                    if (D_00447258[i].handler_index == 1 && D_004472E8 == D_00447258[i].slot) {
-                        D_00425510[i] = D_00446C04;
+                system_screen_state = 2;
+                menu_input_enabled = 0;
+                for (i = 0; i < system_part_count; i++) {
+                    if (system_parts[i].handler_index == 1 && system_menu_line == system_parts[i].slot) {
+                        screen_part_alphas[i] = pulse_sprite_alpha;
                     }
                 }
                 break;
             case 1:
             case 2:
             case 3:
-                for (i = 0; i < D_00446A5C; i++) {
-                    if (D_00447258[i].handler_index == 1 && D_004472E8 == D_00447258[i].slot) {
-                        D_00425510[i] = D_00446C04;
+                for (i = 0; i < system_part_count; i++) {
+                    if (system_parts[i].handler_index == 1 && system_menu_line == system_parts[i].slot) {
+                        screen_part_alphas[i] = pulse_sprite_alpha;
                     }
                 }
-                D_004472DA = 0;
-                D_00446C70 = 2;
+                menu_input_enabled = 0;
+                system_screen_state = 2;
                 break;
             case 4:
-                for (i = 0; i < D_00446A5C; i++) {
-                    if (D_00447258[i].handler_index == 1 && D_004472E8 == D_00447258[i].slot) {
-                        D_00425510[i] = D_00446C04;
+                for (i = 0; i < system_part_count; i++) {
+                    if (system_parts[i].handler_index == 1 && system_menu_line == system_parts[i].slot) {
+                        screen_part_alphas[i] = pulse_sprite_alpha;
                     }
                 }
-                D_00446C70 = 4;
+                system_screen_state = 4;
                 break;
             }
-        } else if (D_00446BD8 == 0) {
+        } else if (quit_choice == 0) {
             PLAY_MENU_SOUND(0);
-            D_004472DA = 0;
-            D_00446C70 = 5;
+            menu_input_enabled = 0;
+            system_screen_state = 5;
         } else {
             PLAY_MENU_SOUND(2);
-            D_00446C70 = 1;
+            system_screen_state = 1;
         }
-    } else if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
         PLAY_MENU_SOUND(2);
-        if (D_00446C70 != 4) {
-            D_004472DA = 0;
-            D_00446C70 = 3;
+        if (system_screen_state != 4) {
+            menu_input_enabled = 0;
+            system_screen_state = 3;
         } else {
-            D_00446C70 = 1;
-            D_00446BD8 = 1;
+            system_screen_state = 1;
+            quit_choice = 1;
         }
     }
 
     if (game_status.bit9) {
         context->unk04 = 0;
-        D_004472E8 = 0;
-        D_00446B20 = (void *)Menu_OpenMain;
+        system_menu_line = 0;
+        menu_screen_handler = (void *)Menu_OpenMain;
     }
 
-    switch (D_00446C70) {
+    switch (system_screen_state) {
     case 0:
-        D_00425510[0xFD] += 1.6f;
-        if (D_00425510[0xFD] > 16.0f) {
-            D_00425510[0xFD] = 16.0f;
+        screen_part_alphas[0xFD] += 1.6f;
+        if (screen_part_alphas[0xFD] > 16.0f) {
+            screen_part_alphas[0xFD] = 16.0f;
         }
-        for (i = 0; i < D_00446A5C; i++) {
-            D_00425510[i] += SPRITE_PACKET_COLOR_VIEW(&D_00447258[i])->alpha / 10.0f;
-            if (SPRITE_PACKET_COLOR_VIEW(&D_00447258[i])->alpha < D_00425510[i]) {
-                for (i = 0; i < D_00446A5C; i++) {
-                    D_00425510[i] = SPRITE_PACKET_COLOR_VIEW(&D_00447258[i])->alpha;
+        for (i = 0; i < system_part_count; i++) {
+            screen_part_alphas[i] += SPRITE_PACKET_COLOR_VIEW(&system_parts[i])->alpha / 10.0f;
+            if (SPRITE_PACKET_COLOR_VIEW(&system_parts[i])->alpha < screen_part_alphas[i]) {
+                for (i = 0; i < system_part_count; i++) {
+                    screen_part_alphas[i] = SPRITE_PACKET_COLOR_VIEW(&system_parts[i])->alpha;
                 }
-                D_00446C70 = 1; // match: before D_004472DA, or every register of the step stores moves
-                D_004472DA = 1;
+                system_screen_state = 1; // match: before menu_input_enabled, or every register of the step stores moves
+                menu_input_enabled = 1;
                 break;
             }
         }
@@ -5348,50 +5347,50 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
     case 3:
     case 5:
     case 6:
-        D_00425510[0xFD] -= 1.6f;
-        if (D_00425510[0xFD] < 0.0f) {
-            D_00425510[0xFD] = 0.0f;
+        screen_part_alphas[0xFD] -= 1.6f;
+        if (screen_part_alphas[0xFD] < 0.0f) {
+            screen_part_alphas[0xFD] = 0.0f;
         }
-        for (i = 0; i < D_00446A5C; i++) {
-            D_00425510[i] -= SPRITE_PACKET_COLOR_VIEW(&D_00447258[i])->alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                D_00425510[i] = 0.0f;
-                if (D_00447258[i].handler_index != 1 || D_004472E8 != D_00447258[i].slot) {
-                    memset(D_00425510, 0, 0x400);
-                    if (D_00446C70 == 2) {
-                        D_004472CF = D_0034968A[0];
-                        D_00446C04 = 128.0f;
-                        D_00446B20 = system_menu_screens[D_004472E8];
-                        D_00446C09 = 0;
-                        D_00446C08 = 0;
-                        if (D_004472E8 == 2) {
-                            D_005CF318[0] = D_0044692C;
-                            D_005CF318[1] = D_0044692E;
-                            D_005CF318[2] = D_00446932;
-                            D_005CF318[3] = D_00446930;
-                            D_005CF318[4] = D_00446936;
-                            D_005CF318[5] = D_00446934;
-                            D_005CF318[6] = D_0044693C;
-                            D_005CF318[7] = D_0044693E;
-                            D_005CF318[8] = D_00446940;
-                            D_005CF318[9] = D_00446944;
-                            D_005CF318[10] = D_00446938;
-                            D_005CF318[11] = D_0044693A;
-                            D_005CF318[12] = D_00446942;
+        for (i = 0; i < system_part_count; i++) {
+            screen_part_alphas[i] -= SPRITE_PACKET_COLOR_VIEW(&system_parts[i])->alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                screen_part_alphas[i] = 0.0f;
+                if (system_parts[i].handler_index != 1 || system_menu_line != system_parts[i].slot) {
+                    memset(screen_part_alphas, 0, 0x400);
+                    if (system_screen_state == 2) {
+                        brightness_before = brightness_option[0];
+                        pulse_sprite_alpha = 128.0f;
+                        menu_screen_handler = system_menu_screens[system_menu_line];
+                        pulse_value_falling = 0;
+                        pulse_sprite_falling = 0;
+                        if (system_menu_line == 2) {
+                            button_settings_copy[0] = forward_button;
+                            button_settings_copy[1] = back_button;
+                            button_settings_copy[2] = turn_left_button;
+                            button_settings_copy[3] = turn_right_button;
+                            button_settings_copy[4] = step_left_button;
+                            button_settings_copy[5] = step_right_button;
+                            button_settings_copy[6] = attack_button;
+                            button_settings_copy[7] = magic_button;
+                            button_settings_copy[8] = action_button;
+                            button_settings_copy[9] = shortcut_button;
+                            button_settings_copy[10] = look_down_button;
+                            button_settings_copy[11] = look_up_button;
+                            button_settings_copy[12] = menu_button;
                             Menu_ReadButtonSettings();
                         }
-                    } else if (D_00446C70 == 3) {
+                    } else if (system_screen_state == 3) {
                         context->unk04 = 0;
-                        D_004472E8 = 0;
-                        D_00446B20 = (void *)Menu_OpenMain;
-                    } else if (D_00446C70 == 5) {
-                        D_00446AC8++;
+                        system_menu_line = 0;
+                        menu_screen_handler = (void *)Menu_OpenMain;
+                    } else if (system_screen_state == 5) {
+                        menu_step++;
                         context->unk04 = 0;
-                        D_004472E8 = 0;
+                        system_menu_line = 0;
                         game_status.bit9 = 1;
                     }
-                    D_00446C70 = 0;
-                    D_00446BD8 = 1;
+                    system_screen_state = 0;
+                    quit_choice = 1;
                     break;
                 }
             }
@@ -5400,38 +5399,38 @@ static void Menu_UpdateSystem(MenuScreenContext *context) {
     }
 }
 
-/* Moves the cursor of the item list (D_00426110) a row or a page, unless the list is locked, shifting the models
+/* Moves the cursor of the item list (item_list_cursor) a row or a page, unless the list is locked, shifting the models
    with it. Returns TRUE when a move button was pressed. */
 s32 Menu_MoveItemListCursor(HandlerContext *context, s32 locked) {
-    MenuItem *cursor = D_00426110[0];
+    MenuItem *cursor = item_list_cursor[0];
     MenuItem *next;
     s32 rows;
 
     if (cursor != NULL) {
-        if ((D_00446DE8 & 0x10) && !locked) {
+        if ((menu_buttons & 0x10) && !locked) {
             next = cursor->next;
             if (next != NULL) {
-                if (cursor == D_00426120[0] && next != D_00426130[0]->prev) {
-                    D_00426120[0] = next;
-                    D_00426130[0] = D_00426130[0]->next;
+                if (cursor == item_list_top[0] && next != item_list_page_mark[0]->prev) {
+                    item_list_top[0] = next;
+                    item_list_page_mark[0] = item_list_page_mark[0]->next;
                 }
-                D_00426110[0] = next;
+                item_list_cursor[0] = next;
                 Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsNext(0);
-        } else if ((D_00446DE8 & 0x40) && !locked) {
+        } else if ((menu_buttons & 0x40) && !locked) {
             if (cursor->prev != NULL) {
-                if (D_00426130[0]->prev == D_00426110[0] && D_00426120[0]->next != D_00426130[0]->prev) {
-                    D_00426130[0] = D_00426130[0]->prev;
-                    D_00426120[0] = D_00426120[0]->prev;
+                if (item_list_page_mark[0]->prev == item_list_cursor[0] && item_list_top[0]->next != item_list_page_mark[0]->prev) {
+                    item_list_page_mark[0] = item_list_page_mark[0]->prev;
+                    item_list_top[0] = item_list_top[0]->prev;
                 }
                 Sound_PlayMenu(1);
-                D_00426110[0] = cursor->prev;
+                item_list_cursor[0] = cursor->prev;
             }
             Menu_ShiftListModelsPrev(0);
-        } else if ((D_00446DE8 & 0x20) && D_00446C48 >= 8 && !locked) {
+        } else if ((menu_buttons & 0x20) && item_list_count >= 8 && !locked) {
             if (cursor->prev != NULL) {
-                if (D_00426120[0]->next != D_00426130[0]->prev) {
+                if (item_list_top[0]->next != item_list_page_mark[0]->prev) {
                     rows = 0;
                     while (ScrollItemListUp()) {
                         if (++rows >= PAGE_ROWS) {
@@ -5442,9 +5441,9 @@ s32 Menu_MoveItemListCursor(HandlerContext *context, s32 locked) {
                 Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsPageUp(0);
-        } else if ((D_00446DE8 & 0x80) && D_00446C48 >= 8 && !locked) {
+        } else if ((menu_buttons & 0x80) && item_list_count >= 8 && !locked) {
             if (cursor->next != NULL) {
-                if (D_00426120[0]->next != D_00426130[0]->prev) {
+                if (item_list_top[0]->next != item_list_page_mark[0]->prev) {
                     rows = 0;
                     while (ScrollItemListDown()) {
                         if (++rows >= PAGE_ROWS) {
@@ -5464,32 +5463,32 @@ s32 Menu_MoveItemListCursor(HandlerContext *context, s32 locked) {
     return FALSE;
 }
 
-/* Moves the cursor of the spell list (D_005CE880) a row, shifting the models with it. Returns 1 when a move
+/* Moves the cursor of the spell list (castable_spell_cursor) a row, shifting the models with it. Returns 1 when a move
    button was pressed. */
 static int Menu_MoveSpellCursor(void) {
-    MenuItem *cur = D_005CE880[0];
+    MenuItem *cur = castable_spell_cursor[0];
     MenuItem *n;
 
     if (cur != NULL) {
-        if (D_00446DE8 & 0x10) {
+        if (menu_buttons & 0x10) {
             n = cur->next;
             if (n != NULL) {
-                if (cur == D_005CE890[0] && n != D_005CE8A0[0]->prev) {
-                    D_005CE890[0] = n;
-                    D_005CE8A0[0] = D_005CE8A0[0]->next;
+                if (cur == castable_spell_top[0] && n != castable_spell_page_mark[0]->prev) {
+                    castable_spell_top[0] = n;
+                    castable_spell_page_mark[0] = castable_spell_page_mark[0]->next;
                 }
                 Sound_PlayMenu(1);
-                D_005CE880[0] = cur->next;
+                castable_spell_cursor[0] = cur->next;
             }
             Menu_ShiftSpellModelsNext(0);
-        } else if (D_00446DE8 & 0x40) {
+        } else if (menu_buttons & 0x40) {
             if (cur->prev != NULL) {
-                if (cur == D_005CE8A0[0]->prev && D_005CE890[0]->next != cur) {
-                    D_005CE8A0[0] = cur;
-                    D_005CE890[0] = D_005CE890[0]->prev;
+                if (cur == castable_spell_page_mark[0]->prev && castable_spell_top[0]->next != cur) {
+                    castable_spell_page_mark[0] = cur;
+                    castable_spell_top[0] = castable_spell_top[0]->prev;
                 }
                 Sound_PlayMenu(1);
-                D_005CE880[0] = cur->prev;
+                castable_spell_cursor[0] = cur->prev;
             }
             Menu_ShiftSpellModelsPrev(0);
         } else {
@@ -5506,23 +5505,23 @@ static int Menu_MoveSpellCursor(void) {
 static int Menu_MoveEquipCursor(void) {
     MenuItem *item = NULL;
 
-    if (D_005CE840[0] != NULL) {
-        item = D_005CE840[0]->item;
+    if (equip_list_shown[0] != NULL) {
+        item = equip_list_shown[0]->item;
     }
     if (item != NULL) {
-        if (D_00446DE8 & 0x80) {
+        if (menu_buttons & 0x80) {
             MenuItem *next = item->next;
             if (next != NULL) {
-                D_005CE840[0]->item = next;
+                equip_list_shown[0]->item = next;
                 Menu_ShiftEquipModelsNextItem(0, item);
                 Sound_PlayMenu(1);
                 return 1;
             }
         }
-        if (D_00446DE8 & 0x20) {
+        if (menu_buttons & 0x20) {
             MenuItem *prev = item->prev;
             if (prev != NULL) {
-                D_005CE840[0]->item = prev;
+                equip_list_shown[0]->item = prev;
                 Menu_ShiftEquipModelsPrevItem(0, item);
                 Sound_PlayMenu(1);
                 return 1;
@@ -5532,38 +5531,38 @@ static int Menu_MoveEquipCursor(void) {
     return 0;
 }
 
-/* Moves the cursor of the list of everything owned (D_005CE850) one row (0x10, 0x40) or one page (0x20, 0x80,
+/* Moves the cursor of the list of everything owned (owned_list_current) one row (0x10, 0x40) or one page (0x20, 0x80,
    lists of 8 and more), scrolling the window and shifting the models. */
 static s32 Menu_MoveAllItemsCursor(void) {
-    MenuItem *cursor = D_005CE850[0];
+    MenuItem *cursor = owned_list_current[0];
     MenuItem *next;
     s32 rows;
 
     if (cursor != NULL) {
-        if (D_00446DE8 & 0x10) {
+        if (menu_buttons & 0x10) {
             next = cursor->next;
             if (next != NULL) {
-                if (cursor == D_005CE860[0] && next != D_005CE870[0]->prev) {
-                    D_005CE860[0] = next;
-                    D_005CE870[0] = D_005CE870[0]->next;
+                if (cursor == owned_list_top[0] && next != owned_list_page_mark[0]->prev) {
+                    owned_list_top[0] = next;
+                    owned_list_page_mark[0] = owned_list_page_mark[0]->next;
                 }
                 Sound_PlayMenu(1);
-                D_005CE850[0] = cursor->next;
+                owned_list_current[0] = cursor->next;
             }
             Menu_ShiftListModelsNext(0);
-        } else if (D_00446DE8 & 0x40) {
+        } else if (menu_buttons & 0x40) {
             if (cursor->prev != NULL) {
-                if (D_005CE870[0]->prev == cursor && D_005CE860[0]->next != cursor) {
-                    D_005CE870[0] = cursor;
-                    D_005CE860[0] = D_005CE860[0]->prev;
+                if (owned_list_page_mark[0]->prev == cursor && owned_list_top[0]->next != cursor) {
+                    owned_list_page_mark[0] = cursor;
+                    owned_list_top[0] = owned_list_top[0]->prev;
                 }
                 Sound_PlayMenu(1);
-                D_005CE850[0] = cursor->prev;
+                owned_list_current[0] = cursor->prev;
             }
             Menu_ShiftListModelsPrev(0);
-        } else if ((D_00446DE8 & 0x20) && D_00446C38 >= 8) {
+        } else if ((menu_buttons & 0x20) && owned_list_count >= 8) {
             if (cursor->prev != NULL) {
-                if (D_005CE860[0]->next != D_005CE870[0]->prev) {
+                if (owned_list_top[0]->next != owned_list_page_mark[0]->prev) {
                     rows = 0;
                     while (ScrollAllItemsUp()) {
                         if (++rows >= PAGE_ROWS) {
@@ -5574,9 +5573,9 @@ static s32 Menu_MoveAllItemsCursor(void) {
                 Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsPageUp(0);
-        } else if ((D_00446DE8 & 0x80) && D_00446C38 >= 8) {
+        } else if ((menu_buttons & 0x80) && owned_list_count >= 8) {
             if (cursor->next != NULL) {
-                if (D_005CE860[0]->next != D_005CE870[0]->prev) {
+                if (owned_list_top[0]->next != owned_list_page_mark[0]->prev) {
                     rows = 0;
                     while (ScrollAllItemsDown()) {
                         if (++rows >= PAGE_ROWS) {
@@ -5604,164 +5603,164 @@ static void Menu_UpdateCardSlot(void) {
     PadReport *report;
 
     card_result = SaveCard_Update();
-    if (D_005CF2F0.check_finished == 0 && SaveCard_IsChecking() == 0) {
-        D_005CF2F0.input_locked = 0;
-        D_005CF2F0.check_finished = 1;
+    if (card_screen_state.check_finished == 0 && SaveCard_IsChecking() == 0) {
+        card_screen_state.input_locked = 0;
+        card_screen_state.check_finished = 1;
         if (SaveCard_IsPresent(0) == 0 && SaveCard_IsPresent(1) != 0) {
-            D_005CF2F0.selected_card = 1;
+            card_screen_state.selected_card = 1;
         }
     }
 
-    for (i = 0; i < D_00446A60; i++) {
-        kind = D_00446BF4[i].handler_index;
-        Menu_SetBlendMode(D_00446BF4[i].blend_mode);
+    for (i = 0; i < slot_part_count; i++) {
+        kind = slot_parts[i].handler_index;
+        Menu_SetBlendMode(slot_parts[i].blend_mode);
         switch (kind) {
         case 2:
-            MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 1, D_00425510[i]);
+            MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 1, screen_part_alphas[i]);
             break;
         case 29:
-            if ((u8)D_00446BF4[i].slot < 2) {
-                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, D_00446BF4[i].slot, D_00425510[i]);
+            if ((u8)slot_parts[i].slot < 2) {
+                MenuSprite_Draw((int)&slot_parts[i], kind + 1000, slot_parts[i].slot, screen_part_alphas[i]);
             }
             break;
         case 3:
-            switch (D_005CF2F0.dialog_id) {
+            switch (card_screen_state.dialog_id) {
             case 4:
             case 5:
             case 9:
             case 10:
-                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
+                MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0, screen_part_alphas[i]);
                 break;
             }
             break;
         case 31:
-            if (D_005CF2F0.check_finished != 0) {
-                if (D_00446C70 != 1) {
-                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, D_005CF2F0.selected_card, D_00425510[i]);
+            if (card_screen_state.check_finished != 0) {
+                if (system_screen_state != 1) {
+                    MenuSprite_Draw((int)&slot_parts[i], kind + 1000, card_screen_state.selected_card, screen_part_alphas[i]);
                 } else {
-                    MenuSprite_Draw((int)&D_00446BF4[i], kind, D_005CF2F0.selected_card, D_00425510[i]);
+                    MenuSprite_Draw((int)&slot_parts[i], kind, card_screen_state.selected_card, screen_part_alphas[i]);
                 }
             }
             break;
         case 26:
             if (SaveCard_IsPresent(0) == 0) {
-                if (D_00446C70 == 0) {
-                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
-                } else if (D_00446C70 < 2) {
-                    if (D_00446C94 != 1 || D_00446BDC == 0) {
-                        MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x20);
+                if (system_screen_state == 0) {
+                    MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x20, screen_part_alphas[i]);
+                } else if (system_screen_state < 2) {
+                    if (menu_mode != 1 || card_slot_leave_steps == 0) {
+                        MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x20);
                     }
                 }
-            } else if (D_00446C70 != 1) {
-                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x80, D_00425510[i]);
+            } else if (system_screen_state != 1) {
+                MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x80, screen_part_alphas[i]);
             } else {
-                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x80);
+                MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x80);
             }
             break;
         case 27:
             if (SaveCard_IsPresent(1) == 0) {
-                if (D_00446C70 == 0) {
-                    MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x20, D_00425510[i]);
-                } else if (D_00446C70 < 2) {
-                    if (D_00446C94 != 1 || D_00446BDC == 0) {
-                        MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x20);
+                if (system_screen_state == 0) {
+                    MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x20, screen_part_alphas[i]);
+                } else if (system_screen_state < 2) {
+                    if (menu_mode != 1 || card_slot_leave_steps == 0) {
+                        MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x20);
                     }
                 }
-            } else if (D_00446C70 != 1) {
-                MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0x80, D_00425510[i]);
+            } else if (system_screen_state != 1) {
+                MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0x80, screen_part_alphas[i]);
             } else {
-                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 0x80);
+                MenuSprite_DrawPlain((int)&slot_parts[i], kind, 0x80);
             }
             break;
         case 28:
-            switch (D_005CF2F0.dialog_id) {
+            switch (card_screen_state.dialog_id) {
             case 4:
-                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 4);
+                MenuSprite_DrawPlain((int)&slot_parts[i], kind, 4);
                 break;
             case 5:
-                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 5);
+                MenuSprite_DrawPlain((int)&slot_parts[i], kind, 5);
                 break;
             case 9:
-                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 9);
+                MenuSprite_DrawPlain((int)&slot_parts[i], kind, 9);
                 break;
             case 10:
-                MenuSprite_DrawPlain((int)&D_00446BF4[i], kind, 10);
+                MenuSprite_DrawPlain((int)&slot_parts[i], kind, 10);
                 break;
             }
             /* fallthrough */
         default:
-            MenuSprite_Draw((int)&D_00446BF4[i], kind + 1000, 0, D_00425510[i]);
+            MenuSprite_Draw((int)&slot_parts[i], kind + 1000, 0, screen_part_alphas[i]);
             break;
         }
         SET_PART_MODE(0);
     }
 
-    if (D_005CF2F0.card_op_running != 0) {
+    if (card_screen_state.card_op_running != 0) {
         if (SaveCard_CheckBusy() == 0) {
-            D_00447224 = SaveCard_GetSaveMask();
-            if (D_00447224 != 0) {
-                D_005CF2F0.input_locked = 1;
-                D_00446C70 = 2;
-                D_005CF2F0.card_saves_found = 1;
+            card_save_mask = SaveCard_GetSaveMask();
+            if (card_save_mask != 0) {
+                card_screen_state.input_locked = 1;
+                system_screen_state = 2;
+                card_screen_state.card_saves_found = 1;
             } else {
-                D_005CF2F0.dialog_id = 9;
+                card_screen_state.dialog_id = 9;
             }
-            D_005CF2F0.card_op_running = 0;
+            card_screen_state.card_op_running = 0;
         } else if (card_result < 0) {
-            if (SaveCard_IsPresent(D_005CF2F0.selected_card) != 0) {
-                D_005CF2F0.dialog_id = 9;
+            if (SaveCard_IsPresent(card_screen_state.selected_card) != 0) {
+                card_screen_state.dialog_id = 9;
             } else {
-                D_005CF2F0.dialog_id = 10;
+                card_screen_state.dialog_id = 10;
             }
-            D_005CF2F0.card_op_running = 0;
+            card_screen_state.card_op_running = 0;
             card_result = 0;
             SaveCard_StartCheck(1);
         }
     }
 
-    if (D_005CF2F0.is_leaving != 0) {
+    if (card_screen_state.is_leaving != 0) {
         if (card_result < 0) {
-            D_005CF2F0.input_locked = 1;
-            D_00446C70 = 3;
+            card_screen_state.input_locked = 1;
+            system_screen_state = 3;
         }
     } else if (card_result < 0) {
-        D_005CF2F0.card_op_running = 0;
-        D_005CF2F0.dialog_id = 10;
+        card_screen_state.card_op_running = 0;
+        card_screen_state.dialog_id = 10;
         SaveCard_StartCheck(1);
-    } else if (D_005CF2F0.card_op_running == 0 && D_005CF2F0.input_locked == 0) {
-        if ((D_00446DE8 & 0xA0) && D_004472D0 != 0xFF && D_005CF2F0.dialog_id == -1) {
+    } else if (card_screen_state.card_op_running == 0 && card_screen_state.input_locked == 0) {
+        if ((menu_buttons & 0xA0) && pad_mode != 0xFF && card_screen_state.dialog_id == -1) {
             Sound_PlayMenu(1);
-            D_005CF2F0.selected_card = (D_005CF2F0.selected_card + 1) & 1;
+            card_screen_state.selected_card = (card_screen_state.selected_card + 1) & 1;
         } else {
             report = Pad_GetReport(0, 0);
-            if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
-                if (D_005CF2F0.dialog_id != -1) {
+            if ((report->pressed & 0x4000) && pad_mode != 0xFF) {
+                if (card_screen_state.dialog_id != -1) {
                     Sound_PlayMenu(0);
-                    D_005CF2F0.dialog_id = -1;
-                } else if (SaveCard_IsPresent(D_005CF2F0.selected_card) != 0) {
+                    card_screen_state.dialog_id = -1;
+                } else if (SaveCard_IsPresent(card_screen_state.selected_card) != 0) {
                     if (SaveCard_CheckSavesIntact() > 0) {
-                        if (SaveCard_StartReadList(D_005CF2F0.selected_card, 1) == 0) {
+                        if (SaveCard_StartReadList(card_screen_state.selected_card, 1) == 0) {
                             Sound_PlayMenu(0);
-                            D_005CF2F0.card_op_running = 1;
+                            card_screen_state.card_op_running = 1;
                         }
                     } else {
-                        D_005CF2F0.dialog_id = 9;
+                        card_screen_state.dialog_id = 9;
                     }
-                } else if (D_005CF2F0.selected_card == 0) {
+                } else if (card_screen_state.selected_card == 0) {
                     Sound_PlayMenu(0);
-                    D_005CF2F0.dialog_id = 4;
-                } else if (D_005CF2F0.selected_card == 1) {
+                    card_screen_state.dialog_id = 4;
+                } else if (card_screen_state.selected_card == 1) {
                     Sound_PlayMenu(0);
-                    D_005CF2F0.dialog_id = 5;
+                    card_screen_state.dialog_id = 5;
                 }
             } else {
                 report = Pad_GetReport(0, 0);
-                if (((report->pressed & 0x2000) && D_004472D0 != 0xFF) || game_status.bit9) {
+                if (((report->pressed & 0x2000) && pad_mode != 0xFF) || game_status.bit9) {
                     Sound_PlayMenu(2);
-                    if (D_005CF2F0.dialog_id != -1) {
-                        D_005CF2F0.dialog_id = -1;
+                    if (card_screen_state.dialog_id != -1) {
+                        card_screen_state.dialog_id = -1;
                     } else {
-                        D_005CF2F0.is_leaving = 1;
+                        card_screen_state.is_leaving = 1;
                         SaveCard_Close();
                     }
                 }
@@ -5769,30 +5768,30 @@ static void Menu_UpdateCardSlot(void) {
         }
     }
 
-    switch (D_00446C70) {
+    switch (system_screen_state) {
     case 0:
-        for (i = 0; i < D_00446A60; i++) {
-            if (D_00446BF4[i].handler_index == 26) {
+        for (i = 0; i < slot_part_count; i++) {
+            if (slot_parts[i].handler_index == 26) {
                 if (SaveCard_IsPresent(0) != 0) {
-                    SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
+                    SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
-                    SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
+                    SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x20;
                 }
-            } else if (D_00446BF4[i].handler_index == 27) {
+            } else if (slot_parts[i].handler_index == 27) {
                 if (SaveCard_IsPresent(1) != 0) {
-                    SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
+                    SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
-                    SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
+                    SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x20;
                 }
             }
-            D_00425510[i] += SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha / 10.0f;
-            if (SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha < D_00425510[i]) {
-                for (i = 0; i < D_00446A60; i++) {
-                    D_00425510[i] = SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha;
+            screen_part_alphas[i] += SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha / 10.0f;
+            if (SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha < screen_part_alphas[i]) {
+                for (i = 0; i < slot_part_count; i++) {
+                    screen_part_alphas[i] = SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha;
                 }
-                D_00446C70 = 1;
-                if (D_005CF2F0.check_finished != 0) {
-                    D_005CF2F0.input_locked = 0;
+                system_screen_state = 1;
+                if (card_screen_state.check_finished != 0) {
+                    card_screen_state.input_locked = 0;
                 }
                 break;
             }
@@ -5800,49 +5799,49 @@ static void Menu_UpdateCardSlot(void) {
         break;
     case 2:
     case 3:
-        for (i = 0; i < D_00446A60; i++) {
-            if (D_00446BF4[i].handler_index == 26) {
+        for (i = 0; i < slot_part_count; i++) {
+            if (slot_parts[i].handler_index == 26) {
                 if (SaveCard_IsPresent(0) != 0) {
-                    SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
+                    SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
-                    SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
+                    SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x20;
                 }
-            } else if (D_00446BF4[i].handler_index == 27) {
+            } else if (slot_parts[i].handler_index == 27) {
                 if (SaveCard_IsPresent(1) != 0) {
-                    SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x80;
+                    SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x80;
                 } else {
-                    SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha = 0x20;
+                    SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha = 0x20;
                 }
             }
-            D_00425510[i] -= SPRITE_PACKET_COLOR_VIEW(&D_00446BF4[i])->alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                if (D_00446C94 == 1) {
-                    D_00446BDC++;
+            screen_part_alphas[i] -= SPRITE_PACKET_COLOR_VIEW(&slot_parts[i])->alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                if (menu_mode == 1) {
+                    card_slot_leave_steps++;
                 } else {
-                    D_00446BDC = 2;
+                    card_slot_leave_steps = 2;
                 }
-                if (D_00446BDC == 2) {
-                    D_00446C04 = 128.0f;
-                    D_00446BDC = 0;
-                    D_00446C08 = 0;
-                    if (D_00446C70 == 2) {
-                        D_005CF2F0.list_step = -1;
-                        D_00446B20 = (void *)Menu_UpdateSaveList;
-                        D_00446B24 = (void *)Menu_UpdateCardSlot;
-                        D_005CF2F0.selected_save = 0;
-                        D_005CF2F0.confirm_press_state = 0;
+                if (card_slot_leave_steps == 2) {
+                    pulse_sprite_alpha = 128.0f;
+                    card_slot_leave_steps = 0;
+                    pulse_sprite_falling = 0;
+                    if (system_screen_state == 2) {
+                        card_screen_state.list_step = -1;
+                        menu_screen_handler = (void *)Menu_UpdateSaveList;
+                        save_list_opener = (void *)Menu_UpdateCardSlot;
+                        card_screen_state.selected_save = 0;
+                        card_screen_state.confirm_press_state = 0;
                         SaveCard_ClearLoadFailed(0);
                         SaveCard_ClearLoadFailed(1);
-                    } else if (D_00446C70 == 3) {
-                        if (D_00446C94 != 1) {
-                            D_00446B20 = (void *)Menu_UpdateSystem;
+                    } else if (system_screen_state == 3) {
+                        if (menu_mode != 1) {
+                            menu_screen_handler = (void *)Menu_UpdateSystem;
                         } else {
-                            D_00446AC8++;
+                            menu_step++;
                         }
                     }
-                    D_005CF2F0.dialog_id = -1;
-                    D_00446C70 = 0;
+                    card_screen_state.dialog_id = -1;
+                    system_screen_state = 0;
                 }
                 break;
             }
@@ -5907,15 +5906,15 @@ static void Menu_UpdateSaveList(void) {
     D_00446E7C = info[2]->play_minutes;
     D_00446E80 = info[2]->play_seconds;
 
-    if (D_005CF2F0.list_step == -1) {
+    if (card_screen_state.list_step == -1) {
         for (i = 0; i < 3; i++) {
-            MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] = SaveCard_GetSaveState(i);
+            MENU_SCREEN_SAVES(&card_screen_state)->save_state[i] = SaveCard_GetSaveState(i);
         }
         for (i = 0; i < 3; i++) {
-            if (MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] != 1) {
+            if (MENU_SCREEN_SAVES(&card_screen_state)->save_state[i] != 1) {
                 switch (i) {
                 case 0:
-                    if (D_005CF2F0.save_state_1 != 0 || D_005CF2F0.save_state_2 != 0) {
+                    if (card_screen_state.save_state_1 != 0 || card_screen_state.save_state_2 != 0) {
                         first_arg = 1;
                         second_arg = 0;
                     } else {
@@ -5924,121 +5923,121 @@ static void Menu_UpdateSaveList(void) {
                     }
                     break;
                 case 1:
-                    if (D_005CF2F0.save_state_0 != 0 && D_005CF2F0.save_state_2 != 0) {
+                    if (card_screen_state.save_state_0 != 0 && card_screen_state.save_state_2 != 0) {
                         second_arg = 0;
                         first_arg = 1;
-                    } else if (D_005CF2F0.save_state_0 != 0 && D_005CF2F0.save_state_2 == 0) {
+                    } else if (card_screen_state.save_state_0 != 0 && card_screen_state.save_state_2 == 0) {
                         second_arg = 0;
                         first_arg = 1;
-                    } else if (D_005CF2F0.save_state_0 == 0 && D_005CF2F0.save_state_2 != 0) {
+                    } else if (card_screen_state.save_state_0 == 0 && card_screen_state.save_state_2 != 0) {
                         second_arg = 0;
                         first_arg = 2;
-                    } else if (D_005CF2F0.save_state_0 == 0 && D_005CF2F0.save_state_2 == 0) {
+                    } else if (card_screen_state.save_state_0 == 0 && card_screen_state.save_state_2 == 0) {
                         second_arg = 1;
                         first_arg = 1;
                     }
                     break;
                 case 2:
-                    if (D_005CF2F0.save_state_0 != 0 && D_005CF2F0.save_state_1 != 0) {
+                    if (card_screen_state.save_state_0 != 0 && card_screen_state.save_state_1 != 0) {
                         second_arg = 0;
                         first_arg = 1;
-                    } else if (D_005CF2F0.save_state_0 != 0 && D_005CF2F0.save_state_1 == 0) {
+                    } else if (card_screen_state.save_state_0 != 0 && card_screen_state.save_state_1 == 0) {
                         second_arg = 0;
                         first_arg = 2;
-                    } else if (D_005CF2F0.save_state_0 == 0 && D_005CF2F0.save_state_1 != 0) {
+                    } else if (card_screen_state.save_state_0 == 0 && card_screen_state.save_state_1 != 0) {
                         second_arg = 0;
                         first_arg = 2;
-                    } else if (D_005CF2F0.save_state_0 == 0 && D_005CF2F0.save_state_1 == 0) { // match: a last test, not an else: retail keeps a path that sets neither
+                    } else if (card_screen_state.save_state_0 == 0 && card_screen_state.save_state_1 == 0) { // match: a last test, not an else: retail keeps a path that sets neither
                         second_arg = 1;
                         first_arg = 2;
                     }
                     break;
                 }
-                if (SaveCard_HasRoomFor(D_005CF2F0.selected_card, first_arg, second_arg) > 0) {
-                    MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] = 0;
+                if (SaveCard_HasRoomFor(card_screen_state.selected_card, first_arg, second_arg) > 0) {
+                    MENU_SCREEN_SAVES(&card_screen_state)->save_state[i] = 0;
                 } else {
-                    MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[i] = -1;
+                    MENU_SCREEN_SAVES(&card_screen_state)->save_state[i] = -1;
                 }
             }
         }
     }
 
-    for (i = 0; i < D_00446A64; i++) {
-        kind = D_00446BF8[i].handler_index;
-        slot = D_00446BF8[i].slot;
-        Menu_SetBlendMode(D_00446BF8[i].blend_mode);
+    for (i = 0; i < data_part_count; i++) {
+        kind = data_parts[i].handler_index;
+        slot = data_parts[i].slot;
+        Menu_SetBlendMode(data_parts[i].blend_mode);
         switch (kind) {
         case 2:
-            MenuSprite_Draw((int)&D_00446BF8[i], 0x3EA, 1, D_00425510[i]);
+            MenuSprite_Draw((int)&data_parts[i], 0x3EA, 1, screen_part_alphas[i]);
             break;
         case 3:
             group = slot / 3;
-            if (MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[group] == 1) {
-                MenuSprite_Draw((int)&D_00446BF8[i], 0x3EB, group * 3, D_00425510[i]);
+            if (MENU_SCREEN_SAVES(&card_screen_state)->save_state[group] == 1) {
+                MenuSprite_Draw((int)&data_parts[i], 0x3EB, group * 3, screen_part_alphas[i]);
             }
             break;
         case 25:
-            if (MENU_SCREEN_SAVES(&D_005CF2F0)->save_state[slot] == 1) {
-                MenuSprite_Draw((int)&D_00446BF8[i], 0x401, D_005CF2F0.selected_save, D_00425510[i]);
+            if (MENU_SCREEN_SAVES(&card_screen_state)->save_state[slot] == 1) {
+                MenuSprite_Draw((int)&data_parts[i], 0x401, card_screen_state.selected_save, screen_part_alphas[i]);
             }
             break;
         default:
-            MenuSprite_Draw((int)&D_00446BF8[i], kind + 1000, D_005CF2F0.selected_save, D_00425510[i]);
+            MenuSprite_Draw((int)&data_parts[i], kind + 1000, card_screen_state.selected_save, screen_part_alphas[i]);
             break;
         }
         SET_PART_MODE(0);
     }
 
-    table = Message_GetFontText(D_00446F38);
+    table = Message_GetFontText(menu_heap);
     word.raw = 0x000A87507C107120;
     for (i = 0; i < 3; i++) {
         entry = ((s32 *)table)[info[i]->save_area + 1];
         MenuText_SetPen(word);
-        MenuText_SetColor(D_00446C78);
+        MenuText_SetColor(menu_draw_color);
         if (entry != 0) {
             MenuText_DrawWrapped((u16 *)(table + entry), 0x18);
         }
         word.f.mid16 += 0x340;
     }
 
-    for (i = 0; i < D_00446AAC; i++) {
-        kind = D_00446C58[i].handler_index;
-        SET_PART_MODE(D_00446C58[i].blend_mode);
+    for (i = 0; i < mc_part_count; i++) {
+        kind = mc_parts[i].handler_index;
+        SET_PART_MODE(mc_parts[i].blend_mode);
         if (kind == 3) {
-            switch (D_005CF2F0.list_step) {
+            switch (card_screen_state.list_step) {
             case 8:
-                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 8);
+                MenuSprite_DrawPlain((int)&mc_parts[i], kind, 8);
                 break;
             case 1:
-                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 1);
+                MenuSprite_DrawPlain((int)&mc_parts[i], kind, 1);
                 break;
             case 3:
-                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 3);
+                MenuSprite_DrawPlain((int)&mc_parts[i], kind, 3);
                 break;
             case 10:
-                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 10);
+                MenuSprite_DrawPlain((int)&mc_parts[i], kind, 10);
                 break;
             case 23:
-                MenuSprite_DrawPlain((int)&D_00446C58[i], kind, 23);
+                MenuSprite_DrawPlain((int)&mc_parts[i], kind, 23);
                 break;
             }
         } else {
-            switch (D_005CF2F0.list_step) {
+            switch (card_screen_state.list_step) {
             case 1:
             case 3:
             case 8:
             case 10:
             case 23:
-                MenuSprite_Draw((int)&D_00446C58[i], kind + 1000, 0, D_00425510[i]);
+                MenuSprite_Draw((int)&mc_parts[i], kind + 1000, 0, screen_part_alphas[i]);
                 break;
             }
         }
         SET_PART_MODE(0);
     }
 
-    if (D_005CF2F0.list_step == 8) {
+    if (card_screen_state.list_step == 8) {
         bar.first.f.lo16 = 0x7490;
-        bar.first.f.mid16 = D_005CF2F0.confirm_choice * 0xC0 + 0x80A0;
+        bar.first.f.mid16 = card_screen_state.confirm_choice * 0xC0 + 0x80A0;
         bar.first.f.mid24 = 0x5F370;
         bar.second.f.lo16 = bar.first.f.lo16 + 0x1720;
         bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
@@ -6046,223 +6045,223 @@ static void Menu_UpdateSaveList(void) {
         bar.red = 0xFF;
         bar.green = 0xFF;
         bar.blue = 0x78;
-        D_00425510[0xFD] = Menu_PulseValue(D_00425510[0xFD], 0x10, 0x20);
-        bar.alpha = D_00425510[0xFD];
+        screen_part_alphas[0xFD] = Menu_PulseValue(screen_part_alphas[0xFD], 0x10, 0x20);
+        bar.alpha = screen_part_alphas[0xFD];
         MenuDraw_Bar(&bar); // match: the float at bar+0x24 that MenuDraw_Bar copies is never set
     }
 
-    D_005CF2F0.card_update_result = SaveCard_Update();
-    if (SaveCard_HasCard(D_005CF2F0.selected_card) == 0) {
-        D_005CF2F0.card_update_result = -1;
+    card_screen_state.card_update_result = SaveCard_Update();
+    if (SaveCard_HasCard(card_screen_state.selected_card) == 0) {
+        card_screen_state.card_update_result = -1;
     }
-    if (D_005CF2F0.list_step == 1 && SaveCard_CheckBusy() == 0) {
-        D_005CF2F0.list_step = 3;
+    if (card_screen_state.list_step == 1 && SaveCard_CheckBusy() == 0) {
+        card_screen_state.list_step = 3;
     }
-    if (D_005CF2F0.card_update_result < 0) {
-        if (SaveCard_GetLoadFailed(D_005CF2F0.selected_card) != 0 && !game_status.bit9) {
-            D_005CF2F0.list_step = 23;
-            SaveCard_ClearLoadFailed(D_005CF2F0.selected_card);
+    if (card_screen_state.card_update_result < 0) {
+        if (SaveCard_GetLoadFailed(card_screen_state.selected_card) != 0 && !game_status.bit9) {
+            card_screen_state.list_step = 23;
+            SaveCard_ClearLoadFailed(card_screen_state.selected_card);
             SaveCard_StartCheck(0);
-        } else if (D_005CF2F0.list_step != 3) {
+        } else if (card_screen_state.list_step != 3) {
             if (!game_status.bit9) {
-                D_005CF2F0.list_step = 10;
+                card_screen_state.list_step = 10;
             }
         }
     }
     if (game_status.bit9) {
-        if (D_005CF2F0.list_step == -1 && D_00446BDD == 0) {
+        if (card_screen_state.list_step == -1 && save_list_leave_steps == 0) {
             SaveCard_Init();
-            D_005CF2F0.input_locked = 1;
-            D_00446C70 = 2;
-            D_00446BDD = 1;
+            card_screen_state.input_locked = 1;
+            system_screen_state = 2;
+            save_list_leave_steps = 1;
         }
     }
 
     report = Pad_GetReport(0, 0);
-    if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
-        if (D_005CF2F0.list_step != 1) {
+    if ((report->pressed & 0x4000) && pad_mode != 0xFF) {
+        if (card_screen_state.list_step != 1) {
             report = Pad_GetReport(0, 0);
             if (report->held & 0x50) {
-                D_005CF2F0.confirm_press_state = 1;
+                card_screen_state.confirm_press_state = 1;
             } else {
-                D_005CF2F0.confirm_press_state = 3;
+                card_screen_state.confirm_press_state = 3;
             }
         }
     }
-    if (D_005CF2F0.confirm_press_state == 2) {
-        D_005CF2F0.confirm_press_state = 3;
+    if (card_screen_state.confirm_press_state == 2) {
+        card_screen_state.confirm_press_state = 3;
     }
-    if (D_005CF2F0.confirm_press_state == 1) {
+    if (card_screen_state.confirm_press_state == 1) {
         report = Pad_GetReport(0, 0);
         if (report->held & 0x50) {
-            if (D_00446DE8 & 0x50) {
-                D_005CF2F0.confirm_press_state = 2;
+            if (menu_buttons & 0x50) {
+                card_screen_state.confirm_press_state = 2;
             }
         } else {
-            D_005CF2F0.confirm_press_state = 3;
+            card_screen_state.confirm_press_state = 3;
         }
     }
 
-    if (D_005CF2F0.list_step != 1 && D_005CF2F0.input_locked == 0) {
-        if (D_005CF2F0.confirm_press_state == 3) {
-            D_005CF2F0.confirm_press_state = 0;
-            switch (D_005CF2F0.list_step) {
+    if (card_screen_state.list_step != 1 && card_screen_state.input_locked == 0) {
+        if (card_screen_state.confirm_press_state == 3) {
+            card_screen_state.confirm_press_state = 0;
+            switch (card_screen_state.list_step) {
             case -1:
                 Sound_PlayMenu(0);
-                D_005CF2F0.list_step = 8;
+                card_screen_state.list_step = 8;
                 break;
             case 8:
-                if (D_005CF2F0.confirm_choice == 0) {
+                if (card_screen_state.confirm_choice == 0) {
                     Sound_PlayMenu(0);
-                    D_005CF2F0.list_step = 1;
+                    card_screen_state.list_step = 1;
                     memset(save_image, 0, 0x20000);
-                    SaveCard_StartLoad(D_005CF2F0.selected_card, D_005CF2F0.selected_save, (s32 *)save_image, 0x20000);
+                    SaveCard_StartLoad(card_screen_state.selected_card, card_screen_state.selected_save, (s32 *)save_image, 0x20000);
                 } else {
                     Sound_PlayMenu(2);
-                    D_005CF2F0.list_step = -1;
-                    D_005CF2F0.confirm_choice = 1;
+                    card_screen_state.list_step = -1;
+                    card_screen_state.confirm_choice = 1;
                 }
                 break;
             case 3:
                 Sound_PlayMenu(0);
-                D_005CF2F0.list_step = -1;
+                card_screen_state.list_step = -1;
                 break;
             case 10:
                 Sound_PlayMenu(0);
-                D_005CF2F0.input_locked = 1;
+                card_screen_state.input_locked = 1;
                 if (!game_status.bit9) {
-                    D_00446C70 = 3;
-                    SaveCard_ResetCard(D_005CF2F0.selected_card);
+                    system_screen_state = 3;
+                    SaveCard_ResetCard(card_screen_state.selected_card);
                 } else {
-                    D_005CF2F0.list_step = -1;
-                    D_00446C70 = 2;
-                    D_00446BDD = 1;
+                    card_screen_state.list_step = -1;
+                    system_screen_state = 2;
+                    save_list_leave_steps = 1;
                 }
                 break;
             case 23:
                 Sound_PlayMenu(0);
-                D_005CF2F0.list_step = -1;
-                D_005CF2F0.confirm_choice = 1;
+                card_screen_state.list_step = -1;
+                card_screen_state.confirm_choice = 1;
                 break;
             }
         } else {
             report = Pad_GetReport(0, 0);
-            if ((report->pressed & 0x2000) && D_004472D0 != 0xFF && D_005CF2F0.confirm_press_state == 0) {
+            if ((report->pressed & 0x2000) && pad_mode != 0xFF && card_screen_state.confirm_press_state == 0) {
                 Sound_PlayMenu(2);
-                switch (D_005CF2F0.list_step) {
+                switch (card_screen_state.list_step) {
                 case 10:
-                    D_005CF2F0.input_locked = 1;
+                    card_screen_state.input_locked = 1;
                     if (!game_status.bit9) {
-                        D_00446C70 = 3;
-                        SaveCard_ResetCard(D_005CF2F0.selected_card);
+                        system_screen_state = 3;
+                        SaveCard_ResetCard(card_screen_state.selected_card);
                     } else {
-                        D_005CF2F0.list_step = -1;
-                        D_00446C70 = 2;
-                        D_00446BDD = 1;
+                        card_screen_state.list_step = -1;
+                        system_screen_state = 2;
+                        save_list_leave_steps = 1;
                     }
                     break;
                 case -1:
-                    D_005CF2F0.input_locked = 1;
-                    D_00446C70 = 3;
+                    card_screen_state.input_locked = 1;
+                    system_screen_state = 3;
                     break;
                 case 3:
-                    D_005CF2F0.list_step = -1;
+                    card_screen_state.list_step = -1;
                     break;
                 case 8:
                 case 23:
-                    D_005CF2F0.list_step = -1;
-                    D_005CF2F0.confirm_choice = 1;
+                    card_screen_state.list_step = -1;
+                    card_screen_state.confirm_choice = 1;
                     break;
                 }
-            } else if ((D_00446DE8 & 0x40) && D_005CF2F0.input_locked == 0) {
-                switch (D_005CF2F0.list_step) {
+            } else if ((menu_buttons & 0x40) && card_screen_state.input_locked == 0) {
+                switch (card_screen_state.list_step) {
                 case -1:
-                    D_005CF2F0.selected_save++;
+                    card_screen_state.selected_save++;
                     for (i = 0; i < 3; i++) {
-                        if (SaveCard_GetSaveState((D_005CF2F0.selected_save + i) % 3) != 0) {
+                        if (SaveCard_GetSaveState((card_screen_state.selected_save + i) % 3) != 0) {
                             break;
                         }
                     }
                     if (i != 2) {
                         Sound_PlayMenu(1);
                     }
-                    D_005CF2F0.selected_save = (D_005CF2F0.selected_save + i) % 3;
+                    card_screen_state.selected_save = (card_screen_state.selected_save + i) % 3;
                     break;
                 case 8:
                     Sound_PlayMenu(1);
-                    D_005CF2F0.confirm_choice = (D_005CF2F0.confirm_choice + 1) & 1;
+                    card_screen_state.confirm_choice = (card_screen_state.confirm_choice + 1) & 1;
                     break;
                 }
-            } else if ((D_00446DE8 & 0x10) && D_005CF2F0.input_locked == 0) {
-                switch (D_005CF2F0.list_step) {
+            } else if ((menu_buttons & 0x10) && card_screen_state.input_locked == 0) {
+                switch (card_screen_state.list_step) {
                 case -1:
-                    D_005CF2F0.selected_save--;
+                    card_screen_state.selected_save--;
                     for (i = 0; i < 3; i++) {
-                        if (SaveCard_GetSaveState((D_005CF2F0.selected_save - i + 3) % 3) != 0) {
+                        if (SaveCard_GetSaveState((card_screen_state.selected_save - i + 3) % 3) != 0) {
                             break;
                         }
                     }
                     if (i != 2) {
                         Sound_PlayMenu(1);
                     }
-                    D_005CF2F0.selected_save = (D_005CF2F0.selected_save - i + 3) % 3;
+                    card_screen_state.selected_save = (card_screen_state.selected_save - i + 3) % 3;
                     break;
                 case 8:
                     Sound_PlayMenu(1);
-                    D_005CF2F0.confirm_choice = (D_005CF2F0.confirm_choice + 1) & 1;
+                    card_screen_state.confirm_choice = (card_screen_state.confirm_choice + 1) & 1;
                     break;
                 }
             }
         }
     }
 
-    switch (D_00446C70) {
+    switch (system_screen_state) {
     case 0:
-        D_00425510[0xFF] += 12.8f;
-        if (D_00425510[0xFF] > 128.0f) {
-            D_00425510[0xFF] = 128.0f;
+        screen_part_alphas[0xFF] += 12.8f;
+        if (screen_part_alphas[0xFF] > 128.0f) {
+            screen_part_alphas[0xFF] = 128.0f;
         }
-        D_00446C78.alpha = D_00425510[0xFF];
-        for (i = 0; i < D_00446A64; i++) {
-            D_00425510[i] += SPRITE_PACKET_COLOR_VIEW(&D_00446BF8[i])->alpha / 10.0f;
-            if (SPRITE_PACKET_COLOR_VIEW(&D_00446BF8[i])->alpha < D_00425510[i]) {
-                for (i = 0; i < D_00446A64; i++) {
-                    D_00425510[i] = SPRITE_PACKET_COLOR_VIEW(&D_00446BF8[i])->alpha;
+        menu_draw_color.alpha = screen_part_alphas[0xFF];
+        for (i = 0; i < data_part_count; i++) {
+            screen_part_alphas[i] += SPRITE_PACKET_COLOR_VIEW(&data_parts[i])->alpha / 10.0f;
+            if (SPRITE_PACKET_COLOR_VIEW(&data_parts[i])->alpha < screen_part_alphas[i]) {
+                for (i = 0; i < data_part_count; i++) {
+                    screen_part_alphas[i] = SPRITE_PACKET_COLOR_VIEW(&data_parts[i])->alpha;
                 }
-                D_00446C70 = 1;
-                D_005CF2F0.input_locked = 0;
+                system_screen_state = 1;
+                card_screen_state.input_locked = 0;
                 break;
             }
         }
         break;
     case 2:
     case 3:
-        D_00425510[0xFF] -= 12.8f;
-        if (D_00425510[0xFF] < 0.0f) {
-            D_00425510[0xFF] = 0.0f;
+        screen_part_alphas[0xFF] -= 12.8f;
+        if (screen_part_alphas[0xFF] < 0.0f) {
+            screen_part_alphas[0xFF] = 0.0f;
         }
-        D_00446C78.alpha = D_00425510[0xFF];
-        for (i = 0; i < D_00446A64; i++) {
-            D_00425510[i] -= SPRITE_PACKET_COLOR_VIEW(&D_00446BF8[i])->alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                D_00446BDD++;
-                D_00446C08 = 0;
-                D_00446C04 = 128.0f;
-                if (D_00446C70 == 2) {
-                    if (D_00446BDD != 2) {
-                        D_005CF2F0.save_loaded = 1;
-                        D_00446C70 = 0;
-                        D_00446B20 = (void *)Menu_UpdateCardSlot;
-                        D_00446BDD = 0;
+        menu_draw_color.alpha = screen_part_alphas[0xFF];
+        for (i = 0; i < data_part_count; i++) {
+            screen_part_alphas[i] -= SPRITE_PACKET_COLOR_VIEW(&data_parts[i])->alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                save_list_leave_steps++;
+                pulse_sprite_falling = 0;
+                pulse_sprite_alpha = 128.0f;
+                if (system_screen_state == 2) {
+                    if (save_list_leave_steps != 2) {
+                        card_screen_state.save_loaded = 1;
+                        system_screen_state = 0;
+                        menu_screen_handler = (void *)Menu_UpdateCardSlot;
+                        save_list_leave_steps = 0;
                         MenuHeap_FreeToMark();
-                        D_00446AC8++;
+                        menu_step++;
                     }
-                } else if (D_00446C70 == 3) {
-                    D_005CF2F0.confirm_choice = 1;
-                    D_00446B20 = (void *)Menu_UpdateCardSlot;
-                    D_00446C70 = 0;
-                    D_00446BDD = 0;
+                } else if (system_screen_state == 3) {
+                    card_screen_state.confirm_choice = 1;
+                    menu_screen_handler = (void *)Menu_UpdateCardSlot;
+                    system_screen_state = 0;
+                    save_list_leave_steps = 0;
                     SaveCard_StartCheck(0);
                 }
                 break;
@@ -6279,10 +6278,10 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
     u8 kind;
     u32 full_alpha;
 
-    if ((D_00446DE8 & 0x10) && D_004472DA != 0) {
+    if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
         context->unk04--;
         Sound_PlayMenu(1);
-    } else if ((D_00446DE8 & 0x40) && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
         context->unk04++;
         Sound_PlayMenu(1);
     }
@@ -6291,37 +6290,37 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
 
     switch (context->unk04) {
     case 0:
-        if ((D_00446DE8 & 0xA0) && D_004472DA != 0) {
+        if ((menu_buttons & 0xA0) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
-            if (D_00446BE4 != 1) {
-                D_00446BE0 = game_options[0];
+            if (sound_mode_change != 1) {
+                sound_mode_before = game_options[0];
             }
-            D_00446BE4 = 1;
+            sound_mode_change = 1;
             game_options[0]++;
             game_options[0] %= 2;
-        } else if (D_00446BE4 == 1 && !(D_00446DE8 & 0xA0) && D_004472DA != 0) {
+        } else if (sound_mode_change == 1 && !(menu_buttons & 0xA0) && menu_input_enabled != 0) {
             if (game_options[0] == 0) {
-                if (D_00446BE0 != 0) {
-                    D_00446BE4 = 2;
+                if (sound_mode_before != 0) {
+                    sound_mode_change = 2;
                     SoundDriver_SetMono();
                 } else {
-                    D_00446BE4 = 4;
+                    sound_mode_change = 4;
                 }
             } else {
-                if (D_00446BE0 == 0) {
-                    D_00446BE4 = 3;
+                if (sound_mode_before == 0) {
+                    sound_mode_change = 3;
                     SoundDriver_SetStereo();
                 } else {
-                    D_00446BE4 = 4;
+                    sound_mode_change = 4;
                 }
             }
         }
         break;
     case 1:
-        if ((D_00446DE8 & 0x20) && game_options[1] < 0x7F && D_004472DA != 0) {
+        if ((menu_buttons & 0x20) && game_options[1] < 0x7F && menu_input_enabled != 0) {
             game_options[1] += 4;
             Sound_PlayMenu(1);
-        } else if ((D_00446DE8 & 0x80) && game_options[1] != 0 && D_004472DA != 0) {
+        } else if ((menu_buttons & 0x80) && game_options[1] != 0 && menu_input_enabled != 0) {
             game_options[1] -= 4;
             Sound_PlayMenu(1);
         }
@@ -6329,40 +6328,40 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         Sound_SyncBgmLevel();
         break;
     case 2:
-        if ((D_00446DE8 & 0x20) && game_options[2] < 0x7F && D_004472DA != 0) {
+        if ((menu_buttons & 0x20) && game_options[2] < 0x7F && menu_input_enabled != 0) {
             game_options[2] += 4;
             Sound_PlayMenu(1);
-        } else if ((D_00446DE8 & 0x80) && game_options[2] != 0 && D_004472DA != 0) {
+        } else if ((menu_buttons & 0x80) && game_options[2] != 0 && menu_input_enabled != 0) {
             game_options[2] -= 4;
             Sound_PlayMenu(1);
         }
         break;
     case 3:
-        if ((D_00446DE8 & 0xA0) && D_004472DA != 0) {
+        if ((menu_buttons & 0xA0) && menu_input_enabled != 0) {
             game_options[5]++;
             Sound_PlayMenu(1);
         }
         game_options[5] = (s8)game_options[5] % 2;
         break;
     case 4:
-        if ((D_00446DE8 & 0xA0) && D_004472DA != 0) {
+        if ((menu_buttons & 0xA0) && menu_input_enabled != 0) {
             game_options[6]++;
             Sound_PlayMenu(1);
         }
         game_options[6] = (s8)game_options[6] % 2;
         break;
     case 5:
-        if ((D_00446DE8 & 0xA0) && D_004472DA != 0) {
+        if ((menu_buttons & 0xA0) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             game_options[9]++;
         }
         game_options[9] = (s8)game_options[9] % 2;
         break;
     case 6:
-        if ((D_00446DE8 & 0x20) && D_004472DA != 0) {
+        if ((menu_buttons & 0x20) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             game_options[8]++;
-        } else if ((D_00446DE8 & 0x80) && D_004472DA != 0) {
+        } else if ((menu_buttons & 0x80) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
             game_options[8]--;
         }
@@ -6370,81 +6369,81 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
         break;
     }
 
-    for (i = 0; i < D_00446A68; i++) {
-        kind = D_0044725C[i].handler_index;
-        Menu_SetBlendMode(D_0044725C[i].blend_mode);
-        MenuSprite_Draw((int)&D_0044725C[i], kind + 1000, context->unk04, (int)D_00425510[i]);
+    for (i = 0; i < option_part_count; i++) {
+        kind = option_parts[i].handler_index;
+        Menu_SetBlendMode(option_parts[i].blend_mode);
+        MenuSprite_Draw((int)&option_parts[i], kind + 1000, context->unk04, (int)screen_part_alphas[i]);
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
-    if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
+    if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        D_004472DA = 0;
-        D_00446C70 = 2;
+        menu_input_enabled = 0;
+        system_screen_state = 2;
     }
 
-    switch (D_00446C70) {
+    switch (system_screen_state) {
     case 0:
-        D_00425510[255] += 12.8f;
-        if (D_00425510[255] > 128.0f) {
-            D_00425510[255] = 128.0f;
+        screen_part_alphas[255] += 12.8f;
+        if (screen_part_alphas[255] > 128.0f) {
+            screen_part_alphas[255] = 128.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        for (i = 0; i < D_00446A68; i++) {
-            D_00425510[i] += D_0044725C[i].alpha / 10.0f;
-            if (D_00425510[i] > D_0044725C[i].alpha) {
-                for (i = 0; i < D_00446A68; i++) {
-                    full_alpha = D_0044725C[i].alpha;
-                    D_00425510[i] = full_alpha;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        for (i = 0; i < option_part_count; i++) {
+            screen_part_alphas[i] += option_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] > option_parts[i].alpha) {
+                for (i = 0; i < option_part_count; i++) {
+                    full_alpha = option_parts[i].alpha;
+                    screen_part_alphas[i] = full_alpha;
                 }
-                D_004472DA = D_00446C70 = 1;
+                menu_input_enabled = system_screen_state = 1;
                 break;
             }
         }
         break;
     case 2:
-        D_00425510[255] -= 12.8f;
-        if (D_00425510[255] < 0.0f) {
-            D_00425510[255] = 0.0f;
+        screen_part_alphas[255] -= 12.8f;
+        if (screen_part_alphas[255] < 0.0f) {
+            screen_part_alphas[255] = 0.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[255];
-        for (i = 0; i < D_00446A68; i++) {
-            D_00425510[i] -= D_0044725C[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                if (D_00446C94 == 2) {
-                    D_00446BE5++;
+        menu_draw_color.alpha = (s32)screen_part_alphas[255];
+        for (i = 0; i < option_part_count; i++) {
+            screen_part_alphas[i] -= option_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                if (menu_mode == 2) {
+                    options_leave_steps++;
                 } else {
-                    D_00446BE5 = 2;
+                    options_leave_steps = 2;
                 }
-                if (D_00446BE5 == 2) {
-                    D_00446BE5 = 0;
-                    D_00446C70 = 0;
+                if (options_leave_steps == 2) {
+                    options_leave_steps = 0;
+                    system_screen_state = 0;
                     context->unk04 = 0;
-                    if (D_00446BE4 == 1) {
+                    if (sound_mode_change == 1) {
                         if (game_options[0] == 0) {
-                            if (D_00446BE0 != 0) {
-                                D_00446BE4 = 2;
+                            if (sound_mode_before != 0) {
+                                sound_mode_change = 2;
                                 SoundDriver_SetMono();
                             } else {
-                                D_00446BE4 = 4;
+                                sound_mode_change = 4;
                             }
                         } else {
-                            if (D_00446BE0 == 0) {
-                                D_00446BE4 = 3;
+                            if (sound_mode_before == 0) {
+                                sound_mode_change = 3;
                                 SoundDriver_SetStereo();
                             } else {
-                                D_00446BE4 = 4;
+                                sound_mode_change = 4;
                             }
                         }
                     }
-                    if (D_00446C94 != 2) {
-                        D_00446B20 = (void *)Menu_UpdateSystem;
+                    if (menu_mode != 2) {
+                        menu_screen_handler = (void *)Menu_UpdateSystem;
                     } else {
-                        D_00446AC8++;
+                        menu_step++;
                     }
-                    D_00446C08 = 0;
-                    D_00446C04 = 128.0f;
+                    pulse_sprite_falling = 0;
+                    pulse_sprite_alpha = 128.0f;
                 }
                 break;
             }
@@ -6457,7 +6456,7 @@ static void Menu_UpdateOptions(MenuScreenContext *context) {
 static const s8 default_button_choices[12] = { 0, 1, 3, 2, 4, 10, 9, 6, 7, 5, 11, 8 };
 /* the twelve button settings, in the order of the button screen's lines */
 static u16 *const button_settings[12] = {
-    &D_0044692C, &D_0044692E, &D_00446932, &D_00446930, &D_00446936, &D_00446934, &D_0044693C, &D_0044693E, &D_00446940, &D_00446938, &D_0044693A, (u16 *)&D_00446942,
+    &forward_button, &back_button, &turn_left_button, &turn_right_button, &step_left_button, &step_right_button, &attack_button, &magic_button, &action_button, &look_down_button, &look_up_button, (u16 *)&menu_button,
 };
 
 /* Fills both 12-entry tables with the index that goes with each slot's pad button bit. */
@@ -6467,40 +6466,40 @@ static void Menu_ReadButtonSettings(void) {
     for (i = 0; i < 12; i++) {
         switch (*button_settings[i]) {
         case 0x10:
-            D_004210C0[i] = D_004210B0[i] = 0;
+            button_choices_shown[i] = button_choices[i] = 0;
             break;
         case 0x40:
-            D_004210C0[i] = D_004210B0[i] = 1;
+            button_choices_shown[i] = button_choices[i] = 1;
             break;
         case 0x20:
-            D_004210C0[i] = D_004210B0[i] = 2;
+            button_choices_shown[i] = button_choices[i] = 2;
             break;
         case 0x80:
-            D_004210C0[i] = D_004210B0[i] = 3;
+            button_choices_shown[i] = button_choices[i] = 3;
             break;
         case 0x400:
-            D_004210C0[i] = D_004210B0[i] = 4;
+            button_choices_shown[i] = button_choices[i] = 4;
             break;
         case 0x100:
-            D_004210C0[i] = D_004210B0[i] = 5;
+            button_choices_shown[i] = button_choices[i] = 5;
             break;
         case 0x1000:
-            D_004210C0[i] = D_004210B0[i] = 6;
+            button_choices_shown[i] = button_choices[i] = 6;
             break;
         case 0x4000:
-            D_004210C0[i] = D_004210B0[i] = 7;
+            button_choices_shown[i] = button_choices[i] = 7;
             break;
         case 0x2000:
-            D_004210C0[i] = D_004210B0[i] = 8;
+            button_choices_shown[i] = button_choices[i] = 8;
             break;
         case 0x8000:
-            D_004210C0[i] = D_004210B0[i] = 9;
+            button_choices_shown[i] = button_choices[i] = 9;
             break;
         case 0x800:
-            D_004210C0[i] = D_004210B0[i] = 10;
+            button_choices_shown[i] = button_choices[i] = 10;
             break;
         case 0x200:
-            D_004210C0[i] = D_004210B0[i] = 11;
+            button_choices_shown[i] = button_choices[i] = 11;
             break;
         }
     }
@@ -6529,48 +6528,48 @@ static void Menu_UpdateButtonConfig(void) {
     s32 other;
     u32 full_alpha;
 
-    if ((D_00446DE8 & 0x10) && D_004472DA != 0) {
-        if (D_00446BF0 == 0) {
+    if ((menu_buttons & 0x10) && menu_input_enabled != 0) {
+        if (button_prompt == 0) {
             Sound_PlayMenu(1);
             // match: only this loop, in the function's first run of code, is loop-optimised in retail; the others keep their entry tests until late
             for (i = 0; i < choice_count; i++) {
                 FOR_PAD_BIT(*button_settings[i], SET_CHOICE)
             }
-            D_00446BE8--;
+            button_line--;
         } else {
-            D_00446BEC = (D_00446BEC + 1) & 1;
+            button_prompt_choice = (button_prompt_choice + 1) & 1;
         }
-    } else if ((D_00446DE8 & 0x40) && D_004472DA != 0) {
-        if (D_00446BF0 == 0) {
+    } else if ((menu_buttons & 0x40) && menu_input_enabled != 0) {
+        if (button_prompt == 0) {
             Sound_PlayMenu(1);
             for (i = 0; i < choice_count; i++) {
                 FOR_PAD_BIT(*button_settings[i], SET_CHOICE)
             }
-            D_00446BE8++;
+            button_line++;
         } else {
-            D_00446BEC = (D_00446BEC + 1) & 1;
+            button_prompt_choice = (button_prompt_choice + 1) & 1;
         }
     }
     line_count = choice_count + 1;
-    D_00446BE8 += line_count;
-    D_00446BE8 %= line_count;
+    button_line += line_count;
+    button_line %= line_count;
 
     wrap = choice_count; // match: a second variable, set here, is what retail keeps in $16 for the two divisions
     for (i = 0; i < wrap; i++) {
-        if (D_004210B0[i] == -1) {
+        if (button_choices[i] == -1) {
             FOR_PAD_BIT(*button_settings[i], SET_SHOWN)
         } else {
-            D_004210C0[i] = D_004210B0[i];
+            button_choices_shown[i] = button_choices[i];
         }
     }
 
-    if (D_00446BE8 != choice_count && D_00446BF0 == 0) {
-        if ((D_00446DE8 & 0x20) && D_004472DA != 0) {
+    if (button_line != choice_count && button_prompt == 0) {
+        if ((menu_buttons & 0x20) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
-            D_004210B0[D_00446BE8] = (s8)(D_004210B0[D_00446BE8] + 1) % wrap;
-        } else if ((D_00446DE8 & 0x80) && D_004472DA != 0) {
+            button_choices[button_line] = (s8)(button_choices[button_line] + 1) % wrap;
+        } else if ((menu_buttons & 0x80) && menu_input_enabled != 0) {
             Sound_PlayMenu(1);
-            D_004210B0[D_00446BE8] = (s8)(D_004210B0[D_00446BE8] + 11) % wrap;
+            button_choices[button_line] = (s8)(button_choices[button_line] + 11) % wrap;
         }
     }
 
@@ -6600,14 +6599,14 @@ static void Menu_UpdateButtonConfig(void) {
     D_00446DFC = 0;
     bar_drawn = FALSE;
     D_00446E00 = 0;
-    for (i = 0; i < D_00446A70; i++) {
-        kind = D_00447264[i].handler_index;
-        slot = D_00447264[i].slot;
-        if (!bar_drawn && D_00447264[i].has_cursor_bar == 1) {
+    for (i = 0; i < keyconf_part_count; i++) {
+        kind = keyconf_parts[i].handler_index;
+        slot = keyconf_parts[i].slot;
+        if (!bar_drawn && keyconf_parts[i].has_cursor_bar == 1) {
             bar_drawn = TRUE;
-            if (D_00446BF0 == 0) {
+            if (button_prompt == 0) {
                 bar.first.f.lo16 = 0x6FE0;
-                bar.first.f.mid16 = D_00446BE8 * 0xB0 + 0x7BE0;
+                bar.first.f.mid16 = button_line * 0xB0 + 0x7BE0;
                 bar.first.f.mid24 = bar_mid24;
                 bar.second.f.lo16 = bar.first.f.lo16 + 0xE60;
                 bar.second.f.mid16 = bar.first.f.mid16 + 0xA0;
@@ -6615,25 +6614,25 @@ static void Menu_UpdateButtonConfig(void) {
                 bar.red = 0xFF;
                 bar.green = 0xFF;
                 bar.blue = 0x78;
-                if (D_00446C70 == 1) {
-                    D_00425510[0xFD] = Menu_PulseValue(D_00425510[0xFD], 0x10, 0x20);
+                if (system_screen_state == 1) {
+                    screen_part_alphas[0xFD] = Menu_PulseValue(screen_part_alphas[0xFD], 0x10, 0x20);
                 }
-                bar.alpha = D_00425510[0xFD];
+                bar.alpha = screen_part_alphas[0xFD];
                 MenuDraw_Bar(&bar);
             }
         }
-        ((void (*)(u8))Menu_SetBlendMode)(D_00447264[i].blend_mode); // match: called as returning nothing, which frees $2 for the switch
+        ((void (*)(u8))Menu_SetBlendMode)(keyconf_parts[i].blend_mode); // match: called as returning nothing, which frees $2 for the switch
         switch (kind) {
         case 2:
-            if (D_00446BF0 != 0) {
-                MenuSprite_Draw((int)&D_00447264[i], kind + 1000, 0, D_00425510[i]);
+            if (button_prompt != 0) {
+                MenuSprite_Draw((int)&keyconf_parts[i], kind + 1000, 0, screen_part_alphas[i]);
             }
             break;
         case 3:
-            if (D_00446BF0 == 1) {
-                MenuSprite_Draw((int)&D_00447264[i], kind + 1000, 0, D_00425510[i]);
-            } else if (D_00446BF0 == 2) {
-                MenuSprite_Draw((int)&D_00447264[i], kind + 1000, 1, D_00425510[i]);
+            if (button_prompt == 1) {
+                MenuSprite_Draw((int)&keyconf_parts[i], kind + 1000, 0, screen_part_alphas[i]);
+            } else if (button_prompt == 2) {
+                MenuSprite_Draw((int)&keyconf_parts[i], kind + 1000, 1, screen_part_alphas[i]);
             }
             break;
         case 0x18:
@@ -6646,7 +6645,7 @@ static void Menu_UpdateButtonConfig(void) {
                     }
                 }
             }
-            if (slot == D_004210C0[D_00446BE8]) {
+            if (slot == button_choices_shown[button_line]) {
                 D_00446DF4 = 0x20400;
                 D_00446DF8 = 0x80FF00;
             } else if (is_shared) {
@@ -6657,117 +6656,117 @@ static void Menu_UpdateButtonConfig(void) {
                 D_00446DF4 = 0;
                 D_00446DF8 = 0;
             }
-            MenuSprite_Draw((int)&D_00447264[i], kind + 1000, slot, D_00425510[i]);
+            MenuSprite_Draw((int)&keyconf_parts[i], kind + 1000, slot, screen_part_alphas[i]);
             break;
         case 0x21:
             if (D_00446E00 == 0) {
                 j = i;
             }
-            D_00446E04 = D_004210C0[D_00446E00];
+            D_00446E04 = button_choices_shown[D_00446E00];
             // match: called as returning a value, which keeps $2 out of the count's increment
-            ((int (*)(int, int, int, int))MenuSprite_Draw)((int)&(&D_00447264[j])[11 - D_00446E04], kind + 1000, D_00446E00, D_00425510[i]);
+            ((int (*)(int, int, int, int))MenuSprite_Draw)((int)&(&keyconf_parts[j])[11 - D_00446E04], kind + 1000, D_00446E00, screen_part_alphas[i]);
             D_00446E00++;
             break;
         default:
-            MenuSprite_Draw((int)&D_00447264[i], kind + 1000, slot, D_00425510[i]);
+            MenuSprite_Draw((int)&keyconf_parts[i], kind + 1000, slot, screen_part_alphas[i]);
             break;
         }
         ((void (*)(u8))Menu_SetBlendMode)(0); // match: called as returning nothing, which frees $2 for the loop test
     }
 
-    if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
+    if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        if (D_00446BF0 != 0) {
-            D_00446BF0 = 0;
-            D_00446BEC = 0;
+        if (button_prompt != 0) {
+            button_prompt = 0;
+            button_prompt_choice = 0;
         } else if (!has_duplicate && !last_is_shared) {
-            D_004472DA = 0;
-            D_00446C70 = 2;
+            menu_input_enabled = 0;
+            system_screen_state = 2;
         } else if (has_duplicate && last_is_shared) { // match: both arms set the same prompt; retail still tests last_is_shared here
-            D_00446BF0 = 1;
+            button_prompt = 1;
         } else {
-            D_00446BF0 = 1;
+            button_prompt = 1;
         }
-    } else if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
-        if (D_00446BF0 == 0) {
-            if (D_00446BE8 != choice_count) {
-                *button_settings[D_00446BE8] = pad_bits.bits[D_004210B0[D_00446BE8]];
-                D_005CF318[D_00446BE8] = pad_bits.bits[D_004210B0[D_00446BE8]];
+        if (button_prompt == 0) {
+            if (button_line != choice_count) {
+                *button_settings[button_line] = pad_bits.bits[button_choices[button_line]];
+                button_settings_copy[button_line] = pad_bits.bits[button_choices[button_line]];
             } else {
                 for (i = 0; i < choice_count; i++) {
-                    D_004210B0[i] = default_button_choices[i];
-                    *button_settings[i] = pad_bits.bits[D_004210B0[i]];
+                    button_choices[i] = default_button_choices[i];
+                    *button_settings[i] = pad_bits.bits[button_choices[i]];
                 }
             }
-        } else if (D_00446BF0 == 1) {
-            D_00446BF0 = 0;
-        } else if (D_00446BF0 == 2) {
-            if (D_00446BEC == 0) {
-                D_00446C70 = 2;
-                D_004472DA = 0;
+        } else if (button_prompt == 1) {
+            button_prompt = 0;
+        } else if (button_prompt == 2) {
+            if (button_prompt_choice == 0) {
+                system_screen_state = 2;
+                menu_input_enabled = 0;
             } else {
-                D_00446BF0 = 0;
-                D_00446BEC = 0;
+                button_prompt = 0;
+                button_prompt_choice = 0;
             }
         }
     }
 
-    switch (D_00446C70) {
+    switch (system_screen_state) {
     case 0:
-        D_00425510[0xFF] += 12.8f;
-        if (D_00425510[0xFF] > 128.0f) {
-            D_00425510[0xFF] = 128.0f;
+        screen_part_alphas[0xFF] += 12.8f;
+        if (screen_part_alphas[0xFF] > 128.0f) {
+            screen_part_alphas[0xFF] = 128.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[0xFF];
-        D_00425510[0xFD] += 1.6f;
-        if (D_00425510[0xFD] > 16.0f) {
-            D_00425510[0xFD] = 16.0f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[0xFF];
+        screen_part_alphas[0xFD] += 1.6f;
+        if (screen_part_alphas[0xFD] > 16.0f) {
+            screen_part_alphas[0xFD] = 16.0f;
         }
-        for (i = 0; i < D_00446A70; i++) {
-            D_00425510[i] += (f32)D_00447264[i].alpha / 10.0f;
-            if ((f32)D_00447264[i].alpha < D_00425510[i]) {
-                for (i = 0; i < D_00446A70; i++) {
-                    full_alpha = D_00447264[i].alpha;
-                    D_00425510[i] = full_alpha;
+        for (i = 0; i < keyconf_part_count; i++) {
+            screen_part_alphas[i] += (f32)keyconf_parts[i].alpha / 10.0f;
+            if ((f32)keyconf_parts[i].alpha < screen_part_alphas[i]) {
+                for (i = 0; i < keyconf_part_count; i++) {
+                    full_alpha = keyconf_parts[i].alpha;
+                    screen_part_alphas[i] = full_alpha;
                 }
-                D_004472DA = D_00446C70 = 1;
+                menu_input_enabled = system_screen_state = 1;
                 break;
             }
         }
         break;
     case 2:
-        D_00425510[0xFF] -= 12.8f;
-        if (D_00425510[0xFF] < 0.0f) {
-            D_00425510[0xFF] = 0.0f;
+        screen_part_alphas[0xFF] -= 12.8f;
+        if (screen_part_alphas[0xFF] < 0.0f) {
+            screen_part_alphas[0xFF] = 0.0f;
         }
-        D_00446C78.alpha = (s32)D_00425510[0xFF];
-        D_00425510[0xFD] -= 1.6f;
-        if (D_00425510[0xFD] < 0.0f) {
-            D_00425510[0xFD] = 0.0f;
+        menu_draw_color.alpha = (s32)screen_part_alphas[0xFF];
+        screen_part_alphas[0xFD] -= 1.6f;
+        if (screen_part_alphas[0xFD] < 0.0f) {
+            screen_part_alphas[0xFD] = 0.0f;
         }
-        for (i = 0; i < D_00446A70; i++) {
-            D_00425510[i] -= (f32)D_00447264[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                if (D_00446C94 == 3) {
-                    D_00446BE6++;
+        for (i = 0; i < keyconf_part_count; i++) {
+            screen_part_alphas[i] -= (f32)keyconf_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                if (menu_mode == 3) {
+                    buttons_leave_steps++;
                 } else {
-                    D_00446BE6 = 2;
+                    buttons_leave_steps = 2;
                 }
-                if (D_00446BE6 == 2) {
-                    D_00446BE6 = 0;
-                    D_00446C70 = 0;
-                    if (D_00446C94 != 3) {
-                        D_00446B20 = (void *)Menu_UpdateSystem;
+                if (buttons_leave_steps == 2) {
+                    buttons_leave_steps = 0;
+                    system_screen_state = 0;
+                    if (menu_mode != 3) {
+                        menu_screen_handler = (void *)Menu_UpdateSystem;
                     } else {
-                        D_00446AC8++;
+                        menu_step++;
                     }
-                    D_00446C04 = 128.0f;
-                    D_00446C08 = 0;
-                    D_00446BE8 = 0;
-                    D_00446BEC = 0;
-                    D_00446BF0 = 0;
+                    pulse_sprite_alpha = 128.0f;
+                    pulse_sprite_falling = 0;
+                    button_line = 0;
+                    button_prompt_choice = 0;
+                    button_prompt = 0;
                 }
                 break;
             }
@@ -6781,19 +6780,19 @@ static void Menu_OpenCardCheck(void) {
     if (SaveCard_Open() >= 0) {
         SaveCard_StartCheck(1);
         SaveCard_Update();
-        memset(D_00425510, 0, 0x400);
-        D_00446B20 = (void *)Menu_UpdateCardCheck;
-        D_005CF2F0.check_step = 0;
-        D_00446C70 = 0;
-        D_00446C09 = 0;
-        D_005CF2F0.is_leaving = 0;
-        D_005CF2F0.selected_card = 0;
-        D_005CF2F0.check_finished = 0;
-        D_005CF2F0.skip_drawing = 0;
-        D_005CF2F0.card_problem_codes = 0;
-        D_005CF2F0.card0_saves_state = 0;
-        D_005CF2F0.card1_saves_state = 0;
-        D_005CF2F0.dialog_id = -1;
+        memset(screen_part_alphas, 0, 0x400);
+        menu_screen_handler = (void *)Menu_UpdateCardCheck;
+        card_screen_state.check_step = 0;
+        system_screen_state = 0;
+        pulse_value_falling = 0;
+        card_screen_state.is_leaving = 0;
+        card_screen_state.selected_card = 0;
+        card_screen_state.check_finished = 0;
+        card_screen_state.skip_drawing = 0;
+        card_screen_state.card_problem_codes = 0;
+        card_screen_state.card0_saves_state = 0;
+        card_screen_state.card1_saves_state = 0;
+        card_screen_state.dialog_id = -1;
     }
 }
 
@@ -6806,111 +6805,111 @@ static void Menu_UpdateCardCheck(void) {
     u32 full_alpha;
     s32 result = ((s32 (*)(void))SaveCard_Update)(); // match: its result is used here
 
-    switch (D_005CF2F0.check_step) {
+    switch (card_screen_state.check_step) {
     case 0:
         if (SaveCard_IsCheckDone() == 0) {
             return;
         }
         if (SaveCard_IsPresent(0) != 0 && SaveCard_IsFormatted(0) != 0) {
             SaveCard_StartReadList(0, 0);
-            D_005CF2F0.check_step = 1;
+            card_screen_state.check_step = 1;
         } else if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
-            D_005CF2F0.check_step = 2;
+            card_screen_state.check_step = 2;
             SaveCard_StartReadList(1, 0);
         } else {
-            D_005CF2F0.check_step = 3;
+            card_screen_state.check_step = 3;
             SaveCard_StartRescan();
         }
         return;
     case 1:
         if (SaveCard_CheckBusy() == 0) {
-            D_005CF2F0.card0_saves_state = SaveCard_GetSavesState();
+            card_screen_state.card0_saves_state = SaveCard_GetSavesState();
             if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
-                D_005CF2F0.check_step = 2;
+                card_screen_state.check_step = 2;
                 SaveCard_StartReadList(1, 0);
             } else {
-                D_005CF2F0.check_step = 3;
+                card_screen_state.check_step = 3;
                 SaveCard_StartRescan();
             }
         } else if (result < 0) {
-            D_005CF2F0.card0_saves_state = 0;
+            card_screen_state.card0_saves_state = 0;
             if (SaveCard_IsPresent(1) != 0 && SaveCard_IsFormatted(1) != 0) {
-                D_005CF2F0.check_step = 2;
+                card_screen_state.check_step = 2;
                 SaveCard_StartReadList(1, 0);
             } else {
-                D_005CF2F0.check_step = 3;
+                card_screen_state.check_step = 3;
                 SaveCard_StartRescan();
             }
         }
         return;
     case 2:
         if (SaveCard_CheckBusy() == 0) {
-            D_005CF2F0.card1_saves_state = SaveCard_GetSavesState();
-            D_005CF2F0.check_step = 3;
+            card_screen_state.card1_saves_state = SaveCard_GetSavesState();
+            card_screen_state.check_step = 3;
             SaveCard_StartRescan();
         } else if (result < 0) {
-            D_005CF2F0.card1_saves_state = 0;
-            D_005CF2F0.check_step = 3;
+            card_screen_state.card1_saves_state = 0;
+            card_screen_state.check_step = 3;
             SaveCard_StartRescan();
         }
         return;
     case 3:
         if (result > 0) {
-            D_005CF2F0.check_step = 4;
+            card_screen_state.check_step = 4;
             for (i = 0; (s32)i < 2; i++) {
                 switch (SaveCard_GetCardProblem(i)) {
                 case 0:
-                    D_005CF2F0.card_problem_codes |= 1 << (i * 4);
+                    card_screen_state.card_problem_codes |= 1 << (i * 4);
                     break;
                 case 8:
-                    D_005CF2F0.card_problem_codes |= 2 << (i * 4);
+                    card_screen_state.card_problem_codes |= 2 << (i * 4);
                     break;
                 default:
-                    D_005CF2F0.card_problem_codes |= 4 << (i * 4);
+                    card_screen_state.card_problem_codes |= 4 << (i * 4);
                     break;
                 }
             }
-            if (D_005CF2F0.card_problem_codes == 0x44) {
-                D_005CF2F0.dialog_id = 0x10;
-            } else if (D_005CF2F0.card_problem_codes == 0x22) {
-                D_005CF2F0.dialog_id = 0x13;
-            } else if (D_005CF2F0.card_problem_codes == 0x42) {
-                D_005CF2F0.dialog_id = 0x11;
-            } else if (D_005CF2F0.card_problem_codes == 0x24) {
-                D_005CF2F0.dialog_id = 0x12;
+            if (card_screen_state.card_problem_codes == 0x44) {
+                card_screen_state.dialog_id = 0x10;
+            } else if (card_screen_state.card_problem_codes == 0x22) {
+                card_screen_state.dialog_id = 0x13;
+            } else if (card_screen_state.card_problem_codes == 0x42) {
+                card_screen_state.dialog_id = 0x11;
+            } else if (card_screen_state.card_problem_codes == 0x24) {
+                card_screen_state.dialog_id = 0x12;
             } else {
-                D_005CF2F0.skip_drawing = D_005CF2F0.is_leaving = 1;
+                card_screen_state.skip_drawing = card_screen_state.is_leaving = 1;
                 SaveCard_Close();
             }
         }
         return;
     }
 
-    if (D_005CF2F0.skip_drawing == 0) {
-        for (i = 0; i < D_00446ABC; i++) {
-            kind = D_00446C68[i].handler_index;
-            ((void (*)(u8))Menu_SetBlendMode)(D_00446C68[i].blend_mode); // match: called as returning nothing, which frees $2 for the switch
-            switch (D_005CF2F0.dialog_id) {
+    if (card_screen_state.skip_drawing == 0) {
+        for (i = 0; i < mc_mess_part_count; i++) {
+            kind = mc_mess_parts[i].handler_index;
+            ((void (*)(u8))Menu_SetBlendMode)(mc_mess_parts[i].blend_mode); // match: called as returning nothing, which frees $2 for the switch
+            switch (card_screen_state.dialog_id) {
             case 0x10:
-                MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x10, D_00425510[i]);
+                MenuSprite_Draw((int)&mc_mess_parts[i], kind + 1000, 0x10, screen_part_alphas[i]);
                 break;
             case 0x11:
-                MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x11, D_00425510[i]);
+                MenuSprite_Draw((int)&mc_mess_parts[i], kind + 1000, 0x11, screen_part_alphas[i]);
                 break;
             case 0x12:
-                MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x12, D_00425510[i]);
+                MenuSprite_Draw((int)&mc_mess_parts[i], kind + 1000, 0x12, screen_part_alphas[i]);
                 break;
             case 0x13:
-                MenuSprite_Draw((int)&D_00446C68[i], kind + 1000, 0x13, D_00425510[i]);
+                MenuSprite_Draw((int)&mc_mess_parts[i], kind + 1000, 0x13, screen_part_alphas[i]);
                 break;
             }
             Menu_SetBlendMode(0);
         }
     }
 
-    if (D_005CF2F0.skip_drawing == 0) {
+    if (card_screen_state.skip_drawing == 0) {
         bar.first.f.lo16 = 0x75D0;
-        bar.first.f.mid16 = D_005CF2F0.selected_card * 0xE0 + 0x8250;
+        bar.first.f.mid16 = card_screen_state.selected_card * 0xE0 + 0x8250;
         bar.first.f.mid24 = 0xDBBA0;
         bar.second.f.lo16 = bar.first.f.lo16 + 0x14A0;
         bar.second.f.mid16 = bar.first.f.mid16 + 0xB0;
@@ -6918,82 +6917,82 @@ static void Menu_UpdateCardCheck(void) {
         bar.red = 0xFF;
         bar.green = 0xFF;
         bar.blue = 0x78;
-        if (D_00446C70 == 1) {
-            D_00425510[0xFD] = Menu_PulseValue(D_00425510[0xFD], 0x10, 0x20);
+        if (system_screen_state == 1) {
+            screen_part_alphas[0xFD] = Menu_PulseValue(screen_part_alphas[0xFD], 0x10, 0x20);
         } else {
-            D_00425510[0xFD] = 0.0f;
+            screen_part_alphas[0xFD] = 0.0f;
         }
-        bar.alpha = D_00425510[0xFD];
+        bar.alpha = screen_part_alphas[0xFD];
         MenuDraw_Bar(&bar);
     }
 
-    if (D_005CF2F0.is_leaving != 0) {
+    if (card_screen_state.is_leaving != 0) {
         if (result < 0) {
-            if (D_00446C70 == 2) {
-                D_00446C70 = 4;
-            } else if (D_00446C70 == 3) {
-                D_00446C70 = 5;
-            } else if (D_00446C70 == 0) {
+            if (system_screen_state == 2) {
+                system_screen_state = 4;
+            } else if (system_screen_state == 3) {
+                system_screen_state = 5;
+            } else if (system_screen_state == 0) {
                 MenuHeap_FreeToMark();
-                D_00446AC8++;
+                menu_step++;
             }
         }
     } else if (result < 0) {
-        D_005CF2F0.is_leaving = 1;
+        card_screen_state.is_leaving = 1;
         SaveCard_StartCheck(1);
         SaveCard_Close();
     } else {
         report = Pad_GetReport(0, 0);
-        if ((report->pressed & 0x4000) && D_004472D0 != 0xFF) {
+        if ((report->pressed & 0x4000) && pad_mode != 0xFF) {
             Sound_PlayMenu(0);
-            D_005CF2F0.is_leaving = 1;
+            card_screen_state.is_leaving = 1;
             SaveCard_StartCheck(1);
             SaveCard_Close();
-            if (D_005CF2F0.selected_card == 0) {
-                D_00446C70 = 2;
+            if (card_screen_state.selected_card == 0) {
+                system_screen_state = 2;
             } else {
-                D_00446C70 = 3;
+                system_screen_state = 3;
             }
-        } else if ((D_00446DE8 & 0x50) && D_004472D0 != 0xFF) {
+        } else if ((menu_buttons & 0x50) && pad_mode != 0xFF) {
             Sound_PlayMenu(1);
-            D_005CF2F0.selected_card = (D_005CF2F0.selected_card + 1) & 1;
+            card_screen_state.selected_card = (card_screen_state.selected_card + 1) & 1;
         }
     }
 
-    if (D_005CF2F0.skip_drawing != 0) {
+    if (card_screen_state.skip_drawing != 0) {
         return;
     }
-    switch (D_00446C70) {
+    switch (system_screen_state) {
     case 0:
-        for (i = 0; i < D_00446ABC; i++) {
-            D_00425510[i] += (f32)D_00446C68[i].alpha / 10.0f;
-            if ((f32)D_00446C68[i].alpha < D_00425510[i]) {
-                for (i = 0; i < D_00446ABC; i++) {
-                    full_alpha = D_00446C68[i].alpha;
-                    D_00425510[i] = full_alpha;
+        for (i = 0; i < mc_mess_part_count; i++) {
+            screen_part_alphas[i] += (f32)mc_mess_parts[i].alpha / 10.0f;
+            if ((f32)mc_mess_parts[i].alpha < screen_part_alphas[i]) {
+                for (i = 0; i < mc_mess_part_count; i++) {
+                    full_alpha = mc_mess_parts[i].alpha;
+                    screen_part_alphas[i] = full_alpha;
                 }
-                D_00446C70 = 1;
+                system_screen_state = 1;
                 break;
             }
         }
         break;
     case 4:
     case 5:
-        for (i = 0; i < D_00446ABC; i++) {
-            D_00425510[i] -= (f32)D_00446C68[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                D_005CF2F0.check_finished++;
-                if (D_005CF2F0.check_finished == 1) {
+        for (i = 0; i < mc_mess_part_count; i++) {
+            screen_part_alphas[i] -= (f32)mc_mess_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                card_screen_state.check_finished++;
+                if (card_screen_state.check_finished == 1) {
                     break;
                 }
-                if (D_00446C70 == 4) {
+                if (system_screen_state == 4) {
                     MenuHeap_FreeToMark();
-                    D_00446AC8++;
+                    menu_step++;
                 } else {
-                    D_00446AC8--;
+                    menu_step--;
                 }
-                D_00446C70 = 0;
+                system_screen_state = 0;
                 break;
             }
         }
@@ -7003,7 +7002,7 @@ static void Menu_UpdateCardCheck(void) {
 
 /* TRUE when the card check (Menu_UpdateCardCheck) found a save on the card of either slot. */
 s32 Menu_CardsHaveSaves(void) {
-    if (D_005CF2F0.card0_saves_state > 0 || D_005CF2F0.card1_saves_state > 0) {
+    if (card_screen_state.card0_saves_state > 0 || card_screen_state.card1_saves_state > 0) {
         return TRUE;
     }
     return FALSE;
@@ -7016,65 +7015,65 @@ static void Menu_UpdateBrightness(void) {
     u8 kind;
     u32 full_alpha;
 
-    if ((D_00446DE8 & 0x20) && D_004472DA != 0) {
+    if ((menu_buttons & 0x20) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
         if (game_options[10] < 0xFC) {
             game_options[10] += 4;
         } else {
             game_options[10] = 0x20;
         }
-    } else if ((D_00446DE8 & 0x80) && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x80) && menu_input_enabled != 0) {
         Sound_PlayMenu(1);
         if (game_options[10] > 0x20) {
             game_options[10] -= 4;
         } else {
             game_options[10] = 0xFC;
         }
-    } else if ((D_00446DE8 & 0x4000) && D_004472DA != 0) {
+    } else if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
-        D_004472DA = 0;
-        D_00446C70 = 2;
-    } else if ((D_00446DE8 & 0x2000) && D_004472DA != 0) {
+        menu_input_enabled = 0;
+        system_screen_state = 2;
+    } else if ((menu_buttons & 0x2000) && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
-        game_options[10] = D_004472CF;
-        D_00446C70 = 3;
-        D_004472DA = 0;
+        game_options[10] = brightness_before;
+        system_screen_state = 3;
+        menu_input_enabled = 0;
     }
-    D_00447228 = (game_options[10] - 32.0f) * 402.0f / 220.0f;
-    for (i = 0; i < D_00446AB0; i++) {
-        kind = D_00446C5C[i].handler_index;
-        Menu_SetBlendMode(D_00446C5C[i].blend_mode);
-        MenuSprite_Draw((int)&D_00446C5C[i], kind + 1000, (int)D_00447228 + 0x72C, (int)D_00425510[i]);
+    brightness_slider = (game_options[10] - 32.0f) * 402.0f / 220.0f;
+    for (i = 0; i < bright_part_count; i++) {
+        kind = bright_parts[i].handler_index;
+        Menu_SetBlendMode(bright_parts[i].blend_mode);
+        MenuSprite_Draw((int)&bright_parts[i], kind + 1000, (int)brightness_slider + 0x72C, (int)screen_part_alphas[i]);
         Menu_SetBlendMode(0);
     }
-    switch (D_00446C70) {
+    switch (system_screen_state) {
     case 0:
-        for (i = 0; i < D_00446AB0; i++) {
-            D_00425510[i] += D_00446C5C[i].alpha / 10.0f;
-            if (D_00425510[i] > D_00446C5C[i].alpha) {
-                for (i = 0; i < D_00446AB0; i++) {
-                    full_alpha = D_00446C5C[i].alpha;
-                    D_00425510[i] = full_alpha;
+        for (i = 0; i < bright_part_count; i++) {
+            screen_part_alphas[i] += bright_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] > bright_parts[i].alpha) {
+                for (i = 0; i < bright_part_count; i++) {
+                    full_alpha = bright_parts[i].alpha;
+                    screen_part_alphas[i] = full_alpha;
                 }
-                D_00446C70 = 1;
-                D_004472DA = 1;
+                system_screen_state = 1;
+                menu_input_enabled = 1;
                 return;
             }
         }
         break;
     case 2:
     case 3:
-        for (i = 0; i < D_00446AB0; i++) {
-            D_00425510[i] -= D_00446C5C[i].alpha / 10.0f;
-            if (D_00425510[i] < 0.0f) {
-                memset(D_00425510, 0, 0x400);
-                D_00446C04 = 128.0f;
-                D_00446C70 = 0;
-                D_00446C08 = 0;
-                if (D_00446C94 != 5) {
-                    D_00446B20 = (void *)Menu_UpdateSystem;
+        for (i = 0; i < bright_part_count; i++) {
+            screen_part_alphas[i] -= bright_parts[i].alpha / 10.0f;
+            if (screen_part_alphas[i] < 0.0f) {
+                memset(screen_part_alphas, 0, 0x400);
+                pulse_sprite_alpha = 128.0f;
+                system_screen_state = 0;
+                pulse_sprite_falling = 0;
+                if (menu_mode != 5) {
+                    menu_screen_handler = (void *)Menu_UpdateSystem;
                 } else {
-                    D_00446AC8++;
+                    menu_step++;
                 }
                 return;
             }
@@ -7087,8 +7086,8 @@ static void Menu_UpdateBrightness(void) {
    screen never installs it. */
 static void Menu_WaitForCancel(void) {
     if (Pad_GetReport(0, 0)->pressed & 0x2000) {
-        if (D_004472D0 != 0xFF) {
-            D_00446B20 = (void *)Menu_OpenMain;
+        if (pad_mode != 0xFF) {
+            menu_screen_handler = (void *)Menu_OpenMain;
             Sound_PlayMenu(2);
         }
     }
@@ -7103,8 +7102,8 @@ static int Menu_DrawEquipItemText(s32 index) {
     s32 entry;
     GsPackedWord word;
 
-    node = (DataNode *)D_005CE840[0]->item;
-    table = Message_GetFontText(D_00446F38);
+    node = (DataNode *)equip_list_shown[0]->item;
+    table = Message_GetFontText(menu_heap);
     slot = node->unk0C + 1;
     entry = ((s32 *)table)[index + slot];
     word.raw = 0x000A87507E9080C0;
@@ -7117,33 +7116,33 @@ static int Menu_DrawEquipItemText(s32 index) {
 
 /* If the item list has anything: names its five models and chains the five load nodes for them. */
 void Menu_ChainItemListModels(void) {
-    if (D_00426110[0] != 0) {
+    if (item_list_cursor[0] != 0) {
         Menu_SetItemListModelNames();
-        Menu_TakeLoadBuffer(&D_00426470);
-        Menu_TakeLoadBuffer(&D_004264C0);
-        Menu_TakeLoadBuffer(&D_00426510);
-        Menu_TakeLoadBuffer(&D_00426560);
-        Menu_TakeLoadBuffer(&D_004265B0);
-        D_00426470.next = &D_004264C0;
-        D_00426470.callback = (void (*)(void))Menu_StepModelLoad;
-        D_00426470.unk20 = 0;
-        D_004264C0.next = &D_00426510;
-        D_004264C0.callback = (void (*)(void))Menu_StepModelLoad;
-        D_004264C0.unk20 = 0;
-        D_004264C0.unk1C = 0;
-        D_00426510.next = &D_00426560;
-        D_00426510.callback = (void (*)(void))Menu_StepModelLoad;
-        D_00426510.unk20 = 0;
-        D_00426510.unk1C = 0;
-        D_00426560.next = &D_004265B0;
-        D_00426560.callback = (void (*)(void))Menu_StepModelLoad;
-        D_00426560.unk20 = 0;
-        D_00426560.unk1C = 0;
-        D_004265B0.next = NULL;
-        D_004265B0.callback = (void (*)(void))Menu_StepModelLoad;
-        D_004265B0.unk20 = 0;
-        D_00426470.unk1C = D_004265B0.unk1C = 0;
-        D_00446C90 = &D_00426470;
+        Menu_TakeLoadBuffer(&model_load_shown);
+        Menu_TakeLoadBuffer(&model_load_up);
+        Menu_TakeLoadBuffer(&model_load_down);
+        Menu_TakeLoadBuffer(&model_load_left);
+        Menu_TakeLoadBuffer(&model_load_right);
+        model_load_shown.next = &model_load_up;
+        model_load_shown.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_shown.unk20 = 0;
+        model_load_up.next = &model_load_down;
+        model_load_up.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_up.unk20 = 0;
+        model_load_up.unk1C = 0;
+        model_load_down.next = &model_load_left;
+        model_load_down.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_down.unk20 = 0;
+        model_load_down.unk1C = 0;
+        model_load_left.next = &model_load_right;
+        model_load_left.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_left.unk20 = 0;
+        model_load_left.unk1C = 0;
+        model_load_right.next = NULL;
+        model_load_right.callback = (void (*)(void))Menu_StepModelLoad;
+        model_load_right.unk20 = 0;
+        model_load_shown.unk1C = model_load_right.unk1C = 0;
+        model_load_chain = &model_load_shown;
     }
 }
 
@@ -7154,32 +7153,32 @@ static void Menu_SetItemListModelNames(void) {
     MenuItem *forward;
     s32 i;
 
-    forward = backward = D_00426120[0];
-    if (D_00446C48 >= 8) {
+    forward = backward = item_list_top[0];
+    if (item_list_count >= 8) {
         for (i = 0; i < 7; i++) {
             forward = forward->next;
             backward = backward->prev;
-            if (forward == D_00446C40) {
-                while (++i < 7 && backward != D_00446C44) {
+            if (forward == item_list_first) {
+                while (++i < 7 && backward != item_list_last_page) {
                     backward = backward->prev;
                 }
                 break;
             }
-            if (backward == D_00446C44) {
-                while (++i < 7 && forward != D_00446C40) {
+            if (backward == item_list_last_page) {
+                while (++i < 7 && forward != item_list_first) {
                     forward = forward->next;
                 }
                 break;
             }
         }
     } else {
-        forward = backward = D_00446C40;
+        forward = backward = item_list_first;
     }
-    sprintf(D_00426498, "menu/select2/i%04d.mod", item_name_defs[D_00426110[0]->unk0C].file_number);
-    sprintf(D_00426538, "menu/select2/i%04d.mod", item_name_defs[D_00426110[0]->prev->unk0C].file_number);
-    sprintf(D_004264E8, "menu/select2/i%04d.mod", item_name_defs[D_00426110[0]->next->unk0C].file_number);
-    sprintf(D_00426588, "menu/select2/i%04d.mod", item_name_defs[forward->unk0C].file_number);
-    sprintf(D_004265D8, "menu/select2/i%04d.mod", item_name_defs[backward->unk0C].file_number);
+    sprintf(model_name_shown, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->unk0C].file_number);
+    sprintf(model_name_down, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->prev->unk0C].file_number);
+    sprintf(model_name_up, "menu/select2/i%04d.mod", item_name_defs[item_list_cursor[0]->next->unk0C].file_number);
+    sprintf(model_name_left, "menu/select2/i%04d.mod", item_name_defs[forward->unk0C].file_number);
+    sprintf(model_name_right, "menu/select2/i%04d.mod", item_name_defs[backward->unk0C].file_number);
 }
 
 /* A list cursor went on one row: the model shown moves to node 2, node 1's becomes the one shown, nodes 1, 3
@@ -7187,48 +7186,48 @@ static void Menu_SetItemListModelNames(void) {
 void Menu_ShiftListModelsNext(s32 value) {
     LinkNode *pending = NULL;
 
-    if (D_00446C90 == &D_004264C0 || D_00446C90 == &D_00426470) {
+    if (model_load_chain == &model_load_up || model_load_chain == &model_load_shown) {
         ((void (*)(s32))Menu_CopyLoadToSpare)(value); // match: the callee takes nothing, yet the argument is passed on
     } else {
         ((void (*)(s32))Menu_MoveLoadToSpare)(value); // match: as above
     }
-    Menu_FreeLoadBuffer((MenuFreeRequest *)&D_00426510);
-    D_00426510 = D_00426470;
-    D_00426510.next = NULL;
-    if (D_00426510.unk20 == 0) {
-        pending = &D_00426510;
+    Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_down);
+    model_load_down = model_load_shown;
+    model_load_down.next = NULL;
+    if (model_load_down.unk20 == 0) {
+        pending = &model_load_down;
     }
-    D_00426470 = D_004264C0;
-    D_00426470.next = NULL;
-    if (D_00426470.unk20 == 0) {
-        pending = &D_00426470;
+    model_load_shown = model_load_up;
+    model_load_shown.next = NULL;
+    if (model_load_shown.unk20 == 0) {
+        pending = &model_load_shown;
     }
-    Menu_TakeLoadBuffer(&D_004264C0);
-    D_004264C0.unk20 = 0;
-    D_004264C0.unk1C = 0;
-    D_004264C0.unk08 = -1;
-    D_004264C0.next = NULL;
+    Menu_TakeLoadBuffer(&model_load_up);
+    model_load_up.unk20 = 0;
+    model_load_up.unk1C = 0;
+    model_load_up.unk08 = -1;
+    model_load_up.next = NULL;
     if (pending == NULL) {
-        pending = &D_004264C0;
+        pending = &model_load_up;
     }
-    D_004265B0.unk20 = 0;
-    D_004265B0.unk1C = 0;
-    D_004265B0.unk08 = -1;
-    D_004265B0.next = NULL;
-    D_00426560.unk20 = 0;
-    D_00426560.unk1C = 0;
-    D_00426560.unk08 = -1;
-    D_00426560.next = NULL;
-    if (D_00446C90 != NULL) {
-        D_00446C90->next = pending;
+    model_load_right.unk20 = 0;
+    model_load_right.unk1C = 0;
+    model_load_right.unk08 = -1;
+    model_load_right.next = NULL;
+    model_load_left.unk20 = 0;
+    model_load_left.unk1C = 0;
+    model_load_left.unk08 = -1;
+    model_load_left.next = NULL;
+    if (model_load_chain != NULL) {
+        model_load_chain->next = pending;
     } else {
-        D_00446C90 = pending;
+        model_load_chain = pending;
     }
-    D_00426470.next = &D_004264C0;
-    D_004264C0.next = &D_00426510;
-    D_00426510.next = &D_004265B0;
-    D_004265B0.next = &D_00426560;
-    D_00426560.next = NULL;
+    model_load_shown.next = &model_load_up;
+    model_load_up.next = &model_load_down;
+    model_load_down.next = &model_load_right;
+    model_load_right.next = &model_load_left;
+    model_load_left.next = NULL;
 }
 
 /* A list cursor went back one row: the model shown moves to node 1, node 2's becomes the one shown, nodes 2, 3
@@ -7236,48 +7235,48 @@ void Menu_ShiftListModelsNext(s32 value) {
 void Menu_ShiftListModelsPrev(s32 value) {
     LinkNode *pending = NULL;
 
-    if (D_00446C90 == &D_00426510 || D_00446C90 == &D_00426470) {
+    if (model_load_chain == &model_load_down || model_load_chain == &model_load_shown) {
         ((void (*)(s32))Menu_CopyLoadToSpare)(value); // match: the callee takes nothing, yet the argument is passed on
     } else {
         ((void (*)(s32))Menu_MoveLoadToSpare)(value); // match: as above
     }
-    Menu_FreeLoadBuffer((MenuFreeRequest *)&D_004264C0);
-    D_004264C0 = D_00426470;
-    D_004264C0.next = NULL;
-    if (D_004264C0.unk20 == 0) {
-        pending = &D_004264C0;
+    Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_up);
+    model_load_up = model_load_shown;
+    model_load_up.next = NULL;
+    if (model_load_up.unk20 == 0) {
+        pending = &model_load_up;
     }
-    D_00426470 = D_00426510;
-    D_00426470.next = NULL;
-    if (D_00426470.unk20 == 0) {
-        pending = &D_00426470;
+    model_load_shown = model_load_down;
+    model_load_shown.next = NULL;
+    if (model_load_shown.unk20 == 0) {
+        pending = &model_load_shown;
     }
-    Menu_TakeLoadBuffer(&D_00426510);
-    D_00426510.unk20 = 0;
-    D_00426510.unk1C = 0;
-    D_00426510.unk08 = -1;
-    D_00426510.next = NULL;
+    Menu_TakeLoadBuffer(&model_load_down);
+    model_load_down.unk20 = 0;
+    model_load_down.unk1C = 0;
+    model_load_down.unk08 = -1;
+    model_load_down.next = NULL;
     if (pending == NULL) {
-        pending = &D_00426510;
+        pending = &model_load_down;
     }
-    D_004265B0.unk20 = 0;
-    D_004265B0.unk1C = 0;
-    D_004265B0.unk08 = -1;
-    D_004265B0.next = NULL;
-    D_00426560.unk20 = 0;
-    D_00426560.unk1C = 0;
-    D_00426560.unk08 = -1;
-    D_00426560.next = NULL;
-    if (D_00446C90 != NULL) {
-        D_00446C90->next = pending;
+    model_load_right.unk20 = 0;
+    model_load_right.unk1C = 0;
+    model_load_right.unk08 = -1;
+    model_load_right.next = NULL;
+    model_load_left.unk20 = 0;
+    model_load_left.unk1C = 0;
+    model_load_left.unk08 = -1;
+    model_load_left.next = NULL;
+    if (model_load_chain != NULL) {
+        model_load_chain->next = pending;
     } else {
-        D_00446C90 = pending;
+        model_load_chain = pending;
     }
-    D_00426470.next = &D_004264C0;
-    D_004264C0.next = &D_00426510;
-    D_00426510.next = &D_00426560;
-    D_00426560.next = &D_004265B0;
-    D_004265B0.next = NULL;
+    model_load_shown.next = &model_load_up;
+    model_load_up.next = &model_load_down;
+    model_load_down.next = &model_load_left;
+    model_load_left.next = &model_load_right;
+    model_load_right.next = NULL;
 }
 
 /* A list went up a page: node 4's model becomes the one shown, the others are made fresh and the five are
@@ -7285,47 +7284,47 @@ void Menu_ShiftListModelsPrev(s32 value) {
 void Menu_ShiftListModelsPageUp(s32 value) {
     LinkNode *pending = NULL;
 
-    if (D_00446C90 == &D_004265B0) {
+    if (model_load_chain == &model_load_right) {
         ((void (*)(s32))Menu_CopyLoadToSpare)(value); // match: the callee takes nothing, yet the argument is passed on
     } else {
         ((void (*)(s32))Menu_MoveLoadToSpare)(value); // match: as above
     }
-    Menu_FreeLoadBuffer((MenuFreeRequest *)&D_00426470);
-    D_00426470 = D_004265B0;
-    D_00426470.next = NULL;
-    if (D_00426470.unk20 == 0) {
-        pending = &D_00426470;
+    Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_shown);
+    model_load_shown = model_load_right;
+    model_load_shown.next = NULL;
+    if (model_load_shown.unk20 == 0) {
+        pending = &model_load_shown;
     }
-    D_004264C0.unk20 = 0;
-    D_004264C0.unk1C = 0;
-    D_004264C0.unk08 = -1;
-    D_004264C0.next = NULL;
-    D_00426510.unk20 = 0;
-    D_00426510.unk1C = 0;
-    D_00426510.unk08 = -1;
-    D_00426510.next = NULL;
-    Menu_TakeLoadBuffer(&D_004265B0);
-    D_004265B0.unk20 = 0;
-    D_004265B0.unk1C = 0;
-    D_004265B0.unk08 = -1;
-    D_004265B0.next = NULL;
-    D_00426560.unk20 = 0;
-    D_00426560.unk1C = 0;
-    D_00426560.unk08 = -1;
-    D_00426560.next = NULL;
+    model_load_up.unk20 = 0;
+    model_load_up.unk1C = 0;
+    model_load_up.unk08 = -1;
+    model_load_up.next = NULL;
+    model_load_down.unk20 = 0;
+    model_load_down.unk1C = 0;
+    model_load_down.unk08 = -1;
+    model_load_down.next = NULL;
+    Menu_TakeLoadBuffer(&model_load_right);
+    model_load_right.unk20 = 0;
+    model_load_right.unk1C = 0;
+    model_load_right.unk08 = -1;
+    model_load_right.next = NULL;
+    model_load_left.unk20 = 0;
+    model_load_left.unk1C = 0;
+    model_load_left.unk08 = -1;
+    model_load_left.next = NULL;
     if (pending == NULL) {
-        pending = &D_00426560;
+        pending = &model_load_left;
     }
-    if (D_00446C90 != NULL) {
-        D_00446C90->next = pending;
+    if (model_load_chain != NULL) {
+        model_load_chain->next = pending;
     } else {
-        D_00446C90 = pending;
+        model_load_chain = pending;
     }
-    D_00426470.next = &D_00426560;
-    D_00426560.next = &D_004265B0;
-    D_004265B0.next = &D_004264C0;
-    D_004264C0.next = &D_00426510;
-    D_00426510.next = NULL;
+    model_load_shown.next = &model_load_left;
+    model_load_left.next = &model_load_right;
+    model_load_right.next = &model_load_up;
+    model_load_up.next = &model_load_down;
+    model_load_down.next = NULL;
 }
 
 /* A list went down a page: node 3's model becomes the one shown, the others are made fresh and the five are
@@ -7333,70 +7332,70 @@ void Menu_ShiftListModelsPageUp(s32 value) {
 void Menu_ShiftListModelsPageDown(s32 value) {
     LinkNode *pending = NULL;
 
-    if (D_00446C90 == &D_00426560) {
+    if (model_load_chain == &model_load_left) {
         ((void (*)(s32))Menu_CopyLoadToSpare)(value); // match: the callee takes nothing, yet the argument is passed on
     } else {
         ((void (*)(s32))Menu_MoveLoadToSpare)(value); // match: as above
     }
-    Menu_FreeLoadBuffer((MenuFreeRequest *)&D_00426470);
-    D_00426470 = D_00426560;
-    D_00426470.next = NULL;
-    if (D_00426470.unk20 == 0) {
-        pending = &D_00426470;
+    Menu_FreeLoadBuffer((MenuFreeRequest *)&model_load_shown);
+    model_load_shown = model_load_left;
+    model_load_shown.next = NULL;
+    if (model_load_shown.unk20 == 0) {
+        pending = &model_load_shown;
     }
-    D_004264C0.unk20 = 0;
-    D_004264C0.unk1C = 0;
-    D_004264C0.unk08 = -1;
-    D_004264C0.next = NULL;
-    D_00426510.unk20 = 0;
-    D_00426510.unk1C = 0;
-    D_00426510.unk08 = -1;
-    D_00426510.next = NULL;
-    D_004265B0.unk20 = 0;
-    D_004265B0.unk1C = 0;
-    D_004265B0.unk08 = -1;
-    D_004265B0.next = NULL;
-    Menu_TakeLoadBuffer(&D_00426560);
-    D_00426560.unk20 = 0;
-    D_00426560.unk1C = 0;
-    D_00426560.unk08 = -1;
-    D_00426560.next = NULL;
+    model_load_up.unk20 = 0;
+    model_load_up.unk1C = 0;
+    model_load_up.unk08 = -1;
+    model_load_up.next = NULL;
+    model_load_down.unk20 = 0;
+    model_load_down.unk1C = 0;
+    model_load_down.unk08 = -1;
+    model_load_down.next = NULL;
+    model_load_right.unk20 = 0;
+    model_load_right.unk1C = 0;
+    model_load_right.unk08 = -1;
+    model_load_right.next = NULL;
+    Menu_TakeLoadBuffer(&model_load_left);
+    model_load_left.unk20 = 0;
+    model_load_left.unk1C = 0;
+    model_load_left.unk08 = -1;
+    model_load_left.next = NULL;
     if (pending == NULL) {
-        pending = &D_00426510;
+        pending = &model_load_down;
     }
-    if (D_00446C90 != NULL) {
-        D_00446C90->next = pending;
+    if (model_load_chain != NULL) {
+        model_load_chain->next = pending;
     } else {
-        D_00446C90 = pending;
+        model_load_chain = pending;
     }
-    D_00426470.next = &D_004265B0;
-    D_004265B0.next = &D_00426560;
-    D_00426560.next = &D_004264C0;
-    D_004264C0.next = &D_00426510;
-    D_00426510.next = NULL;
+    model_load_shown.next = &model_load_right;
+    model_load_right.next = &model_load_left;
+    model_load_left.next = &model_load_up;
+    model_load_up.next = &model_load_down;
+    model_load_down.next = NULL;
 }
 
 /* Resets the memory card screens' state, starts the card check and makes Menu_UpdateCardSlot the current handler. */
 static void Menu_OpenCardSlot(void) {
-    D_005CF2F0.save_loaded = 0;
-    D_005CF2F0.card_saves_found = 0;
-    D_005CF2F0.is_leaving = 0;
-    D_005CF2F0.card_op_running = 0;
-    D_005CF2F0.selected_card = 0;
-    D_005CF2F0.selected_save = 0;
-    D_005CF2F0.input_locked = 1;
-    D_005CF2F0.check_finished = 0;
-    D_005CF2F0.save_state_0 = 0;
-    D_005CF2F0.save_state_1 = 0;
-    D_005CF2F0.save_state_2 = 0;
-    D_005CF2F0.card_update_result = 0;
-    D_005CF2F0.confirm_choice = 1;
-    D_005CF2F0.dialog_id = -1;
+    card_screen_state.save_loaded = 0;
+    card_screen_state.card_saves_found = 0;
+    card_screen_state.is_leaving = 0;
+    card_screen_state.card_op_running = 0;
+    card_screen_state.selected_card = 0;
+    card_screen_state.selected_save = 0;
+    card_screen_state.input_locked = 1;
+    card_screen_state.check_finished = 0;
+    card_screen_state.save_state_0 = 0;
+    card_screen_state.save_state_1 = 0;
+    card_screen_state.save_state_2 = 0;
+    card_screen_state.card_update_result = 0;
+    card_screen_state.confirm_choice = 1;
+    card_screen_state.dialog_id = -1;
     SaveCard_Open();
     SaveCard_ClearLoadFailed(0);
     SaveCard_ClearLoadFailed(1);
     SaveCard_StartCheck(1);
-    D_00446B20 = (void *)Menu_UpdateCardSlot;
+    menu_screen_handler = (void *)Menu_UpdateCardSlot;
 }
 
 /* Tells whether value (an equipment slot's number) differs from the "None" of the slot the given step stands for. */
@@ -7426,7 +7425,7 @@ int Menu_IsEquipSlotFilled(s32 value, u32 step) {
     }
 }
 
-/* Sends a five-quadword packet that draws one sprite in the grey level given, into the frame buffer D_00446F78 selects. */
+/* Sends a five-quadword packet that draws one sprite in the grey level given, into the frame buffer context1_buffer_half selects. */
 void Menu_DrawBrightness(s32 level) {
     GsPacketWord *packet;
     GsPacketWord *cursor;
@@ -7442,7 +7441,7 @@ void Menu_DrawBrightness(s32 level) {
     // match: the do/while (a macro in the original, most likely) keeps the stores above ahead of the load below
     do {
         cursor = packet + 8;
-        if (D_00446F78 == 0) {
+        if (context1_buffer_half == 0) {
             *(u64 *)&packet[6] = 0x668028000;
         } else {
             *(u64 *)&packet[6] = 0x6680288C0;
@@ -7538,47 +7537,47 @@ s32 Menu_SetBlendModeAndTest(u8 mode, char flag) {
 void Menu_ClearEquipSlot(s8 slot) {
     switch (slot) {
         case 0:
-            *D_00420D60[0] = D_004231F0;
+            *equipped_item_refs[0] = weapon_entries;
             player_state.weapon = 0;
             break;
         case 1:
-            *D_00420D60[1] = D_00424050;
+            *equipped_item_refs[1] = spell_entries;
             player_state.equipped_magic = 0;
             break;
         case 2:
-            *D_00420D60[2] = D_00423650;
+            *equipped_item_refs[2] = shield_entries;
             player_state.equipment[EQUIP_SHIELD] = ITEM_WORN_INDEX(ITEM_SHIELD_NONE);
             break;
         case 3:
-            *D_00420D60[3] = D_00423830;
+            *equipped_item_refs[3] = helm_entries;
             player_state.equipment[EQUIP_HELM] = ITEM_WORN_INDEX(ITEM_HELM_NONE);
             break;
         case 4:
-            *D_00420D60[4] = D_004239C0;
+            *equipped_item_refs[4] = armor_entries;
             player_state.equipment[EQUIP_ARMOR] = ITEM_WORN_INDEX(ITEM_ARMOR_NONE);
             break;
         case 5:
-            *D_00420D60[5] = D_00423B50;
+            *equipped_item_refs[5] = gauntlet_entries;
             player_state.equipment[EQUIP_GAUNTLET] = ITEM_WORN_INDEX(ITEM_GAUNTLET_NONE);
             break;
         case 6:
-            *D_00420D60[6] = D_00423CE0;
+            *equipped_item_refs[6] = boot_entries;
             player_state.equipment[EQUIP_BOOT] = ITEM_WORN_INDEX(ITEM_BOOT_NONE);
             break;
         case 7:
-            *D_00420D60[7] = D_00423E70;
+            *equipped_item_refs[7] = ring_entries;
             player_state.equipment[EQUIP_RING] = ITEM_WORN_INDEX(ITEM_RING_NONE);
             break;
         case 8:
-            *D_00420D60[8] = D_00423F10;
+            *equipped_item_refs[8] = bracelet_entries;
             player_state.equipment[EQUIP_BRACELET] = ITEM_WORN_INDEX(ITEM_BRACELET_NONE);
             break;
         case 9:
-            *D_00420D60[9] = D_00423FB0;
+            *equipped_item_refs[9] = amulet_entries;
             player_state.equipment[EQUIP_AMULET] = ITEM_WORN_INDEX(ITEM_AMULET_NONE);
             break;
         case 11:
-            *D_00420D60[10] = D_00424600;
+            *equipped_item_refs[10] = shortcut_entries;
             player_state.shortcut_type = 0;
             player_state.shortcut = 0;
             break;

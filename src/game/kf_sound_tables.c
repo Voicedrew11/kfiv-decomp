@@ -4,19 +4,19 @@
 #include "kf_sound_game.h"
 
 /* the file name formats of the sound banks */
-extern char D_0043EC80[];
-extern char D_0043EC90[];
-extern char D_0043ECA0[];
-extern char D_0043ECB0[];
-extern char D_0043ECC0[];
-extern char D_0043ECD0[];
-extern char D_0043ECE0[];
-extern char D_0043ECF0[];
-extern char D_0043ED00[];
-extern char D_0043ED10[];
-extern char D_0043ED20[];
-extern char D_0043ED30[];
-extern char D_0043ED40[];
+extern char bgm_sq_format[];
+extern char bgm_hd_format[];
+extern char bgm_bd_format[];
+extern char se_com_hd_path[];
+extern char se_com_bd_path[];
+extern char sfx_com_hd_path[];
+extern char sfx_com_bd_path[];
+extern char map_bank_hd_path[];
+extern char map_bank_bd_path[];
+extern char sw_bank_hd_format[];
+extern char sw_bank_bd_format[];
+extern char mg_bank_hd_format[];
+extern char mg_bank_bd_format[];
 
 /* the two ways of starting a tracked sound (kf_sound_game.c) */
 int Sound_PlayTracked(int sound, int unused, float *position);
@@ -42,8 +42,8 @@ SoundBankSlot sfx_com_bank = { /* 0x3EF520 the sfx_com bank */
 SoundBankSlot bgm_buffers = { /* 0x3EF540 the BGM's buffers (bgm_load_job's) */
     .size_a = 0x4B000, .size_b = 0x1400, .unk14 = 0x5000,
 };
-asm(".globl D_003EF544\nD_003EF544 = bgm_buffers + 0x4");  /* 0x3EF544 the BGM's second buffer (Sound_BgmReadHeader) */
-asm(".globl D_003EF548\nD_003EF548 = bgm_buffers + 0x8");  /* 0x3EF548 the BGM's third buffer (Sound_BgmReadSequence) */
+asm(".globl bgm_header_buffer\nbgm_header_buffer = bgm_buffers + 0x4");  /* 0x3EF544 the BGM's second buffer (Sound_BgmReadHeader) */
+asm(".globl bgm_sequence_buffer\nbgm_sequence_buffer = bgm_buffers + 0x8");  /* 0x3EF548 the BGM's third buffer (Sound_BgmReadSequence) */
 
 SoundBankSlot sw_bank = { /* 0x3EF560 the sw bank (Sound_LoadSwBank) */
     .size_a = 0x1A400, .size_b = 0x1400,
@@ -66,8 +66,8 @@ typedef struct {
 
 LoadJobSlot bgm_load_job = { /* 0x3EF5B8 the BGM load job */
     .job = {
-        .buffers = (int *)&bgm_buffers, .name = D_0043ECA0, .unk08 = D_0043EC90,
-        .name_format = D_0043EC80, .file_handle = -1,
+        .buffers = (int *)&bgm_buffers, .name = bgm_bd_format, .unk08 = bgm_hd_format,
+        .name_format = bgm_sq_format, .file_handle = -1,
         /* 0x1C, inside the shared LoadJob's pad18: 0xBB810, the size of a BGM file */
         .pad18 = { 0, 0, 0, 0, 0x10, 0xB8, 0x0B, 0, 0, 0, 0, 0 },
     },
@@ -81,31 +81,31 @@ typedef struct {
 } SoundJobSlot;
 
 SoundJobSlot se_com_job = { /* 0x3EF5E8 the se_com bank's job */
-    .job = { .spec = (SoundJobSpec *)&se_com_bank, .name_a = D_0043ECC0, .name_b = D_0043ECB0,
+    .job = { .spec = (SoundJobSpec *)&se_com_bank, .name_a = se_com_bd_path, .name_b = se_com_hd_path,
              .result = 1, .unk18 = 1, .unk1C = 0x5010 },
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };
 
 SoundJobSlot sfx_com_job = { /* 0x3EF618 the sfx_com bank's job */
-    .job = { .spec = (SoundJobSpec *)&sfx_com_bank, .name_a = D_0043ECE0, .name_b = D_0043ECD0,
+    .job = { .spec = (SoundJobSpec *)&sfx_com_bank, .name_a = sfx_com_bd_path, .name_b = sfx_com_hd_path,
              .result = 2, .unk18 = 2, .unk1C = 0x32010 },
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };
 
 SoundJobSlot map_bank_job = { /* 0x3EF648 the map bank's job (snd/map000) */
-    .job = { .spec = (SoundJobSpec *)&map_bank_files, .name_a = D_0043ED00, .name_b = D_0043ECF0,
+    .job = { .spec = (SoundJobSpec *)&map_bank_files, .name_a = map_bank_bd_path, .name_b = map_bank_hd_path,
              .result = 3, .unk18 = 3, .unk1C = 0x106810 },
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };
 
 SoundJobSlot sw_bank_job = { /* 0x3EF678 the sw bank's job */
-    .job = { .spec = (SoundJobSpec *)&sw_bank, .name_a = D_0043ED20, .name_b = D_0043ED10,
+    .job = { .spec = (SoundJobSpec *)&sw_bank, .name_a = sw_bank_bd_format, .name_b = sw_bank_hd_format,
              .result = 4, .unk18 = 4, .unk1C = 0x190010 },
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };
 
 SoundJobSlot mg_bank_job = { /* 0x3EF6A8 the mg bank's job */
-    .job = { .spec = (SoundJobSpec *)&mg_bank, .name_a = D_0043ED40, .name_b = D_0043ED30,
+    .job = { .spec = (SoundJobSpec *)&mg_bank, .name_a = mg_bank_bd_format, .name_b = mg_bank_hd_format,
              .result = 5, .unk18 = 5, .unk1C = 0x1AA410 },
     .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
 };

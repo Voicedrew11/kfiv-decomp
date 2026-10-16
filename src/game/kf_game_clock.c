@@ -3,7 +3,7 @@
 #include "kf_game.h"
 
 extern ClockControl D_00432820;
-extern u32 D_00446ED4;              /* the frame counter */
+extern u32 frame_counter;              /* the frame counter */
 extern int D_00446EF0;
 
 GameClock game_clock = { 0 };       /* 0x431CE8 the game clock */
@@ -23,7 +23,7 @@ static void GameClock_Tick(void) {
 
     if (D_00432820.clock_stopped == 0) {
         if (D_00432820.flags & 0x200) {
-            if (D_00432820.tick_held == 0 && (D_00446ED4 & 3) == 0) {
+            if (D_00432820.tick_held == 0 && (frame_counter & 3) == 0) {
                 clock = &game_clock;
                 clock->ticks += 1;
             }

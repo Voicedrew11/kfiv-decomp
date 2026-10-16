@@ -4,14 +4,14 @@
 
 #include "common.h"
 
-/* D_005CF340, D_005CF350: passed to the handler picked from a mode table */
+/* trade_context, smith_context, save_screen_context: passed to the handler picked from a mode table */
 typedef struct {
     int unk00;                      /* 0x00 */
     int unk04;                      /* 0x04 */
     int arg;                        /* 0x08 */
 } HandlerContext;
 
-/* D_005CF3C0: the save screen SaveScreen_UpdateCardSelect runs each frame */
+/* save_screen_state: the save screen SaveScreen_UpdateCardSelect runs each frame */
 typedef struct {
     s32 card_update_result;         /* 0x00 SaveCard_Update's result: negative marks a card failure */
     char pad04[0x04];
@@ -37,15 +37,15 @@ typedef struct {
     char pad22[0x0E];
 } SaveScreen;
 
-extern SaveScreen D_005CF3C0;
+extern SaveScreen save_screen_state;
 
-/* what the D_00440B70 handlers build; MenuSprite_Draw dispatches it by kind */
+/* what the sprite_handlers build; MenuSprite_Draw dispatches it by kind */
 typedef struct {
     char pad00[0x31];
     u8 kind;                        /* 0x31 picks the function that consumes the object */
 } KindObject;
 
-/* the 0x60-byte objects D_00446BF4 points at, drawn by MenuSprite_Draw and MenuSprite_DrawPlain (D_00446BFC
+/* the 0x60-byte objects slot_parts points at, drawn by MenuSprite_Draw and MenuSprite_DrawPlain (preshop_parts
    is taken to point at the same kind of object: inferred from the matching offsets, not proven) */
 typedef struct {
     char pad00[0x20];

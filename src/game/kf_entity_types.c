@@ -141,7 +141,7 @@ s32 entity_type_handlers[0x60][2] = {
 
 ModelInstanceBlock fire_lord_model[2] = { 0 }; /* 0x3E7140 the Fire Lord's model, copied for its two draws */
 /* the second of the two, which other files name on its own */
-asm(".globl D_003E7300\nD_003E7300 = fire_lord_model + 0x1C0");  /* 0x3E7300 the model the set-up function copied */
+asm(".globl fire_lord_older_afterimage\nfire_lord_older_afterimage = fire_lord_model + 0x1C0");  /* 0x3E7300 the older afterimage, the model two frames back */
 
 /* 0x3E74C0 the Fire Lord's model matrix (second row zero in retail) */
 ModelMatrix fire_lord_model_matrix = {

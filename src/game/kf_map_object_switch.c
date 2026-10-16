@@ -4,10 +4,10 @@
 
 void MapObject_UpdateOffSwitch(void *);
 void MapObject_UpdateOnSwitch(void *);
-extern u32 D_0038CC74[];
-extern void *D_00420D50[];
+extern u32 game_status_flags[];
+extern void *faced_object[];
 extern GameStatus game_status;
-extern EventRunner D_00420D00;
+extern EventRunner view_ray_status;
 
 /* Step 0 of kind 7 (no object of param/obj.prm has it): animation 4, step 1. */
 void MapObject_StartToggle(MapObject *object) {
@@ -17,8 +17,8 @@ void MapObject_StartToggle(MapObject *object) {
 
 /* Step 1 of kind 7: used by the player, it flips its on bit (bit 17) and goes to step 2. */
 void MapObject_UpdateIdleToggle(MapObject *object) {
-    if ((D_0038CC74[0] >> 1) & 1) {
-        if (D_00420D50[0] == object) {
+    if ((game_status_flags[0] >> 1) & 1) {
+        if (faced_object[0] == object) {
             MAP_OBJECT_BYTES(object)->step = 2;
             object->state_flags = (object->state_flags & ~0x20000) | ((((s32)object->state_flags >> 17) ^ 1) & 1) << 17;
         }
@@ -61,7 +61,7 @@ void MapObject_StartSwitch(MapObject *object) {
 void MapObject_UpdateOffSwitch(void *arg) {
     MapObject *object;
 
-    if (((D_0038CC74[0] >> 1) & 1) && (object = D_00420D50[0]) == arg) {
+    if (((game_status_flags[0] >> 1) & 1) && (object = faced_object[0]) == arg) {
         MAP_OBJECT_BYTES(object)->step = 2;
         object->state_flags |= 0x20000;
     }
@@ -81,7 +81,7 @@ void MapObject_UpdateSwitchTurningOn(MapObject *object) {
 void MapObject_UpdateOnSwitch(void *arg) {
     MapObject *object;
 
-    if (((D_0038CC74[0] >> 1) & 1) && (object = D_00420D50[0]) == arg) {
+    if (((game_status_flags[0] >> 1) & 1) && (object = faced_object[0]) == arg) {
         MAP_OBJECT_BYTES(object)->step = 4;
         object->state_flags &= ~0x20000;
     }
@@ -104,20 +104,20 @@ void MapObject_SetSwitchOn(MapObject *object, int turn_on) {
     int bit;
 
     if ((object->state_flags & 0x2FF00) == 0x100 && turn_on != 0) {
-        saved = D_00420D00.current;
+        saved = view_ray_status.current;
         bit = game_status.bit1;
         game_status.bit1 = 1;
-        D_00420D00.current = object;
+        view_ray_status.current = object;
         MapObject_UpdateOffSwitch(object);
-        D_00420D00.current = saved;
+        view_ray_status.current = saved;
         game_status.bit1 = bit;
     } else if ((object->state_flags & 0x2FF00) == 0x20300 && turn_on == 0) {
-        saved = D_00420D00.current;
+        saved = view_ray_status.current;
         bit = game_status.bit1;
         game_status.bit1 = 1;
-        D_00420D00.current = object;
+        view_ray_status.current = object;
         MapObject_UpdateOnSwitch(object);
-        D_00420D00.current = saved;
+        view_ray_status.current = saved;
         game_status.bit1 = bit;
     }
 }

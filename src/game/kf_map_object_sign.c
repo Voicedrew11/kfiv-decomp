@@ -2,8 +2,8 @@
 #include "kf_splash.h"
 #include "kf_message.h"
 
-extern u32 D_0038CC74[];
-extern void *D_00420D50[];
+extern u32 game_status_flags[];
+extern void *faced_object[];
 
 /* Step 0 of the things that are only examined (kind 0xB): takes the message (the definition's name when the
    source gives none) and, from the source, whether a sign picture goes with it; step 1. */
@@ -24,7 +24,7 @@ void MapObject_StartExaminable(MapObject *object) {
 void MapObject_UpdateExaminable(MapObject *object) {
     MapObject *used;
 
-    if (((D_0038CC74[0] >> 1) & 1) && (used = D_00420D50[0]) == object) {
+    if (((game_status_flags[0] >> 1) & 1) && (used = faced_object[0]) == object) {
         if (used->work[0] != 0) {
             MAP_OBJECT_BYTES(used)->step = 2;
         } else {
@@ -65,6 +65,6 @@ void MapObject_StartSymbolOfPassage(MapObject *object) {
     MAP_OBJECT_BYTES(object)->step = 1;
 }
 
-/* Does nothing: step 1 of the symbols of passage. */
-void func_00120ED8(void) {
+/* Does nothing: the step a symbol of passage stays in once started (the wands look for it). */
+void MapObject_IdleSymbolOfPassage(void) {
 }

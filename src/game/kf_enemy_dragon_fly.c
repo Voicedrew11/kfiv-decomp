@@ -17,7 +17,7 @@ extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn3D(char *);
 void EntityAi_StepState(void *);
@@ -36,7 +36,7 @@ int EntityAi_PickAttack(char *);
 float EntityMath_AngleDifference(float, float);
 void Vector_Copy(void *, void *);
 f32 EntityMath_Distance(f32 *, f32 *);
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixX(float *, float *, float);
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0RotMatrixZ(float *, float *, float);
@@ -124,7 +124,7 @@ static void DragonFly_Animate(Entity *entity) {
 static void DragonFly_Think(Entity *entity, s32 unknown) {
     f32 floor_distance;
 
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -449,7 +449,7 @@ static void DragonFly_Move(Entity *entity) {
         if (entity->move_command & 0x40) {
             amount += amount;
         }
-        sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, D_00431AF0, entity->model->rotation[2]);
+        sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
         sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
         sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
         Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);

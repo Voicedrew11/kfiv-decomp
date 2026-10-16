@@ -8,27 +8,27 @@ void Input_Update(void);
 
 extern PadState pad_state;
 extern PadState pad_states[2];
-extern u16 D_0044692C;
-extern u16 D_0044692E;
-extern u16 D_00446930;
-extern u16 D_00446932;
-extern u16 D_00446934;
-extern u16 D_00446936;
-extern s16 D_00446938;
-extern s16 D_0044693A;
-extern u16 D_0044693C;
-extern s16 D_0044693E;
-extern u16 D_00446940;
-extern s16 D_00446942;
-extern s16 D_00446944;
-extern s16 D_00446946;
+extern u16 forward_button;
+extern u16 back_button;
+extern u16 turn_right_button;
+extern u16 turn_left_button;
+extern u16 step_right_button;
+extern u16 step_left_button;
+extern u16 look_down_button;
+extern u16 look_up_button;
+extern u16 attack_button;
+extern u16 magic_button;
+extern u16 action_button;
+extern u16 menu_button;
+extern u16 shortcut_button;
+extern u16 pause_button;
 extern s8 sfx_volume[];
-extern u8 D_00446949;
-extern u8 D_0044694A;
-extern u8 D_0044694B;
-extern u8 D_0044694C;
-extern u8 D_0044694D;
-extern u8 D_0044694E;
+extern u8 rumble_active;
+extern u8 rumble_strength;
+extern u8 rumble_frames_left;
+extern u8 rumble_frames;
+extern u8 rumble_fades;
+extern u8 rumble_paused;
 
 /* Opens controller port 0 and clears both pad states. */
 void Input_Init(void) {
@@ -39,22 +39,22 @@ void Input_Init(void) {
     memset(pad_states, 0, 0x20);
 }
 
-/* Gives every control its default button (the pad masks D_0044692C to D_00446946). */
+/* Gives every control its default button (the pad masks forward_button to pause_button). */
 void Input_SetDefaultControls(void) {
-    D_0044692C = 0x10;
-    D_0044692E = 0x40;
-    D_00446930 = 0x20;
-    D_00446932 = 0x80;
-    D_00446934 = 0x800;
-    D_00446936 = 0x400;
-    D_00446938 = 0x100;
-    D_0044693A = 0x200;
-    D_0044693C = 0x8000;
-    D_0044693E = 0x1000;
-    D_00446940 = 0x4000;
-    D_00446942 = 0x2000;
-    D_00446944 = 1;
-    D_00446946 = 8;
+    forward_button = 0x10;
+    back_button = 0x40;
+    turn_right_button = 0x20;
+    turn_left_button = 0x80;
+    step_right_button = 0x800;
+    step_left_button = 0x400;
+    look_down_button = 0x100;
+    look_up_button = 0x200;
+    attack_button = 0x8000;
+    magic_button = 0x1000;
+    action_button = 0x4000;
+    menu_button = 0x2000;
+    shortcut_button = 1;
+    pause_button = 8;
 }
 
 /* Once a frame: reads the controller and runs the rumble that Input_StartRumble asked for. */
@@ -69,26 +69,26 @@ void Input_Update(void) {
     Input_ReadPort(0);
     pad_state = pad_states[0];
     if (sfx_volume[4] != 0) {
-        if (D_00446949 != 0 && D_0044694E == 0) {
-            if (D_0044694B != 0) {
-                if (D_0044694D != 0) {
-                    scaled = D_0044694A * D_0044694B / D_0044694C;
+        if (rumble_active != 0 && rumble_paused == 0) {
+            if (rumble_frames_left != 0) {
+                if (rumble_fades != 0) {
+                    scaled = rumble_strength * rumble_frames_left / rumble_frames;
                     if (scaled == 0) {
                         scaled = 1;
                     }
                     Pad_SetRumble(0, 0, (u8)scaled);
                 } else {
-                    Pad_SetRumble(0, 0, D_0044694A);
+                    Pad_SetRumble(0, 0, rumble_strength);
                 }
-                D_0044694B--;
+                rumble_frames_left--;
             } else {
                 Pad_SetRumble(0, 0, 0);
-                D_00446949 = 0;
+                rumble_active = 0;
             }
         }
-    } else if (D_00446949 != 0) {
+    } else if (rumble_active != 0) {
         Pad_SetRumble(0, 0, 0);
-        D_00446949 = 0;
+        rumble_active = 0;
     }
 }
 
@@ -163,24 +163,24 @@ void Input_StopRumble(void) {
    a nonzero last argument makes it fade out over the frames. */
 void Input_StartRumble(u8 strength, u8 duration, u8 delay) {
     if (sfx_volume[4] != 0) {
-        D_0044694A = strength;
-        D_00446949 = 1;
-        D_0044694B = D_0044694C = duration;
-        D_0044694D = delay;
+        rumble_strength = strength;
+        rumble_active = 1;
+        rumble_frames_left = rumble_frames = duration;
+        rumble_fades = delay;
     }
 }
 
 /* Holds the rumble (the game is paused): the motor stops and the request waits. */
 void Input_PauseRumble(void) {
-    if (D_0044694E == 0) {
-        D_0044694E = 1;
+    if (rumble_paused == 0) {
+        rumble_paused = 1;
         Pad_SetRumble(0, 0, 0);
     }
 }
 
 /* Lets a held rumble go on. */
 void Input_ResumeRumble(void) {
-    D_0044694E = 0;
+    rumble_paused = 0;
 }
 
 /* Empty. */

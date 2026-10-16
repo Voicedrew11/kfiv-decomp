@@ -19,7 +19,7 @@ extern s32 entity_type_handlers[][2];
 int Motion_Step(void *, int);
 // match: the callee is void, but retail keeps what it leaves in $2
 int Motion_BlendToPose(EntityModel *, f32);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -121,7 +121,7 @@ static void Beetle_Animate(Entity *entity) {
    for states 0 and 1; when it comes to state 0 from another state it starts the shared action
    EntityAi_StandOnce instead. */
 static void Beetle_Think(Entity *entity, s32 unknown) {
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -205,7 +205,7 @@ static void Beetle_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
@@ -362,7 +362,7 @@ static void Beetle_RangedAttack0(Entity *entity) {
             if (ENTITY_CONTROLLER(entity)->action_frames == 0) {
                 ENTITY_CONTROLLER(entity)->action_frames++;
             }
-            if (D_00446ED4 % ENTITY_CONTROLLER(entity)->action_frames != 0) {
+            if (frame_counter % ENTITY_CONTROLLER(entity)->action_frames != 0) {
                 EntityAi_LaunchShots(entity, unk3D8, entity->params->pitch_limit_deg, entity->params->yaw_limit_deg);
             }
         }

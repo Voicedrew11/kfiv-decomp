@@ -15,14 +15,14 @@
 void Sound_Init(void);
 /* Applies the stereo option (game_options[0]) to the driver: SoundDriver_SetStereo when set, else SoundDriver_SetMono */
 void Sound_ApplyStereoOption(void);
-/* Once a frame: starts the queued tagged sounds; then, unless a reverb change is pending (D_004470E2),
+/* Once a frame: starts the queued tagged sounds; then, unless a reverb change is pending (reverb_change_pending),
    updates the tagged channels and the map's reverb volume and sends the frame's note commands */
 void Sound_Update(void);
 /* Sets the BGM voice's volume (SoundDriver_SetVoiceVolume) to level, kept within 0..0x7F: the music volume option */
 void Sound_SetBgmVolume(s32 level);
 /* Sets one volume (SoundDriver_SetVoiceVolume) on the voices of the five sound banks and on voices 6 to 9 */
 void Sound_SetBankVolumes(int level);
-/* Sets the BGM fade level (D_00446860) to the music volume option (music_volume) */
+/* Sets the BGM fade level (bgm_fade_level) to the music volume option (music_volume) */
 void Sound_SyncBgmLevel(void);
 /* Starts a tracked sound with the player of `kind` in tracked_sound_players (0 Sound_PlayTracked, 1
    Sound_PlayTrackedAt) */
@@ -46,7 +46,7 @@ void Sound_StopVoice(s8 slot);
 s32 Sound_PlayMenu(s32 sound);
 /* Plays a sound of the sw bank on voice 2 */
 void Sound_PlaySw(int mode);
-/* Plays a map bank sound at a point (while D_004470E1 is set): the volume falls off with the distance from
+/* Plays a map bank sound at a point (while map_sounds_enabled is set): the volume falls off with the distance from
    the player (silent at 2500), panned by side, with a random bend */
 int Sound_PlayMapAt(u8 sound, void *position);
 /* Plays a footstep sound (0x20..0x27) from the se_com bank (below 0x22, 0x24, 0x25) or the map bank, with a
@@ -59,17 +59,17 @@ int Sound_PlayMap(int value);
 /* Plays a se_com sound at a point within range: the volume falls off linearly, panned by where the point
    lies from the player's facing; returns the voice */
 int Sound_PlayCommonAt(float range, int sound, float *position);
-/* Plays a map bank sound at volume (scaled by the sound option) with a random bend; -1 while D_004470E1 is
+/* Plays a map bank sound at volume (scaled by the sound option) with a random bend; -1 while map_sounds_enabled is
    clear */
 int Sound_PlayMapVolume(u8 sound, int volume);
 /* Plays a map bank sound at a point within range, the volume falling off by mode (0 and 6 linear, 1 and 7
    steep, 2 and 8 round), panned; a random bend for modes below 3 */
 int Sound_PlayMapAtRange(u8 sound, u8 mode, float *position, float range);
 /* Starts a tagged sound (channel kind 0x63, no position) of the map bank at volume; queued in tagged_requests
-   while D_004470E1 is clear */
+   while map_sounds_enabled is clear */
 int Sound_StartTagged(s8 sound, u8 voice, int volume);
 /* Starts a tagged sound at a point, heard within range (SoundChannel.volume); queued in tagged_requests while
-   D_004470E1 is clear */
+   map_sounds_enabled is clear */
 s32 Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg *position);
 /* As Sound_StartTaggedAt for a sound along the segment origin..target */
 s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, Vector4Arg *target, f32 volume);
@@ -109,7 +109,7 @@ int Sound_BgmFadeIn(int unused, int mode);
 /* BGM load step: frees the last BGM's reverb slot and stores the reverb settings of BGM cue_index (none for 0x12) */
 int Sound_BgmStartCue(void *context, int cue_index);
 /* BGM load step: unless the bgm is 0x12, waits for the driver and sends the BGM's reverb settings, flagging
-   the change (D_004470E2) */
+   the change (reverb_change_pending) */
 int Sound_BgmApplyReverb(void *actor, int mode);
 /* Reads the file request->name formats with the current map's unk70 into a new buffer of the sound heap, a
    step a call; 1 when done. Nothing calls it */
@@ -120,7 +120,7 @@ int Sound_BgmLoadVoice(IopLoadJob *job);
 int Sound_BgmFreeSampleBuffer(IopLoadJob *job);
 /* Loads BGM bgm a step a call while pending; returns 0 once it is the loaded one */
 int Sound_LoadBgm(int bgm, int pending);
-/* Whether the BGM load may be set aside for another sound load (D_0044685C) */
+/* Whether the BGM load may be set aside for another sound load (bgm_load_can_yield) */
 int Sound_BgmLoadCanYield(void);
 /* Load step (Sound_RunFileLoad): reads the file job->name into the job's first buffer, waiting for it */
 int Sound_ReadJobFile(LoadJob *job);
@@ -162,7 +162,7 @@ int Sound_EntityBankFreeSampleBuffer(SoundJob *job);
 /* Loads the sound bank of the entity type file just read into voice index + 6, a step a call; 0 and the
    voice in *voice_out once done, else 1 */
 int Sound_LoadEntityBankStep(int args_addr, int index, int voice_out);
-/* Plays sound from bank with the falloff player kind of D_0043EE30 */
+/* Plays sound from bank with the falloff player kind of falloff_sound_players */
 void Sound_PlayFalloff(int sound, int kind, int bank);
 /* Map bank load step: does nothing but move on */
 s32 Sound_MapBankNoOp(void);
@@ -170,13 +170,13 @@ s32 Sound_MapBankNoOp(void);
 int Sound_MapBankLoadVoice(SoundJob *job);
 /* Map bank load step: once the transfer to sound memory is done, frees the IOP copy of the samples */
 int Sound_MapBankFreeSampleBuffer(SoundJob *job);
-/* Map bank load step: frees the last map's reverb slot and stores the map's reverb settings (D_0043EE78) */
+/* Map bank load step: frees the last map's reverb slot and stores the map's reverb settings (map_reverb_cue_indices) */
 int Sound_MapBankAddReverb(void);
-/* Map bank load step: once the upload is done, sends the map's reverb settings and sets D_004470E1 (map
+/* Map bank load step: once the upload is done, sends the map's reverb settings and sets map_sounds_enabled (map
    sounds may start) */
 int Sound_MapBankApplyReverb(void);
 /* Map bank load step: the first time after Sound_Init moves on to the reverb steps; after that lets map
-   sounds start (D_004470E1) and ends the load */
+   sounds start (map_sounds_enabled) and ends the load */
 int Sound_MapBankFinishUnlessFirst(void);
 /* Loads the sound bank of a map slot (MapSlot.sound_bank) a step a call while pending; returns 0 once it is done */
 int Sound_LoadMapBankStep(int slot_addr, int pending);

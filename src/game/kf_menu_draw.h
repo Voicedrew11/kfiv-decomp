@@ -150,7 +150,7 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
 /* Copies out a texture's TEX0 word and, for a palettized PSM, the word after its CLUT. */
 void MenuTexture_GetRegisters(TextureHeader *tex, u64 *tex0_out, u64 *trailer_out);
 
-/* Builds the menus' buttons for this frame (D_00446DE8), directions as repeating steps; returns them. */
+/* Builds the menus' buttons for this frame (menu_buttons), directions as repeating steps; returns them. */
 s16 MenuPad_Update(void);
 
 /* Writes one GS register and waits for it; returns what sceGsSyncPath says. */

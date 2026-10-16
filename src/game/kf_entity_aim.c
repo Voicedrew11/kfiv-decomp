@@ -7,12 +7,12 @@
 #include "kf_map.h"
 
 int rand(void);
-extern EntityRangeWeights D_0043EB68;
+extern EntityRangeWeights near_point_range_weights;
 float sinf(float);
 float cosf(float);
 void Vector_Add(void *, void *, void *);
 extern PlayerState player_state;
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 void sceVu0RotMatrixY(float *, float *, float);
 void sceVu0ApplyMatrix(float *, int *, float *);
 void Vector_Scale(float *, float *, float);
@@ -29,11 +29,11 @@ double sqrt(double);
 float atan2f(float, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 float sqrtf(float);
-extern int D_00446770;
-extern s32 D_004467A8[2];
-extern s32 D_004467B8[2];
+extern int current_map_slot;
+extern s32 map_objects_started[2];
+extern s32 map_object_counts[2];
 extern MapObject map_slot_objects[];
-extern MapObject D_003AFA30[];
+extern MapObject map_slot1_objects[];
 void Vector_Copy(void *, void *);
 void Collision_HitRayObj(MapObject *, f32 *, f32 *, f32);
 extern MapSlot map_slots[];
@@ -52,9 +52,9 @@ static inline f32 wrap_angle(f32 angle) {
 
 /* the objects of the current map (map 0) or the other loaded one (map 1), which the game inlines */
 static inline MapObject *map_objects(s32 map) {
-    if (D_004467A8[D_00446770 == map ? 0 : 1] != 0) {
-        if (D_00446770 != map) {
-            return D_003AFA30;
+    if (map_objects_started[current_map_slot == map ? 0 : 1] != 0) {
+        if (current_map_slot != map) {
+            return map_slot1_objects;
         }
         return map_slot_objects;
     }
@@ -62,8 +62,8 @@ static inline MapObject *map_objects(s32 map) {
 }
 
 static inline s32 map_object_count(s32 map) {
-    if (D_004467A8[D_00446770 == map ? 0 : 1] != 0) {
-        return D_004467B8[D_00446770 == map ? 0 : 1];
+    if (map_objects_started[current_map_slot == map ? 0 : 1] != 0) {
+        return map_object_counts[current_map_slot == map ? 0 : 1];
     }
     return 0;
 }
@@ -83,7 +83,7 @@ void EntityPoint_PickNearWithHeight(f32 *point, f32 range, f32 height_range, voi
 /* Picks a random point within `range` of `centre`. The nearer half of the range is twice as likely while
    `position` is in the outer half, and the other way round. */
 void EntityPoint_PickNear(float range, void *point_arg, void *centre, void *position) {
-    EntityRangeWeights table = D_0043EB68;
+    EntityRangeWeights table = near_point_range_weights;
     f32 *point = point_arg;
     f32 distance_out[4];
     f32 angle;
@@ -134,7 +134,7 @@ void EntityPoint_PickNear(float range, void *point_arg, void *centre, void *posi
 
 /* EntityPoint_PickNear for a caller that already knows how far from `centre` it is. */
 void EntityPoint_PickNearFromDistance(f32 *point, f32 *centre, f32 distance, f32 range) {
-    EntityRangeWeights table = D_0043EB68;
+    EntityRangeWeights table = near_point_range_weights;
     f32 angle;
     s32 total;
     s32 roll;
@@ -179,7 +179,7 @@ void EntityAim_PredictPlayerPosition(f32 *point, s32 frames) {
     offset[1] = player_state.fall_speed;
     offset[2] = player_state.walk_speed;
     offset[3] = 0.0f;
-    sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, D_00431AF0, player_state.rotation.y);
+    sceVu0RotMatrixY(MODEL_MATRIX_SCRATCH, identity_matrix, player_state.rotation.y);
     sceVu0ApplyMatrix(offset, (int *)MODEL_MATRIX_SCRATCH, offset);
     Vector_Scale(offset, offset, frames);
     Vector_Add(point, &player_state, offset);
@@ -194,13 +194,13 @@ s32 Bone_MultiplyPathTo(void *part_arg, void *target_arg, void *matrix) {
     s32 found;
 
     if (part == target) {
-        sceVu0TransMatrix(local, D_00431AF0, target->position);
+        sceVu0TransMatrix(local, identity_matrix, target->position);
         Matrix_Multiply(matrix, matrix, local);
         return TRUE;
     }
     if (part->child != NULL && Bone_MultiplyPathTo(part->child, target, matrix) != 0) {
         if ((s32)(MODEL_PART_WORD(part) >> 32) & 0x7F) {
-            sceVu0RotMatrixX(local, D_00431AF0, wrap_angle(part->rotation_x));
+            sceVu0RotMatrixX(local, identity_matrix, wrap_angle(part->rotation_x));
             sceVu0RotMatrixZ(local, local, wrap_angle(part->rotation_z));
             sceVu0RotMatrixY(local, local, wrap_angle(part->rotation_y));
             sceVu0TransMatrix(local, local, part->position);
@@ -220,7 +220,7 @@ s32 Bone_MultiplyPathTo(void *part_arg, void *target_arg, void *matrix) {
 /* The matrix of a part of the model in the world (the parts' transforms, then the model's); FALSE: the model
    has no such part. Nothing calls it. */
 s32 Bone_GetMatrix(ModelInstance *model, void *bone, f32 *matrix) {
-    sceVu0CopyMatrix(matrix, D_00431AF0);
+    sceVu0CopyMatrix(matrix, identity_matrix);
     if (Bone_MultiplyPathTo(model->parts, bone, matrix) == 0) {
         return FALSE;
     }
@@ -235,7 +235,7 @@ void Bone_LookAtMatrix(f32 *target, f32 *origin, s32 up_sign, f32 *matrix, f32 s
     f32 *forward = &matrix[8];
     f32 *side;
 
-    sceVu0CopyMatrix(matrix, D_00431AF0);
+    sceVu0CopyMatrix(matrix, identity_matrix);
     Vector_Subtract(vector, target, origin);
     Vector_Normalize(forward, vector);
     // match: the whole vector is set in both arms
@@ -268,12 +268,12 @@ s32 Bone_LookAngles(ModelInstance *model, void *part, f32 *target, f32 *limits, 
     f32 look[16];
     f32 part_matrix[16];
 
-    sceVu0CopyMatrix(part_matrix, D_00431AF0);
+    sceVu0CopyMatrix(part_matrix, identity_matrix);
     if (Bone_MultiplyPathTo(model->parts, part, part_matrix) == 0) {
         return FALSE;
     }
     Matrix_Multiply(part_matrix, model->model_matrix, part_matrix);
-    sceVu0CopyMatrix(look, D_00431AF0);
+    sceVu0CopyMatrix(look, identity_matrix);
     Vector_Subtract(vector, &part_matrix[12], target);
     if (limits != NULL) {
         Bone_ClampDirection(vector, limits, model->rotation.y);
@@ -309,7 +309,7 @@ static s32 Bone_ClampDirection(f32 *direction, f32 *limits, f32 heading) {
     f32 length;
     s32 clamped = FALSE;
 
-    sceVu0RotMatrixY(matrix, D_00431AF0, -heading);
+    sceVu0RotMatrixY(matrix, identity_matrix, -heading);
     Vector_ApplyMatrix(local, matrix, direction);
     length = sqrt(local[0] * local[0] + local[2] * local[2]);
     pitch = atan2f(-local[1], length);
@@ -331,7 +331,7 @@ static s32 Bone_ClampDirection(f32 *direction, f32 *limits, f32 heading) {
         clamped = TRUE;
     }
     if (clamped) {
-        sceVu0RotMatrixX(matrix, D_00431AF0, pitch);
+        sceVu0RotMatrixX(matrix, identity_matrix, pitch);
         sceVu0RotMatrixY(matrix, matrix, yaw);
         sceVu0RotMatrixY(matrix, matrix, heading);
         length = sqrt(direction[0] * direction[0] + direction[1] * direction[1] + direction[2] * direction[2]);
@@ -473,7 +473,7 @@ s32 EntitySight_EntityInWay(Entity *entity) {
     Entity *other;
     s64 flags;
 
-    other = D_004467E0;
+    other = active_entities_head;
     while (other != NULL) {
         flags = other->flags;
         if (((s32)(flags >> 1) & 1) && ((s32)(flags >> 2) & 3) < 2 && other != entity) {
@@ -497,7 +497,7 @@ s32 EntitySight_PropInWay(Entity *entity) {
     s32 hit;
 
     // match: index first, or the two address registers swap
-    player_record = &((MapRecord *)(D_00446770 + map_slots)->records)[player_state.map_index];
+    player_record = &((MapRecord *)(current_map_slot + map_slots)->records)[player_state.map_index];
     Vector_Copy(position, entity->model->position);
     position[1] -= entity->collision_height * 0.5f;
     Vector_Copy(target, &player_state);

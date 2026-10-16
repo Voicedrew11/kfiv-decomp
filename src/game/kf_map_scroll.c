@@ -4,7 +4,7 @@
 #include "kf_packet.h"
 
 extern MapSlot map_slots[];
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 
 void Packet_AppendToChain(u32 *, u32 *);
 u32 *Packet_Alloc(int);
@@ -73,7 +73,7 @@ void MapScroll_UpdateCopy(int map, int mode) {
     if (slot->loaded != 0) {
         for (i = 15; i >= 0; i--, texture++, pair++) {
             if (texture->base != 0 && texture->mode == mode &&
-                (texture->period == 0 || D_00446ED4 % texture->period == 0)) {
+                (texture->period == 0 || frame_counter % texture->period == 0)) {
                 width = texture->width;
                 base = texture->base;
                 format = texture->format;
@@ -200,7 +200,7 @@ void MapScroll_UpdateDraw(int map, int mode) {
             if (texture->target_base != 0 && texture->mode == mode) {
                 width = texture->width << 4;
                 height = texture->height << 4;
-                if (texture->period == 0 || D_00446ED4 % texture->period == 0) {
+                if (texture->period == 0 || frame_counter % texture->period == 0) {
                     if (texture->step_x != 0) {
                         pair->unk00 += texture->step_x;
                         if (pair->unk00 < 0) {

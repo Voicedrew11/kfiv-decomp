@@ -65,31 +65,31 @@ void Player_AddItem(int);
 void *memset(void *, int, u32);
 
 extern GameDefinition item_name_defs[380];
-extern s32 D_004469D0;
-extern ItemNode *D_004469D4;            /* the items lying in the maps, a list */
-extern ItemNode *D_004469D8;            /* the one being picked up */
-extern s32 D_00447198;
-extern f32 D_0044719C;
-extern s32 D_004471A4;
+extern s32 item_drop_counter;
+extern ItemNode *lying_items;            /* the items lying in the maps, a list */
+extern ItemNode *pickup_item;            /* the one being picked up */
+extern s32 pickup_no_put_back;
+extern f32 pickup_pose_scale;
+extern s32 pickup_step;
 extern MapSlot map_slots[];
 extern DroppedItemRecord dropped_item_records[0x80][16];
-extern MapItemDef *D_004469B8[2];
-extern s16 *D_004469C0[2];
-extern s32 D_00447190[2];
-extern u8 *D_004469C8[2];
-extern int D_00446770;
+extern MapItemDef *map_item_defs[2];
+extern s16 *map_item_model_kinds[2];
+extern s32 map_fixed_item_counts[2];
+extern u8 *map_item_group_thresholds[2];
+extern int current_map_slot;
 extern u8 map_item_pickup_counts[0x80][0x40];
-extern const Vector4Arg D_0043F610;
+extern const Vector4Arg enemy_drop_scale;
 extern MapLoadState map_load_state;
-extern int D_0038CC80[3];
+extern int suspended_updates[3];
 extern MapDrawState map_draw_state;
-extern f32 D_00431AF0[16];
+extern f32 identity_matrix[16];
 extern GameStatus game_status;
 extern PlayerState player_state;
-extern EventRunner D_00420D00;
-extern f32 D_004471A8;
-extern int D_004471AC;
-extern int D_004471B0;
+extern EventRunner view_ray_status;
+extern f32 pickup_view_pitch;
+extern int pickup_move_frames;
+extern int pickup_frames_left;
 extern float player_rotation[];
 extern u16 pad_pressed[];
 extern u8 item_counts[];
@@ -101,21 +101,21 @@ extern u8 trade_stock_5[];
 extern ItemCommonDef item_common_defs[];
 
 /* The per-map item blocks: nodes, models and the model data behind them, one set for each map. */
-static ItemModelSource D_0057E040[2][32];   /* 0x57E040 where the model and texture of each item kind lie */
-static ItemNode D_0057E240[2][64];          /* 0x57E240 the fixed items of the map */
-static ItemNode D_00580040[2][16];          /* 0x580040 the dropped items of the map */
-static ItemNode D_005807C0[2][32];          /* 0x5807C0 the items the player may pick up */
-static ModelInstance D_005816C0[2][64];     /* 0x5816C0 the models of the fixed items */
-static ModelInstance D_0058F6C0[2][16];     /* 0x58F6C0 the models of the dropped items */
-static ModelInstance D_00592EC0[2][32];     /* 0x592EC0 the models of the pickup items */
-static char D_00599EC0[2][64][0x200];       /* 0x599EC0 the model data of the fixed items */
-static char D_005A9EC0[2][16][0x200];       /* 0x5A9EC0 the model data of the dropped items */
-static char D_005ADEC0[2][32][0x200];       /* 0x5ADEC0 the model data of the pickup items */
-static s8 D_005B5EC0[2][0x100];             /* 0x5B5EC0 the node of each item slot, -1 for none */
-static f32 D_005B60C0[4];                   /* 0x5B60C0 where the item being picked up is */
-static f32 D_005B60D0[4];                   /* 0x5B60D0 its rotation */
-static f32 D_005B60E0[4];                   /* 0x5B60E0 where it is being taken to */
-static f32 D_005B60F0[4];                   /* 0x5B60F0 its speed */
+static ItemModelSource item_model_sources[2][32];   /* 0x57E040 where the model and texture of each item kind lie */
+static ItemNode fixed_items[2][64];          /* 0x57E240 the fixed items of the map */
+static ItemNode dropped_items[2][16];          /* 0x580040 the dropped items of the map */
+static ItemNode object_items[2][32];          /* 0x5807C0 the items the player may pick up */
+static ModelInstance fixed_item_models[2][64];     /* 0x5816C0 the models of the fixed items */
+static ModelInstance dropped_item_models[2][16];     /* 0x58F6C0 the models of the dropped items */
+static ModelInstance object_item_models[2][32];     /* 0x592EC0 the models of the pickup items */
+static char fixed_item_model_data[2][64][0x200];       /* 0x599EC0 the model data of the fixed items */
+static char dropped_item_model_data[2][16][0x200];       /* 0x5A9EC0 the model data of the dropped items */
+static char object_item_model_data[2][32][0x200];       /* 0x5ADEC0 the model data of the pickup items */
+static s8 fixed_item_by_id[2][0x100];             /* 0x5B5EC0 the node of each item slot, -1 for none */
+static f32 pickup_start_position[4];                   /* 0x5B60C0 where the item being picked up is */
+static f32 pickup_start_rotation[4];                   /* 0x5B60D0 its rotation */
+static f32 pickup_target_position[4];                   /* 0x5B60E0 where it is being taken to */
+static f32 pickup_velocity[4];                   /* 0x5B60F0 its speed */
 
 /* Resets the item code: no items lying about, none being picked up, both map slots' tables cleared; and
    every item definition whose state is 0 gets 1. */
@@ -123,12 +123,12 @@ void MapItem_Init(void) {
     LevelDef *def;
     s32 i;
 
-    D_004469D4 = NULL;
-    D_0044719C = 1.0f;
-    D_004469D8 = NULL;
-    D_00447198 = 0;
-    D_004471A4 = 0;
-    D_004469D0 = 0;
+    lying_items = NULL;
+    pickup_pose_scale = 1.0f;
+    pickup_item = NULL;
+    pickup_no_put_back = 0;
+    pickup_step = 0;
+    item_drop_counter = 0;
     MapItem_ClearMap(0);
     MapItem_ClearMap(1);
     def = (LevelDef *)item_name_defs;
@@ -151,7 +151,7 @@ void MapItem_InitMap(int map) {
     char *model_data;
     char *cursor;
     MapSlot *slot = &map_slots[map];
-    s16 *kinds = D_004469C0[map];
+    s16 *kinds = map_item_model_kinds[map];
     MapHeader *header;
     MapItemDef *def;
     ItemNode *node;
@@ -163,19 +163,19 @@ void MapItem_InitMap(int map) {
 
     memset(offset, 0, sizeof(offset));
     header = slot->header;
-    D_00447190[map] = header->item_count;
+    map_fixed_item_counts[map] = header->item_count;
     cursor = (char *)header + header->item_models_offset;
     for (i = 0; i < 32 && kinds[i] >= 0; i++) {
-        D_0057E040[map][i].model_data = cursor;
+        item_model_sources[map][i].model_data = cursor;
         cursor += *(s32 *)cursor;
-        D_0057E040[map][i].texture = cursor;
+        item_model_sources[map][i].texture = cursor;
         cursor += *(s32 *)cursor;
     }
-    count = D_00447190[map];
-    def = D_004469B8[map];
-    node = D_0057E240[map];
+    count = map_fixed_item_counts[map];
+    def = map_item_defs[map];
+    node = fixed_items[map];
     for (i = 0; i < count; i++, def++, node++) {
-        D_005B5EC0[map][def->slot_id] = i;
+        fixed_item_by_id[map][def->slot_id] = i;
         definition = &item_name_defs[def->item];
         source = MapItem_FindModelSource(map, definition->model_file_number);
         if (source != NULL) {
@@ -184,9 +184,9 @@ void MapItem_InitMap(int map) {
             node->item = def->item;
             node->record = NULL;
             node->index = i;
-            node->model = &D_005816C0[map][i];
+            node->model = &fixed_item_models[map][i];
             model_data = source->model_data;
-            cursor = D_00599EC0[map][i];
+            cursor = fixed_item_model_data[map][i];
             Model_SetUpPosed(node->model, &model_data, &cursor);
             Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
             Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
@@ -221,15 +221,15 @@ void MapItem_InitMap(int map) {
    for it, then one per item against its own chance. */
 void MapItem_RollFixedItems(int map) {
     u8 rolls[16];
-    u8 *thresholds = D_004469C8[map];
+    u8 *thresholds = map_item_group_thresholds[map];
     s32 i;
     ItemNode *node;
 
     for (i = 0; i < 16; i++) {
         rolls[i] = rand() * 100.0f * 4.656613e-10f;
     }
-    node = D_0057E240[map];
-    for (i = 0; i < D_00447190[map]; i++, node++) {
+    node = fixed_items[map];
+    for (i = 0; i < map_fixed_item_counts[map]; i++, node++) {
         if (rolls[node->def->group] < thresholds[node->def->group]) {
             if ((s32)(rand() * 100.0f * 4.656613e-10f) < node->def->chance) {
                 MapItem_PlaceFixed(map, i);
@@ -242,7 +242,7 @@ void MapItem_RollFixedItems(int map) {
 void MapItem_UnloadMap(int map) {
     ItemNode *node;
 
-    node = D_004469D4;
+    node = lying_items;
     while (node != 0) {
         if ((node->flags & 1) == map) {
             node = MapItem_Unlink(node);
@@ -259,15 +259,15 @@ void MapItem_MoveMap(int map, f32 *offset) {
     s32 i;
     ItemNode *node;
 
-    for (i = 0; i < D_00447190[map]; i++) {
-        if (D_0057E240[map][i].def != NULL) {
-            Vector_Add(D_0057E240[map][i].def, D_0057E240[map][i].def, offset);
+    for (i = 0; i < map_fixed_item_counts[map]; i++) {
+        if (fixed_items[map][i].def != NULL) {
+            Vector_Add(fixed_items[map][i].def, fixed_items[map][i].def, offset);
         }
-        if (D_0057E240[map][i].model != NULL) {
-            Vector_Add(&D_0057E240[map][i].model->position, &D_0057E240[map][i].model->position, offset);
+        if (fixed_items[map][i].model != NULL) {
+            Vector_Add(&fixed_items[map][i].model->position, &fixed_items[map][i].model->position, offset);
         }
     }
-    for (node = D_004469D4; node != NULL; node = node->next) {
+    for (node = lying_items; node != NULL; node = node->next) {
         if ((node->flags & 1) == map && node->def == NULL) {
             // match: the same lines twice (one copy in the binary) give `offset` its saved register
             if (node->record != NULL) {
@@ -285,10 +285,10 @@ void MapItem_MoveMap(int map, f32 *offset) {
 
 /* Returns the current map's fixed item with this id, or NULL when the id is invalid or the item has no model. */
 void *MapItem_GetFixedById(int slot) {
-    int index = MapItem_GetFixedIndex(D_00446770, slot);
+    int index = MapItem_GetFixedIndex(current_map_slot, slot);
 
-    if (index >= 0 && D_0057E240[D_00446770][index].model != NULL) {
-        return &D_0057E240[D_00446770][index];
+    if (index >= 0 && fixed_items[current_map_slot][index].model != NULL) {
+        return &fixed_items[current_map_slot][index];
     }
     return NULL;
 }
@@ -299,11 +299,11 @@ int MapItem_PlaceFixed(int map, int index) {
     ItemNode *node;
     u8 tag = map_slots[map].tag;
 
-    if (index < 0 || index >= D_00447190[map]) {
+    if (index < 0 || index >= map_fixed_item_counts[map]) {
         return 0;
     }
-    node = &D_0057E240[map][index];
-    if (node->prev != NULL || node->next != NULL || node == D_004469D4 || node->model == NULL) {
+    node = &fixed_items[map][index];
+    if (node->prev != NULL || node->next != NULL || node == lying_items || node->model == NULL) {
         return 0;
     }
     if (node->def->required_flag != 0 && map_item_pickup_counts[tag][node->index] >= node->def->required_flag) {
@@ -335,7 +335,7 @@ s32 MapItem_DropFromEnemy(Entity *entity) {
 
     memset(rotation, 0, sizeof(rotation));
     rotation[3] = 1.0f;
-    scale = D_0043F610;
+    scale = enemy_drop_scale;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 47)) {
         // match: the low 16 bits of the 64-bit field, copied before the test
         item = value = *(u16 *)&entity->spawn_info->spawn_flags;
@@ -371,7 +371,7 @@ s32 MapItem_DropFromEnemy(Entity *entity) {
     if (!Collision_FindFloorBelow(2000.0f, position)) {
         return FALSE;
     }
-    if (entity->group_id == D_00446770) {
+    if (entity->group_id == current_map_slot) {
         offset[0] = offset[1] = offset[2] = offset[3] = 0.0f;
     } else {
         Vector_Copy(offset, &map_load_state.position);
@@ -381,7 +381,7 @@ s32 MapItem_DropFromEnemy(Entity *entity) {
     return value;
 }
 
-/* Lays a dropped item down in a map: takes a free node of the 16 at D_00580040, or the oldest
+/* Lays a dropped item down in a map: takes a free node of the 16 at dropped_items, or the oldest
    one whose priority is not above this one's, sets up its model and fills in the record that is
    saved for it. `order` is the record's own when it is put back from a save, 0xFFFFFFFF for a
    new drop. Returns FALSE when the player may not have another of the item or nothing is free. */
@@ -409,7 +409,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
         return FALSE;
     }
     index = -1;
-    node = D_00580040[map];
+    node = dropped_items[map];
     for (i = 0; i < 16; i++, node++) {
         if (node->record == NULL) {
             index = i;
@@ -418,7 +418,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     }
     if (index < 0) {
         oldest = NULL;
-        node = D_00580040[map];
+        node = dropped_items[map];
         for (i = 0; i < 16; i++, node++) {
             if ((s32)ITEM_NODE_BITS(node)->priority <= priority) {
                 if (oldest == NULL || (u32)oldest->record->order > (u32)node->record->order) {
@@ -435,7 +435,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     }
     node->item = item;
     node->def = NULL;
-    node->model = &D_0058F6C0[map][index];
+    node->model = &dropped_item_models[map][index];
     node->record = &dropped_item_records[map_slots[map].tag][index];
     ITEM_NODE_BITS(node)->map = map;
     Vector_Copy(&node->model->position, position);
@@ -446,7 +446,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     node->unk28 = floor_y;
     node->unk30 = 0.0f;
     model_data = source->model_data;
-    buffer = D_005A9EC0[map][index];
+    buffer = dropped_item_model_data[map][index];
     Model_SetUpPosed(node->model, &model_data, &buffer);
     Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
     Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
@@ -454,7 +454,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
     node->model->texture_data = (int)source->texture;
     TextureTable_SetBasePointers(source->texture, 0x3B40, 0x3EC0);
     if (order == 0xFFFFFFFF) {
-        order = D_004469D0++;
+        order = item_drop_counter++;
     }
     node->record->position[0] = position[0] + offset[0];
     node->record->position[1] = floor_y + offset[1];
@@ -474,7 +474,7 @@ s32 MapItem_Drop(s32 map, s32 item, s32 priority, f32 *position, f32 floor_y, f3
 }
 
 /* Puts an item into a map for a map object (a chest's contents, say): takes a free node of the 32 at
-   D_005807C0 and sets up its model. Returns NULL when the player may not have another of the item, when
+   object_items and sets up its model. Returns NULL when the player may not have another of the item, when
    the object already has one out, or when no node or no model for the item is there. */
 ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotation, void *scale, void *object) {
     char *sources[2];
@@ -492,13 +492,13 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     if (!MapItem_UniqueNotDropped(item)) {
         return NULL;
     }
-    node = D_005807C0[map];
+    node = object_items[map];
     for (i = 0; i < 32; i++, node++) {
         if ((void *)node->unk08 == object) {
             return NULL;
         }
     }
-    node = D_005807C0[map];
+    node = object_items[map];
     for (i = 0; i < 32 && node->unk08 != 0; i++, node++) {
     }
     if (i >= 32) {
@@ -508,7 +508,7 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     if (source == NULL) {
         return NULL;
     }
-    model = &D_00592EC0[map][i];
+    model = &object_item_models[map][i];
     ITEM_NODE_MAP_BIT(node)->map = map;
     node->item = item;
     node->unk08 = (s32)object;
@@ -517,7 +517,7 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
     Vector_Copy(&node->model->rotation, rotation);
     Vector_Copy(&node->model->scale_x, scale);
     sources[0] = source->model_data;
-    sources[1] = D_005ADEC0[map][i];
+    sources[1] = object_item_model_data[map][i];
     Model_SetUpPosed(node->model, &sources[0], &sources[1]);
     Model_SetTextureBase((char *)node->model, 0x3B40, 0x3EC0);
     Model_SetVertexColour(node->model, 0xFF, 0xFF, 0xFF, -1);
@@ -532,7 +532,7 @@ ItemNode *MapItem_PutOutForObject(int map, int item, void *position, void *rotat
 ItemNode *MapItem_FindForObject(int object) {
     ItemNode *node;
 
-    for (node = D_004469D4; node != NULL; node = node->next) {
+    for (node = lying_items; node != NULL; node = node->next) {
         if (node->unk08 == object) {
             return node;
         }
@@ -547,8 +547,8 @@ void MapItem_UpdateFalling(void) {
     int flags;
     float height;
 
-    node = D_004469D4;
-    if (!(D_0038CC80[0] & 0x10) && node != 0) {
+    node = lying_items;
+    if (!(suspended_updates[0] & 0x10) && node != 0) {
         do {
             if (node->record != 0) {
                 flags = node->flags;
@@ -585,12 +585,12 @@ void MapItem_DrawAll(int with_picked) {
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(0x47, 0x5000D);
     Packet_EndGsRegisters();
-    for (node = D_004469D4; node != NULL; node = node->next) {
+    for (node = lying_items; node != NULL; node = node->next) {
         node->map_record = Map_FindRecordAtInSlot((CameraState *)&node->model->position, 0.0f, node->flags & 1);
         if (node->map_record == NULL) {
             continue;
         }
-        if (node == D_004469D8 && with_picked == 0) {
+        if (node == pickup_item && with_picked == 0) {
             continue;
         }
         Vector_Scale(scale, &node->model->scale_x, 1.0f);
@@ -615,12 +615,12 @@ static inline f32 wrap_angle(f32 angle) {
 }
 
 /* Draws the item being picked up, over everything else: each part's own offset and turn are scaled by
-   D_0044719C, so that the model folds flat while it is held up. Nothing is drawn when hidden is set. */
+   pickup_pose_scale, so that the model folds flat while it is held up. Nothing is drawn when hidden is set. */
 void MapItem_DrawPicked(int hidden) {
     f32 scale[4];
     f32 offset[4];
     f32 turn[4];
-    ItemNode *node = D_004469D8;
+    ItemNode *node = pickup_item;
     ModelPart *part;
     s32 count;
     s32 i;
@@ -642,9 +642,9 @@ void MapItem_DrawPicked(int hidden) {
     count = node->model->part_count;
     part = node->model->parts;
     for (; i < count; i++, part++) {
-        Vector_Scale(offset, part->position, D_0044719C);
-        Vector_Scale(turn, &part->rotation_x, D_0044719C);
-        sceVu0CopyMatrix(part, D_00431AF0);
+        Vector_Scale(offset, part->position, pickup_pose_scale);
+        Vector_Scale(turn, &part->rotation_x, pickup_pose_scale);
+        sceVu0CopyMatrix(part, identity_matrix);
         PART_MATRIX(part)[0][0] = part->scale[0];
         PART_MATRIX(part)[1][1] = part->scale[1];
         PART_MATRIX(part)[2][2] = part->scale[2];
@@ -663,15 +663,15 @@ void MapItem_DrawPicked(int hidden) {
 
 /* Makes node the one being picked up, if none is yet and it is on the list of the ones in use. */
 int MapItem_StartPickup(ItemNode *node) {
-    if (node == NULL || D_004469D8 != NULL) {
+    if (node == NULL || pickup_item != NULL) {
         return FALSE;
     }
-    if (D_004469D4 != node && node->prev == NULL && node->next == NULL) {
+    if (lying_items != node && node->prev == NULL && node->next == NULL) {
         return FALSE;
     }
-    D_004469D8 = node;
-    D_00447198 = 0;
-    D_004471A4 = 0;
+    pickup_item = node;
+    pickup_no_put_back = 0;
+    pickup_step = 0;
     return TRUE;
 }
 
@@ -682,7 +682,7 @@ int MapItem_IsPickable(ItemNode *node) {
     ItemNode *head;
     int result;
 
-    head = D_004469D4;
+    head = lying_items;
     if (node == 0) {
         return 0;
     }
@@ -703,24 +703,24 @@ int MapItem_StartPickupById(int item_id, int may_put_back) {
     int n;
     ItemNode *node;
 
-    n = MapItem_GetFixedIndex(D_00446770, item_id);
-    if (D_004469D8 != 0 || n < 0) {
+    n = MapItem_GetFixedIndex(current_map_slot, item_id);
+    if (pickup_item != 0 || n < 0) {
         return 0;
     }
-    node = &D_0057E240[D_00446770][n];
-    if (D_004469D4 != node && node->prev == 0 && node->next == 0) {
+    node = &fixed_items[current_map_slot][n];
+    if (lying_items != node && node->prev == 0 && node->next == 0) {
         return 0;
     }
-    D_004469D8 = node;
-    D_00447198 = may_put_back == 0;
-    D_004471A4 = 0;
+    pickup_item = node;
+    pickup_no_put_back = may_put_back == 0;
+    pickup_step = 0;
     return 1;
 }
 
 /* Runs the current step of the pickup in progress, if there is one. */
 void MapItem_UpdatePickup(void) {
-    if (D_004469D8 != NULL) {
-        pickup_step_handlers[D_004471A4]();
+    if (pickup_item != NULL) {
+        pickup_step_handlers[pickup_step]();
     }
 }
 
@@ -735,83 +735,83 @@ void MapItem_PickupAim(void) {
     }
     game_status.update_hold_flags = 0x87F;
     Player_StopWalking();
-    Vector_Copy(D_005B60C0, &D_004469D8->model->position);
-    Vector_Copy(D_005B60D0, &D_004469D8->model->rotation);
-    D_005B60D0[1] = Angle_Wrap(D_005B60D0[1]);
-    D_005B60E0[0] = D_00420D00.view_origin[0] + sinf(player_state.rotation.y) * 150.0f;
-    D_005B60E0[2] = D_00420D00.view_origin[2] + cosf(player_state.rotation.y) * 150.0f;
-    D_005B60E0[1] = D_004469D8->model->position.y - 100.0f;
-    if (D_005B60E0[1] < D_00420D00.view_origin[1]) {
-        D_005B60E0[1] = D_00420D00.view_origin[1];
+    Vector_Copy(pickup_start_position, &pickup_item->model->position);
+    Vector_Copy(pickup_start_rotation, &pickup_item->model->rotation);
+    pickup_start_rotation[1] = Angle_Wrap(pickup_start_rotation[1]);
+    pickup_target_position[0] = view_ray_status.view_origin[0] + sinf(player_state.rotation.y) * 150.0f;
+    pickup_target_position[2] = view_ray_status.view_origin[2] + cosf(player_state.rotation.y) * 150.0f;
+    pickup_target_position[1] = pickup_item->model->position.y - 100.0f;
+    if (pickup_target_position[1] < view_ray_status.view_origin[1]) {
+        pickup_target_position[1] = view_ray_status.view_origin[1];
     }
-    D_005B60E0[3] = 0.0f;
-    D_004471A8 = atan2f(D_00420D00.view_origin[1] - D_005B60E0[1], 150.0f);
-    Vector_Subtract(delta, D_005B60E0, D_005B60C0);
+    pickup_target_position[3] = 0.0f;
+    pickup_view_pitch = atan2f(view_ray_status.view_origin[1] - pickup_target_position[1], 150.0f);
+    Vector_Subtract(delta, pickup_target_position, pickup_start_position);
     distance = sqrt(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
     if (distance < 75.0f) {
-        Vector_Scale(D_005B60F0, delta, 1.0f / distance);
-        Vector_Scale(D_005B60F0, D_005B60F0, 5.0f);
-        D_004471AC = distance / 5.0f;
+        Vector_Scale(pickup_velocity, delta, 1.0f / distance);
+        Vector_Scale(pickup_velocity, pickup_velocity, 5.0f);
+        pickup_move_frames = distance / 5.0f;
     } else {
-        Vector_Scale(D_005B60F0, delta, 0.06666667f);
-        D_004471AC = 15;
+        Vector_Scale(pickup_velocity, delta, 0.06666667f);
+        pickup_move_frames = 15;
     }
-    D_0044719C = 1.0f;
-    D_004471B0 = D_004471AC;
-    D_004471A4++;
+    pickup_pose_scale = 1.0f;
+    pickup_frames_left = pickup_move_frames;
+    pickup_step++;
 }
 
 /* Pickup step 1: moves the item to the point in front of the player while its rotation eases to 0 and it
-   folds flat (D_0044719C), and tilts the player's view toward it; then on to step 2. */
+   folds flat (pickup_pose_scale), and tilts the player's view toward it; then on to step 2. */
 void MapItem_PickupBringUp(void) {
-    D_004471B0--;
-    if (D_004471B0 > 0) {
-        Vector_Add(&D_004469D8->model->position, &D_004469D8->model->position, D_005B60F0);
-        Angle_EaseToward(0.0f, &D_004469D8->model->rotation.x, D_004471B0);
-        Angle_EaseToward(0.0f, &D_004469D8->model->rotation.y, D_004471B0);
-        Angle_EaseToward(0.0f, &D_004469D8->model->rotation.z, D_004471B0);
-        Angle_EaseToward(D_004471A8, player_rotation, D_004471B0);
-        D_0044719C = (float)D_004471B0 / (float)D_004471AC;
+    pickup_frames_left--;
+    if (pickup_frames_left > 0) {
+        Vector_Add(&pickup_item->model->position, &pickup_item->model->position, pickup_velocity);
+        Angle_EaseToward(0.0f, &pickup_item->model->rotation.x, pickup_frames_left);
+        Angle_EaseToward(0.0f, &pickup_item->model->rotation.y, pickup_frames_left);
+        Angle_EaseToward(0.0f, &pickup_item->model->rotation.z, pickup_frames_left);
+        Angle_EaseToward(pickup_view_pitch, player_rotation, pickup_frames_left);
+        pickup_pose_scale = (float)pickup_frames_left / (float)pickup_move_frames;
         return;
     }
-    Vector_Copy(&D_004469D8->model->position, D_005B60E0);
-    D_0044719C = 0.0f;
-    player_rotation[0] = D_004471A8;
-    D_004471A4++;
+    Vector_Copy(&pickup_item->model->position, pickup_target_position);
+    pickup_pose_scale = 0.0f;
+    player_rotation[0] = pickup_view_pitch;
+    pickup_step++;
 }
 
 /* Pickup step 2: the item turns in front of the player until it is taken (0x4000) or put back (0x2000). */
 void MapItem_PickupHold(void) {
     f32 delta[4];
 
-    D_0044719C = 0.0f;
-    D_004469D8->model->rotation.y = Angle_Wrap(D_004469D8->model->rotation.y + 0.08377580f);
+    pickup_pose_scale = 0.0f;
+    pickup_item->model->rotation.y = Angle_Wrap(pickup_item->model->rotation.y + 0.08377580f);
     if (pad_pressed[0] & 0x4000) {
-        if (!Player_CannotCarryItem((s16)D_004469D8->item)) {
-            Vector_Copy(D_005B60E0, &player_state);
-            D_005B60E0[1] -= 115.0f;
-            Vector_Subtract(delta, D_005B60E0, &D_004469D8->model->position);
-            Vector_Scale(D_005B60F0, delta, 0.06666667f);
-            D_004471B0 = 15;
-            D_004471A4++;
+        if (!Player_CannotCarryItem((s16)pickup_item->item)) {
+            Vector_Copy(pickup_target_position, &player_state);
+            pickup_target_position[1] -= 115.0f;
+            Vector_Subtract(delta, pickup_target_position, &pickup_item->model->position);
+            Vector_Scale(pickup_velocity, delta, 0.06666667f);
+            pickup_frames_left = 15;
+            pickup_step++;
             return;
         }
         Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_CANT_CARRY_ANY_MORE);
-    } else if (!(pad_pressed[0] & 0x2000) || D_00447198 != 0) {
+    } else if (!(pad_pressed[0] & 0x2000) || pickup_no_put_back != 0) {
         return;
     }
-    Vector_Scale(D_005B60F0, D_005B60F0, -1.0f);
-    D_004471B0 = D_004471AC;
-    D_004471A4 += 2;
+    Vector_Scale(pickup_velocity, pickup_velocity, -1.0f);
+    pickup_frames_left = pickup_move_frames;
+    pickup_step += 2;
 }
 
 /* Pickup step 3: moves the item to the player, then hands it over and frees its node. */
 void MapItem_PickupTake(void) {
-    ItemNode *node = D_004469D8;
+    ItemNode *node = pickup_item;
 
-    D_004471B0--;
-    if (D_004471B0 > 0) {
-        Vector_Add(&node->model->position, &node->model->position, D_005B60F0);
+    pickup_frames_left--;
+    if (pickup_frames_left > 0) {
+        Vector_Add(&node->model->position, &node->model->position, pickup_velocity);
         return;
     }
     Player_AddItem((s16)node->item);
@@ -822,54 +822,54 @@ void MapItem_PickupTake(void) {
     } else if (node->record != NULL) {
         memset(node->record, 0, sizeof(DroppedItemRecord));
     }
-    MapItem_Unlink(D_004469D8);
-    D_0038CC80[0] = 0;
-    D_0044719C = 1.0f;
-    D_004469D8 = NULL;
-    D_004471A4 = 0;
+    MapItem_Unlink(pickup_item);
+    suspended_updates[0] = 0;
+    pickup_pose_scale = 1.0f;
+    pickup_item = NULL;
+    pickup_step = 0;
 }
 
 /* Pickup step 4 (put back): moves the item back to where it lay and lets go of it. */
 void MapItem_PickupPutBack(void) {
     MapObject *object;
 
-    D_004471B0--;
-    if (D_004471B0 > 0) {
-        Vector_Add(&D_004469D8->model->position, &D_004469D8->model->position, D_005B60F0);
-        Angle_EaseToward(D_005B60D0[0], &D_004469D8->model->rotation.x, D_004471B0);
-        Angle_EaseToward(D_005B60D0[1], &D_004469D8->model->rotation.y, D_004471B0);
-        Angle_EaseToward(D_005B60D0[2], &D_004469D8->model->rotation.z, D_004471B0);
-        D_0044719C = 1.0f - (f32)D_004471B0 / (f32)D_004471AC;
+    pickup_frames_left--;
+    if (pickup_frames_left > 0) {
+        Vector_Add(&pickup_item->model->position, &pickup_item->model->position, pickup_velocity);
+        Angle_EaseToward(pickup_start_rotation[0], &pickup_item->model->rotation.x, pickup_frames_left);
+        Angle_EaseToward(pickup_start_rotation[1], &pickup_item->model->rotation.y, pickup_frames_left);
+        Angle_EaseToward(pickup_start_rotation[2], &pickup_item->model->rotation.z, pickup_frames_left);
+        pickup_pose_scale = 1.0f - (f32)pickup_frames_left / (f32)pickup_move_frames;
         return;
     }
-    Vector_Copy(&D_004469D8->model->position, D_005B60C0);
-    Vector_Copy(&D_004469D8->model->rotation, D_005B60D0);
-    object = (MapObject *)D_004469D8->unk08;
+    Vector_Copy(&pickup_item->model->position, pickup_start_position);
+    Vector_Copy(&pickup_item->model->rotation, pickup_start_rotation);
+    object = (MapObject *)pickup_item->unk08;
     if (object != NULL && (object->state_flags & 0x10000) && object->definition->kind == 3) {
-        MapItem_Unlink(D_004469D8);
+        MapItem_Unlink(pickup_item);
     }
-    D_0038CC80[0] = 0;
-    D_0044719C = 1.0f;
-    D_004469D8 = NULL;
-    D_004471A4 = 0;
+    suspended_updates[0] = 0;
+    pickup_pose_scale = 1.0f;
+    pickup_item = NULL;
+    pickup_step = 0;
 }
 
 /* Clears everything the item code keeps for a map slot. */
 void MapItem_ClearMap(int map) {
     int i;
 
-    D_00447190[map] = 0; // match: this order of the three gives the retail register for each table
-    D_004469B8[map] = NULL;
-    D_004469C0[map] = NULL;
-    memset(D_0057E040[map], 0, sizeof(D_0057E040[0]));
-    memset(D_0057E240[map], 0, sizeof(D_0057E240[0]));
-    memset(D_00580040[map], 0, sizeof(D_00580040[0]));
-    memset(D_005807C0[map], 0, sizeof(D_005807C0[0]));
-    memset(D_005816C0[map], 0, sizeof(D_005816C0[0]));
-    memset(D_0058F6C0[map], 0, sizeof(D_0058F6C0[0]));
-    memset(D_00592EC0[map], 0, sizeof(D_00592EC0[0]));
+    map_fixed_item_counts[map] = 0; // match: this order of the three gives the retail register for each table
+    map_item_defs[map] = NULL;
+    map_item_model_kinds[map] = NULL;
+    memset(item_model_sources[map], 0, sizeof(item_model_sources[0]));
+    memset(fixed_items[map], 0, sizeof(fixed_items[0]));
+    memset(dropped_items[map], 0, sizeof(dropped_items[0]));
+    memset(object_items[map], 0, sizeof(object_items[0]));
+    memset(fixed_item_models[map], 0, sizeof(fixed_item_models[0]));
+    memset(dropped_item_models[map], 0, sizeof(dropped_item_models[0]));
+    memset(object_item_models[map], 0, sizeof(object_item_models[0]));
     for (i = 0xFF; i >= 0; i--) {
-        D_005B5EC0[map][i] = -1;
+        fixed_item_by_id[map][i] = -1;
     }
 }
 
@@ -880,29 +880,29 @@ void *MapItem_FindModelSource(int slot, int key) {
     s16 value;
     int i;
 
-    cursor = D_004469C0[slot];
+    cursor = map_item_model_kinds[slot];
     for (i = 0; i < 0x20; i++) {
         value = cursor[i];
         if (value < 0) {
             return NULL;
         }
         if (value == key) {
-            return (char *)D_0057E040 + (slot << 8) + i * 8;
+            return (char *)item_model_sources + (slot << 8) + i * 8;
         }
     }
     return NULL;
 }
 
-/* Puts an item on the front of the list of items lying about (D_004469D4). */
+/* Puts an item on the front of the list of items lying about (lying_items). */
 void MapItem_Link(ListNode *node) {
-    ListNode *head = (ListNode *)D_004469D4;
+    ListNode *head = (ListNode *)lying_items;
 
     node->prev = NULL;
     node->next = head;
     if (head != NULL) {
         head->prev = node;
     }
-    D_004469D4 = (ItemNode *)node;
+    lying_items = (ItemNode *)node;
 }
 
 /* Takes an item off the list of items lying about, frees its object and drop record links, and returns
@@ -917,8 +917,8 @@ ItemNode *MapItem_Unlink(ItemNode *node) {
     if (node->next != NULL) {
         node->next->prev = node->prev;
     }
-    if (node == D_004469D4) {
-        D_004469D4 = node->next;
+    if (node == lying_items) {
+        lying_items = node->next;
     }
     node->prev = NULL;
     node->next = NULL;
@@ -938,7 +938,7 @@ void MapItem_PrepareDraw(void *model) {
 /* Returns the index of the slot's fixed item with this id (1..255), or -1. */
 int MapItem_GetFixedIndex(int slot, int object_id) {
     if ((u32)(object_id - 1) < 0xFF) {
-        return D_005B5EC0[slot][object_id];
+        return fixed_item_by_id[slot][object_id];
     }
     return -1;
 }

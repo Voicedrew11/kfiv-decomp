@@ -10,11 +10,11 @@ float cosf(float);
 double acos(double);
 void Vector_Normalize(void *dst, void *src);
 void Vector_Cross(void *, void *, void *);
-extern u8 D_004141D8[];
-extern EntityModel *D_00446978;
+extern u8 player_weapon_step[];
+extern EntityModel *held_item_model_ptr;
 int rand(void);
 extern PlayerState player_state;
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 float atan2f(float, float);
 
 /* EntityMath_WrapAngle, which the game inlines here: wraps an angle to +-pi */
@@ -296,7 +296,7 @@ s32 EntityAi_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle) {
     if (ABS(angle) > max_angle) {
         return FALSE;
     }
-    if (D_004141D8[0] == 0 || D_00446978->level_tables->unk82 >= 6) {
+    if (player_weapon_step[0] == 0 || held_item_model_ptr->level_tables->unk82 >= 6) {
         return FALSE;
     }
     return rand() % 100 < entity->params->guard_chance / 5;
@@ -307,7 +307,7 @@ s32 EntityAi_ShouldDodge(Entity *entity, f32 max_distance, f32 max_angle) {
     f32 angle;
     f32 distance;
 
-    if (D_004141D8[0] == 0 || D_00446978->level_tables->unk82 >= 6) {
+    if (player_weapon_step[0] == 0 || held_item_model_ptr->level_tables->unk82 >= 6) {
         return FALSE;
     }
     angle = entity->heading_to_player - entity->model->rotation[1];
@@ -666,7 +666,7 @@ s32 EntityAi_PickCombatChoice(Entity *entity, s32 mode) {
     }
     for (i = 0; i < 4; i++) {
         if (i == entity->combat_choice) {
-            elapsed = (u16)D_00446ED4 - entity->choice_change_frame;
+            elapsed = (u16)frame_counter - entity->choice_change_frame;
             if (elapsed < 240) {
                 fade = fade_out(elapsed, 240);
                 fade += 0x80;

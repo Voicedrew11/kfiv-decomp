@@ -19,7 +19,7 @@ int Menu_Run(s8 mode);
    Returns whether the field just shown was the even one. */
 s32 Menu_EndFrame(s32 run_handler);
 
-/* Draws the model of the first load node (D_00426470) with the matrix given. Returns nothing. */
+/* Draws the model of the first load node (model_load_shown) with the matrix given. Returns nothing. */
 int Menu_DrawItemModel(f32 *matrix); // match: callers use an int result
 
 /* Runs the callback of the load node at the head of the chain, or goes on to the next node. */
@@ -43,7 +43,7 @@ void Menu_ClearKeyItems(void);
 /* Puts the key item that goes with LevelDef number `key` into the first empty key item slot. */
 void Menu_AddKeyItem(s32 key);
 
-/* Moves the cursor of the item list (D_00426110) a row or a page, unless the list is locked. Returns TRUE when a
+/* Moves the cursor of the item list (item_list_cursor) a row or a page, unless the list is locked. Returns TRUE when a
    move button was pressed. */
 s32 Menu_MoveItemListCursor(HandlerContext *context, s32 locked);
 

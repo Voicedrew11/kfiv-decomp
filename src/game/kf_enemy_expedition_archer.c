@@ -23,7 +23,7 @@ int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 double atan2(double, double);
 float EntityMath_WrapAngle(float);
 float EntityMath_EaseAngleToward(float *, float, float);
-extern u32 D_00446ED4;
+extern u32 frame_counter;
 void EntityAi_SensePlayer(void *, int);
 void EntityAi_CheckFarFromSpawn(char *);
 void EntityAi_StepState(void *);
@@ -178,7 +178,7 @@ static void ExpeditionArcher_Think(Entity *entity, s32 unknown) {
     } else {
         entity->model->parts[5].unk68 |= 0x8000L << 25;
     }
-    if (D_00446ED4 % 10U == entity->spawn_index % 10U) {
+    if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags != 0) {
@@ -230,7 +230,7 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = side;
         if (entity->combat_choice != entity->prev_combat_choice) {
-            entity->choice_change_frame = D_00446ED4;
+            entity->choice_change_frame = frame_counter;
         }
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {

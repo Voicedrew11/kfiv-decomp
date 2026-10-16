@@ -33,7 +33,7 @@
 #define GS_REG_TRXDIR       0x53
 #define GS_REG_FINISH       0x61
 
-/* a color as four bytes, passed in an 8-byte argument (MenuText_SetColor stores it to D_00446D70..D_00446D73) */
+/* a color as four bytes, passed in an 8-byte argument (MenuText_SetColor stores it to text_ink, kf_menu_draw.c) */
 typedef struct {
     u8 red;                         /* 0x00 */
     u8 green;                       /* 0x01 */
@@ -57,7 +57,7 @@ typedef union {
 } GsAlphaReg;
 
 /* a 64-bit value split into 16, 16, 24 and 8 bits, passed to MenuText_SetPen and kept
-   in D_00446D60; `raw` is the same word whole */
+   in text_pen (kf_menu_draw.c); `raw` is the same word whole */
 typedef union {
     s64 raw;
     struct {
@@ -68,7 +68,7 @@ typedef union {
     } f;
 } GsPackedWord;
 
-/* D_00426140: the menus' two frame buffers, a libgraph sceGsDBuffDc of which the game only names
+/* menu_frame_buffers: the menus' two frame buffers, a libgraph sceGsDBuffDc of which the game only names
    the colour each frame is cleared to */
 typedef struct {
     char pad000[0x180];
@@ -159,8 +159,9 @@ typedef struct {
     u64 test_b_addr;                /* 0x58 */
 } GsClearBits;
 
-/* title_dbuff (kf_title.c), D_00432D20 and D_00432F50 (the game): a libgraph sceGsDBuff, two frame
-   buffers with one context each */
+/* title_dbuff (kf_title.c), game_dbuff and game_dbuff_context2 (the game): a libgraph sceGsDBuff, two frame
+   buffers with one context each. Other files name parts of the game's two: game_dbuff_draw0, game_dbuff_draw1,
+   and game_dbuff_clear_color / game_dbuff_context2_clear_color, the RGBAQ of clear0 ([30] is that of clear1) */
 typedef struct {
     GsDispEnvBits disp[2];          /* 0x000 */
     u64 giftag0[2];                 /* 0x050 */
@@ -171,7 +172,7 @@ typedef struct {
     GsClearBits clear1;             /* 0x1D0 */
 } GsDoubleBuffer;
 
-/* D_00433180 and D_00433190: the DISPFB and DISPLAY values of the two frames, kept by Display_Init */
+/* frame_dispfb_regs and frame_display_regs: the DISPFB and DISPLAY values of the two frames, kept by Display_Init */
 typedef struct {
     u64 first;
     u64 second;

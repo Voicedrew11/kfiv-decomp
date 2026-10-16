@@ -38,7 +38,7 @@ int Map_TestFlagBlockBit(int, int, int, int);
 void MapObject_DrawModel(int *);
 void MapObject_DrawModelWithAlpha(ModelInstance *);
 void MapObject_DrawModelNoDepthWrite(void *);
-void func_0011EA70(void);
+void MapObject_UpdateNoBonePoints(void);
 char *MapObject_GetPositionAsPoint(char *);
 void MapObject_StopSound(MapObject *);
 float Angle_Wrap(float);
@@ -53,7 +53,7 @@ void Vector_Copy(void *, void *);
 void Vector_Add(void *, void *, void *);
 
 extern MapDrawState map_draw_state;
-extern int D_0038CC80[3];
+extern int suspended_updates[3];
 extern MapSlot map_slots[];
 extern Vector4 map_object_glow_colors[4];
 extern u8 item_counts[];
@@ -66,13 +66,13 @@ extern void (*map_object_update_hooks[])(MapObject *);
 extern void (*map_object_offset_hooks[])(MapObject *, f32 *);
 extern void (*map_object_setup_hooks[])(MapObject *);
 extern PlayerState player_state;
-extern int D_00446770;
+extern int current_map_slot;
 
 static s32 sway_frame = 0;                      /* 0x4467A0 counts 0 to 59 */
 static s32 next_sound_channel = 0;              /* 0x4467A4 0 to 31, the next of the channels 0x20 to 0x3F */
-s32 D_004467A8[2] = { 0, 0 };                   /* the objects of each map have been started */
-int D_004467B0[2] = { 0, 0 };                   /* the MapObjectUnk08 array of each map */
-s32 D_004467B8[2] = { 0, 0 };                   /* how many objects each map has */
+s32 map_objects_started[2] = { 0, 0 };         /* the objects of each map have been started */
+int map_object_placements[2] = { 0, 0 };                   /* the MapObjectUnk08 array of each map */
+s32 map_object_counts[2] = { 0, 0 };           /* how many objects each map has */
 
 static s32 glow_item_worn;                      /* 0x447078 Myu's Necklace is worn */
 static s32 glow_item_was_worn;                  /* 0x44707C the same, last frame */
@@ -96,7 +96,7 @@ void MapObject_ClearAllMaps(void) {
    objects into the two draw lists of the map, grouped by the model they use. */
 void MapObject_InitMap(int map) {
     int i = 0;
-    int count = D_004467B8[map];
+    int count = map_object_counts[map];
     MapObject *object = map_slot_objects[map];
     f32 scale;
     int link_id;
@@ -106,7 +106,7 @@ void MapObject_InitMap(int map) {
         MAP_OBJECT_BYTES(object)->step = 0;
         if (object->definition->model_index == 0xFFFF) {
             object->model->get_point = (int (*)(void *, int))MapObject_GetPositionAsPoint;
-            object->model->update_bone_points = (void (*)(ModelInstance *))func_0011EA70;
+            object->model->update_bone_points = (void (*)(ModelInstance *))MapObject_UpdateNoBonePoints;
         }
         if (object->source->spawn_flags.bytes[2] != 0) {
             link_id = object->source->spawn_flags.bytes[2];
@@ -204,7 +204,7 @@ void MapObject_InitMap(int map) {
    handed to the handler of its kind in map_object_setup_hooks. */
 void MapObject_StartMap(int map) {
     int i = 0;
-    int count = D_004467B8[map];
+    int count = map_object_counts[map];
     MapObject *object = map_slot_objects[map];
     int tag = map_slots[map].tag;
     int visited = Game_IsMapVisited(tag);
@@ -213,7 +213,7 @@ void MapObject_StartMap(int map) {
     MapObjectUnk08 *source;
     u8 kind;
 
-    D_004467A8[map] = 1;
+    map_objects_started[map] = 1;
     for (; i < count; i++, object++) {
         source = object->source;
         flag = 0;
@@ -245,7 +245,7 @@ void MapObject_StartMap(int map) {
 /* Unloads the objects of a map: saves four flags of each into the flag block
    of the map, stops their sounds, then empties the table. */
 void MapObject_UnloadMap(int map) {
-    int count = D_004467B8[map];
+    int count = map_object_counts[map];
     MapObject *object = map_slot_objects[map];
     int tag = map_slots[map].tag;
     int i;
@@ -270,7 +270,7 @@ void MapObject_SaveAllFlags(void) {
 
     for (map = 0; map < 2; map++) {
         if (map_slots[map].loaded != 0) {
-            count = D_004467B8[map];
+            count = map_object_counts[map];
             tag = map_slots[map].tag;
             object = map_slot_objects[map];
             for (i = 0; i < count; i++, object++) {
@@ -287,7 +287,7 @@ void MapObject_SaveAllFlags(void) {
 
 /* Moves every object of a map by offset through its kind's handler in map_object_offset_hooks. */
 void MapObject_OffsetAll(int map, f32 *offset) {
-    int count = D_004467B8[map];
+    int count = map_object_counts[map];
     MapObject *object = map_slot_objects[map];
     int i;
 
@@ -298,8 +298,8 @@ void MapObject_OffsetAll(int map, f32 *offset) {
 
 /* the objects of the current map (map 0) or the other loaded one (map 1), which the game inlines */
 static inline MapObject *map_objects(s32 map) {
-    if (D_004467A8[D_00446770 == map ? 0 : 1] != 0) {
-        if (D_00446770 != map) {
+    if (map_objects_started[current_map_slot == map ? 0 : 1] != 0) {
+        if (current_map_slot != map) {
             return map_slot_objects[1];
         }
         return map_slot_objects[0];
@@ -308,8 +308,8 @@ static inline MapObject *map_objects(s32 map) {
 }
 
 static inline s32 map_object_count(s32 map) {
-    if (D_004467A8[D_00446770 == map ? 0 : 1] != 0) {
-        return D_004467B8[D_00446770 == map ? 0 : 1];
+    if (map_objects_started[current_map_slot == map ? 0 : 1] != 0) {
+        return map_object_counts[current_map_slot == map ? 0 : 1];
     }
     return 0;
 }
@@ -338,7 +338,7 @@ void MapObject_UpdateAll(void) {
     f32 delta_y;
     f32 delta_z;
 
-    if (D_0038CC80[0] & 8) {
+    if (suspended_updates[0] & 8) {
         return;
     }
     period = 60; // match: the divisor is a variable
@@ -382,7 +382,7 @@ void MapObject_UpdateAll(void) {
                 if ((MapObject *)player_state.floor_map_object == object) {
                     object->state_flags |= 2;
                 } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
-                    if (Map_TestFlagBlockBit(D_00446770, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->linked_point_owner)) {
+                    if (Map_TestFlagBlockBit(current_map_slot, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->linked_point_owner)) {
                         object->state_flags |= 2;
                     }
                 } else if (record->record_flags & 0x4000000) {
@@ -697,7 +697,7 @@ void MapObject_Break(MapObject *object) {
         MapObject_StartAnim(object, 1);
     }
     Effect_StartSpawner(object->definition->break_effect, &object->model->position, &object->model->rotation, &map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1]);
-    if (object->source->break_script != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == D_00446770) {
+    if (object->source->break_script != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == current_map_slot) {
         Script_Start(object->source->break_script, 0);
     }
     if (object->definition->definition_flags & 0x20000) {
@@ -787,7 +787,7 @@ void MapObject_MarkEmptied(MapObject *object) {
     u8 kind = object->definition->kind;
 
     if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
-        ((u32)(((int)object->source - D_004467B0[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
+        ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
         object->state_flags |= 0x40000;
     }
 }
@@ -800,7 +800,7 @@ void MapObject_MarkEmptiedById(int map, int object_id) {
     if (object != NULL) {
         kind = object->definition->kind;
         if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
-            ((u32)(((int)object->source - D_004467B0[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
+            ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
             object->state_flags |= 0x40000;
         }
     }
@@ -844,8 +844,8 @@ void MapObject_SetScriptedBit21(MapObject *object, int bit21) {
 
 /* Empties one map's objects: the two counts, the two draw lists and the tables. */
 void MapObject_ClearMap(int map) {
-    D_004467A8[map] = 0;
-    D_004467B8[map] = 0;
+    map_objects_started[map] = 0;
+    map_object_counts[map] = 0;
     plain_draw_list[map] = NULL;
     jointed_draw_list[map] = NULL;
     memset(map_slot_objects[map], 0, sizeof(map_slot_objects[map]));
@@ -891,7 +891,7 @@ void MapObject_DrawModelNoDepthWrite(void *model) {
 }
 
 /* Does nothing: the point-update hook (ModelInstance.update_bone_points) of a map object model without points. */
-void func_0011EA70(void) {
+void MapObject_UpdateNoBonePoints(void) {
 }
 
 /* get_point hook of a map object model without points: returns the model's position, whatever the index. */
