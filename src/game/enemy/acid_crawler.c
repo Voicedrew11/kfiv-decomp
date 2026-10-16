@@ -318,7 +318,7 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
         }
         return;
     }
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     if ((s32)(entity->flags >> 32) & 1) {
         if (unkE0->step_index == 1) {
             unkE0->step_index = 0;

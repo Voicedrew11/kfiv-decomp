@@ -103,7 +103,7 @@ void DarkPuppet_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    entity->flags &= ~0x10000000;
+    entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
@@ -122,7 +122,7 @@ void DarkPuppet_Init(Entity *entity) {
 /* The on_hit handler: as EntityAi_OnHit, but it leaves the target and flag bit 10 as they are. */
 static void DarkPuppet_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     if (((s32)(entity->flags >> 36) & 3) == 1) {
         if ((s32)(entity->flags >> 19) & 1) {
             EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);
@@ -170,9 +170,9 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
         }
     }
     if (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) {
-        entity->flags &= ~0x10000000;
+        entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     } else {
-        entity->flags |= 0x10000000;
+        entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     }
     if ((s32)(entity->flags >> 28) & 1) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
@@ -509,9 +509,9 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->level_tables->unk82);
         }
         if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -571,9 +571,9 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
             }
         }
         if (entity->model->level_tables->unk82 > 0 && unk3D8->record.unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -625,9 +625,9 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->unk82);
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -656,14 +656,14 @@ static void DarkPuppet_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        entity->flags &= ~0x3800;
-        entity->flags |= 0x4000;
-        entity->flags |= 0x100000;
-        entity->flags = (entity->flags & ~0xC) | 4;
-        entity->flags |= 0x8000000;
-        entity->flags |= 0x4000000;
-        entity->flags &= ~0x10000000;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags |= ENTITY_FLAG_ANIMATES;
+        entity->flags |= ENTITY_FLAG_100000;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
+        entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
+        entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
+        entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {

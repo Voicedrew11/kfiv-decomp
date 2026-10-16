@@ -391,8 +391,8 @@ static void FireElemental_PlayTurnAnim(Entity *entity) {
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
         }
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
-        entity->flags &= ~0x200;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -566,7 +566,7 @@ static void FireElemental_AlertSameKind(Entity *entity) {
     EntityUnkE0 *unkE0;
 
     for (other = active_entities_head; other != NULL; other = other->next) {
-        if (entity->params == other->params && ((s32)other->flags & 1) && ((s32)(other->flags >> 1) & 1)
+        if (entity->params == other->params && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) && ((s32)(other->flags >> 1) & 1)
             && ((s32)(other->flags >> 2) & 3) == 0 && other != entity) {
             unkE0 = &other->unkE0;
             if (unkE0->pause_timer == 0
@@ -783,7 +783,7 @@ static void FireElemental_ThinkReturn(Entity *entity, s32 unknown) {
         entity->move_command = ((s16 (*)(float, void *, int))FireElemental_BackwardsCommand)(entity->radius + 100.0f + 30.0f, entity, 1);
     } else {
         push[0] = push[1] = push[2] = push[3] = 0.0f;
-        if (entity->flags & (0xC000L << 31)) {
+        if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_400000000000)) {
             push[0] += entity->wall_push[0];
             push[2] += entity->wall_push[2];
         }

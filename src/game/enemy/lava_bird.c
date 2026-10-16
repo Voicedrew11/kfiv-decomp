@@ -362,7 +362,7 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
 /* The move handler: keeps animation 3 on both motion slots, flag bits 11 to 13 at 0. LavaBird_ApplyMoveCommand
    does the turning and the moving. */
 static void LavaBird_Move(Entity *entity) {
-    entity->flags &= ~0x3800ULL;
+    entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
     EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_0, 0, 3, 5, ENTITY_CONTROLLER(entity)->motion_blend_frames, 0);
     EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 3, 5, ENTITY_CONTROLLER(entity)->motion_blend_frames, 0);
 }

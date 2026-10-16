@@ -108,7 +108,7 @@ void DarkSoldier_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    entity->flags &= ~0x10000000;
+    entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
@@ -432,8 +432,8 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
                 Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);
             }
         }
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
-        entity->flags &= ~0x200;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -657,10 +657,10 @@ static void DarkSoldier_Dodge(Entity *entity) {
    bit 28. */
 static void DarkSoldier_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    entity->flags &= ~0x400;
+    entity->flags &= ~ENTITY_FLAG_400;
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    entity->flags &= ~0x200;
-    entity->flags &= ~0x10000000;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
+    entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (((entity->flags >> 36) & 3) == 1) {
         if ((s32)((s64)(entity->flags << 13) >> 32) & 1) {
             EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);

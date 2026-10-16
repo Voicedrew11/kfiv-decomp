@@ -140,8 +140,8 @@ void MapSetup_Armory(int map) {
         if (entity_group_state[0x5C0] == 0) {
             entity = Entity_GetBySpawnIdForMap(map, 0x17);
             if (entity != NULL) {
-                entity->flags |= 2;
-                entity->flags |= 0x80;
+                entity->flags |= ENTITY_FLAG_LIVE;
+                entity->flags |= ENTITY_FLAG_RESPAWNABLE;
             }
         }
     } else {

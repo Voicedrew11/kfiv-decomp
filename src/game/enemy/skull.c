@@ -193,9 +193,9 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        entity->flags &= ~0x3800;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
     } else {
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -206,7 +206,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     mode = EntityAi_PickCombatChoice(entity, 0);
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     if (entity->action_timer == 0 || mode == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
@@ -308,15 +308,15 @@ static void Skull_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        entity->flags &= ~0x3800;
-        entity->flags |= 0x4000;
-        entity->flags |= 0x100000;
-        entity->flags = (entity->flags & ~0xC) | 4;
-        entity->flags |= 0x8000000;
-        entity->flags |= 0x4000000;
-        entity->flags &= ~0x10000000;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags |= ENTITY_FLAG_ANIMATES;
+        entity->flags |= ENTITY_FLAG_100000;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
+        entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
+        entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
+        entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
         entity->collision_radius = 80.0f;
-        entity->flags &= ~0x400000;
+        entity->flags &= ~ENTITY_FLAG_400000;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -337,8 +337,8 @@ static void Skull_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            entity->flags |= 0xC;
-            entity->flags &= ~2;
+            entity->flags |= ENTITY_FLAG_DYING_MASK;
+            entity->flags &= ~ENTITY_FLAG_LIVE;
         }
         break;
     }
@@ -511,7 +511,7 @@ static void Skull_Animate(Entity *entity) {
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
-            entity->flags = flags & ~0x3800L;
+            entity->flags = flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         }
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {

@@ -260,7 +260,7 @@ static void LivingArmor_Animate(Entity *entity) {
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
-            entity->flags = flags & ~0x3800L;
+            entity->flags = flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         }
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {

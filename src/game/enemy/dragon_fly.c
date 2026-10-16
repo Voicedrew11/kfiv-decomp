@@ -169,7 +169,7 @@ static void DragonFly_ThinkReturn(Entity *entity, s32 unknown) {
         entity->move_command = EntityAi_MoveCommand3D(entity, 1, 50.0f);
     } else {
         push[0] = push[1] = push[2] = push[3] = 0.0f;
-        if (entity->flags & (0xC000L << 31)) {
+        if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_400000000000)) {
             push[0] += entity->wall_push[0];
             push[1] += entity->wall_push[1];
             push[2] += entity->wall_push[2];

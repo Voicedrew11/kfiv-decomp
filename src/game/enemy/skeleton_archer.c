@@ -288,9 +288,9 @@ static void SkeletonArcher_RangedAttack0(Entity *entity) {
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->unk82);
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;

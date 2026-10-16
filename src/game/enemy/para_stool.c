@@ -247,9 +247,9 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit54 = ParaStool_CheckPartHitInPlayerView(entity, unk240, 0, elapsed, entity->model->level_tables->unk82, 0.0f);
         }
         if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
             entity->busy_flags = 0;

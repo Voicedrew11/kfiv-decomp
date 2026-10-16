@@ -305,7 +305,7 @@ static int Scorpion_ThinkCombat(Entity *entity, s32 unknown) {
                         entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                     }
                 }
-                if (entity->flags & (0xD000L << 33)) {
+                if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_OBJECT_PUSH | ENTITY_FLAG_ENTITY_PUSH)) {
                     unkE0->move_choice = 1;
                 } else if (unkE0->step_index != 0) {
                     entity->move_command |= MOVE_COMMAND_STEP_RIGHT;

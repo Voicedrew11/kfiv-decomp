@@ -107,7 +107,7 @@ static void Reaper_Think(Entity *entity, s32 unknown) {
             break;
         }
     }
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
 }
 
 /* The think function of state 2: guards the player's swing; starts EntityAi_MeleeAttack when

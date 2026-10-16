@@ -136,7 +136,7 @@ static void GiantSpider_OnHit(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     EntityAi_SetState((char *)entity, 2);
     unkE0->step_index = 1;
@@ -152,7 +152,7 @@ static void GiantSpider_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_StepState(entity);
     switch (entity->state) {
     case 0:
@@ -357,7 +357,7 @@ static void GiantSpider_RangedAttack(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        entity->flags &= ~0x3800;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -378,9 +378,9 @@ static void GiantSpider_RangedAttack(Entity *entity) {
         direction[1] -= 160.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->unk82, direction, 0.2617994f, 0.2617994f);
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;

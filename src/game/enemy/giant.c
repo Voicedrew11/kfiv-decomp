@@ -222,7 +222,7 @@ static void Giant_PlayAnim17(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);

@@ -871,6 +871,66 @@ typedef struct Entity {
 #define ENTITY_BUSY_2000            0x2000  /* an action of the type's own */
 #define ENTITY_BUSY_4000            0x4000  /* an action of the type's own */
 
+/* Entity.flags bits. The code sets them as masks, as shifts or through ENTITY_FLAG_BITS. */
+#define ENTITY_FLAG_ACTIVE_LIST              0x1                   /* on the active entities list: Entity_LinkActive sets it, Entity_UnlinkActive clears it */
+#define ENTITY_FLAG_LIVE                     0x2                   /* alive: attacks, pushes and Effect_IsEntityUntargetable skip an entity without it */
+#define ENTITY_FLAG_DYING_MASK               0xC                   /* 0 alive; 1 when a death action starts, 2 as it fades, 3 once it is off the world */
+#define ENTITY_FLAG_DYING_1                  0x4                   /* that field at 1, which the start of a death action sets */
+#define ENTITY_FLAG_NO_RESPAWN               0x10                  /* EntityAi_ShouldRespawn returns FALSE while set; Entity_ClearFlag10InSlot clears it */
+#define ENTITY_FLAG_OWN_THINK                0x20                  /* EntityAi_Update runs the entity type's own think handler while set (set for every spawn) */
+#define ENTITY_FLAG_HANDLER_RUNS             0x40                  /* EntityAi_Update calls Entity.handler every frame while set */
+#define ENTITY_FLAG_RESPAWNABLE              0x80                  /* the spawn may come back: EntityAi_ShouldRespawn needs it, the spawn flags set it */
+#define ENTITY_FLAG_100                      0x100                 /* EntityEvent_Respawn sets it with the live bits, Entity_SetSpawnedFlags clears it */
+#define ENTITY_FLAG_LOOK_AT_TARGET           0x200                 /* the head follows the target (EntityAi_LookAtPlayer's look_at_target) */
+#define ENTITY_FLAG_400                      0x400                 /* set with bit 9 before an attack is picked, cleared by the on_hit handlers */
+#define ENTITY_FLAG_MOTION_STEP_MODE_MASK    0x3800                /* the mode (0 to 2) Motion_Step and Motion_StepSlot are given */
+#define ENTITY_FLAG_MOTION_STEP_MODE_1       0x800                 /* that mode at 1, which the start of every action sets */
+#define ENTITY_FLAG_ANIMATES                 0x4000                /* the animate handler blends or steps the motion while set */
+#define ENTITY_FLAG_8000                     0x8000                /* read by Motion_Step: the motion stands on its first frame */
+#define ENTITY_FLAG_NOT_TARGETABLE           0x10000               /* Effect_IsEntityUntargetable calls it flagged out: an entity holding an animation has it */
+#define ENTITY_FLAG_DRAW_AFTERIMAGE          0x20000               /* Entity_DrawAll draws the pool block's model again for the entities that have it */
+#define ENTITY_FLAG_40000                    0x40000               /* set and cleared by script commands 257 and 258, and by the unseen actions */
+#define ENTITY_FLAG_80000                    0x80000               /* set once the ranged attack is past its launch frame; a light hit reads it to rewind */
+#define ENTITY_FLAG_100000                   0x100000              /* an attack skips an entity with it set (the target loop of the attack requests) */
+#define ENTITY_FLAG_200000                   0x200000              /* Effect_IsEntityUntargetable excludes it; set with bits 18 and 20 while unseen */
+#define ENTITY_FLAG_400000                   0x400000              /* set when EntityParams.flags bit 0 is clear */
+#define ENTITY_FLAG_NO_WALL_COLLISION        0x800000              /* set when EntityParams.flags bit 1 (ENTITY_PARAMS_FLAG_COLLIDES_*) is clear */
+#define ENTITY_FLAG_NO_SECOND_WALL_COLLISION 0x1000000             /* set when EntityParams.flags bit 2 (ENTITY_PARAMS_FLAG_COLLIDES_*) is clear */
+#define ENTITY_FLAG_NO_MAP_OBJECT_COLLISION  0x2000000             /* set when EntityParams.flags bit 3 (ENTITY_PARAMS_FLAG_COLLIDES_*) is clear */
+#define ENTITY_FLAG_NO_ENTITY_COLLISION      0x4000000             /* set when EntityParams.flags bit 4 (ENTITY_PARAMS_FLAG_COLLIDES_*) is clear */
+#define ENTITY_FLAG_NO_PLAYER_COLLISION      0x8000000             /* set when EntityParams.flags bit 5 (ENTITY_PARAMS_FLAG_COLLIDES_*) is clear */
+#define ENTITY_FLAG_NO_FLOOR_LIFT            0x10000000            /* the collision leaves Entity.floor_lift out of the height while set */
+#define ENTITY_FLAG_20000000                 0x20000000            /* a value the entity types pass to their think functions (Npc, Bell, DarkOne) */
+#define ENTITY_FLAG_MAP_RECORD_INACTIVE      0x40000000            /* set while the map record under the entity is not active (Entity_IsMapRecordActive) */
+#define ENTITY_FLAG_TURN_IN_PLACE            0x80000000ULL         /* set, the think functions would only turn on the spot instead of walking */
+#define ENTITY_FLAG_PLAYER_IN_REACH          0x100000000ULL        /* EntityAi_SensePlayer sets it while the player is inside the reach, arc and height */
+#define ENTITY_FLAG_PLAYER_NOTICED           0x200000000ULL        /* EntityAi_SensePlayer sets it (noticed) by a chance that grows as the player comes nearer */
+#define ENTITY_FLAG_MOTION_ENDED             0x400000000ULL        /* set from Motion_Step's result: the motion has blended in and played to its end */
+#define ENTITY_FLAG_GUARDING                 0x800000000ULL        /* the guard bonuses are added to the defences while set */
+#define ENTITY_FLAG_HIT_STRENGTH_MASK        0x3000000000ULL       /* 1 below 33.3334 percent of EntityParams.hit_points, else 2 */
+#define ENTITY_FLAG_HIT_SOURCE_MASK          0xC000000000ULL       /* 1 the player's weapon, 2 the player's magic, 0 anything else */
+#define ENTITY_FLAG_RAISE_ATTACK_WEIGHT      0x20000000000ULL      /* Attack_HitPlayer sets it with a weapon hit; EntityAi_Update raises that weight once */
+#define ENTITY_FLAG_RAISE_RANGED_WEIGHT      0x40000000000ULL      /* Attack_HitPlayer sets it with a magic hit; EntityAi_Update raises the ranged weights once */
+#define ENTITY_FLAG_HIT_BY_PLAYER            0x80000000000ULL      /* set when the player's attack hits the entity; it wakes the dormant entity types */
+#define ENTITY_FLAG_ON_FLOOR                 0x100000000000ULL     /* set where the collision puts the entity on the floor */
+#define ENTITY_FLAG_WALL_PUSH                0x200000000000ULL     /* set where the collision pushed the entity out of a wall */
+#define ENTITY_FLAG_400000000000             0x400000000000ULL     /* set with bit 45; Motion_Step reads it */
+#define ENTITY_FLAG_OBJECT_PUSH              0x800000000000ULL     /* set where a map object pushed the entity */
+#define ENTITY_FLAG_ENTITY_PUSH              0x1000000000000ULL    /* set where another entity pushed it (Entity.entity_push) */
+#define ENTITY_FLAG_PLAYER_PUSH              0x2000000000000ULL    /* set where the player pushed it */
+#define ENTITY_FLAG_ON_TOP                   0x4000000000000ULL    /* set when the collision result is "stands on it" (hit 2) */
+#define ENTITY_FLAG_SKIP_FLOOR_MASK          0x4000000400000L      /* the collision then leaves the mesh's floor strips out (bits 22 and 50) */
+#define ENTITY_FLAG_LIFT_UP                  0x8000000000000ULL    /* EntityAi_UpdateCollision raises Entity.floor_lift to 40 while set */
+#define ENTITY_FLAG_LEDGE_STOP               0x10000000000000ULL   /* set where a ledge made the entity stop at its previous position */
+#define ENTITY_FLAG_FAR_FROM_SPAWN           0x20000000000000ULL   /* EntityAi_CheckFarFromSpawn(3D) sets it beyond EntitySpawnInfo.wander_radius */
+#define ENTITY_FLAG_MELEE_0_HIT              0x40000000000000ULL   /* the first melee check already hit (EntityAi_CheckMeleeHit) */
+#define ENTITY_FLAG_MELEE_1_HIT              0x80000000000000ULL   /* the second melee check already hit */
+#define ENTITY_FLAG_MELEE_2_HIT              0x100000000000000ULL  /* the third melee check already hit */
+#define ENTITY_FLAG_RANGED_ATTACK            0x200000000000000ULL  /* the attack EntityAi_PickAttack picked is a ranged one */
+#define ENTITY_FLAG_ATTACK_INDEX_MASK        0xC00000000000000ULL  /* the ranged record the attack uses */
+#define ENTITY_FLAG_FLOOR_MATERIAL_MASK      0x7000000000000000ULL /* the floor material Collision_GetFloorMaterial read */
+#define ENTITY_FLAG_SIGHT_BLOCKED            0x8000000000000000ULL /* something stands between the entity and the player (EntityAi_SensePlayer) */
+
 /* Entity with the work area at 0xE0 as plain bytes: the init functions clear it
    one byte at a time, and only an array member gives their code */
 #define ENTITY_WORK_AREA_SIZE 0xA0

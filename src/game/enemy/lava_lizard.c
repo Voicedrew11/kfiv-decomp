@@ -103,7 +103,7 @@ void LavaLizard_Init(Entity *entity) {
 static void LavaLizard_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (entity->flags & (0xD000L << 33)) {
+    if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_OBJECT_PUSH | ENTITY_FLAG_ENTITY_PUSH)) {
         unkE0->step_index = entity->params->far_distance;
     }
     if (frame_counter % 10U == entity->spawn_index % 10U) {

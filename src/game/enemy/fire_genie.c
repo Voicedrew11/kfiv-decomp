@@ -96,7 +96,7 @@ void FireGenie_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    entity->flags |= 0x10000000;
+    entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
@@ -215,7 +215,7 @@ static void FireGenie_OnHit(Entity *entity) {
     flags = entity->flags;
     if (((flags >> 36) & 3) == 2) {
         ENTITY_UNK5C(entity)->as_s32 = 0;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
         if (unkE0->action_counter) {
             other = Entity_GetBySpawnId(unkE0->action_flags);
@@ -255,8 +255,8 @@ static void FireGenie_ThinkDecide(Entity *entity, s32 unknown) {
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
     } else {
-        entity->flags |= 0x400;
-        entity->flags |= 0x200;
+        entity->flags |= ENTITY_FLAG_400;
+        entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
         if (FireGenie_ShouldRespawnOther(entity)) {
             EntityAi_StartAction(entity, FireGenie_RespawnOther, unknown);
         } else if (entity->attack_delay_frames == 0 && FireGenie_CanAttack(entity)) {
@@ -517,7 +517,7 @@ static s32 FireGenie_ShouldRespawnOther(Entity *entity) {
     unkE0->sub_timer = 0;
     for (i = 0; i < entity->params->unk43C; i++) {
         Entity *other = Entity_GetBySpawnId(i + 10);
-        if (other != NULL && (other->flags & 3) == 3 && ((s32)(other->flags >> 2) & 3) < 3) {
+        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 3 && ((s32)(other->flags >> 2) & 3) < 3) {
             unkE0->sub_timer |= 1 << i;
             count++;
         }
@@ -546,7 +546,7 @@ static void FireGenie_RespawnOneOther(Entity *entity) {
             if (rand() % 100 < remaining * 100 / slots_left) {
                 s32 other_id = i + 10;
                 Entity *other = Entity_GetBySpawnId(other_id);
-                if (other != NULL && ((s32)other->flags & 1)) {
+                if (other != NULL && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST)) {
                     EntityEvent_Respawn((char *)other);
                     unkE0->action_flags = other_id;
                     remaining--;

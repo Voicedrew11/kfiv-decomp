@@ -82,7 +82,7 @@ void IceGolem_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    entity->flags &= ~0x10000000;
+    entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
@@ -353,9 +353,9 @@ static void IceGolem_RangedAttack0(Entity *entity) {
             }
         }
         if (entity->model->level_tables->unk82 > 0 && unk3D8->record.unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;

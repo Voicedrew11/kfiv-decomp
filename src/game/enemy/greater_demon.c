@@ -107,7 +107,7 @@ void GreaterDemon_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    entity->flags &= ~0x10000000;
+    entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
@@ -559,12 +559,12 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x1D, 0, 1, 1);
-        entity->flags &= ~0x3800;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
-            entity->flags |= 0x20000;
+            entity->flags |= ENTITY_FLAG_DRAW_AFTERIMAGE;
             entity->action_step++;
         }
         if (unkE0->unk6E == 0) {
@@ -620,8 +620,8 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
         } else {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
         }
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
-        entity->flags &= ~0x200;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -650,8 +650,8 @@ static void GreaterDemon_OnHit(Entity *entity) {
     if ((((u64)entity->flags >> 36) & 3) == 2) {
         EntityAi_LowerWeightsAfterHit((char *)entity);
         entity->target = NULL;
-        entity->flags &= ~0x400;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_400;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         EntityAi_SetReaction((char *)entity, (void (*)(void))GreaterDemon_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
@@ -724,14 +724,14 @@ static void GreaterDemon_Guard(Entity *entity) {
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
             entity->action_timer = entity->params->guard_frames;
-            entity->flags |= 0x8000L << 20;
-            entity->flags &= ~0x4000;
+            entity->flags |= ENTITY_FLAG_GUARDING;
+            entity->flags &= ~ENTITY_FLAG_ANIMATES;
             entity->action_step++;
         }
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit43 && ENTITY_FLAG_BITS(entity)->bit39 && !ENTITY_FLAG_BITS(entity)->bit38) {
-            entity->flags &= ~(0x8000L << 28);
+            entity->flags &= ~ENTITY_FLAG_HIT_BY_PLAYER;
             entity->action_timer = entity->params->guard_frames;
         }
         EntityEvent_StartEffectAtPoint((char **)entity, 0x32F, 0, (int)entity->model->rotation);
@@ -829,7 +829,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
             for (point_index = 0; point_index < count; point_index++) {
                 for (; minion_index < 8; minion_index++) {
                     minion = Entity_GetBySpawnId(minion_index + 10);
-                    if (minion != NULL && (minion->flags & 3) == 1 &&
+                    if (minion != NULL && (minion->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 1 &&
                         (((s32)(minion->flags >> 2) & 3) == 0 || ((s32)(minion->flags >> 2) & 3) == 3)) {
                         point = &climb_points[point_index];
                         if (EntityMath_DistanceXZ(point, &player_state) > 180.0f) {
@@ -851,9 +851,9 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
             }
         }
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -887,7 +887,7 @@ static int GreaterDemon_SetRanged2Weight(Entity *entity) {
         ally = Entity_GetBySpawnId(ally_index + 0xA);
         if (ally != NULL) {
             ally_flags = ally->flags;
-            if ((ally_flags & 3) == 1) {
+            if ((ally_flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 1) {
                 flag_bits = (s32)((ally_flags << 0x1E) >> 0x20); // match: bits 30-31 of the flag word
                 if (((flag_bits & 3) == 0) || ((flag_bits & 3) == 3)) {
                     ally_count++;
@@ -910,8 +910,8 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
-        entity->flags &= ~0x200;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -933,9 +933,9 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
         direction[2] = 0.0f;
         EntityShot_Launch(entity, unk3D8, elapsed, entity->model->level_tables->unk82, direction);
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;

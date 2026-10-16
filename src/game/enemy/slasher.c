@@ -94,7 +94,7 @@ static void Slasher_OnHit(Entity *entity) {
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    flags = entity->flags & ~0x200;
+    flags = entity->flags & ~ENTITY_FLAG_LOOK_AT_TARGET;
     entity->flags = flags;
     hit_strength = (flags >> 36) & 3;
     if (hit_strength == 1) {
@@ -189,7 +189,7 @@ static void Slasher_AlertSameKind(Entity *entity) {
     Entity *other_entity = active_entities_head;
     while (other_entity != NULL) {
         if (entity->params == other_entity->params) {
-            if (*(int *)&other_entity->flags & 1) {
+            if (*(int *)&other_entity->flags & ENTITY_FLAG_ACTIVE_LIST) {
                 u64 other_flags = other_entity->flags;
                 if (((int)(other_flags >> 1) & 1) && !((int)(other_flags >> 2) & 3) &&
                     other_entity != entity) {

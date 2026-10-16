@@ -181,7 +181,7 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
 static void Widda_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if ((entity->busy_flags & ENTITY_BUSY_DODGE) && (entity->flags & (0xD000L << 33))) {
+    if ((entity->busy_flags & ENTITY_BUSY_DODGE) && (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_OBJECT_PUSH | ENTITY_FLAG_ENTITY_PUSH))) {
         unkE0->step_index = 1;
     }
     if (frame_counter % 10U == entity->spawn_index % 10U) {

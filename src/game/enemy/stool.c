@@ -78,7 +78,7 @@ static void Stool_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     flags = entity->flags;
     if ((s32)(flags >> 38) & 3) {
-        entity->flags = (flags & ~(3UL << 58)) | (1UL << 57);
+        entity->flags = (flags & ~ENTITY_FLAG_ATTACK_INDEX_MASK) | ENTITY_FLAG_RANGED_ATTACK;
         EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         return;
     }

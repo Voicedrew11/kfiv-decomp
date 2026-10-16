@@ -128,7 +128,7 @@ static void DarkSorcerer_OnHit(Entity *entity) {
     u64 hit_strength;
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     flags = entity->flags;
     hit_strength = (flags >> 36) & 3;
     if (hit_strength == 1) {
@@ -166,9 +166,9 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
         }
     }
     if (entity->busy_flags & ENTITY_BUSY_DEATH) {
-        entity->flags &= ~0x10000000;
+        entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     } else {
-        entity->flags |= 0x10000000;
+        entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     }
     if ((s32)(entity->flags >> 28) & 1) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
@@ -442,12 +442,12 @@ static void DarkSorcerer_Dormant(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0, 0, 0, 1);
-        entity->flags &= ~0x3800;
-        entity->flags |= 0x200000;
-        entity->flags |= 0x100000;
-        entity->flags |= 0x40000;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags |= ENTITY_FLAG_200000;
+        entity->flags |= ENTITY_FLAG_100000;
+        entity->flags |= ENTITY_FLAG_40000;
         entity->model_alpha = 0x20;
-        entity->flags |= 0x10000000;
+        entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
         unkE0->action_flags = 0;
         entity->action_step++;
     case 1:
@@ -459,9 +459,9 @@ static void DarkSorcerer_Dormant(Entity *entity) {
         entity->model_alpha = unkE0->action_flags * 0x60 / 20 + 0x20;
         unkE0->action_flags++;
         if (unkE0->action_flags > 20) {
-            entity->flags &= ~0x200000;
-            entity->flags &= ~0x100000;
-            entity->flags &= ~0x40000;
+            entity->flags &= ~ENTITY_FLAG_200000;
+            entity->flags &= ~ENTITY_FLAG_100000;
+            entity->flags &= ~ENTITY_FLAG_40000;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
@@ -521,9 +521,9 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->level_tables->unk82);
         }
         if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -580,9 +580,9 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
         target[1] -= 190.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->unk82, target, 0.7853982f, 0.0f);
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -611,14 +611,14 @@ static void DarkSorcerer_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        entity->flags &= ~0x3800;
-        entity->flags |= 0x4000;
-        entity->flags |= 0x100000;
-        entity->flags = (entity->flags & ~0xC) | 4;
-        entity->flags |= 0x8000000;
-        entity->flags |= 0x4000000;
-        entity->flags &= ~0x10000000;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags |= ENTITY_FLAG_ANIMATES;
+        entity->flags |= ENTITY_FLAG_100000;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
+        entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
+        entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
+        entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -695,8 +695,8 @@ static void DarkSorcerer_PlayAnim17AndShoot(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames >> 1, 1);
-        entity->flags &= ~0x3800;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -824,8 +824,8 @@ static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames >> 1, 1);
-        entity->flags &= ~0x3800;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -866,8 +866,8 @@ static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x13, 0, entity->params->motion_blend_frames >> 1, 1);
-        entity->flags &= ~0x3800;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {

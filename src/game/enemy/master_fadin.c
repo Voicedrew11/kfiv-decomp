@@ -95,7 +95,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
     }
     if (entity->spawn_info->spawn_mode == 1) {
         for (other = active_entities_head; other != NULL; other = other->next) {
-            if (other->params == entity->params && other != entity && ((s32)other->flags & 1)) {
+            if (other->params == entity->params && other != entity && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST)) {
                 if (!ENTITY_FLAG_BITS(other)->bit1 || ENTITY_FLAG_BITS(other)->bits2 >= 3) {
                     EntityEvent_Respawn((char *)other);
                 }
@@ -228,13 +228,13 @@ static void MasterFadin_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        entity->flags &= ~0x3800;
-        entity->flags |= 0x4000;
-        entity->flags |= 0x100000;
-        entity->flags = (entity->flags & ~0xC) | 4;
-        entity->flags |= 0x8000000;
-        entity->flags |= 0x4000000;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags |= ENTITY_FLAG_ANIMATES;
+        entity->flags |= ENTITY_FLAG_100000;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
+        entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
+        entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -259,8 +259,8 @@ static void MasterFadin_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            entity->flags |= 0xC;
-            entity->flags &= ~2;
+            entity->flags |= ENTITY_FLAG_DYING_MASK;
+            entity->flags &= ~ENTITY_FLAG_LIVE;
         }
         break;
     }
@@ -274,7 +274,7 @@ static void MasterFadin_AlertPartner(Entity *entity) {
 
     partner = Entity_GetBySpawnId(entity->spawn_info->variant);
     if (partner != NULL) {
-        if ((partner->flags & 0xE) == 2) {
+        if ((partner->flags & (ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) == 2) {
             partner->state = 2;
             partner->unkE0.pause_timer = partner->params->unk43A;
         }

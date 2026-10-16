@@ -78,7 +78,7 @@ void Larva_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    entity->flags &= ~0x10000000;
+    entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     entity->target = NULL;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
@@ -213,14 +213,14 @@ static void Larva_Death(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        entity->flags &= ~0x3800;
-        entity->flags |= 0x4000;
-        entity->flags |= 0x100000;
-        entity->flags = (entity->flags & ~0xC) | 4;
-        entity->flags |= 0x8000000;
-        entity->flags |= 0x4000000;
-        entity->flags &= ~0x10000000;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags |= ENTITY_FLAG_ANIMATES;
+        entity->flags |= ENTITY_FLAG_100000;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
+        entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
+        entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
+        entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -244,8 +244,8 @@ static void Larva_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            entity->flags |= 0xC;
-            entity->flags &= ~2;
+            entity->flags |= ENTITY_FLAG_DYING_MASK;
+            entity->flags &= ~ENTITY_FLAG_LIVE;
         }
         break;
     }
@@ -264,15 +264,15 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, 0, 1);
-        entity->flags &= ~0x3800;
-        entity->flags |= 0x200000;
-        entity->flags |= 0x100000;
-        entity->flags |= 0x40000;
-        entity->flags |= 0x10000000;
-        entity->flags |= 0x400000;
-        entity->flags |= 0x800000;
-        entity->flags |= 0x1000000;
-        entity->flags |= 0x8000000;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags |= ENTITY_FLAG_200000;
+        entity->flags |= ENTITY_FLAG_100000;
+        entity->flags |= ENTITY_FLAG_40000;
+        entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
+        entity->flags |= ENTITY_FLAG_400000;
+        entity->flags |= ENTITY_FLAG_NO_WALL_COLLISION;
+        entity->flags |= ENTITY_FLAG_NO_SECOND_WALL_COLLISION;
+        entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
         entity->action_step++;
     case 1:
         if (unkE0->step_index > 0) {
@@ -284,7 +284,7 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
             return;
         }
         other = Entity_GetBySpawnId(entity->spawn_info->variant);
-        if (other != NULL && (other->flags & 3) == 3) {
+        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 3) {
             point = (f32 *)Model_GetSkinnedBonePoint((char *)other->model, 8);
             if (point != NULL) {
                 entity->model->position[0] = point[0];
@@ -382,10 +382,10 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
             unkE0->action_flags = 1;
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43E, 0xFF, (int)entity->model->rotation);
             EntityAi_SetState((char *)entity, 2);
-            entity->flags &= ~0x200000;
-            entity->flags &= ~0x100000;
-            entity->flags &= ~0x40000;
-            entity->flags &= ~0x10000000;
+            entity->flags &= ~ENTITY_FLAG_200000;
+            entity->flags &= ~ENTITY_FLAG_100000;
+            entity->flags &= ~ENTITY_FLAG_40000;
+            entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;

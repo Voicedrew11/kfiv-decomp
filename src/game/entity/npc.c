@@ -141,9 +141,9 @@ static void Npc_Animate(Entity *entity) {
    (entity_group_state[EntityParams.unk43A].unk02). */
 static void Npc_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit(entity);
-    entity->flags &= ~0x400;
+    entity->flags &= ~ENTITY_FLAG_400;
     entity->target = NULL;
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction(entity, (void (*)(void))Npc_ReactionHeavy, 0);
     entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].unk02 = 1;
 }
@@ -642,19 +642,19 @@ void Npc_InitType81(Entity *entity) {
 static void Npc_OnHitType81(Entity *entity) {
     EntityAi_LowerWeightsAfterHit(entity);
     entity->target = NULL;
-    entity->flags &= ~0x400;
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction(entity, (void (*)(void))Npc_ReactionHeavy, 0);
     entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].unk02 = 1;
     if (((u64)entity->flags >> 38) & 3) {
-        entity->flags |= 0x20000000;
+        entity->flags |= ENTITY_FLAG_20000000;
     }
 }
 
 /* The think handler of type 81: clears flag bit 29, updates what it knows of the player every tenth frame,
    walks back while flag bit 53 is set, else stands. */
 static void Npc_ThinkType81(Entity *entity, s32 run_now) {
-    s32 mask = ~0x20000000;
+    s32 mask = ~ENTITY_FLAG_20000000;
 
     entity->flags &= mask;
     if (frame_counter % 10U == entity->spawn_index % 10U) {

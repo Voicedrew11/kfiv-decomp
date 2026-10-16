@@ -111,7 +111,7 @@ void Interact_FindTarget(void) {
         nearest = COLLISION_RESULT->distance;
     }
     for (entity = active_entities_head; entity != NULL; entity = entity->next) {
-        if ((entity->flags & 0xE) != 2) {
+        if ((entity->flags & (ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) != 2) {
             continue;
         }
         reach = entity->radius + 100.0f + 200.0f;

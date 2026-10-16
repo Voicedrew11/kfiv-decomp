@@ -168,7 +168,7 @@ void Entity_ClearFlag10InSlot(int array_index) {
 
     entity = entity_pool[array_index];
     for (i = 0; i < map_spawn_counts[array_index]; i++, entity++) {
-        entity->flags &= ~0x10;
+        entity->flags &= ~ENTITY_FLAG_NO_RESPAWN;
     }
 }
 
@@ -261,7 +261,7 @@ void Entity_ClearMapSlot(int array_index) {
 }
 
 void Entity_SetSpawnedFlags(Entity *entity) {
-    entity->flags = (entity->flags | 0xC) & ~0x100;
+    entity->flags = (entity->flags | ENTITY_FLAG_DYING_MASK) & ~ENTITY_FLAG_100;
 }
 
 /* Moves every entity of one of the two entity arrays by an offset. */
@@ -340,7 +340,7 @@ void Entity_UpdateAll(void) {
         if (entity->ailment_1_frames != 0) {
             if (entity->ailment_1_frames % 30 == 0) {
                 entity->hit_points = (entity->hit_points < 3) ? 0 : entity->hit_points - 3;
-                entity->flags &= ~(3L << 38);
+                entity->flags &= ~ENTITY_FLAG_HIT_SOURCE_MASK;
             }
             entity->ailment_1_frames--;
         }

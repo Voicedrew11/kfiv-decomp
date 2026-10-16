@@ -94,8 +94,8 @@ static void LivingDead_OnHit(Entity *entity) {
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    entity->flags &= ~0x400;
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     flags = entity->flags;
     kind = (flags >> 36) & 3;
     if (kind == 1) {

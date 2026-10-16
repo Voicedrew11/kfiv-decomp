@@ -344,9 +344,9 @@ static void Spider_RangedAttack(Entity *entity) {
         direction[1] -= 30.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->unk82, direction, 0.7853982f, 0.17453294f);
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -552,7 +552,7 @@ static void Spider_LevelOut(Entity *entity) {
     entity->busy_flags = ENTITY_BUSY_2000;
     pitch_left = EntityMath_EaseAngleToward(&entity->model->rotation[0], 0.0f, 6.0f);
     roll_left = EntityMath_EaseAngleToward(&entity->model->rotation[2], 0.0f, 6.0f);
-    if (entity->flags & (0x8200L << 35)) {
+    if (entity->flags & (ENTITY_FLAG_ON_FLOOR | ENTITY_FLAG_ON_TOP)) {
         pitch_left = ABS(pitch_left);
         roll_left = ABS(roll_left);
         if (ABS(pitch_left) < 0.01f && ABS(roll_left) < 0.01f) {

@@ -137,16 +137,16 @@ static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity) {
     } else {
         Motion_Start(entity, 0x13, 0, 0, 0);
     }
-    entity->flags |= 0x40000;
-    entity->flags |= 0x100000;
-    entity->flags |= 0x200000;
-    entity->flags |= 0x400000;
-    entity->flags |= 0x800000;
-    entity->flags |= 0x1000000;
-    entity->flags |= 0x2000000;
-    entity->flags |= 0x4000000;
-    entity->flags |= 0x10000;
-    entity->flags |= 0x10000000;
+    entity->flags |= ENTITY_FLAG_40000;
+    entity->flags |= ENTITY_FLAG_100000;
+    entity->flags |= ENTITY_FLAG_200000;
+    entity->flags |= ENTITY_FLAG_400000;
+    entity->flags |= ENTITY_FLAG_NO_WALL_COLLISION;
+    entity->flags |= ENTITY_FLAG_NO_SECOND_WALL_COLLISION;
+    entity->flags |= ENTITY_FLAG_NO_MAP_OBJECT_COLLISION;
+    entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
+    entity->flags |= ENTITY_FLAG_NOT_TARGETABLE;
+    entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
 }
 
 /* The think handler (the set-up function's default, for any EntitySpawnInfo.variant but 1 to 4): as
@@ -323,7 +323,7 @@ static void ExpeditionSoldier_Death(Entity *entity) {
             if (entity->spawn_info->spawn_mode != 0) {
                 Entity *partner = Entity_GetBySpawnId(entity->spawn_info->spawn_mode);
 
-                if (partner != NULL && ((s32)partner->flags & 1)) {
+                if (partner != NULL && ((s32)partner->flags & ENTITY_FLAG_ACTIVE_LIST)) {
                     EntityEvent_Respawn((char *)partner);
                     Vector_Copy(partner->model->position, entity->model->position);
                 }

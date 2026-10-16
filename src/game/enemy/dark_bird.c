@@ -115,7 +115,7 @@ void DarkBird_Init(Entity *entity) {
     for (i = 5; i != -1; i--) {
         entity->attack_weights[i] = 0x80;
     }
-    entity->flags |= 0x10000000;
+    entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     entity->target = NULL;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
@@ -148,9 +148,9 @@ static void DarkBird_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags & ENTITY_BUSY_DEATH) {
-        entity->flags &= ~0x10000000;
+        entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     } else {
-        entity->flags |= 0x10000000;
+        entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     }
     if (!(entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_HEAVY | ENTITY_BUSY_ATTACK))) {
         EntityAi_StartSlotMotion(entity, &unkE0->unk88, 1, 3, 0, entity->params->motion_blend_frames, 0);
@@ -405,7 +405,7 @@ static void DarkBird_ThinkIdle(Entity *entity, s32 unknown) {
 /* The move handler: keeps animation 3 on both motion slots, flag bits 11 to 13 at 0. DarkBird_ApplyMoveCommand
    does the turning and the moving. */
 static void DarkBird_Move(Entity *entity) {
-    entity->flags &= ~0x3800UL;
+    entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
     EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_0, 0, 3, 0, entity->params->motion_blend_frames, 0);
     EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
 }
@@ -701,9 +701,9 @@ static void DarkBird_MeleeAttack(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, unkE0->unk80.unk02);
         }
         if (unkE0->unk80.unk02 > 0 && unk240->hit_end_frame >= unkE0->unk80.unk02) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -799,9 +799,9 @@ static void DarkBird_RangedAttack(Entity *entity) {
             }
         }
         if (unkE0->unk80.unk02 > 0 && record->unk03 >= unkE0->unk80.unk02) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -896,8 +896,8 @@ static s32 DarkBird_LaunchThreeShots(Entity *entity, EntityParamsUnk3D8Full *rec
 static void DarkBird_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    entity->flags &= ~0x400;
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     if (((s32)(entity->flags >> 36) & 3) == 1) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))DarkBird_ReactionLight, 0);
     } else if (((s32)(entity->flags >> 36) & 3) == 2) {

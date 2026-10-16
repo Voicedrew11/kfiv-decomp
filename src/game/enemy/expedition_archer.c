@@ -468,7 +468,7 @@ static void ExpeditionArcher_Death(Entity *entity) {
             if (entity->spawn_info->spawn_mode != 0) {
                 Entity *partner = Entity_GetBySpawnId(entity->spawn_info->spawn_mode);
 
-                if (partner != NULL && ((s32)partner->flags & 1)) {
+                if (partner != NULL && ((s32)partner->flags & ENTITY_FLAG_ACTIVE_LIST)) {
                     EntityEvent_Respawn((char *)partner);
                     Vector_Copy(partner->model->position, entity->model->position);
                 }

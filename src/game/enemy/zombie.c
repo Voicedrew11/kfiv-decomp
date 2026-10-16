@@ -99,7 +99,7 @@ static void Zombie_OnHit(Entity *entity) {
     u64 state;
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     flags = entity->flags;
     state = (flags >> 36) & 3;
     if (state == 2) {

@@ -175,7 +175,7 @@ static void Salamander_OnHit(Entity *entity) {
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     if (((s32)(entity->flags >> 36) & 3) == 1) {
         if ((s32)(entity->flags >> 19) & 1) {
             EntityAi_SetReaction((char *)entity, (void (*)(void))Salamander_ReactionRewind, 0);
@@ -204,7 +204,7 @@ static void Salamander_ReactionRewind(Entity *entity) {
         }
         EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, unkE0->unk80.unk00 & 0x1F, frame, 5, 1);
         entity->reaction_step++;
-        entity->flags = ((entity->flags & ~0x3800ULL) | 0x800) & ~0x200ULL;
+        entity->flags = ((entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1) & ~ENTITY_FLAG_LOOK_AT_TARGET;
         break;
     case 1:
         if (unkE0->unk80.unk01 == 0) {
@@ -386,9 +386,9 @@ static void Salamander_MeleeAttack(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, unkE0->unk80.unk02);
         }
         if (unkE0->unk80.unk02 > 0 && unk240->hit_end_frame >= unkE0->unk80.unk02) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -447,9 +447,9 @@ static void Salamander_RangedAttack(Entity *entity) {
                           unkE0->unk80.unk02);
         }
         if (unkE0->unk80.unk02 > 0 && unk3D8->unk03 >= unkE0->unk80.unk02) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -527,7 +527,7 @@ static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
         entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
     } else {
         push[0] = push[1] = push[2] = push[3] = 0.0f;
-        if (entity->flags & (0xC000L << 31)) {
+        if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_400000000000)) {
             push[0] += entity->wall_push[0];
             push[1] += entity->wall_push[1];
             push[2] += entity->wall_push[2];

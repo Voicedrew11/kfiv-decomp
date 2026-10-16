@@ -79,11 +79,11 @@ static void Bell_Think(Entity *entity) {
     u64 flags;
     f32 angle;
 
-    flags = entity->flags & ~0x20000000ULL;
+    flags = entity->flags & ~ENTITY_FLAG_20000000;
     entity->flags = flags;
     if ((s32)(flags >> 43) & 1) {
         if (entity->action_timer == 0) {
-            entity->flags = flags | 0x20000000ULL;
+            entity->flags = flags | ENTITY_FLAG_20000000;
             angle = EntityMath_AngleXZ(player_state.position, (char *)entity->model->position);
             angle = EntityMath_WrapAngle(angle - player_state.heading);
             Sound_PlayFalloff((u8)entity->params->yaw_limit_deg, (u8)entity->params->pitch_limit_deg, entity->sound_bank,
@@ -91,5 +91,5 @@ static void Bell_Think(Entity *entity) {
             entity->action_timer = entity->params->action_frames;
         }
     }
-    entity->flags &= ~(1ULL << 43);
+    entity->flags &= ~ENTITY_FLAG_HIT_BY_PLAYER;
 }

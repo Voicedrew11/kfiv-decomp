@@ -103,7 +103,7 @@ void DarkKnight_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    entity->flags &= ~0x10000000;
+    entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
@@ -261,7 +261,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
     s32 mode;
     s32 side;
 
-    entity->flags = (entity->flags & ~0x3800) | 0x800;
+    entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
     if (DarkKnight_ShouldHoldAnim13(entity, 200.0f, 2.443461f)) {
         EntityAi_StartAction(entity, DarkKnight_HoldGuardPose, 1);
         return;
@@ -275,7 +275,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     mode = EntityAi_PickCombatChoice(entity, 0);
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     if (entity->action_timer == 0 || mode == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
@@ -379,8 +379,8 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
         }
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
-        entity->flags &= ~0x200;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {

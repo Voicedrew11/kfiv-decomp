@@ -1172,7 +1172,7 @@ static Entity *Entity_UnlinkActive(Entity *entity) {
         entity->next->prev = entity->prev;
     }
     Entity_SetSpawnedFlags(entity);
-    entity->flags &= ~1;
+    entity->flags &= ~ENTITY_FLAG_ACTIVE_LIST;
     active_entity_count--;
     return next;
 }

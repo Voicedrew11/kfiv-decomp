@@ -124,8 +124,8 @@ static void GoldenStatue_OnHit(Entity *entity) {
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    entity->flags &= ~0x400;
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     flags = entity->flags;
     if (((flags >> 36) & 3) == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
@@ -144,8 +144,8 @@ static void GoldenStatue_ThinkWaitAtPost(Entity *entity, s32 unknown) {
     u32 phase;
 
     other = Entity_GetBySpawnIdForMap(entity->group_id, 0x29);
-    if (other != NULL && (s32)other->flags & 1) {
-        if ((other->flags & 0xE) != 2) {
+    if (other != NULL && (s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) {
+        if ((other->flags & (ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) != 2) {
             void (*handler)(Entity *, s32) = GoldenStatue_ThinkNoStates;
 
             unkE0->think = handler;
@@ -495,7 +495,7 @@ static void GoldenStatue_Animate(Entity *entity) {
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
-            entity->flags = flags & ~0x3800L;
+            entity->flags = flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         }
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {

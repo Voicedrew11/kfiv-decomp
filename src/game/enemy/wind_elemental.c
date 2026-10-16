@@ -90,7 +90,7 @@ void WindElemental_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    entity->flags &= ~0x10000000;
+    entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
@@ -168,9 +168,9 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
     s32 side;
 
     if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
-        entity->flags &= ~0x3800;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
     } else {
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
     }
     if (WindElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
         EntityAi_StartAction(entity, WindElemental_Dodge, 1);
@@ -185,7 +185,7 @@ static void WindElemental_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     mode = EntityAi_PickCombatChoice(entity, 0);
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     if (entity->action_timer == 0 || mode == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
@@ -276,8 +276,8 @@ static void WindElemental_PlayTurnAnim(Entity *entity) {
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
         }
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
-        entity->flags &= ~0x200;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -426,7 +426,7 @@ static void WindElemental_AlertSameKind(Entity *entity) {
     Entity *other;
 
     for (other = active_entities_head; other != NULL; other = other->next) {
-        if (entity->params == other->params && ((s32)other->flags & 1) && ((s32)(other->flags >> 1) & 1)
+        if (entity->params == other->params && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) && ((s32)(other->flags >> 1) & 1)
             && ((s32)(other->flags >> 2) & 3) == 0 && other != entity) {
             EntityUnkE0 *unkE0 = &other->unkE0;
 

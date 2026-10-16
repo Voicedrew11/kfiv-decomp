@@ -439,7 +439,7 @@ static void WiddaArcher_WalkToMapObject(Entity *entity, s32 unknown) {
     f32 reach;
     MapObject *map_object;
 
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     map_object = MapObject_GetById(entity->group_id, entity->spawn_info->second_map_object_id);
     if (map_object != NULL) {

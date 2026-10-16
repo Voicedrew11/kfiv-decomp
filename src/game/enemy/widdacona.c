@@ -83,7 +83,7 @@ void Widdacona_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    entity->flags |= 0x10000000;
+    entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
@@ -122,7 +122,7 @@ static void Widdacona_Animate(Entity *entity) {
 static void Widdacona_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     if (((s32)(entity->flags >> 36) & 3) == 2) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     }
@@ -178,7 +178,7 @@ static void Widdacona_Death(Entity *entity) {
         break;
     case 3:
         other = Entity_GetBySpawnIdForMap(entity->group_id, entity->spawn_info->spawn_mode);
-        if (other != NULL && ((s32)other->flags & 1) && other->unkE0.step_index != 0) {
+        if (other != NULL && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) && other->unkE0.step_index != 0) {
             ENTITY_FLAG_BITS(entity)->bits2 = 2;
             ENTITY_FLAG_BITS(entity)->bit4 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit20 = TRUE;

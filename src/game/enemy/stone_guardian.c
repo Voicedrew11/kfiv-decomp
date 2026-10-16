@@ -280,14 +280,14 @@ static void StoneGuardian_ThinkHoldAnim17(Entity *entity, s32 unknown) {
     s64 flags;
 
     Motion_Start(entity, 0x11, 0, 0, unknown);
-    flags = entity->flags & ~0x3800;
-    flags |= 0x400000;
-    flags |= 0x800000;
-    flags |= 0x01000000;
-    flags |= 0x40000;
-    flags |= 0x200000;
-    flags |= 0x10000000;
-    flags |= 0x10000;
+    flags = entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+    flags |= ENTITY_FLAG_400000;
+    flags |= ENTITY_FLAG_NO_WALL_COLLISION;
+    flags |= ENTITY_FLAG_NO_SECOND_WALL_COLLISION;
+    flags |= ENTITY_FLAG_40000;
+    flags |= ENTITY_FLAG_200000;
+    flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
+    flags |= ENTITY_FLAG_NOT_TARGETABLE;
     entity->flags = flags;
 }
 
@@ -1643,7 +1643,7 @@ static s32 StoneGuardian_Mode6IsStepFree(Entity *entity, s32 value) {
 
     for (i = 0; i < 5; i++) {
         other = Entity_GetBySpawnId(table.ids[i]);
-        if (other != NULL && (other->flags & 0xD) == 1 && other != entity && other->unkE0.step_index == value) {
+        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_DYING_MASK)) == 1 && other != entity && other->unkE0.step_index == value) {
             return FALSE;
         }
     }
@@ -1662,7 +1662,7 @@ static s32 StoneGuardian_Mode6IsNearestWaiting(Entity *entity, f32 limit) {
 
     for (i = 0; i < 5; i++) {
         other = Entity_GetBySpawnId(table.ids[i]);
-        if (other != NULL && (other->flags & 0xD) == 1 && other != entity) {
+        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_DYING_MASK)) == 1 && other != entity) {
             other_unkE0 = &other->unkE0;
             if (other_unkE0->step_index == 5 && other_unkE0->pitch_speed < limit) {
                 return FALSE;

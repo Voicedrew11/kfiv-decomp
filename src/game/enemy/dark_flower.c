@@ -284,7 +284,7 @@ static void DarkFlower_RangedAttack0(Entity *entity) {
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        entity->flags &= ~0x3800;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
