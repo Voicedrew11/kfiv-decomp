@@ -71,18 +71,18 @@
   "total_units": 455
  },
  "readability": {
-  "bit_ops": 2919,
-  "field_uses": 58152,
+  "bit_ops": 3533,
+  "field_uses": 58045,
   "fn_ptr_casts": 1455,
   "gotos": 79,
   "long_comments": 1800,
   "match_comments": 1050,
-  "named_bit_ops": 134,
+  "named_bit_ops": 2427,
   "named_field_uses": 52358,
-  "named_fields": 2675,
+  "named_fields": 2678,
   "named_globals": 1258,
-  "recovered_structs": 209,
-  "total_fields": 3774,
+  "recovered_structs": 210,
+  "total_fields": 3775,
   "total_globals": 1468,
   "total_structs": 616
  },
@@ -113,7 +113,7 @@
    "functions_named": 14,
    "functions_total": 14,
    "fuzzy": 100.0,
-   "name": "game/kf_game_loop"
+   "name": "game/core/game_loop"
   },
   {
    "category": "game",
@@ -127,7 +127,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_load_buffer"
+   "name": "game/core/load_buffer"
   },
   {
    "category": "game",
@@ -141,7 +141,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_save_state"
+   "name": "game/save/save_state"
   },
   {
    "category": "game",
@@ -155,7 +155,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_sound_load_queue"
+   "name": "game/sound/sound_load_queue"
   },
   {
    "category": "game",
@@ -169,7 +169,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_map_draw_state"
+   "name": "game/map/map_draw_state"
   },
   {
    "category": "game",
@@ -183,7 +183,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_game_state"
+   "name": "game/core/game_state"
   },
   {
    "category": "game",
@@ -197,7 +197,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_map_load_tables"
+   "name": "game/map/map_load_tables"
   },
   {
    "category": "game",
@@ -211,7 +211,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_map_viewer_tables"
+   "name": "game/ui/map_viewer_tables"
   },
   {
    "category": "game",
@@ -225,7 +225,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_tables"
+   "name": "game/map_object/map_object_tables"
   },
   {
    "category": "game",
@@ -239,7 +239,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_pools"
+   "name": "game/entity/entity_pools"
   },
   {
    "category": "game",
@@ -253,7 +253,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_types"
+   "name": "game/entity/entity_types"
   },
   {
    "category": "game",
@@ -267,7 +267,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_linked_point_pool"
+   "name": "game/model/linked_point_pool"
   },
   {
    "category": "game",
@@ -281,7 +281,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_sound_tables"
+   "name": "game/sound/sound_tables"
   },
   {
    "category": "game",
@@ -295,7 +295,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_effect_draw_hooks"
+   "name": "game/effect/effect_draw_hooks"
   },
   {
    "category": "game",
@@ -337,7 +337,7 @@
    "functions_named": 14,
    "functions_total": 14,
    "fuzzy": 100.0,
-   "name": "game/kf_file"
+   "name": "game/core/file"
   },
   {
    "category": "game",
@@ -365,7 +365,7 @@
    "functions_named": 42,
    "functions_total": 42,
    "fuzzy": 100.0,
-   "name": "game/kf_game"
+   "name": "game/core/game"
   },
   {
    "category": "game",
@@ -379,7 +379,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_model_motion"
+   "name": "game/model/model_motion"
   },
   {
    "category": "game",
@@ -421,7 +421,7 @@
    "functions_named": 12,
    "functions_total": 14,
    "fuzzy": 100.0,
-   "name": "game/kf_packet_buffer"
+   "name": "game/gfx/packet_buffer"
   },
   {
    "category": "game",
@@ -435,7 +435,7 @@
    "functions_named": 17,
    "functions_total": 18,
    "fuzzy": 100.0,
-   "name": "game/kf_gs_draw"
+   "name": "game/gfx/gs_draw"
   },
   {
    "category": "game",
@@ -449,7 +449,7 @@
    "functions_named": 3,
    "functions_total": 3,
    "fuzzy": 100.0,
-   "name": "game/kf_model_textures"
+   "name": "game/model/model_textures"
   },
   {
    "category": "game",
@@ -477,7 +477,7 @@
    "functions_named": 3,
    "functions_total": 3,
    "fuzzy": 100.0,
-   "name": "game/kf_draw_list"
+   "name": "game/gfx/draw_list"
   },
   {
    "category": "game",
@@ -491,7 +491,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_texture_table"
+   "name": "game/gfx/texture_table"
   },
   {
    "category": "game",
@@ -505,7 +505,7 @@
    "functions_named": 24,
    "functions_total": 24,
    "fuzzy": 100.0,
-   "name": "game/kf_model"
+   "name": "game/model/model"
   },
   {
    "category": "game",
@@ -533,7 +533,7 @@
    "functions_named": 8,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_model_screen"
+   "name": "game/model/model_screen"
   },
   {
    "category": "game",
@@ -561,7 +561,7 @@
    "functions_named": 9,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_wobble"
+   "name": "game/gfx/wobble"
   },
   {
    "category": "game",
@@ -589,7 +589,7 @@
    "functions_named": 5,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_collision_mesh"
+   "name": "game/collision/collision_mesh"
   },
   {
    "category": "game",
@@ -603,7 +603,7 @@
    "functions_named": 4,
    "functions_total": 4,
    "fuzzy": 100.0,
-   "name": "game/kf_map_init"
+   "name": "game/map/map_init"
   },
   {
    "category": "game",
@@ -645,7 +645,7 @@
    "functions_named": 24,
    "functions_total": 24,
    "fuzzy": 100.0,
-   "name": "game/kf_map"
+   "name": "game/map/map"
   },
   {
    "category": "game",
@@ -659,7 +659,7 @@
    "functions_named": 7,
    "functions_total": 7,
    "fuzzy": 100.0,
-   "name": "game/kf_map_scroll"
+   "name": "game/map/map_scroll"
   },
   {
    "category": "game",
@@ -673,7 +673,7 @@
    "functions_named": 15,
    "functions_total": 15,
    "fuzzy": 100.0,
-   "name": "game/kf_map_load"
+   "name": "game/map/map_load"
   },
   {
    "category": "game",
@@ -687,7 +687,7 @@
    "functions_named": 15,
    "functions_total": 15,
    "fuzzy": 100.0,
-   "name": "game/kf_map_change"
+   "name": "game/map/map_change"
   },
   {
    "category": "game",
@@ -701,7 +701,7 @@
    "functions_named": 20,
    "functions_total": 21,
    "fuzzy": 100.0,
-   "name": "game/kf_map_setup"
+   "name": "game/map/map_setup"
   },
   {
    "category": "game",
@@ -715,7 +715,7 @@
    "functions_named": 15,
    "functions_total": 15,
    "fuzzy": 100.0,
-   "name": "game/kf_map_viewer"
+   "name": "game/ui/map_viewer"
   },
   {
    "category": "game",
@@ -729,7 +729,7 @@
    "functions_named": 29,
    "functions_total": 29,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object"
+   "name": "game/map_object/map_object"
   },
   {
    "category": "game",
@@ -757,7 +757,7 @@
    "functions_named": 2,
    "functions_total": 2,
    "fuzzy": 100.0,
-   "name": "game/kf_scroll_texture"
+   "name": "game/gfx/scroll_texture"
   },
   {
    "category": "game",
@@ -771,7 +771,7 @@
    "functions_named": 9,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_common"
+   "name": "game/map_object/map_object_common"
   },
   {
    "category": "game",
@@ -785,7 +785,7 @@
    "functions_named": 8,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_door"
+   "name": "game/map_object/door"
   },
   {
    "category": "game",
@@ -799,7 +799,7 @@
    "functions_named": 10,
    "functions_total": 11,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_chest"
+   "name": "game/map_object/chest"
   },
   {
    "category": "game",
@@ -813,7 +813,7 @@
    "functions_named": 3,
    "functions_total": 3,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_fade"
+   "name": "game/map_object/fade"
   },
   {
    "category": "game",
@@ -827,7 +827,7 @@
    "functions_named": 9,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_switch"
+   "name": "game/map_object/switch"
   },
   {
    "category": "game",
@@ -841,7 +841,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_light"
+   "name": "game/map_object/light"
   },
   {
    "category": "game",
@@ -855,7 +855,7 @@
    "functions_named": 7,
    "functions_total": 7,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_sign"
+   "name": "game/map_object/sign"
   },
   {
    "category": "game",
@@ -869,7 +869,7 @@
    "functions_named": 9,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_socket"
+   "name": "game/map_object/socket"
   },
   {
    "category": "game",
@@ -883,7 +883,7 @@
    "functions_named": 13,
    "functions_total": 13,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_mechanism"
+   "name": "game/map_object/mechanism"
   },
   {
    "category": "game",
@@ -897,7 +897,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_map_object_pedestal"
+   "name": "game/map_object/pedestal"
   },
   {
    "category": "game",
@@ -911,7 +911,7 @@
    "functions_named": 22,
    "functions_total": 22,
    "fuzzy": 100.0,
-   "name": "game/kf_map_trigger"
+   "name": "game/map_object/map_trigger"
   },
   {
    "category": "game",
@@ -925,7 +925,7 @@
    "functions_named": 39,
    "functions_total": 40,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_pool"
+   "name": "game/entity/entity_pool"
   },
   {
    "category": "game",
@@ -953,7 +953,7 @@
    "functions_named": 15,
    "functions_total": 18,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_world"
+   "name": "game/entity/entity_world"
   },
   {
    "category": "game",
@@ -967,7 +967,7 @@
    "functions_named": 9,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_slime"
+   "name": "game/enemy/slime"
   },
   {
    "category": "game",
@@ -981,7 +981,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_scorpion"
+   "name": "game/enemy/scorpion"
   },
   {
    "category": "game",
@@ -995,7 +995,7 @@
    "functions_named": 11,
    "functions_total": 11,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_spider"
+   "name": "game/enemy/spider"
   },
   {
    "category": "game",
@@ -1009,7 +1009,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_giant_spider"
+   "name": "game/enemy/giant_spider"
   },
   {
    "category": "game",
@@ -1023,7 +1023,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_acid_crawler"
+   "name": "game/enemy/acid_crawler"
   },
   {
    "category": "game",
@@ -1037,7 +1037,7 @@
    "functions_named": 9,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_dragon_fly"
+   "name": "game/enemy/dragon_fly"
   },
   {
    "category": "game",
@@ -1051,7 +1051,7 @@
    "functions_named": 8,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_blood_bat"
+   "name": "game/enemy/blood_bat"
   },
   {
    "category": "game",
@@ -1065,7 +1065,7 @@
    "functions_named": 8,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_beetle"
+   "name": "game/enemy/beetle"
   },
   {
    "category": "game",
@@ -1079,7 +1079,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_critter"
+   "name": "game/enemy/critter"
   },
   {
    "category": "game",
@@ -1093,7 +1093,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_snake"
+   "name": "game/enemy/snake"
   },
   {
    "category": "game",
@@ -1107,7 +1107,7 @@
    "functions_named": 7,
    "functions_total": 7,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_lava_lizard"
+   "name": "game/enemy/lava_lizard"
   },
   {
    "category": "game",
@@ -1121,7 +1121,7 @@
    "functions_named": 17,
    "functions_total": 17,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_fire_lord"
+   "name": "game/enemy/fire_lord"
   },
   {
    "category": "game",
@@ -1135,7 +1135,7 @@
    "functions_named": 14,
    "functions_total": 14,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_salamander"
+   "name": "game/enemy/salamander"
   },
   {
    "category": "game",
@@ -1149,7 +1149,7 @@
    "functions_named": 9,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_widdacona"
+   "name": "game/enemy/widdacona"
   },
   {
    "category": "game",
@@ -1163,7 +1163,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_phagos"
+   "name": "game/enemy/phagos"
   },
   {
    "category": "game",
@@ -1177,7 +1177,7 @@
    "functions_named": 11,
    "functions_total": 11,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_giant_beetle"
+   "name": "game/enemy/giant_beetle"
   },
   {
    "category": "game",
@@ -1191,7 +1191,7 @@
    "functions_named": 2,
    "functions_total": 2,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_living_statue"
+   "name": "game/enemy/living_statue"
   },
   {
    "category": "game",
@@ -1205,7 +1205,7 @@
    "functions_named": 34,
    "functions_total": 34,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_stone_guardian"
+   "name": "game/enemy/stone_guardian"
   },
   {
    "category": "game",
@@ -1233,7 +1233,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_sentinel"
+   "name": "game/enemy/sentinel"
   },
   {
    "category": "game",
@@ -1247,7 +1247,7 @@
    "functions_named": 11,
    "functions_total": 11,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_living_armor"
+   "name": "game/enemy/living_armor"
   },
   {
    "category": "game",
@@ -1261,7 +1261,7 @@
    "functions_named": 11,
    "functions_total": 11,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_golden_statue"
+   "name": "game/enemy/golden_statue"
   },
   {
    "category": "game",
@@ -1275,7 +1275,7 @@
    "functions_named": 2,
    "functions_total": 2,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_lava_face"
+   "name": "game/enemy/lava_face"
   },
   {
    "category": "game",
@@ -1289,7 +1289,7 @@
    "functions_named": 4,
    "functions_total": 4,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_watcher"
+   "name": "game/enemy/watcher"
   },
   {
    "category": "game",
@@ -1303,7 +1303,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_slasher"
+   "name": "game/enemy/slasher"
   },
   {
    "category": "game",
@@ -1317,7 +1317,7 @@
    "functions_named": 4,
    "functions_total": 4,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_giant"
+   "name": "game/enemy/giant"
   },
   {
    "category": "game",
@@ -1331,7 +1331,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_malformed_giant"
+   "name": "game/enemy/malformed_giant"
   },
   {
    "category": "game",
@@ -1345,7 +1345,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_earth_king"
+   "name": "game/enemy/earth_king"
   },
   {
    "category": "game",
@@ -1359,7 +1359,7 @@
    "functions_named": 2,
    "functions_total": 2,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_fadin"
+   "name": "game/enemy/fadin"
   },
   {
    "category": "game",
@@ -1373,7 +1373,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_master_fadin"
+   "name": "game/enemy/master_fadin"
   },
   {
    "category": "game",
@@ -1387,7 +1387,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_makara"
+   "name": "game/enemy/makara"
   },
   {
    "category": "game",
@@ -1401,7 +1401,7 @@
    "functions_named": 4,
    "functions_total": 4,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_aqualizard"
+   "name": "game/enemy/aqualizard"
   },
   {
    "category": "game",
@@ -1415,7 +1415,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_seafang"
+   "name": "game/enemy/seafang"
   },
   {
    "category": "game",
@@ -1429,7 +1429,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_widda"
+   "name": "game/enemy/widda"
   },
   {
    "category": "game",
@@ -1443,7 +1443,7 @@
    "functions_named": 13,
    "functions_total": 13,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_widda_queen"
+   "name": "game/enemy/widda_queen"
   },
   {
    "category": "game",
@@ -1457,7 +1457,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_widda_archer"
+   "name": "game/enemy/widda_archer"
   },
   {
    "category": "game",
@@ -1471,7 +1471,7 @@
    "functions_named": 9,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_skull"
+   "name": "game/enemy/skull"
   },
   {
    "category": "game",
@@ -1485,7 +1485,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_dark_flower"
+   "name": "game/enemy/dark_flower"
   },
   {
    "category": "game",
@@ -1499,7 +1499,7 @@
    "functions_named": 8,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_skeleton_soldier"
+   "name": "game/enemy/skeleton_soldier"
   },
   {
    "category": "game",
@@ -1513,7 +1513,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_skeleton_archer"
+   "name": "game/enemy/skeleton_archer"
   },
   {
    "category": "game",
@@ -1527,7 +1527,7 @@
    "functions_named": 4,
    "functions_total": 4,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_zombie"
+   "name": "game/enemy/zombie"
   },
   {
    "category": "game",
@@ -1541,7 +1541,7 @@
    "functions_named": 17,
    "functions_total": 17,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_ancient_king"
+   "name": "game/enemy/ancient_king"
   },
   {
    "category": "game",
@@ -1569,7 +1569,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_living_dead"
+   "name": "game/enemy/living_dead"
   },
   {
    "category": "game",
@@ -1583,7 +1583,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_high_skeleton"
+   "name": "game/enemy/high_skeleton"
   },
   {
    "category": "game",
@@ -1597,7 +1597,7 @@
    "functions_named": 15,
    "functions_total": 15,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_minion"
+   "name": "game/enemy/minion"
   },
   {
    "category": "game",
@@ -1611,7 +1611,7 @@
    "functions_named": 3,
    "functions_total": 3,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_bell"
+   "name": "game/enemy/bell"
   },
   {
    "category": "game",
@@ -1625,7 +1625,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_mummy"
+   "name": "game/enemy/mummy"
   },
   {
    "category": "game",
@@ -1639,7 +1639,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_ancient_mummy"
+   "name": "game/enemy/ancient_mummy"
   },
   {
    "category": "game",
@@ -1653,7 +1653,7 @@
    "functions_named": 8,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_giant_leader"
+   "name": "game/enemy/giant_leader"
   },
   {
    "category": "game",
@@ -1681,7 +1681,7 @@
    "functions_named": 12,
    "functions_total": 12,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_malice"
+   "name": "game/enemy/malice"
   },
   {
    "category": "game",
@@ -1695,7 +1695,7 @@
    "functions_named": 16,
    "functions_total": 16,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_fire_elemental"
+   "name": "game/enemy/fire_elemental"
   },
   {
    "category": "game",
@@ -1709,7 +1709,7 @@
    "functions_named": 12,
    "functions_total": 12,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_earth_elemental"
+   "name": "game/enemy/earth_elemental"
   },
   {
    "category": "game",
@@ -1723,7 +1723,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_wind_elemental"
+   "name": "game/enemy/wind_elemental"
   },
   {
    "category": "game",
@@ -1737,7 +1737,7 @@
    "functions_named": 9,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_water_elemental"
+   "name": "game/enemy/water_elemental"
   },
   {
    "category": "game",
@@ -1751,7 +1751,7 @@
    "functions_named": 21,
    "functions_total": 21,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_dark_succubus"
+   "name": "game/enemy/dark_succubus"
   },
   {
    "category": "game",
@@ -1765,7 +1765,7 @@
    "functions_named": 14,
    "functions_total": 14,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_dark_knight"
+   "name": "game/enemy/dark_knight"
   },
   {
    "category": "game",
@@ -1779,7 +1779,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_dark_soldier"
+   "name": "game/enemy/dark_soldier"
   },
   {
    "category": "game",
@@ -1793,7 +1793,7 @@
    "functions_named": 15,
    "functions_total": 15,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_fire_genie"
+   "name": "game/enemy/fire_genie"
   },
   {
    "category": "game",
@@ -1807,7 +1807,7 @@
    "functions_named": 15,
    "functions_total": 15,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_greater_demon"
+   "name": "game/enemy/greater_demon"
   },
   {
    "category": "game",
@@ -1821,7 +1821,7 @@
    "functions_named": 12,
    "functions_total": 12,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_dark_archer"
+   "name": "game/enemy/dark_archer"
   },
   {
    "category": "game",
@@ -1835,7 +1835,7 @@
    "functions_named": 16,
    "functions_total": 16,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_dark_sorcerer"
+   "name": "game/enemy/dark_sorcerer"
   },
   {
    "category": "game",
@@ -1863,7 +1863,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_ice_golem"
+   "name": "game/enemy/ice_golem"
   },
   {
    "category": "game",
@@ -1877,7 +1877,7 @@
    "functions_named": 7,
    "functions_total": 7,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_larva"
+   "name": "game/enemy/larva"
   },
   {
    "category": "game",
@@ -1891,7 +1891,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_dark_puppet"
+   "name": "game/enemy/dark_puppet"
   },
   {
    "category": "game",
@@ -1905,7 +1905,7 @@
    "functions_named": 18,
    "functions_total": 18,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_dark_bird"
+   "name": "game/enemy/dark_bird"
   },
   {
    "category": "game",
@@ -1919,7 +1919,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_para_stool"
+   "name": "game/enemy/para_stool"
   },
   {
    "category": "game",
@@ -1933,7 +1933,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_reaper"
+   "name": "game/enemy/reaper"
   },
   {
    "category": "game",
@@ -1947,7 +1947,7 @@
    "functions_named": 8,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_crow"
+   "name": "game/enemy/crow"
   },
   {
    "category": "game",
@@ -1961,7 +1961,7 @@
    "functions_named": 3,
    "functions_total": 3,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_stool"
+   "name": "game/enemy/stool"
   },
   {
    "category": "game",
@@ -1975,7 +1975,7 @@
    "functions_named": 2,
    "functions_total": 2,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_type72"
+   "name": "game/entity/entity_type72"
   },
   {
    "category": "game",
@@ -1989,7 +1989,7 @@
    "functions_named": 3,
    "functions_total": 3,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_eye_pedestal"
+   "name": "game/enemy/eye_pedestal"
   },
   {
    "category": "game",
@@ -2003,7 +2003,7 @@
    "functions_named": 8,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_expedition_archer"
+   "name": "game/enemy/expedition_archer"
   },
   {
    "category": "game",
@@ -2031,7 +2031,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_expedition_soldier"
+   "name": "game/enemy/expedition_soldier"
   },
   {
    "category": "game",
@@ -2045,7 +2045,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_dark_one"
+   "name": "game/enemy/dark_one"
   },
   {
    "category": "game",
@@ -2059,7 +2059,7 @@
    "functions_named": 14,
    "functions_total": 14,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_forest_golem"
+   "name": "game/enemy/forest_golem"
   },
   {
    "category": "game",
@@ -2073,7 +2073,7 @@
    "functions_named": 3,
    "functions_total": 3,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_hammer_skeleton"
+   "name": "game/enemy/hammer_skeleton"
   },
   {
    "category": "game",
@@ -2087,7 +2087,7 @@
    "functions_named": 7,
    "functions_total": 7,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_mutant_wall"
+   "name": "game/enemy/mutant_wall"
   },
   {
    "category": "game",
@@ -2101,7 +2101,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_mutant_ceiling"
+   "name": "game/enemy/mutant_ceiling"
   },
   {
    "category": "game",
@@ -2115,7 +2115,7 @@
    "functions_named": 16,
    "functions_total": 16,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_lava_bird"
+   "name": "game/enemy/lava_bird"
   },
   {
    "category": "game",
@@ -2129,7 +2129,7 @@
    "functions_named": 7,
    "functions_total": 7,
    "fuzzy": 100.0,
-   "name": "game/kf_enemy_onyx"
+   "name": "game/enemy/onyx"
   },
   {
    "category": "game",
@@ -2143,7 +2143,7 @@
    "functions_named": 21,
    "functions_total": 21,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_ai_handlers"
+   "name": "game/entity/entity_ai_handlers"
   },
   {
    "category": "game",
@@ -2157,7 +2157,7 @@
    "functions_named": 19,
    "functions_total": 19,
    "fuzzy": 100.0,
-   "name": "game/kf_npc"
+   "name": "game/entity/npc"
   },
   {
    "category": "game",
@@ -2171,7 +2171,7 @@
    "functions_named": 33,
    "functions_total": 33,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_collision"
+   "name": "game/entity/entity_collision"
   },
   {
    "category": "game",
@@ -2213,7 +2213,7 @@
    "functions_named": 15,
    "functions_total": 15,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_aim"
+   "name": "game/entity/entity_aim"
   },
   {
    "category": "game",
@@ -2227,7 +2227,7 @@
    "functions_named": 11,
    "functions_total": 11,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_events"
+   "name": "game/entity/entity_events"
   },
   {
    "category": "game",
@@ -2241,7 +2241,7 @@
    "functions_named": 17,
    "functions_total": 17,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_ai_choice"
+   "name": "game/entity/entity_ai_choice"
   },
   {
    "category": "game",
@@ -2255,7 +2255,7 @@
    "functions_named": 14,
    "functions_total": 14,
    "fuzzy": 100.0,
-   "name": "game/kf_motion"
+   "name": "game/model/motion"
   },
   {
    "category": "game",
@@ -2269,7 +2269,7 @@
    "functions_named": 19,
    "functions_total": 19,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_math"
+   "name": "game/entity/entity_math"
   },
   {
    "category": "game",
@@ -2283,7 +2283,7 @@
    "functions_named": 57,
    "functions_total": 60,
    "fuzzy": 100.0,
-   "name": "game/kf_entity_ai"
+   "name": "game/entity/entity_ai"
   },
   {
    "category": "game",
@@ -2297,7 +2297,7 @@
    "functions_named": 17,
    "functions_total": 17,
    "fuzzy": 100.0,
-   "name": "game/kf_linked_point"
+   "name": "game/model/linked_point"
   },
   {
    "category": "game",
@@ -2325,7 +2325,7 @@
    "functions_named": 3,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_draw_env"
+   "name": "game/gfx/draw_env"
   },
   {
    "category": "game",
@@ -2339,7 +2339,7 @@
    "functions_named": 9,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_angle"
+   "name": "game/math/angle"
   },
   {
    "category": "game",
@@ -2353,7 +2353,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_screen_dump"
+   "name": "game/debug/screen_dump"
   },
   {
    "category": "game",
@@ -2367,7 +2367,7 @@
    "functions_named": 102,
    "functions_total": 102,
    "fuzzy": 100.0,
-   "name": "game/kf_sound_game"
+   "name": "game/sound/sound_game"
   },
   {
    "category": "game",
@@ -2451,7 +2451,7 @@
    "functions_named": 35,
    "functions_total": 35,
    "fuzzy": 100.0,
-   "name": "game/kf_effect"
+   "name": "game/effect/effect"
   },
   {
    "category": "game",
@@ -2479,7 +2479,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_effect_handlers"
+   "name": "game/effect/effect_handlers"
   },
   {
    "category": "game",
@@ -2493,7 +2493,7 @@
    "functions_named": 81,
    "functions_total": 81,
    "fuzzy": 100.0,
-   "name": "game/kf_effect_kinds_a"
+   "name": "game/effect/effect_kinds_a"
   },
   {
    "category": "game",
@@ -2507,7 +2507,7 @@
    "functions_named": 110,
    "functions_total": 110,
    "fuzzy": 100.0,
-   "name": "game/kf_fx_kinds"
+   "name": "game/effect/fx_kinds"
   },
   {
    "category": "game",
@@ -2535,7 +2535,7 @@
    "functions_named": 16,
    "functions_total": 16,
    "fuzzy": 100.0,
-   "name": "game/kf_fx_shared"
+   "name": "game/effect/fx_shared"
   },
   {
    "category": "game",
@@ -2549,7 +2549,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_effect_query"
+   "name": "game/effect/effect_query"
   },
   {
    "category": "game",
@@ -2563,7 +2563,7 @@
    "functions_named": 12,
    "functions_total": 17,
    "fuzzy": 100.0,
-   "name": "game/kf_debug"
+   "name": "game/debug/debug"
   },
   {
    "category": "game",
@@ -2577,7 +2577,7 @@
    "functions_named": 3,
    "functions_total": 3,
    "fuzzy": 100.0,
-   "name": "game/kf_shot"
+   "name": "game/effect/shot"
   },
   {
    "category": "game",
@@ -2591,7 +2591,7 @@
    "functions_named": 22,
    "functions_total": 24,
    "fuzzy": 100.0,
-   "name": "game/kf_attack"
+   "name": "game/player/attack"
   },
   {
    "category": "game",
@@ -2605,7 +2605,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_pad_state"
+   "name": "game/input/pad_state"
   },
   {
    "category": "game",
@@ -2619,7 +2619,7 @@
    "functions_named": 8,
    "functions_total": 9,
    "fuzzy": 100.0,
-   "name": "game/kf_input"
+   "name": "game/input/input"
   },
   {
    "category": "game",
@@ -2633,7 +2633,7 @@
    "functions_named": 25,
    "functions_total": 25,
    "fuzzy": 100.0,
-   "name": "game/kf_player_update"
+   "name": "game/player/player_update"
   },
   {
    "category": "game",
@@ -2647,7 +2647,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_player_state"
+   "name": "game/player/player_state"
   },
   {
    "category": "game",
@@ -2661,7 +2661,7 @@
    "functions_named": 23,
    "functions_total": 23,
    "fuzzy": 100.0,
-   "name": "game/kf_player_status"
+   "name": "game/player/player_status"
   },
   {
    "category": "game",
@@ -2675,7 +2675,7 @@
    "functions_named": 7,
    "functions_total": 7,
    "fuzzy": 100.0,
-   "name": "game/kf_player_items"
+   "name": "game/player/player_items"
   },
   {
    "category": "game",
@@ -2689,7 +2689,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_magic_ladder"
+   "name": "game/player/magic_ladder"
   },
   {
    "category": "game",
@@ -2703,7 +2703,7 @@
    "functions_named": 8,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_player_collision"
+   "name": "game/player/player_collision"
   },
   {
    "category": "game",
@@ -2717,7 +2717,7 @@
    "functions_named": 13,
    "functions_total": 13,
    "fuzzy": 100.0,
-   "name": "game/kf_held_weapon"
+   "name": "game/player/held_weapon"
   },
   {
    "category": "game",
@@ -2745,7 +2745,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_world_strip_lists"
+   "name": "game/collision/world_strip_lists"
   },
   {
    "category": "game",
@@ -2773,7 +2773,7 @@
    "functions_named": 42,
    "functions_total": 42,
    "fuzzy": 100.0,
-   "name": "game/kf_world_collision"
+   "name": "game/collision/world_collision"
   },
   {
    "category": "game",
@@ -2787,7 +2787,7 @@
    "functions_named": 33,
    "functions_total": 33,
    "fuzzy": 100.0,
-   "name": "game/kf_map_item"
+   "name": "game/item/map_item"
   },
   {
    "category": "game",
@@ -2801,7 +2801,7 @@
    "functions_named": 15,
    "functions_total": 15,
    "fuzzy": 100.0,
-   "name": "game/kf_gold"
+   "name": "game/item/gold"
   },
   {
    "category": "game",
@@ -2829,7 +2829,7 @@
    "functions_named": 67,
    "functions_total": 67,
    "fuzzy": 100.0,
-   "name": "game/kf_sound"
+   "name": "game/sound/sound"
   },
   {
    "category": "game",
@@ -2843,7 +2843,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_item_defs"
+   "name": "game/item/item_defs"
   },
   {
    "category": "game",
@@ -2857,7 +2857,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_sound_rpc"
+   "name": "game/sound/sound_rpc"
   },
   {
    "category": "game",
@@ -2871,7 +2871,7 @@
    "functions_named": 22,
    "functions_total": 22,
    "fuzzy": 100.0,
-   "name": "game/kf_message"
+   "name": "game/ui/message"
   },
   {
    "category": "game",
@@ -2899,7 +2899,7 @@
    "functions_named": 4,
    "functions_total": 4,
    "fuzzy": 100.0,
-   "name": "game/kf_interact"
+   "name": "game/player/interact"
   },
   {
    "category": "game",
@@ -2913,7 +2913,7 @@
    "functions_named": 5,
    "functions_total": 5,
    "fuzzy": 100.0,
-   "name": "game/kf_hud"
+   "name": "game/ui/hud"
   },
   {
    "category": "game",
@@ -2955,7 +2955,7 @@
    "functions_named": 18,
    "functions_total": 18,
    "fuzzy": 100.0,
-   "name": "game/kf_play_time"
+   "name": "game/core/play_time"
   },
   {
    "category": "game",
@@ -2969,7 +2969,7 @@
    "functions_named": 100,
    "functions_total": 100,
    "fuzzy": 100.0,
-   "name": "game/kf_menu_screens"
+   "name": "game/ui/menu_screens"
   },
   {
    "category": "game",
@@ -2997,7 +2997,7 @@
    "functions_named": 40,
    "functions_total": 40,
    "fuzzy": 100.0,
-   "name": "game/kf_trade"
+   "name": "game/ui/trade"
   },
   {
    "category": "game",
@@ -3011,7 +3011,7 @@
    "functions_named": 3,
    "functions_total": 3,
    "fuzzy": 100.0,
-   "name": "game/kf_title_menu"
+   "name": "game/ui/title_menu"
   },
   {
    "category": "game",
@@ -3025,7 +3025,7 @@
    "functions_named": 48,
    "functions_total": 48,
    "fuzzy": 100.0,
-   "name": "game/kf_save_card"
+   "name": "game/save/save_card"
   },
   {
    "category": "game",
@@ -3053,7 +3053,7 @@
    "functions_named": 100,
    "functions_total": 100,
    "fuzzy": 100.0,
-   "name": "game/kf_menu_draw"
+   "name": "game/ui/menu_draw"
   },
   {
    "category": "game",
@@ -3081,7 +3081,7 @@
    "functions_named": 13,
    "functions_total": 17,
    "fuzzy": 100.0,
-   "name": "game/kf_vu0_macro"
+   "name": "game/math/vu0_macro"
   },
   {
    "category": "game",
@@ -3095,7 +3095,7 @@
    "functions_named": 33,
    "functions_total": 33,
    "fuzzy": 100.0,
-   "name": "game/kf_ini"
+   "name": "game/core/ini"
   },
   {
    "category": "game",
@@ -3109,7 +3109,7 @@
    "functions_named": 16,
    "functions_total": 16,
    "fuzzy": 100.0,
-   "name": "game/kf_splash"
+   "name": "game/ui/splash"
   },
   {
    "category": "game",
@@ -3137,7 +3137,7 @@
    "functions_named": 10,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_item_effect"
+   "name": "game/effect/item_effect"
   },
   {
    "category": "game",
@@ -3151,7 +3151,7 @@
    "functions_named": 19,
    "functions_total": 19,
    "fuzzy": 100.0,
-   "name": "game/kf_title"
+   "name": "game/ui/title"
   },
   {
    "category": "game",
@@ -3221,7 +3221,7 @@
    "functions_named": 5,
    "functions_total": 7,
    "fuzzy": 100.0,
-   "name": "game/kf_system"
+   "name": "game/core/system"
   },
   {
    "category": "game",
@@ -3235,7 +3235,7 @@
    "functions_named": 6,
    "functions_total": 6,
    "fuzzy": 100.0,
-   "name": "game/kf_memory"
+   "name": "game/core/memory"
   },
   {
    "category": "game",
@@ -3249,7 +3249,7 @@
    "functions_named": 7,
    "functions_total": 12,
    "fuzzy": 100.0,
-   "name": "game/kf_display"
+   "name": "game/core/display"
   },
   {
    "category": "game",
@@ -3263,7 +3263,7 @@
    "functions_named": 15,
    "functions_total": 16,
    "fuzzy": 100.0,
-   "name": "game/kf_model_matrix"
+   "name": "game/model/model_matrix"
   },
   {
    "category": "game",
@@ -3277,7 +3277,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_sine_table"
+   "name": "game/math/sine_table"
   },
   {
    "category": "game",
@@ -3291,7 +3291,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_scratch_matrices"
+   "name": "game/math/scratch_matrices"
   },
   {
    "category": "game",
@@ -3305,7 +3305,7 @@
    "functions_named": 2,
    "functions_total": 2,
    "fuzzy": 100.0,
-   "name": "game/kf_game_clock"
+   "name": "game/core/game_clock"
   },
   {
    "category": "game",
@@ -3333,7 +3333,7 @@
    "functions_named": 7,
    "functions_total": 7,
    "fuzzy": 100.0,
-   "name": "game/kf_geometry"
+   "name": "game/math/geometry"
   },
   {
    "category": "game",
@@ -3347,7 +3347,7 @@
    "functions_named": 3,
    "functions_total": 4,
    "fuzzy": 100.0,
-   "name": "game/kf_timer"
+   "name": "game/core/timer"
   },
   {
    "category": "game",
@@ -3361,7 +3361,7 @@
    "functions_named": 8,
    "functions_total": 10,
    "fuzzy": 100.0,
-   "name": "game/kf_texture_upload"
+   "name": "game/gfx/texture_upload"
   },
   {
    "category": "game",
@@ -3375,7 +3375,7 @@
    "functions_named": 19,
    "functions_total": 19,
    "fuzzy": 100.0,
-   "name": "game/kf_collision"
+   "name": "game/collision/collision"
   },
   {
    "category": "game",
@@ -3389,7 +3389,7 @@
    "functions_named": 60,
    "functions_total": 60,
    "fuzzy": 100.0,
-   "name": "game/kf_script"
+   "name": "game/script/script"
   },
   {
    "category": "game",
@@ -3431,7 +3431,7 @@
    "functions_named": 85,
    "functions_total": 85,
    "fuzzy": 100.0,
-   "name": "game/kf_script_world"
+   "name": "game/script/script_world"
   },
   {
    "category": "game",
@@ -3445,7 +3445,7 @@
    "functions_named": 53,
    "functions_total": 53,
    "fuzzy": 100.0,
-   "name": "game/kf_script_entity"
+   "name": "game/script/script_entity"
   },
   {
    "category": "game",
@@ -3459,7 +3459,7 @@
    "functions_named": 28,
    "functions_total": 28,
    "fuzzy": 100.0,
-   "name": "game/kf_vu0"
+   "name": "game/math/vu0"
   },
   {
    "category": "game",
@@ -3473,7 +3473,7 @@
    "functions_named": 1,
    "functions_total": 1,
    "fuzzy": 100.0,
-   "name": "game/kf_timer_setup"
+   "name": "game/core/timer_setup"
   },
   {
    "category": "game",
@@ -3487,7 +3487,7 @@
    "functions_named": 19,
    "functions_total": 19,
    "fuzzy": 100.0,
-   "name": "game/kf_pad"
+   "name": "game/input/pad"
   },
   {
    "category": "game",
@@ -3515,7 +3515,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_camera_matrices"
+   "name": "game/math/camera_matrices"
   },
   {
    "category": "game",
@@ -3543,7 +3543,7 @@
    "functions_named": 0,
    "functions_total": 0,
    "fuzzy": 100.0,
-   "name": "game/kf_script_tables"
+   "name": "game/script/script_tables"
   },
   {
    "category": "game",
@@ -3557,7 +3557,7 @@
    "functions_named": 8,
    "functions_total": 8,
    "fuzzy": 100.0,
-   "name": "game/kf_text_log"
+   "name": "game/debug/text_log"
   },
   {
    "category": "game",
@@ -3571,7 +3571,7 @@
    "functions_named": 34,
    "functions_total": 34,
    "fuzzy": 100.0,
-   "name": "game/kf_mc"
+   "name": "game/save/mc"
   },
   {
    "category": "game",
@@ -3585,7 +3585,7 @@
    "functions_named": 126,
    "functions_total": 126,
    "fuzzy": 100.0,
-   "name": "game/kf_movie"
+   "name": "game/gfx/movie"
   },
   {
    "category": "sce",
