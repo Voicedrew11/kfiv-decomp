@@ -35,7 +35,7 @@ extern SoundLoadQueue sound_load_queue;
 extern u16 pad_state[];
 extern u8 item_counts[];
 extern s8 game_options[];
-extern u8 D_00349F56[];
+extern u8 guardians_room_water_purified[];
 extern int current_map_slot;
 extern u32 frame_counter;
 extern int sacrificial_mask_cooldown;              /* frames until the item 0x32 may launch its effect again */
@@ -507,7 +507,7 @@ void Player_Update(void) {
             sacrificial_mask_cooldown = 30;
         }
     }
-    if (map_slots[current_map_slot].tag == 0x23 && D_00349F56[0] == 0 && ((s32)(player_state.unk1C8 >> 38) & 1) &&
+    if (map_slots[current_map_slot].tag == 0x23 && guardians_room_water_purified[0] == 0 && ((s32)(player_state.unk1C8 >> 38) & 1) &&
         game_status.unk00 != 0 && !(game_status.unk30 & 1)) {
         Player_TakeDamageNoRumble(1);
     }

@@ -18,18 +18,34 @@ asm(".globl music_volume\nmusic_volume = game_options + 1\n"
     ".globl hud_option\nhud_option = game_options + 9\n"
     ".globl brightness_option\nbrightness_option = game_options + 0xA\n");
 
-/* 0x349690 a 0x80-by-0x40 byte grid the map scripts, NPCs and set-ups record their state in */
+/* 0x349690 a 0x80-by-0x40 byte grid the map scripts, NPCs and set-ups record their state in: one row of 0x40
+   per map number, byte 0 of a row counting the visits. The single bytes the code names, each set by its
+   map's script:
+   - ocean_shore_icon_of_fire_placed (map 027 [5]): 1 once the Icon of Fire is put on the Altar of Fire
+   - guardians_room_water_purified (map 035 [6]): nonzero once the Icon of Water is put on the Altar of Water;
+     the room's water then stops hurting and is no longer tinted green
+   - dark_sanctuary_fog_lifted (map 038 [7]): 1 once the fog has drawn back, the first time the player
+     stands in a certain part of the map
+   - dark_succubus_fight_started (map 038 [8]): set the first time the player gets past x 6500, which wakes the
+     Dark Succubus and her Dark Archers
+   - dark_sanctuary_idol_of_sorrow_placed (map 038 [9]): 1 once the Idol of Sorrow is put on the Altar of
+     Darkness, which opens the way to the Dark Reality
+   - craftsmans_room_door_unlocked (map 104 [8]): set when a breakable map object is broken (once [7] is set);
+     until then one of the room's doors only says that it will not open
+   - master_fadin_killed (map 110 [7]): set when the Master Fadin dies; the Fadins die with it
+   - dark_sorcerer_fight_started (map 110 [0xC]): set when the player comes through the door to the Dark
+     Sorcerer, which wakes him */
 u8 map_script_flags[0x2000] = { 0 };
-asm(".globl D_00349D55\nD_00349D55 = map_script_flags + 0x6C5\n"
-    ".globl D_00349F56\nD_00349F56 = map_script_flags + 0x8C6\n"
-    ".globl D_0034A017\nD_0034A017 = map_script_flags + 0x987\n"
-    ".globl D_0034A018\nD_0034A018 = map_script_flags + 0x988\n"
-    ".globl D_0034A019\nD_0034A019 = map_script_flags + 0x989\n"
+asm(".globl ocean_shore_icon_of_fire_placed\nocean_shore_icon_of_fire_placed = map_script_flags + 0x6C5\n"
+    ".globl guardians_room_water_purified\nguardians_room_water_purified = map_script_flags + 0x8C6\n"
+    ".globl dark_sanctuary_fog_lifted\ndark_sanctuary_fog_lifted = map_script_flags + 0x987\n"
+    ".globl dark_succubus_fight_started\ndark_succubus_fight_started = map_script_flags + 0x988\n"
+    ".globl dark_sanctuary_idol_of_sorrow_placed\ndark_sanctuary_idol_of_sorrow_placed = map_script_flags + 0x989\n"
     ".globl D_0034A0D5\nD_0034A0D5 = map_script_flags + 0xA45\n"
     ".globl D_0034AFD6\nD_0034AFD6 = map_script_flags + 0x1946\n"
-    ".globl D_0034B098\nD_0034B098 = map_script_flags + 0x1A08\n"
-    ".globl D_0034B217\nD_0034B217 = map_script_flags + 0x1B87\n"
-    ".globl D_0034B21C\nD_0034B21C = map_script_flags + 0x1B8C\n");
+    ".globl craftsmans_room_door_unlocked\ncraftsmans_room_door_unlocked = map_script_flags + 0x1A08\n"
+    ".globl master_fadin_killed\nmaster_fadin_killed = map_script_flags + 0x1B87\n"
+    ".globl dark_sorcerer_fight_started\ndark_sorcerer_fight_started = map_script_flags + 0x1B8C\n");
 
 /* 0x34B690 0x40 story bytes a new game clears and a save keeps (block 11 of the script variables):
    [6] forge_stage, which of the Forge maps 017-019 is in use (0-2; the set-ups of the Earth Folks' Village,

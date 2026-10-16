@@ -15,7 +15,7 @@ void EntityAi_Dormant(Entity *);
 void EntityAi_Death(Entity *);
 extern s32 entity_type_handlers[][2];
 extern float player_state[];
-extern u8 D_0034B217[];
+extern u8 master_fadin_killed[];
 int rand(void);
 float sqrtf(float);
 float atan2f(float, float);
@@ -69,7 +69,7 @@ void Fadin_Init(Entity *entity) {
 
 /* The think handler: launches a shot at the player each time the timer Entity.unkA0 runs out, as
    type 32's; one launch in three is shot EntityParams.unk430, the others shot 0xCD. Starts the
-   death action once D_0034B217[0] is set. */
+   death action once master_fadin_killed[0] is set. */
 static void Fadin_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 angles[4];
@@ -82,7 +82,7 @@ static void Fadin_Think(Entity *entity, s32 unknown) {
     f32 pitch;
     f32 yaw;
 
-    if (D_0034B217[0] != 0) {
+    if (master_fadin_killed[0] != 0) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->death, 0);
         return;
     }
