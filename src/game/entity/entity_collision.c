@@ -158,7 +158,7 @@ void EntityCollision_PushApart(Entity *entity) {
             if (other == entity) {
                 continue;
             }
-            if (other->params->flags & 0x10) {
+            if (other->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_ENTITIES) {
                 if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
                     if (ENTITY_PARAMS_IS_SPHERE(other->params)) {
                         EntityCollision_SphereSphere(entity->model->position, other->model->position, entity->radius, other->radius);

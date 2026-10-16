@@ -337,7 +337,7 @@ typedef struct {
     u16 hit_points;                 /* 0x0A what Entity.hit_points is measured against */
     u16 body_volume;                /* 0x0C 0: Entity_InitFromMapSpawns makes it 70 */
     u16 experience_reward;          /* 0x0E passed to Player_AddExperience when the entity dies */
-    u16 flags;                      /* 0x10 */
+    u16 flags;                      /* 0x10 ENTITY_PARAMS_FLAG_ bits */
     char pad12[0x02];
     u8 combat_choice_weights[4];    /* 0x14 weights of the four actions, scaled by Entity.choice_weights */
     u16 attack_range;               /* 0x18 a distance to the player (see Npc_Think) */
@@ -405,6 +405,23 @@ typedef struct {
     s16 unk43E;                     /* 0x43E */
     u16 variant_effect_ids[8];      /* 0x440 indexed by flag bits 60-62; passed to Effect_StartSpawner */
 } EntityParams;
+
+/* EntityParams.flags; the low six are copied, inverted, into Entity flag bits 22-27 */
+#define ENTITY_PARAMS_FLAG_1                              0x0001 /* clears Entity flag bit 22, which only ScriptCmd_GetEntityFlags reads */
+#define ENTITY_PARAMS_FLAG_COLLIDES_WITH_WALLS            0x0002 /* the map's wall strips push it out; clear sets Entity bit 23, which turns them off */
+#define ENTITY_PARAMS_FLAG_COLLIDES_WITH_SECOND_WALLS     0x0004 /* the map's second wall strips push it out; clear sets Entity bit 24, which turns them off */
+#define ENTITY_PARAMS_FLAG_COLLIDES_WITH_MAP_OBJECTS      0x0008 /* the map objects stop it; clear sets Entity bit 25, which turns them off */
+#define ENTITY_PARAMS_FLAG_COLLIDES_WITH_ENTITIES         0x0010 /* EntityCollision_PushApart pushes it out of the other entities; clear sets Entity bit 26, which skips it */
+#define ENTITY_PARAMS_FLAG_COLLIDES_WITH_PLAYER           0x0020 /* the player collides with it; clear sets Entity bit 27, which makes the player walk through it */
+#define ENTITY_PARAMS_FLAG_40                             0x0040 /* with ENTITY_PARAMS_FLAG_200: its model scale stays exact, unrandomised (Entity_InitFromMapSpawns) */
+#define ENTITY_PARAMS_FLAG_TURNS_IN_PLACE                 0x0080 /* Npc_Think's states 4 and 6 turn it to the player where it stands */
+#define ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE           0x0100 /* Entity flag bits11 (the Motion_Step mode) is 0: its motions do not move it, its move command does */
+#define ENTITY_PARAMS_FLAG_200                            0x0200 /* with ENTITY_PARAMS_FLAG_40: its model scale stays exact, unrandomised (Entity_InitFromMapSpawns) */
+#define ENTITY_PARAMS_FLAG_HIT_BODY_POINTS                0x0400 /* Attack hits its EntityParams.body_points, not its cylinder or sphere */
+#define ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON            0x0800 /* clears Entity.move_command while the player stands on it */
+#define ENTITY_PARAMS_FLAG_NO_KNOCKBACK                   0x1000 /* a hit leaves Entity.knockback_speed at 0 */
+#define ENTITY_PARAMS_FLAG_LOOK_AT_PART_TURNS             0x2000 /* EntityAi_LookAtPoint turns EntityModel.look_at_part to the target */
+#define ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA               0x4000 /* Entity.model_alpha is 0x40 rather than 0x80 */
 
 /* record index of the 0x88-byte records at +0x240, reached by stepping the whole params pointer
    (the match keeps the index scaling apart from the +0x240) */
@@ -721,7 +738,7 @@ typedef struct {
    EntityParams above is a second view of the same block; the two are to be unified. */
 typedef struct {
     char pad00[0x10];
-    u16 flags;                      /* 0x10 */
+    u16 flags;                      /* 0x10 ENTITY_PARAMS_FLAG_ bits */
     u16 state_timer_reload;         /* 0x12 reload value for Entity.timer */
     char pad14[0x04];
     u16 attack_range;               /* 0x18 how near the player has to be for it to notice and attack */

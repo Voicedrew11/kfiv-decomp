@@ -307,7 +307,7 @@ static int EntityAi_TurnLookPart(Entity *actor, f32 *out_a, int mode, f32 *out_b
     if (target == NULL) {
         return 0;
     }
-    if (!(ENTITY_CONTROLLER(actor)->flags & 0x2000)) {
+    if (!(ENTITY_CONTROLLER(actor)->flags & ENTITY_PARAMS_FLAG_LOOK_AT_PART_TURNS)) {
         return 0;
     }
     return TURN_PART_NO_RATE(target, out_a, mode, out_b, limit);
@@ -319,7 +319,7 @@ int EntityAi_LookAtPoint(Entity *entity, int angles, int mode, int target, int l
     EntityModel *model = entity->model;
     int part = (int)model->look_at_part;
 
-    if (part == 0 || !(ENTITY_CONTROLLER(entity)->flags & 0x2000)) {
+    if (part == 0 || !(ENTITY_CONTROLLER(entity)->flags & ENTITY_PARAMS_FLAG_LOOK_AT_PART_TURNS)) {
         return 0;
     }
     return Bone_TurnPartToLook(model, part, angles, mode, (void *)target, limits, rate);
@@ -332,7 +332,7 @@ int EntityAi_LookAtPlayer(Entity *entity, void *target, s32 mode, void *out, f32
 
     Vector_Copy(position, &player_state.position);
     position[1] -= 220.0f;
-    if (entity->model->look_at_part == NULL || !(entity->params->flags & 0x2000)) {
+    if (entity->model->look_at_part == NULL || !(entity->params->flags & ENTITY_PARAMS_FLAG_LOOK_AT_PART_TURNS)) {
         result = 0;
     } else {
         result = Bone_TurnPartToLook(entity->model, (int)entity->model->look_at_part, (int)target, mode, position, (int)out, range);
@@ -1637,22 +1637,22 @@ void EntityAi_UpdateCollision(Entity *entity) {
     if (ENTITY_PARAMS_BITS(entity)->bit25 && ENTITY_PARAMS_BITS(entity)->bit26) {
         return;
     }
-    if (!(entity->params->flags & 0x1)) {
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_1)) {
         ENTITY_FLAG_WORD(entity->flags) |= 0x400000;
     }
-    if (!(entity->params->flags & 0x2)) {
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_WALLS)) {
         ENTITY_FLAG_WORD(entity->flags) |= 0x800000;
     }
-    if (!(entity->params->flags & 0x4)) {
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_SECOND_WALLS)) {
         ENTITY_FLAG_WORD(entity->flags) |= 0x1000000;
     }
-    if (!(entity->params->flags & 0x8)) {
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_MAP_OBJECTS)) {
         ENTITY_FLAG_WORD(entity->flags) |= 0x2000000;
     }
-    if (!(entity->params->flags & 0x10)) {
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_ENTITIES)) {
         ENTITY_FLAG_WORD(entity->flags) |= 0x4000000;
     }
-    if (!(entity->params->flags & 0x20)) {
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_PLAYER)) {
         ENTITY_FLAG_WORD(entity->flags) |= 0x8000000;
     }
 

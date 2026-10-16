@@ -680,7 +680,7 @@ static void EntityPool_EvictBlockUsers(int group_id) {
     entity = loading_entities_head;
     while (entity != NULL) {
         if (group_id == entity->pool_slot_index ||
-            (ENTITY_CONTROLLER(entity)->flags & 0x8000 && entity->pool_slot_index == other && entity->pool_slot_index >= 0)) {
+            (ENTITY_CONTROLLER(entity)->flags & CONTROLLER_FLAG_TWO_BLOCKS && entity->pool_slot_index == other && entity->pool_slot_index >= 0)) {
             next = entity->next;
             Entity_UnlinkLoading(entity);
             Entity_AppendToWaiting(entity);

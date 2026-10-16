@@ -296,7 +296,7 @@ void ScriptCmd_TurnEntityToPlayer(ScriptStateWaitCommand *command) {
         if (entity->busy_flags != 0) {
             return;
         }
-        if (entity->params->flags & 0x80) {
+        if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
             switch (command->step) {
             case 0:
                 heading = EntityMath_HeadingTo(entity->model->position, &player_state.position.x);

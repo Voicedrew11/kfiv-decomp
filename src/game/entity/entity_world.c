@@ -226,7 +226,7 @@ void Entity_ResetToSpawn(Entity *entity) {
     Vector_Copy(entity->model->rotation, &entity->spawn_info->spawn_rotation_x);
     Vector_Scale(entity->model->scale, &scale.x, (f32)entity->params->model_scale_percent / 100.0f);
     Vector_Copy(&scale, entity->spawn_info->spawn_scale);
-    if (!(entity->params->flags & 0x240)) {
+    if (!(entity->params->flags & (ENTITY_PARAMS_FLAG_40 | ENTITY_PARAMS_FLAG_200))) {
         Vector_Scale(&scale.x, &scale.x, (f32)(rand() % 11 + 95) / 100.0f);
     }
     Vector_MultiplyComponents(entity->model->scale, entity->model->scale, &scale.x);
@@ -356,7 +356,7 @@ void Entity_UpdateAll(void) {
                 entity->hit_flash_frames = 3;
             }
         }
-        if (entity->params->flags & 0x1000) {
+        if (entity->params->flags & ENTITY_PARAMS_FLAG_NO_KNOCKBACK) {
             entity->knockback_speed = 0.0f;
         }
         if (entity->knockback_speed > 0.0f) {

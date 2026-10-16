@@ -202,7 +202,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if ((request->target_mask & 0x80) && request->owner == entity) {
                 continue;
             }
-            if (!(entity->params->flags & 0x400)) {
+            if (!(entity->params->flags & ENTITY_PARAMS_FLAG_HIT_BODY_POINTS)) {
                 if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
                     Collision_SphereSphere(entity->model->position, request, entity->radius, request->radius);
                 } else {
@@ -353,7 +353,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if ((request->target_mask & 0x80) && request->owner == entity) {
                 continue;
             }
-            if (!(entity->params->flags & 0x400)) {
+            if (!(entity->params->flags & ENTITY_PARAMS_FLAG_HIT_BODY_POINTS)) {
                 if (IS_PLAYER(request->owner)) {
                     Collision_CylinderArcPitch(entity->model->position, request, entity->radius, entity->height, request->radius,
                                   request->lowest_y, request->highest_y, request->half_angle, request->facing, request->half_pitch,

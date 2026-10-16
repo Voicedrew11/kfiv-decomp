@@ -86,7 +86,7 @@ void StoneGuardian_Init(Entity *entity) {
 
         dest[i] = 0;
     }
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
     unkE0->animate = (void (*)(void))StoneGuardian_Animate;

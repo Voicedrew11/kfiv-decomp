@@ -97,7 +97,7 @@ void Npc_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, part->unk50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     // match: called as returning an int, which keeps $2 busy after the call
@@ -154,7 +154,7 @@ void Npc_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         switch (entity->state) {
         case 4:
-            if (entity->params->flags & 0x80) {
+            if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
                 Npc_ThinkTurnToPlayer(entity, unknown);
             } else {
                 Npc_ThinkReactToPlayer(entity, unknown);
@@ -167,7 +167,7 @@ void Npc_Think(Entity *entity, s32 unknown) {
             }
             break;
         case 6:
-            if (entity->params->flags & 0x80) {
+            if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
                 Npc_ThinkTurnBack(entity, unknown);
             } else {
                 Npc_ThinkStopWatching(entity, unknown);
@@ -398,7 +398,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
             Motion_Start(entity, 0xF, 0, 5, 1);
         }
         params = entity->params;
-        if (params->flags & 0x100) {
+        if (params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             kind = 1;
@@ -457,7 +457,7 @@ static void Npc_Death(Entity *entity) {
             Motion_Start(entity, 0x10, 0, 5, 1);
         }
         params = entity->params;
-        if (params->flags & 0x100) {
+        if (params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             kind = 1;
@@ -629,7 +629,7 @@ void Npc_InitType81(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, part->unk50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     // match: called as returning an int, which keeps $2 busy after the call
