@@ -435,10 +435,10 @@ s32 MenuDraw_SetGsRegister(int, s64);
     first += second;                                            \
     second += first
 #define GIF_SEND(packet, count)                                 \
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));          \
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)); \
     *D2_QWC = count;                                            \
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;                                              \
-    *D2_CHCR = 0x100
+    *D2_CHCR = D_CHCR_STR
 #define RESET_ALPHAS(parts, count)                                                                   \
     for (i = 0; i < count; i++) {                                                                    \
         alpha = parts[i].alpha;                                                                      \
@@ -2247,10 +2247,10 @@ int Menu_Run(s8 mode) { // match: callers declare the parameter int; retail sign
         packet[42] = 0x3F;
         packet[43] = 0;
         packet[0] = 0x800A;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 11;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
         context2_buffer_half = context1_buffer_half = 1;
     }
     menu_run_step = 0;
@@ -2391,10 +2391,10 @@ static void Menu_SendUnusedFlatSprite(void) {
     (cursor++)->as_int = 0x41;
     (cursor++)->as_int = 0;
     packet[0].as_int = 0x8000 | ((cursor - packet) / 4 - 1);
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* Sends a fifteen-quadword packet: GS settings, one textured sprite, GS settings again. Nothing calls it. */
@@ -2465,10 +2465,10 @@ static void Menu_SendUnusedSpriteFirst(void) {
     (cursor++)->as_int = 0x42;
     (cursor++)->as_int = 0;
     packet[0].as_int = 0x8000 | ((cursor - packet) / 4 - 1);
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* As Menu_SendUnusedSpriteFirst, with the sprite at another place. Nothing calls it. */
@@ -2539,10 +2539,10 @@ static void Menu_SendUnusedSpriteSecond(void) {
     (cursor++)->as_int = 0x42;
     (cursor++)->as_int = 0;
     packet[0].as_int = 0x8000 | ((cursor - packet) / 4 - 1);
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = (cursor - packet) / 4;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
 }
 
 /* Draws the menu's item model with the matrix given: sends a three-quadword packet of GS settings,
@@ -2563,10 +2563,10 @@ int Menu_DrawItemModel(f32 *matrix) { // match: callers declare an int result; n
     packet[9] = 0;
     packet[10] = 0x43;
     packet[11] = 0;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 3;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     DRAW_NODE_MODEL(&model_load_shown, matrix, menu_draw_color);
     sceVu0ViewScreenMatrix(menu_view_screen_matrix, 512.0f, 1.0f, 1.0f, 2048.0f, 2048.0f, 0.0f, 16777215.0f, 1.0f, 65536.0f);
 }
@@ -2683,10 +2683,10 @@ static s32 Menu_CopyFrameToTexture(void) {
         packet[102] = 0x42;
         packet[103] = 0;
         packet[0] = 0x8019;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 26;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
     }
     sceGsSyncPath(0, 0);
     menu_run_step++;
@@ -2753,10 +2753,10 @@ static void Menu_DrawBackdropPlain(void) {
         *(f32 *)&packet[15] = 0.4375f;
         packet[16] = 0x87009400;
         packet[17] = 1;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 5;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
         sceGsSyncPath(0, 0);
         packet = MenuDraw_NextPacket();
         packet[0] = 0x8001;
@@ -2771,10 +2771,10 @@ static void Menu_DrawBackdropPlain(void) {
         packet[9] = 2;
         packet[10] = 0x87009400;
         packet[11] = 2;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
     }
 }
 
@@ -2845,10 +2845,10 @@ static s32 Menu_Start(void) {
     packet[5] = 0;
     packet[6] = 0x3F;
     packet[7] = 0;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 2;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     if (menu_mode == 0) {
         equip_group_shown = 0;
         Menu_BuildItemRings();
@@ -3420,10 +3420,10 @@ static void Menu_UpdateCastSpell(s32 context) {
     packet[9] = 0;
     packet[10] = 0x43;
     packet[11] = 0;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 3;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     DRAW_NODE_MODEL(&model_load_shown, local, menu_draw_color);
     if ((menu_buttons & 0x4000) && menu_input_enabled != 0) {
         if (player_state.mp_now >= ((FxTableEntry *)castable_spell_cursor[0]->unk00)->mp_cost && player_state.magic_gauge >= 5000) {
@@ -4570,10 +4570,10 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
         packet[9] = 0;
         packet[10] = 0x43;
         packet[11] = 0;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
         chunk = (PackageChunk *)((char *)npc_package_load.pool_node->buffer + 0x10);
         for (i = 0; i < recollection_page; i++) {
             chunk = (PackageChunk *)((char *)chunk + chunk->unk0C + chunk->unk08);
@@ -4764,10 +4764,10 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
         packet[9] = 0;
         packet[10] = 0x43;
         packet[11] = 0;
-        while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+        while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
         *D2_QWC = 3;
         *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-        *D2_CHCR = 0x100;
+        *D2_CHCR = D_CHCR_STR;
         chunk = (PackageChunk *)((char *)npc_package_load.pool_node->buffer + 0x10);
         for (i = 0; (s32)i < page; i++) {
             chunk = (PackageChunk *)((char *)chunk + chunk->unk0C + chunk->unk08);
@@ -7459,10 +7459,10 @@ void Menu_DrawBrightness(s32 level) {
     (cursor++)->as_float = 0.4375f;
     cursor[0].as_int = 0x86F89400;
     cursor[1].as_int = 0xFFFFF;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 5;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x105;
+    *D2_CHCR = D_CHCR_STR | D_CHCR_DIR_FROM_MEMORY | D_CHCR_MOD_CHAIN;
 }
 
 /* Sets the alpha test and the blend mode of ALPHA_1 from mode and writes them; the value is never seeded. */

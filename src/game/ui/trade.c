@@ -724,10 +724,10 @@ static s32 Trade_CopyFrameToTexture(void) {
     packet[102] = 0x42;
     packet[103] = 0;
     packet[0] = 0x8019;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 26;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     sceGsSyncPath(0, 0);
     trade_run_step++;
     return 1;
@@ -774,10 +774,10 @@ static s32 Trade_Start(HandlerContext *context) {
     packet[5] = 0;
     packet[6] = 0x3F;
     packet[7] = 0;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 2;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     Trade_BuildItemRings(context->arg);
     Menu_InitLoadBuffers();
     pulse_sprite_falling = 0;
@@ -2925,10 +2925,10 @@ static s32 Smith_Start(void) {
     packet[5] = 0;
     packet[6] = 0x3F;
     packet[7] = 0;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 2;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     memset(screen_part_alphas, 0, 0x400);
     memset(panel_part_alphas, 0, 0x400);
     memset(message_part_alphas, 0, 0x400);
@@ -3056,10 +3056,10 @@ static s32 Smith_CopyFrameToTexture(void) {
     packet[102] = 0x42;
     packet[103] = 0;
     packet[0] = 0x8019;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 26;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     sceGsSyncPath(0, 0);
     smith_run_step++;
     return 1;
@@ -5432,10 +5432,10 @@ static s32 SaveScreen_DrawBackground(void) {
     packet->alpha_register = 0x42;
     packet->alpha_pad = 0;
     packet->gif_tag = 0x8019;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 0x1A;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     sceGsSyncPath(0, 0);
     menu_draw_color.red = menu_draw_color.green = menu_draw_color.blue = 0x80;
     menu_draw_color_alpha = 0;
@@ -5487,10 +5487,10 @@ static int SaveScreen_Start(HandlerContext *context) {
     packet[5] = 0;
     packet[6] = 0x3F;
     packet[7] = 0;
-    while ((*D2_CHCR & 0x100) || (*GIF_STAT & 0xC00));
+    while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH));
     *D2_QWC = 2;
     *D2_MADR = ((u32)packet & 0x7FFFFFFF) | 0x80000000;
-    *D2_CHCR = 0x100;
+    *D2_CHCR = D_CHCR_STR;
     Menu_InitLoadBuffers();
     // match: taking the handler first orders its lui before the save screen's
     next_handler = SaveScreen_UpdateCardSelect;
