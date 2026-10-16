@@ -108,7 +108,7 @@ static void GiantSpider_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 2) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -275,7 +275,7 @@ static void GiantSpider_Move(Entity *entity) {
 static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         if (unkE0->step_index != 0) {
@@ -312,7 +312,7 @@ static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
 static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         if (unkE0->step_index != 0) {
@@ -353,7 +353,7 @@ static void GiantSpider_RangedAttack(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

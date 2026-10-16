@@ -795,10 +795,7 @@ typedef struct Entity {
     f32 entity_push[3];             /* 0xB0 a push applied while flag bit 48 is set */
     u8 choice_weights[4];           /* 0xBC weights of the four combat choices, 0x40 to 0xC0 */
     u8 attack_weights[6];           /* 0xC0 weights of the six attacks, 0x40 to 0xC0 */
-    /* 0xC6 busy bits: what the current action or reaction is. 1 an attack, 2 the reaction to a light hit,
-       4 to a heavy hit, 8 a dodge, 0x10 a guard, 0x20 dormant, 0x40 death, 0x1000 and up an action of
-       the type's own. The think handlers decide nothing while it is not 0. */
-    u16 busy_flags;                 /* 0xC6 bits naming the action or reaction that is running */
+    u16 busy_flags;                 /* 0xC6 the running action or reaction, ENTITY_BUSY_ bits; think waits while set */
     /* 0xC8 this frame's movement command, for the move action: 1 forward, 2 back, 4 and 8 sideways,
        0x10 and 0x20 up and down, 0x40 at the run, 0x100 and 0x200 turn, 0x400 turn at twice the speed.
        EntityAi_Update clears it. */
@@ -823,6 +820,19 @@ typedef struct Entity {
     EntityUnkE0 unkE0;              /* 0xE0 */
     char pad170[0x10];              /* 0x170 the record is 0x180 bytes */
 } Entity;
+
+/* Entity.busy_flags bits; 0x1000 and up are actions of the entity type's own */
+#define ENTITY_BUSY_ATTACK          0x1     /* an attack (EntityAi_MeleeAttack, EntityAi_RangedAttack) */
+#define ENTITY_BUSY_REACTION_LIGHT  0x2     /* the reaction to a light hit (EntityAi_ReactionLight, EntityAi_ReactionRewind) */
+#define ENTITY_BUSY_REACTION_HEAVY  0x4     /* the reaction to a heavy hit (EntityAi_ReactionHeavy) */
+#define ENTITY_BUSY_DODGE           0x8     /* a dodge (EntityAi_Dodge) */
+#define ENTITY_BUSY_GUARD           0x10    /* a guard (EntityAi_Guard) */
+#define ENTITY_BUSY_DORMANT         0x20    /* the dormant action (EntityAi_Dormant) */
+#define ENTITY_BUSY_DEATH           0x40    /* the death action (EntityAi_Death) */
+#define ENTITY_BUSY_STAND_ONCE      0x200   /* EntityAi_StandOnce: animation 0 (standing) once */
+#define ENTITY_BUSY_1000            0x1000  /* an action of the type's own */
+#define ENTITY_BUSY_2000            0x2000  /* an action of the type's own */
+#define ENTITY_BUSY_4000            0x4000  /* an action of the type's own */
 
 /* Entity with the work area at 0xE0 as plain bytes: the init functions clear it
    one byte at a time, and only an array member gives their code */

@@ -318,7 +318,7 @@ done:
 static void EarthElemental_PlayTurnAnim(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         if (unkE0->step_index > 0) {
@@ -532,7 +532,7 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
     f32 angle;
     s32 side;
 
-    entity->busy_flags |= 0x3000;
+    entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_2000);
     switch (entity->action_step) {
     case 0:
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
@@ -622,7 +622,7 @@ static void EarthElemental_RangedAttack0(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

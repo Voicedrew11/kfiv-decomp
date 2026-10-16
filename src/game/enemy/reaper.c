@@ -162,7 +162,7 @@ static void Reaper_Move(Entity *entity) {
 static void Reaper_Dormant(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
@@ -203,7 +203,7 @@ static void Reaper_RangedAttack(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

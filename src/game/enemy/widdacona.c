@@ -110,7 +110,7 @@ static void Widdacona_Animate(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
@@ -138,7 +138,7 @@ static void Widdacona_Death(Entity *entity) {
     Entity *other;
     char *part;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -206,7 +206,7 @@ static void Widdacona_Death(Entity *entity) {
 static void Widdacona_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
@@ -272,7 +272,7 @@ static void Widdacona_Dormant(Entity *entity) {
 static void Widdacona_ReturnToDormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, EntityAi_AnimationFrameCount(entity, 2) - 1, entity->params->motion_blend_frames, 1);
@@ -386,7 +386,7 @@ static void Widdacona_RangedAttack0(Entity *entity) {
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
     f32 direction[4];
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

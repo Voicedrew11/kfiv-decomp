@@ -296,7 +296,7 @@ static void MalformedGiant_ThinkPursue(Entity *entity, s32 unknown) {
 static void MalformedGiant_PlayAnim0ToFrame80(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     entity->flags &= ~0x200;
     switch (entity->action_step) {
     case 0:

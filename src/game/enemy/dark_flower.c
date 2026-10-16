@@ -280,7 +280,7 @@ static void DarkFlower_RangedAttack0(Entity *entity) {
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, 0);
     EntityParamsUnk3D8 *second_unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, 1);
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

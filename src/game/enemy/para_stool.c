@@ -209,7 +209,7 @@ static void ParaStool_MeleeAttack0(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[0];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);

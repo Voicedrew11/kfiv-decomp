@@ -139,12 +139,12 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
     if (frame_counter % 60U == entity->spawn_index % 10U) {
         unkE0->pitch_speed = rand() % 10;
     }
-    if (entity->busy_flags & 0x40) {
+    if (entity->busy_flags & ENTITY_BUSY_DEATH) {
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     } else {
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     }
-    if (!(entity->busy_flags & 0x44)) {
+    if (!(entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_HEAVY))) {
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)unkE0)->unk88, 1, 3, 5, entity->params->motion_blend_frames, 0);
     }
     if (entity->busy_flags == 0) {
@@ -169,7 +169,7 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (entity->busy_flags & 0x40) {
+    if (entity->busy_flags & ENTITY_BUSY_DEATH) {
         unkE0->move_speed = 0.0f;
         unkE0->part_angle_x = 0.0f;
     } else {
@@ -517,7 +517,7 @@ static void LavaBird_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &slots->unk80, 0, 1, 0, 0, 1);
@@ -596,7 +596,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
     s32 current_frame;
     f32 unused_vector[4]; // match: the frame has 16 unused bytes, and they keep the tail calls from becoming jumps
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -711,7 +711,7 @@ static void LavaBird_OnHit(Entity *entity) {
 static void LavaBird_ReactionLight(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 2;
+    entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
@@ -750,7 +750,7 @@ static void LavaBird_ReactionLight(Entity *entity) {
 static void LavaBird_ReactionHeavy(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xF, 0, 5, 1);
@@ -794,7 +794,7 @@ static void LavaBird_ReactionHeavy(Entity *entity) {
 static void LavaBird_Death(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0x10, 0, 5, 1);
@@ -853,7 +853,7 @@ static void LavaBird_Animate(Entity *entity) {
         return;
     }
     if (slots->unk80.unk01 != 0) {
-        if (entity->busy_flags & 0x12) {
+        if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
             rate = unkE0->pose_blend_weight;
         } else {
             rate = 1.0f / slots->unk80.unk01;
@@ -869,7 +869,7 @@ static void LavaBird_Animate(Entity *entity) {
         }
     }
     if (slots->unk88.unk01 != 0) {
-        if (entity->busy_flags & 0x12) {
+        if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
             rate = unkE0->pose_blend_weight;
         } else {
             rate = 1.0f / slots->unk88.unk01;

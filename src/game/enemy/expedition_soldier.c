@@ -286,7 +286,7 @@ done:
    EntitySpawnInfo.spawn_mode is set, it calls EntityEvent_Respawn for the entity with that spawn id (if its
    flag bit 0 is set) and puts it at this entity's position. */
 static void ExpeditionSoldier_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -349,7 +349,7 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
     EntityUnkE0Kind178358 *unkE0 = (EntityUnkE0Kind178358 *)&entity->unkE0;
     MapObject *map_object;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);

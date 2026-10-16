@@ -243,7 +243,7 @@ static void Minion_Animate(Entity *entity) {
         return;
     }
     if (slots->unk80.unk01 != 0) {
-        if (entity->busy_flags & 0x12) {
+        if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
             rate = unkE0->pose_blend_weight;
         } else {
             rate = 1.0f / slots->unk80.unk01;
@@ -259,7 +259,7 @@ static void Minion_Animate(Entity *entity) {
         }
     }
     if (slots->unk88.unk01 != 0) {
-        if (entity->busy_flags & 0x12) {
+        if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
             rate = unkE0->pose_blend_weight;
         } else {
             rate = 1.0f / slots->unk88.unk01;
@@ -301,7 +301,7 @@ static void Minion_Animate(Entity *entity) {
 static void Minion_Guard(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x10;
+    entity->busy_flags |= ENTITY_BUSY_GUARD;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, 0xD, 0, 0xA, 1);
@@ -349,7 +349,7 @@ static void Minion_MeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -417,7 +417,7 @@ static void Minion_RangedAttack(Entity *entity) {
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, ENTITY_FLAG_BITS(entity)->bits58);
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -536,7 +536,7 @@ static void Minion_OnHit(Entity *entity) {
 static void Minion_ReactionLight(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 2;
+    entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
@@ -581,7 +581,7 @@ static void Minion_ReactionLight(Entity *entity) {
 static void Minion_ReactionHeavy(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, 0xF, 0, 5, 1);
@@ -630,7 +630,7 @@ static void Minion_ReactionHeavy(Entity *entity) {
 static void Minion_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, 0x10, 0, 5, 1);
@@ -684,7 +684,7 @@ static void Minion_Death(Entity *entity) {
 static void Minion_Dodge(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 8;
+    entity->busy_flags |= ENTITY_BUSY_DODGE;
     switch (entity->action_step) {
     case 0:
         if (EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * 57.29578f > 0.0f) {

@@ -371,7 +371,7 @@ done:
 static void DarkKnight_PlayTurnAnim(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         if (unkE0->action_flags > 0) {
@@ -409,7 +409,7 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
 static void DarkKnight_HoldGuardPose(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x10;
+    entity->busy_flags |= ENTITY_BUSY_GUARD;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0xD, 0, 0xA, 1);
@@ -451,7 +451,7 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[unkE0->step_index];
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         if (ABS(entity->heading_to_player - entity->model->rotation[1]) < 0.5235988f) {
@@ -543,7 +543,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
     EntityParamsUnk240 *unk240 = (EntityParamsUnk240 *)entity->params->melee_attack_third;
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x16, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -603,7 +603,7 @@ static void DarkKnight_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -656,7 +656,7 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x18, 0, entity->params->motion_blend_frames >> 1, 1);

@@ -75,7 +75,7 @@ void EntityAi_FinishMotion(Entity *entity, s32 unused) {
 void EntityAi_StandOnce(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x200;
+    entity->busy_flags |= ENTITY_BUSY_STAND_ONCE;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
@@ -113,7 +113,7 @@ void EntityAi_StandOnce(Entity *entity) {
 void EntityAi_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
@@ -182,7 +182,7 @@ void EntityAi_ReactionRewind(Entity *entity) {
     s32 frame;
     s32 kind;
 
-    entity->busy_flags |= 2;
+    entity->busy_flags |= ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
         frame = entity->model->level_tables->unk82 - 3;
@@ -206,7 +206,7 @@ void EntityAi_ReactionRewind(Entity *entity) {
         break;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
-            entity->busy_flags &= ~2;
+            entity->busy_flags &= ~ENTITY_BUSY_REACTION_LIGHT;
             EntityAi_SetReaction(entity, NULL, 0);
         }
         break;
@@ -218,7 +218,7 @@ void EntityAi_ReactionRewind(Entity *entity) {
 void EntityAi_ReactionLight(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 2;
+    entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
@@ -261,7 +261,7 @@ void EntityAi_ReactionLight(Entity *entity) {
 void EntityAi_ReactionHeavy(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         Motion_Start(entity, 0xF, 0, 5, 1);
@@ -308,7 +308,7 @@ void EntityAi_ReactionHeavy(Entity *entity) {
 void EntityAi_Death(Entity *entity) {
     EntityParams *params;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -367,7 +367,7 @@ void EntityAi_Death(Entity *entity) {
 void EntityAi_Dodge(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 8;
+    entity->busy_flags |= ENTITY_BUSY_DODGE;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0xA, 0, 5, 1);
@@ -402,7 +402,7 @@ void EntityAi_Dodge(Entity *entity) {
 void EntityAi_Guard(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x10;
+    entity->busy_flags |= ENTITY_BUSY_GUARD;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0xD, 0, 0xA, 1);
@@ -448,7 +448,7 @@ void EntityAi_MeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -514,7 +514,7 @@ void EntityAi_RangedAttack(Entity *entity) {
     s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -574,7 +574,7 @@ void EntityAi_Update(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit42) {
         EntityAi_RaiseRangedWeights(entity);
     }
-    if (!(entity->busy_flags & 0x60)) {
+    if (!(entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_DORMANT))) {
         if (entity->hit_points == 0) {
             unkE0->reaction = NULL;
             EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->death, 0);
@@ -606,7 +606,7 @@ void EntityAi_Update(Entity *entity) {
     if (unkE0->animate != NULL) {
         ((void (*)(Entity *))unkE0->animate)(entity);
     }
-    if (entity->ailment_3_frames != 0 && !(entity->busy_flags & 0x46)) {
+    if (entity->ailment_3_frames != 0 && !(entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
         entity->model->position[0] += entity->move_delta_x * 0.75f;
         entity->model->position[1] += entity->move_delta_y * 0.75f;
         entity->model->position[2] += entity->move_delta_z * 0.75f;
@@ -693,7 +693,7 @@ void EntityAi_Animate(Entity *entity) {
         }
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = MOTION_BLEND_TO_POSE(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = MOTION_BLEND_TO_POSE(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }

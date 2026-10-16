@@ -125,7 +125,7 @@ static void HighSkeleton_Think(Entity *entity, s32 unknown) {
 static void HighSkeleton_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
@@ -197,7 +197,7 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 duration;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0, 0, 0, 1);
@@ -249,7 +249,7 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
    As EntityAi_Death, but it frees the entity's effects (Effect_FreeForOwner) when
    EntityParams.respawn_effect_id is neither 0 nor 0xFFFF and does not call EntityEvent_OnDeath. */
 static void HighSkeleton_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);

@@ -499,7 +499,7 @@ static void GoldenStatue_Animate(Entity *entity) {
         }
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
@@ -513,7 +513,7 @@ static void GoldenStatue_Animate(Entity *entity) {
         } else {
             EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, 0, NULL, 8.0f);
         }
-        if ((entity->busy_flags & 1) && entity->animation_index == 0x17) {
+        if ((entity->busy_flags & ENTITY_BUSY_ATTACK) && entity->animation_index == 0x17) {
             GoldenStatue_AimPart15AbovePlayer(entity);
         } else {
             unkE0->part_angle_y = 0.0f;

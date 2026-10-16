@@ -120,7 +120,7 @@ static void ExpeditionArcher_Animate(Entity *entity) {
     if ((s32)((s64)(flags << 18) >> 32) & 1) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 2) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
             flags = entity->flags;
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
@@ -298,7 +298,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
     f32 target[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -365,7 +365,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
     f32 angle;
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -431,7 +431,7 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
    EntitySpawnInfo.spawn_mode is set, it calls EntityEvent_Respawn for the entity with that spawn id (if its
    flag bit 0 is set) and puts it at this entity's position. */
 static void ExpeditionArcher_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);

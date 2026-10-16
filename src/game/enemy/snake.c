@@ -103,7 +103,7 @@ static void Snake_DormantHoldAnim2(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapObject *map_object;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, 0, 0, 1);
@@ -165,7 +165,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
     f32 direction[4];
     f32 distance;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, 0, 1);
@@ -241,7 +241,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
 static void Snake_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 3, 0, 0, 1);
@@ -333,7 +333,7 @@ static void Snake_Think(Entity *entity, s32 unknown) {
    the entity's effects and starts script EntitySpawnInfo.death_script_id where that one calls EntityEvent_OnDeath.
    */
 static void Snake_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);

@@ -113,7 +113,7 @@ static void Widda_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -181,7 +181,7 @@ static void Widda_AimPartsAtTarget(Entity *entity) {
 static void Widda_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if ((entity->busy_flags & 8) && (entity->flags & (0xD000L << 33))) {
+    if ((entity->busy_flags & ENTITY_BUSY_DODGE) && (entity->flags & (0xD000L << 33))) {
         unkE0->step_index = 1;
     }
     if (frame_counter % 10U == entity->spawn_index % 10U) {

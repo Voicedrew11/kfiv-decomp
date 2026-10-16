@@ -116,7 +116,7 @@ static void LivingDead_OnHit(Entity *entity) {
 static void LivingDead_ReactionLight(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 2;
+    entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
@@ -164,7 +164,7 @@ static void LivingDead_ReactionLight(Entity *entity) {
 static void LivingDead_ReactionHeavy(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         Motion_Start(entity, 0xF, 0, 5, 1);

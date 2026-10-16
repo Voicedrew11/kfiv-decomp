@@ -215,7 +215,7 @@ static void EarthKing_MeleeAttack2(Entity *entity) {
     EntityParamsUnk240 *unk240 = (EntityParamsUnk240 *)entity->params->melee_attack_third;
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x16, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -275,7 +275,7 @@ static void EarthKing_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -330,7 +330,7 @@ static void EarthKing_RangedAttack1(Entity *entity) {
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, 1);
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[0];
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x18, 0, entity->params->motion_blend_frames >> 1, 1);

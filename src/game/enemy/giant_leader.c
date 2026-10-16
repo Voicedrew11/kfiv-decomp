@@ -314,7 +314,7 @@ static void GiantLeader_MeleeAttack0(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[0];
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -382,7 +382,7 @@ static void GiantLeader_BreakMapObject(Entity *entity) {
     f32 limit;
     f32 angle;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
@@ -529,7 +529,7 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[1];
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames >> 1, 1);

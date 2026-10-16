@@ -268,7 +268,7 @@ done:
 static void WindElemental_PlayTurnAnim(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         if (unkE0->step_index > 0) {
@@ -305,7 +305,7 @@ static void WindElemental_PlayTurnAnim(Entity *entity) {
 static void WindElemental_Dodge(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 8;
+    entity->busy_flags |= ENTITY_BUSY_DODGE;
     switch (entity->action_step) {
     case 0:
         switch (rand() % 3) {
@@ -353,7 +353,7 @@ static void WindElemental_Dodge(Entity *entity) {
 static void WindElemental_DodgeNoAttack(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 8;
+    entity->busy_flags |= ENTITY_BUSY_DODGE;
     switch (entity->action_step) {
     case 0:
         switch (rand() % 3) {
@@ -469,7 +469,7 @@ static void WindElemental_RunAtPlayer(Entity *entity) {
     f32 direction[4];
     s32 side;
 
-    entity->busy_flags |= 0x3000;
+    entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_2000);
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);

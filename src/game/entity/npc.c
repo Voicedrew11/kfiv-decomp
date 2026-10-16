@@ -119,7 +119,7 @@ static void Npc_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = MOTION_BLEND_TO_POSE(entity->model, (entity->busy_flags & 2) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = MOTION_BLEND_TO_POSE(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -286,7 +286,7 @@ static void Npc_TurnToPlayer(Entity *entity) {
     f32 yaw;
     f32 angle;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -337,7 +337,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
     f32 yaw;
     f32 angle;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
@@ -388,7 +388,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
     EntityParams *params;
     s32 kind;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         if (entity->spawn_info->spawn_mode == 1
@@ -447,7 +447,7 @@ static void Npc_Death(Entity *entity) {
     EntityParams *params;
     s32 kind;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         if (entity->spawn_info->spawn_mode == 1

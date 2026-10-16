@@ -169,7 +169,7 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (entity->busy_flags & 0x46) {
+    if (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) {
         entity->flags &= ~0x10000000;
     } else {
         entity->flags |= 0x10000000;
@@ -189,7 +189,7 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (entity->busy_flags == 0 || (entity->busy_flags & 6)) {
+    if (entity->busy_flags == 0 || (entity->busy_flags & (ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
         DarkPuppet_ApplyMoveCommand(entity);
     }
 }
@@ -472,7 +472,7 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[kind];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -540,7 +540,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
     f32 target[4]; // match: never used, but retail keeps 16 bytes of stack for it
     char *point;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -599,7 +599,7 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
     s32 kind = (s32)(entity->flags >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -652,7 +652,7 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
 static void DarkPuppet_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);

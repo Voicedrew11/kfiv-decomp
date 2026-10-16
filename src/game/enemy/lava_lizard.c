@@ -228,7 +228,7 @@ static void LavaLizard_RunAtPlayer(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     if (EntityAi_CanUseMelee(entity, 0)) {
         EntityAi_StartAttack(entity, EntityAi_MeleeAttack, 1, 0, 0);
         return;
@@ -264,7 +264,7 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

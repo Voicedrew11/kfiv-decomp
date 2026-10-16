@@ -173,7 +173,7 @@ static void DarkSuccubus_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -257,7 +257,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (((s32)(ENTITY_FLAGS(entity) >> 28) & 1) && !(entity->busy_flags & 0x1000)) {
+    if (((s32)(ENTITY_FLAGS(entity) >> 28) & 1) && !(entity->busy_flags & ENTITY_BUSY_1000)) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
         if (height != D_0044681C[0]) {
             if (height > 45.0f) {
@@ -813,7 +813,7 @@ static void DarkSuccubus_ApplyMoveCommand(Entity *entity) {
 static void DarkSuccubus_ReactionLight(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 2;
+    entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
@@ -850,7 +850,7 @@ static void DarkSuccubus_ReactionLight(Entity *entity) {
 static void DarkSuccubus_ReactionHeavy(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         Motion_Start(entity, 0xF, 0, 5, 1);
@@ -888,7 +888,7 @@ static void DarkSuccubus_ReactionHeavy(Entity *entity) {
 static void DarkSuccubus_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -938,7 +938,7 @@ static void DarkSuccubus_MeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 2, 1);
@@ -1004,7 +1004,7 @@ static void DarkSuccubus_RangedAttack(Entity *entity) {
     f32 target[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, attack_index + 0x17, 0, entity->params->motion_blend_frames >> 2, 1);
@@ -1061,7 +1061,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
     f32 height;
     s32 run = FALSE;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     entity->flags &= ~0x3800;
     entity->flags &= ~0x200;
     height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
@@ -1132,7 +1132,7 @@ static void DarkSuccubus_MoveAlongArc(Entity *entity) {
 static void DarkSuccubus_Dodge(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 8;
+    entity->busy_flags |= ENTITY_BUSY_DODGE;
     entity->flags &= ~0x200;
     switch (entity->action_step) {
     case 0:
@@ -1168,7 +1168,7 @@ static void DarkSuccubus_Dodge(Entity *entity) {
 static void DarkSuccubus_DodgeAnim29Or30(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 8;
+    entity->busy_flags |= ENTITY_BUSY_DODGE;
     entity->flags &= ~0x200;
     switch (entity->action_step) {
     case 0:
@@ -1205,7 +1205,7 @@ static void DarkSuccubus_DodgeAnim29Or30(Entity *entity) {
 static void DarkSuccubus_PlayAnim18Turning(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     entity->flags |= 0x200;
     entity->move_command |= EntityAi_TurnCommand(entity);
     switch (entity->action_step) {
@@ -1241,7 +1241,7 @@ static void DarkSuccubus_PlayAnim18Turning(Entity *entity) {
 static void DarkSuccubus_FadeOut(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x4000;
+    entity->busy_flags |= ENTITY_BUSY_4000;
     entity->move_command |= EntityAi_TurnCommand(entity);
     switch (entity->action_step) {
     case 0:

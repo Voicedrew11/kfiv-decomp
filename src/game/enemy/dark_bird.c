@@ -147,12 +147,12 @@ static void DarkBird_Think(Entity *entity, s32 unknown) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->busy_flags & 0x40) {
+    if (entity->busy_flags & ENTITY_BUSY_DEATH) {
         entity->flags &= ~0x10000000;
     } else {
         entity->flags |= 0x10000000;
     }
-    if (!(entity->busy_flags & 0x45)) {
+    if (!(entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_HEAVY | ENTITY_BUSY_ATTACK))) {
         EntityAi_StartSlotMotion(entity, &unkE0->unk88, 1, 3, 0, entity->params->motion_blend_frames, 0);
     }
     if (entity->busy_flags == 0) {
@@ -183,7 +183,7 @@ static void DarkBird_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (entity->busy_flags == 0 || (entity->busy_flags & 6)) {
+    if (entity->busy_flags == 0 || (entity->busy_flags & (ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
         DarkBird_ApplyMoveCommand(entity);
     }
 }
@@ -544,7 +544,7 @@ static void DarkBird_DormantMoveToCircle(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
     f32 angle;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
@@ -598,7 +598,7 @@ static void DarkBird_ApproachForMelee(Entity *entity) {
     f32 height;
     s32 turn;
 
-    entity->busy_flags |= 0x3000;
+    entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_2000);
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, 3, 0, entity->params->motion_blend_frames, 0);
@@ -661,7 +661,7 @@ static void DarkBird_MeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[kind];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, kind | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -738,7 +738,7 @@ static void DarkBird_RangedAttack(Entity *entity) {
     s32 launch_frame;
     s32 i;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -911,7 +911,7 @@ static void DarkBird_OnHit(Entity *entity) {
 static void DarkBird_ReactionLight(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 2;
+    entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
@@ -954,7 +954,7 @@ static void DarkBird_ReactionLight(Entity *entity) {
 static void DarkBird_ReactionHeavy(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, 0xF, 0, 5, 1);
@@ -1006,7 +1006,7 @@ static void DarkBird_ReactionHeavy(Entity *entity) {
 static void DarkBird_Death(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, 0x10, 0, 5, 1);
@@ -1073,7 +1073,7 @@ static void DarkBird_Animate(Entity *entity) {
         return;
     }
     if (slots->unk80.unk01 != 0) {
-        if (entity->busy_flags & 0x12) {
+        if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
             rate = unkE0->pose_blend_weight;
         } else {
             rate = 1.0f / slots->unk80.unk01;
@@ -1089,7 +1089,7 @@ static void DarkBird_Animate(Entity *entity) {
         }
     }
     if (slots->unk88.unk01 != 0) {
-        if (entity->busy_flags & 0x12) {
+        if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
             rate = unkE0->pose_blend_weight;
         } else {
             rate = 1.0f / slots->unk88.unk01;

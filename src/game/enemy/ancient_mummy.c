@@ -291,7 +291,7 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
     f32 yaw;
     f32 step;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames, 0);
@@ -369,7 +369,7 @@ static void AncientMummy_FadeBackIn(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 step;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         ENTITY_FLAG_BITS(entity)->bits36 = 0;

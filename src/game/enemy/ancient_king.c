@@ -243,7 +243,7 @@ static void AncientKing_Death(Entity *entity) {
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
     f32 target[4];
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &slots->unk80, 0, 2, 0, entity->params->motion_blend_frames, 0);
@@ -311,7 +311,7 @@ static void AncientKing_RangedAttack0(Entity *entity) {
     s32 elapsed;
     s32 i;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -358,7 +358,7 @@ static void AncientKing_RangedAttack0(Entity *entity) {
 static void AncientKing_RespawnOthers(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 0x11, 0, entity->params->motion_blend_frames, 1);
@@ -401,7 +401,7 @@ static void AncientKing_RespawnOthers(Entity *entity) {
 static void AncientKing_SwitchHandlers(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_0, 0, 2, 0, entity->params->motion_blend_frames, 0);
@@ -568,7 +568,7 @@ done:
 static void AncientKing_DeathLaunchShot(Entity *entity) {
     f32 target[4];
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -631,7 +631,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
     s32 elapsed;
     s32 i;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -685,7 +685,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
     s32 elapsed;
     s32 i;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x18, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -736,7 +736,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
 static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 1);

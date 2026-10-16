@@ -367,7 +367,7 @@ static void GreaterDemon_Move(Entity *entity) {
 static void GreaterDemon_Rise(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x3000;
+    entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_2000);
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -413,7 +413,7 @@ static void GreaterDemon_DescendAtPlayer(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 flag;
 
-    entity->busy_flags |= 0x4000;
+    entity->busy_flags |= ENTITY_BUSY_4000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, 10, 1);
@@ -555,7 +555,7 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
     EntityUnkE0Kind168160 *unkE0 = (EntityUnkE0Kind168160 *)&entity->unkE0;
     char *unk350 = entity->params->melee_attack_third;
 
-    entity->busy_flags |= 0x5000;
+    entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_4000);
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x1D, 0, 1, 1);
@@ -612,7 +612,7 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
 static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
     EntityUnkE0Kind168160 *unkE0 = (EntityUnkE0Kind168160 *)&entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         if (0.0f < EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) * 57.29578f) {
@@ -662,7 +662,7 @@ int EntityAi_SetReaction(char *, void (*)(void), int); // match: an int result k
 static void GreaterDemon_ReactionHeavy(Entity *entity) {
     EntityUnkE0Kind168160 *unkE0 = (EntityUnkE0Kind168160 *)&entity->unkE0;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         Motion_Start(entity, 0xF, 0, 5, 1);
@@ -708,7 +708,7 @@ static void GreaterDemon_ReactionHeavy(Entity *entity) {
 static void GreaterDemon_Guard(Entity *entity) {
     EntityUnkE0Kind168160 *unkE0 = (EntityUnkE0Kind168160 *)&entity->unkE0;
 
-    entity->busy_flags |= 0x10;
+    entity->busy_flags |= ENTITY_BUSY_GUARD;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0xD, 0, 0xA, 1);
@@ -784,7 +784,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
     s32 point_index;
     s32 count;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, params->motion_blend_frames >> 1, 1);
@@ -906,7 +906,7 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
     f32 direction[3];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

@@ -95,7 +95,7 @@ static void HammerSkeleton_Think(Entity *entity, s32 unknown) {
    calls Game_CountSpawnDeath and starts script EntitySpawnInfo.death_script_id where that one calls EntityEvent_OnDeath.
    */
 static void HammerSkeleton_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);

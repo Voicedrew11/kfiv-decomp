@@ -120,7 +120,7 @@ static void Skull_Think(Entity *entity, s32 unknown) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->busy_flags & 0x40) {
+    if (entity->busy_flags & ENTITY_BUSY_DEATH) {
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
     } else {
@@ -152,7 +152,7 @@ static void Skull_Think(Entity *entity, s32 unknown) {
     if (unkE0->sub_timer > 0) {
         unkE0->sub_timer--;
     }
-    if (ENTITY_FLAG_BITS(entity)->bit28 && !(entity->busy_flags & 1)) {
+    if (ENTITY_FLAG_BITS(entity)->bit28 && !(entity->busy_flags & ENTITY_BUSY_ATTACK)) {
         if (unkE0->sub_timer <= 0) {
             if (entity->model->position[1] < player_state.position[1] - 300.0f) {
                 unkE0->step_index = 1;
@@ -304,7 +304,7 @@ static void Skull_Move(Entity *entity) {
 /* The death action (busy bit 0x40): animation 16, the fade over 20 frames and the removal, as
    EntityAi_Death with other flag settings; it sets Entity.collision_radius to 80. */
 static void Skull_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -354,7 +354,7 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
     f32 step;
     f32 limit;
 
-    if (entity->busy_flags == 0 || (entity->busy_flags & 6)) {
+    if (entity->busy_flags == 0 || (entity->busy_flags & (ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
         if (entity->move_command & 0x100) {
             unkE0->unk1C -= entity->params->turn_step_per_frame;
             if (unkE0->unk1C < -entity->params->turn_limit) {
@@ -515,7 +515,7 @@ static void Skull_Animate(Entity *entity) {
         }
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
@@ -543,7 +543,7 @@ static void Skull_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

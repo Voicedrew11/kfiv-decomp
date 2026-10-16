@@ -158,7 +158,7 @@ static void DarkOne_Death(Entity *entity) {
    EntityAi_Death does, calling EntityEvent_OnDeath at the start, and when the animation has ended sets
    the flags of the fade and stops there: no fade and no removal. */
 static void DarkOne_DeathByOtherWeapon(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -204,7 +204,7 @@ static void DarkOne_DeathByOtherWeapon(Entity *entity) {
 /* A death action (busy bit 0x40), started by DarkOne_Death: as DarkOne_DeathByOtherWeapon with
    animation 0 in place of 16. */
 static void DarkOne_DeathByMoonlightSword(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0, 0, 5, 1);

@@ -431,7 +431,7 @@ static void Seafang_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 fall = 0.0f;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     unkE0->part_angle_x = EntityCollision_DistanceToGround(entity->model->position);
     if (unkE0->part_angle_x != D_0044680C[0] && unkE0->part_angle_x < fall) {
         fall = 2.0f;
@@ -479,7 +479,7 @@ static void Seafang_Death(Entity *entity) {
    y and without EntityEvent_OnDeath, which is what drops the gold (Gold_DropFromEntity), frees the
    effects and starts the spawn's script when an entity dies. */
 static void Seafang_DeathWithoutDrop(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);

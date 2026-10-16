@@ -150,7 +150,7 @@ static void Larva_Think(Entity *entity, s32 unknown) {
 static void Larva_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, entity->params->motion_blend_frames, 1);
@@ -209,7 +209,7 @@ static void Larva_Dormant(Entity *entity) {
    EntityAi_Death with other flag settings; it frees the entity's effects when EntityParams.respawn_effect_id is
    neither 0 nor 0xFFFF. */
 static void Larva_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -260,7 +260,7 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
     Entity *other;
     f32 *point;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, 0, 1);
@@ -312,7 +312,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
     f32 launch_angle;
     f32 angle;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         half = 0.5f;
@@ -410,7 +410,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
 static void Larva_DeathFallAndFade(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 1);

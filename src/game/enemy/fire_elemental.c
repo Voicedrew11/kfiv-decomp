@@ -271,7 +271,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
     f32 direction[4];
     s8 turn;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
@@ -383,7 +383,7 @@ static void FireElemental_StandAndAttack(Entity *entity) {
 static void FireElemental_PlayTurnAnim(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         if (unkE0->action_flags > 0) {
@@ -420,7 +420,7 @@ static void FireElemental_PlayTurnAnim(Entity *entity) {
 static void FireElemental_Dodge(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 8;
+    entity->busy_flags |= ENTITY_BUSY_DODGE;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0xA, 0, 5, 1);
@@ -511,7 +511,7 @@ static void FireElemental_RangedAttack1(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, attack_index + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -607,7 +607,7 @@ static void FireElemental_BackAwayFromPlayer(Entity *entity) {
     f32 direction[4];
     s32 side;
 
-    entity->busy_flags |= 0x3000;
+    entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_2000);
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 5, 0, entity->params->motion_blend_frames, 0);
@@ -824,7 +824,7 @@ static void FireElemental_RangedAttack0(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

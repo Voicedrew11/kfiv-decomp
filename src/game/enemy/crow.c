@@ -82,7 +82,7 @@ static void Crow_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -177,7 +177,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
 static void Crow_Death(Entity *entity) {
     f32 turn;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     // match: the whole step is written out in both arms (only the call is shared in retail)
     if (!ENTITY_FLAG_BITS(entity)->bit44) {
         turn = entity->model->rotation[0];
@@ -240,7 +240,7 @@ static void Crow_Death(Entity *entity) {
 static void Crow_PlayAnim20(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames, 1);
@@ -272,7 +272,7 @@ static void Crow_PlayAnim20(Entity *entity) {
 static void Crow_PlayAnim21(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames, 1);

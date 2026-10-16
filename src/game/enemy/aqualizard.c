@@ -222,7 +222,7 @@ static void Aqualizard_MeleeAttack2(Entity *entity) {
     EntityParamsUnk240 *unk240 = (EntityParamsUnk240 *)entity->params->melee_attack_third;
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x16, 0, entity->params->motion_blend_frames >> 1, 1);

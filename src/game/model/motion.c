@@ -112,7 +112,7 @@ s32 Motion_StepSlot(Entity *entity, EntityUnkE0SlotBits *slot_bits, s32 type, s3
     // match: indexing level_tables as an array swaps the addu operands
     motion = *(MotionData **)((char *)ENTITY_MODEL(entity)->level_tables + (table << 2));
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
-    if (entity->ailment_3_frames != 0 && (entity->busy_flags & 0x46) == 0) {
+    if (entity->ailment_3_frames != 0 && (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) == 0) {
         step = (f32)params->motion_speeds[entity->animation_index] * 0.75f;
     } else {
         step = params->motion_speeds[entity->animation_index];
@@ -551,7 +551,7 @@ int Motion_Start(Entity *entity, int animation, int frame, u32 blend_frames, int
     MODEL_CHANNEL(ENTITY_MODEL(entity))->index = motion;
     MODEL_CHANNEL(ENTITY_MODEL(entity))->param = frame;
     MODEL_CHANNEL(ENTITY_MODEL(entity))->param_shifted = frame << 8;
-    if (entity->ailment_3_frames != 0 && (entity->busy_flags & 0x46) == 0) {
+    if (entity->ailment_3_frames != 0 && (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) == 0) {
         MODEL_CHANNEL(ENTITY_MODEL(entity))->value = (f32)(s32)blend_frames + (f32)(s32)blend_frames * 0.75f;
     } else {
         MODEL_CHANNEL(ENTITY_MODEL(entity))->value = blend_frames;
@@ -609,7 +609,7 @@ s32 Motion_Step(Entity *entity, s32 mode) {
     channel = MODEL_CHANNEL(ENTITY_MODEL(entity));
     motion = (MotionData *)channel->tables[channel->index];
     motion = (MotionData *)((ModelPartLevels *)motion - 1);
-    if (entity->ailment_3_frames != 0 && (entity->busy_flags & 0x46) == 0) {
+    if (entity->ailment_3_frames != 0 && (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) == 0) {
         step = (f32)entity->params->motion_speeds[entity->animation_index] * 0.75f;
     } else {
         step = entity->params->motion_speeds[entity->animation_index];

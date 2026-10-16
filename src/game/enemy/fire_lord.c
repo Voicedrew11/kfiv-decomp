@@ -132,7 +132,7 @@ static void FireLord_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -487,7 +487,7 @@ done:
 static void FireLord_PlayAnim6Or7Alternately(Entity *entity) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     unkE0->afterimage_active = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
@@ -538,7 +538,7 @@ static void FireLord_MeleeAttack0(Entity *entity) {
     s32 i;
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -658,7 +658,7 @@ static void FireLord_MeleeAttack1(Entity *entity) {
     s32 i;
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x15, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -745,7 +745,7 @@ static void FireLord_PlayAnim6Or7ThenMelee0(Entity *entity) {
     EntityUnkE0Kind131390 *unkE0 = (EntityUnkE0Kind131390 *)&entity->unkE0;
     PlayerData *player;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     unkE0->afterimage_active = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);

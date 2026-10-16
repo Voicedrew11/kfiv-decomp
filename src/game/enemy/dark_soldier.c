@@ -343,7 +343,7 @@ static void DarkSoldier_MeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -409,7 +409,7 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 side;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         side = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
@@ -471,7 +471,7 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
     EntityModel *model;
     f32 unused[4]; // match: the frame has room for it, and no call here is a tail call
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -589,7 +589,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 landed;
 
-    entity->busy_flags |= 8;
+    entity->busy_flags |= ENTITY_BUSY_DODGE;
     switch (entity->action_step) {
     case 0:
         if (EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position)) > 0.0f) {

@@ -127,7 +127,7 @@ static void Spider_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -314,7 +314,7 @@ static void Spider_RangedAttack(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -369,7 +369,7 @@ static void Spider_RangedAttack(Entity *entity) {
 static void Spider_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 3, 0, 0, 1);
@@ -417,7 +417,7 @@ static void Spider_OnHit(Entity *entity) {
    and roll back to 0; it clears flag bits 22 to 24 and 27 at the start and sets 26 and 27 for the
    fade. */
 static void Spider_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     EntityMath_EaseAngleToward(&entity->model->rotation[0], 0.0f, 6.0f);
     EntityMath_EaseAngleToward(&entity->model->rotation[2], 0.0f, 6.0f);
     switch (entity->action_step) {
@@ -486,7 +486,7 @@ static void Spider_DropToFloor(Entity *entity) {
     direction[1] = 1.0f;
     direction[2] = 0.0f;
     direction[3] = 0.0f;
-    entity->busy_flags = 0x1000;
+    entity->busy_flags = ENTITY_BUSY_1000;
     sceVu0RotMatrixZ(matrix, identity_matrix, entity->model->rotation[2]);
     sceVu0RotMatrixX(matrix, matrix, entity->model->rotation[0]);
     sceVu0RotMatrixY(matrix, matrix, entity->model->rotation[1]);
@@ -549,7 +549,7 @@ static void Spider_LevelOut(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
-    entity->busy_flags = 0x2000;
+    entity->busy_flags = ENTITY_BUSY_2000;
     pitch_left = EntityMath_EaseAngleToward(&entity->model->rotation[0], 0.0f, 6.0f);
     roll_left = EntityMath_EaseAngleToward(&entity->model->rotation[2], 0.0f, 6.0f);
     if (entity->flags & (0x8200L << 35)) {

@@ -1899,7 +1899,7 @@ int EntityAi_StartSlotMotion(Entity *entity, EntityMotionSlotWord *slot, int cha
     slot->frame_fixed = frame << 8;
     slot->index = animation;
     slot->frame = frame;
-    if (entity->ailment_3_frames != 0 && (entity->busy_flags & 0x46) == 0) {
+    if (entity->ailment_3_frames != 0 && (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) == 0) {
         float slowed = frames;
 
         slot->unk01 = slowed + slowed * 0.75f;

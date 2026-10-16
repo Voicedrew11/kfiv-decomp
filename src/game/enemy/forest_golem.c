@@ -183,7 +183,7 @@ static void ForestGolem_StartScriptAndRumble(Entity *entity) {
     EntityFrameTable shake_frames = forest_golem_rumble_frames;
     u32 i;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 1);
@@ -416,7 +416,7 @@ static void ForestGolem_ThinkCombat(Entity *entity, s32 unknown) {
 static void ForestGolem_Death(Entity *entity) {
     Entity *other;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -473,7 +473,7 @@ static void ForestGolem_SignalMapObject(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     MapObject *map_object;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);

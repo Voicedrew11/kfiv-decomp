@@ -137,7 +137,7 @@ static void SkeletonSoldier_Think(Entity *entity, s32 unknown) {
 static void SkeletonSoldier_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         if (entity->spawn_info->spawn_mode != 0) {
@@ -214,7 +214,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
 static void SkeletonSoldier_PlayAnim17(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     switch (entity->action_step) {
     case 0:
@@ -296,7 +296,7 @@ static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 unknown) {
 static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x12, 0, 0, 1);

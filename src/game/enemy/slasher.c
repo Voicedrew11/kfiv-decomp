@@ -163,7 +163,7 @@ static void Slasher_ThinkStandStill(Entity *entity, s32 unknown) {
 static void Slasher_WaitForPlayerNear(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;

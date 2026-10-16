@@ -165,7 +165,7 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
             DarkSorcerer_ThinkDecide(entity, unknown);
         }
     }
-    if (entity->busy_flags & 0x40) {
+    if (entity->busy_flags & ENTITY_BUSY_DEATH) {
         entity->flags &= ~0x10000000;
     } else {
         entity->flags |= 0x10000000;
@@ -189,7 +189,7 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
             entity->move_command |= 0x10;
         }
     }
-    if (entity->busy_flags == 0 || (entity->busy_flags & 6)) {
+    if (entity->busy_flags == 0 || (entity->busy_flags & (ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
          DarkSorcerer_ApplyMoveCommand(entity);
     }
     if (unkE0->sub_timer > 0) {
@@ -438,7 +438,7 @@ static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
 static void DarkSorcerer_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0, 0, 0, 1);
@@ -484,7 +484,7 @@ static void DarkSorcerer_MeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[kind];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -552,7 +552,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
     f32 target[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -607,7 +607,7 @@ static void DarkSorcerer_RangedAttack(Entity *entity) {
 static void DarkSorcerer_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -691,7 +691,7 @@ static s32 DarkSorcerer_PickAction(Entity *entity) {
 static void DarkSorcerer_PlayAnim17AndShoot(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -820,7 +820,7 @@ static void DarkSorcerer_LaunchShotsAtFixedPoints(Entity *entity) {
 static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -862,7 +862,7 @@ static void DarkSorcerer_PlayAnim18AndShoot(Entity *entity) {
 static void DarkSorcerer_PlayAnim19StartScripts(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x4000;
+    entity->busy_flags |= ENTITY_BUSY_4000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x13, 0, entity->params->motion_blend_frames >> 1, 1);

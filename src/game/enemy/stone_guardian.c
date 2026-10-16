@@ -149,7 +149,7 @@ static void StoneGuardian_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -227,7 +227,7 @@ static void StoneGuardian_TurnToSpawnHeading(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     s32 frames;
 
-    entity->busy_flags = 0x1000;
+    entity->busy_flags = ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         if (EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y) >= 0.0f) {
@@ -1466,7 +1466,7 @@ static void StoneGuardian_PlayAnim9(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     entity->model_alpha = 0x80;
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
@@ -1575,7 +1575,7 @@ static void StoneGuardian_PlayAnim8(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit21 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     entity->model_alpha = 0x80;
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);

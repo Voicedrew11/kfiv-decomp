@@ -126,7 +126,7 @@ static void Salamander_Animate(Entity *entity) {
         return;
     }
     if (slots->unk80.unk01 != 0) {
-        if (entity->busy_flags & 0x12) {
+        if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
             rate = unkE0->pose_blend_weight;
         } else {
             rate = 1.0f / slots->unk80.unk01;
@@ -142,7 +142,7 @@ static void Salamander_Animate(Entity *entity) {
         }
     }
     if (slots->unk88.unk01 != 0) {
-        if (entity->busy_flags & 0x12) {
+        if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
             rate = unkE0->pose_blend_weight;
         } else {
             rate = 1.0f / slots->unk88.unk01;
@@ -195,7 +195,7 @@ static void Salamander_ReactionRewind(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
     s32 frame;
 
-    entity->busy_flags |= 2;
+    entity->busy_flags |= ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
         frame = unkE0->unk80.unk02 - 3;
@@ -208,7 +208,7 @@ static void Salamander_ReactionRewind(Entity *entity) {
         break;
     case 1:
         if (unkE0->unk80.unk01 == 0) {
-            entity->busy_flags &= ~2;
+            entity->busy_flags &= ~ENTITY_BUSY_REACTION_LIGHT;
             EntityAi_SetReaction((char *)entity, NULL, 0);
         }
         break;
@@ -220,7 +220,7 @@ static void Salamander_ReactionRewind(Entity *entity) {
 static void Salamander_ReactionLight(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 2;
+    entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xE, 0, 5, 1);
@@ -256,7 +256,7 @@ static void Salamander_ReactionLight(Entity *entity) {
 static void Salamander_ReactionHeavy(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xF, 0, 5, 1);
@@ -296,7 +296,7 @@ static void Salamander_ReactionHeavy(Entity *entity) {
 static void Salamander_Death(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, 0x10, 0, 5, 1);
@@ -351,7 +351,7 @@ static void Salamander_MeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[kind];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, kind | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -413,7 +413,7 @@ static void Salamander_RangedAttack(Entity *entity) {
     s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -473,7 +473,7 @@ static void Salamander_RangedAttack(Entity *entity) {
 static void Salamander_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (!(entity->busy_flags & 0x40)) {
+    if (!(entity->busy_flags & ENTITY_BUSY_DEATH)) {
         EntityAi_StartSlotMotion(entity, unkE0->motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
     }
     if (frame_counter % 10U == entity->spawn_index % 10U) {
