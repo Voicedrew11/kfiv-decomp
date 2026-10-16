@@ -92,7 +92,7 @@ void DragonFly_Init(Entity *entity) {
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -110,7 +110,7 @@ static void DragonFly_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -169,7 +169,7 @@ static void DragonFly_ThinkReturn(Entity *entity, s32 unknown) {
         entity->move_command = EntityAi_MoveCommand3D(entity, 1, 50.0f);
     } else {
         push[0] = push[1] = push[2] = push[3] = 0.0f;
-        if (entity->flags & (0xC000L << 31)) {
+        if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_400000000000)) {
             push[0] += entity->wall_push[0];
             push[1] += entity->wall_push[1];
             push[2] += entity->wall_push[2];
@@ -192,18 +192,18 @@ static void DragonFly_ThinkReturn(Entity *entity, s32 unknown) {
         }
         entity->target = entity->spawn_info;
         if (turn > 0) {
-            entity->move_command = 0x241;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
             if (push[1] > 0.0f) {
-                entity->move_command = 0x261;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_UP | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
             } else if (push[1] < 0.0f) {
-                entity->move_command = 0x251;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_DOWN | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
             }
         } else if (turn < 0) {
-            entity->move_command = 0x141;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
             if (push[1] > 0.0f) {
-                entity->move_command = 0x161;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_UP | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
             } else if (push[1] < 0.0f) {
-                entity->move_command = 0x151;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_DOWN | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
             }
         } else {
             entity->move_command = EntityAi_MoveCommand3D(entity, 1, 50.0f);
@@ -293,40 +293,40 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
             delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
-                    entity->move_command |= 0x200;
+                    entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command |= 0x100;
+                    entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                 }
             }
             delta = player_state.position[1] - 190.0f + (f32)unkE0->action_flags - entity->model->position[1];
             if (delta > 10.0f) {
-                entity->move_command |= 0x20;
+                entity->move_command |= MOVE_COMMAND_UP;
             } else if (delta < -10.0f) {
-                entity->move_command |= 0x10;
+                entity->move_command |= MOVE_COMMAND_DOWN;
             }
-            entity->move_command |= 1;
+            entity->move_command |= MOVE_COMMAND_FORWARD;
             if (entity->radius + 100.0f + 100.0f < entity->distance_to_player) {
-                entity->move_command |= 0x40;
+                entity->move_command |= MOVE_COMMAND_RUN;
             }
             break;
         case 2:
             delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
-                    entity->move_command |= 0x200;
+                    entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command |= 0x100;
+                    entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                 }
             }
             delta = unkE0->part_angle_y - entity->model->position[1];
             if (delta > 30.0f) {
-                entity->move_command |= 0x20;
+                entity->move_command |= MOVE_COMMAND_UP;
             } else if (delta < -30.0f) {
-                entity->move_command |= 0x10;
+                entity->move_command |= MOVE_COMMAND_DOWN;
             }
-            entity->move_command |= 1;
+            entity->move_command |= MOVE_COMMAND_FORWARD;
             if (unkE0->step_index != 0) {
-                entity->move_command |= 0x40;
+                entity->move_command |= MOVE_COMMAND_RUN;
             }
             Vector_Copy(target, &player_state);
             target[1] = unkE0->part_angle_y;
@@ -339,13 +339,13 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
             delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
-                    entity->move_command |= 0x200;
+                    entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command |= 0x100;
+                    entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                 }
             }
             if (entity->radius + 100.0f + 100.0f < entity->distance_to_player) {
-                entity->move_command |= 0x41;
+                entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN);
             }
             unkE0->pause_timer++;
             if (unkE0->pause_timer > 90) {
@@ -357,13 +357,13 @@ static void DragonFly_ThinkCombat(Entity *entity, s32 unknown) {
             delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
-                    entity->move_command |= 0x200;
+                    entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command |= 0x100;
+                    entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                 }
             }
             delta = player_state.position[1] - entity->model->position[1];
-            entity->move_command |= 0x51;
+            entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_DOWN | MOVE_COMMAND_RUN);
             if (delta > 700.0f) {
                 unkE0->move_choice = 0;
             }
@@ -390,12 +390,12 @@ static void DragonFly_Move(Entity *entity) {
     vector = ENTITY_SCRATCH_VECTOR;
     turn = vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
     climb_step = 0.02f;
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -404,37 +404,37 @@ static void DragonFly_Move(Entity *entity) {
         unkE0->turn_rate = turn;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
-    if (entity->move_command & 3) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {
         amount = 0.0f;
-        if (entity->move_command & 1) {
+        if (entity->move_command & MOVE_COMMAND_FORWARD) {
             amount = -1.0f;
-        } else if (entity->move_command & 2) {
+        } else if (entity->move_command & MOVE_COMMAND_BACK) {
             amount = 1.0f;
         }
         vector[2] += amount;
     }
-    if (entity->move_command & 0xC) {
+    if (entity->move_command & MOVE_COMMAND_SIDEWAYS) {
         amount = 0.0f;
-        if (entity->move_command & 4) {
+        if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
             amount = 1.0f;
-        } else if (entity->move_command & 8) {
+        } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
             amount = -1.0f;
         }
         vector[0] += amount;
     }
-    if (entity->move_command & 0x30) {
+    if (entity->move_command & MOVE_COMMAND_UP_DOWN) {
         amount = 0.0f;
-        if (entity->move_command & 0x10) {
+        if (entity->move_command & MOVE_COMMAND_DOWN) {
             unkE0->part_angle_x -= climb_step;
             if (unkE0->part_angle_x < -1.0f) {
                 unkE0->part_angle_x = -1.0f;
             }
             amount = unkE0->part_angle_x;
-        } else if (entity->move_command & 0x20) {
+        } else if (entity->move_command & MOVE_COMMAND_UP) {
             unkE0->part_angle_x += climb_step;
             if (1.0f < unkE0->part_angle_x) {
                 unkE0->part_angle_x = 1.0f;
@@ -443,10 +443,10 @@ static void DragonFly_Move(Entity *entity) {
         }
         vector[1] += amount;
     }
-    if (entity->move_command & 0x3F) {
+    if (entity->move_command & MOVE_COMMAND_DIRECTIONS) {
         unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
         amount = unkE0->move_speed;
-        if (entity->move_command & 0x40) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             amount += amount;
         }
         sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
@@ -462,23 +462,23 @@ static void DragonFly_Move(Entity *entity) {
         unkE0->move_speed = 0.0f;
         unkE0->part_angle_x = 0.0f;
     }
-    if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, (s32)((f32)entity->params->motion_blend_frames * 0.5f), 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         Motion_Start(entity, 5, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x10) {
+    } else if (entity->move_command & MOVE_COMMAND_DOWN) {
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 4) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         Motion_Start(entity, 6, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 8) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         Motion_Start(entity, 7, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x300) {
+    } else if (entity->move_command & MOVE_COMMAND_TURNS) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
@@ -492,7 +492,7 @@ static void DragonFly_MeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[ENTITY_FLAG_BITS(entity)->bits58];
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, ENTITY_FLAG_BITS(entity)->bits58 | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -552,7 +552,7 @@ static void DragonFly_RangedAttack(Entity *entity) {
     s32 kind = (s32)(entity->flags >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

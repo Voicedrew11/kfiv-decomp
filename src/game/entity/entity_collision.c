@@ -127,7 +127,7 @@ void EntityCollision_PushApart(Entity *entity) {
 
     type_id = entity->spawn_info->type_id;
     if (!(type_id >= 0x14 && type_id <= 0x16) && (u16)type_id != 0x2D && (u16)type_id != 0x63 && (u16)type_id != 0x97
-        && ((s32)(entity->flags >> 1) & 1) && entity->hit_points != 0 && !(entity->flags & 0x8010000)) {
+        && ((s32)(entity->flags >> 1) & 1) && entity->hit_points != 0 && !(entity->flags & (ENTITY_FLAG_NOT_TARGETABLE | ENTITY_FLAG_NO_PLAYER_COLLISION))) {
         if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
             EntityCollision_SphereCylinder(entity->model->position, player_state.position, entity->radius, 100.0f, 230.0f);
         } else {
@@ -158,7 +158,7 @@ void EntityCollision_PushApart(Entity *entity) {
             if (other == entity) {
                 continue;
             }
-            if (other->params->flags & 0x10) {
+            if (other->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_ENTITIES) {
                 if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
                     if (ENTITY_PARAMS_IS_SPHERE(other->params)) {
                         EntityCollision_SphereSphere(entity->model->position, other->model->position, entity->radius, other->radius);
@@ -462,7 +462,7 @@ void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 unknown_a, s32 unkno
                 amount = chance;
             }
             entity->hit_points -= amount;
-            entity->flags &= ~0xC000000000L;
+            entity->flags &= ~ENTITY_FLAG_HIT_SOURCE_MASK;
             entity->hit_flash_frames = 3;
         }
         break;
@@ -470,7 +470,7 @@ void EntityCollision_ApplySurfaceEffect(Entity *entity, s32 unknown_a, s32 unkno
         if (entity->hit_points != 0) {
             entity->hit_points = (entity->hit_points > 30) ? entity->hit_points - 30 : 0;
             entity->hit_flash_frames = 3;
-            entity->flags &= ~0xC000000000L;
+            entity->flags &= ~ENTITY_FLAG_HIT_SOURCE_MASK;
         }
         break;
     }
@@ -568,7 +568,7 @@ walls:
             }
         }
     }
-    if (!(entity->flags & 0x4000000400000L)) {
+    if (!(entity->flags & ENTITY_FLAG_SKIP_FLOOR_MASK)) {
         strip = mesh->floor_strips;
         i = mesh->floor_strip_count;
         while (--i != -1) {
@@ -966,7 +966,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
             do {
                 EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->collision_radius);
                 if (COLLISION_RESULT->hit != 0) {
-                    entity->flags |= 0x8000L << 30;
+                    entity->flags |= ENTITY_FLAG_WALL_PUSH;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     Vector_Add(normal_sum, normal_sum, offset);
@@ -987,7 +987,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
             do {
                 EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->collision_radius);
                 if (COLLISION_RESULT->hit != 0) {
-                    entity->flags |= 0x8000L << 30;
+                    entity->flags |= ENTITY_FLAG_WALL_PUSH;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     Vector_Add(normal_sum, normal_sum, offset);
@@ -1008,7 +1008,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
             do {
                 EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->collision_radius);
                 if (COLLISION_RESULT->hit != 0) {
-                    entity->flags |= 0x8000L << 30;
+                    entity->flags |= ENTITY_FLAG_WALL_PUSH;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     Vector_Add(normal_sum, normal_sum, offset);
@@ -1022,7 +1022,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
             strip = (CollisionStrip *)(point + strip->point_count);
         }
     }
-    if (!(entity->flags & 0x4000000400000L)) {
+    if (!(entity->flags & ENTITY_FLAG_SKIP_FLOOR_MASK)) {
         strip = mesh->floor_strips;
         i = mesh->floor_strip_count;
         while (--i != -1) {
@@ -1032,7 +1032,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
                 EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->collision_radius);
                 if (COLLISION_RESULT->hit != 0) {
                     hit_floor = TRUE;
-                    entity->flags |= 0x8000L << 29;
+                    entity->flags |= ENTITY_FLAG_ON_FLOOR;
                     Vector_Subtract(offset, position, COLLISION_RESULT);
                     sceVu0Normalize(offset, offset);
                     Vector_Scale(offset, offset, entity->collision_radius);
@@ -1063,7 +1063,7 @@ void EntityCollision_SphereAgainstMap(Entity *entity) {
     Vector_Copy(position, entity->model->position);
     normal_sum[0] = normal_sum[1] = normal_sum[2] = normal_sum[3] = 0.0f;
     if (!((s32)(entity->flags >> 28) & 1)) {
-        entity->flags &= ~(1L << 51);
+        entity->flags &= ~ENTITY_FLAG_LIFT_UP;
         position[1] += 0.1f;
         lift = entity->floor_lift;
     }
@@ -1509,7 +1509,7 @@ void EntityCollision_WalkAgainstObjects(Entity *entity) {
         object = map_objects(map);
         count = map_object_count(map);
         for (i = 0; i < count; i++, object++) {
-            if (!(object->state_flags & 0x10000)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                 continue;
             }
             if (object->reach_radius <= 0.0f) {
@@ -1582,7 +1582,7 @@ void EntityCollision_SphereAgainstObjects(Entity *entity) {
         object = map_objects(map);
         count = map_object_count(map);
         for (i = 0; i < count; i++, object++) {
-            if (!(object->state_flags & 0x10000)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                 continue;
             }
             if (object->reach_radius <= 0.0f) {

@@ -91,7 +91,7 @@ void LavaLizard_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -103,7 +103,7 @@ void LavaLizard_Init(Entity *entity) {
 static void LavaLizard_Think(Entity *entity, s32 unknown) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    if (entity->flags & (0xD000L << 33)) {
+    if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_OBJECT_PUSH | ENTITY_FLAG_ENTITY_PUSH)) {
         unkE0->step_index = entity->params->far_distance;
     }
     if (frame_counter % 10U == entity->spawn_index % 10U) {
@@ -209,9 +209,9 @@ static void LavaLizard_ThinkCombat(Entity *entity, s32 unknown) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
@@ -228,7 +228,7 @@ static void LavaLizard_RunAtPlayer(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 direction[4];
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     if (EntityAi_CanUseMelee(entity, 0)) {
         EntityAi_StartAttack(entity, EntityAi_MeleeAttack, 1, 0, 0);
         return;
@@ -264,7 +264,7 @@ static void LavaLizard_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

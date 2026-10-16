@@ -102,7 +102,7 @@ void EarthElemental_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     unkE0->mode_timer = entity->params->guard_chance;
@@ -145,7 +145,7 @@ static void EarthElemental_Think(Entity *entity, s32 unknown) {
         if ((s32)(entity->flags >> 53) & 1) {
             // match: called as returning nothing, so $2 is free for the next statement
             ((void (*)(void *, int))EntityAi_ThinkReturn)(entity, unknown);
-            entity->move_command |= 0x440;
+            entity->move_command |= (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST);
         } else {
             switch (entity->state) {
             case 0:
@@ -181,10 +181,10 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
     s32 mode;
     s32 side;
 
-    if (entity->params->flags & 0x100) {
-        entity->flags &= ~0x3800;
+    if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
     } else {
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
     }
     if (EarthElemental_ShouldDodgeMagic(entity, 200.0f, 1.0471976f)) {
         EntityAi_StartAction(entity, EntityAi_Dodge, 1);
@@ -199,7 +199,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     mode = EntityAi_PickCombatChoice(entity, 0);
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     if (entity->action_timer == 0 || mode == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
@@ -274,9 +274,9 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
             switch (unkE0->move_choice) {
             case 0:
                 if (side > 0) {
-                    entity->move_command = 0x241;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
-                    entity->move_command = 0x141;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
                         && frame_counter % 15U == 0 && !(rand() & 1)) {
@@ -290,9 +290,9 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
                 break;
             case 1:
                 if (side > 0) {
-                    entity->move_command = 0x202;
+                    entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
-                    entity->move_command = 0x102;
+                    entity->move_command = (MOVE_COMMAND_BACK | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
                         && frame_counter % 15U == 0 && !(rand() & 1)) {
@@ -318,7 +318,7 @@ done:
 static void EarthElemental_PlayTurnAnim(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         if (unkE0->step_index > 0) {
@@ -326,8 +326,8 @@ static void EarthElemental_PlayTurnAnim(Entity *entity) {
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
         }
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
-        entity->flags &= ~0x200;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -406,15 +406,15 @@ static void EarthElemental_Move(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     f32 turn;
 
-    if (entity == player_state.stood_on_entity && (entity->params->flags & 0x800)) {
+    if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (unkE0->turn_rate > entity->params->turn_limit) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -423,28 +423,28 @@ static void EarthElemental_Move(Entity *entity) {
         unkE0->turn_rate = 0.0f;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
     unkE0->move_speed = 0.0f;
-    if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         Motion_Start(entity, 0x12, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x10) {
+    } else if (entity->move_command & MOVE_COMMAND_DOWN) {
         Motion_Start(entity, 8, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         Motion_Start(entity, 9, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 4) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         Motion_Start(entity, 6, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 8) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         Motion_Start(entity, 7, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x300) {
+    } else if (entity->move_command & MOVE_COMMAND_TURNS) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
@@ -486,7 +486,7 @@ static void EarthElemental_AlertSameKind(Entity *entity) {
     Entity *other;
 
     for (other = active_entities_head; other != NULL; other = other->next) {
-        if (entity->params == other->params && ((s32)other->flags & 1) && ((s32)(other->flags >> 1) & 1)
+        if (entity->params == other->params && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST) && ((s32)(other->flags >> 1) & 1)
             && ((s32)(other->flags >> 2) & 3) == 0 && other != entity) {
             EntityUnkE0 *unkE0 = &other->unkE0;
 
@@ -532,7 +532,7 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
     f32 angle;
     s32 side;
 
-    entity->busy_flags |= 0x3000;
+    entity->busy_flags |= (ENTITY_BUSY_1000 | ENTITY_BUSY_2000);
     switch (entity->action_step) {
     case 0:
         ENTITY_FLAGS(entity) = (ENTITY_FLAGS(entity) & ~0x3800) | 0x800;
@@ -594,14 +594,14 @@ static void EarthElemental_BackAwayOrRunAtPlayer(Entity *entity) {
         angle = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
         side = EntityAi_TurnFromPush(entity, direction);
         if (ABS(angle) > 0.7853982f) {
-            entity->move_command = 2;
+            entity->move_command = MOVE_COMMAND_BACK;
         } else {
-            entity->move_command = 0x41;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN);
         }
         if (side > 0) {
-            entity->move_command |= 0x200;
+            entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
         } else if (side < 0) {
-            entity->move_command |= 0x100;
+            entity->move_command |= MOVE_COMMAND_TURN_LEFT;
         } else if (ABS(angle) > 0.7853982f) {
             // match: the caller passes a second integer argument the callee does not take
             entity->move_command = EarthElemental_BackwardsCommand(entity, 1, entity->radius + 100.0f + 30.0f);
@@ -622,7 +622,7 @@ static void EarthElemental_RangedAttack0(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

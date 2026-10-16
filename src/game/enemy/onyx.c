@@ -97,7 +97,7 @@ void Onyx_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     unkE0->pause_timer = entity->params->ranged_attacks[0].record.unk00;
@@ -157,7 +157,7 @@ static void Onyx_Think(Entity *entity, s32 unknown) {
     if (unkE0->reload_timer > 0) {
         unkE0->reload_timer--;
     }
-    if (!(entity->busy_flags & 0x1000) && unkE0->reload_timer == 0) {
+    if (!(entity->busy_flags & ENTITY_BUSY_1000) && unkE0->reload_timer == 0) {
         unkE0->pause_timer = entity->params->ranged_attacks[0].record.unk00;
         unkE0->sub_timer = entity->params->melee_attacks[1].attack_weight;
         unkE0->mode_timer = (u8)entity->params->melee_attack_third[0];
@@ -280,9 +280,9 @@ static void Onyx_ThinkCombat(Entity *entity, s32 unknown) {
             switch (unkE0->move_choice) {
             case 0:
                 if (turn > 0) {
-                    entity->move_command = 0x201;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
-                    entity->move_command = 0x101;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
@@ -308,7 +308,7 @@ static void Onyx_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -362,7 +362,7 @@ static void Onyx_SwitchAttack(Entity *entity) {
     s32 first_part;
     s32 part_count;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames >> 1, 1);

@@ -103,7 +103,7 @@ void DarkPuppet_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    entity->flags &= ~0x10000000;
+    entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
@@ -113,7 +113,7 @@ void DarkPuppet_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -122,7 +122,7 @@ void DarkPuppet_Init(Entity *entity) {
 /* The on_hit handler: as EntityAi_OnHit, but it leaves the target and flag bit 10 as they are. */
 static void DarkPuppet_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     if (((s32)(entity->flags >> 36) & 3) == 1) {
         if ((s32)(entity->flags >> 19) & 1) {
             EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionRewind, 0);
@@ -169,10 +169,10 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (entity->busy_flags & 0x46) {
-        entity->flags &= ~0x10000000;
+    if (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) {
+        entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     } else {
-        entity->flags |= 0x10000000;
+        entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
     }
     if ((s32)(entity->flags >> 28) & 1) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
@@ -183,13 +183,13 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
                 unkE0->step_index = 0;
             }
             if (unkE0->step_index != 0) {
-                entity->move_command |= 0x20;
+                entity->move_command |= MOVE_COMMAND_UP;
             } else {
-                entity->move_command |= 0x10;
+                entity->move_command |= MOVE_COMMAND_DOWN;
             }
         }
     }
-    if (entity->busy_flags == 0 || (entity->busy_flags & 6)) {
+    if (entity->busy_flags == 0 || (entity->busy_flags & (ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
         DarkPuppet_ApplyMoveCommand(entity);
     }
 }
@@ -280,9 +280,9 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
             case 0:
                 turn = EntityAi_TurnFromPush(entity, direction);
                 if (turn > 0) {
-                    entity->move_command |= 0x201;
+                    entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
-                    entity->move_command |= 0x101;
+                    entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command |= EntityAi_MoveCommand(entity->radius + 100.0f + 30.0f, entity, 0);
                 }
@@ -292,7 +292,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
                     unkE0->move_choice = rand() % 3 + 2;
                 } else {
                     entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-                    entity->move_command |= 2;
+                    entity->move_command |= MOVE_COMMAND_BACK;
                 }
                 break;
             case 2:
@@ -300,11 +300,11 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
                     unkE0->move_choice = 3;
                 } else {
                     entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-                    entity->move_command |= 4;
+                    entity->move_command |= MOVE_COMMAND_STEP_LEFT;
                     if ((f32)entity->params->far_distance < entity->distance_to_player) {
-                        entity->move_command |= 1;
+                        entity->move_command |= MOVE_COMMAND_FORWARD;
                     } else if (entity->distance_to_player < (f32)entity->params->near_distance) {
-                        entity->move_command |= 2;
+                        entity->move_command |= MOVE_COMMAND_BACK;
                     }
                 }
                 break;
@@ -313,11 +313,11 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
                     unkE0->move_choice = 2;
                 } else {
                     entity->move_command |= ((u16 (*)(Entity *))EntityAi_TurnCommand)(entity); // match: read as unsigned here
-                    entity->move_command |= 8;
+                    entity->move_command |= MOVE_COMMAND_STEP_RIGHT;
                     if ((f32)entity->params->far_distance < entity->distance_to_player) {
-                        entity->move_command |= 1;
+                        entity->move_command |= MOVE_COMMAND_FORWARD;
                     } else if (entity->distance_to_player < (f32)entity->params->near_distance) {
-                        entity->move_command |= 2;
+                        entity->move_command |= MOVE_COMMAND_BACK;
                     }
                 }
                 break;
@@ -335,23 +335,23 @@ done:
    backwards, else 0. DarkPuppet_ApplyMoveCommand does the turning and the moving. */
 static void DarkPuppet_Move(Entity *entity) {
     if (entity == (Entity *)entity_under_player[0]) {
-        if (entity->params->flags & 0x800) {
+        if (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON) {
             entity->move_command = 0;
         }
     }
-    if (entity->move_command & 4) {
+    if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         Motion_Start(entity, 6, 0, entity->params->motion_blend_frames, 0);
         return;
     }
-    if (entity->move_command & 8) {
+    if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         Motion_Start(entity, 7, 0, entity->params->motion_blend_frames, 0);
         return;
     }
-    if (entity->move_command & 1) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         return;
     }
-    if (entity->move_command & 2) {
+    if (entity->move_command & MOVE_COMMAND_BACK) {
         Motion_Start(entity, 5, 0, entity->params->motion_blend_frames, 0);
         return;
     }
@@ -369,16 +369,16 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     f32 step;
     f32 limit;
 
-    if (entity == player_state.stood_on_entity && (entity->params->flags & 0x800)) {
+    if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
     turn = 0.0f;
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->unk1C -= entity->params->turn_step_per_frame;
         if (unkE0->unk1C < -entity->params->turn_limit) {
             unkE0->unk1C = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->unk1C += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->unk1C) {
             unkE0->unk1C = entity->params->turn_limit;
@@ -391,19 +391,19 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
         unkE0->unk1C = 0.0f;
     }
     turn = unkE0->unk1C;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[1] = ENTITY_SCRATCH_VECTOR[2] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
     step = entity->params->speed_step_per_frame * 0.5f;
     limit = entity->params->max_speed * 0.2f;
-    if (entity->move_command & 1) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
         unkE0->unk4C -= entity->params->speed_step_per_frame;
         if (unkE0->unk4C < -entity->params->max_speed) {
             unkE0->unk4C = -entity->params->max_speed;
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         unkE0->unk4C += entity->params->speed_step_per_frame;
         if (entity->params->max_speed < unkE0->unk4C) {
             unkE0->unk4C = entity->params->max_speed;
@@ -415,12 +415,12 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     } else {
         unkE0->unk4C = 0.0f;
     }
-    if (entity->move_command & 4) {
+    if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         unkE0->unk44 += entity->params->speed_step_per_frame;
         if (entity->params->max_speed < unkE0->unk44) {
             unkE0->unk44 = entity->params->max_speed;
         }
-    } else if (entity->move_command & 8) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         unkE0->unk44 -= entity->params->speed_step_per_frame;
         if (unkE0->unk44 < -entity->params->max_speed) {
             unkE0->unk44 = -entity->params->max_speed;
@@ -432,12 +432,12 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     } else {
         unkE0->unk44 = 0.0f;
     }
-    if (entity->move_command & 0x10) {
+    if (entity->move_command & MOVE_COMMAND_DOWN) {
         unkE0->unk48 -= step;
         if (unkE0->unk48 < -limit) {
             unkE0->unk48 = -limit;
         }
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         unkE0->unk48 += step;
         if (limit < unkE0->unk48) {
             unkE0->unk48 = limit;
@@ -456,7 +456,7 @@ static void DarkPuppet_ApplyMoveCommand(Entity *entity) {
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
-    if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_RUN) {
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, 2.0f);
     }
     entity->move_delta_x += ENTITY_SCRATCH_VECTOR[0];
@@ -472,11 +472,11 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[kind];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
-        if (entity->params->flags & 0x100) {
+        if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
@@ -509,9 +509,9 @@ static void DarkPuppet_MeleeAttack(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, entity->model->level_tables->unk82);
         }
         if (entity->model->level_tables->unk82 > 0 && unk240->hit_end_frame >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -540,11 +540,11 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
     f32 target[4]; // match: never used, but retail keeps 16 bytes of stack for it
     char *point;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        if (entity->params->flags & 0x100) {
+        if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
@@ -571,9 +571,9 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
             }
         }
         if (entity->model->level_tables->unk82 > 0 && unk3D8->record.unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -599,11 +599,11 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
     s32 kind = (s32)(entity->flags >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        if (entity->params->flags & 0x100) {
+        if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
@@ -625,9 +625,9 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->unk82);
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
@@ -652,18 +652,18 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
 static void DarkPuppet_Death(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        entity->flags &= ~0x3800;
-        entity->flags |= 0x4000;
-        entity->flags |= 0x100000;
-        entity->flags = (entity->flags & ~0xC) | 4;
-        entity->flags |= 0x8000000;
-        entity->flags |= 0x4000000;
-        entity->flags &= ~0x10000000;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags |= ENTITY_FLAG_ANIMATES;
+        entity->flags |= ENTITY_FLAG_100000;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
+        entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
+        entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
+        entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {

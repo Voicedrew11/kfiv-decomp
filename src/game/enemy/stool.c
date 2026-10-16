@@ -63,7 +63,7 @@ void Stool_Init(Entity *entity) {
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -78,7 +78,7 @@ static void Stool_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit((char *)entity);
     flags = entity->flags;
     if ((s32)(flags >> 38) & 3) {
-        entity->flags = (flags & ~(3UL << 58)) | (1UL << 57);
+        entity->flags = (flags & ~ENTITY_FLAG_ATTACK_INDEX_MASK) | ENTITY_FLAG_RANGED_ATTACK;
         EntityAi_StartAction(entity, EntityAi_RangedAttack, 1);
         return;
     }

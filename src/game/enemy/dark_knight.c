@@ -103,7 +103,7 @@ void DarkKnight_Init(Entity *entity) {
         entity->attack_weights[i] = 0x80;
     }
     entity->target = NULL;
-    entity->flags &= ~0x10000000;
+    entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
     if (ENTITY_FLAG_WORD(entity->spawn_info->spawn_flags) & (0x8000L << 43)) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
     } else {
@@ -113,7 +113,7 @@ void DarkKnight_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -261,7 +261,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
     s32 mode;
     s32 side;
 
-    entity->flags = (entity->flags & ~0x3800) | 0x800;
+    entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
     if (DarkKnight_ShouldHoldAnim13(entity, 200.0f, 2.443461f)) {
         EntityAi_StartAction(entity, DarkKnight_HoldGuardPose, 1);
         return;
@@ -275,7 +275,7 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     mode = EntityAi_PickCombatChoice(entity, 0);
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     if (entity->action_timer == 0 || mode == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
@@ -333,9 +333,9 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
             }
         } else if (work->unk6E != 0) {
             if (side > 0) {
-                entity->move_command = 0x241;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
             } else if (side < 0) {
-                entity->move_command = 0x141;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
             } else {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
@@ -345,12 +345,12 @@ static void DarkKnight_ThinkCombat(Entity *entity, s32 unknown) {
                 }
                 entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
             }
-            entity->move_command |= 0x400;
+            entity->move_command |= MOVE_COMMAND_TURN_FAST;
         } else {
             if (side > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (side < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 if (ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) > 1.5707964f
                     && frame_counter % 15U == 0 && !(rand() & 1)) {
@@ -371,7 +371,7 @@ done:
 static void DarkKnight_PlayTurnAnim(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         if (unkE0->action_flags > 0) {
@@ -379,8 +379,8 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
         }
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
-        entity->flags &= ~0x200;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -409,7 +409,7 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
 static void DarkKnight_HoldGuardPose(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x10;
+    entity->busy_flags |= ENTITY_BUSY_GUARD;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0xD, 0, 0xA, 1);
@@ -451,7 +451,7 @@ static void DarkKnight_GuardThenMeleeAttack(Entity *entity) {
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[unkE0->step_index];
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         if (ABS(entity->heading_to_player - entity->model->rotation[1]) < 0.5235988f) {
@@ -543,7 +543,7 @@ static void DarkKnight_MeleeAttack2(Entity *entity) {
     EntityParamsUnk240 *unk240 = (EntityParamsUnk240 *)entity->params->melee_attack_third;
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x16, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -603,7 +603,7 @@ static void DarkKnight_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -656,11 +656,11 @@ static void DarkKnight_RangedAttack1(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x18, 0, entity->params->motion_blend_frames >> 1, 1);
-        if (entity->params->flags & 0x100) {
+        if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAGS(entity) &= ~0x3800;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;

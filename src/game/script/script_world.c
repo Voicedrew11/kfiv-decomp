@@ -349,7 +349,7 @@ void ScriptCmd_WaitMapObjectMotion(ScriptObjectCommand *command) {
     MapObject *object;
 
     object = MapObject_GetById(current_map_slot, command->object_id.value);
-    if (object == NULL || !(object->model->model_flags & 1) || (object->state_flags & 0x400000) ||
+    if (object == NULL || !(object->model->model_flags & 1) || (object->state_flags & MAP_OBJECT_FLAG_400000) ||
         MODEL_CHANNEL(object->model)->param == 0) {
         command->active = 0;
     }
@@ -360,7 +360,7 @@ void ScriptCmd_WaitMapObjectMotion(ScriptObjectCommand *command) {
 void ScriptCmd_IsMapObjectMotionDone(ScriptCallCommand *command) {
     MapObject *object = MapObject_GetById(current_map_slot, command->target_id.value);
 
-    if (object != NULL && (object->model->model_flags & 1) && !(object->state_flags & 0x400000)) {
+    if (object != NULL && (object->model->model_flags & 1) && !(object->state_flags & MAP_OBJECT_FLAG_400000)) {
         Script_StoreResult(&command->first, MODEL_CHANNEL(object->model)->param < 1);
     } else {
         Script_StoreResult(&command->first, -1);

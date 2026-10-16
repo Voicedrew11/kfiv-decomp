@@ -108,7 +108,7 @@ void LivingArmor_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     unkE0->pause_timer = 0;
@@ -211,14 +211,14 @@ static void LivingArmor_ThinkCombat(Entity *entity, s32 unknown) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
             if ((s16)entity->params->action_frames != 0) {
-                entity->move_command |= 0x40;
+                entity->move_command |= MOVE_COMMAND_RUN;
             }
         }
     }
@@ -260,15 +260,15 @@ static void LivingArmor_Animate(Entity *entity) {
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
-            entity->flags = flags & ~0x3800L;
+            entity->flags = flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         }
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
-        if ((entity->busy_flags & 1) && entity->animation_index == 0x11) {
+        if ((entity->busy_flags & ENTITY_BUSY_ATTACK) && entity->animation_index == 0x11) {
             LivingArmor_AimPart3AtPlayer(entity);
             return;
         }
@@ -298,7 +298,7 @@ static void LivingArmor_OnHit(Entity *entity) {
 static void LivingArmor_ReactionHeavy(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
@@ -338,7 +338,7 @@ static void LivingArmor_ReactionHeavy(Entity *entity) {
 static void LivingArmor_WaitToStrike(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     if (entity->distance_to_player < (s16)entity->params->action_frames + entity->radius + 100.0f) {
         if (!EntitySight_PropInWay(entity) && !EntitySight_ObjectInWay(entity)) {
             EntityAi_StartAction(entity, LivingArmor_MeleeAttack1, 1);
@@ -372,7 +372,7 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
     s32 i;
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -468,7 +468,7 @@ static void LivingArmor_MeleeAttack1(Entity *entity) {
 static void LivingArmor_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
@@ -533,7 +533,7 @@ static void LivingArmor_MeleeAttack0(Entity *entity) {
     s32 i;
     s32 frame;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x14, 0, entity->params->motion_blend_frames >> 1, 1);

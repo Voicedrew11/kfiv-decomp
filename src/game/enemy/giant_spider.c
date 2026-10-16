@@ -86,7 +86,7 @@ void GiantSpider_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -108,7 +108,7 @@ static void GiantSpider_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 2) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -136,7 +136,7 @@ static void GiantSpider_OnHit(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     EntityAi_SetState((char *)entity, 2);
     unkE0->step_index = 1;
@@ -152,7 +152,7 @@ static void GiantSpider_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_StepState(entity);
     switch (entity->state) {
     case 0:
@@ -249,16 +249,16 @@ static void GiantSpider_Move(Entity *entity) {
     u16 command;
 
     command = entity->move_command;
-    if (command & 0x100) {
-        if (command & 0x400) {
+    if (command & MOVE_COMMAND_TURN_LEFT) {
+        if (command & MOVE_COMMAND_TURN_FAST) {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 0);
             return;
         }
         Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 0);
         return;
     }
-    if (command & 0x200) {
-        if (command & 0x400) {
+    if (command & MOVE_COMMAND_TURN_RIGHT) {
+        if (command & MOVE_COMMAND_TURN_FAST) {
             Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 0);
             return;
         }
@@ -275,7 +275,7 @@ static void GiantSpider_Move(Entity *entity) {
 static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         if (unkE0->step_index != 0) {
@@ -312,7 +312,7 @@ static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
 static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         if (unkE0->step_index != 0) {
@@ -353,11 +353,11 @@ static void GiantSpider_RangedAttack(Entity *entity) {
     f32 direction[4];
     s32 elapsed;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        entity->flags &= ~0x3800;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -378,9 +378,9 @@ static void GiantSpider_RangedAttack(Entity *entity) {
         direction[1] -= 160.0f;
         EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->unk82, direction, 0.2617994f, 0.2617994f);
         if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
-            entity->flags |= 0x80000;
+            entity->flags |= ENTITY_FLAG_80000;
         } else {
-            entity->flags &= ~0x80000;
+            entity->flags &= ~ENTITY_FLAG_80000;
         }
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;

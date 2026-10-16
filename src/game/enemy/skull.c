@@ -101,7 +101,7 @@ void Skull_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     unkE0->sub_timer = rand() % 30;
     Motion_ClearPartSlots(entity->model);
@@ -120,7 +120,7 @@ static void Skull_Think(Entity *entity, s32 unknown) {
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (entity->busy_flags & 0x40) {
+    if (entity->busy_flags & ENTITY_BUSY_DEATH) {
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit22 = FALSE;
     } else {
@@ -152,7 +152,7 @@ static void Skull_Think(Entity *entity, s32 unknown) {
     if (unkE0->sub_timer > 0) {
         unkE0->sub_timer--;
     }
-    if (ENTITY_FLAG_BITS(entity)->bit28 && !(entity->busy_flags & 1)) {
+    if (ENTITY_FLAG_BITS(entity)->bit28 && !(entity->busy_flags & ENTITY_BUSY_ATTACK)) {
         if (unkE0->sub_timer <= 0) {
             if (entity->model->position[1] < player_state.position[1] - 300.0f) {
                 unkE0->step_index = 1;
@@ -164,9 +164,9 @@ static void Skull_Think(Entity *entity, s32 unknown) {
             unkE0->sub_timer = rand() % 15 + 20;
         }
         if (unkE0->step_index != 0) {
-            entity->move_command |= 0x20;
+            entity->move_command |= MOVE_COMMAND_UP;
         } else {
-            entity->move_command |= 0x10;
+            entity->move_command |= MOVE_COMMAND_DOWN;
         }
     }
     Skull_ApplyMoveCommand(entity);
@@ -192,10 +192,10 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
     s32 mode;
     s32 side;
 
-    if (entity->params->flags & 0x100) {
-        entity->flags &= ~0x3800;
+    if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
     } else {
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
     }
     if (EntityAi_ShouldGuard(entity, 300.0f, 0.5235988f)) {
         EntityAi_StartAction(entity, EntityAi_Guard, 1);
@@ -206,7 +206,7 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
         return;
     }
     mode = EntityAi_PickCombatChoice(entity, 0);
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     if (entity->action_timer == 0 || mode == 0) {
         entity->prev_combat_choice = entity->combat_choice;
         entity->combat_choice = mode;
@@ -268,18 +268,18 @@ static void Skull_ThinkCombat(Entity *entity, s32 unknown) {
             switch (unkE0->move_choice) {
             case 0:
                 if (side > 0) {
-                    entity->move_command = 0x201;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
-                    entity->move_command = 0x101;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             case 1:
                 if (side > 0) {
-                    entity->move_command = 0x241;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
                 } else if (side < 0) {
-                    entity->move_command = 0x141;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 1, entity->radius + 100.0f + 30.0f);
                 }
@@ -294,7 +294,7 @@ done:
 /* The move handler: only picks the animation, 3 with command bit 1, else 0.
    Skull_ApplyMoveCommand does the turning and the moving. */
 static void Skull_Move(Entity *entity) {
-    if (entity->move_command & 1) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
@@ -304,19 +304,19 @@ static void Skull_Move(Entity *entity) {
 /* The death action (busy bit 0x40): animation 16, the fade over 20 frames and the removal, as
    EntityAi_Death with other flag settings; it sets Entity.collision_radius to 80. */
 static void Skull_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        entity->flags &= ~0x3800;
-        entity->flags |= 0x4000;
-        entity->flags |= 0x100000;
-        entity->flags = (entity->flags & ~0xC) | 4;
-        entity->flags |= 0x8000000;
-        entity->flags |= 0x4000000;
-        entity->flags &= ~0x10000000;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags |= ENTITY_FLAG_ANIMATES;
+        entity->flags |= ENTITY_FLAG_100000;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
+        entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
+        entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
+        entity->flags &= ~ENTITY_FLAG_NO_FLOOR_LIFT;
         entity->collision_radius = 80.0f;
-        entity->flags &= ~0x400000;
+        entity->flags &= ~ENTITY_FLAG_400000;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -337,8 +337,8 @@ static void Skull_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            entity->flags |= 0xC;
-            entity->flags &= ~2;
+            entity->flags |= ENTITY_FLAG_DYING_MASK;
+            entity->flags &= ~ENTITY_FLAG_LIVE;
         }
         break;
     }
@@ -354,13 +354,13 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
     f32 step;
     f32 limit;
 
-    if (entity->busy_flags == 0 || (entity->busy_flags & 6)) {
-        if (entity->move_command & 0x100) {
+    if (entity->busy_flags == 0 || (entity->busy_flags & (ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
+        if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
             unkE0->unk1C -= entity->params->turn_step_per_frame;
             if (unkE0->unk1C < -entity->params->turn_limit) {
                 unkE0->unk1C = -entity->params->turn_limit;
             }
-        } else if (entity->move_command & 0x200) {
+        } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
             unkE0->unk1C += entity->params->turn_step_per_frame;
             if (entity->params->turn_limit < unkE0->unk1C) {
                 unkE0->unk1C = entity->params->turn_limit;
@@ -373,16 +373,16 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
             unkE0->unk1C = 0.0f;
         }
         turn = unkE0->unk1C;
-        if (entity->move_command & 0x400) {
+        if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
             turn += turn;
         }
         entity->turn_delta_yaw += turn;
-        if (entity->move_command & 1) {
+        if (entity->move_command & MOVE_COMMAND_FORWARD) {
             unkE0->unk4C -= entity->params->speed_step_per_frame;
             if (unkE0->unk4C < -entity->params->max_speed) {
                 unkE0->unk4C = -entity->params->max_speed;
             }
-        } else if (entity->move_command & 2) {
+        } else if (entity->move_command & MOVE_COMMAND_BACK) {
             unkE0->unk4C += entity->params->speed_step_per_frame;
             if (entity->params->max_speed < unkE0->unk4C) {
                 unkE0->unk4C = entity->params->max_speed;
@@ -394,12 +394,12 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
         } else {
             unkE0->unk4C = 0.0f;
         }
-        if (entity->move_command & 4) {
+        if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
             unkE0->unk44 += entity->params->speed_step_per_frame;
             if (entity->params->max_speed < unkE0->unk44) {
                 unkE0->unk44 = entity->params->max_speed;
             }
-        } else if (entity->move_command & 8) {
+        } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
             unkE0->unk44 -= entity->params->speed_step_per_frame;
             if (unkE0->unk44 < -entity->params->max_speed) {
                 unkE0->unk44 = -entity->params->max_speed;
@@ -437,12 +437,12 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[1] = ENTITY_SCRATCH_VECTOR[2] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
     step = entity->params->speed_step_per_frame * 0.8f;
     limit = entity->params->max_speed * 0.5f;
-    if (entity->move_command & 0x10) {
+    if (entity->move_command & MOVE_COMMAND_DOWN) {
         unkE0->unk48 -= step;
         if (unkE0->unk48 < -limit) {
             unkE0->unk48 = -limit;
         }
-    } else if (entity->move_command & 0x20) {
+    } else if (entity->move_command & MOVE_COMMAND_UP) {
         unkE0->unk48 += step;
         if (limit < unkE0->unk48) {
             unkE0->unk48 = limit;
@@ -461,7 +461,7 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
     sceVu0RotMatrixX(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[0]);
     sceVu0RotMatrixY(ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_MATRIX, entity->model->rotation[1]);
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
-    if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_RUN) {
         Vector_Scale(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_VECTOR, 2.0f);
     }
     entity->move_delta_x += ENTITY_SCRATCH_VECTOR[0];
@@ -511,11 +511,11 @@ static void Skull_Animate(Entity *entity) {
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
-            entity->flags = flags & ~0x3800L;
+            entity->flags = flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         }
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
@@ -543,7 +543,7 @@ static void Skull_RangedAttack0(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);

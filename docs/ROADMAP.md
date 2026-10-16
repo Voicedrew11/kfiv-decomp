@@ -172,42 +172,27 @@ in C; `src/game/entity/entity_pool.c` (0x123030–0x124DE0) is the first.
 
 ### 5. Readability (started)
 
-Done: `common.h`, `entity/entity.h`, `gfx/gs.h`, the vector helpers named, and
-the rules in `CONTRIBUTING.md`. Still to do, all without breaking the match:
+Done: `common.h` and the shared headers, the rules in `CONTRIBUTING.md`, a
+lint that CI runs on every PR (`lint_readability.py`: 99% of game files
+clean), names for nearly all functions and most globals, the fields of the
+least-readable structs, and the hottest flag words (pad buttons, DMA/GIF
+register bits, `EntityParams.flags`, `Entity.flags`, `busy_flags`,
+`move_command`, `MapObject.state_flags`). `readability_scan.py` (run by
+`ninja progress`) measures what is left. Next, by size:
 
-- **Name the globals** (`D_004467E0` → `g_entity_list`). Every file that
-  declares one changes at once, so do it in one PR right after the open
-  matching PRs merge.
-- **Structs for global arrays.** `D_00420D00` looks like the camera
-  (`[0]` position, `[4]` forward, `[18]` far distance) and `D_00413F80` like
-  the player position.
-- **Finish the vector helpers.** `func_00216778` (copy) and `func_00216C48`
-  (add) wait for PR #24; then use `sceVu0FVECTOR`/`sceVu0FMATRIX`-style
-  types instead of each file's local `Vec`/`Mat`.
-- **Entity flag macros** (`ENTITY_IS_ACTIVE(e)` for `(e->flags >> 1) & 1`)
-  once the bits' meanings are known.
-- **Typed pointers** instead of integer offsets, e.g. a `Model` struct so
-  `(int)entity->model + 0xC0` becomes `&entity->model->position`.
-- **Migrate local structs.** About 200 files still define their own `Ent`/
-  `Obj`; move them to shared headers as each file is touched.
-  `D_003BEDF0[][0x80]` (0x180-byte objects, index at 0xD5) may be the
-  entity pool.
-- **Module headers** with one correct prototype per function, replacing
-  per-file declarations that disagree. `lint_readability.py` reports them
-  as `proto-conflict` (146 files), some real bugs: `func_001AF538` is
-  declared with its arguments in a different order from its definition,
-  `func_00109A80` as both `(int, s64)` and `(int, u64)`.
-- **Struct-shaped arrays.** About 100 files declare a struct as
-  `extern u8 D_...[]` and index it with offsets (`D_0041B9B8[i * 0x90 +
-  0x63]`), and about 100 take an `int *` parameter read as `arg0[7]`. Both
-  want a struct type in a shared header.
-- **`.clang-format`** to keep layout consistent; apply it per module, not
-  in one sweep that conflicts with open PRs.
-- **Real modules.** Merge `func_*.c` files into translation units as
-  regions finish (step 3), moving their data out of asm into C. Started:
-  the entity pool (`entity/entity_pool.c`) and the six other fully-C runs
-  (`gfx/packet_buffer.c`, `model/model_textures.c`, `gfx/draw_list.c`,
-  `gfx/wobble.c`, `ui/map_viewer.c`, `entity/entity_ai.c`).
+- **Raw bit masks** (about 860): shift-form tests (`(flags >> n) & 1`)
+  that only match as written, and about 100 smaller flag fields of a few
+  uses each; name them as their module is touched.
+- **Unknown struct fields** (`unkXX`): about 1,100 left, mostly rarely used.
+  `readability_scan.py -v` lists structs by unknown fields.
+- **Function-pointer casts** (about 1,450): handler tables called or stored
+  through casts. A typedef per table (`map_object/map_object_tables.c`,
+  `ui/menu_screens.c` first) removes most of them.
+- **Unnamed globals and functions**: about 210 `D_` and 70 `func_`.
+- **Long comments**: about 1,800 multi-line comments; comments should be
+  one line.
+- **`.clang-format`** per module, and the remaining `goto`s and `// match:`
+  workarounds where an idiomatic form now matches.
 
 ### 6. Whole-ELF match (later)
 

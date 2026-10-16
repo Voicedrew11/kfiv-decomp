@@ -92,7 +92,7 @@ void AcidCrawler_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -112,7 +112,7 @@ static void AcidCrawler_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 2) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -318,7 +318,7 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
         }
         return;
     }
-    entity->flags |= 0x200;
+    entity->flags |= ENTITY_FLAG_LOOK_AT_TARGET;
     if ((s32)(entity->flags >> 32) & 1) {
         if (unkE0->step_index == 1) {
             unkE0->step_index = 0;
@@ -347,11 +347,11 @@ static void AcidCrawler_ThinkCombat(Entity *entity, s32 unknown) {
         entity->target = &player_state;
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn > 0) {
-            entity->move_command = 0x241;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_RIGHT);
         } else if (turn < 0) {
-            entity->move_command = 0x141;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_LEFT);
         } else {
-            entity->move_command = 0x841;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_TO_TARGET);
         }
     } else {
         unkE0->move_choice = 1;
@@ -368,48 +368,48 @@ static void AcidCrawler_Move(Entity *entity) {
     f32 vector[4];
     f32 turn;
 
-    if (entity == player_state.stood_on_entity && (entity->params->flags & 0x800)) {
+    if (entity == player_state.stood_on_entity && (entity->params->flags & ENTITY_PARAMS_FLAG_STOPS_WHEN_STOOD_ON)) {
         entity->move_command = 0;
     }
     vector[0] = vector[1] = vector[2] = vector[3] = turn = 0.0f;
-    if (entity->move_command & 0x800) {
+    if (entity->move_command & MOVE_COMMAND_TURN_TO_TARGET) {
         if (entity->target != NULL) {
             EntityAi_TurnToPoint(entity, &unkE0->turn_rate, entity->target);
         }
-    } else if (entity->move_command & 0x100) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
         turn = unkE0->turn_rate;
-        if (entity->move_command & 0x400) {
+        if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
             turn += turn;
         }
         entity->turn_delta_yaw += turn;
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
         }
         turn = unkE0->turn_rate;
-        if (entity->move_command & 0x400) {
+        if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
             turn += turn;
         }
         entity->turn_delta_yaw += turn;
     } else {
         unkE0->turn_rate = 0.0f;
     }
-    if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, (s32)((f32)entity->params->motion_blend_frames * 0.5f), 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->move_command & 0x300) {
+    } else if (entity->move_command & MOVE_COMMAND_TURNS) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x8000) {
+    } else if (entity->move_command & MOVE_COMMAND_8000) {
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x800) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_TO_TARGET) {
         Motion_Start(entity, 4, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

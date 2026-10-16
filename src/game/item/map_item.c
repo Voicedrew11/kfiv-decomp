@@ -846,7 +846,7 @@ void MapItem_PickupPutBack(void) {
     Vector_Copy(&pickup_item->model->position, pickup_start_position);
     Vector_Copy(&pickup_item->model->rotation, pickup_start_rotation);
     object = (MapObject *)pickup_item->unk08;
-    if (object != NULL && (object->state_flags & 0x10000) && object->definition->kind == 3) {
+    if (object != NULL && (object->state_flags & MAP_OBJECT_IN_USE) && object->definition->kind == 3) {
         MapItem_Unlink(pickup_item);
     }
     suspended_updates[0] = 0;

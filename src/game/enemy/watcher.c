@@ -59,7 +59,7 @@ void Watcher_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -117,7 +117,7 @@ static void Watcher_Move(Entity *entity) {
 /* The death action (busy bit 0x40): no animation; calls EntityEvent_StartCueAlways with 2, then the fade over 20
    frames and the removal as EntityAi_Death. */
 static void Watcher_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         EntityEvent_StartCueAlways(entity, 2, 0);

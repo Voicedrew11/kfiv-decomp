@@ -121,7 +121,7 @@ void ExpeditionSoldier_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -137,16 +137,16 @@ static void ExpeditionSoldier_ThinkHoldAnim18Or19(Entity *entity) {
     } else {
         Motion_Start(entity, 0x13, 0, 0, 0);
     }
-    entity->flags |= 0x40000;
-    entity->flags |= 0x100000;
-    entity->flags |= 0x200000;
-    entity->flags |= 0x400000;
-    entity->flags |= 0x800000;
-    entity->flags |= 0x1000000;
-    entity->flags |= 0x2000000;
-    entity->flags |= 0x4000000;
-    entity->flags |= 0x10000;
-    entity->flags |= 0x10000000;
+    entity->flags |= ENTITY_FLAG_40000;
+    entity->flags |= ENTITY_FLAG_100000;
+    entity->flags |= ENTITY_FLAG_200000;
+    entity->flags |= ENTITY_FLAG_400000;
+    entity->flags |= ENTITY_FLAG_NO_WALL_COLLISION;
+    entity->flags |= ENTITY_FLAG_NO_SECOND_WALL_COLLISION;
+    entity->flags |= ENTITY_FLAG_NO_MAP_OBJECT_COLLISION;
+    entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
+    entity->flags |= ENTITY_FLAG_NOT_TARGETABLE;
+    entity->flags |= ENTITY_FLAG_NO_FLOOR_LIFT;
 }
 
 /* The think handler (the set-up function's default, for any EntitySpawnInfo.variant but 1 to 4): as
@@ -259,18 +259,18 @@ static void ExpeditionSoldier_ThinkCombat(Entity *entity, s32 unknown) {
             switch (unkE0->move_choice) {
             case 0:
                 if (turn > 0) {
-                    entity->move_command = 0x201;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
-                    entity->move_command = 0x101;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_TurnCommand(entity);
                 }
                 break;
             case 1:
                 if (turn > 0) {
-                    entity->move_command = 0x201;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
                 } else if (turn < 0) {
-                    entity->move_command = 0x101;
+                    entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
                     entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
@@ -286,11 +286,11 @@ done:
    EntitySpawnInfo.spawn_mode is set, it calls EntityEvent_Respawn for the entity with that spawn id (if its
    flag bit 0 is set) and puts it at this entity's position. */
 static void ExpeditionSoldier_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        if (entity->params->flags & 0x100) {
+        if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             s32 kind = 2;
@@ -323,7 +323,7 @@ static void ExpeditionSoldier_Death(Entity *entity) {
             if (entity->spawn_info->spawn_mode != 0) {
                 Entity *partner = Entity_GetBySpawnId(entity->spawn_info->spawn_mode);
 
-                if (partner != NULL && ((s32)partner->flags & 1)) {
+                if (partner != NULL && ((s32)partner->flags & ENTITY_FLAG_ACTIVE_LIST)) {
                     EntityEvent_Respawn((char *)partner);
                     Vector_Copy(partner->model->position, entity->model->position);
                 }
@@ -349,7 +349,7 @@ static void ExpeditionSoldier_SignalMapObject(Entity *entity) {
     EntityUnkE0Kind178358 *unkE0 = (EntityUnkE0Kind178358 *)&entity->unkE0;
     MapObject *map_object;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);

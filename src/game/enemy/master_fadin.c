@@ -63,7 +63,7 @@ void MasterFadin_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -95,7 +95,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
     }
     if (entity->spawn_info->spawn_mode == 1) {
         for (other = active_entities_head; other != NULL; other = other->next) {
-            if (other->params == entity->params && other != entity && ((s32)other->flags & 1)) {
+            if (other->params == entity->params && other != entity && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST)) {
                 if (!ENTITY_FLAG_BITS(other)->bit1 || ENTITY_FLAG_BITS(other)->bits2 >= 3) {
                     EntityEvent_Respawn((char *)other);
                 }
@@ -173,7 +173,7 @@ static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
 static void MasterFadin_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);
@@ -224,17 +224,17 @@ static void MasterFadin_Dormant(Entity *entity) {
    EntityAi_Death with other flag settings; in mode 2 it calls MasterFadin_AlertPartner where that
    one calls EntityEvent_OnDeath. */
 static void MasterFadin_Death(Entity *entity) {
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        entity->flags &= ~0x3800;
-        entity->flags |= 0x4000;
-        entity->flags |= 0x100000;
-        entity->flags = (entity->flags & ~0xC) | 4;
-        entity->flags |= 0x8000000;
-        entity->flags |= 0x4000000;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags |= ENTITY_FLAG_ANIMATES;
+        entity->flags |= ENTITY_FLAG_100000;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_DYING_MASK) | ENTITY_FLAG_DYING_1;
+        entity->flags |= ENTITY_FLAG_NO_PLAYER_COLLISION;
+        entity->flags |= ENTITY_FLAG_NO_ENTITY_COLLISION;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -259,8 +259,8 @@ static void MasterFadin_Death(Entity *entity) {
         if (entity->action_timer != 0) {
             entity->model->alpha = (f32)entity->model_alpha * (f32)entity->action_timer / 20.0f;
         } else {
-            entity->flags |= 0xC;
-            entity->flags &= ~2;
+            entity->flags |= ENTITY_FLAG_DYING_MASK;
+            entity->flags &= ~ENTITY_FLAG_LIVE;
         }
         break;
     }
@@ -274,7 +274,7 @@ static void MasterFadin_AlertPartner(Entity *entity) {
 
     partner = Entity_GetBySpawnId(entity->spawn_info->variant);
     if (partner != NULL) {
-        if ((partner->flags & 0xE) == 2) {
+        if ((partner->flags & (ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) == 2) {
             partner->state = 2;
             partner->unkE0.pause_timer = partner->params->unk43A;
         }

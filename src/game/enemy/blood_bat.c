@@ -91,7 +91,7 @@ void BloodBat_Init(Entity *entity) {
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -107,11 +107,11 @@ static void BloodBat_Animate(Entity *entity) {
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
-            entity->flags = flags & ~0x3800L;
+            entity->flags = flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         }
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & 0x12) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, ENTITY_FLAG_BITS(entity)->bits11);
         }
@@ -168,7 +168,7 @@ static int BloodBat_ThinkReturn(void *entity_arg, int unknown) {
         entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
     } else {
         push[0] = push[1] = push[2] = push[3] = 0.0f;
-        if (entity->flags & (0xC000L << 31)) {
+        if (entity->flags & (ENTITY_FLAG_WALL_PUSH | ENTITY_FLAG_400000000000)) {
             push[0] += entity->wall_push[0];
             push[1] += entity->wall_push[1];
             push[2] += entity->wall_push[2];
@@ -191,18 +191,18 @@ static int BloodBat_ThinkReturn(void *entity_arg, int unknown) {
         }
         entity->target = entity->spawn_info;
         if (turn > 0) {
-            entity->move_command = 0x201;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             if (push[1] > 0.0f) {
-                entity->move_command = 0x221;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_UP | MOVE_COMMAND_TURN_RIGHT);
             } else if (push[1] < 0.0f) {
-                entity->move_command = 0x211;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_DOWN | MOVE_COMMAND_TURN_RIGHT);
             }
         } else if (turn < 0) {
-            entity->move_command = 0x101;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             if (push[1] > 0.0f) {
-                entity->move_command = 0x121;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_UP | MOVE_COMMAND_TURN_LEFT);
             } else if (push[1] < 0.0f) {
-                entity->move_command = 0x111;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_DOWN | MOVE_COMMAND_TURN_LEFT);
             }
         } else {
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
@@ -301,20 +301,20 @@ static int BloodBat_ThinkCombat(void *entity_arg, int unknown) {
             delta = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
             if (ABS(delta) > entity->params->turn_limit) {
                 if (delta >= 0.0f) {
-                    entity->move_command |= 0x200;
+                    entity->move_command |= MOVE_COMMAND_TURN_RIGHT;
                 } else {
-                    entity->move_command |= 0x100;
+                    entity->move_command |= MOVE_COMMAND_TURN_LEFT;
                 }
             }
             delta = player_state.position[1] - unkE0->part_angle_y - entity->model->position[1];
             if (ABS(delta) > entity->params->max_speed) {
                 if (delta >= 0.0f) {
-                    entity->move_command |= 0x20;
+                    entity->move_command |= MOVE_COMMAND_UP;
                 } else {
-                    entity->move_command |= 0x10;
+                    entity->move_command |= MOVE_COMMAND_DOWN;
                 }
             }
-            entity->move_command |= 1;
+            entity->move_command |= MOVE_COMMAND_FORWARD;
             if (entity->distance_to_player < entity->radius + 100.0f + 30.0f) {
                 entity->action_timer = 0;
             }
@@ -334,12 +334,12 @@ static void BloodBat_Move(Entity *entity) {
 
     turn = 0.0f;
     climb_step = 0.02f;
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -348,40 +348,40 @@ static void BloodBat_Move(Entity *entity) {
         unkE0->turn_rate = turn;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
     if (ENTITY_FLAG_BITS(entity)->bits11 == 0) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
-        if (entity->move_command & 3) {
+        if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {
             amount = 0.0f;
-            if (entity->move_command & 1) {
+            if (entity->move_command & MOVE_COMMAND_FORWARD) {
                 amount = -1.0f;
-            } else if (entity->move_command & 2) {
+            } else if (entity->move_command & MOVE_COMMAND_BACK) {
                 amount = 1.0f;
             }
             vector[2] += amount;
         }
-        if (entity->move_command & 0xC) {
+        if (entity->move_command & MOVE_COMMAND_SIDEWAYS) {
             amount = 0.0f;
-            if (entity->move_command & 4) {
+            if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
                 amount = 1.0f;
-            } else if (entity->move_command & 8) {
+            } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
                 amount = -1.0f;
             }
             vector[0] += amount;
         }
-        if (entity->move_command & 0x30) {
+        if (entity->move_command & MOVE_COMMAND_UP_DOWN) {
             amount = 0.0f;
-            if (entity->move_command & 0x10) {
+            if (entity->move_command & MOVE_COMMAND_DOWN) {
                 unkE0->part_angle_x -= climb_step;
                 if (unkE0->part_angle_x < -1.0f) {
                     unkE0->part_angle_x = -1.0f;
                 }
                 amount = unkE0->part_angle_x;
-            } else if (entity->move_command & 0x20) {
+            } else if (entity->move_command & MOVE_COMMAND_UP) {
                 unkE0->part_angle_x += climb_step;
                 if (1.0f < unkE0->part_angle_x) {
                     unkE0->part_angle_x = 1.0f;
@@ -390,10 +390,10 @@ static void BloodBat_Move(Entity *entity) {
             }
             vector[1] += amount;
         }
-        if (entity->move_command & 0x3F) {
+        if (entity->move_command & MOVE_COMMAND_DIRECTIONS) {
             unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
             amount = unkE0->move_speed;
-            if (entity->move_command & 0x40) {
+            if (entity->move_command & MOVE_COMMAND_RUN) {
                 amount += amount;
             }
             sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
@@ -413,8 +413,8 @@ static void BloodBat_Move(Entity *entity) {
         unkE0->move_speed = 0.0f;
         unkE0->part_angle_x = 0.0f;
     }
-    if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
@@ -430,7 +430,7 @@ static void BloodBat_Move(Entity *entity) {
 static void BloodBat_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 1, 0, 0, 1);

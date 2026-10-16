@@ -113,7 +113,7 @@ void LavaBird_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_SetPartSlots(entity->model, 0x10, 0x19, 1);
@@ -139,12 +139,12 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
     if (frame_counter % 60U == entity->spawn_index % 10U) {
         unkE0->pitch_speed = rand() % 10;
     }
-    if (entity->busy_flags & 0x40) {
+    if (entity->busy_flags & ENTITY_BUSY_DEATH) {
         ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     } else {
         ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     }
-    if (!(entity->busy_flags & 0x44)) {
+    if (!(entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_HEAVY))) {
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)unkE0)->unk88, 1, 3, 5, entity->params->motion_blend_frames, 0);
     }
     if (entity->busy_flags == 0) {
@@ -169,15 +169,15 @@ static void LavaBird_Think(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (entity->busy_flags & 0x40) {
+    if (entity->busy_flags & ENTITY_BUSY_DEATH) {
         unkE0->move_speed = 0.0f;
         unkE0->part_angle_x = 0.0f;
     } else {
         side = EntityAi_TurnFromPush(entity, direction);
         if (side > 0) {
-            entity->move_command = 0x201;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
         } else if (side < 0) {
-            entity->move_command = 0x101;
+            entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
         } else {
             // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
             entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
@@ -265,9 +265,9 @@ static void LavaBird_ThinkCombat(Entity *entity, s32 unknown) {
         side = EntityAi_TurnFromPush(entity, direction);
         if (unkE0->move_choice == 0) {
             if (side > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (side < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
                 entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
@@ -292,9 +292,9 @@ static void LavaBird_ThinkPursue(Entity *entity, s32 unknown) {
     }
     turn = EntityAi_TurnFromPush(entity, direction);
     if (turn > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (turn < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 50.0f);
     }
@@ -349,9 +349,9 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
     }
     side = EntityAi_TurnFromPush(entity, direction);
     if (side > 0) {
-        entity->move_command = 0x201;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
     } else if (side < 0) {
-        entity->move_command = 0x101;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
         // match: called like EntityAi_MoveCommand, with a speed and a mode the callee ignores
         entity->move_command = LavaBird_SteerToTargetCommand(entity, 0, 0.0f);
@@ -362,7 +362,7 @@ static void LavaBird_ThinkIdle(Entity *entity, s32 unknown) {
 /* The move handler: keeps animation 3 on both motion slots, flag bits 11 to 13 at 0. LavaBird_ApplyMoveCommand
    does the turning and the moving. */
 static void LavaBird_Move(Entity *entity) {
-    entity->flags &= ~0x3800ULL;
+    entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
     EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_0, 0, 3, 5, ENTITY_CONTROLLER(entity)->motion_blend_frames, 0);
     EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 3, 5, ENTITY_CONTROLLER(entity)->motion_blend_frames, 0);
 }
@@ -378,13 +378,13 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     f32 step;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
         roll = (unkE0->pitch_speed + 50.0f) * 0.017453292f;
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -432,12 +432,12 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     entity->turn_delta_pitch += unkE0->part_angle_y;
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[1] = ENTITY_SCRATCH_VECTOR[2] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
     step = entity->params->speed_step_per_frame;
-    if (entity->move_command & 1) {
+    if (entity->move_command & MOVE_COMMAND_FORWARD) {
         unkE0->part_angle_x -= step;
         if (unkE0->part_angle_x < -entity->params->max_speed) {
             unkE0->part_angle_x = -entity->params->max_speed;
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         unkE0->part_angle_x += step;
         if (entity->params->max_speed < unkE0->part_angle_x) {
             unkE0->part_angle_x = entity->params->max_speed;
@@ -449,12 +449,12 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     } else {
         unkE0->part_angle_x = 0.0f;
     }
-    if (entity->move_command & 4) {
+    if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
         unkE0->move_speed += entity->params->speed_step_per_frame;
         if (entity->params->max_speed < unkE0->move_speed) {
             unkE0->move_speed = entity->params->max_speed;
         }
-    } else if (entity->move_command & 8) {
+    } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
         unkE0->move_speed -= entity->params->speed_step_per_frame;
         if (unkE0->move_speed < -entity->params->max_speed) {
             unkE0->move_speed = -entity->params->max_speed;
@@ -475,7 +475,7 @@ static void LavaBird_ApplyMoveCommand(Entity *entity) {
     Vector_ApplyMatrix(ENTITY_SCRATCH_VECTOR, ENTITY_SCRATCH_MATRIX, ENTITY_SCRATCH_VECTOR);
     // match: a test whose result is never used (DarkSorcerer_ApplyMoveCommand doubles the speed on this bit); it leaves
     // no code, but the scratchpad reads below only get their own address loads when it is here
-    if (entity->move_command & 0x40) {
+    if (entity->move_command & MOVE_COMMAND_RUN) {
         step += step;
     }
     entity->move_delta_x += ENTITY_SCRATCH_VECTOR[0];
@@ -517,7 +517,7 @@ static void LavaBird_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &slots->unk80, 0, 1, 0, 0, 1);
@@ -578,7 +578,7 @@ static void LavaBird_Dormant(Entity *entity) {
                 EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
             }
         }
-        entity->move_command = 1;
+        entity->move_command = MOVE_COMMAND_FORWARD;
         LavaBird_ApplyMoveCommand(entity);
         break;
     }
@@ -596,7 +596,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
     s32 current_frame;
     f32 unused_vector[4]; // match: the frame has 16 unused bytes, and they keep the tail calls from becoming jumps
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits58 + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -711,7 +711,7 @@ static void LavaBird_OnHit(Entity *entity) {
 static void LavaBird_ReactionLight(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 2;
+    entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
         EntityEvent_StartFrameCues(entity, 0xE, 0, 0);
@@ -750,7 +750,7 @@ static void LavaBird_ReactionLight(Entity *entity) {
 static void LavaBird_ReactionHeavy(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xF, 0, 5, 1);
@@ -794,7 +794,7 @@ static void LavaBird_ReactionHeavy(Entity *entity) {
 static void LavaBird_Death(Entity *entity) {
     EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0x10, 0, 5, 1);
@@ -853,7 +853,7 @@ static void LavaBird_Animate(Entity *entity) {
         return;
     }
     if (slots->unk80.unk01 != 0) {
-        if (entity->busy_flags & 0x12) {
+        if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
             rate = unkE0->pose_blend_weight;
         } else {
             rate = 1.0f / slots->unk80.unk01;
@@ -869,7 +869,7 @@ static void LavaBird_Animate(Entity *entity) {
         }
     }
     if (slots->unk88.unk01 != 0) {
-        if (entity->busy_flags & 0x12) {
+        if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
             rate = unkE0->pose_blend_weight;
         } else {
             rate = 1.0f / slots->unk88.unk01;

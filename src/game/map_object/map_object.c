@@ -348,7 +348,7 @@ void MapObject_UpdateAll(void) {
         object = map_objects(map);
         count = map_object_count(map);
         for (i = 0; i < count; i++, object++) {
-            if (!(object->state_flags & 0x10000)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                 continue;
             }
             model = object->model;
@@ -367,33 +367,33 @@ void MapObject_UpdateAll(void) {
                     Effect_StartSpawner(anim->unk02, &model->position, &model->rotation, object);
                 }
             }
-            kind = (object->state_flags & 0x100000) ? 0 : object->definition->kind;
+            kind = (object->state_flags & MAP_OBJECT_SCRIPTED) ? 0 : object->definition->kind;
             if (MAP_OBJECT_BYTES(object)->step < 0x10) {
                 if (map_object_step_handlers[kind][MAP_OBJECT_BYTES(object)->step] != NULL) {
                     map_object_step_handlers[kind][MAP_OBJECT_BYTES(object)->step](object);
                 }
             }
-            if (!(object->state_flags & 0x10000)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                 continue;
             }
             map_object_update_hooks[object->definition->kind](object);
             record = (MapRecord *)object->map_record;
             if (record != NULL) {
                 if ((MapObject *)player_state.floor_map_object == object) {
-                    object->state_flags |= 2;
+                    object->state_flags |= MAP_OBJECT_IN_VIEW;
                 } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
                     if (Map_TestFlagBlockBit(current_map_slot, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->linked_point_owner)) {
-                        object->state_flags |= 2;
+                        object->state_flags |= MAP_OBJECT_IN_VIEW;
                     }
                 } else if (record->record_flags & 0x4000000) {
-                    object->state_flags |= 2;
+                    object->state_flags |= MAP_OBJECT_IN_VIEW;
                 }
             }
             source = object->source;
             if (source->appear_effect == 0) {
                 continue;
             }
-            in_view = object->state_flags & 6;
+            in_view = object->state_flags & MAP_OBJECT_IN_VIEW_MASK;
             if (in_view == 2) {
                 shown = object->model;
                 if (shown->parts != NULL) {
@@ -431,7 +431,7 @@ int MapObject_UseItem(MapObject *object, int item) {
 
 /* Passes a signal to a map object's kind (map_object_signal_hooks) unless a script drives it. */
 void MapObject_Signal(MapObject *object, int signal) {
-    if (object != NULL && !(object->state_flags & 0x100000)) {
+    if (object != NULL && !(object->state_flags & MAP_OBJECT_SCRIPTED)) {
         map_object_signal_hooks[object->definition->kind](object, signal);
     }
 }
@@ -518,7 +518,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             continue;
         }
         for (object = jointed_draw_list[map]; object != NULL; object = object->next_in_draw_list) {
-            if (!(object->state_flags & 2)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_VIEW)) {
                 continue;
             }
             if (mode != 0 && !(RECORD_FLAGS(object) & 0x20)) {
@@ -577,7 +577,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             continue;
         }
         for (object = plain_draw_list[map]; object != NULL; object = object->next_in_draw_list) {
-            if (!(object->state_flags & 2)) {
+            if (!(object->state_flags & MAP_OBJECT_IN_VIEW)) {
                 continue;
             }
             if (mode != 0 && !(RECORD_FLAGS(object) & 0x20)) {
@@ -640,8 +640,8 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
 void MapObject_Activate(MapObject *object) {
     ModelInstance *model;
 
-    if (object != NULL && !(object->state_flags & 0x10000)) {
-        object->state_flags |= 0x10000;
+    if (object != NULL && !(object->state_flags & MAP_OBJECT_IN_USE)) {
+        object->state_flags |= MAP_OBJECT_IN_USE;
         MAP_OBJECT_BITS(object)->step = 0;
         MAP_OBJECT_BITS(object)->bit1 = FALSE;
         MAP_OBJECT_BITS(object)->bit2 = FALSE;
@@ -661,7 +661,7 @@ void MapObject_Deactivate(MapObject *object) {
         }
         MapObject_StopSound(object);
         Effect_FreeForOwner((Entity *)object); // match: shared prototype takes an Entity
-        object->state_flags &= ~0x10000;
+        object->state_flags &= ~MAP_OBJECT_IN_USE;
         MAP_OBJECT_BITS(object)->step = 0;
         MAP_OBJECT_BITS(object)->bit1 = FALSE;
         MAP_OBJECT_BITS(object)->bit2 = FALSE;
@@ -691,7 +691,7 @@ void MapObject_Break(MapObject *object) {
     if (MAP_OBJECT_BYTES(object)->step == 0xF) {
         return;
     }
-    object->state_flags &= ~0x100000;
+    object->state_flags &= ~MAP_OBJECT_SCRIPTED;
     MAP_OBJECT_BYTES(object)->step = 0xF;
     if (MAP_OBJECT_DEF_WORD(object) & 0x1000) {
         MapObject_StartAnim(object, 1);
@@ -788,7 +788,7 @@ void MapObject_MarkEmptied(MapObject *object) {
 
     if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
         ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
-        object->state_flags |= 0x40000;
+        object->state_flags |= MAP_OBJECT_EMPTIED;
     }
 }
 
@@ -801,7 +801,7 @@ void MapObject_MarkEmptiedById(int map, int object_id) {
         kind = object->definition->kind;
         if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
             ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
-            object->state_flags |= 0x40000;
+            object->state_flags |= MAP_OBJECT_EMPTIED;
         }
     }
 }
@@ -827,7 +827,7 @@ void MapObject_SetScripted(MapObject *object, int scripted) {
 
 /* Restarts a scripted map object (model flag 1, bit 20) on another animation. */
 void MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22) {
-    if ((object->model->model_flags & 1) && (object->state_flags & 0x100000)) {
+    if ((object->model->model_flags & 1) && (object->state_flags & MAP_OBJECT_SCRIPTED)) {
         MAP_OBJECT_BITS(object)->bit21 = FALSE;
         MAP_OBJECT_BITS(object)->bit22 = bit22;
         MAP_OBJECT_BITS(object)->anim = anim;
@@ -837,7 +837,7 @@ void MapObject_PlayScriptedAnim(MapObject *object, int anim, int bit22) {
 
 /* Sets bit 21 of a scripted map object (model flag 1, bit 20). */
 void MapObject_SetScriptedBit21(MapObject *object, int bit21) {
-    if ((object->model->model_flags & 1) && (object->state_flags & 0x100000)) {
+    if ((object->model->model_flags & 1) && (object->state_flags & MAP_OBJECT_SCRIPTED)) {
         MAP_OBJECT_BITS(object)->bit21 = bit21;
     }
 }

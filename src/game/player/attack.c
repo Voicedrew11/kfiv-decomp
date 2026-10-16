@@ -155,7 +155,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             count = map_object_counts[index];
             object = map_slot_objects[index];
             for (item = 0; item < count; item++, object++) {
-                if (!(object->state_flags & 0x10000)) {
+                if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
                     continue;
                 }
                 if ((request->target_mask & 0x80) && request->owner == (Entity *)object) {
@@ -202,7 +202,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if ((request->target_mask & 0x80) && request->owner == entity) {
                 continue;
             }
-            if (!(entity->params->flags & 0x400)) {
+            if (!(entity->params->flags & ENTITY_PARAMS_FLAG_HIT_BODY_POINTS)) {
                 if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
                     Collision_SphereSphere(entity->model->position, request, entity->radius, request->radius);
                 } else {
@@ -353,7 +353,7 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
             if ((request->target_mask & 0x80) && request->owner == entity) {
                 continue;
             }
-            if (!(entity->params->flags & 0x400)) {
+            if (!(entity->params->flags & ENTITY_PARAMS_FLAG_HIT_BODY_POINTS)) {
                 if (IS_PLAYER(request->owner)) {
                     Collision_CylinderArcPitch(entity->model->position, request, entity->radius, entity->height, request->radius,
                                   request->lowest_y, request->highest_y, request->half_angle, request->facing, request->half_pitch,
@@ -748,9 +748,9 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
 
     if (owner >= entity_pool[0] && owner < (Entity *)entity_pool_slots) {
         if (extra->is_magic_shot == 0) {
-            owner->flags |= 0x8000L << 26;
+            owner->flags |= ENTITY_FLAG_RAISE_ATTACK_WEIGHT;
         } else {
-            owner->flags |= 0x8000L << 27;
+            owner->flags |= ENTITY_FLAG_RAISE_RANGED_WEIGHT;
         }
     }
     if (player_state.hp_now == 0) {
@@ -881,7 +881,7 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
         if (entity->hit_cooldown_frames != 0) {
             return;
         }
-        entity->flags |= 0x8000L << 28;
+        entity->flags |= ENTITY_FLAG_HIT_BY_PLAYER;
         entity->hit_cooldown_frames = 15;
         printf(last_boss_hits_format, dark_one_hits_left);
         if (!by_weapon) {
@@ -914,7 +914,7 @@ void Attack_HitEntity(Unk1B1470Request *request, Unk1B1470Extra *extra, Entity *
 
     // match: the range test (not one of the entities) is always true for the player
     if (IS_PLAYER(owner) && (owner < entity_pool[0] || owner > &entity_pool_last)) {
-        entity->flags |= 0x8000L << 28;
+        entity->flags |= ENTITY_FLAG_HIT_BY_PLAYER;
     }
     if (extra->is_magic_shot == 1) {
         entity->stun_frames = request->stun_frames;

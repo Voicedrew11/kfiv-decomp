@@ -114,7 +114,7 @@ void AncientKing_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_SetPartSlots(entity->model, 5, 0x16, 1);
@@ -125,9 +125,9 @@ void AncientKing_Init(Entity *entity) {
     for (i = 0; i < 6; i++) {
         other = Entity_GetBySpawnId(i + 10);
         if (other != NULL) {
-            other->flags &= ~2;
-            other->flags &= ~0x80;
-            other->flags &= ~0x100;
+            other->flags &= ~ENTITY_FLAG_LIVE;
+            other->flags &= ~ENTITY_FLAG_RESPAWNABLE;
+            other->flags &= ~ENTITY_FLAG_100;
         }
     }
 }
@@ -243,7 +243,7 @@ static void AncientKing_Death(Entity *entity) {
     EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
     f32 target[4];
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, &slots->unk80, 0, 2, 0, entity->params->motion_blend_frames, 0);
@@ -311,12 +311,12 @@ static void AncientKing_RangedAttack0(Entity *entity) {
     s32 elapsed;
     s32 i;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
-        entity->flags &= ~0x3800;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (((EntityUnkE0Slot *)unkE0->motion_slot_1)->unk01 == 0) {
@@ -358,12 +358,12 @@ static void AncientKing_RangedAttack0(Entity *entity) {
 static void AncientKing_RespawnOthers(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 0x11, 0, entity->params->motion_blend_frames, 1);
-        entity->flags &= ~0x3800;
-        entity->flags &= ~0x200;
+        entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (((EntityUnkE0Slot *)unkE0->motion_slot_1)->unk01 == 0) {
@@ -401,7 +401,7 @@ static void AncientKing_RespawnOthers(Entity *entity) {
 static void AncientKing_SwitchHandlers(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x2000;
+    entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
         EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_0, 0, 2, 0, entity->params->motion_blend_frames, 0);
@@ -550,9 +550,9 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
             }
@@ -568,11 +568,11 @@ done:
 static void AncientKing_DeathLaunchShot(Entity *entity) {
     f32 target[4];
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
-        if (entity->params->flags & 0x100) {
+        if (entity->params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
@@ -631,7 +631,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
     s32 elapsed;
     s32 i;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -685,7 +685,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
     s32 elapsed;
     s32 i;
 
-    entity->busy_flags |= 1;
+    entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x18, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -736,12 +736,12 @@ static void AncientKing_RangedAttack1(Entity *entity) {
 static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 1);
-        entity->flags = (entity->flags & ~0x3800) | 0x800;
-        entity->flags &= ~0x200;
+        entity->flags = (entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1;
+        entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->unk88 == 0) {
@@ -785,7 +785,7 @@ static s32 AncientKing_ShouldRespawnOthers(Entity *entity) {
     unkE0->sub_timer = 0;
     for (i = 0; i < 6; i++) {
         Entity *other = Entity_GetBySpawnId(i + 10);
-        if (other != NULL && (other->flags & 3) == 3 && ((s32)(other->flags >> 2) & 3) < 3) {
+        if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 3 && ((s32)(other->flags >> 2) & 3) < 3) {
             unkE0->sub_timer |= 1 << i;
             count++;
         }
@@ -814,7 +814,7 @@ static void AncientKing_RespawnTwoOthers(Entity *entity) {
         if (!((unkE0->sub_timer >> i) & 1)) {
             if (rand() % 100 < chance / slots_left) {
                 Entity *other = Entity_GetBySpawnId(i + 10);
-                if (other != NULL && ((s32)other->flags & 1)) {
+                if (other != NULL && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST)) {
                     chance -= 100;
                     EntityEvent_Respawn((char *)other);
                     remaining--;

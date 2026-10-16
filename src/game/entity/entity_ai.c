@@ -307,7 +307,7 @@ static int EntityAi_TurnLookPart(Entity *actor, f32 *out_a, int mode, f32 *out_b
     if (target == NULL) {
         return 0;
     }
-    if (!(ENTITY_CONTROLLER(actor)->flags & 0x2000)) {
+    if (!(ENTITY_CONTROLLER(actor)->flags & ENTITY_PARAMS_FLAG_LOOK_AT_PART_TURNS)) {
         return 0;
     }
     return TURN_PART_NO_RATE(target, out_a, mode, out_b, limit);
@@ -319,7 +319,7 @@ int EntityAi_LookAtPoint(Entity *entity, int angles, int mode, int target, int l
     EntityModel *model = entity->model;
     int part = (int)model->look_at_part;
 
-    if (part == 0 || !(ENTITY_CONTROLLER(entity)->flags & 0x2000)) {
+    if (part == 0 || !(ENTITY_CONTROLLER(entity)->flags & ENTITY_PARAMS_FLAG_LOOK_AT_PART_TURNS)) {
         return 0;
     }
     return Bone_TurnPartToLook(model, part, angles, mode, (void *)target, limits, rate);
@@ -332,7 +332,7 @@ int EntityAi_LookAtPlayer(Entity *entity, void *target, s32 mode, void *out, f32
 
     Vector_Copy(position, &player_state.position);
     position[1] -= 220.0f;
-    if (entity->model->look_at_part == NULL || !(entity->params->flags & 0x2000)) {
+    if (entity->model->look_at_part == NULL || !(entity->params->flags & ENTITY_PARAMS_FLAG_LOOK_AT_PART_TURNS)) {
         result = 0;
     } else {
         result = Bone_TurnPartToLook(entity->model, (int)entity->model->look_at_part, (int)target, mode, position, (int)out, range);
@@ -390,7 +390,7 @@ s32 EntityAi_RemoveIfFallen(Entity *entity) {
         if (ctrl_flags != 0 && ctrl_flags != 0xFFFF) {
             Effect_FreeForOwner(entity);
         }
-        entity->flags &= ~2;
+        entity->flags &= ~ENTITY_FLAG_LIVE;
         return 1;
     }
     return 0;
@@ -505,15 +505,15 @@ static void EntityAi_RollNoticePlayer(Entity *actor) {
         reach *= 0.5f;
     }
     limit = actor->radius + 100.0f + reach;
-    if (actor->flags & ((u64)0x20001 << 32)) {
-        actor->flags |= (u64)0x8000 << 18;
+    if (actor->flags & (ENTITY_FLAG_PLAYER_IN_REACH | ENTITY_FLAG_PLAYER_PUSH)) {
+        actor->flags |= ENTITY_FLAG_PLAYER_NOTICED;
     } else if (limit < actor->distance_to_player) {
-        actor->flags &= ~((u64)1 << 33);
+        actor->flags &= ~ENTITY_FLAG_PLAYER_NOTICED;
     } else {
         s32 chance = (s32)((limit - actor->distance_to_player) * 100.0f / limit) * 2;
 
         if (rand() % 100 < chance) {
-            actor->flags |= (u64)0x8000 << 18;
+            actor->flags |= ENTITY_FLAG_PLAYER_NOTICED;
         }
     }
 }
@@ -565,24 +565,24 @@ void EntityAi_SensePlayer(Entity *actor, s32 mode) {
         near_reach *= 0.5f;
     }
     limit = actor->radius + 100.0f + near_reach;
-    if (actor->flags & ((u64)0x20001 << 32)) {
-        actor->flags |= (u64)0x8000 << 18;
+    if (actor->flags & (ENTITY_FLAG_PLAYER_IN_REACH | ENTITY_FLAG_PLAYER_PUSH)) {
+        actor->flags |= ENTITY_FLAG_PLAYER_NOTICED;
     } else if (limit < actor->distance_to_player) {
-        actor->flags &= ~((u64)1 << 33);
+        actor->flags &= ~ENTITY_FLAG_PLAYER_NOTICED;
     } else {
         s32 chance = (s32)((limit - actor->distance_to_player) * 100.0f / limit) * 2;
 
         if (rand() % 100 < chance) {
-            actor->flags |= (u64)0x8000 << 18;
+            actor->flags |= ENTITY_FLAG_PLAYER_NOTICED;
         }
     }
-    actor->flags &= ~((u64)1 << 63);
+    actor->flags &= ~ENTITY_FLAG_SIGHT_BLOCKED;
     if (EntitySight_PropInWay(actor) - 1 < 3U || EntitySight_ObjectInWay(actor) != 0) {
-        actor->flags |= (u64)0x8000 << 48;
+        actor->flags |= ENTITY_FLAG_SIGHT_BLOCKED;
         if (mode < 2) {
-            actor->flags &= ~((u64)1 << 32);
+            actor->flags &= ~ENTITY_FLAG_PLAYER_IN_REACH;
             if (mode == 0) {
-                actor->flags &= ~((u64)1 << 33);
+                actor->flags &= ~ENTITY_FLAG_PLAYER_NOTICED;
             }
         }
     }
@@ -605,10 +605,10 @@ void EntityAi_CheckFarFromSpawn3D(Entity *entity) {
     limit = spawn_info->wander_radius;
     delta_z = model->position[2] - spawn_info->spawn_z;
     if ((float)(limit * limit) < (delta_x * delta_x) + (delta_y * delta_y) + (delta_z * delta_z)) {
-        entity->flags |= (0x8000UL << 38);
+        entity->flags |= ENTITY_FLAG_FAR_FROM_SPAWN;
         return;
     }
-    entity->flags &= 0xFFDFFFFFFFFFFFFFUL;
+    entity->flags &= ~ENTITY_FLAG_FAR_FROM_SPAWN;
 }
 
 /* Sets flag 53 while the model is farther from its spawn point than EntitySpawnInfo.wander_radius (in x and z),
@@ -626,16 +626,16 @@ void EntityAi_CheckFarFromSpawn(Entity *entity) {
     limit = spawn_info->wander_radius;
     delta_z = model->position[2] - spawn_info->spawn_z;
     if ((float)(limit * limit) < (delta_x * delta_x) + (delta_z * delta_z)) {
-        entity->flags |= (0x8000UL << 38);
+        entity->flags |= ENTITY_FLAG_FAR_FROM_SPAWN;
         return;
     }
-    entity->flags &= 0xFFDFFFFFFFFFFFFFUL;
+    entity->flags &= ~ENTITY_FLAG_FAR_FROM_SPAWN;
 }
 
 /* Clears flag bit 31. The think functions call it when closing in and test the bit right after: set, they
    would only turn on the spot to the player. Nothing in the game sets it, so they always walk. */
 void EntityAi_ClearTurnInPlace(Entity *entity) {
-    entity->flags &= 0xFFFFFFFF7FFFFFFFULL;
+    entity->flags &= ~ENTITY_FLAG_TURN_IN_PLACE;
 }
 
 /* Tests whether the target is within a distance and inside the horizontal and vertical view cones (each
@@ -1619,41 +1619,41 @@ static int EntityAi_InRangedDistanceOf(Entity *entity, int index) {
 /* Per-frame collision of an entity: clears its push and state bits, sets bits 22-27 from its params, then
    runs its entity, map object and map piece checks. */
 void EntityAi_UpdateCollision(Entity *entity) {
-    ENTITY_FLAG_WORD(entity->flags) &= ~(1ULL << 51);
+    ENTITY_FLAG_WORD(entity->flags) &= ~ENTITY_FLAG_LIFT_UP;
     entity->wall_push[0] = 0;
-    ENTITY_FLAG_WORD(entity->flags) &= ~(1ULL << 52);
-    ENTITY_FLAG_WORD(entity->flags) &= ~(1ULL << 45);
-    ENTITY_FLAG_WORD(entity->flags) &= ~(1ULL << 46);
+    ENTITY_FLAG_WORD(entity->flags) &= ~ENTITY_FLAG_LEDGE_STOP;
+    ENTITY_FLAG_WORD(entity->flags) &= ~ENTITY_FLAG_WALL_PUSH;
+    ENTITY_FLAG_WORD(entity->flags) &= ~ENTITY_FLAG_400000000000;
     entity->wall_push[1] = 0;
-    ENTITY_FLAG_WORD(entity->flags) &= ~(1ULL << 49);
+    ENTITY_FLAG_WORD(entity->flags) &= ~ENTITY_FLAG_PLAYER_PUSH;
     entity->wall_push[2] = 0;
-    ENTITY_FLAG_WORD(entity->flags) &= ~(1ULL << 48);
+    ENTITY_FLAG_WORD(entity->flags) &= ~ENTITY_FLAG_ENTITY_PUSH;
     entity->entity_push[0] = 0;
-    ENTITY_FLAG_WORD(entity->flags) &= ~(1ULL << 47);
+    ENTITY_FLAG_WORD(entity->flags) &= ~ENTITY_FLAG_OBJECT_PUSH;
     entity->entity_push[1] = 0;
-    ENTITY_FLAG_WORD(entity->flags) &= ~(1ULL << 50);
+    ENTITY_FLAG_WORD(entity->flags) &= ~ENTITY_FLAG_ON_TOP;
     entity->entity_push[2] = 0;
 
     if (ENTITY_PARAMS_BITS(entity)->bit25 && ENTITY_PARAMS_BITS(entity)->bit26) {
         return;
     }
-    if (!(entity->params->flags & 0x1)) {
-        ENTITY_FLAG_WORD(entity->flags) |= 0x400000;
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_1)) {
+        ENTITY_FLAG_WORD(entity->flags) |= ENTITY_FLAG_400000;
     }
-    if (!(entity->params->flags & 0x2)) {
-        ENTITY_FLAG_WORD(entity->flags) |= 0x800000;
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_WALLS)) {
+        ENTITY_FLAG_WORD(entity->flags) |= ENTITY_FLAG_NO_WALL_COLLISION;
     }
-    if (!(entity->params->flags & 0x4)) {
-        ENTITY_FLAG_WORD(entity->flags) |= 0x1000000;
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_SECOND_WALLS)) {
+        ENTITY_FLAG_WORD(entity->flags) |= ENTITY_FLAG_NO_SECOND_WALL_COLLISION;
     }
-    if (!(entity->params->flags & 0x8)) {
-        ENTITY_FLAG_WORD(entity->flags) |= 0x2000000;
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_MAP_OBJECTS)) {
+        ENTITY_FLAG_WORD(entity->flags) |= ENTITY_FLAG_NO_MAP_OBJECT_COLLISION;
     }
-    if (!(entity->params->flags & 0x10)) {
-        ENTITY_FLAG_WORD(entity->flags) |= 0x4000000;
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_ENTITIES)) {
+        ENTITY_FLAG_WORD(entity->flags) |= ENTITY_FLAG_NO_ENTITY_COLLISION;
     }
-    if (!(entity->params->flags & 0x20)) {
-        ENTITY_FLAG_WORD(entity->flags) |= 0x8000000;
+    if (!(entity->params->flags & ENTITY_PARAMS_FLAG_COLLIDES_WITH_PLAYER)) {
+        ENTITY_FLAG_WORD(entity->flags) |= ENTITY_FLAG_NO_PLAYER_COLLISION;
     }
 
     EntityCollision_PushApart(entity);
@@ -1899,7 +1899,7 @@ int EntityAi_StartSlotMotion(Entity *entity, EntityMotionSlotWord *slot, int cha
     slot->frame_fixed = frame << 8;
     slot->index = animation;
     slot->frame = frame;
-    if (entity->ailment_3_frames != 0 && (entity->busy_flags & 0x46) == 0) {
+    if (entity->ailment_3_frames != 0 && (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) == 0) {
         float slowed = frames;
 
         slot->unk01 = slowed + slowed * 0.75f;

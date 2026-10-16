@@ -97,7 +97,7 @@ void Npc_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, part->unk50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     // match: called as returning an int, which keeps $2 busy after the call
@@ -119,7 +119,7 @@ static void Npc_Animate(Entity *entity) {
     if (ENTITY_FLAG_BITS(entity)->bit14) {
         blend_frames = entity->model->level_tables->unk88;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = MOTION_BLEND_TO_POSE(entity->model, (entity->busy_flags & 2) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = MOTION_BLEND_TO_POSE(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
@@ -141,9 +141,9 @@ static void Npc_Animate(Entity *entity) {
    (entity_group_state[EntityParams.unk43A].unk02). */
 static void Npc_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit(entity);
-    entity->flags &= ~0x400;
+    entity->flags &= ~ENTITY_FLAG_400;
     entity->target = NULL;
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction(entity, (void (*)(void))Npc_ReactionHeavy, 0);
     entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].unk02 = 1;
 }
@@ -154,7 +154,7 @@ void Npc_Think(Entity *entity, s32 unknown) {
     if (entity->busy_flags == 0) {
         switch (entity->state) {
         case 4:
-            if (entity->params->flags & 0x80) {
+            if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
                 Npc_ThinkTurnToPlayer(entity, unknown);
             } else {
                 Npc_ThinkReactToPlayer(entity, unknown);
@@ -167,7 +167,7 @@ void Npc_Think(Entity *entity, s32 unknown) {
             }
             break;
         case 6:
-            if (entity->params->flags & 0x80) {
+            if (entity->params->flags & ENTITY_PARAMS_FLAG_TURNS_IN_PLACE) {
                 Npc_ThinkTurnBack(entity, unknown);
             } else {
                 Npc_ThinkStopWatching(entity, unknown);
@@ -204,12 +204,12 @@ static void Npc_ThinkReactToPlayer(Entity *entity, s32 run_now) {
     limit = (f32)ENTITY_CONTROLLER(entity)->far_distance * 0.017453292f;
     if (0.0f <= angle ? limit < angle : limit < -angle) {
         if (0.0f <= angle) {
-            unkE0->pause_timer = 0x4000;
+            unkE0->pause_timer = MOVE_COMMAND_ANIMATION_28;
         } else {
-            unkE0->pause_timer = 0x2000;
+            unkE0->pause_timer = MOVE_COMMAND_ANIMATION_27;
         }
     } else {
-        unkE0->pause_timer = 0x1000;
+        unkE0->pause_timer = MOVE_COMMAND_ANIMATION_26;
     }
     entity->move_command = unkE0->pause_timer;
     EntityAi_SetState((char *)entity, 5);
@@ -230,8 +230,8 @@ static void Npc_ThinkTurnToPlayer(Entity *entity, s32 run_now) {
     if (0.0f <= angle ? limit < angle : limit < -angle) {
         EntityAi_StartAction(entity, Npc_TurnToPlayer, run_now);
     } else {
-        unkE0->pause_timer = 0x1000;
-        entity->move_command = 0x1000;
+        unkE0->pause_timer = MOVE_COMMAND_ANIMATION_26;
+        entity->move_command = MOVE_COMMAND_ANIMATION_26;
         EntityAi_SetState((char *)entity, 5);
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, run_now);
     }
@@ -286,7 +286,7 @@ static void Npc_TurnToPlayer(Entity *entity) {
     f32 yaw;
     f32 angle;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -337,7 +337,7 @@ static void Npc_TurnToSpawnHeading(Entity *entity) {
     f32 yaw;
     f32 angle;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
         angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->spawn_info->spawn_rotation_y);
@@ -388,7 +388,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
     EntityParams *params;
     s32 kind;
 
-    entity->busy_flags = 4;
+    entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
         if (entity->spawn_info->spawn_mode == 1
@@ -398,7 +398,7 @@ static void Npc_ReactionHeavy(Entity *entity) {
             Motion_Start(entity, 0xF, 0, 5, 1);
         }
         params = entity->params;
-        if (params->flags & 0x100) {
+        if (params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             kind = 1;
@@ -447,7 +447,7 @@ static void Npc_Death(Entity *entity) {
     EntityParams *params;
     s32 kind;
 
-    entity->busy_flags = 0x40;
+    entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
         if (entity->spawn_info->spawn_mode == 1
@@ -457,7 +457,7 @@ static void Npc_Death(Entity *entity) {
             Motion_Start(entity, 0x10, 0, 5, 1);
         }
         params = entity->params;
-        if (params->flags & 0x100) {
+        if (params->flags & ENTITY_PARAMS_FLAG_MOTION_DOES_NOT_MOVE) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
             kind = 1;
@@ -512,12 +512,12 @@ static void Npc_Move(Entity *entity) {
     f32 amount;
 
     turn = 0.0f;
-    if (entity->move_command & 0x100) {
+    if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
         unkE0->turn_rate -= entity->params->turn_step_per_frame;
         if (unkE0->turn_rate < -entity->params->turn_limit) {
             unkE0->turn_rate = -entity->params->turn_limit;
         }
-    } else if (entity->move_command & 0x200) {
+    } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
         unkE0->turn_rate += entity->params->turn_step_per_frame;
         if (entity->params->turn_limit < unkE0->turn_rate) {
             unkE0->turn_rate = entity->params->turn_limit;
@@ -526,26 +526,26 @@ static void Npc_Move(Entity *entity) {
         unkE0->turn_rate = turn;
     }
     turn = unkE0->turn_rate;
-    if (entity->move_command & 0x400) {
+    if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         turn += turn;
     }
     entity->turn_delta_yaw += turn;
     if (ENTITY_FLAG_BITS(entity)->bits11 == 0) {
         vector = ENTITY_SCRATCH_VECTOR;
         vector[0] = vector[1] = vector[2] = vector[3] = 0.0f;
-        if (entity->move_command & 3) {
+        if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {
             amount = 0.0f;
-            if (entity->move_command & 1) {
+            if (entity->move_command & MOVE_COMMAND_FORWARD) {
                 amount = -1.0f;
-            } else if (entity->move_command & 2) {
+            } else if (entity->move_command & MOVE_COMMAND_BACK) {
                 amount = 1.0f;
             }
             vector[2] += amount;
         }
-        if (entity->move_command & 3) {
+        if (entity->move_command & MOVE_COMMAND_FORWARD_BACK) {
             unkE0->move_speed = EntityAi_Accelerate(entity, unkE0->move_speed);
             amount = unkE0->move_speed;
-            if (entity->move_command & 0x40) {
+            if (entity->move_command & MOVE_COMMAND_RUN) {
                 amount += amount;
             }
             sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);
@@ -566,21 +566,21 @@ static void Npc_Move(Entity *entity) {
     if (entity->spawn_info->spawn_mode == 1
         && map_script_flags[entity->spawn_info->variant][entity->spawn_info->map_object_id] == entity->spawn_info->second_map_object_id) {
         Motion_Start(entity, 0x11, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 1) {
-        if (entity->move_command & 0x40) {
+    } else if (entity->move_command & MOVE_COMMAND_FORWARD) {
+        if (entity->move_command & MOVE_COMMAND_RUN) {
             Motion_Start(entity, 4, 0, entity->params->motion_blend_frames >> 1, 0);
         } else {
             Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
         }
-    } else if (entity->move_command & 2) {
+    } else if (entity->move_command & MOVE_COMMAND_BACK) {
         Motion_Start(entity, 5, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x1000) {
+    } else if (entity->move_command & MOVE_COMMAND_ANIMATION_26) {
         Motion_Start(entity, 0x1A, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x2000) {
+    } else if (entity->move_command & MOVE_COMMAND_ANIMATION_27) {
         Motion_Start(entity, 0x1B, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x4000) {
+    } else if (entity->move_command & MOVE_COMMAND_ANIMATION_28) {
         Motion_Start(entity, 0x1C, 0, entity->params->motion_blend_frames, 0);
-    } else if (entity->move_command & 0x300) {
+    } else if (entity->move_command & MOVE_COMMAND_TURNS) {
         Motion_Start(entity, 3, 0, entity->params->motion_blend_frames, 0);
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
@@ -629,7 +629,7 @@ void Npc_InitType81(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, part->unk50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     // match: called as returning an int, which keeps $2 busy after the call
@@ -642,19 +642,19 @@ void Npc_InitType81(Entity *entity) {
 static void Npc_OnHitType81(Entity *entity) {
     EntityAi_LowerWeightsAfterHit(entity);
     entity->target = NULL;
-    entity->flags &= ~0x400;
-    entity->flags &= ~0x200;
+    entity->flags &= ~ENTITY_FLAG_400;
+    entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction(entity, (void (*)(void))Npc_ReactionHeavy, 0);
     entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].unk02 = 1;
     if (((u64)entity->flags >> 38) & 3) {
-        entity->flags |= 0x20000000;
+        entity->flags |= ENTITY_FLAG_20000000;
     }
 }
 
 /* The think handler of type 81: clears flag bit 29, updates what it knows of the player every tenth frame,
    walks back while flag bit 53 is set, else stands. */
 static void Npc_ThinkType81(Entity *entity, s32 run_now) {
-    s32 mask = ~0x20000000;
+    s32 mask = ~ENTITY_FLAG_20000000;
 
     entity->flags &= mask;
     if (frame_counter % 10U == entity->spawn_index % 10U) {

@@ -78,7 +78,7 @@ void Slasher_Init(Entity *entity) {
         Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -94,7 +94,7 @@ static void Slasher_OnHit(Entity *entity) {
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     ENTITY_UNK5C(entity)->as_s32 = 0;
-    flags = entity->flags & ~0x200;
+    flags = entity->flags & ~ENTITY_FLAG_LOOK_AT_TARGET;
     entity->flags = flags;
     hit_strength = (flags >> 36) & 3;
     if (hit_strength == 1) {
@@ -163,7 +163,7 @@ static void Slasher_ThinkStandStill(Entity *entity, s32 unknown) {
 static void Slasher_WaitForPlayerNear(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x1000;
+    entity->busy_flags |= ENTITY_BUSY_1000;
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
@@ -189,7 +189,7 @@ static void Slasher_AlertSameKind(Entity *entity) {
     Entity *other_entity = active_entities_head;
     while (other_entity != NULL) {
         if (entity->params == other_entity->params) {
-            if (*(int *)&other_entity->flags & 1) {
+            if (*(int *)&other_entity->flags & ENTITY_FLAG_ACTIVE_LIST) {
                 u64 other_flags = other_entity->flags;
                 if (((int)(other_flags >> 1) & 1) && !((int)(other_flags >> 2) & 3) &&
                     other_entity != entity) {

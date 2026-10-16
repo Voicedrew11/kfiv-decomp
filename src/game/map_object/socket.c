@@ -27,7 +27,7 @@ void MapObject_StartPedestal(MapObject *object) {
 
     work->part = 2;
     work->fired = 0;
-    if (!(object->state_flags & 0x20000)) {
+    if (!(object->state_flags & MAP_OBJECT_ON)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
@@ -58,7 +58,7 @@ void MapObject_UpdateEmptyPedestal(MapObject *object) {
         work->timer = 0x2D;
     } else if (work->fired != 0) {
         work->fired = 0;
-        object->state_flags |= 0x20000;
+        object->state_flags |= MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(object)->step = 2;
         MapObject_StepAnim(object);
         MapObject_RebuildMatrices((char *)object);
@@ -131,7 +131,7 @@ void MapObject_UpdateFilledPedestal(MapObject *object) {
             work->timer = 0x2D;
         } else {
             MAP_OBJECT_BYTES(object)->step = 5;
-            object->state_flags &= ~0x20000;
+            object->state_flags &= ~MAP_OBJECT_ON;
             Player_AddItem(source->kind_param_0);
             game_status.update_hold_flags |= 1;
         }

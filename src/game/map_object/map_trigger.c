@@ -85,7 +85,7 @@ void MapObject_SetUpContainer(MapObject *object) {
 /* Start handler of a switch (kind 30): off (animation 4, step 1) or, with bit 17 set, on (animation 5,
    step 3). */
 void MapObject_StartPivotSwitch(MapObject *object) {
-    if (!(object->state_flags & 0x20000)) {
+    if (!(object->state_flags & MAP_OBJECT_ON)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
@@ -99,7 +99,7 @@ void MapObject_UpdatePivotSwitchOff(MapObject *object) {
     MapObject *used = faced_object[0];
 
     if (used == object && ((game_status_flags[0] >> 1) & 1)) {
-        used->state_flags |= 0x20000;
+        used->state_flags |= MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(used)->step = 2;
     }
 }
@@ -119,7 +119,7 @@ void MapObject_UpdatePivotSwitchOn(MapObject *object) {
     MapObject *used = faced_object[0];
 
     if (used == object && ((game_status_flags[0] >> 1) & 1)) {
-        used->state_flags &= ~0x20000;
+        used->state_flags &= ~MAP_OBJECT_ON;
         MAP_OBJECT_BYTES(used)->step = 4;
     }
 }

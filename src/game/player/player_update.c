@@ -1113,7 +1113,7 @@ void Player_Move(u16 buttons, u16 unused_pressed) {
     memset(&step, 0, sizeof(step));
 
     platform = (MapObject *)player_previous.floor_map_object;
-    if (platform != NULL && (platform->state_flags & 0x10000) && (MAP_OBJECT_DEF_FLAGS(platform->definition) & MAP_OBJECT_DEF_CARRIES)) {
+    if (platform != NULL && (platform->state_flags & MAP_OBJECT_IN_USE) && (MAP_OBJECT_DEF_FLAGS(platform->definition) & MAP_OBJECT_DEF_CARRIES)) {
         Vector_Subtract(&turn, &platform->model->rotation, &platform->last_rotation_x);
         turn.x = Angle_Wrap(turn.x);
         turn.y = Angle_Wrap(turn.y);

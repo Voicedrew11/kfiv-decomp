@@ -34,7 +34,7 @@ void MapObject_UpdateItemHolder(MapObject *object) {
         object->work[0]--;
     }
     if (((game_status_flags[0] >> 1) & 1) && faced_object[0] == object) {
-        if (object->source->kind_param_0 != 0 && !(object->state_flags & 0x40000)) {
+        if (object->source->kind_param_0 != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
             object->model->update_bone_points(object->model);
             MapItem_StartPickup((ModelNode *)MapItem_PutOutForObject(
                 MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
@@ -67,7 +67,7 @@ void MapObject_SpawnHeldItem(MapObject *object) {
     drop_params[0] = object_item_scale.unk00;
     drop_params[1] = object_item_scale.unk08;
     if (object->source->kind_param_0 != 0) {
-        if (!(object->state_flags & 0x40000)) {
+        if (!(object->state_flags & MAP_OBJECT_EMPTIED)) {
             map_object_update_hooks[object->definition->kind](object);
             object->model->update_bone_points(object->model);
             MapItem_PutOutForObject((u8)object->state_flags & 1, object->source->kind_param_0, (void *)object->model->get_point(object->model, 0),
@@ -86,14 +86,14 @@ void MapObject_StartChest(MapObject *object) {
 
     drop_params[0] = object_item_scale.unk00;
     drop_params[1] = object_item_scale.unk08;
-    if (!(object->state_flags & 0x20000)) {
+    if (!(object->state_flags & MAP_OBJECT_ON)) {
         MapObject_StartAnim(object, 4);
         MAP_OBJECT_BYTES(object)->step = 1;
     } else {
         MapObject_StartAnim(object, 5);
         source = object->source;
         MAP_OBJECT_BYTES(object)->step = 3;
-        if (source->kind_param_0 != 0 && !(object->state_flags & 0x40000)) {
+        if (source->kind_param_0 != 0 && !(object->state_flags & MAP_OBJECT_EMPTIED)) {
             model = object->model;
             drop_position[0] = model->position.x;
             drop_position[1] = model->position.y - 25.0f;
@@ -192,7 +192,7 @@ void MapObject_UpdateOpenChest(MapObject *object) {
         work[1]--;
     }
     if (((game_status_flags[0] >> 1) & 1) && faced_object[0] == object) {
-        if (!(object->state_flags & 0x40000) &&
+        if (!(object->state_flags & MAP_OBJECT_EMPTIED) &&
             ((source = MAP_OBJECT_WORDS(object))->kind_param_0 != 0 || source->kind_param_2 != 0)) {
             pickup = MapItem_FindForObject((int)object);
             if (pickup != NULL) {
@@ -219,7 +219,7 @@ void MapObject_OpenChestOnSignal(GameEvent *event, int mode) {
     void *saved;
     int bit;
 
-    if ((event->flags & 0x2FF00) == 0x100 && mode != 0) {
+    if ((event->flags & MAP_OBJECT_STEP_AND_ON_MASK) == 0x100 && mode != 0) {
         saved = view_ray_status.current;
         bit = game_status.bit1;
         game_status.bit1 = 1;

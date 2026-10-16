@@ -82,7 +82,7 @@ void Critter_Init(Entity *entity) {
         EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
     }
     unkE0->pose_blend_weight = 0.5f;
-    entity->model_alpha = (entity->params->flags & 0x4000) ? 0x40 : 0x80;
+    entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_StepModel(entity->model, 0, 0);
@@ -94,7 +94,7 @@ void Critter_Init(Entity *entity) {
 static void Critter_Dormant(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
 
-    entity->busy_flags |= 0x20;
+    entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
     case 0:
         Motion_Start(entity, 2, 0, 0, 1);
@@ -181,7 +181,7 @@ static void Critter_ThinkIdle(Entity *entity, s32 unknown) {
 
     if (unkE0->step_index == 0) {
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        entity->move_command = 0x41;
+        entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_RUN);
         turn = EntityAi_TurnFromPush(entity, direction);
         if (turn != 0 && unkE0->action_flags <= 0) {
             if (turn > 0) {
@@ -204,9 +204,9 @@ static void Critter_ThinkIdle(Entity *entity, s32 unknown) {
         angle = EntityMath_AngleDifference(entity->model->rotation[1], unkE0->part_angle_x);
         if (ABS(angle) > entity->params->turn_limit) {
             if (angle >= 0.0f) {
-                entity->move_command |= 0x600;
+                entity->move_command |= (MOVE_COMMAND_TURN_RIGHT | MOVE_COMMAND_TURN_FAST);
             } else {
-                entity->move_command |= 0x500;
+                entity->move_command |= (MOVE_COMMAND_TURN_LEFT | MOVE_COMMAND_TURN_FAST);
             }
         } else {
             unkE0->step_index = 0;
@@ -282,9 +282,9 @@ static void Critter_ThinkCombat(Entity *entity, s32 unknown) {
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
             if (turn > 0) {
-                entity->move_command = 0x201;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_RIGHT);
             } else if (turn < 0) {
-                entity->move_command = 0x101;
+                entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
             } else {
                 entity->move_command = EntityAi_MoveCommand(entity->radius + 100.0f + 30.0f, entity, 0);
             }
