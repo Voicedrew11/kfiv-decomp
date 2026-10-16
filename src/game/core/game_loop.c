@@ -9,6 +9,7 @@
 #include "ui/splash.h"
 #include "effect/effect.h"
 #include "core/game.h"
+#include "input/pad.h"
 #include "entity/entity_world.h"
 #include "ui/hud.h"
 #include "map/map.h"
@@ -256,7 +257,7 @@ void GameLoop_Run(int arg) {
             Input_Update();
         }
         if (game_status.bit12 && !game_status.bit13) {
-            if (pad_state[1] & 8) {
+            if (pad_state[1] & PAD_START) {
                 pad_state[1] = 0;
                 game_status.bit13 = TRUE;
                 pad_state[0] = 0;

@@ -890,10 +890,10 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
     s32 kind;
 
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x10) {
+        if (menu_buttons & PAD_UP) {
             Sound_PlayMenu(1);
             context->unk04--;
-        } else if (menu_buttons & 0x40) {
+        } else if (menu_buttons & PAD_DOWN) {
             Sound_PlayMenu(1);
             context->unk04++;
         }
@@ -928,7 +928,7 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
     }
 
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x4000) {
+        if (menu_buttons & PAD_CROSS) {
             if (context->unk04 == 0) {
                 if (trade_stock_list_cursor[0] != NULL) {
                     Sound_PlayMenu(0);
@@ -946,7 +946,7 @@ static void Trade_UpdateSelectScreen(HandlerContext *context) {
                     Sound_PlayMenu(3);
                 }
             }
-        } else if (menu_buttons & 0x2000) {
+        } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             trade_screen_state = 4;
             modal_input_locked = 1;
@@ -1190,7 +1190,7 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     }
 
     if (modal_input_locked == 0) {
-        if ((menu_buttons & 0x1000) && Menu_IsEquipSlotFilled(record, trade_stock_list_cursor[0]->group)) {
+        if ((menu_buttons & PAD_TRIANGLE) && Menu_IsEquipSlotFilled(record, trade_stock_list_cursor[0]->group)) {
             trade_stock_list_panel_sound_pending = 1;
             if (trade_panel_shown == 0) {
                 trade_panel_shown = 1;
@@ -1330,12 +1330,12 @@ static void Trade_UpdateStockList(HandlerContext *context) {
     }
 
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x4000) {
+        if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
             trade_screen_state = 2;
             trade_panel_state = 3;
             modal_input_locked = 1;
-        } else if (menu_buttons & 0x2000) {
+        } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             if (context->arg != 4) {
                 trade_screen_state = 3;
@@ -1453,10 +1453,10 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
 
     record = trade_stock_list_cursor[0]->unk0C - bases.first_item[trade_stock_list_cursor[0]->group];
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x20) {
+        if (menu_buttons & PAD_RIGHT) {
             Sound_PlayMenu(1);
             context->unk04++;
-        } else if ((menu_buttons & 0x80) && D_00447310 == 0) {
+        } else if ((menu_buttons & PAD_LEFT) && D_00447310 == 0) {
             Sound_PlayMenu(1);
             context->unk04--;
         }
@@ -1542,7 +1542,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     sceVu0TransMatrix((f32 *)local_matrix, (f32 *)local_matrix, trade_take_amount_model_position);
     Menu_DrawItemModel((f32 *)local_matrix);
 
-    if (modal_input_locked == 0 && (menu_buttons & 0x1000) && Menu_IsEquipSlotFilled(record, trade_stock_list_cursor[0]->group)) {
+    if (modal_input_locked == 0 && (menu_buttons & PAD_TRIANGLE) && Menu_IsEquipSlotFilled(record, trade_stock_list_cursor[0]->group)) {
         trade_take_amount_panel_sound_pending = 1;
         if (trade_panel_shown == 0) {
             trade_panel_shown = 1;
@@ -1748,7 +1748,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
     }
 
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x4000) {
+        if (menu_buttons & PAD_CROSS) {
             if ((player_state.gold >= D_00446E50 && context->arg != 4) || (D_00446E30 >= D_00446E50 && context->arg == 4)) {
                 Sound_PlayMenu(0);
                 trade_screen_state = 3;
@@ -1760,7 +1760,7 @@ static void Trade_UpdateTakeAmount(HandlerContext *context) {
             } else {
                 Sound_PlayMenu(3);
             }
-        } else if (menu_buttons & 0x2000) {
+        } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             trade_screen_state = 4;
             trade_panel_state = 2;
@@ -2017,7 +2017,7 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
         if (group == 11) {
             group = 12;
         }
-        if ((menu_buttons & 0x1000) && Menu_IsEquipSlotFilled(record, group)) {
+        if ((menu_buttons & PAD_TRIANGLE) && Menu_IsEquipSlotFilled(record, group)) {
             details_opened = 1;
             if (trade_panel_shown == 0) {
                 trade_panel_shown = 1;
@@ -2153,12 +2153,12 @@ static void Trade_UpdateOwnedList(HandlerContext *context) {
     }
 
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x4000) {
+        if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
             trade_screen_state = 2;
             trade_panel_state = 3;
             modal_input_locked = 1;
-        } else if (menu_buttons & 0x2000) {
+        } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             trade_screen_state = 3;
             trade_panel_state = 2;
@@ -2264,10 +2264,10 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
 
     info_pressed = 0;
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x20) {
+        if (menu_buttons & PAD_RIGHT) {
             Sound_PlayMenu(1);
             context->unk04++;
-        } else if (menu_buttons & 0x80) {
+        } else if (menu_buttons & PAD_LEFT) {
             Sound_PlayMenu(1);
             context->unk04--;
         }
@@ -2330,7 +2330,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
         if (group == 11) {
             group = 12;
         }
-        if ((menu_buttons & 0x1000) && Menu_IsEquipSlotFilled(record, group)) {
+        if ((menu_buttons & PAD_TRIANGLE) && Menu_IsEquipSlotFilled(record, group)) {
             info_pressed = 1;
             if (trade_panel_shown == 0) {
                 trade_panel_shown = 1;
@@ -2504,7 +2504,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
     }
 
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x4000) {
+        if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
             player_state.gold += D_00446E50;
             if (player_state.gold > 999999) {
@@ -2532,7 +2532,7 @@ static void Trade_UpdateGiveAmount(HandlerContext *context) {
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
-        } else if (menu_buttons & 0x2000) {
+        } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             trade_screen_state = 4;
             trade_panel_state = 2;
@@ -2663,7 +2663,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
     s32 rows;
 
     if (cursor != NULL) {
-        if (menu_buttons & 0x10) {
+        if (menu_buttons & PAD_UP) {
             next = cursor->next;
             if (next != NULL) {
                 if (cursor == trade_stock_list_top[0] && next != trade_stock_list_page_mark[0]->prev) {
@@ -2674,7 +2674,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                 trade_stock_list_cursor[0] = cursor->next;
             }
             Menu_ShiftListModelsNext(0);
-        } else if (menu_buttons & 0x40) {
+        } else if (menu_buttons & PAD_DOWN) {
             if (cursor->prev != NULL) {
                 if (trade_stock_list_page_mark[0]->prev == cursor && trade_stock_list_top[0]->next != cursor) {
                     trade_stock_list_page_mark[0] = cursor;
@@ -2684,7 +2684,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                 trade_stock_list_cursor[0] = cursor->prev;
             }
             Menu_ShiftListModelsPrev(0);
-        } else if ((menu_buttons & 0x20) && item_list_count >= 8) {
+        } else if ((menu_buttons & PAD_RIGHT) && item_list_count >= 8) {
             if (cursor->prev != NULL) {
                 if (trade_stock_list_top[0]->next != trade_stock_list_page_mark[0]->prev) {
                     rows = 0;
@@ -2697,7 +2697,7 @@ static s32 Trade_MoveListCursor(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsPageUp(0);
-        } else if ((menu_buttons & 0x80) && item_list_count >= 8) {
+        } else if ((menu_buttons & PAD_LEFT) && item_list_count >= 8) {
             if (cursor->next != NULL) {
                 if (trade_stock_list_top[0]->next != trade_stock_list_page_mark[0]->prev) {
                     rows = 0;
@@ -3144,10 +3144,10 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
     u8 kind;
 
     if (modal_input_locked == 0 && smith_choices_active != 0) {
-        if (menu_buttons & 0x10) {
+        if (menu_buttons & PAD_UP) {
             Sound_PlayMenu(1);
             context->unk04--;
-        } else if (menu_buttons & 0x40) {
+        } else if (menu_buttons & PAD_DOWN) {
             Sound_PlayMenu(1);
             context->unk04++;
         }
@@ -3188,7 +3188,7 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
     }
 
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x4000) {
+        if (menu_buttons & PAD_CROSS) {
             if (smith_choices_active == 0) {
                 Sound_PlayMenu(0);
                 smith_choices_active = 1;
@@ -3227,7 +3227,7 @@ static void Smith_UpdateSelectScreen(HandlerContext *context) {
                     break;
                 }
             }
-        } else if (menu_buttons & 0x2000) {
+        } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             if (smith_choices_active == 0) {
                 smith_choices_active = 1;
@@ -3445,7 +3445,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     sceVu0RotMatrixY(rotation, scale, smith_upgrade_list_model_angle);
     sceVu0TransMatrix(rotation, rotation, smith_upgrade_list_model_position);
     Menu_DrawItemModel(rotation);
-    if ((menu_buttons & 0x1000) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
+    if ((menu_buttons & PAD_TRIANGLE) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
         smith_upgrade_list_panel_sound_pending = 1;
         if (detail_panel_open == 0) {
             detail_panel_open = 1;
@@ -3601,7 +3601,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
     if (entry != 0) {
         MenuText_DrawWordWrappedLong(table + entry, 0x33);
     }
-    if ((menu_buttons & 0x4000) && modal_input_locked == 0) {
+    if ((menu_buttons & PAD_CROSS) && modal_input_locked == 0) {
         if ((item_list_cursor[0]->unk0C < 220 ? GetWeaponLevel(item_list_cursor[0]->unk0C - 150) < 100
                                         : GetItemLevel(item_list_cursor[0]->unk0C - 220) < 100) ||
             item_list_cursor[0]->unk0C == 183) {
@@ -3610,7 +3610,7 @@ static void Smith_UpdateUpgradeList(HandlerContext *context) {
             smith_panel_state = 3;
             modal_input_locked = 1;
         }
-    } else if ((menu_buttons & 0x2000) && modal_input_locked == 0) {
+    } else if ((menu_buttons & PAD_CIRCLE) && modal_input_locked == 0) {
         Sound_PlayMenu(2);
         smith_screen_state = 3;
         smith_panel_state = 2;
@@ -3760,7 +3760,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
     sceVu0RotMatrixY(rotation, scale, smith_upgrade_confirm_model_angle);
     sceVu0TransMatrix(rotation, rotation, smith_upgrade_confirm_model_position);
     Menu_DrawItemModel(rotation);
-    if ((menu_buttons & 0x1000) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
+    if ((menu_buttons & PAD_TRIANGLE) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
         smith_upgrade_confirm_panel_sound_pending = 1;
         if (detail_panel_open == 0) {
             detail_panel_open = 1;
@@ -3937,7 +3937,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
         MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x33);
     }
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x4000) {
+        if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
             smith_screen_state = 2;
             smith_panel_state = 2;
@@ -3945,7 +3945,7 @@ static void Smith_UpdateUpgradeConfirm(HandlerContext *context) {
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
-        } else if (menu_buttons & 0x2000) {
+        } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             smith_screen_state = 3;
             smith_panel_state = 2;
@@ -4193,7 +4193,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
     sceVu0RotMatrixY(rotation, scale, smith_confirm_list_model_angle);
     sceVu0TransMatrix(rotation, rotation, smith_confirm_list_model_position);
     Menu_DrawItemModel(rotation);
-    if ((menu_buttons & 0x1000) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
+    if ((menu_buttons & PAD_TRIANGLE) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
         if (detail_panel_open == 0) {
             smith_confirm_list_panel_sound_pending = 1;
             detail_panel_open = 1;
@@ -4364,7 +4364,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
         MenuText_DrawWordWrappedLong((u16 *)(table + entry), 0x33);
     }
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x4000) {
+        if (menu_buttons & PAD_CROSS) {
             if (smith_confirm_shown == 0) {
                 Sound_PlayMenu(0);
                 smith_screen_state = 2;
@@ -4377,7 +4377,7 @@ static void Smith_UpdateListWithConfirm(HandlerContext *context) {
                     model_load_chain->next = NULL;
                 }
             }
-        } else if (menu_buttons & 0x2000) {
+        } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             if (smith_confirm_shown == 0) {
                 smith_screen_state = 4;
@@ -4572,10 +4572,10 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     s32 text_index;
 
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x40) {
+        if (menu_buttons & PAD_DOWN) {
             Sound_PlayMenu(1);
             smith_upgrade_choice++;
-        } else if (menu_buttons & 0x10) {
+        } else if (menu_buttons & PAD_UP) {
             Sound_PlayMenu(1);
             smith_upgrade_choice--;
         }
@@ -4634,7 +4634,7 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
     sceVu0RotMatrixY(rotation, scale, smith_item_screen_model_angle);
     sceVu0TransMatrix(rotation, rotation, smith_item_screen_model_position);
     Menu_DrawItemModel(rotation);
-    if ((menu_buttons & 0x1000) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
+    if ((menu_buttons & PAD_TRIANGLE) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, item_list_cursor[0]->group)) {
         if (detail_panel_open == 0) {
             play_sound = TRUE;
             detail_panel_open = 1;
@@ -4770,14 +4770,14 @@ static void Smith_UpdateItemScreen(HandlerContext *context) {
         MenuText_DrawWordWrappedLong(table + entry, 0x33);
     }
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x4000) {
+        if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
             smith_screen_state = 2;
             modal_input_locked = 1;
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
-        } else if (menu_buttons & 0x2000) {
+        } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             smith_screen_state = 3;
             modal_input_locked = 1;
@@ -4962,7 +4962,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
     sceVu0RotMatrixY(rotation, scale, smith_collect_list_model_angle);
     sceVu0TransMatrix(rotation, rotation, smith_collect_list_model_position);
     Menu_DrawItemModel(rotation);
-    if ((menu_buttons & 0x1000) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, smith_collect_list_cursor[0]->group)) {
+    if ((menu_buttons & PAD_TRIANGLE) && modal_input_locked == 0 && Menu_IsEquipSlotFilled(index, smith_collect_list_cursor[0]->group)) {
         smith_collect_list_panel_sound_pending = 1;
         if (detail_panel_open == 0) {
             detail_panel_open = 1;
@@ -5117,7 +5117,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
         MenuText_DrawWordWrappedLong(table + entry, 0x33);
     }
     if (modal_input_locked == 0) {
-        if (menu_buttons & 0x4000) {
+        if (menu_buttons & PAD_CROSS) {
             Sound_PlayMenu(0);
             smith_screen_state = 2;
             smith_panel_state = 3;
@@ -5125,7 +5125,7 @@ static void Smith_UpdateCollectList(HandlerContext *context) {
             if (model_load_chain != NULL) {
                 model_load_chain->next = NULL;
             }
-        } else if (menu_buttons & 0x2000) {
+        } else if (menu_buttons & PAD_CIRCLE) {
             Sound_PlayMenu(2);
             smith_screen_state = 3;
             smith_panel_state = 2;
@@ -5216,7 +5216,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
     s32 rows;
 
     if (cursor != NULL) {
-        if (menu_buttons & 0x10) {
+        if (menu_buttons & PAD_UP) {
             next = cursor->next;
             if (next != NULL) {
                 if (cursor == smith_collect_list_top[0] && next != smith_collect_list_page_mark[0]->prev) {
@@ -5227,7 +5227,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                 smith_collect_list_cursor[0] = cursor->next;
             }
             Menu_ShiftListModelsNext(0);
-        } else if (menu_buttons & 0x40) {
+        } else if (menu_buttons & PAD_DOWN) {
             if (cursor->prev != NULL) {
                 if (smith_collect_list_page_mark[0]->prev == cursor && smith_collect_list_top[0]->next != cursor) {
                     smith_collect_list_page_mark[0] = cursor;
@@ -5237,7 +5237,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                 smith_collect_list_cursor[0] = cursor->prev;
             }
             Menu_ShiftListModelsPrev(0);
-        } else if ((menu_buttons & 0x20) && item_list_count >= 8) {
+        } else if ((menu_buttons & PAD_RIGHT) && item_list_count >= 8) {
             if (cursor->prev != NULL) {
                 if (smith_collect_list_top[0]->next != smith_collect_list_page_mark[0]->prev) {
                     rows = 0;
@@ -5250,7 +5250,7 @@ static s32 Smith_MoveListCursor(HandlerContext *context) {
                 Sound_PlayMenu(1);
             }
             Menu_ShiftListModelsPageUp(0);
-        } else if ((menu_buttons & 0x80) && item_list_count >= 8) {
+        } else if ((menu_buttons & PAD_LEFT) && item_list_count >= 8) {
             if (cursor->next != NULL) {
                 if (smith_collect_list_top[0]->next != smith_collect_list_page_mark[0]->prev) {
                     rows = 0;
@@ -5781,18 +5781,18 @@ static void SaveScreen_UpdateCardSelect(void) {
         save_screen_state.card_op_running = 0;
         SaveCard_StartCheck(1);
     } else if (save_screen_state.card_op_running == 0 && save_screen_state.input_locked == 0) {
-        if ((menu_buttons & 0xA0) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == -1) {
+        if ((menu_buttons & (PAD_LEFT | PAD_RIGHT)) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == -1) {
             Sound_PlayMenu(1);
             save_screen_state.selected_card = (save_screen_state.selected_card + 1) & 1;
         } else {
             report = Pad_GetReport(0, 0);
-            if ((report->pressed & 0x4000) && modal_pad_mode != 0xFF) {
+            if ((report->pressed & PAD_CROSS) && modal_pad_mode != 0xFF) {
                 Sound_PlayMenu(0);
                 save_screen_state.confirm_pending = 1;
                 save_screen_state.input_locked = 1;
             } else {
                 report = Pad_GetReport(0, 0);
-                if ((report->pressed & 0x2000) && modal_pad_mode != 0xFF) {
+                if ((report->pressed & PAD_CIRCLE) && modal_pad_mode != 0xFF) {
                     Sound_PlayMenu(2);
                     if (save_screen_state.dialog_id == 14) {
                         if (SaveCard_StartReadList(save_screen_state.selected_card, 0) == 0) {
@@ -5805,10 +5805,10 @@ static void SaveScreen_UpdateCardSelect(void) {
                         save_screen_state.is_leaving = 1;
                         SaveCard_Close();
                     }
-                } else if ((menu_buttons & 0x10) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == 12) {
+                } else if ((menu_buttons & PAD_UP) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == 12) {
                     Sound_PlayMenu(1);
                     save_screen_state.selected_save = (save_screen_state.selected_save + 1) & 1;
-                } else if ((menu_buttons & 0x40) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == 12) {
+                } else if ((menu_buttons & PAD_DOWN) && modal_pad_mode != 0xFF && save_screen_state.dialog_id == 12) {
                     Sound_PlayMenu(1);
                     save_screen_state.selected_save = (save_screen_state.selected_save - 1) & 1;
                 }
@@ -6189,10 +6189,10 @@ static void SaveScreen_UpdateSaveList(void) {
     }
 
     report = Pad_GetReport(0, 0);
-    if ((report->pressed & 0x4000) && modal_pad_mode != 0xFF) {
+    if ((report->pressed & PAD_CROSS) && modal_pad_mode != 0xFF) {
         if (save_screen_state.list_step != 0) {
             report = Pad_GetReport(0, 0);
-            if (report->held & 0x50) {
+            if (report->held & (PAD_UP | PAD_DOWN)) {
                 save_screen_state.confirm_press_state = 1;
             } else {
                 save_screen_state.confirm_press_state = 3;
@@ -6204,8 +6204,8 @@ static void SaveScreen_UpdateSaveList(void) {
     }
     if (save_screen_state.confirm_press_state == 1) {
         report = Pad_GetReport(0, 0);
-        if (report->held & 0x50) {
-            if (menu_buttons & 0x50) {
+        if (report->held & (PAD_UP | PAD_DOWN)) {
+            if (menu_buttons & (PAD_UP | PAD_DOWN)) {
                 save_screen_state.confirm_press_state = 2;
             }
         } else {
@@ -6262,7 +6262,7 @@ static void SaveScreen_UpdateSaveList(void) {
             }
         } else {
             report = Pad_GetReport(0, 0);
-            if ((report->pressed & 0x2000) && modal_pad_mode != 0xFF && save_screen_state.confirm_press_state == 0) {
+            if ((report->pressed & PAD_CIRCLE) && modal_pad_mode != 0xFF && save_screen_state.confirm_press_state == 0) {
                 Sound_PlayMenu(2);
                 switch (save_screen_state.list_step) {
                 case -1:
@@ -6282,7 +6282,7 @@ static void SaveScreen_UpdateSaveList(void) {
                     save_screen_state.list_step = -1;
                     break;
                 }
-            } else if (menu_buttons & 0x40) {
+            } else if (menu_buttons & PAD_DOWN) {
                 switch (save_screen_state.list_step) {
                 case -1:
                     for (i = 0; i < 3; i++) {
@@ -6301,7 +6301,7 @@ static void SaveScreen_UpdateSaveList(void) {
                     save_screen_state.confirm_choice = (save_screen_state.confirm_choice + 1) & 1;
                     break;
                 }
-            } else if (menu_buttons & 0x10) {
+            } else if (menu_buttons & PAD_UP) {
                 switch (save_screen_state.list_step) {
                 case -1:
                     for (i = 0; i < 3; i++) {

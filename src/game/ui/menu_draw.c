@@ -4218,51 +4218,51 @@ s16 MenuPad_Update(void) {
     int mode;
     u16 stick;
 
-    menu_buttons = report->pressed & 0xFF0F;
-    menu_buttons |= report->held & 0xF00;
+    menu_buttons = report->pressed & ~PAD_DIRECTIONS;
+    menu_buttons |= report->held & (PAD_L2 | PAD_R2 | PAD_L1 | PAD_R1);
     horizontal = MenuPad_StepHorizontal(1);
     vertical = MenuPad_StepVertical(1);
     if (horizontal > 0) {
-        menu_buttons |= 0x20;
+        menu_buttons |= PAD_RIGHT;
     }
     if (horizontal < 0) {
-        menu_buttons |= 0x80;
+        menu_buttons |= PAD_LEFT;
     }
     if (vertical > 0) {
-        menu_buttons |= 0x10;
+        menu_buttons |= PAD_UP;
     }
     if (vertical < 0) {
-        menu_buttons |= 0x40;
+        menu_buttons |= PAD_DOWN;
     }
     mode = Pad_GetMode(0, 0);
     if (mode == 1 && ((PadReportAxes *)report)->left_stick != 0) {
         stick = 0;
         if (report->left_stick_x < 0x40) {
-            stick |= 0x80;
+            stick |= PAD_LEFT;
         }
         if (report->left_stick_x > 0xC0) {
-            stick |= 0x20;
+            stick |= PAD_RIGHT;
         }
         if (report->left_stick_y < 0x40) {
-            stick |= 0x10;
+            stick |= PAD_UP;
         }
         if (report->left_stick_y > 0xC0) {
-            stick |= 0x40;
+            stick |= PAD_DOWN;
         }
-        if (!(report->held & 0xF0)) {
+        if (!(report->held & PAD_DIRECTIONS)) {
             horizontal = MenuPad_StepHorizontalFrom(1, stick);
             vertical = MenuPad_StepVerticalFrom(1, stick);
             if (horizontal > 0) {
-                menu_buttons |= 0x20;
+                menu_buttons |= PAD_RIGHT;
             }
             if (horizontal < 0) {
-                menu_buttons |= 0x80;
+                menu_buttons |= PAD_LEFT;
             }
             if (vertical > 0) {
-                menu_buttons |= 0x10;
+                menu_buttons |= PAD_UP;
             }
             if (vertical < 0) {
-                menu_buttons |= 0x40;
+                menu_buttons |= PAD_DOWN;
             }
         }
     }
@@ -4293,7 +4293,7 @@ static int MenuPad_StepHorizontal(int repeat_start) {
         horizontal_idle_frames = 10;
     }
     horizontal_idle_frames++;
-    if (!(Pad_GetReport(0, 0)->held & 0xA0)) {
+    if (!(Pad_GetReport(0, 0)->held & (PAD_LEFT | PAD_RIGHT))) {
         if (horizontal_held_frames != 0 && horizontal_repeating == 0 && horizontal_idle_frames > 10) {
             int backward = horizontal_held_frames < 1; // match: the test as a value, or the compare turns round
             int back_step = -1;         // match: -1 loaded before step is set
@@ -4309,7 +4309,7 @@ static int MenuPad_StepHorizontal(int repeat_start) {
             horizontal_held_frames = 0;
         }
     }
-    if (Pad_GetReport(0, 0)->held & 0x20) {
+    if (Pad_GetReport(0, 0)->held & PAD_RIGHT) {
         horizontal_held_frames++;
         if (horizontal_held_frames > 10) {
             step = 1;
@@ -4317,7 +4317,7 @@ static int MenuPad_StepHorizontal(int repeat_start) {
             horizontal_repeating = 1;
             horizontal_idle_frames = 0;
         }
-    } else if (Pad_GetReport(0, 0)->held & 0x80) {
+    } else if (Pad_GetReport(0, 0)->held & PAD_LEFT) {
         horizontal_held_frames--;
         if (horizontal_held_frames < -10) {
             horizontal_held_frames = -repeat_start;
@@ -4350,7 +4350,7 @@ static int MenuPad_StepVertical(int repeat_start) {
         vertical_idle_frames = 10;
     }
     vertical_idle_frames++;
-    if (!(Pad_GetReport(0, 0)->held & 0x50)) {
+    if (!(Pad_GetReport(0, 0)->held & (PAD_UP | PAD_DOWN))) {
         if (vertical_held_frames != 0 && vertical_repeating == 0 && vertical_idle_frames > 10) {
             int backward = vertical_held_frames < 1; // match: the test as a value, or the compare turns round
             int back_step = -1;         // match: -1 loaded before step is set
@@ -4366,7 +4366,7 @@ static int MenuPad_StepVertical(int repeat_start) {
             vertical_held_frames = 0;
         }
     }
-    if (Pad_GetReport(0, 0)->held & 0x10) {
+    if (Pad_GetReport(0, 0)->held & PAD_UP) {
         vertical_held_frames++;
         if (vertical_held_frames > 10) {
             step = 1;
@@ -4374,7 +4374,7 @@ static int MenuPad_StepVertical(int repeat_start) {
             vertical_repeating = 1;
             vertical_idle_frames = 0;
         }
-    } else if (Pad_GetReport(0, 0)->held & 0x40) {
+    } else if (Pad_GetReport(0, 0)->held & PAD_DOWN) {
         vertical_held_frames--;
         if (vertical_held_frames < -10) {
             vertical_held_frames = -repeat_start;
@@ -4407,7 +4407,7 @@ static int MenuPad_StepHorizontalFrom(int repeat_start, u16 buttons) {
         stick_horizontal_idle_frames = 10;
     }
     stick_horizontal_idle_frames++;
-    if (!(buttons & 0xA0)) {
+    if (!(buttons & (PAD_LEFT | PAD_RIGHT))) {
         if (stick_horizontal_held_frames != 0 && stick_horizontal_repeating == 0 && stick_horizontal_idle_frames > 10) {
             int backward = stick_horizontal_held_frames < 1; // match: the test as a value, or the compare turns round
             int back_step = -1;         // match: -1 loaded before step is set
@@ -4423,7 +4423,7 @@ static int MenuPad_StepHorizontalFrom(int repeat_start, u16 buttons) {
             stick_horizontal_held_frames = 0;
         }
     }
-    if (buttons & 0x20) {
+    if (buttons & PAD_RIGHT) {
         stick_horizontal_held_frames++;
         if (stick_horizontal_held_frames > 10) {
             step = 1;
@@ -4431,7 +4431,7 @@ static int MenuPad_StepHorizontalFrom(int repeat_start, u16 buttons) {
             stick_horizontal_repeating = 1;
             stick_horizontal_idle_frames = 0;
         }
-    } else if (buttons & 0x80) {
+    } else if (buttons & PAD_LEFT) {
         stick_horizontal_held_frames--;
         if (stick_horizontal_held_frames < -10) {
             stick_horizontal_held_frames = -repeat_start;
@@ -4511,7 +4511,7 @@ static int MenuPad_StepVerticalFrom(int repeat_start, u16 buttons) {
         stick_vertical_idle_frames = 10;
     }
     stick_vertical_idle_frames++;
-    if (!(buttons & 0x50)) {
+    if (!(buttons & (PAD_UP | PAD_DOWN))) {
         if (stick_vertical_held_frames != 0 && stick_vertical_repeating == 0 && stick_vertical_idle_frames > 10) {
             int backward = stick_vertical_held_frames < 1; // match: the test as a value, or the compare turns round
             int back_step = -1;         // match: -1 loaded before step is set
@@ -4527,7 +4527,7 @@ static int MenuPad_StepVerticalFrom(int repeat_start, u16 buttons) {
             stick_vertical_held_frames = 0;
         }
     }
-    if (buttons & 0x10) {
+    if (buttons & PAD_UP) {
         stick_vertical_held_frames++;
         if (stick_vertical_held_frames > 10) {
             step = 1;
@@ -4535,7 +4535,7 @@ static int MenuPad_StepVerticalFrom(int repeat_start, u16 buttons) {
             stick_vertical_repeating = 1;
             stick_vertical_idle_frames = 0;
         }
-    } else if (buttons & 0x40) {
+    } else if (buttons & PAD_DOWN) {
         stick_vertical_held_frames--;
         if (stick_vertical_held_frames < -10) {
             stick_vertical_held_frames = -repeat_start;

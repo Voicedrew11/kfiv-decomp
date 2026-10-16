@@ -16,6 +16,7 @@
 #include "ui/message.h"
 #include "gfx/packet.h"
 #include "gfx/texture.h"
+#include "input/pad.h"
 
 #define FOG_COLOR() \
     ((u64)map_draw_state.unk280.red | ((u64)map_draw_state.unk280.green << 8) | ((u64)map_draw_state.unk280.blue << 16) | \
@@ -878,7 +879,7 @@ void *Map_GetRecordById(int slot, int prop_id) {
 }
 
 /* The free-camera map viewer: while GameStatus.bit7 is set it runs its own frame loop, in which the pad
-   turns the camera about the player (with 0x2000 held) or moves it, and both 0x400 and 0x800 put it back. */
+   turns the camera about the player (with PAD_CIRCLE held) or moves it, and both PAD_L1 and PAD_R1 put it back. */
 void Map_RunFreeCamera(void) {
     VuVector4 position;
     VuVector4 rotation;
@@ -904,35 +905,35 @@ void Map_RunFreeCamera(void) {
             DrawList_Clear();
             Input_Update();
             move.x = move.y = move.z = move.w = 0.0f;
-            if (pad_state[0] & 0x2000) {
-                if (pad_state[0] & 0x40) {
+            if (pad_state[0] & PAD_CIRCLE) {
+                if (pad_state[0] & PAD_DOWN) {
                     rotation.x = Angle_Wrap(rotation.x + 0.08726646f);
                 }
-                if (pad_state[0] & 0x10) {
+                if (pad_state[0] & PAD_UP) {
                     rotation.x = Angle_Wrap(rotation.x - 0.08726646f);
                 }
-                if (pad_state[0] & 0x80) {
+                if (pad_state[0] & PAD_LEFT) {
                     rotation.y = Angle_Wrap(rotation.y + 0.08726646f);
                 }
-                if (pad_state[0] & 0x20) {
+                if (pad_state[0] & PAD_RIGHT) {
                     rotation.y = Angle_Wrap(rotation.y - 0.08726646f);
                 }
             } else {
-                if (pad_state[0] & 0x80) {
+                if (pad_state[0] & PAD_LEFT) {
                     move.x = -1.0f;
                 }
-                if (pad_state[0] & 0x20) {
+                if (pad_state[0] & PAD_RIGHT) {
                     move.x += 1.0f;
                 }
-                if (pad_state[0] & 0x10) {
+                if (pad_state[0] & PAD_UP) {
                     move.y -= 1.0f;
                 }
-                if (pad_state[0] & 0x40) {
+                if (pad_state[0] & PAD_DOWN) {
                     move.y += 1.0f;
                 }
             }
             if (!reset_held) {
-                if ((*(s32 *)pad_state & 0xC00) == 0xC00) {
+                if ((*(s32 *)pad_state & (PAD_L1 | PAD_R1)) == (PAD_L1 | PAD_R1)) {
                     reset_held = TRUE;
                     position.z = 10000.0f;
                     rotation.x = -1.5707964f;
@@ -942,12 +943,12 @@ void Map_RunFreeCamera(void) {
                     position.w = 0.0f;
                     rotation.z = 0.0f;
                     rotation.w = 0.0f;
-                } else if (pad_state[0] & 0x400) {
+                } else if (pad_state[0] & PAD_L1) {
                     move.z += 1.0f;
-                } else if (pad_state[0] & 0x800) {
+                } else if (pad_state[0] & PAD_R1) {
                     move.z -= 1.0f;
                 }
-            } else if (!(*(s32 *)pad_state & 0xC00)) {
+            } else if (!(*(s32 *)pad_state & (PAD_L1 | PAD_R1))) {
                 reset_held = FALSE;
             }
             if (move.x != 0.0f || move.y != 0.0f || move.z != 0.0f) {
@@ -977,7 +978,7 @@ void Map_RunFreeCamera(void) {
             func_001095D8();
             GameLoop_RunSoundLoads();
             Packet_WaitForSend();
-        } while (!(pad_state[1] & 0x2000));
+        } while (!(pad_state[1] & PAD_CIRCLE));
         game_status.bit7 = FALSE;
     }
 }

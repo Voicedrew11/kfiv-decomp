@@ -7,8 +7,6 @@
 #include "input/pad.h"
 #include "gfx/gs.h"
 
-#define PAD_BUTTON_START 0x0008
-
 extern int opening_movie_skipped; /* set once START was pressed during the opening movie */
 extern char *map_file_area;        /* the memory area the movie player is given as its heap */
 extern int map_file_area_size;          /* the size it is given for that heap */
@@ -60,7 +58,7 @@ void sceVu0CopyMatrix(void *, void *);
    and returns TRUE, ending the movie, when START is pressed. */
 static int Movie_PollSkip(void) {
     Pad_Update();
-    if (Pad_GetReport(0, 0)->pressed & PAD_BUTTON_START) {
+    if (Pad_GetReport(0, 0)->pressed & PAD_START) {
         opening_movie_skipped = TRUE;
         return TRUE;
     }

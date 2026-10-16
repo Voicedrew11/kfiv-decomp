@@ -10,6 +10,7 @@
 #include "gfx/packet.h"
 #include "player/player.h"
 #include "gfx/texture.h"
+#include "input/pad.h"
 #include "ui/message.h"
 
 int MapViewer_IsKingsMapUsable(int);
@@ -286,16 +287,16 @@ void MapViewer_RunPictureMap(void) {
         MapViewer_DrawPictureMap();
         func_001095D8();
         Input_Update();
-        if ((pad_state[1] & 0x10) && (viewer_picture > 0)) {
+        if ((pad_state[1] & PAD_UP) && (viewer_picture > 0)) {
             viewer_picture -= 1;
-        } else if (pad_state[1] & 0x40) {
+        } else if (pad_state[1] & PAD_DOWN) {
             next_picture = viewer_picture + 1;
             if (next_picture < viewer->count) {
                 viewer_picture = next_picture;
             }
         }
         Packet_WaitForSend();
-    } while ((pad_state[1] & 0x2000) == 0);
+    } while ((pad_state[1] & PAD_CIRCLE) == 0);
 }
 
 /* Draws the picked viewer's picture and the player's marker on it: a turned, pulsing arrow where the
@@ -631,7 +632,7 @@ int MapViewer_LocateOnWiddasMap(int *screen_x, int *screen_y) {
 }
 
 /* The King's Map, a free camera over the map records: runs its own frame loop, in which the pad turns the
-   camera about the player (with 0x4000 held) or moves it, and both 0x400 and 0x800 put it back. */
+   camera about the player (with PAD_CROSS held) or moves it, and both PAD_L1 and PAD_R1 put it back. */
 void MapViewer_RunKingsMap(void) {
     VuVector4 position;
     VuVector4 rotation;
@@ -661,35 +662,35 @@ void MapViewer_RunKingsMap(void) {
             held = pad_state[0];
             pressed = pad_state[1];
             move.x = move.y = move.z = move.w = 0.0f;
-            if (held & 0x4000) {
-                if (held & 0x40) {
+            if (held & PAD_CROSS) {
+                if (held & PAD_DOWN) {
                     rotation.x = Angle_Wrap(rotation.x + 0.08726646f);
                 }
-                if (held & 0x10) {
+                if (held & PAD_UP) {
                     rotation.x = Angle_Wrap(rotation.x - 0.08726646f);
                 }
-                if (held & 0x80) {
+                if (held & PAD_LEFT) {
                     rotation.y = Angle_Wrap(rotation.y + 0.08726646f);
                 }
-                if (held & 0x20) {
+                if (held & PAD_RIGHT) {
                     rotation.y = Angle_Wrap(rotation.y - 0.08726646f);
                 }
             } else {
-                if (held & 0x80) {
+                if (held & PAD_LEFT) {
                     move.x = -1.0f;
                 }
-                if (held & 0x20) {
+                if (held & PAD_RIGHT) {
                     move.x += 1.0f;
                 }
-                if (held & 0x10) {
+                if (held & PAD_UP) {
                     move.y -= 1.0f;
                 }
-                if (held & 0x40) {
+                if (held & PAD_DOWN) {
                     move.y += 1.0f;
                 }
             }
             if (!reset_held) {
-                if ((held & 0xC00) == 0xC00) {
+                if ((held & (PAD_L1 | PAD_R1)) == (PAD_L1 | PAD_R1)) {
                     reset_held = TRUE;
                     position.z = 10000.0f;
                     rotation.x = -1.5707964f;
@@ -699,12 +700,12 @@ void MapViewer_RunKingsMap(void) {
                     position.w = 0.0f;
                     rotation.z = 0.0f;
                     rotation.w = 0.0f;
-                } else if (held & 0x400) {
+                } else if (held & PAD_L1) {
                     move.z += 1.0f;
-                } else if (held & 0x800) {
+                } else if (held & PAD_R1) {
                     move.z -= 1.0f;
                 }
-            } else if (!(held & 0xC00)) {
+            } else if (!(held & (PAD_L1 | PAD_R1))) {
                 reset_held = FALSE;
             }
             if (move.x != 0.0f || move.y != 0.0f || move.z != 0.0f) {
@@ -745,7 +746,7 @@ void MapViewer_RunKingsMap(void) {
             func_001095D8();
             // match: it returns a value here, which keeps $2 busy
             ((int (*)(void))Packet_WaitForSend)();
-        } while (!(pressed & 0x2000));
+        } while (!(pressed & PAD_CIRCLE));
     }
 }
 

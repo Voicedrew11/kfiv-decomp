@@ -8,11 +8,6 @@
 #include <libgraph.h>
 #include "ui/menu_screens.h"
 
-#define PAD_UP    0x0010
-#define PAD_DOWN  0x0040
-#define PAD_START 0x0008
-#define PAD_CROSS 0x4000
-
 #define LOGO_FRAMES         300  /* each logo stays this long */
 #define PRESS_START_FRAMES  3600 /* the PRESS START screen goes back to the logos after this long */
 #define TITLE_FADE_FRAMES   30

@@ -6,6 +6,7 @@
 #include "collision/collision.h"
 #include "model/linked_point.h"
 #include "ui/message.h"
+#include "input/pad.h"
 #include "map_object/map_object.h"
 
 void MapItem_ClearMap(int);
@@ -780,13 +781,13 @@ void MapItem_PickupBringUp(void) {
     pickup_step++;
 }
 
-/* Pickup step 2: the item turns in front of the player until it is taken (0x4000) or put back (0x2000). */
+/* Pickup step 2: the item turns in front of the player until it is taken (PAD_CROSS) or put back (PAD_CIRCLE). */
 void MapItem_PickupHold(void) {
     f32 delta[4];
 
     pickup_pose_scale = 0.0f;
     pickup_item->model->rotation.y = Angle_Wrap(pickup_item->model->rotation.y + 0.08377580f);
-    if (pad_pressed[0] & 0x4000) {
+    if (pad_pressed[0] & PAD_CROSS) {
         if (!Player_CannotCarryItem((s16)pickup_item->item)) {
             Vector_Copy(pickup_target_position, &player_state);
             pickup_target_position[1] -= 115.0f;
@@ -797,7 +798,7 @@ void MapItem_PickupHold(void) {
             return;
         }
         Message_ShowNotice(0, 0, 0, 0, 0x2D, MSG_CANT_CARRY_ANY_MORE);
-    } else if (!(pad_pressed[0] & 0x2000) || pickup_no_put_back != 0) {
+    } else if (!(pad_pressed[0] & PAD_CIRCLE) || pickup_no_put_back != 0) {
         return;
     }
     Vector_Scale(pickup_velocity, pickup_velocity, -1.0f);
