@@ -53,7 +53,7 @@ void sceVu0RotMatrixZ(float *, float *, float);
 void Vector_ApplyMatrix(void *, void *, void *);
 void Vector_Scale(float *, float *, float);
 // match: the size is unknown; a complete small type would be read through $gp
-extern u8 D_0034B21C[];
+extern u8 dark_sorcerer_fight_started[];
 int EntityAi_CheckMeleeHit(Entity *, void *, s32, s32, s32);
 void EntityAi_SetAttackDelay(Entity *, s32);
 int EntityShot_LaunchAimed(Entity *, EntityParamsUnk3D8 *, s32, s32, f32 *, f32, f32);
@@ -432,7 +432,7 @@ static void DarkSorcerer_ApplyMoveCommand(Entity *entity) {
 }
 
 /* The dormant action (busy bit 0x20), which the set-up function always starts: animation 0 with
-   flag bits 18, 20 and 21 set and Entity.unkD6 at 0x20 until D_0034B21C[0] is not 0; then it brings
+   flag bits 18, 20 and 21 set and Entity.unkD6 at 0x20 until dark_sorcerer_fight_started[0] is not 0; then it brings
    unkD6 up to 0x80 over 20 frames (counted in work byte unk7B), clears the three bits and thinks.
    */
 static void DarkSorcerer_Dormant(Entity *entity) {
@@ -451,7 +451,7 @@ static void DarkSorcerer_Dormant(Entity *entity) {
         unkE0->unk7B = 0;
         entity->action_step++;
     case 1:
-        if (D_0034B21C[0] != 0) {
+        if (dark_sorcerer_fight_started[0] != 0) {
             entity->action_step++;
         }
         break;

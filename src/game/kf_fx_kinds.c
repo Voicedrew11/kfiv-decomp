@@ -61,7 +61,7 @@ extern s64 light_point_start_target[2];
 /* LinkedPoint_StartDefault called as returning s16 (the caller keeps the handle in a halfword) */
 // match: only this type matches; kf_linked_point.c defines it as returning int
 #define LINKED_POINT_START_S16 ((s16(*)(f32, void *, void *))LinkedPoint_StartDefault)
-extern u8 D_0034A019[];
+extern u8 dark_sanctuary_idol_of_sorrow_placed[];
 extern u8 D_0034AFD6[];
 void Sound_PlaySw(int mode);
 /* 0x402D50 seven (weapon, effect param) pairs EffectWeaponSound_Start matches to play sound 3 */
@@ -2380,8 +2380,8 @@ void EffectSeekPoint_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
 }
 
-/* Kind 106 update: after def->radius_half frames, while D_0034A019 is set, steers toward the world point
-   (0, -270, 0); moves until def->max_frames. */
+/* Kind 106 update: after def->radius_half frames, while dark_sanctuary_idol_of_sorrow_placed is set, steers
+   toward the world point (0, -270, 0); moves until def->max_frames. */
 void EffectSeekPoint_Update(EffectActor *effect) {
     Vector4 ground;
     Vector4 to_ground;
@@ -2394,7 +2394,7 @@ void EffectSeekPoint_Update(EffectActor *effect) {
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
     if (effect->frame < effect->def->max_frames || effect->def->max_frames == 0) {
-        if (D_0034A019[0] != 0 && effect->def->radius_half < effect->frame) {
+        if (dark_sanctuary_idol_of_sorrow_placed[0] != 0 && effect->def->radius_half < effect->frame) {
             Vector_Subtract(&to_ground, &ground, &effect->model->position);
             EffectSteer_Toward(&motion->velocity, &to_ground, effect->def->speed, effect->def->unkDC);
         }

@@ -24,7 +24,7 @@ int Motion_BlendToPose(EntityModel *, f32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
 extern u32 frame_counter;
 extern PlayerData player_state;
-extern u8 D_0034A018[];
+extern u8 dark_succubus_fight_started[];
 // match: the size is unknown; a complete small type would be read through $gp
 extern f32 D_0044681C[];
 int rand(void);
@@ -192,8 +192,8 @@ static void DarkSuccubus_Animate(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, with three functions for state 2, picked by work byte unk7C
    (DarkSuccubus_CountLiveSpawns sets it): DarkSuccubus_ThinkCombat at 0, DarkSuccubus_ThinkCombatCircleNear at 1,
-   DarkSuccubus_ThinkCombatKeepAwayWhenFaced above. While D_0034A018[0] is 0 it does nothing but set model flag 0x800, flag bits
-   18 and 21 and Entity.unkD6 to 0x80. With the player's x at 6600 or more it goes back to its spawn
+   DarkSuccubus_ThinkCombatKeepAwayWhenFaced above. Until the map script sets dark_succubus_fight_started it
+   does nothing but set model flag 0x800, flag bits 18 and 21 and Entity.unkD6 to 0x80. With the player's x at 6600 or more it goes back to its spawn
    point instead of thinking. It adds command bit 0x10 or 0x20 by what EntityCollision_DistanceToPropFloor reads at the
    entity's position (work byte unk7A). While work word unk68 counts down, model flag 0x800 and flag
    bit 21 are set and Entity.unkD6 is 0x80; work word unk6A is the pause after it. With unk7C at 0
@@ -207,7 +207,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
     if (frame_counter % 10U == entity->unkD7 % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
-    if (D_0034A018[0] == 0) {
+    if (dark_succubus_fight_started[0] == 0) {
         entity->model->unk102 |= 0x800;
         ((EntityFlagWord *)&entity->spawn_info->unk38)->bytes[3] = 0x1E;
         entity->unkD6 = 0x80;

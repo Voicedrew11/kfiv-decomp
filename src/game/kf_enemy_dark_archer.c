@@ -48,7 +48,7 @@ int EntityAi_CanUseRanged(Entity *, int);
 void EntityAi_SensePlayer(void *, int);
 int Motion_Start(void *, int, int, u32, int);
 // match: the size is unknown; a complete small type would be read through $gp
-extern u8 D_0034A018[];
+extern u8 dark_succubus_fight_started[];
 extern MapSlot map_slots[];
 extern EntitySpawnInfo *map_spawn_infos[2];
 void Game_CountSpawnDeath(u32, int);
@@ -325,7 +325,7 @@ static void DarkArcher_MoveTurnOnly(Entity *entity) {
 }
 
 /* The dormant action of a spawn whose EntitySpawnInfo.unk40 is set (busy bit 0x20): animation 0,
-   unseen (Entity.unkD6 0) with flag bits 18, 20 and 21 set until D_0034A018[0] is not 0, then fades
+   unseen (Entity.unkD6 0) with flag bits 18, 20 and 21 set until dark_succubus_fight_started[0] is not 0, then fades
    the model in over 20 frames (counted in work byte unk7B), clears the three bits and thinks. */
 static void DarkArcher_DormantFadeIn(Entity *entity) {
     EntityUnkE0 *unkE0 = &entity->unkE0;
@@ -342,7 +342,7 @@ static void DarkArcher_DormantFadeIn(Entity *entity) {
         unkE0->unk7B = 0;
         entity->action_step++;
     case 1:
-        if (D_0034A018[0] != 0) {
+        if (dark_succubus_fight_started[0] != 0) {
             entity->action_step++;
         }
         break;

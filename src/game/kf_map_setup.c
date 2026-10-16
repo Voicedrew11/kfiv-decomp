@@ -35,12 +35,12 @@ extern u8 map_script_flags[];
 extern u8 entity_group_state[];
 extern u8 forge_door_open[];
 extern u8 forge_stage[];
-extern u8 D_00349D55[];
+extern u8 ocean_shore_icon_of_fire_placed[];
 extern f32 map_record_height[];
-extern u8 D_00349F56[];
-extern u8 D_0034A017[];
+extern u8 guardians_room_water_purified[];
+extern u8 dark_sanctuary_fog_lifted[];
 extern u8 D_0034A0D5[];
-extern u8 D_0034B098[];
+extern u8 craftsmans_room_door_unlocked[];
 
 void func_0011A428(int);
 
@@ -369,12 +369,13 @@ void MapSetup_FireLordsDomain(int map) {
     }
 }
 
-/* Set-up of the Ocean Shore (map 027): once its story flag is 1, new fog in blocks 0, 1 and 4. */
+/* Set-up of the Ocean Shore (map 027): once the Icon of Fire is on its altar (ocean_shore_icon_of_fire_placed
+   1), the fog the map script fades to when it is placed, in blocks 0, 1 and 4. */
 void MapSetup_OceanShore(int map) {
     MapSlot *slot = &map_slots[map];
     MapSlotUnk0CValues *fog;
 
-    if (D_00349D55[0] == 1) {
+    if (ocean_shore_icon_of_fire_placed[0] == 1) {
         fog = (MapSlotUnk0CValues *)slot->unk0C;
         fog[0].unk00 = fog[0].unk04 = 0.0f;
         fog[0].unk08 = -9.705887f;
@@ -416,10 +417,10 @@ void MapSetup_UndergroundCanal(int map) {
     }
 }
 
-/* Set-up of the Guardian's Room (map 035): once the story flag is set, swaps map records 8-12 for
-   0x29-0x2D. */
+/* Set-up of the Guardian's Room (map 035): once guardians_room_water_purified is set, swaps map records 8-12
+   for 0x29-0x2D (the map script makes props 8-12 non-solid and 41-45 solid at the same time). */
 void MapSetup_GuardiansRoom(int map) {
-    if (D_00349F56[0] != 0) {
+    if (guardians_room_water_purified[0] != 0) {
         hide_record(map, 8);
         hide_record(map, 9);
         hide_record(map, 0xA);
@@ -433,11 +434,12 @@ void MapSetup_GuardiansRoom(int map) {
     }
 }
 
-/* Set-up of the Dark Sanctuary (map 038): once its story flag is 1, new fog in blocks 1 and 2. */
+/* Set-up of the Dark Sanctuary (map 038): once dark_sanctuary_fog_lifted is 1, the fog the map script draws
+   back to, in blocks 1 and 2. */
 void MapSetup_DarkSanctuary(int map) {
     MapSlot *slot = &map_slots[map];
 
-    if (D_0034A017[0] == 1) {
+    if (dark_sanctuary_fog_lifted[0] == 1) {
         MapSlotUnk0CValues *fog = (MapSlotUnk0CValues *)slot->unk0C;
 
         fog[1].unk00 = fog[1].unk04 = 0.0f;
@@ -526,12 +528,13 @@ void MapSetup_CentralTowerLevel3(int map_slot) {
     }
 }
 
-/* Set-up of the Craftsman's Room (map 104): until flag D_0034B098[0] is set, takes map objects 0x77 and 0x76 out of
-   use, giving 0x77 (when it is a light, kind 9) the colour 0xFF, 0x80, 0x18 in its source (unk4A 0). */
+/* Set-up of the Craftsman's Room (map 104): until craftsmans_room_door_unlocked is set, takes map objects 0x77
+   and 0x76 out of use, giving 0x77 (when it is a light, kind 9) the colour 0xFF, 0x80, 0x18 in its source (unk4A
+   0); the map script turns 0x77 on when it sets the flag. */
 void MapSetup_CraftsmansRoom(int map) {
     MapObject *object;
 
-    if (D_0034B098[0] == 0) {
+    if (craftsmans_room_door_unlocked[0] == 0) {
         object = MapObject_GetById(map, 0x77);
         if (object != NULL) {
             MapObject_Deactivate(object);

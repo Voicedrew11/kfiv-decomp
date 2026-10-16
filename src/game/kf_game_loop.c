@@ -165,7 +165,7 @@ extern f32 world_screen_matrix[16];
 extern s64 game_dbuff_clear_color[];
 extern s64 game_dbuff_context2_clear_color[];
 extern u32 frame_counter;
-extern u8 D_00349F56[];
+extern u8 guardians_room_water_purified[];
 extern MapDrawStateOverlays map_draw_state;
 extern int message_dim_alpha;
 extern int current_map_slot;
@@ -500,7 +500,7 @@ int GameLoop_DrawFrame(int arg) {
     Player_DrawArm();
     Player_DrawScreenTints();
     if ((s32)(player_state.unk1C8 >> 39) & 1) {
-        if (map_slots[current_map_slot].tag == 0x23 && D_00349F56[0] == 0) {
+        if (map_slots[current_map_slot].tag == 0x23 && guardians_room_water_purified[0] == 0) {
             GsDraw_FillScreen(0x40, 0x80, 0x40, 0x78, 0x44);
         } else {
             Game_TintScreen(0x5E, 0x87, 0x92);
