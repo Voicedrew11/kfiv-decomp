@@ -328,8 +328,9 @@ typedef struct {
     u32 model_number : 16;          /* 0x00 the chr/cNNNN.chr model file number, 0xFFFF: none */
     u32 entity_type : 8;            /* 0x02 index into entity_type_handlers */
     u32 unk03_0 : 1;                /* 0x03 */
-    u32 unk03_1 : 2;
-    u32 unk03_3 : 5;
+    u32 movement_kind : 2;          /* 0x03 bits 25-26: how it moves and collides (ENTITY_PARAMS_MOVEMENT_KIND) */
+    u32 sphere_collision : 1;       /* 0x03 bit 27: it collides as a sphere, not as a cylinder */
+    u32 unk03_4 : 4;
     u16 unk04;                      /* 0x04 Entity.body_radius before scaling */
     u16 map_collision_radius;       /* 0x06 Entity.collision_radius before scaling */
     u16 map_collision_height;       /* 0x08 Entity.collision_height before scaling */
@@ -458,10 +459,22 @@ typedef struct {
     u8 unk03;                       /* 0x03 */
 } EntityParamsBytes;
 
-/* the first word of EntityParams read whole (unk00_0, unk02, unk03_x together) */
+/* the first word of EntityParams read whole (model_number, entity_type and the 0x03 bits together) */
 typedef struct {
-    u32 unk00;                      /* 0x00 bits 25-26: unk03_1 */
+    u32 word;                       /* 0x00 */
 } EntityParamsWord;
+
+/* EntityParams.movement_kind read through the whole word, as the code tests it: 0 walks, 2 flies, 3 stays put */
+#define ENTITY_PARAMS_MOVEMENT_MASK         0x6000000
+#define ENTITY_PARAMS_MOVEMENT_WALK         0x0000000
+#define ENTITY_PARAMS_MOVEMENT_1            0x2000000 /* not in param/chr.prm */
+#define ENTITY_PARAMS_MOVEMENT_FLY          0x4000000
+#define ENTITY_PARAMS_MOVEMENT_FIXED        0x6000000
+#define ENTITY_PARAMS_MOVEMENT_KIND(params) (((EntityParamsWord *)(params))->word & ENTITY_PARAMS_MOVEMENT_MASK)
+
+/* EntityParams.sphere_collision read through the whole word */
+#define ENTITY_PARAMS_SPHERE_MASK           0x8000000
+#define ENTITY_PARAMS_IS_SPHERE(params)     (((EntityParamsWord *)(params))->word & ENTITY_PARAMS_SPHERE_MASK)
 
 /* sub-struct at Entity+0xE0: the work area of an entity's type. It starts with the handlers the
    type's set-up function installs; EntityAi_Update calls them. All of them take the entity. */

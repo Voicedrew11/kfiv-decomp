@@ -203,7 +203,7 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                 continue;
             }
             if (!(entity->params->flags & 0x400)) {
-                if (((EntityParamsWord *)entity->params)->unk00 & 0x8000000) {
+                if (ENTITY_PARAMS_IS_SPHERE(entity->params)) {
                     Collision_SphereSphere(entity->model->position, request, entity->radius, request->radius);
                 } else {
                     Collision_SphereCylinder(entity->model->position, request, entity->radius, entity->height, request->radius);

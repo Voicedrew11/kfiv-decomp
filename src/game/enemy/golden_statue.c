@@ -273,7 +273,7 @@ static void GoldenStatue_ThinkNoStates(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    if ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) != 0x06000000) {
+    if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) != ENTITY_PARAMS_MOVEMENT_FIXED) {
         EntityAi_CheckFarFromSpawn(entity);
     }
     EntityAi_StepState(entity);
@@ -494,7 +494,7 @@ static void GoldenStatue_Animate(Entity *entity) {
     flags = entity->flags;
     unkE0 = &entity->unkE0;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x6000000) {
+        if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FIXED) {
             entity->flags = flags & ~0x3800L;
         }
         blend_frames = entity->model->level_tables->unk88;

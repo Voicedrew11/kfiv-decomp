@@ -148,7 +148,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
@@ -172,7 +172,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
             if (entity->params->flags & 0x100) {
                 ENTITY_FLAG_BITS(entity)->bits11 = 0;
             } else {
-                ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+                ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
             }
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
             entity->action_step++;
@@ -193,7 +193,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
             ENTITY_FLAG_BITS(entity)->bit24 = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
             ENTITY_FLAG_BITS(entity)->bit17 = 1;
-            if (!(((EntityParamsWord *)entity->params)->unk00 & 0x6000000)) {
+            if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
                 ENTITY_FLAG_BITS(entity)->bit28 = 0;
             }
             entity->busy_flags = 0;
@@ -222,7 +222,7 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         unkE0->turn_rate = 0.0f;
         entity->action_step++;
@@ -303,7 +303,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
         if (entity->params->flags & 0x100) {
             ENTITY_FLAG_BITS(entity)->bits11 = 0;
         } else {
-            ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+            ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
@@ -324,7 +324,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
             if (entity->params->flags & 0x100) {
                 ENTITY_FLAG_BITS(entity)->bits11 = 0;
             } else {
-                ENTITY_FLAG_BITS(entity)->bits11 = (((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x2000000 ? 2 : 1;
+                ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
             }
             ENTITY_FLAG_BITS(entity)->bits36 = 0;
             entity->action_step++;
@@ -348,7 +348,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
             }
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
             ENTITY_FLAG_BITS(entity)->bit17 = 1;
-            if (!(((EntityParamsWord *)entity->params)->unk00 & 0x6000000)) {
+            if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_WALK) {
                 ENTITY_FLAG_BITS(entity)->bit28 = 0;
             }
             entity->busy_flags = 0;
@@ -376,7 +376,7 @@ static void SkeletonSoldier_ThinkNoStates(Entity *entity, s32 unknown) {
     if (entity->busy_flags != 0) {
         return;
     }
-    if ((((EntityParamsWord *)entity->params)->unk00 & 0x06000000) != 0x06000000) {
+    if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) != ENTITY_PARAMS_MOVEMENT_FIXED) {
         EntityAi_CheckFarFromSpawn((char *)entity);
     }
     EntityAi_StepState(entity);

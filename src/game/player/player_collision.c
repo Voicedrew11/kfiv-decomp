@@ -429,7 +429,7 @@ void Player_CollideWithEntities(int climb) {
                 }
                 Vector_Copy(position, entity->model->position);
                 radius = entity->radius;
-                if (!(((EntityParamsWord *)entity->params)->unk00 & 0x8000000)) {
+                if (!ENTITY_PARAMS_IS_SPHERE(entity->params)) {
                     height = entity->height;
                 } else {
                     height = radius + radius;
@@ -445,7 +445,7 @@ void Player_CollideWithEntities(int climb) {
                 if (position[1] < player_state.position.y - 230.0f) {
                     continue;
                 }
-                if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x4000000) {
+                if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FLY) {
                     continue;
                 }
                 if (entity->spawn_info->type_id == 0x50) {
@@ -486,7 +486,7 @@ void Player_CollideWithEntities(int climb) {
         if ((s32)(entity->flags >> 27) & 1) {
             continue;
         }
-        if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x4000000) {
+        if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FLY) {
             continue;
         }
         switch (entity->spawn_info->type_id) {

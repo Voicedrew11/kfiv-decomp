@@ -484,7 +484,7 @@ static void Seafang_DeathWithoutDrop(Entity *entity) {
     case 0:
         Motion_Start(entity, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
-        if ((((EntityParamsWord *)entity->params)->unk00 & 0x6000000) == 0x4000000) {
+        if (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_FLY) {
             entity->collision_radius = 20.0f;
         }
         ENTITY_FLAG_BITS(entity)->bit14 = 1;
