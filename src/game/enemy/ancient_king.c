@@ -1,4 +1,4 @@
-/* AncientKing: the behaviour of entity type 61 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* AncientKing: the behaviour of entity type 61 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: the Ancient King, chr.prm record
    57, whose one spawn is in 006.map with six High Skeletons as spawn ids 10-15, the entities this code
    raises again. The game names no monsters; the name is from the bestiary of Prima's official strategy
@@ -340,7 +340,7 @@ static void AncientKing_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -659,7 +659,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -718,7 +718,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {

@@ -1,4 +1,4 @@
-/* HammerSkeleton: the behaviour of entity type 37 (Entity.params->unk02, the index into entity_type_handlers): its
+/* HammerSkeleton: the behaviour of entity type 37 (EntityParams.entity_type, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: chr.prm record 154,
    model c0154 (a skeleton holding a small hammer), whose one spawn in 007.map stands beside the bell
    (enemy/bell.c). It gives no experience and dies by itself when the player enters one of two

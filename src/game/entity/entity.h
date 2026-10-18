@@ -267,8 +267,8 @@ typedef struct {
 /* a whole 0x1C-byte record at EntityParams+0x3D8 (EntityParamsUnk3D8 is its first word) */
 typedef struct {
     u8 unk00;                       /* 0x00 */
-    u8 unk01;                       /* 0x01 */
-    u8 unk02;                       /* 0x02 */
+    u8 turn_frames;                 /* 0x01 the entity turns to the player until the motion reaches this frame */
+    u8 attack_delay;                /* 0x02 passed to EntityAi_SetAttackDelay when the attack ends */
     u8 unk03;                       /* 0x03 */
     char pad04[0x08];
     u8 unk0C;                       /* 0x0C */
@@ -279,8 +279,8 @@ typedef struct {
 /* sub-struct at EntityParams+0x3D8 */
 typedef struct {
     u8 unk00;                       /* 0x00 */
-    u8 unk01;                       /* 0x01 */
-    u8 unk02;                       /* 0x02 */
+    u8 turn_frames;                 /* 0x01 the entity turns to the player until the motion reaches this frame */
+    u8 attack_delay;                /* 0x02 passed to EntityAi_SetAttackDelay when the attack ends */
     u8 unk03;                       /* 0x03 */
 } EntityParamsUnk3D8;
 
@@ -429,18 +429,18 @@ typedef struct {
 
 /* what EntityParams.anim_effect_offsets[n] leads to: something Effect_StartSpawner starts at a bone on an animation frame */
 typedef struct {
-    u16 unk00;                      /* 0x00 passed to Effect_StartSpawner */
-    u16 unk02;                      /* 0x02 the animation frame */
-    u8 unk04;                       /* 0x04 passed to Model_GetSkinnedBonePoint (and the one after it) */
-    s8 unk05;                       /* 0x05 not 0: EntityParams.variant_effect_ids picks what to start */
+    u16 effect_id;                  /* 0x00 passed to Effect_StartSpawner */
+    u16 frame;                      /* 0x02 the animation frame */
+    u8 bone;                        /* 0x04 passed to Model_GetSkinnedBonePoint (and the one after it) */
+    s8 use_variant;                 /* 0x05 not 0: EntityParams.variant_effect_ids picks what to start */
 } EntityParamsUnk130;
 
 /* what EntityParams.anim_sound_offsets[n] leads to: something Sound_PlayFalloff starts on an animation frame */
 typedef struct {
-    u8 unk00;                       /* 0x00 passed to Sound_PlayFalloff */
-    u8 unk01;                       /* 0x01 passed to Sound_PlayFalloff */
-    u16 unk02;                      /* 0x02 the animation frame */
-    u8 unk04;                       /* 0x04 not 0: left out while Entity.ailment_4_frames is set */
+    u8 sound;                       /* 0x00 the sound Sound_PlayFalloff plays */
+    u8 kind;                        /* 0x01 the kind passed to Sound_PlayFalloff */
+    u16 frame;                      /* 0x02 the animation frame */
+    u8 skip_while_ailing;           /* 0x04 not 0: left out while Entity.ailment_4_frames is set */
     char pad05[0x03];
 } EntityParamsUnk1B0;
 
@@ -472,7 +472,7 @@ typedef struct {
 typedef struct {
     u8 unk00;                       /* 0x00 */
     u8 unk01;                       /* 0x01 */
-    u8 unk02;                       /* 0x02 index into entity_type_handlers */
+    u8 entity_type;                 /* 0x02 index into entity_type_handlers */
     u8 unk03;                       /* 0x03 */
 } EntityParamsBytes;
 

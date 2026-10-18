@@ -1,4 +1,4 @@
-/* AncientMummy: the behaviour of entity type 42 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* AncientMummy: the behaviour of entity type 42 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Ancient Mummy. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -308,12 +308,12 @@ static void AncientMummy_ShootAndRelocate(Entity *entity) {
             ai_state->step_index = 0;
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
             ai_state->turn_rate = 0.0f;

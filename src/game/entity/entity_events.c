@@ -231,8 +231,8 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
         return;
     }
     for (i = 0; i < count; i++, record++) {
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk04);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk04 + 1);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->bone);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->bone + 1);
         if (from != NULL && tip != NULL) {
             delta_x = tip[0] - from[0];
             delta_y = tip[1] - from[1];
@@ -240,17 +240,17 @@ void EntityEvent_StartFrameEffects(Entity *entity, s32 animation, s32 frame_from
             angles[0] = -atan2f(delta_y, sqrtf(delta_x * delta_x + delta_z * delta_z));
             angles[1] = wrap_angle(-atan2f(delta_z, delta_x) + 1.5707964f);
             angles[2] = angles[3] = 0.0f;
-            frame = record->unk02 << 8;
+            frame = record->frame << 8;
             if (frame < frame_from) {
                 continue;
             }
             if (frame >= frame_to) {
                 continue;
             }
-            if (record->unk05 != 0) {
+            if (record->use_variant != 0) {
                 Effect_StartSpawner(entity->params->variant_effect_ids[(s32)(entity->flags >> 60) & 7], from, angles, entity);
             } else {
-                Effect_StartSpawner(record->unk00, from, angles, entity);
+                Effect_StartSpawner(record->effect_id, from, angles, entity);
             }
         }
     }
@@ -276,17 +276,17 @@ void EntityEvent_StartFrameCues(Entity *entity, s32 animation, s32 frame_from, s
             angle += 6.2831855f;
         }
         for (i = 0; i < count; i++, record++) {
-            frame = record->unk02 << 8;
+            frame = record->frame << 8;
             if (frame < frame_from) {
                 continue;
             }
             if (frame >= frame_to) {
                 continue;
             }
-            if (entity->ailment_4_frames != 0 && record->unk04 != 0) {
+            if (entity->ailment_4_frames != 0 && record->skip_while_ailing != 0) {
                 continue;
             }
-            Sound_PlayFalloff(entity->params->sound_id, record->unk00, record->unk01, entity->sound_bank, entity->distance_to_player_3d, angle);
+            Sound_PlayFalloff(entity->params->sound_id, record->sound, record->kind, entity->sound_bank, entity->distance_to_player_3d, angle);
         }
     }
 }

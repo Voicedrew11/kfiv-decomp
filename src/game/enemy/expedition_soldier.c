@@ -1,4 +1,4 @@
-/* ExpeditionSoldier: the behaviour of entity type 7 (Entity.params->unk02, the index into entity_type_handlers): its
+/* ExpeditionSoldier: the behaviour of entity type 7 (EntityParams.entity_type, the index into entity_type_handlers): its
    set-up function, which the table names, and the handlers it installs. Used by: Expedition Soldier, Lee
    Maynor. The game names no monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched
    to the chr.prm records by hit points and experience, with resistances and drops where two monsters share

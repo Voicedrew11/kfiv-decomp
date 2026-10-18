@@ -1,4 +1,4 @@
-/* DarkPuppet: the behaviour of entity type 52 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* DarkPuppet: the behaviour of entity type 52 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: Dark Puppet. The game names no
    monsters; these names are from https://www.cleanhit.wiki/KF4:Creatures, matched to the chr.prm records by
    hit points and experience, with resistances and drops where two monsters share those. */
@@ -555,12 +555,12 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->record.unk01 != 0) {
+        if (unk3D8->record.turn_frames != 0) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         break;
     case 2:
-        if (unk3D8->record.unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->record.turn_frames >= entity->model->level_tables->frame) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         if (((s32)(entity->flags >> 58) & 3) == 0 && entity->model->level_tables->frame == 0x1E &&
@@ -579,7 +579,7 @@ static void DarkPuppet_RangedAttack0(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->record.unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->record.attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -614,12 +614,12 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (unk3D8->unk01 != 0) {
+        if (unk3D8->turn_frames != 0) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+        if (unk3D8->turn_frames >= entity->model->level_tables->frame) {
             entity->move_command |= EntityAi_TurnCommand(entity);
         }
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8,
@@ -633,7 +633,7 @@ static void DarkPuppet_RangedAttack(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            EntityAi_SetAttackDelay(entity, unk3D8->unk02);
+            EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
                 return;

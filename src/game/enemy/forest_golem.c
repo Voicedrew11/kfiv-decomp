@@ -1,4 +1,4 @@
-/* Forest Golem: the behaviour of entity type 77 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* Forest Golem: the behaviour of entity type 77 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. The Forest Golem: its one spawn (013.map,
    Holy Forest) says "Unable to move" when examined and takes the Forest Dew, the Golems' food. */
 #include "entity/entity.h"

@@ -1,4 +1,4 @@
-/* DarkOne: the behaviour of entity type 75 (Entity.params->unk02, the index into entity_type_handlers): its set-up
+/* DarkOne: the behaviour of entity type 75 (EntityParams.entity_type, the index into entity_type_handlers): its set-up
    function, which the table names, and the handlers it installs. Used by: the Dark One, the last boss,
    chr.prm record 99 (ENTITY_TYPE_LAST_BOSS in Attack_HitEntity), whose one spawn is in 040.map, the end of
    the Dark Reality. The game's own text calls him the Dark One. Attack_HitEntity gives him no damage:
