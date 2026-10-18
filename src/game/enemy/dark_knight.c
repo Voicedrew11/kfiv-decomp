@@ -154,8 +154,8 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     ai_state->pose_blend_weight = 0.5f;
-    first_aim = aims->unk80;
-    second_aim = aims->unk90;
+    first_aim = aims->first_aim;
+    second_aim = aims->second_aim;
     from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1E);
     tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, 0x1C);
     delta[0] = tip[0] - from[0];
@@ -181,10 +181,10 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
             delta[0] = tip[0] - from[0];
             delta[1] = tip[1] - from[1];
             delta[2] = tip[2] - from[2];
-            aims->unk30[0] = atan2f(-delta[1], sqrtf(delta[0] * delta[0] + delta[2] * delta[2]));
-            aims->unk30[1] = atan2f(delta[0], delta[2]);
-            aims->unk30[2] = 0.0f;
-            EntityEvent_StartEffectAtPoint((char **)entity, rand() % 3 + 0x21F, 4, (int)aims->unk30);
+            aims->effect_angles[0] = atan2f(-delta[1], sqrtf(delta[0] * delta[0] + delta[2] * delta[2]));
+            aims->effect_angles[1] = atan2f(delta[0], delta[2]);
+            aims->effect_angles[2] = 0.0f;
+            EntityEvent_StartEffectAtPoint((char **)entity, rand() % 3 + 0x21F, 4, (int)aims->effect_angles);
             frames = entity->params->far_distance;
             entity->params->melee_attacks[0].hit_parts[0].unk00.unk00[8] = frames;
             entity->params->melee_attacks[0].hit_parts[1].unk00.unk00[8] = frames;

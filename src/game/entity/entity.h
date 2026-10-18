@@ -631,15 +631,15 @@ typedef struct {
     f32 unk40;                      /* 0x40 */
     f32 unk44;                      /* 0x44 */
     char pad48[0x22];
-    s16 unk6A;                      /* 0x6A */
+    s16 climb_point_index;          /* 0x6A which of the 5 climb_points it heads for next */
     s16 unk6C;                      /* 0x6C */
     s16 reload_timer;               /* 0x6E countdown after which other work fields are reloaded */
     char pad70[0x08];
-    s8 unk78;                       /* 0x78 */
-    s8 unk79;                       /* 0x79 */
-    s8 unk7A;                       /* 0x7A */
-    s8 unk7B;                       /* 0x7B */
-    s8 unk7C;                       /* 0x7C */
+    s8 move_choice;                 /* 0x78 the way it closes in (0 or -1), as EntityAiState.move_choice */
+    s8 turn_in_place;               /* 0x79 set while it must turn in place towards the player */
+    s8 player_far;                  /* 0x7A 1 once the player is over radius+1100 away, 0 again under radius+600 */
+    s8 sliding;                     /* 0x7B 1 while a slide is under way (the next choice slides to a stop) */
+    s8 magic_alert_timer;           /* 0x7C 30 frames counted down after the player launches a magic shot */
     char pad7D[0x23];
 } __attribute__((aligned(8))) EntityAiStateKind168160;
 
@@ -676,29 +676,29 @@ typedef struct {
    8-byte aligned: only then is "unk68 == 0 && unk6A == 0" one lwu. */
 typedef struct {
     char pad00[0x68];
-    s16 unk68;                      /* 0x68 counts down */
-    s16 unk6A;                      /* 0x6A counts down */
-    s16 unk6C;                      /* 0x6C counts down */
+    s16 vanish_frames;              /* 0x68 frames left while it is vanished (draw flag 0x800, params.action_frames to start) */
+    s16 vanish_cooldown;            /* 0x6A frames before it may vanish again (params.far_distance to start) */
+    s16 think_timer;                /* 0x6C countdown reloaded from params.unk43A */
     char pad6E[0x0A];
     s8 unk78;                       /* 0x78 */
     s8 unk79;                       /* 0x79 */
-    s8 unk7A;                       /* 0x7A */
-    s8 unk7B;                       /* 0x7B */
-    s8 unk7C;                       /* 0x7C */
-    s8 unk7D;                       /* 0x7D */
-    s8 unk7E;                       /* 0x7E */
+    s8 rising;                      /* 0x7A 1 while it climbs (above 45 over the floor) until under 35 */
+    s8 dipped_low;                  /* 0x7B set once it has dropped under 35 over the floor */
+    s8 combat_mode;                 /* 0x7C which combat think state 2 runs: 0 normal, 1 circle near, else keep away */
+    s8 fading_out;                  /* 0x7D set while it fades out before vanishing */
+    s8 fade_frames;                 /* 0x7E frames of the fade-out left (from 20) */
     char pad7F[0x21];
 } __attribute__((aligned(8))) EntityAiStateKind15F8C0;
 
 /* Entity+0xE0 as the kind set up by func_00162BC8 lays it out */
 typedef struct {
     char pad00[0x30];
-    f32 unk30[4];                   /* 0x30 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
+    f32 effect_angles[4];           /* 0x30 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
     char pad40[0x2E];
     s16 unk6E;                      /* 0x6E */
     char pad70[0x10];
-    f32 unk80[4];                   /* 0x80 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
-    f32 unk90[4];                   /* 0x90 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
+    f32 first_aim[4];               /* 0x80 pitch and yaw of the first aimed effect */
+    f32 second_aim[4];              /* 0x90 pitch and yaw of the second aimed effect */
 } EntityAiStateKind162BC8;
 
 /* Entity+0xE0 as the kind set up by Onyx_Init lays it out */

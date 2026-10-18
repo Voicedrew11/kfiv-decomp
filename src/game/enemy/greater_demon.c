@@ -135,32 +135,32 @@ static void GreaterDemon_Think(Entity *entity, s32 unknown) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (player_state.magic_shot_launched != 0) {
-        ai_state->unk7C = 30;
+        ai_state->magic_alert_timer = 30;
     }
-    if (ai_state->unk7C > 0) {
-        ai_state->unk7C--;
+    if (ai_state->magic_alert_timer > 0) {
+        ai_state->magic_alert_timer--;
     }
-    if (entity->distance_to_player < entity->radius + 500.0f + 100.0f && ai_state->unk7A == 1 && ai_state->unk7B == 0) {
-        ai_state->unk7A = 0;
-    } else if (entity->radius + 1000.0f + 100.0f < entity->distance_to_player && ai_state->unk7A == 0) {
-        ai_state->unk7A = 1;
+    if (entity->distance_to_player < entity->radius + 500.0f + 100.0f && ai_state->player_far == 1 && ai_state->sliding == 0) {
+        ai_state->player_far = 0;
+    } else if (entity->radius + 1000.0f + 100.0f < entity->distance_to_player && ai_state->player_far == 0) {
+        ai_state->player_far = 1;
     }
-    if (ai_state->unk6A < 5) {
-        EntityPoint_PickNear(500.0f, &climb_points[ai_state->unk6A], &player_state, &player_state);
+    if (ai_state->climb_point_index < 5) {
+        EntityPoint_PickNear(500.0f, &climb_points[ai_state->climb_point_index], &player_state, &player_state);
         slot = &map_slots[current_map_slot];
-        height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.map_record_index, &climb_points[ai_state->unk6A]);
+        height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.map_record_index, &climb_points[ai_state->climb_point_index]);
         no_floor = D_00446824[0];
         if (height == no_floor) {
-            height = EntityCollision_DistanceToPropFloor(entity->map_record, &climb_points[ai_state->unk6A]);
+            height = EntityCollision_DistanceToPropFloor(entity->map_record, &climb_points[ai_state->climb_point_index]);
             if (height != no_floor) {
-                point = &climb_points[ai_state->unk6A];
+                point = &climb_points[ai_state->climb_point_index];
                 point->y += height;
-                ai_state->unk6A++;
+                ai_state->climb_point_index++;
             }
         } else {
-            point = &climb_points[ai_state->unk6A];
+            point = &climb_points[ai_state->climb_point_index];
             point->y += height;
-            ai_state->unk6A++;
+            ai_state->climb_point_index++;
         }
     }
     if (entity->busy_flags == 0) {
@@ -214,7 +214,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
         entity->params->ranged_attacks[2].record.unk00 = 0;
     }
     // match: angle is read here before anything has set it
-    if (ai_state->unk7B == 0 && entity->distance_to_player < entity->radius + 50.0f + 100.0f && entity->action_timer == 0 &&
+    if (ai_state->sliding == 0 && entity->distance_to_player < entity->radius + 50.0f + 100.0f && entity->action_timer == 0 &&
         rand() % 100 < (s16)entity->params->action_frames && ABS(angle) < 1.0471976f) {
         turn_left = entity->heading_to_player - entity->model->rotation[1];
         if (ABS(turn_left) < 1.0471976f) {
@@ -233,7 +233,7 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_LowerChoiceWeight(entity, side);
         switch (entity->combat_choice) {
         case 0:
-            if (ai_state->unk7B == 1) {
+            if (ai_state->sliding == 1) {
                 EntityAi_StartAction(entity, GreaterDemon_SlideToStop, unknown);
             } else if (EntityAi_PickAttack((char *)entity)) {
                 if (((s32)(entity->flags >> 58) & 3) == 2) {
@@ -246,23 +246,23 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
             }
             return;
         case 1:
-            if (ai_state->unk7A == 1 && ai_state->unk7B == 0 && EntitySight_EntityInWay((int *)entity) == 0) {
+            if (ai_state->player_far == 1 && ai_state->sliding == 0 && EntitySight_EntityInWay((int *)entity) == 0) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 0xF0;
-                ai_state->unk78 = 0;
+                ai_state->move_choice = 0;
                 EntityAi_StartAction(entity, GreaterDemon_Rise, unknown);
                 return;
             }
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 0x78;
-            ai_state->unk78 = 0;
+            ai_state->move_choice = 0;
             break;
         case 2:
             entity->action_timer = rand() % 30 + 0x1E;
-            ai_state->unk78 = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            ai_state->unk78 = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
@@ -271,21 +271,21 @@ static void GreaterDemon_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (ai_state->unk79 == 0) {
-                ai_state->unk79 = ABS(angle) > 0.5235988f;
-                if (ai_state->unk79 == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                ai_state->unk79 = 0;
+                ai_state->turn_in_place = 0;
             }
-        } else if (ai_state->unk7A == 1) {
-            if (EntitySight_EntityInWay((int *)entity) == 0 && ai_state->unk7B == 0) {
+        } else if (ai_state->player_far == 1) {
+            if (EntitySight_EntityInWay((int *)entity) == 0 && ai_state->sliding == 0) {
                 entity->target = &player_state;
                 entity->action_timer = rand() % 60 + 0xF0;
-                ai_state->unk78 = 0;
+                ai_state->move_choice = 0;
                 EntityAi_StartAction(entity, GreaterDemon_Rise, unknown);
                 return;
             }
@@ -589,7 +589,7 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
-            ai_state->unk7B = 0;
+            ai_state->sliding = 0;
             if ((s32)(entity->flags >> 5) & 1) {
                 ai_state->think(entity, 1);
             } else {
@@ -681,7 +681,7 @@ static void GreaterDemon_ReactionHeavy(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit10 = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->reaction_step++;
-        ai_state->unk7B = 0;
+        ai_state->sliding = 0;
         break;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
@@ -761,7 +761,7 @@ static s32 GreaterDemon_ShouldGuard(Entity *entity, f32 min_gap, f32 max_angle) 
     f32 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
     f32 facing = EntityMath_AngleDifference(player_state.heading, EntityMath_AngleXZ(player_state.position, (char *)entity->model->position));
 
-    if (entity->busy_flags != 0 || gap < min_gap || max_angle < ABS(angle) || 0.7853982f < ABS(facing) || ai_state->unk7C <= 0) {
+    if (entity->busy_flags != 0 || gap < min_gap || max_angle < ABS(angle) || 0.7853982f < ABS(facing) || ai_state->magic_alert_timer <= 0) {
         return FALSE;
     }
     return rand() % 100 < entity->params->guard_chance;
@@ -793,27 +793,27 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
-        ai_state->unk6A = 0;
+        ai_state->climb_point_index = 0;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        if (ai_state->unk6A < 5) {
-            EntityPoint_PickNear(500.0f, &climb_points[ai_state->unk6A], &player_state, &player_state);
+        if (ai_state->climb_point_index < 5) {
+            EntityPoint_PickNear(500.0f, &climb_points[ai_state->climb_point_index], &player_state, &player_state);
             slot = &map_slots[current_map_slot];
-            height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.map_record_index, &climb_points[ai_state->unk6A]);
+            height = EntityCollision_DistanceToPropFloor((MapRecord *)slot->records + player_state.map_record_index, &climb_points[ai_state->climb_point_index]);
             no_floor = D_00446828[0];
             if (height == no_floor) {
-                height = EntityCollision_DistanceToPropFloor(entity->map_record, &climb_points[ai_state->unk6A]);
+                height = EntityCollision_DistanceToPropFloor(entity->map_record, &climb_points[ai_state->climb_point_index]);
                 if (height == no_floor) {
                     break;
                 }
             }
-            floor_point = &climb_points[ai_state->unk6A];
+            floor_point = &climb_points[ai_state->climb_point_index];
             floor_point->y += height;
-            ai_state->unk6A++;
+            ai_state->climb_point_index++;
         }
         break;
     case 2:
@@ -823,8 +823,8 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
         if (entity->model->level_tables->frame == 0x11) {
             minion_index = 0;
             count = rand() % 5 + 1;
-            if (ai_state->unk6A < count) {
-                count = ai_state->unk6A;
+            if (ai_state->climb_point_index < count) {
+                count = ai_state->climb_point_index;
             }
             for (point_index = 0; point_index < count; point_index++) {
                 for (; minion_index < 8; minion_index++) {
