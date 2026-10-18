@@ -4349,10 +4349,10 @@ static void Menu_UpdateKeyItems(void) {
             TEXTURE_HEADER_BITS(texture)->tex0.f.cbp = clut_pages.base[i];
             pool_slots[31].part = part;
             // match: both words are read through unions, which keeps the two NULL stores below them
-            pool_slots[31].unk58 = TEXTURE_HEADER_BITS(texture)->tex0.raw;
+            pool_slots[31].tex0 = TEXTURE_HEADER_BITS(texture)->tex0.raw;
             pool_slots[31].unk60 = TEXTURE_HEADER_BITS(texture)->unk18.raw;
-            pool_slots[31].unk48 = NULL;
-            pool_slots[31].unk40 = NULL;
+            pool_slots[31].part_record = NULL;
+            pool_slots[31].parent = NULL;
             MenuTexture_Upload(texture, NULL);
             sceVu0TransMatrix((f32 *)&pool_slots[31], view, positions.position[i]);
             PoolSlot_Draw((RenderSlot *)&pool_slots[31], slot_arg); // match: slot_arg is never set
