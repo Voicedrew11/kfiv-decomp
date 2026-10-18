@@ -123,7 +123,7 @@ typedef struct {
 /* the viewers MapViewer_Run runs, indexed by picked_viewer (ui/map_viewer.c), 0xC bytes each */
 typedef struct {
     void (*run)(void);              /* 0x00 loops until the viewer is left */
-    int locate_player_fn;           /* 0x04 the function that finds the player's marker on the picture */
+    int (*locate_player_fn)(int *x, int *y); /* 0x04 the function that finds the player's marker on the picture */
     int count;                      /* 0x08 the number of pictures; viewer_picture stays below it */
 } ViewerEntry;
 

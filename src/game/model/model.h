@@ -417,7 +417,7 @@ typedef struct ModelInstance {
     void (*draw)(struct ModelInstance *model); /* 0x1AC sets the GS state and draws */
     void (*after_draw)();           /* 0x1B0 called with the model by DrawList_Draw */
     void (*update_bone_points)(struct ModelInstance *model); /* 0x1B4 recomputes the 32 bone positions from the bone anchors */
-    int (*get_point)(void *model, int index); /* 0x1B8 */
+    void *(*get_point)(void *model, int index); /* 0x1B8 the point (a vector) of index */
     void (*on_textures_sent)(struct ModelInstance *model); /* 0x1BC called when ModelTexture_SendForModel sent new textures */
 } ModelInstance;
 

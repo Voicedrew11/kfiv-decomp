@@ -187,7 +187,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     model->draw_parts = Model_DrawSkinned;
     *file_cursor += file->size;
     model->update_bone_points = Model_UpdateSkinnedBonePoints;
-    model->get_point = (int (*)(void *, int))Model_GetSkinnedBonePoint;
+    model->get_point = (void *(*)(void *, int))Model_GetSkinnedBonePoint;
     first = TRUE;
     model->unk160[0] = 0;
     model->unk160[1] = 0;
@@ -825,7 +825,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
     model->draw_parts = Model_DrawPosed;
     *file_cursor += file->size;
     model->update_bone_points = Model_UpdateBonePoints;
-    model->get_point = (int (*)(void *, int))Model_GetBonePoint;
+    model->get_point = (void *(*)(void *, int))Model_GetBonePoint;
 }
 
 /* Draws a model (ModelInstance.draw_parts of the models Model_SetUpPosed sets up): queues a packet with

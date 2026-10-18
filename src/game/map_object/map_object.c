@@ -105,7 +105,7 @@ void MapObject_InitMap(int map) {
     for (; i < count; i++, object++) {
         MAP_OBJECT_BYTES(object)->step = 0;
         if (object->definition->model_index == 0xFFFF) {
-            object->model->get_point = (int (*)(void *, int))MapObject_GetPositionAsPoint;
+            object->model->get_point = (void *(*)(void *, int))MapObject_GetPositionAsPoint;
             object->model->update_bone_points = (void (*)(ModelInstance *))MapObject_UpdateNoBonePoints;
         }
         if (object->source->spawn_flags.bytes[2] != 0) {
