@@ -667,8 +667,8 @@ typedef struct {
     f32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
     char pad20[0x24];
     f32 move_speed;                 /* 0x44 speed the movement builds up with EntityAi_Accelerate */
-    f32 unk48;                      /* 0x48 */
-    f32 unk4C;                      /* 0x4C */
+    f32 vertical_speed;             /* 0x48 up/down speed eased by the up and down commands */
+    f32 forward_speed;              /* 0x4C forward speed eased by the forward and back commands */
     char pad50[0x50];
 } EntityAiStateKind16BF98;
 
