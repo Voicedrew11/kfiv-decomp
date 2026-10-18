@@ -143,7 +143,7 @@ void EffectAtTarget_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     int target_id;
 
     target_id = EffectHit_FindAimedEntity(effect, &player_state.position, &player_state.rotation);
-    effect->unk6C = target_id;
+    effect->target_entity = target_id;
     motion = (TargetMotion *)&effect->motion;
     if (target_id == 0) {
         EffectStart_PlaceModel(effect, spawn_slot);
@@ -157,7 +157,7 @@ void EffectAtTarget_Start(EffectActor *effect, EffectSlot *spawn_slot) {
         effect->model->rotation.y = 0.0f;
         effect->model->rotation.z = 0.0f;
     }
-    motion->unk00 = effect->def->radius_half;
+    motion->countdown = effect->def->radius_half;
     motion->unk04 = 0;
 }
 
@@ -183,14 +183,14 @@ void EffectAtTargetFloor_Start(EffectActor *actor, EffectSlot *spawn_slot) {
 
     source = (Entity *)EffectHit_FindAimedEntity(actor, &player_state.position, &player_state.rotation);
     motion = (SnappedMotion *)&actor->motion;
-    actor->unk6C = (int)source;
-    motion->unk04 = 1;
-    if (actor->unk6C == 0) {
+    actor->target_entity = (int)source;
+    motion->no_floor = 1;
+    if (actor->target_entity == 0) {
         EffectStart_PlaceModel(actor, spawn_slot);
         EffectStart_TurnModel(actor, spawn_slot);
-        motion->unk04 = 0;
+        motion->no_floor = 0;
     } else {
-        source_model = ENTITY_MODEL((Entity *)actor->unk6C);
+        source_model = ENTITY_MODEL((Entity *)actor->target_entity);
         actor->model->position.x = source_model->position.x;
         actor->model->position.y = source_model->position.y;
         actor->model->position.z = source_model->position.z;
@@ -200,11 +200,11 @@ void EffectAtTargetFloor_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     }
     actor->model->position.y -= actor->def->ground_height * 0.5f;
     if (Collision_FindFloorBelow(actor->def->ground_height, &actor->model->position) == 0) {
-        motion->unk04 = 1;
+        motion->no_floor = 1;
         actor->frame = actor->def->keyframe_end;
         actor->model->position.y += actor->def->ground_height * 0.5f;
     } else {
-        motion->unk04 = 0;
+        motion->no_floor = 0;
         actor->model->position.y = COLLISION_RESULT->point[1];
     }
     motion->radius_half = actor->def->radius_half;
@@ -219,7 +219,7 @@ void EffectAtTargetFloor_Update(EffectActor *effect) {
 
     remaining = motion->countdown - 1;
     motion->countdown = remaining;
-    if (motion->unk04 == 0 && remaining <= 0) {
+    if (motion->no_floor == 0 && remaining <= 0) {
         EffectHit_CheckAndEnd(effect, state_buffer);
     }
     effect->frame += 1;
@@ -297,14 +297,14 @@ void EffectTrailHoming_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(effect, spawn_slot);
     EffectStart_PlaceModel(effect, spawn_slot);
     effect->model->position.y -= 220.0f;
-    effect->unk6C = EffectHit_FindAimedEntity(effect, &effect->model->position, &effect->model->rotation);
+    effect->target_entity = EffectHit_FindAimedEntity(effect, &effect->model->position, &effect->model->rotation);
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
-    motion->unk14 = 0;
-    motion->unkDC = effect->def->turn_rate;
-    motion->unk18 = 0;
-    motion->unk1C = 0;
-    motion->unk20 = 0;
-    motion->unk24 = 0;
+    motion->hit_cooldown = 0;
+    motion->turn_rate = effect->def->turn_rate;
+    motion->wobbling = 0;
+    motion->wobble_x = 0;
+    motion->wobble_z = 0;
+    motion->ended = 0;
     ENTITY_FLAG_WORD(effect->flags) |= EFFECT_FLAG_HAS_TARGETERS;
 }
 
@@ -323,47 +323,47 @@ void EffectTrailHoming_Update(EffectActor *actor) {
     motion = (HomingMotion *)&actor->motion;
     EffectKeys_ApplySpin(actor);
     EffectKeys_ApplyColour(actor);
-    if (motion->unk24 != 0) {
+    if (motion->ended != 0) {
         Effect_Free(actor);
         return;
     }
-    if (actor->unk6C != 0) {
-        Vector_Subtract(&delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
-        if (motion->unk18 == 0) {
-            motion->unkDC += actor->def->ground_height;
-            delta.y -= ((Entity *)actor->unk6C)->height * 0.8f;
+    if (actor->target_entity != 0) {
+        Vector_Subtract(&delta, ((Entity *)actor->target_entity)->model->position, &actor->model->position);
+        if (motion->wobbling == 0) {
+            motion->turn_rate += actor->def->ground_height;
+            delta.y -= ((Entity *)actor->target_entity)->height * 0.8f;
         } else {
             if (actor->frame & 1) {
-                motion->unk1C = (((rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 200.0f;
-                motion->unk20 = (((rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 200.0f;
+                motion->wobble_x = (((rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 200.0f;
+                motion->wobble_z = (((rand() & 0xFFFF) * 0.000030517578f) - 1.0f) * 200.0f;
             }
-            delta.y -= ((Entity *)actor->unk6C)->height;
+            delta.y -= ((Entity *)actor->target_entity)->height;
             if (Vector_Dot3(&delta, motion) < 0.0f) {
-                delta.x += motion->unk1C;
+                delta.x += motion->wobble_x;
                 delta.y -= 50.0f;
-                delta.z += motion->unk20;
+                delta.z += motion->wobble_z;
             }
         }
-        EffectSteer_Toward(&motion->velocity, &delta, actor->def->speed, motion->unkDC);
+        EffectSteer_Toward(&motion->velocity, &delta, actor->def->speed, motion->turn_rate);
         EffectAngle_FromVector(&actor->model->rotation.x, &motion->velocity.x);
-        if (ENTITY_FLAG_BITS((Entity *)actor->unk6C)->bits2 > 0) {
-            actor->unk6C = (int)EffectHit_FindNearestEntity(actor, &actor->model->position, &actor->model->rotation);
+        if (ENTITY_FLAG_BITS((Entity *)actor->target_entity)->bits2 > 0) {
+            actor->target_entity = (int)EffectHit_FindNearestEntity(actor, &actor->model->position, &actor->model->rotation);
         }
     }
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
         sceVu0AddVector(&actor->model->position, &actor->model->position, motion);
         Effect_Spawn(actor->def->child_effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
     }
-    motion->unk14--;
+    motion->hit_cooldown--;
     COLLISION_RESULT->unk18 = 6;
     hit = Attack_RunEffectHitCheck(actor);
     if (hit != 0) {
         if (hit & 2) {
-            if (motion->unk14 < 0) {
-                motion->unkDC = actor->def->sub_effect_id;
+            if (motion->hit_cooldown < 0) {
+                motion->turn_rate = actor->def->sub_effect_id;
                 Effect_Spawn(actor->def->radius_half, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
-                motion->unk18 = 1;
-                motion->unk14 = 15;
+                motion->wobbling = 1;
+                motion->hit_cooldown = 15;
             }
         } else {
             mode = COLLISION_RESULT->unk18;
@@ -376,7 +376,7 @@ void EffectTrailHoming_Update(EffectActor *actor) {
                 effect_id = 0x14;
             }
             Effect_Spawn(effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
-            motion->unk24 = 1;
+            motion->ended = 1;
         }
     }
     actor->frame++;
@@ -393,8 +393,8 @@ void EffectAimedHoming_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     model = effect->model;
     model->position.y -= 220.0f;
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &model->rotation);
-    effect->unk6C = EffectHit_FindAimedEntity(effect, &player_state.position, &player_state.rotation);
-    motion->unkDC = effect->def->turn_rate;
+    effect->target_entity = EffectHit_FindAimedEntity(effect, &player_state.position, &player_state.rotation);
+    motion->turn_rate = effect->def->turn_rate;
 }
 
 /* Homes on its entity with a turn that grows by EffectDef.ground_height, while the entity can be hit. On a
@@ -410,14 +410,14 @@ void EffectAimedHoming_Update(EffectActor *actor) {
     motion = (ScaledFallMotion *)&actor->motion;
     EffectKeys_ApplySpin(actor);
     EffectKeys_ApplyColour(actor);
-    if (actor->unk6C != 0) {
-        if (((u32)(((Entity *)actor->unk6C)->flags >> 2) & 3) == 0) {
-            Vector_Subtract(&vec, &((Entity *)actor->unk6C)->model->position, &actor->model->position);
+    if (actor->target_entity != 0) {
+        if (((u32)(((Entity *)actor->target_entity)->flags >> 2) & 3) == 0) {
+            Vector_Subtract(&vec, &((Entity *)actor->target_entity)->model->position, &actor->model->position);
             motion->fall_speed += actor->def->ground_height;
-            vec.y -= ((Entity *)actor->unk6C)->height * 0.5f;
+            vec.y -= ((Entity *)actor->target_entity)->height * 0.5f;
             EffectSteer_Toward(&motion->velocity, &vec, actor->def->speed, motion->fall_speed);
         } else {
-            actor->unk6C = 0;
+            actor->target_entity = 0;
         }
     }
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
@@ -453,7 +453,7 @@ void EffectShot_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     model = effect->model;
     model->position.y -= 220.0f;
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &model->rotation);
-    motion->unk10 = Effect_FramesToImpact((float)effect->def->radius_half, effect, motion, scratch);
+    motion->frames_to_impact = Effect_FramesToImpact((float)effect->def->radius_half, effect, motion, scratch);
 }
 
 /* Flies on; on a hit or at the frame it reaches the scenery spawns the end effect and ends (kind
@@ -534,13 +534,13 @@ void EffectGroundChase_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectStart_TurnModel(actor, spawn_slot);
     if (actor->target->def->child_effect_id != 0) {
         EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
-        actor->unk6C = EffectHit_FindAimedEntity(actor, &player_state.position, &player_state.rotation);
-        motion->unk14 = actor->target->def->child_effect_id;
+        actor->target_entity = EffectHit_FindAimedEntity(actor, &player_state.position, &player_state.rotation);
+        motion->links_left = actor->target->def->child_effect_id;
     } else {
         Vector_Copy(motion, target_motion);
-        actor->unk6C = actor->target->unk6C;
-        motion->unk14 = target_motion->unk14 - 1;
-        if (motion->unk14 == 0) {
+        actor->target_entity = actor->target->target_entity;
+        motion->links_left = target_motion->links_left - 1;
+        if (motion->links_left == 0) {
             actor->frame = actor->def->keyframe_end;
         }
     }
@@ -564,13 +564,13 @@ void EffectGroundChase_Update(EffectActor *actor) {
 
     motion = (LandingMotion *)&actor->motion;
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
-        target = (Entity *)actor->unk6C;
+        target = (Entity *)actor->target_entity;
         if (target != NULL) {
             if (((int)(target->flags >> 2) & 3) == 0) { // match: the int cast gives retail's dsll/dsra32
                 Vector_Subtract(&offset, &target->model->position, &actor->model->position);
                 EffectSteer_Toward(&motion->velocity, &offset, actor->def->speed, actor->def->turn_rate);
             } else {
-                actor->unk6C = 0;
+                actor->target_entity = 0;
             }
         }
         actor->model->position.y -= actor->def->ground_height * 0.5f;
@@ -587,8 +587,8 @@ void EffectGroundChase_Update(EffectActor *actor) {
         Effect_Free(actor);
     } else if (actor->frame == 0) {
         Vector_Copy(&offset, &actor->model->position);
-        if (actor->unk6C != 0) {
-            target = (Entity *)actor->unk6C;
+        if (actor->target_entity != 0) {
+            target = (Entity *)actor->target_entity;
             if (Effect_Distance(&offset, &target->model->position) < 100.0f) {
                 Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
                 motion->state = 1;
@@ -680,10 +680,10 @@ void EffectChase_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectStart_PlaceModel(actor, spawn_slot);
     actor->model->position.y -= 220.0f;
     EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
-    actor->unk6C = EffectHit_FindAimedEntity(actor, &actor->model->position, &actor->model->rotation);
+    actor->target_entity = EffectHit_FindAimedEntity(actor, &actor->model->position, &actor->model->rotation);
     motion->ended = 0;
-    if (actor->unk6C != 0) {
-        target = *(ModelInstance **)actor->unk6C;
+    if (actor->target_entity != 0) {
+        target = *(ModelInstance **)actor->target_entity;
         Vector_Subtract(offset, &target->position, &actor->model->position);
         remaining = (double)(float)actor->def->interval - sqrt((double)(offset[0] * offset[0] + offset[2] * offset[2]));
         motion->turn = remaining / (double)((float)actor->def->interval + (float)actor->def->interval);
@@ -705,12 +705,12 @@ void EffectChase_Update(EffectActor *actor) {
     motion = (ChaseMotion *)&actor->motion;
     EffectKeys_ApplySpin(actor);
     EffectKeys_ApplyColour(actor);
-    if (actor->unk6C != 0) {
-        if (((u32)(((Entity *)actor->unk6C)->flags >> 2) & 3) < 2) {
-            Vector_Subtract(delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
+    if (actor->target_entity != 0) {
+        if (((u32)(((Entity *)actor->target_entity)->flags >> 2) & 3) < 2) {
+            Vector_Subtract(delta, ((Entity *)actor->target_entity)->model->position, &actor->model->position);
             if (Vector_Dot3(delta, motion) > 0.0f) {
                 motion->turn += actor->def->ground_height;
-                delta[1] -= ((Entity *)actor->unk6C)->height * 0.5f;
+                delta[1] -= ((Entity *)actor->target_entity)->height * 0.5f;
             } else {
                 actor->frame = actor->def->keyframe_end;
             }
@@ -718,7 +718,7 @@ void EffectChase_Update(EffectActor *actor) {
             EffectAngle_FromVector(&actor->model->rotation.x, &motion->velocity.x);
             motion->velocity.w = 0;
         } else {
-            actor->unk6C = 0;
+            actor->target_entity = 0;
         }
     }
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
@@ -866,8 +866,8 @@ void EffectFloorSkim_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectStart_PlaceModel(actor, spawn_slot);
     EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
     motion->unk20 = Effect_FramesToImpact(30.0f, actor, motion, motion->unk10);
-    motion->unk25 = 0;
-    motion->unk22 = 0;
+    motion->ends_next_frame = 0;
+    motion->frames_to_impact = 0;
     motion->unk24 = 0;
 }
 
@@ -887,17 +887,17 @@ void EffectFloorSkim_Update(EffectActor *effect) {
     EffectKeys_ApplySpin(effect);
     EffectKeys_ApplyColour(effect);
     sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
-    if ((s8)motion->unk25 != 0) { // match: retail loads unk25 as a signed byte
+    if ((s8)motion->ends_next_frame != 0) { // match: retail loads unk25 as a signed byte
         Effect_Free(effect);
     } else {
-        motion->unk22 -= 1;
+        motion->frames_to_impact -= 1;
         hits = Attack_RunEffectHitCheck(effect);
         if (hits != 0) {
             if ((hits & 2) && effect->def->child_effect_id != 0) {
                 Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 Effect_Spawn(0x33, &point, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
-                motion->unk25 = 1;
-            } else if ((hits & 8) && motion->unk22 < 0) {
+                motion->ends_next_frame = 1;
+            } else if ((hits & 8) && motion->frames_to_impact < 0) {
                 Vector_Copy(&point, &effect->model->position);
                 point.y -= 100.0f;
                 point.y = (Collision_FindFloorBelow(200.0f, &point) == 1) ? COLLISION_RESULT->point[1] : effect->model->position.y;
@@ -925,7 +925,7 @@ void EffectFloorSkim_Update(EffectActor *effect) {
                         motion->unk24 = 1;
                     }
                 }
-                motion->unk22 = effect->def->radius_half;
+                motion->frames_to_impact = effect->def->radius_half;
             }
         }
     }
@@ -1016,8 +1016,8 @@ void EffectGroundSway_Update(EffectActor *effect) {
         return;
     }
     if (effect->frame == 0) {
-        result = Sound_PlayTrackedKind(1, 10, 0, (int)&player_state, EFFECT_FLAG_PARTS(effect)->unk46);
-        EFFECT_FLAG_PARTS(effect)->unk46 = result;
+        result = Sound_PlayTrackedKind(1, 10, 0, (int)&player_state, EFFECT_FLAG_PARTS(effect)->sound_track);
+        EFFECT_FLAG_PARTS(effect)->sound_track = result;
         if ((s8)result > 0) {
             effect_sound_count += 1;
         }
@@ -1110,8 +1110,8 @@ void EffectGroundTrail_Update(EffectActor *effect) {
         return;
     }
     if (effect->frame == 0) {
-        result = Sound_PlayTrackedKind(1, 10, 0, (int)&player_state, EFFECT_FLAG_PARTS(effect)->unk46);
-        EFFECT_FLAG_PARTS(effect)->unk46 = result;
+        result = Sound_PlayTrackedKind(1, 10, 0, (int)&player_state, EFFECT_FLAG_PARTS(effect)->sound_track);
+        EFFECT_FLAG_PARTS(effect)->sound_track = result;
         if ((s8)result > 0) {
             effect_sound_count += 1;
         }
@@ -1182,7 +1182,7 @@ void EffectArc_Update(EffectActor *actor) {
         EffectAngle_FromVector(&actor->model->rotation.x, &motion->velocity.x);
     }
     if (actor->frame < 0x14) {
-        if (motion->unk10 != 0) {
+        if (motion->ends_next_frame != 0) {
             Effect_Free(actor);
         } else if (Attack_RunEffectHitCheck(actor) != 0) {
             if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
@@ -1192,7 +1192,7 @@ void EffectArc_Update(EffectActor *actor) {
                 end_effect = actor->def->end_effect;
             }
             Effect_Spawn(end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
-            motion->unk10 = 1;
+            motion->ends_next_frame = 1;
         }
     }
     actor->frame++;
@@ -1255,7 +1255,7 @@ void EffectFollow_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     EffectAngle_ToVector(effect->def->speed, &motion->velocity, &effect->model->rotation);
     motion->unk24 = 0;
     motion->unk26 = 0;
-    motion->unk25 = 0;
+    motion->ends_next_frame = 0;
 }
 
 /* Looks for the floor up to 700 below position; if there is one, sets the aim 600 above it under
@@ -1270,7 +1270,7 @@ static int EffectFollow_AimAboveFloor(EffectActor *effect, float *position, AimM
     if (Collision_FindFloorBelow(1000.0f, &local.x)) {
         target_model = effect->target->model;
         motion->target_x = target_model->position.x;
-        motion->unk14 = COLLISION_RESULT->point[1] - 600.0f;
+        motion->target_y = COLLISION_RESULT->point[1] - 600.0f;
         target_z = target_model->position.z;
         motion->flag25 = 1;
         motion->target_z = target_z;
@@ -1412,10 +1412,10 @@ void EffectBeam_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     motion->scale_per_mille = 0;
     chosen = picked->entity[EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level - 1];
     if (chosen != NULL) {
-        actor->unk6C = (int)chosen;
+        actor->target_entity = (int)chosen;
         motion->scale_per_mille = picked->distance[EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level - 1];
         Vector_Copy(&motion->end_position, chosen->model->position);
-        EffectBeam_AnglesToward(&actor->model->rotation, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
+        EffectBeam_AnglesToward(&actor->model->rotation, ((Entity *)actor->target_entity)->model->position, &actor->model->position);
         return;
     }
     offset[0] = ((rand() & 0xFFFF) * 3.0517578e-05f - 1.0f) * 0.7f;
@@ -1469,7 +1469,7 @@ void EffectHomingChain_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectStart_PlaceModel(actor, spawn_slot);
     EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
     if (actor->target->def->child_effect_id != 0) {
-        actor->unk6C = EffectHit_FindAimedEntity(actor, &player_state.position, &player_state.rotation);
+        actor->target_entity = EffectHit_FindAimedEntity(actor, &player_state.position, &player_state.rotation);
         motion->timer = actor->target->def->child_effect_id;
         if (EffectHit_Check(actor)) {
             Effect_Spawn(actor->def->end_effect, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
@@ -1478,12 +1478,12 @@ void EffectHomingChain_Start(EffectActor *actor, EffectSlot *spawn_slot) {
         }
     } else {
         timer = target_motion->timer - 1;
-        actor->unk6C = actor->target->unk6C;
+        actor->target_entity = actor->target->target_entity;
         motion->timer = timer;
     }
-    if (actor->unk6C != 0) {
-        Vector_Subtract(&offset, &((Entity *)actor->unk6C)->model->position, &actor->model->position);
-        offset.y -= ((Entity *)actor->unk6C)->height * 0.5f;
+    if (actor->target_entity != 0) {
+        Vector_Subtract(&offset, &((Entity *)actor->target_entity)->model->position, &actor->model->position);
+        offset.y -= ((Entity *)actor->target_entity)->height * 0.5f;
         EffectSteer_Toward(&motion->velocity, &offset, actor->def->speed, actor->def->turn_rate);
     }
     motion->flags = 0xFFFF;
@@ -1511,11 +1511,11 @@ void EffectHomingChain_Update(EffectActor *effect) {
             Effect_Spawn(effect->def->end_effect, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         } else {
             if (motion->unk24 == 0) {
-                Effect_Spawn(effect->def->end_effect, &motion->unk10, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
+                Effect_Spawn(effect->def->end_effect, &motion->end_position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             } else {
                 u16 effect_id;
 
-                if (motion->unk20 > 0) {
+                if (motion->links_left > 0) {
                     effect_id = effect->def->radius_half;
                 } else {
                     effect_id = effect->def->sub_effect_id;
@@ -1540,7 +1540,7 @@ void EffectFan_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectStart_PlaceModel(actor, spawn_slot);
     actor->motion.velocity.x = motion->velocity.y = motion->velocity.w = 0.0f;
     motion->velocity.z = actor->def->spin_rate;
-    sceVu0RotMatrixY(matrix, identity_matrix, spawn_slot->unk10.y);
+    sceVu0RotMatrixY(matrix, identity_matrix, spawn_slot->rotation.y);
     sceVu0ApplyMatrix(&motion->end_position.x, matrix, &motion->velocity.x);
     actor->motion.velocity.x = motion->velocity.y = motion->velocity.w = 0.0f;
     motion->velocity.z = actor->def->speed;
@@ -1554,7 +1554,7 @@ void EffectFan_Start(EffectActor *actor, EffectSlot *spawn_slot) {
         angle += 6.2831855f;
     }
     sceVu0RotMatrixZ(matrix, matrix, angle);
-    sceVu0RotMatrixY(matrix, matrix, spawn_slot->unk10.y);
+    sceVu0RotMatrixY(matrix, matrix, spawn_slot->rotation.y);
     sceVu0ApplyMatrix(&motion->velocity.x, matrix, &motion->velocity.x);
     motion->scale_per_mille = 1.0f;
 }
@@ -1571,9 +1571,9 @@ void EffectFan_Update(EffectActor *effect) {
     EffectKeys_ApplyColour(effect);
     def = effect->def;
     if (effect->frame < def->max_frames || def->max_frames == 0) {
-        motion->unk20 += def->scale_per_frame;
+        motion->velocity_scale += def->scale_per_frame;
         Vector_Add(&motion->velocity, &motion->end_position, &motion->velocity);
-        Vector_Scale(&motion->velocity.x, &motion->velocity.x, motion->unk20);
+        Vector_Scale(&motion->velocity.x, &motion->velocity.x, motion->velocity_scale);
         sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
     }
     effect->frame += 1;
@@ -1609,7 +1609,7 @@ void EffectBobHoming_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     motion->bob_speed = (((rand() & 0xFFFF) * 0.000030517578125f) - 1.0f) * 0.5f;
     motion->bob_limit = (((rand() & 0xFFFF) * 0.000030517578125f) - 1.0f) * 0.1f + 0.6f;
     motion->bob_rising = FALSE;
-    actor->unk6C = 0;
+    actor->target_entity = 0;
     motion->velocity_scale = 1.0f;
     motion->end_countdown = 0;
     motion->countdown = 0;
@@ -1684,13 +1684,13 @@ void EffectBobHoming_Update(EffectActor *effect) {
     effect->model->position.y += motion->bob_speed;
     if (effect->frame == effect->def->max_frames && effect->def->interval != 0) {
         // match: retail passes the rotation as a third argument the function does not take
-        effect->unk6C = (int)((Entity *(*)(EffectActor *, Vector4 *, Vector4 *))EffectHit_FindNearestEntity)(effect, &effect->model->position, &effect->model->rotation);
+        effect->target_entity = (int)((Entity *(*)(EffectActor *, Vector4 *, Vector4 *))EffectHit_FindNearestEntity)(effect, &effect->model->position, &effect->model->rotation);
         motion->turn = 0.0f;
     }
-    if (effect->unk6C != 0) {
-        if (((s32)(((EffectTarget *)effect->unk6C)->flags >> 2) & 3) == 0) {
-            Vector_Subtract(&to_target, &((EffectTarget *)effect->unk6C)->model->position, &effect->model->position);
-            to_target.y -= ((EffectTarget *)effect->unk6C)->height * 0.5f;
+    if (effect->target_entity != 0) {
+        if (((s32)(((EffectTarget *)effect->target_entity)->flags >> 2) & 3) == 0) {
+            Vector_Subtract(&to_target, &((EffectTarget *)effect->target_entity)->model->position, &effect->model->position);
+            to_target.y -= ((EffectTarget *)effect->target_entity)->height * 0.5f;
             if (effect->def->ground_height < motion->turn) {
                 motion->turn = effect->def->ground_height;
             } else {
@@ -1699,7 +1699,7 @@ void EffectBobHoming_Update(EffectActor *effect) {
             EffectSteer_Toward(&motion->velocity, &to_target, motion->turn, 100.0f);
             sceVu0AddVector(&effect->model->position, &effect->model->position, &motion->velocity);
         } else {
-            effect->unk6C = 0;
+            effect->target_entity = 0;
         }
     }
     if (motion->ended != 0) {
@@ -1804,7 +1804,7 @@ void EffectHoverShot_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     motion->end_frame = -1;
     actor->model->position.y -= 220.0f;
     motion->ended = 0;
-    actor->unk6C = 0;
+    actor->target_entity = 0;
     actor->flags |= (s64)0x8000 << 0x2B;
 }
 
@@ -1821,14 +1821,14 @@ void EffectHoverShot_Update(EffectActor *effect) {
     int gone_bits;
 
     motion = (TimerMotion *)&effect->motion;
-    if (effect->unk6C != 0) {
-        gone_bits = (int)(((EffectTarget *)effect->unk6C)->flags << 30 >> 32);
+    if (effect->target_entity != 0) {
+        gone_bits = (int)(((EffectTarget *)effect->target_entity)->flags << 30 >> 32);
         if ((gone_bits & 3) == 0) {
-            Vector_Subtract(&offset, &((EffectTarget *)effect->unk6C)->model->position, &effect->model->position);
-            offset.y -= ((EffectTarget *)effect->unk6C)->height * 0.5f;
+            Vector_Subtract(&offset, &((EffectTarget *)effect->target_entity)->model->position, &effect->model->position);
+            offset.y -= ((EffectTarget *)effect->target_entity)->height * 0.5f;
             EffectSteer_Toward(&motion->velocity, &offset, effect->def->speed, effect->def->turn_rate);
         } else {
-            effect->unk6C = 0;
+            effect->target_entity = 0;
         }
     }
     if (effect->frame >= effect->def->radius_half) {
@@ -1852,7 +1852,7 @@ void EffectHoverShot_Update(EffectActor *effect) {
         motion->timer = timer;
         if (timer == 0) {
             EffectAngle_FromVector(&angles.x, &motion->velocity.x);
-            effect->unk6C = EffectHit_FindAimedEntity(effect, &effect->model->position, &angles);
+            effect->target_entity = EffectHit_FindAimedEntity(effect, &effect->model->position, &angles);
         }
     }
     effect->frame += 1;
@@ -2069,10 +2069,10 @@ void EffectAimedChase_Start(EffectActor *actor, EffectSlot *spawn_slot) {
     EffectStart_PlaceModel(actor, spawn_slot);
     motion = (ChaseMotion *)&actor->motion;
     EffectAngle_ToVector(actor->def->speed, &motion->velocity, &actor->model->rotation);
-    actor->unk6C = EffectHit_FindAimedEntity(actor, &player_state.position, &player_state.rotation);
+    actor->target_entity = EffectHit_FindAimedEntity(actor, &player_state.position, &player_state.rotation);
     motion->ended = 0;
-    if (actor->unk6C) {
-        Vector_Subtract(&offset, &ENTITY_MODEL((Entity *)actor->unk6C)->position, &actor->model->position);
+    if (actor->target_entity) {
+        Vector_Subtract(&offset, &ENTITY_MODEL((Entity *)actor->target_entity)->position, &actor->model->position);
         interval = (f32)actor->def->interval;
         distance = sqrt(offset.x * offset.x + offset.z * offset.z);
         remaining = interval - distance;
@@ -2095,18 +2095,18 @@ void EffectAimedChase_Update(EffectActor *actor) {
     motion = (ChaseMotion *)&actor->motion;
     EffectKeys_ApplySpin(actor);
     EffectKeys_ApplyColour(actor);
-    if (actor->unk6C != 0) {
-        if (ENTITY_FLAG_BITS((Entity *)actor->unk6C)->bits2 == 0) {
-            Vector_Subtract(delta, ((Entity *)actor->unk6C)->model->position, &actor->model->position);
+    if (actor->target_entity != 0) {
+        if (ENTITY_FLAG_BITS((Entity *)actor->target_entity)->bits2 == 0) {
+            Vector_Subtract(delta, ((Entity *)actor->target_entity)->model->position, &actor->model->position);
             if (Vector_Dot3(delta, motion) > 0.0f) {
                 motion->turn += actor->def->ground_height;
-                delta[1] -= ((Entity *)actor->unk6C)->height * 0.5f;
+                delta[1] -= ((Entity *)actor->target_entity)->height * 0.5f;
             }
             EffectSteer_Toward(&motion->velocity, (Vector4 *)delta, actor->def->speed, motion->turn);
             EffectAngle_FromVector(&actor->model->rotation.x, &motion->velocity.x);
             motion->velocity.w = 0;
         } else {
-            actor->unk6C = 0;
+            actor->target_entity = 0;
         }
     }
     if (actor->frame < actor->def->max_frames || actor->def->max_frames == 0) {
@@ -2150,7 +2150,7 @@ void EffectLingerShot_Update(EffectActor *actor) {
             sceVu0AddVector(&actor->model->position, &actor->model->position, motion);
         }
         if (actor->frame >= motion->end_frame) {
-            Effect_Spawn(actor->def->end_effect, &motion->unk10, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
+            Effect_Spawn(actor->def->end_effect, &motion->end_position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             spawn_flag = 1;
         } else {
             EffectHit_CheckAndEnd(actor, &spawn_flag);
@@ -2175,7 +2175,7 @@ static void EffectSweep_AimAt(EffectActor *actor, Vector4 *target) {
     EffectAngle_FromVector(&actor->model->rotation.x, &offset.x);
     distance = Effect_Distance(target, &actor->model->position);
     motion->unk24 = Math_AbsFloat((distance - actor->def->radius_half) / 500.0f);
-    Vector_Copy(&motion->unk10, target);
+    Vector_Copy(&motion->target_position, target);
 }
 
 /* Starts a sweeping effect (kind 33) aimed at the entity the player faces, or with none at the
@@ -2194,19 +2194,19 @@ void EffectSweep_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     motion->arrived = 0;
     motion->on_ground = 0;
     motion->hit_spawned = 0;
-    effect->unk6C = EffectHit_FindAimedEntity(effect, &player_state.position, &player_state.rotation);
+    effect->target_entity = EffectHit_FindAimedEntity(effect, &player_state.position, &player_state.rotation);
     motion->level_step = effect->def->max_level - EFFECT_SLOT_FLAG_PARTS(spawn_slot)->level;
-    if (effect->unk6C != 0) {
-        EffectSweep_AimAt(effect, &((EffectTarget *)effect->unk6C)->model->position);
-        Vector_Copy(&aim, &((EffectTarget *)effect->unk6C)->model->position);
+    if (effect->target_entity != 0) {
+        EffectSweep_AimAt(effect, &((EffectTarget *)effect->target_entity)->model->position);
+        Vector_Copy(&aim, &((EffectTarget *)effect->target_entity)->model->position);
         aim.y -= 50.0f;
         if (Collision_FindFloorBelow(100.0f, &aim) == 1) {
             motion->on_ground = 1;
         }
         motion->has_aim = 1;
     } else {
-        sine = sin(-spawn_slot->unk10.y);
-        cosine = cos(-spawn_slot->unk10.y);
+        sine = sin(-spawn_slot->rotation.y);
+        cosine = cos(-spawn_slot->rotation.y);
         aim.x = 0.0f;
         aim.y = 0.0f;
         aim.w = 0.0f;

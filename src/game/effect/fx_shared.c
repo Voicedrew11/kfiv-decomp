@@ -257,10 +257,10 @@ void EffectStart_PlaceModel(EffectActor *effect, EffectSlot *spawn_slot) {
     } else {
         Vector_Copy(&effect->model->position, &spawn_slot->position);
         Vector_Copy(&origin, &spawn_slot->position);
-        pitch_sine = sin(-spawn_slot->unk10.x);
-        pitch_cosine = cos(-spawn_slot->unk10.x);
-        heading_sine = sin(-spawn_slot->unk10.y);
-        heading_cosine = cos(-spawn_slot->unk10.y);
+        pitch_sine = sin(-spawn_slot->rotation.x);
+        pitch_cosine = cos(-spawn_slot->rotation.x);
+        heading_sine = sin(-spawn_slot->rotation.y);
+        heading_cosine = cos(-spawn_slot->rotation.y);
     }
     offset.x = effect->def->offset_base[0] + ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[0];
     offset.y = effect->def->offset_base[1] + ((rand() & 0xFFFF) * (1.0f / 32768.0f) - 1.0f) * effect->def->offset_spread[1];
@@ -276,7 +276,7 @@ void EffectStart_PlaceModel(EffectActor *effect, EffectSlot *spawn_slot) {
     offset.z = rotated.z;
     offset.x = rotated.x;
     sceVu0AddVector(&effect->model->position, &offset, &origin);
-    Vector_Copy(&effect->unk70, &effect->model->position);
+    Vector_Copy(&effect->saved_position, &effect->model->position);
 }
 
 /* Sets the model's rotation for a new effect: the start rotation or the slot's, plus the definition's
@@ -285,7 +285,7 @@ void EffectStart_TurnModel(EffectActor *effect, EffectSlot *spawn_slot) {
     if (EFFECT_DEF_FLAGS(effect->def) & 0x10000) {
         Vector_Copy(&effect->model->rotation, effect->start_rotation);
     } else {
-        Vector_Copy(&effect->model->rotation, &spawn_slot->unk10);
+        Vector_Copy(&effect->model->rotation, &spawn_slot->rotation);
     }
     if (!(EFFECT_DEF_FLAGS(effect->def) & 0x40000)) {
         effect->model->rotation.x = 0.0f;
