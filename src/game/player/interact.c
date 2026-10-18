@@ -256,9 +256,9 @@ void Interact_FindTarget(void) {
         can_act = game_status.bit1;
         pickup = view_ray_status.facing_item;
         if (pickup != NULL && can_act) {
-            if (pickup->def != NULL && pickup->def->unk34 != 0) {
+            if (pickup->def != NULL && pickup->def->pickup_script != 0) {
                 if ((pickup->flags & 1) == current_map_slot) {
-                    Script_Start(pickup->def->unk34, 0);
+                    Script_Start(pickup->def->pickup_script, 0);
                 }
                 can_act = FALSE;
             } else if (pickup_item == NULL) {

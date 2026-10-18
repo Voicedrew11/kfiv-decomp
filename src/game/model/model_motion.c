@@ -72,7 +72,7 @@ MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused)
             parts[i].sibling = NULL;
         }
         // match: indexing level_tables as an array swaps the addu operands
-        parts[i].part_flags = (*(ModelPartLevels **)((char *)model->level_tables + (channel->motion_index << 2)))[i].unk02;
+        parts[i].part_flags = (*(ModelPartLevels **)((char *)model->level_tables + (channel->motion_index << 2)))[i].part_flags;
     }
     data = (MotionData *)((char *)motion + motion->size);
     return data;

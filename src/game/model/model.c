@@ -167,7 +167,7 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
     for (i = 0; i < file->part_count; i++, part++, file_part++) {
         part->data_count = file_part->data_count;
         part->data_addr = *file_cursor + file_part->data_offset;
-        part->pad78_46 = file_part->unk07;
+        part->pad78_46 = file_part->parent;
         MODEL_PART_FLAG_BITS(part)->bit41 = TRUE;
         // match: retail keeps only the empty loop; a walk whose result nothing uses is deleted like this one
         data = (ModelPartData *)(u32)part->data_addr;
@@ -180,8 +180,8 @@ void Model_SetUpSkinned(ModelInstance *model, int *file_cursor, int *memory) {
         part->rotation_x = part->rotation_y = part->rotation_z = 0.0f;
         part->rotation_w = 1.0f;
         part->scale[0] = part->scale[1] = part->scale[2] = 1.0f;
-        if (file_part->unk06 >= 1 && file_part->unk06 <= 3) {
-            MODEL_SLOT_PARTS(model)[file_part->unk06 - 1] = part;
+        if (file_part->slot >= 1 && file_part->slot <= 3) {
+            MODEL_SLOT_PARTS(model)[file_part->slot - 1] = part;
         }
     }
     model->draw_parts = Model_DrawSkinned;

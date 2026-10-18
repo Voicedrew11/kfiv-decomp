@@ -226,8 +226,8 @@ typedef struct {
     char pad3E[0x06];
     u16 item_count;                 /* 0x44 how many fixed items (MapItemDef) the map has */
     char pad46[0x2A];
-    s8 unk70;                       /* 0x70 passed to sprintf as the file-name index */
-    u8 unk71;                       /* 0x71 which block of MapDrawState.light_blocks the items lying in the map are drawn with */
+    s8 file_index;                  /* 0x70 passed to sprintf as the file-name index */
+    u8 light_block;                 /* 0x71 which block of MapDrawState.light_blocks the items lying in the map are drawn with */
 } MapHeader;
 
 /* one 0x60-byte entry of map_slots, indexed by the current map/slot current_map_slot */
@@ -431,10 +431,10 @@ typedef struct {
     u8 type;                        /* 0x00 */
     u16 unk01_0 : 4;                /* 0x01 */
     u16 use_mode : 4;               /* using one: 0 takes it, 2 takes it and gives one of unk02 (Player_UseItem) */
-    u16 unk02;                      /* 0x02 an item (item_counts) */
+    u16 item;                       /* 0x02 an item (item_counts) */
     u16 hp_heal;                    /* 0x04 added to PlayerState.hp_now when a type 0 one is used */
     u16 mp_heal;                    /* 0x06 added to PlayerState.mp_now */
-    u16 unk08;                      /* 0x08 bit n set: starts PlayerState.timed_flags[n] for 60 frames */
+    u16 timed_flags;                /* 0x08 bit n set: starts PlayerState.timed_flags[n] for 60 frames */
     char pad0A[0x04];
     u16 flags;                      /* 0x0E bit 1 */
     char pad10[0x10];

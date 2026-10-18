@@ -46,9 +46,9 @@ typedef s32 VuIntVector[4] __attribute__((aligned(16)));
 /* one vertex of a strip */
 typedef struct {
     void *unk00;                    /* 0x00 */
-    s32 unk04;                      /* 0x04 */
-    s32 unk08;                      /* 0x08 */
-    s32 unk0C;                      /* 0x0C */
+    s32 x;                          /* 0x04 x, as Collision_GetFloorMaterial reads it */
+    s32 y;                          /* 0x08 y, as Collision_GetFloorMaterial reads it */
+    s32 z;                          /* 0x0C z, as Collision_GetFloorMaterial reads it */
 } StripVertex;
 
 /* a strip: a header, then vertex_count vertices */
@@ -92,7 +92,7 @@ typedef struct {
     s16 y;                          /* 0x02 */
     s16 z;                          /* 0x04 */
     char pad06[0x08];
-    u16 unk0E;                      /* 0x0E flag bits Wobble_DrawRippledModel passes on to the GS vertex */
+    u16 flags;                      /* 0x0E flag bits Wobble_DrawRippledModel passes on to the GS vertex */
     u16 tex_u;                      /* 0x10 texture coordinates */
     u16 tex_v;                      /* 0x12 */
     u16 unk14;                      /* 0x14 set to 1 by ModelScreen_SetUvsFromScreen */
@@ -118,7 +118,7 @@ typedef struct {
 
 /* a ModelPartData block from 0x70 on, for the models whose vertices start at 0x80 (ModelScreen_SetUvsFromScreen) */
 typedef struct {
-    s32 unk00;                      /* 0x00 low 15 bits: how many vertices */
+    s32 vertex_count;               /* 0x00 low 15 bits: how many vertices */
     char pad04[0x0C];
     ModelPartVertex vertices[1];    /* 0x10 */
 } ModelPartDataTail;
@@ -251,7 +251,7 @@ typedef struct {
 typedef struct {
     u8 count;                       /* 0x00 */
     char pad01;
-    u8 unk02;                       /* 0x02 low 7 bits go to ModelPart.part_flags */
+    u8 part_flags;                  /* 0x02 low 7 bits go to ModelPart.part_flags */
     u8 child;                       /* 0x03 index of the part's first child, 0: none */
     u8 sibling;                     /* 0x04 index of the next part on the same parent, 0: none */
     char pad05[0x03];
@@ -320,8 +320,8 @@ typedef struct {
 typedef struct {
     s32 data_offset;                /* 0x00 from the start of the file to the part's ModelPartData blocks */
     u16 data_count;                 /* 0x04 how many blocks */
-    u8 unk06;                       /* 0x06 1..3: the part goes to ModelInstance.root_part[unk06 - 1] */
-    s8 unk07;                       /* 0x07 */
+    u8 slot;                        /* 0x06 1..3: the part goes to ModelInstanceSlots slot 1 to 3 */
+    s8 parent;                      /* 0x07 the part this one hangs off (ModelPart.pad78_46) */
     char pad08[0x08];
 } ModelFilePart;
 
@@ -564,9 +564,9 @@ typedef struct {
 typedef struct {
     u8 anim;                        /* 0x00 passed to ModelMotion_Select */
     u8 sound_kind;                  /* 0x01 0: Sound_PlayCommonAt, 1: Sound_PlayMapAtRange, 2: Sound_StartTaggedAt */
-    u16 unk02;                      /* 0x02 passed to Effect_StartSpawner on frame unk06 (MapObject_UpdateAll) */
+    u16 spawner_effect_id;          /* 0x02 passed to Effect_StartSpawner on frame spawn_frame (MapObject_UpdateAll) */
     u16 sound;                      /* 0x04 0xFFFF: none */
-    u8 unk06;                       /* 0x06 the animation frame unk02 starts on */
+    u8 spawn_frame;                 /* 0x06 the animation frame spawner_effect_id starts on */
     u8 sound_frame;                 /* 0x07 the animation frame the sound starts on */
 } MapObjectAnim;
 
@@ -671,9 +671,9 @@ typedef struct {
 /* MapObject.work as most kinds use it */
 typedef struct {
     Vector4 unk00;                  /* 0x00 */
-    f32 unk10;                      /* 0x10 */
-    f32 unk14;                      /* 0x14 */
-    f32 unk18;                      /* 0x18 */
+    f32 base_x;                     /* 0x10 the x of part 1's position at the start */
+    f32 base_y;                     /* 0x14 the y of part 1's position at the start */
+    f32 base_z;                     /* 0x18 the z of part 1's position at the start */
     s32 timer;                      /* 0x1C counts down to 0 */
 } MapObjectWork;
 
@@ -794,7 +794,7 @@ typedef struct {
     Vector4 scale;                  /* 0x20 */
     u16 item;                       /* 0x30 which LevelDef (item_name_defs) it is */
     char pad32[0x02];
-    u16 unk34;                      /* 0x34 passed to Script_Start in place of picking the item up, 0: nothing (Interact_FindTarget) */
+    u16 pickup_script;              /* 0x34 passed to Script_Start in place of picking the item up, 0: nothing (Interact_FindTarget) */
     u8 required_flag;               /* 0x36 nonzero: it only appears while its byte of map_item_pickup_counts is below this */
     u8 chance;                      /* 0x37 percent chance that it appears (MapItem_RollFixedItems) */
     u8 group;                       /* 0x38 0-15: picks the roll and the map's threshold it is tested against */

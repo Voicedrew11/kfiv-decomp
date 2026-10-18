@@ -363,8 +363,8 @@ void MapObject_UpdateAll(void) {
             MAP_OBJECT_BITS_LOW(object)->bit3 = FALSE;
             if (MODEL_UNK100_BITS(model)->has_motion) {
                 anim = &object->definition->anims[MAP_OBJECT_BYTES(object)->anim];
-                if (anim->unk06 == MODEL_CHANNEL(model)->frame) {
-                    Effect_StartSpawner(anim->unk02, &model->position, &model->rotation, object);
+                if (anim->spawn_frame == MODEL_CHANNEL(model)->frame) {
+                    Effect_StartSpawner(anim->spawner_effect_id, &model->position, &model->rotation, object);
                 }
             }
             kind = (object->state_flags & MAP_OBJECT_SCRIPTED) ? 0 : object->definition->kind;

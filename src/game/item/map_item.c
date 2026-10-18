@@ -601,7 +601,7 @@ void MapItem_DrawAll(int with_picked) {
         for (i = 0; i < count; i++, part++) {
             ModelMatrix_BuildPartLocal(node->model, part, part);
         }
-        node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->unk71];
+        node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->light_block];
         node->model->fog_block = &map_draw_state.fog_blocks[node->flags & 1][((MapRecordInfo *)node->map_record)->draw_block_index];
         LinkedPoint_FindHitsForModel(node->model);
         ModelTexture_SendForModel(node->model);
@@ -654,7 +654,7 @@ void MapItem_DrawPicked(int hidden) {
         sceVu0RotMatrixY((f32 *)part, (f32 *)part, wrap_angle(turn[1]));
         sceVu0TransMatrix((f32 *)part, (f32 *)part, offset);
     }
-    node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->unk71];
+    node->model->light_block = (s32)&map_draw_state.light_blocks[node->flags & 1][map_slots[node->flags & 1].header->light_block];
     node->model->fog_block = &map_draw_state.fog_blocks[node->flags & 1][((MapRecordInfo *)node->map_record)->draw_block_index];
     LinkedPoint_FindHitsForModel(node->model);
     ModelTexture_SendForModel(node->model);

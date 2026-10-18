@@ -620,7 +620,7 @@ void ModelScreen_SetUvsFromScreen(ModelInstance *model) {
             length = next_data->length;
             data = next_data;
             next_data = (ModelPartData *)&next_data->vertex_count; // match: the cursor steps on to the vertex count
-            vertex_count = ((ModelPartDataTail *)next_data)->unk00 & 0x7FFF;
+            vertex_count = ((ModelPartDataTail *)next_data)->vertex_count & 0x7FFF;
             vertex = ((ModelPartDataTail *)next_data)->vertices;
             for (k = 0; k < vertex_count; k++) {
                 point[0] = vertex->x;

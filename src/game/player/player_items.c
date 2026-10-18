@@ -133,7 +133,7 @@ void Player_UseItem(void) {
                 if (player_state.mp_now > player_state.mp_max) {
                     player_state.mp_now = player_state.mp_max;
                 }
-                timed = def->unk08;
+                timed = def->timed_flags;
                 if (timed & 1) {
                     player_state.timed_flags[0] = 0;
                     player_state.flag_timers[0] = 60;
@@ -196,7 +196,7 @@ void Player_UseItem(void) {
                 break;
             case 2:
                 item_counts[item]--;
-                item_counts[def->unk02]++;
+                item_counts[def->item]++;
                 break;
             }
         }
