@@ -13,7 +13,7 @@ typedef struct {
     u32 moves_entity : 1;           /* the root part's movement in the motion is handed to the entity */
     u32 bit6 : 1;
     u32 backwards : 1;
-    u32 unk01 : 8;                  /* 0x01 frames left, counted down by EntityAi_StepSlotMotion */
+    u32 frames_left : 8;            /* 0x01 frames left, counted down by EntityAi_StepSlotMotion */
     u32 frame : 16;                 /* 0x02 */
     s32 frame_fixed;                /* 0x04 the frame times 256 */
 } EntityMotionSlotWord;

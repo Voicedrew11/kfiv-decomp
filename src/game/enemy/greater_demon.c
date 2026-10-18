@@ -320,19 +320,19 @@ static void GreaterDemon_Move(Entity *entity) {
     }
     params = entity->params;
     if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
-        ai_state->unk1C -= params->turn_step_per_frame;
-        if (ai_state->unk1C < -params->turn_limit) {
-            ai_state->unk1C = -params->turn_limit;
+        ai_state->turn_rate -= params->turn_step_per_frame;
+        if (ai_state->turn_rate < -params->turn_limit) {
+            ai_state->turn_rate = -params->turn_limit;
         }
     } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
-        ai_state->unk1C += params->turn_step_per_frame;
-        if (params->turn_limit < ai_state->unk1C) {
-            ai_state->unk1C = params->turn_limit;
+        ai_state->turn_rate += params->turn_step_per_frame;
+        if (params->turn_limit < ai_state->turn_rate) {
+            ai_state->turn_rate = params->turn_limit;
         }
     } else {
-        ai_state->unk1C = 0.0f;
+        ai_state->turn_rate = 0.0f;
     }
-    turn = ai_state->unk1C;
+    turn = ai_state->turn_rate;
     if (entity->move_command & (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST)) {
         turn += turn;
     }
@@ -567,22 +567,22 @@ static void GreaterDemon_SlideToStop(Entity *entity) {
             entity->flags |= ENTITY_FLAG_DRAW_AFTERIMAGE;
             entity->action_step++;
         }
-        if (ai_state->unk6E == 0) {
+        if (ai_state->reload_timer == 0) {
             s32 flag = (s32)(entity->flags >> 49) & 1;
 
             if (flag == 1) {
                 EntityAi_CheckMeleeHit(entity, unk350, 0, 0x1E, 0x1F);
-                ai_state->unk6E = flag;
+                ai_state->reload_timer = flag;
             }
         }
         break;
     case 2:
-        if (ai_state->unk6E == 0) {
+        if (ai_state->reload_timer == 0) {
             s32 flag = (s32)(entity->flags >> 49) & 1;
 
             if (flag == 1) {
                 EntityAi_CheckMeleeHit(entity, unk350, 0, 0x1E, 0x1F);
-                ai_state->unk6E = flag;
+                ai_state->reload_timer = flag;
             }
         }
         if ((s32)(entity->flags >> 34) & 1) {
@@ -627,10 +627,10 @@ static void GreaterDemon_PlayAnim6Or7BySide(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
-        EntityAi_TurnToHeading(entity, &ai_state->unk1C, entity->heading_to_player);
+        EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         break;
     case 2:
-        EntityAi_TurnToHeading(entity, &ai_state->unk1C, entity->heading_to_player);
+        EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         if ((s32)(entity->flags >> 34) & 1) {
             entity->busy_flags = 0;
             entity->move_command = 0;
@@ -671,7 +671,7 @@ static void GreaterDemon_ReactionHeavy(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
-        ai_state->unk1C = 0.0f;
+        ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit14 = 1;
         ENTITY_FLAG_BITS(entity)->bit19 = 0;
         ENTITY_FLAG_BITS(entity)->bit35 = 0;
@@ -717,7 +717,7 @@ static void GreaterDemon_Guard(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = (ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1) ? 2 : 1;
         }
-        ai_state->unk1C = 0.0f;
+        ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
         break;
@@ -817,7 +817,7 @@ static void GreaterDemon_RangedAttack2(Entity *entity) {
         }
         break;
     case 2:
-        ai_state->unk1C = 0.0f;
+        ai_state->turn_rate = 0.0f;
         EntityAi_LaunchShots(entity, unk3D8, (entity->model->level_tables->frame_fixed - params->motion_speeds[entity->animation_index]) >> 8,
                       entity->model->level_tables->frame);
         if (entity->model->level_tables->frame == 0x11) {
@@ -895,7 +895,7 @@ static int GreaterDemon_SetRanged2Weight(Entity *entity) {
             }
         }
     }
-    entity->params->ranged_attacks[2].record.unk00 = (f32)work->unk68[2] * (f32)ally_count * 0.125f;
+    entity->params->ranged_attacks[2].record.unk00 = (f32)work->action_weights[2] * (f32)ally_count * 0.125f;
     return 0;
 }
 
@@ -918,14 +918,14 @@ static void GreaterDemon_RangedAttack(Entity *entity) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &ai_state->unk1C, entity->heading_to_player);
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
         if (unk3D8->unk01 >= entity->model->level_tables->frame) {
-            EntityAi_TurnToHeading(entity, &ai_state->unk1C, entity->heading_to_player);
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
-            ai_state->unk1C = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
         elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         direction[0] = 0.0f;

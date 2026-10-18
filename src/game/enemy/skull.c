@@ -356,23 +356,23 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
 
     if (entity->busy_flags == 0 || (entity->busy_flags & (ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY))) {
         if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
-            ai_state->unk1C -= entity->params->turn_step_per_frame;
-            if (ai_state->unk1C < -entity->params->turn_limit) {
-                ai_state->unk1C = -entity->params->turn_limit;
+            ai_state->turn_rate -= entity->params->turn_step_per_frame;
+            if (ai_state->turn_rate < -entity->params->turn_limit) {
+                ai_state->turn_rate = -entity->params->turn_limit;
             }
         } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
-            ai_state->unk1C += entity->params->turn_step_per_frame;
-            if (entity->params->turn_limit < ai_state->unk1C) {
-                ai_state->unk1C = entity->params->turn_limit;
+            ai_state->turn_rate += entity->params->turn_step_per_frame;
+            if (entity->params->turn_limit < ai_state->turn_rate) {
+                ai_state->turn_rate = entity->params->turn_limit;
             }
-        } else if (entity->params->turn_step_per_frame < ai_state->unk1C) {
-            ai_state->unk1C -= entity->params->turn_step_per_frame;
-        } else if (ai_state->unk1C < -entity->params->turn_step_per_frame) {
-            ai_state->unk1C += entity->params->turn_step_per_frame;
+        } else if (entity->params->turn_step_per_frame < ai_state->turn_rate) {
+            ai_state->turn_rate -= entity->params->turn_step_per_frame;
+        } else if (ai_state->turn_rate < -entity->params->turn_step_per_frame) {
+            ai_state->turn_rate += entity->params->turn_step_per_frame;
         } else {
-            ai_state->unk1C = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
-        turn = ai_state->unk1C;
+        turn = ai_state->turn_rate;
         if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
             turn += turn;
         }
@@ -395,29 +395,29 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
             ai_state->unk4C = 0.0f;
         }
         if (entity->move_command & MOVE_COMMAND_STEP_LEFT) {
-            ai_state->unk44 += entity->params->speed_step_per_frame;
-            if (entity->params->max_speed < ai_state->unk44) {
-                ai_state->unk44 = entity->params->max_speed;
+            ai_state->move_speed += entity->params->speed_step_per_frame;
+            if (entity->params->max_speed < ai_state->move_speed) {
+                ai_state->move_speed = entity->params->max_speed;
             }
         } else if (entity->move_command & MOVE_COMMAND_STEP_RIGHT) {
-            ai_state->unk44 -= entity->params->speed_step_per_frame;
-            if (ai_state->unk44 < -entity->params->max_speed) {
-                ai_state->unk44 = -entity->params->max_speed;
+            ai_state->move_speed -= entity->params->speed_step_per_frame;
+            if (ai_state->move_speed < -entity->params->max_speed) {
+                ai_state->move_speed = -entity->params->max_speed;
             }
-        } else if (ai_state->unk44 > entity->params->speed_step_per_frame) {
-            ai_state->unk44 -= entity->params->speed_step_per_frame;
-        } else if (ai_state->unk44 < -entity->params->speed_step_per_frame) {
-            ai_state->unk44 += entity->params->speed_step_per_frame;
+        } else if (ai_state->move_speed > entity->params->speed_step_per_frame) {
+            ai_state->move_speed -= entity->params->speed_step_per_frame;
+        } else if (ai_state->move_speed < -entity->params->speed_step_per_frame) {
+            ai_state->move_speed += entity->params->speed_step_per_frame;
         } else {
-            ai_state->unk44 = 0.0f;
+            ai_state->move_speed = 0.0f;
         }
     } else {
-        if (entity->params->turn_step_per_frame < ai_state->unk1C) {
-            ai_state->unk1C -= entity->params->turn_step_per_frame;
-        } else if (ai_state->unk1C < -entity->params->turn_step_per_frame) {
-            ai_state->unk1C += entity->params->turn_step_per_frame;
+        if (entity->params->turn_step_per_frame < ai_state->turn_rate) {
+            ai_state->turn_rate -= entity->params->turn_step_per_frame;
+        } else if (ai_state->turn_rate < -entity->params->turn_step_per_frame) {
+            ai_state->turn_rate += entity->params->turn_step_per_frame;
         } else {
-            ai_state->unk1C = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
         if (ai_state->unk4C > entity->params->speed_step_per_frame) {
             ai_state->unk4C -= entity->params->speed_step_per_frame;
@@ -426,12 +426,12 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
         } else {
             ai_state->unk4C = 0.0f;
         }
-        if (entity->params->speed_step_per_frame < ai_state->unk44) {
-            ai_state->unk44 -= entity->params->speed_step_per_frame;
-        } else if (ai_state->unk44 < -entity->params->speed_step_per_frame) {
-            ai_state->unk44 += entity->params->speed_step_per_frame;
+        if (entity->params->speed_step_per_frame < ai_state->move_speed) {
+            ai_state->move_speed -= entity->params->speed_step_per_frame;
+        } else if (ai_state->move_speed < -entity->params->speed_step_per_frame) {
+            ai_state->move_speed += entity->params->speed_step_per_frame;
         } else {
-            ai_state->unk44 = 0.0f;
+            ai_state->move_speed = 0.0f;
         }
     }
     ENTITY_SCRATCH_VECTOR[0] = ENTITY_SCRATCH_VECTOR[1] = ENTITY_SCRATCH_VECTOR[2] = ENTITY_SCRATCH_VECTOR[3] = 0.0f;
@@ -454,7 +454,7 @@ static void Skull_ApplyMoveCommand(Entity *entity) {
     } else {
         ai_state->unk48 = 0.0f;
     }
-    ENTITY_SCRATCH_VECTOR[0] = ai_state->unk44;
+    ENTITY_SCRATCH_VECTOR[0] = ai_state->move_speed;
     ENTITY_SCRATCH_VECTOR[1] = ai_state->unk48;
     ENTITY_SCRATCH_VECTOR[2] = ai_state->unk4C;
     sceVu0RotMatrixZ(ENTITY_SCRATCH_MATRIX, identity_matrix, entity->model->rotation[2]);

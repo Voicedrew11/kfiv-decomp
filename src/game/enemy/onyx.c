@@ -452,7 +452,7 @@ static s32 Onyx_PickAttack(Entity *entity) {
     for (i = 0; i < 6; i++) {
         if (i < 3) {
             if (EntityAi_CanUseMelee(entity, i) && (i == 1 || i == 2)) {
-                chance = (entity->attack_weights[i] * ((EntityAiStateKind17FC60 *)&entity->ai_state)->unk68[i]) >> 6;
+                chance = (entity->attack_weights[i] * ((EntityAiStateKind17FC60 *)&entity->ai_state)->action_weights[i]) >> 6;
             } else {
                 chance = 0;
             }

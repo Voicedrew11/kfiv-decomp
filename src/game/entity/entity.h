@@ -304,7 +304,7 @@ typedef struct {
     u8 moves_entity : 1;            /* the root part's movement in the motion is handed to the entity */
     u8 bit6 : 1;
     u8 backwards : 1;               /* the motion plays from its last frame to its first */
-    u8 unk01;                       /* 0x01 */
+    u8 frames_left;                 /* 0x01 frames left, counted down by EntityAi_StepSlotMotion */
     s16 frame;                      /* 0x02 */
     s32 frame_fixed;                /* 0x04 the frame times 256 */
 } EntityMotionSlot;
@@ -625,7 +625,7 @@ typedef struct {
     void (*dormant)(void);          /* 0x10 */
     void (*death)(void);            /* 0x14 */
     void (*move)(void);             /* 0x18 */
-    f32 unk1C;                      /* 0x1C */
+    f32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
     f32 unk20[4];                   /* 0x20 */
     char pad30[0x10];
     f32 unk40;                      /* 0x40 */
@@ -633,7 +633,7 @@ typedef struct {
     char pad48[0x22];
     s16 unk6A;                      /* 0x6A */
     s16 unk6C;                      /* 0x6C */
-    s16 unk6E;                      /* 0x6E */
+    s16 reload_timer;               /* 0x6E countdown after which other work fields are reloaded */
     char pad70[0x08];
     s8 unk78;                       /* 0x78 */
     s8 unk79;                       /* 0x79 */
@@ -664,9 +664,9 @@ typedef struct {
 /* Entity+0xE0 as the kind set up by DarkSorcerer_Init lays it out */
 typedef struct {
     char pad00[0x1C];
-    f32 unk1C;                      /* 0x1C turn speed */
+    f32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
     char pad20[0x24];
-    f32 unk44;                      /* 0x44 speed along x, y and z */
+    f32 move_speed;                 /* 0x44 speed the movement builds up with EntityAi_Accelerate */
     f32 unk48;                      /* 0x48 */
     f32 unk4C;                      /* 0x4C */
     char pad50[0x50];
@@ -704,7 +704,7 @@ typedef struct {
 /* Entity+0xE0 as the kind set up by Onyx_Init lays it out */
 typedef struct {
     char pad00[0x68];
-    s16 unk68[3];                   /* 0x68 weights of the first three actions (see Onyx_PickAttack) */
+    s16 action_weights[3];          /* 0x68 weights of the first three actions (see Onyx_PickAttack) */
     char pad6E[0x32];
 } EntityAiStateKind17FC60;
 
@@ -728,9 +728,9 @@ typedef struct {
 /* Entity+0xE0 as the kind set up by func_0012ACA0 lays it out */
 typedef struct {
     char pad00[0x1C];
-    f32 unk1C;                      /* 0x1C turn speed */
+    f32 turn_rate;                  /* 0x1C turn speed built towards EntityParams.turn_limit */
     char pad20[0x20];
-    f32 unk40[7];                   /* 0x40 [2] to [6]: how far each of the five neck joints (model parts 30 to 34) is bent */
+    f32 neck_bend[7];               /* 0x40 how far each of the five neck joints (model parts 30 to 34) is bent, [2] to [6] */
     char pad5C[0x44];
 } EntityAiStateKind12ACA0;
 

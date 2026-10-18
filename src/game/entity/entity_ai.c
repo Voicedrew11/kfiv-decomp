@@ -1902,9 +1902,9 @@ int EntityAi_StartSlotMotion(Entity *entity, EntityMotionSlotWord *slot, int cha
     if (entity->ailment_3_frames != 0 && (entity->busy_flags & (ENTITY_BUSY_DEATH | ENTITY_BUSY_REACTION_LIGHT | ENTITY_BUSY_REACTION_HEAVY)) == 0) {
         float slowed = frames;
 
-        slot->unk01 = slowed + slowed * 0.75f;
+        slot->frames_left = slowed + slowed * 0.75f;
     } else {
-        slot->unk01 = frames;
+        slot->frames_left = frames;
     }
     if (*(int *)slot & 0x20) {
         ModelPart *root = ENTITY_MODEL(entity)->root_part;
@@ -1920,7 +1920,7 @@ int EntityAi_StepSlotMotion(Entity *entity, EntityMotionSlot *slot, int channel,
     u8 frames_left;
 
     Motion_BlendSlotToPose(ENTITY_MODEL(entity), channel, entity->params->motion_ids[slot->index], slot->frame, weight);
-    slot->unk01 = frames_left = slot->unk01 - 1;
+    slot->frames_left = frames_left = slot->frames_left - 1;
     return frames_left;
 }
 

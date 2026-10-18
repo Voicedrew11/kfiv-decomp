@@ -794,19 +794,19 @@ static void FireLord_Move(Entity *entity) {
     }
     params = entity->params;
     if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
-        ai_state->unk1C -= params->turn_step_per_frame;
-        if (ai_state->unk1C < -params->turn_limit) {
-            ai_state->unk1C = -params->turn_limit;
+        ai_state->turn_rate -= params->turn_step_per_frame;
+        if (ai_state->turn_rate < -params->turn_limit) {
+            ai_state->turn_rate = -params->turn_limit;
         }
     } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
-        ai_state->unk1C += params->turn_step_per_frame;
-        if (params->turn_limit < ai_state->unk1C) {
-            ai_state->unk1C = params->turn_limit;
+        ai_state->turn_rate += params->turn_step_per_frame;
+        if (params->turn_limit < ai_state->turn_rate) {
+            ai_state->turn_rate = params->turn_limit;
         }
     } else {
-        ai_state->unk1C = 0.0f;
+        ai_state->turn_rate = 0.0f;
     }
-    turn = ai_state->unk1C;
+    turn = ai_state->turn_rate;
     if (entity->move_command & (MOVE_COMMAND_RUN | MOVE_COMMAND_TURN_FAST)) {
         turn += turn;
     }
