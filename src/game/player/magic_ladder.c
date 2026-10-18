@@ -69,7 +69,7 @@ int Player_CastMagic(int magic_id) {
     }
     channeled_magic_active = 0;
     entry = &fx_table[magic_id];
-    stats = &entry->unkAC;
+    stats = &entry->stats;
     if (entry->item_menu_magic == 0) {
         if ((s32)(player_state.status_bits >> 39) & 1) {
             return FALSE;
@@ -118,40 +118,40 @@ int Player_CastMagic(int magic_id) {
         Attack_LaunchMagicEffect(magic_id, shot, &player_state, &player_state.rotation, &player_state); // match: the player's rotation is passed; the clamped angles above are never used
         player_state.cast_launched_shot = 1;
     } else {
-        if (stats->unk00[0] != 0) {
+        if (stats->clears_timed_flag[0] != 0) {
             player_state.timed_flags[0] = 0;
         }
-        if (stats->unk00[1] != 0) {
+        if (stats->clears_timed_flag[1] != 0) {
             player_state.timed_flags[1] = 0;
         }
-        if (stats->unk00[2] != 0) {
+        if (stats->clears_timed_flag[2] != 0) {
             player_state.timed_flags[2] = 0;
         }
-        if (stats->unk00[3] != 0) {
+        if (stats->clears_timed_flag[3] != 0) {
             player_state.timed_flags[3] = 0;
         }
-        if (stats->unk00[4] != 0) {
+        if (stats->clears_timed_flag[4] != 0) {
             player_state.timed_flags[4] = 0;
         }
-        if (stats->unk00[5] != 0) {
+        if (stats->clears_timed_flag[5] != 0) {
             player_state.timed_flags[5] = 0;
         }
-        if (stats->unk4A >= 999) {
+        if (stats->heal_total >= 999) {
             player_state.hp_now = player_state.hp_max;
-        } else if (stats->unk4A != 0) {
-            player_state.hp_now += stats->unk4C;
+        } else if (stats->heal_total != 0) {
+            player_state.hp_now += stats->heal_at_once;
             if (player_state.hp_now > player_state.hp_max) {
                 player_state.hp_now = player_state.hp_max;
             }
             if (player_state.hp_now < 0) {
                 player_state.hp_now = 0;
             }
-            player_state.hp_step_remaining = stats->unk4A - stats->unk4C;
+            player_state.hp_step_remaining = stats->heal_total - stats->heal_at_once;
             if (player_state.hp_step_remaining == 0) {
                 player_state.hp_step_period = 0;
             } else {
-                if (stats->unk4E > 0) {
-                    player_state.hp_step_period = stats->unk4E;
+                if (stats->heal_step_period > 0) {
+                    player_state.hp_step_period = stats->heal_step_period;
                 } else {
                     player_state.hp_step_period = 1;
                 }
@@ -163,133 +163,133 @@ int Player_CastMagic(int magic_id) {
                 && player_state.magic_strength_bonus[3] <= 0 && player_state.magic_strength_bonus[4] <= 0 && player_state.magic_strength_bonus[5] <= 0) {
                 timed_boost_order = 0;
             }
-            if (stats->unk18[0] != 0) {
-                player_state.physical_strength_bonus[0] = stats->unk18[0];
+            if (stats->strength_bonus[0] != 0) {
+                player_state.physical_strength_bonus[0] = stats->strength_bonus[0];
                 player_state.physical_strength_bonus_timer[0] = stats->duration;
                 player_state.physical_bonus_stamp[0] = ++timed_boost_order;
             }
-            if (stats->unk18[1] != 0) {
-                player_state.physical_strength_bonus[1] = stats->unk18[1];
+            if (stats->strength_bonus[1] != 0) {
+                player_state.physical_strength_bonus[1] = stats->strength_bonus[1];
                 player_state.physical_strength_bonus_timer[1] = stats->duration;
                 player_state.physical_bonus_stamp[1] = ++timed_boost_order;
             }
-            if (stats->unk18[2] != 0) {
-                player_state.physical_strength_bonus[2] = stats->unk18[2];
+            if (stats->strength_bonus[2] != 0) {
+                player_state.physical_strength_bonus[2] = stats->strength_bonus[2];
                 player_state.physical_strength_bonus_timer[2] = stats->duration;
                 player_state.physical_bonus_stamp[2] = ++timed_boost_order;
             }
-            if (stats->unk18[3] != 0) {
-                player_state.magic_strength_bonus[0] = stats->unk18[3];
+            if (stats->strength_bonus[3] != 0) {
+                player_state.magic_strength_bonus[0] = stats->strength_bonus[3];
                 player_state.magic_strength_bonus_timer[0] = stats->duration;
                 player_state.magic_bonus_stamp[0] = ++timed_boost_order;
             }
-            if (stats->unk18[4] != 0) {
-                player_state.magic_strength_bonus[1] = stats->unk18[4];
+            if (stats->strength_bonus[4] != 0) {
+                player_state.magic_strength_bonus[1] = stats->strength_bonus[4];
                 player_state.magic_strength_bonus_timer[1] = stats->duration;
                 player_state.magic_bonus_stamp[1] = ++timed_boost_order;
             }
-            if (stats->unk18[5] != 0) {
-                player_state.magic_strength_bonus[2] = stats->unk18[5];
+            if (stats->strength_bonus[5] != 0) {
+                player_state.magic_strength_bonus[2] = stats->strength_bonus[5];
                 player_state.magic_strength_bonus_timer[2] = stats->duration;
                 player_state.magic_bonus_stamp[2] = ++timed_boost_order;
             }
-            if (stats->unk18[6] != 0) {
-                player_state.magic_strength_bonus[3] = stats->unk18[6];
+            if (stats->strength_bonus[6] != 0) {
+                player_state.magic_strength_bonus[3] = stats->strength_bonus[6];
                 player_state.magic_strength_bonus_timer[3] = stats->duration;
                 player_state.magic_bonus_stamp[3] = ++timed_boost_order;
             }
-            if (stats->unk18[7] != 0) {
-                player_state.magic_strength_bonus[4] = stats->unk18[7];
+            if (stats->strength_bonus[7] != 0) {
+                player_state.magic_strength_bonus[4] = stats->strength_bonus[7];
                 player_state.magic_strength_bonus_timer[4] = stats->duration;
                 player_state.magic_bonus_stamp[4] = ++timed_boost_order;
             }
-            if (stats->unk18[8] != 0) {
-                player_state.magic_strength_bonus[5] = stats->unk18[8];
+            if (stats->strength_bonus[8] != 0) {
+                player_state.magic_strength_bonus[5] = stats->strength_bonus[8];
                 player_state.magic_strength_bonus_timer[5] = stats->duration;
                 player_state.magic_bonus_stamp[5] = ++timed_boost_order;
             }
-            if (stats->unk0C[0] != 0) {
-                player_state.ailment_attack_bonus[0] = stats->unk0C[0];
+            if (stats->ailment_attack_bonus[0] != 0) {
+                player_state.ailment_attack_bonus[0] = stats->ailment_attack_bonus[0];
                 player_state.ailment_attack_bonus_timer[0] = stats->duration;
             }
-            if (stats->unk0C[1] != 0) {
-                player_state.ailment_attack_bonus[1] = stats->unk0C[1];
+            if (stats->ailment_attack_bonus[1] != 0) {
+                player_state.ailment_attack_bonus[1] = stats->ailment_attack_bonus[1];
                 player_state.ailment_attack_bonus_timer[1] = stats->duration;
             }
-            if (stats->unk0C[2] != 0) {
-                player_state.ailment_attack_bonus[2] = stats->unk0C[2];
+            if (stats->ailment_attack_bonus[2] != 0) {
+                player_state.ailment_attack_bonus[2] = stats->ailment_attack_bonus[2];
                 player_state.ailment_attack_bonus_timer[2] = stats->duration;
             }
-            if (stats->unk0C[3] != 0) {
-                player_state.ailment_attack_bonus[3] = stats->unk0C[3];
+            if (stats->ailment_attack_bonus[3] != 0) {
+                player_state.ailment_attack_bonus[3] = stats->ailment_attack_bonus[3];
                 player_state.ailment_attack_bonus_timer[3] = stats->duration;
             }
-            if (stats->unk0C[4] != 0) {
-                player_state.ailment_attack_bonus[4] = stats->unk0C[4];
+            if (stats->ailment_attack_bonus[4] != 0) {
+                player_state.ailment_attack_bonus[4] = stats->ailment_attack_bonus[4];
                 player_state.ailment_attack_bonus_timer[4] = stats->duration;
             }
-            if (stats->unk0C[5] != 0) {
-                player_state.ailment_attack_bonus[5] = stats->unk0C[5];
+            if (stats->ailment_attack_bonus[5] != 0) {
+                player_state.ailment_attack_bonus[5] = stats->ailment_attack_bonus[5];
                 player_state.ailment_attack_bonus_timer[5] = stats->duration;
             }
-            if (stats->unk36[0] != 0) {
-                player_state.physical_defence_bonus[0] = stats->unk36[0];
+            if (stats->defence_bonus[0] != 0) {
+                player_state.physical_defence_bonus[0] = stats->defence_bonus[0];
                 player_state.physical_defence_bonus_timer[0] = stats->duration;
             }
-            if (stats->unk36[1] != 0) {
-                player_state.physical_defence_bonus[1] = stats->unk36[1];
+            if (stats->defence_bonus[1] != 0) {
+                player_state.physical_defence_bonus[1] = stats->defence_bonus[1];
                 player_state.physical_defence_bonus_timer[1] = stats->duration;
             }
-            if (stats->unk36[2] != 0) {
-                player_state.physical_defence_bonus[2] = stats->unk36[2];
+            if (stats->defence_bonus[2] != 0) {
+                player_state.physical_defence_bonus[2] = stats->defence_bonus[2];
                 player_state.physical_defence_bonus_timer[2] = stats->duration;
             }
-            if (stats->unk36[3] != 0) {
-                player_state.magic_defence_bonus[0] = stats->unk36[3];
+            if (stats->defence_bonus[3] != 0) {
+                player_state.magic_defence_bonus[0] = stats->defence_bonus[3];
                 player_state.magic_defence_bonus_timer[0] = stats->duration;
             }
-            if (stats->unk36[4] != 0) {
-                player_state.magic_defence_bonus[1] = stats->unk36[4];
+            if (stats->defence_bonus[4] != 0) {
+                player_state.magic_defence_bonus[1] = stats->defence_bonus[4];
                 player_state.magic_defence_bonus_timer[1] = stats->duration;
             }
-            if (stats->unk36[5] != 0) {
-                player_state.magic_defence_bonus[2] = stats->unk36[5];
+            if (stats->defence_bonus[5] != 0) {
+                player_state.magic_defence_bonus[2] = stats->defence_bonus[5];
                 player_state.magic_defence_bonus_timer[2] = stats->duration;
             }
-            if (stats->unk36[6] != 0) {
-                player_state.magic_defence_bonus[3] = stats->unk36[6];
+            if (stats->defence_bonus[6] != 0) {
+                player_state.magic_defence_bonus[3] = stats->defence_bonus[6];
                 player_state.magic_defence_bonus_timer[3] = stats->duration;
             }
-            if (stats->unk36[7] != 0) {
-                player_state.magic_defence_bonus[4] = stats->unk36[7];
+            if (stats->defence_bonus[7] != 0) {
+                player_state.magic_defence_bonus[4] = stats->defence_bonus[7];
                 player_state.magic_defence_bonus_timer[4] = stats->duration;
             }
-            if (stats->unk36[8] != 0) {
-                player_state.magic_defence_bonus[5] = stats->unk36[8];
+            if (stats->defence_bonus[8] != 0) {
+                player_state.magic_defence_bonus[5] = stats->defence_bonus[8];
                 player_state.magic_defence_bonus_timer[5] = stats->duration;
             }
-            if (stats->unk2A[0] != 0) {
-                player_state.ailment_defence_bonus[0] = stats->unk2A[0];
+            if (stats->ailment_defence_bonus[0] != 0) {
+                player_state.ailment_defence_bonus[0] = stats->ailment_defence_bonus[0];
                 player_state.ailment_defence_bonus_timer[0] = stats->duration;
             }
-            if (stats->unk2A[1] != 0) {
-                player_state.ailment_defence_bonus[1] = stats->unk2A[1];
+            if (stats->ailment_defence_bonus[1] != 0) {
+                player_state.ailment_defence_bonus[1] = stats->ailment_defence_bonus[1];
                 player_state.ailment_defence_bonus_timer[1] = stats->duration;
             }
-            if (stats->unk2A[2] != 0) {
-                player_state.ailment_defence_bonus[2] = stats->unk2A[2];
+            if (stats->ailment_defence_bonus[2] != 0) {
+                player_state.ailment_defence_bonus[2] = stats->ailment_defence_bonus[2];
                 player_state.ailment_defence_bonus_timer[2] = stats->duration;
             }
-            if (stats->unk2A[3] != 0) {
-                player_state.ailment_defence_bonus[3] = stats->unk2A[3];
+            if (stats->ailment_defence_bonus[3] != 0) {
+                player_state.ailment_defence_bonus[3] = stats->ailment_defence_bonus[3];
                 player_state.ailment_defence_bonus_timer[3] = stats->duration;
             }
-            if (stats->unk2A[4] != 0) {
-                player_state.ailment_defence_bonus[4] = stats->unk2A[4];
+            if (stats->ailment_defence_bonus[4] != 0) {
+                player_state.ailment_defence_bonus[4] = stats->ailment_defence_bonus[4];
                 player_state.ailment_defence_bonus_timer[4] = stats->duration;
             }
-            if (stats->unk2A[5] != 0) {
-                player_state.ailment_defence_bonus[5] = stats->unk2A[5];
+            if (stats->ailment_defence_bonus[5] != 0) {
+                player_state.ailment_defence_bonus[5] = stats->ailment_defence_bonus[5];
                 player_state.ailment_defence_bonus_timer[5] = stats->duration;
             }
         }

@@ -1482,14 +1482,14 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
         switch (check->shape) {
         case 0:
             position = &effect->saved_position;
-            request.radius = check->unk1E;
+            request.radius = check->radius;
             request.shape = 0;
             break;
         case 1:
             position = &effect->saved_position;
-            request.radius = check->unk1E;
+            request.radius = check->radius;
             request.shape = 1;
-            request.height = check->unk20;
+            request.height = check->height;
             break;
         case 2:
             position = &effect->saved_position;
@@ -1507,39 +1507,39 @@ int Attack_RunEffectHitCheck(void *effect_actor) {
     request.owner = effect->owner_entity;
     request.unk4C_2 = 0;
     request.target_mask = 0;
-    if (check->unk23 & 1) {
+    if (check->target_mask & 1) {
         request.target_mask = 1;
     }
-    if (check->unk23 & 2) {
+    if (check->target_mask & 2) {
         request.target_mask |= 2;
     }
-    if (check->unk23 & 4) {
+    if (check->target_mask & 4) {
         request.target_mask |= 4;
     }
-    if (check->unk23 & 8) {
+    if (check->target_mask & 8) {
         request.target_mask |= 8;
     }
-    if (check->unk23 & 0x10) {
+    if (check->target_mask & 0x10) {
         request.target_mask |= 0x10;
     }
-    if (check->unk23 & 0x20) {
+    if (check->target_mask & 0x20) {
         request.target_mask |= 0x20;
     }
-    if (check->unk23 & 0x80) {
+    if (check->target_mask & 0x80) {
         request.target_mask |= 0x80;
     }
     shot = effect->owner;
     if (shot->attack_request == 0) {
         request.unk50 = check->strengths;
         request.unk62 = check->unk12;
-        request.knockback = check->unk26 != 0;
-        request.stun_frames = check->unk25;
-        request.instant_kill_chance_percent = check->unk27;
+        request.knockback = check->knockback != 0;
+        request.stun_frames = check->stun_frames;
+        request.instant_kill_chance_percent = check->instant_kill_chance_percent;
         request.player_hit_cooldown = EFFECT_FLAG_PARTS(effect)->frames_left;
         request.double_hit_chance_percent = 0;
         hits = Attack_Run(&request, shot);
         if (hits != 0 && (s8)request.landed_on_player != 0 && EFFECT_FLAG_PARTS(effect)->frames_left == 0) {
-            EFFECT_FLAG_PARTS(effect)->frames_left = check->unk24;
+            EFFECT_FLAG_PARTS(effect)->frames_left = check->frames_left_on_hit;
         }
     } else {
         request.unk50 = SHOT_REQUEST->unk50;
