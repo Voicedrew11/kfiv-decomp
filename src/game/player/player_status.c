@@ -21,7 +21,7 @@ int ModelMotion_BlendInto(ModelInstance *model, u8 index, u16 speed);
 void Packet_BeginGsRegisters(void);
 void Packet_AddGsRegister(int, s64);
 void Packet_EndGsRegisters(void);
-void GsDraw_FillScreen(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, s64);
 int Sound_PlaySw(int); // match: an int return (the definition is void) keeps $2 busy in Player_BounceWeapon
 int Sound_PlayCommon(int);
 

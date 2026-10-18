@@ -515,7 +515,7 @@ void Player_Update(void) {
     game_status.movement_input_enabled = 1;
 }
 
-void GsDraw_FillScreen(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, s64);
 
 /* Draws the colours that lie over the screen (PlayerScreenTint). */
 void Player_DrawScreenTints(void) {

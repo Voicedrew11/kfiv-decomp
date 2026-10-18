@@ -33,7 +33,7 @@ void Packet_BeginGsRegisters(void);
 void Packet_AddGsRegister(int, s64);
 void Packet_EndGsRegisters(void);
 void GsDraw_QueueTexturedSprite(void *);
-void GsDraw_FillScreen(int, int, int, int, int);
+void GsDraw_FillScreen(int, int, int, int, s64);
 void Map_DrawRecords(int);
 int File_IsLocked(void);
 void MapLoad_Update(void);
