@@ -42,7 +42,7 @@ void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction);
 
 /* Start handler of the kinds that do nothing of their own (kind 6 and most unused kinds): does
    nothing. */
-void EffectIdle_Start(void) {
+void EffectIdle_Start(EffectActor *effect, EffectSlot *spawn_slot) {
 }
 
 /* Update handler of those kinds: only counts the frame. */

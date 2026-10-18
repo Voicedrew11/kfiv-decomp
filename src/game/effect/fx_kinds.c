@@ -90,7 +90,7 @@ void EffectBolt_StartBySurface(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectBolt_StartWithTargeters(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectBolt_StartCounted(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectBolt_Update(EffectActor *actor);
-void EffectFollowPose_Start(EffectActor *effect);
+void EffectFollowPose_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectFollowPose_Update(EffectActor *effect);
 void EffectFollowPosition_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectFollowPosition_Update(EffectActor *effect);
@@ -152,7 +152,7 @@ void EffectLight_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectLight_Update(EffectActor *effect);
 void EffectSpiral_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectSpiral_Update(EffectActor *effect);
-void EffectScatterAroundPlayer_Start(EffectActor *effect);
+void EffectScatterAroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot);
 void EffectScatterAroundPlayer_Update(EffectActor *effect);
 void EffectDrop_Start(EffectActor *actor, EffectSlot *spawn_slot);
 void EffectDrop_Update(EffectActor *effect);
@@ -704,7 +704,7 @@ void EffectBolt_Update(EffectActor *actor) {
 }
 
 /* Kind 40 start: keeps the target's position and rotation; the model is not placed. */
-void EffectFollowPose_Start(EffectActor *effect) {
+void EffectFollowPose_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector_Copy(&effect->motion, &effect->target->model->position);
     Vector_Copy(&effect->motion.unk10, &effect->target->model->rotation);
 }
@@ -2019,7 +2019,7 @@ void EffectSpiral_Update(EffectActor *effect) {
 /* Kind 86 start: at def->offset_base turned by the player's heading, plus a random spread, randomly turned,
    def->radius_half off the floor found within 1500 of it; ends where there is none. Velocity.y is
    def->speed. */
-void EffectScatterAroundPlayer_Start(EffectActor *effect) {
+void EffectScatterAroundPlayer_Start(EffectActor *effect, EffectSlot *spawn_slot) {
     Vector4 offset;
     f32 matrix[16];
     EffectMotion *motion;
