@@ -275,7 +275,7 @@ void ItemEffect_Update(void) {
         def = &weapon_defs[player_state.weapon];
         item_effect_pending_effects = 0;
         if (player_state.equipped_magic != 0 || def->first_magic_id != 0xFFFF ||
-            (def->second_magic_id != 0xFFFF && weapon_level_records[player_state.weapon].unk14 + 1 >= 3) || Player_KnowsItemMenuMagic() != 0) {
+            (def->second_magic_id != 0xFFFF && weapon_level_records[player_state.weapon].level_index + 1 >= 3) || Player_KnowsItemMenuMagic() != 0) {
             player_state.magic_gauge = 5000;
         }
         if (item_effect_marked != 0) {

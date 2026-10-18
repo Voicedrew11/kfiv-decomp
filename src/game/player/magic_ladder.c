@@ -107,7 +107,7 @@ int Player_CastMagic(int magic_id) {
         shot->player_power = player_state.power;
         shot->player_magic = player_state.magic;
         shot->magic_id = magic_id;
-        shot->unk08 = player_state.unk7E;
+        shot->worn_item_stats = player_state.worn_item_stats;
         Vector_Copy(&angles, &player_state.rotation);
         angles.x += player_state.view_tilt_pitch;
         if (angles.x > 1.012291f) {
@@ -398,7 +398,7 @@ void Player_HoldMagic(int magic_id) {
             channeled_shot->player_power = player_state.power;
             channeled_shot->player_magic = player_state.magic;
             channeled_shot->magic_id = magic_id;
-            channeled_shot->unk08 = player_state.unk7E;
+            channeled_shot->worn_item_stats = player_state.worn_item_stats;
             Vector_Copy(&angles, &player_state.rotation);
             angles.x += player_state.view_tilt_pitch;
             if (angles.x > 1.012291f) {

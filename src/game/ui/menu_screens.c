@@ -110,7 +110,7 @@ extern MenuItem *castable_spell_page_mark[];
     first = NULL;                                                                                        \
     for (i = 0; i < (item_count); i++) {                                                                 \
         if (item_counts[(item_base) + i] != 0 && (item_name_defs[(item_base) + i].state & 1) &&               \
-            (records)[(record_base) + i].unk18 == 0) {                                                   \
+            (records)[(record_base) + i].in_smith_rings == 0) {                                                   \
             LINK_ITEM(&(nodes)[i])                                                                       \
         }                                                                                                \
     }                                                                                                    \
@@ -797,15 +797,15 @@ static void Menu_BuildItemRings(void) {
     count = 0;
     for (i = 1; i < 380; i++) {
         if (item_counts[i] != 0 && !(item_name_defs[i].state & 2)) {
-            if ((i >= 0 && i < 150) || (i >= 150 && i < 220 && weapon_level_records[i - 150].unk18 == 0) ||
-                (i >= 220 && i < 250 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 250 && i < 275 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 275 && i < 300 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 300 && i < 325 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 325 && i < 350 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 350 && i < 360 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 360 && i < 370 && worn_item_level_records[i - 220].unk18 == 0) ||
-                (i >= 370 && worn_item_level_records[i - 220].unk18 == 0)) {
+            if ((i >= 0 && i < 150) || (i >= 150 && i < 220 && weapon_level_records[i - 150].in_smith_rings == 0) ||
+                (i >= 220 && i < 250 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 250 && i < 275 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 275 && i < 300 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 300 && i < 325 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 325 && i < 350 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 350 && i < 360 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 360 && i < 370 && worn_item_level_records[i - 220].in_smith_rings == 0) ||
+                (i >= 370 && worn_item_level_records[i - 220].in_smith_rings == 0)) {
                 count++;
                 if (count == 7) {
                     owned_list_page_mark[0] = &all_item_entries[i];
@@ -875,7 +875,7 @@ static void Menu_BuildItemRings(void) {
     last = NULL;
     first = NULL;
     for (i = 0; i < 70; i++) {
-        if (item_counts[150 + i] != 0 && (item_name_defs[150 + i].state & 1) && weapon_level_records[i].unk18 == 0) {
+        if (item_counts[150 + i] != 0 && (item_name_defs[150 + i].state & 1) && weapon_level_records[i].in_smith_rings == 0) {
             LINK_ITEM(&weapon_entries[i])
         }
     }
@@ -3594,7 +3594,7 @@ static void Menu_UpdateEquip(void) {
     }
     index = CURRENT_ITEM->unk0C - bases.first_item[CURRENT_ITEM->group];
     if (CURRENT_ITEM->group == 0) {
-        D_00446E30 = weapon_level_records[index].unk14 + 1;
+        D_00446E30 = weapon_level_records[index].level_index + 1;
     } else if (CURRENT_ITEM->group == 1) {
         D_00446E30 = (index - 1) % 3 + 1;
     }
@@ -3644,7 +3644,7 @@ static void Menu_UpdateEquip(void) {
     node.unk00 = 0;
     D_00446ACC = weapon_defs[player_state.weapon].equip_menu_motion;
     if (weapon_defs[player_state.weapon].action_handler_index == 0) {
-        D_00446ACC += worn_defs[player_state.equipment[EQUIP_SHIELD]].unk3F;
+        D_00446ACC += worn_defs[player_state.equipment[EQUIP_SHIELD]].equip_menu_motion_offset;
     }
     PoolNode_Pose((RelocEntry *)equip_weapon_motions[D_00446ACC]->frames, pool_slots, weapon_matrix, equip_weapon_motion_frame);
     equip_weapon_motion_frame++;
@@ -3742,15 +3742,15 @@ static void Menu_UpdateEquip(void) {
     if (detail_panel_open != 0) {
         switch (CURRENT_ITEM->group) {
         case 0:
-            D_00446DF4 = (weapon_level_records[index].unk00[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[0]) * weapon_level_records[index].level / 100;
-            D_00446DF8 = (weapon_level_records[index].unk00[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[1]) * weapon_level_records[index].level / 100;
-            D_00446DFC = (weapon_level_records[index].unk00[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[2]) * weapon_level_records[index].level / 100;
-            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[3] * weapon_level_records[index].level / 100;
-            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[4] * weapon_level_records[index].level / 100;
-            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[5] * weapon_level_records[index].level / 100;
-            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[6] * weapon_level_records[index].level / 100;
-            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[7] * weapon_level_records[index].level / 100;
-            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].unk14].values[8] * weapon_level_records[index].level / 100;
+            D_00446DF4 = (weapon_level_records[index].gained_values[0] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[0]) * weapon_level_records[index].level / 100;
+            D_00446DF8 = (weapon_level_records[index].gained_values[1] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[1]) * weapon_level_records[index].level / 100;
+            D_00446DFC = (weapon_level_records[index].gained_values[2] + weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[2]) * weapon_level_records[index].level / 100;
+            D_00446E00 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[3] * weapon_level_records[index].level / 100;
+            D_00446E04 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[4] * weapon_level_records[index].level / 100;
+            D_00446E08 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[5] * weapon_level_records[index].level / 100;
+            D_00446E0C = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[6] * weapon_level_records[index].level / 100;
+            D_00446E10 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[7] * weapon_level_records[index].level / 100;
+            D_00446E14 = weapon_defs[index].attack_by_level[weapon_level_records[index].level_index].values[8] * weapon_level_records[index].level / 100;
             D_00446E1C = (s32)(weapon_defs[index].weapon_length_cm * 0.03281f * 10.0f);
             D_00446E20 = weapon_level_records[index].level;
             D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
@@ -3841,15 +3841,15 @@ static void Menu_UpdateEquip(void) {
         case 4:
         case 5:
         case 6:
-            D_00446DF4 = (worn_item_level_records[index].unk00[0] + worn_defs[index].unk00[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].unk00[1] + worn_defs[index].unk00[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].unk00[2] + worn_defs[index].unk00[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].unk00[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].unk00[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].unk00[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].unk00[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].unk00[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].unk00[8] * worn_item_level_records[index].level / 100;
+            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
             D_00446E1C = player_weapon[EQUIP_LIST->group];
             D_00446E20 = worn_item_level_records[index].level;
@@ -3872,15 +3872,15 @@ static void Menu_UpdateEquip(void) {
         case 7:
         case 8:
         case 9:
-            D_00446DF4 = (worn_item_level_records[index].unk00[0] + worn_defs[index].unk00[0]) * worn_item_level_records[index].level / 100;
-            D_00446DF8 = (worn_item_level_records[index].unk00[1] + worn_defs[index].unk00[1]) * worn_item_level_records[index].level / 100;
-            D_00446DFC = (worn_item_level_records[index].unk00[2] + worn_defs[index].unk00[2]) * worn_item_level_records[index].level / 100;
-            D_00446E00 = worn_defs[index].unk00[3] * worn_item_level_records[index].level / 100;
-            D_00446E04 = worn_defs[index].unk00[4] * worn_item_level_records[index].level / 100;
-            D_00446E08 = worn_defs[index].unk00[5] * worn_item_level_records[index].level / 100;
-            D_00446E0C = worn_defs[index].unk00[6] * worn_item_level_records[index].level / 100;
-            D_00446E10 = worn_defs[index].unk00[7] * worn_item_level_records[index].level / 100;
-            D_00446E14 = worn_defs[index].unk00[8] * worn_item_level_records[index].level / 100;
+            D_00446DF4 = (worn_item_level_records[index].gained_values[0] + worn_defs[index].base_values[0]) * worn_item_level_records[index].level / 100;
+            D_00446DF8 = (worn_item_level_records[index].gained_values[1] + worn_defs[index].base_values[1]) * worn_item_level_records[index].level / 100;
+            D_00446DFC = (worn_item_level_records[index].gained_values[2] + worn_defs[index].base_values[2]) * worn_item_level_records[index].level / 100;
+            D_00446E00 = worn_defs[index].base_values[3] * worn_item_level_records[index].level / 100;
+            D_00446E04 = worn_defs[index].base_values[4] * worn_item_level_records[index].level / 100;
+            D_00446E08 = worn_defs[index].base_values[5] * worn_item_level_records[index].level / 100;
+            D_00446E0C = worn_defs[index].base_values[6] * worn_item_level_records[index].level / 100;
+            D_00446E10 = worn_defs[index].base_values[7] * worn_item_level_records[index].level / 100;
+            D_00446E14 = worn_defs[index].base_values[8] * worn_item_level_records[index].level / 100;
             D_00446E18 = item_name_defs[CURRENT_ITEM->unk0C].weight_tenths_of_pound;
             D_00446E1C = player_weapon[EQUIP_LIST->group];
             if (index != 130 && index != 140 && index != 150) {
@@ -4902,7 +4902,7 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
     record = owned_list_current[0]->unk0C - bases.first_item[owned_list_current[0]->group];
     D_00446DF4 = item_counts[owned_list_current[0]->unk0C];
     if (owned_list_current[0]->group == 0) {
-        D_00446E30 = weapon_level_records[record].unk14 + 1;
+        D_00446E30 = weapon_level_records[record].level_index + 1;
     }
     for (i = 0; i < recol_part_count; i++) {
         kind = recol_parts[i].handler_index;
@@ -5023,15 +5023,15 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         case 4:
         case 5:
         case 6:
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].unk00[0] + worn_defs[record].unk00[0], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].unk00[1] + worn_defs[record].unk00[1], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_item_level_records[record].unk00[2] + worn_defs[record].unk00[2], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].unk00[3], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].unk00[4], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].unk00[5], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].unk00[6], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].unk00[7], worn_item_level_records[record].level, 100);
-            D_00446E18 = ScaleValue(worn_defs[record].unk00[8], worn_item_level_records[record].level, 100);
+            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            D_00446E00 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            D_00446E18 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             D_00446E24 = worn_item_level_records[record].level;
             D_00446E28 = 100;
             D_00446E1C = item_name_defs[owned_list_current[0]->unk0C].weight_tenths_of_pound;
@@ -5045,15 +5045,15 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
         case 7:
         case 8:
         case 9:
-            D_00446DF8 = ScaleValue(worn_item_level_records[record].unk00[0] + worn_defs[record].unk00[0], worn_item_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(worn_item_level_records[record].unk00[1] + worn_defs[record].unk00[1], worn_item_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(worn_item_level_records[record].unk00[2] + worn_defs[record].unk00[2], worn_item_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(worn_defs[record].unk00[3], worn_item_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(worn_defs[record].unk00[4], worn_item_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(worn_defs[record].unk00[5], worn_item_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(worn_defs[record].unk00[6], worn_item_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(worn_defs[record].unk00[7], worn_item_level_records[record].level, 100);
-            D_00446E18 = ScaleValue(worn_defs[record].unk00[8], worn_item_level_records[record].level, 100);
+            D_00446DF8 = ScaleValue(worn_item_level_records[record].gained_values[0] + worn_defs[record].base_values[0], worn_item_level_records[record].level, 100);
+            D_00446DFC = ScaleValue(worn_item_level_records[record].gained_values[1] + worn_defs[record].base_values[1], worn_item_level_records[record].level, 100);
+            D_00446E00 = ScaleValue(worn_item_level_records[record].gained_values[2] + worn_defs[record].base_values[2], worn_item_level_records[record].level, 100);
+            D_00446E04 = ScaleValue(worn_defs[record].base_values[3], worn_item_level_records[record].level, 100);
+            D_00446E08 = ScaleValue(worn_defs[record].base_values[4], worn_item_level_records[record].level, 100);
+            D_00446E0C = ScaleValue(worn_defs[record].base_values[5], worn_item_level_records[record].level, 100);
+            D_00446E10 = ScaleValue(worn_defs[record].base_values[6], worn_item_level_records[record].level, 100);
+            D_00446E14 = ScaleValue(worn_defs[record].base_values[7], worn_item_level_records[record].level, 100);
+            D_00446E18 = ScaleValue(worn_defs[record].base_values[8], worn_item_level_records[record].level, 100);
             D_00446E1C = item_name_defs[owned_list_current[0]->unk0C].weight_tenths_of_pound;
             if (visible_panel_state == 1) {
                 FILL_FADE(panel_part_alphas, recol_g2_parts, recol_g2_part_count)
@@ -5063,15 +5063,15 @@ static void Menu_UpdateVisibleItem(HandlerContext *context) {
             count = recol_g2_part_count;
             break;
         case 0:
-            D_00446DF8 = ScaleValue(weapon_level_records[record].unk00[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[0], weapon_level_records[record].level, 100);
-            D_00446DFC = ScaleValue(weapon_level_records[record].unk00[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[1], weapon_level_records[record].level, 100);
-            D_00446E00 = ScaleValue(weapon_level_records[record].unk00[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[2], weapon_level_records[record].level, 100);
-            D_00446E04 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[3], weapon_level_records[record].level, 100);
-            D_00446E08 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[4], weapon_level_records[record].level, 100);
-            D_00446E0C = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[5], weapon_level_records[record].level, 100);
-            D_00446E10 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[6], weapon_level_records[record].level, 100);
-            D_00446E14 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[7], weapon_level_records[record].level, 100);
-            D_00446E18 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].unk14].values[8], weapon_level_records[record].level, 100);
+            D_00446DF8 = ScaleValue(weapon_level_records[record].gained_values[0] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[0], weapon_level_records[record].level, 100);
+            D_00446DFC = ScaleValue(weapon_level_records[record].gained_values[1] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[1], weapon_level_records[record].level, 100);
+            D_00446E00 = ScaleValue(weapon_level_records[record].gained_values[2] + weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[2], weapon_level_records[record].level, 100);
+            D_00446E04 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[3], weapon_level_records[record].level, 100);
+            D_00446E08 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[4], weapon_level_records[record].level, 100);
+            D_00446E0C = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[5], weapon_level_records[record].level, 100);
+            D_00446E10 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[6], weapon_level_records[record].level, 100);
+            D_00446E14 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[7], weapon_level_records[record].level, 100);
+            D_00446E18 = ScaleValue(weapon_defs[record].attack_by_level[weapon_level_records[record].level_index].values[8], weapon_level_records[record].level, 100);
             D_00446E20 = (s32)(weapon_defs[record].weapon_length_cm * 0.03281f * 10.0f);
             D_00446E24 = weapon_level_records[record].level;
             D_00446E1C = item_name_defs[owned_list_current[0]->unk0C].weight_tenths_of_pound;

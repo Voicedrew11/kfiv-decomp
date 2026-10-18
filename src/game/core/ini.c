@@ -349,13 +349,13 @@ void Ini_SetItem(char *text) {
                 } else if (time > 480) {
                     time = 480;
                 }
-                weapon_level_records[index].unk16 = time;
+                weapon_level_records[index].use_count = time;
                 if (time >= 480) {
-                    weapon_level_records[index].unk14 = 2;
+                    weapon_level_records[index].level_index = 2;
                 } else if (time >= 180) {
-                    weapon_level_records[index].unk14 = 1;
+                    weapon_level_records[index].level_index = 1;
                 } else {
-                    weapon_level_records[index].unk14 = 0;
+                    weapon_level_records[index].level_index = 0;
                 }
             }
         } else if ((u32)(item - 160) < 160) { // match: tests 160 to 319 where the index below is item - 220, so 320 to 379 get no level
