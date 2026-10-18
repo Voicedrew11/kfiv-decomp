@@ -774,15 +774,15 @@ void Attack_HitPlayer(Unk1B1470Request *request, Unk1B1470Extra *extra) {
         percent += 20;
     }
     Attack_GetEffectiveStrengths(&attack, request, extra); // match: attack is filled here and never read; the terms below use request->unk50
-    damage = Attack_StrengthDamageToPlayer(request->unk50.unk00[0], player_state.unk90.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[1], player_state.unk90.values[1], player_state.power); // match: values[1] a second time
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[2], player_state.unk90.values[2], player_state.power);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[3], player_state.unk90.values[3], player_state.magic) * percent / 100;
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[4], player_state.unk90.values[4], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[5], player_state.unk90.values[5], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[6], player_state.unk90.values[6], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[7], player_state.unk90.values[7], player_state.magic);
-    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[8], player_state.unk90.values[8], player_state.magic);
+    damage = Attack_StrengthDamageToPlayer(request->unk50.unk00[0], player_state.defence_stats.values[1], player_state.power); // match: values[1] here and on the next line; values[0] is never used
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[1], player_state.defence_stats.values[1], player_state.power); // match: values[1] a second time
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[2], player_state.defence_stats.values[2], player_state.power);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[3], player_state.defence_stats.values[3], player_state.magic) * percent / 100;
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[4], player_state.defence_stats.values[4], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[5], player_state.defence_stats.values[5], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[6], player_state.defence_stats.values[6], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[7], player_state.defence_stats.values[7], player_state.magic);
+    damage += Attack_StrengthDamageToPlayer(request->unk50.unk00[8], player_state.defence_stats.values[8], player_state.magic);
     request->landed_on_player = 1;
     if (damage <= blocked) { // match: blocked is request->unk72, which is known to be 0 here
         damage = 1;

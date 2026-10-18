@@ -14,4 +14,4 @@ asm(".globl object_under_player\nobject_under_player = player_state + 0x208\n");
 asm(".globl player_floor_block\nplayer_floor_block = player_state + 0x250\n");  /* unk250 the flag block of the floor record under the player */
 asm(".globl player_weapon_step\nplayer_weapon_step = player_state + 0x258\n");  /* unk258 the step of the weapon's action, 0 while idle */
 asm(".globl player_status_bits\nplayer_status_bits = player_previous + 0x1C8\n");  /* unk1C8 status bits */
-asm(".globl player_previous_fade_level\nplayer_previous_fade_level = player_previous + 0x2A4\n");  /* pad2A4: the map record byte 0x4C under the player, the frame before */
+asm(".globl player_previous_fade_level\nplayer_previous_fade_level = player_previous + 0x2A4\n");  /* fade_area: the map record byte 0x4C under the player, the frame before */

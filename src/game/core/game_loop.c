@@ -870,7 +870,7 @@ void GameLoop_OpenRequestedMenu(void) {
                 if (item_def->first_magic_id != 0xFFFF) {
                     player_state.magic_gauge = 0;
                     player_state.charging_magic = item_def->first_magic_id;
-                } else if (item_def->second_magic_id != 0xFFFF && weapon_level_records[player_state.weapon].unk14 + 1 == 3) {
+                } else if (item_def->second_magic_id != 0xFFFF && weapon_level_records[player_state.weapon].level_index + 1 == 3) {
                     player_state.magic_gauge = 0;
                     player_state.charging_magic = item_def->second_magic_id;
                 }
