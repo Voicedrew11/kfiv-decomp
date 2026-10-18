@@ -339,7 +339,7 @@ int Effect_Spawn(int effect_id, Vector4 *position, Vector4 *rotation, Entity *ow
 }
 
 /* Runs the spawner slots and the effects for one frame. While the game status has bit 0x400
-   set, only those of the owner in unk40 and of the kinds 0x280, 0x282 and 0x284 run. */
+   set, only those of the owner and of the kinds 0x280, 0x282 and 0x284 run. */
 void Effect_UpdateAll(void) {
     Vector4 unused[2]; /* unused, but retail reserves the bytes */
     EffectDef *kind_280 = &effect_table.defs[0x280];
