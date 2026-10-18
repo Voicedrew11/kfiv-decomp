@@ -276,7 +276,7 @@ static void AncientKing_Death(Entity *entity) {
     case 4:
         if ((slots->motion_slot_1.frame_fixed - entity->params->motion_speeds[slots->motion_slot_1.index]) >> 8 < 0x2B && slots->motion_slot_1.frame >= 0x2B) {
             Vector_Copy(target, player_state.position);
-            EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0])->unk10[0].unk00, target,
+            EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0])->launches[0].magic_effect, target,
                           entity->model->rotation);
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
@@ -332,7 +332,7 @@ static void AncientKing_RangedAttack0(Entity *entity) {
                     Vector_Copy(target, player_state.position);
                     target[0] += rand() % 1201 - 600;
                     target[2] += rand() % 1201 - 600;
-                    EntityAi_LaunchShot(entity, unk3D8->unk10[0].unk00, target, entity->model->rotation);
+                    EntityAi_LaunchShot(entity, unk3D8->launches[0].magic_effect, target, entity->model->rotation);
                 }
             }
         }
@@ -597,7 +597,7 @@ static void AncientKing_DeathLaunchShot(Entity *entity) {
         if ((entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8 < 0x2B &&
             entity->model->level_tables->frame >= 0x2B) {
             Vector_Copy(target, player_state.position);
-            EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0])->unk10[0].unk00, target,
+            EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0])->launches[0].magic_effect, target,
                           entity->model->rotation);
         }
         if (ENTITY_FLAG_BITS(entity)->bit34) {
@@ -651,7 +651,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
                     Vector_Copy(target, player_state.position);
                     target[0] += rand() % 401 - 200;
                     target[2] += rand() % 401 - 200;
-                    EntityAi_LaunchShot(entity, unk3D8->unk10[0].unk00, target, entity->model->rotation);
+                    EntityAi_LaunchShot(entity, unk3D8->launches[0].magic_effect, target, entity->model->rotation);
                 }
             }
         }
@@ -709,7 +709,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
                         direction[0] = -0.17453292f;
                         direction[1] = EntityMath_WrapAngle(-atan2f(delta_z, delta_x) + 1.5707964f);
                         direction[2] = direction[3] = 0.0f;
-                        EntityAi_LaunchShot(entity, unk3D8->unk10[0].unk00, source, direction);
+                        EntityAi_LaunchShot(entity, unk3D8->launches[0].magic_effect, source, direction);
                     }
                 }
             }

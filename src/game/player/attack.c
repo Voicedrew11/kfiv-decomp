@@ -222,13 +222,13 @@ s32 Attack_RunSphere(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     }
                     point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                     if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
-                        Collision_SphereCylinder(point, request, body->unk04 * scale, body->unk06 * ENTITY_MODEL(entity)->scale_y,
+                        Collision_SphereCylinder(point, request, body->radius * scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                       request->radius);
                     } else {
-                        Collision_SphereSphere(point, request, body->unk04 * scale, request->radius);
+                        Collision_SphereSphere(point, request, body->radius * scale, request->radius);
                     }
                     if (COLLISION_RESULT->hit != 0) {
-                        Attack_HitEntity(request, extra, entity, body->unk08);
+                        Attack_HitEntity(request, extra, entity, body->hit_multiplier);
                         return 2;
                     }
                 }
@@ -384,24 +384,24 @@ s32 Attack_RunSwept(Unk1B1470Request *request, Unk1B1470Extra *extra) {
                     point = (void *)ENTITY_MODEL(entity)->get_point(ENTITY_MODEL(entity), body->unk00.point);
                     if (!(body->unk00.flags & ENTITY_BODY_ROUND)) {
                         if (IS_PLAYER(request->owner)) {
-                            Collision_CylinderArcPitch(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->scale_y,
+                            Collision_CylinderArcPitch(point, request, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                           request->radius, request->lowest_y, request->highest_y, request->half_angle, request->facing,
                                           request->half_pitch, request->pitch);
                         } else {
-                            Collision_CylinderArc(point, request, body->unk04 * width_scale, body->unk06 * ENTITY_MODEL(entity)->scale_y,
+                            Collision_CylinderArc(point, request, body->radius * width_scale, body->height * ENTITY_MODEL(entity)->scale_y,
                                           request->radius, request->height, request->half_angle, request->facing);
                         }
                     } else {
                         if (IS_PLAYER(request->owner)) {
-                            Collision_BallSwingPitch(point, request, body->unk04 * scale, request->radius, request->lowest_y, request->highest_y,
+                            Collision_BallSwingPitch(point, request, body->radius * scale, request->radius, request->lowest_y, request->highest_y,
                                           request->half_angle, request->facing, request->half_pitch, request->pitch);
                         } else {
-                            Collision_BallSwing(point, request, body->unk04 * scale, request->radius, request->height,
+                            Collision_BallSwing(point, request, body->radius * scale, request->radius, request->height,
                                           request->half_angle, request->facing);
                         }
                     }
                     if (COLLISION_RESULT->hit != 0) {
-                        Attack_HitEntity(request, extra, entity, body->unk08);
+                        Attack_HitEntity(request, extra, entity, body->hit_multiplier);
                         return 2;
                     }
                 }

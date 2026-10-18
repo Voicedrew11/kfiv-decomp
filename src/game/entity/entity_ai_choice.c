@@ -71,19 +71,19 @@ static inline s32 player_in_reach(Entity *entity, EntityParams *params) {
     }
     angles[2] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[2] = ABS(angles[2]);
-    angle = ENTITY_PARAMS_RANGED(params)[0].unk0E * 0.017453292f;
+    angle = ENTITY_PARAMS_RANGED(params)[0].heading_offset_deg * 0.017453292f;
     if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
     angles[3] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[3] = ABS(angles[3]);
-    angle = ENTITY_PARAMS_RANGED(params)[1].unk0E * 0.017453292f;
+    angle = ENTITY_PARAMS_RANGED(params)[1].heading_offset_deg * 0.017453292f;
     if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
     angles[4] = wrap_angle(entity->heading_to_player - wrap_angle(entity->model->rotation[1] + angle));
     angles[4] = ABS(angles[4]);
-    angle = ENTITY_PARAMS_RANGED(params)[2].unk0E * 0.017453292f;
+    angle = ENTITY_PARAMS_RANGED(params)[2].heading_offset_deg * 0.017453292f;
     if (!(entity->model->scale[0] >= 0.0f)) {
         angle = -angle;
     }
@@ -126,15 +126,15 @@ static inline s32 player_in_reach(Entity *entity, EntityParams *params) {
         }
     }
     if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top) {
-        if (ENTITY_PARAMS_RANGED(params)[0].record.unk00 != 0 && angles[3] < ENTITY_PARAMS_RANGED(params)[0].unk08 && reach[0][3] <= entity->distance_to_player &&
+        if (ENTITY_PARAMS_RANGED(params)[0].record.unk00 != 0 && angles[3] < ENTITY_PARAMS_RANGED(params)[0].widest_angle && reach[0][3] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][3]) {
             return TRUE;
         }
-        if (ENTITY_PARAMS_RANGED(params)[1].record.unk00 != 0 && angles[4] < ENTITY_PARAMS_RANGED(params)[1].unk08 && reach[0][4] <= entity->distance_to_player &&
+        if (ENTITY_PARAMS_RANGED(params)[1].record.unk00 != 0 && angles[4] < ENTITY_PARAMS_RANGED(params)[1].widest_angle && reach[0][4] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][4]) {
             return TRUE;
         }
-        if (ENTITY_PARAMS_RANGED(params)[2].record.unk00 != 0 && angles[5] < ENTITY_PARAMS_RANGED(params)[2].unk08 && reach[0][5] <= entity->distance_to_player &&
+        if (ENTITY_PARAMS_RANGED(params)[2].record.unk00 != 0 && angles[5] < ENTITY_PARAMS_RANGED(params)[2].widest_angle && reach[0][5] <= entity->distance_to_player &&
             entity->distance_to_player < reach[1][5]) {
             return TRUE;
         }
@@ -401,7 +401,7 @@ s32 EntityAi_PickAttack(Entity *entity) {
             s32 j;
 
             j = i - 3;
-            angle = ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].unk0E * 0.017453292f;
+            angle = ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].heading_offset_deg * 0.017453292f;
             if (!(entity->model->scale[0] >= 0.0f)) {
                 angle = -angle;
             }
@@ -425,7 +425,7 @@ s32 EntityAi_PickAttack(Entity *entity) {
             radius = entity->radius; // match: as in the melee half
             reach[1] = (farthest < ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].reach_max ? farthest + radius : ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].reach_max + radius) + 100.0f;
             in_reach = FALSE;
-            if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top && difference < ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].unk08 &&
+            if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top && difference < ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[j].widest_angle &&
                 reach[0] <= entity->distance_to_player && entity->distance_to_player < reach[1]) {
                 in_reach = TRUE;
             }
@@ -570,7 +570,7 @@ s32 EntityAi_PickRangedAttack(Entity *entity) {
         // gives the loop its two hoisted registers for each (the second a copy of the first)
         model = entity->model;
         radius = entity->radius;
-        angle = attack_angle(model, entity->model, entity->heading_to_player, ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].unk0E);
+        angle = attack_angle(model, entity->model, entity->heading_to_player, ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].heading_offset_deg);
         angle = ABS(angle);
         bottom = entity->model->position[1] - (entity->height + entity->params->attack_height_band) * 0.5f;
         top = entity->model->position[1] - (entity->height - entity->params->attack_height_band) * 0.5f;
@@ -592,7 +592,7 @@ s32 EntityAi_PickRangedAttack(Entity *entity) {
         reach[1] = farthest;
         in_reach = FALSE;
         if (bottom <= player_state.position.y && player_state.position.y - 230.0f <= top &&
-            angle < ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].unk08 && reach[0] <= entity->distance_to_player &&
+            angle < ENTITY_PARAMS_RANGED_VIEW(entity->params)->ranged[i].widest_angle && reach[0] <= entity->distance_to_player &&
             entity->distance_to_player < farthest) {
             in_reach = TRUE;
         }

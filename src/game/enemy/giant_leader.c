@@ -594,9 +594,9 @@ static void GiantLeader_MeleeAttack1(Entity *entity) {
    EntityParams.action_frames instead and run as part 1, 0 and 1. */
 static s32 GiantLeader_CheckPartHit(Entity *entity, EntityParamsUnk240 *unk240, s32 part, s32 frame_from, s32 frame_to, f32 angle) {
     if (part < 3) {
-        if (unk240->hit_parts[part].unk24 == 0 ||
-            (frame_from < unk240->hit_parts[part].unk24 && frame_to < unk240->hit_parts[part].unk24) ||
-            (unk240->hit_parts[part].unk26 < frame_from && unk240->hit_parts[part].unk26 < frame_to)) {
+        if (unk240->hit_parts[part].first_frame == 0 ||
+            (frame_from < unk240->hit_parts[part].first_frame && frame_to < unk240->hit_parts[part].first_frame) ||
+            (unk240->hit_parts[part].last_frame < frame_from && unk240->hit_parts[part].last_frame < frame_to)) {
             return 0;
         }
     } else if (part == 3) {

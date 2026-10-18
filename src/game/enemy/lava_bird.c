@@ -618,7 +618,7 @@ static void LavaBird_RangedAttack(Entity *entity) {
         }
         frame = (slots->motion_slot_0.frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         current_frame = slots->motion_slot_0.frame;
-        launch_frame = ((EntityParamsUnk3D8Full *)unk3D8)->unk10[0].unk02;
+        launch_frame = ((EntityParamsUnk3D8Full *)unk3D8)->launches[0].frame;
         if (launch_frame != 0 && frame < launch_frame && launch_frame <= current_frame) {
             LavaBird_LaunchBothShots(entity, unk3D8, frame, current_frame, player_state.position, 0.7853982f, 0.7853982f);
         }
@@ -665,10 +665,10 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
         shot->unk22 = shot->unk20 = 0;
         shot->unk00 = 1;
         shot->unk28 = entity->params->unk238;
-        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01);
-        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->unk10[i].unk01 + 1);
+        from = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone);
+        tip = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, record->launches[i].bone + 1);
         if (from != NULL && tip != NULL) {
-            if (record->unk10[i].unk01 != 0xFF) {
+            if (record->launches[i].bone != 0xFF) {
                 delta_x = tip[0] - from[0];
                 delta_y = tip[1] - from[1];
                 delta_z = tip[2] - from[2];
@@ -685,7 +685,7 @@ static s32 LavaBird_LaunchBothShots(Entity *entity, EntityParamsUnk3D8 *unk3D8, 
                 angles[0] = EntityMath_Approach(angles[0], pitch, pitch_rate);
                 angles[1] = EntityMath_Approach(angles[1], yaw, yaw_rate);
             }
-            Attack_LaunchMagicEffect(record->unk10[i].unk00, shot, from, angles, entity);
+            Attack_LaunchMagicEffect(record->launches[i].magic_effect, shot, from, angles, entity);
         }
     }
     return 0;

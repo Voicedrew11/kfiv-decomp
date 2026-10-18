@@ -451,8 +451,8 @@ void Ladder_Start(ObjectReference *object, int from_far_end) {
     Vector_Subtract(&ladder_walk_step, &ladder_foot_position, &player_state.position);
     ladder_walk_frames_remaining = sqrtf(ladder_walk_step.x * ladder_walk_step.x + ladder_walk_step.y * ladder_walk_step.y + ladder_walk_step.z * ladder_walk_step.z) / 12.0f;
     Vector_Scale(&ladder_walk_step, &ladder_walk_step, 1.0f / (f32)ladder_walk_frames_remaining);
-    def = object->unk08;
-    step_count = def->unk50;
+    def = object->definition;
+    step_count = def->step_count;
     ladder_rung_count = step_count;
     if (from_far_end) {
         ladder_current_rung = step_count;
@@ -461,7 +461,7 @@ void Ladder_Start(ObjectReference *object, int from_far_end) {
         ladder_current_rung = 0;
         ladder_rung_anim_base = 0;
     }
-    ladder_frames_per_rung = def->unk52;
+    ladder_frames_per_rung = def->frames_per_step;
     ladder_rung_anim_frame = 0;
     Vector_Subtract(&span, &ladder_bottom_point, &ladder_top_point);
     ladder_rung_spacing = sqrtf(span.x * span.x + span.y * span.y + span.z * span.z) / (f32)ladder_rung_count;
@@ -500,7 +500,7 @@ void Ladder_WalkToFoot(void) {
 
 /* Waits on a rung; up/down input starts climbing or leaves the ladder. */
 void Ladder_WaitOnRung(u16 buttons) {
-    if (!(ladder_object->unk10 & 0x10000)) {
+    if (!(ladder_object->flags & 0x10000)) {
         player_state.status_bits &= ~(1L << 36);
     }
     if (buttons & (step_right_button | step_left_button)) {
@@ -536,7 +536,7 @@ void Ladder_ClimbRungUp(u16 buttons) {
     f32 angle;
     f32 fraction;
 
-    if (!(ladder_object->unk10 & 0x10000)) {
+    if (!(ladder_object->flags & 0x10000)) {
         player_state.status_bits &= ~(1L << 36);
     }
     if (buttons & (step_right_button | step_left_button)) {
@@ -566,7 +566,7 @@ void Ladder_ClimbRungDown(u16 buttons) {
     f32 angle;
     f32 fraction;
 
-    if (!(ladder_object->unk10 & 0x10000)) {
+    if (!(ladder_object->flags & 0x10000)) {
         player_state.status_bits &= ~(1L << 36);
     }
     if (buttons & (step_right_button | step_left_button)) {
@@ -595,7 +595,7 @@ int Ladder_PlayStepSound(void) {
     u16 kind;
 
     if (ladder_object != NULL) {
-        kind = ladder_object->unk08->unk30;
+        kind = ladder_object->definition->kind;
         switch (kind) {
         case 0x56:
             return Sound_PlayFootstep(0x22);

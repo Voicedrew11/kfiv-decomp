@@ -145,7 +145,7 @@ static void Npc_OnHit(Entity *entity) {
     entity->target = NULL;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction(entity, (void (*)(void))Npc_ReactionHeavy, 0);
-    entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].unk02 = 1;
+    entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].member_died = 1;
 }
 
 /* The think handler of type 15, while not busy: state 4 turns to the player, state 5 watches the player until
@@ -645,7 +645,7 @@ static void Npc_OnHitType81(Entity *entity) {
     entity->flags &= ~ENTITY_FLAG_400;
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction(entity, (void (*)(void))Npc_ReactionHeavy, 0);
-    entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].unk02 = 1;
+    entity_group_state[ENTITY_CONTROLLER(entity)->entity_group_index].member_died = 1;
     if (((u64)entity->flags >> 38) & 3) {
         entity->flags |= ENTITY_FLAG_20000000;
     }

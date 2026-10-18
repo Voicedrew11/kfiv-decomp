@@ -233,9 +233,9 @@ void Entity_ResetToSpawn(Entity *entity) {
     widest = (scale.z < scale.x) ? scale.x : scale.z;
     entity->collision_radius = (f32)entity->params->map_collision_radius * widest;
     entity->collision_height = (f32)entity->params->map_collision_height * scale.y;
-    entity->radius = (f32)entity->params->body_radius * widest;
+    entity->radius = (f32)entity->params->radius * widest;
     entity->height = (f32)entity->params->body_height * scale.y;
-    entity->body_radius = (f32)entity->params->unk04 * widest;
+    entity->body_radius = (f32)entity->params->body_radius * widest;
     entity->knockback_damping = (f32)entity->params->body_volume * scale.x * scale.y * scale.z;
     entity->knockback_damping = ABS(entity->knockback_damping);
     entity->model->radius = (entity->collision_radius < entity->collision_height) ? entity->collision_height : entity->collision_radius;
