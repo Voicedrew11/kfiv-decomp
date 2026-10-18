@@ -154,7 +154,7 @@ void Map_LoadAtOnce(int map) {
     map_slots[0].loaded = 1;
     current_map_slot = 0;
     map_draw_state.current_fog_block = *slot->fog_blocks;
-    map_draw_state.current_light_block = *(MapSlotUnk10Words *)slot->light_blocks;
+    map_draw_state.current_light_block = *(MapLightBlock *)slot->light_blocks;
     fog = &map_draw_state.current_fog_color;
     *fog = ((MapSlotUnk08 *)map_slots[0].header)->fog_color;
     map_draw_state.unk9A = 0;

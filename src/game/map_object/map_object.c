@@ -81,8 +81,8 @@ static MapObject *plain_draw_list[2];           /* 0x447088 per map, through Map
 static MapObject *jointed_draw_list[2];         /* 0x447090 per map, through MapObject.next_in_draw_list */
 
 static MapObject *objects_by_id[2][0x100];      /* 0x472240 per map, by MapObjectUnk08.spawn_flags.bytes[2] */
-static MapSlotUnk10Vectors glow_lights_shared;  /* 0x472A40 map_draw_state.current_light_block blended for the glow */
-static MapSlotUnk10Vectors glow_lights[2][0x20]; /* 0x472AC0 map_draw_state.unkA90 blended for the glow */
+static MapLightBlockVectors glow_lights_shared;  /* 0x472A40 map_draw_state.current_light_block blended for the glow */
+static MapLightBlockVectors glow_lights[2][0x20]; /* 0x472AC0 map_draw_state.unkA90 blended for the glow */
 
 /* Empties the map objects of both maps. */
 void MapObject_ClearAllMaps(void) {
@@ -450,8 +450,8 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
     f32 rest;
     int map;
     int i;
-    MapSlotUnk10Vectors *dest;
-    MapSlotUnk10Vectors *source;
+    MapLightBlockVectors *dest;
+    MapLightBlockVectors *source;
     MapObject *object;
 
     glow_item_was_worn = glow_item_worn;
@@ -471,7 +471,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
         if (map_slots[map].loaded != 0) {
             for (i = 0; i < 0x20; i++) {
                 dest = &glow_lights[map][i];
-                source = (MapSlotUnk10Vectors *)&map_draw_state.light_blocks[map][i];
+                source = (MapLightBlockVectors *)&map_draw_state.light_blocks[map][i];
                 Vector_Copy(&dest->directions[0], &source->directions[0]);
                 Vector_Copy(&dest->directions[1], &source->directions[1]);
                 Vector_Copy(&dest->directions[2], &source->directions[2]);
@@ -491,21 +491,21 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             }
         }
     }
-    Vector_Copy(&glow_lights_shared.directions[0], &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->directions[0]);
-    Vector_Copy(&glow_lights_shared.directions[1], &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->directions[1]);
-    Vector_Copy(&glow_lights_shared.directions[2], &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->directions[2]);
-    Vector_Copy(&glow_lights_shared.directions[3], &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->directions[3]);
+    Vector_Copy(&glow_lights_shared.directions[0], &((MapLightBlockVectors *)&map_draw_state.current_light_block)->directions[0]);
+    Vector_Copy(&glow_lights_shared.directions[1], &((MapLightBlockVectors *)&map_draw_state.current_light_block)->directions[1]);
+    Vector_Copy(&glow_lights_shared.directions[2], &((MapLightBlockVectors *)&map_draw_state.current_light_block)->directions[2]);
+    Vector_Copy(&glow_lights_shared.directions[3], &((MapLightBlockVectors *)&map_draw_state.current_light_block)->directions[3]);
     Vector_Scale(scaled, &map_object_glow_colors[0].x, blend);
-    Vector_Scale(&glow_lights_shared.colors[0].x, &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->colors[0].x, rest);
+    Vector_Scale(&glow_lights_shared.colors[0].x, &((MapLightBlockVectors *)&map_draw_state.current_light_block)->colors[0].x, rest);
     Vector_Add(&glow_lights_shared.colors[0], &glow_lights_shared.colors[0], scaled);
     Vector_Scale(scaled, &map_object_glow_colors[1].x, blend);
-    Vector_Scale(&glow_lights_shared.colors[1].x, &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->colors[1].x, rest);
+    Vector_Scale(&glow_lights_shared.colors[1].x, &((MapLightBlockVectors *)&map_draw_state.current_light_block)->colors[1].x, rest);
     Vector_Add(&glow_lights_shared.colors[1], &glow_lights_shared.colors[1], scaled);
     Vector_Scale(scaled, &map_object_glow_colors[2].x, blend);
-    Vector_Scale(&glow_lights_shared.colors[2].x, &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->colors[2].x, rest);
+    Vector_Scale(&glow_lights_shared.colors[2].x, &((MapLightBlockVectors *)&map_draw_state.current_light_block)->colors[2].x, rest);
     Vector_Add(&glow_lights_shared.colors[2], &glow_lights_shared.colors[2], scaled);
     Vector_Scale(scaled, &map_object_glow_colors[3].x, blend);
-    Vector_Scale(&glow_lights_shared.colors[3].x, &((MapSlotUnk10Vectors *)&map_draw_state.current_light_block)->colors[3].x, rest);
+    Vector_Scale(&glow_lights_shared.colors[3].x, &((MapLightBlockVectors *)&map_draw_state.current_light_block)->colors[3].x, rest);
     Vector_Add(&glow_lights_shared.colors[3], &glow_lights_shared.colors[3], scaled);
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(GS_REG_ALPHA_1, 0x44);

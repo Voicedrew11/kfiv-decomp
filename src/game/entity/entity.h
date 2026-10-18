@@ -1106,8 +1106,8 @@ typedef struct {
     char pad30[0x02];
     u16 collision_mesh_index;       /* 0x32 0xFFFF: unused */
     char pad34[0x02];
-    u8 draw_block_index;            /* 0x36 which MapSlotUnk0C block the entities standing on it are drawn with */
-    u8 light_block_index;           /* 0x37 which MapSlotUnk10Words block they are drawn with */
+    u8 draw_block_index;            /* 0x36 which MapFogBlock block the entities standing on it are drawn with */
+    u8 light_block_index;           /* 0x37 which MapLightBlock block they are drawn with */
     u64 record_flags;               /* 0x38 flags; 0x4000000: EntityEvent_StartFrameEffects does its work */
     char pad40[0x0E];
     u8 prop_id;                     /* 0x4E which prop of the map it is, 0: none */

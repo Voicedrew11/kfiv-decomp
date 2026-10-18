@@ -34,9 +34,9 @@ typedef struct {
 /* one of the 32 0x20-byte blocks MapSlot.fog_blocks points at; a model's unk14C points at one */
 typedef struct {
     u64 unk00[4];                   /* 0x00 */
-} MapSlotUnk0C;
+} MapFogBlock;
 
-/* a MapSlotUnk0C block as the per-map set-up functions (MapSetup_RunForMap) fill it */
+/* a MapFogBlock block as the per-map set-up functions (MapSetup_RunForMap) fill it */
 typedef struct {
     f32 unk00;                      /* 0x00 */
     f32 unk04;                      /* 0x04 */
@@ -44,32 +44,32 @@ typedef struct {
     f32 unk0C;                      /* 0x0C */
     s64 unk10;                      /* 0x10 */
     char pad18[0x08];
-} MapSlotUnk0CValues;
+} MapFogBlockValues;
 
 /* one of the 32 0x80-byte blocks MapSlot.light_blocks points at, as whole doublewords (see MapSlotUnk10
    in entity/entity.h); a model's unk148 points at one */
 typedef struct {
     u64 unk00[16];                  /* 0x00 */
-} MapSlotUnk10Words;
+} MapLightBlock;
 
 /* the first half of such a block: what the held item's models are lit by (held_item_light_blocks, Player_UpdateArmModels) */
 typedef struct {
     u64 unk00[8];                   /* 0x00 */
-} MapSlotUnk10Half;
+} MapLightBlockHalf;
 
-/* a MapSlotUnk10Words block as the eight vectors it holds; MapObject_DrawAll blends the last four
+/* a MapLightBlock block as the eight vectors it holds; MapObject_DrawAll blends the last four
    towards map_object_glow_colors */
 typedef struct {
-    Vector4 directions[4];          /* 0x00 the light directions (MapSlotUnk10Lights) */
-    Vector4 colors[4];              /* 0x40 the light colours (MapSlotUnk10Lights) */
-} MapSlotUnk10Vectors;
+    Vector4 directions[4];          /* 0x00 the light directions (MapLightBlockLights) */
+    Vector4 colors[4];              /* 0x40 the light colours (MapLightBlockLights) */
+} MapLightBlockVectors;
 
-/* a MapSlotUnk10Words block as three lights: their directions are the columns of a matrix, their
+/* a MapLightBlock block as three lights: their directions are the columns of a matrix, their
    colours (0 to 1) the vectors after it (ScriptCmd_SetMapLight) */
 typedef struct {
     f32 directions[4][4];           /* 0x00 [axis][light] */
     Vector4 colors[4];              /* 0x40 */
-} MapSlotUnk10Lights;
+} MapLightBlockLights;
 
 /* map_draw_state as GameLoop_SetCameraMatrices reads it: the first word of MapDrawState.draw_flags as a float */
 typedef struct {
@@ -94,12 +94,12 @@ typedef struct {
     u8 unk9B;                       /* 0x9B */
     u8 unk9C;                       /* 0x9C */
     char pad9D[0x03];
-    MapSlotUnk0C current_fog_block; /* 0xA0 the current map's first fog block */
-    MapSlotUnk10Words current_light_block; /* 0xC0 the current map's first light block */
+    MapFogBlock current_fog_block; /* 0xA0 the current map's first fog block */
+    MapLightBlock current_light_block; /* 0xC0 the current map's first light block */
     char pad140[0x140];
     MapFogColor current_fog_color;  /* 0x280 the current map's fog colour */
-    MapSlotUnk0C fog_blocks[2][0x20]; /* 0x290 each map slot's blocks */
-    MapSlotUnk10Words light_blocks[2][0x20]; /* 0xA90 each map slot's blocks */
+    MapFogBlock fog_blocks[2][0x20]; /* 0x290 each map slot's blocks */
+    MapLightBlock light_blocks[2][0x20]; /* 0xA90 each map slot's blocks */
     f32 screen_tint_amount;         /* 0x2A90 0 to 0.25: rises while PlayerState.light_spell_timer or unk10C is set (Player_UpdateScreenTints) */
     f32 screen_tint_amount_copy;    /* 0x2A94 copy of unk2A90 */
     f32 screen_tint_amount_copy2;   /* 0x2A98 copy of unk2A90 */
@@ -141,8 +141,8 @@ typedef struct {
 /* a map record (MapRecord in entity/entity.h) as the code that draws the maps reads it */
 typedef struct MapDrawRecord {
     char pad00[0x34];
-    u8 fog_block_index;             /* 0x34 which MapSlotUnk0C block it is drawn with */
-    u8 light_block_index;           /* 0x35 which MapSlotUnk10Words block it is drawn with */
+    u8 fog_block_index;             /* 0x34 which MapFogBlock block it is drawn with */
+    u8 light_block_index;           /* 0x35 which MapLightBlock block it is drawn with */
     char pad36[0x02];
     u8 linked_point_owner;          /* 0x38 low byte of MapRecord.linked_point_owner: compared with LinkedPoint.unk32 (LinkedPoint_FindHitsForMapDraw) */
     char pad39[0x03];
@@ -238,7 +238,7 @@ typedef struct MapSlot {
     char pad03[0x01];
     s32 rounded_file_size;          /* 0x04 the map file's size, rounded up to 0x40000 */
     MapHeader *header;              /* 0x08 */
-    MapSlotUnk0C *fog_blocks;       /* 0x0C 32 blocks */
+    MapFogBlock *fog_blocks;       /* 0x0C 32 blocks */
     void *light_blocks;             /* 0x10 the map's 32 light blocks (MapSlotUnk10), picked per record */
     char *records;                  /* 0x14 0x80-byte records, by PlayerState.map_index */
     MapFlagBlock *flag_blocks;      /* 0x18 */

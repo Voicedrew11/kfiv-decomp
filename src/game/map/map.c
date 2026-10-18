@@ -136,7 +136,7 @@ extern f32 D_0044676C[]; /* the largest float */
 extern GameStatus game_status;
 extern u16 pad_state[];
 extern PlayerState player_state;
-extern MapSlotUnk10Words map_object_default_lights;
+extern MapLightBlock map_object_default_lights;
 extern TextureTableHeader *D_00446790;
 extern u8 player_floor_block[];
 
@@ -362,7 +362,7 @@ void Map_ParseFile(int map) {
     cursor = (char *)header;
     slot->header = (MapHeader *)cursor;
     cursor = (char *)header + 0x80;
-    slot->fog_blocks = (MapSlotUnk0C *)cursor;
+    slot->fog_blocks = (MapFogBlock *)cursor;
     cursor = (char *)header + 0x480;
     slot->light_blocks = cursor;
     cursor = (char *)header + 0x1480;

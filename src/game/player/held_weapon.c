@@ -39,13 +39,13 @@ extern char *held_weapon_area;
 extern PlayerState player_state;
 extern GameDefinition weapon_name_defs[70];
 extern PlayerItemDef weapon_defs[];
-extern MapSlotUnk0C current_fog_block;
+extern MapFogBlock current_fog_block;
 extern char file_load_buffer[0x80000];
 extern char arm_phong_texture_path[];
 extern char item_arm_path_format[];
 extern char default_held_item_path[];
 extern char default_arm_path[];
-extern MapSlotUnk10Half current_light_block;
+extern MapLightBlockHalf current_light_block;
 extern CameraState camera_state;
 extern f32 identity_matrix[16];
 extern f32 world_screen_matrix[16];
@@ -53,7 +53,7 @@ extern int loaded_arm_gauntlet;
 extern int loaded_held_weapon;
 
 /* What lights the held item's models, its trail, its position offsets and the points of its arm. */
-MapSlotUnk10Half held_item_light_blocks[2] = { /* 0x4145E0 the second hand's block ends with 1.0 four times */
+MapLightBlockHalf held_item_light_blocks[2] = { /* 0x4145E0 the second hand's block ends with 1.0 four times */
     { { 0 } },
     { { 0, 0, 0, 0, 0, 0, 0x3F8000003F800000, 0x3F8000003F800000 } },
 };

@@ -218,7 +218,7 @@ static inline f32 wrap_angle(f32 angle) {
 }
 
 /* Draws a model (the draw function Model_SetUpSkinned installs): works out a turn from the block at
-   unk148 and the model's rotation, queues a packet with the model's two matrices, its MapSlotUnk0C
+   unk148 and the model's rotation, queues a packet with the model's two matrices, its MapFogBlock
    block, its lights and the vectors at unk160 and unk150, then for every part that is switched on
    and not scaled to nothing its two matrices, its parent's two and a reference to each of its data
    blocks. */
@@ -275,7 +275,7 @@ void Model_DrawSkinned(ModelInstance *model) {
     packet += 2;
     *(u64 *)packet = 0xE;
     packet += 2;
-    *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+    *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
     packet += 2;
     *packet++ = 0x3D;
     *packet++ = 0;
@@ -412,7 +412,7 @@ void Model_DrawSkinnedTwoPass(ModelInstance *model) {
     packet += 2;
     *(u64 *)packet = 0xE;
     packet += 2;
-    *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+    *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
     packet += 2;
     *packet++ = 0x3D;
     *packet++ = 0;
@@ -829,7 +829,7 @@ void Model_SetUpPosed(ModelInstance *model, char **file_cursor, char **memory) {
 }
 
 /* Draws a model (ModelInstance.draw_parts of the models Model_SetUpPosed sets up): queues a packet with
-   its two matrices, its MapSlotUnk0C block, its lights and, when it has one, its own colour, then
+   its two matrices, its MapFogBlock block, its lights and, when it has one, its own colour, then
    for every part that is switched on a packet with the part's matrix and a reference to each of
    its data blocks. */
 void Model_DrawPosed(ModelInstance *model) {
@@ -872,7 +872,7 @@ void Model_DrawPosed(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -974,7 +974,7 @@ void Model_DrawPosedPrebuilt(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -1077,7 +1077,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;
@@ -1147,7 +1147,7 @@ void Model_DrawPosedDepthByPart(ModelInstance *model) {
     }
 }
 
-/* Draws a model: queues a packet with its two matrices, its MapSlotUnk0C block and its lights,
+/* Draws a model: queues a packet with its two matrices, its MapFogBlock block and its lights,
    then for every part that is switched on and not scaled to nothing the GS state and a packet
    with the part's matrix and a reference to each of its data blocks. */
 void Model_DrawPosedWithAlpha(ModelInstance *model) {
@@ -1190,7 +1190,7 @@ void Model_DrawPosedWithAlpha(ModelInstance *model) {
         packet += 2;
         *(u64 *)packet = 0xE;
         packet += 2;
-        *(u64 *)packet = ((MapSlotUnk0CValues *)model->fog_block)->unk10;
+        *(u64 *)packet = ((MapFogBlockValues *)model->fog_block)->unk10;
         packet += 2;
         *packet++ = 0x3D;
         *packet++ = 0;

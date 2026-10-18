@@ -96,7 +96,7 @@ extern f32 D_00446798[];        /* the largest float */
 extern f32 D_0044679C[];        /* the lowest float */
 extern f32 identity_matrix[16];      /* the unit matrix */
 extern MapDrawState map_draw_state;
-extern MapSlotUnk10Words viewer_default_lights;
+extern MapLightBlock viewer_default_lights;
 extern char kings_map_overlay_rect[0x40];
 extern char kings_map_corner_rect[0x40];
 extern s64 game_dbuff_clear_color[];
