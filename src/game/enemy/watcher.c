@@ -27,7 +27,7 @@ static void Watcher_Death(Entity *entity);
 
 /* Set-up of a type 73 entity: clears its work area and installs the type's handlers. */
 void Watcher_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -35,17 +35,17 @@ void Watcher_Init(Entity *entity) {
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = Watcher_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = NULL;
-    unkE0->move = (void (*)(void))Watcher_Move;
-    unkE0->dormant = NULL;
-    unkE0->death = (void (*)(void))Watcher_Death;
+    ai_state->think = Watcher_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = NULL;
+    ai_state->move = (void (*)(void))Watcher_Move;
+    ai_state->dormant = NULL;
+    ai_state->death = (void (*)(void))Watcher_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -54,11 +54,11 @@ void Watcher_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -71,25 +71,25 @@ void Watcher_Init(Entity *entity) {
    and flag bit 9 and plays animation 2, else clears them and plays animation 0. Calls EntityEvent_StartCueAlways
    with 1 when unk7A changes. */
 static void Watcher_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s8 previous;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
     }
     if (entity->busy_flags == 0) {
-        previous = unkE0->step_index;
+        previous = ai_state->step_index;
         if (!(s32)(entity->flags >> 63) && EntityAi_CanUseRanged(entity, 0)) {
             Attack_DrainPlayerMp((s16)entity->params->action_frames);
-            unkE0->step_index = 1;
+            ai_state->step_index = 1;
             ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
             Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
         } else {
-            unkE0->step_index = 0;
+            ai_state->step_index = 0;
             ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
             Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
         }
-        if (previous != unkE0->step_index) {
+        if (previous != ai_state->step_index) {
             EntityEvent_StartCueAlways(entity, 1, 0);
         }
     }
@@ -99,19 +99,19 @@ static void Watcher_Think(Entity *entity, s32 unknown) {
    and calls EntityEvent_StartCueAlways with 0 every EntityParams.far_distance frames (counted in work word unk68);
    else it keeps animation 0. */
 static void Watcher_Move(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
-    if (unkE0->step_index != 0) {
+    if (ai_state->step_index != 0) {
         Motion_Start(entity, 2, 0, entity->params->motion_blend_frames, 0);
-        if (unkE0->pause_timer <= 0) {
+        if (ai_state->pause_timer <= 0) {
             EntityEvent_StartCueAlways(entity, 0, 0);
-            unkE0->pause_timer = entity->params->far_distance;
+            ai_state->pause_timer = entity->params->far_distance;
         }
     } else {
         Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-        unkE0->pause_timer = 0;
+        ai_state->pause_timer = 0;
     }
-    unkE0->pause_timer--;
+    ai_state->pause_timer--;
 }
 
 /* The death action (busy bit 0x40): no animation; calls EntityEvent_StartCueAlways with 2, then the fade over 20

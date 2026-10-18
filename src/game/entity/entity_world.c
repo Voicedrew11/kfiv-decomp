@@ -72,7 +72,7 @@ void EntityAi_SetUpdate(char *, s32);
    No handlers. */
 void Entity_InitInert(Entity *entity) {
     Motion_Start(entity, 0, 0, 0, 0);
-    memset(&entity->unkE0, 0, ENTITY_WORK_AREA_SIZE);
+    memset(&entity->ai_state, 0, ENTITY_WORK_AREA_SIZE);
     ENTITY_FLAG_BITS(entity)->bit22 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit23 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit24 = TRUE;

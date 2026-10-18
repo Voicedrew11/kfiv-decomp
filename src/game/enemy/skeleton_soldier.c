@@ -49,7 +49,7 @@ static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 unknown)
 
 /* Set-up of a type 6 entity: clears its work area and installs the type's handlers. */
 void SkeletonSoldier_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
@@ -57,18 +57,18 @@ void SkeletonSoldier_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
-    unkE0->dormant = (void (*)(void))SkeletonSoldier_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
+    ai_state->dormant = (void (*)(void))SkeletonSoldier_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     if (entity->spawn_info->spawn_mode == 1) {
-        unkE0->think = (void (*)(Entity *, s32))SkeletonSoldier_ThinkNoStates;
+        ai_state->think = (void (*)(Entity *, s32))SkeletonSoldier_ThinkNoStates;
     } else if (entity->spawn_info->spawn_mode >= 2 && entity->spawn_info->spawn_mode <= 3) {
-        unkE0->think = SkeletonSoldier_ThinkClearFlag25Away;
-        unkE0->dormant = (void (*)(void))SkeletonSoldier_DormantAnim18Then19;
+        ai_state->think = SkeletonSoldier_ThinkClearFlag25Away;
+        ai_state->dormant = (void (*)(void))SkeletonSoldier_DormantAnim18Then19;
     } else {
-        unkE0->think = SkeletonSoldier_Think;
+        ai_state->think = SkeletonSoldier_Think;
     }
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
@@ -79,14 +79,14 @@ void SkeletonSoldier_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -96,7 +96,7 @@ void SkeletonSoldier_Init(Entity *entity) {
 /* The think handler: as EntityAi_Think; in state 2 with flag bit 32 set it first plays
    SkeletonSoldier_PlayAnim17 once (work word unk6C says whether it has; state 0 clears it). */
 static void SkeletonSoldier_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
@@ -110,15 +110,15 @@ static void SkeletonSoldier_Think(Entity *entity, s32 unknown) {
             switch (entity->state) {
             case 0:
                 EntityAi_ThinkIdle(entity, unknown);
-                unkE0->mode_timer = 0;
+                ai_state->mode_timer = 0;
                 break;
             case 1:
                 EntityAi_ThinkPursue(entity, unknown);
                 break;
             case 2:
-                if (ENTITY_FLAG_BITS(entity)->bit32 && unkE0->mode_timer == 0) {
+                if (ENTITY_FLAG_BITS(entity)->bit32 && ai_state->mode_timer == 0) {
                     EntityAi_StartAction(entity, SkeletonSoldier_PlayAnim17, unknown);
-                    unkE0->mode_timer = 1;
+                    ai_state->mode_timer = 1;
                 } else {
                     EntityAi_ThinkCombat(entity, unknown);
                 }
@@ -135,7 +135,7 @@ static void SkeletonSoldier_Think(Entity *entity, s32 unknown) {
    animations are 18 and 19 instead of 1 and 2; flag bit 20 is set and flag bit 17 clear while it
    lasts. */
 static void SkeletonSoldier_Dormant(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
@@ -152,7 +152,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
-        unkE0->turn_rate = 0.0f;
+        ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit22 = 1;
         ENTITY_FLAG_BITS(entity)->bit23 = 1;
         ENTITY_FLAG_BITS(entity)->bit24 = 1;
@@ -179,7 +179,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
         }
         break;
     case 2:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -200,9 +200,9 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.think(entity, 1);
+                entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -212,7 +212,7 @@ static void SkeletonSoldier_Dormant(Entity *entity) {
 /* An action (busy bit 0x1000): plays animation 17 to its end with flag bit 9 clear. The think
    handlers start it once on entering state 2. */
 static void SkeletonSoldier_PlayAnim17(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
@@ -224,11 +224,11 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
         } else {
             ENTITY_FLAG_BITS(entity)->bits11 = ENTITY_PARAMS_MOVEMENT_KIND(entity->params) == ENTITY_PARAMS_MOVEMENT_1 ? 2 : 1;
         }
-        unkE0->turn_rate = 0.0f;
+        ai_state->turn_rate = 0.0f;
         entity->action_step++;
         break;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -238,9 +238,9 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.think(entity, 1);
+                entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -252,7 +252,7 @@ static void SkeletonSoldier_PlayAnim17(Entity *entity) {
    its spawn point (SkeletonSoldier_DormantAnim18Then19 leaves the bit set in that mode). What flag bit
    25 does is not known; scripts read and set it (ScriptCmd_SetEntityFlags, ScriptCmd_GetEntityFlags). */
 static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
@@ -269,15 +269,15 @@ static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 unknown) {
             switch (entity->state) {
             case 0:
                 EntityAi_ThinkIdle(entity, unknown);
-                unkE0->mode_timer = 0;
+                ai_state->mode_timer = 0;
                 break;
             case 1:
                 EntityAi_ThinkPursue(entity, unknown);
                 break;
             case 2:
-                if (ENTITY_FLAG_BITS(entity)->bit32 && unkE0->mode_timer == 0) {
+                if (ENTITY_FLAG_BITS(entity)->bit32 && ai_state->mode_timer == 0) {
                     EntityAi_StartAction(entity, SkeletonSoldier_PlayAnim17, unknown);
-                    unkE0->mode_timer = 1;
+                    ai_state->mode_timer = 1;
                 } else {
                     EntityAi_ThinkCombat(entity, unknown);
                 }
@@ -294,7 +294,7 @@ static void SkeletonSoldier_ThinkClearFlag25Away(Entity *entity, s32 unknown) {
    3: as SkeletonSoldier_Dormant with animations 18 and 19; it also sets flag bit 25, and clears it at
    the end only when unk40 is 2. */
 static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
@@ -307,7 +307,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
-        unkE0->turn_rate = 0.0f;
+        ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit22 = 1;
         ENTITY_FLAG_BITS(entity)->bit23 = 1;
         ENTITY_FLAG_BITS(entity)->bit24 = 1;
@@ -331,7 +331,7 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
         }
         break;
     case 2:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -355,9 +355,9 @@ static void SkeletonSoldier_DormantAnim18Then19(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.think(entity, 1);
+                entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -391,7 +391,7 @@ static void SkeletonSoldier_ThinkNoStates(Entity *entity, s32 unknown) {
    EntityAi_PickCombatChoice does not choose the attack it waits 30 to 59 frames. The motion never moves the
    entity. */
 static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 side;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
@@ -422,7 +422,7 @@ static void SkeletonSoldier_ThinkDecideAttackOrWait(Entity *entity, s32 unknown)
             return;
         }
         entity->action_timer = rand() % 30 + 30;
-        unkE0->move_choice = -1;
+        ai_state->move_choice = -1;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }

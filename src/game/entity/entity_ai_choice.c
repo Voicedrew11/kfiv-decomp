@@ -296,7 +296,7 @@ s32 EntityAi_ShouldGuard(Entity *entity, f32 max_distance, f32 max_angle) {
     if (ABS(angle) > max_angle) {
         return FALSE;
     }
-    if (player_weapon_step[0] == 0 || held_item_model_ptr->level_tables->unk82 >= 6) {
+    if (player_weapon_step[0] == 0 || held_item_model_ptr->level_tables->frame >= 6) {
         return FALSE;
     }
     return rand() % 100 < entity->params->guard_chance / 5;
@@ -307,7 +307,7 @@ s32 EntityAi_ShouldDodge(Entity *entity, f32 max_distance, f32 max_angle) {
     f32 angle;
     f32 distance;
 
-    if (player_weapon_step[0] == 0 || held_item_model_ptr->level_tables->unk82 >= 6) {
+    if (player_weapon_step[0] == 0 || held_item_model_ptr->level_tables->frame >= 6) {
         return FALSE;
     }
     angle = entity->heading_to_player - entity->model->rotation[1];

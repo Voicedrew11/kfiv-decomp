@@ -13,7 +13,7 @@ void Vector_Copy(void *, void *);
 void Motion_SetPartSlots(EntityModel *, s32, s32, s32);
 extern s32 entity_type_handlers[][2];
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
-s32 Motion_StepSlot(Entity *, EntityUnkE0SlotBits *, s32, s32);
+s32 Motion_StepSlot(Entity *, EntityAiMotionSlotBits *, s32, s32);
 void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 int EntityAi_LookAtPoint(void *, int, int, int, int, float);
@@ -65,7 +65,7 @@ static void Salamander_Move(Entity *entity);
 
 /* Set-up of a type 22 entity: clears its work area and installs the type's handlers. */
 void Salamander_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -73,17 +73,17 @@ void Salamander_Init(Entity *entity) {
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = Salamander_Think;
-    unkE0->animate = (void (*)(void))Salamander_Animate;
-    unkE0->on_hit = (void (*)(void))Salamander_OnHit;
-    unkE0->move = (void (*)(void))Salamander_Move;
-    unkE0->death = (void (*)(void))Salamander_Death;
-    unkE0->dormant = NULL;
+    ai_state->think = Salamander_Think;
+    ai_state->animate = (void (*)(void))Salamander_Animate;
+    ai_state->on_hit = (void (*)(void))Salamander_OnHit;
+    ai_state->move = (void (*)(void))Salamander_Move;
+    ai_state->death = (void (*)(void))Salamander_Death;
+    ai_state->dormant = NULL;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -92,22 +92,22 @@ void Salamander_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_SetPartSlots(entity->model, 10, 0x13, 1);
-    ((EntityUnkE0Kind151D30 *)unkE0)->unk80.bit5 = 1;
-    ((EntityUnkE0Kind151D30 *)unkE0)->unk80.bit6 = 1;
-    ((EntityUnkE0Kind151D30 *)unkE0)->unk88.bit6 = 1;
+    ((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.bit5 = 1;
+    ((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.bit6 = 1;
+    ((EntityAiStateKind151D30 *)ai_state)->motion_slot_1.bit6 = 1;
     Motion_StepModel(entity->model, 0, 0);
 }
 
@@ -115,8 +115,8 @@ void Salamander_Init(Entity *entity) {
    EntityAi_Animate plays the model's one motion, then turns the head (EntityAi_LookAtPoint with the target
    while flag bit 9 is set and there is one). */
 static void Salamander_Animate(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
+    EntityAiStateKind151D30 *slots = (EntityAiStateKind151D30 *)ai_state;
     f32 limits[4];
     f32 unused_vector[4]; // match: retail reserves 16 more bytes of stack than it uses
     s32 previous;
@@ -125,36 +125,36 @@ static void Salamander_Animate(Entity *entity) {
     if (!ENTITY_FLAG_BITS(entity)->bit14) {
         return;
     }
-    if (slots->unk80.unk01 != 0) {
+    if (slots->motion_slot_0.frames_left != 0) {
         if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
-            rate = unkE0->pose_blend_weight;
+            rate = ai_state->pose_blend_weight;
         } else {
-            rate = 1.0f / slots->unk80.unk01;
+            rate = 1.0f / slots->motion_slot_0.frames_left;
         }
         // match: the caller passes a float the callee does not take
-        ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->unk80, 0, rate);
+        ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->motion_slot_0, 0, rate);
     } else {
-        previous = slots->unk80.unk04;
-        ENTITY_FLAG_BITS(entity)->bit34 = Motion_StepSlot(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits11);
-        if (slots->unk80.index != 3) {
-            EntityEvent_StartFrameEffects(entity, slots->unk80.index, previous, slots->unk80.unk04);
-            EntityEvent_StartFrameCues(entity, slots->unk80.index, previous, slots->unk80.unk04);
+        previous = slots->motion_slot_0.frame_fixed;
+        ENTITY_FLAG_BITS(entity)->bit34 = Motion_StepSlot(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->bits11);
+        if (slots->motion_slot_0.index != 3) {
+            EntityEvent_StartFrameEffects(entity, slots->motion_slot_0.index, previous, slots->motion_slot_0.frame_fixed);
+            EntityEvent_StartFrameCues(entity, slots->motion_slot_0.index, previous, slots->motion_slot_0.frame_fixed);
         }
     }
-    if (slots->unk88.unk01 != 0) {
+    if (slots->motion_slot_1.frames_left != 0) {
         if (entity->busy_flags & (ENTITY_BUSY_GUARD | ENTITY_BUSY_REACTION_LIGHT)) {
-            rate = unkE0->pose_blend_weight;
+            rate = ai_state->pose_blend_weight;
         } else {
-            rate = 1.0f / slots->unk88.unk01;
+            rate = 1.0f / slots->motion_slot_1.frames_left;
         }
         // match: the caller passes a float the callee does not take
-        ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->unk88, 1, rate);
+        ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->motion_slot_1, 1, rate);
     } else {
-        previous = slots->unk88.unk04;
-        Motion_StepSlot(entity, &slots->unk88, 1, ENTITY_FLAG_BITS(entity)->bits11);
-        if (slots->unk88.index == 3) {
-            EntityEvent_StartFrameEffects(entity, slots->unk88.index, previous, slots->unk88.unk04);
-            EntityEvent_StartFrameCues(entity, slots->unk88.index, previous, slots->unk88.unk04);
+        previous = slots->motion_slot_1.frame_fixed;
+        Motion_StepSlot(entity, &slots->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->bits11);
+        if (slots->motion_slot_1.index == 3) {
+            EntityEvent_StartFrameEffects(entity, slots->motion_slot_1.index, previous, slots->motion_slot_1.frame_fixed);
+            EntityEvent_StartFrameCues(entity, slots->motion_slot_1.index, previous, slots->motion_slot_1.frame_fixed);
         }
     }
     limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
@@ -162,16 +162,16 @@ static void Salamander_Animate(Entity *entity) {
     limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
     limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
     if (ENTITY_FLAG_BITS(entity)->bit9 && entity->target != NULL) {
-        EntityAi_LookAtPoint(entity, (int)unkE0->look_part_angles, ENTITY_FLAG_BITS(entity)->bit9, (int)entity->target, (int)limits, 12.0f);
+        EntityAi_LookAtPoint(entity, (int)ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->bit9, (int)entity->target, (int)limits, 12.0f);
     } else {
-        EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, ENTITY_FLAG_BITS(entity)->bit9, NULL, 8.0f);
+        EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->bit9, NULL, 8.0f);
     }
 }
 
 /* The on_hit handler: as EntityAi_OnHit with the type's own three reactions; it leaves flag bit 10
    as it is and sets work byte unk7A. */
 static void Salamander_OnHit(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->target = NULL;
@@ -186,28 +186,28 @@ static void Salamander_OnHit(Entity *entity) {
         EntityAi_SetReaction((char *)entity, (void (*)(void))Salamander_ReactionHeavy, 0);
     }
     EntityAi_SetState((char *)entity, 2);
-    unkE0->step_index = 1;
+    ai_state->step_index = 1;
 }
 
 /* The reaction to a light hit while flag bit 19 is set (busy bit 2 while it blends in): as
    EntityAi_ReactionRewind, on the first motion slot. */
 static void Salamander_ReactionRewind(Entity *entity) {
-    EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
+    EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
     s32 frame;
 
     entity->busy_flags |= ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
-        frame = unkE0->unk80.unk02 - 3;
+        frame = ai_state->motion_slot_0.frame - 3;
         if (frame < 0) {
             frame = 0;
         }
-        EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, unkE0->unk80.unk00 & 0x1F, frame, 5, 1);
+        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, ai_state->motion_slot_0.motion_bits & 0x1F, frame, 5, 1);
         entity->reaction_step++;
         entity->flags = ((entity->flags & ~ENTITY_FLAG_MOTION_STEP_MODE_MASK) | ENTITY_FLAG_MOTION_STEP_MODE_1) & ~ENTITY_FLAG_LOOK_AT_TARGET;
         break;
     case 1:
-        if (unkE0->unk80.unk01 == 0) {
+        if (ai_state->motion_slot_0.frames_left == 0) {
             entity->busy_flags &= ~ENTITY_BUSY_REACTION_LIGHT;
             EntityAi_SetReaction((char *)entity, NULL, 0);
         }
@@ -218,14 +218,14 @@ static void Salamander_ReactionRewind(Entity *entity) {
 /* The reaction to a light hit (busy bit 2): as EntityAi_ReactionLight, on the first motion slot,
    without the call of EntityEvent_StartFrameCues. */
 static void Salamander_ReactionLight(Entity *entity) {
-    EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
+    EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
 
     entity->busy_flags = ENTITY_BUSY_REACTION_LIGHT;
     switch (entity->reaction_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xE, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityAiStateKind1740A8 *)&entity->ai_state)->motion_slot_0, 0, 0xE, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        unkE0->turn_rate = 0;
+        ai_state->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit35 = FALSE;
@@ -233,7 +233,7 @@ static void Salamander_ReactionLight(Entity *entity) {
         entity->reaction_step++;
         break;
     case 1:
-        if (unkE0->unk80.unk01 == 0) {
+        if (ai_state->motion_slot_0.frames_left == 0) {
             entity->reaction_step++;
         }
         break;
@@ -244,9 +244,9 @@ static void Salamander_ReactionLight(Entity *entity) {
         entity->move_command = 0;
         entity->action_timer = 0;
         if (ENTITY_FLAG_BITS(entity)->bit5) {
-            entity->unkE0.think(entity, 1);
+            entity->ai_state.think(entity, 1);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
         }
         break;
     }
@@ -254,14 +254,14 @@ static void Salamander_ReactionLight(Entity *entity) {
 
 /* The reaction to a heavy hit (busy bit 4): as EntityAi_ReactionHeavy, on the first motion slot. */
 static void Salamander_ReactionHeavy(Entity *entity) {
-    EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
+    EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
 
     entity->busy_flags = ENTITY_BUSY_REACTION_HEAVY;
     switch (entity->reaction_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &((EntityUnkE0Kind1740A8 *)&entity->unkE0)->unk80, 0, 0xF, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &((EntityAiStateKind1740A8 *)&entity->ai_state)->motion_slot_0, 0, 0xF, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
-        unkE0->turn_rate = 0;
+        ai_state->turn_rate = 0;
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit19 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit35 = FALSE;
@@ -269,7 +269,7 @@ static void Salamander_ReactionHeavy(Entity *entity) {
         entity->reaction_step++;
         break;
     case 1:
-        if (unkE0->unk80.unk01 == 0) {
+        if (ai_state->motion_slot_0.frames_left == 0) {
             entity->reaction_step++;
         }
         break;
@@ -281,9 +281,9 @@ static void Salamander_ReactionHeavy(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.think(entity, 1);
+                entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -294,13 +294,13 @@ static void Salamander_ReactionHeavy(Entity *entity) {
    to 20; from frame 30 of animation 16 it clears flag bit 28 and brings the model's pitch and roll
    back to 0. */
 static void Salamander_Death(Entity *entity) {
-    EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
+    EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, 0x10, 0, 5, 1);
-        EntityAi_StartSlotMotion(entity, &unkE0->unk88, 1, 0x10, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, 0x10, 0, 5, 1);
+        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_1, 1, 0x10, 0, 5, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
@@ -311,12 +311,12 @@ static void Salamander_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
     case 1:
-        if (unkE0->unk80.unk01 == 0) {
+        if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (unkE0->unk80.unk02 >= 30) {
+        if (ai_state->motion_slot_0.frame >= 30) {
             ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
             entity->action_step++;
         }
@@ -346,7 +346,7 @@ static void Salamander_Death(Entity *entity) {
 
 /* The melee attack (busy bit 1): as EntityAi_MeleeAttack, on the first motion slot. */
 static void Salamander_MeleeAttack(Entity *entity) {
-    EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
+    EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
     s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;
     EntityParamsUnk240 *unk240 = &entity->params->melee_attacks[kind];
     s32 elapsed;
@@ -354,7 +354,7 @@ static void Salamander_MeleeAttack(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, kind | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, kind | 0x14, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit54 = 0;
         ENTITY_FLAG_BITS(entity)->bit55 = 0;
@@ -362,30 +362,30 @@ static void Salamander_MeleeAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
         entity->action_step++;
     case 1:
-        if (unkE0->unk80.unk01 == 0) {
+        if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
         if (unk240->hit_start_frame != 0) {
-            EntityAi_TurnToHeading(entity, (f32 *)&unkE0->turn_rate, entity->heading_to_player);
+            EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unkE0->unk80.unk02 <= unk240->hit_start_frame) {
-            EntityAi_TurnToHeading(entity, (f32 *)&unkE0->turn_rate, entity->heading_to_player);
+        if (ai_state->motion_slot_0.frame <= unk240->hit_start_frame) {
+            EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0;
+            ai_state->turn_rate = 0;
         }
-        elapsed = (unkE0->unk80.unk04 - entity->params->motion_speeds[((EntityUnkE0SlotBits *)&unkE0->unk80)->index]) >> 8;
+        elapsed = (ai_state->motion_slot_0.frame_fixed - entity->params->motion_speeds[((EntityAiMotionSlotBits *)&ai_state->motion_slot_0)->index]) >> 8;
         if (!((s32)(entity->flags >> 54) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, unkE0->unk80.unk02);
+            ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHit(entity, unk240, 0, elapsed, ai_state->motion_slot_0.frame);
         }
         if (!((s32)(entity->flags >> 55) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, unkE0->unk80.unk02);
+            ENTITY_FLAG_BITS(entity)->bit55 = EntityAi_CheckMeleeHit(entity, unk240, 1, elapsed, ai_state->motion_slot_0.frame);
         }
         if (!((s32)(entity->flags >> 56) & 1)) {
-            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, unkE0->unk80.unk02);
+            ENTITY_FLAG_BITS(entity)->bit56 = EntityAi_CheckMeleeHit(entity, unk240, 2, elapsed, ai_state->motion_slot_0.frame);
         }
-        if (unkE0->unk80.unk02 > 0 && unk240->hit_end_frame >= unkE0->unk80.unk02) {
+        if (ai_state->motion_slot_0.frame > 0 && unk240->hit_end_frame >= ai_state->motion_slot_0.frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
@@ -396,9 +396,9 @@ static void Salamander_MeleeAttack(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk240->attack_delay);
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -409,33 +409,33 @@ static void Salamander_MeleeAttack(Entity *entity) {
    animation 23 it launches the record's shots every other frame from frame 20 to 44 instead, the
    head following the target meanwhile. */
 static void Salamander_RangedAttack(Entity *entity) {
-    EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
+    EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
     s32 kind = (s32)(ENTITY_FLAG_WORD(entity->flags) >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
 
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &unkE0->unk80, 0, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, &ai_state->motion_slot_0, 0, kind + 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
     case 1:
-        if (unkE0->unk80.unk01 == 0) {
+        if (ai_state->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, (f32 *)&unkE0->turn_rate, entity->heading_to_player);
+            EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unkE0->unk80.unk02 <= unk3D8->unk01) {
-            EntityAi_TurnToHeading(entity, (f32 *)&unkE0->turn_rate, entity->heading_to_player);
+        if (ai_state->motion_slot_0.frame <= unk3D8->unk01) {
+            EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0;
+            ai_state->turn_rate = 0;
         }
-        if (((EntityUnkE0SlotBits *)&unkE0->unk80)->index == 0x17) {
-            if (unkE0->unk80.unk02 >= 20 && unkE0->unk80.unk02 <= 44) {
+        if (((EntityAiMotionSlotBits *)&ai_state->motion_slot_0)->index == 0x17) {
+            if (ai_state->motion_slot_0.frame >= 20 && ai_state->motion_slot_0.frame <= 44) {
                 if (frame_counter & 1) {
                     EntityAi_LaunchShots(entity, unk3D8, 20, 44);
                 }
@@ -443,10 +443,10 @@ static void Salamander_RangedAttack(Entity *entity) {
             }
         } else {
             EntityAi_LaunchShots(entity, unk3D8,
-                          (unkE0->unk80.unk04 - entity->params->motion_speeds[((EntityUnkE0SlotBits *)&unkE0->unk80)->index]) >> 8,
-                          unkE0->unk80.unk02);
+                          (ai_state->motion_slot_0.frame_fixed - entity->params->motion_speeds[((EntityAiMotionSlotBits *)&ai_state->motion_slot_0)->index]) >> 8,
+                          ai_state->motion_slot_0.frame);
         }
-        if (unkE0->unk80.unk02 > 0 && unk3D8->unk03 >= unkE0->unk80.unk02) {
+        if (ai_state->motion_slot_0.frame > 0 && unk3D8->unk03 >= ai_state->motion_slot_0.frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
@@ -457,9 +457,9 @@ static void Salamander_RangedAttack(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -471,10 +471,10 @@ static void Salamander_RangedAttack(Entity *entity) {
    and Salamander_ThinkWanderAndShoot for state 0 and, as long as work byte unk7A is 0 (Salamander_OnHit sets it),
    for every state. Keeps animation 3 on the second motion slot except in the death action. */
 static void Salamander_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     if (!(entity->busy_flags & ENTITY_BUSY_DEATH)) {
-        EntityAi_StartSlotMotion(entity, unkE0->motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
+        EntityAi_StartSlotMotion(entity, ai_state->motion_slot_1, 1, 3, 0, entity->params->motion_blend_frames, 0);
     }
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 1);
@@ -488,7 +488,7 @@ static void Salamander_Think(Entity *entity, s32 unknown) {
         Salamander_ThinkReturn(entity, unknown);
         return;
     }
-    if (unkE0->step_index == 0) {
+    if (ai_state->step_index == 0) {
         Salamander_ThinkWanderAndShoot(entity, unknown);
         return;
     }
@@ -507,7 +507,7 @@ static void Salamander_Think(Entity *entity, s32 unknown) {
    whatever is pushing the entity, as EntityAi_ThinkReturn; with the command of EntityAi_MoveCommand3D and,
    while it is pushed, command bit 0x20 or 0x10 by the y of the push. */
 static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 to_spawn[4];
     f32 push[4];
     f32 direction[4];
@@ -567,7 +567,7 @@ static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The think function of state 0, and of every state until Salamander_OnHit sets work byte unk7A: starts
@@ -576,7 +576,7 @@ static void Salamander_ThinkReturn(Entity *entity, s32 unknown) {
    unk6A (EntityParams.far_distance) is over; else moves in three dimensions to a random point near the spawn point
    (EntityPoint_PickNearWithHeight), a new one every 240 to 359 frames. */
 static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 *point;
     s32 turn;
@@ -585,18 +585,18 @@ static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown) {
     ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
     if (EntityAi_IsPointInView(entity, player_state, entity->params->unk43A * 0.017453292f,
                       entity->params->unk43C * 0.017453292f, entity->params->unk43E) &&
-        unkE0->sub_timer <= 0) {
+        ai_state->sub_timer <= 0) {
         EntityAi_PickRangedAttack(entity);
         // match: an int result keeps $2 busy after the call
         ((int (*)(char *, void (*)(void), int))EntityAi_StartAction)((char *)entity, (void (*)(void))Salamander_RangedAttack, unknown);
-        unkE0->sub_timer = entity->params->far_distance;
+        ai_state->sub_timer = entity->params->far_distance;
         return;
     }
-    if (unkE0->sub_timer > 0) {
-        unkE0->sub_timer--;
+    if (ai_state->sub_timer > 0) {
+        ai_state->sub_timer--;
     }
     if (entity->action_timer == 0) {
-        point = unkE0->target_point;
+        point = ai_state->target_point;
         EntityPoint_PickNearWithHeight(point, entity->spawn_info->wander_radius, entity->spawn_info->wander_height_range, entity->spawn_info,
                       entity->model->position);
         entity->target = point;
@@ -608,7 +608,7 @@ static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown) {
     } else {
         entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The think function of states 1 and 2: it has none of EntityAi_ThinkCombat's guard, dodge and draw
@@ -620,7 +620,7 @@ static void Salamander_ThinkWanderAndShoot(Entity *entity, s32 unknown) {
    point's y, for EntityParams.near_distance frames (work word unk68) or until the player is unk434 away.
    The commands come from EntityAi_MoveCommand3D, or EntityAi_PushTurnCommand3D while it is pushed. */
 static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     s32 turn;
 
@@ -630,24 +630,24 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
     if (turn != 0) {
         entity->move_command = EntityAi_PushTurnCommand3D(entity, turn);
     } else {
-        switch (unkE0->move_choice) {
+        switch (ai_state->move_choice) {
         case 0: {
-            f32 *point = unkE0->target_point;
+            f32 *point = ai_state->target_point;
 
             Vector_Copy(point, player_state);
-            unkE0->target_point[1] -= 220.0f;
+            ai_state->target_point[1] -= 220.0f;
             entity->target = point;
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, entity->radius + 100.0f + 30.0f);
             if (entity->distance_to_player < (f32)ENTITY_CONTROLLER(entity)->action_frames) {
-                unkE0->move_choice++;
+                ai_state->move_choice++;
             }
             break;
         }
         case 1: {
-            f32 *point = unkE0->target_point;
+            f32 *point = ai_state->target_point;
 
             Vector_Copy(point, player_state);
-            unkE0->target_point[1] -= 190.0f;
+            ai_state->target_point[1] -= 190.0f;
             entity->target = point;
             if (EntityAi_IsPointInView(entity, point, entity->params->unk43A * 0.017453292f,
                               entity->params->unk43C * 0.017453292f, entity->params->unk43E)) {
@@ -656,41 +656,41 @@ static void Salamander_ThinkCombat(Entity *entity, s32 unknown) {
                 } else {
                     EntityAi_StartAction(entity, Salamander_MeleeAttack, unknown);
                 }
-                unkE0->pause_timer = entity->params->near_distance;
-                unkE0->move_choice++;
+                ai_state->pause_timer = entity->params->near_distance;
+                ai_state->move_choice++;
                 return;
             }
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, entity->radius + 100.0f + 30.0f);
             break;
         }
         case 2: {
-            f32 *point = unkE0->target_point;
+            f32 *point = ai_state->target_point;
 
             direction[0] = EntityMath_WrapAngle(entity->heading_to_player + 3.1415927f);
             EntityMath_FacingVector((Vector4 *)point, direction[0]);
             Vector_Scale(point, point, 800.0f);
             Vector_Add(point, point, player_state);
             entity->target = point;
-            unkE0->target_point[1] = entity->spawn_info->spawn_y;
+            ai_state->target_point[1] = entity->spawn_info->spawn_y;
             entity->move_command = EntityAi_MoveCommand3D(entity, 0, 50.0f);
-            if (entity->distance_to_player >= (f32)ENTITY_CONTROLLER(entity)->action_frames || unkE0->pause_timer <= 0) {
-                unkE0->move_choice = 0;
+            if (entity->distance_to_player >= (f32)ENTITY_CONTROLLER(entity)->action_frames || ai_state->pause_timer <= 0) {
+                ai_state->move_choice = 0;
             }
             break;
         }
         }
     }
-    if (unkE0->pause_timer > 0) {
-        unkE0->pause_timer--;
+    if (ai_state->pause_timer > 0) {
+        ai_state->pause_timer--;
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The move handler: turns as the command says, rolls the model 20 degrees into the turn, and
    pitches it up to 30 degrees for command bits 0x10 and 0x20 (through Entity.turn_delta_pitch); keeps
    animation 3 on the first motion slot. It adds no movement of its own. */
 static void Salamander_Move(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 value;
     f32 roll;
     f32 pitch;
@@ -698,22 +698,22 @@ static void Salamander_Move(Entity *entity) {
     f32 pitch_rate;
 
     if (entity->move_command & MOVE_COMMAND_TURN_LEFT) {
-        unkE0->turn_rate -= entity->params->turn_step_per_frame;
-        if (unkE0->turn_rate < -entity->params->turn_limit) {
-            unkE0->turn_rate = -entity->params->turn_limit;
+        ai_state->turn_rate -= entity->params->turn_step_per_frame;
+        if (ai_state->turn_rate < -entity->params->turn_limit) {
+            ai_state->turn_rate = -entity->params->turn_limit;
         }
         roll = 0.34906584f;
     } else if (entity->move_command & MOVE_COMMAND_TURN_RIGHT) {
-        unkE0->turn_rate += entity->params->turn_step_per_frame;
-        if (unkE0->turn_rate > entity->params->turn_limit) {
-            unkE0->turn_rate = entity->params->turn_limit;
+        ai_state->turn_rate += entity->params->turn_step_per_frame;
+        if (ai_state->turn_rate > entity->params->turn_limit) {
+            ai_state->turn_rate = entity->params->turn_limit;
         }
         roll = -0.34906584f;
     } else {
-        unkE0->turn_rate = 0.0f;
-        roll = unkE0->turn_rate;
+        ai_state->turn_rate = 0.0f;
+        roll = ai_state->turn_rate;
     }
-    value = unkE0->turn_rate;
+    value = ai_state->turn_rate;
     if (entity->move_command & MOVE_COMMAND_TURN_FAST) {
         value += value;
     }
@@ -735,5 +735,5 @@ static void Salamander_Move(Entity *entity) {
     value = entity->model->rotation[0];
     EntityMath_EaseAngleToward(&value, pitch, pitch_rate);
     entity->turn_delta_pitch += value - entity->model->rotation[0];
-    EntityAi_StartSlotMotion(entity, unkE0->motion_slot_0, 0, 3, 0, entity->params->motion_blend_frames, 0);
+    EntityAi_StartSlotMotion(entity, ai_state->motion_slot_0, 0, 3, 0, entity->params->motion_blend_frames, 0);
 }

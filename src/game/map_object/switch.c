@@ -30,14 +30,14 @@ void MapObject_UpdateIdleToggle(MapObject *object) {
 void MapObject_UpdateMovingToggle(MapObject *object) {
     ModelChannel *channel = MODEL_CHANNEL(object->model);
 
-    if (channel->index == 0) {
-        if (channel->param != 0) {
+    if (channel->motion_index == 0) {
+        if (channel->frame != 0) {
             MapObject_StepAnim(object);
         } else {
             MapObject_StartAnim(object, 5);
         }
     } else {
-        if (channel->param == 0) {
+        if (channel->frame == 0) {
             MapObject_StartAnim(object, 4);
             MAP_OBJECT_BYTES(object)->step = 1;
         } else {
@@ -69,7 +69,7 @@ void MapObject_UpdateOffSwitch(void *arg) {
 
 /* Update handler of a switch turning on: runs the animation, then it is on. */
 void MapObject_UpdateSwitchTurningOn(MapObject *object) {
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 5);
@@ -89,7 +89,7 @@ void MapObject_UpdateOnSwitch(void *arg) {
 
 /* Update handler of a switch turning off: runs the animation, then it is off. */
 void MapObject_UpdateSwitchTurningOff(MapObject *object) {
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 4);

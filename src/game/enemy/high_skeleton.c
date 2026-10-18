@@ -37,7 +37,7 @@ static void HighSkeleton_Death(Entity *entity);
 
 /* Set-up of a type 62 entity: clears its work area and installs the type's handlers. */
 void HighSkeleton_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     char *unk138 = entity->model->look_at_part;
     s32 i;
 
@@ -45,16 +45,16 @@ void HighSkeleton_Init(Entity *entity) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = HighSkeleton_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
+    ai_state->think = HighSkeleton_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
     if (entity->spawn_info->spawn_mode != 0) {
-        unkE0->dormant = (void (*)(void))HighSkeleton_DormantScaleUp;
+        ai_state->dormant = (void (*)(void))HighSkeleton_DormantScaleUp;
     } else {
-        unkE0->dormant = (void (*)(void))HighSkeleton_Dormant;
+        ai_state->dormant = (void (*)(void))HighSkeleton_Dormant;
     }
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -64,14 +64,14 @@ void HighSkeleton_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 0;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -123,7 +123,7 @@ static void HighSkeleton_Think(Entity *entity, s32 unknown) {
 /* The dormant action (busy bit 0x20): as EntityAi_Dormant, and flag bits 20 and 25 are set with the
    others while it lasts. */
 static void HighSkeleton_Dormant(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
@@ -136,7 +136,7 @@ static void HighSkeleton_Dormant(Entity *entity) {
         }
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit20 = 1;
-        unkE0->turn_rate = 0.0f;
+        ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit22 = 1;
         ENTITY_FLAG_BITS(entity)->bit23 = 1;
         ENTITY_FLAG_BITS(entity)->bit24 = 1;
@@ -159,7 +159,7 @@ static void HighSkeleton_Dormant(Entity *entity) {
         }
         break;
     case 2:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -180,9 +180,9 @@ static void HighSkeleton_Dormant(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.think(entity, 1);
+                entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -194,7 +194,7 @@ static void HighSkeleton_Dormant(Entity *entity) {
    with flag bits 18 and 21 set, calls EntityEvent_StartEffectAtPoint with 0x22F once, and meanwhile scales the model
    in x and z and the radius from 0 up to their full size; then goes to state 2 and thinks. */
 static void HighSkeleton_DormantScaleUp(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 duration;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
@@ -203,13 +203,13 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
         Motion_Start(entity, 0, 0, 0, 1);
         ENTITY_FLAG_BITS(entity)->bits11 = 0;
         entity->action_timer = (u16)entity->params->near_distance;
-        unkE0->part_angle_x = entity->model->scale[0];
-        unkE0->part_angle_y = entity->model->scale[1];
-        unkE0->part_angle_z = entity->model->scale[2];
-        unkE0->pitch_speed = entity->radius;
+        ai_state->part_angle_x = entity->model->scale[0];
+        ai_state->part_angle_y = entity->model->scale[1];
+        ai_state->part_angle_z = entity->model->scale[2];
+        ai_state->pitch_speed = entity->radius;
         entity->model->scale[0] = 0.0f;
         entity->model->scale[2] = 0.0f;
-        unkE0->turn_rate = 0.0f;
+        ai_state->turn_rate = 0.0f;
         ENTITY_FLAG_BITS(entity)->bit21 = 1;
         ENTITY_FLAG_BITS(entity)->bit18 = 1;
         ENTITY_FLAG_BITS(entity)->bit9 = 0;
@@ -223,12 +223,12 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
         duration = entity->params->near_distance;
         entity->model->scale[0] = (f32)(duration - entity->action_timer) / (f32)duration;
         entity->model->scale[2] = (f32)(duration - entity->action_timer) / (f32)duration;
-        entity->radius = unkE0->pitch_speed * ((f32)(duration - entity->action_timer) / (f32)duration);
+        entity->radius = ai_state->pitch_speed * ((f32)(duration - entity->action_timer) / (f32)duration);
         if (entity->action_timer == 0) {
-            entity->model->scale[0] = unkE0->part_angle_x;
-            entity->model->scale[1] = unkE0->part_angle_y;
-            entity->model->scale[2] = unkE0->part_angle_z;
-            entity->radius = unkE0->pitch_speed;
+            entity->model->scale[0] = ai_state->part_angle_x;
+            entity->model->scale[1] = ai_state->part_angle_y;
+            entity->model->scale[2] = ai_state->part_angle_z;
+            entity->radius = ai_state->pitch_speed;
             EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit21 = 0;
             ENTITY_FLAG_BITS(entity)->bit18 = 0;
@@ -236,9 +236,9 @@ static void HighSkeleton_DormantScaleUp(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.think(entity, 1);
+                entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -266,7 +266,7 @@ static void HighSkeleton_Death(Entity *entity) {
         }
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;

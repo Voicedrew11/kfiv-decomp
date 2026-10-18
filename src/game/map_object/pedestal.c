@@ -122,7 +122,7 @@ void MapObject_SettleMarkerStone(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 5);
@@ -170,7 +170,7 @@ void MapObject_LiftMarkerStone(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
         return;
     }

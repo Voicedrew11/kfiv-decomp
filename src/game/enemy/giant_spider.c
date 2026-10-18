@@ -50,7 +50,7 @@ static void GiantSpider_RangedAttack(Entity *entity);
 
 /* Set-up of a type 4 entity: clears its work area and installs the type's handlers. */
 void GiantSpider_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -58,17 +58,17 @@ void GiantSpider_Init(Entity *entity) {
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = GiantSpider_Think;
-    unkE0->animate = (void (*)(void))GiantSpider_Animate;
-    unkE0->on_hit = (void (*)(void))GiantSpider_OnHit;
-    unkE0->move = (void (*)(void))GiantSpider_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = GiantSpider_Think;
+    ai_state->animate = (void (*)(void))GiantSpider_Animate;
+    ai_state->on_hit = (void (*)(void))GiantSpider_OnHit;
+    ai_state->move = (void (*)(void))GiantSpider_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -77,15 +77,15 @@ void GiantSpider_Init(Entity *entity) {
     }
     ENTITY_UNK5C(entity)->as_s32 = 0;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -98,23 +98,23 @@ void GiantSpider_Init(Entity *entity) {
 static void GiantSpider_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     s64 flags;
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
     EntityModelPart80 *part;
     f32 angle;
 
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     flags = entity->flags;
     part = entity->model->look_at_part;
     if (ENTITY_FLAG_BITS(entity)->bit14) {
-        blend_frames = entity->model->level_tables->unk88;
+        blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
         }
         if (part != NULL) {
             if ((u8)(entity->animation_index - 0xE) < 3) {
-                unkE0->look_part_angles[1] = -part->unk50[1];
+                ai_state->look_part_angles[1] = -part->unk50[1];
             } else {
                 angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
                 if (angle < -0.5235988f) {
@@ -123,8 +123,8 @@ static void GiantSpider_Animate(Entity *entity) {
                 if (0.5235988f < angle) {
                     angle = 0.5235988f;
                 }
-                EntityMath_EaseAngleToward(&unkE0->look_part_angles[1], angle, 10.0f);
-                part->unk50[1] = -unkE0->look_part_angles[1];
+                EntityMath_EaseAngleToward(&ai_state->look_part_angles[1], angle, 10.0f);
+                part->unk50[1] = -ai_state->look_part_angles[1];
             }
         }
     }
@@ -133,13 +133,13 @@ static void GiantSpider_Animate(Entity *entity) {
 /* The on_hit handler: every hit starts EntityAi_ReactionHeavy, whatever its strength; sets work
    byte unk7A. */
 static void GiantSpider_OnHit(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     EntityAi_LowerWeightsAfterHit((char *)entity);
     entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
     EntityAi_SetReaction((char *)entity, (void (*)(void))EntityAi_ReactionHeavy, 0);
     EntityAi_SetState((char *)entity, 2);
-    unkE0->step_index = 1;
+    ai_state->step_index = 1;
 }
 
 /* The think handler: as EntityAi_Think without EntityAi_CheckFarFromSpawn and the return to the spawn point,
@@ -170,7 +170,7 @@ static void GiantSpider_Think(Entity *entity, s32 unknown) {
    more than 25 degrees off the heading it starts GiantSpider_PlayTurnAnim7Or12 (positive side) or
    GiantSpider_PlayTurnAnim6Or11; else it starts the move action with no command. */
 static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 angle;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 1;
@@ -182,7 +182,7 @@ static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 unknown) {
             EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim6Or11, unknown);
         }
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
     }
 }
 
@@ -192,7 +192,7 @@ static void GiantSpider_ThinkTurnToPlayer(Entity *entity, s32 unknown) {
    GiantSpider_PlayTurnAnim7Or12 or GiantSpider_PlayTurnAnim6Or11 (by the side) when Entity.heading_to_player is more than
    25 degrees off the heading. An attack clears work byte unk7A. */
 static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 side;
     f32 angle;
 
@@ -216,7 +216,7 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
             } else {
                 EntityAi_StartAction(entity, EntityAi_MeleeAttack, unknown);
             }
-            unkE0->step_index = 0;
+            ai_state->step_index = 0;
             return;
         case 1:
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
@@ -228,19 +228,19 @@ static void GiantSpider_ThinkCombat(Entity *entity, s32 unknown) {
                 EntityAi_StartAction(entity, GiantSpider_PlayTurnAnim6Or11, unknown);
                 return;
             }
-            unkE0->step_index = 0;
-            unkE0->move_choice = -1;
+            ai_state->step_index = 0;
+            ai_state->move_choice = -1;
             break;
         case 2:
             entity->action_timer = rand() % 30 + 30;
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The move handler: only picks the animation: 12 or 11 for command bit 0x100 or 0x200, 7 or 6 when
@@ -273,12 +273,12 @@ static void GiantSpider_Move(Entity *entity) {
    work byte unk7A is set (GiantSpider_OnHit sets it), else animation 11, to its end, with flag bits
    11 to 13 at 3. */
 static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
-        if (unkE0->step_index != 0) {
+        if (ai_state->step_index != 0) {
             Motion_Start(entity, 6, 0, entity->params->motion_blend_frames >> 1, 1);
         } else {
             Motion_Start(entity, 0xB, 0, entity->params->motion_blend_frames, 1);
@@ -288,7 +288,7 @@ static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -298,9 +298,9 @@ static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -310,12 +310,12 @@ static void GiantSpider_PlayTurnAnim6Or11(Entity *entity) {
 /* An action (busy bit 0x2000), the same as GiantSpider_PlayTurnAnim6Or11 for the positive side: plays
    animation 7 when work byte unk7A is set, else animation 12, to its end. */
 static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
-        if (unkE0->step_index != 0) {
+        if (ai_state->step_index != 0) {
             Motion_Start(entity, 7, 0, entity->params->motion_blend_frames >> 1, 1);
         } else {
             Motion_Start(entity, 0xC, 0, entity->params->motion_blend_frames, 1);
@@ -325,7 +325,7 @@ static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -335,9 +335,9 @@ static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -347,7 +347,7 @@ static void GiantSpider_PlayTurnAnim7Or12(Entity *entity) {
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, the shots turned towards a point 160
    below the player by at most 15 degrees (EntityShot_LaunchAimed). */
 static void GiantSpider_RangedAttack(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 kind = (s32)(entity->flags >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, kind);
     f32 direction[4];
@@ -360,24 +360,24 @@ static void GiantSpider_RangedAttack(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
-        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
-        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(direction, &player_state);
         direction[1] -= 160.0f;
-        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->unk82, direction, 0.2617994f, 0.2617994f);
-        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, direction, 0.2617994f, 0.2617994f);
+        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             entity->flags |= ENTITY_FLAG_80000;
         } else {
             entity->flags &= ~ENTITY_FLAG_80000;
@@ -388,9 +388,9 @@ static void GiantSpider_RangedAttack(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;

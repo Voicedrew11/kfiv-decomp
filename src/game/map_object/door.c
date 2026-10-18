@@ -117,7 +117,7 @@ void MapObject_UpdateOpeningDoor(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         ((int (*)(char *))MapObject_StepAnim)((char *)object); // match: it returns a value
         kind = object->definition->kind;
         if (kind == 6) {
@@ -192,7 +192,7 @@ void MapObject_UpdateClosingDoor(MapObject *object) {
     if (work->timer > 0) {
         work->timer--;
     }
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         ((int (*)(char *))MapObject_StepAnim)((char *)object); // match: it returns a value
         if (object->definition->kind == 6) {
             Vector_Subtract(&delta, object->model->parts[1].position, work);

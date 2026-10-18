@@ -237,7 +237,7 @@ void Interact_FindTarget(void) {
                     if (!(object->state_flags & MAP_OBJECT_ON)) {
                         continue;
                     }
-                    frame = MODEL_CHANNEL(object->model)->param;
+                    frame = MODEL_CHANNEL(object->model)->frame;
                     if (frame != 1 && !(ModelMotion_GetLastFrame((char *)object->model) / 2 < frame)) {
                         continue;
                     }

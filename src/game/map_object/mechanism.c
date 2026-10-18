@@ -201,7 +201,7 @@ void MapObject_UpdateOpeningPitfall(MapObject *object) {
             object->work[0] = delay - 1;
         }
     } else {
-        if (MODEL_CHANNEL(object->model)->param != 0) {
+        if (MODEL_CHANNEL(object->model)->frame != 0) {
             MapObject_StepAnim(object);
         } else {
             MapObject_StartAnim(object, 5);
@@ -226,7 +226,7 @@ void MapObject_UpdateClosingPitfall(MapObject *object) {
         if (MAP_OBJECT_WORDS(object)->kind_param_1 > 0) {
             object->work[0]--;
         }
-    } else if (MODEL_CHANNEL(object->model)->param != 0) {
+    } else if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 4);

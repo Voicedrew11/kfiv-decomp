@@ -363,7 +363,7 @@ void MapObject_UpdateAll(void) {
             MAP_OBJECT_BITS_LOW(object)->bit3 = FALSE;
             if (MODEL_UNK100_BITS(model)->has_motion) {
                 anim = &object->definition->anims[MAP_OBJECT_BYTES(object)->anim];
-                if (anim->unk06 == MODEL_CHANNEL(model)->param) {
+                if (anim->unk06 == MODEL_CHANNEL(model)->frame) {
                     Effect_StartSpawner(anim->unk02, &model->position, &model->rotation, object);
                 }
             }
@@ -716,8 +716,8 @@ s16 MapObject_StartAnim(MapObject *object, int anim) {
     ModelMotion_Select(object->model, object->definition->anims[anim].anim);
     MAP_OBJECT_BYTES(object)->anim = anim;
     channel = MODEL_CHANNEL(object->model);
-    channel->param = 0;
-    channel->param_shifted = 0;
+    channel->frame = 0;
+    channel->frame_fixed = 0;
     MapObject_StepAnim(object);
 }
 
@@ -730,7 +730,7 @@ int MapObject_StepAnim(MapObject *object) {
 
     if (anim->sound != 0xFFFF) {
         model = object->model;
-        if (anim->sound_frame == MODEL_CHANNEL(model)->param) {
+        if (anim->sound_frame == MODEL_CHANNEL(model)->frame) {
             range = 800.0f;
             if (object->definition->sound_range > 0.0f) {
                 range = object->definition->sound_range;
@@ -753,7 +753,7 @@ int MapObject_StepAnim(MapObject *object) {
     }
     if (MAP_OBJECT_BITS(object)->anim == 4 || MAP_OBJECT_BITS(object)->anim == 5) {
         anim = &object->definition->anims[MAP_OBJECT_BYTES(object)->anim + 2];
-        if (anim->sound != 0xFFFF && anim->sound_frame == MODEL_CHANNEL(object->model)->param) {
+        if (anim->sound != 0xFFFF && anim->sound_frame == MODEL_CHANNEL(object->model)->frame) {
             range = 800.0f;
             if (object->definition->sound_range > 0.0f) {
                 range = object->definition->sound_range;
@@ -775,11 +775,11 @@ int MapObject_StepAnim(MapObject *object) {
     object->model->update_bone_points(object->model);
     object->state_flags |= 8;
     model = object->model;
-    if (MODEL_CHANNEL(model)->param == 0) {
+    if (MODEL_CHANNEL(model)->frame == 0) {
         MapObject_StopSound(object);
         model = object->model; // match: re-read here although the return reads it again; keeps the model in $6
     }
-    return MODEL_CHANNEL(object->model)->param != 0;
+    return MODEL_CHANNEL(object->model)->frame != 0;
 }
 
 /* Marks a map object that holds something (bones and gravestones, chests, containers) of the map's own sources as emptied. */

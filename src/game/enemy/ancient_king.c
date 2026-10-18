@@ -16,7 +16,7 @@ int Motion_StepModel(EntityModel *, s32, s32);
 void Vector_Copy(void *, void *);
 extern s32 entity_type_handlers[][2];
 int EntityAi_StepSlotMotion(Entity *, EntityMotionSlot *, int, f32);
-s32 Motion_StepSlot(Entity *, EntityUnkE0SlotBits *, s32, s32);
+s32 Motion_StepSlot(Entity *, EntityAiMotionSlotBits *, s32, s32);
 void EntityEvent_StartFrameEffects(Entity *, s32, s32, s32);
 void EntityEvent_StartFrameCues(Entity *, s32, s32, s32);
 int EntityAi_LookAtPlayer(Entity *, void *, s32, void *, f32);
@@ -81,7 +81,7 @@ static void AncientKing_RespawnTwoOthers(Entity *entity);
 
 /* Set-up of a type 61 entity: clears its work area and installs the type's handlers. */
 void AncientKing_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -90,16 +90,16 @@ void AncientKing_Init(Entity *entity) {
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = AncientKing_Think;
-    unkE0->animate = (void (*)(void))AncientKing_Animate;
-    unkE0->move = (void (*)(void))AncientKing_Move;
-    unkE0->death = (void (*)(void))AncientKing_Death;
-    unkE0->on_hit = NULL;
+    ai_state->think = AncientKing_Think;
+    ai_state->animate = (void (*)(void))AncientKing_Animate;
+    ai_state->move = (void (*)(void))AncientKing_Move;
+    ai_state->death = (void (*)(void))AncientKing_Death;
+    ai_state->on_hit = NULL;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -109,18 +109,18 @@ void AncientKing_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     ENTITY_FLAG_BITS(entity)->bit25 = TRUE;
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
     Motion_SetPartSlots(entity->model, 5, 0x16, 1);
-    ((EntityUnkE0Kind151D30 *)unkE0)->unk80.bit5 = 1;
-    ((EntityUnkE0Kind151D30 *)unkE0)->unk80.bit6 = 1;
-    ((EntityUnkE0Kind151D30 *)unkE0)->unk88.bit6 = 1;
+    ((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.bit5 = 1;
+    ((EntityAiStateKind151D30 *)ai_state)->motion_slot_0.bit6 = 1;
+    ((EntityAiStateKind151D30 *)ai_state)->motion_slot_1.bit6 = 1;
     Motion_StepModel(entity->model, 0, 0);
     for (i = 0; i < 6; i++) {
         other = Entity_GetBySpawnId(i + 10);
@@ -136,34 +136,34 @@ void AncientKing_Init(Entity *entity) {
    two motion slots of the work area (unk80 and unk88), flag bit 34 coming from the second, then
    turns the head. */
 static void AncientKing_Animate(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
+    EntityAiStateKind151D30 *slots = (EntityAiStateKind151D30 *)ai_state;
     f32 limits[4];
     s32 previous;
 
     if (!ENTITY_FLAG_BITS(entity)->bit14) {
         return;
     }
-    if (slots->unk80.unk01 != 0) {
+    if (slots->motion_slot_0.frames_left != 0) {
         // match: the caller passes a float the callee does not take
-        ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, 1.0f / slots->unk80.unk01);
+        ENTITY_FLAG_BITS(entity)->bit34 = ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, 1.0f / slots->motion_slot_0.frames_left);
     } else {
-        previous = slots->unk80.unk04;
-        Motion_StepSlot(entity, &((EntityUnkE0Kind151D30 *)&entity->unkE0)->unk80, 0, ENTITY_FLAG_BITS(entity)->bits11);
-        if (slots->unk80.index == 1) {
-            EntityEvent_StartFrameEffects(entity, slots->unk80.index, previous, slots->unk80.unk04);
-            EntityEvent_StartFrameCues(entity, slots->unk80.index, previous, slots->unk80.unk04);
+        previous = slots->motion_slot_0.frame_fixed;
+        Motion_StepSlot(entity, &((EntityAiStateKind151D30 *)&entity->ai_state)->motion_slot_0, 0, ENTITY_FLAG_BITS(entity)->bits11);
+        if (slots->motion_slot_0.index == 1) {
+            EntityEvent_StartFrameEffects(entity, slots->motion_slot_0.index, previous, slots->motion_slot_0.frame_fixed);
+            EntityEvent_StartFrameCues(entity, slots->motion_slot_0.index, previous, slots->motion_slot_0.frame_fixed);
         }
     }
-    if (slots->unk88.unk01 != 0) {
+    if (slots->motion_slot_1.frames_left != 0) {
         // match: the caller passes a float the callee does not take
-        ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->unk88, 1, 1.0f / slots->unk88.unk01);
+        ((int (*)(void *, void *, int, float))EntityAi_StepSlotMotion)(entity, &slots->motion_slot_1, 1, 1.0f / slots->motion_slot_1.frames_left);
     } else {
-        previous = slots->unk88.unk04;
-        ENTITY_FLAG_BITS(entity)->bit34 = Motion_StepSlot(entity, &slots->unk88, 1, ENTITY_FLAG_BITS(entity)->bits11);
-        if (slots->unk88.index != 1) {
-            EntityEvent_StartFrameEffects(entity, slots->unk88.index, previous, slots->unk88.unk04);
-            EntityEvent_StartFrameCues(entity, slots->unk88.index, previous, slots->unk88.unk04);
+        previous = slots->motion_slot_1.frame_fixed;
+        ENTITY_FLAG_BITS(entity)->bit34 = Motion_StepSlot(entity, &slots->motion_slot_1, 1, ENTITY_FLAG_BITS(entity)->bits11);
+        if (slots->motion_slot_1.index != 1) {
+            EntityEvent_StartFrameEffects(entity, slots->motion_slot_1.index, previous, slots->motion_slot_1.frame_fixed);
+            EntityEvent_StartFrameCues(entity, slots->motion_slot_1.index, previous, slots->motion_slot_1.frame_fixed);
         }
     }
     limits[1] = entity->params->pitch_limit_deg * 0.017453292f;
@@ -171,9 +171,9 @@ static void AncientKing_Animate(Entity *entity) {
     limits[3] = entity->params->yaw_limit_deg * 0.017453292f;
     limits[2] = -entity->params->yaw_limit_deg * 0.017453292f;
     if (ENTITY_FLAG_BITS(entity)->bit9) {
-        EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, ENTITY_FLAG_BITS(entity)->bit9, limits, 12.0f);
+        EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, ENTITY_FLAG_BITS(entity)->bit9, limits, 12.0f);
     } else {
-        EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, -1, NULL, 8.0f);
+        EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, -1, NULL, 8.0f);
     }
 }
 
@@ -182,7 +182,7 @@ static void AncientKing_Animate(Entity *entity) {
    AncientKing_SwitchHandlers; else in state 2 it calls AncientKing_ThinkCombat, and in the other
    states starts the move action. Counts down work word unk68. */
 static void AncientKing_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 0);
@@ -200,12 +200,12 @@ static void AncientKing_Think(Entity *entity, s32 unknown) {
         case 0:
         case 1:
         default:
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
             break;
         }
     }
-    if (unkE0->pause_timer > 0) {
-        unkE0->pause_timer--;
+    if (ai_state->pause_timer > 0) {
+        ai_state->pause_timer--;
     }
 }
 
@@ -213,7 +213,7 @@ static void AncientKing_Think(Entity *entity, s32 unknown) {
    AncientKing_RangedAttack0 when the pause Entity.attack_delay_frames is over and EntityAi_CanUseRanged finds the player
    in reach of ranged record 0; else the move action. */
 static void AncientKing_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     ENTITY_FLAG_BITS(entity)->bit9 = TRUE;
@@ -222,16 +222,16 @@ static void AncientKing_ThinkCombat(Entity *entity, s32 unknown) {
     } else if (entity->attack_delay_frames == 0 && EntityAi_CanUseRanged(entity, 0)) {
         EntityAi_StartAttack(entity, AncientKing_RangedAttack0, unknown, 1, 0);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
     }
 }
 
 /* The move handler until AncientKing_SwitchHandlers installs EntityAi_Move: keeps animation 1 on both
    motion slots and does not turn. */
 static void AncientKing_Move(Entity *entity) {
-    entity->unkE0.turn_rate = 0.0f;
-    EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_0, 0, 1, 0, entity->params->motion_blend_frames, 0);
-    EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 1, 0, entity->params->motion_blend_frames, 0);
+    entity->ai_state.turn_rate = 0.0f;
+    EntityAi_StartSlotMotion(entity, entity->ai_state.motion_slot_0, 0, 1, 0, entity->params->motion_blend_frames, 0);
+    EntityAi_StartSlotMotion(entity, entity->ai_state.motion_slot_1, 1, 1, 0, entity->params->motion_blend_frames, 0);
 }
 
 /* The death action (busy bit 0x40) until AncientKing_SwitchHandlers installs AncientKing_DeathLaunchShot:
@@ -239,15 +239,15 @@ static void AncientKing_Move(Entity *entity) {
    it launches shot unk10[0].unk00 of ranged record 0 with the player's position as its starting
    point (EntityAi_LaunchShot); then the fade and the removal as in EntityAi_Death. */
 static void AncientKing_Death(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
-    EntityUnkE0Kind151D30 *slots = (EntityUnkE0Kind151D30 *)unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
+    EntityAiStateKind151D30 *slots = (EntityAiStateKind151D30 *)ai_state;
     f32 target[4];
 
     entity->busy_flags = ENTITY_BUSY_DEATH;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, &slots->unk80, 0, 2, 0, entity->params->motion_blend_frames, 0);
-        EntityAi_StartSlotMotion(entity, &slots->unk88, 1, 2, 0, entity->params->motion_blend_frames, 0);
+        EntityAi_StartSlotMotion(entity, &slots->motion_slot_0, 0, 2, 0, entity->params->motion_blend_frames, 0);
+        EntityAi_StartSlotMotion(entity, &slots->motion_slot_1, 1, 2, 0, entity->params->motion_blend_frames, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
@@ -255,8 +255,8 @@ static void AncientKing_Death(Entity *entity) {
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            EntityAi_StartSlotMotion(entity, &slots->unk80, 0, 0x10, 5, entity->params->motion_blend_frames, 1);
-            EntityAi_StartSlotMotion(entity, &slots->unk88, 1, 0x10, 5, entity->params->motion_blend_frames, 1);
+            EntityAi_StartSlotMotion(entity, &slots->motion_slot_0, 0, 0x10, 5, entity->params->motion_blend_frames, 1);
+            EntityAi_StartSlotMotion(entity, &slots->motion_slot_1, 1, 0x10, 5, entity->params->motion_blend_frames, 1);
             ENTITY_FLAG_BITS(entity)->bits11 = 1;
             ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
             ENTITY_FLAG_BITS(entity)->bit20 = TRUE;
@@ -269,12 +269,12 @@ static void AncientKing_Death(Entity *entity) {
         break;
     case 1:
     case 3:
-        if (slots->unk80.unk01 == 0) {
+        if (slots->motion_slot_0.frames_left == 0) {
             entity->action_step++;
         }
         break;
     case 4:
-        if ((slots->unk88.unk04 - entity->params->motion_speeds[slots->unk88.index]) >> 8 < 0x2B && slots->unk88.unk02 >= 0x2B) {
+        if ((slots->motion_slot_1.frame_fixed - entity->params->motion_speeds[slots->motion_slot_1.index]) >> 8 < 0x2B && slots->motion_slot_1.frame >= 0x2B) {
             Vector_Copy(target, player_state.position);
             EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0])->unk10[0].unk00, target,
                           entity->model->rotation);
@@ -304,7 +304,7 @@ static void AncientKing_Death(Entity *entity) {
    unk10[0].unk00, its starting point up to 600 from the player's position in x and in z
    (EntityAi_LaunchShot). */
 static void AncientKing_RangedAttack0(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0];
     f32 target[4];
     EntityFrameTable5 launch_frames = ancient_king_near_shot_frames;
@@ -314,21 +314,21 @@ static void AncientKing_RangedAttack0(Entity *entity) {
     entity->busy_flags |= ENTITY_BUSY_ATTACK;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
+        EntityAi_StartSlotMotion(entity, entity->ai_state.motion_slot_1, 1, 0x17, 0, entity->params->motion_blend_frames >> 1, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (((EntityUnkE0Slot *)unkE0->motion_slot_1)->unk01 == 0) {
+        if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frames_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        elapsed = (((EntityUnkE0Slot *)unkE0->motion_slot_1)->unk04 -
-                   entity->params->motion_speeds[((EntityUnkE0SlotBits *)unkE0->motion_slot_1)->index]) >> 8;
+        elapsed = (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame_fixed -
+                   entity->params->motion_speeds[((EntityAiMotionSlotBits *)ai_state->motion_slot_1)->index]) >> 8;
         for (i = 0; i < 5; i++) {
             if (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0) {
-                if (elapsed < launch_frames.frames[i] && ((EntityUnkE0Slot *)unkE0->motion_slot_1)->unk02 >= launch_frames.frames[i]) {
+                if (elapsed < launch_frames.frames[i] && ((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame >= launch_frames.frames[i]) {
                     Vector_Copy(target, player_state.position);
                     target[0] += rand() % 1201 - 600;
                     target[2] += rand() % 1201 - 600;
@@ -342,9 +342,9 @@ static void AncientKing_RangedAttack0(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -356,25 +356,25 @@ static void AncientKing_RangedAttack0(Entity *entity) {
    EntityParams.far_distance it starts effect unk436 at model point unk43E (EntityEvent_StartEffectAtPoint), past frame
    unk43C effect unk43A there, and calls AncientKing_RespawnTwoOthers; then it plays to the end. */
 static void AncientKing_RespawnOthers(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 0x11, 0, entity->params->motion_blend_frames, 1);
+        EntityAi_StartSlotMotion(entity, entity->ai_state.motion_slot_1, 1, 0x11, 0, entity->params->motion_blend_frames, 1);
         entity->flags &= ~ENTITY_FLAG_MOTION_STEP_MODE_MASK;
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (((EntityUnkE0Slot *)unkE0->motion_slot_1)->unk01 == 0) {
+        if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frames_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (((EntityUnkE0Slot *)unkE0->motion_slot_1)->unk02 == entity->params->far_distance) {
+        if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame == entity->params->far_distance) {
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->unk43E, (int)entity->model->rotation);
         }
-        if (entity->params->unk43C < ((EntityUnkE0Slot *)unkE0->motion_slot_1)->unk02) {
+        if (entity->params->unk43C < ((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame) {
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43A, entity->params->unk43E, (int)entity->model->rotation);
             AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
@@ -386,9 +386,9 @@ static void AncientKing_RespawnOthers(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.think(entity, 1);
+                entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -399,38 +399,38 @@ static void AncientKing_RespawnOthers(Entity *entity) {
    slots to its end, then installs the second set of handlers (AncientKing_ThinkAfterSwitch,
    AncientKing_DeathLaunchShot, EntityAi_Animate, EntityAi_OnHit, EntityAi_Move) and thinks. */
 static void AncientKing_SwitchHandlers(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_2000;
     switch (entity->action_step) {
     case 0:
-        EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_0, 0, 2, 0, entity->params->motion_blend_frames, 0);
-        EntityAi_StartSlotMotion(entity, entity->unkE0.motion_slot_1, 1, 2, 0, entity->params->motion_blend_frames, 0);
+        EntityAi_StartSlotMotion(entity, entity->ai_state.motion_slot_0, 0, 2, 0, entity->params->motion_blend_frames, 0);
+        EntityAi_StartSlotMotion(entity, entity->ai_state.motion_slot_1, 1, 2, 0, entity->params->motion_blend_frames, 0);
         ENTITY_FLAG_BITS(entity)->bits11 = 1;
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
         entity->action_step++;
         break;
     case 1:
-        if (((EntityUnkE0Slot *)unkE0->motion_slot_0)->unk01 == 0) {
+        if (((EntityAiMotionSlot *)ai_state->motion_slot_0)->frames_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         if (ENTITY_FLAG_BITS(entity)->bit34) {
-            unkE0->animate = EntityAi_Animate;
-            unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-            unkE0->move = (void (*)(void))EntityAi_Move;
-            unkE0->death = (void (*)(void))AncientKing_DeathLaunchShot;
-            entity->unkE0.think = AncientKing_ThinkAfterSwitch;
+            ai_state->animate = EntityAi_Animate;
+            ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+            ai_state->move = (void (*)(void))EntityAi_Move;
+            ai_state->death = (void (*)(void))AncientKing_DeathLaunchShot;
+            entity->ai_state.think = AncientKing_ThinkAfterSwitch;
             ENTITY_FLAG_BITS(entity)->bit18 = FALSE;
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                entity->unkE0.think(entity, 1);
+                entity->ai_state.think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -442,7 +442,7 @@ static void AncientKing_SwitchHandlers(Entity *entity) {
    bit 25 once the entity is more than 160 from its spawn point (EntityMath_DistanceXZ). Counts down work
    word unk68. */
 static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     if (frame_counter % 10U == entity->spawn_index % 10U) {
         EntityAi_SensePlayer(entity, 0);
@@ -468,8 +468,8 @@ static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown) {
             }
         }
     }
-    if (unkE0->pause_timer > 0) {
-        unkE0->pause_timer--;
+    if (ai_state->pause_timer > 0) {
+        ai_state->pause_timer--;
     }
 }
 
@@ -477,7 +477,7 @@ static void AncientKing_ThinkAfterSwitch(Entity *entity, s32 unknown) {
    AncientKing_RespawnOthersAfterSwitch when AncientKing_ShouldRespawnOthers says so, and ranged records 0 and 1 have the
    type's own actions (AncientKing_LaunchShotsNearPlayer, AncientKing_RangedAttack1). */
 static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
     s32 side;
@@ -522,30 +522,30 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
         case 1:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 0x78;
-            unkE0->move_choice = 0;
+            ai_state->move_choice = 0;
             break;
         case 2:
             entity->action_timer = rand() % 30 + 0x1E;
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
-    if (unkE0->move_choice == 0) {
+    if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (unkE0->turn_in_place == 0) {
-                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
-                if (unkE0->turn_in_place == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                unkE0->turn_in_place = 0;
+                ai_state->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
@@ -559,7 +559,7 @@ static void AncientKing_ThinkCombatAfterSwitch(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The death action (busy bit 0x40) that AncientKing_SwitchHandlers installs: as EntityAi_Death; as
@@ -589,13 +589,13 @@ static void AncientKing_DeathLaunchShot(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if ((entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8 < 0x2B &&
-            entity->model->level_tables->unk82 >= 0x2B) {
+        if ((entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8 < 0x2B &&
+            entity->model->level_tables->frame >= 0x2B) {
             Vector_Copy(target, player_state.position);
             EntityAi_LaunchShot(entity, ((EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0])->unk10[0].unk00, target,
                           entity->model->rotation);
@@ -624,7 +624,7 @@ static void AncientKing_DeathLaunchShot(Entity *entity) {
    AncientKing_RangedAttack0, but animation 23 plays on the main motion and the starting points lie up to 200
    from the player's position in x and in z. */
 static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)&entity->params->ranged_attacks[0];
     f32 target[4];
     EntityFrameTable5 launch_frames = ancient_king_near_shot_frames;
@@ -639,15 +639,15 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         for (i = 0; i < 5; i++) {
             if (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0) {
-                if (elapsed < launch_frames.frames[i] && entity->model->level_tables->unk82 >= launch_frames.frames[i]) {
+                if (elapsed < launch_frames.frames[i] && entity->model->level_tables->frame >= launch_frames.frames[i]) {
                     Vector_Copy(target, player_state.position);
                     target[0] += rand() % 401 - 200;
                     target[2] += rand() % 401 - 200;
@@ -661,9 +661,9 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -675,7 +675,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
    EntityParams.unk43E, heading away from the entity's own position, with a pitch of -10 degrees
    (EntityAi_LaunchShot). */
 static void AncientKing_RangedAttack1(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8Full *unk3D8 = (EntityParamsUnk3D8Full *)ENTITY_PARAMS_UNK3D8(entity->params, 1);
     f32 direction[4];
     EntityFrameTable launch_frames = ancient_king_bone_shot_frames;
@@ -693,15 +693,15 @@ static void AncientKing_RangedAttack1(Entity *entity) {
         ENTITY_FLAGS(entity) &= ~0x200;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         for (i = 0; i < 4; i++) {
             if (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0) {
-                if (elapsed < launch_frames.frames[i] && entity->model->level_tables->unk82 >= launch_frames.frames[i]) {
+                if (elapsed < launch_frames.frames[i] && entity->model->level_tables->frame >= launch_frames.frames[i]) {
                     source = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unk43E);
                     if (source != NULL) {
                         delta_x = source[0] - entity->model->position[0];
@@ -720,9 +720,9 @@ static void AncientKing_RangedAttack1(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -734,7 +734,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
    one uses the second motion slot. It belongs to the handlers AncientKing_SwitchHandlers installs.
    */
 static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_1000;
     switch (entity->action_step) {
@@ -744,15 +744,15 @@ static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
-        if (((EntityUnkE0Slot *)unkE0->motion_slot_1)->unk02 == entity->params->far_distance) {
+        if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame == entity->params->far_distance) {
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->unk43E, (int)entity->model->rotation);
         }
-        if (entity->params->unk43C < entity->model->level_tables->unk82) {
+        if (entity->params->unk43C < entity->model->level_tables->frame) {
             EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43A, entity->params->unk43E, (int)entity->model->rotation);
             AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
@@ -764,9 +764,9 @@ static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if ((s32)(entity->flags >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -778,21 +778,21 @@ static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
    0 and 1 set and flag bits 2-3 below 3 (the count goes to work byte unk7A, a bit each to work word
    unk6A); TRUE when there are fewer than 5 and the pause in work word unk68 is over. */
 static s32 AncientKing_ShouldRespawnOthers(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 count = 0;
     s32 i;
 
-    unkE0->sub_timer = 0;
+    ai_state->sub_timer = 0;
     for (i = 0; i < 6; i++) {
         Entity *other = Entity_GetBySpawnId(i + 10);
         if (other != NULL && (other->flags & (ENTITY_FLAG_ACTIVE_LIST | ENTITY_FLAG_LIVE)) == 3 && ((s32)(other->flags >> 2) & 3) < 3) {
-            unkE0->sub_timer |= 1 << i;
+            ai_state->sub_timer |= 1 << i;
             count++;
         }
     }
-    unkE0->step_index = count;
-    if (unkE0->step_index < 5) {
-        if (unkE0->pause_timer < 1) {
+    ai_state->step_index = count;
+    if (ai_state->step_index < 5) {
+        if (ai_state->pause_timer < 1) {
             return TRUE;
         }
     }
@@ -804,14 +804,14 @@ static s32 AncientKing_ShouldRespawnOthers(Entity *entity) {
    respawns each that has flag bit 0 set (EntityEvent_Respawn, which calls Entity_ResetToSpawn), and sets
    the pause in work word unk68 to EntityParams.action_frames. */
 static void AncientKing_RespawnTwoOthers(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 remaining = 2;
     s32 chance = 200;
     s32 i;
-    s32 slots_left = 6 - unkE0->step_index;
+    s32 slots_left = 6 - ai_state->step_index;
 
     for (i = 0; i < 6; i++) {
-        if (!((unkE0->sub_timer >> i) & 1)) {
+        if (!((ai_state->sub_timer >> i) & 1)) {
             if (rand() % 100 < chance / slots_left) {
                 Entity *other = Entity_GetBySpawnId(i + 10);
                 if (other != NULL && ((s32)other->flags & ENTITY_FLAG_ACTIVE_LIST)) {
@@ -829,5 +829,5 @@ static void AncientKing_RespawnTwoOthers(Entity *entity) {
             }
         }
     }
-    unkE0->pause_timer = entity->params->action_frames;
+    ai_state->pause_timer = entity->params->action_frames;
 }

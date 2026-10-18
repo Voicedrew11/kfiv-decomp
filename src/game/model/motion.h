@@ -16,7 +16,7 @@ void Motion_SetPartSlots(EntityModel *model, s32 first, s32 last, s32 slot);
 int Motion_SeekSlotKeys(ModelInstance *model, int slot, int table_index, int value);
 
 /* Plays one of the entity's motion slots a step on; returns whether the motion ended. */
-s32 Motion_StepSlot(Entity *entity, EntityUnkE0SlotBits *slot_bits, s32 slot, s32 mode);
+s32 Motion_StepSlot(Entity *entity, EntityAiMotionSlotBits *slot_bits, s32 slot, s32 mode);
 
 /* Eases the parts of one motion slot toward the pose at `frame`; returns whether `weight` reached 1. */
 s32 Motion_BlendSlotToPose(ModelInstance *model, s32 slot, s32 table, s16 frame, f32 weight);

@@ -1,6 +1,6 @@
 /* The shared entity AI: the per-frame update most entity types run (EntityAi_Update), the set-up of type 0,
    and the default handlers a type's set-up function installs in the work area (think, animate, on_hit,
-   dormant, death, move), with the actions and reactions they start. See EntityUnkE0 in entity/entity.h. */
+   dormant, death, move), with the actions and reactions they start. See EntityAiState in entity/entity.h. */
 #ifndef KF_ENTITY_AI_HANDLERS_H
 #define KF_ENTITY_AI_HANDLERS_H
 

@@ -106,7 +106,7 @@ void MapObject_UpdatePivotSwitchOff(MapObject *object) {
 
 /* Update handler of a switch turning on: runs the animation, then it is on. */
 void MapObject_TurnPivotSwitchOn(MapObject *object) {
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 5);
@@ -126,7 +126,7 @@ void MapObject_UpdatePivotSwitchOn(MapObject *object) {
 
 /* Update handler of a switch turning off: runs the animation, then it is off. */
 void MapObject_TurnPivotSwitchOff(MapObject *object) {
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 4);

@@ -813,14 +813,14 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
                 swing_magic_frames = 0;
             }
         }
-        if (MODEL_CHANNEL(WEAPON_MODEL)->param_shifted <= 0) {
+        if (MODEL_CHANNEL(WEAPON_MODEL)->frame_fixed <= 0) {
             player_state.item_action_step = 0;
             return;
         }
         if (player_state.swing_ended != 0) {
             return;
         }
-        if (MODEL_CHANNEL(WEAPON_MODEL)->param >= def->draw_ready_frame && MODEL_CHANNEL(WEAPON_MODEL)->param <= def->draw_last_frame && swing_magic_frames == 0) {
+        if (MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_ready_frame && MODEL_CHANNEL(WEAPON_MODEL)->frame <= def->draw_last_frame && swing_magic_frames == 0) {
             memset(&request, 0, sizeof(request));
             Vector_Copy(request.position, &player_state);
             request.owner = (Entity *)&player_state;
@@ -841,33 +841,33 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             request.highest_y = player_state.position.y + 50.0f;
             Attack_Run(&request, (Unk1B1470Extra *)&player_state.unk268);
         }
-        if (!player_state.draw_sound_played && def->draw_sound_id != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->draw_sound_frame) {
+        if (!player_state.draw_sound_played && def->draw_sound_id != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_sound_frame) {
             ((int (*)(int))Sound_PlaySw)(def->draw_sound_id); // match: called as if it returned a value
             player_state.draw_sound_played = 1;
         }
         if (magic_button & pressed) {
             if (player_state.magic1_window != 0 && player_state.magic1_state == 0 && def->first_magic_id != 0xFFFF &&
-                MODEL_CHANNEL(WEAPON_MODEL)->param >= def->first_magic_window_start_frame && MODEL_CHANNEL(WEAPON_MODEL)->param <= def->first_magic_window_end_frame) {
+                MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_window_start_frame && MODEL_CHANNEL(WEAPON_MODEL)->frame <= def->first_magic_window_end_frame) {
                 player_state.magic2_armed = 0;
                 player_state.magic1_asked = 1;
                 player_state.magic1_state = 1;
             }
             if (player_state.magic2_armed != 0 && player_state.magic2_asked == 0 && def->second_magic_id != 0xFFFF &&
-                MODEL_CHANNEL(WEAPON_MODEL)->param >= def->second_magic_window_start_frame && MODEL_CHANNEL(WEAPON_MODEL)->param <= def->second_magic_window_end_frame) {
+                MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_window_start_frame && MODEL_CHANNEL(WEAPON_MODEL)->frame <= def->second_magic_window_end_frame) {
                 player_state.magic2_asked = 1;
                 player_state.magic2_state = 1;
             }
             player_state.magic1_window = 0;
             player_state.magic2_armed = 0;
         }
-        if (player_state.magic1_state == 1 && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->first_magic_cast_frame) {
+        if (player_state.magic1_state == 1 && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_cast_frame) {
             player_state.magic1_state = 2;
             if (Player_CastMagic(def->first_magic_id)) {
                 swing_magic_id = def->first_magic_id;
                 swing_magic_frames = def->first_magic_effect_frames;
             }
         }
-        if (player_state.magic2_state == 1 && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->second_magic_cast_frame) {
+        if (player_state.magic2_state == 1 && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_cast_frame) {
             player_state.magic2_state = 2;
             if (Player_CastMagic(def->second_magic_id)) {
                 swing_magic_id = def->second_magic_id;
@@ -875,16 +875,16 @@ void Player_SwingWeapon(u16 held, u16 pressed) {
             }
         }
         if (player_state.magic1_state != 0 && !player_state.magic1_motion_reached && def->unk46 != 0xFFFF &&
-            MODEL_CHANNEL(WEAPON_MODEL)->param >= def->first_magic_latch_frame) {
+            MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->first_magic_latch_frame) {
             player_state.magic1_motion_reached = 1;
         }
         if (player_state.magic2_state != 0 && !player_state.magic2_motion_reached && def->unk56 != 0xFFFF &&
-            MODEL_CHANNEL(WEAPON_MODEL)->param >= def->second_magic_latch_frame) {
+            MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->second_magic_latch_frame) {
             player_state.magic1_motion_reached = 1; // match: bit 1 again, though bit 2 was tested
         }
     } else {
         ModelMotion_Step(WEAPON_MODEL);
-        if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
+        if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left == 0) {
             player_state.item_action_step = 0;
         }
     }
@@ -903,8 +903,8 @@ void Player_FireProjectile(u16 held, u16 pressed) {
 
     if ((attack_button & pressed) && !((s32)(player_state.status_bits >> 39) & 1) && item_counts[def->ammo_item_index] != 0) {
         ModelMotion_Select(WEAPON_MODEL, 0);
-        MODEL_CHANNEL(WEAPON_MODEL)->param = 0;
-        MODEL_CHANNEL(WEAPON_MODEL)->param_shifted = 0;
+        MODEL_CHANNEL(WEAPON_MODEL)->frame = 0;
+        MODEL_CHANNEL(WEAPON_MODEL)->frame_fixed = 0;
         ModelMotion_Step(WEAPON_MODEL);
         ((int (*)(ModelInstance *))WEAPON_MODEL->update_bone_points)(WEAPON_MODEL); // match: called as if it returned a value
         player_state.draw_sound_played = 0;
@@ -937,14 +937,14 @@ void Player_DrawBow(u16 held, u16 pressed) {
     s32 frame;
     s32 speed;
 
-    if (MODEL_CHANNEL(WEAPON_MODEL)->param != 0 && MODEL_CHANNEL(WEAPON_MODEL)->param < def->draw_last_frame) {
+    if (MODEL_CHANNEL(WEAPON_MODEL)->frame != 0 && MODEL_CHANNEL(WEAPON_MODEL)->frame < def->draw_last_frame) {
         ModelMotion_Step(WEAPON_MODEL);
     }
     if (player_state.draw_motion_complete == 0) {
-        player_state.draw_motion_complete = MODEL_CHANNEL(WEAPON_MODEL)->param >= def->draw_ready_frame;
+        player_state.draw_motion_complete = MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_ready_frame;
     }
     if (player_state.swing_ended == 0 && !((s32)(player_state.status_bits >> 39) & 1) && Player_CanFireAtAim()) {
-        if (!player_state.draw_sound_played && def->draw_sound_id != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->param >= def->draw_sound_frame) {
+        if (!player_state.draw_sound_played && def->draw_sound_id != 0xFFFF && MODEL_CHANNEL(WEAPON_MODEL)->frame >= def->draw_sound_frame) {
             ((int (*)(int))Sound_PlaySw)(0); // match: called as if it returned a value
             player_state.draw_sound_played = 1;
         }
@@ -972,8 +972,8 @@ void Player_DrawBow(u16 held, u16 pressed) {
             *(PlayerItemRates *)&SHOT_REQUEST->unk62 = player_state.unk72;
             SHOT_REQUEST->map_object_damage_multiplier = def->map_object_damage_multiplier;
             SHOT_REQUEST->double_hit_chance_percent = def->double_hit_chance_percent;
-            if (MODEL_CHANNEL(WEAPON_MODEL)->param != 0) {
-                frame = MODEL_CHANNEL(WEAPON_MODEL)->param;
+            if (MODEL_CHANNEL(WEAPON_MODEL)->frame != 0) {
+                frame = MODEL_CHANNEL(WEAPON_MODEL)->frame;
             } else {
                 frame = def->draw_last_frame;
             }
@@ -1002,12 +1002,12 @@ void Player_PlayEquipSound(void) {
 }
 
 void Player_FinishWeaponMotion(void) {
-    if (MODEL_CHANNEL(WEAPON_MODEL)->value != 0) {
+    if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left != 0) {
         ModelMotion_Step(WEAPON_MODEL);
-        if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
+        if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left == 0) {
             ModelMotion_Step(WEAPON_MODEL);
         }
-    } else if (MODEL_CHANNEL(WEAPON_MODEL)->param_shifted > 0) {
+    } else if (MODEL_CHANNEL(WEAPON_MODEL)->frame_fixed > 0) {
         ModelMotion_Step(WEAPON_MODEL);
     } else {
         player_state.item_action_step = 0;
@@ -1017,7 +1017,7 @@ void Player_FinishWeaponMotion(void) {
 
 void Player_HolsterWeapon(void) {
     ModelMotion_Step(WEAPON_MODEL);
-    if (MODEL_CHANNEL(WEAPON_MODEL)->value == 0) {
+    if (MODEL_CHANNEL(WEAPON_MODEL)->blend_left == 0) {
         Effect_FreePlayerWeaponKinds();
         player_weapon_step[0] = 0;
     }

@@ -171,7 +171,7 @@ void MapObject_UpdateClosedChest(void *arg, int unused) {
 /* Step 2 of a chest: runs the opening animation; at its end the chest is open (animation 5, step 3, work[0]
    set to 90). Then the open-chest update. */
 void MapObject_UpdateOpeningChest(MapObject *object) {
-    if (MODEL_CHANNEL(object->model)->param != 0) {
+    if (MODEL_CHANNEL(object->model)->frame != 0) {
         MapObject_StepAnim(object);
     } else {
         MapObject_StartAnim(object, 5);

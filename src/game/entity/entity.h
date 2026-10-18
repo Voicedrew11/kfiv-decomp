@@ -56,15 +56,15 @@ typedef union {
 
 struct Entity;
 
-/* what EntityModel.level_tables points at */
+/* what EntityModel.level_tables points at: the ModelChannel (model/model.h) seen from Entity code */
 typedef struct {
     char pad00[0x81];
-    u8 unk81;                       /* 0x81 */
-    s16 unk82;                      /* 0x82 */
-    s32 unk84;                      /* 0x84 */
-    s32 unk88;                      /* 0x88 */
-    u16 unk8C;                      /* 0x8C set from EntityParams.motion_speeds[] */
-} EntityModelUnkFC;
+    u8 motion_index;                /* 0x81 0x81 the motion playing (ModelChannel.index) */
+    s16 frame;                      /* 0x82 0x82 the motion's current frame */
+    s32 frame_fixed;                /* 0x84 0x84 the frame times 256 */
+    s32 blend_left;                 /* 0x88 0x88 blend still to run; 0 once the motion plays on its own */
+    u16 frame_step;                 /* 0x8C 0x8C set from EntityParams.motion_speeds[] */
+} EntityModelChannel;
 
 /* one 0x100-byte element of what EntityModel.parts points at */
 typedef struct {
@@ -111,7 +111,7 @@ typedef struct {
     f32 scale[4];                   /* 0xE0 the model's x, y and z scale */
     char padF0[0x08];
     EntityModelUnkF8 *parts;        /* 0xF8 the model's part array (0x80 or 0x100 bytes per part) */
-    EntityModelUnkFC *level_tables; /* 0xFC the model's animation channel (ModelInstance.level_tables) */
+    EntityModelChannel *level_tables; /* 0xFC the model's animation channel (ModelInstance.level_tables) */
     char pad100[0x02];
     u16 draw_flags;                 /* 0x102 0x800: drawn with its own texture (same word as ModelInstance) */
     char pad104[0x30];
@@ -540,17 +540,17 @@ typedef struct {
     char action_flags;              /* 0x7B per-type flag byte: turn side, one-shot bits, amount */
     char action_counter;            /* 0x7C per-type counter, timer, half period or map object id */
     char pad7D[0x03];
-    char motion_slot_0[0x08];       /* 0x80 (Entity+0x160) passed by address; an EntityUnkE0Slot */
-    char motion_slot_1[0x08];       /* 0x88 (Entity+0x168) passed by address; an EntityUnkE0Slot */
-} EntityUnkE0;
+    char motion_slot_0[0x08];       /* 0x80 (Entity+0x160) passed by address; an EntityAiMotionSlot */
+    char motion_slot_1[0x08];       /* 0x88 (Entity+0x168) passed by address; an EntityAiMotionSlot */
+} EntityAiState;
 
 /* one of the two 8-byte slots EntityAi_StartSlotMotion fills */
 typedef struct {
-    u8 unk00;                       /* 0x00 */
-    u8 unk01;                       /* 0x01 */
-    s16 unk02;                      /* 0x02 */
-    s32 unk04;                      /* 0x04 */
-} EntityUnkE0Slot;
+    u8 motion_bits;                 /* 0x00 0x00 motion index (5 bits) and flags, as EntityMotionSlotWord */
+    u8 frames_left;                 /* 0x01 0x01 frames left, counted down by EntityAi_StepSlotMotion */
+    s16 frame;                      /* 0x02 0x02 current frame */
+    s32 frame_fixed;                /* 0x04 0x04 the frame times 256 */
+} EntityAiMotionSlot;
 
 /* Entity+0xE0 as the kinds handled at 0x1740A8..0x180000 use it */
 typedef struct {
@@ -571,9 +571,9 @@ typedef struct {
     s8 climb_command;               /* 0x79 1/-1 climb, 2/-2 keep the height in bounds, 0 level out */
     s8 think_flag;                  /* 0x7A 0/1 flag or countdown the type's think handler keeps */
     char pad7B[0x05];
-    EntityUnkE0Slot unk80;          /* 0x80 */
-    EntityUnkE0Slot unk88;          /* 0x88 */
-} EntityUnkE0Kind1740A8;
+    EntityAiMotionSlot motion_slot_0;  /* 0x80 */
+    EntityAiMotionSlot motion_slot_1;  /* 0x88 */
+} EntityAiStateKind1740A8;
 
 /* Entity+0xE0 as the flying kind set up by DarkBird_Init lays it out */
 typedef struct {
@@ -589,10 +589,10 @@ typedef struct {
     s8 unk78;                       /* 0x78 */
     s8 climb_command;               /* 0x79 climb (above 0), dive (below 0) or level out (0) */
     char pad7A[0x06];
-    EntityUnkE0Slot unk80;          /* 0x80 */
-    EntityUnkE0Slot unk88;          /* 0x88 */
+    EntityAiMotionSlot motion_slot_0;  /* 0x80 */
+    EntityAiMotionSlot motion_slot_1;  /* 0x88 */
     char pad90[0x10];
-} EntityUnkE0Kind1719F8;
+} EntityAiStateKind1719F8;
 
 /* Entity+0xE0 as the kind set up by ExpeditionSoldier_Init lays it out */
 typedef struct {
@@ -607,13 +607,13 @@ typedef struct {
     s8 map_object_43_state;         /* 0x7B state of map object spawn_info->unk43 */
     s8 map_object_to_operate_id;    /* 0x7C id of the map object to operate */
     char pad7D[0x23];
-} EntityUnkE0Kind178358;
+} EntityAiStateKind178358;
 
 /* Entity+0xE0 as the kind set up by func_00150588 lays it out */
 typedef struct {
     char pad00[0x1C];
     s32 unk1C;                      /* 0x1C */
-} EntityUnkE0Kind150588;
+} EntityAiStateKind150588;
 
 /* Entity+0xE0 as the kind set up by GreaterDemon_Init lays it out. The area is
    8-byte aligned: tests of neighbouring bytes are merged into one 64-bit load. */
@@ -641,7 +641,7 @@ typedef struct {
     s8 unk7B;                       /* 0x7B */
     s8 unk7C;                       /* 0x7C */
     char pad7D[0x23];
-} __attribute__((aligned(8))) EntityUnkE0Kind168160;
+} __attribute__((aligned(8))) EntityAiStateKind168160;
 
 /* an 8-byte slot of the work area as the bit-fields the init functions set */
 typedef struct {
@@ -649,17 +649,17 @@ typedef struct {
     u64 bit5 : 1;
     u64 bit6 : 1;
     u64 pad7 : 1;
-    u8 unk01;                       /* 0x01 */
-    s16 unk02;                      /* 0x02 */
-    s32 unk04;                      /* 0x04 */
-} EntityUnkE0SlotBits;
+    u8 frames_left;                 /* 0x01 0x01 frames left */
+    s16 frame;                      /* 0x02 0x02 current frame */
+    s32 frame_fixed;                /* 0x04 0x04 the frame times 256 */
+} EntityAiMotionSlotBits;
 
 /* Entity+0xE0 as the kinds set up by func_00151D30 and its neighbours use it */
 typedef struct {
     char pad00[0x80];
-    EntityUnkE0SlotBits unk80;      /* 0x80 */
-    EntityUnkE0SlotBits unk88;      /* 0x88 */
-} EntityUnkE0Kind151D30;
+    EntityAiMotionSlotBits motion_slot_0; /* 0x80 */
+    EntityAiMotionSlotBits motion_slot_1; /* 0x88 */
+} EntityAiStateKind151D30;
 
 /* Entity+0xE0 as the kind set up by DarkSorcerer_Init lays it out */
 typedef struct {
@@ -670,7 +670,7 @@ typedef struct {
     f32 unk48;                      /* 0x48 */
     f32 unk4C;                      /* 0x4C */
     char pad50[0x50];
-} EntityUnkE0Kind16BF98;
+} EntityAiStateKind16BF98;
 
 /* Entity+0xE0 as the kind set up by func_0015F8C0 lays it out. The area is
    8-byte aligned: only then is "unk68 == 0 && unk6A == 0" one lwu. */
@@ -688,7 +688,7 @@ typedef struct {
     s8 unk7D;                       /* 0x7D */
     s8 unk7E;                       /* 0x7E */
     char pad7F[0x21];
-} __attribute__((aligned(8))) EntityUnkE0Kind15F8C0;
+} __attribute__((aligned(8))) EntityAiStateKind15F8C0;
 
 /* Entity+0xE0 as the kind set up by func_00162BC8 lays it out */
 typedef struct {
@@ -699,14 +699,14 @@ typedef struct {
     char pad70[0x10];
     f32 unk80[4];                   /* 0x80 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
     f32 unk90[4];                   /* 0x90 pitch and yaw passed to EntityEvent_StartEffectAtPoint */
-} EntityUnkE0Kind162BC8;
+} EntityAiStateKind162BC8;
 
 /* Entity+0xE0 as the kind set up by Onyx_Init lays it out */
 typedef struct {
     char pad00[0x68];
     s16 unk68[3];                   /* 0x68 weights of the first three actions (see Onyx_PickAttack) */
     char pad6E[0x32];
-} EntityUnkE0Kind17FC60;
+} EntityAiStateKind17FC60;
 
 /* Entity+0xE0 as the kind set up by func_00131390 lays it out */
 typedef struct {
@@ -723,7 +723,7 @@ typedef struct {
     s8 distance_band_timer;         /* 0x7D frames until unk7C is picked again */
     s8 afterimage_active;           /* 0x7E set by the actions that play animation 6 or 7 */
     char pad7F[0x21];
-} EntityUnkE0Kind131390;
+} EntityAiStateKind131390;
 
 /* Entity+0xE0 as the kind set up by func_0012ACA0 lays it out */
 typedef struct {
@@ -732,7 +732,7 @@ typedef struct {
     char pad20[0x20];
     f32 unk40[7];                   /* 0x40 [2] to [6]: how far each of the five neck joints (model parts 30 to 34) is bent */
     char pad5C[0x44];
-} EntityUnkE0Kind12ACA0;
+} EntityAiStateKind12ACA0;
 
 /* what Entity.params points at (the entity's controller / type data), see ENTITY_CONTROLLER.
    EntityParams above is a second view of the same block; the two are to be unified. */
@@ -838,7 +838,7 @@ typedef struct Entity {
     u16 busy_flags;                 /* 0xC6 the running action or reaction, ENTITY_BUSY_ bits; think waits while set */
     u16 move_command;               /* 0xC8 this frame's MOVE_COMMAND_ bits for the move action; EntityAi_Update clears it */
     s8 action_step;                 /* 0xCA step of the current action; EntityAi_StartAction puts it back to 0 */
-    s8 reaction_step;               /* 0xCB step of the reaction (EntityUnkE0.reaction); EntityAi_SetReaction puts it back to 0 */
+    s8 reaction_step;               /* 0xCB step of the reaction (EntityAiState.reaction); EntityAi_SetReaction puts it back to 0 */
     /* 0xCC what the entity knows of the player (EntityAi_StepState): 0 nothing, 2 the player is noticed
        (flag bit 33), 1 it was and Entity.timer still runs. Scripts and some types set other values. */
     s8 state;
@@ -854,7 +854,7 @@ typedef struct Entity {
     u8 model_alpha;                 /* 0xD6 the model's alpha, 0x80 (0x40 for some kinds) */
     u8 spawn_index;                 /* 0xD7 spawn record index; staggers the periodic checks */
     u64 flags;                      /* 0xD8 */
-    EntityUnkE0 unkE0;              /* 0xE0 */
+    EntityAiState ai_state;        /* 0xE0 the AI handlers and their work fields */
     char pad170[0x10];              /* 0x170 the record is 0x180 bytes */
 } Entity;
 

@@ -1727,7 +1727,7 @@ static void EntityCollision_PushOutOfBoxPair(CollisionOwner *owner, f32 *centre,
     f32 height;
 
     COLLISION_RESULT->hit = 0;
-    if (((EntityModel *)owner->model)->level_tables->unk81 == 0 && ((EntityModel *)owner->model)->level_tables->unk82 < 2) {
+    if (((EntityModel *)owner->model)->level_tables->motion_index == 0 && ((EntityModel *)owner->model)->level_tables->frame < 2) {
         corner_a = (f32 *)owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;
@@ -2077,7 +2077,7 @@ static void EntityCollision_SphereBoxPair(CollisionOwner *owner, void *centre, f
     f32 height;
 
     COLLISION_RESULT->hit = 0;
-    if (((EntityModel *)owner->model)->level_tables->unk81 == 0 && ((EntityModel *)owner->model)->level_tables->unk82 < 2) {
+    if (((EntityModel *)owner->model)->level_tables->motion_index == 0 && ((EntityModel *)owner->model)->level_tables->frame < 2) {
         corner_a = (f32 *)owner->model->get_point(owner->model, 0);
         if (corner_a == NULL) {
             return;

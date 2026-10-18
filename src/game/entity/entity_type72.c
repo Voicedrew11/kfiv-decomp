@@ -13,22 +13,22 @@ static void EntityType72_Think(void);
 
 /* Set-up of a type 72 entity: clears its work area and installs the type's handlers. */
 void EntityType72_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 i;
 
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         // match: the pointer has to be formed inside the loop
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = (void (*)(Entity *, s32))EntityType72_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = NULL;
-    unkE0->move = NULL;
-    unkE0->dormant = NULL;
-    unkE0->death = NULL;
+    ai_state->think = (void (*)(Entity *, s32))EntityType72_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = NULL;
+    ai_state->move = NULL;
+    ai_state->dormant = NULL;
+    ai_state->death = NULL;
     ENTITY_FLAG_BITS(entity)->bit21 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit18 = TRUE;
     ENTITY_FLAG_BITS(entity)->bit28 = TRUE;

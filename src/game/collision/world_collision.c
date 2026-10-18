@@ -1208,7 +1208,7 @@ void Collision_HitRayDoubleDoorObj(void *target, int from, int direction, float 
     if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
-    if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param == 1) {
+    if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame == 1) {
         corner0 = (f32 *)object->model->get_point(object->model, 0);
         top = (f32 *)object->model->get_point(object->model, 0x1F);
         height = corner0[1] - top[1];
@@ -1547,7 +1547,7 @@ int Collision_HitSphereDoubleDoorObj(MapObject *object, f32 *point, f32 reach) {
     if (!(object->state_flags & MAP_OBJECT_IN_USE)) {
         return;
     }
-    if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param < 2) {
+    if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame < 2) {
         corner0 = (f32 *)object->model->get_point(object->model, 0);
         if (corner0 == NULL) {
             return;
@@ -1871,7 +1871,7 @@ void Collision_HitCapsuleDoubleDoorObj(MapObject *object, f32 *centre, f32 radiu
     f32 height;
 
     if (object->state_flags & MAP_OBJECT_IN_USE) {
-        if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param < 2) {
+        if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame < 2) {
             point0 = (f32 *)object->model->get_point(object->model, 0);
             if (point0 == NULL) {
                 return;
@@ -2118,7 +2118,7 @@ void Collision_HitFanDoubleDoorObj(MapObject *object, Vector4 *origin, f32 radiu
     CollisionResult *result = COLLISION_RESULT; // match: one pointer, so the hit flag is reloaded only after a call
 
     if (object->state_flags & MAP_OBJECT_IN_USE) {
-        if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param < 2) {
+        if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame < 2) {
             point0 = (Vector4 *)object->model->get_point(object->model, 0);
             if (point0 == NULL) {
                 return;
@@ -2483,7 +2483,7 @@ void Collision_PushOutOfDoubleDoorObj(MapObject *object, f32 *centre, f32 radius
 
     if (object->state_flags & MAP_OBJECT_IN_USE) {
         object->model->update_bone_points(object->model);
-        if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->param == 1) {
+        if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim && MODEL_CHANNEL(object->model)->frame == 1) {
             point0 = (f32 *)object->model->get_point(object->model, 0);
             if (point0 == NULL) {
                 return;
@@ -2554,8 +2554,8 @@ void Collision_PushOutOfDoubleDoorObj(MapObject *object, f32 *centre, f32 radius
             delta_x = point3[0] - point4[0];
             delta_z = point3[2] - point4[2];
             second_gap = sqrtf(delta_x * delta_x + delta_z * delta_z);
-            if (!(MODEL_CHANNEL(object->model)->index == object->definition->anims[5].anim &&
-                  MODEL_CHANNEL(object->model)->param == 1) &&
+            if (!(MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[5].anim &&
+                  MODEL_CHANNEL(object->model)->frame == 1) &&
                 gap_is_closed(object, centre, push, first_gap, second_gap)) {
                 Collision_CylinderEdge(point2, point5, height, centre, radius, push);
                 if (COLLISION_RESULT->hit != 0) {
@@ -2827,8 +2827,8 @@ s32 Collision_StandOnPitfallObj(MapObject *object, f32 *position, f32 radius) {
     f32 lowest;
 
     if (object->state_flags & MAP_OBJECT_IN_USE) {
-        if (MODEL_CHANNEL(object->model)->index == object->definition->anims[4].anim
-            && MODEL_CHANNEL(object->model)->param < 2) {
+        if (MODEL_CHANNEL(object->model)->motion_index == object->definition->anims[4].anim
+            && MODEL_CHANNEL(object->model)->frame < 2) {
             return drop_on_floor_strips(object, position, radius);
         }
         Vector_Copy(centre, position);

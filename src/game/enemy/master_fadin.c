@@ -36,19 +36,19 @@ static void MasterFadin_AlertPartner(Entity *entity);
 
 /* Set-up of a type 79 entity: clears its work area and installs the type's handlers. */
 void MasterFadin_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 i;
 
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
         ENTITY_WORK_BYTES(entity)[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = MasterFadin_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->dormant = (void (*)(void))MasterFadin_Dormant;
-    unkE0->death = (void (*)(void))MasterFadin_Death;
-    unkE0->on_hit = NULL;
-    unkE0->move = NULL;
+    ai_state->think = MasterFadin_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->dormant = (void (*)(void))MasterFadin_Dormant;
+    ai_state->death = (void (*)(void))MasterFadin_Death;
+    ai_state->on_hit = NULL;
+    ai_state->move = NULL;
     for (i = 3; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -58,11 +58,11 @@ void MasterFadin_Init(Entity *entity) {
     ENTITY_FLAG_BITS(entity)->bit28 = 1;
     entity->target = NULL;
     if (ENTITY_SPAWN_FLAGS(entity) & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -77,7 +77,7 @@ void MasterFadin_Init(Entity *entity) {
    and 2, and in state 0 starts what the move slot holds (the set-up function leaves it NULL). Keeps
    animation 0; once work word unk68 has run out it puts the state back to 0. */
 static void MasterFadin_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     Entity *leader;
     Entity *other;
 
@@ -86,7 +86,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
         if (leader != NULL) {
             if (ENTITY_FLAG_BITS(leader)->bits2 >= 2) {
                 // match: called as returning int; only then are the flags kept in $3 afterwards
-                ((int (*)(char *, void (*)(void), int))EntityAi_StartAction)((char *)entity, unkE0->death, 0);
+                ((int (*)(char *, void (*)(void), int))EntityAi_StartAction)((char *)entity, ai_state->death, 0);
                 ENTITY_FLAG_BITS(entity)->bit7 = FALSE;
                 return;
             }
@@ -110,13 +110,13 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
             break;
         case 0:
         default:
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
             break;
         }
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    if (unkE0->pause_timer > 0) {
-        unkE0->pause_timer--;
+    if (ai_state->pause_timer > 0) {
+        ai_state->pause_timer--;
     } else {
         entity->state = 0;
     }
@@ -127,7 +127,7 @@ static void MasterFadin_Think(Entity *entity, s32 unknown) {
    turned towards the player 190 above his feet by at most unk436 in pitch and unk438 in yaw, starts cue 0 and
    sets unkA0 to unk434. Keeps animation 0 and starts the move action. */
 static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 angles[4];
     f32 target[4];
     f32 *from;
@@ -165,13 +165,13 @@ static void MasterFadin_ThinkShootAtPlayer(Entity *entity, s32 unknown) {
         }
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The dormant action (busy bit 0x20): as EntityAi_Dormant with flag bits 11 to 13 at 0; flag bit 43
    does not end the wait, it does not go to state 2, and it leaves flag bit 28 set. */
 static void MasterFadin_Dormant(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     entity->busy_flags |= ENTITY_BUSY_DORMANT;
     switch (entity->action_step) {
@@ -196,7 +196,7 @@ static void MasterFadin_Dormant(Entity *entity) {
         }
         break;
     case 2:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -211,9 +211,9 @@ static void MasterFadin_Dormant(Entity *entity) {
             entity->move_command = 0;
             entity->action_timer = 0;
             if (ENTITY_FLAG_BITS(entity)->bit5) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -237,7 +237,7 @@ static void MasterFadin_Death(Entity *entity) {
         entity->flags &= ~ENTITY_FLAG_LOOK_AT_TARGET;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
@@ -276,7 +276,7 @@ static void MasterFadin_AlertPartner(Entity *entity) {
     if (partner != NULL) {
         if ((partner->flags & (ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) == 2) {
             partner->state = 2;
-            partner->unkE0.pause_timer = partner->params->unk43A;
+            partner->ai_state.pause_timer = partner->params->unk43A;
         }
     }
 }

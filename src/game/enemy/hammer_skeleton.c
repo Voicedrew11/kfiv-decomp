@@ -32,24 +32,24 @@ static void HammerSkeleton_Death(Entity *entity);
 
 /* Set-up of a type 37 entity: clears its work area and installs the type's handlers. */
 void HammerSkeleton_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     s32 i;
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = HammerSkeleton_Think;
-    unkE0->animate = EntityAi_Animate;
-    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))EntityAi_Death;
+    ai_state->think = HammerSkeleton_Think;
+    ai_state->animate = EntityAi_Animate;
+    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))EntityAi_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -59,11 +59,11 @@ void HammerSkeleton_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -73,7 +73,7 @@ void HammerSkeleton_Init(Entity *entity) {
 /* The think handler: no states. While the entity is not busy it starts HammerSkeleton_Death when the
    player is inside either of two fixed boxes, else the move action. */
 static void HammerSkeleton_Think(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
 
     if (entity->busy_flags == 0) {
         if ((-6200.0f <= player_state[0] && player_state[0] <= -1400.0f &&
@@ -84,7 +84,7 @@ static void HammerSkeleton_Think(Entity *entity, s32 unknown) {
              -600.0f <= player_state[2] && player_state[2] <= 1000.0f)) {
             EntityAi_StartAction(entity, HammerSkeleton_Death, unknown);
         } else {
-            EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+            EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
         }
     }
 }
@@ -106,7 +106,7 @@ static void HammerSkeleton_Death(Entity *entity) {
         Effect_FreeForOwner(entity);
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;

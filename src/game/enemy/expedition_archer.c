@@ -62,7 +62,7 @@ static void ExpeditionArcher_Death(Entity *entity);
 
 /* Set-up of a type 13 entity: clears its work area and installs the type's handlers. */
 void ExpeditionArcher_Init(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
     u8 *unkC0 = entity->attack_weights;
     char *unk138 = entity->model->look_at_part;
@@ -70,17 +70,17 @@ void ExpeditionArcher_Init(Entity *entity) {
 
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
-        u8 *dest = (u8 *)&entity->unkE0;
+        u8 *dest = (u8 *)&entity->ai_state;
 
         dest[i] = 0;
     }
     EntityAi_SetUpdate((char *)entity, entity_type_handlers[entity->params->entity_type][1]);
-    unkE0->think = ExpeditionArcher_Think;
-    unkE0->animate = (void (*)(void))ExpeditionArcher_Animate;
-    unkE0->on_hit = (void (*)(void))EntityAi_OnHit;
-    unkE0->move = (void (*)(void))EntityAi_Move;
-    unkE0->dormant = (void (*)(void))EntityAi_Dormant;
-    unkE0->death = (void (*)(void))ExpeditionArcher_Death;
+    ai_state->think = ExpeditionArcher_Think;
+    ai_state->animate = (void (*)(void))ExpeditionArcher_Animate;
+    ai_state->on_hit = (void (*)(void))EntityAi_OnHit;
+    ai_state->move = (void (*)(void))EntityAi_Move;
+    ai_state->dormant = (void (*)(void))EntityAi_Dormant;
+    ai_state->death = (void (*)(void))ExpeditionArcher_Death;
     for (i = 4 - 1; i != -1; i--) {
         entity->choice_weights[i] = 0x80;
     }
@@ -90,14 +90,14 @@ void ExpeditionArcher_Init(Entity *entity) {
     ENTITY_UNK5C(entity)->as_s32 = 0;
     ENTITY_FLAG_BITS(entity)->bit28 = FALSE;
     if (entity->spawn_info->spawn_flags & (0x8000L << 43)) {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->dormant, 1);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->dormant, 1);
     } else {
-        EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 0);
+        EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 0);
     }
     if (unk138 != NULL) {
-        Vector_Copy(unkE0->look_part_angles, unk138 + 0x50);
+        Vector_Copy(ai_state->look_part_angles, unk138 + 0x50);
     }
-    unkE0->pose_blend_weight = 0.5f;
+    ai_state->pose_blend_weight = 0.5f;
     entity->model_alpha = (entity->params->flags & ENTITY_PARAMS_FLAG_HALF_MODEL_ALPHA) ? 0x40 : 0x80;
     entity->model->alpha = entity->model_alpha;
     Motion_ClearPartSlots(entity->model);
@@ -111,16 +111,16 @@ static void ExpeditionArcher_Animate(Entity *entity) {
     u32 blend_frames; // match: converted to float as unsigned
     s64 flags;
     s64 flags_now;
-    EntityUnkE0 *unkE0;
+    EntityAiState *ai_state;
     s32 look_at_target;
     EntityParams *params;
 
     flags = entity->flags;
-    unkE0 = &entity->unkE0;
+    ai_state = &entity->ai_state;
     if ((s32)((s64)(flags << 18) >> 32) & 1) {
-        blend_frames = entity->model->level_tables->unk88;
+        blend_frames = entity->model->level_tables->blend_left;
         if (blend_frames != 0) {
-            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? unkE0->pose_blend_weight : 1.0f / (f32)blend_frames);
+            ENTITY_FLAG_BITS(entity)->bit34 = Motion_BlendToPose(entity->model, (entity->busy_flags & ENTITY_BUSY_REACTION_LIGHT) ? ai_state->pose_blend_weight : 1.0f / (f32)blend_frames);
             flags = entity->flags;
         } else {
             ENTITY_FLAG_BITS(entity)->bit34 = Motion_Step(entity, (s32)(flags >> 11) & 7);
@@ -130,7 +130,7 @@ static void ExpeditionArcher_Animate(Entity *entity) {
     if ((s32)((s64)(flags << 22) >> 32) & 1) {
         ExpeditionArcher_PitchPartToPlayer(entity);
     } else {
-        unkE0->part_angle_x = 0.0f;
+        ai_state->part_angle_x = 0.0f;
     }
     flags_now = entity->flags;
     if ((s32)((s64)(flags_now << 18) >> 32) & 1) {
@@ -141,9 +141,9 @@ static void ExpeditionArcher_Animate(Entity *entity) {
         limits[3] = params->yaw_limit_deg * 0.017453292f;
         limits[2] = -params->yaw_limit_deg * 0.017453292f;
         if (look_at_target) {
-            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, look_at_target, limits, 12.0f);
+            EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, look_at_target, limits, 12.0f);
         } else {
-            EntityAi_LookAtPlayer(entity, unkE0->look_part_angles, 0, NULL, 8.0f);
+            EntityAi_LookAtPlayer(entity, ai_state->look_part_angles, 0, NULL, 8.0f);
         }
     }
 }
@@ -153,7 +153,7 @@ static void ExpeditionArcher_Animate(Entity *entity) {
 static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
     ModelInstance *model = ENTITY_MODEL(actor);
     ModelPart *part = &model->parts[ENTITY_CONTROLLER(actor)->action_frames];
-    EntityUnkE0 *sub = &actor->unkE0;
+    EntityAiState *sub = &actor->ai_state;
     float angle;
 
     if (part != NULL) {
@@ -172,8 +172,8 @@ static void ExpeditionArcher_PitchPartToPlayer(Entity *actor) {
    clears bit 40 of model part 5's unk68 during frames 9 to 46 of animations 23 and 24 and sets it
    otherwise. */
 static void ExpeditionArcher_Think(Entity *entity, s32 unknown) {
-    if (((u8)entity->animation_index == 0x17 || (u8)entity->animation_index == 0x18) && entity->model->level_tables->unk88 == 0 &&
-        entity->model->level_tables->unk82 >= 9 && entity->model->level_tables->unk82 < 0x2F) {
+    if (((u8)entity->animation_index == 0x17 || (u8)entity->animation_index == 0x18) && entity->model->level_tables->blend_left == 0 &&
+        entity->model->level_tables->frame >= 9 && entity->model->level_tables->frame < 0x2F) {
         entity->model->parts[5].unk68 &= ~(0x8000L << 25);
     } else {
         entity->model->parts[5].unk68 |= 0x8000L << 25;
@@ -208,7 +208,7 @@ static void ExpeditionArcher_Think(Entity *entity, s32 unknown) {
    ExpeditionArcher_RangedAttack1 and the other ranged records ExpeditionArcher_RangedAttack; closing in
    never runs. */
 static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     f32 direction[4];
     f32 angle;
     s32 side;
@@ -248,30 +248,30 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
         case 1:
             entity->target = &player_state;
             entity->action_timer = rand() % 60 + 0x78;
-            unkE0->move_choice = 0;
+            ai_state->move_choice = 0;
             break;
         case 2:
             entity->action_timer = rand() % 30 + 0x1E;
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         default:
-            unkE0->move_choice = -1;
+            ai_state->move_choice = -1;
             break;
         }
     }
-    if (unkE0->move_choice == 0) {
+    if (ai_state->move_choice == 0) {
         EntityAi_ClearTurnInPlace(entity);
         if (ENTITY_FLAG_BITS(entity)->bit31) {
             angle = EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-            if (unkE0->turn_in_place == 0) {
-                unkE0->turn_in_place = ABS(angle) > 0.5235988f;
-                if (unkE0->turn_in_place == 0) {
+            if (ai_state->turn_in_place == 0) {
+                ai_state->turn_in_place = ABS(angle) > 0.5235988f;
+                if (ai_state->turn_in_place == 0) {
                     goto done;
                 }
             }
             entity->move_command = EntityAi_TurnCommand(entity);
             if (entity->move_command == 0) {
-                unkE0->turn_in_place = 0;
+                ai_state->turn_in_place = 0;
             }
         } else {
             turn = EntityAi_TurnFromPush(entity, direction);
@@ -285,14 +285,14 @@ static void ExpeditionArcher_ThinkCombat(Entity *entity, s32 unknown) {
         }
     }
 done:
-    EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, unknown);
+    EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, but it sets flag bit 10 and aims its
    shots at a point 170 below the player's position, within 10 degrees (EntityShot_LaunchAimed).
    ExpeditionArcher_ThinkCombat starts it for records 0 and 2. */
 static void ExpeditionArcher_RangedAttack(Entity *entity) {
-    EntityUnkE0 *unkE0 = &entity->unkE0;
+    EntityAiState *ai_state = &entity->ai_state;
     s32 attack_index = (s32)(entity->flags >> 58) & 3;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, attack_index);
     f32 target[4];
@@ -315,25 +315,25 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         if (unk3D8->unk01 != 0) {
-            EntityAi_TurnToHeading(entity, &unkE0->turn_rate, entity->heading_to_player);
+            EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         }
         break;
     case 2:
         ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
-        if (unk3D8->unk01 >= entity->model->level_tables->unk82) {
-            EntityAi_TurnToHeading(entity, &entity->unkE0.turn_rate, entity->heading_to_player);
+        if (unk3D8->unk01 >= entity->model->level_tables->frame) {
+            EntityAi_TurnToHeading(entity, &entity->ai_state.turn_rate, entity->heading_to_player);
         } else {
-            unkE0->turn_rate = 0.0f;
+            ai_state->turn_rate = 0.0f;
         }
-        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, player_state.position);
         target[1] -= 170.0f;
-        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->unk82, target, 0.17453294f, 0.17453294f);
-        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.17453294f, 0.17453294f);
+        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
@@ -344,9 +344,9 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
@@ -359,7 +359,7 @@ static void ExpeditionArcher_RangedAttack(Entity *entity) {
    than 200 or 90 frames have gone by, then plays on and launches the shots at a point 170 below the
    player's position, within 10 degrees (EntityShot_LaunchAimed). */
 static void ExpeditionArcher_RangedAttack1(Entity *entity) {
-    EntityUnkE0Kind1740A8 *unkE0 = (EntityUnkE0Kind1740A8 *)&entity->unkE0;
+    EntityAiStateKind1740A8 *ai_state = (EntityAiStateKind1740A8 *)&entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = ENTITY_PARAMS_UNK3D8(entity->params, ENTITY_FLAG_BITS(entity)->bits58);
     f32 target[4];
     f32 angle;
@@ -378,53 +378,53 @@ static void ExpeditionArcher_RangedAttack1(Entity *entity) {
         entity->action_step++;
         break;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
     case 2:
         ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
-        EntityAi_TurnToHeading(entity, (f32 *)&unkE0->turn_rate, entity->heading_to_player);
-        if (entity->model->level_tables->unk82 > 0 && unk3D8->unk03 >= entity->model->level_tables->unk82) {
+        EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
+        if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;
         } else {
             ENTITY_FLAGS(entity) &= ~0x80000;
         }
-        if (entity->model->level_tables->unk82 >= 0x2A) {
+        if (entity->model->level_tables->frame >= 0x2A) {
             entity->action_timer = 0x5A;
             entity->action_step++;
         }
         break;
     case 3:
-        EntityAi_TurnToHeading(entity, (f32 *)&unkE0->turn_rate, entity->heading_to_player);
+        EntityAi_TurnToHeading(entity, (f32 *)&ai_state->turn_rate, entity->heading_to_player);
         ENTITY_FLAG_BITS(entity)->bit10 = TRUE;
         ENTITY_FLAG_BITS(entity)->bit14 = FALSE;
         EntityMath_AngleDifference(entity->model->rotation[1], entity->heading_to_player);
-        angle = EntityMath_AngleDifference(unkE0->point_y, entity->heading_to_player);
+        angle = EntityMath_AngleDifference(ai_state->point_y, entity->heading_to_player);
         if (entity->action_timer == 0 || entity->distance_to_player < 200.0f || ABS(angle) <= 0.010471975f) {
             entity->action_step++;
         }
         break;
     case 4:
         ENTITY_FLAG_BITS(entity)->bit14 = TRUE;
-        elapsed = (entity->model->level_tables->unk84 - entity->params->motion_speeds[entity->animation_index]) >> 8;
+        elapsed = (entity->model->level_tables->frame_fixed - entity->params->motion_speeds[entity->animation_index]) >> 8;
         Vector_Copy(target, player_state.position);
         target[1] -= 170.0f;
-        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->unk82, target, 0.17453294f, 0.17453294f);
+        EntityShot_LaunchAimed(entity, unk3D8, elapsed, entity->model->level_tables->frame, target, 0.17453294f, 0.17453294f);
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
             entity->busy_flags = 0;
             entity->move_command = 0;
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->unk02);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                unkE0->think(entity, 1);
+                ai_state->think(entity, 1);
             } else {
-                EntityAi_StartAction(entity, (void (*)(Entity *))unkE0->move, 1);
+                EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, 1);
             }
         }
         break;
     }
-    unkE0->point_y = entity->heading_to_player;
+    ai_state->point_y = entity->heading_to_player;
 }
 
 /* The death action (busy bit 0x40): as EntityAi_Death; when the fade starts and
@@ -454,7 +454,7 @@ static void ExpeditionArcher_Death(Entity *entity) {
         ENTITY_FLAG_BITS(entity)->bit9 = FALSE;
         entity->action_step++;
     case 1:
-        if (entity->model->level_tables->unk88 == 0) {
+        if (entity->model->level_tables->blend_left == 0) {
             entity->action_step++;
         }
         break;
