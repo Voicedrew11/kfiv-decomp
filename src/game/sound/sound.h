@@ -113,7 +113,7 @@ typedef struct {
     SoundEffectParams effects[4];   /* 0x440 stored reverb settings */
     SoundEffectParams effect;       /* 0x4A0 the one sent to the driver last */
     void *load_addr;                /* 0x4B8 first IOP heap load's address */
-    int unk4BC;                     /* 0x4BC */
+    int sample_area_start;          /* 0x4BC where the samples start in sound memory */
     u32 spu_used_end;               /* 0x4C0 end of the used sound memory */
     int dma_src;                    /* 0x4C4 */
     int iop_buffer;                 /* 0x4C8 the IOP buffer the streams are read into */
@@ -257,7 +257,7 @@ typedef struct {
 } SoundScriptState;
 
 /* sound_channels[128]: a sound channel (0x40 bytes); sound_id is -1 when it is free.
-   tagged_requests[128] are queued requests of the same shape; there unk38 is -1 when free. */
+   tagged_requests[128] are queued requests of the same shape; there voice is -1 when free. */
 typedef struct {
     Vector4Arg origin;              /* 0x00 */
     Vector4Arg target;              /* 0x10 */

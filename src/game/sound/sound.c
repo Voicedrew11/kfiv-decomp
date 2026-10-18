@@ -85,7 +85,7 @@ int SoundDriver_Init(void) {
     *(int **)&sound_state->dma_dest = sound_command_list;
     sound_command_list[0] = 0;
     // match: as above
-    *(char **)&sound_state->unk4BC = *(char **)&sound_state->spu_used_end = (char *)0x5010;
+    *(char **)&sound_state->sample_area_start = *(char **)&sound_state->spu_used_end = (char *)0x5010;
     *(u16 *)&sound_state->unk4D0[4] = 1; // match: the u16 at 0x4D4
     sound_state->active = 0;
     voice = sound_state->voices;
@@ -1264,7 +1264,7 @@ int SoundDriver_CompactMemory(void) {
             }
         }
     }
-    next_addr = sound_state->unk4BC;
+    next_addr = sound_state->sample_area_start;
     for (i = 0; i < 16; i++) {
         voice = sorted[i];
         if (voice->iop_heap == 0) {
