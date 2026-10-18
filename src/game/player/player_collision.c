@@ -459,7 +459,7 @@ void Player_CollideWithEntities(int climb) {
                 }
                 player_state.position.y = top;
                 stepped = TRUE;
-                player_state.stepped_on_entity = (s32)entity;
+                player_state.stepped_on_entity = entity;
             }
         }
         player_state.position.y -= 1.0f;

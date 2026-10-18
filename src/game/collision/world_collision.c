@@ -12,7 +12,7 @@ typedef void (*MapObjectCircleTest)(MapObject *, f32 *, f32, f32);
 #define NOTE_FOUND(object) \
     result = TRUE; \
     if (centre == (f32 *)&player_state) { \
-        ((PlayerState *)centre)->floor_map_object = (s32)(object); \
+        ((PlayerState *)centre)->floor_map_object = (object); \
     }
 // match: the last test is called for its value, which keeps it an ordinary call
 typedef int (*WallTest)(void *, void *, f32, void *, f32);
@@ -2384,7 +2384,7 @@ void Collision_PushOutOfMeshObj(MapObject *object, f32 *position, f32 height, f3
         position[0] = centre[0];
         position[2] = centre[2];
         if (touched && player_state.touched_map_object == 0) {
-            player_state.touched_map_object = (s32)object;
+            player_state.touched_map_object = object;
         }
     }
 }
