@@ -64,19 +64,19 @@ u32 Collision_GetFloorMaterial(int, u32, u32);
 void Vector_Scale(float *, float *, float);
 void Vector_Copy(void *, void *);
 float sqrtf(float);
-void Collision_HitRayBoxObj(void *, int, int, float);
-void Collision_HitRayDoubleDoorObj(void *, int, int, float);
-s32 Collision_HitRayQuadObj(AnimObject *, s32, s32, f32);
-void Collision_HitRayPitfallObj(void *, int, int, float);
+void Collision_HitRayBoxObj(void *, f32 *, f32 *, float);
+void Collision_HitRayDoubleDoorObj(void *, f32 *, f32 *, float);
+s32 Collision_HitRayQuadObj(AnimObject *, f32 *, f32 *, f32);
+void Collision_HitRayPitfallObj(void *, f32 *, f32 *, float);
 void Collision_HitRayMeshObj(MapObject *, f32 *, f32 *, f32);
 int Collision_HitSphereBoxObj(MapObject *, f32 *, f32);
 int Collision_HitSphereDoubleDoorObj(MapObject *, f32 *, f32);
 void Collision_HitSphereQuadObj(MapObject *, f32 *, f32);
 void Collision_HitSpherePitfallObj(MapObject *, f32 *, f32);
-void Collision_HitSphereMeshObj(CollisionOwner *, int, float);
+void Collision_HitSphereMeshObj(CollisionOwner *, f32 *, float);
 int Collision_HitCapsuleBoxObj(MapObject *, f32 *, f32, f32);
 void Collision_HitCapsuleDoubleDoorObj(MapObject *, f32 *, f32, f32);
-int Collision_HitCapsuleQuadObj(CollisionOwner *, int, float, float);
+int Collision_HitCapsuleQuadObj(CollisionOwner *, f32 *, float, float);
 void Collision_HitCapsulePitfallObj(void);
 void Collision_HitCapsuleMeshObj(MapObject *, f32 *, f32, f32);
 float sinf(float);
@@ -475,11 +475,11 @@ void Collision_CastRayAtMap(f32 scale, void *position_arg, void *direction) {
                         forward = TRUE;
                         do {
                             if (forward) {
-                                Collision_RayTriangle((int)strip_point[0].position, (int)strip_point[1].position,
-                                              (int)strip_point[2].position, (int)position, (int)direction, scale);
+                                Collision_RayTriangle(strip_point[0].position, strip_point[1].position,
+                                              strip_point[2].position, position, direction, scale);
                             } else {
-                                Collision_RayTriangle((int)strip_point[0].position, (int)strip_point[2].position,
-                                              (int)strip_point[1].position, (int)position, (int)direction, scale);
+                                Collision_RayTriangle(strip_point[0].position, strip_point[2].position,
+                                              strip_point[1].position, position, direction, scale);
                             }
                             forward ^= 1;
                             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->distance < best.result.distance) {
@@ -580,11 +580,11 @@ void Collision_CastRayAtMapLists(f32 scale, void *position_arg, void *direction,
                         forward = TRUE;
                         do {
                             if (forward) {
-                                Collision_RayTriangle((int)strip_point[0].position, (int)strip_point[1].position,
-                                              (int)strip_point[2].position, (int)position, (int)direction, scale);
+                                Collision_RayTriangle(strip_point[0].position, strip_point[1].position,
+                                              strip_point[2].position, position, direction, scale);
                             } else {
-                                Collision_RayTriangle((int)strip_point[0].position, (int)strip_point[2].position,
-                                              (int)strip_point[1].position, (int)position, (int)direction, scale);
+                                Collision_RayTriangle(strip_point[0].position, strip_point[2].position,
+                                              strip_point[1].position, position, direction, scale);
                             }
                             forward ^= 1;
                             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->distance < best.result.distance) {
@@ -686,11 +686,11 @@ void Collision_CastSegmentAtMap(f32 *position, f32 *target) {
                         forward = TRUE;
                         do {
                             if (forward) {
-                                Collision_RayTriangle((int)strip_point[0].position, (int)strip_point[1].position,
-                                              (int)strip_point[2].position, (int)position, (int)direction, length);
+                                Collision_RayTriangle(strip_point[0].position, strip_point[1].position,
+                                              strip_point[2].position, position, direction, length);
                             } else {
-                                Collision_RayTriangle((int)strip_point[0].position, (int)strip_point[2].position,
-                                              (int)strip_point[1].position, (int)position, (int)direction, length);
+                                Collision_RayTriangle(strip_point[0].position, strip_point[2].position,
+                                              strip_point[1].position, position, direction, length);
                             }
                             forward ^= 1;
                             if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->distance < best.distance) {
@@ -721,16 +721,16 @@ void Collision_HitRayObj(MapObject *object, f32 *origin, f32 *direction, f32 rea
     COLLISION_RESULT->hit = 0;
     switch (object->definition->kind) {
     case 1:
-        Collision_HitRayBoxObj(object, (int)origin, (int)direction, reach);
+        Collision_HitRayBoxObj(object, origin, direction, reach);
         break;
     case 2:
-        Collision_HitRayDoubleDoorObj(object, (int)origin, (int)direction, reach);
+        Collision_HitRayDoubleDoorObj(object, origin, direction, reach);
         break;
     case 17:
-        Collision_HitRayQuadObj((AnimObject *)object, (s32)origin, (s32)direction, reach);
+        Collision_HitRayQuadObj((AnimObject *)object, origin, direction, reach);
         break;
     case 18:
-        Collision_HitRayPitfallObj(object, (int)origin, (int)direction, reach);
+        Collision_HitRayPitfallObj(object, origin, direction, reach);
         break;
     default:
         if (object->model->strips != NULL) {
@@ -777,7 +777,7 @@ void Collision_HitSphereObj(MapObject *object, f32 *point, f32 reach) {
         break;
     default:
         if (model->strips != NULL) {
-            Collision_HitSphereMeshObj((CollisionOwner *)object, (int)point, reach);
+            Collision_HitSphereMeshObj((CollisionOwner *)object, point, reach);
         }
         break;
     }
@@ -809,7 +809,7 @@ void Collision_HitCapsuleObj(MapObject *object, f32 *point, f32 reach, f32 heigh
         Collision_HitCapsuleDoubleDoorObj(object, point, reach, height);
         break;
     case 17:
-        Collision_HitCapsuleQuadObj((CollisionOwner *)object, (int)point, reach, height);
+        Collision_HitCapsuleQuadObj((CollisionOwner *)object, point, reach, height);
         break;
     case 18:
         // match: the pitfall test is an empty function, but it is passed everything the others are
@@ -1133,7 +1133,7 @@ void Collision_HitRayMeshObj(MapObject *object, f32 *origin, f32 *direction, f32
 /* Tests a ray against the four walls of a box-like map object (kind 1), two triangles a wall.
    Model points 0 to 3 are the bottom corners; the top ones lie above them at the height of point
    0x1F (y grows downward). Stops at the first triangle hit. */
-void Collision_HitRayBoxObj(void *target, int from, int direction, float distance) {
+void Collision_HitRayBoxObj(void *target, f32 *from, f32 *direction, float distance) {
     MapObject *object = target;
     Vector4 bottom[4];
     f32 *corner0;
@@ -1154,48 +1154,48 @@ void Collision_HitRayBoxObj(void *target, int from, int direction, float distanc
     corner3 = (f32 *)object->model->get_point(object->model, 3);
     Vector_Copy(&bottom[0], corner0);
     bottom[0].y -= height;
-    Collision_RayTriangle((int)corner0, (int)corner1, (int)&bottom[0], from, direction, distance);
+    Collision_RayTriangle(corner0, corner1, &bottom[0].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     Vector_Copy(&bottom[1], corner1);
     bottom[1].y -= height;
-    Collision_RayTriangle((int)corner1, (int)&bottom[0], (int)&bottom[1], from, direction, distance);
+    Collision_RayTriangle(corner1, &bottom[0].x, &bottom[1].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     Vector_Copy(&bottom[2], corner2);
     bottom[2].y -= height;
-    Collision_RayTriangle((int)corner2, (int)corner3, (int)&bottom[2], from, direction, distance);
+    Collision_RayTriangle(corner2, corner3, &bottom[2].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     Vector_Copy(&bottom[3], corner3);
     bottom[3].y -= height;
-    Collision_RayTriangle((int)corner3, (int)&bottom[2], (int)&bottom[3], from, direction, distance);
+    Collision_RayTriangle(corner3, &bottom[2].x, &bottom[3].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner1, (int)corner2, (int)&bottom[1], from, direction, distance);
+    Collision_RayTriangle(corner1, corner2, &bottom[1].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner2, (int)&bottom[1], (int)&bottom[2], from, direction, distance);
+    Collision_RayTriangle(corner2, &bottom[1].x, &bottom[2].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner3, (int)corner0, (int)&bottom[3], from, direction, distance);
+    Collision_RayTriangle(corner3, corner0, &bottom[3].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner0, (int)&bottom[3], (int)&bottom[0], from, direction, distance);
+    Collision_RayTriangle(corner0, &bottom[3].x, &bottom[0].x, from, direction, distance);
 }
 
 /* Tests a ray against the walls of a two-box map object (kind 2), two triangles a wall. Model
    points 0 to 3 and 4 to 7 are the bottom corners of its two halves; the top ones lie above
    them at the height of point 0x1F (y grows downward). While the object is on frame 1 of animation 4 the
    halves are tested as one box (corners 0, 1, 6, 7). Stops at the first triangle hit. */
-void Collision_HitRayDoubleDoorObj(void *target, int from, int direction, float distance) {
+void Collision_HitRayDoubleDoorObj(void *target, f32 *from, f32 *direction, float distance) {
     MapObject *object = target;
     Vector4 bottom[4];
     f32 *corner0;
@@ -1217,41 +1217,41 @@ void Collision_HitRayDoubleDoorObj(void *target, int from, int direction, float 
         corner3 = (f32 *)object->model->get_point(object->model, 7);
         Vector_Copy(&bottom[0], corner0);
         bottom[0].y -= height;
-        Collision_RayTriangle((int)corner0, (int)corner1, (int)&bottom[0], from, direction, distance);
+        Collision_RayTriangle(corner0, corner1, &bottom[0].x, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
         Vector_Copy(&bottom[1], corner1);
         bottom[1].y -= height;
-        Collision_RayTriangle((int)corner1, (int)&bottom[0], (int)&bottom[1], from, direction, distance);
+        Collision_RayTriangle(corner1, &bottom[0].x, &bottom[1].x, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
         Vector_Copy(&bottom[2], corner2);
         bottom[2].y -= height;
-        Collision_RayTriangle((int)corner2, (int)corner3, (int)&bottom[2], from, direction, distance);
+        Collision_RayTriangle(corner2, corner3, &bottom[2].x, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
         Vector_Copy(&bottom[3], corner3);
         bottom[3].y -= height;
-        Collision_RayTriangle((int)corner3, (int)&bottom[2], (int)&bottom[3], from, direction, distance);
+        Collision_RayTriangle(corner3, &bottom[2].x, &bottom[3].x, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
-        Collision_RayTriangle((int)corner1, (int)corner2, (int)&bottom[1], from, direction, distance);
+        Collision_RayTriangle(corner1, corner2, &bottom[1].x, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
-        Collision_RayTriangle((int)corner2, (int)&bottom[1], (int)&bottom[2], from, direction, distance);
+        Collision_RayTriangle(corner2, &bottom[1].x, &bottom[2].x, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
-        Collision_RayTriangle((int)corner3, (int)corner0, (int)&bottom[3], from, direction, distance);
+        Collision_RayTriangle(corner3, corner0, &bottom[3].x, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
-        Collision_RayTriangle((int)corner0, (int)&bottom[3], (int)&bottom[0], from, direction, distance);
+        Collision_RayTriangle(corner0, &bottom[3].x, &bottom[0].x, from, direction, distance);
         return;
     }
     corner0 = (f32 *)object->model->get_point(object->model, 0);
@@ -1262,41 +1262,41 @@ void Collision_HitRayDoubleDoorObj(void *target, int from, int direction, float 
     corner3 = (f32 *)object->model->get_point(object->model, 3);
     Vector_Copy(&bottom[0], corner0);
     bottom[0].y -= height;
-    Collision_RayTriangle((int)corner0, (int)corner1, (int)&bottom[0], from, direction, distance);
+    Collision_RayTriangle(corner0, corner1, &bottom[0].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     Vector_Copy(&bottom[1], corner1);
     bottom[1].y -= height;
-    Collision_RayTriangle((int)corner1, (int)&bottom[0], (int)&bottom[1], from, direction, distance);
+    Collision_RayTriangle(corner1, &bottom[0].x, &bottom[1].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     Vector_Copy(&bottom[2], corner2);
     bottom[2].y -= height;
-    Collision_RayTriangle((int)corner2, (int)corner3, (int)&bottom[2], from, direction, distance);
+    Collision_RayTriangle(corner2, corner3, &bottom[2].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     Vector_Copy(&bottom[3], corner3);
     bottom[3].y -= height;
-    Collision_RayTriangle((int)corner3, (int)&bottom[2], (int)&bottom[3], from, direction, distance);
+    Collision_RayTriangle(corner3, &bottom[2].x, &bottom[3].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner1, (int)corner2, (int)&bottom[1], from, direction, distance);
+    Collision_RayTriangle(corner1, corner2, &bottom[1].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner2, (int)&bottom[1], (int)&bottom[2], from, direction, distance);
+    Collision_RayTriangle(corner2, &bottom[1].x, &bottom[2].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner3, (int)corner0, (int)&bottom[3], from, direction, distance);
+    Collision_RayTriangle(corner3, corner0, &bottom[3].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner0, (int)&bottom[3], (int)&bottom[0], from, direction, distance);
+    Collision_RayTriangle(corner0, &bottom[3].x, &bottom[0].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
@@ -1306,53 +1306,53 @@ void Collision_HitRayDoubleDoorObj(void *target, int from, int direction, float 
     corner3 = (f32 *)object->model->get_point(object->model, 7);
     Vector_Copy(&bottom[0], corner0);
     bottom[0].y -= height;
-    Collision_RayTriangle((int)corner0, (int)corner1, (int)&bottom[0], from, direction, distance);
+    Collision_RayTriangle(corner0, corner1, &bottom[0].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     Vector_Copy(&bottom[1], corner1);
     bottom[1].y -= height;
-    Collision_RayTriangle((int)corner1, (int)&bottom[0], (int)&bottom[1], from, direction, distance);
+    Collision_RayTriangle(corner1, &bottom[0].x, &bottom[1].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     Vector_Copy(&bottom[2], corner2);
     bottom[2].y -= height;
-    Collision_RayTriangle((int)corner2, (int)corner3, (int)&bottom[2], from, direction, distance);
+    Collision_RayTriangle(corner2, corner3, &bottom[2].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
     Vector_Copy(&bottom[3], corner3);
     bottom[3].y -= height;
-    Collision_RayTriangle((int)corner3, (int)&bottom[2], (int)&bottom[3], from, direction, distance);
+    Collision_RayTriangle(corner3, &bottom[2].x, &bottom[3].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner1, (int)corner2, (int)&bottom[1], from, direction, distance);
+    Collision_RayTriangle(corner1, corner2, &bottom[1].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner2, (int)&bottom[1], (int)&bottom[2], from, direction, distance);
+    Collision_RayTriangle(corner2, &bottom[1].x, &bottom[2].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner3, (int)corner0, (int)&bottom[3], from, direction, distance);
+    Collision_RayTriangle(corner3, corner0, &bottom[3].x, from, direction, distance);
     if (COLLISION_RESULT->hit != 0) {
         return;
     }
-    Collision_RayTriangle((int)corner0, (int)&bottom[3], (int)&bottom[0], from, direction, distance);
+    Collision_RayTriangle(corner0, &bottom[3].x, &bottom[0].x, from, direction, distance);
 }
 
 // match: retail returns what the second test leaves in $v0; the definition returns nothing
-typedef s32 (*RayTriangleValue)(s32, s32, s32, s32, s32, f32);
+typedef s32 (*RayTriangleValue)(f32 *, f32 *, f32 *, f32 *, f32 *, f32);
 
 /* Tests a ray against the quad of the object's model points 0 to 3 as two triangles, if the object has flag
    0x10000; the second triangle only when the first is missed. */
-s32 Collision_HitRayQuadObj(AnimObject *object, s32 param1, s32 param2, f32 param3) {
-    s32 point0;
-    s32 point1;
-    s32 point2;
-    s32 point3;
+s32 Collision_HitRayQuadObj(AnimObject *object, f32 *param1, f32 *param2, f32 param3) {
+    f32 *point0;
+    f32 *point1;
+    f32 *point2;
+    f32 *point3;
     s32 result;
 
     result = ANIM_OBJECT_FLAGS(object) & 0x10000;
@@ -1374,7 +1374,7 @@ s32 Collision_HitRayQuadObj(AnimObject *object, s32 param1, s32 param2, f32 para
    collision strips are tested, as Collision_HitRayMeshObj does. With it set, model points 0 to 0x1F are
    taken four at a time as quads, up to the first quad with a corner at the model's own position
    (an unused point). */
-void Collision_HitRayPitfallObj(void *target, int from, int direction, float distance) {
+void Collision_HitRayPitfallObj(void *target, f32 *from, f32 *direction, float distance) {
     MapObject *object = target;
     ModelStripList *list;
     Strip *strip;
@@ -1400,7 +1400,7 @@ void Collision_HitRayPitfallObj(void *target, int from, int direction, float dis
                 vertex = strip->vertices;
                 triangles_left = strip->vertex_count - 2;
                 do {
-                    Collision_RayTriangle((int)vertex[0].unk00, (int)vertex[1].unk00, (int)vertex[2].unk00, from, direction, distance);
+                    Collision_RayTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, from, direction, distance);
                     if (COLLISION_RESULT->hit != 0) {
                         return;
                     }
@@ -1428,11 +1428,11 @@ void Collision_HitRayPitfallObj(void *target, int from, int direction, float dis
         if (corner3[0] == object->model->position.x && corner3[1] == object->model->position.y && corner3[2] == object->model->position.z) {
             return;
         }
-        Collision_RayTriangle((int)corner0, (int)corner1, (int)corner2, from, direction, distance);
+        Collision_RayTriangle(corner0, corner1, corner2, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
-        Collision_RayTriangle((int)corner0, (int)corner2, (int)corner3, from, direction, distance);
+        Collision_RayTriangle(corner0, corner2, corner3, from, direction, distance);
         if (COLLISION_RESULT->hit != 0) {
             return;
         }
@@ -1442,7 +1442,7 @@ void Collision_HitRayPitfallObj(void *target, int from, int direction, float dis
 /* Tests a point (with a reach) against every triangle of the strips of a map object's collision mesh, if the
    object is in use and the mesh has 4 points or more. At the first hit it stops and notes the floor material
    in COLLISION_RESULT->floor_material. */
-void Collision_HitSphereMeshObj(CollisionOwner *owner, int mode, float factor) {
+void Collision_HitSphereMeshObj(CollisionOwner *owner, f32 *point, float factor) {
     ModelStripList *list;
     Strip *strip;
     StripVertex *vertex;
@@ -1458,7 +1458,7 @@ void Collision_HitSphereMeshObj(CollisionOwner *owner, int mode, float factor) {
                 vertex = strip->vertices;
                 j = strip->vertex_count - 2;
                 do {
-                    Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, mode, factor);
+                    Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, point, factor);
                     if (COLLISION_RESULT->hit != 0) {
                         COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(vertex->x, vertex->y, vertex->z);
                         return;
@@ -1711,7 +1711,7 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
                 vertex = strip->vertices;
                 triangles_left = strip->vertex_count - 2;
                 do {
-                    Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, (int)point, reach);
+                    Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, point, reach);
                     if (COLLISION_RESULT->hit != 0) {
                         COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(vertex->x, vertex->y, vertex->z);
                         return;
@@ -1740,12 +1740,12 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
         if (corner3[0] == object->model->position.x && corner3[1] == object->model->position.y && corner3[2] == object->model->position.z) {
             return;
         }
-        Collision_PointTriangle(corner0, corner1, corner2, (int)point, reach);
+        Collision_PointTriangle(corner0, corner1, corner2, point, reach);
         if (COLLISION_RESULT->hit != 0) {
             puts(hit_sphere_pitfall_message);
             return;
         }
-        Collision_PointTriangle(corner0, corner2, corner3, (int)point, reach);
+        Collision_PointTriangle(corner0, corner2, corner3, point, reach);
         if (COLLISION_RESULT->hit != 0) {
             puts(hit_sphere_pitfall_message);
             return;
@@ -1960,22 +1960,23 @@ void Collision_HitCapsuleDoubleDoorObj(MapObject *object, f32 *centre, f32 radiu
 }
 
 // match: retail returns what the second test leaves in $v0; the definition returns nothing
-typedef int (*CapsuleTriangleValue)(int, int, int, int, float, float);
+typedef int (*CapsuleTriangleValue)(f32 *, f32 *, f32 *, f32 *, float, float);
 
 /* Tests an upright capsule against the quad of the owner's model points 0 to 3 as two triangles, if the owner
    has flag 0x10000; the second triangle only when the first is missed. */
-int Collision_HitCapsuleQuadObj(CollisionOwner *owner, int context, float first_value, float second_value) {
-    int point_a, point_b, point_c, point_d, result;
+int Collision_HitCapsuleQuadObj(CollisionOwner *owner, f32 *point, float first_value, float second_value) {
+    f32 *point_a, *point_b, *point_c, *point_d;
+    int result;
 
     if (owner->flags & 0x10000) {
         point_a = owner->model->get_point(owner->model, 0);
         point_b = owner->model->get_point(owner->model, 1);
         point_c = owner->model->get_point(owner->model, 2);
         point_d = owner->model->get_point(owner->model, 3);
-        ((CapsuleTriangleValue)Collision_CapsuleTriangle)(point_a, point_b, point_c, context, second_value, first_value);
+        ((CapsuleTriangleValue)Collision_CapsuleTriangle)(point_a, point_b, point_c, point, second_value, first_value);
         result = COLLISION_RESULT->hit;
         if (result == 0) {
-            return ((CapsuleTriangleValue)Collision_CapsuleTriangle)(point_a, point_c, point_d, context, second_value, first_value);
+            return ((CapsuleTriangleValue)Collision_CapsuleTriangle)(point_a, point_c, point_d, point, second_value, first_value);
         }
         return result;
     }
@@ -2027,8 +2028,8 @@ void Collision_HitFanMeshObj(MapObject *object, Vector4 *origin, f32 radius, f32
                     TEST_SIDES((f32 *)point->position);
                     if (second_sides != 7 && first_sides != 7) {
                         // match: the unsigned indices give retail's two-step address
-                        Collision_CapsuleTriangle((int)point[-2U].position, (int)point[-1U].position, (int)point->position,
-                                      (int)origin, push, radius);
+                        Collision_CapsuleTriangle(point[-2U].position, point[-1U].position, point->position,
+                                      &origin->x, push, radius);
                         if (COLLISION_RESULT->hit != 0) {
                             COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(point->material_first, point->material_second, point->material_third);
                             return;
@@ -2299,7 +2300,7 @@ void Collision_HitFanQuadObj(MapObject *object, Vector4 *origin, f32 radius, f32
             // match: the notes are not moved up a bit here (Collision_HitFanMeshObj does), so on the second triangle bit 0 is point 0 or point 3
             TEST_SIDES(points[i]);
             if (second_sides != 7 && first_sides != 7) {
-                Collision_CapsuleTriangle((int)points[i - 2], (int)points[i - 1], (int)points[i], (int)origin, push, radius);
+                Collision_CapsuleTriangle(points[i - 2], points[i - 1], points[i], &origin->x, push, radius);
                 if (COLLISION_RESULT->hit != 0) {
                     return;
                 }
@@ -2345,8 +2346,8 @@ void Collision_PushOutOfMeshObj(MapObject *object, f32 *position, f32 height, f3
                 point = strip->points;
                 j = strip->point_count - 2;
                 do {
-                    Collision_CapsuleTriangle((int)point[0].position, (int)point[1].position, (int)point[2].position,
-                                  (int)centre, radius, height);
+                    Collision_CapsuleTriangle(point[0].position, point[1].position, point[2].position,
+                                  centre, radius, height);
                     if (COLLISION_RESULT->hit != 0) {
                         touched = TRUE;
                     }
@@ -2361,8 +2362,8 @@ void Collision_PushOutOfMeshObj(MapObject *object, f32 *position, f32 height, f3
             point = strip->points;
             j = strip->point_count - 2;
             do {
-                Collision_CapsuleTriangle((int)point[0].position, (int)point[1].position, (int)point[2].position,
-                              (int)centre, radius, height);
+                Collision_CapsuleTriangle(point[0].position, point[1].position, point[2].position,
+                              centre, radius, height);
                 if (COLLISION_RESULT->hit != 0) {
                     offset[0] = centre[0] - COLLISION_RESULT->point[0];
                     offset[1] = 0.0f;

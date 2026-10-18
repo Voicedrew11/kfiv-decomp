@@ -537,7 +537,7 @@ int Attack_TestMapModel(ModelInstance *model, void *request, f32 reach) {
             strip_point = strip->points;
             points_left = strip->point_count - 2;
             do {
-                Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
+                Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, request, reach);
                 if (COLLISION_RESULT->hit != 0) {
                     COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                     return lists.lists[list];
@@ -630,7 +630,7 @@ int Attack_TestMapModelFloors(ModelInstance *model, void *request, f32 reach) {
             strip_point = strip->points;
             points_left = strip->point_count - 2;
             do {
-                Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
+                Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, request, reach);
                 if (COLLISION_RESULT->hit != 0) {
                     COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                     return 1;
@@ -724,7 +724,7 @@ int Attack_TestMapModelWalls(ModelInstance *model, void *request, f32 reach) {
             strip_point = strip->points;
             points_left = strip->point_count - 2;
             do {
-                Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
+                Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, request, reach);
                 if (COLLISION_RESULT->hit != 0) {
                     COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                     return 0;
