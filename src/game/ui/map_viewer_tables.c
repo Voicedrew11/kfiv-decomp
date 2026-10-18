@@ -86,13 +86,13 @@ ScreenQuad kings_map_corner_rect = { .tag = 0x4007FC05E1312BC0, .unk08 = 0x00000
   .second_u = 0x1000, .second_v = 0x800 }; /* 0x38D8F0 the King's Map's bottom-left panel (textures 2 and 3) */
 
 /* 0x38D930 the light block the viewer's models are lit by: one grey light */
-MapSlotUnk10Lights viewer_default_lights = {
+MapLightBlockLights viewer_default_lights = {
     { { 0 } },
     { { 0 }, { 0 }, { 0 }, { 0.5f, 0.5f, 0.5f, 0.0f } },
 };
 
 /* 0x38D9B0 the 0x40 bytes retail keeps after that block, which nothing reads */
-static MapSlotUnk10Half viewer_light_unused = { 0 };
+static MapLightBlockHalf viewer_light_unused = { 0 };
 
 Vector4 map_object_glow_colors[4] = { /* 0x38D9F0 the colours a map object's lights are blended towards */
     { 0 }, { 0 }, { 0 }, { 0.5f, 1.0f, 0.5f, 1.0f },

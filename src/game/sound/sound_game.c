@@ -1437,7 +1437,7 @@ s32 Sound_ReadMapBankFileStep(LoadRequest *request) {
             buffer = sound_heap_next;
             request->target->buffer = (void *)buffer;
             sound_heap_next = (((buffer + 0x2003F) >> 6) << 6);
-            sprintf(map_bank_file_path, request->name, map_slot0_header[0]->unk70);
+            sprintf(map_bank_file_path, request->name, map_slot0_header[0]->file_index);
             map_bank_file_handle = File_Open(map_bank_file_path, TRUE, TRUE);
             File_Read(map_bank_file_handle, request->target->buffer, -1);
             map_bank_file_read_step += 1;

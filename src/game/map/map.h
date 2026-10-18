@@ -34,9 +34,9 @@ typedef struct {
 /* one of the 32 0x20-byte blocks MapSlot.fog_blocks points at; a model's unk14C points at one */
 typedef struct {
     u64 unk00[4];                   /* 0x00 */
-} MapSlotUnk0C;
+} MapFogBlock;
 
-/* a MapSlotUnk0C block as the per-map set-up functions (MapSetup_RunForMap) fill it */
+/* a MapFogBlock block as the per-map set-up functions (MapSetup_RunForMap) fill it */
 typedef struct {
     f32 unk00;                      /* 0x00 */
     f32 unk04;                      /* 0x04 */
@@ -44,32 +44,32 @@ typedef struct {
     f32 unk0C;                      /* 0x0C */
     s64 unk10;                      /* 0x10 */
     char pad18[0x08];
-} MapSlotUnk0CValues;
+} MapFogBlockValues;
 
 /* one of the 32 0x80-byte blocks MapSlot.light_blocks points at, as whole doublewords (see MapSlotUnk10
    in entity/entity.h); a model's unk148 points at one */
 typedef struct {
     u64 unk00[16];                  /* 0x00 */
-} MapSlotUnk10Words;
+} MapLightBlock;
 
 /* the first half of such a block: what the held item's models are lit by (held_item_light_blocks, Player_UpdateArmModels) */
 typedef struct {
     u64 unk00[8];                   /* 0x00 */
-} MapSlotUnk10Half;
+} MapLightBlockHalf;
 
-/* a MapSlotUnk10Words block as the eight vectors it holds; MapObject_DrawAll blends the last four
+/* a MapLightBlock block as the eight vectors it holds; MapObject_DrawAll blends the last four
    towards map_object_glow_colors */
 typedef struct {
-    Vector4 unk00[4];               /* 0x00 */
-    Vector4 unk40[4];               /* 0x40 */
-} MapSlotUnk10Vectors;
+    Vector4 directions[4];          /* 0x00 the light directions (MapLightBlockLights) */
+    Vector4 colors[4];              /* 0x40 the light colours (MapLightBlockLights) */
+} MapLightBlockVectors;
 
-/* a MapSlotUnk10Words block as three lights: their directions are the columns of a matrix, their
+/* a MapLightBlock block as three lights: their directions are the columns of a matrix, their
    colours (0 to 1) the vectors after it (ScriptCmd_SetMapLight) */
 typedef struct {
     f32 directions[4][4];           /* 0x00 [axis][light] */
     Vector4 colors[4];              /* 0x40 */
-} MapSlotUnk10Lights;
+} MapLightBlockLights;
 
 /* map_draw_state as GameLoop_SetCameraMatrices reads it: the first word of MapDrawState.draw_flags as a float */
 typedef struct {
@@ -94,12 +94,12 @@ typedef struct {
     u8 unk9B;                       /* 0x9B */
     u8 unk9C;                       /* 0x9C */
     char pad9D[0x03];
-    MapSlotUnk0C unkA0;             /* 0xA0 the current map's first block */
-    MapSlotUnk10Words unkC0;        /* 0xC0 the current map's first block */
+    MapFogBlock current_fog_block; /* 0xA0 the current map's first fog block */
+    MapLightBlock current_light_block; /* 0xC0 the current map's first light block */
     char pad140[0x140];
-    MapFogColor unk280;             /* 0x280 the current map's */
-    MapSlotUnk0C fog_blocks[2][0x20]; /* 0x290 each map slot's blocks */
-    MapSlotUnk10Words light_blocks[2][0x20]; /* 0xA90 each map slot's blocks */
+    MapFogColor current_fog_color;  /* 0x280 the current map's fog colour */
+    MapFogBlock fog_blocks[2][0x20]; /* 0x290 each map slot's blocks */
+    MapLightBlock light_blocks[2][0x20]; /* 0xA90 each map slot's blocks */
     f32 screen_tint_amount;         /* 0x2A90 0 to 0.25: rises while PlayerState.light_spell_timer or unk10C is set (Player_UpdateScreenTints) */
     f32 screen_tint_amount_copy;    /* 0x2A94 copy of unk2A90 */
     f32 screen_tint_amount_copy2;   /* 0x2A98 copy of unk2A90 */
@@ -141,8 +141,8 @@ typedef struct {
 /* a map record (MapRecord in entity/entity.h) as the code that draws the maps reads it */
 typedef struct MapDrawRecord {
     char pad00[0x34];
-    u8 fog_block_index;             /* 0x34 which MapSlotUnk0C block it is drawn with */
-    u8 light_block_index;           /* 0x35 which MapSlotUnk10Words block it is drawn with */
+    u8 fog_block_index;             /* 0x34 which MapFogBlock block it is drawn with */
+    u8 light_block_index;           /* 0x35 which MapLightBlock block it is drawn with */
     char pad36[0x02];
     u8 linked_point_owner;          /* 0x38 low byte of MapRecord.linked_point_owner: compared with LinkedPoint.unk32 (LinkedPoint_FindHitsForMapDraw) */
     char pad39[0x03];
@@ -157,8 +157,8 @@ typedef struct MapDrawRecord {
 
 /* map_scroll_copy_pairs and map_scroll_draw_pairs in map/map_scroll.c: 16 pairs per map slot */
 typedef struct {
-    s16 unk00;                      /* 0x00 */
-    s16 unk02;                      /* 0x02 */
+    s16 scroll_x;                   /* 0x00 scroll offset in x, wrapped at the texture width */
+    s16 scroll_y;                   /* 0x02 scroll offset in y, wrapped at the texture height */
 } MapSlotPair;
 
 /* one of the 16 0xC-byte entries MapSlot.scroll_copy_textures points at: a texture that MapScroll_UpdateCopy scrolls in
@@ -226,8 +226,8 @@ typedef struct {
     char pad3E[0x06];
     u16 item_count;                 /* 0x44 how many fixed items (MapItemDef) the map has */
     char pad46[0x2A];
-    s8 unk70;                       /* 0x70 passed to sprintf as the file-name index */
-    u8 unk71;                       /* 0x71 which block of MapDrawState.light_blocks the items lying in the map are drawn with */
+    s8 file_index;                  /* 0x70 passed to sprintf as the file-name index */
+    u8 light_block;                 /* 0x71 which block of MapDrawState.light_blocks the items lying in the map are drawn with */
 } MapHeader;
 
 /* one 0x60-byte entry of map_slots, indexed by the current map/slot current_map_slot */
@@ -238,7 +238,7 @@ typedef struct MapSlot {
     char pad03[0x01];
     s32 rounded_file_size;          /* 0x04 the map file's size, rounded up to 0x40000 */
     MapHeader *header;              /* 0x08 */
-    MapSlotUnk0C *fog_blocks;       /* 0x0C 32 blocks */
+    MapFogBlock *fog_blocks;       /* 0x0C 32 blocks */
     void *light_blocks;             /* 0x10 the map's 32 light blocks (MapSlotUnk10), picked per record */
     char *records;                  /* 0x14 0x80-byte records, by PlayerState.map_index */
     MapFlagBlock *flag_blocks;      /* 0x18 */
@@ -251,7 +251,7 @@ typedef struct MapSlot {
     struct SoundSpecSource *sound_bank; /* 0x34 the file at MapSlotUnk08.record_model_spare_bytes: the map's sound bank */
     char *scroll_copy_textures;     /* 0x38 the file at 0x1480 */
     char *scroll_draw_textures;     /* 0x3C the file at 0x1540 */
-    MapSlotPackets unk40;           /* 0x40 */
+    MapSlotPackets packets;         /* 0x40 the map slot's packets */
     s32 script;                     /* 0x5C passed to Script_Init when the map becomes current */
 } MapSlot;
 
@@ -282,7 +282,7 @@ typedef struct {
     u16 item_count;                 /* 0x44 how many fixed items (MapItemDef) the map has */
     char pad46[0x06];
     s32 script_offset;              /* 0x4C offset in the file of what MapSlot.script points at */
-    MapFogColor fog_color;          /* 0x50 becomes MapDrawState.unk280 when the map becomes current */
+    MapFogColor fog_color;          /* 0x50 becomes MapDrawState.current_fog_color when the map becomes current */
     f32 player_start_x;             /* 0x60 where the player starts: x */
     f32 player_start_y;             /* 0x64 y */
     f32 player_start_z;             /* 0x68 z */
@@ -362,33 +362,33 @@ typedef struct {
 
 /* MapTrigger.shot as MapObject_StartSinkingPlatform (start) and MapObject_UpdateSinkingPlatform (update) use it */
 typedef struct {
-    f32 unk00;                      /* 0x00 a speed, added to the model's y */
-    s32 unk04;                      /* 0x04 frames to wait */
-    s32 unk08;                      /* 0x08 1 while object_under_player is this trigger */
-    s32 unk0C;                      /* 0x0C unk08 of the frame before */
+    f32 speed;                      /* 0x00 a speed, added to the model's y */
+    s32 frames_to_wait;             /* 0x04 frames to wait */
+    s32 player_on;                  /* 0x08 1 while object_under_player is this trigger */
+    s32 player_was_on;              /* 0x0C player_on of the frame before */
 } MapTriggerShotKind121660;
 
-/* what MapTrigger.unk08 points at, as MapObject_StopAmbientSound reads it */
+/* what MapTrigger.source points at, as MapObject_StopAmbientSound reads it */
 typedef struct {
     char pad00[0x44];
-    u16 unk44;                      /* 0x44 */
+    u16 sound_tag;                  /* 0x44 the sound tag, Sound_StopTagged stops it */
 } TriggerSource;
 
 /* a map event trigger (MapObject_PlaceStoneOnMarker) */
 typedef struct {
     ModelInstance *model;           /* 0x00 */
     u8 *unk04;                      /* 0x04 */
-    char *unk08;                    /* 0x08 TriggerSource; byte 0x3A is passed to Game_AddTriggerItem */
+    char *source;                   /* 0x08 TriggerSource; byte 0x3A is passed to Game_AddTriggerItem */
     char pad0C[0x04];
-    u8 unk10;                       /* 0x10 bit 0 picks the MapSlot */
+    u8 flags;                       /* 0x10 bit 0 picks the MapSlot */
     u8 type;                        /* 0x11 */
     char pad12[0x2E];
     MapTriggerShot shot;            /* 0x40 */
 } MapTrigger;
 
-#define MAP_TRIGGER_SOURCE(trigger) ((TriggerSource *)(trigger)->unk08)
+#define MAP_TRIGGER_SOURCE(trigger) ((TriggerSource *)(trigger)->source)
 
-/* the word at MapTrigger+0x10 (unk10, type and flag bits) as the game reads it whole */
+/* the word at MapTrigger+0x10 (flags, type and flag bits) as the game reads it whole */
 typedef union {
     u32 word;                       /* MAP_TRIGGER_FLAG_20000 in bit 17 */
     struct {
@@ -400,7 +400,7 @@ typedef union {
     } bits;
 } MapTriggerFlags;
 
-#define MAP_TRIGGER_FLAGS(trigger) ((MapTriggerFlags *)&(trigger)->unk10)
+#define MAP_TRIGGER_FLAGS(trigger) ((MapTriggerFlags *)&(trigger)->flags)
 #define MAP_TRIGGER_FLAG_20000  0x20000
 
 /* MapTrigger.shot as the kind started by MapObject_StartPulse uses it (MapObject_UpdatePulse steps it) */
@@ -411,8 +411,8 @@ typedef struct {
 
 /* MapTrigger.shot as the kind started by MapObject_StartFadeObject uses it */
 typedef struct {
-    f32 unk00[4];                   /* 0x00 a vector handed to Model_FadeVertexColoursNear */
-    f32 unk10;                      /* 0x10 grows while it moves */
+    f32 fade_vector[4];             /* 0x00 a vector handed to Model_FadeVertexColoursNear */
+    f32 fade_progress;              /* 0x10 grows while it moves */
 } MapTriggerShotKind122BE8;
 
 /* trigger_items[5]: which item was placed on which trigger (Game_AddTriggerItem records, Game_GetTriggerItem looks up) */
@@ -430,11 +430,11 @@ typedef struct {
 typedef struct {
     u8 type;                        /* 0x00 */
     u16 unk01_0 : 4;                /* 0x01 */
-    u16 use_mode : 4;               /* using one: 0 takes it, 2 takes it and gives one of unk02 (Player_UseItem) */
-    u16 unk02;                      /* 0x02 an item (item_counts) */
+    u16 use_mode : 4;               /* using one: 0 takes it, 2 takes it and gives one of item (Player_UseItem) */
+    u16 item;                       /* 0x02 an item (item_counts) */
     u16 hp_heal;                    /* 0x04 added to PlayerState.hp_now when a type 0 one is used */
     u16 mp_heal;                    /* 0x06 added to PlayerState.mp_now */
-    u16 unk08;                      /* 0x08 bit n set: starts PlayerState.timed_flags[n] for 60 frames */
+    u16 timed_flags;                /* 0x08 bit n set: starts PlayerState.timed_flags[n] for 60 frames */
     char pad0A[0x04];
     u16 flags;                      /* 0x0E bit 1 */
     char pad10[0x10];
@@ -460,7 +460,7 @@ typedef struct MapActor {
     f32 unk08;                      /* 0x08 D_004469DC when it was dropped */
     u32 serial;                     /* 0x0C the slot's count of drops when it was dropped: the lowest is the oldest */
     ModelInstance *body;            /* 0x10 */
-    f32 unk14;                      /* 0x14 */
+    f32 position_y;                 /* 0x14 the y position */
     struct MapActor *prev;          /* 0x18 */
     struct MapActor *next;          /* 0x1C the list of the ones in use starts at map_actors_in_use */
     char pad20[0x04];
@@ -497,8 +497,8 @@ typedef struct {
     s16 y;                          /* 0x02 */
     s16 z;                          /* 0x04 */
     char radius;                    /* 0x06 */
-    u8 unk07;                       /* 0x07 */
-    u16 unk08;                      /* 0x08 */
+    u8 object_id;                   /* 0x07 the map object the mark belongs to, passed to Gold_Drop */
+    u16 amount;                     /* 0x08 the amount of gold, passed to Gold_Drop */
 } ObjectMark;
 
 /* a map's 16 marks, as Gold_InitMap copies them whole */

@@ -14,7 +14,7 @@ asm(".globl suspended_updates\nsuspended_updates = game_status + 0x30");
 asm(".globl save_area_name_id\nsave_area_name_id = game_status + 0x34");
 
 /* 0x38CCA0 default light block for map objects: one light (125, 110, 83) */
-MapSlotUnk10Lights map_object_default_lights __attribute__((aligned(16))) = {
+MapLightBlockLights map_object_default_lights __attribute__((aligned(16))) = {
     { { 0 } },
     { { 0 }, { 0 }, { 0 }, { 125.0f / 255.0f, 110.0f / 255.0f, 83.0f / 255.0f, 0.0f } },
 };

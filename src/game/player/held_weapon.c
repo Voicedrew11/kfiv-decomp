@@ -39,13 +39,13 @@ extern char *held_weapon_area;
 extern PlayerState player_state;
 extern GameDefinition weapon_name_defs[70];
 extern PlayerItemDef weapon_defs[];
-extern MapSlotUnk0C current_fog_block;
+extern MapFogBlock current_fog_block;
 extern char file_load_buffer[0x80000];
 extern char arm_phong_texture_path[];
 extern char item_arm_path_format[];
 extern char default_held_item_path[];
 extern char default_arm_path[];
-extern MapSlotUnk10Half current_light_block;
+extern MapLightBlockHalf current_light_block;
 extern CameraState camera_state;
 extern f32 identity_matrix[16];
 extern f32 world_screen_matrix[16];
@@ -53,7 +53,7 @@ extern int loaded_arm_gauntlet;
 extern int loaded_held_weapon;
 
 /* What lights the held item's models, its trail, its position offsets and the points of its arm. */
-MapSlotUnk10Half held_item_light_blocks[2] = { /* 0x4145E0 the second hand's block ends with 1.0 four times */
+MapLightBlockHalf held_item_light_blocks[2] = { /* 0x4145E0 the second hand's block ends with 1.0 four times */
     { { 0 } },
     { { 0, 0, 0, 0, 0, 0, 0x3F8000003F800000, 0x3F8000003F800000 } },
 };
@@ -184,7 +184,7 @@ void Player_LoadArmModels(void) {
         }
         held_item_model.light_block = (s32)held_item_light_blocks;
         held_item_model.fog_block = &current_fog_block;
-        MODEL_CHANNEL(&held_item_model)->unk8F = 0x80;
+        MODEL_CHANNEL(&held_item_model)->blend_speed = 0x80;
         Sound_LoadSwBank(player_state.weapon);
         WeaponTrail_Reset();
         WeaponTrail_SetMinLife(3);
@@ -322,17 +322,17 @@ void WeaponTrail_Update(void) {
         Vu0_ProjectToScreen((int *)&point, blade_base);
         point.z = (s32)point.z >> 4;
         if (point.z > 0xFFFF0 || ((point.x | point.y) & 0xFFFF0000)) {
-            point.unk0C |= 0x8000;
+            point.flags |= 0x8000;
         } else {
-            point.unk0C = 0;
+            point.flags = 0;
         }
         WeaponTrail_Push(&point);
         Vu0_ProjectToScreen((int *)&point, blade_tip);
         point.z = (s32)point.z >> 4;
         if (point.z > 0xFFFF0 || ((point.x | point.y) & 0xFFFF0000)) {
-            point.unk0C |= 0x8000;
+            point.flags |= 0x8000;
         } else {
-            point.unk0C = 0;
+            point.flags = 0;
         }
         WeaponTrail_Push(&point);
     }

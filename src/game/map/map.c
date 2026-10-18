@@ -19,7 +19,7 @@
 #include "input/pad.h"
 
 #define FOG_COLOR() \
-    ((u64)map_draw_state.unk280.red | ((u64)map_draw_state.unk280.green << 8) | ((u64)map_draw_state.unk280.blue << 16) | \
+    ((u64)map_draw_state.current_fog_color.red | ((u64)map_draw_state.current_fog_color.green << 8) | ((u64)map_draw_state.current_fog_color.blue << 16) | \
      ((u64)0x80 << 24))
 #define USABLE(node) (!((node)->flags & 0x40000000))
 #define IN_X(node) ((node)->left - margin <= point[0] && point[0] <= (node)->right + margin)
@@ -136,7 +136,7 @@ extern f32 D_0044676C[]; /* the largest float */
 extern GameStatus game_status;
 extern u16 pad_state[];
 extern PlayerState player_state;
-extern MapSlotUnk10Words map_object_default_lights;
+extern MapLightBlock map_object_default_lights;
 extern TextureTableHeader *D_00446790;
 extern u8 player_floor_block[];
 
@@ -199,8 +199,8 @@ void Map_DrawRecords(int mode) {
                     continue;
                 }
                 if (flags & 0x10) {
-                    record->model->light_block = (s32)&map_draw_state.unkC0;
-                    record->model->fog_block = &map_draw_state.unkA0;
+                    record->model->light_block = (s32)&map_draw_state.current_light_block;
+                    record->model->fog_block = &map_draw_state.current_fog_block;
                 } else {
                     record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
                     record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
@@ -283,8 +283,8 @@ void Map_DrawLateRecords(int mode) {
                     Packet_EndGsRegisters();
                 }
                 if (record->flags & 0x10) {
-                    record->model->light_block = (s32)&map_draw_state.unkC0;
-                    record->model->fog_block = &map_draw_state.unkA0;
+                    record->model->light_block = (s32)&map_draw_state.current_light_block;
+                    record->model->fog_block = &map_draw_state.current_fog_block;
                 } else {
                     record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
                     record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
@@ -362,7 +362,7 @@ void Map_ParseFile(int map) {
     cursor = (char *)header;
     slot->header = (MapHeader *)cursor;
     cursor = (char *)header + 0x80;
-    slot->fog_blocks = (MapSlotUnk0C *)cursor;
+    slot->fog_blocks = (MapFogBlock *)cursor;
     cursor = (char *)header + 0x480;
     slot->light_blocks = cursor;
     cursor = (char *)header + 0x1480;
@@ -398,7 +398,7 @@ void Map_ParseFile(int map) {
     packet = (u32 *)cursor;
     for (i = 0; i < 6; i++) {
         // match: stored as a char *, the type memory->unk1C has (see the note on slot)
-        ((char **)slot->unk40.items)[i] = (char *)packet;
+        ((char **)slot->packets.items)[i] = (char *)packet;
         packet += (*packet + 1) * 4;
     }
     cursor = (char *)header;
@@ -1013,8 +1013,8 @@ void Map_DrawFreeCameraView(void) {
             for (i = 0; i < ((MapSlotUnk08 *)slot->header)->record_count; i++, record++) {
                 if (!(record->flags & 0x80000000)) {
                     if (record->flags & 0x10) {
-                        record->model->light_block = (s32)&map_draw_state.unkC0;
-                        record->model->fog_block = &map_draw_state.unkA0;
+                        record->model->light_block = (s32)&map_draw_state.current_light_block;
+                        record->model->fog_block = &map_draw_state.current_fog_block;
                     } else {
                         record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
                         record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
@@ -1022,7 +1022,7 @@ void Map_DrawFreeCameraView(void) {
                     record->model->hit_count = 0;
                     // match: both blocks chosen above are replaced at once by the viewer's own
                     record->model->light_block = (s32)&map_object_default_lights;
-                    record->model->fog_block = &map_draw_state.unkA0;
+                    record->model->fog_block = &map_draw_state.current_fog_block;
                     Model_DrawPosed(record->model);
                 }
             }
@@ -1128,15 +1128,15 @@ void Map_CoverScreenWithMapTint(void) {
     GsDraw_FillScreen(header->screen_tint_red, header->screen_tint_green, header->screen_tint_blue, header->screen_tint_alpha, 0x44);
 }
 
-/* Queues prebuilt packet index of the map slot (MapSlot.unk40) for sending. */
+/* Queues prebuilt packet index of the map slot (MapSlot.packets) for sending. */
 void Map_QueueSlotPacket(int slot, int index) {
     MapSlot *map_slot = &map_slots[slot];
     u32 *packet_start;
     u32 *packet;
 
     packet_start = packet = Packet_Alloc(3);
-    *packet++ = *map_slot->unk40.items[index] | 0x30000000;
-    *packet++ = (u32)map_slot->unk40.items[index] + 0x10;
+    *packet++ = *map_slot->packets.items[index] | 0x30000000;
+    *packet++ = (u32)map_slot->packets.items[index] + 0x10;
     *packet++ = 0;
     *packet++ = 0;
     Packet_AppendToChain(packet_start, packet);
@@ -1160,7 +1160,7 @@ void Map_QueuePacket(int *packet) {
 /* Returns packet index of the map slot. */
 u32 *Map_GetSlotPacket(int slot, int index) {
     MapSlot *map_slot = &map_slots[slot];
-    MapSlotPackets *packets = &map_slot->unk40;
+    MapSlotPackets *packets = &map_slot->packets;
 
     if (packets != NULL) {
         return packets->items[index];

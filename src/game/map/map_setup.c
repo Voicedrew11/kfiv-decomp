@@ -219,7 +219,7 @@ static inline void show_found_record(MapRecordBounds *record) {
    more) and, past 0, changes fog block 2 and light block 4. */
 void MapSetup_EarthFolksVillage(int map) {
     void *target; // match: one variable for every record and then the map slot; it gives the slot the records' register
-    MapSlotUnk0CValues *block;
+    MapFogBlockValues *block;
     MapSlotUnk10 *light;
 
     switch (forge_stage[0]) {
@@ -253,7 +253,7 @@ void MapSetup_EarthFolksVillage(int map) {
         break;
     }
     target = &map_slots[map];
-    block = (MapSlotUnk0CValues *)((MapSlot *)target)->fog_blocks;
+    block = (MapFogBlockValues *)((MapSlot *)target)->fog_blocks;
     light = ((MapSlot *)target)->light_blocks;
     block[2].unk00 = block[2].unk04 = 0.0f;
     block[2].unk08 = -43.40425f;
@@ -274,16 +274,16 @@ void MapSetup_EarthFolksVillage(int map) {
    two light colours and all three light directions cleared in light block 9. */
 void MapSetup_CavernOfLava(int map) {
     MapSlot *slot = &map_slots[map];
-    MapSlotUnk0CValues *fog;
-    MapSlotUnk10Lights *lights;
+    MapFogBlockValues *fog;
+    MapLightBlockLights *lights;
 
     if (forge_stage[0] == 0) {
-        ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk00 = ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk04 = 0.0f;
-        ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk08 = -28.333328f;
-        ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk0C = 113333.336f;
-        ((MapSlotUnk0CValues *)slot->fog_blocks)[5].unk10 = 0x8C8C8C;
+        ((MapFogBlockValues *)slot->fog_blocks)[5].unk00 = ((MapFogBlockValues *)slot->fog_blocks)[5].unk04 = 0.0f;
+        ((MapFogBlockValues *)slot->fog_blocks)[5].unk08 = -28.333328f;
+        ((MapFogBlockValues *)slot->fog_blocks)[5].unk0C = 113333.336f;
+        ((MapFogBlockValues *)slot->fog_blocks)[5].unk10 = 0x8C8C8C;
     } else {
-        fog = (MapSlotUnk0CValues *)slot->fog_blocks;
+        fog = (MapFogBlockValues *)slot->fog_blocks;
         lights = slot->light_blocks;
         fog[5].unk00 = fog[5].unk04 = 0.0f;
         fog[5].unk08 = -318.75f;
@@ -373,10 +373,10 @@ void MapSetup_FireLordsDomain(int map) {
    1), the fog the map script fades to when it is placed, in blocks 0, 1 and 4. */
 void MapSetup_OceanShore(int map) {
     MapSlot *slot = &map_slots[map];
-    MapSlotUnk0CValues *fog;
+    MapFogBlockValues *fog;
 
     if (ocean_shore_icon_of_fire_placed[0] == 1) {
-        fog = (MapSlotUnk0CValues *)slot->fog_blocks;
+        fog = (MapFogBlockValues *)slot->fog_blocks;
         fog[0].unk00 = fog[0].unk04 = 0.0f;
         fog[0].unk08 = -9.705887f;
         fog[0].unk0C = 476470.62f;
@@ -440,7 +440,7 @@ void MapSetup_DarkSanctuary(int map) {
     MapSlot *slot = &map_slots[map];
 
     if (dark_sanctuary_fog_lifted[0] == 1) {
-        MapSlotUnk0CValues *fog = (MapSlotUnk0CValues *)slot->fog_blocks;
+        MapFogBlockValues *fog = (MapFogBlockValues *)slot->fog_blocks;
 
         fog[1].unk00 = fog[1].unk04 = 0.0f;
         fog[1].unk08 = 46.666664f;
@@ -459,7 +459,7 @@ void MapSetup_KingsThroneAlcoves(int map) {
     MapSlot *slot = &map_slots[map];
 
     if (D_0034A0D5[0] == 1) {
-        MapSlotUnk0CValues *fog = (MapSlotUnk0CValues *)slot->fog_blocks;
+        MapFogBlockValues *fog = (MapFogBlockValues *)slot->fog_blocks;
         MapSlotUnk10 *light = slot->light_blocks;
 
         fog[2].unk00 = fog[2].unk04 = 0.0f;

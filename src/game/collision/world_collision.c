@@ -1460,7 +1460,7 @@ void Collision_HitSphereMeshObj(CollisionOwner *owner, int mode, float factor) {
                 do {
                     Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, mode, factor);
                     if (COLLISION_RESULT->hit != 0) {
-                        COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(vertex->unk04, vertex->unk08, vertex->unk0C);
+                        COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(vertex->x, vertex->y, vertex->z);
                         return;
                     }
                     vertex++;
@@ -1713,7 +1713,7 @@ void Collision_HitSpherePitfallObj(MapObject *object, f32 *point, f32 reach) {
                 do {
                     Collision_PointTriangle(vertex[0].unk00, vertex[1].unk00, vertex[2].unk00, (int)point, reach);
                     if (COLLISION_RESULT->hit != 0) {
-                        COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(vertex->unk04, vertex->unk08, vertex->unk0C);
+                        COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(vertex->x, vertex->y, vertex->z);
                         return;
                     }
                     vertex++;

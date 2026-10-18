@@ -256,9 +256,9 @@ void Interact_FindTarget(void) {
         can_act = game_status.bit1;
         pickup = view_ray_status.facing_item;
         if (pickup != NULL && can_act) {
-            if (pickup->def != NULL && pickup->def->unk34 != 0) {
+            if (pickup->def != NULL && pickup->def->pickup_script != 0) {
                 if ((pickup->flags & 1) == current_map_slot) {
-                    Script_Start(pickup->def->unk34, 0);
+                    Script_Start(pickup->def->pickup_script, 0);
                 }
                 can_act = FALSE;
             } else if (pickup_item == NULL) {
@@ -279,7 +279,7 @@ void Interact_FindTarget(void) {
         } else {
             used = view_ray_status.current;
             if (used != NULL && can_act && used->source->use_script != 0) {
-                if ((MAP_OBJECT_BYTES(used)->unk00 & 1) == current_map_slot) {
+                if ((MAP_OBJECT_BYTES(used)->map_slot & 1) == current_map_slot) {
                     if (used->source->item_use_script == 0 || Script_IsRunning(used->source->item_use_script) == 0) {
                         Script_Start(((MapObject *)view_ray_status.current)->source->use_script, 0);
                     }

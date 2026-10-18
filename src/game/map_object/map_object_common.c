@@ -42,10 +42,10 @@ void MapObject_UpdateScenery(MapObject *object) {
         source = object->source;
         if ((u32)((u16)source->kind_param_0 - 0x40) < 0x40) {
             if (object->work[0] != 0) {
-                if ((MAP_OBJECT_BYTES(object)->unk00 & 1) != current_map_slot) {
+                if ((MAP_OBJECT_BYTES(object)->map_slot & 1) != current_map_slot) {
                     object->work[0] = 0;
                 }
-            } else if ((MAP_OBJECT_BYTES(object)->unk00 & 1) == current_map_slot && sound_load_queue[4] == 0 && sound_load_queue[5] == 0) {
+            } else if ((MAP_OBJECT_BYTES(object)->map_slot & 1) == current_map_slot && sound_load_queue[4] == 0 && sound_load_queue[5] == 0) {
                 Sound_StartTaggedAt(source->kind_param_0, source->kind_param_2, source->kind_param_1, source->kind_param_3, (Vector4Arg *)&object->model->position);
                 object->work[0] = 1;
             }
@@ -90,7 +90,7 @@ void MapObject_UpdateBreaking(MapObject *object) {
         MapObject_StepAnim(object);
     } else {
         if (!(object->definition->definition_flags & 0x20000)) {
-            other = MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->spawn_flags.bytes[3]);
+            other = MapObject_GetById(MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->spawn_flags.bytes[3]);
             if (other != NULL) {
                 MapObject_Activate(other);
             }
@@ -106,12 +106,12 @@ void MapObject_StopAmbientSound(MapTrigger *trigger) {
 
     if (*trigger->unk04 == 0) {
         source = MAP_TRIGGER_SOURCE(trigger);
-        if (((u32)(source->unk44 - 0x40) < 0x40) && (trigger->shot.unk00[0] != 0)) {
-            if ((trigger->unk10 & 1) != current_map_slot) {
+        if (((u32)(source->sound_tag - 0x40) < 0x40) && (trigger->shot.unk00[0] != 0)) {
+            if ((trigger->flags & 1) != current_map_slot) {
                 trigger->shot.unk00[0] = 0;
                 return;
             }
-            Sound_StopTagged((char)source->unk44);
+            Sound_StopTagged((char)source->sound_tag);
             trigger->shot.unk00[0] = 0;
         }
     }

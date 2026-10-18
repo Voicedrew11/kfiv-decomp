@@ -96,7 +96,7 @@ extern f32 D_00446798[];        /* the largest float */
 extern f32 D_0044679C[];        /* the lowest float */
 extern f32 identity_matrix[16];      /* the unit matrix */
 extern MapDrawState map_draw_state;
-extern MapSlotUnk10Words viewer_default_lights;
+extern MapLightBlock viewer_default_lights;
 extern char kings_map_overlay_rect[0x40];
 extern char kings_map_corner_rect[0x40];
 extern s64 game_dbuff_clear_color[];
@@ -776,7 +776,7 @@ static void MapViewer_DrawKingsMap(void) {
     Packet_EndGsRegisters();
     pointer_model.light_block = (s32)&viewer_default_lights;
     pointer_model.hit_count = 0;
-    pointer_model.fog_block = &map_draw_state.unkA0;
+    pointer_model.fog_block = &map_draw_state.current_fog_block;
     Model_DrawPosed(&pointer_model);
     Packet_BeginGsRegisters();
     Packet_AddGsRegister(0x1A, 0);
@@ -812,15 +812,15 @@ static void MapViewer_DrawKingsMap(void) {
                             continue;
                         }
                         if (flags & 0x10) {
-                            record->model->light_block = (s32)&map_draw_state.unkC0;
-                            record->model->fog_block = &map_draw_state.unkA0;
+                            record->model->light_block = (s32)&map_draw_state.current_light_block;
+                            record->model->fog_block = &map_draw_state.current_fog_block;
                         } else {
                             record->model->light_block = (s32)&map_draw_state.light_blocks[map][record->light_block_index];
                             record->model->fog_block = &map_draw_state.fog_blocks[map][record->fog_block_index];
                         }
                         record->model->hit_count = 0;
                         record->model->light_block = (s32)&viewer_default_lights;
-                        record->model->fog_block = &map_draw_state.unkA0;
+                        record->model->fog_block = &map_draw_state.current_fog_block;
                         Model_DrawPosed(record->model);
                     }
                     break;

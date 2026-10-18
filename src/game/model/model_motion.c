@@ -72,7 +72,7 @@ MotionData *ModelMotion_Load(MotionData *data, ModelInstance *model, int unused)
             parts[i].sibling = NULL;
         }
         // match: indexing level_tables as an array swaps the addu operands
-        parts[i].part_flags = (*(ModelPartLevels **)((char *)model->level_tables + (channel->motion_index << 2)))[i].unk02;
+        parts[i].part_flags = (*(ModelPartLevels **)((char *)model->level_tables + (channel->motion_index << 2)))[i].part_flags;
     }
     data = (MotionData *)((char *)motion + motion->size);
     return data;
@@ -112,7 +112,7 @@ void ModelMotion_Select(ModelInstance *model, int index) {
 int ModelMotion_IsAtEnd(ModelInstance *model) {
     ModelChannel *channel = MODEL_CHANNEL(model);
 
-    return channel->frame >= ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->unk00;
+    return channel->frame >= ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->frame_count;
 }
 
 /* Whether the model's motion stepped onto the given frame on its last step. */
@@ -229,7 +229,7 @@ u16 ModelMotion_GetLastFrame(char *model_arg) {
     ModelInstance *model = (ModelInstance *)model_arg;
     ModelChannel *channel = MODEL_CHANNEL(model);
 
-    return ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->unk00;
+    return ((ModelTableHeader *)channel->tables[channel->motion_index] - 1)->frame_count;
 }
 
 /* Hermite interpolation: hands the four basis weights for the ratio to Vector_WeightedSum4. */
@@ -265,10 +265,10 @@ void ModelMotion_StepBlend(ModelInstance *model) {
     vectors = motion->vectors;
     if (channel->frame_step >= channel->blend_left) {
         divisor = 1.0f;
-    } else if (channel->unk8F == 0) {
+    } else if (channel->blend_speed == 0) {
         divisor = (f32)channel->blend_left / (f32)channel->frame_step;
     } else {
-        divisor = 255.0f / (f32)channel->unk8F;
+        divisor = 255.0f / (f32)channel->blend_speed;
     }
     part = model->parts;
     for (i = 0; i < model->part_count; i++, record++, part++) {

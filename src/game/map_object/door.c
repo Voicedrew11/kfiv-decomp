@@ -33,9 +33,9 @@ void MapObject_StartDoor(MapObject *object) {
         Vector_Copy(work, object->model->parts[1].position);
         work->timer = 0;
         part = object->model->parts;
-        work->unk10 = part[1].position[0];
-        work->unk14 = part[1].position[1];
-        work->unk18 = part[1].position[2];
+        work->base_x = part[1].position[0];
+        work->base_y = part[1].position[1];
+        work->base_z = part[1].position[2];
         if (MAP_OBJECT_FLAGS(object) & MAP_OBJECT_ON) {
             MAP_OBJECT_BYTES(object)->step = 2;
             do {
@@ -233,7 +233,7 @@ void MapObject_RebuildMovingDoorMatrices(MapObject *object) {
     // match: it returns a value
     ((int (*)(ModelInstance *, Vector4 *, Vector4 *, f32 *))ModelMatrix_Build)(object->model, &object->model->position, &object->model->rotation, &object->model->scale_x);
     Vector_Copy(&saved, object->model->parts[1].position);
-    Vector_Copy(object->model->parts[1].position, &MAP_OBJECT_WORK(object)->unk10);
+    Vector_Copy(object->model->parts[1].position, &MAP_OBJECT_WORK(object)->base_x);
     object->model->parts[1].position[3] = 1.0f;
     part_count = object->model->part_count;
     part = object->model->parts;
