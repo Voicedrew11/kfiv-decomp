@@ -49,7 +49,7 @@
    "name": "SDK and runtime libraries"
   }
  ],
- "generated": "2026-10-16",
+ "generated": "2026-10-18",
  "measures": {
   "complete_code": 1336416,
   "complete_code_percent": 99.5845,
@@ -72,16 +72,16 @@
  },
  "readability": {
   "bit_ops": 3533,
-  "field_uses": 58045,
+  "field_uses": 58278,
   "fn_ptr_casts": 1455,
   "gotos": 79,
   "long_comments": 1800,
   "match_comments": 1050,
   "named_bit_ops": 2427,
-  "named_field_uses": 52358,
-  "named_fields": 2678,
+  "named_field_uses": 57421,
+  "named_fields": 2947,
   "named_globals": 1258,
-  "recovered_structs": 210,
+  "recovered_structs": 237,
   "total_fields": 3775,
   "total_globals": 1468,
   "total_structs": 616
