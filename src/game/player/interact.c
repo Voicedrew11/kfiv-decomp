@@ -279,7 +279,7 @@ void Interact_FindTarget(void) {
         } else {
             used = view_ray_status.current;
             if (used != NULL && can_act && used->source->use_script != 0) {
-                if ((MAP_OBJECT_BYTES(used)->unk00 & 1) == current_map_slot) {
+                if ((MAP_OBJECT_BYTES(used)->map_slot & 1) == current_map_slot) {
                     if (used->source->item_use_script == 0 || Script_IsRunning(used->source->item_use_script) == 0) {
                         Script_Start(((MapObject *)view_ray_status.current)->source->use_script, 0);
                     }

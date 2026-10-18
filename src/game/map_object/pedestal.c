@@ -40,7 +40,7 @@ void MapObject_StartMarker(MapObject *object) {
     work->fired = 0;
     item = 0;
     if (object->state_flags & MAP_OBJECT_ON) {
-        item = Game_GetTriggerItem(map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag, object->source->spawn_flags.bytes[2]);
+        item = Game_GetTriggerItem(map_slots[MAP_OBJECT_BYTES(object)->map_slot & 1].tag, object->source->spawn_flags.bytes[2]);
         if (item <= 0) {
             object->state_flags &= ~MAP_OBJECT_ON;
         }
@@ -137,7 +137,7 @@ void MapObject_SettleMarkerStone(MapObject *object) {
 void MapObject_UpdateFilledMarker(MapObject *object) {
     MapObjectWorkKind121DA8 *work = (MapObjectWorkKind121DA8 *)object->work;
     u8 timer = work->timer;
-    u8 tag = map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1].tag;
+    u8 tag = map_slots[MAP_OBJECT_BYTES(object)->map_slot & 1].tag;
     int item;
 
     if (work->timer > 0) {

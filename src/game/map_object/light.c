@@ -20,7 +20,7 @@ void MapObject_StartLight(MapObject *object) {
     colour.w = 1.0f;
     point = (void *)object->model->get_point(object->model, source->kind_param_7);
     params = MAP_OBJECT_WORDS(object);
-    work[0] = LinkedPoint_Allocate(params->kind_param_3, point, &colour, 0, MAP_OBJECT_BYTES(object)->unk00 & 1, params->kind_param_4 != 0 ? params->kind_param_5 : -1, 1);
+    work[0] = LinkedPoint_Allocate(params->kind_param_3, point, &colour, 0, MAP_OBJECT_BYTES(object)->map_slot & 1, params->kind_param_4 != 0 ? params->kind_param_5 : -1, 1);
     sort = MAP_OBJECT_WORDS(object)->kind_param_6;
     if (sort >= 0) {
         if (sort <= 1) {

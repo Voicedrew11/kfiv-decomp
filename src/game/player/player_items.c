@@ -115,7 +115,7 @@ void Player_UseItem(void) {
                 return;
             }
             object = view_ray_status.current;
-            if (object != NULL && object->source->item_use_script != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == current_map_slot) {
+            if (object != NULL && object->source->item_use_script != 0 && (MAP_OBJECT_BYTES(object)->map_slot & 1) == current_map_slot) {
                 if (object->source->use_script != 0 && Script_IsRunning(object->source->use_script) != 0) {
                     return;
                 }

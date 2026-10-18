@@ -26,22 +26,22 @@ typedef u32 u_long128 __attribute__((mode(TI)));
 #define ROUND_HALF(value) ((value) > 0.0f ? (value) + 0.5f : (value) - 0.5f)
 /* turns a packed vertex into one of floats */
 #define TO_BLEND_VERTEX(to, from)                                                                  \
-    (to).unk00[0] = (from)->x;                                                                     \
-    (to).unk00[1] = (from)->y;                                                                     \
-    (to).unk00[2] = (from)->z;                                                                     \
-    (to).unk00[3] = 1.0f;                                                                          \
-    (to).unk10[0] = (from)->unk08[0] * 4096.0f;                                                    \
-    (to).unk10[1] = (from)->unk08[1] * 4096.0f;                                                    \
-    (to).unk10[2] = (from)->unk08[2] * 4096.0f;                                                    \
-    (to).unk10[3] = 0.0f;                                                                          \
-    (to).unk20[0] = (from)->tex_u * 4096.0f;                                                           \
-    (to).unk20[1] = (from)->tex_v * 4096.0f;                                                           \
-    (to).unk20[2] = 1.0f;                                                                          \
-    (to).unk20[3] = 0.0f;                                                                          \
-    (to).unk30[0] = (from)->colour[0];                                                             \
-    (to).unk30[1] = (from)->colour[1];                                                             \
-    (to).unk30[2] = (from)->colour[2];                                                             \
-    (to).unk30[3] = (from)->colour[3]
+    (to).position[0] = (from)->x;                                                                     \
+    (to).position[1] = (from)->y;                                                                     \
+    (to).position[2] = (from)->z;                                                                     \
+    (to).position[3] = 1.0f;                                                                          \
+    (to).normal[0] = (from)->normal[0] * 4096.0f;                                                    \
+    (to).normal[1] = (from)->normal[1] * 4096.0f;                                                    \
+    (to).normal[2] = (from)->normal[2] * 4096.0f;                                                    \
+    (to).normal[3] = 0.0f;                                                                          \
+    (to).tex_coords[0] = (from)->tex_u * 4096.0f;                                                           \
+    (to).tex_coords[1] = (from)->tex_v * 4096.0f;                                                           \
+    (to).tex_coords[2] = 1.0f;                                                                          \
+    (to).tex_coords[3] = 0.0f;                                                                          \
+    (to).colour[0] = (from)->colour[0];                                                             \
+    (to).colour[1] = (from)->colour[1];                                                             \
+    (to).colour[2] = (from)->colour[2];                                                             \
+    (to).colour[3] = (from)->colour[3]
 void sceVu0MulMatrix(void *, void *, void *);
 void Vu0_LoadMatrix(void *);
 void Vu0_ProjectToScreen(int *, void *);
@@ -282,9 +282,9 @@ void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *f
     delta[0] = (last->x - position[0]) / steps;
     delta[1] = (last->y - position[1]) / steps;
     delta[2] = (last->z - position[2]) / steps;
-    step.unk08[0] = (last->unk08[0] - from->unk08[0]) / steps;
-    step.unk08[1] = (last->unk08[1] - from->unk08[1]) / steps;
-    step.unk08[2] = (last->unk08[2] - from->unk08[2]) / steps;
+    step.normal[0] = (last->normal[0] - from->normal[0]) / steps;
+    step.normal[1] = (last->normal[1] - from->normal[1]) / steps;
+    step.normal[2] = (last->normal[2] - from->normal[2]) / steps;
     step.tex_u = (last->tex_u - from->tex_u) / steps;
     step.tex_v = (last->tex_v - from->tex_v) / steps;
     step.colour[0] = (last->colour[0] - from->colour[0]) / steps;
@@ -303,9 +303,9 @@ void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *f
         out->y = position[1];
         out->z = position[2];
         out->unk06 = 1;
-        out->unk08[0] = previous->unk08[0] + step.unk08[0];
-        out->unk08[1] = previous->unk08[1] + step.unk08[1];
-        out->unk08[2] = previous->unk08[2] + step.unk08[2];
+        out->normal[0] = previous->normal[0] + step.normal[0];
+        out->normal[1] = previous->normal[1] + step.normal[1];
+        out->normal[2] = previous->normal[2] + step.normal[2];
         out->unk0E = 0;
         out->tex_u = previous->tex_u + step.tex_u;
         out->tex_v = previous->tex_v + step.tex_v;
@@ -342,9 +342,9 @@ void ModelScreen_StepVerticesRounded(ModelPartVertexWords *out, ModelPartVertexW
     delta[1] = last->y - position[1];
     delta[2] = last->z - position[2];
     delta[3] = 0.0f;
-    step.unk08[0] = (last->unk08[0] - from->unk08[0]) / steps;
-    step.unk08[1] = (last->unk08[1] - from->unk08[1]) / steps;
-    step.unk08[2] = (last->unk08[2] - from->unk08[2]) / steps;
+    step.normal[0] = (last->normal[0] - from->normal[0]) / steps;
+    step.normal[1] = (last->normal[1] - from->normal[1]) / steps;
+    step.normal[2] = (last->normal[2] - from->normal[2]) / steps;
     step.tex_u = (last->tex_u - from->tex_u) / steps;
     step.tex_v = (last->tex_v - from->tex_v) / steps;
     step.colour[0] = (last->colour[0] - from->colour[0]) / steps;
@@ -365,9 +365,9 @@ void ModelScreen_StepVerticesRounded(ModelPartVertexWords *out, ModelPartVertexW
         out->y = ROUND_HALF(current[1]);
         out->z = ROUND_HALF(current[2]);
         out->unk06 = 1;
-        out->unk08[0] = previous->unk08[0] + step.unk08[0];
-        out->unk08[1] = previous->unk08[1] + step.unk08[1];
-        out->unk08[2] = previous->unk08[2] + step.unk08[2];
+        out->normal[0] = previous->normal[0] + step.normal[0];
+        out->normal[1] = previous->normal[1] + step.normal[1];
+        out->normal[2] = previous->normal[2] + step.normal[2];
         out->unk0E = 0;
         out->tex_u = previous->tex_u + step.tex_u;
         out->tex_v = previous->tex_v + step.tex_v;
@@ -483,10 +483,10 @@ void ModelScreen_QueueCutFloatTriangle(u32 *data, ModelPartVertexWords *vertex, 
         previous = row_point;
         ModelScreen_StepFloatVertices(row_point, &apex_point, edge_point++, steps);
         *out = apex_point;
-        *(s32 *)&out->unk10[3] = 0x8000;
+        *(s32 *)&out->normal[3] = 0x8000;
         out++;
         *out = row[1];
-        *(s32 *)&out->unk10[3] = 0x8000;
+        *(s32 *)&out->normal[3] = 0x8000;
         out++;
         row_point = row + 2;
         *out++ = previous[1];
@@ -520,27 +520,27 @@ void ModelScreen_StepPackedToFloat(BlendVertex *out, ModelPartVertexWords *from,
     scale = 1.0f / steps;
     TO_BLEND_VERTEX(from_point, from);
     TO_BLEND_VERTEX(last_point, last);
-    Vector_Subtract(delta.unk00, last_point.unk00, from_point.unk00);
-    Vector_Scale(delta.unk00, delta.unk00, scale);
-    Vector_Subtract(delta.unk10, last_point.unk10, from_point.unk10);
-    Vector_Scale(delta.unk10, delta.unk10, scale);
-    delta.unk20[0] = last_point.unk20[0] * from_point.unk20[0] * scale;
-    delta.unk20[1] = last_point.unk20[1] * from_point.unk20[1] * scale;
-    Vector_Subtract(delta.unk30, last_point.unk30, from_point.unk30);
-    Vector_Scale(delta.unk30, delta.unk30, scale);
+    Vector_Subtract(delta.position, last_point.position, from_point.position);
+    Vector_Scale(delta.position, delta.position, scale);
+    Vector_Subtract(delta.normal, last_point.normal, from_point.normal);
+    Vector_Scale(delta.normal, delta.normal, scale);
+    delta.tex_coords[0] = last_point.tex_coords[0] * from_point.tex_coords[0] * scale;
+    delta.tex_coords[1] = last_point.tex_coords[1] * from_point.tex_coords[1] * scale;
+    Vector_Subtract(delta.colour, last_point.colour, from_point.colour);
+    Vector_Scale(delta.colour, delta.colour, scale);
     previous = out;
     *out = from_point;
     out++;
     for (i = 1; i < steps; i++) {
-        Vector_Add(out->unk00, previous->unk00, delta.unk00);
-        out->unk00[3] = 1.0f;
-        Vector_Add(out->unk10, previous->unk10, delta.unk10);
-        *(s32 *)&out->unk10[3] = 0; // match: stored as an integer; as a float it would hold the loads below back
-        out->unk20[0] = previous->unk20[0] + delta.unk20[0];
-        out->unk20[1] = previous->unk20[1] + delta.unk20[1];
-        out->unk20[2] = 1.0f;
-        *(s32 *)&out->unk20[3] = 0; // match: an integer as well
-        Vector_Add(out->unk30, previous->unk30, delta.unk30);
+        Vector_Add(out->position, previous->position, delta.position);
+        out->position[3] = 1.0f;
+        Vector_Add(out->normal, previous->normal, delta.normal);
+        *(s32 *)&out->normal[3] = 0; // match: stored as an integer; as a float it would hold the loads below back
+        out->tex_coords[0] = previous->tex_coords[0] + delta.tex_coords[0];
+        out->tex_coords[1] = previous->tex_coords[1] + delta.tex_coords[1];
+        out->tex_coords[2] = 1.0f;
+        *(s32 *)&out->tex_coords[3] = 0; // match: an integer as well
+        Vector_Add(out->colour, previous->colour, delta.colour);
         previous++;
         out++;
     }
@@ -556,28 +556,28 @@ void ModelScreen_StepFloatVertices(BlendVertex *out, BlendVertex *from, BlendVer
     int i;
 
     scale = 1.0f / steps;
-    Vector_Subtract(delta.unk00, last->unk00, from->unk00);
-    Vector_Scale(delta.unk00, delta.unk00, scale);
-    Vector_Subtract(delta.unk10, last->unk10, from->unk10);
-    Vector_Scale(delta.unk10, delta.unk10, scale);
+    Vector_Subtract(delta.position, last->position, from->position);
+    Vector_Scale(delta.position, delta.position, scale);
+    Vector_Subtract(delta.normal, last->normal, from->normal);
+    Vector_Scale(delta.normal, delta.normal, scale);
     // match: retail bug, a product where every other component uses the difference last - from
-    delta.unk20[0] = last->unk20[0] * from->unk20[0] * scale;
-    delta.unk20[1] = last->unk20[1] * from->unk20[1] * scale; // match: retail bug, as above
-    Vector_Subtract(delta.unk30, last->unk30, from->unk30);
-    Vector_Scale(delta.unk30, delta.unk30, scale);
+    delta.tex_coords[0] = last->tex_coords[0] * from->tex_coords[0] * scale;
+    delta.tex_coords[1] = last->tex_coords[1] * from->tex_coords[1] * scale; // match: retail bug, as above
+    Vector_Subtract(delta.colour, last->colour, from->colour);
+    Vector_Scale(delta.colour, delta.colour, scale);
     previous = out;
     *out = *from;
     out++;
     for (i = 1; i < steps; i++) {
-        Vector_Add(out->unk00, previous->unk00, delta.unk00);
-        out->unk00[3] = 1.0f;
-        Vector_Add(out->unk10, previous->unk10, delta.unk10);
-        *(s32 *)&out->unk10[3] = 0; // match: stored as an integer; as a float it would hold the loads below back
-        out->unk20[0] = previous->unk20[0] + delta.unk20[0];
-        out->unk20[1] = previous->unk20[1] + delta.unk20[1];
-        out->unk20[2] = 1.0f;
-        *(s32 *)&out->unk20[3] = 0; // match: an integer as well
-        Vector_Add(out->unk30, previous->unk30, delta.unk30);
+        Vector_Add(out->position, previous->position, delta.position);
+        out->position[3] = 1.0f;
+        Vector_Add(out->normal, previous->normal, delta.normal);
+        *(s32 *)&out->normal[3] = 0; // match: stored as an integer; as a float it would hold the loads below back
+        out->tex_coords[0] = previous->tex_coords[0] + delta.tex_coords[0];
+        out->tex_coords[1] = previous->tex_coords[1] + delta.tex_coords[1];
+        out->tex_coords[2] = 1.0f;
+        *(s32 *)&out->tex_coords[3] = 0; // match: an integer as well
+        Vector_Add(out->colour, previous->colour, delta.colour);
         previous++;
         out++;
     }

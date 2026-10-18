@@ -107,7 +107,7 @@ typedef struct {
     s16 y;                          /* 0x02 */
     s16 z;                          /* 0x04 */
     s16 unk06;                      /* 0x06 1 on a vertex built between two others */
-    s16 unk08[3];                   /* 0x08 a normal, it seems */
+    s16 normal[3];                  /* 0x08 normal, x y z */
     u16 unk0E;                      /* 0x0E 0; 0x8000 on the first two vertices of a strip (ModelScreen_QueueCutTriangle) */
     s16 tex_u;                      /* 0x10 */
     s16 tex_v;                      /* 0x12 */
@@ -162,10 +162,10 @@ typedef struct {
    Bone_MultiplyPathTo leaves the part's turn and offset out. */
 typedef struct {
     char pad00[0x78];
-    u64 unk78;                      /* 0x78 */
+    u64 bit_fields;                 /* 0x78 low word: data pointer; bits 39-45 level, 46-52 parent, 53+ count */
 } ModelPartWords;
 
-#define MODEL_PART_WORD(part) (((ModelPartWords *)(part))->unk78)
+#define MODEL_PART_WORD(part) (((ModelPartWords *)(part))->bit_fields)
 
 /* the same doubleword through a union, for where retail reads it again after stores of other
    types (Model_DrawSkinned) */
@@ -422,10 +422,10 @@ typedef struct ModelInstance {
 
 /* a 0x40-byte vertex of four vectors; ModelScreen_StepFloatVertices fills the steps between two of them */
 typedef struct {
-    f32 unk00[4];                   /* 0x00 w is 1 */
-    f32 unk10[4];                   /* 0x10 w is 0 */
-    f32 unk20[4];                   /* 0x20 two values, then 1 and 0 */
-    f32 unk30[4];                   /* 0x30 */
+    f32 position[4];                /* 0x00 w is 1 */
+    f32 normal[4];                  /* 0x10 w is 0 */
+    f32 tex_coords[4];              /* 0x20 s, t, then 1 and 0 */
+    f32 colour[4];                  /* 0x30 r, g, b, a */
 } BlendVertex;
 
 /* one of the 0x40-byte lights at linked_point_pool, as the drawing code copies it into a packet */
@@ -735,7 +735,7 @@ typedef struct {
 
 /* the same word as bytes */
 typedef struct {
-    u8 unk00;                       /* 0x10 */
+    u8 map_slot;                    /* 0x10 bit 0: the map slot */
     u8 step;                        /* 0x11 */
     u8 unk02;                       /* 0x12 */
     s8 anim;                        /* 0x13 */

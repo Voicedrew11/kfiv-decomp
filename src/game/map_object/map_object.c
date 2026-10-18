@@ -232,7 +232,7 @@ void MapObject_StartMap(int map) {
         if (Game_GetTriggerItem(tag, object->source->spawn_flags.bytes[2])) {
             flag = 1;
         }
-        object->map_record = (s32)Map_FindRecordAtInSlot((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->unk00 & 1);
+        object->map_record = (s32)Map_FindRecordAtInSlot((CameraState *)&object->model->position, 0.0f, MAP_OBJECT_BYTES(object)->map_slot & 1);
         if (in_use) {
             MapObject_Activate(object);
         } else {
@@ -382,7 +382,7 @@ void MapObject_UpdateAll(void) {
                 if ((MapObject *)player_state.floor_map_object == object) {
                     object->state_flags |= MAP_OBJECT_IN_VIEW;
                 } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
-                    if (Map_TestFlagBlockBit(current_map_slot, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->linked_point_owner)) {
+                    if (Map_TestFlagBlockBit(current_map_slot, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->linked_point_owner)) {
                         object->state_flags |= MAP_OBJECT_IN_VIEW;
                     }
                 } else if (record->record_flags & 0x4000000) {
@@ -535,7 +535,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             }
             if ((MAP_OBJECT_DEF_WORD(object) & 0x4000) && glow_item_worn != 0) {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
-                    object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
+                    object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
                     object->model->light_block = (s32)&glow_lights_shared;
                 } else {
@@ -543,7 +543,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 }
             } else {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
-                    object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
+                    object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
                     object->model->light_block = (s32)&map_draw_state.unkC0;
                 } else {
@@ -551,7 +551,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 }
             }
             if ((s8)object->source->spawn_flags.bytes[4] != -1) {
-                object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[4]];
+                object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[4]];
             } else if (RECORD_FLAGS(object) & 0x10) {
                 object->model->fog_block = &map_draw_state.unkA0;
             } else {
@@ -594,7 +594,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
             }
             if ((MAP_OBJECT_DEF_WORD(object) & 0x4000) && glow_item_worn != 0) {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
-                    object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
+                    object->model->light_block = (s32)&glow_lights[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
                     object->model->light_block = (s32)&glow_lights_shared;
                 } else {
@@ -602,7 +602,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                 }
             } else {
                 if ((s8)object->source->spawn_flags.bytes[5] != -1) {
-                    object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[5]];
+                    object->model->light_block = (s32)&map_draw_state.light_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[5]];
                 } else if (RECORD_FLAGS(object) & 0x10) {
                     object->model->light_block = (s32)&map_draw_state.unkC0;
                 } else {
@@ -616,7 +616,7 @@ void MapObject_DrawAll(int mode, int only_one, int which) {
                     object->model->fog_block = &map_draw_state.fog_blocks[RECORD_MAP(object)][((MapDrawRecord *)object->map_record)->fog_block_index];
                 }
             } else {
-                object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->unk00 & 1][(s8)object->source->spawn_flags.bytes[4]];
+                object->model->fog_block = &map_draw_state.fog_blocks[MAP_OBJECT_BYTES(object)->map_slot & 1][(s8)object->source->spawn_flags.bytes[4]];
             }
             if (object->definition->kind == 9) {
                 LinkedPoint_FindHitsExclude(object->model, *(s16 *)object->work);
@@ -696,12 +696,12 @@ void MapObject_Break(MapObject *object) {
     if (MAP_OBJECT_DEF_WORD(object) & 0x1000) {
         MapObject_StartAnim(object, 1);
     }
-    Effect_StartSpawner(object->definition->break_effect, &object->model->position, &object->model->rotation, &map_slots[MAP_OBJECT_BYTES(object)->unk00 & 1]);
-    if (object->source->break_script != 0 && (MAP_OBJECT_BYTES(object)->unk00 & 1) == current_map_slot) {
+    Effect_StartSpawner(object->definition->break_effect, &object->model->position, &object->model->rotation, &map_slots[MAP_OBJECT_BYTES(object)->map_slot & 1]);
+    if (object->source->break_script != 0 && (MAP_OBJECT_BYTES(object)->map_slot & 1) == current_map_slot) {
         Script_Start(object->source->break_script, 0);
     }
     if (object->definition->definition_flags & 0x20000) {
-        other = MapObject_GetById(MAP_OBJECT_BYTES(object)->unk00 & 1, object->source->spawn_flags.bytes[3]);
+        other = MapObject_GetById(MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->spawn_flags.bytes[3]);
         if (other != NULL) {
             MapObject_Activate(other);
         }
@@ -787,7 +787,7 @@ void MapObject_MarkEmptied(MapObject *object) {
     u8 kind = object->definition->kind;
 
     if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
-        ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
+        ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->map_slot & 1]) >> 7) >> 7) < 0x200) {
         object->state_flags |= MAP_OBJECT_EMPTIED;
     }
 }
@@ -800,7 +800,7 @@ void MapObject_MarkEmptiedById(int map, int object_id) {
     if (object != NULL) {
         kind = object->definition->kind;
         if ((kind == 3 || kind == MAP_OBJECT_KIND_CHEST || kind == MAP_OBJECT_KIND_CONTAINER) &&
-            ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->unk00 & 1]) >> 7) >> 7) < 0x200) {
+            ((u32)(((int)object->source - map_object_placements[MAP_OBJECT_BYTES(object)->map_slot & 1]) >> 7) >> 7) < 0x200) {
             object->state_flags |= MAP_OBJECT_EMPTIED;
         }
     }
