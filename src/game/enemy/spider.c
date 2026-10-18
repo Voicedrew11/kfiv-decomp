@@ -23,7 +23,7 @@ int EntityAi_ThinkReturn(void *, int);
 int rand(void);
 int EntityAi_TurnFromPush(void *, void *);
 void EntityPoint_PickNear(float, void *, void *, void *);
-s16 EntityAi_MoveCommand(float, void *, int); // match: this file only matches with this type; EntityAi_MoveCommand.c defines it differently
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 extern PlayerData player_state;
 s32 EntityAi_ShouldGuard(Entity *, f32, f32);
 s32 EntityAi_ShouldDodge(Entity *, f32, f32);
@@ -197,7 +197,7 @@ static void Spider_ThinkWander(Entity *entity, s32 unknown) {
     } else if (turn < 0) {
         entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
     } else {
-        entity->move_command = EntityAi_MoveCommand(50.0f, entity, 0);
+        entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
     }
     EntityAi_StartAction(entity, (void (*)(Entity *))ai_state->move, unknown);
 }
@@ -286,7 +286,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
-                    entity->move_command = EntityAi_MoveCommand(entity->radius + 100.0f + 30.0f, entity, 0);
+                    entity->move_command = EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
             case 1:
                 if (turn > 0) {
@@ -294,7 +294,7 @@ static void Spider_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->move_command = (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
-                    entity->move_command = EntityAi_MoveCommand(50.0f, entity, 0);
+                    entity->move_command = EntityAi_MoveCommand(entity, 0, 50.0f);
                 }
                 break;
             }

@@ -44,7 +44,7 @@ float EntityMath_AngleDifference(float, float);
 s32 EntityAi_IsPushedFromFront(Entity *, f32);
 int EntityAi_TurnCommand(Entity *entity);
 int EntityAi_TurnFromPush(void *, void *);
-s16 EntityAi_MoveCommand(float, void *, int); // match: this file only matches with this type; EntityAi_MoveCommand.c defines it differently
+s32 EntityAi_MoveCommand(Entity *, s32, f32);
 void EntityAi_Dodge(Entity *);
 void EntityAi_Guard(Entity *);
 void EntityAi_ClearTurnInPlace(Entity *);
@@ -284,7 +284,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
                 } else if (turn < 0) {
                     entity->move_command |= (MOVE_COMMAND_FORWARD | MOVE_COMMAND_TURN_LEFT);
                 } else {
-                    entity->move_command |= EntityAi_MoveCommand(entity->radius + 100.0f + 30.0f, entity, 0);
+                    entity->move_command |= EntityAi_MoveCommand(entity, 0, entity->radius + 100.0f + 30.0f);
                 }
                 break;
             case 1:
