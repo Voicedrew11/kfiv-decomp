@@ -111,7 +111,7 @@ static void LavaFace_Think(Entity *entity, s32 unknown) {
         angles[0] = EntityMath_Approach(angles[0], pitch, entity->params->near_distance);
         angles[1] = EntityMath_Approach(angles[1], yaw, entity->params->far_distance);
         EntityAi_LaunchShot(entity, entity->params->pitch_limit_deg, from, angles);
-        EntityEvent_StartCue(entity, entity->params->unk43A, entity->params->unk43C, entity->params->unk43E);
+        EntityEvent_StartCue(entity, entity->params->type_param_0, entity->params->type_param_1, entity->params->type_param_2);
         entity->action_timer = entity->params->action_frames + rand() % 3;
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

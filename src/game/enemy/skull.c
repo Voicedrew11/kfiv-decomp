@@ -537,8 +537,8 @@ static void Skull_Animate(Entity *entity) {
     }
 }
 
-/* The ranged attack with record 0 (busy bit 1): animation 23; from frame EntityParams.unk43A to
-   unk43C launches the record's shots every other frame. */
+/* The ranged attack with record 0 (busy bit 1): animation 23; from frame EntityParams.type_param_0 to
+   type_param_1 launches the record's shots every other frame. */
 static void Skull_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
@@ -564,9 +564,9 @@ static void Skull_RangedAttack0(Entity *entity) {
         } else {
             ai_state->turn_rate = 0.0f;
         }
-        if (entity->model->level_tables->frame >= entity->params->unk43A && entity->model->level_tables->frame <= entity->params->unk43C &&
+        if (entity->model->level_tables->frame >= entity->params->type_param_0 && entity->model->level_tables->frame <= entity->params->type_param_1 &&
             (frame_counter & 1)) {
-            EntityAi_LaunchShots(entity, unk3D8, entity->params->unk43A, entity->params->unk43C);
+            EntityAi_LaunchShots(entity, unk3D8, entity->params->type_param_0, entity->params->type_param_1);
         }
         if (entity->model->level_tables->frame > 0 && unk3D8->unk03 >= entity->model->level_tables->frame) {
             ENTITY_FLAGS(entity) |= 0x80000;

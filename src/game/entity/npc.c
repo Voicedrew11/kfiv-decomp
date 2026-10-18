@@ -55,7 +55,7 @@ static void Npc_ThinkType81(Entity *entity, s32 run_now);
 static int Npc_ThinkType81Stand(void *entity_ptr, int unknown);
 
 /* The set-up function of entity type 15, the talking characters (chr.prm): as EntityAi_InitDefaults, with the
-   Npc_ handlers, its look part from EntityParams.unk43C, and flag bit 16 set. */
+   Npc_ handlers, its look part from EntityParams.type_param_1, and flag bit 16 set. */
 void Npc_Init(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     u8 *unkBC = entity->choice_weights;
@@ -63,7 +63,7 @@ void Npc_Init(Entity *entity) {
     EntityModelPart80 *part;
     s32 i;
 
-    part = (EntityModelPart80 *)entity->model->parts + entity->params->unk43C;
+    part = (EntityModelPart80 *)entity->model->parts + entity->params->type_param_1;
     entity->model->look_at_part = part;
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {
@@ -138,7 +138,7 @@ static void Npc_Animate(Entity *entity) {
 
 /* The on_hit handler of type 15: lowers the weights of the last choice (EntityAi_LowerWeightsAfterHit),
    forgets the target, stops the head following it, starts Npc_ReactionHeavy and marks its group record
-   (entity_group_state[EntityParams.unk43A].unk02). */
+   (entity_group_state[EntityParams.type_param_0].unk02). */
 static void Npc_OnHit(Entity *entity) {
     EntityAi_LowerWeightsAfterHit(entity);
     entity->flags &= ~ENTITY_FLAG_400;
@@ -595,7 +595,7 @@ void Npc_InitType81(Entity *entity) {
     EntityModelPart80 *part;
     s32 i;
 
-    part = (EntityModelPart80 *)entity->model->parts + entity->params->unk43C;
+    part = (EntityModelPart80 *)entity->model->parts + entity->params->type_param_1;
     entity->model->look_at_part = part;
     // match: in the three loops the pointer has to be formed inside the loop
     for (i = ENTITY_WORK_AREA_SIZE - 1; i != -1; i--) {

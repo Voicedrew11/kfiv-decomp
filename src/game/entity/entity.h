@@ -400,9 +400,9 @@ typedef struct {
     u16 action_frames;              /* 0x434 frames its actions run for, loaded into the work timers */
     s16 near_distance;              /* 0x436 the nearer of the two distances it keeps from the player */
     s16 far_distance;               /* 0x438 the farther of the two distances it keeps from the player */
-    s16 unk43A;                     /* 0x43A */
-    s16 unk43C;                     /* 0x43C */
-    s16 unk43E;                     /* 0x43E */
+    s16 type_param_0;               /* 0x43A a value each entity type uses its own way (frames, a bone, a distance) */
+    s16 type_param_1;               /* 0x43C a second per-type value */
+    s16 type_param_2;               /* 0x43E a third per-type value */
     u16 variant_effect_ids[8];      /* 0x440 indexed by flag bits 60-62; passed to Effect_StartSpawner */
 } EntityParams;
 
@@ -678,7 +678,7 @@ typedef struct {
     char pad00[0x68];
     s16 vanish_frames;              /* 0x68 frames left while it is vanished (draw flag 0x800, params.action_frames to start) */
     s16 vanish_cooldown;            /* 0x6A frames before it may vanish again (params.far_distance to start) */
-    s16 think_timer;                /* 0x6C countdown reloaded from params.unk43A */
+    s16 think_timer;                /* 0x6C countdown reloaded from params.type_param_0 */
     char pad6E[0x0A];
     s8 unk78;                       /* 0x78 */
     s8 unk79;                       /* 0x79 */

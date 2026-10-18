@@ -171,7 +171,7 @@ static void EarthElemental_Think(Entity *entity, s32 unknown) {
    the player's facing it goes backwards for 60 to 89 frames (work byte unk78 is 1, command from
    EarthElemental_BackwardsCommand); else it runs at the player for 60 to 119 frames (unk78 is 0); with the player
    more than 90 degrees off its heading it starts EarthElemental_PlayTurnAnim. Work word unk6A counts
-   the frames it is not going for the player; above EntityParams.unk43A, with the player within 30
+   the frames it is not going for the player; above EntityParams.type_param_0, with the player within 30
    degrees ahead and nearer than 1000, it starts EarthElemental_RangedAttack0. */
 static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -244,7 +244,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
             break;
         }
     }
-    if (ai_state->sub_timer > entity->params->unk43A
+    if (ai_state->sub_timer > entity->params->type_param_0
         && ABS(EntityMath_WrapAngle(entity->heading_to_player - entity->model->rotation[1])) < 0.5235988f
         && entity->distance_to_player < 1000.0f) {
         ai_state->sub_timer = 0;
@@ -252,7 +252,7 @@ static void EarthElemental_ThinkCombat(Entity *entity, s32 unknown) {
         EntityAi_StartAction(entity, EarthElemental_RangedAttack0, 1);
         return;
     }
-    if (ai_state->sub_timer <= entity->params->unk43A) {
+    if (ai_state->sub_timer <= entity->params->type_param_0) {
         ai_state->sub_timer++;
     }
     if (entity->combat_choice == 1) {

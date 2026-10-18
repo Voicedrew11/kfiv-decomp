@@ -198,7 +198,7 @@ static void DarkSuccubus_Animate(Entity *entity) {
    entity's position (work byte unk7A). While work word unk68 counts down, model flag 0x800 and flag
    bit 21 are set and Entity.model_alpha is 0x80; work word unk6A is the pause after it. With unk7C at 0
    the handler starts that time itself now and then, taking unkD6 down over 20 frames first. Work
-   word unk6C is put to EntityParams.unk43A while player_state.unk259 is set and counts down. */
+   word unk6C is put to EntityParams.type_param_0 while player_state.unk259 is set and counts down. */
 static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityAiStateKind15F8C0 *timers = (EntityAiStateKind15F8C0 *)ai_state;
@@ -220,7 +220,7 @@ static void DarkSuccubus_Think(Entity *entity, s32 unknown) {
         timers->think_timer--;
     }
     if (player_state.magic_shot_launched != 0) {
-        timers->think_timer = entity->params->unk43A;
+        timers->think_timer = entity->params->type_param_0;
     }
     DarkSuccubus_CountLiveSpawns(entity);
     if (entity->busy_flags == 0) {

@@ -353,8 +353,8 @@ static void AncientKing_RangedAttack0(Entity *entity) {
 
 /* An action (busy bit 0x1000) that AncientKing_ThinkCombat starts when
    AncientKing_ShouldRespawnOthers says so: animation 17 on the second motion slot; on frame
-   EntityParams.far_distance it starts effect unk436 at model point unk43E (EntityEvent_StartEffectAtPoint), past frame
-   unk43C effect unk43A there, and calls AncientKing_RespawnTwoOthers; then it plays to the end. */
+   EntityParams.far_distance it starts effect unk436 at model point type_param_2 (EntityEvent_StartEffectAtPoint), past frame
+   type_param_1 effect type_param_0 there, and calls AncientKing_RespawnTwoOthers; then it plays to the end. */
 static void AncientKing_RespawnOthers(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -372,10 +372,10 @@ static void AncientKing_RespawnOthers(Entity *entity) {
         break;
     case 2:
         if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame == entity->params->far_distance) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->unk43E, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->type_param_2, (int)entity->model->rotation);
         }
-        if (entity->params->unk43C < ((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43A, entity->params->unk43E, (int)entity->model->rotation);
+        if (entity->params->type_param_1 < ((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame) {
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_0, entity->params->type_param_2, (int)entity->model->rotation);
             AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
         }
@@ -672,7 +672,7 @@ static void AncientKing_LaunchShotsNearPlayer(Entity *entity) {
 
 /* The ranged attack with record 1 (busy bit 1): animation 24; on each of the four frames in
    ancient_king_bone_shot_frames it launches the record's shot unk10[0].unk00 from the point Model_GetSkinnedBonePoint gives for
-   EntityParams.unk43E, heading away from the entity's own position, with a pitch of -10 degrees
+   EntityParams.type_param_2, heading away from the entity's own position, with a pitch of -10 degrees
    (EntityAi_LaunchShot). */
 static void AncientKing_RangedAttack1(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -702,7 +702,7 @@ static void AncientKing_RangedAttack1(Entity *entity) {
         for (i = 0; i < 4; i++) {
             if (entity->ailment_4_frames == 0 || unk3D8->unk0C != 0) {
                 if (elapsed < launch_frames.frames[i] && entity->model->level_tables->frame >= launch_frames.frames[i]) {
-                    source = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->unk43E);
+                    source = (f32 *)Model_GetSkinnedBonePoint((char *)entity->model, entity->params->type_param_2);
                     if (source != NULL) {
                         delta_x = source[0] - entity->model->position[0];
                         delta_z = source[2] - entity->model->position[2];
@@ -750,10 +750,10 @@ static void AncientKing_RespawnOthersAfterSwitch(Entity *entity) {
         break;
     case 2:
         if (((EntityAiMotionSlot *)ai_state->motion_slot_1)->frame == entity->params->far_distance) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->unk43E, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->near_distance, entity->params->type_param_2, (int)entity->model->rotation);
         }
-        if (entity->params->unk43C < entity->model->level_tables->frame) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43A, entity->params->unk43E, (int)entity->model->rotation);
+        if (entity->params->type_param_1 < entity->model->level_tables->frame) {
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_0, entity->params->type_param_2, (int)entity->model->rotation);
             AncientKing_RespawnTwoOthers(entity);
             entity->action_step++;
         }

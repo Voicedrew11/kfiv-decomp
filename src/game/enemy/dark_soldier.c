@@ -52,7 +52,7 @@ static inline void move_along_arc(Entity *entity, EntityAiState *ai_state) {
     entity->move_delta_x = ai_state->move_speed * ai_state->target_point[0];
     entity->move_delta_y = -ai_state->part_angle_x;
     entity->move_delta_z = ai_state->move_speed * ai_state->target_point[2];
-    ai_state->part_angle_x -= entity->params->unk43E * 0.1f;
+    ai_state->part_angle_x -= entity->params->type_param_2 * 0.1f;
     ai_state->move_speed -= 0.5f;
     if (ai_state->move_speed < 0.0f) {
         ai_state->move_speed = 0.0f;
@@ -463,7 +463,7 @@ static void DarkSoldier_PlayAnim6Or7BySide(Entity *entity) {
 
 /* An action (busy bit 0x2000): the move DarkSoldier_CanMoveAlongArc tried out. Plays animation 8
    turning to the player, then from frame 10 moves the entity along the arc (move_along_arc:
-   forwards at work float unk44 along unk30, in y at unk48, both from EntityParams.unk43A to unk43E)
+   forwards at work float unk44 along unk30, in y at unk48, both from EntityParams.type_param_0 to type_param_2)
    through animations 17 and 9, until flag bit 44, 48, 49 or 50 is set. Afterwards, with work byte
    unk7B set, it calls EntityAi_PickAttack and starts DarkSoldier_MeleeAttack; else it thinks. */
 static void DarkSoldier_MoveAlongArc(Entity *entity) {
@@ -484,8 +484,8 @@ static void DarkSoldier_MoveAlongArc(Entity *entity) {
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
         model = entity->model;
         if (model->level_tables->blend_left == 0) {
-            ai_state->part_angle_x = entity->params->unk43A;
-            ai_state->move_speed = entity->params->unk43C;
+            ai_state->part_angle_x = entity->params->type_param_0;
+            ai_state->move_speed = entity->params->type_param_1;
             entity->action_step++;
             EntityMath_FacingVector((Vector4 *)ai_state->target_point, model->rotation[1]);
         }
@@ -602,7 +602,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
         entity->action_step++;
     case 1:
         if (entity->model->level_tables->blend_left == 0) {
-            ai_state->part_angle_x = entity->params->unk43A * 0.8f;
+            ai_state->part_angle_x = entity->params->type_param_0 * 0.8f;
             entity->action_step = 5;
         }
         EntityAi_TurnToHeading(entity, &ai_state->turn_rate, entity->heading_to_player);
@@ -610,7 +610,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
     case 2:
         if (entity->model->level_tables->frame >= 4) {
             entity->move_delta_y = -ai_state->part_angle_x;
-            ai_state->part_angle_x -= entity->params->unk43E * 0.1f;
+            ai_state->part_angle_x -= entity->params->type_param_2 * 0.1f;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {
             Motion_Start(entity, 9, 0, entity->params->motion_blend_frames >> 1, 1);
@@ -619,7 +619,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
         break;
     case 3:
         entity->move_delta_y = -ai_state->part_angle_x;
-        ai_state->part_angle_x -= entity->params->unk43E * 0.1f;
+        ai_state->part_angle_x -= entity->params->type_param_2 * 0.1f;
         if (entity->model->level_tables->blend_left == 0) {
             ENTITY_FLAGS(entity) &= ~0x4000;
             entity->action_step++;
@@ -627,7 +627,7 @@ static void DarkSoldier_Dodge(Entity *entity) {
         break;
     case 4:
         entity->move_delta_y = -ai_state->part_angle_x;
-        ai_state->part_angle_x -= entity->params->unk43E * 0.1f;
+        ai_state->part_angle_x -= entity->params->type_param_2 * 0.1f;
         landed = (s32)(ENTITY_FLAGS(entity) >> 44) & 1;
         if (landed == 1) {
             entity->move_delta_x = 0.0f;
@@ -688,14 +688,14 @@ static s32 DarkSoldier_CanMoveAlongArc(Entity *entity) {
     f32 distance;
 
     EntityMath_FacingVector((Vector4 *)direction, entity->model->rotation[1]);
-    rise = entity->params->unk43A;
-    advance = entity->params->unk43C;
+    rise = entity->params->type_param_0;
+    advance = entity->params->type_param_1;
     delta_x = delta_y = delta_z = 0.0f;
     while (rise > 0.0f) {
         delta_x += advance * direction[0];
         delta_z += advance * direction[2];
         delta_y -= rise;
-        rise -= entity->params->unk43E * 0.1f;
+        rise -= entity->params->type_param_2 * 0.1f;
         advance -= 0.5f;
         if (advance < 0.0f) {
             advance = 0.0f;

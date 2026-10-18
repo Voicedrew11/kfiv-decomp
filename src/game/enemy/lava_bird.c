@@ -510,7 +510,7 @@ static s32 LavaBird_SteerToTargetCommand(Entity *entity, s32 mark_far, f32 range
 
 /* The dormant action (busy bit 0x20), on the motion slots: holds animation 1 until the player is
    within EntitySpawnInfo.wake_distance or flag bit 43 is set; then it starts effect 0x166 at model point
-   0xFF and moves the entity in y by a speed that starts at EntityParams.unk43A and falls off, plays
+   0xFF and moves the entity in y by a speed that starts at EntityParams.type_param_0 and falls off, plays
    animation 2 to its end while LavaBird_ApplyMoveCommand moves it with command 1, goes to state 2 and thinks.
    */
 static void LavaBird_Dormant(Entity *entity) {
@@ -535,7 +535,7 @@ static void LavaBird_Dormant(Entity *entity) {
         break;
     case 1:
         if (entity->distance_to_player < entity->spawn_info->wake_distance || ENTITY_FLAG_BITS(entity)->bit43) {
-            ai_state->part_angle_z = entity->params->unk43A;
+            ai_state->part_angle_z = entity->params->type_param_0;
             EntityEvent_StartEffectAtPoint((char **)entity, 0x166, 0xFF, (int)entity->model->rotation);
             entity->action_step++;
         }

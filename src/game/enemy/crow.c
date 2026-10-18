@@ -144,7 +144,7 @@ static void Crow_PickAction(Entity *entity, s32 unknown) {
 
 /* Helper of Crow_Think, called in state 3: gives the forward command and starts the move
    action; the motion never moves the entity. It calls EntityEvent_StartEffectAtPoint with EntityParams.far_distance on the
-   first unk43A frames, pitches the entity to -40 degrees while its y is above -2000 and back to 0
+   first type_param_0 frames, pitches the entity to -40 degrees while its y is above -2000 and back to 0
    after, and clears flag bit 1 once it is more than 10000 from its spawn point. */
 static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -152,7 +152,7 @@ static void Crow_MoveOffAndRemove(Entity *entity, s32 unknown) {
 
     ENTITY_FLAG_BITS(entity)->bits11 = 0;
     entity->move_command |= MOVE_COMMAND_FORWARD;
-    if (ai_state->pause_timer < entity->params->unk43A) {
+    if (ai_state->pause_timer < entity->params->type_param_0) {
         EntityEvent_StartEffectAtPoint((char **)entity, entity->params->far_distance, 0xFF, (int)entity->model->rotation);
         ai_state->pause_timer++;
     }

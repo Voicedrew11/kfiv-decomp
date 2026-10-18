@@ -221,9 +221,9 @@ static void AcidCrawler_TurnParts30To34ToTarget(void *entity_arg) {
 
 /* The think handler: as EntityAi_Think, with AcidCrawler_ThinkCombat for states 1 and 2; after
    EntityAi_ThinkIdle it sets work byte unk7A to 1. Before that, while Entity.ailment_4_frames is 0, it
-   launches shot EntityParams.unk43C from near the point Model_GetSkinnedBonePoint gives for 0, on two timers:
+   launches shot EntityParams.type_param_1 from near the point Model_GetSkinnedBonePoint gives for 0, on two timers:
    work word unk68 (chance EntityParams.action_frames in 100 a frame, then a pause of unk436 frames) and
-   work word unk6A (chance unk438, pause unk43A). */
+   work word unk6A (chance unk438, pause type_param_0). */
 static void AcidCrawler_Think(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
     char *part = Model_GetSkinnedBonePoint((char *)entity->model, 0);
@@ -243,7 +243,7 @@ static void AcidCrawler_Think(Entity *entity, s32 unknown) {
                 target[0] += offset;
                 target[1] += offset;
                 target[2] += offset;
-                EntityAi_LaunchShot(entity, entity->params->unk43C, target, direction);
+                EntityAi_LaunchShot(entity, entity->params->type_param_1, target, direction);
                 ai_state->pause_timer = entity->params->near_distance;
             }
         }
@@ -257,8 +257,8 @@ static void AcidCrawler_Think(Entity *entity, s32 unknown) {
                 target[0] += offset;
                 target[1] += offset;
                 target[2] += offset;
-                EntityAi_LaunchShot(entity, entity->params->unk43C, target, direction);
-                ai_state->sub_timer = entity->params->unk43A;
+                EntityAi_LaunchShot(entity, entity->params->type_param_1, target, direction);
+                ai_state->sub_timer = entity->params->type_param_0;
             }
         }
         if (ai_state->sub_timer != 0) {

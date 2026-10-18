@@ -100,7 +100,7 @@ void Larva_Init(Entity *entity) {
 
 /* The think handler: as EntityAi_Think without EntityAi_CheckFarFromSpawn and the return to the spawn point;
    states 1 and 2 both have EntityAi_ThinkCombat. Every 20th frame it starts effect
-   EntityParams.unk43A at model point 0xFF. While work word unk6A counts down
+   EntityParams.type_param_0 at model point 0xFF. While work word unk6A counts down
    (Larva_DormantMoveAlongArc sets it to 600) it shrinks the model's scale (EntityModel.scale) from
    the one kept in work floats unk54 to unk5C towards half of it and lowers unk70 and unk74 of the
    entity's map record; at 0 it starts Larva_Death. */
@@ -126,7 +126,7 @@ static void Larva_Think(Entity *entity, s32 unknown) {
         }
     }
     if (frame_counter % 20U == 0) {
-        EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43A, 0xFF, (int)entity->model->rotation);
+        EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_0, 0xFF, (int)entity->model->rotation);
     }
     if (ai_state->sub_timer != 0) {
         ai_state->sub_timer--;
@@ -300,7 +300,7 @@ static void Larva_DormantHeldAtModelPoint(Entity *entity) {
    turns the entity to Entity.heading_to_player, give or take half of EntityParams.action_frames degrees, and sends it
    off at 40 degrees with a speed of 24 to 48 by the distance to the player, the y speed growing by
    EntityParams.pitch_limit_deg (limit unk432); it checks part 0 of melee record 0 for a hit (EntityAi_CheckMeleeHit)
-   and starts effect unk43C every third frame. When flag bit 44 is set it puts the model's scale
+   and starts effect type_param_1 every third frame. When flag bit 44 is set it puts the model's scale
    back, sets work word unk6A to 600, goes to state 2 and starts Larva_Dormant. */
 static void Larva_DormantMoveAlongArc(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -367,7 +367,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
             ai_state->part_angle_x = (f32)entity->params->yaw_limit_deg;
         }
         if (frame_counter % 3U == 0) {
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43C, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_1, 0xFF, (int)entity->model->rotation);
         }
         if (ai_state->action_counter == 0) {
             ai_state->action_counter = EntityAi_CheckMeleeHit(entity, entity->params->melee_attacks, 0, 1, 2);
@@ -380,7 +380,7 @@ static void Larva_DormantMoveAlongArc(Entity *entity) {
             entity->model->scale[1] = ai_state->heading_speed;
             entity->model->scale[2] = ai_state->keep_min_distance;
             ai_state->action_flags = 1;
-            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->unk43E, 0xFF, (int)entity->model->rotation);
+            EntityEvent_StartEffectAtPoint((char **)entity, entity->params->type_param_2, 0xFF, (int)entity->model->rotation);
             EntityAi_SetState((char *)entity, 2);
             entity->flags &= ~ENTITY_FLAG_200000;
             entity->flags &= ~ENTITY_FLAG_100000;

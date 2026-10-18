@@ -118,7 +118,7 @@ static void Fadin_Think(Entity *entity, s32 unknown) {
         if (ai_state->step_index < 0) {
             ai_state->step_index = 0;
         }
-        EntityEvent_StartCue(entity, entity->params->unk43A, entity->params->unk43C, entity->params->unk43E);
+        EntityEvent_StartCue(entity, entity->params->type_param_0, entity->params->type_param_1, entity->params->type_param_2);
         entity->action_timer = entity->params->action_frames + rand() % 3;
     }
     Motion_Start(entity, 0, 0, entity->params->motion_blend_frames, 0);

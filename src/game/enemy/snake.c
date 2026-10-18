@@ -237,7 +237,7 @@ static void Snake_DormantHoldAnim8ThenMove(Entity *entity) {
 
 /* The dormant action of the other modes (busy bit 0x20): holds animation 3 until the player is
    within EntitySpawnInfo.wake_distance, then plays it until EntityMath_DistanceXZ between the entity and its spawn
-   point reaches EntityParams.unk43A, goes to state 2 and thinks. */
+   point reaches EntityParams.type_param_0, goes to state 2 and thinks. */
 static void Snake_Dormant(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -264,7 +264,7 @@ static void Snake_Dormant(Entity *entity) {
         }
         break;
     case 2:
-        if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) >= (f32)entity->params->unk43A) {
+        if (EntityMath_DistanceXZ(entity->model->position, entity->spawn_info) >= (f32)entity->params->type_param_0) {
             EntityAi_SetState((char *)entity, 2);
             ENTITY_FLAG_BITS(entity)->bit27 = FALSE;
             ENTITY_FLAG_BITS(entity)->bit22 = FALSE;

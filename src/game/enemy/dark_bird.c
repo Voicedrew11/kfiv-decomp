@@ -721,8 +721,8 @@ static void DarkBird_MeleeAttack(Entity *entity) {
 }
 
 /* The ranged attack (busy bit 1): as EntityAi_RangedAttack, on the motion slots, with launches of
-   its own. Record 1: on the frame of the record's first shot and on frames EntityParams.unk43A and
-   unk43C, DarkBird_LaunchThreeShots launches, pitched at the player and up to 14 degrees to
+   its own. Record 1: on the frame of the record's first shot and on frames EntityParams.type_param_0 and
+   type_param_1, DarkBird_LaunchThreeShots launches, pitched at the player and up to 14 degrees to
    either side of the reverse of the heading. The other records: on the frame of the first shot
    DarkBird_LaunchBothShots launches at a point 200 below the player. The pause Entity.attack_delay_frames
    is the record's unk02 as it is. */
@@ -773,10 +773,10 @@ static void DarkBird_RangedAttack(Entity *entity) {
                     launch_frame = record->launches[0].frame;
                     break;
                 case 1:
-                    launch_frame = entity->params->unk43A;
+                    launch_frame = entity->params->type_param_0;
                     break;
                 case 2:
-                    launch_frame = entity->params->unk43C;
+                    launch_frame = entity->params->type_param_1;
                     break;
                 }
                 if (launch_frame != 0 && elapsed < launch_frame && frame >= launch_frame) {

@@ -301,7 +301,7 @@ static void Makara_Dormant(Entity *entity) {
 
 /* The ranged attack with record 0 (busy bit 1): animation 23, as EntityAi_RangedAttack; when it
    ends and EntityAi_CanUseMelee finds the player in reach of melee record 2 it starts EntityAi_MeleeAttack
-   with that record, with a chance of EntityParams.unk43A in 100. */
+   with that record, with a chance of EntityParams.type_param_0 in 100. */
 static void Makara_RangedAttack0(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
     EntityParamsUnk3D8 *unk3D8 = &entity->params->ranged_attacks[0].record;
@@ -341,7 +341,7 @@ static void Makara_RangedAttack0(Entity *entity) {
             entity->action_timer = 0;
             EntityAi_SetAttackDelay(entity, unk3D8->attack_delay);
             if ((s32)(ENTITY_FLAGS(entity) >> 5) & 1) {
-                if (EntityAi_CanUseMelee(entity, 2) && rand() % 100 < entity->params->unk43A) {
+                if (EntityAi_CanUseMelee(entity, 2) && rand() % 100 < entity->params->type_param_0) {
                     EntityAi_StartAttack(entity, EntityAi_MeleeAttack, 1, 0, 2);
                 } else {
                     ai_state->think(entity, 1);

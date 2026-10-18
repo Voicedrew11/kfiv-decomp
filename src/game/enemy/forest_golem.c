@@ -124,7 +124,7 @@ void ForestGolem_Init(Entity *entity) {
 /* The think handler the set-up function installs when the byte of map_script_flags that
    EntityParams.pitch_limit_deg and unk432 index is set, and ForestGolem_StartScriptAndRumble when it ends: copies
    the position in work floats unk48 to unk50 to the model, relative to the map origin
-   EntityParams.unk43A names when the entity is on another map than current_map_slot, sets the heading to
+   EntityParams.type_param_0 names when the entity is on another map than current_map_slot, sets the heading to
    0 and starts the move action. */
 static void ForestGolem_ThinkStayInPlace(Entity *entity, int invoke_now) {
     EntityAiState *sub;

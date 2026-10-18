@@ -302,8 +302,8 @@ static void WaterElemental_PlayTurnAnim(Entity *entity) {
 
 /* An action (busy bit 0x1000) that WaterElemental_Think starts when Entity.hit_points is below
    EntityParams.near_distance percent of EntityParams.hit_points: plays animation 18 to its end; on frame
-   EntityParams.unk43E it adds EntityParams.unk43A percent of unk0A to Entity.hit_points, once, and sets
-   the pause in work word unk6C to unk43C. Entity.hit_points is the entity's health: Entity_ResetToSpawn
+   EntityParams.type_param_2 it adds EntityParams.type_param_0 percent of unk0A to Entity.hit_points, once, and sets
+   the pause in work word unk6C to type_param_1. Entity.hit_points is the entity's health: Entity_ResetToSpawn
    loads it from EntityParams.hit_points, Attack_HitEntity takes the damage of a hit off it, and
    EntityAi_Update starts the death action when it is 0. */
 static void WaterElemental_RecoverHealth(Entity *entity) {
@@ -325,9 +325,9 @@ static void WaterElemental_RecoverHealth(Entity *entity) {
         }
         break;
     case 2:
-        if (ai_state->action_counter == 0 && entity->model->level_tables->frame == entity->params->unk43E) {
-            entity->hit_points += (s32)(entity->params->hit_points * (f32)entity->params->unk43A / 100.0f);
-            ai_state->mode_timer = entity->params->unk43C;
+        if (ai_state->action_counter == 0 && entity->model->level_tables->frame == entity->params->type_param_2) {
+            entity->hit_points += (s32)(entity->params->hit_points * (f32)entity->params->type_param_0 / 100.0f);
+            ai_state->mode_timer = entity->params->type_param_1;
             ai_state->action_counter = 1;
         }
         if ((s32)(ENTITY_FLAGS(entity) >> 34) & 1) {

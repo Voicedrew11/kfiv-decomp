@@ -208,7 +208,7 @@ done:
 }
 
 /* The melee attack with record 2 (EntityParams.melee_attack_third; busy bit 1): animation 22; the three parts
-   are checked along the heading plus EntityParams.far_distance, unk43A and unk43C degrees, and one hit
+   are checked along the heading plus EntityParams.far_distance, type_param_0 and type_param_1 degrees, and one hit
    ends the checks. */
 static void EarthKing_MeleeAttack2(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -243,9 +243,9 @@ static void EarthKing_MeleeAttack2(Entity *entity) {
         if (!ENTITY_FLAG_BITS(entity)->bit54) {
             ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 0, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + entity->params->far_distance * 0.017453292f));
             if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + entity->params->unk43A * 0.017453292f));
+                ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 1, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + entity->params->type_param_0 * 0.017453292f));
                 if (!ENTITY_FLAG_BITS(entity)->bit54) {
-                    ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + entity->params->unk43C * 0.017453292f));
+                    ENTITY_FLAG_BITS(entity)->bit54 = EntityAi_CheckMeleeHitAt(entity, unk240, 2, frame, entity->model->level_tables->frame, EntityMath_WrapAngle(entity->model->rotation[1] + entity->params->type_param_1 * 0.017453292f));
                 }
             }
         }

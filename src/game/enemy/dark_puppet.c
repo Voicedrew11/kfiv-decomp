@@ -138,7 +138,7 @@ static void DarkPuppet_OnHit(Entity *entity) {
 /* The think handler: as EntityAi_Think, with DarkPuppet_ThinkCombat for state 2. After that it
    keeps flag bit 28 set except during a hit reaction or the death (busy bits 2, 4, 0x40); while the
    bit is set it adds command bit 0x20 or 0x10 by the height EntityCollision_DistanceToPropFloor reads (work byte unk7A:
-   set above EntityParams.unk43C, cleared below unk43E); and it calls DarkPuppet_ApplyMoveCommand while the entity
+   set above EntityParams.type_param_1, cleared below type_param_2); and it calls DarkPuppet_ApplyMoveCommand while the entity
    is not busy or is in a hit reaction. */
 static void DarkPuppet_Think(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -177,9 +177,9 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
     if ((s32)(entity->flags >> 28) & 1) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
         if (height != D_00446834[0]) {
-            if ((f32)entity->params->unk43C < height) {
+            if ((f32)entity->params->type_param_1 < height) {
                 ai_state->step_index = 1;
-            } else if (height < (f32)entity->params->unk43E) {
+            } else if (height < (f32)entity->params->type_param_2) {
                 ai_state->step_index = 0;
             }
             if (ai_state->step_index != 0) {
@@ -196,7 +196,7 @@ static void DarkPuppet_Think(Entity *entity, s32 unknown) {
 
 /* The think function of state 2: as EntityAi_ThinkCombat with the type's own attacks
    (DarkPuppet_MeleeAttack; DarkPuppet_RangedAttack0 for ranged record 0,
-   DarkPuppet_RangedAttack for the others). Closing in lasts EntityParams.unk43A frames and has
+   DarkPuppet_RangedAttack for the others). Closing in lasts EntityParams.type_param_0 frames and has
    four ways, kept in work byte unk78: 0 forward (the player farther than unk438), 1 backwards
    (nearer than unk436), 2 and 3 sideways (command bits 4 and 8) while keeping between the two
    distances; EntityAi_IsPushedFromFront makes it change the way. Waiting (4) it turns to the player. */
@@ -249,7 +249,7 @@ static void DarkPuppet_ThinkCombat(Entity *entity, s32 unknown) {
             } else {
                 ai_state->move_choice = 3;
             }
-            entity->action_timer = entity->params->unk43A;
+            entity->action_timer = entity->params->type_param_0;
             break;
         case 2:
             entity->target = &player_state;

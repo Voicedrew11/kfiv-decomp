@@ -115,7 +115,7 @@ static void Slasher_OnHit(Entity *entity) {
 
 /* The think handler: as EntityAi_Think, but states 1 and 2 both have EntityAi_ThinkCombat (and
    clear work byte unk7A) and state 0 starts Slasher_WaitForPlayerNear. Every frame it starts effect
-   EntityParams.unk43A at the points Model_GetSkinnedBonePoint gives for 30 and 31. */
+   EntityParams.type_param_0 at the points Model_GetSkinnedBonePoint gives for 30 and 31. */
 static void Slasher_Think(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
     char *part;
@@ -143,9 +143,9 @@ static void Slasher_Think(Entity *entity, s32 unknown) {
         }
     }
     part = Model_GetSkinnedBonePoint((char *)entity->model, 0x1E);
-    Effect_StartSpawner(entity->params->unk43A, part, entity->model->rotation, entity);
+    Effect_StartSpawner(entity->params->type_param_0, part, entity->model->rotation, entity);
     part = Model_GetSkinnedBonePoint((char *)entity->model, 0x1F);
-    Effect_StartSpawner(entity->params->unk43A, part, entity->model->rotation, entity);
+    Effect_StartSpawner(entity->params->type_param_0, part, entity->model->rotation, entity);
 }
 
 /* A think function nothing refers to: gives no movement command, lets the head follow the target (flag 9) and

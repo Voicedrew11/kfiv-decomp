@@ -146,8 +146,8 @@ static void DarkSorcerer_OnHit(Entity *entity) {
 /* The think handler: no states. While the entity is not busy it calls EntityAi_ThinkReturn when
    flag bit 53 is set, else DarkSorcerer_ThinkDecide. After that it keeps flag bit 28 set except in
    the death action; while the bit is set it adds command bit 0x20 or 0x10 by the height
-   EntityCollision_DistanceToPropFloor reads (work byte unk7A: set above EntityParams.unk43C or when there is no reading,
-   cleared below unk43E); and it calls DarkSorcerer_ApplyMoveCommand while the entity is not busy or is in a hit
+   EntityCollision_DistanceToPropFloor reads (work byte unk7A: set above EntityParams.type_param_1 or when there is no reading,
+   cleared below type_param_2); and it calls DarkSorcerer_ApplyMoveCommand while the entity is not busy or is in a hit
    reaction. Counts down work word unk6A. */
 static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
     EntityAiState *ai_state = &entity->ai_state;
@@ -173,8 +173,8 @@ static void DarkSorcerer_Think(Entity *entity, s32 unknown) {
     if ((s32)(entity->flags >> 28) & 1) {
         height = EntityCollision_DistanceToPropFloor(entity->map_record, entity->model->position);
         if (height != D_00446830[0]) {
-            if (!((f32)entity->params->unk43C < height)) {
-                if (height < (f32)entity->params->unk43E) {
+            if (!((f32)entity->params->type_param_1 < height)) {
+                if (height < (f32)entity->params->type_param_2) {
                     ai_state->step_index = 0;
                 }
             } else {
@@ -247,7 +247,7 @@ static void DarkSorcerer_ThinkDecide(Entity *entity, s32 unknown) {
             } else {
                 ai_state->move_choice = 3;
             }
-            entity->action_timer = entity->params->unk43A;
+            entity->action_timer = entity->params->type_param_0;
             break;
         case 2:
             entity->target = &player_state;

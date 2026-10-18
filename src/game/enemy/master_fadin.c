@@ -268,7 +268,7 @@ static void MasterFadin_Death(Entity *entity) {
 
 /* Helper of MasterFadin_Death: when the dying entity's partner (spawn id EntitySpawnInfo.variant)
    has flag bit 1 set and bits 2-3 at 0, puts it in state 2 and reloads its work word unk68 from
-   EntityParams.unk43A. */
+   EntityParams.type_param_0. */
 static void MasterFadin_AlertPartner(Entity *entity) {
     Entity *partner;
 
@@ -276,7 +276,7 @@ static void MasterFadin_AlertPartner(Entity *entity) {
     if (partner != NULL) {
         if ((partner->flags & (ENTITY_FLAG_LIVE | ENTITY_FLAG_DYING_MASK)) == 2) {
             partner->state = 2;
-            partner->ai_state.pause_timer = partner->params->unk43A;
+            partner->ai_state.pause_timer = partner->params->type_param_0;
         }
     }
 }

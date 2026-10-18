@@ -137,7 +137,7 @@ static void DarkKnight_OnHit(Entity *entity) {
    while work word unk68 counts down (DarkKnight_RangedAttack0 sets it), for the first
    EntityParams.near_distance frames it starts one of effects 0x21F to 0x221 at point 4 and writes
    EntityParams.far_distance into unk10[n].unk00.unk00[8] of the three melee records, and 0 once the count
-   is over; it counts down work word unk6C, set to EntityParams.unk43A while player_state.unk259 is
+   is over; it counts down work word unk6C, set to EntityParams.type_param_0 while player_state.unk259 is
    not 0; and while work word unk6A counts down it keeps flag bit 35 set, with effect 0x25C every
    third frame. */
 static void DarkKnight_Think(Entity *entity, s32 unknown) {
@@ -212,7 +212,7 @@ static void DarkKnight_Think(Entity *entity, s32 unknown) {
         ai_state->mode_timer--;
     }
     if (player_state.magic_shot_launched != 0) {
-        ai_state->mode_timer = entity->params->unk43A;
+        ai_state->mode_timer = entity->params->type_param_0;
     }
     if (ai_state->sub_timer > 0) {
         if (frame_counter % 3U == 0) {
@@ -405,7 +405,7 @@ static void DarkKnight_PlayTurnAnim(Entity *entity) {
 /* An action (busy bit 0x10) that DarkKnight_ThinkCombat starts when DarkKnight_ShouldHoldAnim13 says so: as
    EntityAi_Guard (animation 13 held for EntityParams.guard_frames frames with the motion stopped), but without flag
    35, so it adds no defence and a hit still starts a reaction; once the motion has blended in it puts work word
-   unk6A to EntityParams.unk43C, the pause before the next. */
+   unk6A to EntityParams.type_param_1, the pause before the next. */
 static void DarkKnight_HoldGuardPose(Entity *entity) {
     EntityAiState *ai_state = &entity->ai_state;
 
@@ -422,7 +422,7 @@ static void DarkKnight_HoldGuardPose(Entity *entity) {
         if (entity->model->level_tables->blend_left == 0) {
             entity->action_timer = entity->params->guard_frames;
             ENTITY_FLAGS(entity) &= ~0x4000;
-            ai_state->sub_timer = entity->params->unk43C;
+            ai_state->sub_timer = entity->params->type_param_1;
             entity->action_step++;
         }
         break;
