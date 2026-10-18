@@ -355,7 +355,7 @@ void EffectTrailHoming_Update(EffectActor *actor) {
         Effect_Spawn(actor->def->child_effect_id, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
     }
     motion->hit_cooldown--;
-    COLLISION_RESULT->unk18 = 6;
+    COLLISION_RESULT->floor_material = 6;
     hit = Attack_RunEffectHitCheck(actor);
     if (hit != 0) {
         if (hit & 2) {
@@ -366,7 +366,7 @@ void EffectTrailHoming_Update(EffectActor *actor) {
                 motion->hit_cooldown = 15;
             }
         } else {
-            mode = COLLISION_RESULT->unk18;
+            mode = COLLISION_RESULT->floor_material;
             if (mode != 3) {
                 effect_id = 0x14;
                 if (mode != 5) {
@@ -512,7 +512,7 @@ void EffectLob_Update(EffectActor *effect) {
         EffectAngle_FromVector(&effect->model->rotation.x, &motion->velocity.x);
     }
     if (Attack_RunEffectHitCheck(effect)) {
-        spawn_id = COLLISION_RESULT->unk18 == 5 ? 0x16 : effect->def->end_effect;
+        spawn_id = COLLISION_RESULT->floor_material == 5 ? 0x16 : effect->def->end_effect;
         Effect_Spawn(spawn_id, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         Effect_Spawn(0x122, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
         motion->landed = 1;
@@ -638,8 +638,8 @@ void EffectFall_Update(EffectActor *effect) {
     }
     hit = Attack_RunEffectHitCheck(effect);
     if (hit & 8) {
-        if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
-            if (COLLISION_RESULT->unk18 == 5) {
+        if (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5) {
+            if (COLLISION_RESULT->floor_material == 5) {
                 Effect_Spawn(0x16, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             }
             Effect_Spawn(0x14, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
@@ -653,8 +653,8 @@ void EffectFall_Update(EffectActor *effect) {
         }
         Effect_Free(effect);
     } else if (hit != 0) {
-        if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
-            if (COLLISION_RESULT->unk18 == 5) {
+        if (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5) {
+            if (COLLISION_RESULT->floor_material == 5) {
                 Effect_Spawn(0x16, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
             }
             Effect_Spawn(0x14, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
@@ -794,7 +794,7 @@ void EffectGroundRun_Update(EffectActor *effect) {
                 Effect_Free(effect);
                 return;
             }
-            if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
+            if (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5) {
                 Effect_Spawn(effect->def->sub_effect_id, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 Effect_Spawn(0x123, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 Effect_Free(effect);
@@ -814,7 +814,7 @@ void EffectGroundRun_Update(EffectActor *effect) {
         if (effect->frame >= effect->def->radius_half && effect->frame <= effect->def->interval) {
             effect->model->position.y -= motion->hit_offset;
             if (Attack_RunEffectHitCheck(effect) & 0x14) {
-                if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
+                if (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5) {
                     Effect_Spawn(effect->def->sub_effect_id, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                     Effect_Spawn(0x123, &effect->model->position, &effect->model->rotation, effect->owner_entity, effect->effect_param, effect->owner);
                 }
@@ -901,7 +901,7 @@ void EffectFloorSkim_Update(EffectActor *effect) {
                 Vector_Copy(&point, &effect->model->position);
                 point.y -= 100.0f;
                 point.y = (Collision_FindFloorBelow(200.0f, &point) == 1) ? COLLISION_RESULT->point[1] : effect->model->position.y;
-                if (COLLISION_RESULT->unk18 == 5) {
+                if (COLLISION_RESULT->floor_material == 5) {
                     if (3.0f < effect->model->scale_z) {
                         spawn_id = 0x19;
                         floor_skim_spawn_count = 0;
@@ -1185,7 +1185,7 @@ void EffectArc_Update(EffectActor *actor) {
         if (motion->ends_next_frame != 0) {
             Effect_Free(actor);
         } else if (Attack_RunEffectHitCheck(actor) != 0) {
-            if (COLLISION_RESULT->unk18 == 3 || COLLISION_RESULT->unk18 == 5) {
+            if (COLLISION_RESULT->floor_material == 3 || COLLISION_RESULT->floor_material == 5) {
                 end_effect = actor->def->sub_effect_id;
                 Effect_Spawn(0x122, &actor->model->position, &actor->model->rotation, actor->owner_entity, actor->effect_param, actor->owner);
             } else {

@@ -1210,12 +1210,12 @@ static void Menu_OpenModelFile(ChunkUpload *upload) {
     s32 file_handle;
 
     file_handle = File_OpenUnflagged(upload->name, 1, 1);
-    upload->unk08 = file_handle;
+    upload->file_handle = file_handle;
     if (file_handle < 0) {
-        upload->unk08 = File_Open("menu/select2/i0000.mod", 1, 1);
+        upload->file_handle = File_Open("menu/select2/i0000.mod", 1, 1);
     }
-    File_Read(upload->unk08, upload->pool_node->buffer, 0x25800);
-    model_read_file = upload->unk08;
+    File_Read(upload->file_handle, upload->pool_node->buffer, 0x25800);
+    model_read_file = upload->file_handle;
     upload->stage++;
 }
 
@@ -1223,13 +1223,13 @@ static void Menu_OpenModelFile(ChunkUpload *upload) {
 static void Menu_WaitModelRead(ChunkUpload *upload) {
     s32 status;
 
-    status = File_Sync(upload->unk08, 1);
+    status = File_Sync(upload->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         upload->done = upload->stage = 0;
         model_read_file = -1;
     }
@@ -1244,7 +1244,7 @@ static void Menu_FinishModelLoad(ChunkUpload *upload) {
     FlushCache(0);
     upload->done = 1;
     upload->stage = 0;
-    upload->unk08 = -1;
+    upload->file_handle = -1;
 }
 
 /* the stages of a menu model's load: open, wait for the read, hand the model over */
@@ -1293,13 +1293,13 @@ static void Menu_OpenWornModelFile(LinkNode *node) {
 static void Menu_WaitWornModelRead(ChunkUpload *upload) {
     s32 status;
 
-    status = File_Sync(upload->unk08, 1);
+    status = File_Sync(upload->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         upload->done = upload->stage = 0;
         model_read_file = -1;
         worn_model_loading = 0;
@@ -1368,14 +1368,14 @@ static void Menu_OpenPackageFile(ChunkUpload *upload) {
     s32 file_handle;
 
     file_handle = File_OpenUnflagged(upload->name, 1, 1);
-    upload->unk08 = file_handle;
+    upload->file_handle = file_handle;
     if (file_handle < 0) {
         upload->stage = 0;
         upload->done = 0;
         upload = NULL; // match: retail goes on to read through this null pointer
     }
-    File_Read(upload->unk08, upload->pool_node->buffer, 0x1A2000);
-    model_read_file = upload->unk08;
+    File_Read(upload->file_handle, upload->pool_node->buffer, 0x1A2000);
+    model_read_file = upload->file_handle;
     upload->stage++;
 }
 
@@ -1383,13 +1383,13 @@ static void Menu_OpenPackageFile(ChunkUpload *upload) {
 static void Menu_WaitPackageRead(ChunkUpload *upload) {
     s32 status;
 
-    status = File_Sync(upload->unk08, 1);
+    status = File_Sync(upload->file_handle, 1);
     if (status == 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         model_read_file = -1;
         upload->stage++;
     } else if (status < 0) {
-        File_Close(upload->unk08);
+        File_Close(upload->file_handle);
         upload->done = upload->stage = 0;
         model_read_file = -1;
     }
@@ -1412,7 +1412,7 @@ static void Menu_FinishPackageLoad(ChunkUpload *upload) {
     FlushCache(0);
     upload->done = 1;
     upload->stage = 0;
-    upload->unk08 = -1;
+    upload->file_handle = -1;
 }
 
 /* the stages of a package's load: open, wait for the read, hand every chunk over */
@@ -3033,8 +3033,8 @@ static void Menu_UpdateMain(HandlerContext *context) {
                         }
                         if (Menu_KnowsCastableSpell() != 0 || main_menu_line != 1) {
                             menu_screen_handler = (void *)Menu_OpenChosenScreen;
-                            context->unk04 = main_menu_line;
-                            switch (context->unk04) {
+                            context->active_list = main_menu_line;
+                            switch (context->active_list) {
                             case 0:
                                 ((void (*)(s32))Menu_ChainItemListModels)(0); // match: the callee takes nothing
                                 break;
@@ -3058,7 +3058,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
                             }
                         }
                     } else if (main_menu_state == 3) {
-                        context->unk04 = 0;
+                        context->active_list = 0;
                         main_menu_line = 0;
                         menu_step++;
                     }
@@ -3073,7 +3073,7 @@ static void Menu_UpdateMain(HandlerContext *context) {
 
 /* Makes the screen of the main menu line chosen (context->unk04) the current handler and clears the line. */
 static void Menu_OpenChosenScreen(HandlerContext *context) {
-    int *line = &context->unk04;
+    int *line = &context->active_list;
 
     pulse_sprite_alpha = 128.0f;
     menu_screen_handler = main_menu_screens[*line];
@@ -4349,10 +4349,10 @@ static void Menu_UpdateKeyItems(void) {
             TEXTURE_HEADER_BITS(texture)->tex0.f.cbp = clut_pages.base[i];
             pool_slots[31].part = part;
             // match: both words are read through unions, which keeps the two NULL stores below them
-            pool_slots[31].unk58 = TEXTURE_HEADER_BITS(texture)->tex0.raw;
+            pool_slots[31].tex0 = TEXTURE_HEADER_BITS(texture)->tex0.raw;
             pool_slots[31].unk60 = TEXTURE_HEADER_BITS(texture)->unk18.raw;
-            pool_slots[31].unk48 = NULL;
-            pool_slots[31].unk40 = NULL;
+            pool_slots[31].part_record = NULL;
+            pool_slots[31].parent = NULL;
             MenuTexture_Upload(texture, NULL);
             sceVu0TransMatrix((f32 *)&pool_slots[31], view, positions.position[i]);
             PoolSlot_Draw((RenderSlot *)&pool_slots[31], slot_arg); // match: slot_arg is never set
@@ -4647,7 +4647,7 @@ static void Menu_UpdateRecollection(HandlerContext *context) {
     if ((menu_buttons & PAD_CROSS) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(0);
         menu_screen_handler = (void *)Menu_UpdateRecollectionPage;
-        context->unk04 = recollection_page * LIST_PAGES + rows[recollection_cursor] + MSG_RECOLLECTION_FIRST;
+        context->active_list = recollection_page * LIST_PAGES + rows[recollection_cursor] + MSG_RECOLLECTION_FIRST;
         menu_input_enabled = 0;
     } else if ((menu_buttons & PAD_CIRCLE) && recollection_state == 1 && menu_input_enabled != 0) {
         Sound_PlayMenu(2);
@@ -4738,7 +4738,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     s32 entry;
     u8 kind;
 
-    page = (context->unk04 - 3000) / 50;
+    page = (context->active_list - 3000) / 50;
     for (i = 0; i < image_part_count; i++) {
         kind = image_parts[i].handler_index;
         Menu_SetBlendMode(image_parts[i].blend_mode);
@@ -4793,7 +4793,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     }
     word.raw = 0x000AAE607C307F80;
     MenuText_SetPen(word);
-    entry = ((s32 *)table)[context->unk04 + 1];
+    entry = ((s32 *)table)[context->active_list + 1];
     if (entry != 0) {
         if (page == 0) {
             MenuText_DrawWrappedLong((u16 *)(table + entry), 0x1B);
@@ -4803,7 +4803,7 @@ static void Menu_UpdateRecollectionPage(HandlerContext *context) {
     }
     if (menu_buttons & PAD_CIRCLE) {
         Sound_PlayMenu(2);
-        context->unk04 = 0;
+        context->active_list = 0;
         menu_screen_handler = (void *)Menu_UpdateRecollection;
         menu_input_enabled = 1;
     }

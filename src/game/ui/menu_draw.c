@@ -2159,17 +2159,17 @@ s32 PoolNodeFile_Relocate(RelocFile *file) {
 
     for (i = 0; i < file->entry_count; i++) {
         entry = cursor;
-        if (entry->unk30 != NULL) {
-            entry->unk30 = (char *)file + (s32)entry->unk30;
+        if (entry->keys != NULL) {
+            entry->keys = (char *)file + (s32)entry->keys;
         }
         if (entry->layers != NULL) {
             entry->layers = (RelocLayer *)((char *)file + (s32)entry->layers);
         }
-        if (entry->unk38 != NULL) {
-            entry->unk38 = (char *)file + (s32)entry->unk38;
+        if (entry->child != NULL) {
+            entry->child = (char *)file + (s32)entry->child;
         }
-        if (entry->unk3C != NULL) {
-            entry->unk3C = (char *)file + (s32)entry->unk3C;
+        if (entry->sibling != NULL) {
+            entry->sibling = (char *)file + (s32)entry->sibling;
         }
         for (j = 0, layer = entry->layers; j < entry->layer_count; j++, layer++) {
             if (layer->unk08 != NULL) {
@@ -2311,7 +2311,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
         *((u64 *)scratch->cursor)++ = 0x1C;
         *((u64 *)scratch->cursor)++ = scratch->tex0;
         *((u64 *)scratch->cursor)++ = 0x17;
-        *scratch->cursor++ = scratch->strip_at->unk04;
+        *scratch->cursor++ = scratch->strip_at->alpha_2;
         *scratch->cursor++ = 0;
         *scratch->cursor++ = 0x43;
         *scratch->cursor++ = 0;
@@ -2343,7 +2343,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
             scratch->cursor = out + 8;
             scratch->strip_point++;
         }
-        if (scratch->strip_at->unk10 != 0) {
+        if (scratch->strip_at->second_tex0 != 0) {
             scratch->strip_point = scratch->strip_at->points;
             *scratch->cursor++ = scratch->reg_tag[0];
             *scratch->cursor++ = scratch->reg_tag[1];
@@ -2354,7 +2354,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
             ((PoolPartMaterialBits *)scratch->strip_start)->cld = 4; // match: as above
             scratch->registers[0] = 0;
             scratch->registers[1] = 0;
-            scratch->registers[4] = scratch->strip_at->unk10 | 0x800000000;
+            scratch->registers[4] = scratch->strip_at->second_tex0 | 0x800000000;
             scratch->registers[5] = 7;
             scratch->registers[2] = 0x60;
             scratch->registers[3] = 0x15;
@@ -2363,7 +2363,7 @@ void PoolPart_DrawTinted(PoolPart *part, s32 parent, RenderSlotArg color) {
             scratch->cursor += 0x10;
             *((u64 *)scratch->cursor)++ = 4;
             *((u64 *)scratch->cursor)++ = 0x1C;
-            *((u64 *)scratch->cursor)++ = scratch->strip_at->unk10;
+            *((u64 *)scratch->cursor)++ = scratch->strip_at->second_tex0;
             *((u64 *)scratch->cursor)++ = 0x17;
             *((u64 *)scratch->cursor)++ = 9;
             *scratch->cursor++ = 0x43;
@@ -2538,7 +2538,7 @@ void PoolPart_Draw(PoolPart *part, s32 parent) {
         *((u64 *)scratch->cursor)++ = 0x1C;
         *((u64 *)scratch->cursor)++ = scratch->tex0;
         *((u64 *)scratch->cursor)++ = 0x17;
-        *scratch->cursor++ = scratch->strip_at->unk04;
+        *scratch->cursor++ = scratch->strip_at->alpha_2;
         *scratch->cursor++ = 0;
         *scratch->cursor++ = 0x43;
         *scratch->cursor++ = 0;
@@ -2673,18 +2673,18 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
     scratch->normal_count = part->normal_count;
     scratch->point_index = 0;
     scratch->normal_index = 0;
-    record = POOL(slot)->unk48;
+    record = POOL(slot)->part_record;
     wait_gif();
     if (record != NULL) {
-        scratch->parent_point_count = record->unk00;
-        scratch->parent_normal_count = record->unk04;
-        sceVu0MulMatrix(scratch->screen, menu_view_screen_matrix, POOL(slot)->unk40);
-        sceVu0MulMatrix(scratch->light, POOL(slot)->unk40, menu_model_light_directions);
+        scratch->parent_point_count = record->parent_point_count;
+        scratch->parent_normal_count = record->parent_normal_count;
+        sceVu0MulMatrix(scratch->screen, menu_view_screen_matrix, POOL(slot)->parent);
+        sceVu0MulMatrix(scratch->light, POOL(slot)->parent, menu_model_light_directions);
         __asm__ volatile("lqc2 $vf12, 0x0(%0)\n"
                          "lqc2 $vf13, 0x10(%0)\n"
                          "lqc2 $vf14, 0x20(%0)\n"
                          "lqc2 $vf15, 0x30(%0)\n"
-                         : : "r"(POOL(slot)->unk40));
+                         : : "r"(POOL(slot)->parent));
         __asm__ volatile("lqc2 $vf1, 0x0(%0)\n"
                          "lqc2 $vf2, 0x10(%0)\n"
                          "lqc2 $vf3, 0x20(%0)\n"
@@ -2810,7 +2810,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
     scratch->reg_tag[0] = 0x8008;
     scratch->reg_tag[1] = 0x10004000;
     scratch->reg_tag[2] = 0xE;
-    scratch->tex0 = POOL(slot)->unk58; // match: the slot's TEX0 serves every strip
+    scratch->tex0 = POOL(slot)->tex0; // match: the slot's TEX0 serves every strip
     scratch->prim_tag[3] = 0;
     scratch->reg_tag[3] = 0;
     for (scratch->strip = 0; scratch->strip < scratch->strip_count; scratch->strip++) {
@@ -2837,7 +2837,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
         *((u64 *)scratch->cursor)++ = 0x1C;
         *((u64 *)scratch->cursor)++ = scratch->tex0;
         *((u64 *)scratch->cursor)++ = 0x16;
-        *scratch->cursor++ = scratch->strip_at->unk04;
+        *scratch->cursor++ = scratch->strip_at->alpha_2;
         *scratch->cursor++ = 0;
         *scratch->cursor++ = 0x42;
         *scratch->cursor++ = 0;
@@ -2866,7 +2866,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             scratch->cursor += 12;
             scratch->strip_point++;
         }
-        if (scratch->strip_at->unk10 != 0) {
+        if (scratch->strip_at->second_tex0 != 0) {
             scratch->strip_point = scratch->strip_at->points;
             *scratch->cursor++ = scratch->reg_tag[0];
             *scratch->cursor++ = scratch->reg_tag[1];
@@ -2877,7 +2877,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             ((PoolPartMaterialBits *)scratch->strip_start)->cld = 4;
             scratch->registers[1] = 0x3F;
             scratch->registers[0] = 0;
-            scratch->registers[4] = scratch->strip_at->unk10 | 0x800000000;
+            scratch->registers[4] = scratch->strip_at->second_tex0 | 0x800000000;
             scratch->registers[5] = 6;
             scratch->registers[2] = 0x60;
             scratch->registers[3] = 0x15;
@@ -2886,7 +2886,7 @@ void PoolSlot_Draw(RenderSlot *slot, RenderSlotArg unused) {
             scratch->cursor += 0x10;
             *((u64 *)scratch->cursor)++ = 4;
             *((u64 *)scratch->cursor)++ = 0x1C;
-            *((u64 *)scratch->cursor)++ = scratch->strip_at->unk10 | 0x800000000;
+            *((u64 *)scratch->cursor)++ = scratch->strip_at->second_tex0 | 0x800000000;
             *((u64 *)scratch->cursor)++ = 0x16;
             *((u64 *)scratch->cursor)++ = 9;
             *scratch->cursor++ = 0x42;
@@ -3076,12 +3076,12 @@ void PoolSlot_LoadGroup(PoolPartSource *source, u32 group) {
             // match: tex0 and unk18 go across as one 16-byte struct
             POOL_SLOT_REGISTERS(&pool_slots[slots[i]]) = *(PoolSlotRegisters *)&texture->tex0;
             record = (PoolPartRecord *)((char *)file + (s32)file->records_end) - remaining;
-            if (record->unk00 > 0) {
-                pool_slots[slots[i]].unk48 = record;
-                pool_slots[slots[i]].unk40 = &pool_slots[slots[record->unk08]];
+            if (record->parent_point_count > 0) {
+                pool_slots[slots[i]].part_record = record;
+                pool_slots[slots[i]].parent = &pool_slots[slots[record->parent_slot_index]];
             } else {
-                pool_slots[slots[i]].unk48 = NULL;
-                pool_slots[slots[i]].unk40 = NULL;
+                pool_slots[slots[i]].part_record = NULL;
+                pool_slots[slots[i]].parent = NULL;
             }
             part++;
         }
@@ -3089,8 +3089,8 @@ void PoolSlot_LoadGroup(PoolPartSource *source, u32 group) {
         part = file->parts;
         pool_slots[groups[group][0]].part = part;
         POOL_SLOT_REGISTERS(&pool_slots[groups[group][0]]) = *(PoolSlotRegisters *)&texture->tex0; // match: as above
-        pool_slots[groups[group][0]].unk48 = NULL;
-        pool_slots[groups[group][0]].unk40 = NULL;
+        pool_slots[groups[group][0]].part_record = NULL;
+        pool_slots[groups[group][0]].parent = NULL;
     }
 }
 
@@ -3138,8 +3138,8 @@ void PoolNode_Pose(RelocEntry *node, PoolSlot *slots, f32 *parent_matrix, s32 fr
             slot->key_index = 0;
         }
         // match: with no keys, key, next and phase are used below without being set
-        if (node->unk30 != NULL) {
-            key = &((PoolNodeKey *)node->unk30)[slot->key_index];
+        if (node->keys != NULL) {
+            key = &((PoolNodeKey *)node->keys)[slot->key_index];
             for (;;) {
                 if (frame < key->frame + key->length) {
                     phase = (f32)(frame - key->frame) / (f32)key->length;
@@ -3177,11 +3177,11 @@ void PoolNode_Pose(RelocEntry *node, PoolSlot *slots, f32 *parent_matrix, s32 fr
         sceVu0ScaleVectorXYZ(local[2], local[2], slot->part->scale[2]);
     }
     sceVu0MulMatrix(slot, parent_matrix, local);
-    if (node->unk38 != NULL) {
-        PoolNode_Pose(node->unk38, slots, (f32 *)slot, frame);
+    if (node->child != NULL) {
+        PoolNode_Pose(node->child, slots, (f32 *)slot, frame);
     }
-    if (node->unk3C != NULL) {
-        PoolNode_Pose(node->unk3C, slots, parent_matrix, frame);
+    if (node->sibling != NULL) {
+        PoolNode_Pose(node->sibling, slots, parent_matrix, frame);
     }
 }
 
@@ -3529,7 +3529,7 @@ void MenuTexture_UploadTwoCluts(TextureHeader *header, u64 *tex0_out, u64 *trail
     }
     sceGsSetDefLoadImage(&second_load, ((BootTex0 *)trailer)->cbp, 1, ((BootTex0 *)trailer)->cpsm, 0, 0, clut_width, clut_height);
     FlushCache(0);
-    sceGsExecLoadImage(&second_load, (char *)header + header->unk0C);
+    sceGsExecLoadImage(&second_load, (char *)header + header->second_clut_offset);
     while ((*D2_CHCR & D_CHCR_STR) || (*GIF_STAT & GIF_STAT_APATH)) {
     }
 }

@@ -58,11 +58,11 @@ typedef struct AreaNode {
     char pad00[0x3C];
     s32 flags;                      /* 0x3C bit 25 skips insertion, bit 31 picks the second list */
     f32 left;                       /* 0x40 */
-    f32 unk44;                      /* 0x44 the box's lowest y */
+    f32 lowest_y;                   /* 0x44 the box's lowest y */
     f32 top;                        /* 0x48 */
     char pad4C[0x04];
     f32 right;                      /* 0x50 */
-    f32 unk54;                      /* 0x54 the box's highest y */
+    f32 highest_y;                  /* 0x54 the box's highest y */
     f32 bottom;                     /* 0x58 */
     struct AreaNode *next;          /* 0x5C */
 } AreaNode;

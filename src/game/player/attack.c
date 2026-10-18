@@ -113,7 +113,7 @@ FxTableEntry fx_table[256] = { 0 };
 /* Runs an attack request against the world, by the request's shape (0 to 3). Only shapes
    0 and 3 do anything. */
 s32 Attack_Run(Unk1B1470Request *request, Unk1B1470Extra *extra) {
-    COLLISION_RESULT->unk18 = 6;
+    COLLISION_RESULT->floor_material = 6;
     switch ((u8)((Unk1B1470RequestWord *)request)->flags & 3) {
     case 0:
         return Attack_RunSphere(request, extra);
@@ -539,7 +539,7 @@ int Attack_TestMapModel(ModelInstance *model, void *request, f32 reach) {
             do {
                 Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
                 if (COLLISION_RESULT->hit != 0) {
-                    COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                    COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                     return lists.lists[list];
                 }
                 strip_point++;
@@ -632,7 +632,7 @@ int Attack_TestMapModelFloors(ModelInstance *model, void *request, f32 reach) {
             do {
                 Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
                 if (COLLISION_RESULT->hit != 0) {
-                    COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                    COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                     return 1;
                 }
                 strip_point++;
@@ -726,7 +726,7 @@ int Attack_TestMapModelWalls(ModelInstance *model, void *request, f32 reach) {
             do {
                 Collision_PointTriangle(strip_point[0].position, strip_point[1].position, strip_point[2].position, (int)request, reach);
                 if (COLLISION_RESULT->hit != 0) {
-                    COLLISION_RESULT->unk18 = Collision_GetFloorMaterial(strip_point->unk04, strip_point->unk08, strip_point->unk0C);
+                    COLLISION_RESULT->floor_material = Collision_GetFloorMaterial(strip_point->material_first, strip_point->material_second, strip_point->material_third);
                     return 0;
                 }
                 strip_point++;

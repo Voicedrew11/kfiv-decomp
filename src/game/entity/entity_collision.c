@@ -503,7 +503,7 @@ s32 EntityCollision_WalkAgainstMesh(Entity *entity, ModelInstance *model, f32 *p
                 Collision_DropOnTriangle(point[0].position, point[1].position, point[2].position, entity->model->position);
                 if (COLLISION_RESULT->hit != 0 && COLLISION_RESULT->point[1] <= entity->model->position[1]
                     && entity->model->position[1] - entity->collision_height <= COLLISION_RESULT->point[1]) {
-                    EntityCollision_ApplySurfaceEffect(entity, point->unk04, point->unk08, point->unk0C);
+                    EntityCollision_ApplySurfaceEffect(entity, point->material_first, point->material_second, point->material_third);
                     goto walls;
                 }
                 point++;
@@ -544,8 +544,8 @@ walls:
         while (--i != -1) {
             point = strip->points;
             j = strip->point_count - 2;
-            if (Collision_GetBarrierLevel(point->unk04, point->unk08, point->unk0C) >= entity->spawn_info->barrier_level) {
-                if (Collision_IsBarrierFloor(point->unk04, point->unk08, point->unk0C)) {
+            if (Collision_GetBarrierLevel(point->material_first, point->material_second, point->material_third) >= entity->spawn_info->barrier_level) {
+                if (Collision_IsBarrierFloor(point->material_first, point->material_second, point->material_third)) {
                     do {
                         Collision_DropOnTriangle(point[0].position, point[1].position, point[2].position, entity->model->position);
                         if (COLLISION_RESULT->hit != 0
@@ -581,7 +581,7 @@ walls:
                     && COLLISION_RESULT->point[1] <= *floor_y) {
                     hit_floor = TRUE;
                     *floor_y = COLLISION_RESULT->point[1];
-                    ENTITY_FLAG_BITS(entity)->bits60 = Collision_GetFloorMaterial(point->unk04, point->unk08, point->unk0C);
+                    ENTITY_FLAG_BITS(entity)->bits60 = Collision_GetFloorMaterial(point->material_first, point->material_second, point->material_third);
                 }
                 point++;
             } while (--j != 0);
@@ -1004,7 +1004,7 @@ s32 EntityCollision_SphereAgainstMesh(Entity *entity, ModelInstance *model, f32 
     while (--i != -1) {
         point = strip->points;
         j = strip->point_count - 2;
-        if (Collision_GetBarrierLevel(point->unk04, point->unk08, point->unk0C) >= entity->spawn_info->barrier_level) {
+        if (Collision_GetBarrierLevel(point->material_first, point->material_second, point->material_third) >= entity->spawn_info->barrier_level) {
             do {
                 EntityCollision_SphereTriangle(point[0].position, point[1].position, point[2].position, position, entity->collision_radius);
                 if (COLLISION_RESULT->hit != 0) {

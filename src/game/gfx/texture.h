@@ -9,7 +9,7 @@ typedef struct {
     int data_offset;                /* 0x00 from this header */
     int image_size;                 /* 0x04 bytes */
     char pad08[0x04];
-    int unk0C;                      /* 0x0C from this header to a second CLUT (MenuTexture_UploadTwoCluts) */
+    int second_clut_offset;         /* 0x0C from this header to a second CLUT */
     u64 tex0;                       /* 0x10 GS TEX0: TBP0 at bit 0, CBP at bit 37 */
     u64 unk18;                      /* 0x18 copied to PoolSlot.unk60 with tex0 (Menu_UpdateKeyItems) */
 } TextureHeader;
@@ -59,7 +59,7 @@ typedef struct {
 
 /* a chunk table: this header, then entry_count TextureTableEntry */
 typedef struct {
-    int unk00;                      /* 0x00 */
+    int packet_size;                /* 0x00 the bytes of the built packets */
     u32 entry_count;                /* 0x04 */
     int unk08;                      /* 0x08 Texture_BuildPacketTable clears it */
     int unk0C;                      /* 0x0C Texture_BuildPacketTable clears it */
@@ -101,7 +101,7 @@ typedef struct {
     int offset;                     /* 0x00 from the table base, to a chunk: its size in quadwords, 12 bytes, the data */
     int unk04;                      /* 0x04 Texture_BuildPacketTable clears it */
     int unk08;                      /* 0x08 Texture_BuildPacketTable clears it */
-    int unk0C;                      /* 0x0C not 0: TextureTable_QueueEnabled skips it (set by TextureTable_SetChunkEnabled) */
+    int disabled;                   /* 0x0C nonzero: TextureTable_QueueEnabled skips the chunk */
 } TextureTableEntry;
 
 /* Sends the GS a TEXFLUSH through DMA channel 2 (gfx/texture_upload.c). */

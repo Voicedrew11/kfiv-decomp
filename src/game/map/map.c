@@ -23,7 +23,7 @@
      ((u64)0x80 << 24))
 #define USABLE(node) (!((node)->flags & 0x40000000))
 #define IN_X(node) ((node)->left - margin <= point[0] && point[0] <= (node)->right + margin)
-#define IN_Y(node) ((node)->unk44 - margin <= point[1] && point[1] <= (node)->unk54 + margin)
+#define IN_Y(node) ((node)->lowest_y - margin <= point[1] && point[1] <= (node)->highest_y + margin)
 #define IN_Z(node) ((node)->top - margin <= point[2] && point[2] <= (node)->bottom + margin)
 /* how far the point is outside the box along one axis */
 #define DISTANCE(low, high, value)                                                                 \
@@ -791,7 +791,7 @@ AreaNode *Map_FindRecordAt(f32 *point, f32 margin) {
     best = NULL;
     for (node = head; node != NULL; node = node->next) {
         if (USABLE(node) && IN_X(node) && IN_Z(node)) {
-            DISTANCE(node->unk44, node->unk54, point[1]);
+            DISTANCE(node->lowest_y, node->highest_y, point[1]);
         }
     }
     if (best != NULL) {
@@ -831,7 +831,7 @@ MapRecordInfo *Map_FindRecordAtInSlot(CameraState *position, f32 margin, int map
     best = NULL;
     for (node = head; node != NULL; node = node->next) {
         if (USABLE_IN_MAP(node) && IN_X(node) && IN_Z(node)) {
-            DISTANCE(node->unk44, node->unk54, point[1]);
+            DISTANCE(node->lowest_y, node->highest_y, point[1]);
         }
     }
     if (best != NULL) {
@@ -860,7 +860,7 @@ int Map_IsPointInRecord(f32 *point, AreaNode *node, f32 margin) {
     if (node != NULL) {
         inside = FALSE;
         if (!(node->flags & 0x40000000) && node->left - margin <= point[0] && point[0] <= node->right + margin &&
-            node->unk44 - margin <= point[1] && point[1] <= node->unk54 + margin &&
+            node->lowest_y - margin <= point[1] && point[1] <= node->highest_y + margin &&
             node->top - margin <= point[2] && point[2] <= node->bottom + margin) {
             inside = TRUE;
         }
@@ -1040,7 +1040,7 @@ void Map_DrawFreeCameraView(void) {
     memset(&quad, 0, sizeof(quad));
     quad.tag = 0x4007A80621312E40L;
     quad.unk08 = 0x60;
-    quad.unk10 = 0x156;
+    quad.prim = 0x156;
     quad.red = 0x80;
     quad.green = 0x80;
     quad.blue = 0x80;
@@ -1095,7 +1095,7 @@ void Map_StretchOffscreenToScreen(void) {
     Packet_EndGsRegisters();
     quad.tag = 0x624A16BC0L;
     quad.unk08 = 0x60;
-    quad.unk10 = 0x116;
+    quad.prim = 0x116;
     quad.red = 0x80;
     quad.green = 0x80;
     quad.blue = 0x80;

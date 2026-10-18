@@ -46,7 +46,7 @@ void TextureTable_QueueEnabled(TextureTableHeader *table_arg, s32 skip_mask) {
     GsDraw_QueueFlush();
     entries = (TextureTableEntry *)(table + 1);
     for (i = 0; i < table->entry_count; i++) {
-        if (entries[i].unk0C == 0 && (i >= 32 || !((skip_mask >> i) & 1))) {
+        if (entries[i].disabled == 0 && (i >= 32 || !((skip_mask >> i) & 1))) {
             packet = Packet_Alloc(1);
             if (packet_start == NULL) {
                 packet_start = packet;
@@ -92,7 +92,7 @@ void TextureTable_SetChunkEnabled(TextureTableHeader *table, s32 index, s32 enab
     TextureTableEntry *entries = (TextureTableEntry *)(table + 1);
 
     if (index >= 0 && index < table->entry_count) {
-        entries[index].unk0C = enable == 0;
+        entries[index].disabled = enable == 0;
     }
 }
 
