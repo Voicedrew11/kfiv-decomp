@@ -192,7 +192,7 @@ int Player_CollideWithMap(void) {
                     continue;
                 }
                 if (player_state.floor_map_object != 0
-                    && (MAP_OBJECT_DEF_FLAGS(((MapObject *)player_state.floor_map_object)->definition) & MAP_OBJECT_DEF_CARRIES)) {
+                    && (MAP_OBJECT_DEF_FLAGS(player_state.floor_map_object->definition) & MAP_OBJECT_DEF_CARRIES)) {
                     continue;
                 }
                 strips_left = mesh->floor_strip_count;
@@ -575,7 +575,7 @@ void Player_CollideWithMapObjects(s32 climb) {
         Collision_PushOutOfObjects((f32 *)&player_state, 0, 230.0f, 100.0f);
     }
     if (player_state.touched_map_object != 0 && player_state.touched_map_object != player_previous.touched_map_object) {
-        switch ((s16)((MapObject *)player_state.touched_map_object)->source->touch_status_flag) {
+        switch ((s16)player_state.touched_map_object->source->touch_status_flag) {
         case 1:
             player_state.timed_flags[0] = 1800;
             player_state.ailment0_start_frame = frame_counter;
@@ -603,7 +603,7 @@ void Player_CollideWithMapObjects(s32 climb) {
         }
         Player_FlashDamage();
     }
-    if (player_state.floor_map_object != 0 && ((MapObject *)player_state.floor_map_object)->source->def_index == 0x165) {
+    if (player_state.floor_map_object != 0 && player_state.floor_map_object->source->def_index == 0x165) {
         player_state.floor_material = 2;
     }
 }

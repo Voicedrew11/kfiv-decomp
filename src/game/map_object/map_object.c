@@ -379,7 +379,7 @@ void MapObject_UpdateAll(void) {
             map_object_update_hooks[object->definition->kind](object);
             record = (MapRecord *)object->map_record;
             if (record != NULL) {
-                if ((MapObject *)player_state.floor_map_object == object) {
+                if (player_state.floor_map_object == object) {
                     object->state_flags |= MAP_OBJECT_IN_VIEW;
                 } else if (object->source->linked_point_owner != 0 && object->source->linked_point_owner != 0xFF) {
                     if (Map_TestFlagBlockBit(current_map_slot, player_state.record_flag_block, MAP_OBJECT_BYTES(object)->map_slot & 1, object->source->linked_point_owner)) {
