@@ -11,7 +11,7 @@
 
 void MapItem_ClearMap(int);
 s32 MapItem_Drop(s32, s32, s32, f32 *, f32, f32 *, f32 *, f32 *, u32);
-void *MapItem_FindModelSource(int, int);
+ItemModelSource *MapItem_FindModelSource(int, int);
 void Model_SetUpPosed(ModelInstance *, char **, char **);
 void Model_SetTextureBase(char *, int, int);
 void Model_SetVertexColour(void *, int, int, int, int);
@@ -876,7 +876,7 @@ void MapItem_ClearMap(int map) {
 
 /* Returns where the model and texture of item kind key lie in the slot's map (the map lists up to 32
    kinds), or NULL when the map has none for it. */
-void *MapItem_FindModelSource(int slot, int key) {
+ItemModelSource *MapItem_FindModelSource(int slot, int key) {
     s16 *cursor;
     s16 value;
     int i;
@@ -888,7 +888,7 @@ void *MapItem_FindModelSource(int slot, int key) {
             return NULL;
         }
         if (value == key) {
-            return (char *)item_model_sources + (slot << 8) + i * 8;
+            return &item_model_sources[slot][i];
         }
     }
     return NULL;
