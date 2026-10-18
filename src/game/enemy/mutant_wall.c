@@ -160,8 +160,7 @@ static void MutantWall_ThinkCombat(Entity *entity, s32 unknown) {
         if (entity->combat_choice != entity->prev_combat_choice) {
             entity->choice_change_frame = frame_counter;
         }
-        // match: called with one argument here
-        ((void (*)(Entity *))EntityAi_LowerChoiceWeight)(entity);
+        EntityAi_LowerChoiceWeight(entity, next_action);
         switch (entity->combat_choice) {
         case 0:
             if (EntityAi_PickAttack((char *)entity)) {
