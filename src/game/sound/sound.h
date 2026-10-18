@@ -257,7 +257,8 @@ typedef struct {
 } SoundScriptState;
 
 /* sound_channels[128]: a sound channel (0x40 bytes); sound_id is -1 when it is free.
-   tagged_requests[128] are queued requests of the same shape; there voice is -1 when free. */
+   tagged_requests[128] are queued requests of the same shape; there voice is -1 when free
+   and mode and kind hold each other's values. */
 typedef struct {
     Vector4Arg origin;              /* 0x00 */
     Vector4Arg target;              /* 0x10 */
