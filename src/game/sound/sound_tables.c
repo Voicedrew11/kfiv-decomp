@@ -82,32 +82,32 @@ typedef struct {
 
 SoundJobSlot se_com_job = { /* 0x3EF5E8 the se_com bank's job */
     .job = { .spec = (SoundJobSpec *)&se_com_bank, .name_a = se_com_bd_path, .name_b = se_com_hd_path,
-             .result = 1, .unk18 = 1, .unk1C = 0x5010 },
-    .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
+             .result = 1, .voice_index = 1, .spu_dest = 0x5010 },
+    .bank = { .iop_heap = 0, .iop_size = -1, .voice = -1 },
 };
 
 SoundJobSlot sfx_com_job = { /* 0x3EF618 the sfx_com bank's job */
     .job = { .spec = (SoundJobSpec *)&sfx_com_bank, .name_a = sfx_com_bd_path, .name_b = sfx_com_hd_path,
-             .result = 2, .unk18 = 2, .unk1C = 0x32010 },
-    .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
+             .result = 2, .voice_index = 2, .spu_dest = 0x32010 },
+    .bank = { .iop_heap = 0, .iop_size = -1, .voice = -1 },
 };
 
 SoundJobSlot map_bank_job = { /* 0x3EF648 the map bank's job (snd/map000) */
     .job = { .spec = (SoundJobSpec *)&map_bank_files, .name_a = map_bank_bd_path, .name_b = map_bank_hd_path,
-             .result = 3, .unk18 = 3, .unk1C = 0x106810 },
-    .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
+             .result = 3, .voice_index = 3, .spu_dest = 0x106810 },
+    .bank = { .iop_heap = 0, .iop_size = -1, .voice = -1 },
 };
 
 SoundJobSlot sw_bank_job = { /* 0x3EF678 the sw bank's job */
     .job = { .spec = (SoundJobSpec *)&sw_bank, .name_a = sw_bank_bd_format, .name_b = sw_bank_hd_format,
-             .result = 4, .unk18 = 4, .unk1C = 0x190010 },
-    .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
+             .result = 4, .voice_index = 4, .spu_dest = 0x190010 },
+    .bank = { .iop_heap = 0, .iop_size = -1, .voice = -1 },
 };
 
 SoundJobSlot mg_bank_job = { /* 0x3EF6A8 the mg bank's job */
     .job = { .spec = (SoundJobSpec *)&mg_bank, .name_a = mg_bank_bd_format, .name_b = mg_bank_hd_format,
-             .result = 5, .unk18 = 5, .unk1C = 0x1AA410 },
-    .bank = { .iop_heap = 0, .unk04 = -1, .voice = -1 },
+             .result = 5, .voice_index = 5, .spu_dest = 0x1AA410 },
+    .bank = { .iop_heap = 0, .iop_size = -1, .voice = -1 },
 };
 
 f32 sound_cos_polynomial[4] __attribute__((aligned(16))) = { /* 0x3EF6E0 what Sound_CosSin loads into VU0 */
@@ -123,4 +123,4 @@ void *tracked_sound_players[4] = { /* 0x3EF700 the player Sound_PlayTrackedKind 
     (void *)Sound_PlayTracked, (void *)Sound_PlayTrackedAt, NULL, NULL,
 };
 
-SoundChannel sound_channels[128] = { 0 }; /* 0x3EF710 the channels; unk3A is -1 when one is free */
+SoundChannel sound_channels[128] = { 0 }; /* 0x3EF710 the channels; sound_id is -1 when one is free */

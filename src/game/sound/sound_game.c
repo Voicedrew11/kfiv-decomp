@@ -162,11 +162,11 @@ void Sound_Init(void) {
     sfx_com_bank.limit = se_com_bank.limit;
     Sound_LoadJob(&sfx_com_job);
     for (i = 0; i < 0x80; i++) {
-        sound_channels[i].unk3A = -1;
+        sound_channels[i].sound_id = -1;
     }
     Sound_LoadReverbParams();
     for (i = 0; i < 0x80; i++) {
-        tagged_requests[i].unk38 = -1;
+        tagged_requests[i].voice = -1;
     }
     for (i = 0; i < 0x10; i++) {
         tagged_voice_flags[i] = -1;
@@ -730,27 +730,27 @@ int Sound_StartTagged(s8 sound, u8 voice, int volume) {
     }
     if (map_sounds_enabled == 0) {
         for (i = 0; i < 0x80; i++) {
-            if (tagged_requests[i].unk38 == -1) {
+            if (tagged_requests[i].voice == -1) {
                 request = &tagged_requests[i];
-                request->unk38 = 1;
-                request->unk3A = sound;
-                request->unk3B = voice;
-                request->unk39 = 0x63;
-                request->unk30 = volume;
+                request->voice = 1;
+                request->sound_id = sound;
+                request->note_slot = voice;
+                request->mode = 0x63;
+                request->volume_level = volume;
                 return 0;
             }
         }
     }
     for (i = 0; i < 0x80; i++) {
-        if (sound_channels[i].unk3A < 0) {
+        if (sound_channels[i].sound_id < 0) {
             break;
         }
     }
     channel = &sound_channels[i];
-    channel->unk3A = sound;
-    channel->unk3C = 0x63;
-    channel->unk30 = volume;
-    voice_id = channel->unk3B = Sound_ClaimTaggedVoice();
+    channel->sound_id = sound;
+    channel->kind = 0x63;
+    channel->volume_level = volume;
+    voice_id = channel->note_slot = Sound_ClaimTaggedVoice();
     SoundDriver_NoteOn(voice_id, map_bank_job.result, 0, voice, 0x3C, volume, 0, 0x3F);
 }
 
@@ -763,13 +763,13 @@ s32 Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg *
 
     if (map_sounds_enabled == 0) {
         for (i = 0; i < 0x80; i++) {
-            if (tagged_requests[i].unk38 == -1) {
+            if (tagged_requests[i].voice == -1) {
                 request = &tagged_requests[i];
-                request->unk3A = sound_id;
-                request->unk3B = voice;
+                request->sound_id = sound_id;
+                request->note_slot = voice;
                 request->volume = volume;
-                request->unk3C = mode;
-                request->unk39 = request->unk38 = 1;
+                request->kind = mode;
+                request->mode = request->voice = 1;
                 request->origin.x = position->x;
                 request->origin.y = position->y;
                 request->origin.z = position->z;
@@ -778,19 +778,19 @@ s32 Sound_StartTaggedAt(s8 sound_id, u8 voice, u8 mode, f32 volume, Vector4Arg *
         }
     }
     for (i = 0; i < 0x80; i++) {
-        if (sound_channels[i].unk3A < 0) {
+        if (sound_channels[i].sound_id < 0) {
             break;
         }
     }
     channel = &sound_channels[i];
-    channel->unk3A = sound_id;
-    channel->unk38 = voice;
-    channel->unk3B = -1;
+    channel->sound_id = sound_id;
+    channel->voice = voice;
+    channel->note_slot = -1;
     channel->origin.x = position->x;
     channel->origin.y = position->y;
     channel->origin.z = position->z;
-    channel->unk39 = mode;
-    channel->unk3C = 1;
+    channel->mode = mode;
+    channel->kind = 1;
     channel->volume = volume;
     /* match: no return; "return channel" adds a $2 copy retail lacks (implicit-int style fall-off) */
 }
@@ -803,14 +803,14 @@ s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, V
 
     if (map_sounds_enabled == 0) {
         for (i = 0; i < 0x80; i++) {
-            if (tagged_requests[i].unk38 == -1) {
+            if (tagged_requests[i].voice == -1) {
                 request = &tagged_requests[i];
-                request->unk38 = 1;
-                request->unk3A = sound_id;
-                request->unk3B = voice;
+                request->voice = 1;
+                request->sound_id = sound_id;
+                request->note_slot = voice;
                 request->volume = volume;
-                request->unk3C = mode;
-                request->unk39 = 2;
+                request->kind = mode;
+                request->mode = 2;
                 request->origin.x = origin->x;
                 request->origin.y = origin->y;
                 request->origin.z = origin->z;
@@ -822,22 +822,22 @@ s32 Sound_StartTaggedAlong(s8 sound_id, u8 voice, u8 mode, Vector4Arg *origin, V
         }
     }
     for (i = 0; i < 0x80; i++) {
-        if (sound_channels[i].unk3A < 0) {
+        if (sound_channels[i].sound_id < 0) {
             break;
         }
     }
     channel = &sound_channels[i];
-    channel->unk3A = sound_id;
-    channel->unk38 = voice;
-    channel->unk3B = -1;
+    channel->sound_id = sound_id;
+    channel->voice = voice;
+    channel->note_slot = -1;
     channel->origin.x = origin->x;
     channel->origin.y = origin->y;
     channel->origin.z = origin->z;
     channel->target.x = target->x;
     channel->target.y = target->y;
     channel->target.z = target->z;
-    channel->unk39 = mode;
-    channel->unk3C = 2;
+    channel->mode = mode;
+    channel->kind = 2;
     channel->volume = volume;
     /* match: no return; "return channel" adds a $2 copy retail lacks (implicit-int style fall-off) */
 }
@@ -858,17 +858,17 @@ void Sound_UpdateTagged(void) {
     s8 voice;
 
     for (i = 0; i < 0x80; i++, tagged_bend = 0) {
-        if (sound_channels[i].unk3A >= 0 && sound_channels[i].unk3C != 0x63) {
+        if (sound_channels[i].sound_id >= 0 && sound_channels[i].kind != 0x63) {
             Sound_TaggedNearestPoint(i, &nearest);
             distance = Sound_Delta(diff, &nearest.x, &player_state.position.x);
             if (sound_channels[i].volume < distance) {
-                if (sound_channels[i].unk3B > 0) {
-                    SoundDriver_NoteOff(sound_channels[i].unk3B);
-                    tagged_voice_flags[sound_channels[i].unk3B - 0x54] = sound_channels[i].unk3B = -1;
+                if (sound_channels[i].note_slot > 0) {
+                    SoundDriver_NoteOff(sound_channels[i].note_slot);
+                    tagged_voice_flags[sound_channels[i].note_slot - 0x54] = sound_channels[i].note_slot = -1;
                 }
             } else {
                 if (positional_sounds_muted == 0) {
-                    switch ((u8) sound_channels[i].unk39) {
+                    switch ((u8) sound_channels[i].mode) {
                     case 0:
                     case 6:
                         volume = (sound_channels[i].volume - distance) * 64.0f * (1.0f / sound_channels[i].volume);
@@ -886,9 +886,9 @@ void Sound_UpdateTagged(void) {
                         break;
                     }
                     if (volume <= 0) {
-                        if (sound_channels[i].unk3B > 0) {
-                            SoundDriver_NoteOff(sound_channels[i].unk3B);
-                            tagged_voice_flags[sound_channels[i].unk3B - 0x54] = sound_channels[i].unk3B = -1;
+                        if (sound_channels[i].note_slot > 0) {
+                            SoundDriver_NoteOff(sound_channels[i].note_slot);
+                            tagged_voice_flags[sound_channels[i].note_slot - 0x54] = sound_channels[i].note_slot = -1;
                         }
                         continue;
                     } else {
@@ -910,7 +910,7 @@ void Sound_UpdateTagged(void) {
                 }
                 Sound_CosSin(angle, origin, offset);
                 pan = (offset[0] * 0.6f + 1.0f) * 63.0f;
-                if ((u8) sound_channels[i].unk39 < 6 || (u8) sound_channels[i].unk39 > 8) {
+                if ((u8) sound_channels[i].mode < 6 || (u8) sound_channels[i].mode > 8) {
                     if (tagged_bend_falling != 0) {
                         tagged_bend -= rand() % 60;
                     } else {
@@ -923,15 +923,15 @@ void Sound_UpdateTagged(void) {
                         tagged_bend_high = rand() % 0x555 + 0x555;
                         tagged_bend_falling = 0;
                     }
-                    SoundDriver_SetNoteControl(2, sound_channels[i].unk3B, tagged_bend);
+                    SoundDriver_SetNoteControl(2, sound_channels[i].note_slot, tagged_bend);
                 }
-                if (sound_channels[i].unk3B < 0) {
-                    voice = sound_channels[i].unk3B = Sound_ClaimTaggedVoice();
-                    SoundDriver_NoteOn(voice, map_bank_job.result, 0, sound_channels[i].unk38, 0x3C, volume, tagged_bend, (char) pan);
+                if (sound_channels[i].note_slot < 0) {
+                    voice = sound_channels[i].note_slot = Sound_ClaimTaggedVoice();
+                    SoundDriver_NoteOn(voice, map_bank_job.result, 0, sound_channels[i].voice, 0x3C, volume, tagged_bend, (char) pan);
                     continue;
                 }
-                SoundDriver_SetNoteControl(0, sound_channels[i].unk3B, volume);
-                SoundDriver_SetNoteControl(1, sound_channels[i].unk3B, pan);
+                SoundDriver_SetNoteControl(0, sound_channels[i].note_slot, volume);
+                SoundDriver_SetNoteControl(1, sound_channels[i].note_slot, pan);
             }
         }
     }
@@ -960,7 +960,7 @@ static int Sound_TaggedNearestPoint(s32 index, Vector4 *nearest) {
     f32 cos_end;
     f32 along;
 
-    switch (sound_channels[index].unk3C) {
+    switch (sound_channels[index].kind) {
     case 1:
         nearest->x = sound_channels[index].origin.x;
         nearest->y = sound_channels[index].origin.y;
@@ -1043,24 +1043,24 @@ static void Sound_StartQueued(void) {
     if (map_sounds_enabled != 0) {
         for (i = 0; i < 0x80; i++) {
             request = &tagged_requests[i];
-            if (request->unk38 > 0) {
-                switch (request->unk39) {
+            if (request->voice > 0) {
+                switch (request->mode) {
                 case 1:
-                    request->unk38 = -1;
-                    Sound_StartTaggedAt(request->unk3A, request->unk3B, request->unk3C, request->volume, &request->origin);
+                    request->voice = -1;
+                    Sound_StartTaggedAt(request->sound_id, request->note_slot, request->kind, request->volume, &request->origin);
                     break;
                 case 2:
-                    request->unk38 = -1;
+                    request->voice = -1;
                     // match: target is indexed off the array; through request it is not strength-reduced
-                    Sound_StartTaggedAlong(request->unk3A, request->unk3B, request->unk3C, &request->origin, &tagged_requests[i].target, request->volume);
+                    Sound_StartTaggedAlong(request->sound_id, request->note_slot, request->kind, &request->origin, &tagged_requests[i].target, request->volume);
                     break;
                 case 0x63:
-                    sound_channels[i].unk3A = request->unk3A;
-                    sound_channels[i].unk3C = 0x63;
-                    sound_channels[i].unk30 = request->unk30;
-                    request->unk38 = -1;
-                    sound_channels[i].unk3B = Sound_ClaimTaggedVoice();
-                    SoundDriver_NoteOn(sound_channels[i].unk3B, map_bank_job.result, 0, request->unk3B, 0x3C, request->unk30, 0, 0x3F);
+                    sound_channels[i].sound_id = request->sound_id;
+                    sound_channels[i].kind = 0x63;
+                    sound_channels[i].volume_level = request->volume_level;
+                    request->voice = -1;
+                    sound_channels[i].note_slot = Sound_ClaimTaggedVoice();
+                    SoundDriver_NoteOn(sound_channels[i].note_slot, map_bank_job.result, 0, request->note_slot, 0x3C, request->volume_level, 0, 0x3F);
                     break;
                 }
             }
@@ -1075,8 +1075,8 @@ void Sound_MuteTagged(void) {
 
     do {
         n--;
-        if (entry->unk3A >= 0 && entry->unk3C == 0x63) {
-            SoundDriver_SetNoteControl(0, entry->unk3B, 0);
+        if (entry->sound_id >= 0 && entry->kind == 0x63) {
+            SoundDriver_SetNoteControl(0, entry->note_slot, 0);
         }
         entry++;
     } while (n >= 0);
@@ -1090,9 +1090,9 @@ void Sound_UnmuteTagged(void) {
 
     do {
         n--;
-        if (channel->unk3A >= 0 && channel->unk3C == 0x63) {
-            volume = (int)((float)channel->unk30 * (float)game_options[2] * 0.015625f);
-            SoundDriver_SetNoteControl(0, channel->unk3B, (volume >= 0x80) ? 0x7F : volume);
+        if (channel->sound_id >= 0 && channel->kind == 0x63) {
+            volume = (int)((float)channel->volume_level * (float)game_options[2] * 0.015625f);
+            SoundDriver_SetNoteControl(0, channel->note_slot, (volume >= 0x80) ? 0x7F : volume);
         }
         channel++;
     } while (n >= 0);
@@ -1103,19 +1103,19 @@ int Sound_StopTagged(char sound) {
     int i;
 
     for (i = 0; i < 0x80; i++) {
-        if (sound_channels[i].unk3A == sound) {
+        if (sound_channels[i].sound_id == sound) {
             break;
         }
     }
     if (i >= 0x80) {
         return -1;
     }
-    if ((sound_channels + i)->unk3B > 0) {
-        SoundDriver_NoteOff((sound_channels + i)->unk3B);
-        (sound_channels + i)->unk3A = -1;
-        tagged_voice_flags[(sound_channels + i)->unk3B - 0x54] = -1;
+    if ((sound_channels + i)->note_slot > 0) {
+        SoundDriver_NoteOff((sound_channels + i)->note_slot);
+        (sound_channels + i)->sound_id = -1;
+        tagged_voice_flags[(sound_channels + i)->note_slot - 0x54] = -1;
     } else {
-        (sound_channels + i)->unk3A = -1;
+        (sound_channels + i)->sound_id = -1;
     }
 }
 
@@ -1131,12 +1131,12 @@ void Sound_StopAll(int clear_queue) {
         SoundDriver_NoteOff(i);
     }
     for (i = 0; i < 0x80; i++) {
-        sound_channels[i].unk3A = -1;
-        tagged_voice_flags[sound_channels[i].unk3B - 0x54] = -1;
+        sound_channels[i].sound_id = -1;
+        tagged_voice_flags[sound_channels[i].note_slot - 0x54] = -1;
     }
     if (clear_queue != 0) {
         for (i = 0; i < 0x80; i++) {
-            tagged_requests[i].unk38 = -1;
+            tagged_requests[i].voice = -1;
         }
     }
 }
@@ -1370,7 +1370,7 @@ int Sound_BgmStartCue(void *context, int cue_index) {
         SoundDriver_FreeReverb((char)bgm_reverb_slot);
     }
     cue = (SoundCue *)(bgm_cues + cue_index * 0x10);
-    bgm_reverb_slot = SoundDriver_AddReverb(cue->flags, cue->unk04, cue->unk06, cue->unk08, cue->unk0A, cue->unk0C, cue->unk0E, 0);
+    bgm_reverb_slot = SoundDriver_AddReverb(cue->flags, cue->depth_l, cue->depth_r, cue->delay, cue->feedback, cue->unk0C, cue->unk0E, 0);
     bgm_load_step += 1;
     return 0;
 }
@@ -1897,7 +1897,7 @@ void Sound_PlayMapRound(u8 sound, float range, float distance, float angle) {
    the job; moves on once it is loaded. */
 int Sound_EntityBankLoadVoice(SoundJob *job) {
     SoundJobSpec *spec = job->spec;
-    int result = SoundDriver_LoadVoiceStep(job->unk18, (int)spec->buffer_b, spec->size_b, (int)spec->buffer_a, spec->size_a, 0, job->unk1C);
+    int result = SoundDriver_LoadVoiceStep(job->voice_index, (int)spec->buffer_b, spec->size_b, (int)spec->buffer_a, spec->size_a, 0, job->spu_dest);
 
     job->result = result;
     if (result >= 0) {
@@ -1937,8 +1937,8 @@ int Sound_LoadEntityBankStep(int args_addr, int index, int voice_out) {
     SoundStartArgs *args = (SoundStartArgs *)args_addr;
     int pending = 1;
 
-    sound_load_job.unk18 = index + 6;
-    sound_load_job.unk1C = index * 0x11800 + 0x138810;
+    sound_load_job.voice_index = index + 6;
+    sound_load_job.spu_dest = index * 0x11800 + 0x138810;
     sound_load_spec.buffer_a = (void *)args->buffer_a;
     sound_load_spec.buffer_b = (void *)args->buffer_b;
     sound_load_spec.size_a = args->size_a;
@@ -1978,7 +1978,7 @@ int Sound_MapBankLoadVoice(SoundJob *job) {
         reverb_change_pending = 0;
     }
     spec = job->spec;
-    result = SoundDriver_LoadVoiceStep(job->unk18, (int)spec->buffer_b, spec->size_b, (int)spec->buffer_a, spec->size_a, 0, job->unk1C);
+    result = SoundDriver_LoadVoiceStep(job->voice_index, (int)spec->buffer_b, spec->size_b, (int)spec->buffer_a, spec->size_a, 0, job->spu_dest);
     job->result = result;
     if (result >= 0) {
         map_bank_load_step += 1;
@@ -2012,7 +2012,7 @@ int Sound_MapBankAddReverb(void) {
         SoundDriver_FreeReverb((char)map_reverb_slot);
     }
     cue = (SoundCue *)(map_bank_cues + state.cue_index * 0x10);
-    map_reverb_slot = SoundDriver_AddReverb(cue->flags, cue->unk04, cue->unk06, cue->unk08, cue->unk0A, cue->unk0C, cue->unk0E, 1);
+    map_reverb_slot = SoundDriver_AddReverb(cue->flags, cue->depth_l, cue->depth_r, cue->delay, cue->feedback, cue->unk0C, cue->unk0E, 1);
     map_bank_load_step += 1;
     return 0;
 }
@@ -2062,8 +2062,8 @@ int Sound_LoadMapBankStep(int slot_addr, int pending) {
     if (pending == 0) {
         return 0;
     }
-    map_bank_load_job.unk1C = 0x106810;
-    map_bank_load_job.unk18 = 3;
+    map_bank_load_job.spu_dest = 0x106810;
+    map_bank_load_job.voice_index = 3;
     bank = (SoundBankInfo *)slot->sound_bank;
     map_bank_load_job.spec = (SoundJobSpec *)&map_bank_spec;
     map_bank_spec.size_a = bank->size_a;
@@ -2080,8 +2080,8 @@ int Sound_LoadMapBankStep(int slot_addr, int pending) {
 int Sound_LoadMapBank(MapSlot *slot) {
     SoundBankInfo *bank;
 
-    map_bank_job.unk18 = 3;
-    map_bank_job.unk1C = 0x106810;
+    map_bank_job.voice_index = 3;
+    map_bank_job.spu_dest = 0x106810;
     bank = (SoundBankInfo *)slot->sound_bank;
     map_bank_job.spec = (SoundJobSpec *)&map_bank_files;
     map_bank_files.size_a = bank->size_a;
@@ -2113,7 +2113,7 @@ void Sound_LoadSwBank(int file_id) {
     sound_heap_next = buffer_limit + 0x8000;
     while (Sound_StepUpload() == 0) {
     }
-    sw_bank_job.result = Sound_LoadFilePair(path_a, path_b, sw_bank_job.spec, sw_bank_job.unk18, sw_bank_job.unk1C);
+    sw_bank_job.result = Sound_LoadFilePair(path_a, path_b, sw_bank_job.spec, sw_bank_job.voice_index, sw_bank_job.spu_dest);
     while (Sound_StepUpload() == 0) {
     }
     while (SoundDriver_IsTransferDone(0) == 0) {
@@ -2139,7 +2139,7 @@ void Sound_LoadMgBank(int file_number) {
     mg_bank.used = 0;
     sound_heap_next = buffer_end + 0x8000;
     while (Sound_StepUpload() == 0);
-    mg_bank_job.result = Sound_LoadFilePair(path_a, path_b, mg_bank_job.spec, mg_bank_job.unk18, mg_bank_job.unk1C);
+    mg_bank_job.result = Sound_LoadFilePair(path_a, path_b, mg_bank_job.spec, mg_bank_job.voice_index, mg_bank_job.spu_dest);
     while (Sound_StepUpload() == 0);
     while (SoundDriver_IsTransferDone(0) == 0);
     SoundDriver_FreeSampleBuffer(mg_bank_job.result);
@@ -2176,7 +2176,7 @@ static int Sound_StepUpload(void) {
 /* Loads the two files named in a job and hands them to the driver, waiting until it is done. */
 void Sound_LoadJob(SoundJob *slot) {
     while (Sound_StepUpload() == 0);
-    slot->result = Sound_LoadFilePair(slot->name_a, slot->name_b, slot->spec, slot->unk18, slot->unk1C);
+    slot->result = Sound_LoadFilePair(slot->name_a, slot->name_b, slot->spec, slot->voice_index, slot->spu_dest);
     while (Sound_StepUpload() == 0);
     while (SoundDriver_IsTransferDone(0) == 0);
     SoundDriver_FreeSampleBuffer(slot->result);

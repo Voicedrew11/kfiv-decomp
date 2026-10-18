@@ -25,32 +25,32 @@ typedef struct {
 /* SoundState.banks[4]: a sequence (the .sq data of a BGM, on the IOP) and the voice it plays */
 typedef struct {
     int iop_heap;                   /* 0x00 IOP memory, 0 when freed */
-    int unk04;                      /* 0x04 the size of the data at iop_heap */
+    int iop_size;                   /* 0x04 the size of the data at iop_heap */
     int voice;                      /* 0x08 */
-    int unk0C;                      /* 0x0C the driver's id for the sequence */
+    int sequence_id;                /* 0x0C the driver's id for the sequence */
 } SoundBank;
 
 /* the request SoundDriver_VoiceLoadBind reads: the voice to reload and the heap to free */
 typedef struct {
     SoundVoice *voice;              /* 0x00 */
     int unk04;                      /* 0x04 */
-    int unk08;                      /* 0x08 bytes still to send */
-    int unk0C;                      /* 0x0C where the next piece goes */
+    int bytes_remaining;            /* 0x08 bytes still to send */
+    int next_spu_addr;              /* 0x0C where the next piece goes in sound memory */
     int heap_addr;                  /* 0x10 */
-    int unk14;                      /* 0x14 */
-    int unk18;                      /* 0x18 */
-    int unk1C;                      /* 0x1C the running DMA transfer */
+    int voice_index;                /* 0x14 the voice being loaded */
+    int piece_size;                 /* 0x18 the size of the piece being sent */
+    int dma_id;                     /* 0x1C the running DMA transfer */
 } SoundReloadRequest;
 
 /* the arguments of SoundDriver_LoadVoiceStep as its step functions get them */
 typedef struct {
-    int unk00;                      /* 0x00 the voice */
-    int unk04;                      /* 0x04 the voice's first data */
-    int unk08;                      /* 0x08 its size */
-    char *unk0C;                    /* 0x0C where the next piece is read from */
-    int unk10;                      /* 0x10 */
+    int voice_index;                /* 0x00 the voice */
+    int header_data;                /* 0x04 the voice's first data */
+    int header_size;                /* 0x08 its size */
+    char *next_sample_data;         /* 0x0C where the next piece is read from */
+    int sample_size;                /* 0x10 the samples' size */
     int unk14;                      /* 0x14 */
-    int unk18;                      /* 0x18 */
+    int spu_dest;                   /* 0x18 where the samples go in sound memory */
 } SoundLoadArgs;
 
 /* 0x18 bytes of reverb settings, copied whole (byte-aligned) */
@@ -61,12 +61,12 @@ typedef struct {
 /* SoundEffectParams field by field: the reverb settings SoundDriver_AddReverb stores (the layout of
    sceSdEffectAttr: core, mode, depth, delay, feedback) */
 typedef struct {
-    int unk00;                      /* 0x00 the SPU2 core; -1 when the slot is free */
-    int unk04;                      /* 0x04 the reverb mode, with 0x100 (clear the work area) added */
-    s16 unk08;                      /* 0x08 */
-    s16 unk0A;                      /* 0x0A */
-    int unk0C;                      /* 0x0C */
-    int unk10;                      /* 0x10 */
+    int core;                       /* 0x00 the SPU2 core; -1 when the slot is free */
+    int mode;                       /* 0x04 the reverb mode, with 0x100 (clear the work area) added */
+    s16 depth_l;                    /* 0x08 the left depth */
+    s16 depth_r;                    /* 0x0A the right depth */
+    int delay;                      /* 0x0C the reverb delay */
+    int feedback;                   /* 0x10 the reverb feedback */
     s16 unk14;                      /* 0x14 */
     s16 unk16;                      /* 0x16 */
 } SoundEffectFields;
@@ -96,27 +96,27 @@ typedef struct {
     int mode;                       /* 0x0C */
 } SoundDmaRequest;
 
-/* SoundState.unk240[n] with its signs: the note sounding in slot n (SoundDriver_NoteOn fills it) */
+/* SoundState.note_keys[n] with its signs: the note sounding in slot n (SoundDriver_NoteOn fills it) */
 typedef struct {
     s8 voice;                       /* 0x00 index into SoundState.voices */
-    u8 unk01;                       /* 0x01 */
-    u8 unk02;                       /* 0x02 */
-    s8 unk03;                       /* 0x03 1 while it sounds, -1 once stopped (SoundDriver_NoteOff) */
+    u8 channel;                     /* 0x01 the MIDI channel of the note */
+    u8 note;                        /* 0x02 the note number */
+    s8 sounding;                    /* 0x03 1 while it sounds, -1 once stopped */
 } SoundKey;
 
 /* the sound driver state (sound_state_storage in sound/sound.c) */
 typedef struct {
     SoundVoice voices[16];          /* 0x000 */
     SoundBank banks[4];             /* 0x200 */
-    s8 unk240[126][4];              /* 0x240 all -1 after SoundDriver_Init */
+    s8 note_keys[126][4];           /* 0x240 the note slots, 4 bytes each (SoundKey): all -1 after SoundDriver_Init */
     char pad438[0x08];
     SoundEffectParams effects[4];   /* 0x440 stored reverb settings */
     SoundEffectParams effect;       /* 0x4A0 the one sent to the driver last */
     void *load_addr;                /* 0x4B8 first IOP heap load's address */
     int unk4BC;                     /* 0x4BC */
-    u32 unk4C0;                     /* 0x4C0 end of the used sound memory */
+    u32 spu_used_end;               /* 0x4C0 end of the used sound memory */
     int dma_src;                    /* 0x4C4 */
-    int unk4C8;                     /* 0x4C8 */
+    int iop_buffer;                 /* 0x4C8 the IOP buffer the streams are read into */
     int dma_dest;                   /* 0x4CC */
     char unk4D0[0x06];              /* 0x4D0 u16 at 0x4D4: 1 stereo output, 0 mono */
     u16 active;                     /* 0x4D6 */
@@ -155,10 +155,10 @@ typedef struct {
 /* bgm_cues[], map_bank_cues[]: a reverb setting from rev_para.dat, the arguments of SoundDriver_AddReverb */
 typedef struct {
     int flags;                      /* 0x00 */
-    s16 unk04;                      /* 0x04 */
-    s16 unk06;                      /* 0x06 */
-    s16 unk08;                      /* 0x08 */
-    s16 unk0A;                      /* 0x0A */
+    s16 depth_l;                    /* 0x04 the left depth */
+    s16 depth_r;                    /* 0x06 the right depth */
+    s16 delay;                      /* 0x08 the reverb delay */
+    s16 feedback;                   /* 0x0A the reverb feedback */
     s16 unk0C;                      /* 0x0C */
     s16 unk0E;                      /* 0x0E */
 } SoundCue;
@@ -191,8 +191,8 @@ typedef struct {
     char pad0C[0x04];
     int result;                     /* 0x10 the voice or step the driver returned */
     char pad14[0x04];
-    int unk18;                      /* 0x18 */
-    int unk1C;                      /* 0x1C */
+    int voice_index;                /* 0x18 the voice the load binds */
+    int spu_dest;                   /* 0x1C where the samples go in sound memory */
 } SoundJob;
 
 /* the start arguments Sound_LoadEntityBankStep copies into a SoundJobSpec */
@@ -256,19 +256,19 @@ typedef struct {
     char pad02[0x76];
 } SoundScriptState;
 
-/* sound_channels[128]: a sound channel (0x40 bytes); unk3A is -1 when it is free.
+/* sound_channels[128]: a sound channel (0x40 bytes); sound_id is -1 when it is free.
    tagged_requests[128] are queued requests of the same shape; there unk38 is -1 when free. */
 typedef struct {
     Vector4Arg origin;              /* 0x00 */
     Vector4Arg target;              /* 0x10 */
     char pad20[0x10];
-    s32 unk30;                      /* 0x30 */
+    s32 volume_level;               /* 0x30 the volume the driver is given, 0 to 127 */
     f32 volume;                     /* 0x34 */
-    s8 unk38;                       /* 0x38 */
-    s8 unk39;                       /* 0x39 */
-    s8 unk3A;                       /* 0x3A */
-    s8 unk3B;                       /* 0x3B voice handed to SoundDriver_SetNoteControl */
-    s8 unk3C;                       /* 0x3C 1: a point at origin, 2: a segment origin..target; 0x63: restarts with the cue's volume */
+    s8 voice;                       /* 0x38 the voice the sound plays (a queued request: 1 when queued, -1 when free) */
+    s8 mode;                        /* 0x39 the mode the caller passed (0 to 8) */
+    s8 sound_id;                    /* 0x3A the sound number; -1 when the channel is free */
+    s8 note_slot;                   /* 0x3B the note slot the channel plays in (a queued request keeps its voice here) */
+    s8 kind;                        /* 0x3C 1: a point at origin, 2: a segment origin..target; 0x63: restarts with the cue's volume */
     char pad3D[0x03];
 } SoundChannel;
 
