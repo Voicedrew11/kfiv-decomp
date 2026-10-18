@@ -265,10 +265,10 @@ void ModelMotion_StepBlend(ModelInstance *model) {
     vectors = motion->vectors;
     if (channel->frame_step >= channel->blend_left) {
         divisor = 1.0f;
-    } else if (channel->unk8F == 0) {
+    } else if (channel->blend_speed == 0) {
         divisor = (f32)channel->blend_left / (f32)channel->frame_step;
     } else {
-        divisor = 255.0f / (f32)channel->unk8F;
+        divisor = 255.0f / (f32)channel->blend_speed;
     }
     part = model->parts;
     for (i = 0; i < model->part_count; i++, record++, part++) {

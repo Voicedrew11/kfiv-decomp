@@ -982,14 +982,14 @@ void Player_DrawBow(u16 held, u16 pressed) {
                 speed = 1;
             }
             ModelMotion_BlendInto(WEAPON_MODEL, 1, speed);
-            MODEL_CHANNEL(WEAPON_MODEL)->unk8F = 0;
+            MODEL_CHANNEL(WEAPON_MODEL)->blend_speed = 0;
             player_state.item_action_step++;
             item_counts[def->ammo_item_index]--;
             return;
         }
     }
     ModelMotion_BlendInto(WEAPON_MODEL, 0, 0xF);
-    MODEL_CHANNEL(WEAPON_MODEL)->unk8F = 0;
+    MODEL_CHANNEL(WEAPON_MODEL)->blend_speed = 0;
     player_state.draw_motion_complete = 0;
     player_state.power_gauge = 0;
     player_state.item_action_step += 3;

@@ -398,7 +398,7 @@ void Map_ParseFile(int map) {
     packet = (u32 *)cursor;
     for (i = 0; i < 6; i++) {
         // match: stored as a char *, the type memory->unk1C has (see the note on slot)
-        ((char **)slot->unk40.items)[i] = (char *)packet;
+        ((char **)slot->packets.items)[i] = (char *)packet;
         packet += (*packet + 1) * 4;
     }
     cursor = (char *)header;
@@ -1128,15 +1128,15 @@ void Map_CoverScreenWithMapTint(void) {
     GsDraw_FillScreen(header->screen_tint_red, header->screen_tint_green, header->screen_tint_blue, header->screen_tint_alpha, 0x44);
 }
 
-/* Queues prebuilt packet index of the map slot (MapSlot.unk40) for sending. */
+/* Queues prebuilt packet index of the map slot (MapSlot.packets) for sending. */
 void Map_QueueSlotPacket(int slot, int index) {
     MapSlot *map_slot = &map_slots[slot];
     u32 *packet_start;
     u32 *packet;
 
     packet_start = packet = Packet_Alloc(3);
-    *packet++ = *map_slot->unk40.items[index] | 0x30000000;
-    *packet++ = (u32)map_slot->unk40.items[index] + 0x10;
+    *packet++ = *map_slot->packets.items[index] | 0x30000000;
+    *packet++ = (u32)map_slot->packets.items[index] + 0x10;
     *packet++ = 0;
     *packet++ = 0;
     Packet_AppendToChain(packet_start, packet);
@@ -1160,7 +1160,7 @@ void Map_QueuePacket(int *packet) {
 /* Returns packet index of the map slot. */
 u32 *Map_GetSlotPacket(int slot, int index) {
     MapSlot *map_slot = &map_slots[slot];
-    MapSlotPackets *packets = &map_slot->unk40;
+    MapSlotPackets *packets = &map_slot->packets;
 
     if (packets != NULL) {
         return packets->items[index];

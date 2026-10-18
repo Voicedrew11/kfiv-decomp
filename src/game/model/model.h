@@ -108,7 +108,7 @@ typedef struct {
     s16 z;                          /* 0x04 */
     s16 unk06;                      /* 0x06 1 on a vertex built between two others */
     s16 normal[3];                  /* 0x08 normal, x y z */
-    u16 unk0E;                      /* 0x0E 0; 0x8000 on the first two vertices of a strip (ModelScreen_QueueCutTriangle) */
+    u16 cut_flag;                   /* 0x0E 0; 0x8000 on the first two vertices of a strip (ModelScreen_QueueCutTriangle) */
     s16 tex_u;                      /* 0x10 */
     s16 tex_v;                      /* 0x12 */
     s16 unk14;                      /* 0x14 0x1000 */
@@ -125,9 +125,9 @@ typedef struct {
 
 /* the doubleword at ModelPartData+0x30 */
 typedef struct {
-    u64 unk00 : 14;                 /* the texture base pointer when it is a TEX0 (Model_SetTextureBase) */
+    u64 texture_base : 14;          /* 0x00 14 bits: the texture base pointer when it is a TEX0 (Model_SetTextureBase) */
     u64 pad14 : 23;
-    u64 unk37 : 14;                 /* not 0 on the blocks Model_SetUpSkinned looks for */
+    u64 clut_base : 14;             /* 0x37 14 bits: the CLUT base, not 0 on the blocks Model_SetUpSkinned looks for */
     u64 pad51 : 10;
     u64 unk61 : 3;                  /* set to 2 on the first block of a model whose unk37 is not 0 */
 } ModelPartDataBits30;
@@ -137,7 +137,7 @@ typedef struct {
 typedef struct {
     u16 length;                     /* 0x00 in 16-byte units, not counting the first */
     char pad02[0x2E];
-    ModelPartDataBits30 unk30;      /* 0x30 */
+    ModelPartDataBits30 texture_word; /* 0x30 the doubleword: texture base, CLUT base and skinned mark */
     char pad38[0x08];
     u64 tex0;                       /* 0x40 low 14 bits: the texture it draws with */
     char pad48[0x08];
@@ -195,7 +195,7 @@ typedef struct {
 typedef struct {
     u16 length;                     /* 0x00 in 16-byte units, not counting the first */
     char pad02[0x8E];
-    s32 unk90;                      /* 0x90 low 15 bits: how many vertices */
+    s32 vertex_count;               /* 0x90 low 15 bits: how many vertices */
     char pad94[0x1C];
     ModelWideVertex vertices[1];    /* 0xB0 */
 } ModelWideData;
@@ -442,7 +442,7 @@ typedef struct {
     s32 x;                          /* 0x00 12.4 fixed point; the screen is 0x6C00 to 0x9400 across */
     s32 y;                          /* 0x04 0x7200 to 0x8E00 down */
     u32 z;                          /* 0x08 */
-    s32 unk0C;                      /* 0x0C */
+    s32 flags;                      /* 0x0C flag bits, 0x8000 on some points */
 } ModelScreenPoint;
 
 /* a 4x4 matrix (ModelInstance.model_matrix, ModelPart.matrix) as retail copies it whole: by doublewords */
@@ -823,7 +823,7 @@ typedef struct {
 typedef struct ItemNode {
     MapItemDef *def;                /* 0x00 NULL on a dropped item */
     DroppedItemRecord *record;      /* 0x04 NULL on a fixed item */
-    s32 unk08;                      /* 0x08 */
+    s32 map_object;                 /* 0x08 the map object it was put out for (MapItem_FindForObject) */
     u32 flags;                      /* 0x0C ItemNodeBits */
     char pad10[0x04];
     void *map_record;               /* 0x14 the MapRecordInfo (map/map.h) it lies in, looked up before it is drawn */
@@ -832,8 +832,8 @@ typedef struct ItemNode {
     s16 index;                      /* 0x1E */
     struct ItemNode *prev;          /* 0x20 */
     struct ItemNode *next;          /* 0x24 */
-    f32 unk28;                      /* 0x28 a height */
-    f32 unk2C;                      /* 0x2C a height */
+    f32 floor_y;                    /* 0x28 the height of the floor it lies on */
+    f32 position_y;                 /* 0x2C the item's y */
     f32 unk30;                      /* 0x30 0 when the item is laid down */
     char pad34[0x08];
 } ItemNode;
@@ -881,7 +881,7 @@ typedef struct {
     u32 blend_left;                 /* 0x88 0x88 blend still to run (ModelMotion_StepBlend while nonzero) */
     u16 frame_step;                 /* 0x8C 0x8C added to frame_fixed each frame (0x100: one frame) */
     u8 frame_changed;               /* 0x8E 0x8E nonzero in a frame that moved on to a new frame */
-    u8 unk8F;                       /* 0x8F nonzero: a blend moves 255/unk8F of the way each frame (ModelMotion_StepBlend) */
+    u8 blend_speed;                 /* 0x8F nonzero: a blend moves 255/blend_speed of the way each frame (ModelMotion_StepBlend) */
 } ModelChannel;
 
 /* ModelInstance.level_tables points at the model's ModelChannel, whose first 0x80 bytes are the tables */

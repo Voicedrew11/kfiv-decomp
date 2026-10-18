@@ -251,7 +251,7 @@ typedef struct MapSlot {
     struct SoundSpecSource *sound_bank; /* 0x34 the file at MapSlotUnk08.record_model_spare_bytes: the map's sound bank */
     char *scroll_copy_textures;     /* 0x38 the file at 0x1480 */
     char *scroll_draw_textures;     /* 0x3C the file at 0x1540 */
-    MapSlotPackets unk40;           /* 0x40 */
+    MapSlotPackets packets;         /* 0x40 the map slot's packets */
     s32 script;                     /* 0x5C passed to Script_Init when the map becomes current */
 } MapSlot;
 
@@ -460,7 +460,7 @@ typedef struct MapActor {
     f32 unk08;                      /* 0x08 D_004469DC when it was dropped */
     u32 serial;                     /* 0x0C the slot's count of drops when it was dropped: the lowest is the oldest */
     ModelInstance *body;            /* 0x10 */
-    f32 unk14;                      /* 0x14 */
+    f32 position_y;                 /* 0x14 the y position */
     struct MapActor *prev;          /* 0x18 */
     struct MapActor *next;          /* 0x1C the list of the ones in use starts at map_actors_in_use */
     char pad20[0x04];
@@ -497,8 +497,8 @@ typedef struct {
     s16 y;                          /* 0x02 */
     s16 z;                          /* 0x04 */
     char radius;                    /* 0x06 */
-    u8 unk07;                       /* 0x07 */
-    u16 unk08;                      /* 0x08 */
+    u8 object_id;                   /* 0x07 the map object the mark belongs to, passed to Gold_Drop */
+    u16 amount;                     /* 0x08 the amount of gold, passed to Gold_Drop */
 } ObjectMark;
 
 /* a map's 16 marks, as Gold_InitMap copies them whole */

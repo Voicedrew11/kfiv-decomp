@@ -146,7 +146,7 @@ void ModelScreen_CutClippedTriangles(ModelInstance *model) {
                 if (OUT_OF_RANGE(screen)) {
                     outside |= 1;
                 }
-                if (vertex->unk0E == 0 && outside != 0 && outside != 7) {
+                if (vertex->cut_flag == 0 && outside != 0 && outside != 7) {
                     if (!(clip[0] & clip[1] & clip[2])) {
                         if (clip[0] | clip[1] | clip[2]) {
                             ModelScreen_QueueCutTriangle((u32 *)block, vertex, first, setup, local_matrix);
@@ -242,10 +242,10 @@ void ModelScreen_QueueCutTriangle(u32 *data, ModelPartVertexWords *vertex, int f
         previous = row_point;
         ModelScreen_StepVertices(row_point, apex, edge_point++, steps);
         *out = *apex;
-        out->unk0E = 0x8000;
+        out->cut_flag = 0x8000;
         out++;
         *out = row[1];
-        out->unk0E = 0x8000;
+        out->cut_flag = 0x8000;
         out++;
         row_point = row + 2;
         *out++ = previous[1];
@@ -294,7 +294,7 @@ void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *f
     previous = out;
     *out = *from;
     out->unk14 = 0x1000;
-    out->unk0E = 0;
+    out->cut_flag = 0;
     out->unk16 = 0;
     out++;
     for (i = 1; i < steps; i++) {
@@ -306,7 +306,7 @@ void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *f
         out->normal[0] = previous->normal[0] + step.normal[0];
         out->normal[1] = previous->normal[1] + step.normal[1];
         out->normal[2] = previous->normal[2] + step.normal[2];
-        out->unk0E = 0;
+        out->cut_flag = 0;
         out->tex_u = previous->tex_u + step.tex_u;
         out->tex_v = previous->tex_v + step.tex_v;
         out->unk14 = 0x1000;
@@ -320,7 +320,7 @@ void ModelScreen_StepVertices(ModelPartVertexWords *out, ModelPartVertexWords *f
     }
     *out = *last;
     out->unk14 = 0x1000;
-    out->unk0E = 0;
+    out->cut_flag = 0;
     out->unk16 = 0;
 }
 
@@ -354,7 +354,7 @@ void ModelScreen_StepVerticesRounded(ModelPartVertexWords *out, ModelPartVertexW
     previous = out;
     *out = *from;
     out->unk14 = 0x1000;
-    out->unk0E = 0;
+    out->cut_flag = 0;
     out->unk16 = 0;
     out++;
     for (i = 1; i < steps; i++) {
@@ -368,7 +368,7 @@ void ModelScreen_StepVerticesRounded(ModelPartVertexWords *out, ModelPartVertexW
         out->normal[0] = previous->normal[0] + step.normal[0];
         out->normal[1] = previous->normal[1] + step.normal[1];
         out->normal[2] = previous->normal[2] + step.normal[2];
-        out->unk0E = 0;
+        out->cut_flag = 0;
         out->tex_u = previous->tex_u + step.tex_u;
         out->tex_v = previous->tex_v + step.tex_v;
         out->unk14 = 0x1000;
@@ -382,7 +382,7 @@ void ModelScreen_StepVerticesRounded(ModelPartVertexWords *out, ModelPartVertexW
     }
     *out = *last;
     out->unk14 = 0x1000;
-    out->unk0E = 0;
+    out->cut_flag = 0;
     out->unk16 = 0;
 }
 
