@@ -81,7 +81,7 @@ static MapObject *plain_draw_list[2];           /* 0x447088 per map, through Map
 static MapObject *jointed_draw_list[2];         /* 0x447090 per map, through MapObject.next_in_draw_list */
 
 static MapObject *objects_by_id[2][0x100];      /* 0x472240 per map, by MapObjectUnk08.spawn_flags.bytes[2] */
-static MapSlotUnk10Vectors glow_lights_shared;  /* 0x472A40 map_draw_state.unkC0 blended for the glow */
+static MapSlotUnk10Vectors glow_lights_shared;  /* 0x472A40 map_draw_state.current_light_block blended for the glow */
 static MapSlotUnk10Vectors glow_lights[2][0x20]; /* 0x472AC0 map_draw_state.unkA90 blended for the glow */
 
 /* Empties the map objects of both maps. */

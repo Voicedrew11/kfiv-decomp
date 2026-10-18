@@ -368,7 +368,7 @@ typedef struct {
     s32 player_was_on;              /* 0x0C player_on of the frame before */
 } MapTriggerShotKind121660;
 
-/* what MapTrigger.unk08 points at, as MapObject_StopAmbientSound reads it */
+/* what MapTrigger.source points at, as MapObject_StopAmbientSound reads it */
 typedef struct {
     char pad00[0x44];
     u16 unk44;                      /* 0x44 */

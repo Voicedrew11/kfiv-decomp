@@ -16,10 +16,10 @@ MapDrawStateMirror map_draw_state = { 0 };
 /* 0x38A218 MapDrawState.hud_shown on: the HUD is drawn (ui/hud.c) */
 s32 hud_visible[0xE] = { 0 };
 
-/* 0x38A250 MapDrawState.unkA0: the current map's first block (player/held_weapon.c) */
+/* 0x38A250 MapDrawState.current_fog_block: the current map's first block (player/held_weapon.c) */
 MapSlotUnk0C current_fog_block = { { 0 } };
 
-/* 0x38A270 MapDrawState.unkC0: the block as the eight vectors it holds, in two halves */
+/* 0x38A270 MapDrawState.current_light_block: the block as the eight vectors it holds, in two halves */
 MapSlotUnk10Half current_light_block = { { 0 } };
 MapSlotUnk10Half current_map_light_colors = { { 0 } };     /* its second half: the colours of the lights */
 
