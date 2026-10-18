@@ -66,7 +66,7 @@ typedef struct {
 
 LoadJobSlot bgm_load_job = { /* 0x3EF5B8 the BGM load job */
     .job = {
-        .buffers = (int *)&bgm_buffers, .name = bgm_bd_format, .unk08 = bgm_hd_format,
+        .buffers = (int *)&bgm_buffers, .name = bgm_bd_format, .header_format = bgm_hd_format,
         .name_format = bgm_sq_format, .file_handle = -1,
         /* 0x1C, inside the shared LoadJob's pad18: 0xBB810, the size of a BGM file */
         .pad18 = { 0, 0, 0, 0, 0x10, 0xB8, 0x0B, 0, 0, 0, 0, 0 },

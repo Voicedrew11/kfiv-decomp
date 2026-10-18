@@ -193,7 +193,7 @@ void MapChange_FadeOutCapture(void) {
     Packet_EndGsRegisters();
     total = 30;
     quad.tag = 0x26802ABC0L;
-    quad.unk10 = 0x156;
+    quad.prim = 0x156;
     quad.first_x = 0x6BF8;
     quad.first_y = 0x71F8;
     quad.second_x = 0x7000;

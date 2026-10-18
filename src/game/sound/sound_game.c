@@ -171,8 +171,8 @@ void Sound_Init(void) {
     for (i = 0; i < 0x10; i++) {
         tagged_voice_flags[i] = -1;
     }
-    bgm_load_job.unk10 = 0;
-    bgm_load_job.unk14 = 0;
+    bgm_load_job.voice_index = 0;
+    bgm_load_job.sequence_index = 0;
 }
 
 /* Starts and at once stops sound 0 of the sfx_com bank on each tracked voice (0x64..0x7D). Nothing calls
@@ -326,13 +326,13 @@ static void Sound_SetUpMixer(void) {
 
 /* Starts the BGM's sequence (bgm_load_job.unk14) playing, with value. Nothing calls it. */
 static void Sound_PlayBgmSequence(int value) {
-    SoundDriver_PlaySequence(bgm_load_job.unk14, value);
+    SoundDriver_PlaySequence(bgm_load_job.sequence_index, value);
 }
 
 /* Sets the BGM sequence's volume (SoundDriver_SetSequenceVolume) to level, at most 0x7F: the fades of
    the BGM load steps. */
 static void Sound_SetBgmFade(s32 level) {
-    SoundDriver_SetSequenceVolume(bgm_load_job.unk14, (s16)(level < 0x80 ? level : 0x7F));
+    SoundDriver_SetSequenceVolume(bgm_load_job.sequence_index, (s16)(level < 0x80 ? level : 0x7F));
 }
 
 /* Sets the BGM voice's volume (SoundDriver_SetVoiceVolume) to level, kept within 0..0x7F: the music volume option. */
@@ -343,7 +343,7 @@ void Sound_SetBgmVolume(s32 level) {
     if (level > 0x7F) {
         level = 0x7F;
     }
-    SoundDriver_SetVoiceVolume(bgm_load_job.unk10, level);
+    SoundDriver_SetVoiceVolume(bgm_load_job.voice_index, level);
 }
 
 /* Sets one volume (SoundDriver_SetVoiceVolume) on the voices of the five sound banks and on voices 6 to 9. */
@@ -1192,20 +1192,20 @@ int Sound_BgmFadeOut(IopLoadJob *job) {
     voice = job->result;
     if (voice < 0) {
         spec = job->ctl;
-        result = SoundDriver_LoadVoiceStep(job->unk18, spec[1], spec[4], spec[0], spec[3], 0, job->unk1C);
+        result = SoundDriver_LoadVoiceStep(job->load_index, spec[1], spec[4], spec[0], spec[3], 0, job->spu_dest);
         job->result = result;
         if (result >= 0) {
             SoundDriver_FreeVoice(result);
         }
         return -1;
     } else {
-        if (job->unk14 < 0) {
+        if (job->sequence_index < 0) {
             spec = job->ctl;
-            result = SoundDriver_LoadSequenceStep(job->unk18, voice, spec[2], spec[5]);
-            job->unk14 = result;
+            result = SoundDriver_LoadSequenceStep(job->load_index, voice, spec[2], spec[5]);
+            job->sequence_index = result;
             if (result >= 0) {
                 SoundDriver_FreeVoice(job->result);
-                SoundDriver_FreeSequence(job->unk14);
+                SoundDriver_FreeSequence(job->sequence_index);
             }
             return -1;
         }
@@ -1232,9 +1232,9 @@ int Sound_BgmCloseBody(LoadJob *job) {
     File_Close(job->file_handle);
     File_Unlock();
     job->file_handle = -1;
-    SoundDriver_StopSequence(job->unk14);
-    SoundDriver_FreeSequence(job->unk14);
-    SoundDriver_FreeVoice(job->unk10);
+    SoundDriver_StopSequence(job->sequence_index);
+    SoundDriver_FreeSequence(job->sequence_index);
+    SoundDriver_FreeVoice(job->voice_index);
     bgm_load_can_yield = 1;
     bgm_load_step += 1;
     return 0;
@@ -1258,7 +1258,7 @@ int Sound_BgmReadHeader(LoadJob *job, int index) {
     heap_top = sound_heap_next;
     bgm_header_buffer[0] = heap_top;
     sound_heap_next = ((u32)(heap_top + 0x2003F) >> 6) << 6;
-    sprintf(name, job->unk08, index);
+    sprintf(name, job->header_format, index);
     file = File_Open(name, 1, 1);
     job->file_handle = file;
     bgm_hd_size = File_GetSize(file);
@@ -1329,8 +1329,8 @@ int Sound_BgmStartSequence(IopLoadJob *job) {
     int result;
 
     spec = job->ctl;
-    result = SoundDriver_LoadSequenceStep(job->unk18, job->result, spec[2], spec[5]);
-    job->unk14 = result;
+    result = SoundDriver_LoadSequenceStep(job->load_index, job->result, spec[2], spec[5]);
+    job->sequence_index = result;
     if (result >= 0) {
         SoundDriver_PlaySequence(result, 0);
         bgm_load_step += 1;
@@ -1417,7 +1417,7 @@ static int Sound_ReadHeapFileStep(LoadJob *job, int index) {
             if (File_Sync(heap_file_handle, 1) == 0) {
                 File_Close(heap_file_handle);
                 heap_file_read_step = 0;
-                SoundDriver_FreeVoice(job->unk10);
+                SoundDriver_FreeVoice(job->voice_index);
                 return 1;
             }
             break;
@@ -1460,7 +1460,7 @@ int Sound_BgmLoadVoice(IopLoadJob *job) {
     int *ctl = job->ctl;
     int result;
 
-    result = SoundDriver_LoadVoiceStep(job->unk18, ctl[1], ctl[4], ctl[0], ctl[3], 0, job->unk1C);
+    result = SoundDriver_LoadVoiceStep(job->load_index, ctl[1], ctl[4], ctl[0], ctl[3], 0, job->spu_dest);
     job->result = result;
     if (result >= 0) {
         bgm_load_step += 1;
@@ -1581,7 +1581,7 @@ int Sound_FileLoadVoice(IopLoadJob *job) {
     int *ctl = job->ctl;
     int result;
 
-    result = SoundDriver_LoadVoiceStep(job->unk18, ctl[1], ctl[4], ctl[0], ctl[3], 0, job->unk1C);
+    result = SoundDriver_LoadVoiceStep(job->load_index, ctl[1], ctl[4], ctl[0], ctl[3], 0, job->spu_dest);
     job->result = result;
     if (result >= 0) {
         bgm_load_step += 1;

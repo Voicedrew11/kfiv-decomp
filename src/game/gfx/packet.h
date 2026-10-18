@@ -92,7 +92,7 @@ typedef struct {
 typedef struct {
     s64 tag;                        /* 0x00 */
     s64 unk08;                      /* 0x08 */
-    s32 unk10;                      /* 0x10 */
+    s32 prim;                       /* 0x10 GS PRIM: a textured, alpha-blended sprite (0x156) */
     u8 red;                         /* 0x14 */
     u8 green;                       /* 0x15 */
     u8 blue;                        /* 0x16 */

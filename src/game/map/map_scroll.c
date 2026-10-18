@@ -244,7 +244,7 @@ void MapScroll_UpdateDraw(int map, int mode) {
                            ((s64)width_log << 26) | ((s64)height_log << 30) | (1L << 34) |
                            ((s64)texture->clut_base << 37) | ((s64)texture->clut_format << 51) | (4L << 61);
                 quad.unk08 = 0x60;
-                quad.unk10 = 0x156;
+                quad.prim = 0x156;
                 half = texture->target_width >> 1;
                 quad.red = texture->red;
                 quad.green = texture->green;

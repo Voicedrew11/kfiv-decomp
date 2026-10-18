@@ -9,10 +9,10 @@
 typedef struct {
     int *buffers;                   /* 0x00 [0]/[2]: where the data goes */
     char *name;                     /* 0x04 file name, or a sprintf format of the index */
-    char *unk08;                    /* 0x08 sprintf format of the index (Sound_BgmReadHeader) */
+    char *header_format;            /* 0x08 sprintf format of the index (Sound_BgmReadHeader) */
     char *name_format;              /* 0x0C sprintf format of the index */
-    int unk10;                      /* 0x10 */
-    int unk14;                      /* 0x14 */
+    int voice_index;                /* 0x10 the voice the load fills */
+    int sequence_index;             /* 0x14 the sequence the load starts */
     char pad18[0x0C];
     int file_handle;                /* 0x24 -1 when closed */
 } LoadJob;
@@ -22,9 +22,9 @@ typedef struct {
     int *ctl;                       /* 0x00 */
     char pad04[0x0C];
     s32 result;                     /* 0x10 handle, negative until loaded */
-    s32 unk14;                      /* 0x14 */
-    s32 unk18;                      /* 0x18 */
-    s32 unk1C;                      /* 0x1C */
+    s32 sequence_index;             /* 0x14 the sequence bank the load started */
+    s32 load_index;                 /* 0x18 the voice or sequence bank the load fills */
+    s32 spu_dest;                   /* 0x1C where the samples go in sound memory */
 } IopLoadJob;
 
 /* LoadRequest.target (Sound_ReadRequestFile) */
