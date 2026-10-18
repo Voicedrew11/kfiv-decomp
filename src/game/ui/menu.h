@@ -28,10 +28,10 @@ typedef struct {
 } MenuCursorBar;
 
 typedef struct MenuItem {
-    int unk00;                      /* 0x00 */
+    int definition;                 /* 0x00 0x00 the item's definition: an item, weapon, worn or spell (fx_table) entry */
     struct MenuItem *next;          /* 0x04 */
     struct MenuItem *prev;          /* 0x08 */
-    s16 unk0C;                      /* 0x0C the number in its model's file name */
+    s16 item_number;                /* 0x0C 0x0C the item's number: its index in item_name_defs and item_counts */
     s8 group;                       /* 0x0E which run of LevelDefs it is in (0: 150 on, 1: the first 150, 2 to 9: 220 on), 0 to 12 */
 } MenuItem;
 
@@ -75,7 +75,7 @@ typedef struct DataNode {
     int unk00;                      /* 0x00 */
     struct DataNode *next;          /* 0x04 */
     struct DataNode *prev;          /* 0x08 */
-    s16 unk0C;                      /* 0x0C table row, plus one */
+    s16 table_row;                  /* 0x0C 0x0C row of the item's text table, plus one */
 } DataNode;
 
 /* one of the three 0x180-byte records SaveCard_GetSaveInfo hands out (SaveInfo in save/save_card.h), as the save list of
@@ -83,7 +83,7 @@ typedef struct DataNode {
 typedef struct {
     char pad00[0x04];
     s32 save_area;                  /* 0x04 GameStatus.save_area: the message id of its area name, from 400 */
-    s32 experience;                 /* 0x08 unk08 to gold: numbers put into the text (D_00446DF4...) */
+    s32 experience;                 /* 0x08 experience, to gold: numbers put into the text (D_00446DF4...) */
     s32 level;                      /* 0x0C the player's level */
     s32 hp_now;                     /* 0x10 the HP the player had */
     s32 hp_max;                     /* 0x14 the most HP the player could have */
@@ -93,7 +93,7 @@ typedef struct {
     s32 magic_base;                 /* 0x24 the player's magic base */
     s32 gold;                       /* 0x28 the gold the player had */
     char pad2C[0x14D];
-    u8 play_seconds;                /* 0x179 unk179 to play_hours: three more numbers for the text */
+    u8 play_seconds;                /* 0x179 play_seconds, to play_hours: three more numbers for the text */
     u8 play_minutes;                /* 0x17A the play time's minutes */
     u8 play_hours;                  /* 0x17B the play time's hours */
     char pad17C[0x04];
@@ -111,7 +111,7 @@ typedef struct {
 /* what the screen handler in menu_screen_handler is handed */
 typedef struct {
     s32 unk00;                      /* 0x00 */
-    s32 unk04;                      /* 0x04 cleared when a screen is left */
+    s32 selection;                  /* 0x04 0x04 the selected line or text number of the screen; cleared when a screen is left */
 } MenuScreenContext;
 
 /* card_screen_state: state of the menu screen Menu_UpdateCardSlot runs; Menu_OpenCardSlot resets it */
@@ -132,7 +132,7 @@ typedef struct {
     s8 save_loaded;                 /* 0x16 1: a save was loaded, Menu_Run gives its caller 1 for it */
     s8 check_step;                  /* 0x17 the step of the card check screen (0 to 4) */
     s8 input_locked;                /* 0x18 starts as 1 */
-    s8 card0_saves_state;           /* 0x19 what SaveCard_GetSavesState said of the first slot's card, unk1A of the second's (Menu_CardsHaveSaves) */
+    s8 card0_saves_state;           /* 0x19 what SaveCard_GetSavesState said of the first slot's card, card1_saves_state of the second's (Menu_CardsHaveSaves) */
     s8 card1_saves_state;           /* 0x1A what SaveCard_GetSavesState said of the second card */
     s8 check_finished;              /* 0x1B 0 until the first card check has finished */
     s8 skip_drawing;                /* 0x1C 1: the screen draws nothing and leaves at once */

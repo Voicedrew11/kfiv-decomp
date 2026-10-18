@@ -6,13 +6,13 @@
 
 typedef struct LinkNode {
     s64 unk00;                      /* 0x00 */
-    s32 unk08;                      /* 0x08 set to -1 when the node is reset */
+    s32 file_handle;                /* 0x08 0x08 file handle of the file the node loads, -1 when none */
     void *pool_node;                /* 0x0C */
-    struct LinkNode *unk10;         /* 0x10 another node; Smith_CutModelChain clears its next too */
+    struct LinkNode *target_node;   /* 0x10 0x10 the node this load is for: its model file is read and the buffer goes to it */
     struct LinkNode *next;          /* 0x14 */
     void (*callback)(void);         /* 0x18 */
-    s32 unk1C;                      /* 0x1C */
-    s32 unk20;                      /* 0x20 */
+    s32 stage;                      /* 0x1C 0x1C which stage of the load runs next */
+    s32 done;                       /* 0x20 0x20 1 once the load has finished */
     s8 slot;                        /* 0x24 which pool_part_sources entry its file is for (Menu_FinishWornModelLoad) */
     char pad25[0x03];
     char name[0x28];                /* 0x28 file name built with sprintf */
