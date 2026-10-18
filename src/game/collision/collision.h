@@ -28,7 +28,7 @@ typedef struct {
     char pad30[0x40];
     Vector4 push;                   /* 0x70 the way out of what was hit */
     Vector4 point;                  /* 0x80 the point that is tested */
-    Vector4 unk90;                  /* 0x90 the point Player_CollideWithMap keeps away from the walls */
+    Vector4 wall_point;             /* 0x90 the point Player_CollideWithMap keeps away from the walls */
 } CollisionScratch;
 
 #define COLLISION_SCRATCH ((CollisionScratch *)0x70000000)

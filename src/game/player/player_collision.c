@@ -49,7 +49,7 @@ extern FxTableEntry fx_table[];
 int Player_CollideWithMap(void) {
     // match: the scratchpad points through pointers (retail forms each address anew), and the order of these
     // declarations decides which stack slot each value that does not fit a register gets
-    Vector4 *wall_point = &COLLISION_SCRATCH->unk90;
+    Vector4 *wall_point = &COLLISION_SCRATCH->wall_point;
     Vector4 *floor_point = &COLLISION_SCRATCH->point;
     Vector4 raised_point;
     s32 step_bit;
@@ -149,15 +149,15 @@ int Player_CollideWithMap(void) {
                     points_left = strip->point_count - 2;
                     do {
                         Collision_CapsuleTriangle((f32 *)strip_point[0].position, (f32 *)strip_point[1].position,
-                                      (f32 *)strip_point[2].position, (f32 *)&COLLISION_SCRATCH->unk90, 100.0f, 230.0f);
+                                      (f32 *)strip_point[2].position, (f32 *)&COLLISION_SCRATCH->wall_point, 100.0f, 230.0f);
                         if (COLLISION_RESULT->hit != 0) {
-                            COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->unk90.x - COLLISION_RESULT->point[0];
+                            COLLISION_SCRATCH->push.x = COLLISION_SCRATCH->wall_point.x - COLLISION_RESULT->point[0];
                             COLLISION_SCRATCH->push.y = 0.0f;
-                            COLLISION_SCRATCH->push.z = COLLISION_SCRATCH->unk90.z - COLLISION_RESULT->point[2];
+                            COLLISION_SCRATCH->push.z = COLLISION_SCRATCH->wall_point.z - COLLISION_RESULT->point[2];
                             Vector_Normalize(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push);
                             Vector_Scale(&COLLISION_SCRATCH->push, &COLLISION_SCRATCH->push, 100.0f);
-                            COLLISION_SCRATCH->unk90.x = COLLISION_RESULT->point[0] + COLLISION_SCRATCH->push.x;
-                            COLLISION_SCRATCH->unk90.z = COLLISION_RESULT->point[2] + COLLISION_SCRATCH->push.z;
+                            COLLISION_SCRATCH->wall_point.x = COLLISION_RESULT->point[0] + COLLISION_SCRATCH->push.x;
+                            COLLISION_SCRATCH->wall_point.z = COLLISION_RESULT->point[2] + COLLISION_SCRATCH->push.z;
                         }
                         strip_point++;
                     } while (--points_left != 0);
